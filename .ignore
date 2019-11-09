@@ -1,0 +1,11 @@
+/.DS_Store
+/.DS_Store?
+.classpath
+.project
+.idea
+.iml
+.ignore
+.sokrater/reports/src
+.settings/
+target/
+_sokrates

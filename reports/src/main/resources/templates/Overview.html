@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@1.5.13/dist/vuetify.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+        function showHide(id) {
+            var e = document.getElementById(id);
+            e.style.display = (e.style.display == 'block') ? 'none' : 'block';
+        }
+    </script>
+</head>
+
+<body>
+<div id="app">
+    <v-app>
+        <h1>Overview</h1>
+        <template>
+            <v-layout row>
+                <v-flex xs24 sm6 offset-sm3>
+                    <v-card>
+                        <v-toolbar color="cyan" dark>
+                            <v-toolbar-title>Analysis Scope</v-toolbar-title>
+                        </v-toolbar>
+
+                        <v-list one-line>
+                            <template>
+                                <v-list-tile>
+                                    <v-icon>arrow_right</v-icon>
+                                    <v-list-tile-content>
+                                        <v-list-tile-title>
+                                            <b>{{ analysis.scope.extensions.length }}</b>
+                                            extensions are included in analyses:
+                                            <b>{{ analysis.scope.extensions.join(", ") }}</b>
+                                        </v-list-tile-title>
+                                    </v-list-tile-content>
+                                </v-list-tile>
+                            </template>
+                        </v-list>
+                    </v-card>
+                </v-flex>
+            </v-layout>
+        </template>
+    </v-app>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@1.5.13/dist/vuetify.min.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: "${__DATA__}"
+    })
+</script>
+
+</body>
+</html>

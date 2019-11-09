@@ -1,0 +1,31 @@
+digraph G {
+    compound="true"
+    rankdir="TB"
+    bgcolor="white"
+    node [
+        fixedsize="false"
+        fontname="Tahoma"
+        color="white"
+        fillcolor="deepskyblue2"
+        fontcolor="black"
+        shape="box"
+        style="filled"
+    ]
+    edge [
+        fontname="Arial"
+        color="deepskyblue4"
+        fontcolor="black"
+        fontsize="12"
+        arrowsize="0.5"
+    ]
+"codeexplorer";"common";"codeanalyzer";"webapi";"reports";    "codeexplorer" -> "common" [label=" 21 ", penwidth="4"];
+    "codeexplorer" -> "codeanalyzer" [label=" 20 ", penwidth="4"];
+    "codeexplorer" -> "reports" [label=" 2 ", penwidth="1"];
+    "codeanalyzer" -> "common" [label=" 47 ", penwidth="10"];
+    "webapi" -> "common" [label=" 1 ", penwidth="1"];
+    "webapi" -> "codeanalyzer" [label=" 1 ", penwidth="1"];
+    "webapi" -> "reports" [label=" 1 ", penwidth="1"];
+    "reports" -> "common" [label=" 16 ", penwidth="3"];
+    "reports" -> "codeanalyzer" [label=" 19 ", penwidth="4"];
+
+}

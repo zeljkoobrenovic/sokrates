@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style type="text/css" media="screen">
+        #editor {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+    </style>
+    <script src="../components/ace/src/ace.js"
+            type="text/javascript" charset="utf-8"></script>
+</head>
+<script>
+    var editor = ace.edit("editor");
+
+    function pasteContent(content) {
+        editor.onPaste(content);
+    }
+
+    function getValue() {
+        return editor.getValue();
+    }
+
+    function openEditorFindDialog() {
+        return editor.execCommand("find");
+    }
+
+    function openEditorReplaceDialog() {
+        return editor.execCommand("replace");
+    }
+
+    function setValue(content) {
+        var currentLine = editor.getSelectionRange().start.row;
+        var formattedContent = JSON.stringify(JSON.parse(content), null, "    ");
+        editor.setValue(formattedContent);
+        editor.session.selection.clearSelection();
+        editor.scrollToRow(currentLine == 0 ? 0 : currentLine - 1);
+        editor.selection.moveCursorToPosition({row: currentLine, column: 0});
+        editor.selection.selectLine();
+    }
+
+    function setTextValue(content) {
+        editor.setValue(content);
+    }
+
+    function find(text) {
+        var lineIndex = getLineIndex(text, 0);
+        if (lineIndex >= 0) {
+            editor.gotoLine(parseInt(lineIndex) + 1);
+        }
+    }
+
+    function findAfter(textAfterWhichToFind, textToFind) {
+        var lineIndex1 = getLineIndex(textAfterWhichToFind, 0);
+        if (lineIndex1 >= 0) {
+            var lineIndex2 = getLineIndex(textToFind, lineIndex1 + 1);
+            if (lineIndex2 >= 0) {
+                editor.gotoLine(parseInt(lineIndex2) + 1);
+            }
+        }
+    }
+
+    function getLineIndex(text, start) {
+        var lines = editor.session.doc.getAllLines();
+        var lineIndex = -1;
+
+        for (l in lines) {
+            if (l >= start) {
+                var line = lines[l];
+                if (line.indexOf(text) >= 0) {
+                    lineIndex = l;
+                    break;
+                }
+            }
+        }
+
+        return lineIndex;
+    }
+
+    function gotoLine(lineIndex) {
+        editor.gotoLine(lineIndex);
+    }
+</script>
+<body>
+<div id="error" style="color:darkred"></div>
+<div id="editor"></div>
+<script>
+    var editor = ace.edit("editor");
+    editor.getSession().setMode("ace/mode/json");
+    //editor.setTheme("ace/theme/clouds");
+    editor.setOption("wrap", true);
+
+</script>
+</body>
+</html>

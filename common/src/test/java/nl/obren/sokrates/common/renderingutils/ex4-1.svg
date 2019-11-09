@@ -1,0 +1,100 @@
+<svg width="192pt" height="299pt"
+ viewBox="0.00 0.00 191.58 299.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 295)">
+<title>G</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-295 187.5828,-295 187.5828,4 -4,4"/>
+<!-- common -->
+<g id="node1" class="node">
+<title>common</title>
+<polygon fill="#00b2ee" stroke="#ffffff" points="86.0828,-36 29.0828,-36 29.0828,0 86.0828,0 86.0828,-36"/>
+<text text-anchor="middle" x="57.5828" y="-14.3" font-family="Optima" font-size="14.00" fill="#000000">common</text>
+</g>
+<!-- codeexplorer -->
+<g id="node2" class="node">
+<title>codeexplorer</title>
+<polygon fill="#00b2ee" stroke="#ffffff" points="76.5828,-291 .5828,-291 .5828,-255 76.5828,-255 76.5828,-291"/>
+<text text-anchor="middle" x="38.5828" y="-269.3" font-family="Optima" font-size="14.00" fill="#000000">codeexplorer</text>
+</g>
+<!-- codeexplorer&#45;&gt;common -->
+<g id="edge1" class="edge">
+<title>codeexplorer&#45;&gt;common</title>
+<path fill="none" stroke="#00688b" stroke-width="4" d="M25.7042,-254.9616C17.2904,-242.0226 7.062,-223.7996 2.5828,-206 -1.3218,-190.4837 .0608,-185.8 2.5828,-170 10.1932,-122.3215 32.4158,-70.0758 46.1727,-40.9363"/>
+<polygon fill="#00688b" stroke="#00688b" stroke-width="4" points="47.8985,-41.3829 48.4708,-36.1164 44.7392,-39.8765 47.8985,-41.3829"/>
+<text text-anchor="middle" x="17.5828" y="-142.4" font-family="Arial" font-size="12.00" fill="#000000"> 21 </text>
+</g>
+<!-- codeanalyzer -->
+<g id="node3" class="node">
+<title>codeanalyzer</title>
+<polygon fill="#00b2ee" stroke="#ffffff" points="143.0828,-121 66.0828,-121 66.0828,-85 143.0828,-85 143.0828,-121"/>
+<text text-anchor="middle" x="104.5828" y="-99.3" font-family="Optima" font-size="14.00" fill="#000000">codeanalyzer</text>
+</g>
+<!-- codeexplorer&#45;&gt;codeanalyzer -->
+<g id="edge2" class="edge">
+<title>codeexplorer&#45;&gt;codeanalyzer</title>
+<path fill="none" stroke="#00688b" stroke-width="4" d="M49.7483,-254.7368C57.474,-241.5445 67.5846,-223.1108 74.5828,-206 85.4834,-179.3477 94.1595,-147.3205 99.3222,-126.1313"/>
+<polygon fill="#00688b" stroke="#00688b" stroke-width="4" points="101.0278,-126.5231 100.4955,-121.2525 97.6248,-125.7047 101.0278,-126.5231"/>
+<text text-anchor="middle" x="95.5828" y="-184.9" font-family="Arial" font-size="12.00" fill="#000000"> 20 </text>
+</g>
+<!-- reports -->
+<g id="node4" class="node">
+<title>reports</title>
+<polygon fill="#00b2ee" stroke="#ffffff" points="65.5828,-206 11.5828,-206 11.5828,-170 65.5828,-170 65.5828,-206"/>
+<text text-anchor="middle" x="38.5828" y="-184.3" font-family="Optima" font-size="14.00" fill="#000000">reports</text>
+</g>
+<!-- codeexplorer&#45;&gt;reports -->
+<g id="edge3" class="edge">
+<title>codeexplorer&#45;&gt;reports</title>
+<path fill="none" stroke="#00688b" d="M38.5828,-254.9737C38.5828,-242.2393 38.5828,-225.058 38.5828,-211.2861"/>
+<polygon fill="#00688b" stroke="#00688b" points="40.3329,-211.0003 38.5828,-206.0003 36.8329,-211.0004 40.3329,-211.0003"/>
+<text text-anchor="middle" x="44.0828" y="-227.4" font-family="Arial" font-size="12.00" fill="#000000"> 2 </text>
+</g>
+<!-- codeanalyzer&#45;&gt;common -->
+<g id="edge4" class="edge">
+<title>codeanalyzer&#45;&gt;common</title>
+<path fill="none" stroke="#00688b" stroke-width="10" d="M94.6153,-84.9737C87.4493,-72.0139 77.7366,-54.4484 70.0561,-40.5581"/>
+<polygon fill="#00688b" stroke="#00688b" stroke-width="10" points="73.7841,-38.2589 67.5359,-36.0003 66.1267,-42.4931 73.7841,-38.2589"/>
+<text text-anchor="middle" x="92.5828" y="-57.4" font-family="Arial" font-size="12.00" fill="#000000"> 47 </text>
+</g>
+<!-- reports&#45;&gt;common -->
+<g id="edge5" class="edge">
+<title>reports&#45;&gt;common</title>
+<path fill="none" stroke="#00688b" stroke-width="3" d="M37.6803,-169.6698C36.9539,-148.997 36.6177,-114.4237 40.5828,-85 42.5778,-70.196 46.6519,-53.9479 50.3116,-41.1602"/>
+<polygon fill="#00688b" stroke="#00688b" stroke-width="3" points="52.0202,-41.5522 51.7413,-36.2621 48.6604,-40.5715 52.0202,-41.5522"/>
+<text text-anchor="middle" x="48.5828" y="-99.9" font-family="Arial" font-size="12.00" fill="#000000"> 16 </text>
+</g>
+<!-- reports&#45;&gt;codeanalyzer -->
+<g id="edge6" class="edge">
+<title>reports&#45;&gt;codeanalyzer</title>
+<path fill="none" stroke="#00688b" stroke-width="4" d="M49.8769,-169.8572C55.9812,-160.4177 63.8389,-148.8285 71.5828,-139 75.2723,-134.3174 79.4245,-129.4912 83.5069,-124.9537"/>
+<polygon fill="#00688b" stroke="#00688b" stroke-width="4" points="84.835,-126.0945 86.908,-121.2195 82.2474,-123.7377 84.835,-126.0945"/>
+<text text-anchor="middle" x="79.5828" y="-142.4" font-family="Arial" font-size="12.00" fill="#000000"> 19 </text>
+</g>
+<!-- webapi -->
+<g id="node5" class="node">
+<title>webapi</title>
+<polygon fill="#00b2ee" stroke="#ffffff" points="183.5828,-291 129.5828,-291 129.5828,-255 183.5828,-255 183.5828,-291"/>
+<text text-anchor="middle" x="156.5828" y="-269.3" font-family="Optima" font-size="14.00" fill="#000000">webapi</text>
+</g>
+<!-- webapi&#45;&gt;common -->
+<g id="edge7" class="edge">
+<title>webapi&#45;&gt;common</title>
+<path fill="none" stroke="#00688b" d="M161.3622,-254.7877C169.5544,-219.5331 182.6603,-140.5505 152.5828,-85 139.3053,-60.4776 112.6857,-42.9084 90.9943,-31.9303"/>
+<polygon fill="#00688b" stroke="#00688b" points="91.7053,-30.3298 86.447,-29.6876 90.1572,-33.4688 91.7053,-30.3298"/>
+<text text-anchor="middle" x="175.0828" y="-142.4" font-family="Arial" font-size="12.00" fill="#000000"> 1 </text>
+</g>
+<!-- webapi&#45;&gt;codeanalyzer -->
+<g id="edge8" class="edge">
+<title>webapi&#45;&gt;codeanalyzer</title>
+<path fill="none" stroke="#00688b" d="M151.0179,-254.807C141.4785,-223.6206 122.0245,-160.0211 111.5809,-125.8785"/>
+<polygon fill="#00688b" stroke="#00688b" points="113.2437,-125.3316 110.1077,-121.0622 109.8968,-126.3554 113.2437,-125.3316"/>
+<text text-anchor="middle" x="141.0828" y="-184.9" font-family="Arial" font-size="12.00" fill="#000000"> 1 </text>
+</g>
+<!-- webapi&#45;&gt;reports -->
+<g id="edge9" class="edge">
+<title>webapi&#45;&gt;reports</title>
+<path fill="none" stroke="#00688b" d="M131.558,-254.9737C112.941,-241.5631 87.4777,-223.2209 67.9056,-209.1224"/>
+<polygon fill="#00688b" stroke="#00688b" points="68.6514,-207.5028 63.5715,-206.0003 66.6057,-210.3428 68.6514,-207.5028"/>
+<text text-anchor="middle" x="110.0828" y="-227.4" font-family="Arial" font-size="12.00" fill="#000000"> 1 </text>
+</g>
+</g>
+</svg>

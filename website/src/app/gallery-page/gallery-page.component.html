@@ -1,0 +1,20 @@
+<mat-card>
+  <h1>EXAMPLES</h1>
+  <div *ngFor="let group of projects">
+    <h2 style="margin-top: 32px">{{ group.title }}</h2>
+    <div>
+      <div *ngFor="let project of group.projects" class="card">
+        <img [src]="project.logoLink" style="width: 48px; height: 48px">
+        <div style="display: inline-block; vertical-align: top; margin-top: 0px; margin-left: 10px  ">
+          <div style="font-size: 120%; font-weight: bold">{{ project.name }}</div>
+          <div *ngIf="project.size" style="color: grey">{{ project.size }}</div>
+        </div>
+        <div>
+          <a [href]="reportsLink(group.folder, project.id)" target="_blank">View Source Code Analysis</a> ⤇
+        </div>
+      </div>
+    </div>
+  </div>
+</mat-card>
+
+

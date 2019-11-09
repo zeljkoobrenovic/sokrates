@@ -1,0 +1,75 @@
+body {
+    font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+    margin-left: 5%;
+    margin-right: 5%;
+}
+
+table {
+    color: #333;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+td, th {
+    border: 1px solid #CCC;
+    height: 30px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+th {
+    background: #F3F3F3;
+    font-weight: bold;
+}
+
+td {
+    background: #FFFFFF;
+    text-align: left;
+}
+
+h3 {
+    margin-top: 0
+}
+
+h1 {
+    margin-bottom: 0;
+}
+
+p {
+    margin-top: 0;
+}
+
+.group {
+    margin-bottom: 30px;
+    border: solid lightgrey 1px;
+    padding: 20px;
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
+    border-radius: 2px;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.groupheader {
+    margin-bottom: 30px;
+    border: solid lightgrey 1px;
+    padding: 20px;
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
+    background-color: lightskyblue;
+}
+
+.internalgroup {
+    margin-bottom: 30px;
+    border: solid lightgrey 1px;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.internalgroupheader {
+    border: solid lightgrey 1px;
+    padding: 6px;
+    background-color: lightgrey;
+}
+
+.groupbody {
+    margin: 20px;
+}

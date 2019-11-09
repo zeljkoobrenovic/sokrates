@@ -1,0 +1,45 @@
+package nl.obren.sokrates.reports.generators.explorers;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import nl.obren.sokrates.common.io.JsonGenerator;
+import nl.obren.sokrates.reports.dataexporters.dependencies.DependeciesExportInfo;
+import nl.obren.sokrates.reports.dataexporters.dependencies.DependenciesExporter;
+import nl.obren.sokrates.reports.dataexporters.duplication.DuplicationExportInfo;
+import nl.obren.sokrates.reports.dataexporters.duplication.DuplicationExporter;
+import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
+import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
+
+public class DependenciesExplorerGenerator {
+    public static final String DEPENDENCIES_DATA = "\"${__DEPENDENCIES_DATA__}\"";
+    private CodeAnalysisResults codeAnalysisResults;
+
+    public DependenciesExplorerGenerator(CodeAnalysisResults codeAnalysisResults) {
+        this.codeAnalysisResults = codeAnalysisResults;
+    }
+
+    public String generateExplorer() {
+        return generateExplorer(getDuplicationExportInfo());
+    }
+
+    private String generateExplorer(DependeciesExportInfo exportInfo) {
+        String html = HtmlTemplateUtils.getTemplate("/templates/Dependencies.html");
+        try {
+            html = html.replace(DEPENDENCIES_DATA, new JsonGenerator().generate(exportInfo));
+        } catch (JsonProcessingException e) {
+            html = html.replace(DEPENDENCIES_DATA, "{}");
+            e.printStackTrace();
+        }
+
+        return html;
+    }
+
+    private DependeciesExportInfo getDuplicationExportInfo() {
+        DependenciesExporter dependenciesExporter = new DependenciesExporter(codeAnalysisResults.getAllDependencies());
+
+        DependeciesExportInfo exportInfo = new DependeciesExportInfo();
+        exportInfo.setLinks(dependenciesExporter.getDependenciesExportInfo());
+
+        return exportInfo;
+    }
+}

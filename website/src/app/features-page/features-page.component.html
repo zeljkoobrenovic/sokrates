@@ -1,0 +1,114 @@
+<div style="margin:20px">
+  <div class="card">
+    <h2 class="title">Source Code Overview Report</h2>
+    <ul>
+      <li>For analysis purposes Sokrates separate files in scope into several categories: main, test, generated,
+        deployment
+        and build, and other.
+      </li>
+      <li>The <b>main</b> category contains all <b>manually</b> created source code files that are being used in the <b>production</b>.
+      </li>
+      <li>Files in the <b>main</b> category are used as input for other analyses: logical decomposition, cross-cutting
+        concerns, duplication, file size, unit size, and cyclomatic complexity.
+      </li>
+      <li><b>Test</b> source code files are used only for testing of the product. These files are normally not deployed
+        to production.
+      </li>
+      <li><b>Build and deployment</b> source code files are used to configure or support build and deployment process.
+      </li>
+      <li><b>Generated</b> source code files are automatically generated files that have not been manually changed after
+        generation.
+      </li>
+      <li>While a source code folder may contain a number of files, Sokrates is primarily interested in the source code
+        files
+        that are being written and maintained by developers.
+      </li>
+      <li>Files containing binaries, documentation, or third-party libraries, for instance, are excluded from analysis.
+        The exception are third-party libraries that have been changed by developers.
+      </li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2 class="title">Logical Decomposition</h2>
+    <p><b>Logical decomposition</b> is a representation of the organization of the <b>main</b> source code, where every
+      and each file is put in exactly one <b>logical component</b>.</p>
+    <ul>
+      <li>A software system can have <b>one</b> or <b>more</b> logical decompositions.</li>
+      <li>A logical decomposition can be defined in two ways.</li>
+      <li>First approach is based on the <b>folders structure</b>. Components are mapped to folders at defined <b>folder
+        depth</b> relative to the source code root.
+      </li>
+      <li>Second approach is based on <b>explicit</b> definition of each component. In such explicit definitions,
+        components are explicitly <b>named</b> and their files are selected based on explicitly defined path and content
+        <b>filters</b>.
+      </li>
+      <li>A logical decomposition is considered <b>invalid</b> if a file is selected into <b>two or more components</b>.This
+        constraint is introduced in order to facilitate measuring of <b>dependencies</b> among components.
+      </li>
+      <li>Files not assigned to any component are put into a special "<b>Unclassified</b>" component.</li>
+    </ul>
+  </div>
+  <div class='card'>
+    <h2 class="title">Cross-Cutting Concerns Report</h2>
+    <ul>
+      <li>Cross-cutting concerns are aspects of a software system that cannot be cleanly decomposed from the rest of the
+        system.
+      </li>
+      <li>A single concern may be present in multiple files. One source code file may contain multiple concerns.</li>
+    </ul>
+  </div>
+  <div class='card'>
+    <h2 class="title">Duplication</h2>
+    <ul>
+      <li>For duplication, Sokrates look at places in code where there are six or more lines of code that are exactly
+        the
+        same.
+      </li>
+      <li>Before duplication is calculated, the code is cleaned to remove empty lines, comments, and frequently
+        duplicated constructs such as imports.
+      </li>
+    </ul>
+  </div>
+  <div class='card'>
+    <h2 class="title">File Size</h2>
+    <ul>
+      <li>File size measurements show the distribution of size of files.</li>
+      <li>Files are classified in four categories based on their size (lines of code): 1-200 (small files), 200-500
+        (medium size files), 501-1000 (long files), 1001+ (very long files).
+      </li>
+    </ul>
+  </div>
+  <div class='card'>
+    <h2 class="title">Unit Size</h2>
+    <ul>
+      <li>Unit size measurements show the distribution of size of units of code (methods, functions...).</li>
+      <li>Units are classified in four categories based on their size (lines of code): 1-20 (small units), 20-50 (medium
+        size units), 51-100 (long units), 101+ (very long units).
+      </li>
+    </ul>
+  </div>
+  <div class='card'>
+    <h2 class="title">Cyclomatic Complexity</h2>
+    <ul>
+      <li>Cyclomatic complexity is a software metric (measurement), used to indicate the complexity of a program. It is
+        a quantitative measure of the number of linearly independent paths through a program's source code.
+      </li>
+      <li>Cyclomatic complexity is measured at the unit level (methods, functions...).</li>
+      <li>Units are classified in four categories based on the measured McCabe index: 1-5 (simple units), 6-10 (medium
+        complex units), 11-25 (complex units), 26+ (very complex units).
+      </li>
+    </ul>
+  </div>
+  <div class='card'>
+    <h2 class="title">Metrics Report</h2>
+    <ul>
+      <li>A list of all measurements.</li>
+    </ul>
+  </div>
+  <div class='card'>
+    <h2 class="title">Controls</h2>
+    <ul>
+      <li>A semaphore-like controls, to get warnings based on the range or metric values.</li>
+    </ul>
+  </div>
+</div>

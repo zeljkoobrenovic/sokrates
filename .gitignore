@@ -1,0 +1,15 @@
+.classpath
+.project
+.settings
+.idea
+node
+node_modules
+target-eclipse
+target
+.DS_Store
+bin
+.tern-project
+app/src/main/resources/public/components/
+bin/
+*.iml
+_sokrates

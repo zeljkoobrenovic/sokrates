@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style type="text/css" media="screen">
+        #editor {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+    </style>
+</head>
+<script>
+    var editor = ace.edit("editor");
+    var markerId = undefined;
+
+    function pasteContent(content) {
+        editor.onPaste(content);
+    }
+
+    function getValue() {
+        return editor.getValue();
+    }
+
+    function getSelectedText() {
+        return editor.getSelectedText();
+    }
+
+    function openEditorFindDialog() {
+        return editor.execCommand("find");
+    }
+
+    function openEditorReplaceDialog() {
+        return editor.execCommand("replace");
+    }
+
+    function gotoLine(lineIndex) {
+        return editor.gotoLine(parseInt(lineIndex));
+    }
+
+    function selectLines(startLine, endLine) {
+        var Range = ace.require('ace/range').Range;
+
+        if (markerId != undefined) {
+            editor.session.removeMarker(markerId);
+        }
+
+        markerId = editor.session.addMarker(new Range(startLine, 0, endLine, 0), "ace_active-line", "fullLine");
+    }
+
+    function setValue(content, path) {
+        try {
+            var modelist = ace.require("ace/ext/modelist");
+            var mode = modelist.getModeForPath(path).mode;
+            editor.getSession().setMode(mode);
+            editor.setValue(content);
+            editor.scrollToRow(0);
+            editor.session.selection.clearSelection();
+        } catch (err) {
+            editor.setValue(err + "\n" + content);
+            document.getElementById("error").innerHTML = err;
+        }
+    }
+
+</script>
+<body>
+<div id="error" style="color:darkred"></div>
+<div id="editor"></div>
+<script src="../components/ace/src/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="../components/ace/src/ext-modelist.js" type="text/javascript" charset="utf-8"></script>
+<script>
+    var editor = ace.edit("editor");
+    editor.setTheme("ace/theme/xcode");
+    editor.setReadOnly(true);
+    editor.setOption("wrap", true);
+</script>
+</body>
+</html>

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@1.5.13/dist/vuetify.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+</head>
+
+<body>
+<div id="app">
+    <v-app>
+        <v-container grid-list-xl>
+            <v-card-title>
+                <h1 class="font-weight-light mb-4 display-1">
+                    <v-icon large>poll</v-icon>
+                    {{ duplication.title }}
+                </h1>
+            </v-card-title>
+            <v-expansion-panel>
+                <v-expansion-panel-content>
+                    <div slot="header">
+                        <v-icon>filter</v-icon>
+                        <b style="margin-right: 20px">Filter</b>
+                        <v-chip close
+                                v-model="chipExtension"
+                                v-if="extensionFilter.value">
+                            ".{{ extensionFilter.value }}" duplicates
+                        </v-chip>
+                        <v-chip close
+                                v-model="chipScope"
+                                v-if="scopeFilter.value">
+                            {{ scopeFilter.value}}
+                        </v-chip>
+                        <v-chip close
+                                v-model="chipBlockSizeRange"
+                                v-if="blockSizeRange[0] > minBlockSize || blockSizeRange[1] < maxBlockSize">
+                            size between {{ blockSizeRange[0] }} and {{ blockSizeRange[1] }} lines of code
+                        </v-chip>
+                    </div>
+                    <v-container fluid>
+                        <v-layout row>
+                            <v-flex xs6>
+                                <v-combobox
+                                        v-model="extensionFilter"
+                                        :items="extensionsInScope"
+                                        label="Extensions Filter"
+                                ></v-combobox>
+                            </v-flex>
+                            <v-flex xs6>
+                                <v-combobox
+                                        v-model="scopeFilter"
+                                        :items="componentsInScope"
+                                        label="Components and Concerns Filter"
+                                ></v-combobox>
+                            </v-flex>
+                        </v-layout>
+                    </v-container>
+                    <v-container fluid>
+                        <div>Duplicate Size (lines of code):</div>
+                        <v-layout row style="margin:0; padding: 0">
+                            <v-flex shrink style="width: 100px;">
+                                <v-text-field v-model="blockSizeRange[0]" class="mt-0" hide-details single-line
+                                              type="number"></v-text-field>
+                            </v-flex>
+
+                            <v-flex style="margin:0; ">
+                                <v-range-slider v-model="blockSizeRange"
+                                                :min="minBlockSize"
+                                                :max="maxBlockSize"
+                                                :step="1">
+                                </v-range-slider>
+                            </v-flex>
+
+                            <v-flex shrink style="width: 100px;">
+                                <v-text-field v-model="blockSizeRange[1]" class="mt-0" hide-details single-line
+                                              type="number"></v-text-field>
+                            </v-flex>
+                        </v-layout>
+                    </v-container>
+                </v-expansion-panel-content>
+            </v-expansion-panel>
+            <div style="margin-bottom: 1px; text-align: left">
+                <v-text-field
+                        style="max-width: 300px; display: inline-block; padding: 10px;"
+                        v-model="search"
+                        append-icon="search"
+                        label="search"
+                        single-line
+                        hide-details
+                ></v-text-field>
+                = <b>{{ filteredDuplicates.length }}</b> duplicates ({{ Math.round(100 * filteredDuplicates.length /
+                duplication.overallDuplication.numberOfDuplicates) }}% of duplicates).
+            </div>
+            <v-data-table
+                    :headers="headers"
+                    :pagination.sync="pagination"
+                    :items="filteredDuplicates"
+                    :rows-per-page-items="[25,50,100, {'text':'$vuetify.dataIterator.rowsPerPageAll','value':-1}]"
+                    class="elevation-1">
+                <template slot="items" slot-scope="props">
+                    <td class="text-xs-right">
+                        {{ props.item.blockSize }}
+                        <div :style="'height: 11px; width: ' + (40 * props.item.blockSize / maxBlockSize + 1) + 'px; background-color: crimson; display: inline-block; border-radius: 2px'">
+                        </div>
+
+                    </td>
+                    <td class="text-xs-left">
+                        <span v-html="getInFilesFragment(props.item.duplicatedFileBlocks)"></span>
+                    </td>
+                </template>
+            </v-data-table>
+            <v-footer class="pa-3">
+                <v-spacer></v-spacer>
+                <div>Generated by &copy; Sokrates @ {{ duplication.timestamp }}</div>
+            </v-footer>
+        </v-container>
+    </v-app>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@1.5.13/dist/vuetify.min.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        methods: {
+            getInFilesFragment: function (duplicatedFileBlocks) {
+                let html = "";
+
+                duplicatedFileBlocks.forEach(fileBlock => {
+                    html += "<div> - "
+                        + this.formatPath(fileBlock.file.relativePath)
+                        + " [" + fileBlock.startLine + ":" + fileBlock.endLine + "]"
+                        + "</div>";
+                });
+
+                return html;
+            },
+            formatPath: function (path) {
+                var index = path.lastIndexOf("/");
+                if (index > 0) {
+                    return path.substr(0, index).replace(/\//g, " / ") + " / <b>" + path.substr(index + 1) + "</b>";
+                } else {
+                    return path.replace(/\//g, " / ");
+                }
+            }
+        },
+        computed: {
+            componentsInScope: function () {
+                var componentIds = [];
+                var components = [{text: "", value: ""}];
+
+                this.duplication.duplicates.forEach(duplicate => {
+                    duplicate.duplicatedFileBlocks.forEach(block => {
+                        block.file.components.forEach(component => {
+                            var value = "component " + component;
+                            if (!componentIds.includes(value)) {
+                                componentIds.push(value);
+                                components.push({
+                                    text: value,
+                                    value: value
+                                })
+                            }
+                        });
+                    });
+                });
+
+                this.duplication.duplicates.forEach(duplicate => {
+                    duplicate.duplicatedFileBlocks.forEach(block => {
+                        block.file.crossCuttingConcerns.forEach(component => {
+                            var value = "concern " + component;
+                            if (!componentIds.includes(value)) {
+                                componentIds.push(value);
+                                components.push({
+                                    text: value,
+                                    value: value
+                                })
+                            }
+                        });
+                    });
+                });
+
+                return components;
+            },
+            filteredByBlockSize: function () {
+                return this.duplication.duplicates.filter(duplicate =>
+                    duplicate.blockSize >= this.blockSizeRange[0] && duplicate.blockSize <= this.blockSizeRange[1]
+                );
+            },
+            filteredByExtension: function () {
+                if (this.extensionFilter && this.extensionFilter.value) {
+                    let searchString = this.extensionFilter.value.toLowerCase();
+                    return this.filteredByBlockSize.filter(duplicate => {
+                        let found = true;
+                        duplicate.duplicatedFileBlocks.forEach(block => {
+                            if (!block.file.extension.toLowerCase() !== searchString) {
+                                found = false;
+                                return;
+                            }
+                        });
+                        return found;
+                    });
+                } else {
+                    return this.filteredByBlockSize;
+                }
+            },
+            filteredByComponent: function () {
+                if (this.scopeFilter && this.scopeFilter.value) {
+                    if (this.scopeFilter.value.startsWith("component ")) {
+                        var searchString = this.scopeFilter.value.substr(10).trim();
+                        return this.duplication.duplicates.filter(duplicate => {
+                            let found = true;
+                            duplicate.duplicatedFileBlocks.forEach(block => {
+                                if (!block.file.components.includes(searchString)) {
+                                    found = false;
+                                    return;
+                                }
+                            });
+                            return found;
+                        });
+                    } else if (this.scopeFilter.value.startsWith("concern ")) {
+                        var searchString = this.scopeFilter.value.substr(8).trim();
+                        return this.duplication.duplicates.filter(duplicate => {
+                            let found = true;
+                            duplicate.duplicatedFileBlocks.forEach(block => {
+                                if (!block.file.crossCuttingConcerns.includes(searchString)) {
+                                    found = false;
+                                    return;
+                                }
+                            });
+                            return found;
+                        });
+                    }
+                } else {
+                    return this.filteredByExtension;
+                }
+            },
+            filteredDuplicates: function () {
+                if (this.search) {
+                    let searchString = this.search.toLowerCase();
+                    let result = this.filteredByComponent.filter(duplicate => {
+                        let filteredBlocks = duplicate.duplicatedFileBlocks
+                            .filter(block => {
+                                return block.file.relativePath.toLowerCase().includes(searchString);
+                            });
+                        return filteredBlocks.length > 0;
+                    });
+                    return result;
+                } else {
+                    return this.filteredByComponent;
+                }
+            },
+            minBlockSize: function () {
+                var min = 1000000000;
+                this.duplication.duplicates.forEach(duplicate => min = Math.min(duplicate.blockSize, min));
+                return min;
+            },
+            maxBlockSize: function () {
+                var max = 0;
+                this.duplication.duplicates.forEach(duplicate => max = Math.max(duplicate.blockSize, max));
+                return max;
+            },
+            duplicatedLinesCount: function () {
+
+            },
+            extensionsInScope: function () {
+                let extensions = [];
+                this.duplication.duplicates.forEach(duplicate => {
+                    duplicate.duplicatedFileBlocks.forEach(block => {
+                        let extension = block.file.extension.toLowerCase();
+                        if (!extensions.includes(extension)) {
+                            extensions.push({
+                                text: extension,
+                                value: extension
+                            });
+                        }
+                    })
+                });
+
+                return extensions;
+            }
+        },
+        created: function () {
+            this.blockSizeRange[0] = this.minBlockSize;
+            this.blockSizeRange[1] = this.maxBlockSize;
+            const self = this;
+        },
+
+        watch: {
+            chipExtension: function (value) {
+                if (!value) this.extensionFilter = {text: "", value: ""};
+            },
+            extensionFilter: function (value) {
+                if (value.value) this.chipExtension = true;
+            },
+            chipScope: function (value) {
+                if (!value) this.scopeFilter = {text: "", value: ""};
+            },
+            scopeFilter: function (value) {
+                if (value.value) this.chipScope = true;
+            },
+            chipBlockSizeRange: function (value) {
+                if (!value) {
+                    this.blockSizeRange[0] = this.minBlockSize;
+                    this.blockSizeRange[1] = this.maxBlockSize;
+                }
+            },
+            blockSizeRange: function (value) {
+                this.chipBlockSizeRange = value[0] > this.minBlockSize || value[1] < this.maxBlockSize;
+            }
+        },
+        data: {
+            chipBlockSizeRange: false,
+            chipExtension: false,
+            chipScope: false,
+            pagination: {
+                sortBy: 'blockSize',
+                descending: true,
+                rowsPerPage: 25
+            },
+            message: "Message",
+            extensionFilter: {text: "", value: ""},
+            scopeFilter: {text: "", value: ""},
+            blockSizeRange: [0, 0],
+            headers: [
+                {text: 'Size', value: 'blockSize', sortable: true},
+                {text: 'In Files', value: 'duplicatedFileBlocks', sortable: true}
+
+            ],
+            search: '',
+            duplication: "${__DUPLICATION_DATA__}"
+        }
+    })
+</script>
+
+</body>
+</html>
