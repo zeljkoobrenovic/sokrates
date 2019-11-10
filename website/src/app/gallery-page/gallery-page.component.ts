@@ -526,7 +526,7 @@ export class GalleryPageComponent implements OnInit {
   }
 
   reportsLink(folder, projectId) {
-    return 'https://sokrates-gallery.s3-eu-west-1.amazonaws.com/'
+    return 'https://d3axxy9bcycpv7.cloudfront.net/'
       + folder + '/' + projectId + '/reports/html/index.html';
   }
 }
