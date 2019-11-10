@@ -76,8 +76,6 @@ public class LogicalDecomposition {
             });
         }
 
-        System.out.println(this.name);
-        System.out.println(includeRemainingFiles);
         CodeConfigurationUtils.populateUnclassifiedAndMultipleAspectsFiles(components,
                 (includeRemainingFiles ? allSourceFiles : filteredSourceFiles),
                 sourceFileAspectPair -> {

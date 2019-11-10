@@ -134,7 +134,6 @@ public class DependencyUtils {
                 if (components.size() > 1) {
                     String message = "ERROR: the anchor \'" + anchor.getAnchor() + "\' found in " + components.size() + " '" + key + "'+ components. " + components;
                     errors.add(new DependencyError(message, key));
-                    System.out.println(message);
                 }
             });
         });

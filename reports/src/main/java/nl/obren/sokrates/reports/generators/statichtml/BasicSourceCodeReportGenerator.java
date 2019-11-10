@@ -104,7 +104,6 @@ public class BasicSourceCodeReportGenerator {
 
     private void createBasicReport() {
         if (codeAnalyzerSettings.isAnalyzeFilesInScope()) {
-            System.out.println(overviewScopeReport.getDisplayName());
             new OverviewReportGenerator(codeAnalysisResults, codeConfigurationFile).addScopeAnalysisToReport(overviewScopeReport);
         }
 
