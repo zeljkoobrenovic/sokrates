@@ -62,10 +62,11 @@ public class CodeBrowserPane extends SplitPane {
                 String content = findingsFile.exists() ? FileUtils.readFileToString(findingsFile, StandardCharsets.UTF_8) : "";
                 FileUtils.write(findingsFile,
                         content
-                                + new Date().toString() + "\n"
-                                + "Summary: " + findings.getSummary() + "\n\n"
-                                + findings.getContent() + "\n"
-                                + "------------------------------------------------\n\n"
+                                + "<finding>\n"
+                                + "<summary>" + findings.getSummary() + "</summary>\n\n"
+                                + "<body>\n" + findings.getContent() + "\n</body>\n"
+                                + "</finding>"
+                                + "\n\n\n"
                         , StandardCharsets.UTF_8);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -123,6 +124,7 @@ public class CodeBrowserPane extends SplitPane {
         reportMenu.getItems().add(getMenuItem("Update File Size Report...", e -> codeConfigurationView.generateFileSizeReport()));
         reportMenu.getItems().add(getMenuItem("Update Unit Size Report...", e -> codeConfigurationView.generateUnitSizeReport()));
         reportMenu.getItems().add(getMenuItem("Update Cyclomatic Complexity Report...", e -> codeConfigurationView.generateCyclomaticComplexity()));
+        reportMenu.getItems().add(getMenuItem("Update Findings Report...", e -> codeConfigurationView.generateFindingsOverviewReport()));
         reportMenu.getItems().add(getMenuItem("Update Metrics Overview Report...", e -> codeConfigurationView.generateMetricsOverviewReport()));
         reportMenu.getItems().add(getMenuItem("Update Controls Report...", e -> codeConfigurationView.generateControlsReport()));
 

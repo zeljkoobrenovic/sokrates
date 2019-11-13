@@ -14,6 +14,7 @@ public class CodeAnalyzerSettings {
     private boolean analyzeCyclomaticComplexity = true;
     private boolean createMetricsList = true;
     private boolean analyzeControls = true;
+    private boolean analyzeFindings = true;
 
     public void selectAll() {
         analyzeFilesInScope = true;
@@ -109,5 +110,13 @@ public class CodeAnalyzerSettings {
 
     public void setAnalyzeControls(boolean analyzeControls) {
         this.analyzeControls = analyzeControls;
+    }
+
+    public boolean isAnalyzeFindings() {
+        return analyzeFindings;
+    }
+
+    public void setAnalyzeFindings(boolean analyzeFindings) {
+        this.analyzeFindings = analyzeFindings;
     }
 }

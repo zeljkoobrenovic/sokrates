@@ -35,6 +35,8 @@ public class CodeConfiguration {
 
     private List<MetricRangeControl> controls = new ArrayList<>();
 
+    private List<String> summaryFindings = new ArrayList<>();
+
     public CodeConfiguration() {
         createDefaultScope();
     }
@@ -428,6 +430,18 @@ public class CodeConfiguration {
         if (this.crossCuttingConcerns.size() == 0) {
             CrossCuttingConcernsGroup group = new CrossCuttingConcernsGroup("general");
             this.crossCuttingConcerns.add(group);
+        }
+    }
+
+    public List<String> getSummaryFindings() {
+        return summaryFindings;
+    }
+
+    public void setSummaryFindings(List<String> summaryFindings) {
+        if (summaryFindings == null) {
+            this.summaryFindings = new ArrayList<>();
+        } else {
+            this.summaryFindings = summaryFindings;
         }
     }
 }

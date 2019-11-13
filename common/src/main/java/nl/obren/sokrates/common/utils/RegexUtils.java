@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -55,6 +56,25 @@ public class RegexUtils {
             LOG.error(e);
         }
         return null;
+    }
+
+    public static List<String> getMatchedRegexesNoLimits(String text, String regex) {
+        List<String> matches = new ArrayList<>();
+        try {
+            Pattern soe = Pattern.compile(regex);
+            Matcher matcher = soe.matcher(text);
+
+            while (matcher.find()) {
+                int start = matcher.start();
+                int end = matcher.end();
+                matches.add(unifyEndOfLineCharacters(text.substring(start, end)));
+            }
+        } catch (PatternSyntaxException e) {
+            LOG.debug(e);
+        } catch (StackOverflowError e) {
+            LOG.error(e);
+        }
+        return matches;
     }
 
     public static String getLastMatchedRegex(String text, String regex) {

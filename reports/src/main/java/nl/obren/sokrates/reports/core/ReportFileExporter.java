@@ -5,6 +5,7 @@ import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.FilesAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.lang3.StringUtils;
 
@@ -224,7 +225,7 @@ public class ReportFileExporter {
                                 + " LOC)");
             });
         }
-        summary.append("</p>" );
+        summary.append("</p>");
 
         indexReport.addParagraph(summary.toString());
 
@@ -234,14 +235,7 @@ public class ReportFileExporter {
             indexReport.addParagraph("Duplication: <b style='" + (duplication > 5.0 ? "color: crimson" : "") + "'>" + FormattingUtils.getFormattedPercentage(duplication) + "%</b>");
         }
         int mainLOC = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
-        int veryLongFilesLOC = analysisResults.getFilesAnalysisResults().getOveralFileSizeDistribution().getVeryHighRiskValue();
-        int shortFilesLOC = analysisResults.getFilesAnalysisResults().getOveralFileSizeDistribution().getLowRiskValue();
-
-        indexReport.addParagraph("File Size: <b style='" + (veryLongFilesLOC > 1 ? "color: crimson" : "") + "'>"
-                + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(mainLOC, veryLongFilesLOC))
-                + "%</b> very long (>1000 LOC), <b style='color: green'>"
-                + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(mainLOC, shortFilesLOC))
-                + "%</b> short (<= 200 LOC)");
+        summarizeFileSize(indexReport, analysisResults);
 
         int linesOfCodeInUnits = analysisResults.getUnitsAnalysisResults().getLinesOfCodeInUnits();
         int veryLongUnitsLOC = analysisResults.getUnitsAnalysisResults().getUnitSizeRiskDistribution().getVeryHighRiskValue();
@@ -271,6 +265,30 @@ public class ReportFileExporter {
             indexReport.addHtmlContent(decomposition.getKey() + " (" + decomposition.getComponents().size() + " components)");
         });
         indexReport.addHtmlContent("</p>");
+        List<String> summaryFindings = analysisResults.getCodeConfiguration().getSummaryFindings();
+        if (summaryFindings != null && summaryFindings.size() > 0) {
+            indexReport.addParagraph("Other findings:");
+            indexReport.startUnorderedList();
+            summaryFindings.forEach(summaryFinding -> {
+                indexReport.addListItem(summaryFinding);
+            });
+            indexReport.endUnorderedList();
+        }
+    }
+
+    private static void summarizeFileSize(RichTextReport indexReport, CodeAnalysisResults analysisResults) {
+        FilesAnalysisResults filesAnalysisResults = analysisResults.getFilesAnalysisResults();
+        if (filesAnalysisResults != null && filesAnalysisResults.getOveralFileSizeDistribution() != null) {
+            int mainLOC = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
+            int veryLongFilesLOC = filesAnalysisResults.getOveralFileSizeDistribution().getVeryHighRiskValue();
+            int shortFilesLOC = filesAnalysisResults.getOveralFileSizeDistribution().getLowRiskValue();
+
+            indexReport.addParagraph("File Size: <b style='" + (veryLongFilesLOC > 1 ? "color: crimson" : "") + "'>"
+                    + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(mainLOC, veryLongFilesLOC))
+                    + "%</b> very long (>1000 LOC), <b style='color: green'>"
+                    + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(mainLOC, shortFilesLOC))
+                    + "%</b> short (<= 200 LOC)");
+        }
     }
 
     private static void appendLinks(RichTextReport report, CodeAnalysisResults analysisResults) {
@@ -351,6 +369,7 @@ public class ReportFileExporter {
                 {"UnitSize.html", "Unit Size"},
                 {"CyclomaticComplexity.html", "Cyclomatic Complexity"},
                 {"CrossCuttingConcerns.html", "Cross - Cutting Concerns"},
+                {"Findings.html", "Findings"},
                 {"Metrics.html", "Metrics"},
                 {"Controls.html", "Controls"}
         };

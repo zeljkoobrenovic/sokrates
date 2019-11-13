@@ -27,6 +27,18 @@
         return editor.getSelectedText();
     }
 
+    function getSelectedRange() {
+        selectionRange = editor.getSelectionRange();
+
+        if (selectionRange && selectionRange.start && selectionRange.end) {
+            startLine = selectionRange.start.row;
+            endLine = selectionRange.end.row;
+            return [startLine, endLine];
+        }
+
+        return null;
+    }
+
     function openEditorFindDialog() {
         return editor.execCommand("find");
     }

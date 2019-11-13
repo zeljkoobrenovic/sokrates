@@ -243,6 +243,10 @@ public class CodeConfigurationView extends ConfigurationEditorView {
         generateReports(CommandLineInterface.REPORT_CYCLOMATIC_COMPLEXITY);
     }
 
+    public void generateFindingsOverviewReport() {
+        generateReports(CommandLineInterface.REPORT_OVERVIEW);
+    }
+
     public void generateMetricsOverviewReport() {
         generateReports(CommandLineInterface.REPORT_OVERVIEW);
     }

@@ -43,6 +43,7 @@ public class CommandLineInterface {
     public static final String REPORT_JSON = "reportJson";
     public static final String REPORT_TEXT = "reportText";
     public static final String REPORT_OVERVIEW = "reportOverview";
+    public static final String REPORT_FINDINGS = "reportFindings";
     public static final String REPORT_DUPLICATION = "reportDuplication";
     public static final String REPORT_LOGICAL_DECOMPOSITION = "reportLogicalDecomposition";
     public static final String REPORT_CROSS_CUTTING_CONCERNS = "reportCrossCuttingConcerns";
@@ -60,6 +61,7 @@ public class CommandLineInterface {
     private Option json = new Option(REPORT_JSON, false, "save report data in JSON format");
     private Option txt = new Option(REPORT_TEXT, false, "save textual summary");
     private Option scope = new Option(REPORT_OVERVIEW, false, "generate report describing the overview of files in scope");
+    private Option findings = new Option(REPORT_FINDINGS, false, "generate report describing the manual findings");
     private Option duplication = new Option(REPORT_DUPLICATION, false, "generate the duplication report (stored in <outputFolder>/Duplication.html)");
     private Option logicalDecomposition = new Option(REPORT_LOGICAL_DECOMPOSITION, false, "generate the logical decomposition report (stored in <outputFolder>/LogicalDecomposition.html)");
     private Option crossCuttingConcerns = new Option(REPORT_CROSS_CUTTING_CONCERNS, false, "generate the cross cutting concerns report (stored in <outputFolder>/CrossCuttingConcerns.html)");
@@ -324,6 +326,9 @@ public class CommandLineInterface {
             if (cmd.hasOption(scope.getOpt())) {
                 settings.setAnalyzeFilesInScope(true);
             }
+            if (cmd.hasOption(findings.getOpt())) {
+                settings.setAnalyzeFilesInScope(true);
+            }
             if (cmd.hasOption(duplication.getOpt())) {
                 settings.setAnalyzeDuplication(true);
             }
@@ -368,6 +373,7 @@ public class CommandLineInterface {
         options.addOption(confFile);
         options.addOption(outputFolder);
         options.addOption(unitSize);
+        options.addOption(findings);
         options.addOption(controls);
 
         outputFolder.setRequired(true);

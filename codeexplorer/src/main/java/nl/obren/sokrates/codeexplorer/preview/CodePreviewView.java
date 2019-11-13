@@ -14,6 +14,8 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -62,17 +64,7 @@ public class CodePreviewView extends BorderPane {
         toolBar.getItems().add(contentCleaningOptions);
         toolBar.getItems().add(evidenceButton);
         evidenceButton.setOnAction(event -> {
-            String selectedText = getSelectedText();
-            if (StringUtils.isBlank(selectedText)) {
-                return;
-            }
-
-            String summary = getSummary();
-            if (summary != null) {
-                findings.setSummary(summary);
-                findings.setContent("in " + sourceFile.getRelativePath() + ":\n\n" + selectedText);
-                findings.save();
-            }
+            addFinding();
         });
         toolBar.getItems().add(autoScroll);
         autoScroll.setOnAction(event -> {
@@ -84,6 +76,28 @@ public class CodePreviewView extends BorderPane {
             }
         });
         return toolBar;
+    }
+
+    private void addFinding() {
+        String selectedText = getSelectedText();
+        if (StringUtils.isBlank(selectedText)) {
+            return;
+        }
+
+        String summary = getSummary();
+        if (summary != null) {
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            LocalDateTime now = LocalDateTime.now();
+
+            findings.setSummary(summary);
+            String content = "";
+            content += "<p><b>" + sourceFile.getRelativePath() + "</b> "
+                    + "[" + getSelectedRangeString() + "]:</p>\n";
+            content += "<pre>\n" + selectedText + "\n</pre>\n";
+            content += "<p>" + dtf.format(now) + "</p>\n";
+            findings.setContent(content);
+            findings.save();
+        }
     }
 
     private String getSummary() {
@@ -186,6 +200,12 @@ public class CodePreviewView extends BorderPane {
 
     public String getSelectedText() {
         return (String) editorWebView.getEngine().executeScript("getSelectedText()");
+    }
+
+    public String getSelectedRangeString() {
+        Object range = editorWebView.getEngine().executeScript("getSelectedRange()");
+
+        return range.toString().replace(",", ":");
     }
 
     private void reload() {
