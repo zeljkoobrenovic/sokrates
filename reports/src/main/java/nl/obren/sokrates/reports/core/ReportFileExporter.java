@@ -371,6 +371,7 @@ public class ReportFileExporter {
                 {"CrossCuttingConcerns.html", "Cross - Cutting Concerns"},
                 {"Findings.html", "Findings"},
                 {"Metrics.html", "Metrics"},
+                {"Comparison.html", "Comparison"},
                 {"Controls.html", "Controls"}
         };
     }

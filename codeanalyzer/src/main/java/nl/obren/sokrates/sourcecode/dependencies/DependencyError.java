@@ -4,6 +4,9 @@ public class DependencyError {
     private String message;
     private String filtering;
 
+    public DependencyError() {
+    }
+
     public DependencyError(String message, String filtering) {
         this.message = message;
         this.filtering = filtering;

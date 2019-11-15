@@ -27,6 +27,7 @@ public class BasicSourceCodeReportGenerator {
     private RichTextReport cyclomaticComplexityReport = new RichTextReport("Cyclomatic Complexity", "");
     private RichTextReport findingsReport = new RichTextReport("Findings", "");
     private RichTextReport metricsReport = new RichTextReport("Metrics", "");
+    private RichTextReport comparisonReport = new RichTextReport("Comparison", "");
     private RichTextReport controlsReport = new RichTextReport("Controls", "");
     private CodeAnalyzerSettings codeAnalyzerSettings;
     private CodeAnalysisResults codeAnalysisResults;
@@ -81,6 +82,7 @@ public class BasicSourceCodeReportGenerator {
 
         if (codeAnalyzerSettings.isCreateMetricsList()) {
             reports.add(metricsReport);
+            reports.add(comparisonReport);
         }
 
         if (codeAnalyzerSettings.isAnalyzeControls()) {
@@ -102,6 +104,7 @@ public class BasicSourceCodeReportGenerator {
         decorateReport(fileSizeReport, name, logoLink);
         decorateReport(controlsReport, name, logoLink);
         decorateReport(metricsReport, name, logoLink);
+        decorateReport(comparisonReport, name, logoLink);
         decorateReport(findingsReport, name, logoLink);
         decorateReport(logicalComponentsReport, name, logoLink);
         decorateReport(crossCuttingConcernsReport, name, logoLink);
@@ -140,6 +143,7 @@ public class BasicSourceCodeReportGenerator {
 
         if (codeAnalyzerSettings.isCreateMetricsList()) {
             new MetricsListReportGenerator().generateReport(codeAnalysisResults, metricsReport);
+            new ComparisonReportGenerator(codeConfigurationFile).generateReport(codeAnalysisResults, comparisonReport);
         }
 
         if (codeAnalyzerSettings.isAnalyzeControls()) {

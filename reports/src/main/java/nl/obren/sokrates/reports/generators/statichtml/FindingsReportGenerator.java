@@ -5,6 +5,7 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,34 +30,45 @@ public class FindingsReportGenerator {
             try {
                 String html = FileUtils.readFileToString(findingsFile, StandardCharsets.UTF_8);
 
-                List<String> summaryItems = RegexUtils.getMatchedRegexesNoLimits(html, "<summary>.*?</summary>");
-
-                if (summaryItems.size() > 0) {
-                    report.addLevel2Header("Summary");
-                    report.startUnorderedList();
-                    summaryItems.forEach(item -> {
-                        report.addListItem(item);
-                    });
-                    report.endUnorderedList();
-                    report.addLineBreak();
+                if (StringUtils.isBlank(html)) {
+                    report.addParagraph("No manual findings have been added.");
+                } else {
+                    addManualFindings(report, html);
+                    return report;
                 }
-                report.addLevel2Header("Details");
-
-                html = html.replace("<finding>", "<div class='section'>");
-                html = html.replace("</finding>", "</div>");
-
-                html = html.replace("<summary>", "<div class='sectionHeader sectionTitle'>");
-                html = html.replace("</summary>", "</div>");
-
-                html = html.replace("<body>", "<div class='sectionBody'>");
-                html = html.replace("</body>", "</div>");
-
-                report.addHtmlContent(html);
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        } else {
+            report.addParagraph("No manual findings have been added.");
         }
 
         return report;
+    }
+
+    private void addManualFindings(RichTextReport report, String html) {
+        List<String> summaryItems = RegexUtils.getMatchedRegexesNoLimits(html, "<summary>.*?</summary>");
+
+        if (summaryItems.size() > 0) {
+            report.addLevel2Header("Summary");
+            report.startUnorderedList();
+            summaryItems.forEach(item -> {
+                report.addListItem(item);
+            });
+            report.endUnorderedList();
+            report.addLineBreak();
+        }
+        report.addLevel2Header("Details");
+
+        html = html.replace("<finding>", "<div class='section'>");
+        html = html.replace("</finding>", "</div>");
+
+        html = html.replace("<summary>", "<div class='sectionHeader sectionTitle'>");
+        html = html.replace("</summary>", "</div>");
+
+        html = html.replace("<body>", "<div class='sectionBody'>");
+        html = html.replace("</body>", "</div>");
+
+        report.addHtmlContent(html);
     }
 }

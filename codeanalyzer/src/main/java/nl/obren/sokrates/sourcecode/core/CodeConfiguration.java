@@ -34,7 +34,7 @@ public class CodeConfiguration {
     private List<CrossCuttingConcernsGroup> crossCuttingConcerns = new ArrayList<>();
 
     private List<MetricRangeControl> controls = new ArrayList<>();
-
+    private List<ReferenceAnalysisResult> compareResultsWith = new ArrayList<>();
     private List<String> summaryFindings = new ArrayList<>();
 
     public CodeConfiguration() {
@@ -431,6 +431,14 @@ public class CodeConfiguration {
             CrossCuttingConcernsGroup group = new CrossCuttingConcernsGroup("general");
             this.crossCuttingConcerns.add(group);
         }
+    }
+
+    public List<ReferenceAnalysisResult> getCompareResultsWith() {
+        return compareResultsWith;
+    }
+
+    public void setCompareResultsWith(List<ReferenceAnalysisResult> compareResultsWith) {
+        this.compareResultsWith = compareResultsWith;
     }
 
     public List<String> getSummaryFindings() {
