@@ -15,6 +15,6 @@ phases:
     commands:
       - echo Build completed on `date`
 artifacts:
-  files:
+  files:JsonGeneratorTest
     - cli/target/cli-1.0-jar-with-dependencies.jar
     - codeexplorer/target/codeexplorer-1.0-jar-with-dependencies.jar
