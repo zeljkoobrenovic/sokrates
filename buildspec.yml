@@ -16,8 +16,9 @@ phases:
       - echo Build completed on `date`
       - mkdir builds
       - cp cli/target/cli-1.0-jar-with-dependencies.jar builds/sokrates.jar
-      - cp builds/sokrates.jar builds/sokrates-1.0.jar
-      - cp builds/sokrates-explorer.jar builds/sokrates-explorer-1.0.jar
+      - cp codeexplorer/target/codeexplorer-1.0-jar-with-dependencies.jar sokrates-explorer.jar
+      - cp builds/sokrates.jar builds/sokrates-0.9.jar
+      - cp builds/sokrates-explorer.jar builds/sokrates-explorer-0.9.jar
 artifacts:
   files:
     - builds/sokrates.jar
