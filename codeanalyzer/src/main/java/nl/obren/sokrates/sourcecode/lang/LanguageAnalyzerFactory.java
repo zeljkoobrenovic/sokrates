@@ -13,8 +13,10 @@ import nl.obren.sokrates.sourcecode.lang.groovy.GroovyAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.html.HtmlAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.java.JavaAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.js.JavaScriptAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.js.TypeScriptAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.json.JsonAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.jsp.JspAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.less.LessAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.perl.PerlAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.php.PhpAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.python.PythonAnalyzer;
@@ -52,7 +54,7 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("php", PhpAnalyzer.class);
         analyzersMap.put("py", PythonAnalyzer.class);
         analyzersMap.put("js", JavaScriptAnalyzer.class);
-        analyzersMap.put("ts", JavaScriptAnalyzer.class);
+        analyzersMap.put("ts", TypeScriptAnalyzer.class);
         analyzersMap.put("scala", ScalaAnalyzer.class);
         analyzersMap.put("html", HtmlAnalyzer.class);
         analyzersMap.put("htm", HtmlAnalyzer.class);
@@ -62,6 +64,7 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("rb", RubyAnalyzer.class);
         analyzersMap.put("groovy", GroovyAnalyzer.class);
         analyzersMap.put("css", CssAnalyzer.class);
+        analyzersMap.put("less", LessAnalyzer.class);
         analyzersMap.put("sass", SassAnalyzer.class);
         analyzersMap.put("json", JsonAnalyzer.class);
         analyzersMap.put("gsp", JspAnalyzer.class);
@@ -90,9 +93,9 @@ public class LanguageAnalyzerFactory {
         this.overrides = overrides;
     }
 
-    public LanguageAnalyzer getLanguageAnalyzer(SourceFile sourceFile) {
+    public LanguageAnalyzer getLanguageAnalyzerByExtension(String extension) {
         try {
-            Class aClass = analyzersMap.get(getAnalyzerKey(sourceFile));
+            Class aClass = analyzersMap.get(extension);
             if (aClass != null) {
                 return (LanguageAnalyzer) aClass.newInstance();
             }
@@ -101,6 +104,10 @@ public class LanguageAnalyzerFactory {
         }
 
         return new UnknownLanguageAnalyzer();
+    }
+
+    public LanguageAnalyzer getLanguageAnalyzer(SourceFile sourceFile) {
+        return getLanguageAnalyzerByExtension(getAnalyzerKey(sourceFile));
     }
 
     private String getAnalyzerKey(SourceFile sourceFile) {

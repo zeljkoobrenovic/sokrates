@@ -10,6 +10,7 @@ import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
 import nl.obren.sokrates.sourcecode.units.CStyleHeuristicUnitParser;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class JavaScriptAnalyzer extends LanguageAnalyzer {
@@ -72,6 +73,20 @@ public class JavaScriptAnalyzer extends LanguageAnalyzer {
     @Override
     public DependenciesAnalysis extractDependencies(List<SourceFile> sourceFiles, ProgressFeedback progressFeedback) {
         return new JSHeuristicDependenciesExtractor().extractDependencies(sourceFiles, progressFeedback);
+    }
+
+
+    @Override
+    public List<String> getFeaturesDescription() {
+        List<String> features = new ArrayList<>();
+
+        features.add(FEATURE_ALL_STANDARD_ANALYSES);
+        features.add(FEATURE_ADVANCED_CODE_CLEANING);
+        features.add(FEATURE_ADVANCED_UNIT_SIZE_ANALYSIS);
+        features.add(FEATURE_ADVANCED_CYCLOMATIC_COMPLEXITY_ANALYSIS);
+        features.add(FEATURE_BASIC_DEPENDENCIES_ANALYSIS + " (based on imports and require statements)");
+
+        return features;
     }
 
 }

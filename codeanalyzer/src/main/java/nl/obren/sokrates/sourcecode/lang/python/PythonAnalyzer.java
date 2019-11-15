@@ -9,6 +9,7 @@ import nl.obren.sokrates.sourcecode.dependencies.DependenciesAnalysis;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PythonAnalyzer extends LanguageAnalyzer {
@@ -43,5 +44,19 @@ public class PythonAnalyzer extends LanguageAnalyzer {
     @Override
     public DependenciesAnalysis extractDependencies(List<SourceFile> sourceFiles, ProgressFeedback progressFeedback) {
         return new PythonDependenciesExtractor().extractDependencies(sourceFiles, progressFeedback);
+    }
+
+
+    @Override
+    public List<String> getFeaturesDescription() {
+        List<String> features = new ArrayList<>();
+
+        features.add(FEATURE_ALL_STANDARD_ANALYSES);
+        features.add(FEATURE_ADVANCED_CODE_CLEANING);
+        features.add(FEATURE_ADVANCED_UNIT_SIZE_ANALYSIS);
+        features.add(FEATURE_ADVANCED_CYCLOMATIC_COMPLEXITY_ANALYSIS);
+        features.add(FEATURE_BASIC_DEPENDENCIES_ANALYSIS);
+
+        return features;
     }
 }

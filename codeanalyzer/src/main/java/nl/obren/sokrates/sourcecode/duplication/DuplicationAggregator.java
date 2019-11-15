@@ -166,7 +166,5 @@ public class DuplicationAggregator {
 
         return duplications;
     }
-
-
 }
 

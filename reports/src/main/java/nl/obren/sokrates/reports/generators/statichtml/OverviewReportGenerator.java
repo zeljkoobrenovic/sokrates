@@ -3,9 +3,12 @@ package nl.obren.sokrates.reports.generators.statichtml;
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.ScopesRenderer;
+import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.lang3.StringUtils;
 
@@ -51,22 +54,9 @@ public class OverviewReportGenerator {
         renderScopes(report, codeAnalysisResults.getBuildAndDeployAspectAnalysisResults(), "Build and Deployment Code", "Source code used to configure or support build and deployment process.");
         renderScopes(report, codeAnalysisResults.getOtherAspectAnalysisResults(), "Other Code", "");
 
-        /*report.startSection();
-        report.addHtmlContent(ChartUtils.getAspectsVolumePieChart("Lines of code per type of code", code).toString());
-        report.endDiv();*/
-
         report.endSection();
 
-        /*report.startSection();
-        report.addLevel2Header("Details", "background-color: yellow");
-
-        renderScopesDetails(report, codeAnalysisResults.getMainAspectAnalysisResults(), "Main Code", "");
-        renderScopesDetails(report, codeAnalysisResults.getTestAspectAnalysisResults(), "Test Code", "");
-        renderScopesDetails(report, codeAnalysisResults.getGeneratedAspectAnalysisResults(), "Generated Code", "");
-        renderScopesDetails(report, codeAnalysisResults.getBuildAndDeployAspectAnalysisResults(), "Build and Deployment Code", "");
-        renderScopesDetails(report, codeAnalysisResults.getOtherAspectAnalysisResults(), "Other Code", "");
-
-        report.endDiv();*/
+        renderAnalyzersInfo(report, codeAnalysisResults);
 
         addFooter(report);
     }
@@ -94,6 +84,24 @@ public class OverviewReportGenerator {
         report.addParagraph(RichTextRenderingUtils.italic(new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date())));
     }
 
+
+    public void renderAnalyzersInfo(RichTextReport report, CodeAnalysisResults results) {
+        report.startSection("Analyzers", "Info about analyzers used for source code examinations.");
+
+        report.startUnorderedList();
+        results.getMainAspectAnalysisResults().getFileCountPerExtension().forEach(extension -> {
+            String extensionString = extension.getName().replace("*.", "").trim().toLowerCase();
+            LanguageAnalyzer analyzer = LanguageAnalyzerFactory.getInstance().getLanguageAnalyzerByExtension(extensionString);
+
+            report.addListItem("*." + extensionString + " files are analyzed with <b> " + analyzer.getClass().getSimpleName() + ":");
+            report.startUnorderedList("margin-bottom: 12px");
+            analyzer.getFeaturesDescription().forEach(feature -> {
+                report.addListItem(feature);
+            });
+            report.endUnorderedList();
+        });
+        report.endUnorderedList();
+    }
 
     public void renderScopes(RichTextReport report, AspectAnalysisResults aspectAnalysisResults, String title, String description) {
         List<NumericMetric> fileCountPerExtension = aspectAnalysisResults.getFileCountPerExtension();

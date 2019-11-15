@@ -198,6 +198,10 @@ public class RichTextReport {
         addHtmlContent("<ul>\n");
     }
 
+    public void startUnorderedList(String style) {
+        addHtmlContent("<ul style='" + style + "'>\n");
+    }
+
     public void endUnorderedList() {
         addHtmlContent("</ul>\n");
     }

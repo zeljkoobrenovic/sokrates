@@ -69,4 +69,17 @@ public class JavaAnalyzer extends LanguageAnalyzer {
     public DependenciesAnalysis extractDependencies(List<SourceFile> sourceFiles, ProgressFeedback progressFeedback) {
         return new JavaHeuristicDependenciesExtractor().extractDependencies(sourceFiles, progressFeedback);
     }
+
+    @Override
+    public List<String> getFeaturesDescription() {
+        List<String> features = new ArrayList<>();
+
+        features.add(FEATURE_ALL_STANDARD_ANALYSES);
+        features.add(FEATURE_ADVANCED_CODE_CLEANING);
+        features.add(FEATURE_ADVANCED_UNIT_SIZE_ANALYSIS);
+        features.add(FEATURE_ADVANCED_CYCLOMATIC_COMPLEXITY_ANALYSIS);
+        features.add(FEATURE_ADVANCED_DEPENDENCIES_ANALYSIS + " (based on package names)");
+
+        return features;
+    }
 }
