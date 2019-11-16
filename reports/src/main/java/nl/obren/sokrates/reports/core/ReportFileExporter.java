@@ -1,12 +1,8 @@
 package nl.obren.sokrates.reports.core;
 
-import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
-import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.analysis.results.FilesAnalysisResults;
-import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -190,105 +186,7 @@ public class ReportFileExporter {
     }
 
     private static void summarize(RichTextReport indexReport, CodeAnalysisResults analysisResults) {
-        StringBuilder summary = new StringBuilder("");
-        summary.append("<p>Main Code: ");
-        summary.append(RichTextRenderingUtils.renderNumberStrong(analysisResults.getMainAspectAnalysisResults().getLinesOfCode()) + " LOC");
-        summary.append(" = ");
-        final boolean[] first = {true};
-        analysisResults.getMainAspectAnalysisResults().getLinesOfCodePerExtension().forEach(ext -> {
-            if (!first[0]) {
-                summary.append(" + ");
-            } else {
-                first[0] = false;
-            }
-            summary.append(
-                    ext.getName().toUpperCase().replace("*.", "") + "</b> ("
-                            + RichTextRenderingUtils.renderNumber(ext.getValue().intValue())
-                            + " LOC)");
-        });
-        summary.append("</p>");
-        summary.append("<p>Test Code: ");
-        summary.append(RichTextRenderingUtils.renderNumberStrong(analysisResults.getTestAspectAnalysisResults().getLinesOfCode()) + " LOC");
-        List<NumericMetric> linesOfCodePerExtension = analysisResults.getTestAspectAnalysisResults().getLinesOfCodePerExtension();
-        if (linesOfCodePerExtension.size() > 0) {
-            summary.append(" = ");
-            first[0] = true;
-            linesOfCodePerExtension.forEach(ext -> {
-                if (!first[0]) {
-                    summary.append(" + ");
-                } else {
-                    first[0] = false;
-                }
-                summary.append(
-                        "<b>" + ext.getName().toUpperCase().replace("*.", "") + "</b> ("
-                                + RichTextRenderingUtils.renderNumber(ext.getValue().intValue())
-                                + " LOC)");
-            });
-        }
-        summary.append("</p>");
-
-        indexReport.addParagraph(summary.toString());
-
-        Number duplicationPercentage = analysisResults.getDuplicationAnalysisResults().getOverallDuplication().getDuplicationPercentage();
-        double duplication = duplicationPercentage.doubleValue();
-        if (!analysisResults.getCodeConfiguration().getAnalysis().isSkipDuplication()) {
-            indexReport.addParagraph("Duplication: <b style='" + (duplication > 5.0 ? "color: crimson" : "") + "'>" + FormattingUtils.getFormattedPercentage(duplication) + "%</b>");
-        }
-        int mainLOC = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
-        summarizeFileSize(indexReport, analysisResults);
-
-        int linesOfCodeInUnits = analysisResults.getUnitsAnalysisResults().getLinesOfCodeInUnits();
-        int veryLongUnitsLOC = analysisResults.getUnitsAnalysisResults().getUnitSizeRiskDistribution().getVeryHighRiskValue();
-        int lowUnitsLOC = analysisResults.getUnitsAnalysisResults().getUnitSizeRiskDistribution().getLowRiskValue();
-        int veryComplexUnitsLOC = analysisResults.getUnitsAnalysisResults().getCyclomaticComplexityRiskDistribution().getVeryHighRiskValue();
-        int lowComplexUnitsLOC = analysisResults.getUnitsAnalysisResults().getCyclomaticComplexityRiskDistribution().getLowRiskValue();
-
-        indexReport.addParagraph("Unit Size: <b style='" + (veryLongUnitsLOC > 1 ? "color: crimson" : "") + "'>"
-                + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, veryLongUnitsLOC))
-                + "%</b> very long (>100 LOC), <b style='color: green'>"
-                + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, lowUnitsLOC))
-                + "%</b> short (<= 20 LOC)");
-        indexReport.addParagraph("Cyclomatic Complexity: <b style='" + (veryComplexUnitsLOC > 1 ? "color: crimson" : "") + "'>"
-                + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, veryComplexUnitsLOC))
-                + "%</b> very complex (McCabe index > 25), <b style='color: green'>"
-                + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, lowComplexUnitsLOC))
-                + "%</b> simple (McCabe index <= 5)");
-
-        indexReport.addHtmlContent("<p>Logical Component Decomposition:");
-        first[0] = true;
-        analysisResults.getLogicalDecompositionsAnalysisResults().forEach(decomposition -> {
-            if (!first[0]) {
-                indexReport.addHtmlContent(", ");
-            } else {
-                first[0] = false;
-            }
-            indexReport.addHtmlContent(decomposition.getKey() + " (" + decomposition.getComponents().size() + " components)");
-        });
-        indexReport.addHtmlContent("</p>");
-        List<String> summaryFindings = analysisResults.getCodeConfiguration().getSummaryFindings();
-        if (summaryFindings != null && summaryFindings.size() > 0) {
-            indexReport.addParagraph("Other findings:");
-            indexReport.startUnorderedList();
-            summaryFindings.forEach(summaryFinding -> {
-                indexReport.addListItem(summaryFinding);
-            });
-            indexReport.endUnorderedList();
-        }
-    }
-
-    private static void summarizeFileSize(RichTextReport indexReport, CodeAnalysisResults analysisResults) {
-        FilesAnalysisResults filesAnalysisResults = analysisResults.getFilesAnalysisResults();
-        if (filesAnalysisResults != null && filesAnalysisResults.getOveralFileSizeDistribution() != null) {
-            int mainLOC = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
-            int veryLongFilesLOC = filesAnalysisResults.getOveralFileSizeDistribution().getVeryHighRiskValue();
-            int shortFilesLOC = filesAnalysisResults.getOveralFileSizeDistribution().getLowRiskValue();
-
-            indexReport.addParagraph("File Size: <b style='" + (veryLongFilesLOC > 1 ? "color: crimson" : "") + "'>"
-                    + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(mainLOC, veryLongFilesLOC))
-                    + "%</b> very long (>1000 LOC), <b style='color: green'>"
-                    + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(mainLOC, shortFilesLOC))
-                    + "%</b> short (<= 200 LOC)");
-        }
+new SummaryUtils().summarize(analysisResults, indexReport);
     }
 
     private static void appendLinks(RichTextReport report, CodeAnalysisResults analysisResults) {
