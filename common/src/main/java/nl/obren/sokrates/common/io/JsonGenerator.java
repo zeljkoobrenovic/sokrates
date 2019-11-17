@@ -5,6 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JsonGenerator {
     public String generate(Object data) throws JsonProcessingException {
-        return new ObjectMapper().writeValueAsString(data);
+        return new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(data);
     }
 }
