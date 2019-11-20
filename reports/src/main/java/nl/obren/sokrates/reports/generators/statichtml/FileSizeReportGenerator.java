@@ -28,6 +28,16 @@ public class FileSizeReportGenerator {
         report.addListItem("File size measurements show the distribution of size of files.");
         report.addListItem("Files are classified in four categories based on their size (lines of code): " +
                 "1-200 (small files), 200-500 (medium size files), 501-1000 (long files), 1001+ (very long files).");
+        report.addListItem("It is a good practice to keep files small. Long files may become \"bloaters\", code that have increased to such gargantuan proportions that they are hard to work with.");
+        report.endUnorderedList();
+        report.endUnorderedList();
+        report.startUnorderedList();
+        report.addListItem("To learn more about bloaters and how to deal with long code structures, Sokrates recommends the following resources:");
+        report.startUnorderedList();
+        report.addListItem("<a target='_blank' href='https://sourcemaking.com/refactoring/smells/bloaters'>Refactoring bloaters</a>, sourcemaking.com");
+        report.addListItem("<a target='_blank' href='https://sourcemaking.com/antipatterns/the-blob'>The Blob Software Development Anit-Pattern</a>, sourcemaking.com");
+
+        report.endUnorderedList();
         report.endUnorderedList();
         report.endSection();
 

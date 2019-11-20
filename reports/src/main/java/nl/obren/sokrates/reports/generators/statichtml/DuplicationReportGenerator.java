@@ -54,6 +54,19 @@ public class DuplicationReportGenerator {
         report.startUnorderedList();
         report.addListItem("For duplication, we look at places in code where there are six or more lines of code that are exactly the same.");
         report.addListItem("Before duplication is calculated, the code is cleaned to remove empty lines, comments, and frequently duplicated constructs such as imports.");
+        report.addListItem("You should aim at having as little as possible (<5%) of duplicated code as high-level of duplication can lead to maintenance difficulties, poor factoring, and logical contradictions.");
+        report.endUnorderedList();
+        report.startUnorderedList();
+        report.addListItem("To learn more about duplications and techniques for eliminating duplication, Sokrates recommends the following resources:");
+        report.startUnorderedList();
+        report.addListItem("<a target='_blank' href='https://martinfowler.com/ieeeSoftware/repetition.pdf'>Avoid Repetition</a>, MartinFlower.com (IEEE Software article)");
+        report.addListItem("<a target='_blank' href='https://sourcemaking.com/refactoring/smells/duplicate-code'>Refactoring duplicated code</a>, sourcemaking.com");
+        report.addListItem("<a target='_blank' href='https://martinfowler.com/bliki/BeckDesignRules.html'>Beck Design Rules</a>, MartinFowler.com");
+        report.addListItem("<a target='_blank' href='https://en.wikipedia.org/wiki/Don%27t_repeat_yourself'>DRY (Don't Repeat Yourself) Principle</a>, Wikipedia");
+        report.addListItem("<a target='_blank' href='https://sourcemaking.com/antipatterns/cut-and-paste-programming'>The Cut-and-Paste Programming Software Development Anti-Pattern</a>, sourcemaking.com");
+
+        // Duplicated code is the bane of software development. Stamp out duplication whenever possible. You should always be on the lookout for more subtle cases of near-duplication, too. Don't Repeat Yourself!
+        report.endUnorderedList();
         report.endUnorderedList();
         report.endSection();
 

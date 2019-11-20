@@ -14,16 +14,22 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-public class ComparisonReportGenerator {
+public class TrendReportGenerator {
     private RichTextReport report;
     private File codeConfigurationFile;
 
-    public ComparisonReportGenerator(File codeConfigurationFile) {
+    public TrendReportGenerator(File codeConfigurationFile) {
         this.codeConfigurationFile = codeConfigurationFile;
     }
 
     public RichTextReport generateReport(CodeAnalysisResults codeAnalysisResults, RichTextReport report) {
         this.report = report;
+        report.startSection("Intro", "");
+        report.startUnorderedList();
+        report.addListItem("Trend report shows difference in metric between the latest measurements and previous reference measurements.");
+        report.addListItem("For more insights in the value of trend analysis, Sokrates recommends reading the section \"Favor tracking trends over absolute numbers\" in the article <a href='https://martinfowler.com/articles/useOfMetrics.html' target='_blank'>An Appropriate Use of Metrics</a>, (MartinFowler.com).");
+        report.endUnorderedList();
+        report.endSection();
 
         List<ReferenceAnalysisResult> referenceResults = codeAnalysisResults.getCodeConfiguration().getCompareResultsWith();
 

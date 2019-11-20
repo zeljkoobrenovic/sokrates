@@ -269,7 +269,7 @@ new SummaryUtils().summarize(analysisResults, indexReport);
                 {"CrossCuttingConcerns.html", "Cross - Cutting Concerns"},
                 {"Findings.html", "Findings"},
                 {"Metrics.html", "Metrics"},
-                {"Comparison.html", "Comparison"},
+                {"Trend.html", "Trend"},
                 {"Controls.html", "Controls"}
         };
     }

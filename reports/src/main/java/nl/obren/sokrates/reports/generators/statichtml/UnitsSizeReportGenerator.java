@@ -30,6 +30,27 @@ public class UnitsSizeReportGenerator {
         report.addListItem("Unit size measurements show the distribution of size of units of code (methods, functions...).");
         report.addListItem("Units are classified in four categories based on their size (lines of code): " +
                 "1-20 (small units), 20-50 (medium size units), 51-100 (long units), 101+ (very long units).");
+        report.addListItem("You should aim at keeping units small (< 20 lines). Long units may become \"bloaters\", code that have increased to such gargantuan proportions that they are hard to work with.");
+        report.addListItem("To learn more about unit size, the Sokrates recommends the following resources:");
+        report.startUnorderedList();
+        report.addListItem("<a href='https://martinfowler.com/bliki/FunctionLength.html'>Function Length</a>, MartinFowler.com");
+        report.startUnorderedList();
+        report.addListItem("<i>\"If you have to spend effort into looking at a fragment of code to figure out what it's doing, then you should extract it into a function and name the function after that 'what'.\"</i>");
+        report.endUnorderedList();
+        report.addListItem("<a href='https://softwareengineering.stackexchange.com/questions/133404/what-is-the-ideal-length-of-a-method-for-you'>Stack Overflow Discussion on Unit Size</a>, stackoverflow.com");
+        report.startUnorderedList();
+        report.addListItem("<i>\"Use common sense, stick to small function sizes in most instances but don't be dogmatic about it if you have a genuinely good reason to make an unusually big function.\"</i>");
+        report.endUnorderedList();
+        report.addListItem("<a href='https://blog.codinghorror.com/code-smells/'>Coding Smells</a>, codinghorror.com");
+        report.startUnorderedList();
+        report.addListItem("<i>\"All other things being equal, a shorter method is easier to read, easier to understand, and easier to troubleshoot. Refactor long methods into smaller methods if you can.\"</i>");
+        report.endUnorderedList();
+        report.addListItem("<a href='https://www.amazon.com/dp/0132350882/'>Clean Code: A Handbook of Agile Software Craftsmanship</a>, by Robert Martin");
+        report.startUnorderedList();
+        report.addListItem("<i>\"The first rule of functions is that they should be small. The second rule of functions is that they should be smaller than that. Functions should not be 100 lines long. Functions should hardly ever be 20 lines long.\"</i>");
+        report.endUnorderedList();
+
+        report.endUnorderedList();
         report.endUnorderedList();
         report.endSection();
 

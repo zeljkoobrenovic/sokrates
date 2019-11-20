@@ -27,14 +27,27 @@ public class CyclomaticComplexityReportGenerator {
 
         report.startSection("Intro", "");
         report.startUnorderedList();
+        // "\"Conditional complexity\" (also called cyclomatic complexity) is a term used to measure the complexity of software. The term refers to the number of possible paths through a program function; a higher value means higher maintenance and testing costs."
         report.addListItem("Cyclomatic complexity is a software metric (measurement), used to indicate the complexity of a program. It is a quantitative measure of the number of linearly " +
                 "independent paths through a program's source code.");
         report.addListItem("Cyclomatic complexity is measured at the unit level (methods, functions...).");
         report.addListItem("Units are classified in four categories based on the measured McCabe index: " +
                 "1-5 (simple units), 6-10 (medium complex units), 11-25 (complex units), 26+ (very complex units).");
         report.endUnorderedList();
+        report.startUnorderedList();
+        report.addListItem("To learn more about cyclomatic complexity and techniques for reducing this type of complexity, Sokrates recommends the following resources:");
+        report.startUnorderedList();
+        report.addListItem("<a target='_blank' href='https://sourcemaking.com/refactoring/simplifying-conditional-expressions'>Simplifying Conditional Expressions</a>, sourcemaking.com");
+        report.addListItem("<a target='_blank' href='https://en.wikipedia.org/wiki/Cyclomatic_complexity'>Cyclomatic Complexity</a>, wikipedia.org");
+
+        report.endUnorderedList();
+        report.endUnorderedList();
+
         report.addHorizontalLine();
+
         report.endSection();
+
+        // "https://www.wrightfully.com/thoughts-on-cyclomatic-complexity/"
 
         report.startSection("Cyclomatic Complexity Overall", "");
         report.startUnorderedList();

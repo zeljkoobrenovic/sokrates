@@ -1,13 +1,9 @@
 package nl.obren.sokrates.reports.generators.statichtml;
 
-import nl.obren.sokrates.common.renderingutils.VisualizationItem;
-import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
-import nl.obren.sokrates.common.utils.SystemUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.CodeAnalyzerSettings;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,7 +23,7 @@ public class BasicSourceCodeReportGenerator {
     private RichTextReport cyclomaticComplexityReport = new RichTextReport("Cyclomatic Complexity", "");
     private RichTextReport findingsReport = new RichTextReport("Findings", "");
     private RichTextReport metricsReport = new RichTextReport("Metrics", "");
-    private RichTextReport comparisonReport = new RichTextReport("Comparison", "");
+    private RichTextReport comparisonReport = new RichTextReport("Trend", "");
     private RichTextReport controlsReport = new RichTextReport("Controls", "");
     private CodeAnalyzerSettings codeAnalyzerSettings;
     private CodeAnalysisResults codeAnalysisResults;
@@ -143,7 +139,7 @@ public class BasicSourceCodeReportGenerator {
 
         if (codeAnalyzerSettings.isCreateMetricsList()) {
             new MetricsListReportGenerator().generateReport(codeAnalysisResults, metricsReport);
-            new ComparisonReportGenerator(codeConfigurationFile).generateReport(codeAnalysisResults, comparisonReport);
+            new TrendReportGenerator(codeConfigurationFile).generateReport(codeAnalysisResults, comparisonReport);
         }
 
         if (codeAnalyzerSettings.isAnalyzeControls()) {

@@ -145,7 +145,7 @@ public class LogicalComponentsReportGenerator {
 
         String longIntro = "<ul>\n";
         longIntro += "<li>A software system can have <b>one</b> or <b>more</b> logical decompositions.</li>\n";
-        longIntro += "<li>A logical decomposition can be defined in two ways.</li>\n";
+        longIntro += "<li>A logical decomposition can be defined in two ways in Sokrates.</li>\n";
         longIntro += "<li>First approach is based on the <b>folders structure</b>. " +
                 "Components are mapped to folders at defined <b>folder depth</b> relative to the source code root.</li>\n";
         longIntro += "<li>Second approach is based on <b>explicit</b> definition of each component. In such explicit definitions, components are " +
@@ -156,8 +156,17 @@ public class LogicalComponentsReportGenerator {
 
         longIntro += "</ul>\n";
 
+
         report.addParagraph(shortIntro);
         report.addHtmlContent(longIntro);
+
+        report.startUnorderedList();
+        report.addListItem("To learn more about good practices on componentization and dependencies, Sokrates recommends the following resources:");
+        report.startUnorderedList();
+        report.addListItem("<a target='_blank' href='https://www.martinfowler.com/ieeeSoftware/coupling.pdf'>Reduce Coupling</a>, MartinFlower.com (IEEE Software article)");
+        report.addListItem("<a target='_blank' href='https://sourcemaking.com/refactoring/smells/couplers'>Couplers Code Smells</a>, sourcemaking.com");
+        report.endUnorderedList();
+        report.endUnorderedList();
     }
 
 
