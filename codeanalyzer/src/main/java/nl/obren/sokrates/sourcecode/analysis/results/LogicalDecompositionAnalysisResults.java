@@ -1,8 +1,8 @@
 package nl.obren.sokrates.sourcecode.analysis.results;
 
+import nl.obren.sokrates.sourcecode.aspects.DependenciesFinder;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
-import nl.obren.sokrates.sourcecode.dependencies.Dependency;
 import nl.obren.sokrates.sourcecode.dependencies.DependencyError;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 
@@ -74,4 +74,5 @@ public class LogicalDecompositionAnalysisResults {
     public void setComponentDependenciesErrors(List<DependencyError> componentDependenciesErrors) {
         this.componentDependenciesErrors = componentDependenciesErrors;
     }
+
 }

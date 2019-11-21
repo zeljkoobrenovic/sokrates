@@ -109,7 +109,10 @@ public class LogicalComponentsReportGenerator {
                 report.endUnorderedList();
                 List<String> componentNames = new ArrayList<>();
                 logicalDecomposition.getComponents().forEach(c -> componentNames.add(c.getName()));
-                String graphvizContent = new GraphvizDependencyRenderer().getGraphvizContent(componentNames, componentDependencies);
+                GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
+                graphvizDependencyRenderer.setOrientation(logicalDecomposition.getLogicalDecomposition().getRenderingOrientation());
+
+                String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(componentNames, componentDependencies);
                 report.addGraphvizFigure("", graphvizContent);
                 report.addLineBreak();
                 report.addShowMoreBlock("",

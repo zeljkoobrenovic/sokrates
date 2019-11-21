@@ -100,7 +100,7 @@ public class AspectsTablePane extends BorderPane {
         showMeasuredDependenciesMenuItem.setOnAction(e -> {
             List<String> componentNames = new ArrayList<>();
             logicalDecomposition.getComponents().forEach(c -> componentNames.add(c.getName()));
-            DependenciesPane.openInWindow(codeBrowserPane.getCodeConfiguration().getMain(), group, componentNames);
+            DependenciesPane.openInWindow(codeBrowserPane.getCodeConfiguration().getMain(), logicalDecomposition, componentNames);
         });
         menu.getItems().addAll(showMeasuredDependenciesMenuItem, new SeparatorMenuItem(), showBubbleChartMenuItem, showTreeMapMenuItem);
 

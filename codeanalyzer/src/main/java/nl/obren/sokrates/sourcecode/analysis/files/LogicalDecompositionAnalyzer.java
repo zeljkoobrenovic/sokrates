@@ -1,29 +1,28 @@
 package nl.obren.sokrates.sourcecode.analysis.files;
 
 import nl.obren.sokrates.common.utils.ProgressFeedback;
-import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.analysis.AnalysisUtils;
 import nl.obren.sokrates.sourcecode.analysis.Analyzer;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.LogicalDecompositionAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.dependencies.*;
 import nl.obren.sokrates.sourcecode.metrics.Metric;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class LogicalDecompositionAnalyzer extends Analyzer {
     private final StringBuffer textSummary;
     private final CodeConfiguration codeConfiguration;
     private final MetricsList metricsList;
     private final long start;
-    private CodeAnalysisResults codeAnalysisResults;
     private final List<LogicalDecompositionAnalysisResults> logicalDecompositionAnalysisResults;
     private final SourceCodeAspect main;
+    private CodeAnalysisResults codeAnalysisResults;
     private ProgressFeedback progressFeedback;
 
     public LogicalDecompositionAnalyzer(CodeAnalysisResults codeAnalysisResults) {
@@ -42,6 +41,7 @@ public class LogicalDecompositionAnalyzer extends Analyzer {
         progressFeedback.setDetailedText("");
         AnalysisUtils.info(textSummary, progressFeedback, "Extracting dependencies...", start);
         DependenciesAnalysis dependenciesAnalysis = DependenciesUtils.extractDependencies(codeConfiguration.getMain(), codeAnalysisResults.getCodeConfiguration().getAnalysis().isSkipDependencies());
+
         List<Dependency> allDependencies = dependenciesAnalysis.getDependencies();
         this.codeAnalysisResults.setAllDependencies(allDependencies);
         codeConfiguration.getLogicalDecompositions().forEach(logicalDecomposition -> {
@@ -56,6 +56,10 @@ public class LogicalDecompositionAnalyzer extends Analyzer {
             });
 
             List<ComponentDependency> componentDependencies = DependencyUtils.getComponentDependencies(allDependencies, logicalDecomposition.getName());
+            DependenciesFinderExtractor finder = new DependenciesFinderExtractor(logicalDecomposition);
+            List<ComponentDependency> finderDependencies = finder.findComponentDependencies(codeConfiguration.getMain());
+            componentDependencies.addAll(finderDependencies);
+
             logicalDecompositionAnalysisResults.setComponentDependencies(componentDependencies);
 
             addDependencyMetrics(allDependencies, logicalDecomposition.getName(), componentDependencies);

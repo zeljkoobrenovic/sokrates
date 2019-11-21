@@ -20,6 +20,8 @@ public class LogicalDecomposition {
     private List<SourceFileFilter> filters = new ArrayList<>();
     private boolean includeRemainingFiles = true;
     private List<SourceCodeAspect> components = new ArrayList<>();
+    private String renderingOrientation = "TB";
+    private DependenciesFinder dependenciesFinder = new DependenciesFinder();
 
     public LogicalDecomposition() {
     }
@@ -140,5 +142,21 @@ public class LogicalDecomposition {
 
     public void setFilters(List<SourceFileFilter> filters) {
         this.filters = filters;
+    }
+
+    public String getRenderingOrientation() {
+        return renderingOrientation;
+    }
+
+    public void setRenderingOrientation(String renderingOrientation) {
+        this.renderingOrientation = renderingOrientation;
+    }
+
+    public DependenciesFinder getDependenciesFinder() {
+        return dependenciesFinder;
+    }
+
+    public void setDependenciesFinder(DependenciesFinder dependenciesFinder) {
+        this.dependenciesFinder = dependenciesFinder;
     }
 }

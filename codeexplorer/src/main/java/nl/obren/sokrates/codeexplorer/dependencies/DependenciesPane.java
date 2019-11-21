@@ -14,18 +14,16 @@ import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import nl.obren.sokrates.codeexplorer.codebrowser.TableViewUtils;
-import nl.obren.sokrates.common.renderingutils.GraphvizUtil;
-import nl.obren.sokrates.codeexplorer.common.UXUtils;
 import nl.obren.sokrates.codeexplorer.common.NumericBarCellFactory;
-import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.codeexplorer.common.ProgressFeedbackPane;
+import nl.obren.sokrates.codeexplorer.common.UXUtils;
+import nl.obren.sokrates.common.renderingutils.GraphvizUtil;
+import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.SourceFile;
+import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
-import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
-import nl.obren.sokrates.sourcecode.dependencies.Dependency;
-import nl.obren.sokrates.sourcecode.dependencies.DependencyProgressFeedback;
-import nl.obren.sokrates.sourcecode.dependencies.DependencyUtils;
+import nl.obren.sokrates.sourcecode.dependencies.*;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
 import org.apache.commons.logging.Log;
@@ -42,7 +40,7 @@ public class DependenciesPane extends BorderPane {
     private final WebView info;
     private final DependenciesView dependenciesView;
     private final DependenciesMatrix dependenciesMatrix;
-    private String group;
+    private LogicalDecomposition logicalDecomposition;
     private TableView<Dependency> table = new TableView<>();
     private BorderPane topPane = new BorderPane();
     private ProgressFeedbackPane progressFeedbackPane = new ProgressFeedbackPane();
@@ -50,11 +48,11 @@ public class DependenciesPane extends BorderPane {
     private List<ComponentDependency> componentDependencies;
     private boolean renderGraphviz;
 
-    public DependenciesPane(String group, boolean renderGraphviz) {
+    public DependenciesPane(LogicalDecomposition logicalDecomposition, boolean renderGraphviz) {
         this.renderGraphviz = renderGraphviz;
         TableViewUtils.addCopyToClipboardContextMenu(table);
 
-        this.group = group;
+        this.logicalDecomposition = logicalDecomposition;
         setId("dependencies_pane");
         addTableColumns();
 
@@ -89,7 +87,7 @@ public class DependenciesPane extends BorderPane {
         }
     }
 
-    public static void openInWindow(SourceCodeAspect sourceCodeAspect, String group, List<String> componentNames) {
+    public static void openInWindow(SourceCodeAspect sourceCodeAspect, LogicalDecomposition group, List<String> componentNames) {
         if (stage != null) {
             stage.close();
         }
@@ -110,6 +108,7 @@ public class DependenciesPane extends BorderPane {
     private void reloadGrapvizContent(String graphvizContent) {
         if (renderGraphviz) {
             GraphvizDependencyRenderer renderer = new GraphvizDependencyRenderer();
+            renderer.setOrientation(logicalDecomposition.getRenderingOrientation());
             renderer.append(GraphvizUtil.getSvgExternal(graphvizContent));
             dependenciesView.load(renderer.getHtmlContent(), graphvizContent);
         } else {
@@ -133,13 +132,13 @@ public class DependenciesPane extends BorderPane {
         StringBuilder text = new StringBuilder();
 
         text.append("<b><i>" + dependency.getDependencyString() + " (");
-        dependency.getFromComponents(group).forEach(component -> {
+        dependency.getFromComponents(logicalDecomposition.getName()).forEach(component -> {
             text.append("" + component.getName() + " ");
         });
 
         text.append(" ->  ");
 
-        dependency.getToComponents(group).forEach(component -> {
+        dependency.getToComponents(logicalDecomposition.getName()).forEach(component -> {
             text.append(component.getName() + " ");
         });
         text.append(")</i></b><br/>\n<br/>\n");
@@ -164,7 +163,7 @@ public class DependenciesPane extends BorderPane {
 
     protected void addTableColumns() {
         TableColumn<Dependency, String> column1 = new TableColumn<>("Component Dependency");
-        column1.setCellValueFactory(p -> new SimpleStringProperty(p.getValue().getComponentDependency(group)));
+        column1.setCellValueFactory(p -> new SimpleStringProperty(p.getValue().getComponentDependency(logicalDecomposition.getName())));
 
         TableColumn<Dependency, String> column2 = new TableColumn<>("From");
         column2.setCellValueFactory(p -> new SimpleStringProperty(p.getValue().getFrom().getAnchor()));
@@ -195,26 +194,32 @@ public class DependenciesPane extends BorderPane {
                 ObservableList<Dependency> items = FXCollections.observableArrayList();
                 List<Dependency> allDependencies = new ArrayList<>();
 
-                ProgressFeedback progressFeedback = getProgressFeedback(componentNames, items);
-                progressFeedback.start();
+                if (logicalDecomposition.getDependenciesFinder().isUseBuiltInDependencyFinders()) {
+                    ProgressFeedback progressFeedback = getProgressFeedback(componentNames, items);
+                    progressFeedback.start();
 
-                sourceCodeAspect.getAspectsPerExtensions().forEach(langAspect -> {
-                    if (langAspect.getSourceFiles().size() > 0) {
-                        SourceFile sourceFileSample = langAspect.getSourceFiles().get(0);
-                        LanguageAnalyzer languageAnalyzer = LanguageAnalyzerFactory.getInstance().getLanguageAnalyzer(sourceFileSample);
-                        List<Dependency> dependencies = languageAnalyzer.extractDependencies(langAspect.getSourceFiles(), progressFeedback).getDependencies();
-                        allDependencies.addAll(dependencies);
-                        calculateMaxValues(dependencies);
-                        dependencies.forEach(items::add);
-                    }
-                });
+                    sourceCodeAspect.getAspectsPerExtensions().forEach(langAspect -> {
+                        if (langAspect.getSourceFiles().size() > 0) {
+                            SourceFile sourceFileSample = langAspect.getSourceFiles().get(0);
+                            LanguageAnalyzer languageAnalyzer = LanguageAnalyzerFactory.getInstance().getLanguageAnalyzer(sourceFileSample);
+                            List<Dependency> dependencies = languageAnalyzer.extractDependencies(langAspect.getSourceFiles(), progressFeedback).getDependencies();
+                            allDependencies.addAll(dependencies);
+
+                            calculateMaxValues(dependencies);
+                            dependencies.forEach(items::add);
+                        }
+                    });
+                    progressFeedback.end();
+                }
+
+                DependenciesFinderExtractor finder = new DependenciesFinderExtractor(logicalDecomposition);
+                List<ComponentDependency> finderDependencies = finder.findComponentDependencies(sourceCodeAspect);
 
                 Platform.runLater(() -> {
-                    showDependencyDiagram(allDependencies, group, componentNames);
+                    showDependencyDiagram(allDependencies, finderDependencies, logicalDecomposition.getName(), componentNames);
                     table.setItems(items);
                 });
 
-                progressFeedback.end();
             });
         } else {
             LOG.error("Load dependencies: the source code aspect is null.");
@@ -246,7 +251,7 @@ public class DependenciesPane extends BorderPane {
                 if (System.currentTimeMillis() - lastUpdate > 100) {
                     lastUpdate = System.currentTimeMillis();
                     Platform.runLater(() -> {
-                        showDependencyDiagram(getCurrentDependencies(), group, componentNames);
+                        showDependencyDiagram(getCurrentDependencies(), new ArrayList<>(), logicalDecomposition.getName(), componentNames);
                         table.setItems(items);
                     });
                 }
@@ -257,15 +262,17 @@ public class DependenciesPane extends BorderPane {
         return progressFeedback;
     }
 
-    public void showDependencyDiagram(List<Dependency> dependencies, String group, List<String> componentNames) {
+    public void showDependencyDiagram(List<Dependency> dependencies, List<ComponentDependency> finderDependencies, String group, List<String> componentNames) {
         dependenciesView.load("Please wait...", "");
         componentDependencies = DependencyUtils.getComponentDependencies(dependencies, group);
+        componentDependencies.addAll(finderDependencies);
         String graphvizContent = new GraphvizDependencyRenderer().getGraphvizContent(componentNames, componentDependencies);
 
         String htmlContent = "";
         if (this.renderGraphviz) {
             try {
                 GraphvizDependencyRenderer renderer = new GraphvizDependencyRenderer();
+                renderer.setOrientation(logicalDecomposition.getRenderingOrientation());
                 renderer.append(GraphvizUtil.getSvgInternal(graphvizContent));
                 htmlContent = renderer.getHtmlContent();
             } catch (Exception e) {
@@ -283,6 +290,7 @@ public class DependenciesPane extends BorderPane {
         String htmlContent = "";
         if (this.renderGraphviz) {
             GraphvizDependencyRenderer renderer = new GraphvizDependencyRenderer();
+            renderer.setOrientation(logicalDecomposition.getRenderingOrientation());
             renderer.append(GraphvizUtil.getSvgInternal(graphvizContent));
             htmlContent = renderer.getHtmlContent();
         }
