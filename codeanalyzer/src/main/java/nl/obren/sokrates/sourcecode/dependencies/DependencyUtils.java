@@ -91,7 +91,7 @@ public class DependencyUtils {
                         if (!fileToComponentLinks.contains(fileToComponentLink)) {
                             fileToComponentLinks.add(fileToComponentLink);
                             sourceFileDependency.getSourceFile().getLogicalComponents(group).forEach(sourceComponent -> {
-                                addComponentDependency(componentDependencies, sourceComponent, targetComponent);
+                                addComponentDependency(sourceFileDependency, componentDependencies, sourceComponent, targetComponent);
                             });
                         }
                     });
@@ -102,7 +102,7 @@ public class DependencyUtils {
         return componentDependencies;
     }
 
-    private static void addComponentDependency(List<ComponentDependency> componentDependencies, SourceCodeAspect
+    private static void addComponentDependency(SourceFileDependency sourceFileDependency, List<ComponentDependency> componentDependencies, SourceCodeAspect
             sourceComponent, SourceCodeAspect targetComponent) {
         if (!sourceComponent.getName().equalsIgnoreCase(targetComponent.getName())) {
             ComponentDependency componentDependency = new ComponentDependency(sourceComponent.getName(),
@@ -114,6 +114,10 @@ public class DependencyUtils {
                 componentDependency.setCount(1);
                 componentDependencies.add(componentDependency);
             }
+
+            SourceFile sourceFile = sourceFileDependency.getSourceFile();
+            componentDependency.setLocFrom(componentDependency.getLocFrom() + sourceFile.getLinesOfCode());
+            componentDependency.getPathsFrom().add(sourceFile.getRelativePath());
         }
     }
 

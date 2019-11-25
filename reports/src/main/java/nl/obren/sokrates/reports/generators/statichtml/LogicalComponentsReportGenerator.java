@@ -12,8 +12,10 @@ import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class LogicalComponentsReportGenerator {
     private CodeAnalysisResults codeAnalysisResults;
@@ -93,32 +95,7 @@ public class LogicalComponentsReportGenerator {
             List<ComponentDependency> componentDependencies = logicalDecomposition.getComponentDependencies();
             report.startSubSection("Dependencies", "Dependencies among components are <b>static</b> code dependencies among files in different components.");
             if (componentDependencies != null && componentDependencies.size() > 0) {
-                report.startUnorderedList();
-                report.addListItem("Analyzed system has <b>" + componentDependencies.size() + "</b> links (arrows) between components.");
-                report.addListItem("The number on the arrow represents the number of files from referring component that depend on files in referred component.");
-                report.addListItem("These " + componentDependencies.size() + " links contain <b>" + DependencyUtils.getDependenciesCount(componentDependencies) + "</b> dependencies.");
-                int cyclicDependencyPlacesCount = DependencyUtils.getCyclicDependencyPlacesCount(componentDependencies);
-                int cyclicDependencyCount = DependencyUtils.getCyclicDependencyCount(componentDependencies);
-                if (cyclicDependencyPlacesCount > 0) {
-                    String numberOfPlacesText = cyclicDependencyPlacesCount == 1
-                            ? "is <b>1</b> place"
-                            : "are <b>" + cyclicDependencyPlacesCount + "</b> places";
-                    report.addListItem("There " + numberOfPlacesText + " (" + (cyclicDependencyPlacesCount * 2) + " links) with <b>cyclic</b> dependencies (<b>" + cyclicDependencyCount + "</b> " +
-                            "file dependencies).");
-                }
-                report.endUnorderedList();
-                List<String> componentNames = new ArrayList<>();
-                logicalDecomposition.getComponents().forEach(c -> componentNames.add(c.getName()));
-                GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
-                graphvizDependencyRenderer.setOrientation(logicalDecomposition.getLogicalDecomposition().getRenderingOrientation());
-
-                String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(componentNames, componentDependencies);
-                report.addGraphvizFigure("", graphvizContent);
-                report.addLineBreak();
-                report.addShowMoreBlock("",
-                        "<textarea style='width:90%; height: 20em; font-family: Courier New; color: grey'>"
-                                + graphvizContent
-                                + "</textarea>", "graphviz code...");
+                addComponentDependeciesSection(report, logicalDecomposition, componentDependencies);
             } else {
                 report.addParagraph("No component dependencies found.");
             }
@@ -126,6 +103,58 @@ public class LogicalComponentsReportGenerator {
             report.endSection();
             sectionIndex[0]++;
         });
+    }
+
+    private void addComponentDependeciesSection(RichTextReport report, LogicalDecompositionAnalysisResults logicalDecomposition, List<ComponentDependency> componentDependencies) {
+        report.startUnorderedList();
+        report.addListItem("Analyzed system has <b>" + componentDependencies.size() + "</b> links (arrows) between components.");
+        report.addListItem("The number on the arrow represents the number of files from referring component that depend on files in referred component.");
+        report.addListItem("These " + componentDependencies.size() + " links contain <b>" + DependencyUtils.getDependenciesCount(componentDependencies) + "</b> dependencies.");
+        int cyclicDependencyPlacesCount = DependencyUtils.getCyclicDependencyPlacesCount(componentDependencies);
+        int cyclicDependencyCount = DependencyUtils.getCyclicDependencyCount(componentDependencies);
+        if (cyclicDependencyPlacesCount > 0) {
+            String numberOfPlacesText = cyclicDependencyPlacesCount == 1
+                    ? "is <b>1</b> place"
+                    : "are <b>" + cyclicDependencyPlacesCount + "</b> places";
+            report.addListItem("There " + numberOfPlacesText + " (" + (cyclicDependencyPlacesCount * 2) + " links) with <b>cyclic</b> dependencies (<b>" + cyclicDependencyCount + "</b> " +
+                    "file dependencies).");
+        }
+        report.endUnorderedList();
+        List<String> componentNames = new ArrayList<>();
+        logicalDecomposition.getComponents().forEach(c -> componentNames.add(c.getName()));
+        GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
+        graphvizDependencyRenderer.setOrientation(logicalDecomposition.getLogicalDecomposition().getRenderingOrientation());
+
+        String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(componentNames, componentDependencies);
+        report.addGraphvizFigure("", graphvizContent);
+        report.addLineBreak();
+        report.addShowMoreBlock("",
+                "<textarea style='width:90%; height: 20em; font-family: Courier New; color: grey'>"
+                        + graphvizContent
+                        + "</textarea>", "graphviz code...");
+
+        report.addLineBreak();
+        report.addLineBreak();
+        report.startTable();
+        report.addTableHeader("From", "From Files", "->", "To");
+        Collections.sort(componentDependencies, (o1, o2) -> o2.getCount() - o1.getCount());
+        componentDependencies.forEach(componentDependency -> {
+            report.startTableRow();
+            report.addTableCell(componentDependency.getFromComponent());
+            report.addHtmlContent("<td>");
+            report.addShowMoreBlock("",
+                    "<textarea style='width:90%; height: 20em; font-family: Courier New; color: grey'>"
+                            + componentDependency.getPathsFrom().stream().collect(Collectors.joining("\n")) +
+                            "</textarea>",
+                    componentDependency.getCount() + " files"
+                            + " (" + componentDependency.getLocFrom() + " LOC)"
+            );
+            report.addHtmlContent("</td>");
+            report.addTableCell("&nbsp;->&nbsp;");
+            report.addTableCell(componentDependency.getToComponent());
+            report.endTableRow();
+        });
+        report.endTable();
     }
 
     private String getDecompositionDescription(LogicalDecompositionAnalysisResults logicalDecomposition) {

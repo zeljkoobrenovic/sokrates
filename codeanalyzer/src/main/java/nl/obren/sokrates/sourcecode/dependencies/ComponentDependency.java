@@ -1,7 +1,14 @@
 package nl.obren.sokrates.sourcecode.dependencies;
 
+import com.kitfox.svg.A;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class ComponentDependency {
     private String fromComponent;
+    private int locFrom = 0;
+    private List<String> pathsFrom = new ArrayList<>();
     private String toComponent;
     private int count = 1;
     private String text = null;
@@ -24,6 +31,22 @@ public class ComponentDependency {
 
     public String getToComponent() {
         return toComponent;
+    }
+
+    public int getLocFrom() {
+        return locFrom;
+    }
+
+    public void setLocFrom(int locFrom) {
+        this.locFrom = locFrom;
+    }
+
+    public List<String> getPathsFrom() {
+        return pathsFrom;
+    }
+
+    public void setPathsFrom(List<String> pathsFrom) {
+        this.pathsFrom = pathsFrom;
     }
 
     public void setToComponent(String toComponent) {

@@ -90,11 +90,15 @@ public class DependenciesFinderExtractor {
         if (!dependency.getFromComponent().equalsIgnoreCase(dependency.getToComponent())) {
             String key = dependency.getDependencyString();
             if (dependenciesMap.containsKey(key)) {
-                dependenciesMap.get(key).setCount(dependenciesMap.get(key).getCount() + 1);
+                dependency = dependenciesMap.get(key);
+                dependency.setCount(dependency.getCount() + 1);
             } else {
                 dependencies.add(dependency);
                 dependenciesMap.put(key, dependency);
             }
+
+            dependency.setLocFrom(dependency.getLocFrom() + sourceFile.getLinesOfCode());
+            dependency.getPathsFrom().add(sourceFile.getRelativePath());
         }
     }
 
