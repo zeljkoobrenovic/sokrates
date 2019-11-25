@@ -4,7 +4,7 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.DuplicationReportUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.duplication.DuplicationDependenciesUtils;
+import nl.obren.sokrates.sourcecode.duplication.DuplicationDependenciesHelper;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
 import nl.obren.sokrates.sourcecode.metrics.DuplicationMetric;
 
@@ -95,7 +95,7 @@ public class DuplicationReportGenerator {
             graphvizDependencyRenderer.setArrow("--");
             graphvizDependencyRenderer.setArrowColor("crimson");
             report.addGraphvizFigure("Duplication between components", graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(),
-                    DuplicationDependenciesUtils.extractDependencies(logicalDecompositionName, codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates())));
+                    new DuplicationDependenciesHelper(logicalDecompositionName).extractDependencies(codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates())));
             report.endSection();
         });
 

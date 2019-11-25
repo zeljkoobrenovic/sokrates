@@ -84,39 +84,6 @@ public class DuplicationAggregator {
         });
     }
 
-    public static List<AspectDuplication> getDuplicationPerCrossCuttingConcern(List<CrossCuttingConcern> crossCuttingConcerns,
-                                                                               List<SourceFile> sourceFiles,
-                                                                               List<SourceFileDuplication> duplicates) {
-        List<AspectDuplication> duplications = new ArrayList<>();
-        Map<String, AspectDuplication> map = new HashMap<>();
-
-        duplicates.forEach(sourceFileDuplication -> {
-            sourceFileDuplication.getSourceFile().getCrossCuttingConcerns().forEach(aspect -> {
-                String displayName = aspect.getName();
-                AspectDuplication aspectDuplication = map.get(displayName);
-                if (aspectDuplication == null) {
-                    aspectDuplication = new AspectDuplication();
-                    aspectDuplication.setAspect(aspect);
-                    aspectDuplication.setDuplicatedLinesOfCode(sourceFileDuplication.getDuplicatedLinesOfCode());
-                    map.put(displayName, aspectDuplication);
-                    duplications.add(aspectDuplication);
-                } else {
-                    aspectDuplication.setDuplicatedLinesOfCode(aspectDuplication.getDuplicatedLinesOfCode() +
-                            sourceFileDuplication.getDuplicatedLinesOfCode());
-                }
-            });
-        });
-
-        map.keySet().forEach(component -> {
-            map.get(component).setCleanedLinesOfCode(DuplicationUtils.getTotalNumberOfCleanedLinesForLogicalComponent(sourceFiles, component));
-        });
-
-        addCrossCuttingConcernsWithoutDuplicates(crossCuttingConcerns, sourceFiles, duplications, map);
-
-
-        return duplications;
-    }
-
     private static void addCrossCuttingConcernsWithoutDuplicates(List<CrossCuttingConcern> crossCuttingConcerns,
                                                                  List<SourceFile> sourceFiles,
                                                                  List<AspectDuplication> duplications,

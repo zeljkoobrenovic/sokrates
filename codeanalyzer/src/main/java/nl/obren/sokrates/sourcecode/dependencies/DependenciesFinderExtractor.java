@@ -73,12 +73,7 @@ public class DependenciesFinderExtractor {
             return;
         }
 
-        String duplicationKey = sourceFile.getRelativePath() + " -> " + toComponent;
-        if (fileComponentDependencies.contains(duplicationKey)) {
-            return;
-        }
-
-        fileComponentDependencies.add(duplicationKey);
+        if (isDuplicatedDependecies(sourceFile, toComponent)) return;
 
         ComponentDependency dependency = new ComponentDependency();
         String group = logicalDecomposition.getName();
@@ -101,5 +96,15 @@ public class DependenciesFinderExtractor {
                 dependenciesMap.put(key, dependency);
             }
         }
+    }
+
+    private boolean isDuplicatedDependecies(SourceFile sourceFile, String toComponent) {
+        String duplicationKey = sourceFile.getRelativePath() + " -> " + toComponent;
+        if (fileComponentDependencies.contains(duplicationKey)) {
+            return true;
+        }
+
+        fileComponentDependencies.add(duplicationKey);
+        return false;
     }
 }
