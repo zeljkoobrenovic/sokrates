@@ -1,17 +1,15 @@
 package nl.obren.sokrates.sourcecode.aspects;
 
-public class DependencyFinderPattern {
-    private String component = "";
+import nl.obren.sokrates.sourcecode.operations.OperationStatement;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class DependencyFinderMetaPattern {
     private String pathPattern = "";
     private String contentPattern = "";
 
-    public String getComponent() {
-        return component;
-    }
-
-    public void setComponent(String component) {
-        this.component = component;
-    }
+    private List<OperationStatement> nameOperations = new ArrayList<>();
 
     public String getPathPattern() {
         return pathPattern;
@@ -27,5 +25,13 @@ public class DependencyFinderPattern {
 
     public void setContentPattern(String contentPattern) {
         this.contentPattern = contentPattern;
+    }
+
+    public List<OperationStatement> getNameOperations() {
+        return nameOperations;
+    }
+
+    public void setNameOperations(List<OperationStatement> nameOperations) {
+        this.nameOperations = nameOperations;
     }
 }

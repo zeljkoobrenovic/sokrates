@@ -6,6 +6,7 @@ import nl.obren.sokrates.sourcecode.analysis.Analyzer;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.LogicalDecompositionAnalysisResults;
+import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.dependencies.*;
@@ -42,7 +43,16 @@ public class LogicalDecompositionAnalyzer extends Analyzer {
         AnalysisUtils.info(textSummary, progressFeedback, "Extracting dependencies...", start);
         DependenciesAnalysis dependenciesAnalysis = DependenciesUtils.extractDependencies(codeConfiguration.getMain(), codeAnalysisResults.getCodeConfiguration().getAnalysis().isSkipDependencies());
 
-        List<Dependency> allDependencies = dependenciesAnalysis.getDependencies();
+        boolean shouldGetDependencies = false;
+
+        for (LogicalDecomposition logicalDecomposition : codeConfiguration.getLogicalDecompositions()) {
+            if (logicalDecomposition.getDependenciesFinder().isUseBuiltInDependencyFinders()) {
+                shouldGetDependencies = true;
+                break;
+            }
+        }
+
+        List<Dependency> allDependencies = shouldGetDependencies ? dependenciesAnalysis.getDependencies() : new ArrayList<>();
         this.codeAnalysisResults.setAllDependencies(allDependencies);
         codeConfiguration.getLogicalDecompositions().forEach(logicalDecomposition -> {
             LogicalDecompositionAnalysisResults logicalDecompositionAnalysisResults = new LogicalDecompositionAnalysisResults(logicalDecomposition.getName());
@@ -55,7 +65,10 @@ public class LogicalDecompositionAnalyzer extends Analyzer {
                         metricsList, textSummary, start);
             });
 
-            List<ComponentDependency> componentDependencies = DependencyUtils.getComponentDependencies(allDependencies, logicalDecomposition.getName());
+            List<ComponentDependency> componentDependencies =
+                    logicalDecomposition.getDependenciesFinder().isUseBuiltInDependencyFinders()
+                    ? DependencyUtils.getComponentDependencies(allDependencies, logicalDecomposition.getName())
+                    : new ArrayList<>();
             DependenciesFinderExtractor finder = new DependenciesFinderExtractor(logicalDecomposition);
             List<ComponentDependency> finderDependencies = finder.findComponentDependencies(codeConfiguration.getMain());
             componentDependencies.addAll(finderDependencies);

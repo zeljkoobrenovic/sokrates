@@ -102,7 +102,7 @@ public class SourceFileFilter {
                 (StringUtils.isBlank(contentPattern) || contentMatches(sourceFile.getLines()));
     }
 
-    boolean pathMatches(String path) {
+    public boolean pathMatches(String path) {
         boolean pathMatches;
         if (StringUtils.isNotBlank(pathPattern)) {
             pathMatches = RegexUtils.matchesEntirely(pathPattern, path)
