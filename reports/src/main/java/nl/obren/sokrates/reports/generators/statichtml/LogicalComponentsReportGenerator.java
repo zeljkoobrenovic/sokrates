@@ -132,43 +132,46 @@ public class LogicalComponentsReportGenerator {
         report.addGraphvizFigure("", graphvizContent);
         report.addLineBreak();
         report.addShowMoreBlock("",
-                "<textarea style='width:90%; height: 20em; font-family: Courier New; color: grey'>"
+                "<textarea style='width:100%; height: 20em;'>"
                         + graphvizContent
                         + "</textarea>", "graphviz code...");
 
         report.addLineBreak();
         report.addLineBreak();
         report.startTable();
-        report.addTableHeader("From", "From Files", "->", "To");
+        report.addTableHeader("From Component<br/>↪ To Component", "From Component<br/>(files with dependencies)");
         Collections.sort(componentDependencies, (o1, o2) -> o2.getCount() - o1.getCount());
         componentDependencies.forEach(componentDependency -> {
             report.startTableRow();
-            report.addTableCell(componentDependency.getFromComponent());
+            report.addTableCell(
+                    componentDependency.getFromComponent()
+                            + "<br/>&nbsp↪&nbsp"
+                            + componentDependency.getToComponent()
+            );
             report.addHtmlContent("<td>");
             int locFromDuplications = componentDependency.getLocFrom();
             SourceCodeAspect fromComponentByName = logicalDecomposition.getLogicalDecomposition().getComponentByName(componentDependency.getFromComponent());
             String percentageHtmlFragment = null;
+            int dependencyCount = componentDependency.getCount();
             if (fromComponentByName != null) {
                 SimpleOneBarChart chart = new SimpleOneBarChart();
-                chart.setWidth(240);
-                chart.setMaxBarWidth(120);
-                chart.setBarHeight(10);
+                chart.setWidth(320);
+                chart.setMaxBarWidth(100);
+                chart.setBarHeight(14);
                 chart.setBarStartXOffset(2);
+                chart.setSmallerFontSize();
                 double percentage = 100.0 * locFromDuplications / fromComponentByName.getLinesOfCode();
                 String percentageText = FormattingUtils.getFormattedPercentage(percentage) + "%";
-                percentageHtmlFragment = chart.getPercentageSvg(percentage, "", locFromDuplications + " LOC (" + percentageText + ")");
+                percentageHtmlFragment = chart.getPercentageSvg(percentage, "", dependencyCount + " " + (dependencyCount == 1 ? "file" : "files") + ", " + locFromDuplications + " LOC (" + percentageText + ")");
             }
 
             report.addShowMoreBlock("",
                     "<textarea style='width:90%; height: 20em; font-family: Courier New; color: grey'>"
                             + componentDependency.getPathsFrom().stream().collect(Collectors.joining("\n")) +
                             "</textarea>",
-                    componentDependency.getCount() + " files"
-                            + (percentageHtmlFragment != null ? "<br/>" + percentageHtmlFragment : " (" + locFromDuplications + " LOC)")
+                    (percentageHtmlFragment != null ? "" + percentageHtmlFragment : dependencyCount + " files (" + locFromDuplications + " LOC)<br/>")
             );
             report.addHtmlContent("</td>");
-            report.addTableCell("&nbsp;->&nbsp;");
-            report.addTableCell(componentDependency.getToComponent());
             report.endTableRow();
         });
         report.endTable();

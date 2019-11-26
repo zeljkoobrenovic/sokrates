@@ -14,6 +14,7 @@ public class SimpleOneBarChart {
     private int maxBarWidth = 200;
     private int barHeight = 20;
     private int barStartXOffset = 300;
+    private String fontSize = "medium";
 
     public void calculateBarOffsetFromTexts(List<String> leftTexts) {
 
@@ -95,8 +96,21 @@ public class SimpleOneBarChart {
         return svg;
     }
 
+    public String getFontSize() {
+        return fontSize;
+    }
+
+    public void setFontSize(String fontSize) {
+        this.fontSize = fontSize;
+    }
+
+    public void setSmallerFontSize() {
+        this.fontSize = "smaller";
+    }
+
     private String getRightAlignedTextSvg(String text, int x) {
         return "<text text-anchor='end' " +
+                " font-size='" + this.fontSize + "' " +
                 " x='" + x + "'" +
                 " y='" + (barHeight / 2 + 7) + "'>" +
                 text +
@@ -105,6 +119,7 @@ public class SimpleOneBarChart {
 
     private String getTextSvg(String text, int x) {
         return "<text" +
+                " font-size='" + this.fontSize + "' " +
                 " x='" + x + "'" +
                 " y='" + (barHeight / 2 + 7) + "'>" +
                 text +
