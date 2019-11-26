@@ -4,12 +4,15 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.DuplicationReportUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationDependenciesHelper;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
 import nl.obren.sokrates.sourcecode.metrics.DuplicationMetric;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DuplicationReportGenerator {
     private CodeAnalysisResults codeAnalysisResults;
@@ -94,8 +97,40 @@ public class DuplicationReportGenerator {
             graphvizDependencyRenderer.setType("graph");
             graphvizDependencyRenderer.setArrow("--");
             graphvizDependencyRenderer.setArrowColor("crimson");
-            report.addGraphvizFigure("Duplication between components", graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(),
-                    new DuplicationDependenciesHelper(logicalDecompositionName).extractDependencies(codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates())));
+            List<ComponentDependency> componentDependencies = new DuplicationDependenciesHelper(logicalDecompositionName).extractDependencies(codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates());
+            String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), componentDependencies);
+            report.addGraphvizFigure("Duplication between components", graphvizContent);
+
+            report.addShowMoreBlock("",
+                    "<textarea style='width:100%; height: 20em;'>"
+                            + graphvizContent
+                            + "</textarea>", "graphviz code...");
+
+            report.addLineBreak();
+            report.addLineBreak();
+
+            Collections.sort(componentDependencies, (o1, o2) -> o2.getCount() - o1.getCount());
+
+            report.startTable();
+            report.addTableHeader("From Component<br/>↪ To Component", "Duplicated<br/>Lines", "Duplication<br/>File Pairs");
+            componentDependencies.forEach(componentDependency -> {
+                report.startTableRow();
+                report.addTableCell(
+                        componentDependency.getFromComponent()
+                                + "<br/>&nbsp↪&nbsp"
+                                + componentDependency.getToComponent()
+                );
+                report.addTableCell(componentDependency.getCount() + "", "text-align: center");
+                int pairsCount = componentDependency.getPathsFrom().size();
+                String filePairsText = pairsCount + (pairsCount == 1 ? " file pair" : " file pairs");
+                report.addHtmlContent("<td style='text-align: center'>");
+                report.addShowMoreBlock("", "<textarea style='width:100%; height: 20em;'>"
+                        + componentDependency.getPathsFrom().stream().collect(Collectors.joining("\n\n"))
+                        + "</textarea>", filePairsText);
+                report.addHtmlContent("</td>");
+                report.endTableRow();
+            });
+            report.endTable();
             report.endSection();
         });
 

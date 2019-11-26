@@ -166,7 +166,7 @@ public class LogicalComponentsReportGenerator {
             }
 
             report.addShowMoreBlock("",
-                    "<textarea style='width:90%; height: 20em; font-family: Courier New; color: grey'>"
+                    "<textarea style='width:90%; height: 20em;'>"
                             + componentDependency.getPathsFrom().stream().collect(Collectors.joining("\n")) +
                             "</textarea>",
                     (percentageHtmlFragment != null ? "" + percentageHtmlFragment : dependencyCount + " files (" + locFromDuplications + " LOC)<br/>")

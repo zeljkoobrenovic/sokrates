@@ -44,6 +44,11 @@ public class DuplicationDependenciesHelper {
                     Set<String> duplicatedLines = updatedDuplicatedLines(componentDuplicatedLines, file1, file2, name1, name2);
                     ComponentDependency dependency = getDependency(name1, name2);
                     dependency.setCount(duplicatedLines.size());
+                    String key = file1.getSourceFile().getRelativePath() + "\n" + file2.getSourceFile().getRelativePath();
+                    String alternativeKey = file2.getSourceFile().getRelativePath() + "\n" + file1.getSourceFile().getRelativePath();
+                    if (!dependency.getPathsFrom().contains(key) && !dependency.getPathsFrom().contains(alternativeKey)) {
+                        dependency.getPathsFrom().add(key);
+                    }
                 }
             }
         }
