@@ -100,7 +100,6 @@ public class Blocks {
                 });
             }
         });
-        System.out.println(filePairMap.size() + " duplicate file pairs.");
         resetProgressValues(0);
     }
 

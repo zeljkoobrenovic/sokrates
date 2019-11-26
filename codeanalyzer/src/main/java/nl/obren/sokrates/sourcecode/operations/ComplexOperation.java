@@ -21,12 +21,7 @@ public class ComplexOperation extends StringOperation {
         final String[] result = {input};
 
         this.operations.forEach(op -> {
-            System.out.println(result[0]);
-            System.out.println(" => " + op.getOp());
-            System.out.println("    (" + op.getParams() + "):");
             result[0] = factory.getOperation(op).exec(result[0]);
-            System.out.println(result[0]);
-            System.out.println();
         });
 
         return result[0];

@@ -10,6 +10,7 @@ import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -158,5 +159,10 @@ public class LogicalDecomposition {
 
     public void setDependenciesFinder(DependenciesFinder dependenciesFinder) {
         this.dependenciesFinder = dependenciesFinder;
+    }
+
+    public SourceCodeAspect getComponentByName(String fromComponent) {
+        Optional<SourceCodeAspect> first = this.components.stream().filter(c -> c.getName().equalsIgnoreCase(fromComponent)).findFirst();
+        return first.isPresent() ? first.get() : null;
     }
 }

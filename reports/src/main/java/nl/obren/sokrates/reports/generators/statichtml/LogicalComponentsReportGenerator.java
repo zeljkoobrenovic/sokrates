@@ -1,11 +1,14 @@
 package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
+import nl.obren.sokrates.common.utils.FormattingUtils;
+import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.reports.utils.ScopesRenderer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.LogicalDecompositionAnalysisResults;
+import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.dependencies.DependencyUtils;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
@@ -142,12 +145,26 @@ public class LogicalComponentsReportGenerator {
             report.startTableRow();
             report.addTableCell(componentDependency.getFromComponent());
             report.addHtmlContent("<td>");
+            int locFromDuplications = componentDependency.getLocFrom();
+            SourceCodeAspect fromComponentByName = logicalDecomposition.getLogicalDecomposition().getComponentByName(componentDependency.getFromComponent());
+            String percentageHtmlFragment = null;
+            if (fromComponentByName != null) {
+                SimpleOneBarChart chart = new SimpleOneBarChart();
+                chart.setWidth(240);
+                chart.setMaxBarWidth(120);
+                chart.setBarHeight(10);
+                chart.setBarStartXOffset(2);
+                double percentage = 100.0 * locFromDuplications / fromComponentByName.getLinesOfCode();
+                String percentageText = FormattingUtils.getFormattedPercentage(percentage) + "%";
+                percentageHtmlFragment = chart.getPercentageSvg(percentage, "", locFromDuplications + " LOC (" + percentageText + ")");
+            }
+
             report.addShowMoreBlock("",
                     "<textarea style='width:90%; height: 20em; font-family: Courier New; color: grey'>"
                             + componentDependency.getPathsFrom().stream().collect(Collectors.joining("\n")) +
                             "</textarea>",
                     componentDependency.getCount() + " files"
-                            + " (" + componentDependency.getLocFrom() + " LOC)"
+                            + (percentageHtmlFragment != null ? "<br/>" + percentageHtmlFragment : " (" + locFromDuplications + " LOC)")
             );
             report.addHtmlContent("</td>");
             report.addTableCell("&nbsp;->&nbsp;");
