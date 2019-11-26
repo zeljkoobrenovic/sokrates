@@ -67,6 +67,15 @@ public class DuplicationReportGenerator {
         report.addListItem("<a target='_blank' href='https://martinfowler.com/bliki/BeckDesignRules.html'>Beck Design Rules</a>, MartinFowler.com");
         report.addListItem("<a target='_blank' href='https://en.wikipedia.org/wiki/Don%27t_repeat_yourself'>DRY (Don't Repeat Yourself) Principle</a>, Wikipedia");
         report.addListItem("<a target='_blank' href='https://sourcemaking.com/antipatterns/cut-and-paste-programming'>The Cut-and-Paste Programming Software Development Anti-Pattern</a>, sourcemaking.com");
+        report.addListItem("<a target='_blank' href='https://blog.codinghorror.com/code-smells/'>Code Smells / Duplicated Code</a>, Jeff Atwood, codinghorror.com:");
+        report.startUnorderedList();
+        report.addListItem("<i>\"Duplicated code is the bane of software development. Stamp out duplication whenever possible. You should always be on the lookout for more subtle cases of near-duplication, too. Don't Repeat Yourself!\"</i>");
+        report.endUnorderedList();
+        report.addListItem("<a target='_blank' href='https://martinfowler.com/ieeeSoftware/coupling.pdf'>Reducing Coupling</a>, MartinFlower.com (IEEE Software article):");
+        report.startUnorderedList();
+        report.addListItem("<i>\"There are several ways to describe coupling, but it boils down to this: If changing one module in a program requires changing another module, then coupling exists.  ... Duplication always implies coupling, because changing one piece of duplicate code implies changing the other.\"</i>");
+
+        report.endUnorderedList();
 
         // Duplicated code is the bane of software development. Stamp out duplication whenever possible. You should always be on the lookout for more subtle cases of near-duplication, too. Don't Repeat Yourself!
         report.endUnorderedList();
@@ -99,6 +108,7 @@ public class DuplicationReportGenerator {
             graphvizDependencyRenderer.setArrowColor("crimson");
             List<ComponentDependency> componentDependencies = new DuplicationDependenciesHelper(logicalDecompositionName).extractDependencies(codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates());
             String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), componentDependencies);
+            report.addLevel3Header("Duplication Between Components", "margin-top: 30px");
             report.addGraphvizFigure("Duplication between components", graphvizContent);
 
             report.addShowMoreBlock("",

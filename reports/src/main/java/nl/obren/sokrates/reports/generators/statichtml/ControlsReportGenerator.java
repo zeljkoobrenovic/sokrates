@@ -6,36 +6,51 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ControlStatus;
 
 public class ControlsReportGenerator {
-    private RichTextReport metricsReport;
+    private RichTextReport report;
 
     public RichTextReport generateReport(CodeAnalysisResults codeAnalysisResults, RichTextReport metricsReport) {
-        this.metricsReport = metricsReport;
-        metricsReport.startTable();
-        metricsReport.addTableHeader("", "Control", "Status", "Value");
-        codeAnalysisResults.getControlResults().getControlStatuses().forEach(controlResult -> {
-            addRow(controlResult);
+        this.report = metricsReport;
+
+        report.startSection("Intro", "");
+        report.startUnorderedList();
+        report.addListItem("Controls enable you to set alarms for any of the Sokrates metrics. An alarm is defines with a desired range and tolerance.");
+        report.addListItem("For more insights in the value of trend analysis, Sokrates recommends reading the section \"Explicitly link metrics to goals\" in the article <a href='https://martinfowler.com/articles/useOfMetrics.html#ExplicitlyLinkMetricsToGoals' target='_blank'>An Appropriate Use of Metrics</a>, (MartinFowler.com), e.g.:");
+        report.startUnorderedList();
+        report.addListItem("<i>\"We would like our code to be less complex and easier to change. Therefore we should aim to write short methods (less than 15 lines) with a low cyclomatic complexity (less than 20 is good). We should also aim to have a small handful of parameters (up to four) so that methods remain as focused as possible.\"</i>");
+        report.endUnorderedList();
+        report.endUnorderedList();
+        report.endSection();
+
+        codeAnalysisResults.getControlResults().getGoalsAnalysisResults().forEach(goalsAnalysisResults -> {
+            report.startSection(goalsAnalysisResults.getMetricsWithGoal().getGoal(), goalsAnalysisResults.getMetricsWithGoal().getDescription());
+            report.startTable();
+            report.addTableHeader("", "Control", "Status", "Metric", "Desired Range<br/>[from - to] ±tolerance", "Current Value");
+            goalsAnalysisResults.getControlStatuses().forEach(controlResult -> {
+                addRow(controlResult);
+            });
+            report.endTable();
+            report.endSection();
         });
-        metricsReport.endTable();
 
         return metricsReport;
     }
 
     private void addRow(ControlStatus controlStatus) {
-        metricsReport.startTableRow();
-        metricsReport.startTableCell();
+        report.startTableRow();
+        report.startTableCell();
         String status = controlStatus.getStatus();
-        metricsReport.addHtmlContent(ReportUtils.getSvgCircle(getColor(status)));
-        metricsReport.endTableCell();
-        metricsReport.startTableCell();
-        metricsReport.addHtmlContent("" + controlStatus.getControl().getDescription() + "");
-        metricsReport.endTableCell();
-        metricsReport.startTableCell();
-        metricsReport.addHtmlContent(status);
-        metricsReport.endTableCell();
-        metricsReport.startTableCell();
-        metricsReport.addHtmlContent("" + controlStatus.getMetric().getId() + "=<b>" + controlStatus.getMetric().getValue() + "</b>");
-        metricsReport.endTableCell();
-        metricsReport.endTableRow();
+        report.addHtmlContent(ReportUtils.getSvgCircle(getColor(status)));
+        report.endTableCell();
+        report.startTableCell();
+        report.addHtmlContent("" + controlStatus.getControl().getDescription() + "");
+        report.endTableCell();
+        report.startTableCell();
+        report.addHtmlContent(status);
+        report.endTableCell();
+        report.addTableCell(controlStatus.getMetric().getId(), "text-align: center");
+        report.addTableCell("" + controlStatus.getControl().getDesiredRange().getTextDescription(), "text-align: center");
+        report.addTableCell("<b>" + controlStatus.getMetric().getValue() + "</b>", "text-align: center");
+        report.endTableRow();
     }
 
     private String getColor(String status) {

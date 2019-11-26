@@ -63,7 +63,7 @@ public class Range {
             return true;
         }
         String testValueString = testValue.replace(" ", "").trim();
-        if (NumberUtils.isNumber(testValueString) && NumberUtils.isNumber(tolerance)) {
+        if (NumberUtils.isCreatable(testValueString) && NumberUtils.isCreatable(tolerance)) {
             return value >= Double.parseDouble(testValueString) - Double.parseDouble(tolerance);
         }
 
@@ -76,10 +76,15 @@ public class Range {
             return true;
         }
         String testValueString = testValue.replace(" ", "").trim();
-        if (NumberUtils.isNumber(testValueString) && NumberUtils.isNumber(tolerance)) {
+        if (NumberUtils.isCreatable(testValueString) && NumberUtils.isCreatable(tolerance)) {
             return value <= Double.parseDouble(testValueString) + Double.parseDouble(tolerance);
         }
 
         return false;
+    }
+
+    @JsonIgnore
+    public String getTextDescription() {
+        return "[" + min + " - " + max + "] ±" + tolerance;
     }
 }

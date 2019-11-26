@@ -96,6 +96,10 @@ public class RichTextReport {
         addHtmlContent("<h3>" + text + "</h3>\n");
     }
 
+    public void addLevel3Header(String text, String style) {
+        addHtmlContent("<h3 style=\"" + style + "\">" + text + "</h2>\n");
+    }
+
     public void addLevel4Header(String text) {
         addHtmlContent("<h4>" + text + "</h4>\n");
     }

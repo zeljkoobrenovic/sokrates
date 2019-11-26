@@ -6,7 +6,7 @@ import nl.obren.sokrates.sourcecode.SourceCodeFiles;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.aspects.*;
-import nl.obren.sokrates.sourcecode.metrics.MetricRangeControl;
+import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ public class CodeConfiguration {
     private List<LogicalDecomposition> logicalDecompositions = new ArrayList<>();
     private List<CrossCuttingConcernsGroup> crossCuttingConcerns = new ArrayList<>();
 
-    private List<MetricRangeControl> controls = new ArrayList<>();
+    private List<MetricsWithGoal> goalsAndControls = new ArrayList<>();
     private List<ReferenceAnalysisResult> compareResultsWith = new ArrayList<>();
     private List<String> summaryFindings = new ArrayList<>();
 
@@ -409,12 +409,12 @@ public class CodeConfiguration {
         }
     }
 
-    public List<MetricRangeControl> getControls() {
-        return controls;
+    public List<MetricsWithGoal> getGoalsAndControls() {
+        return goalsAndControls;
     }
 
-    public void setControls(List<MetricRangeControl> controls) {
-        this.controls = controls;
+    public void setGoalsAndControls(List<MetricsWithGoal> goalsAndControls) {
+        this.goalsAndControls = goalsAndControls;
     }
 
     public List<CrossCuttingConcernsGroup> getCrossCuttingConcerns() {

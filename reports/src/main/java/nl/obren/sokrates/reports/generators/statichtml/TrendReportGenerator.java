@@ -27,7 +27,7 @@ public class TrendReportGenerator {
         report.startSection("Intro", "");
         report.startUnorderedList();
         report.addListItem("Trend report shows difference in metric between the latest measurements and previous reference measurements.");
-        report.addListItem("For more insights in the value of trend analysis, Sokrates recommends reading the section \"Favor tracking trends over absolute numbers\" in the article <a href='https://martinfowler.com/articles/useOfMetrics.html' target='_blank'>An Appropriate Use of Metrics</a>, (MartinFowler.com).");
+        report.addListItem("For more insights in the value of trend analysis, Sokrates recommends reading the section \"Favor tracking trends over absolute numbers\" in the article <a href='https://martinfowler.com/articles/useOfMetrics.html#FavorTrackingTrendsOverAbsoluteNumbers' target='_blank'>An Appropriate Use of Metrics</a>, (MartinFowler.com).");
         report.endUnorderedList();
         report.endSection();
 

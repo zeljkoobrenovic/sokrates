@@ -4,13 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ControlsAnalysisResults {
-    private List<ControlStatus> controlStatuses = new ArrayList<>();
+    private List<GoalsAnalysisResults> goalsAnalysisResults = new ArrayList<>();
 
-    public List<ControlStatus> getControlStatuses() {
-        return controlStatuses;
+    public List<GoalsAnalysisResults> getGoalsAnalysisResults() {
+        return goalsAnalysisResults;
     }
 
-    public void setControlStatuses(List<ControlStatus> controlStatuses) {
-        this.controlStatuses = controlStatuses;
+    public void setGoalsAnalysisResults(List<GoalsAnalysisResults> goalsAnalysisResults) {
+        this.goalsAnalysisResults = goalsAnalysisResults;
     }
 }
