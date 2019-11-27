@@ -52,6 +52,19 @@ public class RichTextRenderingUtils {
         return content.toString();
     }
 
+    public static String getStartShowMoreParagraph(String visibleContent, String linkLabel) {
+        StringBuilder content = new StringBuilder();
+        String id = "showMoreBlock_" + showMoreBlockId++;
+        content.append(visibleContent + " " + "<a href=\"javascript:showHide('" + id + "');\")>" + linkLabel + "</a>");
+        content.append("<span id=\"" + id + "\" style=\"display: none;\">");
+
+        return content.toString();
+    }
+
+    public static String getEndShowMoreParagraph() {
+        return "</span>";
+    }
+
     public static String getLinkWikiStyle(String link) {
         link = link.trim();
         String title, url;

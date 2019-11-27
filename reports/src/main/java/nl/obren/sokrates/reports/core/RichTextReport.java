@@ -275,4 +275,12 @@ public class RichTextReport {
     public void addShowMoreBlock(String visibleContent, String hiddenContent, String linkLabel) {
         addHtmlContent(RichTextRenderingUtils.getShowMoreParagraph(visibleContent, hiddenContent, linkLabel));
     }
+
+    public void startShowMoreBlock(String visibleContent, String linkLabel) {
+        addHtmlContent(RichTextRenderingUtils.getStartShowMoreParagraph(visibleContent, linkLabel));
+    }
+
+    public void endShowMoreBlock() {
+        addHtmlContent(RichTextRenderingUtils.getEndShowMoreParagraph());
+    }
 }

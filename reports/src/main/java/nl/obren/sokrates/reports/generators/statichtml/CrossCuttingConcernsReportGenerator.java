@@ -38,11 +38,15 @@ public class CrossCuttingConcernsReportGenerator {
 
         codeAnalysisResults.getCrossCuttingConcernsAnalysisResults().forEach(crossCuttingConcernsAnalysisResults -> {
             if (crossCuttingConcernsAnalysisResults.getCrossCuttingConcerns().size() > 1) {
+                String key = crossCuttingConcernsAnalysisResults.getKey();
+                if (key.equalsIgnoreCase("Unclassified")) {
+                    return;
+                }
                 groupCounter++;
-                report.startSection("" + groupCounter + " " + crossCuttingConcernsAnalysisResults.getKey().toUpperCase() + " Cross-Cutting Concerns", "");
+                report.startSection("" + groupCounter + " " + key.toUpperCase() + " Cross-Cutting Concerns", "");
                 report.startUnorderedList();
                 int count = crossCuttingConcernsAnalysisResults.getCrossCuttingConcerns().size();
-                report.addListItem("The \"" + crossCuttingConcernsAnalysisResults.getKey() + "\" group contains <b>"
+                report.addListItem("The \"" + key + "\" group contains <b>"
                         + count + "</b> concern" + (count > 1 ? "s" : "") + ".");
 
                 report.startUnorderedList();
@@ -51,7 +55,7 @@ public class CrossCuttingConcernsReportGenerator {
 
                 report.endUnorderedList();
                 crossCuttingConcernsAnalysisResults.getCrossCuttingConcerns().forEach(aspectAnalysisResults -> {
-                    renderScopes(crossCuttingConcernsAnalysisResults.getKey().toUpperCase(), report, aspectAnalysisResults);
+                    renderScopes(key.toUpperCase(), report, aspectAnalysisResults);
                 });
                 report.endSection();
             } else {
@@ -61,6 +65,13 @@ public class CrossCuttingConcernsReportGenerator {
     }
 
     private void renderScopes(String key, RichTextReport report, AspectAnalysisResults aspectAnalysisResults) {
+        String name = aspectAnalysisResults.getName();
+        if (name.equalsIgnoreCase("Multiple Classifications")) {
+            return;
+        }
+        if (name.equalsIgnoreCase("Unclassified")) {
+            return;
+        }
         concernCounter++;
         List<NumericMetric> fileCountPerExtension = aspectAnalysisResults.getFileCountPerExtension();
         List<NumericMetric> linesOfCodePerExtension = aspectAnalysisResults.getLinesOfCodePerExtension();
@@ -68,7 +79,6 @@ public class CrossCuttingConcernsReportGenerator {
         ScopesRenderer renderer = new ScopesRenderer();
         renderer.setLinesOfCodeInMain(codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode());
 
-        String name = aspectAnalysisResults.getName();
         String title = key + " / " + name.replace(" - ", " Multiple Classifications / ");
         renderer.setTitle(groupCounter + "." + concernCounter + " " + title);
         renderer.setDescription("");
@@ -104,6 +114,7 @@ public class CrossCuttingConcernsReportGenerator {
             }
         }
 
+        report.startShowMoreBlock("", "details...");
         codeAnalysisResults.getLogicalDecompositionsAnalysisResults()
                 .forEach(logicalDecompositionAnalysisResults -> {
                     report.addHorizontalLine();
@@ -129,6 +140,7 @@ public class CrossCuttingConcernsReportGenerator {
                                 report.endDiv();
                             });
                 });
+        report.endShowMoreBlock();
 
         report.endSection();
     }
