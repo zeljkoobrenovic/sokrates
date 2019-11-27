@@ -53,6 +53,46 @@ public class DuplicationReportGenerator {
     }
 
     public void addDuplicationToReport(RichTextReport report) {
+        addIntro(report);
+
+        if (codeAnalysisResults.getCodeConfiguration().getAnalysis().isSkipDuplication()) {
+            report.addParagraph("Duplication analysis has been skipped.");
+            return;
+        }
+
+        addOverallDuplicationSection(report);
+        addDuplicationPerExtensionSection(report);
+        addDuplicationPerLogicalDecomposition(report);
+        addLongestDuplicatesList(report);
+        addMostFrequentDuplicatesList(report);
+    }
+
+    private void addDuplicationPerLogicalDecomposition(RichTextReport report) {
+        codeAnalysisResults.getDuplicationAnalysisResults().getDuplicationPerComponent().forEach(duplicationPerComponent -> {
+            String logicalDecompositionName = getLogicalDecompositionName(codeAnalysisResults.getDuplicationAnalysisResults().getDuplicationPerComponent().indexOf(duplicationPerComponent));
+            report.startSection("Duplication per Component (" + logicalDecompositionName + ")", "");
+            DuplicationReportUtils.addDuplicationPerAspect(report, duplicationPerComponent);
+            renderDependeciesViaDuplication(report, logicalDecompositionName);
+            report.endSection();
+        });
+    }
+
+    private void addDuplicationPerExtensionSection(RichTextReport report) {
+        report.startSection("Duplication per Extension", "");
+        List<DuplicationMetric> duplicationPerExtension = codeAnalysisResults.getDuplicationAnalysisResults().getDuplicationPerExtension();
+        if (duplicationPerExtension.size() > 0) {
+            DuplicationReportUtils.addDuplicationPerAspect(report, duplicationPerExtension);
+        }
+        report.endSection();
+    }
+
+    private void addOverallDuplicationSection(RichTextReport report) {
+        report.startSection("Duplication Overall", "");
+        DuplicationReportUtils.addOverallDuplication(report, codeAnalysisResults.getDuplicationAnalysisResults().getOverallDuplication());
+        report.endSection();
+    }
+
+    private void addIntro(RichTextReport report) {
         report.startSection("Intro", "");
         report.startUnorderedList();
         report.addListItem("For duplication, we look at places in code where there are six or more lines of code that are exactly the same.");
@@ -77,36 +117,18 @@ public class DuplicationReportGenerator {
 
         report.endUnorderedList();
 
-        // Duplicated code is the bane of software development. Stamp out duplication whenever possible. You should always be on the lookout for more subtle cases of near-duplication, too. Don't Repeat Yourself!
         report.endUnorderedList();
         report.endUnorderedList();
         report.endSection();
+    }
 
-        if (codeAnalysisResults.getCodeConfiguration().getAnalysis().isSkipDuplication()) {
-            report.addParagraph("Duplication analysis has been skipped.");
-            return;
-        }
-
-        report.startSection("Duplication Overall", "");
-        DuplicationReportUtils.addOverallDuplication(report, codeAnalysisResults.getDuplicationAnalysisResults().getOverallDuplication());
-        report.endSection();
-
-        report.startSection("Duplication per Extension", "");
-        List<DuplicationMetric> duplicationPerExtension = codeAnalysisResults.getDuplicationAnalysisResults().getDuplicationPerExtension();
-        if (duplicationPerExtension.size() > 0) {
-            DuplicationReportUtils.addDuplicationPerAspect(report, duplicationPerExtension);
-        }
-        report.endSection();
-
-        codeAnalysisResults.getDuplicationAnalysisResults().getDuplicationPerComponent().forEach(duplicationPerComponent -> {
-            String logicalDecompositionName = getLogicalDecompositionName(codeAnalysisResults.getDuplicationAnalysisResults().getDuplicationPerComponent().indexOf(duplicationPerComponent));
-            report.startSection("Duplication per Component (" + logicalDecompositionName + ")", "");
-            DuplicationReportUtils.addDuplicationPerAspect(report, duplicationPerComponent);
+    private void renderDependeciesViaDuplication(RichTextReport report, String logicalDecompositionName) {
+        List<ComponentDependency> componentDependencies = new DuplicationDependenciesHelper(logicalDecompositionName).extractDependencies(codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates());
+        if (componentDependencies.size() > 0) {
             GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
             graphvizDependencyRenderer.setType("graph");
             graphvizDependencyRenderer.setArrow("--");
             graphvizDependencyRenderer.setArrowColor("crimson");
-            List<ComponentDependency> componentDependencies = new DuplicationDependenciesHelper(logicalDecompositionName).extractDependencies(codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates());
             String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), componentDependencies);
             report.addLevel3Header("Duplication Between Components", "margin-top: 30px");
             report.addGraphvizFigure("Duplication between components", graphvizContent);
@@ -141,12 +163,7 @@ public class DuplicationReportGenerator {
                 report.endTableRow();
             });
             report.endTable();
-            report.endSection();
-        });
-
-        addLongestDuplicatesList(report);
-
-        addMostFrequentDuplicatesList(report);
+        }
     }
 
     private String getLogicalDecompositionName(int index) {

@@ -92,7 +92,10 @@ public class DuplicationAnalyzer extends Analyzer {
 
         Collections.sort(duplicates, (o1, o2) -> -new Integer(o1.getDuplicatedFileBlocks().size()).compareTo(o2.getDuplicatedFileBlocks().size()));
         for (int i = 0; i < Math.min(20, duplicates.size()); i++) {
-            analysisResults.getMostFrequentDuplicates().add(duplicates.get(i));
+            DuplicationInstance duplicate = duplicates.get(i);
+            if (duplicate.getDuplicatedFileBlocks().size() > 2) {
+                analysisResults.getMostFrequentDuplicates().add(duplicate);
+            }
         }
 
         Collections.sort(duplicates, (o1, o2) -> -new Integer(o1.getBlockSize()).compareTo(o2.getBlockSize()));
@@ -131,7 +134,7 @@ public class DuplicationAnalyzer extends Analyzer {
     private void addComponentDuplicationMetrics(LogicalDecomposition logicalDecomposition, AspectDuplication componentDuplication, String displayName) {
         AnalysisUtils.detailedInfo(textSummary, progressFeedback, "     - \"" + displayName + "\": " + componentDuplication.getDuplicatedLinesOfCode() + " duplicated lines vs. " + componentDuplication
                 .getCleanedLinesOfCode
-                () + " total" +
+                        () + " total" +
                 " lines", start);
 
         metricsList.addMetric()

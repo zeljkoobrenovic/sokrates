@@ -22,7 +22,8 @@ public class ControlsReportGenerator {
         report.endSection();
 
         codeAnalysisResults.getControlResults().getGoalsAnalysisResults().forEach(goalsAnalysisResults -> {
-            report.startSection(goalsAnalysisResults.getMetricsWithGoal().getGoal(), goalsAnalysisResults.getMetricsWithGoal().getDescription());
+            report.startSection(goalsAnalysisResults.getMetricsWithGoal().getGoal(),
+                    goalsAnalysisResults.getMetricsWithGoal().getDescription());
             report.startTable();
             report.addTableHeader("", "Control", "Status", "Metric", "Desired Range<br/>[from - to] ±tolerance", "Current Value");
             goalsAnalysisResults.getControlStatuses().forEach(controlResult -> {

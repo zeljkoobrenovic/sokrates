@@ -11,12 +11,14 @@ public class ReportRenderer {
     public void render(RichTextReport richTextReport, ReportRenderingClient reportRenderingClient) {
         StringBuilder content = new StringBuilder();
         content.append("<h1>");
+        content.append("<a href='index.html' style=\"text-decoration:none\">\n");
         if (StringUtils.isNotBlank(richTextReport.getLogoLink())) {
             int size = richTextReport.getDisplayName().contains("<div") ? 24 : 36;
             String valign = richTextReport.getDisplayName().contains("<div") ? "middle" : "bottom";
             content.append("<img style='height: " + size + "px' valign='" + valign + "' src='" + richTextReport.getLogoLink() + "'>\n");
         }
         content.append(richTextReport.getDisplayName());
+        content.append("</a>\n");
         content.append("</h1>\n");
         content.append("<p style=\"font-style: italic; color: gray\">" + richTextReport.getDescription() + "</p>\n");
         reportRenderingClient.append(content.toString());

@@ -24,6 +24,8 @@ public class FindingsReportGenerator {
     public RichTextReport generateReport(CodeAnalysisResults codeAnalysisResults, RichTextReport report) {
         this.report = report;
 
+        addIntro();
+
         File findingsFile = CodeConfigurationUtils.getDefaultSokratesFindingsFile(codeConfigurationFile.getParentFile());
 
         if (findingsFile.exists()) {
@@ -44,6 +46,14 @@ public class FindingsReportGenerator {
         }
 
         return report;
+    }
+
+    private void addIntro() {
+        report.startSection("Intro", "");
+        report.startUnorderedList();
+        report.addListItem("Finds are free-from notes and pieces of code from explorations of the source code.");
+        report.endUnorderedList();
+        report.endSection();
     }
 
     private void addManualFindings(RichTextReport report, String html) {
