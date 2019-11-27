@@ -144,12 +144,12 @@ public class DuplicationReportGenerator {
             Collections.sort(componentDependencies, (o1, o2) -> o2.getCount() - o1.getCount());
 
             report.startTable();
-            report.addTableHeader("From Component<br/>↪ To Component", "Duplicated<br/>Lines", "Duplication<br/>File Pairs");
+            report.addTableHeader("From Component<br/>&nbsp;--> To Component", "Duplicated<br/>Lines", "Duplication<br/>File Pairs");
             componentDependencies.forEach(componentDependency -> {
                 report.startTableRow();
                 report.addTableCell(
                         componentDependency.getFromComponent()
-                                + "<br/>&nbsp↪&nbsp"
+                                + "<br/>&nbsp&nbsp;-->&nbsp"
                                 + componentDependency.getToComponent()
                 );
                 report.addTableCell(componentDependency.getCount() + "", "text-align: center");

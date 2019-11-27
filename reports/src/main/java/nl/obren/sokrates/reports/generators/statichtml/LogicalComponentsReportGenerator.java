@@ -139,13 +139,13 @@ public class LogicalComponentsReportGenerator {
         report.addLineBreak();
         report.addLineBreak();
         report.startTable();
-        report.addTableHeader("From Component<br/>↪ To Component", "From Component<br/>(files with dependencies)");
+        report.addTableHeader("From Component<br/>&nbsp;--> To Component", "From Component<br/>(files with dependencies)");
         Collections.sort(componentDependencies, (o1, o2) -> o2.getCount() - o1.getCount());
         componentDependencies.forEach(componentDependency -> {
             report.startTableRow();
             report.addTableCell(
                     componentDependency.getFromComponent()
-                            + "<br/>&nbsp↪&nbsp"
+                            + "<br/>&nbsp&nbsp;-->&nbsp"
                             + componentDependency.getToComponent()
             );
             report.addHtmlContent("<td>");
