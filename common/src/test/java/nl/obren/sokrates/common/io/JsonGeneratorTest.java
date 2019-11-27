@@ -21,6 +21,6 @@ public class JsonGeneratorTest {
         }
 
         String json = new JsonGenerator().generate(new A());
-        assertEquals(json, "{\"a\":\"a\"}");
+        assertEquals(json, "{\n  \"a\" : \"a\"\n}");
     }
 }
