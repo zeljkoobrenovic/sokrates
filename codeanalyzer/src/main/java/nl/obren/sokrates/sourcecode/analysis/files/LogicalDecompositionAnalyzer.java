@@ -91,18 +91,28 @@ public class LogicalDecompositionAnalyzer extends Analyzer {
         addNumberOfComponentDependenciesMetric(logicalDecompositionName, componentDependencies);
     }
 
+    private String getMetricFriendlyName(String logicalDecompositionName) {
+        return logicalDecompositionName.toUpperCase().replace(" ", "_").replace("-", "_");
+    }
+
     private void addNumberOfComponentDependenciesMetric(String logicalDecompositionName, List<ComponentDependency> componentDependencies) {
+        String name = getMetricFriendlyName(logicalDecompositionName);
+
         metricsList.addMetric()
-                .id(AnalysisUtils.getMetricId("NUMBER_OF_COMPONENT_DEPENDENCIES"))
-                .description("Number of component dependencies")
+                .id(AnalysisUtils.getMetricId("NUMBER_OF_DEPENDENCIES_" + name))
                 .scope(Metric.Scope.LOGICAL_DECOMPOSITION)
-                .scopeQualifier(logicalDecompositionName)
                 .value(componentDependencies.size());
+
+        metricsList.addMetric()
+                .id(AnalysisUtils.getMetricId("NUMBER_OF_PLACES_WITH_CYCLIC_DEPENDENCIES_" + name))
+                .scope(Metric.Scope.LOGICAL_DECOMPOSITION)
+                .value(DependencyUtils.getCyclicDependencyPlacesCount(componentDependencies));
     }
 
     private void addNumberOfAnchorDependenciesMetric(List<Dependency> allDependencies, String logicalDecompositionName) {
+        String name = getMetricFriendlyName(logicalDecompositionName);
         metricsList.addMetric()
-                .id(AnalysisUtils.getMetricId("NUMBER_OF_ANCHOR_DEPENDENCIES"))
+                .id(AnalysisUtils.getMetricId("NUMBER_OF_DEPENDENCY_LINKS_" + name))
                 .description("Number of anchor dependencies")
                 .scope(Metric.Scope.LOGICAL_DECOMPOSITION)
                 .scopeQualifier(logicalDecompositionName)

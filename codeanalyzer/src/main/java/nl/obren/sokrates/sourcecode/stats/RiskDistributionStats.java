@@ -29,18 +29,18 @@ public class RiskDistributionStats {
         this.key = key;
     }
 
+    public RiskDistributionStats(int mediumRiskThreshold, int highRiskThreshold, int veryHighRiskThreshold) {
+        this.mediumRiskThreshold = mediumRiskThreshold;
+        this.highRiskThreshold = highRiskThreshold;
+        this.veryHighRiskThreshold = veryHighRiskThreshold;
+    }
+
     public String getKey() {
         return key;
     }
 
     public void setKey(String key) {
         this.key = key;
-    }
-
-    public RiskDistributionStats(int mediumRiskThreshold, int highRiskThreshold, int veryHighRiskThreshold) {
-        this.mediumRiskThreshold = mediumRiskThreshold;
-        this.highRiskThreshold = highRiskThreshold;
-        this.veryHighRiskThreshold = veryHighRiskThreshold;
     }
 
     public void reset() {
@@ -166,6 +166,27 @@ public class RiskDistributionStats {
         this.lowRiskLabel = lowRiskLabel;
     }
 
+    private int totalValue() {
+        return veryHighRiskValue + highRiskValue + mediumRiskValue + lowRiskValue;
+    }
+
+    public double getVeryHighRiskPercentage() {
+        return totalValue() > 0 ? 100.0 * veryHighRiskValue / totalValue() : 0;
+    }
+
+    public double getHighRiskPercentage() {
+        return totalValue() > 0 ? 100.0 * highRiskValue / totalValue() : 0;
+    }
+
+
+    public double getMediumRiskPercentage() {
+        return totalValue() > 0 ? 100.0 * mediumRiskValue / totalValue() : 0;
+    }
+
+
+    public double getLowRiskPercentage() {
+        return totalValue() > 0 ? 100.0 * lowRiskValue / totalValue() : 0;
+    }
 
 }
 

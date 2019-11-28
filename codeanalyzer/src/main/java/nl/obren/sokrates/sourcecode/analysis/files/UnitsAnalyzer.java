@@ -1,12 +1,12 @@
 package nl.obren.sokrates.sourcecode.analysis.files;
 
 import nl.obren.sokrates.common.utils.ProgressFeedback;
-import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.analysis.AnalysisUtils;
 import nl.obren.sokrates.sourcecode.analysis.Analyzer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.metrics.Metric;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
@@ -20,12 +20,16 @@ import java.util.List;
 
 public class UnitsAnalyzer extends Analyzer {
     private final StringBuffer textSummary;
-    private ProgressFeedback progressFeedback;
     private final CodeConfiguration codeConfiguration;
     private final MetricsList metricsList;
     private final long start;
     private final UnitsAnalysisResults unitsAnalysisResults;
     private final SourceCodeAspect main;
+    private ProgressFeedback progressFeedback;
+
+    private UnitCategoryNames unitSizeCategoryNames = new UnitCategoryNames("1_20", "21_50", "51_100", "101_PLUS");
+
+    private UnitCategoryNames cyclomaticComplexityCategoryNames = new UnitCategoryNames("1_5", "6_10", "10_25", "26_PLUS");
 
     public UnitsAnalyzer(CodeAnalysisResults analysisResults, ProgressFeedback progressFeedback) {
         this.unitsAnalysisResults = analysisResults.getUnitsAnalysisResults();
@@ -52,7 +56,7 @@ public class UnitsAnalyzer extends Analyzer {
 
         RiskDistributionStats unitSizeDistribution = UnitUtils.getUnitSizeDistribution(allUnits);
         unitsAnalysisResults.setUnitSizeRiskDistribution(unitSizeDistribution);
-        printRiskDistributionStats(unitSizeDistribution, "Unit size distribution: ");
+        printRiskDistributionStats(unitSizeDistribution, unitSizeCategoryNames, "Unit size distribution: ");
 
         AnalysisUtils.detailedInfo(textSummary, progressFeedback, "Unit size distribution per component:", start);
         UnitUtils.getUnitSizeDistributionPerComponent(codeConfiguration.getLogicalDecompositions(), allUnits).forEach(group -> {
@@ -60,32 +64,32 @@ public class UnitsAnalyzer extends Analyzer {
             unitsAnalysisResults.getUnitSizeRiskDistributionPerComponent().add(componentUnitSizeDistributionStats);
             group.forEach(componentUnitSizeDistribution -> {
                 componentUnitSizeDistributionStats.add(componentUnitSizeDistribution);
-                printRiskDistributionStats(componentUnitSizeDistribution, "  - " + componentUnitSizeDistribution.getKey() + ": ");
+                printRiskDistributionStats(componentUnitSizeDistribution, unitSizeCategoryNames, "  - " + componentUnitSizeDistribution.getKey() + ": ");
             });
         });
 
         AnalysisUtils.detailedInfo(textSummary, progressFeedback, "Unit size distribution per extension:", start);
         UnitUtils.getUnitSizeDistributionPerExtension(allUnits).forEach(extensionUnitSizeDistribution -> {
             unitsAnalysisResults.getUnitSizeRiskDistributionPerExtension().add(extensionUnitSizeDistribution);
-            printRiskDistributionStats(extensionUnitSizeDistribution, "  - " + extensionUnitSizeDistribution.getKey() + ": ");
+            printRiskDistributionStats(extensionUnitSizeDistribution, unitSizeCategoryNames, "  - " + extensionUnitSizeDistribution.getKey() + ": ");
         });
 
         RiskDistributionStats cyclomaticComplexityDistribution = UnitUtils.getCyclomaticComplexityDistribution(allUnits);
         unitsAnalysisResults.setCyclomaticComplexityRiskDistribution(cyclomaticComplexityDistribution);
-        printRiskDistributionStats(UnitUtils.getCyclomaticComplexityDistribution(allUnits), "Cyclomatic complexity distribution: ");
+        printRiskDistributionStats(UnitUtils.getCyclomaticComplexityDistribution(allUnits), cyclomaticComplexityCategoryNames, "Cyclomatic complexity distribution: ");
         AnalysisUtils.detailedInfo(textSummary, progressFeedback, "Cyclomatic complexity distribution per component:", start);
         UnitUtils.getCyclomaticComplexityDistributionPerComponent(codeConfiguration.getLogicalDecompositions(), allUnits).forEach(group -> {
             List<RiskDistributionStats> componentCyclomaticComplexityDistributionStats = new ArrayList<>();
             unitsAnalysisResults.getCyclomaticComplexityRiskDistributionPerComponent().add(componentCyclomaticComplexityDistributionStats);
             group.forEach(componentCyclomaticComplexityDistribution -> {
                 componentCyclomaticComplexityDistributionStats.add(componentCyclomaticComplexityDistribution);
-                printRiskDistributionStats(componentCyclomaticComplexityDistribution, "  - " + componentCyclomaticComplexityDistribution.getKey() + ": ");
+                printRiskDistributionStats(componentCyclomaticComplexityDistribution, cyclomaticComplexityCategoryNames, "  - " + componentCyclomaticComplexityDistribution.getKey() + ": ");
             });
         });
         AnalysisUtils.detailedInfo(textSummary, progressFeedback, "Cyclomatic complexity distribution per extension:", start);
         UnitUtils.getCyclomaticComplexityDistributionPerExtension(allUnits).forEach(extensionUnitSizeDistribution -> {
             unitsAnalysisResults.getCyclomaticComplexityRiskDistributionPerExtension().add(extensionUnitSizeDistribution);
-            printRiskDistributionStats(extensionUnitSizeDistribution, "  - " + extensionUnitSizeDistribution.getKey() + ": ");
+            printRiskDistributionStats(extensionUnitSizeDistribution, cyclomaticComplexityCategoryNames, "  - " + extensionUnitSizeDistribution.getKey() + ": ");
         });
 
         int sampleSize = 50;
@@ -145,39 +149,86 @@ public class UnitsAnalyzer extends Analyzer {
         });
     }
 
-    private void printRiskDistributionStats(RiskDistributionStats riskDistributionStats, String prefix) {
-        metricsList.addMetric()
-                .id(AnalysisUtils.getMetricId("LOW_RISK_VALUE"))
-                .description("Low risk value - " + riskDistributionStats.getKey())
-                .scope(Metric.Scope.SYSTEM)
-                .scopeQualifier(prefix)
-                .value(riskDistributionStats.getLowRiskValue());
+    private void printRiskDistributionStats(RiskDistributionStats riskDistributionStats, UnitCategoryNames categoryNames, String prefix) {
+        String namePrefix = prefix.toUpperCase().replace(":", "") + "_";
 
-        metricsList.addMetric()
-                .id(AnalysisUtils.getMetricId("MEDIUM_RISK_VALUE"))
-                .description("Medium risk value - " + riskDistributionStats.getKey())
-                .scope(Metric.Scope.SYSTEM)
-                .scopeQualifier(prefix)
-                .value(riskDistributionStats.getMediumRiskValue());
-
-        metricsList.addMetric()
-                .id(AnalysisUtils.getMetricId("HIGH_RISK_VALUE"))
-                .description("High risk value - " + riskDistributionStats.getKey())
-                .scope(Metric.Scope.SYSTEM)
-                .scopeQualifier(prefix)
-                .value(riskDistributionStats.getHighRiskValue());
-
-        metricsList.addMetric()
-                .id(AnalysisUtils.getMetricId("VERY_HIGH_RISK_VALUE"))
-                .description("Very high risk value - " + riskDistributionStats.getKey())
-                .scope(Metric.Scope.SYSTEM)
-                .scopeQualifier(prefix)
-                .value(riskDistributionStats.getVeryHighRiskValue());
+        addLowRIskMetrics(riskDistributionStats, categoryNames, prefix, namePrefix);
+        addMediumRIskMetrics(riskDistributionStats, categoryNames, prefix, namePrefix);
+        addHighRIskMetrics(riskDistributionStats, categoryNames, prefix, namePrefix);
+        addVeryHighRIskMetrics(riskDistributionStats, categoryNames, prefix, namePrefix);
 
         AnalysisUtils.detailedInfo(textSummary, progressFeedback, prefix + riskDistributionStats.getLowRiskValue() + " / "
                 + riskDistributionStats.getMediumRiskValue() + " / "
                 + riskDistributionStats.getHighRiskValue() + " / "
                 + riskDistributionStats.getVeryHighRiskValue(), start);
+    }
+
+    private void addVeryHighRIskMetrics(RiskDistributionStats riskDistributionStats, UnitCategoryNames categoryNames, String prefix, String namePrefix) {
+        metricsList.addMetric()
+                .id(AnalysisUtils.getMetricId(namePrefix + categoryNames.getVeryHighRisk() + "_LOC"))
+                .scopeQualifier(prefix)
+                .value(riskDistributionStats.getVeryHighRiskValue());
+
+        metricsList.addMetric()
+                .id(AnalysisUtils.getMetricId(namePrefix + categoryNames.getVeryHighRisk() + "_PERCENTAGE"))
+                .scopeQualifier(prefix)
+                .value(riskDistributionStats.getVeryHighRiskPercentage());
+
+        metricsList.addMetric()
+                .id(AnalysisUtils.getMetricId(namePrefix + categoryNames.getVeryHighRisk() + "_COUNT"))
+                .scopeQualifier(prefix)
+                .value(riskDistributionStats.getVeryHighRiskCount());
+    }
+
+    private void addHighRIskMetrics(RiskDistributionStats riskDistributionStats, UnitCategoryNames categoryNames, String prefix, String namePrefix) {
+        metricsList.addMetric()
+                .id(AnalysisUtils.getMetricId(namePrefix + categoryNames.getHighRisk() + "_LOC"))
+                .scopeQualifier(prefix)
+                .value(riskDistributionStats.getHighRiskValue());
+
+        metricsList.addMetric()
+                .id(AnalysisUtils.getMetricId(namePrefix + categoryNames.getHighRisk() + "_PERCENTAGE"))
+                .scopeQualifier(prefix)
+                .value(riskDistributionStats.getHighRiskPercentage());
+
+        metricsList.addMetric()
+                .id(AnalysisUtils.getMetricId(namePrefix + categoryNames.getHighRisk() + "_COUNT"))
+                .scopeQualifier(prefix)
+                .value(riskDistributionStats.getHighRiskCount());
+    }
+
+    private void addMediumRIskMetrics(RiskDistributionStats riskDistributionStats, UnitCategoryNames categoryNames, String prefix, String namePrefix) {
+        metricsList.addMetric()
+                .id(AnalysisUtils.getMetricId(namePrefix + categoryNames.getMediumRisk() + "_LOC"))
+                .scopeQualifier(prefix)
+                .value(riskDistributionStats.getMediumRiskValue());
+
+        metricsList.addMetric()
+                .id(AnalysisUtils.getMetricId(namePrefix + categoryNames.getMediumRisk() + "_PERCENTAGE"))
+                .scopeQualifier(prefix)
+                .value(riskDistributionStats.getMediumRiskPercentage());
+
+        metricsList.addMetric()
+                .id(AnalysisUtils.getMetricId(namePrefix + categoryNames.getMediumRisk() + "_COUNT"))
+                .scopeQualifier(prefix)
+                .value(riskDistributionStats.getMediumRiskCount());
+    }
+
+    private void addLowRIskMetrics(RiskDistributionStats riskDistributionStats, UnitCategoryNames categoryNames, String prefix, String namePrefix) {
+        metricsList.addMetric()
+                .id(AnalysisUtils.getMetricId(namePrefix + categoryNames.getLowRisk() + "_LOC"))
+                .scopeQualifier(prefix)
+                .value(riskDistributionStats.getLowRiskValue());
+
+        metricsList.addMetric()
+                .id(AnalysisUtils.getMetricId(namePrefix + categoryNames.getLowRisk() + "_PERCENTAGE"))
+                .scopeQualifier(prefix)
+                .value(riskDistributionStats.getLowRiskPercentage());
+
+        metricsList.addMetric()
+                .id(AnalysisUtils.getMetricId(namePrefix + categoryNames.getLowRisk() + "_COUNT"))
+                .scopeQualifier(prefix)
+                .value(riskDistributionStats.getLowRiskCount());
     }
 
 

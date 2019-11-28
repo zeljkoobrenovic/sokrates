@@ -5,7 +5,7 @@ public class Metric {
     public enum Scope { SYSTEM, LOGICAL_DECOMPOSITION, LOGICAL_COMPONENT, CROSS_CUTTING_CATEGORY, CROSS_CUTTING_CONCERN, EXTENSION }
 
     private String id;
-    private Scope scope;
+    private Scope scope = Scope.SYSTEM;
     private String scopeQualifier;
     private Number value;
     private String description;
