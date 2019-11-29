@@ -20,7 +20,7 @@ public class LogicalDecomposition {
     private int componentsFolderDepth = 1;
     private List<SourceFileFilter> filters = new ArrayList<>();
     private boolean includeRemainingFiles = true;
-    private List<SourceCodeAspect> components = new ArrayList<>();
+    private List<NamedSourceCodeAspect> components = new ArrayList<>();
     private String renderingOrientation = "TB";
     private DependenciesFinder dependenciesFinder = new DependenciesFinder();
 
@@ -55,11 +55,11 @@ public class LogicalDecomposition {
         this.componentsFolderDepth = componentsFolderDepth;
     }
 
-    public List<SourceCodeAspect> getComponents() {
+    public List<NamedSourceCodeAspect> getComponents() {
         return components;
     }
 
-    public void setComponents(List<SourceCodeAspect> components) {
+    public void setComponents(List<NamedSourceCodeAspect> components) {
         this.components = components;
     }
 
@@ -72,7 +72,7 @@ public class LogicalDecomposition {
                     CodeConfiguration.getAbsoluteSrcRoot(codeConfiguration.getSrcRoot(), codeConfigurationFile),
                     filteredSourceFiles, componentsFolderDepth));
         }
-        for (SourceCodeAspect aspect : components) {
+        for (NamedSourceCodeAspect aspect : components) {
             sourceCodeFiles.getSourceFiles(aspect, filteredSourceFiles);
             aspect.getSourceFiles().forEach(sourceFile -> {
                 sourceFile.getLogicalComponents().add(aspect);
@@ -82,9 +82,9 @@ public class LogicalDecomposition {
         CodeConfigurationUtils.populateUnclassifiedAndMultipleAspectsFiles(components,
                 (includeRemainingFiles ? allSourceFiles : filteredSourceFiles),
                 sourceFileAspectPair -> {
-                    SourceCodeAspect sourceCodeAspect = sourceFileAspectPair.getRight();
-                    sourceCodeAspect.setFiltering(name);
-                    sourceFileAspectPair.getLeft().getLogicalComponents().add(sourceCodeAspect);
+                    NamedSourceCodeAspect namedSourceCodeAspect = sourceFileAspectPair.getRight();
+                    namedSourceCodeAspect.setFiltering(name);
+                    sourceFileAspectPair.getLeft().getLogicalComponents().add(namedSourceCodeAspect);
                     return null;
                 });
         CodeConfigurationUtils.removeEmptyAspects(components);
@@ -161,8 +161,8 @@ public class LogicalDecomposition {
         this.dependenciesFinder = dependenciesFinder;
     }
 
-    public SourceCodeAspect getComponentByName(String fromComponent) {
-        Optional<SourceCodeAspect> first = this.components.stream().filter(c -> c.getName().equalsIgnoreCase(fromComponent)).findFirst();
+    public NamedSourceCodeAspect getComponentByName(String fromComponent) {
+        Optional<NamedSourceCodeAspect> first = this.components.stream().filter(c -> c.getName().equalsIgnoreCase(fromComponent)).findFirst();
         return first.isPresent() ? first.get() : null;
     }
 }

@@ -17,7 +17,7 @@ import nl.obren.sokrates.codeexplorer.common.ProgressFeedbackPane;
 import nl.obren.sokrates.sourcecode.SearcheableFilesCache;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.SourceFileWithSearchData;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.search.SearchExpression;
 import nl.obren.sokrates.sourcecode.search.SearchRequest;
 import nl.obren.sokrates.sourcecode.search.SearchResult;
@@ -35,7 +35,7 @@ public class SearchPane extends BorderPane {
     private SearcheableFilesCache searcheableFilesCache;
     private SearchResult searchResult = new SearchResult(new SearchRequest());
     private CodeBrowserPane codeBrowserPane;
-    private SourceCodeAspect aspect;
+    private NamedSourceCodeAspect aspect;
 
     public SearchPane(CodeBrowserPane codeBrowserPane) {
         this.codeBrowserPane = codeBrowserPane;
@@ -95,7 +95,7 @@ public class SearchPane extends BorderPane {
         search();
     }
 
-    public void setAspect(SourceCodeAspect aspect) {
+    public void setAspect(NamedSourceCodeAspect aspect) {
         pathFilterField.setText("");
         String firstPredefinedContentFilter = aspect.getSourceFileFilters().size() > 0 ? aspect.getSourceFileFilters().get(0).getContentPattern() : "";
         contentFilterField.setText(firstPredefinedContentFilter);
@@ -116,7 +116,7 @@ public class SearchPane extends BorderPane {
         return contentFilterField;
     }
 
-    public SearcheableFilesCache createSearcheableFilesCache(SourceCodeAspect aspect) {
+    public SearcheableFilesCache createSearcheableFilesCache(NamedSourceCodeAspect aspect) {
         if (searcheableFilesCache != null) {
             searcheableFilesCache.search().clear();
         }

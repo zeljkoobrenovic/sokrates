@@ -1,8 +1,6 @@
 package nl.obren.sokrates.sourcecode;
 
-import nl.obren.sokrates.common.utils.ProgressFeedback;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
-import org.junit.Ignore;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import org.junit.Test;
 
 import java.io.File;
@@ -35,7 +33,7 @@ public class SourceCodeFilesTest {
         List<SourceFile> testSourceFiles = getTestSourceFiles();
         sourceCodeFiles.setFilesInBroadScope(testSourceFiles);
 
-        SourceCodeAspect aspect = new SourceCodeAspect();
+        NamedSourceCodeAspect aspect = new NamedSourceCodeAspect();
         aspect.getSourceFileFilters().add(new SourceFileFilter(".*(A|B|C)[.]java", ""));
 
         List<SourceFile> sourceFiles = sourceCodeFiles.getSourceFiles(aspect);
@@ -52,7 +50,7 @@ public class SourceCodeFilesTest {
         List<SourceFile> testSourceFiles = getTestSourceFiles();
         sourceCodeFiles.setFilesInBroadScope(testSourceFiles);
 
-        SourceCodeAspect aspect = new SourceCodeAspect();
+        NamedSourceCodeAspect aspect = new NamedSourceCodeAspect();
         aspect.getSourceFileFilters().add(new SourceFileFilter(".*(A|B|C)[.]java", ""));
         aspect.getSourceFileFilters().add(new SourceFileFilter(".*A[.]java", ""));
         aspect.getSourceFileFilters().add(new SourceFileFilter(".*B[.]java", ""));
@@ -71,7 +69,7 @@ public class SourceCodeFilesTest {
         List<SourceFile> testSourceFiles = getTestSourceFiles();
         sourceCodeFiles.setFilesInBroadScope(testSourceFiles);
 
-        SourceCodeAspect aspect = new SourceCodeAspect();
+        NamedSourceCodeAspect aspect = new NamedSourceCodeAspect();
         aspect.getSourceFileFilters().add(new SourceFileFilter(".*(A|B|C)[.]java", ""));
         SourceFileFilter exclusiveFilter = new SourceFileFilter(".*A[.]java", "");
         exclusiveFilter.setInclude(false);

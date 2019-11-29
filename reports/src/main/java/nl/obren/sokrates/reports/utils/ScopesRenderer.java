@@ -5,7 +5,7 @@ import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
@@ -25,7 +25,7 @@ public class ScopesRenderer {
     private int linesCount = 0;
     private int linesOfCodeInMain = 1;
     private int totalNumberOfRegexMatches = 0;
-    private SourceCodeAspect aspect;
+    private NamedSourceCodeAspect aspect;
     private boolean inSection = true;
 
     public List<NumericMetric> getFileCountPerComponent() {
@@ -230,11 +230,11 @@ public class ScopesRenderer {
 
     }
 
-    public SourceCodeAspect getAspect() {
+    public NamedSourceCodeAspect getAspect() {
         return aspect;
     }
 
-    public void setAspect(SourceCodeAspect aspect) {
+    public void setAspect(NamedSourceCodeAspect aspect) {
         this.aspect = aspect;
     }
 }

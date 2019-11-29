@@ -7,7 +7,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.LogicalDecompositionAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.dependencies.*;
 import nl.obren.sokrates.sourcecode.metrics.Metric;
@@ -22,7 +22,6 @@ public class LogicalDecompositionAnalyzer extends Analyzer {
     private final MetricsList metricsList;
     private final long start;
     private final List<LogicalDecompositionAnalysisResults> logicalDecompositionAnalysisResults;
-    private final SourceCodeAspect main;
     private CodeAnalysisResults codeAnalysisResults;
     private ProgressFeedback progressFeedback;
 
@@ -33,7 +32,6 @@ public class LogicalDecompositionAnalyzer extends Analyzer {
         this.metricsList = codeAnalysisResults.getMetricsList();
         this.start = codeAnalysisResults.getAnalysisStartTimeMs();
         this.textSummary = codeAnalysisResults.getTextSummary();
-        this.main = codeConfiguration.getMain();
     }
 
     public void analyze(ProgressFeedback progressFeedback) {

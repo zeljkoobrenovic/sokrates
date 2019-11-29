@@ -2,7 +2,7 @@ package nl.obren.sokrates.sourcecode.lang;
 
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.dependencies.Dependency;
 import nl.obren.sokrates.sourcecode.dependencies.DependencyAnchor;
 import nl.obren.sokrates.sourcecode.dependencies.DependencyUtils;
@@ -156,11 +156,11 @@ public class RubyHeuristicDependenciesExtractorTest {
                 "\n" +
                 "public class B {\n}");
 
-        file1.getLogicalComponents().add(new SourceCodeAspect("A"));
-        file2.getLogicalComponents().add(new SourceCodeAspect("B"));
-        file3.getLogicalComponents().add(new SourceCodeAspect("B"));
-        file4.getLogicalComponents().add(new SourceCodeAspect("C"));
-        file5.getLogicalComponents().add(new SourceCodeAspect("C"));
+        file1.getLogicalComponents().add(new NamedSourceCodeAspect("A"));
+        file2.getLogicalComponents().add(new NamedSourceCodeAspect("B"));
+        file3.getLogicalComponents().add(new NamedSourceCodeAspect("B"));
+        file4.getLogicalComponents().add(new NamedSourceCodeAspect("C"));
+        file5.getLogicalComponents().add(new NamedSourceCodeAspect("C"));
 
         List<Dependency> dependencies = parser.extractDependencies(Arrays.asList(file1, file2, file3, file4, file5), new ProgressFeedback()).getDependencies();
 

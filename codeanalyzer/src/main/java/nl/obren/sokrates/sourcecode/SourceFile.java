@@ -1,7 +1,7 @@
 package nl.obren.sokrates.sourcecode;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
@@ -27,8 +27,8 @@ public class SourceFile {
     private String relativePath;
     private String extension;
     private int linesOfCode;
-    private List<SourceCodeAspect> logicalComponents = new ArrayList<>();
-    private List<SourceCodeAspect> crossCuttingConcerns = new ArrayList<>();
+    private List<NamedSourceCodeAspect> logicalComponents = new ArrayList<>();
+    private List<NamedSourceCodeAspect> crossCuttingConcerns = new ArrayList<>();
     @JsonIgnore
     private String content;
 
@@ -88,25 +88,25 @@ public class SourceFile {
         this.linesOfCode = linesOfCode;
     }
 
-    public List<SourceCodeAspect> getLogicalComponents(String group) {
-        List<SourceCodeAspect> filteredLogicalComponents = new ArrayList<>();
+    public List<NamedSourceCodeAspect> getLogicalComponents(String group) {
+        List<NamedSourceCodeAspect> filteredLogicalComponents = new ArrayList<>();
         logicalComponents.stream().filter(comp -> comp.getFiltering().equals(group)).forEach(filteredLogicalComponents::add);
         return filteredLogicalComponents;
     }
 
-    public List<SourceCodeAspect> getLogicalComponents() {
+    public List<NamedSourceCodeAspect> getLogicalComponents() {
         return logicalComponents;
     }
 
-    public void setLogicalComponents(List<SourceCodeAspect> logicalComponents) {
+    public void setLogicalComponents(List<NamedSourceCodeAspect> logicalComponents) {
         this.logicalComponents = logicalComponents;
     }
 
-    public List<SourceCodeAspect> getCrossCuttingConcerns() {
+    public List<NamedSourceCodeAspect> getCrossCuttingConcerns() {
         return crossCuttingConcerns;
     }
 
-    public void setCrossCuttingConcerns(List<SourceCodeAspect> crossCuttingConcerns) {
+    public void setCrossCuttingConcerns(List<NamedSourceCodeAspect> crossCuttingConcerns) {
         this.crossCuttingConcerns = crossCuttingConcerns;
     }
 

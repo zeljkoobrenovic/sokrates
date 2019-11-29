@@ -1,7 +1,7 @@
 package nl.obren.sokrates.sourcecode.lang;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.dependencies.Dependency;
 import nl.obren.sokrates.sourcecode.dependencies.DependencyAnchor;
 import nl.obren.sokrates.sourcecode.lang.js.NodeJavaScriptHeuristicDependenciesExtractor;
@@ -20,11 +20,11 @@ public class NodeJavaScriptHeuristicDependenciesExtractorTest {
         List<Dependency> dependencies = new ArrayList<>();
         SourceFile sourceFile1 = new SourceFile();
         sourceFile1.setFile(new File("/root/folder/file1.js"));
-        sourceFile1.getLogicalComponents().add(new SourceCodeAspect("A"));
+        sourceFile1.getLogicalComponents().add(new NamedSourceCodeAspect("A"));
         sourceFile1.setContent("var a = require('file2.js')");
         SourceFile sourceFile2 = new SourceFile();
         sourceFile2.setFile(new File("/root/folder/file2.js"));
-        sourceFile2.getLogicalComponents().add(new SourceCodeAspect("B"));
+        sourceFile2.getLogicalComponents().add(new NamedSourceCodeAspect("B"));
 
         DependencyAnchor sourceAnchor = new DependencyAnchor("/root/folder/file1.js");
         sourceAnchor.getSourceFiles().add(sourceFile1);
@@ -44,11 +44,11 @@ public class NodeJavaScriptHeuristicDependenciesExtractorTest {
         List<Dependency> dependencies = new ArrayList<>();
         SourceFile sourceFile1 = new SourceFile();
         sourceFile1.setFile(new File("/root/folder/file1.js"));
-        sourceFile1.getLogicalComponents().add(new SourceCodeAspect("A"));
+        sourceFile1.getLogicalComponents().add(new NamedSourceCodeAspect("A"));
         sourceFile1.setContent("var a = require('file2.js')");
         SourceFile sourceFile2 = new SourceFile();
         sourceFile2.setFile(new File("/root/folder/file3.js"));
-        sourceFile2.getLogicalComponents().add(new SourceCodeAspect("C"));
+        sourceFile2.getLogicalComponents().add(new NamedSourceCodeAspect("C"));
 
         DependencyAnchor sourceAnchor = new DependencyAnchor("/root/folder/file1.js");
         sourceAnchor.getSourceFiles().add(sourceFile1);

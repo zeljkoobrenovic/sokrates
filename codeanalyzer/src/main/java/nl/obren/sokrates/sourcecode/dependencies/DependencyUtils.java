@@ -1,7 +1,7 @@
 package nl.obren.sokrates.sourcecode.dependencies;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -102,8 +102,8 @@ public class DependencyUtils {
         return componentDependencies;
     }
 
-    private static void addComponentDependency(SourceFileDependency sourceFileDependency, List<ComponentDependency> componentDependencies, SourceCodeAspect
-            sourceComponent, SourceCodeAspect targetComponent) {
+    private static void addComponentDependency(SourceFileDependency sourceFileDependency, List<ComponentDependency> componentDependencies, NamedSourceCodeAspect
+            sourceComponent, NamedSourceCodeAspect targetComponent) {
         if (!sourceComponent.getName().equalsIgnoreCase(targetComponent.getName())) {
             ComponentDependency componentDependency = new ComponentDependency(sourceComponent.getName(),
                     targetComponent.getName());

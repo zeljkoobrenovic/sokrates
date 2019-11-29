@@ -4,6 +4,9 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.ReportUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ControlStatus;
+import nl.obren.sokrates.sourcecode.analysis.results.GoalsAnalysisResults;
+
+import java.util.List;
 
 public class ControlsReportGenerator {
     private RichTextReport report;
@@ -13,7 +16,7 @@ public class ControlsReportGenerator {
 
         report.startSection("Intro", "");
         report.startUnorderedList();
-        report.addListItem("Controls enable you to set alarms for any of the Sokrates metrics. An alarm is defines with a desired range and tolerance.");
+        report.addListItem("Controls enable you to set alarms for any of the Sokrates metrics. An alarm is defined with a desired range and tolerance.");
         report.addListItem("For more insights in the value of trend analysis, Sokrates recommends reading the section \"Explicitly link metrics to goals\" in the article <a href='https://martinfowler.com/articles/useOfMetrics.html#ExplicitlyLinkMetricsToGoals' target='_blank'>An Appropriate Use of Metrics</a>, (MartinFowler.com), e.g.:");
         report.startUnorderedList();
         report.addListItem("<i>\"We would like our code to be less complex and easier to change. Therefore we should aim to write short methods (less than 15 lines) with a low cyclomatic complexity (less than 20 is good). We should also aim to have a small handful of parameters (up to four) so that methods remain as focused as possible.\"</i>");
@@ -21,7 +24,13 @@ public class ControlsReportGenerator {
         report.endUnorderedList();
         report.endSection();
 
-        codeAnalysisResults.getControlResults().getGoalsAnalysisResults().forEach(goalsAnalysisResults -> {
+        List<GoalsAnalysisResults> goals = codeAnalysisResults.getControlResults().getGoalsAnalysisResults();
+        if (goals.size() == 0) {
+            report.addParagraph("No goals have been defined.");
+            return report;
+        }
+
+        goals.forEach(goalsAnalysisResults -> {
             report.startSection(goalsAnalysisResults.getMetricsWithGoal().getGoal(),
                     goalsAnalysisResults.getMetricsWithGoal().getDescription());
             report.startTable();

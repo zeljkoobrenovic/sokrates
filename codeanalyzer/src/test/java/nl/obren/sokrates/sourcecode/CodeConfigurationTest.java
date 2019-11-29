@@ -1,6 +1,6 @@
 package nl.obren.sokrates.sourcecode;
 
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import org.junit.Test;
 
@@ -31,7 +31,7 @@ public class CodeConfigurationTest {
         CodeConfiguration codeConfiguration = CodeConfiguration.getDefaultConfiguration();
 
         codeConfiguration.getMain().setSourceFiles(sourceFiles);
-        List<SourceCodeAspect> scopesWithExtensions = codeConfiguration.getScopesWithExtensions();
+        List<NamedSourceCodeAspect> scopesWithExtensions = codeConfiguration.getScopesWithExtensions();
 
         assertEquals(scopesWithExtensions.size(), 8);
         assertEquals(scopesWithExtensions.get(0).getName(), "main");

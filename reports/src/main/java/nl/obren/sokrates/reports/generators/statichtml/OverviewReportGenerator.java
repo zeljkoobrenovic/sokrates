@@ -1,9 +1,9 @@
 package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
+import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.ScopesRenderer;
-import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -28,16 +28,22 @@ public class OverviewReportGenerator {
     public void addScopeAnalysisToReport(RichTextReport report) {
         appendHeader(report);
 
-        List<NumericMetric> code = Arrays.asList(new NumericMetric("main", codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode()),
-                new NumericMetric("test", codeAnalysisResults.getTestAspectAnalysisResults().getLinesOfCode()),
-                new NumericMetric("generated", codeAnalysisResults.getGeneratedAspectAnalysisResults().getLinesOfCode()),
-                new NumericMetric("build", codeAnalysisResults.getBuildAndDeployAspectAnalysisResults().getLinesOfCode()),
-                new NumericMetric("other", codeAnalysisResults.getOtherAspectAnalysisResults().getLinesOfCode()));
-        List<NumericMetric> counts = Arrays.asList(new NumericMetric("main", codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode()),
-                new NumericMetric("test", codeAnalysisResults.getTestAspectAnalysisResults().getFilesCount()),
-                new NumericMetric("generated", codeAnalysisResults.getGeneratedAspectAnalysisResults().getFilesCount()),
-                new NumericMetric("build", codeAnalysisResults.getBuildAndDeployAspectAnalysisResults().getFilesCount()),
-                new NumericMetric("other", codeAnalysisResults.getOtherAspectAnalysisResults().getFilesCount()));
+        String mainName = codeAnalysisResults.getCodeConfiguration().getMain().getName();
+        String testName = codeAnalysisResults.getCodeConfiguration().getTest().getName();
+        String generatedName = codeAnalysisResults.getCodeConfiguration().getGenerated().getName();
+        String buildName = codeAnalysisResults.getCodeConfiguration().getBuildAndDeployment().getName();
+        String otherName = codeAnalysisResults.getCodeConfiguration().getOther().getName();
+
+        List<NumericMetric> code = Arrays.asList(new NumericMetric(mainName, codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode()),
+                new NumericMetric(testName, codeAnalysisResults.getTestAspectAnalysisResults().getLinesOfCode()),
+                new NumericMetric(generatedName, codeAnalysisResults.getGeneratedAspectAnalysisResults().getLinesOfCode()),
+                new NumericMetric(buildName, codeAnalysisResults.getBuildAndDeployAspectAnalysisResults().getLinesOfCode()),
+                new NumericMetric(otherName, codeAnalysisResults.getOtherAspectAnalysisResults().getLinesOfCode()));
+        List<NumericMetric> counts = Arrays.asList(new NumericMetric(mainName, codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode()),
+                new NumericMetric(testName, codeAnalysisResults.getTestAspectAnalysisResults().getFilesCount()),
+                new NumericMetric(generatedName, codeAnalysisResults.getGeneratedAspectAnalysisResults().getFilesCount()),
+                new NumericMetric(buildName, codeAnalysisResults.getBuildAndDeployAspectAnalysisResults().getFilesCount()),
+                new NumericMetric(otherName, codeAnalysisResults.getOtherAspectAnalysisResults().getFilesCount()));
 
         report.startSection("Overview of Analyzed Files", "Basic stats on analyzed files");
         report.startSubSection("Intro", "For analysis purposes we separate files in scope into several categories: <b>main</b>, <b>test</b>, <b>generated</b>, <b>deployment and build</b>, and <b>other</b>.");
@@ -149,17 +155,35 @@ public class OverviewReportGenerator {
             });
             report.endUnorderedList();
         }
-        report.addListItem("The source code folder contains " + RichTextRenderingUtils.renderNumberStrong(totalNumberOfFilesInScope) + " files.");
+        int totalNumberOfIncludedFiles = totalNumberOfFilesInScope - numberOfExcludedFiles;
+        String scopeSvg = getScopeSvg(totalNumberOfFilesInScope, numberOfExcludedFiles, totalNumberOfIncludedFiles);
+        report.endUnorderedList();
+
         report.startUnorderedList();
-        report.addListItem(RichTextRenderingUtils.renderNumberStrong(totalNumberOfFilesInScope - numberOfExcludedFiles) + " files are included in analyses.");
+        report.addListItem("The source code folder contains " + RichTextRenderingUtils.renderNumberStrong(totalNumberOfFilesInScope) + " files:");
+        report.startUnorderedList();
+        report.addListItem(scopeSvg);
+        report.addListItem(RichTextRenderingUtils.renderNumberStrong(totalNumberOfIncludedFiles) + " files are included in analyses. ");
         report.addHtmlContent("<li>");
-        report.addShowMoreBlock(RichTextRenderingUtils.renderNumberStrong(numberOfExcludedFiles) + " files are excluded from analyses.", getExcludedExtensionsOverview
-                (codeAnalysisResults
-                        .getExcludedExtensions()), "(...)");
+        report.startShowMoreBlock(RichTextRenderingUtils.renderNumberStrong(numberOfExcludedFiles) + " files are excluded from analyses.", "(...)");
+        report.addHtmlContent(getExcludedExtensionsOverview(codeAnalysisResults.getExcludedExtensions()));
+        report.endShowMoreBlock();
         report.addHtmlContent("</li>");
         report.endUnorderedList();
-        report.endUnorderedList();
+
+
         report.endSection();
+    }
+
+    private String getScopeSvg(int totalNumberOfFilesInScope, int numberOfExcludedFiles, int totalNumberOfIncludedFiles) {
+        SimpleOneBarChart chart = new SimpleOneBarChart();
+        chart.setWidth(400);
+        chart.setMaxBarWidth(240);
+        chart.setBarHeight(10);
+        chart.setBarStartXOffset(1);
+
+        double percentageIncluded = totalNumberOfFilesInScope > 0 ? 100.0 * totalNumberOfIncludedFiles / totalNumberOfFilesInScope : 0;
+        return chart.getPercentageSvg(percentageIncluded, "" , "" );
     }
 
     private String describeExclusion(SourceFileFilter exclusion) {

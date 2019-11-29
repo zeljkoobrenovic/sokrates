@@ -13,10 +13,10 @@ import nl.obren.sokrates.common.renderingutils.VisualizationItem;
 import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
 import nl.obren.sokrates.codeexplorer.common.NumericBarCellFactory;
 import nl.obren.sokrates.common.utils.SystemUtils;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.aspects.CrossCuttingConcern;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
 import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspectUtils;
 import nl.obren.sokrates.sourcecode.catalogs.StandardSecurityAspects;
 import org.apache.commons.lang3.tuple.Pair;
@@ -25,14 +25,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AspectsTablePane extends BorderPane {
-    private TableView<SourceCodeAspect> table = new TableView<>();
+    private TableView<NamedSourceCodeAspect> table = new TableView<>();
     private CodeBrowserPane codeBrowserPane;
     private int maxFileLinesOfCode;
     private int maxFileCount;
     private String title;
     private boolean sortEnabled = true;
     private ComboBox selector;
-    private SourceCodeAspect main;
+    private NamedSourceCodeAspect main;
 
     public AspectsTablePane(String title, boolean sortEnabled) {
         this.title = title;
@@ -43,7 +43,7 @@ public class AspectsTablePane extends BorderPane {
         setCenter(table);
     }
 
-    public void setAspectSelections(List<Pair<String, List<SourceCodeAspect>>> aspectSelections) {
+    public void setAspectSelections(List<Pair<String, List<NamedSourceCodeAspect>>> aspectSelections) {
         if (aspectSelections.size() > 0) {
             selector = new ComboBox<>();
             List<String> keys = new ArrayList<>();
@@ -152,16 +152,16 @@ public class AspectsTablePane extends BorderPane {
         SystemUtils.createAndOpenTempFile(new VisualizationTemplate().renderTreeMap(items));
     }
 
-    public TableView<SourceCodeAspect> getTable() {
+    public TableView<NamedSourceCodeAspect> getTable() {
         return table;
     }
 
-    public void refresh(List<? extends SourceCodeAspect> aspects, SourceCodeAspect main) {
+    public void refresh(List<? extends NamedSourceCodeAspect> aspects, NamedSourceCodeAspect main) {
         calculateMax(aspects);
         setItems(aspects, main);
     }
 
-    private void setItems(List<? extends SourceCodeAspect> aspects, SourceCodeAspect main) {
+    private void setItems(List<? extends NamedSourceCodeAspect> aspects, NamedSourceCodeAspect main) {
         this.main = main;
         table.layout();
         table.setItems(FXCollections.observableArrayList(aspects));
@@ -179,7 +179,7 @@ public class AspectsTablePane extends BorderPane {
     }
 
     private void configureTable() {
-        TableColumn<SourceCodeAspect, String> nameColumn = getNameTableColumn();
+        TableColumn<NamedSourceCodeAspect, String> nameColumn = getNameTableColumn();
         TableColumn locColumn = getLocTableColumn();
         TableColumn filesColumn = getFileCountTableColumn();
 
@@ -194,8 +194,8 @@ public class AspectsTablePane extends BorderPane {
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
 
-    private TableColumn<SourceCodeAspect, String> getNameTableColumn() {
-        TableColumn<SourceCodeAspect, String> nameColumn = new TableColumn<>(title);
+    private TableColumn<NamedSourceCodeAspect, String> getNameTableColumn() {
+        TableColumn<NamedSourceCodeAspect, String> nameColumn = new TableColumn<>(title);
         nameColumn.setSortable(sortEnabled);
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
         nameColumn.setPrefWidth(400);
@@ -203,7 +203,7 @@ public class AspectsTablePane extends BorderPane {
     }
 
     private TableColumn getFileCountTableColumn() {
-        TableColumn<SourceCodeAspect, Number> column = new TableColumn<>("# files");
+        TableColumn<NamedSourceCodeAspect, Number> column = new TableColumn<>("# files");
         column.setMinWidth(150);
         column.setPrefWidth(150);
         column.setMaxWidth(200);
@@ -214,7 +214,7 @@ public class AspectsTablePane extends BorderPane {
     }
 
     private TableColumn getLocTableColumn() {
-        TableColumn<SourceCodeAspect, Number> column = new TableColumn<>("# lines");
+        TableColumn<NamedSourceCodeAspect, Number> column = new TableColumn<>("# lines");
         column.setMinWidth(150);
         column.setPrefWidth(150);
         column.setMaxWidth(200);
@@ -232,7 +232,7 @@ public class AspectsTablePane extends BorderPane {
         return maxFileLinesOfCode;
     }
 
-    private void calculateMax(List<? extends SourceCodeAspect> aspects) {
+    private void calculateMax(List<? extends NamedSourceCodeAspect> aspects) {
         maxFileLinesOfCode = SourceCodeAspectUtils.getMaxLinesOfCode(aspects);
         maxFileCount = SourceCodeAspectUtils.getMaxFileCount(aspects);
 

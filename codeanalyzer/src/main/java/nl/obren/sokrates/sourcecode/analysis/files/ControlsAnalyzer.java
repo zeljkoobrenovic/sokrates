@@ -6,28 +6,20 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ControlStatus;
 import nl.obren.sokrates.sourcecode.analysis.results.ControlsAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.GoalsAnalysisResults;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.metrics.Metric;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 
 public class ControlsAnalyzer extends Analyzer {
-    private final StringBuffer textSummary;
     private final CodeConfiguration codeConfiguration;
     private final MetricsList metricsList;
-    private final long start;
     private final ControlsAnalysisResults controlsAnalysisResults;
-    private final SourceCodeAspect main;
-    private ProgressFeedback progressFeedback;
 
     public ControlsAnalyzer(CodeAnalysisResults analysisResults, ProgressFeedback progressFeedback) {
         this.controlsAnalysisResults = analysisResults.getControlResults();
         this.codeConfiguration = analysisResults.getCodeConfiguration();
         this.metricsList = analysisResults.getMetricsList();
-        this.start = analysisResults.getAnalysisStartTimeMs();
-        this.textSummary = analysisResults.getTextSummary();
-        this.progressFeedback = progressFeedback;
-        this.main = codeConfiguration.getMain();
     }
 
     public void analyze() {

@@ -2,7 +2,7 @@ package nl.obren.sokrates.sourcecode.lang;
 
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
 import nl.obren.sokrates.sourcecode.dependencies.Dependency;
 import nl.obren.sokrates.sourcecode.dependencies.DependencyAnchor;
@@ -146,10 +146,10 @@ public class PhpAnalyzerTest {
                 "//...";
 
         SourceFile sourceFile1 = new SourceFile(new File("a.php"), code1);
-        sourceFile1.getLogicalComponents().add(new SourceCodeAspect("CompA"));
+        sourceFile1.getLogicalComponents().add(new NamedSourceCodeAspect("CompA"));
 
         SourceFile sourceFile2 = new SourceFile(new File("b.h"), code2);
-        sourceFile2.getLogicalComponents().add(new SourceCodeAspect("CompB"));
+        sourceFile2.getLogicalComponents().add(new NamedSourceCodeAspect("CompB"));
 
         List<DependencyAnchor> dependencyAnchors = new PhpHeuristicDependenciesExtractor().extractDependencyAnchors(sourceFile2);
         List<Dependency> dependencies = analyzer.extractDependencies(Arrays.asList(sourceFile1, sourceFile2), new ProgressFeedback()).getDependencies();

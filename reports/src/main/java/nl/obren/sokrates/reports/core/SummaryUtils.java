@@ -4,7 +4,6 @@ import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesAnalysisResults;
-import nl.obren.sokrates.sourcecode.metrics.Metric;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 
 import java.util.List;
@@ -25,7 +24,7 @@ public class SummaryUtils {
         }
     }
 
-    private static void summarizeListOfLocAspects(StringBuilder summary, List<NumericMetric> linesOfCodePerAspect) {
+    private static void summarizeListOfLocAspects(StringBuilder summary, int totalLoc, List<NumericMetric> linesOfCodePerAspect) {
         if (linesOfCodePerAspect.size() > 0) {
             summary.append(" = ");
         }
@@ -36,10 +35,12 @@ public class SummaryUtils {
             } else {
                 first[0] = false;
             }
-            summary.append(
-                    ext.getName().toUpperCase().replace("*.", "") + "</b> ("
-                            + RichTextRenderingUtils.renderNumber(ext.getValue().intValue())
-                            + " LOC)");
+            String language = ext.getName().toUpperCase().replace("*.", "");
+            int loc = ext.getValue().intValue();
+            double percentage = totalLoc > 0 ? 100.0 * loc / totalLoc : 0;
+            String formattedPercentage = FormattingUtils.getFormattedPercentage(percentage) + "%";
+
+            summary.append("<b>" + language + "</b> <span style='color:grey'>(" + formattedPercentage + ")</span>");
         });
     }
 
@@ -133,16 +134,18 @@ public class SummaryUtils {
 
     private void summarizeTestCode(CodeAnalysisResults analysisResults, StringBuilder summary) {
         summary.append("<p>Test Code: ");
-        summary.append(RichTextRenderingUtils.renderNumberStrong(analysisResults.getTestAspectAnalysisResults().getLinesOfCode()) + " LOC");
+        int totalLoc = analysisResults.getTestAspectAnalysisResults().getLinesOfCode();
+        summary.append(RichTextRenderingUtils.renderNumberStrong(totalLoc) + " LOC");
         List<NumericMetric> linesOfCodePerExtension = analysisResults.getTestAspectAnalysisResults().getLinesOfCodePerExtension();
-        summarizeListOfLocAspects(summary, linesOfCodePerExtension);
+        summarizeListOfLocAspects(summary, totalLoc, linesOfCodePerExtension);
         summary.append("</p>");
     }
 
     private void summarizeMainCode(CodeAnalysisResults analysisResults, StringBuilder summary) {
         summary.append("<p>Main Code: ");
-        summary.append(RichTextRenderingUtils.renderNumberStrong(analysisResults.getMainAspectAnalysisResults().getLinesOfCode()) + " LOC");
-        summarizeListOfLocAspects(summary, analysisResults.getMainAspectAnalysisResults().getLinesOfCodePerExtension());
+        int totalLoc = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
+        summary.append(RichTextRenderingUtils.renderNumberStrong(totalLoc) + " LOC");
+        summarizeListOfLocAspects(summary, totalLoc, analysisResults.getMainAspectAnalysisResults().getLinesOfCodePerExtension());
 
         summary.append("</p>");
     }

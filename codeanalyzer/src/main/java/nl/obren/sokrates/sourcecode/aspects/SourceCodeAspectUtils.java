@@ -1,45 +1,46 @@
 package nl.obren.sokrates.sourcecode.aspects;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class SourceCodeAspectUtils {
     private static final Log LOG = LogFactory.getLog(SourceCodeAspectUtils.class);
 
-    public static int getMaxLinesOfCode(List<? extends SourceCodeAspect> aspects) {
+    public static int getMaxLinesOfCode(List<? extends NamedSourceCodeAspect> aspects) {
         int maxFileLinesOfCode = 0;
 
-        for (SourceCodeAspect aspect : aspects) {
+        for (NamedSourceCodeAspect aspect : aspects) {
             maxFileLinesOfCode = Math.max(maxFileLinesOfCode, aspect.getLinesOfCode());
         }
 
         return maxFileLinesOfCode;
     }
 
-    public static int getMaxFileCount(List<? extends SourceCodeAspect> aspects) {
+    public static int getMaxFileCount(List<? extends NamedSourceCodeAspect> aspects) {
         int maxFileCount = 0;
 
-        for (SourceCodeAspect aspect : aspects) {
+        for (NamedSourceCodeAspect aspect : aspects) {
             maxFileCount = Math.max(maxFileCount, aspect.getSourceFiles().size());
         }
 
         return maxFileCount;
     }
 
-    public static List<SourceCodeAspect> getSourceCodeAspectBasedOnFolderDepth(String srcRoot, List<SourceFile>
+    public static List<NamedSourceCodeAspect> getSourceCodeAspectBasedOnFolderDepth(String srcRoot, List<SourceFile>
             sourceFiles, int depth) {
         List<String> paths = getUniquePaths(sourceFiles, depth);
 
         String greatestCommonPrefix = greatestCommonPrefix(paths);
 
-        List<SourceCodeAspect> aspects = new ArrayList<>();
+        List<NamedSourceCodeAspect> aspects = new ArrayList<>();
 
         paths.forEach(path -> {
             String aspectName = path;
@@ -47,7 +48,7 @@ public class SourceCodeAspectUtils {
                 aspectName = path.substring(greatestCommonPrefix.length());
             }
             aspectName = StringUtils.defaultIfBlank(aspectName, "ROOT");
-            SourceCodeAspect aspect = new SourceCodeAspect(aspectName);
+            NamedSourceCodeAspect aspect = new NamedSourceCodeAspect(aspectName);
             String pathPattern = srcRoot + File.separator + path.toString() + File.separator + ".*";
             pathPattern = pathPattern.replace(File.separator + File.separator, File.separator);
             aspect.getSourceFileFilters().add(new SourceFileFilter(pathPattern, ""));
@@ -64,7 +65,7 @@ public class SourceCodeAspectUtils {
         return aspects;
     }
 
-    private static void addExclusiveFilterIfNeeded(String path, String otherPath, String srcRoot, SourceCodeAspect
+    private static void addExclusiveFilterIfNeeded(String path, String otherPath, String srcRoot, NamedSourceCodeAspect
             aspect) {
         if (otherPath.startsWith(path)) {
             String otherPathPattern = srcRoot + File.separator + otherPath.toString() + File.separator + ".*";
@@ -132,5 +133,26 @@ public class SourceCodeAspectUtils {
             commonPrefix = commonPrefix.substring(0, lastIndexOfSeparator + 1);
         }
         return commonPrefix;
+    }
+
+    @JsonIgnore
+    public static List<NamedSourceCodeAspect> getAspectsPerExtensions(NamedSourceCodeAspect aspect) {
+        Map<String, NamedSourceCodeAspect> map = new HashMap<>();
+
+        aspect.getSourceFiles().forEach(sourceFile -> {
+            String extension = FilenameUtils.getExtension(sourceFile.getFile().getPath()).toLowerCase();
+            NamedSourceCodeAspect extensionAspect = map.get(extension);
+            if (extensionAspect == null) {
+                extensionAspect = new NamedSourceCodeAspect("  *." + extension);
+                map.put(extension, extensionAspect);
+            }
+            extensionAspect.getSourceFiles().add(sourceFile);
+        });
+
+        List<NamedSourceCodeAspect> list = new ArrayList<>();
+        map.values().forEach(list::add);
+        Collections.sort(list, (o1, o2) -> o1.getLinesOfCode() > o2.getLinesOfCode() ? -1 : (o1.getLinesOfCode() < o2.getLinesOfCode() ? 1 : 0));
+
+        return list;
     }
 }

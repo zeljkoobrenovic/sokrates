@@ -1,6 +1,6 @@
 package nl.obren.sokrates.sourcecode.analysis.results;
 
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 
 import java.util.ArrayList;
@@ -13,7 +13,7 @@ public class AspectAnalysisResults {
     private int numberOfRegexLineMatches;
     private List<NumericMetric> fileCountPerExtension = new ArrayList<>();
     private List<NumericMetric> linesOfCodePerExtension = new ArrayList<>();
-    private SourceCodeAspect aspect;
+    private NamedSourceCodeAspect aspect;
 
 
     public AspectAnalysisResults() {
@@ -64,11 +64,11 @@ public class AspectAnalysisResults {
     }
 
 
-    public void setAspect(SourceCodeAspect aspect) {
+    public void setAspect(NamedSourceCodeAspect aspect) {
         this.aspect = aspect;
     }
 
-    public SourceCodeAspect getAspect() {
+    public NamedSourceCodeAspect getAspect() {
         return aspect;
     }
 

@@ -22,7 +22,8 @@ import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspectUtils;
 import nl.obren.sokrates.sourcecode.dependencies.*;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
@@ -87,14 +88,14 @@ public class DependenciesPane extends BorderPane {
         }
     }
 
-    public static void openInWindow(SourceCodeAspect sourceCodeAspect, LogicalDecomposition group, List<String> componentNames) {
+    public static void openInWindow(NamedSourceCodeAspect namedSourceCodeAspect, LogicalDecomposition group, List<String> componentNames) {
         if (stage != null) {
             stage.close();
         }
         stage = new Stage();
         stage.setTitle("Logical Component Dependencies");
         instance = new DependenciesPane(group, true);
-        instance.loadDependencies(sourceCodeAspect, componentNames);
+        instance.loadDependencies(namedSourceCodeAspect, componentNames);
 
         Scene value = new Scene(instance, 800, 600);
         stage.setScene(value);
@@ -188,8 +189,8 @@ public class DependenciesPane extends BorderPane {
         return maxCount;
     }
 
-    private void loadDependencies(SourceCodeAspect sourceCodeAspect, List<String> componentNames) {
-        if (sourceCodeAspect != null) {
+    private void loadDependencies(NamedSourceCodeAspect namedSourceCodeAspect, List<String> componentNames) {
+        if (namedSourceCodeAspect != null) {
             Executors.newCachedThreadPool().execute(() -> {
                 ObservableList<Dependency> items = FXCollections.observableArrayList();
                 List<Dependency> allDependencies = new ArrayList<>();
@@ -198,7 +199,7 @@ public class DependenciesPane extends BorderPane {
                     ProgressFeedback progressFeedback = getProgressFeedback(componentNames, items);
                     progressFeedback.start();
 
-                    sourceCodeAspect.getAspectsPerExtensions().forEach(langAspect -> {
+                    SourceCodeAspectUtils.getAspectsPerExtensions(namedSourceCodeAspect).forEach(langAspect -> {
                         if (langAspect.getSourceFiles().size() > 0) {
                             SourceFile sourceFileSample = langAspect.getSourceFiles().get(0);
                             LanguageAnalyzer languageAnalyzer = LanguageAnalyzerFactory.getInstance().getLanguageAnalyzer(sourceFileSample);
@@ -213,7 +214,7 @@ public class DependenciesPane extends BorderPane {
                 }
 
                 DependenciesFinderExtractor finder = new DependenciesFinderExtractor(logicalDecomposition);
-                List<ComponentDependency> finderDependencies = finder.findComponentDependencies(sourceCodeAspect);
+                List<ComponentDependency> finderDependencies = finder.findComponentDependencies(namedSourceCodeAspect);
 
                 Platform.runLater(() -> {
                     showDependencyDiagram(allDependencies, finderDependencies, logicalDecomposition.getName(), componentNames);

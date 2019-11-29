@@ -1,6 +1,6 @@
 package nl.obren.sokrates.sourcecode.duplication;
 
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 
 import java.util.*;
@@ -20,7 +20,7 @@ public class DuplicationDependenciesHelper {
 
         duplicationInstances.forEach(instance -> {
             instance.getDuplicatedFileBlocks().forEach(file1 -> {
-                List<SourceCodeAspect> logicalComponents1 = file1.getSourceFile().getLogicalComponents(group);
+                List<NamedSourceCodeAspect> logicalComponents1 = file1.getSourceFile().getLogicalComponents(group);
                 if (logicalComponents1.size() > 0) {
                     instance.getDuplicatedFileBlocks().forEach(file2 -> {
                         processDuplicationInstance(file1, logicalComponents1, file2);
@@ -34,9 +34,9 @@ public class DuplicationDependenciesHelper {
         return componentDependencies;
     }
 
-    private void processDuplicationInstance(DuplicatedFileBlock file1, List<SourceCodeAspect> logicalComponents1, DuplicatedFileBlock file2) {
+    private void processDuplicationInstance(DuplicatedFileBlock file1, List<NamedSourceCodeAspect> logicalComponents1, DuplicatedFileBlock file2) {
         if (file1 != file2) {
-            List<SourceCodeAspect> logicalComponents2 = file2.getSourceFile().getLogicalComponents(group);
+            List<NamedSourceCodeAspect> logicalComponents2 = file2.getSourceFile().getLogicalComponents(group);
             if (logicalComponents2.size() > 0) {
                 String name1 = logicalComponents1.get(0).getName();
                 String name2 = logicalComponents2.get(0).getName();

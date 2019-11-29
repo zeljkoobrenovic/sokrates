@@ -14,17 +14,17 @@ import java.util.List;
 
 public class BasicSourceCodeReportGenerator {
     private static final Log LOG = LogFactory.getLog(BasicSourceCodeReportGenerator.class);
-    private RichTextReport overviewScopeReport = new RichTextReport("Source Code Overview", "");
-    private RichTextReport logicalComponentsReport = new RichTextReport("Components", "");
-    private RichTextReport crossCuttingConcernsReport = new RichTextReport("Cross-Cutting Concerns", "");
-    private RichTextReport duplicationReport = new RichTextReport("Duplication", "");
-    private RichTextReport fileSizeReport = new RichTextReport("File Size", "");
-    private RichTextReport unitSizeReport = new RichTextReport("Unit Size", "");
-    private RichTextReport cyclomaticComplexityReport = new RichTextReport("Cyclomatic Complexity", "");
-    private RichTextReport findingsReport = new RichTextReport("Findings", "");
-    private RichTextReport metricsReport = new RichTextReport("Metrics", "");
-    private RichTextReport comparisonReport = new RichTextReport("Trend", "");
-    private RichTextReport controlsReport = new RichTextReport("Controls", "");
+    private RichTextReport overviewScopeReport = new RichTextReport("Source Code Overview", "SourceCodeOverview.html");
+    private RichTextReport logicalComponentsReport = new RichTextReport("Components & Dependencies", "Components.html");
+    private RichTextReport crossCuttingConcernsReport = new RichTextReport("Cross-Cutting Concerns", "CrossCuttingConcerns.html");
+    private RichTextReport duplicationReport = new RichTextReport("Duplication", "Duplication.html");
+    private RichTextReport fileSizeReport = new RichTextReport("File Size", "FileSize.html");
+    private RichTextReport unitSizeReport = new RichTextReport("Unit Size", "UnitSize.html");
+    private RichTextReport cyclomaticComplexityReport = new RichTextReport("Cyclomatic Complexity", "CyclomaticComplexity.html");
+    private RichTextReport findingsReport = new RichTextReport("Notes & Findings", "Notes.html");
+    private RichTextReport metricsReport = new RichTextReport("Metrics", "Metrics.html");
+    private RichTextReport comparisonReport = new RichTextReport("Trend", "Trend.html");
+    private RichTextReport controlsReport = new RichTextReport("Goals & Controls", "Controls.html");
     private CodeAnalyzerSettings codeAnalyzerSettings;
     private CodeAnalysisResults codeAnalysisResults;
     private File codeConfigurationFile;

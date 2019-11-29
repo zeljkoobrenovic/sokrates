@@ -13,122 +13,6 @@ import java.util.Date;
 import java.util.List;
 
 public class ReportFileExporter {
-    public final static String REPORTS_HTML_HEADER = "<!DOCTYPE html>\n" +
-            "<html lang=\"en\">\n" +
-            "<head>\n" +
-            "    <style type=\"text/css\" media=\"all\">\n" +
-            "        body {\n" +
-            "            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;\n" +
-            "            margin-left: 5%;\n" +
-            "            margin-right: 5%;\n" +
-            "        }\n" +
-            "\n" +
-            "        table {\n" +
-            "            color: #333;\n" +
-            "            border-collapse: collapse;\n" +
-            "            border-spacing: 0;\n" +
-            "        }\n" +
-            "\n" +
-            "        td, th {\n" +
-            "            border: 1px solid #CCC;\n" +
-            "            height: 30px;\n" +
-            "            padding-left: 10px;\n" +
-            "            padding-right: 10px;\n" +
-            "        }\n" +
-            "\n" +
-            "        th {\n" +
-            "            background: #F3F3F3;\n" +
-            "            font-weight: bold;\n" +
-            "        }\n" +
-            "\n" +
-            "        td {\n" +
-            "            background: #FFFFFF;\n" +
-            "            text-align: left;\n" +
-            "        }\n" +
-            "\n" +
-            "        h3 {\n" +
-            "            margin-top: 0\n" +
-            "        }\n" +
-            "\n" +
-            "        h1 {\n" +
-            "            margin-bottom: 0;\n" +
-            "        }\n" +
-            "\n" +
-            "        p {\n" +
-            "            margin-top: 0;\n" +
-            "        }\n" +
-            "\n" +
-            "        .reportSubtitle {\n" +
-            "            color: grey;\n" +
-            "        }\n" +
-            "\n" +
-            "        .group {\n" +
-            "            margin-bottom: 10px;\n" +
-            "            border: solid lightgrey 1px;\n" +
-            "            box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);\n" +
-            "            border-radius: 2px;\n" +
-            "        }\n" +
-            "\n" +
-            "        .section {\n" +
-            "            margin-bottom: 30px;\n" +
-            "            border: solid lightgrey 1px;\n" +
-            "            box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);\n" +
-            "            border-radius: 2px;\n" +
-            "            padding: 0;\n" +
-            "        }\n" +
-            "\n" +
-            "        .sectionHeader {\n" +
-            "            margin-bottom: 30px;\n" +
-            "            padding: 20px;\n" +
-            "            box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);\n" +
-            "            background-color: lightskyblue;\n" +
-            "        }\n" +
-            "\n" +
-            "        .sectionTitle {\n" +
-            "            font-size: 140%;\n" +
-            "        }\n" +
-            "\n" +
-            "        .sectionSubtitle {\n" +
-            "            font-size: 90%; color: grey;\n" +
-            "        }\n" +
-            "\n" +
-            "        .subSectionTitle {\n" +
-            "            font-size: 140%;\n" +
-            "        }\n" +
-            "\n" +
-            "        .subSectionSubtitle {\n" +
-            "            font-size: 90%; color: grey;\n" +
-            "        }\n" +
-            "\n" +
-            "        .subSection {\n" +
-            "            margin-bottom: 30px;\n" +
-            "            border: solid lightgrey 1px;\n" +
-            "            padding-top: 0;\n" +
-            "            padding-bottom: 0;\n" +
-            "            box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.2), 0 1px 9px 0 rgba(0, 0, 0, 0.19);\n" +
-            "        }\n" +
-            "\n" +
-            "        .subSectionHeader {\n" +
-            "            border: solid lightgrey 1px;\n" +
-            "            padding: 6px;\n" +
-            "            background-color: lightgrey;\n" +
-            "            box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.2), 0 2px 9px 0 rgba(0, 0, 0, 0.19);\n" +
-            "        }\n" +
-            "\n" +
-            "        .sectionBody {\n" +
-            "            margin: 20px;\n" +
-            "        }" +
-            "    </style>\n" +
-            "    <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Ubuntu\">\n" +
-            "    <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Lato\">\n" +
-            "    <script type=\"text/javascript\">\n" +
-            "        function showHide(id) {\n" +
-            "            var e = document.getElementById(id);\n" +
-            "            e.style.display = (e.style.display == 'block') ? 'none' : 'block';\n" +
-            "        }\n" +
-            "    </script>\n" +
-            "</head>\n";
-
     public static void exportHtml(File folder, RichTextReport report) {
         File htmlReportsFolder = getHtmlReportsFolder(folder);
         String reportFileName = getReportFileName(report);
@@ -139,7 +23,7 @@ public class ReportFileExporter {
         File reportFile = new File(folder, reportFileName);
         try {
             PrintWriter out = new PrintWriter(reportFile);
-            out.println(REPORTS_HTML_HEADER + "\n<body><div id=\"report\">\n" + "\n");
+            out.println(ReportConstants.REPORTS_HTML_HEADER + "\n<body><div id=\"report\">\n" + "\n");
             new ReportRenderer().render(report, text -> {
                 out.println(text);
             });
@@ -152,7 +36,7 @@ public class ReportFileExporter {
     }
 
     private static String getReportFileName(RichTextReport report) {
-        return report.getId().replace("-", "").replace(" ", "") + ".html";
+        return report.getFileName();
     }
 
     public static void exportReportsIndexFile(File reportsFolder, CodeAnalysisResults analysisResults) {
@@ -186,7 +70,7 @@ public class ReportFileExporter {
     }
 
     private static void summarize(RichTextReport indexReport, CodeAnalysisResults analysisResults) {
-new SummaryUtils().summarize(analysisResults, indexReport);
+        new SummaryUtils().summarize(analysisResults, indexReport);
     }
 
     private static void appendLinks(RichTextReport report, CodeAnalysisResults analysisResults) {
@@ -219,8 +103,8 @@ new SummaryUtils().summarize(analysisResults, indexReport);
             indexReport.startDiv("font-size:90%; color:deepskyblue");
             indexReport.addHtmlContent("Analysis Report");
             indexReport.endDiv();
-            indexReport.startDiv("");
-            indexReport.addHtmlContent("<img style='margin-top:15px; margin-bottom: 20px;width:80px' src='https://www.zeljkoobrenovic.com/images/report.png'>");
+            indexReport.startDiv("padding: 20px;");
+            indexReport.addHtmlContent(ReportConstants.REPORT_SVG_ICON);
             indexReport.endDiv();
             indexReport.startDiv("font-size:100%; color:blue; ");
             indexReport.addHtmlContent("<b><a style='text-decoration: none' href=\"" + reportFileName + "\">" + reportTitle + "</a></b>");
@@ -242,8 +126,8 @@ new SummaryUtils().summarize(analysisResults, indexReport);
         indexReport.addHtmlContent("Interactive Explorer");
         indexReport.endDiv();
 
-        indexReport.startDiv("");
-        indexReport.addHtmlContent("<img style='margin-top:15px; margin-bottom: 20px;width:80px' src='https://www.zeljkoobrenovic.com/images/report.png'>");
+        indexReport.startDiv("padding: 20px;");
+        indexReport.addHtmlContent(ReportConstants.REPORT_SVG_ICON);
         indexReport.endDiv();
 
         indexReport.startDiv("font-size:100%; color:blue; ");
@@ -261,16 +145,17 @@ new SummaryUtils().summarize(analysisResults, indexReport);
     private static String[][] getReportsList() {
         return new String[][]{
                 {"SourceCodeOverview.html", "Source Code Overview"},
-                {"Components.html", "Components"},
+                {"Components.html", "Components and Dependencies"},
                 {"Duplication.html", "Duplication "},
                 {"FileSize.html", "File Size"},
                 {"UnitSize.html", "Unit Size"},
                 {"CyclomaticComplexity.html", "Cyclomatic Complexity"},
                 {"CrossCuttingConcerns.html", "Cross - Cutting Concerns"},
-                {"Findings.html", "Findings"},
-                {"Metrics.html", "Metrics"},
+                {"Metrics.html", "All Metrics"},
                 {"Trend.html", "Trend"},
-                {"Controls.html", "Controls"}
+                {"Controls.html", "Goals & Controls"},
+                {"Findings.html", "Notes & Findings"},
+
         };
     }
 

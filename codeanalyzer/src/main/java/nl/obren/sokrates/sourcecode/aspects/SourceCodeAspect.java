@@ -3,14 +3,12 @@ package nl.obren.sokrates.sourcecode.aspects;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
-import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SourceCodeAspect {
-    private String name = "";
-
     @JsonIgnore
     private String filtering = "";
 
@@ -19,19 +17,6 @@ public class SourceCodeAspect {
     private List<SourceFile> sourceFiles = new ArrayList<>();
 
     public SourceCodeAspect() {
-    }
-
-    public SourceCodeAspect(String name) {
-        this();
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     @JsonIgnore
@@ -81,28 +66,7 @@ public class SourceCodeAspect {
         return null;
     }
 
-    @JsonIgnore
-    public List<SourceCodeAspect> getAspectsPerExtensions() {
-        Map<String, SourceCodeAspect> map = new HashMap<>();
-
-        sourceFiles.forEach(sourceFile -> {
-            String extension = FilenameUtils.getExtension(sourceFile.getFile().getPath()).toLowerCase();
-            SourceCodeAspect extensionAspect = map.get(extension);
-            if (extensionAspect == null) {
-                extensionAspect = new SourceCodeAspect("  *." + extension);
-                map.put(extension, extensionAspect);
-            }
-            extensionAspect.getSourceFiles().add(sourceFile);
-        });
-
-        List<SourceCodeAspect> list = new ArrayList<>();
-        map.values().forEach(list::add);
-        Collections.sort(list, (o1, o2) -> o1.getLinesOfCode() > o2.getLinesOfCode() ? -1 : (o1.getLinesOfCode() < o2.getLinesOfCode() ? 1 : 0));
-
-        return list;
-    }
-
-    public void remove(SourceCodeAspect aspect) {
+    public void remove(NamedSourceCodeAspect aspect) {
         aspect.getSourceFiles().forEach(sourceFile -> {
             SourceFile existingSourceFile = getSourceFile(sourceFile.getFile());
             if (existingSourceFile != null) {

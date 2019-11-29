@@ -1,6 +1,6 @@
 package nl.obren.sokrates.sourcecode.dependencies;
 
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +22,8 @@ public class Dependency {
         return from;
     }
 
-    public List<SourceCodeAspect> getFromComponents(String group) {
-        List<SourceCodeAspect> fromComponents = new ArrayList<>();
+    public List<NamedSourceCodeAspect> getFromComponents(String group) {
+        List<NamedSourceCodeAspect> fromComponents = new ArrayList<>();
 
         fromFiles.forEach(sourceFile -> {
             sourceFile.getSourceFile().getLogicalComponents(group).forEach(sourceCodeAspect -> {
@@ -36,8 +36,8 @@ public class Dependency {
         return fromComponents;
     }
 
-    public List<SourceCodeAspect> getToComponents(String group) {
-        List<SourceCodeAspect> toComponents = new ArrayList<>();
+    public List<NamedSourceCodeAspect> getToComponents(String group) {
+        List<NamedSourceCodeAspect> toComponents = new ArrayList<>();
 
         to.getSourceFiles().forEach(sourceFile -> {
             sourceFile.getLogicalComponents(group).forEach(sourceCodeAspect -> {
@@ -86,8 +86,8 @@ public class Dependency {
     }
 
     public String getComponentDependency(String group) {
-        List<SourceCodeAspect> fromComponents = getFromComponents(group);
-        List<SourceCodeAspect> toComponents = getToComponents(group);
+        List<NamedSourceCodeAspect> fromComponents = getFromComponents(group);
+        List<NamedSourceCodeAspect> toComponents = getToComponents(group);
         return (fromComponents.size() > 0 ? fromComponents.get(0).getName() : from.getAnchor())
                 + " -> "
                 + (toComponents.size() > 0 ? toComponents.get(0).getName() : to.getAnchor());

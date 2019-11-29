@@ -12,7 +12,7 @@ import java.util.List;
 import static junit.framework.TestCase.assertEquals;
 
 
-public class SourceCodeAspectUtilsTest {
+public class NamedSourceCodeAspectUtilsTest {
 
     @Test
     public void getSourceCodeAspectBasedOnFolderDepth() throws Exception {
@@ -141,22 +141,22 @@ public class SourceCodeAspectUtilsTest {
 
     @Test
     public void getMaxLinesOfCode() throws Exception {
-        SourceCodeAspect aspect1 = new SourceCodeAspect();
+        NamedSourceCodeAspect aspect1 = new NamedSourceCodeAspect();
         SourceFile sourceFile1 = new SourceFile();
         sourceFile1.setLinesOfCode(100);
         aspect1.getSourceFiles().add(sourceFile1);
 
-        SourceCodeAspect aspect2 = new SourceCodeAspect();
+        NamedSourceCodeAspect aspect2 = new NamedSourceCodeAspect();
         SourceFile sourceFile2 = new SourceFile();
         sourceFile2.setLinesOfCode(400);
         aspect2.getSourceFiles().add(sourceFile2);
 
-        SourceCodeAspect aspect3 = new SourceCodeAspect();
+        NamedSourceCodeAspect aspect3 = new NamedSourceCodeAspect();
         SourceFile sourceFile3 = new SourceFile();
         sourceFile3.setLinesOfCode(500);
         aspect3.getSourceFiles().add(sourceFile3);
 
-        SourceCodeAspect aspect4 = new SourceCodeAspect();
+        NamedSourceCodeAspect aspect4 = new NamedSourceCodeAspect();
         SourceFile sourceFile4 = new SourceFile();
         sourceFile4.setLinesOfCode(200);
         aspect4.getSourceFiles().add(sourceFile4);
@@ -166,13 +166,13 @@ public class SourceCodeAspectUtilsTest {
 
     @Test
     public void getMaxFileCount() throws Exception {
-        SourceCodeAspect aspect1 = new SourceCodeAspect();
+        NamedSourceCodeAspect aspect1 = new NamedSourceCodeAspect();
         aspect1.getSourceFiles().add(new SourceFile());
         aspect1.getSourceFiles().add(new SourceFile());
         aspect1.getSourceFiles().add(new SourceFile());
         aspect1.getSourceFiles().add(new SourceFile());
 
-        SourceCodeAspect aspect2 = new SourceCodeAspect();
+        NamedSourceCodeAspect aspect2 = new NamedSourceCodeAspect();
         aspect2.getSourceFiles().add(new SourceFile());
         aspect2.getSourceFiles().add(new SourceFile());
         aspect2.getSourceFiles().add(new SourceFile());
@@ -180,12 +180,12 @@ public class SourceCodeAspectUtilsTest {
         aspect2.getSourceFiles().add(new SourceFile());
         aspect2.getSourceFiles().add(new SourceFile());
 
-        SourceCodeAspect aspect3 = new SourceCodeAspect();
+        NamedSourceCodeAspect aspect3 = new NamedSourceCodeAspect();
         aspect3.getSourceFiles().add(new SourceFile());
         aspect3.getSourceFiles().add(new SourceFile());
         aspect3.getSourceFiles().add(new SourceFile());
 
-        SourceCodeAspect aspect4 = new SourceCodeAspect();
+        NamedSourceCodeAspect aspect4 = new NamedSourceCodeAspect();
         aspect4.getSourceFiles().add(new SourceFile());
         aspect4.getSourceFiles().add(new SourceFile());
 

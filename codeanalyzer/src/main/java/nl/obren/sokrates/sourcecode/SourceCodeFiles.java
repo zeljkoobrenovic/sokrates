@@ -1,7 +1,7 @@
 package nl.obren.sokrates.sourcecode;
 
 import nl.obren.sokrates.common.utils.ProgressFeedback;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import org.apache.commons.io.FilenameUtils;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 
@@ -41,11 +41,11 @@ public class SourceCodeFiles {
         progressFeedback.end();
     }
 
-    public List<SourceFile> getSourceFiles(SourceCodeAspect aspect) {
+    public List<SourceFile> getSourceFiles(NamedSourceCodeAspect aspect) {
         return getSourceFiles(aspect, getFilesInBroadScope());
     }
 
-    public List<SourceFile> getSourceFiles(SourceCodeAspect aspect, List<SourceFile> scopeSourceFiles) {
+    public List<SourceFile> getSourceFiles(NamedSourceCodeAspect aspect, List<SourceFile> scopeSourceFiles) {
         progressFeedback.start();
         progressFeedback.setDetailedText("Updating \"" + aspect.getName() + "\"...");
         aspect.getSourceFiles().clear();

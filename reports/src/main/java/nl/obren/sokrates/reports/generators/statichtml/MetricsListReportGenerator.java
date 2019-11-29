@@ -4,30 +4,37 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.Metric;
 
-public class MetricsListReportGenerator {
-    private RichTextReport metricsReport;
+import java.util.List;
 
-    public RichTextReport generateReport(CodeAnalysisResults codeAnalysisResults, RichTextReport metricsReport) {
-        this.metricsReport = metricsReport;
-        metricsReport.startTable();
-        metricsReport.addTableHeader("Metric", "Value");
-        codeAnalysisResults.getMetricsList().getMetrics().forEach(metric -> {
+public class MetricsListReportGenerator {
+    private RichTextReport report;
+
+    public RichTextReport generateReport(CodeAnalysisResults codeAnalysisResults, RichTextReport report) {
+        this.report = report;
+
+        List<Metric> metrics = codeAnalysisResults.getMetricsList().getMetrics();
+
+        report.startTable();
+        report.addTableHeader("Metric", "Value");
+
+        metrics.forEach(metric -> {
             addRow(metric);
         });
-        metricsReport.endTable();
 
-        return metricsReport;
+        report.endTable();
+
+        return report;
     }
 
     private void addRow(Metric metric) {
-        metricsReport.startTableRow();
-        metricsReport.startTableCell();
-        metricsReport.addHtmlContent("<b>" + metric.getId() + "</b><br/>");
-        metricsReport.addHtmlContent("<i>" + metric.getDescription() + "</i><br/>");
-        metricsReport.endTableCell();
-        metricsReport.startTableCell("text-align: left");
-        metricsReport.addHtmlContent("" + metric.getValue());
-        metricsReport.endTableCell();
-        metricsReport.endTableRow();
+        report.startTableRow();
+        report.startTableCell();
+        report.addHtmlContent("<b>" + metric.getId() + "</b><br/>");
+        report.addHtmlContent("<i>" + metric.getDescription() + "</i><br/>");
+        report.endTableCell();
+        report.startTableCell("text-align: left");
+        report.addHtmlContent("" + metric.getValue());
+        report.endTableCell();
+        report.endTableRow();
     }
 }

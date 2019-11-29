@@ -2,7 +2,7 @@ package nl.obren.sokrates.sourcecode.search;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileWithSearchData;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.dependencies.Dependency;
 import org.junit.Before;
@@ -21,11 +21,11 @@ public class SearchResultDependenciesTest {
     public void createSearchResults() {
         SourceFile sourceFile1 = new SourceFile(new File("/root/path/name1.ext"));
         sourceFile1.relativize(new File("/root"));
-        sourceFile1.getLogicalComponents().add(new SourceCodeAspect("ComponentA"));
+        sourceFile1.getLogicalComponents().add(new NamedSourceCodeAspect("ComponentA"));
 
         SourceFile sourceFile2 = new SourceFile(new File("/root/path/name2.ext"));
         sourceFile2.relativize(new File("/root"));
-        sourceFile2.getLogicalComponents().add(new SourceCodeAspect("ComponentB"));
+        sourceFile2.getLogicalComponents().add(new NamedSourceCodeAspect("ComponentB"));
 
         SourceFileWithSearchData sourceFileWithSearchData1 = new SourceFileWithSearchData(sourceFile1);
         sourceFileWithSearchData1.getLinesWithSearchedContent().add(new FoundLine(1, "line start middle end content", "start midNOISEdle end"));

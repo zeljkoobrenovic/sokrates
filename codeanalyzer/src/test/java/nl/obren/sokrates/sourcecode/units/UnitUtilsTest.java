@@ -2,7 +2,7 @@ package nl.obren.sokrates.sourcecode.units;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import org.junit.Test;
 
@@ -104,21 +104,21 @@ public class UnitUtilsTest {
         UnitInfo unit1 = new UnitInfo();
         unit1.setLinesOfCode(10);
         SourceFile sourceFile1 = new SourceFile(new File("A.java"), " ");
-        sourceFile1.getLogicalComponents().add(new SourceCodeAspect("A"));
+        sourceFile1.getLogicalComponents().add(new NamedSourceCodeAspect("A"));
         unit1.setSourceFile(sourceFile1);
         units.add(unit1);
 
         UnitInfo unit2 = new UnitInfo();
         unit2.setLinesOfCode(20);
         SourceFile sourceFile2 = new SourceFile(new File("B.java"), " ");
-        sourceFile2.getLogicalComponents().add(new SourceCodeAspect("A"));
+        sourceFile2.getLogicalComponents().add(new NamedSourceCodeAspect("A"));
         unit2.setSourceFile(sourceFile2);
         units.add(unit2);
 
         UnitInfo unit3 = new UnitInfo();
         unit3.setLinesOfCode(110);
         SourceFile sourceFile3 = new SourceFile(new File("B.java"), " ");
-        sourceFile3.getLogicalComponents().add(new SourceCodeAspect("B"));
+        sourceFile3.getLogicalComponents().add(new NamedSourceCodeAspect("B"));
         unit3.setSourceFile(sourceFile3);
         units.add(unit3);
 
@@ -150,7 +150,7 @@ public class UnitUtilsTest {
         unit1.setLinesOfCode(20);
         unit1.setMcCabeIndex(2);
         SourceFile sourceFile1 = new SourceFile(new File("A.java"), " ");
-        sourceFile1.getLogicalComponents().add(new SourceCodeAspect("A"));
+        sourceFile1.getLogicalComponents().add(new NamedSourceCodeAspect("A"));
         unit1.setSourceFile(sourceFile1);
         units.add(unit1);
 
@@ -158,7 +158,7 @@ public class UnitUtilsTest {
         unit2.setLinesOfCode(40);
         unit2.setMcCabeIndex(12);
         SourceFile sourceFile2 = new SourceFile(new File("B.java"), " ");
-        sourceFile2.getLogicalComponents().add(new SourceCodeAspect("A"));
+        sourceFile2.getLogicalComponents().add(new NamedSourceCodeAspect("A"));
         unit2.setSourceFile(sourceFile2);
         units.add(unit2);
 
@@ -166,7 +166,7 @@ public class UnitUtilsTest {
         unit3.setLinesOfCode(100);
         unit3.setMcCabeIndex(32);
         SourceFile sourceFile3 = new SourceFile(new File("B.java"), " ");
-        sourceFile3.getLogicalComponents().add(new SourceCodeAspect("B"));
+        sourceFile3.getLogicalComponents().add(new NamedSourceCodeAspect("B"));
         unit3.setSourceFile(sourceFile3);
         units.add(unit3);
 

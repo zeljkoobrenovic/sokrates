@@ -6,7 +6,7 @@ import nl.obren.sokrates.sourcecode.analysis.Analyzer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.duplication.*;
 import nl.obren.sokrates.sourcecode.metrics.DuplicationMetric;
@@ -23,7 +23,7 @@ public class DuplicationAnalyzer extends Analyzer {
     private final MetricsList metricsList;
     private final long start;
     private final DuplicationAnalysisResults analysisResults;
-    private final SourceCodeAspect main;
+    private final NamedSourceCodeAspect main;
     private ProgressFeedback progressFeedback;
 
     public DuplicationAnalyzer(CodeAnalysisResults analysisResults) {

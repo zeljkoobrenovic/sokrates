@@ -5,7 +5,7 @@ import nl.obren.sokrates.sourcecode.analysis.AnalysisUtils;
 import nl.obren.sokrates.sourcecode.analysis.Analyzer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.metrics.Metric;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
@@ -24,7 +24,7 @@ public class UnitsAnalyzer extends Analyzer {
     private final MetricsList metricsList;
     private final long start;
     private final UnitsAnalysisResults unitsAnalysisResults;
-    private final SourceCodeAspect main;
+    private final NamedSourceCodeAspect main;
     private ProgressFeedback progressFeedback;
 
     private UnitCategoryNames unitSizeCategoryNames = new UnitCategoryNames("1_20", "21_50", "51_100", "101_PLUS");

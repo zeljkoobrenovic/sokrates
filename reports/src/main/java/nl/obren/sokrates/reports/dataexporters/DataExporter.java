@@ -12,7 +12,7 @@ import nl.obren.sokrates.reports.generators.explorers.FilesExplorerGenerator;
 import nl.obren.sokrates.reports.generators.explorers.UnitsExplorerGenerator;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.duplication.DuplicatedFileBlock;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
@@ -180,7 +180,7 @@ public class DataExporter {
     }
 
 
-    private void saveAspectJsonFiles(File dataFolder, File srcCacheFolder, SourceCodeAspect aspect, String aspectName) throws IOException {
+    private void saveAspectJsonFiles(File dataFolder, File srcCacheFolder, NamedSourceCodeAspect aspect, String aspectName) throws IOException {
         File filesListFile = new File(dataFolder, aspectName + "-files.json");
         detailedInfo(" - storing the file list for the <b>" + aspectName + "</b> aspect in <a href='" + filesListFile.getPath() + "'>" + filesListFile.getPath() + "</a>");
         List<String> files = new ArrayList<>();

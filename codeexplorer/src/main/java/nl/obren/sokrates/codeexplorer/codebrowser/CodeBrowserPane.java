@@ -15,7 +15,7 @@ import nl.obren.sokrates.sourcecode.SourceCodeFiles;
 import nl.obren.sokrates.sourcecode.aspects.CrossCuttingConcern;
 import nl.obren.sokrates.sourcecode.aspects.CrossCuttingConcernsGroup;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.sourcecode.findings.Findings;
@@ -27,7 +27,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Executors;
 
@@ -195,7 +194,7 @@ public class CodeBrowserPane extends SplitPane {
         sourceCodeFiles.load(new File(CodeConfiguration.getAbsoluteSrcRoot(codeConfiguration.getSrcRoot(), codeConfigurationFile)), progressFeedback);
         codeConfiguration.load(sourceCodeFiles, codeConfigurationFile);
 
-        List<SourceCodeAspect> scopesWithExtensions = codeConfiguration.getScopesWithExtensions();
+        List<NamedSourceCodeAspect> scopesWithExtensions = codeConfiguration.getScopesWithExtensions();
 
         List<LogicalDecomposition> logicalDecompositions = codeConfiguration.getLogicalDecompositions();
         if (logicalDecompositions == null) {
@@ -207,10 +206,10 @@ public class CodeBrowserPane extends SplitPane {
 
         List<CrossCuttingConcernsGroup> crossCuttingConcerns = codeConfiguration.getCrossCuttingConcerns();
 
-        List<Pair<String, List<SourceCodeAspect>>> logicalDecompositionPairs = new ArrayList<>();
+        List<Pair<String, List<NamedSourceCodeAspect>>> logicalDecompositionPairs = new ArrayList<>();
         logicalDecompositions.forEach(logicalDecomposition -> logicalDecompositionPairs.add(new ImmutablePair<>(logicalDecomposition.getName(), logicalDecomposition.getComponents())));
 
-        List<SourceCodeAspect> logicalComponents = logicalDecompositions.get(0).getComponents();
+        List<NamedSourceCodeAspect> logicalComponents = logicalDecompositions.get(0).getComponents();
 
         List<Pair<String, List<CrossCuttingConcern>>> concernsDecompositionPairs = new ArrayList<>();
         List<CrossCuttingConcern> allConcerns = new ArrayList<>();
@@ -236,7 +235,7 @@ public class CodeBrowserPane extends SplitPane {
         progressFeedback.setText("Done.");
     }
 
-    public void load(SourceCodeAspect aspect) {
+    public void load(NamedSourceCodeAspect aspect) {
         aspectFilesBrowserPane.getSearchPane().createSearcheableFilesCache(aspect);
     }
 

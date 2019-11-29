@@ -2,7 +2,7 @@ package nl.obren.sokrates.sourcecode.duplication;
 
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import org.junit.Test;
 
 import java.io.File;
@@ -39,13 +39,13 @@ public class DuplicationAggregatorTest {
     public void getDuplicationPerLogicalComponent() throws Exception {
         List<DuplicationInstance> duplicates = new ArrayList<>();
 
-        SourceCodeAspect sourceCodeAspect = new SourceCodeAspect("A");
+        NamedSourceCodeAspect namedSourceCodeAspect = new NamedSourceCodeAspect("A");
 
         DuplicationInstance instance = new DuplicationInstance();
         DuplicatedFileBlock duplicatedFileBlock1 = new DuplicatedFileBlock();
         SourceFile sourceFile1 = new SourceFile(new File("/root/a.b"));
         sourceFile1.setRelativePath("a.b");
-        sourceFile1.getLogicalComponents().add(sourceCodeAspect);
+        sourceFile1.getLogicalComponents().add(namedSourceCodeAspect);
         duplicatedFileBlock1.setSourceFile(sourceFile1);
         duplicatedFileBlock1.setCleanedStartLine(11);
         duplicatedFileBlock1.setCleanedEndLine(60);
@@ -53,7 +53,7 @@ public class DuplicationAggregatorTest {
 
         DuplicatedFileBlock duplicatedFileBlock2 = new DuplicatedFileBlock();
         SourceFile sourceFile2 = new SourceFile(new File("/root/d.e"));
-        sourceFile2.getLogicalComponents().add(sourceCodeAspect);
+        sourceFile2.getLogicalComponents().add(namedSourceCodeAspect);
         sourceFile2.setRelativePath("d.e");
         duplicatedFileBlock2.setSourceFile(sourceFile2);
         duplicatedFileBlock2.setCleanedStartLine(101);

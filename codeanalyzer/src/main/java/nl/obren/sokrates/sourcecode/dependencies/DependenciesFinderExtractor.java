@@ -4,7 +4,7 @@ import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import org.apache.commons.lang3.StringUtils;
 
@@ -21,7 +21,7 @@ public class DependenciesFinderExtractor {
         this.logicalDecomposition = logicalDecomposition;
     }
 
-    public List<ComponentDependency> findComponentDependencies(SourceCodeAspect aspect) {
+    public List<ComponentDependency> findComponentDependencies(NamedSourceCodeAspect aspect) {
         dependencies = new ArrayList<>();
         dependenciesMap = new HashMap<>();
 
@@ -77,13 +77,13 @@ public class DependenciesFinderExtractor {
 
         ComponentDependency dependency = new ComponentDependency();
         String group = logicalDecomposition.getName();
-        List<SourceCodeAspect> logicalComponents = sourceFile.getLogicalComponents(group);
+        List<NamedSourceCodeAspect> logicalComponents = sourceFile.getLogicalComponents(group);
 
         if (logicalComponents.size() == 0) {
             return;
         }
 
-        SourceCodeAspect firstAspect = logicalComponents.get(0);
+        NamedSourceCodeAspect firstAspect = logicalComponents.get(0);
         dependency.setFromComponent(firstAspect.getName());
         dependency.setToComponent(toComponent);
 

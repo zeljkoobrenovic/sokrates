@@ -1,7 +1,7 @@
 package nl.obren.sokrates.sourcecode.dependencies;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import org.junit.Test;
 
 import java.util.List;
@@ -15,17 +15,17 @@ public class DependencyTest {
     public void getFromComponents() throws Exception {
         DependencyAnchor a = new DependencyAnchor("a");
         SourceFile sourceFile1 = new SourceFile();
-        sourceFile1.getLogicalComponents().add(new SourceCodeAspect("Comp1"));
+        sourceFile1.getLogicalComponents().add(new NamedSourceCodeAspect("Comp1"));
         a.getSourceFiles().add(sourceFile1);
 
         DependencyAnchor b = new DependencyAnchor("b");
         SourceFile sourceFile2 = new SourceFile();
-        sourceFile2.getLogicalComponents().add(new SourceCodeAspect("Comp2"));
+        sourceFile2.getLogicalComponents().add(new NamedSourceCodeAspect("Comp2"));
         b.getSourceFiles().add(sourceFile2);
 
         Dependency dependency = new Dependency(a, b);
         dependency.getFromFiles().add(new SourceFileDependency(sourceFile1));
-        List<SourceCodeAspect> fromComponents = dependency.getFromComponents("");
+        List<NamedSourceCodeAspect> fromComponents = dependency.getFromComponents("");
 
         assertEquals(fromComponents.size(), 1);
         assertEquals(fromComponents.get(0).getName(), "Comp1");
@@ -35,16 +35,16 @@ public class DependencyTest {
     public void getToComponents() throws Exception {
         DependencyAnchor a = new DependencyAnchor("a");
         SourceFile sourceFile1 = new SourceFile();
-        sourceFile1.getLogicalComponents().add(new SourceCodeAspect("Comp1"));
+        sourceFile1.getLogicalComponents().add(new NamedSourceCodeAspect("Comp1"));
         a.getSourceFiles().add(sourceFile1);
 
         DependencyAnchor b = new DependencyAnchor("b");
         SourceFile sourceFile2 = new SourceFile();
-        sourceFile2.getLogicalComponents().add(new SourceCodeAspect("Comp2"));
+        sourceFile2.getLogicalComponents().add(new NamedSourceCodeAspect("Comp2"));
         b.getSourceFiles().add(sourceFile2);
 
         Dependency dependency = new Dependency(a, b);
-        List<SourceCodeAspect> toComponents = dependency.getToComponents("");
+        List<NamedSourceCodeAspect> toComponents = dependency.getToComponents("");
 
         assertEquals(toComponents.size(), 1);
         assertEquals(toComponents.get(0).getName(), "Comp2");
@@ -73,12 +73,12 @@ public class DependencyTest {
     public void getComponentDependency() throws Exception {
         DependencyAnchor a = new DependencyAnchor("a");
         SourceFile sourceFile1 = new SourceFile();
-        sourceFile1.getLogicalComponents().add(new SourceCodeAspect("Comp1"));
+        sourceFile1.getLogicalComponents().add(new NamedSourceCodeAspect("Comp1"));
         a.getSourceFiles().add(sourceFile1);
 
         DependencyAnchor b = new DependencyAnchor("b");
         SourceFile sourceFile2 = new SourceFile();
-        sourceFile2.getLogicalComponents().add(new SourceCodeAspect("Comp2"));
+        sourceFile2.getLogicalComponents().add(new NamedSourceCodeAspect("Comp2"));
         b.getSourceFiles().add(sourceFile2);
 
         String componentDependency = new Dependency(a, b).getComponentDependency("");

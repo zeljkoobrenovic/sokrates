@@ -11,13 +11,13 @@ import javafx.scene.shape.Rectangle;
 import nl.obren.sokrates.codeexplorer.codebrowser.CodeBrowserPane;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.sourcecode.SourceFileWithSearchData;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.search.SearchResult;
 import org.apache.commons.lang3.StringUtils;
 
 public class SearchSummaryPane extends BorderPane {
 
-    public SearchSummaryPane(CodeBrowserPane codeBrowserPane, SourceCodeAspect aspect, ObservableList<SourceFileWithSearchData> cachedFiles) {
+    public SearchSummaryPane(CodeBrowserPane codeBrowserPane, NamedSourceCodeAspect aspect, ObservableList<SourceFileWithSearchData> cachedFiles) {
         int foundFilesCount = cachedFiles.size();
         int foundLoc = getLoc(cachedFiles);
         double percentage = 100.0 * foundLoc / aspect.getLinesOfCode();

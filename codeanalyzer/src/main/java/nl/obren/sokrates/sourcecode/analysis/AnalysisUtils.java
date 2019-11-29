@@ -4,7 +4,8 @@ import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SearcheableFilesCache;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.CrossCuttingConcern;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspectUtils;
 import nl.obren.sokrates.sourcecode.metrics.Metric;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
@@ -20,8 +21,8 @@ import java.text.DecimalFormat;
 public class AnalysisUtils {
     private static final Log LOG = LogFactory.getLog(AnalysisUtils.class);
 
-    public static void analyze(SourceCodeAspect aspect, ProgressFeedback progressFeedback, AspectAnalysisResults aspectAnalysisResults,
-                                MetricsList metricsList, StringBuffer textSummary, long start) {
+    public static void analyze(NamedSourceCodeAspect aspect, ProgressFeedback progressFeedback, AspectAnalysisResults aspectAnalysisResults,
+                               MetricsList metricsList, StringBuffer textSummary, long start) {
         aspectAnalysisResults.setAspect(aspect);
         metricsList.addMetric()
                 .id(getMetricId("NUMBER_OF_FILES_" + aspect.getName()))
@@ -58,7 +59,7 @@ public class AnalysisUtils {
             });
         }
 
-        aspect.getAspectsPerExtensions().forEach(aspectPerExtension -> {
+        SourceCodeAspectUtils.getAspectsPerExtensions(aspect).forEach(aspectPerExtension -> {
             metricsList.addMetric()
                     .id(getMetricId("NUMBER_OF_FILES_" + aspectPerExtension.getName().replace("*.", "")))
                     .description("Number of files in scope")

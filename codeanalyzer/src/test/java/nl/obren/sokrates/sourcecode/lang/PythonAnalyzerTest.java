@@ -2,7 +2,7 @@ package nl.obren.sokrates.sourcecode.lang;
 
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
 import nl.obren.sokrates.sourcecode.dependencies.Dependency;
 import nl.obren.sokrates.sourcecode.lang.python.PythonAnalyzer;
@@ -129,9 +129,9 @@ public class PythonAnalyzerTest {
                 "    return add(x, add(x,x));\n" +
                 "}";
         SourceFile sourceFile1 = new SourceFile(new File("a.py"), code1);
-        sourceFile1.getLogicalComponents().add(new SourceCodeAspect("CompA"));
+        sourceFile1.getLogicalComponents().add(new NamedSourceCodeAspect("CompA"));
         SourceFile sourceFile2 = new SourceFile(new File("b.py"), code2);
-        sourceFile2.getLogicalComponents().add(new SourceCodeAspect("CompB"));
+        sourceFile2.getLogicalComponents().add(new NamedSourceCodeAspect("CompB"));
         List<Dependency> dependencies = analyzer.extractDependencies(Arrays.asList(sourceFile1, sourceFile2), new ProgressFeedback()).getDependencies();
         assertEquals(dependencies.size(), 1);
         assertEquals(dependencies.get(0).getDependencyString(), "a -> b");

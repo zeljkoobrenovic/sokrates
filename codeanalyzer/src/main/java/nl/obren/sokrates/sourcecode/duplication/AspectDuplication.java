@@ -1,17 +1,17 @@
 package nl.obren.sokrates.sourcecode.duplication;
 
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 
 public class AspectDuplication {
-    private SourceCodeAspect aspect;
+    private NamedSourceCodeAspect aspect;
     private int cleanedLinesOfCode;
     private int duplicatedLinesOfCode;
 
-    public SourceCodeAspect getAspect() {
+    public NamedSourceCodeAspect getAspect() {
         return aspect;
     }
 
-    public void setAspect(SourceCodeAspect aspect) {
+    public void setAspect(NamedSourceCodeAspect aspect) {
         this.aspect = aspect;
     }
 

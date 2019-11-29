@@ -24,11 +24,11 @@ public class CodeConfiguration {
     private AnalysisConfig analysis = new AnalysisConfig();
     private ArrayList<SourceFileFilter> ignore = new ArrayList<>();
 
-    private SourceCodeAspect main;
-    private SourceCodeAspect test;
-    private SourceCodeAspect generated;
-    private SourceCodeAspect buildAndDeployment;
-    private SourceCodeAspect other;
+    private NamedSourceCodeAspect main;
+    private NamedSourceCodeAspect test;
+    private NamedSourceCodeAspect generated;
+    private NamedSourceCodeAspect buildAndDeployment;
+    private NamedSourceCodeAspect other;
 
     private List<LogicalDecomposition> logicalDecompositions = new ArrayList<>();
     private List<CrossCuttingConcernsGroup> crossCuttingConcerns = new ArrayList<>();
@@ -76,8 +76,8 @@ public class CodeConfiguration {
     }
 
     @JsonIgnore
-    private List<SourceCodeAspect> getScopeAspects() {
-        List<SourceCodeAspect> aspects = new ArrayList<>();
+    private List<NamedSourceCodeAspect> getScopeAspects() {
+        List<NamedSourceCodeAspect> aspects = new ArrayList<>();
 
         addAspectIfNotNull(aspects, main);
         addAspectIfNotNull(aspects, test);
@@ -88,19 +88,19 @@ public class CodeConfiguration {
         return aspects;
     }
 
-    private void addAspectIfNotNull(List<SourceCodeAspect> aspects, SourceCodeAspect aspect) {
+    private void addAspectIfNotNull(List<NamedSourceCodeAspect> aspects, NamedSourceCodeAspect aspect) {
         if (aspect != null) {
             aspects.add(aspect);
         }
     }
 
     @JsonIgnore
-    public List<SourceCodeAspect> getScopesWithExtensions() {
-        List<SourceCodeAspect> aspects = new ArrayList<>();
+    public List<NamedSourceCodeAspect> getScopesWithExtensions() {
+        List<NamedSourceCodeAspect> aspects = new ArrayList<>();
 
-        for (SourceCodeAspect aspect : getScopeAspects()) {
+        for (NamedSourceCodeAspect aspect : getScopeAspects()) {
             aspects.add(aspect);
-            aspects.addAll(aspect.getAspectsPerExtensions());
+            aspects.addAll(SourceCodeAspectUtils.getAspectsPerExtensions(aspect));
         }
 
         return aspects;
@@ -117,29 +117,29 @@ public class CodeConfiguration {
     }
 
     private void createOther() {
-        other = new SourceCodeAspect("other");
+        other = new NamedSourceCodeAspect("other");
     }
 
     private void createBuildAndDeployment() {
-        buildAndDeployment = new SourceCodeAspect("build and deployment");
+        buildAndDeployment = new NamedSourceCodeAspect("build and deployment");
     }
 
     private void createGenerated() {
-        generated = new SourceCodeAspect("generated");
+        generated = new NamedSourceCodeAspect("generated");
     }
 
     private void createTest() {
-        test = new SourceCodeAspect("test");
+        test = new NamedSourceCodeAspect("test");
     }
 
     private void createMain() {
-        main = new SourceCodeAspect("main");
+        main = new NamedSourceCodeAspect("main");
         main.getSourceFileFilters().add(new SourceFileFilter(".*", ""));
     }
 
     @JsonIgnore
     private void updateScopesFiles(SourceCodeFiles sourceCodeFiles) {
-        for (SourceCodeAspect aspect : getScopeAspects()) {
+        for (NamedSourceCodeAspect aspect : getScopeAspects()) {
             sourceCodeFiles.getSourceFiles(aspect);
         }
 
@@ -149,7 +149,7 @@ public class CodeConfiguration {
         removeAspectIfNotNull(other);
     }
 
-    private void removeAspectIfNotNull(SourceCodeAspect aspect) {
+    private void removeAspectIfNotNull(NamedSourceCodeAspect aspect) {
         if (main != null && aspect != null) {
             main.remove(aspect);
         }
@@ -251,7 +251,7 @@ public class CodeConfiguration {
         });
     }
 
-    private void replacePercentageInOverlapConcernName(SourceCodeAspect concern1, SourceCodeAspect concern2, CrossCuttingConcern overlapConcern) {
+    private void replacePercentageInOverlapConcernName(NamedSourceCodeAspect concern1, NamedSourceCodeAspect concern2, CrossCuttingConcern overlapConcern) {
         int totalLinesOfCode = overlapConcern.getLinesOfCode();
         if (overlapConcern.getName().contains(PERCENTAGE_1_VARIABLE)) {
             overlapConcern.setName(overlapConcern.getName().replace(PERCENTAGE_1_VARIABLE, getPercentageString(concern1, totalLinesOfCode)));
@@ -259,7 +259,7 @@ public class CodeConfiguration {
         }
     }
 
-    private String getPercentageString(SourceCodeAspect concern, int totalLinesOfCode) {
+    private String getPercentageString(NamedSourceCodeAspect concern, int totalLinesOfCode) {
         double value = 100.0 * totalLinesOfCode / concern.getLinesOfCode();
         if (value > 0 && value < 1) {
             return "<1%";
@@ -268,7 +268,7 @@ public class CodeConfiguration {
         }
     }
 
-    private DerivedCrossCuttingConcern getOverlapSourceCodeAspect(SourceCodeAspect concern1, SourceCodeAspect concern2,
+    private DerivedCrossCuttingConcern getOverlapSourceCodeAspect(NamedSourceCodeAspect concern1, NamedSourceCodeAspect concern2,
                                                                   Map<String, DerivedCrossCuttingConcern> overlapsMap, List<DerivedCrossCuttingConcern> overlaps) {
         String key1 = getOverlapConcernKey(concern1, concern2);
         String key2 = getOverlapConcernKey(concern2, concern1);
@@ -286,11 +286,11 @@ public class CodeConfiguration {
         return aspect;
     }
 
-    private String getOverlapConcernKey(SourceCodeAspect concern1, SourceCodeAspect concern2) {
+    private String getOverlapConcernKey(NamedSourceCodeAspect concern1, NamedSourceCodeAspect concern2) {
         return " - " + concern1.getName() + " (" + PERCENTAGE_1_VARIABLE + ") AND " + concern2.getName() + " (" + PERCENTAGE_2_VARIABLE + ")";
     }
 
-    private CrossCuttingConcern getOverlapSourceCodeAspectIfExist(SourceCodeAspect concern1, SourceCodeAspect concern2,
+    private CrossCuttingConcern getOverlapSourceCodeAspectIfExist(NamedSourceCodeAspect concern1, NamedSourceCodeAspect concern2,
                                                                   Map<String, ? extends CrossCuttingConcern> overlapsMap) {
         String key = getOverlapConcernKey(concern1, concern2);
         return overlapsMap.get(key);
@@ -337,7 +337,7 @@ public class CodeConfiguration {
     }
 
     @JsonIgnore
-    public SourceCodeAspect getScope(String scope) {
+    public NamedSourceCodeAspect getScope(String scope) {
         switch (scope.toLowerCase()) {
             case "main":
                 return main;
@@ -351,45 +351,45 @@ public class CodeConfiguration {
         return main;
     }
 
-    public SourceCodeAspect getMain() {
+    public NamedSourceCodeAspect getMain() {
         return main;
     }
 
-    public void setMain(SourceCodeAspect main) {
+    public void setMain(NamedSourceCodeAspect main) {
         if (main != null) {
             this.main = main;
         }
     }
 
-    public SourceCodeAspect getTest() {
+    public NamedSourceCodeAspect getTest() {
         return test;
     }
 
-    public void setTest(SourceCodeAspect test) {
+    public void setTest(NamedSourceCodeAspect test) {
         this.test = test;
     }
 
-    public SourceCodeAspect getGenerated() {
+    public NamedSourceCodeAspect getGenerated() {
         return generated;
     }
 
-    public void setGenerated(SourceCodeAspect generated) {
+    public void setGenerated(NamedSourceCodeAspect generated) {
         this.generated = generated;
     }
 
-    public SourceCodeAspect getBuildAndDeployment() {
+    public NamedSourceCodeAspect getBuildAndDeployment() {
         return buildAndDeployment;
     }
 
-    public void setBuildAndDeployment(SourceCodeAspect buildAndDeployment) {
+    public void setBuildAndDeployment(NamedSourceCodeAspect buildAndDeployment) {
         this.buildAndDeployment = buildAndDeployment;
     }
 
-    public SourceCodeAspect getOther() {
+    public NamedSourceCodeAspect getOther() {
         return other;
     }
 
-    public void setOther(SourceCodeAspect other) {
+    public void setOther(NamedSourceCodeAspect other) {
         this.other = other;
     }
 

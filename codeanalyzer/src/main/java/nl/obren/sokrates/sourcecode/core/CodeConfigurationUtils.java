@@ -1,15 +1,12 @@
 package nl.obren.sokrates.sourcecode.core;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
-import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
-import nl.obren.sokrates.sourcecode.core.SimpleCallback;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 
 public class CodeConfigurationUtils {
@@ -42,14 +39,14 @@ public class CodeConfigurationUtils {
         return new File(folder, "findings.txt");
     }
 
-    public static void populateUnclassifiedAndMultipleAspectsFiles(List<SourceCodeAspect> aspects, List<SourceFile> sourceFiles,
-                                                                   SimpleCallback<Pair<SourceFile, SourceCodeAspect>, Void> sourceFileUpdateCallback) {
-        SourceCodeAspect unclassified = new SourceCodeAspect(CodeConfigurationUtils.UNCLASSIFIED_FILES);
-        SourceCodeAspect filesInMultipleScopes = new SourceCodeAspect(CodeConfigurationUtils.FILES_IN_MULTIPLE_CLASSIFICATIONS);
+    public static void populateUnclassifiedAndMultipleAspectsFiles(List<NamedSourceCodeAspect> aspects, List<SourceFile> sourceFiles,
+                                                                   SimpleCallback<Pair<SourceFile, NamedSourceCodeAspect>, Void> sourceFileUpdateCallback) {
+        NamedSourceCodeAspect unclassified = new NamedSourceCodeAspect(CodeConfigurationUtils.UNCLASSIFIED_FILES);
+        NamedSourceCodeAspect filesInMultipleScopes = new NamedSourceCodeAspect(CodeConfigurationUtils.FILES_IN_MULTIPLE_CLASSIFICATIONS);
 
         for (SourceFile sourceFile : sourceFiles) {
             int fileAspectCount = 0;
-            for (SourceCodeAspect aspect : aspects) {
+            for (NamedSourceCodeAspect aspect : aspects) {
                 if (aspect.getSourceFiles().contains(sourceFile)) {
                     fileAspectCount++;
                 }
@@ -71,8 +68,8 @@ public class CodeConfigurationUtils {
         }
     }
 
-    public static void removeEmptyAspects(List<SourceCodeAspect> aspects) {
-        List<SourceCodeAspect> aspectsWithFiles = new ArrayList<>();
+    public static void removeEmptyAspects(List<NamedSourceCodeAspect> aspects) {
+        List<NamedSourceCodeAspect> aspectsWithFiles = new ArrayList<>();
         aspects.forEach(aspect -> {
             if (aspect.getSourceFiles().size() > 0) {
                 aspectsWithFiles.add(aspect);

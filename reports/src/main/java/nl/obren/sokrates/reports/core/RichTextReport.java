@@ -8,21 +8,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RichTextReport {
-    public static final String GROUP_WITH_SHADOW = "margin-bottom: 30px; border: solid lightgrey 1px; padding: 20px; " +
-            " box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19); border-radius: 3px;";
     private List<RichTextFragment> richTextFragments = new ArrayList<>();
     private String id;
+    private String fileName = "";
     private String displayName;
     private String group = "";
     private String description = "";
-    private String logoLink;
+    private String logoLink = "";
     private List<Finding> findings = new ArrayList<>();
 
     public RichTextReport() {
     }
 
-    public RichTextReport(String id, String description) {
-        this(id, description, "");
+    public RichTextReport(String id, String fileName) {
+        this.id = id;
+        this.displayName = id;
+        this.fileName = fileName;
     }
 
     public RichTextReport(String id, String description, String logoLink) {
@@ -54,6 +55,18 @@ public class RichTextReport {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getFileName() {
+        if (StringUtils.isBlank(fileName)) {
+            return id.replace("-", "").replace(" ", "") + ".html";
+        } else {
+            return fileName;
+        }
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 
     public String getDescription() {

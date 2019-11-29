@@ -1,7 +1,7 @@
 package nl.obren.sokrates.sourcecode;
 
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import org.junit.Test;
 
@@ -107,10 +107,10 @@ public class LogicalDecompositionTest {
 
         LogicalDecomposition logicalDecomposition = new LogicalDecomposition("test");
         logicalDecomposition.setComponentsFolderDepth(0);
-        SourceCodeAspect a = new SourceCodeAspect("A");
+        NamedSourceCodeAspect a = new NamedSourceCodeAspect("A");
         a.getSourceFileFilters().add(new SourceFileFilter(".*/a/.*", ""));
         logicalDecomposition.getComponents().add(a);
-        SourceCodeAspect b = new SourceCodeAspect("B");
+        NamedSourceCodeAspect b = new NamedSourceCodeAspect("B");
         b.getSourceFileFilters().add(new SourceFileFilter(".*/b/.*", ""));
         logicalDecomposition.getComponents().add(b);
 

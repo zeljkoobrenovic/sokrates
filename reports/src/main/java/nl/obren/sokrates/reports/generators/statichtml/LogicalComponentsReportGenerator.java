@@ -8,7 +8,7 @@ import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.reports.utils.ScopesRenderer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.LogicalDecompositionAnalysisResults;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.dependencies.DependencyUtils;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
@@ -23,18 +23,20 @@ import java.util.stream.Collectors;
 public class LogicalComponentsReportGenerator {
     private CodeAnalysisResults codeAnalysisResults;
     private boolean elaborate = true;
+    private RichTextReport report;
 
     public LogicalComponentsReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
     }
 
     public void addCodeOrganizationToReport(RichTextReport report) {
-        addSummary(report);
-        addErrors(report);
-        addFooter(report);
+        this.report = report;
+        addSummary();
+        addErrors();
+        addFooter();
     }
 
-    private void addErrors(RichTextReport report) {
+    private void addErrors() {
         codeAnalysisResults.getLogicalDecompositionsAnalysisResults().forEach(result -> {
             if (result.getComponentDependenciesErrors().size() > 0) {
                 report.startSection("WARNINGS (" + result.getComponentDependenciesErrors().size() + ")", "Places where dependencies cannot be resolved uniquely");
@@ -48,18 +50,20 @@ public class LogicalComponentsReportGenerator {
         });
     }
 
-    private void addFooter(RichTextReport report) {
+    private void addFooter() {
         report.addLineBreak();
         report.addHorizontalLine();
         report.addParagraph(RichTextRenderingUtils.italic(new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date())));
     }
 
-    private void addSummary(RichTextReport report) {
+    private void addSummary() {
         report.startSection("Intro", "");
         if (elaborate) {
-            appendIntroduction(report);
+            appendIntroduction();
         }
+        report.endSection();
 
+        report.startSection("Logical Decompositions Overview", "");
         int size = codeAnalysisResults.getLogicalDecompositionsAnalysisResults().size();
         report.addParagraph("Analyzed system has <b>" + size + "</b> logical decomposition" + (size > 1 ? "s" : "") + ":");
         report.startUnorderedList();
@@ -72,43 +76,47 @@ public class LogicalComponentsReportGenerator {
 
         int[] sectionIndex = {1};
         codeAnalysisResults.getLogicalDecompositionsAnalysisResults().forEach(logicalDecomposition -> {
-            report.startSection("Logical Decomposition #" + sectionIndex[0] + ": " + logicalDecomposition.getKey().toUpperCase(), getDecompositionDescription(logicalDecomposition));
-
-            List<NumericMetric> fileCountPerExtension = logicalDecomposition.getFileCountPerComponent();
-            List<NumericMetric> linesOfCodePerExtension = logicalDecomposition.getLinesOfCodePerComponent();
-
-            ScopesRenderer renderer = new ScopesRenderer();
-            renderer.setLinesOfCodeInMain(codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode());
-
-            renderer.setTitle("Components");
-            renderer.setDescription("");
-            renderer.setFileCountPerComponent(fileCountPerExtension);
-            renderer.setLinesOfCode(linesOfCodePerExtension);
-            renderer.setMaxFileCount(codeAnalysisResults.getMaxFileCount());
-            renderer.setMaxLinesOfCode(codeAnalysisResults.getMaxLinesOfCode());
-            renderer.renderReport(report, "The \"" + logicalDecomposition.getLogicalDecomposition().getName() + "\" logical decomposition has <b>" + logicalDecomposition.getLogicalDecomposition().getComponents().size() + "</b> components.");
-
-            report.startSubSection("Alternative Visuals", "");
-            report.startUnorderedList();
-            report.addListItem("<a href='visuals/bubble_chart_components_" + (sectionIndex[0]) + ".html'>Bubble Chart</a>");
-            report.addListItem("<a href='visuals/tree_map_components_" + (sectionIndex[0]) + ".html'>Tree Map</a>");
-            report.endUnorderedList();
-            report.endSection();
-
-            List<ComponentDependency> componentDependencies = logicalDecomposition.getComponentDependencies();
-            report.startSubSection("Dependencies", "Dependencies among components are <b>static</b> code dependencies among files in different components.");
-            if (componentDependencies != null && componentDependencies.size() > 0) {
-                addComponentDependeciesSection(report, logicalDecomposition, componentDependencies);
-            } else {
-                report.addParagraph("No component dependencies found.");
-            }
-            report.endSection();
-            report.endSection();
+            analyzeLogicalDecomposition(sectionIndex[0], logicalDecomposition);
             sectionIndex[0]++;
         });
+        report.endSection();
     }
 
-    private void addComponentDependeciesSection(RichTextReport report, LogicalDecompositionAnalysisResults logicalDecomposition, List<ComponentDependency> componentDependencies) {
+    private void analyzeLogicalDecomposition(int sectionIndex, LogicalDecompositionAnalysisResults logicalDecomposition) {
+        report.startSection("Logical Decomposition #" + sectionIndex + ": " + logicalDecomposition.getKey().toUpperCase(), getDecompositionDescription(logicalDecomposition));
+
+        List<NumericMetric> fileCountPerExtension = logicalDecomposition.getFileCountPerComponent();
+        List<NumericMetric> linesOfCodePerExtension = logicalDecomposition.getLinesOfCodePerComponent();
+
+        ScopesRenderer renderer = new ScopesRenderer();
+        renderer.setLinesOfCodeInMain(codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode());
+
+        renderer.setDescription("");
+        renderer.setFileCountPerComponent(fileCountPerExtension);
+        renderer.setLinesOfCode(linesOfCodePerExtension);
+        renderer.setMaxFileCount(codeAnalysisResults.getMaxFileCount());
+        renderer.setMaxLinesOfCode(codeAnalysisResults.getMaxLinesOfCode());
+        renderer.renderReport(report, "The \"" + logicalDecomposition.getLogicalDecomposition().getName() + "\" logical decomposition has <b>" + logicalDecomposition.getLogicalDecomposition().getComponents().size() + "</b> components.");
+
+        report.startSubSection("Alternative Visuals", "");
+        report.startUnorderedList();
+        report.addListItem("<a href='visuals/bubble_chart_components_" + (sectionIndex) + ".html'>Bubble Chart</a>");
+        report.addListItem("<a href='visuals/tree_map_components_" + (sectionIndex) + ".html'>Tree Map</a>");
+        report.endUnorderedList();
+        report.endSection();
+
+        List<ComponentDependency> componentDependencies = logicalDecomposition.getComponentDependencies();
+        report.startSubSection("Dependencies", "Dependencies among components are <b>static</b> code dependencies among files in different components.");
+        if (componentDependencies != null && componentDependencies.size() > 0) {
+            addComponentDependeciesSection(logicalDecomposition, componentDependencies);
+        } else {
+            report.addParagraph("No component dependencies found.");
+        }
+        report.endSection();
+        report.endSection();
+    }
+
+    private void addComponentDependeciesSection(LogicalDecompositionAnalysisResults logicalDecomposition, List<ComponentDependency> componentDependencies) {
         report.startUnorderedList();
         report.addListItem("Analyzed system has <b>" + componentDependencies.size() + "</b> links (arrows) between components.");
         report.addListItem("The number on the arrow represents the number of files from referring component that depend on files in referred component.");
@@ -142,39 +150,53 @@ public class LogicalComponentsReportGenerator {
         report.addTableHeader("From Component<br/>&nbsp;--> To Component", "From Component<br/>(files with dependencies)");
         Collections.sort(componentDependencies, (o1, o2) -> o2.getCount() - o1.getCount());
         componentDependencies.forEach(componentDependency -> {
-            report.startTableRow();
-            report.addTableCell(
-                    componentDependency.getFromComponent()
-                            + "<br/>&nbsp&nbsp;-->&nbsp"
-                            + componentDependency.getToComponent()
-            );
-            report.addHtmlContent("<td>");
-            int locFromDuplications = componentDependency.getLocFrom();
-            SourceCodeAspect fromComponentByName = logicalDecomposition.getLogicalDecomposition().getComponentByName(componentDependency.getFromComponent());
-            String percentageHtmlFragment = null;
-            int dependencyCount = componentDependency.getCount();
-            if (fromComponentByName != null) {
-                SimpleOneBarChart chart = new SimpleOneBarChart();
-                chart.setWidth(320);
-                chart.setMaxBarWidth(100);
-                chart.setBarHeight(14);
-                chart.setBarStartXOffset(2);
-                chart.setSmallerFontSize();
-                double percentage = 100.0 * locFromDuplications / fromComponentByName.getLinesOfCode();
-                String percentageText = FormattingUtils.getFormattedPercentage(percentage) + "%";
-                percentageHtmlFragment = chart.getPercentageSvg(percentage, "", dependencyCount + " " + (dependencyCount == 1 ? "file" : "files") + ", " + locFromDuplications + " LOC (" + percentageText + ")");
-            }
-
-            report.addShowMoreBlock("",
-                    "<textarea style='width:90%; height: 20em;'>"
-                            + componentDependency.getPathsFrom().stream().collect(Collectors.joining("\n")) +
-                            "</textarea>",
-                    (percentageHtmlFragment != null ? "" + percentageHtmlFragment : dependencyCount + " files (" + locFromDuplications + " LOC)<br/>")
-            );
-            report.addHtmlContent("</td>");
-            report.endTableRow();
+            addDependecyRow(logicalDecomposition, componentDependency);
         });
         report.endTable();
+    }
+
+    private void addDependecyRow(LogicalDecompositionAnalysisResults logicalDecomposition, ComponentDependency componentDependency) {
+        report.startTableRow();
+        report.addTableCell(
+                componentDependency.getFromComponent()
+                        + "<br/>&nbsp&nbsp;-->&nbsp"
+                        + componentDependency.getToComponent()
+        );
+        report.addHtmlContent("<td>");
+        int locFromDuplications = componentDependency.getLocFrom();
+        NamedSourceCodeAspect fromComponentByName = logicalDecomposition.getLogicalDecomposition().getComponentByName(componentDependency.getFromComponent());
+        String percentageHtmlFragment = null;
+        int dependencyCount = componentDependency.getCount();
+        if (fromComponentByName != null) {
+            percentageHtmlFragment = getFromDependecyCoverageSvg(locFromDuplications, fromComponentByName, dependencyCount);
+        }
+
+        report.addShowMoreBlock("",
+                "<textarea style='width:90%; height: 20em;'>"
+                        + componentDependency.getPathsFrom().stream().collect(Collectors.joining("\n")) +
+                        "</textarea>",
+                (percentageHtmlFragment != null ? "" + percentageHtmlFragment : dependencyCount + " files (" + locFromDuplications + " LOC)<br/>")
+        );
+        report.addHtmlContent("</td>");
+        report.endTableRow();
+    }
+
+    private String getFromDependecyCoverageSvg(int locFromDuplications, NamedSourceCodeAspect fromComponentByName, int dependencyCount) {
+        SimpleOneBarChart chart = new SimpleOneBarChart();
+        chart.setWidth(320);
+        chart.setMaxBarWidth(100);
+        chart.setBarHeight(14);
+        chart.setBarStartXOffset(2);
+        chart.setSmallerFontSize();
+
+        double percentage = 100.0 * locFromDuplications / fromComponentByName.getLinesOfCode();
+        String percentageText = FormattingUtils.getFormattedPercentage(percentage) + "%";
+
+        String textRight = dependencyCount + " "
+                + (dependencyCount == 1 ? "file" : "files") + ", "
+                + locFromDuplications + " LOC (" + percentageText + ")";
+
+        return chart.getPercentageSvg(percentage, "", textRight);
     }
 
     private String getDecompositionDescription(LogicalDecompositionAnalysisResults logicalDecomposition) {
@@ -189,7 +211,7 @@ public class LogicalComponentsReportGenerator {
         return decompositionDescription;
     }
 
-    private void appendIntroduction(RichTextReport report) {
+    private void appendIntroduction() {
         String shortIntro = "";
         shortIntro += "<b>Logical decomposition</b> is a representation of the organization of the <b>main</b> source code, where every and each file is " +
                 "put in exactly one <b>logical component</b>.";
