@@ -113,7 +113,7 @@ public class DuplicationInstance {
     }
 
     @JsonIgnore
-    public String getFilesDisplayString() {
+    public String getFilesDisplayString(boolean linkToFiles) {
         StringBuilder stringBuilder = new StringBuilder();
         int i[] = {0};
         duplicatedFileBlocks.forEach(block -> {
@@ -124,11 +124,15 @@ public class DuplicationInstance {
                 if (!stringBuilder.toString().isEmpty()) {
                     stringBuilder.append("\n");
                 }
-                stringBuilder.append("<a href='");
-                stringBuilder.append("../src/main/" + block.getSourceFile().getRelativePath());
-                stringBuilder.append("' target='_blank'>");
-                stringBuilder.append(block.getSourceFile().getFile().getName());
-                stringBuilder.append("</a>");
+                if (linkToFiles) {
+                    stringBuilder.append("<a href='");
+                    stringBuilder.append("../src/main/" + block.getSourceFile().getRelativePath());
+                    stringBuilder.append("' target='_blank'>");
+                    stringBuilder.append(block.getSourceFile().getFile().getName());
+                    stringBuilder.append("</a>");
+                } else {
+                    stringBuilder.append(block.getSourceFile().getFile().getName());
+                }
             }
             i[0]++;
         });

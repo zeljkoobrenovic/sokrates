@@ -7,7 +7,7 @@ import java.util.List;
 
 public class FilesReportUtils {
 
-    public static String getFilesTable(List<SourceFile> sourceFiles) {
+    public static String getFilesTable(List<SourceFile> sourceFiles, boolean linkToFiles) {
         StringBuilder table = new StringBuilder();
 
         table.append("<table style='width: 80%'>\n");
@@ -16,13 +16,19 @@ public class FilesReportUtils {
         sourceFiles.forEach(sourceFile -> {
             table.append("<tr>\n");
 
-            String href = "../src/main/" + sourceFile.getRelativePath();
-
             File file = new File(sourceFile.getRelativePath());
+
+            String fileNameFragment;
+
+            if (linkToFiles) {
+                String href = "../src/main/" + sourceFile.getRelativePath();
+                fileNameFragment = "<a target='blank' href='" + href + "'>" + file.getName() + "</a>";
+            } else {
+                fileNameFragment = file.getName();
+            }
+
             table.append("<td><b>"
-                    + "<a target='blank' href='"
-                    + href + "'>"
-                    + file.getName() + "</a></b><br/>in " + file.getParent() + "<br/>" +
+                    + fileNameFragment + "</b><br/>in " + file.getParent() + "<br/>" +
                     "</td>\n");
             table.append("<td>" + sourceFile.getLinesOfCode() + "</td>\n");
 

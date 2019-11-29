@@ -35,7 +35,7 @@ public class FileSizeReportGenerator {
         report.addListItem("To learn more about bloaters and how to deal with long code structures, Sokrates recommends the following resources:");
         report.startUnorderedList();
         report.addListItem("<a target='_blank' href='https://sourcemaking.com/refactoring/smells/bloaters'>Refactoring bloaters</a>, sourcemaking.com");
-        report.addListItem("<a target='_blank' href='https://sourcemaking.com/antipatterns/the-blob'>The Blob Software Development Anit-Pattern</a>, sourcemaking.com");
+        report.addListItem("<a target='_blank' href='https://sourcemaking.com/antipatterns/the-blob'>The Blob Software Development Anti-Pattern</a>, sourcemaking.com");
 
         report.endUnorderedList();
         report.endUnorderedList();
@@ -99,7 +99,8 @@ public class FileSizeReportGenerator {
     private void addLongestFilesList(RichTextReport report) {
         List<SourceFile> longestFiles = codeAnalysisResults.getFilesAnalysisResults().getLongestFiles();
         report.startSection("Longest Files (Top " + longestFiles.size() + ")", "");
-        report.addHtmlContent(FilesReportUtils.getFilesTable(longestFiles).toString());
+        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+        report.addHtmlContent(FilesReportUtils.getFilesTable(longestFiles, cacheSourceFiles).toString());
         report.endSection();
     }
 }

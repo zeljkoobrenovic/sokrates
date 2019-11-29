@@ -39,7 +39,7 @@ public class FileListExporter {
             BasicColorInfo color = getRiskProfileColor(sourceFileSizeDistribution, file.getLinesOfCode());
             units.add(new Unit3D(file.getFile().getPath(), file.getLinesOfCode(), color));
         });
-        new X3DomExporter().export(units, false, 50);
+        new X3DomExporter("A 3D View of All Files", "Each block is one file. The height of the block represents the file relative size in lines of code. The color of the file represents its unit size category (green=0-200, yellow=201-500, orange=501-1000, red=1001+).").export(units, false, 50);
     }
 
     public BasicColorInfo getRiskProfileColor(SourceFileSizeDistribution distribution, int linesOfCode) {

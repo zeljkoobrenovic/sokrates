@@ -8,6 +8,7 @@ import java.util.List;
 public class AnalysisConfig {
     private boolean skipDuplication = false;
     private boolean skipDependencies = false;
+    private boolean cacheSourceFiles = true;
     private List<AnalyzerOverride> analyzerOverrides = new ArrayList<>();
 
     public boolean isSkipDuplication() {
@@ -32,5 +33,13 @@ public class AnalysisConfig {
 
     public void setAnalyzerOverrides(List<AnalyzerOverride> analyzerOverrides) {
         this.analyzerOverrides = analyzerOverrides;
+    }
+
+    public boolean isCacheSourceFiles() {
+        return cacheSourceFiles;
+    }
+
+    public void setCacheSourceFiles(boolean cacheSourceFiles) {
+        this.cacheSourceFiles = cacheSourceFiles;
     }
 }

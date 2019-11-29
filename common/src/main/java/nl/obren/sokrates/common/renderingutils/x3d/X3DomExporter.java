@@ -19,6 +19,7 @@ public class X3DomExporter {
             "        <link rel=\"stylesheet\" type=\"text/css\" href=\"https://examples.x3dom.org/example/x3dom.css\" />\n" +
             "        <script type=\"text/javascript\" src=\"https://examples.x3dom.org/example/x3dom.js\"></script>\n" +
             "    </head>\n" +
+            "    <style>body { font-family: Arial; margin: 20px;}</style>\n" +
             "       \n" +
             "<body>\n" +
             "\n" +
@@ -45,11 +46,16 @@ public class X3DomExporter {
     private static final Log LOG = LogFactory.getLog(X3DomExporter.class);
     private boolean groupPerComponent = true;
     private File exportFile;
+    private String title = "A 3D View";
+    private String description = "";
 
-    public X3DomExporter() {
+    public X3DomExporter(String title, String description) {
+        this.title = title;
+        this.description = description;
     }
 
-    public X3DomExporter(File exportFile) {
+    public X3DomExporter(File exportFile, String title, String description) {
+        this(title, description);
         this.exportFile = exportFile;
     }
 
@@ -96,7 +102,12 @@ public class X3DomExporter {
                 body.append("</Transform>\n");
                 position += getSqrtRows(nodesInComponent) + 2;
             }
-            FileUtils.write(file, "\n" + HTML_3D_HEADER + body.toString() + HTML_3D_FOOTER, UTF_8);
+            String headSectionFragment = "<h1>" + title + "</h1>";
+            headSectionFragment += "<p>" + description + "</p>";
+            FileUtils.write(file, "\n" + HTML_3D_HEADER
+                    + headSectionFragment
+                    + body.toString()
+                    + HTML_3D_FOOTER, UTF_8);
             if (exportFile == null) SystemUtils.openFile(file);
         } catch (IOException e) {
             LOG.error(e);

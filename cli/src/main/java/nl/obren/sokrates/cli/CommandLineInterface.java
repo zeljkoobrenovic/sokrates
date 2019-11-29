@@ -220,7 +220,9 @@ public class CommandLineInterface {
         File srcCache = dataExporter.getCodeCacheFolder(reportsFolder);
         info("HTML reports: <a href='" + htmlReports.getPath() + "/index.html'>" + htmlReports.getPath() + "</a>");
         info("Raw data: <a href='" + dataReports.getPath() + "'>" + dataReports.getPath() + "</a>");
-        info("Source code cache : <a href='" + srcCache.getPath() + "'>" + srcCache.getPath() + "</a>");
+        if (analysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles()) {
+            info("Source code cache : <a href='" + srcCache.getPath() + "'>" + srcCache.getPath() + "</a>");
+        }
         info("");
         info("");
         BasicSourceCodeReportGenerator generator = new BasicSourceCodeReportGenerator(codeAnalyzer.getCodeAnalyzerSettings(), analysisResults, inputFile);
@@ -256,10 +258,16 @@ public class CommandLineInterface {
     }
 
     private void generate3DUnitsView(File visualsFolder, CodeAnalysisResults analysisResults) {
-        List<Unit3D> unit3D = new ArrayList<>();
+        List<Unit3D> unit3DCyclomaticComplexity = new ArrayList<>();
         analysisResults.getUnitsAnalysisResults().getAllUnits().forEach(unit -> {
             BasicColorInfo color = Thresholds.getColor(Thresholds.UNIT_MCCABE, unit.getMcCabeIndex());
-            unit3D.add(new Unit3D(unit.getLongName(), unit.getLinesOfCode(), color));
+            unit3DCyclomaticComplexity.add(new Unit3D(unit.getLongName(), unit.getLinesOfCode(), color));
+        });
+
+        List<Unit3D> unit3DSize = new ArrayList<>();
+        analysisResults.getUnitsAnalysisResults().getAllUnits().forEach(unit -> {
+            BasicColorInfo color = Thresholds.getColor(Thresholds.UNIT_LINES, unit.getLinesOfCode());
+            unit3DSize.add(new Unit3D(unit.getLongName(), unit.getLinesOfCode(), color));
         });
 
         List<Unit3D> files3D = new ArrayList<>();
@@ -269,8 +277,11 @@ public class CommandLineInterface {
             files3D.add(new Unit3D(file.getFile().getPath(), file.getLinesOfCode(), color));
         });
 
-        new X3DomExporter(new File(visualsFolder, "units_3d.html")).export(unit3D, false, 10);
-        new X3DomExporter(new File(visualsFolder, "files_3d.html")).export(files3D, false, 50);
+        new X3DomExporter(new File(visualsFolder, "units_3d_complexity.html"), "A 3D View of All Units (Cyclomatic Complexity)", "Each block is one unit. The height of the block represents the file unit size in lines of code. The color of the unit represents its cyclomatic complexity category (green=0-5, yellow=6-10, orange=11-25, red=26+).").export(unit3DCyclomaticComplexity, false, 10);
+
+        new X3DomExporter(new File(visualsFolder, "units_3d_size.html"), "A 3D View of All Units (Unit Size)", "Each block is one unit. The height of the block represents the file unit size in lines of code. The color of the unit represents its unit size category (green=0-20, yellow=21-50, orange=51-100, red=101+).").export(unit3DSize, false, 10);
+
+        new X3DomExporter(new File(visualsFolder, "files_3d.html"), "A 3D View of All Files", "Each block is one file. The height of the block represents the file relative size in lines of code. The color of the file represents its unit size category (green=0-200, yellow=201-500, orange=501-1000, red=1001+).").export(files3D, false, 50);
     }
 
     public BasicColorInfo getFileSizeColor(SourceFileSizeDistribution distribution, int linesOfCode) {

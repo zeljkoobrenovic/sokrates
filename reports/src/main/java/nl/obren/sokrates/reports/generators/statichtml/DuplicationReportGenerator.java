@@ -35,7 +35,8 @@ public class DuplicationReportGenerator {
             report.addHtmlContent("<td>" + instance.getBlockSize() + "</td>");
             report.addHtmlContent("<td>x&nbsp;" + instance.getDuplicatedFileBlocks().size() + "</td>");
             report.addHtmlContent("<td>" + formatDisplayString(instance.getFoldersDisplayString()) + "</td>");
-            report.addHtmlContent("<td>" + formatDisplayStringSimple(instance.getFilesDisplayString()) + "</td>");
+            boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+            report.addHtmlContent("<td>" + formatDisplayStringSimple(instance.getFilesDisplayString(cacheSourceFiles)) + "</td>");
             report.addHtmlContent("<td>" + formatDisplayString(instance.getLinesDisplayString()) + "</td>");
             report.addHtmlContent("<td><a target='_blank' href='" + url + "'>view</a></td>");
 

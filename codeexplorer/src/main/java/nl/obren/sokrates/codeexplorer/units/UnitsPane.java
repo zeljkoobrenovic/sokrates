@@ -20,7 +20,8 @@ import nl.obren.sokrates.common.renderingutils.Threshold;
 import nl.obren.sokrates.common.renderingutils.Thresholds;
 import nl.obren.sokrates.common.renderingutils.x3d.Unit3D;
 import nl.obren.sokrates.common.renderingutils.x3d.X3DomExporter;
-import nl.obren.sokrates.common.utils.*;
+import nl.obren.sokrates.common.utils.BasicColorInfo;
+import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
@@ -100,7 +101,9 @@ public class UnitsPane extends BorderPane {
                 BasicColorInfo color = Thresholds.getColor(Thresholds.UNIT_MCCABE, unit.getMcCabeIndex());
                 unit3Ds.add(new Unit3D(unit.getLongName(), unit.getLinesOfCode(), color));
             });
-            new X3DomExporter().export(unit3Ds, false, divideByFactor);
+            new X3DomExporter("A 3D View of All Units", "Each block is one unit. The height of the block represents the file unit size in lines of code. The color of the unit represents its cyclomatic complexity category (green=0-5, yellow=6-10, orange=11-25, red=26+).").export(unit3Ds, false, divideByFactor);
+
+
         }
     }
 

@@ -37,12 +37,14 @@ public class DataExporter {
     public static final String DATA_FOLDER_NAME = "data";
     private static final Log LOG = LogFactory.getLog(DataExporter.class);
     private ProgressFeedback progressFeedback;
+    private CodeConfiguration codeConfiguration;
 
     public DataExporter(ProgressFeedback progressFeedback) {
         this.progressFeedback = progressFeedback;
     }
 
     public void saveData(CodeConfiguration codeConfiguration, File reportsFolder, CodeAnalysisResults analysisResults) throws IOException {
+        this.codeConfiguration = codeConfiguration;
         File dataFolder = getDataFolder(reportsFolder);
 
         exportJson(analysisResults, dataFolder);
@@ -64,8 +66,10 @@ public class DataExporter {
         saveUnitFragmentFiles(codeCacheFolder,
                 analysisResults.getUnitsAnalysisResults().getMostComplexUnits(), "most_complex_unit");
 
-        saveAllUnitFragmentFiles(codeCacheFolder,
-                analysisResults.getUnitsAnalysisResults().getAllUnits(), "all_units");
+        if (codeConfiguration.getAnalysis().isCacheSourceFiles()) {
+            saveAllUnitFragmentFiles(codeCacheFolder,
+                    analysisResults.getUnitsAnalysisResults().getAllUnits(), "all_units");
+        }
 
         saveDuplicateFragmentFiles(codeCacheFolder,
                 analysisResults.getDuplicationAnalysisResults().getLongestDuplicates(), "longest_duplicates");
@@ -100,7 +104,7 @@ public class DataExporter {
     }
 
     private void saveUnitFragmentFiles(File srcCacheFolder, List<UnitInfo> units, String fragmentType) throws IOException {
-        File fragmentsFolder = recreatFolder(srcCacheFolder, "fragments/" + fragmentType);
+        File fragmentsFolder = recreateFolder(srcCacheFolder, "fragments/" + fragmentType);
 
         detailedInfo(" - saving source code cache for the " + fragmentType + "fragments");
         int count[] = {0};
@@ -120,7 +124,7 @@ public class DataExporter {
     }
 
     private void saveDuplicateFragmentFiles(File srcCacheFolder, List<DuplicationInstance> duplicates, String fragmentType) throws IOException {
-        File fragmentsFolder = recreatFolder(srcCacheFolder, "fragments/" + fragmentType);
+        File fragmentsFolder = recreateFolder(srcCacheFolder, "fragments/" + fragmentType);
 
         detailedInfo(" - saving source code cache for the " + fragmentType + "fragments");
         int count[] = {0};
@@ -147,7 +151,7 @@ public class DataExporter {
         });
     }
 
-    private File recreatFolder(File srcCacheFolder, String s) throws IOException {
+    private File recreateFolder(File srcCacheFolder, String s) throws IOException {
         File fragmentsFolder = new File(srcCacheFolder, s);
         if (fragmentsFolder.exists()) {
             FileUtils.deleteDirectory(fragmentsFolder);
@@ -157,7 +161,7 @@ public class DataExporter {
     }
 
     private void saveAllUnitFragmentFiles(File srcCacheFolder, List<UnitInfo> units, String fragmentType) throws IOException {
-        File fragmentsFolder = recreatFolder(srcCacheFolder, "fragments/" + fragmentType);
+        File fragmentsFolder = recreateFolder(srcCacheFolder, "fragments/" + fragmentType);
 
         detailedInfo(" - saving source code cache for the " + fragmentType + "fragments");
         int count[] = {0};
@@ -189,18 +193,20 @@ public class DataExporter {
         });
         FileUtils.write(filesListFile, new JsonGenerator().generate(files), UTF_8);
 
-        File aspectCodeCacheFolder = recreatFolder(srcCacheFolder, aspectName);
+        File aspectCodeCacheFolder = recreateFolder(srcCacheFolder, aspectName);
 
-        Map<String, List<String>> contents = new HashMap<>();
-        detailedInfo(" - saving source code cache for the <b>" + aspectName + "</b> aspect in <a href='" + aspectCodeCacheFolder.getPath() + "'>" + aspectCodeCacheFolder.getPath() + "</a>");
-        aspect.getSourceFiles().forEach(sourceFile -> {
-            contents.put(sourceFile.getRelativePath(), sourceFile.getLines());
-            try {
-                FileUtils.write(new File(aspectCodeCacheFolder, sourceFile.getRelativePath()), sourceFile.getContent(), UTF_8);
-            } catch (IOException e) {
-                LOG.warn(e);
-            }
-        });
+        if (codeConfiguration.getAnalysis().isCacheSourceFiles()) {
+            Map<String, List<String>> contents = new HashMap<>();
+            detailedInfo(" - saving source code cache for the <b>" + aspectName + "</b> aspect in <a href='" + aspectCodeCacheFolder.getPath() + "'>" + aspectCodeCacheFolder.getPath() + "</a>");
+            aspect.getSourceFiles().forEach(sourceFile -> {
+                contents.put(sourceFile.getRelativePath(), sourceFile.getLines());
+                try {
+                    FileUtils.write(new File(aspectCodeCacheFolder, sourceFile.getRelativePath()), sourceFile.getContent(), UTF_8);
+                } catch (IOException e) {
+                    LOG.warn(e);
+                }
+            });
+        }
     }
 
     public File getCodeCacheFolder(File reportsFolder) {
