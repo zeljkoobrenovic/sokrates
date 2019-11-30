@@ -27,6 +27,7 @@ public class ScopesRenderer {
     private int totalNumberOfRegexMatches = 0;
     private NamedSourceCodeAspect aspect;
     private boolean inSection = true;
+    private String filesListPath;
 
     public List<NumericMetric> getFileCountPerComponent() {
         return fileCountPerComponent;
@@ -100,13 +101,21 @@ public class ScopesRenderer {
         this.linesOfCodeInMain = linesOfCodeInMain;
     }
 
+    public String getFilesListPath() {
+        return filesListPath;
+    }
+
+    public void setFilesListPath(String filesListPath) {
+        this.filesListPath = filesListPath;
+    }
+
     public void renderReport(RichTextReport report, String description) {
         updateCountVariables();
         if (fileCountPerComponent.size() > 0) {
             if (linesOfCode.size() > 0 && linesCount > 0) {
                 if (inSection) {
                     Collections.sort(linesOfCode, (o1, o2) -> -Integer.compare(o1.getValue().intValue(), o2.getValue().intValue()));
-                    report.startSubSection("Overview", description);
+                    report.startSubSection(title, description);
                     renderDetails(report, false);
                     if (linesOfCode.size() > 1) {
                         report.startUnorderedList();
@@ -200,7 +209,13 @@ public class ScopesRenderer {
         }
         report.startUnorderedList();
         if (criteriaDefined) {
-            report.addListItem("<b>" + filesCount + "</b> files match" + (filesCount == 1 ? "es" : "") + " defined criteria (" +
+            String filesFragment;
+            if (StringUtils.isNotBlank(filesListPath)) {
+                filesFragment = "<a href='../data/" + filesListPath + "'><b>" + filesCount + "</b> files</a>";
+            } else {
+                filesFragment = "<b>" + filesCount + "</b> files";
+            }
+            report.addListItem(filesFragment + " match" + (filesCount == 1 ? "es" : "") + " defined criteria (" +
                     "<b>" + RichTextRenderingUtils.renderNumber(linesCount) + "</b> lines of code, "
                     + "<b>" + RichTextRenderingUtils.renderNumber(100.0 * linesCount / linesOfCodeInMain) + "%</b> vs. main code)"
                     + (fileCountPerComponent.size() == 1 ? ". All matches are in " + fileCountPerComponent.get(0).getName() + " files." : ":"));

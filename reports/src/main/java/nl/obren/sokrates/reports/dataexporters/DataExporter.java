@@ -64,6 +64,11 @@ public class DataExporter {
     private void exportFileLists() {
         saveExcludedByExtensionFiles();
         saveExplicitlyIgnoredFiles();
+        saveSourceCodeAspect(analysisResults.getMainAspectAnalysisResults().getAspect());
+        saveSourceCodeAspect(analysisResults.getTestAspectAnalysisResults().getAspect());
+        saveSourceCodeAspect(analysisResults.getGeneratedAspectAnalysisResults().getAspect());
+        saveSourceCodeAspect(analysisResults.getBuildAndDeployAspectAnalysisResults().getAspect());
+        saveSourceCodeAspect(analysisResults.getOtherAspectAnalysisResults().getAspect());
     }
 
     private void saveExcludedByExtensionFiles() {
@@ -135,6 +140,28 @@ public class DataExporter {
         }
     }
 
+    private void saveSourceCodeAspect(NamedSourceCodeAspect aspect) {
+        StringBuilder content = new StringBuilder();
+
+        List<SourceFile> files = new ArrayList<>(aspect.getSourceFiles());
+        Collections.sort(files, Comparator.comparing(SourceFile::getRelativePath));
+
+        files.forEach(sourceFile -> {
+            content.append(sourceFile.getRelativePath());
+            content.append("\n");
+        });
+
+        try {
+            FileUtils.write(new File(dataFolder, DataExporter.getAspectFileListFileName(aspect)), content.toString(), UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String getAspectFileListFileName(NamedSourceCodeAspect aspect) {
+        return "aspect_" + aspect.getFileSystemFriendlyName() + ".txt";
+    }
+
     private void exportSourceFile() throws IOException {
         this.codeCacheFolder = getCodeCacheFolder();
 
@@ -142,7 +169,7 @@ public class DataExporter {
         saveAspectJsonFiles(codeConfiguration.getMain(), "main");
         saveAspectJsonFiles(codeConfiguration.getTest(), "test");
         saveAspectJsonFiles(codeConfiguration.getGenerated(), "generated");
-        saveAspectJsonFiles(codeConfiguration.getBuildAndDeployment(), "build-and-deployment");
+        saveAspectJsonFiles(codeConfiguration.getBuildAndDeployment(), "buildAndDeployment");
         saveAspectJsonFiles(codeConfiguration.getOther(), "other");
 
         UnitsAnalysisResults unitsAnalysisResults = analysisResults.getUnitsAnalysisResults();
@@ -266,7 +293,7 @@ public class DataExporter {
 
 
     private void saveAspectJsonFiles(NamedSourceCodeAspect aspect, String aspectName) throws IOException {
-        File filesListFile = new File(dataFolder, aspectName + "-files.json");
+        File filesListFile = new File(dataFolder, aspectName + "FilesPaths.json");
         detailedInfo(" - storing the file list for the <b>" + aspectName + "</b> aspect in <a href='" + filesListFile.getPath() + "'>" + filesListFile.getPath() + "</a>");
         List<String> files = new ArrayList<>();
         aspect.getSourceFiles().forEach(sourceFile -> {

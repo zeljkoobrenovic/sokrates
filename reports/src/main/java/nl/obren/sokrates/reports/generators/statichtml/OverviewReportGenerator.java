@@ -3,6 +3,7 @@ package nl.obren.sokrates.reports.generators.statichtml;
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.dataexporters.DataExporter;
 import nl.obren.sokrates.reports.utils.ScopesRenderer;
 import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
@@ -51,11 +52,11 @@ public class OverviewReportGenerator {
         appendIntroduction(report);
         ScopesRenderer renderer = getScopesRenderer("", "", counts, code);
         renderer.setInSection(false);
+        renderer.setTitle("All Files in Scope");
         renderer.renderReport(report, "");
         report.endSection();
 
-        renderScopes(report, codeAnalysisResults.getMainAspectAnalysisResults(), "Main Code", "All <b>manually</b> created or maintained source code that defines logic of the product " +
-                "that is  run in a <b>production</b> environment.");
+        renderScopes(report, codeAnalysisResults.getMainAspectAnalysisResults(), "Main Code", "All <b>manually</b> created or maintained source code that defines logic of the product that is  run in a <b>production</b> environment.");
         renderScopes(report, codeAnalysisResults.getTestAspectAnalysisResults(), "Test Code", "Used only for testing of the product. Normally not deployed in a production environment.");
         renderScopes(report, codeAnalysisResults.getGeneratedAspectAnalysisResults(), "Generated Code", "Automatically generated files, not manually changed after generation.");
         renderScopes(report, codeAnalysisResults.getBuildAndDeployAspectAnalysisResults(), "Build and Deployment Code", "Source code used to configure or support build and deployment process.");
@@ -112,11 +113,12 @@ public class OverviewReportGenerator {
 
     public void renderScopes(RichTextReport report, AspectAnalysisResults aspectAnalysisResults, String title, String description) {
         List<NumericMetric> fileCountPerExtension = aspectAnalysisResults.getFileCountPerExtension();
-        List<NumericMetric> linesOfCodePerExtension = aspectAnalysisResults.getLinesOfCodePerExtension();
-
-        ScopesRenderer renderer = getScopesRenderer(title, "", fileCountPerExtension, linesOfCodePerExtension);
 
         if (fileCountPerExtension.size() > 0) {
+            List<NumericMetric> linesOfCodePerExtension = aspectAnalysisResults.getLinesOfCodePerExtension();
+            ScopesRenderer renderer = getScopesRenderer(title, "", fileCountPerExtension, linesOfCodePerExtension);
+            renderer.setTitle(title);
+            renderer.setFilesListPath(DataExporter.getAspectFileListFileName(aspectAnalysisResults.getAspect()));
             renderer.setAspect(aspectAnalysisResults.getAspect());
             renderer.renderReport(report, description);
         }
