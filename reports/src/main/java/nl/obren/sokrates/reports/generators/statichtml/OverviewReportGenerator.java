@@ -4,6 +4,7 @@ import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.ScopesRenderer;
+import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -164,11 +165,12 @@ public class OverviewReportGenerator {
         report.startUnorderedList();
         report.addListItem(scopeSvg);
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(totalNumberOfIncludedFiles) + " files are included in analyses. ");
-        report.addHtmlContent("<li>");
-        report.startShowMoreBlock(RichTextRenderingUtils.renderNumberStrong(numberOfExcludedFiles) + " files are excluded from analyses.", "(...)");
-        report.addHtmlContent(getExcludedExtensionsOverview(codeAnalysisResults.getExcludedExtensions()));
-        report.endShowMoreBlock();
-        report.addHtmlContent("</li>");
+        report.addListItem(RichTextRenderingUtils.renderNumberStrong(numberOfExcludedFiles) + " files are excluded from analyses:");
+        report.startUnorderedList();
+        int filesExcludedByExtensionCount = codeAnalysisResults.getFilesExcludedByExtension().size();
+        report.addListItem("<a href='../data/excluded_files_ignored_extensions.txt'>" + RichTextRenderingUtils.renderNumberStrong(filesExcludedByExtensionCount) + " based on extension</a>.");
+        report.addListItem("<a href='../data/excluded_files_ignored_rules.txt'>" +RichTextRenderingUtils.renderNumberStrong(numberOfExcludedFiles - filesExcludedByExtensionCount) + " based on ignore rules</a>.");
+        report.endUnorderedList();
         report.endUnorderedList();
 
 
@@ -183,7 +185,7 @@ public class OverviewReportGenerator {
         chart.setBarStartXOffset(1);
 
         double percentageIncluded = totalNumberOfFilesInScope > 0 ? 100.0 * totalNumberOfIncludedFiles / totalNumberOfFilesInScope : 0;
-        return chart.getPercentageSvg(percentageIncluded, "" , "" );
+        return chart.getPercentageSvg(percentageIncluded, "", "");
     }
 
     private String describeExclusion(SourceFileFilter exclusion) {
@@ -203,6 +205,12 @@ public class OverviewReportGenerator {
         if (StringUtils.isNotBlank(exclusion.getNote())) {
             description += " (" + exclusion.getNote() + ")";
         }
+        IgnoredFilesGroup ignoredFilesGroup = codeAnalysisResults.getIgnoredFilesGroups().get(exclusion.toString());
+        int ignoredGroupFilesCount = 0;
+        if (ignoredFilesGroup != null) {
+            ignoredGroupFilesCount = ignoredFilesGroup.getSourceFiles().size();
+        }
+        description += " (<b>" + ignoredGroupFilesCount + "</b> file" + (ignoredGroupFilesCount != 1 ? "s" : "") + ")";
         return description + ".";
     }
 

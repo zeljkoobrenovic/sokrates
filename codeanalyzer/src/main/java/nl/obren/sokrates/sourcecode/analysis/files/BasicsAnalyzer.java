@@ -39,6 +39,8 @@ public class BasicsAnalyzer extends Analyzer {
         sourceCodeFiles.load(new File(CodeConfiguration.getAbsoluteSrcRoot(codeConfiguration.getSrcRoot(), codeConfigurationFile)),
                 progressFeedback);
 
+        results.setFilesExcludedByExtension(sourceCodeFiles.getFilesExcludedByExtension());
+        results.setIgnoredFilesGroups(sourceCodeFiles.getIgnoredFilesGroups());
         results.setCodeConfiguration(codeConfiguration);
         results.setTotalNumberOfFilesInScope(sourceCodeFiles.getAllFiles().size());
 

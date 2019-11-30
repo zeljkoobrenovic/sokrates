@@ -216,8 +216,8 @@ public class CommandLineInterface {
 
     private void generateAndSaveReports(File inputFile, File reportsFolder, CodeAnalyzer codeAnalyzer, CodeAnalysisResults analysisResults) {
         File htmlReports = getHtmlFolder(reportsFolder);
-        File dataReports = dataExporter.getDataFolder(reportsFolder);
-        File srcCache = dataExporter.getCodeCacheFolder(reportsFolder);
+        File dataReports = dataExporter.getDataFolder();
+        File srcCache = dataExporter.getCodeCacheFolder();
         info("HTML reports: <a href='" + htmlReports.getPath() + "/index.html'>" + htmlReports.getPath() + "</a>");
         info("Raw data: <a href='" + dataReports.getPath() + "'>" + dataReports.getPath() + "</a>");
         if (analysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles()) {
@@ -304,7 +304,7 @@ public class CommandLineInterface {
     }
 
     private void saveTextualSummary(File reportsFolder, CodeAnalysisResults analysisResults) throws IOException {
-        File jsonFile = new File(dataExporter.getDataFolder(reportsFolder), "textualSummary.txt");
+        File jsonFile = new File(dataExporter.getDataFolder(), "textualSummary.txt");
         FileUtils.write(jsonFile, analysisResults.getTextSummary().toString(), UTF_8);
     }
 

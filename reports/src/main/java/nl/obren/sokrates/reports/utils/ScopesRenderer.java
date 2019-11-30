@@ -106,7 +106,7 @@ public class ScopesRenderer {
             if (linesOfCode.size() > 0 && linesCount > 0) {
                 if (inSection) {
                     Collections.sort(linesOfCode, (o1, o2) -> -Integer.compare(o1.getValue().intValue(), o2.getValue().intValue()));
-                    report.startSubSection(title, description);
+                    report.startSubSection("Overview", description);
                     renderDetails(report, false);
                     if (linesOfCode.size() > 1) {
                         report.startUnorderedList();

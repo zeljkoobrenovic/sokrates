@@ -13,6 +13,8 @@ public class SourceCodeFiles {
     private List<SourceFile> filesInBroadScope = new ArrayList<>();
     private File root;
     private ProgressFeedback progressFeedback = new ProgressFeedback();
+    private Map<String, IgnoredFilesGroup> ignoredFilesGroups = new HashMap<>();
+    private List<SourceFile> filesExcludedByExtension = new ArrayList<>();
 
     public SourceCodeFiles() {
     }
@@ -110,6 +112,8 @@ public class SourceCodeFiles {
                     filesInBroadScope.add(sourceFile);
                 }
                 progressFeedback.progress(++fileIndex[0], allFiles.size());
+            } else {
+                filesExcludedByExtension.add(sourceFile);
             }
         });
         progressFeedback.end();
@@ -120,6 +124,13 @@ public class SourceCodeFiles {
         for (SourceFileFilter filter : exclusions) {
             if (filter.matches(sourceFile)) {
                 exclude = true;
+                String key = filter.toString();
+                IgnoredFilesGroup ignoredFilesGroup = ignoredFilesGroups.get(key);
+                if (ignoredFilesGroup == null) {
+                    ignoredFilesGroup = new IgnoredFilesGroup(filter);
+                    ignoredFilesGroups.put(key,ignoredFilesGroup);
+                }
+                ignoredFilesGroup.getSourceFiles().add(sourceFile);
                 break;
             }
         }
@@ -189,5 +200,21 @@ public class SourceCodeFiles {
         });
 
         return excludedFiles;
+    }
+
+    public Map<String, IgnoredFilesGroup> getIgnoredFilesGroups() {
+        return ignoredFilesGroups;
+    }
+
+    public void setIgnoredFilesGroups(Map<String, IgnoredFilesGroup> ignoredFilesGroups) {
+        this.ignoredFilesGroups = ignoredFilesGroups;
+    }
+
+    public List<SourceFile> getFilesExcludedByExtension() {
+        return filesExcludedByExtension;
+    }
+
+    public void setFilesExcludedByExtension(List<SourceFile> filesExcludedByExtension) {
+        this.filesExcludedByExtension = filesExcludedByExtension;
     }
 }

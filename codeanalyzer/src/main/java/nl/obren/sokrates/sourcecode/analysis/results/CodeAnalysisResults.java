@@ -1,5 +1,7 @@
 package nl.obren.sokrates.sourcecode.analysis.results;
 
+import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
+import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.dependencies.Dependency;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
@@ -34,6 +36,8 @@ public class CodeAnalysisResults {
     private int numberOfExcludedFiles;
     private Map<String, Integer> excludedExtensions;
     private long analysisStartTimeMs;
+    private List<SourceFile> filesExcludedByExtension;
+    private Map<String, IgnoredFilesGroup> ignoredFilesGroups;
 
     public MetricsList getMetricsList() {
         return metricsList;
@@ -207,5 +211,21 @@ public class CodeAnalysisResults {
 
     public void setAnalysisStartTimeMs(long analysisStartTimeMs) {
         this.analysisStartTimeMs = analysisStartTimeMs;
+    }
+
+    public void setFilesExcludedByExtension(List<SourceFile> filesExcludedByExtension) {
+        this.filesExcludedByExtension = filesExcludedByExtension;
+    }
+
+    public List<SourceFile> getFilesExcludedByExtension() {
+        return filesExcludedByExtension;
+    }
+
+    public void setIgnoredFilesGroups(Map<String, IgnoredFilesGroup> ignoredFilesGroups) {
+        this.ignoredFilesGroups = ignoredFilesGroups;
+    }
+
+    public Map<String, IgnoredFilesGroup> getIgnoredFilesGroups() {
+        return ignoredFilesGroups;
     }
 }

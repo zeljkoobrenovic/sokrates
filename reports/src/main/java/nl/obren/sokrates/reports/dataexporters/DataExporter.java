@@ -10,23 +10,24 @@ import nl.obren.sokrates.reports.generators.explorers.DependenciesExplorerGenera
 import nl.obren.sokrates.reports.generators.explorers.DuplicationExplorerGenerator;
 import nl.obren.sokrates.reports.generators.explorers.FilesExplorerGenerator;
 import nl.obren.sokrates.reports.generators.explorers.UnitsExplorerGenerator;
+import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.duplication.DuplicatedFileBlock;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -35,9 +36,14 @@ public class DataExporter {
     public static final String INTERACTIVE_HTML_FOLDER_NAME = "explorers";
     public static final String SRC_CACHE_FOLDER_NAME = "src";
     public static final String DATA_FOLDER_NAME = "data";
+    public static final String SEPARATOR = "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n";
     private static final Log LOG = LogFactory.getLog(DataExporter.class);
     private ProgressFeedback progressFeedback;
     private CodeConfiguration codeConfiguration;
+    private File reportsFolder;
+    private CodeAnalysisResults analysisResults;
+    private File dataFolder;
+    private File codeCacheFolder;
 
     public DataExporter(ProgressFeedback progressFeedback) {
         this.progressFeedback = progressFeedback;
@@ -45,40 +51,115 @@ public class DataExporter {
 
     public void saveData(CodeConfiguration codeConfiguration, File reportsFolder, CodeAnalysisResults analysisResults) throws IOException {
         this.codeConfiguration = codeConfiguration;
-        File dataFolder = getDataFolder(reportsFolder);
+        this.reportsFolder = reportsFolder;
+        this.analysisResults = analysisResults;
+        this.dataFolder = getDataFolder();
 
-        exportJson(analysisResults, dataFolder);
-
-        exportInteractiveExplorers(reportsFolder, analysisResults);
-
-        File codeCacheFolder = getCodeCacheFolder(reportsFolder);
-
-        detailedInfo("Saving details and source code cache:");
-        saveAspectJsonFiles(dataFolder, codeCacheFolder, codeConfiguration.getMain(), "main");
-        saveAspectJsonFiles(dataFolder, codeCacheFolder, codeConfiguration.getTest(), "test");
-        saveAspectJsonFiles(dataFolder, codeCacheFolder, codeConfiguration.getGenerated(), "generated");
-        saveAspectJsonFiles(dataFolder, codeCacheFolder, codeConfiguration.getBuildAndDeployment(), "build-and-deployment");
-        saveAspectJsonFiles(dataFolder, codeCacheFolder, codeConfiguration.getOther(), "other");
-
-        saveUnitFragmentFiles(codeCacheFolder,
-                analysisResults.getUnitsAnalysisResults().getLongestUnits(), "longest_unit");
-
-        saveUnitFragmentFiles(codeCacheFolder,
-                analysisResults.getUnitsAnalysisResults().getMostComplexUnits(), "most_complex_unit");
-
-        if (codeConfiguration.getAnalysis().isCacheSourceFiles()) {
-            saveAllUnitFragmentFiles(codeCacheFolder,
-                    analysisResults.getUnitsAnalysisResults().getAllUnits(), "all_units");
-        }
-
-        saveDuplicateFragmentFiles(codeCacheFolder,
-                analysisResults.getDuplicationAnalysisResults().getLongestDuplicates(), "longest_duplicates");
-        saveDuplicateFragmentFiles(codeCacheFolder,
-                analysisResults.getDuplicationAnalysisResults().getMostFrequentDuplicates(), "most_frequent_duplicates");
+        exportFileLists();
+        exportJson();
+        exportInteractiveExplorers();
+        exportSourceFile();
     }
 
-    private void exportInteractiveExplorers(File reportsFolder, CodeAnalysisResults analysisResults) throws IOException {
-        File interactiveHtmlFolder = getInteractiveHtmlFolder(reportsFolder);
+    private void exportFileLists() {
+        saveExcludedByExtensionFiles();
+        saveExplicitlyIgnoredFiles();
+    }
+
+    private void saveExcludedByExtensionFiles() {
+        StringBuilder content = new StringBuilder();
+
+        Map<String, List<SourceFile>> extensionsMap = new HashMap<>();
+
+        analysisResults.getFilesExcludedByExtension().forEach(sourceFile -> {
+            String extension = FilenameUtils.getExtension(sourceFile.getRelativePath());
+            List<SourceFile> files = extensionsMap.get(extension);
+            if (files == null) {
+                files = new ArrayList<>();
+                extensionsMap.put(extension, files);
+            }
+            files.add(sourceFile);
+        });
+
+        List<String> extensions = new ArrayList<>(extensionsMap.keySet());
+        Collections.sort(extensions, (o1, o2) -> extensionsMap.get(o2).size() - extensionsMap.get(o1).size());
+
+        extensions.forEach(extension -> {
+            List<SourceFile> sourceFiles = extensionsMap.get(extension);
+            content.append(SEPARATOR);
+            content.append("*." + extension + " files (" + sourceFiles.size() + ")");
+            content.append(":\n\n");
+            sourceFiles.forEach(sourceFile -> {
+                content.append(sourceFile.getRelativePath());
+                content.append("\n");
+            });
+            content.append(SEPARATOR);
+            content.append("\n\n\n");
+        });
+
+        try {
+            FileUtils.write(new File(dataFolder, "excluded_files_ignored_extensions.txt"), content.toString(), UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void saveExplicitlyIgnoredFiles() {
+        StringBuilder content = new StringBuilder();
+
+        Map<String, IgnoredFilesGroup> ignoredFilesGroups = analysisResults.getIgnoredFilesGroups();
+        List<String> keys = new ArrayList<>(ignoredFilesGroups.keySet());
+        Collections.sort(keys, (o1, o2) -> ignoredFilesGroups.get(o2).getSourceFiles().size() - ignoredFilesGroups.get(o1).getSourceFiles().size());
+        keys.forEach(key -> {
+            IgnoredFilesGroup ignoredFilesGroup = ignoredFilesGroups.get(key);
+            content.append(SEPARATOR);
+            content.append(ignoredFilesGroup.getFilter().getNote());
+            content.append("\n");
+            content.append(key);
+            content.append("\n");
+            List<SourceFile> sourceFiles = ignoredFilesGroup.getSourceFiles();
+            content.append(sourceFiles.size() + " files");
+            content.append(":\n\n");
+            sourceFiles.forEach(sourceFile -> {
+                content.append(sourceFile.getRelativePath());
+                content.append("\n");
+            });
+            content.append(SEPARATOR);
+            content.append("\n\n\n");
+        });
+
+        try {
+            FileUtils.write(new File(dataFolder, "excluded_files_ignored_rules.txt"), content.toString(), UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void exportSourceFile() throws IOException {
+        this.codeCacheFolder = getCodeCacheFolder();
+
+        detailedInfo("Saving details and source code cache:");
+        saveAspectJsonFiles(codeConfiguration.getMain(), "main");
+        saveAspectJsonFiles(codeConfiguration.getTest(), "test");
+        saveAspectJsonFiles(codeConfiguration.getGenerated(), "generated");
+        saveAspectJsonFiles(codeConfiguration.getBuildAndDeployment(), "build-and-deployment");
+        saveAspectJsonFiles(codeConfiguration.getOther(), "other");
+
+        UnitsAnalysisResults unitsAnalysisResults = analysisResults.getUnitsAnalysisResults();
+        saveUnitFragmentFiles(unitsAnalysisResults.getLongestUnits(), "longest_unit");
+        saveUnitFragmentFiles(unitsAnalysisResults.getMostComplexUnits(), "most_complex_unit");
+
+        if (codeConfiguration.getAnalysis().isCacheSourceFiles()) {
+            saveAllUnitFragmentFiles(unitsAnalysisResults.getAllUnits(), "all_units");
+        }
+
+        DuplicationAnalysisResults duplicationAnalysisResults = analysisResults.getDuplicationAnalysisResults();
+        saveDuplicateFragmentFiles(duplicationAnalysisResults.getLongestDuplicates(), "longest_duplicates");
+        saveDuplicateFragmentFiles(duplicationAnalysisResults.getMostFrequentDuplicates(), "most_frequent_duplicates");
+    }
+
+    private void exportInteractiveExplorers() throws IOException {
+        File interactiveHtmlFolder = getInteractiveHtmlFolder();
         FileUtils.write(new File(interactiveHtmlFolder, "MainFiles.html"),
                 new FilesExplorerGenerator(analysisResults).generateExplorer(), UTF_8);
         FileUtils.write(new File(interactiveHtmlFolder, "Units.html"),
@@ -89,7 +170,7 @@ public class DataExporter {
                 new DependenciesExplorerGenerator(analysisResults).generateExplorer(), UTF_8);
     }
 
-    private void exportJson(CodeAnalysisResults analysisResults, File dataFolder) throws IOException {
+    private void exportJson() throws IOException {
         FileUtils.write(new File(dataFolder, "analysisResults.json"), new JsonGenerator().generate(analysisResults), UTF_8);
         FileUtils.write(new File(dataFolder, "mainFiles.json"), new JsonGenerator().generate(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
         FileUtils.write(new File(dataFolder, "testFiles.json"), new JsonGenerator().generate(analysisResults.getTestAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
@@ -103,8 +184,8 @@ public class DataExporter {
                 new DependenciesExporter(analysisResults.getAllDependencies()).getDependenciesExportInfo()), UTF_8);
     }
 
-    private void saveUnitFragmentFiles(File srcCacheFolder, List<UnitInfo> units, String fragmentType) throws IOException {
-        File fragmentsFolder = recreateFolder(srcCacheFolder, "fragments/" + fragmentType);
+    private void saveUnitFragmentFiles(List<UnitInfo> units, String fragmentType) throws IOException {
+        File fragmentsFolder = recreateFolder("fragments/" + fragmentType);
 
         detailedInfo(" - saving source code cache for the " + fragmentType + "fragments");
         int count[] = {0};
@@ -123,8 +204,8 @@ public class DataExporter {
         });
     }
 
-    private void saveDuplicateFragmentFiles(File srcCacheFolder, List<DuplicationInstance> duplicates, String fragmentType) throws IOException {
-        File fragmentsFolder = recreateFolder(srcCacheFolder, "fragments/" + fragmentType);
+    private void saveDuplicateFragmentFiles(List<DuplicationInstance> duplicates, String fragmentType) throws IOException {
+        File fragmentsFolder = recreateFolder("fragments/" + fragmentType);
 
         detailedInfo(" - saving source code cache for the " + fragmentType + "fragments");
         int count[] = {0};
@@ -140,8 +221,8 @@ public class DataExporter {
 
                 duplicate.getDuplicatedFileBlocks().forEach(block -> {
                     body.append(block.getSourceFile().getRelativePath() + " [" + block.getStartLine() + ":" + block.getEndLine() + "]:\n");
-                    body.append("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
-                    body.append(block.getSourceFile().getLines().subList(block.getStartLine() - 1, block.getEndLine()).stream().collect(Collectors.joining("\n")) + "\n- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n\n\n\n");
+                    body.append(SEPARATOR);
+                    body.append(block.getSourceFile().getLines().subList(block.getStartLine() - 1, block.getEndLine()).stream().collect(Collectors.joining("\n")) + "\n" + SEPARATOR + "\n\n\n");
                 });
 
                 FileUtils.write(file, body.toString(), UTF_8);
@@ -151,8 +232,8 @@ public class DataExporter {
         });
     }
 
-    private File recreateFolder(File srcCacheFolder, String s) throws IOException {
-        File fragmentsFolder = new File(srcCacheFolder, s);
+    private File recreateFolder(String folderName) throws IOException {
+        File fragmentsFolder = new File(codeCacheFolder, folderName);
         if (fragmentsFolder.exists()) {
             FileUtils.deleteDirectory(fragmentsFolder);
         }
@@ -160,8 +241,8 @@ public class DataExporter {
         return fragmentsFolder;
     }
 
-    private void saveAllUnitFragmentFiles(File srcCacheFolder, List<UnitInfo> units, String fragmentType) throws IOException {
-        File fragmentsFolder = recreateFolder(srcCacheFolder, "fragments/" + fragmentType);
+    private void saveAllUnitFragmentFiles(List<UnitInfo> units, String fragmentType) throws IOException {
+        File fragmentsFolder = recreateFolder("fragments/" + fragmentType);
 
         detailedInfo(" - saving source code cache for the " + fragmentType + "fragments");
         int count[] = {0};
@@ -184,7 +265,7 @@ public class DataExporter {
     }
 
 
-    private void saveAspectJsonFiles(File dataFolder, File srcCacheFolder, NamedSourceCodeAspect aspect, String aspectName) throws IOException {
+    private void saveAspectJsonFiles(NamedSourceCodeAspect aspect, String aspectName) throws IOException {
         File filesListFile = new File(dataFolder, aspectName + "-files.json");
         detailedInfo(" - storing the file list for the <b>" + aspectName + "</b> aspect in <a href='" + filesListFile.getPath() + "'>" + filesListFile.getPath() + "</a>");
         List<String> files = new ArrayList<>();
@@ -193,7 +274,7 @@ public class DataExporter {
         });
         FileUtils.write(filesListFile, new JsonGenerator().generate(files), UTF_8);
 
-        File aspectCodeCacheFolder = recreateFolder(srcCacheFolder, aspectName);
+        File aspectCodeCacheFolder = recreateFolder(aspectName);
 
         if (codeConfiguration.getAnalysis().isCacheSourceFiles()) {
             Map<String, List<String>> contents = new HashMap<>();
@@ -209,19 +290,19 @@ public class DataExporter {
         }
     }
 
-    public File getCodeCacheFolder(File reportsFolder) {
+    public File getCodeCacheFolder() {
         File codeCacheFolder = new File(reportsFolder, SRC_CACHE_FOLDER_NAME);
         codeCacheFolder.mkdirs();
         return codeCacheFolder;
     }
 
-    public File getInteractiveHtmlFolder(File reportsFolder) {
+    public File getInteractiveHtmlFolder() {
         File codeCacheFolder = new File(reportsFolder, INTERACTIVE_HTML_FOLDER_NAME);
         codeCacheFolder.mkdirs();
         return codeCacheFolder;
     }
 
-    public File getDataFolder(File reportsFolder) {
+    public File getDataFolder() {
         File dataFolder = new File(reportsFolder, DATA_FOLDER_NAME);
         dataFolder.mkdirs();
         return dataFolder;
