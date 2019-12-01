@@ -2,6 +2,7 @@ package nl.obren.sokrates.reports.dataexporters;
 
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
+import nl.obren.sokrates.common.utils.SystemUtils;
 import nl.obren.sokrates.reports.dataexporters.dependencies.DependenciesExporter;
 import nl.obren.sokrates.reports.dataexporters.duplication.DuplicationExporter;
 import nl.obren.sokrates.reports.dataexporters.files.FileListExporter;
@@ -17,11 +18,13 @@ import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
+import nl.obren.sokrates.sourcecode.dependencies.Dependency;
 import nl.obren.sokrates.sourcecode.duplication.DuplicatedFileBlock;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -49,6 +52,14 @@ public class DataExporter {
         this.progressFeedback = progressFeedback;
     }
 
+    public static String fileNamePrefix(String fromComponent, String toComponent, String logicalDecompositionName) {
+        String fileNamePrefix = "dependencies_" + SystemUtils.getFileSystemFriendlyName(logicalDecompositionName);
+        if (StringUtils.isNotBlank(fromComponent) && StringUtils.isNotBlank(toComponent)) {
+            fileNamePrefix += "_" + SystemUtils.getFileSystemFriendlyName(fromComponent + "_" + toComponent);
+        }
+        return fileNamePrefix;
+    }
+
     public void saveData(CodeConfiguration codeConfiguration, File reportsFolder, CodeAnalysisResults analysisResults) throws IOException {
         this.codeConfiguration = codeConfiguration;
         this.reportsFolder = reportsFolder;
@@ -59,6 +70,12 @@ public class DataExporter {
         exportJson();
         exportInteractiveExplorers();
         exportSourceFile();
+        exportDependencies("", "", "");
+        analysisResults.getLogicalDecompositionsAnalysisResults().forEach(logicalDecompositionAnalysisResults -> {
+            logicalDecompositionAnalysisResults.getComponentDependencies().forEach(componentDependency -> {
+                exportDependencies(logicalDecompositionAnalysisResults.getKey(), componentDependency.getFromComponent(), componentDependency.getToComponent());
+            });
+        });
     }
 
     private void exportFileLists() {
@@ -71,13 +88,13 @@ public class DataExporter {
         saveSourceCodeAspect(analysisResults.getOtherAspectAnalysisResults().getAspect(), "");
 
         analysisResults.getLogicalDecompositionsAnalysisResults().forEach(logicalDecomposition -> {
-            logicalDecomposition.getComponents().forEach(component  -> {
+            logicalDecomposition.getComponents().forEach(component -> {
                 saveSourceCodeAspect(component.getAspect(), DataExportUtils.getComponentFilePrefix(logicalDecomposition.getKey()));
             });
         });
 
         analysisResults.getCrossCuttingConcernsAnalysisResults().forEach(group -> {
-            group.getCrossCuttingConcerns().forEach(concern  -> {
+            group.getCrossCuttingConcerns().forEach(concern -> {
                 saveSourceCodeAspect(concern.getAspect(), DataExportUtils.getCrossCuttingConcernFilePrefix(group.getKey()));
             });
         });
@@ -119,6 +136,52 @@ public class DataExporter {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void exportDependencies(String filterLogicalDecomposition, String filterFrom, String filterTo) {
+        analysisResults.getLogicalDecompositionsAnalysisResults().forEach(logicalDecomposition -> {
+            StringBuilder content = new StringBuilder();
+            String logicalDecompositionName = logicalDecomposition.getKey();
+            if (shouldProcessLogicalDecomposition(filterLogicalDecomposition, logicalDecompositionName)) {
+                String fileNamePrefix = fileNamePrefix(filterFrom, filterTo, logicalDecompositionName);
+                logicalDecomposition.getAllDependencies().forEach(dependency -> {
+                    appendDependency(filterFrom, filterTo, content, logicalDecompositionName, dependency);
+                });
+                try {
+                    FileUtils.write(new File(dataFolder, fileNamePrefix + ".txt"), content.toString(), UTF_8);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    private void appendDependency(String filterFrom, String filterTo, StringBuilder content, String logicalDecompositionName, Dependency dependency) {
+        dependency.getFromFiles().forEach(sourceFileDependency -> {
+            String fromComponent = dependency.getFromComponents(logicalDecompositionName).get(0).getName();
+            String toComponent = dependency.getToComponents(logicalDecompositionName).get(0).getName();
+
+            if (shouldAppendDependency(filterFrom, filterTo, fromComponent, toComponent)) {
+                content.append("from: " + fromComponent);
+                content.append("\n");
+                content.append("to: " + toComponent);
+                content.append("\nevidence:");
+                content.append("\n - found line \"");
+                content.append(sourceFileDependency.getCodeFragment());
+                content.append("\"\n");
+                content.append(" - in file: \"");
+                content.append(sourceFileDependency.getSourceFile().getRelativePath());
+                content.append("\"\n\n");
+            }
+        });
+    }
+
+    private boolean shouldProcessLogicalDecomposition(String filterLogicalDecomposition, String logicalDecompositionName) {
+        return StringUtils.isBlank(filterLogicalDecomposition) || logicalDecompositionName.equalsIgnoreCase(filterLogicalDecomposition);
+    }
+
+    private boolean shouldAppendDependency(String filterFrom, String filterTo, String fromComponent, String toComponent) {
+        return StringUtils.isBlank(filterFrom) || StringUtils.isBlank(filterTo) || (fromComponent.equalsIgnoreCase(filterFrom) && toComponent.equalsIgnoreCase(toComponent));
     }
 
     private void saveExplicitlyIgnoredFiles() {

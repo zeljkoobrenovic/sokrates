@@ -72,6 +72,7 @@ public class LogicalDecompositionAnalyzer extends Analyzer {
             componentDependencies.addAll(finderDependencies);
 
             logicalDecompositionAnalysisResults.setComponentDependencies(componentDependencies);
+            logicalDecompositionAnalysisResults.setAllDependencies(allDependencies);
 
             addDependencyMetrics(allDependencies, logicalDecomposition.getName(), componentDependencies);
             List<DependencyError> errors = new ArrayList<>();
