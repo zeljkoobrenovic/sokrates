@@ -3,7 +3,7 @@ package nl.obren.sokrates.reports.generators.statichtml;
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.RichTextReport;
-import nl.obren.sokrates.reports.dataexporters.DataExporter;
+import nl.obren.sokrates.reports.dataexporters.DataExportUtils;
 import nl.obren.sokrates.reports.utils.ScopesRenderer;
 import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
@@ -17,6 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class OverviewReportGenerator {
     private CodeAnalysisResults codeAnalysisResults;
@@ -46,6 +47,11 @@ public class OverviewReportGenerator {
                 new NumericMetric(generatedName, codeAnalysisResults.getGeneratedAspectAnalysisResults().getFilesCount()),
                 new NumericMetric(buildName, codeAnalysisResults.getBuildAndDeployAspectAnalysisResults().getFilesCount()),
                 new NumericMetric(otherName, codeAnalysisResults.getOtherAspectAnalysisResults().getFilesCount()));
+        List<AspectAnalysisResults> aspects = Arrays.asList(codeAnalysisResults.getMainAspectAnalysisResults(),
+                codeAnalysisResults.getTestAspectAnalysisResults(),
+                codeAnalysisResults.getGeneratedAspectAnalysisResults(),
+                codeAnalysisResults.getBuildAndDeployAspectAnalysisResults(),
+                codeAnalysisResults.getOtherAspectAnalysisResults());
 
         report.startSection("Overview of Analyzed Files", "Basic stats on analyzed files");
         report.startSubSection("Intro", "For analysis purposes we separate files in scope into several categories: <b>main</b>, <b>test</b>, <b>generated</b>, <b>deployment and build</b>, and <b>other</b>.");
@@ -53,7 +59,9 @@ public class OverviewReportGenerator {
         ScopesRenderer renderer = getScopesRenderer("", "", counts, code);
         renderer.setInSection(false);
         renderer.setTitle("All Files in Scope");
+        renderer.setAspectsFileListPaths(aspects.stream().map(aspect -> aspect.getAspect().getFileSystemFriendlyName("")).collect(Collectors.toList()));
         renderer.renderReport(report, "");
+
         report.endSection();
 
         renderScopes(report, codeAnalysisResults.getMainAspectAnalysisResults(), "Main Code", "All <b>manually</b> created or maintained source code that defines logic of the product that is  run in a <b>production</b> environment.");
@@ -118,7 +126,7 @@ public class OverviewReportGenerator {
             List<NumericMetric> linesOfCodePerExtension = aspectAnalysisResults.getLinesOfCodePerExtension();
             ScopesRenderer renderer = getScopesRenderer(title, "", fileCountPerExtension, linesOfCodePerExtension);
             renderer.setTitle(title);
-            renderer.setFilesListPath(DataExporter.getAspectFileListFileName(aspectAnalysisResults.getAspect()));
+            renderer.setFilesListPath(DataExportUtils.getAspectFileListFileName(aspectAnalysisResults.getAspect(), ""));
             renderer.setAspect(aspectAnalysisResults.getAspect());
             renderer.renderReport(report, description);
         }

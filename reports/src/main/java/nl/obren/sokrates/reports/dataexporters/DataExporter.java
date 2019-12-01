@@ -64,11 +64,23 @@ public class DataExporter {
     private void exportFileLists() {
         saveExcludedByExtensionFiles();
         saveExplicitlyIgnoredFiles();
-        saveSourceCodeAspect(analysisResults.getMainAspectAnalysisResults().getAspect());
-        saveSourceCodeAspect(analysisResults.getTestAspectAnalysisResults().getAspect());
-        saveSourceCodeAspect(analysisResults.getGeneratedAspectAnalysisResults().getAspect());
-        saveSourceCodeAspect(analysisResults.getBuildAndDeployAspectAnalysisResults().getAspect());
-        saveSourceCodeAspect(analysisResults.getOtherAspectAnalysisResults().getAspect());
+        saveSourceCodeAspect(analysisResults.getMainAspectAnalysisResults().getAspect(), "");
+        saveSourceCodeAspect(analysisResults.getTestAspectAnalysisResults().getAspect(), "");
+        saveSourceCodeAspect(analysisResults.getGeneratedAspectAnalysisResults().getAspect(), "");
+        saveSourceCodeAspect(analysisResults.getBuildAndDeployAspectAnalysisResults().getAspect(), "");
+        saveSourceCodeAspect(analysisResults.getOtherAspectAnalysisResults().getAspect(), "");
+
+        analysisResults.getLogicalDecompositionsAnalysisResults().forEach(logicalDecomposition -> {
+            logicalDecomposition.getComponents().forEach(component  -> {
+                saveSourceCodeAspect(component.getAspect(), DataExportUtils.getComponentFilePrefix(logicalDecomposition.getKey()));
+            });
+        });
+
+        analysisResults.getCrossCuttingConcernsAnalysisResults().forEach(group -> {
+            group.getCrossCuttingConcerns().forEach(concern  -> {
+                saveSourceCodeAspect(concern.getAspect(), DataExportUtils.getCrossCuttingConcernFilePrefix(group.getKey()));
+            });
+        });
     }
 
     private void saveExcludedByExtensionFiles() {
@@ -140,26 +152,25 @@ public class DataExporter {
         }
     }
 
-    private void saveSourceCodeAspect(NamedSourceCodeAspect aspect) {
+    private void saveSourceCodeAspect(NamedSourceCodeAspect aspect, String prefix) {
         StringBuilder content = new StringBuilder();
 
         List<SourceFile> files = new ArrayList<>(aspect.getSourceFiles());
         Collections.sort(files, Comparator.comparing(SourceFile::getRelativePath));
 
+        content.append("Path\tLines of Code\n");
         files.forEach(sourceFile -> {
             content.append(sourceFile.getRelativePath());
+            content.append("\t");
+            content.append(sourceFile.getLinesOfCode());
             content.append("\n");
         });
 
         try {
-            FileUtils.write(new File(dataFolder, DataExporter.getAspectFileListFileName(aspect)), content.toString(), UTF_8);
+            FileUtils.write(new File(dataFolder, DataExportUtils.getAspectFileListFileName(aspect, prefix)), content.toString(), UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public static String getAspectFileListFileName(NamedSourceCodeAspect aspect) {
-        return "aspect_" + aspect.getFileSystemFriendlyName() + ".txt";
     }
 
     private void exportSourceFile() throws IOException {

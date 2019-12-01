@@ -4,8 +4,10 @@ import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.dataexporters.DataExportUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.reports.utils.ScopesRenderer;
+import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.LogicalDecompositionAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
@@ -91,11 +93,16 @@ public class LogicalComponentsReportGenerator {
         ScopesRenderer renderer = new ScopesRenderer();
         renderer.setLinesOfCodeInMain(codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode());
 
+        renderer.setTitle("Components");
         renderer.setDescription("");
         renderer.setFileCountPerComponent(fileCountPerExtension);
+        // renderer.setFilesListPath();
         renderer.setLinesOfCode(linesOfCodePerExtension);
         renderer.setMaxFileCount(codeAnalysisResults.getMaxFileCount());
         renderer.setMaxLinesOfCode(codeAnalysisResults.getMaxLinesOfCode());
+        List<AspectAnalysisResults> components = logicalDecomposition.getComponents();
+        String filePathPrefix = DataExportUtils.getComponentFilePrefix(logicalDecomposition.getKey());
+        renderer.setAspectsFileListPaths(components.stream().map(aspect -> aspect.getAspect().getFileSystemFriendlyName(filePathPrefix)).collect(Collectors.toList()));
         renderer.renderReport(report, "The \"" + logicalDecomposition.getLogicalDecomposition().getName() + "\" logical decomposition has <b>" + logicalDecomposition.getLogicalDecomposition().getComponents().size() + "</b> components.");
 
         report.startSubSection("Alternative Visuals", "");

@@ -11,10 +11,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class ScopesRenderer {
+    private List<String> aspectsFileListPaths;
     private List<NumericMetric> fileCountPerComponent;
     private List<NumericMetric> linesOfCode;
     private String title;
@@ -28,6 +30,30 @@ public class ScopesRenderer {
     private NamedSourceCodeAspect aspect;
     private boolean inSection = true;
     private String filesListPath;
+
+    public List<String> getAspectsFileListPaths() {
+        return aspectsFileListPaths;
+    }
+
+    public void setAspectsFileListPaths(List<String> aspectsFileListPaths) {
+        this.aspectsFileListPaths = aspectsFileListPaths;
+    }
+
+    public int getFilesCount() {
+        return filesCount;
+    }
+
+    public void setFilesCount(int filesCount) {
+        this.filesCount = filesCount;
+    }
+
+    public int getLinesCount() {
+        return linesCount;
+    }
+
+    public void setLinesCount(int linesCount) {
+        this.linesCount = linesCount;
+    }
 
     public List<NumericMetric> getFileCountPerComponent() {
         return fileCountPerComponent;
@@ -113,17 +139,17 @@ public class ScopesRenderer {
         updateCountVariables();
         if (fileCountPerComponent.size() > 0) {
             if (linesOfCode.size() > 0 && linesCount > 0) {
+                List<ScopeRendererItem> renderingList = getRenderingList();
                 if (inSection) {
-                    Collections.sort(linesOfCode, (o1, o2) -> -Integer.compare(o1.getValue().intValue(), o2.getValue().intValue()));
                     report.startSubSection(title, description);
                     renderDetails(report, false);
-                    if (linesOfCode.size() > 1) {
+                    if (renderingList.size() > 1) {
                         report.startUnorderedList();
-                        NumericMetric firstMetric = linesOfCode.get(0);
+                        NumericMetric firstMetric = renderingList.get(0).getLinesOfCode();
                         double firstPercentage = 100.0 * firstMetric.getValue().doubleValue() / linesCount;
                         report.addListItem("\"" + firstMetric.getName() + "\" is biggest, containing <b>" + new DecimalFormat("##.##").format(firstPercentage) + "%</b> of code.");
-                        if (linesOfCode.size() >= 2) {
-                            NumericMetric lastMetric = linesOfCode.get(linesOfCode.size() - 1);
+                        if (renderingList.size() >= 2) {
+                            NumericMetric lastMetric = renderingList.get(renderingList.size() - 1).getLinesOfCode();
                             double lastPercentage = 100.0 * lastMetric.getValue().doubleValue() / linesCount;
                             report.addListItem("\"" + lastMetric.getName() + "\" is smallest, containing <b>" + new DecimalFormat("##.##").format(lastPercentage) + "%</b> of code.");
                         }
@@ -132,24 +158,50 @@ public class ScopesRenderer {
                     report.addLineBreak();
                     report.addLineBreak();
                 }
-                getSvgBars(report);
+                getSvgBars(report, renderingList);
                 if (inSection) report.endSection();
             }
         }
     }
 
-    private void getSvgBars(RichTextReport report) {
+    private List<ScopeRendererItem> getRenderingList() {
+        List<ScopeRendererItem> items = new ArrayList<>();
+        for (int i = 0; i < linesOfCode.size(); i++) {
+            ScopeRendererItem item = new ScopeRendererItem();
+            item.setLinesOfCode(linesOfCode.get(i));
+            String filesFragment = "";
+            if (fileCountPerComponent.size() > i) {
+                item.setFilesCount(fileCountPerComponent.get(i));
+                filesFragment = fileCountPerComponent.get(i).getValue() + " files";
+                if (aspectsFileListPaths != null && aspectsFileListPaths.size() > i) {
+                    filesFragment = "<u><a href='../data/aspect_" + aspectsFileListPaths.get(i)
+                            + ".txt'>" + filesFragment + "</a></u>";
+                }
+                item.setFilesFragment(filesFragment);
+            }
+            items.add(item);
+        }
+
+        Collections.sort(items, (o1, o2) -> -Integer.compare(o1.getLinesOfCode().getValue().intValue(), o2.getLinesOfCode().getValue().intValue()));
+
+        return items;
+    }
+
+    private void getSvgBars(RichTextReport report, List<ScopeRendererItem> renderingList) {
         SimpleOneBarChart chart = new SimpleOneBarChart();
         chart.setWidth(800);
         chart.setMaxBarWidth(200);
         chart.setBarHeight(20);
 
-        linesOfCode.forEach(metric -> {
-            int metricLinesOfCode = metric.getValue().intValue();
+        renderingList.forEach(rendererItem -> {
+            int metricLinesOfCode = rendererItem.getLinesOfCode().getValue().intValue();
             double percentage = 100.0 * metricLinesOfCode / maxLinesOfCode;
-            report.addContentInDiv(chart.getPercentageSvg(percentage, metric.getName(),
+            String filesFragment = StringUtils.defaultIfBlank(rendererItem.getFilesFragment(), "");
+
+            report.addContentInDiv(chart.getPercentageSvg(percentage, rendererItem.getLinesOfCode().getName(),
                     "" + metricLinesOfCode + " LOC (" +
-                            StringEscapeUtils.escapeHtml4(FormattingUtils.getFormattedPercentage(percentage)) + "%)"), "");
+                            StringEscapeUtils.escapeHtml4(FormattingUtils.getFormattedPercentage(percentage))
+                            + "%) " + filesFragment), "");
         });
     }
 

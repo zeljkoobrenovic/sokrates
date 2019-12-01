@@ -120,18 +120,21 @@ public class NamedSourceCodeAspectTest {
         NamedSourceCodeAspect aspect = new NamedSourceCodeAspect();
 
         aspect.setName("main");
-        assertEquals("main", aspect.getFileSystemFriendlyName());
+        assertEquals("main", aspect.getFileSystemFriendlyName(""));
+
+        aspect.setName("main");
+        assertEquals("prefix1_main", aspect.getFileSystemFriendlyName("prefix1 "));
 
         aspect.setName("test");
-        assertEquals("test", aspect.getFileSystemFriendlyName());
+        assertEquals("test", aspect.getFileSystemFriendlyName(""));
 
         aspect.setName("build and deploy");
-        assertEquals("build_and_deploy", aspect.getFileSystemFriendlyName());
+        assertEquals("build_and_deploy", aspect.getFileSystemFriendlyName(""));
 
         aspect.setName("This is my aspect - good (between 3 and 6)");
-        assertEquals("This_is_my_aspect___good__between_3_and_6_", aspect.getFileSystemFriendlyName());
+        assertEquals("This_is_my_aspect___good__between_3_and_6_", aspect.getFileSystemFriendlyName(""));
 
         aspect.setName("328457qw9et&^*%$&#%^@*");
-        assertEquals("328457qw9et___________", aspect.getFileSystemFriendlyName());
+        assertEquals("328457qw9et___________", aspect.getFileSystemFriendlyName(""));
     }
 }
