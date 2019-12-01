@@ -52,7 +52,7 @@ public class DataExporter {
         this.progressFeedback = progressFeedback;
     }
 
-    public static String fileNamePrefix(String fromComponent, String toComponent, String logicalDecompositionName) {
+    public static String dependenciesFileNamePrefix(String fromComponent, String toComponent, String logicalDecompositionName) {
         String fileNamePrefix = "dependencies_" + SystemUtils.getFileSystemFriendlyName(logicalDecompositionName);
         if (StringUtils.isNotBlank(fromComponent) && StringUtils.isNotBlank(toComponent)) {
             fileNamePrefix += "_" + SystemUtils.getFileSystemFriendlyName(fromComponent + "_" + toComponent);
@@ -140,12 +140,12 @@ public class DataExporter {
 
     private void exportDependencies(String filterLogicalDecomposition, String filterFrom, String filterTo) {
         analysisResults.getLogicalDecompositionsAnalysisResults().forEach(logicalDecomposition -> {
-            StringBuilder content = new StringBuilder();
             String logicalDecompositionName = logicalDecomposition.getKey();
             if (shouldProcessLogicalDecomposition(filterLogicalDecomposition, logicalDecompositionName)) {
-                String fileNamePrefix = fileNamePrefix(filterFrom, filterTo, logicalDecompositionName);
+                StringBuilder content = new StringBuilder();
+                String fileNamePrefix = dependenciesFileNamePrefix(filterFrom, filterTo, logicalDecompositionName);
                 logicalDecomposition.getAllDependencies().forEach(dependency -> {
-                    appendDependency(filterFrom, filterTo, content, logicalDecompositionName, dependency);
+                    content.append(appendDependency(filterFrom, filterTo, logicalDecompositionName, dependency));
                 });
                 try {
                     FileUtils.write(new File(dataFolder, fileNamePrefix + ".txt"), content.toString(), UTF_8);
@@ -156,7 +156,8 @@ public class DataExporter {
         });
     }
 
-    private void appendDependency(String filterFrom, String filterTo, StringBuilder content, String logicalDecompositionName, Dependency dependency) {
+    private String appendDependency(String filterFrom, String filterTo, String logicalDecompositionName, Dependency dependency) {
+        StringBuilder content = new StringBuilder();
         dependency.getFromFiles().forEach(sourceFileDependency -> {
             String fromComponent = dependency.getFromComponents(logicalDecompositionName).get(0).getName();
             String toComponent = dependency.getToComponents(logicalDecompositionName).get(0).getName();
@@ -165,15 +166,17 @@ public class DataExporter {
                 content.append("from: " + fromComponent);
                 content.append("\n");
                 content.append("to: " + toComponent);
-                content.append("\nevidence:");
-                content.append("\n - found line \"");
-                content.append(sourceFileDependency.getCodeFragment());
-                content.append("\"\n");
-                content.append(" - in file: \"");
+                content.append("\nevidence:\n");
+                content.append(" - file: \"");
                 content.append(sourceFileDependency.getSourceFile().getRelativePath());
+                content.append("\"\n");
+                content.append("   contains \"");
+                content.append(sourceFileDependency.getCodeFragment());
                 content.append("\"\n\n");
             }
         });
+
+        return content.toString();
     }
 
     private boolean shouldProcessLogicalDecomposition(String filterLogicalDecomposition, String logicalDecompositionName) {
@@ -181,7 +184,7 @@ public class DataExporter {
     }
 
     private boolean shouldAppendDependency(String filterFrom, String filterTo, String fromComponent, String toComponent) {
-        return StringUtils.isBlank(filterFrom) || StringUtils.isBlank(filterTo) || (fromComponent.equalsIgnoreCase(filterFrom) && toComponent.equalsIgnoreCase(toComponent));
+        return StringUtils.isBlank(filterFrom) || StringUtils.isBlank(filterTo) || (fromComponent.equalsIgnoreCase(filterFrom) && toComponent.equalsIgnoreCase(filterTo));
     }
 
     private void saveExplicitlyIgnoredFiles() {

@@ -5,6 +5,7 @@ import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.dataexporters.DataExportUtils;
+import nl.obren.sokrates.reports.dataexporters.DataExporter;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.reports.utils.ScopesRenderer;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
@@ -115,7 +116,7 @@ public class LogicalComponentsReportGenerator {
         List<ComponentDependency> componentDependencies = logicalDecomposition.getComponentDependencies();
         report.startSubSection("Dependencies", "Dependencies among components are <b>static</b> code dependencies among files in different components.");
         if (componentDependencies != null && componentDependencies.size() > 0) {
-            addComponentDependeciesSection(logicalDecomposition, componentDependencies);
+            addComponentDependenciesSection(logicalDecomposition, componentDependencies);
         } else {
             report.addParagraph("No component dependencies found.");
         }
@@ -123,11 +124,11 @@ public class LogicalComponentsReportGenerator {
         report.endSection();
     }
 
-    private void addComponentDependeciesSection(LogicalDecompositionAnalysisResults logicalDecomposition, List<ComponentDependency> componentDependencies) {
+    private void addComponentDependenciesSection(LogicalDecompositionAnalysisResults logicalDecomposition, List<ComponentDependency> componentDependencies) {
         report.startUnorderedList();
         report.addListItem("Analyzed system has <b>" + componentDependencies.size() + "</b> links (arrows) between components.");
         report.addListItem("The number on the arrow represents the number of files from referring component that depend on files in referred component.");
-        report.addListItem("These " + componentDependencies.size() + " links contain <b>" + DependencyUtils.getDependenciesCount(componentDependencies) + "</b> dependencies.");
+        report.addListItem("These " + componentDependencies.size() + " links contain <a href='../data/" + DataExporter.dependenciesFileNamePrefix("", "", logicalDecomposition.getKey()) + ".txt'><b>" + DependencyUtils.getDependenciesCount(componentDependencies) + "</b> dependencies</a>.");
         int cyclicDependencyPlacesCount = DependencyUtils.getCyclicDependencyPlacesCount(componentDependencies);
         int cyclicDependencyCount = DependencyUtils.getCyclicDependencyCount(componentDependencies);
         if (cyclicDependencyPlacesCount > 0) {
@@ -154,15 +155,15 @@ public class LogicalComponentsReportGenerator {
         report.addLineBreak();
         report.addLineBreak();
         report.startTable();
-        report.addTableHeader("From Component<br/>&nbsp;--> To Component", "From Component<br/>(files with dependencies)");
+        report.addTableHeader("From Component<br/>&nbsp;--> To Component", "From Component<br/>(files with dependencies)", "Details");
         Collections.sort(componentDependencies, (o1, o2) -> o2.getCount() - o1.getCount());
         componentDependencies.forEach(componentDependency -> {
-            addDependecyRow(logicalDecomposition, componentDependency);
+            addDependencyRow(logicalDecomposition, componentDependency);
         });
         report.endTable();
     }
 
-    private void addDependecyRow(LogicalDecompositionAnalysisResults logicalDecomposition, ComponentDependency componentDependency) {
+    private void addDependencyRow(LogicalDecompositionAnalysisResults logicalDecomposition, ComponentDependency componentDependency) {
         report.startTableRow();
         report.addTableCell(
                 componentDependency.getFromComponent()
@@ -185,6 +186,7 @@ public class LogicalComponentsReportGenerator {
                 (percentageHtmlFragment != null ? "" + percentageHtmlFragment : dependencyCount + " files (" + locFromDuplications + " LOC)<br/>")
         );
         report.addHtmlContent("</td>");
+        report.addTableCell("<a href='../data/" + DataExporter.dependenciesFileNamePrefix(componentDependency.getFromComponent(), componentDependency.getToComponent(), logicalDecomposition.getKey()) + ".txt'><b>" + dependencyCount + "</b> source " + (dependencyCount == 1 ? "file" : "files") + "</a>");
         report.endTableRow();
     }
 
