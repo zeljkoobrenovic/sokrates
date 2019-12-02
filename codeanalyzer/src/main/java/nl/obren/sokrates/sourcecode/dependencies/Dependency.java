@@ -9,6 +9,8 @@ public class Dependency {
     private List<SourceFileDependency> fromFiles = new ArrayList<>();
     private DependencyAnchor from;
     private DependencyAnchor to;
+    private String fromComponentName = null;
+    private String toComponentName = null;
 
     public Dependency() {
     }
@@ -16,6 +18,26 @@ public class Dependency {
     public Dependency(DependencyAnchor from, DependencyAnchor to) {
         this.from = from;
         this.to = to;
+    }
+
+    public void setFromFiles(List<SourceFileDependency> fromFiles) {
+        this.fromFiles = fromFiles;
+    }
+
+    public String getFromComponentName() {
+        return fromComponentName;
+    }
+
+    public void setFromComponentName(String fromComponentName) {
+        this.fromComponentName = fromComponentName;
+    }
+
+    public String getToComponentName() {
+        return toComponentName;
+    }
+
+    public void setToComponentName(String toComponentName) {
+        this.toComponentName = toComponentName;
     }
 
     public DependencyAnchor getFrom() {

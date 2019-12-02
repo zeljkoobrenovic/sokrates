@@ -222,8 +222,7 @@ public class LogicalComponentsReportGenerator {
 
     private void appendIntroduction() {
         String shortIntro = "";
-        shortIntro += "<b>Logical decomposition</b> is a representation of the organization of the <b>main</b> source code, where every and each file is " +
-                "put in exactly one <b>logical component</b>.";
+        shortIntro += "<b>Logical decomposition</b> is a representation of the organization of the <b>main</b> source code, where every and each file is put in exactly one <b>logical component</b>.";
         shortIntro += "";
 
         String longIntro = "<ul>\n";
@@ -231,8 +230,7 @@ public class LogicalComponentsReportGenerator {
         longIntro += "<li>A logical decomposition can be defined in two ways in Sokrates.</li>\n";
         longIntro += "<li>First approach is based on the <b>folders structure</b>. " +
                 "Components are mapped to folders at defined <b>folder depth</b> relative to the source code root.</li>\n";
-        longIntro += "<li>Second approach is based on <b>explicit</b> definition of each component. In such explicit definitions, components are " +
-                "explicitly <b>named</b> and their files are selected based on explicitly defined path and content <b>filters</b>.</li>\n";
+        longIntro += "<li>Second approach is based on <b>explicit</b> definition of each component. In such explicit definitions, components are explicitly <b>named</b> and their files are selected based on explicitly defined path and content <b>filters</b>.</li>\n";
         longIntro += "<li>A logical decomposition is considered <b>invalid</b> if a file is selected into <b>two or more components</b>." +
                 "This constraint is introduced in order to facilitate measuring of <b>dependencies</b> among components.</li>\n";
         longIntro += "<li>Files not assigned to any component are put into a special \"<b>Unclassified</b>\" component.</li>\n";

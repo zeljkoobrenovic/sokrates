@@ -70,6 +70,7 @@ public class LogicalDecompositionAnalyzer extends Analyzer {
             DependenciesFinderExtractor finder = new DependenciesFinderExtractor(logicalDecomposition);
             List<ComponentDependency> finderDependencies = finder.findComponentDependencies(codeConfiguration.getMain());
             componentDependencies.addAll(finderDependencies);
+            allDependencies.addAll(finder.getAllDependencies());
 
             logicalDecompositionAnalysisResults.setComponentDependencies(componentDependencies);
             logicalDecompositionAnalysisResults.setAllDependencies(allDependencies);
