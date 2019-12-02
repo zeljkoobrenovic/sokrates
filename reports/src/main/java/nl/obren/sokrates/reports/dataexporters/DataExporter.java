@@ -4,6 +4,8 @@ import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.common.utils.SystemUtils;
 import nl.obren.sokrates.reports.dataexporters.dependencies.DependenciesExporter;
+import nl.obren.sokrates.reports.dataexporters.duplication.DuplicateFileBlockExportInfo;
+import nl.obren.sokrates.reports.dataexporters.duplication.DuplicationExportInfo;
 import nl.obren.sokrates.reports.dataexporters.duplication.DuplicationExporter;
 import nl.obren.sokrates.reports.dataexporters.files.FileListExporter;
 import nl.obren.sokrates.reports.dataexporters.units.UnitListExporter;
@@ -68,8 +70,40 @@ public class DataExporter {
 
         exportFileLists();
         exportJson();
+        exportDuplicates();
         exportInteractiveExplorers();
         exportSourceFile();
+        exportDependencies(analysisResults);
+    }
+
+    private void exportDuplicates() {
+        DuplicationExportInfo duplicationExportInfo = new DuplicationExporter(analysisResults.getDuplicationAnalysisResults().getAllDuplicates()).getDuplicationExportInfo();
+
+        StringBuilder content = new StringBuilder();
+
+        int id[] = {1};
+        duplicationExportInfo.getDuplicates().forEach(duplicate -> {
+            List<DuplicateFileBlockExportInfo> duplicatedFileBlocks = duplicate.getDuplicatedFileBlocks();
+            content.append("duplicated block id: " + id[0] + "\n");
+            content.append("size: " + duplicate.getBlockSize() + " cleaned lines of code\n");
+            content.append("in " + duplicatedFileBlocks.size() + " files:\n");
+            duplicatedFileBlocks.forEach(duplicateFileBlock -> {
+                content.append(" - " + duplicateFileBlock.getFile().getRelativePath());
+                content.append(" (" + duplicateFileBlock.getStartLine() + ":" + duplicateFileBlock.getEndLine() + ")\n");
+            });
+
+            content.append("\n");
+
+            id[0]++;
+        });
+        try {
+            FileUtils.write(new File(dataFolder, "duplicates.txt"), content.toString(), UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void exportDependencies(CodeAnalysisResults analysisResults) {
         exportDependencies("", "", "");
         analysisResults.getLogicalDecompositionsAnalysisResults().forEach(logicalDecompositionAnalysisResults -> {
             logicalDecompositionAnalysisResults.getComponentDependencies().forEach(componentDependency -> {

@@ -262,10 +262,11 @@ public class ScopesRenderer {
         report.startUnorderedList();
         if (criteriaDefined) {
             String filesFragment;
+            String filesPhrase = filesCount == 1 ? "file" : "files";
             if (StringUtils.isNotBlank(filesListPath)) {
-                filesFragment = "<a href='../data/" + filesListPath + "'><b>" + filesCount + "</b> files</a>";
+                filesFragment = "<a href='../data/" + filesListPath + "'><b>" + filesCount + "</b> " + filesPhrase + "</a>";
             } else {
-                filesFragment = "<b>" + filesCount + "</b> files";
+                filesFragment = "<b>" + filesCount + "</b> " + filesPhrase;
             }
             report.addListItem(filesFragment + " match" + (filesCount == 1 ? "es" : "") + " defined criteria (" +
                     "<b>" + RichTextRenderingUtils.renderNumber(linesCount) + "</b> lines of code, "

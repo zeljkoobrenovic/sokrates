@@ -1,9 +1,11 @@
 package nl.obren.sokrates.reports.generators.statichtml;
 
+import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.DuplicationReportUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationDependenciesHelper;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
@@ -88,8 +90,18 @@ public class DuplicationReportGenerator {
     }
 
     private void addOverallDuplicationSection(RichTextReport report) {
+        DuplicationAnalysisResults duplicationAnalysisResults = codeAnalysisResults.getDuplicationAnalysisResults();
+
         report.startSection("Duplication Overall", "");
-        DuplicationReportUtils.addOverallDuplication(report, codeAnalysisResults.getDuplicationAnalysisResults().getOverallDuplication());
+        report.startUnorderedList();
+        report.addListItem("<b>" + FormattingUtils.getFormattedPercentage(duplicationAnalysisResults.getOverallDuplication().getDuplicationPercentage().doubleValue()) + "%<b> duplication:");
+        report.startUnorderedList();
+        report.addListItem("<b>" + FormattingUtils.getFormattedCount(duplicationAnalysisResults.getOverallDuplication().getCleanedLinesOfCode()) + "</b> cleaned lines of cleaned code (without empty lines, comments, and frequently duplicated constructs such as imports)");
+        report.addListItem("<b>" + FormattingUtils.getFormattedCount(duplicationAnalysisResults.getOverallDuplication().getDuplicatedLinesOfCode()) + "</b> duplicated lines");
+        report.endUnorderedList();
+        report.addListItem("<a href='../data/duplicates.txt'><b>" + FormattingUtils.getFormattedCount(duplicationAnalysisResults.getAllDuplicates().size()) + " duplicates</b></a>");
+        report.endUnorderedList();
+        DuplicationReportUtils.addOverallDuplication(report, duplicationAnalysisResults.getOverallDuplication());
         report.endSection();
     }
 
@@ -157,7 +169,7 @@ public class DuplicationReportGenerator {
                 int pairsCount = componentDependency.getPathsFrom().size();
                 String filePairsText = pairsCount + (pairsCount == 1 ? " file pair" : " file pairs");
                 report.addHtmlContent("<td style='text-align: center'>");
-                report.addShowMoreBlock("", "<textarea style='width:100%; height: 20em;'>"
+                report.addShowMoreBlock("", "<textarea style='width:400px; height: 20em;'>"
                         + componentDependency.getPathsFrom().stream().collect(Collectors.joining("\n\n"))
                         + "</textarea>", filePairsText);
                 report.addHtmlContent("</td>");
