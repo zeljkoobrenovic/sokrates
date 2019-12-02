@@ -34,7 +34,7 @@ public class ControlsReportGenerator {
             report.startSection(goalsAnalysisResults.getMetricsWithGoal().getGoal(),
                     goalsAnalysisResults.getMetricsWithGoal().getDescription());
             report.startTable();
-            report.addTableHeader("", "Control", "Status", "Metric", "Desired Range<br/>[from - to] ±tolerance", "Current Value");
+            report.addTableHeader("", "Status", "Metric", "Desired Range<br/>[from - to] ±tolerance", "Current Value", "Description");
             goalsAnalysisResults.getControlStatuses().forEach(controlResult -> {
                 addRow(controlResult);
             });
@@ -46,20 +46,15 @@ public class ControlsReportGenerator {
     }
 
     private void addRow(ControlStatus controlStatus) {
-        report.startTableRow();
-        report.startTableCell();
         String status = controlStatus.getStatus();
-        report.addHtmlContent(ReportUtils.getSvgCircle(getColor(status)));
-        report.endTableCell();
-        report.startTableCell();
-        report.addHtmlContent("" + controlStatus.getControl().getDescription() + "");
-        report.endTableCell();
-        report.startTableCell();
-        report.addHtmlContent(status);
-        report.endTableCell();
+
+        report.startTableRow();
+        report.addTableCell(ReportUtils.getSvgCircle(getColor(status)));
+        report.addTableCell(status);
         report.addTableCell(controlStatus.getMetric().getId(), "text-align: center");
         report.addTableCell("" + controlStatus.getControl().getDesiredRange().getTextDescription(), "text-align: center");
         report.addTableCell("<b>" + controlStatus.getMetric().getValue() + "</b>", "text-align: center");
+        report.addTableCell("" + controlStatus.getControl().getDescription() + "");
         report.endTableRow();
     }
 

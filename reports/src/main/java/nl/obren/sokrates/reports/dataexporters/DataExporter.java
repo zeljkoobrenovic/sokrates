@@ -69,12 +69,52 @@ public class DataExporter {
         this.dataFolder = getDataFolder();
 
         exportFileLists();
+        exportMetrics();
+        exportControls();
         exportJson();
         exportDuplicates();
         exportUnits();
         exportInteractiveExplorers();
         exportSourceFile();
         exportDependencies(analysisResults);
+    }
+
+    private void exportMetrics() {
+        StringBuilder content = new StringBuilder();
+
+        analysisResults.getMetricsList().getMetrics().forEach(metric -> {
+            content.append(metric.getId());
+            content.append(": ");
+            content.append(metric.getValue());
+            content.append("\n");
+        });
+        try {
+            FileUtils.write(new File(dataFolder, "metrics.txt"), content.toString(), UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void exportControls() {
+        StringBuilder content = new StringBuilder();
+
+        analysisResults.getControlResults().getGoalsAnalysisResults().forEach(goalsAnalysisResults -> {
+            goalsAnalysisResults.getControlStatuses().forEach(status -> {
+                content.append("goal: " + goalsAnalysisResults.getMetricsWithGoal().getGoal() + "\n");
+                content.append("control metric: " + status.getMetric().getId() + "\n");
+                content.append("status: " + status.getStatus() + "\n");
+                content.append("desired range: " + status.getControl().getDesiredRange().getTextDescription() + "\n");
+                content.append("value: " + status.getMetric().getValue() + "\n");
+                content.append("description: " + status.getControl().getDescription() + "\n");
+                content.append("\n");
+            });
+        });
+        try {
+            FileUtils.write(new File(dataFolder, "controls.txt"), content.toString(), UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     private void exportDuplicates() {

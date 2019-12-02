@@ -17,12 +17,12 @@ import java.util.Map;
 
 public class BasicsAnalyzer extends Analyzer {
     private final StringBuffer textSummary;
-    private File codeConfigurationFile;
-    private ProgressFeedback progressFeedback;
     private final CodeConfiguration codeConfiguration;
     private final MetricsList metricsList;
     private final long start;
     private final CodeAnalysisResults results;
+    private File codeConfigurationFile;
+    private ProgressFeedback progressFeedback;
 
     public BasicsAnalyzer(CodeAnalysisResults analysisResults, File codeConfigurationFile, ProgressFeedback progressFeedback) {
         this.results = analysisResults;
@@ -56,6 +56,7 @@ public class BasicsAnalyzer extends Analyzer {
 
         AnalysisUtils.detailedInfo(textSummary, progressFeedback, "Excluded from analyses " + (excludedFiles.size()) + " files", start);
     }
+
     private Map<String, Integer> getExcludedExtensions(List<SourceFile> excludedFiles) {
         Map<String, Integer> excludedExtensions = new HashMap<>();
 
@@ -79,9 +80,9 @@ public class BasicsAnalyzer extends Analyzer {
     }
 
     private void analyzeScopes() {
-        AnalysisUtils.analyze(codeConfiguration.getMain(), progressFeedback, results.getMainAspectAnalysisResults(),
+        AnalysisUtils.analyze("", codeConfiguration.getMain(), progressFeedback, results.getMainAspectAnalysisResults(),
                 results.getMetricsList(), results.getTextSummary(), start);
-        AnalysisUtils.analyze(codeConfiguration.getTest(), progressFeedback, results.getTestAspectAnalysisResults(),
+        AnalysisUtils.analyze("", codeConfiguration.getTest(), progressFeedback, results.getTestAspectAnalysisResults(),
                 results.getMetricsList(), results.getTextSummary(), start);
         results.getMetricsList().addMetric()
                 .id(AnalysisUtils.getMetricId("TEST_VS_MAIN_LINES_OF_CODE_PERCENTAGE"))
@@ -90,11 +91,11 @@ public class BasicsAnalyzer extends Analyzer {
                 .value(((int) (10000.0 * results.getTestAspectAnalysisResults().getLinesOfCode() / results.getMainAspectAnalysisResults().getLinesOfCode())) / 100.0
                 );
 
-        AnalysisUtils.analyze(codeConfiguration.getGenerated(), progressFeedback, results.getGeneratedAspectAnalysisResults(),
+        AnalysisUtils.analyze("", codeConfiguration.getGenerated(), progressFeedback, results.getGeneratedAspectAnalysisResults(),
                 results.getMetricsList(), results.getTextSummary(), start);
-        AnalysisUtils.analyze(codeConfiguration.getBuildAndDeployment(), progressFeedback, results.getBuildAndDeployAspectAnalysisResults(),
+        AnalysisUtils.analyze("", codeConfiguration.getBuildAndDeployment(), progressFeedback, results.getBuildAndDeployAspectAnalysisResults(),
                 results.getMetricsList(), results.getTextSummary(), start);
-        AnalysisUtils.analyze(codeConfiguration.getOther(), progressFeedback, results.getOtherAspectAnalysisResults(),
+        AnalysisUtils.analyze("", codeConfiguration.getOther(), progressFeedback, results.getOtherAspectAnalysisResults(),
                 results.getMetricsList(), results.getTextSummary(), start);
     }
 }

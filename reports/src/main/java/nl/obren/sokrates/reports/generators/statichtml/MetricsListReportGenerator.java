@@ -35,7 +35,7 @@ public class MetricsListReportGenerator {
     private void addIntro() {
         report.startSection("Intro", "");
         report.startUnorderedList();
-        report.addListItem("Metrics are all numberic values measured by Sokrates.");
+        report.addListItem("Metrics are all numeric values measured by Sokrates.");
         report.addListItem("You can use these metrics to define <a href='Controls.html'>goals and controls</a>.");
         report.endUnorderedList();
         report.endSection();
@@ -46,9 +46,6 @@ public class MetricsListReportGenerator {
 
         report.startTableCell();
         report.addHtmlContent("<b>" + metric.getId() + "</b>");
-        if (StringUtils.isNotBlank(metric.getDescription())) {
-            report.addHtmlContent("<br/><i>" + metric.getDescription() + "</i><br/>");
-        }
         report.endTableCell();
 
         report.startTableCell("text-align: left");

@@ -1,5 +1,7 @@
 package nl.obren.sokrates.sourcecode.metrics;
 
+import nl.obren.sokrates.common.utils.SystemUtils;
+
 public class Metric {
 
     public enum Scope { SYSTEM, LOGICAL_DECOMPOSITION, LOGICAL_COMPONENT, CROSS_CUTTING_CATEGORY, CROSS_CUTTING_CONCERN, EXTENSION }
@@ -15,7 +17,7 @@ public class Metric {
     }
 
     public Metric id(String name) {
-        this.id = name;
+        this.id = SystemUtils.getFileSystemFriendlyName(name).toUpperCase();
         return this;
     }
 

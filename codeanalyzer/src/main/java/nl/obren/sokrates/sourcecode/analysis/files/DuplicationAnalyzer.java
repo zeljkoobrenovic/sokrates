@@ -105,22 +105,23 @@ public class DuplicationAnalyzer extends Analyzer {
     }
 
     private void addExtensionDuplicationMetrics(ExtensionDuplication extensionDuplication) {
+        String suffix = "_" + extensionDuplication.getExtension();
         metricsList.addMetric()
-                .id(AnalysisUtils.getMetricId("DUPLICATION_NUMBER_OF_DUPLICATED_LINES"))
+                .id(AnalysisUtils.getMetricId("DUPLICATION_NUMBER_OF_DUPLICATED_LINES") + suffix)
                 .description("Number of duplicated lines")
                 .scope(Metric.Scope.EXTENSION)
                 .scopeQualifier(extensionDuplication.getExtension())
                 .value(extensionDuplication.getDuplicatedLinesOfCode());
 
         metricsList.addMetric()
-                .id(AnalysisUtils.getMetricId("DUPLICATION_NUMBER_OF_CLEANED_LINES"))
+                .id(AnalysisUtils.getMetricId("DUPLICATION_NUMBER_OF_CLEANED_LINES") + suffix)
                 .description("Number of lines after cleaning for duplication calculations")
                 .scope(Metric.Scope.EXTENSION)
                 .scopeQualifier(extensionDuplication.getExtension())
                 .value(extensionDuplication.getCleanedLinesOfCode());
 
         metricsList.addMetric()
-                .id(AnalysisUtils.getMetricId("DUPLICATION_PERCENTAGE"))
+                .id(AnalysisUtils.getMetricId("DUPLICATION_PERCENTAGE") + suffix)
                 .description("Duplication percentage")
                 .scope(Metric.Scope.EXTENSION)
                 .scopeQualifier(extensionDuplication.getExtension())
@@ -137,25 +138,27 @@ public class DuplicationAnalyzer extends Analyzer {
                         () + " total" +
                 " lines", start);
 
+        String suffix = "_" + logicalDecomposition.getName() + "_" + displayName;
+
         metricsList.addMetric()
-                .id(AnalysisUtils.getMetricId("DUPLICATION_NUMBER_OF_DUPLICATED_LINES"))
+                .id(AnalysisUtils.getMetricId("DUPLICATION_NUMBER_OF_DUPLICATED_LINES") + suffix)
                 .description("Number of duplicated lines")
                 .scope(Metric.Scope.LOGICAL_COMPONENT)
-                .scopeQualifier(logicalDecomposition.getName())
+                .scopeQualifier(suffix)
                 .value(componentDuplication.getDuplicatedLinesOfCode());
 
         metricsList.addMetric()
-                .id(AnalysisUtils.getMetricId("DUPLICATION_NUMBER_OF_CLEANED_LINES"))
+                .id(AnalysisUtils.getMetricId("DUPLICATION_NUMBER_OF_CLEANED_LINES") + suffix)
                 .description("Number of lines after cleaning for duplication calculations")
                 .scope(Metric.Scope.LOGICAL_COMPONENT)
-                .scopeQualifier(logicalDecomposition.getName())
+                .scopeQualifier(suffix)
                 .value(componentDuplication.getDuplicatedLinesOfCode());
 
         metricsList.addMetric()
-                .id(AnalysisUtils.getMetricId("DUPLICATION_PERCENTAGE"))
+                .id(AnalysisUtils.getMetricId("DUPLICATION_PERCENTAGE") + suffix)
                 .description("Duplication percentage")
                 .scope(Metric.Scope.LOGICAL_COMPONENT)
-                .scopeQualifier(logicalDecomposition.getName())
+                .scopeQualifier(suffix)
                 .value(100.0 * componentDuplication.getDuplicatedLinesOfCode() / componentDuplication.getDuplicatedLinesOfCode());
     }
 

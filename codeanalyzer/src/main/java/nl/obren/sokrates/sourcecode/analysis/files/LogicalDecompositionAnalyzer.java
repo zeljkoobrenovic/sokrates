@@ -59,7 +59,7 @@ public class LogicalDecompositionAnalyzer extends Analyzer {
             logicalDecomposition.getComponents().forEach(component -> {
                 AspectAnalysisResults componentAnalysisResults = new AspectAnalysisResults(component.getName());
                 logicalDecompositionAnalysisResults.getComponents().add(componentAnalysisResults);
-                AnalysisUtils.analyze(component, LogicalDecompositionAnalyzer.this.progressFeedback, componentAnalysisResults,
+                AnalysisUtils.analyze(logicalDecomposition.getName(), component, LogicalDecompositionAnalyzer.this.progressFeedback, componentAnalysisResults,
                         metricsList, textSummary, start);
             });
 
