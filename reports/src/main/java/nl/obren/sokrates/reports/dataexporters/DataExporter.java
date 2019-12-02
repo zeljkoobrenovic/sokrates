@@ -258,8 +258,16 @@ public class DataExporter {
     private String appendDependency(String filterFrom, String filterTo, String logicalDecompositionName, Dependency dependency) {
         StringBuilder content = new StringBuilder();
         dependency.getFromFiles().forEach(sourceFileDependency -> {
-            String fromComponent = dependency.getFromComponentName() != null ? dependency.getFromComponentName() : dependency.getFromComponents(logicalDecompositionName).get(0).getName();
-            String toComponent = dependency.getToComponentName() != null ? dependency.getToComponentName() : dependency.getToComponents(logicalDecompositionName).get(0).getName();
+            List<NamedSourceCodeAspect> fromComponents = dependency.getFromComponents(logicalDecompositionName);
+            List<NamedSourceCodeAspect> toComponents = dependency.getToComponents(logicalDecompositionName);
+
+            String fromComponent = dependency.getFromComponentName() != null
+                    ? dependency.getFromComponentName()
+                    : fromComponents.size() > 0 ? fromComponents.get(0).getName() : "UNKNOWN";
+
+            String toComponent = dependency.getToComponentName() != null
+                    ? dependency.getToComponentName()
+                    : toComponents.size() > 0 ? toComponents.get(0).getName() : "UNKNOWN";
 
             if (shouldAppendDependency(filterFrom, filterTo, fromComponent, toComponent)) {
                 content.append("from: " + fromComponent);
