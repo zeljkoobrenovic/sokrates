@@ -122,7 +122,7 @@ public class CodeBrowserPane extends SplitPane {
         reportMenu.getItems().add(getMenuItem("Update Cross Cutting Concerns Report...", e -> codeConfigurationView.generateCrossCuttingConcernsReport()));
         reportMenu.getItems().add(getMenuItem("Update File Size Report...", e -> codeConfigurationView.generateFileSizeReport()));
         reportMenu.getItems().add(getMenuItem("Update Unit Size Report...", e -> codeConfigurationView.generateUnitSizeReport()));
-        reportMenu.getItems().add(getMenuItem("Update Cyclomatic Complexity Report...", e -> codeConfigurationView.generateCyclomaticComplexity()));
+        reportMenu.getItems().add(getMenuItem("Update Conditional Complexity Report...", e -> codeConfigurationView.generateConditionalComplexity()));
         reportMenu.getItems().add(getMenuItem("Update Findings Report...", e -> codeConfigurationView.generateFindingsOverviewReport()));
         reportMenu.getItems().add(getMenuItem("Update Metrics Overview Report...", e -> codeConfigurationView.generateMetricsOverviewReport()));
         reportMenu.getItems().add(getMenuItem("Update Controls Report...", e -> codeConfigurationView.generateControlsReport()));

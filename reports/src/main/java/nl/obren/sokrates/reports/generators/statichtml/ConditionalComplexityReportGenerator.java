@@ -13,29 +13,29 @@ import nl.obren.sokrates.sourcecode.units.UnitInfo;
 import java.util.Arrays;
 import java.util.List;
 
-public class CyclomaticComplexityReportGenerator {
+public class ConditionalComplexityReportGenerator {
     private CodeAnalysisResults codeAnalysisResults;
     private List<String> labels = Arrays.asList("26+", "11-25", "6-10", "1-5");
 
-    public CyclomaticComplexityReportGenerator(CodeAnalysisResults codeAnalysisResults) {
+    public ConditionalComplexityReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
     }
 
-    public void addCyclomaticComplexityToReport(RichTextReport report) {
+    public void addConditionalComplexityToReport(RichTextReport report) {
         UnitsAnalysisResults unitsAnalysisResults = codeAnalysisResults.getUnitsAnalysisResults();
-        RiskDistributionStats unitMcCabeDistribution = unitsAnalysisResults.getCyclomaticComplexityRiskDistribution();
+        RiskDistributionStats unitMcCabeDistribution = unitsAnalysisResults.getConditionalComplexityRiskDistribution();
 
         report.startSection("Intro", "");
         report.startUnorderedList();
         // "\"Conditional complexity\" (also called cyclomatic complexity) is a term used to measure the complexity of software. The term refers to the number of possible paths through a program function; a higher value means higher maintenance and testing costs."
-        report.addListItem("Cyclomatic complexity is a software metric (measurement), used to indicate the complexity of a program. It is a quantitative measure of the number of linearly " +
-                "independent paths through a program's source code.");
-        report.addListItem("Cyclomatic complexity is measured at the unit level (methods, functions...).");
+        report.addListItem("Conditional complexity (also called cyclomatic complexity) is a term used to measure the complexity of software. The term refers to the number of possible paths through a program function. A higher value ofter means higher maintenance and testing costs (<a href='https://resources.infosecinstitute.com/conditional-complexity-of-risk-models/#gref'>infosecinstitute.com</a>).");
+        report.addListItem("Conditional complexity is calculated by counting all conditions in the program that can affect the execution path (e.g. if statement, loops, switches, and/or operators, try and catch blocks...).");
+        report.addListItem("Conditional complexity is measured at the unit level (methods, functions...).");
         report.addListItem("Units are classified in four categories based on the measured McCabe index: " +
                 "1-5 (simple units), 6-10 (medium complex units), 11-25 (complex units), 26+ (very complex units).");
         report.endUnorderedList();
         report.startUnorderedList();
-        report.addListItem("To learn more about cyclomatic complexity and techniques for reducing this type of complexity, Sokrates recommends the following resources:");
+        report.addListItem("To learn more about conditional complexity and techniques for reducing this type of complexity, Sokrates recommends the following resources:");
         report.startUnorderedList();
         report.addListItem("<a target='_blank' href='https://sourcemaking.com/refactoring/simplifying-conditional-expressions'>Simplifying Conditional Expressions</a>, sourcemaking.com");
         report.addListItem("<a target='_blank' href='https://en.wikipedia.org/wiki/Cyclomatic_complexity'>Cyclomatic Complexity</a>, wikipedia.org");
@@ -49,11 +49,11 @@ public class CyclomaticComplexityReportGenerator {
 
         // "https://www.wrightfully.com/thoughts-on-cyclomatic-complexity/"
 
-        report.startSection("Cyclomatic Complexity Overall", "");
+        report.startSection("Conditional Complexity Overall", "");
         report.startUnorderedList();
         int linesOfCodeInUnits = unitsAnalysisResults.getLinesOfCodeInUnits();
-        report.addListItem("There are " + RichTextRenderingUtils.renderNumberStrong(unitsAnalysisResults.getTotalNumberOfUnits())
-                + " units with " + RichTextRenderingUtils.renderNumberStrong(linesOfCodeInUnits)
+        report.addListItem("There are <a href='../data/units.txt'>" + RichTextRenderingUtils.renderNumberStrong(unitsAnalysisResults.getTotalNumberOfUnits())
+                + " units</a> with " + RichTextRenderingUtils.renderNumberStrong(linesOfCodeInUnits)
                 + " lines of code in units (" + (RichTextRenderingUtils.renderNumber(100.0 * linesOfCodeInUnits / codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode())) + "% of code)" +
                 ".");
         report.startUnorderedList();
@@ -74,15 +74,15 @@ public class CyclomaticComplexityReportGenerator {
         report.addHtmlContent(PieChartUtils.getRiskDistributionPieChart(unitMcCabeDistribution, labels));
         report.endSection();
 
-        report.startSection("Cyclomatic Complexity per Extension", "");
+        report.startSection("Conditional Complexity per Extension", "");
         report.addHtmlContent(RiskDistributionStatsReportUtils.getRiskDistributionPerKeySvgBarChart(unitsAnalysisResults
-                .getCyclomaticComplexityRiskDistributionPerExtension(), labels).toString());
+                .getConditionalComplexityRiskDistributionPerExtension(), labels).toString());
         report.endSection();
 
-        report.startSection("Cyclomatic Complexity per Logical Component", "");
-        List<List<RiskDistributionStats>> cyclomaticComplexityRiskDistributionPerComponent = unitsAnalysisResults.getCyclomaticComplexityRiskDistributionPerComponent();
-        cyclomaticComplexityRiskDistributionPerComponent.forEach(stats -> {
-            report.startSubSection(getLogicalDecompositionName(cyclomaticComplexityRiskDistributionPerComponent.indexOf(stats)) + " logical decomposition", "");
+        report.startSection("Conditional Complexity per Logical Component", "");
+        List<List<RiskDistributionStats>> conditionalComplexityRiskDistributionPerComponent = unitsAnalysisResults.getConditionalComplexityRiskDistributionPerComponent();
+        conditionalComplexityRiskDistributionPerComponent.forEach(stats -> {
+            report.startSubSection(getLogicalDecompositionName(conditionalComplexityRiskDistributionPerComponent.indexOf(stats)) + " logical decomposition", "");
             report.addHtmlContent(RiskDistributionStatsReportUtils.getRiskDistributionPerKeySvgBarChart(stats, labels).toString());
             report.endSection();
         });

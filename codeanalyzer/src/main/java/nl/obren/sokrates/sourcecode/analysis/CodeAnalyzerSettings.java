@@ -11,7 +11,7 @@ public class CodeAnalyzerSettings {
     private boolean analyzeDuplication = true;
     private boolean analyzeFileSize = true;
     private boolean analyzeUnitSize = true;
-    private boolean analyzeCyclomaticComplexity = true;
+    private boolean analyzeConditionalComplexity = true;
     private boolean createMetricsList = true;
     private boolean analyzeControls = true;
     private boolean analyzeFindings = true;
@@ -23,7 +23,7 @@ public class CodeAnalyzerSettings {
         analyzeDuplication = true;
         analyzeFileSize = true;
         analyzeUnitSize = true;
-        analyzeCyclomaticComplexity = true;
+        analyzeConditionalComplexity = true;
         createMetricsList = true;
         analyzeControls = true;
     }
@@ -35,7 +35,7 @@ public class CodeAnalyzerSettings {
         analyzeDuplication = false;
         analyzeFileSize = false;
         analyzeUnitSize = false;
-        analyzeCyclomaticComplexity = false;
+        analyzeConditionalComplexity = false;
         createMetricsList = false;
         analyzeControls = false;
     }
@@ -88,12 +88,12 @@ public class CodeAnalyzerSettings {
         this.analyzeUnitSize = analyzeUnitSize;
     }
 
-    public boolean isAnalyzeCyclomaticComplexity() {
-        return analyzeCyclomaticComplexity;
+    public boolean isAnalyzeConditionalComplexity() {
+        return analyzeConditionalComplexity;
     }
 
-    public void setAnalyzeCyclomaticComplexity(boolean analyzeCyclomaticComplexity) {
-        this.analyzeCyclomaticComplexity = analyzeCyclomaticComplexity;
+    public void setAnalyzeConditionalComplexity(boolean analyzeConditionalComplexity) {
+        this.analyzeConditionalComplexity = analyzeConditionalComplexity;
     }
 
     public boolean isCreateMetricsList() {

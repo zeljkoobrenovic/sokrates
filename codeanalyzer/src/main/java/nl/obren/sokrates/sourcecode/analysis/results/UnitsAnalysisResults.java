@@ -11,14 +11,14 @@ public class UnitsAnalysisResults {
     private int linesOfCodeInUnits;
 
     private RiskDistributionStats unitSizeRiskDistribution = new RiskDistributionStats("system");
-    private RiskDistributionStats cyclomaticComplexityRiskDistribution = new RiskDistributionStats("system");
+    private RiskDistributionStats conditionalComplexityRiskDistribution = new RiskDistributionStats("system");
 
     private List<RiskDistributionStats> unitSizeRiskDistributionPerExtension = new ArrayList<>();
     private List<List<RiskDistributionStats>> unitSizeRiskDistributionPerComponent = new ArrayList<>();
     private List<UnitInfo> longestUnits = new ArrayList<>();
 
-    private List<RiskDistributionStats> cyclomaticComplexityRiskDistributionPerExtension = new ArrayList<>();
-    private List<List<RiskDistributionStats>> cyclomaticComplexityRiskDistributionPerComponent = new ArrayList<>();
+    private List<RiskDistributionStats> conditionalComplexityRiskDistributionPerExtension = new ArrayList<>();
+    private List<List<RiskDistributionStats>> conditionalComplexityRiskDistributionPerComponent = new ArrayList<>();
     private List<UnitInfo> mostComplexUnits = new ArrayList<>();
 
     private List<UnitInfo> allUnits = new ArrayList<>();
@@ -47,12 +47,12 @@ public class UnitsAnalysisResults {
         this.unitSizeRiskDistribution = unitSizeRiskDistribution;
     }
 
-    public RiskDistributionStats getCyclomaticComplexityRiskDistribution() {
-        return cyclomaticComplexityRiskDistribution;
+    public RiskDistributionStats getConditionalComplexityRiskDistribution() {
+        return conditionalComplexityRiskDistribution;
     }
 
-    public void setCyclomaticComplexityRiskDistribution(RiskDistributionStats cyclomaticComplexityRiskDistribution) {
-        this.cyclomaticComplexityRiskDistribution = cyclomaticComplexityRiskDistribution;
+    public void setConditionalComplexityRiskDistribution(RiskDistributionStats conditionalComplexityRiskDistribution) {
+        this.conditionalComplexityRiskDistribution = conditionalComplexityRiskDistribution;
     }
 
     public List<RiskDistributionStats> getUnitSizeRiskDistributionPerExtension() {
@@ -71,20 +71,20 @@ public class UnitsAnalysisResults {
         this.unitSizeRiskDistributionPerComponent = unitSizeRiskDistributionPerComponent;
     }
 
-    public List<RiskDistributionStats> getCyclomaticComplexityRiskDistributionPerExtension() {
-        return cyclomaticComplexityRiskDistributionPerExtension;
+    public List<RiskDistributionStats> getConditionalComplexityRiskDistributionPerExtension() {
+        return conditionalComplexityRiskDistributionPerExtension;
     }
 
-    public void setCyclomaticComplexityRiskDistributionPerExtension(List<RiskDistributionStats> cyclomaticComplexityRiskDistributionPerExtension) {
-        this.cyclomaticComplexityRiskDistributionPerExtension = cyclomaticComplexityRiskDistributionPerExtension;
+    public void setConditionalComplexityRiskDistributionPerExtension(List<RiskDistributionStats> conditionalComplexityRiskDistributionPerExtension) {
+        this.conditionalComplexityRiskDistributionPerExtension = conditionalComplexityRiskDistributionPerExtension;
     }
 
-    public List<List<RiskDistributionStats>> getCyclomaticComplexityRiskDistributionPerComponent() {
-        return cyclomaticComplexityRiskDistributionPerComponent;
+    public List<List<RiskDistributionStats>> getConditionalComplexityRiskDistributionPerComponent() {
+        return conditionalComplexityRiskDistributionPerComponent;
     }
 
-    public void setCyclomaticComplexityRiskDistributionPerComponent(List<List<RiskDistributionStats>> cyclomaticComplexityRiskDistributionPerComponent) {
-        this.cyclomaticComplexityRiskDistributionPerComponent = cyclomaticComplexityRiskDistributionPerComponent;
+    public void setConditionalComplexityRiskDistributionPerComponent(List<List<RiskDistributionStats>> conditionalComplexityRiskDistributionPerComponent) {
+        this.conditionalComplexityRiskDistributionPerComponent = conditionalComplexityRiskDistributionPerComponent;
     }
 
     public List<UnitInfo> getLongestUnits() {

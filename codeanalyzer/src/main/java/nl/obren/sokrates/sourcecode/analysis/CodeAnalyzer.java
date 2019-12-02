@@ -84,7 +84,7 @@ public class CodeAnalyzer {
     }
 
     private boolean shouldAnalyzeUnits() {
-        return codeAnalyzerSettings.isAnalyzeUnitSize() || codeAnalyzerSettings.isAnalyzeCyclomaticComplexity()
+        return codeAnalyzerSettings.isAnalyzeUnitSize() || codeAnalyzerSettings.isAnalyzeConditionalComplexity()
                 || codeAnalyzerSettings.isCreateMetricsList() || codeAnalyzerSettings.isAnalyzeControls();
     }
 

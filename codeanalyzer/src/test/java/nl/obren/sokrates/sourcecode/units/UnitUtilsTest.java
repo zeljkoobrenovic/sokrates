@@ -34,8 +34,8 @@ public class UnitUtilsTest {
     }
 
     @Test
-    public void getCyclomaticComplexityRiskDistributionInstance() throws Exception {
-        RiskDistributionStats instance = UnitUtils.getCyclomaticComplexityRiskDistributionInstance();
+    public void getConditionalComplexityRiskDistributionInstance() throws Exception {
+        RiskDistributionStats instance = UnitUtils.getConditionalComplexityRiskDistributionInstance();
         assertTrue(instance.getMediumRiskThreshold() > 0);
         assertTrue(instance.getHighRiskThreshold() > instance.getMediumRiskThreshold());
         assertTrue(instance.getVeryHighRiskThreshold() > instance.getHighRiskThreshold());
@@ -69,7 +69,7 @@ public class UnitUtilsTest {
     }
 
     @Test
-    public void getCyclomaticComplexityDistributionPerExtension() throws Exception {
+    public void getConditionalComplexityDistributionPerExtension() throws Exception {
         List<UnitInfo> units = new ArrayList<>();
         UnitInfo unit1 = new UnitInfo();
         unit1.setLinesOfCode(10);
@@ -89,7 +89,7 @@ public class UnitUtilsTest {
         unit3.setSourceFile(new SourceFile(new File("B.java"), " "));
         units.add(unit3);
 
-        List<RiskDistributionStats> instance = UnitUtils.getCyclomaticComplexityDistributionPerExtension(units);
+        List<RiskDistributionStats> instance = UnitUtils.getConditionalComplexityDistributionPerExtension(units);
         assertEquals(instance.size(), 1);
         assertEquals(instance.get(0).getKey(), "java");
         assertEquals(instance.get(0).getLowRiskValue(), 10);
@@ -144,7 +144,7 @@ public class UnitUtilsTest {
     }
 
     @Test
-    public void getCyclomaticComplexityDistributionPerComponent() throws Exception {
+    public void getConditionalComplexityDistributionPerComponent() throws Exception {
         List<UnitInfo> units = new ArrayList<>();
         UnitInfo unit1 = new UnitInfo();
         unit1.setLinesOfCode(20);
@@ -176,7 +176,7 @@ public class UnitUtilsTest {
                 return true;
             }
         };
-        List<RiskDistributionStats> instance = UnitUtils.getCyclomaticComplexityDistributionPerComponent(Arrays.asList(logicalDecomposition), units).get(0);
+        List<RiskDistributionStats> instance = UnitUtils.getConditionalComplexityDistributionPerComponent(Arrays.asList(logicalDecomposition), units).get(0);
         assertEquals(instance.size(), 2);
         assertEquals(instance.get(0).getKey(), "A");
         assertEquals(instance.get(0).getLowRiskValue(), 20);
@@ -218,7 +218,7 @@ public class UnitUtilsTest {
     }
 
     @Test
-    public void getAggregateCyclomaticComplexityRiskDistribution() throws Exception {
+    public void getAggregateConditionalComplexityRiskDistribution() throws Exception {
         List<UnitInfo> units = new ArrayList<>();
         UnitInfo unit1 = new UnitInfo();
         unit1.setLinesOfCode(10);
@@ -238,13 +238,13 @@ public class UnitUtilsTest {
         unit3.setSourceFile(new SourceFile(new File("B.java"), " "));
         units.add(unit3);
 
-        List<RiskDistributionStats> aggregateCyclomaticComplexityRiskDistribution = UnitUtils.getAggregateCyclomaticComplexityRiskDistribution(units, param -> "Y");
-        assertEquals(aggregateCyclomaticComplexityRiskDistribution.size(), 1);
-        assertEquals(aggregateCyclomaticComplexityRiskDistribution.get(0).getKey(), "Y");
-        assertEquals(aggregateCyclomaticComplexityRiskDistribution.get(0).getLowRiskValue(), 21);
-        assertEquals(aggregateCyclomaticComplexityRiskDistribution.get(0).getMediumRiskValue(), 0);
-        assertEquals(aggregateCyclomaticComplexityRiskDistribution.get(0).getHighRiskValue(), 0);
-        assertEquals(aggregateCyclomaticComplexityRiskDistribution.get(0).getVeryHighRiskValue(), 50);
+        List<RiskDistributionStats> aggregateConditionalComplexityRiskDistribution = UnitUtils.getAggregateConditionalComplexityRiskDistribution(units, param -> "Y");
+        assertEquals(aggregateConditionalComplexityRiskDistribution.size(), 1);
+        assertEquals(aggregateConditionalComplexityRiskDistribution.get(0).getKey(), "Y");
+        assertEquals(aggregateConditionalComplexityRiskDistribution.get(0).getLowRiskValue(), 21);
+        assertEquals(aggregateConditionalComplexityRiskDistribution.get(0).getMediumRiskValue(), 0);
+        assertEquals(aggregateConditionalComplexityRiskDistribution.get(0).getHighRiskValue(), 0);
+        assertEquals(aggregateConditionalComplexityRiskDistribution.get(0).getVeryHighRiskValue(), 50);
     }
 
     @Test
@@ -277,7 +277,7 @@ public class UnitUtilsTest {
     }
 
     @Test
-    public void getCyclomaticComplexityDistribution() throws Exception {
+    public void getConditionalComplexityDistribution() throws Exception {
         List<UnitInfo> units = new ArrayList<>();
         UnitInfo unit1 = new UnitInfo();
         unit1.setLinesOfCode(10);
@@ -304,9 +304,9 @@ public class UnitUtilsTest {
         unit5.setMcCabeIndex(1);
         units.add(unit5);
 
-        assertEquals(UnitUtils.getCyclomaticComplexityDistribution(units).getLowRiskValue(), 11);
-        assertEquals(UnitUtils.getCyclomaticComplexityDistribution(units).getMediumRiskValue(), 20);
-        assertEquals(UnitUtils.getCyclomaticComplexityDistribution(units).getHighRiskValue(), 30);
-        assertEquals(UnitUtils.getCyclomaticComplexityDistribution(units).getVeryHighRiskValue(), 200);
+        assertEquals(UnitUtils.getConditionalComplexityDistribution(units).getLowRiskValue(), 11);
+        assertEquals(UnitUtils.getConditionalComplexityDistribution(units).getMediumRiskValue(), 20);
+        assertEquals(UnitUtils.getConditionalComplexityDistribution(units).getHighRiskValue(), 30);
+        assertEquals(UnitUtils.getConditionalComplexityDistribution(units).getVeryHighRiskValue(), 200);
     }
 }

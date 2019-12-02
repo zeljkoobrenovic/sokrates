@@ -29,7 +29,7 @@ public class UnitUtils {
         return distributionStats;
     }
 
-    public static RiskDistributionStats getCyclomaticComplexityRiskDistributionInstance() {
+    public static RiskDistributionStats getConditionalComplexityRiskDistributionInstance() {
         RiskDistributionStats distributionStats = new RiskDistributionStats(5, 10, 25);
         distributionStats.setLowRiskLabel("1-5");
         distributionStats.setMediumRiskLabel("6-10");
@@ -44,8 +44,8 @@ public class UnitUtils {
         return distribution;
     }
 
-    public static RiskDistributionStats getCyclomaticComplexityDistribution(List<UnitInfo> units) {
-        RiskDistributionStats distribution = getCyclomaticComplexityRiskDistributionInstance();
+    public static RiskDistributionStats getConditionalComplexityDistribution(List<UnitInfo> units) {
+        RiskDistributionStats distribution = getConditionalComplexityRiskDistributionInstance();
         units.forEach(unit -> distribution.update(unit.getMcCabeIndex(), unit.getLinesOfCode()));
         return distribution;
     }
@@ -54,8 +54,8 @@ public class UnitUtils {
         return getAggregateUnitSizeRiskDistribution(units, unit -> unit.getSourceFile().getExtension());
     }
 
-    public static List<RiskDistributionStats> getCyclomaticComplexityDistributionPerExtension(List<UnitInfo> units) {
-        return getAggregateCyclomaticComplexityRiskDistribution(units, unit -> unit.getSourceFile().getExtension());
+    public static List<RiskDistributionStats> getConditionalComplexityDistributionPerExtension(List<UnitInfo> units) {
+        return getAggregateConditionalComplexityRiskDistribution(units, unit -> unit.getSourceFile().getExtension());
     }
 
     public static List<List<RiskDistributionStats>> getUnitSizeDistributionPerComponent(List<LogicalDecomposition> logicalDecompositions, List<UnitInfo> units) {
@@ -68,11 +68,11 @@ public class UnitUtils {
         return componentStats;
     }
 
-    public static List<List<RiskDistributionStats>> getCyclomaticComplexityDistributionPerComponent(List<LogicalDecomposition> logicalDecompositions, List<UnitInfo> units) {
+    public static List<List<RiskDistributionStats>> getConditionalComplexityDistributionPerComponent(List<LogicalDecomposition> logicalDecompositions, List<UnitInfo> units) {
         List<List<RiskDistributionStats>> componentStats = new ArrayList<>();
         logicalDecompositions.forEach(logicalDecomposition -> {
             List<UnitInfo> unitsInScope = units.stream().filter(unit -> logicalDecomposition.isInScope(unit.getSourceFile())).collect(Collectors.toList());
-            componentStats.add(getAggregateCyclomaticComplexityRiskDistribution(unitsInScope, unit -> unit.getSourceFile().getLogicalComponents(logicalDecomposition.getName()).get(0).getName()));
+            componentStats.add(getAggregateConditionalComplexityRiskDistribution(unitsInScope, unit -> unit.getSourceFile().getLogicalComponents(logicalDecomposition.getName()).get(0).getName()));
         });
         return componentStats;
     }
@@ -95,14 +95,14 @@ public class UnitUtils {
         return distributionList;
     }
 
-    public static List<RiskDistributionStats> getAggregateCyclomaticComplexityRiskDistribution(List<UnitInfo> units, SimpleCallback<UnitInfo, String> aggregationKeyCallback) {
+    public static List<RiskDistributionStats> getAggregateConditionalComplexityRiskDistribution(List<UnitInfo> units, SimpleCallback<UnitInfo, String> aggregationKeyCallback) {
         Map<String, RiskDistributionStats> distributionMap = new HashMap<>();
         List<RiskDistributionStats> distributionList = new ArrayList<>();
         units.forEach(unit -> {
             String key = aggregationKeyCallback.call(unit);
             RiskDistributionStats distributionStats = distributionMap.get(key);
             if (distributionStats == null) {
-                distributionStats = getCyclomaticComplexityRiskDistributionInstance();
+                distributionStats = getConditionalComplexityRiskDistributionInstance();
                 distributionMap.put(key, distributionStats);
                 distributionStats.setKey(key);
                 distributionList.add(distributionStats);

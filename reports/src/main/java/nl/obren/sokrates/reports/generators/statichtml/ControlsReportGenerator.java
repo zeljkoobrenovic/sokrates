@@ -19,7 +19,7 @@ public class ControlsReportGenerator {
         report.addListItem("Controls enable you to set alarms for any of the <a href='Metrics.html'>Sokrates metrics</a>. An alarm is defined with a desired range and tolerance.");
         report.addListItem("For more insights in the value of trend analysis, Sokrates recommends reading the section \"Explicitly link metrics to goals\" in the article <a href='https://martinfowler.com/articles/useOfMetrics.html#ExplicitlyLinkMetricsToGoals' target='_blank'>An Appropriate Use of Metrics</a>, (MartinFowler.com), e.g.:");
         report.startUnorderedList();
-        report.addListItem("<i>\"We would like our code to be less complex and easier to change. Therefore we should aim to write short methods (less than 15 lines) with a low cyclomatic complexity (less than 20 is good). We should also aim to have a small handful of parameters (up to four) so that methods remain as focused as possible.\"</i>");
+        report.addListItem("<i>\"We would like our code to be less complex and easier to change. Therefore we should aim to write short methods (less than 15 lines) with a low conditional complexity (less than 20 is good). We should also aim to have a small handful of parameters (up to four) so that methods remain as focused as possible.\"</i>");
         report.endUnorderedList();
         report.endUnorderedList();
         report.endSection();

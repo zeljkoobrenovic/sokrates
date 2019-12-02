@@ -20,7 +20,7 @@ public class BasicSourceCodeReportGenerator {
     private RichTextReport duplicationReport = new RichTextReport("Duplication", "Duplication.html");
     private RichTextReport fileSizeReport = new RichTextReport("File Size", "FileSize.html");
     private RichTextReport unitSizeReport = new RichTextReport("Unit Size", "UnitSize.html");
-    private RichTextReport cyclomaticComplexityReport = new RichTextReport("Cyclomatic Complexity", "CyclomaticComplexity.html");
+    private RichTextReport conditionalComplexityReport = new RichTextReport("Conditional Complexity", "ConditionalComplexity.html");
     private RichTextReport findingsReport = new RichTextReport("Notes & Findings", "Notes.html");
     private RichTextReport metricsReport = new RichTextReport("Metrics", "Metrics.html");
     private RichTextReport comparisonReport = new RichTextReport("Trend", "Trend.html");
@@ -67,8 +67,8 @@ public class BasicSourceCodeReportGenerator {
         if (codeAnalyzerSettings.isAnalyzeUnitSize()) {
             reports.add(unitSizeReport);
         }
-        if (codeAnalyzerSettings.isAnalyzeCyclomaticComplexity()) {
-            reports.add(cyclomaticComplexityReport);
+        if (codeAnalyzerSettings.isAnalyzeConditionalComplexity()) {
+            reports.add(conditionalComplexityReport);
         }
         if (codeAnalyzerSettings.isAnalyzeCrossCuttingConcerns()) {
             reports.add(crossCuttingConcernsReport);
@@ -96,7 +96,7 @@ public class BasicSourceCodeReportGenerator {
         decorateReport(overviewScopeReport, name, logoLink);
         decorateReport(duplicationReport, name, logoLink);
         decorateReport(unitSizeReport, name, logoLink);
-        decorateReport(cyclomaticComplexityReport, name, logoLink);
+        decorateReport(conditionalComplexityReport, name, logoLink);
         decorateReport(fileSizeReport, name, logoLink);
         decorateReport(controlsReport, name, logoLink);
         decorateReport(metricsReport, name, logoLink);
@@ -131,8 +131,8 @@ public class BasicSourceCodeReportGenerator {
             new UnitsSizeReportGenerator(codeAnalysisResults).addUnitsSizeToReport(unitSizeReport);
         }
 
-        if (codeAnalyzerSettings.isAnalyzeCyclomaticComplexity()) {
-            new CyclomaticComplexityReportGenerator(codeAnalysisResults).addCyclomaticComplexityToReport(cyclomaticComplexityReport);
+        if (codeAnalyzerSettings.isAnalyzeConditionalComplexity()) {
+            new ConditionalComplexityReportGenerator(codeAnalysisResults).addConditionalComplexityToReport(conditionalComplexityReport);
         }
 
         new FindingsReportGenerator(codeConfigurationFile).generateReport(codeAnalysisResults, findingsReport);

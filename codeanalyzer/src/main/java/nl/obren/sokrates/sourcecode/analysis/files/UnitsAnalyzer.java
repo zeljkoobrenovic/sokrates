@@ -29,7 +29,7 @@ public class UnitsAnalyzer extends Analyzer {
 
     private UnitCategoryNames unitSizeCategoryNames = new UnitCategoryNames("1_20", "21_50", "51_100", "101_PLUS");
 
-    private UnitCategoryNames cyclomaticComplexityCategoryNames = new UnitCategoryNames("1_5", "6_10", "10_25", "26_PLUS");
+    private UnitCategoryNames conditionalComplexityCategoryNames = new UnitCategoryNames("1_5", "6_10", "10_25", "26_PLUS");
 
     public UnitsAnalyzer(CodeAnalysisResults analysisResults, ProgressFeedback progressFeedback) {
         this.unitsAnalysisResults = analysisResults.getUnitsAnalysisResults();
@@ -74,22 +74,22 @@ public class UnitsAnalyzer extends Analyzer {
             printRiskDistributionStats(extensionUnitSizeDistribution, unitSizeCategoryNames, "  - " + extensionUnitSizeDistribution.getKey() + ": ");
         });
 
-        RiskDistributionStats cyclomaticComplexityDistribution = UnitUtils.getCyclomaticComplexityDistribution(allUnits);
-        unitsAnalysisResults.setCyclomaticComplexityRiskDistribution(cyclomaticComplexityDistribution);
-        printRiskDistributionStats(UnitUtils.getCyclomaticComplexityDistribution(allUnits), cyclomaticComplexityCategoryNames, "Cyclomatic complexity distribution: ");
-        AnalysisUtils.detailedInfo(textSummary, progressFeedback, "Cyclomatic complexity distribution per component:", start);
-        UnitUtils.getCyclomaticComplexityDistributionPerComponent(codeConfiguration.getLogicalDecompositions(), allUnits).forEach(group -> {
-            List<RiskDistributionStats> componentCyclomaticComplexityDistributionStats = new ArrayList<>();
-            unitsAnalysisResults.getCyclomaticComplexityRiskDistributionPerComponent().add(componentCyclomaticComplexityDistributionStats);
-            group.forEach(componentCyclomaticComplexityDistribution -> {
-                componentCyclomaticComplexityDistributionStats.add(componentCyclomaticComplexityDistribution);
-                printRiskDistributionStats(componentCyclomaticComplexityDistribution, cyclomaticComplexityCategoryNames, "  - " + componentCyclomaticComplexityDistribution.getKey() + ": ");
+        RiskDistributionStats conditionalComplexityDistribution = UnitUtils.getConditionalComplexityDistribution(allUnits);
+        unitsAnalysisResults.setConditionalComplexityRiskDistribution(conditionalComplexityDistribution);
+        printRiskDistributionStats(UnitUtils.getConditionalComplexityDistribution(allUnits), conditionalComplexityCategoryNames, "Conditional complexity distribution: ");
+        AnalysisUtils.detailedInfo(textSummary, progressFeedback, "Conditional complexity distribution per component:", start);
+        UnitUtils.getConditionalComplexityDistributionPerComponent(codeConfiguration.getLogicalDecompositions(), allUnits).forEach(group -> {
+            List<RiskDistributionStats> componentConditionalComplexityDistributionStats = new ArrayList<>();
+            unitsAnalysisResults.getConditionalComplexityRiskDistributionPerComponent().add(componentConditionalComplexityDistributionStats);
+            group.forEach(componentConditionalComplexityDistribution -> {
+                componentConditionalComplexityDistributionStats.add(componentConditionalComplexityDistribution);
+                printRiskDistributionStats(componentConditionalComplexityDistribution, conditionalComplexityCategoryNames, "  - " + componentConditionalComplexityDistribution.getKey() + ": ");
             });
         });
-        AnalysisUtils.detailedInfo(textSummary, progressFeedback, "Cyclomatic complexity distribution per extension:", start);
-        UnitUtils.getCyclomaticComplexityDistributionPerExtension(allUnits).forEach(extensionUnitSizeDistribution -> {
-            unitsAnalysisResults.getCyclomaticComplexityRiskDistributionPerExtension().add(extensionUnitSizeDistribution);
-            printRiskDistributionStats(extensionUnitSizeDistribution, cyclomaticComplexityCategoryNames, "  - " + extensionUnitSizeDistribution.getKey() + ": ");
+        AnalysisUtils.detailedInfo(textSummary, progressFeedback, "Conditional complexity distribution per extension:", start);
+        UnitUtils.getConditionalComplexityDistributionPerExtension(allUnits).forEach(extensionUnitSizeDistribution -> {
+            unitsAnalysisResults.getConditionalComplexityRiskDistributionPerExtension().add(extensionUnitSizeDistribution);
+            printRiskDistributionStats(extensionUnitSizeDistribution, conditionalComplexityCategoryNames, "  - " + extensionUnitSizeDistribution.getKey() + ": ");
         });
 
         int sampleSize = 50;

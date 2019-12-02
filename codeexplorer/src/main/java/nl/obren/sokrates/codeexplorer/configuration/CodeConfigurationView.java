@@ -23,7 +23,6 @@ import org.apache.commons.logging.LogFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
 import java.util.concurrent.Executors;
 
 public class CodeConfigurationView extends ConfigurationEditorView {
@@ -239,8 +238,8 @@ public class CodeConfigurationView extends ConfigurationEditorView {
         generateReports(CommandLineInterface.REPORT_UNIT_SIZE);
     }
 
-    public void generateCyclomaticComplexity() {
-        generateReports(CommandLineInterface.REPORT_CYCLOMATIC_COMPLEXITY);
+    public void generateConditionalComplexity() {
+        generateReports(CommandLineInterface.REPORT_CONDITIONAL_COMPLEXITY);
     }
 
     public void generateFindingsOverviewReport() {

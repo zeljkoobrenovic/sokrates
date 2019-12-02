@@ -50,7 +50,7 @@ public class CommandLineInterface {
     public static final String REPORT_FILE_SIZE = "reportFileSize";
     public static final String REPORT_METRICS = "reportMetrics";
     public static final String REPORT_UNIT_SIZE = "reportUnitSize";
-    public static final String REPORT_CYCLOMATIC_COMPLEXITY = "reportCyclomaticComplexity";
+    public static final String REPORT_CONDITIONAL_COMPLEXITY = "reportConditionalComplexity";
     public static final String REPORT_CONTROLS = "reportControls";
     public static final String OUTPUT_FOLDER = "outputFolder";
     public static final String HTML_REPORTS_FOLDER_NAME = "html";
@@ -68,7 +68,7 @@ public class CommandLineInterface {
     private Option fileSize = new Option(REPORT_FILE_SIZE, false, "generate the file size report (stored in <outputFolder>/FileSize.html)");
     private Option metrics = new Option(REPORT_METRICS, false, "generate the metrics overview report (stored in <outputFolder>/Metrics.html)");
     private Option unitSize = new Option(REPORT_UNIT_SIZE, false, "generate the unit size report (stored in <outputFolder>/UnitSize.html)");
-    private Option cyclomaticComplexity = new Option(REPORT_CYCLOMATIC_COMPLEXITY, false, "generate the cyclomatic complexity report (stored in <outputFolder>/CyclomaticComplexity.html)");
+    private Option conditionalComplexity = new Option(REPORT_CONDITIONAL_COMPLEXITY, false, "generate the conditional complexity report (stored in <outputFolder>/ConditionalComplexity.html)");
     private Option controls = new Option(REPORT_CONTROLS, false, "generate the controls report (stored in <outputFolder>/Controls.html)");
 
     private Option outputFolder = new Option(OUTPUT_FOLDER, true, "the folder where reports will be stored");
@@ -258,10 +258,10 @@ public class CommandLineInterface {
     }
 
     private void generate3DUnitsView(File visualsFolder, CodeAnalysisResults analysisResults) {
-        List<Unit3D> unit3DCyclomaticComplexity = new ArrayList<>();
+        List<Unit3D> unit3DConditionalComplexity = new ArrayList<>();
         analysisResults.getUnitsAnalysisResults().getAllUnits().forEach(unit -> {
             BasicColorInfo color = Thresholds.getColor(Thresholds.UNIT_MCCABE, unit.getMcCabeIndex());
-            unit3DCyclomaticComplexity.add(new Unit3D(unit.getLongName(), unit.getLinesOfCode(), color));
+            unit3DConditionalComplexity.add(new Unit3D(unit.getLongName(), unit.getLinesOfCode(), color));
         });
 
         List<Unit3D> unit3DSize = new ArrayList<>();
@@ -277,7 +277,7 @@ public class CommandLineInterface {
             files3D.add(new Unit3D(file.getFile().getPath(), file.getLinesOfCode(), color));
         });
 
-        new X3DomExporter(new File(visualsFolder, "units_3d_complexity.html"), "A 3D View of All Units (Cyclomatic Complexity)", "Each block is one unit. The height of the block represents the file unit size in lines of code. The color of the unit represents its cyclomatic complexity category (green=0-5, yellow=6-10, orange=11-25, red=26+).").export(unit3DCyclomaticComplexity, false, 10);
+        new X3DomExporter(new File(visualsFolder, "units_3d_complexity.html"), "A 3D View of All Units (Conditional Complexity)", "Each block is one unit. The height of the block represents the file unit size in lines of code. The color of the unit represents its conditional complexity category (green=0-5, yellow=6-10, orange=11-25, red=26+).").export(unit3DConditionalComplexity, false, 10);
 
         new X3DomExporter(new File(visualsFolder, "units_3d_size.html"), "A 3D View of All Units (Unit Size)", "Each block is one unit. The height of the block represents the file unit size in lines of code. The color of the unit represents its unit size category (green=0-20, yellow=21-50, orange=51-100, red=101+).").export(unit3DSize, false, 10);
 
@@ -352,8 +352,8 @@ public class CommandLineInterface {
             if (cmd.hasOption(fileSize.getOpt())) {
                 settings.setAnalyzeFileSize(true);
             }
-            if (cmd.hasOption(cyclomaticComplexity.getOpt())) {
-                settings.setAnalyzeCyclomaticComplexity(true);
+            if (cmd.hasOption(conditionalComplexity.getOpt())) {
+                settings.setAnalyzeConditionalComplexity(true);
             }
             if (cmd.hasOption(unitSize.getOpt())) {
                 settings.setAnalyzeUnitSize(true);
@@ -380,7 +380,7 @@ public class CommandLineInterface {
         options.addOption(crossCuttingConcerns);
         options.addOption(fileSize);
         options.addOption(metrics);
-        options.addOption(cyclomaticComplexity);
+        options.addOption(conditionalComplexity);
         options.addOption(confFile);
         options.addOption(outputFolder);
         options.addOption(unitSize);

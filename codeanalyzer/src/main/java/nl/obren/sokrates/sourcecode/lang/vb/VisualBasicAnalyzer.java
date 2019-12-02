@@ -58,7 +58,7 @@ public class VisualBasicAnalyzer extends LanguageAnalyzer {
         features.add(FEATURE_ALL_STANDARD_ANALYSES);
         features.add(FEATURE_ADVANCED_CODE_CLEANING);
         features.add(FEATURE_NO_UNIT_SIZE_ANALYSIS);
-        features.add(FEATURE_NO_CYCLOMATIC_COMPLEXITY_ANALYSIS);
+        features.add(FEATURE_NO_CONDITIONAL_COMPLEXITY_ANALYSIS);
         features.add(FEATURE_NO_DEPENDENCIES_ANALYSIS);
 
         return features;

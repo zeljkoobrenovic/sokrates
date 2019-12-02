@@ -71,6 +71,7 @@ public class DataExporter {
         exportFileLists();
         exportJson();
         exportDuplicates();
+        exportUnits();
         exportInteractiveExplorers();
         exportSourceFile();
         exportDependencies(analysisResults);
@@ -98,6 +99,30 @@ public class DataExporter {
         });
         try {
             FileUtils.write(new File(dataFolder, "duplicates.txt"), content.toString(), UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void exportUnits() {
+        UnitListExporter units = new UnitListExporter(analysisResults.getUnitsAnalysisResults().getAllUnits());
+        int id[] = {1};
+        StringBuilder content = new StringBuilder();
+        units.getAllUnitsData().forEach(unit -> {
+            content.append("id: " + id[0] + "\n");
+            content.append("unit: " + unit.getShortName() + "\n");
+            content.append("file: " + unit.getRelativeFileName() + "\n");
+            content.append("start line: " + unit.getStartLine() + "\n");
+            content.append("end line: " + unit.getEndLine() + "\n");
+            content.append("size: " + unit.getLinesOfCode() + " LOC\n");
+            content.append("McCabe index: " + unit.getMcCabeIndex() + "\n");
+            content.append("number of parameters: " + unit.getNumberOfParameters() + "\n");
+            content.append("\n");
+
+            id[0]++;
+        });
+        try {
+            FileUtils.write(new File(dataFolder, "units.txt"), content.toString(), UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }

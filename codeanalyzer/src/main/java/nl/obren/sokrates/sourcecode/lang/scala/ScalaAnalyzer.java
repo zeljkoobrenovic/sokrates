@@ -53,7 +53,7 @@ public class ScalaAnalyzer extends LanguageAnalyzer {
         features.add(FEATURE_ALL_STANDARD_ANALYSES);
         features.add(FEATURE_ADVANCED_CODE_CLEANING);
         features.add(FEATURE_ADVANCED_UNIT_SIZE_ANALYSIS);
-        features.add(FEATURE_ADVANCED_CYCLOMATIC_COMPLEXITY_ANALYSIS);
+        features.add(FEATURE_ADVANCED_CONDITIONAL_COMPLEXITY_ANALYSIS);
         features.add(FEATURE_BASIC_DEPENDENCIES_ANALYSIS);
 
         return features;

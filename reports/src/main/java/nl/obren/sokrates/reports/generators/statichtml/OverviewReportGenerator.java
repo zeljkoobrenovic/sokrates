@@ -81,9 +81,7 @@ public class OverviewReportGenerator {
         String extra = "";
         extra += "<ul>";
         extra += "<li>The <b>main</b> category contains all <b>manually</b> created source code files that are being used in the <b>production</b>.</li>";
-        extra += "<li>Files in the <b>main</b> category are used as input for other analyses: logical decomposition, cross-cutting concerns, duplication, file size, unit size, and " +
-                "cyclomatic complexity" +
-                ".</li>";
+        extra += "<li>Files in the <b>main</b> category are used as input for other analyses: logical decomposition, cross-cutting concerns, duplication, file size, unit size, and conditional complexity.</li>";
         extra += "<li><b>Test</b> source code files are used only for testing of the product. These files are normally not deployed to production.</li>";
         extra += "<li><b>Build and deployment</b> source code files are used to configure or support build and deployment process.</li>";
         extra += "<li><b>Generated</b> source code files are automatically generated files that have not been manually changed after generation.</li>";

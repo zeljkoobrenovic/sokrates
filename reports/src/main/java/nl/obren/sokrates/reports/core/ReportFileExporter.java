@@ -149,7 +149,7 @@ public class ReportFileExporter {
                 {"Duplication.html", "Duplication "},
                 {"FileSize.html", "File Size"},
                 {"UnitSize.html", "Unit Size"},
-                {"CyclomaticComplexity.html", "Cyclomatic Complexity"},
+                {"ConditionalComplexity.html", "Conditional Complexity"},
                 {"CrossCuttingConcerns.html", "Cross - Cutting Concerns"},
                 {"Metrics.html", "All Metrics"},
                 {"Trend.html", "Trend"},

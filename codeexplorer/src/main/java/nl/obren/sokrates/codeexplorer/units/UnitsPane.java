@@ -101,7 +101,7 @@ public class UnitsPane extends BorderPane {
                 BasicColorInfo color = Thresholds.getColor(Thresholds.UNIT_MCCABE, unit.getMcCabeIndex());
                 unit3Ds.add(new Unit3D(unit.getLongName(), unit.getLinesOfCode(), color));
             });
-            new X3DomExporter("A 3D View of All Units", "Each block is one unit. The height of the block represents the file unit size in lines of code. The color of the unit represents its cyclomatic complexity category (green=0-5, yellow=6-10, orange=11-25, red=26+).").export(unit3Ds, false, divideByFactor);
+            new X3DomExporter("A 3D View of All Units", "Each block is one unit. The height of the block represents the file unit size in lines of code. The color of the unit represents its conditional complexity category (green=0-5, yellow=6-10, orange=11-25, red=26+).").export(unit3Ds, false, divideByFactor);
 
 
         }
@@ -236,8 +236,8 @@ public class UnitsPane extends BorderPane {
         splitPane.setOrientation(Orientation.HORIZONTAL);
         splitPane.getItems().add(getUnitSizePieChart(UnitUtils.getUnitSizeDistribution(units), Thresholds.UNIT_LINES,
                 "Lines of Code"));
-        splitPane.getItems().add(getUnitSizePieChart(UnitUtils.getCyclomaticComplexityDistribution(units), Thresholds
-                .UNIT_MCCABE, "Cyclomatic Complexity"));
+        splitPane.getItems().add(getUnitSizePieChart(UnitUtils.getConditionalComplexityDistribution(units), Thresholds
+                .UNIT_MCCABE, "Conditional Complexity"));
         topPane.setCenter(splitPane);
     }
 

@@ -178,10 +178,10 @@ public class SummaryUtils {
 
     private void summarizeUnitComplexity(CodeAnalysisResults analysisResults, RichTextReport report) {
         int linesOfCodeInUnits = analysisResults.getUnitsAnalysisResults().getLinesOfCodeInUnits();
-        int veryComplexUnitsLOC = analysisResults.getUnitsAnalysisResults().getCyclomaticComplexityRiskDistribution().getVeryHighRiskValue();
-        int lowComplexUnitsLOC = analysisResults.getUnitsAnalysisResults().getCyclomaticComplexityRiskDistribution().getLowRiskValue();
+        int veryComplexUnitsLOC = analysisResults.getUnitsAnalysisResults().getConditionalComplexityRiskDistribution().getVeryHighRiskValue();
+        int lowComplexUnitsLOC = analysisResults.getUnitsAnalysisResults().getConditionalComplexityRiskDistribution().getLowRiskValue();
 
-        report.addParagraph("Cyclomatic Complexity: <b style='" + (veryComplexUnitsLOC > 1 ? "color: crimson" : "") + "'>"
+        report.addParagraph("Conditional Complexity: <b style='" + (veryComplexUnitsLOC > 1 ? "color: crimson" : "") + "'>"
                 + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, veryComplexUnitsLOC))
                 + "%</b> very complex (McCabe index > 25), <b style='color: green'>"
                 + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, lowComplexUnitsLOC))

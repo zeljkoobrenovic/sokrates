@@ -13,11 +13,11 @@ public abstract class LanguageAnalyzer {
     public static final String FEATURE_BASIC_CODE_CLEANING = "Basic code cleaning (empty lines removed for LOC calculations and duplication calculations)";
     public static final String FEATURE_ADVANCED_CODE_CLEANING = "Advanced code cleaning (empty lines and comments removed for LOC calculations, additional cleaning for duplication calculations)";
     public static final String FEATURE_ADVANCED_UNIT_SIZE_ANALYSIS = "Advanced unit size analysis";
-    public static final String FEATURE_ADVANCED_CYCLOMATIC_COMPLEXITY_ANALYSIS = "Advanced cyclomatic complexity analysis";
+    public static final String FEATURE_ADVANCED_CONDITIONAL_COMPLEXITY_ANALYSIS = "Advanced conditional complexity analysis";
     public static final String FEATURE_ADVANCED_DEPENDENCIES_ANALYSIS = "Advanced heuristic dependency analysis";
 
     public static final String FEATURE_NO_UNIT_SIZE_ANALYSIS = "No unit size analysis";
-    public static final String FEATURE_NO_CYCLOMATIC_COMPLEXITY_ANALYSIS = "No cyclomatic complexity analysis";
+    public static final String FEATURE_NO_CONDITIONAL_COMPLEXITY_ANALYSIS = "No conditional complexity analysis";
     public static final String FEATURE_NO_DEPENDENCIES_ANALYSIS = "No dependency analysis";
 
     public static final String FEATURE_BASIC_DEPENDENCIES_ANALYSIS = "Basic heuristic dependency analysis";
