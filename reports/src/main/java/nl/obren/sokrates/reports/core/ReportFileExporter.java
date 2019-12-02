@@ -154,7 +154,7 @@ public class ReportFileExporter {
                 {"Metrics.html", "All Metrics"},
                 {"Trend.html", "Trend"},
                 {"Controls.html", "Goals & Controls"},
-                {"Findings.html", "Notes & Findings"},
+                {"Notes.html", "Notes & Findings"},
 
         };
     }

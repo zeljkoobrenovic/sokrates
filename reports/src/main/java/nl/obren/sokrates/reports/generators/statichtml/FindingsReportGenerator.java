@@ -17,7 +17,6 @@ public class FindingsReportGenerator {
     private File codeConfigurationFile;
 
     public FindingsReportGenerator(File codeConfigurationFile) {
-
         this.codeConfigurationFile = codeConfigurationFile;
     }
 
@@ -51,7 +50,7 @@ public class FindingsReportGenerator {
     private void addIntro() {
         report.startSection("Intro", "");
         report.startUnorderedList();
-        report.addListItem("Finds are free-from notes and pieces of code from explorations of the source code.");
+        report.addListItem("Free-from notes and pieces of code from explorations of the source code.");
         report.endUnorderedList();
         report.endSection();
     }
