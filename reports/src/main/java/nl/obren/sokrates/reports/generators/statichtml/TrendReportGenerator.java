@@ -4,6 +4,7 @@ import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.core.SummaryUtils;
+import nl.obren.sokrates.reports.utils.ZipUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.core.ReferenceAnalysisResult;
 import nl.obren.sokrates.sourcecode.metrics.Metric;
@@ -12,12 +13,9 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 public class TrendReportGenerator {
     private RichTextReport report;
@@ -83,7 +81,7 @@ public class TrendReportGenerator {
 
     private String getJson(File file) throws IOException {
         if (FilenameUtils.getExtension(file.getName()).equalsIgnoreCase("zip")) {
-            String json = unzipAnalysisResults(file);
+            String json = ZipUtils.unzipFirstEntryAsString(file);
             return StringUtils.isNotBlank(json) ? json : "";
         } else {
             return FileUtils.readFileToString(file, StandardCharsets.UTF_8);
@@ -142,33 +140,5 @@ public class TrendReportGenerator {
                     + FormattingUtils.getFormattedPercentage(Math.abs(percentage)) + "%)";
         }
         return diffText;
-    }
-
-
-    private String unzipAnalysisResults(File zipFile) {
-        try {
-            ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile));
-            ZipEntry zipEntry = zis.getNextEntry();
-            StringBuilder stringBuilder = new StringBuilder();
-            if (zipEntry != null) {
-                int len;
-                byte[] buffer = new byte[1024];
-                while ((len = zis.read(buffer)) > 0) {
-                    for (int i = 0; i < len; i++) {
-                        stringBuilder.append((char) buffer[i]);
-                    }
-                }
-            }
-            zis.closeEntry();
-            zis.close();
-
-            String content = stringBuilder.toString();
-
-            return content;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return null;
     }
 }

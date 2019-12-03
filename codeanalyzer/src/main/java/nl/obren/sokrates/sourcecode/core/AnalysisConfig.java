@@ -9,7 +9,7 @@ public class AnalysisConfig {
     private boolean skipDuplication = false;
     private boolean skipDependencies = false;
     private boolean cacheSourceFiles = true;
-    private boolean saveDailyHistory = true;
+    private boolean saveDailyHistory = false;
     private List<AnalyzerOverride> analyzerOverrides = new ArrayList<>();
 
     public boolean isSkipDuplication() {

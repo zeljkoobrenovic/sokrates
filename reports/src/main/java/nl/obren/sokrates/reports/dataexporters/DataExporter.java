@@ -13,6 +13,7 @@ import nl.obren.sokrates.reports.generators.explorers.DependenciesExplorerGenera
 import nl.obren.sokrates.reports.generators.explorers.DuplicationExplorerGenerator;
 import nl.obren.sokrates.reports.generators.explorers.FilesExplorerGenerator;
 import nl.obren.sokrates.reports.generators.explorers.UnitsExplorerGenerator;
+import nl.obren.sokrates.reports.utils.ZipUtils;
 import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -389,30 +390,12 @@ public class DataExporter {
                 new DependenciesExplorerGenerator(analysisResults).generateExplorer(), UTF_8);
     }
 
-    private void zipHistory(File folder, String entryName, String content) {
-        try {
-            FileOutputStream fos = new FileOutputStream(new File(folder, "analysisResults.zip"));
-            ZipOutputStream zipOut = new ZipOutputStream(fos);
-
-            ZipEntry zipEntry = new ZipEntry(entryName);
-            zipOut.putNextEntry(zipEntry);
-            zipOut.write(content.getBytes());
-
-            zipOut.close();
-            fos.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     private void exportJson() throws IOException {
         String analysisResultsJson = new JsonGenerator().generate(analysisResults);
         FileUtils.write(new File(dataFolder, "analysisResults.json"), analysisResultsJson, UTF_8);
 
         if (codeConfiguration.getAnalysis().isSaveDailyHistory()) {
-            zipHistory(getTodayHistoryFolder(), "analysisResults.json", analysisResultsJson);
+            ZipUtils.stringToZipFile(new File(getTodayHistoryFolder(), "analysisResults.zip"), "analysisResults.json", analysisResultsJson);
         }
 
         FileUtils.write(new File(dataFolder, "mainFiles.json"), new JsonGenerator().generate(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);

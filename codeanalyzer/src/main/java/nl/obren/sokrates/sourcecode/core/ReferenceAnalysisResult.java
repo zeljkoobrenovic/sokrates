@@ -1,8 +1,8 @@
 package nl.obren.sokrates.sourcecode.core;
 
 public class ReferenceAnalysisResult {
-    private String label = "reference";
-    private String analysisResultsPath = "reference-analyses/previous.json";
+    private String label = "DATE";
+    private String analysisResultsPath = "reports/history/DATE/analysisResults.zip";
 
     public String getLabel() {
         return label;
