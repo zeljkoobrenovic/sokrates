@@ -108,71 +108,8 @@ public class SourceCodeCleanerUtils {
 
     public static CleanedContent cleanCommentsAndEmptyLines(String content, String singleLineCommentStart, String
             blockCommentStart, String blockCommentEnd, String stringDelimiter, char stringEscapeChar) {
-        content = SourceCodeCleanerUtils.normalizeLineEnds(content);
-
-        int indexSingleLineCommentStart = content.indexOf(singleLineCommentStart);
-        int indexBlockCommentStart = content.indexOf(blockCommentStart);
-        int indexStringStart = content.indexOf(stringDelimiter);
-        while (indexStringStart > 0 && content.charAt(indexStringStart - 1) == stringEscapeChar) {
-            indexStringStart = content.indexOf(stringDelimiter, indexStringStart + 1);
-        }
-
-        int index;
-
-        while ((index = getFirstIndex(Arrays.asList(indexSingleLineCommentStart, indexBlockCommentStart, indexStringStart))) != -1) {
-            String contentBefore = content.substring(0, index);
-            if (index == indexSingleLineCommentStart) {
-                int endIndex = content.indexOf("\n", index + singleLineCommentStart.length());
-                if (endIndex == -1) {
-                    content = contentBefore;
-                    break;
-                } else {
-                    content = contentBefore + content.substring(endIndex);
-                }
-            } else if (index == indexBlockCommentStart) {
-                int endIndex = content.indexOf(blockCommentEnd, index + blockCommentStart.length());
-                if (endIndex == -1) {
-                    content = contentBefore;
-                    break;
-                } else {
-                    contentBefore += StringUtils.repeat("\n", StringUtils.countMatches(content.substring(index, endIndex), "\n"));
-                    content = contentBefore + content.substring(endIndex + blockCommentEnd.length());
-                }
-            } else if (index == indexStringStart) {
-                int endIndex = content.indexOf(stringDelimiter, index + 1);
-                while (endIndex > 0 && content.charAt(endIndex - 1) == stringEscapeChar) {
-                    endIndex = content.indexOf(stringDelimiter, endIndex + 1);
-                }
-                if (endIndex == -1) {
-                    content = contentBefore;
-                    break;
-                } else {
-                    contentBefore += content.substring(index, endIndex + 1);
-                }
-            } else {
-                break;
-            }
-
-            indexSingleLineCommentStart = content.indexOf(singleLineCommentStart, contentBefore.length());
-            indexBlockCommentStart = content.indexOf(blockCommentStart, contentBefore.length());
-            indexStringStart = content.indexOf(stringDelimiter, contentBefore.length());
-            while (indexStringStart > 0 && content.charAt(indexStringStart - 1) == stringEscapeChar) {
-                indexStringStart = content.indexOf(stringDelimiter, indexStringStart + 1);
-            }
-
-        }
-
-        return SourceCodeCleanerUtils.cleanEmptyLinesWithLineIndexes(content);
-    }
-
-    private static int getFirstIndex(List<Integer> indexes) {
-        int index = -1;
-        for (Integer i : indexes) {
-            if (i >= 0 && (index == -1 || i < index)) {
-                index = i;
-            }
-        }
-        return index;
+        CommentsAndEmptyLinesCleaner cleaner = new CommentsAndEmptyLinesCleaner(singleLineCommentStart, blockCommentStart, blockCommentEnd, stringDelimiter, stringEscapeChar);
+        return cleaner.clean(content);
     }
 
     public static CleanedContent cleanSingeLineCommentsAndEmptyLines(String content, List<String> singleLineCommentStarts) {
