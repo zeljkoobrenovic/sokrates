@@ -37,5 +37,5 @@ public class RichTextFragment {
         this.description = description;
     }
 
-    public enum Type {HTML, GRAPHVIZ, PLANTUML, SVG}
+    public enum Type {HTML, GRAPHVIZ, SVG}
 }

@@ -31,9 +31,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -41,6 +46,7 @@ public class DataExporter {
     public static final String INTERACTIVE_HTML_FOLDER_NAME = "explorers";
     public static final String SRC_CACHE_FOLDER_NAME = "src";
     public static final String DATA_FOLDER_NAME = "data";
+    public static final String HISTORY_FOLDER_NAME = "history";
     public static final String SEPARATOR = "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n";
     private static final Log LOG = LogFactory.getLog(DataExporter.class);
     private ProgressFeedback progressFeedback;
@@ -48,6 +54,7 @@ public class DataExporter {
     private File reportsFolder;
     private CodeAnalysisResults analysisResults;
     private File dataFolder;
+    private File historyFolder;
     private File codeCacheFolder;
 
     public DataExporter(ProgressFeedback progressFeedback) {
@@ -67,6 +74,7 @@ public class DataExporter {
         this.reportsFolder = reportsFolder;
         this.analysisResults = analysisResults;
         this.dataFolder = getDataFolder();
+        this.historyFolder = getDataHistoryFolder();
 
         exportFileLists();
         exportMetrics();
@@ -381,8 +389,32 @@ public class DataExporter {
                 new DependenciesExplorerGenerator(analysisResults).generateExplorer(), UTF_8);
     }
 
+    private void zipHistory(File folder, String entryName, String content) {
+        try {
+            FileOutputStream fos = new FileOutputStream(new File(folder, "analysisResults.zip"));
+            ZipOutputStream zipOut = new ZipOutputStream(fos);
+
+            ZipEntry zipEntry = new ZipEntry(entryName);
+            zipOut.putNextEntry(zipEntry);
+            zipOut.write(content.getBytes());
+
+            zipOut.close();
+            fos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void exportJson() throws IOException {
-        FileUtils.write(new File(dataFolder, "analysisResults.json"), new JsonGenerator().generate(analysisResults), UTF_8);
+        String analysisResultsJson = new JsonGenerator().generate(analysisResults);
+        FileUtils.write(new File(dataFolder, "analysisResults.json"), analysisResultsJson, UTF_8);
+
+        if (codeConfiguration.getAnalysis().isSaveDailyHistory()) {
+            zipHistory(getTodayHistoryFolder(), "analysisResults.json", analysisResultsJson);
+        }
+
         FileUtils.write(new File(dataFolder, "mainFiles.json"), new JsonGenerator().generate(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
         FileUtils.write(new File(dataFolder, "testFiles.json"), new JsonGenerator().generate(analysisResults.getTestAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
         FileUtils.write(new File(dataFolder, "units.json"), new JsonGenerator().generate(new UnitListExporter(analysisResults.getUnitsAnalysisResults().getAllUnits()).getAllUnitsData()), UTF_8);
@@ -519,6 +551,22 @@ public class DataExporter {
         return dataFolder;
     }
 
+    public File getDataHistoryFolder() {
+        File folder = new File(reportsFolder, HISTORY_FOLDER_NAME);
+        folder.mkdirs();
+        return folder;
+    }
+
+    public File getTodayHistoryFolder() {
+        String pattern = "yyyy-MM-dd";
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+
+        String date = simpleDateFormat.format(new Date());
+
+        File folder = new File(getDataHistoryFolder(), date);
+        folder.mkdirs();
+        return folder;
+    }
 
     private void info(String text) {
         LOG.info(text);

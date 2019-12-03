@@ -159,12 +159,6 @@ public class RichTextReport {
         this.endDiv();
     }
 
-    public void addPlantUmlFigure(String description, String plantUmlCode) {
-        RichTextFragment fragment = new RichTextFragment(plantUmlCode, RichTextFragment.Type.PLANTUML);
-        fragment.setDescription(description);
-        richTextFragments.add(fragment);
-    }
-
     public void addTableHeader(String... columns) {
         for (String column : columns) {
             addHtmlContent("<th>" + column + "</th>\n");

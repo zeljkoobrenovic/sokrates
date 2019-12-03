@@ -8,11 +8,16 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.core.ReferenceAnalysisResult;
 import nl.obren.sokrates.sourcecode.metrics.Metric;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class TrendReportGenerator {
     private RichTextReport report;
@@ -54,23 +59,34 @@ public class TrendReportGenerator {
                 file = new File(codeConfigurationFile.getParentFile(), analysisResultsPath);
             }
             if (file.exists()) {
-                report.startSection(result.getLabel(), result.getAnalysisResultsPath());
-                json = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+                report.startSection("Current vs. " + result.getLabel(), result.getAnalysisResultsPath());
+                json = getJson(file);
                 CodeAnalysisResults refData = (CodeAnalysisResults) new JsonMapper().getObject(json, CodeAnalysisResults.class);
 
                 new SummaryUtils().summarizeAndCompare(codeAnalysisResults, refData, report);
 
+                report.startShowMoreBlock("", "Detailed comparison of all metrics...");
                 report.startTable();
                 report.addTableHeader("Metric", "Reference Value", "Current Value", "Difference");
                 codeAnalysisResults.getMetricsList().getMetrics().forEach(metric -> {
                     addRow(metric, refData);
                 });
                 report.endTable();
+                report.endShowMoreBlock();
             } else {
                 report.addParagraph("ERROR: could not find the reference result file '" + analysisResultsPath + "'.");
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private String getJson(File file) throws IOException {
+        if (FilenameUtils.getExtension(file.getName()).equalsIgnoreCase("zip")) {
+            String json = unzipAnalysisResults(file);
+            return StringUtils.isNotBlank(json) ? json : "";
+        } else {
+            return FileUtils.readFileToString(file, StandardCharsets.UTF_8);
         }
     }
 
@@ -81,11 +97,7 @@ public class TrendReportGenerator {
 
         report.startTableRow();
         report.startTableCell();
-        if (metric.getScopeQualifier() != null) {
-            report.addHtmlContent("<i>" + metric.getScopeQualifier() + "</i><br/>");
-        }
         report.addHtmlContent("<b>" + metric.getId() + "</b><br/>");
-        report.addHtmlContent("<i>" + metric.getDescription() + "</i><br/>");
         report.endTableCell();
 
 
@@ -132,4 +144,31 @@ public class TrendReportGenerator {
         return diffText;
     }
 
+
+    private String unzipAnalysisResults(File zipFile) {
+        try {
+            ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile));
+            ZipEntry zipEntry = zis.getNextEntry();
+            StringBuilder stringBuilder = new StringBuilder();
+            if (zipEntry != null) {
+                int len;
+                byte[] buffer = new byte[1024];
+                while ((len = zis.read(buffer)) > 0) {
+                    for (int i = 0; i < len; i++) {
+                        stringBuilder.append((char) buffer[i]);
+                    }
+                }
+            }
+            zis.closeEntry();
+            zis.close();
+
+            String content = stringBuilder.toString();
+
+            return content;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 }

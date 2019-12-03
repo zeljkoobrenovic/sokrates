@@ -7,6 +7,9 @@ public class IgnoredFilesGroup {
     private SourceFileFilter filter;
     private List<SourceFile> sourceFiles = new ArrayList<>();
 
+    public IgnoredFilesGroup() {
+    }
+
     public IgnoredFilesGroup(SourceFileFilter filter) {
         this.filter = filter;
     }

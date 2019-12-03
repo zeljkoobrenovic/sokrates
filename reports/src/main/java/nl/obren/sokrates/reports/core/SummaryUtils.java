@@ -78,8 +78,8 @@ public class SummaryUtils {
         sumariseDuplication(analysisResults, report);
         report.endDiv();
 
-        report.addParagraph(addDiffDiv(analysisResults.getDuplicationAnalysisResults().getOverallDuplication().getDuplicatedLinesOfCode(),
-                refData.getDuplicationAnalysisResults().getOverallDuplication().getDuplicatedLinesOfCode()));
+        report.addParagraph(addDiffDiv(analysisResults.getDuplicationAnalysisResults().getOverallDuplication().getDuplicationPercentage().doubleValue(),
+                refData.getDuplicationAnalysisResults().getOverallDuplication().getDuplicationPercentage().doubleValue()));
         report.startDiv("opacity:0.4;margin-left: 24px;font-size:90%;margin-bottom:46px");
         sumariseDuplication(refData, report);
         report.endDiv();
