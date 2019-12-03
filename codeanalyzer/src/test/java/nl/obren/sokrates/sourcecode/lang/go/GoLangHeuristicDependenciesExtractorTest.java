@@ -1,4 +1,4 @@
-package nl.obren.sokrates.sourcecode.lang;
+package nl.obren.sokrates.sourcecode.lang.go;
 
 import nl.obren.sokrates.sourcecode.lang.go.GoLangHeuristicDependenciesExtractor;
 import org.junit.Test;

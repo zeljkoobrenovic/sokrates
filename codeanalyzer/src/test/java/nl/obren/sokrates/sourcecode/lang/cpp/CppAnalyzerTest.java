@@ -1,11 +1,11 @@
-package nl.obren.sokrates.sourcecode.lang;
+package nl.obren.sokrates.sourcecode.lang.cpp;
 
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
 import nl.obren.sokrates.sourcecode.dependencies.Dependency;
-import nl.obren.sokrates.sourcecode.lang.cpp.CAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.cpp.CppAnalyzer;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 import org.junit.Test;
 
@@ -15,45 +15,87 @@ import java.util.List;
 
 import static junit.framework.TestCase.assertEquals;
 
-public class CAnalyzerTest {
+public class CppAnalyzerTest {
     @Test
     public void cleanForLinesOfCodeCalculations() throws Exception {
-        CAnalyzer analyzer = new CAnalyzer();
-        String code = "if (opt.equals (\"e\"))\n" +
-                "   opt_enabled = true;\n" +
-                "   // opt_enabled = true;\n" +
-                "   a(); // opt_enabled = false;\n" +
-                " /*\n" +
-                "  if (opt.equals (\"d\"))\n" +
-                "   opt_debug = true;\n" +
-                " // */\n";
-        assertEquals(analyzer.cleanForLinesOfCodeCalculations(new SourceFile(new File("dummy.c"), code)).getCleanedContent(), "if (opt.equals (\"e\"))\n" +
-                "   opt_enabled = true;\n" +
-                "   a(); ");
+        CppAnalyzer analyzer = new CppAnalyzer();
+        String code = "// function example\n" +
+                "#include <iostream>\n" +
+                "using namespace std;\n" +
+                "\n" +
+                "int addition (int a, int b)\n" +
+                "{\n" +
+                "  int r;\n" +
+                "  r=a+b;\n" +
+                "  return r;\n" +
+                "}\n" +
+                "\n" +
+                "int main ()\n" +
+                "{\n" +
+                "  int z;\n" +
+                "  z = addition (5,3);\n" +
+                "  cout << \"The result is \" << z;\n" +
+                "}";
+        assertEquals(analyzer.cleanForLinesOfCodeCalculations(new SourceFile(new File("dummy.cpp"), code)).getCleanedContent(), "#include <iostream>\n" +
+                "using namespace std;\n" +
+                "int addition (int a, int b)\n" +
+                "{\n" +
+                "  int r;\n" +
+                "  r=a+b;\n" +
+                "  return r;\n" +
+                "}\n" +
+                "int main ()\n" +
+                "{\n" +
+                "  int z;\n" +
+                "  z = addition (5,3);\n" +
+                "  cout << \"The result is \" << z;\n" +
+                "}");
     }
 
     @Test
     public void cleanForDuplicationCalculations() throws Exception {
-        CAnalyzer analyzer = new CAnalyzer();
-        String code = "#include \"add.h\"\n" +
+        CppAnalyzer analyzer = new CppAnalyzer();
+        String code = "// function example\n" +
+                "#include <iostream>\n" +
+                "using namespace std;\n" +
                 "\n" +
-                "int triple(int x)\n" +
+                "int addition (int a, int b)\n" +
                 "{\n" +
-                "    // comment\n" +
-                "    return add(x, add(x,x));\n" +
+                "  int r;\n" +
+                "  r=a+b;\n" +
+                "  return r;\n" +
+                "}\n" +
+                "\n" +
+                "int main ()\n" +
+                "{\n" +
+                "  int z;\n" +
+                "  z = addition (5,3);\n" +
+                "  cout << \"The result is \" << z;\n" +
                 "}";
-        CleanedContent cleanedContent = analyzer.cleanForDuplicationCalculations(new SourceFile(new File("dummy.c"), code));
-        assertEquals(cleanedContent.getCleanedContent(), "int triple(int x)\n" +
-                "return add(x, add(x,x));");
-        assertEquals(cleanedContent.getCleanedLinesCount(), 2);
-        assertEquals(cleanedContent.getFileLineIndexes().size(), 2);
-        assertEquals(cleanedContent.getFileLineIndexes().get(0).intValue(), 2);
-        assertEquals(cleanedContent.getFileLineIndexes().get(1).intValue(), 5);
+        CleanedContent cleanedContent = analyzer.cleanForDuplicationCalculations(new SourceFile(new File("dummy.cpp"), code));
+        assertEquals(cleanedContent.getCleanedContent(), "int addition (int a, int b)\n" +
+                "int r;\n" +
+                "r=a+b;\n" +
+                "return r;\n" +
+                "int main ()\n" +
+                "int z;\n" +
+                "z = addition (5,3);\n" +
+                "cout << \"The result is \" << z;");
+        assertEquals(cleanedContent.getCleanedLinesCount(), 8);
+        assertEquals(cleanedContent.getFileLineIndexes().size(), 8);
+        assertEquals(cleanedContent.getFileLineIndexes().get(0).intValue(), 4);
+        assertEquals(cleanedContent.getFileLineIndexes().get(1).intValue(), 6);
+        assertEquals(cleanedContent.getFileLineIndexes().get(2).intValue(), 7);
+        assertEquals(cleanedContent.getFileLineIndexes().get(3).intValue(), 8);
+        assertEquals(cleanedContent.getFileLineIndexes().get(4).intValue(), 11);
+        assertEquals(cleanedContent.getFileLineIndexes().get(5).intValue(), 13);
+        assertEquals(cleanedContent.getFileLineIndexes().get(6).intValue(), 14);
+        assertEquals(cleanedContent.getFileLineIndexes().get(7).intValue(), 15);
     }
 
     @Test
     public void extractUnits1() throws Exception {
-        CAnalyzer analyzer = new CAnalyzer();
+        CppAnalyzer analyzer = new CppAnalyzer();
         String code = "#include \"add.h\"\n" +
                 "\n" +
                 "int triple(int x)\n" +
@@ -61,25 +103,8 @@ public class CAnalyzerTest {
                 "    // comment\n" +
                 "    return add(x, add(x,x));\n" +
                 "}";
-        List<UnitInfo> units = analyzer.extractUnits(new SourceFile(new File("dummy.c"), code));
-        assertEquals(units.size(), 1);
-        assertEquals(units.get(0).getShortName(), "int triple()");
-        assertEquals(units.get(0).getLinesOfCode(), 4);
-        assertEquals(units.get(0).getMcCabeIndex(), 1);
-        assertEquals(units.get(0).getNumberOfParameters(), 1);
-    }
-
-    @Test
-    public void extractUnitsMultiLine() throws Exception {
-        CAnalyzer analyzer = new CAnalyzer();
-        String code = "#include \"add.h\"\n" +
-                "\n" +
-                "int triple(int x)\n" +
-                "{\n" +
-                "    // comment\n" +
-                "    return add(x, add(x,x));\n" +
-                "}";
-        List<UnitInfo> units = analyzer.extractUnits(new SourceFile(new File("dummy.c"), code));
+        SourceFile sourceFile = new SourceFile(new File("dummy.cpp"), code);
+        List<UnitInfo> units = analyzer.extractUnits(sourceFile);
         assertEquals(units.size(), 1);
         assertEquals(units.get(0).getShortName(), "int triple()");
         assertEquals(units.get(0).getLinesOfCode(), 4);
@@ -89,7 +114,7 @@ public class CAnalyzerTest {
 
     @Test
     public void extractUnits2() throws Exception {
-        CAnalyzer analyzer = new CAnalyzer();
+        CppAnalyzer analyzer = new CppAnalyzer();
         String code = "#include <stdio.h>\n" +
                 " \n" +
                 "/* function declaration */\n" +
@@ -123,7 +148,7 @@ public class CAnalyzerTest {
                 " \n" +
                 "   return result; \n" +
                 "}";
-        List<UnitInfo> units = analyzer.extractUnits(new SourceFile(new File("dummy.c"), code));
+        List<UnitInfo> units = analyzer.extractUnits(new SourceFile(new File("dummy.cpp"), code));
         assertEquals(units.size(), 2);
         assertEquals(units.get(0).getShortName(), "int main()");
         assertEquals(units.get(0).getLinesOfCode(), 8);
@@ -137,7 +162,7 @@ public class CAnalyzerTest {
 
     @Test
     public void extractDependencies() throws Exception {
-        CAnalyzer analyzer = new CAnalyzer();
+        CppAnalyzer analyzer = new CppAnalyzer();
         String code1 = "#include \"b.h\"\n";
         String code2 = "#include \"add.h\"\n" +
                 "\n" +
@@ -146,13 +171,13 @@ public class CAnalyzerTest {
                 "    // comment\n" +
                 "    return add(x, add(x,x));\n" +
                 "}";
-        SourceFile sourceFile1 = new SourceFile(new File("a.c"), code1);
+        SourceFile sourceFile1 = new SourceFile(new File("a.cpp"), code1);
         sourceFile1.getLogicalComponents().add(new NamedSourceCodeAspect("CompA"));
         SourceFile sourceFile2 = new SourceFile(new File("b.h"), code2);
         sourceFile2.getLogicalComponents().add(new NamedSourceCodeAspect("CompB"));
         List<Dependency> dependencies = analyzer.extractDependencies(Arrays.asList(sourceFile1, sourceFile2), new ProgressFeedback()).getDependencies();
         assertEquals(dependencies.size(), 1);
-        assertEquals(dependencies.get(0).getDependencyString(), "a.c -> b.h");
+        assertEquals(dependencies.get(0).getDependencyString(), "a.cpp -> b.h");
         assertEquals(dependencies.get(0).getComponentDependency(""), "CompA -> CompB");
     }
 }

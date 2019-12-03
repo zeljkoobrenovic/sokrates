@@ -1,4 +1,4 @@
-package nl.obren.sokrates.sourcecode.lang;
+package nl.obren.sokrates.sourcecode.lang.scala;
 
 import nl.obren.sokrates.sourcecode.lang.scala.ScalaHeuristicUnitParser;
 import org.junit.Test;

@@ -1,4 +1,4 @@
-package nl.obren.sokrates.sourcecode.lang;
+package nl.obren.sokrates.sourcecode.lang.csharp;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.dependencies.DependencyAnchor;

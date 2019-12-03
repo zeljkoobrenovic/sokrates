@@ -1,4 +1,4 @@
-package nl.obren.sokrates.sourcecode.lang;
+package nl.obren.sokrates.sourcecode.lang.ruby;
 
 import junit.framework.TestCase;
 import nl.obren.sokrates.sourcecode.SourceFile;

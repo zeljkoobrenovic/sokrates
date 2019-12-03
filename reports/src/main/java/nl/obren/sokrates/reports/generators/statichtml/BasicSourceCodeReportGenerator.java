@@ -14,6 +14,7 @@ import java.util.List;
 
 public class BasicSourceCodeReportGenerator {
     private static final Log LOG = LogFactory.getLog(BasicSourceCodeReportGenerator.class);
+
     private RichTextReport overviewScopeReport = new RichTextReport("Source Code Overview", "SourceCodeOverview.html");
     private RichTextReport logicalComponentsReport = new RichTextReport("Components & Dependencies", "Components.html");
     private RichTextReport crossCuttingConcernsReport = new RichTextReport("Cross-Cutting Concerns", "CrossCuttingConcerns.html");
