@@ -148,9 +148,13 @@ public class CommentsAndEmptyLinesCleaner {
         while (indexStringStart > 0 && content.charAt(indexStringStart - 1) == stringEscapeChar) {
             indexStringStart = content.indexOf(stringDelimiter, indexStringStart + 1);
         }
-        indexStringStartAlt = content.indexOf(indexStringStartAlt, startIndex);
-        while (indexStringStartAlt > 0 && content.charAt(indexStringStartAlt - 1) == stringEscapeCharAlt) {
-            indexStringStartAlt = content.indexOf(indexStringStartAlt, indexStringStartAlt + 1);
+        if (StringUtils.isBlank(stringDelimiterAlt)) {
+            indexStringStartAlt = -1;
+        } else {
+            indexStringStartAlt = content.indexOf(indexStringStartAlt, startIndex);
+            while (indexStringStartAlt > 0 && content.charAt(indexStringStartAlt - 1) == stringEscapeCharAlt) {
+                indexStringStartAlt = content.indexOf(indexStringStartAlt, indexStringStartAlt + 1);
+            }
         }
     }
 
@@ -184,9 +188,13 @@ public class CommentsAndEmptyLinesCleaner {
         while (indexStringStart > 0 && content.charAt(indexStringStart - 1) == stringEscapeChar) {
             indexStringStart = content.indexOf(stringDelimiter, indexStringStart + 1);
         }
-        indexStringStartAlt = content.indexOf(stringDelimiterAlt);
-        while (indexStringStartAlt > 0 && content.charAt(indexStringStartAlt - 1) == stringEscapeCharAlt) {
-            indexStringStartAlt = content.indexOf(stringDelimiterAlt, indexStringStartAlt + 1);
+        if (StringUtils.isBlank(stringDelimiterAlt)) {
+            indexStringStartAlt = -1;
+        } else {
+            indexStringStartAlt = content.indexOf(stringDelimiterAlt);
+            while (indexStringStartAlt > 0 && content.charAt(indexStringStartAlt - 1) == stringEscapeCharAlt) {
+                indexStringStartAlt = content.indexOf(stringDelimiterAlt, indexStringStartAlt + 1);
+            }
         }
     }
 

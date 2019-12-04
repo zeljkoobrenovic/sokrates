@@ -75,7 +75,9 @@ public class DuplicationReportGenerator {
             String logicalDecompositionName = getLogicalDecompositionName(codeAnalysisResults.getDuplicationAnalysisResults().getDuplicationPerComponent().indexOf(duplicationPerComponent));
             report.startSection("Duplication per Component (" + logicalDecompositionName + ")", "");
             DuplicationReportUtils.addDuplicationPerAspect(report, duplicationPerComponent);
-            renderDependeciesViaDuplication(report, logicalDecompositionName);
+            report.startDiv("");
+            renderDependenciesViaDuplication(report, logicalDecompositionName);
+            report.endDiv();
             report.endSection();
         });
     }
@@ -94,7 +96,7 @@ public class DuplicationReportGenerator {
 
         report.startSection("Duplication Overall", "");
         report.startUnorderedList();
-        report.addListItem("<b>" + FormattingUtils.getFormattedPercentage(duplicationAnalysisResults.getOverallDuplication().getDuplicationPercentage().doubleValue()) + "%<b> duplication:");
+        report.addListItem("<b>" + FormattingUtils.getFormattedPercentage(duplicationAnalysisResults.getOverallDuplication().getDuplicationPercentage().doubleValue()) + "%</b> duplication:");
         report.startUnorderedList();
         report.addListItem("<b>" + FormattingUtils.getFormattedCount(duplicationAnalysisResults.getOverallDuplication().getCleanedLinesOfCode()) + "</b> cleaned lines of cleaned code (without empty lines, comments, and frequently duplicated constructs such as imports)");
         report.addListItem("<b>" + FormattingUtils.getFormattedCount(duplicationAnalysisResults.getOverallDuplication().getDuplicatedLinesOfCode()) + "</b> duplicated lines");
@@ -112,6 +114,7 @@ public class DuplicationReportGenerator {
         report.addListItem("Before duplication is calculated, the code is cleaned to remove empty lines, comments, and frequently duplicated constructs such as imports.");
         report.addListItem("You should aim at having as little as possible (<5%) of duplicated code as high-level of duplication can lead to maintenance difficulties, poor factoring, and logical contradictions.");
         report.endUnorderedList();
+        report.startShowMoreBlock("", "Learn more...");
         report.startUnorderedList();
         report.addListItem("To learn more about duplications and techniques for eliminating duplication, Sokrates recommends the following resources:");
         report.startUnorderedList();
@@ -132,10 +135,12 @@ public class DuplicationReportGenerator {
 
         report.endUnorderedList();
         report.endUnorderedList();
+        report.endShowMoreBlock();
+
         report.endSection();
     }
 
-    private void renderDependeciesViaDuplication(RichTextReport report, String logicalDecompositionName) {
+    private void renderDependenciesViaDuplication(RichTextReport report, String logicalDecompositionName) {
         List<ComponentDependency> componentDependencies = new DuplicationDependenciesHelper(logicalDecompositionName).extractDependencies(codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates());
         if (componentDependencies.size() > 0) {
             GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
