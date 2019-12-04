@@ -31,6 +31,10 @@ public class UnitsSizeReportGenerator {
         report.addListItem("Units are classified in four categories based on their size (lines of code): " +
                 "1-20 (small units), 20-50 (medium size units), 51-100 (long units), 101+ (very long units).");
         report.addListItem("You should aim at keeping units small (< 20 lines). Long units may become \"bloaters\", code that have increased to such gargantuan proportions that they are hard to work with.");
+        report.endUnorderedList();
+
+        report.startShowMoreBlock("", "Learn more...");
+        report.startUnorderedList();
         report.addListItem("To learn more about unit size, the Sokrates recommends the following resources:");
         report.startUnorderedList();
         report.addListItem("<a href='https://martinfowler.com/bliki/FunctionLength.html'>Function Length</a>, MartinFowler.com");
@@ -52,6 +56,7 @@ public class UnitsSizeReportGenerator {
 
         report.endUnorderedList();
         report.endUnorderedList();
+        report.endShowMoreBlock();
         report.endSection();
 
         report.startSection("Unit Size Overall", "");

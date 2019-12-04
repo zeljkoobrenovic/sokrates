@@ -241,6 +241,7 @@ public class LogicalComponentsReportGenerator {
         report.addParagraph(shortIntro);
         report.addHtmlContent(longIntro);
 
+        report.startShowMoreBlock("", "Learn more...");
         report.startUnorderedList();
         report.addListItem("To learn more about good practices on componentization and dependencies, Sokrates recommends the following resources:");
         report.startUnorderedList();
@@ -248,6 +249,8 @@ public class LogicalComponentsReportGenerator {
         report.addListItem("<a target='_blank' href='https://sourcemaking.com/refactoring/smells/couplers'>Couplers Code Smells</a>, sourcemaking.com");
         report.endUnorderedList();
         report.endUnorderedList();
+
+        report.endShowMoreBlock();
     }
 
 

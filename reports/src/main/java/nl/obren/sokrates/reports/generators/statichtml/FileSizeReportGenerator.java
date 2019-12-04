@@ -31,6 +31,8 @@ public class FileSizeReportGenerator {
         report.addListItem("It is a good practice to keep files small. Long files may become \"bloaters\", code that have increased to such gargantuan proportions that they are hard to work with.");
         report.endUnorderedList();
         report.endUnorderedList();
+
+        report.startShowMoreBlock("", "Learn more...");
         report.startUnorderedList();
         report.addListItem("To learn more about bloaters and how to deal with long code structures, Sokrates recommends the following resources:");
         report.startUnorderedList();
@@ -39,6 +41,7 @@ public class FileSizeReportGenerator {
 
         report.endUnorderedList();
         report.endUnorderedList();
+        report.endShowMoreBlock();
         report.endSection();
 
         addGraphOverall(report, codeAnalysisResults.getFilesAnalysisResults().getOveralFileSizeDistribution());
