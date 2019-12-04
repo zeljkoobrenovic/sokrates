@@ -74,19 +74,20 @@ public class TrendReportGenerator {
         });
         report.startSection("Summary: Code Volume Change", "");
         report.startTable();
-        report.addTableHeader("", "Main LOC", "Test LOC", "");
+        report.addTableHeader("", "Main LOC", "", "Test LOC", "Duplication");
 
         int index[] = {0};
         analysisResultsList.forEach(refData -> {
+            int mainLoc = refData.getMainAspectAnalysisResults().getLinesOfCode();
+            int testLoc = refData.getTestAspectAnalysisResults().getLinesOfCode();
+            double duplicationPercentage = refData.getDuplicationAnalysisResults().getOverallDuplication().getDuplicationPercentage().doubleValue();
+
             report.startTableRow();
             report.addTableCell(labels.get(index[0]));
-            int mainLoc = refData.getMainAspectAnalysisResults().getLinesOfCode();
             report.addTableCell(FormattingUtils.getFormattedCount(mainLoc), "text-align: right");
-            int testLoc = refData.getTestAspectAnalysisResults().getLinesOfCode();
+            report.addTableCell(getVolumeSvgBarChart(maxTotalLoc[0], mainLoc, testLoc));
             report.addTableCell(FormattingUtils.getFormattedCount(testLoc), "text-align: right");
-            report.startTableCell();
-            report.addHtmlContent(getSvgBarChart(maxTotalLoc[0], mainLoc, testLoc));
-            report.endTableCell();
+            report.addTableCell(getDuplicationChart(duplicationPercentage));
             report.endTableRow();
             index[0]++;
         });
@@ -94,7 +95,7 @@ public class TrendReportGenerator {
         report.endSection();
     }
 
-    private String getSvgBarChart(int maxTotalLoc, int mainLoc, int testLoc) {
+    private String getVolumeSvgBarChart(int maxTotalLoc, int mainLoc, int testLoc) {
         if (maxTotalLoc == 0) return "";
 
         SimpleOneBarChart chart = new SimpleOneBarChart();
@@ -103,6 +104,16 @@ public class TrendReportGenerator {
         chart.setBarHeight(20);
         chart.setBarStartXOffset(2);
         return chart.getStackedBarSvg(Arrays.asList(mainLoc, testLoc), Palette.getDefaultPalette(), "", "");
+    }
+
+    private String getDuplicationChart(double duplicationPercentage) {
+        SimpleOneBarChart chart = new SimpleOneBarChart();
+        chart.setWidth(110);
+        chart.setMaxBarWidth(60);
+        chart.setBarHeight(20);
+        chart.setBarStartXOffset(2);
+        chart.setActiveColor("crimson");
+        return chart.getPercentageSvg(duplicationPercentage, "", FormattingUtils.getFormattedPercentage(duplicationPercentage) + "%");
     }
 
     private void processReferenceResults(CodeAnalysisResults codeAnalysisResults, RichTextReport report, ReferenceAnalysisResult result) {
