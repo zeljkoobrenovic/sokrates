@@ -2,6 +2,7 @@ package nl.obren.sokrates.sourcecode.cleaners;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -9,6 +10,7 @@ public class CommentsAndEmptyLinesCleaner {
     private String singleLineCommentStart = "//";
     private String blockCommentStart = "/*";
     private String blockCommentEnd = "*/";
+    private List<StringParsingHelper> stringParsing = new ArrayList<>();
     private String stringDelimiter = "\"";
     private char stringEscapeChar = '\\';
     private String stringDelimiterAlt = "'";
@@ -21,15 +23,22 @@ public class CommentsAndEmptyLinesCleaner {
     private String content;
 
     public CommentsAndEmptyLinesCleaner() {
+        stringParsing.add(new StringParsingHelper("\"", "\"", "\\", false));
+        stringParsing.add(new StringParsingHelper("'", "'", "\\", false));
+        stringParsing.add(new StringParsingHelper("`", "`", "\\", false));
+        stringParsing.add(new StringParsingHelper("@\"", "\"", "\"", false));
+        stringParsing.add(new StringParsingHelper("\"\"\"", "\"\"\"", "", false));
     }
 
     public CommentsAndEmptyLinesCleaner(String singleLineCommentStart, String blockCommentStart, String blockCommentEnd) {
+        this();
         this.singleLineCommentStart = singleLineCommentStart;
         this.blockCommentStart = blockCommentStart;
         this.blockCommentEnd = blockCommentEnd;
     }
 
     public CommentsAndEmptyLinesCleaner(String singleLineCommentStart, String blockCommentStart, String blockCommentEnd, String stringDelimiter, char stringEscapeChar) {
+        this();
         this.singleLineCommentStart = singleLineCommentStart;
         this.blockCommentStart = blockCommentStart;
         this.blockCommentEnd = blockCommentEnd;

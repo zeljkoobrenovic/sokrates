@@ -1,6 +1,7 @@
 package nl.obren.sokrates.reports.dataexporters;
 
 import nl.obren.sokrates.common.io.JsonGenerator;
+import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.common.utils.SystemUtils;
 import nl.obren.sokrates.reports.dataexporters.dependencies.DependenciesExporter;
@@ -13,6 +14,7 @@ import nl.obren.sokrates.reports.generators.explorers.DependenciesExplorerGenera
 import nl.obren.sokrates.reports.generators.explorers.DuplicationExplorerGenerator;
 import nl.obren.sokrates.reports.generators.explorers.FilesExplorerGenerator;
 import nl.obren.sokrates.reports.generators.explorers.UnitsExplorerGenerator;
+import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.reports.utils.ZipUtils;
 import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.SourceFile;
@@ -30,16 +32,13 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -411,6 +410,8 @@ public class DataExporter {
     }
 
     private void saveUnitFragmentFiles(List<UnitInfo> units, String fragmentType) throws IOException {
+        String htmlTemplate = HtmlTemplateUtils.getTemplate("/templates/Code.html");
+
         File fragmentsFolder = recreateFolder("fragments/" + fragmentType);
 
         detailedInfo(" - saving source code cache for the " + fragmentType + "fragments");
@@ -420,10 +421,23 @@ public class DataExporter {
             try {
                 String fileName = fragmentType + "_" + count[0] + "." + unit.getSourceFile().getExtension();
                 File file = new File(fragmentsFolder, fileName);
-                String body = unit.getSourceFile().getRelativePath() + " ["
-                        + unit.getStartLine() + ":" + unit.getEndLine() + "]:\n\n"
+                String fileAndLines = unit.getSourceFile().getRelativePath() + " ["
+                        + unit.getStartLine() + ":" + unit.getEndLine() + "]";
+                String body = fileAndLines + ":\n\n"
                         + unit.getBody();
                 FileUtils.write(file, body, UTF_8);
+
+                String html = htmlTemplate.replace("${title}", unit.getShortName());
+                html = html.replace("${unit-name}", unit.getShortName());
+                html = html.replace("${file-and-lines}", fileAndLines);
+                html = html.replace("${lang}", unit.getSourceFile().getExtension());
+                html = html.replace("${code}", StringEscapeUtils.escapeHtml4(unit.getBody().replace("\n", "\n ")));
+                html = html.replace("${lines-of-code}", FormattingUtils.getFormattedCount(unit.getLinesOfCode()));
+                html = html.replace("${mccabe-index}", FormattingUtils.getFormattedCount(unit.getMcCabeIndex()));
+
+                File htmlFile = new File(fragmentsFolder, fileName + ".html");
+                FileUtils.write(htmlFile, html, UTF_8);
+
             } catch (IOException e) {
                 LOG.warn(e);
             }

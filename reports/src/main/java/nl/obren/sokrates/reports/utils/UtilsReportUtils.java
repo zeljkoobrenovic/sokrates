@@ -21,7 +21,7 @@ public class UtilsReportUtils {
                     "href='../src/fragments/" + fragmentType + "/" + fragmentType + "_" +
                     +index[0] + "."
                     + unit.getSourceFile().getExtension()
-                    + "'>"
+                    + ".html'>"
                     + unit.getShortName() + "</a></b><br/>in " + unit.getSourceFile().getRelativePath()
                     + "</td>\n");
             table.append("<td>" + unit.getLinesOfCode() + "</td>\n");
