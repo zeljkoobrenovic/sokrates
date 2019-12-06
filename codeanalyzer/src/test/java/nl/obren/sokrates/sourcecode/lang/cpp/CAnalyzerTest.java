@@ -82,6 +82,8 @@ public class CAnalyzerTest {
         List<UnitInfo> units = analyzer.extractUnits(new SourceFile(new File("dummy.c"), code));
         assertEquals(units.size(), 1);
         assertEquals(units.get(0).getShortName(), "int triple()");
+        assertEquals(units.get(0).getCleanedBody(), "int triple(int x)\n" +
+                "{\n    return add(x, add(x,x));\n}\n");
         assertEquals(units.get(0).getLinesOfCode(), 4);
         assertEquals(units.get(0).getMcCabeIndex(), 1);
         assertEquals(units.get(0).getNumberOfParameters(), 1);

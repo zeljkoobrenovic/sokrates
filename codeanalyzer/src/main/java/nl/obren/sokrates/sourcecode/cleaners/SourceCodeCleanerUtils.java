@@ -103,12 +103,12 @@ public class SourceCodeCleanerUtils {
 
     public static CleanedContent cleanCommentsAndEmptyLines(String content, String singleLineCommentStart, String
             blockCommentStart, String blockCommentEnd) {
-        return cleanCommentsAndEmptyLines(content, singleLineCommentStart, blockCommentStart, blockCommentEnd, "\"", '\\');
+        return cleanCommentsAndEmptyLines(content, singleLineCommentStart, blockCommentStart, blockCommentEnd, "\"", "\\");
     }
 
     public static CleanedContent cleanCommentsAndEmptyLines(String content, String singleLineCommentStart, String
-            blockCommentStart, String blockCommentEnd, String stringDelimiter, char stringEscapeChar) {
-        CommentsAndEmptyLinesCleaner cleaner = new CommentsAndEmptyLinesCleaner(singleLineCommentStart, blockCommentStart, blockCommentEnd, stringDelimiter, stringEscapeChar);
+            blockCommentStart, String blockCommentEnd, String stringDelimiter, String stringEscapeMarker) {
+        CommentsAndEmptyLinesCleaner cleaner = new CommentsAndEmptyLinesCleaner(singleLineCommentStart, blockCommentStart, blockCommentEnd, stringDelimiter, stringEscapeMarker);
         return cleaner.clean(content);
     }
 
