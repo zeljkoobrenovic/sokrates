@@ -10,16 +10,16 @@ import java.util.Arrays;
 
 import static junit.framework.TestCase.assertEquals;
 
-public class UnknownLanguageAnalyzerTest {
+public class DefaultLanguageAnalyzerTest {
     @Test
     public void cleanForLinesOfCodeCalculations() throws Exception {
-        UnknownLanguageAnalyzer analyzer = new UnknownLanguageAnalyzer();
+        DefaultLanguageAnalyzer analyzer = new DefaultLanguageAnalyzer();
         assertEquals(analyzer.cleanForLinesOfCodeCalculations(new SourceFile(new File(""), "a\nb\n\n\nc\n")).getCleanedContent(), "a\nb\nc");
     }
 
     @Test
     public void cleanForDuplicationCalculations() throws Exception {
-        UnknownLanguageAnalyzer analyzer = new UnknownLanguageAnalyzer();
+        DefaultLanguageAnalyzer analyzer = new DefaultLanguageAnalyzer();
         CleanedContent cleanedContent = analyzer.cleanForDuplicationCalculations(new SourceFile(new File(""),
                 "a\nb\n\n\nc\n"));
         assertEquals(cleanedContent.getCleanedContent(), "a\nb\nc");
@@ -32,13 +32,13 @@ public class UnknownLanguageAnalyzerTest {
 
     @Test
     public void extractUnits() throws Exception {
-        UnknownLanguageAnalyzer analyzer = new UnknownLanguageAnalyzer();
+        DefaultLanguageAnalyzer analyzer = new DefaultLanguageAnalyzer();
         assertEquals(analyzer.extractUnits(new SourceFile(new File(""), "a\nb\n\n\nc\n")).size(), 0);
     }
 
     @Test
     public void extractDependencies() throws Exception {
-        UnknownLanguageAnalyzer analyzer = new UnknownLanguageAnalyzer();
+        DefaultLanguageAnalyzer analyzer = new DefaultLanguageAnalyzer();
         SourceFile sourceFile = new SourceFile(new File(""), "a\nb\n\n\nc\n");
         assertEquals(analyzer.extractDependencies(Arrays.asList(sourceFile), new ProgressFeedback()).getDependencies().size(), 0);
     }

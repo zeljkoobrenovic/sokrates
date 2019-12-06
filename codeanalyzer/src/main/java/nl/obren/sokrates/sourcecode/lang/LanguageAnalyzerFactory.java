@@ -23,6 +23,7 @@ import nl.obren.sokrates.sourcecode.lang.python.PythonAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.ruby.RubyAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.sass.SassAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.scala.ScalaAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.swift.SwiftAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.vb.VisualBasicAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.xml.XmlAnalyzer;
 import org.apache.commons.io.FilenameUtils;
@@ -79,6 +80,7 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("cljs", ClojureLangAnalyzer.class);
         analyzersMap.put("cljc", ClojureLangAnalyzer.class);
         analyzersMap.put("edn", ClojureLangAnalyzer.class);
+        analyzersMap.put("swift", SwiftAnalyzer.class);
     }
 
     public static LanguageAnalyzerFactory getInstance() {
@@ -107,7 +109,7 @@ public class LanguageAnalyzerFactory {
             throw new RuntimeException("Error");
         }
 
-        return new UnknownLanguageAnalyzer();
+        return new DefaultLanguageAnalyzer();
     }
 
     public LanguageAnalyzer getLanguageAnalyzer(SourceFile sourceFile) {

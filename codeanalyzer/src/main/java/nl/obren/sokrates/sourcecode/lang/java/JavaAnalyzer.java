@@ -19,12 +19,10 @@ public class JavaAnalyzer extends LanguageAnalyzer {
 
     @Override
     public CleanedContent cleanForLinesOfCodeCalculations(SourceFile sourceFile) {
-        CommentsAndEmptyLinesCleaner cleaner = getCommentsAndEmptyLinesCleaner();
-
-        return cleaner.clean(sourceFile.getContent());
+        return getCleaner().clean(sourceFile.getContent());
     }
 
-    private CommentsAndEmptyLinesCleaner getCommentsAndEmptyLinesCleaner() {
+    private CommentsAndEmptyLinesCleaner getCleaner() {
         CommentsAndEmptyLinesCleaner cleaner = new CommentsAndEmptyLinesCleaner();
 
         cleaner.addCommentBlockHelper("/*", "*/");
@@ -36,9 +34,7 @@ public class JavaAnalyzer extends LanguageAnalyzer {
 
     @Override
     public CleanedContent cleanForDuplicationCalculations(SourceFile sourceFile) {
-        CommentsAndEmptyLinesCleaner cleaner = getCommentsAndEmptyLinesCleaner();
-
-        String content = cleaner.cleanRaw(sourceFile.getContent());
+        String content = getCleaner().cleanRaw(sourceFile.getContent());
 
         content = SourceCodeCleanerUtils.trimLines(content);
         content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("import .*;", content);
