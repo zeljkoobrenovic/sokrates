@@ -410,7 +410,6 @@ public class DataExporter {
     }
 
     private void saveUnitFragmentFiles(List<UnitInfo> units, String fragmentType) throws IOException {
-        String htmlTemplate = HtmlTemplateUtils.getTemplate("/templates/Code.html");
 
         File fragmentsFolder = recreateFolder("fragments/" + fragmentType);
 
@@ -418,30 +417,30 @@ public class DataExporter {
         int count[] = {0};
         units.forEach(unit -> {
             count[0]++;
-            try {
-                String fileName = fragmentType + "_" + count[0] + "." + unit.getSourceFile().getExtension();
-                File file = new File(fragmentsFolder, fileName);
-                String fileAndLines = unit.getSourceFile().getRelativePath() + " ["
-                        + unit.getStartLine() + ":" + unit.getEndLine() + "]";
-                String body = fileAndLines + ":\n\n"
-                        + unit.getBody();
-                FileUtils.write(file, body, UTF_8);
-
-                String html = htmlTemplate.replace("${title}", unit.getShortName());
-                html = html.replace("${unit-name}", unit.getShortName());
-                html = html.replace("${file-and-lines}", fileAndLines);
-                html = html.replace("${lang}", unit.getSourceFile().getExtension());
-                html = html.replace("${code}", StringEscapeUtils.escapeHtml4(unit.getBody().replace("\n", "\n ")));
-                html = html.replace("${lines-of-code}", FormattingUtils.getFormattedCount(unit.getLinesOfCode()));
-                html = html.replace("${mccabe-index}", FormattingUtils.getFormattedCount(unit.getMcCabeIndex()));
-
-                File htmlFile = new File(fragmentsFolder, fileName + ".html");
-                FileUtils.write(htmlFile, html, UTF_8);
-
-            } catch (IOException e) {
-                LOG.warn(e);
-            }
+            saveUnitAsHtml(fragmentType, fragmentsFolder, count, unit);
         });
+    }
+
+    private void saveUnitAsHtml(String fragmentType, File fragmentsFolder, int[] count, UnitInfo unit) {
+        try {
+            String fileName = fragmentType + "_" + count[0] + "." + unit.getSourceFile().getExtension();
+            String fileAndLines = unit.getSourceFile().getRelativePath() + " [" + unit.getStartLine() + ":" + unit.getEndLine() + "]";
+
+            String htmlTemplate = HtmlTemplateUtils.getTemplate("/templates/CodeFragmentUnit.html");
+            String html = htmlTemplate.replace("${title}", unit.getShortName());
+            html = html.replace("${unit-name}", unit.getShortName());
+            html = html.replace("${file-and-lines}", fileAndLines);
+            html = html.replace("${lang}", unit.getSourceFile().getExtension());
+            html = html.replace("${code}", StringEscapeUtils.escapeHtml4(unit.getBody().replace("\n", "\n ")));
+            html = html.replace("${lines-of-code}", FormattingUtils.getFormattedCount(unit.getLinesOfCode()));
+            html = html.replace("${mccabe-index}", FormattingUtils.getFormattedCount(unit.getMcCabeIndex()));
+
+            File htmlFile = new File(fragmentsFolder, fileName + ".html");
+            FileUtils.write(htmlFile, html, UTF_8);
+
+        } catch (IOException e) {
+            LOG.warn(e);
+        }
     }
 
     private void saveDuplicateFragmentFiles(List<DuplicationInstance> duplicates, String fragmentType) throws IOException {
