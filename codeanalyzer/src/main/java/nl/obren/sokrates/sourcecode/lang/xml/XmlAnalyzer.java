@@ -3,6 +3,7 @@ package nl.obren.sokrates.sourcecode.lang.xml;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
+import nl.obren.sokrates.sourcecode.cleaners.CommentsAndEmptyLinesCleaner;
 import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
 import nl.obren.sokrates.sourcecode.dependencies.DependenciesAnalysis;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
@@ -17,27 +18,24 @@ public class XmlAnalyzer extends LanguageAnalyzer {
 
     @Override
     public CleanedContent cleanForLinesOfCodeCalculations(SourceFile sourceFile) {
-        String content = emptyComments(sourceFile);
+        return getCleaner().clean(sourceFile.getContent());
+    }
 
-        return SourceCodeCleanerUtils.cleanEmptyLinesWithLineIndexes(content);
+    private CommentsAndEmptyLinesCleaner getCleaner() {
+        CommentsAndEmptyLinesCleaner cleaner = new CommentsAndEmptyLinesCleaner();
+        cleaner.addCommentBlockHelper("<!--", "-->");
+        cleaner.addStringBlockHelper("<![CDATA[", "]]>");
+        return cleaner;
     }
 
     @Override
     public CleanedContent cleanForDuplicationCalculations(SourceFile sourceFile) {
-        String content = emptyComments(sourceFile);
+        String content = getCleaner().cleanRaw(sourceFile.getContent());
 
         content = SourceCodeCleanerUtils.trimLines(content);
         content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("</.*?>", content);
 
         return SourceCodeCleanerUtils.cleanEmptyLinesWithLineIndexes(content);
-    }
-
-    private String emptyComments(SourceFile sourceFile) {
-        String content = sourceFile.getContent();
-
-        content = SourceCodeCleanerUtils.emptyComments(content, null, "<!--", "-->").getCleanedContent();
-
-        return content;
     }
 
     @Override

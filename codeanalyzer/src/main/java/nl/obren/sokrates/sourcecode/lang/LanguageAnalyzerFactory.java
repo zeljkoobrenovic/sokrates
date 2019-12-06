@@ -66,6 +66,7 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("css", CssAnalyzer.class);
         analyzersMap.put("less", LessAnalyzer.class);
         analyzersMap.put("sass", SassAnalyzer.class);
+        analyzersMap.put("scss", SassAnalyzer.class);
         analyzersMap.put("json", JsonAnalyzer.class);
         analyzersMap.put("gsp", JspAnalyzer.class);
         analyzersMap.put("jsp", JspAnalyzer.class);
@@ -75,6 +76,9 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("cls", VisualBasicAnalyzer.class);
         analyzersMap.put("ctl", VisualBasicAnalyzer.class);
         analyzersMap.put("clj", ClojureLangAnalyzer.class);
+        analyzersMap.put("cljs", ClojureLangAnalyzer.class);
+        analyzersMap.put("cljc", ClojureLangAnalyzer.class);
+        analyzersMap.put("edn", ClojureLangAnalyzer.class);
     }
 
     public static LanguageAnalyzerFactory getInstance() {

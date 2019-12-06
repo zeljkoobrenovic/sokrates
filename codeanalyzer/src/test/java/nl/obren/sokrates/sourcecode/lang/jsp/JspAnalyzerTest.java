@@ -43,7 +43,7 @@ public class JspAnalyzerTest {
                 "  </td>\n" +
                 "</tr>";
 
-        SourceFile sourceFile = new SourceFile(new File(""), sample);
+        SourceFile sourceFile = new SourceFile(new File("dummy.jsp"), sample);
         assertEquals(analyzer.cleanForDuplicationCalculations(sourceFile).getCleanedLinesCount(), 7);
         assertEquals(analyzer.cleanForDuplicationCalculations(sourceFile).getCleanedContent(), "<tr class=\"prop ${rowClass}\">\n" +
                 "<td class=\"name\">\n" +

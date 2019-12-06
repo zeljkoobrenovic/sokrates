@@ -26,15 +26,23 @@ public class CommentsAndEmptyLinesCleaner {
         addStringBlockHelper(stringDelimiter, stringDelimiter, stringEscapeMarker);
     }
 
-    private void addStringBlockHelper(String startMarker, String endMarker, String escapeMarker) {
+    public void addStringBlockHelper(String marker, String escapeMarker) {
+        codeBlockParsingHelpers.add(new CodeBlockParsingHelper(marker, marker, escapeMarker, false));
+    }
+
+    public void addStringBlockHelper(String startMarker, String endMarker, String escapeMarker) {
         codeBlockParsingHelpers.add(new CodeBlockParsingHelper(startMarker, endMarker, escapeMarker, false));
     }
 
-    private void addCommentBlockHelper(String startMarker, String endMarker, String escapeMarker) {
+    public void addCommentBlockHelper(String startMarker, String endMarker) {
+        codeBlockParsingHelpers.add(new CodeBlockParsingHelper(startMarker, endMarker, "", true));
+    }
+
+    public void addCommentBlockHelper(String startMarker, String endMarker, String escapeMarker) {
         codeBlockParsingHelpers.add(new CodeBlockParsingHelper(startMarker, endMarker, escapeMarker, true));
     }
 
-    public CleanedContent clean(String originalContent) {
+    public String cleanRaw(String originalContent) {
         this.content = SourceCodeCleanerUtils.normalizeLineEnds(originalContent);
 
         while (true) {
@@ -43,7 +51,7 @@ public class CommentsAndEmptyLinesCleaner {
             this.codeBlockParsingHelpers.forEach(helper -> {
                 int helperIndex = helper.getStringStartIndex(content, currentIndex);
 
-                if (helperIndex >= 0 && (index[0] == -1 || helperIndex <= index[0])) {
+                if (helperIndex >= 0 && (index[0] == -1 || helperIndex < index[0])) {
                     index[0] = helperIndex;
                     activeHelper = helper;
                 }
@@ -58,7 +66,11 @@ public class CommentsAndEmptyLinesCleaner {
             }
         }
 
-        return SourceCodeCleanerUtils.cleanEmptyLinesWithLineIndexes(content);
+        return content;
+    }
+
+    public CleanedContent clean(String originalContent) {
+        return SourceCodeCleanerUtils.cleanEmptyLinesWithLineIndexes(cleanRaw(originalContent));
     }
 
 }

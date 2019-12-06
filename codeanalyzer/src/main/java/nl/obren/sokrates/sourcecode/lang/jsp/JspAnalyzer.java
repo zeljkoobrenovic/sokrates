@@ -51,7 +51,7 @@ public class JspAnalyzer extends LanguageAnalyzer {
     public DependenciesAnalysis extractDependencies(List<SourceFile> sourceFiles, ProgressFeedback progressFeedback) {
         return new DependenciesAnalysis();
     }
-    
+
     @Override
     public List<String> getFeaturesDescription() {
         List<String> features = new ArrayList<>();

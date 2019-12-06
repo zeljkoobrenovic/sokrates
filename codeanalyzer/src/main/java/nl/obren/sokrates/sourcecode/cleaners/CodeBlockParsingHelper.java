@@ -44,7 +44,7 @@ public class CodeBlockParsingHelper {
         int endIndex = this.getStringEndIndex(content, startIndex + 1);
 
         if (endIndex == -1) {
-            return new CleaningResult(content, content.length() - 1);
+            return new CleaningResult(content.substring(0, startIndex), startIndex);
         }
 
         if (this.removeWhenCleaning) {

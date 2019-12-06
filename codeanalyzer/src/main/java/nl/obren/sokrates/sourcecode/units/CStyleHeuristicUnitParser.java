@@ -3,6 +3,7 @@ package nl.obren.sokrates.sourcecode.units;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
 import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
+import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
 import org.apache.commons.lang3.StringUtils;
 
@@ -143,7 +144,7 @@ public class CStyleHeuristicUnitParser {
         StringBuilder cleandedBody = new StringBuilder();
         if (isValidLineRange(lineIndex, endOfUnitBodyIndex)) {
             for (int bodyIndex = lineIndex; bodyIndex <= endOfUnitBodyIndex; bodyIndex++) {
-                cleandedBody.append(cleanedLines.get(bodyIndex) + "\n");
+                cleandedBody.append(StringUtils.appendIfMissing(cleanedLines.get(bodyIndex), "\n"));
             }
         }
         return cleandedBody.toString();
@@ -164,9 +165,11 @@ public class CStyleHeuristicUnitParser {
     }
 
     private CleanedContent getCleanContent(SourceFile sourceFile) {
-        CleanedContent normallyCleanedContent = LanguageAnalyzerFactory.getInstance().getLanguageAnalyzer(sourceFile)
-                .cleanForLinesOfCodeCalculations(sourceFile);
+        LanguageAnalyzer languageAnalyzer = LanguageAnalyzerFactory.getInstance().getLanguageAnalyzer(sourceFile);
+
+        CleanedContent normallyCleanedContent = languageAnalyzer.cleanForLinesOfCodeCalculations(sourceFile);
         normallyCleanedContent.setCleanedContent(extraCleanContent(normallyCleanedContent.getCleanedContent()));
+
         return normallyCleanedContent;
     }
 
@@ -215,7 +218,7 @@ public class CStyleHeuristicUnitParser {
         cleanedContent = cleanedContent.replaceAll("@\".*?\"", "\"\"");
         cleanedContent = cleanedContent.replaceAll("\".*?\"", "\"\"");
         cleanedContent = cleanedContent.replaceAll("'.*?'", "''");
-        cleanedContent = cleanedContent.replaceAll("/.*?/", "\"\"");
+        cleanedContent = cleanedContent.replaceAll("/.+?/", "\"\"");
         cleanedContent = cleanedContent.replace("://", ":/ /");
         cleanedContent = cleanedContent.replaceAll("[<].*?[>]", "");
         cleanedContent = cleanedContent.replace("\t", " ");

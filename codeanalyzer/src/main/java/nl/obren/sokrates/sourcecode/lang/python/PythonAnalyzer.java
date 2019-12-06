@@ -3,6 +3,7 @@ package nl.obren.sokrates.sourcecode.lang.python;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
+import nl.obren.sokrates.sourcecode.cleaners.CommentsAndEmptyLinesCleaner;
 import nl.obren.sokrates.sourcecode.cleaners.CommentsCleanerUtils;
 import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
 import nl.obren.sokrates.sourcecode.dependencies.DependenciesAnalysis;
@@ -18,16 +19,24 @@ public class PythonAnalyzer extends LanguageAnalyzer {
 
     @Override
     public CleanedContent cleanForLinesOfCodeCalculations(SourceFile sourceFile) {
-        String content = CommentsCleanerUtils.cleanLineComments(sourceFile.getContent(), "#");
-        content = CommentsCleanerUtils.cleanBlockComments(content, "\"\"\"", "\"\"\"");
-        return SourceCodeCleanerUtils.cleanEmptyLinesWithLineIndexes(content);
-}
+        return getCleaner().clean(sourceFile.getContent());
+    }
+
+    private CommentsAndEmptyLinesCleaner getCleaner() {
+        CommentsAndEmptyLinesCleaner cleaner = new CommentsAndEmptyLinesCleaner();
+
+        cleaner.addCommentBlockHelper("\"\"\"", "\"\"\"");
+        cleaner.addCommentBlockHelper("#", "\n");
+        cleaner.addStringBlockHelper("\"", "\\");
+        cleaner.addStringBlockHelper("'", "\\");
+        cleaner.addStringBlockHelper("'''", "'''");
+
+        return cleaner;
+    }
 
     @Override
     public CleanedContent cleanForDuplicationCalculations(SourceFile sourceFile) {
-        String content = CommentsCleanerUtils.cleanLineComments(sourceFile.getContent(), "#");
-        content = CommentsCleanerUtils.cleanBlockComments(content, "\"\"\"", "\"\"\"");
-        content = CommentsCleanerUtils.cleanBlockComments(content, "'''", "'''");
+        String content = getCleaner().cleanRaw(sourceFile.getContent());
 
         content = SourceCodeCleanerUtils.trimLines(content);
         content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("from .*import.*", content);

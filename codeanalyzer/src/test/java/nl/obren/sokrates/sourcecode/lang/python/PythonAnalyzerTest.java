@@ -27,7 +27,7 @@ public class PythonAnalyzerTest {
                 "    import sys\n" +
                 "    fib(int(sys.argv[1]))";
         assertEquals(analyzer.cleanForLinesOfCodeCalculations(new SourceFile(new File("dummy.py"), code)).getCleanedContent(), "spam = 1  \n" +
-                "text = \"\n" +
+                "text = \"# This is not a comment because it's inside quotes.\"\n" +
                 "if __name__ == \"__main__\":\n" +
                 "    import sys\n" +
                 "    fib(int(sys.argv[1]))");
@@ -61,7 +61,7 @@ public class PythonAnalyzerTest {
                 "    fib(int(sys.argv[1]))";
         CleanedContent cleanedContent = analyzer.cleanForDuplicationCalculations(new SourceFile(new File("dummy.py"), code));
         assertEquals(cleanedContent.getCleanedContent(), "spam = 1\n" +
-                "text = \"\n" +
+                "text = \"# This is not a comment because it's inside quotes.\"\n" +
                 "if __name__ == \"__main__\":\n" +
                 "fib(int(sys.argv[1]))");
         assertEquals(cleanedContent.getCleanedLinesCount(), 4);

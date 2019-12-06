@@ -3,6 +3,7 @@ package nl.obren.sokrates.sourcecode.lang.scala;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
+import nl.obren.sokrates.sourcecode.cleaners.CommentsAndEmptyLinesCleaner;
 import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
 import nl.obren.sokrates.sourcecode.dependencies.DependenciesAnalysis;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
@@ -18,13 +19,26 @@ public class ScalaAnalyzer extends LanguageAnalyzer {
 
     @Override
     public CleanedContent cleanForLinesOfCodeCalculations(SourceFile sourceFile) {
-        return SourceCodeCleanerUtils.cleanCommentsAndEmptyLines(sourceFile.getContent(), "//", "/*", "*/");
+        CommentsAndEmptyLinesCleaner cleaner = getCommentsAndEmptyLinesCleaner();
+
+        return cleaner.clean(sourceFile.getContent());
+    }
+
+    private CommentsAndEmptyLinesCleaner getCommentsAndEmptyLinesCleaner() {
+        CommentsAndEmptyLinesCleaner cleaner = new CommentsAndEmptyLinesCleaner();
+
+        cleaner.addCommentBlockHelper("/*", "*/");
+        cleaner.addCommentBlockHelper("//", "\n");
+        cleaner.addStringBlockHelper("\"", "\\");
+        cleaner.addStringBlockHelper("'", "\\");
+        return cleaner;
     }
 
     @Override
     public CleanedContent cleanForDuplicationCalculations(SourceFile sourceFile) {
-        String content = SourceCodeCleanerUtils.emptyComments(sourceFile.getContent(), "//", "/*", "*/").getCleanedContent();
+        CommentsAndEmptyLinesCleaner cleaner = getCommentsAndEmptyLinesCleaner();
 
+        String content = cleaner.cleanRaw(sourceFile.getContent());
         content = SourceCodeCleanerUtils.trimLines(content);
         content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("package .*", content);
         content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("import .*", content);

@@ -44,7 +44,7 @@ public class JavaExampleFragments {
             "        return result.toString();\n" +
             "    }\n";
 
-    public static String FRAMGENT_1_CLEANED = "    protected String getRelativePath(HttpServletRequest request) {\n" +
+    public static String FRAGMENT_1_CLEANED = "    protected String getRelativePath(HttpServletRequest request) {\n" +
             "        return getRelativePath(request, false);\n" +
             "    }\n" +
             "    protected String getRelativePath(HttpServletRequest request, boolean allowEmptyPath) {\n" +
@@ -70,7 +70,7 @@ public class JavaExampleFragments {
             "        return result.toString();\n" +
             "    }";
 
-    public static String FRAMGENT_1_CLEANED_FOR_DUPLICATION = "protected String getRelativePath(HttpServletRequest request) {\n" +
+    public static String FRAGMENT_1_CLEANED_FOR_DUPLICATION = "protected String getRelativePath(HttpServletRequest request) {\n" +
             "return getRelativePath(request, false);\n" +
             "protected String getRelativePath(HttpServletRequest request, boolean allowEmptyPath) {\n" +
             "String servletPath;\n" +

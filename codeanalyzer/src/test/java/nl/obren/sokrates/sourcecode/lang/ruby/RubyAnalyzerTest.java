@@ -14,161 +14,67 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 public class RubyAnalyzerTest {
+    private final static String SIMPLE_CODE = "# sample program showing special characters like comments\n" +
+            "# I'm a comment line\n" +
+            "a = 1  #notice no semicolon and no type declaration\n" +
+            "b = 2; c = 3 #notice two statements on one line\n" +
+            "name = \"Abraham \\\n" +
+            "Lincoln\"   # a line continued by trailing \\\n" +
+            "puts \"#{name}\"\n" +
+            "=begin\n" +
+            "I'm ignored.\n" +
+            "So am I.\n" +
+            "=end\n" +
+            "puts \"goodbye\"\n" +
+            "__END__\n" +
+            "1\n" +
+            "2\n" +
+            "3\n" +
+            "4";
+    private static final String CODE_WITH_UNIT = SIMPLE_CODE + "\n\n" + "def multiply(a,b)\n" +
+            "  product = a * b\n" +
+            "  return product\n" +
+            "end";
     @Test
     public void extractUnits() throws Exception {
-        String content = "package nl.obren.codeexplorer.common;\n" +
-                "\n" +
-                "import java.lang.*;\n" +
-                "import nl.obren.*;\n" +
-                "\n" +
-                "/* This class is a generic mechanism for feedback interaction.*/\n" +
-                "public class ProgressFeedback {\n" +
-                "    public void start() {}\n" +
-                "    public void end() {}\n" +
-                "    public void setText(String text) {}\n" +
-                "\n" +
-                "    // should be called to check if a user canceled the process\n" +
-                "    // i.e. enables bi-directional feedback\n" +
-                "    public boolean canceled() {\n" +
-                "        if (true) return false else return true;\n" +
-                "    }\n" +
-                "\n" +
-                "    public void progress(int currentValue, int endValue) {\n" +
-                "    }\n" +
-                "}\n";
+        RubyAnalyzer analyzer = new RubyAnalyzer();
+        List<UnitInfo> units = analyzer.extractUnits(new SourceFile(new File("dummy.rb"), CODE_WITH_UNIT));
 
-        JavaAnalyzer analyzer = new JavaAnalyzer();
-        assertEquals(analyzer.extractUnits(new SourceFile(new File(""), content)).size(), 5);
-        assertEquals(analyzer.extractUnits(new SourceFile(new File(""), content)).get(0).getShortName(), "public void start()");
-        assertEquals(analyzer.extractUnits(new SourceFile(new File(""), content)).get(0).getLinesOfCode(), 1);
-        assertEquals(analyzer.extractUnits(new SourceFile(new File(""), content)).get(0).getMcCabeIndex(), 1);
-        assertEquals(analyzer.extractUnits(new SourceFile(new File(""), content)).get(1).getShortName(), "public void end()");
-        assertEquals(analyzer.extractUnits(new SourceFile(new File(""), content)).get(2).getShortName(), "public void setText()");
-        assertEquals(analyzer.extractUnits(new SourceFile(new File(""), content)).get(3).getShortName(), "public boolean canceled()");
-        assertEquals(analyzer.extractUnits(new SourceFile(new File(""), content)).get(3).getLinesOfCode(), 3);
-        assertEquals(analyzer.extractUnits(new SourceFile(new File(""), content)).get(3).getMcCabeIndex(), 2);
-        assertEquals(analyzer.extractUnits(new SourceFile(new File(""), content)).get(4).getShortName(), "public void progress()");
+        assertEquals(units.size(), 1);
+        assertEquals(units.get(0).getCleanedBody(), "def multiply(a,b)\n" +
+                "  product = a * b\n" +
+                "  return product\n" +
+                "end\n");
+        assertEquals(units.get(0).getShortName(), "multiply");
+        assertEquals(units.get(0).getLinesOfCode(), 4);
+        assertEquals(units.get(0).getMcCabeIndex(), 1);
     }
 
     @Test
     public void cleanForLinesOfCodeCalculations() throws Exception {
-        String content = "package nl.obren.codeexplorer.common;\n" +
-                "\n" +
-                "import java.lang.*;\n" +
-                "import nl.obren.*;\n" +
-                "\n" +
-                "/* This class is a generic mechanism for feedback interaction.*/\n" +
-                "public class ProgressFeedback {\n" +
-                "    public void start() {}\n" +
-                "    public void end() {}\n" +
-                "    public void setText(String text) {}\n" +
-                "\n" +
-                "    // should be called to check if a user canceled the process\n" +
-                "    // i.e. enables bi-directional feedback\n" +
-                "    public boolean canceled() {\n" +
-                "        return false;\n" +
-                "    }\n" +
-                "\n" +
-                "    public void progress(int currentValue, int endValue) {\n" +
-                "    }\n" +
-                "}\n";
+        RubyAnalyzer analyzer = new RubyAnalyzer();
+        SourceFile sourceFile = new SourceFile(new File("dummy.rb"), SIMPLE_CODE);
 
-        String cleanedContent = "package nl.obren.codeexplorer.common;\n" +
-                "import java.lang.*;\n" +
-                "import nl.obren.*;\n" +
-                "public class ProgressFeedback {\n" +
-                "    public void start() {}\n" +
-                "    public void end() {}\n" +
-                "    public void setText(String text) {}\n" +
-                "    public boolean canceled() {\n" +
-                "        return false;\n" +
-                "    }\n" +
-                "    public void progress(int currentValue, int endValue) {\n" +
-                "    }\n" +
-                "}";
-
-        JavaAnalyzer analyzer = new JavaAnalyzer();
-        assertEquals(analyzer.cleanForLinesOfCodeCalculations(new SourceFile(new File(""), content)).getCleanedContent(), cleanedContent);
+        assertEquals(analyzer.cleanForLinesOfCodeCalculations(sourceFile).getCleanedContent(), "a = 1  \n" +
+                "b = 2; c = 3 \n" +
+                "name = \"Abraham \\\n" +
+                "Lincoln\"   \n" +
+                "puts \"#{name}\"\n" +
+                "puts \"goodbye\"");
     }
 
 
     @Test
     public void cleanForDuplicationCalculations() throws Exception {
-        String content = "package nl.obren.codeexplorer.common;\n" +
-                "\n" +
-                "import java.lang.*;\n" +
-                "import nl.obren.*;\n" +
-                "\n" +
-                "/* This class is a generic mechanism for feedback interaction.*/\n" +
-                "public class ProgressFeedback {\n" +
-                "    public void start() {}\n" +
-                "    public void end() {}\n" +
-                "    public void setText(String text) {}\n" +
-                "\n" +
-                "    // should be called to check if a user canceled the process\n" +
-                "    // i.e. enables bi-directional feedback\n" +
-                "    public boolean canceled() {\n" +
-                "        return false;\n" +
-                "    }\n" +
-                "\n" +
-                "    public void progress(int currentValue, int endValue) {\n" +
-                "    }\n" +
-                "}\n";
+        RubyAnalyzer analyzer = new RubyAnalyzer();
+        SourceFile sourceFile = new SourceFile(new File("dummy.rb"), SIMPLE_CODE);
 
-        String result = "public class ProgressFeedback {\n" +
-                "public void start() {}\n" +
-                "public void end() {}\n" +
-                "public void setText(String text) {}\n" +
-                "public boolean canceled() {\n" +
-                "return false;\n" +
-                "public void progress(int currentValue, int endValue) {";
-
-        JavaAnalyzer analyzer = new JavaAnalyzer();
-        CleanedContent cleanedContent = analyzer.cleanForDuplicationCalculations(new SourceFile(new File(""), content));
-        assertEquals(cleanedContent.getCleanedContent(), result);
-        TestCase.assertEquals(cleanedContent.getCleanedLinesCount(), 7);
-        TestCase.assertEquals(cleanedContent.getFileLineIndexes().size(), 7);
-        TestCase.assertEquals(cleanedContent.getFileLineIndexes().get(0).intValue(), 6);
-        TestCase.assertEquals(cleanedContent.getFileLineIndexes().get(1).intValue(), 7);
-        TestCase.assertEquals(cleanedContent.getFileLineIndexes().get(2).intValue(), 8);
-        TestCase.assertEquals(cleanedContent.getFileLineIndexes().get(3).intValue(), 9);
-        TestCase.assertEquals(cleanedContent.getFileLineIndexes().get(4).intValue(), 13);
-        TestCase.assertEquals(cleanedContent.getFileLineIndexes().get(5).intValue(), 14);
-        TestCase.assertEquals(cleanedContent.getFileLineIndexes().get(6).intValue(), 17);
+        assertEquals(analyzer.cleanForDuplicationCalculations(sourceFile).getCleanedContent(), "a = 1\n" +
+                "b = 2; c = 3\n" +
+                "name = \"Abraham \\\n" +
+                "Lincoln\"\n" +
+                "puts \"#{name}\"\n" +
+                "puts \"goodbye\"");
     }
-
-
-    @Test
-    public void parseStatic() throws Exception {
-        JavaAnalyzer analyzer = new JavaAnalyzer();
-
-        List<UnitInfo> units = analyzer.extractUnits(new SourceFile(new File("test"), "class A {\n" +
-                "    static {\n" +
-                "         MAP.put('a', 'a');\n" +
-                "         if (true) {\n" +
-                "             MAP.put('b', 'b');\n" +
-                "         }\n" +
-                "    }\n\n" +
-                "    public static void a() {\n" +
-                "        if (a) {\n" +
-                "            doA();\n" +
-                "        } else {\n" +
-                "            doNotA();\n" +
-                "        }\n" +
-                "    }\n" +
-                "}"));
-
-        Assert.assertEquals(units.size(), 2);
-        Assert.assertEquals(units.get(0).getShortName(), "static");
-        Assert.assertEquals(units.get(0).getLinesOfCode(), 6);
-        Assert.assertEquals(units.get(0).getMcCabeIndex(), 2);
-        Assert.assertEquals(units.get(0).getNumberOfParameters(), 0);
-
-        Assert.assertEquals(units.get(1).getShortName(), "public static void a()");
-        Assert.assertEquals(units.get(1).getLinesOfCode(), 7);
-        Assert.assertEquals(units.get(1).getMcCabeIndex(), 2);
-        Assert.assertEquals(units.get(1).getNumberOfParameters(), 0);
-    }
-
 
 }
