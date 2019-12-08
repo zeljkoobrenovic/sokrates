@@ -1,12 +1,11 @@
 package nl.obren.sokrates.reports.utils;
 
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 
 public class GraphvizDependencyRenderer {
-
-    private String orientation = "TB";
 
     public static String REPORTS_HTML_HEADER = "<!DOCTYPE html>\n" +
             "<html lang=\"en\">\n" +
@@ -17,66 +16,13 @@ public class GraphvizDependencyRenderer {
             "        }\n" +
             "    </style>\n" +
             "</head>\n";
-
+    private String orientation = "TB";
     private StringBuilder body = new StringBuilder();
     private String type = "digraph";
     private String arrow = "->";
     private String arrowColor = "deepskyblue4";
 
     public GraphvizDependencyRenderer() {
-    }
-
-    public String getOrientation() {
-        return orientation;
-    }
-
-    public void setOrientation(String orientation) {
-        this.orientation = orientation;
-    }
-
-    private String getHeader() {
-        return type + " G {\n" +
-                "    compound=\"true\"\n" +
-                "    rankdir=\"" + orientation + "\"\n" +
-                "    bgcolor=\"white\"\n" +
-                "    node [\n" +
-                "        fixedsize=\"false\"\n" +
-                "        fontname=\"Tahoma\"\n" +
-                "        color=\"white\"\n" +
-                "        fillcolor=\"deepskyblue2\"\n" +
-                "        fontcolor=\"black\"\n" +
-                "        shape=\"box\"\n" +
-                "        style=\"filled\"\n" +
-                "    ]\n" +
-                "    edge [\n" +
-                "        fontname=\"Arial\"\n" +
-                "        color=\"" + arrowColor + "\"\n" +
-                "        fontcolor=\"black\"\n" +
-                "        fontsize=\"12\"\n" +
-                "        arrowsize=\"0.5\"\n" +
-                "    ]\n";
-    }
-
-    public String getGraphvizContent(List<String> allComponents, List<ComponentDependency> componentDependencies) {
-        int maxCount = getMaxDependencyCount(componentDependencies);
-        StringBuilder graphviz = new StringBuilder();
-        graphviz.append(getHeader());
-
-        allComponents.forEach(c -> graphviz.append("\"" + encodeLabel(c) + "\";"));
-
-        componentDependencies.forEach(componentDependency -> {
-            int thickness = getThickness(componentDependency, maxCount);
-            graphviz.append("    \"" + encodeLabel(componentDependency.getFromComponent())
-                    + "\" " + arrow + " \""
-                    + encodeLabel(componentDependency.getToComponent()) + "\""
-                    + " [label=\" " + encodeLabel(getLabel(componentDependency))
-                    + " \", penwidth=\"" + Math.max(1, thickness) + "\""
-                    + (isCyclic(componentDependencies, componentDependency) ? ", color=\"crimson\"" : "")
-                    + "];\n");
-        });
-        graphviz.append("\n}");
-
-        return graphviz.toString();
     }
 
     public static String encodeLabel(String label) {
@@ -116,6 +62,62 @@ public class GraphvizDependencyRenderer {
         int max[] = {0};
         values.forEach(value -> max[0] = Math.max(max[0], value.getCount()));
         return max[0];
+    }
+
+    public String getOrientation() {
+        return orientation;
+    }
+
+    public void setOrientation(String orientation) {
+        this.orientation = orientation;
+    }
+
+    private String getHeader() {
+        return type + " G {\n" +
+                "    compound=\"true\"\n" +
+                "    rankdir=\"" + orientation + "\"\n" +
+                "    bgcolor=\"white\"\n" +
+                "    node [\n" +
+                "        fixedsize=\"false\"\n" +
+                "        fontname=\"Tahoma\"\n" +
+                "        color=\"white\"\n" +
+                "        fillcolor=\"deepskyblue2\"\n" +
+                "        fontcolor=\"black\"\n" +
+                "        shape=\"box\"\n" +
+                "        style=\"filled\"\n" +
+                "    ]\n" +
+                "    edge [\n" +
+                "        fontname=\"Arial\"\n" +
+                "        color=\"" + arrowColor + "\"\n" +
+                "        fontcolor=\"black\"\n" +
+                "        fontsize=\"12\"\n" +
+                "        arrowsize=\"0.5\"\n" +
+                "    ]\n";
+    }
+
+    public String getGraphvizContent(List<String> allComponents, List<ComponentDependency> componentDependencies) {
+        int maxCount = getMaxDependencyCount(componentDependencies);
+        StringBuilder graphviz = new StringBuilder();
+        graphviz.append(getHeader());
+
+        allComponents.stream().filter(c -> StringUtils.isNotBlank(c)).forEach(c -> graphviz.append("\"" + encodeLabel(c) + "\";\n"));
+
+        componentDependencies
+                .stream()
+                .filter(d -> StringUtils.isNotBlank(d.getFromComponent()) && StringUtils.isNotBlank(d.getToComponent()))
+                .forEach(componentDependency -> {
+                    int thickness = getThickness(componentDependency, maxCount);
+                    graphviz.append("    \"" + encodeLabel(componentDependency.getFromComponent())
+                            + "\" " + arrow + " \""
+                            + encodeLabel(componentDependency.getToComponent()) + "\""
+                            + " [label=\" " + encodeLabel(getLabel(componentDependency))
+                            + " \", penwidth=\"" + Math.max(1, thickness) + "\""
+                            + (isCyclic(componentDependencies, componentDependency) ? ", color=\"crimson\"" : "")
+                            + "];\n");
+                });
+        graphviz.append("\n}");
+
+        return graphviz.toString();
     }
 
     public String getType() {

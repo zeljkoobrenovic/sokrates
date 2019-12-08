@@ -4,7 +4,6 @@ import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.operations.OperationStatement;
 import org.junit.Test;
 
-import javax.inject.Named;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
@@ -35,7 +34,7 @@ public class MetaRulesProcessorTest {
         MetaRule content = new MetaRule(".*", ".*2.*", "content");
         List<MetaRule> rules = Arrays.asList(content);
 
-        List<CrossCuttingConcern> concerns = processor.extractConcerns(aspect, rules);
+        List<CrossCuttingConcern> concerns = processor.extractAspects(aspect, rules);
 
         assertEquals(2, concerns.size());
         assertEquals("def 2", concerns.get(0).getName());
@@ -46,7 +45,7 @@ public class MetaRulesProcessorTest {
 
         processor = MetaRulesProcessor.getCrossCurringConcernsInstance();
         content.getNameOperations().add(new OperationStatement("extract", Arrays.asList("[0-9]+")));
-        concerns = processor.extractConcerns(aspect, rules);
+        concerns = processor.extractAspects(aspect, rules);
 
         assertEquals(1, concerns.size());
         assertEquals("2", concerns.get(0).getName());
@@ -66,7 +65,7 @@ public class MetaRulesProcessorTest {
         MetaRule content = new MetaRule(".*", ".*2.*", "content");
         List<MetaRule> rules = Arrays.asList(content);
 
-        List<NamedSourceCodeAspect> components = processor.extractConcerns(aspect, rules);
+        List<NamedSourceCodeAspect> components = processor.extractAspects(aspect, rules);
 
         assertEquals(2, components.size());
         assertEquals("abc 2", components.get(0).getName());
@@ -76,7 +75,7 @@ public class MetaRulesProcessorTest {
         assertEquals(1, components.get(1).getSourceFiles().size());
 
         content.getNameOperations().add(new OperationStatement("extract", Arrays.asList("[0-9]+")));
-        components = processor.extractConcerns(aspect, rules);
+        components = processor.extractAspects(aspect, rules);
 
         assertEquals(1, components.size());
         assertEquals("2", components.get(0).getName());
@@ -95,7 +94,7 @@ public class MetaRulesProcessorTest {
 
         List<MetaRule> rules = Arrays.asList(new MetaRule(".*", ".*", "content"));
 
-        List<CrossCuttingConcern> concerns = processor.extractConcerns(aspect, rules);
+        List<CrossCuttingConcern> concerns = processor.extractAspects(aspect, rules);
 
         assertEquals(5, concerns.size());
         assertEquals("abc 1", concerns.get(0).getName());

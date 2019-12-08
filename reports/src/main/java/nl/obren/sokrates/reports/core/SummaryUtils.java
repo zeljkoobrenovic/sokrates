@@ -151,7 +151,7 @@ public class SummaryUtils {
     }
 
     private void addSummaryFindings(CodeAnalysisResults analysisResults, RichTextReport report) {
-        List<String> summaryFindings = analysisResults.getCodeConfiguration().getSummaryFindings();
+        List<String> summaryFindings = analysisResults.getCodeConfiguration().getSummary();
         if (summaryFindings != null && summaryFindings.size() > 0) {
             report.addParagraph("Other findings:");
             report.startUnorderedList();

@@ -18,10 +18,10 @@ import static nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils.*;
 
 public class CodeConfiguration {
     private Metadata metadata = new Metadata();
-    private String srcRoot = "..";
+    private List<String> summary = new ArrayList<>();
 
+    private String srcRoot = "..";
     private List<String> extensions = new ArrayList<>();
-    private AnalysisConfig analysis = new AnalysisConfig();
     private ArrayList<SourceFileFilter> ignore = new ArrayList<>();
 
     private NamedSourceCodeAspect main;
@@ -30,12 +30,13 @@ public class CodeConfiguration {
     private NamedSourceCodeAspect buildAndDeployment;
     private NamedSourceCodeAspect other;
 
+    private List<MetricsWithGoal> goalsAndControls = new ArrayList<>();
+    private List<ReferenceAnalysisResult> compareResultsWith = new ArrayList<>();
+
     private List<LogicalDecomposition> logicalDecompositions = new ArrayList<>();
     private List<CrossCuttingConcernsGroup> crossCuttingConcerns = new ArrayList<>();
 
-    private List<MetricsWithGoal> goalsAndControls = new ArrayList<>();
-    private List<ReferenceAnalysisResult> compareResultsWith = new ArrayList<>();
-    private List<String> summaryFindings = new ArrayList<>();
+    private AnalysisConfig analysis = new AnalysisConfig();
 
     public CodeConfiguration() {
         createDefaultScope();
@@ -200,8 +201,7 @@ public class CodeConfiguration {
             });
 
             MetaRulesProcessor helper = MetaRulesProcessor.getCrossCurringConcernsInstance();
-            List<CrossCuttingConcern> metaConcerns = helper.extractConcerns(main, group.getMetaConcerns());
-
+            List<CrossCuttingConcern> metaConcerns = helper.extractAspects(main, group.getMetaConcerns());
             group.getConcerns().addAll(metaConcerns);
 
             populateUnclassifiedForCrossCuttingConcern(group.getConcerns());
@@ -448,15 +448,15 @@ public class CodeConfiguration {
         this.compareResultsWith = compareResultsWith;
     }
 
-    public List<String> getSummaryFindings() {
-        return summaryFindings;
+    public List<String> getSummary() {
+        return summary;
     }
 
-    public void setSummaryFindings(List<String> summaryFindings) {
-        if (summaryFindings == null) {
-            this.summaryFindings = new ArrayList<>();
+    public void setSummary(List<String> summary) {
+        if (summary == null) {
+            this.summary = new ArrayList<>();
         } else {
-            this.summaryFindings = summaryFindings;
+            this.summary = summary;
         }
     }
 }

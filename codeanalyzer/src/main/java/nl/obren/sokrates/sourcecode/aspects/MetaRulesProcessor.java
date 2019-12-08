@@ -6,10 +6,10 @@ import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.lang.reflect.Array;
 import java.util.*;
 
 public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
@@ -18,19 +18,27 @@ public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
     private List<SourceFile> alreadyAddedFiles = new ArrayList<>();
     private Map<String, T> map = new HashMap<>();
     private Callback<String, T> sourceCodeAspectFactory;
+    private Callback<Pair<SourceFile, NamedSourceCodeAspect>, Boolean> sourceFileUpdate;
     private boolean uniqueClassification;
 
-    private MetaRulesProcessor(boolean uniqueClassification, Callback<String, T> sourceCodeAspectFactory) {
+    private MetaRulesProcessor(boolean uniqueClassification,
+                               Callback<String, T> sourceCodeAspectFactory,
+                               Callback<Pair<SourceFile, NamedSourceCodeAspect>, Boolean> sourceFileUpdate) {
         this.uniqueClassification = uniqueClassification;
         this.sourceCodeAspectFactory = sourceCodeAspectFactory;
+        this.sourceFileUpdate = sourceFileUpdate;
     }
 
     public static MetaRulesProcessor getCrossCurringConcernsInstance() {
-        return new MetaRulesProcessor<CrossCuttingConcern>(false, param -> new CrossCuttingConcern(param));
+        return new MetaRulesProcessor<CrossCuttingConcern>(false,
+                name -> new CrossCuttingConcern(name),
+                updateInfo -> updateInfo.getLeft().getCrossCuttingConcerns().add(updateInfo.getRight()));
     }
 
     public static MetaRulesProcessor getLogicalDecompositionInstance() {
-        return new MetaRulesProcessor<NamedSourceCodeAspect>(true, param -> new NamedSourceCodeAspect(param));
+        return new MetaRulesProcessor<NamedSourceCodeAspect>(true,
+                name -> new NamedSourceCodeAspect(name),
+                updateInfo -> updateInfo.getLeft().getLogicalComponents().add(updateInfo.getRight()));
     }
 
     public boolean isUniqueClassification() {
@@ -41,7 +49,7 @@ public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
         this.uniqueClassification = uniqueClassification;
     }
 
-    public List<T> extractConcerns(NamedSourceCodeAspect aspect, List<MetaRule> metaRules) {
+    public List<T> extractAspects(NamedSourceCodeAspect aspect, List<MetaRule> metaRules) {
         concerns = new ArrayList<>();
         map = new HashMap<>();
         alreadyAddedFiles = new ArrayList<>();
@@ -87,29 +95,22 @@ public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
         return !uniqueClassification || !alreadyAddedFiles.contains(sourceFile);
     }
 
-    private void processSourceFilePath(SourceFile sourceFile, MetaRule metaRule) {
-        if (RegexUtils.matchesEntirely(metaRule.getContentPattern(), sourceFile.getRelativePath())) {
-            processMatchingString(sourceFile, metaRule, sourceFile.getRelativePath());
-        }
-    }
-
     private void processMatchingString(SourceFile sourceFile, MetaRule metaRule, String matchingString) {
         updateAlreadyPrcessedFiles(sourceFile);
         String name = new ComplexOperation(metaRule.getNameOperations()).exec(matchingString);
+        name = StringUtils.defaultIfBlank(name, "ROOT");
         if (map.containsKey(name)) {
-            List<SourceFile> sourceFiles = map.get(name).getSourceFiles();
+            T sourceCodeAspect = map.get(name);
+            List<SourceFile> sourceFiles = sourceCodeAspect.getSourceFiles();
             if (!sourceFiles.contains(sourceFile)) {
                 sourceFiles.add(sourceFile);
+                sourceFileUpdate.call(Pair.of(sourceFile, sourceCodeAspect));
             }
         } else {
             T sourceCodeAspect = sourceCodeAspectFactory.call(name);
             sourceCodeAspect.getSourceFiles().add(sourceFile);
 
-            if (sourceCodeAspect instanceof CrossCuttingConcern)
-                sourceFile.getCrossCuttingConcerns().add(sourceCodeAspect);
-            else if (sourceCodeAspect instanceof NamedSourceCodeAspect) {
-                sourceFile.getLogicalComponents().add(sourceCodeAspect);
-            }
+            sourceFileUpdate.call(Pair.of(sourceFile, sourceCodeAspect));
 
             map.put(name, sourceCodeAspect);
             concerns.add(sourceCodeAspect);

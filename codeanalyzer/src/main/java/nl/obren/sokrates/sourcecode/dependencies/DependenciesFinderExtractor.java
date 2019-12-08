@@ -4,6 +4,8 @@ import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
+import nl.obren.sokrates.sourcecode.aspects.MetaRule;
+import nl.obren.sokrates.sourcecode.aspects.MetaRulesProcessor;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import org.apache.commons.lang3.StringUtils;
@@ -45,7 +47,7 @@ public class DependenciesFinderExtractor {
             SourceFileFilter sourceFileFilter = new SourceFileFilter(rule.getPathPattern(), "");
 
             if (sourceFileFilter.pathMatches(sourceFile.getRelativePath())) {
-                getLines(sourceFile).forEach(line -> {
+                getSimpleLines(sourceFile).forEach(line -> {
                     if (RegexUtils.matchesEntirely(rule.getContentPattern(), line)) {
                         addDependency(dependencies, dependenciesMap, sourceFile, rule.getComponent(), line);
                     }
@@ -59,7 +61,7 @@ public class DependenciesFinderExtractor {
             SourceFileFilter sourceFileFilter = new SourceFileFilter(metaRule.getPathPattern(), "");
 
             if (sourceFileFilter.pathMatches(sourceFile.getRelativePath())) {
-                getLines(sourceFile).forEach(line -> {
+                getLines(sourceFile, metaRule).forEach(line -> {
                     if (RegexUtils.matchesEntirely(metaRule.getContentPattern(), line)) {
                         String component = new ComplexOperation(metaRule.getNameOperations()).exec(line);
                         addDependency(dependencies, dependenciesMap, sourceFile, component, line);
@@ -69,7 +71,18 @@ public class DependenciesFinderExtractor {
         });
     }
 
-    private List<String> getLines(SourceFile sourceFile) {
+    private List<String> getLines(SourceFile sourceFile, MetaRule metaRule) {
+        if (metaRule.getUse().equalsIgnoreCase("path")) {
+            return Arrays.asList(sourceFile.getRelativePath());
+        }
+        List<String> lines = metaRule.isIgnoreComments() ? sourceFile.getCleanedLines() : sourceFile.getLines();
+        if (lines.size() > MAX_SEARCH_DEPTH_LINES) {
+            lines = lines.subList(0, MAX_SEARCH_DEPTH_LINES);
+        }
+        return lines;
+    }
+
+    private List<String> getSimpleLines(SourceFile sourceFile) {
         List<String> lines = sourceFile.getLines();
         if (lines.size() > MAX_SEARCH_DEPTH_LINES) {
             lines = lines.subList(0, MAX_SEARCH_DEPTH_LINES);

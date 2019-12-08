@@ -88,9 +88,9 @@ public class SourceFile {
         this.linesOfCode = linesOfCode;
     }
 
-    public List<NamedSourceCodeAspect> getLogicalComponents(String group) {
+    public List<NamedSourceCodeAspect> getLogicalComponents(String filer) {
         List<NamedSourceCodeAspect> filteredLogicalComponents = new ArrayList<>();
-        logicalComponents.stream().filter(comp -> comp.getFiltering().equals(group)).forEach(filteredLogicalComponents::add);
+        logicalComponents.stream().filter(comp -> comp.getFiltering().equals(filer)).forEach(filteredLogicalComponents::add);
         return filteredLogicalComponents;
     }
 

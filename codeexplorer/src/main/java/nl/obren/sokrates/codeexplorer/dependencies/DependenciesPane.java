@@ -109,7 +109,7 @@ public class DependenciesPane extends BorderPane {
     private void reloadGrapvizContent(String graphvizContent) {
         if (renderGraphviz) {
             GraphvizDependencyRenderer renderer = new GraphvizDependencyRenderer();
-            renderer.setOrientation(logicalDecomposition.getRenderingOrientation());
+            renderer.setOrientation(logicalDecomposition.getRenderingOptions().getOrientation());
             renderer.append(GraphvizUtil.getSvgExternal(graphvizContent));
             dependenciesView.load(renderer.getHtmlContent(), graphvizContent);
         } else {
@@ -273,7 +273,7 @@ public class DependenciesPane extends BorderPane {
         if (this.renderGraphviz) {
             try {
                 GraphvizDependencyRenderer renderer = new GraphvizDependencyRenderer();
-                renderer.setOrientation(logicalDecomposition.getRenderingOrientation());
+                renderer.setOrientation(logicalDecomposition.getRenderingOptions().getOrientation());
                 renderer.append(GraphvizUtil.getSvgInternal(graphvizContent));
                 htmlContent = renderer.getHtmlContent();
             } catch (Exception e) {
@@ -291,7 +291,7 @@ public class DependenciesPane extends BorderPane {
         String htmlContent = "";
         if (this.renderGraphviz) {
             GraphvizDependencyRenderer renderer = new GraphvizDependencyRenderer();
-            renderer.setOrientation(logicalDecomposition.getRenderingOrientation());
+            renderer.setOrientation(logicalDecomposition.getRenderingOptions().getOrientation());
             renderer.append(GraphvizUtil.getSvgInternal(graphvizContent));
             htmlContent = renderer.getHtmlContent();
         }

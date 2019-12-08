@@ -17,12 +17,13 @@ import java.util.stream.Collectors;
 public class LogicalDecomposition {
     private String name = "";
     private String scope = "main";
-    private int componentsFolderDepth = 1;
     private List<SourceFileFilter> filters = new ArrayList<>();
-    private boolean includeRemainingFiles = true;
+    private int componentsFolderDepth = 1;
     private List<NamedSourceCodeAspect> components = new ArrayList<>();
-    private String renderingOrientation = "TB";
+    private List<MetaRule> metaComponents = new ArrayList<>();
+    private boolean includeRemainingFiles = true;
     private DependenciesFinder dependenciesFinder = new DependenciesFinder();
+    private RenderingOptions renderingOptions = new RenderingOptions();
 
     public LogicalDecomposition() {
     }
@@ -72,12 +73,18 @@ public class LogicalDecomposition {
                     CodeConfiguration.getAbsoluteSrcRoot(codeConfiguration.getSrcRoot(), codeConfigurationFile),
                     filteredSourceFiles, componentsFolderDepth));
         }
+
         for (NamedSourceCodeAspect aspect : components) {
             sourceCodeFiles.getSourceFiles(aspect, filteredSourceFiles);
             aspect.getSourceFiles().forEach(sourceFile -> {
-                sourceFile.getLogicalComponents().add(aspect);
+                if (!sourceFile.getLogicalComponents().contains(aspect))
+                    sourceFile.getLogicalComponents().add(aspect);
             });
         }
+
+        MetaRulesProcessor helper = MetaRulesProcessor.getLogicalDecompositionInstance();
+        List<NamedSourceCodeAspect> metaComponents = helper.extractAspects(codeConfiguration.getMain(), this.metaComponents);
+        components.addAll(metaComponents);
 
         CodeConfigurationUtils.populateUnclassifiedAndMultipleAspectsFiles(components,
                 (includeRemainingFiles ? allSourceFiles : filteredSourceFiles),
@@ -145,12 +152,20 @@ public class LogicalDecomposition {
         this.filters = filters;
     }
 
-    public String getRenderingOrientation() {
-        return renderingOrientation;
+    public List<MetaRule> getMetaComponents() {
+        return metaComponents;
     }
 
-    public void setRenderingOrientation(String renderingOrientation) {
-        this.renderingOrientation = renderingOrientation;
+    public void setMetaComponents(List<MetaRule> metaComponents) {
+        this.metaComponents = metaComponents;
+    }
+
+    public RenderingOptions getRenderingOptions() {
+        return renderingOptions;
+    }
+
+    public void setRenderingOptions(RenderingOptions renderingOptions) {
+        this.renderingOptions = renderingOptions;
     }
 
     public DependenciesFinder getDependenciesFinder() {
