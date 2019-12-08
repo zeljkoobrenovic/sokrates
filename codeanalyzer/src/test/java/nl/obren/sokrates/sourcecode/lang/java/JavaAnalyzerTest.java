@@ -26,6 +26,28 @@ public class JavaAnalyzerTest {
     }
 
     @Test
+    public void cleanForLinesOfCodeCalculations2() {
+        String code = JavaExampleFragments.FRAGMENT_2;
+
+        JavaAnalyzer analyzer = new JavaAnalyzer();
+
+        CleanedContent cleanedContent = analyzer.cleanForLinesOfCodeCalculations(new SourceFile(new File(""), code));
+
+        assertEquals(JavaExampleFragments.FRAGMENT_2_CLEANED, cleanedContent.getCleanedContent());
+    }
+
+    @Test
+    public void cleanForLinesOfCodeCalculations3() {
+        String code = JavaExampleFragments.FRAGMENT_3;
+
+        JavaAnalyzer analyzer = new JavaAnalyzer();
+
+        CleanedContent cleanedContent = analyzer.cleanForLinesOfCodeCalculations(new SourceFile(new File(""), code));
+
+        assertEquals(JavaExampleFragments.FRAGMENT_3_CLEANED, cleanedContent.getCleanedContent());
+    }
+
+    @Test
     public void cleanForDuplicationCalculations() {
         String code = JavaExampleFragments.FRAGMENT_1;
 

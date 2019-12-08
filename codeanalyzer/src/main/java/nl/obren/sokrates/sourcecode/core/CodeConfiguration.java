@@ -198,8 +198,15 @@ public class CodeConfiguration {
                     sourceFile.getCrossCuttingConcerns().add(aspect);
                 });
             });
+
+            MetaRulesProcessor helper = MetaRulesProcessor.getCrossCurringConcernsInstance();
+            List<CrossCuttingConcern> metaConcerns = helper.extractConcerns(main, group.getMetaConcerns());
+
+            group.getConcerns().addAll(metaConcerns);
+
             populateUnclassifiedForCrossCuttingConcern(group.getConcerns());
             List<DerivedCrossCuttingConcern> overlaps = getOverlaps(group.getConcerns());
+
             group.getConcerns().addAll(overlaps);
         });
     }

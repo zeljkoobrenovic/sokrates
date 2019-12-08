@@ -41,7 +41,7 @@ public class AnalysisUtils {
         aspectAnalysisResults.setLinesOfCode(aspect.getLinesOfCode());
 
         if (aspect instanceof CrossCuttingConcern) {
-            LOG.info("Creating searcheable file chache for " + name);
+            LOG.info("Creating searchable file chache for " + name);
             SearcheableFilesCache searcheableFilesCache = SearcheableFilesCache.getInstance(aspect.getSourceFiles());
             aspect.getSourceFileFilters().forEach(filter -> {
                 SearchRequest searchRequest = new SearchRequest(

@@ -6,7 +6,7 @@ import java.util.List;
 public class DependenciesFinder {
     private boolean useBuiltInDependencyFinders = true;
     private List<DependencyFinderPattern> rules = new ArrayList<>();
-    private List<DependencyFinderMetaPattern> metaRules = new ArrayList<>();
+    private List<MetaRule> metaRules = new ArrayList<>();
 
     public boolean isUseBuiltInDependencyFinders() {
         return useBuiltInDependencyFinders;
@@ -24,11 +24,11 @@ public class DependenciesFinder {
         this.rules = rules;
     }
 
-    public List<DependencyFinderMetaPattern> getMetaRules() {
+    public List<MetaRule> getMetaRules() {
         return metaRules;
     }
 
-    public void setMetaRules(List<DependencyFinderMetaPattern> metaRules) {
+    public void setMetaRules(List<MetaRule> metaRules) {
         this.metaRules = metaRules;
     }
 }

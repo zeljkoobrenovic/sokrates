@@ -1,15 +1,14 @@
 package nl.obren.sokrates.sourcecode.cleaners;
 
-import nl.obren.sokrates.sourcecode.lang.cpp.CAnalyzer;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class CodeBlockParsingHelperTest {
+public class CodeBlockParserTest {
 
     @Test
     public void getStringStartIndex() {
-        CodeBlockParsingHelper stringParsing = new CodeBlockParsingHelper("'", "'", "\\", false);
+        CodeBlockParser stringParsing = new CodeBlockParser("'", "'", "\\", false);
 
         assertEquals(10, stringParsing.getStringEndIndex("Line with 'string content' ", 0));
         assertEquals(10, stringParsing.getStringEndIndex("Line with 'string content' ", 2));
@@ -19,14 +18,14 @@ public class CodeBlockParsingHelperTest {
 
     @Test
     public void getStringEndIndex() {
-        CodeBlockParsingHelper stringParsing = new CodeBlockParsingHelper("'", "'", "\\", false);
+        CodeBlockParser stringParsing = new CodeBlockParser("'", "'", "\\", false);
 
         assertEquals(10, stringParsing.getStringEndIndex("Line with 'string \\'content\\'' ", 0));
         assertEquals(29, stringParsing.getStringEndIndex("Line with 'string \\'content\\'' ", 11));
         assertEquals(29, stringParsing.getStringEndIndex("Line with 'string \\'content\\'' ", 12));
         assertEquals(31, stringParsing.getStringEndIndex("Line with 'string \n \\'content\\'' ", 13));
 
-        stringParsing = new CodeBlockParsingHelper("\"\"\"", "\"\"\"", "", false);
+        stringParsing = new CodeBlockParser("\"\"\"", "\"\"\"", "", false);
 
         String content = "Line with \"\"\"string\n\"content\" \"\"\" ";
 
@@ -35,7 +34,7 @@ public class CodeBlockParsingHelperTest {
         assertEquals(30, stringParsing.getStringEndIndex(content, 12));
         assertEquals(30, stringParsing.getStringEndIndex(content, 13));
 
-        stringParsing = new CodeBlockParsingHelper("@\"", "\"", "\"", false);
+        stringParsing = new CodeBlockParser("@\"", "\"", "\"", false);
 
         content = "Line with @\"string\n\"\"content\"\" \" ";
 
@@ -47,8 +46,8 @@ public class CodeBlockParsingHelperTest {
 
     @Test
     public void cleanOrSkip() {
-        CodeBlockParsingHelper helperSkip = new CodeBlockParsingHelper("'", "'", "\\", false);
-        CodeBlockParsingHelper helperClean = new CodeBlockParsingHelper("'", "'", "\\", true);
+        CodeBlockParser helperSkip = new CodeBlockParser("'", "'", "\\", false);
+        CodeBlockParser helperClean = new CodeBlockParser("'", "'", "\\", true);
 
         String content = "Line with 'string \\'content\\'' ";
 
@@ -64,8 +63,8 @@ public class CodeBlockParsingHelperTest {
 
     @Test
     public void cleanOrSkipMultiLine() {
-        CodeBlockParsingHelper helperSkip = new CodeBlockParsingHelper("'", "'", "\\", false);
-        CodeBlockParsingHelper helperClean = new CodeBlockParsingHelper("'", "'", "\\", true);
+        CodeBlockParser helperSkip = new CodeBlockParser("'", "'", "\\", false);
+        CodeBlockParser helperClean = new CodeBlockParser("'", "'", "\\", true);
 
         String contentMultiLine = "Line with 'string \\'multi\nline\ncontent\\'' ";
 
@@ -81,7 +80,7 @@ public class CodeBlockParsingHelperTest {
 
     @Test
     public void cleanOrSkipOneLineComment() {
-        CodeBlockParsingHelper helper = new CodeBlockParsingHelper("//", "\n", "", true);
+        CodeBlockParser helper = new CodeBlockParser("//", "\n", "", true);
 
         String content = "Line 1 // comment 1\nLine 2 // comment 2\n";
 
@@ -96,5 +95,15 @@ public class CodeBlockParsingHelperTest {
 
         assertEquals("Line 1 \nLine 2 \n", helper.cleanOrSkip(result1, startIndex).getContent());
         assertEquals(16, helper.cleanOrSkip(content, startIndex).getCurrentIndex());
+    }
+
+
+    @Test
+    public void getEscapingEscapeMarker() {
+        CodeBlockParser stringParsing = new CodeBlockParser("'", "'", "\\", false);
+
+        // assertEquals(33, stringParsing.getStringEndIndex("Line with 'the \\'string\\' content' ", 12));
+
+        assertEquals(23, stringParsing.getStringEndIndex("temp = temp.replace('\\\\', '_');", 21));
     }
 }

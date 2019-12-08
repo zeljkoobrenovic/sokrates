@@ -13,7 +13,7 @@ import nl.obren.sokrates.sourcecode.lang.groovy.GroovyAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.html.HtmlAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.java.JavaAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.js.JavaScriptAnalyzer;
-import nl.obren.sokrates.sourcecode.lang.js.TypeScriptAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.ts.TypeScriptAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.json.JsonAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.jsp.JspAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.less.LessAnalyzer;

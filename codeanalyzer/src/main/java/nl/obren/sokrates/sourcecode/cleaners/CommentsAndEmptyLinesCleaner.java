@@ -6,9 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CommentsAndEmptyLinesCleaner {
-    private List<CodeBlockParsingHelper> codeBlockParsingHelpers = new ArrayList<>();
+    private List<CodeBlockParser> codeBlockParsers = new ArrayList<>();
     private String content;
-    private CodeBlockParsingHelper activeHelper = null;
+    private CodeBlockParser activeHelper = null;
 
     private int currentIndex = 0;
 
@@ -27,19 +27,19 @@ public class CommentsAndEmptyLinesCleaner {
     }
 
     public void addStringBlockHelper(String marker, String escapeMarker) {
-        codeBlockParsingHelpers.add(new CodeBlockParsingHelper(marker, marker, escapeMarker, false));
+        codeBlockParsers.add(new CodeBlockParser(marker, marker, escapeMarker, false));
     }
 
     public void addStringBlockHelper(String startMarker, String endMarker, String escapeMarker) {
-        codeBlockParsingHelpers.add(new CodeBlockParsingHelper(startMarker, endMarker, escapeMarker, false));
+        codeBlockParsers.add(new CodeBlockParser(startMarker, endMarker, escapeMarker, false));
     }
 
     public void addCommentBlockHelper(String startMarker, String endMarker) {
-        codeBlockParsingHelpers.add(new CodeBlockParsingHelper(startMarker, endMarker, "", true));
+        codeBlockParsers.add(new CodeBlockParser(startMarker, endMarker, "", true));
     }
 
     public void addCommentBlockHelper(String startMarker, String endMarker, String escapeMarker) {
-        codeBlockParsingHelpers.add(new CodeBlockParsingHelper(startMarker, endMarker, escapeMarker, true));
+        codeBlockParsers.add(new CodeBlockParser(startMarker, endMarker, escapeMarker, true));
     }
 
     public String cleanRaw(String originalContent) {
@@ -48,7 +48,7 @@ public class CommentsAndEmptyLinesCleaner {
         while (true) {
             activeHelper = null;
             final int index[] = {-1};
-            this.codeBlockParsingHelpers.forEach(helper -> {
+            this.codeBlockParsers.forEach(helper -> {
                 int helperIndex = helper.getStringStartIndex(content, currentIndex);
 
                 if (helperIndex >= 0 && (index[0] == -1 || helperIndex < index[0])) {

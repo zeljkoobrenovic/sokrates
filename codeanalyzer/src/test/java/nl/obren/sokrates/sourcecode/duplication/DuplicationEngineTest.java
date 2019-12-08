@@ -13,7 +13,6 @@ import static junit.framework.TestCase.assertEquals;
 
 public class DuplicationEngineTest {
     @Test
-    @Ignore
     public void findDuplicates() throws Exception {
         DuplicationEngine engine = new DuplicationEngine();
 
