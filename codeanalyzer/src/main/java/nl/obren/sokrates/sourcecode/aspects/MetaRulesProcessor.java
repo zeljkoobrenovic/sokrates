@@ -1,6 +1,5 @@
 package nl.obren.sokrates.sourcecode.aspects;
 
-import javafx.util.Callback;
 import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
@@ -17,28 +16,41 @@ public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
     private List<T> concerns = new ArrayList<>();
     private List<SourceFile> alreadyAddedFiles = new ArrayList<>();
     private Map<String, T> map = new HashMap<>();
-    private Callback<String, T> sourceCodeAspectFactory;
-    private Callback<Pair<SourceFile, NamedSourceCodeAspect>, Boolean> sourceFileUpdate;
+    private MetaRulesProcessorCallback sourceCodeAspectFactory;
     private boolean uniqueClassification;
 
     private MetaRulesProcessor(boolean uniqueClassification,
-                               Callback<String, T> sourceCodeAspectFactory,
-                               Callback<Pair<SourceFile, NamedSourceCodeAspect>, Boolean> sourceFileUpdate) {
+                               MetaRulesProcessorCallback sourceCodeAspectFactory) {
         this.uniqueClassification = uniqueClassification;
         this.sourceCodeAspectFactory = sourceCodeAspectFactory;
-        this.sourceFileUpdate = sourceFileUpdate;
     }
 
     public static MetaRulesProcessor getCrossCurringConcernsInstance() {
-        return new MetaRulesProcessor<CrossCuttingConcern>(false,
-                name -> new CrossCuttingConcern(name),
-                updateInfo -> updateInfo.getLeft().getCrossCuttingConcerns().add(updateInfo.getRight()));
+        return new MetaRulesProcessor<CrossCuttingConcern>(false, new MetaRulesProcessorCallback() {
+            @Override
+            public NamedSourceCodeAspect getInstance(String name) {
+                return new CrossCuttingConcern(name);
+            }
+
+            @Override
+            public void updateSourceFile(SourceFile sourceFile, NamedSourceCodeAspect aspect) {
+                sourceFile.getCrossCuttingConcerns().add(aspect);
+            }
+        });
     }
 
     public static MetaRulesProcessor getLogicalDecompositionInstance() {
-        return new MetaRulesProcessor<NamedSourceCodeAspect>(true,
-                name -> new NamedSourceCodeAspect(name),
-                updateInfo -> updateInfo.getLeft().getLogicalComponents().add(updateInfo.getRight()));
+        return new MetaRulesProcessor<NamedSourceCodeAspect>(true,new MetaRulesProcessorCallback() {
+            @Override
+            public NamedSourceCodeAspect getInstance(String name) {
+                return new NamedSourceCodeAspect(name);
+            }
+
+            @Override
+            public void updateSourceFile(SourceFile sourceFile, NamedSourceCodeAspect aspect) {
+                sourceFile.getLogicalComponents().add(aspect);
+            }
+        });
     }
 
     public boolean isUniqueClassification() {
@@ -104,16 +116,16 @@ public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
             List<SourceFile> sourceFiles = sourceCodeAspect.getSourceFiles();
             if (!sourceFiles.contains(sourceFile)) {
                 sourceFiles.add(sourceFile);
-                sourceFileUpdate.call(Pair.of(sourceFile, sourceCodeAspect));
+                sourceCodeAspectFactory.updateSourceFile(sourceFile, sourceCodeAspect);
             }
         } else {
-            T sourceCodeAspect = sourceCodeAspectFactory.call(name);
+            NamedSourceCodeAspect sourceCodeAspect = sourceCodeAspectFactory.getInstance(name);
             sourceCodeAspect.getSourceFiles().add(sourceFile);
 
-            sourceFileUpdate.call(Pair.of(sourceFile, sourceCodeAspect));
+            sourceCodeAspectFactory.updateSourceFile(sourceFile, sourceCodeAspect);
 
-            map.put(name, sourceCodeAspect);
-            concerns.add(sourceCodeAspect);
+            map.put(name, (T) sourceCodeAspect);
+            concerns.add((T) sourceCodeAspect);
         }
     }
 
@@ -122,4 +134,11 @@ public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
             alreadyAddedFiles.add(sourceFile);
         }
     }
+
 }
+
+interface MetaRulesProcessorCallback {
+    NamedSourceCodeAspect getInstance(String name);
+    void updateSourceFile(SourceFile sourceFile, NamedSourceCodeAspect aspect);
+}
+
