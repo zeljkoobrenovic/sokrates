@@ -1,4 +1,4 @@
-package nl.obren.sokrates.common.renderingutils.googlecharts;
+package nl.obren.sokrates.common.renderingutils.charts;
 
 import java.util.Arrays;
 import java.util.List;
@@ -20,9 +20,10 @@ public class Palette {
     }
 
     public static Palette getDefaultPalette() {
-        return new Palette(Arrays.asList("#75ADD2", "#584982", "#FFFD98", "#FCF7FF",
+       /* return new Palette(Arrays.asList("#75ADD2", "#584982", "#FFFD98", "#FCF7FF",
                 "#61A99B", "#567E99", "#41365F", "#BAB96F", "#B8B4BA",
-                "#B0EFE3", "#A7CAE2", "#948BAF", "#FFFDBD", "#FDF9FF", "#84E7D4"));
+                "#B0EFE3", "#A7CAE2", "#948BAF", "#FFFDBD", "#FDF9FF", "#84E7D4")); */
+        return new Palette(Arrays.asList("grey", "lightgrey"));
     }
 
     public String nextColor() {

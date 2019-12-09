@@ -1,35 +1,27 @@
-package nl.obren.sokrates.common.renderingutils.googlecharts;
+package nl.obren.sokrates.common.renderingutils.charts;
 
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PieChart {
+public class BarChart {
     private static int chartCounter = 1;
     private String title;
-    private List<String> labels = new ArrayList<>();
-    private List<Number> values = new ArrayList<>();
-    private List<String> colors = new ArrayList<>();
-    private int width = 800;
+    private int width = 900;
     private int height = 500;
+    private List<String> labels = new ArrayList<>();
+    private List<String> rowLabels = new ArrayList<>();
+    private List<List<Number>> rows = new ArrayList<>();
+    private List<String> colors = new ArrayList<>();
 
-    public PieChart(String title) {
+    public BarChart(String title) {
         this.title = title;
     }
 
-    public void addItem(String label, Number value, String color) {
-        labels.add(label);
-        values.add(value);
-        colors.add(color);
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
+    public void addRow(String label, List<Number> values) {
+        rowLabels.add(label);
+        rows.add(values);
     }
 
     public int getWidth() {
@@ -48,6 +40,14 @@ public class PieChart {
         this.height = height;
     }
 
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
     public List<String> getLabels() {
         return labels;
     }
@@ -56,12 +56,12 @@ public class PieChart {
         this.labels = labels;
     }
 
-    public List<Number> getValues() {
-        return values;
+    public List<List<Number>> getRows() {
+        return rows;
     }
 
-    public void setValues(List<Number> values) {
-        this.values = values;
+    public void setRows(List<List<Number>> rows) {
+        this.rows = rows;
     }
 
     public List<String> getColors() {
@@ -74,11 +74,16 @@ public class PieChart {
 
     @Override
     public String toString() {
+        StringBuilder labelsString = new StringBuilder();
+        labels.forEach(label -> labelsString.append("'" + label + "',"));
         StringBuilder dataString = new StringBuilder();
-        dataString.append("['', ''],");
-        for (int i = 0; i < labels.size(); i++) {
-            dataString.append("['" + labels.get(i) + "', " + values.get(i) + "],");
+        dataString.append("[" + StringUtils.removeEnd(labelsString.toString(), ",") + "],");
+        for (int i = 0; i < rowLabels.size(); i++) {
+            dataString.append("['" + rowLabels.get(i) + "', ");
+            rows.get(i).forEach(value -> dataString.append("" + value + ","));
+            dataString.append("],");
         }
+
         StringBuilder colorsString = new StringBuilder();
         colors.forEach(color -> colorsString.append("'" + color + "',"));
 
@@ -88,25 +93,27 @@ public class PieChart {
     }
 
     private String getScriptString(StringBuilder dataString, StringBuilder colorsString) {
-        String id = "pie" + chartCounter++;
+        String id = "bar" + chartCounter++;
         String functionId = "draw_" + id;
         return "<script type=\"text/javascript\">\n" +
                 "      google.charts.load(\"current\", {packages:[\"corechart\"]});\n" +
                 "      google.charts.setOnLoadCallback(" + functionId + ");\n" +
                 "      function " + functionId + "() {\n" +
                 "        var data = google.visualization.arrayToDataTable([\n" +
-                StringUtils.removeEnd(dataString.toString(), ",") +
+                StringUtils.removeEnd(dataString.toString().replace(",]", "]"), ",") +
                 "        ]);\n" +
                 "        var options = {\n" +
-                (StringUtils.isNotBlank(title) ? "          title: '" + title + "',\n" : "") +
-                "          pieHole: 0.5,\n" +
+                "          title: '" + title + "',\n" +
                 "          fontName: 'Tahoma', " +
+                "          isStacked: true," +
+                "          height: " + height + "," +
+                "          legend: { position: 'top', maxLines: 3 }, " +
                 "          colors: [\n" +
                 StringUtils.removeEnd(colorsString.toString(), ",") +
                 "          ]\n" +
                 "        };\n" +
                 "\n" +
-                "        var chart = new google.visualization.PieChart(document.getElementById('" + id + "'));\n" +
+                "        var chart = new google.visualization.BarChart(document.getElementById('" + id + "'));\n" +
                 "        chart.draw(data, options);\n" +
                 "      }\n" +
                 "</script>" +

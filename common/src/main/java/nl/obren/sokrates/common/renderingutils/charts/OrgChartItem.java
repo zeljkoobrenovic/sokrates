@@ -1,4 +1,4 @@
-package nl.obren.sokrates.common.renderingutils.googlecharts;
+package nl.obren.sokrates.common.renderingutils.charts;
 
 public class OrgChartItem {
     private String item = "";

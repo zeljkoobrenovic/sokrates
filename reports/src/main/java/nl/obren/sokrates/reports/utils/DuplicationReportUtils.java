@@ -1,8 +1,8 @@
 package nl.obren.sokrates.reports.utils;
 
-import nl.obren.sokrates.common.renderingutils.googlecharts.BarChart;
-import nl.obren.sokrates.common.renderingutils.googlecharts.Palette;
-import nl.obren.sokrates.common.renderingutils.googlecharts.PieChart;
+import nl.obren.sokrates.common.renderingutils.charts.BarChart;
+import nl.obren.sokrates.common.renderingutils.charts.Palette;
+import nl.obren.sokrates.common.renderingutils.charts.PieChart;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.RichTextReport;

@@ -1,6 +1,6 @@
 package nl.obren.sokrates.reports.charts;
 
-import nl.obren.sokrates.common.renderingutils.googlecharts.Palette;
+import nl.obren.sokrates.common.renderingutils.charts.Palette;
 
 import java.util.List;
 

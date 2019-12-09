@@ -1,7 +1,7 @@
 package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.common.io.JsonMapper;
-import nl.obren.sokrates.common.renderingutils.googlecharts.Palette;
+import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.RichTextReport;

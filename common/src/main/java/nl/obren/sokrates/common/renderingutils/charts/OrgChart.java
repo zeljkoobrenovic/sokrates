@@ -1,4 +1,4 @@
-package nl.obren.sokrates.common.renderingutils.googlecharts;
+package nl.obren.sokrates.common.renderingutils.charts;
 
 import org.apache.commons.lang3.StringUtils;
 
