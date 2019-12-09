@@ -51,9 +51,9 @@ public class ReportFileExporter {
             indexReport.addParagraph(metadata.getDescription());
         }
         indexReport.startSection("Summary", "");
-        indexReport.startUnorderedList();
+        indexReport.startDiv("");
         summarize(indexReport, analysisResults);
-        indexReport.endUnorderedList();
+        indexReport.endDiv();
         indexReport.endSection();
         indexReport.startSection("Reports", "");
         for (String[] report : reportList) {

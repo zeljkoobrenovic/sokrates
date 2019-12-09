@@ -20,6 +20,16 @@ public class SummaryUtils {
     private static final int BAR_WIDTH = 480;
     private static final int BAR_HEIGHT = 12;
 
+    public void summarize(CodeAnalysisResults analysisResults, RichTextReport report) {
+        summarizeMainVolume(analysisResults, report);
+        summarizeDuplication(analysisResults, report);
+        summarizeFileSize(report, analysisResults);
+        summarizeUnitSize(analysisResults, report);
+        summarizeUnitComplexity(analysisResults, report);
+        summarizeComponents(analysisResults, report);
+        addSummaryFindings(analysisResults, report);
+    }
+
     private void summarizeFileSize(RichTextReport report, CodeAnalysisResults analysisResults) {
         FilesAnalysisResults filesAnalysisResults = analysisResults.getFilesAnalysisResults();
         if (filesAnalysisResults != null) {
@@ -61,17 +71,6 @@ public class SummaryUtils {
             summary.append("</span>");
             summary.append("<div>" + getVolumeVisual(linesOfCodePerAspect, totalLoc, mainLoc, "") + "</div>");
         }
-    }
-
-    public void summarize(CodeAnalysisResults analysisResults, RichTextReport report) {
-        summarizeMainVolume(analysisResults, report);
-        summarizeDuplication(analysisResults, report);
-        summarizeFileSize(report, analysisResults);
-        summarizeUnitSize(analysisResults, report);
-        summarizeUnitComplexity(analysisResults, report);
-        summarizeComponents(analysisResults, report);
-        summarizeTestVolume(analysisResults, report);
-        addSummaryFindings(analysisResults, report);
     }
 
     public void summarizeAndCompare(CodeAnalysisResults analysisResults, CodeAnalysisResults refData, RichTextReport report) {
@@ -207,7 +206,7 @@ public class SummaryUtils {
             List<NumericMetric> linesOfCodePerComponent = decomposition.getLinesOfCodePerComponent();
             linesOfCodePerComponent.forEach(c -> totalLoc[0] += c.getValue().intValue());
 
-            report.addContentInDiv(getVolumeVisual(linesOfCodePerComponent, totalLoc[0], mainLoc,decomposition.getKey() + " (" + decomposition.getComponents().size() + " components)"));
+            report.addContentInDiv(getVolumeVisual(linesOfCodePerComponent, totalLoc[0], mainLoc, decomposition.getKey() + " (" + decomposition.getComponents().size() + " components)"));
         });
 
     }
