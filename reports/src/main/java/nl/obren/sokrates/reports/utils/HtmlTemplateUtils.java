@@ -6,8 +6,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 public class HtmlTemplateUtils {
-    public static String getTemplate(String resourcePath) {
+    public static String getResource(String resourcePath) {
         InputStream in = HtmlTemplateUtils.class.getResourceAsStream(resourcePath);
+        if (in == null) {
+            return "";
+        }
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 
         String line;

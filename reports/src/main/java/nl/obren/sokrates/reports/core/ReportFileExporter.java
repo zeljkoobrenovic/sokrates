@@ -1,5 +1,6 @@
 package nl.obren.sokrates.reports.core;
 
+import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -94,6 +95,13 @@ public class ReportFileExporter {
         return htmlExportFolder;
     }
 
+    private static String getIconSvg(String icon) {
+        String svg = HtmlTemplateUtils.getResource("/icons/" + icon + ".svg");
+        svg = svg.replaceAll("height='.*?'", "height='80px'");
+        svg = svg.replaceAll("width='.*?'", "width='80px'");
+        return svg;
+    }
+
     private static void addReportFragment(File reportsFolder, RichTextReport indexReport, String[] report) {
         String reportFileName = report[0];
         String reportTitle = report[1];
@@ -104,7 +112,11 @@ public class ReportFileExporter {
             indexReport.addHtmlContent("Analysis Report");
             indexReport.endDiv();
             indexReport.startDiv("padding: 20px;");
-            indexReport.addHtmlContent(ReportConstants.REPORT_SVG_ICON);
+            if (StringUtils.isNotBlank(report[2])) {
+                indexReport.addHtmlContent(getIconSvg(report[2]));
+            } else {
+                indexReport.addHtmlContent(ReportConstants.REPORT_SVG_ICON);
+            }
             indexReport.endDiv();
             indexReport.startDiv("font-size:100%; color:blue; ");
             indexReport.addHtmlContent("<b><a style='text-decoration: none' href=\"" + reportFileName + "\">" + reportTitle + "</a></b>");
@@ -144,17 +156,17 @@ public class ReportFileExporter {
 
     private static String[][] getReportsList() {
         return new String[][]{
-                {"SourceCodeOverview.html", "Source Code Overview"},
-                {"Components.html", "Components and Dependencies"},
-                {"Duplication.html", "Duplication "},
-                {"FileSize.html", "File Size"},
-                {"UnitSize.html", "Unit Size"},
-                {"ConditionalComplexity.html", "Conditional Complexity"},
-                {"CrossCuttingConcerns.html", "Cross - Cutting Concerns"},
-                {"Metrics.html", "All Metrics"},
-                {"Trend.html", "Trend"},
-                {"Controls.html", "Goals & Controls"},
-                {"Notes.html", "Notes & Findings"},
+                {"SourceCodeOverview.html", "Source Code Overview", "codebase"},
+                {"Components.html", "Components and Dependencies", "dependencies"},
+                {"Duplication.html", "Duplication", "duplication"},
+                {"FileSize.html", "File Size", "file_size"},
+                {"UnitSize.html", "Unit Size", "unit_size"},
+                {"ConditionalComplexity.html", "Conditional Complexity", "conditional"},
+                {"CrossCuttingConcerns.html", "Cross - Cutting Concerns", "cross_cutting_concerns"},
+                {"Metrics.html", "All Metrics", "metrics"},
+                {"Trend.html", "Trend", "trend"},
+                {"Controls.html", "Goals & Controls", "goal"},
+                {"Notes.html", "Notes & Findings", "notes"},
 
         };
     }

@@ -21,7 +21,7 @@ public class FilesExplorerGenerator {
     }
 
     private String generateExplorer(FilesExportInfo exportInfo) {
-        String html = HtmlTemplateUtils.getTemplate("/templates/Files.html");
+        String html = HtmlTemplateUtils.getResource("/templates/Files.html");
         try {
             html = html.replace(FILES_DATA, new JsonGenerator().generate(exportInfo));
         } catch (JsonProcessingException e) {

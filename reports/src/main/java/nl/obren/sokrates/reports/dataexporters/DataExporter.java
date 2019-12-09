@@ -426,7 +426,7 @@ public class DataExporter {
             String fileName = fragmentType + "_" + count[0] + "." + unit.getSourceFile().getExtension();
             String fileAndLines = unit.getSourceFile().getRelativePath() + " [" + unit.getStartLine() + ":" + unit.getEndLine() + "]";
 
-            String htmlTemplate = HtmlTemplateUtils.getTemplate("/templates/CodeFragmentUnit.html");
+            String htmlTemplate = HtmlTemplateUtils.getResource("/templates/CodeFragmentUnit.html");
             String html = htmlTemplate.replace("${title}", unit.getShortName());
             html = html.replace("${unit-name}", unit.getShortName());
             html = html.replace("${file-and-lines}", fileAndLines);

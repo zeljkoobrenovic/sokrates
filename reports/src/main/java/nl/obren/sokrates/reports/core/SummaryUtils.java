@@ -4,6 +4,7 @@ import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
+import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.DuplicationMetric;
@@ -17,10 +18,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class SummaryUtils {
-    private static final int BAR_WIDTH = 480;
-    private static final int BAR_HEIGHT = 12;
+    private static final int BAR_WIDTH = 260;
+    private static final int BAR_HEIGHT = 20;
 
     public void summarize(CodeAnalysisResults analysisResults, RichTextReport report) {
+        report.startTable("border: none;");
         summarizeMainVolume(analysisResults, report);
         summarizeDuplication(analysisResults, report);
         summarizeFileSize(report, analysisResults);
@@ -28,6 +30,7 @@ public class SummaryUtils {
         summarizeUnitComplexity(analysisResults, report);
         summarizeComponents(analysisResults, report);
         addSummaryFindings(analysisResults, report);
+        report.endTable();
     }
 
     private void summarizeFileSize(RichTextReport report, CodeAnalysisResults analysisResults) {
@@ -39,14 +42,25 @@ public class SummaryUtils {
                 int veryLongFilesLOC = distribution.getVeryHighRiskValue();
                 int shortFilesLOC = distribution.getLowRiskValue();
 
-                report.addParagraph("File Size: <b style='" + (veryLongFilesLOC > 1 ? "color: crimson" : "") + "'>"
+                report.startTableRow();
+                report.addTableCell(getIconSvg("file_size"), "border: none");
+                report.addTableCell(getRiskProfileVisual(distribution), "border: none");
+                report.addTableCell("File Size: <b>"
                         + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(mainLOC, veryLongFilesLOC))
-                        + "%</b> very long (>1000 LOC), <b style='color: green'>"
+                        + "%</b> very long (>1000 LOC), <b>"
                         + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(mainLOC, shortFilesLOC))
-                        + "%</b> short (<= 200 LOC)", "margin-bottom: 0; margin-top: 6px");
-                report.addContentInDiv(getRiskProfileVisual(distribution));
+                        + "%</b> short (<= 200 LOC)", "border: none");
+                report.addTableCell("<a href='FileSize.html'>...</a>", "border: none");
+                report.endTableRow();
             }
         }
+    }
+
+    private String getIconSvg(String icon) {
+        String svg = HtmlTemplateUtils.getResource("/icons/" + icon + ".svg");
+        svg = svg.replaceAll("height='.*?'", "height='40px'");
+        svg = svg.replaceAll("width='.*?'", "width='40px'");
+        return svg;
     }
 
     private void summarizeListOfLocAspects(StringBuilder summary, int totalLoc, int mainLoc, List<NumericMetric> linesOfCodePerAspect) {
@@ -69,7 +83,6 @@ public class SummaryUtils {
         });
         if (linesOfCodePerAspect.size() > 0) {
             summary.append("</span>");
-            summary.append("<div>" + getVolumeVisual(linesOfCodePerAspect, totalLoc, mainLoc, "") + "</div>");
         }
     }
 
@@ -145,9 +158,12 @@ public class SummaryUtils {
     }
 
     private void summarizeMainVolume(CodeAnalysisResults analysisResults, RichTextReport report) {
+        report.startTableRow();
         StringBuilder summary = new StringBuilder("");
         summarizeMainCode(analysisResults, summary);
-        report.addParagraph(summary.toString());
+        report.addHtmlContent(summary.toString());
+        report.addTableCell("<a href='SourceCodeOverview.html'>...</a>", "border: none");
+        report.endTableRow();
     }
 
     private void summarizeTestVolume(CodeAnalysisResults analysisResults, RichTextReport report) {
@@ -167,12 +183,16 @@ public class SummaryUtils {
     }
 
     private void summarizeMainCode(CodeAnalysisResults analysisResults, StringBuilder summary) {
-        summary.append("<p style='margin-bottom: 0'>Main Code: ");
+        summary.append("<td style='border: none'>" + getIconSvg("codebase") + "</td>");
+        summary.append("<td style='border: none'>");
         int totalLoc = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
+        List<NumericMetric> linesOfCodePerExtension = analysisResults.getMainAspectAnalysisResults().getLinesOfCodePerExtension();
+        summary.append("<div>" + getVolumeVisual(linesOfCodePerExtension, totalLoc, totalLoc, "") + "</div>");
+        summary.append("</td>");
+        summary.append("<td  style='border: none'>Main Code: ");
         summary.append(RichTextRenderingUtils.renderNumberStrong(totalLoc) + " LOC");
-        summarizeListOfLocAspects(summary, totalLoc, totalLoc, analysisResults.getMainAspectAnalysisResults().getLinesOfCodePerExtension());
-
-        summary.append("</p>");
+        summarizeListOfLocAspects(summary, totalLoc, totalLoc, linesOfCodePerExtension);
+        summary.append("</td>");
     }
 
     private void addSummaryFindings(CodeAnalysisResults analysisResults, RichTextReport report) {
@@ -188,7 +208,22 @@ public class SummaryUtils {
     }
 
     private void summarizeComponents(CodeAnalysisResults analysisResults, RichTextReport report) {
-        report.addHtmlContent("<p style='margin-bottom: 0; margin-top: 30px'>Logical Component Decomposition:");
+        report.startTableRow();
+        report.addTableCell(getIconSvg("dependencies"), "border: none");
+
+        report.startTableCell("border: none");
+        analysisResults.getLogicalDecompositionsAnalysisResults().forEach(decomposition -> {
+            int mainLoc = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
+            int totalLoc[] = {0};
+            List<NumericMetric> linesOfCodePerComponent = decomposition.getLinesOfCodePerComponent();
+            linesOfCodePerComponent.forEach(c -> totalLoc[0] += c.getValue().intValue());
+
+            report.addContentInDiv(getVolumeVisual(linesOfCodePerComponent, totalLoc[0], mainLoc, ""));
+        });
+        report.endTableCell();
+
+        report.startTableCell("border: none");
+        report.addHtmlContent("Logical Component Decomposition:");
         boolean first[] = {true};
         analysisResults.getLogicalDecompositionsAnalysisResults().forEach(decomposition -> {
             if (!first[0]) {
@@ -198,17 +233,10 @@ public class SummaryUtils {
             }
             report.addHtmlContent(decomposition.getKey() + " (" + decomposition.getComponents().size() + " components)");
         });
-        report.addHtmlContent("</p>");
+        report.endTableCell();
+        report.addTableCell("<a href='Components.html'>...</a>", "border: none");
 
-        analysisResults.getLogicalDecompositionsAnalysisResults().forEach(decomposition -> {
-            int mainLoc = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
-            int totalLoc[] = {0};
-            List<NumericMetric> linesOfCodePerComponent = decomposition.getLinesOfCodePerComponent();
-            linesOfCodePerComponent.forEach(c -> totalLoc[0] += c.getValue().intValue());
-
-            report.addContentInDiv(getVolumeVisual(linesOfCodePerComponent, totalLoc[0], mainLoc, decomposition.getKey() + " (" + decomposition.getComponents().size() + " components)"));
-        });
-
+        report.endTableRow();
     }
 
     private void summarizeUnitComplexity(CodeAnalysisResults analysisResults, RichTextReport report) {
@@ -217,14 +245,17 @@ public class SummaryUtils {
         int veryComplexUnitsLOC = distribution.getVeryHighRiskValue();
         int lowComplexUnitsLOC = distribution.getLowRiskValue();
 
-        report.addParagraph("Conditional Complexity: <b style='" + (veryComplexUnitsLOC > 1 ? "color: crimson" : "") + "'>"
+        report.startTableRow();
+        report.addTableCell(getIconSvg("conditional"), "border: none");
+        report.addTableCell(getRiskProfileVisual(distribution), "border: none");
+        report.addTableCell("Conditional Complexity: <b>"
                 + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, veryComplexUnitsLOC))
-                + "%</b> very complex (McCabe index > 25), <b style='color: green'>"
+                + "%</b> very complex (McCabe index > 25), <b>"
                 + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, lowComplexUnitsLOC))
-                + "%</b> simple (McCabe index <= 5)", "margin-bottom: 0; margin-top: 6px");
+                + "%</b> simple (McCabe index <= 5)", "border: none");
 
-        report.addContentInDiv(getRiskProfileVisual(distribution));
-
+        report.addTableCell("<a href='ConditionalComplexity.html'>...</a>", "border: none");
+        report.endTableRow();
     }
 
     private void summarizeUnitSize(CodeAnalysisResults analysisResults, RichTextReport report) {
@@ -233,12 +264,16 @@ public class SummaryUtils {
         int veryLongUnitsLOC = distribution.getVeryHighRiskValue();
         int lowUnitsLOC = distribution.getLowRiskValue();
 
-        report.addParagraph("Unit Size: <b style='" + (veryLongUnitsLOC > 1 ? "color: crimson" : "") + "'>"
+        report.startTableRow();
+        report.addTableCell(getIconSvg("unit_size"), "border: none");
+        report.addTableCell(getRiskProfileVisual(distribution), "border: none");
+        report.addTableCell("Unit Size: <b>"
                 + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, veryLongUnitsLOC))
-                + "%</b> very long (>100 LOC), <b style='color: green'>"
+                + "%</b> very long (>100 LOC), <b>"
                 + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, lowUnitsLOC))
-                + "%</b> short (<= 20 LOC)", "margin-bottom: 0; margin-top: 6px");
-        report.addContentInDiv(getRiskProfileVisual(distribution));
+                + "%</b> short (<= 20 LOC)", "border: none");
+        report.addTableCell("<a href='UnitSize.html'>...</a>", "border: none");
+        report.endTableRow();
     }
 
     private void summarizeDuplication(CodeAnalysisResults analysisResults, RichTextReport report) {
@@ -246,9 +281,12 @@ public class SummaryUtils {
         Number duplicationPercentage = overallDuplication.getDuplicationPercentage();
         double duplication = duplicationPercentage.doubleValue();
         if (!analysisResults.getCodeConfiguration().getAnalysis().isSkipDuplication()) {
-            report.addParagraph("Duplication: <b style='" + (duplication > 5.0 ? "color: crimson" : "") + "'>" + FormattingUtils.getFormattedPercentage(duplication) + "%</b>", "margin-bottom: 0; margin-top: 24px");
-
-            report.addContentInDiv(getDuplicationVisual(duplicationPercentage));
+            report.startTableRow();
+            report.addTableCell(getIconSvg("duplication"), "border: none");
+            report.addTableCell(getDuplicationVisual(duplicationPercentage), "border: none");
+            report.addTableCell("Duplication: <b>" + FormattingUtils.getFormattedPercentage(duplication) + "%</b>", "margin-bottom: 0;  border: none;");
+            report.addTableCell("<a href='Duplication.html'>...</a>", "border: none");
+            report.endTableRow();
         }
     }
 
@@ -256,7 +294,7 @@ public class SummaryUtils {
 
         int barWidth = (int) ((double) BAR_WIDTH * totalLoc / mainLoc);
         SimpleOneBarChart chart = new SimpleOneBarChart();
-        chart.setWidth(barWidth + 200);
+        chart.setWidth(barWidth);
         chart.setBarHeight(BAR_HEIGHT);
         chart.setMaxBarWidth(barWidth);
         chart.setBarStartXOffset(0);
@@ -288,9 +326,10 @@ public class SummaryUtils {
         chart.setBarHeight(BAR_HEIGHT);
         chart.setMaxBarWidth(BAR_WIDTH);
         chart.setBarStartXOffset(2);
-        chart.setAlignment(SimpleOneBarChart.Alignment.LEFT);
         chart.setActiveColor("crimson");
         chart.setBackgroundColor("#9DC034");
+        chart.setBackgroundStyle("");
+
         return chart.getPercentageSvg(duplicationPercentage.doubleValue(), "", "");
     }
 

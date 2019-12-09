@@ -1,6 +1,7 @@
 package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.CodeAnalyzerSettings;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -36,6 +37,14 @@ public class BasicSourceCodeReportGenerator {
         this.codeConfigurationFile = codeConfigurationFile;
         decorateReports();
     }
+
+    private static String getIconSvg(String icon) {
+        String svg = HtmlTemplateUtils.getResource("/icons/" + icon + ".svg");
+        svg = svg.replaceAll("height='.*?'", "height='80px'");
+        svg = svg.replaceAll("width='.*?'", "width='80px'");
+        return svg;
+    }
+
 
     private void decorateReport(RichTextReport report, String prefix, String logoLink) {
         if (StringUtils.isNotBlank(prefix)) {

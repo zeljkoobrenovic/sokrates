@@ -4,11 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.reports.dataexporters.dependencies.DependeciesExportInfo;
 import nl.obren.sokrates.reports.dataexporters.dependencies.DependenciesExporter;
-import nl.obren.sokrates.reports.dataexporters.duplication.DuplicationExportInfo;
-import nl.obren.sokrates.reports.dataexporters.duplication.DuplicationExporter;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
 
 public class DependenciesExplorerGenerator {
     public static final String DEPENDENCIES_DATA = "\"${__DEPENDENCIES_DATA__}\"";
@@ -23,7 +20,7 @@ public class DependenciesExplorerGenerator {
     }
 
     private String generateExplorer(DependeciesExportInfo exportInfo) {
-        String html = HtmlTemplateUtils.getTemplate("/templates/Dependencies.html");
+        String html = HtmlTemplateUtils.getResource("/templates/Dependencies.html");
         try {
             html = html.replace(DEPENDENCIES_DATA, new JsonGenerator().generate(exportInfo));
         } catch (JsonProcessingException e) {

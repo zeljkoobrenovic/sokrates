@@ -21,7 +21,7 @@ public class UnitsExplorerGenerator {
     }
 
     private String generateExplorer(UnitsExportInfo exportInfo) {
-        String html = HtmlTemplateUtils.getTemplate("/templates/Units.html");
+        String html = HtmlTemplateUtils.getResource("/templates/Units.html");
         try {
             html = html.replace(UNITS_DATA, new JsonGenerator().generate(exportInfo));
         } catch (JsonProcessingException e) {

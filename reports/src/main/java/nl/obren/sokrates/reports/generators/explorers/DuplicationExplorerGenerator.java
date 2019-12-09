@@ -21,7 +21,7 @@ public class DuplicationExplorerGenerator {
     }
 
     private String generateExplorer(DuplicationExportInfo exportInfo) {
-        String html = HtmlTemplateUtils.getTemplate("/templates/Duplicates.html");
+        String html = HtmlTemplateUtils.getResource("/templates/Duplicates.html");
         try {
             html = html.replace(DUPLICATION_DATA, new JsonGenerator().generate(exportInfo));
         } catch (JsonProcessingException e) {
