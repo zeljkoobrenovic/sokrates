@@ -197,8 +197,10 @@ public class DuplicationReportGenerator {
 
     private void addMostFrequentDuplicatesList(RichTextReport report) {
         List<DuplicationInstance> duplicates = codeAnalysisResults.getDuplicationAnalysisResults().getMostFrequentDuplicates();
-        report.startSection("Most Frequent Duplicates", "The list of " + duplicates.size() + " most frequently found duplicates.");
-        getDuplicatesTable(report, duplicates, "most_frequent_duplicates");
-        report.endSection();
+        if (duplicates.size() > 0) {
+            report.startSection("Most Frequent Duplicates", "The list of " + duplicates.size() + " most frequently found duplicates.");
+            getDuplicatesTable(report, duplicates, "most_frequent_duplicates");
+            report.endSection();
+        }
     }
 }
