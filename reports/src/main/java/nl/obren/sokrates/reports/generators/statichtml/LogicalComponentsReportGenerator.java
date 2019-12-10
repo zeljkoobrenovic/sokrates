@@ -8,9 +8,13 @@ import nl.obren.sokrates.reports.dataexporters.DataExportUtils;
 import nl.obren.sokrates.reports.dataexporters.DataExporter;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.reports.utils.ScopesRenderer;
+import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.LogicalDecompositionAnalysisResults;
+import nl.obren.sokrates.sourcecode.aspects.DependencyFinderPattern;
+import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
+import nl.obren.sokrates.sourcecode.aspects.MetaRule;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.dependencies.DependencyUtils;
@@ -138,7 +142,11 @@ public class LogicalComponentsReportGenerator {
             report.addListItem("There " + numberOfPlacesText + " (" + (cyclicDependencyPlacesCount * 2) + " links) with <b>cyclic</b> dependencies (<b>" + cyclicDependencyCount + "</b> " +
                     "file dependencies).");
         }
+
+        describeDependencyFinder(logicalDecomposition);
+
         report.endUnorderedList();
+
         List<String> componentNames = new ArrayList<>();
         logicalDecomposition.getComponents().forEach(c -> componentNames.add(c.getName()));
         GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
@@ -163,12 +171,42 @@ public class LogicalComponentsReportGenerator {
         report.endTable();
     }
 
+    private void describeDependencyFinder(LogicalDecompositionAnalysisResults logicalDecomposition) {
+        List<DependencyFinderPattern> rules = logicalDecomposition.getLogicalDecomposition().getDependenciesFinder().getRules();
+        if (rules.size() > 0) {
+            report.addListItem("The following explicit rules for finding dependencies are defined:");
+            report.startUnorderedList();
+            rules.forEach(rule -> {
+                SourceFileFilter filter = new SourceFileFilter(rule.getPathPattern(), rule.getContentPattern());
+                report.addListItem("\"" + rule.getComponent() + "\" <== " + filter.toString());
+            });
+            report.endUnorderedList();
+        }
+        List<MetaRule> metaRules = logicalDecomposition.getLogicalDecomposition().getDependenciesFinder().getMetaRules();
+        if (metaRules.size() > 0) {
+            report.addListItem("The following explicit meta-rules for finding dependencies are defined:");
+            report.startUnorderedList();
+            metaRules.forEach(rule -> {
+                SourceFileFilter filter = new SourceFileFilter(rule.getPathPattern(), rule.getContentPattern());
+                report.addListItem(filter.toString());
+                report.startUnorderedList();
+                rule.getNameOperations().forEach(op -> {
+                    StringBuilder params = new StringBuilder();
+                    op.getParams().forEach(param -> {
+                        if (params.length() > 0) params.append(", ");
+                        params.append("\"" + param + "\"");
+                    });
+                    report.addListItem(op.getOp() + " (" + params.toString() + ")");
+                });
+                report.endUnorderedList();
+            });
+            report.endUnorderedList();
+        }
+    }
+
     private void addDependencyRow(LogicalDecompositionAnalysisResults logicalDecomposition, ComponentDependency componentDependency) {
         report.startTableRow();
-        report.addTableCell(
-                componentDependency.getFromComponent()
-                        + "<br/>&nbsp&nbsp;-->&nbsp"
-                        + componentDependency.getToComponent()
+        report.addTableCell(componentDependency.getFromComponent() + "<br/>&nbsp&nbsp;-->&nbsp" + componentDependency.getToComponent()
         );
         report.addHtmlContent("<td>");
         int locFromDuplications = componentDependency.getLocFrom();
@@ -210,14 +248,14 @@ public class LogicalComponentsReportGenerator {
 
     private String getDecompositionDescription(LogicalDecompositionAnalysisResults logicalDecomposition) {
         int numberOfComponents = logicalDecomposition.getComponents().size();
-        String decompositionDescription = "";
-        if (logicalDecomposition.getLogicalDecomposition().getComponentsFolderDepth() > 0) {
-            decompositionDescription = "The decompositions is based on folder structure at <b>level " + logicalDecomposition.getLogicalDecomposition().getComponentsFolderDepth() + "</b> (relative to the source code root).";
+        StringBuilder description = new StringBuilder();
+        LogicalDecomposition definition = logicalDecomposition.getLogicalDecomposition();
+        if (definition.getComponentsFolderDepth() > 0) {
+            description.append("The decompositions is based on folder structure at <b>level " + definition.getComponentsFolderDepth() + "</b> (relative to the source code root).");
         } else if (logicalDecomposition.getComponents() != null && numberOfComponents > 0) {
-            decompositionDescription = "The \"" + logicalDecomposition.getLogicalDecomposition().getName() + "\" logical decomposition in based on <b>" + numberOfComponents + "</b> explicitly defined " +
-                    "components.";
+            description.append("The \"" + definition.getName() + "\" logical decomposition in based on <b>" + numberOfComponents + "</b> explicitly defined components.");
         }
-        return decompositionDescription;
+        return description.toString();
     }
 
     private void appendIntroduction() {
