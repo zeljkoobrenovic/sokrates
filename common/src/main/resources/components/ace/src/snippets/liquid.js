@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ */
+
 ace.define("ace/snippets/liquid",["require","exports","module"], function(require, exports, module) {
 "use strict";
 
@@ -892,4 +896,3 @@ exports.scope = "liquid";
                         }
                     });
                 })();
-            

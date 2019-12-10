@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ */
+
 ace.define("ace/theme/kr_theme",["require","exports","module","ace/lib/dom"], function(require, exports, module) {
 
 exports.isDark = true;
@@ -108,4 +112,3 @@ dom.importCssString(exports.cssText, exports.cssClass);
                         }
                     });
                 })();
-            

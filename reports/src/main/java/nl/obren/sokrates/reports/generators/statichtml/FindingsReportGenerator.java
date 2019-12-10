@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ */
+
 package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.common.utils.RegexUtils;

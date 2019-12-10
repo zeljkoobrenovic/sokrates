@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ */
+
 package nl.obren.sokrates.reports.charts;
 
 import nl.obren.sokrates.common.renderingutils.charts.Palette;

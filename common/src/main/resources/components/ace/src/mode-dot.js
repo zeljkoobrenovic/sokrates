@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ */
+
 ace.define("ace/mode/matching_brace_outdent",["require","exports","module","ace/range"], function(require, exports, module) {
 "use strict";
 
@@ -414,4 +418,3 @@ exports.Mode = Mode;
                         }
                     });
                 })();
-            

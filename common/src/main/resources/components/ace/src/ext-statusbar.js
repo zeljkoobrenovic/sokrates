@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ */
+
 ace.define("ace/ext/statusbar",["require","exports","module","ace/lib/dom","ace/lib/lang"], function(require, exports, module) {
 "use strict";
 var dom = require("ace/lib/dom");
@@ -53,4 +57,3 @@ exports.StatusBar = StatusBar;
                         }
                     });
                 })();
-            

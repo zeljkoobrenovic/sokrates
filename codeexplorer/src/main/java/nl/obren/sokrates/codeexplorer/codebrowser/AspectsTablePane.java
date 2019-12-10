@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ */
+
 package nl.obren.sokrates.codeexplorer.codebrowser;
 
 import com.fasterxml.jackson.core.JsonProcessingException;

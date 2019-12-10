@@ -1,8 +1,10 @@
+/*
+ * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ */
+
 package nl.obren.sokrates.reports.dataexporters.dependencies;
 
 import nl.obren.sokrates.reports.dataexporters.files.FileExportInfo;
-import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.dependencies.DependencyAnchor;
 
 import java.util.ArrayList;

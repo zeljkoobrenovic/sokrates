@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ */
+
 ace.define("ace/ext/linking",["require","exports","module","ace/editor","ace/config"], function(require, exports, module) {
 
 var Editor = require("ace/editor").Editor;
@@ -61,4 +65,3 @@ function onClick(e) {
                         }
                     });
                 })();
-            

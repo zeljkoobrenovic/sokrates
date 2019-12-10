@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ */
+
 package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
@@ -110,6 +114,14 @@ public class LogicalComponentsReportGenerator {
         renderer.setAspectsFileListPaths(components.stream().map(aspect -> aspect.getAspect().getFileSystemFriendlyName(filePathPrefix)).collect(Collectors.toList()));
         renderer.renderReport(report, "The \"" + logicalDecomposition.getLogicalDecomposition().getName() + "\" logical decomposition has <b>" + logicalDecomposition.getLogicalDecomposition().getComponents().size() + "</b> components.");
 
+        List<MetaRule> metaComponents = logicalDecomposition.getLogicalDecomposition().getMetaComponents();
+        if (metaComponents.size() > 0) {
+            report.startSubSection("Meta-Rules for Componentization", "");
+            report.addListItem("The following explicit meta-rules for components are defined:");
+            describeMetaRules(metaComponents);
+            report.endSection();
+        }
+
         report.startSubSection("Alternative Visuals", "");
         report.startUnorderedList();
         report.addListItem("<a href='visuals/bubble_chart_components_" + (sectionIndex) + ".html'>Bubble Chart</a>");
@@ -185,23 +197,27 @@ public class LogicalComponentsReportGenerator {
         List<MetaRule> metaRules = logicalDecomposition.getLogicalDecomposition().getDependenciesFinder().getMetaRules();
         if (metaRules.size() > 0) {
             report.addListItem("The following explicit meta-rules for finding dependencies are defined:");
+            describeMetaRules(metaRules);
+        }
+    }
+
+    private void describeMetaRules(List<MetaRule> metaRules) {
+        report.startUnorderedList();
+        metaRules.forEach(rule -> {
+            SourceFileFilter filter = new SourceFileFilter(rule.getPathPattern(), rule.getContentPattern());
+            report.addListItem(filter.toString());
             report.startUnorderedList();
-            metaRules.forEach(rule -> {
-                SourceFileFilter filter = new SourceFileFilter(rule.getPathPattern(), rule.getContentPattern());
-                report.addListItem(filter.toString());
-                report.startUnorderedList();
-                rule.getNameOperations().forEach(op -> {
-                    StringBuilder params = new StringBuilder();
-                    op.getParams().forEach(param -> {
-                        if (params.length() > 0) params.append(", ");
-                        params.append("\"" + param + "\"");
-                    });
-                    report.addListItem(op.getOp() + " (" + params.toString() + ")");
+            rule.getNameOperations().forEach(op -> {
+                StringBuilder params = new StringBuilder();
+                op.getParams().forEach(param -> {
+                    if (params.length() > 0) params.append(", ");
+                    params.append("\"" + param + "\"");
                 });
-                report.endUnorderedList();
+                report.addListItem(op.getOp() + " (" + params.toString() + ")");
             });
             report.endUnorderedList();
-        }
+        });
+        report.endUnorderedList();
     }
 
     private void addDependencyRow(LogicalDecompositionAnalysisResults logicalDecomposition, ComponentDependency componentDependency) {

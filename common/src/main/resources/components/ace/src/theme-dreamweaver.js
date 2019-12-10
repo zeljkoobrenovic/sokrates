@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ */
+
 ace.define("ace/theme/dreamweaver",["require","exports","module","ace/lib/dom"], function(require, exports, module) {
 exports.isDark = false;
 exports.cssClass = "ace-dreamweaver";
@@ -145,4 +149,3 @@ dom.importCssString(exports.cssText, exports.cssClass);
                         }
                     });
                 })();
-            

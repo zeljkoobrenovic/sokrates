@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ */
+
 ace.define("ace/mode/xquery/jsoniq_lexer",["require","exports","module"], function(require, exports, module) {
 module.exports = (function outer (modules, cache, entry) {
     var previousRequire = typeof require == "function" && require;
@@ -2628,4 +2632,3 @@ exports.Mode = Mode;
                         }
                     });
                 })();
-            

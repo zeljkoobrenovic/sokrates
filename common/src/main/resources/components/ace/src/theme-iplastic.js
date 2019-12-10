@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ */
+
 ace.define("ace/theme/iplastic",["require","exports","module","ace/lib/dom"], function(require, exports, module) {
 
 exports.isDark = false;
@@ -125,4 +129,3 @@ dom.importCssString(exports.cssText, exports.cssClass);
                         }
                     });
                 })();
-            

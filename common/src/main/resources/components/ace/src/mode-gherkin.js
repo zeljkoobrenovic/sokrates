@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ */
+
 ace.define("ace/mode/gherkin_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/text_highlight_rules"], function(require, exports, module) {
 
 var oop = require("../lib/oop");
@@ -167,4 +171,3 @@ exports.Mode = Mode;
                         }
                     });
                 })();
-            

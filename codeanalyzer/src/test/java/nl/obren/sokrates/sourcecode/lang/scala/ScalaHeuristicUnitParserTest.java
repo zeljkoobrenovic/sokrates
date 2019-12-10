@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ */
+
 package nl.obren.sokrates.sourcecode.lang.scala;
 
 import nl.obren.sokrates.sourcecode.lang.scala.ScalaHeuristicUnitParser;

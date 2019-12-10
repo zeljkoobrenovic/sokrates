@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ */
+
 ace.define("ace/ext/elastic_tabstops_lite",["require","exports","module","ace/editor","ace/config"], function(require, exports, module) {
 "use strict";
 
@@ -274,4 +278,3 @@ require("../config").defineOptions(Editor.prototype, "editor", {
                         }
                     });
                 })();
-            

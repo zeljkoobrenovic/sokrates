@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ */
+
 ace.define("ace/ext/rtl",["require","exports","module","ace/lib/dom","ace/lib/lang","ace/editor","ace/config"], function(require, exports, module) {
 "use strict";
 var dom = require("ace/lib/dom");
@@ -121,4 +125,3 @@ function clearTextLayer(renderer) {
                         }
                     });
                 })();
-            

@@ -1,7 +1,10 @@
+/*
+ * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ */
+
 package nl.obren.sokrates.reports.utils;
 
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
-import org.apache.commons.lang3.StringEscapeUtils;
 
 import java.util.List;
 

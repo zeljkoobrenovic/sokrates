@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ */
+
 "no use strict";
 !(function(window) {
 if (typeof window.window != "undefined" && window.document)

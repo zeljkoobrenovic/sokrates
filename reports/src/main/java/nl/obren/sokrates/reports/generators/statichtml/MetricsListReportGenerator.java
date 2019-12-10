@@ -1,9 +1,12 @@
+/*
+ * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ */
+
 package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.Metric;
-import org.apache.commons.lang3.StringUtils;
 
 public class MetricsListReportGenerator {
     private CodeAnalysisResults codeAnalysisResults;

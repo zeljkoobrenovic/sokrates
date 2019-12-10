@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ */
+
 ace.define("ace/ext/themelist",["require","exports","module"], function(require, exports, module) {
 "use strict";
 
@@ -62,4 +66,3 @@ exports.themes = themeData.map(function(data) {
                         }
                     });
                 })();
-            
