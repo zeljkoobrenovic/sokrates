@@ -14,6 +14,7 @@ import org.apache.commons.logging.LogFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -65,10 +66,14 @@ public class SourceFile {
     }
 
     public SourceFile relativize(File root) {
-        Path rootPath = Paths.get(root.getPath());
-        Path sourceFilePath = Paths.get(file.getPath());
+        try {
+            Path rootPath = Paths.get(root.getPath());
+            Path sourceFilePath = Paths.get(file.getPath());
 
-        setRelativePath(rootPath.relativize(sourceFilePath).toString());
+            setRelativePath(rootPath.relativize(sourceFilePath).toString());
+        } catch (InvalidPathException e) {
+            e.printStackTrace();
+        }
         return this;
     }
 
