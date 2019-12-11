@@ -23,7 +23,7 @@ public class ControlsReportGenerator {
         report.addListItem("Controls enable you to set alarms for any of the <a href='Metrics.html'>Sokrates metrics</a>. An alarm is defined with a desired range and tolerance.");
         report.endUnorderedList();
 
-        report.startShowMoreBlock("", "Learn more...");
+        report.startShowMoreBlock("Learn more...");
         report.startUnorderedList();
         report.addListItem("For more insights in the value of trend analysis, Sokrates recommends reading the section \"Explicitly link metrics to goals\" in the article <a href='https://martinfowler.com/articles/useOfMetrics.html#ExplicitlyLinkMetricsToGoals' target='_blank'>An Appropriate Use of Metrics</a>, (MartinFowler.com), e.g.:");
         report.startUnorderedList();

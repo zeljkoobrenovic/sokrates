@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
 
 public class DuplicationReportGenerator {
     private CodeAnalysisResults codeAnalysisResults;
+    private RichTextReport report;
+    private int graphCounter = 1;
 
     public DuplicationReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
@@ -60,6 +62,7 @@ public class DuplicationReportGenerator {
     }
 
     public void addDuplicationToReport(RichTextReport report) {
+        this.report = report;
         addIntro(report);
 
         if (codeAnalysisResults.getCodeConfiguration().getAnalysis().isSkipDuplication()) {
@@ -118,7 +121,7 @@ public class DuplicationReportGenerator {
         report.addListItem("Before duplication is calculated, the code is cleaned to remove empty lines, comments, and frequently duplicated constructs such as imports.");
         report.addListItem("You should aim at having as little as possible (<5%) of duplicated code as high-level of duplication can lead to maintenance difficulties, poor factoring, and logical contradictions.");
         report.endUnorderedList();
-        report.startShowMoreBlock("", "Learn more...");
+        report.startShowMoreBlock("Learn more...");
         report.startUnorderedList();
         report.addListItem("To learn more about duplications and techniques for eliminating duplication, Sokrates recommends the following resources:");
         report.startUnorderedList();
@@ -153,40 +156,62 @@ public class DuplicationReportGenerator {
             graphvizDependencyRenderer.setArrowColor("crimson");
             String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), componentDependencies);
             report.addLevel3Header("Duplication Between Components", "margin-top: 30px");
-            report.addGraphvizFigure("Duplication between components", graphvizContent);
 
-            report.addShowMoreBlock("",
-                    "<textarea style='width:100%; height: 20em;'>"
-                            + graphvizContent
-                            + "</textarea>", "graphviz code...");
+            String graphId = "duplication_dependencies_" + graphCounter++;
+            report.addGraphvizFigure(graphId, "Duplication between components", graphvizContent);
 
             report.addLineBreak();
+
+            addDownloadLinks(graphId);
+
             report.addLineBreak();
 
-            Collections.sort(componentDependencies, (o1, o2) -> o2.getCount() - o1.getCount());
+            addMoreDetailsSection(report, componentDependencies);
 
-            report.startTable();
-            report.addTableHeader("From Component<br/>&nbsp;--> To Component", "Duplicated<br/>Lines", "Duplication<br/>File Pairs");
-            componentDependencies.forEach(componentDependency -> {
-                report.startTableRow();
-                report.addTableCell(
-                        componentDependency.getFromComponent()
-                                + "<br/>&nbsp&nbsp;-->&nbsp"
-                                + componentDependency.getToComponent()
-                );
-                report.addTableCell(componentDependency.getCount() + "", "text-align: center");
-                int pairsCount = componentDependency.getPathsFrom().size();
-                String filePairsText = pairsCount + (pairsCount == 1 ? " file pair" : " file pairs");
-                report.addHtmlContent("<td style='text-align: center'>");
-                report.addShowMoreBlock("", "<textarea style='width:400px; height: 20em;'>"
-                        + componentDependency.getPathsFrom().stream().collect(Collectors.joining("\n\n"))
-                        + "</textarea>", filePairsText);
-                report.addHtmlContent("</td>");
-                report.endTableRow();
-            });
-            report.endTable();
+            report.addLineBreak();
         }
     }
+
+    private void addMoreDetailsSection(RichTextReport report, List<ComponentDependency> componentDependencies) {
+        Collections.sort(componentDependencies, (o1, o2) -> o2.getCount() - o1.getCount());
+
+        report.startShowMoreBlock("Show more details on duplication between components...");
+        report.startTable();
+        report.addTableHeader("From Component<br/>&nbsp;--> To Component", "Duplicated<br/>Lines", "Duplication<br/>File Pairs");
+        componentDependencies.forEach(componentDependency -> {
+            report.startTableRow();
+            report.addTableCell(
+                    componentDependency.getFromComponent()
+                            + "<br/>&nbsp&nbsp;-->&nbsp"
+                            + componentDependency.getToComponent()
+            );
+            report.addTableCell(componentDependency.getCount() + "", "text-align: center");
+            int pairsCount = componentDependency.getPathsFrom().size();
+            String filePairsText = pairsCount + (pairsCount == 1 ? " file pair" : " file pairs");
+            report.addHtmlContent("<td style='text-align: center'>");
+            report.addShowMoreBlock("", "<textarea style='width:400px; height: 20em;'>"
+                    + componentDependency.getPathsFrom().stream().collect(Collectors.joining("\n\n"))
+                    + "</textarea>", filePairsText);
+            report.addHtmlContent("</td>");
+            report.endTableRow();
+        });
+        report.endTable();
+        report.endShowMoreBlock();
+    }
+
+    private void addDownloadLinks(String graphId) {
+        report.startDiv("");
+        report.addHtmlContent("Download: ");
+        report.addNewTabLink("PNG", "visuals/" + graphId + ".png");
+        report.addHtmlContent(" ");
+        report.addNewTabLink("SVG", "visuals/" + graphId + ".svg");
+        report.addHtmlContent(" ");
+        report.addNewTabLink("DOT", "visuals/" + graphId + ".dot.txt");
+        report.addHtmlContent(" ");
+        report.addNewTabLink("(open online Graphviz editor)", "https://www.zeljkoobrenovic.com/tools/graphviz/");
+        report.endDiv();
+    }
+
 
     private String getLogicalDecompositionName(int index) {
         return codeAnalysisResults.getCodeConfiguration().getLogicalDecompositions().get(index).getName();

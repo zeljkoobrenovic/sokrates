@@ -37,7 +37,7 @@ public class UnitsSizeReportGenerator {
         report.addListItem("You should aim at keeping units small (< 20 lines). Long units may become \"bloaters\", code that have increased to such gargantuan proportions that they are hard to work with.");
         report.endUnorderedList();
 
-        report.startShowMoreBlock("", "Learn more...");
+        report.startShowMoreBlock("Learn more...");
         report.startUnorderedList();
         report.addListItem("To learn more about unit size, the Sokrates recommends the following resources:");
         report.startUnorderedList();

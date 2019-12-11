@@ -165,12 +165,7 @@ public class LogicalComponentsReportGenerator {
         GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
         graphvizDependencyRenderer.setOrientation(logicalDecomposition.getLogicalDecomposition().getRenderingOptions().getOrientation());
 
-        String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(componentNames, componentDependencies);
-        String graphId = "dependencies_" + dependencyVisualCounter++;
-        report.addGraphvizFigure(graphId, "", graphvizContent);
-        report.addLineBreak();
-        report.addLineBreak();
-        addDownloadLinks(graphId);
+        addDependencyGraphVisuals(componentDependencies, componentNames, graphvizDependencyRenderer);
         report.addLineBreak();
         report.addLineBreak();
         addMoreDetailsSection(logicalDecomposition, componentDependencies);
@@ -179,8 +174,17 @@ public class LogicalComponentsReportGenerator {
         report.addLineBreak();
     }
 
+    private void addDependencyGraphVisuals(List<ComponentDependency> componentDependencies, List<String> componentNames, GraphvizDependencyRenderer graphvizDependencyRenderer) {
+        String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(componentNames, componentDependencies);
+        String graphId = "dependencies_" + dependencyVisualCounter++;
+        report.addGraphvizFigure(graphId, "", graphvizContent);
+        report.addLineBreak();
+        report.addLineBreak();
+        addDownloadLinks(graphId);
+    }
+
     private void addMoreDetailsSection(LogicalDecompositionAnalysisResults logicalDecomposition, List<ComponentDependency> componentDependencies) {
-        report.startShowMoreBlock("", "Show more details about dependencies...");
+        report.startShowMoreBlock("Show more details about dependencies...");
         report.startTable();
         report.addTableHeader("From Component<br/>&nbsp;--> To Component", "From Component<br/>(files with dependencies)", "Details");
         Collections.sort(componentDependencies, (o1, o2) -> o2.getCount() - o1.getCount());
@@ -299,7 +303,7 @@ public class LogicalComponentsReportGenerator {
         report.addParagraph(getShortIntro());
         report.addHtmlContent(getLongIntro());
 
-        report.startShowMoreBlock("", "Learn more...");
+        report.startShowMoreBlock("Learn more...");
         report.startUnorderedList();
         report.addListItem("To learn more about good practices on componentization and dependencies, Sokrates recommends the following resources:");
         report.startUnorderedList();

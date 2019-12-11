@@ -173,7 +173,7 @@ public class CrossCuttingConcernsReportGenerator {
             renderer.renderDetails(report, false);
         }
 
-        report.startShowMoreBlock("", "details...");
+        report.startShowMoreBlock("details...");
         codeAnalysisResults.getLogicalDecompositionsAnalysisResults()
                 .forEach(logicalDecompositionAnalysisResults -> {
                     renderConcernPerComponent(aspectAnalysisResults, mainLoc, logicalDecompositionAnalysisResults);

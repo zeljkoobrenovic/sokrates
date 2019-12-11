@@ -301,6 +301,10 @@ public class RichTextReport {
         addHtmlContent(RichTextRenderingUtils.getStartShowMoreParagraph(visibleContent, linkLabel));
     }
 
+    public void startShowMoreBlock(String linkLabel) {
+        addHtmlContent(RichTextRenderingUtils.getStartShowMoreParagraph("", linkLabel));
+    }
+
     public void endShowMoreBlock() {
         addHtmlContent(RichTextRenderingUtils.getEndShowMoreParagraph());
     }
