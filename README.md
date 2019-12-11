@@ -2,7 +2,7 @@
 
 Know your code! The unexamined code is not worth maintaining!
 
-For details and examples visit the website [sokrates.org](https://sokrates.org).
+For details and examples visit the website [sokrat.org](https://sokrates.org).
 
 * Sokrates is built by Željko Obrenović. It implements his vision on how to approach understanding of complex source code bases, in a pragmatic and efficient way.
 * Sokrates is a code spelunking tool, inspired by the grep, adding structure on top of regex source code searches.
