@@ -8,6 +8,7 @@ import nl.obren.sokrates.common.analysis.Finding;
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +21,7 @@ public class RichTextReport {
     private String description = "";
     private String logoLink = "";
     private List<Finding> findings = new ArrayList<>();
+    private File reportsFolder;
 
     public RichTextReport() {
     }
@@ -156,8 +158,12 @@ public class RichTextReport {
     }
 
     public void addGraphvizFigure(String description, String graphvizCode) {
+        this.addGraphvizFigure("", description, graphvizCode);
+    }
+
+    public void addGraphvizFigure(String id, String description, String graphvizCode) {
         this.startDiv("width: 100%; overflow: auto");
-        RichTextFragment fragment = new RichTextFragment(graphvizCode, RichTextFragment.Type.GRAPHVIZ);
+        RichTextFragment fragment = new RichTextFragment(id, graphvizCode, RichTextFragment.Type.GRAPHVIZ);
         fragment.setDescription(description);
         richTextFragments.add(fragment);
         this.endDiv();
@@ -297,5 +303,23 @@ public class RichTextReport {
 
     public void endShowMoreBlock() {
         addHtmlContent(RichTextRenderingUtils.getEndShowMoreParagraph());
+    }
+
+    public void addNewTabLink(String label, String href) {
+        this.addHtmlContent("<a target='_blank' href='" + href + "'>" + label + "</a>");
+    }
+
+    public void setReportsFolder(File reportsFolder) {
+        this.reportsFolder = reportsFolder;
+    }
+
+    private File getVisualsFolder() {
+        File visualsFile = new File(reportsFolder, "visuals");
+        visualsFile.mkdirs();
+        return visualsFile;
+    }
+
+    public File getReportsFolder() {
+        return reportsFolder;
     }
 }

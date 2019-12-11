@@ -94,10 +94,37 @@ public final class GraphvizUtil {
         try {
             MutableGraph g = Parser.read(dotCode);
             Graphviz graphviz = Graphviz.fromGraph(g);
-            Graphviz graphviz1 = graphviz.width(700);
-            Renderer render = graphviz1.render(Format.SVG);
+            Graphviz graphvizStandardWidth = graphviz.width(700);
+            Renderer renderSvg = graphvizStandardWidth.render(Format.SVG);
 
-            String svg = render.toString();
+            String svg = renderSvg.toString();
+
+            int svgBeginIndex = svg.indexOf("<svg");
+            if (svgBeginIndex >= 0) {
+                svg = svg.substring(svgBeginIndex);
+            }
+
+            return svg;
+        } catch (IOException e) {
+            LOG.error(e);
+        } catch (Exception e) {
+            LOG.error(e);
+        }
+
+        return null;
+    }
+
+    public static String saveToPngFileReturnSvg(String dotCode, File file) {
+        try {
+            MutableGraph g = Parser.read(dotCode);
+            Graphviz graphviz = Graphviz.fromGraph(g);
+            Graphviz graphvizStandardWidth = graphviz.width(700);
+
+            Renderer renderPng = graphvizStandardWidth.render(Format.PNG);
+            renderPng.toFile(file);
+
+            Renderer renderSvg = graphvizStandardWidth.render(Format.SVG);
+            String svg = renderSvg.toString();
 
             int svgBeginIndex = svg.indexOf("<svg");
             if (svgBeginIndex >= 0) {

@@ -7,6 +7,7 @@ package nl.obren.sokrates.reports.utils;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.File;
 import java.util.List;
 
 public class GraphvizDependencyRenderer {

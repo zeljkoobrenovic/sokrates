@@ -35,6 +35,7 @@ public class LogicalComponentsReportGenerator {
     private CodeAnalysisResults codeAnalysisResults;
     private boolean elaborate = true;
     private RichTextReport report;
+    private int dependencyVisualCounter = 1;
 
     public LogicalComponentsReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
@@ -43,7 +44,7 @@ public class LogicalComponentsReportGenerator {
     public void addCodeOrganizationToReport(RichTextReport report) {
         this.report = report;
         addSummary();
-        addErrors();
+        // addErrors();
         addFooter();
     }
 
@@ -165,15 +166,21 @@ public class LogicalComponentsReportGenerator {
         graphvizDependencyRenderer.setOrientation(logicalDecomposition.getLogicalDecomposition().getRenderingOptions().getOrientation());
 
         String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(componentNames, componentDependencies);
-        report.addGraphvizFigure("", graphvizContent);
+        String graphId = "dependencies_" + dependencyVisualCounter++;
+        report.addGraphvizFigure(graphId, "", graphvizContent);
         report.addLineBreak();
-        report.addShowMoreBlock("",
-                "<textarea style='width:100%; height: 20em;'>"
-                        + graphvizContent
-                        + "</textarea>", "graphviz code...");
+        report.addLineBreak();
+        addDownloadLinks(graphId);
+        report.addLineBreak();
+        report.addLineBreak();
+        addMoreDetailsSection(logicalDecomposition, componentDependencies);
+        report.addLineBreak();
+        report.addLineBreak();
+        report.addLineBreak();
+    }
 
-        report.addLineBreak();
-        report.addLineBreak();
+    private void addMoreDetailsSection(LogicalDecompositionAnalysisResults logicalDecomposition, List<ComponentDependency> componentDependencies) {
+        report.startShowMoreBlock("", "Show more details about dependencies...");
         report.startTable();
         report.addTableHeader("From Component<br/>&nbsp;--> To Component", "From Component<br/>(files with dependencies)", "Details");
         Collections.sort(componentDependencies, (o1, o2) -> o2.getCount() - o1.getCount());
@@ -181,6 +188,20 @@ public class LogicalComponentsReportGenerator {
             addDependencyRow(logicalDecomposition, componentDependency);
         });
         report.endTable();
+        report.endShowMoreBlock();
+    }
+
+    private void addDownloadLinks(String graphId) {
+        report.startDiv("");
+        report.addHtmlContent("Download: ");
+        report.addNewTabLink("PNG", "visuals/" + graphId + ".png");
+        report.addHtmlContent(" ");
+        report.addNewTabLink("SVG", "visuals/" + graphId + ".svg");
+        report.addHtmlContent(" ");
+        report.addNewTabLink("DOT", "visuals/" + graphId + ".dot.txt");
+        report.addHtmlContent(" ");
+        report.addNewTabLink("(open online Graphviz editor)", "https://www.zeljkoobrenovic.com/tools/graphviz/");
+        report.endDiv();
     }
 
     private void describeDependencyFinder(LogicalDecompositionAnalysisResults logicalDecomposition) {
@@ -275,25 +296,8 @@ public class LogicalComponentsReportGenerator {
     }
 
     private void appendIntroduction() {
-        String shortIntro = "";
-        shortIntro += "<b>Logical decomposition</b> is a representation of the organization of the <b>main</b> source code, where every and each file is put in exactly one <b>logical component</b>.";
-        shortIntro += "";
-
-        String longIntro = "<ul>\n";
-        longIntro += "<li>A software system can have <b>one</b> or <b>more</b> logical decompositions.</li>\n";
-        longIntro += "<li>A logical decomposition can be defined in two ways in Sokrates.</li>\n";
-        longIntro += "<li>First approach is based on the <b>folders structure</b>. " +
-                "Components are mapped to folders at defined <b>folder depth</b> relative to the source code root.</li>\n";
-        longIntro += "<li>Second approach is based on <b>explicit</b> definition of each component. In such explicit definitions, components are explicitly <b>named</b> and their files are selected based on explicitly defined path and content <b>filters</b>.</li>\n";
-        longIntro += "<li>A logical decomposition is considered <b>invalid</b> if a file is selected into <b>two or more components</b>." +
-                "This constraint is introduced in order to facilitate measuring of <b>dependencies</b> among components.</li>\n";
-        longIntro += "<li>Files not assigned to any component are put into a special \"<b>Unclassified</b>\" component.</li>\n";
-
-        longIntro += "</ul>\n";
-
-
-        report.addParagraph(shortIntro);
-        report.addHtmlContent(longIntro);
+        report.addParagraph(getShortIntro());
+        report.addHtmlContent(getLongIntro());
 
         report.startShowMoreBlock("", "Learn more...");
         report.startUnorderedList();
@@ -305,6 +309,27 @@ public class LogicalComponentsReportGenerator {
         report.endUnorderedList();
 
         report.endShowMoreBlock();
+    }
+
+    private String getShortIntro() {
+        String shortIntro = "";
+        shortIntro += "<b>Logical decomposition</b> is a representation of the organization of the <b>main</b> source code, where every and each file is put in exactly one <b>logical component</b>.";
+        return shortIntro;
+    }
+
+    private String getLongIntro() {
+        String longIntro = "<ul>\n";
+        longIntro += "<li>A software system can have <b>one</b> or <b>more</b> logical decompositions.</li>\n";
+        longIntro += "<li>A logical decomposition can be defined in two ways in Sokrates.</li>\n";
+        longIntro += "<li>First approach is based on the <b>folders structure</b>. " +
+                "Components are mapped to folders at defined <b>folder depth</b> relative to the source code root.</li>\n";
+        longIntro += "<li>Second approach is based on <b>explicit</b> definition of each component. In such explicit definitions, components are explicitly <b>named</b> and their files are selected based on explicitly defined path and content <b>filters</b>.</li>\n";
+        longIntro += "<li>A logical decomposition is considered <b>invalid</b> if a file is selected into <b>two or more components</b>." +
+                "This constraint is introduced in order to facilitate measuring of <b>dependencies</b> among components.</li>\n";
+        longIntro += "<li>Files not assigned to any component are put into a special \"<b>Unclassified</b>\" component.</li>\n";
+
+        longIntro += "</ul>\n";
+        return longIntro;
     }
 
 

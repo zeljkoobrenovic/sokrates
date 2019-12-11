@@ -29,15 +29,29 @@ public class ReportFileExporter {
         try {
             PrintWriter out = new PrintWriter(reportFile);
             out.println(ReportConstants.REPORTS_HTML_HEADER + "\n<body><div id=\"report\">\n" + "\n");
-            new ReportRenderer().render(report, text -> {
-                out.println(text);
-            });
+            new ReportRenderer().render(report, getReportRenderingClient(out, folder));
             out.println("</div>\n</body>\n</html>");
             out.flush();
             out.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+    }
+
+    private static ReportRenderingClient getReportRenderingClient(PrintWriter out, File reportsFolder) {
+        return new ReportRenderingClient() {
+            @Override
+            public void append(String text) {
+                out.println(text);
+            }
+
+            @Override
+            public File getVisualsExportFolder() {
+                File visualsFolder = new File(reportsFolder, "visuals");
+                visualsFolder.mkdirs();
+                return visualsFolder;
+            }
+        };
     }
 
     private static String getReportFileName(RichTextReport report) {

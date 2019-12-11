@@ -4,6 +4,9 @@
 
 package nl.obren.sokrates.reports.core;
 
+import java.io.File;
+
 public interface  ReportRenderingClient {
     void append(String text);
+    File getVisualsExportFolder();
 }

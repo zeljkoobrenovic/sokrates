@@ -34,11 +34,14 @@ public class BasicSourceCodeReportGenerator {
     private CodeAnalyzerSettings codeAnalyzerSettings;
     private CodeAnalysisResults codeAnalysisResults;
     private File codeConfigurationFile;
+    private File reportsFolder;
 
-    public BasicSourceCodeReportGenerator(CodeAnalyzerSettings codeAnalyzerSettings, CodeAnalysisResults codeAnalysisResults, File codeConfigurationFile) {
+    public BasicSourceCodeReportGenerator(CodeAnalyzerSettings codeAnalyzerSettings, CodeAnalysisResults codeAnalysisResults, File codeConfigurationFile, File reportsFolder) {
         this.codeAnalyzerSettings = codeAnalyzerSettings;
         this.codeAnalysisResults = codeAnalysisResults;
         this.codeConfigurationFile = codeConfigurationFile;
+        this.reportsFolder = reportsFolder;
+        logicalComponentsReport.setReportsFolder(reportsFolder);
         decorateReports();
     }
 

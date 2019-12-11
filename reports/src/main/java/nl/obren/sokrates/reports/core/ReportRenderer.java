@@ -5,8 +5,12 @@
 package nl.obren.sokrates.reports.core;
 
 import nl.obren.sokrates.common.renderingutils.GraphvizUtil;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,12 +36,42 @@ public class ReportRenderer {
 
     private void renderFragment(ReportRenderingClient reportRenderingClient, RichTextFragment fragment) {
         if (fragment.getType() == RichTextFragment.Type.GRAPHVIZ) {
-            reportRenderingClient.append(GraphvizUtil.getSvgExternal(fragment.getFragment()) + "\n");
+            if (shouldExportVisualToFile(reportRenderingClient, fragment)) {
+                renderAndSaveVisuals(reportRenderingClient, fragment);
+            } else {
+                reportRenderingClient.append(GraphvizUtil.getSvgExternal(fragment.getFragment()) + "\n");
+            }
         } else if (fragment.getType() == RichTextFragment.Type.SVG) {
             reportRenderingClient.append(fragment.getFragment() + "\n");
         } else {
             reportRenderingClient.append(fragment.getFragment() + "\n");
         }
+    }
+
+    private void renderAndSaveVisuals(ReportRenderingClient reportRenderingClient, RichTextFragment fragment) {
+        try {
+            File folder = reportRenderingClient.getVisualsExportFolder();
+            String id = fragment.getId();
+
+            File dotFile = new File(folder, id + ".dot.txt");
+            FileUtils.write(dotFile, fragment.getFragment(), StandardCharsets.UTF_8);
+
+            File pngFile = new File(folder, id + ".png");
+
+            String svgContent = GraphvizUtil.saveToPngFileReturnSvg(fragment.getFragment(), pngFile);
+
+            reportRenderingClient.append(svgContent + "\n");
+
+            File svgFile = new File(folder, id + ".svg");
+            FileUtils.write(svgFile, svgContent, StandardCharsets.UTF_8);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private boolean shouldExportVisualToFile(ReportRenderingClient reportRenderingClient, RichTextFragment fragment) {
+        return reportRenderingClient.getVisualsExportFolder() != null && StringUtils.isNotBlank(fragment.getId());
     }
 
     public List<Figure> getFigures(RichTextReport richTextReport) {

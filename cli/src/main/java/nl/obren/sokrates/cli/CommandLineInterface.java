@@ -229,7 +229,7 @@ public class CommandLineInterface {
         }
         info("");
         info("");
-        BasicSourceCodeReportGenerator generator = new BasicSourceCodeReportGenerator(codeAnalyzer.getCodeAnalyzerSettings(), analysisResults, inputFile);
+        BasicSourceCodeReportGenerator generator = new BasicSourceCodeReportGenerator(codeAnalyzer.getCodeAnalyzerSettings(), analysisResults, inputFile, reportsFolder);
         List<RichTextReport> reports = generator.report();
         reports.forEach(report -> {
             info("Generating the '" + report.getId().toUpperCase() + "' report...");

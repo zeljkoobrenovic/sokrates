@@ -5,6 +5,7 @@
 package nl.obren.sokrates.reports.core;
 
 public class RichTextFragment {
+    private String id = "";
     private String fragment = "";
     private String description = "";
     private RichTextFragment.Type type = RichTextFragment.Type.HTML;
@@ -15,6 +16,20 @@ public class RichTextFragment {
     public RichTextFragment(String fragment, Type type) {
         this.fragment = fragment;
         this.type = type;
+    }
+
+    public RichTextFragment(String id, String fragment, Type type) {
+        this.id = id;
+        this.fragment = fragment;
+        this.type = type;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getFragment() {
