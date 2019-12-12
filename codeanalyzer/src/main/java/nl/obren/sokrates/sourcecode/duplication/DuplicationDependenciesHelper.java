@@ -34,8 +34,6 @@ public class DuplicationDependenciesHelper {
             });
         });
 
-        // componentDependencies.forEach(d -> d.setCount(d.getCount() / 2));
-
         return componentDependencies;
     }
 
