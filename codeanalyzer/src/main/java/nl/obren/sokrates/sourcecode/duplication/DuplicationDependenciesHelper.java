@@ -33,7 +33,7 @@ public class DuplicationDependenciesHelper {
             });
         });
 
-        componentDependencies.forEach(d -> d.setCount(d.getCount() / 2));
+        // componentDependencies.forEach(d -> d.setCount(d.getCount() / 2));
 
         return componentDependencies;
     }
@@ -71,12 +71,12 @@ public class DuplicationDependenciesHelper {
             duplicatedLines = new HashSet<>();
             componentDuplicatedLines.put(key, duplicatedLines);
         }
-        for (int i = file1.getCleanedStartLine(); i <= file2.getCleanedEndLine(); i++) {
+        for (int i = file1.getCleanedStartLine(); i <= file1.getCleanedEndLine(); i++) {
             String duplicatedLineId = file1.getSourceFile().getRelativePath() + "::" + i;
             duplicatedLines.add(duplicatedLineId);
         }
         for (int i = file2.getCleanedStartLine(); i <= file2.getCleanedEndLine(); i++) {
-            String duplicatedLineId = file1.getSourceFile().getRelativePath() + "::" + i;
+            String duplicatedLineId = file2.getSourceFile().getRelativePath() + "::" + i;
             duplicatedLines.add(duplicatedLineId);
         }
         return duplicatedLines;

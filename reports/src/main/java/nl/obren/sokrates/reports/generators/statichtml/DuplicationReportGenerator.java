@@ -222,8 +222,6 @@ public class DuplicationReportGenerator {
             e.printStackTrace();
         }
 
-        System.out.println(file.getPath());
-
         return "../data/" + file.getName();
     }
 
@@ -278,8 +276,6 @@ public class DuplicationReportGenerator {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        System.out.println(file.getPath());
 
         return "../data/" + file.getName();
     }
