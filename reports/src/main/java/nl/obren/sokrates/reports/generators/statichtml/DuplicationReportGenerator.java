@@ -156,7 +156,10 @@ public class DuplicationReportGenerator {
     }
 
     private void renderDependenciesViaDuplication(RichTextReport report, String logicalDecompositionName) {
-        List<ComponentDependency> componentDependencies = new DuplicationDependenciesHelper(logicalDecompositionName).extractDependencies(codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates());
+        DuplicationDependenciesHelper duplicationDependenciesHelper = new DuplicationDependenciesHelper(logicalDecompositionName);
+        List<ComponentDependency> componentDependencies = duplicationDependenciesHelper.extractDependencies(codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates());
+        List<DuplicationInstance> instances = duplicationDependenciesHelper.getInstances();
+
         if (componentDependencies.size() > 0) {
             GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
             graphvizDependencyRenderer.setType("graph");
@@ -174,18 +177,18 @@ public class DuplicationReportGenerator {
 
             report.addLineBreak();
 
-            addMoreDetailsSection(report, componentDependencies, logicalDecompositionName);
+            addMoreDetailsSection(report, componentDependencies, logicalDecompositionName, instances);
 
             report.addLineBreak();
         }
     }
 
-    private void addMoreDetailsSection(RichTextReport report, List<ComponentDependency> componentDependencies, String logicalDecompositionName) {
+    private void addMoreDetailsSection(RichTextReport report, List<ComponentDependency> componentDependencies, String logicalDecompositionName, List<DuplicationInstance> instances) {
         Collections.sort(componentDependencies, (o1, o2) -> o2.getCount() - o1.getCount());
 
         report.startShowMoreBlock("Show more details on duplication between components...");
         report.startTable();
-        report.addTableHeader("From Component<br/>&nbsp;--> To Component", "Duplicated<br/>Lines", "Duplication<br/>File Pairs", "Details");
+        report.addTableHeader("From Component<br/>&nbsp;--> To Component", "Duplicated<br/>Lines", "File Pairs", "Details");
 
         componentDependencies.forEach(componentDependency -> {
             report.startTableRow();
@@ -203,7 +206,7 @@ public class DuplicationReportGenerator {
             report.endTableCell();
 
             report.startTableCell();
-            report.addNewTabLink("details...", saveDuplicates(componentDependency, logicalDecompositionName));
+            report.addNewTabLink("details...", saveDuplicates(componentDependency, logicalDecompositionName, instances));
             report.endTableCell();
 
             report.endTableRow();
@@ -225,7 +228,7 @@ public class DuplicationReportGenerator {
         return "../data/" + file.getName();
     }
 
-    private String saveDuplicates(ComponentDependency componentDependency, String logicalDecompositionName) {
+    private String saveDuplicates(ComponentDependency componentDependency, String logicalDecompositionName, List<DuplicationInstance> allInstances) {
         File file = new File(this.report.getReportsFolder(), "data/intercomponent_duplicates_" + componentDuplicatesCount++ + ".txt");
         List<DuplicationInstance> duplicates = this.codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates();
 
@@ -234,7 +237,7 @@ public class DuplicationReportGenerator {
 
         List<DuplicationInstance> instances = new ArrayList<>();
 
-        duplicates.forEach(duplicate -> {
+        allInstances.forEach(duplicate -> {
             boolean fromPresent[] = {false};
             boolean toPresent[] = {false};
             duplicate.getDuplicatedFileBlocks().forEach(duplicatedFileBlock -> {
