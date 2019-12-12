@@ -41,7 +41,6 @@ public class BasicSourceCodeReportGenerator {
         this.codeAnalysisResults = codeAnalysisResults;
         this.codeConfigurationFile = codeConfigurationFile;
         this.reportsFolder = reportsFolder;
-        logicalComponentsReport.setReportsFolder(reportsFolder);
         decorateReports();
     }
 
@@ -60,6 +59,7 @@ public class BasicSourceCodeReportGenerator {
                     + "<div style='height: 22px'></div></span>"
                     + report.getDisplayName());
         }
+        report.setReportsFolder(reportsFolder);
 
         report.setLogoLink(logoLink);
     }

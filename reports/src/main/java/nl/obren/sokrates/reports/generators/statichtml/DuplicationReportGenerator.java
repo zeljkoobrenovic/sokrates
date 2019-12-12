@@ -8,13 +8,19 @@ import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.DuplicationReportUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
+import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationDependenciesHelper;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
 import nl.obren.sokrates.sourcecode.metrics.DuplicationMetric;
+import org.apache.commons.io.FileUtils;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +30,8 @@ public class DuplicationReportGenerator {
     private CodeAnalysisResults codeAnalysisResults;
     private RichTextReport report;
     private int graphCounter = 1;
+    private int componentDuplicatesCount = 1;
+    private int filePairsCount = 1;
 
     public DuplicationReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
@@ -166,37 +174,114 @@ public class DuplicationReportGenerator {
 
             report.addLineBreak();
 
-            addMoreDetailsSection(report, componentDependencies);
+            addMoreDetailsSection(report, componentDependencies, logicalDecompositionName);
 
             report.addLineBreak();
         }
     }
 
-    private void addMoreDetailsSection(RichTextReport report, List<ComponentDependency> componentDependencies) {
+    private void addMoreDetailsSection(RichTextReport report, List<ComponentDependency> componentDependencies, String logicalDecompositionName) {
         Collections.sort(componentDependencies, (o1, o2) -> o2.getCount() - o1.getCount());
 
         report.startShowMoreBlock("Show more details on duplication between components...");
         report.startTable();
-        report.addTableHeader("From Component<br/>&nbsp;--> To Component", "Duplicated<br/>Lines", "Duplication<br/>File Pairs");
+        report.addTableHeader("From Component<br/>&nbsp;--> To Component", "Duplicated<br/>Lines", "Duplication<br/>File Pairs", "Details");
+
         componentDependencies.forEach(componentDependency -> {
             report.startTableRow();
-            report.addTableCell(
-                    componentDependency.getFromComponent()
-                            + "<br/>&nbsp&nbsp;-->&nbsp"
-                            + componentDependency.getToComponent()
-            );
+
+            report.addTableCell(componentDependency.getFromComponent() + "<br/>&nbsp&nbsp;-->&nbsp"
+                    + componentDependency.getToComponent());
+
             report.addTableCell(componentDependency.getCount() + "", "text-align: center");
+
             int pairsCount = componentDependency.getPathsFrom().size();
             String filePairsText = pairsCount + (pairsCount == 1 ? " file pair" : " file pairs");
-            report.addHtmlContent("<td style='text-align: center'>");
-            report.addShowMoreBlock("", "<textarea style='width:400px; height: 20em;'>"
-                    + componentDependency.getPathsFrom().stream().collect(Collectors.joining("\n\n"))
-                    + "</textarea>", filePairsText);
-            report.addHtmlContent("</td>");
+
+            report.startTableCell("text-align: center");
+            report.addNewTabLink(filePairsText, saveFilePairs(componentDependency));
+            report.endTableCell();
+
+            report.startTableCell();
+            report.addNewTabLink("details...", saveDuplicates(componentDependency, logicalDecompositionName));
+            report.endTableCell();
+
             report.endTableRow();
         });
         report.endTable();
         report.endShowMoreBlock();
+    }
+
+    private String saveFilePairs(ComponentDependency componentDependency) {
+        File file = new File(this.report.getReportsFolder(), "data/intercomponent_duplicated_file_pairs_" + filePairsCount++ + ".txt");
+
+        try {
+            String content = componentDependency.getPathsFrom().stream().collect(Collectors.joining("\n\n"));
+            FileUtils.write(file, content, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println(file.getPath());
+
+        return "../data/" + file.getName();
+    }
+
+    private String saveDuplicates(ComponentDependency componentDependency, String logicalDecompositionName) {
+        File file = new File(this.report.getReportsFolder(), "data/intercomponent_duplicates_" + componentDuplicatesCount++ + ".txt");
+        List<DuplicationInstance> duplicates = this.codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates();
+
+        String from = componentDependency.getFromComponent();
+        String to = componentDependency.getToComponent();
+
+        List<DuplicationInstance> instances = new ArrayList<>();
+
+        duplicates.forEach(duplicate -> {
+            boolean fromPresent[] = {false};
+            boolean toPresent[] = {false};
+            duplicate.getDuplicatedFileBlocks().forEach(duplicatedFileBlock -> {
+                SourceFile sourceFile = duplicatedFileBlock.getSourceFile();
+                List<NamedSourceCodeAspect> components = sourceFile.getLogicalComponents(logicalDecompositionName);
+                if (components.stream().filter(c -> c.getName().equalsIgnoreCase(from)).findAny().isPresent()) {
+                    fromPresent[0] = true;
+                }
+                if (components.stream().filter(c -> c.getName().equalsIgnoreCase(to)).findAny().isPresent()) {
+                    toPresent[0] = true;
+                }
+            });
+
+            if (toPresent[0] && fromPresent[0]) {
+                instances.add(duplicate);
+            }
+        });
+
+        StringBuilder stringBuilder = new StringBuilder();
+
+        Collections.sort(instances, (o1, o2) -> o2.getBlockSize() - o1.getBlockSize());
+
+        instances.forEach(instance -> {
+            stringBuilder.append(instance.getBlockSize() + " duplicated lines in:\n");
+            instance.getDuplicatedFileBlocks().forEach(block -> {
+                stringBuilder.append("  - ");
+                stringBuilder.append(block.getSourceFile().getRelativePath());
+                stringBuilder.append(" (");
+                stringBuilder.append(block.getStartLine());
+                stringBuilder.append(":");
+                stringBuilder.append(block.getEndLine());
+                stringBuilder.append(")\n");
+            });
+            stringBuilder.append("\n");
+        });
+
+        try {
+            FileUtils.write(file, stringBuilder.toString(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println(file.getPath());
+
+        return "../data/" + file.getName();
     }
 
     private void addDownloadLinks(String graphId) {
