@@ -6,18 +6,18 @@ package nl.obren.sokrates.sourcecode.duplication;
 
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SourceFile;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static junit.framework.TestCase.assertEquals;
 
 public class DuplicationEngineTest {
     @Test
-    public void findDuplicates() throws Exception {
+    public void findDuplicates() {
         DuplicationEngine engine = new DuplicationEngine();
 
         SourceFile sourceFile1 = new SourceFile(new File("file1.unknown"), "a\n" +
@@ -64,21 +64,25 @@ public class DuplicationEngineTest {
 
         assertEquals(duplicates.size(), 2);
 
-        assertEquals(duplicates.get(0).getDuplicatedFileBlocks().size(), 2);
-        assertEquals(duplicates.get(0).getDuplicatedFileBlocks().get(0).getSourceFile().getFile().getName(), "file1.unknown");
-        assertEquals(duplicates.get(0).getDuplicatedFileBlocks().get(0).getStartLine(), 1);
-        assertEquals(duplicates.get(0).getDuplicatedFileBlocks().get(0).getEndLine(), 7);
-        assertEquals(duplicates.get(0).getDuplicatedFileBlocks().get(1).getSourceFile().getFile().getName(), "file2.unknown");
-        assertEquals(duplicates.get(0).getDuplicatedFileBlocks().get(1).getStartLine(), 1);
-        assertEquals(duplicates.get(0).getDuplicatedFileBlocks().get(1).getEndLine(), 7);
+        Collections.sort(duplicates, (d1,d2)-> d1.getDuplicatedFileBlocks().get(0).getStartLine() - d2.getDuplicatedFileBlocks().get(0).getStartLine());
 
-        assertEquals(duplicates.get(1).getDuplicatedFileBlocks().size(), 2);
-        assertEquals(duplicates.get(1).getDuplicatedFileBlocks().get(0).getSourceFile().getFile().getName(), "file1.unknown");
-        assertEquals(duplicates.get(1).getDuplicatedFileBlocks().get(0).getStartLine(), 9);
-        assertEquals(duplicates.get(1).getDuplicatedFileBlocks().get(0).getEndLine(), 19);
-        assertEquals(duplicates.get(1).getDuplicatedFileBlocks().get(1).getSourceFile().getFile().getName(), "file2.unknown");
-        assertEquals(duplicates.get(1).getDuplicatedFileBlocks().get(1).getStartLine(), 9);
-        assertEquals(duplicates.get(1).getDuplicatedFileBlocks().get(1).getEndLine(), 19);
+        List<DuplicatedFileBlock> duplicatedFileBlocks1 = duplicates.get(0).getDuplicatedFileBlocks();
+        List<DuplicatedFileBlock> duplicatedFileBlocks2 = duplicates.get(1).getDuplicatedFileBlocks();
+        assertEquals(duplicatedFileBlocks1.size(), 2);
+        assertEquals(duplicatedFileBlocks1.get(0).getSourceFile().getFile().getName(), "file1.unknown");
+        assertEquals(duplicatedFileBlocks1.get(0).getStartLine(), 1);
+        assertEquals(duplicatedFileBlocks1.get(0).getEndLine(), 7);
+        assertEquals(duplicatedFileBlocks1.get(1).getSourceFile().getFile().getName(), "file2.unknown");
+        assertEquals(duplicatedFileBlocks1.get(1).getStartLine(), 1);
+        assertEquals(duplicatedFileBlocks1.get(1).getEndLine(), 7);
+
+        assertEquals(duplicatedFileBlocks2.size(), 2);
+        assertEquals(duplicatedFileBlocks2.get(0).getSourceFile().getFile().getName(), "file1.unknown");
+        assertEquals(duplicatedFileBlocks2.get(0).getStartLine(), 9);
+        assertEquals(duplicatedFileBlocks2.get(0).getEndLine(), 19);
+        assertEquals(duplicatedFileBlocks2.get(1).getSourceFile().getFile().getName(), "file2.unknown");
+        assertEquals(duplicatedFileBlocks2.get(1).getStartLine(), 9);
+        assertEquals(duplicatedFileBlocks2.get(1).getEndLine(), 19);
 
     }
 
