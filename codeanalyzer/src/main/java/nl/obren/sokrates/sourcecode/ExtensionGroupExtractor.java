@@ -71,10 +71,8 @@ public class ExtensionGroupExtractor {
 
     public void extractExtensionsInfo(File root) {
         if (root.isDirectory()) {
-            if (!root.getName().startsWith(".")) {
-                for (File file : root.listFiles()) {
-                    extractExtensionsInfo(file);
-                }
+            for (File file : root.listFiles()) {
+                extractExtensionsInfo(file);
             }
         } else {
             updateExtensionInfo(root);
