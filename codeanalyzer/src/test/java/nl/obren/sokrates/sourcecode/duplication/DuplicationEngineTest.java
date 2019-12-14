@@ -11,6 +11,7 @@ import org.junit.Test;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import static junit.framework.TestCase.assertEquals;
@@ -64,7 +65,7 @@ public class DuplicationEngineTest {
 
         assertEquals(duplicates.size(), 2);
 
-        Collections.sort(duplicates, (d1,d2)-> d1.getDuplicatedFileBlocks().get(0).getStartLine() - d2.getDuplicatedFileBlocks().get(0).getStartLine());
+        Collections.sort(duplicates, Comparator.comparingInt(d -> d.getDuplicatedFileBlocks().get(0).getStartLine()));
 
         List<DuplicatedFileBlock> duplicatedFileBlocks1 = duplicates.get(0).getDuplicatedFileBlocks();
         List<DuplicatedFileBlock> duplicatedFileBlocks2 = duplicates.get(1).getDuplicatedFileBlocks();

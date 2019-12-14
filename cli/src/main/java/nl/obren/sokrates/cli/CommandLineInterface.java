@@ -44,8 +44,7 @@ public class CommandLineInterface {
     public static final String SRC_ROOT = "srcRoot";
     public static final String CONF_FILE = "confFile";
     public static final String REPORT_ALL = "reportAll";
-    public static final String REPORT_JSON = "reportJson";
-    public static final String REPORT_TEXT = "reportText";
+    public static final String REPORT_DATA = "reportData";
     public static final String REPORT_OVERVIEW = "reportOverview";
     public static final String REPORT_FINDINGS = "reportFindings";
     public static final String REPORT_DUPLICATION = "reportDuplication";
@@ -62,8 +61,7 @@ public class CommandLineInterface {
     private Option srcRoot = new Option(SRC_ROOT, true, "the path to source code root folder");
     private Option confFile = new Option(CONF_FILE, true, "[OPTIONAL] the path to configuration file (default is \"<srcRoot>/_sokrates/config.json\")");
     private Option all = new Option(REPORT_ALL, false, "generate all reports");
-    private Option json = new Option(REPORT_JSON, false, "save report data in JSON format");
-    private Option txt = new Option(REPORT_TEXT, false, "save textual summary");
+    private Option data = new Option(REPORT_DATA, false, "save analysis data in JSON and text format (in the _sokrates/reports/data folder)");
     private Option scope = new Option(REPORT_OVERVIEW, false, "generate report describing the overview of files in scope");
     private Option findings = new Option(REPORT_FINDINGS, false, "generate report describing the manual findings");
     private Option duplication = new Option(REPORT_DUPLICATION, false, "generate the duplication report (stored in <outputFolder>/Duplication.html)");
@@ -108,6 +106,7 @@ public class CommandLineInterface {
 
             generateReports(args);
         } catch (ParseException e) {
+            System.out.println("ERROR: " + e.getMessage() + "\n");
             usage();
         }
     }
@@ -151,23 +150,34 @@ public class CommandLineInterface {
     }
 
     private void generateReports(CommandLine cmd) throws IOException {
+        File inputFile;
+
         if (!cmd.hasOption(confFile.getOpt())) {
-            usage(GENERATE_REPORTS, getReportingOptions());
-            return;
+            String confFilePath = "./_sokrates/config.json";
+            inputFile = new File(confFilePath);
+        } else {
+            inputFile = new File(cmd.getOptionValue(confFile.getOpt()));
         }
-        File inputFile = new File(cmd.getOptionValue(confFile.getOpt()));
+
+        System.out.println("Configuration file: " + inputFile.getPath());
+        if (noFileError(inputFile)) return;
+
         String jsonContent = FileUtils.readFileToString(inputFile, UTF_8);
         CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
         LanguageAnalyzerFactory.getInstance().setOverrides(codeConfiguration.getAnalysis().getAnalyzerOverrides());
 
         detailedInfo("Starting analysis based on the configuration file " + inputFile.getPath());
 
+        File reportsFolder;
+
         if (!cmd.hasOption(outputFolder.getOpt())) {
-            usage(GENERATE_REPORTS, getReportingOptions());
-            return;
+            reportsFolder = prepareReportsFolder("./_sokrates/reports");
+        } else {
+            reportsFolder = prepareReportsFolder(cmd.getOptionValue(outputFolder.getOpt()));
         }
 
-        File reportsFolder = prepareReportsFolder(cmd);
+        System.out.println("Reports folder: " + reportsFolder.getPath());
+        if (noFileError(reportsFolder)) return;
 
         if (this.progressFeedback == null) {
             this.progressFeedback = new ProgressFeedback() {
@@ -186,15 +196,14 @@ public class CommandLineInterface {
             CodeAnalyzer codeAnalyzer = new CodeAnalyzer(getCodeAnalyzerSettings(cmd), codeConfiguration, inputFile);
             CodeAnalysisResults analysisResults = codeAnalyzer.analyze(progressFeedback);
 
-            if (cmd.hasOption(all.getOpt()) || cmd.hasOption(json.getOpt())) {
-                dataExporter.saveData(codeConfiguration, reportsFolder, analysisResults);
-            }
+            boolean useDefault = noReportingOptions(cmd);
 
-            if (cmd.hasOption(all.getOpt()) || cmd.hasOption(txt.getOpt())) {
+            if (useDefault || cmd.hasOption(all.getOpt()) || cmd.hasOption(data.getOpt())) {
+                dataExporter.saveData(codeConfiguration, reportsFolder, analysisResults);
                 saveTextualSummary(reportsFolder, analysisResults);
             }
 
-            if (cmd.hasOption(all.getOpt()) || cmd.hasOption(logicalDecomposition.getOpt())) {
+            if (useDefault || cmd.hasOption(all.getOpt()) || cmd.hasOption(logicalDecomposition.getOpt())) {
                 generateVisuals(reportsFolder, analysisResults);
             }
 
@@ -202,6 +211,37 @@ public class CommandLineInterface {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private boolean noFileError(File inputFile) {
+        if (!inputFile.exists()) {
+            System.out.println("ERROR: " + inputFile.getPath() + " does not exist.");
+            return true;
+        }
+        return false;
+    }
+
+    private boolean noReportingOptions(CommandLine cmd) {
+        for (Option arg : cmd.getOptions()) {
+            if (arg.getOpt().toLowerCase().startsWith("report")) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean dataReportsOnly(CommandLine cmd) {
+        boolean anyReports = false;
+        for (Option arg : cmd.getOptions()) {
+            String reportOption = arg.getOpt().toLowerCase();
+            if (reportOption.startsWith("report")) {
+                anyReports = true;
+                if (!reportOption.equalsIgnoreCase(data.getOpt())) {
+                    return false;
+                }
+            }
+        }
+        return anyReports;
     }
 
     private void info(String text) {
@@ -222,20 +262,27 @@ public class CommandLineInterface {
         File htmlReports = getHtmlFolder(reportsFolder);
         File dataReports = dataExporter.getDataFolder();
         File srcCache = dataExporter.getCodeCacheFolder();
-        info("HTML reports: <a href='" + htmlReports.getPath() + "/index.html'>" + htmlReports.getPath() + "</a>");
+        CodeAnalyzerSettings codeAnalyzerSettings = codeAnalyzer.getCodeAnalyzerSettings();
+        if (new File(htmlReports, "index.html").exists() || codeAnalyzerSettings.isUpdateIndex()) {
+            info("HTML reports: <a href='" + htmlReports.getPath() + "/index.html'>" + htmlReports.getPath() + "</a>");
+        } else {
+            info("HTML reports: <a href='" + htmlReports.getPath() + "'>" + htmlReports.getPath() + "</a>");
+        }
         info("Raw data: <a href='" + dataReports.getPath() + "'>" + dataReports.getPath() + "</a>");
         if (analysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles()) {
             info("Source code cache : <a href='" + srcCache.getPath() + "'>" + srcCache.getPath() + "</a>");
         }
         info("");
         info("");
-        BasicSourceCodeReportGenerator generator = new BasicSourceCodeReportGenerator(codeAnalyzer.getCodeAnalyzerSettings(), analysisResults, inputFile, reportsFolder);
+        BasicSourceCodeReportGenerator generator = new BasicSourceCodeReportGenerator(codeAnalyzerSettings, analysisResults, inputFile, reportsFolder);
         List<RichTextReport> reports = generator.report();
         reports.forEach(report -> {
             info("Generating the '" + report.getId().toUpperCase() + "' report...");
             ReportFileExporter.exportHtml(reportsFolder, report);
         });
-        ReportFileExporter.exportReportsIndexFile(reportsFolder, analysisResults);
+        if (!codeAnalyzerSettings.isDataOnly() && codeAnalyzerSettings.isUpdateIndex()) {
+            ReportFileExporter.exportReportsIndexFile(reportsFolder, analysisResults);
+        }
     }
 
 
@@ -312,8 +359,8 @@ public class CommandLineInterface {
         FileUtils.write(jsonFile, analysisResults.getTextSummary().toString(), UTF_8);
     }
 
-    private File prepareReportsFolder(CommandLine cmd) throws IOException {
-        File reportsFolder = new File(cmd.getOptionValue(outputFolder.getOpt()));
+    private File prepareReportsFolder(String path) throws IOException {
+        File reportsFolder = new File(path);
         reportsFolder.mkdirs();
 
         return reportsFolder;
@@ -332,8 +379,10 @@ public class CommandLineInterface {
 
     private CodeAnalyzerSettings getCodeAnalyzerSettings(CommandLine cmd) {
         CodeAnalyzerSettings settings = new CodeAnalyzerSettings();
+        settings.setDataOnly(dataReportsOnly(cmd));
+        settings.setUpdateIndex(cmd.hasOption(all.getOpt()));
 
-        if (cmd.hasOption(all.getOpt())) {
+        if (fullAnalysisNeeded(cmd)) {
             return settings;
         } else {
             settings.deselectAll();
@@ -373,12 +422,15 @@ public class CommandLineInterface {
         return settings;
     }
 
+    private boolean fullAnalysisNeeded(CommandLine cmd) {
+        return noReportingOptions(cmd) || cmd.hasOption(all.getOpt()) || cmd.hasOption(data.getOpt());
+    }
+
     private Options getReportingOptions() {
         Options options = new Options();
         options.addOption(all);
         options.addOption(scope);
-        options.addOption(json);
-        options.addOption(txt);
+        options.addOption(data);
         options.addOption(duplication);
         options.addOption(logicalDecomposition);
         options.addOption(crossCuttingConcerns);

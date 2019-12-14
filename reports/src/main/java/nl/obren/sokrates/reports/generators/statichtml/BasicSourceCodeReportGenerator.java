@@ -67,39 +67,43 @@ public class BasicSourceCodeReportGenerator {
     public List<RichTextReport> report() {
         List<RichTextReport> reports = new ArrayList<>();
 
-        createBasicReport();
+        if (!codeAnalyzerSettings.isDataOnly()) {
+            createBasicReport();
 
-        if (codeAnalyzerSettings.isAnalyzeFilesInScope()) {
-            reports.add(overviewScopeReport);
-        }
-        if (codeAnalyzerSettings.isAnalyzeLogicalDecomposition()) {
-            reports.add(logicalComponentsReport);
-        }
-        if (codeAnalyzerSettings.isAnalyzeDuplication()) {
-            reports.add(duplicationReport);
-        }
-        if (codeAnalyzerSettings.isAnalyzeFileSize()) {
-            reports.add(fileSizeReport);
-        }
-        if (codeAnalyzerSettings.isAnalyzeUnitSize()) {
-            reports.add(unitSizeReport);
-        }
-        if (codeAnalyzerSettings.isAnalyzeConditionalComplexity()) {
-            reports.add(conditionalComplexityReport);
-        }
-        if (codeAnalyzerSettings.isAnalyzeCrossCuttingConcerns()) {
-            reports.add(crossCuttingConcernsReport);
-        }
+            if (codeAnalyzerSettings.isAnalyzeFilesInScope()) {
+                reports.add(overviewScopeReport);
+            }
+            if (codeAnalyzerSettings.isAnalyzeLogicalDecomposition()) {
+                reports.add(logicalComponentsReport);
+            }
+            if (codeAnalyzerSettings.isAnalyzeDuplication()) {
+                reports.add(duplicationReport);
+            }
+            if (codeAnalyzerSettings.isAnalyzeFileSize()) {
+                reports.add(fileSizeReport);
+            }
+            if (codeAnalyzerSettings.isAnalyzeUnitSize()) {
+                reports.add(unitSizeReport);
+            }
+            if (codeAnalyzerSettings.isAnalyzeConditionalComplexity()) {
+                reports.add(conditionalComplexityReport);
+            }
+            if (codeAnalyzerSettings.isAnalyzeCrossCuttingConcerns()) {
+                reports.add(crossCuttingConcernsReport);
+            }
 
-        reports.add(findingsReport);
+            if (codeAnalyzerSettings.isAnalyzeFindings()) {
+                reports.add(findingsReport);
+            }
 
-        if (codeAnalyzerSettings.isCreateMetricsList()) {
-            reports.add(metricsReport);
-            reports.add(comparisonReport);
-        }
+            if (codeAnalyzerSettings.isCreateMetricsList()) {
+                reports.add(metricsReport);
+                reports.add(comparisonReport);
+            }
 
-        if (codeAnalyzerSettings.isAnalyzeControls()) {
-            reports.add(controlsReport);
+            if (codeAnalyzerSettings.isAnalyzeControls()) {
+                reports.add(controlsReport);
+            }
         }
 
         return reports;

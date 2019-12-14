@@ -9,6 +9,8 @@ import org.apache.commons.logging.LogFactory;
 
 public class CodeAnalyzerSettings {
     private static final Log LOG = LogFactory.getLog(CodeAnalyzerSettings.class);
+    private boolean dataOnly = false;
+    private boolean updateIndex = true;
     private boolean analyzeFilesInScope = true;
     private boolean analyzeLogicalDecomposition = true;
     private boolean analyzeCrossCuttingConcerns = true;
@@ -30,6 +32,10 @@ public class CodeAnalyzerSettings {
         analyzeConditionalComplexity = true;
         createMetricsList = true;
         analyzeControls = true;
+        analyzeFindings = true;
+
+        dataOnly = false;
+        updateIndex = true;
     }
 
     public void deselectAll() {
@@ -42,6 +48,26 @@ public class CodeAnalyzerSettings {
         analyzeConditionalComplexity = false;
         createMetricsList = false;
         analyzeControls = false;
+        analyzeFindings = false;
+
+        dataOnly = false;
+        updateIndex = false;
+    }
+
+    public boolean isDataOnly() {
+        return dataOnly;
+    }
+
+    public void setDataOnly(boolean dataOnly) {
+        this.dataOnly = dataOnly;
+    }
+
+    public boolean isUpdateIndex() {
+        return updateIndex;
+    }
+
+    public void setUpdateIndex(boolean updateIndex) {
+        this.updateIndex = updateIndex;
     }
 
     public boolean isAnalyzeFilesInScope() {
