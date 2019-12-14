@@ -386,7 +386,8 @@ public class CommandLineInterface {
     private CodeAnalyzerSettings getCodeAnalyzerSettings(CommandLine cmd) {
         CodeAnalyzerSettings settings = new CodeAnalyzerSettings();
         settings.setDataOnly(dataReportsOnly(cmd));
-        settings.setUpdateIndex(cmd.hasOption(all.getOpt()));
+        boolean useDefault = noReportingOptions(cmd);
+        settings.setUpdateIndex(useDefault || cmd.hasOption(all.getOpt()));
 
         if (fullAnalysisNeeded(cmd)) {
             return settings;
