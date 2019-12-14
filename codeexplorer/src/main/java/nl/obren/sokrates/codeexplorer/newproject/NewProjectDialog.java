@@ -112,6 +112,7 @@ public class NewProjectDialog extends BorderPane {
 
         SourceCodeFiles sourceCodeFiles = new SourceCodeFiles();
         File root = new File(srcFolder.getText());
+        codeConfiguration.getMetadata().setName(root.getName());
         sourceCodeFiles.load(root, new ProgressFeedback() {
             public void setText(String text) {
                 System.out.println(text);

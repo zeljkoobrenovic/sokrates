@@ -31,6 +31,9 @@ public class ScopeCreator {
         List<String> extensions = getExtensions();
 
         CodeConfiguration codeConfiguration = getCodeConfiguration(extensions);
+
+        codeConfiguration.getMetadata().setName(srcRoot.getCanonicalFile().getName());
+
         SourceCodeFiles sourceCodeFiles = getSourceCodeFiles(extensions);
 
         expandScopeWithConventions(codeConfiguration, sourceCodeFiles);

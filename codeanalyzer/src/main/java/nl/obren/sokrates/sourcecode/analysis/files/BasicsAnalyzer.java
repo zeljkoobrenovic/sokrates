@@ -15,6 +15,7 @@ import nl.obren.sokrates.sourcecode.metrics.Metric;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +41,7 @@ public class BasicsAnalyzer extends Analyzer {
 
     public void analyze() {
         SourceCodeFiles sourceCodeFiles = new SourceCodeFiles();
+
         sourceCodeFiles.load(new File(CodeConfiguration.getAbsoluteSrcRoot(codeConfiguration.getSrcRoot(), codeConfigurationFile)),
                 progressFeedback);
 
