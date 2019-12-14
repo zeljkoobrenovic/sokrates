@@ -59,7 +59,7 @@ public class CommandLineInterface {
     public static final String HTML_REPORTS_FOLDER_NAME = "html";
     private static final Log LOG = LogFactory.getLog(CommandLineInterface.class);
     private Option srcRoot = new Option(SRC_ROOT, true, "the path to source code root folder");
-    private Option confFile = new Option(CONF_FILE, true, "[OPTIONAL] the path to configuration file (default is \"<srcRoot>/_sokrates/config.json\")");
+    private Option confFile = new Option(CONF_FILE, true, "[DEFAULT] the path to configuration file (default is \"<srcRoot>/_sokrates/config.json\")");
     private Option all = new Option(REPORT_ALL, false, "generate all reports");
     private Option data = new Option(REPORT_DATA, false, "save analysis data in JSON and text format (in the _sokrates/reports/data folder)");
     private Option scope = new Option(REPORT_OVERVIEW, false, "generate report describing the overview of files in scope");
