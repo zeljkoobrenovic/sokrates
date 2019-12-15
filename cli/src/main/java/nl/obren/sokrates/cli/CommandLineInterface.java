@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.cli;
 
+import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.renderingutils.Thresholds;
 import nl.obren.sokrates.common.renderingutils.VisualizationItem;
@@ -39,8 +40,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class CommandLineInterface {
-    public static final String GENERATE_REPORTS = "generateReports";
     public static final String INIT = "init";
+    public static final String GENERATE_REPORTS = "generateReports";
+    public static final String CONFIG_COMPLETE = "configComplete";
     public static final String SRC_ROOT = "srcRoot";
     public static final String CONF_FILE = "confFile";
     public static final String REPORT_ALL = "reportAll";
@@ -99,6 +101,9 @@ public class CommandLineInterface {
             if (args[0].equalsIgnoreCase(INIT)) {
                 init(args);
                 return;
+            } else if (args[0].equalsIgnoreCase(CONFIG_COMPLETE)) {
+                completeConfig(args);
+                return;
             } else if (!args[0].equalsIgnoreCase(GENERATE_REPORTS)) {
                 usage();
                 return;
@@ -139,6 +144,33 @@ public class CommandLineInterface {
         new ScopeCreator(root, conf).createScopeFromConventions();
 
         System.out.println("Configuration stored in " + conf.getPath());
+    }
+
+    private void completeConfig(String[] args) throws ParseException, IOException {
+        Options options = getInitOptions();
+        CommandLineParser parser = new DefaultParser();
+        CommandLine cmd = parser.parse(options, args);
+
+        String strRootPath = cmd.getOptionValue(srcRoot.getOpt());
+        if (!cmd.hasOption(srcRoot.getOpt())) {
+            strRootPath = ".";
+        }
+
+        File root = new File(strRootPath);
+        if (!root.exists()) {
+            LOG.error("The src root \"" + root.getPath() + "\" does not exist.");
+            return;
+        }
+
+        File confFile = getConfigFile(cmd, root);
+        System.out.println("Configuration file '" + confFile.getPath() + "'.");
+
+        String jsonContent = FileUtils.readFileToString(confFile, UTF_8);
+        FileUtils.write(new File(confFile.getParentFile(), "config_backup.json"), new JsonGenerator().generate(jsonContent), UTF_8);
+        CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
+        FileUtils.write(confFile, new JsonGenerator().generate(codeConfiguration), UTF_8);
+
+        System.out.println("The configuration file has been updated (the original version of the file is saved in the 'config_backup.json' file).");
     }
 
     private File getConfigFile(CommandLine cmd, File root) {
@@ -369,12 +401,15 @@ public class CommandLineInterface {
     }
 
     private void usage() {
-        System.out.println("java -jar sokrates.jar init [options]");
-        System.out.println("java -jar sokrates.jar generateReports [options]");
-        System.out.println();
+        System.out.println("\njava -jar sokrates.jar " + INIT + " [options]\n    Creates a Sokrates configuration file for a codebase");
+        System.out.println("\njava -jar sokrates.jar " + GENERATE_REPORTS + " [options]\n    Generates Sokrates reports based on the configuration");
+        System.out.println("\njava -jar sokrates.jar " + CONFIG_COMPLETE + "\n    Completes missing fields in the configuration file\n");
+        System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
         usage(INIT, getInitOptions());
-        System.out.println();
+        System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
         usage(GENERATE_REPORTS, getReportingOptions());
+        System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
+        usage(CONFIG_COMPLETE, getConfigCompleteOptions());
     }
 
     private void usage(String prefix, Options options) {
@@ -460,6 +495,15 @@ public class CommandLineInterface {
     private Options getInitOptions() {
         Options options = new Options();
         options.addOption(srcRoot);
+        options.addOption(confFile);
+
+        confFile.setRequired(false);
+
+        return options;
+    }
+
+    private Options getConfigCompleteOptions() {
+        Options options = new Options();
         options.addOption(confFile);
 
         confFile.setRequired(false);
