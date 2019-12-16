@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JavaHeuristicDependenciesExtractor extends HeuristicDependenciesExtractor {
-
     public static final String PACKAGE_PREFIX = "package ";
 
     @Override
