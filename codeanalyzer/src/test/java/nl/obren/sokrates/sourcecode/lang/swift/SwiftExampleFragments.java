@@ -4,11 +4,18 @@
 
 package nl.obren.sokrates.sourcecode.lang.swift;
 
-public class SwiftExamples {
-    public final static String COMMENT = "extension Array {\n" +
+public class SwiftExampleFragments {
+    public final static String FRAGMENT_1 = "extension Array {\n" +
             "  /// Creates a new, empty array. [...]\n" +
             "  init()\n" +
             "}";
+
+    public final static String FRAGMENT_1_CLEANED = "extension Array {\n" +
+            "  init()\n" +
+            "}";
+
+    public final static String FRAGMENT_1_CLEANED_FOR_DUPLICATION = "extension Array {\n" +
+            "init()";
 
     public final static String COMMENT_NESTED = "/* This is the start of the first multiline comment.\n" +
             " /* This is the second, nested multiline comment. */\n" +
@@ -26,9 +33,8 @@ public class SwiftExamples {
             "        }\n" +
             "    }\n" +
             "    return (currentMin, currentMax)\n" +
-            "}";
-
-    public final static String UNIT_2 = "func printAndCount(string: String) -> Int {\n" +
+            "}\n\n" +
+            "func printAndCount(string: String) -> Int {\n" +
             "    print(string)\n" +
             "    return string.count\n" +
             "}\n" +
@@ -39,4 +45,18 @@ public class SwiftExamples {
             "// prints \"hello, world\" and returns a value of 12\n" +
             "printWithoutCounting(string: \"hello, world\")\n" +
             "// prints \"hello, world\" but does not return a value";
+
+    public final static String INIT_UNITS = "struct Color {\n" +
+            "    let red, green, blue: Double\n" +
+            "    init(red: Double, green: Double, blue: Double) {\n" +
+            "        self.red   = red\n" +
+            "        self.green = green\n" +
+            "        self.blue  = blue\n" +
+            "    }\n" +
+            "    init(white: Double) {\n" +
+            "        red   = white\n" +
+            "        green = white\n" +
+            "        blue  = white\n" +
+            "    }\n" +
+            "}";
 }

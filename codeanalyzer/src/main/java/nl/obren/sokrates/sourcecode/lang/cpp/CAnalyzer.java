@@ -67,8 +67,8 @@ public class CAnalyzer extends LanguageAnalyzer {
 
         features.add(FEATURE_ALL_STANDARD_ANALYSES);
         features.add(FEATURE_ADVANCED_CODE_CLEANING);
-        features.add(FEATURE_ADVANCED_UNIT_SIZE_ANALYSIS);
-        features.add(FEATURE_ADVANCED_CONDITIONAL_COMPLEXITY_ANALYSIS);
+        features.add(FEATURE_UNIT_SIZE_ANALYSIS);
+        features.add(FEATURE_CONDITIONAL_COMPLEXITY_ANALYSIS);
         features.add(FEATURE_ADVANCED_DEPENDENCIES_ANALYSIS);
 
         return features;
