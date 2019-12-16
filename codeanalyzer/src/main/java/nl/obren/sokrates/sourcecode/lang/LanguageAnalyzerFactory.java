@@ -17,6 +17,7 @@ import nl.obren.sokrates.sourcecode.lang.groovy.GroovyAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.html.HtmlAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.java.JavaAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.js.JavaScriptAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.kotlin.KotlinAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.ts.TypeScriptAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.json.JsonAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.jsp.JspAnalyzer;
@@ -85,6 +86,8 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("cljc", ClojureLangAnalyzer.class);
         analyzersMap.put("edn", ClojureLangAnalyzer.class);
         analyzersMap.put("swift", SwiftAnalyzer.class);
+        analyzersMap.put("kt", KotlinAnalyzer.class);
+        analyzersMap.put("kts", KotlinAnalyzer.class);
     }
 
     public static LanguageAnalyzerFactory getInstance() {
@@ -137,4 +140,5 @@ public class LanguageAnalyzerFactory {
         }
         return FilenameUtils.getExtension(sourceFile.getFile().getPath()).toLowerCase();
     }
+
 }

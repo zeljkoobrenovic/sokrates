@@ -8,7 +8,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.web.WebView;
 import nl.obren.sokrates.codeexplorer.common.UXUtils;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.*;
 
@@ -41,11 +41,11 @@ public class DependenciesMatrix extends BorderPane {
         html.append("<table>\n");
         html.append("<th></th>\n");
         columns.forEach(column -> {
-            html.append("<th style='width: 102px'> " + StringEscapeUtils.escapeHtml4(column) + " -></th>\n");
+            html.append("<th style='white-space: nowrap;'> " + StringEscapeUtils.escapeHtml4(column) + " -></th>\n");
         });
         rows.forEach(row -> {
             html.append("<tr>\n");
-            html.append("<td><b>-> " + StringEscapeUtils.escapeHtml4(row) + "</b></td>\n");
+            html.append("<td style='white-space: nowrap;'><b>-> " + StringEscapeUtils.escapeHtml4(row) + "</b></td>\n");
             columns.forEach(column -> {
                 String key = row + ARROW + column;
                 html.append("<td>\n");
