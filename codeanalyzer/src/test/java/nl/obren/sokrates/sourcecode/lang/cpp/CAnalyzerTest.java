@@ -4,17 +4,12 @@
 
 package nl.obren.sokrates.sourcecode.lang.cpp;
 
-import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
-import nl.obren.sokrates.sourcecode.dependencies.Dependency;
-import nl.obren.sokrates.sourcecode.lang.cpp.CAnalyzer;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 
 import static junit.framework.TestCase.assertEquals;
@@ -143,22 +138,6 @@ public class CAnalyzerTest {
 
     @Test
     public void extractDependencies() throws Exception {
-        CAnalyzer analyzer = new CAnalyzer();
-        String code1 = "#include \"b.h\"\n";
-        String code2 = "#include \"add.h\"\n" +
-                "\n" +
-                "int triple(int x)\n" +
-                "{\n" +
-                "    // comment\n" +
-                "    return add(x, add(x,x));\n" +
-                "}";
-        SourceFile sourceFile1 = new SourceFile(new File("a.c"), code1);
-        sourceFile1.getLogicalComponents().add(new NamedSourceCodeAspect("CompA"));
-        SourceFile sourceFile2 = new SourceFile(new File("b.h"), code2);
-        sourceFile2.getLogicalComponents().add(new NamedSourceCodeAspect("CompB"));
-        List<Dependency> dependencies = analyzer.extractDependencies(Arrays.asList(sourceFile1, sourceFile2), new ProgressFeedback()).getDependencies();
-        assertEquals(dependencies.size(), 1);
-        assertEquals(dependencies.get(0).getDependencyString(), "a.c -> b.h");
-        assertEquals(dependencies.get(0).getComponentDependency(""), "CompA -> CompB");
+
     }
 }

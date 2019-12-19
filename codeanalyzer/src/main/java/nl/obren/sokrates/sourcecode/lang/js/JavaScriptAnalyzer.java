@@ -90,7 +90,7 @@ public class JavaScriptAnalyzer extends LanguageAnalyzer {
 
     @Override
     public DependenciesAnalysis extractDependencies(List<SourceFile> sourceFiles, ProgressFeedback progressFeedback) {
-        return new JSHeuristicDependenciesExtractor().extractDependencies(sourceFiles, progressFeedback);
+        return new DependenciesAnalysis();
     }
 
 
@@ -102,7 +102,7 @@ public class JavaScriptAnalyzer extends LanguageAnalyzer {
         features.add(FEATURE_ADVANCED_CODE_CLEANING);
         features.add(FEATURE_UNIT_SIZE_ANALYSIS);
         features.add(FEATURE_CONDITIONAL_COMPLEXITY_ANALYSIS);
-        features.add(FEATURE_BASIC_DEPENDENCIES_ANALYSIS + " (based on imports and require statements)");
+        features.add(FEATURE_NO_DEPENDENCIES_ANALYSIS);
 
         return features;
     }

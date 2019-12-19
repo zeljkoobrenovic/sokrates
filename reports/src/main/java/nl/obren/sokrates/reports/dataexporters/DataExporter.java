@@ -362,18 +362,20 @@ public class DataExporter {
         this.codeCacheFolder = getCodeCacheFolder();
 
         detailedInfo("Saving details and source code cache:");
-        saveAspectJsonFiles(codeConfiguration.getMain(), "main");
-        saveAspectJsonFiles(codeConfiguration.getTest(), "test");
-        saveAspectJsonFiles(codeConfiguration.getGenerated(), "generated");
-        saveAspectJsonFiles(codeConfiguration.getBuildAndDeployment(), "buildAndDeployment");
-        saveAspectJsonFiles(codeConfiguration.getOther(), "other");
+        if (codeConfiguration.getAnalysis().isCacheSourceFiles()) {
+            saveAspectJsonFiles(codeConfiguration.getMain(), "main");
+            saveAspectJsonFiles(codeConfiguration.getTest(), "test");
+            saveAspectJsonFiles(codeConfiguration.getGenerated(), "generated");
+            saveAspectJsonFiles(codeConfiguration.getBuildAndDeployment(), "buildAndDeployment");
+            saveAspectJsonFiles(codeConfiguration.getOther(), "other");
+        }
 
         UnitsAnalysisResults unitsAnalysisResults = analysisResults.getUnitsAnalysisResults();
         saveUnitFragmentFiles(unitsAnalysisResults.getLongestUnits(), "longest_unit");
         saveUnitFragmentFiles(unitsAnalysisResults.getMostComplexUnits(), "most_complex_unit");
 
         if (codeConfiguration.getAnalysis().isCacheSourceFiles()) {
-            saveAllUnitFragmentFiles(unitsAnalysisResults.getAllUnits(), "all_units");
+            //    saveAllUnitFragmentFiles(unitsAnalysisResults.getAllUnits(), "all_units");
         }
 
         DuplicationAnalysisResults duplicationAnalysisResults = analysisResults.getDuplicationAnalysisResults();
@@ -440,6 +442,23 @@ public class DataExporter {
             html = html.replace("${mccabe-index}", FormattingUtils.getFormattedCount(unit.getMcCabeIndex()));
 
             File htmlFile = new File(fragmentsFolder, fileName + ".html");
+            FileUtils.write(htmlFile, html, UTF_8);
+
+        } catch (IOException e) {
+            LOG.warn(e);
+        }
+    }
+
+    private void saveFileAsHtml(File htmlFile, SourceFile sourceFile) {
+        try {
+
+            String htmlTemplate = HtmlTemplateUtils.getResource("/templates/CodeFragmentFile.html");
+            String html = htmlTemplate.replace("${title}", sourceFile.getRelativePath());
+            html = html.replace("${file-path}", sourceFile.getRelativePath());
+            html = html.replace("${lang}", sourceFile.getExtension());
+            html = html.replace("${code}", StringEscapeUtils.escapeHtml4(sourceFile.getContent().replace("\n", "\n ")));
+            html = html.replace("${lines-of-code}", FormattingUtils.getFormattedCount(sourceFile.getLinesOfCode()));
+
             FileUtils.write(htmlFile, html, UTF_8);
 
         } catch (IOException e) {
@@ -519,18 +538,17 @@ public class DataExporter {
 
         File aspectCodeCacheFolder = recreateFolder(aspectName);
 
-        if (codeConfiguration.getAnalysis().isCacheSourceFiles()) {
-            Map<String, List<String>> contents = new HashMap<>();
-            detailedInfo(" - saving source code cache for the <b>" + aspectName + "</b> aspect in <a href='" + aspectCodeCacheFolder.getPath() + "'>" + aspectCodeCacheFolder.getPath() + "</a>");
-            aspect.getSourceFiles().forEach(sourceFile -> {
-                contents.put(sourceFile.getRelativePath(), sourceFile.getLines());
-                try {
-                    FileUtils.write(new File(aspectCodeCacheFolder, sourceFile.getRelativePath()), sourceFile.getContent(), UTF_8);
-                } catch (IOException e) {
-                    LOG.warn(e);
-                }
-            });
-        }
+        Map<String, List<String>> contents = new HashMap<>();
+        detailedInfo(" - saving source code cache for the <b>" + aspectName + "</b> aspect in <a href='" + aspectCodeCacheFolder.getPath() + "'>" + aspectCodeCacheFolder.getPath() + "</a>");
+        aspect.getSourceFiles().forEach(sourceFile -> {
+            contents.put(sourceFile.getRelativePath(), sourceFile.getLines());
+            try {
+                FileUtils.write(new File(aspectCodeCacheFolder, sourceFile.getRelativePath()), sourceFile.getContent(), UTF_8);
+                saveFileAsHtml(new File(aspectCodeCacheFolder, sourceFile.getRelativePath() + ".html"), sourceFile);
+            } catch (IOException e) {
+                LOG.warn(e);
+            }
+        });
     }
 
     public File getCodeCacheFolder() {

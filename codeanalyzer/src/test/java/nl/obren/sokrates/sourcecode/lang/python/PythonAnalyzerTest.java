@@ -123,22 +123,5 @@ public class PythonAnalyzerTest {
 
     @Test
     public void extractDependencies() throws Exception {
-        PythonAnalyzer analyzer = new PythonAnalyzer();
-        String code1 = "import b\n";
-        String code2 = "\n" +
-                "\n" +
-                "int triple(int x)\n" +
-                "{\n" +
-                "    // comment\n" +
-                "    return add(x, add(x,x));\n" +
-                "}";
-        SourceFile sourceFile1 = new SourceFile(new File("a.py"), code1);
-        sourceFile1.getLogicalComponents().add(new NamedSourceCodeAspect("CompA"));
-        SourceFile sourceFile2 = new SourceFile(new File("b.py"), code2);
-        sourceFile2.getLogicalComponents().add(new NamedSourceCodeAspect("CompB"));
-        List<Dependency> dependencies = analyzer.extractDependencies(Arrays.asList(sourceFile1, sourceFile2), new ProgressFeedback()).getDependencies();
-        assertEquals(dependencies.size(), 1);
-        assertEquals(dependencies.get(0).getDependencyString(), "a -> b");
-        assertEquals(dependencies.get(0).getComponentDependency(""), "CompA -> CompB");
     }
 }

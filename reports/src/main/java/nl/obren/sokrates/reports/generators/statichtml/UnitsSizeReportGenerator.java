@@ -26,6 +26,7 @@ public class UnitsSizeReportGenerator {
     }
 
     public void addUnitsSizeToReport(RichTextReport report) {
+
         UnitsAnalysisResults unitsAnalysisResults = codeAnalysisResults.getUnitsAnalysisResults();
         RiskDistributionStats unitSizeDistribution = unitsAnalysisResults.getUnitSizeRiskDistribution();
 
@@ -112,7 +113,8 @@ public class UnitsSizeReportGenerator {
 
         List<UnitInfo> longestUnits = unitsAnalysisResults.getLongestUnits();
         report.startSection("Longest Units", "Top " + longestUnits.size() + " longest units");
-        report.addHtmlContent(UtilsReportUtils.getUnitsTable(longestUnits, "longest_unit").toString());
+        boolean cacheFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+        report.addHtmlContent(UtilsReportUtils.getUnitsTable(longestUnits, "longest_unit", cacheFiles).toString());
         report.endSection();
     }
 

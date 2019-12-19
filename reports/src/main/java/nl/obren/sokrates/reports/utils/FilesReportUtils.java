@@ -26,7 +26,7 @@ public class FilesReportUtils {
 
             if (linkToFiles) {
                 String href = "../src/main/" + sourceFile.getRelativePath();
-                fileNameFragment = "<a target='blank' href='" + href + "'>" + file.getName() + "</a>";
+                fileNameFragment = "<a target='blank' href='" + href + ".html'>" + file.getName() + "</a>";
             } else {
                 fileNameFragment = file.getName();
             }

@@ -61,7 +61,7 @@ public class RubyHeuristicDependenciesExtractor extends HeuristicDependenciesExt
         dependencyAnchor.setCodeFragment(sourceFile.getRelativePath());
 
         dependencyAnchor.getDependencyPatterns().add(0, "[ ]*require (\"|')" + pathPrefix + fileName + "(\"|')");
-        dependencyAnchor.getDependencyPatterns().add(0, "[ ]*require_repaltive (\"|')" + pathPrefix + fileName + "(\"|')");
+        dependencyAnchor.getDependencyPatterns().add(0, "[ ]*require_relative (\"|')" + pathPrefix + fileName + "(\"|')");
 
         dependencyAnchor.getSourceFiles().add(sourceFile);
 

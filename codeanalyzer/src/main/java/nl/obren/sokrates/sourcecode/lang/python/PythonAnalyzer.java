@@ -55,7 +55,7 @@ public class PythonAnalyzer extends LanguageAnalyzer {
 
     @Override
     public DependenciesAnalysis extractDependencies(List<SourceFile> sourceFiles, ProgressFeedback progressFeedback) {
-        return new PythonDependenciesExtractor().extractDependencies(sourceFiles, progressFeedback);
+        return new DependenciesAnalysis();
     }
 
 

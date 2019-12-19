@@ -26,6 +26,7 @@ public class ConditionalComplexityReportGenerator {
     }
 
     public void addConditionalComplexityToReport(RichTextReport report) {
+        boolean cacheFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
         UnitsAnalysisResults unitsAnalysisResults = codeAnalysisResults.getUnitsAnalysisResults();
         RiskDistributionStats unitMcCabeDistribution = unitsAnalysisResults.getConditionalComplexityRiskDistribution();
 
@@ -102,7 +103,7 @@ public class ConditionalComplexityReportGenerator {
 
         List<UnitInfo> mostComplexUnits = unitsAnalysisResults.getMostComplexUnits();
         report.startSection("Most Complex Units", "Top " + mostComplexUnits.size() + " most complex units");
-        report.addHtmlContent(UtilsReportUtils.getUnitsTable(mostComplexUnits, "most_complex_unit").toString());
+        report.addHtmlContent(UtilsReportUtils.getUnitsTable(mostComplexUnits, "most_complex_unit", cacheFiles).toString());
     }
 
     private String getLogicalDecompositionName(int index) {

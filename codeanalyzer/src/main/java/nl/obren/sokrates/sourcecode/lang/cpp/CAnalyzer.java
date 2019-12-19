@@ -57,8 +57,7 @@ public class CAnalyzer extends LanguageAnalyzer {
 
     @Override
     public DependenciesAnalysis extractDependencies(List<SourceFile> sourceFiles, ProgressFeedback progressFeedback) {
-        CIncludesDependenciesExtractor dependenciesExtractor = new CIncludesDependenciesExtractor();
-        return dependenciesExtractor.extractDependencies(sourceFiles, progressFeedback);
+        return new DependenciesAnalysis();
     }
 
     @Override
@@ -69,7 +68,7 @@ public class CAnalyzer extends LanguageAnalyzer {
         features.add(FEATURE_ADVANCED_CODE_CLEANING);
         features.add(FEATURE_UNIT_SIZE_ANALYSIS);
         features.add(FEATURE_CONDITIONAL_COMPLEXITY_ANALYSIS);
-        features.add(FEATURE_ADVANCED_DEPENDENCIES_ANALYSIS);
+        features.add(FEATURE_NO_DEPENDENCIES_ANALYSIS);
 
         return features;
     }
