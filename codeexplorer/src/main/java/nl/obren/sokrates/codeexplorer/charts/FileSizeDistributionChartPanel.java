@@ -97,7 +97,7 @@ public class FileSizeDistributionChartPanel extends BorderPane {
 
         Optional<String> optional = inputDlg.showAndWait();
 
-        if (optional.isPresent() && NumberUtils.isNumber(optional.get())) {
+        if (optional.isPresent() && NumberUtils.isParsable(optional.get())) {
             return Double.parseDouble(optional.get());
         }
 

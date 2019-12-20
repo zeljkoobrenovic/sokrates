@@ -23,7 +23,7 @@ public class CSharpHeuristicDependenciesExtractorTest {
         assertEquals(anchors.size(), 1);
         assertEquals(anchors.get(0).getAnchor(), "a");
         assertEquals(anchors.get(0).getDependencyPatterns().size(), 1);
-        assertEquals(anchors.get(0).getDependencyPatterns().get(0), "[ ]*using.* a([.][A-Z].*|[.][*]|);");
+        assertEquals(anchors.get(0).getDependencyPatterns().get(0), "[ ]*using* a([.][A-Z].*|[.][*]|);");
     }
 
 }

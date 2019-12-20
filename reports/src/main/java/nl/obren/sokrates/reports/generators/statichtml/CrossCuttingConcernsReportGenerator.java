@@ -263,7 +263,7 @@ public class CrossCuttingConcernsReportGenerator {
                 int start = matcher.start();
                 int end = matcher.end();
                 String strValue = name.substring(start + 1, end - 2);
-                if (NumberUtils.isNumber(strValue)) {
+                if (NumberUtils.isParsable(strValue)) {
                     percentages.add(Double.parseDouble(strValue));
                 }
             }

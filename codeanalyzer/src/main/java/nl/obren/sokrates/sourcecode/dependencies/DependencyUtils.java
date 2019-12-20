@@ -31,16 +31,15 @@ public class DependencyUtils {
 
     public static boolean sourceAndTargetInSameComponent(SourceFile sourceFile, DependencyAnchor targetAnchor) {
         boolean[] same = {false};
-        sourceFile.getLogicalComponents().forEach(source -> {
-            String filtering = source.getFiltering();
+        /*sourceFile.getLogicalComponents().forEach(source -> {
             targetAnchor.getSourceFiles().forEach(targetAnchorSourceFile -> {
-                targetAnchorSourceFile.getLogicalComponents(filtering).forEach(target -> {
+                targetAnchorSourceFile.getLogicalComponents().forEach(target -> {
                     if (source.getName().equalsIgnoreCase(target.getName())) {
                         same[0] = true;
                     }
                 });
             });
-        });
+        });*/
         return same[0];
     }
 

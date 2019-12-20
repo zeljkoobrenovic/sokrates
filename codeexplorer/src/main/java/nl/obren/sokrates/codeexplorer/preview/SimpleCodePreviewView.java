@@ -9,7 +9,7 @@ import javafx.scene.web.WebView;
 import nl.obren.sokrates.codeexplorer.common.UXUtils;
 import nl.obren.sokrates.common.utils.Templates;
 import nl.obren.sokrates.sourcecode.SourceFile;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 
 public class SimpleCodePreviewView extends BorderPane {
     private WebView editorWebView = new WebView();

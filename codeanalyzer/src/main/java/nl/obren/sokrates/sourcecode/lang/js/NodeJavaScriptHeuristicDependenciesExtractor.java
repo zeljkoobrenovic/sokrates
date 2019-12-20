@@ -23,9 +23,6 @@ public class NodeJavaScriptHeuristicDependenciesExtractor extends HeuristicFileP
 
     public void extractDependenciesToTargetAnchor(List<Dependency> dependencies, SourceFile sourceFile,
                                                   DependencyAnchor sourceAnchor, DependencyAnchor targetAnchor) {
-        if (DependencyUtils.sourceAndTargetInSameComponent(sourceFile, targetAnchor)) {
-            return;
-        }
         String content = getContent(sourceFile);
 
         int startIndexOfModuleName = content.indexOf("require(");

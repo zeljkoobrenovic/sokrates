@@ -14,7 +14,7 @@ import nl.obren.sokrates.common.utils.Templates;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.findings.Findings;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
@@ -131,7 +131,7 @@ public class CodePreviewView extends BorderPane {
         boolean ok[] = {false};
 
         result.ifPresent(strPause -> {
-            if (NumberUtils.isNumber(strPause)) {
+            if (NumberUtils.isParsable(strPause)) {
                 autoScrollPause = Integer.parseInt(strPause);
                 ok[0] = true;
             } else {
