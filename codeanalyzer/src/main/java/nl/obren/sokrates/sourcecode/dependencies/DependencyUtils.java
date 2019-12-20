@@ -29,30 +29,6 @@ public class DependencyUtils {
         }
     }
 
-    public static boolean sourceAndTargetInSameComponent(SourceFile sourceFile, DependencyAnchor targetAnchor) {
-        boolean[] same = {false};
-        /*sourceFile.getLogicalComponents().forEach(source -> {
-            targetAnchor.getSourceFiles().forEach(targetAnchorSourceFile -> {
-                targetAnchorSourceFile.getLogicalComponents().forEach(target -> {
-                    if (source.getName().equalsIgnoreCase(target.getName())) {
-                        same[0] = true;
-                    }
-                });
-            });
-        });*/
-        return same[0];
-    }
-
-    public static boolean sourceAndTargetInSameComponent(List<SourceFileDependency> sourceFilesDependency, DependencyAnchor targetAnchor) {
-        boolean[] same = {false};
-        sourceFilesDependency.forEach(sourceFile -> {
-            if (sourceAndTargetInSameComponent(sourceFile.getSourceFile(), targetAnchor)) {
-                same[0] = true;
-            }
-        });
-        return same[0];
-    }
-
     public static int getDependenciesCount(List<ComponentDependency> componentDependencies) {
         int[] count = {0};
         componentDependencies.forEach(d -> count[0] += d.getCount());
@@ -87,20 +63,18 @@ public class DependencyUtils {
         List<ComponentDependency> componentDependencies = new ArrayList<>();
         List<String> fileToComponentLinks = new ArrayList<>();
         dependencies.forEach(dependency -> {
-            if (!sourceAndTargetInSameComponent(dependency.getFromFiles(), dependency.getTo())) {
-                dependency.getFromFiles().forEach(sourceFileDependency -> {
-                    dependency.getToComponents(group).forEach(targetComponent -> {
-                        String fileToComponentLink = sourceFileDependency.getSourceFile().getFile().getPath() + "::" +
-                                targetComponent.getName();
-                        if (!fileToComponentLinks.contains(fileToComponentLink)) {
-                            fileToComponentLinks.add(fileToComponentLink);
-                            sourceFileDependency.getSourceFile().getLogicalComponents(group).forEach(sourceComponent -> {
-                                addComponentDependency(sourceFileDependency, componentDependencies, sourceComponent, targetComponent);
-                            });
-                        }
-                    });
+            dependency.getFromFiles().forEach(sourceFileDependency -> {
+                dependency.getToComponents(group).forEach(targetComponent -> {
+                    String fileToComponentLink = sourceFileDependency.getSourceFile().getFile().getPath() + "::" +
+                            targetComponent.getName();
+                    if (!fileToComponentLinks.contains(fileToComponentLink)) {
+                        fileToComponentLinks.add(fileToComponentLink);
+                        sourceFileDependency.getSourceFile().getLogicalComponents(group).forEach(sourceComponent -> {
+                            addComponentDependency(sourceFileDependency, componentDependencies, sourceComponent, targetComponent);
+                        });
+                    }
                 });
-            }
+            });
         });
 
         return componentDependencies;

@@ -45,9 +45,6 @@ public abstract class HeuristicDependenciesExtractor {
     }
 
     private void extractDependenciesToTargetAnchor(List<Dependency> dependencies, SourceFile sourceFile, DependencyAnchor sourceAnchor, DependencyAnchor targetAnchor) {
-        if (DependencyUtils.sourceAndTargetInSameComponent(sourceFile, targetAnchor)) {
-            return;
-        }
         String content = sourceFile.getContent();
         if (content.contains(targetAnchor.getAnchor())) {
             String dependencyCodeFragment = targetAnchor.getDependencyCodeFragment(content);
