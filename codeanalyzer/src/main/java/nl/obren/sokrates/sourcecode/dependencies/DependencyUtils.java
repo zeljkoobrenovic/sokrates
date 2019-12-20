@@ -32,8 +32,9 @@ public class DependencyUtils {
     public static boolean sourceAndTargetInSameComponent(SourceFile sourceFile, DependencyAnchor targetAnchor) {
         boolean[] same = {false};
         sourceFile.getLogicalComponents().forEach(source -> {
+            String filtering = source.getFiltering();
             targetAnchor.getSourceFiles().forEach(targetAnchorSourceFile -> {
-                targetAnchorSourceFile.getLogicalComponents().forEach(target -> {
+                targetAnchorSourceFile.getLogicalComponents(filtering).forEach(target -> {
                     if (source.getName().equalsIgnoreCase(target.getName())) {
                         same[0] = true;
                     }

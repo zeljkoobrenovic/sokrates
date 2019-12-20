@@ -16,6 +16,8 @@ import java.util.List;
 
 public class CSharpHeuristicDependenciesExtractor extends HeuristicDependenciesExtractor {
 
+    public static final String NAMESPACE_PREFIX = "namespace ";
+
     @Override
     public List<DependencyAnchor> extractDependencyAnchors(SourceFile sourceFile) {
         List<DependencyAnchor> anchors = new ArrayList<>();
@@ -24,14 +26,14 @@ public class CSharpHeuristicDependenciesExtractor extends HeuristicDependenciesE
         content = content.replace("\t", " ");
         content = SourceCodeCleanerUtils.normalizeLineEnds(content);
 
-        int startIndexOfNamespaceName = content.indexOf("namespace ");
+        int startIndexOfNamespaceName = content.indexOf(NAMESPACE_PREFIX);
         if (startIndexOfNamespaceName >= 0) {
             int endIndexOfNamespaceName = ExplorerStringUtils.firstIndexOfAny(Arrays.asList("{", ";", " ", "\n"), content, startIndexOfNamespaceName + "namespace ".length());
             if (endIndexOfNamespaceName >= 0) {
-                String namespaceName = content.substring(startIndexOfNamespaceName + "namespace ".length(), endIndexOfNamespaceName).trim();
+                String namespaceName = content.substring(startIndexOfNamespaceName + NAMESPACE_PREFIX.length(), endIndexOfNamespaceName).trim();
                 DependencyAnchor dependencyAnchor = new DependencyAnchor(namespaceName);
                 dependencyAnchor.setCodeFragment(content.substring(startIndexOfNamespaceName, endIndexOfNamespaceName + 1).trim());
-                dependencyAnchor.getDependencyPatterns().add("[ ]*using.* " + namespaceName.replace(".", "[.]") + "([.][A-Z].*|[.][*]|);");
+                dependencyAnchor.getDependencyPatterns().add("[ ]*using[ ]+" + namespaceName.replace(".", "[.]") + "([.][A-Z].*|[.][*]|);");
                 dependencyAnchor.getSourceFiles().add(sourceFile);
                 anchors.add(dependencyAnchor);
             }

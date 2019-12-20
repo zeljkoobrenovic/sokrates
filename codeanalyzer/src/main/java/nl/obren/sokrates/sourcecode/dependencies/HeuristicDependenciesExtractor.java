@@ -20,7 +20,7 @@ public abstract class HeuristicDependenciesExtractor {
         dependenciesAnalysis.setDependencies(dependencies);
         List<DependencyAnchor> anchors = getDependencyAnchors(files);
 
-        DependencyUtils.findErrors(anchors, dependenciesAnalysis.getErrors());
+        // DependencyUtils.findErrors(anchors, dependenciesAnalysis.getErrors());
 
         int i = 0;
         for (DependencyAnchor sourceAnchor : anchors) {

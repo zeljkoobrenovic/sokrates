@@ -80,6 +80,12 @@ public class ConditionalComplexityReportGenerator {
         report.addHtmlContent(PieChartUtils.getRiskDistributionPieChart(unitMcCabeDistribution, labels));
         report.endSection();
 
+        report.startSection("Alternative Visuals", "");
+        report.startUnorderedList();
+        report.addListItem("<a target='_blank' href='visuals/units_3d_complexity.html'>3D view of all units</a>");
+        report.endUnorderedList();
+        report.endSection();
+
         report.startSection("Conditional Complexity per Extension", "");
         report.addHtmlContent(RiskDistributionStatsReportUtils.getRiskDistributionPerKeySvgBarChart(unitsAnalysisResults
                 .getConditionalComplexityRiskDistributionPerExtension(), labels).toString());
@@ -92,13 +98,6 @@ public class ConditionalComplexityReportGenerator {
             report.addHtmlContent(RiskDistributionStatsReportUtils.getRiskDistributionPerKeySvgBarChart(stats, labels).toString());
             report.endSection();
         });
-        report.endSection();
-
-
-        report.startSection("Alternative Visuals", "");
-        report.startUnorderedList();
-        report.addListItem("<a target='_blank' href='visuals/units_3d_complexity.html'>3D view of all units</a>");
-        report.endUnorderedList();
         report.endSection();
 
         List<UnitInfo> mostComplexUnits = unitsAnalysisResults.getMostComplexUnits();

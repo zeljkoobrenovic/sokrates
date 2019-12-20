@@ -436,8 +436,8 @@ public class DataExporter {
             String html = htmlTemplate.replace("${title}", unit.getShortName());
             html = html.replace("${unit-name}", unit.getShortName());
             html = html.replace("${file-and-lines}", fileAndLines);
-            html = html.replace("${lang}", unit.getSourceFile().getExtension());
-            html = html.replace("${code}", StringEscapeUtils.escapeHtml4(unit.getBody().replace("\n", "\n ")));
+            html = html.replace("${language}", unit.getSourceFile().getExtension());
+            html = html.replace("${code}", StringEscapeUtils.escapeHtml4(unit.getBody()));
             html = html.replace("${lines-of-code}", FormattingUtils.getFormattedCount(unit.getLinesOfCode()));
             html = html.replace("${mccabe-index}", FormattingUtils.getFormattedCount(unit.getMcCabeIndex()));
 
@@ -455,8 +455,8 @@ public class DataExporter {
             String htmlTemplate = HtmlTemplateUtils.getResource("/templates/CodeFragmentFile.html");
             String html = htmlTemplate.replace("${title}", sourceFile.getRelativePath());
             html = html.replace("${file-path}", sourceFile.getRelativePath());
-            html = html.replace("${lang}", sourceFile.getExtension());
-            html = html.replace("${code}", StringEscapeUtils.escapeHtml4(sourceFile.getContent().replace("\n", "\n ")));
+            html = html.replace("${language}", sourceFile.getExtension());
+            html = html.replace("${code}", StringEscapeUtils.escapeHtml4(sourceFile.getContent()));
             html = html.replace("${lines-of-code}", FormattingUtils.getFormattedCount(sourceFile.getLinesOfCode()));
 
             FileUtils.write(htmlFile, html, UTF_8);

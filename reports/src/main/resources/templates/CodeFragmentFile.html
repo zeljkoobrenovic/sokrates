@@ -1,17 +1,25 @@
 <html>
 <head>
     <title>${title}</title>
-    <link rel="stylesheet" charset="UTF-8" href="https://d2bb1mtyn3kglb.cloudfront.net/lib/highlight/styles/docco.min.css">
-    <script charset="UTF-8" type="application/javascript" src="https://d2bb1mtyn3kglb.cloudfront.net/lib/highlight/highlight.min.js"></script>
+    <style type="text/css" media="screen">
+        #editor {
+            position: absolute;
+            top: 40px;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+    </style>
 </head>
 <body style="font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif">
 <h3 style="margin-bottom: 0">${file-path} (<b>${lines-of-code}</b> lines of code):</h3>
-<pre>
-<code class="${language}">
-${code}
-</code>
-</pre>
+<div id="editor">${code}</div>
+<script src="https://www.zeljkoobrenovic.com/tools/common/lib/ace/ace.js" type="text/javascript" charset="utf-8"></script>
 <script>
-    hljs.initHighlightingOnLoad();
+    var editor = ace.edit("editor");
+    editor.session.setMode("ace/mode/${language}");
+    editor.setTheme("ace/theme/xcode");
+    editor.setReadOnly(true);
+    editor.setOption("wrap", true);
 </script>
 </body>
