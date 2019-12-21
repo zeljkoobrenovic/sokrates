@@ -162,6 +162,7 @@ public class DuplicationReportGenerator {
 
         if (componentDependencies.size() > 0) {
             GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
+            graphvizDependencyRenderer.setDefaultNodeFillColor("deepskyblue2");
             graphvizDependencyRenderer.setType("graph");
             graphvizDependencyRenderer.setArrow("--");
             graphvizDependencyRenderer.setArrowColor("crimson");

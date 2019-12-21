@@ -30,6 +30,8 @@ import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.dependencies.Dependency;
 import nl.obren.sokrates.sourcecode.duplication.DuplicatedFileBlock;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
+import nl.obren.sokrates.sourcecode.lang.DefaultLanguageAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -455,7 +457,10 @@ public class DataExporter {
             String htmlTemplate = HtmlTemplateUtils.getResource("/templates/CodeFragmentFile.html");
             String html = htmlTemplate.replace("${title}", sourceFile.getRelativePath());
             html = html.replace("${file-path}", sourceFile.getRelativePath());
-            html = html.replace("${language}", sourceFile.getExtension());
+            html = html.replace("${file-name}", sourceFile.getFile().getName());
+            String langName = LanguageAnalyzerFactory.getInstance().getLanguageAnalyzer(sourceFile).getClass().getSimpleName().replace("Analyzer", "").toLowerCase();
+            String defaultLangName = DefaultLanguageAnalyzer.class.getSimpleName().replace("Analyzer", "");
+            html = html.replace("${language}", langName.equalsIgnoreCase(defaultLangName) ? sourceFile.getExtension() : langName);
             html = html.replace("${code}", StringEscapeUtils.escapeHtml4(sourceFile.getContent()));
             html = html.replace("${lines-of-code}", FormattingUtils.getFormattedCount(sourceFile.getLinesOfCode()));
 

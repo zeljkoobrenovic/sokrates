@@ -18,6 +18,7 @@ import nl.obren.sokrates.sourcecode.lang.html.HtmlAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.java.JavaAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.js.JavaScriptAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.kotlin.KotlinAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.sql.SqlAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.ts.TypeScriptAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.json.JsonAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.jsp.JspAnalyzer;
@@ -64,6 +65,9 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("scala", ScalaAnalyzer.class);
         analyzersMap.put("html", HtmlAnalyzer.class);
         analyzersMap.put("htm", HtmlAnalyzer.class);
+        analyzersMap.put("cshtml", HtmlAnalyzer.class);
+        analyzersMap.put("asp", HtmlAnalyzer.class);
+        analyzersMap.put("aspx", HtmlAnalyzer.class);
         analyzersMap.put("xml", XmlAnalyzer.class);
         analyzersMap.put("pl", PerlAnalyzer.class);
         analyzersMap.put("pm", PerlAnalyzer.class);
@@ -88,6 +92,7 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("swift", SwiftAnalyzer.class);
         analyzersMap.put("kt", KotlinAnalyzer.class);
         analyzersMap.put("kts", KotlinAnalyzer.class);
+        analyzersMap.put("sql", SqlAnalyzer.class);
     }
 
     public static LanguageAnalyzerFactory getInstance() {

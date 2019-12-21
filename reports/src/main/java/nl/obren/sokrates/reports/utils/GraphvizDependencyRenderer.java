@@ -7,7 +7,6 @@ package nl.obren.sokrates.reports.utils;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.File;
 import java.util.List;
 
 public class GraphvizDependencyRenderer {
@@ -26,6 +25,7 @@ public class GraphvizDependencyRenderer {
     private String type = "digraph";
     private String arrow = "->";
     private String arrowColor = "deepskyblue4";
+    private String defaultNodeFillColor = "grey";
 
     public GraphvizDependencyRenderer() {
     }
@@ -86,7 +86,7 @@ public class GraphvizDependencyRenderer {
                 "        fixedsize=\"false\"\n" +
                 "        fontname=\"Tahoma\"\n" +
                 "        color=\"white\"\n" +
-                "        fillcolor=\"deepskyblue2\"\n" +
+                "        fillcolor=\""+ defaultNodeFillColor +"\"\n" +
                 "        fontcolor=\"black\"\n" +
                 "        shape=\"box\"\n" +
                 "        style=\"filled\"\n" +
@@ -105,7 +105,11 @@ public class GraphvizDependencyRenderer {
         StringBuilder graphviz = new StringBuilder();
         graphviz.append(getHeader());
 
-        allComponents.stream().filter(c -> StringUtils.isNotBlank(c)).forEach(c -> graphviz.append("\"" + encodeLabel(c) + "\";\n"));
+        graphviz.append("\n");
+        allComponents.stream().filter(c -> StringUtils.isNotBlank(c)).forEach(c -> {
+            graphviz.append("    \"" + encodeLabel(c) + "\" [fillcolor=\"deepskyblue2\"];\n");
+        });
+        graphviz.append("\n");
 
         componentDependencies
                 .stream()
@@ -160,5 +164,13 @@ public class GraphvizDependencyRenderer {
 
     public void setArrowColor(String arrowColor) {
         this.arrowColor = arrowColor;
+    }
+
+    public String getDefaultNodeFillColor() {
+        return defaultNodeFillColor;
+    }
+
+    public void setDefaultNodeFillColor(String defaultNodeFillColor) {
+        this.defaultNodeFillColor = defaultNodeFillColor;
     }
 }

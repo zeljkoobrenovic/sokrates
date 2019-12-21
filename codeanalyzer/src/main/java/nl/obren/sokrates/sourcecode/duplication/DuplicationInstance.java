@@ -130,7 +130,7 @@ public class DuplicationInstance {
                 }
                 if (linkToFiles) {
                     stringBuilder.append("<a href='");
-                    stringBuilder.append("../src/main/" + block.getSourceFile().getRelativePath());
+                    stringBuilder.append("../src/main/" + block.getSourceFile().getRelativePath() + ".html");
                     stringBuilder.append("' target='_blank'>");
                     stringBuilder.append(block.getSourceFile().getFile().getName());
                     stringBuilder.append("</a>");
