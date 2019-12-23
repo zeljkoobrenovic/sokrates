@@ -3,6 +3,12 @@
  */
 
 package nl.obren.sokrates.codeexplorer.common;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -82,10 +88,11 @@ public class UXUtils {
     public static void addCopyHandler(WebView webView) {
         webView.getEngine().setOnAlert((WebEvent<String> we) -> {
             if (we.getData() != null && we.getData().startsWith("copy: ")) {
-                final Clipboard clipboard = Clipboard.getSystemClipboard();
-                final ClipboardContent content = new ClipboardContent();
-                content.putString(we.getData().substring(6));
-                clipboard.setContent(content);
+                String string = we.getData().substring(6);
+                StringSelection stringSelection = new StringSelection(string);
+                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                clipboard.setContents(stringSelection, null);
+                System.out.println(string);
             }
         });
     }
@@ -94,10 +101,17 @@ public class UXUtils {
         webView.addEventHandler(KeyEvent.KEY_PRESSED, keyEvent -> {
             boolean pasteKey = (keyEvent.isMetaDown() || keyEvent.isControlDown()) && keyEvent.getCode() == KeyCode.V;
             if (pasteKey) {
-                final Clipboard clipboard = Clipboard.getSystemClipboard();
-                String content = (String) clipboard.getContent(DataFormat.PLAIN_TEXT);
-                String script = "pasteContent(\"" + StringEscapeUtils.escapeEcmaScript(content) + "\") ";
-                webView.getEngine().executeScript(script);
+                final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                String content = null;
+                try {
+                    content = (String) clipboard.getData(DataFlavor.stringFlavor);
+                    String script = "pasteContent(\"" + StringEscapeUtils.escapeEcmaScript(content) + "\") ";
+                    webView.getEngine().executeScript(script);
+                } catch (UnsupportedFlavorException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
