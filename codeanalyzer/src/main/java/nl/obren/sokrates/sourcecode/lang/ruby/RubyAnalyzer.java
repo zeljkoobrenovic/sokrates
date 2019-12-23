@@ -59,6 +59,11 @@ public class RubyAnalyzer extends LanguageAnalyzer {
     @Override
     public List<UnitInfo> extractUnits(SourceFile sourceFile) {
         List<UnitInfo> units = new ArrayList<>();
+        return units;
+    }
+
+    public List<UnitInfo> extractUnitsWrong(SourceFile sourceFile) {
+        List<UnitInfo> units = new ArrayList<>();
 
         List<String> lines = sourceFile.getLines();
         for (int i = 0; i < lines.size(); i++) {
@@ -147,8 +152,8 @@ public class RubyAnalyzer extends LanguageAnalyzer {
 
         features.add(FEATURE_ALL_STANDARD_ANALYSES);
         features.add(FEATURE_ADVANCED_CODE_CLEANING);
-        features.add(FEATURE_UNIT_SIZE_ANALYSIS);
-        features.add(FEATURE_CONDITIONAL_COMPLEXITY_ANALYSIS);
+        features.add(FEATURE_NO_UNIT_SIZE_ANALYSIS);
+        features.add(FEATURE_NO_CONDITIONAL_COMPLEXITY_ANALYSIS);
         features.add(FEATURE_BASIC_DEPENDENCIES_ANALYSIS);
 
         return features;

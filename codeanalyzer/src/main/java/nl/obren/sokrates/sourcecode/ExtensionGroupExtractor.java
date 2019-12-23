@@ -87,6 +87,7 @@ public class ExtensionGroupExtractor {
     }
 
     private void updateMap(File file, String extension) {
+        if (!file.exists()) return;
         if (extensionsMap.containsKey(extension)) {
             ExtensionGroup extensionGroup = extensionsMap.get(extension);
             extensionGroup.setNumberOfFiles(extensionGroup.getNumberOfFiles() + 1);

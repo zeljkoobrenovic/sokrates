@@ -74,7 +74,11 @@ public class CommentsAndEmptyLinesCleaner {
     }
 
     public CleanedContent clean(String originalContent) {
-        return SourceCodeCleanerUtils.cleanEmptyLinesWithLineIndexes(cleanRaw(originalContent));
+        if (originalContent.contains("=item B<cookie_get_valid_names>")) {
+            System.out.println("Ho");
+        }
+        String rawContent = cleanRaw(originalContent);
+        return SourceCodeCleanerUtils.cleanEmptyLinesWithLineIndexes(rawContent);
     }
 
 }

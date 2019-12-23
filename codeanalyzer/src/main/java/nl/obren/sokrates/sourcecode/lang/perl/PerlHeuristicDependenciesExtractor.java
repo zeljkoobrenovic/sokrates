@@ -38,7 +38,7 @@ public class PerlHeuristicDependenciesExtractor extends HeuristicDependenciesExt
                         useName += "::";
                     }
                     useName += element;
-                    dependencyAnchor.getDependencyPatterns().add("use( |\t)+" + useName + "( |;)");
+                    dependencyAnchor.getDependencyPatterns().add("use[ ]+" + useName + ".*");
                 }
 
                 dependencyAnchor.getSourceFiles().add(sourceFile);

@@ -16,6 +16,7 @@ import nl.obren.sokrates.sourcecode.units.CStyleHeuristicUnitParser;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class PerlAnalyzer extends LanguageAnalyzer {
@@ -24,13 +25,37 @@ public class PerlAnalyzer extends LanguageAnalyzer {
 
     @Override
     public CleanedContent cleanForLinesOfCodeCalculations(SourceFile sourceFile) {
-        return getCleaner().clean(sourceFile.getContent());
+        return getCleaner().clean(removePerlBlockComments(sourceFile));
+    }
+
+    private String removePerlBlockComments(SourceFile sourceFile) {
+        List<String> lines = Arrays.asList(sourceFile.getContent().split("\n"));
+
+        StringBuilder stringBuilder = new StringBuilder();
+
+        boolean inBlock = false;
+        for (String line : lines) {
+            if (inBlock) {
+                if (line.trim().equalsIgnoreCase("=cut")) {
+                    inBlock = false;
+                }
+                stringBuilder.append("\n");
+            } else {
+                if (line.startsWith("=")) {
+                    inBlock = true;
+                } else {
+                    stringBuilder.append(line);
+                }
+                stringBuilder.append("\n");
+            }
+        }
+
+        return stringBuilder.toString();
     }
 
     private CommentsAndEmptyLinesCleaner getCleaner() {
         CommentsAndEmptyLinesCleaner cleaner = new CommentsAndEmptyLinesCleaner();
 
-        cleaner.addCommentBlockHelper("\n=", "\n=cut");
         cleaner.addCommentBlockHelper("#", "\n");
         cleaner.addStringBlockHelper("\"", "\\");
         cleaner.addStringBlockHelper("'", "\\");
@@ -42,7 +67,7 @@ public class PerlAnalyzer extends LanguageAnalyzer {
 
     @Override
     public CleanedContent cleanForDuplicationCalculations(SourceFile sourceFile) {
-        String content = getCleaner().cleanRaw(sourceFile.getContent());
+        String content = getCleaner().cleanRaw(removePerlBlockComments(sourceFile));
 
         content = SourceCodeCleanerUtils.trimLines(content);
         content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("use .*;", content);

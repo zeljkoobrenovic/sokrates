@@ -29,6 +29,7 @@ public class CssAnalyzer extends LanguageAnalyzer {
         CommentsAndEmptyLinesCleaner cleaner = new CommentsAndEmptyLinesCleaner();
 
         cleaner.addCommentBlockHelper("/*", "*/");
+        cleaner.addCommentBlockHelper("//", "\n");
         cleaner.addStringBlockHelper("\"", "\\");
         cleaner.addStringBlockHelper("'", "\\");
 

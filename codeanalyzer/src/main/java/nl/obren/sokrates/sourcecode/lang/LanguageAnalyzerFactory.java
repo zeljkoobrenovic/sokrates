@@ -18,6 +18,7 @@ import nl.obren.sokrates.sourcecode.lang.html.HtmlAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.java.JavaAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.js.JavaScriptAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.kotlin.KotlinAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.scss.ScssAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.sql.SqlAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.ts.TypeScriptAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.json.JsonAnalyzer;
@@ -76,7 +77,7 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("css", CssAnalyzer.class);
         analyzersMap.put("less", LessAnalyzer.class);
         analyzersMap.put("sass", SassAnalyzer.class);
-        analyzersMap.put("scss", SassAnalyzer.class);
+        analyzersMap.put("scss", ScssAnalyzer.class);
         analyzersMap.put("json", JsonAnalyzer.class);
         analyzersMap.put("gsp", JspAnalyzer.class);
         analyzersMap.put("jsp", JspAnalyzer.class);
