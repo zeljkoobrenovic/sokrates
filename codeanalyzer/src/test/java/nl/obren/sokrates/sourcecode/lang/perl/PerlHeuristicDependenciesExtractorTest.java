@@ -31,19 +31,19 @@ public class PerlHeuristicDependenciesExtractorTest {
         assertEquals(dependencyAnchors.size(), 3);
 
         assertEquals(dependencyAnchors.get(0).getAnchor(), "a.b.c");
-        assertEquals(dependencyAnchors.get(0).getDependencyPatterns().get(0), "use( |\t)+a.b.c( |;)");
+        assertEquals(dependencyAnchors.get(0).getDependencyPatterns().get(0), "use[ ]+a.b.c.*");
         assertEquals(dependencyAnchors.get(0).getSourceFiles().size(), 3);
         assertEquals(dependencyAnchors.get(0).getSourceFiles().get(0).getFile().getPath(), "file1");
         assertEquals(dependencyAnchors.get(0).getSourceFiles().get(1).getFile().getPath(), "file2");
         assertEquals(dependencyAnchors.get(0).getSourceFiles().get(2).getFile().getPath(), "file3");
 
         assertEquals(dependencyAnchors.get(1).getAnchor(), "d.e.f");
-        assertEquals(dependencyAnchors.get(1).getDependencyPatterns().get(0), "use( |\t)+d.e.f( |;)");
+        assertEquals(dependencyAnchors.get(1).getDependencyPatterns().get(0), "use[ ]+d.e.f.*");
         assertEquals(dependencyAnchors.get(1).getSourceFiles().size(), 1);
         assertEquals(dependencyAnchors.get(1).getSourceFiles().get(0).getFile().getPath(), "file4");
 
         assertEquals(dependencyAnchors.get(2).getAnchor(), "g.h.i");
-        assertEquals(dependencyAnchors.get(2).getDependencyPatterns().get(0), "use( |\t)+g.h.i( |;)");
+        assertEquals(dependencyAnchors.get(2).getDependencyPatterns().get(0), "use[ ]+g.h.i.*");
         assertEquals(dependencyAnchors.get(2).getSourceFiles().size(), 1);
         assertEquals(dependencyAnchors.get(2).getSourceFiles().get(0).getFile().getPath(), "file5");
 

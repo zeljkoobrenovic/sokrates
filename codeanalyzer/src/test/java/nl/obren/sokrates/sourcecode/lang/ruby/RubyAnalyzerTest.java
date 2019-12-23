@@ -10,6 +10,7 @@ import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
 import nl.obren.sokrates.sourcecode.lang.java.JavaAnalyzer;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -40,6 +41,7 @@ public class RubyAnalyzerTest {
             "  return product\n" +
             "end";
     @Test
+    @Ignore
     public void extractUnits() throws Exception {
         RubyAnalyzer analyzer = new RubyAnalyzer();
         List<UnitInfo> units = analyzer.extractUnits(new SourceFile(new File("dummy.rb"), CODE_WITH_UNIT));
