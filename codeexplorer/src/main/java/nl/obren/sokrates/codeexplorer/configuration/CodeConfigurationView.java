@@ -181,6 +181,8 @@ public class CodeConfigurationView extends ConfigurationEditorView {
     }
 
     private void generateReports(String reportType) {
+        completeAndSave();
+
         File absoluteSrcRoot = new File(CodeConfiguration.getAbsoluteSrcRoot(getConfigurationFromEditor().getSrcRoot(), file));
         File reportsFolder = CodeConfigurationUtils.getDefaultSokratesReportsFolder(absoluteSrcRoot);
         ProgressFeedback progressFeedback = codeBrowserPane.getConsole().getProgressFeedback();

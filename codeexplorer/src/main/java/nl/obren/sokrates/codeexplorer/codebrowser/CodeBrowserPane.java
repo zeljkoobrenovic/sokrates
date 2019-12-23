@@ -57,6 +57,7 @@ public class CodeBrowserPane extends SplitPane {
 
     private Findings findings;
     private File findingsFile;
+    private MenuBar menuBar;
 
     public CodeBrowserPane(Stage primaryStage) {
         setStyle(DEFAULT_FONT_STYLE_FRAGMENT);
@@ -87,7 +88,7 @@ public class CodeBrowserPane extends SplitPane {
         splitPane.getItems().add(editorPane);
         splitPane.getItems().add(codeViewerPane);
 
-        setMenuBar();
+        createMenuBar();
 
         getItems().addAll(mainPane, console);
         setOrientation(Orientation.VERTICAL);
@@ -98,7 +99,7 @@ public class CodeBrowserPane extends SplitPane {
         return console;
     }
 
-    private void setMenuBar() {
+    private void createMenuBar() {
         final Menu fileMenu = new Menu("File");
         fileMenu.getItems().add(getMenuItem("New", e -> codeConfigurationView.newConfiguration()));
         fileMenu.getItems().add(new SeparatorMenuItem());
@@ -132,13 +133,13 @@ public class CodeBrowserPane extends SplitPane {
         reportMenu.getItems().add(getMenuItem("Update Controls Report...", e -> codeConfigurationView.generateControlsReport()));
 
         MenuBar menuBar = new MenuBar();
-        menuBar.getMenus().addAll(fileMenu, editMenu, findingsMenu, reportMenu);
-
         final String os = System.getProperty("os.name");
         if (os != null && os.startsWith("Mac")) {
             menuBar.setUseSystemMenuBar(true);
         }
-        mainPane.setTop(new BorderPane(mainPane.getTop(), menuBar, null, null, null));
+        menuBar.getMenus().addAll(fileMenu, editMenu, findingsMenu, reportMenu);
+
+        this.menuBar = menuBar;
     }
 
     private MenuItem getMenuItem(String text, EventHandler<ActionEvent> actionEventEventHandler) {
@@ -151,7 +152,7 @@ public class CodeBrowserPane extends SplitPane {
         Menu menu = new Menu("Open Recent");
 
         List<File> recentFiles = UserProperties.getInstance("sokrates").getFileListProperty(RECENT_CONFIGURATION_FILES_PROPERTY);
-        int count[] = {0};
+        int[] count = {0};
         recentFiles.forEach(recentFile -> {
             if (recentFile.exists() && count[0]++ < 20) {
                 MenuItem menuItem = new MenuItem(recentFile.getPath());
@@ -280,5 +281,13 @@ public class CodeBrowserPane extends SplitPane {
 
     public AspectFilesBrowserPane getAspectFilesBrowserPane() {
         return aspectFilesBrowserPane;
+    }
+
+    public MenuBar getMenuBar() {
+        return menuBar;
+    }
+
+    public void setMenuBar(MenuBar menuBar) {
+        this.menuBar = menuBar;
     }
 }

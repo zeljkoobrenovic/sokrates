@@ -16,9 +16,13 @@ public class CodeExplorerToolbar extends ToolBar {
         getItems().add(new Separator());
         getItems().add(UXUtils.getButton(SvgIcons.SVG_COMPLETE, e -> codeBrowserPane.getCodeConfigurationView().completeAndSave(), "Save & Complete"));
         getItems().add(new Separator());
-        getItems().add(UXUtils.getButton(SvgIcons.SVG_RUN, e -> {
+        getItems().add(UXUtils.getButton(SvgIcons.SVG_REFRESH, e -> {
             codeBrowserPane.getCodeConfigurationView().completeAndSave();
             codeBrowserPane.load();
-        }, "Run analysis"));
+        }, "Refresh files"));
+        getItems().add(new Separator());
+        getItems().add(UXUtils.getButton(SvgIcons.SVG_RUN, e -> {
+            codeBrowserPane.getCodeConfigurationView().generateFullReport();
+        }, "Generate all reports"));
     }
 }
