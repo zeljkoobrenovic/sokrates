@@ -46,11 +46,14 @@ public class OverviewReportGenerator {
                 new NumericMetric(generatedName, codeAnalysisResults.getGeneratedAspectAnalysisResults().getLinesOfCode()),
                 new NumericMetric(buildName, codeAnalysisResults.getBuildAndDeployAspectAnalysisResults().getLinesOfCode()),
                 new NumericMetric(otherName, codeAnalysisResults.getOtherAspectAnalysisResults().getLinesOfCode()));
-        List<NumericMetric> counts = Arrays.asList(new NumericMetric(mainName, codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode()),
+
+        List<NumericMetric> counts = Arrays.asList(new NumericMetric(mainName,
+                        codeAnalysisResults.getMainAspectAnalysisResults().getFilesCount()),
                 new NumericMetric(testName, codeAnalysisResults.getTestAspectAnalysisResults().getFilesCount()),
                 new NumericMetric(generatedName, codeAnalysisResults.getGeneratedAspectAnalysisResults().getFilesCount()),
                 new NumericMetric(buildName, codeAnalysisResults.getBuildAndDeployAspectAnalysisResults().getFilesCount()),
                 new NumericMetric(otherName, codeAnalysisResults.getOtherAspectAnalysisResults().getFilesCount()));
+
         List<AspectAnalysisResults> aspects = Arrays.asList(codeAnalysisResults.getMainAspectAnalysisResults(),
                 codeAnalysisResults.getTestAspectAnalysisResults(),
                 codeAnalysisResults.getGeneratedAspectAnalysisResults(),
