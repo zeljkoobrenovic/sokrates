@@ -64,6 +64,7 @@ public class ScopingConventions {
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]cvsignore", "", "CVS configuration files"));
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]git[a-z]+", "", "Git configuration files"));
         buildAndDeploymentFilesConventions.add(new Convention(".*([.]|/)webpack([.]|/).*", "", "Webpack configuration files"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]csproj", "", "C# project files"));
     }
 
     private void addGeneratedConventions() {
@@ -101,6 +102,7 @@ public class ScopingConventions {
         ignoredFilesConventions.add(new Convention(".*/node_modules/.*", "", "Node modules"));
         ignoredFilesConventions.add(new Convention(".*/bower_components/.*", "", "Bower components"));
         ignoredFilesConventions.add(new Convention(".*/target/.*", "", "Compiled files"));
+        ignoredFilesConventions.add(new Convention(".*/dist/.*", "", "Binaries for distribution"));
         ignoredFilesConventions.add(new Convention("(?i).*bootstrap[.]css", "", "Bootstrap CSS files"));
         ignoredFilesConventions.add(new Convention("(?i).*/jquery.*[.]js", "", "jQuery files"));
         ignoredFilesConventions.add(new Convention(".*/sokrates[.]json", "", "Sokrates configuration"));

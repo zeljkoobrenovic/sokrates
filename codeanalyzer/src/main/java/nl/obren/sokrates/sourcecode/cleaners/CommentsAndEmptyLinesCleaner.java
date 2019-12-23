@@ -81,4 +81,11 @@ public class CommentsAndEmptyLinesCleaner {
         return SourceCodeCleanerUtils.cleanEmptyLinesWithLineIndexes(rawContent);
     }
 
+    public List<CodeBlockParser> getCodeBlockParsers() {
+        return codeBlockParsers;
+    }
+
+    public void setCodeBlockParsers(List<CodeBlockParser> codeBlockParsers) {
+        this.codeBlockParsers = codeBlockParsers;
+    }
 }
