@@ -87,6 +87,7 @@ public class ScopingConventions {
         testFilesConventions.add(new Convention(".*[-]tests[-].*", "", defaultNote));
         testFilesConventions.add(new Convention(".*__test__.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*__tests__.*", "", defaultNote));
+        testFilesConventions.add(new Convention(".*[.]feature", "", defaultNote));
         testFilesConventions.add(new Convention(".*[.]lint[-]test", "", defaultNote));
         testFilesConventions.add(new Convention(".*[.]lint[-]tests", "", defaultNote));
         testFilesConventions.add(new Convention(".*[.]spec[.]ts", "", defaultNote));

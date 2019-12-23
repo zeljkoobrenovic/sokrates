@@ -15,6 +15,7 @@ import nl.obren.sokrates.sourcecode.units.UnitInfo;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class RubyAnalyzer extends LanguageAnalyzer {
@@ -59,17 +60,13 @@ public class RubyAnalyzer extends LanguageAnalyzer {
     @Override
     public List<UnitInfo> extractUnits(SourceFile sourceFile) {
         List<UnitInfo> units = new ArrayList<>();
-        return units;
-    }
 
-    public List<UnitInfo> extractUnitsWrong(SourceFile sourceFile) {
-        List<UnitInfo> units = new ArrayList<>();
+        List<String> lines = Arrays.asList(getCleaner().cleanRaw(sourceFile.getContent()).split("\n"));
 
-        List<String> lines = sourceFile.getLines();
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i).replace("\t", "    ");
             String trimmedLine = line.trim();
-            if (trimmedLine.startsWith("def ")) {
+            if (trimmedLine.startsWith("def ") && !trimmedLine.endsWith(" end") && !trimmedLine.endsWith(";end")) {
                 UnitInfo unit = getUnitInfo(sourceFile, line, trimmedLine);
                 unit.setStartLine(i);
 
@@ -81,7 +78,7 @@ public class RubyAnalyzer extends LanguageAnalyzer {
                 do {
                     body.append(lines.get(i) + "\n");
                     bodyLine = lines.get(i).replace("\t", "   ");
-                    if (!bodyLine.trim().isEmpty() && !bodyLine.trim().startsWith("#")) {
+                    if (!bodyLine.trim().isEmpty()) {
                         loc++;
                         cleanBody.append(lines.get(i) + "\n");
                     }

@@ -41,7 +41,6 @@ public class RubyAnalyzerTest {
             "  return product\n" +
             "end";
     @Test
-    @Ignore
     public void extractUnits() throws Exception {
         RubyAnalyzer analyzer = new RubyAnalyzer();
         List<UnitInfo> units = analyzer.extractUnits(new SourceFile(new File("dummy.rb"), CODE_WITH_UNIT));
