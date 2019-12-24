@@ -19,6 +19,7 @@ import nl.obren.sokrates.sourcecode.lang.java.JavaAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.js.JavaScriptAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.kotlin.KotlinAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.scss.ScssAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.shell.ShellAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.sql.SqlAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.ts.TypeScriptAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.json.JsonAnalyzer;
@@ -33,6 +34,7 @@ import nl.obren.sokrates.sourcecode.lang.scala.ScalaAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.swift.SwiftAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.vb.VisualBasicAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.xml.XmlAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.yaml.YamlAnalyzer;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -94,6 +96,11 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("kt", KotlinAnalyzer.class);
         analyzersMap.put("kts", KotlinAnalyzer.class);
         analyzersMap.put("sql", SqlAnalyzer.class);
+        analyzersMap.put("sh", ShellAnalyzer.class);
+        analyzersMap.put("zsh", ShellAnalyzer.class);
+        analyzersMap.put("bash", ShellAnalyzer.class);
+        analyzersMap.put("yml", YamlAnalyzer.class);
+        analyzersMap.put("yaml", YamlAnalyzer.class);
     }
 
     public static LanguageAnalyzerFactory getInstance() {
