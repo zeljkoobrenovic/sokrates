@@ -18,7 +18,7 @@ public class ShellAnalyzerTest {
     public void cleanForLinesOfCodeCalculations() {
         ShellAnalyzer analyzer = new ShellAnalyzer();
 
-        CleanedContent cleanedContent = analyzer.cleanForLinesOfCodeCalculations(new SourceFile(new File("dummy.rb"), ShellCodeSamples.SAMPLE_1));
+        CleanedContent cleanedContent = analyzer.cleanForLinesOfCodeCalculations(new SourceFile(new File("dummy.sh"), ShellCodeSamples.SAMPLE_1));
 
         assertEquals(ShellCodeSamples.SAMPLE_1_CLEANED, cleanedContent.getCleanedContent());
     }
@@ -27,7 +27,7 @@ public class ShellAnalyzerTest {
     public void cleanForDuplicationCalculations() {
         ShellAnalyzer analyzer = new ShellAnalyzer();
 
-        CleanedContent cleanedContent = analyzer.cleanForDuplicationCalculations(new SourceFile(new File("dummy.rb"), ShellCodeSamples.SAMPLE_1));
+        CleanedContent cleanedContent = analyzer.cleanForDuplicationCalculations(new SourceFile(new File("dummy.sh"), ShellCodeSamples.SAMPLE_1));
 
         assertEquals(ShellCodeSamples.SAMPLE_1_CLEANED_FOR_DUPLICATION, cleanedContent.getCleanedContent());
     }

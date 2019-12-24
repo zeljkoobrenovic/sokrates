@@ -18,6 +18,7 @@ import nl.obren.sokrates.sourcecode.lang.html.HtmlAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.java.JavaAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.js.JavaScriptAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.kotlin.KotlinAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.r.RAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.scss.ScssAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.shell.ShellAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.sql.SqlAnalyzer;
@@ -72,6 +73,8 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("asp", HtmlAnalyzer.class);
         analyzersMap.put("aspx", HtmlAnalyzer.class);
         analyzersMap.put("xml", XmlAnalyzer.class);
+        analyzersMap.put("xaml", XmlAnalyzer.class);
+        analyzersMap.put("csproj", XmlAnalyzer.class);
         analyzersMap.put("pl", PerlAnalyzer.class);
         analyzersMap.put("pm", PerlAnalyzer.class);
         analyzersMap.put("rb", RubyAnalyzer.class);
@@ -101,6 +104,10 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("bash", ShellAnalyzer.class);
         analyzersMap.put("yml", YamlAnalyzer.class);
         analyzersMap.put("yaml", YamlAnalyzer.class);
+        analyzersMap.put("r", RAnalyzer.class);
+        analyzersMap.put("rds", RAnalyzer.class);
+        analyzersMap.put("rda", RAnalyzer.class);
+        analyzersMap.put("rdata", RAnalyzer.class);
     }
 
     public static LanguageAnalyzerFactory getInstance() {

@@ -20,7 +20,7 @@ public class YamlAnalyzerTest {
     public void cleanForLinesOfCodeCalculations() {
         YamlAnalyzer analyzer = new YamlAnalyzer();
 
-        CleanedContent cleanedContent = analyzer.cleanForLinesOfCodeCalculations(new SourceFile(new File("dummy.rb"), YamlCodeSamples.SAMPLE_1));
+        CleanedContent cleanedContent = analyzer.cleanForLinesOfCodeCalculations(new SourceFile(new File("dummy.yml"), YamlCodeSamples.SAMPLE_1));
 
         assertEquals(YamlCodeSamples.SAMPLE_1_CLEANED, cleanedContent.getCleanedContent());
     }
@@ -29,7 +29,7 @@ public class YamlAnalyzerTest {
     public void cleanForDuplicationCalculations() {
         YamlAnalyzer analyzer = new YamlAnalyzer();
 
-        CleanedContent cleanedContent = analyzer.cleanForDuplicationCalculations(new SourceFile(new File("dummy.rb"), YamlCodeSamples.SAMPLE_1));
+        CleanedContent cleanedContent = analyzer.cleanForDuplicationCalculations(new SourceFile(new File("dummy.yml"), YamlCodeSamples.SAMPLE_1));
 
         assertEquals(YamlCodeSamples.SAMPLE_1_CLEANED_FOR_DUPLICATION, cleanedContent.getCleanedContent());
     }

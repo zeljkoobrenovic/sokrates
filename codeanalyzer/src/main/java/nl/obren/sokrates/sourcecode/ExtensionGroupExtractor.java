@@ -32,7 +32,9 @@ public class ExtensionGroupExtractor {
             "plist", "json", "thrift", "feature", "txt", "gradle", "xsl",
             "meta", "mat", "prefab", "asset", "unity",
             "shader", "cginc", "controller", "physicmaterial", "rendertexture",
-            "cubemap", "mixer");
+            "cubemap", "mixer",
+            "gitignore", "gitattributes", "manifest"
+    );
     private static final List<String> knownBinaryExtensions = Arrays.asList("3ds", "3g2", "3gp", "7z", "a", "aac", "adp",
             "ai", "aif", "aiff", "alz", "ape", "apk", "ar", "arj", "asf", "au", "avi", "bak", "bh", "bin", "bk", "bmp",
             "btif", "bz2", "bzip2", "cab", "caf", "cgm", "class", "cmx", "cpio", "cr2", "csv", "cur", "dat", "deb", "dex",
