@@ -18,6 +18,7 @@ import nl.obren.sokrates.sourcecode.lang.groovy.GroovyAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.html.HtmlAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.java.JavaAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.js.JavaScriptAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.julia.JuliaAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.kotlin.KotlinAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.r.RAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.scss.ScssAnalyzer;
@@ -110,6 +111,7 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("rds", RAnalyzer.class);
         analyzersMap.put("rda", RAnalyzer.class);
         analyzersMap.put("rdata", RAnalyzer.class);
+        analyzersMap.put("jl", JuliaAnalyzer.class);
     }
 
     public static LanguageAnalyzerFactory getInstance() {
