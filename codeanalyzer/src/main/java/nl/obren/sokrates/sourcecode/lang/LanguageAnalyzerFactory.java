@@ -12,6 +12,7 @@ import nl.obren.sokrates.sourcecode.lang.cpp.CAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.cpp.CppAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.csharp.CSharpAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.css.CssAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.d.DAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.go.GoLangAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.groovy.GroovyAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.html.HtmlAnalyzer;
@@ -58,6 +59,7 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("cs", CSharpAnalyzer.class);
         analyzersMap.put("c", CAnalyzer.class);
         analyzersMap.put("h", CAnalyzer.class);
+        analyzersMap.put("d", DAnalyzer.class);
         analyzersMap.put("cpp", CppAnalyzer.class);
         analyzersMap.put("cc", CppAnalyzer.class);
         analyzersMap.put("hpp", CppAnalyzer.class);
