@@ -73,10 +73,6 @@ public class UnitUtils {
                         if (logicalComponents.size() > 0)
                             return logicalComponents.get(0).getName();
                         else {
-                            System.out.println(logicalDecomposition.getName());
-                            System.out.println(unit.getSourceFile().getRelativePath());
-                            System.out.println(unit.getSourceFile().getLogicalComponents().size());
-                            System.out.println();
                             return "";
                         }
                     }
