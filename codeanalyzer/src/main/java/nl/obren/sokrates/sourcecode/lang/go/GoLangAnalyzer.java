@@ -45,7 +45,7 @@ public class GoLangAnalyzer extends LanguageAnalyzer {
         CommentsAndEmptyLinesCleaner cleaner = getCleaner();
         cleaner.addCommentBlockHelper("import (", ")", "");
 
-        String content = cleaner.cleanRaw(sourceFile.getContent());
+        String content = cleaner.cleanKeepEmptyLines(sourceFile.getContent());
 
         content = SourceCodeCleanerUtils.trimLines(content);
         content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("import .*", content);

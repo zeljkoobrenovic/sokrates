@@ -38,7 +38,7 @@ public class JavaAnalyzer extends LanguageAnalyzer {
 
     @Override
     public CleanedContent cleanForDuplicationCalculations(SourceFile sourceFile) {
-        String content = getCleaner().cleanRaw(sourceFile.getContent());
+        String content = getCleaner().cleanKeepEmptyLines(sourceFile.getContent());
 
         content = SourceCodeCleanerUtils.trimLines(content);
         content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("import .*;", content);

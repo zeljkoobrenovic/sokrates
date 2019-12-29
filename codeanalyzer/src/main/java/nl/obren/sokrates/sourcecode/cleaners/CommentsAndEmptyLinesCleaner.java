@@ -46,7 +46,7 @@ public class CommentsAndEmptyLinesCleaner {
         codeBlockParsers.add(new CodeBlockParser(startMarker, endMarker, escapeMarker, true));
     }
 
-    public String cleanRaw(String originalContent) {
+    public String cleanKeepEmptyLines(String originalContent) {
         this.content = SourceCodeCleanerUtils.normalizeLineEnds(originalContent);
 
         while (true) {
@@ -74,7 +74,7 @@ public class CommentsAndEmptyLinesCleaner {
     }
 
     public CleanedContent clean(String originalContent) {
-        String rawContent = cleanRaw(originalContent);
+        String rawContent = cleanKeepEmptyLines(originalContent);
         return SourceCodeCleanerUtils.cleanEmptyLinesWithLineIndexes(rawContent);
     }
 

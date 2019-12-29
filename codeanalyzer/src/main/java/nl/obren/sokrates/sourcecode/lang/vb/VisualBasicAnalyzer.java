@@ -7,7 +7,6 @@ package nl.obren.sokrates.sourcecode.lang.vb;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
-import nl.obren.sokrates.sourcecode.cleaners.CodeBlockParser;
 import nl.obren.sokrates.sourcecode.cleaners.CommentsAndEmptyLinesCleaner;
 import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
 import nl.obren.sokrates.sourcecode.dependencies.DependenciesAnalysis;
@@ -41,12 +40,8 @@ public class VisualBasicAnalyzer extends LanguageAnalyzer {
     }
 
     private CommentsAndEmptyLinesCleaner getCommentsAndEmptyLinesCleanerExtraString() {
-        CommentsAndEmptyLinesCleaner cleaner = new CommentsAndEmptyLinesCleaner();
-
-        cleaner.addCommentBlockHelper("\n REM ", "\n");
-        cleaner.addCommentBlockHelper("'", "\n");
-        cleaner.getCodeBlockParsers().add(new CodeBlockParser("\"", "\"", "\"", true));
-
+        CommentsAndEmptyLinesCleaner cleaner = getCommentsAndEmptyLinesCleaner();
+        cleaner.getCodeBlockParsers().forEach(codeBlockParser -> codeBlockParser.setRemoveWhenCleaning(true));
         return cleaner;
     }
 
@@ -54,7 +49,7 @@ public class VisualBasicAnalyzer extends LanguageAnalyzer {
     public CleanedContent cleanForDuplicationCalculations(SourceFile sourceFile) {
         CommentsAndEmptyLinesCleaner cleaner = getCommentsAndEmptyLinesCleaner();
 
-        String content = cleaner.cleanRaw(sourceFile.getContent());
+        String content = cleaner.cleanKeepEmptyLines(sourceFile.getContent());
         content = SourceCodeCleanerUtils.trimLines(content);
         content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("[ ]*End [A-Z][a-z]+[ ]*", content);
         content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("[ ]*Imports .*", content);
@@ -67,7 +62,7 @@ public class VisualBasicAnalyzer extends LanguageAnalyzer {
         List<UnitInfo> units = new ArrayList<>();
 
         CommentsAndEmptyLinesCleaner cleaner = getCommentsAndEmptyLinesCleaner();
-        List<String> lines = Arrays.asList(cleaner.cleanRaw(sourceFile.getContent()).split("\n"));
+        List<String> lines = Arrays.asList(cleaner.cleanKeepEmptyLines(sourceFile.getContent()).split("\n"));
 
         List<String> unitEnds = Arrays.asList("End Sub", "End Function");
         int loc = 0;
@@ -120,7 +115,7 @@ public class VisualBasicAnalyzer extends LanguageAnalyzer {
 
     private void updateParamsAndMcCabeIndex(UnitInfo unit, String body) {
         CommentsAndEmptyLinesCleaner cleaner = getCommentsAndEmptyLinesCleanerExtraString();
-        String content = cleaner.cleanRaw(body);
+        String content = cleaner.cleanKeepEmptyLines(body);
 
         String bodyForSearch = " " + content.replace("\n", " ");
         bodyForSearch = bodyForSearch.replace("(", " (");

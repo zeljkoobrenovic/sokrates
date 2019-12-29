@@ -14,10 +14,10 @@ import java.util.List;
 
 import static junit.framework.TestCase.assertEquals;
 
-public class CAnalyzerTest {
+public class CStyleAnalyzerTest {
     @Test
     public void cleanForLinesOfCodeCalculations() throws Exception {
-        CAnalyzer analyzer = new CAnalyzer();
+        CStyleAnalyzer analyzer = new CStyleAnalyzer();
         String code = "if (opt.equals (\"e\"))\n" +
                 "   opt_enabled = true;\n" +
                 "   // opt_enabled = true;\n" +
@@ -33,7 +33,7 @@ public class CAnalyzerTest {
 
     @Test
     public void cleanForDuplicationCalculations() throws Exception {
-        CAnalyzer analyzer = new CAnalyzer();
+        CStyleAnalyzer analyzer = new CStyleAnalyzer();
         String code = "#include \"add.h\"\n" +
                 "\n" +
                 "int triple(int x)\n" +
@@ -52,7 +52,7 @@ public class CAnalyzerTest {
 
     @Test
     public void extractUnits1() throws Exception {
-        CAnalyzer analyzer = new CAnalyzer();
+        CStyleAnalyzer analyzer = new CStyleAnalyzer();
         String code = "#include \"add.h\"\n" +
                 "\n" +
                 "int triple(int x)\n" +
@@ -70,7 +70,7 @@ public class CAnalyzerTest {
 
     @Test
     public void extractUnitsMultiLine() throws Exception {
-        CAnalyzer analyzer = new CAnalyzer();
+        CStyleAnalyzer analyzer = new CStyleAnalyzer();
         String code = "#include \"add.h\"\n" +
                 "\n" +
                 "int triple(int x)\n" +
@@ -90,7 +90,7 @@ public class CAnalyzerTest {
 
     @Test
     public void extractUnits2() throws Exception {
-        CAnalyzer analyzer = new CAnalyzer();
+        CStyleAnalyzer analyzer = new CStyleAnalyzer();
         String code = "#include <stdio.h>\n" +
                 " \n" +
                 "/* function declaration */\n" +

@@ -42,7 +42,7 @@ public class ScalaAnalyzer extends LanguageAnalyzer {
     public CleanedContent cleanForDuplicationCalculations(SourceFile sourceFile) {
         CommentsAndEmptyLinesCleaner cleaner = getCommentsAndEmptyLinesCleaner();
 
-        String content = cleaner.cleanRaw(sourceFile.getContent());
+        String content = cleaner.cleanKeepEmptyLines(sourceFile.getContent());
         content = SourceCodeCleanerUtils.trimLines(content);
         content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("package .*", content);
         content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("import .*", content);

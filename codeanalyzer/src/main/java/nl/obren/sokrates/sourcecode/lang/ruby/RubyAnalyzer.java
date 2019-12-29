@@ -50,7 +50,7 @@ public class RubyAnalyzer extends LanguageAnalyzer {
 
     @Override
     public CleanedContent cleanForDuplicationCalculations(SourceFile sourceFile) {
-        String content = getCleaner().cleanRaw(sourceFile.getContent());
+        String content = getCleaner().cleanKeepEmptyLines(sourceFile.getContent());
 
         content = SourceCodeCleanerUtils.trimLines(content);
 
@@ -61,7 +61,7 @@ public class RubyAnalyzer extends LanguageAnalyzer {
     public List<UnitInfo> extractUnits(SourceFile sourceFile) {
         List<UnitInfo> units = new ArrayList<>();
 
-        List<String> lines = Arrays.asList(getCleaner().cleanRaw(sourceFile.getContent()).split("\n"));
+        List<String> lines = Arrays.asList(getCleaner().cleanKeepEmptyLines(sourceFile.getContent()).split("\n"));
 
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i).replace("\t", "    ");

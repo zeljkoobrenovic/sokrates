@@ -12,6 +12,7 @@ import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
 import nl.obren.sokrates.sourcecode.dependencies.DependenciesAnalysis;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,10 +23,10 @@ public class JuliaAnalyzer extends LanguageAnalyzer {
 
     @Override
     public CleanedContent cleanForLinesOfCodeCalculations(SourceFile sourceFile) {
-        return getCleaner().clean(sourceFile.getContent());
+        return getCommentsAndEmptyLinesCleaner().clean(sourceFile.getContent());
     }
 
-    private CommentsAndEmptyLinesCleaner getCleaner() {
+    protected CommentsAndEmptyLinesCleaner getCommentsAndEmptyLinesCleaner() {
         CommentsAndEmptyLinesCleaner cleaner = new CommentsAndEmptyLinesCleaner();
 
         cleaner.addCommentBlockHelper("#=", "=#");
@@ -39,7 +40,7 @@ public class JuliaAnalyzer extends LanguageAnalyzer {
 
     @Override
     public CleanedContent cleanForDuplicationCalculations(SourceFile sourceFile) {
-        String content = getCleaner().cleanRaw(sourceFile.getContent());
+        String content = getCommentsAndEmptyLinesCleaner().cleanKeepEmptyLines(sourceFile.getContent());
 
         content = SourceCodeCleanerUtils.trimLines(content);
 
@@ -48,7 +49,8 @@ public class JuliaAnalyzer extends LanguageAnalyzer {
 
     @Override
     public List<UnitInfo> extractUnits(SourceFile sourceFile) {
-        return new ArrayList<>();
+        String rawContent = getCommentsAndEmptyLinesCleaner().cleanKeepEmptyLines(sourceFile.getContent());
+        return new JuliaUnitsExtractor(sourceFile, rawContent, this).extractUnits();
     }
 
 
@@ -56,6 +58,8 @@ public class JuliaAnalyzer extends LanguageAnalyzer {
     public DependenciesAnalysis extractDependencies(List<SourceFile> sourceFiles, ProgressFeedback progressFeedback) {
         return new DependenciesAnalysis();
     }
+
+
 
     @Override
     public List<String> getFeaturesDescription() {

@@ -8,7 +8,7 @@ import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.analysis.AnalyzerOverride;
 import nl.obren.sokrates.sourcecode.lang.clojure.ClojureLangAnalyzer;
-import nl.obren.sokrates.sourcecode.lang.cpp.CAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.cpp.CStyleAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.cpp.CppAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.csharp.CSharpAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.css.CssAnalyzer;
@@ -21,6 +21,7 @@ import nl.obren.sokrates.sourcecode.lang.js.JavaScriptAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.julia.JuliaAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.kotlin.KotlinAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.r.RAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.rust.RustAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.scss.ScssAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.shell.ShellAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.sql.SqlAnalyzer;
@@ -58,13 +59,14 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("java", JavaAnalyzer.class);
         analyzersMap.put("go", GoLangAnalyzer.class);
         analyzersMap.put("cs", CSharpAnalyzer.class);
-        analyzersMap.put("c", CAnalyzer.class);
-        analyzersMap.put("h", CAnalyzer.class);
+        analyzersMap.put("c", CStyleAnalyzer.class);
+        analyzersMap.put("h", CStyleAnalyzer.class);
         analyzersMap.put("d", DAnalyzer.class);
         analyzersMap.put("cpp", CppAnalyzer.class);
         analyzersMap.put("cc", CppAnalyzer.class);
         analyzersMap.put("hpp", CppAnalyzer.class);
         analyzersMap.put("m", CppAnalyzer.class);
+        analyzersMap.put("dart", CppAnalyzer.class);
         analyzersMap.put("php", PhpAnalyzer.class);
         analyzersMap.put("py", PythonAnalyzer.class);
         analyzersMap.put("js", JavaScriptAnalyzer.class);
@@ -112,6 +114,8 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("rda", RAnalyzer.class);
         analyzersMap.put("rdata", RAnalyzer.class);
         analyzersMap.put("jl", JuliaAnalyzer.class);
+        analyzersMap.put("rs", RustAnalyzer.class);
+        analyzersMap.put("rlib", RustAnalyzer.class);
     }
 
     public static LanguageAnalyzerFactory getInstance() {

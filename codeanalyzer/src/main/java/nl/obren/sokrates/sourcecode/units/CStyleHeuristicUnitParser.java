@@ -12,6 +12,7 @@ import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,6 +27,17 @@ public class CStyleHeuristicUnitParser {
     private List<String> normalLines;
     private List<String> cleanedLines;
     private List<UnitInfo> previousUnits;
+
+    private List<String> mcCabeIndexLiterals = Arrays.asList(
+            " if ",
+            " while ",
+            " for ",
+            " foreach ",
+            "case ",
+            "&&",
+            "||",
+            " ? ",
+            " catch ");
 
     // for languages with embedded units (e.g. JavaScript functions)
     public void setExtractRecursively(boolean extractRecursively) {
@@ -203,15 +215,9 @@ public class CStyleHeuristicUnitParser {
         bodyForSearch = bodyForSearch.replace("{", " {");
 
         int mcCabeIndex = 1;
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " if ");
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " while ");
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " for ");
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " foreach ");
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, "case ");
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, "&&");
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, "||");
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " ? ");
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " catch ");
+        for (String mcCabeIndexLiteral : mcCabeIndexLiterals) {
+            mcCabeIndex += StringUtils.countMatches(bodyForSearch, mcCabeIndexLiteral);
+        }
 
         return mcCabeIndex;
     }
@@ -262,5 +268,13 @@ public class CStyleHeuristicUnitParser {
             }
         }
         return false;
+    }
+
+    public List<String> getMcCabeIndexLiterals() {
+        return mcCabeIndexLiterals;
+    }
+
+    public void setMcCabeIndexLiterals(List<String> mcCabeIndexLiterals) {
+        this.mcCabeIndexLiterals = mcCabeIndexLiterals;
     }
 }

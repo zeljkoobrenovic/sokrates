@@ -2,7 +2,7 @@
  * Copyright (c) 2019 Željko Obrenović. All rights reserved.
  */
 
-package nl.obren.sokrates.sourcecode.lang.cpp;
+package nl.obren.sokrates.sourcecode.lang.rust;
 
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SourceFile;
@@ -15,10 +15,11 @@ import nl.obren.sokrates.sourcecode.units.CStyleHeuristicUnitParser;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-public class CAnalyzer extends LanguageAnalyzer {
-    public CAnalyzer() {
+public class RustAnalyzer extends LanguageAnalyzer {
+    public RustAnalyzer() {
     }
 
     @Override
@@ -29,20 +30,19 @@ public class CAnalyzer extends LanguageAnalyzer {
     private CommentsAndEmptyLinesCleaner getCleaner() {
         CommentsAndEmptyLinesCleaner cleaner = new CommentsAndEmptyLinesCleaner();
 
-        cleaner.addCommentBlockHelper("/*", "*/");
         cleaner.addCommentBlockHelper("//", "\n");
         cleaner.addStringBlockHelper("\"", "\\");
         cleaner.addStringBlockHelper("'", "\\");
-
         return cleaner;
     }
 
     @Override
     public CleanedContent cleanForDuplicationCalculations(SourceFile sourceFile) {
-        String content = getCleaner().cleanRaw(sourceFile.getContent());
+        String content = getCleaner().cleanKeepEmptyLines(sourceFile.getContent());
 
         content = SourceCodeCleanerUtils.trimLines(content);
-        content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("[#].*", content);
+        content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("import .*;", content);
+        content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("package .*", content);
         content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("[{]", content);
         content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("[}]", content);
 
@@ -51,7 +51,22 @@ public class CAnalyzer extends LanguageAnalyzer {
 
     @Override
     public List<UnitInfo> extractUnits(SourceFile sourceFile) {
-        return new CStyleHeuristicUnitParser().extractUnits(sourceFile);
+        CStyleHeuristicUnitParser heuristicUnitParser = new CStyleHeuristicUnitParser() {
+            @Override
+            public boolean isUnitSignature(String line) {
+                return line.replace("\t", " ").trim().startsWith("fn ");
+            }
+        };
+        heuristicUnitParser.setMcCabeIndexLiterals(Arrays.asList(
+                " if ",
+                " loop ",
+                " while ",
+                " for ",
+                "case ",
+                "&&",
+                "||",
+                " catch "));
+        return heuristicUnitParser.extractUnits(sourceFile);
     }
 
 

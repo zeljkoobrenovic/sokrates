@@ -67,7 +67,7 @@ public class PerlAnalyzer extends LanguageAnalyzer {
 
     @Override
     public CleanedContent cleanForDuplicationCalculations(SourceFile sourceFile) {
-        String content = getCleaner().cleanRaw(removePerlBlockComments(sourceFile));
+        String content = getCleaner().cleanKeepEmptyLines(removePerlBlockComments(sourceFile));
 
         content = SourceCodeCleanerUtils.trimLines(content);
         content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("use .*;", content);
