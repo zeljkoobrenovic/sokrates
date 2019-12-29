@@ -20,6 +20,7 @@ import nl.obren.sokrates.sourcecode.lang.java.JavaAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.js.JavaScriptAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.julia.JuliaAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.kotlin.KotlinAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.lua.LuaAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.r.RAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.rust.RustAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.scss.ScssAnalyzer;
@@ -60,6 +61,7 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("go", GoLangAnalyzer.class);
         analyzersMap.put("cs", CSharpAnalyzer.class);
         analyzersMap.put("c", CStyleAnalyzer.class);
+        analyzersMap.put("lua", LuaAnalyzer.class);
         analyzersMap.put("h", CStyleAnalyzer.class);
         analyzersMap.put("d", DAnalyzer.class);
         analyzersMap.put("cpp", CppAnalyzer.class);
