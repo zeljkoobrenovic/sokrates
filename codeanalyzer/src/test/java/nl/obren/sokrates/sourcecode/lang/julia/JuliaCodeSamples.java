@@ -76,4 +76,52 @@ public class JuliaCodeSamples {
             "end\n" +
             "return howfar\n" +
             "end";
+
+    protected final static String BIG_FRAGMENT =
+            "# This is basically a hack while we don't have a working `ldiv!`.\n" +
+                    "@adjoint function \\(A::Cholesky, B::AbstractVecOrMat)\n" +
+                    "  Y, back = Zygote.pullback((U, B)->U \\ (U' \\ B), A.U, B)\n" +
+                    "  return Y, function(Ȳ)\n" +
+                    "    Ā_factors, B̄ = back(Ȳ)\n" +
+                    "    return ((uplo=nothing, status=nothing, factors=Ā_factors), B̄)\n" +
+                    "  end\n" +
+                    "end\n" +
+                    "\n" +
+                    "# Implementation due to Seeger, Matthias, et al. \"Auto-differentiating linear algebra.\"\n" +
+                    "@adjoint function cholesky(Σ::Union{StridedMatrix, Symmetric{<:Real, <:StridedMatrix}})\n" +
+                    "  C = cholesky(Σ)\n" +
+                    "  return C, function(Δ::NamedTuple)\n" +
+                    "    U, Ū = C.U, Δ.factors\n" +
+                    "    Σ̄ = Ū * U'\n" +
+                    "    Σ̄ = copytri!(Σ̄, 'U')\n" +
+                    "    Σ̄ = ldiv!(U, Σ̄)\n" +
+                    "    BLAS.trsm!('R', 'U', 'T', 'N', one(eltype(Σ)), U.data, Σ̄)\n" +
+                    "    @inbounds for n in diagind(Σ̄)\n" +
+                    "      Σ̄[n] /= 2\n" +
+                    "    end\n" +
+                    "    return (UpperTriangular(Σ̄),)\n" +
+                    "  end\n" +
+                    "end";
+    protected final static String BIG_FRAGMENT_CLEANED =
+            "@adjoint function \\(A::Cholesky, B::AbstractVecOrMat)\n" +
+                    "  Y, back = Zygote.pullback((U, B)->U \\ (U' \\ B), A.U, B)\n" +
+                    "  return Y, function(Ȳ)\n" +
+                    "    Ā_factors, B̄ = back(Ȳ)\n" +
+                    "    return ((uplo=nothing, status=nothing, factors=Ā_factors), B̄)\n" +
+                    "  end\n" +
+                    "end\n" +
+                    "@adjoint function cholesky(Σ::Union{StridedMatrix, Symmetric{<:Real, <:StridedMatrix}})\n" +
+                    "  C = cholesky(Σ)\n" +
+                    "  return C, function(Δ::NamedTuple)\n" +
+                    "    U, Ū = C.U, Δ.factors\n" +
+                    "    Σ̄ = Ū * U'\n" +
+                    "    Σ̄ = copytri!(Σ̄, 'U')\n" +
+                    "    Σ̄ = ldiv!(U, Σ̄)\n" +
+                    "    BLAS.trsm!('R', 'U', 'T', 'N', one(eltype(Σ)), U.data, Σ̄)\n" +
+                    "    @inbounds for n in diagind(Σ̄)\n" +
+                    "      Σ̄[n] /= 2\n" +
+                    "    end\n" +
+                    "    return (UpperTriangular(Σ̄),)\n" +
+                    "  end\n" +
+                    "end";
 }

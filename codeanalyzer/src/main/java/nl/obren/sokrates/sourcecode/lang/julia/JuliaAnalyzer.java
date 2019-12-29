@@ -33,7 +33,6 @@ public class JuliaAnalyzer extends LanguageAnalyzer {
         cleaner.addCommentBlockHelper("#", "\n");
         cleaner.addCommentBlockHelper("\"\"\"", "\"\"\"");
         cleaner.addStringBlockHelper("\"", "\\");
-        cleaner.addStringBlockHelper("'", "\\");
 
         return cleaner;
     }

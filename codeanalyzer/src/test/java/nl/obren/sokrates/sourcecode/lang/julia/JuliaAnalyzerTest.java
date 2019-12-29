@@ -26,6 +26,16 @@ public class JuliaAnalyzerTest {
 
         assertEquals(JuliaCodeSamples.FRAGMENT_1_CLEANED, cleanedContent.getCleanedContent());
     }
+    @Test
+    public void cleanForLinesOfCodeCalculationsBig() {
+        String code = JuliaCodeSamples.BIG_FRAGMENT;
+
+        JuliaAnalyzer analyzer = new JuliaAnalyzer();
+
+        CleanedContent cleanedContent = analyzer.cleanForLinesOfCodeCalculations(new SourceFile(new File(""), code));
+
+        assertEquals(JuliaCodeSamples.BIG_FRAGMENT_CLEANED, cleanedContent.getCleanedContent());
+    }
 
     @Test
     public void cleanForDuplicationCalculations() {
