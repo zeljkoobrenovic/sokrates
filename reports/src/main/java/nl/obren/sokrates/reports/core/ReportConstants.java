@@ -10,6 +10,7 @@ public class ReportConstants {
     public final static String REPORTS_HTML_HEADER = "<!DOCTYPE html>\n" +
             "<html lang=\"en\">\n" +
             "<head>\n" +
+            "    <meta charset=\"utf-8\">\n" +
             "    <style type=\"text/css\" media=\"all\">\n" +
             "        body {\n" +
             "            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;\n" +
