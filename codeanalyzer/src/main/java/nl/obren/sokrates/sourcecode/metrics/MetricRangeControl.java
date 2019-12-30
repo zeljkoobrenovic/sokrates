@@ -11,6 +11,15 @@ public class MetricRangeControl {
     private String description = "";
     private Range desiredRange = new Range();
 
+    public MetricRangeControl() {
+    }
+
+    public MetricRangeControl(String metric, String description, Range desiredRange) {
+        this.metric = metric;
+        this.description = description;
+        this.desiredRange = desiredRange;
+    }
+
     public String getMetric() {
         return metric;
     }

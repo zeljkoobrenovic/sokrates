@@ -9,9 +9,11 @@ import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
+import nl.obren.sokrates.reports.utils.ReportUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.DuplicationMetric;
+import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileSizeDistribution;
@@ -33,6 +35,7 @@ public class SummaryUtils {
         summarizeUnitSize(analysisResults, report);
         summarizeUnitComplexity(analysisResults, report);
         summarizeComponents(analysisResults, report);
+        summarizeGoals(analysisResults, report);
         addSummaryFindings(analysisResults, report);
         report.endTable();
     }
@@ -149,7 +152,7 @@ public class SummaryUtils {
         report.endDiv();
 
         report.startDiv("margin-left: 24px;font-size:90%;margin-bottom:46px");
-        summarizeComponents(refData, report);
+        summarizeGoals(refData, report);
         report.endDiv();
 
         report.startDiv("color:black");
@@ -239,6 +242,46 @@ public class SummaryUtils {
         });
         report.endTableCell();
         report.addTableCell("<a href='Components.html'>...</a>", "border: none");
+
+        report.endTableRow();
+    }
+
+    private String getControlColor(String status) {
+        String upperCaseStatus = status.toUpperCase();
+        return upperCaseStatus.equals("OK")
+                ? "darkgreen"
+                : upperCaseStatus.equals("FAILED")
+                ? "crimson"
+                : "orange";
+    }
+
+
+    private void summarizeGoals(CodeAnalysisResults analysisResults, RichTextReport report) {
+        report.startTableRow();
+        report.addTableCell(getIconSvg("goal"), "border: none");
+
+        report.startTableCell("border: none");
+        analysisResults.getControlResults().getGoalsAnalysisResults().forEach(goalsAnalysisResults -> {
+            goalsAnalysisResults.getControlStatuses().forEach(controlStatus -> {
+                report.addHtmlContent(ReportUtils.getSvgCircle(getControlColor(controlStatus.getStatus())) + " ");
+            });
+        });
+        report.endTableCell();
+
+        report.startTableCell("border: none");
+        report.addHtmlContent("Goals:");
+        boolean first[] = {true};
+        analysisResults.getControlResults().getGoalsAnalysisResults().forEach(goalsAnalysisResults -> {
+            if (!first[0]) {
+                report.addHtmlContent(", ");
+            } else {
+                first[0] = false;
+            }
+            MetricsWithGoal metricsWithGoal = goalsAnalysisResults.getMetricsWithGoal();
+            report.addHtmlContent(metricsWithGoal.getGoal() + " (" + metricsWithGoal.getControls().size() + ")");
+        });
+        report.endTableCell();
+        report.addTableCell("<a href='Controls.html'>...</a>", "border: none");
 
         report.endTableRow();
     }
