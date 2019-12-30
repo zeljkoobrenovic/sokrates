@@ -21,7 +21,7 @@ import nl.obren.sokrates.sourcecode.lang.js.JavaScriptAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.julia.JuliaAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.kotlin.KotlinAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.lua.LuaAnalyzer;
-import nl.obren.sokrates.sourcecode.lang.pascal.PascalAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.objectpascal.ObjectPascalAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.r.RAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.rust.RustAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.scss.ScssAnalyzer;
@@ -119,9 +119,9 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("jl", JuliaAnalyzer.class);
         analyzersMap.put("rs", RustAnalyzer.class);
         analyzersMap.put("rlib", RustAnalyzer.class);
-        analyzersMap.put("pas", PascalAnalyzer.class);
-        analyzersMap.put("pp", PascalAnalyzer.class);
-        analyzersMap.put("p", PascalAnalyzer.class);
+        analyzersMap.put("pas", ObjectPascalAnalyzer.class);
+        analyzersMap.put("pp", ObjectPascalAnalyzer.class);
+        analyzersMap.put("p", ObjectPascalAnalyzer.class);
     }
 
     public static LanguageAnalyzerFactory getInstance() {

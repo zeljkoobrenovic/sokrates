@@ -2,7 +2,7 @@
  * Copyright (c) 2019 Željko Obrenović. All rights reserved.
  */
 
-package nl.obren.sokrates.sourcecode.lang.pascal;
+package nl.obren.sokrates.sourcecode.lang.objectpascal;
 
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SourceFile;
@@ -16,8 +16,8 @@ import nl.obren.sokrates.sourcecode.units.UnitInfo;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PascalAnalyzer extends LanguageAnalyzer {
-    public PascalAnalyzer() {
+public class ObjectPascalAnalyzer extends LanguageAnalyzer {
+    public ObjectPascalAnalyzer() {
     }
 
     @Override
@@ -49,7 +49,8 @@ public class PascalAnalyzer extends LanguageAnalyzer {
 
     @Override
     public List<UnitInfo> extractUnits(SourceFile sourceFile) {
-        return new ArrayList<>();
+        String rawContent = getCommentsAndEmptyLinesCleaner().cleanKeepEmptyLines(sourceFile.getContent());
+        return new ObjectPascalUnitsExtractor(sourceFile, rawContent, this).extractUnits();
     }
 
 

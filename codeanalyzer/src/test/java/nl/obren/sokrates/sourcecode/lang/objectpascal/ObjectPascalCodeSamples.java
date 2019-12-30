@@ -2,9 +2,9 @@
  * Copyright (c) 2019 Željko Obrenović. All rights reserved.
  */
 
-package nl.obren.sokrates.sourcecode.lang.pascal;
+package nl.obren.sokrates.sourcecode.lang.objectpascal;
 
-public class PascalCodeSamples {
+public class ObjectPascalCodeSamples {
     protected final static String FRAGMENT_1 = "program ObjectPascalExample;\n" +
             "\n" +
             "   type\n" +
@@ -84,4 +84,40 @@ public class PascalCodeSamples {
             "HelloWorld2 := HelloWorld3;\n" +
             "Dispose(HelloWorld);\n" +
             "Dispose(HelloWorld3);";
+
+    protected final static String UNIT1 = "program ObjectPascalExample;\n" +
+            "\n" +
+            "type\n" +
+            "  THelloWorld = class\n" +
+            "    Put:procedure of object;\n" +
+            "  end;\n" +
+            "\n" +
+            "procedure THelloWorld.Put;\n" +
+            "begin\n" +
+            "  Writeln('Hello, World!');\n" +
+            "end;\n" +
+            "\n" +
+            "procedure THelloWorld.Free;\n" +
+            "begin\n" +
+            "   // dispose any pointers //\n" +
+            "end;\n" +
+            "\n" +
+            "procedure THelloWorld.Init(var Center:TKraftVector3;const Radius:TKraftScalar);\n" +
+            "begin\n" +
+            "   // initialize variables\n" +
+            "   // link methods (manual RTTI)\n" +
+            "   with Self do begin\n" +
+            "      TMethod(@Put):=[@THelloWorld.Put, @Self];\n" +
+            "      TMethod(@Free):=[@THelloWorld.Free, @Self];\n" +
+            "   End;\n" +
+            "end;\n" +
+            "\n" +
+            "var\n" +
+            "  HelloWorld: THelloWorld;               { this is an implicit pointer }\n" +
+            "\n" +
+            "begin\n" +
+            "  HelloWorld.Init;                       { self initialization (pointer to an object) of type THelloWorld }\n" +
+            "  HelloWorld.Put;\n" +
+            "  HelloWorld.Free;                       { this line deallocates the THelloWorld object pointed to by HelloWorld }\n" +
+            "end.";
 }
