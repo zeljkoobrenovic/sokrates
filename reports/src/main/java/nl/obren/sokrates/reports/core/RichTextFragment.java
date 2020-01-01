@@ -8,6 +8,7 @@ public class RichTextFragment {
     private String id = "";
     private String fragment = "";
     private String description = "";
+    private boolean show = true;
     private RichTextFragment.Type type = RichTextFragment.Type.HTML;
 
     public RichTextFragment() {
@@ -54,6 +55,14 @@ public class RichTextFragment {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public boolean isShow() {
+        return show;
+    }
+
+    public void setShow(boolean show) {
+        this.show = show;
     }
 
     public enum Type {HTML, GRAPHVIZ, SVG}

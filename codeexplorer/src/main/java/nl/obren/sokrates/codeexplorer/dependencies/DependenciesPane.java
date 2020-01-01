@@ -114,7 +114,7 @@ public class DependenciesPane extends BorderPane {
         if (renderGraphviz) {
             GraphvizDependencyRenderer renderer = new GraphvizDependencyRenderer();
             renderer.setOrientation(logicalDecomposition.getRenderingOptions().getOrientation());
-            renderer.append(GraphvizUtil.getSvgExternal(graphvizContent));
+            renderer.append(GraphvizUtil.getSvgFromDot(graphvizContent));
             dependenciesView.load(renderer.getHtmlContent(), graphvizContent);
         } else {
             dependenciesView.load("", graphvizContent);
@@ -278,7 +278,8 @@ public class DependenciesPane extends BorderPane {
             try {
                 GraphvizDependencyRenderer renderer = new GraphvizDependencyRenderer();
                 renderer.setOrientation(logicalDecomposition.getRenderingOptions().getOrientation());
-                renderer.append(GraphvizUtil.getSvgInternal(graphvizContent));
+                String svg = GraphvizUtil.getSvgFromDot(graphvizContent);
+                renderer.append(svg != null ? svg : "Could not render dependencies. Try to increase memory limits.");
                 htmlContent = renderer.getHtmlContent();
             } catch (Exception e) {
                 htmlContent = "";
@@ -296,7 +297,8 @@ public class DependenciesPane extends BorderPane {
         if (this.renderGraphviz) {
             GraphvizDependencyRenderer renderer = new GraphvizDependencyRenderer();
             renderer.setOrientation(logicalDecomposition.getRenderingOptions().getOrientation());
-            renderer.append(GraphvizUtil.getSvgInternal(graphvizContent));
+            String svg = GraphvizUtil.getSvgFromDot(graphvizContent);
+            renderer.append(svg != null ? svg : "Could not render dependencies. Try to increase memory limits.");
             htmlContent = renderer.getHtmlContent();
         }
         dependenciesView.load(htmlContent, graphvizContent);

@@ -169,6 +169,15 @@ public class RichTextReport {
         this.endDiv();
     }
 
+    public void addHiddenGraphvizFigure(String id, String description, String graphvizCode) {
+        this.startDiv("width: 100%; overflow: auto");
+        RichTextFragment fragment = new RichTextFragment(id, graphvizCode, RichTextFragment.Type.GRAPHVIZ);
+        fragment.setDescription(description);
+        fragment.setShow(false);
+        richTextFragments.add(fragment);
+        this.endDiv();
+    }
+
     public void addTableHeader(String... columns) {
         for (String column : columns) {
             addHtmlContent("<th>" + column + "</th>\n");

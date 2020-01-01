@@ -25,7 +25,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public final class GraphvizUtil {
     private static final Log LOG = LogFactory.getLog(GraphvizUtil.class);
 
-    private static boolean useExternalGrapnviz = false;
+    public static boolean useExternalGraphviz = true;
 
     static {
         Graphviz.useEngine(new GraphvizJdkEngine());
@@ -35,15 +35,19 @@ public final class GraphvizUtil {
 
     }
 
-    public static String getSvgExternal(String dotCode) {
-        if (useExternalGrapnviz) {
-            return getSvgExternal(dotCode, new String[]{});
+    public static String getSvgFromDot(String dotCode) {
+        if (useExternalGraphviz()) {
+            return getSvgFromDot(dotCode, new String[]{});
         } else {
             return getSvgInternal(dotCode);
         }
     }
 
-    public static String getSvgExternal(String dotCode, String extraDotArguments[]) {
+    private static boolean useExternalGraphviz() {
+        return useExternalGraphviz && GraphvizSettings.getGraphVizDotPath() != null;
+    }
+
+    public static String getSvgFromDot(String dotCode, String extraDotArguments[]) {
         File dotFile = null;
         try {
             dotFile = File.createTempFile("grapviz_dot_graph", ".dot");
@@ -68,7 +72,7 @@ public final class GraphvizUtil {
     public static String getSvgFromDotFileExternal(File dotFile, String extraDotArguments[]) {
         File svgFile = null;
         try {
-            svgFile = File.createTempFile("sat_calls_dot_image", ".svg");
+            svgFile = File.createTempFile("dependencies_dot_image", ".svg");
             List<String> dotArguments = getDotParameters(dotFile, svgFile);
             Collections.addAll(dotArguments, extraDotArguments);
             runDot(dotArguments);
@@ -90,11 +94,12 @@ public final class GraphvizUtil {
     }
 
 
-    public static String getSvgInternal(String dotCode) {
+    private static String getSvgInternal(String dotCode) {
         try {
-            MutableGraph g = Parser.read(dotCode);
+            Parser parser = new Parser();
+            MutableGraph g = parser.read(dotCode);
             Graphviz graphviz = Graphviz.fromGraph(g);
-            Graphviz graphvizStandardWidth = graphviz.width(700);
+            Graphviz graphvizStandardWidth = graphviz;
             Renderer renderSvg = graphvizStandardWidth.render(Format.SVG);
 
             String svg = renderSvg.toString();
@@ -108,6 +113,8 @@ public final class GraphvizUtil {
         } catch (IOException e) {
             LOG.error(e);
         } catch (Exception e) {
+            LOG.error(e);
+        } catch (Throwable e) {
             LOG.error(e);
         }
 
@@ -116,15 +123,13 @@ public final class GraphvizUtil {
 
     public static String saveToPngFileReturnSvg(String dotCode, File file) {
         try {
-            MutableGraph g = Parser.read(dotCode);
-            Graphviz graphviz = Graphviz.fromGraph(g);
-            Graphviz graphvizStandardWidth = graphviz.width(700);
+            String svg = getSvgFromDot(dotCode);
+            //MutableGraph g = new Parser().read(dotCode);
+            //Graphviz graphviz = Graphviz.fromGraph(g);
+            //Graphviz graphvizStandardWidth = graphviz;
 
-            Renderer renderPng = graphvizStandardWidth.render(Format.PNG);
-            renderPng.toFile(file);
-
-            Renderer renderSvg = graphvizStandardWidth.render(Format.SVG);
-            String svg = renderSvg.toString();
+            //Renderer renderPng = graphvizStandardWidth.render(Format.PNG);
+            //renderPng.toFile(file);
 
             int svgBeginIndex = svg.indexOf("<svg");
             if (svgBeginIndex >= 0) {
@@ -132,9 +137,7 @@ public final class GraphvizUtil {
             }
 
             return svg;
-        } catch (IOException e) {
-            LOG.error(e);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             LOG.error(e);
         }
 

@@ -90,6 +90,7 @@ public class GraphvizDependencyRenderer {
                 "        fontcolor=\"black\"\n" +
                 "        shape=\"box\"\n" +
                 "        style=\"filled\"\n" +
+                "        penwidth=\"1.0\"\n" +
                 "    ]\n" +
                 "    edge [\n" +
                 "        fontname=\"Arial\"\n" +
@@ -97,6 +98,7 @@ public class GraphvizDependencyRenderer {
                 "        fontcolor=\"black\"\n" +
                 "        fontsize=\"12\"\n" +
                 "        arrowsize=\"0.5\"\n" +
+                "        penwidth=\"1.0\"\n" +
                 "    ]\n";
     }
 

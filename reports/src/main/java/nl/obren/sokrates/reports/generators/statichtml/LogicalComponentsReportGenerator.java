@@ -198,8 +198,6 @@ public class LogicalComponentsReportGenerator {
     private void addDownloadLinks(String graphId) {
         report.startDiv("");
         report.addHtmlContent("Download: ");
-        report.addNewTabLink("PNG", "visuals/" + graphId + ".png");
-        report.addHtmlContent(" ");
         report.addNewTabLink("SVG", "visuals/" + graphId + ".svg");
         report.addHtmlContent(" ");
         report.addNewTabLink("DOT", "visuals/" + graphId + ".dot.txt");

@@ -39,12 +39,18 @@ public class ReportRenderer {
             if (shouldExportVisualToFile(reportRenderingClient, fragment)) {
                 renderAndSaveVisuals(reportRenderingClient, fragment);
             } else {
-                reportRenderingClient.append(GraphvizUtil.getSvgExternal(fragment.getFragment()) + "\n");
+                if (fragment.isShow()) {
+                    reportRenderingClient.append(GraphvizUtil.getSvgFromDot(fragment.getFragment()) + "\n");
+                }
             }
         } else if (fragment.getType() == RichTextFragment.Type.SVG) {
-            reportRenderingClient.append(fragment.getFragment() + "\n");
+            if (fragment.isShow()) {
+                reportRenderingClient.append(fragment.getFragment() + "\n");
+            }
         } else {
-            reportRenderingClient.append(fragment.getFragment() + "\n");
+            if (fragment.isShow()) {
+                reportRenderingClient.append(fragment.getFragment() + "\n");
+            }
         }
     }
 
@@ -56,11 +62,11 @@ public class ReportRenderer {
             File dotFile = new File(folder, id + ".dot.txt");
             FileUtils.write(dotFile, fragment.getFragment(), StandardCharsets.UTF_8);
 
-            File pngFile = new File(folder, id + ".png");
+            String svgContent = GraphvizUtil.getSvgFromDot(fragment.getFragment());
 
-            String svgContent = GraphvizUtil.saveToPngFileReturnSvg(fragment.getFragment(), pngFile);
-
-            reportRenderingClient.append(svgContent + "\n");
+            if (fragment.isShow()) {
+                reportRenderingClient.append(svgContent + "\n");
+            }
 
             File svgFile = new File(folder, id + ".svg");
             FileUtils.write(svgFile, svgContent, StandardCharsets.UTF_8);
@@ -78,7 +84,7 @@ public class ReportRenderer {
         List<Figure> figures = new ArrayList<>();
         richTextReport.getRichTextFragments().forEach(fragment -> {
             if (fragment.getType() == RichTextFragment.Type.GRAPHVIZ) {
-                Figure figure = new Figure(fragment.getDescription(), GraphvizUtil.getSvgExternal(fragment.getFragment()) + "\n");
+                Figure figure = new Figure(fragment.getDescription(), GraphvizUtil.getSvgFromDot(fragment.getFragment()) + "\n");
                 figure.setSource(fragment.getFragment());
                 figures.add(figure);
             } else if (fragment.getType() == RichTextFragment.Type.SVG) {
