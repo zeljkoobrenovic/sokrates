@@ -37,7 +37,8 @@ public final class GraphvizUtil {
 
     public static String getSvgFromDot(String dotCode) {
         if (useExternalGraphviz()) {
-            return getSvgFromDot(dotCode, new String[]{});
+            String svg = getSvgFromDot(dotCode, new String[]{});
+            return svg != null ? svg : getSvgInternal(dotCode);
         } else {
             return getSvgInternal(dotCode);
         }

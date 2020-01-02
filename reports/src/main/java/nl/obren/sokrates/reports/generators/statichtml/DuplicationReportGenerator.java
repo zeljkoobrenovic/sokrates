@@ -17,6 +17,7 @@ import nl.obren.sokrates.sourcecode.duplication.DuplicationDependenciesHelper;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
 import nl.obren.sokrates.sourcecode.metrics.DuplicationMetric;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,6 +39,7 @@ public class DuplicationReportGenerator {
     }
 
     public void getDuplicatesTable(RichTextReport report, List<DuplicationInstance> sourceFiles, String fragmentType) {
+        report.startDiv("width: 100%; overflow-x: auto");
         report.addHtmlContent("<table style='width: 80%'>\n");
         report.addHtmlContent("<th>Size</th><th>#</th><th>Folders</th><th>Files</th><th>Lines</th><th>Code</th>");
         int count[] = {0};
@@ -50,7 +52,9 @@ public class DuplicationReportGenerator {
 
             report.addHtmlContent("<td>" + instance.getBlockSize() + "</td>");
             report.addHtmlContent("<td>x&nbsp;" + instance.getDuplicatedFileBlocks().size() + "</td>");
-            report.addHtmlContent("<td>" + formatDisplayString(instance.getFoldersDisplayString()) + "</td>");
+            String folderString = formatDisplayString(instance.getFoldersDisplayString());
+            folderString = StringUtils.abbreviateMiddle(folderString, "...", 50);
+            report.addHtmlContent("<td>" + folderString + "</td>");
             boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
             report.addHtmlContent("<td>" + formatDisplayStringSimple(instance.getFilesDisplayString(cacheSourceFiles)) + "</td>");
             report.addHtmlContent("<td>" + formatDisplayString(instance.getLinesDisplayString()) + "</td>");
@@ -59,6 +63,7 @@ public class DuplicationReportGenerator {
             report.addHtmlContent("</tr>\n");
         });
         report.addHtmlContent("</table>\n");
+        report.endDiv();
     }
 
     private String formatDisplayStringSimple(String text) {
@@ -188,6 +193,7 @@ public class DuplicationReportGenerator {
         Collections.sort(componentDependencies, (o1, o2) -> o2.getCount() - o1.getCount());
 
         report.startShowMoreBlock("Show more details on duplication between components...");
+        report.startDiv("width: 100%; overflow-x: auto");
         report.startTable();
         report.addTableHeader("From Component<br/>&nbsp;--> To Component", "Duplicated<br/>Lines", "File Pairs", "Details");
 
@@ -213,6 +219,7 @@ public class DuplicationReportGenerator {
             report.endTableRow();
         });
         report.endTable();
+        report.endDiv();
         report.endShowMoreBlock();
     }
 

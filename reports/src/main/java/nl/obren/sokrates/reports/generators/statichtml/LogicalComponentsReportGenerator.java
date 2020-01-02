@@ -185,6 +185,7 @@ public class LogicalComponentsReportGenerator {
 
     private void addMoreDetailsSection(LogicalDecompositionAnalysisResults logicalDecomposition, List<ComponentDependency> componentDependencies) {
         report.startShowMoreBlock("Show more details about dependencies...");
+        report.startDiv("width: 100%; overflow-x: auto");
         report.startTable();
         report.addTableHeader("From Component<br/>&nbsp;--> To Component", "From Component<br/>(files with dependencies)", "Details");
         Collections.sort(componentDependencies, (o1, o2) -> o2.getCount() - o1.getCount());
@@ -192,6 +193,7 @@ public class LogicalComponentsReportGenerator {
             addDependencyRow(logicalDecomposition, componentDependency);
         });
         report.endTable();
+        report.endDiv();
         report.endShowMoreBlock();
     }
 
