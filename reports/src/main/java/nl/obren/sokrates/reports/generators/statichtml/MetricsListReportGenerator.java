@@ -24,6 +24,7 @@ public class MetricsListReportGenerator {
 
     private void addMetricsTable() {
         report.startSection("Metrics", "");
+        report.startDiv("width: 100%; overflow-x: auto");
         report.startTable();
         report.addTableHeader("Metric", "Value");
 
@@ -32,6 +33,7 @@ public class MetricsListReportGenerator {
         });
 
         report.endTable();
+        report.endDiv();
         report.endSection();
     }
 

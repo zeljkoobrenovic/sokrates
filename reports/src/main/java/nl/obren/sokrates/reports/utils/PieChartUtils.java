@@ -29,9 +29,12 @@ public class PieChartUtils {
         String joinedValues = values.stream().map(v -> FormattingUtils.getFormattedPercentage(100.0 * v.doubleValue() / totalValue) + "%").collect(Collectors.joining(" | "));
         String stackedBarSvg = chart.getStackedBarSvg(values, palette, distribution.getKey(), joinedValues);
 
-        String html = "";
+        String html = "<div style='width: 100%; overflow-x: auto'>";
         html += "<div>" + stackedBarSvg + "</div>";
-        html += "<div style='font-size:90%;margin-top:20px;width:100%;text-alight:right'>Legend: " + chart.getLegend(labels, palette) + "</div>";
+        html += "<div style='font-size:90%;margin-top:20px;width:100%;text-alight:right'>";
+        html += "Legend: " + chart.getLegend(labels, palette);
+        html += "</div>";
+        html += "</div>";
 
         return html;
     }

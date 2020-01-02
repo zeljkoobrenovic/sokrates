@@ -82,6 +82,7 @@ public class TrendReportGenerator {
             }
         });
         report.startSection("Summary: Code Volume Change", "");
+        report.startDiv("width: 100%; overflow-x: auto");
         report.startTable();
         report.addTableHeader("", "Main LOC", "", "Test LOC", "Duplication");
 
@@ -101,6 +102,7 @@ public class TrendReportGenerator {
             index[0]++;
         });
         report.endTable();
+        report.endDiv();
         report.endSection();
     }
 
@@ -133,6 +135,7 @@ public class TrendReportGenerator {
             new SummaryUtils().summarizeAndCompare(codeAnalysisResults, refData, report);
 
             report.startShowMoreBlock("Detailed comparison of all metrics...");
+            report.startDiv("width: 100%; overflow-x: auto");
             report.startTable();
             report.addTableHeader("Metric", "Reference Value", "Current Value", "Difference");
             CodeAnalysisResults finalRefData = refData;
@@ -140,6 +143,7 @@ public class TrendReportGenerator {
                 addRow(metric, finalRefData);
             });
             report.endTable();
+            report.endDiv();
             report.endShowMoreBlock();
             report.endSection();
         } else {

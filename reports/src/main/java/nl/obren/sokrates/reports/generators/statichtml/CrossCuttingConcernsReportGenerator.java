@@ -52,6 +52,7 @@ public class CrossCuttingConcernsReportGenerator {
         codeAnalysisResults.getCrossCuttingConcernsAnalysisResults().forEach(crossCuttingConcernsAnalysisResults -> {
             String group = crossCuttingConcernsAnalysisResults.getKey();
             report.addLevel2Header(group.toUpperCase());
+            report.startDiv("width: 100%; overflow-x: auto");
             if (crossCuttingConcernsAnalysisResults.getCrossCuttingConcerns().size() > 1) {
                 crossCuttingConcernsAnalysisResults.getCrossCuttingConcerns().forEach(concern -> {
                     if (!isDerivedConcern(concern)) {
@@ -68,6 +69,7 @@ public class CrossCuttingConcernsReportGenerator {
                     }
                 });
             }
+            report.endDiv();
         });
 
         report.endSection();
@@ -186,6 +188,7 @@ public class CrossCuttingConcernsReportGenerator {
     private void renderConcernPerComponent(AspectAnalysisResults aspectAnalysisResults, int mainLoc, LogicalDecompositionAnalysisResults logicalDecompositionAnalysisResults) {
         report.addHorizontalLine();
         report.addLevel3Header("per component - " + logicalDecompositionAnalysisResults.getKey() + " logical decomposition");
+        report.startDiv("width: 100%; overflow-x: auto");
         logicalDecompositionAnalysisResults.getComponents()
                 .stream().sorted(Comparator.comparingInt(AspectAnalysisResults::getLinesOfCode).reversed())
                 .forEach(component -> {
@@ -206,6 +209,7 @@ public class CrossCuttingConcernsReportGenerator {
                     report.addHtmlContent(svg);
                     report.endDiv();
                 });
+        report.endDiv();
     }
 
     private String getCodePercentageSvg(double percentage, String aspectName, int numberOfFiles, int linesOfCode, int maxSize, int barHeight) {

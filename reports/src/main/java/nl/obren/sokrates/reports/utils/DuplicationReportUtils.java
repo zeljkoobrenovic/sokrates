@@ -58,6 +58,7 @@ public class DuplicationReportUtils {
 
         duplicationMetrics.forEach(metric -> maxCleanedLinesOfCode[0] = Math.max(maxCleanedLinesOfCode[0], metric.getCleanedLinesOfCode()));
 
+        report.startDiv("width: 100%; overflow-x: auto");
         duplicationMetrics.stream().sorted((o1, o2) -> o2.getDuplicatedLinesOfCode() - o1.getDuplicatedLinesOfCode()).forEach(metric -> {
             chart.setMaxBarWidth((int) (200.0 * metric.getCleanedLinesOfCode() / maxCleanedLinesOfCode[0]));
             double percentage = 100.0 * metric.getDuplicatedLinesOfCode() / metric.getCleanedLinesOfCode();
@@ -67,6 +68,7 @@ public class DuplicationReportUtils {
             String svg = chart.getPercentageSvg(percentage, metric.getKey(), textRight);
             report.addContentInDiv(svg);
         });
+        report.endDiv();
     }
 
     public static void addOverallDuplication(RichTextReport report, DuplicationMetric metric) {
@@ -83,7 +85,9 @@ public class DuplicationReportUtils {
                 FormattingUtils.getFormattedPercentage(percentage)
                         + "% (" + FormattingUtils.getFormattedCount(metric.getDuplicatedLinesOfCode()) + " lines)");
         String svg = chart.getPercentageSvg(percentage, metric.getKey(), textRight);
+        report.startDiv("width: 100%; overflow-x: auto");
         report.addContentInDiv(svg);
+        report.endDiv();
     }
 
 }

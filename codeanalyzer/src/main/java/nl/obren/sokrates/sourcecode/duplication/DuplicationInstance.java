@@ -128,14 +128,15 @@ public class DuplicationInstance {
                 if (!stringBuilder.toString().isEmpty()) {
                     stringBuilder.append("\n");
                 }
+                String name = StringUtils.abbreviate(block.getSourceFile().getFile().getName(), 40);
                 if (linkToFiles) {
                     stringBuilder.append("<a href='");
                     stringBuilder.append("../src/main/" + block.getSourceFile().getRelativePath() + ".html");
                     stringBuilder.append("' target='_blank'>");
-                    stringBuilder.append(block.getSourceFile().getFile().getName());
+                    stringBuilder.append(name);
                     stringBuilder.append("</a>");
                 } else {
-                    stringBuilder.append(block.getSourceFile().getFile().getName());
+                    stringBuilder.append(name);
                 }
             }
             i[0]++;

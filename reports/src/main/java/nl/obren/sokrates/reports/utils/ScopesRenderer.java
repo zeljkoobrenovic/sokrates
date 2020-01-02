@@ -197,6 +197,8 @@ public class ScopesRenderer {
         chart.setMaxBarWidth(200);
         chart.setBarHeight(20);
 
+        report.startDiv("width: 100%; overflow-x: auto");
+        report.startDiv("min-width: 1000px");
         renderingList.forEach(rendererItem -> {
             int metricLinesOfCode = rendererItem.getLinesOfCode().getValue().intValue();
             double percentage = 100.0 * metricLinesOfCode / maxLinesOfCode;
@@ -207,6 +209,8 @@ public class ScopesRenderer {
                             StringEscapeUtils.escapeHtml4(FormattingUtils.getFormattedPercentage(percentage))
                             + "%) " + filesFragment), "");
         });
+        report.endDiv();
+        report.endDiv();
     }
 
     private void updateCountVariables() {

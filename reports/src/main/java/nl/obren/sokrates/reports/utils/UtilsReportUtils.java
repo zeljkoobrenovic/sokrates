@@ -13,6 +13,7 @@ public class UtilsReportUtils {
     public static String getUnitsTable(List<UnitInfo> units, String fragmentType, boolean cacheFiles) {
         StringBuilder table = new StringBuilder();
 
+        table.append("<div style='width: 100%; overflow-x: scroll'>\n");
         table.append("<table style='width: 80%'>\n");
         table.append("<th>Unit</th><th># lines</th><th>McCabe index</th><th># params</th>\n");
         int index[] = {0};
@@ -41,6 +42,7 @@ public class UtilsReportUtils {
             table.append("</tr>\n");
         });
         table.append("</table>\n");
+        table.append("</div>\n");
 
         return table.toString();
     }

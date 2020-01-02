@@ -42,12 +42,14 @@ public class ControlsReportGenerator {
         goals.forEach(goalsAnalysisResults -> {
             report.startSection(goalsAnalysisResults.getMetricsWithGoal().getGoal(),
                     goalsAnalysisResults.getMetricsWithGoal().getDescription());
+            report.startDiv("width: 100%; overflow-x: auto");
             report.startTable();
             report.addTableHeader("", "Status", "Metric", "Desired Range<br/>[from - to] ±tolerance", "Current Value", "Description");
             goalsAnalysisResults.getControlStatuses().forEach(controlResult -> {
                 addRow(controlResult);
             });
             report.endTable();
+            report.endDiv();
             report.endSection();
         });
 

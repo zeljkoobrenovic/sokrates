@@ -37,24 +37,27 @@ public class RiskDistributionStatsReportUtils {
         Palette palette = Palette.getRiskPalette();
 
         chart.calculateBarOffsetFromTexts(distributions.stream().map(d -> d.getKey()).collect(Collectors.toList()));
+        html[0] += "<div style='width: 100%; overflow-x: auto'>";
 
         distributions.stream()
-                .sorted((o1,o2) -> o2.getLowRiskValue() - o1.getLowRiskValue())
-                .sorted((o1,o2) -> o2.getMediumRiskValue() - o1.getMediumRiskValue())
-                .sorted((o1,o2) -> o2.getHighRiskValue() - o1.getHighRiskValue())
-                .sorted((o1,o2) -> o2.getVeryHighRiskValue() - o1.getVeryHighRiskValue())
+                .sorted((o1, o2) -> o2.getLowRiskValue() - o1.getLowRiskValue())
+                .sorted((o1, o2) -> o2.getMediumRiskValue() - o1.getMediumRiskValue())
+                .sorted((o1, o2) -> o2.getHighRiskValue() - o1.getHighRiskValue())
+                .sorted((o1, o2) -> o2.getVeryHighRiskValue() - o1.getVeryHighRiskValue())
                 .forEach(distribution -> {
-            int totalValue = distribution.getTotalValue();
-            chart.setMaxBarWidth(Math.max(1, (int) Math.round(300.0 * totalValue / maxTotalValue[0])));
+                    int totalValue = distribution.getTotalValue();
+                    chart.setMaxBarWidth(Math.max(1, (int) Math.round(300.0 * totalValue / maxTotalValue[0])));
 
-            List<Integer> values = getRowData(distribution);
+                    List<Integer> values = getRowData(distribution);
 
-            String joinedValues = values.stream().map(v -> FormattingUtils.getFormattedPercentage(100.0 * v.doubleValue() / totalValue) + "%").collect(Collectors.joining(" | "));
-            String stackedBarSvg = chart.getStackedBarSvg(values, palette, distribution.getKey(), joinedValues);
-            html[0] += "<div>" + stackedBarSvg + "</div>";
-        });
+                    String joinedValues = values.stream().map(v -> FormattingUtils.getFormattedPercentage(100.0 * v.doubleValue() / totalValue) + "%").collect(Collectors.joining(" | "));
+                    String stackedBarSvg = chart.getStackedBarSvg(values, palette, distribution.getKey(), joinedValues);
+                    html[0] += "<div>" + stackedBarSvg + "</div>";
+                });
 
         html[0] += "<div style='font-size:90%;margin-top:20px;width:100%;text-alight:right'>Legend: " + chart.getLegend(labels, palette) + "</div>";
+
+        html[0] += "</div>";
 
         return html[0];
     }

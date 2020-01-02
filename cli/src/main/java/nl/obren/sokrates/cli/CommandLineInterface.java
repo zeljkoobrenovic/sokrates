@@ -6,6 +6,7 @@ package nl.obren.sokrates.cli;
 
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
+import nl.obren.sokrates.common.renderingutils.GraphvizUtil;
 import nl.obren.sokrates.common.renderingutils.Thresholds;
 import nl.obren.sokrates.common.renderingutils.VisualizationItem;
 import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
@@ -58,6 +59,7 @@ public class CommandLineInterface {
     public static final String REPORT_CONDITIONAL_COMPLEXITY = "reportConditionalComplexity";
     public static final String REPORT_CONTROLS = "reportControls";
     public static final String OUTPUT_FOLDER = "outputFolder";
+    public static final String USE_INTERNAL_GRAPHVIZ = "internalGraphviz";
     public static final String HTML_REPORTS_FOLDER_NAME = "html";
     private static final Log LOG = LogFactory.getLog(CommandLineInterface.class);
     private Option srcRoot = new Option(SRC_ROOT, true, "[OPTIONAL] the folder where reports will be stored (default is \"<currentFolder>/_sokrates/reports/\")");
@@ -74,6 +76,7 @@ public class CommandLineInterface {
     private Option conditionalComplexity = new Option(REPORT_CONDITIONAL_COMPLEXITY, false, "generate the conditional complexity report (stored in <outputFolder>/ConditionalComplexity.html)");
     private Option metrics = new Option(REPORT_METRICS, false, "generate the metrics overview report (stored in <outputFolder>/Metrics.html)");
     private Option controls = new Option(REPORT_CONTROLS, false, "generate the controls report (stored in <outputFolder>/Controls.html)");
+    private Option internalGraphviz = new Option(USE_INTERNAL_GRAPHVIZ, false, "use internal Graphviz library (by default external dot program is used, you may specify the external dot path via the system variable GRAPHVIZ_DOT)");
 
     private Option outputFolder = new Option(OUTPUT_FOLDER, true, "[OPTIONAL] the folder where reports will be stored (defaule value is <currentFolder/_sokrates/reports>)");
     private ProgressFeedback progressFeedback;
@@ -460,6 +463,8 @@ public class CommandLineInterface {
             if (cmd.hasOption(controls.getOpt())) {
                 settings.setAnalyzeControls(true);
             }
+
+            GraphvizUtil.useExternalGraphviz = !cmd.hasOption(internalGraphviz.getOpt());
         }
 
         return settings;
@@ -485,6 +490,7 @@ public class CommandLineInterface {
         options.addOption(metrics);
         options.addOption(controls);
         options.addOption(findings);
+        options.addOption(internalGraphviz);
 
         outputFolder.setRequired(true);
         confFile.setRequired(true);
