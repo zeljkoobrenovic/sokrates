@@ -9,6 +9,7 @@ import nl.obren.sokrates.common.utils.SystemUtils;
 import nl.obren.sokrates.sourcecode.analysis.AnalysisUtils;
 import nl.obren.sokrates.sourcecode.analysis.Analyzer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.FilesAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
@@ -30,13 +31,16 @@ public class UnitsAnalyzer extends Analyzer {
     private final long start;
     private final UnitsAnalysisResults unitsAnalysisResults;
     private final NamedSourceCodeAspect main;
+    private final FilesAnalysisResults filesAnalysisResults;
     private ProgressFeedback progressFeedback;
 
     private UnitCategoryNames unitSizeCategoryNames = new UnitCategoryNames("1_20", "21_50", "51_100", "101_PLUS");
 
     private UnitCategoryNames conditionalComplexityCategoryNames = new UnitCategoryNames("1_5", "6_10", "10_25", "26_PLUS");
+    private List<UnitInfo> allUnits;
 
     public UnitsAnalyzer(CodeAnalysisResults analysisResults, ProgressFeedback progressFeedback) {
+        this.filesAnalysisResults = analysisResults.getFilesAnalysisResults();
         this.unitsAnalysisResults = analysisResults.getUnitsAnalysisResults();
         this.codeConfiguration = analysisResults.getCodeConfiguration();
         this.metricsList = analysisResults.getMetricsList();
@@ -49,7 +53,7 @@ public class UnitsAnalyzer extends Analyzer {
     public void analyze() {
         progressFeedback.start();
         AnalysisUtils.info(textSummary, progressFeedback, "Extracting units...", start);
-        List<UnitInfo> allUnits = new UnitsExtractor().getUnits(main.getSourceFiles(), progressFeedback);
+        this.allUnits = new UnitsExtractor().getUnits(main.getSourceFiles(), progressFeedback);
 
         int linesOfCode = UnitUtils.getLinesOfCode(allUnits);
         addBasicUnitMetrics(allUnits, linesOfCode);
@@ -121,6 +125,24 @@ public class UnitsAnalyzer extends Analyzer {
                 .description("Lines of code in units")
                 .scope(Metric.Scope.SYSTEM)
                 .value(main.getLinesOfCode() - linesOfCode);
+
+        updateFilesWithUnitInfo();
+    }
+
+    private void updateFilesWithUnitInfo() {
+        filesAnalysisResults.getAllFiles().forEach(sourceFile -> {
+            final int[] unitsLoc = {0};
+            final int[] unitsCount = {0};
+            final int[] mcCabeIndexSum = {0};
+            allUnits.stream().filter(u -> u.getSourceFile().getFile() == sourceFile.getFile()).forEach(unitInfo -> {
+                unitsCount[0] += 1;
+                mcCabeIndexSum[0] += unitInfo.getMcCabeIndex();
+                unitsLoc[0] += unitInfo.getLinesOfCode();
+            });
+            sourceFile.setUnitsCount(unitsCount[0]);
+            sourceFile.setUnitsMcCabeIndexSum(mcCabeIndexSum[0]);
+            sourceFile.setLinesOfCodeInUnits(unitsLoc[0]);
+        });
     }
 
     private void addAllUnits(List<UnitInfo> allUnits, UnitsAnalysisResults unitsAnalysisResults) {

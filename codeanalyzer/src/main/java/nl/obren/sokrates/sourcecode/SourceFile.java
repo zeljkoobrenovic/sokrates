@@ -32,10 +32,13 @@ public class SourceFile {
     private String relativePath;
     private String extension;
     private int linesOfCode;
+    private int unitsCount = 0;
+    private int unitsMcCabeIndexSum = 0;
     private List<NamedSourceCodeAspect> logicalComponents = new ArrayList<>();
     private List<NamedSourceCodeAspect> crossCuttingConcerns = new ArrayList<>();
     @JsonIgnore
     private String content;
+    private int linesOfCodeInUnits;
 
     public SourceFile() {
     }
@@ -119,6 +122,22 @@ public class SourceFile {
         this.crossCuttingConcerns = crossCuttingConcerns;
     }
 
+    public int getUnitsCount() {
+        return unitsCount;
+    }
+
+    public void setUnitsCount(int unitsCount) {
+        this.unitsCount = unitsCount;
+    }
+
+    public int getUnitsMcCabeIndexSum() {
+        return unitsMcCabeIndexSum;
+    }
+
+    public void setUnitsMcCabeIndexSum(int unitsMcCabeIndexSum) {
+        this.unitsMcCabeIndexSum = unitsMcCabeIndexSum;
+    }
+
     @JsonIgnore
     public String getContent() {
         try {
@@ -171,5 +190,13 @@ public class SourceFile {
         }
 
         return ((SourceFile) obj).getFile().equals(this.getFile());
+    }
+
+    public void setLinesOfCodeInUnits(int linesOfCodeInUnits) {
+        this.linesOfCodeInUnits = linesOfCodeInUnits;
+    }
+
+    public int getLinesOfCodeInUnits() {
+        return linesOfCodeInUnits;
     }
 }

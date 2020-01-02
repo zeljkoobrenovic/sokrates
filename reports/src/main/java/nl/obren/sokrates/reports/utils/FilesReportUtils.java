@@ -17,7 +17,10 @@ public class FilesReportUtils {
 
         table.append("<div style='witdh: 100%; overflow-x: scroll'>\n");
         table.append("<table style='width: 80%'>\n");
-        table.append("<th>File</th><th># lines</th>\n");
+        table.append("<tr>");
+        table.append("<th>File</th><th># lines</th><th># units</th>\n");
+        // table.append("<th>File</th><th># lines</th><th># units</th><th># unit lines</th><th>McCabe index</th>\n");
+        table.append("<tr>");
 
         sourceFiles.forEach(sourceFile -> {
             table.append("<tr>\n");
@@ -37,7 +40,14 @@ public class FilesReportUtils {
             table.append("<td><b>"
                     + fileNameFragment + "</b><br/>in " + parent + "<br/>" +
                     "</td>\n");
-            table.append("<td>" + sourceFile.getLinesOfCode() + "</td>\n");
+            table.append("<td style='text-align: center'>" + sourceFile.getLinesOfCode() + "</td>\n");
+            if (sourceFile.getUnitsCount() > 0) {
+                table.append("<td style='text-align: center'>" + sourceFile.getUnitsCount() + "</td>\n");
+            } else {
+                table.append("<td style='text-align: center; color: lightgrey'>-</td>\n");
+            }
+            // table.append("<td style='text-align: center'>" + sourceFile.getLinesOfCodeInUnits() + "</td>\n");
+            // table.append("<td style='text-align: center'>" + sourceFile.getUnitsMcCabeIndexSum() + "</td>\n");
 
             table.append("</tr>\n");
         });

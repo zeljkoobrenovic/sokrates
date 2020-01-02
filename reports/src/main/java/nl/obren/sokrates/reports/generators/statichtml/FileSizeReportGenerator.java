@@ -17,6 +17,7 @@ import nl.obren.sokrates.sourcecode.stats.SourceFileSizeDistribution;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class FileSizeReportGenerator {
     private CodeAnalysisResults codeAnalysisResults;
@@ -59,6 +60,7 @@ public class FileSizeReportGenerator {
         report.endSection();
 
         addLongestFilesList(report);
+        addFilesWithMostUnitsList(report);
     }
 
     private void addGraphOverall(RichTextReport report, SourceFileSizeDistribution distribution) {
@@ -108,6 +110,17 @@ public class FileSizeReportGenerator {
         report.startSection("Longest Files (Top " + longestFiles.size() + ")", "");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(longestFiles, cacheSourceFiles).toString());
+        report.endSection();
+    }
+
+    private void addFilesWithMostUnitsList(RichTextReport report) {
+        List<SourceFile> filesList = codeAnalysisResults.getFilesAnalysisResults().getAllFiles()
+                .stream().filter(sourceFile -> sourceFile.getUnitsCount() > 0).collect(Collectors.toList());
+        filesList.sort((o1, o2) -> o2.getUnitsCount() - o1.getUnitsCount());
+        filesList = filesList.subList(0, Math.min(50, filesList.size()));
+        report.startSection("Files With Most Units (Top " + filesList.size() + ")", "");
+        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+        report.addHtmlContent(FilesReportUtils.getFilesTable(filesList, cacheSourceFiles).toString());
         report.endSection();
     }
 }
