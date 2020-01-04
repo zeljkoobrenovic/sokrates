@@ -5,15 +5,35 @@
 package nl.obren.sokrates.sourcecode.duplication;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledOnOs;
 
 import java.io.File;
 
 import static junit.framework.TestCase.assertEquals;
+import static org.junit.jupiter.api.condition.OS.*;
 
 public class DuplicationInstanceTest {
     @Test
-    public void testToString() throws Exception {
+    @EnabledOnOs({LINUX, MAC})
+    public void testToStringOnLinuxOrMac() {
+        DuplicationInstance instance = prepTestData();
+        assertEquals(instance.toString(), "3 lines: 'folder/file.ext[10:16]a\n" +
+                "b\n" +
+                "c");
+    }
+
+    @Test
+    @EnabledOnOs(WINDOWS)
+    public void testToStringOnWindows() {
+        DuplicationInstance instance = prepTestData();
+        assertEquals(instance.toString(), "3 lines: 'folder\\file.ext[10:16]a\n" +
+                "b\n" +
+                "c");
+    }
+
+    private DuplicationInstance prepTestData() {
         DuplicationInstance instance = new DuplicationInstance();
         instance.setDisplayContent("a\nb\nc");
         DuplicatedFileBlock block = new DuplicatedFileBlock();
@@ -22,9 +42,7 @@ public class DuplicationInstanceTest {
         block.setEndLine(15);
         instance.getDuplicatedFileBlocks().add(block);
         instance.setBlockSize(3);
-        assertEquals(instance.toString(), "3 lines: 'folder/file.ext[10:16]a\n" +
-                "b\n" +
-                "c");
+        return instance;
     }
 
 }
