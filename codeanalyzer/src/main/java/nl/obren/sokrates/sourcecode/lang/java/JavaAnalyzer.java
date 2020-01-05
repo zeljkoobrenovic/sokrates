@@ -51,33 +51,8 @@ public class JavaAnalyzer extends LanguageAnalyzer {
 
     @Override
     public List<UnitInfo> extractUnits(SourceFile sourceFile) {
-        CStyleHeuristicUnitParser heuristicUnitParser = new CStyleHeuristicUnitParser() {
-            @Override
-            public boolean isUnitSignature(String line) {
-                return super.isUnitSignature(line) || isStaticUnit(line);
-            }
-
-            @Override
-            public void setNameAndParameters(String line, UnitInfo unit, String cleanedBody) {
-                if (isStaticUnit(line)) {
-                    unit.setShortName("static");
-                    unit.setNumberOfParameters(0);
-                } else {
-                    super.setNameAndParameters(line, unit, cleanedBody);
-                }
-            }
-
-        };
-        return heuristicUnitParser.extractUnits(sourceFile);
+        return new JavaUnitsExtractor().extractUnits(sourceFile);
     }
-
-    private boolean isStaticUnit(String line) {
-        line = line.replace("\t", "");
-        line = line.replace(" ", "");
-        line = line.trim();
-        return line.equalsIgnoreCase("static{");
-    }
-
 
     @Override
     public DependenciesAnalysis extractDependencies(List<SourceFile> sourceFiles, ProgressFeedback progressFeedback) {

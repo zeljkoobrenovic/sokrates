@@ -237,4 +237,17 @@ public class JavaAnalyzerTest {
         Assert.assertEquals(units.get(1).getMcCabeIndex(), 2);
         Assert.assertEquals(units.get(1).getNumberOfParameters(), 0);
     }
+
+    @Test
+    public void testUnitExtractionWithCases() {
+        JavaAnalyzer analyzer = new JavaAnalyzer();
+
+        List<UnitInfo> units = analyzer.extractUnits(new SourceFile(new File("dummy.java"), JavaExampleFragments.FRAGMENT_4));
+
+        Assert.assertEquals(units.size(), 1);
+        Assert.assertEquals(units.get(0).getShortName(), "public NamedSourceCodeAspect getScope()");
+        Assert.assertEquals(units.get(0).getLinesOfCode(), 13);
+        Assert.assertEquals(units.get(0).getMcCabeIndex(), 5);
+        Assert.assertEquals(units.get(0).getNumberOfParameters(), 1);
+    }
 }
