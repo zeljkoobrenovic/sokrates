@@ -10,12 +10,13 @@ import org.apache.commons.logging.LogFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileSystems;
 
 public class Templates {
     private static final Log LOG = LogFactory.getLog(Templates.class);
 
     private static String RESOURCES_ROOT = "file:" + getResourceFolder().getPath();
-    private static String TEMPLATES_ROOT = RESOURCES_ROOT + "/templates/";
+    private static String TEMPLATES_ROOT = RESOURCES_ROOT + FileSystems.getDefault().getSeparator() + "templates" + FileSystems.getDefault().getSeparator();
     public static String EDITOR_TEMPLATE_PATH = TEMPLATES_ROOT + "editor.html";
     public static String CODE_PREVIEW_TEMPLATE_PATH = TEMPLATES_ROOT + "codepreview.html";
 

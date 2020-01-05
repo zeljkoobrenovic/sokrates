@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static java.nio.file.FileSystems.getDefault;
 import static org.junit.Assert.*;
 
 public class SourceCodeFilesTest {
@@ -43,9 +44,15 @@ public class SourceCodeFilesTest {
         List<SourceFile> sourceFiles = sourceCodeFiles.getSourceFiles(aspect);
 
         assertEquals(sourceFiles.size(), 3);
-        assertEquals(sourceFiles.get(0).getFile().getPath(), "/testproject/src/main/java/package/A.java");
-        assertEquals(sourceFiles.get(1).getFile().getPath(), "/testproject/src/main/java/package/B.java");
-        assertEquals(sourceFiles.get(2).getFile().getPath(), "/testproject/src/main/java/package/C.java");
+        assertEquals(sourceFiles.get(0).getFile().getPath(), getDefault().getSeparator() + "testproject" +
+                getDefault().getSeparator() + "src" + getDefault().getSeparator() + "main" + getDefault().getSeparator()
+                + "java" + getDefault().getSeparator() + "package" + getDefault().getSeparator() + "A.java");
+        assertEquals(sourceFiles.get(1).getFile().getPath(), getDefault().getSeparator() + "testproject" +
+                getDefault().getSeparator() + "src" + getDefault().getSeparator() + "main" + getDefault().getSeparator()
+                + "java" + getDefault().getSeparator() + "package" + getDefault().getSeparator() + "B.java");
+        assertEquals(sourceFiles.get(2).getFile().getPath(), getDefault().getSeparator() + "testproject" +
+                getDefault().getSeparator() + "src" + getDefault().getSeparator() + "main" + getDefault().getSeparator()
+                + "java" + getDefault().getSeparator() + "package" + getDefault().getSeparator() + "C.java");
     }
 
     @Test
@@ -62,9 +69,15 @@ public class SourceCodeFilesTest {
         List<SourceFile> sourceFiles = sourceCodeFiles.getSourceFiles(aspect);
 
         assertEquals(sourceFiles.size(), 3);
-        assertEquals(sourceFiles.get(0).getFile().getPath(), "/testproject/src/main/java/package/A.java");
-        assertEquals(sourceFiles.get(1).getFile().getPath(), "/testproject/src/main/java/package/B.java");
-        assertEquals(sourceFiles.get(2).getFile().getPath(), "/testproject/src/main/java/package/C.java");
+        assertEquals(sourceFiles.get(0).getFile().getPath(),  getDefault().getSeparator() + "testproject" +
+                getDefault().getSeparator() + "src" + getDefault().getSeparator() + "main" + getDefault().getSeparator()
+                + "java" + getDefault().getSeparator() + "package" + getDefault().getSeparator() + "A.java");
+        assertEquals(sourceFiles.get(1).getFile().getPath(),  getDefault().getSeparator() + "testproject" +
+                getDefault().getSeparator() + "src" + getDefault().getSeparator() + "main" + getDefault().getSeparator()
+                + "java" + getDefault().getSeparator() + "package" + getDefault().getSeparator() + "B.java");
+        assertEquals(sourceFiles.get(2).getFile().getPath(),  getDefault().getSeparator() + "testproject" +
+                getDefault().getSeparator() + "src" + getDefault().getSeparator() + "main" + getDefault().getSeparator()
+                + "java" + getDefault().getSeparator() + "package" + getDefault().getSeparator() + "C.java");
     }
 
     @Test
@@ -82,8 +95,12 @@ public class SourceCodeFilesTest {
         List<SourceFile> sourceFiles = sourceCodeFiles.getSourceFiles(aspect);
 
         assertEquals(sourceFiles.size(), 2);
-        assertEquals(sourceFiles.get(0).getFile().getPath(), "/testproject/src/main/java/package/B.java");
-        assertEquals(sourceFiles.get(1).getFile().getPath(), "/testproject/src/main/java/package/C.java");
+        assertEquals(sourceFiles.get(0).getFile().getPath(),  getDefault().getSeparator() + "testproject" +
+                getDefault().getSeparator() + "src" + getDefault().getSeparator() + "main" + getDefault().getSeparator()
+                + "java" + getDefault().getSeparator() + "package" + getDefault().getSeparator() + "B.java");
+        assertEquals(sourceFiles.get(1).getFile().getPath(),  getDefault().getSeparator() + "testproject" +
+                getDefault().getSeparator() + "src" + getDefault().getSeparator() + "main" + getDefault().getSeparator()
+                + "java" + getDefault().getSeparator() + "package" + getDefault().getSeparator() + "C.java");
     }
 
     @Test

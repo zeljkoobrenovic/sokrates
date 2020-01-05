@@ -57,7 +57,7 @@ public class NodeJavaScriptHeuristicDependenciesExtractor extends HeuristicFileP
     private void addDependencyIfTargetReferenced(List<Dependency> dependencies, SourceFile sourceFile,
                                                  DependencyAnchor sourceAnchor, DependencyAnchor targetAnchor) {
         try {
-            if (targetAnchor.getAnchor().equalsIgnoreCase(referencedFile.getCanonicalFile().getPath())) {
+            if (referencedFile.getCanonicalFile().getPath().contains(targetAnchor.getAnchor())) {
                 Dependency dependency = new Dependency();
                 dependency.setFrom(sourceAnchor);
                 SourceFileDependency sourceFileDependency = new SourceFileDependency();
