@@ -1,3 +1,6 @@
+# NOTE
+This is a (hopefully temporary) Windows port of the sokrates tool created by Željko Obrenović.
+
 # Sokrates
 
 Know your code! The unexamined code is not worth maintaining!
