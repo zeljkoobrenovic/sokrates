@@ -15,11 +15,12 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.nio.file.FileSystems.getDefault;
 import static junit.framework.TestCase.assertEquals;
 
 public class NodeJavaScriptHeuristicDependenciesExtractorTest {
     @Test
-    public void extractDependenciesToTargetAnchor() throws Exception {
+    public void extractDependenciesToTargetAnchor() {
         NodeJavaScriptHeuristicDependenciesExtractor extractor = new NodeJavaScriptHeuristicDependenciesExtractor();
         List<Dependency> dependencies = new ArrayList<>();
         SourceFile sourceFile1 = new SourceFile();
@@ -38,12 +39,12 @@ public class NodeJavaScriptHeuristicDependenciesExtractorTest {
         extractor.extractDependenciesToTargetAnchor(dependencies, sourceFile1, sourceAnchor, targetAnchor);
 
         assertEquals(dependencies.size(), 1);
-        assertEquals(dependencies.get(0).getFrom().getAnchor(), "/root/folder/file1.js");
-        assertEquals(dependencies.get(0).getTo().getAnchor(), "/root/folder/file2.js");
+        assertEquals(dependencies.get(0).getFrom().getAnchor(),  getDefault().getSeparator() + "root" + getDefault().getSeparator() + "folder" + getDefault().getSeparator() + "file1.js");
+        assertEquals(dependencies.get(0).getTo().getAnchor(), getDefault().getSeparator() + "root" + getDefault().getSeparator() + "folder" + getDefault().getSeparator() + "file2.js");
     }
 
     @Test
-    public void extractDependenciesToTargetAnchorMissingReference() throws Exception {
+    public void extractDependenciesToTargetAnchorMissingReference() {
         NodeJavaScriptHeuristicDependenciesExtractor extractor = new NodeJavaScriptHeuristicDependenciesExtractor();
         List<Dependency> dependencies = new ArrayList<>();
         SourceFile sourceFile1 = new SourceFile();
