@@ -23,16 +23,16 @@ public class NodeJavaScriptHeuristicDependenciesExtractorTest {
         NodeJavaScriptHeuristicDependenciesExtractor extractor = new NodeJavaScriptHeuristicDependenciesExtractor();
         List<Dependency> dependencies = new ArrayList<>();
         SourceFile sourceFile1 = new SourceFile();
-        sourceFile1.setFile(new File("/root/folder/file1.js"));
+        sourceFile1.setFile(new File("\\root\\folder\\file1.js"));
         sourceFile1.getLogicalComponents().add(new NamedSourceCodeAspect("A"));
         sourceFile1.setContent("var a = require('file2.js')");
         SourceFile sourceFile2 = new SourceFile();
-        sourceFile2.setFile(new File("/root/folder/file2.js"));
+        sourceFile2.setFile(new File("\\root\\folder\\file2.js"));
         sourceFile2.getLogicalComponents().add(new NamedSourceCodeAspect("B"));
 
-        DependencyAnchor sourceAnchor = new DependencyAnchor("/root/folder/file1.js");
+        DependencyAnchor sourceAnchor = new DependencyAnchor("\\root\\folder\\file1.js");
         sourceAnchor.getSourceFiles().add(sourceFile1);
-        DependencyAnchor targetAnchor = new DependencyAnchor("/root/folder/file2.js");
+        DependencyAnchor targetAnchor = new DependencyAnchor("\\root\\folder\\file2.js");
         targetAnchor.getSourceFiles().add(sourceFile2);
 
         extractor.extractDependenciesToTargetAnchor(dependencies, sourceFile1, sourceAnchor, targetAnchor);

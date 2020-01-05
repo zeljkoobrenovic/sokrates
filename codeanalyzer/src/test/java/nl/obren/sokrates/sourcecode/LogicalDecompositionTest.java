@@ -13,6 +13,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
+import static java.nio.file.FileSystems.getDefault;
 import static junit.framework.TestCase.assertEquals;
 
 public class LogicalDecompositionTest {
@@ -46,12 +47,12 @@ public class LogicalDecompositionTest {
         assertEquals(logicalDecomposition.getComponents().size(), 2);
         assertEquals(logicalDecomposition.getComponents().get(0).getName(), "a");
         assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().size(), 2);
-        assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().get(0).getRelativePath(), "a/a1/file1.java");
-        assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().get(1).getRelativePath(), "a/a2/file2.java");
+        assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().get(0).getRelativePath(), "a"  + getDefault().getSeparator() + "a1"  + getDefault().getSeparator() + "file1.java");
+        assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().get(1).getRelativePath(), "a"  + getDefault().getSeparator() + "a2" + getDefault().getSeparator() + "file2.java");
         assertEquals(logicalDecomposition.getComponents().get(1).getName(), "b");
         assertEquals(logicalDecomposition.getComponents().get(1).getSourceFiles().size(), 2);
-        assertEquals(logicalDecomposition.getComponents().get(1).getSourceFiles().get(0).getRelativePath(), "b/b1/file3.java");
-        assertEquals(logicalDecomposition.getComponents().get(1).getSourceFiles().get(1).getRelativePath(), "b/b2/file4.java");
+        assertEquals(logicalDecomposition.getComponents().get(1).getSourceFiles().get(0).getRelativePath(), "b"  + getDefault().getSeparator() + "b1"  + getDefault().getSeparator() + "file3.java");
+        assertEquals(logicalDecomposition.getComponents().get(1).getSourceFiles().get(1).getRelativePath(), "b"  + getDefault().getSeparator() + "b2"  + getDefault().getSeparator() + "file4.java");
     }
 
     @Test
@@ -73,12 +74,12 @@ public class LogicalDecompositionTest {
         assertEquals(logicalDecomposition.getComponents().size(), 2);
         assertEquals(logicalDecomposition.getComponents().get(0).getName(), "a");
         assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().size(), 2);
-        assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().get(0).getRelativePath(), "a/a1/file1.java");
-        assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().get(1).getRelativePath(), "a/a2/file2.java");
+        assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().get(0).getRelativePath(), "a" + getDefault().getSeparator() + "a1"  + getDefault().getSeparator() + "file1.java");
+        assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().get(1).getRelativePath(), "a"  + getDefault().getSeparator() + "a2" + getDefault().getSeparator() + "file2.java");
         assertEquals(logicalDecomposition.getComponents().get(1).getName(), "Unclassified");
         assertEquals(logicalDecomposition.getComponents().get(1).getSourceFiles().size(), 2);
-        assertEquals(logicalDecomposition.getComponents().get(1).getSourceFiles().get(0).getRelativePath(), "b/b1/file3.java");
-        assertEquals(logicalDecomposition.getComponents().get(1).getSourceFiles().get(1).getRelativePath(), "b/b2/file4.java");
+        assertEquals(logicalDecomposition.getComponents().get(1).getSourceFiles().get(0).getRelativePath(), "b"  + getDefault().getSeparator() + "b1" + getDefault().getSeparator() + "file3.java");
+        assertEquals(logicalDecomposition.getComponents().get(1).getSourceFiles().get(1).getRelativePath(), "b"  + getDefault().getSeparator() + "b2"  + getDefault().getSeparator() + "file4.java");
     }
 
     @Test
@@ -101,8 +102,8 @@ public class LogicalDecompositionTest {
         assertEquals(logicalDecomposition.getComponents().size(), 1);
         assertEquals(logicalDecomposition.getComponents().get(0).getName(), "a");
         assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().size(), 2);
-        assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().get(0).getRelativePath(), "a/a1/file1.java");
-        assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().get(1).getRelativePath(), "a/a2/file2.java");
+        assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().get(0).getRelativePath(), "a" + getDefault().getSeparator() + "a1" + getDefault().getSeparator() + "file1.java");
+        assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().get(1).getRelativePath(), "a" + getDefault().getSeparator() + "a2" + getDefault().getSeparator() + "file2.java");
     }
 
     @Test
@@ -131,11 +132,11 @@ public class LogicalDecompositionTest {
         assertEquals(logicalDecomposition.getComponents().size(), 2);
         assertEquals(logicalDecomposition.getComponents().get(0).getName(), "A");
         assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().size(), 2);
-        assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().get(0).getRelativePath(), "a/a1/file1.java");
-        assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().get(1).getRelativePath(), "a/a2/file2.java");
+        assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().get(0).getRelativePath(), "a" + getDefault().getSeparator() + "a1" + getDefault().getSeparator() + "file1.java");
+        assertEquals(logicalDecomposition.getComponents().get(0).getSourceFiles().get(1).getRelativePath(), "a" + getDefault().getSeparator() + "a2" + getDefault().getSeparator() + "file2.java");
         assertEquals(logicalDecomposition.getComponents().get(1).getName(), "B");
         assertEquals(logicalDecomposition.getComponents().get(1).getSourceFiles().size(), 2);
-        assertEquals(logicalDecomposition.getComponents().get(1).getSourceFiles().get(0).getRelativePath(), "b/b1/file3.java");
-        assertEquals(logicalDecomposition.getComponents().get(1).getSourceFiles().get(1).getRelativePath(), "b/b2/file4.java");
+        assertEquals(logicalDecomposition.getComponents().get(1).getSourceFiles().get(0).getRelativePath(), "b"+ getDefault().getSeparator() + "b1" + getDefault().getSeparator() + "file3.java");
+        assertEquals(logicalDecomposition.getComponents().get(1).getSourceFiles().get(1).getRelativePath(), "b" + getDefault().getSeparator() + "b2" + getDefault().getSeparator() + "file4.java");
     }
 }

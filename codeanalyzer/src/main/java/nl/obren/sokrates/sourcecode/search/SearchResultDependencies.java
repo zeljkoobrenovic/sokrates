@@ -12,6 +12,7 @@ import nl.obren.sokrates.sourcecode.dependencies.DependencyAnchor;
 import nl.obren.sokrates.sourcecode.dependencies.SourceFileDependency;
 import org.apache.commons.lang3.StringUtils;
 
+import java.nio.file.FileSystems;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -75,12 +76,12 @@ public class SearchResultDependencies {
     private String getSourceNode(SourceFile sourceFile, String group) {
         switch (sourceNodeExtractionType) {
             case COMPONENT:
-                return sourceFile.getLogicalComponents(group).size() == 0 ? "" : StringUtils.defaultIfBlank(sourceFile.getLogicalComponents(group).get(0).getName(), "/");
+                return sourceFile.getLogicalComponents(group).size() == 0 ? "" : StringUtils.defaultIfBlank(sourceFile.getLogicalComponents(group).get(0).getName(), FileSystems.getDefault().getSeparator());
             case FILE_NAME:
-                return StringUtils.defaultIfBlank(sourceFile.getFile().getName(), "/");
+                return StringUtils.defaultIfBlank(sourceFile.getFile().getName(), FileSystems.getDefault().getSeparator());
             case FILE_PATH:
             default:
-                return StringUtils.defaultIfBlank(sourceFile.getRelativePath(), "/");
+                return StringUtils.defaultIfBlank(sourceFile.getRelativePath(), FileSystems.getDefault().getSeparator());
         }
     }
 

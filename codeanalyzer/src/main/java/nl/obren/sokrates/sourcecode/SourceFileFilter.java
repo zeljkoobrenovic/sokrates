@@ -111,7 +111,9 @@ public class SourceFileFilter {
         if (StringUtils.isNotBlank(pathPattern)) {
             pathMatches = RegexUtils.matchesEntirely(pathPattern, path)
                     || RegexUtils.matchesEntirely(pathPattern, path.replace("\\", "/"))
-                    || RegexUtils.matchesEntirely(pathPattern, path.replace("/", "\\"));
+                    || RegexUtils.matchesEntirely(pathPattern, path.replace("/", "\\"))
+                    || RegexUtils.matchesEntirely(pathPattern.replace("\\", "/"), path.replace("\\", "/"))
+                    || RegexUtils.matchesEntirely(pathPattern.replace("\\", "/"), path.replace("/", "\\"));
         } else {
             pathMatches = true;
         }
