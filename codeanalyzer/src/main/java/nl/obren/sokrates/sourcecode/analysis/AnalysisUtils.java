@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.nio.file.FileSystems;
 import java.text.DecimalFormat;
 
 public class AnalysisUtils {
@@ -26,7 +27,7 @@ public class AnalysisUtils {
 
     public static void analyze(String group, NamedSourceCodeAspect aspect, ProgressFeedback progressFeedback, AspectAnalysisResults aspectAnalysisResults, MetricsList metricsList, StringBuffer textSummary, long start) {
         aspectAnalysisResults.setAspect(aspect);
-        String prefix = StringUtils.isNotBlank(group) ? (group + "/") : "";
+        String prefix = StringUtils.isNotBlank(group) ? (group + FileSystems.getDefault().getSeparator()) : "";
 
         String name = prefix + aspect.getName();
 

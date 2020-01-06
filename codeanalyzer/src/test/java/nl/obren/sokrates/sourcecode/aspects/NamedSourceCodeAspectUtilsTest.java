@@ -6,20 +6,21 @@ package nl.obren.sokrates.sourcecode.aspects;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static java.nio.file.FileSystems.getDefault;
 import static junit.framework.TestCase.assertEquals;
 
 
 public class NamedSourceCodeAspectUtilsTest {
 
     @Test
-    public void getSourceCodeAspectBasedOnFolderDepth() throws Exception {
+    public void getSourceCodeAspectBasedOnFolderDepth() {
         List<SourceFile> sourceFiles = Arrays.asList(
                 new SourceFile(new File("/root/subfolder/a/folder1a/A.java"), "").relativize(new File("/root")),
                 new SourceFile(new File("/root/subfolder/a/folder1b/B.java"), "").relativize(new File("/root")),
@@ -35,7 +36,7 @@ public class NamedSourceCodeAspectUtilsTest {
     }
 
     @Test
-    public void getSourceCodeAspectBasedOnFolderDepthForRoot() throws Exception {
+    public void getSourceCodeAspectBasedOnFolderDepthForRoot() {
         List<SourceFile> sourceFiles = Arrays.asList(
                 new SourceFile(new File("/root/prefixABC/A.java"), "").relativize(new File("/root")),
                 new SourceFile(new File("/root/prefixDEF/B.java"), "").relativize(new File("/root"))
@@ -49,7 +50,7 @@ public class NamedSourceCodeAspectUtilsTest {
     }
 
     @Test
-    public void getUniquePaths() throws Exception {
+    public void getUniquePaths() {
         List<SourceFile> sourceFiles = Arrays.asList(
                 new SourceFile(new File("/root/folder1/folder1a/A.java"), "").relativize(new File("/root")),
                 new SourceFile(new File("/root/folder1/folder1b/B.java"), "").relativize(new File("/root")),
@@ -57,25 +58,27 @@ public class NamedSourceCodeAspectUtilsTest {
                 new SourceFile(new File("/root/folder2/D.java"), "").relativize(new File("/root"))
         );
         assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 2).size(), 3);
-        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 2).get(0), "folder1/folder1a");
-        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 2).get(1), "folder1/folder1b");
+        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 2).get(0), "folder1" + getDefault().getSeparator() + "folder1a");
+        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 2).get(1), "folder1" + getDefault().getSeparator() + "folder1b");
         assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 2).get(2), "folder2");
     }
 
+
     @Test
-    public void getFolderBasedComponentName() throws Exception {
+    public void getFolderBasedComponent() {
         SourceFile sourceFile = new SourceFile(new File("/a/b/c/d/e/J.java"));
         sourceFile.setRelativePath("b/c/d/e/J.java");
         assertEquals(SourceCodeAspectUtils.getFolderBasedComponentName(sourceFile, 1), "b");
-        assertEquals(SourceCodeAspectUtils.getFolderBasedComponentName(sourceFile, 2), "b/c");
-        assertEquals(SourceCodeAspectUtils.getFolderBasedComponentName(sourceFile, 3), "b/c/d");
-        assertEquals(SourceCodeAspectUtils.getFolderBasedComponentName(sourceFile, 4), "b/c/d/e");
-        assertEquals(SourceCodeAspectUtils.getFolderBasedComponentName(sourceFile, 5), "b/c/d/e");
-        assertEquals(SourceCodeAspectUtils.getFolderBasedComponentName(sourceFile, 6), "b/c/d/e");
+        assertEquals(SourceCodeAspectUtils.getFolderBasedComponentName(sourceFile, 2), "b" + getDefault().getSeparator() + "c");
+        assertEquals(SourceCodeAspectUtils.getFolderBasedComponentName(sourceFile, 3), "b" + getDefault().getSeparator() + "c" + getDefault().getSeparator() + "d");
+        assertEquals(SourceCodeAspectUtils.getFolderBasedComponentName(sourceFile, 4), "b" + getDefault().getSeparator() + "c" + getDefault().getSeparator() + "d" + getDefault().getSeparator() + "e");
+        assertEquals(SourceCodeAspectUtils.getFolderBasedComponentName(sourceFile, 5), "b" + getDefault().getSeparator() + "c" + getDefault().getSeparator() + "d" + getDefault().getSeparator() + "e");
+        assertEquals(SourceCodeAspectUtils.getFolderBasedComponentName(sourceFile, 6), "b" + getDefault().getSeparator() + "c" + getDefault().getSeparator() + "d" + getDefault().getSeparator() + "e");
     }
 
+
     @Test
-    public void getUniquePaths1() throws Exception {
+    public void getUniquePaths1() {
         List<SourceFile> sourceFiles = new ArrayList<>();
         SourceFile sourceFile1 = new SourceFile(new File("/root/a/b/c/d.java"), "");
         sourceFile1.setRelativePath("a/b/c/d.java");
@@ -86,17 +89,17 @@ public class NamedSourceCodeAspectUtilsTest {
         assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 1).size(), 1);
         assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 1).get(0), "a");
         assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 2).size(), 1);
-        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 2).get(0), "a/b");
+        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 2).get(0), "a" + getDefault().getSeparator() + "b");
         assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 3).size(), 1);
-        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 3).get(0), "a/b/c");
+        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 3).get(0), "a" + getDefault().getSeparator() + "b" + getDefault().getSeparator() + "c");
         assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 4).size(), 1);
-        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 4).get(0), "a/b/c");
+        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 4).get(0), "a" + getDefault().getSeparator() + "b" + getDefault().getSeparator() + "c");
         assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 5).size(), 1);
-        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 5).get(0), "a/b/c");
+        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 5).get(0), "a" + getDefault().getSeparator() + "b" + getDefault().getSeparator() + "c");
     }
 
     @Test
-    public void getUniquePaths2() throws Exception {
+    public void getUniquePaths2() {
         List<SourceFile> sourceFiles = new ArrayList<>();
         SourceFile sourceFile1a = new SourceFile(new File("/root/a/b/c/d1.java"), "");
         sourceFile1a.setRelativePath("a/b/c/d2.java");
@@ -128,23 +131,23 @@ public class NamedSourceCodeAspectUtilsTest {
         assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 1).size(), 1);
         assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 1).get(0), "a");
         assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 2).size(), 1);
-        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 2).get(0), "a/b");
+        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 2).get(0), "a"+ getDefault().getSeparator() +"b");
         assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 3).size(), 3);
-        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 3).get(0), "a/b/c");
-        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 3).get(1), "a/b/e");
-        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 3).get(2), "a/b/h");
+        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 3).get(0), "a" + getDefault().getSeparator() + "b" + getDefault().getSeparator() + "c");
+        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 3).get(1), "a" + getDefault().getSeparator() + "b" + getDefault().getSeparator() + "e");
+        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 3).get(2), "a" + getDefault().getSeparator() + "b" + getDefault().getSeparator() + "h");
         assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 4).size(), 3);
-        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 4).get(0), "a/b/c");
-        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 4).get(1), "a/b/e/f");
-        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 4).get(2), "a/b/h/i");
+        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 4).get(0), "a" + getDefault().getSeparator() + "b" + getDefault().getSeparator() + "c");
+        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 4).get(1), "a" + getDefault().getSeparator() + "b" + getDefault().getSeparator() + "e" + getDefault().getSeparator() + "f");
+        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 4).get(2), "a" + getDefault().getSeparator() + "b"+ getDefault().getSeparator() +"h"+ getDefault().getSeparator() +"i");
         assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 5).size(), 3);
-        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 5).get(0), "a/b/c");
-        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 5).get(1), "a/b/e/f");
-        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 5).get(2), "a/b/h/i");
+        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 5).get(0), "a"+ getDefault().getSeparator() +"b" + getDefault().getSeparator() + "c");
+        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 5).get(1), "a" + getDefault().getSeparator() + "b" + getDefault().getSeparator() + "e" + getDefault().getSeparator() + "f");
+        assertEquals(SourceCodeAspectUtils.getUniquePaths(sourceFiles, 5).get(2), "a" + getDefault().getSeparator() + "b" + getDefault().getSeparator() + "h" + getDefault().getSeparator() + "i");
     }
 
     @Test
-    public void getMaxLinesOfCode() throws Exception {
+    public void getMaxLinesOfCode() {
         NamedSourceCodeAspect aspect1 = new NamedSourceCodeAspect();
         SourceFile sourceFile1 = new SourceFile();
         sourceFile1.setLinesOfCode(100);
@@ -169,7 +172,7 @@ public class NamedSourceCodeAspectUtilsTest {
     }
 
     @Test
-    public void getMaxFileCount() throws Exception {
+    public void getMaxFileCount() {
         NamedSourceCodeAspect aspect1 = new NamedSourceCodeAspect();
         aspect1.getSourceFiles().add(new SourceFile());
         aspect1.getSourceFiles().add(new SourceFile());
@@ -197,7 +200,7 @@ public class NamedSourceCodeAspectUtilsTest {
     }
 
     @Test
-    public void greatestCommonPrefix() throws Exception {
+    public void greatestCommonPrefix() {
         assertEquals(SourceCodeAspectUtils.greatestCommonPrefix(Arrays.asList("")), "");
 
         assertEquals(SourceCodeAspectUtils.greatestCommonPrefix(Arrays.asList("", "")), "");

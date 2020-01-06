@@ -9,19 +9,24 @@ import nl.obren.sokrates.sourcecode.SourceFileWithSearchData;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.dependencies.Dependency;
-import org.junit.Before;
-import org.junit.Test;
+
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
+import static java.nio.file.FileSystems.getDefault;
 import static junit.framework.TestCase.assertEquals;
 
 public class SearchResultDependenciesTest {
     private SearchResult searchResult;
 
-    @Before
+    @BeforeEach
     public void createSearchResults() {
         SourceFile sourceFile1 = new SourceFile(new File("/root/path/name1.ext"));
         sourceFile1.relativize(new File("/root"));
@@ -43,7 +48,8 @@ public class SearchResultDependenciesTest {
     }
 
     @Test
-    public void getDependenciesWithoutCleaning() throws Exception {
+    @EnabledOnOs({OS.LINUX, OS.MAC})
+    public void getDependenciesWithoutCleaningOnLinuxMac() throws Exception {
         SearchResultCleaner searchResultCleaner = new SearchResultCleaner();
 
         SearchResultDependencies searchDependencies = new SearchResultDependencies(searchResult, searchResultCleaner);
@@ -52,14 +58,32 @@ public class SearchResultDependenciesTest {
 
         assertEquals(dependencyList.size(), 2);
         assertEquals(componentDependencies.size(), 2);
-        assertEquals(dependencyList.get(0).getDependencyString(), "path/name2.ext -> START MIDNOISEDLE END");
-        assertEquals(dependencyList.get(1).getDependencyString(), "path/name1.ext -> start midNOISEdle end");
+        assertEquals(dependencyList.get(0).getDependencyString(), "path" + getDefault().getSeparator() + "name2.ext -> START MIDNOISEDLE END");
+        assertEquals(dependencyList.get(1).getDependencyString(), "path" + getDefault().getSeparator() + "name1.ext -> start midNOISEdle end");
         assertEquals(componentDependencies.get(0).getDependencyString(), "ComponentB -> START MIDNOISEDLE END");
         assertEquals(componentDependencies.get(1).getDependencyString(), "ComponentA -> start midNOISEdle end");
     }
 
     @Test
-    public void getDependenciesWithCleaning() throws Exception {
+    @EnabledOnOs(OS.WINDOWS)
+    public void getDependenciesWithoutCleaningOnWindows() throws Exception {
+        SearchResultCleaner searchResultCleaner = new SearchResultCleaner();
+
+        SearchResultDependencies searchDependencies = new SearchResultDependencies(searchResult, searchResultCleaner);
+        List<Dependency> dependencyList = searchDependencies.getDependencies();
+        List<ComponentDependency> componentDependencies = searchDependencies.getComponentDependencies(dependencyList, "");
+
+        assertEquals(dependencyList.size(), 2);
+        assertEquals(componentDependencies.size(), 2);
+        assertEquals(dependencyList.get(1).getDependencyString(), "path" + getDefault().getSeparator() + "name2.ext -> START MIDNOISEDLE END");
+        assertEquals(dependencyList.get(0).getDependencyString(), "path" + getDefault().getSeparator() + "name1.ext -> start midNOISEdle end");
+        assertEquals(componentDependencies.get(1).getDependencyString(), "ComponentB -> START MIDNOISEDLE END");
+        assertEquals(componentDependencies.get(0).getDependencyString(), "ComponentA -> start midNOISEdle end");
+    }
+
+    @Test
+    @EnabledOnOs({OS.LINUX, OS.MAC})
+    public void getDependenciesWithCleaningOnLinuxMac() throws Exception {
         SearchResultCleaner searchResultCleaner = new SearchResultCleaner();
 
         SearchResultDependencies searchDependencies = new SearchResultDependencies(searchResult, searchResultCleaner);
@@ -73,10 +97,32 @@ public class SearchResultDependenciesTest {
         List<ComponentDependency> componentDependencies = searchDependencies.getComponentDependencies(dependencyList, "");
         assertEquals(dependencyList.size(), 2);
         assertEquals(componentDependencies.size(), 2);
-        assertEquals(dependencyList.get(0).getDependencyString(), "path/name2.ext -> MIDDLE");
-        assertEquals(dependencyList.get(1).getDependencyString(), "path/name1.ext -> middle");
+        assertEquals(dependencyList.get(0).getDependencyString(), "path" + getDefault().getSeparator() + "name2.ext -> MIDDLE");
+        assertEquals(dependencyList.get(1).getDependencyString(), "path" + getDefault().getSeparator() + "name1.ext -> middle");
         assertEquals(componentDependencies.get(0).getDependencyString(), "name2.ext -> MIDDLE");
         assertEquals(componentDependencies.get(1).getDependencyString(), "name1.ext -> middle");
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    public void getDependenciesWithCleaningOnWindows() throws Exception {
+        SearchResultCleaner searchResultCleaner = new SearchResultCleaner();
+
+        SearchResultDependencies searchDependencies = new SearchResultDependencies(searchResult, searchResultCleaner);
+
+        searchResultCleaner.setEndCleaningPattern("(end|END)");
+        searchResultCleaner.setStartCleaningPattern("(start|START)");
+        searchResultCleaner.setReplacePairs(Arrays.asList(new ReplacePair("NOISE", "")));
+        searchDependencies.setSourceNodeExtractionType(SearchResultDependencies.SourceNodeExtractionType.FILE_NAME);
+
+        List<Dependency> dependencyList = searchDependencies.getDependencies();
+        List<ComponentDependency> componentDependencies = searchDependencies.getComponentDependencies(dependencyList, "");
+        assertEquals(dependencyList.size(), 2);
+        assertEquals(componentDependencies.size(), 2);
+        assertEquals(dependencyList.get(1).getDependencyString(), "path" + getDefault().getSeparator() + "name2.ext -> MIDDLE");
+        assertEquals(dependencyList.get(0).getDependencyString(), "path" + getDefault().getSeparator() + "name1.ext -> middle");
+        assertEquals(componentDependencies.get(1).getDependencyString(), "name2.ext -> MIDDLE");
+        assertEquals(componentDependencies.get(0).getDependencyString(), "name1.ext -> middle");
     }
 
 }
