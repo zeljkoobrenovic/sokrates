@@ -16,10 +16,10 @@ import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class CStyleHeuristicUnitParserTest {
+public class CStyleHeuristicUnitsExtractorTest {
     @Test
     public void cleanContent() throws Exception {
-        CStyleHeuristicUnitParser unitParser = new CStyleHeuristicUnitParser();
+        CStyleHeuristicUnitsExtractor unitParser = new CStyleHeuristicUnitsExtractor();
 
         String code = "    String getEndOfUnitBodyIndex(String[] lines, int i) {\n" +
                 "        StringBuilder unitBody = new StringBuilder();\n" +
@@ -58,7 +58,7 @@ public class CStyleHeuristicUnitParserTest {
 
     @Test
     public void getEndOfUnitBodyIndex1() throws Exception {
-        CStyleHeuristicUnitParser unitParser = new CStyleHeuristicUnitParser();
+        CStyleHeuristicUnitsExtractor unitParser = new CStyleHeuristicUnitsExtractor();
 
         String code = "    String getEndOfUnitBodyIndex(String[] lines, int i) {\n" +
                 "        StringBuilder unitBody = new StringBuilder();\n" +
@@ -82,7 +82,7 @@ public class CStyleHeuristicUnitParserTest {
 
     @Test
     public void getEndOfUnitBodyIndex2() throws Exception {
-        CStyleHeuristicUnitParser unitParser = new CStyleHeuristicUnitParser();
+        CStyleHeuristicUnitsExtractor unitParser = new CStyleHeuristicUnitsExtractor();
 
         String code = "\n\nprotected String getEndOfUnitBodyIndex(String[] lines, int i) {\n" +
                 "        StringBuilder unitBody = new StringBuilder();\n" +
@@ -106,7 +106,7 @@ public class CStyleHeuristicUnitParserTest {
 
     @Test
     public void matchesStartOfUnit() throws Exception {
-        CStyleHeuristicUnitParser unitParser = new CStyleHeuristicUnitParser();
+        CStyleHeuristicUnitsExtractor unitParser = new CStyleHeuristicUnitsExtractor();
 
         assertTrue(unitParser.isUnitSignature("private void test() {"));
         assertTrue(unitParser.isUnitSignature("public void test() {"));
@@ -142,7 +142,7 @@ public class CStyleHeuristicUnitParserTest {
 
     @Test
     public void matchesStartOfUnitFalse() throws Exception {
-        CStyleHeuristicUnitParser unitParser = new CStyleHeuristicUnitParser();
+        CStyleHeuristicUnitsExtractor unitParser = new CStyleHeuristicUnitsExtractor();
 
         assertFalse(unitParser.isUnitSignature(""));
         assertFalse(unitParser.isUnitSignature("()"));
@@ -156,7 +156,7 @@ public class CStyleHeuristicUnitParserTest {
 
     @Test
     public void parse1() throws Exception {
-        CStyleHeuristicUnitParser unitParser = new CStyleHeuristicUnitParser();
+        CStyleHeuristicUnitsExtractor unitParser = new CStyleHeuristicUnitsExtractor();
 
         List<UnitInfo> units = unitParser.extractUnits(new SourceFile(new File("test"), "class A {\n" +
                 "    public void a() {\n" +
@@ -177,7 +177,7 @@ public class CStyleHeuristicUnitParserTest {
 
     @Test
     public void parse2() throws Exception {
-        CStyleHeuristicUnitParser unitParser = new CStyleHeuristicUnitParser();
+        CStyleHeuristicUnitsExtractor unitParser = new CStyleHeuristicUnitsExtractor();
 
         List<UnitInfo> units = unitParser.extractUnits(new SourceFile(new File("test"), "class A {\n" +
                 "    public void a(int a) {\n" +
@@ -204,7 +204,7 @@ public class CStyleHeuristicUnitParserTest {
 
     @Test
     public void parse3() throws Exception {
-        CStyleHeuristicUnitParser unitParser = new CStyleHeuristicUnitParser();
+        CStyleHeuristicUnitsExtractor unitParser = new CStyleHeuristicUnitsExtractor();
 
         List<UnitInfo> units = unitParser.extractUnits(new SourceFile(new File("test"), "   public void setSize(int size) {\n        this.size = size;    }\n"));
 
@@ -217,7 +217,7 @@ public class CStyleHeuristicUnitParserTest {
 
     @Test
     public void parseComplexExample() throws Exception {
-        CStyleHeuristicUnitParser unitParser = new CStyleHeuristicUnitParser();
+        CStyleHeuristicUnitsExtractor unitParser = new CStyleHeuristicUnitsExtractor();
 
         List<UnitInfo> units = unitParser.extractUnits(new SourceFile(new File("test"), getContent()));
 

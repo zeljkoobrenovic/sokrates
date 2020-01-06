@@ -12,7 +12,6 @@ import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
 import nl.obren.sokrates.sourcecode.dependencies.DependenciesAnalysis;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +48,7 @@ public class JuliaAnalyzer extends LanguageAnalyzer {
     @Override
     public List<UnitInfo> extractUnits(SourceFile sourceFile) {
         String rawContent = getCommentsAndEmptyLinesCleaner().cleanKeepEmptyLines(sourceFile.getContent());
-        return new JuliaUnitsExtractor(sourceFile, rawContent, this).extractUnits();
+        return new JuliaHeuristicUnitsExtractor(sourceFile, rawContent, this).extractUnits();
     }
 
 

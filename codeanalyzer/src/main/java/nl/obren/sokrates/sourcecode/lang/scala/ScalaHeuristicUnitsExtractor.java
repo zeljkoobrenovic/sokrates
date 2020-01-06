@@ -4,16 +4,16 @@
 
 package nl.obren.sokrates.sourcecode.lang.scala;
 
-import nl.obren.sokrates.sourcecode.units.CStyleHeuristicUnitParser;
+import nl.obren.sokrates.sourcecode.units.CStyleHeuristicUnitsExtractor;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ScalaHeuristicUnitParser extends CStyleHeuristicUnitParser {
+public class ScalaHeuristicUnitsExtractor extends CStyleHeuristicUnitsExtractor {
     @Override
     public boolean isUnitSignature(String line) {
         line = extraCleanContent(line);
-        if (line.contains("(") && !line.contains(";") && !line.contains("new ") && !line.trim().startsWith("else ") && !line.contains("return ")) {
+        if (hasMinimalRequirementsForUnitStart(line)) {
             line = line.substring(0, line.indexOf("(") + 1);
             String startUnitRegex = "(.* |)def .*";
             Pattern pattern = Pattern.compile(startUnitRegex);
@@ -24,5 +24,9 @@ public class ScalaHeuristicUnitParser extends CStyleHeuristicUnitParser {
 
         }
         return false;
+    }
+
+    private boolean hasMinimalRequirementsForUnitStart(String line) {
+        return line.contains("(") && !line.contains(";") && !line.contains("new ") && !line.trim().startsWith("else ") && !line.contains("return ");
     }
 }

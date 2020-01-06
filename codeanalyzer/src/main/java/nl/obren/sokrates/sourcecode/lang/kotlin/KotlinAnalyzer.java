@@ -5,14 +5,12 @@
 package nl.obren.sokrates.sourcecode.lang.kotlin;
 
 import nl.obren.sokrates.common.utils.ProgressFeedback;
-import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
 import nl.obren.sokrates.sourcecode.cleaners.CommentsAndEmptyLinesCleaner;
 import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
 import nl.obren.sokrates.sourcecode.dependencies.DependenciesAnalysis;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
-import nl.obren.sokrates.sourcecode.units.CStyleHeuristicUnitParser;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 
 import java.util.ArrayList;
@@ -54,25 +52,7 @@ public class KotlinAnalyzer extends LanguageAnalyzer {
 
     @Override
     public List<UnitInfo> extractUnits(SourceFile sourceFile) {
-        CStyleHeuristicUnitParser heuristicUnitParser = new CStyleHeuristicUnitParser() {
-            @Override
-            public boolean isUnitSignature(String line) {
-                return isFunction(line) || isInitBlock(line);
-            }
-        };
-        heuristicUnitParser.setExtractRecursively(true);
-        List<UnitInfo> units = heuristicUnitParser.extractUnits(sourceFile);
-        return units;
-    }
-
-    private boolean isFunction(String line) {
-        String idRegex = "[a-zA-Z_$][a-zA-Z_$0-9]*";
-        String prefixes = "override| open |abstract |protected |public| private |suspend ";
-        return !line.contains(";") && !line.contains("=") && (RegexUtils.matchesEntirely("[ ]*(" + prefixes + ")*[ ]*fun[ ]*" + idRegex + "[(].*", line));
-    }
-
-    private boolean isInitBlock(String line) {
-        return RegexUtils.matchesEntirely("[ ]*init[ ]*{[ ]*", line);
+        return new KotlinHeuristicUnitsExtractor().extractUnits(sourceFile);
     }
 
     @Override

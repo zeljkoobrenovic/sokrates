@@ -5,14 +5,12 @@
 package nl.obren.sokrates.sourcecode.lang.perl;
 
 import nl.obren.sokrates.common.utils.ProgressFeedback;
-import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
 import nl.obren.sokrates.sourcecode.cleaners.CommentsAndEmptyLinesCleaner;
 import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
 import nl.obren.sokrates.sourcecode.dependencies.DependenciesAnalysis;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
-import nl.obren.sokrates.sourcecode.units.CStyleHeuristicUnitParser;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 
 import java.util.ArrayList;
@@ -78,19 +76,7 @@ public class PerlAnalyzer extends LanguageAnalyzer {
 
     @Override
     public List<UnitInfo> extractUnits(SourceFile sourceFile) {
-        CStyleHeuristicUnitParser heuristicUnitParser = new CStyleHeuristicUnitParser() {
-            @Override
-            public boolean isUnitSignature(String line) {
-                return RegexUtils.matchesEntirely(".*( |\t|)sub( |\t).*", line);
-            }
-
-            @Override
-            public void setNameAndParameters(String line, UnitInfo unit, String cleandedBody) {
-                super.setNameAndParameters(line, unit, cleandedBody);
-                unit.setNumberOfParameters(0);
-            }
-        };
-        return heuristicUnitParser.extractUnits(sourceFile);
+        return new PerlAnalyzer().extractUnits(sourceFile);
 
     }
 

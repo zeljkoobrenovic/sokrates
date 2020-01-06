@@ -2,8 +2,9 @@
  * Copyright (c) 2019 Željko Obrenović. All rights reserved.
  */
 
-package nl.obren.sokrates.sourcecode.lang.julia;
+package nl.obren.sokrates.sourcecode.lang.objectpascal;
 
+import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.cleaners.CommentsAndEmptyLinesCleaner;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
@@ -13,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class JuliaUnitsExtractor {
+public class ObjectPascalHeuristicUnitsExtractor {
     private UnitInfo unit = null;
     private StringBuilder unitBody = null;
     private StringBuilder cleanedUnitBody = null;
@@ -21,9 +22,9 @@ public class JuliaUnitsExtractor {
     private int loc = 0;
     private SourceFile sourceFile;
     private String cleanedFileContent;
-    private JuliaAnalyzer analyzer;
+    private ObjectPascalAnalyzer analyzer;
 
-    public JuliaUnitsExtractor(SourceFile sourceFile, String cleanedFileContent, JuliaAnalyzer analyzer) {
+    public ObjectPascalHeuristicUnitsExtractor(SourceFile sourceFile, String cleanedFileContent, ObjectPascalAnalyzer analyzer) {
         this.sourceFile = sourceFile;
         this.cleanedFileContent = cleanedFileContent;
         this.analyzer = analyzer;
@@ -41,7 +42,7 @@ public class JuliaUnitsExtractor {
             } else if (unit != null) {
                 updateUnit(line);
 
-                if (line.startsWith(prefix + "end")) {
+                if (line.equals(prefix + "end;")) {
                     endUnit(lineIndex);
                 }
             }
@@ -52,9 +53,8 @@ public class JuliaUnitsExtractor {
     }
 
     private boolean isFunctionStartLine(String line) {
-        String trimmedLine = line.trim();
-        return trimmedLine.startsWith("function ") || trimmedLine.startsWith("function(")
-                || (trimmedLine.startsWith("@") && trimmedLine.contains(" function"));
+        String trimmedLine = line.trim().replace("\t", " ");
+        return RegexUtils.matchesEntirely("(class[ ]+)?(procedure|function|method)[ ]+([a-zA-Z0-9_]+[.])+[a-zA-Z0-9_]+[ ]*(\\(|;).*", trimmedLine);
     }
 
     private void updateUnit(String line) {
@@ -113,31 +113,30 @@ public class JuliaUnitsExtractor {
 
         String bodyForSearch = " " + content.replace("\n", " ");
         bodyForSearch = bodyForSearch.replace("(", " (");
-        bodyForSearch = bodyForSearch.replace("{", " {");
 
-        int startOfParamsSearchIndex = body.indexOf("(");
-        int endOfParamsSearchIndex = body.indexOf(")", startOfParamsSearchIndex + 1);
         if (unit.getShortName().contains("(")) {
             unit.setShortName(unit.getShortName().substring(0, unit.getShortName().indexOf("(")).trim() + "()");
-        }
-        if (startOfParamsSearchIndex > 0 && endOfParamsSearchIndex > 0 && endOfParamsSearchIndex > startOfParamsSearchIndex) {
-            String trimedParams = body.substring(startOfParamsSearchIndex + 1, endOfParamsSearchIndex).trim();
-            if (!trimedParams.isEmpty()) {
-                String[] params = trimedParams.split("\\,");
-                unit.setNumberOfParameters(params.length);
+            int startOfParamsSearchIndex = body.indexOf("(");
+            int endOfParamsSearchIndex = body.indexOf(")", startOfParamsSearchIndex + 1);
+            if (startOfParamsSearchIndex > 0 && endOfParamsSearchIndex > 0 && endOfParamsSearchIndex > startOfParamsSearchIndex) {
+                String trimmedParams = body.substring(startOfParamsSearchIndex + 1, endOfParamsSearchIndex).trim();
+                if (!trimmedParams.isEmpty()) {
+                    String[] params = trimmedParams.split("\\;");
+                    unit.setNumberOfParameters(params.length);
+                }
             }
         }
 
+        bodyForSearch = bodyForSearch.toLowerCase();
+
         int mcCabeIndex = 1;
         mcCabeIndex += StringUtils.countMatches(bodyForSearch, " if ");
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " elseif ");
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " ifelse ");
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " \\? ");
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " for ");
+        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " repeat ");
         mcCabeIndex += StringUtils.countMatches(bodyForSearch, " while ");
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " catch ");
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " && ");
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " || ");
+        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " for ");
+        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " case ");
+        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " AND");
+        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " OR ");
 
         unit.setMcCabeIndex(mcCabeIndex);
     }

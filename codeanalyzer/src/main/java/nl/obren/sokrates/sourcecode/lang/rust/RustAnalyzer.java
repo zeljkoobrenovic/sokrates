@@ -11,11 +11,9 @@ import nl.obren.sokrates.sourcecode.cleaners.CommentsAndEmptyLinesCleaner;
 import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
 import nl.obren.sokrates.sourcecode.dependencies.DependenciesAnalysis;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
-import nl.obren.sokrates.sourcecode.units.CStyleHeuristicUnitParser;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class RustAnalyzer extends LanguageAnalyzer {
@@ -51,22 +49,7 @@ public class RustAnalyzer extends LanguageAnalyzer {
 
     @Override
     public List<UnitInfo> extractUnits(SourceFile sourceFile) {
-        CStyleHeuristicUnitParser heuristicUnitParser = new CStyleHeuristicUnitParser() {
-            @Override
-            public boolean isUnitSignature(String line) {
-                return line.replace("\t", " ").trim().startsWith("fn ");
-            }
-        };
-        heuristicUnitParser.setMcCabeIndexLiterals(Arrays.asList(
-                " if ",
-                " loop ",
-                " while ",
-                " for ",
-                "case ",
-                "&&",
-                "||",
-                " catch "));
-        return heuristicUnitParser.extractUnits(sourceFile);
+        return new RustHeuristicUnitsExtractor().extractUnits(sourceFile);
     }
 
 

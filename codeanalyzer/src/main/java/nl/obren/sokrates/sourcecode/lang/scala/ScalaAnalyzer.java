@@ -11,7 +11,7 @@ import nl.obren.sokrates.sourcecode.cleaners.CommentsAndEmptyLinesCleaner;
 import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
 import nl.obren.sokrates.sourcecode.dependencies.DependenciesAnalysis;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
-import nl.obren.sokrates.sourcecode.units.CStyleHeuristicUnitParser;
+import nl.obren.sokrates.sourcecode.units.CStyleHeuristicUnitsExtractor;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 
 import java.util.ArrayList;
@@ -54,8 +54,8 @@ public class ScalaAnalyzer extends LanguageAnalyzer {
 
     @Override
     public List<UnitInfo> extractUnits(SourceFile sourceFile) {
-        CStyleHeuristicUnitParser cStyleHeuristicUnitParser = new ScalaHeuristicUnitParser();
-        return cStyleHeuristicUnitParser.extractUnits(sourceFile);
+        CStyleHeuristicUnitsExtractor cStyleHeuristicUnitsExtractor = new ScalaHeuristicUnitsExtractor();
+        return cStyleHeuristicUnitsExtractor.extractUnits(sourceFile);
     }
 
 

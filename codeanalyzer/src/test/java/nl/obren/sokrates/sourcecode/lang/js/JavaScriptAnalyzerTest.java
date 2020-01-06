@@ -568,21 +568,4 @@ public class JavaScriptAnalyzerTest {
         List<Dependency> dependencies = analyzer.extractDependencies(Arrays.asList(), new ProgressFeedback()).getDependencies();
         assertEquals(dependencies.size(), 0);
     }
-
-    @Test
-    public void doesNotStartWithKeyword() throws Exception {
-        JavaScriptAnalyzer analyzer = new JavaScriptAnalyzer();
-
-        assertTrue(analyzer.doesNotStartWithKeyword("myFunction() {"));
-        assertTrue(analyzer.doesNotStartWithKeyword("myFunction (param1, param2) {"));
-
-        assertFalse(analyzer.doesNotStartWithKeyword("while (true) {"));
-        assertFalse(analyzer.doesNotStartWithKeyword("while(true) {"));
-        assertFalse(analyzer.doesNotStartWithKeyword("if (a) {"));
-        assertFalse(analyzer.doesNotStartWithKeyword("if(a) {"));
-        assertFalse(analyzer.doesNotStartWithKeyword("switch(b) {"));
-        assertFalse(analyzer.doesNotStartWithKeyword("switch (b) {"));
-        assertFalse(analyzer.doesNotStartWithKeyword("catch (e) {"));
-        assertFalse(analyzer.doesNotStartWithKeyword("catch(e) {"));
-    }
 }

@@ -8,7 +8,6 @@ import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.dependencies.Dependency;
 import nl.obren.sokrates.sourcecode.dependencies.DependencyAnchor;
-import nl.obren.sokrates.sourcecode.lang.js.NodeJavaScriptHeuristicDependenciesExtractor;
 import org.junit.Test;
 
 import java.io.File;
@@ -17,10 +16,10 @@ import java.util.List;
 
 import static junit.framework.TestCase.assertEquals;
 
-public class NodeJavaScriptHeuristicDependenciesExtractorTest {
+public class JavaScriptHeuristicNodeDependenciesExtractorTest {
     @Test
     public void extractDependenciesToTargetAnchor() throws Exception {
-        NodeJavaScriptHeuristicDependenciesExtractor extractor = new NodeJavaScriptHeuristicDependenciesExtractor();
+        JavaScriptHeuristicNodeDependenciesExtractor extractor = new JavaScriptHeuristicNodeDependenciesExtractor();
         List<Dependency> dependencies = new ArrayList<>();
         SourceFile sourceFile1 = new SourceFile();
         sourceFile1.setFile(new File("/root/folder/file1.js"));
@@ -44,7 +43,7 @@ public class NodeJavaScriptHeuristicDependenciesExtractorTest {
 
     @Test
     public void extractDependenciesToTargetAnchorMissingReference() throws Exception {
-        NodeJavaScriptHeuristicDependenciesExtractor extractor = new NodeJavaScriptHeuristicDependenciesExtractor();
+        JavaScriptHeuristicNodeDependenciesExtractor extractor = new JavaScriptHeuristicNodeDependenciesExtractor();
         List<Dependency> dependencies = new ArrayList<>();
         SourceFile sourceFile1 = new SourceFile();
         sourceFile1.setFile(new File("/root/folder/file1.js"));

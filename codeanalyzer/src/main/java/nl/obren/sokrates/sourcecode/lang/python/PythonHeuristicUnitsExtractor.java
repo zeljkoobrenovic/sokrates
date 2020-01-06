@@ -14,7 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PythonHeuristicUnitParser {
+public class PythonHeuristicUnitsExtractor {
 
     public static String replaceTabs(String line) {
         return line.replace("\t", "    ");

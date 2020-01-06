@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class CStyleHeuristicUnitParser {
+public class CStyleHeuristicUnitsExtractor {
     private boolean extractRecursively = false;
 
     private SourceFile sourceFile;

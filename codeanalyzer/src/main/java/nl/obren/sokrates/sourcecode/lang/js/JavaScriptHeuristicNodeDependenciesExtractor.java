@@ -15,8 +15,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-public class NodeJavaScriptHeuristicDependenciesExtractor extends HeuristicFilePathDependenciesExtractor {
-    private static final Log LOG = LogFactory.getLog(NodeJavaScriptHeuristicDependenciesExtractor.class);
+public class JavaScriptHeuristicNodeDependenciesExtractor extends HeuristicFilePathDependenciesExtractor {
+    private static final Log LOG = LogFactory.getLog(JavaScriptHeuristicNodeDependenciesExtractor.class);
 
     private String moduleName;
     private File referencedFile;

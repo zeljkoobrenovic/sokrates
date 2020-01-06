@@ -12,7 +12,7 @@ import org.apache.commons.io.FilenameUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JSHeuristicDependenciesExtractor extends HeuristicDependenciesExtractor {
+public class JavaScriptHeuristicImportsDependenciesExtractor extends HeuristicDependenciesExtractor {
 
     @Override
     public List<DependencyAnchor> extractDependencyAnchors(SourceFile sourceFile) {

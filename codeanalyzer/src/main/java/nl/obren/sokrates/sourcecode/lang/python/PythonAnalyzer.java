@@ -50,7 +50,7 @@ public class PythonAnalyzer extends LanguageAnalyzer {
 
     @Override
     public List<UnitInfo> extractUnits(SourceFile sourceFile) {
-        return new PythonHeuristicUnitParser().extractUnits(sourceFile);
+        return new PythonHeuristicUnitsExtractor().extractUnits(sourceFile);
     }
 
     @Override
