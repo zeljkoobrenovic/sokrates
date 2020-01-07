@@ -2,15 +2,12 @@
  * Copyright (c) 2020 Željko Obrenović. All rights reserved.
  */
 
-package nl.obren.sokrates.sourcecode.lang.java;
+package nl.obren.sokrates.sourcecode.lang.groovy;
 
-import nl.obren.sokrates.sourcecode.units.CStyleHeuristicUnitParser;
+import nl.obren.sokrates.sourcecode.units.CStyleHeuristicUnitsExtractor;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 
-import java.util.Arrays;
-import java.util.List;
-
-public class JavaUnitsExtractor extends CStyleHeuristicUnitParser {
+public class GroovyHeuristicUnitsExtractor extends CStyleHeuristicUnitsExtractor {
     @Override
     public boolean isUnitSignature(String line) {
         return super.isUnitSignature(line) || isStaticUnit(line);
@@ -31,10 +28,5 @@ public class JavaUnitsExtractor extends CStyleHeuristicUnitParser {
         line = line.replace(" ", "");
         line = line.trim();
         return line.equalsIgnoreCase("static{");
-    }
-
-    @Override
-    public List<String> getMcCabeIndexLiterals() {
-        return Arrays.asList(" if ", " while ", " for ", " case ", "&&", "||", " ? ", " catch ");
     }
 }

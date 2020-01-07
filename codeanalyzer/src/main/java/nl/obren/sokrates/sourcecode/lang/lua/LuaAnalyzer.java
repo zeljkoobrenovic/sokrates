@@ -11,7 +11,6 @@ import nl.obren.sokrates.sourcecode.cleaners.CommentsAndEmptyLinesCleaner;
 import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
 import nl.obren.sokrates.sourcecode.dependencies.DependenciesAnalysis;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
-import nl.obren.sokrates.sourcecode.lang.julia.JuliaUnitsExtractor;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 
 import java.util.ArrayList;
@@ -51,7 +50,7 @@ public class LuaAnalyzer extends LanguageAnalyzer {
     @Override
     public List<UnitInfo> extractUnits(SourceFile sourceFile) {
         String rawContent = getCommentsAndEmptyLinesCleaner().cleanKeepEmptyLines(sourceFile.getContent());
-        return new LuaUnitsExtractor(sourceFile, rawContent, this).extractUnits();
+        return new LuaHeuristicUnitsExtractor(sourceFile, rawContent, this).extractUnits();
     }
 
 

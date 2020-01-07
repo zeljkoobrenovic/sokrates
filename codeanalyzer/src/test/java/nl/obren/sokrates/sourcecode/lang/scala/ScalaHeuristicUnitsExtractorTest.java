@@ -4,16 +4,15 @@
 
 package nl.obren.sokrates.sourcecode.lang.scala;
 
-import nl.obren.sokrates.sourcecode.lang.scala.ScalaHeuristicUnitParser;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 
-public class ScalaHeuristicUnitParserTest {
+public class ScalaHeuristicUnitsExtractorTest {
     @Test
     public void isUnitSignature() throws Exception {
-        ScalaHeuristicUnitParser parser = new ScalaHeuristicUnitParser();
+        ScalaHeuristicUnitsExtractor parser = new ScalaHeuristicUnitsExtractor();
 
         assertTrue(parser.isUnitSignature("def method()"));
 

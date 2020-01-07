@@ -50,7 +50,7 @@ public class ObjectPascalAnalyzer extends LanguageAnalyzer {
     @Override
     public List<UnitInfo> extractUnits(SourceFile sourceFile) {
         String rawContent = getCommentsAndEmptyLinesCleaner().cleanKeepEmptyLines(sourceFile.getContent());
-        return new ObjectPascalUnitsExtractor(sourceFile, rawContent, this).extractUnits();
+        return new ObjectPascalHeuristicUnitsExtractor(sourceFile, rawContent, this).extractUnits();
     }
 
 

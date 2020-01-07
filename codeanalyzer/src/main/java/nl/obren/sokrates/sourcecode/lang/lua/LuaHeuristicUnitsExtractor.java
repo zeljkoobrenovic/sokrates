@@ -2,7 +2,7 @@
  * Copyright (c) 2019 Željko Obrenović. All rights reserved.
  */
 
-package nl.obren.sokrates.sourcecode.lang.objectpascal;
+package nl.obren.sokrates.sourcecode.lang.lua;
 
 import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.sourcecode.SourceFile;
@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ObjectPascalUnitsExtractor {
+public class LuaHeuristicUnitsExtractor {
     private UnitInfo unit = null;
     private StringBuilder unitBody = null;
     private StringBuilder cleanedUnitBody = null;
@@ -22,9 +22,9 @@ public class ObjectPascalUnitsExtractor {
     private int loc = 0;
     private SourceFile sourceFile;
     private String cleanedFileContent;
-    private ObjectPascalAnalyzer analyzer;
+    private LuaAnalyzer analyzer;
 
-    public ObjectPascalUnitsExtractor(SourceFile sourceFile, String cleanedFileContent, ObjectPascalAnalyzer analyzer) {
+    public LuaHeuristicUnitsExtractor(SourceFile sourceFile, String cleanedFileContent, LuaAnalyzer analyzer) {
         this.sourceFile = sourceFile;
         this.cleanedFileContent = cleanedFileContent;
         this.analyzer = analyzer;
@@ -42,7 +42,7 @@ public class ObjectPascalUnitsExtractor {
             } else if (unit != null) {
                 updateUnit(line);
 
-                if (line.equals(prefix + "end;")) {
+                if (line.startsWith(prefix + "end")) {
                     endUnit(lineIndex);
                 }
             }
@@ -53,8 +53,10 @@ public class ObjectPascalUnitsExtractor {
     }
 
     private boolean isFunctionStartLine(String line) {
-        String trimmedLine = line.trim().replace("\t", " ");
-        return RegexUtils.matchesEntirely("(class[ ]+)?(procedure|function|method)[ ]+([a-zA-Z0-9_]+[.])+[a-zA-Z0-9_]+[ ]*(\\(|;).*", trimmedLine);
+        String trimmedLine = line.trim();
+        return (trimmedLine.startsWith("function ") || trimmedLine.startsWith("function(")
+                || RegexUtils.matchesEntirely(".*[=][ ]*function[ ]*[(].*", trimmedLine))
+                && !(trimmedLine.endsWith("end)") || trimmedLine.endsWith("end"));
     }
 
     private void updateUnit(String line) {
@@ -113,30 +115,29 @@ public class ObjectPascalUnitsExtractor {
 
         String bodyForSearch = " " + content.replace("\n", " ");
         bodyForSearch = bodyForSearch.replace("(", " (");
+        bodyForSearch = bodyForSearch.replace("{", " {");
 
+        int startOfParamsSearchIndex = body.indexOf("(");
+        int endOfParamsSearchIndex = body.indexOf(")", startOfParamsSearchIndex + 1);
         if (unit.getShortName().contains("(")) {
             unit.setShortName(unit.getShortName().substring(0, unit.getShortName().indexOf("(")).trim() + "()");
-            int startOfParamsSearchIndex = body.indexOf("(");
-            int endOfParamsSearchIndex = body.indexOf(")", startOfParamsSearchIndex + 1);
-            if (startOfParamsSearchIndex > 0 && endOfParamsSearchIndex > 0 && endOfParamsSearchIndex > startOfParamsSearchIndex) {
-                String trimmedParams = body.substring(startOfParamsSearchIndex + 1, endOfParamsSearchIndex).trim();
-                if (!trimmedParams.isEmpty()) {
-                    String[] params = trimmedParams.split("\\;");
-                    unit.setNumberOfParameters(params.length);
-                }
+        }
+        if (startOfParamsSearchIndex > 0 && endOfParamsSearchIndex > 0 && endOfParamsSearchIndex > startOfParamsSearchIndex) {
+            String trimedParams = body.substring(startOfParamsSearchIndex + 1, endOfParamsSearchIndex).trim();
+            if (!trimedParams.isEmpty()) {
+                String[] params = trimedParams.split("\\,");
+                unit.setNumberOfParameters(params.length);
             }
         }
 
-        bodyForSearch = bodyForSearch.toLowerCase();
-
         int mcCabeIndex = 1;
         mcCabeIndex += StringUtils.countMatches(bodyForSearch, " if ");
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " repeat ");
+        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " elseif ");
         mcCabeIndex += StringUtils.countMatches(bodyForSearch, " while ");
+        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " repeat ");
         mcCabeIndex += StringUtils.countMatches(bodyForSearch, " for ");
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " case ");
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " AND");
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " OR ");
+        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " && ");
+        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " || ");
 
         unit.setMcCabeIndex(mcCabeIndex);
     }

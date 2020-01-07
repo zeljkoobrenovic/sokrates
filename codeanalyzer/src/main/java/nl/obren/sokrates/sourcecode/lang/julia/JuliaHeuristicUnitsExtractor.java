@@ -2,9 +2,8 @@
  * Copyright (c) 2019 Željko Obrenović. All rights reserved.
  */
 
-package nl.obren.sokrates.sourcecode.lang.lua;
+package nl.obren.sokrates.sourcecode.lang.julia;
 
-import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.cleaners.CommentsAndEmptyLinesCleaner;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
@@ -14,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class LuaUnitsExtractor {
+public class JuliaHeuristicUnitsExtractor {
     private UnitInfo unit = null;
     private StringBuilder unitBody = null;
     private StringBuilder cleanedUnitBody = null;
@@ -22,9 +21,9 @@ public class LuaUnitsExtractor {
     private int loc = 0;
     private SourceFile sourceFile;
     private String cleanedFileContent;
-    private LuaAnalyzer analyzer;
+    private JuliaAnalyzer analyzer;
 
-    public LuaUnitsExtractor(SourceFile sourceFile, String cleanedFileContent, LuaAnalyzer analyzer) {
+    public JuliaHeuristicUnitsExtractor(SourceFile sourceFile, String cleanedFileContent, JuliaAnalyzer analyzer) {
         this.sourceFile = sourceFile;
         this.cleanedFileContent = cleanedFileContent;
         this.analyzer = analyzer;
@@ -54,9 +53,8 @@ public class LuaUnitsExtractor {
 
     private boolean isFunctionStartLine(String line) {
         String trimmedLine = line.trim();
-        return (trimmedLine.startsWith("function ") || trimmedLine.startsWith("function(")
-                || RegexUtils.matchesEntirely(".*[=][ ]*function[ ]*[(].*", trimmedLine))
-                && !(trimmedLine.endsWith("end)") || trimmedLine.endsWith("end"));
+        return trimmedLine.startsWith("function ") || trimmedLine.startsWith("function(")
+                || (trimmedLine.startsWith("@") && trimmedLine.contains(" function"));
     }
 
     private void updateUnit(String line) {
@@ -133,9 +131,11 @@ public class LuaUnitsExtractor {
         int mcCabeIndex = 1;
         mcCabeIndex += StringUtils.countMatches(bodyForSearch, " if ");
         mcCabeIndex += StringUtils.countMatches(bodyForSearch, " elseif ");
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " while ");
-        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " repeat ");
+        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " ifelse ");
+        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " \\? ");
         mcCabeIndex += StringUtils.countMatches(bodyForSearch, " for ");
+        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " while ");
+        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " catch ");
         mcCabeIndex += StringUtils.countMatches(bodyForSearch, " && ");
         mcCabeIndex += StringUtils.countMatches(bodyForSearch, " || ");
 
