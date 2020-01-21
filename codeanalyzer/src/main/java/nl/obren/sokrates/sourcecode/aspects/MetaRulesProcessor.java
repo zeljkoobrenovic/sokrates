@@ -9,11 +9,16 @@ import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.util.*;
+
+interface MetaRulesProcessorCallback {
+    NamedSourceCodeAspect getInstance(String name);
+
+    void updateSourceFile(SourceFile sourceFile, NamedSourceCodeAspect aspect);
+}
 
 public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
     private static final Log LOG = LogFactory.getLog(MetaRulesProcessor.class);
@@ -44,7 +49,7 @@ public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
     }
 
     public static MetaRulesProcessor getLogicalDecompositionInstance() {
-        return new MetaRulesProcessor<NamedSourceCodeAspect>(true,new MetaRulesProcessorCallback() {
+        return new MetaRulesProcessor<NamedSourceCodeAspect>(true, new MetaRulesProcessorCallback() {
             @Override
             public NamedSourceCodeAspect getInstance(String name) {
                 return new NamedSourceCodeAspect(name);
@@ -65,12 +70,12 @@ public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
         this.uniqueClassification = uniqueClassification;
     }
 
-    public List<T> extractAspects(NamedSourceCodeAspect aspect, List<MetaRule> metaRules) {
+    public List<T> extractAspects(List<SourceFile> sourceFiles, List<MetaRule> metaRules) {
         concerns = new ArrayList<>();
         map = new HashMap<>();
         alreadyAddedFiles = new ArrayList<>();
 
-        aspect.getSourceFiles().forEach(sourceFile -> {
+        sourceFiles.forEach(sourceFile -> {
             processSourceFile(metaRules, sourceFile);
         });
 
@@ -79,7 +84,7 @@ public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
 
     private void processSourceFile(List<MetaRule> metaRules, SourceFile sourceFile) {
         metaRules.forEach(metaRule -> {
-            SourceFileFilter sourceFileFilter = new SourceFileFilter(metaRule.getPathPattern(), "");
+            SourceFileFilter sourceFileFilter = new SourceFileFilter(metaRule.getPathPattern(), metaRule.getContentPattern());
             if (sourceFileFilter.pathMatches(sourceFile.getRelativePath())) {
                 processSourceFileContent(sourceFile, metaRule);
             }
@@ -87,16 +92,32 @@ public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
     }
 
     private void processSourceFileContent(SourceFile sourceFile, MetaRule metaRule) {
-        if (StringUtils.isBlank(metaRule.getContentPattern())) {
+        if (stopProcessing(metaRule)) {
             return;
         }
         getLines(sourceFile, metaRule).forEach(line -> {
-            if (RegexUtils.matchesEntirely(metaRule.getContentPattern(), line)) {
+            if (matches(metaRule, line)) {
                 if (shouldProcessFile(sourceFile)) {
                     processMatchingString(sourceFile, metaRule, line);
                 }
             }
         });
+    }
+
+    private boolean stopProcessing(MetaRule metaRule) {
+        if (metaRule.getUse().equalsIgnoreCase("path")) {
+            return StringUtils.isBlank(metaRule.getPathPattern());
+        } else {
+            return StringUtils.isBlank(metaRule.getContentPattern());
+        }
+    }
+
+    private boolean matches(MetaRule metaRule, String line) {
+        if (metaRule.getUse().equalsIgnoreCase("path")) {
+            return RegexUtils.matchesEntirely(metaRule.getPathPattern(), line);
+        } else {
+            return RegexUtils.matchesEntirely(metaRule.getContentPattern(), line);
+        }
     }
 
     private List<String> getLines(SourceFile sourceFile, MetaRule metaRule) {
@@ -139,10 +160,5 @@ public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
         }
     }
 
-}
-
-interface MetaRulesProcessorCallback {
-    NamedSourceCodeAspect getInstance(String name);
-    void updateSourceFile(SourceFile sourceFile, NamedSourceCodeAspect aspect);
 }
 

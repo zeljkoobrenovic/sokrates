@@ -219,7 +219,7 @@ public class CodeConfiguration {
             });
 
             MetaRulesProcessor helper = MetaRulesProcessor.getCrossCurringConcernsInstance();
-            List<CrossCuttingConcern> metaConcerns = helper.extractAspects(main, group.getMetaConcerns());
+            List<CrossCuttingConcern> metaConcerns = helper.extractAspects(main.getSourceFiles(), group.getMetaConcerns());
             group.getConcerns().addAll(metaConcerns);
 
             populateUnclassifiedForCrossCuttingConcern(group.getConcerns());

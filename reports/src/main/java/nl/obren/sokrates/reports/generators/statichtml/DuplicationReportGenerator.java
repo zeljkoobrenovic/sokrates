@@ -11,6 +11,7 @@ import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
+import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationDependenciesHelper;
@@ -92,11 +93,12 @@ public class DuplicationReportGenerator {
 
     private void addDuplicationPerLogicalDecomposition(RichTextReport report) {
         codeAnalysisResults.getDuplicationAnalysisResults().getDuplicationPerComponent().forEach(duplicationPerComponent -> {
-            String logicalDecompositionName = getLogicalDecompositionName(codeAnalysisResults.getDuplicationAnalysisResults().getDuplicationPerComponent().indexOf(duplicationPerComponent));
+            LogicalDecomposition logicalDecomposition = getLogicalDecomposition(codeAnalysisResults.getDuplicationAnalysisResults().getDuplicationPerComponent().indexOf(duplicationPerComponent));
+            String logicalDecompositionName = logicalDecomposition.getName();
             report.startSection("Duplication per Component (" + logicalDecompositionName + ")", "");
             DuplicationReportUtils.addDuplicationPerAspect(report, duplicationPerComponent);
             report.startDiv("");
-            renderDependenciesViaDuplication(report, logicalDecompositionName);
+            renderDependenciesViaDuplication(report, logicalDecomposition);
             report.endDiv();
             report.endSection();
         });
@@ -160,9 +162,12 @@ public class DuplicationReportGenerator {
         report.endSection();
     }
 
-    private void renderDependenciesViaDuplication(RichTextReport report, String logicalDecompositionName) {
-        DuplicationDependenciesHelper duplicationDependenciesHelper = new DuplicationDependenciesHelper(logicalDecompositionName);
-        List<ComponentDependency> componentDependencies = duplicationDependenciesHelper.extractDependencies(codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates());
+    private void renderDependenciesViaDuplication(RichTextReport report, LogicalDecomposition logicalDecomposition) {
+        DuplicationDependenciesHelper duplicationDependenciesHelper = new DuplicationDependenciesHelper(logicalDecomposition.getName());
+        List<ComponentDependency> allDuplicates = duplicationDependenciesHelper.extractDependencies(codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates());
+        int threshold = logicalDecomposition.getDuplicationLinkThreshold();
+        List<ComponentDependency> componentDependencies = allDuplicates.stream().filter(d -> d.getCount() >= threshold).collect(Collectors.toList());
+
         List<DuplicationInstance> instances = duplicationDependenciesHelper.getInstances();
 
         if (componentDependencies.size() > 0) {
@@ -172,7 +177,7 @@ public class DuplicationReportGenerator {
             graphvizDependencyRenderer.setArrow("--");
             graphvizDependencyRenderer.setArrowColor("crimson");
             String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), componentDependencies);
-            report.addLevel3Header("Duplication Between Components", "margin-top: 30px");
+            report.addLevel3Header("Duplication Between Components (" + threshold + "+ lines)", "margin-top: 30px");
 
             String graphId = "duplication_dependencies_" + graphCounter++;
             report.addGraphvizFigure(graphId, "Duplication between components", graphvizContent);
@@ -183,7 +188,7 @@ public class DuplicationReportGenerator {
 
             report.addLineBreak();
 
-            addMoreDetailsSection(report, componentDependencies, logicalDecompositionName, instances);
+            addMoreDetailsSection(report, componentDependencies, logicalDecomposition.getName(), instances);
 
             report.addLineBreak();
         }
@@ -303,8 +308,8 @@ public class DuplicationReportGenerator {
     }
 
 
-    private String getLogicalDecompositionName(int index) {
-        return codeAnalysisResults.getCodeConfiguration().getLogicalDecompositions().get(index).getName();
+    private LogicalDecomposition getLogicalDecomposition(int index) {
+        return codeAnalysisResults.getCodeConfiguration().getLogicalDecompositions().get(index);
     }
 
     private void addLongestDuplicatesList(RichTextReport report) {

@@ -28,6 +28,7 @@ public class LogicalDecomposition {
     private boolean includeRemainingFiles = true;
     private DependenciesFinder dependenciesFinder = new DependenciesFinder();
     private RenderingOptions renderingOptions = new RenderingOptions();
+    private int duplicationLinkThreshold = 50;
 
     public LogicalDecomposition() {
     }
@@ -87,7 +88,7 @@ public class LogicalDecomposition {
         }
 
         MetaRulesProcessor helper = MetaRulesProcessor.getLogicalDecompositionInstance();
-        List<NamedSourceCodeAspect> metaComponents = helper.extractAspects(codeConfiguration.getMain(), this.metaComponents);
+        List<NamedSourceCodeAspect> metaComponents = helper.extractAspects(getSourceFiles(codeConfiguration), this.metaComponents);
         components.addAll(metaComponents);
 
         CodeConfigurationUtils.populateUnclassifiedAndMultipleAspectsFiles(components,
@@ -183,5 +184,13 @@ public class LogicalDecomposition {
     public NamedSourceCodeAspect getComponentByName(String fromComponent) {
         Optional<NamedSourceCodeAspect> first = this.components.stream().filter(c -> c.getName().equalsIgnoreCase(fromComponent)).findFirst();
         return first.isPresent() ? first.get() : null;
+    }
+
+    public int getDuplicationLinkThreshold() {
+        return duplicationLinkThreshold;
+    }
+
+    public void setDuplicationLinkThreshold(int duplicationLinkThreshold) {
+        this.duplicationLinkThreshold = duplicationLinkThreshold;
     }
 }
