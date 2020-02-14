@@ -18,7 +18,7 @@ public class ScopingConventions {
     private List<Convention> otherFilesConventions = new ArrayList<>();
 
     public ScopingConventions() {
-        addIgnoreConvetions();
+        addIgnoreConventions();
         addTestConventions();
         addGeneratedConventions();
         addBuildAndDeploymentConventions();
@@ -100,7 +100,7 @@ public class ScopingConventions {
         testFilesConventions.add(new Convention(".*/protractor[.]conf[.]js", "", defaultNote));
     }
 
-    private void addIgnoreConvetions() {
+    private void addIgnoreConventions() {
         ignoredFilesConventions.add(new Convention(".*/[.][a-zA-Z0-9_]+.*", "", "Hidden files and folders"));
         ignoredFilesConventions.add(new Convention(".*/node_modules/.*", "", "Node modules"));
         ignoredFilesConventions.add(new Convention(".*/bower_components/.*", "", "Bower components"));
