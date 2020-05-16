@@ -99,6 +99,10 @@ public class DependenciesFinderExtractor {
             return;
         }
 
+        if (!logicalDecomposition.isIncludeExternalComponents() && logicalDecomposition.getComponentByName(toComponent) == null) {
+            return;
+        }
+
         if (isInDuplicatedDependecies(sourceFile, toComponent)) return;
 
         ComponentDependency componentDependency = new ComponentDependency();
