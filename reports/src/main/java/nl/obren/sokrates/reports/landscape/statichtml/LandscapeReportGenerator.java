@@ -2,7 +2,7 @@
  * Copyright (c) 2019 Željko Obrenović. All rights reserved.
  */
 
-package nl.obren.sokrates.reports.landspace.statichtml;
+package nl.obren.sokrates.reports.landscape.statichtml;
 
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.utils.FormattingUtils;
@@ -43,21 +43,11 @@ public class LandscapeReportGenerator {
 
         addProjectsSection(landscapeAnalysisResults.getProjectAnalysisResults());
 
-        addDetailedNumbers(landscapeAnalysisResults);
-    }
-
-    private void addDetailedNumbers(LandscapeAnalysisResults landscapeAnalysisResults) {
-        landscapeReport.startSection("Details", "All the details");
-        landscapeReport.startUnorderedList();
-        landscapeReport.addListItem(landscapeAnalysisResults.getProjectsCount() + " projects");
-        landscapeReport.addListItem(landscapeAnalysisResults.getMainLoc() + " lines of code");
-        landscapeReport.addListItem(landscapeAnalysisResults.getMainFileCount() + " main files");
-        landscapeReport.endUnorderedList();
-        landscapeReport.endSection();
+        addLanguages();
     }
 
     private void addBigSummary(LandscapeAnalysisResults landscapeAnalysisResults) {
-        List<NumericMetric> linesOfCodePerExtension = getLinesOfCodePerExtension(landscapeAnalysisResults.getAllProjects());
+        List<NumericMetric> linesOfCodePerExtension = landscapeAnalysisResults.getLinesOfCodePerExtension();
 
         landscapeReport.startDiv("margin-top: 32px;");
         addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getProjectsCount()), "projects");
@@ -66,22 +56,32 @@ public class LandscapeReportGenerator {
         //addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainFileCount()), "files");
         landscapeReport.endDiv();
 
-        System.out.println(linesOfCodePerExtension.size());
+    }
+
+    private void addLanguages() {
+        List<NumericMetric> linesOfCodePerExtension = landscapeAnalysisResults.getLinesOfCodePerExtension();
+        landscapeReport.startSubSection("Languages", "");
         landscapeReport.startDiv("");
-        landscapeReport.addHtmlContent(getVolumeVisual(linesOfCodePerExtension));
+        landscapeReport.addContentInDiv(getVolumeVisual(linesOfCodePerExtension));
+        landscapeReport.addHtmlContent("( ");
+        landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_languages.html");
+        landscapeReport.addHtmlContent(" | ");
+        landscapeReport.addNewTabLink("tree map", "visuals/tree_map_languages.html");
+        landscapeReport.addHtmlContent(" )");
+        landscapeReport.addLineBreak();
+        landscapeReport.addLineBreak();
         landscapeReport.endDiv();
-        landscapeReport.startDiv("margin-bottom: 36px");
+        landscapeReport.startDiv("");
         linesOfCodePerExtension.forEach(extension -> {
-            addSmallInfoBlock(FormattingUtils.getSmallTextForNumber(extension.getValue().intValue()), extension.getName());
+            addSmallInfoBlock(FormattingUtils.getSmallTextForNumber(extension.getValue().intValue()), extension.getName().replace("*.", ""));
         });
         landscapeReport.endDiv();
+        landscapeReport.endSection();
     }
 
     private void addProjectsSection(List<ProjectAnalysisResults> projectsAnalysisResults) {
         Collections.sort(projectsAnalysisResults, (a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode() - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
-        int projectsCount = projectsAnalysisResults.size();
-        String countText = projectsCount + (projectsCount == 1 ? " project" : " projects");
-        landscapeReport.startSection("Projects", "");
+        landscapeReport.startSubSection("Projects", "");
 
         if (projectsAnalysisResults.size() > 0) {
             List<NumericMetric> projectSizes = new ArrayList<>();
@@ -90,7 +90,14 @@ public class LandscapeReportGenerator {
                 projectSizes.add(new NumericMetric(analysisResults.getCodeConfiguration().getMetadata().getName(), analysisResults.getMainAspectAnalysisResults().getLinesOfCode()));
             });
             landscapeReport.addContentInDiv(getVolumeVisual(projectSizes));
-            landscapeReport.startTable();
+            landscapeReport.addHtmlContent("( ");
+            landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_projects.html");
+            landscapeReport.addHtmlContent(" | ");
+            landscapeReport.addNewTabLink("tree map", "visuals/tree_map_projects.html");
+            landscapeReport.addHtmlContent(" )");
+            landscapeReport.addLineBreak();
+            landscapeReport.addLineBreak();
+            landscapeReport.startTable("width: 100%");
             landscapeReport.addTableHeader("", "Project", "Lines of code", "Languages", "Duplication", "Report");
             projectsAnalysisResults.forEach(projectAnalysis -> {
                 addProjectRow(projectAnalysis);
@@ -159,33 +166,13 @@ public class LandscapeReportGenerator {
         return reports;
     }
 
-    public List<NumericMetric> getLinesOfCodePerExtension(List<ProjectAnalysisResults> projects) {
-        List<NumericMetric> linesOfCodePerExtension = new ArrayList<>();
-        projects.forEach(projectAnalysisResults -> {
-            AspectAnalysisResults main = projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults();
-            List<NumericMetric> projectLinesOfCodePerExtension = main.getLinesOfCodePerExtension();
-            projectLinesOfCodePerExtension.forEach(metric -> {
-                String id = metric.getName();
-                Optional<NumericMetric> existingMetric = linesOfCodePerExtension.stream().filter(c -> c.getName().equalsIgnoreCase(id)).findAny();
-                if (existingMetric.isPresent()) {
-                    existingMetric.get().setValue(existingMetric.get().getValue().intValue() + metric.getValue().intValue());
-                } else {
-                    linesOfCodePerExtension.add(metric);
-                }
-            });
-        });
-
-        Collections.sort(linesOfCodePerExtension, (a, b) -> b.getValue().intValue() - a.getValue().intValue());
-        return linesOfCodePerExtension;
-    }
-
     private String getVolumeVisual(List<NumericMetric> linesOfCodePerExtension) {
         int total[] = {0};
         linesOfCodePerExtension.forEach(extension -> total[0] += extension.getValue().intValue());
 
         SimpleOneBarChart chart = new SimpleOneBarChart();
         chart.setWidth(400);
-        chart.setBarHeight(40);
+        chart.setBarHeight(12);
         chart.setMaxBarWidth(400);
         chart.setBarStartXOffset(0);
         chart.setFontSize("small");
