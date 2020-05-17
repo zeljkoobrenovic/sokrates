@@ -49,7 +49,7 @@ public class LandscapeAnalyzer {
         group.getProjects().forEach(link -> {
             CodeAnalysisResults projectAnalysisResults = this.getProjectAnalysisResults(link);
             if (projectAnalysisResults != null) {
-                groupAnalysisResults.getProjectsAnalysisResults().add(projectAnalysisResults);
+                groupAnalysisResults.getProjectsAnalysisResults().add(new ProjectAnalysisResults(link, projectAnalysisResults));
             }
         });
 

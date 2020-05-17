@@ -50,4 +50,24 @@ public class FormattingUtilsTest {
         assertEquals(FormattingUtils.getFormattedCount(0), "0");
     }
 
+    @Test
+    public void getSmallTextForNumber() {
+        assertEquals(FormattingUtils.getSmallTextForNumber(100), "<b>100</b>");
+        assertEquals(FormattingUtils.getSmallTextForNumber(999), "<b>999</b>");
+        assertEquals(FormattingUtils.getSmallTextForNumber(1000), "<b>1</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumber(1807), "<b>1.8</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumber(1999), "<b>2</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumber(9999), "<b>10</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumber(9899), "<b>9.9</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumber(10000), "<b>10</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumber(18070), "<b>18</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumber(19990), "<b>20</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumber(89990), "<b>90</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumber(99990), "<b>100</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumber(1000000), "<b>1</b>M");
+        assertEquals(FormattingUtils.getSmallTextForNumber(1807000), "<b>1.8</b>M");
+        assertEquals(FormattingUtils.getSmallTextForNumber(1999000), "<b>2</b>M");
+        assertEquals(FormattingUtils.getSmallTextForNumber(9800000), "<b>9.8</b>M");
+        assertEquals(FormattingUtils.getSmallTextForNumber(19800000), "<b>20</b>M");
+    }
 }

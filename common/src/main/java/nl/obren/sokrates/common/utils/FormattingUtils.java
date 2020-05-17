@@ -22,4 +22,27 @@ public class FormattingUtils {
     public static String getFormattedCount(int value) {
         return new DecimalFormat("#,###").format(value);
     }
+
+    public static String getSmallTextForNumber(int number) {
+        if (number < 1000) {
+            return "<b>" + number + "</b>" + "";
+        } else if (number < 10000) {
+            return "<b>" + removeZeroDecimalIfNecessary(String.format("%.1f", number / 1000f)) + "</b>" + "K";
+        } else if (number < 1000000) {
+            return "<b>" + Math.round(number / 1000f) + "</b>" + "K";
+        } else if (number < 10000000) {
+            return "<b>" + removeZeroDecimalIfNecessary(String.format("%.1f", number / 1000000f)) + "</b>" + "M";
+        } else {
+            return "<b>" + Math.round(number / 1000000f) + "</b>" + "M";
+        }
+    }
+
+    private static String removeZeroDecimalIfNecessary(String formattedNumber) {
+        if (formattedNumber.endsWith(".0")) {
+            formattedNumber = formattedNumber.substring(0, formattedNumber.length() - 2);
+        }
+        return formattedNumber;
+    }
+
+
 }

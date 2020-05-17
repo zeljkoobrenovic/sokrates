@@ -5,6 +5,7 @@
 package nl.obren.sokrates.sourcecode.landscape.analysis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.kitfox.svg.A;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 
 import java.util.ArrayList;
@@ -28,6 +29,23 @@ public class LandscapeAnalysisResults {
 
     public void setGroupsAnalysisResults(List<LandscapeGroupAnalysisResults> groupsAnalysisResults) {
         this.groupsAnalysisResults = groupsAnalysisResults;
+    }
+
+    @JsonIgnore
+    public List<ProjectAnalysisResults> getAllProjects() {
+        return getAllProjects(this.groupsAnalysisResults);
+    }
+
+    @JsonIgnore
+    private List<ProjectAnalysisResults> getAllProjects( List<LandscapeGroupAnalysisResults> groupsAnalysisResults) {
+        List<ProjectAnalysisResults> projectAnalysisResults = new ArrayList<>();
+
+        groupsAnalysisResults.forEach(groupAnalysisResult -> {
+            projectAnalysisResults.addAll(groupAnalysisResult.getProjectsAnalysisResults());
+            projectAnalysisResults.addAll(getAllProjects(groupAnalysisResult.getSubGroupsAnalysisResults()));
+        });
+
+        return projectAnalysisResults;
     }
 
     @JsonIgnore

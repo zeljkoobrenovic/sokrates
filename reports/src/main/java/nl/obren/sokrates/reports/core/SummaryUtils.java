@@ -26,6 +26,15 @@ import java.util.stream.Collectors;
 public class SummaryUtils {
     private static final int BAR_WIDTH = 260;
     private static final int BAR_HEIGHT = 20;
+    private String reportRoot = "";
+
+    public String getReportRoot() {
+        return reportRoot;
+    }
+
+    public void setReportRoot(String reportRoot) {
+        this.reportRoot = reportRoot;
+    }
 
     public void summarize(CodeAnalysisResults analysisResults, RichTextReport report) {
         report.startDiv("width: 100%; overflow-x: auto");
@@ -59,7 +68,7 @@ public class SummaryUtils {
                         + "%</b> very long (>1000 LOC), <b>"
                         + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(mainLOC, shortFilesLOC))
                         + "%</b> short (<= 200 LOC)", "border: none");
-                report.addTableCell("<a href='FileSize.html'>...</a>", "border: none");
+                report.addTableCell("<a href='" + reportRoot + "FileSize.html'>...</a>", "border: none");
                 report.endTableRow();
             }
         }
@@ -72,7 +81,7 @@ public class SummaryUtils {
         return svg;
     }
 
-    private void summarizeListOfLocAspects(StringBuilder summary, int totalLoc, int mainLoc, List<NumericMetric> linesOfCodePerAspect) {
+    public void summarizeListOfLocAspects(StringBuilder summary, int totalLoc, List<NumericMetric> linesOfCodePerAspect) {
         if (linesOfCodePerAspect.size() > 0) {
             summary.append("<span style='color: grey'> = ");
         }
@@ -180,24 +189,8 @@ public class SummaryUtils {
         StringBuilder summary = new StringBuilder("");
         summarizeMainCode(analysisResults, summary);
         report.addHtmlContent(summary.toString());
-        report.addTableCell("<a href='SourceCodeOverview.html'>...</a>", "border: none");
+        report.addTableCell("<a href='" + reportRoot + "SourceCodeOverview.html'>...</a>", "border: none");
         report.endTableRow();
-    }
-
-    private void summarizeTestVolume(CodeAnalysisResults analysisResults, RichTextReport report) {
-        StringBuilder summary = new StringBuilder("");
-        summarizeTestCode(analysisResults, summary);
-        report.addParagraph(summary.toString());
-    }
-
-    private void summarizeTestCode(CodeAnalysisResults analysisResults, StringBuilder summary) {
-        summary.append("<p style='margin-bottom: 0; margin-top: 36px'>Test Code: ");
-        int mainLoc = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
-        int totalLoc = analysisResults.getTestAspectAnalysisResults().getLinesOfCode();
-        summary.append(RichTextRenderingUtils.renderNumberStrong(totalLoc) + " LOC");
-        List<NumericMetric> linesOfCodePerExtension = analysisResults.getTestAspectAnalysisResults().getLinesOfCodePerExtension();
-        summarizeListOfLocAspects(summary, totalLoc, mainLoc, linesOfCodePerExtension);
-        summary.append("</p>");
     }
 
     private void summarizeMainCode(CodeAnalysisResults analysisResults, StringBuilder summary) {
@@ -209,7 +202,7 @@ public class SummaryUtils {
         summary.append("</td>");
         summary.append("<td  style='border: none'>Main Code: ");
         summary.append(RichTextRenderingUtils.renderNumberStrong(totalLoc) + " LOC");
-        summarizeListOfLocAspects(summary, totalLoc, totalLoc, linesOfCodePerExtension);
+        summarizeListOfLocAspects(summary, totalLoc, linesOfCodePerExtension);
         summary.append("</td>");
     }
 
@@ -252,7 +245,7 @@ public class SummaryUtils {
             report.addHtmlContent(decomposition.getKey() + " (" + decomposition.getComponents().size() + " components)");
         });
         report.endTableCell();
-        report.addTableCell("<a href='Components.html'>...</a>", "border: none");
+        report.addTableCell("<a href='" + reportRoot + "Components.html'>...</a>", "border: none");
 
         report.endTableRow();
     }
@@ -292,7 +285,7 @@ public class SummaryUtils {
             report.addHtmlContent(metricsWithGoal.getGoal() + " (" + metricsWithGoal.getControls().size() + ")");
         });
         report.endTableCell();
-        report.addTableCell("<a href='Controls.html'>...</a>", "border: none");
+        report.addTableCell("<a href='" + reportRoot + "Controls.html'>...</a>", "border: none");
 
         report.endTableRow();
     }
@@ -312,7 +305,7 @@ public class SummaryUtils {
                 + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, lowComplexUnitsLOC))
                 + "%</b> simple (McCabe index <= 5)", "border: none");
 
-        report.addTableCell("<a href='ConditionalComplexity.html'>...</a>", "border: none");
+        report.addTableCell("<a href='" + reportRoot + "ConditionalComplexity.html'>...</a>", "border: none");
         report.endTableRow();
     }
 
@@ -330,7 +323,7 @@ public class SummaryUtils {
                 + "%</b> very long (>100 LOC), <b>"
                 + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, lowUnitsLOC))
                 + "%</b> short (<= 20 LOC)", "border: none");
-        report.addTableCell("<a href='UnitSize.html'>...</a>", "border: none");
+        report.addTableCell("<a href='" + reportRoot + "UnitSize.html'>...</a>", "border: none");
         report.endTableRow();
     }
 
@@ -343,7 +336,7 @@ public class SummaryUtils {
             report.addTableCell(getIconSvg("duplication"), "border: none");
             report.addTableCell(getDuplicationVisual(duplicationPercentage), "border: none");
             report.addTableCell("Duplication: <b>" + FormattingUtils.getFormattedPercentage(duplication) + "%</b>", "margin-bottom: 0;  border: none;");
-            report.addTableCell("<a href='Duplication.html'>...</a>", "border: none");
+            report.addTableCell("<a href='" + reportRoot + "Duplication.html'>...</a>", "border: none");
             report.endTableRow();
         }
     }

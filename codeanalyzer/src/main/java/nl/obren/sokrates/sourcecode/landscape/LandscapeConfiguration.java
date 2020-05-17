@@ -12,6 +12,7 @@ import java.util.List;
 public class LandscapeConfiguration {
     private Metadata metadata = new Metadata();
     private String analysisRoot = "";
+    private String projectReportsUrlPrefix = "../../../";
 
     private List<LandscapeGroup> groups = new ArrayList<>();
 
@@ -37,5 +38,13 @@ public class LandscapeConfiguration {
 
     public void setAnalysisRoot(String analysisRoot) {
         this.analysisRoot = analysisRoot;
+    }
+
+    public String getProjectReportsUrlPrefix() {
+        return projectReportsUrlPrefix;
+    }
+
+    public void setProjectReportsUrlPrefix(String projectReportsUrlPrefix) {
+        this.projectReportsUrlPrefix = projectReportsUrlPrefix;
     }
 }

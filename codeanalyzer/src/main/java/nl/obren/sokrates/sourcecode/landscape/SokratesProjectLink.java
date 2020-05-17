@@ -8,7 +8,7 @@ import java.io.File;
 
 public class SokratesProjectLink {
     private String analysisResultsPath = "";
-    private String htmlReportsIndexPath = "";
+    private String htmlReportsRoot = "";
     private String note = "";
 
     public SokratesProjectLink() {
@@ -17,8 +17,7 @@ public class SokratesProjectLink {
     public SokratesProjectLink(String analysisResultsPath) {
         this.analysisResultsPath = analysisResultsPath;
         File reportsRoot = new File(analysisResultsPath).getParentFile().getParentFile();
-        File htmlRoot = new File(reportsRoot, "html");
-        this.htmlReportsIndexPath = new File(htmlRoot, "index.html").getPath();
+        this.htmlReportsRoot = new File(reportsRoot, "html").getPath();
     }
 
     public String getAnalysisResultsPath() {
@@ -29,12 +28,12 @@ public class SokratesProjectLink {
         this.analysisResultsPath = analysisResultsPath;
     }
 
-    public String getHtmlReportsIndexPath() {
-        return htmlReportsIndexPath;
+    public String getHtmlReportsRoot() {
+        return htmlReportsRoot;
     }
 
-    public void setHtmlReportsIndexPath(String htmlReportsIndexPath) {
-        this.htmlReportsIndexPath = htmlReportsIndexPath;
+    public void setHtmlReportsRoot(String htmlReportsRoot) {
+        this.htmlReportsRoot = htmlReportsRoot;
     }
 
     public String getNote() {

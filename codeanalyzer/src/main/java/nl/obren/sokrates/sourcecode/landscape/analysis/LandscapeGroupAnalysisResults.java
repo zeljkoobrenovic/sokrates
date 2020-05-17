@@ -13,7 +13,7 @@ import java.util.List;
 
 public class LandscapeGroupAnalysisResults {
     private LandscapeGroup group = new LandscapeGroup();
-    private List<CodeAnalysisResults> projectsAnalysisResults = new ArrayList<>();
+    private List<ProjectAnalysisResults> projectsAnalysisResults = new ArrayList<>();
     private List<LandscapeGroupAnalysisResults> subGroupsAnalysisResults = new ArrayList<>();
 
     public LandscapeGroup getGroup() {
@@ -24,11 +24,11 @@ public class LandscapeGroupAnalysisResults {
         this.group = group;
     }
 
-    public List<CodeAnalysisResults> getProjectsAnalysisResults() {
+    public List<ProjectAnalysisResults> getProjectsAnalysisResults() {
         return projectsAnalysisResults;
     }
 
-    public void setProjectsAnalysisResults(List<CodeAnalysisResults> projectsAnalysisResults) {
+    public void setProjectsAnalysisResults(List<ProjectAnalysisResults> projectsAnalysisResults) {
         this.projectsAnalysisResults = projectsAnalysisResults;
     }
 
@@ -56,7 +56,7 @@ public class LandscapeGroupAnalysisResults {
     public int getMainLoc() {
         int locInGroup[] = {0};
         this.getProjectsAnalysisResults().forEach(projectsAnalysisResults -> {
-            locInGroup[0] += projectsAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode();
+            locInGroup[0] += projectsAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
         });
 
         int locInSubGroups[] = {0};
@@ -72,7 +72,7 @@ public class LandscapeGroupAnalysisResults {
     public int getMainFileCount() {
         int locInGroup[] = {0};
         this.getProjectsAnalysisResults().forEach(projectsAnalysisResults -> {
-            locInGroup[0] += projectsAnalysisResults.getMainAspectAnalysisResults().getFilesCount();
+            locInGroup[0] += projectsAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getFilesCount();
         });
 
         int locInSubGroups[] = {0};
