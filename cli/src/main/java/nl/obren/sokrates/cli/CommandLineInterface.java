@@ -18,6 +18,7 @@ import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.dataexporters.DataExporter;
 import nl.obren.sokrates.reports.generators.statichtml.BasicSourceCodeReportGenerator;
+import nl.obren.sokrates.reports.landscape.statichtml.LandscapeAnalysisCommands;
 import nl.obren.sokrates.sourcecode.analysis.CodeAnalyzer;
 import nl.obren.sokrates.sourcecode.analysis.CodeAnalyzerSettings;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -61,9 +62,13 @@ public class CommandLineInterface {
     public static final String OUTPUT_FOLDER = "outputFolder";
     public static final String USE_INTERNAL_GRAPHVIZ = "internalGraphviz";
     public static final String HTML_REPORTS_FOLDER_NAME = "html";
+    public static final String INIT_LANDSCAPE = "initLandscape";
+    public static final String UPDATE_LANDSCAPE = "updateLandscape";
+    public static final String ANALYSIS_ROOT = "analysisRoot";
     private static final Log LOG = LogFactory.getLog(CommandLineInterface.class);
     private Option srcRoot = new Option(SRC_ROOT, true, "[OPTIONAL] the folder where reports will be stored (default is \"<currentFolder>/_sokrates/reports/\")");
     private Option confFile = new Option(CONF_FILE, true, "[OPTIONAL] the path to configuration file (default is \"<currentFolder>/_sokrates/config.json\"");
+    private Option analysisRoot = new Option(ANALYSIS_ROOT, true, "[OPTIONAL] the path to configuration file (default is \"<currentFolder>/_sokrates/config.json\"");
     private Option all = new Option(REPORT_ALL, false, "[DEFAULT] generate all reports");
     private Option data = new Option(REPORT_DATA, false, "save analysis data in JSON and text format (in the _sokrates/reports/data folder)");
     private Option scope = new Option(REPORT_OVERVIEW, false, "generate the report describing the overview of files in scope");
@@ -107,6 +112,12 @@ public class CommandLineInterface {
             } else if (args[0].equalsIgnoreCase(CONFIG_COMPLETE)) {
                 completeConfig(args);
                 return;
+            } else if (args[0].equalsIgnoreCase(INIT_LANDSCAPE)) {
+                initLandscape(args);
+                return;
+            } else if (args[0].equalsIgnoreCase(UPDATE_LANDSCAPE)) {
+                updateLandscape(args);
+                return;
             } else if (!args[0].equalsIgnoreCase(GENERATE_REPORTS)) {
                 usage();
                 return;
@@ -117,6 +128,48 @@ public class CommandLineInterface {
             System.out.println("ERROR: " + e.getMessage() + "\n");
             usage();
         }
+    }
+
+    private void initLandscape(String[] args) throws ParseException {
+        Options options = getInitLandscapeOptions();
+        CommandLineParser parser = new DefaultParser();
+        CommandLine cmd = parser.parse(options, args);
+
+        String strRootPath = cmd.getOptionValue(analysisRoot.getOpt());
+        if (!cmd.hasOption(analysisRoot.getOpt())) {
+            strRootPath = ".";
+        }
+
+        File root = new File(strRootPath);
+        if (!root.exists()) {
+            LOG.error("The analysis root \"" + root.getPath() + "\" does not exist.");
+            return;
+        }
+
+        String confFilePath = cmd.getOptionValue(confFile.getOpt());
+
+        LandscapeAnalysisCommands.init(root, confFilePath != null ? new File(confFilePath) : null);
+    }
+
+    private void updateLandscape(String[] args) throws ParseException {
+        Options options = getInitLandscapeOptions();
+        CommandLineParser parser = new DefaultParser();
+        CommandLine cmd = parser.parse(options, args);
+
+        String strRootPath = cmd.getOptionValue(analysisRoot.getOpt());
+        if (!cmd.hasOption(analysisRoot.getOpt())) {
+            strRootPath = ".";
+        }
+
+        File root = new File(strRootPath);
+        if (!root.exists()) {
+            LOG.error("The analysis root \"" + root.getPath() + "\" does not exist.");
+            return;
+        }
+
+        String confFilePath = cmd.getOptionValue(confFile.getOpt());
+
+        LandscapeAnalysisCommands.update(root, confFilePath != null ? new File(confFilePath) : null);
     }
 
     private void generateReports(String[] args) throws ParseException, IOException {
@@ -413,6 +466,8 @@ public class CommandLineInterface {
         usage(GENERATE_REPORTS, getReportingOptions());
         System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
         usage(CONFIG_COMPLETE, getConfigCompleteOptions());
+        usage(INIT_LANDSCAPE, getInitLandscapeOptions());
+        usage(UPDATE_LANDSCAPE, getUpdateLandscapeOptions());
     }
 
     private void usage(String prefix, Options options) {
@@ -516,6 +571,34 @@ public class CommandLineInterface {
 
         return options;
     }
+
+    private Options getInitLandscapeOptions() {
+        Options options = new Options();
+        options.addOption(analysisRoot);
+        options.addOption(confFile);
+
+        confFile.setRequired(false);
+
+        return options;
+    }
+
+    private Options getUpdateLandscapeOptions() {
+        Options options = new Options();
+        options.addOption(analysisRoot);
+        options.addOption(confFile);
+
+        confFile.setRequired(false);
+
+        return options;
+    }
+
+    private Options getGenerateLandscapeReportOptions() {
+        Options options = new Options();
+        options.addOption(confFile);
+
+        return options;
+    }
+
 
     public void setProgressFeedback(ProgressFeedback progressFeedback) {
         this.progressFeedback = progressFeedback;
