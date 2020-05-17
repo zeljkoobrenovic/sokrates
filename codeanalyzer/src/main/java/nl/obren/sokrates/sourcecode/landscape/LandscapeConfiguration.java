@@ -14,7 +14,7 @@ public class LandscapeConfiguration {
     private String analysisRoot = "";
     private String projectReportsUrlPrefix = "../../../";
 
-    private List<LandscapeGroup> groups = new ArrayList<>();
+    private List<SokratesProjectLink> projects = new ArrayList<>();
 
     public Metadata getMetadata() {
         return metadata;
@@ -22,14 +22,6 @@ public class LandscapeConfiguration {
 
     public void setMetadata(Metadata metadata) {
         this.metadata = metadata;
-    }
-
-    public List<LandscapeGroup> getGroups() {
-        return groups;
-    }
-
-    public void setGroups(List<LandscapeGroup> groups) {
-        this.groups = groups;
     }
 
     public String getAnalysisRoot() {
@@ -46,5 +38,13 @@ public class LandscapeConfiguration {
 
     public void setProjectReportsUrlPrefix(String projectReportsUrlPrefix) {
         this.projectReportsUrlPrefix = projectReportsUrlPrefix;
+    }
+
+    public List<SokratesProjectLink> getProjects() {
+        return projects;
+    }
+
+    public void setProjects(List<SokratesProjectLink> projects) {
+        this.projects = projects;
     }
 }

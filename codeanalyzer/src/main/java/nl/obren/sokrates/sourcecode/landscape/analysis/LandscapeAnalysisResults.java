@@ -5,7 +5,6 @@
 package nl.obren.sokrates.sourcecode.landscape.analysis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.kitfox.svg.A;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 
 import java.util.ArrayList;
@@ -13,7 +12,7 @@ import java.util.List;
 
 public class LandscapeAnalysisResults {
     private LandscapeConfiguration configuration = new LandscapeConfiguration();
-    private List<LandscapeGroupAnalysisResults> groupsAnalysisResults = new ArrayList<>();
+    private List<ProjectAnalysisResults> projectAnalysisResults = new ArrayList<>();
 
     public LandscapeConfiguration getConfiguration() {
         return configuration;
@@ -23,49 +22,39 @@ public class LandscapeAnalysisResults {
         this.configuration = configuration;
     }
 
-    public List<LandscapeGroupAnalysisResults> getGroupsAnalysisResults() {
-        return groupsAnalysisResults;
+    public List<ProjectAnalysisResults> getProjectAnalysisResults() {
+        return projectAnalysisResults;
     }
 
-    public void setGroupsAnalysisResults(List<LandscapeGroupAnalysisResults> groupsAnalysisResults) {
-        this.groupsAnalysisResults = groupsAnalysisResults;
+    public void setProjectAnalysisResults(List<ProjectAnalysisResults> projectAnalysisResults) {
+        this.projectAnalysisResults = projectAnalysisResults;
     }
 
     @JsonIgnore
     public List<ProjectAnalysisResults> getAllProjects() {
-        return getAllProjects(this.groupsAnalysisResults);
-    }
-
-    @JsonIgnore
-    private List<ProjectAnalysisResults> getAllProjects( List<LandscapeGroupAnalysisResults> groupsAnalysisResults) {
-        List<ProjectAnalysisResults> projectAnalysisResults = new ArrayList<>();
-
-        groupsAnalysisResults.forEach(groupAnalysisResult -> {
-            projectAnalysisResults.addAll(groupAnalysisResult.getProjectsAnalysisResults());
-            projectAnalysisResults.addAll(getAllProjects(groupAnalysisResult.getSubGroupsAnalysisResults()));
-        });
-
-        return projectAnalysisResults;
+        return this.projectAnalysisResults;
     }
 
     @JsonIgnore
     public int getProjectsCount() {
-        int count[] = {0};
-        this.groupsAnalysisResults.forEach(groupAnalysisResult -> count[0] += groupAnalysisResult.getProjectsCount());
-        return count[0];
+        return projectAnalysisResults.size();
     }
 
     @JsonIgnore
     public int getMainFileCount() {
         int count[] = {0};
-        this.groupsAnalysisResults.forEach(groupAnalysisResult -> count[0] += groupAnalysisResult.getMainFileCount());
+        this.projectAnalysisResults.forEach(projectAnalysisResults -> {
+            count[0] += projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getFilesCount();
+        });
         return count[0];
     }
 
     @JsonIgnore
     public int getMainLoc() {
         int count[] = {0};
-        this.groupsAnalysisResults.forEach(groupAnalysisResult -> count[0] += groupAnalysisResult.getMainLoc());
+        this.projectAnalysisResults.forEach(projectAnalysisResults -> {
+            count[0] += projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
+        });
         return count[0];
     }
 }

@@ -7,7 +7,6 @@ package nl.obren.sokrates.sourcecode.landscape.init;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
-import nl.obren.sokrates.sourcecode.landscape.LandscapeGroup;
 import nl.obren.sokrates.sourcecode.landscape.SokratesProjectLink;
 import org.apache.commons.io.FileUtils;
 
@@ -24,13 +23,9 @@ public class LandscapeAnalysisInitiator {
         LandscapeConfiguration landscapeConfiguration = new LandscapeConfiguration();
         landscapeConfiguration.setAnalysisRoot(analysisRoot.getPath());
 
-        LandscapeGroup defaultGroup = new LandscapeGroup();
-
-        landscapeConfiguration.getGroups().add(defaultGroup);
-
         try (Stream<Path> paths = Files.walk(Paths.get(analysisRoot.getPath()))) {
             paths.filter(file -> isSokratesAnalysisFile(file)).forEach(file -> {
-                processAnalysisResultFile(analysisRoot, defaultGroup, file);
+                processAnalysisResultFile(analysisRoot, landscapeConfiguration, file);
             });
         } catch (IOException e) {
             e.printStackTrace();
@@ -63,9 +58,9 @@ public class LandscapeAnalysisInitiator {
         return file.endsWith("reports/data/analysisResults.json");
     }
 
-    private void processAnalysisResultFile(File root, LandscapeGroup defaultGroup, Path file) {
+    private void processAnalysisResultFile(File root, LandscapeConfiguration configuration, Path file) {
         String relativePath = root.toPath().relativize(file).toString();
-        defaultGroup.getProjects().add(new SokratesProjectLink(relativePath));
+        configuration.getProjects().add(new SokratesProjectLink(relativePath));
 
         System.out.println(relativePath);
     }

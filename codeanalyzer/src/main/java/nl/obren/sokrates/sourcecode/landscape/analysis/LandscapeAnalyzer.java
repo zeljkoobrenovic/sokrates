@@ -9,7 +9,6 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
-import nl.obren.sokrates.sourcecode.landscape.LandscapeGroup;
 import nl.obren.sokrates.sourcecode.landscape.SokratesProjectLink;
 import org.apache.commons.io.FileUtils;
 
@@ -32,34 +31,17 @@ public class LandscapeAnalyzer {
             String json = FileUtils.readFileToString(landscapeConfigurationFile, StandardCharsets.UTF_8);
             this.landscapeConfiguration = (LandscapeConfiguration) new JsonMapper().getObject(json, LandscapeConfiguration.class);
             landscapeAnalysisResults.setConfiguration(landscapeConfiguration);
-            landscapeConfiguration.getGroups().forEach(group -> {
-                landscapeAnalysisResults.getGroupsAnalysisResults().add(analyzeGroup(group));
+            landscapeConfiguration.getProjects().forEach(link -> {
+                CodeAnalysisResults projectAnalysisResults = this.getProjectAnalysisResults(link);
+                if (projectAnalysisResults != null) {
+                    landscapeAnalysisResults.getProjectAnalysisResults().add(new ProjectAnalysisResults(link, projectAnalysisResults));
+                }
             });
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         return landscapeAnalysisResults;
-    }
-
-    private LandscapeGroupAnalysisResults analyzeGroup(LandscapeGroup group) {
-        LandscapeGroupAnalysisResults groupAnalysisResults = new LandscapeGroupAnalysisResults();
-        groupAnalysisResults.setGroup(group);
-
-        group.getProjects().forEach(link -> {
-            CodeAnalysisResults projectAnalysisResults = this.getProjectAnalysisResults(link);
-            if (projectAnalysisResults != null) {
-                groupAnalysisResults.getProjectsAnalysisResults().add(new ProjectAnalysisResults(link, projectAnalysisResults));
-            }
-        });
-
-        if (group.getSubGroups() != null) {
-            group.getSubGroups().forEach(subGroup -> {
-                groupAnalysisResults.getSubGroupsAnalysisResults().add(analyzeGroup(subGroup));
-            });
-        }
-
-        return groupAnalysisResults;
     }
 
     private CodeAnalysisResults getProjectAnalysisResults(SokratesProjectLink sokratesProjectLink) {

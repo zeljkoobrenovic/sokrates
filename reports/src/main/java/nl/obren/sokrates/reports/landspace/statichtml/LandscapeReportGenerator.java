@@ -14,7 +14,6 @@ import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
-import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeGroupAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ProjectAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.lang3.StringUtils;
@@ -42,9 +41,7 @@ public class LandscapeReportGenerator {
 
         addBigSummary(landscapeAnalysisResults);
 
-        landscapeAnalysisResults.getGroupsAnalysisResults().forEach(groupAnalysisResults -> {
-            addGroup(groupAnalysisResults);
-        });
+        addProjectsSection(landscapeAnalysisResults.getProjectAnalysisResults());
 
         addDetailedNumbers(landscapeAnalysisResults);
     }
@@ -60,14 +57,15 @@ public class LandscapeReportGenerator {
     }
 
     private void addBigSummary(LandscapeAnalysisResults landscapeAnalysisResults) {
+        List<NumericMetric> linesOfCodePerExtension = getLinesOfCodePerExtension(landscapeAnalysisResults.getAllProjects());
+
         landscapeReport.startDiv("margin-top: 32px;");
         addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getProjectsCount()), "projects");
         addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "lines of code");
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(linesOfCodePerExtension.size()), linesOfCodePerExtension.size() == 1 ? " language" : " languages");
         //addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainFileCount()), "files");
         landscapeReport.endDiv();
 
-        List<NumericMetric> linesOfCodePerExtension = getLinesOfCodePerExtension(landscapeAnalysisResults.getAllProjects());
-        landscapeReport.addLevel2Header(linesOfCodePerExtension.size() + (linesOfCodePerExtension.size() == 1 ? " Language" : " Languages"));
         System.out.println(linesOfCodePerExtension.size());
         landscapeReport.startDiv("");
         landscapeReport.addHtmlContent(getVolumeVisual(linesOfCodePerExtension));
@@ -79,20 +77,13 @@ public class LandscapeReportGenerator {
         landscapeReport.endDiv();
     }
 
-    private void addGroup(LandscapeGroupAnalysisResults groupAnalysisResults) {
-        List<ProjectAnalysisResults> projectsAnalysisResults = groupAnalysisResults.getProjectsAnalysisResults();
+    private void addProjectsSection(List<ProjectAnalysisResults> projectsAnalysisResults) {
         Collections.sort(projectsAnalysisResults, (a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode() - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
         int projectsCount = projectsAnalysisResults.size();
         String countText = projectsCount + (projectsCount == 1 ? " project" : " projects");
-        int subGroupsCount = groupAnalysisResults.getSubGroupsAnalysisResults().size();
-        if (subGroupsCount > 0) {
-            countText += ", " + subGroupsCount + (subGroupsCount == 1 ? " sub-group" : " sub-groups");
-        }
-        landscapeReport.startSubSection(groupAnalysisResults.getGroup().getMetadata().getName(),
-                "Group details (" + countText + ")");
+        landscapeReport.startSection("Projects", "");
 
         if (projectsAnalysisResults.size() > 0) {
-            landscapeReport.addLevel2Header("Projects");
             List<NumericMetric> projectSizes = new ArrayList<>();
             projectsAnalysisResults.forEach(projectAnalysisResults -> {
                 CodeAnalysisResults analysisResults = projectAnalysisResults.getAnalysisResults();
@@ -106,11 +97,6 @@ public class LandscapeReportGenerator {
             });
             landscapeReport.endTable();
         }
-
-        groupAnalysisResults.getSubGroupsAnalysisResults().forEach(subGroupAnalysisResults -> {
-            landscapeReport.addLineBreak();
-            addGroup(subGroupAnalysisResults);
-        });
 
         landscapeReport.endSection();
     }
