@@ -12,7 +12,7 @@ import java.util.List;
 public class LandscapeConfiguration {
     private Metadata metadata = new Metadata();
     private String analysisRoot = "";
-    private String projectReportsUrlPrefix = "../../../";
+    private String projectReportsUrlPrefix = "../";
 
     private List<SokratesProjectLink> projects = new ArrayList<>();
 

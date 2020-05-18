@@ -18,8 +18,7 @@ import java.io.IOException;
 public class JavaGraphvizTest {
     @Test
     public void test() throws IOException {
-        /*String path = "/Users/zeljko/Documents/workspace/sokrates/common/src/test/java/nl/obren/" +
-                "sokrates/common/renderingutils/colors.dot";
+        /*String path = "";
         System.out.println(new File(path).exists());
         MutableGraph g = Parser.read(new FileInputStream(new File(path)));
         Graphviz graphviz = Graphviz.fromGraph(g);

@@ -92,7 +92,6 @@ public class UXUtils {
                 StringSelection stringSelection = new StringSelection(string);
                 Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
                 clipboard.setContents(stringSelection, null);
-                System.out.println(string);
             }
         });
     }

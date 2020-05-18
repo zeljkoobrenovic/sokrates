@@ -23,12 +23,15 @@ public class LandscapeAnalysisCommands {
         LandscapeAnalysisInitiator initiator = new LandscapeAnalysisInitiator();
         initiator.initConfiguration(analysisRoot, landscapeConfigFile, true);
         generateReport(landscapeConfigFile);
+
+        System.out.println("Configuration file: " + landscapeConfigFile.getPath());
     }
 
     public static void update(File analysisRoot, File landscapeConfigFile) {
         landscapeConfigFile = getConfigFile(analysisRoot, landscapeConfigFile);
         LandscapeAnalysisUpdater updater = new LandscapeAnalysisUpdater();
         updater.updateConfiguration(analysisRoot, landscapeConfigFile);
+        System.out.println("Configuration file: " + landscapeConfigFile.getPath());
         generateReport(landscapeConfigFile);
     }
 
@@ -41,7 +44,7 @@ public class LandscapeAnalysisCommands {
     }
 
     public static void generateReport(File landscapeConfigFile) {
-        File reportsFolder = Paths.get(landscapeConfigFile.getParent(), "reports").toFile();
+        File reportsFolder = Paths.get(landscapeConfigFile.getParent(), "").toFile();
 
         LandscapeAnalyzer analyzer = new LandscapeAnalyzer();
 
@@ -56,11 +59,13 @@ public class LandscapeAnalysisCommands {
 
             File finalReportsFolder = reportsFolder;
             reports.forEach(report -> {
-                ReportFileExporter.exportHtml(finalReportsFolder, report);
+                ReportFileExporter.exportHtml(finalReportsFolder, "", report);
             });
 
             LandscapeVisualsGenerator visualsGenerator = new LandscapeVisualsGenerator(reportsFolder);
             visualsGenerator.exportVisuals(landscapeAnalysisResults);
+
+            System.out.println("Report file: " + finalReportsFolder.getPath() + "/index.html");
         } catch (IOException e) {
             e.printStackTrace();
         }

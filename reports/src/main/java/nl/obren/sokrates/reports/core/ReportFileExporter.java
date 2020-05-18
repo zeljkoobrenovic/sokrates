@@ -18,7 +18,11 @@ import java.util.Date;
 import java.util.List;
 
 public class ReportFileExporter {
-    public static void exportHtml(File folder, RichTextReport report) {
+
+    private static String htmlReportsSubFolder = "html";
+
+    public static void exportHtml(File folder, String subFolder, RichTextReport report) {
+        htmlReportsSubFolder = subFolder;
         File htmlReportsFolder = getHtmlReportsFolder(folder);
         String reportFileName = getReportFileName(report);
         export(htmlReportsFolder, report, reportFileName);
@@ -108,7 +112,7 @@ public class ReportFileExporter {
 
 
     private static File getHtmlReportsFolder(File reportsFolder) {
-        File htmlExportFolder = new File(reportsFolder, "html");
+        File htmlExportFolder = new File(reportsFolder, htmlReportsSubFolder);
         htmlExportFolder.mkdirs();
         return htmlExportFolder;
     }
@@ -197,5 +201,4 @@ public class ReportFileExporter {
                 {"Dependencies.html", "Dependencies"}
         };
     }
-
 }

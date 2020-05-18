@@ -38,7 +38,6 @@ public class GoLangAnalyzerTest {
     public void extractUnits() {
         GoLangAnalyzer analyzer = new GoLangAnalyzer();
         SourceFile sourceFile = new SourceFile(new File("dummy.go"), GoExampleFragments.FRAGMENT_1);
-        System.out.println(sourceFile.getExtension());
         List<UnitInfo> units = analyzer.extractUnits(sourceFile);
 
         assertEquals(1, units.size());

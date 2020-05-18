@@ -19,7 +19,10 @@ import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 public class LandscapeAnalysisInitiator {
+    private boolean saveFile;
+
     public LandscapeConfiguration initConfiguration(File analysisRoot, File landscapeConfigFile, boolean saveFile) {
+        this.saveFile = saveFile;
         LandscapeConfiguration landscapeConfiguration = new LandscapeConfiguration();
         landscapeConfiguration.setAnalysisRoot(analysisRoot.getPath());
 
@@ -62,6 +65,8 @@ public class LandscapeAnalysisInitiator {
         String relativePath = root.toPath().relativize(file).toString();
         configuration.getProjects().add(new SokratesProjectLink(relativePath));
 
-        System.out.println(relativePath);
+        if (saveFile) {
+            System.out.println("Adding project: " + relativePath);
+        }
     }
 }

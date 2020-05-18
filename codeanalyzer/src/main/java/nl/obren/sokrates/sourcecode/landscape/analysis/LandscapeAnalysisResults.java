@@ -45,15 +45,6 @@ public class LandscapeAnalysisResults {
     }
 
     @JsonIgnore
-    public int getMainFileCount() {
-        int count[] = {0};
-        this.projectAnalysisResults.forEach(projectAnalysisResults -> {
-            count[0] += projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getFilesCount();
-        });
-        return count[0];
-    }
-
-    @JsonIgnore
     public int getMainLoc() {
         int count[] = {0};
         this.projectAnalysisResults.forEach(projectAnalysisResults -> {

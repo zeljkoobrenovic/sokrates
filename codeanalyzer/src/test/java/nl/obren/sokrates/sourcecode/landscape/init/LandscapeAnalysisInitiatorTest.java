@@ -5,18 +5,20 @@
 package nl.obren.sokrates.sourcecode.landscape.init;
 
 import nl.obren.sokrates.sourcecode.landscape.init.LandscapeAnalysisInitiator;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
 
 public class LandscapeAnalysisInitiatorTest {
 
+    @Ignore
     @Test
     public void initConfiguration() {
         LandscapeAnalysisInitiator initiator = new LandscapeAnalysisInitiator();
 
-        File landscapeConfigFile = new File("/Users/zeljkoobrenovic/Documents/workspace/sokrates-gallery/_sokrates_landscape/config.json");
-        File analysisRoot = new File("/Users/zeljkoobrenovic/Documents/workspace/sokrates-gallery/ubeross");
+        File landscapeConfigFile = new File("");
+        File analysisRoot = new File("");
 
         initiator.initConfiguration(analysisRoot, null, true);
     }

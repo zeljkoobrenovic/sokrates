@@ -52,9 +52,8 @@ public class LandscapeVisualsGenerator {
     }
 
     public void exportVisuals(String nameSuffix, List<VisualizationItem> items) throws IOException {
-        File folder = Paths.get(landscapeReportsFolder.getPath(), "html/visuals").toFile();
+        File folder = Paths.get(landscapeReportsFolder.getPath(), "visuals").toFile();
         folder.mkdirs();
-        System.out.println(folder.getPath());
         FileUtils.write(new File(folder, "bubble_chart_" + nameSuffix + ".html"), new VisualizationTemplate().renderBubbleChart(items), UTF_8);
         FileUtils.write(new File(folder, "tree_map_" + nameSuffix + ".html"), new VisualizationTemplate().renderTreeMap(items), UTF_8);
     }

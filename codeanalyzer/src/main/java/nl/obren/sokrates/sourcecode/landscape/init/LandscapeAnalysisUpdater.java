@@ -62,6 +62,7 @@ public class LandscapeAnalysisUpdater {
 
         allProjects.forEach(project -> {
             if (!(allPreviousProjects.stream().filter(prevProject -> prevProject.getAnalysisResultsPath().equalsIgnoreCase(project.getAnalysisResultsPath())).findAny().isPresent())) {
+                System.out.println("Adding project: " + project.getAnalysisResultsPath());
                 newProjects.add(project);
             }
         });
@@ -75,6 +76,7 @@ public class LandscapeAnalysisUpdater {
         landscapeConfiguration.getProjects().forEach(project -> {
             File analysisFile = Paths.get(analysisRoot, project.getAnalysisResultsPath()).toFile();
             if (!analysisFile.exists()) {
+                System.out.println("Removing project: " + project.getAnalysisResultsPath());
                 removedProjects.add(project);
             }
         });
