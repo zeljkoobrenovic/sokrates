@@ -48,7 +48,7 @@ public class LandscapeVisualsGenerator {
         landscapeAnalysisResults.getLinesOfCodePerExtension().forEach(metric -> {
             items.add(new VisualizationItem(metric.getName().replace("*.", ""), metric.getValue().intValue()));
         });
-        exportVisuals("languages", items);
+        exportVisuals("extensions", items);
     }
 
     public void exportVisuals(String nameSuffix, List<VisualizationItem> items) throws IOException {

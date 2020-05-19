@@ -117,10 +117,14 @@ public class ReportFileExporter {
         return htmlExportFolder;
     }
 
-    private static String getIconSvg(String icon) {
+    public static String getIconSvg(String icon) {
+        return getIconSvg(icon, 80);
+    }
+
+    public static String getIconSvg(String icon, int size) {
         String svg = HtmlTemplateUtils.getResource("/icons/" + icon + ".svg");
-        svg = svg.replaceAll("height='.*?'", "height='80px'");
-        svg = svg.replaceAll("width='.*?'", "width='80px'");
+        svg = svg.replaceAll("height='.*?'", "height='" + size + "px'");
+        svg = svg.replaceAll("width='.*?'", "width='" + size + "px'");
         return svg;
     }
 
