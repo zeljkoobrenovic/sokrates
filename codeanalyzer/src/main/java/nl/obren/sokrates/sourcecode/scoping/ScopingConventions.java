@@ -38,7 +38,7 @@ public class ScopingConventions {
         otherFilesConventions.add(new Convention(".*/config/checkstyle/.*", "", "Checkstyle configuration"));
         otherFilesConventions.add(new Convention(".*/checkstyle[.]xml", "", "Checkstyle configuration"));
         otherFilesConventions.add(new Convention(".*[.]md", "", "Markdown files"));
-        otherFilesConventions.add(new Convention(".*[.]txt", "", "Text files"));
+        otherFilesConventions.add(new Convention(".*[.]txt", "Text ", "Text files"));
         otherFilesConventions.add(new Convention(".*[.]svg", "", "SVG files"));
     }
 
@@ -94,10 +94,11 @@ public class ScopingConventions {
         testFilesConventions.add(new Convention(".*[.]feature", "", defaultNote));
         testFilesConventions.add(new Convention(".*[.]lint[-]test", "", defaultNote));
         testFilesConventions.add(new Convention(".*[.]lint[-]tests", "", defaultNote));
-        testFilesConventions.add(new Convention(".*[.]spec[.]ts", "", defaultNote));
-        testFilesConventions.add(new Convention(".*[.]spec[.]js", "", defaultNote));
-        testFilesConventions.add(new Convention(".*/karma[.]conf[.]js", "", defaultNote));
-        testFilesConventions.add(new Convention(".*/protractor[.]conf[.]js", "", defaultNote));
+        testFilesConventions.add(new Convention(".*[.]spec[.]ts", "", "TypeScript test files"));
+        testFilesConventions.add(new Convention(".*[.]spec[.]js", "", "JavaScript test files"));
+        testFilesConventions.add(new Convention(".*/karma[.]conf[.]js", "", "Karma test files"));
+        testFilesConventions.add(new Convention(".*/protractor[.]conf[.]js", "", "Protractor test files"));
+        testFilesConventions.add(new Convention(".*/e2e/.*", "", "Protractor test files"));
     }
 
     private void addIgnoreConventions() {
@@ -106,11 +107,29 @@ public class ScopingConventions {
         ignoredFilesConventions.add(new Convention(".*/bower_components/.*", "", "Bower components"));
         ignoredFilesConventions.add(new Convention(".*/target/.*", "", "Compiled files"));
         ignoredFilesConventions.add(new Convention(".*/dist/.*", "", "Binaries for distribution"));
+        ignoredFilesConventions.add(new Convention(".*/bin/.*", "", "Binaries for distribution"));
         ignoredFilesConventions.add(new Convention("(?i).*bootstrap[.]css", "", "Bootstrap CSS files"));
         ignoredFilesConventions.add(new Convention("(?i).*/jquery.*[.]js", "", "jQuery files"));
-        ignoredFilesConventions.add(new Convention(".*/sokrates[.]json", "", "Sokrates configuration"));
+        ignoredFilesConventions.add(new Convention(".*/_sokrates/.*", "", "Sokrates files"));
+        ignoredFilesConventions.add(new Convention(".*/_sokrates_landscape/.*", "", "Sokrates landscape files"));
         ignoredFilesConventions.add(new Convention(".*/docs/.*", "", "Documentation"));
         ignoredFilesConventions.add(new Convention(".*/bootstrap[.]js", "", "3rd party library"));
         ignoredFilesConventions.add(new Convention(".*/.*[.]min[.]js", "", "Minimized JS library"));
+    }
+
+    public static void main(String args[]) {
+        printText("ignore files with:", new ScopingConventions().ignoredFilesConventions, "  - ");
+        printText("add to the test scope files with:", new ScopingConventions().testFilesConventions, "   - ");
+        printText("add to the generated scope files with:", new ScopingConventions().generatedFilesConventions, "   - ");
+        printText("add to the build-and-deploy scope files with:", new ScopingConventions().buildAndDeploymentFilesConventions, "   - ");
+        printText("add to the other scope files with:", new ScopingConventions().otherFilesConventions, "   - ");
+    }
+
+    private static void printText(String s, List<Convention> ignoredFilesConventions, String s2) {
+        System.out.println(s);
+        ignoredFilesConventions.forEach(convention -> {
+            System.out.println(s2 + convention.getFilter().toString() + " (" + convention.getFilter().getNote() + ")");
+        });
+        System.out.println();
     }
 }

@@ -74,6 +74,7 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("py", PythonAnalyzer.class);
         analyzersMap.put("js", JavaScriptAnalyzer.class);
         analyzersMap.put("ts", TypeScriptAnalyzer.class);
+        analyzersMap.put("tsx", TypeScriptAnalyzer.class);
         analyzersMap.put("scala", ScalaAnalyzer.class);
         analyzersMap.put("html", HtmlAnalyzer.class);
         analyzersMap.put("htm", HtmlAnalyzer.class);

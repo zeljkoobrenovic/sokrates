@@ -25,7 +25,7 @@ public class ExtensionGroupExtractor {
             "workflow", "st", "q", "properties", "gitignore", "ice", "yy", "j", "ls", "m4", "mqh", "mask", "nb", "moo",
             "s", "nl", "n", "odin", "mm", "plist", "ddl", "prc", "pp", "pod", "rpy", "r", "rno", "rs", "01", "1in",
             "1m", "1x", "02", "03", "3in", "3m", "3p", "3pm", "3qt", "3x", "04", "05", "06", "07", "08", "09", "man",
-            "mdoc", "pluginspec", "srt", "sls", "sc", "tsx", "toc", "ts", "vba", "cproject", "dircolors", "nanorc",
+            "mdoc", "pluginspec", "srt", "sls", "sc", "toc", "ts", "tsx", "vba", "cproject", "dircolors", "nanorc",
             "bsl", "os", "4dm", "abap", "abnf", "ash", "ampl", "g4", "apib", "apl", "dyalog", "asn", "asn1", "asp",
             "asax", "ascx", "ashx", "asmx", "aspx", "axd", "dats", "hats", "sats", "adb", "ada", "ads", "afm", "agda",
             "als", "OutJob", "PcbDoc", "PrjPCB", "SchDoc", "angelscript", "apacheconf", "htaccess", "agc",
