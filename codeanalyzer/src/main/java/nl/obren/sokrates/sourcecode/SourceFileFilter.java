@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.sourcecode;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.common.utils.RegexUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -21,6 +22,9 @@ public class SourceFileFilter {
     private String contentPattern = "";
     private Boolean include = true;
     private String note = "";
+
+    @JsonIgnore
+    private int maxLinesForContentSearch = -1;
 
     public SourceFileFilter() {
     }
@@ -124,7 +128,15 @@ public class SourceFileFilter {
         if (StringUtils.isBlank(contentPattern)) {
             return true;
         } else {
-            return matchesAnyLine(lines, contentPattern);
+            return SourceFileFilter.matchesAnyLine(getMaxLines(lines), contentPattern);
+        }
+    }
+
+    private List<String> getMaxLines(List<String> lines) {
+        if (maxLinesForContentSearch < 0 || maxLinesForContentSearch > lines.size()) {
+            return lines;
+        } else {
+            return lines.subList(0, maxLinesForContentSearch);
         }
     }
 
@@ -141,5 +153,15 @@ public class SourceFileFilter {
             string += "content like \"" + contentPattern + "\"";
         }
         return string;
+    }
+
+    @JsonIgnore
+    public int getMaxLinesForContentSearch() {
+        return maxLinesForContentSearch;
+    }
+
+    @JsonIgnore
+    public void setMaxLinesForContentSearch(int maxLinesForContentSearch) {
+        this.maxLinesForContentSearch = maxLinesForContentSearch;
     }
 }
