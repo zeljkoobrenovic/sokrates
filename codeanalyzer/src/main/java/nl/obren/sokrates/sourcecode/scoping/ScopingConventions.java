@@ -464,5 +464,8 @@ public class ScopingConventions {
         ignoredFilesConventions.add(new Convention(".*/[Gg]roovydoc/.*", "", "Generated documentation"));
         ignoredFilesConventions.add(new Convention(".*/[Jj]avadoc/.*", "", "Generated documentation"));
         ignoredFilesConventions.add(new Convention(".*/inst/doc/.*", "", "Generated documentation"));
+
+        ignoredFilesConventions.add(new Convention(".*/Thumbs[.]db", "", "Thumbs.db"));
+        ignoredFilesConventions.add(new Convention(".*/__MACOSX/.*", "", "__MACOSX folder"));
     }
 }

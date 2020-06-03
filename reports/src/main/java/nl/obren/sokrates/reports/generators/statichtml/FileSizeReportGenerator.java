@@ -109,7 +109,7 @@ public class FileSizeReportGenerator {
         List<SourceFile> longestFiles = codeAnalysisResults.getFilesAnalysisResults().getLongestFiles();
         report.startSection("Longest Files (Top " + longestFiles.size() + ")", "");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
-        report.addHtmlContent(FilesReportUtils.getFilesTable(longestFiles, cacheSourceFiles).toString());
+        report.addHtmlContent(FilesReportUtils.getFilesTable(longestFiles, cacheSourceFiles, false).toString());
         report.endSection();
     }
 
@@ -120,7 +120,7 @@ public class FileSizeReportGenerator {
         filesList = filesList.subList(0, Math.min(50, filesList.size()));
         report.startSection("Files With Most Units (Top " + filesList.size() + ")", "");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
-        report.addHtmlContent(FilesReportUtils.getFilesTable(filesList, cacheSourceFiles).toString());
+        report.addHtmlContent(FilesReportUtils.getFilesTable(filesList, cacheSourceFiles, false).toString());
         report.endSection();
     }
 }

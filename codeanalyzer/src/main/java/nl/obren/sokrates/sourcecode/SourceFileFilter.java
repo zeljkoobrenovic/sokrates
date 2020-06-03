@@ -20,7 +20,7 @@ public class SourceFileFilter {
 
     private String pathPattern = "";
     private String contentPattern = "";
-    private Boolean include = true;
+    private Boolean exception = false;
     private String note = "";
 
     @JsonIgnore
@@ -89,12 +89,12 @@ public class SourceFileFilter {
         this.contentPattern = contentPattern;
     }
 
-    public Boolean getInclude() {
-        return include;
+    public Boolean getException() {
+        return exception;
     }
 
-    public void setInclude(Boolean include) {
-        this.include = include;
+    public void setException(Boolean exception) {
+        this.exception = exception;
     }
 
     public String getNote() {

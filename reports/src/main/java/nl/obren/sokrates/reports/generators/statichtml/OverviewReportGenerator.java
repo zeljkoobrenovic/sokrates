@@ -204,7 +204,7 @@ public class OverviewReportGenerator {
     }
 
     private String describeExclusion(SourceFileFilter exclusion) {
-        String description = !exclusion.getInclude() ? "do not exclude" : "exclude";
+        String description = exclusion.getException() ? "do not exclude" : "exclude";
         description += " files with ";
         boolean add = false;
         if (StringUtils.isNotBlank(exclusion.getPathPattern())) {

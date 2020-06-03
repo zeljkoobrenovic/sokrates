@@ -578,9 +578,9 @@ public class LanguageAnalyzerFactory {
         for (AnalyzerOverride override : overrides) {
             boolean overridden = false;
             for (SourceFileFilter sourceFileFilter : override.getFilters()) {
-                if (sourceFileFilter.matches(sourceFile) && sourceFileFilter.getInclude()) {
+                if (sourceFileFilter.matches(sourceFile) && !sourceFileFilter.getException()) {
                     overridden = true;
-                } else if (sourceFileFilter.matches(sourceFile) && !sourceFileFilter.getInclude()) {
+                } else if (sourceFileFilter.matches(sourceFile) && sourceFileFilter.getException()) {
                     overridden = false;
                     break;
                 }

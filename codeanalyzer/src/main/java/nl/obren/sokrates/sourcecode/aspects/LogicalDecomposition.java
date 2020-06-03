@@ -127,7 +127,7 @@ public class LogicalDecomposition {
             boolean[] inScope = {false};
             filters.forEach(filter -> {
                 if (filter.matches(sourceFile)) {
-                    if (filter.getInclude()) {
+                    if (!filter.getException()) {
                         inScope[0] = true;
                     } else {
                         inScope[0] = false;

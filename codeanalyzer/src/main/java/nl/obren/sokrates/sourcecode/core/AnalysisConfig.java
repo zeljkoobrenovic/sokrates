@@ -15,6 +15,7 @@ public class AnalysisConfig {
     private boolean cacheSourceFiles = true;
     private boolean saveDailyHistory = false;
     private List<AnalyzerOverride> analyzerOverrides = new ArrayList<>();
+    private String filesAgeImportPath = "";
 
     public boolean isSkipDuplication() {
         return skipDuplication;
@@ -54,5 +55,13 @@ public class AnalysisConfig {
 
     public void setCacheSourceFiles(boolean cacheSourceFiles) {
         this.cacheSourceFiles = cacheSourceFiles;
+    }
+
+    public String getFilesAgeImportPath() {
+        return filesAgeImportPath;
+    }
+
+    public void setFilesAgeImportPath(String filesAgeImportPath) {
+        this.filesAgeImportPath = filesAgeImportPath;
     }
 }

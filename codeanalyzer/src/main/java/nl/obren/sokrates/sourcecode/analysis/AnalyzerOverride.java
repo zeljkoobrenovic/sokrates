@@ -35,9 +35,9 @@ public class AnalyzerOverride {
     public boolean isOverridden(SourceFile sourceFile) {
         boolean overridden = false;
         for (SourceFileFilter sourceFileFilter : filters) {
-            if (sourceFileFilter.matches(sourceFile) && sourceFileFilter.getInclude()) {
+            if (sourceFileFilter.matches(sourceFile) && !sourceFileFilter.getException()) {
                 overridden = true;
-            } else if (sourceFileFilter.matches(sourceFile) && !sourceFileFilter.getInclude()) {
+            } else if (sourceFileFilter.matches(sourceFile) && sourceFileFilter.getException()) {
                 overridden = false;
                 break;
             }

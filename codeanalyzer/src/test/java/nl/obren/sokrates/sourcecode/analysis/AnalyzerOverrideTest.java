@@ -21,7 +21,7 @@ public class AnalyzerOverrideTest {
 
         SourceFileFilter includeFilter = new SourceFileFilter("/a/b/c/.*", "");
         SourceFileFilter excludeFilter = new SourceFileFilter("/a/b/c/d/.*", "");
-        excludeFilter.setInclude(false);
+        excludeFilter.setException(true);
 
         override.getFilters().add(includeFilter);
         override.getFilters().add(excludeFilter);

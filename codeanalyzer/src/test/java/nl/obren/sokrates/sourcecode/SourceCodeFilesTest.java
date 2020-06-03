@@ -89,7 +89,7 @@ public class SourceCodeFilesTest {
         NamedSourceCodeAspect aspect = new NamedSourceCodeAspect();
         aspect.getSourceFileFilters().add(new SourceFileFilter(".*(A|B|C)[.]java", ""));
         SourceFileFilter exclusiveFilter = new SourceFileFilter(".*A[.]java", "");
-        exclusiveFilter.setInclude(false);
+        exclusiveFilter.setException(true);
         aspect.getSourceFileFilters().add(exclusiveFilter);
 
         List<SourceFile> sourceFiles = sourceCodeFiles.getSourceFiles(aspect);

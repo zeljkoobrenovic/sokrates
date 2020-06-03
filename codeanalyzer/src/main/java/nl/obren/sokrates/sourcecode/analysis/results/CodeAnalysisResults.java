@@ -33,6 +33,7 @@ public class CodeAnalysisResults {
     private List<Dependency> allDependencies = new ArrayList<>();
 
     private FilesAnalysisResults filesAnalysisResults = new FilesAnalysisResults();
+    private FilesAgeAnalysisResults filesAgeAnalysisResults = new FilesAgeAnalysisResults();
     private UnitsAnalysisResults unitsAnalysisResults = new UnitsAnalysisResults();
 
     private DuplicationAnalysisResults duplicationAnalysisResults = new DuplicationAnalysisResults();
@@ -145,6 +146,14 @@ public class CodeAnalysisResults {
 
     public void setFilesAnalysisResults(FilesAnalysisResults filesAnalysisResults) {
         this.filesAnalysisResults = filesAnalysisResults;
+    }
+
+    public FilesAgeAnalysisResults getFilesAgeAnalysisResults() {
+        return filesAgeAnalysisResults;
+    }
+
+    public void setFilesAgeAnalysisResults(FilesAgeAnalysisResults filesAgeAnalysisResults) {
+        this.filesAgeAnalysisResults = filesAgeAnalysisResults;
     }
 
     public UnitsAnalysisResults getUnitsAnalysisResults() {

@@ -32,12 +32,15 @@ public class SourceFile {
     private String relativePath;
     private String extension;
     private int linesOfCode;
+    private int ageInDays = 0;
     private int unitsCount = 0;
     private int unitsMcCabeIndexSum = 0;
     private List<NamedSourceCodeAspect> logicalComponents = new ArrayList<>();
     private List<NamedSourceCodeAspect> crossCuttingConcerns = new ArrayList<>();
+
     @JsonIgnore
     private String content;
+
     private int linesOfCodeInUnits;
 
     public SourceFile() {
@@ -94,6 +97,14 @@ public class SourceFile {
 
     public int getLinesOfCode() {
         return linesOfCode;
+    }
+
+    public int getAgeInDays() {
+        return ageInDays;
+    }
+
+    public void setAgeInDays(int ageInDays) {
+        this.ageInDays = ageInDays;
     }
 
     public void setLinesOfCode(int linesOfCode) {

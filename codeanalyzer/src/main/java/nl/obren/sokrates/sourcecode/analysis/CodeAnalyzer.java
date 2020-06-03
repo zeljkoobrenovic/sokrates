@@ -59,6 +59,7 @@ public class CodeAnalyzer {
 
         if (shouldAnalyzeFiles()) {
             new FileSizeAnalyzer(results).analyze();
+            new FileAgeAnalyzer(results).analyze();
         }
 
         if (shouldAnalyzeUnits()) {

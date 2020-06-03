@@ -71,7 +71,7 @@ public class SourceCodeFiles {
                     return;
                 }
                 if (filter.matches(sourceFile)) {
-                    if (filter.getInclude()) {
+                    if (!filter.getException()) {
                         included[0] = true;
                     } else {
                         excluded[0] = true;

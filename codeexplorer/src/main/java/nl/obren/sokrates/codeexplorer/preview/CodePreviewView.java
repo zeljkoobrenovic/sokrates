@@ -108,8 +108,11 @@ public class CodePreviewView extends BorderPane {
         final TextInputDialog inputDlg = new TextInputDialog(summary);
         inputDlg.initOwner(getScene().getWindow());
         inputDlg.setTitle("Summary");
-        inputDlg.setContentText(summary);
         inputDlg.setHeaderText("Summary");
+
+        inputDlg.getDialogPane().setMinWidth(500);
+
+        inputDlg.setWidth(600);
 
         Optional<String> optional = inputDlg.showAndWait();
 

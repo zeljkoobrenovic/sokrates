@@ -12,14 +12,15 @@ import java.util.List;
 
 public class FilesReportUtils {
 
-    public static String getFilesTable(List<SourceFile> sourceFiles, boolean linkToFiles) {
+    public static String getFilesTable(List<SourceFile> sourceFiles, boolean linkToFiles, boolean showAge) {
         StringBuilder table = new StringBuilder();
 
         table.append("<div style='witdh: 100%; overflow-x: scroll'>\n");
         table.append("<table style='width: 80%'>\n");
         table.append("<tr>");
-        table.append("<th>File</th><th># lines</th><th># units</th>\n");
-        // table.append("<th>File</th><th># lines</th><th># units</th><th># unit lines</th><th>McCabe index</th>\n");
+        String header = "<th>File</th><th># lines</th><th># units</th>";
+        if (showAge) header += "<th>age (days)</th>";
+        table.append(header + "\n");
         table.append("<tr>");
 
         sourceFiles.forEach(sourceFile -> {
@@ -46,8 +47,10 @@ public class FilesReportUtils {
             } else {
                 table.append("<td style='text-align: center; color: lightgrey'>-</td>\n");
             }
-            // table.append("<td style='text-align: center'>" + sourceFile.getLinesOfCodeInUnits() + "</td>\n");
-            // table.append("<td style='text-align: center'>" + sourceFile.getUnitsMcCabeIndexSum() + "</td>\n");
+
+            if (showAge) {
+                table.append("<td style='text-align: center'>" + sourceFile.getAgeInDays() + "</td>\n");
+            }
 
             table.append("</tr>\n");
         });

@@ -223,7 +223,7 @@ public class ScopesRenderer {
     }
 
     private String describeFilters(SourceFileFilter filter) {
-        String description = filter.getInclude() ? "" : "except";
+        String description = !filter.getException() ? "" : "except";
         description += " files with ";
         boolean add = false;
         if (StringUtils.isNotBlank(filter.getPathPattern())) {
