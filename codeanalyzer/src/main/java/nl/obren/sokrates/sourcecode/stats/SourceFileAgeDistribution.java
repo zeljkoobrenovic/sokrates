@@ -36,7 +36,7 @@ public class SourceFileAgeDistribution extends RiskDistributionStats {
                     map.put(distribution.getKey(), distribution);
                 }
 
-                distribution.update(sourceFile.getAgeInDays(), sourceFile.getAgeInDays());
+                distribution.update(sourceFile.getAgeInDays(), sourceFile.getLinesOfCode());
             });
         }
 
@@ -51,7 +51,7 @@ public class SourceFileAgeDistribution extends RiskDistributionStats {
             distribution.setKey(component.getName());
             distributions.add(distribution);
             component.getSourceFiles().forEach(sourceFile -> {
-                distribution.update(sourceFile.getAgeInDays(), sourceFile.getAgeInDays());
+                distribution.update(sourceFile.getAgeInDays(), sourceFile.getLinesOfCode());
             });
         });
 
@@ -62,7 +62,7 @@ public class SourceFileAgeDistribution extends RiskDistributionStats {
         reset();
         if (files != null) {
             files.forEach(sourceFile -> {
-                update(sourceFile.getAgeInDays(), sourceFile.getAgeInDays());
+                update(sourceFile.getAgeInDays(), sourceFile.getLinesOfCode());
             });
         }
         return this;
