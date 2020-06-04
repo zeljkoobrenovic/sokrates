@@ -12,16 +12,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution.Types.LAST_MODIFIED;
+
 public class SourceFileAgeDistribution extends RiskDistributionStats {
-    public SourceFileAgeDistribution() {
+    private Types type;
+
+    public SourceFileAgeDistribution(Types type) {
         super(30, 90, 180);
+        this.type = type;
         setLowRiskLabel("1-30 days");
         setMediumRiskLabel("31-60 days");
         setHighRiskLabel("61-180 days");
         setVeryHighRiskLabel("181+");
     }
 
-    public static List<RiskDistributionStats> getFileAgeRiskDistributionPerExtension(List<SourceFile> files) {
+    public List<RiskDistributionStats> getFileAgeRiskDistributionPerExtension(List<SourceFile> files) {
         ArrayList<RiskDistributionStats> distributions = new ArrayList<>();
 
         Map<String, SourceFileAgeDistribution> map = new HashMap<>();
@@ -30,42 +35,65 @@ public class SourceFileAgeDistribution extends RiskDistributionStats {
             files.forEach(sourceFile -> {
                 SourceFileAgeDistribution distribution = map.get(sourceFile.getExtension());
                 if (distribution == null) {
-                    distribution = new SourceFileAgeDistribution();
+                    distribution = new SourceFileAgeDistribution(LAST_MODIFIED);
                     distribution.setKey(sourceFile.getExtension());
                     distributions.add(distribution);
                     map.put(distribution.getKey(), distribution);
                 }
 
-                distribution.update(sourceFile.getAgeInDays(), sourceFile.getLinesOfCode());
+                if (sourceFile.getFileModificationHistory() != null) {
+                    distribution.update(getAge(sourceFile), sourceFile.getLinesOfCode());
+                }
             });
         }
 
         return distributions;
     }
 
-    public static List<RiskDistributionStats> getFileAgeRiskDistributionPerComponent(List<SourceFile> files, LogicalDecomposition logicalDecomposition) {
+    ;
+
+    public List<RiskDistributionStats> getFileAgeRiskDistributionPerComponent(LogicalDecomposition logicalDecomposition) {
         ArrayList<RiskDistributionStats> distributions = new ArrayList<>();
 
         logicalDecomposition.getComponents().forEach(component -> {
-            SourceFileAgeDistribution distribution = new SourceFileAgeDistribution();
+            SourceFileAgeDistribution distribution = new SourceFileAgeDistribution(LAST_MODIFIED);
             distribution.setKey(component.getName());
             distributions.add(distribution);
-            component.getSourceFiles().forEach(sourceFile -> {
-                distribution.update(sourceFile.getAgeInDays(), sourceFile.getLinesOfCode());
+            component.getSourceFiles().stream().filter(f -> f.getFileModificationHistory() != null).forEach(sourceFile -> {
+                distribution.update(getAge(sourceFile), sourceFile.getLinesOfCode());
             });
         });
 
         return distributions;
     }
 
-    public SourceFileAgeDistribution getOverallDistribution(List<SourceFile> files) {
+    public SourceFileAgeDistribution getOverallLastModifiedDistribution(List<SourceFile> files) {
         reset();
         if (files != null) {
-            files.forEach(sourceFile -> {
-                update(sourceFile.getAgeInDays(), sourceFile.getLinesOfCode());
+            files.stream().filter(f -> f.getFileModificationHistory() != null).forEach(sourceFile -> {
+                update(getAge(sourceFile), sourceFile.getLinesOfCode());
             });
         }
         return this;
     }
+
+    private int getAge(SourceFile sourceFile) {
+        return type == LAST_MODIFIED
+                ? sourceFile.getFileModificationHistory().daysSinceLatestUpdate()
+                : sourceFile.getFileModificationHistory().daysSinceFirstUpdate();
+    }
+
+    public SourceFileAgeDistribution getOverallFirstModifiedDistribution(List<SourceFile> files) {
+        reset();
+        if (files != null) {
+            files.stream().filter(f -> f.getFileModificationHistory() != null).forEach(sourceFile -> {
+                update(sourceFile.getFileModificationHistory().daysSinceFirstUpdate(), sourceFile.getLinesOfCode());
+            });
+        }
+        return this;
+    }
+
+    public static enum Types {LAST_MODIFIED, FIRST_MODIFIED}
+
 }
 

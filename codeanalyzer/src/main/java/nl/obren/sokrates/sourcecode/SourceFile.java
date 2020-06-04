@@ -5,6 +5,7 @@
 package nl.obren.sokrates.sourcecode;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import nl.obren.sokrates.sourcecode.age.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
@@ -32,7 +33,8 @@ public class SourceFile {
     private String relativePath;
     private String extension;
     private int linesOfCode;
-    private int ageInDays = 0;
+    @JsonIgnore
+    private FileModificationHistory fileModificationHistory = null;
     private int unitsCount = 0;
     private int unitsMcCabeIndexSum = 0;
     private List<NamedSourceCodeAspect> logicalComponents = new ArrayList<>();
@@ -99,12 +101,12 @@ public class SourceFile {
         return linesOfCode;
     }
 
-    public int getAgeInDays() {
-        return ageInDays;
+    public FileModificationHistory getFileModificationHistory() {
+        return fileModificationHistory;
     }
 
-    public void setAgeInDays(int ageInDays) {
-        this.ageInDays = ageInDays;
+    public void setFileModificationHistory(FileModificationHistory fileModificationHistory) {
+        this.fileModificationHistory = fileModificationHistory;
     }
 
     public void setLinesOfCode(int linesOfCode) {

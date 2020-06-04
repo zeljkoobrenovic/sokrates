@@ -19,11 +19,15 @@ public class FilesReportUtils {
         table.append("<table style='width: 80%'>\n");
         table.append("<tr>");
         String header = "<th>File</th><th># lines</th><th># units</th>";
-        if (showAge) header += "<th>age (days)</th>";
+        if (showAge) {
+            header += "<th>last modified<br/>(days ago)</th>";
+            header += "<th>created<br/>(days ago)</th>";
+            header += "<th># changes</th>";
+        }
         table.append(header + "\n");
         table.append("<tr>");
 
-        sourceFiles.forEach(sourceFile -> {
+        sourceFiles.stream().filter(f -> f.getFileModificationHistory() != null).forEach(sourceFile -> {
             table.append("<tr>\n");
 
             File file = new File(sourceFile.getRelativePath());
@@ -49,7 +53,13 @@ public class FilesReportUtils {
             }
 
             if (showAge) {
-                table.append("<td style='text-align: center'>" + sourceFile.getAgeInDays() + "</td>\n");
+                table.append("<td style='text-align: center'>" + sourceFile.getFileModificationHistory().daysSinceLatestUpdate() + "</td>\n");
+                table.append("<td style='text-align: center'>" + sourceFile.getFileModificationHistory().daysSinceFirstUpdate() + "</td>\n");
+                table.append("<td style='text-align: center'>" + sourceFile.getFileModificationHistory().getDates().size() + "</td>\n");
+            } else {
+                table.append("<td style='text-align: center'></td>\n");
+                table.append("<td style='text-align: center'></td>\n");
+                table.append("<td style='text-align: center'></td>\n");
             }
 
             table.append("</tr>\n");

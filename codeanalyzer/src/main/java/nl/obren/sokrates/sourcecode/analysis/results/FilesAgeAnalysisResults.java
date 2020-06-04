@@ -13,15 +13,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FilesAgeAnalysisResults {
-    private SourceFileAgeDistribution overallFileAgeDistribution;
-    private List<RiskDistributionStats> fileAgeDistributionPerExtension = new ArrayList<>();
-    private List<FileAgeDistributionPerLogicalDecomposition> fileAgeDistributionPerLogicalDecomposition = new ArrayList<>();
+    private SourceFileAgeDistribution overallFileLastModifiedDistribution;
+    private SourceFileAgeDistribution overallFileFirstModifiedDistribution;
+    private List<RiskDistributionStats> lastModifiedDistributionPerExtension = new ArrayList<>();
+    private List<FileAgeDistributionPerLogicalDecomposition> lastModifiedDistributionPerLogicalDecomposition = new ArrayList<>();
+    private List<RiskDistributionStats> firstModifiedDistributionPerExtension = new ArrayList<>();
+    private List<FileAgeDistributionPerLogicalDecomposition> firstModifiedDistributionPerLogicalDecomposition = new ArrayList<>();
 
     @JsonIgnore
     private List<SourceFile> allFiles = new ArrayList<>();
 
     private List<SourceFile> oldestFiles = new ArrayList<>();
     private List<SourceFile> youngestFiles = new ArrayList<>();
+
+    private List<SourceFile> mostRecentlyChangedFiles = new ArrayList<>();
+    private List<SourceFile> mostPreviouslyChangedFiles = new ArrayList<>();
+    private List<SourceFile> mostChangedFiles = new ArrayList<>();
 
     @JsonIgnore
     public List<SourceFile> getAllFiles() {
@@ -49,28 +56,76 @@ public class FilesAgeAnalysisResults {
         this.youngestFiles = youngestFiles;
     }
 
-    public SourceFileAgeDistribution getOverallFileAgeDistribution() {
-        return overallFileAgeDistribution;
+    public SourceFileAgeDistribution getOverallFileLastModifiedDistribution() {
+        return overallFileLastModifiedDistribution;
     }
 
-    public void setOverallFileAgeDistribution(SourceFileAgeDistribution overallFileAgeDistribution) {
-        this.overallFileAgeDistribution = overallFileAgeDistribution;
+    public void setOverallFileLastModifiedDistribution(SourceFileAgeDistribution overallFileLastModifiedDistribution) {
+        this.overallFileLastModifiedDistribution = overallFileLastModifiedDistribution;
     }
 
-    public List<RiskDistributionStats> getFileAgeDistributionPerExtension() {
-        return fileAgeDistributionPerExtension;
+    public SourceFileAgeDistribution getOverallFileFirstModifiedDistribution() {
+        return overallFileFirstModifiedDistribution;
     }
 
-    public void setFileAgeDistributionPerExtension(List<RiskDistributionStats> fileAgeDistributionPerExtension) {
-        this.fileAgeDistributionPerExtension = fileAgeDistributionPerExtension;
+    public void setOverallFileFirstModifiedDistribution(SourceFileAgeDistribution overallFileFirstModifiedDistribution) {
+        this.overallFileFirstModifiedDistribution = overallFileFirstModifiedDistribution;
+    }
+
+    public List<RiskDistributionStats> getLastModifiedDistributionPerExtension() {
+        return lastModifiedDistributionPerExtension;
+    }
+
+    public void setLastModifiedDistributionPerExtension(List<RiskDistributionStats> lastModifiedDistributionPerExtension) {
+        this.lastModifiedDistributionPerExtension = lastModifiedDistributionPerExtension;
     }
 
 
-    public List<FileAgeDistributionPerLogicalDecomposition> getFileAgeDistributionPerLogicalDecomposition() {
-        return fileAgeDistributionPerLogicalDecomposition;
+    public List<FileAgeDistributionPerLogicalDecomposition> getLastModifiedDistributionPerLogicalDecomposition() {
+        return lastModifiedDistributionPerLogicalDecomposition;
     }
 
-    public void setFileAgeDistributionPerLogicalDecomposition(List<FileAgeDistributionPerLogicalDecomposition> fileAgeDistributionPerLogicalDecomposition) {
-        this.fileAgeDistributionPerLogicalDecomposition = fileAgeDistributionPerLogicalDecomposition;
+    public void setLastModifiedDistributionPerLogicalDecomposition(List<FileAgeDistributionPerLogicalDecomposition> lastModifiedDistributionPerLogicalDecomposition) {
+        this.lastModifiedDistributionPerLogicalDecomposition = lastModifiedDistributionPerLogicalDecomposition;
+    }
+
+    public List<RiskDistributionStats> getFirstModifiedDistributionPerExtension() {
+        return firstModifiedDistributionPerExtension;
+    }
+
+    public void setFirstModifiedDistributionPerExtension(List<RiskDistributionStats> firstModifiedDistributionPerExtension) {
+        this.firstModifiedDistributionPerExtension = firstModifiedDistributionPerExtension;
+    }
+
+    public List<FileAgeDistributionPerLogicalDecomposition> getFirstModifiedDistributionPerLogicalDecomposition() {
+        return firstModifiedDistributionPerLogicalDecomposition;
+    }
+
+    public void setFirstModifiedDistributionPerLogicalDecomposition(List<FileAgeDistributionPerLogicalDecomposition> firstModifiedDistributionPerLogicalDecomposition) {
+        this.firstModifiedDistributionPerLogicalDecomposition = firstModifiedDistributionPerLogicalDecomposition;
+    }
+
+    public List<SourceFile> getMostRecentlyChangedFiles() {
+        return mostRecentlyChangedFiles;
+    }
+
+    public void setMostRecentlyChangedFiles(List<SourceFile> mostRecentlyChangedFiles) {
+        this.mostRecentlyChangedFiles = mostRecentlyChangedFiles;
+    }
+
+    public List<SourceFile> getMostPreviouslyChangedFiles() {
+        return mostPreviouslyChangedFiles;
+    }
+
+    public void setMostPreviouslyChangedFiles(List<SourceFile> mostPreviouslyChangedFiles) {
+        this.mostPreviouslyChangedFiles = mostPreviouslyChangedFiles;
+    }
+
+    public List<SourceFile> getMostChangedFiles() {
+        return mostChangedFiles;
+    }
+
+    public void setMostChangedFiles(List<SourceFile> mostChangedFiles) {
+        this.mostChangedFiles = mostChangedFiles;
     }
 }

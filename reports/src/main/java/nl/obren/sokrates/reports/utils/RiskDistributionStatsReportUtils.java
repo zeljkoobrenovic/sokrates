@@ -24,6 +24,14 @@ public class RiskDistributionStatsReportUtils {
     }
 
     public static String getRiskDistributionPerKeySvgBarChart(List<RiskDistributionStats> distributions, List<String> labels) {
+        return getRiskDistributionPerKeySvgBarChart(distributions, labels, Palette.getRiskPalette());
+    }
+
+    public static String getAgeRiskDistributionPerKeySvgBarChart(List<RiskDistributionStats> distributions, List<String> labels) {
+        return getRiskDistributionPerKeySvgBarChart(distributions, labels, Palette.getAgePalette());
+    }
+
+    public static String getRiskDistributionPerKeySvgBarChart(List<RiskDistributionStats> distributions, List<String> labels, Palette palette) {
         SimpleOneBarChart chart = new SimpleOneBarChart();
         chart.setWidth(800);
 
@@ -33,8 +41,6 @@ public class RiskDistributionStatsReportUtils {
         distributions.forEach(distribution -> {
             maxTotalValue[0] = Math.max(maxTotalValue[0], distribution.getTotalValue());
         });
-
-        Palette palette = Palette.getRiskPalette();
 
         chart.calculateBarOffsetFromTexts(distributions.stream().map(d -> d.getKey()).collect(Collectors.toList()));
         html[0] += "<div style='width: 100%; overflow-x: auto'>";

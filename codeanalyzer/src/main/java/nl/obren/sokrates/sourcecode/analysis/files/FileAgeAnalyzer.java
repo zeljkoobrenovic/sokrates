@@ -5,20 +5,23 @@
 package nl.obren.sokrates.sourcecode.analysis.files;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.age.FileLastModifiedInfo;
+import nl.obren.sokrates.sourcecode.age.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.age.utils.GitLsFileUtil;
 import nl.obren.sokrates.sourcecode.analysis.Analyzer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FileAgeDistributionPerLogicalDecomposition;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesAgeAnalysisResults;
+import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
-import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.util.*;
+
+import static nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution.Types.FIRST_MODIFIED;
+import static nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution.Types.LAST_MODIFIED;
 
 public class FileAgeAnalyzer extends Analyzer {
     private CodeConfiguration codeConfiguration;
@@ -34,7 +37,7 @@ public class FileAgeAnalyzer extends Analyzer {
     public void analyze() {
         String filesAgeImportPath = codeConfiguration.getAnalysis().getFilesAgeImportPath();
         if (StringUtils.isNotBlank(filesAgeImportPath)) {
-            List<FileLastModifiedInfo> ages = GitLsFileUtil.importGitLsFilesExport(new File(filesAgeImportPath));
+            List<FileModificationHistory> ages = GitLsFileUtil.importGitLsFilesExport(new File(filesAgeImportPath));
             if (ages.size() > 0) {
                 enrichFilesWithAge(ages);
                 analyzeFilesAge();
@@ -43,30 +46,54 @@ public class FileAgeAnalyzer extends Analyzer {
     }
 
     private void analyzeFilesAge() {
-        SourceFileAgeDistribution fileAgeDistribution = new SourceFileAgeDistribution();
         List<SourceFile> allFiles = codeConfiguration.getMain().getSourceFiles();
         List<SourceFile> sourceFiles = allFiles;
-        SourceFileAgeDistribution overallDistribution = fileAgeDistribution.getOverallDistribution(sourceFiles);
-        analysisResults.setOverallFileAgeDistribution(overallDistribution);
-        analysisResults.setFileAgeDistributionPerExtension(SourceFileAgeDistribution.getFileAgeRiskDistributionPerExtension(sourceFiles));
+        SourceFileAgeDistribution lastModifiedDistribution = new SourceFileAgeDistribution(LAST_MODIFIED).getOverallLastModifiedDistribution(sourceFiles);
+        SourceFileAgeDistribution firstModifiedDistribution = new SourceFileAgeDistribution(LAST_MODIFIED).getOverallFirstModifiedDistribution(sourceFiles);
+
+        analysisResults.setOverallFileLastModifiedDistribution(lastModifiedDistribution);
+        analysisResults.setOverallFileFirstModifiedDistribution(firstModifiedDistribution);
+        analysisResults.setFirstModifiedDistributionPerExtension(
+                new SourceFileAgeDistribution(FIRST_MODIFIED).getFileAgeRiskDistributionPerExtension(sourceFiles));
+        analysisResults.setLastModifiedDistributionPerExtension(
+                new SourceFileAgeDistribution(LAST_MODIFIED).getFileAgeRiskDistributionPerExtension(sourceFiles));
+
         codeConfiguration.getLogicalDecompositions().forEach(logicalDecomposition -> {
-            FileAgeDistributionPerLogicalDecomposition distributionPerLogicalDecomposition = new FileAgeDistributionPerLogicalDecomposition();
-            distributionPerLogicalDecomposition.setName(logicalDecomposition.getName());
-            distributionPerLogicalDecomposition.setFileAgeDistributionPerComponent(SourceFileAgeDistribution.getFileAgeRiskDistributionPerComponent(sourceFiles, logicalDecomposition));
-            analysisResults.getFileAgeDistributionPerLogicalDecomposition().add(distributionPerLogicalDecomposition);
+            addLogicalDecompositions(logicalDecomposition);
         });
+
         analysisResults.setAllFiles(allFiles);
         addOldestFiles(allFiles, analysisResults, 50);
         addYoungestFiles(allFiles, analysisResults, 50);
+        addMostRecentlyChangedFiles(allFiles, analysisResults, 50);
+        addMostPreviouslyChangedFiles(allFiles, analysisResults, 50);
+        addMostChangedFiles(allFiles, analysisResults, 50);
 
-        addMetrics(overallDistribution);
+        addMetrics(lastModifiedDistribution);
     }
 
-    private void enrichFilesWithAge(List<FileLastModifiedInfo> ages) {
+    private void addLogicalDecompositions(LogicalDecomposition logicalDecomposition) {
+        FileAgeDistributionPerLogicalDecomposition decomposition1 = new FileAgeDistributionPerLogicalDecomposition();
+        decomposition1.setName(logicalDecomposition.getName());
+        decomposition1.setFirstModifiedDistributionPerComponent(
+                new SourceFileAgeDistribution(FIRST_MODIFIED).getFileAgeRiskDistributionPerComponent(logicalDecomposition));
+
+        analysisResults.getFirstModifiedDistributionPerLogicalDecomposition().add(decomposition1);
+
+        FileAgeDistributionPerLogicalDecomposition decomposition2 = new FileAgeDistributionPerLogicalDecomposition();
+        decomposition2.setName(logicalDecomposition.getName());
+
+        decomposition2.setLastModifiedDistributionPerComponent(
+                new SourceFileAgeDistribution(LAST_MODIFIED).getFileAgeRiskDistributionPerComponent(logicalDecomposition));
+
+        analysisResults.getLastModifiedDistributionPerLogicalDecomposition().add(decomposition2);
+    }
+
+    private void enrichFilesWithAge(List<FileModificationHistory> ages) {
         codeConfiguration.getMain().getSourceFiles().forEach(sourceFile -> {
-            Optional<FileLastModifiedInfo> any = ages.stream().filter(f -> f.getPath().equalsIgnoreCase(sourceFile.getRelativePath())).findAny();
+            Optional<FileModificationHistory> any = ages.stream().filter(f -> f.getPath().equalsIgnoreCase(sourceFile.getRelativePath())).findAny();
             if (any.isPresent()) {
-                sourceFile.setAgeInDays(any.get().ageInDays());
+                sourceFile.setFileModificationHistory(any.get());
             }
         });
     }
@@ -94,7 +121,9 @@ public class FileAgeAnalyzer extends Analyzer {
     private void addOldestFiles(List<SourceFile> sourceFiles, FilesAgeAnalysisResults filesAgeAnalysisResults, int sampleSize) {
         List<SourceFile> files = new ArrayList<>(sourceFiles);
         Collections.sort(files, (o1, o2) -> Integer.compare(o2.getLinesOfCode(), o1.getLinesOfCode()));
-        Collections.sort(files, (o1, o2) -> Integer.compare(o2.getAgeInDays(), o1.getAgeInDays()));
+        Collections.sort(files, (o1, o2) ->
+                (o2.getFileModificationHistory() == null ? 0 : o2.getFileModificationHistory().daysSinceFirstUpdate()) -
+                        (o1.getFileModificationHistory() == null ? 0 : o1.getFileModificationHistory().daysSinceFirstUpdate()));
         int index[] = {0};
         files.forEach(sourceFile -> {
             if (index[0]++ >= sampleSize) {
@@ -107,13 +136,54 @@ public class FileAgeAnalyzer extends Analyzer {
     private void addYoungestFiles(List<SourceFile> sourceFiles, FilesAgeAnalysisResults filesAgeAnalysisResults, int sampleSize) {
         List<SourceFile> files = new ArrayList<>(sourceFiles);
         Collections.sort(files, (o1, o2) -> Integer.compare(o2.getLinesOfCode(), o1.getLinesOfCode()));
-        Collections.sort(files, Comparator.comparingInt(SourceFile::getAgeInDays));
+        Collections.sort(files, Comparator.comparingInt(o -> (o.getFileModificationHistory() == null ? 0 : o.getFileModificationHistory().daysSinceFirstUpdate())));
         int index[] = {0};
         files.forEach(sourceFile -> {
             if (index[0]++ >= sampleSize) {
                 return;
             }
             filesAgeAnalysisResults.getYoungestFiles().add(sourceFile);
+        });
+    }
+
+    private void addMostRecentlyChangedFiles(List<SourceFile> sourceFiles, FilesAgeAnalysisResults filesAgeAnalysisResults, int sampleSize) {
+        List<SourceFile> files = new ArrayList<>(sourceFiles);
+        Collections.sort(files, (o1, o2) -> Integer.compare(o2.getLinesOfCode(), o1.getLinesOfCode()));
+        Collections.sort(files, Comparator.comparingInt(o -> (o.getFileModificationHistory() == null ? 0 : o.getFileModificationHistory().daysSinceLatestUpdate())));
+        int index[] = {0};
+        files.forEach(sourceFile -> {
+            if (index[0]++ >= sampleSize) {
+                return;
+            }
+            filesAgeAnalysisResults.getMostRecentlyChangedFiles().add(sourceFile);
+        });
+    }
+
+    private void addMostPreviouslyChangedFiles(List<SourceFile> sourceFiles, FilesAgeAnalysisResults filesAgeAnalysisResults, int sampleSize) {
+        List<SourceFile> files = new ArrayList<>(sourceFiles);
+        Collections.sort(files, (o1, o2) -> Integer.compare(o2.getLinesOfCode(), o1.getLinesOfCode()));
+        Collections.sort(files, Comparator.comparingInt(o -> (o.getFileModificationHistory() == null ? 0 : o.getFileModificationHistory().daysSinceLatestUpdate())));
+        Collections.reverse(files);
+        int index[] = {0};
+        files.forEach(sourceFile -> {
+            if (index[0]++ >= sampleSize) {
+                return;
+            }
+            filesAgeAnalysisResults.getMostPreviouslyChangedFiles().add(sourceFile);
+        });
+    }
+
+    private void addMostChangedFiles(List<SourceFile> sourceFiles, FilesAgeAnalysisResults filesAgeAnalysisResults, int sampleSize) {
+        List<SourceFile> files = new ArrayList<>(sourceFiles);
+        Collections.sort(files, (o1, o2) -> Integer.compare(o2.getLinesOfCode(), o1.getLinesOfCode()));
+        Collections.sort(files, Comparator.comparingInt(o -> (o.getFileModificationHistory() == null ? 0 : o.getFileModificationHistory().getDates().size())));
+        Collections.reverse(files);
+        int index[] = {0};
+        files.forEach(sourceFile -> {
+            if (index[0]++ >= sampleSize) {
+                return;
+            }
+            filesAgeAnalysisResults.getMostChangedFiles().add(sourceFile);
         });
     }
 }

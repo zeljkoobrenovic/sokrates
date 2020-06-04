@@ -19,6 +19,11 @@ public class Palette {
         return new Palette(Arrays.asList("#F2021B", "#F9CF3F", "#F4DEB5", "#9DC034"));
     }
 
+    public static Palette getAgePalette() {
+        return new Palette(Arrays.asList("#ACDFED", "#70CDE3", "#FBB568", "#EE3124"));
+        // #B81A20
+    }
+
     public static Palette getDuplicationPalette() {
         return new Palette(Arrays.asList("#9DC034", "#F2021B"));
     }
