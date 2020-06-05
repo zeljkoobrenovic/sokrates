@@ -66,7 +66,8 @@ public class UnitUtilsTest {
         List<RiskDistributionStats> instance = UnitUtils.getUnitSizeDistributionPerExtension(units);
         assertEquals(instance.size(), 1);
         assertEquals(instance.get(0).getKey(), "java");
-        assertEquals(instance.get(0).getLowRiskValue(), 30);
+        assertEquals(instance.get(0).getNegligibleRiskValue(), 10);
+        assertEquals(instance.get(0).getLowRiskValue(), 20);
         assertEquals(instance.get(0).getMediumRiskValue(), 0);
         assertEquals(instance.get(0).getHighRiskValue(), 0);
         assertEquals(instance.get(0).getVeryHighRiskValue(), 110);
@@ -96,10 +97,11 @@ public class UnitUtilsTest {
         List<RiskDistributionStats> instance = UnitUtils.getConditionalComplexityDistributionPerExtension(units);
         assertEquals(instance.size(), 1);
         assertEquals(instance.get(0).getKey(), "java");
-        assertEquals(instance.get(0).getLowRiskValue(), 10);
-        assertEquals(instance.get(0).getMediumRiskValue(), 30);
-        assertEquals(instance.get(0).getHighRiskValue(), 0);
-        assertEquals(instance.get(0).getVeryHighRiskValue(), 50);
+        assertEquals(instance.get(0).getNegligibleRiskValue(), 10);
+        assertEquals(instance.get(0).getLowRiskValue(), 30);
+        assertEquals(instance.get(0).getMediumRiskValue(), 0);
+        assertEquals(instance.get(0).getHighRiskValue(), 50);
+        assertEquals(instance.get(0).getVeryHighRiskValue(), 0);
     }
 
     @Test
@@ -136,11 +138,13 @@ public class UnitUtilsTest {
         List<RiskDistributionStats> instance = UnitUtils.getUnitSizeDistributionPerComponent(Arrays.asList(logicalDecomposition), units).get(0);
         assertEquals(instance.size(), 2);
         assertEquals(instance.get(0).getKey(), "A");
-        assertEquals(instance.get(0).getLowRiskValue(), 30);
+        assertEquals(instance.get(0).getNegligibleRiskValue(), 10);
+        assertEquals(instance.get(0).getLowRiskValue(), 20);
         assertEquals(instance.get(0).getMediumRiskValue(), 0);
         assertEquals(instance.get(0).getHighRiskValue(), 0);
         assertEquals(instance.get(0).getVeryHighRiskValue(), 0);
         assertEquals(instance.get(1).getKey(), "B");
+        assertEquals(instance.get(1).getNegligibleRiskValue(), 0);
         assertEquals(instance.get(1).getLowRiskValue(), 0);
         assertEquals(instance.get(1).getMediumRiskValue(), 0);
         assertEquals(instance.get(1).getHighRiskValue(), 0);
@@ -183,15 +187,17 @@ public class UnitUtilsTest {
         List<RiskDistributionStats> instance = UnitUtils.getConditionalComplexityDistributionPerComponent(Arrays.asList(logicalDecomposition), units).get(0);
         assertEquals(instance.size(), 2);
         assertEquals(instance.get(0).getKey(), "A");
-        assertEquals(instance.get(0).getLowRiskValue(), 20);
-        assertEquals(instance.get(0).getMediumRiskValue(), 0);
-        assertEquals(instance.get(0).getHighRiskValue(), 40);
+        assertEquals(instance.get(0).getNegligibleRiskValue(), 20);
+        assertEquals(instance.get(0).getLowRiskValue(), 0);
+        assertEquals(instance.get(0).getMediumRiskValue(), 40);
+        assertEquals(instance.get(0).getHighRiskValue(), 0);
         assertEquals(instance.get(0).getVeryHighRiskValue(), 0);
         assertEquals(instance.get(1).getKey(), "B");
+        assertEquals(instance.get(1).getNegligibleRiskValue(), 0);
         assertEquals(instance.get(1).getLowRiskValue(), 0);
         assertEquals(instance.get(1).getMediumRiskValue(), 0);
-        assertEquals(instance.get(1).getHighRiskValue(), 0);
-        assertEquals(instance.get(1).getVeryHighRiskValue(), 100);
+        assertEquals(instance.get(1).getHighRiskValue(), 100);
+        assertEquals(instance.get(1).getVeryHighRiskValue(), 0);
     }
 
     @Test
@@ -215,7 +221,8 @@ public class UnitUtilsTest {
         List<RiskDistributionStats> aggregateUnitSizeRiskDistribution = UnitUtils.getAggregateUnitSizeRiskDistribution(units, param -> "X");
         assertEquals(aggregateUnitSizeRiskDistribution.size(), 1);
         assertEquals(aggregateUnitSizeRiskDistribution.get(0).getKey(), "X");
-        assertEquals(aggregateUnitSizeRiskDistribution.get(0).getLowRiskValue(), 10);
+        assertEquals(aggregateUnitSizeRiskDistribution.get(0).getNegligibleRiskValue(), 10);
+        assertEquals(aggregateUnitSizeRiskDistribution.get(0).getLowRiskValue(), 0);
         assertEquals(aggregateUnitSizeRiskDistribution.get(0).getMediumRiskValue(), 0);
         assertEquals(aggregateUnitSizeRiskDistribution.get(0).getHighRiskValue(), 60);
         assertEquals(aggregateUnitSizeRiskDistribution.get(0).getVeryHighRiskValue(), 210);
@@ -245,10 +252,11 @@ public class UnitUtilsTest {
         List<RiskDistributionStats> aggregateConditionalComplexityRiskDistribution = UnitUtils.getAggregateConditionalComplexityRiskDistribution(units, param -> "Y");
         assertEquals(aggregateConditionalComplexityRiskDistribution.size(), 1);
         assertEquals(aggregateConditionalComplexityRiskDistribution.get(0).getKey(), "Y");
-        assertEquals(aggregateConditionalComplexityRiskDistribution.get(0).getLowRiskValue(), 21);
+        assertEquals(aggregateConditionalComplexityRiskDistribution.get(0).getNegligibleRiskValue(), 21);
+        assertEquals(aggregateConditionalComplexityRiskDistribution.get(0).getLowRiskValue(), 0);
         assertEquals(aggregateConditionalComplexityRiskDistribution.get(0).getMediumRiskValue(), 0);
-        assertEquals(aggregateConditionalComplexityRiskDistribution.get(0).getHighRiskValue(), 0);
-        assertEquals(aggregateConditionalComplexityRiskDistribution.get(0).getVeryHighRiskValue(), 50);
+        assertEquals(aggregateConditionalComplexityRiskDistribution.get(0).getHighRiskValue(), 50);
+        assertEquals(aggregateConditionalComplexityRiskDistribution.get(0).getVeryHighRiskValue(), 0);
     }
 
     @Test
@@ -274,7 +282,8 @@ public class UnitUtilsTest {
         unit5.setLinesOfCode(200);
         units.add(unit5);
 
-        assertEquals(UnitUtils.getUnitSizeDistribution(units).getLowRiskValue(), 21);
+        assertEquals(UnitUtils.getUnitSizeDistribution(units).getNegligibleRiskValue(), 1);
+        assertEquals(UnitUtils.getUnitSizeDistribution(units).getLowRiskValue(), 20);
         assertEquals(UnitUtils.getUnitSizeDistribution(units).getMediumRiskValue(), 50);
         assertEquals(UnitUtils.getUnitSizeDistribution(units).getHighRiskValue(), 100);
         assertEquals(UnitUtils.getUnitSizeDistribution(units).getVeryHighRiskValue(), 200);
@@ -308,9 +317,10 @@ public class UnitUtilsTest {
         unit5.setMcCabeIndex(1);
         units.add(unit5);
 
-        assertEquals(UnitUtils.getConditionalComplexityDistribution(units).getLowRiskValue(), 11);
-        assertEquals(UnitUtils.getConditionalComplexityDistribution(units).getMediumRiskValue(), 20);
-        assertEquals(UnitUtils.getConditionalComplexityDistribution(units).getHighRiskValue(), 30);
+        assertEquals(UnitUtils.getConditionalComplexityDistribution(units).getNegligibleRiskValue(), 11);
+        assertEquals(UnitUtils.getConditionalComplexityDistribution(units).getLowRiskValue(), 20);
+        assertEquals(UnitUtils.getConditionalComplexityDistribution(units).getMediumRiskValue(), 30);
+        assertEquals(UnitUtils.getConditionalComplexityDistribution(units).getHighRiskValue(), 0);
         assertEquals(UnitUtils.getConditionalComplexityDistribution(units).getVeryHighRiskValue(), 200);
     }
 }

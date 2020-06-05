@@ -40,21 +40,24 @@ public class SourceFileSizeDistributionTest {
 
         sourceFileSizeDistribution.getOverallDistribution(getSourceFile(100));
 
-        assertEquals(sourceFileSizeDistribution.getLowRiskValue(), 100);
+        assertEquals(sourceFileSizeDistribution.getNegligibleRiskValue(), 100);
+        assertEquals(sourceFileSizeDistribution.getLowRiskValue(), 0);
         assertEquals(sourceFileSizeDistribution.getMediumRiskValue(), 0);
         assertEquals(sourceFileSizeDistribution.getHighRiskValue(), 0);
         assertEquals(sourceFileSizeDistribution.getVeryHighRiskValue(), 0);
 
         sourceFileSizeDistribution.getOverallDistribution(getSourceFile(100, 80));
 
-        assertEquals(sourceFileSizeDistribution.getLowRiskValue(), 180);
+        assertEquals(sourceFileSizeDistribution.getNegligibleRiskValue(), 180);
+        assertEquals(sourceFileSizeDistribution.getLowRiskValue(), 0);
         assertEquals(sourceFileSizeDistribution.getMediumRiskValue(), 0);
         assertEquals(sourceFileSizeDistribution.getHighRiskValue(), 0);
         assertEquals(sourceFileSizeDistribution.getVeryHighRiskValue(), 0);
 
         sourceFileSizeDistribution.getOverallDistribution(getSourceFile(100, 80, 500, 400, 1000, 800, 2000, 1400));
 
-        assertEquals(sourceFileSizeDistribution.getLowRiskValue(), 180);
+        assertEquals(sourceFileSizeDistribution.getNegligibleRiskValue(), 180);
+        assertEquals(sourceFileSizeDistribution.getLowRiskValue(), 0);
         assertEquals(sourceFileSizeDistribution.getMediumRiskValue(), 900);
         assertEquals(sourceFileSizeDistribution.getHighRiskValue(), 1800);
         assertEquals(sourceFileSizeDistribution.getVeryHighRiskValue(), 3400);
