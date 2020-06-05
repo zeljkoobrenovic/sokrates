@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
+import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,10 +16,15 @@ import java.util.List;
 public class FilesAgeAnalysisResults {
     private SourceFileAgeDistribution overallFileLastModifiedDistribution;
     private SourceFileAgeDistribution overallFileFirstModifiedDistribution;
+    private SourceFileChangeDistribution overallFileChangeDistribution;
+
+    private List<RiskDistributionStats> changeDistributionPerExtension = new ArrayList<>();
     private List<RiskDistributionStats> lastModifiedDistributionPerExtension = new ArrayList<>();
-    private List<FileAgeDistributionPerLogicalDecomposition> lastModifiedDistributionPerLogicalDecomposition = new ArrayList<>();
     private List<RiskDistributionStats> firstModifiedDistributionPerExtension = new ArrayList<>();
+
+    private List<FileAgeDistributionPerLogicalDecomposition> changeDistributionPerLogicalDecomposition = new ArrayList<>();
     private List<FileAgeDistributionPerLogicalDecomposition> firstModifiedDistributionPerLogicalDecomposition = new ArrayList<>();
+    private List<FileAgeDistributionPerLogicalDecomposition> lastModifiedDistributionPerLogicalDecomposition = new ArrayList<>();
 
     @JsonIgnore
     private List<SourceFile> allFiles = new ArrayList<>();
@@ -127,5 +133,29 @@ public class FilesAgeAnalysisResults {
 
     public void setMostChangedFiles(List<SourceFile> mostChangedFiles) {
         this.mostChangedFiles = mostChangedFiles;
+    }
+
+    public SourceFileChangeDistribution getOverallFileChangeDistribution() {
+        return overallFileChangeDistribution;
+    }
+
+    public void setOverallFileChangeDistribution(SourceFileChangeDistribution overallFileChangeDistribution) {
+        this.overallFileChangeDistribution = overallFileChangeDistribution;
+    }
+
+    public List<RiskDistributionStats> getChangeDistributionPerExtension() {
+        return changeDistributionPerExtension;
+    }
+
+    public void setChangeDistributionPerExtension(List<RiskDistributionStats> changeDistributionPerExtension) {
+        this.changeDistributionPerExtension = changeDistributionPerExtension;
+    }
+
+    public List<FileAgeDistributionPerLogicalDecomposition> getChangeDistributionPerLogicalDecomposition() {
+        return changeDistributionPerLogicalDecomposition;
+    }
+
+    public void setChangeDistributionPerLogicalDecomposition(List<FileAgeDistributionPerLogicalDecomposition> changeDistributionPerLogicalDecomposition) {
+        this.changeDistributionPerLogicalDecomposition = changeDistributionPerLogicalDecomposition;
     }
 }

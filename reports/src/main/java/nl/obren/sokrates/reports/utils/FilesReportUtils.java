@@ -5,6 +5,7 @@
 package nl.obren.sokrates.reports.utils;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
+import nl.obren.sokrates.sourcecode.age.FileModificationHistory;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -53,13 +54,16 @@ public class FilesReportUtils {
             }
 
             if (showAge) {
-                table.append("<td style='text-align: center'>" + sourceFile.getFileModificationHistory().daysSinceLatestUpdate() + "</td>\n");
-                table.append("<td style='text-align: center'>" + sourceFile.getFileModificationHistory().daysSinceFirstUpdate() + "</td>\n");
-                table.append("<td style='text-align: center'>" + sourceFile.getFileModificationHistory().getDates().size() + "</td>\n");
-            } else {
-                table.append("<td style='text-align: center'></td>\n");
-                table.append("<td style='text-align: center'></td>\n");
-                table.append("<td style='text-align: center'></td>\n");
+                FileModificationHistory history = sourceFile.getFileModificationHistory();
+                if (history != null) {
+                    table.append("<td style='text-align: center'>" + history.daysSinceLatestUpdate() + "</td>\n");
+                    table.append("<td style='text-align: center'>" + history.daysSinceFirstUpdate() + "</td>\n");
+                    table.append("<td style='text-align: center'>" + history.getDates().size() + "</td>\n");
+                } else {
+                    table.append("<td style='text-align: center'></td>\n");
+                    table.append("<td style='text-align: center'></td>\n");
+                    table.append("<td style='text-align: center'></td>\n");
+                }
             }
 
             table.append("</tr>\n");

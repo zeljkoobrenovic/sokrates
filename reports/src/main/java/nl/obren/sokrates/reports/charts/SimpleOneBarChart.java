@@ -9,11 +9,11 @@ import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import java.util.List;
 
 public class SimpleOneBarChart {
-    private String backgroundColor = "#898989";
+    private String backgroundColor = "#ffffff";
     private String activeColor = "#00aced";
     private Alignment alignment = Alignment.LEFT;
-    private String backgroundStyle = "fill-opacity:0.4;stroke:#898989;stroke-width:0;";
-    private String activeStyle = "fill:#c0deed;stroke:#898989;stroke-width:0;";
+    private String backgroundStyle = "fill-opacity:0.4;stroke:#a0a0a0;stroke-width:0;";
+    private String activeStyle = "fill:#c0deed;stroke:#898989;stroke-width:0.5;";
     private int width = 800;
     private int maxBarWidth = 200;
     private int barHeight = 20;
@@ -64,7 +64,7 @@ public class SimpleOneBarChart {
         for (int i = 0; i < labels.size(); i++) {
             String label = labels.get(i);
             String color = palette.nextColor();
-            html += "<div style='margin: 4px; vertical-align:middle;display:inline-block;width:30px;height:14px;background-color:" + color + "'></div>";
+            html += "<div style='margin: 4px; vertical-align:middle;display:inline-block;width:14px;height:14px;background-color:" + color + "; border: 1px solid #a0a0a0;'></div>";
             html += "<div style='margin-right:10px; display:inline-block'>" + label + "</div>";
         }
 

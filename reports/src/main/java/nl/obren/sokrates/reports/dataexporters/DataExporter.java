@@ -22,6 +22,7 @@ import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.reports.utils.ZipUtils;
 import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.SourceFile;
+import nl.obren.sokrates.sourcecode.age.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
@@ -406,6 +407,8 @@ public class DataExporter {
         }
 
         FileUtils.write(new File(dataFolder, "mainFiles.json"), new JsonGenerator().generate(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
+        FileUtils.write(new File(dataFolder, "mainFiles.txt"), getFilesAsTxt(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
+        FileUtils.write(new File(dataFolder, "mainFilesWithHistory.txt"), getFilesWithHistoryAsTxt(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
         FileUtils.write(new File(dataFolder, "testFiles.json"), new JsonGenerator().generate(analysisResults.getTestAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
         FileUtils.write(new File(dataFolder, "units.json"), new JsonGenerator().generate(new UnitListExporter(analysisResults.getUnitsAnalysisResults().getAllUnits()).getAllUnitsData()), UTF_8);
         FileUtils.write(new File(dataFolder, "files.json"), new FileListExporter(analysisResults.getFilesAnalysisResults().getAllFiles()).getJson(), UTF_8);
@@ -415,6 +418,54 @@ public class DataExporter {
                 analysisResults.getLogicalDecompositionsAnalysisResults()), UTF_8);
         FileUtils.write(new File(dataFolder, "dependencies.json"), new JsonGenerator().generate(
                 new DependenciesExporter(analysisResults.getAllDependencies()).getDependenciesExportInfo()), UTF_8);
+    }
+
+    private String getFilesAsTxt(List<SourceFile> sourceFiles) {
+        StringBuilder builder = new StringBuilder();
+
+        builder.append("path\t# lines of code").append("\n");
+
+        sourceFiles.forEach(sourceFile -> {
+            builder.append(sourceFile.getRelativePath())
+                    .append("\t")
+                    .append(sourceFile.getLinesOfCode())
+                    .append("\n");
+        });
+
+        return builder.toString();
+    }
+
+    private String getFilesWithHistoryAsTxt(List<SourceFile> sourceFiles) {
+        StringBuilder builder = new StringBuilder();
+
+        builder
+                .append("path\t")
+                .append("# lines of code\t")
+                .append("number of updates\tdays since first update\tdays since last update\t")
+                .append("first updated\tlast updated\t")
+                .append("\n");
+
+        sourceFiles.forEach(sourceFile -> {
+            FileModificationHistory history = sourceFile.getFileModificationHistory();
+            if (history != null) {
+                builder.append(sourceFile.getRelativePath())
+                        .append("\t")
+                        .append(sourceFile.getLinesOfCode())
+                        .append("\t")
+                        .append(history.getDates().size())
+                        .append("\t")
+                        .append(history.daysSinceFirstUpdate())
+                        .append("\t")
+                        .append(history.daysSinceLatestUpdate())
+                        .append("\t")
+                        .append(history.getOldestDate())
+                        .append("\t")
+                        .append(history.getLatestDate())
+                        .append("\n");
+            }
+        });
+
+        return builder.toString();
     }
 
     private void saveUnitFragmentFiles(List<UnitInfo> units, String fragmentType) throws IOException {

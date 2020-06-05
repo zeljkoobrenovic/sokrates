@@ -7,20 +7,24 @@ package nl.obren.sokrates.sourcecode.stats;
 public class RiskDistributionStats {
     private String key = "";
 
+    private int lowRiskThreshold;
     private int mediumRiskThreshold;
     private int highRiskThreshold;
     private int veryHighRiskThreshold;
 
+    private int negligibleRiskValue;
     private int lowRiskValue;
     private int mediumRiskValue;
     private int highRiskValue;
     private int veryHighRiskValue;
 
     private int lowRiskCount;
+    private int negligibleRiskCount;
     private int mediumRiskCount;
     private int highRiskCount;
     private int veryHighRiskCount;
 
+    private String negligibleRiskLabel = "";
     private String lowRiskLabel = "";
     private String mediumRiskLabel = "";
     private String highRiskLabel = "";
@@ -33,7 +37,8 @@ public class RiskDistributionStats {
         this.key = key;
     }
 
-    public RiskDistributionStats(int mediumRiskThreshold, int highRiskThreshold, int veryHighRiskThreshold) {
+    public RiskDistributionStats(int lowRiskThreshold, int mediumRiskThreshold, int highRiskThreshold, int veryHighRiskThreshold) {
+        this.lowRiskThreshold = lowRiskThreshold;
         this.mediumRiskThreshold = mediumRiskThreshold;
         this.highRiskThreshold = highRiskThreshold;
         this.veryHighRiskThreshold = veryHighRiskThreshold;
@@ -48,6 +53,8 @@ public class RiskDistributionStats {
     }
 
     public void reset() {
+        negligibleRiskValue = 0;
+        negligibleRiskCount = 0;
         lowRiskValue = 0;
         lowRiskCount = 0;
         mediumRiskValue = 0;
@@ -59,7 +66,10 @@ public class RiskDistributionStats {
     }
 
     public void update(int testValue, int addValue) {
-        if (testValue <= mediumRiskThreshold) {
+        if (testValue <= lowRiskThreshold) {
+            negligibleRiskValue += addValue;
+            negligibleRiskCount++;
+        } else if (testValue <= mediumRiskThreshold) {
             lowRiskValue += addValue;
             lowRiskCount++;
         } else if (testValue <= highRiskThreshold) {
@@ -75,11 +85,15 @@ public class RiskDistributionStats {
     }
 
     public int getTotalValue() {
-        return lowRiskValue + mediumRiskValue + highRiskValue + veryHighRiskValue;
+        return negligibleRiskValue + lowRiskValue + mediumRiskValue + highRiskValue + veryHighRiskValue;
     }
 
     public int getTotalCount() {
-        return lowRiskCount + mediumRiskCount + highRiskCount + veryHighRiskCount;
+        return negligibleRiskCount + lowRiskCount + mediumRiskCount + highRiskCount + veryHighRiskCount;
+    }
+
+    public int getNegligibleRiskValue() {
+        return negligibleRiskValue;
     }
 
     public int getLowRiskValue() {
@@ -96,6 +110,10 @@ public class RiskDistributionStats {
 
     public int getVeryHighRiskValue() {
         return veryHighRiskValue;
+    }
+
+    public int getNegligibleRiskCount() {
+        return negligibleRiskCount;
     }
 
     public int getLowRiskCount() {
@@ -117,6 +135,8 @@ public class RiskDistributionStats {
     public int getMediumRiskThreshold() {
         return mediumRiskThreshold;
     }
+
+
 
     public void setMediumRiskThreshold(int mediumRiskThreshold) {
         this.mediumRiskThreshold = mediumRiskThreshold;
@@ -170,8 +190,16 @@ public class RiskDistributionStats {
         this.lowRiskLabel = lowRiskLabel;
     }
 
+    public String getNegligibleRiskLabel() {
+        return negligibleRiskLabel;
+    }
+
+    public void setNegligibleRiskLabel(String negligibleRiskLabel) {
+        this.negligibleRiskLabel = negligibleRiskLabel;
+    }
+
     private int totalValue() {
-        return veryHighRiskValue + highRiskValue + mediumRiskValue + lowRiskValue;
+        return veryHighRiskValue + highRiskValue + mediumRiskValue + lowRiskValue + negligibleRiskValue;
     }
 
     public double getVeryHighRiskPercentage() {
@@ -190,6 +218,10 @@ public class RiskDistributionStats {
 
     public double getLowRiskPercentage() {
         return totalValue() > 0 ? 100.0 * lowRiskValue / totalValue() : 0;
+    }
+
+    public double getNeglictableRiskPercentage() {
+        return totalValue() > 0 ? 100.0 * negligibleRiskValue / totalValue() : 0;
     }
 
 }

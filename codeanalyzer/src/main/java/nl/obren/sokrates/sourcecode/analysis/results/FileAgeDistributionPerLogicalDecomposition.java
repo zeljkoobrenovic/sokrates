@@ -11,8 +11,7 @@ import java.util.List;
 
 public class FileAgeDistributionPerLogicalDecomposition {
     private String name = "";
-    private List<RiskDistributionStats> firstModifiedDistributionPerComponent = new ArrayList<>();
-    private List<RiskDistributionStats> lastModifiedDistributionPerComponent = new ArrayList<>();
+    private List<RiskDistributionStats> distributionPerComponent = new ArrayList<>();
 
     public String getName() {
         return name;
@@ -22,19 +21,11 @@ public class FileAgeDistributionPerLogicalDecomposition {
         this.name = name;
     }
 
-    public List<RiskDistributionStats> getFirstModifiedDistributionPerComponent() {
-        return firstModifiedDistributionPerComponent;
+    public List<RiskDistributionStats> getDistributionPerComponent() {
+        return distributionPerComponent;
     }
 
-    public void setFirstModifiedDistributionPerComponent(List<RiskDistributionStats> firstModifiedDistributionPerComponent) {
-        this.firstModifiedDistributionPerComponent = firstModifiedDistributionPerComponent;
-    }
-
-    public List<RiskDistributionStats> getLastModifiedDistributionPerComponent() {
-        return lastModifiedDistributionPerComponent;
-    }
-
-    public void setLastModifiedDistributionPerComponent(List<RiskDistributionStats> lastModifiedDistributionPerComponent) {
-        this.lastModifiedDistributionPerComponent = lastModifiedDistributionPerComponent;
+    public void setDistributionPerComponent(List<RiskDistributionStats> distributionPerComponent) {
+        this.distributionPerComponent = distributionPerComponent;
     }
 }

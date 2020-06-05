@@ -20,6 +20,7 @@ public class RiskDistributionStatsReportUtils {
         rowData.add(riskDistributionStats.getHighRiskValue());
         rowData.add(riskDistributionStats.getMediumRiskValue());
         rowData.add(riskDistributionStats.getLowRiskValue());
+        rowData.add(riskDistributionStats.getNegligibleRiskValue());
         return rowData;
     }
 
@@ -27,13 +28,9 @@ public class RiskDistributionStatsReportUtils {
         return getRiskDistributionPerKeySvgBarChart(distributions, labels, Palette.getRiskPalette());
     }
 
-    public static String getAgeRiskDistributionPerKeySvgBarChart(List<RiskDistributionStats> distributions, List<String> labels) {
-        return getRiskDistributionPerKeySvgBarChart(distributions, labels, Palette.getAgePalette());
-    }
-
     public static String getRiskDistributionPerKeySvgBarChart(List<RiskDistributionStats> distributions, List<String> labels, Palette palette) {
         SimpleOneBarChart chart = new SimpleOneBarChart();
-        chart.setWidth(800);
+        chart.setWidth(900);
 
         final String[] html = {""};
 

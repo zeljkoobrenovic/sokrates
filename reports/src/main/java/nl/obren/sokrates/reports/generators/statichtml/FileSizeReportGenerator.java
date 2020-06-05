@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 public class FileSizeReportGenerator {
     private CodeAnalysisResults codeAnalysisResults;
-    private List<String> labels = Arrays.asList("1001+", "501-1000", "201-500", "1-200");
+    private List<String> labels = Arrays.asList("1001+", "501-1000", "201-500", "101-200", "1-100");
 
     public FileSizeReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
@@ -32,7 +32,7 @@ public class FileSizeReportGenerator {
         report.startUnorderedList();
         report.addListItem("File size measurements show the distribution of size of files.");
         report.addListItem("Files are classified in four categories based on their size (lines of code): " +
-                "1-200 (small files), 200-500 (medium size files), 501-1000 (long files), 1001+ (very long files).");
+                "1-100 (very small files), 100-200 (small files), 200-500 (medium size files), 501-1000 (long files), 1001+ (very long files).");
         report.addListItem("It is a good practice to keep files small. Long files may become \"bloaters\", code that have increased to such gargantuan proportions that they are hard to work with.");
         report.endUnorderedList();
         report.endUnorderedList();
@@ -66,9 +66,11 @@ public class FileSizeReportGenerator {
     private void addGraphOverall(RichTextReport report, SourceFileSizeDistribution distribution) {
         report.startSection("File Size Overall", "");
         report.startUnorderedList();
-        report.addListItem("There are " + RichTextRenderingUtils.renderNumberStrong(distribution.getTotalCount())
-                + " files with " + RichTextRenderingUtils.renderNumberStrong(distribution.getTotalValue())
-                + " lines of code in files" +
+        report.addListItem("There are "
+                + "<a href='../data/mainFiles.txt' target='_blank'>"
+                + RichTextRenderingUtils.renderNumberStrong(distribution.getTotalCount())
+                + " files</a> with " + RichTextRenderingUtils.renderNumberStrong(distribution.getTotalValue())
+                + " lines of code" +
                 ".");
         report.startUnorderedList();
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getVeryHighRiskCount())
@@ -82,6 +84,9 @@ public class FileSizeReportGenerator {
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskCount())
                 + " small files (" + RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskValue())
+                + " lines of code)");
+        report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskCount())
+                + " very small files (" + RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskValue())
                 + " lines of code)");
         report.endUnorderedList();
         report.endUnorderedList();

@@ -15,6 +15,7 @@ import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
+import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -35,7 +36,7 @@ public class FileAgeAnalyzer extends Analyzer {
     }
 
     public void analyze() {
-        String filesAgeImportPath = codeConfiguration.getAnalysis().getFilesAgeImportPath();
+        String filesAgeImportPath = codeConfiguration.getAnalysis().getFilesHistoryImportPath();
         if (StringUtils.isNotBlank(filesAgeImportPath)) {
             List<FileModificationHistory> ages = GitLsFileUtil.importGitLsFilesExport(new File(filesAgeImportPath));
             if (ages.size() > 0) {
@@ -50,9 +51,14 @@ public class FileAgeAnalyzer extends Analyzer {
         List<SourceFile> sourceFiles = allFiles;
         SourceFileAgeDistribution lastModifiedDistribution = new SourceFileAgeDistribution(LAST_MODIFIED).getOverallLastModifiedDistribution(sourceFiles);
         SourceFileAgeDistribution firstModifiedDistribution = new SourceFileAgeDistribution(LAST_MODIFIED).getOverallFirstModifiedDistribution(sourceFiles);
+        SourceFileChangeDistribution changeDistribution = new SourceFileChangeDistribution().getOverallDistribution(sourceFiles);
 
         analysisResults.setOverallFileLastModifiedDistribution(lastModifiedDistribution);
         analysisResults.setOverallFileFirstModifiedDistribution(firstModifiedDistribution);
+        analysisResults.setOverallFileChangeDistribution(changeDistribution);
+
+        analysisResults.setChangeDistributionPerExtension(
+                new SourceFileChangeDistribution().getDistributionPerExtension(sourceFiles));
         analysisResults.setFirstModifiedDistributionPerExtension(
                 new SourceFileAgeDistribution(FIRST_MODIFIED).getFileAgeRiskDistributionPerExtension(sourceFiles));
         analysisResults.setLastModifiedDistributionPerExtension(
@@ -73,20 +79,27 @@ public class FileAgeAnalyzer extends Analyzer {
     }
 
     private void addLogicalDecompositions(LogicalDecomposition logicalDecomposition) {
-        FileAgeDistributionPerLogicalDecomposition decomposition1 = new FileAgeDistributionPerLogicalDecomposition();
-        decomposition1.setName(logicalDecomposition.getName());
-        decomposition1.setFirstModifiedDistributionPerComponent(
+        FileAgeDistributionPerLogicalDecomposition change = new FileAgeDistributionPerLogicalDecomposition();
+        change.setName(logicalDecomposition.getName());
+        change.setDistributionPerComponent(
+                new SourceFileChangeDistribution().getRiskDistributionPerComponent(logicalDecomposition));
+
+        analysisResults.getChangeDistributionPerLogicalDecomposition().add(change);
+
+        FileAgeDistributionPerLogicalDecomposition firstModified = new FileAgeDistributionPerLogicalDecomposition();
+        firstModified.setName(logicalDecomposition.getName());
+        firstModified.setDistributionPerComponent(
                 new SourceFileAgeDistribution(FIRST_MODIFIED).getFileAgeRiskDistributionPerComponent(logicalDecomposition));
 
-        analysisResults.getFirstModifiedDistributionPerLogicalDecomposition().add(decomposition1);
+        analysisResults.getFirstModifiedDistributionPerLogicalDecomposition().add(firstModified);
 
-        FileAgeDistributionPerLogicalDecomposition decomposition2 = new FileAgeDistributionPerLogicalDecomposition();
-        decomposition2.setName(logicalDecomposition.getName());
+        FileAgeDistributionPerLogicalDecomposition lastModified = new FileAgeDistributionPerLogicalDecomposition();
+        lastModified.setName(logicalDecomposition.getName());
 
-        decomposition2.setLastModifiedDistributionPerComponent(
+        lastModified.setDistributionPerComponent(
                 new SourceFileAgeDistribution(LAST_MODIFIED).getFileAgeRiskDistributionPerComponent(logicalDecomposition));
 
-        analysisResults.getLastModifiedDistributionPerLogicalDecomposition().add(decomposition2);
+        analysisResults.getLastModifiedDistributionPerLogicalDecomposition().add(lastModified);
     }
 
     private void enrichFilesWithAge(List<FileModificationHistory> ages) {

@@ -18,12 +18,13 @@ public class SourceFileAgeDistribution extends RiskDistributionStats {
     private Types type;
 
     public SourceFileAgeDistribution(Types type) {
-        super(30, 90, 180);
+        super(30, 90, 180, 365);
         this.type = type;
-        setLowRiskLabel("1-30 days");
-        setMediumRiskLabel("31-60 days");
-        setHighRiskLabel("61-180 days");
-        setVeryHighRiskLabel("181+");
+        setNegligibleRiskLabel("1-30 days");
+        setLowRiskLabel("31-60 days");
+        setMediumRiskLabel("61-180 days");
+        setHighRiskLabel("181-365 days");
+        setVeryHighRiskLabel("366+ days");
     }
 
     public List<RiskDistributionStats> getFileAgeRiskDistributionPerExtension(List<SourceFile> files) {

@@ -19,7 +19,7 @@ import java.util.List;
 
 public class ConditionalComplexityReportGenerator {
     private CodeAnalysisResults codeAnalysisResults;
-    private List<String> labels = Arrays.asList("26+", "11-25", "6-10", "1-5");
+    private List<String> labels = Arrays.asList("51+", "26-50", "11-25", "6-10", "1-5");
 
     public ConditionalComplexityReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
@@ -74,6 +74,9 @@ public class ConditionalComplexityReportGenerator {
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(unitMcCabeDistribution.getLowRiskCount())
                 + " simple units (" + RichTextRenderingUtils.renderNumberStrong(unitMcCabeDistribution.getLowRiskValue())
+                + " lines of code)");
+        report.addListItem(RichTextRenderingUtils.renderNumberStrong(unitMcCabeDistribution.getNegligibleRiskCount())
+                + " very simple units (" + RichTextRenderingUtils.renderNumberStrong(unitMcCabeDistribution.getNegligibleRiskValue())
                 + " lines of code)");
         report.endUnorderedList();
         report.endUnorderedList();

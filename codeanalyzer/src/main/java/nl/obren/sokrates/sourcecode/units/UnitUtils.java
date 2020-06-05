@@ -26,8 +26,9 @@ public class UnitUtils {
     }
 
     public static RiskDistributionStats getUnitSizeRiskDistributionInstance() {
-        RiskDistributionStats distributionStats = new RiskDistributionStats(20, 50, 100);
-        distributionStats.setLowRiskLabel("1-20");
+        RiskDistributionStats distributionStats = new RiskDistributionStats(10, 20, 50, 100);
+        distributionStats.setNegligibleRiskLabel("1-10");
+        distributionStats.setLowRiskLabel("10-20");
         distributionStats.setMediumRiskLabel("21-50");
         distributionStats.setHighRiskLabel("51-100");
         distributionStats.setVeryHighRiskLabel("101+");
@@ -35,11 +36,12 @@ public class UnitUtils {
     }
 
     public static RiskDistributionStats getConditionalComplexityRiskDistributionInstance() {
-        RiskDistributionStats distributionStats = new RiskDistributionStats(5, 10, 25);
-        distributionStats.setLowRiskLabel("1-5");
-        distributionStats.setMediumRiskLabel("6-10");
-        distributionStats.setHighRiskLabel("11-15");
-        distributionStats.setVeryHighRiskLabel("26+");
+        RiskDistributionStats distributionStats = new RiskDistributionStats(5, 10, 25, 50);
+        distributionStats.setNegligibleRiskLabel("1-5");
+        distributionStats.setLowRiskLabel("6-10");
+        distributionStats.setMediumRiskLabel("11-25");
+        distributionStats.setHighRiskLabel("26-50");
+        distributionStats.setVeryHighRiskLabel("51+");
         return distributionStats;
     }
 

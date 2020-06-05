@@ -7,6 +7,8 @@ package nl.obren.sokrates.common.renderingutils.charts;
 import java.util.Arrays;
 import java.util.List;
 
+// https://colorbrewer2.org/#type=sequential&scheme=BuGn&n=5
+
 public class Palette {
     private int index = 0;
     private List<String> colors;
@@ -16,12 +18,19 @@ public class Palette {
     }
 
     public static Palette getRiskPalette() {
-        return new Palette(Arrays.asList("#F2021B", "#F9CF3F", "#F4DEB5", "#9DC034"));
+        return new Palette(Arrays.asList("#d7191c", "#fdae61", "#ffffbf", "#a6d96a", "#1a9641"));
+    }
+
+    public static Palette getHeatPalette() {
+        return new Palette(Arrays.asList("#bd0026", "#f03b20", "#fd8d3c", "#fed98e", "#ffffd4"));
     }
 
     public static Palette getAgePalette() {
-        return new Palette(Arrays.asList("#ACDFED", "#70CDE3", "#FBB568", "#EE3124"));
-        // #B81A20
+        return new Palette(Arrays.asList("#252525", "#636363", "#969696", "#cccccc", "#f7f7f7"));
+    }
+
+    public static Palette getFreshnessPalette() {
+        return new Palette(Arrays.asList( "#006d2c", "#31a354", "#74c476", "#bae4b3", "#edf8e9"));
     }
 
     public static Palette getDuplicationPalette() {

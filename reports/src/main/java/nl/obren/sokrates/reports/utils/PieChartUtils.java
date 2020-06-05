@@ -17,10 +17,6 @@ public class PieChartUtils {
         return getRiskDistributionPieChart(distribution, labels, Palette.getRiskPalette());
     }
 
-    public static String getAgeRiskDistributionPieChart(RiskDistributionStats distribution, List<String> labels) {
-        return getRiskDistributionPieChart(distribution, labels, Palette.getAgePalette());
-    }
-
     public static String getRiskDistributionPieChart(RiskDistributionStats distribution, List<String> labels, Palette palette) {
         SimpleOneBarChart chart = new SimpleOneBarChart();
         chart.setWidth(800);

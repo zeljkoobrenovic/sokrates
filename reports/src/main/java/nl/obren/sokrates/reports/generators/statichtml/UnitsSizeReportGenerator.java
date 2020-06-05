@@ -19,7 +19,7 @@ import java.util.List;
 
 public class UnitsSizeReportGenerator {
     private CodeAnalysisResults codeAnalysisResults;
-    private List<String> labels = Arrays.asList("101+", "51-100", "21-50", "1-20");
+    private List<String> labels = Arrays.asList("101+", "51-100", "21-50", "11-20", "1-10");
 
     public UnitsSizeReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
@@ -83,6 +83,9 @@ public class UnitsSizeReportGenerator {
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(unitSizeDistribution.getLowRiskCount())
                 + " small units (" + RichTextRenderingUtils.renderNumberStrong(unitSizeDistribution.getLowRiskValue())
+                + " lines of code)");
+        report.addListItem(RichTextRenderingUtils.renderNumberStrong(unitSizeDistribution.getNegligibleRiskCount())
+                + " very small units (" + RichTextRenderingUtils.renderNumberStrong(unitSizeDistribution.getNegligibleRiskValue())
                 + " lines of code)");
 
         report.endUnorderedList();

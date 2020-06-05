@@ -14,8 +14,9 @@ import java.util.Map;
 
 public class SourceFileSizeDistribution extends RiskDistributionStats {
     public SourceFileSizeDistribution() {
-        super(200, 500, 1000);
-        setLowRiskLabel("1-200 lines of code");
+        super(100, 200, 500, 1000);
+        setLowRiskLabel("1-100 lines of code");
+        setLowRiskLabel("101-200");
         setMediumRiskLabel("201-500");
         setHighRiskLabel("501-1000");
         setVeryHighRiskLabel("1001+");

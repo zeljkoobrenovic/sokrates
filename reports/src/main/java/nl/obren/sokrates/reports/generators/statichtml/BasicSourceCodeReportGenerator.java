@@ -25,7 +25,7 @@ public class BasicSourceCodeReportGenerator {
     private RichTextReport crossCuttingConcernsReport = new RichTextReport("Cross-Cutting Concerns", "CrossCuttingConcerns.html");
     private RichTextReport duplicationReport = new RichTextReport("Duplication", "Duplication.html");
     private RichTextReport fileSizeReport = new RichTextReport("File Size", "FileSize.html");
-    private RichTextReport fileAgeReport = new RichTextReport("File Age", "FileAge.html");
+    private RichTextReport fileHistoryReport = new RichTextReport("File History", "FileHistory.html");
     private RichTextReport unitSizeReport = new RichTextReport("Unit Size", "UnitSize.html");
     private RichTextReport conditionalComplexityReport = new RichTextReport("Conditional Complexity", "ConditionalComplexity.html");
     private RichTextReport findingsReport = new RichTextReport("Notes & Findings", "Notes.html");
@@ -82,7 +82,9 @@ public class BasicSourceCodeReportGenerator {
             }
             if (codeAnalyzerSettings.isAnalyzeFileSize()) {
                 reports.add(fileSizeReport);
-                reports.add(fileAgeReport);
+                if (filesHistoryImportPathExists()) {
+                    reports.add(fileHistoryReport);
+                }
             }
             if (codeAnalyzerSettings.isAnalyzeUnitSize()) {
                 reports.add(unitSizeReport);
@@ -121,7 +123,7 @@ public class BasicSourceCodeReportGenerator {
         decorateReport(unitSizeReport, name, logoLink);
         decorateReport(conditionalComplexityReport, name, logoLink);
         decorateReport(fileSizeReport, name, logoLink);
-        decorateReport(fileAgeReport, name, logoLink);
+        decorateReport(fileHistoryReport, name, logoLink);
         decorateReport(controlsReport, name, logoLink);
         decorateReport(metricsReport, name, logoLink);
         decorateReport(comparisonReport, name, logoLink);
@@ -149,7 +151,9 @@ public class BasicSourceCodeReportGenerator {
 
         if (codeAnalyzerSettings.isAnalyzeFileSize()) {
             new FileSizeReportGenerator(codeAnalysisResults).addFileSizeToReport(fileSizeReport);
-            new FileAgeReportGenerator(codeAnalysisResults).addFileAgeToReport(fileAgeReport);
+            if (filesHistoryImportPathExists()) {
+                new FileHistoryReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileHistoryReport);
+            }
         }
 
         if (codeAnalyzerSettings.isAnalyzeUnitSize()) {
@@ -170,5 +174,9 @@ public class BasicSourceCodeReportGenerator {
         if (codeAnalyzerSettings.isAnalyzeControls()) {
             new ControlsReportGenerator().generateReport(codeAnalysisResults, controlsReport);
         }
+    }
+
+    private boolean filesHistoryImportPathExists() {
+        return new File(codeAnalysisResults.getCodeConfiguration().getAnalysis().getFilesHistoryImportPath()).exists();
     }
 }
