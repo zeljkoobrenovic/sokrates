@@ -82,7 +82,7 @@ public class BasicSourceCodeReportGenerator {
             }
             if (codeAnalyzerSettings.isAnalyzeFileSize()) {
                 reports.add(fileSizeReport);
-                if (filesHistoryImportPathExists()) {
+                if (codeAnalysisResults.getCodeConfiguration().getAnalysis().filesHistoryImportPathExists(codeConfigurationFile.getParentFile())) {
                     reports.add(fileHistoryReport);
                 }
             }
@@ -151,7 +151,7 @@ public class BasicSourceCodeReportGenerator {
 
         if (codeAnalyzerSettings.isAnalyzeFileSize()) {
             new FileSizeReportGenerator(codeAnalysisResults).addFileSizeToReport(fileSizeReport);
-            if (filesHistoryImportPathExists()) {
+            if (codeAnalysisResults.getCodeConfiguration().getAnalysis().filesHistoryImportPathExists(codeConfigurationFile.getParentFile())) {
                 new FileHistoryReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileHistoryReport);
             }
         }
@@ -174,9 +174,5 @@ public class BasicSourceCodeReportGenerator {
         if (codeAnalyzerSettings.isAnalyzeControls()) {
             new ControlsReportGenerator().generateReport(codeAnalysisResults, controlsReport);
         }
-    }
-
-    private boolean filesHistoryImportPathExists() {
-        return new File(codeAnalysisResults.getCodeConfiguration().getAnalysis().getFilesHistoryImportPath()).exists();
     }
 }

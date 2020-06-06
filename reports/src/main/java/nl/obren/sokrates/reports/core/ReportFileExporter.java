@@ -66,8 +66,8 @@ public class ReportFileExporter {
         return report.getFileName();
     }
 
-    public static void exportReportsIndexFile(File reportsFolder, CodeAnalysisResults analysisResults) {
-        List<String[]> reportList = getReportsList(analysisResults, reportsFolder);
+    public static void exportReportsIndexFile(File reportsFolder, CodeAnalysisResults analysisResults, File sokratesConfigFolder) {
+        List<String[]> reportList = getReportsList(analysisResults, sokratesConfigFolder);
 
         File htmlExportFolder = getHtmlReportsFolder(reportsFolder);
 
@@ -197,18 +197,18 @@ public class ReportFileExporter {
         indexReport.addHtmlContent("</div>");
     }
 
-    private static List<String[]> getReportsList(CodeAnalysisResults analysisResults, File reportsFolder) {
+    private static List<String[]> getReportsList(CodeAnalysisResults analysisResults, File sokratesConfigFolder) {
         List<String[]> list = new ArrayList<>();
 
         CodeConfiguration config = analysisResults.getCodeConfiguration();
-        boolean showHistoryReport = config.getAnalysis().filesHistoryImportPathExists();
+        boolean showHistoryReport = config.getAnalysis().filesHistoryImportPathExists(sokratesConfigFolder);
         boolean showDuplication = !config.getAnalysis().isSkipDuplication();
         boolean showDependencies = !config.getAnalysis().isSkipDependencies();
         boolean showTrends = config.getCompareResultsWith().size() > 0;
         boolean showConcerns = config.countAllCrossCuttingConcernsDefinitions() > 1;
         boolean showControls = config.getGoalsAndControls().size() > 0;
 
-        File findingsFile = CodeConfigurationUtils.getDefaultSokratesFindingsFile(reportsFolder.getParentFile());
+        File findingsFile = CodeConfigurationUtils.getDefaultSokratesFindingsFile(sokratesConfigFolder);
 
         boolean showFindings = false;
 

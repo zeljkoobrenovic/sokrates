@@ -64,16 +64,25 @@ public class AnalysisConfig {
         return filesHistoryImportPath;
     }
 
+    public void setFilesHistoryImportPath(String filesHistoryImportPath) {
+        this.filesHistoryImportPath = filesHistoryImportPath;
+    }
+
     @JsonIgnore
-    public boolean filesHistoryImportPathExists() {
+    public File getFilesHistoryFile(File sokratesFolder) {
+        if (new File(filesHistoryImportPath).exists()) {
+            return new File(filesHistoryImportPath);
+        } else {
+            return new File(sokratesFolder, filesHistoryImportPath);
+        }
+    }
+
+    @JsonIgnore
+    public boolean filesHistoryImportPathExists(File sokratesFolder) {
         if (StringUtils.isBlank(filesHistoryImportPath)) {
             return false;
         }
 
-        return new File(filesHistoryImportPath).exists();
-    }
-
-    public void setFilesHistoryImportPath(String filesHistoryImportPath) {
-        this.filesHistoryImportPath = filesHistoryImportPath;
+        return getFilesHistoryFile(sokratesFolder).exists();
     }
 }

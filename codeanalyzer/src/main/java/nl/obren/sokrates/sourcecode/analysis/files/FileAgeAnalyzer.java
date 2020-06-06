@@ -27,18 +27,20 @@ import static nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution.Types
 public class FileAgeAnalyzer extends Analyzer {
     private CodeConfiguration codeConfiguration;
     private MetricsList metricsList;
+    private File sokratesFolder;
     private FilesAgeAnalysisResults analysisResults;
 
-    public FileAgeAnalyzer(CodeAnalysisResults results) {
+    public FileAgeAnalyzer(CodeAnalysisResults results, File sokratesFolder) {
         this.analysisResults = results.getFilesAgeAnalysisResults();
         this.codeConfiguration = results.getCodeConfiguration();
         this.metricsList = results.getMetricsList();
+        this.sokratesFolder = sokratesFolder;
     }
 
     public void analyze() {
-        if (codeConfiguration.getAnalysis().filesHistoryImportPathExists()) {
-            String filesAgeImportPath = codeConfiguration.getAnalysis().getFilesHistoryImportPath();
-            List<FileModificationHistory> ages = GitLsFileUtil.importGitLsFilesExport(new File(filesAgeImportPath));
+        if (codeConfiguration.getAnalysis().filesHistoryImportPathExists(sokratesFolder)) {
+            File historyFile = codeConfiguration.getAnalysis().getFilesHistoryFile(sokratesFolder);
+            List<FileModificationHistory> ages = GitLsFileUtil.importGitLsFilesExport(historyFile);
             if (ages.size() > 0) {
                 enrichFilesWithAge(ages);
                 analyzeFilesAge();

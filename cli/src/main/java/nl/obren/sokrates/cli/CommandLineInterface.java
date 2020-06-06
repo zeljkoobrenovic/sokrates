@@ -240,23 +240,23 @@ public class CommandLineInterface {
     }
 
     private void generateReports(CommandLine cmd) throws IOException {
-        File inputFile;
+        File sokratesConfigFile;
 
         if (!cmd.hasOption(confFile.getOpt())) {
             String confFilePath = "./_sokrates/config.json";
-            inputFile = new File(confFilePath);
+            sokratesConfigFile = new File(confFilePath);
         } else {
-            inputFile = new File(cmd.getOptionValue(confFile.getOpt()));
+            sokratesConfigFile = new File(cmd.getOptionValue(confFile.getOpt()));
         }
 
-        System.out.println("Configuration file: " + inputFile.getPath());
-        if (noFileError(inputFile)) return;
+        System.out.println("Configuration file: " + sokratesConfigFile.getPath());
+        if (noFileError(sokratesConfigFile)) return;
 
-        String jsonContent = FileUtils.readFileToString(inputFile, UTF_8);
+        String jsonContent = FileUtils.readFileToString(sokratesConfigFile, UTF_8);
         CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
         LanguageAnalyzerFactory.getInstance().setOverrides(codeConfiguration.getAnalysis().getAnalyzerOverrides());
 
-        detailedInfo("Starting analysis based on the configuration file " + inputFile.getPath());
+        detailedInfo("Starting analysis based on the configuration file " + sokratesConfigFile.getPath());
 
         File reportsFolder;
 
@@ -283,7 +283,7 @@ public class CommandLineInterface {
 
         try {
 
-            CodeAnalyzer codeAnalyzer = new CodeAnalyzer(getCodeAnalyzerSettings(cmd), codeConfiguration, inputFile);
+            CodeAnalyzer codeAnalyzer = new CodeAnalyzer(getCodeAnalyzerSettings(cmd), codeConfiguration, sokratesConfigFile);
             CodeAnalysisResults analysisResults = codeAnalyzer.analyze(progressFeedback);
 
             boolean useDefault = noReportingOptions(cmd);
@@ -297,7 +297,7 @@ public class CommandLineInterface {
                 generateVisuals(reportsFolder, analysisResults);
             }
 
-            generateAndSaveReports(inputFile, reportsFolder, codeAnalyzer, analysisResults);
+            generateAndSaveReports(sokratesConfigFile, reportsFolder, sokratesConfigFile.getParentFile(), codeAnalyzer, analysisResults);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -348,7 +348,7 @@ public class CommandLineInterface {
         }
     }
 
-    private void generateAndSaveReports(File inputFile, File reportsFolder, CodeAnalyzer codeAnalyzer, CodeAnalysisResults analysisResults) {
+    private void generateAndSaveReports(File inputFile, File reportsFolder, File sokratesConfigFolder, CodeAnalyzer codeAnalyzer, CodeAnalysisResults analysisResults) {
         File htmlReports = getHtmlFolder(reportsFolder);
         File dataReports = dataExporter.getDataFolder();
         File srcCache = dataExporter.getCodeCacheFolder();
@@ -371,7 +371,7 @@ public class CommandLineInterface {
             ReportFileExporter.exportHtml(reportsFolder, "html", report);
         });
         if (!codeAnalyzerSettings.isDataOnly() && codeAnalyzerSettings.isUpdateIndex()) {
-            ReportFileExporter.exportReportsIndexFile(reportsFolder, analysisResults);
+            ReportFileExporter.exportReportsIndexFile(reportsFolder, analysisResults, sokratesConfigFolder);
         }
     }
 

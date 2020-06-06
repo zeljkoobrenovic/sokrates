@@ -8,6 +8,7 @@ import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.analysis.files.*;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
+import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.sourcecode.metrics.Metric;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -59,7 +60,7 @@ public class CodeAnalyzer {
 
         if (shouldAnalyzeFiles()) {
             new FileSizeAnalyzer(results).analyze();
-            new FileAgeAnalyzer(results).analyze();
+            new FileAgeAnalyzer(results, codeConfigurationFile.getParentFile()).analyze();
         }
 
         if (shouldAnalyzeUnits()) {
