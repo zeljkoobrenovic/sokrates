@@ -36,8 +36,8 @@ public class FileAgeAnalyzer extends Analyzer {
     }
 
     public void analyze() {
-        String filesAgeImportPath = codeConfiguration.getAnalysis().getFilesHistoryImportPath();
-        if (StringUtils.isNotBlank(filesAgeImportPath)) {
+        if (codeConfiguration.getAnalysis().filesHistoryImportPathExists()) {
+            String filesAgeImportPath = codeConfiguration.getAnalysis().getFilesHistoryImportPath();
             List<FileModificationHistory> ages = GitLsFileUtil.importGitLsFilesExport(new File(filesAgeImportPath));
             if (ages.size() > 0) {
                 enrichFilesWithAge(ages);

@@ -4,8 +4,11 @@
 
 package nl.obren.sokrates.sourcecode.core;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.analysis.AnalyzerOverride;
+import org.apache.commons.lang3.StringUtils;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,6 +62,15 @@ public class AnalysisConfig {
 
     public String getFilesHistoryImportPath() {
         return filesHistoryImportPath;
+    }
+
+    @JsonIgnore
+    public boolean filesHistoryImportPathExists() {
+        if (StringUtils.isBlank(filesHistoryImportPath)) {
+            return false;
+        }
+
+        return new File(filesHistoryImportPath).exists();
     }
 
     public void setFilesHistoryImportPath(String filesHistoryImportPath) {

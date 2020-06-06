@@ -65,9 +65,9 @@ public class FileHistoryReportGenerator {
     private void addOverallSections(RichTextReport report) {
         addGraphOverallChange(report, codeAnalysisResults.getFilesAgeAnalysisResults().getOverallFileChangeDistribution(),
                 THE_NUMBER_OF_FILE_CHANGES + " Overall", THE_NUMBER_OF_FILE_CHANGES_DESCRIPTION);
-        addGraphOverall(report, codeAnalysisResults.getFilesAgeAnalysisResults().getOverallFileFirstModifiedDistribution(),
+        addAgeGraphOverall(report, codeAnalysisResults.getFilesAgeAnalysisResults().getOverallFileFirstModifiedDistribution(),
                 FILE_AGE_DISTRIBUTION + " Overall", FILE_AGE_DESCRIPTION, Palette.getAgePalette());
-        addGraphOverall(report, codeAnalysisResults.getFilesAgeAnalysisResults().getOverallFileLastModifiedDistribution(), "" +
+        addFreshessGraphOverall(report, codeAnalysisResults.getFilesAgeAnalysisResults().getOverallFileLastModifiedDistribution(), "" +
                 LATEST_CHANGE_DISTRIBUTION + " Overall", LATEST_CHANGE_DESCRIPTION, Palette.getFreshnessPalette());
     }
 
@@ -118,7 +118,7 @@ public class FileHistoryReportGenerator {
         report.endSection();
     }
 
-    private void addGraphOverall(RichTextReport report, SourceFileAgeDistribution distribution, String title, String subtitle, Palette palette) {
+    private void addAgeGraphOverall(RichTextReport report, SourceFileAgeDistribution distribution, String title, String subtitle, Palette palette) {
         report.startSection(title, subtitle);
         report.startUnorderedList();
         report.addListItem("There are " + RichTextRenderingUtils.renderNumberStrong(distribution.getTotalCount())
@@ -140,6 +140,35 @@ public class FileHistoryReportGenerator {
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskCount())
                 + " less than 30 days old files (" + RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskValue())
+                + " lines of code)");
+        report.endUnorderedList();
+        report.endUnorderedList();
+        report.addHtmlContent(PieChartUtils.getRiskDistributionPieChart(distribution, labels, palette));
+        report.endSection();
+    }
+
+    private void addFreshessGraphOverall(RichTextReport report, SourceFileAgeDistribution distribution, String title, String subtitle, Palette palette) {
+        report.startSection(title, subtitle);
+        report.startUnorderedList();
+        report.addListItem("There are " + RichTextRenderingUtils.renderNumberStrong(distribution.getTotalCount())
+                + " files with " + RichTextRenderingUtils.renderNumberStrong(distribution.getTotalValue())
+                + " lines of code in files" +
+                ".");
+        report.startUnorderedList();
+        report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getVeryHighRiskCount())
+                + " files have been last changed more than 1 year ago (" + RichTextRenderingUtils.renderNumberStrong(distribution.getVeryHighRiskValue())
+                + " lines of code)");
+        report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getHighRiskCount())
+                + "  files have been last changed 180 days to 1 year ago (" + RichTextRenderingUtils.renderNumberStrong(distribution.getHighRiskValue())
+                + " lines of code)");
+        report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getMediumRiskCount())
+                + " files have been last changed 90 to 180 days ago (" + RichTextRenderingUtils.renderNumberStrong(distribution.getMediumRiskValue())
+                + " lines of code)");
+        report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskCount())
+                + " files have been last changed 30 to 90 days ago (" + RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskValue())
+                + " lines of code)");
+        report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskCount())
+                + " files have been last changed less than 30 days ago (" + RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskValue())
                 + " lines of code)");
         report.endUnorderedList();
         report.endUnorderedList();

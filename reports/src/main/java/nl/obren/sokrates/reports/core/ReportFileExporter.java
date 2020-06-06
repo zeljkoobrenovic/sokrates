@@ -8,12 +8,16 @@ import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
+import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -63,7 +67,7 @@ public class ReportFileExporter {
     }
 
     public static void exportReportsIndexFile(File reportsFolder, CodeAnalysisResults analysisResults) {
-        String[][] reportList = getReportsList();
+        List<String[]> reportList = getReportsList(analysisResults, reportsFolder);
 
         File htmlExportFolder = getHtmlReportsFolder(reportsFolder);
 
@@ -131,30 +135,43 @@ public class ReportFileExporter {
     private static void addReportFragment(File reportsFolder, RichTextReport indexReport, String[] report) {
         String reportFileName = report[0];
         String reportTitle = report[1];
-        indexReport.addHtmlContent("<div class='group' style='padding: 10px; margin: 10px; width: 180px; height: 200px; text-align: center; display: inline-block; vertical-align: top'>");
         File reportFile = new File(reportsFolder, reportFileName);
-        if (reportFile.exists()) {
+        boolean showReport = reportFile.exists() && StringUtils.isNotBlank(reportFileName);
+
+        if (showReport) {
+            indexReport.addHtmlContent("<div class='group' style='padding: 10px; margin: 10px; width: 180px; height: 200px; text-align: center; display: inline-block; vertical-align: top'>");
             indexReport.startDiv("font-size:90%; color:deepskyblue");
             indexReport.addHtmlContent("Analysis Report");
-            indexReport.endDiv();
-            indexReport.startDiv("padding: 20px;");
-            if (StringUtils.isNotBlank(report[2])) {
-                indexReport.addHtmlContent(getIconSvg(report[2]));
-            } else {
-                indexReport.addHtmlContent(ReportConstants.REPORT_SVG_ICON);
-            }
-            indexReport.endDiv();
-            indexReport.startDiv("font-size:100%; color:blue; ");
+        } else {
+            indexReport.addHtmlContent("<div class='group' style='padding: 10px; margin: 10px; width: 180px; height: 200px; text-align: center; display: inline-block; vertical-align: top; opacity: 0.4'>");
+            indexReport.startDiv("font-size:90%;");
+            indexReport.addHtmlContent("Analysis Report");
+        }
+
+        indexReport.endDiv();
+        indexReport.startDiv("padding: 20px;");
+        if (StringUtils.isNotBlank(report[2])) {
+            indexReport.addHtmlContent(getIconSvg(report[2]));
+        } else {
+            indexReport.addHtmlContent(ReportConstants.REPORT_SVG_ICON);
+        }
+        indexReport.endDiv();
+        if (showReport) {
+            indexReport.startDiv("color:blue; ");
             indexReport.addHtmlContent("<b><a style='text-decoration: none' href=\"" + reportFileName + "\">" + reportTitle + "</a></b>");
             indexReport.endDiv();
-            indexReport.startDiv("margin-top: 10px; font-size: 90%; color: lightgrey");
+        } else {
+            indexReport.startDiv("");
+            indexReport.addHtmlContent("<b>" + reportTitle + "</b>");
+            indexReport.endDiv();
+        }
+        indexReport.startDiv("margin-top: 10px; font-size: 90%; color: lightgrey");
+        if (showReport) {
             SimpleDateFormat format = new SimpleDateFormat("yyyy.MM.dd");
             indexReport.addHtmlContent(format.format(new Date()));
-            indexReport.endDiv();
-        } else {
-            indexReport.addHtmlContent("<span style=\"color:grey\">" + reportTitle + "</span>");
         }
-        indexReport.addHtmlContent("</div>");
+        indexReport.endDiv();
+        indexReport.endDiv();
     }
 
     private static void addExplorerFragment(RichTextReport indexReport, String explorer[]) {
@@ -180,21 +197,76 @@ public class ReportFileExporter {
         indexReport.addHtmlContent("</div>");
     }
 
-    private static String[][] getReportsList() {
-        return new String[][]{
-                {"SourceCodeOverview.html", "Source Code Overview", "codebase"},
-                {"Components.html", "Components and Dependencies", "dependencies"},
-                {"Duplication.html", "Duplication", "duplication"},
-                {"FileSize.html", "File Size", "file_size"},
-                {"UnitSize.html", "Unit Size", "unit_size"},
-                {"ConditionalComplexity.html", "Conditional Complexity", "conditional"},
-                {"CrossCuttingConcerns.html", "Cross - Cutting Concerns", "cross_cutting_concerns"},
-                {"Metrics.html", "All Metrics", "metrics"},
-                {"Trend.html", "Trend", "trend"},
-                {"Controls.html", "Goals & Controls", "goal"},
-                {"Notes.html", "Notes & Findings", "notes"},
+    private static List<String[]> getReportsList(CodeAnalysisResults analysisResults, File reportsFolder) {
+        List<String[]> list = new ArrayList<>();
 
-        };
+        CodeConfiguration config = analysisResults.getCodeConfiguration();
+        boolean showHistoryReport = config.getAnalysis().filesHistoryImportPathExists();
+        boolean showDuplication = !config.getAnalysis().isSkipDuplication();
+        boolean showDependencies = !config.getAnalysis().isSkipDependencies();
+        boolean showTrends = config.getCompareResultsWith().size() > 0;
+        boolean showConcerns = config.countAllCrossCuttingConcernsDefinitions() > 1;
+        boolean showControls = config.getGoalsAndControls().size() > 0;
+
+        File findingsFile = CodeConfigurationUtils.getDefaultSokratesFindingsFile(reportsFolder.getParentFile());
+
+        boolean showFindings = false;
+
+        if (findingsFile.exists()) {
+            showFindings = FileUtils.sizeOf(findingsFile) > 10;
+        }
+
+        list.add(new String[]{"SourceCodeOverview.html", "Source Code Overview", "codebase"});
+
+        list.add(new String[]{"Components.html", showDependencies ? "Components and Dependencies" : "Components", "dependencies"});
+
+        if (showDuplication) {
+            list.add(new String[]{"Duplication.html", "Duplication", "duplication"});
+        }
+
+        list.add(new String[]{"FileSize.html", "File Size", "file_size"});
+
+        if (showHistoryReport) {
+            list.add(new String[]{"FileHistory.html", "File Change History", "file_history"});
+        }
+        list.add(new String[]{"UnitSize.html", "Unit Size", "unit_size"});
+        list.add(new String[]{"ConditionalComplexity.html", "Conditional Complexity", "conditional"});
+        if (showConcerns) {
+            list.add(new String[]{"CrossCuttingConcerns.html", "Cross - Cutting Concerns", "cross_cutting_concerns"});
+        }
+        list.add(new String[]{"Metrics.html", "All Metrics", "metrics"});
+        if (showTrends) {
+            list.add(new String[]{"Trend.html", "Trend", "trend"});
+        }
+        if (showControls) {
+            list.add(new String[]{"Controls.html", "Goals & Controls", "goal"});
+        }
+
+        if (showFindings) {
+            list.add(new String[]{"Notes.html", "Notes & Findings", "notes"});
+        }
+
+        if (!showDuplication) {
+            list.add(new String[]{"", "Duplication", "duplication"});
+        }
+        if (!showHistoryReport) {
+            list.add(new String[]{"", "File Change History", "file_history"});
+        }
+        if (!showConcerns) {
+            list.add(new String[]{"", "Cross - Cutting Concerns", "cross_cutting_concerns"});
+        }
+        if (!showTrends) {
+            list.add(new String[]{"", "Trend", "trend"});
+        }
+        if (!showControls) {
+            list.add(new String[]{"", "Goals & Controls", "goal"});
+        }
+
+        if (!showFindings) {
+            list.add(new String[]{"", "Notes & Findings", "notes"});
+        }
+
+        return list;
     }
 
     private static String[][] getExplorersList() {

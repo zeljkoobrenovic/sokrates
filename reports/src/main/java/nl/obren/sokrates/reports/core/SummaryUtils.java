@@ -58,14 +58,14 @@ public class SummaryUtils {
             if (distribution != null) {
                 int mainLOC = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
                 int veryLongFilesLOC = distribution.getVeryHighRiskValue();
-                int shortFilesLOC = distribution.getLowRiskValue();
+                int shortFilesLOC = distribution.getLowRiskValue() + distribution.getNegligibleRiskValue();
 
                 report.startTableRow();
                 report.addTableCell(getIconSvg("file_size"), "border: none");
                 report.addTableCell(getRiskProfileVisual(distribution), "border: none");
                 report.addTableCell("File Size: <b>"
                         + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(mainLOC, veryLongFilesLOC))
-                        + "%</b> very long (>1000 LOC), <b>"
+                        + "%</b> long (>1000 LOC), <b>"
                         + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(mainLOC, shortFilesLOC))
                         + "%</b> short (<= 200 LOC)", "border: none");
                 report.addTableCell("<a href='" + reportRoot + "FileSize.html'>...</a>", "border: none");
@@ -293,7 +293,7 @@ public class SummaryUtils {
     private void summarizeUnitComplexity(CodeAnalysisResults analysisResults, RichTextReport report) {
         int linesOfCodeInUnits = analysisResults.getUnitsAnalysisResults().getLinesOfCodeInUnits();
         RiskDistributionStats distribution = analysisResults.getUnitsAnalysisResults().getConditionalComplexityRiskDistribution();
-        int veryComplexUnitsLOC = distribution.getVeryHighRiskValue();
+        int veryComplexUnitsLOC = distribution.getHighRiskValue() + distribution.getVeryHighRiskValue();
         int lowComplexUnitsLOC = distribution.getLowRiskValue();
 
         report.startTableRow();
@@ -301,7 +301,7 @@ public class SummaryUtils {
         report.addTableCell(getRiskProfileVisual(distribution), "border: none");
         report.addTableCell("Conditional Complexity: <b>"
                 + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, veryComplexUnitsLOC))
-                + "%</b> very complex (McCabe index > 25), <b>"
+                + "%</b> complex (McCabe index > 25), <b>"
                 + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, lowComplexUnitsLOC))
                 + "%</b> simple (McCabe index <= 5)", "border: none");
 
@@ -313,14 +313,14 @@ public class SummaryUtils {
         int linesOfCodeInUnits = analysisResults.getUnitsAnalysisResults().getLinesOfCodeInUnits();
         RiskDistributionStats distribution = analysisResults.getUnitsAnalysisResults().getUnitSizeRiskDistribution();
         int veryLongUnitsLOC = distribution.getVeryHighRiskValue();
-        int lowUnitsLOC = distribution.getLowRiskValue();
+        int lowUnitsLOC = distribution.getLowRiskValue() + distribution.getNegligibleRiskValue();
 
         report.startTableRow();
         report.addTableCell(getIconSvg("unit_size"), "border: none");
         report.addTableCell(getRiskProfileVisual(distribution), "border: none");
         report.addTableCell("Unit Size: <b>"
                 + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, veryLongUnitsLOC))
-                + "%</b> very long (>100 LOC), <b>"
+                + "%</b> long (>100 LOC), <b>"
                 + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, lowUnitsLOC))
                 + "%</b> short (<= 20 LOC)", "border: none");
         report.addTableCell("<a href='" + reportRoot + "UnitSize.html'>...</a>", "border: none");

@@ -442,6 +442,16 @@ public class CodeConfiguration {
         this.goalsAndControls = goalsAndControls;
     }
 
+    @JsonIgnore
+    public int countAllCrossCuttingConcernsDefinitions() {
+        int count = 0;
+        for (CrossCuttingConcernsGroup group : getCrossCuttingConcerns()) {
+            count += group.getConcerns().size();
+            count += group.getMetaConcerns().size();
+        }
+        return count;
+    }
+
     public List<CrossCuttingConcernsGroup> getCrossCuttingConcerns() {
         return crossCuttingConcerns;
     }
