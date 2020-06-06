@@ -224,7 +224,7 @@ public class FileHistoryReportGenerator {
 
     private void addYoungestFilesList(RichTextReport report) {
         List<SourceFile> youngestFiles = codeAnalysisResults.getFilesAgeAnalysisResults().getYoungestFiles();
-        report.startSection("Youngest Files (Top " + youngestFiles.size() + ")", "");
+        report.startSection("Most Recently Created Files (Top " + youngestFiles.size() + ")", "");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true).toString());
         report.endSection();
@@ -232,7 +232,7 @@ public class FileHistoryReportGenerator {
 
     private void addMostRecentlyChangedFilesList(RichTextReport report) {
         List<SourceFile> youngestFiles = codeAnalysisResults.getFilesAgeAnalysisResults().getMostRecentlyChangedFiles();
-        report.startSection("Most Recently Changed File (Top " + youngestFiles.size() + ")", "");
+        report.startSection("Most Recently Changed Files (Top " + youngestFiles.size() + ")", "");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true).toString());
         report.endSection();
@@ -240,7 +240,7 @@ public class FileHistoryReportGenerator {
 
     private void addMostPreviouslyChangedFilesList(RichTextReport report) {
         List<SourceFile> youngestFiles = codeAnalysisResults.getFilesAgeAnalysisResults().getMostPreviouslyChangedFiles();
-        report.startSection("Most Previously Changed File (Top " + youngestFiles.size() + ")", "");
+        report.startSection("Files Not Recently Changed (Top " + youngestFiles.size() + ")", "");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true).toString());
         report.endSection();
@@ -248,7 +248,7 @@ public class FileHistoryReportGenerator {
 
     private void addMostChangedFilesList(RichTextReport report) {
         List<SourceFile> youngestFiles = codeAnalysisResults.getFilesAgeAnalysisResults().getMostChangedFiles();
-        report.startSection("Most Changed File (Top " + youngestFiles.size() + ")", "");
+        report.startSection("Most Frequently Changed Files (Top " + youngestFiles.size() + ")", "");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true).toString());
         report.endSection();

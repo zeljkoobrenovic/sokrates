@@ -40,9 +40,9 @@ public class FileAgeAnalyzer extends Analyzer {
     public void analyze() {
         if (codeConfiguration.getAnalysis().filesHistoryImportPathExists(sokratesFolder)) {
             File historyFile = codeConfiguration.getAnalysis().getFilesHistoryFile(sokratesFolder);
-            List<FileModificationHistory> ages = GitLsFileUtil.importGitLsFilesExport(historyFile);
-            if (ages.size() > 0) {
-                enrichFilesWithAge(ages);
+            List<FileModificationHistory> history = codeConfiguration.getAnalysis().getHistory(sokratesFolder);
+            if (history.size() > 0) {
+                enrichFilesWithAge(history);
                 analyzeFilesAge();
             }
         }

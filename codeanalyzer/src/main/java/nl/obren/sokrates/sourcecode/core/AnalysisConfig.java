@@ -5,6 +5,8 @@
 package nl.obren.sokrates.sourcecode.core;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import nl.obren.sokrates.sourcecode.age.FileModificationHistory;
+import nl.obren.sokrates.sourcecode.age.utils.GitLsFileUtil;
 import nl.obren.sokrates.sourcecode.analysis.AnalyzerOverride;
 import org.apache.commons.lang3.StringUtils;
 
@@ -69,20 +71,26 @@ public class AnalysisConfig {
     }
 
     @JsonIgnore
-    public File getFilesHistoryFile(File sokratesFolder) {
+    public File getFilesHistoryFile(File sokratesConfigFolder) {
         if (new File(filesHistoryImportPath).exists()) {
             return new File(filesHistoryImportPath);
         } else {
-            return new File(sokratesFolder, filesHistoryImportPath);
+            return new File(sokratesConfigFolder, filesHistoryImportPath);
         }
     }
 
     @JsonIgnore
-    public boolean filesHistoryImportPathExists(File sokratesFolder) {
+    public List<FileModificationHistory> getHistory(File sokratesConfigFolder) {
+        return GitLsFileUtil.importGitLsFilesExport(getFilesHistoryFile(sokratesConfigFolder));
+    }
+
+    @JsonIgnore
+    public boolean filesHistoryImportPathExists(File sokratesConfigFolder) {
         if (StringUtils.isBlank(filesHistoryImportPath)) {
             return false;
         }
 
-        return getFilesHistoryFile(sokratesFolder).exists();
+        return getFilesHistoryFile(sokratesConfigFolder).exists()
+                && getHistory(sokratesConfigFolder).size() > 0;
     }
 }
