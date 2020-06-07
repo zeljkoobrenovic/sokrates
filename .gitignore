@@ -13,3 +13,5 @@ app/src/main/resources/public/components/
 bin/
 *.iml
 _sokrates/reports
+git-history.txt
+
