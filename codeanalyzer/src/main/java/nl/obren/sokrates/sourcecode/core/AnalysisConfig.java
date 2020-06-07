@@ -6,7 +6,7 @@ package nl.obren.sokrates.sourcecode.core;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.age.FileModificationHistory;
-import nl.obren.sokrates.sourcecode.age.utils.GitLsFileUtil;
+import nl.obren.sokrates.sourcecode.age.GitLsFileUtil;
 import nl.obren.sokrates.sourcecode.analysis.AnalyzerOverride;
 import org.apache.commons.lang3.StringUtils;
 

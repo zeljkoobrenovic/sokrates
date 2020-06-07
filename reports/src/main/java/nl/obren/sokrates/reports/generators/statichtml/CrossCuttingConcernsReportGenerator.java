@@ -228,7 +228,7 @@ public class CrossCuttingConcernsReportGenerator {
     private String getOverviewCodePercentageSvg(double percentage, int numberOfFiles, int linesOfCode, int maxSize, int barHeight, String fileListPath) {
         String filesFragment = numberOfFiles + (numberOfFiles == 1 ? " file " : " files");
         if (StringUtils.isNotBlank(fileListPath)) {
-            filesFragment = "<u><a href='../data/aspect_" + fileListPath + ".txt'>" + filesFragment + "</a></u>";
+            filesFragment = "<u><a href='../data/text/aspect_" + fileListPath + ".txt'>" + filesFragment + "</a></u>";
         }
         String displayText = FormattingUtils.getFormattedCount(linesOfCode) + " LOC ("
                 + FormattingUtils.getFormattedPercentage(percentage) + "%) "

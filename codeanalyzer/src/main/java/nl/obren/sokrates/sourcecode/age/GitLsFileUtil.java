@@ -2,7 +2,7 @@
  * Copyright (c) 2020 Željko Obrenović. All rights reserved.
  */
 
-package nl.obren.sokrates.sourcecode.age.utils;
+package nl.obren.sokrates.sourcecode.age;
 
 import nl.obren.sokrates.sourcecode.age.FileModificationHistory;
 import org.apache.commons.io.FileUtils;
@@ -21,12 +21,6 @@ import java.util.Map;
  */
 public class GitLsFileUtil {
     private final static int DATE_PATH_SEPARATION_POISTION = 26;
-
-    public static void main(String args[]) throws IOException {
-        GitLsFileUtil util = new GitLsFileUtil();
-
-        List<FileModificationHistory> fileInfos = util.importGitLsFilesExport(new File("/Users/zeljkoobrenovic/Documents/workspace/sokrates/changes.txt"));
-    }
 
     public static String printGitLogCommand() {
         return "git ls-files -z | xargs -0 -n1 -I{} -- git log --format=\"%ai {}\" {} > git-history.txt";

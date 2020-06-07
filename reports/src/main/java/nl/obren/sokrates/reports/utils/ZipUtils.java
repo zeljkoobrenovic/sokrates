@@ -11,13 +11,21 @@ import java.util.zip.ZipOutputStream;
 
 public class ZipUtils {
     public static void stringToZipFile(File zipFile, String entryName, String content) {
+        stringToZipFile(zipFile, new String[][]{{entryName, content}});
+    }
+
+    public static void stringToZipFile(File zipFile, String[][] entries) {
         try {
             FileOutputStream fos = new FileOutputStream(zipFile);
             ZipOutputStream zipOut = new ZipOutputStream(fos);
 
-            ZipEntry zipEntry = new ZipEntry(entryName);
-            zipOut.putNextEntry(zipEntry);
-            zipOut.write(content.getBytes());
+            for (String[] entry : entries) {
+                if (entry.length == 2) {
+                    ZipEntry zipEntry = new ZipEntry(entry[0]);
+                    zipOut.putNextEntry(zipEntry);
+                    zipOut.write(entry[1].getBytes());
+                }
+            }
 
             zipOut.close();
             fos.close();

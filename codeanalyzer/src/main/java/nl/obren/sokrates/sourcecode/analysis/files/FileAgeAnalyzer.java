@@ -6,7 +6,6 @@ package nl.obren.sokrates.sourcecode.analysis.files;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.age.FileModificationHistory;
-import nl.obren.sokrates.sourcecode.age.utils.GitLsFileUtil;
 import nl.obren.sokrates.sourcecode.analysis.Analyzer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FileAgeDistributionPerLogicalDecomposition;
@@ -16,10 +15,10 @@ import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution.Types.FIRST_MODIFIED;
 import static nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution.Types.LAST_MODIFIED;
@@ -35,6 +34,10 @@ public class FileAgeAnalyzer extends Analyzer {
         this.codeConfiguration = results.getCodeConfiguration();
         this.metricsList = results.getMetricsList();
         this.sokratesFolder = sokratesFolder;
+    }
+
+    private static String escapeRegex(String text) {
+        return ".*" + Pattern.quote(text);
     }
 
     public void analyze() {

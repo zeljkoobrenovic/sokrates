@@ -19,6 +19,7 @@ public class NamedSourceCodeAspect {
     private String filtering = "";
 
     private List<SourceFileFilter> sourceFileFilters = new ArrayList<>();
+    private List<String> files = new ArrayList<>();
     @JsonIgnore
     private List<SourceFile> sourceFiles = new ArrayList<>();
 
@@ -94,9 +95,16 @@ public class NamedSourceCodeAspect {
         });
     }
 
-
     @JsonIgnore
     public String getFileSystemFriendlyName(String prefix) {
         return SystemUtils.getFileSystemFriendlyName(prefix + name);
+    }
+
+    public List<String> getFiles() {
+        return files;
+    }
+
+    public void setFiles(List<String> files) {
+        this.files = files;
     }
 }

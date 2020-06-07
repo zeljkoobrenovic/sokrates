@@ -91,7 +91,7 @@ public class FileHistoryReportGenerator {
         report.startSection(title, subtitle);
         report.startUnorderedList();
         report.addListItem("There are "
-                + "<a href='../data/mainFilesWithHistory.txt' target='_blank'>"
+                + "<a href='../data/text/mainFilesWithHistory.txt' target='_blank'>"
                 + RichTextRenderingUtils.renderNumberStrong(distribution.getTotalCount())
                 + " files</a> with " + RichTextRenderingUtils.renderNumberStrong(distribution.getTotalValue())
                 + " lines of code" +

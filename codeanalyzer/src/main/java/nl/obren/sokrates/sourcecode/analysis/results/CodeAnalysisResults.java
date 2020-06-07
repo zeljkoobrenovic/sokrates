@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.sourcecode.analysis.results;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 public class CodeAnalysisResults {
+    @JsonIgnore
     private CodeConfiguration codeConfiguration;
     private MetricsList metricsList = new MetricsList();
     private ControlsAnalysisResults controlResults = new ControlsAnalysisResults();
@@ -60,10 +62,12 @@ public class CodeAnalysisResults {
         this.textSummary = textSummary;
     }
 
+    @JsonIgnore
     public CodeConfiguration getCodeConfiguration() {
         return codeConfiguration;
     }
 
+    @JsonIgnore
     public void setCodeConfiguration(CodeConfiguration codeConfiguration) {
         this.codeConfiguration = codeConfiguration;
     }

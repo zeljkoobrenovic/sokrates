@@ -123,7 +123,7 @@ public class DuplicationReportGenerator {
         report.addListItem("<b>" + FormattingUtils.getFormattedCount(duplicationAnalysisResults.getOverallDuplication().getCleanedLinesOfCode()) + "</b> cleaned lines of cleaned code (without empty lines, comments, and frequently duplicated constructs such as imports)");
         report.addListItem("<b>" + FormattingUtils.getFormattedCount(duplicationAnalysisResults.getOverallDuplication().getDuplicatedLinesOfCode()) + "</b> duplicated lines");
         report.endUnorderedList();
-        report.addListItem("<a href='../data/duplicates.txt'><b>" + FormattingUtils.getFormattedCount(duplicationAnalysisResults.getAllDuplicates().size()) + " duplicates</b></a>");
+        report.addListItem("<a href='../data/text/duplicates.txt'><b>" + FormattingUtils.getFormattedCount(duplicationAnalysisResults.getAllDuplicates().size()) + " duplicates</b></a>");
         report.endUnorderedList();
         DuplicationReportUtils.addOverallDuplication(report, duplicationAnalysisResults.getOverallDuplication());
         report.endSection();
@@ -229,7 +229,7 @@ public class DuplicationReportGenerator {
     }
 
     private String saveFilePairs(ComponentDependency componentDependency) {
-        File file = new File(this.report.getReportsFolder(), "data/intercomponent_duplicated_file_pairs_" + filePairsCount++ + ".txt");
+        File file = new File(this.report.getReportsFolder(), "data/text/intercomponent_duplicated_file_pairs_" + filePairsCount++ + ".txt");
 
         try {
             String content = componentDependency.getPathsFrom().stream().collect(Collectors.joining("\n\n"));
@@ -238,11 +238,11 @@ public class DuplicationReportGenerator {
             e.printStackTrace();
         }
 
-        return "../data/" + file.getName();
+        return "../data/text/" + file.getName();
     }
 
     private String saveDuplicates(ComponentDependency componentDependency, String logicalDecompositionName, List<DuplicationInstance> allInstances) {
-        File file = new File(this.report.getReportsFolder(), "data/intercomponent_duplicates_" + componentDuplicatesCount++ + ".txt");
+        File file = new File(this.report.getReportsFolder(), "data/text/intercomponent_duplicates_" + componentDuplicatesCount++ + ".txt");
         List<DuplicationInstance> duplicates = this.codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates();
 
         String from = componentDependency.getFromComponent();
@@ -293,7 +293,7 @@ public class DuplicationReportGenerator {
             e.printStackTrace();
         }
 
-        return "../data/" + file.getName();
+        return "../data/text/" + file.getName();
     }
 
     private void addDownloadLinks(String graphId) {

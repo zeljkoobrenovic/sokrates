@@ -6,11 +6,10 @@ package nl.obren.sokrates.sourcecode;
 
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
-import org.apache.commons.io.FilenameUtils;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
+import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 public class SourceCodeFiles {
@@ -66,6 +65,9 @@ public class SourceCodeFiles {
             }
             boolean included[] = {false};
             boolean excluded[] = {false};
+            if (aspect.getFiles().contains(sourceFile.getRelativePath())) {
+                included[0] = true;
+            }
             aspect.getSourceFileFilters().forEach(filter -> {
                 if (progressFeedback.canceled()) {
                     return;
@@ -133,7 +135,7 @@ public class SourceCodeFiles {
                 IgnoredFilesGroup ignoredFilesGroup = ignoredFilesGroups.get(key);
                 if (ignoredFilesGroup == null) {
                     ignoredFilesGroup = new IgnoredFilesGroup(filter);
-                    ignoredFilesGroups.put(key,ignoredFilesGroup);
+                    ignoredFilesGroups.put(key, ignoredFilesGroup);
                 }
                 ignoredFilesGroup.getSourceFiles().add(sourceFile);
                 break;

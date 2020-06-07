@@ -37,7 +37,9 @@ public class SourceFile {
     private FileModificationHistory fileModificationHistory = null;
     private int unitsCount = 0;
     private int unitsMcCabeIndexSum = 0;
+    @JsonIgnore
     private List<NamedSourceCodeAspect> logicalComponents = new ArrayList<>();
+    @JsonIgnore
     private List<NamedSourceCodeAspect> crossCuttingConcerns = new ArrayList<>();
 
     @JsonIgnore
@@ -119,18 +121,22 @@ public class SourceFile {
         return filteredLogicalComponents;
     }
 
+    @JsonIgnore
     public List<NamedSourceCodeAspect> getLogicalComponents() {
         return logicalComponents;
     }
 
+    @JsonIgnore
     public void setLogicalComponents(List<NamedSourceCodeAspect> logicalComponents) {
         this.logicalComponents = logicalComponents;
     }
 
+    @JsonIgnore
     public List<NamedSourceCodeAspect> getCrossCuttingConcerns() {
         return crossCuttingConcerns;
     }
 
+    @JsonIgnore
     public void setCrossCuttingConcerns(List<NamedSourceCodeAspect> crossCuttingConcerns) {
         this.crossCuttingConcerns = crossCuttingConcerns;
     }

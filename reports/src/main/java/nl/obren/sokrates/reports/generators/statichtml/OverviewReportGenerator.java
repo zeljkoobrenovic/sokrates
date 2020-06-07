@@ -183,8 +183,8 @@ public class OverviewReportGenerator {
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(numberOfExcludedFiles) + " files are excluded from analyses:");
         report.startUnorderedList();
         int filesExcludedByExtensionCount = codeAnalysisResults.getFilesExcludedByExtension().size();
-        report.addListItem("<a href='../data/excluded_files_ignored_extensions.txt'>" + RichTextRenderingUtils.renderNumberStrong(filesExcludedByExtensionCount) + " based on extension</a>.");
-        report.addListItem("<a href='../data/excluded_files_ignored_rules.txt'>" +RichTextRenderingUtils.renderNumberStrong(numberOfExcludedFiles - filesExcludedByExtensionCount) + " based on ignore rules</a>.");
+        report.addListItem("<a href='../data/text/excluded_files_ignored_extensions.txt'>" + RichTextRenderingUtils.renderNumberStrong(filesExcludedByExtensionCount) + " based on extension</a>.");
+        report.addListItem("<a href='../data/text/excluded_files_ignored_rules.txt'>" +RichTextRenderingUtils.renderNumberStrong(numberOfExcludedFiles - filesExcludedByExtensionCount) + " based on ignore rules</a>.");
         report.endUnorderedList();
         report.endUnorderedList();
 

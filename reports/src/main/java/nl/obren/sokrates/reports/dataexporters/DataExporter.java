@@ -5,6 +5,7 @@
 package nl.obren.sokrates.reports.dataexporters;
 
 import nl.obren.sokrates.common.io.JsonGenerator;
+import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.common.utils.SystemUtils;
@@ -22,7 +23,9 @@ import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.reports.utils.ZipUtils;
 import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.SourceFile;
+import nl.obren.sokrates.sourcecode.age.FileHistoryScopingUtils;
 import nl.obren.sokrates.sourcecode.age.FileModificationHistory;
+import nl.obren.sokrates.sourcecode.analysis.files.FileAgeAnalyzer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
@@ -57,12 +60,15 @@ public class DataExporter {
     public static final String SEPARATOR = "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n";
     private static final Log LOG = LogFactory.getLog(DataExporter.class);
     private ProgressFeedback progressFeedback;
+    private File sokratesConfigFile;
     private CodeConfiguration codeConfiguration;
     private File reportsFolder;
     private CodeAnalysisResults analysisResults;
     private File dataFolder;
     private File historyFolder;
     private File codeCacheFolder;
+    private File textDataFolder;
+    private File extraAnalysisDataFolder;
 
     public DataExporter(ProgressFeedback progressFeedback) {
         this.progressFeedback = progressFeedback;
@@ -76,11 +82,14 @@ public class DataExporter {
         return fileNamePrefix;
     }
 
-    public void saveData(CodeConfiguration codeConfiguration, File reportsFolder, CodeAnalysisResults analysisResults) throws IOException {
+    public void saveData(File sokratesConfigFile, CodeConfiguration codeConfiguration, File reportsFolder, CodeAnalysisResults analysisResults) throws IOException {
+        this.sokratesConfigFile = sokratesConfigFile;
         this.codeConfiguration = codeConfiguration;
         this.reportsFolder = reportsFolder;
         this.analysisResults = analysisResults;
         this.dataFolder = getDataFolder();
+        this.textDataFolder = getTextDataFolder();
+        this.extraAnalysisDataFolder = getExtraAnalysisDataFolder();
         this.historyFolder = getDataHistoryFolder();
 
         exportFileLists();
@@ -104,7 +113,7 @@ public class DataExporter {
             content.append("\n");
         });
         try {
-            FileUtils.write(new File(dataFolder, "metrics.txt"), content.toString(), UTF_8);
+            FileUtils.write(new File(textDataFolder, "metrics.txt"), content.toString(), UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -125,7 +134,7 @@ public class DataExporter {
             });
         });
         try {
-            FileUtils.write(new File(dataFolder, "controls.txt"), content.toString(), UTF_8);
+            FileUtils.write(new File(textDataFolder, "controls.txt"), content.toString(), UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -153,7 +162,7 @@ public class DataExporter {
             id[0]++;
         });
         try {
-            FileUtils.write(new File(dataFolder, "duplicates.txt"), content.toString(), UTF_8);
+            FileUtils.write(new File(textDataFolder, "duplicates.txt"), content.toString(), UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -177,7 +186,7 @@ public class DataExporter {
             id[0]++;
         });
         try {
-            FileUtils.write(new File(dataFolder, "units.txt"), content.toString(), UTF_8);
+            FileUtils.write(new File(textDataFolder, "units.txt"), content.toString(), UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -246,7 +255,7 @@ public class DataExporter {
         });
 
         try {
-            FileUtils.write(new File(dataFolder, "excluded_files_ignored_extensions.txt"), content.toString(), UTF_8);
+            FileUtils.write(new File(textDataFolder, "excluded_files_ignored_extensions.txt"), content.toString(), UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -262,7 +271,7 @@ public class DataExporter {
                     content.append(appendDependency(filterFrom, filterTo, logicalDecompositionName, dependency));
                 });
                 try {
-                    FileUtils.write(new File(dataFolder, fileNamePrefix + ".txt"), content.toString(), UTF_8);
+                    FileUtils.write(new File(textDataFolder, fileNamePrefix + ".txt"), content.toString(), UTF_8);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -334,7 +343,7 @@ public class DataExporter {
         });
 
         try {
-            FileUtils.write(new File(dataFolder, "excluded_files_ignored_rules.txt"), content.toString(), UTF_8);
+            FileUtils.write(new File(textDataFolder, "excluded_files_ignored_rules.txt"), content.toString(), UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -355,7 +364,7 @@ public class DataExporter {
         });
 
         try {
-            FileUtils.write(new File(dataFolder, DataExportUtils.getAspectFileListFileName(aspect, prefix)), content.toString(), UTF_8);
+            FileUtils.write(new File(textDataFolder, DataExportUtils.getAspectFileListFileName(aspect, prefix)), content.toString(), UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -402,13 +411,23 @@ public class DataExporter {
         String analysisResultsJson = new JsonGenerator().generate(analysisResults);
         FileUtils.write(new File(dataFolder, "analysisResults.json"), analysisResultsJson, UTF_8);
 
+        String configJson = FileUtils.readFileToString(sokratesConfigFile, UTF_8);
+        FileUtils.write(new File(dataFolder, "config.json"), analysisResultsJson, UTF_8);
+
         if (codeConfiguration.getAnalysis().isSaveDailyHistory()) {
-            ZipUtils.stringToZipFile(new File(getTodayHistoryFolder(), "analysisResults.zip"), "analysisResults.json", analysisResultsJson);
+            ZipUtils.stringToZipFile(new File(getTodayHistoryFolder(), "analysisResults.zip"),
+                    new String[][]{{"config.json", configJson},
+                            {"analysisResults.json", analysisResultsJson}});
         }
 
         FileUtils.write(new File(dataFolder, "mainFiles.json"), new JsonGenerator().generate(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
-        FileUtils.write(new File(dataFolder, "mainFiles.txt"), getFilesAsTxt(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
-        FileUtils.write(new File(dataFolder, "mainFilesWithHistory.txt"), getFilesWithHistoryAsTxt(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
+
+        if (codeConfiguration.getAnalysis().filesHistoryImportPathExists(sokratesConfigFile.getParentFile())) {
+            saveExtraAnalysesConfig();
+        }
+
+        FileUtils.write(new File(textDataFolder, "mainFiles.txt"), getFilesAsTxt(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
+        FileUtils.write(new File(textDataFolder, "mainFilesWithHistory.txt"), getFilesWithHistoryAsTxt(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
         FileUtils.write(new File(dataFolder, "testFiles.json"), new JsonGenerator().generate(analysisResults.getTestAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
         FileUtils.write(new File(dataFolder, "units.json"), new JsonGenerator().generate(new UnitListExporter(analysisResults.getUnitsAnalysisResults().getAllUnits()).getAllUnitsData()), UTF_8);
         FileUtils.write(new File(dataFolder, "files.json"), new FileListExporter(analysisResults.getFilesAnalysisResults().getAllFiles()).getJson(), UTF_8);
@@ -418,6 +437,59 @@ public class DataExporter {
                 analysisResults.getLogicalDecompositionsAnalysisResults()), UTF_8);
         FileUtils.write(new File(dataFolder, "dependencies.json"), new JsonGenerator().generate(
                 new DependenciesExporter(analysisResults.getAllDependencies()).getDependenciesExportInfo()), UTF_8);
+    }
+
+    public File getTextDataFolder() {
+        File textDataFolder = new File(dataFolder, "text");
+        textDataFolder.mkdirs();
+        return textDataFolder;
+    }
+
+    public File getExtraAnalysisDataFolder() {
+        File extraAnalysisDataFolder = new File(dataFolder, "extra_analysis");
+        extraAnalysisDataFolder.mkdirs();
+        return extraAnalysisDataFolder;
+    }
+
+    private void saveExtraAnalysesConfig() {
+        try {
+            String jsonContent = FileUtils.readFileToString(sokratesConfigFile, UTF_8);
+
+            FileUtils.write(new File(extraAnalysisDataFolder, "config_original.json"), new JsonGenerator().generate(codeConfiguration), UTF_8);
+
+            saveConfigByFileChangeFrequency(jsonContent);
+            saveConfigByFileAge(jsonContent);
+            saveConfigByFileFreshness(jsonContent);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void saveConfigByFileChangeFrequency(String jsonContent) throws IOException {
+        CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
+        codeConfiguration.setLogicalDecompositions(FileHistoryScopingUtils.getLogicalDecompositionsFileUpdateFrequency(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()));
+
+        codeConfiguration.getAnalysis().setFilesHistoryImportPath("");
+
+        FileUtils.write(new File(extraAnalysisDataFolder, "config_by_file_change_frequency.json"), new JsonGenerator().generate(codeConfiguration), UTF_8);
+    }
+
+    private void saveConfigByFileAge(String jsonContent) throws IOException {
+        CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
+        codeConfiguration.setLogicalDecompositions(FileHistoryScopingUtils.getLogicalDecompositionsByAge(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()));
+
+        codeConfiguration.getAnalysis().setFilesHistoryImportPath("");
+
+        FileUtils.write(new File(extraAnalysisDataFolder, "config_by_file_age.json"), new JsonGenerator().generate(codeConfiguration), UTF_8);
+    }
+
+    private void saveConfigByFileFreshness(String jsonContent) throws IOException {
+        CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
+        codeConfiguration.setLogicalDecompositions(FileHistoryScopingUtils.getLogicalDecompositionsByFreshness(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()));
+
+        codeConfiguration.getAnalysis().setFilesHistoryImportPath("");
+
+        FileUtils.write(new File(extraAnalysisDataFolder, "config_by_file_freshness.json"), new JsonGenerator().generate(codeConfiguration), UTF_8);
     }
 
     private String getFilesAsTxt(List<SourceFile> sourceFiles) {

@@ -8,4 +8,5 @@
 .sokrater/reports/src
 .settings/
 target/
-_sokrates
+_sokrates/reports
+*.txt

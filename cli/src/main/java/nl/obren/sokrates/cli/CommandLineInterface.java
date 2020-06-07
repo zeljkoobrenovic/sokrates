@@ -282,14 +282,13 @@ public class CommandLineInterface {
         }
 
         try {
-
             CodeAnalyzer codeAnalyzer = new CodeAnalyzer(getCodeAnalyzerSettings(cmd), codeConfiguration, sokratesConfigFile);
             CodeAnalysisResults analysisResults = codeAnalyzer.analyze(progressFeedback);
 
             boolean useDefault = noReportingOptions(cmd);
 
             if (useDefault || cmd.hasOption(all.getOpt()) || cmd.hasOption(data.getOpt())) {
-                dataExporter.saveData(codeConfiguration, reportsFolder, analysisResults);
+                dataExporter.saveData(sokratesConfigFile, codeConfiguration, reportsFolder, analysisResults);
                 saveTextualSummary(reportsFolder, analysisResults);
             }
 
@@ -445,7 +444,7 @@ public class CommandLineInterface {
     }
 
     private void saveTextualSummary(File reportsFolder, CodeAnalysisResults analysisResults) throws IOException {
-        File jsonFile = new File(dataExporter.getDataFolder(), "textualSummary.txt");
+        File jsonFile = new File(dataExporter.getTextDataFolder(), "textualSummary.txt");
         FileUtils.write(jsonFile, analysisResults.getTextSummary().toString(), UTF_8);
     }
 

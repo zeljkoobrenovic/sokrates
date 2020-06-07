@@ -58,7 +58,7 @@ public class ConditionalComplexityReportGenerator {
         report.startSection("Conditional Complexity Overall", "");
         report.startUnorderedList();
         int linesOfCodeInUnits = unitsAnalysisResults.getLinesOfCodeInUnits();
-        report.addListItem("There are <a href='../data/units.txt'>" + RichTextRenderingUtils.renderNumberStrong(unitsAnalysisResults.getTotalNumberOfUnits())
+        report.addListItem("There are <a href='../data/text/units.txt'>" + RichTextRenderingUtils.renderNumberStrong(unitsAnalysisResults.getTotalNumberOfUnits())
                 + " units</a> with " + RichTextRenderingUtils.renderNumberStrong(linesOfCodeInUnits)
                 + " lines of code in units (" + (RichTextRenderingUtils.renderNumber(100.0 * linesOfCodeInUnits / codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode())) + "% of code)" +
                 ".");

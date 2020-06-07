@@ -48,20 +48,6 @@ public class LogicalComponentsReportGenerator {
         addFooter();
     }
 
-    private void addErrors() {
-        codeAnalysisResults.getLogicalDecompositionsAnalysisResults().forEach(result -> {
-            if (result.getComponentDependenciesErrors().size() > 0) {
-                report.startSection("WARNINGS (" + result.getComponentDependenciesErrors().size() + ")", "Places where dependencies cannot be resolved uniquely");
-                report.startUnorderedList();
-                result.getComponentDependenciesErrors().forEach(error ->
-                        report.addListItem(result.getKey() + ": " + error.getMessage() + " " + error.getFiltering())
-                );
-                report.endUnorderedList();
-                report.endSection();
-            }
-        });
-    }
-
     private void addFooter() {
         report.addLineBreak();
         report.addHorizontalLine();
@@ -145,7 +131,7 @@ public class LogicalComponentsReportGenerator {
         report.startUnorderedList();
         report.addListItem("Analyzed system has <b>" + componentDependencies.size() + "</b> links (arrows) between components.");
         report.addListItem("The number on the arrow represents the number of files from referring component that depend on files in referred component.");
-        report.addListItem("These " + componentDependencies.size() + " links contain <a href='../data/" + DataExporter.dependenciesFileNamePrefix("", "", logicalDecomposition.getKey()) + ".txt'><b>" + DependencyUtils.getDependenciesCount(componentDependencies) + "</b> dependencies</a>.");
+        report.addListItem("These " + componentDependencies.size() + " links contain <a href='../data/text/" + DataExporter.dependenciesFileNamePrefix("", "", logicalDecomposition.getKey()) + ".txt'><b>" + DependencyUtils.getDependenciesCount(componentDependencies) + "</b> dependencies</a>.");
         int cyclicDependencyPlacesCount = DependencyUtils.getCyclicDependencyPlacesCount(componentDependencies);
         int cyclicDependencyCount = DependencyUtils.getCyclicDependencyCount(componentDependencies);
         if (cyclicDependencyPlacesCount > 0) {
@@ -265,7 +251,7 @@ public class LogicalComponentsReportGenerator {
                 (percentageHtmlFragment != null ? "" + percentageHtmlFragment : dependencyCount + " files (" + locFromDuplications + " LOC)<br/>")
         );
         report.addHtmlContent("</td>");
-        report.addTableCell("<a href='../data/" + DataExporter.dependenciesFileNamePrefix(componentDependency.getFromComponent(), componentDependency.getToComponent(), logicalDecomposition.getKey()) + ".txt'><b>" + dependencyCount + "</b> source " + (dependencyCount == 1 ? "file" : "files") + "</a>");
+        report.addTableCell("<a href='../data/text/" + DataExporter.dependenciesFileNamePrefix(componentDependency.getFromComponent(), componentDependency.getToComponent(), logicalDecomposition.getKey()) + ".txt'><b>" + dependencyCount + "</b> source " + (dependencyCount == 1 ? "file" : "files") + "</a>");
         report.endTableRow();
     }
 
