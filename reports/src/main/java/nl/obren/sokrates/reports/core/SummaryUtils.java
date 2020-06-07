@@ -366,7 +366,7 @@ public class SummaryUtils {
         chart.setBarStartXOffset(0);
 
         List<Integer> values = Arrays.asList(distributionStats.getVeryHighRiskValue(),
-                distributionStats.getHighRiskValue(), distributionStats.getMediumRiskValue(), distributionStats.getLowRiskValue());
+                distributionStats.getHighRiskValue(), distributionStats.getMediumRiskValue(), distributionStats.getLowRiskValue(), distributionStats.getNegligibleRiskValue());
 
         return chart.getStackedBarSvg(values, Palette.getRiskPalette(), "", "");
     }
