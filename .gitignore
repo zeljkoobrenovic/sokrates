@@ -12,4 +12,4 @@ bin
 app/src/main/resources/public/components/
 bin/
 *.iml
-_sokrates
+_sokrates/reports
