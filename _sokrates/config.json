@@ -135,6 +135,6 @@
     "cacheSourceFiles" : true,
     "saveDailyHistory" : false,
     "analyzerOverrides" : [ ],
-    "filesHistoryImportPath" : ""
+    "filesHistoryImportPath" : "../git-history.txt"
   }
 }

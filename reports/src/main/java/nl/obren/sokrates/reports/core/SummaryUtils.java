@@ -294,7 +294,7 @@ public class SummaryUtils {
         int linesOfCodeInUnits = analysisResults.getUnitsAnalysisResults().getLinesOfCodeInUnits();
         RiskDistributionStats distribution = analysisResults.getUnitsAnalysisResults().getConditionalComplexityRiskDistribution();
         int veryComplexUnitsLOC = distribution.getHighRiskValue() + distribution.getVeryHighRiskValue();
-        int lowComplexUnitsLOC = distribution.getLowRiskValue();
+        int lowComplexUnitsLOC = distribution.getNegligibleRiskValue();
 
         report.startTableRow();
         report.addTableCell(getIconSvg("conditional"), "border: none");
@@ -365,8 +365,12 @@ public class SummaryUtils {
         chart.setMaxBarWidth(BAR_WIDTH);
         chart.setBarStartXOffset(0);
 
-        List<Integer> values = Arrays.asList(distributionStats.getVeryHighRiskValue(),
-                distributionStats.getHighRiskValue(), distributionStats.getMediumRiskValue(), distributionStats.getLowRiskValue(), distributionStats.getNegligibleRiskValue());
+        List<Integer> values = Arrays.asList(
+                distributionStats.getVeryHighRiskValue(),
+                distributionStats.getHighRiskValue(),
+                distributionStats.getMediumRiskValue(),
+                distributionStats.getLowRiskValue(),
+                distributionStats.getNegligibleRiskValue());
 
         return chart.getStackedBarSvg(values, Palette.getRiskPalette(), "", "");
     }
