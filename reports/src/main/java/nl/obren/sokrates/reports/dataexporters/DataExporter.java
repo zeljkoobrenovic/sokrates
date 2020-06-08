@@ -285,26 +285,26 @@ public class DataExporter {
             List<NamedSourceCodeAspect> fromComponents = dependency.getFromComponents(logicalDecompositionName);
             List<NamedSourceCodeAspect> toComponents = dependency.getToComponents(logicalDecompositionName);
 
-            String fromComponent = dependency.getFromComponentName() != null
-                    ? dependency.getFromComponentName()
-                    : fromComponents.size() > 0 ? fromComponents.get(0).getName() : "UNKNOWN";
-
-            String toComponent = dependency.getToComponentName() != null
-                    ? dependency.getToComponentName()
-                    : toComponents.size() > 0 ? toComponents.get(0).getName() : "UNKNOWN";
-
-            if (shouldAppendDependency(filterFrom, filterTo, fromComponent, toComponent)) {
-                content.append("from: " + fromComponent);
-                content.append("\n");
-                content.append("to: " + toComponent);
-                content.append("\nevidence:\n");
-                content.append(" - file: \"");
-                content.append(sourceFileDependency.getSourceFile().getRelativePath());
-                content.append("\"\n");
-                content.append("   contains \"");
-                content.append(sourceFileDependency.getCodeFragment());
-                content.append("\"\n\n");
-            }
+            fromComponents.forEach(fromComponent -> {
+                toComponents.forEach(toComponent -> {
+                    String from = fromComponent.getName();
+                    String to = toComponent.getName();
+                    if (!from.equalsIgnoreCase(to)) {
+                        if (shouldAppendDependency(filterFrom, filterTo, from, to)) {
+                            content.append("from: " + from);
+                            content.append("\n");
+                            content.append("to: " + to);
+                            content.append("\nevidence:\n");
+                            content.append(" - file: \"");
+                            content.append(sourceFileDependency.getSourceFile().getRelativePath());
+                            content.append("\"\n");
+                            content.append("   contains \"");
+                            content.append(sourceFileDependency.getCodeFragment());
+                            content.append("\"\n\n");
+                        }
+                    }
+                });
+            });
         });
 
         return content.toString();
