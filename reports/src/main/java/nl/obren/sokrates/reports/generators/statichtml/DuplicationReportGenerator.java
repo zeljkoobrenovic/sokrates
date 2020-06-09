@@ -14,6 +14,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
+import nl.obren.sokrates.sourcecode.dependencies.DependencyEvidence;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationDependenciesHelper;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
 import nl.obren.sokrates.sourcecode.metrics.DuplicationMetric;
@@ -210,7 +211,7 @@ public class DuplicationReportGenerator {
 
             report.addTableCell(componentDependency.getCount() + "", "text-align: center");
 
-            int pairsCount = componentDependency.getPathsFrom().size();
+            int pairsCount = componentDependency.getEvidence().size();
             String filePairsText = pairsCount + (pairsCount == 1 ? " file pair" : " file pairs");
 
             report.startTableCell("text-align: center");
@@ -232,7 +233,7 @@ public class DuplicationReportGenerator {
         File file = new File(this.report.getReportsFolder(), "data/text/intercomponent_duplicated_file_pairs_" + filePairsCount++ + ".txt");
 
         try {
-            String content = componentDependency.getPathsFrom().stream().collect(Collectors.joining("\n\n"));
+            String content = componentDependency.getEvidence().stream().map(DependencyEvidence::getPathFrom).collect(Collectors.joining("\n\n"));
             FileUtils.write(file, content, StandardCharsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();

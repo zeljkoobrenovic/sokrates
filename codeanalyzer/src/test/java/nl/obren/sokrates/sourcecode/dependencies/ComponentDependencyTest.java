@@ -6,8 +6,7 @@ package nl.obren.sokrates.sourcecode.dependencies;
 
 import org.junit.Test;
 
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertNotSame;
+import static junit.framework.TestCase.*;
 
 public class ComponentDependencyTest {
     @Test
@@ -25,6 +24,18 @@ public class ComponentDependencyTest {
     @Test
     public void getDependencyString() throws Exception {
         assertEquals(new ComponentDependency("a", "b").getDependencyString(), "a -> b");
+    }
+
+    @Test
+    public void hasPathFrom() throws Exception {
+        ComponentDependency componentDependency = new ComponentDependency("a", "b");
+
+        componentDependency.getEvidence().add(new DependencyEvidence("path1/a", "evidence 1"));
+        componentDependency.getEvidence().add(new DependencyEvidence("path2/b", "evidence 2"));
+
+        assertTrue(componentDependency.hasPathFrom("path1/a"));
+        assertTrue(componentDependency.hasPathFrom("path2/b"));
+        assertFalse(componentDependency.hasPathFrom("path3/c"));
     }
 
 }

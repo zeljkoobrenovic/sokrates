@@ -25,13 +25,12 @@ import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.age.FileHistoryScopingUtils;
 import nl.obren.sokrates.sourcecode.age.FileModificationHistory;
-import nl.obren.sokrates.sourcecode.analysis.files.FileAgeAnalyzer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
-import nl.obren.sokrates.sourcecode.dependencies.Dependency;
+import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.duplication.DuplicatedFileBlock;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
 import nl.obren.sokrates.sourcecode.lang.DefaultLanguageAnalyzer;
@@ -267,8 +266,8 @@ public class DataExporter {
             if (shouldProcessLogicalDecomposition(filterLogicalDecomposition, logicalDecompositionName)) {
                 StringBuilder content = new StringBuilder();
                 String fileNamePrefix = dependenciesFileNamePrefix(filterFrom, filterTo, logicalDecompositionName);
-                logicalDecomposition.getAllDependencies().forEach(dependency -> {
-                    content.append(appendDependency(filterFrom, filterTo, logicalDecompositionName, dependency));
+                logicalDecomposition.getComponentDependencies().forEach(dependency -> {
+                    content.append(appendDependency(filterFrom, filterTo, dependency));
                 });
                 try {
                     FileUtils.write(new File(textDataFolder, fileNamePrefix + ".txt"), content.toString(), UTF_8);
@@ -279,33 +278,25 @@ public class DataExporter {
         });
     }
 
-    private String appendDependency(String filterFrom, String filterTo, String logicalDecompositionName, Dependency dependency) {
+    private String appendDependency(String filterFrom, String filterTo, ComponentDependency dependency) {
         StringBuilder content = new StringBuilder();
-        dependency.getFromFiles().forEach(sourceFileDependency -> {
-            List<NamedSourceCodeAspect> fromComponents = dependency.getFromComponents(logicalDecompositionName);
-            List<NamedSourceCodeAspect> toComponents = dependency.getToComponents(logicalDecompositionName);
 
-            fromComponents.forEach(fromComponent -> {
-                toComponents.forEach(toComponent -> {
-                    String from = fromComponent.getName();
-                    String to = toComponent.getName();
-                    if (!from.equalsIgnoreCase(to)) {
-                        if (shouldAppendDependency(filterFrom, filterTo, from, to)) {
-                            content.append("from: " + from);
-                            content.append("\n");
-                            content.append("to: " + to);
-                            content.append("\nevidence:\n");
-                            content.append(" - file: \"");
-                            content.append(sourceFileDependency.getSourceFile().getRelativePath());
-                            content.append("\"\n");
-                            content.append("   contains \"");
-                            content.append(sourceFileDependency.getCodeFragment());
-                            content.append("\"\n\n");
-                        }
-                    }
-                });
+        String from = dependency.getFromComponent();
+        String to = dependency.getToComponent();
+        if (shouldAppendDependency(filterFrom, filterTo, from, to)) {
+            dependency.getEvidence().forEach(evidence -> {
+                content.append("from: " + from);
+                content.append("\n");
+                content.append("to: " + to);
+                content.append("\nevidence:\n");
+                content.append(" - file: \"");
+                content.append(evidence.getPathFrom());
+                content.append("\"\n");
+                content.append("   contains \"");
+                content.append(evidence.getEvidence());
+                content.append("\"\n\n");
             });
-        });
+        }
 
         return content.toString();
     }

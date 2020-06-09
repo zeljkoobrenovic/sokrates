@@ -6,6 +6,7 @@ package nl.obren.sokrates.sourcecode.duplication;
 
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
+import nl.obren.sokrates.sourcecode.dependencies.DependencyEvidence;
 
 import java.util.*;
 
@@ -57,8 +58,8 @@ public class DuplicationDependenciesHelper {
         String key = file1.getSourceFile().getRelativePath() + "\n" + file2.getSourceFile().getRelativePath();
         String alternativeKey = file2.getSourceFile().getRelativePath() + "\n" + file1.getSourceFile().getRelativePath();
 
-        if (!dependency.getPathsFrom().contains(key) && !dependency.getPathsFrom().contains(alternativeKey)) {
-            dependency.getPathsFrom().add(key);
+        if (!dependency.hasPathFrom(key) && !dependency.hasPathFrom(alternativeKey)) {
+            dependency.getEvidence().add(new DependencyEvidence(key, ""));
         }
     }
 

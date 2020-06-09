@@ -95,7 +95,7 @@ public class DependencyUtils {
 
             SourceFile sourceFile = sourceFileDependency.getSourceFile();
             componentDependency.setLocFrom(componentDependency.getLocFrom() + sourceFile.getLinesOfCode());
-            componentDependency.getPathsFrom().add(sourceFile.getRelativePath());
+            componentDependency.getEvidence().add(new DependencyEvidence(sourceFile.getRelativePath(), sourceFileDependency.getCodeFragment()));
         }
     }
 

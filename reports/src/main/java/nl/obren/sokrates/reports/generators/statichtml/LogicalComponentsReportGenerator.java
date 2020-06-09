@@ -21,6 +21,7 @@ import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.aspects.MetaRule;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
+import nl.obren.sokrates.sourcecode.dependencies.DependencyEvidence;
 import nl.obren.sokrates.sourcecode.dependencies.DependencyUtils;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 
@@ -246,7 +247,7 @@ public class LogicalComponentsReportGenerator {
 
         report.addShowMoreBlock("",
                 "<textarea style='width:90%; height: 20em;'>"
-                        + componentDependency.getPathsFrom().stream().collect(Collectors.joining("\n")) +
+                        + componentDependency.getEvidence().stream().map(DependencyEvidence::getPathFrom).collect(Collectors.joining("\n")) +
                         "</textarea>",
                 (percentageHtmlFragment != null ? "" + percentageHtmlFragment : dependencyCount + " files (" + locFromDuplications + " LOC)<br/>")
         );

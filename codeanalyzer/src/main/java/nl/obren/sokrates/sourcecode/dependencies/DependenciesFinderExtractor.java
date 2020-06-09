@@ -9,7 +9,6 @@ import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.aspects.MetaRule;
-import nl.obren.sokrates.sourcecode.aspects.MetaRulesProcessor;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import org.apache.commons.lang3.StringUtils;
@@ -131,7 +130,7 @@ public class DependenciesFinderExtractor {
             }
 
             componentDependency.setLocFrom(componentDependency.getLocFrom() + sourceFile.getLinesOfCode());
-            componentDependency.getPathsFrom().add(sourceFile.getRelativePath());
+            componentDependency.getEvidence().add(new DependencyEvidence(sourceFile.getRelativePath(), line));
         }
     }
 
