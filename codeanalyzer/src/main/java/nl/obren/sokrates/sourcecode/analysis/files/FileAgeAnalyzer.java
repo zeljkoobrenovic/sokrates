@@ -6,6 +6,7 @@ package nl.obren.sokrates.sourcecode.analysis.files;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.age.FileModificationHistory;
+import nl.obren.sokrates.sourcecode.age.FilePairsChangedTogether;
 import nl.obren.sokrates.sourcecode.analysis.Analyzer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FileAgeDistributionPerLogicalDecomposition;
@@ -42,13 +43,21 @@ public class FileAgeAnalyzer extends Analyzer {
 
     public void analyze() {
         if (codeConfiguration.getAnalysis().filesHistoryImportPathExists(sokratesFolder)) {
-            File historyFile = codeConfiguration.getAnalysis().getFilesHistoryFile(sokratesFolder);
             List<FileModificationHistory> history = codeConfiguration.getAnalysis().getHistory(sokratesFolder);
             if (history.size() > 0) {
                 enrichFilesWithAge(history);
                 analyzeFilesAge();
+                analyzeFilesChangedTogether(history);
             }
         }
+    }
+
+    private void analyzeFilesChangedTogether(List<FileModificationHistory> history) {
+        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether();
+
+        filePairsChangedTogether.populate(codeConfiguration.getMain(), history);
+
+        analysisResults.setFilePairsChangedTogether(filePairsChangedTogether.getFilePairs());
     }
 
     private void analyzeFilesAge() {

@@ -343,7 +343,7 @@ public class SummaryUtils {
 
     private String getVolumeVisual(List<NumericMetric> linesOfCodePerExtension, int totalLoc, int mainLoc, String text) {
 
-        int barWidth = (int) ((double) BAR_WIDTH * totalLoc / mainLoc);
+        int barWidth = Math.min(BAR_WIDTH, (int) ((double) BAR_WIDTH * totalLoc / mainLoc));
         SimpleOneBarChart chart = new SimpleOneBarChart();
         chart.setWidth(barWidth);
         chart.setBarHeight(BAR_HEIGHT);

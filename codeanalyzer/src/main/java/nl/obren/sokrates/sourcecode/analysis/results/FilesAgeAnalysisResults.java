@@ -6,6 +6,7 @@ package nl.obren.sokrates.sourcecode.analysis.results;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.SourceFile;
+import nl.obren.sokrates.sourcecode.age.FilePairChangedTogether;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
@@ -21,6 +22,8 @@ public class FilesAgeAnalysisResults {
     private List<RiskDistributionStats> changeDistributionPerExtension = new ArrayList<>();
     private List<RiskDistributionStats> lastModifiedDistributionPerExtension = new ArrayList<>();
     private List<RiskDistributionStats> firstModifiedDistributionPerExtension = new ArrayList<>();
+
+    private List<FilePairChangedTogether> filePairsChangedTogether = new ArrayList<>();
 
     private List<FileAgeDistributionPerLogicalDecomposition> changeDistributionPerLogicalDecomposition = new ArrayList<>();
     private List<FileAgeDistributionPerLogicalDecomposition> firstModifiedDistributionPerLogicalDecomposition = new ArrayList<>();
@@ -157,5 +160,13 @@ public class FilesAgeAnalysisResults {
 
     public void setChangeDistributionPerLogicalDecomposition(List<FileAgeDistributionPerLogicalDecomposition> changeDistributionPerLogicalDecomposition) {
         this.changeDistributionPerLogicalDecomposition = changeDistributionPerLogicalDecomposition;
+    }
+
+    public List<FilePairChangedTogether> getFilePairsChangedTogether() {
+        return filePairsChangedTogether;
+    }
+
+    public void setFilePairsChangedTogether(List<FilePairChangedTogether> filePairsChangedTogether) {
+        this.filePairsChangedTogether = filePairsChangedTogether;
     }
 }

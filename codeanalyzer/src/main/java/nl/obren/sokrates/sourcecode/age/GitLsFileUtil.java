@@ -4,7 +4,6 @@
 
 package nl.obren.sokrates.sourcecode.age;
 
-import nl.obren.sokrates.sourcecode.age.FileModificationHistory;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -20,7 +19,8 @@ import java.util.Map;
  * git ls-files -z | xargs -0 -n1 -I{} -- git log --format="%ai {}" {} > git-history.txt
  */
 public class GitLsFileUtil {
-    private final static int DATE_PATH_SEPARATION_POISTION = 26;
+    private final static int DATE_AND_TIME_PATH_SEPARATION_POISTION = 26;
+    private final static int DATE_SEPARATION_POSITION = 10;
 
     public static String printGitLogCommand() {
         return "git ls-files -z | xargs -0 -n1 -I{} -- git log --format=\"%ai {}\" {} > git-history.txt";
@@ -39,8 +39,8 @@ public class GitLsFileUtil {
 
         Map<String, FileModificationHistory> map = new HashMap<>();
 
-        lines.stream().filter(line -> line.length() > DATE_PATH_SEPARATION_POISTION).forEach(line -> {
-            String path = line.substring(DATE_PATH_SEPARATION_POISTION).trim();
+        lines.stream().filter(line -> line.length() > DATE_AND_TIME_PATH_SEPARATION_POISTION).forEach(line -> {
+            String path = line.substring(DATE_AND_TIME_PATH_SEPARATION_POISTION).trim();
             FileModificationHistory fileInfo = map.get(path);
             if (fileInfo == null) {
                 fileInfo = new FileModificationHistory(path);
@@ -48,8 +48,10 @@ public class GitLsFileUtil {
                 map.put(path, fileInfo);
             }
 
-            String lastModifiedDate = line.substring(0, DATE_PATH_SEPARATION_POISTION).trim();
-            fileInfo.getDates().add(lastModifiedDate);
+            String lastModifiedDate = line.substring(0, DATE_SEPARATION_POSITION).trim();
+            if (!fileInfo.getDates().contains(lastModifiedDate)) {
+                fileInfo.getDates().add(lastModifiedDate);
+            }
         });
 
         return files;

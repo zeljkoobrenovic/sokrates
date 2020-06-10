@@ -8,17 +8,26 @@ import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.FilesReportUtils;
+import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.reports.utils.PieChartUtils;
 import nl.obren.sokrates.reports.utils.RiskDistributionStatsReportUtils;
 import nl.obren.sokrates.sourcecode.SourceFile;
+import nl.obren.sokrates.sourcecode.age.FilePairChangedTogether;
+import nl.obren.sokrates.sourcecode.age.TemporalDependenciesHelper;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesAgeAnalysisResults;
+import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
+import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
+import nl.obren.sokrates.sourcecode.duplication.DuplicationDependenciesHelper;
+import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class FileHistoryReportGenerator {
     public static final String LATEST_CHANGE_DISTRIBUTION = "Latest Change Distribution";
@@ -30,6 +39,7 @@ public class FileHistoryReportGenerator {
     private CodeAnalysisResults codeAnalysisResults;
     private List<String> labels = Arrays.asList("> 1y", "6-12m", "91-180d", "31-90d", "1-30d");
     private List<String> labelsChange = Arrays.asList("101+", "51-100", "21-50", "6-20", "1-5 updates");
+    private int graphCounter = 1;
 
     public FileHistoryReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
@@ -49,6 +59,28 @@ public class FileHistoryReportGenerator {
         addMostPreviouslyChangedFilesList(report);
         addYoungestFilesList(report);
         addMostRecentlyChangedFilesList(report);
+        addFileChangedTogetherList(report);
+    }
+
+    private void addFileChangedTogetherList(RichTextReport report) {
+        List<FilePairChangedTogether> filePairs = codeAnalysisResults.getFilesAgeAnalysisResults().getFilePairsChangedTogether();
+        if (filePairs.size() > 50) {
+            filePairs = filePairs.subList(0, 50);
+        }
+        report.startSection("Files Most Frequently Changed Together (Top " + filePairs.size() + ")", "");
+        report.startTable();
+        report.addTableHeader("Pairs", "# same days");
+        filePairs.forEach(filePair -> {
+            report.startTableRow();
+
+            report.addTableCell(filePair.getSourceFile1().getRelativePath() + "<br/>" + filePair.getSourceFile2().getRelativePath());
+
+            report.addTableCell("" + filePair.getDates().size());
+
+            report.endTableRow();
+        });
+        report.endTable();
+        report.endSection();
     }
 
     private void addGraphsPerExtension(RichTextReport report) {
@@ -130,16 +162,16 @@ public class FileHistoryReportGenerator {
                 + " files older than 1 year (" + RichTextRenderingUtils.renderNumberStrong(distribution.getVeryHighRiskValue())
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getHighRiskCount())
-                + " 180 days to 1 year old files (" + RichTextRenderingUtils.renderNumberStrong(distribution.getHighRiskValue())
+                + " files are 180 days to 1 year old (" + RichTextRenderingUtils.renderNumberStrong(distribution.getHighRiskValue())
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getMediumRiskCount())
-                + " 90 to 180 days old files (" + RichTextRenderingUtils.renderNumberStrong(distribution.getMediumRiskValue())
+                + " files are 90 to 180 days old (" + RichTextRenderingUtils.renderNumberStrong(distribution.getMediumRiskValue())
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskCount())
-                + " 30 to 90 days old files (" + RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskValue())
+                + " files are 30 to 90 days old (" + RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskValue())
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskCount())
-                + " less than 30 days old files (" + RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskValue())
+                + " files are less than 30 days old (" + RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskValue())
                 + " lines of code)");
         report.endUnorderedList();
         report.endUnorderedList();
@@ -196,6 +228,8 @@ public class FileHistoryReportGenerator {
                     + " (" + THE_NUMBER_OF_FILE_CHANGES.toLowerCase() + ")", THE_NUMBER_OF_FILE_CHANGES_DESCRIPTION);
             report.addHtmlContent(RiskDistributionStatsReportUtils.getRiskDistributionPerKeySvgBarChart(logicalDecomposition.getDistributionPerComponent(), labelsChange, Palette.getHeatPalette()));
             report.endSection();
+
+            renderDependenciesViaDuplication(report, logicalDecomposition.getName());
         });
 
         codeAnalysisResults.getFilesAgeAnalysisResults().getFirstModifiedDistributionPerLogicalDecomposition().forEach(logicalDecomposition -> {
@@ -211,7 +245,30 @@ public class FileHistoryReportGenerator {
             report.addHtmlContent(RiskDistributionStatsReportUtils.getRiskDistributionPerKeySvgBarChart(logicalDecomposition.getDistributionPerComponent(), labels, Palette.getFreshnessPalette()));
             report.endSection();
         });
+
         report.endSection();
+    }
+
+    private void renderDependenciesViaDuplication(RichTextReport report, String logicalDecompositionName) {
+        TemporalDependenciesHelper dependenciesHelper = new TemporalDependenciesHelper(logicalDecompositionName);
+        List<ComponentDependency> dependencies = dependenciesHelper.extractDependencies(codeAnalysisResults.getFilesAgeAnalysisResults().getFilePairsChangedTogether());
+        int threshold = 20;
+        List<ComponentDependency> componentDependencies = dependencies.stream().filter(d -> d.getCount() >= threshold).collect(Collectors.toList());
+
+        if (componentDependencies.size() > 0) {
+            GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
+            graphvizDependencyRenderer.setDefaultNodeFillColor("deepskyblue2");
+            graphvizDependencyRenderer.setType("graph");
+            graphvizDependencyRenderer.setArrow("--");
+            graphvizDependencyRenderer.setArrowColor("crimson");
+            String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), componentDependencies);
+            report.addLevel3Header("File changed together in different components (" + threshold + "+ days)", "margin-top: 30px");
+
+            String graphId = "file_changed_together_dependencies_" + graphCounter++;
+            report.addGraphvizFigure(graphId, "File changed together in different components", graphvizContent);
+
+            report.addLineBreak();
+        }
     }
 
     private void addOldestFilesList(RichTextReport report) {

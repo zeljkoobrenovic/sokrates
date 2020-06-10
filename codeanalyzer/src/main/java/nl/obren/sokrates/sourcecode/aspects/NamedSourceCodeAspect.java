@@ -100,6 +100,16 @@ public class NamedSourceCodeAspect {
         return SystemUtils.getFileSystemFriendlyName(prefix + name);
     }
 
+    @JsonIgnore
+    public SourceFile getSourceFileByPath(String path) {
+        for (SourceFile sourceFile : sourceFiles) {
+            if (sourceFile.getRelativePath().equalsIgnoreCase(path)) {
+                return sourceFile;
+            }
+        }
+        return null;
+    }
+
     public List<String> getFiles() {
         return files;
     }
