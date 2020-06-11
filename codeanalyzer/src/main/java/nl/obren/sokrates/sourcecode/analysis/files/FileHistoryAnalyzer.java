@@ -4,15 +4,16 @@
 
 package nl.obren.sokrates.sourcecode.analysis.files;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.age.FileModificationHistory;
-import nl.obren.sokrates.sourcecode.age.FilePairsChangedTogether;
 import nl.obren.sokrates.sourcecode.analysis.Analyzer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FileAgeDistributionPerLogicalDecomposition;
-import nl.obren.sokrates.sourcecode.analysis.results.FilesAgeAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
+import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
+import nl.obren.sokrates.sourcecode.filehistory.FilePairsChangedTogether;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
@@ -24,14 +25,14 @@ import java.util.regex.Pattern;
 import static nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution.Types.FIRST_MODIFIED;
 import static nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution.Types.LAST_MODIFIED;
 
-public class FileAgeAnalyzer extends Analyzer {
+public class FileHistoryAnalyzer extends Analyzer {
     private CodeConfiguration codeConfiguration;
     private MetricsList metricsList;
     private File sokratesFolder;
-    private FilesAgeAnalysisResults analysisResults;
+    private FilesHistoryAnalysisResults analysisResults;
 
-    public FileAgeAnalyzer(CodeAnalysisResults results, File sokratesFolder) {
-        this.analysisResults = results.getFilesAgeAnalysisResults();
+    public FileHistoryAnalyzer(CodeAnalysisResults results, File sokratesFolder) {
+        this.analysisResults = results.getFilesHistoryAnalysisResults();
         this.codeConfiguration = results.getCodeConfiguration();
         this.metricsList = results.getMetricsList();
         this.sokratesFolder = sokratesFolder;
@@ -44,6 +45,9 @@ public class FileAgeAnalyzer extends Analyzer {
     public void analyze() {
         if (codeConfiguration.getAnalysis().filesHistoryImportPathExists(sokratesFolder)) {
             List<FileModificationHistory> history = codeConfiguration.getAnalysis().getHistory(sokratesFolder);
+
+            analysisResults.setHistory(history);
+
             if (history.size() > 0) {
                 enrichFilesWithAge(history);
                 analyzeFilesAge();
@@ -145,7 +149,7 @@ public class FileAgeAnalyzer extends Analyzer {
                 .description("Lines of code in all files more than 181 days old");
     }
 
-    private void addOldestFiles(List<SourceFile> sourceFiles, FilesAgeAnalysisResults filesAgeAnalysisResults, int sampleSize) {
+    private void addOldestFiles(List<SourceFile> sourceFiles, FilesHistoryAnalysisResults filesHistoryAnalysisResults, int sampleSize) {
         List<SourceFile> files = new ArrayList<>(sourceFiles);
         Collections.sort(files, (o1, o2) -> Integer.compare(o2.getLinesOfCode(), o1.getLinesOfCode()));
         Collections.sort(files, (o1, o2) ->
@@ -156,11 +160,11 @@ public class FileAgeAnalyzer extends Analyzer {
             if (index[0]++ >= sampleSize) {
                 return;
             }
-            filesAgeAnalysisResults.getOldestFiles().add(sourceFile);
+            filesHistoryAnalysisResults.getOldestFiles().add(sourceFile);
         });
     }
 
-    private void addYoungestFiles(List<SourceFile> sourceFiles, FilesAgeAnalysisResults filesAgeAnalysisResults, int sampleSize) {
+    private void addYoungestFiles(List<SourceFile> sourceFiles, FilesHistoryAnalysisResults filesHistoryAnalysisResults, int sampleSize) {
         List<SourceFile> files = new ArrayList<>(sourceFiles);
         Collections.sort(files, (o1, o2) -> Integer.compare(o2.getLinesOfCode(), o1.getLinesOfCode()));
         Collections.sort(files, Comparator.comparingInt(o -> (o.getFileModificationHistory() == null ? 0 : o.getFileModificationHistory().daysSinceFirstUpdate())));
@@ -169,11 +173,11 @@ public class FileAgeAnalyzer extends Analyzer {
             if (index[0]++ >= sampleSize) {
                 return;
             }
-            filesAgeAnalysisResults.getYoungestFiles().add(sourceFile);
+            filesHistoryAnalysisResults.getYoungestFiles().add(sourceFile);
         });
     }
 
-    private void addMostRecentlyChangedFiles(List<SourceFile> sourceFiles, FilesAgeAnalysisResults filesAgeAnalysisResults, int sampleSize) {
+    private void addMostRecentlyChangedFiles(List<SourceFile> sourceFiles, FilesHistoryAnalysisResults filesHistoryAnalysisResults, int sampleSize) {
         List<SourceFile> files = new ArrayList<>(sourceFiles);
         Collections.sort(files, (o1, o2) -> Integer.compare(o2.getLinesOfCode(), o1.getLinesOfCode()));
         Collections.sort(files, Comparator.comparingInt(o -> (o.getFileModificationHistory() == null ? 0 : o.getFileModificationHistory().daysSinceLatestUpdate())));
@@ -182,11 +186,11 @@ public class FileAgeAnalyzer extends Analyzer {
             if (index[0]++ >= sampleSize) {
                 return;
             }
-            filesAgeAnalysisResults.getMostRecentlyChangedFiles().add(sourceFile);
+            filesHistoryAnalysisResults.getMostRecentlyChangedFiles().add(sourceFile);
         });
     }
 
-    private void addMostPreviouslyChangedFiles(List<SourceFile> sourceFiles, FilesAgeAnalysisResults filesAgeAnalysisResults, int sampleSize) {
+    private void addMostPreviouslyChangedFiles(List<SourceFile> sourceFiles, FilesHistoryAnalysisResults filesHistoryAnalysisResults, int sampleSize) {
         List<SourceFile> files = new ArrayList<>(sourceFiles);
         Collections.sort(files, (o1, o2) -> Integer.compare(o2.getLinesOfCode(), o1.getLinesOfCode()));
         Collections.sort(files, Comparator.comparingInt(o -> (o.getFileModificationHistory() == null ? 0 : o.getFileModificationHistory().daysSinceLatestUpdate())));
@@ -196,11 +200,11 @@ public class FileAgeAnalyzer extends Analyzer {
             if (index[0]++ >= sampleSize) {
                 return;
             }
-            filesAgeAnalysisResults.getMostPreviouslyChangedFiles().add(sourceFile);
+            filesHistoryAnalysisResults.getMostPreviouslyChangedFiles().add(sourceFile);
         });
     }
 
-    private void addMostChangedFiles(List<SourceFile> sourceFiles, FilesAgeAnalysisResults filesAgeAnalysisResults, int sampleSize) {
+    private void addMostChangedFiles(List<SourceFile> sourceFiles, FilesHistoryAnalysisResults filesHistoryAnalysisResults, int sampleSize) {
         List<SourceFile> files = new ArrayList<>(sourceFiles);
         Collections.sort(files, (o1, o2) -> Integer.compare(o2.getLinesOfCode(), o1.getLinesOfCode()));
         Collections.sort(files, Comparator.comparingInt(o -> (o.getFileModificationHistory() == null ? 0 : o.getFileModificationHistory().getDates().size())));
@@ -210,7 +214,7 @@ public class FileAgeAnalyzer extends Analyzer {
             if (index[0]++ >= sampleSize) {
                 return;
             }
-            filesAgeAnalysisResults.getMostChangedFiles().add(sourceFile);
+            filesHistoryAnalysisResults.getMostChangedFiles().add(sourceFile);
         });
     }
 }

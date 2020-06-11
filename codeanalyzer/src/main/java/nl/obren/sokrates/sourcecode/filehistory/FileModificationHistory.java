@@ -2,15 +2,11 @@
  * Copyright (c) 2020 Željko Obrenović. All rights reserved.
  */
 
-package nl.obren.sokrates.sourcecode.age;
+package nl.obren.sokrates.sourcecode.filehistory;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class FileModificationHistory {
     private List<String> dates = new ArrayList<>();
@@ -54,23 +50,10 @@ public class FileModificationHistory {
     }
 
     public int daysSinceFirstUpdate() {
-        return days(getOldestDate());
+        return FileHistoryUtils.daysFromToday(getOldestDate());
     }
 
     public int daysSinceLatestUpdate() {
-        return days(getLatestDate());
-    }
-
-    private int days(String dateString) {
-        Date today = new Date();
-
-        try {
-            Date fileDate = new SimpleDateFormat("yyyy-MM-dd").parse(dateString.substring(0, 10));
-            return 1 + (int) TimeUnit.DAYS.convert(Math.abs(today.getTime() - fileDate.getTime()), TimeUnit.MILLISECONDS);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-
-        return 0;
+        return FileHistoryUtils.daysFromToday(getLatestDate());
     }
 }

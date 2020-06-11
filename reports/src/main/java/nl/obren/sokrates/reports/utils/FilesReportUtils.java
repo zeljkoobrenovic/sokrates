@@ -5,7 +5,7 @@
 package nl.obren.sokrates.reports.utils;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.age.FileModificationHistory;
+import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;

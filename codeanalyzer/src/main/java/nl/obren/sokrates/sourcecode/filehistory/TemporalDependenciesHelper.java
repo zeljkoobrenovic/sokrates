@@ -2,7 +2,7 @@
  * Copyright (c) 2019 Željko Obrenović. All rights reserved.
  */
 
-package nl.obren.sokrates.sourcecode.age;
+package nl.obren.sokrates.sourcecode.filehistory;
 
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
@@ -29,28 +29,32 @@ public class TemporalDependenciesHelper {
                 String component2 = logicalComponents2.get(0).getName();
 
                 if (!component1.equalsIgnoreCase(component2)) {
-                    ComponentDependency dependency = getDependency(component1, component2);
-
-                    dependency.setCount(dependency.getCount() + 1);
-
-                    List<String> dates = datesMap.get(dependency);
-                    if (dates == null) {
-                        dates = new ArrayList<>();
-                        datesMap.put(dependency, dates);
-                    }
-
-                    List<String> finalDates = dates;
-                    filePairChangedTogether.getDates().forEach(date -> {
-                        if (!finalDates.contains(date)) {
-                            finalDates.add(date);
-                        }
-                    });
-                    dependency.setCount(finalDates.size());
+                    addDependency(filePairChangedTogether, component1, component2);
                 }
             }
         });
 
         return componentDependencies;
+    }
+
+    private void addDependency(FilePairChangedTogether filePairChangedTogether, String component1, String component2) {
+        ComponentDependency dependency = getDependency(component1, component2);
+
+        dependency.setCount(dependency.getCount() + 1);
+
+        List<String> dates = datesMap.get(dependency);
+        if (dates == null) {
+            dates = new ArrayList<>();
+            datesMap.put(dependency, dates);
+        }
+
+        List<String> finalDates = dates;
+        filePairChangedTogether.getDates().forEach(date -> {
+            if (!finalDates.contains(date)) {
+                finalDates.add(date);
+            }
+        });
+        dependency.setCount(finalDates.size());
     }
 
     private ComponentDependency getDependency(String name1, String name2) {

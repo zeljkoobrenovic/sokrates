@@ -7,26 +7,19 @@ package nl.obren.sokrates.reports.generators.statichtml;
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.reports.core.RichTextReport;
-import nl.obren.sokrates.reports.utils.FilesReportUtils;
-import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
-import nl.obren.sokrates.reports.utils.PieChartUtils;
-import nl.obren.sokrates.reports.utils.RiskDistributionStatsReportUtils;
+import nl.obren.sokrates.reports.utils.*;
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.age.FilePairChangedTogether;
-import nl.obren.sokrates.sourcecode.age.TemporalDependenciesHelper;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.analysis.results.FilesAgeAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.FileAgeDistributionPerLogicalDecomposition;
+import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
-import nl.obren.sokrates.sourcecode.duplication.DuplicationDependenciesHelper;
-import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
+import nl.obren.sokrates.sourcecode.filehistory.*;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class FileHistoryReportGenerator {
@@ -40,6 +33,8 @@ public class FileHistoryReportGenerator {
     private List<String> labels = Arrays.asList("> 1y", "6-12m", "91-180d", "31-90d", "1-30d");
     private List<String> labelsChange = Arrays.asList("101+", "51-100", "21-50", "6-20", "1-5 updates");
     private int graphCounter = 1;
+    private int daysBetween;
+    private int estimatedWorkingDays;
 
     public FileHistoryReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
@@ -47,6 +42,8 @@ public class FileHistoryReportGenerator {
 
     public void addFileHistoryToReport(RichTextReport report) {
         addIntro(report);
+
+        addSummary(report);
 
         addOverallSections(report);
 
@@ -62,8 +59,42 @@ public class FileHistoryReportGenerator {
         addFileChangedTogetherList(report);
     }
 
+    private void addSummary(RichTextReport report) {
+        FileHistoryComponentsHelper helper = new FileHistoryComponentsHelper();
+
+        List<FileModificationHistory> history = codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory();
+        List<String> uniqueDates = helper.getUniqueDates(history);
+
+        if (uniqueDates.size() > 1) {
+            String firstDateString = uniqueDates.get(0);
+            String latestDateString = uniqueDates.get(uniqueDates.size() - 1);
+
+            Date firstDate = FileHistoryUtils.getDateFromString(firstDateString);
+            Date latestDate = FileHistoryUtils.getDateFromString(latestDateString);
+
+            this.daysBetween = FileHistoryUtils.daysBetween(firstDate, latestDate);
+
+            int weeks = daysBetween / 7;
+            estimatedWorkingDays = weeks * 5;
+
+            report.startSection("Basic Data", "");
+
+            report.startUnorderedList();
+
+            report.addListItem("Number of files: <b>" + codeAnalysisResults.getMainAspectAnalysisResults().getFilesCount() + "</b>");
+            report.addListItem("Daily file updates (only one update per file and date counted): <b>" + history.size() + "</b>");
+            report.addListItem("First update: <b>" + firstDateString + "</b>");
+            report.addListItem("Latest update: <b>" + latestDateString + "</b>");
+            report.addListItem("Days between first and latest update: <b>" + daysBetween + "</b> (" + weeks + " weeks, estimated " + estimatedWorkingDays + " working days)");
+            report.addListItem("Active days (at least one file change): <b>" + uniqueDates.size() + "</b>");
+
+            report.endUnorderedList();
+            report.endSection();
+        }
+    }
+
     private void addFileChangedTogetherList(RichTextReport report) {
-        List<FilePairChangedTogether> filePairs = codeAnalysisResults.getFilesAgeAnalysisResults().getFilePairsChangedTogether();
+        List<FilePairChangedTogether> filePairs = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether();
         if (filePairs.size() > 50) {
             filePairs = filePairs.subList(0, 50);
         }
@@ -84,7 +115,7 @@ public class FileHistoryReportGenerator {
     }
 
     private void addGraphsPerExtension(RichTextReport report) {
-        FilesAgeAnalysisResults ageAnalysisResults = codeAnalysisResults.getFilesAgeAnalysisResults();
+        FilesHistoryAnalysisResults ageAnalysisResults = codeAnalysisResults.getFilesHistoryAnalysisResults();
 
         addChangesGraphPerExtension(report, ageAnalysisResults.getChangeDistributionPerExtension(),
                 THE_NUMBER_OF_FILE_CHANGES + " per Extension", THE_NUMBER_OF_FILE_CHANGES_DESCRIPTION);
@@ -95,11 +126,11 @@ public class FileHistoryReportGenerator {
     }
 
     private void addOverallSections(RichTextReport report) {
-        addGraphOverallChange(report, codeAnalysisResults.getFilesAgeAnalysisResults().getOverallFileChangeDistribution(),
+        addGraphOverallChange(report, codeAnalysisResults.getFilesHistoryAnalysisResults().getOverallFileChangeDistribution(),
                 THE_NUMBER_OF_FILE_CHANGES + " Overall", THE_NUMBER_OF_FILE_CHANGES_DESCRIPTION);
-        addAgeGraphOverall(report, codeAnalysisResults.getFilesAgeAnalysisResults().getOverallFileFirstModifiedDistribution(),
+        addAgeGraphOverall(report, codeAnalysisResults.getFilesHistoryAnalysisResults().getOverallFileFirstModifiedDistribution(),
                 FILE_AGE_DISTRIBUTION + " Overall", FILE_AGE_DESCRIPTION, Palette.getAgePalette());
-        addFreshessGraphOverall(report, codeAnalysisResults.getFilesAgeAnalysisResults().getOverallFileLastModifiedDistribution(), "" +
+        addFreshnessGraphOverall(report, codeAnalysisResults.getFilesHistoryAnalysisResults().getOverallFileLastModifiedDistribution(), "" +
                 LATEST_CHANGE_DISTRIBUTION + " Overall", LATEST_CHANGE_DESCRIPTION, Palette.getFreshnessPalette());
     }
 
@@ -113,9 +144,7 @@ public class FileHistoryReportGenerator {
 
     private void describe(RichTextReport report) {
         report.startUnorderedList();
-        report.addListItem("File age measurements show the distribution of age of files.");
-        report.addListItem("Files are classified in four categories based on their age (in days): " +
-                "1-30 (fresh files), 31-90 (recent files), 91-180 (old files), 181+ (very old files).");
+        report.addListItem("File history measurements show the file age (in days) and frequency of file updates.");
         report.endUnorderedList();
     }
 
@@ -179,7 +208,7 @@ public class FileHistoryReportGenerator {
         report.endSection();
     }
 
-    private void addFreshessGraphOverall(RichTextReport report, SourceFileAgeDistribution distribution, String title, String subtitle, Palette palette) {
+    private void addFreshnessGraphOverall(RichTextReport report, SourceFileAgeDistribution distribution, String title, String subtitle, Palette palette) {
         report.startSection(title, subtitle);
         report.startUnorderedList();
         report.addListItem("There are " + RichTextRenderingUtils.renderNumberStrong(distribution.getTotalCount())
@@ -223,35 +252,96 @@ public class FileHistoryReportGenerator {
     private void addGraphsPerLogicalComponents(RichTextReport report) {
         report.startSection("File Change History per Logical Decomposition", "");
 
-        codeAnalysisResults.getFilesAgeAnalysisResults().getChangeDistributionPerLogicalDecomposition().forEach(logicalDecomposition -> {
-            report.startSubSection("" + logicalDecomposition.getName()
-                    + " (" + THE_NUMBER_OF_FILE_CHANGES.toLowerCase() + ")", THE_NUMBER_OF_FILE_CHANGES_DESCRIPTION);
-            report.addHtmlContent(RiskDistributionStatsReportUtils.getRiskDistributionPerKeySvgBarChart(logicalDecomposition.getDistributionPerComponent(), labelsChange, Palette.getHeatPalette()));
-            report.endSection();
+        addChangesPerLogicalDecomposition(report);
 
-            renderDependenciesViaDuplication(report, logicalDecomposition.getName());
-        });
+        addFirsModifiedPerLogicalDecomposition(report);
 
-        codeAnalysisResults.getFilesAgeAnalysisResults().getFirstModifiedDistributionPerLogicalDecomposition().forEach(logicalDecomposition -> {
-            report.startSubSection("" + logicalDecomposition.getName()
-                    + " (" + FILE_AGE_DISTRIBUTION.toLowerCase() + ")", FILE_AGE_DESCRIPTION);
-            report.addHtmlContent(RiskDistributionStatsReportUtils.getRiskDistributionPerKeySvgBarChart(logicalDecomposition.getDistributionPerComponent(), labels, Palette.getAgePalette()));
-            report.endSection();
-        });
+        addLastModifiedPerLogicalComponent(report);
 
-        codeAnalysisResults.getFilesAgeAnalysisResults().getLastModifiedDistributionPerLogicalDecomposition().forEach(logicalDecomposition -> {
+        report.endSection();
+    }
+
+    private void addLastModifiedPerLogicalComponent(RichTextReport report) {
+        codeAnalysisResults.getFilesHistoryAnalysisResults().getLastModifiedDistributionPerLogicalDecomposition().forEach(logicalDecomposition -> {
             report.startSubSection("" + logicalDecomposition.getName()
                     + " (" + LATEST_CHANGE_DISTRIBUTION.toLowerCase() + ")", LATEST_CHANGE_DESCRIPTION);
             report.addHtmlContent(RiskDistributionStatsReportUtils.getRiskDistributionPerKeySvgBarChart(logicalDecomposition.getDistributionPerComponent(), labels, Palette.getFreshnessPalette()));
             report.endSection();
         });
+    }
 
+    private void addFirsModifiedPerLogicalDecomposition(RichTextReport report) {
+        codeAnalysisResults.getFilesHistoryAnalysisResults().getFirstModifiedDistributionPerLogicalDecomposition().forEach(logicalDecomposition -> {
+            report.startSubSection("" + logicalDecomposition.getName()
+                    + " (" + FILE_AGE_DISTRIBUTION.toLowerCase() + ")", FILE_AGE_DESCRIPTION);
+            report.addHtmlContent(RiskDistributionStatsReportUtils.getRiskDistributionPerKeySvgBarChart(logicalDecomposition.getDistributionPerComponent(), labels, Palette.getAgePalette()));
+            report.endSection();
+        });
+    }
+
+    private LogicalDecomposition getLogicalDecompositionByName(String name) {
+        for (LogicalDecomposition logicalDecomposition : this.codeAnalysisResults.getCodeConfiguration().getLogicalDecompositions()) {
+            if (logicalDecomposition.getName().equalsIgnoreCase(name)) {
+                return logicalDecomposition;
+            }
+        }
+
+        return null;
+    }
+
+    private void addChangesPerLogicalDecomposition(RichTextReport report) {
+        codeAnalysisResults.getFilesHistoryAnalysisResults().getChangeDistributionPerLogicalDecomposition().forEach(logicalDecompositionDistribution -> {
+            addLogicalDecompositionBasicData(report, logicalDecompositionDistribution.getName());
+            addChangeDetailsForLogicalDecomposition(report, logicalDecompositionDistribution);
+        });
+    }
+
+    private void addLogicalDecompositionBasicData(RichTextReport report, String logicalDecompositionName) {
+        List<FileModificationHistory> history = codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory();
+        LogicalDecomposition logicalDecomposition = getLogicalDecompositionByName(logicalDecompositionName);
+        if (logicalDecomposition != null) {
+            List<ComponentUpdateHistory> componentHistories = new ArrayList<>();
+            logicalDecomposition.getComponents().forEach(component -> {
+                ComponentUpdateHistory componentUpdateHistory = new ComponentUpdateHistory(component);
+                componentUpdateHistory.addDates(history);
+                componentHistories.add(componentUpdateHistory);
+            });
+
+            Collections.sort(componentHistories, (a, b) -> b.getDates().size() - a.getDates().size());
+            report.startSubSection(logicalDecomposition.getName() + " (basic data)", "");
+
+            componentHistories.forEach(componentUpdateHistory -> {
+                String name = componentUpdateHistory.getComponent().getName();
+
+                List<String> dates = componentUpdateHistory.getDates();
+                int activeDays = dates.size();
+                report.startDiv("margin-bottom: 12px");
+                report.addHtmlContent(name + ": <b>" + activeDays + "</b> active days ("
+                        + dates.get(0) + " to "
+                        + dates.get(dates.size() - 1) +
+                        ")<br/>");
+                report.addHtmlContent(ReportUtils.getSvgBar(activeDays, estimatedWorkingDays, "skyblue"));
+                report.endDiv();
+            });
+
+            report.endSection();
+        }
+    }
+
+    private void addChangeDetailsForLogicalDecomposition(RichTextReport report, FileAgeDistributionPerLogicalDecomposition logicalDecomposition) {
+        report.startSubSection("" + logicalDecomposition.getName()
+                + " (" + THE_NUMBER_OF_FILE_CHANGES.toLowerCase() + ")", THE_NUMBER_OF_FILE_CHANGES_DESCRIPTION);
+        report.addHtmlContent(RiskDistributionStatsReportUtils.getRiskDistributionPerKeySvgBarChart(logicalDecomposition.getDistributionPerComponent(), labelsChange, Palette.getHeatPalette()));
+        report.endSection();
+
+        report.startSubSection(logicalDecomposition.getName() + " (temporal dependencies)", "");
+        renderDependenciesViaDuplication(report, logicalDecomposition.getName());
         report.endSection();
     }
 
     private void renderDependenciesViaDuplication(RichTextReport report, String logicalDecompositionName) {
         TemporalDependenciesHelper dependenciesHelper = new TemporalDependenciesHelper(logicalDecompositionName);
-        List<ComponentDependency> dependencies = dependenciesHelper.extractDependencies(codeAnalysisResults.getFilesAgeAnalysisResults().getFilePairsChangedTogether());
+        List<ComponentDependency> dependencies = dependenciesHelper.extractDependencies(codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether());
         int threshold = 20;
         List<ComponentDependency> componentDependencies = dependencies.stream().filter(d -> d.getCount() >= threshold).collect(Collectors.toList());
 
@@ -272,7 +362,7 @@ public class FileHistoryReportGenerator {
     }
 
     private void addOldestFilesList(RichTextReport report) {
-        List<SourceFile> longestFiles = codeAnalysisResults.getFilesAgeAnalysisResults().getOldestFiles();
+        List<SourceFile> longestFiles = codeAnalysisResults.getFilesHistoryAnalysisResults().getOldestFiles();
         report.startSection("Oldest Files (Top " + longestFiles.size() + ")", "");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(longestFiles, cacheSourceFiles, true).toString());
@@ -280,7 +370,7 @@ public class FileHistoryReportGenerator {
     }
 
     private void addYoungestFilesList(RichTextReport report) {
-        List<SourceFile> youngestFiles = codeAnalysisResults.getFilesAgeAnalysisResults().getYoungestFiles();
+        List<SourceFile> youngestFiles = codeAnalysisResults.getFilesHistoryAnalysisResults().getYoungestFiles();
         report.startSection("Most Recently Created Files (Top " + youngestFiles.size() + ")", "");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true).toString());
@@ -288,7 +378,7 @@ public class FileHistoryReportGenerator {
     }
 
     private void addMostRecentlyChangedFilesList(RichTextReport report) {
-        List<SourceFile> youngestFiles = codeAnalysisResults.getFilesAgeAnalysisResults().getMostRecentlyChangedFiles();
+        List<SourceFile> youngestFiles = codeAnalysisResults.getFilesHistoryAnalysisResults().getMostRecentlyChangedFiles();
         report.startSection("Most Recently Changed Files (Top " + youngestFiles.size() + ")", "");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true).toString());
@@ -296,7 +386,7 @@ public class FileHistoryReportGenerator {
     }
 
     private void addMostPreviouslyChangedFilesList(RichTextReport report) {
-        List<SourceFile> youngestFiles = codeAnalysisResults.getFilesAgeAnalysisResults().getMostPreviouslyChangedFiles();
+        List<SourceFile> youngestFiles = codeAnalysisResults.getFilesHistoryAnalysisResults().getMostPreviouslyChangedFiles();
         report.startSection("Files Not Recently Changed (Top " + youngestFiles.size() + ")", "");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true).toString());
@@ -304,7 +394,7 @@ public class FileHistoryReportGenerator {
     }
 
     private void addMostChangedFilesList(RichTextReport report) {
-        List<SourceFile> youngestFiles = codeAnalysisResults.getFilesAgeAnalysisResults().getMostChangedFiles();
+        List<SourceFile> youngestFiles = codeAnalysisResults.getFilesHistoryAnalysisResults().getMostChangedFiles();
         report.startSection("Most Frequently Changed Files (Top " + youngestFiles.size() + ")", "");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true).toString());

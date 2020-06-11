@@ -93,7 +93,7 @@ public class LogicalComponentsReportGenerator {
         renderer.setTitle("Components");
         renderer.setDescription("");
         renderer.setFileCountPerComponent(fileCountPerExtension);
-        // renderer.setFilesListPath();
+
         renderer.setLinesOfCode(linesOfCodePerExtension);
         renderer.setMaxFileCount(codeAnalysisResults.getMaxFileCount());
         renderer.setMaxLinesOfCode(codeAnalysisResults.getMaxLinesOfCode());
@@ -242,7 +242,7 @@ public class LogicalComponentsReportGenerator {
         String percentageHtmlFragment = null;
         int dependencyCount = componentDependency.getCount();
         if (fromComponentByName != null) {
-            percentageHtmlFragment = getFromDependecyCoverageSvg(locFromDuplications, fromComponentByName, dependencyCount);
+            percentageHtmlFragment = getFromDependencyCoverageSvg(locFromDuplications, fromComponentByName, dependencyCount);
         }
 
         report.addShowMoreBlock("",
@@ -256,7 +256,7 @@ public class LogicalComponentsReportGenerator {
         report.endTableRow();
     }
 
-    private String getFromDependecyCoverageSvg(int locFromDuplications, NamedSourceCodeAspect fromComponentByName, int dependencyCount) {
+    private String getFromDependencyCoverageSvg(int locFromDuplications, NamedSourceCodeAspect fromComponentByName, int dependencyCount) {
         SimpleOneBarChart chart = new SimpleOneBarChart();
         chart.setWidth(320);
         chart.setMaxBarWidth(100);

@@ -35,7 +35,7 @@ public class CodeAnalysisResults {
     private List<Dependency> allDependencies = new ArrayList<>();
 
     private FilesAnalysisResults filesAnalysisResults = new FilesAnalysisResults();
-    private FilesAgeAnalysisResults filesAgeAnalysisResults = new FilesAgeAnalysisResults();
+    private FilesHistoryAnalysisResults filesHistoryAnalysisResults = new FilesHistoryAnalysisResults();
     private UnitsAnalysisResults unitsAnalysisResults = new UnitsAnalysisResults();
 
     private DuplicationAnalysisResults duplicationAnalysisResults = new DuplicationAnalysisResults();
@@ -152,12 +152,12 @@ public class CodeAnalysisResults {
         this.filesAnalysisResults = filesAnalysisResults;
     }
 
-    public FilesAgeAnalysisResults getFilesAgeAnalysisResults() {
-        return filesAgeAnalysisResults;
+    public FilesHistoryAnalysisResults getFilesHistoryAnalysisResults() {
+        return filesHistoryAnalysisResults;
     }
 
-    public void setFilesAgeAnalysisResults(FilesAgeAnalysisResults filesAgeAnalysisResults) {
-        this.filesAgeAnalysisResults = filesAgeAnalysisResults;
+    public void setFilesHistoryAnalysisResults(FilesHistoryAnalysisResults filesHistoryAnalysisResults) {
+        this.filesHistoryAnalysisResults = filesHistoryAnalysisResults;
     }
 
     public UnitsAnalysisResults getUnitsAnalysisResults() {

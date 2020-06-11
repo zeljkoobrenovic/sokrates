@@ -2,7 +2,7 @@
  * Copyright (c) 2020 Željko Obrenović. All rights reserved.
  */
 
-package nl.obren.sokrates.sourcecode.age;
+package nl.obren.sokrates.sourcecode.filehistory;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;

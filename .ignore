@@ -5,8 +5,7 @@
 .idea
 .iml
 .ignore
-.sokrater/reports/src
 .settings/
 target/
-_sokrates/reports
+/_sokrates/reports
 *.txt

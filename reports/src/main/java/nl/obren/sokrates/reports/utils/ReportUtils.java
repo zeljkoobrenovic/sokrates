@@ -6,9 +6,13 @@ package nl.obren.sokrates.reports.utils;
 
 public class ReportUtils {
 
-    public static String getSvgBar(int linesOfCode, int maxLinesOfCode, String color) {
-        int width = 100;
-        return "<svg width='" + width + "' y='15' height='10'>" + "<rect fill='" + color + "' width='" + Math.max(1, width * linesOfCode / maxLinesOfCode) + "' height='30'/>" + "</svg";
+    public static String getSvgBar(int value, int maxValue, String color) {
+        maxValue = Math.max(value, maxValue);
+        int width = 200;
+        return "<svg width='" + width + "' y='15' height='20'>"
+                + "<rect fill='" + "lightgrey" + "' width='" + width + "' height='30'/>"
+                + "<rect fill='" + color + "' width='" + Math.max(1, width * value / maxValue) + "' height='30'/>"
+                + "</svg>";
     }
 
     public static String getSvgCircle(String color) {

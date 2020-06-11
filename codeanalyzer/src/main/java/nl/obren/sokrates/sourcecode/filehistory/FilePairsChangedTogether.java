@@ -2,7 +2,7 @@
  * Copyright (c) 2020 Željko Obrenović. All rights reserved.
  */
 
-package nl.obren.sokrates.sourcecode.age;
+package nl.obren.sokrates.sourcecode.filehistory;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
@@ -45,8 +45,6 @@ public class FilePairsChangedTogether {
 
         String key1 = path1 + "_" + path2;
         String key2 = path2 + "_" + path1;
-
-        System.out.println(key1);
 
         FilePairChangedTogether filePairChangedTogether = filePairsMap.get(key1);
         if (filePairChangedTogether == null) {

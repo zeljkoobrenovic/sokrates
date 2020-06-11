@@ -5,9 +5,9 @@
 package nl.obren.sokrates.sourcecode;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import nl.obren.sokrates.sourcecode.age.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
+import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
 import org.apache.commons.io.FileUtils;
@@ -103,16 +103,16 @@ public class SourceFile {
         return linesOfCode;
     }
 
+    public void setLinesOfCode(int linesOfCode) {
+        this.linesOfCode = linesOfCode;
+    }
+
     public FileModificationHistory getFileModificationHistory() {
         return fileModificationHistory;
     }
 
     public void setFileModificationHistory(FileModificationHistory fileModificationHistory) {
         this.fileModificationHistory = fileModificationHistory;
-    }
-
-    public void setLinesOfCode(int linesOfCode) {
-        this.linesOfCode = linesOfCode;
     }
 
     public List<NamedSourceCodeAspect> getLogicalComponents(String filer) {
@@ -211,11 +211,21 @@ public class SourceFile {
         return ((SourceFile) obj).getFile().equals(this.getFile());
     }
 
+    public int getLinesOfCodeInUnits() {
+        return linesOfCodeInUnits;
+    }
+
     public void setLinesOfCodeInUnits(int linesOfCodeInUnits) {
         this.linesOfCodeInUnits = linesOfCodeInUnits;
     }
 
-    public int getLinesOfCodeInUnits() {
-        return linesOfCodeInUnits;
+    @JsonIgnore
+    public boolean isInLogicalComponent(String name) {
+        for (NamedSourceCodeAspect logicalComponent : logicalComponents) {
+            if (logicalComponent.getName().equalsIgnoreCase(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

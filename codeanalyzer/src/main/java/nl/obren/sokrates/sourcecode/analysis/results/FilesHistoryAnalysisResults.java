@@ -6,7 +6,8 @@ package nl.obren.sokrates.sourcecode.analysis.results;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.age.FilePairChangedTogether;
+import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
+import nl.obren.sokrates.sourcecode.filehistory.FilePairChangedTogether;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
@@ -14,7 +15,7 @@ import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FilesAgeAnalysisResults {
+public class FilesHistoryAnalysisResults {
     private SourceFileAgeDistribution overallFileLastModifiedDistribution;
     private SourceFileAgeDistribution overallFileFirstModifiedDistribution;
     private SourceFileChangeDistribution overallFileChangeDistribution;
@@ -31,6 +32,8 @@ public class FilesAgeAnalysisResults {
 
     @JsonIgnore
     private List<SourceFile> allFiles = new ArrayList<>();
+    @JsonIgnore
+    private List<FileModificationHistory> history = new ArrayList<>();
 
     private List<SourceFile> oldestFiles = new ArrayList<>();
     private List<SourceFile> youngestFiles = new ArrayList<>();
@@ -168,5 +171,15 @@ public class FilesAgeAnalysisResults {
 
     public void setFilePairsChangedTogether(List<FilePairChangedTogether> filePairsChangedTogether) {
         this.filePairsChangedTogether = filePairsChangedTogether;
+    }
+
+    @JsonIgnore
+    public List<FileModificationHistory> getHistory() {
+        return history;
+    }
+
+    @JsonIgnore
+    public void setHistory(List<FileModificationHistory> history) {
+        this.history = history;
     }
 }
