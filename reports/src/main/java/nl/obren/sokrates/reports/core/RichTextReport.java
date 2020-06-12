@@ -284,6 +284,15 @@ public class RichTextReport {
                 "<div class='sectionBody'>");
     }
 
+    public void startTocSection() {
+        String title = "Table of Content";
+        this.addHtmlContent("<div class='subSection' style='width: 400px;'>" +
+                "<div class='subSectionHeader'>\n" +
+                "    <span>" + title + "</span>\n" +
+                "</div>\n" +
+                "<div class='sectionBody' style='font-size: 90%'>");
+    }
+
     public void endDiv() {
         addHtmlContent("</div>");
     }

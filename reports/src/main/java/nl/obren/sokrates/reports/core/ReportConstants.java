@@ -36,6 +36,10 @@ public class ReportConstants {
             "            font-weight: bold;\n" +
             "        }\n" +
             "\n" +
+            "        ul {\n" +
+            "            padding-left: 20px;\n" +
+            "        }\n" +
+            "\n" +
             "        td {\n" +
             "            background: #FFFFFF;\n" +
             "            text-align: left;\n" +
