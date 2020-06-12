@@ -331,7 +331,7 @@ public class SummaryUtils {
         DuplicationMetric overallDuplication = analysisResults.getDuplicationAnalysisResults().getOverallDuplication();
         Number duplicationPercentage = overallDuplication.getDuplicationPercentage();
         double duplication = duplicationPercentage.doubleValue();
-        if (!analysisResults.getCodeConfiguration().getAnalysis().isSkipDuplication()) {
+        if (analysisResults.getCodeConfiguration() == null || !analysisResults.getCodeConfiguration().getAnalysis().isSkipDuplication()) {
             report.startTableRow();
             report.addTableCell(getIconSvg("duplication"), "border: none");
             report.addTableCell(getDuplicationVisual(duplicationPercentage), "border: none");

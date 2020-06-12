@@ -10,20 +10,20 @@ import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.core.SummaryUtils;
+import nl.obren.sokrates.reports.utils.ZipEntryContent;
 import nl.obren.sokrates.reports.utils.ZipUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.ReferenceAnalysisResult;
 import nl.obren.sokrates.sourcecode.metrics.Metric;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class TrendReportGenerator {
     private RichTextReport report;
@@ -68,17 +68,21 @@ public class TrendReportGenerator {
         List<String> labels = new ArrayList<>();
         analysisResultsList.add(currentAnalysisResults);
         labels.add("Current");
-        int maxMainLoc[] = {0};
-        int maxTestLoc[] = {0};
-        int maxTotalLoc[] = {0};
+        int maxMainLoc[] = {currentAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode()};
+        int maxTestLoc[] = {currentAnalysisResults.getTestAspectAnalysisResults().getLinesOfCode()};
+        int maxTotalLoc[] = {maxMainLoc[0] + maxTestLoc[0]};
         referenceResults.forEach(result -> {
             CodeAnalysisResults refData = getRefData(result.getAnalysisResultsPath());
-            if (refData != null) {
+            if (refData != null && refData.getCodeConfiguration() != null) {
                 analysisResultsList.add(refData);
                 labels.add(result.getLabel());
-                maxMainLoc[0] = Math.max(refData.getMainAspectAnalysisResults().getLinesOfCode(), maxMainLoc[0]);
-                maxTestLoc[0] = Math.max(refData.getTestAspectAnalysisResults().getLinesOfCode(), maxTestLoc[0]);
-                maxTotalLoc[0] = Math.max(refData.getMainAspectAnalysisResults().getLinesOfCode() + refData.getTestAspectAnalysisResults().getLinesOfCode(), maxTotalLoc[0]);
+
+                int refLocMain = refData.getMainAspectAnalysisResults().getLinesOfCode();
+                int refLocTest = refData.getTestAspectAnalysisResults().getLinesOfCode();
+
+                maxMainLoc[0] = Math.max(refLocMain, maxMainLoc[0]);
+                maxTestLoc[0] = Math.max(refLocTest, maxTestLoc[0]);
+                maxTotalLoc[0] = Math.max(refLocMain + refLocTest, maxTotalLoc[0]);
             }
         });
         report.startSection("Summary: Code Volume Change", "");
@@ -132,7 +136,12 @@ public class TrendReportGenerator {
         CodeAnalysisResults refData = getRefData(analysisResultsPath);
         if (refData != null) {
             report.startSection("Current vs. " + result.getLabel(), result.getAnalysisResultsPath());
+            report.startShowMoreBlock("Comparison summary...");
             new SummaryUtils().summarizeAndCompare(codeAnalysisResults, refData, report);
+            report.endShowMoreBlock();
+
+            report.addLineBreak();
+            report.addLineBreak();
 
             report.startShowMoreBlock("Detailed comparison of all metrics...");
             report.startDiv("width: 100%; overflow-x: auto");
@@ -154,14 +163,12 @@ public class TrendReportGenerator {
     private CodeAnalysisResults getRefData(String analysisResultsPath) {
         CodeAnalysisResults refData = null;
         try {
-            String json = null;
             File file = new File(codeConfigurationFile, analysisResultsPath);
             if (!file.exists()) {
                 file = new File(codeConfigurationFile.getParentFile(), analysisResultsPath);
             }
             if (file.exists()) {
-                json = getJson(file);
-                refData = (CodeAnalysisResults) new JsonMapper().getObject(json, CodeAnalysisResults.class);
+                refData = getAnalysisResultsFromJson(file);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -169,16 +176,28 @@ public class TrendReportGenerator {
         return refData;
     }
 
-    private String getJson(File file) throws IOException {
+    private CodeAnalysisResults getAnalysisResultsFromJson(File file) throws IOException {
         if (file.isDirectory()) {
             file = new File(file, "analysisResults.zip");
         }
+
         if (FilenameUtils.getExtension(file.getName()).equalsIgnoreCase("zip")) {
-            String json = ZipUtils.unzipFirstEntryAsString(file);
-            return StringUtils.isNotBlank(json) ? json : "";
-        } else {
-            return FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+            Map<String, ZipEntryContent> entries = ZipUtils.unzipAllEntriesAsStrings(file);
+
+            if (entries.get("analysisResults.json") != null) {
+                String resultsJson = entries.get("analysisResults.json").getContent();
+                CodeAnalysisResults results = (CodeAnalysisResults) new JsonMapper().getObject(resultsJson, CodeAnalysisResults.class);
+                if (entries.get("config.json") != null) {
+                    String configJson = entries.get("config.json").getContent();
+                    CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(configJson, CodeConfiguration.class);
+                    results.setCodeConfiguration(codeConfiguration);
+                }
+
+                return results;
+            }
         }
+
+        return null;
     }
 
     private void addRow(Metric metric, CodeAnalysisResults refData) {

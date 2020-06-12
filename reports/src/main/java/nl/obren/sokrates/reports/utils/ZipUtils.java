@@ -5,6 +5,10 @@
 package nl.obren.sokrates.reports.utils;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -61,5 +65,32 @@ public class ZipUtils {
         }
 
         return null;
+    }
+
+    public static Map<String, ZipEntryContent> unzipAllEntriesAsStrings(File zipFile) {
+        Map<String, ZipEntryContent> entries = new HashMap<>();
+        try {
+            ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile));
+            ZipEntry zipEntry;
+            while ((zipEntry = zis.getNextEntry()) != null) {
+                StringBuilder stringBuilder = new StringBuilder();
+                if (zipEntry != null) {
+                    int len;
+                    byte[] buffer = new byte[1024];
+                    while ((len = zis.read(buffer)) > 0) {
+                        for (int i = 0; i < len; i++) {
+                            stringBuilder.append((char) buffer[i]);
+                        }
+                    }
+                }
+                String name = zipEntry.getName();
+                entries.put(name, new ZipEntryContent(name, stringBuilder.toString()));
+            }
+            zis.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return entries;
     }
 }

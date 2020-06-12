@@ -409,6 +409,9 @@ public class DataExporter {
             ZipUtils.stringToZipFile(new File(getTodayHistoryFolder(), "analysisResults.zip"),
                     new String[][]{{"config.json", configJson},
                             {"analysisResults.json", analysisResultsJson}});
+            ZipUtils.stringToZipFile(new File(getLatestHistoryFolder(), "analysisResults.zip"),
+                    new String[][]{{"config.json", configJson},
+                            {"analysisResults.json", analysisResultsJson}});
         }
 
         FileUtils.write(new File(dataFolder, "mainFiles.json"), new JsonGenerator().generate(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
@@ -701,6 +704,12 @@ public class DataExporter {
         String date = simpleDateFormat.format(new Date());
 
         File folder = new File(getDataHistoryFolder(), date);
+        folder.mkdirs();
+        return folder;
+    }
+
+    public File getLatestHistoryFolder() {
+        File folder = new File(getDataHistoryFolder(), "LATEST");
         folder.mkdirs();
         return folder;
     }

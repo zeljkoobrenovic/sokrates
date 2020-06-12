@@ -17,6 +17,10 @@ import static nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution.Types
 public class SourceFileAgeDistribution extends RiskDistributionStats {
     private Types type;
 
+    public SourceFileAgeDistribution() {
+        super(30, 90, 180, 365);
+    }
+
     public SourceFileAgeDistribution(Types type) {
         super(30, 90, 180, 365);
         this.type = type;
