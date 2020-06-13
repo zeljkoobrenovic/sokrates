@@ -14,7 +14,7 @@ import java.util.Date;
 import java.util.List;
 
 public class TrendAnalysisConfig {
-    private String referenceAnalysesFolder = "reports/history";
+    private String referenceAnalysesFolder = "history";
     private boolean saveHistory = false;
     private String frequency = "weekly";
     private int maxReferencePointsForAnalysis = 20;
@@ -67,12 +67,14 @@ public class TrendAnalysisConfig {
     public String getSnapshotFolderName() {
         Date today = new Date();
 
+        String subFolder = "snapshots/";
+        
         if (frequency.toLowerCase().startsWith("week")) {
-            return "weekly/" + new SimpleDateFormat("yyyy-ww").format(today);
+            return subFolder + new SimpleDateFormat("yyyy-ww").format(today);
         } else if (frequency.toLowerCase().startsWith("month")) {
-            return "monthly/" + new SimpleDateFormat("yyyy-MM").format(today);
+            return subFolder + new SimpleDateFormat("yyyy-MM").format(today);
         } else {
-            return "daily/" + new SimpleDateFormat("yyyy-MM-dd").format(today);
+            return subFolder + new SimpleDateFormat("yyyy-MM-dd").format(today);
         }
     }
 
