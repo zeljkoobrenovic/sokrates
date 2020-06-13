@@ -4,9 +4,19 @@
 
 package nl.obren.sokrates.sourcecode.core;
 
+import java.io.File;
+
 public class ReferenceAnalysisResult {
     private String label = "DATE";
-    private String analysisResultsPath = "reports/history/DATE/analysisResults.zip";
+    private File analysisResultsZipFile;
+
+    public ReferenceAnalysisResult() {
+    }
+
+    public ReferenceAnalysisResult(String label, File analysisResultsZipFile) {
+        this.label = label;
+        this.analysisResultsZipFile = analysisResultsZipFile;
+    }
 
     public String getLabel() {
         return label;
@@ -16,11 +26,11 @@ public class ReferenceAnalysisResult {
         this.label = label;
     }
 
-    public String getAnalysisResultsPath() {
-        return analysisResultsPath;
+    public File getAnalysisResultsZipFile() {
+        return analysisResultsZipFile;
     }
 
-    public void setAnalysisResultsPath(String analysisResultsPath) {
-        this.analysisResultsPath = analysisResultsPath;
+    public void setAnalysisResultsZipFile(File analysisResultsZipFile) {
+        this.analysisResultsZipFile = analysisResultsZipFile;
     }
 }

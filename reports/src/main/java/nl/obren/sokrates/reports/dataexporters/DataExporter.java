@@ -23,8 +23,6 @@ import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.reports.utils.ZipUtils;
 import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.filehistory.FileHistoryScopingUtils;
-import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
@@ -33,6 +31,8 @@ import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.duplication.DuplicatedFileBlock;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
+import nl.obren.sokrates.sourcecode.filehistory.FileHistoryScopingUtils;
+import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.lang.DefaultLanguageAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
@@ -45,7 +45,6 @@ import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -405,7 +404,7 @@ public class DataExporter {
         String configJson = FileUtils.readFileToString(sokratesConfigFile, UTF_8);
         FileUtils.write(new File(dataFolder, "config.json"), analysisResultsJson, UTF_8);
 
-        if (codeConfiguration.getAnalysis().isSaveDailyHistory()) {
+        if (codeConfiguration.getTrendAnalysis().isSaveHistory()) {
             ZipUtils.stringToZipFile(new File(getTodayHistoryFolder(), "analysisResults.zip"),
                     new String[][]{{"config.json", configJson},
                             {"analysisResults.json", analysisResultsJson}});
@@ -416,7 +415,7 @@ public class DataExporter {
 
         FileUtils.write(new File(dataFolder, "mainFiles.json"), new JsonGenerator().generate(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
 
-        if (codeConfiguration.getAnalysis().filesHistoryImportPathExists(sokratesConfigFile.getParentFile())) {
+        if (codeConfiguration.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesConfigFile.getParentFile())) {
             saveExtraAnalysesConfig();
         }
 
@@ -463,7 +462,7 @@ public class DataExporter {
         CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
         codeConfiguration.setLogicalDecompositions(FileHistoryScopingUtils.getLogicalDecompositionsFileUpdateFrequency(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()));
 
-        codeConfiguration.getAnalysis().setFilesHistoryImportPath("");
+        codeConfiguration.getFileHistoryAnalysis().setImportPath("");
 
         FileUtils.write(new File(extraAnalysisDataFolder, "config_by_file_change_frequency.json"), new JsonGenerator().generate(codeConfiguration), UTF_8);
     }
@@ -472,7 +471,7 @@ public class DataExporter {
         CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
         codeConfiguration.setLogicalDecompositions(FileHistoryScopingUtils.getLogicalDecompositionsByAge(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()));
 
-        codeConfiguration.getAnalysis().setFilesHistoryImportPath("");
+        codeConfiguration.getFileHistoryAnalysis().setImportPath("");
 
         FileUtils.write(new File(extraAnalysisDataFolder, "config_by_file_age.json"), new JsonGenerator().generate(codeConfiguration), UTF_8);
     }
@@ -481,7 +480,7 @@ public class DataExporter {
         CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
         codeConfiguration.setLogicalDecompositions(FileHistoryScopingUtils.getLogicalDecompositionsByFreshness(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()));
 
-        codeConfiguration.getAnalysis().setFilesHistoryImportPath("");
+        codeConfiguration.getFileHistoryAnalysis().setImportPath("");
 
         FileUtils.write(new File(extraAnalysisDataFolder, "config_by_file_freshness.json"), new JsonGenerator().generate(codeConfiguration), UTF_8);
     }
@@ -698,14 +697,7 @@ public class DataExporter {
     }
 
     public File getTodayHistoryFolder() {
-        String pattern = "yyyy-MM-dd";
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
-
-        String date = simpleDateFormat.format(new Date());
-
-        File folder = new File(getDataHistoryFolder(), date);
-        folder.mkdirs();
-        return folder;
+        return codeConfiguration.getTrendAnalysis().getSnapshotFolder(sokratesConfigFile.getParentFile());
     }
 
     public File getLatestHistoryFolder() {

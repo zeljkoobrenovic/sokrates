@@ -201,10 +201,10 @@ public class ReportFileExporter {
         List<String[]> list = new ArrayList<>();
 
         CodeConfiguration config = analysisResults.getCodeConfiguration();
-        boolean showHistoryReport = config.getAnalysis().filesHistoryImportPathExists(sokratesConfigFolder);
+        boolean showHistoryReport = config.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesConfigFolder);
         boolean showDuplication = !config.getAnalysis().isSkipDuplication();
         boolean showDependencies = !config.getAnalysis().isSkipDependencies();
-        boolean showTrends = config.getCompareResultsWith().size() > 0;
+        boolean showTrends = config.getTrendAnalysis().getReferenceAnalyses(sokratesConfigFolder).size() > 0;
         boolean showConcerns = config.countAllCrossCuttingConcernsDefinitions() > 1;
         boolean showControls = config.getGoalsAndControls().size() > 0;
 

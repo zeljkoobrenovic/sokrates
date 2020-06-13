@@ -15,6 +15,7 @@ import nl.obren.sokrates.reports.utils.ZipUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.ReferenceAnalysisResult;
+import nl.obren.sokrates.sourcecode.core.TrendAnalysisConfig;
 import nl.obren.sokrates.sourcecode.metrics.Metric;
 import org.apache.commons.io.FilenameUtils;
 
@@ -47,7 +48,8 @@ public class TrendReportGenerator {
         report.endShowMoreBlock();
         report.endSection();
 
-        List<ReferenceAnalysisResult> referenceResults = codeAnalysisResults.getCodeConfiguration().getCompareResultsWith();
+        TrendAnalysisConfig trendAnalysis = codeAnalysisResults.getCodeConfiguration().getTrendAnalysis();
+        List<ReferenceAnalysisResult> referenceResults = trendAnalysis.getReferenceAnalyses(codeConfigurationFile.getParentFile());
 
         if (referenceResults.size() == 0) {
             report.addParagraph("No reference analysis results have been defined.");
@@ -72,7 +74,7 @@ public class TrendReportGenerator {
         int maxTestLoc[] = {currentAnalysisResults.getTestAspectAnalysisResults().getLinesOfCode()};
         int maxTotalLoc[] = {maxMainLoc[0] + maxTestLoc[0]};
         referenceResults.forEach(result -> {
-            CodeAnalysisResults refData = getRefData(result.getAnalysisResultsPath());
+            CodeAnalysisResults refData = getRefData(result.getAnalysisResultsZipFile());
             if (refData != null && refData.getCodeConfiguration() != null) {
                 analysisResultsList.add(refData);
                 labels.add(result.getLabel());
@@ -132,10 +134,10 @@ public class TrendReportGenerator {
     }
 
     private void processReferenceResults(CodeAnalysisResults codeAnalysisResults, RichTextReport report, ReferenceAnalysisResult result) {
-        String analysisResultsPath = result.getAnalysisResultsPath();
-        CodeAnalysisResults refData = getRefData(analysisResultsPath);
+        String analysisResultsPath = result.getAnalysisResultsZipFile().getPath();
+        CodeAnalysisResults refData = getRefData(result.getAnalysisResultsZipFile());
         if (refData != null) {
-            report.startSection("Current vs. " + result.getLabel(), result.getAnalysisResultsPath());
+            report.startSection("Current vs. " + result.getLabel(), analysisResultsPath);
             report.startShowMoreBlock("Comparison summary...");
             new SummaryUtils().summarizeAndCompare(codeAnalysisResults, refData, report);
             report.endShowMoreBlock();
@@ -160,13 +162,9 @@ public class TrendReportGenerator {
         }
     }
 
-    private CodeAnalysisResults getRefData(String analysisResultsPath) {
+    private CodeAnalysisResults getRefData(File file) {
         CodeAnalysisResults refData = null;
         try {
-            File file = new File(codeConfigurationFile, analysisResultsPath);
-            if (!file.exists()) {
-                file = new File(codeConfigurationFile.getParentFile(), analysisResultsPath);
-            }
             if (file.exists()) {
                 refData = getAnalysisResultsFromJson(file);
             }

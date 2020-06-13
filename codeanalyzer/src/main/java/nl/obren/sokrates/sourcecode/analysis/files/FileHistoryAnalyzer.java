@@ -43,8 +43,8 @@ public class FileHistoryAnalyzer extends Analyzer {
     }
 
     public void analyze() {
-        if (codeConfiguration.getAnalysis().filesHistoryImportPathExists(sokratesFolder)) {
-            List<FileModificationHistory> history = codeConfiguration.getAnalysis().getHistory(sokratesFolder);
+        if (codeConfiguration.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesFolder)) {
+            List<FileModificationHistory> history = codeConfiguration.getFileHistoryAnalysis().getHistory(sokratesFolder);
 
             analysisResults.setHistory(history);
 

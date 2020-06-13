@@ -9,6 +9,7 @@ import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.SourceCodeFiles;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
+import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.aspects.*;
 import nl.obren.sokrates.sourcecode.metrics.MetricRangeControl;
 import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
@@ -35,13 +36,14 @@ public class CodeConfiguration {
     private NamedSourceCodeAspect buildAndDeployment;
     private NamedSourceCodeAspect other;
 
-    private List<MetricsWithGoal> goalsAndControls = new ArrayList<>();
-    private List<ReferenceAnalysisResult> compareResultsWith = new ArrayList<>();
-
     private List<LogicalDecomposition> logicalDecompositions = new ArrayList<>();
     private List<CrossCuttingConcernsGroup> crossCuttingConcerns = new ArrayList<>();
 
     private AnalysisConfig analysis = new AnalysisConfig();
+
+    private TrendAnalysisConfig trendAnalysis = new TrendAnalysisConfig();
+    private List<MetricsWithGoal> goalsAndControls = new ArrayList<>();
+    private FileHistoryAnalysisConfig fileHistoryAnalysis = new FileHistoryAnalysisConfig();
 
     public CodeConfiguration() {
         createDefaultScope();
@@ -468,14 +470,6 @@ public class CodeConfiguration {
         }
     }
 
-    public List<ReferenceAnalysisResult> getCompareResultsWith() {
-        return compareResultsWith;
-    }
-
-    public void setCompareResultsWith(List<ReferenceAnalysisResult> compareResultsWith) {
-        this.compareResultsWith = compareResultsWith;
-    }
-
     public List<String> getSummary() {
         return summary;
     }
@@ -485,6 +479,26 @@ public class CodeConfiguration {
             this.summary = new ArrayList<>();
         } else {
             this.summary = summary;
+        }
+    }
+
+    public FileHistoryAnalysisConfig getFileHistoryAnalysis() {
+        return fileHistoryAnalysis;
+    }
+
+    public void setFileHistoryAnalysis(FileHistoryAnalysisConfig fileHistoryAnalysis) {
+        if (fileHistoryAnalysis != null) {
+            this.fileHistoryAnalysis = fileHistoryAnalysis;
+        }
+    }
+
+    public TrendAnalysisConfig getTrendAnalysis() {
+        return trendAnalysis;
+    }
+
+    public void setTrendAnalysis(TrendAnalysisConfig trendAnalysis) {
+        if (trendAnalysis != null) {
+            this.trendAnalysis = trendAnalysis;
         }
     }
 }

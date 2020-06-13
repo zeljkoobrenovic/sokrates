@@ -18,9 +18,7 @@ public class AnalysisConfig {
     private boolean skipDuplication = false;
     private boolean skipDependencies = false;
     private boolean cacheSourceFiles = true;
-    private boolean saveDailyHistory = false;
     private List<AnalyzerOverride> analyzerOverrides = new ArrayList<>();
-    private String filesHistoryImportPath = "";
 
     public boolean isSkipDuplication() {
         return skipDuplication;
@@ -46,14 +44,6 @@ public class AnalysisConfig {
         this.analyzerOverrides = analyzerOverrides;
     }
 
-    public boolean isSaveDailyHistory() {
-        return saveDailyHistory;
-    }
-
-    public void setSaveDailyHistory(boolean saveDailyHistory) {
-        this.saveDailyHistory = saveDailyHistory;
-    }
-
     public boolean isCacheSourceFiles() {
         return cacheSourceFiles;
     }
@@ -62,35 +52,4 @@ public class AnalysisConfig {
         this.cacheSourceFiles = cacheSourceFiles;
     }
 
-    public String getFilesHistoryImportPath() {
-        return filesHistoryImportPath;
-    }
-
-    public void setFilesHistoryImportPath(String filesHistoryImportPath) {
-        this.filesHistoryImportPath = filesHistoryImportPath;
-    }
-
-    @JsonIgnore
-    public File getFilesHistoryFile(File sokratesConfigFolder) {
-        if (new File(filesHistoryImportPath).exists()) {
-            return new File(filesHistoryImportPath);
-        } else {
-            return new File(sokratesConfigFolder, filesHistoryImportPath);
-        }
-    }
-
-    @JsonIgnore
-    public List<FileModificationHistory> getHistory(File sokratesConfigFolder) {
-        return GitLsFileUtil.importGitLsFilesExport(getFilesHistoryFile(sokratesConfigFolder));
-    }
-
-    @JsonIgnore
-    public boolean filesHistoryImportPathExists(File sokratesConfigFolder) {
-        if (StringUtils.isBlank(filesHistoryImportPath)) {
-            return false;
-        }
-
-        return getFilesHistoryFile(sokratesConfigFolder).exists()
-                && getHistory(sokratesConfigFolder).size() > 0;
-    }
 }
