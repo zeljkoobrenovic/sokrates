@@ -39,11 +39,12 @@ public class CodeConfiguration {
     private List<LogicalDecomposition> logicalDecompositions = new ArrayList<>();
     private List<CrossCuttingConcernsGroup> crossCuttingConcerns = new ArrayList<>();
 
-    private AnalysisConfig analysis = new AnalysisConfig();
+    private List<MetricsWithGoal> goalsAndControls = new ArrayList<>();
 
     private TrendAnalysisConfig trendAnalysis = new TrendAnalysisConfig();
-    private List<MetricsWithGoal> goalsAndControls = new ArrayList<>();
     private FileHistoryAnalysisConfig fileHistoryAnalysis = new FileHistoryAnalysisConfig();
+
+    private AnalysisConfig analysis = new AnalysisConfig();
 
     public CodeConfiguration() {
         createDefaultScope();

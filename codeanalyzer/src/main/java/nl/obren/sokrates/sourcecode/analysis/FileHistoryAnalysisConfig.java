@@ -14,6 +14,7 @@ import java.util.List;
 
 public class FileHistoryAnalysisConfig {
     private String importPath = "";
+    private int dependencyLinkThreshold = 20;
 
     public String getImportPath() {
         return importPath;
@@ -45,5 +46,13 @@ public class FileHistoryAnalysisConfig {
 
         return getFilesHistoryFile(sokratesConfigFolder).exists()
                 && getHistory(sokratesConfigFolder).size() > 0;
+    }
+
+    public int getDependencyLinkThreshold() {
+        return dependencyLinkThreshold;
+    }
+
+    public void setDependencyLinkThreshold(int dependencyLinkThreshold) {
+        this.dependencyLinkThreshold = dependencyLinkThreshold;
     }
 }

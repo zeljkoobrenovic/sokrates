@@ -57,8 +57,11 @@ public class CodeAnalyzer {
             new CrossCuttingConcernsAnalyzer(results, progressFeedback).analyze();
         }
 
-        if (shouldAnalyzeFiles()) {
+        if (shouldAnalyzeFileSize()) {
             new FileSizeAnalyzer(results).analyze();
+        }
+
+        if (shouldAnalyzeFileHistory()) {
             new FileHistoryAnalyzer(results, codeConfigurationFile.getParentFile()).analyze();
         }
 
@@ -84,8 +87,12 @@ public class CodeAnalyzer {
         return codeAnalyzerSettings.isAnalyzeCrossCuttingConcerns() || codeAnalyzerSettings.isCreateMetricsList() || codeAnalyzerSettings.isAnalyzeControls();
     }
 
-    private boolean shouldAnalyzeFiles() {
+    private boolean shouldAnalyzeFileSize() {
         return codeAnalyzerSettings.isAnalyzeFileSize() || codeAnalyzerSettings.isCreateMetricsList() || codeAnalyzerSettings.isAnalyzeControls();
+    }
+
+    private boolean shouldAnalyzeFileHistory() {
+        return codeAnalyzerSettings.isAnalyzeFileHistory();
     }
 
     private boolean shouldAnalyzeUnits() {

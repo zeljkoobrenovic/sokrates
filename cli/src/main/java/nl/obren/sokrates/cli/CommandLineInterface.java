@@ -55,6 +55,7 @@ public class CommandLineInterface {
     public static final String REPORT_LOGICAL_DECOMPOSITION = "reportLogicalDecomposition";
     public static final String REPORT_CROSS_CUTTING_CONCERNS = "reportCrossCuttingConcerns";
     public static final String REPORT_FILE_SIZE = "reportFileSize";
+    public static final String REPORT_FILE_HISTORY = "reportFileHistory";
     public static final String REPORT_METRICS = "reportMetrics";
     public static final String REPORT_UNIT_SIZE = "reportUnitSize";
     public static final String REPORT_CONDITIONAL_COMPLEXITY = "reportConditionalComplexity";
@@ -77,6 +78,7 @@ public class CommandLineInterface {
     private Option logicalDecomposition = new Option(REPORT_LOGICAL_DECOMPOSITION, false, "generate the logical decomposition report (stored in <outputFolder>/LogicalDecomposition.html)");
     private Option crossCuttingConcerns = new Option(REPORT_CROSS_CUTTING_CONCERNS, false, "generate the cross cutting concerns report (stored in <outputFolder>/CrossCuttingConcerns.html)");
     private Option fileSize = new Option(REPORT_FILE_SIZE, false, "generate the file size report (stored in <outputFolder>/FileSize.html)");
+    private Option fileHistory = new Option(REPORT_FILE_HISTORY, false, "generate the file history report (stored in <outputFolder>/FileHistory.html)");
     private Option unitSize = new Option(REPORT_UNIT_SIZE, false, "generate the unit size report (stored in <outputFolder>/UnitSize.html)");
     private Option conditionalComplexity = new Option(REPORT_CONDITIONAL_COMPLEXITY, false, "generate the conditional complexity report (stored in <outputFolder>/ConditionalComplexity.html)");
     private Option metrics = new Option(REPORT_METRICS, false, "generate the metrics overview report (stored in <outputFolder>/Metrics.html)");
@@ -504,6 +506,9 @@ public class CommandLineInterface {
             }
             if (cmd.hasOption(fileSize.getOpt())) {
                 settings.setAnalyzeFileSize(true);
+            }
+            if (cmd.hasOption(fileHistory.getOpt())) {
+                settings.setAnalyzeFileHistory(true);
             }
             if (cmd.hasOption(conditionalComplexity.getOpt())) {
                 settings.setAnalyzeConditionalComplexity(true);

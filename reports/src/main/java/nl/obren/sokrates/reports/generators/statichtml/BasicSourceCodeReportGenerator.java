@@ -82,6 +82,8 @@ public class BasicSourceCodeReportGenerator {
             }
             if (codeAnalyzerSettings.isAnalyzeFileSize()) {
                 reports.add(fileSizeReport);
+            }
+            if (codeAnalyzerSettings.isAnalyzeFileHistory()) {
                 if (codeAnalysisResults.getCodeConfiguration().getFileHistoryAnalysis().filesHistoryImportPathExists(codeConfigurationFile.getParentFile())) {
                     reports.add(fileHistoryReport);
                 }
@@ -151,6 +153,9 @@ public class BasicSourceCodeReportGenerator {
 
         if (codeAnalyzerSettings.isAnalyzeFileSize()) {
             new FileSizeReportGenerator(codeAnalysisResults).addFileSizeToReport(fileSizeReport);
+        }
+
+        if (codeAnalyzerSettings.isAnalyzeFileHistory()) {
             if (codeAnalysisResults.getCodeConfiguration().getFileHistoryAnalysis().filesHistoryImportPathExists(codeConfigurationFile.getParentFile())) {
                 new FileHistoryReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileHistoryReport);
             }

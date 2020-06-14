@@ -16,6 +16,7 @@ public class CodeAnalyzerSettings {
     private boolean analyzeCrossCuttingConcerns = true;
     private boolean analyzeDuplication = true;
     private boolean analyzeFileSize = true;
+    private boolean analyzeFileHistory = true;
     private boolean analyzeUnitSize = true;
     private boolean analyzeConditionalComplexity = true;
     private boolean createMetricsList = true;
@@ -44,6 +45,7 @@ public class CodeAnalyzerSettings {
         analyzeCrossCuttingConcerns = false;
         analyzeDuplication = false;
         analyzeFileSize = false;
+        analyzeFileHistory = false;
         analyzeUnitSize = false;
         analyzeConditionalComplexity = false;
         createMetricsList = false;
@@ -148,5 +150,13 @@ public class CodeAnalyzerSettings {
 
     public void setAnalyzeFindings(boolean analyzeFindings) {
         this.analyzeFindings = analyzeFindings;
+    }
+
+    public boolean isAnalyzeFileHistory() {
+        return analyzeFileHistory;
+    }
+
+    public void setAnalyzeFileHistory(boolean analyzeFileHistory) {
+        this.analyzeFileHistory = analyzeFileHistory;
     }
 }

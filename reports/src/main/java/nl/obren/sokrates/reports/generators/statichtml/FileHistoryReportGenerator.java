@@ -441,7 +441,7 @@ public class FileHistoryReportGenerator {
     private void renderDependenciesViaDuplication(RichTextReport report, String logicalDecompositionName) {
         TemporalDependenciesHelper dependenciesHelper = new TemporalDependenciesHelper(logicalDecompositionName);
         List<ComponentDependency> dependencies = dependenciesHelper.extractDependencies(codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether());
-        int threshold = 20;
+        int threshold = codeAnalysisResults.getCodeConfiguration().getFileHistoryAnalysis().getDependencyLinkThreshold();
         List<ComponentDependency> componentDependencies = dependencies.stream().filter(d -> d.getCount() >= threshold).collect(Collectors.toList());
 
         if (componentDependencies.size() > 0) {
