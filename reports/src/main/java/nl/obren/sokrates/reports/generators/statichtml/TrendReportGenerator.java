@@ -10,6 +10,7 @@ import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.core.SummaryUtils;
+import nl.obren.sokrates.reports.utils.ReportUtils;
 import nl.obren.sokrates.reports.utils.ZipEntryContent;
 import nl.obren.sokrates.reports.utils.ZipUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -210,10 +211,10 @@ public class TrendReportGenerator {
 
 
         report.startTableCell("text-align: center; color: lightgrey");
-        report.addHtmlContent("" + refValue);
+        report.addHtmlContent("" + ReportUtils.formatNumber(refValue));
         report.endTableCell();
         report.startTableCell("text-align: center");
-        report.addHtmlContent("<b>" + currentValue + "</b>");
+        report.addHtmlContent("<b>" + ReportUtils.formatNumber(currentValue) + "</b>");
         report.endTableCell();
 
         addDiffCell(currentValue, refValue);
@@ -243,10 +244,10 @@ public class TrendReportGenerator {
         if (Math.abs(diff) < roundingError) {
             diffText = "0 (0%)";
         } else if (Math.abs(refValue) < roundingError) {
-            diffText = diff + " (NEW)";
+            diffText = ReportUtils.formatNumber(diff) + " (NEW)";
         } else {
             double percentage = 100.0 * diff / refValue;
-            diffText = diff + " (" + (percentage > 0 ? "+" : (percentage < 0 ? "-" : ""))
+            diffText = ReportUtils.formatNumber(diff) + " (" + (percentage > 0 ? "+" : (percentage < 0 ? "-" : ""))
                     + FormattingUtils.getFormattedPercentage(Math.abs(percentage)) + "%)";
         }
         return diffText;
