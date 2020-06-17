@@ -4,6 +4,8 @@
 
 package nl.obren.sokrates.reports.utils;
 
+import java.text.DecimalFormat;
+
 public class ReportUtils {
 
     public static String getSvgBar(int value, int maxValue, String color) {
@@ -22,5 +24,15 @@ public class ReportUtils {
         svg += "</svg>";
 
         return svg;
+    }
+
+    public static String formatNumber(Number number) {
+        DecimalFormat df = new DecimalFormat("###,###,###.##");
+        String formattedValue = df.format(number);
+        if (formattedValue.equalsIgnoreCase("NaN")) {
+            formattedValue = "0";
+        }
+
+        return formattedValue;
     }
 }

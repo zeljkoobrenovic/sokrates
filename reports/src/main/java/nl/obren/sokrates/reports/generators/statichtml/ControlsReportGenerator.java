@@ -64,7 +64,8 @@ public class ControlsReportGenerator {
         report.addTableCell(status);
         report.addTableCell(controlStatus.getMetric().getId(), "text-align: center");
         report.addTableCell("" + controlStatus.getControl().getDesiredRange().getTextDescription(), "text-align: center");
-        report.addTableCell("<b>" + controlStatus.getMetric().getValue() + "</b>", "text-align: center");
+        Number value = controlStatus.getMetric().getValue();
+        report.addTableCell("<b>" + ReportUtils.formatNumber(value) + "</b>", "text-align: center");
         report.addTableCell("" + controlStatus.getControl().getDescription() + "");
         report.endTableRow();
     }
