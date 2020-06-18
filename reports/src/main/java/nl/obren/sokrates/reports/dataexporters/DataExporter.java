@@ -14,6 +14,7 @@ import nl.obren.sokrates.reports.dataexporters.duplication.DuplicateFileBlockExp
 import nl.obren.sokrates.reports.dataexporters.duplication.DuplicationExportInfo;
 import nl.obren.sokrates.reports.dataexporters.duplication.DuplicationExporter;
 import nl.obren.sokrates.reports.dataexporters.files.FileListExporter;
+import nl.obren.sokrates.reports.dataexporters.trends.MetricsTrendExporter;
 import nl.obren.sokrates.reports.dataexporters.units.UnitListExporter;
 import nl.obren.sokrates.reports.generators.explorers.DependenciesExplorerGenerator;
 import nl.obren.sokrates.reports.generators.explorers.DuplicationExplorerGenerator;
@@ -92,6 +93,7 @@ public class DataExporter {
 
         exportFileLists();
         exportMetrics();
+        exportTrends();
         exportControls();
         exportJson();
         exportDuplicates();
@@ -99,6 +101,16 @@ public class DataExporter {
         exportInteractiveExplorers();
         exportSourceFile();
         exportDependencies(analysisResults);
+    }
+
+    private void exportTrends() {
+        MetricsTrendExporter exporter = new MetricsTrendExporter(sokratesConfigFile, analysisResults);
+
+        try {
+            FileUtils.write(new File(textDataFolder, "metrics_trend.txt"), exporter.getText(), UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void exportMetrics() {

@@ -10,6 +10,7 @@ import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.core.SummaryUtils;
+import nl.obren.sokrates.reports.dataexporters.trends.ReferenceResultsLoader;
 import nl.obren.sokrates.reports.utils.ReportUtils;
 import nl.obren.sokrates.reports.utils.ZipEntryContent;
 import nl.obren.sokrates.reports.utils.ZipUtils;
@@ -60,7 +61,8 @@ public class TrendReportGenerator {
         summarize(codeAnalysisResults, report, referenceResults);
 
         referenceResults.forEach(result -> {
-            processReferenceResults(codeAnalysisResults, report, result);
+            CodeAnalysisResults refData = new ReferenceResultsLoader().getRefData(result.getAnalysisResultsZipFile());
+            processReferenceResults(codeAnalysisResults, refData, report, result);
         });
 
         return report;
@@ -75,7 +77,7 @@ public class TrendReportGenerator {
         int maxTestLoc[] = {currentAnalysisResults.getTestAspectAnalysisResults().getLinesOfCode()};
         int maxTotalLoc[] = {maxMainLoc[0] + maxTestLoc[0]};
         referenceResults.forEach(result -> {
-            CodeAnalysisResults refData = getRefData(result.getAnalysisResultsZipFile());
+            CodeAnalysisResults refData = new ReferenceResultsLoader().getRefData(result.getAnalysisResultsZipFile());
             if (refData != null && refData.getCodeConfiguration() != null) {
                 analysisResultsList.add(refData);
                 labels.add(result.getLabel());
@@ -88,6 +90,10 @@ public class TrendReportGenerator {
                 maxTotalLoc[0] = Math.max(refLocMain + refLocTest, maxTotalLoc[0]);
             }
         });
+        addCodeVolumeSummarySection(report, analysisResultsList, labels, maxTotalLoc[0]);
+    }
+
+    private void addCodeVolumeSummarySection(RichTextReport report, List<CodeAnalysisResults> analysisResultsList, List<String> labels, int maxTotalLoc) {
         report.startSection("Summary: Code Volume Change", "");
         report.startDiv("width: 100%; overflow-x: auto");
         report.startTable();
@@ -102,13 +108,15 @@ public class TrendReportGenerator {
             report.startTableRow();
             report.addTableCell(labels.get(index[0]));
             report.addTableCell(FormattingUtils.getFormattedCount(mainLoc), "text-align: right");
-            report.addTableCell(getVolumeSvgBarChart(maxTotalLoc[0], mainLoc, testLoc));
+            report.addTableCell(getVolumeSvgBarChart(maxTotalLoc, mainLoc, testLoc));
             report.addTableCell(FormattingUtils.getFormattedCount(testLoc), "text-align: right");
             report.addTableCell(getDuplicationChart(duplicationPercentage));
             report.endTableRow();
             index[0]++;
         });
         report.endTable();
+        report.addLineBreak();
+        report.addNewTabLink("See the details per metric (TXT)", "../data/text/metrics_trend.txt");
         report.endDiv();
         report.endSection();
     }
@@ -134,9 +142,8 @@ public class TrendReportGenerator {
         return chart.getPercentageSvg(duplicationPercentage, "", FormattingUtils.getFormattedPercentage(duplicationPercentage) + "%");
     }
 
-    private void processReferenceResults(CodeAnalysisResults codeAnalysisResults, RichTextReport report, ReferenceAnalysisResult result) {
+    private void processReferenceResults(CodeAnalysisResults codeAnalysisResults, CodeAnalysisResults refData, RichTextReport report, ReferenceAnalysisResult result) {
         String analysisResultsPath = result.getAnalysisResultsZipFile().getPath();
-        CodeAnalysisResults refData = getRefData(result.getAnalysisResultsZipFile());
         if (refData != null) {
             report.startSection("Current vs. " + result.getLabel(), analysisResultsPath);
             report.startShowMoreBlock("Comparison summary...");
@@ -161,42 +168,6 @@ public class TrendReportGenerator {
         } else {
             report.addParagraph("ERROR: could not find the reference result file '" + analysisResultsPath + "'.");
         }
-    }
-
-    private CodeAnalysisResults getRefData(File file) {
-        CodeAnalysisResults refData = null;
-        try {
-            if (file.exists()) {
-                refData = getAnalysisResultsFromJson(file);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return refData;
-    }
-
-    private CodeAnalysisResults getAnalysisResultsFromJson(File file) throws IOException {
-        if (file.isDirectory()) {
-            file = new File(file, "analysisResults.zip");
-        }
-
-        if (FilenameUtils.getExtension(file.getName()).equalsIgnoreCase("zip")) {
-            Map<String, ZipEntryContent> entries = ZipUtils.unzipAllEntriesAsStrings(file);
-
-            if (entries.get("analysisResults.json") != null) {
-                String resultsJson = entries.get("analysisResults.json").getContent();
-                CodeAnalysisResults results = (CodeAnalysisResults) new JsonMapper().getObject(resultsJson, CodeAnalysisResults.class);
-                if (entries.get("config.json") != null) {
-                    String configJson = entries.get("config.json").getContent();
-                    CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(configJson, CodeConfiguration.class);
-                    results.setCodeConfiguration(codeConfiguration);
-                }
-
-                return results;
-            }
-        }
-
-        return null;
     }
 
     private void addRow(Metric metric, CodeAnalysisResults refData) {
