@@ -420,7 +420,7 @@ public class DataExporter {
         FileUtils.write(new File(dataFolder, "analysisResults.json"), analysisResultsJson, UTF_8);
 
         String configJson = FileUtils.readFileToString(sokratesConfigFile, UTF_8);
-        FileUtils.write(new File(dataFolder, "config.json"), analysisResultsJson, UTF_8);
+        FileUtils.write(new File(dataFolder, "config.json"), configJson, UTF_8);
 
         if (codeConfiguration.getTrendAnalysis().isSaveHistory()) {
             ZipUtils.stringToZipFile(new File(getTodayHistoryFolder(), "analysisResults.zip"),
