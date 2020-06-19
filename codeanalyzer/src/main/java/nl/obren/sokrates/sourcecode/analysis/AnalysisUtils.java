@@ -61,7 +61,7 @@ public class AnalysisUtils {
         }
 
         SourceCodeAspectUtils.getAspectsPerExtensions(aspect).forEach(aspectPerExtension -> {
-            String extensionMetricName = name + "_" + aspectPerExtension.getName().replace("*.", "");
+            String extensionMetricName = name + "_EXT_" + aspectPerExtension.getName().replace("*.", "");
             metricsList.addMetric()
                     .id(getMetricId("NUMBER_OF_FILES_" + extensionMetricName))
                     .value(aspectPerExtension.getSourceFiles().size());

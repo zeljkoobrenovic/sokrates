@@ -8,11 +8,7 @@ import nl.obren.sokrates.common.utils.SystemUtils;
 
 public class Metric {
 
-    public enum Scope { SYSTEM, LOGICAL_DECOMPOSITION, LOGICAL_COMPONENT, CROSS_CUTTING_CATEGORY, CROSS_CUTTING_CONCERN, EXTENSION }
-
     private String id;
-    private Scope scope = Scope.SYSTEM;
-    private String scopeQualifier;
     private Number value;
     private String description;
 
@@ -22,30 +18,6 @@ public class Metric {
 
     public Metric id(String name) {
         this.id = SystemUtils.getFileSystemFriendlyName(name).toUpperCase();
-        return this;
-    }
-
-    public Scope getScope() {
-        return scope;
-    }
-
-    public Metric scope(Scope scope) {
-        this.scope = scope;
-        return this;
-    }
-
-    public Metric scope(Scope scope, String scopeQualifier) {
-        this.scope = scope;
-        this.scopeQualifier = scopeQualifier;
-        return this;
-    }
-
-    public String getScopeQualifier() {
-        return scopeQualifier;
-    }
-
-    public Metric scopeQualifier(String scopeQualifier) {
-        this.scopeQualifier = scopeQualifier;
         return this;
     }
 

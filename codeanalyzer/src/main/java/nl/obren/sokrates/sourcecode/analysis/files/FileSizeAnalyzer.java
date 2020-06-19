@@ -48,22 +48,22 @@ public class FileSizeAnalyzer extends Analyzer {
     }
 
     private void addMetrics(SourceFileSizeDistribution overallDistribution) {
-        metricsList.addSystemMetric().id("NUMBER_OF_FILES_0_200").value(overallDistribution.getLowRiskCount())
+        metricsList.addSystemMetric().id("NUMBER_OF_FILES_FILE_SIZE_0_200").value(overallDistribution.getLowRiskCount())
                 .description("Number of files with 200 or less lines of code");
-        metricsList.addSystemMetric().id("NUMBER_OF_FILES_201_500").value(overallDistribution.getMediumRiskCount())
+        metricsList.addSystemMetric().id("NUMBER_OF_FILES_FILE_SIZE_201_500").value(overallDistribution.getMediumRiskCount())
                 .description("Number of files with 200 to 500 lines of code");
-        metricsList.addSystemMetric().id("NUMBER_OF_FILES_501_1000").value(overallDistribution.getHighRiskCount())
+        metricsList.addSystemMetric().id("NUMBER_OF_FILES_FILE_SIZE_501_1000").value(overallDistribution.getHighRiskCount())
                 .description("Number of files with 500 to 1000 lines of code");
-        metricsList.addSystemMetric().id("NUMBER_OF_FILES_1001_PLUS").value(overallDistribution.getVeryHighRiskCount())
+        metricsList.addSystemMetric().id("NUMBER_OF_FILES_FILE_SIZE_1001_PLUS").value(overallDistribution.getVeryHighRiskCount())
                 .description("Number of files with more than 1000 lines of code");
 
-        metricsList.addSystemMetric().id("LINES_OF_CODE_IN_FILES_0_200").value(overallDistribution.getLowRiskCount())
+        metricsList.addSystemMetric().id("LINES_OF_CODE_FILE_SIZE_FILES_0_200").value(overallDistribution.getLowRiskCount())
                 .description("Lines of code in all files with 500 to 1000 lines of code");
-        metricsList.addSystemMetric().id("LINES_OF_CODE_IN_201_500").value(overallDistribution.getMediumRiskCount())
+        metricsList.addSystemMetric().id("LINES_OF_CODE_FILE_SIZE_201_500").value(overallDistribution.getMediumRiskCount())
                 .description("Lines of code in all files with 500 to 1000 lines of code");
-        metricsList.addSystemMetric().id("LINES_OF_CODE_IN_501_1000").value(overallDistribution.getHighRiskCount())
+        metricsList.addSystemMetric().id("LINES_OF_CODE_FILE_SIZE_501_1000").value(overallDistribution.getHighRiskCount())
                 .description("Lines of code in files with 500 to 1000 lines of code");
-        metricsList.addSystemMetric().id("LINES_OF_CODE_IN_1001_PLUS").value(overallDistribution.getVeryHighRiskCount())
+        metricsList.addSystemMetric().id("LINES_OF_CODE_FILE_SIZE_1001_PLUS").value(overallDistribution.getVeryHighRiskCount())
                 .description("Lines of code in all files with more than 1000 lines of code");
     }
 

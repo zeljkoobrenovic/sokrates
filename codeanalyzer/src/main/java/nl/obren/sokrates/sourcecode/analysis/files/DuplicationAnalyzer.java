@@ -113,22 +113,16 @@ public class DuplicationAnalyzer extends Analyzer {
         metricsList.addMetric()
                 .id(AnalysisUtils.getMetricId("DUPLICATION_NUMBER_OF_DUPLICATED_LINES") + suffix)
                 .description("Number of duplicated lines")
-                .scope(Metric.Scope.EXTENSION)
-                .scopeQualifier(extensionDuplication.getExtension())
                 .value(extensionDuplication.getDuplicatedLinesOfCode());
 
         metricsList.addMetric()
                 .id(AnalysisUtils.getMetricId("DUPLICATION_NUMBER_OF_CLEANED_LINES") + suffix)
                 .description("Number of lines after cleaning for duplication calculations")
-                .scope(Metric.Scope.EXTENSION)
-                .scopeQualifier(extensionDuplication.getExtension())
                 .value(extensionDuplication.getCleanedLinesOfCode());
 
         metricsList.addMetric()
                 .id(AnalysisUtils.getMetricId("DUPLICATION_PERCENTAGE") + suffix)
                 .description("Duplication percentage")
-                .scope(Metric.Scope.EXTENSION)
-                .scopeQualifier(extensionDuplication.getExtension())
                 .value(100.0 * extensionDuplication.getDuplicatedLinesOfCode() / extensionDuplication.getCleanedLinesOfCode());
 
         AnalysisUtils.detailedInfo(textSummary, progressFeedback, "     - \"" + extensionDuplication.getExtension() + "\": " + extensionDuplication.getDuplicatedLinesOfCode() + " duplicated lines vs. " +
@@ -147,22 +141,16 @@ public class DuplicationAnalyzer extends Analyzer {
         metricsList.addMetric()
                 .id(AnalysisUtils.getMetricId("DUPLICATION_NUMBER_OF_DUPLICATED_LINES") + suffix)
                 .description("Number of duplicated lines")
-                .scope(Metric.Scope.LOGICAL_COMPONENT)
-                .scopeQualifier(suffix)
                 .value(componentDuplication.getDuplicatedLinesOfCode());
 
         metricsList.addMetric()
                 .id(AnalysisUtils.getMetricId("DUPLICATION_NUMBER_OF_CLEANED_LINES") + suffix)
                 .description("Number of lines after cleaning for duplication calculations")
-                .scope(Metric.Scope.LOGICAL_COMPONENT)
-                .scopeQualifier(suffix)
                 .value(componentDuplication.getDuplicatedLinesOfCode());
 
         metricsList.addMetric()
                 .id(AnalysisUtils.getMetricId("DUPLICATION_PERCENTAGE") + suffix)
                 .description("Duplication percentage")
-                .scope(Metric.Scope.LOGICAL_COMPONENT)
-                .scopeQualifier(suffix)
                 .value(100.0 * componentDuplication.getDuplicatedLinesOfCode() / componentDuplication.getDuplicatedLinesOfCode());
     }
 
@@ -174,31 +162,26 @@ public class DuplicationAnalyzer extends Analyzer {
         metricsList.addMetric()
                 .id(AnalysisUtils.getMetricId("DUPLICATION_NUMBER_OF_DUPLICATES"))
                 .description("Number of duplicates")
-                .scope(Metric.Scope.SYSTEM)
                 .value(numberOfDuplicates);
 
         metricsList.addMetric()
                 .id(AnalysisUtils.getMetricId("DUPLICATION_NUMBER_OF_FILES_WITH_DUPLICATES"))
                 .description("Number of files with duplicates")
-                .scope(Metric.Scope.SYSTEM)
                 .value(numberOfFilesWithDuplicates);
 
         metricsList.addMetric()
                 .id(AnalysisUtils.getMetricId("DUPLICATION_NUMBER_OF_DUPLICATED_LINES"))
                 .description("Number of duplicated lines")
-                .scope(Metric.Scope.SYSTEM)
                 .value(numberOfDuplicatedLines);
 
         metricsList.addMetric()
                 .id(AnalysisUtils.getMetricId("DUPLICATION_NUMBER_OF_CLEANED_LINES"))
                 .description("Number of lines after cleaning for duplication calculations")
-                .scope(Metric.Scope.SYSTEM)
                 .value(totalNumberOfCleanedLines);
 
         metricsList.addMetric()
                 .id(AnalysisUtils.getMetricId("DUPLICATION_PERCENTAGE"))
                 .description("Duplication percentage")
-                .scope(Metric.Scope.SYSTEM)
                 .value(100.0 * numberOfDuplicatedLines / totalNumberOfCleanedLines);
     }
 

@@ -4,7 +4,6 @@
 
 package nl.obren.sokrates.reports.generators.statichtml;
 
-import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
@@ -12,21 +11,15 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.core.SummaryUtils;
 import nl.obren.sokrates.reports.dataexporters.trends.ReferenceResultsLoader;
 import nl.obren.sokrates.reports.utils.ReportUtils;
-import nl.obren.sokrates.reports.utils.ZipEntryContent;
-import nl.obren.sokrates.reports.utils.ZipUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.ReferenceAnalysisResult;
 import nl.obren.sokrates.sourcecode.core.TrendAnalysisConfig;
 import nl.obren.sokrates.sourcecode.metrics.Metric;
-import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 public class TrendReportGenerator {
     private RichTextReport report;
@@ -116,7 +109,30 @@ public class TrendReportGenerator {
         });
         report.endTable();
         report.addLineBreak();
-        report.addNewTabLink("See the details per metric (TXT)", "../data/text/metrics_trend.txt");
+        report.addParagraph("See the details (TXT):");
+        report.startUnorderedList();
+        report.startListItem();
+        report.addNewTabLink("all metrics", "../data/text/metrics_trend.txt");
+        report.endListItem();
+        report.startListItem();
+        report.addNewTabLink("lines of code per extension", "../data/text/metrics_trend_loc_per_extension.txt");
+        report.endListItem();
+        report.startListItem();
+        report.addNewTabLink("lines of code per logical component", "../data/text/metrics_trend_loc_logical_decompositions.txt");
+        report.endListItem();
+        report.startListItem();
+        report.addNewTabLink("duplicated lines", "../data/text/metrics_trend_loc_duplication.txt");
+        report.endListItem();
+        report.startListItem();
+        report.addNewTabLink("lines of code per file size category", "../data/text/metrics_trend_loc_file_size.txt");
+        report.endListItem();
+        report.startListItem();
+        report.addNewTabLink("lines of code per unit size category", "../data/text/metrics_trend_unit_size_loc.txt");
+        report.endListItem();
+        report.startListItem();
+        report.addNewTabLink("lines of code per conditional complexity catagory", "../data/text/metrics_trend_conditional_complexity_loc.txt");
+        report.endListItem();
+        report.endUnorderedList();
         report.endDiv();
         report.endSection();
     }

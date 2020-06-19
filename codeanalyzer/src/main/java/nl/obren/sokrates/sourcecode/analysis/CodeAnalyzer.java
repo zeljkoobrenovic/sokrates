@@ -116,7 +116,6 @@ public class CodeAnalyzer {
         results.getMetricsList().addMetric()
                 .id(AnalysisUtils.getMetricId("TOTAL_ANALYSIS_TIME_IN_MILLIS"))
                 .description("Total analysis time in milliseconds")
-                .scope(Metric.Scope.SYSTEM)
                 .value(System.currentTimeMillis() - start);
 
         AnalysisUtils.info(results.getTextSummary(), progressFeedback, "Total analysis time: " + new DecimalFormat("#.00").format(((System.currentTimeMillis() - start) / 10) * 0.01) + "s", start);

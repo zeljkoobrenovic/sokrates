@@ -23,7 +23,6 @@ import java.util.Map;
 public class BasicsAnalyzer extends Analyzer {
     private final StringBuffer textSummary;
     private final CodeConfiguration codeConfiguration;
-    private final MetricsList metricsList;
     private final long start;
     private final CodeAnalysisResults results;
     private File codeConfigurationFile;
@@ -32,7 +31,6 @@ public class BasicsAnalyzer extends Analyzer {
     public BasicsAnalyzer(CodeAnalysisResults analysisResults, File codeConfigurationFile, ProgressFeedback progressFeedback) {
         this.results = analysisResults;
         this.codeConfiguration = analysisResults.getCodeConfiguration();
-        this.metricsList = analysisResults.getMetricsList();
         this.start = analysisResults.getAnalysisStartTimeMs();
         this.textSummary = analysisResults.getTextSummary();
         this.codeConfigurationFile = codeConfigurationFile;
@@ -81,7 +79,6 @@ public class BasicsAnalyzer extends Analyzer {
         results.getMetricsList().addMetric()
                 .id(AnalysisUtils.getMetricId("TOTAL_NUMBER_OF_FILES"))
                 .description("Total number of files in the source folder")
-                .scope(Metric.Scope.SYSTEM)
                 .value(sourceCodeFiles.getAllFiles().size());
     }
 
@@ -93,7 +90,6 @@ public class BasicsAnalyzer extends Analyzer {
         results.getMetricsList().addMetric()
                 .id(AnalysisUtils.getMetricId("TEST_VS_MAIN_LINES_OF_CODE_PERCENTAGE"))
                 .description("Test / main code ratio")
-                .scope(Metric.Scope.SYSTEM)
                 .value(((int) (10000.0 * results.getTestAspectAnalysisResults().getLinesOfCode() / results.getMainAspectAnalysisResults().getLinesOfCode())) / 100.0
                 );
 

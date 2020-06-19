@@ -63,7 +63,7 @@ public class LogicalDecompositionAnalyzer extends Analyzer {
             logicalDecomposition.getComponents().forEach(component -> {
                 AspectAnalysisResults componentAnalysisResults = new AspectAnalysisResults(component.getName());
                 logicalDecompositionAnalysisResults.getComponents().add(componentAnalysisResults);
-                AnalysisUtils.analyze(logicalDecomposition.getName(), component, LogicalDecompositionAnalyzer.this.progressFeedback, componentAnalysisResults,
+                AnalysisUtils.analyze("DECOMPOSITION_" + logicalDecomposition.getName(), component, LogicalDecompositionAnalyzer.this.progressFeedback, componentAnalysisResults,
                         metricsList, textSummary, start);
             });
 
@@ -103,23 +103,19 @@ public class LogicalDecompositionAnalyzer extends Analyzer {
         String name = getMetricFriendlyName(logicalDecompositionName);
 
         metricsList.addMetric()
-                .id(AnalysisUtils.getMetricId("NUMBER_OF_DEPENDENCIES_" + name))
-                .scope(Metric.Scope.LOGICAL_DECOMPOSITION)
+                .id(AnalysisUtils.getMetricId("NUMBER_OF_DEPENDENCIES_DECOMPOSITION_" + name))
                 .value(componentDependencies.size());
 
         metricsList.addMetric()
-                .id(AnalysisUtils.getMetricId("NUMBER_OF_PLACES_WITH_CYCLIC_DEPENDENCIES_" + name))
-                .scope(Metric.Scope.LOGICAL_DECOMPOSITION)
+                .id(AnalysisUtils.getMetricId("NUMBER_OF_PLACES_WITH_CYCLIC_DEPENDENCIES_DECOMPOSITION_" + name))
                 .value(DependencyUtils.getCyclicDependencyPlacesCount(componentDependencies));
     }
 
     private void addNumberOfAnchorDependenciesMetric(List<Dependency> allDependencies, String logicalDecompositionName) {
         String name = getMetricFriendlyName(logicalDecompositionName);
         metricsList.addMetric()
-                .id(AnalysisUtils.getMetricId("NUMBER_OF_DEPENDENCY_LINKS_" + name))
+                .id(AnalysisUtils.getMetricId("NUMBER_OF_DEPENDENCY_LINKS_DECOMPOSITION_" + name))
                 .description("Number of anchor dependencies")
-                .scope(Metric.Scope.LOGICAL_DECOMPOSITION)
-                .scopeQualifier(logicalDecompositionName)
                 .value(allDependencies.size());
     }
 

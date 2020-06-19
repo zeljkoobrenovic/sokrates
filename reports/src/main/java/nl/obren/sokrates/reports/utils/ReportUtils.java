@@ -27,12 +27,18 @@ public class ReportUtils {
     }
 
     public static String formatNumber(Number number) {
-        DecimalFormat df = new DecimalFormat("###,###,###.##");
-        String formattedValue = df.format(number);
-        if (formattedValue.equalsIgnoreCase("NaN")) {
-            formattedValue = "0";
+        try {
+            DecimalFormat df = new DecimalFormat("###,###,###.##");
+            String formattedValue = df.format(number);
+            if (formattedValue.equalsIgnoreCase("NaN")) {
+                formattedValue = "0";
+            }
+
+            return formattedValue;
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
         }
 
-        return formattedValue;
+        return "0";
     }
 }

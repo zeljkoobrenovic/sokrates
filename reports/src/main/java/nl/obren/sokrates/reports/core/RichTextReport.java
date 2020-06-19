@@ -228,6 +228,14 @@ public class RichTextReport {
         addHtmlContent("<li>" + text + "</li>\n");
     }
 
+    public void startListItem() {
+        addHtmlContent("<li>");
+    }
+
+    public void endListItem() {
+        addHtmlContent("</li>\n");
+    }
+
     public void startUnorderedList() {
         addHtmlContent("<ul>\n");
     }

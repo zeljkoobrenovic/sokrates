@@ -30,7 +30,7 @@ public class MetricsList {
     public Metric addSystemMetric() {
         Metric metric = new Metric();
         metrics.add(metric);
-        return metric.scope(Metric.Scope.SYSTEM);
+        return metric;
     }
 
     public List<Metric> getMetrics() {

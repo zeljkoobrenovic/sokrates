@@ -111,19 +111,16 @@ public class UnitsAnalyzer extends Analyzer {
         metricsList.addMetric()
                 .id(AnalysisUtils.getMetricId("NUMBER_OF_UNITS"))
                 .description("Number of units")
-                .scope(Metric.Scope.SYSTEM)
                 .value(allUnits.size());
 
         metricsList.addMetric()
                 .id(AnalysisUtils.getMetricId("LINES_OF_CODE_IN_UNITS"))
                 .description("Lines of code in units")
-                .scope(Metric.Scope.SYSTEM)
                 .value(linesOfCode);
 
         metricsList.addMetric()
                 .id(AnalysisUtils.getMetricId("LINES_OF_CODE_OUTSIDE_UNITS"))
                 .description("Lines of code in units")
-                .scope(Metric.Scope.SYSTEM)
                 .value(main.getLinesOfCode() - linesOfCode);
 
         updateFilesWithUnitInfo();
@@ -193,51 +190,42 @@ public class UnitsAnalyzer extends Analyzer {
     private void addVeryHighRiskMetrics(RiskDistributionStats riskDistributionStats, UnitCategoryNames categoryNames, String prefix, String namePrefix) {
         metricsList.addMetric()
                 .id(safeId(AnalysisUtils.getMetricId(namePrefix + categoryNames.getVeryHighRisk() + "_LOC")))
-                .scopeQualifier(prefix)
                 .value(riskDistributionStats.getVeryHighRiskValue());
 
         metricsList.addMetric()
                 .id(safeId(AnalysisUtils.getMetricId(namePrefix + categoryNames.getVeryHighRisk() + "_PERCENTAGE")))
-                .scopeQualifier(prefix)
                 .value(riskDistributionStats.getVeryHighRiskPercentage());
 
         metricsList.addMetric()
                 .id(safeId(AnalysisUtils.getMetricId(namePrefix + categoryNames.getVeryHighRisk() + "_COUNT")))
-                .scopeQualifier(prefix)
                 .value(riskDistributionStats.getVeryHighRiskCount());
     }
 
     private void addHighRiskMetrics(RiskDistributionStats riskDistributionStats, UnitCategoryNames categoryNames, String prefix, String namePrefix) {
         metricsList.addMetric()
                 .id(safeId(AnalysisUtils.getMetricId(namePrefix + categoryNames.getHighRisk() + "_LOC")))
-                .scopeQualifier(prefix)
                 .value(riskDistributionStats.getHighRiskValue());
 
         metricsList.addMetric()
                 .id(safeId(AnalysisUtils.getMetricId(namePrefix + categoryNames.getHighRisk() + "_PERCENTAGE")))
-                .scopeQualifier(prefix)
                 .value(riskDistributionStats.getHighRiskPercentage());
 
         metricsList.addMetric()
                 .id(safeId(AnalysisUtils.getMetricId(namePrefix + categoryNames.getHighRisk() + "_COUNT")))
-                .scopeQualifier(prefix)
                 .value(riskDistributionStats.getHighRiskCount());
     }
 
     private void addMediumRIskMetrics(RiskDistributionStats riskDistributionStats, UnitCategoryNames categoryNames, String prefix, String namePrefix) {
         metricsList.addMetric()
                 .id(safeId(AnalysisUtils.getMetricId(namePrefix + categoryNames.getMediumRisk() + "_LOC")))
-                .scopeQualifier(prefix)
                 .value(riskDistributionStats.getMediumRiskValue());
 
         metricsList.addMetric()
                 .id(safeId(AnalysisUtils.getMetricId(namePrefix + categoryNames.getMediumRisk() + "_PERCENTAGE")))
-                .scopeQualifier(prefix)
                 .value(riskDistributionStats.getMediumRiskPercentage());
 
         metricsList.addMetric()
                 .id(safeId(AnalysisUtils.getMetricId(namePrefix + categoryNames.getMediumRisk() + "_COUNT")))
-                .scopeQualifier(prefix)
                 .value(riskDistributionStats.getMediumRiskCount());
     }
 
@@ -248,17 +236,14 @@ public class UnitsAnalyzer extends Analyzer {
     private void addLowRiskMetrics(RiskDistributionStats riskDistributionStats, UnitCategoryNames categoryNames, String prefix, String namePrefix) {
         metricsList.addMetric()
                 .id(safeId(AnalysisUtils.getMetricId(namePrefix + categoryNames.getLowRisk() + "_LOC")))
-                .scopeQualifier(prefix)
                 .value(riskDistributionStats.getLowRiskValue());
 
         metricsList.addMetric()
                 .id(safeId(AnalysisUtils.getMetricId(namePrefix + categoryNames.getLowRisk() + "_PERCENTAGE")))
-                .scopeQualifier(prefix)
                 .value(riskDistributionStats.getLowRiskPercentage());
 
         metricsList.addMetric()
                 .id(safeId(AnalysisUtils.getMetricId(namePrefix + categoryNames.getLowRisk() + "_COUNT")))
-                .scopeQualifier(prefix)
                 .value(riskDistributionStats.getLowRiskCount());
     }
 

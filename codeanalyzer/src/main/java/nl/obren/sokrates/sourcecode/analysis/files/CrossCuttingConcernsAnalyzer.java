@@ -40,7 +40,7 @@ public class CrossCuttingConcernsAnalyzer extends Analyzer {
             group.getConcerns().forEach(concern -> {
                 AspectAnalysisResults aspectAnalysisResults = new AspectAnalysisResults(concern.getName());
                 crossCuttingConcernsAnalysisResults.getCrossCuttingConcerns().add(aspectAnalysisResults);
-                AnalysisUtils.analyze(group.getName(), concern, progressFeedback, aspectAnalysisResults, metricsList, textSummary, start);
+                AnalysisUtils.analyze("CONCERN_" + group.getName(), concern, progressFeedback, aspectAnalysisResults, metricsList, textSummary, start);
             });
         });
     }
