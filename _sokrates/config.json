@@ -49,6 +49,71 @@
     "sourceFileFilters" : [ ],
     "files" : [ ]
   },
+  "logicalDecompositions" : [ {
+    "name" : "primary",
+    "scope" : "main",
+    "filters" : [ ],
+    "componentsFolderDepth" : 0,
+    "components" : [ ],
+    "metaComponents" : [ {
+      "pathPattern" : "",
+      "contentPattern" : "package nl[.]obren[.]sokrates[.].*",
+      "use" : "content",
+      "ignoreComments" : true,
+      "nameOperations" : [ {
+        "op" : "extract",
+        "params" : [ "nl[.]obren[.]sokrates[.][a-z0-9_]+" ]
+      }, {
+        "op" : "replace",
+        "params" : [ "nl[.]obren[.]sokrates[.]", "" ]
+      } ]
+    } ],
+    "includeRemainingFiles" : true,
+    "dependenciesFinder" : {
+      "useBuiltInDependencyFinders" : true,
+      "rules" : [ ],
+      "metaRules" : [ ]
+    },
+    "renderingOptions" : {
+      "orientation" : "TB"
+    },
+    "includeExternalComponents" : true,
+    "duplicationLinkThreshold" : 50,
+    "fileChangeHistoryLinkThreshold" : 20
+  }, {
+    "name" : "packgae level",
+    "scope" : "main",
+    "filters" : [ ],
+    "componentsFolderDepth" : 12,
+    "components" : [ ],
+    "metaComponents" : [ ],
+    "includeRemainingFiles" : true,
+    "dependenciesFinder" : {
+      "useBuiltInDependencyFinders" : true,
+      "rules" : [ ],
+      "metaRules" : [ ]
+    },
+    "renderingOptions" : {
+      "orientation" : "TB"
+    },
+    "includeExternalComponents" : true,
+    "duplicationLinkThreshold" : 50,
+    "fileChangeHistoryLinkThreshold" : 20
+  } ],
+  "crossCuttingConcerns" : [ {
+    "name" : "general",
+    "concerns" : [ ],
+    "metaConcerns" : [ {
+      "pathPattern" : "",
+      "contentPattern" : "import (com|org)[.][a-z0-9_]+[.].*",
+      "use" : "content",
+      "ignoreComments" : false,
+      "nameOperations" : [ {
+        "op" : "extract",
+        "params" : [ "(com|org)[.][a-z0-9_]+" ]
+      } ]
+    } ]
+  } ],
   "goalsAndControls" : [ {
     "goal" : "Keep the system simple and easy to change",
     "description" : "Aim at keeping the system size modest (less than 200,000 LOC is good), duplication low (less than 5% is good), files small (no files longer than 1000 LOC is good), and units simple (no units with more than 25 decision points is good).",
@@ -86,55 +151,19 @@
       }
     } ]
   } ],
-  "compareResultsWith" : [ ],
-  "logicalDecompositions" : [ {
-    "name" : "primary",
-    "scope" : "main",
-    "filters" : [ ],
-    "componentsFolderDepth" : 1,
-    "components" : [ ],
-    "metaComponents" : [ ],
-    "includeRemainingFiles" : true,
-    "dependenciesFinder" : {
-      "useBuiltInDependencyFinders" : true,
-      "rules" : [ ],
-      "metaRules" : [ ]
-    },
-    "renderingOptions" : {
-      "orientation" : "TB"
-    },
-    "includeExternalComponents" : true,
-    "duplicationLinkThreshold" : 50
-  }, {
-    "name" : "packgae level",
-    "scope" : "main",
-    "filters" : [ ],
-    "componentsFolderDepth" : 12,
-    "components" : [ ],
-    "metaComponents" : [ ],
-    "includeRemainingFiles" : true,
-    "dependenciesFinder" : {
-      "useBuiltInDependencyFinders" : true,
-      "rules" : [ ],
-      "metaRules" : [ ]
-    },
-    "renderingOptions" : {
-      "orientation" : "TB"
-    },
-    "includeExternalComponents" : true,
-    "duplicationLinkThreshold" : 50
-  } ],
-  "crossCuttingConcerns" : [ {
-    "name" : "general",
-    "concerns" : [ ],
-    "metaConcerns" : [ ]
-  } ],
+  "trendAnalysis" : {
+    "saveHistory" : false,
+    "frequency" : "weekly",
+    "maxReferencePointsForAnalysis" : 20,
+    "historyFolder" : "history"
+  },
+  "fileHistoryAnalysis" : {
+    "importPath" : ""
+  },
   "analysis" : {
     "skipDuplication" : false,
     "skipDependencies" : false,
     "cacheSourceFiles" : true,
-    "saveDailyHistory" : false,
-    "analyzerOverrides" : [ ],
-    "filesHistoryImportPath" : "../git-history.txt"
+    "analyzerOverrides" : [ ]
   }
 }

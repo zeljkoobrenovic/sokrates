@@ -379,7 +379,7 @@ public class FileHistoryReportGenerator {
     private void addChangeDependencies(RichTextReport report, LogicalDecomposition logicalDecomposition) {
         report.startSubSection(logicalDecomposition.getName() + " (temporal dependencies, files changed at same days)", "");
         report.startShowMoreBlock("show dependencies...");
-        renderDependenciesViaDuplication(report, logicalDecomposition.getName());
+        renderDependencies(report, logicalDecomposition.getName(), logicalDecomposition.getFileChangeHistoryLinkThreshold());
         report.endShowMoreBlock();
         report.endSection();
     }
@@ -438,10 +438,9 @@ public class FileHistoryReportGenerator {
 
     }
 
-    private void renderDependenciesViaDuplication(RichTextReport report, String logicalDecompositionName) {
+    private void renderDependencies(RichTextReport report, String logicalDecompositionName, int threshold) {
         TemporalDependenciesHelper dependenciesHelper = new TemporalDependenciesHelper(logicalDecompositionName);
         List<ComponentDependency> dependencies = dependenciesHelper.extractDependencies(codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether());
-        int threshold = codeAnalysisResults.getCodeConfiguration().getFileHistoryAnalysis().getDependencyLinkThreshold();
         List<ComponentDependency> componentDependencies = dependencies.stream().filter(d -> d.getCount() >= threshold).collect(Collectors.toList());
 
         if (componentDependencies.size() > 0) {

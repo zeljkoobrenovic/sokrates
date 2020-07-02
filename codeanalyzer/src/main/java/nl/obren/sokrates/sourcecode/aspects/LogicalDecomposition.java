@@ -30,6 +30,7 @@ public class LogicalDecomposition {
     private RenderingOptions renderingOptions = new RenderingOptions();
     private boolean includeExternalComponents = true;
     private int duplicationLinkThreshold = 50;
+    private int fileChangeHistoryLinkThreshold = 20;
 
     public LogicalDecomposition() {
     }
@@ -201,5 +202,13 @@ public class LogicalDecomposition {
 
     public void setIncludeExternalComponents(boolean includeExternalComponents) {
         this.includeExternalComponents = includeExternalComponents;
+    }
+
+    public int getFileChangeHistoryLinkThreshold() {
+        return fileChangeHistoryLinkThreshold;
+    }
+
+    public void setFileChangeHistoryLinkThreshold(int fileChangeHistoryLinkThreshold) {
+        this.fileChangeHistoryLinkThreshold = fileChangeHistoryLinkThreshold;
     }
 }
