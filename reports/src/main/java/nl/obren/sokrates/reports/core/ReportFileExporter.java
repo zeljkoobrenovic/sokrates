@@ -102,7 +102,7 @@ public class ReportFileExporter {
 
     private static void appendLinks(RichTextReport report, CodeAnalysisResults analysisResults) {
         List<Link> links = analysisResults.getCodeConfiguration().getMetadata().getLinks();
-        links.add(0, new Link("Configuration file (JSON)", "../../config.json"));
+        links.add(0, new Link("Configuration file (JSON)", "../data/config.json"));
         if (links.size() > 0) {
             report.startSection("Links", "");
             report.startUnorderedList();
