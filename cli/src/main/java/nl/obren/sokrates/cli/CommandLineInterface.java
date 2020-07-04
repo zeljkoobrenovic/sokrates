@@ -19,6 +19,7 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.dataexporters.DataExporter;
 import nl.obren.sokrates.reports.generators.statichtml.BasicSourceCodeReportGenerator;
 import nl.obren.sokrates.reports.landscape.statichtml.LandscapeAnalysisCommands;
+import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.analysis.CodeAnalyzer;
 import nl.obren.sokrates.sourcecode.analysis.CodeAnalyzerSettings;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -29,6 +30,7 @@ import nl.obren.sokrates.sourcecode.scoping.ScopeCreator;
 import nl.obren.sokrates.sourcecode.stats.SourceFileSizeDistribution;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.BasicConfigurator;
@@ -44,7 +46,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class CommandLineInterface {
     public static final String INIT = "init";
     public static final String GENERATE_REPORTS = "generateReports";
-    public static final String CONFIG_COMPLETE = "configComplete";
+    public static final String UPDATE_CONFIG = "updateConfig";
     public static final String SRC_ROOT = "srcRoot";
     public static final String CONF_FILE = "confFile";
     public static final String REPORT_ALL = "reportAll";
@@ -66,6 +68,14 @@ public class CommandLineInterface {
     public static final String INIT_LANDSCAPE = "initLandscape";
     public static final String UPDATE_LANDSCAPE = "updateLandscape";
     public static final String ANALYSIS_ROOT = "analysisRoot";
+
+    public static final String SKIP_COMPLEX_ANALYSES = "skipComplexAnalyses";
+
+    public static final String SET_NAME = "setName";
+    public static final String SET_LOGO_LINK = "setLogoLink";
+    public static final String SET_DESCRIPTION = "setDescription";
+    public static final String ADD_LINK = "addLink";
+
     private static final Log LOG = LogFactory.getLog(CommandLineInterface.class);
     private Option srcRoot = new Option(SRC_ROOT, true, "[OPTIONAL] the folder where reports will be stored (default is \"<currentFolder>/_sokrates/reports/\")");
     private Option confFile = new Option(CONF_FILE, true, "[OPTIONAL] the path to configuration file (default is \"<currentFolder>/_sokrates/config.json\"");
@@ -85,10 +95,17 @@ public class CommandLineInterface {
     private Option controls = new Option(REPORT_CONTROLS, false, "generate the controls report (stored in <outputFolder>/Controls.html)");
     private Option internalGraphviz = new Option(USE_INTERNAL_GRAPHVIZ, false, "use internal Graphviz library (by default external dot program is used, you may specify the external dot path via the system variable GRAPHVIZ_DOT)");
 
-    private Option outputFolder = new Option(OUTPUT_FOLDER, true, "[OPTIONAL] the folder where reports will be stored (defaule value is <currentFolder/_sokrates/reports>)");
+    private Option outputFolder = new Option(OUTPUT_FOLDER, true, "[OPTIONAL] the folder where reports will be stored (default value is <currentFolder/_sokrates/reports>)");
+
+    private Option skipComplexAnalyses = new Option(SKIP_COMPLEX_ANALYSES, false, "[OPTIONAL] skips complex analyses (duplication, dependencies, file caching)");
+
+    private Option setName = new Option(SET_NAME, true, "[OPTIONAL] sets a project name");
+    private Option setDescription = new Option(SET_DESCRIPTION, true, "[OPTIONAL] sets a project description");
+    private Option setLogoLink = new Option(SET_LOGO_LINK, true, "[OPTIONAL] sets a project logo link");
+    private Option addLink = new Option(ADD_LINK, true, "link label [OPTIONAL] adds a new link to an external document");
+
     private ProgressFeedback progressFeedback;
     private DataExporter dataExporter = new DataExporter(this.progressFeedback);
-
 
     public static void main(String args[]) throws ParseException, IOException {
         BasicConfigurator.configure();
@@ -111,8 +128,8 @@ public class CommandLineInterface {
             if (args[0].equalsIgnoreCase(INIT)) {
                 init(args);
                 return;
-            } else if (args[0].equalsIgnoreCase(CONFIG_COMPLETE)) {
-                completeConfig(args);
+            } else if (args[0].equalsIgnoreCase(UPDATE_CONFIG)) {
+                updateConfig(args);
                 return;
             } else if (args[0].equalsIgnoreCase(INIT_LANDSCAPE)) {
                 initLandscape(args);
@@ -204,8 +221,9 @@ public class CommandLineInterface {
         System.out.println("Configuration stored in " + conf.getPath());
     }
 
-    private void completeConfig(String[] args) throws ParseException, IOException {
-        Options options = getInitOptions();
+    private void updateConfig(String[] args) throws ParseException, IOException {
+        Options options = getUpdateConfigOptions();
+
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
@@ -226,6 +244,43 @@ public class CommandLineInterface {
         String jsonContent = FileUtils.readFileToString(confFile, UTF_8);
         FileUtils.write(new File(confFile.getParentFile(), "config_backup.json"), new JsonGenerator().generate(jsonContent), UTF_8);
         CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
+
+        if (cmd.hasOption(skipComplexAnalyses.getOpt())) {
+            codeConfiguration.getAnalysis().setSkipDependencies(true);
+            codeConfiguration.getAnalysis().setSkipDuplication(true);
+            codeConfiguration.getAnalysis().setCacheSourceFiles(false);
+        }
+
+        if (cmd.hasOption(setName.getOpt())) {
+            String name = cmd.getOptionValue(setName.getOpt());
+            if (StringUtils.isNotBlank(name)) {
+                codeConfiguration.getMetadata().setName(name);
+            }
+        }
+
+        if (cmd.hasOption(setDescription.getOpt())) {
+            String description = cmd.getOptionValue(setDescription.getOpt());
+            if (StringUtils.isNotBlank(description)) {
+                codeConfiguration.getMetadata().setDescription(description);
+            }
+        }
+
+        if (cmd.hasOption(setLogoLink.getOpt())) {
+            String logoLink = cmd.getOptionValue(setLogoLink.getOpt());
+            if (StringUtils.isNotBlank(logoLink)) {
+                codeConfiguration.getMetadata().setLogoLink(logoLink);
+            }
+        }
+
+        if (cmd.hasOption(addLink.getOpt())) {
+            String linkData[] = cmd.getOptionValues(addLink.getOpt());
+            if (linkData.length >= 1 && StringUtils.isNotBlank(linkData[0])) {
+                String href = linkData[0];
+                String label = linkData.length >= 1 ? linkData[1] : "";
+                codeConfiguration.getMetadata().getLinks().add(new Link(label, href));
+            }
+        }
+
         FileUtils.write(confFile, new JsonGenerator().generate(codeConfiguration), UTF_8);
 
         System.out.println("The configuration file has been updated (the original version of the file is saved in the 'config_backup.json' file).");
@@ -460,13 +515,13 @@ public class CommandLineInterface {
     private void usage() {
         System.out.println("\njava -jar sokrates.jar " + INIT + " [options]\n    Creates a Sokrates configuration file for a codebase");
         System.out.println("\njava -jar sokrates.jar " + GENERATE_REPORTS + " [options]\n    Generates Sokrates reports based on the configuration");
-        System.out.println("\njava -jar sokrates.jar " + CONFIG_COMPLETE + "\n    Completes missing fields in the configuration file\n");
+        System.out.println("\njava -jar sokrates.jar " + UPDATE_CONFIG + " [options]\n    Updates a configuration file and completes missing fields\n");
         System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
         usage(INIT, getInitOptions());
         System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
         usage(GENERATE_REPORTS, getReportingOptions());
         System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
-        usage(CONFIG_COMPLETE, getConfigCompleteOptions());
+        usage(UPDATE_CONFIG, getUpdateConfigOptions());
         usage(INIT_LANDSCAPE, getInitLandscapeOptions());
         usage(UPDATE_LANDSCAPE, getUpdateLandscapeOptions());
     }
@@ -567,11 +622,21 @@ public class CommandLineInterface {
         return options;
     }
 
-    private Options getConfigCompleteOptions() {
+    private Options getUpdateConfigOptions() {
         Options options = new Options();
         options.addOption(confFile);
+        options.addOption(skipComplexAnalyses);
+        options.addOption(setName);
+        options.addOption(setDescription);
+        options.addOption(setLogoLink);
+        options.addOption(addLink);
 
+        addLink.setArgs(2);
         confFile.setRequired(false);
+        skipComplexAnalyses.setRequired(false);
+        setName.setRequired(false);
+        setDescription.setRequired(false);
+        setLogoLink.setRequired(false);
 
         return options;
     }
