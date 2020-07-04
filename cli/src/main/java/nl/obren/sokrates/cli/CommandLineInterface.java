@@ -70,6 +70,7 @@ public class CommandLineInterface {
     public static final String ANALYSIS_ROOT = "analysisRoot";
 
     public static final String SKIP_COMPLEX_ANALYSES = "skipComplexAnalyses";
+    public static final String SET_CACHE_FILES = "setCacheFiles";
 
     public static final String SET_NAME = "setName";
     public static final String SET_LOGO_LINK = "setLogoLink";
@@ -102,6 +103,7 @@ public class CommandLineInterface {
     private Option setName = new Option(SET_NAME, true, "[OPTIONAL] sets a project name");
     private Option setDescription = new Option(SET_DESCRIPTION, true, "[OPTIONAL] sets a project description");
     private Option setLogoLink = new Option(SET_LOGO_LINK, true, "[OPTIONAL] sets a project logo link");
+    private Option setCacheFiles = new Option(SET_CACHE_FILES, true, "[OPTIONAL] sets a cahche file flag ('true' or 'false')");
     private Option addLink = new Option(ADD_LINK, true, "link label [OPTIONAL] adds a new link to an external document");
 
     private ProgressFeedback progressFeedback;
@@ -269,6 +271,13 @@ public class CommandLineInterface {
             String logoLink = cmd.getOptionValue(setLogoLink.getOpt());
             if (StringUtils.isNotBlank(logoLink)) {
                 codeConfiguration.getMetadata().setLogoLink(logoLink);
+            }
+        }
+
+        if (cmd.hasOption(setCacheFiles.getOpt())) {
+            String cacheFileValue = cmd.getOptionValue(setCacheFiles.getOpt());
+            if (StringUtils.isNotBlank(cacheFileValue)) {
+                codeConfiguration.getAnalysis().setCacheSourceFiles(cacheFileValue.equalsIgnoreCase("true"));
             }
         }
 
@@ -626,6 +635,7 @@ public class CommandLineInterface {
         Options options = new Options();
         options.addOption(confFile);
         options.addOption(skipComplexAnalyses);
+        options.addOption(setCacheFiles);
         options.addOption(setName);
         options.addOption(setDescription);
         options.addOption(setLogoLink);

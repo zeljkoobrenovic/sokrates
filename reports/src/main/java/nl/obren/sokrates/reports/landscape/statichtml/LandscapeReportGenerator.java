@@ -48,10 +48,16 @@ public class LandscapeReportGenerator {
 
         landscapeReport.startDiv("margin-top: 32px;");
         addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getProjectsCount()), "projects");
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "lines of code");
         addInfoBlock(FormattingUtils.getSmallTextForNumber(linesOfCodePerExtension.size()), linesOfCodePerExtension.size() == 1 ? " extension" : " extensions");
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "Lines of code (main)");
+        landscapeReport.addLineBreak();
+        addSmallInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getTestLoc()), "(test)");
+        addSmallInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getGeneratedLoc()), "(generated)");
+        addSmallInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getBuildAndDeploymentLoc()), "(build)");
+        addSmallInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getOtherLoc()), "(other)");
         //addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainFileCount()), "files");
         landscapeReport.endDiv();
+        landscapeReport.addLineBreak();
 
     }
 
@@ -83,7 +89,7 @@ public class LandscapeReportGenerator {
             List<NumericMetric> projectSizes = new ArrayList<>();
             projectsAnalysisResults.forEach(projectAnalysisResults -> {
                 CodeAnalysisResults analysisResults = projectAnalysisResults.getAnalysisResults();
-                projectSizes.add(new NumericMetric(analysisResults.getCodeConfiguration().getMetadata().getName(), analysisResults.getMainAspectAnalysisResults().getLinesOfCode()));
+                projectSizes.add(new NumericMetric(analysisResults.getMetadata().getName(), analysisResults.getMainAspectAnalysisResults().getLinesOfCode()));
             });
             landscapeReport.addHtmlContent("( ");
             landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_projects.html");
@@ -93,7 +99,7 @@ public class LandscapeReportGenerator {
             landscapeReport.addLineBreak();
             landscapeReport.addLineBreak();
             landscapeReport.startTable("width: 100%");
-            landscapeReport.addTableHeader("", "Project", "Lines of code", "Languages", "Duplication", "Report");
+            landscapeReport.addTableHeader("", "Project", "Main<br/>Language", "LOC<br/>(main)", "Duplication", "LOC<br/>(test)", "LOC<br/>(generated)", "LOC<br/>(build)", "LOC<br/>(other)", "Report");
             projectsAnalysisResults.forEach(projectAnalysis -> {
                 addProjectRow(projectAnalysis);
             });
@@ -105,23 +111,33 @@ public class LandscapeReportGenerator {
 
     private void addProjectRow(ProjectAnalysisResults projectAnalysis) {
         CodeAnalysisResults analysisResults = projectAnalysis.getAnalysisResults();
-        Metadata metadata = analysisResults.getCodeConfiguration().getMetadata();
+        Metadata metadata = analysisResults.getMetadata();
         String logoLink = metadata.getLogoLink();
 
         landscapeReport.startTableRow();
         landscapeReport.addTableCell(StringUtils.isNotBlank(logoLink) ? "<img src='" + logoLink + "' style='width: 20px'>" : "", "text-align: center");
         landscapeReport.addTableCell(metadata.getName());
         AspectAnalysisResults main = analysisResults.getMainAspectAnalysisResults();
+        AspectAnalysisResults test = analysisResults.getTestAspectAnalysisResults();
+        AspectAnalysisResults generated = analysisResults.getGeneratedAspectAnalysisResults();
+        AspectAnalysisResults build = analysisResults.getBuildAndDeployAspectAnalysisResults();
+        AspectAnalysisResults other = analysisResults.getOtherAspectAnalysisResults();
 
         DuplicationAnalysisResults duplication = analysisResults.getDuplicationAnalysisResults();
-        landscapeReport.addTableCell(FormattingUtils.getFormattedCount(main.getLinesOfCode()), "text-align: right");
 
         List<NumericMetric> linesOfCodePerExtension = main.getLinesOfCodePerExtension();
         StringBuilder locSummary = new StringBuilder();
-        new SummaryUtils().summarizeListOfLocAspects(locSummary, main.getLinesOfCode(), linesOfCodePerExtension);
-        landscapeReport.addTableCell(locSummary.toString().replace("> = ", ">"));
+        if (linesOfCodePerExtension.size() > 0) {
+            locSummary.append(linesOfCodePerExtension.get(0).getName().replace("*.", "").trim().toUpperCase());
+        }
+        landscapeReport.addTableCell(locSummary.toString().replace("> = ", ">"), "text-align: center");
+        landscapeReport.addTableCell(FormattingUtils.getFormattedCount(main.getLinesOfCode()), "text-align: center");
 
-        landscapeReport.addTableCell(FormattingUtils.getFormattedPercentage(duplication.getOverallDuplication().getDuplicationPercentage().doubleValue()) + "%", "text-align: right");
+        landscapeReport.addTableCell(FormattingUtils.getFormattedPercentage(duplication.getOverallDuplication().getDuplicationPercentage().doubleValue()) + "%", "text-align: center");
+        landscapeReport.addTableCell(FormattingUtils.getFormattedCount(test.getLinesOfCode()), "text-align: center");
+        landscapeReport.addTableCell(FormattingUtils.getFormattedCount(generated.getLinesOfCode()), "text-align: center");
+        landscapeReport.addTableCell(FormattingUtils.getFormattedCount(build.getLinesOfCode()), "text-align: center");
+        landscapeReport.addTableCell(FormattingUtils.getFormattedCount(other.getLinesOfCode()), "text-align: center");
         String projectReportUrl = landscapeAnalysisResults.getConfiguration().getProjectReportsUrlPrefix() + projectAnalysis.getSokratesProjectLink().getHtmlReportsRoot() + "/index.html";
         landscapeReport.addTableCell("<a href='" + projectReportUrl + "' target='_blank'>"
                 + "<div style='height: 40px'>" + ReportFileExporter.getIconSvg("report", 40) + "</div></a>", "text-align: center");

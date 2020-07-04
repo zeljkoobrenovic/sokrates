@@ -6,6 +6,7 @@ package nl.obren.sokrates.sourcecode.analysis.results;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
+import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.dependencies.Dependency;
@@ -18,6 +19,9 @@ import java.util.Map;
 public class CodeAnalysisResults {
     @JsonIgnore
     private CodeConfiguration codeConfiguration;
+
+    private Metadata metadata = new Metadata();
+
     private MetricsList metricsList = new MetricsList();
     private ControlsAnalysisResults controlResults = new ControlsAnalysisResults();
     private StringBuffer textSummary = new StringBuffer();
@@ -45,6 +49,14 @@ public class CodeAnalysisResults {
     private long analysisStartTimeMs;
     private List<SourceFile> filesExcludedByExtension;
     private Map<String, IgnoredFilesGroup> ignoredFilesGroups;
+
+    public Metadata getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Metadata metadata) {
+        this.metadata = metadata;
+    }
 
     public MetricsList getMetricsList() {
         return metricsList;

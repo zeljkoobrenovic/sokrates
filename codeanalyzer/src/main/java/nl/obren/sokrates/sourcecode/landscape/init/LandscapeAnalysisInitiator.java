@@ -58,7 +58,7 @@ public class LandscapeAnalysisInitiator {
     }
 
     private boolean isSokratesAnalysisFile(Path file) {
-        return file.endsWith("reports/data/analysisResults.json");
+        return file.endsWith("data/analysisResults.json");
     }
 
     private void processAnalysisResultFile(File root, LandscapeConfiguration configuration, Path file) {

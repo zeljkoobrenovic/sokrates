@@ -54,6 +54,55 @@ public class LandscapeAnalysisResults {
     }
 
     @JsonIgnore
+    public int getTestLoc() {
+        int count[] = {0};
+        this.projectAnalysisResults.forEach(projectAnalysisResults -> {
+            count[0] += projectAnalysisResults.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCode();
+        });
+        return count[0];
+    }
+
+    @JsonIgnore
+    public int getGeneratedLoc() {
+        int count[] = {0};
+        this.projectAnalysisResults.forEach(projectAnalysisResults -> {
+            count[0] += projectAnalysisResults.getAnalysisResults().getGeneratedAspectAnalysisResults().getLinesOfCode();
+        });
+        return count[0];
+    }
+
+    @JsonIgnore
+    public int getBuildAndDeploymentLoc() {
+        int count[] = {0};
+        this.projectAnalysisResults.forEach(projectAnalysisResults -> {
+            count[0] += projectAnalysisResults.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getLinesOfCode();
+        });
+        return count[0];
+    }
+
+    @JsonIgnore
+    public int getOtherLoc() {
+        int count[] = {0};
+        this.projectAnalysisResults.forEach(projectAnalysisResults -> {
+            count[0] += projectAnalysisResults.getAnalysisResults().getOtherAspectAnalysisResults().getLinesOfCode();
+        });
+        return count[0];
+    }
+
+    @JsonIgnore
+    public int getAllLoc() {
+        int count[] = {0};
+        this.projectAnalysisResults.forEach(projectAnalysisResults -> {
+            count[0] += projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
+            count[0] += projectAnalysisResults.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCode();
+            count[0] += projectAnalysisResults.getAnalysisResults().getGeneratedAspectAnalysisResults().getLinesOfCode();
+            count[0] += projectAnalysisResults.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getLinesOfCode();
+            count[0] += projectAnalysisResults.getAnalysisResults().getOtherAspectAnalysisResults().getLinesOfCode();
+        });
+        return count[0];
+    }
+
+    @JsonIgnore
     public List<NumericMetric> getLinesOfCodePerExtension() {
         List<NumericMetric> linesOfCodePerExtension = new ArrayList<>();
         getProjectAnalysisResults().forEach(projectAnalysisResults -> {

@@ -35,7 +35,7 @@ public class LandscapeVisualsGenerator {
         landscapeAnalysisResults.getAllProjects().forEach(projectAnalysisResults -> {
             CodeAnalysisResults analysisResults = projectAnalysisResults.getAnalysisResults();
 
-            String name = analysisResults.getCodeConfiguration().getMetadata().getName();
+            String name = analysisResults.getMetadata().getName();
             int linesOfCode = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
 
             items.add(new VisualizationItem(name, linesOfCode));

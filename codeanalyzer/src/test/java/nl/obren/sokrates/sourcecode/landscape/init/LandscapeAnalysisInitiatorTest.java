@@ -17,8 +17,7 @@ public class LandscapeAnalysisInitiatorTest {
     public void initConfiguration() {
         LandscapeAnalysisInitiator initiator = new LandscapeAnalysisInitiator();
 
-        File landscapeConfigFile = new File("");
-        File analysisRoot = new File("");
+        File analysisRoot = new File("/Users/zobrenovic/Downloads/github/move/sokrates-batch/sokrates-initial-reports");
 
         initiator.initConfiguration(analysisRoot, null, true);
     }

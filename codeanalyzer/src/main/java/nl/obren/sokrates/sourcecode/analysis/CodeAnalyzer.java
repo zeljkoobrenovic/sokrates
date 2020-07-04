@@ -41,6 +41,7 @@ public class CodeAnalyzer {
     public CodeAnalysisResults analyze(ProgressFeedback progressFeedback) {
         this.progressFeedback = progressFeedback;
         results = new CodeAnalysisResults();
+        results.setMetadata(codeConfiguration.getMetadata());
         start = System.currentTimeMillis();
         results.setAnalysisStartTimeMs(start);
         results.setCodeConfiguration(codeConfiguration);
