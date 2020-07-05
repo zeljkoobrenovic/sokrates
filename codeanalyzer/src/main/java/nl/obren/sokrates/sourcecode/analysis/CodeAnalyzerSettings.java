@@ -13,7 +13,7 @@ public class CodeAnalyzerSettings {
     private boolean updateIndex = true;
     private boolean analyzeFilesInScope = true;
     private boolean analyzeLogicalDecomposition = true;
-    private boolean analyzeCrossCuttingConcerns = true;
+    private boolean analyzeConcerns = true;
     private boolean analyzeDuplication = true;
     private boolean analyzeFileSize = true;
     private boolean analyzeFileHistory = true;
@@ -26,7 +26,7 @@ public class CodeAnalyzerSettings {
     public void selectAll() {
         analyzeFilesInScope = true;
         analyzeLogicalDecomposition = true;
-        analyzeCrossCuttingConcerns = true;
+        analyzeConcerns = true;
         analyzeDuplication = true;
         analyzeFileSize = true;
         analyzeUnitSize = true;
@@ -42,7 +42,7 @@ public class CodeAnalyzerSettings {
     public void deselectAll() {
         analyzeFilesInScope = false;
         analyzeLogicalDecomposition = false;
-        analyzeCrossCuttingConcerns = false;
+        analyzeConcerns = false;
         analyzeDuplication = false;
         analyzeFileSize = false;
         analyzeFileHistory = false;
@@ -88,12 +88,12 @@ public class CodeAnalyzerSettings {
         this.analyzeLogicalDecomposition = analyzeLogicalDecomposition;
     }
 
-    public boolean isAnalyzeCrossCuttingConcerns() {
-        return analyzeCrossCuttingConcerns;
+    public boolean isAnalyzeConcerns() {
+        return analyzeConcerns;
     }
 
-    public void setAnalyzeCrossCuttingConcerns(boolean analyzeCrossCuttingConcerns) {
-        this.analyzeCrossCuttingConcerns = analyzeCrossCuttingConcerns;
+    public void setAnalyzeConcerns(boolean analyzeConcerns) {
+        this.analyzeConcerns = analyzeConcerns;
     }
 
     public boolean isAnalyzeDuplication() {

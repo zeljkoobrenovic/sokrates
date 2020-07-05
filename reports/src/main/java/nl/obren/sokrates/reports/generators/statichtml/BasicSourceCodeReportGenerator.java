@@ -22,7 +22,7 @@ public class BasicSourceCodeReportGenerator {
 
     private RichTextReport overviewScopeReport = new RichTextReport("Source Code Overview", "SourceCodeOverview.html");
     private RichTextReport logicalComponentsReport = new RichTextReport("Components & Dependencies", "Components.html");
-    private RichTextReport crossCuttingConcernsReport = new RichTextReport("Cross-Cutting Concerns", "CrossCuttingConcerns.html");
+    private RichTextReport concernsReport = new RichTextReport("Concerns", "Concerns.html");
     private RichTextReport duplicationReport = new RichTextReport("Duplication", "Duplication.html");
     private RichTextReport fileSizeReport = new RichTextReport("File Size", "FileSize.html");
     private RichTextReport fileHistoryReport = new RichTextReport("File History", "FileHistory.html");
@@ -94,8 +94,8 @@ public class BasicSourceCodeReportGenerator {
             if (codeAnalyzerSettings.isAnalyzeConditionalComplexity()) {
                 reports.add(conditionalComplexityReport);
             }
-            if (codeAnalyzerSettings.isAnalyzeCrossCuttingConcerns()) {
-                reports.add(crossCuttingConcernsReport);
+            if (codeAnalyzerSettings.isAnalyzeConcerns()) {
+                reports.add(concernsReport);
             }
 
             if (codeAnalyzerSettings.isAnalyzeFindings()) {
@@ -131,7 +131,7 @@ public class BasicSourceCodeReportGenerator {
         decorateReport(comparisonReport, name, logoLink);
         decorateReport(findingsReport, name, logoLink);
         decorateReport(logicalComponentsReport, name, logoLink);
-        decorateReport(crossCuttingConcernsReport, name, logoLink);
+        decorateReport(concernsReport, name, logoLink);
     }
 
     private void createBasicReport() {
@@ -143,8 +143,8 @@ public class BasicSourceCodeReportGenerator {
             new LogicalComponentsReportGenerator(codeAnalysisResults).addCodeOrganizationToReport(logicalComponentsReport);
         }
 
-        if (codeAnalyzerSettings.isAnalyzeCrossCuttingConcerns()) {
-            new CrossCuttingConcernsReportGenerator(codeAnalysisResults).addCrossCuttingConcernsToReport(crossCuttingConcernsReport);
+        if (codeAnalyzerSettings.isAnalyzeConcerns()) {
+            new ConcernsReportGenerator(codeAnalysisResults).addConcernsToReport(concernsReport);
         }
 
         if (codeAnalyzerSettings.isAnalyzeDuplication()) {

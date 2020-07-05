@@ -35,15 +35,15 @@ public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
     }
 
     public static MetaRulesProcessor getCrossCurringConcernsInstance() {
-        return new MetaRulesProcessor<CrossCuttingConcern>(false, new MetaRulesProcessorCallback() {
+        return new MetaRulesProcessor<Concern>(false, new MetaRulesProcessorCallback() {
             @Override
             public NamedSourceCodeAspect getInstance(String name) {
-                return new CrossCuttingConcern(name);
+                return new Concern(name);
             }
 
             @Override
             public void updateSourceFile(SourceFile sourceFile, NamedSourceCodeAspect aspect) {
-                sourceFile.getCrossCuttingConcerns().add(aspect);
+                sourceFile.getConcerns().add(aspect);
             }
         });
     }

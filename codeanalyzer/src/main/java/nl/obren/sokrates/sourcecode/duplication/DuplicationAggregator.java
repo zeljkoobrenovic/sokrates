@@ -6,7 +6,7 @@ package nl.obren.sokrates.sourcecode.duplication;
 
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.aspects.CrossCuttingConcern;
+import nl.obren.sokrates.sourcecode.aspects.Concern;
 import org.apache.commons.io.FilenameUtils;
 
 import java.util.ArrayList;
@@ -88,11 +88,11 @@ public class DuplicationAggregator {
         });
     }
 
-    private static void addCrossCuttingConcernsWithoutDuplicates(List<CrossCuttingConcern> crossCuttingConcerns,
-                                                                 List<SourceFile> sourceFiles,
-                                                                 List<AspectDuplication> duplications,
-                                                                 Map<String, AspectDuplication> map) {
-        crossCuttingConcerns.forEach(concern -> {
+    private static void addConcernsWithoutDuplicates(List<Concern> concerns,
+                                                     List<SourceFile> sourceFiles,
+                                                     List<AspectDuplication> duplications,
+                                                     Map<String, AspectDuplication> map) {
+        concerns.forEach(concern -> {
             String displayName = concern.getName();
             if (!map.containsKey(displayName)) {
                 AspectDuplication aspectDuplication = new AspectDuplication();

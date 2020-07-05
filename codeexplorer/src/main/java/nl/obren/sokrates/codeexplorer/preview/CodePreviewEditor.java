@@ -69,7 +69,7 @@ public class CodePreviewEditor extends SplitPane {
 
             sourceFile.getLogicalComponents().forEach(aspect -> infoBuilder.append(aspect.getName() + "; "));
             infoBuilder.append(" / ");
-            sourceFile.getCrossCuttingConcerns().forEach(aspect -> infoBuilder.append(aspect.getName() + "; "));
+            sourceFile.getConcerns().forEach(aspect -> infoBuilder.append(aspect.getName() + "; "));
 
             codeArea.setEditorValue(sourceFile, infoBuilder.toString());
             getItems().clear();

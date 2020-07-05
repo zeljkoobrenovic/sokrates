@@ -172,7 +172,7 @@
 
                 this.duplication.duplicates.forEach(duplicate => {
                     duplicate.duplicatedFileBlocks.forEach(block => {
-                        block.file.crossCuttingConcerns.forEach(component => {
+                        block.file.concerns.forEach(component => {
                             var value = "concern " + component;
                             if (!componentIds.includes(value)) {
                                 componentIds.push(value);
@@ -228,7 +228,7 @@
                         return this.duplication.duplicates.filter(duplicate => {
                             let found = true;
                             duplicate.duplicatedFileBlocks.forEach(block => {
-                                if (!block.file.crossCuttingConcerns.includes(searchString)) {
+                                if (!block.file.concerns.includes(searchString)) {
                                     found = false;
                                     return;
                                 }

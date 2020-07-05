@@ -14,7 +14,7 @@ public class FileExportInfo {
     private String extension;
     private int linesOfCode;
     private List<String> components;
-    private List<String> crossCuttingConcerns;
+    private List<String> concerns;
 
     public static FileExportInfo getInstance(SourceFile sourceFile) {
         FileExportInfo fileExportInfo = new FileExportInfo();
@@ -27,11 +27,11 @@ public class FileExportInfo {
         });
         fileExportInfo.setComponents(components);
 
-        ArrayList<String> crossCuttingConcerns = new ArrayList<>();
-        sourceFile.getCrossCuttingConcerns().forEach(concern -> {
-            crossCuttingConcerns.add(concern.getFiltering() + "::" + concern.getName());
+        ArrayList<String> concerns = new ArrayList<>();
+        sourceFile.getConcerns().forEach(concern -> {
+            concerns.add(concern.getFiltering() + "::" + concern.getName());
         });
-        fileExportInfo.setCrossCuttingConcerns(crossCuttingConcerns);
+        fileExportInfo.setConcerns(concerns);
 
         return fileExportInfo;
     }
@@ -68,11 +68,11 @@ public class FileExportInfo {
         this.components = components;
     }
 
-    public List<String> getCrossCuttingConcerns() {
-        return crossCuttingConcerns;
+    public List<String> getConcerns() {
+        return concerns;
     }
 
-    public void setCrossCuttingConcerns(List<String> crossCuttingConcerns) {
-        this.crossCuttingConcerns = crossCuttingConcerns;
+    public void setConcerns(List<String> concerns) {
+        this.concerns = concerns;
     }
 }

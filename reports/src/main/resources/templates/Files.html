@@ -164,7 +164,7 @@
                 return this.files.files.filter(file => file.components.includes(component));
             },
             filesPerConcern: function (concern) {
-                return this.files.files.filter(file => file.crossCuttingConcerns.includes(concern));
+                return this.files.files.filter(file => file.concerns.includes(concern));
             }
         },
         computed: {
@@ -210,7 +210,7 @@
                         return this.extensionFiles.filter(file => file.components.includes(searchString));
                     } else if (this.scopeFilter.value.startsWith("concern ")) {
                         var searchString = this.scopeFilter.value.substr(8).trim();
-                        return this.extensionFiles.filter(file => file.crossCuttingConcerns.includes(searchString));
+                        return this.extensionFiles.filter(file => file.concerns.includes(searchString));
                     }
                 } else {
                     return this.extensionFiles;

@@ -232,8 +232,8 @@ public class CodeConfigurationView extends ConfigurationEditorView {
         generateReports(CommandLineInterface.REPORT_LOGICAL_DECOMPOSITION);
     }
 
-    public void generateCrossCuttingConcernsReport() {
-        generateReports(CommandLineInterface.REPORT_CROSS_CUTTING_CONCERNS);
+    public void generateConcernsReport() {
+        generateReports(CommandLineInterface.REPORT_CONCERNS);
     }
 
     public void generateFileSizeReport() {

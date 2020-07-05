@@ -34,7 +34,7 @@ public class CodeAnalysisResults {
     private AspectAnalysisResults otherAspectAnalysisResults = new AspectAnalysisResults();
 
     private List<LogicalDecompositionAnalysisResults> logicalDecompositionsAnalysisResults = new ArrayList<>();
-    private List<CrossCuttingConcernsAnalysisResults> crossCuttingConcernsAnalysisResults = new ArrayList<>();
+    private List<ConcernsAnalysisResults> concernsAnalysisResults = new ArrayList<>();
 
     private List<Dependency> allDependencies = new ArrayList<>();
 
@@ -140,12 +140,12 @@ public class CodeAnalysisResults {
         this.logicalDecompositionsAnalysisResults = logicalDecompositionsAnalysisResults;
     }
 
-    public List<CrossCuttingConcernsAnalysisResults> getCrossCuttingConcernsAnalysisResults() {
-        return crossCuttingConcernsAnalysisResults;
+    public List<ConcernsAnalysisResults> getConcernsAnalysisResults() {
+        return concernsAnalysisResults;
     }
 
-    public void setCrossCuttingConcernsAnalysisResults(List<CrossCuttingConcernsAnalysisResults> crossCuttingConcernsAnalysisResults) {
-        this.crossCuttingConcernsAnalysisResults = crossCuttingConcernsAnalysisResults;
+    public void setConcernsAnalysisResults(List<ConcernsAnalysisResults> concernsAnalysisResults) {
+        this.concernsAnalysisResults = concernsAnalysisResults;
     }
 
     public List<Dependency> getAllDependencies() {

@@ -106,9 +106,9 @@ public class AspectFilesBrowserPane extends BorderPane {
         scopeAspectsTablePane.setCodeBrowserPane(codeBrowserPane);
         codeBrowserPane.setScopeAspectsTablePane(scopeAspectsTablePane);
 
-        AspectsTablePane crossCuttingAspectsTablePane = new AspectsTablePane("Concern", true);
-        crossCuttingAspectsTablePane.setCodeBrowserPane(codeBrowserPane);
-        codeBrowserPane.setCrossCuttingAspectsTablePane(crossCuttingAspectsTablePane);
+        AspectsTablePane concernAspectsTablePane = new AspectsTablePane("Concern", true);
+        concernAspectsTablePane.setCodeBrowserPane(codeBrowserPane);
+        codeBrowserPane.setConcernAspectsTablePane(concernAspectsTablePane);
 
         AspectsTablePane logicalComponentsTablePane = new AspectsTablePane("Component", true);
         logicalComponentsTablePane.setCodeBrowserPane(codeBrowserPane);
@@ -125,7 +125,7 @@ public class AspectFilesBrowserPane extends BorderPane {
         tabLogicalComponents.setText("components");
         tabLogicalComponents.setId("logical_components_tab");
         aspectsTabPane.getTabs().add(tabLogicalComponents);
-        Tab concerns = new Tab("concerns", crossCuttingAspectsTablePane);
+        Tab concerns = new Tab("concerns", concernAspectsTablePane);
         concerns.setGraphic(UXUtils.getIcon(SvgIcons.SVG_CONCERN));
         concerns.setText("concerns");
         aspectsTabPane.getTabs().add(concerns);

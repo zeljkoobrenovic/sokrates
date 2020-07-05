@@ -38,7 +38,7 @@ public class MetaRulesProcessorTest {
         MetaRule content = new MetaRule(".*", ".*2.*", "content");
         List<MetaRule> rules = Arrays.asList(content);
 
-        List<CrossCuttingConcern> concerns = processor.extractAspects(aspect.getSourceFiles(), rules);
+        List<Concern> concerns = processor.extractAspects(aspect.getSourceFiles(), rules);
 
         assertEquals(2, concerns.size());
         assertEquals("def 2", concerns.get(0).getName());
@@ -98,7 +98,7 @@ public class MetaRulesProcessorTest {
 
         List<MetaRule> rules = Arrays.asList(new MetaRule(".*", ".*", "content"));
 
-        List<CrossCuttingConcern> concerns = processor.extractAspects(aspect.getSourceFiles(), rules);
+        List<Concern> concerns = processor.extractAspects(aspect.getSourceFiles(), rules);
 
         assertEquals(5, concerns.size());
         assertEquals("abc 1", concerns.get(0).getName());

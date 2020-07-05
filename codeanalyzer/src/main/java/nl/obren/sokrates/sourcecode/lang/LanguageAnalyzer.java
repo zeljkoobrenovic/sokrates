@@ -13,7 +13,7 @@ import nl.obren.sokrates.sourcecode.units.UnitInfo;
 import java.util.List;
 
 public abstract class LanguageAnalyzer {
-    public static final String FEATURE_ALL_STANDARD_ANALYSES = "All basic standard analyses supported (source code overview, duplication, file size, cross-cutting concerns, findings, metrics, controls)";
+    public static final String FEATURE_ALL_STANDARD_ANALYSES = "All basic standard analyses supported (source code overview, duplication, file size, concerns, findings, metrics, controls)";
     public static final String FEATURE_BASIC_CODE_CLEANING = "Basic code cleaning (empty lines removed for LOC calculations and duplication calculations)";
     public static final String FEATURE_ADVANCED_CODE_CLEANING = "Advanced code cleaning (empty lines and comments removed for LOC calculations, additional cleaning for duplication calculations)";
     public static final String FEATURE_UNIT_SIZE_ANALYSIS = "Unit size analysis";

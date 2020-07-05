@@ -4,11 +4,11 @@
 
 package nl.obren.sokrates.sourcecode.aspects;
 
-public class CrossCuttingConcern extends NamedSourceCodeAspect {
-    public CrossCuttingConcern() {
+public class Concern extends NamedSourceCodeAspect {
+    public Concern() {
     }
 
-    public CrossCuttingConcern(String name) {
+    public Concern(String name) {
         super(name);
     }
 }

@@ -100,7 +100,7 @@
     "duplicationLinkThreshold" : 50,
     "fileChangeHistoryLinkThreshold" : 20
   } ],
-  "crossCuttingConcerns" : [ {
+  "concernGroups" : [ {
     "name" : "general",
     "concerns" : [ ],
     "metaConcerns" : [ {

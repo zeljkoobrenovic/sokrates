@@ -157,7 +157,7 @@
                 return this.units.units.filter(file => file.components.includes(component));
             },
             unitsPerConcern: function (concern) {
-                return this.units.units.filter(file => file.crossCuttingConcerns.includes(concern));
+                return this.units.units.filter(file => file.concerns.includes(concern));
             }
         },
         computed: {
@@ -203,7 +203,7 @@
                         return this.extensionUnits.filter(file => file.components.includes(searchString));
                     } else if (this.scopeFilter.value.startsWith("concern ")) {
                         var searchString = this.scopeFilter.value.substr(8).trim();
-                        return this.extensionUnits.filter(file => file.crossCuttingConcerns.includes(searchString));
+                        return this.extensionUnits.filter(file => file.concerns.includes(searchString));
                     }
                 } else {
                     return this.extensionUnits;

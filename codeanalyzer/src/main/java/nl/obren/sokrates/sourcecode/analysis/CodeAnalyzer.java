@@ -8,7 +8,6 @@ import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.analysis.files.*;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
-import nl.obren.sokrates.sourcecode.metrics.Metric;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -54,8 +53,8 @@ public class CodeAnalyzer {
             new LogicalDecompositionAnalyzer(results).analyze(progressFeedback);
         }
 
-        if (shouldAnalyzeCrossCuttingConcerns()) {
-            new CrossCuttingConcernsAnalyzer(results, progressFeedback).analyze();
+        if (shouldAnalyzeConcerns()) {
+            new ConcernsAnalyzer(results, progressFeedback).analyze();
         }
 
         if (shouldAnalyzeFileSize()) {
@@ -84,8 +83,8 @@ public class CodeAnalyzer {
     }
 
 
-    private boolean shouldAnalyzeCrossCuttingConcerns() {
-        return codeAnalyzerSettings.isAnalyzeCrossCuttingConcerns() || codeAnalyzerSettings.isCreateMetricsList() || codeAnalyzerSettings.isAnalyzeControls();
+    private boolean shouldAnalyzeConcerns() {
+        return codeAnalyzerSettings.isAnalyzeConcerns() || codeAnalyzerSettings.isCreateMetricsList() || codeAnalyzerSettings.isAnalyzeControls();
     }
 
     private boolean shouldAnalyzeFileSize() {

@@ -15,7 +15,7 @@ public class DataExportUtils {
         return "component_" + logicalDecompositionName + "_";
     }
 
-    public static String getCrossCuttingConcernFilePrefix(String concernGroup) {
+    public static String getConcernFilePrefix(String concernGroup) {
         return "concern_" + concernGroup + "_";
     }
 }

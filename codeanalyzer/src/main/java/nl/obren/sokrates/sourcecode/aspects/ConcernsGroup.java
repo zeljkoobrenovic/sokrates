@@ -7,15 +7,15 @@ package nl.obren.sokrates.sourcecode.aspects;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CrossCuttingConcernsGroup {
+public class ConcernsGroup {
     private String name = "";
-    private List<CrossCuttingConcern> concerns = new ArrayList<>();
+    private List<Concern> concerns = new ArrayList<>();
     private List<MetaRule> metaConcerns = new ArrayList<>();
 
-    public CrossCuttingConcernsGroup() {
+    public ConcernsGroup() {
     }
 
-    public CrossCuttingConcernsGroup(String name) {
+    public ConcernsGroup(String name) {
         this.name = name;
     }
 
@@ -27,11 +27,11 @@ public class CrossCuttingConcernsGroup {
         this.name = name;
     }
 
-    public List<CrossCuttingConcern> getConcerns() {
+    public List<Concern> getConcerns() {
         return concerns;
     }
 
-    public void setConcerns(List<CrossCuttingConcern> concerns) {
+    public void setConcerns(List<Concern> concerns) {
         this.concerns = concerns;
     }
 

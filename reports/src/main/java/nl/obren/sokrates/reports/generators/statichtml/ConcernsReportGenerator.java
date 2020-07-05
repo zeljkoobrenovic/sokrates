@@ -11,7 +11,7 @@ import nl.obren.sokrates.reports.dataexporters.DataExportUtils;
 import nl.obren.sokrates.reports.utils.ScopesRenderer;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.analysis.results.CrossCuttingConcernsAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.ConcernsAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.LogicalDecompositionAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.lang3.StringUtils;
@@ -26,40 +26,40 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class CrossCuttingConcernsReportGenerator {
-    private static final Log LOG = LogFactory.getLog(CrossCuttingConcernsReportGenerator.class);
+public class ConcernsReportGenerator {
+    private static final Log LOG = LogFactory.getLog(ConcernsReportGenerator.class);
     private CodeAnalysisResults codeAnalysisResults;
     private int groupCounter = 0;
     private int concernCounter = 0;
     private RichTextReport report;
 
-    public CrossCuttingConcernsReportGenerator(CodeAnalysisResults codeAnalysisResults) {
+    public ConcernsReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
     }
 
-    public void addCrossCuttingConcernsToReport(RichTextReport report) {
+    public void addConcernsToReport(RichTextReport report) {
         this.report = report;
         addIntro(report);
 
         addSummary(report);
 
-        addCrossCuttingConcernsGroup(report);
+        addConcernsGroup(report);
     }
 
     private void addSummary(RichTextReport report) {
         report.startSection("Overview", "");
 
-        codeAnalysisResults.getCrossCuttingConcernsAnalysisResults().forEach(crossCuttingConcernsAnalysisResults -> {
-            String group = crossCuttingConcernsAnalysisResults.getKey();
+        codeAnalysisResults.getConcernsAnalysisResults().forEach(concernsAnalysisResults -> {
+            String group = concernsAnalysisResults.getKey();
             report.addLevel2Header(group.toUpperCase());
             report.startDiv("width: 100%; overflow-x: auto");
-            if (crossCuttingConcernsAnalysisResults.getCrossCuttingConcerns().size() > 1) {
-                crossCuttingConcernsAnalysisResults.getCrossCuttingConcerns().forEach(concern -> {
+            if (concernsAnalysisResults.getConcerns().size() > 1) {
+                concernsAnalysisResults.getConcerns().forEach(concern -> {
                     if (!isDerivedConcern(concern)) {
                         int mainLoc = codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode();
                         int concernLoc = concern.getLinesOfCode();
                         double relativeConcernSizeInPerc = 100.0 * concernLoc / mainLoc;
-                        String fileListPath = concern.getAspect().getFileSystemFriendlyName(DataExportUtils.getCrossCuttingConcernFilePrefix(group));
+                        String fileListPath = concern.getAspect().getFileSystemFriendlyName(DataExportUtils.getConcernFilePrefix(group));
                         String svg = getOverviewCodePercentageSvg(relativeConcernSizeInPerc,
                                 concern.getFilesCount(), concernLoc, 400, 20, fileListPath);
                         report.startDiv("");
@@ -82,12 +82,12 @@ public class CrossCuttingConcernsReportGenerator {
                 || name.equalsIgnoreCase("Multiple Classifications");
     }
 
-    private void addCrossCuttingConcernsGroup(RichTextReport report) {
-        codeAnalysisResults.getCrossCuttingConcernsAnalysisResults().forEach(crossCuttingConcernsAnalysisResults -> {
-            if (crossCuttingConcernsAnalysisResults.getCrossCuttingConcerns().size() > 1) {
-                renderCrossCuttingConcern(report, crossCuttingConcernsAnalysisResults);
+    private void addConcernsGroup(RichTextReport report) {
+        codeAnalysisResults.getConcernsAnalysisResults().forEach(concernsAnalysisResults -> {
+            if (concernsAnalysisResults.getConcerns().size() > 1) {
+                renderConcern(report, concernsAnalysisResults);
             } else {
-                report.addParagraph("No cross-cutting concerns defined.");
+                report.addParagraph("No concerns defined.");
             }
         });
     }
@@ -95,30 +95,30 @@ public class CrossCuttingConcernsReportGenerator {
     private void addIntro(RichTextReport report) {
         report.startSection("Intro", "");
         report.startUnorderedList();
-        report.addListItem("Cross-cutting concerns are aspects of a software system that cannot be cleanly decomposed from the rest of the system.");
+        report.addListItem("Concerns are any aspects of a software system that can be identified thourgh patterns in code.");
         report.addListItem("A single concern may be present in multiple files. One source code file may contain multiple concerns.");
         report.endUnorderedList();
         report.endSection();
     }
 
-    private void renderCrossCuttingConcern(RichTextReport report, CrossCuttingConcernsAnalysisResults crossCuttingConcernsAnalysisResults) {
-        String key = crossCuttingConcernsAnalysisResults.getKey();
+    private void renderConcern(RichTextReport report, ConcernsAnalysisResults concernsAnalysisResults) {
+        String key = concernsAnalysisResults.getKey();
         if (key.equalsIgnoreCase("Unclassified")) {
             return;
         }
         groupCounter++;
-        report.startSection("" + groupCounter + " " + key.toUpperCase() + " Cross-Cutting Concerns", "");
+        report.startSection("" + groupCounter + " " + key.toUpperCase() + " Concerns", "");
         report.startUnorderedList();
-        int count = crossCuttingConcernsAnalysisResults.getCrossCuttingConcerns().size();
+        int count = concernsAnalysisResults.getConcerns().size();
         report.addListItem("The \"" + key + "\" group contains <b>"
                 + count + "</b> concern" + (count > 1 ? "s" : "") + ".");
 
         report.startUnorderedList();
-        crossCuttingConcernsAnalysisResults.getCrossCuttingConcerns().forEach(c -> report.addListItem(c.getName()));
+        concernsAnalysisResults.getConcerns().forEach(c -> report.addListItem(c.getName()));
         report.endUnorderedList();
 
         report.endUnorderedList();
-        crossCuttingConcernsAnalysisResults.getCrossCuttingConcerns().forEach(aspectAnalysisResults -> {
+        concernsAnalysisResults.getConcerns().forEach(aspectAnalysisResults -> {
             renderScopes(key.toUpperCase(), aspectAnalysisResults);
         });
         report.endSection();
@@ -162,7 +162,7 @@ public class CrossCuttingConcernsReportGenerator {
         int linesOfCode = aspectAnalysisResults.getLinesOfCode();
 
         report.startSubSection(renderer.getTitle(), "");
-        String fileListPath = aspectAnalysisResults.getAspect().getFileSystemFriendlyName(DataExportUtils.getCrossCuttingConcernFilePrefix(key));
+        String fileListPath = aspectAnalysisResults.getAspect().getFileSystemFriendlyName(DataExportUtils.getConcernFilePrefix(key));
         report.addContentInDiv(getOverviewCodePercentageSvg(relativeSizeInPerc, numberOfFiles, linesOfCode, 200, 20, fileListPath), fileListPath);
 
         if (name.contains(" - ") && name.contains(" AND ")) {

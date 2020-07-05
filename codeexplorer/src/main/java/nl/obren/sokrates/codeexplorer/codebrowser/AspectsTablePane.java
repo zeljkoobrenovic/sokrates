@@ -19,7 +19,7 @@ import nl.obren.sokrates.codeexplorer.common.NumericBarCellFactory;
 import nl.obren.sokrates.common.utils.SystemUtils;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
-import nl.obren.sokrates.sourcecode.aspects.CrossCuttingConcern;
+import nl.obren.sokrates.sourcecode.aspects.Concern;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspectUtils;
 import nl.obren.sokrates.sourcecode.catalogs.StandardSecurityAspects;
@@ -68,7 +68,7 @@ public class AspectsTablePane extends BorderPane {
         }
     }
 
-    public void setConcernsSelections(List<Pair<String, List<CrossCuttingConcern>>> concernSelections) {
+    public void setConcernsSelections(List<Pair<String, List<Concern>>> concernSelections) {
         if (concernSelections.size() > 0) {
             selector = new ComboBox<>();
             List<String> keys = new ArrayList<>();
@@ -121,7 +121,7 @@ public class AspectsTablePane extends BorderPane {
         securityItem.setOnAction(e -> {
             StandardSecurityAspects aspects = new StandardSecurityAspects();
             CodeConfiguration codeConfiguration = codeBrowserPane.getCodeConfigurationView().getConfigurationFromEditor();
-            codeConfiguration.getCrossCuttingConcerns().add(aspects);
+            codeConfiguration.getConcernGroups().add(aspects);
             try {
                 String configurationContent = new JsonGenerator().generate(codeConfiguration);
                 codeBrowserPane.getCodeConfigurationView().setEditorValue(configurationContent);

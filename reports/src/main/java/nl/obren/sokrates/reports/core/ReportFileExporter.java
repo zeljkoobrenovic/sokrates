@@ -205,7 +205,7 @@ public class ReportFileExporter {
         boolean showDuplication = !config.getAnalysis().isSkipDuplication();
         boolean showDependencies = !config.getAnalysis().isSkipDependencies();
         boolean showTrends = config.getTrendAnalysis().getReferenceAnalyses(sokratesConfigFolder).size() > 0;
-        boolean showConcerns = config.countAllCrossCuttingConcernsDefinitions() > 1;
+        boolean showConcerns = config.countAllConcernsDefinitions() > 1;
         boolean showControls = config.getGoalsAndControls().size() > 0;
 
         File findingsFile = CodeConfigurationUtils.getDefaultSokratesFindingsFile(sokratesConfigFolder);
@@ -232,7 +232,7 @@ public class ReportFileExporter {
         list.add(new String[]{"UnitSize.html", "Unit Size", "unit_size"});
         list.add(new String[]{"ConditionalComplexity.html", "Conditional Complexity", "conditional"});
         if (showConcerns) {
-            list.add(new String[]{"CrossCuttingConcerns.html", "Cross - Cutting Concerns", "cross_cutting_concerns"});
+            list.add(new String[]{"Concerns.html", "Concerns", "cross_cutting_concerns"});
         }
         list.add(new String[]{"Metrics.html", "All Metrics", "metrics"});
         if (showTrends) {

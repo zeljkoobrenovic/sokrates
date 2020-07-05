@@ -10,7 +10,7 @@ import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CrossCuttingConcernConventions {
+public class ConcernConventions {
     private List<Convention> todos = new ArrayList<>();
     private List<Convention> exceptionHandling = new ArrayList<>();
     private List<Convention> logging = new ArrayList<>();
@@ -32,7 +32,7 @@ public class CrossCuttingConcernConventions {
     private List<Convention> lowLevelMemoryOperations = new ArrayList<>();
     private List<Convention> lowLevelStringManipulation = new ArrayList<>();
 
-    public CrossCuttingConcernConventions() {
+    public ConcernConventions() {
         exceptionHandling.add(new Convention("", ".*catch.*", ""));
         exceptionHandling.add(new Convention("", ".*err( |\t)*:=", ""));
 

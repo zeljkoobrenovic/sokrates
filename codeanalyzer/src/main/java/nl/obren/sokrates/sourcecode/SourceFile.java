@@ -40,7 +40,7 @@ public class SourceFile {
     @JsonIgnore
     private List<NamedSourceCodeAspect> logicalComponents = new ArrayList<>();
     @JsonIgnore
-    private List<NamedSourceCodeAspect> crossCuttingConcerns = new ArrayList<>();
+    private List<NamedSourceCodeAspect> concerns = new ArrayList<>();
 
     @JsonIgnore
     private String content;
@@ -132,13 +132,13 @@ public class SourceFile {
     }
 
     @JsonIgnore
-    public List<NamedSourceCodeAspect> getCrossCuttingConcerns() {
-        return crossCuttingConcerns;
+    public List<NamedSourceCodeAspect> getConcerns() {
+        return concerns;
     }
 
     @JsonIgnore
-    public void setCrossCuttingConcerns(List<NamedSourceCodeAspect> crossCuttingConcerns) {
-        this.crossCuttingConcerns = crossCuttingConcerns;
+    public void setConcerns(List<NamedSourceCodeAspect> concerns) {
+        this.concerns = concerns;
     }
 
     public int getUnitsCount() {

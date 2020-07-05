@@ -4,27 +4,27 @@
 
 package nl.obren.sokrates.sourcecode.catalogs;
 
-import nl.obren.sokrates.sourcecode.aspects.CrossCuttingConcern;
-import nl.obren.sokrates.sourcecode.aspects.CrossCuttingConcernsGroup;
+import nl.obren.sokrates.sourcecode.aspects.Concern;
+import nl.obren.sokrates.sourcecode.aspects.ConcernsGroup;
 
 import java.util.List;
 
-public class StandardSecurityAspects extends CrossCuttingConcernsGroup {
+public class StandardSecurityAspects extends ConcernsGroup {
 
     public StandardSecurityAspects() {
         super("security");
 
-        List<CrossCuttingConcern> concerns = getConcerns();
+        List<Concern> concerns = getConcerns();
 
-        concerns.add(new CrossCuttingConcern("authentication"));
-        concerns.add(new CrossCuttingConcern("session management"));
-        concerns.add(new CrossCuttingConcern("access control"));
-        concerns.add(new CrossCuttingConcern("input/output validation"));
-        concerns.add(new CrossCuttingConcern("cryptography"));
-        concerns.add(new CrossCuttingConcern("error logging"));
-        concerns.add(new CrossCuttingConcern("data protection"));
-        concerns.add(new CrossCuttingConcern("communications"));
-        concerns.add(new CrossCuttingConcern("file operations"));
+        concerns.add(new Concern("authentication"));
+        concerns.add(new Concern("session management"));
+        concerns.add(new Concern("access control"));
+        concerns.add(new Concern("input/output validation"));
+        concerns.add(new Concern("cryptography"));
+        concerns.add(new Concern("error logging"));
+        concerns.add(new Concern("data protection"));
+        concerns.add(new Concern("communications"));
+        concerns.add(new Concern("file operations"));
     }
 
 }

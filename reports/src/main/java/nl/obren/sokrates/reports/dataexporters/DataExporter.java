@@ -232,9 +232,9 @@ public class DataExporter {
             });
         });
 
-        analysisResults.getCrossCuttingConcernsAnalysisResults().forEach(group -> {
-            group.getCrossCuttingConcerns().forEach(concern -> {
-                saveSourceCodeAspect(concern.getAspect(), DataExportUtils.getCrossCuttingConcernFilePrefix(group.getKey()));
+        analysisResults.getConcernsAnalysisResults().forEach(group -> {
+            group.getConcerns().forEach(concern -> {
+                saveSourceCodeAspect(concern.getAspect(), DataExportUtils.getConcernFilePrefix(group.getKey()));
             });
         });
     }

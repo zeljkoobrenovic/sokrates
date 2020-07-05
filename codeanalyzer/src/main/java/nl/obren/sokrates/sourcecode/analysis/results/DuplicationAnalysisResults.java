@@ -15,7 +15,7 @@ public class DuplicationAnalysisResults {
     private DuplicationMetric overallDuplication = new DuplicationMetric("system");
 
     private List<List<DuplicationMetric>> duplicationPerComponent = new ArrayList<>();
-    private List<DuplicationMetric> duplicationPerCrossCuttingConcern = new ArrayList<>();
+    private List<DuplicationMetric> duplicationPerConcern = new ArrayList<>();
     private List<DuplicationMetric> duplicationPerExtension = new ArrayList<>();
 
     @JsonIgnore
@@ -39,12 +39,12 @@ public class DuplicationAnalysisResults {
         this.duplicationPerComponent = duplicationPerComponent;
     }
 
-    public List<DuplicationMetric> getDuplicationPerCrossCuttingConcern() {
-        return duplicationPerCrossCuttingConcern;
+    public List<DuplicationMetric> getDuplicationPerConcern() {
+        return duplicationPerConcern;
     }
 
-    public void setDuplicationPerCrossCuttingConcern(List<DuplicationMetric> duplicationPerCrossCuttingConcern) {
-        this.duplicationPerCrossCuttingConcern = duplicationPerCrossCuttingConcern;
+    public void setDuplicationPerConcern(List<DuplicationMetric> duplicationPerConcern) {
+        this.duplicationPerConcern = duplicationPerConcern;
     }
 
     public List<DuplicationMetric> getDuplicationPerExtension() {

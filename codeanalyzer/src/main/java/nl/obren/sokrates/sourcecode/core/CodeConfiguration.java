@@ -37,7 +37,7 @@ public class CodeConfiguration {
     private NamedSourceCodeAspect other;
 
     private List<LogicalDecomposition> logicalDecompositions = new ArrayList<>();
-    private List<CrossCuttingConcernsGroup> crossCuttingConcerns = new ArrayList<>();
+    private List<ConcernsGroup> concernGroups = new ArrayList<>();
 
     private List<MetricsWithGoal> goalsAndControls = new ArrayList<>();
 
@@ -53,7 +53,7 @@ public class CodeConfiguration {
     public static CodeConfiguration getDefaultConfiguration() {
         CodeConfiguration codeConfiguration = new CodeConfiguration();
 
-        codeConfiguration.createDefaultCrossCuttingConcerns();
+        codeConfiguration.createDefaultConcerns();
 
         codeConfiguration.getGoalsAndControls().add(getDefaultMetricsWithGoal());
 
@@ -94,7 +94,7 @@ public class CodeConfiguration {
         logicalDecompositions.forEach(logicalDecomposition -> {
             logicalDecomposition.updateLogicalComponentsFiles(sourceCodeFiles, CodeConfiguration.this, codeConfigurationFile);
         });
-        updateCrossCuttingConcernFiles(sourceCodeFiles);
+        updateConcernFiles(sourceCodeFiles);
     }
 
     @JsonIgnore
@@ -178,25 +178,25 @@ public class CodeConfiguration {
     }
 
     @JsonIgnore
-    public void createDefaultCrossCuttingConcerns() {
-        crossCuttingConcerns.clear();
+    public void createDefaultConcerns() {
+        concernGroups.clear();
     }
 
     @JsonIgnore
-    private void populateUnclassifiedForCrossCuttingConcern(List<CrossCuttingConcern> concerns) {
-        CrossCuttingConcern unclassified = new CrossCuttingConcern(UNCLASSIFIED_FILES);
-        CrossCuttingConcern filesInMultipleClassifications = new CrossCuttingConcern(FILES_IN_MULTIPLE_CLASSIFICATIONS);
+    private void populateUnclassifiedForConcern(List<Concern> concerns) {
+        Concern unclassified = new Concern(UNCLASSIFIED_FILES);
+        Concern filesInMultipleClassifications = new Concern(FILES_IN_MULTIPLE_CLASSIFICATIONS);
 
         for (SourceFile sourceFile : main.getSourceFiles()) {
             int fileAspectCount = 0;
-            for (CrossCuttingConcern aspect : concerns) {
+            for (Concern aspect : concerns) {
                 if (aspect.getSourceFiles().contains(sourceFile)) {
                     fileAspectCount++;
                 }
             }
             if (fileAspectCount == 0) {
                 unclassified.getSourceFiles().add(sourceFile);
-                sourceFile.getCrossCuttingConcerns().add(unclassified);
+                sourceFile.getConcerns().add(unclassified);
             } else if (fileAspectCount > 1) {
                 filesInMultipleClassifications.getSourceFiles().add(sourceFile);
             }
@@ -212,36 +212,36 @@ public class CodeConfiguration {
     }
 
     @JsonIgnore
-    private void updateCrossCuttingConcernFiles(SourceCodeFiles sourceCodeFiles) {
-        crossCuttingConcerns.forEach(group -> {
+    private void updateConcernFiles(SourceCodeFiles sourceCodeFiles) {
+        concernGroups.forEach(group -> {
             group.getConcerns().forEach(aspect -> {
                 sourceCodeFiles.getSourceFiles(aspect, main.getSourceFiles());
                 aspect.getSourceFiles().forEach(sourceFile -> {
-                    sourceFile.getCrossCuttingConcerns().add(aspect);
+                    sourceFile.getConcerns().add(aspect);
                 });
             });
 
             MetaRulesProcessor helper = MetaRulesProcessor.getCrossCurringConcernsInstance();
-            List<CrossCuttingConcern> metaConcerns = helper.extractAspects(main.getSourceFiles(), group.getMetaConcerns());
+            List<Concern> metaConcerns = helper.extractAspects(main.getSourceFiles(), group.getMetaConcerns());
             group.getConcerns().addAll(metaConcerns);
 
-            populateUnclassifiedForCrossCuttingConcern(group.getConcerns());
-            List<DerivedCrossCuttingConcern> overlaps = getOverlaps(group.getConcerns());
+            populateUnclassifiedForConcern(group.getConcerns());
+            List<DerivedConcern> overlaps = getOverlaps(group.getConcerns());
 
             group.getConcerns().addAll(overlaps);
         });
     }
 
-    private List<DerivedCrossCuttingConcern> getOverlaps(List<CrossCuttingConcern> concerns) {
-        List<DerivedCrossCuttingConcern> overlaps = new ArrayList<>();
-        Map<String, DerivedCrossCuttingConcern> overlapsMap = new HashMap<>();
+    private List<DerivedConcern> getOverlaps(List<Concern> concerns) {
+        List<DerivedConcern> overlaps = new ArrayList<>();
+        Map<String, DerivedConcern> overlapsMap = new HashMap<>();
 
         getMain().getSourceFiles().forEach(sourceFile -> {
-            if (sourceFile.getCrossCuttingConcerns().size() > 1) {
-                sourceFile.getCrossCuttingConcerns().forEach(concern1 -> {
-                    sourceFile.getCrossCuttingConcerns().forEach(concern2 -> {
+            if (sourceFile.getConcerns().size() > 1) {
+                sourceFile.getConcerns().forEach(concern1 -> {
+                    sourceFile.getConcerns().forEach(concern2 -> {
                         if (concern1 != concern2 && concerns.contains(concern1) && concerns.contains(concern2)) {
-                            CrossCuttingConcern overlapConcern = getOverlapSourceCodeAspect(concern1, concern2, overlapsMap, overlaps);
+                            Concern overlapConcern = getOverlapSourceCodeAspect(concern1, concern2, overlapsMap, overlaps);
                             if (!overlapConcern.getSourceFiles().contains(sourceFile)) {
                                 overlapConcern.getSourceFiles().add(sourceFile);
                             }
@@ -256,14 +256,14 @@ public class CodeConfiguration {
         return overlaps;
     }
 
-    private void replacePercentageInOverlapConcerns(List<CrossCuttingConcern> concerns, Map<String, DerivedCrossCuttingConcern> overlapsMap) {
+    private void replacePercentageInOverlapConcerns(List<Concern> concerns, Map<String, DerivedConcern> overlapsMap) {
         getMain().getSourceFiles().forEach(sourceFile -> {
-            if (sourceFile.getCrossCuttingConcerns().size() > 1) {
-                sourceFile.getCrossCuttingConcerns().forEach(concern1 -> {
-                    sourceFile.getCrossCuttingConcerns().forEach(concern2 -> {
+            if (sourceFile.getConcerns().size() > 1) {
+                sourceFile.getConcerns().forEach(concern1 -> {
+                    sourceFile.getConcerns().forEach(concern2 -> {
                         if (concern1 != concern2 && concerns.contains(concern1) && concerns.contains(concern2)) {
-                            CrossCuttingConcern overlapConcern1 = getOverlapSourceCodeAspectIfExist(concern1, concern2, overlapsMap);
-                            CrossCuttingConcern overlapConcern2 = getOverlapSourceCodeAspectIfExist(concern2, concern1, overlapsMap);
+                            Concern overlapConcern1 = getOverlapSourceCodeAspectIfExist(concern1, concern2, overlapsMap);
+                            Concern overlapConcern2 = getOverlapSourceCodeAspectIfExist(concern2, concern1, overlapsMap);
                             if (overlapConcern1 != null) {
                                 replacePercentageInOverlapConcernName(concern1, concern2, overlapConcern1);
                             } else {
@@ -279,7 +279,7 @@ public class CodeConfiguration {
         });
     }
 
-    private void replacePercentageInOverlapConcernName(NamedSourceCodeAspect concern1, NamedSourceCodeAspect concern2, CrossCuttingConcern overlapConcern) {
+    private void replacePercentageInOverlapConcernName(NamedSourceCodeAspect concern1, NamedSourceCodeAspect concern2, Concern overlapConcern) {
         int totalLinesOfCode = overlapConcern.getLinesOfCode();
         if (overlapConcern.getName().contains(PERCENTAGE_1_VARIABLE)) {
             overlapConcern.setName(overlapConcern.getName().replace(PERCENTAGE_1_VARIABLE, getPercentageString(concern1, totalLinesOfCode)));
@@ -296,17 +296,17 @@ public class CodeConfiguration {
         }
     }
 
-    private DerivedCrossCuttingConcern getOverlapSourceCodeAspect(NamedSourceCodeAspect concern1, NamedSourceCodeAspect concern2,
-                                                                  Map<String, DerivedCrossCuttingConcern> overlapsMap, List<DerivedCrossCuttingConcern> overlaps) {
+    private DerivedConcern getOverlapSourceCodeAspect(NamedSourceCodeAspect concern1, NamedSourceCodeAspect concern2,
+                                                      Map<String, DerivedConcern> overlapsMap, List<DerivedConcern> overlaps) {
         String key1 = getOverlapConcernKey(concern1, concern2);
         String key2 = getOverlapConcernKey(concern2, concern1);
-        DerivedCrossCuttingConcern aspect;
+        DerivedConcern aspect;
         if (overlapsMap.containsKey(key1)) {
             aspect = overlapsMap.get(key1);
         } else if (overlapsMap.containsKey(key2)) {
             aspect = overlapsMap.get(key2);
         } else {
-            aspect = new DerivedCrossCuttingConcern(key1);
+            aspect = new DerivedConcern(key1);
             overlapsMap.put(key1, aspect);
             overlaps.add(aspect);
         }
@@ -318,8 +318,8 @@ public class CodeConfiguration {
         return " - " + concern1.getName() + " (" + PERCENTAGE_1_VARIABLE + ") AND " + concern2.getName() + " (" + PERCENTAGE_2_VARIABLE + ")";
     }
 
-    private CrossCuttingConcern getOverlapSourceCodeAspectIfExist(NamedSourceCodeAspect concern1, NamedSourceCodeAspect concern2,
-                                                                  Map<String, ? extends CrossCuttingConcern> overlapsMap) {
+    private Concern getOverlapSourceCodeAspectIfExist(NamedSourceCodeAspect concern1, NamedSourceCodeAspect concern2,
+                                                      Map<String, ? extends Concern> overlapsMap) {
         String key = getOverlapConcernKey(concern1, concern2);
         return overlapsMap.get(key);
     }
@@ -446,29 +446,34 @@ public class CodeConfiguration {
     }
 
     @JsonIgnore
-    public int countAllCrossCuttingConcernsDefinitions() {
+    public int countAllConcernsDefinitions() {
         int count = 0;
-        for (CrossCuttingConcernsGroup group : getCrossCuttingConcerns()) {
+        for (ConcernsGroup group : getConcernGroups()) {
             count += group.getConcerns().size();
             count += group.getMetaConcerns().size();
         }
         return count;
     }
 
-    public List<CrossCuttingConcernsGroup> getCrossCuttingConcerns() {
-        return crossCuttingConcerns;
+    public List<ConcernsGroup> getConcernGroups() {
+        return concernGroups;
     }
 
-    public void setCrossCuttingConcerns(List<CrossCuttingConcernsGroup> crossCuttingConcerns) {
-        if (crossCuttingConcerns != null) {
-            this.crossCuttingConcerns = crossCuttingConcerns;
+    public void setConcernGroups(List<ConcernsGroup> concernGroups) {
+        if (concernGroups != null) {
+            this.concernGroups = concernGroups;
         } else {
-            this.crossCuttingConcerns = new ArrayList<>();
+            this.concernGroups = new ArrayList<>();
         }
-        if (this.crossCuttingConcerns.size() == 0) {
-            CrossCuttingConcernsGroup group = new CrossCuttingConcernsGroup("general");
-            this.crossCuttingConcerns.add(group);
+        if (this.concernGroups.size() == 0) {
+            ConcernsGroup group = new ConcernsGroup("general");
+            this.concernGroups.add(group);
         }
+    }
+
+    // legacy support
+    public void setConcerns(List<ConcernsGroup> concerns) {
+        setConcernGroups(concerns);
     }
 
     public List<String> getSummary() {

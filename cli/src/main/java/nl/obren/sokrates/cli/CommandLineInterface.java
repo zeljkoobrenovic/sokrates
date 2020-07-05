@@ -54,8 +54,8 @@ public class CommandLineInterface {
     public static final String REPORT_OVERVIEW = "reportOverview";
     public static final String REPORT_FINDINGS = "reportFindings";
     public static final String REPORT_DUPLICATION = "reportDuplication";
-    public static final String REPORT_LOGICAL_DECOMPOSITION = "reportLogicalDecomposition";
-    public static final String REPORT_CROSS_CUTTING_CONCERNS = "reportCrossCuttingConcerns";
+    public static final String REPORT_LOGICAL_DECOMPOSITION = "reportLogicalDecompositions";
+    public static final String REPORT_CONCERNS = "reportConcerns";
     public static final String REPORT_FILE_SIZE = "reportFileSize";
     public static final String REPORT_FILE_HISTORY = "reportFileHistory";
     public static final String REPORT_METRICS = "reportMetrics";
@@ -87,7 +87,7 @@ public class CommandLineInterface {
     private Option findings = new Option(REPORT_FINDINGS, false, "generate the report describing the manual findings");
     private Option duplication = new Option(REPORT_DUPLICATION, false, "generate the duplication report (stored in <outputFolder>/Duplication.html)");
     private Option logicalDecomposition = new Option(REPORT_LOGICAL_DECOMPOSITION, false, "generate the logical decomposition report (stored in <outputFolder>/LogicalDecomposition.html)");
-    private Option crossCuttingConcerns = new Option(REPORT_CROSS_CUTTING_CONCERNS, false, "generate the cross cutting concerns report (stored in <outputFolder>/CrossCuttingConcerns.html)");
+    private Option concerns = new Option(REPORT_CONCERNS, false, "generate the concerns report (stored in <outputFolder>/Concerns.html)");
     private Option fileSize = new Option(REPORT_FILE_SIZE, false, "generate the file size report (stored in <outputFolder>/FileSize.html)");
     private Option fileHistory = new Option(REPORT_FILE_HISTORY, false, "generate the file history report (stored in <outputFolder>/FileHistory.html)");
     private Option unitSize = new Option(REPORT_UNIT_SIZE, false, "generate the unit size report (stored in <outputFolder>/UnitSize.html)");
@@ -565,8 +565,8 @@ public class CommandLineInterface {
             if (cmd.hasOption(logicalDecomposition.getOpt())) {
                 settings.setAnalyzeLogicalDecomposition(true);
             }
-            if (cmd.hasOption(crossCuttingConcerns.getOpt())) {
-                settings.setAnalyzeCrossCuttingConcerns(true);
+            if (cmd.hasOption(concerns.getOpt())) {
+                settings.setAnalyzeConcerns(true);
             }
             if (cmd.hasOption(fileSize.getOpt())) {
                 settings.setAnalyzeFileSize(true);
@@ -606,7 +606,7 @@ public class CommandLineInterface {
         options.addOption(data);
         options.addOption(duplication);
         options.addOption(logicalDecomposition);
-        options.addOption(crossCuttingConcerns);
+        options.addOption(concerns);
         options.addOption(fileSize);
         options.addOption(unitSize);
         options.addOption(conditionalComplexity);

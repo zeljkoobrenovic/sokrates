@@ -7,7 +7,7 @@ package nl.obren.sokrates.sourcecode.analysis;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SearcheableFilesCache;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
-import nl.obren.sokrates.sourcecode.aspects.CrossCuttingConcern;
+import nl.obren.sokrates.sourcecode.aspects.Concern;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspectUtils;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
@@ -45,7 +45,7 @@ public class AnalysisUtils {
         aspectAnalysisResults.setFilesCount(aspect.getSourceFiles().size());
         aspectAnalysisResults.setLinesOfCode(aspect.getLinesOfCode());
 
-        if (aspect instanceof CrossCuttingConcern) {
+        if (aspect instanceof Concern) {
             LOG.info("Creating searchable file chache for " + name);
             SearcheableFilesCache searcheableFilesCache = SearcheableFilesCache.getInstance(aspect.getSourceFiles());
             aspect.getSourceFileFilters().forEach(filter -> {
