@@ -12,10 +12,12 @@ import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.reports.utils.ReportUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.DuplicationMetric;
 import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
+import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileSizeDistribution;
 
 import java.util.Arrays;
@@ -45,6 +47,9 @@ public class SummaryUtils {
         summarizeUnitSize(analysisResults, report);
         summarizeUnitComplexity(analysisResults, report);
         summarizeComponents(analysisResults, report);
+        if (analysisResults.getFilesHistoryAnalysisResults().getHistory().size() > 0) {
+            summarizeFileChangeHistory(analysisResults, report);
+        }
         summarizeGoals(analysisResults, report);
         addSummaryFindings(analysisResults, report);
         report.endTable();
@@ -250,6 +255,34 @@ public class SummaryUtils {
         report.endTableRow();
     }
 
+    private void summarizeFileChangeHistory(CodeAnalysisResults analysisResults, RichTextReport report) {
+        report.startTableRow();
+        report.addTableCell(getIconSvg("file_history"), "border: none");
+
+        FilesHistoryAnalysisResults results = analysisResults.getFilesHistoryAnalysisResults();
+        report.startTableCell("border: none; padding-top: 4px");
+        SourceFileAgeDistribution age = results.getOverallFileFirstModifiedDistribution();
+        report.addContentInDiv(getRiskProfileVisual(age, Palette.getAgePalette()));
+        SourceFileAgeDistribution changes = results.getOverallFileLastModifiedDistribution();
+        report.addContentInDiv(getRiskProfileVisual(changes, Palette.getFreshnessPalette()));
+        report.endTableCell();
+
+        report.startTableCell("border: none");
+        report.addHtmlContent("File Age: "
+                + FormattingUtils.getFormattedPercentage(age.getVeryHighRiskPercentage())
+                + "% more than a year, "
+                + FormattingUtils.getFormattedPercentage(age.getNeglictableRiskPercentage()) + "% less than a month");
+        report.addContentInDiv("", "height: 4px");
+        report.addHtmlContent("File Changes: "
+                + FormattingUtils.getFormattedPercentage(changes.getVeryHighRiskPercentage())
+                + "% more than a year ago, "
+                + FormattingUtils.getFormattedPercentage(changes.getNeglictableRiskPercentage()) + "% past month");
+        report.endTableCell();
+        report.addTableCell("<a href='" + reportRoot + "FileHistory.html'>...</a>", "border: none");
+
+        report.endTableRow();
+    }
+
     private String getControlColor(String status) {
         String upperCaseStatus = status.toUpperCase();
         return upperCaseStatus.equals("OK")
@@ -359,6 +392,10 @@ public class SummaryUtils {
     }
 
     private String getRiskProfileVisual(RiskDistributionStats distributionStats) {
+        return getRiskProfileVisual(distributionStats, Palette.getRiskPalette());
+    }
+
+    private String getRiskProfileVisual(RiskDistributionStats distributionStats, Palette palette) {
         SimpleOneBarChart chart = new SimpleOneBarChart();
         chart.setWidth(BAR_WIDTH + 20);
         chart.setBarHeight(BAR_HEIGHT);
@@ -372,7 +409,7 @@ public class SummaryUtils {
                 distributionStats.getLowRiskValue(),
                 distributionStats.getNegligibleRiskValue());
 
-        return chart.getStackedBarSvg(values, Palette.getRiskPalette(), "", "");
+        return chart.getStackedBarSvg(values, palette, "", "");
     }
 
     private String getDuplicationVisual(Number duplicationPercentage) {
