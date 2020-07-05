@@ -221,7 +221,7 @@ public class CodeConfiguration {
                 });
             });
 
-            MetaRulesProcessor helper = MetaRulesProcessor.getCrossCurringConcernsInstance();
+            MetaRulesProcessor helper = MetaRulesProcessor.getConcernsInstance();
             List<Concern> metaConcerns = helper.extractAspects(main.getSourceFiles(), group.getMetaConcerns());
             group.getConcerns().addAll(metaConcerns);
 

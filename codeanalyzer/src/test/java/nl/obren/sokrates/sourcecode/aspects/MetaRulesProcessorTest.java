@@ -33,7 +33,7 @@ public class MetaRulesProcessorTest {
         aspect.getSourceFiles().add(newSourceFile("path1b/path2b/File1a.java", "abc 2\ndef 1\nefg"));
         aspect.getSourceFiles().add(newSourceFile("path1b/path2b/File1b.java", "abc 2\ndef 2\nefg"));
 
-        MetaRulesProcessor processor = MetaRulesProcessor.getCrossCurringConcernsInstance();
+        MetaRulesProcessor processor = MetaRulesProcessor.getConcernsInstance();
 
         MetaRule content = new MetaRule(".*", ".*2.*", "content");
         List<MetaRule> rules = Arrays.asList(content);
@@ -47,7 +47,7 @@ public class MetaRulesProcessorTest {
         assertEquals("abc 2", concerns.get(1).getName());
         assertEquals(2, concerns.get(1).getSourceFiles().size());
 
-        processor = MetaRulesProcessor.getCrossCurringConcernsInstance();
+        processor = MetaRulesProcessor.getConcernsInstance();
         content.getNameOperations().add(new OperationStatement("extract", Arrays.asList("[0-9]+")));
         concerns = processor.extractAspects(aspect.getSourceFiles(), rules);
 
@@ -94,7 +94,7 @@ public class MetaRulesProcessorTest {
         aspect.getSourceFiles().add(newSourceFile("path1b/path2b/File1a.java", "abc 2\ndef 1\nefg"));
         aspect.getSourceFiles().add(newSourceFile("path1b/path2b/File1b.java", "abc 2\ndef 2\nefg"));
 
-        MetaRulesProcessor processor = MetaRulesProcessor.getCrossCurringConcernsInstance();
+        MetaRulesProcessor processor = MetaRulesProcessor.getConcernsInstance();
 
         List<MetaRule> rules = Arrays.asList(new MetaRule(".*", ".*", "content"));
 

@@ -253,7 +253,7 @@ public class ReportFileExporter {
             list.add(new String[]{"", "File Change History", "file_history"});
         }
         if (!showConcerns) {
-            list.add(new String[]{"", "Cross - Cutting Concerns", "cross_cutting_concerns"});
+            list.add(new String[]{"", "Concerns", "cross_cutting_concerns"});
         }
         if (!showTrends) {
             list.add(new String[]{"", "Trend", "trend"});

@@ -34,7 +34,7 @@ public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
         this.sourceCodeAspectFactory = sourceCodeAspectFactory;
     }
 
-    public static MetaRulesProcessor getCrossCurringConcernsInstance() {
+    public static MetaRulesProcessor getConcernsInstance() {
         return new MetaRulesProcessor<Concern>(false, new MetaRulesProcessorCallback() {
             @Override
             public NamedSourceCodeAspect getInstance(String name) {
