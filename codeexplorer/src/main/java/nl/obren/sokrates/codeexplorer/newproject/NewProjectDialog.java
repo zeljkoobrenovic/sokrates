@@ -119,7 +119,7 @@ public class NewProjectDialog extends BorderPane {
             }
         });
 
-        sourceCodeFiles.createBroadScope(extensions, new ArrayList<>(), false);
+        sourceCodeFiles.createBroadScope(extensions, new ArrayList<>(), false, codeConfiguration.getAnalysis().getMaxLineLength());
 
         ScopingConventions scopingConventions = new ScopingConventions();
 

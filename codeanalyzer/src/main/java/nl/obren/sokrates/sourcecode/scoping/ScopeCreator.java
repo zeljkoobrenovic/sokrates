@@ -34,7 +34,7 @@ public class ScopeCreator {
 
         codeConfiguration.getMetadata().setName(srcRoot.getCanonicalFile().getName());
 
-        SourceCodeFiles sourceCodeFiles = getSourceCodeFiles(extensions);
+        SourceCodeFiles sourceCodeFiles = getSourceCodeFiles(extensions, codeConfiguration.getAnalysis().getMaxLineLength());
 
         expandScopeWithConventions(codeConfiguration, sourceCodeFiles);
 
@@ -64,9 +64,9 @@ public class ScopeCreator {
         return codeConfiguration;
     }
 
-    private SourceCodeFiles getSourceCodeFiles(List<String> extensions) {
+    private SourceCodeFiles getSourceCodeFiles(List<String> extensions, int maxLineLength) {
         SourceCodeFiles sourceCodeFiles = getSourceCodeFiles();
-        sourceCodeFiles.createBroadScope(extensions, new ArrayList<>(), false);
+        sourceCodeFiles.createBroadScope(extensions, new ArrayList<>(), maxLineLength);
         return sourceCodeFiles;
     }
 

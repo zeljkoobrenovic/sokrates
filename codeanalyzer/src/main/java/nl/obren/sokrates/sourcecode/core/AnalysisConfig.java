@@ -4,13 +4,8 @@
 
 package nl.obren.sokrates.sourcecode.core;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
-import nl.obren.sokrates.sourcecode.filehistory.GitLsFileUtil;
 import nl.obren.sokrates.sourcecode.analysis.AnalyzerOverride;
-import org.apache.commons.lang3.StringUtils;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +13,7 @@ public class AnalysisConfig {
     private boolean skipDuplication = false;
     private boolean skipDependencies = false;
     private boolean cacheSourceFiles = true;
+    private int maxLineLength = 1000;
     private List<AnalyzerOverride> analyzerOverrides = new ArrayList<>();
 
     public boolean isSkipDuplication() {
@@ -42,6 +38,14 @@ public class AnalysisConfig {
 
     public void setAnalyzerOverrides(List<AnalyzerOverride> analyzerOverrides) {
         this.analyzerOverrides = analyzerOverrides;
+    }
+
+    public int getMaxLineLength() {
+        return maxLineLength;
+    }
+
+    public void setMaxLineLength(int maxLineLength) {
+        this.maxLineLength = maxLineLength;
     }
 
     public boolean isCacheSourceFiles() {

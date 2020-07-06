@@ -89,7 +89,7 @@ public class CodeConfiguration {
 
     @JsonIgnore
     public void load(SourceCodeFiles sourceCodeFiles, File codeConfigurationFile) {
-        sourceCodeFiles.createBroadScope(extensions, ignore);
+        sourceCodeFiles.createBroadScope(extensions, ignore, analysis.getMaxLineLength());
         updateScopesFiles(sourceCodeFiles);
         logicalDecompositions.forEach(logicalDecomposition -> {
             logicalDecomposition.updateLogicalComponentsFiles(sourceCodeFiles, CodeConfiguration.this, codeConfigurationFile);

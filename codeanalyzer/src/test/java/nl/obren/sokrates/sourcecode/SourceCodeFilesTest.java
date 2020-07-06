@@ -118,7 +118,7 @@ public class SourceCodeFilesTest {
         assertEquals(extensionsCountMap.get("html"), new Integer(2));
         assertEquals(extensionsCountMap.get("css"), new Integer(1));
 
-        sourceCodeFiles.createBroadScope(Arrays.asList("java", "js"), new ArrayList<>());
+        sourceCodeFiles.createBroadScope(Arrays.asList("java", "js"), new ArrayList<>(), 1000);
 
         assertEquals(sourceCodeFiles.getFilesInBroadScope().size(), 7);
 
@@ -131,7 +131,7 @@ public class SourceCodeFilesTest {
 
         SourceFileFilter filter = new SourceFileFilter(".*[.]js", "");
 
-        sourceCodeFiles.createBroadScope(Arrays.asList("java", "js"), Arrays.asList(filter));
+        sourceCodeFiles.createBroadScope(Arrays.asList("java", "js"), Arrays.asList(filter), 1000);
         assertEquals(sourceCodeFiles.getFilesInBroadScope().size(), 4);
 
         Map<String, Integer> broadScopeExtensionsCountMapFiltered = sourceCodeFiles.getExtensionsCountMap(sourceCodeFiles.getFilesInBroadScope());
@@ -151,9 +151,9 @@ public class SourceCodeFilesTest {
         SourceFileFilter filter1 = new SourceFileFilter(".*[.]java", "");
         SourceFileFilter filter2 = new SourceFileFilter(".*[.]js", "");
 
-        assertTrue(sourceCodeFiles.shouldExcludeFile(sourceFile, Arrays.asList(filter1)));
-        assertFalse(sourceCodeFiles.shouldExcludeFile(sourceFile, Arrays.asList(filter2)));
-        assertTrue(sourceCodeFiles.shouldExcludeFile(sourceFile, Arrays.asList(filter1, filter2)));
+        assertTrue(sourceCodeFiles.shouldExcludeFile(sourceFile, Arrays.asList(filter1), 100));
+        assertFalse(sourceCodeFiles.shouldExcludeFile(sourceFile, Arrays.asList(filter2), 100));
+        assertTrue(sourceCodeFiles.shouldExcludeFile(sourceFile, Arrays.asList(filter1, filter2), 100));
     }
 
     @Test
