@@ -8,8 +8,12 @@ import java.text.DecimalFormat;
 
 public class FormattingUtils {
     public static String getFormattedPercentage(double percentage) {
+        return getFormattedPercentage(percentage, "0");
+    }
+
+    public static String getFormattedPercentage(double percentage, String textForZero) {
         return percentage < 0.0000000000000000000001
-                ? "0"
+                ? textForZero
                 : percentage < 1.0
                 ? "<1"
                 : ("" + (int) percentage);
@@ -21,6 +25,10 @@ public class FormattingUtils {
 
     public static String getFormattedCount(int value) {
         return new DecimalFormat("#,###").format(value);
+    }
+
+    public static String getFormattedCount(int value, String textForZero) {
+        return value == 0 ? textForZero : new DecimalFormat("#,###").format(value);
     }
 
     public static String getSmallTextForNumber(int number) {

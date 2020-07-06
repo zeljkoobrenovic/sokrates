@@ -7,7 +7,6 @@ package nl.obren.sokrates.reports.landscape.statichtml;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
-import nl.obren.sokrates.reports.core.SummaryUtils;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -129,15 +128,17 @@ public class LandscapeReportGenerator {
         StringBuilder locSummary = new StringBuilder();
         if (linesOfCodePerExtension.size() > 0) {
             locSummary.append(linesOfCodePerExtension.get(0).getName().replace("*.", "").trim().toUpperCase());
+        } else {
+            locSummary.append("-");
         }
         landscapeReport.addTableCell(locSummary.toString().replace("> = ", ">"), "text-align: center");
-        landscapeReport.addTableCell(FormattingUtils.getFormattedCount(main.getLinesOfCode()), "text-align: center");
+        landscapeReport.addTableCell(FormattingUtils.getFormattedCount(main.getLinesOfCode(), "-"), "text-align: center");
 
-        landscapeReport.addTableCell(FormattingUtils.getFormattedPercentage(duplication.getOverallDuplication().getDuplicationPercentage().doubleValue()) + "%", "text-align: center");
-        landscapeReport.addTableCell(FormattingUtils.getFormattedCount(test.getLinesOfCode()), "text-align: center");
-        landscapeReport.addTableCell(FormattingUtils.getFormattedCount(generated.getLinesOfCode()), "text-align: center");
-        landscapeReport.addTableCell(FormattingUtils.getFormattedCount(build.getLinesOfCode()), "text-align: center");
-        landscapeReport.addTableCell(FormattingUtils.getFormattedCount(other.getLinesOfCode()), "text-align: center");
+        landscapeReport.addTableCell(FormattingUtils.getFormattedPercentage(duplication.getOverallDuplication().getDuplicationPercentage().doubleValue(), "-"), "text-align: center");
+        landscapeReport.addTableCell(FormattingUtils.getFormattedCount(test.getLinesOfCode(), "-"), "text-align: center");
+        landscapeReport.addTableCell(FormattingUtils.getFormattedCount(generated.getLinesOfCode(), "-"), "text-align: center");
+        landscapeReport.addTableCell(FormattingUtils.getFormattedCount(build.getLinesOfCode(), "-"), "text-align: center");
+        landscapeReport.addTableCell(FormattingUtils.getFormattedCount(other.getLinesOfCode(), "-"), "text-align: center");
         String projectReportUrl = landscapeAnalysisResults.getConfiguration().getProjectReportsUrlPrefix() + projectAnalysis.getSokratesProjectLink().getHtmlReportsRoot() + "/index.html";
         landscapeReport.addTableCell("<a href='" + projectReportUrl + "' target='_blank'>"
                 + "<div style='height: 40px'>" + ReportFileExporter.getIconSvg("report", 40) + "</div></a>", "text-align: center");

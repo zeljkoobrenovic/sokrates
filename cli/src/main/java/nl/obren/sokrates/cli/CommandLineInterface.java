@@ -39,6 +39,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -68,6 +69,7 @@ public class CommandLineInterface {
     public static final String INIT_LANDSCAPE = "initLandscape";
     public static final String UPDATE_LANDSCAPE = "updateLandscape";
     public static final String ANALYSIS_ROOT = "analysisRoot";
+    public static final String TIMEOUT = "timeout";
 
     public static final String SKIP_COMPLEX_ANALYSES = "skipComplexAnalyses";
     public static final String SET_CACHE_FILES = "setCacheFiles";
@@ -81,6 +83,7 @@ public class CommandLineInterface {
     private Option srcRoot = new Option(SRC_ROOT, true, "[OPTIONAL] the folder where reports will be stored (default is \"<currentFolder>/_sokrates/reports/\")");
     private Option confFile = new Option(CONF_FILE, true, "[OPTIONAL] the path to configuration file (default is \"<currentFolder>/_sokrates/config.json\"");
     private Option analysisRoot = new Option(ANALYSIS_ROOT, true, "[OPTIONAL] the path to configuration file (default is \"<currentFolder>/_sokrates/config.json\"");
+    private Option timeout = new Option(TIMEOUT, true, "[OPTIONAL] timeout in seconds");
     private Option all = new Option(REPORT_ALL, false, "[DEFAULT] generate all reports");
     private Option data = new Option(REPORT_DATA, false, "save analysis data in JSON and text format (in the _sokrates/reports/data folder)");
     private Option scope = new Option(REPORT_OVERVIEW, false, "generate the report describing the overview of files in scope");
@@ -114,6 +117,8 @@ public class CommandLineInterface {
 
         CommandLineInterface commandLineInterface = new CommandLineInterface();
         commandLineInterface.run(args);
+
+        System.exit(0);
     }
 
     public void run(String args[]) throws IOException {
@@ -156,6 +161,8 @@ public class CommandLineInterface {
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
+        startTimeoutIfDefined(cmd);
+
         String strRootPath = cmd.getOptionValue(analysisRoot.getOpt());
         if (!cmd.hasOption(analysisRoot.getOpt())) {
             strRootPath = ".";
@@ -177,6 +184,8 @@ public class CommandLineInterface {
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
+        startTimeoutIfDefined(cmd);
+
         String strRootPath = cmd.getOptionValue(analysisRoot.getOpt());
         if (!cmd.hasOption(analysisRoot.getOpt())) {
             strRootPath = ".";
@@ -197,6 +206,9 @@ public class CommandLineInterface {
         Options options = getReportingOptions();
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
+
+        startTimeoutIfDefined(cmd);
+
         generateReports(cmd);
     }
 
@@ -204,6 +216,8 @@ public class CommandLineInterface {
         Options options = getInitOptions();
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
+
+        startTimeoutIfDefined(cmd);
 
         String strRootPath = cmd.getOptionValue(srcRoot.getOpt());
         if (!cmd.hasOption(srcRoot.getOpt())) {
@@ -223,11 +237,30 @@ public class CommandLineInterface {
         System.out.println("Configuration stored in " + conf.getPath());
     }
 
+    private void startTimeoutIfDefined(CommandLine cmd) {
+        String timeoutSeconds = cmd.getOptionValue(timeout.getOpt());
+        if (StringUtils.isNumeric(timeoutSeconds)) {
+            int seconds = Integer.parseInt(timeoutSeconds);
+            System.out.println("Timeout timer set to " + seconds + " seconds.");
+            Executors.newCachedThreadPool().execute(() -> {
+                try {
+                    Thread.sleep(seconds * 1000);
+                    System.out.println("Timeout after " + seconds + " seconds.");
+                    System.exit(-1);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+    }
+
     private void updateConfig(String[] args) throws ParseException, IOException {
         Options options = getUpdateConfigOptions();
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
+
+        startTimeoutIfDefined(cmd);
 
         String strRootPath = cmd.getOptionValue(srcRoot.getOpt());
         if (!cmd.hasOption(srcRoot.getOpt())) {
@@ -614,6 +647,7 @@ public class CommandLineInterface {
         options.addOption(controls);
         options.addOption(findings);
         options.addOption(internalGraphviz);
+        options.addOption(timeout);
 
         outputFolder.setRequired(true);
         confFile.setRequired(true);
@@ -625,6 +659,7 @@ public class CommandLineInterface {
         Options options = new Options();
         options.addOption(srcRoot);
         options.addOption(confFile);
+        options.addOption(timeout);
 
         confFile.setRequired(false);
 
@@ -640,6 +675,7 @@ public class CommandLineInterface {
         options.addOption(setDescription);
         options.addOption(setLogoLink);
         options.addOption(addLink);
+        options.addOption(timeout);
 
         addLink.setArgs(2);
         confFile.setRequired(false);
@@ -655,6 +691,7 @@ public class CommandLineInterface {
         Options options = new Options();
         options.addOption(analysisRoot);
         options.addOption(confFile);
+        options.addOption(timeout);
 
         confFile.setRequired(false);
 
@@ -665,6 +702,7 @@ public class CommandLineInterface {
         Options options = new Options();
         options.addOption(analysisRoot);
         options.addOption(confFile);
+        options.addOption(timeout);
 
         confFile.setRequired(false);
 
