@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.sourcecode.analysis.results;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 
@@ -25,6 +26,7 @@ public class UnitsAnalysisResults {
     private List<List<RiskDistributionStats>> conditionalComplexityRiskDistributionPerComponent = new ArrayList<>();
     private List<UnitInfo> mostComplexUnits = new ArrayList<>();
 
+    @JsonIgnore
     private List<UnitInfo> allUnits = new ArrayList<>();
 
     public int getTotalNumberOfUnits() {
@@ -107,10 +109,12 @@ public class UnitsAnalysisResults {
         this.mostComplexUnits = mostComplexUnits;
     }
 
+    @JsonIgnore
     public List<UnitInfo> getAllUnits() {
         return allUnits;
     }
 
+    @JsonIgnore
     public void setAllUnits(List<UnitInfo> allUnits) {
         this.allUnits = allUnits;
     }

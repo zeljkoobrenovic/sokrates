@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.sourcecode.analysis.results;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.aspects.DependenciesFinder;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
@@ -20,6 +21,7 @@ public class LogicalDecompositionAnalysisResults {
     private List<ComponentDependency> componentDependencies = new ArrayList<>();
     private List<DependencyError> componentDependenciesErrors = new ArrayList<>();
     private LogicalDecomposition logicalDecomposition;
+    @JsonIgnore
     private List<Dependency> allDependencies;
 
     public LogicalDecompositionAnalysisResults() {
@@ -81,10 +83,12 @@ public class LogicalDecompositionAnalysisResults {
         this.componentDependenciesErrors = componentDependenciesErrors;
     }
 
+    @JsonIgnore
     public void setAllDependencies(List<Dependency> allDependencies) {
         this.allDependencies = allDependencies;
     }
 
+    @JsonIgnore
     public List<Dependency> getAllDependencies() {
         return allDependencies;
     }

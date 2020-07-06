@@ -87,13 +87,16 @@ public class ReportFileExporter {
             addReportFragment(htmlExportFolder, indexReport, report);
         }
         indexReport.endSection();
+        appendLinks(indexReport, analysisResults);
+        export(htmlExportFolder, indexReport, "index.html");
+    }
+
+    private static void addExplorersSection(RichTextReport indexReport) {
         indexReport.startSection("Explorers", "");
         for (String[] explorer : getExplorersList()) {
             addExplorerFragment(indexReport, explorer);
         }
         indexReport.endSection();
-        appendLinks(indexReport, analysisResults);
-        export(htmlExportFolder, indexReport, "index.html");
     }
 
     private static void summarize(RichTextReport indexReport, CodeAnalysisResults analysisResults) {

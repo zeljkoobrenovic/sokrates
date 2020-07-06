@@ -24,6 +24,7 @@ public class FilesHistoryAnalysisResults {
     private List<RiskDistributionStats> lastModifiedDistributionPerExtension = new ArrayList<>();
     private List<RiskDistributionStats> firstModifiedDistributionPerExtension = new ArrayList<>();
 
+    @JsonIgnore
     private List<FilePairChangedTogether> filePairsChangedTogether = new ArrayList<>();
 
     private List<FileAgeDistributionPerLogicalDecomposition> changeDistributionPerLogicalDecomposition = new ArrayList<>();
@@ -165,10 +166,12 @@ public class FilesHistoryAnalysisResults {
         this.changeDistributionPerLogicalDecomposition = changeDistributionPerLogicalDecomposition;
     }
 
+    @JsonIgnore
     public List<FilePairChangedTogether> getFilePairsChangedTogether() {
         return filePairsChangedTogether;
     }
 
+    @JsonIgnore
     public void setFilePairsChangedTogether(List<FilePairChangedTogether> filePairsChangedTogether) {
         this.filePairsChangedTogether = filePairsChangedTogether;
     }

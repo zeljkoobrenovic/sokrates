@@ -36,6 +36,7 @@ public class CodeAnalysisResults {
     private List<LogicalDecompositionAnalysisResults> logicalDecompositionsAnalysisResults = new ArrayList<>();
     private List<ConcernsAnalysisResults> concernsAnalysisResults = new ArrayList<>();
 
+    @JsonIgnore
     private List<Dependency> allDependencies = new ArrayList<>();
 
     private FilesAnalysisResults filesAnalysisResults = new FilesAnalysisResults();
@@ -148,10 +149,12 @@ public class CodeAnalysisResults {
         this.concernsAnalysisResults = concernsAnalysisResults;
     }
 
+    @JsonIgnore
     public List<Dependency> getAllDependencies() {
         return allDependencies;
     }
 
+    @JsonIgnore
     public void setAllDependencies(List<Dependency> allDependencies) {
         this.allDependencies = allDependencies;
     }

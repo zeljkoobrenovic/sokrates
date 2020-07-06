@@ -30,7 +30,7 @@ public class Palette {
     }
 
     public static Palette getFreshnessPalette() {
-        return new Palette(Arrays.asList( "#006d2c", "#31a354", "#74c476", "#bae4b3", "#edf8e9"));
+        return new Palette(Arrays.asList( "#252525", "#006d2c", "#31a354", "#74c476", "#bae4b3"));
     }
 
     public static Palette getDuplicationPalette() {
