@@ -134,7 +134,11 @@ public class LandscapeReportGenerator {
         landscapeReport.addTableCell(locSummary.toString().replace("> = ", ">"), "text-align: center");
         landscapeReport.addTableCell(FormattingUtils.getFormattedCount(main.getLinesOfCode(), "-"), "text-align: center");
 
-        landscapeReport.addTableCell(FormattingUtils.getFormattedPercentage(duplication.getOverallDuplication().getDuplicationPercentage().doubleValue(), "-"), "text-align: center");
+        String duplicationString = FormattingUtils.getFormattedPercentage(duplication.getOverallDuplication().getDuplicationPercentage().doubleValue(), "-");
+        if (!duplicationString.equals("-")) {
+            duplicationString += "%";
+        }
+        landscapeReport.addTableCell(duplicationString, "text-align: center");
         landscapeReport.addTableCell(FormattingUtils.getFormattedCount(test.getLinesOfCode(), "-"), "text-align: center");
         landscapeReport.addTableCell(FormattingUtils.getFormattedCount(generated.getLinesOfCode(), "-"), "text-align: center");
         landscapeReport.addTableCell(FormattingUtils.getFormattedCount(build.getLinesOfCode(), "-"), "text-align: center");
