@@ -76,8 +76,7 @@ public class PerlAnalyzer extends LanguageAnalyzer {
 
     @Override
     public List<UnitInfo> extractUnits(SourceFile sourceFile) {
-        return new PerlAnalyzer().extractUnits(sourceFile);
-
+        return new PerlHeuristicUnitsExtractor().extractUnits(sourceFile);
     }
 
 
