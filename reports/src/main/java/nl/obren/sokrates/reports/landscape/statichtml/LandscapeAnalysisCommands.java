@@ -54,7 +54,6 @@ public class LandscapeAnalysisCommands {
         List<RichTextReport> reports = reportGenerator.report();
 
         try {
-            FileUtils.deleteDirectory(reportsFolder);
             reportsFolder.mkdirs();
 
             File finalReportsFolder = reportsFolder;

@@ -7,6 +7,7 @@ package nl.obren.sokrates.sourcecode.landscape.analysis;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
+import nl.obren.sokrates.sourcecode.metrics.Metric;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 
 import java.util.ArrayList;
@@ -114,7 +115,7 @@ public class LandscapeAnalysisResults {
                 if (existingMetric.isPresent()) {
                     existingMetric.get().setValue(existingMetric.get().getValue().intValue() + metric.getValue().intValue());
                 } else {
-                    linesOfCodePerExtension.add(metric);
+                    linesOfCodePerExtension.add(new NumericMetric(metric.getName(), metric.getValue()));
                 }
             });
         });

@@ -30,19 +30,25 @@ public class LandscapeReportGenerator {
     private LandscapeAnalysisResults landscapeAnalysisResults;
 
     public LandscapeReportGenerator(LandscapeAnalysisResults landscapeAnalysisResults) {
-        String landscapeName = landscapeAnalysisResults.getConfiguration().getMetadata().getName();
+        Metadata metadata = landscapeAnalysisResults.getConfiguration().getMetadata();
+        String landscapeName = metadata.getName();
         if (StringUtils.isNotBlank(landscapeName)) {
             landscapeReport.setDisplayName(landscapeName);
+        }
+        landscapeReport.setLogoLink(metadata.getLogoLink());
+        String description = metadata.getDescription();
+        if (StringUtils.isNotBlank(description)) {
+            landscapeReport.addParagraph(description);
         }
         this.landscapeAnalysisResults = landscapeAnalysisResults;
 
         addBigSummary(landscapeAnalysisResults);
+        addExtensions();
 
         addLandscapeSection(landscapeAnalysisResults.getConfiguration().getSubLandscapes());
 
         addProjectsSection(landscapeAnalysisResults.getProjectAnalysisResults());
 
-        addExtensions();
     }
 
     private void addLandscapeSection(List<SubLandscapeLink> subLandscapes) {
@@ -87,7 +93,7 @@ public class LandscapeReportGenerator {
 
     private void addExtensions() {
         List<NumericMetric> linesOfCodePerExtension = landscapeAnalysisResults.getLinesOfCodePerExtension();
-        landscapeReport.startSubSection("Extensions (" + linesOfCodePerExtension.size() + ")", "");
+        landscapeReport.startSubSection("Extensions in Main Code (" + linesOfCodePerExtension.size() + ")", "");
         landscapeReport.startDiv("");
         landscapeReport.addHtmlContent("( ");
         landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_extensions.html");
