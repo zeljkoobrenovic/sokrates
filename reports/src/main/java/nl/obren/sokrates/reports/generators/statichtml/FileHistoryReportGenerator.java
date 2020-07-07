@@ -417,13 +417,15 @@ public class FileHistoryReportGenerator {
 
                 List<String> dates = componentUpdateHistory.getDates();
                 int activeDays = dates.size();
-                report.startDiv("margin-bottom: 12px");
-                report.addHtmlContent(name + ": <b>" + activeDays + "</b> active days ("
-                        + dates.get(0) + " to "
-                        + dates.get(dates.size() - 1) +
-                        ")<br/>");
-                report.addHtmlContent(ReportUtils.getSvgBar(activeDays, estimatedWorkingDays, "black"));
-                report.endDiv();
+                if (activeDays > 0) {
+                    report.startDiv("margin-bottom: 12px");
+                    report.addHtmlContent(name + ": <b>" + activeDays + "</b> active days ("
+                            + dates.get(0) + " to "
+                            + dates.get(dates.size() - 1) +
+                            ")<br/>");
+                    report.addHtmlContent(ReportUtils.getSvgBar(activeDays, estimatedWorkingDays, "black"));
+                    report.endDiv();
+                }
             });
 
             report.endSection();

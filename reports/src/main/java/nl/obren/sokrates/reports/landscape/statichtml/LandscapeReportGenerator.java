@@ -11,6 +11,7 @@ import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
+import nl.obren.sokrates.sourcecode.landscape.SubLandscapeLink;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ProjectAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
@@ -37,9 +38,33 @@ public class LandscapeReportGenerator {
 
         addBigSummary(landscapeAnalysisResults);
 
+        addLandscapeSection(landscapeAnalysisResults.getConfiguration().getSubLandscapes());
+
         addProjectsSection(landscapeAnalysisResults.getProjectAnalysisResults());
 
         addExtensions();
+    }
+
+    private void addLandscapeSection(List<SubLandscapeLink> subLandscapes) {
+        List<SubLandscapeLink> links = new ArrayList<>(subLandscapes);
+        if (links.size() > 0) {
+            Collections.sort(links, (a, b) -> a.getName().compareTo(b.getName()));
+            landscapeReport.startSubSection("Sub-Landscapes (" + links.size() + ")", "");
+
+            landscapeReport.startUnorderedList();
+
+            links.forEach(subLandscape -> {
+                landscapeReport.startListItem();
+                String href = landscapeAnalysisResults.getConfiguration().getProjectReportsUrlPrefix() + subLandscape.getIndexFilePath();
+                landscapeReport.addNewTabLink(subLandscape.getName(), href);
+                landscapeReport.endListItem();
+            });
+
+            landscapeReport.endUnorderedList();
+
+            landscapeReport.endSection();
+        }
+
     }
 
     private void addBigSummary(LandscapeAnalysisResults landscapeAnalysisResults) {

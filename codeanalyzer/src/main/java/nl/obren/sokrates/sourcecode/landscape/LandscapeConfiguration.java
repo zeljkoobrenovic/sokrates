@@ -14,6 +14,7 @@ public class LandscapeConfiguration {
     private String analysisRoot = "";
     private String projectReportsUrlPrefix = "../";
 
+    private List<SubLandscapeLink> subLandscapes = new ArrayList<>();
     private List<SokratesProjectLink> projects = new ArrayList<>();
 
     public Metadata getMetadata() {
@@ -38,6 +39,14 @@ public class LandscapeConfiguration {
 
     public void setProjectReportsUrlPrefix(String projectReportsUrlPrefix) {
         this.projectReportsUrlPrefix = projectReportsUrlPrefix;
+    }
+
+    public List<SubLandscapeLink> getSubLandscapes() {
+        return subLandscapes;
+    }
+
+    public void setSubLandscapes(List<SubLandscapeLink> subLandscapes) {
+        this.subLandscapes = subLandscapes;
     }
 
     public List<SokratesProjectLink> getProjects() {

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.SokratesProjectLink;
+import nl.obren.sokrates.sourcecode.landscape.SubLandscapeLink;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -25,6 +26,14 @@ public class LandscapeAnalysisInitiator {
         this.saveFile = saveFile;
         LandscapeConfiguration landscapeConfiguration = new LandscapeConfiguration();
         landscapeConfiguration.setAnalysisRoot(analysisRoot.getPath());
+
+        try (Stream<Path> paths = Files.walk(Paths.get(analysisRoot.getPath()))) {
+            paths.filter(file -> isSokratesLandscapeFile(file)).forEach(file -> {
+                addSubLandscape(analysisRoot, landscapeConfiguration, file);
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         try (Stream<Path> paths = Files.walk(Paths.get(analysisRoot.getPath()))) {
             paths.filter(file -> isSokratesAnalysisFile(file)).forEach(file -> {
@@ -46,8 +55,23 @@ public class LandscapeAnalysisInitiator {
         return landscapeConfiguration;
     }
 
+    private void addSubLandscape(File root, LandscapeConfiguration configuration, Path file) {
+        String relativePath = root.toPath().relativize(file).toString();
+
+        File parent = new File(relativePath).getParentFile().getParentFile();
+
+        if (parent != null) {
+            configuration.getSubLandscapes().add(new SubLandscapeLink(parent.getName(), relativePath));
+
+            if (saveFile) {
+                System.out.println("Adding sub-landscape: " + relativePath);
+            }
+        }
+    }
+
     private void save(File landscapeConfigFile, LandscapeConfiguration landscapeConfiguration) {
         try {
+            System.out.println("Saving landscape configuration file in " + landscapeConfigFile.getCanonicalPath());
             String json = new JsonGenerator().generate(landscapeConfiguration);
             FileUtils.write(landscapeConfigFile, json, StandardCharsets.UTF_8);
         } catch (JsonProcessingException e) {
@@ -59,6 +83,10 @@ public class LandscapeAnalysisInitiator {
 
     private boolean isSokratesAnalysisFile(Path file) {
         return file.endsWith("data/analysisResults.json");
+    }
+
+    private boolean isSokratesLandscapeFile(Path file) {
+        return file.endsWith("_sokrates_landscape/index.html");
     }
 
     private void processAnalysisResultFile(File root, LandscapeConfiguration configuration, Path file) {

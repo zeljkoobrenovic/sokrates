@@ -31,14 +31,12 @@ public class ReportUtils {
             DecimalFormat df = new DecimalFormat("###,###,###.##");
             String formattedValue = df.format(number);
             if (formattedValue.equalsIgnoreCase("NaN")) {
-                formattedValue = "0";
+                formattedValue = "-";
             }
 
             return formattedValue;
         } catch (IllegalArgumentException e) {
-            e.printStackTrace();
+            return "-";
         }
-
-        return "0";
     }
 }
