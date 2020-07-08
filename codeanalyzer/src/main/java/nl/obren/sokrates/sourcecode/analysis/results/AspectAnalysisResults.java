@@ -4,11 +4,17 @@
 
 package nl.obren.sokrates.sourcecode.analysis.results;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import nl.obren.sokrates.sourcecode.SourceFileWithSearchData;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
+import nl.obren.sokrates.sourcecode.search.FoundText;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AspectAnalysisResults {
     private String name;
@@ -18,6 +24,10 @@ public class AspectAnalysisResults {
     private List<NumericMetric> fileCountPerExtension = new ArrayList<>();
     private List<NumericMetric> linesOfCodePerExtension = new ArrayList<>();
     private NamedSourceCodeAspect aspect;
+    @JsonIgnore
+    private List<FoundText> foundTextList = new ArrayList<>();
+    @JsonIgnore
+    private Map<File, SourceFileWithSearchData> foundFiles = new HashMap<>();
 
 
     public AspectAnalysisResults() {
@@ -82,5 +92,25 @@ public class AspectAnalysisResults {
 
     public void setNumberOfRegexLineMatches(int numberOfRegexLineMatches) {
         this.numberOfRegexLineMatches = numberOfRegexLineMatches;
+    }
+
+    @JsonIgnore
+    public void setFoundTextList(List<FoundText> foundTextList) {
+        this.foundTextList = foundTextList;
+    }
+
+    @JsonIgnore
+    public List<FoundText> getFoundTextList() {
+        return foundTextList;
+    }
+
+    @JsonIgnore
+    public void setFoundFiles(Map<File, SourceFileWithSearchData> foundFiles) {
+        this.foundFiles = foundFiles;
+    }
+
+    @JsonIgnore
+    public Map<File, SourceFileWithSearchData> getFoundFiles() {
+        return foundFiles;
     }
 }

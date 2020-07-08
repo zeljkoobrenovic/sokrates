@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.reports.dataexporters;
 
+import com.kitfox.svg.A;
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.utils.FormattingUtils;
@@ -24,6 +25,8 @@ import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.reports.utils.ZipUtils;
 import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.SourceFile;
+import nl.obren.sokrates.sourcecode.SourceFileWithSearchData;
+import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
@@ -36,6 +39,7 @@ import nl.obren.sokrates.sourcecode.filehistory.FileHistoryScopingUtils;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.lang.DefaultLanguageAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
+import nl.obren.sokrates.sourcecode.search.FoundLine;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -58,6 +62,8 @@ public class DataExporter {
     public static final String HISTORY_FOLDER_NAME = "history";
     public static final String SEPARATOR = "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n";
     private static final Log LOG = LogFactory.getLog(DataExporter.class);
+    public static final String FOUND_TEXT_PER_FILE_SIFFIX = "_found_text_per_file";
+    public static final String FOUND_TEXT_SUFFIX = "_found_text";
     private ProgressFeedback progressFeedback;
     private File sokratesConfigFile;
     private CodeConfiguration codeConfiguration;
@@ -235,6 +241,8 @@ public class DataExporter {
         analysisResults.getConcernsAnalysisResults().forEach(group -> {
             group.getConcerns().forEach(concern -> {
                 saveSourceCodeAspect(concern.getAspect(), DataExportUtils.getConcernFilePrefix(group.getKey()));
+                saveFoundText(concern, DataExportUtils.getConcernFilePrefix(group.getKey()));
+                saveFoundTextPerFile(concern, DataExportUtils.getConcernFilePrefix(group.getKey()));
             });
         });
     }
@@ -373,6 +381,61 @@ public class DataExporter {
 
         try {
             FileUtils.write(new File(textDataFolder, DataExportUtils.getAspectFileListFileName(aspect, prefix)), content.toString(), UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void saveFoundText(AspectAnalysisResults aspectAnalysisResults, String prefix) {
+        if (aspectAnalysisResults.getFoundTextList().size() == 0) {
+            return;
+        }
+
+        StringBuilder content = new StringBuilder();
+
+        content.append("Text\tCount\n");
+        aspectAnalysisResults.getFoundTextList().forEach(foundText -> {
+            content.append(foundText.getText().trim());
+            content.append("\t");
+            content.append(foundText.getCount());
+            content.append("\n");
+        });
+
+        try {
+            String fileName = DataExportUtils.getAspectFileListFileName(aspectAnalysisResults.getAspect(), prefix, FOUND_TEXT_SUFFIX);
+            FileUtils.write(new File(textDataFolder, fileName), content.toString(), UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void saveFoundTextPerFile(AspectAnalysisResults aspectAnalysisResults, String prefix) {
+        Map<File, SourceFileWithSearchData> foundFiles = aspectAnalysisResults.getFoundFiles();
+        if (foundFiles.size() == 0) {
+            return;
+        }
+
+        StringBuilder content = new StringBuilder();
+
+        List<SourceFileWithSearchData> list = new ArrayList<>(foundFiles.values());
+        Collections.sort(list, (a, b) -> b.getFoundInstancesCount() - a.getFoundInstancesCount());
+        list.forEach(data -> {
+            if (content.length() > 0) {
+                content.append("\n\n");
+            }
+            List<FoundLine> lines = data.getLinesWithSearchedContent();
+            content.append(data.getSourceFile().getRelativePath() + " (" + lines.size() + " " + (lines.size() == 1 ? "line" : "lines") + "):\n");
+            data.getLinesWithSearchedContent().forEach(line -> {
+                content.append("\t");
+                content.append("- line " + line.getLineNumber() + ": ");
+                content.append(line.getFoundText().trim());
+                content.append("\n");
+            });
+        });
+
+        try {
+            String fileName = DataExportUtils.getAspectFileListFileName(aspectAnalysisResults.getAspect(), prefix, FOUND_TEXT_PER_FILE_SIFFIX);
+            FileUtils.write(new File(textDataFolder, fileName), content.toString(), UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }

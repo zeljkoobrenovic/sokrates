@@ -55,13 +55,13 @@ public class ConcernsReportGenerator {
             report.startDiv("width: 100%; overflow-x: auto");
             if (concernsAnalysisResults.getConcerns().size() > 1) {
                 concernsAnalysisResults.getConcerns().forEach(concern -> {
-                    if (!isDerivedConcern(concern)) {
+                    if (!isDerivedConcern(concern.getName())) {
                         int mainLoc = codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode();
                         int concernLoc = concern.getLinesOfCode();
                         double relativeConcernSizeInPerc = 100.0 * concernLoc / mainLoc;
                         String fileListPath = concern.getAspect().getFileSystemFriendlyName(DataExportUtils.getConcernFilePrefix(group));
                         String svg = getOverviewCodePercentageSvg(relativeConcernSizeInPerc,
-                                concern.getFilesCount(), concernLoc, 400, 20, fileListPath);
+                                concern.getFilesCount(), concernLoc, 400, 20, fileListPath, isDerivedConcern(concern.getName()));
                         report.startDiv("");
                         report.addContentInDiv(concern.getName());
                         report.addHtmlContent(svg);
@@ -75,8 +75,7 @@ public class ConcernsReportGenerator {
         report.endSection();
     }
 
-    private boolean isDerivedConcern(AspectAnalysisResults concern) {
-        String name = concern.getName();
+    private boolean isDerivedConcern(String name) {
         return name.trim().startsWith("- ")
                 || name.equalsIgnoreCase("Unclassified")
                 || name.equalsIgnoreCase("Multiple Classifications");
@@ -95,7 +94,7 @@ public class ConcernsReportGenerator {
     private void addIntro(RichTextReport report) {
         report.startSection("Intro", "");
         report.startUnorderedList();
-        report.addListItem("Concerns are any aspects of a software system that can be identified thourgh patterns in code.");
+        report.addListItem("Concerns are any aspects of a software system that can be identified through patterns in code.");
         report.addListItem("A single concern may be present in multiple files. One source code file may contain multiple concerns.");
         report.endUnorderedList();
         report.endSection();
@@ -163,7 +162,7 @@ public class ConcernsReportGenerator {
 
         report.startSubSection(renderer.getTitle(), "");
         String fileListPath = aspectAnalysisResults.getAspect().getFileSystemFriendlyName(DataExportUtils.getConcernFilePrefix(key));
-        report.addContentInDiv(getOverviewCodePercentageSvg(relativeSizeInPerc, numberOfFiles, linesOfCode, 200, 20, fileListPath), fileListPath);
+        report.addContentInDiv(getOverviewCodePercentageSvg(relativeSizeInPerc, numberOfFiles, linesOfCode, 200, 20, fileListPath, isDerivedConcern(name)), fileListPath);
 
         if (name.contains(" - ") && name.contains(" AND ")) {
             List<Double> percentages = extractPercentages(name);
@@ -225,10 +224,14 @@ public class ConcernsReportGenerator {
         return chart.getPercentageSvg(percentage, aspectName, displayText);
     }
 
-    private String getOverviewCodePercentageSvg(double percentage, int numberOfFiles, int linesOfCode, int maxSize, int barHeight, String fileListPath) {
+    private String getOverviewCodePercentageSvg(double percentage, int numberOfFiles, int linesOfCode, int maxSize, int barHeight, String fileListPath, boolean derivedConcern) {
         String filesFragment = numberOfFiles + (numberOfFiles == 1 ? " file " : " files");
         if (StringUtils.isNotBlank(fileListPath)) {
             filesFragment = "<u><a href='../data/text/aspect_" + fileListPath + ".txt'>" + filesFragment + "</a></u>";
+            if (!derivedConcern) {
+                filesFragment += " | <u><a href='../data/text/aspect_" + fileListPath + "_found_text.txt'>found text</a></u>";
+                filesFragment += " | <u><a href='../data/text/aspect_" + fileListPath + "_found_text_per_file.txt'>found text per file</a></u>";
+            }
         }
         String displayText = FormattingUtils.getFormattedCount(linesOfCode) + " LOC ("
                 + FormattingUtils.getFormattedPercentage(percentage) + "%) "

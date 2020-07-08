@@ -55,6 +55,8 @@ public class AnalysisUtils {
                 LOG.info("Searching for path line \"" + searchRequest.getPathSearchExpression().getExpression() + "\" and/or content like \""
                         + searchRequest.getContentSearchExpression().getExpression() + "\"");
                 SearchResult searchResult = searcheableFilesCache.search(searchRequest, new ProgressFeedback());
+                aspectAnalysisResults.setFoundTextList(searchResult.getFoundTextList());
+                aspectAnalysisResults.setFoundFiles(searchResult.getFoundFiles());
                 aspectAnalysisResults.setNumberOfRegexLineMatches(aspectAnalysisResults.getNumberOfRegexLineMatches()
                         + searchResult.getTotalNumberOfMatchingLines());
             });
