@@ -61,21 +61,9 @@ public class CodeBrowserPane extends SplitPane {
 
     public CodeBrowserPane(Stage primaryStage) {
         setStyle(DEFAULT_FONT_STYLE_FRAGMENT);
-        this.findings = new Findings(() -> {
-            try {
-                String content = findingsFile.exists() ? FileUtils.readFileToString(findingsFile, StandardCharsets.UTF_8) : "";
-                FileUtils.write(findingsFile,
-                        content
-                                + "<finding>\n"
-                                + "<summary>" + findings.getSummary() + "</summary>\n\n"
-                                + "<body>\n" + findings.getContent() + "\n</body>\n"
-                                + "</finding>"
-                                + "\n\n\n"
-                        , StandardCharsets.UTF_8);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
+
+        initFindings();
+
         this.aspectFilesBrowserPane = new AspectFilesBrowserPane(this, findings);
 
         codeViewerPane.setCenter(aspectFilesBrowserPane);
@@ -93,6 +81,24 @@ public class CodeBrowserPane extends SplitPane {
         getItems().addAll(mainPane, console);
         setOrientation(Orientation.VERTICAL);
         setDividerPosition(0, 0.9);
+    }
+
+    private void initFindings() {
+        this.findings = new Findings(() -> {
+            try {
+                String content = findingsFile.exists() ? FileUtils.readFileToString(findingsFile, StandardCharsets.UTF_8) : "";
+                FileUtils.write(findingsFile,
+                        content
+                                + "<finding>\n"
+                                + "<summary>" + findings.getSummary() + "</summary>\n\n"
+                                + "<body>\n" + findings.getContent() + "\n</body>\n"
+                                + "</finding>"
+                                + "\n\n\n"
+                        , StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     public WebViewConsole getConsole() {

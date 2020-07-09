@@ -13,6 +13,7 @@ import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.aspects.*;
 import nl.obren.sokrates.sourcecode.metrics.MetricRangeControl;
 import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
+import nl.obren.sokrates.sourcecode.scoping.Convention;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -179,7 +180,18 @@ public class CodeConfiguration {
 
     @JsonIgnore
     public void createDefaultConcerns() {
+        Concern todos = new Concern("TODOs");
+        Concern security = new Concern("Security");
+
+        todos.getSourceFileFilters().add(new SourceFileFilter("", ".*(TODO|FIXME)( |:|\t).*"));
+        security.getSourceFileFilters().add(new SourceFileFilter("", "(?i).*(Security|Authentication|Password).*"));
+
         concernGroups.clear();
+        ConcernsGroup general = new ConcernsGroup("general");
+        concernGroups.add(general);
+
+        general.getConcerns().add(todos);
+        general.getConcerns().add(security);
     }
 
     @JsonIgnore

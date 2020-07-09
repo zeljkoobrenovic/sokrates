@@ -27,6 +27,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AspectsTablePane extends BorderPane {
     private TableView<NamedSourceCodeAspect> table = new TableView<>();
@@ -79,11 +80,6 @@ public class AspectsTablePane extends BorderPane {
             selector.setOnAction(event -> refresh(concernSelections.get(selector.getSelectionModel().getSelectedIndex()).getRight(), main));
             BorderPane topPane = new BorderPane();
             topPane.setCenter(selector);
-            Button addConcernButton = new Button("+");
-            addConcernButton.setId("addConcern");
-            addConcernButton.setOnAction(event -> addConcernButton(addConcernButton));
-            topPane.setRight(addConcernButton);
-            setTop(topPane);
             setTop(topPane);
         } else {
             setTop(null);
@@ -168,7 +164,11 @@ public class AspectsTablePane extends BorderPane {
     private void setItems(List<? extends NamedSourceCodeAspect> aspects, NamedSourceCodeAspect main) {
         this.main = main;
         table.layout();
-        table.setItems(FXCollections.observableArrayList(aspects));
+        ArrayList<? extends NamedSourceCodeAspect> filtered = aspects.stream()
+                .filter(i -> !i.getName().contains("Multiple Classification")
+                        && !i.getName().contains("Unclassified"))
+                .collect(Collectors.toCollection(ArrayList::new));
+        table.setItems(FXCollections.observableArrayList(filtered));
 
         refreshBarChartColumns();
 

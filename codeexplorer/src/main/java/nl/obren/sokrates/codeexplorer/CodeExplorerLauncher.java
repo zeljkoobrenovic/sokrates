@@ -12,10 +12,12 @@ import javafx.stage.Stage;
 import nl.obren.sokrates.codeexplorer.codebrowser.CodeBrowserPane;
 import org.apache.log4j.BasicConfigurator;
 
-import java.awt.*;
-
 public class CodeExplorerLauncher extends Application {
+    public static String initSrcRoot = null;
     public static void main(String[] args) {
+        if (args.length == 1) {
+            initSrcRoot = args[0];
+        }
         launch(args);
     }
 

@@ -8,7 +8,11 @@ import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 
 public class DataExportUtils {
     public static String getAspectFileListFileName(NamedSourceCodeAspect aspect, String prefix) {
-        return "aspect_" + aspect.getFileSystemFriendlyName(prefix) + ".txt";
+        return getAspectFileListFileName(aspect, prefix, "");
+    }
+
+    public static String getAspectFileListFileName(NamedSourceCodeAspect aspect, String prefix, String suffix) {
+        return "aspect_" + aspect.getFileSystemFriendlyName(prefix) + suffix + ".txt";
     }
 
     public static String getComponentFilePrefix(String logicalDecompositionName) {

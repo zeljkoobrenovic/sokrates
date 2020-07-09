@@ -9,6 +9,7 @@ import javafx.concurrent.Worker;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import nl.obren.sokrates.cli.CommandLineInterface;
+import nl.obren.sokrates.codeexplorer.CodeExplorerLauncher;
 import nl.obren.sokrates.codeexplorer.codebrowser.CodeBrowserPane;
 import nl.obren.sokrates.codeexplorer.newproject.NewProjectDialog;
 import nl.obren.sokrates.common.io.JsonGenerator;
@@ -47,7 +48,14 @@ public class CodeConfigurationView extends ConfigurationEditorView {
     protected void initEngine() {
         editorWebView.getEngine().getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue == Worker.State.SUCCEEDED) {
-                if (UserProperties.getInstance("sokrates").getFileProperty(LAST_CONFIGURATION_FILE_PROPERTY) != null) {
+                if (CodeExplorerLauncher.initSrcRoot != null) {
+                    file = new File(CodeExplorerLauncher.initSrcRoot);
+                    if (!file.exists()) {
+                        file = null;
+                    }
+                    addToRecentlyUsedFilesList();
+                    openFile();
+                } else if (UserProperties.getInstance("sokrates").getFileProperty(LAST_CONFIGURATION_FILE_PROPERTY) != null) {
                     file = UserProperties.getInstance("sokrates").getFileProperty(LAST_CONFIGURATION_FILE_PROPERTY);
                     addToRecentlyUsedFilesList();
                     openFile();
