@@ -468,4 +468,44 @@ public class ScopingConventions {
         ignoredFilesConventions.add(new Convention(".*/Thumbs[.]db", "", "Thumbs.db"));
         ignoredFilesConventions.add(new Convention(".*/__MACOSX/.*", "", "__MACOSX folder"));
     }
+
+    public List<Convention> getIgnoredFilesConventions() {
+        return ignoredFilesConventions;
+    }
+
+    public void setIgnoredFilesConventions(List<Convention> ignoredFilesConventions) {
+        this.ignoredFilesConventions = ignoredFilesConventions;
+    }
+
+    public List<Convention> getTestFilesConventions() {
+        return testFilesConventions;
+    }
+
+    public void setTestFilesConventions(List<Convention> testFilesConventions) {
+        this.testFilesConventions = testFilesConventions;
+    }
+
+    public List<Convention> getGeneratedFilesConventions() {
+        return generatedFilesConventions;
+    }
+
+    public void setGeneratedFilesConventions(List<Convention> generatedFilesConventions) {
+        this.generatedFilesConventions = generatedFilesConventions;
+    }
+
+    public List<Convention> getBuildAndDeploymentFilesConventions() {
+        return buildAndDeploymentFilesConventions;
+    }
+
+    public void setBuildAndDeploymentFilesConventions(List<Convention> buildAndDeploymentFilesConventions) {
+        this.buildAndDeploymentFilesConventions = buildAndDeploymentFilesConventions;
+    }
+
+    public List<Convention> getOtherFilesConventions() {
+        return otherFilesConventions;
+    }
+
+    public void setOtherFilesConventions(List<Convention> otherFilesConventions) {
+        this.otherFilesConventions = otherFilesConventions;
+    }
 }
