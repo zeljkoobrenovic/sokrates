@@ -8,8 +8,11 @@ import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
 import nl.obren.sokrates.sourcecode.SourceCodeFiles;
+import nl.obren.sokrates.sourcecode.SourceFile;
+import nl.obren.sokrates.sourcecode.aspects.ConcernsGroup;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
+import nl.obren.sokrates.sourcecode.scoping.custom.CustomScopingConventions;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -27,7 +30,7 @@ public class ScopeCreator {
         this.confFile = confFile;
     }
 
-    public void createScopeFromConventions() throws IOException {
+    public void createScopeFromConventions(CustomScopingConventions customScopingConventions) throws IOException {
         List<String> extensions = getExtensions();
 
         CodeConfiguration codeConfiguration = getCodeConfiguration(extensions);
@@ -36,9 +39,39 @@ public class ScopeCreator {
 
         SourceCodeFiles sourceCodeFiles = getSourceCodeFiles(extensions, codeConfiguration.getAnalysis().getMaxLineLength());
 
-        expandScopeWithConventions(codeConfiguration, sourceCodeFiles);
+        if (customScopingConventions == null || !customScopingConventions.isIgnoreStandardScopingConventions()) {
+            expandScopeWithConventions(codeConfiguration, sourceCodeFiles);
+        }
+        if (customScopingConventions != null) {
+            expandScopeWithCustomConventions(codeConfiguration, sourceCodeFiles, customScopingConventions);
+        }
 
         saveScope(codeConfiguration);
+    }
+
+    private void expandScopeWithCustomConventions(CodeConfiguration codeConfiguration, SourceCodeFiles sourceCodeFiles, CustomScopingConventions customScopingConventions) {
+        if (customScopingConventions.getMaxLineLength() > 0) {
+            codeConfiguration.getAnalysis().setMaxLineLength(customScopingConventions.getMaxLineLength());
+        }
+        List<SourceFile> sourceFiles = sourceCodeFiles.getFilesInBroadScope();
+        ConventionUtils.addConventions(customScopingConventions.getIgnoredFilesConventions(), codeConfiguration.getIgnore(), sourceFiles);
+        ConventionUtils.addConventions(customScopingConventions.getTestFilesConventions(), codeConfiguration.getTest().getSourceFileFilters(), sourceFiles);
+        ConventionUtils.addConventions(customScopingConventions.getGeneratedFilesConventions(), codeConfiguration.getGenerated().getSourceFileFilters(), sourceFiles);
+        ConventionUtils.addConventions(customScopingConventions.getBuildAndDeploymentFilesConventions(), codeConfiguration.getBuildAndDeployment().getSourceFileFilters(), sourceFiles);
+        ConventionUtils.addConventions(customScopingConventions.getOtherFilesConventions(), codeConfiguration.getOther().getSourceFileFilters(), sourceFiles);
+
+        List<ConcernsGroup> concernGroups = codeConfiguration.getConcernGroups();
+        if (customScopingConventions.isRemoveStandardConcerns()) {
+            concernGroups.clear();
+        }
+
+        if (customScopingConventions.getConcerns().size() > 0) {
+            if (concernGroups.size() == 0) {
+                concernGroups.add(new ConcernsGroup("general"));
+            }
+
+            concernGroups.get(0).getConcerns().addAll(customScopingConventions.getConcerns());
+        }
     }
 
     private List<String> getExtensions() {

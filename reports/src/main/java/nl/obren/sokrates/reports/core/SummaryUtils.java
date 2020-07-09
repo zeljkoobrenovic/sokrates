@@ -13,6 +13,7 @@ import nl.obren.sokrates.reports.utils.ReportUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
+import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.metrics.DuplicationMetric;
 import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
@@ -39,18 +40,33 @@ public class SummaryUtils {
     }
 
     public void summarize(CodeAnalysisResults analysisResults, RichTextReport report) {
+        CodeConfiguration config = analysisResults.getCodeConfiguration();
+
+        boolean mainExists = analysisResults.getMainAspectAnalysisResults().getFilesCount() > 0;
+        boolean showDuplication = mainExists && !config.getAnalysis().isSkipDuplication();
+        boolean showControls = mainExists && config.getGoalsAndControls().size() > 0;
+        boolean showUnits = mainExists && analysisResults.getUnitsAnalysisResults().getTotalNumberOfUnits() > 0;
+
         report.startDiv("width: 100%; overflow-x: auto");
         report.startTable("border: none; min-width: 800px; ");
         summarizeMainVolume(analysisResults, report);
-        summarizeDuplication(analysisResults, report);
-        summarizeFileSize(report, analysisResults);
-        summarizeUnitSize(analysisResults, report);
-        summarizeUnitComplexity(analysisResults, report);
-        summarizeComponents(analysisResults, report);
+        if (mainExists) {
+            if (showDuplication) {
+                summarizeDuplication(analysisResults, report);
+            }
+            summarizeFileSize(report, analysisResults);
+            if (showUnits) {
+                summarizeUnitSize(analysisResults, report);
+                summarizeUnitComplexity(analysisResults, report);
+            }
+            summarizeComponents(analysisResults, report);
+        }
         if (analysisResults.getFilesHistoryAnalysisResults().getHistory().size() > 0) {
             summarizeFileChangeHistory(analysisResults, report);
         }
-        summarizeGoals(analysisResults, report);
+        if (showControls) {
+            summarizeGoals(analysisResults, report);
+        }
         addSummaryFindings(analysisResults, report);
         report.endTable();
         report.endDiv();

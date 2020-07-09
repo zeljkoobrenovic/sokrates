@@ -27,6 +27,8 @@ import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
 import nl.obren.sokrates.sourcecode.scoping.ScopeCreator;
+import nl.obren.sokrates.sourcecode.scoping.custom.CustomConventionsHelper;
+import nl.obren.sokrates.sourcecode.scoping.custom.CustomScopingConventions;
 import nl.obren.sokrates.sourcecode.stats.SourceFileSizeDistribution;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
@@ -48,7 +50,9 @@ public class CommandLineInterface {
     public static final String INIT = "init";
     public static final String GENERATE_REPORTS = "generateReports";
     public static final String UPDATE_CONFIG = "updateConfig";
+    public static final String EXPORT_STANDARD_CONVENTIONS = "exportStandardConventions";
     public static final String SRC_ROOT = "srcRoot";
+    public static final String CONVENTIONS_FILE = "conventionsFile";
     public static final String CONF_FILE = "confFile";
     public static final String REPORT_ALL = "reportAll";
     public static final String REPORT_DATA = "reportData";
@@ -81,6 +85,7 @@ public class CommandLineInterface {
 
     private static final Log LOG = LogFactory.getLog(CommandLineInterface.class);
     private Option srcRoot = new Option(SRC_ROOT, true, "[OPTIONAL] the folder where reports will be stored (default is \"<currentFolder>/_sokrates/reports/\")");
+    private Option conventionsFile = new Option(CONVENTIONS_FILE, true, "the custom conventions JSON file path\")");
     private Option confFile = new Option(CONF_FILE, true, "[OPTIONAL] the path to configuration file (default is \"<currentFolder>/_sokrates/config.json\"");
     private Option analysisRoot = new Option(ANALYSIS_ROOT, true, "[OPTIONAL] the path to configuration file (default is \"<currentFolder>/_sokrates/config.json\"");
     private Option timeout = new Option(TIMEOUT, true, "[OPTIONAL] timeout in seconds");
@@ -137,6 +142,9 @@ public class CommandLineInterface {
                 return;
             } else if (args[0].equalsIgnoreCase(UPDATE_CONFIG)) {
                 updateConfig(args);
+                return;
+            } else if (args[0].equalsIgnoreCase(EXPORT_STANDARD_CONVENTIONS)) {
+                exportConventions(args);
                 return;
             } else if (args[0].equalsIgnoreCase(INIT_LANDSCAPE)) {
                 initLandscape(args);
@@ -224,6 +232,14 @@ public class CommandLineInterface {
             strRootPath = ".";
         }
 
+        CustomScopingConventions customScopingConventions = null;
+        if (cmd.hasOption(conventionsFile.getOpt())) {
+            File scopingConventionsFile = new File(cmd.getOptionValue(conventionsFile.getOpt()));
+            if (scopingConventionsFile.exists()) {
+                customScopingConventions = CustomConventionsHelper.readFromFile(scopingConventionsFile);
+            }
+        }
+
         File root = new File(strRootPath);
         if (!root.exists()) {
             LOG.error("The src root \"" + root.getPath() + "\" does not exist.");
@@ -232,7 +248,7 @@ public class CommandLineInterface {
 
         File conf = getConfigFile(cmd, root);
 
-        new ScopeCreator(root, conf).createScopeFromConventions();
+        new ScopeCreator(root, conf).createScopeFromConventions(customScopingConventions);
 
         System.out.println("Configuration stored in " + conf.getPath());
     }
@@ -326,6 +342,14 @@ public class CommandLineInterface {
         FileUtils.write(confFile, new JsonGenerator().generate(codeConfiguration), UTF_8);
 
         System.out.println("The configuration file has been updated (the original version of the file is saved in the 'config_backup.json' file).");
+    }
+
+    private void exportConventions(String[] args) throws ParseException, IOException {
+        File file = new File("sokrates_standard_conventions.json");
+
+        CustomConventionsHelper.saveStandardConventionsToFile(file);
+
+        System.out.println("Conventions saved to '" + file.getPath() + "'.");
     }
 
     private File getConfigFile(CommandLine cmd, File root) {
@@ -659,6 +683,7 @@ public class CommandLineInterface {
         Options options = new Options();
         options.addOption(srcRoot);
         options.addOption(confFile);
+        options.addOption(conventionsFile);
         options.addOption(timeout);
 
         confFile.setRequired(false);
@@ -683,6 +708,12 @@ public class CommandLineInterface {
         setName.setRequired(false);
         setDescription.setRequired(false);
         setLogoLink.setRequired(false);
+
+        return options;
+    }
+
+    private Options getExportStandardConventionsOptions() {
+        Options options = new Options();
 
         return options;
     }

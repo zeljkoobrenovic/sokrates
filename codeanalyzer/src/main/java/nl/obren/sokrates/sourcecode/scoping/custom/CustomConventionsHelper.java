@@ -18,10 +18,14 @@ import java.nio.charset.StandardCharsets;
 public class CustomConventionsHelper {
     public static CustomScopingConventions exportStandardConventions() {
         ScopingConventions standardConventions = new ScopingConventions();
-        CodeConfiguration defaultCodeConfiguration = new CodeConfiguration();
+        CodeConfiguration defaultCodeConfiguration = CodeConfiguration.getDefaultConfiguration();
         CustomScopingConventions conventions = new CustomScopingConventions();
 
         conventions.setMaxLineLength(defaultCodeConfiguration.getAnalysis().getMaxLineLength());
+
+        defaultCodeConfiguration.getConcernGroups().forEach(concernsGroup -> {
+            conventions.getConcerns().addAll(concernsGroup.getConcerns());
+        });
 
         conventions.setTestFilesConventions(standardConventions.getTestFilesConventions());
         conventions.setGeneratedFilesConventions(standardConventions.getGeneratedFilesConventions());

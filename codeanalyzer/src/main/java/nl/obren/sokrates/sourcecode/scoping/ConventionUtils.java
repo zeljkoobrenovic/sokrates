@@ -13,9 +13,8 @@ public class ConventionUtils {
     public static void addConventions(List<Convention> conventions, List<SourceFileFilter> sourceFileFilters, List<SourceFile> sourceFiles) {
         sourceFiles.forEach(sourceFile -> {
             conventions.forEach(convention -> {
-                SourceFileFilter filter = convention.getFilter();
-                if (isNotAdded(filter, sourceFileFilters) && filter.matches(sourceFile)) {
-                    sourceFileFilters.add(filter);
+                if (isNotAdded(convention, sourceFileFilters) && convention.matches(sourceFile)) {
+                    sourceFileFilters.add(convention);
                 }
             });
         });

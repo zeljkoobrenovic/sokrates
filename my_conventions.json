@@ -1,0 +1,35 @@
+{
+  "extensions": {
+    "onlyInclude": [],
+    "alwaysExclude": []
+  },
+  "maxLineLength": 1000,
+  "ignoreStandardScopingConventions": false,
+  "removeStandardConcerns": true,
+  "ignoredFilesConventions": [],
+  "testFilesConventions": [],
+  "generatedFilesConventions": [],
+  "buildAndDeploymentFilesConventions": [],
+  "otherFilesConventions": [
+    {
+      "pathPattern": ".*[.]kt",
+      "contentPattern": "",
+      "exception": false,
+      "note": "Kotlin files"
+    }
+  ],
+  "concerns": [
+    {
+      "name": "TODOs",
+      "sourceFileFilters": [
+        {
+          "pathPattern": "",
+          "contentPattern": ".*(TODO|FI XME)( |:|\t).*",
+          "exception": false,
+          "note": ""
+        }
+      ],
+      "files": []
+    }
+  ]
+}

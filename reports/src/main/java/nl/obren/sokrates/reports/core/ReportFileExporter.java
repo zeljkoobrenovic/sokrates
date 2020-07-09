@@ -204,12 +204,14 @@ public class ReportFileExporter {
         List<String[]> list = new ArrayList<>();
 
         CodeConfiguration config = analysisResults.getCodeConfiguration();
-        boolean showHistoryReport = config.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesConfigFolder);
-        boolean showDuplication = !config.getAnalysis().isSkipDuplication();
-        boolean showDependencies = !config.getAnalysis().isSkipDependencies();
-        boolean showTrends = config.getTrendAnalysis().getReferenceAnalyses(sokratesConfigFolder).size() > 0;
-        boolean showConcerns = config.countAllConcernsDefinitions() > 1;
-        boolean showControls = config.getGoalsAndControls().size() > 0;
+        boolean mainExists = analysisResults.getMainAspectAnalysisResults().getFilesCount() > 0;
+        boolean showHistoryReport = mainExists && config.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesConfigFolder);
+        boolean showDuplication = mainExists && !config.getAnalysis().isSkipDuplication();
+        boolean showDependencies = mainExists && !config.getAnalysis().isSkipDependencies();
+        boolean showTrends = mainExists && config.getTrendAnalysis().getReferenceAnalyses(sokratesConfigFolder).size() > 0;
+        boolean showConcerns = mainExists && config.countAllConcernsDefinitions() > 1;
+        boolean showControls = mainExists && config.getGoalsAndControls().size() > 0;
+        boolean showUnits = mainExists && analysisResults.getUnitsAnalysisResults().getTotalNumberOfUnits() > 0;
 
         File findingsFile = CodeConfigurationUtils.getDefaultSokratesFindingsFile(sokratesConfigFolder);
 
@@ -220,20 +222,24 @@ public class ReportFileExporter {
         }
 
         list.add(new String[]{"SourceCodeOverview.html", "Source Code Overview", "codebase"});
-
-        list.add(new String[]{"Components.html", showDependencies ? "Components and Dependencies" : "Components", "dependencies"});
+        if (mainExists) {
+            list.add(new String[]{"Components.html", showDependencies ? "Components and Dependencies" : "Components", "dependencies"});
+        }
 
         if (showDuplication) {
             list.add(new String[]{"Duplication.html", "Duplication", "duplication"});
         }
 
-        list.add(new String[]{"FileSize.html", "File Size", "file_size"});
-
+        if (mainExists) {
+            list.add(new String[]{"FileSize.html", "File Size", "file_size"});
+        }
         if (showHistoryReport) {
             list.add(new String[]{"FileHistory.html", "File Change History", "file_history"});
         }
-        list.add(new String[]{"UnitSize.html", "Unit Size", "unit_size"});
-        list.add(new String[]{"ConditionalComplexity.html", "Conditional Complexity", "conditional"});
+        if (showUnits) {
+            list.add(new String[]{"UnitSize.html", "Unit Size", "unit_size"});
+            list.add(new String[]{"ConditionalComplexity.html", "Conditional Complexity", "conditional"});
+        }
         if (showConcerns) {
             list.add(new String[]{"Concerns.html", "Concerns", "cross_cutting_concerns"});
         }
@@ -249,11 +255,21 @@ public class ReportFileExporter {
             list.add(new String[]{"Notes.html", "Notes & Findings", "notes"});
         }
 
+        if (!mainExists) {
+            list.add(new String[]{"", showDependencies ? "Components and Dependencies" : "Components", "dependencies"});
+        }
         if (!showDuplication) {
             list.add(new String[]{"", "Duplication", "duplication"});
         }
+        if (!mainExists) {
+            list.add(new String[]{"", "File Size", "file_size"});
+        }
         if (!showHistoryReport) {
             list.add(new String[]{"", "File Change History", "file_history"});
+        }
+        if (!showUnits) {
+            list.add(new String[]{"", "Unit Size", "unit_size"});
+            list.add(new String[]{"", "Conditional Complexity", "conditional"});
         }
         if (!showConcerns) {
             list.add(new String[]{"", "Concerns", "cross_cutting_concerns"});
