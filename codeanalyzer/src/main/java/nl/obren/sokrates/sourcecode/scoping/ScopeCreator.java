@@ -6,12 +6,14 @@ package nl.obren.sokrates.sourcecode.scoping;
 
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
+import nl.obren.sokrates.sourcecode.ExtensionGroup;
 import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
 import nl.obren.sokrates.sourcecode.SourceCodeFiles;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.aspects.ConcernsGroup;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
+import nl.obren.sokrates.sourcecode.scoping.custom.CustomExtensionConventions;
 import nl.obren.sokrates.sourcecode.scoping.custom.CustomScopingConventions;
 import org.apache.commons.io.FileUtils;
 
@@ -24,13 +26,15 @@ import java.util.List;
 public class ScopeCreator {
     private File srcRoot;
     private File confFile;
+    private CustomScopingConventions customScopingConventions;
 
-    public ScopeCreator(File srcRoot, File confFile) {
+    public ScopeCreator(File srcRoot, File confFile, CustomScopingConventions customScopingConventions) {
         this.srcRoot = srcRoot;
         this.confFile = confFile;
+        this.customScopingConventions = customScopingConventions;
     }
 
-    public void createScopeFromConventions(CustomScopingConventions customScopingConventions) throws IOException {
+    public void createScopeFromConventions() throws IOException {
         List<String> extensions = getExtensions();
 
         CodeConfiguration codeConfiguration = getCodeConfiguration(extensions);
@@ -43,13 +47,13 @@ public class ScopeCreator {
             expandScopeWithConventions(codeConfiguration, sourceCodeFiles);
         }
         if (customScopingConventions != null) {
-            expandScopeWithCustomConventions(codeConfiguration, sourceCodeFiles, customScopingConventions);
+            expandScopeWithCustomConventions(codeConfiguration, sourceCodeFiles);
         }
 
         saveScope(codeConfiguration);
     }
 
-    private void expandScopeWithCustomConventions(CodeConfiguration codeConfiguration, SourceCodeFiles sourceCodeFiles, CustomScopingConventions customScopingConventions) {
+    private void expandScopeWithCustomConventions(CodeConfiguration codeConfiguration, SourceCodeFiles sourceCodeFiles) {
         if (customScopingConventions.getMaxLineLength() > 0) {
             codeConfiguration.getAnalysis().setMaxLineLength(customScopingConventions.getMaxLineLength());
         }
@@ -84,11 +88,34 @@ public class ScopeCreator {
     private List<String> getExtensions(ExtensionGroupExtractor extractor) {
         List<String> extensions = new ArrayList<>();
         extractor.getExtensionsList()
-                .stream().filter(e -> ExtensionGroupExtractor.isKnownSourceCodeExtension(e.getExtension()))
+                .stream()
+                .filter(e -> shouldIncludeExtension(e.getExtension()))
                 .forEach(extensionGroup -> {
                     extensions.add(extensionGroup.getExtension());
                 });
         return extensions;
+    }
+
+    private boolean shouldIncludeExtension(String extension) {
+        if (customScopingConventions != null) {
+            CustomExtensionConventions customExtensions = customScopingConventions.getExtensions();
+            if (customExtensions.getOnlyInclude().size() > 0) {
+                for (String onlyInclude : customExtensions.getOnlyInclude()) {
+                    if (onlyInclude.equalsIgnoreCase(extension)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            if (customExtensions.getAlwaysExclude().size() > 0) {
+                for (String alwaysExclude : customExtensions.getAlwaysExclude()) {
+                    if (alwaysExclude.equalsIgnoreCase(extension)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return ExtensionGroupExtractor.isKnownSourceCodeExtension(extension);
     }
 
     private CodeConfiguration getCodeConfiguration(List<String> extensions) {

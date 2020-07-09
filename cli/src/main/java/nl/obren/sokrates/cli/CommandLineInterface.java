@@ -248,7 +248,7 @@ public class CommandLineInterface {
 
         File conf = getConfigFile(cmd, root);
 
-        new ScopeCreator(root, conf).createScopeFromConventions(customScopingConventions);
+        new ScopeCreator(root, conf, customScopingConventions).createScopeFromConventions();
 
         System.out.println("Configuration stored in " + conf.getPath());
     }
