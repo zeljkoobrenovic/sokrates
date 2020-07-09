@@ -5,16 +5,16 @@
 package nl.obren.sokrates.sourcecode.analysis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.contributors.GitContributorsUtil;
-import nl.obren.sokrates.sourcecode.filehistory.GitHistoryUtil;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.util.List;
 
-public class FileHistoryAnalysisConfig {
-    private String importPath = "../git-history.txt";
+public class ContributorsAnalysisConfig {
+    private String importPath = "../git-contributors.txt";
 
     public String getImportPath() {
         return importPath;
@@ -25,7 +25,7 @@ public class FileHistoryAnalysisConfig {
     }
 
     @JsonIgnore
-    public File getFilesHistoryFile(File sokratesConfigFolder) {
+    public File getContributorsFile(File sokratesConfigFolder) {
         if (new File(importPath).exists()) {
             return new File(importPath);
         } else {
@@ -34,8 +34,8 @@ public class FileHistoryAnalysisConfig {
     }
 
     @JsonIgnore
-    public List<FileModificationHistory> getHistory(File sokratesConfigFolder) {
-        return GitHistoryUtil.importGitLsFilesExport(getFilesHistoryFile(sokratesConfigFolder));
+    public List<Contributor> getContributors(File sokratesConfigFolder) {
+        return GitContributorsUtil.importGitContributorsExport(getContributorsFile(sokratesConfigFolder));
     }
 
     @JsonIgnore
@@ -44,7 +44,7 @@ public class FileHistoryAnalysisConfig {
             return false;
         }
 
-        return getFilesHistoryFile(sokratesConfigFolder).exists()
-                && getHistory(sokratesConfigFolder).size() > 0;
+        return getContributorsFile(sokratesConfigFolder).exists()
+                && getContributors(sokratesConfigFolder).size() > 0;
     }
 }

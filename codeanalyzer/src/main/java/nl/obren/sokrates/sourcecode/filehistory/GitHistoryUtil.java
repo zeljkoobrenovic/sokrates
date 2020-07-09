@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.sourcecode.filehistory;
 
+import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -15,14 +16,14 @@ import java.util.List;
 import java.util.Map;
 
 /*
- * Assumes that you have generated the text file being read iusing the following git command:
+ * Assumes that you have generated the text file being read using the following git command:
  * git ls-files -z | xargs -0 -n1 -I{} -- git log --format="%ai {}" {} > git-history.txt
  */
-public class GitLsFileUtil {
+public class GitHistoryUtil {
     private final static int DATE_AND_TIME_PATH_SEPARATION_POISTION = 26;
     private final static int DATE_SEPARATION_POSITION = 10;
 
-    public static String printGitLogCommand() {
+    public static String printContributorsCommand() {
         return "git ls-files -z | xargs -0 -n1 -I{} -- git log --format=\"%ai {}\" {} > git-history.txt";
     }
 

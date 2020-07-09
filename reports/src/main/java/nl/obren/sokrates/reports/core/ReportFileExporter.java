@@ -8,6 +8,7 @@ import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import org.apache.commons.io.FileUtils;
@@ -18,6 +19,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -87,8 +89,27 @@ public class ReportFileExporter {
             addReportFragment(htmlExportFolder, indexReport, report);
         }
         indexReport.endSection();
+        addContributersSection(analysisResults, sokratesConfigFolder, indexReport);
         appendLinks(indexReport, analysisResults);
         export(htmlExportFolder, indexReport, "index.html");
+    }
+
+    public static void addContributersSection(CodeAnalysisResults analysisResults, File sokratesConfigFolder, RichTextReport indexReport) {
+        CodeConfiguration codeConfiguration = analysisResults.getCodeConfiguration();
+        List<Contributor> contributors = codeConfiguration.getContributorsAnalysis().getContributors(sokratesConfigFolder);
+        if (contributors.size() > 0) {
+            Collections.sort(contributors, (a, b) -> b.getCommitsCount() - a.getCommitsCount());
+            int max = contributors.get(0).getCommitsCount();
+            indexReport.startSection("Contributors (" + contributors.size() + ")", "");
+            contributors.forEach(contributor -> {
+                double opacity = 0.05 + 0.95 * contributor.getCommitsCount() / max;
+                String info = contributor.getName() + " " + contributor.getCommitsCount() + " commits";
+                indexReport.addHtmlContent("<div style='display: inline-block;opacity:" + opacity + "' title='" + info + "'>");
+                indexReport.addHtmlContent(getIconSvg("contributor"));
+                indexReport.addHtmlContent("</div>");
+            });
+            indexReport.endSection();
+        }
     }
 
     private static void addExplorersSection(RichTextReport indexReport) {

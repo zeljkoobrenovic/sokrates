@@ -9,11 +9,11 @@ import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.SourceCodeFiles;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
+import nl.obren.sokrates.sourcecode.analysis.ContributorsAnalysisConfig;
 import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.aspects.*;
 import nl.obren.sokrates.sourcecode.metrics.MetricRangeControl;
 import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
-import nl.obren.sokrates.sourcecode.scoping.Convention;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -44,6 +44,7 @@ public class CodeConfiguration {
 
     private TrendAnalysisConfig trendAnalysis = new TrendAnalysisConfig();
     private FileHistoryAnalysisConfig fileHistoryAnalysis = new FileHistoryAnalysisConfig();
+    private ContributorsAnalysisConfig contributorsAnalysis = new ContributorsAnalysisConfig();
 
     private AnalysisConfig analysis = new AnalysisConfig();
 
@@ -507,6 +508,16 @@ public class CodeConfiguration {
     public void setFileHistoryAnalysis(FileHistoryAnalysisConfig fileHistoryAnalysis) {
         if (fileHistoryAnalysis != null) {
             this.fileHistoryAnalysis = fileHistoryAnalysis;
+        }
+    }
+
+    public ContributorsAnalysisConfig getContributorsAnalysis() {
+        return contributorsAnalysis;
+    }
+
+    public void setContributorsAnalysis(ContributorsAnalysisConfig contributorsAnalysis) {
+        if (contributorsAnalysis != null) {
+            this.contributorsAnalysis = contributorsAnalysis;
         }
     }
 
