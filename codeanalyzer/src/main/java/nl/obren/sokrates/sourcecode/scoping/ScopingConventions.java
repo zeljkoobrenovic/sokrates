@@ -358,7 +358,7 @@ public class ScopingConventions {
 
         ignoredFilesConventions.add(new Convention(".*/_sokrates/.*", "", "Sokrates files"));
         ignoredFilesConventions.add(new Convention(".*/_sokrates_landscape/.*", "", "Sokrates landscape files"));
-        ignoredFilesConventions.add(new Convention(".*/git[-][a-zA-Z0-9_][.]txt", "", "Git data exports for sokrates analyses"));
+        ignoredFilesConventions.add(new Convention(".*/git[-][a-zA-Z0-9_]+[.]txt", "", "Git data exports for sokrates analyses"));
 
         ignoredFilesConventions.add(new Convention(".*/testdata/.*", "", "Test data"));
         ignoredFilesConventions.add(new Convention(".*/Godeps/_workspace/.*", "", "Go dependencies"));

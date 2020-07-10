@@ -44,6 +44,18 @@ public class LandscapeReportGenerator {
         if (StringUtils.isNotBlank(description)) {
             landscapeReport.addParagraph(description);
         }
+        if (metadata.getLinks().size() > 0) {
+            landscapeReport.startDiv("");
+            boolean first[] = {true};
+            metadata.getLinks().forEach(link -> {
+                if (!first[0]) {
+                    landscapeReport.addHtmlContent(" | ");
+                }
+                landscapeReport.addNewTabLink(link.getLabel(), link.getHref());
+                first[0] = false;
+            });
+            landscapeReport.endDiv();
+        }
         this.landscapeAnalysisResults = landscapeAnalysisResults;
 
         addBigSummary(landscapeAnalysisResults);
@@ -144,7 +156,10 @@ public class LandscapeReportGenerator {
             double percentage = 100.0 * contributerCommits / totalCommits;
             landscapeReport.addTableCell(contributerCommits + " (" + FormattingUtils.getFormattedPercentage(percentage) + "%)", "vertical-align: top; padding-top: 4px; padding-bottom: 4px;");
             StringBuilder projectInfo = new StringBuilder();
-            for (int i = 0; i < contributor.getProjects().size(); i++) {
+            landscapeReport.startTableCell();
+            int projectsCount = contributor.getProjects().size();
+            landscapeReport.startShowMoreBlock(projectsCount + (projectsCount == 1 ? " project" : " projects"));
+            for (int i = 0; i < projectsCount; i++) {
                 String projectName = contributor.getProjects().get(i).getAnalysisResults().getMetadata().getName();
                 int commits = contributor.getProjectsCommits().get(i);
                 if (projectInfo.length() > 0) {
@@ -152,7 +167,8 @@ public class LandscapeReportGenerator {
                 }
                 projectInfo.append(projectName + " <span style='color: grey'>(" + commits + (commits == 1 ? " commit" : " commit") + ")</span>");
             }
-            landscapeReport.addTableCell(projectInfo.toString(), "vertical-align: top; padding-top: 4px; padding-bottom: 4px;");
+            landscapeReport.addHtmlContent(projectInfo.toString());
+            landscapeReport.endTableCell();
             landscapeReport.endTableRow();
         });
         landscapeReport.endTable();
@@ -183,7 +199,7 @@ public class LandscapeReportGenerator {
             landscapeReport.startTable("width: 100%");
             landscapeReport.addTableHeader("", "Project", "Main<br/>Language", "LOC<br/>(main)",
                     "LOC<br/>(test)", "LOC<br/>(generated)", "LOC<br/>(build)", "LOC<br/>(other)",
-                    "Contributors", "Report");
+                    "Age", "Contributors", "Report");
             projectsAnalysisResults.forEach(projectAnalysis -> {
                 addProjectRow(projectAnalysis);
             });
@@ -227,6 +243,9 @@ public class LandscapeReportGenerator {
         landscapeReport.addTableCell(FormattingUtils.getFormattedCount(generated.getLinesOfCode(), "-"), "text-align: center");
         landscapeReport.addTableCell(FormattingUtils.getFormattedCount(build.getLinesOfCode(), "-"), "text-align: center");
         landscapeReport.addTableCell(FormattingUtils.getFormattedCount(other.getLinesOfCode(), "-"), "text-align: center");
+        int projectAgeYears = (int) Math.round(analysisResults.getFilesHistoryAnalysisResults().getAgeInDays() / 365.0);
+        String age = projectAgeYears == 0 ? "<1y" : projectAgeYears + "y";
+        landscapeReport.addTableCell(age, "text-align: center");
         landscapeReport.addTableCell(FormattingUtils.getFormattedCount(contributorsCount, "-"), "text-align: center");
         String projectReportUrl = landscapeAnalysisResults.getConfiguration().getProjectReportsUrlPrefix() + projectAnalysis.getSokratesProjectLink().getHtmlReportsRoot() + "/index.html";
         landscapeReport.addTableCell("<a href='" + projectReportUrl + "' target='_blank'>"
