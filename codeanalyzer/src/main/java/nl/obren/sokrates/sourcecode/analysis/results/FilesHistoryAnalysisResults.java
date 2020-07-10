@@ -42,6 +42,13 @@ public class FilesHistoryAnalysisResults {
     private List<SourceFile> mostRecentlyChangedFiles = new ArrayList<>();
     private List<SourceFile> mostPreviouslyChangedFiles = new ArrayList<>();
     private List<SourceFile> mostChangedFiles = new ArrayList<>();
+    private String firstDate = "";
+    private String latestDate = "";
+    private int daysBetweenFirstAndLastDate;
+    private int weeks;
+    private int estimatedWorkindDays;
+    private int activeDays;
+    private int ageInDays;
 
     @JsonIgnore
     public List<SourceFile> getAllFiles() {
@@ -184,5 +191,61 @@ public class FilesHistoryAnalysisResults {
     @JsonIgnore
     public void setHistory(List<FileModificationHistory> history) {
         this.history = history;
+    }
+
+    public void setFirstDate(String firstDate) {
+        this.firstDate = firstDate;
+    }
+
+    public String getFirstDate() {
+        return firstDate;
+    }
+
+    public void setLatestDate(String latestDate) {
+        this.latestDate = latestDate;
+    }
+
+    public String getLatestDate() {
+        return latestDate;
+    }
+
+    public void setDaysBetweenFirstAndLastDate(int daysBetweenFirstAndLastDate) {
+        this.daysBetweenFirstAndLastDate = daysBetweenFirstAndLastDate;
+    }
+
+    public int getDaysBetweenFirstAndLastDate() {
+        return daysBetweenFirstAndLastDate;
+    }
+
+    public void setWeeks(int weeks) {
+        this.weeks = weeks;
+    }
+
+    public int getWeeks() {
+        return weeks;
+    }
+
+    public void setEstimatedWorkindDays(int estimatedWorkindDays) {
+        this.estimatedWorkindDays = estimatedWorkindDays;
+    }
+
+    public int getEstimatedWorkindDays() {
+        return estimatedWorkindDays;
+    }
+
+    public void setActiveDays(int activeDays) {
+        this.activeDays = activeDays;
+    }
+
+    public int getActiveDays() {
+        return activeDays;
+    }
+
+    public void setAgeInDays(int ageInDays) {
+        this.ageInDays = ageInDays;
+    }
+
+    public int getAgeInDays() {
+        return ageInDays;
     }
 }

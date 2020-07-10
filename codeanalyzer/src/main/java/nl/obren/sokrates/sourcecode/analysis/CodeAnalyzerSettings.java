@@ -17,6 +17,7 @@ public class CodeAnalyzerSettings {
     private boolean analyzeDuplication = true;
     private boolean analyzeFileSize = true;
     private boolean analyzeFileHistory = true;
+    private boolean analyzeContributors = true;
     private boolean analyzeUnitSize = true;
     private boolean analyzeConditionalComplexity = true;
     private boolean createMetricsList = true;
@@ -29,11 +30,13 @@ public class CodeAnalyzerSettings {
         analyzeConcerns = true;
         analyzeDuplication = true;
         analyzeFileSize = true;
+        analyzeFileHistory = true;
         analyzeUnitSize = true;
         analyzeConditionalComplexity = true;
         createMetricsList = true;
         analyzeControls = true;
         analyzeFindings = true;
+        analyzeContributors = true;
 
         dataOnly = false;
         updateIndex = true;
@@ -51,6 +54,7 @@ public class CodeAnalyzerSettings {
         createMetricsList = false;
         analyzeControls = false;
         analyzeFindings = false;
+        analyzeContributors = false;
 
         dataOnly = false;
         updateIndex = false;
@@ -158,5 +162,13 @@ public class CodeAnalyzerSettings {
 
     public void setAnalyzeFileHistory(boolean analyzeFileHistory) {
         this.analyzeFileHistory = analyzeFileHistory;
+    }
+
+    public boolean isAnalyzeContributors() {
+        return analyzeContributors;
+    }
+
+    public void setAnalyzeContributors(boolean analyzeContributors) {
+        this.analyzeContributors = analyzeContributors;
     }
 }

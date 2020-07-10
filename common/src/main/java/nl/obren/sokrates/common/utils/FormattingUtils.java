@@ -53,4 +53,36 @@ public class FormattingUtils {
     }
 
 
+    public static String formatPeriod(int ageInDays) {
+        int years = ageInDays / 365;
+        int rest = ageInDays % 365;
+        int months = rest / 30;
+
+
+        if (years == 0 && months == 0) {
+            return "less than a month";
+        }
+
+        String text = "";
+        if (years == 1) {
+            text += "1 year";
+        } else if (years > 1) {
+            text += years + " years";
+        }
+
+        if (months > 0) {
+            if (text.length() > 0) {
+                text += ", ";
+            }
+            if (months == 1) {
+                text += "1 month";
+            } else if (months > 1) {
+                text += months + " months";
+            } else {
+
+            }
+        }
+
+        return text;
+    }
 }

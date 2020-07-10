@@ -31,6 +31,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
+import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.duplication.DuplicatedFileBlock;
@@ -101,6 +102,7 @@ public class DataExporter {
         exportMetrics();
         exportTrends();
         exportControls();
+        exportContributors();
         exportJson();
         exportDuplicates();
         exportUnits();
@@ -161,6 +163,25 @@ public class DataExporter {
             e.printStackTrace();
         }
 
+    }
+
+    private void exportContributors() {
+        StringBuilder content = new StringBuilder();
+
+        List<Contributor> contributors = analysisResults.getContributorsAnalysisResults().getContributors();
+        int total = contributors.stream().mapToInt(c -> c.getCommitsCount()).sum();
+
+        contributors.forEach(contributor -> {
+            content.append(contributor.getName() + "\t");
+            content.append(contributor.getCommitsCount() + "\t");
+            double percentage = 100.0 * contributor.getCommitsCount() / total;
+            content.append(FormattingUtils.getFormattedPercentage(percentage) + "%\n");
+        });
+        try {
+            FileUtils.write(new File(textDataFolder, "contributors.txt"), content.toString(), UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void exportDuplicates() {
@@ -511,6 +532,7 @@ public class DataExporter {
                 analysisResults.getLogicalDecompositionsAnalysisResults()), UTF_8);
         FileUtils.write(new File(dataFolder, "dependencies.json"), new JsonGenerator().generate(
                 new DependenciesExporter(analysisResults.getAllDependencies()).getDependenciesExportInfo()), UTF_8);
+        FileUtils.write(new File(dataFolder, "contributors.json"), new JsonGenerator().generate(analysisResults.getContributorsAnalysisResults().getContributors()), UTF_8);
     }
 
     public File getTextDataFolder() {

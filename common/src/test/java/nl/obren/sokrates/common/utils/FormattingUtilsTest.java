@@ -70,4 +70,19 @@ public class FormattingUtilsTest {
         assertEquals(FormattingUtils.getSmallTextForNumber(9800000), "<b>9.8</b>M");
         assertEquals(FormattingUtils.getSmallTextForNumber(19800000), "<b>20</b>M");
     }
+
+
+    @Test
+    public void formatPeriod() {
+        assertEquals(FormattingUtils.formatPeriod(0), "less than a month");
+        assertEquals(FormattingUtils.formatPeriod(10), "less than a month");
+        assertEquals(FormattingUtils.formatPeriod(30), "1 month");
+        assertEquals(FormattingUtils.formatPeriod(60), "2 months");
+        assertEquals(FormattingUtils.formatPeriod(91), "3 months");
+        assertEquals(FormattingUtils.formatPeriod(365), "1 year");
+        assertEquals(FormattingUtils.formatPeriod(367), "1 year");
+        assertEquals(FormattingUtils.formatPeriod(400), "1 year, 1 month");
+        assertEquals(FormattingUtils.formatPeriod(440), "1 year, 2 months");
+        assertEquals(FormattingUtils.formatPeriod(1440), "3 years, 11 months");
+    }
 }

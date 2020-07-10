@@ -4,7 +4,6 @@
 
 package nl.obren.sokrates.sourcecode.analysis.files;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.Analyzer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -12,6 +11,8 @@ import nl.obren.sokrates.sourcecode.analysis.results.FileAgeDistributionPerLogic
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
+import nl.obren.sokrates.sourcecode.filehistory.FileHistoryComponentsHelper;
+import nl.obren.sokrates.sourcecode.filehistory.FileHistoryUtils;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.filehistory.FilePairsChangedTogether;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
@@ -43,16 +44,64 @@ public class FileHistoryAnalyzer extends Analyzer {
     }
 
     public void analyze() {
+
         if (codeConfiguration.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesFolder)) {
             List<FileModificationHistory> history = codeConfiguration.getFileHistoryAnalysis().getHistory(sokratesFolder);
-
             analysisResults.setHistory(history);
 
             if (history.size() > 0) {
+                summarize(history);
+
                 enrichFilesWithAge(history);
                 analyzeFilesAge();
                 analyzeFilesChangedTogether(history);
             }
+        }
+    }
+
+    private void summarize(List<FileModificationHistory> history) {
+        FileHistoryComponentsHelper helper = new FileHistoryComponentsHelper();
+        List<String> uniqueDates = helper.getUniqueDates(history);
+
+        if (uniqueDates.size() > 1) {
+            String firstDateString = uniqueDates.get(0);
+            String latestDateString = uniqueDates.get(uniqueDates.size() - 1);
+
+            Date firstDate = FileHistoryUtils.getDateFromString(firstDateString);
+            Date latestDate = FileHistoryUtils.getDateFromString(latestDateString);
+
+            int daysBetween = FileHistoryUtils.daysBetween(firstDate, latestDate);
+            Date today = new Date();
+            int totalAge = FileHistoryUtils.daysBetween(firstDate, today);
+
+            int weeks = daysBetween / 7;
+            int estimatedWorkingDays = weeks * 5;
+
+            int activeDays = uniqueDates.size();
+
+            analysisResults.setFirstDate(firstDateString);
+            analysisResults.setLatestDate(latestDateString);
+            analysisResults.setAgeInDays(totalAge);
+            analysisResults.setDaysBetweenFirstAndLastDate(daysBetween);
+            analysisResults.setWeeks(weeks);
+            analysisResults.setEstimatedWorkindDays(estimatedWorkingDays);
+            analysisResults.setActiveDays(activeDays);
+
+            metricsList.addMetric().id("FILE_CHANGE_HISTORY_TOTAL_AGE_DAYS")
+                    .description("The age of the project in days")
+                    .value(totalAge);
+
+            metricsList.addMetric().id("FILE_CHANGE_HISTORY_ACTIVE_DAYS")
+                    .description("The number of daty with at least one file change")
+                    .value(activeDays);
+
+            metricsList.addMetric().id("FILE_CHANGE_HISTORY_WEEKS")
+                    .description("The number of weeks")
+                    .value(weeks);
+
+            metricsList.addMetric().id("FILE_CHANGE_HISTORY_ESTIMATED_WORKING_DAYS")
+                    .description("The number of estimated working days in the period")
+                    .value(estimatedWorkingDays);
         }
     }
 

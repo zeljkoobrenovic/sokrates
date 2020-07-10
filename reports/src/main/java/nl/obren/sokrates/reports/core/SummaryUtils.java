@@ -182,7 +182,7 @@ public class SummaryUtils {
         report.addHorizontalLine();
         report.addLineBreak();
 
-        // componentns
+        // components
         report.startDiv("color:black");
         summarizeComponents(analysisResults, report);
         report.endDiv();
@@ -273,28 +273,31 @@ public class SummaryUtils {
 
     private void summarizeFileChangeHistory(CodeAnalysisResults analysisResults, RichTextReport report) {
         report.startTableRow();
-        report.addTableCell(getIconSvg("file_history"), "border: none");
+        report.addTableCell(getIconSvg("file_history"), "border: none;  vertical-align: top");
 
         FilesHistoryAnalysisResults results = analysisResults.getFilesHistoryAnalysisResults();
-        report.startTableCell("border: none; padding-top: 4px");
+        report.startTableCell("border: none; padding-top: 4px; vertical-align: top");
         SourceFileAgeDistribution age = results.getOverallFileFirstModifiedDistribution();
         report.addContentInDiv(getRiskProfileVisual(age, Palette.getAgePalette()));
         SourceFileAgeDistribution changes = results.getOverallFileLastModifiedDistribution();
         report.addContentInDiv(getRiskProfileVisual(changes, Palette.getFreshnessPalette()));
         report.endTableCell();
 
-        report.startTableCell("border: none");
-        report.addHtmlContent("File Age: "
+        report.startTableCell("border: none; padding-top: 4px;");
+        String ageSummary = FormattingUtils.formatPeriod(results.getAgeInDays()) + " old";
+        report.addParagraph(ageSummary);
+        report.startUnorderedList();
+        report.addListItem("File Age Distribution: "
                 + FormattingUtils.getFormattedPercentage(age.getVeryHighRiskPercentage())
-                + "% more than a year, "
+                + "% older than a year, "
                 + FormattingUtils.getFormattedPercentage(age.getNeglictableRiskPercentage()) + "% less than a month");
-        report.addContentInDiv("", "height: 4px");
-        report.addHtmlContent("File Changes: "
+        report.addListItem("File Changes Distribution: "
                 + FormattingUtils.getFormattedPercentage(changes.getVeryHighRiskPercentage())
                 + "% more than a year ago, "
                 + FormattingUtils.getFormattedPercentage(changes.getNeglictableRiskPercentage()) + "% past month");
+        report.endUnorderedList();
         report.endTableCell();
-        report.addTableCell("<a href='" + reportRoot + "FileHistory.html'>...</a>", "border: none");
+        report.addTableCell("<a href='" + reportRoot + "FileHistory.html'>...</a>", "border: none;  vertical-align: top");
 
         report.endTableRow();
     }

@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.reports.core;
 
+import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
@@ -84,30 +85,36 @@ public class ReportFileExporter {
         summarize(indexReport, analysisResults);
         indexReport.endDiv();
         indexReport.endSection();
+        addContributorsSection(analysisResults, sokratesConfigFolder, indexReport);
         indexReport.startSection("Reports", "");
         for (String[] report : reportList) {
             addReportFragment(htmlExportFolder, indexReport, report);
         }
         indexReport.endSection();
-        addContributersSection(analysisResults, sokratesConfigFolder, indexReport);
         appendLinks(indexReport, analysisResults);
         export(htmlExportFolder, indexReport, "index.html");
     }
 
-    public static void addContributersSection(CodeAnalysisResults analysisResults, File sokratesConfigFolder, RichTextReport indexReport) {
+    public static void addContributorsSection(CodeAnalysisResults analysisResults, File sokratesConfigFolder, RichTextReport indexReport) {
         CodeConfiguration codeConfiguration = analysisResults.getCodeConfiguration();
         List<Contributor> contributors = codeConfiguration.getContributorsAnalysis().getContributors(sokratesConfigFolder);
         if (contributors.size() > 0) {
             Collections.sort(contributors, (a, b) -> b.getCommitsCount() - a.getCommitsCount());
             int max = contributors.get(0).getCommitsCount();
+            int total = contributors.stream().mapToInt(c -> c.getCommitsCount()).sum();
             indexReport.startSection("Contributors (" + contributors.size() + ")", "");
             contributors.forEach(contributor -> {
-                double opacity = 0.05 + 0.95 * contributor.getCommitsCount() / max;
-                String info = contributor.getName() + " " + contributor.getCommitsCount() + " commits";
+                int commitsCount = contributor.getCommitsCount();
+                double opacity = 0.1 + 0.9 * commitsCount / max;
+                double percentage = 100.0 * commitsCount / total;
+                String info = contributor.getName() + " " + commitsCount + " commits (" + FormattingUtils.getFormattedPercentage(percentage) + "%)";
+
                 indexReport.addHtmlContent("<div style='display: inline-block;opacity:" + opacity + "' title='" + info + "'>");
                 indexReport.addHtmlContent(getIconSvg("contributor"));
                 indexReport.addHtmlContent("</div>");
             });
+            indexReport.addLineBreak();
+            indexReport.addNewTabLink("Details...", "../data/text/contributors.txt");
             indexReport.endSection();
         }
     }

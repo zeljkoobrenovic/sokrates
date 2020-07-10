@@ -44,6 +44,7 @@ public class CodeAnalysisResults {
     private UnitsAnalysisResults unitsAnalysisResults = new UnitsAnalysisResults();
 
     private DuplicationAnalysisResults duplicationAnalysisResults = new DuplicationAnalysisResults();
+    private ContributorsAnalysisResults contributorsAnalysisResults = new ContributorsAnalysisResults();
 
     private int numberOfExcludedFiles;
     private Map<String, Integer> excludedExtensions;
@@ -259,5 +260,13 @@ public class CodeAnalysisResults {
 
     public Map<String, IgnoredFilesGroup> getIgnoredFilesGroups() {
         return ignoredFilesGroups;
+    }
+
+    public ContributorsAnalysisResults getContributorsAnalysisResults() {
+        return contributorsAnalysisResults;
+    }
+
+    public void setContributorsAnalysisResults(ContributorsAnalysisResults contributorsAnalysisResults) {
+        this.contributorsAnalysisResults = contributorsAnalysisResults;
     }
 }

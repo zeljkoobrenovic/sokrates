@@ -65,6 +65,8 @@ public class CodeAnalyzer {
             new FileHistoryAnalyzer(results, codeConfigurationFile.getParentFile()).analyze();
         }
 
+        new ContributorsAnalyzer(results, codeConfigurationFile.getParentFile()).analyze();
+
         if (shouldAnalyzeUnits()) {
             new UnitsAnalyzer(results, progressFeedback).analyze();
         }
