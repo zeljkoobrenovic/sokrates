@@ -13,16 +13,8 @@ import java.io.File;
 import java.util.List;
 
 public class ContributorsAnalysisConfig {
-    private int activeThresholdDays = 180; // 6 months
+    // private int activeThresholdDays = 180; // 6 months
     private String importPath = "../git-contributors-log.txt";
-
-    public int getActiveThresholdDays() {
-        return activeThresholdDays;
-    }
-
-    public void setActiveThresholdDays(int activeThresholdDays) {
-        this.activeThresholdDays = activeThresholdDays;
-    }
 
     public String getImportPath() {
         return importPath;
