@@ -6,14 +6,12 @@ package nl.obren.sokrates.sourcecode.landscape.analysis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
+import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
-import nl.obren.sokrates.sourcecode.metrics.Metric;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class LandscapeAnalysisResults {
     private LandscapeConfiguration configuration = new LandscapeConfiguration();
@@ -122,6 +120,38 @@ public class LandscapeAnalysisResults {
 
         Collections.sort(linesOfCodePerExtension, (a, b) -> b.getValue().intValue() - a.getValue().intValue());
         return linesOfCodePerExtension;
+    }
+
+    @JsonIgnore
+
+    public List<ContributorProject> getContributors() {
+        List<ContributorProject> list = new ArrayList<>();
+        Map<String, ContributorProject> map = new HashMap<>();
+
+        getProjectAnalysisResults().forEach(projectAnalysisResults -> {
+            ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
+            contributorsAnalysisResults.getContributors().forEach(contributor -> {
+                String name = contributor.getName();
+                int projectCommits = contributor.getCommitsCount();
+                int commits = projectCommits;
+
+                if (map.containsKey(name)) {
+                    ContributorProject existingContributor = map.get(name);
+                    existingContributor.getContributor().setCommitsCount(existingContributor.getContributor().getCommitsCount() + projectCommits);
+                    existingContributor.addProject(projectAnalysisResults, projectCommits);
+                } else {
+                    Contributor newContributor = new Contributor(contributor.getName(), projectCommits);
+                    ContributorProject newContributorWithProjects = new ContributorProject(contributor);
+                    newContributorWithProjects.addProject(projectAnalysisResults, projectCommits);
+                    map.put(name, newContributorWithProjects);
+                    list.add(newContributorWithProjects);
+                }
+            });
+        });
+
+        Collections.sort(list, (a, b) -> b.getContributor().getCommitsCount() - a.getContributor().getCommitsCount());
+
+        return list;
     }
 
 }

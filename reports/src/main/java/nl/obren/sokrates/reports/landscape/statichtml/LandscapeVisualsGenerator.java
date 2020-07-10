@@ -27,6 +27,7 @@ public class LandscapeVisualsGenerator {
 
     public void exportVisuals(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {
         exportProjects(landscapeAnalysisResults);
+        exportContributors(landscapeAnalysisResults);
         exportLanguages(landscapeAnalysisResults);
     }
 
@@ -41,6 +42,15 @@ public class LandscapeVisualsGenerator {
             items.add(new VisualizationItem(name, linesOfCode));
         });
         exportVisuals("projects", items);
+    }
+
+    private void exportContributors(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {
+        List<VisualizationItem> items = new ArrayList<>();
+        landscapeAnalysisResults.getContributors().forEach(contributorProject -> {
+            String name = contributorProject.getContributor().getName().replaceAll("<.*?>", "").trim();
+            items.add(new VisualizationItem(name, contributorProject.getContributor().getCommitsCount()));
+        });
+        exportVisuals("contributors", items);
     }
 
     private void exportLanguages(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {

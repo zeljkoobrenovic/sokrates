@@ -220,6 +220,10 @@ public class RichTextReport {
         addHtmlContent("<tr>\n");
     }
 
+    public void startTableRow(String style) {
+        addHtmlContent("<tr style='" + style + "'>\n");
+    }
+
     public void endTableRow() {
         addHtmlContent("</tr>\n");
     }

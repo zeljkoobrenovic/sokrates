@@ -11,17 +11,21 @@ import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
+import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.landscape.SubLandscapeLink;
+import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProject;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ProjectAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class LandscapeReportGenerator {
     private static final Log LOG = LogFactory.getLog(LandscapeReportGenerator.class);
@@ -49,6 +53,7 @@ public class LandscapeReportGenerator {
 
         addProjectsSection(landscapeAnalysisResults.getProjectAnalysisResults());
 
+        addContributors();
     }
 
     private void addLandscapeSection(List<SubLandscapeLink> subLandscapes) {
@@ -80,6 +85,7 @@ public class LandscapeReportGenerator {
         addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getProjectsCount()), "projects");
         addInfoBlock(FormattingUtils.getSmallTextForNumber(linesOfCodePerExtension.size()), linesOfCodePerExtension.size() == 1 ? " extension" : " extensions");
         addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "Lines of code (main)");
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getContributors().size()), "contributors");
         landscapeReport.addLineBreak();
         addSmallInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getTestLoc()), "(test)");
         addSmallInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getGeneratedLoc()), "(generated)");
@@ -95,11 +101,9 @@ public class LandscapeReportGenerator {
         List<NumericMetric> linesOfCodePerExtension = landscapeAnalysisResults.getLinesOfCodePerExtension();
         landscapeReport.startSubSection("Extensions in Main Code (" + linesOfCodePerExtension.size() + ")", "");
         landscapeReport.startDiv("");
-        landscapeReport.addHtmlContent("( ");
         landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_extensions.html");
         landscapeReport.addHtmlContent(" | ");
         landscapeReport.addNewTabLink("tree map", "visuals/tree_map_extensions.html");
-        landscapeReport.addHtmlContent(" )");
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
         landscapeReport.endDiv();
@@ -108,6 +112,53 @@ public class LandscapeReportGenerator {
             addSmallInfoBlock(FormattingUtils.getSmallTextForNumber(extension.getValue().intValue()), extension.getName().replace("*.", ""));
         });
         landscapeReport.endDiv();
+        landscapeReport.endSection();
+    }
+
+    private void addContributors() {
+        List<ContributorProject> contributors = landscapeAnalysisResults.getContributors();
+        landscapeReport.startSubSection("Contributors (" + contributors.size() + ")", "");
+
+        landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_contributors.html");
+        landscapeReport.addHtmlContent(" | ");
+        landscapeReport.addNewTabLink("tree map", "visuals/tree_map_contributors.html");
+        landscapeReport.addLineBreak();
+        landscapeReport.addLineBreak();
+
+        if (contributors.size() > 100) {
+            landscapeReport.startShowMoreBlock("show details...");
+        }
+        landscapeReport.startTable("width: 100%");
+        landscapeReport.addTableHeader("", "Contributor", "# commits", "projects");
+
+        int totalCommits = contributors.stream().mapToInt(c -> c.getContributor().getCommitsCount()).sum();
+
+        int counter[] = {0};
+
+        contributors.forEach(contributor -> {
+            landscapeReport.startTableRow();
+            counter[0] += 1;
+            landscapeReport.addTableCell("" + counter[0], "text-align: center; vertical-align: top; padding-top: 4px; padding-bottom: 4px;");
+            landscapeReport.addTableCell(StringEscapeUtils.escapeHtml4(contributor.getContributor().getName()), "vertical-align: top; padding-top: 4px; padding-bottom: 4px;");
+            int contributerCommits = contributor.getContributor().getCommitsCount();
+            double percentage = 100.0 * contributerCommits / totalCommits;
+            landscapeReport.addTableCell(contributerCommits + " (" + FormattingUtils.getFormattedPercentage(percentage) + "%)", "vertical-align: top; padding-top: 4px; padding-bottom: 4px;");
+            StringBuilder projectInfo = new StringBuilder();
+            for (int i = 0; i < contributor.getProjects().size(); i++) {
+                String projectName = contributor.getProjects().get(i).getAnalysisResults().getMetadata().getName();
+                int commits = contributor.getProjectsCommits().get(i);
+                if (projectInfo.length() > 0) {
+                    projectInfo.append("<br/>");
+                }
+                projectInfo.append(projectName + " <span style='color: grey'>(" + commits + (commits == 1 ? " commit" : " commit") + ")</span>");
+            }
+            landscapeReport.addTableCell(projectInfo.toString(), "vertical-align: top; padding-top: 4px; padding-bottom: 4px;");
+            landscapeReport.endTableRow();
+        });
+        landscapeReport.endTable();
+        if (contributors.size() > 100) {
+            landscapeReport.endShowMoreBlock();
+        }
         landscapeReport.endSection();
     }
 
@@ -121,19 +172,25 @@ public class LandscapeReportGenerator {
                 CodeAnalysisResults analysisResults = projectAnalysisResults.getAnalysisResults();
                 projectSizes.add(new NumericMetric(analysisResults.getMetadata().getName(), analysisResults.getMainAspectAnalysisResults().getLinesOfCode()));
             });
-            landscapeReport.addHtmlContent("( ");
             landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_projects.html");
             landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("tree map", "visuals/tree_map_projects.html");
-            landscapeReport.addHtmlContent(" )");
             landscapeReport.addLineBreak();
             landscapeReport.addLineBreak();
+            if (projectsAnalysisResults.size() > 100) {
+                landscapeReport.startShowMoreBlock("show details...");
+            }
             landscapeReport.startTable("width: 100%");
-            landscapeReport.addTableHeader("", "Project", "Main<br/>Language", "LOC<br/>(main)", "Duplication", "LOC<br/>(test)", "LOC<br/>(generated)", "LOC<br/>(build)", "LOC<br/>(other)", "Report");
+            landscapeReport.addTableHeader("", "Project", "Main<br/>Language", "LOC<br/>(main)",
+                    "LOC<br/>(test)", "LOC<br/>(generated)", "LOC<br/>(build)", "LOC<br/>(other)",
+                    "Contributors", "Report");
             projectsAnalysisResults.forEach(projectAnalysis -> {
                 addProjectRow(projectAnalysis);
             });
             landscapeReport.endTable();
+            if (projectsAnalysisResults.size() > 100) {
+                landscapeReport.endShowMoreBlock();
+            }
         }
 
         landscapeReport.endSection();
@@ -152,6 +209,7 @@ public class LandscapeReportGenerator {
         AspectAnalysisResults generated = analysisResults.getGeneratedAspectAnalysisResults();
         AspectAnalysisResults build = analysisResults.getBuildAndDeployAspectAnalysisResults();
         AspectAnalysisResults other = analysisResults.getOtherAspectAnalysisResults();
+        int contributorsCount = analysisResults.getContributorsAnalysisResults().getContributors().size();
 
         DuplicationAnalysisResults duplication = analysisResults.getDuplicationAnalysisResults();
 
@@ -165,15 +223,11 @@ public class LandscapeReportGenerator {
         landscapeReport.addTableCell(locSummary.toString().replace("> = ", ">"), "text-align: center");
         landscapeReport.addTableCell(FormattingUtils.getFormattedCount(main.getLinesOfCode(), "-"), "text-align: center");
 
-        String duplicationString = FormattingUtils.getFormattedPercentage(duplication.getOverallDuplication().getDuplicationPercentage().doubleValue(), "-");
-        if (!duplicationString.equals("-")) {
-            duplicationString += "%";
-        }
-        landscapeReport.addTableCell(duplicationString, "text-align: center");
         landscapeReport.addTableCell(FormattingUtils.getFormattedCount(test.getLinesOfCode(), "-"), "text-align: center");
         landscapeReport.addTableCell(FormattingUtils.getFormattedCount(generated.getLinesOfCode(), "-"), "text-align: center");
         landscapeReport.addTableCell(FormattingUtils.getFormattedCount(build.getLinesOfCode(), "-"), "text-align: center");
         landscapeReport.addTableCell(FormattingUtils.getFormattedCount(other.getLinesOfCode(), "-"), "text-align: center");
+        landscapeReport.addTableCell(FormattingUtils.getFormattedCount(contributorsCount, "-"), "text-align: center");
         String projectReportUrl = landscapeAnalysisResults.getConfiguration().getProjectReportsUrlPrefix() + projectAnalysis.getSokratesProjectLink().getHtmlReportsRoot() + "/index.html";
         landscapeReport.addTableCell("<a href='" + projectReportUrl + "' target='_blank'>"
                 + "<div style='height: 40px'>" + ReportFileExporter.getIconSvg("report", 40) + "</div></a>", "text-align: center");
