@@ -25,7 +25,6 @@ import org.apache.commons.text.StringEscapeUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class LandscapeReportGenerator {
     private static final Log LOG = LogFactory.getLog(LandscapeReportGenerator.class);
@@ -96,8 +95,15 @@ public class LandscapeReportGenerator {
         landscapeReport.startDiv("margin-top: 32px;");
         addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getProjectsCount()), "projects");
         addInfoBlock(FormattingUtils.getSmallTextForNumber(linesOfCodePerExtension.size()), linesOfCodePerExtension.size() == 1 ? " extension" : " extensions");
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "Lines of code (main)");
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getContributors().size()), "contributors");
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "lines of code (main)");
+
+        List<ContributorProject> contributors = landscapeAnalysisResults.getContributors();
+        int contributorsCount = getContributorsCount(contributors);
+        if (contributorsCount > 0) {
+            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(contributorsCount), "contributors");
+            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(getRecentContributorsCount(contributors)), "recent contributors");
+            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(getRookiesContributorsCount(contributors)), "rookies");
+        }
         landscapeReport.addLineBreak();
         addSmallInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getTestLoc()), "(test)");
         addSmallInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getGeneratedLoc()), "(generated)");
@@ -107,6 +113,18 @@ public class LandscapeReportGenerator {
         landscapeReport.endDiv();
         landscapeReport.addLineBreak();
 
+    }
+
+    private int getContributorsCount(List<ContributorProject> contributors) {
+        return contributors.size();
+    }
+
+    private int getRecentContributorsCount(List<ContributorProject> contributors) {
+        return (int) contributors.stream().filter(c -> c.getContributor().isActive()).count();
+    }
+
+    private int getRookiesContributorsCount(List<ContributorProject> contributors) {
+        return (int) contributors.stream().filter(c -> c.getContributor().isRookie()).count();
     }
 
     private void addExtensions() {
@@ -129,7 +147,7 @@ public class LandscapeReportGenerator {
 
     private void addContributors() {
         List<ContributorProject> contributors = landscapeAnalysisResults.getContributors();
-        landscapeReport.startSubSection("Contributors (" + contributors.size() + ")", "");
+        landscapeReport.startSubSection("Contributors (" + getContributorsCount(contributors) + ")", "");
 
         landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_contributors.html");
         landscapeReport.addHtmlContent(" | ");
@@ -137,11 +155,11 @@ public class LandscapeReportGenerator {
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
 
-        if (contributors.size() > 100) {
+        if (getContributorsCount(contributors) > 100) {
             landscapeReport.startShowMoreBlock("show details...");
         }
         landscapeReport.startTable("width: 100%");
-        landscapeReport.addTableHeader("", "Contributor", "# commits", "projects");
+        landscapeReport.addTableHeader("", "Contributor", "# commits", "first", "latest", "projects");
 
         int totalCommits = contributors.stream().mapToInt(c -> c.getContributor().getCommitsCount()).sum();
 
@@ -155,6 +173,8 @@ public class LandscapeReportGenerator {
             int contributerCommits = contributor.getContributor().getCommitsCount();
             double percentage = 100.0 * contributerCommits / totalCommits;
             landscapeReport.addTableCell(contributerCommits + " (" + FormattingUtils.getFormattedPercentage(percentage) + "%)", "vertical-align: top; padding-top: 4px; padding-bottom: 4px;");
+            landscapeReport.addTableCell(contributor.getContributor().getFirstCommitDate(), "vertical-align: top; padding-top: 4px; padding-bottom: 4px;");
+            landscapeReport.addTableCell(contributor.getContributor().getLatestCommitDate(), "vertical-align: top; padding-top: 4px; padding-bottom: 4px;");
             StringBuilder projectInfo = new StringBuilder();
             landscapeReport.startTableCell();
             int projectsCount = contributor.getProjects().size();
@@ -172,7 +192,7 @@ public class LandscapeReportGenerator {
             landscapeReport.endTableRow();
         });
         landscapeReport.endTable();
-        if (contributors.size() > 100) {
+        if (getContributorsCount(contributors) > 100) {
             landscapeReport.endShowMoreBlock();
         }
         landscapeReport.endSection();
@@ -199,7 +219,7 @@ public class LandscapeReportGenerator {
             landscapeReport.startTable("width: 100%");
             landscapeReport.addTableHeader("", "Project", "Main<br/>Language", "LOC<br/>(main)",
                     "LOC<br/>(test)", "LOC<br/>(generated)", "LOC<br/>(build)", "LOC<br/>(other)",
-                    "Age", "Contributors", "Report");
+                    "Age", "Contributors", "Recent Contributors", "Rookies", "Report");
             projectsAnalysisResults.forEach(projectAnalysis -> {
                 addProjectRow(projectAnalysis);
             });
@@ -225,7 +245,10 @@ public class LandscapeReportGenerator {
         AspectAnalysisResults generated = analysisResults.getGeneratedAspectAnalysisResults();
         AspectAnalysisResults build = analysisResults.getBuildAndDeployAspectAnalysisResults();
         AspectAnalysisResults other = analysisResults.getOtherAspectAnalysisResults();
-        int contributorsCount = analysisResults.getContributorsAnalysisResults().getContributors().size();
+        List<Contributor> contributors = analysisResults.getContributorsAnalysisResults().getContributors();
+        int contributorsCount = contributors.size();
+        int recentContributorsCount = (int) contributors.stream().filter(c -> c.isActive()).count();
+        int rookiesCount = (int) contributors.stream().filter(c -> c.isRookie()).count();
 
         DuplicationAnalysisResults duplication = analysisResults.getDuplicationAnalysisResults();
 
@@ -247,6 +270,8 @@ public class LandscapeReportGenerator {
         String age = projectAgeYears == 0 ? "<1y" : projectAgeYears + "y";
         landscapeReport.addTableCell(age, "text-align: center");
         landscapeReport.addTableCell(FormattingUtils.getFormattedCount(contributorsCount, "-"), "text-align: center");
+        landscapeReport.addTableCell(FormattingUtils.getFormattedCount(recentContributorsCount, "-"), "text-align: center");
+        landscapeReport.addTableCell(FormattingUtils.getFormattedCount(rookiesCount, "-"), "text-align: center");
         String projectReportUrl = landscapeAnalysisResults.getConfiguration().getProjectReportsUrlPrefix() + projectAnalysis.getSokratesProjectLink().getHtmlReportsRoot() + "/index.html";
         landscapeReport.addTableCell("<a href='" + projectReportUrl + "' target='_blank'>"
                 + "<div style='height: 40px'>" + ReportFileExporter.getIconSvg("report", 40) + "</div></a>", "text-align: center");
@@ -254,11 +279,19 @@ public class LandscapeReportGenerator {
     }
 
     private void addInfoBlock(String mainValue, String subtitle) {
+        addInfoBlock(mainValue, subtitle, "skyblue");
+    }
+
+    private void addPeopleInfoBlock(String mainValue, String subtitle) {
+        addInfoBlock(mainValue, subtitle, "lavender");
+    }
+
+    private void addInfoBlock(String mainValue, String subtitle, String color) {
         String style = "border-radius: 12px;";
 
         style += "margin: 12px 12px 12px 0px;";
         style += "display: inline-block; width: 160px; height: 120px;";
-        style += "background-color: skyblue; text-align: center; vertical-align: middle; margin-bottom: 36px;";
+        style += "background-color: " + color + "; text-align: center; vertical-align: middle; margin-bottom: 36px;";
 
         landscapeReport.startDiv(style);
         landscapeReport.addHtmlContent("<div style='font-size: 50px; margin-top: 20px'>" + mainValue + "</div>");
