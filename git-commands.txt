@@ -1,0 +1,3 @@
+git ls-files -z | xargs -0 -n1 -I{} -- git log --format="%ai {}" {} > git-history.txt
+git shortlog -s -n -e > git-contributors.txt
+git log --pretty=format:"%ad %an <%ae>" --date=short > git-contributors-log.txt
