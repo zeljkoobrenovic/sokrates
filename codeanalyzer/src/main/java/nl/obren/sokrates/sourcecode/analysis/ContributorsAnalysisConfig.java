@@ -6,7 +6,6 @@ package nl.obren.sokrates.sourcecode.analysis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
-import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.contributors.GitContributorsUtil;
 import org.apache.commons.lang3.StringUtils;
 
@@ -14,7 +13,16 @@ import java.io.File;
 import java.util.List;
 
 public class ContributorsAnalysisConfig {
-    private String importPath = "../git-contributors.txt";
+    private int activeThresholdDays = 180; // 6 months
+    private String importPath = "../git-contributors-log.txt";
+
+    public int getActiveThresholdDays() {
+        return activeThresholdDays;
+    }
+
+    public void setActiveThresholdDays(int activeThresholdDays) {
+        this.activeThresholdDays = activeThresholdDays;
+    }
 
     public String getImportPath() {
         return importPath;

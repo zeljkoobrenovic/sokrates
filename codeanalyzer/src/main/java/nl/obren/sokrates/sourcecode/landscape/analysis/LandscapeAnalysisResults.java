@@ -139,9 +139,17 @@ public class LandscapeAnalysisResults {
                     ContributorProject existingContributor = map.get(name);
                     existingContributor.getContributor().setCommitsCount(existingContributor.getContributor().getCommitsCount() + projectCommits);
                     existingContributor.addProject(projectAnalysisResults, projectCommits);
+                    if (contributor.getFirstCommitDate().compareTo(existingContributor.getContributor().getFirstCommitDate()) < 0) {
+                        existingContributor.getContributor().setFirstCommitDate(contributor.getFirstCommitDate());
+                    }
+                    if (contributor.getLatestCommitDate().compareTo(existingContributor.getContributor().getLatestCommitDate()) > 0) {
+                        existingContributor.getContributor().setLatestCommitDate(contributor.getLatestCommitDate());
+                    }
                 } else {
                     Contributor newContributor = new Contributor(contributor.getName(), projectCommits);
-                    ContributorProject newContributorWithProjects = new ContributorProject(contributor);
+                    newContributor.setFirstCommitDate(contributor.getFirstCommitDate());
+                    newContributor.setLatestCommitDate(contributor.getLatestCommitDate());
+                    ContributorProject newContributorWithProjects = new ContributorProject(newContributor);
                     newContributorWithProjects.addProject(projectAnalysisResults, projectCommits);
                     map.put(name, newContributorWithProjects);
                     list.add(newContributorWithProjects);

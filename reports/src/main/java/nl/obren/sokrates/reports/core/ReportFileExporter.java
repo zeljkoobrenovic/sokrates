@@ -103,20 +103,45 @@ public class ReportFileExporter {
             int max = contributors.get(0).getCommitsCount();
             int total = contributors.stream().mapToInt(c -> c.getCommitsCount()).sum();
             indexReport.startSection("Contributors (" + contributors.size() + ")", "");
-            contributors.forEach(contributor -> {
-                int commitsCount = contributor.getCommitsCount();
-                double opacity = 0.1 + 0.9 * commitsCount / max;
-                double percentage = 100.0 * commitsCount / total;
-                String info = contributor.getName() + " " + commitsCount + " commits (" + FormattingUtils.getFormattedPercentage(percentage) + "%)";
-
-                indexReport.addHtmlContent("<div style='display: inline-block;opacity:" + opacity + "' title='" + info + "'>");
-                indexReport.addHtmlContent(getIconSvg("contributor"));
-                indexReport.addHtmlContent("</div>");
+            long activeCount = contributors.stream().filter(c -> c.isActive()).count();
+            long rookiesCount = contributors.stream().filter(c -> c.isRookie()).count();
+            long veteransCount = activeCount - rookiesCount;
+            long historicalCount = contributors.size() - activeCount;
+            indexReport.startSubSection("Recent Contributors (" + activeCount
+                            + " = " + veteransCount + " " + (veteransCount == 1 ? "veteran" : "veterans")
+                            + " + " + rookiesCount + " " + (rookiesCount == 1 ? "rookie" : "rookies") + ")",
+                    "Contributed in past 6 months");
+            contributors.stream().filter(c -> c.isActive()).forEach(contributor -> {
+                addContributor(indexReport, max, total, contributor);
             });
+            indexReport.endSection();
+            indexReport.startSubSection("Historical Contributors (" + historicalCount + ")", "Last contributed more than 6 months ago");
+            contributors.stream().filter(c -> !c.isActive()).forEach(contributor -> {
+                addContributor(indexReport, max, total, contributor);
+            });
+            indexReport.endSection();
             indexReport.addLineBreak();
             indexReport.addNewTabLink("Details...", "../data/text/contributors.txt");
             indexReport.endSection();
         }
+    }
+
+    public static void addContributor(RichTextReport indexReport, int max, int total, Contributor contributor) {
+        int commitsCount = contributor.getCommitsCount();
+        double opacity = 0.2 + 0.8 * commitsCount / max;
+        double percentage = 100.0 * commitsCount / total;
+        String info = contributor.getName()
+                + " " + commitsCount
+                + " commits (" + FormattingUtils.getFormattedPercentage(percentage) + "%),"
+                + " between " + contributor.getFirstCommitDate() + " and " + contributor.getLatestCommitDate();
+
+        if (contributor.isRookie()) {
+            indexReport.addHtmlContent("<div style='border:2px solid green; border-radius: 5px; display: inline-block;opacity:" + opacity + "' title='Rookie: " + info + "'>");
+        } else {
+            indexReport.addHtmlContent("<div style='display: inline-block;opacity:" + opacity + "' title='" + info + "'>");
+        }
+        indexReport.addHtmlContent(getIconSvg("contributor"));
+        indexReport.addHtmlContent("</div>");
     }
 
     private static void addExplorersSection(RichTextReport indexReport) {
