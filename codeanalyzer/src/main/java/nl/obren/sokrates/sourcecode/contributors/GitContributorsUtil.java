@@ -31,7 +31,11 @@ public class GitContributorsUtil {
 
         ContributorsImport contributorsImport = new ContributorsImport();
         contributorsImport.setContributors(getContributors(lines));
-        contributorsImport.setContributorsPerYear(getContributorsPerYear(lines));
+        List<ContributionYear> contributorsPerYear = getContributorsPerYear(lines);
+        List<ContributionYear> rookiesPerYear = new ArrayList<>(contributorsPerYear);
+        List<ContributionYear> leaversPerYear = new ArrayList<>(contributorsPerYear);
+
+        contributorsImport.setContributorsPerYear(contributorsPerYear);
 
         return contributorsImport;
     }

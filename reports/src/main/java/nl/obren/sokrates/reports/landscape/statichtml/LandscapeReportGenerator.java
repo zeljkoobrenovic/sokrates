@@ -11,6 +11,7 @@ import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
+import nl.obren.sokrates.sourcecode.contributors.ContributionYear;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.landscape.SubLandscapeLink;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProject;
@@ -65,6 +66,7 @@ public class LandscapeReportGenerator {
         addProjectsSection(landscapeAnalysisResults.getProjectAnalysisResults());
 
         addContributors();
+        addContributorsPerYear();
     }
 
     private void addLandscapeSection(List<SubLandscapeLink> subLandscapes) {
@@ -319,4 +321,58 @@ public class LandscapeReportGenerator {
 
         return reports;
     }
+
+    private void addContributorsPerYear() {
+        List<ContributionYear> contributorsPerYear = landscapeAnalysisResults.getContributorsPerYear();
+        if (contributorsPerYear.size() > 0) {
+            int limit = 20;
+            if (contributorsPerYear.size() > limit) {
+                contributorsPerYear = contributorsPerYear.subList(contributorsPerYear.size() - limit, contributorsPerYear.size());
+            }
+
+            landscapeReport.startSubSection("Contribution Trend", "");
+            int maxContributors = contributorsPerYear.stream().mapToInt(c -> c.getContributorsCount()).max().orElse(1);
+            int maxCommits = contributorsPerYear.stream().mapToInt(c -> c.getCommitsCount()).max().orElse(1);
+
+            landscapeReport.startTable();
+
+            landscapeReport.startTableRow();
+            landscapeReport.addTableCell("Commits", "border: none;");
+            String style = "border: none; text-align: center; vertical-align: bottom; font-size: 80%";
+            contributorsPerYear.forEach(year -> {
+                landscapeReport.startTableCell(style);
+                int count = year.getCommitsCount();
+                landscapeReport.addParagraph(count + "", "margin: 2px");
+                int height = 1 + (int) (64.0 * count / maxCommits);
+                landscapeReport.addHtmlContent("<div style='width: 100%; background-color: darkgrey; height:" + height + "px'></div>");
+                landscapeReport.endTableCell();
+            });
+            landscapeReport.endTableRow();
+
+            landscapeReport.startTableRow();
+            landscapeReport.addTableCell("Contributors", "border: none;");
+            contributorsPerYear.forEach(year -> {
+                landscapeReport.startTableCell(style);
+                int count = year.getContributorsCount();
+                landscapeReport.addParagraph(count + "", "margin: 2px");
+                int height = 1 + (int) (64.0 * count / maxContributors);
+                landscapeReport.addHtmlContent("<div style='width: 100%; background-color: skyblue; height:" + height + "px'></div>");
+                landscapeReport.endTableCell();
+            });
+            landscapeReport.endTableRow();
+
+            landscapeReport.startTableRow();
+            landscapeReport.addTableCell("", "border: none; ");
+            contributorsPerYear.forEach(year -> {
+                landscapeReport.addTableCell(year.getYear(), "border: none; text-align: center; font-size: 90%");
+            });
+            landscapeReport.endTableRow();
+
+            landscapeReport.endTable();
+
+            landscapeReport.endSection();
+        }
+    }
+
 }
+

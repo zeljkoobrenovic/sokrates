@@ -21,7 +21,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 
 public class ReportFileExporter {
 
@@ -122,34 +125,34 @@ public class ReportFileExporter {
             indexReport.startTable();
 
             indexReport.startTableRow();
-            indexReport.addTableCell( "Commits");
-            String style = "text-align: center; vertical-align: bottom; font-size: 90%";
+            indexReport.addTableCell("Commits", "border: none;");
+            String style = "border: none; text-align: center; vertical-align: bottom; font-size: 80%";
             contributorsPerYear.forEach(year -> {
                 indexReport.startTableCell(style);
                 int count = year.getCommitsCount();
-                indexReport.addParagraph(count + "", "margin: 0");
-                int height = 1 + (int)(100.0 * count / maxCommits);
+                indexReport.addParagraph(count + "", "margin: 2px");
+                int height = 1 + (int) (64.0 * count / maxCommits);
                 indexReport.addHtmlContent("<div style='width: 100%; background-color: darkgrey; height:" + height + "px'></div>");
                 indexReport.endTableCell();
             });
             indexReport.endTableRow();
 
             indexReport.startTableRow();
-            indexReport.addTableCell( "Contributors");
+            indexReport.addTableCell("Contributors", "border: none;");
             contributorsPerYear.forEach(year -> {
                 indexReport.startTableCell(style);
                 int count = year.getContributorsCount();
-                indexReport.addParagraph(count + "", "margin: 0");
-                int height = 1 + (int)(100.0 * count / maxContributors);
+                indexReport.addParagraph(count + "", "margin: 2px");
+                int height = 1 + (int) (64.0 * count / maxContributors);
                 indexReport.addHtmlContent("<div style='width: 100%; background-color: skyblue; height:" + height + "px'></div>");
                 indexReport.endTableCell();
             });
             indexReport.endTableRow();
 
             indexReport.startTableRow();
-            indexReport.addTableCell( "Years");
+            indexReport.addTableCell("", "border: none; ");
             contributorsPerYear.forEach(year -> {
-                indexReport.addTableCell(year.getYear(), "text-align: center; font-size: 90%");
+                indexReport.addTableCell(year.getYear(), "border: none; text-align: center; font-size: 90%");
             });
             indexReport.endTableRow();
 
@@ -196,7 +199,7 @@ public class ReportFileExporter {
         } else {
             indexReport.addHtmlContent("<div style='display: inline-block;opacity:" + opacity + "' title='" + info + "'>");
         }
-        indexReport.addHtmlContent(getIconSvg("contributor"));
+        indexReport.addHtmlContent(contributor.isActive() ? getIconSvg("contributor") : getIconSvg("contributor_historical"));
         indexReport.addHtmlContent("</div>");
     }
 

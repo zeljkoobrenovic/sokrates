@@ -7,6 +7,7 @@ package nl.obren.sokrates.sourcecode.landscape.analysis;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
+import nl.obren.sokrates.sourcecode.contributors.ContributionYear;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
@@ -158,6 +159,33 @@ public class LandscapeAnalysisResults {
         });
 
         Collections.sort(list, (a, b) -> b.getContributor().getCommitsCount() - a.getContributor().getCommitsCount());
+
+        return list;
+    }
+
+    public List<ContributionYear> getContributorsPerYear() {
+        List<ContributionYear> list = new ArrayList<>();
+        Map<String, ContributionYear> map = new HashMap<>();
+
+        getProjectAnalysisResults().forEach(projectAnalysisResults -> {
+            ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
+            contributorsAnalysisResults.getContributorsPerYear().forEach(year -> {
+                ContributionYear contributionYear = map.get(year.getYear());
+                if (contributionYear == null) {
+                    contributionYear = new ContributionYear();
+                    contributionYear.setYear(year.getYear());
+                    contributionYear.setContributorsCount(year.getContributorsCount());
+                    contributionYear.setCommitsCount(year.getCommitsCount());
+                    list.add(contributionYear);
+                    map.put(year.getYear(), contributionYear);
+                } else {
+                    contributionYear.setContributorsCount(contributionYear.getContributorsCount() + year.getContributorsCount());
+                    contributionYear.setCommitsCount(contributionYear.getCommitsCount() + year.getCommitsCount());
+                }
+            });
+        });
+
+        Collections.sort(list, Comparator.comparing(ContributionYear::getYear));
 
         return list;
     }
