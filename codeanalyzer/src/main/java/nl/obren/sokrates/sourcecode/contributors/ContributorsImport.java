@@ -1,14 +1,14 @@
-package nl.obren.sokrates.sourcecode.analysis.results;
+/*
+ * Copyright (c) 2020 Željko Obrenović. All rights reserved.
+ */
 
-import nl.obren.sokrates.sourcecode.contributors.ContributionYear;
-import nl.obren.sokrates.sourcecode.contributors.Contributor;
+package nl.obren.sokrates.sourcecode.contributors;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ContributorsAnalysisResults {
+public class ContributorsImport {
     private List<Contributor> contributors = new ArrayList<>();
-
     private List<ContributionYear> contributorsPerYear = new ArrayList<>();
 
     public List<Contributor> getContributors() {

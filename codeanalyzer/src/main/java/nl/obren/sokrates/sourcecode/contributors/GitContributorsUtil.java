@@ -5,7 +5,6 @@
 package nl.obren.sokrates.sourcecode.contributors;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,15 +20,23 @@ public class GitContributorsUtil {
         return "git log --pretty=format:\"%ad %an <%ae>\" --date=short > git-contributors-log.txt";
     }
 
-    public static List<Contributor> importGitContributorsExport(File file) {
+    public static ContributorsImport importGitContributorsExport(File file) {
         List<String> lines;
         try {
             lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
-            return new ArrayList<>();
+            return new ContributorsImport();
         }
 
+        ContributorsImport contributorsImport = new ContributorsImport();
+        contributorsImport.setContributors(getContributors(lines));
+        contributorsImport.setContributorsPerYear(getContributorsPerYear(lines));
+
+        return contributorsImport;
+    }
+
+    public static List<Contributor> getContributors(List<String> lines) {
         List<Contributor> list = new ArrayList<>();
         Map<String, Contributor> map = new HashMap<>();
 
@@ -47,8 +54,40 @@ public class GitContributorsUtil {
                 }
             }
         });
-
         Collections.sort(list, (a, b) -> b.getCommitsCount() - a.getCommitsCount());
+
+        return list;
+    }
+
+    public static List<ContributionYear> getContributorsPerYear(List<String> lines) {
+        List<ContributionYear> list = new ArrayList<>();
+        Map<String, ContributionYear> map = new HashMap<>();
+        Map<String, List<String>> peopleNames = new HashMap<>();
+
+        lines.forEach(line -> {
+            if (line.length() > 11) {
+                String year = line.substring(0, 4).trim();
+                String name = line.substring(11).trim();
+                List<String> names = peopleNames.get(year);
+                if (names == null) {
+                    names = new ArrayList<>();
+                    peopleNames.put(year, names);
+                }
+                if (!names.contains(name)) {
+                    names.add(name);
+                }
+                ContributionYear contributionYear = map.get(year);
+                if (contributionYear == null) {
+                    contributionYear = new ContributionYear(year);
+                    map.put(year, contributionYear);
+                    list.add(contributionYear);
+                }
+                contributionYear.incrementCommitsCount();
+                contributionYear.setContributorsCount(names.size());
+            }
+        });
+
+        Collections.sort(list, Comparator.comparing(ContributionYear::getYear));
 
         return list;
     }

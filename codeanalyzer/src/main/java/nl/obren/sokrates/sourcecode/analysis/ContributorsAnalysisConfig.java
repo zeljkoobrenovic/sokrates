@@ -6,6 +6,7 @@ package nl.obren.sokrates.sourcecode.analysis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
+import nl.obren.sokrates.sourcecode.contributors.ContributorsImport;
 import nl.obren.sokrates.sourcecode.contributors.GitContributorsUtil;
 import org.apache.commons.lang3.StringUtils;
 
@@ -34,7 +35,7 @@ public class ContributorsAnalysisConfig {
     }
 
     @JsonIgnore
-    public List<Contributor> getContributors(File sokratesConfigFolder) {
+    public ContributorsImport getContributors(File sokratesConfigFolder) {
         return GitContributorsUtil.importGitContributorsExport(getContributorsFile(sokratesConfigFolder));
     }
 
@@ -45,6 +46,6 @@ public class ContributorsAnalysisConfig {
         }
 
         return getContributorsFile(sokratesConfigFolder).exists()
-                && getContributors(sokratesConfigFolder).size() > 0;
+                && getContributors(sokratesConfigFolder).getContributors().size() > 0;
     }
 }

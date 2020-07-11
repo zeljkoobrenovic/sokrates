@@ -12,6 +12,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.FileAgeDistributionPerLogic
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
+import nl.obren.sokrates.sourcecode.contributors.ContributorsImport;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.filehistory.FilePairsChangedTogether;
@@ -30,6 +31,7 @@ public class ContributorsAnalyzer extends Analyzer {
     private CodeConfiguration codeConfiguration;
     private MetricsList metricsList;
     private File sokratesFolder;
+
     private ContributorsAnalysisResults analysisResults;
 
     public ContributorsAnalyzer(CodeAnalysisResults results, File sokratesFolder) {
@@ -41,9 +43,11 @@ public class ContributorsAnalyzer extends Analyzer {
 
     public void analyze() {
         if (codeConfiguration.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesFolder)) {
-            List<Contributor> history = codeConfiguration.getContributorsAnalysis().getContributors(sokratesFolder);
+            ContributorsImport contributorsImport = codeConfiguration.getContributorsAnalysis().getContributors(sokratesFolder);
+            analysisResults.setContributors(contributorsImport.getContributors());
+            analysisResults.setContributorsPerYear(contributorsImport.getContributorsPerYear());
 
-            analysisResults.setContributors(history);
+            addMetrics();
         }
     }
 
