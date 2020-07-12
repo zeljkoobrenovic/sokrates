@@ -32,8 +32,6 @@ public class GitContributorsUtil {
         ContributorsImport contributorsImport = new ContributorsImport();
         contributorsImport.setContributors(getContributors(lines));
         List<ContributionYear> contributorsPerYear = getContributorsPerYear(lines);
-        List<ContributionYear> rookiesPerYear = new ArrayList<>(contributorsPerYear);
-        List<ContributionYear> leaversPerYear = new ArrayList<>(contributorsPerYear);
 
         contributorsImport.setContributorsPerYear(contributorsPerYear);
 
@@ -47,12 +45,13 @@ public class GitContributorsUtil {
         lines.forEach(line -> {
             if (line.length() > 11) {
                 String date = line.substring(0, 10).trim();
-                String name = line.substring(11).trim();
-                if (map.containsKey(name)) {
-                    map.get(name).addCommit(date);
+                String contributorInfo = line.substring(11).trim();
+                Contributor contributor = Contributor.getInstanceFromNameEmailLine(contributorInfo);
+                String id = contributor.getId();
+                if (map.containsKey(id)) {
+                    map.get(id).addCommit(date);
                 } else {
-                    Contributor contributor = Contributor.getInstanceFromNameEmailLine(name);
-                    map.put(name, contributor);
+                    map.put(id, contributor);
                     list.add(contributor);
                     contributor.addCommit(date);
                 }
@@ -66,19 +65,21 @@ public class GitContributorsUtil {
     public static List<ContributionYear> getContributorsPerYear(List<String> lines) {
         List<ContributionYear> list = new ArrayList<>();
         Map<String, ContributionYear> map = new HashMap<>();
-        Map<String, List<String>> peopleNames = new HashMap<>();
+        Map<String, List<String>> peopleIds = new HashMap<>();
 
         lines.forEach(line -> {
             if (line.length() > 11) {
                 String year = line.substring(0, 4).trim();
-                String name = line.substring(11).trim();
-                List<String> names = peopleNames.get(year);
-                if (names == null) {
-                    names = new ArrayList<>();
-                    peopleNames.put(year, names);
+                String contributorInfo = line.substring(11).trim();
+                Contributor contributor = Contributor.getInstanceFromNameEmailLine(contributorInfo);
+                String id = contributor.getId();
+                List<String> ids = peopleIds.get(year);
+                if (ids == null) {
+                    ids = new ArrayList<>();
+                    peopleIds.put(year, ids);
                 }
-                if (!names.contains(name)) {
-                    names.add(name);
+                if (!ids.contains(id)) {
+                    ids.add(id);
                 }
                 ContributionYear contributionYear = map.get(year);
                 if (contributionYear == null) {
@@ -87,7 +88,7 @@ public class GitContributorsUtil {
                     list.add(contributionYear);
                 }
                 contributionYear.incrementCommitsCount();
-                contributionYear.setContributorsCount(names.size());
+                contributionYear.setContributorsCount(ids.size());
             }
         });
 

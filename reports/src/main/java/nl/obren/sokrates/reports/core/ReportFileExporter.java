@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ReportFileExporter {
 
@@ -175,9 +177,35 @@ public class ReportFileExporter {
                         + " = " + veteransCount + " " + (veteransCount == 1 ? "veteran" : "veterans")
                         + " + " + rookiesCount + " " + (rookiesCount == 1 ? "rookie" : "rookies") + ")",
                 "Contributed in past 6 months (a rookie = the first contribution in past year)");
-        contributors.stream().filter(c -> c.isActive()).forEach(contributor -> {
-            addContributor(indexReport, max, total, contributor);
-        });
+        List<Contributor> contributor30Days = contributors.stream().filter(c -> c.isActive(30)).collect(Collectors.toList());
+        List<Contributor> contributor90Days = contributors.stream().filter(c -> c.isActive(90) && !c.isActive(30)).collect(Collectors.toList());
+        List<Contributor> contributor180Days = contributors.stream().filter(c -> c.isActive(180) && !c.isActive(90)).collect(Collectors.toList());
+        if (contributor30Days.size() > 0) {
+            indexReport.addParagraph("Past 30 days:", "font-size: 80%");
+            contributor30Days.forEach(contributor -> {
+                addContributor(indexReport, max, total, contributor);
+            });
+        } else {
+            indexReport.addParagraph("No contributors in past 30 days.", "font-size: 80%");
+        }
+        indexReport.addHorizontalLine();
+        if (contributor90Days.size() > 0) {
+            indexReport.addParagraph("Past 31 to 90 days:", "font-size: 80%");
+            contributor90Days.forEach(contributor -> {
+                addContributor(indexReport, max, total, contributor);
+            });
+        } else {
+            indexReport.addParagraph("No contributors in past 31 to 90 days.", "font-size: 80%");
+        }
+        indexReport.addHorizontalLine();
+        if (contributor180Days.size() > 0) {
+            indexReport.addParagraph("Past 91 to 180 days:", "font-size: 80%");
+            contributor180Days.forEach(contributor -> {
+                addContributor(indexReport, max, total, contributor);
+            });
+        } else {
+            indexReport.addParagraph("No contributors in past 91 to 180 days.", "font-size: 80%");
+        }
         indexReport.endSection();
         indexReport.startSubSection("Historical Contributors (" + historicalCount + ")", "Last contributed more than 6 months ago");
         contributors.stream().filter(c -> !c.isActive()).forEach(contributor -> {

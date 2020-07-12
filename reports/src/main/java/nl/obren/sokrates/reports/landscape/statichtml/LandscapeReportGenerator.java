@@ -13,7 +13,6 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributionYear;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
-import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.SubLandscapeLink;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProject;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
@@ -27,12 +26,11 @@ import org.apache.commons.text.StringEscapeUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class LandscapeReportGenerator {
+    public static final int RECENT_THRESHOLD_DAYS = 90;
     private static final Log LOG = LogFactory.getLog(LandscapeReportGenerator.class);
-
     private RichTextReport landscapeReport = new RichTextReport("Landscape Report", "index.html");
     private LandscapeAnalysisResults landscapeAnalysisResults;
 
@@ -114,7 +112,7 @@ public class LandscapeReportGenerator {
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) contributorsCount), "contributors",
                     (thresholdCommits > 1 ? "(" + thresholdCommits + "+ commits)" : ""));
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(getRecentContributorsCount(contributors)), "recent contributors",
-                    "(past 6 months)");
+                    "(past 3 months)");
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(getRookiesContributorsCount(contributors)), "rookies",
                     "(started in past year)");
         }
@@ -134,11 +132,11 @@ public class LandscapeReportGenerator {
     }
 
     private int getRecentContributorsCount(List<ContributorProject> contributors) {
-        return (int) contributors.stream().filter(c -> c.getContributor().isActive()).count();
+        return (int) contributors.stream().filter(c -> c.getContributor().isActive(RECENT_THRESHOLD_DAYS)).count();
     }
 
     private int getRookiesContributorsCount(List<ContributorProject> contributors) {
-        return (int) contributors.stream().filter(c -> c.getContributor().isRookie()).count();
+        return (int) contributors.stream().filter(c -> c.getContributor().isRookie(RECENT_THRESHOLD_DAYS)).count();
     }
 
     private void addExtensions() {
@@ -194,7 +192,7 @@ public class LandscapeReportGenerator {
         int counter[] = {0};
 
         contributors.forEach(contributor -> {
-            landscapeReport.startTableRow(contributor.getContributor().isActive() ? "font-weight: bold;" : "color: lightgrey");
+            landscapeReport.startTableRow(contributor.getContributor().isActive(RECENT_THRESHOLD_DAYS) ? "font-weight: bold;" : "color: lightgrey");
             counter[0] += 1;
             landscapeReport.addTableCell("" + counter[0], "text-align: center; vertical-align: top; padding-top: 13px;");
             landscapeReport.addTableCell(StringEscapeUtils.escapeHtml4(contributor.getContributor().getDisplayName()), "vertical-align: top; padding-top: 13px;");
@@ -284,8 +282,8 @@ public class LandscapeReportGenerator {
                 .stream().filter(c -> c.getCommitsCount() >= thresholdCommits).collect(Collectors.toCollection(ArrayList::new));
 
         int contributorsCount = contributors.size();
-        int recentContributorsCount = (int) contributors.stream().filter(c -> c.isActive()).count();
-        int rookiesCount = (int) contributors.stream().filter(c -> c.isRookie()).count();
+        int recentContributorsCount = (int) contributors.stream().filter(c -> c.isActive(RECENT_THRESHOLD_DAYS)).count();
+        int rookiesCount = (int) contributors.stream().filter(c -> c.isRookie(RECENT_THRESHOLD_DAYS)).count();
 
         DuplicationAnalysisResults duplication = analysisResults.getDuplicationAnalysisResults();
 
