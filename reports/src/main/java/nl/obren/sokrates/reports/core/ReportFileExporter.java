@@ -16,6 +16,7 @@ import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -189,13 +190,13 @@ public class ReportFileExporter {
         int commitsCount = contributor.getCommitsCount();
         double opacity = 0.2 + 0.8 * commitsCount / max;
         double percentage = 100.0 * commitsCount / total;
-        String info = contributor.getName()
+        String info = StringEscapeUtils.escapeHtml4(contributor.getName()
                 + " " + commitsCount
                 + " commits (" + FormattingUtils.getFormattedPercentage(percentage) + "%),"
-                + " between " + contributor.getFirstCommitDate() + " and " + contributor.getLatestCommitDate();
+                + " between " + contributor.getFirstCommitDate() + " and " + contributor.getLatestCommitDate());
 
         if (contributor.isRookie()) {
-            indexReport.addHtmlContent("<div style='border:2px solid green; border-radius: 5px; display: inline-block;opacity:" + opacity + "' title='Rookie: " + info + "'>");
+            indexReport.addHtmlContent("<div style='border:2px solid green; border-radius: 5px; display: inline-block;opacity:" + opacity + "' title='" + info + "'>");
         } else {
             indexReport.addHtmlContent("<div style='display: inline-block;opacity:" + opacity + "' title='" + info + "'>");
         }

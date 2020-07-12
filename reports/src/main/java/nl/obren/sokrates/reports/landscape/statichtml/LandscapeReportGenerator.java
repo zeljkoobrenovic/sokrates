@@ -59,6 +59,7 @@ public class LandscapeReportGenerator {
         this.landscapeAnalysisResults = landscapeAnalysisResults;
 
         addBigSummary(landscapeAnalysisResults);
+        addContributorsPerYear();
         addExtensions();
 
         addLandscapeSection(landscapeAnalysisResults.getConfiguration().getSubLandscapes());
@@ -66,7 +67,6 @@ public class LandscapeReportGenerator {
         addProjectsSection(landscapeAnalysisResults.getProjectAnalysisResults());
 
         addContributors();
-        addContributorsPerYear();
     }
 
     private void addLandscapeSection(List<SubLandscapeLink> subLandscapes) {
@@ -349,6 +349,7 @@ public class LandscapeReportGenerator {
             });
             landscapeReport.endTableRow();
 
+            /*
             landscapeReport.startTableRow();
             landscapeReport.addTableCell("Contributors", "border: none;");
             contributorsPerYear.forEach(year -> {
@@ -360,6 +361,7 @@ public class LandscapeReportGenerator {
                 landscapeReport.endTableCell();
             });
             landscapeReport.endTableRow();
+             */
 
             landscapeReport.startTableRow();
             landscapeReport.addTableCell("", "border: none; ");
