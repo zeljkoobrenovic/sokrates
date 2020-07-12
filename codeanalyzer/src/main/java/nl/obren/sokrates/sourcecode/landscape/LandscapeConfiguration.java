@@ -14,6 +14,11 @@ public class LandscapeConfiguration {
     private String analysisRoot = "";
     private String projectReportsUrlPrefix = "../";
 
+    private int extensionThresholdLoc = 0;
+    private int projectThresholdLocMain = 0;
+    private int projectThresholdContributors = 2;
+    private int contributorThresholdCommits = 2;
+
     private List<SubLandscapeLink> subLandscapes = new ArrayList<>();
     private List<SokratesProjectLink> projects = new ArrayList<>();
 
@@ -55,5 +60,37 @@ public class LandscapeConfiguration {
 
     public void setProjects(List<SokratesProjectLink> projects) {
         this.projects = projects;
+    }
+
+    public int getExtensionThresholdLoc() {
+        return extensionThresholdLoc;
+    }
+
+    public void setExtensionThresholdLoc(int extensionThresholdLoc) {
+        this.extensionThresholdLoc = extensionThresholdLoc;
+    }
+
+    public int getProjectThresholdLocMain() {
+        return projectThresholdLocMain;
+    }
+
+    public void setProjectThresholdLocMain(int projectThresholdLocMain) {
+        this.projectThresholdLocMain = projectThresholdLocMain;
+    }
+
+    public int getContributorThresholdCommits() {
+        return contributorThresholdCommits;
+    }
+
+    public void setContributorThresholdCommits(int contributorThresholdCommits) {
+        this.contributorThresholdCommits = contributorThresholdCommits;
+    }
+
+    public int getProjectThresholdContributors() {
+        return projectThresholdContributors;
+    }
+
+    public void setProjectThresholdContributors(int projectThresholdContributors) {
+        this.projectThresholdContributors = projectThresholdContributors;
     }
 }

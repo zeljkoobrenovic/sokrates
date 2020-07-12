@@ -174,7 +174,7 @@ public class ReportFileExporter {
         indexReport.startSubSection("Recent Contributors (" + activeCount
                         + " = " + veteransCount + " " + (veteransCount == 1 ? "veteran" : "veterans")
                         + " + " + rookiesCount + " " + (rookiesCount == 1 ? "rookie" : "rookies") + ")",
-                "Contributed in past 6 months");
+                "Contributed in past 6 months (a rookie = the first contribution in past year)");
         contributors.stream().filter(c -> c.isActive()).forEach(contributor -> {
             addContributor(indexReport, max, total, contributor);
         });

@@ -62,14 +62,14 @@ public class LandscapeReportGenerator {
         addContributorsPerYear();
         addExtensions();
 
-        addLandscapeSection(landscapeAnalysisResults.getConfiguration().getSubLandscapes());
+        addSubLandscapeSection(landscapeAnalysisResults.getConfiguration().getSubLandscapes());
 
         addProjectsSection(landscapeAnalysisResults.getProjectAnalysisResults());
 
         addContributors();
     }
 
-    private void addLandscapeSection(List<SubLandscapeLink> subLandscapes) {
+    private void addSubLandscapeSection(List<SubLandscapeLink> subLandscapes) {
         List<SubLandscapeLink> links = new ArrayList<>(subLandscapes);
         if (links.size() > 0) {
             Collections.sort(links, (a, b) -> a.getName().compareTo(b.getName()));
@@ -100,9 +100,10 @@ public class LandscapeReportGenerator {
         addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "lines of code (main)");
 
         List<ContributorProject> contributors = landscapeAnalysisResults.getContributors();
-        int contributorsCount = getContributorsCount(contributors);
-        if (contributorsCount > 0) {
-            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(contributorsCount), "contributors");
+        int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
+        long filteredContributorsCount = contributors.stream().filter(c -> c.getContributor().getCommitsCount() >= thresholdCommits).count();
+        if (filteredContributorsCount > 0) {
+            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) filteredContributorsCount), "contributors");
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(getRecentContributorsCount(contributors)), "recent contributors");
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(getRookiesContributorsCount(contributors)), "rookies");
         }
@@ -118,15 +119,18 @@ public class LandscapeReportGenerator {
     }
 
     private int getContributorsCount(List<ContributorProject> contributors) {
-        return contributors.size();
+        int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
+        return (int) contributors.stream().filter(c -> c.getContributor().getCommitsCount() >= thresholdCommits).count();
     }
 
     private int getRecentContributorsCount(List<ContributorProject> contributors) {
-        return (int) contributors.stream().filter(c -> c.getContributor().isActive()).count();
+        int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
+        return (int) contributors.stream().filter(c -> c.getContributor().isActive() && c.getContributor().getCommitsCount() >= thresholdCommits).count();
     }
 
     private int getRookiesContributorsCount(List<ContributorProject> contributors) {
-        return (int) contributors.stream().filter(c -> c.getContributor().isRookie()).count();
+        int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
+        return (int) contributors.stream().filter(c -> c.getContributor().isRookie() && c.getContributor().getCommitsCount() >= thresholdCommits).count();
     }
 
     private void addExtensions() {
@@ -149,7 +153,13 @@ public class LandscapeReportGenerator {
 
     private void addContributors() {
         List<ContributorProject> contributors = landscapeAnalysisResults.getContributors();
-        landscapeReport.startSubSection("Contributors (" + getContributorsCount(contributors) + ")", "");
+
+        int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
+
+        int totalCommits = contributors.stream().mapToInt(c -> c.getContributor().getCommitsCount()).sum();
+
+        landscapeReport.startSubSection("Contributors (" + getContributorsCount(contributors) + ")",
+                thresholdCommits > 1 ? thresholdCommits + "+ commits" : "");
 
         landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_contributors.html");
         landscapeReport.addHtmlContent(" | ");
@@ -163,20 +173,18 @@ public class LandscapeReportGenerator {
         landscapeReport.startTable("width: 100%");
         landscapeReport.addTableHeader("", "Contributor", "# commits", "first", "latest", "projects");
 
-        int totalCommits = contributors.stream().mapToInt(c -> c.getContributor().getCommitsCount()).sum();
-
         int counter[] = {0};
 
-        contributors.forEach(contributor -> {
-            landscapeReport.startTableRow();
+        contributors.stream().filter(c -> c.getContributor().getCommitsCount() >= thresholdCommits).forEach(contributor -> {
+            landscapeReport.startTableRow(contributor.getContributor().isActive() ? "font-weight: bold;" : "color: lightgrey");
             counter[0] += 1;
-            landscapeReport.addTableCell("" + counter[0], "text-align: center; vertical-align: top; padding-top: 4px; padding-bottom: 4px;");
-            landscapeReport.addTableCell(StringEscapeUtils.escapeHtml4(contributor.getContributor().getName()), "vertical-align: top; padding-top: 4px; padding-bottom: 4px;");
+            landscapeReport.addTableCell("" + counter[0], "text-align: center; vertical-align: top; padding-top: 13px;");
+            landscapeReport.addTableCell(StringEscapeUtils.escapeHtml4(contributor.getContributor().getName()), "vertical-align: top; padding-top: 13px;");
             int contributerCommits = contributor.getContributor().getCommitsCount();
             double percentage = 100.0 * contributerCommits / totalCommits;
-            landscapeReport.addTableCell(contributerCommits + " (" + FormattingUtils.getFormattedPercentage(percentage) + "%)", "vertical-align: top; padding-top: 4px; padding-bottom: 4px;");
-            landscapeReport.addTableCell(contributor.getContributor().getFirstCommitDate(), "vertical-align: top; padding-top: 4px; padding-bottom: 4px;");
-            landscapeReport.addTableCell(contributor.getContributor().getLatestCommitDate(), "vertical-align: top; padding-top: 4px; padding-bottom: 4px;");
+            landscapeReport.addTableCell(contributerCommits + " (" + FormattingUtils.getFormattedPercentage(percentage) + "%)", "vertical-align: top; padding-top: 13px;");
+            landscapeReport.addTableCell(contributor.getContributor().getFirstCommitDate(), "vertical-align: top; padding-top: 13px;");
+            landscapeReport.addTableCell(contributor.getContributor().getLatestCommitDate(), "vertical-align: top; padding-top: 13px;");
             StringBuilder projectInfo = new StringBuilder();
             landscapeReport.startTableCell();
             int projectsCount = contributor.getProjects().size();

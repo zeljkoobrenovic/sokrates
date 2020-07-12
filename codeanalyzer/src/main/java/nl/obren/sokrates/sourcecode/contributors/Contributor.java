@@ -54,12 +54,12 @@ public class Contributor {
     }
 
     public boolean isRookie() {
-        if (StringUtils.isBlank(firstCommitDate)) {
+        if (StringUtils.isBlank(firstCommitDate) || !isActive()) {
             return false;
         }
 
         Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DATE, -180);
+        cal.add(Calendar.DATE, -365);
 
         String thresholdDate = new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime());
 
