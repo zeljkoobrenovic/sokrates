@@ -6,6 +6,7 @@ package nl.obren.sokrates.sourcecode.landscape.analysis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributionYear;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
@@ -13,6 +14,7 @@ import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class LandscapeAnalysisResults {
     private LandscapeConfiguration configuration = new LandscapeConfiguration();
@@ -28,6 +30,20 @@ public class LandscapeAnalysisResults {
 
     public List<ProjectAnalysisResults> getProjectAnalysisResults() {
         return projectAnalysisResults;
+    }
+
+    @JsonIgnore
+    public List<ProjectAnalysisResults> getFilteredProjectAnalysisResults() {
+        int thresholdLoc = configuration.getProjectThresholdLocMain();
+        int thresholdContributors = configuration.getProjectThresholdContributors();
+
+        return projectAnalysisResults.stream()
+                .filter(p -> {
+                    CodeAnalysisResults results = p.getAnalysisResults();
+                    return results.getMainAspectAnalysisResults().getLinesOfCode() >= thresholdLoc
+                            && results.getContributorsAnalysisResults().getContributors().size() >= thresholdContributors;
+                })
+                .collect(Collectors.toList());
     }
 
     public void setProjectAnalysisResults(List<ProjectAnalysisResults> projectAnalysisResults) {
@@ -47,7 +63,7 @@ public class LandscapeAnalysisResults {
     @JsonIgnore
     public int getMainLoc() {
         int count[] = {0};
-        this.projectAnalysisResults.forEach(projectAnalysisResults -> {
+        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
             count[0] += projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
         });
         return count[0];
@@ -56,7 +72,7 @@ public class LandscapeAnalysisResults {
     @JsonIgnore
     public int getTestLoc() {
         int count[] = {0};
-        this.projectAnalysisResults.forEach(projectAnalysisResults -> {
+        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
             count[0] += projectAnalysisResults.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCode();
         });
         return count[0];
@@ -65,7 +81,7 @@ public class LandscapeAnalysisResults {
     @JsonIgnore
     public int getGeneratedLoc() {
         int count[] = {0};
-        this.projectAnalysisResults.forEach(projectAnalysisResults -> {
+        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
             count[0] += projectAnalysisResults.getAnalysisResults().getGeneratedAspectAnalysisResults().getLinesOfCode();
         });
         return count[0];
@@ -74,7 +90,7 @@ public class LandscapeAnalysisResults {
     @JsonIgnore
     public int getBuildAndDeploymentLoc() {
         int count[] = {0};
-        this.projectAnalysisResults.forEach(projectAnalysisResults -> {
+        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
             count[0] += projectAnalysisResults.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getLinesOfCode();
         });
         return count[0];
@@ -83,7 +99,7 @@ public class LandscapeAnalysisResults {
     @JsonIgnore
     public int getOtherLoc() {
         int count[] = {0};
-        this.projectAnalysisResults.forEach(projectAnalysisResults -> {
+        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
             count[0] += projectAnalysisResults.getAnalysisResults().getOtherAspectAnalysisResults().getLinesOfCode();
         });
         return count[0];
@@ -92,7 +108,7 @@ public class LandscapeAnalysisResults {
     @JsonIgnore
     public int getAllLoc() {
         int count[] = {0};
-        this.projectAnalysisResults.forEach(projectAnalysisResults -> {
+        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
             count[0] += projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
             count[0] += projectAnalysisResults.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCode();
             count[0] += projectAnalysisResults.getAnalysisResults().getGeneratedAspectAnalysisResults().getLinesOfCode();
@@ -105,7 +121,7 @@ public class LandscapeAnalysisResults {
     @JsonIgnore
     public List<NumericMetric> getLinesOfCodePerExtension() {
         List<NumericMetric> linesOfCodePerExtension = new ArrayList<>();
-        getProjectAnalysisResults().forEach(projectAnalysisResults -> {
+        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
             AspectAnalysisResults main = projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults();
             List<NumericMetric> projectLinesOfCodePerExtension = main.getLinesOfCodePerExtension();
             projectLinesOfCodePerExtension.forEach(metric -> {
@@ -124,12 +140,19 @@ public class LandscapeAnalysisResults {
     }
 
     @JsonIgnore
-
     public List<ContributorProject> getContributors() {
+        int thresholdCommits = configuration.getContributorThresholdCommits();
+        return getAllContributors().stream()
+                .filter(c -> c.getContributor().getCommitsCount() >= thresholdCommits)
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    @JsonIgnore
+    public List<ContributorProject> getAllContributors() {
         List<ContributorProject> list = new ArrayList<>();
         Map<String, ContributorProject> map = new HashMap<>();
 
-        getProjectAnalysisResults().forEach(projectAnalysisResults -> {
+        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
             ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
             contributorsAnalysisResults.getContributors().forEach(contributor -> {
                 String name = contributor.getName();
@@ -167,7 +190,7 @@ public class LandscapeAnalysisResults {
         List<ContributionYear> list = new ArrayList<>();
         Map<String, ContributionYear> map = new HashMap<>();
 
-        getProjectAnalysisResults().forEach(projectAnalysisResults -> {
+        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
             ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
             contributorsAnalysisResults.getContributorsPerYear().forEach(year -> {
                 ContributionYear contributionYear = map.get(year.getYear());

@@ -13,6 +13,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributionYear;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
+import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.SubLandscapeLink;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProject;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
@@ -26,6 +27,8 @@ import org.apache.commons.text.StringEscapeUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class LandscapeReportGenerator {
     private static final Log LOG = LogFactory.getLog(LandscapeReportGenerator.class);
@@ -64,9 +67,13 @@ public class LandscapeReportGenerator {
 
         addSubLandscapeSection(landscapeAnalysisResults.getConfiguration().getSubLandscapes());
 
-        addProjectsSection(landscapeAnalysisResults.getProjectAnalysisResults());
+        addProjectsSection(getProjects());
 
         addContributors();
+    }
+
+    private List<ProjectAnalysisResults> getProjects() {
+        return landscapeAnalysisResults.getFilteredProjectAnalysisResults();
     }
 
     private void addSubLandscapeSection(List<SubLandscapeLink> subLandscapes) {
@@ -92,20 +99,24 @@ public class LandscapeReportGenerator {
     }
 
     private void addBigSummary(LandscapeAnalysisResults landscapeAnalysisResults) {
-        List<NumericMetric> linesOfCodePerExtension = landscapeAnalysisResults.getLinesOfCodePerExtension();
-
         landscapeReport.startDiv("margin-top: 32px;");
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getProjectsCount()), "projects");
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(linesOfCodePerExtension.size()), linesOfCodePerExtension.size() == 1 ? " extension" : " extensions");
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "lines of code (main)");
+        int thresholdContributors = landscapeAnalysisResults.getConfiguration().getProjectThresholdContributors();
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(getProjects().size()), "projects",
+                thresholdContributors > 1 ? "(" + thresholdContributors + "+ contributors)" : "");
+        int extensionsCount = getLinesOfCodePerExtension().size();
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(extensionsCount), extensionsCount == 1 ? "extension" : "extensions", "");
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "lines of code (main)", "");
 
         List<ContributorProject> contributors = landscapeAnalysisResults.getContributors();
-        int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
-        long filteredContributorsCount = contributors.stream().filter(c -> c.getContributor().getCommitsCount() >= thresholdCommits).count();
-        if (filteredContributorsCount > 0) {
-            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) filteredContributorsCount), "contributors");
-            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(getRecentContributorsCount(contributors)), "recent contributors");
-            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(getRookiesContributorsCount(contributors)), "rookies");
+        long contributorsCount = contributors.size();
+        if (contributorsCount > 0) {
+            int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
+            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) contributorsCount), "contributors",
+                    (thresholdCommits > 1 ? "(" + thresholdCommits + "+ commits)" : ""));
+            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(getRecentContributorsCount(contributors)), "recent contributors",
+                    "(past 6 months)");
+            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(getRookiesContributorsCount(contributors)), "rookies",
+                    "(started in past year)");
         }
         landscapeReport.addLineBreak();
         addSmallInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getTestLoc()), "(test)");
@@ -119,23 +130,23 @@ public class LandscapeReportGenerator {
     }
 
     private int getContributorsCount(List<ContributorProject> contributors) {
-        int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
-        return (int) contributors.stream().filter(c -> c.getContributor().getCommitsCount() >= thresholdCommits).count();
+        return contributors.size();
     }
 
     private int getRecentContributorsCount(List<ContributorProject> contributors) {
-        int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
-        return (int) contributors.stream().filter(c -> c.getContributor().isActive() && c.getContributor().getCommitsCount() >= thresholdCommits).count();
+        return (int) contributors.stream().filter(c -> c.getContributor().isActive()).count();
     }
 
     private int getRookiesContributorsCount(List<ContributorProject> contributors) {
-        int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
-        return (int) contributors.stream().filter(c -> c.getContributor().isRookie() && c.getContributor().getCommitsCount() >= thresholdCommits).count();
+        return (int) contributors.stream().filter(c -> c.getContributor().isRookie()).count();
     }
 
     private void addExtensions() {
-        List<NumericMetric> linesOfCodePerExtension = landscapeAnalysisResults.getLinesOfCodePerExtension();
-        landscapeReport.startSubSection("Extensions in Main Code (" + linesOfCodePerExtension.size() + ")", "");
+        int threshold = landscapeAnalysisResults.getConfiguration().getExtensionThresholdLoc();
+
+        List<NumericMetric> linesOfCodePerExtension = getLinesOfCodePerExtension();
+        landscapeReport.startSubSection("Extensions in Main Code (" + linesOfCodePerExtension.size() + ")",
+                threshold >= 1 ? threshold + "+ lines of code" : "");
         landscapeReport.startDiv("");
         landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_extensions.html");
         landscapeReport.addHtmlContent(" | ");
@@ -149,6 +160,13 @@ public class LandscapeReportGenerator {
         });
         landscapeReport.endDiv();
         landscapeReport.endSection();
+    }
+
+    private List<NumericMetric> getLinesOfCodePerExtension() {
+        int threshold = landscapeAnalysisResults.getConfiguration().getExtensionThresholdLoc();
+        return landscapeAnalysisResults.getLinesOfCodePerExtension().stream()
+                .filter(e -> e.getValue().intValue() >= threshold)
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private void addContributors() {
@@ -175,7 +193,7 @@ public class LandscapeReportGenerator {
 
         int counter[] = {0};
 
-        contributors.stream().filter(c -> c.getContributor().getCommitsCount() >= thresholdCommits).forEach(contributor -> {
+        contributors.forEach(contributor -> {
             landscapeReport.startTableRow(contributor.getContributor().isActive() ? "font-weight: bold;" : "color: lightgrey");
             counter[0] += 1;
             landscapeReport.addTableCell("" + counter[0], "text-align: center; vertical-align: top; padding-top: 13px;");
@@ -227,9 +245,14 @@ public class LandscapeReportGenerator {
                 landscapeReport.startShowMoreBlock("show details...");
             }
             landscapeReport.startTable("width: 100%");
-            landscapeReport.addTableHeader("", "Project", "Main<br/>Language", "LOC<br/>(main)",
+            int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
+            int thresholdContributors = landscapeAnalysisResults.getConfiguration().getProjectThresholdContributors();
+            landscapeReport.addTableHeader("",
+                    "Project" + (thresholdContributors > 1 ? "<br/>(" + thresholdContributors + "+ contributors)" : ""),
+                    "Main<br/>Language", "LOC<br/>(main)",
                     "LOC<br/>(test)", "LOC<br/>(generated)", "LOC<br/>(build)", "LOC<br/>(other)",
-                    "Age", "Contributors", "Recent Contributors", "Rookies", "Report");
+                    "Age", "Contributors" + (thresholdCommits > 1 ? "<br/>(" + thresholdCommits + "+ commits)" : ""),
+                    "Recent<br>Contributors", "Rookies", "Report");
             projectsAnalysisResults.forEach(projectAnalysis -> {
                 addProjectRow(projectAnalysis);
             });
@@ -255,7 +278,11 @@ public class LandscapeReportGenerator {
         AspectAnalysisResults generated = analysisResults.getGeneratedAspectAnalysisResults();
         AspectAnalysisResults build = analysisResults.getBuildAndDeployAspectAnalysisResults();
         AspectAnalysisResults other = analysisResults.getOtherAspectAnalysisResults();
-        List<Contributor> contributors = analysisResults.getContributorsAnalysisResults().getContributors();
+
+        int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
+        List<Contributor> contributors = analysisResults.getContributorsAnalysisResults().getContributors()
+                .stream().filter(c -> c.getCommitsCount() >= thresholdCommits).collect(Collectors.toCollection(ArrayList::new));
+
         int contributorsCount = contributors.size();
         int recentContributorsCount = (int) contributors.stream().filter(c -> c.isActive()).count();
         int rookiesCount = (int) contributors.stream().filter(c -> c.isRookie()).count();
@@ -288,15 +315,21 @@ public class LandscapeReportGenerator {
         landscapeReport.endTableRow();
     }
 
-    private void addInfoBlock(String mainValue, String subtitle) {
-        addInfoBlock(mainValue, subtitle, "skyblue");
+    private void addInfoBlock(String mainValue, String subtitle, String description) {
+        if (StringUtils.isNotBlank(description)) {
+            subtitle += "<br/><span style='color: grey; font-size: 80%'>" + description + "</span>";
+        }
+        addInfoBlockWithColor(mainValue, subtitle, "skyblue");
     }
 
-    private void addPeopleInfoBlock(String mainValue, String subtitle) {
-        addInfoBlock(mainValue, subtitle, "lavender");
+    private void addPeopleInfoBlock(String mainValue, String subtitle, String description) {
+        if (StringUtils.isNotBlank(description)) {
+            subtitle += "<br/><span style='color: grey; font-size: 80%'>" + description + "</span>";
+        }
+        addInfoBlockWithColor(mainValue, subtitle, "lavender");
     }
 
-    private void addInfoBlock(String mainValue, String subtitle, String color) {
+    private void addInfoBlockWithColor(String mainValue, String subtitle, String color) {
         String style = "border-radius: 12px;";
 
         style += "margin: 12px 12px 12px 0px;";
