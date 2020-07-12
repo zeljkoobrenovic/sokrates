@@ -173,6 +173,7 @@ public class DataExporter {
 
         contributors.forEach(contributor -> {
             content.append(contributor.getName() + "\t");
+            content.append(contributor.getEmail() + "\t");
             content.append(contributor.getCommitsCount() + "\t");
             double percentage = 100.0 * contributor.getCommitsCount() / total;
             content.append(FormattingUtils.getFormattedPercentage(percentage) + "%\n");

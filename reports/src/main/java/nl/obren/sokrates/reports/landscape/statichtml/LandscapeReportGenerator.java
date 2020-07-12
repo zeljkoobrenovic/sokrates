@@ -197,7 +197,7 @@ public class LandscapeReportGenerator {
             landscapeReport.startTableRow(contributor.getContributor().isActive() ? "font-weight: bold;" : "color: lightgrey");
             counter[0] += 1;
             landscapeReport.addTableCell("" + counter[0], "text-align: center; vertical-align: top; padding-top: 13px;");
-            landscapeReport.addTableCell(StringEscapeUtils.escapeHtml4(contributor.getContributor().getName()), "vertical-align: top; padding-top: 13px;");
+            landscapeReport.addTableCell(StringEscapeUtils.escapeHtml4(contributor.getContributor().getDisplayName()), "vertical-align: top; padding-top: 13px;");
             int contributerCommits = contributor.getContributor().getCommitsCount();
             double percentage = 100.0 * contributerCommits / totalCommits;
             landscapeReport.addTableCell(contributerCommits + " (" + FormattingUtils.getFormattedPercentage(percentage) + "%)", "vertical-align: top; padding-top: 13px;");

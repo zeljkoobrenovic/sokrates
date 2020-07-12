@@ -51,7 +51,7 @@ public class GitContributorsUtil {
                 if (map.containsKey(name)) {
                     map.get(name).addCommit(date);
                 } else {
-                    Contributor contributor = new Contributor(name);
+                    Contributor contributor = Contributor.getInstanceFromNameEmailLine(name);
                     map.put(name, contributor);
                     list.add(contributor);
                     contributor.addCommit(date);

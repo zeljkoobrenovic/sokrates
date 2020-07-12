@@ -155,12 +155,11 @@ public class LandscapeAnalysisResults {
         getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
             ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
             contributorsAnalysisResults.getContributors().forEach(contributor -> {
-                String name = contributor.getName();
+                String contributorId = contributor.getId();
                 int projectCommits = contributor.getCommitsCount();
-                int commits = projectCommits;
 
-                if (map.containsKey(name)) {
-                    ContributorProject existingContributor = map.get(name);
+                if (map.containsKey(contributorId)) {
+                    ContributorProject existingContributor = map.get(contributorId);
                     existingContributor.getContributor().setCommitsCount(existingContributor.getContributor().getCommitsCount() + projectCommits);
                     existingContributor.addProject(projectAnalysisResults, projectCommits);
                     if (contributor.getFirstCommitDate().compareTo(existingContributor.getContributor().getFirstCommitDate()) < 0) {
@@ -170,12 +169,18 @@ public class LandscapeAnalysisResults {
                         existingContributor.getContributor().setLatestCommitDate(contributor.getLatestCommitDate());
                     }
                 } else {
-                    Contributor newContributor = new Contributor(contributor.getName(), projectCommits);
+                    Contributor newContributor = new Contributor();
+
+                    newContributor.setName(contributor.getName());
+                    newContributor.setEmail(contributor.getEmail());
+                    newContributor.setCommitsCount(projectCommits);
                     newContributor.setFirstCommitDate(contributor.getFirstCommitDate());
                     newContributor.setLatestCommitDate(contributor.getLatestCommitDate());
+
                     ContributorProject newContributorWithProjects = new ContributorProject(newContributor);
                     newContributorWithProjects.addProject(projectAnalysisResults, projectCommits);
-                    map.put(name, newContributorWithProjects);
+
+                    map.put(contributorId, newContributorWithProjects);
                     list.add(newContributorWithProjects);
                 }
             });

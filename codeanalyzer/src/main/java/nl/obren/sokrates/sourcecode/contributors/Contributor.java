@@ -5,6 +5,7 @@
 package nl.obren.sokrates.sourcecode.contributors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.commons.lang3.StringUtils;
 
 import java.text.SimpleDateFormat;
@@ -12,6 +13,7 @@ import java.util.Calendar;
 
 public class Contributor {
     private String name = "";
+    private String email = "";
     private int commitsCount = 0;
     private String firstCommitDate = "";
     private String latestCommitDate = "";
@@ -26,6 +28,23 @@ public class Contributor {
     public Contributor(String name, int commitsCount) {
         this.name = name;
         this.commitsCount = commitsCount;
+    }
+
+    public static Contributor getInstanceFromNameEmailLine(String line) {
+        Contributor contributor = new Contributor();
+
+        int n1 = line.lastIndexOf("<");
+        int n2 = line.lastIndexOf(">");
+
+        if (n1 > 0 && n2 > n1) {
+            contributor.setName(line.substring(0, n1).trim());
+            contributor.setEmail(line.substring(n1 + 1, n2).trim());
+        } else {
+            contributor.setName(line);
+            contributor.setEmail("");
+        }
+
+        return contributor;
     }
 
     @JsonIgnore
@@ -66,12 +85,30 @@ public class Contributor {
         return firstCommitDate.compareTo(thresholdDate) > 0;
     }
 
+    @JsonIgnore
+    public String getId() {
+        return StringUtils.isNotBlank(email) ? email : name;
+    }
+
+    @JsonPropertyOrder
+    public String getDisplayName() {
+        return name + (StringUtils.isNotBlank(email) ? " <" + email + ">" : "");
+    }
+
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public int getCommitsCount() {

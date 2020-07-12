@@ -190,7 +190,7 @@ public class ReportFileExporter {
         int commitsCount = contributor.getCommitsCount();
         double opacity = 0.2 + 0.8 * commitsCount / max;
         double percentage = 100.0 * commitsCount / total;
-        String info = StringEscapeUtils.escapeHtml4(contributor.getName()
+        String info = StringEscapeUtils.escapeHtml4(contributor.getDisplayName()
                 + " " + commitsCount
                 + " commits (" + FormattingUtils.getFormattedPercentage(percentage) + "%),"
                 + " between " + contributor.getFirstCommitDate() + " and " + contributor.getLatestCommitDate());
