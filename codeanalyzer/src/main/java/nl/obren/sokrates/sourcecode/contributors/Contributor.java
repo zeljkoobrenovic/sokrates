@@ -16,7 +16,7 @@ import java.util.List;
 
 public class Contributor {
     public static final int ACTIVITY_THRESHOLD_DAYS = 180;
-    public static final int ROOKY_THRESHOLD_DAYS = 365;
+    public static final int ROOKIE_THRESHOLD_DAYS = 365;
     private String name = "";
     private String email = "";
     private int commitsCount = 0;
@@ -101,7 +101,7 @@ public class Contributor {
         }
 
         Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DATE, -ROOKY_THRESHOLD_DAYS);
+        cal.add(Calendar.DATE, -ROOKIE_THRESHOLD_DAYS);
 
         String thresholdDate = new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime());
 

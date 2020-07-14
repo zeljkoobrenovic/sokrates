@@ -218,4 +218,10 @@ public class LandscapeAnalysisResults {
         return list;
     }
 
+    @JsonIgnore
+    public int getCommitsCount() {
+        return this.projectAnalysisResults.stream()
+                .mapToInt(p -> p.getAnalysisResults()
+                .getContributorsAnalysisResults().getCommitsCount()).sum();
+    }
 }

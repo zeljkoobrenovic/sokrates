@@ -67,7 +67,7 @@ public class LanguageAnalyzerFactory {
         // javascript
         analyzersMap.put("js", JavaScriptAnalyzer.class);
         analyzersMap.put("cy", JavaScriptAnalyzer.class);
-        analyzersMap.put("jsx", JavaScriptAnalyzer.class);
+        analyzersMap.put("jsx", HtmlAnalyzer.class);
         analyzersMap.put("_js", JavaScriptAnalyzer.class);
         analyzersMap.put("bones", JavaScriptAnalyzer.class);
         analyzersMap.put("cjs", JavaScriptAnalyzer.class);

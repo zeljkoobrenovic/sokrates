@@ -10,6 +10,7 @@ import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.SokratesProjectLink;
 import nl.obren.sokrates.sourcecode.landscape.SubLandscapeLink;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,6 +47,14 @@ public class LandscapeAnalysisInitiator {
         if (landscapeConfigFile == null) {
             File landscapeAnalysisRoot = new File(analysisRoot, "_sokrates_landscape");
             landscapeConfigFile = new File(landscapeAnalysisRoot, "config.json");
+        }
+
+        if (StringUtils.isBlank(landscapeConfiguration.getMetadata().getName())) {
+            try {
+                landscapeConfiguration.getMetadata().setName(analysisRoot.getCanonicalFile().getName());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         if (saveFile) {

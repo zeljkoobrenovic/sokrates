@@ -22,6 +22,7 @@ public class RichTextReport {
     private String logoLink = "";
     private List<Finding> findings = new ArrayList<>();
     private File reportsFolder;
+    private String parentUrl = "";
 
     public RichTextReport() {
     }
@@ -355,5 +356,13 @@ public class RichTextReport {
 
     public File getReportsFolder() {
         return reportsFolder;
+    }
+
+    public void setParentUrl(String parentUrl) {
+        this.parentUrl = parentUrl;
+    }
+
+    public String getParentUrl() {
+        return parentUrl;
     }
 }

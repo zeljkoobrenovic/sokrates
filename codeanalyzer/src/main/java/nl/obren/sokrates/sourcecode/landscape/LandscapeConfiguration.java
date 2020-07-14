@@ -13,6 +13,7 @@ public class LandscapeConfiguration {
     private Metadata metadata = new Metadata();
     private String analysisRoot = "";
     private String projectReportsUrlPrefix = "../";
+    private String parentUrl = "";
 
     private int extensionThresholdLoc = 0;
     private int projectThresholdLocMain = 0;
@@ -92,5 +93,13 @@ public class LandscapeConfiguration {
 
     public void setProjectThresholdContributors(int projectThresholdContributors) {
         this.projectThresholdContributors = projectThresholdContributors;
+    }
+
+    public String getParentUrl() {
+        return parentUrl;
+    }
+
+    public void setParentUrl(String parentUrl) {
+        this.parentUrl = parentUrl;
     }
 }

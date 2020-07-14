@@ -50,7 +50,7 @@ public class LandscapeAnalysisCommands {
 
         LandscapeAnalysisResults landscapeAnalysisResults = analyzer.analyze(landscapeConfigFile);
 
-        LandscapeReportGenerator reportGenerator = new LandscapeReportGenerator(landscapeAnalysisResults);
+        LandscapeReportGenerator reportGenerator = new LandscapeReportGenerator(landscapeAnalysisResults, landscapeConfigFile.getParentFile());
         List<RichTextReport> reports = reportGenerator.report();
 
         try {

@@ -18,7 +18,8 @@ public class ReportRenderer {
     public void render(RichTextReport richTextReport, ReportRenderingClient reportRenderingClient) {
         StringBuilder content = new StringBuilder();
         content.append("<h1>");
-        content.append("<a href='index.html' style=\"text-decoration:none\">\n");
+        String parentUrl = StringUtils.isNotBlank(richTextReport.getParentUrl()) ? richTextReport.getParentUrl() : "index.html";
+        content.append("<a href='" + parentUrl + "' style=\"text-decoration:none\">\n");
         if (StringUtils.isNotBlank(richTextReport.getLogoLink())) {
             int size = richTextReport.getDisplayName().contains("<div") ? 24 : 36;
             String valign = richTextReport.getDisplayName().contains("<div") ? "middle" : "bottom";

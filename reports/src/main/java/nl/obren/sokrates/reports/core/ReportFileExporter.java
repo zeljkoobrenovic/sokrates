@@ -181,7 +181,7 @@ public class ReportFileExporter {
         List<Contributor> contributor90Days = contributors.stream().filter(c -> c.isActive(90) && !c.isActive(30)).collect(Collectors.toList());
         List<Contributor> contributor180Days = contributors.stream().filter(c -> c.isActive(180) && !c.isActive(90)).collect(Collectors.toList());
         if (contributor30Days.size() > 0) {
-            indexReport.addParagraph("Past 30 days:", "font-size: 80%");
+            indexReport.addParagraph("Past 30 days (" + contributor30Days.size() + "):", "font-size: 80%");
             contributor30Days.forEach(contributor -> {
                 addContributor(indexReport, max, total, contributor);
             });
@@ -190,7 +190,7 @@ public class ReportFileExporter {
         }
         indexReport.addHorizontalLine();
         if (contributor90Days.size() > 0) {
-            indexReport.addParagraph("Past 31 to 90 days:", "font-size: 80%");
+            indexReport.addParagraph("Past 31 to 90 days (" + contributor90Days.size() + "):", "font-size: 80%");
             contributor90Days.forEach(contributor -> {
                 addContributor(indexReport, max, total, contributor);
             });
@@ -199,7 +199,7 @@ public class ReportFileExporter {
         }
         indexReport.addHorizontalLine();
         if (contributor180Days.size() > 0) {
-            indexReport.addParagraph("Past 91 to 180 days:", "font-size: 80%");
+            indexReport.addParagraph("Past 91 to 180 days (" + contributor180Days.size() + "):", "font-size: 80%");
             contributor180Days.forEach(contributor -> {
                 addContributor(indexReport, max, total, contributor);
             });
