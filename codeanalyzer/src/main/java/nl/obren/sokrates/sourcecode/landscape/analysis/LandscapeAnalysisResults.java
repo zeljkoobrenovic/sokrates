@@ -40,8 +40,9 @@ public class LandscapeAnalysisResults {
         return projectAnalysisResults.stream()
                 .filter(p -> {
                     CodeAnalysisResults results = p.getAnalysisResults();
+                    int contributorsCount = results.getContributorsAnalysisResults().getContributors().size();
                     return results.getMainAspectAnalysisResults().getLinesOfCode() >= thresholdLoc
-                            && results.getContributorsAnalysisResults().getContributors().size() >= thresholdContributors;
+                            && (contributorsCount == 0 || contributorsCount >= thresholdContributors);
                 })
                 .collect(Collectors.toList());
     }

@@ -23,6 +23,7 @@ public class CustomScopingConventions {
     private List<Convention> otherFilesConventions = new ArrayList<>();
 
     private List<Concern> concerns = new ArrayList<>();
+    private List<String> ignoreContributors = new ArrayList<>();
 
     public CustomExtensionConventions getExtensions() {
         return extensions;
@@ -102,5 +103,13 @@ public class CustomScopingConventions {
 
     public void setConcerns(List<Concern> concerns) {
         this.concerns = concerns;
+    }
+
+    public List<String> getIgnoreContributors() {
+        return ignoreContributors;
+    }
+
+    public void setIgnoreContributors(List<String> ignoreContributors) {
+        this.ignoreContributors = ignoreContributors;
     }
 }

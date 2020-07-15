@@ -269,6 +269,14 @@ public class RichTextReport {
         addHtmlContent("<div style=\"" + style + "\">");
     }
 
+    public void startSpan(String style) {
+        addHtmlContent("<span style=\"" + style + "\">");
+    }
+
+    public void endSpan() {
+        addHtmlContent("</span>");
+    }
+
     public void addContentInDiv(String content) {
         addContentInDiv(content, "");
     }
@@ -316,7 +324,9 @@ public class RichTextReport {
     }
 
     public void addParagraph(String text, String style) {
-        addHtmlContent("<p style=\"" + style + "\">" + text + "</p>\n");
+        if (StringUtils.isNotBlank(text)) {
+            addHtmlContent("<p style=\"" + style + "\">" + text + "</p>\n");
+        }
     }
 
     public void addTableCell(String text, String style) {

@@ -20,6 +20,10 @@ public class LandscapeConfiguration {
     private int projectThresholdContributors = 2;
     private int contributorThresholdCommits = 2;
 
+    private List<CustomMetric> customMetrics = new ArrayList<>();
+    private List<CustomMetric> customMetricsSmall = new ArrayList<>();
+    private CustomTagsConfig tags = new CustomTagsConfig();
+
     private List<SubLandscapeLink> subLandscapes = new ArrayList<>();
     private List<SokratesProjectLink> projects = new ArrayList<>();
 
@@ -101,5 +105,29 @@ public class LandscapeConfiguration {
 
     public void setParentUrl(String parentUrl) {
         this.parentUrl = parentUrl;
+    }
+
+    public List<CustomMetric> getCustomMetrics() {
+        return customMetrics;
+    }
+
+    public void setCustomMetrics(List<CustomMetric> customMetrics) {
+        this.customMetrics = customMetrics;
+    }
+
+    public List<CustomMetric> getCustomMetricsSmall() {
+        return customMetricsSmall;
+    }
+
+    public void setCustomMetricsSmall(List<CustomMetric> customMetricsSmall) {
+        this.customMetricsSmall = customMetricsSmall;
+    }
+
+    public CustomTagsConfig getTags() {
+        return tags;
+    }
+
+    public void setTags(CustomTagsConfig tags) {
+        this.tags = tags;
     }
 }

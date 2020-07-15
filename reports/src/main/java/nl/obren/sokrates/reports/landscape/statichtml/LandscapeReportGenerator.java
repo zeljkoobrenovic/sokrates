@@ -13,6 +13,8 @@ import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributionYear;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
+import nl.obren.sokrates.sourcecode.landscape.CustomMetric;
+import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.SubLandscapeLink;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProject;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
@@ -109,18 +111,22 @@ public class LandscapeReportGenerator {
 
     private void addBigSummary(LandscapeAnalysisResults landscapeAnalysisResults) {
         landscapeReport.startDiv("margin-top: 32px;");
-        int thresholdContributors = landscapeAnalysisResults.getConfiguration().getProjectThresholdContributors();
+        LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
+        int thresholdContributors = configuration.getProjectThresholdContributors();
         addInfoBlock(FormattingUtils.getSmallTextForNumber(getProjects().size()), "projects",
                 thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : "");
         int extensionsCount = getLinesOfCodePerExtension().size();
         addInfoBlock(FormattingUtils.getSmallTextForNumber(extensionsCount), extensionsCount == 1 ? "extension" : "extensions", "");
         addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "lines of code (main)", "");
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getCommitsCount()), "commits", "");
+        int commitsCount = landscapeAnalysisResults.getCommitsCount();
+        if (commitsCount > 0) {
+            addInfoBlock(FormattingUtils.getSmallTextForNumber(commitsCount), "commits", "");
+        }
 
         List<ContributorProject> contributors = landscapeAnalysisResults.getContributors();
         long contributorsCount = contributors.size();
         if (contributorsCount > 0) {
-            int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
+            int thresholdCommits = configuration.getContributorThresholdCommits();
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) contributorsCount), "contributors",
                     (thresholdCommits > 1 ? "(" + thresholdCommits + "+&nbsp;commits)" : ""));
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(getRecentContributorsCount(contributors)), "recent contributors",
@@ -129,16 +135,47 @@ public class LandscapeReportGenerator {
                     "(started in past year)");
         }
         landscapeReport.addLineBreak();
+        if (configuration.getCustomMetrics().size() > 0) {
+            configuration.getCustomMetrics().forEach(customMetric -> addCustomInfoBlock(customMetric));
+            landscapeReport.addLineBreak();
+        }
         addSmallInfoBlockLoc(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getTestLoc()), "(test)");
         addSmallInfoBlockLoc(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getGeneratedLoc()
                 + landscapeAnalysisResults.getBuildAndDeploymentLoc()
                 + landscapeAnalysisResults.getOtherLoc()), "(other)");
-        addSmallInfoBlockPeople(FormattingUtils.getSmallTextForNumber(getRecentContributorsCount6Months(contributors)), "(6 months)");
-        addSmallInfoBlockPeople(FormattingUtils.getSmallTextForNumber(getRecentContributorsCount3Months(contributors)), "(3 months)");
-        //addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainFileCount()), "files");
+
+        int recentContributorsCount6Months = getRecentContributorsCount6Months(contributors);
+        int recentContributorsCount3Months = getRecentContributorsCount3Months(contributors);
+        if (recentContributorsCount3Months > 0 || recentContributorsCount6Months > 0) {
+            addSmallInfoBlockPeople(FormattingUtils.getSmallTextForNumber(recentContributorsCount6Months), "(6 months)");
+            addSmallInfoBlockPeople(FormattingUtils.getSmallTextForNumber(recentContributorsCount3Months), "(3 months)");
+        }
+
         landscapeReport.endDiv();
         landscapeReport.addLineBreak();
 
+        addCustomTags(configuration);
+    }
+
+    private void addCustomTags(LandscapeConfiguration configuration) {
+        if (configuration.getTags().getGroups().size() > 0) {
+            landscapeReport.startDiv("margin-bottom: 20px");
+            configuration.getTags().getGroups().forEach(tagGroup -> {
+                landscapeReport.startDiv("display: inline-block; border: 1px solid lightgrey; padding: 6px; border-radius: 6px; width: calc(100% - 16px)");
+                landscapeReport.addParagraph(tagGroup.getName(), "font-size: 70%; color: grey;");
+                tagGroup.getTags().forEach(tag -> {
+                    String logoSrc = configuration.getTags().getLogosRoot() + tag.getIcon();
+                    landscapeReport.startSpan("position: relative;");
+                    landscapeReport.addHtmlContent("<img src='" + logoSrc + "' style='width: 80px; height: 60px; object-fit: contain;'>");
+                    if (StringUtils.isNotBlank(tag.getMark())) {
+                        landscapeReport.addHtmlContent("<span style='border: 1px solid lightgrey; font-size: 80%; background-color: yellow; position: absolute; top: -44px; left: 0px;'>&nbsp;" + tag.getMark() + "&nbsp;</span>");
+                    }
+                    landscapeReport.endSpan();
+                });
+                landscapeReport.endDiv();
+            });
+            landscapeReport.endDiv();
+        }
     }
 
     private int getContributorsCount(List<ContributorProject> contributors) {
@@ -191,14 +228,37 @@ public class LandscapeReportGenerator {
 
     private void addContributors() {
         List<ContributorProject> contributors = landscapeAnalysisResults.getContributors();
+        int contributorsCount = getContributorsCount(contributors);
 
-        int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
+        if (contributorsCount > 0) {
+            int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
+            int totalCommits = contributors.stream().mapToInt(c -> c.getContributor().getCommitsCount()).sum();
 
-        int totalCommits = contributors.stream().mapToInt(c -> c.getContributor().getCommitsCount()).sum();
+            landscapeReport.startSubSection("Contributors (" + contributorsCount + ")",
+                    thresholdCommits > 1 ? thresholdCommits + "+&nbsp;commits" : "");
 
-        landscapeReport.startSubSection("Contributors (" + getContributorsCount(contributors) + ")",
-                thresholdCommits > 1 ? thresholdCommits + "+&nbsp;commits" : "");
+            addContributorLinks();
 
+            if (contributorsCount > 100) {
+                landscapeReport.startShowMoreBlock("show details...");
+            }
+            landscapeReport.startTable("width: 100%");
+            landscapeReport.addTableHeader("", "Contributor", "# commits", "first", "latest", "projects");
+
+            int counter[] = {0};
+
+            contributors.forEach(contributor -> {
+                addContributor(totalCommits, counter, contributor);
+            });
+            landscapeReport.endTable();
+            if (contributorsCount > 100) {
+                landscapeReport.endShowMoreBlock();
+            }
+            landscapeReport.endSection();
+        }
+    }
+
+    private void addContributorLinks() {
         landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_contributors.html");
         landscapeReport.addHtmlContent(" | ");
         landscapeReport.addNewTabLink("tree map", "visuals/tree_map_contributors.html");
@@ -206,47 +266,34 @@ public class LandscapeReportGenerator {
         landscapeReport.addNewTabLink("data", "data/contributors.txt");
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
+    }
 
-        if (getContributorsCount(contributors) > 100) {
-            landscapeReport.startShowMoreBlock("show details...");
-        }
-        landscapeReport.startTable("width: 100%");
-        landscapeReport.addTableHeader("", "Contributor", "# commits", "first", "latest", "projects");
-
-        int counter[] = {0};
-
-        contributors.forEach(contributor -> {
-            landscapeReport.startTableRow(contributor.getContributor().isActive(RECENT_THRESHOLD_DAYS) ? "font-weight: bold;"
-                    : "color: " + (contributor.getContributor().isActive(90) ? "grey" : "lightgrey"));
-            counter[0] += 1;
-            landscapeReport.addTableCell("" + counter[0], "text-align: center; vertical-align: top; padding-top: 13px;");
-            landscapeReport.addTableCell(StringEscapeUtils.escapeHtml4(contributor.getContributor().getDisplayName()), "vertical-align: top; padding-top: 13px;");
-            int contributerCommits = contributor.getContributor().getCommitsCount();
-            double percentage = 100.0 * contributerCommits / totalCommits;
-            landscapeReport.addTableCell(contributerCommits + " (" + FormattingUtils.getFormattedPercentage(percentage) + "%)", "vertical-align: top; padding-top: 13px;");
-            landscapeReport.addTableCell(contributor.getContributor().getFirstCommitDate(), "vertical-align: top; padding-top: 13px;");
-            landscapeReport.addTableCell(contributor.getContributor().getLatestCommitDate(), "vertical-align: top; padding-top: 13px;");
-            StringBuilder projectInfo = new StringBuilder();
-            landscapeReport.startTableCell();
-            int projectsCount = contributor.getProjects().size();
-            landscapeReport.startShowMoreBlock(projectsCount + (projectsCount == 1 ? " project" : " projects"));
-            for (int i = 0; i < projectsCount; i++) {
-                String projectName = contributor.getProjects().get(i).getAnalysisResults().getMetadata().getName();
-                int commits = contributor.getProjectsCommits().get(i);
-                if (projectInfo.length() > 0) {
-                    projectInfo.append("<br/>");
-                }
-                projectInfo.append(projectName + " <span style='color: grey'>(" + commits + (commits == 1 ? " commit" : " commit") + ")</span>");
+    private void addContributor(int totalCommits, int[] counter, ContributorProject contributor) {
+        landscapeReport.startTableRow(contributor.getContributor().isActive(RECENT_THRESHOLD_DAYS) ? "font-weight: bold;"
+                : "color: " + (contributor.getContributor().isActive(90) ? "grey" : "lightgrey"));
+        counter[0] += 1;
+        landscapeReport.addTableCell("" + counter[0], "text-align: center; vertical-align: top; padding-top: 13px;");
+        landscapeReport.addTableCell(StringEscapeUtils.escapeHtml4(contributor.getContributor().getDisplayName()), "vertical-align: top; padding-top: 13px;");
+        int contributerCommits = contributor.getContributor().getCommitsCount();
+        double percentage = 100.0 * contributerCommits / totalCommits;
+        landscapeReport.addTableCell(contributerCommits + " (" + FormattingUtils.getFormattedPercentage(percentage) + "%)", "vertical-align: top; padding-top: 13px;");
+        landscapeReport.addTableCell(contributor.getContributor().getFirstCommitDate(), "vertical-align: top; padding-top: 13px;");
+        landscapeReport.addTableCell(contributor.getContributor().getLatestCommitDate(), "vertical-align: top; padding-top: 13px;");
+        StringBuilder projectInfo = new StringBuilder();
+        landscapeReport.startTableCell();
+        int projectsCount = contributor.getProjects().size();
+        landscapeReport.startShowMoreBlock(projectsCount + (projectsCount == 1 ? " project" : " projects"));
+        for (int i = 0; i < projectsCount; i++) {
+            String projectName = contributor.getProjects().get(i).getAnalysisResults().getMetadata().getName();
+            int commits = contributor.getProjectsCommits().get(i);
+            if (projectInfo.length() > 0) {
+                projectInfo.append("<br/>");
             }
-            landscapeReport.addHtmlContent(projectInfo.toString());
-            landscapeReport.endTableCell();
-            landscapeReport.endTableRow();
-        });
-        landscapeReport.endTable();
-        if (getContributorsCount(contributors) > 100) {
-            landscapeReport.endShowMoreBlock();
+            projectInfo.append(projectName + " <span style='color: grey'>(" + commits + (commits == 1 ? " commit" : " commit") + ")</span>");
         }
-        landscapeReport.endSection();
+        landscapeReport.addHtmlContent(projectInfo.toString());
+        landscapeReport.endTableCell();
+        landscapeReport.endTableRow();
     }
 
     private void addProjectsSection(List<ProjectAnalysisResults> projectsAnalysisResults) {
@@ -337,6 +384,15 @@ public class LandscapeReportGenerator {
         landscapeReport.endTableRow();
     }
 
+    private void addCustomInfoBlock(CustomMetric customMetric) {
+        String subtitle = customMetric.getTitle();
+        if (StringUtils.isNotBlank(customMetric.getSubTitle())) {
+            subtitle += "<br/><span style='color: grey; font-size: 80%'>" + customMetric.getSubTitle() + "</span>";
+        }
+        String color = StringUtils.isNotBlank(customMetric.getColor()) ? customMetric.getColor() : "lightgrey";
+        addInfoBlockWithColor(customMetric.getValue(), subtitle, color);
+    }
+
     private void addInfoBlock(String mainValue, String subtitle, String description) {
         if (StringUtils.isNotBlank(description)) {
             subtitle += "<br/><span style='color: grey; font-size: 80%'>" + description + "</span>";
@@ -362,6 +418,11 @@ public class LandscapeReportGenerator {
         landscapeReport.addHtmlContent("<div style='font-size: 50px; margin-top: 20px'>" + mainValue + "</div>");
         landscapeReport.addHtmlContent("<div style='color: #434343; font-size: 16px'>" + subtitle + "</div>");
         landscapeReport.endDiv();
+    }
+
+    private void addSmallCustomInfoBlockLoc(CustomMetric customMetric) {
+        String color = StringUtils.isNotBlank(customMetric.getColor()) ? customMetric.getColor() : "lightgrey";
+        addSmallInfoBlock(customMetric.getValue(), customMetric.getTitle(), color);
     }
 
     private void addSmallInfoBlockLoc(String value, String subtitle) {

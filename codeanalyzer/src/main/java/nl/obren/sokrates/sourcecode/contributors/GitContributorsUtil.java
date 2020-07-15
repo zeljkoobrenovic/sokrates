@@ -25,7 +25,6 @@ public class GitContributorsUtil {
         try {
             lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            e.printStackTrace();
             return new ContributorsImport();
         }
 

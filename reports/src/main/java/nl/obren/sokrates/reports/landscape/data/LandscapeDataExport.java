@@ -7,6 +7,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProject;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
+import nl.obren.sokrates.sourcecode.landscape.analysis.ProjectAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.StringEscapeUtils;
@@ -39,38 +40,7 @@ public class LandscapeDataExport {
         int thresholdCommits = analysisResults.getConfiguration().getContributorThresholdCommits();
 
         analysisResults.getProjectAnalysisResults().forEach(project -> {
-            CodeAnalysisResults projectAnalysis = project.getAnalysisResults();
-            builder.append(projectAnalysis.getMetadata().getName()).append("\t");
-            AspectAnalysisResults main = projectAnalysis.getMainAspectAnalysisResults();
-
-            List<NumericMetric> linesOfCodePerExtension = main.getLinesOfCodePerExtension();
-            StringBuilder locSummary = new StringBuilder();
-            if (linesOfCodePerExtension.size() > 0) {
-                locSummary.append(linesOfCodePerExtension.get(0).getName().replace("*.", "").trim().toUpperCase());
-            } else {
-                locSummary.append("-");
-            }
-            builder.append(locSummary.toString().replace("> = ", ">")).append("\t");
-            builder.append(main.getLinesOfCode()).append("\t");
-            builder.append(projectAnalysis.getTestAspectAnalysisResults().getLinesOfCode()).append("\t");
-            builder.append(projectAnalysis.getGeneratedAspectAnalysisResults().getLinesOfCode()
-                    + projectAnalysis.getBuildAndDeployAspectAnalysisResults().getLinesOfCode()
-                    + projectAnalysis.getOtherAspectAnalysisResults().getLinesOfCode()).append("\t");
-
-            int projectAgeYears = (int) Math.round(projectAnalysis.getFilesHistoryAnalysisResults().getAgeInDays() / 365.0);
-            builder.append(projectAgeYears).append("\t");
-
-            List<Contributor> contributors = projectAnalysis.getContributorsAnalysisResults().getContributors()
-                    .stream().filter(c -> c.getCommitsCount() >= thresholdCommits).collect(Collectors.toCollection(ArrayList::new));
-
-            int contributorsCount = contributors.size();
-            int recentContributorsCount = (int) contributors.stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count();
-            int rookiesCount = (int) contributors.stream().filter(c -> c.isRookie(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count();
-            builder.append(contributorsCount).append("\t");
-            builder.append(recentContributorsCount).append("\t");
-            builder.append(rookiesCount).append("\t");
-            builder.append(projectAnalysis.getContributorsAnalysisResults().getCommitsThisYear());
-            builder.append("\n");
+            appendProject(builder, thresholdCommits, project);
         });
 
         try {
@@ -78,6 +48,41 @@ public class LandscapeDataExport {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void appendProject(StringBuilder builder, int thresholdCommits, ProjectAnalysisResults project) {
+        CodeAnalysisResults projectAnalysis = project.getAnalysisResults();
+        builder.append(projectAnalysis.getMetadata().getName()).append("\t");
+        AspectAnalysisResults main = projectAnalysis.getMainAspectAnalysisResults();
+
+        List<NumericMetric> linesOfCodePerExtension = main.getLinesOfCodePerExtension();
+        StringBuilder locSummary = new StringBuilder();
+        if (linesOfCodePerExtension.size() > 0) {
+            locSummary.append(linesOfCodePerExtension.get(0).getName().replace("*.", "").trim().toUpperCase());
+        } else {
+            locSummary.append("-");
+        }
+        builder.append(locSummary.toString().replace("> = ", ">")).append("\t");
+        builder.append(main.getLinesOfCode()).append("\t");
+        builder.append(projectAnalysis.getTestAspectAnalysisResults().getLinesOfCode()).append("\t");
+        builder.append(projectAnalysis.getGeneratedAspectAnalysisResults().getLinesOfCode()
+                + projectAnalysis.getBuildAndDeployAspectAnalysisResults().getLinesOfCode()
+                + projectAnalysis.getOtherAspectAnalysisResults().getLinesOfCode()).append("\t");
+
+        int projectAgeYears = (int) Math.round(projectAnalysis.getFilesHistoryAnalysisResults().getAgeInDays() / 365.0);
+        builder.append(projectAgeYears).append("\t");
+
+        List<Contributor> contributors = projectAnalysis.getContributorsAnalysisResults().getContributors()
+                .stream().filter(c -> c.getCommitsCount() >= thresholdCommits).collect(Collectors.toCollection(ArrayList::new));
+
+        int contributorsCount = contributors.size();
+        int recentContributorsCount = (int) contributors.stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count();
+        int rookiesCount = (int) contributors.stream().filter(c -> c.isRookie(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count();
+        builder.append(contributorsCount).append("\t");
+        builder.append(recentContributorsCount).append("\t");
+        builder.append(rookiesCount).append("\t");
+        builder.append(projectAnalysis.getContributorsAnalysisResults().getCommitsThisYear());
+        builder.append("\n");
     }
 
 

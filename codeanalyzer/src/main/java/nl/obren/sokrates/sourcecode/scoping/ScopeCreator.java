@@ -76,6 +76,8 @@ public class ScopeCreator {
 
             concernGroups.get(0).getConcerns().addAll(customScopingConventions.getConcerns());
         }
+
+        codeConfiguration.getContributorsAnalysis().getIgnoreContributors().addAll(customScopingConventions.getIgnoreContributors());
     }
 
     private List<String> getExtensions() {
