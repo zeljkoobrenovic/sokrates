@@ -172,7 +172,6 @@ public class DataExporter {
         int total = contributors.stream().mapToInt(c -> c.getCommitsCount()).sum();
 
         contributors.forEach(contributor -> {
-            content.append(contributor.getName() + "\t");
             content.append(contributor.getEmail() + "\t");
             content.append(contributor.getCommitsCount() + "\t");
             double percentage = 100.0 * contributor.getCommitsCount() / total;

@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ReportFileExporter {
-
     private static String htmlReportsSubFolder = "html";
 
     public static void exportHtml(File folder, String subFolder, RichTextReport report) {
@@ -102,7 +101,7 @@ public class ReportFileExporter {
 
     public static void addContributorsSection(CodeAnalysisResults analysisResults, File sokratesConfigFolder, RichTextReport indexReport) {
         CodeConfiguration codeConfiguration = analysisResults.getCodeConfiguration();
-        ContributorsImport contributorsImport = codeConfiguration.getContributorsAnalysis().getContributors(sokratesConfigFolder);
+        ContributorsImport contributorsImport = codeConfiguration.getFileHistoryAnalysis().getContributors(sokratesConfigFolder);
         List<Contributor> contributors = contributorsImport.getContributors();
         List<ContributionYear> contributorsPerYear = contributorsImport.getContributorsPerYear();
         if (contributors.size() > 0) {
@@ -218,7 +217,7 @@ public class ReportFileExporter {
         int commitsCount = contributor.getCommitsCount();
         double opacity = 0.2 + 0.8 * commitsCount / max;
         double percentage = 100.0 * commitsCount / total;
-        String info = StringEscapeUtils.escapeHtml4(contributor.getDisplayName()
+        String info = StringEscapeUtils.escapeHtml4(contributor.getEmail()
                 + " " + commitsCount
                 + " commits (" + FormattingUtils.getFormattedPercentage(percentage) + "%),"
                 + " between " + contributor.getFirstCommitDate() + " and " + contributor.getLatestCommitDate());

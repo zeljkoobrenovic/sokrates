@@ -47,7 +47,7 @@ public class LandscapeVisualsGenerator {
     private void exportContributors(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {
         List<VisualizationItem> items = new ArrayList<>();
         landscapeAnalysisResults.getContributors().forEach(contributorProject -> {
-            String name = contributorProject.getContributor().getName();
+            String name = contributorProject.getContributor().getEmail();
             items.add(new VisualizationItem(name, contributorProject.getContributor().getCommitsCount()));
         });
         exportVisuals("contributors", items);

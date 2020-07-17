@@ -44,7 +44,6 @@ public class CodeConfiguration {
 
     private TrendAnalysisConfig trendAnalysis = new TrendAnalysisConfig();
     private FileHistoryAnalysisConfig fileHistoryAnalysis = new FileHistoryAnalysisConfig();
-    private ContributorsAnalysisConfig contributorsAnalysis = new ContributorsAnalysisConfig();
 
     private AnalysisConfig analysis = new AnalysisConfig();
 
@@ -508,16 +507,6 @@ public class CodeConfiguration {
     public void setFileHistoryAnalysis(FileHistoryAnalysisConfig fileHistoryAnalysis) {
         if (fileHistoryAnalysis != null) {
             this.fileHistoryAnalysis = fileHistoryAnalysis;
-        }
-    }
-
-    public ContributorsAnalysisConfig getContributorsAnalysis() {
-        return contributorsAnalysis;
-    }
-
-    public void setContributorsAnalysis(ContributorsAnalysisConfig contributorsAnalysis) {
-        if (contributorsAnalysis != null) {
-            this.contributorsAnalysis = contributorsAnalysis;
         }
     }
 

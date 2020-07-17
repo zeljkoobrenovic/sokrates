@@ -43,7 +43,7 @@ public class ContributorsAnalyzer extends Analyzer {
 
     public void analyze() {
         if (codeConfiguration.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesFolder)) {
-            ContributorsImport contributorsImport = codeConfiguration.getContributorsAnalysis().getContributors(sokratesFolder);
+            ContributorsImport contributorsImport = codeConfiguration.getFileHistoryAnalysis().getContributors(sokratesFolder);
             analysisResults.setContributors(contributorsImport.getContributors());
             analysisResults.setContributorsPerYear(contributorsImport.getContributorsPerYear());
 

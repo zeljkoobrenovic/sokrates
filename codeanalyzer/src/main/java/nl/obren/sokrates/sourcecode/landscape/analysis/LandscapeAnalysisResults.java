@@ -156,7 +156,7 @@ public class LandscapeAnalysisResults {
         getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
             ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
             contributorsAnalysisResults.getContributors().forEach(contributor -> {
-                String contributorId = contributor.getId();
+                String contributorId = contributor.getEmail();
                 int projectCommits = contributor.getCommitsCount();
 
                 if (map.containsKey(contributorId)) {
@@ -172,7 +172,6 @@ public class LandscapeAnalysisResults {
                 } else {
                     Contributor newContributor = new Contributor();
 
-                    newContributor.setName(contributor.getName());
                     newContributor.setEmail(contributor.getEmail());
                     newContributor.setCommitsCount(projectCommits);
                     newContributor.setFirstCommitDate(contributor.getFirstCommitDate());

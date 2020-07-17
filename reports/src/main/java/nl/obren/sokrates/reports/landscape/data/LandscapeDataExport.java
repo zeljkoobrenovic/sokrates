@@ -94,7 +94,7 @@ public class LandscapeDataExport {
         List<ContributorProject> contributors = analysisResults.getContributors();
 
         contributors.forEach(contributor -> {
-            builder.append(contributor.getContributor().getDisplayName()).append("\t");
+            builder.append(contributor.getContributor().getEmail()).append("\t");
             int contributerCommits = contributor.getContributor().getCommitsCount();
             builder.append(contributerCommits).append("\t");
             builder.append(contributor.getContributor().getFirstCommitDate()).append("\t");

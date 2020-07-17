@@ -13,9 +13,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributionYear;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
-import nl.obren.sokrates.sourcecode.landscape.CustomMetric;
-import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
-import nl.obren.sokrates.sourcecode.landscape.SubLandscapeLink;
+import nl.obren.sokrates.sourcecode.landscape.*;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProject;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ProjectAnalysisResults;
@@ -116,7 +114,7 @@ public class LandscapeReportGenerator {
         addInfoBlock(FormattingUtils.getSmallTextForNumber(getProjects().size()), "projects",
                 thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : "");
         int extensionsCount = getLinesOfCodePerExtension().size();
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(extensionsCount), extensionsCount == 1 ? "extension" : "extensions", "");
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(extensionsCount), extensionsCount == 1 ? "file extension" : "file extensions", "");
         addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "lines of code (main)", "");
         int commitsCount = landscapeAnalysisResults.getCommitsCount();
         if (commitsCount > 0) {
@@ -161,21 +159,59 @@ public class LandscapeReportGenerator {
         if (configuration.getTags().getGroups().size() > 0) {
             landscapeReport.startDiv("margin-bottom: 20px");
             configuration.getTags().getGroups().forEach(tagGroup -> {
-                landscapeReport.startDiv("display: inline-block; border: 1px solid lightgrey; padding: 6px; border-radius: 6px; width: calc(100% - 16px)");
-                landscapeReport.addParagraph(tagGroup.getName(), "font-size: 70%; color: grey;");
-                tagGroup.getTags().forEach(tag -> {
-                    String logoSrc = configuration.getTags().getLogosRoot() + tag.getIcon();
-                    landscapeReport.startSpan("position: relative;");
-                    landscapeReport.addHtmlContent("<img src='" + logoSrc + "' style='width: 80px; height: 60px; object-fit: contain;'>");
-                    if (StringUtils.isNotBlank(tag.getMark())) {
-                        landscapeReport.addHtmlContent("<span style='border: 1px solid lightgrey; font-size: 80%; background-color: yellow; position: absolute; top: -44px; left: 0px;'>&nbsp;" + tag.getMark() + "&nbsp;</span>");
-                    }
-                    landscapeReport.endSpan();
-                });
-                landscapeReport.endDiv();
+                renderTagGroup(configuration, tagGroup);
             });
             landscapeReport.endDiv();
         }
+    }
+
+    private void renderTagGroup(LandscapeConfiguration configuration, CustomTagGroup tagGroup) {
+        if (anyTagsPresent(tagGroup)) {
+            landscapeReport.startDiv("display: inline-block; border: 1px solid lightgrey; padding: 6px; border-radius: 6px;");
+            landscapeReport.addParagraph(tagGroup.getName(), "font-size: 70%; color: grey;");
+            tagGroup.getTags().forEach(tag -> {
+                renderTag(configuration, tag);
+            });
+            tagGroup.getSubGroups().forEach(subGroup -> {
+                renderTagGroup(configuration, subGroup);
+            });
+            landscapeReport.endDiv();
+        }
+    }
+
+    private boolean anyTagsPresent(CustomTagGroup tagGroup) {
+        if (tagGroup.getTags().size() > 0) {
+            return true;
+        }
+
+        for (CustomTagGroup subGroup : tagGroup.getSubGroups()) {
+            if (anyTagsPresent(subGroup)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void renderTag(LandscapeConfiguration configuration, CustomTag tag) {
+        String logoSrc = configuration.getTags().getLogosRoot() + tag.getIcon();
+        landscapeReport.startSpan("position: relative;");
+        String imageStyle = "width: 80px; height: 60px; object-fit: contain;";
+        String title = tag.getTitle();
+        if (StringUtils.isNotBlank(tag.getDescription())) {
+            title += "\n\n" + tag.getDescription();
+        }
+        if (StringUtils.isNotBlank(tag.getLink())) {
+            landscapeReport.addHtmlContent("<a target='_blank' href='" + tag.getLink() + "'>");
+        }
+        landscapeReport.addHtmlContent("<img src='" + logoSrc + "' title='" + title + "' style='" + imageStyle + "'>");
+        if (StringUtils.isNotBlank(tag.getMark())) {
+            landscapeReport.addHtmlContent("<span style='border: 1px solid lightgrey; font-size: 80%; background-color: yellow; position: absolute; top: -44px; left: 0px;'>&nbsp;" + tag.getMark() + "&nbsp;</span>");
+        }
+        if (StringUtils.isNotBlank(tag.getLink())) {
+            landscapeReport.addHtmlContent("</a>");
+        }
+        landscapeReport.endSpan();
     }
 
     private int getContributorsCount(List<ContributorProject> contributors) {
@@ -202,7 +238,7 @@ public class LandscapeReportGenerator {
         int threshold = landscapeAnalysisResults.getConfiguration().getExtensionThresholdLoc();
 
         List<NumericMetric> linesOfCodePerExtension = getLinesOfCodePerExtension();
-        landscapeReport.startSubSection("Extensions in Main Code (" + linesOfCodePerExtension.size() + ")",
+        landscapeReport.startSubSection("File Extensions in Main Code (" + linesOfCodePerExtension.size() + ")",
                 threshold >= 1 ? threshold + "+ lines of code" : "");
         landscapeReport.startDiv("");
         landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_extensions.html");
@@ -273,7 +309,7 @@ public class LandscapeReportGenerator {
                 : "color: " + (contributor.getContributor().isActive(90) ? "grey" : "lightgrey"));
         counter[0] += 1;
         landscapeReport.addTableCell("" + counter[0], "text-align: center; vertical-align: top; padding-top: 13px;");
-        landscapeReport.addTableCell(StringEscapeUtils.escapeHtml4(contributor.getContributor().getDisplayName()), "vertical-align: top; padding-top: 13px;");
+        landscapeReport.addTableCell(StringEscapeUtils.escapeHtml4(contributor.getContributor().getEmail()), "vertical-align: top; padding-top: 13px;");
         int contributerCommits = contributor.getContributor().getCommitsCount();
         double percentage = 100.0 * contributerCommits / totalCommits;
         landscapeReport.addTableCell(contributerCommits + " (" + FormattingUtils.getFormattedPercentage(percentage) + "%)", "vertical-align: top; padding-top: 13px;");
