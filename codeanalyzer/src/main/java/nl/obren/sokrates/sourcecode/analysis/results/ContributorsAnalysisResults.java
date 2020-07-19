@@ -3,6 +3,7 @@ package nl.obren.sokrates.sourcecode.analysis.results;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.contributors.ContributionYear;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
+import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -12,6 +13,7 @@ public class ContributorsAnalysisResults {
     private List<Contributor> contributors = new ArrayList<>();
 
     private List<ContributionYear> contributorsPerYear = new ArrayList<>();
+    private List<CommitsPerExtension> commitsPerExtensions = new ArrayList<>();
 
     public List<Contributor> getContributors() {
         return contributors;
@@ -27,6 +29,14 @@ public class ContributorsAnalysisResults {
 
     public void setContributorsPerYear(List<ContributionYear> contributorsPerYear) {
         this.contributorsPerYear = contributorsPerYear;
+    }
+
+    public List<CommitsPerExtension> getCommitsPerExtensions() {
+        return commitsPerExtensions;
+    }
+
+    public void setCommitsPerExtensions(List<CommitsPerExtension> commitsPerExtensions) {
+        this.commitsPerExtensions = commitsPerExtensions;
     }
 
     @JsonIgnore

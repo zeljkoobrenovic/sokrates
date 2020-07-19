@@ -108,7 +108,7 @@ public class ReportFileExporter {
             indexReport.startSection("Contributors (" + contributors.size() + ")", "");
             addContributors(indexReport, contributors);
             addContributorsPerYear(indexReport, contributorsPerYear);
-            indexReport.addNewTabLink("Contributor details...", "../data/text/contributors.txt");
+            indexReport.addNewTabLink("Contributors' details...", "../data/text/contributors.txt");
             indexReport.endSection();
         }
     }

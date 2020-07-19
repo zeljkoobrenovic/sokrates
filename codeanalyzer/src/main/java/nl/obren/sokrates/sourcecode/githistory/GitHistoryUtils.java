@@ -5,14 +5,13 @@ package nl.obren.sokrates.sourcecode.githistory;
  * git ls-files -z | xargs -0 -n1 -I{} -- git log --date=short --format="%ad %ae %H {}" {} > git-history.txt
  */
 
-import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class GitHistoryUtils {
     public static String printContributorsCommand() {

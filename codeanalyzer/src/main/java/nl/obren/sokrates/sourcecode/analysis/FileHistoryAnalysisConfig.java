@@ -12,6 +12,7 @@ import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.contributors.GitContributorsUtil;
 import nl.obren.sokrates.sourcecode.filehistory.GitHistoryUtil;
+import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -70,6 +71,11 @@ public class FileHistoryAnalysisConfig {
         List<Contributor> contributors = contributorsImport.getContributors().stream().filter(c -> !shouldIgnore(c)).collect(Collectors.toList());
         contributorsImport.setContributors(contributors);
         return contributorsImport;
+    }
+
+    @JsonIgnore
+    public List<CommitsPerExtension> getCommitsPerExtension(File sokratesConfigFolder) {
+        return GitContributorsUtil.getCommitsPerExtension(getContributorsFile(sokratesConfigFolder));
     }
 
     private boolean shouldIgnore(Contributor contributor) {

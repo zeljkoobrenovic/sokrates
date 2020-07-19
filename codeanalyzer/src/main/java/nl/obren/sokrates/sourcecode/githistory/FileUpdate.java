@@ -1,6 +1,7 @@
 package nl.obren.sokrates.sourcecode.githistory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.apache.commons.io.FilenameUtils;
 
 public class FileUpdate {
     private String date = "";
@@ -45,5 +46,9 @@ public class FileUpdate {
 
     public void setCommitId(String commitId) {
         this.commitId = commitId;
+    }
+
+    public String getExtension() {
+        return FilenameUtils.getExtension(getPath());
     }
 }

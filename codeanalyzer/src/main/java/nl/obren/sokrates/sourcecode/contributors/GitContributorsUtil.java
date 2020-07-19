@@ -5,7 +5,8 @@
 package nl.obren.sokrates.sourcecode.contributors;
 
 import nl.obren.sokrates.sourcecode.githistory.AuthorCommit;
-import nl.obren.sokrates.sourcecode.githistory.FileUpdate;
+import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
+import nl.obren.sokrates.sourcecode.githistory.GitHistoryPerExtensionUtils;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 
 import java.io.File;
@@ -21,6 +22,10 @@ public class GitContributorsUtil {
         contributorsImport.setContributorsPerYear(contributorsPerYear);
 
         return contributorsImport;
+    }
+
+    public static List<CommitsPerExtension> getCommitsPerExtension(File file) {
+        return new GitHistoryPerExtensionUtils().getCommitsPerExtensions(file);
     }
 
     public static List<Contributor> getContributors(List<AuthorCommit> authorCommits) {

@@ -13,6 +13,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributionYear;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
+import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.landscape.*;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProject;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
@@ -74,6 +75,7 @@ public class LandscapeReportGenerator {
         addProjectsSection(getProjects());
 
         addContributors();
+        addContributorsPerExtension();
     }
 
     private List<ProjectAnalysisResults> getProjects() {
@@ -294,6 +296,36 @@ public class LandscapeReportGenerator {
         }
     }
 
+    private void addContributorsPerExtension() {
+        int commitsCount = landscapeAnalysisResults.getCommitsCount();
+        if (commitsCount > 0) {
+            List<CommitsPerExtension> perExtension = landscapeAnalysisResults.getContributorsPerExtension();
+
+            if (perExtension.size() > 0) {
+                landscapeReport.startSubSection("Commits & Extensions (" + perExtension.size() + ")", "");
+
+                if (perExtension.size() > 100) {
+                    landscapeReport.startShowMoreBlock("show details...");
+                }
+                landscapeReport.startTable("width: 100%");
+                landscapeReport.addTableHeader("Extension",
+                        "# contributors<br>30 days", "# commits<br>30 days", "# files<br>30 days",
+                        "# contributors<br>90 days", "# commits<br>90 days", "# files<br>90 days",
+                        "# contributors", "# commits", "# files");
+
+                perExtension.forEach(commitsPerExtension -> {
+                    addCommitExtension(commitsPerExtension);
+                });
+                landscapeReport.endTable();
+                if (perExtension.size() > 100) {
+                    landscapeReport.endShowMoreBlock();
+                }
+
+                landscapeReport.endSection();
+            }
+        }
+    }
+
     private void addContributorLinks() {
         landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_contributors.html");
         landscapeReport.addHtmlContent(" | ");
@@ -330,6 +362,23 @@ public class LandscapeReportGenerator {
             projectInfo.append(projectName + " <span style='color: grey'>(" + commits + (commits == 1 ? " commit" : " commit") + ")</span>");
         }
         landscapeReport.addHtmlContent(projectInfo.toString());
+        landscapeReport.endTableCell();
+        landscapeReport.endTableRow();
+    }
+
+    private void addCommitExtension(CommitsPerExtension commitsPerExtension) {
+        landscapeReport.startTableRow(commitsPerExtension.getCommitters30Days().size() > 0 ? "font-weight: bold;"
+                : "color: " + (commitsPerExtension.getCommitters90Days().size() > 0 ? "grey" : "lightgrey"));
+        landscapeReport.addTableCell("" + commitsPerExtension.getExtension(), "text-align: center;");
+        landscapeReport.addTableCell("" + commitsPerExtension.getCommitters30Days().size(), "text-align: center;");
+        landscapeReport.addTableCell("" + commitsPerExtension.getCommitsCount30Days(), "text-align: center;");
+        landscapeReport.addTableCell("" + commitsPerExtension.getFilesCount30Days(), "text-align: center;");
+        landscapeReport.addTableCell("" + commitsPerExtension.getCommitters90Days().size(), "text-align: center;");
+        landscapeReport.addTableCell("" + commitsPerExtension.getFilesCount90Days(), "text-align: center;");
+        landscapeReport.addTableCell("" + commitsPerExtension.getCommitsCount90Days(), "text-align: center;");
+        landscapeReport.addTableCell("" + commitsPerExtension.getCommitters().size(), "text-align: center;");
+        landscapeReport.addTableCell("" + commitsPerExtension.getCommitsCount(), "text-align: center;");
+        landscapeReport.addTableCell("" + commitsPerExtension.getFilesCount(), "text-align: center;");
         landscapeReport.endTableCell();
         landscapeReport.endTableRow();
     }

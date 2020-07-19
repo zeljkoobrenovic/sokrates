@@ -10,6 +10,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributionYear;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
+import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 
@@ -32,6 +33,10 @@ public class LandscapeAnalysisResults {
         return projectAnalysisResults;
     }
 
+    public void setProjectAnalysisResults(List<ProjectAnalysisResults> projectAnalysisResults) {
+        this.projectAnalysisResults = projectAnalysisResults;
+    }
+
     @JsonIgnore
     public List<ProjectAnalysisResults> getFilteredProjectAnalysisResults() {
         int thresholdLoc = configuration.getProjectThresholdLocMain();
@@ -45,10 +50,6 @@ public class LandscapeAnalysisResults {
                             && (contributorsCount == 0 || contributorsCount >= thresholdContributors);
                 })
                 .collect(Collectors.toList());
-    }
-
-    public void setProjectAnalysisResults(List<ProjectAnalysisResults> projectAnalysisResults) {
-        this.projectAnalysisResults = projectAnalysisResults;
     }
 
     @JsonIgnore
@@ -141,11 +142,76 @@ public class LandscapeAnalysisResults {
     }
 
     @JsonIgnore
+    public List<String> getAllExtension() {
+        List<String> extensions = new ArrayList<>();
+        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
+            projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults().getCommitsPerExtensions().forEach(perExtension -> {
+                String extension = perExtension.getExtension();
+                if (!extensions.contains(extension)) {
+                    extensions.add(extension);
+                }
+            });
+        });
+
+        return extensions;
+    }
+
+    @JsonIgnore
     public List<ContributorProject> getContributors() {
         int thresholdCommits = configuration.getContributorThresholdCommits();
         return getAllContributors().stream()
                 .filter(c -> c.getContributor().getCommitsCount() >= thresholdCommits)
                 .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    @JsonIgnore
+    public List<CommitsPerExtension> getContributorsPerExtension() {
+        int thresholdCommits = configuration.getContributorThresholdCommits();
+        Map<String, CommitsPerExtension> commitsPerExtensions = new HashMap<>();
+
+        getAllExtension().forEach(extension -> {
+            commitsPerExtensions.put(extension, new CommitsPerExtension(extension));
+        });
+
+        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
+            List<CommitsPerExtension> projectData = projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults().getCommitsPerExtensions();
+
+            projectData.forEach(projectExtData -> {
+                String extension = projectExtData.getExtension();
+                if (commitsPerExtensions.containsKey(extension)) {
+                    CommitsPerExtension commitsPerExtension = commitsPerExtensions.get(extension);
+                    commitsPerExtension.setCommitsCount(commitsPerExtension.getCommitsCount() + projectExtData.getCommitsCount());
+
+                    commitsPerExtension.setCommitsCount30Days(commitsPerExtension.getCommitsCount30Days() + projectExtData.getCommitsCount30Days());
+                    commitsPerExtension.setCommitsCount90Days(commitsPerExtension.getCommitsCount90Days() + projectExtData.getCommitsCount90Days());
+
+                    commitsPerExtension.setFilesCount(commitsPerExtension.getFilesCount() + projectExtData.getFilesCount());
+                    commitsPerExtension.setFilesCount30Days(commitsPerExtension.getFilesCount30Days() + projectExtData.getFilesCount30Days());
+                    commitsPerExtension.setFilesCount90Days(commitsPerExtension.getFilesCount90Days() + projectExtData.getFilesCount90Days());
+
+                    projectExtData.getCommitters().forEach(email -> {
+                        if (!commitsPerExtension.getCommitters().contains(email)) {
+                            commitsPerExtension.getCommitters().add(email);
+                        }
+                    });
+                    projectExtData.getCommitters30Days().forEach(email -> {
+                        if (!commitsPerExtension.getCommitters30Days().contains(email)) {
+                            commitsPerExtension.getCommitters30Days().add(email);
+                        }
+                    });
+                    projectExtData.getCommitters90Days().forEach(email -> {
+                        if (!commitsPerExtension.getCommitters90Days().contains(email)) {
+                            commitsPerExtension.getCommitters90Days().add(email);
+                        }
+                    });
+                }
+            });
+        });
+
+        ArrayList<CommitsPerExtension> list = new ArrayList<>(commitsPerExtensions.values());
+        Collections.sort(list, (a, b) -> b.getCommitters30Days().size() - a.getCommitters30Days().size());
+
+        return list;
     }
 
     @JsonIgnore
@@ -158,10 +224,19 @@ public class LandscapeAnalysisResults {
             contributorsAnalysisResults.getContributors().forEach(contributor -> {
                 String contributorId = contributor.getEmail();
                 int projectCommits = contributor.getCommitsCount();
+                int projectCommits30Days = contributor.getCommitsCount30Days();
+                int projectCommits90Days = contributor.getCommitsCount90Days();
 
                 if (map.containsKey(contributorId)) {
                     ContributorProject existingContributor = map.get(contributorId);
                     existingContributor.getContributor().setCommitsCount(existingContributor.getContributor().getCommitsCount() + projectCommits);
+
+                    existingContributor.getContributor().setCommitsCount30Days(
+                            existingContributor.getContributor().getCommitsCount30Days() + projectCommits30Days);
+
+                    existingContributor.getContributor().setCommitsCount90Days(
+                            existingContributor.getContributor().getCommitsCount30Days() + projectCommits90Days);
+
                     existingContributor.addProject(projectAnalysisResults, projectCommits);
                     if (contributor.getFirstCommitDate().compareTo(existingContributor.getContributor().getFirstCommitDate()) < 0) {
                         existingContributor.getContributor().setFirstCommitDate(contributor.getFirstCommitDate());
@@ -174,6 +249,8 @@ public class LandscapeAnalysisResults {
 
                     newContributor.setEmail(contributor.getEmail());
                     newContributor.setCommitsCount(projectCommits);
+                    newContributor.setCommitsCount30Days(projectCommits30Days);
+                    newContributor.setCommitsCount90Days(projectCommits90Days);
                     newContributor.setFirstCommitDate(contributor.getFirstCommitDate());
                     newContributor.setLatestCommitDate(contributor.getLatestCommitDate());
 
@@ -222,6 +299,6 @@ public class LandscapeAnalysisResults {
     public int getCommitsCount() {
         return this.projectAnalysisResults.stream()
                 .mapToInt(p -> p.getAnalysisResults()
-                .getContributorsAnalysisResults().getCommitsCount()).sum();
+                        .getContributorsAnalysisResults().getCommitsCount()).sum();
     }
 }
