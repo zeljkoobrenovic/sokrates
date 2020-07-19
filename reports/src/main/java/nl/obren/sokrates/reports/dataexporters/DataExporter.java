@@ -171,9 +171,15 @@ public class DataExporter {
         List<Contributor> contributors = analysisResults.getContributorsAnalysisResults().getContributors();
         int total = contributors.stream().mapToInt(c -> c.getCommitsCount()).sum();
 
+        content.append("Contributor\t#commits\t#commits (30 days)\t#commits (90 days)\tfirst commit\tlast commit\n");
+
         contributors.forEach(contributor -> {
             content.append(contributor.getEmail() + "\t");
             content.append(contributor.getCommitsCount() + "\t");
+            content.append(contributor.getCommitsCount30Days() + "\t");
+            content.append(contributor.getCommitsCount90Days() + "\t");
+            content.append(contributor.getFirstCommitDate() + "\t");
+            content.append(contributor.getLatestCommitDate() + "\t");
             double percentage = 100.0 * contributor.getCommitsCount() / total;
             content.append(FormattingUtils.getFormattedPercentage(percentage) + "%\n");
         });

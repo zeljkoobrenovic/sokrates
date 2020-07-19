@@ -279,7 +279,7 @@ public class LandscapeReportGenerator {
                 landscapeReport.startShowMoreBlock("show details...");
             }
             landscapeReport.startTable("width: 100%");
-            landscapeReport.addTableHeader("", "Contributor", "# commits", "first", "latest", "projects");
+            landscapeReport.addTableHeader("", "Contributor", "# commits", "# commits<br>30 days", "# commits<br>90 days", "first", "latest", "projects");
 
             int counter[] = {0};
 
@@ -313,6 +313,8 @@ public class LandscapeReportGenerator {
         int contributerCommits = contributor.getContributor().getCommitsCount();
         double percentage = 100.0 * contributerCommits / totalCommits;
         landscapeReport.addTableCell(contributerCommits + " (" + FormattingUtils.getFormattedPercentage(percentage) + "%)", "vertical-align: top; padding-top: 13px;");
+        landscapeReport.addTableCell(FormattingUtils.getFormattedCount(contributor.getContributor().getCommitsCount30Days()), "vertical-align: top; padding-top: 13px;");
+        landscapeReport.addTableCell(FormattingUtils.getFormattedCount(contributor.getContributor().getCommitsCount90Days()), "vertical-align: top; padding-top: 13px;");
         landscapeReport.addTableCell(contributor.getContributor().getFirstCommitDate(), "vertical-align: top; padding-top: 13px;");
         landscapeReport.addTableCell(contributor.getContributor().getLatestCommitDate(), "vertical-align: top; padding-top: 13px;");
         StringBuilder projectInfo = new StringBuilder();
