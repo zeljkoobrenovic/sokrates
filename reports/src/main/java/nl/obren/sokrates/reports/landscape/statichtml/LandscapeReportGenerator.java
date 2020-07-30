@@ -302,7 +302,7 @@ public class LandscapeReportGenerator {
             List<CommitsPerExtension> perExtension = landscapeAnalysisResults.getContributorsPerExtension();
 
             if (perExtension.size() > 0) {
-                landscapeReport.startSubSection("Commits & Extensions (" + perExtension.size() + ")", "");
+                landscapeReport.startSubSection("Commits & File Extensions (" + perExtension.size() + ")", "");
 
                 if (perExtension.size() > 100) {
                     landscapeReport.startShowMoreBlock("show details...");

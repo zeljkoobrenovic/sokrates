@@ -39,7 +39,7 @@ public class GitHistoryUtils {
         try {
             lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
             return updates;
         }
 

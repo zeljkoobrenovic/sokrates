@@ -38,12 +38,16 @@
 
     function setValue(content) {
         var currentLine = editor.getSelectionRange().start.row;
-        var formattedContent = JSON.stringify(JSON.parse(content), null, "    ");
+        var formattedContent = JSON.stringify(JSON.parse(content), null, "  ");
         editor.setValue(formattedContent);
         editor.session.selection.clearSelection();
         editor.scrollToRow(currentLine == 0 ? 0 : currentLine - 1);
         editor.selection.moveCursorToPosition({row: currentLine, column: 0});
+        editor.getSession().foldAll(1, 0, 0);
+        editor.getSession().unfold(currentLine, true);
         editor.selection.selectLine();
+        editor.scrollToLine(currentLine + 2, true, true, function () {});
+        editor.gotoLine(currentLine + 2, 0, true);
     }
 
     function setTextValue(content) {
@@ -96,7 +100,6 @@
     editor.getSession().setMode("ace/mode/json");
     //editor.setTheme("ace/theme/clouds");
     editor.setOption("wrap", true);
-
 </script>
 </body>
 </html>
