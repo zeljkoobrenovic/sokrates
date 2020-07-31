@@ -33,7 +33,7 @@ public class CSharpHeuristicDependenciesExtractor extends HeuristicDependenciesE
                 String namespaceName = content.substring(startIndexOfNamespaceName + NAMESPACE_PREFIX.length(), endIndexOfNamespaceName).trim();
                 DependencyAnchor dependencyAnchor = new DependencyAnchor(namespaceName);
                 dependencyAnchor.setCodeFragment(content.substring(startIndexOfNamespaceName, endIndexOfNamespaceName + 1).trim());
-                dependencyAnchor.getDependencyPatterns().add("[ ]*using* " + namespaceName.replace(".", "[.]") + "([.][A-Z].*|[.][*]|);");
+                dependencyAnchor.getDependencyPatterns().add("[ ]*using[ ]+" + namespaceName.replace(".", "[.]") + "([.][*]|);");
                 dependencyAnchor.getSourceFiles().add(sourceFile);
                 anchors.add(dependencyAnchor);
             }
