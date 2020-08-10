@@ -159,9 +159,18 @@ public class LandscapeAnalysisResults {
     @JsonIgnore
     public List<ContributorProject> getContributors() {
         int thresholdCommits = configuration.getContributorThresholdCommits();
-        return getAllContributors().stream()
+        List<ContributorProject> contributorProjects = getAllContributors().stream()
                 .filter(c -> c.getContributor().getCommitsCount() >= thresholdCommits)
                 .collect(Collectors.toCollection(ArrayList::new));
+
+        if (configuration.isAnonymizeContributors()) {
+            int counter[] = {1};
+            contributorProjects.forEach(contributorProject -> {
+                contributorProject.getContributor().setEmail("Contributor " + counter[0]);
+                counter[0] += 1;
+            });
+        }
+        return contributorProjects;
     }
 
     @JsonIgnore

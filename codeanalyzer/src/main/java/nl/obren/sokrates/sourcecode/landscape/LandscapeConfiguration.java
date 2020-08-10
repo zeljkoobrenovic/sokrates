@@ -19,6 +19,7 @@ public class LandscapeConfiguration {
     private int projectThresholdLocMain = 0;
     private int projectThresholdContributors = 2;
     private int contributorThresholdCommits = 2;
+    private boolean anonymizeContributors = true;
 
     private List<CustomMetric> customMetrics = new ArrayList<>();
     private List<CustomMetric> customMetricsSmall = new ArrayList<>();
@@ -129,5 +130,13 @@ public class LandscapeConfiguration {
 
     public void setTags(CustomTagsConfig tags) {
         this.tags = tags;
+    }
+
+    public boolean isAnonymizeContributors() {
+        return anonymizeContributors;
+    }
+
+    public void setAnonymizeContributors(boolean anonymizeContributors) {
+        this.anonymizeContributors = anonymizeContributors;
     }
 }
