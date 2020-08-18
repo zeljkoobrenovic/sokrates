@@ -354,6 +354,14 @@ public class RichTextReport {
         this.addHtmlContent("<a target='_blank' href='" + href + "'>" + label + "</a>");
     }
 
+    public void startNewTabLink(String href, String style) {
+        this.addHtmlContent("<a target='_blank' href='" + href + "' style='" + style + "'>");
+    }
+
+    public void endNewTabLink() {
+        this.addHtmlContent("</a>");
+    }
+
     public void setReportsFolder(File reportsFolder) {
         this.reportsFolder = reportsFolder;
     }

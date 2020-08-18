@@ -5,6 +5,7 @@ public class CustomMetric {
     private String subTitle = "";
     private String value = "";
     private String color = "";
+    private String link = "";
 
     public String getTitle() {
         return title;
@@ -36,5 +37,13 @@ public class CustomMetric {
 
     public void setColor(String color) {
         this.color = color;
+    }
+
+    public String getLink() {
+        return link;
+    }
+
+    public void setLink(String link) {
+        this.link = link;
     }
 }

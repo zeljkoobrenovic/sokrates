@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class LandscapeReportGenerator {
-    public static final int RECENT_THRESHOLD_DAYS = 30;
+    public static final int RECENT_THRESHOLD_DAYS = 40;
     private static final Log LOG = LogFactory.getLog(LandscapeReportGenerator.class);
     private RichTextReport landscapeReport = new RichTextReport("Landscape Report", "index.html");
     private LandscapeAnalysisResults landscapeAnalysisResults;
@@ -139,16 +139,21 @@ public class LandscapeReportGenerator {
             configuration.getCustomMetrics().forEach(customMetric -> addCustomInfoBlock(customMetric));
             landscapeReport.addLineBreak();
         }
-        addSmallInfoBlockLoc(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getTestLoc()), "(test)");
+        addSmallInfoBlockLoc(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getTestLoc()), "LOC (test)", null);
         addSmallInfoBlockLoc(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getGeneratedLoc()
                 + landscapeAnalysisResults.getBuildAndDeploymentLoc()
-                + landscapeAnalysisResults.getOtherLoc()), "(other)");
+                + landscapeAnalysisResults.getOtherLoc()), "LOC (other)", null);
 
         int recentContributorsCount6Months = getRecentContributorsCount6Months(contributors);
         int recentContributorsCount3Months = getRecentContributorsCount3Months(contributors);
         if (recentContributorsCount3Months > 0 || recentContributorsCount6Months > 0) {
-            addSmallInfoBlockPeople(FormattingUtils.getSmallTextForNumber(recentContributorsCount6Months), "(6 months)");
-            addSmallInfoBlockPeople(FormattingUtils.getSmallTextForNumber(recentContributorsCount3Months), "(3 months)");
+            addSmallInfoBlockPeople(FormattingUtils.getSmallTextForNumber(recentContributorsCount6Months), "contributors (6 months)", null);
+            addSmallInfoBlockPeople(FormattingUtils.getSmallTextForNumber(recentContributorsCount3Months), "contributors (3 months)", null);
+        }
+        if (configuration.getCustomMetricsSmall().size() > 0) {
+            configuration.getCustomMetricsSmall().forEach(customMetric -> {
+                addSmallInfoBlock(customMetric.getValue(), customMetric.getTitle(), customMetric.getColor(), customMetric.getLink());
+            });
         }
 
         landscapeReport.endDiv();
@@ -251,7 +256,8 @@ public class LandscapeReportGenerator {
         landscapeReport.endDiv();
         landscapeReport.startDiv("");
         linesOfCodePerExtension.forEach(extension -> {
-            addSmallInfoBlockLoc(FormattingUtils.getSmallTextForNumber(extension.getValue().intValue()), extension.getName().replace("*.", ""));
+            String smallTextForNumber = FormattingUtils.getSmallTextForNumber(extension.getValue().intValue());
+            addSmallInfoBlockLoc(smallTextForNumber, extension.getName().replace("*.", ""), null);
         });
         landscapeReport.endDiv();
         landscapeReport.endSection();
@@ -507,29 +513,30 @@ public class LandscapeReportGenerator {
         landscapeReport.endDiv();
     }
 
-    private void addSmallCustomInfoBlockLoc(CustomMetric customMetric) {
-        String color = StringUtils.isNotBlank(customMetric.getColor()) ? customMetric.getColor() : "lightgrey";
-        addSmallInfoBlock(customMetric.getValue(), customMetric.getTitle(), color);
+    private void addSmallInfoBlockLoc(String value, String subtitle, String link) {
+        addSmallInfoBlock(value, subtitle, "skyblue", link);
     }
 
-    private void addSmallInfoBlockLoc(String value, String subtitle) {
-        addSmallInfoBlock(value, subtitle, "skyblue");
+    private void addSmallInfoBlockPeople(String value, String subtitle, String link) {
+        addSmallInfoBlock(value, subtitle, "lavender", link);
     }
 
-    private void addSmallInfoBlockPeople(String value, String subtitle) {
-        addSmallInfoBlock(value, subtitle, "lavender");
-    }
-
-    private void addSmallInfoBlock(String value, String subtitle, String color) {
+    private void addSmallInfoBlock(String value, String subtitle, String color, String link) {
         String style = "border-radius: 8px;";
 
         style += "margin: 4px 4px 4px 0px;";
-        style += "display: inline-block; width: 80px; height: 64px;";
+        style += "display: inline-block; width: 80px; height: 76px;";
         style += "background-color: " + color + "; text-align: center; vertical-align: middle; margin-bottom: 16px;";
 
         landscapeReport.startDiv(style);
-        landscapeReport.addHtmlContent("<div style='font-size: 26px; margin-top: 8px'>" + value + "</div>");
-        landscapeReport.addHtmlContent("<div style='color: #434343; font-size: 14px'>" + subtitle + "</div>");
+        if (StringUtils.isNotBlank(link)) {
+            landscapeReport.startNewTabLink(link, "text-decoration: none");
+        }
+        landscapeReport.addHtmlContent("<div style='font-size: 24px; margin-top: 8px;'>" + value + "</div>");
+        landscapeReport.addHtmlContent("<div style='color: #434343; font-size: 13px'>" + subtitle + "</div>");
+        if (StringUtils.isNotBlank(link)) {
+            landscapeReport.endNewTabLink();
+        }
         landscapeReport.endDiv();
     }
 

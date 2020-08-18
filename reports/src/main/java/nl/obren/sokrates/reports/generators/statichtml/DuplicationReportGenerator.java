@@ -55,7 +55,6 @@ public class DuplicationReportGenerator {
             report.addHtmlContent("<td>" + instance.getBlockSize() + "</td>");
             report.addHtmlContent("<td>x&nbsp;" + instance.getDuplicatedFileBlocks().size() + "</td>");
             String folderString = formatDisplayString(instance.getFoldersDisplayString());
-            folderString = StringUtils.abbreviateMiddle(folderString, "...", 50);
             report.addHtmlContent("<td>" + folderString + "</td>");
             boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
             report.addHtmlContent("<td>" + formatDisplayStringSimple(instance.getFilesDisplayString(cacheSourceFiles)) + "</td>");
@@ -73,7 +72,12 @@ public class DuplicationReportGenerator {
     }
 
     private String formatDisplayString(String text) {
-        return text.replace(" ", "&nbsp;").replace("\n", "</br>");
+        text = text.replace(" ", "&nbsp;");
+        StringBuilder stringBuilder = new StringBuilder();
+        for (String line : text.split("\n")) {
+            stringBuilder.append(StringUtils.abbreviateMiddle(line, "...", 50)).append("\n");
+        }
+        return stringBuilder.toString().replace("\n", "</br>");
     }
 
     public void addDuplicationToReport(RichTextReport report) {

@@ -293,7 +293,6 @@ public class CommandLineInterface {
         System.out.println("Configuration file '" + confFile.getPath() + "'.");
 
         String jsonContent = FileUtils.readFileToString(confFile, UTF_8);
-        FileUtils.write(new File(confFile.getParentFile(), "config_backup.json"), new JsonGenerator().generate(jsonContent), UTF_8);
         CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
 
         if (cmd.hasOption(skipComplexAnalyses.getOpt())) {
@@ -340,8 +339,6 @@ public class CommandLineInterface {
         }
 
         FileUtils.write(confFile, new JsonGenerator().generate(codeConfiguration), UTF_8);
-
-        System.out.println("The configuration file has been updated (the original version of the file is saved in the 'config_backup.json' file).");
     }
 
     private void exportConventions(String[] args) throws ParseException, IOException {

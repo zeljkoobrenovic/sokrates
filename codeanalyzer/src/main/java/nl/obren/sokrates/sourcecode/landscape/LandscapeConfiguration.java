@@ -19,7 +19,7 @@ public class LandscapeConfiguration {
     private int projectThresholdLocMain = 0;
     private int projectThresholdContributors = 2;
     private int contributorThresholdCommits = 2;
-    private boolean anonymizeContributors = true;
+    private boolean anonymizeContributors = false;
 
     private List<CustomMetric> customMetrics = new ArrayList<>();
     private List<CustomMetric> customMetricsSmall = new ArrayList<>();
