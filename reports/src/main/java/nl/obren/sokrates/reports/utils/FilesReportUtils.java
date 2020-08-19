@@ -28,7 +28,7 @@ public class FilesReportUtils {
         table.append(header + "\n");
         table.append("<tr>");
 
-        sourceFiles.stream().filter(f -> f.getFileModificationHistory() != null).forEach(sourceFile -> {
+        sourceFiles.stream().forEach(sourceFile -> {
             table.append("<tr>\n");
 
             File file = new File(sourceFile.getRelativePath());
@@ -53,7 +53,7 @@ public class FilesReportUtils {
                 table.append("<td style='text-align: center; color: lightgrey'>-</td>\n");
             }
 
-            if (showAge) {
+            if (sourceFile.getFileModificationHistory() != null && showAge) {
                 FileModificationHistory history = sourceFile.getFileModificationHistory();
                 if (history != null) {
                     table.append("<td style='text-align: center'>" + history.daysSinceLatestUpdate() + "</td>\n");
