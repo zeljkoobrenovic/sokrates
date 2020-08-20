@@ -64,7 +64,16 @@ public class DependencyUtils {
         List<String> fileToComponentLinks = new ArrayList<>();
         dependencies.forEach(dependency -> {
             dependency.getFromFiles().forEach(sourceFileDependency -> {
-                dependency.getToComponents(groupName).forEach(targetComponent -> {
+                List<NamedSourceCodeAspect> fromComponents = dependency.getFromComponents(groupName);
+                List<NamedSourceCodeAspect> toComponents = dependency.getToComponents(groupName);
+                for (NamedSourceCodeAspect toComponent : toComponents) {
+                    for (NamedSourceCodeAspect fromComponent : fromComponents) {
+                        if (fromComponent.getName().equalsIgnoreCase(toComponent.getName())) {
+                            return;
+                        }
+                    }
+                }
+                toComponents.forEach(targetComponent -> {
                     String fileToComponentLink = sourceFileDependency.getSourceFile().getFile().getPath() + "::" +
                             targetComponent.getName();
                     if (!fileToComponentLinks.contains(fileToComponentLink)) {

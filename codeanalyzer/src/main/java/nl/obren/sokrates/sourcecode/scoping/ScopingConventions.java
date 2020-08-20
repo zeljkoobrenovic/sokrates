@@ -215,6 +215,7 @@ public class ScopingConventions {
         generatedFilesConventions.add(new Convention(".*/_generated_/.*", "", defaultNote));
         generatedFilesConventions.add(new Convention(".*/_generated/.*", "", defaultNote));
         generatedFilesConventions.add(new Convention(".*/__generated__/.*", "", defaultNote));
+        generatedFilesConventions.add(new Convention(".*/gen/.*[.]go", "", "Generated Go files"));
 
         generatedFilesConventions.add(new Convention(".*/npm[-]shrinkwrap[.]json", "", "A generated npm shrinkwrap file"));
         generatedFilesConventions.add(new Convention(".*/package[-]lock[.]json", "", "A generated npm package lock file"));
@@ -265,6 +266,10 @@ public class ScopingConventions {
         String defaultNote = "Test files";
         testFilesConventions.add(new Convention(".*/[Tt]est/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*/[Tt]ests/.*", "", defaultNote));
+        testFilesConventions.add(new Convention(".*[.][Tt]est/.*", "", defaultNote));
+        testFilesConventions.add(new Convention(".*[.][Tt]ests/.*", "", defaultNote));
+        testFilesConventions.add(new Convention(".*[.][Tt]est[.].*", "", defaultNote));
+        testFilesConventions.add(new Convention(".*[.][Tt]ests[.].*", "", defaultNote));
         testFilesConventions.add(new Convention(".*/[Ss]pecs/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*[-]tests/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*_test[.].*", "", defaultNote));
