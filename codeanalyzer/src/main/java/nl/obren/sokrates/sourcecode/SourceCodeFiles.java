@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.sourcecode;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
@@ -17,7 +18,9 @@ public class SourceCodeFiles {
     private List<SourceFile> filesInBroadScope = new ArrayList<>();
     private File root;
     private ProgressFeedback progressFeedback = new ProgressFeedback();
+    @JsonIgnore
     private Map<String, IgnoredFilesGroup> ignoredFilesGroups = new HashMap<>();
+    @JsonIgnore
     private List<SourceFile> filesExcludedByExtension = new ArrayList<>();
 
     public SourceCodeFiles() {
@@ -230,18 +233,22 @@ public class SourceCodeFiles {
         return excludedFiles;
     }
 
+    @JsonIgnore
     public Map<String, IgnoredFilesGroup> getIgnoredFilesGroups() {
         return ignoredFilesGroups;
     }
 
+    @JsonIgnore
     public void setIgnoredFilesGroups(Map<String, IgnoredFilesGroup> ignoredFilesGroups) {
         this.ignoredFilesGroups = ignoredFilesGroups;
     }
 
+    @JsonIgnore
     public List<SourceFile> getFilesExcludedByExtension() {
         return filesExcludedByExtension;
     }
 
+    @JsonIgnore
     public void setFilesExcludedByExtension(List<SourceFile> filesExcludedByExtension) {
         this.filesExcludedByExtension = filesExcludedByExtension;
     }

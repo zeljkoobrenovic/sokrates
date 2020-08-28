@@ -265,11 +265,17 @@ public class ScopingConventions {
     private void addTestConventions() {
         String defaultNote = "Test files";
         testFilesConventions.add(new Convention(".*/[Tt]est/.*", "", defaultNote));
+        testFilesConventions.add(new Convention(".*/[Tt]est/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*/[Tt]ests/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*[.][Tt]est/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*[.][Tt]ests/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*[.][Tt]est[.].*", "", defaultNote));
         testFilesConventions.add(new Convention(".*[.][Tt]ests[.].*", "", defaultNote));
+        testFilesConventions.add(new Convention(".*/src/testPlay/.*", "", defaultNote));
+        testFilesConventions.add(new Convention(".*/src/ciTest/.*", "", defaultNote));
+        testFilesConventions.add(new Convention(".*/src/ciTests/.*", "", defaultNote));
+        testFilesConventions.add(new Convention(".*/src/androidTest/.*", "", defaultNote));
+        testFilesConventions.add(new Convention(".*/src/androidTests/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*/[Ss]pecs/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*[-]tests/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*_test[.].*", "", defaultNote));

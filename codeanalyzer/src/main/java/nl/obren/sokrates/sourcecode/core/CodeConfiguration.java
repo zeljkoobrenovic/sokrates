@@ -181,17 +181,17 @@ public class CodeConfiguration {
     @JsonIgnore
     public void createDefaultConcerns() {
         Concern todos = new Concern("TODOs");
-        Concern security = new Concern("Security");
-
         todos.getSourceFileFilters().add(new SourceFileFilter("", ".*(TODO|FIXME)( |:|\t).*"));
-        security.getSourceFileFilters().add(new SourceFileFilter("", "(?i).*(Security|Authentication|Password).*"));
 
         concernGroups.clear();
         ConcernsGroup general = new ConcernsGroup("general");
         concernGroups.add(general);
 
         general.getConcerns().add(todos);
-        general.getConcerns().add(security);
+
+        // Concern security = new Concern("Security");
+        // security.getSourceFileFilters().add(new SourceFileFilter("", "(?i).*(Security|Authentication|Password).*"));
+        // general.getConcerns().add(security);
     }
 
     @JsonIgnore
