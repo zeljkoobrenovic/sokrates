@@ -12,7 +12,7 @@ public class SimpleOneBarChart {
     private String backgroundColor = "#ffffff";
     private String activeColor = "#00aced";
     private Alignment alignment = Alignment.LEFT;
-    private String backgroundStyle = "fill-opacity:0.4;stroke:#a0a0a0;stroke-width:0;";
+    private String backgroundStyle = "fill-opacity:0.4;stroke:#a0a0a0;stroke-width:0.5px;";
     private String activeStyle = "fill:#c0deed;stroke:#898989;stroke-width:0.5;";
     private int width = 800;
     private int maxBarWidth = 200;
@@ -26,12 +26,12 @@ public class SimpleOneBarChart {
 
         leftTexts.forEach(text -> barStartXOffset = Math.max(barStartXOffset, 20 + text.length() * 8));
 
-        barStartXOffset =  Math.min(400, barStartXOffset);
-        barStartXOffset =  Math.max(100, barStartXOffset);
+        barStartXOffset = Math.min(400, barStartXOffset);
+        barStartXOffset = Math.max(100, barStartXOffset);
     }
 
     public String getStackedBarSvg(List<Integer> values, Palette palette, String textLeft, String textRight) {
-        String svg = "<svg width='" + width + "' height='" + (barHeight + 2) + "'>";
+        String svg = "<svg width='" + width + "' height='" + (barHeight + 4) + "'>";
 
         double sum = values.stream().mapToDouble(Number::doubleValue).sum();
 
@@ -88,7 +88,7 @@ public class SimpleOneBarChart {
     }
 
     public String getSvg(double activeBarSize, String textLeft, String textRight) {
-        String svg = "<svg width='" + width + "' height='" + (barHeight + 2) + "'>";
+        String svg = "<svg width='" + width + "' height='" + (barHeight + 4) + "'>";
 
         svg += getBackgroundBarSvg(maxBarWidth);
         svg += getBarSvg((int) (activeBarSize));

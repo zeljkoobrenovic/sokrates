@@ -152,7 +152,12 @@ public class LogicalComponentsReportGenerator {
         GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
         graphvizDependencyRenderer.setOrientation(logicalDecomposition.getLogicalDecomposition().getRenderingOptions().getOrientation());
 
-        addDependencyGraphVisuals(componentDependencies, componentNames, graphvizDependencyRenderer);
+        boolean renderComponentsWithoutDependencies = logicalDecomposition.getLogicalDecomposition().getRenderingOptions().isRenderComponentsWithoutDependencies();
+        int linkThreshold = logicalDecomposition.getLogicalDecomposition().getDependencyLinkThreshold();
+        List<ComponentDependency> dependenciesAboveThreshold = componentDependencies.stream().filter(d -> d.getCount() >= linkThreshold).collect(Collectors.toCollection(ArrayList::new));
+        addDependencyGraphVisuals(
+                dependenciesAboveThreshold,
+                componentNames.stream().filter(c -> renderComponentsWithoutDependencies || isComponentInDependency(dependenciesAboveThreshold, c)).collect(Collectors.toCollection(ArrayList::new)), graphvizDependencyRenderer);
         report.addLineBreak();
         report.addLineBreak();
         addMoreDetailsSection(logicalDecomposition, componentDependencies);
@@ -161,8 +166,23 @@ public class LogicalComponentsReportGenerator {
         report.addLineBreak();
     }
 
+    private boolean isComponentInDependency(List<ComponentDependency> dependencies, String component) {
+        for (ComponentDependency dependency : dependencies) {
+            if (dependency.getFromComponent().equalsIgnoreCase(component)) {
+                return true;
+            }
+            if (dependency.getToComponent().equalsIgnoreCase(component)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private void addDependencyGraphVisuals(List<ComponentDependency> componentDependencies, List<String> componentNames, GraphvizDependencyRenderer graphvizDependencyRenderer) {
-        String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(componentNames, componentDependencies);
+        String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(
+                componentNames,
+                componentDependencies);
         String graphId = "dependencies_" + dependencyVisualCounter++;
         report.addGraphvizFigure(graphId, "", graphvizContent);
         report.addLineBreak();

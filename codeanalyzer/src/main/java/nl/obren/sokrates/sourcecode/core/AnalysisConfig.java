@@ -13,7 +13,6 @@ public class AnalysisConfig {
     private boolean skipDuplication = false;
     private boolean skipDependencies = false;
     private boolean cacheSourceFiles = true;
-    private boolean skipCodeCleaning = false;
     private int maxLineLength = 1000;
     private List<AnalyzerOverride> analyzerOverrides = new ArrayList<>();
 
@@ -55,13 +54,5 @@ public class AnalysisConfig {
 
     public void setCacheSourceFiles(boolean cacheSourceFiles) {
         this.cacheSourceFiles = cacheSourceFiles;
-    }
-
-    public boolean isSkipCodeCleaning() {
-        return skipCodeCleaning;
-    }
-
-    public void setSkipCodeCleaning(boolean skipCodeCleaning) {
-        this.skipCodeCleaning = skipCodeCleaning;
     }
 }

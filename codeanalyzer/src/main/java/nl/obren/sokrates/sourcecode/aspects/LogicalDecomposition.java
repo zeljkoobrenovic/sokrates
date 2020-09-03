@@ -29,6 +29,7 @@ public class LogicalDecomposition {
     private DependenciesFinder dependenciesFinder = new DependenciesFinder();
     private RenderingOptions renderingOptions = new RenderingOptions();
     private boolean includeExternalComponents = true;
+    private int dependencyLinkThreshold = 1;
     private int duplicationLinkThreshold = 50;
     private int fileChangeHistoryLinkThreshold = 20;
 
@@ -186,6 +187,14 @@ public class LogicalDecomposition {
     public NamedSourceCodeAspect getComponentByName(String name) {
         Optional<NamedSourceCodeAspect> first = this.components.stream().filter(c -> c.getName().equalsIgnoreCase(name)).findFirst();
         return first.isPresent() ? first.get() : null;
+    }
+
+    public int getDependencyLinkThreshold() {
+        return dependencyLinkThreshold;
+    }
+
+    public void setDependencyLinkThreshold(int dependencyLinkThreshold) {
+        this.dependencyLinkThreshold = dependencyLinkThreshold;
     }
 
     public int getDuplicationLinkThreshold() {

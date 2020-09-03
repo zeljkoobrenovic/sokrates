@@ -193,20 +193,25 @@ public class ConcernsReportGenerator {
                 .forEach(component -> {
                     int componentLoc = component.getLinesOfCode();
                     int[] loc = {0};
+                    int[] filesCount = {0};
                     aspectAnalysisResults.getAspect().getSourceFiles()
                             .forEach(sourceFile -> {
                                 if (sourceFile.getLogicalComponents().contains(component.getAspect())) {
                                     loc[0] += sourceFile.getLinesOfCode();
+                                    filesCount[0] += 1;
                                 }
                             });
-                    double relativeComponentSizeInPerc = 100.0 * loc[0] / componentLoc;
-                    String svg = getCodePercentageSvg(relativeComponentSizeInPerc,
-                            component.getName(), component.getFilesCount(),
-                            loc[0],
-                            (int) ((double) 400 * componentLoc / mainLoc), 20);
-                    report.startDiv("");
-                    report.addHtmlContent(svg);
-                    report.endDiv();
+                    if (filesCount[0] > 0) {
+                        double relativeComponentSizeInPerc = 100.0 * loc[0] / componentLoc;
+                        String svg = getCodePercentageSvg(relativeComponentSizeInPerc,
+                                component.getName(),
+                                filesCount[0],
+                                loc[0],
+                                (int) ((double) 400 * componentLoc / mainLoc), 20);
+                        report.startDiv("");
+                        report.addHtmlContent(svg);
+                        report.endDiv();
+                    }
                 });
         report.endDiv();
     }

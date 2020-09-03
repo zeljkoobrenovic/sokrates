@@ -72,8 +72,8 @@ public class ScopingConventions {
         otherFilesConventions.add(new Convention(".*[.]workbook", "", "Markdown files"));
 
         otherFilesConventions.add(new Convention(".*[.]json", "", "JSON files"));
-        otherFilesConventions.add(new Convention(".*[.]yml", "", "YAML files"));
-        otherFilesConventions.add(new Convention(".*[.]yaml", "", "YAML files"));
+        // otherFilesConventions.add(new Convention(".*[.]yml", "", "YAML files"));
+        // otherFilesConventions.add(new Convention(".*[.]yaml", "", "YAML files"));
 
         otherFilesConventions.add(new Convention(".*[.]svg", "", "SVG files"));
 
@@ -271,6 +271,9 @@ public class ScopingConventions {
         testFilesConventions.add(new Convention(".*[.][Tt]ests/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*[.][Tt]est[.].*", "", defaultNote));
         testFilesConventions.add(new Convention(".*[.][Tt]ests[.].*", "", defaultNote));
+        testFilesConventions.add(new Convention(".*/UnitTests?/.*", "", defaultNote));
+        testFilesConventions.add(new Convention(".*/IntegrationTests?/.*", "", defaultNote));
+        testFilesConventions.add(new Convention(".*/UITests?/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*/src/testPlay/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*/src/ciTest/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*/src/ciTests/.*", "", defaultNote));
