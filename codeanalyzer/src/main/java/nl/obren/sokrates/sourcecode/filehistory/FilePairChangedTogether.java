@@ -12,8 +12,10 @@ import java.util.List;
 public class FilePairChangedTogether {
     private SourceFile sourceFile1;
     private SourceFile sourceFile2;
+    private int commitsCountFile1;
+    private int commitsCountFile2;
 
-    private List<String> dates = new ArrayList<>();
+    private List<String> commits = new ArrayList<>();
 
     public FilePairChangedTogether() {
     }
@@ -39,11 +41,27 @@ public class FilePairChangedTogether {
         this.sourceFile2 = sourceFile2;
     }
 
-    public List<String> getDates() {
-        return dates;
+    public List<String> getCommits() {
+        return commits;
     }
 
-    public void setDates(List<String> dates) {
-        this.dates = dates;
+    public void setCommits(List<String> commits) {
+        this.commits = commits;
+    }
+
+    public int getCommitsCountFile1() {
+        return commitsCountFile1;
+    }
+
+    public void setCommitsCountFile1(int commitsCountFile1) {
+        this.commitsCountFile1 = commitsCountFile1;
+    }
+
+    public int getCommitsCountFile2() {
+        return commitsCountFile2;
+    }
+
+    public void setCommitsCountFile2(int commitsCountFile2) {
+        this.commitsCountFile2 = commitsCountFile2;
     }
 }

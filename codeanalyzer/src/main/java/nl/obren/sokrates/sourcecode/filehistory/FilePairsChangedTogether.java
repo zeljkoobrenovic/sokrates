@@ -14,50 +14,55 @@ public class FilePairsChangedTogether {
     private List<FilePairChangedTogether> filePairs = new ArrayList<>();
 
     public void populate(NamedSourceCodeAspect aspect, List<FileModificationHistory> fileHistories) {
-        Map<String, List<SourceFile>> datesMap = new HashMap<>();
+        Map<String, List<FileModificationHistory>> commitsIdMap = new HashMap<>();
 
         fileHistories.forEach(fileHistory -> {
-            fileHistory.getDates().forEach(dateTime -> {
-                if (dateTime.length() >= 10) {
-                    SourceFile sourceFile = aspect.getSourceFileByPath(fileHistory.getPath());
-                    if (sourceFile != null) {
-                        String date = dateTime.substring(0, 10);
-                        List<SourceFile> list = datesMap.get(date);
-                        if (list == null) {
-                            list = new ArrayList<>();
-                            datesMap.put(date, list);
-                            list.add(sourceFile);
-                        } else if (!list.contains(sourceFile)) {
-                            list.forEach(sourceFileOnSameDate -> addFilePair(sourceFile, sourceFileOnSameDate, date));
-                            list.add(sourceFile);
-                        }
+            fileHistory.getCommits().forEach(commitId -> {
+                if (commitId.length() >= 10) {
+                    List<FileModificationHistory> list = commitsIdMap.get(commitId);
+                    if (list == null) {
+                        list = new ArrayList<>();
+                        commitsIdMap.put(commitId, list);
+                        list.add(fileHistory);
+                    } else if (!list.contains(fileHistory)) {
+                        list.forEach(sourceFileInSameCommit -> addFilePair(aspect, fileHistory, sourceFileInSameCommit, commitId));
+                        list.add(fileHistory);
                     }
                 }
             });
         });
 
-        Collections.sort(filePairs, (a, b) -> b.getDates().size() - a.getDates().size());
+        Collections.sort(filePairs, (a, b) -> b.getCommits().size() - a.getCommits().size());
     }
 
-    public void addFilePair(SourceFile sourceFile1, SourceFile sourceFile2, String date) {
-        String path1 = sourceFile1.getRelativePath().toLowerCase();
-        String path2 = sourceFile2.getRelativePath().toLowerCase();
+    private void addFilePair(NamedSourceCodeAspect aspect, FileModificationHistory fileHistory1, FileModificationHistory fileHistory2, String commitId) {
+        SourceFile sourceFile1 = aspect.getSourceFileByPath(fileHistory1.getPath());
+        SourceFile sourceFile2 = aspect.getSourceFileByPath(fileHistory2.getPath());
 
-        String key1 = path1 + "_" + path2;
-        String key2 = path2 + "_" + path1;
+        if (sourceFile1 != null && sourceFile2 != null) {
+            String path1 = sourceFile1.getRelativePath().toLowerCase();
+            String path2 = sourceFile2.getRelativePath().toLowerCase();
 
-        FilePairChangedTogether filePairChangedTogether = filePairsMap.get(key1);
-        if (filePairChangedTogether == null) {
-            filePairChangedTogether = filePairsMap.get(key2);
+            String key1 = path1 + "_" + path2;
+            String key2 = path2 + "_" + path1;
+
+            FilePairChangedTogether filePairChangedTogether = filePairsMap.get(key1);
+            if (filePairChangedTogether == null) {
+                filePairChangedTogether = filePairsMap.get(key2);
+            }
+
+            if (filePairChangedTogether == null) {
+                filePairChangedTogether = new FilePairChangedTogether(sourceFile1, sourceFile2);
+
+                filePairChangedTogether.setCommitsCountFile1(fileHistory1.getCommits().size());
+                filePairChangedTogether.setCommitsCountFile2(fileHistory2.getCommits().size());
+
+                filePairsMap.put(key1, filePairChangedTogether);
+                filePairs.add(filePairChangedTogether);
+            }
+
+            filePairChangedTogether.getCommits().add(commitId);
         }
-
-        if (filePairChangedTogether == null) {
-            filePairChangedTogether = new FilePairChangedTogether(sourceFile1, sourceFile2);
-            filePairsMap.put(key1, filePairChangedTogether);
-            filePairs.add(filePairChangedTogether);
-        }
-
-        filePairChangedTogether.getDates().add(date);
     }
 
     public List<FilePairChangedTogether> getFilePairs() {

@@ -10,6 +10,7 @@ import java.util.List;
 
 public class FileModificationHistory {
     private List<String> dates = new ArrayList<>();
+    private List<String> commits = new ArrayList<>();
     private String path = "";
 
     public FileModificationHistory() {
@@ -55,5 +56,13 @@ public class FileModificationHistory {
 
     public int daysSinceLatestUpdate() {
         return FileHistoryUtils.daysFromToday(getLatestDate());
+    }
+
+    public List<String> getCommits() {
+        return commits;
+    }
+
+    public void setCommits(List<String> commits) {
+        this.commits = commits;
     }
 }

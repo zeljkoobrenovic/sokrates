@@ -6,6 +6,7 @@ package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
+import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.*;
 import nl.obren.sokrates.sourcecode.SourceFile;
@@ -119,13 +120,20 @@ public class FileHistoryReportGenerator {
         }
         report.startSection("Files Most Frequently Changed Together (Top " + filePairs.size() + ")", "");
         report.startTable();
-        report.addTableHeader("Pairs", "# same days");
+        report.addTableHeader("Pairs", "# same commits", "# commits 1", "# commits 2");
         filePairs.forEach(filePair -> {
             report.startTableRow();
 
             report.addTableCell(filePair.getSourceFile1().getRelativePath() + "<br/>" + filePair.getSourceFile2().getRelativePath());
 
-            report.addTableCell("" + filePair.getDates().size());
+            int commitsCount = filePair.getCommits().size();
+            report.addTableCell("" + commitsCount);
+            int commitsCountFile1 = filePair.getCommitsCountFile1();
+            report.addTableCell("" + commitsCountFile1
+                    + (commitsCountFile1 > 0 && commitsCountFile1 > commitsCount  ? " (" + FormattingUtils.getFormattedPercentage(100.0 * commitsCount / commitsCountFile1) + "%)" : ""));
+            int commitsCountFile2 = filePair.getCommitsCountFile2();
+            report.addTableCell("" + commitsCountFile2
+                    + (commitsCountFile2 > 0 && commitsCountFile2 > commitsCount ? " (" + FormattingUtils.getFormattedPercentage(100.0 * commitsCount / commitsCountFile2) + "%)" : ""));
 
             report.endTableRow();
         });
@@ -377,7 +385,7 @@ public class FileHistoryReportGenerator {
     }
 
     private void addChangeDependencies(RichTextReport report, LogicalDecomposition logicalDecomposition) {
-        report.startSubSection(logicalDecomposition.getName() + " (temporal dependencies, files changed at same days)", "");
+        report.startSubSection(logicalDecomposition.getName() + " (temporal dependencies, # commits)", "");
         report.startShowMoreBlock("show dependencies...");
         renderDependencies(report, logicalDecomposition.getName(), logicalDecomposition.getFileChangeHistoryLinkThreshold());
         report.endShowMoreBlock();

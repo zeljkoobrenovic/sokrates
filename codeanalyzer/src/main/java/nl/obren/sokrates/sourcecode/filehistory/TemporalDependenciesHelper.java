@@ -49,7 +49,7 @@ public class TemporalDependenciesHelper {
         }
 
         List<String> finalDates = dates;
-        filePairChangedTogether.getDates().forEach(date -> {
+        filePairChangedTogether.getCommits().forEach(date -> {
             if (!finalDates.contains(date)) {
                 finalDates.add(date);
             }
