@@ -374,14 +374,16 @@ public class ReportFileExporter {
             list.add(new String[]{"FileSize.html", "File Size", "file_size"});
         }
         if (showHistoryReport) {
-            list.add(new String[]{"FileHistory.html", "File Change History", "file_history"});
+            list.add(new String[]{"FileAge.html", "File Age", "file_history"});
+            list.add(new String[]{"FileChangeFrequency.html", "File Change Frequency", "heat"});
+            list.add(new String[]{"FileTemporalDependencies.html", "Temporal Dependencies", "temporal_dependency"});
         }
         if (showUnits) {
             list.add(new String[]{"UnitSize.html", "Unit Size", "unit_size"});
             list.add(new String[]{"ConditionalComplexity.html", "Conditional Complexity", "conditional"});
         }
         if (showConcerns) {
-            list.add(new String[]{"Concerns.html", "Concerns", "cross_cutting_concerns"});
+            list.add(new String[]{"FeaturesOfInterest.html", "Features of Interest", "cross_cutting_concerns"});
         }
         list.add(new String[]{"Metrics.html", "All Metrics", "metrics"});
         if (showTrends) {
@@ -405,14 +407,16 @@ public class ReportFileExporter {
             list.add(new String[]{"", "File Size", "file_size"});
         }
         if (!showHistoryReport) {
-            list.add(new String[]{"", "File Change History", "file_history"});
+            list.add(new String[]{"", "File Age", "file_age"});
+            list.add(new String[]{"", "File Change Frequency", "heat"});
+            list.add(new String[]{"", "Temporal Dependencies", "temporal-dependencies"});
         }
         if (!showUnits) {
             list.add(new String[]{"", "Unit Size", "unit_size"});
             list.add(new String[]{"", "Conditional Complexity", "conditional"});
         }
         if (!showConcerns) {
-            list.add(new String[]{"", "Concerns", "cross_cutting_concerns"});
+            list.add(new String[]{"", "Features of Interest", "cross_cutting_concerns"});
         }
         if (!showTrends) {
             list.add(new String[]{"", "Trend", "trend"});

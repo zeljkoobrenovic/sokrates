@@ -4,7 +4,6 @@
 
 package nl.obren.sokrates.reports.dataexporters;
 
-import com.kitfox.svg.A;
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.utils.FormattingUtils;
@@ -38,6 +37,7 @@ import nl.obren.sokrates.sourcecode.duplication.DuplicatedFileBlock;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
 import nl.obren.sokrates.sourcecode.filehistory.FileHistoryScopingUtils;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
+import nl.obren.sokrates.sourcecode.filehistory.FilePairChangedTogether;
 import nl.obren.sokrates.sourcecode.lang.DefaultLanguageAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
 import nl.obren.sokrates.sourcecode.search.FoundLine;
@@ -62,9 +62,9 @@ public class DataExporter {
     public static final String DATA_FOLDER_NAME = "data";
     public static final String HISTORY_FOLDER_NAME = "history";
     public static final String SEPARATOR = "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n";
-    private static final Log LOG = LogFactory.getLog(DataExporter.class);
     public static final String FOUND_TEXT_PER_FILE_SIFFIX = "_found_text_per_file";
     public static final String FOUND_TEXT_SUFFIX = "_found_text";
+    private static final Log LOG = LogFactory.getLog(DataExporter.class);
     private ProgressFeedback progressFeedback;
     private File sokratesConfigFile;
     private CodeConfiguration codeConfiguration;
@@ -109,6 +109,7 @@ public class DataExporter {
         exportInteractiveExplorers();
         exportSourceFile();
         exportDependencies(analysisResults);
+        saveTemporalDependencies(analysisResults);
     }
 
     private void exportTrends() {
@@ -248,6 +249,30 @@ public class DataExporter {
                 exportDependencies(logicalDecompositionAnalysisResults.getKey(), componentDependency.getFromComponent(), componentDependency.getToComponent());
             });
         });
+    }
+
+    private void saveTemporalDependencies(CodeAnalysisResults analysisResults) {
+        exportFilesChangedTogether(analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether(),
+                "temporal_dependencies.txt");
+        exportFilesChangedTogether(analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogetherInDifferentFolders(),
+                "temporal_dependencies_different_folders.txt");
+    }
+
+    private void exportFilesChangedTogether(List<FilePairChangedTogether> filePairsChangedTogether, String fileName) {
+        StringBuilder content = new StringBuilder();
+        content.append("file 1\tfile 2\t# same commits\t# commits file 1\t# commits file 2\n");
+        filePairsChangedTogether.forEach(pair -> {
+            content.append(pair.getSourceFile1().getRelativePath()).append("\t");
+            content.append(pair.getSourceFile2().getRelativePath()).append("\t");
+            content.append(pair.getCommits().size()).append("\t");
+            content.append(pair.getCommitsCountFile1()).append("\t");
+            content.append(pair.getCommitsCountFile2()).append("\n");
+        });
+        try {
+            FileUtils.write(new File(textDataFolder, fileName), content.toString(), UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void exportFileLists() {

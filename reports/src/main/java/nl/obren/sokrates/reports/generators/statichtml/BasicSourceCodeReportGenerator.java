@@ -22,10 +22,12 @@ public class BasicSourceCodeReportGenerator {
 
     private RichTextReport overviewScopeReport = new RichTextReport("Source Code Overview", "SourceCodeOverview.html");
     private RichTextReport logicalComponentsReport = new RichTextReport("Components & Dependencies", "Components.html");
-    private RichTextReport concernsReport = new RichTextReport("Concerns", "Concerns.html");
+    private RichTextReport concernsReport = new RichTextReport("Features of Interest", "FeaturesOfInterest.html");
     private RichTextReport duplicationReport = new RichTextReport("Duplication", "Duplication.html");
     private RichTextReport fileSizeReport = new RichTextReport("File Size", "FileSize.html");
-    private RichTextReport fileHistoryReport = new RichTextReport("File History", "FileHistory.html");
+    private RichTextReport fileHistoryReport = new RichTextReport("File Age", "FileAge.html");
+    private RichTextReport fileChangeFrequencyReport = new RichTextReport("File Change Frequency", "FileChangeFrequency.html");
+    private RichTextReport fileTemporalDependenciesReport = new RichTextReport("Temporal Dependencies", "FileTemporalDependencies.html");
     private RichTextReport unitSizeReport = new RichTextReport("Unit Size", "UnitSize.html");
     private RichTextReport conditionalComplexityReport = new RichTextReport("Conditional Complexity", "ConditionalComplexity.html");
     private RichTextReport findingsReport = new RichTextReport("Notes & Findings", "Notes.html");
@@ -86,6 +88,8 @@ public class BasicSourceCodeReportGenerator {
             if (codeAnalyzerSettings.isAnalyzeFileHistory()) {
                 if (codeAnalysisResults.getCodeConfiguration().getFileHistoryAnalysis().filesHistoryImportPathExists(codeConfigurationFile.getParentFile())) {
                     reports.add(fileHistoryReport);
+                    reports.add(fileChangeFrequencyReport);
+                    reports.add(fileTemporalDependenciesReport);
                 }
             }
             if (codeAnalyzerSettings.isAnalyzeUnitSize()) {
@@ -126,6 +130,8 @@ public class BasicSourceCodeReportGenerator {
         decorateReport(conditionalComplexityReport, name, logoLink);
         decorateReport(fileSizeReport, name, logoLink);
         decorateReport(fileHistoryReport, name, logoLink);
+        decorateReport(fileChangeFrequencyReport, name, logoLink);
+        decorateReport(fileTemporalDependenciesReport, name, logoLink);
         decorateReport(controlsReport, name, logoLink);
         decorateReport(metricsReport, name, logoLink);
         decorateReport(comparisonReport, name, logoLink);
@@ -158,6 +164,8 @@ public class BasicSourceCodeReportGenerator {
         if (codeAnalyzerSettings.isAnalyzeFileHistory()) {
             if (codeAnalysisResults.getCodeConfiguration().getFileHistoryAnalysis().filesHistoryImportPathExists(codeConfigurationFile.getParentFile())) {
                 new FileHistoryReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileHistoryReport);
+                new FileChurnReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileChangeFrequencyReport);
+                new FileTemporalDependenciesReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileTemporalDependenciesReport);
             }
         }
 

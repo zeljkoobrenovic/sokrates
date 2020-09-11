@@ -297,7 +297,7 @@ public class SummaryUtils {
                 + FormattingUtils.getFormattedPercentage(changes.getNeglictableRiskPercentage()) + "% past month");
         report.endUnorderedList();
         report.endTableCell();
-        report.addTableCell("<a href='" + reportRoot + "FileHistory.html'>...</a>", "border: none;  vertical-align: top");
+        report.addTableCell("<a href='" + reportRoot + "FileAge.html'>...</a>", "border: none;  vertical-align: top");
 
         report.endTableRow();
     }

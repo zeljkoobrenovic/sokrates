@@ -27,6 +27,7 @@ import nl.obren.sokrates.sourcecode.lang.lua.LuaAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.objectpascal.ObjectPascalAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.perl.PerlAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.php.PhpAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.puppet.PuppetAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.python.PythonAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.r.RAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.ruby.RubyAnalyzer;
@@ -234,6 +235,8 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("dpr", ObjectPascalAnalyzer.class);
         analyzersMap.put("lpr", ObjectPascalAnalyzer.class);
         analyzersMap.put("pascal", ObjectPascalAnalyzer.class);
+
+        analyzersMap.put("pp", PuppetAnalyzer.class);
     }
 
     private void registerRuby() {

@@ -97,7 +97,7 @@ public class CommandLineInterface {
     private Option logicalDecomposition = new Option(REPORT_LOGICAL_DECOMPOSITION, false, "generate the logical decomposition report (stored in <outputFolder>/LogicalDecomposition.html)");
     private Option concerns = new Option(REPORT_CONCERNS, false, "generate the concerns report (stored in <outputFolder>/Concerns.html)");
     private Option fileSize = new Option(REPORT_FILE_SIZE, false, "generate the file size report (stored in <outputFolder>/FileSize.html)");
-    private Option fileHistory = new Option(REPORT_FILE_HISTORY, false, "generate the file history report (stored in <outputFolder>/FileHistory.html)");
+    private Option fileHistory = new Option(REPORT_FILE_HISTORY, false, "generate the file history reports (stored in <outputFolder>/FileAge.html, FileChangeFrequency.html, and TemporalDependencies.html)");
     private Option unitSize = new Option(REPORT_UNIT_SIZE, false, "generate the unit size report (stored in <outputFolder>/UnitSize.html)");
     private Option conditionalComplexity = new Option(REPORT_CONDITIONAL_COMPLEXITY, false, "generate the conditional complexity report (stored in <outputFolder>/ConditionalComplexity.html)");
     private Option metrics = new Option(REPORT_METRICS, false, "generate the metrics overview report (stored in <outputFolder>/Metrics.html)");

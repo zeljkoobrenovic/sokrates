@@ -12,8 +12,10 @@ import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class FilesHistoryAnalysisResults {
     private SourceFileAgeDistribution overallFileLastModifiedDistribution;
@@ -184,6 +186,18 @@ public class FilesHistoryAnalysisResults {
     }
 
     @JsonIgnore
+    public List<FilePairChangedTogether> getFilePairsChangedTogetherInDifferentFolders() {
+        return filePairsChangedTogether.stream().filter(p -> {
+            File folder1 = new File(p.getSourceFile1().getRelativePath()).getParentFile();
+            File folder2 = new File(p.getSourceFile2().getRelativePath()).getParentFile();
+            if (folder1 == null || folder2 == null) {
+                return false;
+            }
+            return !folder1.equals(folder2);
+        }).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    @JsonIgnore
     public List<FileModificationHistory> getHistory() {
         return history;
     }
@@ -193,59 +207,59 @@ public class FilesHistoryAnalysisResults {
         this.history = history;
     }
 
-    public void setFirstDate(String firstDate) {
-        this.firstDate = firstDate;
-    }
-
     public String getFirstDate() {
         return firstDate;
     }
 
-    public void setLatestDate(String latestDate) {
-        this.latestDate = latestDate;
+    public void setFirstDate(String firstDate) {
+        this.firstDate = firstDate;
     }
 
     public String getLatestDate() {
         return latestDate;
     }
 
-    public void setDaysBetweenFirstAndLastDate(int daysBetweenFirstAndLastDate) {
-        this.daysBetweenFirstAndLastDate = daysBetweenFirstAndLastDate;
+    public void setLatestDate(String latestDate) {
+        this.latestDate = latestDate;
     }
 
     public int getDaysBetweenFirstAndLastDate() {
         return daysBetweenFirstAndLastDate;
     }
 
-    public void setWeeks(int weeks) {
-        this.weeks = weeks;
+    public void setDaysBetweenFirstAndLastDate(int daysBetweenFirstAndLastDate) {
+        this.daysBetweenFirstAndLastDate = daysBetweenFirstAndLastDate;
     }
 
     public int getWeeks() {
         return weeks;
     }
 
-    public void setEstimatedWorkindDays(int estimatedWorkindDays) {
-        this.estimatedWorkindDays = estimatedWorkindDays;
+    public void setWeeks(int weeks) {
+        this.weeks = weeks;
     }
 
     public int getEstimatedWorkindDays() {
         return estimatedWorkindDays;
     }
 
-    public void setActiveDays(int activeDays) {
-        this.activeDays = activeDays;
+    public void setEstimatedWorkindDays(int estimatedWorkindDays) {
+        this.estimatedWorkindDays = estimatedWorkindDays;
     }
 
     public int getActiveDays() {
         return activeDays;
     }
 
-    public void setAgeInDays(int ageInDays) {
-        this.ageInDays = ageInDays;
+    public void setActiveDays(int activeDays) {
+        this.activeDays = activeDays;
     }
 
     public int getAgeInDays() {
         return ageInDays;
+    }
+
+    public void setAgeInDays(int ageInDays) {
+        this.ageInDays = ageInDays;
     }
 }

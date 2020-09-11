@@ -2,7 +2,7 @@
  * Copyright (c) 2019 Željko Obrenović. All rights reserved.
  */
 
-package nl.obren.sokrates.sourcecode.lang.shell;
+package nl.obren.sokrates.sourcecode.lang.puppet;
 
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SourceFile;
@@ -16,8 +16,8 @@ import nl.obren.sokrates.sourcecode.units.UnitInfo;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ShellAnalyzer extends LanguageAnalyzer {
-    public ShellAnalyzer() {
+public class PuppetAnalyzer extends LanguageAnalyzer {
+    public PuppetAnalyzer() {
     }
 
     @Override

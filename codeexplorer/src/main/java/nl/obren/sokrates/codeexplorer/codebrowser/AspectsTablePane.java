@@ -162,17 +162,19 @@ public class AspectsTablePane extends BorderPane {
     }
 
     private void setItems(List<? extends NamedSourceCodeAspect> aspects, NamedSourceCodeAspect main) {
-        this.main = main;
-        table.layout();
-        ArrayList<? extends NamedSourceCodeAspect> filtered = aspects.stream()
-                .filter(i -> !i.getName().contains("Multiple Classification")
-                        && !i.getName().contains("Unclassified"))
-                .collect(Collectors.toCollection(ArrayList::new));
-        table.setItems(FXCollections.observableArrayList(filtered));
+        if (main != null && aspects != null) {
+            this.main = main;
+            table.layout();
+            ArrayList<? extends NamedSourceCodeAspect> filtered = aspects.stream()
+                    .filter(i -> !i.getName().contains("Multiple Classification")
+                            && !i.getName().contains("Unclassified"))
+                    .collect(Collectors.toCollection(ArrayList::new));
+            table.setItems(FXCollections.observableArrayList(filtered));
 
-        refreshBarChartColumns();
+            refreshBarChartColumns();
 
-        table.refresh();
+            table.refresh();
+        }
     }
 
     private void refreshBarChartColumns() {

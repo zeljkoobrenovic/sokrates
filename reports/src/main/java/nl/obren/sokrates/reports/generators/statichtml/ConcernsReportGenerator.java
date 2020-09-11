@@ -94,8 +94,9 @@ public class ConcernsReportGenerator {
     private void addIntro(RichTextReport report) {
         report.startSection("Intro", "");
         report.startUnorderedList();
-        report.addListItem("Concerns are any aspects of a software system that can be identified through patterns in code.");
-        report.addListItem("A single concern may be present in multiple files. One source code file may contain multiple concerns.");
+        report.addListItem("Features of interest are any aspects of a software system that can be identified through patterns in code.");
+        report.addListItem("Features of interest provide you with a way to focus your attention on relevant parts of the codebase. Typical examples include, security, TODOs, logging.");
+        report.addListItem("A feature of interest may be present in multiple files. Any source code file may be in zero or multiple features of interest.");
         report.endUnorderedList();
         report.endSection();
     }
@@ -118,7 +119,7 @@ public class ConcernsReportGenerator {
 
         report.endUnorderedList();
         concernsAnalysisResults.getConcerns().forEach(aspectAnalysisResults -> {
-            renderScopes(key.toUpperCase(), aspectAnalysisResults);
+            renderScopes(key, aspectAnalysisResults);
         });
         report.endSection();
     }
@@ -138,8 +139,9 @@ public class ConcernsReportGenerator {
         ScopesRenderer renderer = new ScopesRenderer();
         renderer.setLinesOfCodeInMain(codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode());
 
-        String title = key + " / " + name.replace(" - ", " Multiple Classifications / ");
-        renderer.setTitle(groupCounter + "." + concernCounter + " " + title);
+        String title = "<span style='color: grey; font-size: 90%'>" + key + "</span><br>";
+        title += groupCounter + "." + concernCounter + " " + name.replace(" - ", " Multiple Classifications");
+        renderer.setTitle(title);
         renderer.setDescription("");
         if (name.equalsIgnoreCase("Unclassified")) {
             renderer.setDescription("This concern include all files that are not included in any of the previously described concerns in this group.");
@@ -162,7 +164,8 @@ public class ConcernsReportGenerator {
 
         report.startSubSection(renderer.getTitle(), "");
         String fileListPath = aspectAnalysisResults.getAspect().getFileSystemFriendlyName(DataExportUtils.getConcernFilePrefix(key));
-        report.addContentInDiv(getOverviewCodePercentageSvg(relativeSizeInPerc, numberOfFiles, linesOfCode, 200, 20, fileListPath, isDerivedConcern(name)), fileListPath);
+        report.addContentInDiv(getOverviewCodePercentageSvg(relativeSizeInPerc, numberOfFiles, linesOfCode,
+                200, 20, fileListPath, isDerivedConcern(name)), fileListPath);
 
         if (name.contains(" - ") && name.contains(" AND ")) {
             List<Double> percentages = extractPercentages(name);
@@ -218,11 +221,11 @@ public class ConcernsReportGenerator {
 
     private String getCodePercentageSvg(double percentage, String aspectName, int numberOfFiles, int linesOfCode, int maxSize, int barHeight) {
         String displayText = "in " + numberOfFiles + (numberOfFiles == 1 ? " file " : " files, ")
-                + "containing " + FormattingUtils.getFormattedCount(linesOfCode) + " LOC ("
+                + " " + FormattingUtils.getFormattedCount(linesOfCode) + " LOC ("
                 + FormattingUtils.getFormattedPercentage(percentage) + "%)";
 
         SimpleOneBarChart chart = new SimpleOneBarChart();
-        chart.setWidth(800);
+        chart.setWidth(900);
         chart.setMaxBarWidth(maxSize);
         chart.setBarHeight(barHeight);
 
