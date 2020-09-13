@@ -12,13 +12,19 @@ import java.util.*;
 public class FilePairsChangedTogether {
     private Map<String, FilePairChangedTogether> filePairsMap = new HashMap<>();
     private List<FilePairChangedTogether> filePairs = new ArrayList<>();
+    private int rangeInDays = -1;
+
+    public FilePairsChangedTogether(int rangeInDays) {
+        this.rangeInDays = rangeInDays;
+    }
 
     public void populate(NamedSourceCodeAspect aspect, List<FileModificationHistory> fileHistories) {
         Map<String, List<FileModificationHistory>> commitsIdMap = new HashMap<>();
 
         fileHistories.forEach(fileHistory -> {
-            fileHistory.getCommits().forEach(commitId -> {
-                if (commitId.length() >= 10) {
+            fileHistory.getCommits().forEach(commitInfo -> {
+                if (rangeInDays <= 0 || DateUtils.isDateWithinRange(commitInfo.getDate(), rangeInDays)) {
+                    String commitId = commitInfo.getId();
                     List<FileModificationHistory> list = commitsIdMap.get(commitId);
                     if (list == null) {
                         list = new ArrayList<>();

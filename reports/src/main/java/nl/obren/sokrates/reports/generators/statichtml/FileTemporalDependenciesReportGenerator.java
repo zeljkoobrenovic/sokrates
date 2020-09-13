@@ -14,6 +14,7 @@ import nl.obren.sokrates.sourcecode.filehistory.FilePairChangedTogether;
 import nl.obren.sokrates.sourcecode.filehistory.TemporalDependenciesHelper;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,6 +32,7 @@ public class FileTemporalDependenciesReportGenerator {
         addGraphsPerLogicalComponents(report);
 
         addFileChangedTogetherList(report);
+        addFileChangedTogetherList30Days(report);
         addFileChangedTogetherInDifferentFoldersList(report);
     }
 
@@ -44,8 +46,18 @@ public class FileTemporalDependenciesReportGenerator {
         addTable(report, filePairs);
     }
 
+    private void addFileChangedTogetherList30Days(RichTextReport report) {
+        List<FilePairChangedTogether> filePairs = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days();
+        if (filePairs.size() > 20) {
+            filePairs = filePairs.subList(0, 20);
+        }
+        report.startSection("Files Most Frequently Changed Together in Past 30 Days (Top " + filePairs.size() + ")", "");
+        report.addParagraph("<a href='../data/text/temporal_dependencies_30_days.txt' target='_blank'>data...</a>");
+        addTable(report, filePairs);
+    }
+
     private void addFileChangedTogetherInDifferentFoldersList(RichTextReport report) {
-        List<FilePairChangedTogether> filePairs = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogetherInDifferentFolders();
+        List<FilePairChangedTogether> filePairs = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogetherInDifferentFolders(codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether());
         if (filePairs.size() > 20) {
             filePairs = filePairs.subList(0, 20);
         }
@@ -99,24 +111,29 @@ public class FileTemporalDependenciesReportGenerator {
             String name = logicalDecomposition.getName();
             codeAnalysisResults.getFilesHistoryAnalysisResults().getChangeDistributionPerLogicalDecomposition().stream()
                     .filter(d -> d.getName().equalsIgnoreCase(name)).forEach(distribution -> {
-                addChangeDependencies(report, logicalDecomposition);
+                addChangeDependencies(report, logicalDecomposition, codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether());
+                addChangeDependencies(report, logicalDecomposition, codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days());
             });
         });
     }
 
-    private void addChangeDependencies(RichTextReport report, LogicalDecomposition logicalDecomposition) {
+    private void addChangeDependencies(RichTextReport report, LogicalDecomposition logicalDecomposition, List<FilePairChangedTogether> filePairsChangedTogether) {
         int threshold = logicalDecomposition.getTemporalLinkThreshold();
         report.startSubSection(logicalDecomposition.getName() + " (" + threshold + "+ links)", "");
-        renderDependencies(report, logicalDecomposition.getName(), threshold);
+        renderDependencies(report, logicalDecomposition.getName(), threshold, filePairsChangedTogether);
         report.endSection();
     }
 
-    private void renderDependencies(RichTextReport report, String logicalDecompositionName, int threshold) {
+    private void renderDependencies(RichTextReport report, String logicalDecompositionName, int threshold, List<FilePairChangedTogether> filePairsChangedTogether) {
         TemporalDependenciesHelper dependenciesHelper = new TemporalDependenciesHelper(logicalDecompositionName);
-        List<ComponentDependency> dependencies = dependenciesHelper.extractDependencies(codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether());
+        List<ComponentDependency> dependencies = dependenciesHelper.extractDependencies(filePairsChangedTogether);
         List<ComponentDependency> componentDependencies = dependencies.stream().filter(d -> d.getCount() >= threshold).collect(Collectors.toList());
 
         if (componentDependencies.size() > 0) {
+            Collections.sort(componentDependencies, (a, b) -> b.getCount() - a.getCount());
+            if (componentDependencies.size() > 50) {
+                componentDependencies = componentDependencies.subList(0, 50);
+            }
             GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
             graphvizDependencyRenderer.setDefaultNodeFillColor("deepskyblue2");
             graphvizDependencyRenderer.setType("graph");

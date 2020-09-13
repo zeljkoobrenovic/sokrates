@@ -252,10 +252,16 @@ public class DataExporter {
     }
 
     private void saveTemporalDependencies(CodeAnalysisResults analysisResults) {
-        exportFilesChangedTogether(analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether(),
+        List<FilePairChangedTogether> filePairsChangedTogether = analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether();
+        exportFilesChangedTogether(filePairsChangedTogether,
                 "temporal_dependencies.txt");
-        exportFilesChangedTogether(analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogetherInDifferentFolders(),
+        exportFilesChangedTogether(analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogetherInDifferentFolders(filePairsChangedTogether),
                 "temporal_dependencies_different_folders.txt");
+        List<FilePairChangedTogether> filePairsChangedTogether30Days = analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days();
+        exportFilesChangedTogether(filePairsChangedTogether30Days,
+                "temporal_dependencies_30_days.txt");
+        exportFilesChangedTogether(analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogetherInDifferentFolders(filePairsChangedTogether30Days),
+                "temporal_dependencies_different_folders_30_days.txt");
     }
 
     private void exportFilesChangedTogether(List<FilePairChangedTogether> filePairsChangedTogether, String fileName) {

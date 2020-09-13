@@ -28,6 +28,8 @@ public class FilesHistoryAnalysisResults {
 
     @JsonIgnore
     private List<FilePairChangedTogether> filePairsChangedTogether = new ArrayList<>();
+    @JsonIgnore
+    private List<FilePairChangedTogether> filePairsChangedTogether30Days = new ArrayList<>();
 
     private List<FileAgeDistributionPerLogicalDecomposition> changeDistributionPerLogicalDecomposition = new ArrayList<>();
     private List<FileAgeDistributionPerLogicalDecomposition> firstModifiedDistributionPerLogicalDecomposition = new ArrayList<>();
@@ -186,8 +188,18 @@ public class FilesHistoryAnalysisResults {
     }
 
     @JsonIgnore
-    public List<FilePairChangedTogether> getFilePairsChangedTogetherInDifferentFolders() {
-        return filePairsChangedTogether.stream().filter(p -> {
+    public List<FilePairChangedTogether> getFilePairsChangedTogether30Days() {
+        return filePairsChangedTogether30Days;
+    }
+
+    @JsonIgnore
+    public void setFilePairsChangedTogether30Days(List<FilePairChangedTogether> filePairsChangedTogether30Days) {
+        this.filePairsChangedTogether30Days = filePairsChangedTogether30Days;
+    }
+
+    @JsonIgnore
+    public List<FilePairChangedTogether> getFilePairsChangedTogetherInDifferentFolders(List<FilePairChangedTogether> pairs) {
+        return pairs.stream().filter(p -> {
             File folder1 = new File(p.getSourceFile1().getRelativePath()).getParentFile();
             File folder2 = new File(p.getSourceFile2().getRelativePath()).getParentFile();
             if (folder1 == null || folder2 == null) {

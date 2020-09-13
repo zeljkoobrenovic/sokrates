@@ -38,7 +38,7 @@ public class GitHistoryUtil {
             map.put(path, fileInfo);
         }
 
-        fileInfo.getCommits().add(fileUpdate.getCommitId());
+        fileInfo.getCommits().add(new CommitInfo(fileUpdate.getCommitId(), fileUpdate.getDate()));
 
         String lastModifiedDate = fileUpdate.getDate();
         if (!fileInfo.getDates().contains(lastModifiedDate)) {

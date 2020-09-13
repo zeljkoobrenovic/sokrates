@@ -5,10 +5,9 @@
 package nl.obren.sokrates.sourcecode.contributors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -19,7 +18,6 @@ public class Contributor {
     public static final int RECENTLY_ACTIVITY_THRESHOLD_DAYS = 30;
     public static final int ACTIVITY_THRESHOLD_DAYS = 180;
     public static final int ROOKIE_THRESHOLD_DAYS = 365;
-    public static final String ENV_SOKRATES_SOURCE_CODE_DATE = "SOKRATES_SOURCE_CODE_DATE";
     private String email = "";
     private int commitsCount = 0;
     private int commitsCount30Days = 0;
@@ -67,7 +65,7 @@ public class Contributor {
     }
 
     private boolean isCommitedLessThanDaysAgo(String date, int daysAgo) {
-        Calendar cal = getCalendar();
+        Calendar cal = DateUtils.getCalendar();
         cal.add(Calendar.DATE, -daysAgo);
 
         String thresholdDate = new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime());
@@ -79,34 +77,8 @@ public class Contributor {
         return isActive(ACTIVITY_THRESHOLD_DAYS);
     }
 
-    @JsonIgnore
-    public boolean isActive(int threshold) {
-        if (StringUtils.isBlank(latestCommitDate)) {
-            return true;
-        }
-
-        Calendar cal = getCalendar();
-
-        cal.add(Calendar.DATE, -threshold);
-
-        String thresholdDate = new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime());
-
-        return latestCommitDate.compareTo(thresholdDate) > 0;
-    }
-
-    private Calendar getCalendar() {
-        Calendar cal = Calendar.getInstance();
-
-        String sourceCodeDate = System.getenv(ENV_SOKRATES_SOURCE_CODE_DATE);
-        if (StringUtils.isNotBlank(sourceCodeDate)) {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            try {
-                cal.setTime(sdf.parse(sourceCodeDate));// all done
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-        }
-        return cal;
+    public boolean isActive(int rangeInDays) {
+        return DateUtils.isDateWithinRange(latestCommitDate, rangeInDays);
     }
 
     public boolean isRookie() {
@@ -119,7 +91,7 @@ public class Contributor {
             return false;
         }
 
-        Calendar cal = getCalendar();
+        Calendar cal = DateUtils.getCalendar();
         cal.add(Calendar.DATE, -ROOKIE_THRESHOLD_DAYS);
 
         String thresholdDate = new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime());

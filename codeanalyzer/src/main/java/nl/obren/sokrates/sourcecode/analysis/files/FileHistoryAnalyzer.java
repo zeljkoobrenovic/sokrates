@@ -55,6 +55,7 @@ public class FileHistoryAnalyzer extends Analyzer {
                 enrichFilesWithAge(history);
                 analyzeFilesAge();
                 analyzeFilesChangedTogether(history);
+                analyzeFilesChangedTogether30Days(history);
             }
         }
     }
@@ -106,11 +107,15 @@ public class FileHistoryAnalyzer extends Analyzer {
     }
 
     private void analyzeFilesChangedTogether(List<FileModificationHistory> history) {
-        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether();
-
+        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(-1);
         filePairsChangedTogether.populate(codeConfiguration.getMain(), history);
-
         analysisResults.setFilePairsChangedTogether(filePairsChangedTogether.getFilePairs());
+    }
+
+    private void analyzeFilesChangedTogether30Days(List<FileModificationHistory> history) {
+        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(30);
+        filePairsChangedTogether.populate(codeConfiguration.getMain(), history);
+        analysisResults.setFilePairsChangedTogether30Days(filePairsChangedTogether.getFilePairs());
     }
 
     private void analyzeFilesAge() {

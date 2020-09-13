@@ -142,26 +142,6 @@ public class FileChurnReportGenerator {
 
     }
 
-    private void renderDependencies(RichTextReport report, String logicalDecompositionName, int threshold) {
-        TemporalDependenciesHelper dependenciesHelper = new TemporalDependenciesHelper(logicalDecompositionName);
-        List<ComponentDependency> dependencies = dependenciesHelper.extractDependencies(codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether());
-        List<ComponentDependency> componentDependencies = dependencies.stream().filter(d -> d.getCount() >= threshold).collect(Collectors.toList());
-
-        if (componentDependencies.size() > 0) {
-            GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
-            graphvizDependencyRenderer.setDefaultNodeFillColor("deepskyblue2");
-            graphvizDependencyRenderer.setType("graph");
-            graphvizDependencyRenderer.setArrow("--");
-            graphvizDependencyRenderer.setArrowColor("crimson");
-            String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), componentDependencies);
-
-            String graphId = "file_changed_together_dependencies_" + graphCounter++;
-            report.addGraphvizFigure(graphId, "File changed together in different components", graphvizContent);
-
-            report.addLineBreak();
-        }
-    }
-
     private void addMostChangedFilesList(RichTextReport report) {
         List<SourceFile> youngestFiles = codeAnalysisResults.getFilesHistoryAnalysisResults().getMostChangedFiles();
         report.startSection("Most Frequently Changed Files (Top " + youngestFiles.size() + ")", "");
