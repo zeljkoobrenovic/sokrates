@@ -6,6 +6,7 @@ package nl.obren.sokrates.sourcecode.filehistory;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 
@@ -25,13 +26,15 @@ public class FilePairsChangedTogether {
             fileHistory.getCommits().forEach(commitInfo -> {
                 if (rangeInDays <= 0 || DateUtils.isDateWithinRange(commitInfo.getDate(), rangeInDays)) {
                     String commitId = commitInfo.getId();
+                    String commitDate = commitInfo.getDate();
                     List<FileModificationHistory> list = commitsIdMap.get(commitId);
                     if (list == null) {
                         list = new ArrayList<>();
                         commitsIdMap.put(commitId, list);
                         list.add(fileHistory);
                     } else if (!list.contains(fileHistory)) {
-                        list.forEach(sourceFileInSameCommit -> addFilePair(aspect, fileHistory, sourceFileInSameCommit, commitId));
+                        list.forEach(sourceFileInSameCommit -> addFilePair(aspect, fileHistory,
+                                sourceFileInSameCommit, commitId, commitDate));
                         list.add(fileHistory);
                     }
                 }
@@ -41,7 +44,7 @@ public class FilePairsChangedTogether {
         Collections.sort(filePairs, (a, b) -> b.getCommits().size() - a.getCommits().size());
     }
 
-    private void addFilePair(NamedSourceCodeAspect aspect, FileModificationHistory fileHistory1, FileModificationHistory fileHistory2, String commitId) {
+    private void addFilePair(NamedSourceCodeAspect aspect, FileModificationHistory fileHistory1, FileModificationHistory fileHistory2, String commitId, String date) {
         SourceFile sourceFile1 = aspect.getSourceFileByPath(fileHistory1.getPath());
         SourceFile sourceFile2 = aspect.getSourceFileByPath(fileHistory2.getPath());
 
@@ -68,6 +71,10 @@ public class FilePairsChangedTogether {
             }
 
             filePairChangedTogether.getCommits().add(commitId);
+            if (StringUtils.isBlank(filePairChangedTogether.getLatestCommit()) ||
+                    date.compareTo(filePairChangedTogether.getLatestCommit()) > 0) {
+                filePairChangedTogether.setLatestCommit(date);
+            }
         }
     }
 

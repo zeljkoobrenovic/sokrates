@@ -181,6 +181,7 @@ public class DuplicationReportGenerator {
             graphvizDependencyRenderer.setType("graph");
             graphvizDependencyRenderer.setArrow("--");
             graphvizDependencyRenderer.setArrowColor("crimson");
+            graphvizDependencyRenderer.setMaxNumberOfDependencies(50);
             String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), componentDependencies);
             report.addLevel3Header("Duplication Between Components (" + threshold + "+ lines)", "margin-top: 30px");
 

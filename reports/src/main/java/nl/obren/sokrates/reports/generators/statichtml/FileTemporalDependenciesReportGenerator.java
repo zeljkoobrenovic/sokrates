@@ -14,7 +14,6 @@ import nl.obren.sokrates.sourcecode.filehistory.FilePairChangedTogether;
 import nl.obren.sokrates.sourcecode.filehistory.TemporalDependenciesHelper;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,7 +31,6 @@ public class FileTemporalDependenciesReportGenerator {
         addGraphsPerLogicalComponents(report);
 
         addFileChangedTogetherList(report);
-        addFileChangedTogetherList30Days(report);
         addFileChangedTogetherInDifferentFoldersList(report);
     }
 
@@ -43,16 +41,6 @@ public class FileTemporalDependenciesReportGenerator {
         }
         report.startSection("Files Most Frequently Changed Together (Top " + filePairs.size() + ")", "");
         report.addParagraph("<a href='../data/text/temporal_dependencies.txt' target='_blank'>data...</a>");
-        addTable(report, filePairs);
-    }
-
-    private void addFileChangedTogetherList30Days(RichTextReport report) {
-        List<FilePairChangedTogether> filePairs = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days();
-        if (filePairs.size() > 20) {
-            filePairs = filePairs.subList(0, 20);
-        }
-        report.startSection("Files Most Frequently Changed Together in Past 30 Days (Top " + filePairs.size() + ")", "");
-        report.addParagraph("<a href='../data/text/temporal_dependencies_30_days.txt' target='_blank'>data...</a>");
         addTable(report, filePairs);
     }
 
@@ -68,7 +56,7 @@ public class FileTemporalDependenciesReportGenerator {
 
     private void addTable(RichTextReport report, List<FilePairChangedTogether> filePairs) {
         report.startTable();
-        report.addTableHeader("Pairs", "# same commits", "# commits 1", "# commits 2");
+        report.addTableHeader("Pairs", "# same commits", "# commits 1", "# commits 2", "latest commit");
         filePairs.forEach(filePair -> {
             report.startTableRow();
 
@@ -86,6 +74,7 @@ public class FileTemporalDependenciesReportGenerator {
                     + (commitsCountFile2 > 0 && commitsCountFile2 >= commitsCount
                     ? " (" + FormattingUtils.getFormattedPercentage(100.0 * commitsCount / commitsCountFile2) + "%)"
                     : ""));
+            report.addTableCell("" + filePair.getLatestCommit());
 
             report.endTableRow();
         });
@@ -111,17 +100,43 @@ public class FileTemporalDependenciesReportGenerator {
             String name = logicalDecomposition.getName();
             codeAnalysisResults.getFilesHistoryAnalysisResults().getChangeDistributionPerLogicalDecomposition().stream()
                     .filter(d -> d.getName().equalsIgnoreCase(name)).forEach(distribution -> {
-                addChangeDependencies(report, logicalDecomposition, codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether());
-                addChangeDependencies(report, logicalDecomposition, codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days());
+                addDependeciesSection(report, logicalDecomposition);
             });
         });
     }
 
+    private void addDependeciesSection(RichTextReport report, LogicalDecomposition logicalDecomposition) {
+        int threshold = logicalDecomposition.getTemporalLinkThreshold();
+
+        report.startDiv("margin: 10px;");
+        report.startSubSection(logicalDecomposition.getName() + " (" + threshold + "+ links)", "");
+        addChangeDependencies(report, logicalDecomposition, codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether());
+        report.endDiv();
+
+        report.startDiv("margin: 10px;");
+        report.startShowMoreBlock("past 30 days...");
+        addChangeDependencies(report, logicalDecomposition, codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days());
+        report.endShowMoreBlock();
+        report.endDiv();
+
+        report.startDiv("margin: 10px;");
+        report.startShowMoreBlock("past 3 months...");
+        addChangeDependencies(report, logicalDecomposition, codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether90Days());
+        report.endShowMoreBlock();
+        report.endDiv();
+
+        report.startDiv("margin: 10px;");
+        report.startShowMoreBlock("past 6 months...");
+        addChangeDependencies(report, logicalDecomposition, codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether180Days());
+        report.endShowMoreBlock();
+        report.endDiv();
+
+        report.endSection();
+    }
+
     private void addChangeDependencies(RichTextReport report, LogicalDecomposition logicalDecomposition, List<FilePairChangedTogether> filePairsChangedTogether) {
         int threshold = logicalDecomposition.getTemporalLinkThreshold();
-        report.startSubSection(logicalDecomposition.getName() + " (" + threshold + "+ links)", "");
         renderDependencies(report, logicalDecomposition.getName(), threshold, filePairsChangedTogether);
-        report.endSection();
     }
 
     private void renderDependencies(RichTextReport report, String logicalDecompositionName, int threshold, List<FilePairChangedTogether> filePairsChangedTogether) {
@@ -130,15 +145,12 @@ public class FileTemporalDependenciesReportGenerator {
         List<ComponentDependency> componentDependencies = dependencies.stream().filter(d -> d.getCount() >= threshold).collect(Collectors.toList());
 
         if (componentDependencies.size() > 0) {
-            Collections.sort(componentDependencies, (a, b) -> b.getCount() - a.getCount());
-            if (componentDependencies.size() > 50) {
-                componentDependencies = componentDependencies.subList(0, 50);
-            }
             GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
             graphvizDependencyRenderer.setDefaultNodeFillColor("deepskyblue2");
             graphvizDependencyRenderer.setType("graph");
             graphvizDependencyRenderer.setArrow("--");
-            graphvizDependencyRenderer.setArrowColor("crimson");
+            graphvizDependencyRenderer.setArrowColor("deepskyblue4");
+            graphvizDependencyRenderer.setMaxNumberOfDependencies(50);
             String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), componentDependencies);
 
             String graphId = "file_changed_together_dependencies_" + graphCounter++;

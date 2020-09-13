@@ -115,6 +115,7 @@ public class DependenciesPane extends BorderPane {
             GraphvizDependencyRenderer renderer = new GraphvizDependencyRenderer();
             renderer.setOrientation(logicalDecomposition.getRenderingOptions().getOrientation());
             renderer.append(GraphvizUtil.getSvgFromDot(graphvizContent));
+            renderer.setMaxNumberOfDependencies(100);
             dependenciesView.load(renderer.getHtmlContent(), graphvizContent);
         } else {
             dependenciesView.load("", graphvizContent);

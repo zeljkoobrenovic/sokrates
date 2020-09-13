@@ -14,6 +14,7 @@ public class FilePairChangedTogether {
     private SourceFile sourceFile2;
     private int commitsCountFile1;
     private int commitsCountFile2;
+    private String latestCommit = "";
 
     private List<String> commits = new ArrayList<>();
 
@@ -63,5 +64,13 @@ public class FilePairChangedTogether {
 
     public void setCommitsCountFile2(int commitsCountFile2) {
         this.commitsCountFile2 = commitsCountFile2;
+    }
+
+    public String getLatestCommit() {
+        return latestCommit;
+    }
+
+    public void setLatestCommit(String latestCommit) {
+        this.latestCommit = latestCommit;
     }
 }

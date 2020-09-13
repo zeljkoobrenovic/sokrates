@@ -150,6 +150,7 @@ public class LogicalComponentsReportGenerator {
         List<String> componentNames = new ArrayList<>();
         logicalDecomposition.getComponents().forEach(c -> componentNames.add(c.getName()));
         GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
+        graphvizDependencyRenderer.setMaxNumberOfDependencies(100);
         graphvizDependencyRenderer.setOrientation(logicalDecomposition.getLogicalDecomposition().getRenderingOptions().getOrientation());
 
         boolean renderComponentsWithoutDependencies = logicalDecomposition.getLogicalDecomposition().getRenderingOptions().isRenderComponentsWithoutDependencies();

@@ -7,6 +7,7 @@ package nl.obren.sokrates.reports.utils;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Collections;
 import java.util.List;
 
 public class GraphvizDependencyRenderer {
@@ -26,6 +27,7 @@ public class GraphvizDependencyRenderer {
     private String arrow = "->";
     private String arrowColor = "deepskyblue4";
     private String defaultNodeFillColor = "grey";
+    private int maxNumberOfDependencies;
 
     public GraphvizDependencyRenderer() {
     }
@@ -113,8 +115,14 @@ public class GraphvizDependencyRenderer {
         });
         graphviz.append("\n");
 
-        componentDependencies
-                .stream()
+        List<ComponentDependency> renderDependencies = componentDependencies;
+        Collections.sort(renderDependencies, (a, b) -> b.getCount() - a.getCount());
+
+        if (maxNumberOfDependencies > 0 && renderDependencies.size() > maxNumberOfDependencies) {
+            renderDependencies = renderDependencies.subList(0, maxNumberOfDependencies);
+        }
+
+        renderDependencies.stream()
                 .filter(d -> StringUtils.isNotBlank(d.getFromComponent()) && StringUtils.isNotBlank(d.getToComponent()))
                 .forEach(componentDependency -> {
                     int thickness = getThickness(componentDependency, maxCount);
@@ -174,5 +182,13 @@ public class GraphvizDependencyRenderer {
 
     public void setDefaultNodeFillColor(String defaultNodeFillColor) {
         this.defaultNodeFillColor = defaultNodeFillColor;
+    }
+
+    public void setMaxNumberOfDependencies(int maxNumberOfDependencies) {
+        this.maxNumberOfDependencies = maxNumberOfDependencies;
+    }
+
+    public int getMaxNumberOfDependencies() {
+        return maxNumberOfDependencies;
     }
 }

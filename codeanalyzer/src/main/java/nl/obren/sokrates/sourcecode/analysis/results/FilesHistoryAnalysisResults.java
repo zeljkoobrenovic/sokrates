@@ -30,6 +30,10 @@ public class FilesHistoryAnalysisResults {
     private List<FilePairChangedTogether> filePairsChangedTogether = new ArrayList<>();
     @JsonIgnore
     private List<FilePairChangedTogether> filePairsChangedTogether30Days = new ArrayList<>();
+    @JsonIgnore
+    private List<FilePairChangedTogether> filePairsChangedTogether90Days = new ArrayList<>();
+    @JsonIgnore
+    private List<FilePairChangedTogether> filePairsChangedTogether180Days = new ArrayList<>();
 
     private List<FileAgeDistributionPerLogicalDecomposition> changeDistributionPerLogicalDecomposition = new ArrayList<>();
     private List<FileAgeDistributionPerLogicalDecomposition> firstModifiedDistributionPerLogicalDecomposition = new ArrayList<>();
@@ -195,6 +199,26 @@ public class FilesHistoryAnalysisResults {
     @JsonIgnore
     public void setFilePairsChangedTogether30Days(List<FilePairChangedTogether> filePairsChangedTogether30Days) {
         this.filePairsChangedTogether30Days = filePairsChangedTogether30Days;
+    }
+
+    @JsonIgnore
+    public List<FilePairChangedTogether> getFilePairsChangedTogether90Days() {
+        return filePairsChangedTogether90Days;
+    }
+
+    @JsonIgnore
+    public void setFilePairsChangedTogether90Days(List<FilePairChangedTogether> filePairsChangedTogether30Days) {
+        this.filePairsChangedTogether90Days = filePairsChangedTogether30Days;
+    }
+
+    @JsonIgnore
+    public List<FilePairChangedTogether> getFilePairsChangedTogether180Days() {
+        return filePairsChangedTogether180Days;
+    }
+
+    @JsonIgnore
+    public void setFilePairsChangedTogether180Days(List<FilePairChangedTogether> filePairsChangedTogether180Days) {
+        this.filePairsChangedTogether180Days = filePairsChangedTogether180Days;
     }
 
     @JsonIgnore
