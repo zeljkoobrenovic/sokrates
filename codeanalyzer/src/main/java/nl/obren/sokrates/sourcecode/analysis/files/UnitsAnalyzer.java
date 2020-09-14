@@ -52,7 +52,7 @@ public class UnitsAnalyzer extends Analyzer {
 
     public void analyze() {
         progressFeedback.start();
-        AnalysisUtils.info(textSummary, progressFeedback, "Extracting units...", start);
+        AnalysisUtils.info(textSummary, progressFeedback, "Analysing units...", start);
         this.allUnits = new UnitsExtractor().getUnits(main.getSourceFiles(), progressFeedback);
 
         int linesOfCode = UnitUtils.getLinesOfCode(allUnits);

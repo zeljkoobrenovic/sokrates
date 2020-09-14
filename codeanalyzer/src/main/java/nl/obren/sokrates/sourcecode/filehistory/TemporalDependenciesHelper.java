@@ -42,19 +42,19 @@ public class TemporalDependenciesHelper {
 
         dependency.setCount(dependency.getCount() + 1);
 
-        List<String> dates = datesMap.get(dependency);
-        if (dates == null) {
-            dates = new ArrayList<>();
-            datesMap.put(dependency, dates);
+        List<String> commits = datesMap.get(dependency);
+        if (commits == null) {
+            commits = new ArrayList<>();
+            datesMap.put(dependency, commits);
         }
 
-        List<String> finalDates = dates;
-        filePairChangedTogether.getCommits().forEach(date -> {
-            if (!finalDates.contains(date)) {
-                finalDates.add(date);
+        List<String> finalCommits = commits;
+        filePairChangedTogether.getCommits().forEach(commit -> {
+            if (!finalCommits.contains(commit)) {
+                finalCommits.add(commit);
             }
         });
-        dependency.setCount(finalDates.size());
+        dependency.setCount(finalCommits.size());
     }
 
     private ComponentDependency getDependency(String name1, String name2) {

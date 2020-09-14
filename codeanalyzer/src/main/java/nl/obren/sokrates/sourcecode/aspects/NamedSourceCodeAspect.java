@@ -11,7 +11,9 @@ import nl.obren.sokrates.sourcecode.SourceFileFilter;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class NamedSourceCodeAspect {
     private String name = "";
@@ -22,6 +24,8 @@ public class NamedSourceCodeAspect {
     private List<String> files = new ArrayList<>();
     @JsonIgnore
     private List<SourceFile> sourceFiles = new ArrayList<>();
+    @JsonIgnore
+    private Map<String, SourceFile> sourceFilesPathMap = null;
 
     public NamedSourceCodeAspect() {
     }
@@ -102,12 +106,11 @@ public class NamedSourceCodeAspect {
 
     @JsonIgnore
     public SourceFile getSourceFileByPath(String path) {
-        for (SourceFile sourceFile : sourceFiles) {
-            if (sourceFile.getRelativePath().equalsIgnoreCase(path)) {
-                return sourceFile;
-            }
+        if (sourceFilesPathMap == null) {
+            sourceFilesPathMap = new HashMap<>();
+            sourceFiles.forEach(sourceFile -> sourceFilesPathMap.put(sourceFile.getRelativePath(), sourceFile));
         }
-        return null;
+        return sourceFilesPathMap.get(path);
     }
 
     public List<String> getFiles() {

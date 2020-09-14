@@ -71,11 +71,16 @@ public class FilePairsChangedTogether {
             }
 
             filePairChangedTogether.getCommits().add(commitId);
-            if (StringUtils.isBlank(filePairChangedTogether.getLatestCommit()) ||
-                    date.compareTo(filePairChangedTogether.getLatestCommit()) > 0) {
+
+            if (shouldUpdateLatestDate(date, filePairChangedTogether)) {
                 filePairChangedTogether.setLatestCommit(date);
             }
         }
+    }
+
+    private boolean shouldUpdateLatestDate(String date, FilePairChangedTogether filePairChangedTogether) {
+        return StringUtils.isBlank(filePairChangedTogether.getLatestCommit()) ||
+                date.compareTo(filePairChangedTogether.getLatestCommit()) > 0;
     }
 
     public List<FilePairChangedTogether> getFilePairs() {

@@ -44,24 +44,29 @@ public class CodeAnalyzer {
         start = System.currentTimeMillis();
         results.setAnalysisStartTimeMs(start);
         results.setCodeConfiguration(codeConfiguration);
+        StringBuffer textSummary = results.getTextSummary();
 
         AnalysisUtils.detailedInfo(results.getTextSummary(), progressFeedback, "Start of analysis", start);
 
         new BasicsAnalyzer(results, codeConfigurationFile, progressFeedback).analyze();
 
         if (shouldAnalyzeLogicalDecomposition()) {
+            AnalysisUtils.info(textSummary, progressFeedback, "Analysing logical decompositions...", start);
             new LogicalDecompositionAnalyzer(results).analyze(progressFeedback);
         }
 
         if (shouldAnalyzeConcerns()) {
+            AnalysisUtils.info(textSummary, progressFeedback, "Analysing features of interest...", start);
             new ConcernsAnalyzer(results, progressFeedback).analyze();
         }
 
         if (shouldAnalyzeFileSize()) {
+            AnalysisUtils.info(textSummary, progressFeedback, "Analysing file size...", start);
             new FileSizeAnalyzer(results).analyze();
         }
 
         if (shouldAnalyzeFileHistory()) {
+            AnalysisUtils.info(textSummary, progressFeedback, "Analysing commits history...", start);
             new FileHistoryAnalyzer(results, codeConfigurationFile.getParentFile()).analyze();
         }
 

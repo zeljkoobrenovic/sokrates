@@ -46,7 +46,7 @@ public class LogicalDecompositionAnalyzer extends Analyzer {
         DependenciesAnalysis dependenciesAnalysis = new DependenciesAnalysis();
         boolean shouldGetDependencies = false;
         if (!skipDependencies) {
-            AnalysisUtils.info(textSummary, progressFeedback, "Extracting dependencies...", start);
+            AnalysisUtils.info(textSummary, progressFeedback, "Analysing dependencies...", start);
             dependenciesAnalysis = DependenciesUtils.extractDependencies(codeConfiguration.getMain(), skipDependencies);
             for (LogicalDecomposition logicalDecomposition : codeConfiguration.getLogicalDecompositions()) {
                 if (logicalDecomposition.getDependenciesFinder().isUseBuiltInDependencyFinders()) {

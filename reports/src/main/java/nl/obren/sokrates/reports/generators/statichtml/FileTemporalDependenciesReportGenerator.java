@@ -109,7 +109,7 @@ public class FileTemporalDependenciesReportGenerator {
         int threshold = logicalDecomposition.getTemporalLinkThreshold();
 
         report.startDiv("margin: 10px;");
-        report.startSubSection(logicalDecomposition.getName() + " (" + threshold + "+ links)", "");
+        report.startSubSection(logicalDecomposition.getName() + " (" + threshold + "+ commits)", "");
         addChangeDependencies(report, logicalDecomposition, codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether());
         report.endDiv();
 

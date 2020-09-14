@@ -47,7 +47,7 @@ public class DuplicationAnalyzer extends Analyzer {
         this.progressFeedback = progressFeedback;
         progressFeedback.start();
         progressFeedback.setDetailedText("");
-        AnalysisUtils.info(textSummary, progressFeedback, "Extracting duplication...", start);
+        AnalysisUtils.info(textSummary, progressFeedback, "Analysing duplication...", start);
         List<DuplicationInstance> duplicates = new DuplicationEngine().findDuplicates(main.getSourceFiles(), new ProgressFeedback());
 
         analysisResults.setAllDuplicates(duplicates);
