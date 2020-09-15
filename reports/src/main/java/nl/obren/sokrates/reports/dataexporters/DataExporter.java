@@ -267,13 +267,20 @@ public class DataExporter {
     private void exportFilesChangedTogether(List<FilePairChangedTogether> filePairsChangedTogether, String fileName) {
         StringBuilder content = new StringBuilder();
         content.append("file 1\tfile 2\t# same commits\t# commits file 1\t# commits file 2\n");
-        filePairsChangedTogether.forEach(pair -> {
-            content.append(pair.getSourceFile1().getRelativePath()).append("\t");
-            content.append(pair.getSourceFile2().getRelativePath()).append("\t");
-            content.append(pair.getCommits().size()).append("\t");
-            content.append(pair.getCommitsCountFile1()).append("\t");
-            content.append(pair.getCommitsCountFile2()).append("\n");
-        });
+        if (filePairsChangedTogether.size() > 0) {
+            filePairsChangedTogether.sort((a, b) -> b.getCommits().size() - a.getCommits().size());
+
+            int limit = Math.min(10000, filePairsChangedTogether.size());
+            List<FilePairChangedTogether> limitedList = filePairsChangedTogether.subList(0, limit);
+
+            limitedList.forEach(pair -> {
+                content.append(pair.getSourceFile1().getRelativePath()).append("\t");
+                content.append(pair.getSourceFile2().getRelativePath()).append("\t");
+                content.append(pair.getCommits().size()).append("\t");
+                content.append(pair.getCommitsCountFile1()).append("\t");
+                content.append(pair.getCommitsCountFile2()).append("\n");
+            });
+        }
         try {
             FileUtils.write(new File(textDataFolder, fileName), content.toString(), UTF_8);
         } catch (IOException e) {
