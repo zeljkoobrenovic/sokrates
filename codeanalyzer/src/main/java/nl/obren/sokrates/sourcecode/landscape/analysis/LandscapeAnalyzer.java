@@ -64,11 +64,13 @@ public class LandscapeAnalyzer {
             codeAnalysisResults.setFilesAnalysisResults(new FilesAnalysisResults());
             codeAnalysisResults.setAllDependencies(new ArrayList<>());
             codeAnalysisResults.setFilesExcludedByExtension(new ArrayList<>());
-            codeAnalysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles().clear();
-            codeAnalysisResults.getTestAspectAnalysisResults().getAspect().getSourceFiles().clear();
-            codeAnalysisResults.getGeneratedAspectAnalysisResults().getAspect().getSourceFiles().clear();
-            codeAnalysisResults.getBuildAndDeployAspectAnalysisResults().getAspect().getSourceFiles().clear();
-            codeAnalysisResults.getOtherAspectAnalysisResults().getAspect().getSourceFiles().clear();
+            if (codeAnalysisResults.getMainAspectAnalysisResults().getAspect() != null) {
+                codeAnalysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles().clear();
+                codeAnalysisResults.getTestAspectAnalysisResults().getAspect().getSourceFiles().clear();
+                codeAnalysisResults.getGeneratedAspectAnalysisResults().getAspect().getSourceFiles().clear();
+                codeAnalysisResults.getBuildAndDeployAspectAnalysisResults().getAspect().getSourceFiles().clear();
+                codeAnalysisResults.getOtherAspectAnalysisResults().getAspect().getSourceFiles().clear();
+            }
             return codeAnalysisResults;
         } catch (IOException e) {
             e.printStackTrace();

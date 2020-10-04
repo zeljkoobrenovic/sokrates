@@ -23,6 +23,7 @@ public class LandscapeConfiguration {
 
     private List<CustomMetric> customMetrics = new ArrayList<>();
     private List<CustomMetric> customMetricsSmall = new ArrayList<>();
+    private List<WebFrameLink> iFrames = new ArrayList<>();
     private CustomTagsConfig tags = new CustomTagsConfig();
 
     private List<SubLandscapeLink> subLandscapes = new ArrayList<>();
@@ -122,6 +123,14 @@ public class LandscapeConfiguration {
 
     public void setCustomMetricsSmall(List<CustomMetric> customMetricsSmall) {
         this.customMetricsSmall = customMetricsSmall;
+    }
+
+    public List<WebFrameLink> getiFrames() {
+        return iFrames;
+    }
+
+    public void setiFrames(List<WebFrameLink> iFrames) {
+        this.iFrames = iFrames;
     }
 
     public CustomTagsConfig getTags() {

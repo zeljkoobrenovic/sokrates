@@ -159,7 +159,23 @@ public class LandscapeReportGenerator {
         landscapeReport.endDiv();
         landscapeReport.addLineBreak();
 
+        addIFrames(configuration);
         addCustomTags(configuration);
+    }
+
+    private void addIFrames(LandscapeConfiguration configuration) {
+        if (configuration.getiFrames().size() > 0) {
+            configuration.getiFrames().forEach(iframe -> {
+                if (StringUtils.isNotBlank(iframe.getTitle())) {
+                    landscapeReport.startSubSection(iframe.getTitle(), "");
+                }
+                String style = StringUtils.defaultIfBlank(iframe.getStyle(), "width: 100%; height: 200px; border: 1px solid lightgrey;");
+                landscapeReport.addHtmlContent("<iframe src='" + iframe.getSrc() + "' frameborder='0' style='" + style + "'></iframe>");
+                if (StringUtils.isNotBlank(iframe.getTitle())) {
+                    landscapeReport.endSection();
+                }
+            });
+        }
     }
 
     private void addCustomTags(LandscapeConfiguration configuration) {

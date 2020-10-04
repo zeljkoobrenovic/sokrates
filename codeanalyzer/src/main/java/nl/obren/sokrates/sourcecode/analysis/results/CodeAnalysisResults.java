@@ -49,7 +49,9 @@ public class CodeAnalysisResults {
     private int numberOfExcludedFiles;
     private Map<String, Integer> excludedExtensions;
     private long analysisStartTimeMs;
+    @JsonIgnore
     private List<SourceFile> filesExcludedByExtension;
+    @JsonIgnore
     private Map<String, IgnoredFilesGroup> ignoredFilesGroups;
 
     public Metadata getMetadata() {
@@ -246,18 +248,22 @@ public class CodeAnalysisResults {
         this.analysisStartTimeMs = analysisStartTimeMs;
     }
 
+    @JsonIgnore
     public void setFilesExcludedByExtension(List<SourceFile> filesExcludedByExtension) {
         this.filesExcludedByExtension = filesExcludedByExtension;
     }
 
+    @JsonIgnore
     public List<SourceFile> getFilesExcludedByExtension() {
         return filesExcludedByExtension;
     }
 
+    @JsonIgnore
     public void setIgnoredFilesGroups(Map<String, IgnoredFilesGroup> ignoredFilesGroups) {
         this.ignoredFilesGroups = ignoredFilesGroups;
     }
 
+    @JsonIgnore
     public Map<String, IgnoredFilesGroup> getIgnoredFilesGroups() {
         return ignoredFilesGroups;
     }

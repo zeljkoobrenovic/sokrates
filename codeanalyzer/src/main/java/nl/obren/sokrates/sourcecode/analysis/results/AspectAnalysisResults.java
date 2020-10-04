@@ -23,6 +23,7 @@ public class AspectAnalysisResults {
     private int numberOfRegexLineMatches;
     private List<NumericMetric> fileCountPerExtension = new ArrayList<>();
     private List<NumericMetric> linesOfCodePerExtension = new ArrayList<>();
+    @JsonIgnore
     private NamedSourceCodeAspect aspect;
     @JsonIgnore
     private List<FoundText> foundTextList = new ArrayList<>();
@@ -78,10 +79,12 @@ public class AspectAnalysisResults {
     }
 
 
+    @JsonIgnore
     public void setAspect(NamedSourceCodeAspect aspect) {
         this.aspect = aspect;
     }
 
+    @JsonIgnore
     public NamedSourceCodeAspect getAspect() {
         return aspect;
     }
