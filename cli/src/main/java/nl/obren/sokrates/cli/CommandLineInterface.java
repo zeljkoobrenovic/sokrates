@@ -25,6 +25,7 @@ import nl.obren.sokrates.sourcecode.analysis.CodeAnalyzerSettings;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
 import nl.obren.sokrates.sourcecode.scoping.ScopeCreator;
 import nl.obren.sokrates.sourcecode.scoping.custom.CustomConventionsHelper;
@@ -54,6 +55,7 @@ public class CommandLineInterface {
     public static final String SRC_ROOT = "srcRoot";
     public static final String CONVENTIONS_FILE = "conventionsFile";
     public static final String CONF_FILE = "confFile";
+    public static final String DATE = "date";
     public static final String REPORT_ALL = "reportAll";
     public static final String REPORT_DATA = "reportData";
     public static final String REPORT_OVERVIEW = "reportOverview";
@@ -87,6 +89,7 @@ public class CommandLineInterface {
     private Option srcRoot = new Option(SRC_ROOT, true, "[OPTIONAL] the folder where reports will be stored (default is \"<currentFolder>/_sokrates/reports/\")");
     private Option conventionsFile = new Option(CONVENTIONS_FILE, true, "the custom conventions JSON file path\")");
     private Option confFile = new Option(CONF_FILE, true, "[OPTIONAL] the path to configuration file (default is \"<currentFolder>/_sokrates/config.json\"");
+    private Option date = new Option(DATE, true, "[OPTIONAL] last date of source code update (default today), used for reports on active contributors");
     private Option analysisRoot = new Option(ANALYSIS_ROOT, true, "[OPTIONAL] the path to configuration file (default is \"<currentFolder>/_sokrates/config.json\"");
     private Option timeout = new Option(TIMEOUT, true, "[OPTIONAL] timeout in seconds");
     private Option all = new Option(REPORT_ALL, false, "[DEFAULT] generate all reports");
@@ -184,7 +187,17 @@ public class CommandLineInterface {
 
         String confFilePath = cmd.getOptionValue(confFile.getOpt());
 
+        updateDateParam(cmd);
+
         LandscapeAnalysisCommands.init(root, confFilePath != null ? new File(confFilePath) : null);
+    }
+
+    private void updateDateParam(CommandLine cmd) {
+        String dateString = cmd.getOptionValue(date.getOpt());
+        if (dateString != null) {
+            System.out.println("Using '" + dateString + "' as latest source code update date for active contributors reports.");
+            DateUtils.setDateParam(dateString);
+        }
     }
 
     private void updateLandscape(String[] args) throws ParseException {
@@ -206,6 +219,7 @@ public class CommandLineInterface {
         }
 
         String confFilePath = cmd.getOptionValue(confFile.getOpt());
+        updateDateParam(cmd);
 
         LandscapeAnalysisCommands.update(root, confFilePath != null ? new File(confFilePath) : null);
     }
@@ -247,6 +261,8 @@ public class CommandLineInterface {
         }
 
         File conf = getConfigFile(cmd, root);
+
+        updateDateParam(cmd);
 
         new ScopeCreator(root, conf, customScopingConventions).createScopeFromConventions();
 
@@ -360,6 +376,8 @@ public class CommandLineInterface {
     }
 
     private void generateReports(CommandLine cmd) throws IOException {
+        updateDateParam(cmd);
+
         File sokratesConfigFile;
 
         if (!cmd.hasOption(confFile.getOpt())) {
@@ -669,6 +687,7 @@ public class CommandLineInterface {
         options.addOption(findings);
         options.addOption(internalGraphviz);
         options.addOption(timeout);
+        options.addOption(date);
 
         outputFolder.setRequired(true);
         confFile.setRequired(true);
@@ -709,17 +728,12 @@ public class CommandLineInterface {
         return options;
     }
 
-    private Options getExportStandardConventionsOptions() {
-        Options options = new Options();
-
-        return options;
-    }
-
     private Options getInitLandscapeOptions() {
         Options options = new Options();
         options.addOption(analysisRoot);
         options.addOption(confFile);
         options.addOption(timeout);
+        options.addOption(date);
 
         confFile.setRequired(false);
 
@@ -731,19 +745,12 @@ public class CommandLineInterface {
         options.addOption(analysisRoot);
         options.addOption(confFile);
         options.addOption(timeout);
+        options.addOption(date);
 
         confFile.setRequired(false);
 
         return options;
     }
-
-    private Options getGenerateLandscapeReportOptions() {
-        Options options = new Options();
-        options.addOption(confFile);
-
-        return options;
-    }
-
 
     public void setProgressFeedback(ProgressFeedback progressFeedback) {
         this.progressFeedback = progressFeedback;

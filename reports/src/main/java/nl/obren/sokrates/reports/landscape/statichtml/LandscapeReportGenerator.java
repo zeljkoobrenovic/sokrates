@@ -167,7 +167,13 @@ public class LandscapeReportGenerator {
         if (configuration.getiFrames().size() > 0) {
             configuration.getiFrames().forEach(iframe -> {
                 if (StringUtils.isNotBlank(iframe.getTitle())) {
-                    landscapeReport.startSubSection(iframe.getTitle(), "");
+                    String title;
+                    if (StringUtils.isNotBlank(iframe.getMoreInfoLink())) {
+                        title = "<a href='" + iframe.getMoreInfoLink() + "' target='_blank'>" + iframe.getTitle() + "</a>";
+                    } else {
+                        title = iframe.getTitle();
+                    }
+                    landscapeReport.startSubSection(title, "");
                 }
                 String style = StringUtils.defaultIfBlank(iframe.getStyle(), "width: 100%; height: 200px; border: 1px solid lightgrey;");
                 landscapeReport.addHtmlContent("<iframe src='" + iframe.getSrc() + "' frameborder='0' style='" + style + "'></iframe>");
@@ -434,6 +440,9 @@ public class LandscapeReportGenerator {
                     "LOC<br/>(test)", "LOC<br/>(other)",
                     "Age", "Contributors" + (thresholdCommits > 1 ? "<br/>(" + thresholdCommits + "+&nbsp;commits)" : ""),
                     "Recent<br>Contributors<br>(30d)", "Rookies", "Commits<br>this year", "Report");
+            Collections.sort(projectsAnalysisResults,
+                    (a, b) -> b.getAnalysisResults().getContributorsAnalysisResults().getCommitsThisYear()
+                            - a.getAnalysisResults().getContributorsAnalysisResults().getCommitsThisYear());
             projectsAnalysisResults.forEach(projectAnalysis -> {
                 addProjectRow(projectAnalysis);
             });

@@ -4,7 +4,6 @@
 
 package nl.obren.sokrates.sourcecode.filehistory;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
 
 import java.text.ParseException;
@@ -13,6 +12,7 @@ import java.util.Calendar;
 
 public class DateUtils {
     public static final String ENV_SOKRATES_SOURCE_CODE_DATE = "SOKRATES_SOURCE_CODE_DATE";
+    public static String dateParam = null;
 
     public static boolean isDateWithinRange(String date, int rangeInDays) {
         if (StringUtils.isBlank(date)) {
@@ -31,17 +31,32 @@ public class DateUtils {
     public static Calendar getCalendar() {
         Calendar cal = Calendar.getInstance();
 
-        String sourceCodeDate = System.getenv(ENV_SOKRATES_SOURCE_CODE_DATE);
-        if (StringUtils.isNotBlank(sourceCodeDate)) {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            try {
-                cal.setTime(sdf.parse(sourceCodeDate));// all done
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-        }
+        updateWithDateParams(cal);
+
         return cal;
     }
 
+    private static void updateWithDateParams(Calendar cal) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            if (StringUtils.isNotBlank(DateUtils.dateParam)) {
+                cal.setTime(sdf.parse(DateUtils.dateParam));
+            } else {
+                String sourceCodeDate = System.getenv(ENV_SOKRATES_SOURCE_CODE_DATE);
+                if (StringUtils.isNotBlank(sourceCodeDate)) {
+                    cal.setTime(sdf.parse(sourceCodeDate));
+                }
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+    }
 
+    public static String getDateParam() {
+        return dateParam;
+    }
+
+    public static void setDateParam(String dateParam) {
+        DateUtils.dateParam = dateParam;
+    }
 }

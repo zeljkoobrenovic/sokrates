@@ -4,6 +4,7 @@ public class WebFrameLink {
     private String title = "";
     private String src = "";
     private String style = "";
+    private String moreInfoLink = "";
 
     public WebFrameLink() {
     }
@@ -30,5 +31,13 @@ public class WebFrameLink {
 
     public void setStyle(String style) {
         this.style = style;
+    }
+
+    public String getMoreInfoLink() {
+        return moreInfoLink;
+    }
+
+    public void setMoreInfoLink(String moreInfoLink) {
+        this.moreInfoLink = moreInfoLink;
     }
 }
