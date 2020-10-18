@@ -24,6 +24,7 @@ public class Blocks {
     private String progressText = "";
     private int currentProgressValue = 0;
     private int endProgressValue = 0;
+    private boolean optimize = false;
 
     private Map<String, Pair<SourceFile, SourceFile>> filePairMap = new HashMap<>();
 
@@ -79,8 +80,8 @@ public class Blocks {
                 duplicatedFilePairs.add(db);
                 SourceFile sourceFile1 = db.getFiles().get(0);
                 SourceFile sourceFile2 = db.getFiles().get(1);
-                String pairKey1 = sourceFile1.getFile().getPath() + "::" + sourceFile2.getFile().getPath();
-                String pairKey2 = sourceFile2.getFile().getPath() + "::" + sourceFile1.getFile().getPath();
+                String pairKey1 = getPairKey(sourceFile1.getFile().getPath(), sourceFile2.getFile().getPath());
+                String pairKey2 = getPairKey(sourceFile2.getFile().getPath(), sourceFile1.getFile().getPath());
 
                 if (!(filePairMap.containsKey(pairKey1) || filePairMap.containsKey(pairKey2))) {
                     filePairMap.put(pairKey1, new ImmutablePair<>(sourceFile1, sourceFile2));
@@ -94,8 +95,8 @@ public class Blocks {
                         newBlock.getFiles().add(f1);
                         newBlock.getFiles().add(f2);
 
-                        String pairKey1 = f1.getFile().getPath() + "::" + f2.getFile().getPath();
-                        String pairKey2 = f2.getFile().getPath() + "::" + f1.getFile().getPath();
+                        String pairKey1 = getPairKey(f1.getFile().getPath(), f2.getFile().getPath());
+                        String pairKey2 = getPairKey(f2.getFile().getPath(), f1.getFile().getPath());
 
                         if (!(filePairMap.containsKey(pairKey1) || filePairMap.containsKey(pairKey2))) {
                             filePairMap.put(pairKey1, new ImmutablePair(f1, f2));
@@ -107,9 +108,18 @@ public class Blocks {
         resetProgressValues(0);
     }
 
+    private String getPairKey(String path1, String path2) {
+        return new StringBuilder()
+                .append(path1)
+                .append("::")
+                .append(path2)
+                .toString();
+    }
+
     private void findDuplicatesAmongFiles() {
         resetProgressValues(filePairMap.size());
         reportProgress("Finding duplicates among files");
+
         filePairMap.values().forEach(pair -> {
             if (progressFeedback != null && progressFeedback.canceled()) {
                 return;
@@ -126,22 +136,24 @@ public class Blocks {
             fileInfoForDuplication2Copy.setBlocks(files.getFilesMap().get(f2).getBlocks());
             fileInfoForDuplication2Copy.getLineIDs().addAll(files.getFilesMap().get(f2).getLineIDs());
 
-            int startBlockSize = Math.min(fileInfoForDuplication1.getBiggestBlockSize(), fileInfoForDuplication2Copy.getBiggestBlockSize());
+            int startBlockSize = optimize
+                    ? minDuplicationBlockSize
+                    : Math.min(fileInfoForDuplication1.getBiggestBlockSize(), fileInfoForDuplication2Copy.getBiggestBlockSize());
 
             for (int blockSize = startBlockSize; blockSize >= minDuplicationBlockSize; blockSize--) {
                 addDuplicationInstances(fileInfoForDuplication1, fileInfoForDuplication2Copy, blockSize);
             }
-
         });
         resetProgressValues(0);
     }
 
     private void addDuplicationInstances(FileInfoForDuplication fileInfoForDuplication1,
-                                         FileInfoForDuplication fileInfoForDuplication2,
-                                         final int blockSize) {
+                                        FileInfoForDuplication fileInfoForDuplication2,
+                                        final int blockSize) {
         final List<Block> blocks = fileInfoForDuplication1.extractBlocks(blockSize);
         blocks.forEach(block1 -> {
-            block1.extractAllPossibleSubBlocks(blockSize).forEach(subBlock1 -> {
+            List<Block> allPossibleSubBlocks = block1.extractAllPossibleSubBlocks(blockSize);
+            allPossibleSubBlocks.forEach(subBlock1 -> {
                 DuplicationInstance instance = duplicationInstances.get(subBlock1.getStringKey());
                 if (instance == null) {
                     instance = new DuplicationInstance();
@@ -164,8 +176,8 @@ public class Blocks {
 
                     File file1 = fileInfoForDuplication1.getSourceFile().getFile();
                     File file2 = fileInfoForDuplication2.getSourceFile().getFile();
-                    String key1 = file1.getPath() + "::" + file2.getPath();
-                    String key2 = file2.getPath() + "::" + file1.getPath();
+                    String key1 = getPairKey(file1.getPath(), file2.getPath());
+                    String key2 = getPairKey(file2.getPath(), file1.getPath());
 
                     boolean alreadyIncluded = false;
                     DuplicateRangePairs duplicateRangePairs1 = fileRangePairs.get(key1);
@@ -175,7 +187,7 @@ public class Blocks {
                         alreadyIncluded = true;
                     }
 
-                    if (duplicateRangePairs2 != null && duplicateRangePairs2.includes(pair2)) {
+                    if (!alreadyIncluded && duplicateRangePairs2 != null && duplicateRangePairs2.includes(pair2)) {
                         alreadyIncluded = true;
                     }
 
@@ -195,7 +207,6 @@ public class Blocks {
                         }
                         duplicateRangePairs2.getRanges().add(pair2);
                     }
-                    // fileInfoForDuplication2.clearSubBlock(subBlock1);
                 }
             });
         });
@@ -217,7 +228,7 @@ public class Blocks {
             copy.setBlocks(fileLineIndexes.getBlocks());
             copy.getLineIDs().addAll(fileLineIndexes.getLineIDs());
 
-            for (int blockSize = copy.getBiggestBlockSize(); blockSize >= minDuplicationBlockSize; blockSize--) {
+            for (int blockSize = optimize ? minDuplicationBlockSize : copy.getBiggestBlockSize(); blockSize >= minDuplicationBlockSize; blockSize--) {
                 final int currentBlockSize = blockSize;
                 final List<Block> blocks = copy.extractBlocks(currentBlockSize);
                 blocks.forEach(block -> {

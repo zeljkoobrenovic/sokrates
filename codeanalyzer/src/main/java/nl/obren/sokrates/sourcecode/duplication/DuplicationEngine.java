@@ -28,17 +28,22 @@ public class DuplicationEngine {
     private int numberOfDuplicatedLines;
 
     public List<DuplicationInstance> findDuplicates(List<SourceFile> sourceFiles, ProgressFeedback progressFeedback) {
+        progressFeedback.setText(System.currentTimeMillis() / 1000 + "");
         duplicates = new ArrayList<>();
 
         Files files = new Files(progressFeedback);
         files.addAll(sourceFiles);
 
         Blocks blocks = new Blocks(files, threshold);
+        System.out.println(System.currentTimeMillis());
         duplicates = blocks.extractDuplicatedBlocks(progressFeedback);
+        System.out.println(System.currentTimeMillis());
 
         totalCleanedLinesOfCode = files.getTotalCleanedLinesOfCode();
 
         numberOfDuplicatedLines = DuplicationUtils.getNumberOfDuplicatedLines(duplicates);
+
+        progressFeedback.setText(System.currentTimeMillis() / 1000 + "");
 
         return duplicates;
     }

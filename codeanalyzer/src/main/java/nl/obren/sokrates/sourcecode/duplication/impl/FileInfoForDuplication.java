@@ -5,7 +5,6 @@
 package nl.obren.sokrates.sourcecode.duplication.impl;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.duplication.impl.Block;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +42,18 @@ public class FileInfoForDuplication {
 
         for (Block block : blocks) {
             blockSize = Math.max(blockSize, block.getLineIndexes().size());
+        }
+
+        return blockSize;
+    }
+
+    public int getSmallestBlockSize(int minDuplicationBlockSize) {
+        int blockSize = minDuplicationBlockSize;
+
+        for (Block block : blocks) {
+            if (block.getLineIndexes().size() >= minDuplicationBlockSize) {
+                blockSize = Math.min(blockSize, block.getLineIndexes().size());
+            }
         }
 
         return blockSize;
