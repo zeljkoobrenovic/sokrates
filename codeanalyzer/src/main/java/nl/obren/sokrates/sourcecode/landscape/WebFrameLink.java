@@ -4,6 +4,7 @@ public class WebFrameLink {
     private String title = "";
     private String src = "";
     private String style = "";
+    private Boolean scrolling = true;
     private String moreInfoLink = "";
 
     public WebFrameLink() {
@@ -39,5 +40,13 @@ public class WebFrameLink {
 
     public void setMoreInfoLink(String moreInfoLink) {
         this.moreInfoLink = moreInfoLink;
+    }
+
+    public Boolean getScrolling() {
+        return scrolling;
+    }
+
+    public void setScrolling(Boolean scrolling) {
+        this.scrolling = scrolling;
     }
 }
