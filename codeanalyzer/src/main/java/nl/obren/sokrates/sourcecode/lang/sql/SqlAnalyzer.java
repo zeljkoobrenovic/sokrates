@@ -30,8 +30,8 @@ public class SqlAnalyzer extends LanguageAnalyzer {
 
         cleaner.addCommentBlockHelper("/*", "*/");
         cleaner.addCommentBlockHelper("--", "\n");
-        cleaner.addStringBlockHelper("\"", "\\");
-        cleaner.addStringBlockHelper("'", "\\");
+        // cleaner.addStringBlockHelper("\"", "\\");
+        // cleaner.addStringBlockHelper("'", "\\");
 
         return cleaner;
     }
