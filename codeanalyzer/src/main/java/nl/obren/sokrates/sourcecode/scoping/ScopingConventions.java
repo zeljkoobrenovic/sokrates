@@ -281,6 +281,7 @@ public class ScopingConventions {
         testFilesConventions.add(new Convention(".*/src/androidTests/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*/[Ss]pecs/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*[-]tests/.*", "", defaultNote));
+        testFilesConventions.add(new Convention(".*/test[-]data/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*_test[.].*", "", defaultNote));
         testFilesConventions.add(new Convention(".*_tests[.].*", "", defaultNote));
         testFilesConventions.add(new Convention(".*[.]test[.].*", "", defaultNote));
