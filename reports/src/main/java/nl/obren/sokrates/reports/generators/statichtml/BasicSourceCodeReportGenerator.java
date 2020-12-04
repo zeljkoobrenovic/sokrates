@@ -30,6 +30,7 @@ public class BasicSourceCodeReportGenerator {
     private RichTextReport fileTemporalDependenciesReport = new RichTextReport("Temporal Dependencies", "FileTemporalDependencies.html");
     private RichTextReport unitSizeReport = new RichTextReport("Unit Size", "UnitSize.html");
     private RichTextReport conditionalComplexityReport = new RichTextReport("Conditional Complexity", "ConditionalComplexity.html");
+    private RichTextReport contributorsReport = new RichTextReport("Contributors", "Contributors.html");
     private RichTextReport findingsReport = new RichTextReport("Notes & Findings", "Notes.html");
     private RichTextReport metricsReport = new RichTextReport("Metrics", "Metrics.html");
     private RichTextReport comparisonReport = new RichTextReport("Trend", "Trend.html");
@@ -90,6 +91,7 @@ public class BasicSourceCodeReportGenerator {
                     reports.add(fileHistoryReport);
                     reports.add(fileChangeFrequencyReport);
                     reports.add(fileTemporalDependenciesReport);
+                    reports.add(contributorsReport);
                 }
             }
             if (codeAnalyzerSettings.isAnalyzeUnitSize()) {
@@ -132,6 +134,7 @@ public class BasicSourceCodeReportGenerator {
         decorateReport(fileHistoryReport, name, logoLink);
         decorateReport(fileChangeFrequencyReport, name, logoLink);
         decorateReport(fileTemporalDependenciesReport, name, logoLink);
+        decorateReport(contributorsReport, name, logoLink);
         decorateReport(controlsReport, name, logoLink);
         decorateReport(metricsReport, name, logoLink);
         decorateReport(comparisonReport, name, logoLink);
@@ -166,6 +169,7 @@ public class BasicSourceCodeReportGenerator {
                 new FileHistoryReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileHistoryReport);
                 new FileChurnReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileChangeFrequencyReport);
                 new FileTemporalDependenciesReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileTemporalDependenciesReport);
+                new ContributorsReportGenerator(codeAnalysisResults).addContributorsAnalysisToReport(contributorsReport);
             }
         }
 

@@ -75,11 +75,13 @@
       "metaRules" : [ ]
     },
     "renderingOptions" : {
-      "orientation" : "TB"
+      "orientation" : "TB",
+      "renderComponentsWithoutDependencies" : true
     },
     "includeExternalComponents" : true,
+    "dependencyLinkThreshold" : 1,
     "duplicationLinkThreshold" : 50,
-    "fileChangeHistoryLinkThreshold" : 20
+    "temporalLinkThreshold" : 2
   }, {
     "name" : "packgae level",
     "scope" : "main",
@@ -94,11 +96,13 @@
       "metaRules" : [ ]
     },
     "renderingOptions" : {
-      "orientation" : "TB"
+      "orientation" : "TB",
+      "renderComponentsWithoutDependencies" : true
     },
     "includeExternalComponents" : true,
+    "dependencyLinkThreshold" : 1,
     "duplicationLinkThreshold" : 50,
-    "fileChangeHistoryLinkThreshold" : 20
+    "temporalLinkThreshold" : 2
   } ],
   "concernGroups" : [ {
     "name" : "general",
@@ -158,12 +162,14 @@
     "historyFolder" : "history"
   },
   "fileHistoryAnalysis" : {
-    "importPath" : ""
+    "importPath" : "../git-history.txt",
+    "ignoreContributors" : [ ]
   },
   "analysis" : {
     "skipDuplication" : false,
     "skipDependencies" : false,
     "cacheSourceFiles" : true,
+    "maxLineLength" : 1000,
     "analyzerOverrides" : [ ]
   }
 }
