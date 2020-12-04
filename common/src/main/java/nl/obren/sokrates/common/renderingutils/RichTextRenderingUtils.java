@@ -65,6 +65,17 @@ public class RichTextRenderingUtils {
         return content.toString();
     }
 
+    public static String getStartShowMoreParagraphDisappear(String visibleContent, String linkLabel) {
+        StringBuilder content = new StringBuilder();
+        String id = "showMoreBlock_" + showMoreBlockId++;
+        content.append("<span id='" + id + "_trigger' style='display: inline-block;'>"
+                + visibleContent + " " + "<a href=\"javascript:showHideDisappear('" + id + "');\")>"
+                + linkLabel + "</a></span>");
+        content.append("<span id='" + id + "' style='display: none;'>");
+
+        return content.toString();
+    }
+
     public static String getEndShowMoreParagraph() {
         return "</span>";
     }

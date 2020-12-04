@@ -8,11 +8,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributionYear;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
+import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -69,6 +71,37 @@ public class LandscapeAnalysisResults {
             count[0] += projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
         });
         return count[0];
+    }
+
+    @JsonIgnore
+    public int getMainLocActive() {
+        int count[] = {0};
+        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
+            FilesHistoryAnalysisResults filesHistoryAnalysisResults = projectAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
+            SourceFileAgeDistribution overallFileLastModifiedDistribution = filesHistoryAnalysisResults.getOverallFileLastModifiedDistribution();
+            if (overallFileLastModifiedDistribution != null) {
+                count[0] += overallFileLastModifiedDistribution.getTotalValue() - overallFileLastModifiedDistribution.getVeryHighRiskValue();
+            }
+        });
+        return count[0];
+    }
+
+    @JsonIgnore
+    public int getMainLocNew() {
+        int count[] = {0};
+        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
+            FilesHistoryAnalysisResults filesHistoryAnalysisResults = projectAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
+            SourceFileAgeDistribution overallFileFirstModifiedDistribution = filesHistoryAnalysisResults.getOverallFileFirstModifiedDistribution();
+            if (overallFileFirstModifiedDistribution != null) {
+                count[0] += overallFileFirstModifiedDistribution.getTotalValue() - overallFileFirstModifiedDistribution.getVeryHighRiskValue();
+            }
+        });
+        return count[0];
+    }
+
+    @JsonIgnore
+    public int getMainLocMaintenance() {
+        return getMainLocActive() - getMainLocNew();
     }
 
     @JsonIgnore

@@ -96,6 +96,7 @@ public class ReportFileExporter {
         }
         indexReport.endSection();
         appendLinks(indexReport, analysisResults);
+        indexReport.addParagraph("<span style='color: grey; font-size: 90%'>updated: " + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + "</span>");
         export(htmlExportFolder, indexReport, "index.html");
     }
 
@@ -308,12 +309,6 @@ public class ReportFileExporter {
             indexReport.addHtmlContent("<b>" + reportTitle + "</b>");
             indexReport.endDiv();
         }
-        indexReport.startDiv("margin-top: 10px; font-size: 90%; color: lightgrey");
-        if (showReport) {
-            SimpleDateFormat format = new SimpleDateFormat("yyyy.MM.dd");
-            indexReport.addHtmlContent(format.format(new Date()));
-        }
-        indexReport.endDiv();
         indexReport.endDiv();
     }
 

@@ -269,6 +269,10 @@ public class RichTextReport {
         addHtmlContent("<div style=\"" + style + "\">");
     }
 
+    public void startDiv(String style, String tooltip) {
+        addHtmlContent("<div style=\"" + style + "\" title=\"" + tooltip + "\">");
+    }
+
     public void startSpan(String style) {
         addHtmlContent("<span style=\"" + style + "\">");
     }
@@ -340,6 +344,10 @@ public class RichTextReport {
 
     public void startShowMoreBlock(String visibleContent, String linkLabel) {
         addHtmlContent(RichTextRenderingUtils.getStartShowMoreParagraph(visibleContent, linkLabel));
+    }
+
+    public void startShowMoreBlockDisappear(String visibleContent, String linkLabel) {
+        addHtmlContent(RichTextRenderingUtils.getStartShowMoreParagraphDisappear(visibleContent, linkLabel));
     }
 
     public void startShowMoreBlock(String linkLabel) {

@@ -125,6 +125,12 @@ public class ReportConstants {
             "            var e = document.getElementById(id);\n" +
             "            e.style.display = (e.style.display == 'block') ? 'none' : 'block';\n" +
             "        }\n" +
+            "        function showHideDisappear(id) {\n" +
+            "            var e = document.getElementById(id);\n" +
+            "            e.style.display = '';" +
+            "            var eTrigger = document.getElementById(id + '_trigger');\n" +
+            "            eTrigger.style.display = 'none';\n" +
+            "        }\n" +
             "    </script>\n" +
             "</head>\n";
 }

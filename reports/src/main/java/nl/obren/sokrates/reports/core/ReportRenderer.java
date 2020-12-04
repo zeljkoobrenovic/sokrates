@@ -80,21 +80,4 @@ public class ReportRenderer {
     private boolean shouldExportVisualToFile(ReportRenderingClient reportRenderingClient, RichTextFragment fragment) {
         return reportRenderingClient.getVisualsExportFolder() != null && StringUtils.isNotBlank(fragment.getId());
     }
-
-    public List<Figure> getFigures(RichTextReport richTextReport) {
-        List<Figure> figures = new ArrayList<>();
-        richTextReport.getRichTextFragments().forEach(fragment -> {
-            if (fragment.getType() == RichTextFragment.Type.GRAPHVIZ) {
-                Figure figure = new Figure(fragment.getDescription(), GraphvizUtil.getSvgFromDot(fragment.getFragment()) + "\n");
-                figure.setSource(fragment.getFragment());
-                figures.add(figure);
-            } else if (fragment.getType() == RichTextFragment.Type.SVG) {
-                Figure figure = new Figure(fragment.getDescription(), fragment.getFragment() + "\n");
-                figure.setSource(fragment.getFragment());
-                figures.add(figure);
-            }
-        });
-
-        return figures;
-    }
 }

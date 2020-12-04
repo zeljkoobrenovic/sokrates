@@ -302,6 +302,9 @@ public class ScopingConventions {
         testFilesConventions.add(new Convention(".*/e2e/.*", "", "Protractor test files"));
 
         testFilesConventions.add(new Convention(".*/test[-]resources/.*", "", "Test resources"));
+        testFilesConventions.add(new Convention(".*/__mocks?__/.*", "", "Mock resources"));
+        testFilesConventions.add(new Convention(".*/mockapi/.*", "", "Mock resources"));
+        testFilesConventions.add(new Convention(".*/mock[-]server/.*", "", "Mock resources"));
 
         testFilesConventions.add(new Convention(".*[.]snap", "", "Jest snapshots"));
     }

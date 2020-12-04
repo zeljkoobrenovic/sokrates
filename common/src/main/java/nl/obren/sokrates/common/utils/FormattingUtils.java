@@ -45,6 +45,10 @@ public class FormattingUtils {
         }
     }
 
+    public static String getPlainTextForNumber(int number) {
+        return getSmallTextForNumber(number).replaceAll("<.*?>", "");
+    }
+
     private static String removeZeroDecimalIfNecessary(String formattedNumber) {
         if (formattedNumber.endsWith(".0")) {
             formattedNumber = formattedNumber.substring(0, formattedNumber.length() - 2);
