@@ -22,6 +22,8 @@ public class Contributor {
     private int commitsCount = 0;
     private int commitsCount30Days = 0;
     private int commitsCount90Days = 0;
+    private int commitsCount180Days = 0;
+    private int commitsCount365Days = 0;
     private String firstCommitDate = "";
     private String latestCommitDate = "";
     private List<String> activeYears = new ArrayList<>();
@@ -58,6 +60,12 @@ public class Contributor {
             }
             if (isCommitedLessThanDaysAgo(date, 90)) {
                 commitsCount90Days += 1;
+            }
+            if (isCommitedLessThanDaysAgo(date, 180)) {
+                commitsCount180Days += 1;
+            }
+            if (isCommitedLessThanDaysAgo(date, 365)) {
+                commitsCount365Days += 1;
             }
         }
 
@@ -153,5 +161,21 @@ public class Contributor {
 
     public void setCommitsCount90Days(int commitsCount90Days) {
         this.commitsCount90Days = commitsCount90Days;
+    }
+
+    public int getCommitsCount180Days() {
+        return commitsCount180Days;
+    }
+
+    public void setCommitsCount180Days(int commitsCount180Days) {
+        this.commitsCount180Days = commitsCount180Days;
+    }
+
+    public int getCommitsCount365Days() {
+        return commitsCount365Days;
+    }
+
+    public void setCommitsCount365Days(int commitsCount365Days) {
+        this.commitsCount365Days = commitsCount365Days;
     }
 }

@@ -5,6 +5,7 @@
 package nl.obren.sokrates.reports.core;
 
 import nl.obren.sokrates.common.utils.FormattingUtils;
+import nl.obren.sokrates.reports.generators.statichtml.ContributorsReportUtils;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
@@ -89,7 +90,7 @@ public class ReportFileExporter {
         summarize(indexReport, analysisResults);
         indexReport.endDiv();
         indexReport.endSection();
-        addContributorsSection(analysisResults, sokratesConfigFolder, indexReport);
+        ContributorsReportUtils.addContributorsSection(analysisResults, indexReport);
         indexReport.startSection("Reports", "");
         for (String[] report : reportList) {
             addReportFragment(htmlExportFolder, indexReport, report);
@@ -98,138 +99,6 @@ public class ReportFileExporter {
         appendLinks(indexReport, analysisResults);
         indexReport.addParagraph("<span style='color: grey; font-size: 90%'>updated: " + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + "</span>");
         export(htmlExportFolder, indexReport, "index.html");
-    }
-
-    public static void addContributorsSection(CodeAnalysisResults analysisResults, File sokratesConfigFolder, RichTextReport indexReport) {
-        CodeConfiguration codeConfiguration = analysisResults.getCodeConfiguration();
-        ContributorsImport contributorsImport = codeConfiguration.getFileHistoryAnalysis().getContributors(sokratesConfigFolder);
-        List<Contributor> contributors = contributorsImport.getContributors();
-        List<ContributionYear> contributorsPerYear = contributorsImport.getContributorsPerYear();
-        if (contributors.size() > 0) {
-            indexReport.startSection("Contributors (" + contributors.size() + ")", "");
-            addContributors(indexReport, contributors);
-            addContributorsPerYear(indexReport, contributorsPerYear);
-            indexReport.addNewTabLink("Contributors' details...", "../data/text/contributors.txt");
-            indexReport.endSection();
-        }
-    }
-
-    private static void addContributorsPerYear(RichTextReport indexReport, List<ContributionYear> contributorsPerYear) {
-        if (contributorsPerYear.size() > 0) {
-            int limit = 20;
-            if (contributorsPerYear.size() > limit) {
-                contributorsPerYear = contributorsPerYear.subList(contributorsPerYear.size() - limit, contributorsPerYear.size());
-            }
-
-            indexReport.startSubSection("Trend", "");
-            int maxContributors = contributorsPerYear.stream().mapToInt(c -> c.getContributorsCount()).max().orElse(1);
-            int maxCommits = contributorsPerYear.stream().mapToInt(c -> c.getCommitsCount()).max().orElse(1);
-
-            indexReport.startTable();
-
-            indexReport.startTableRow();
-            indexReport.addTableCell("Commits", "border: none;");
-            String style = "border: none; text-align: center; vertical-align: bottom; font-size: 80%";
-            contributorsPerYear.forEach(year -> {
-                indexReport.startTableCell(style);
-                int count = year.getCommitsCount();
-                indexReport.addParagraph(count + "", "margin: 2px");
-                int height = 1 + (int) (64.0 * count / maxCommits);
-                indexReport.addHtmlContent("<div style='width: 100%; background-color: darkgrey; height:" + height + "px'></div>");
-                indexReport.endTableCell();
-            });
-            indexReport.endTableRow();
-
-            indexReport.startTableRow();
-            indexReport.addTableCell("Contributors", "border: none;");
-            contributorsPerYear.forEach(year -> {
-                indexReport.startTableCell(style);
-                int count = year.getContributorsCount();
-                indexReport.addParagraph(count + "", "margin: 2px");
-                int height = 1 + (int) (64.0 * count / maxContributors);
-                indexReport.addHtmlContent("<div style='width: 100%; background-color: skyblue; height:" + height + "px'></div>");
-                indexReport.endTableCell();
-            });
-            indexReport.endTableRow();
-
-            indexReport.startTableRow();
-            indexReport.addTableCell("", "border: none; ");
-            contributorsPerYear.forEach(year -> {
-                indexReport.addTableCell(year.getYear(), "border: none; text-align: center; font-size: 90%");
-            });
-            indexReport.endTableRow();
-
-            indexReport.endTable();
-
-            indexReport.endSection();
-        }
-    }
-
-    public static void addContributors(RichTextReport indexReport, List<Contributor> contributors) {
-        Collections.sort(contributors, (a, b) -> b.getCommitsCount() - a.getCommitsCount());
-        int max = contributors.get(0).getCommitsCount();
-        int total = contributors.stream().mapToInt(c -> c.getCommitsCount()).sum();
-        long activeCount = contributors.stream().filter(c -> c.isActive()).count();
-        long rookiesCount = contributors.stream().filter(c -> c.isRookie()).count();
-        long veteransCount = activeCount - rookiesCount;
-        long historicalCount = contributors.size() - activeCount;
-        indexReport.startSubSection("Recent Contributors (" + activeCount
-                        + " = " + veteransCount + " " + (veteransCount == 1 ? "veteran" : "veterans")
-                        + " + " + rookiesCount + " " + (rookiesCount == 1 ? "rookie" : "rookies") + ")",
-                "Contributed in past 6 months (a rookie = the first contribution in past year)");
-        List<Contributor> contributor30Days = contributors.stream().filter(c -> c.isActive(30)).collect(Collectors.toList());
-        List<Contributor> contributor90Days = contributors.stream().filter(c -> c.isActive(90) && !c.isActive(30)).collect(Collectors.toList());
-        List<Contributor> contributor180Days = contributors.stream().filter(c -> c.isActive(180) && !c.isActive(90)).collect(Collectors.toList());
-        if (contributor30Days.size() > 0) {
-            indexReport.addParagraph("Past 30 days (" + contributor30Days.size() + "):", "font-size: 80%");
-            contributor30Days.forEach(contributor -> {
-                addContributor(indexReport, max, total, contributor);
-            });
-        } else {
-            indexReport.addParagraph("No contributors in past 30 days.", "font-size: 80%");
-        }
-        indexReport.addHorizontalLine();
-        if (contributor90Days.size() > 0) {
-            indexReport.addParagraph("Past 31 to 90 days (" + contributor90Days.size() + "):", "font-size: 80%");
-            contributor90Days.forEach(contributor -> {
-                addContributor(indexReport, max, total, contributor);
-            });
-        } else {
-            indexReport.addParagraph("No contributors in past 31 to 90 days.", "font-size: 80%");
-        }
-        indexReport.addHorizontalLine();
-        if (contributor180Days.size() > 0) {
-            indexReport.addParagraph("Past 91 to 180 days (" + contributor180Days.size() + "):", "font-size: 80%");
-            contributor180Days.forEach(contributor -> {
-                addContributor(indexReport, max, total, contributor);
-            });
-        } else {
-            indexReport.addParagraph("No contributors in past 91 to 180 days.", "font-size: 80%");
-        }
-        indexReport.endSection();
-        indexReport.startSubSection("Historical Contributors (" + historicalCount + ")", "Last contributed more than 6 months ago");
-        contributors.stream().filter(c -> !c.isActive()).forEach(contributor -> {
-            addContributor(indexReport, max, total, contributor);
-        });
-        indexReport.endSection();
-    }
-
-    public static void addContributor(RichTextReport indexReport, int max, int total, Contributor contributor) {
-        int commitsCount = contributor.getCommitsCount();
-        double opacity = 0.2 + 0.8 * commitsCount / max;
-        double percentage = 100.0 * commitsCount / total;
-        String info = StringEscapeUtils.escapeHtml4(contributor.getEmail()
-                + " " + commitsCount
-                + " commits (" + FormattingUtils.getFormattedPercentage(percentage) + "%),"
-                + " between " + contributor.getFirstCommitDate() + " and " + contributor.getLatestCommitDate());
-
-        if (contributor.isRookie()) {
-            indexReport.addHtmlContent("<div style='border:2px solid green; border-radius: 5px; display: inline-block;opacity:" + opacity + "' title='" + info + "'>");
-        } else {
-            indexReport.addHtmlContent("<div style='display: inline-block;opacity:" + opacity + "' title='" + info + "'>");
-        }
-        indexReport.addHtmlContent(contributor.isActive() ? getIconSvg("contributor") : getIconSvg("contributor_historical"));
-        indexReport.addHtmlContent("</div>");
     }
 
     private static void addExplorersSection(RichTextReport indexReport) {
@@ -403,9 +272,10 @@ public class ReportFileExporter {
             list.add(new String[]{"", "File Size", "file_size"});
         }
         if (!showHistoryReport) {
-            list.add(new String[]{"", "File Age", "file_age"});
+            list.add(new String[]{"", "File Age", "file_history"});
             list.add(new String[]{"", "File Change Frequency", "heat"});
-            list.add(new String[]{"", "Temporal Dependencies", "temporal-dependencies"});
+            list.add(new String[]{"", "Temporal Dependencies", "temporal_dependency"});
+            list.add(new String[]{"", "Contributors", "contributors"});
         }
         if (!showUnits) {
             list.add(new String[]{"", "Unit Size", "unit_size"});
