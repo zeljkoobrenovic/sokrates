@@ -34,7 +34,7 @@ public class ContributorsReportUtils {
         }
     }
 
-    public static void addContributorsPerYear(RichTextReport indexReport, List<ContributionYear> contributorsPerYear) {
+    public static void addContributorsPerYear(RichTextReport report, List<ContributionYear> contributorsPerYear) {
         if (contributorsPerYear.size() > 0) {
             int limit = 20;
             if (contributorsPerYear.size() > limit) {
@@ -44,41 +44,41 @@ public class ContributorsReportUtils {
             int maxContributors = contributorsPerYear.stream().mapToInt(c -> c.getContributorsCount()).max().orElse(1);
             int maxCommits = contributorsPerYear.stream().mapToInt(c -> c.getCommitsCount()).max().orElse(1);
 
-            indexReport.startTable();
+            report.startTable();
 
-            indexReport.startTableRow();
-            indexReport.addTableCell("Commits", "border: none;");
+            report.startTableRow();
+            report.addTableCell("Commits", "border: none;");
             String style = "border: none; text-align: center; vertical-align: bottom; font-size: 80%";
             contributorsPerYear.forEach(year -> {
-                indexReport.startTableCell(style);
+                report.startTableCell(style);
                 int count = year.getCommitsCount();
-                indexReport.addParagraph(count + "", "margin: 2px");
+                report.addParagraph(count + "", "margin: 2px");
                 int height = 1 + (int) (64.0 * count / maxCommits);
-                indexReport.addHtmlContent("<div style='width: 100%; background-color: darkgrey; height:" + height + "px'></div>");
-                indexReport.endTableCell();
+                report.addHtmlContent("<div style='width: 100%; background-color: darkgrey; height:" + height + "px'></div>");
+                report.endTableCell();
             });
-            indexReport.endTableRow();
+            report.endTableRow();
 
-            indexReport.startTableRow();
-            indexReport.addTableCell("Contributors", "border: none;");
+            report.startTableRow();
+            report.addTableCell("Contributors", "border: none;");
             contributorsPerYear.forEach(year -> {
-                indexReport.startTableCell(style);
+                report.startTableCell(style);
                 int count = year.getContributorsCount();
-                indexReport.addParagraph(count + "", "margin: 2px");
+                report.addParagraph(count + "", "margin: 2px");
                 int height = 1 + (int) (64.0 * count / maxContributors);
-                indexReport.addHtmlContent("<div style='width: 100%; background-color: skyblue; height:" + height + "px'></div>");
-                indexReport.endTableCell();
+                report.addHtmlContent("<div style='width: 100%; background-color: skyblue; height:" + height + "px'></div>");
+                report.endTableCell();
             });
-            indexReport.endTableRow();
+            report.endTableRow();
 
-            indexReport.startTableRow();
-            indexReport.addTableCell("", "border: none; ");
+            report.startTableRow();
+            report.addTableCell("", "border: none; ");
             contributorsPerYear.forEach(year -> {
-                indexReport.addTableCell(year.getYear(), "border: none; text-align: center; font-size: 90%");
+                report.addTableCell(year.getYear(), "border: none; text-align: center; font-size: 90%");
             });
-            indexReport.endTableRow();
+            report.endTableRow();
 
-            indexReport.endTable();
+            report.endTable();
         }
     }
 

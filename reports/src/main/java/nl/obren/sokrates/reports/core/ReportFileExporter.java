@@ -90,7 +90,10 @@ public class ReportFileExporter {
         summarize(indexReport, analysisResults);
         indexReport.endDiv();
         indexReport.endSection();
-        ContributorsReportUtils.addContributorsSection(analysisResults, indexReport);
+        List<ContributionYear> contributorsPerYear = analysisResults.getContributorsAnalysisResults().getContributorsPerYear();
+        indexReport.startSubSection("Commits Trend", "");
+        ContributorsReportUtils.addContributorsPerYear(indexReport, contributorsPerYear);
+        indexReport.endSection();
         indexReport.startSection("Reports", "");
         for (String[] report : reportList) {
             addReportFragment(htmlExportFolder, indexReport, report);
