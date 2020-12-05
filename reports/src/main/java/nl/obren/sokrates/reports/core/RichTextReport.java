@@ -370,10 +370,6 @@ public class RichTextReport {
         this.addHtmlContent("</a>");
     }
 
-    public void setReportsFolder(File reportsFolder) {
-        this.reportsFolder = reportsFolder;
-    }
-
     private File getVisualsFolder() {
         File visualsFile = new File(reportsFolder, "visuals");
         visualsFile.mkdirs();
@@ -384,11 +380,42 @@ public class RichTextReport {
         return reportsFolder;
     }
 
-    public void setParentUrl(String parentUrl) {
-        this.parentUrl = parentUrl;
+    public void setReportsFolder(File reportsFolder) {
+        this.reportsFolder = reportsFolder;
     }
 
     public String getParentUrl() {
         return parentUrl;
+    }
+
+    public void setParentUrl(String parentUrl) {
+        this.parentUrl = parentUrl;
+    }
+
+    public void startTabGroup() {
+        addHtmlContent("<div class=\"tab\">\n");
+    }
+
+    public void addTab(String id, String label, boolean active) {
+        String styleClass = "tablinks";
+        if (active) {
+            styleClass += " active";
+        }
+        addHtmlContent("    <button class='" + styleClass + "' onclick='openTab(event, \""
+                + id + "\")'>"
+                + label + "</button>");
+    }
+
+    public void endTabGroup() {
+        addHtmlContent("</div>\n");
+    }
+
+    public void startTabContentSection(String id, boolean active) {
+        String style = active ? "block" : "none";
+        addHtmlContent("<div id=\"" + id + "\" class=\"tabcontent\" style=\"display: " + style + "\">\n");
+    }
+
+    public void endTabContentSection() {
+        addHtmlContent("</div>\n");
     }
 }
