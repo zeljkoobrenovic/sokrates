@@ -22,15 +22,18 @@ public class ContributorsReportGenerator {
     }
 
     public void addContributorsAnalysisToReport(RichTextReport report) {
-        ContributorsReportUtils.addContributorsPerYear(report, codeAnalysisResults.getContributorsAnalysisResults().getContributorsPerYear());;
+        ContributorsReportUtils.addContributorsPerYear(report, codeAnalysisResults.getContributorsAnalysisResults().getContributorsPerYear());
+        ;
         report.addLineBreak();
 
         report.startTabGroup();
-        report.addTab("all_time", "all time", true);
-        report.addTab("30_days", "past 30 days", false);
-        report.addTab("90_days", "past 3 months", false);
-        report.addTab("180_days", "past 6 months", false);
-        report.addTab("365_days", "past year", false);
+        report.addTab("all_time", "All Time", true);
+        report.addTab("30_days", "Past 30 Days", false);
+        report.addTab("90_days", "Past 3 Months", false);
+        report.addTab("180_days", "Past 6 Months", false);
+        report.addTab("365_days", "Past Year", false);
+        report.addTab("visuals", "Visuals", false);
+        report.addTab("data", "Data", false);
         report.endTabGroup();
 
         List<Contributor> contributors = codeAnalysisResults.getContributorsAnalysisResults().getContributors();
@@ -62,6 +65,18 @@ public class ContributorsReportGenerator {
         commits365Days.sort((a, b) -> b.getCommitsCount365Days() - a.getCommitsCount365Days());
         addContributorsPanel(report, commits365Days, c -> c.getCommitsCount365Days());
         report.endTabContentSection();
+
+        report.startTabContentSection("visuals", false);
+        ContributorsReportUtils.addContributorsSection(codeAnalysisResults, report);
+        report.endTabContentSection();
+
+        report.startTabContentSection("data", false);
+        report.startUnorderedList();
+        report.startListItem();
+        report.addNewTabLink("Contributors' details...", "../data/text/contributors.txt");
+        report.endListItem();
+        report.endUnorderedList();
+        report.endTabContentSection();
     }
 
     public void addContributorsPanel(RichTextReport report, List<Contributor> contributors, ContributionCounter contributionCounter) {
@@ -76,11 +91,24 @@ public class ContributorsReportGenerator {
             report.addParagraph("<b>" + FormattingUtils.getFormattedCount(count) + "</b> " + (count == 1 ? "contributor" : "contributors") + " (" + "<b>" + FormattingUtils.getFormattedCount(total[0]) + "</b> " + (count == 1 ? "commit" : "commits") + "):");
             StringBuilder map = new StringBuilder("");
             Palette palette = Palette.getDefaultPalette();
+            int index[] = {0};
+            int cumulative[] = {0};
             contributors.forEach(contributor -> {
                 int contributorCommitsCount = contributionCounter.count(contributor);
+                cumulative[0] += contributorCommitsCount;
                 int w = (int) Math.round(600 * (double) contributorCommitsCount / total[0]);
                 int x = 620 - w;
-                map.append("<div style='background-color: " + palette.nextColor() + "; display: inline-block; height: 20px; width: " + w + "px' title='" + contributor.getEmail() + "\n" + contributorCommitsCount + " commits (" + (Math.round(100.0 * contributorCommitsCount / total[0])) + "%)'>&nbsp;</div>");
+                index[0]++;
+                String cumulativeText = "";
+                if (index[0] > 1) {
+                    cumulativeText = "\n\ntop " + index[0]
+                            + " contributors together ("
+                            + FormattingUtils.getFormattedPercentage(100.0 * index[0] / contributors.size())
+                            + "% of contributors) = "
+                            + FormattingUtils.getFormattedPercentage(100.0 * cumulative[0] / total[0])
+                            + "% of all commits";
+                }
+                map.append("<div style='background-color: " + palette.nextColor() + "; display: inline-block; height: 20px; width: " + w + "px' title='" + contributor.getEmail() + "\n" + contributorCommitsCount + " commits (" + (Math.round(100.0 * contributorCommitsCount / total[0])) + "%)" + cumulativeText + "'>&nbsp;</div>");
             });
             report.addHtmlContent(map.toString());
             report.addLineBreak();

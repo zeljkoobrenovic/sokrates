@@ -30,7 +30,7 @@ public class BasicSourceCodeReportGenerator {
     private RichTextReport fileTemporalDependenciesReport = new RichTextReport("Temporal Dependencies", "FileTemporalDependencies.html");
     private RichTextReport unitSizeReport = new RichTextReport("Unit Size", "UnitSize.html");
     private RichTextReport conditionalComplexityReport = new RichTextReport("Conditional Complexity", "ConditionalComplexity.html");
-    private RichTextReport contributorsReport = new RichTextReport("Contributors", "Contributors.html");
+    private RichTextReport contributorsReport = new RichTextReport("Commits &amp; Contributors", "Commits.html");
     private RichTextReport findingsReport = new RichTextReport("Notes & Findings", "Notes.html");
     private RichTextReport metricsReport = new RichTextReport("Metrics", "Metrics.html");
     private RichTextReport comparisonReport = new RichTextReport("Trend", "Trend.html");

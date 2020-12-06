@@ -26,11 +26,7 @@ public class ContributorsReportUtils {
         List<Contributor> contributors = contributorsAnalysisResults.getContributors();
         List<ContributionYear> contributorsPerYear = contributorsAnalysisResults.getContributorsPerYear();
         if (contributors.size() > 0) {
-            report.startSection("Contributors (" + contributors.size() + ")", "");
             addContributors(report, contributors);
-            addContributorsPerYear(report, contributorsPerYear);
-            report.addNewTabLink("Contributors' details...", "../data/text/contributors.txt");
-            report.endSection();
         }
     }
 
