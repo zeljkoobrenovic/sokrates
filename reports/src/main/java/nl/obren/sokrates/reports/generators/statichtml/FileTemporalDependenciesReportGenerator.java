@@ -48,8 +48,8 @@ public class FileTemporalDependenciesReportGenerator {
 
     private void addTab(RichTextReport report, String id, List<FilePairChangedTogether> filePairs, boolean active) {
         report.startTabContentSection(id, active);
-        addGraphsPerLogicalComponents(report, filePairs);
         addFileChangedTogetherList(report, filePairs);
+        addGraphsPerLogicalComponents(report, filePairs);
         // addFileChangedTogetherInDifferentFoldersList(report, filePairs);
         report.endTabGroup();
 
@@ -64,7 +64,7 @@ public class FileTemporalDependenciesReportGenerator {
         if (filePairs.size() > maxListSize) {
             filePairs = filePairs.subList(0, maxListSize);
         }
-        report.startSection("Files Most Frequently Changed Together (Top " + filePairs.size() + ")", "");
+        report.startSubSection("Files Most Frequently Changed Together (Top " + filePairs.size() + ")", "");
         report.addParagraph("<a href='../data/text/temporal_dependencies.txt' target='_blank'>data...</a>");
         addTable(report, filePairs);
     }
