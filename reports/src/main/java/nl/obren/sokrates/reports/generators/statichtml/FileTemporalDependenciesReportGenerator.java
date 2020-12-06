@@ -28,24 +28,49 @@ public class FileTemporalDependenciesReportGenerator {
     public void addFileHistoryToReport(RichTextReport report) {
         report.addParagraph("A temporal dependency occurs when developers change two or more files at the same time (i.e. they are a part of the same commit).");
 
-        addGraphsPerLogicalComponents(report);
+        report.startTabGroup();
+        report.addTab("all_time", "All Time", true);
+        report.addTab("30_days", "Past 30 Days", false);
+        report.addTab("90_days", "Past 3 Months", false);
+        report.addTab("180_days", "Past 6 Months", false);
+        report.endTabGroup();
 
-        addFileChangedTogetherList(report);
-        addFileChangedTogetherInDifferentFoldersList(report);
+        List<FilePairChangedTogether> filePairsChangedTogether = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether();
+        List<FilePairChangedTogether> filePairsChangedTogether30Days = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days();
+        List<FilePairChangedTogether> filePairsChangedTogether90Days = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether90Days();
+        List<FilePairChangedTogether> filePairsChangedTogether180Days = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether180Days();
+
+        addTab(report, "all_time", filePairsChangedTogether, true);
+        addTab(report, "30_days", filePairsChangedTogether30Days, false);
+        addTab(report, "90_days", filePairsChangedTogether90Days, false);
+        addTab(report, "180_days", filePairsChangedTogether180Days, false);
     }
 
-    private void addFileChangedTogetherList(RichTextReport report) {
-        List<FilePairChangedTogether> filePairs = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether();
-        if (filePairs.size() > 20) {
-            filePairs = filePairs.subList(0, 20);
+    private void addTab(RichTextReport report, String id, List<FilePairChangedTogether> filePairs, boolean active) {
+        report.startTabContentSection(id, active);
+        addGraphsPerLogicalComponents(report, filePairs);
+        addFileChangedTogetherList(report, filePairs);
+        // addFileChangedTogetherInDifferentFoldersList(report, filePairs);
+        report.endTabGroup();
+
+    }
+
+    private void addFileChangedTogetherList(RichTextReport report, List<FilePairChangedTogether> filePairs) {
+        if (filePairs.size() == 0) {
+            report.addParagraph("No file pairs changed together.");
+            return;
+        }
+        final int maxListSize = 50;
+        if (filePairs.size() > maxListSize) {
+            filePairs = filePairs.subList(0, maxListSize);
         }
         report.startSection("Files Most Frequently Changed Together (Top " + filePairs.size() + ")", "");
         report.addParagraph("<a href='../data/text/temporal_dependencies.txt' target='_blank'>data...</a>");
         addTable(report, filePairs);
     }
 
-    private void addFileChangedTogetherInDifferentFoldersList(RichTextReport report) {
-        List<FilePairChangedTogether> filePairs = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogetherInDifferentFolders(codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether());
+    private void addFileChangedTogetherInDifferentFoldersList(RichTextReport report, List<FilePairChangedTogether> filePairsChangedTogether) {
+        List<FilePairChangedTogether> filePairs = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogetherInDifferentFolders(filePairsChangedTogether);
         if (filePairs.size() > 20) {
             filePairs = filePairs.subList(0, 20);
         }
@@ -63,7 +88,7 @@ public class FileTemporalDependenciesReportGenerator {
             report.addTableCell(filePair.getSourceFile1().getRelativePath() + "<br/>" + filePair.getSourceFile2().getRelativePath());
 
             int commitsCount = filePair.getCommits().size();
-            report.addTableCell("" + commitsCount);
+            report.addTableCell("" + commitsCount, "text-align: center");
             int commitsCountFile1 = filePair.getCommitsCountFile1();
             report.addTableCell("" + commitsCountFile1 +
                     (commitsCountFile1 > 0 && commitsCountFile1 >= commitsCount
@@ -82,53 +107,37 @@ public class FileTemporalDependenciesReportGenerator {
         report.endSection();
     }
 
-    private void addGraphsPerLogicalComponents(RichTextReport report) {
+    private void addGraphsPerLogicalComponents(RichTextReport report, List<FilePairChangedTogether> filePairsChangedTogether) {
         String components = codeAnalysisResults.getCodeConfiguration().getLogicalDecompositions().stream().map(c -> c.getName()).collect(Collectors.joining(", "));
 
-        report.startSection("File Change History per Logical Decomposition", components);
+        report.startSubSection("File Change History per Logical Decomposition", components);
 
-        addChangesPerLogicalDecomposition(report);
+        addChangesPerLogicalDecomposition(report, filePairsChangedTogether);
 
         report.endSection();
     }
 
-    private void addChangesPerLogicalDecomposition(RichTextReport report) {
+    private void addChangesPerLogicalDecomposition(RichTextReport report, List<FilePairChangedTogether> filePairsChangedTogether) {
         int[] logicalDecompositionCounter = {0};
         codeAnalysisResults.getCodeConfiguration().getLogicalDecompositions().forEach(logicalDecomposition -> {
             logicalDecompositionCounter[0]++;
 
             String name = logicalDecomposition.getName();
-            codeAnalysisResults.getFilesHistoryAnalysisResults().getChangeDistributionPerLogicalDecomposition().stream()
+            codeAnalysisResults.getFilesHistoryAnalysisResults()
+                    .getChangeDistributionPerLogicalDecomposition().stream()
                     .filter(d -> d.getName().equalsIgnoreCase(name)).forEach(distribution -> {
-                addDependeciesSection(report, logicalDecomposition);
+                addDependenciesSection(report, logicalDecomposition, filePairsChangedTogether);
             });
         });
     }
 
-    private void addDependeciesSection(RichTextReport report, LogicalDecomposition logicalDecomposition) {
+    private void addDependenciesSection(RichTextReport report, LogicalDecomposition logicalDecomposition, List<FilePairChangedTogether> filePairsChangedTogether) {
         int threshold = logicalDecomposition.getTemporalLinkThreshold();
 
         report.startDiv("margin: 10px;");
+
         report.startSubSection(logicalDecomposition.getName() + " (" + threshold + "+ commits)", "");
-        addChangeDependencies(report, logicalDecomposition, codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether());
-        report.endDiv();
-
-        report.startDiv("margin: 10px;");
-        report.startShowMoreBlock("past 30 days...");
-        addChangeDependencies(report, logicalDecomposition, codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days());
-        report.endShowMoreBlock();
-        report.endDiv();
-
-        report.startDiv("margin: 10px;");
-        report.startShowMoreBlock("past 3 months...");
-        addChangeDependencies(report, logicalDecomposition, codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether90Days());
-        report.endShowMoreBlock();
-        report.endDiv();
-
-        report.startDiv("margin: 10px;");
-        report.startShowMoreBlock("past 6 months...");
-        addChangeDependencies(report, logicalDecomposition, codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether180Days());
-        report.endShowMoreBlock();
+        addChangeDependencies(report, logicalDecomposition, filePairsChangedTogether);
         report.endDiv();
 
         report.endSection();
