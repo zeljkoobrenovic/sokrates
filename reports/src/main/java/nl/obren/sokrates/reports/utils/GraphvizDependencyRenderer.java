@@ -25,7 +25,9 @@ public class GraphvizDependencyRenderer {
     private StringBuilder body = new StringBuilder();
     private String type = "digraph";
     private String arrow = "->";
-    private String arrowColor = "deepskyblue4";
+    private boolean changingArrowColor = false;
+    private String arrowColorChanging = "#00688b";
+    private String arrowColor = "#00688b";
     private String defaultNodeFillColor = "grey";
     private int maxNumberOfDependencies;
 
@@ -96,7 +98,7 @@ public class GraphvizDependencyRenderer {
                 "    ]\n" +
                 "    edge [\n" +
                 "        fontname=\"Arial\"\n" +
-                "        color=\"" + arrowColor + "\"\n" +
+                "        color=\"" + getArrowColor() + "\"\n" +
                 "        fontcolor=\"black\"\n" +
                 "        fontsize=\"12\"\n" +
                 "        arrowsize=\"0.5\"\n" +
@@ -126,12 +128,15 @@ public class GraphvizDependencyRenderer {
                 .filter(d -> StringUtils.isNotBlank(d.getFromComponent()) && StringUtils.isNotBlank(d.getToComponent()))
                 .forEach(componentDependency -> {
                     int thickness = getThickness(componentDependency, maxCount);
+                    String color = isCyclic(componentDependencies, componentDependency) ? "#DC143C" : this.arrowColor;
+                    int transparency = (int) (255.0 * (0.3 + 0.7 * thickness / 10.0));
+                    color += String.format("%02X", transparency);
                     graphviz.append("    \"" + encodeLabel(componentDependency.getFromComponent())
                             + "\" " + arrow + " \""
                             + encodeLabel(componentDependency.getToComponent()) + "\""
                             + " [label=\" " + encodeLabel(getLabel(componentDependency))
                             + " \", penwidth=\"" + Math.max(1, thickness) + "\""
-                            + (isCyclic(componentDependencies, componentDependency) ? ", color=\"crimson\"" : "")
+                            + ", color=\"" + color + "\""
                             + "];\n");
                 });
         graphviz.append("\n}");
@@ -190,5 +195,21 @@ public class GraphvizDependencyRenderer {
 
     public int getMaxNumberOfDependencies() {
         return maxNumberOfDependencies;
+    }
+
+    public boolean isChangingArrowColor() {
+        return changingArrowColor;
+    }
+
+    public void setChangingArrowColor(boolean changingArrowColor) {
+        this.changingArrowColor = changingArrowColor;
+    }
+
+    public String getArrowColorChanging() {
+        return arrowColorChanging;
+    }
+
+    public void setArrowColorChanging(String arrowColorChanging) {
+        this.arrowColorChanging = arrowColorChanging;
     }
 }

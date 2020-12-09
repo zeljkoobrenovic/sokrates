@@ -5,6 +5,8 @@ package nl.obren.sokrates.sourcecode.githistory;
  * git ls-files -z | xargs -0 -n1 -I{} -- git log --date=short --format="%ad %ae %H {}" {} > git-history.txt
  */
 
+import nl.obren.sokrates.common.utils.RegexUtils;
+import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -32,6 +34,16 @@ public class GitHistoryUtils {
 
         return commits;
     }
+
+    public static boolean shouldIgnore(String email, List<String> ignoreContributors) {
+        for (String ignorePattern : ignoreContributors) {
+            if (RegexUtils.matchesEntirely(ignorePattern, email)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     public static List<FileUpdate> getHistoryFromFile(File file) {
         List<FileUpdate> updates = new ArrayList<>();

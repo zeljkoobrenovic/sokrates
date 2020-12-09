@@ -13,6 +13,7 @@ import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.contributors.GitContributorsUtil;
 import nl.obren.sokrates.sourcecode.filehistory.GitHistoryUtil;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
+import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -43,7 +44,7 @@ public class FileHistoryAnalysisConfig {
 
     @JsonIgnore
     public List<FileModificationHistory> getHistory(File sokratesConfigFolder) {
-        return new GitHistoryUtil().importGitLsFilesExport(getFilesHistoryFile(sokratesConfigFolder));
+        return new GitHistoryUtil().importGitLsFilesExport(getFilesHistoryFile(sokratesConfigFolder), ignoreContributors);
     }
 
     @JsonIgnore
@@ -68,7 +69,10 @@ public class FileHistoryAnalysisConfig {
     @JsonIgnore
     public ContributorsImport getContributors(File sokratesConfigFolder) {
         ContributorsImport contributorsImport = GitContributorsUtil.importGitContributorsExport(getContributorsFile(sokratesConfigFolder));
-        List<Contributor> contributors = contributorsImport.getContributors().stream().filter(c -> !shouldIgnore(c)).collect(Collectors.toList());
+        List<Contributor> contributors = contributorsImport.getContributors()
+                .stream()
+                .filter(c -> !GitHistoryUtils.shouldIgnore(c.getEmail(), ignoreContributors))
+                .collect(Collectors.toList());
         contributorsImport.setContributors(contributors);
         return contributorsImport;
     }
@@ -76,15 +80,6 @@ public class FileHistoryAnalysisConfig {
     @JsonIgnore
     public List<CommitsPerExtension> getCommitsPerExtension(File sokratesConfigFolder) {
         return GitContributorsUtil.getCommitsPerExtension(getContributorsFile(sokratesConfigFolder));
-    }
-
-    private boolean shouldIgnore(Contributor contributor) {
-        for (String ignorePattern : ignoreContributors) {
-            if (RegexUtils.matchesEntirely(ignorePattern, contributor.getEmail())) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public List<String> getIgnoreContributors() {

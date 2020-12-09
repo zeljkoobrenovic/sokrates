@@ -28,6 +28,16 @@ public class DateUtils {
         return date.compareTo(thresholdDate) > 0;
     }
 
+    public static boolean isCommittedLessThanDaysAgo(String date, int daysAgo) {
+        Calendar cal = DateUtils.getCalendar();
+        cal.add(Calendar.DATE, -daysAgo);
+
+        String thresholdDate = new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime());
+
+        return date.compareTo(thresholdDate) > 0;
+    }
+
+
     public static Calendar getCalendar() {
         Calendar cal = Calendar.getInstance();
 

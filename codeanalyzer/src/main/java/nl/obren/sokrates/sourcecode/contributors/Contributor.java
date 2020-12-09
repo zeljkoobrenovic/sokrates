@@ -55,30 +55,21 @@ public class Contributor {
             }
             Collections.sort(activeYears);
 
-            if (isCommitedLessThanDaysAgo(date, RECENTLY_ACTIVITY_THRESHOLD_DAYS)) {
+            if (DateUtils.isCommittedLessThanDaysAgo(date, RECENTLY_ACTIVITY_THRESHOLD_DAYS)) {
                 commitsCount30Days += 1;
             }
-            if (isCommitedLessThanDaysAgo(date, 90)) {
+            if (DateUtils.isCommittedLessThanDaysAgo(date, 90)) {
                 commitsCount90Days += 1;
             }
-            if (isCommitedLessThanDaysAgo(date, 180)) {
+            if (DateUtils.isCommittedLessThanDaysAgo(date, 180)) {
                 commitsCount180Days += 1;
             }
-            if (isCommitedLessThanDaysAgo(date, 365)) {
+            if (DateUtils.isCommittedLessThanDaysAgo(date, 365)) {
                 commitsCount365Days += 1;
             }
         }
 
         commitsCount += 1;
-    }
-
-    private boolean isCommitedLessThanDaysAgo(String date, int daysAgo) {
-        Calendar cal = DateUtils.getCalendar();
-        cal.add(Calendar.DATE, -daysAgo);
-
-        String thresholdDate = new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime());
-
-        return date.compareTo(thresholdDate) > 0;
     }
 
     public boolean isActive() {

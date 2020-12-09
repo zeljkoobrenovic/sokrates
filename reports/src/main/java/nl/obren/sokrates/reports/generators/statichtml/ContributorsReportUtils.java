@@ -11,11 +11,8 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributionYear;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
-import nl.obren.sokrates.sourcecode.contributors.ContributorsImport;
-import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import org.apache.commons.text.StringEscapeUtils;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -86,10 +83,10 @@ public class ContributorsReportUtils {
         long rookiesCount = contributors.stream().filter(c -> c.isRookie()).count();
         long veteransCount = activeCount - rookiesCount;
         long historicalCount = contributors.size() - activeCount;
-        indexReport.startSubSection("Recent Contributors (" + activeCount
-                        + " = " + veteransCount + " " + (veteransCount == 1 ? "veteran" : "veterans")
-                        + " + " + rookiesCount + " " + (rookiesCount == 1 ? "rookie" : "rookies") + ")",
-                "Contributed in past 6 months (a rookie = the first contribution in past year)");
+        indexReport.addLevel2Header("Recent Contributors (" + activeCount
+                + " = " + veteransCount + " " + (veteransCount == 1 ? "veteran" : "veterans")
+                + " + " + rookiesCount + " " + (rookiesCount == 1 ? "rookie" : "rookies") + ")");
+        indexReport.addParagraph("Contributed in past 6 months (a rookie = the first contribution in past year)", "color: grey");
         List<Contributor> contributor30Days = contributors.stream().filter(c -> c.isActive(30)).collect(Collectors.toList());
         List<Contributor> contributor90Days = contributors.stream().filter(c -> c.isActive(90) && !c.isActive(30)).collect(Collectors.toList());
         List<Contributor> contributor180Days = contributors.stream().filter(c -> c.isActive(180) && !c.isActive(90)).collect(Collectors.toList());
@@ -119,12 +116,11 @@ public class ContributorsReportUtils {
         } else {
             indexReport.addParagraph("No contributors in past 91 to 180 days.", "font-size: 80%");
         }
-        indexReport.endSection();
-        indexReport.startSubSection("Historical Contributors (" + historicalCount + ")", "Last contributed more than 6 months ago");
+        indexReport.addLevel2Header("Historical Contributors (" + historicalCount + ")", "margin-top: 40px");
+        indexReport.addParagraph("Last contributed more than 6 months ago", "color: grey");
         contributors.stream().filter(c -> !c.isActive()).forEach(contributor -> {
             addContributor(indexReport, max, total, contributor);
         });
-        indexReport.endSection();
     }
 
     public static void addContributor(RichTextReport indexReport, int max, int total, Contributor contributor) {

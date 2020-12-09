@@ -5,7 +5,6 @@
 package nl.obren.sokrates.sourcecode.dependencies;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.kitfox.svg.A;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -96,5 +95,10 @@ public class ComponentDependency {
     @JsonIgnore
     public boolean hasPathFrom(String path) {
         return this.getEvidence().stream().filter(e -> e.getPathFrom().equalsIgnoreCase(path)).findAny().isPresent();
+    }
+
+    @JsonIgnore
+    public void increment(int delta) {
+        count += delta;
     }
 }

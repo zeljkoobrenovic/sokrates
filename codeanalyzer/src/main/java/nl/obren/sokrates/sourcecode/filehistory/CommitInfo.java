@@ -7,6 +7,7 @@ package nl.obren.sokrates.sourcecode.filehistory;
 public class CommitInfo {
     private String id = "";
     private String date = "";
+    private String email = "";
 
     public CommitInfo() {
     }
@@ -30,5 +31,13 @@ public class CommitInfo {
 
     public void setDate(String date) {
         this.date = date;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }

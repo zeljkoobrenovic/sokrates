@@ -6,11 +6,8 @@ package nl.obren.sokrates.sourcecode.filehistory;
 
 import nl.obren.sokrates.sourcecode.githistory.FileUpdate;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
-import org.apache.commons.io.FileUtils;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,12 +17,15 @@ public class GitHistoryUtil {
     List<FileModificationHistory> files = new ArrayList<>();
     Map<String, FileModificationHistory> map = new HashMap<>();
 
-    public List<FileModificationHistory> importGitLsFilesExport(File file) {
+    public List<FileModificationHistory> importGitLsFilesExport(File file, List<String> ignoreContributors) {
         files = new ArrayList<>();
         map = new HashMap<>();
-        GitHistoryUtils.getHistoryFromFile(file).forEach(fileUpdate -> {
-            processUpdate(fileUpdate);
-        });
+        GitHistoryUtils.getHistoryFromFile(file)
+                .stream()
+                .filter(fileUpdate -> !GitHistoryUtils.shouldIgnore(fileUpdate.getAuthorEmail(), ignoreContributors))
+                .forEach(fileUpdate -> {
+                    processUpdate(fileUpdate);
+                });
         return files;
     }
 
@@ -38,7 +38,10 @@ public class GitHistoryUtil {
             map.put(path, fileInfo);
         }
 
-        fileInfo.getCommits().add(new CommitInfo(fileUpdate.getCommitId(), fileUpdate.getDate()));
+        CommitInfo commitInfo = new CommitInfo(fileUpdate.getCommitId(), fileUpdate.getDate());
+        String authorEmail = fileUpdate.getAuthorEmail();
+        commitInfo.setEmail(authorEmail);
+        fileInfo.getCommits().add(commitInfo);
 
         String lastModifiedDate = fileUpdate.getDate();
         if (!fileInfo.getDates().contains(lastModifiedDate)) {
