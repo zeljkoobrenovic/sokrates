@@ -14,6 +14,8 @@ public class ReportConstants {
             "}\n" +
             "\n" +
             ".tab button {\n" +
+            "  font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;\n" +
+            "  font-size: 100%;\n" +
             "  background-color: inherit;\n" +
             "  float: left;\n" +
             "  border: none;\n" +

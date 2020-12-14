@@ -19,6 +19,7 @@ public class LandscapeConfiguration {
     private int projectThresholdLocMain = 0;
     private int projectThresholdContributors = 2;
     private int contributorThresholdCommits = 2;
+    private int peopleDependenciesCommitsThreshold = 10;
     private boolean anonymizeContributors = false;
 
     private List<CustomMetric> customMetrics = new ArrayList<>();
@@ -147,5 +148,13 @@ public class LandscapeConfiguration {
 
     public void setAnonymizeContributors(boolean anonymizeContributors) {
         this.anonymizeContributors = anonymizeContributors;
+    }
+
+    public int getPeopleDependenciesCommitsThreshold() {
+        return peopleDependenciesCommitsThreshold;
+    }
+
+    public void setPeopleDependenciesCommitsThreshold(int peopleDependenciesCommitsThreshold) {
+        this.peopleDependenciesCommitsThreshold = peopleDependenciesCommitsThreshold;
     }
 }

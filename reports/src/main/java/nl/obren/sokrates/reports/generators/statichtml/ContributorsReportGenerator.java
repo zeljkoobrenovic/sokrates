@@ -92,6 +92,7 @@ public class ContributorsReportGenerator {
 
     private void renderPeopleDependencies(int daysAgo) {
         report.addLevel2Header("People Dependencies", "margin-top: 40px");
+        report.startShowMoreBlock("show graph...");
         report.addParagraph("The number on lines shows the number of same files that both persons changed in past <b>" + daysAgo + "</b> days.", "color: grey");
         GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
         graphvizDependencyRenderer.setMaxNumberOfDependencies(100);
@@ -107,6 +108,65 @@ public class ContributorsReportGenerator {
 
         String prefix = "people_dependencies_" + daysAgo + "_";
         addDependencyGraphVisuals(peopleDependencies, new ArrayList<>(), graphvizDependencyRenderer, prefix);
+        report.endShowMoreBlock();
+
+        List<ContributorConnection> contributorConnections = getContributorConnections(peopleDependencies);
+        report.addParagraph("C-index: " + getCIndex(contributorConnections));
+        report.startTable();
+        report.addTableHeader("", "Contributor", "# connections");
+        int index[] = {0};
+        contributorConnections.forEach(contributorConnection -> {
+            index[0]++;
+            report.startTableRow();
+            report.addTableCell(index[0] + ".");
+            report.addTableCell(contributorConnection.getEmail());
+            report.addTableCell(contributorConnection.getCount() + "");
+            report.endTableRow();
+        });
+        report.endTable();
+    }
+
+    private int getCIndex(List<ContributorConnection> contributorConnections) {
+        int index[] = {0};
+
+        contributorConnections.sort((a, b) -> b.getCount() - a.getCount());
+
+        contributorConnections.forEach(contributorConnection -> {
+            if (contributorConnection.getCount() > index[0]) {
+                index[0]++;
+            }
+        });
+
+        return index[0];
+    }
+
+    private List<ContributorConnection> getContributorConnections(List<ComponentDependency> peopleDependencies) {
+        List<ContributorConnection> contributorConnections = new ArrayList<>();
+        Map<String, ContributorConnection> map = new HashMap<>();
+        peopleDependencies.forEach(dependency -> {
+            String email1 = dependency.getFromComponent();
+            String email2 = dependency.getToComponent();
+            if (!email1.equalsIgnoreCase(email2)) {
+                ContributorConnection contributorConnection1 = map.get(email1);
+                if (contributorConnection1 == null) {
+                    contributorConnection1 = new ContributorConnection(email1, 1);
+                    map.put(email1, contributorConnection1);
+                    contributorConnections.add(contributorConnection1);
+                } else {
+                    contributorConnection1.setCount(contributorConnection1.getCount() + 1);
+                }
+                ContributorConnection contributorConnection2 = map.get(email2);
+                if (contributorConnection2 == null) {
+                    contributorConnection2 = new ContributorConnection(email2, 1);
+                    map.put(email2, contributorConnection2);
+                    contributorConnections.add(contributorConnection2);
+                } else {
+                    contributorConnection2.setCount(contributorConnection2.getCount() + 1);
+                }
+            }
+        });
+        contributorConnections.sort((a, b) -> b.getCount() - a.getCount());
+        return contributorConnections;
     }
 
     private void addDependencyGraphVisuals(List<ComponentDependency> componentDependencies, List<String> componentNames, GraphvizDependencyRenderer graphvizDependencyRenderer, String prefix) {
@@ -167,7 +227,7 @@ public class ContributorsReportGenerator {
             report.addLineBreak();
         }
         report.startTable();
-        report.addTableHeader("#", "Contributor", "First Commit", "Latest Commit", "# commit");
+        report.addTableHeader("#", "Contributor", "First Commit", "Latest Commit", "# commits");
         int index[] = {0};
         contributors.forEach(contributor -> {
             index[0]++;
@@ -237,11 +297,40 @@ public class ContributorsReportGenerator {
                 });
             });
         });
-
+        dependencies.sort((a, b) -> b.getCount() - a.getCount());
         return dependencies;
     }
 
     interface ContributionCounter {
         int count(Contributor contributor);
+    }
+
+    class ContributorConnection {
+        private String email;
+        private int count;
+
+        public ContributorConnection() {
+        }
+
+        public ContributorConnection(String email, int count) {
+            this.email = email;
+            this.count = count;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
+        }
+
+        public int getCount() {
+            return count;
+        }
+
+        public void setCount(int count) {
+            this.count = count;
+        }
     }
 }

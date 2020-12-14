@@ -8,14 +8,18 @@ import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
+import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributionYear;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
+import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.landscape.*;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProject;
+import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjectInfo;
+import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjects;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ProjectAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
@@ -34,11 +38,13 @@ public class LandscapeReportGenerator {
     private static final Log LOG = LogFactory.getLog(LandscapeReportGenerator.class);
     private RichTextReport landscapeReport = new RichTextReport("Landscape Report", "index.html");
     private LandscapeAnalysisResults landscapeAnalysisResults;
+    private int dependencyVisualCounter = 1;
 
     public LandscapeReportGenerator(LandscapeAnalysisResults landscapeAnalysisResults, File folder) {
         LandscapeDataExport dataExport = new LandscapeDataExport(landscapeAnalysisResults, folder);
         dataExport.exportProjects();
         dataExport.exportContributors();
+        dataExport.exportAnalysisResults();
 
         Metadata metadata = landscapeAnalysisResults.getConfiguration().getMetadata();
         String landscapeName = metadata.getName();
@@ -65,16 +71,38 @@ public class LandscapeReportGenerator {
         }
         this.landscapeAnalysisResults = landscapeAnalysisResults;
 
+        landscapeReport.addLineBreak();
+        landscapeReport.startTabGroup();
+        landscapeReport.addTab("overview", "Overview", true);
+        landscapeReport.addTab("source code", "Projects", false);
+        landscapeReport.addTab("commits", "Contributors", false);
+        landscapeReport.endTabGroup();
+
+        landscapeReport.startTabContentSection("overview", true);
         addBigSummary(landscapeAnalysisResults);
-        addExtensions();
-
         addSubLandscapeSection(landscapeAnalysisResults.getConfiguration().getSubLandscapes());
-
+        landscapeReport.endTabContentSection();
+        landscapeReport.startTabContentSection("source code", false);
+        addBigProjectsSummary(landscapeAnalysisResults);
+        addExtensions();
         addProjectsSection(getProjects());
+        landscapeReport.endTabContentSection();
 
+        landscapeReport.startTabContentSection("commits", false);
+        addBigContributorsSummary(landscapeAnalysisResults);
         addContributors();
         addContributorsPerExtension();
+        addPeopleDependencies();
+        landscapeReport.endTabContentSection();
         landscapeReport.addParagraph("<span style='color: grey; font-size: 90%'>updated: " + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + "</span>");
+    }
+
+    private void addPeopleDependencies() {
+        landscapeReport.startSubSection("People Dependencies", "");
+        this.renderPeopleDependencies(30);
+        this.renderPeopleDependencies(90);
+        this.renderPeopleDependencies(180);
+        landscapeReport.endSection();
     }
 
     private List<ProjectAnalysisResults> getProjects() {
@@ -109,7 +137,7 @@ public class LandscapeReportGenerator {
     }
 
     private void addBigSummary(LandscapeAnalysisResults landscapeAnalysisResults) {
-        landscapeReport.startDiv("margin-top: 32px;");
+        landscapeReport.startDiv("margin-top: 0px;");
         LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
         int thresholdContributors = configuration.getProjectThresholdContributors();
         addInfoBlock(FormattingUtils.getSmallTextForNumber(getProjects().size()), "projects",
@@ -121,10 +149,10 @@ public class LandscapeReportGenerator {
         int mainLocNew = landscapeAnalysisResults.getMainLocNew();
         addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocNew), "lines of code (new)", "", "files created in past year");
 
-        List<ContributorProject> contributors = landscapeAnalysisResults.getContributors();
+        List<ContributorProjects> contributors = landscapeAnalysisResults.getContributors();
         long contributorsCount = contributors.size();
         if (contributorsCount > 0) {
-            int recentContributorsCount = getRecentContributorsCount(contributors);
+            int recentContributorsCount = landscapeAnalysisResults.getRecentContributorsCount();
             int locPerRecentContributor = 0;
             int locNewPerRecentContributor = 0;
             if (recentContributorsCount > 0) {
@@ -133,13 +161,11 @@ public class LandscapeReportGenerator {
             }
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(recentContributorsCount), "recent contributors",
                     "(past 30 days)", getExtraPeopleInfo(contributors, contributorsCount) + "\n" + FormattingUtils.getFormattedCount(locPerRecentContributor) + " active lines of code per recent contributor");
-            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(getRookiesContributorsCount(contributors)), "active rookies",
+            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getRookiesContributorsCount()), "active rookies",
                     "(started in past year)", "active contributors with the first commit in past year");
-            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(locPerRecentContributor), "contributor load",
-                    "(active LOC/contributor)", "active lines of code per recent contributor\n\n" + FormattingUtils.getPlainTextForNumber(locNewPerRecentContributor) + " new LOC/recent contributor");
         }
 
-        addContributorsPerYear();
+        addContributorsPerYear(false);
 
         landscapeReport.addLineBreak();
 
@@ -159,6 +185,52 @@ public class LandscapeReportGenerator {
 
         addIFrames(configuration);
         addCustomTags(configuration);
+    }
+
+    private void addBigProjectsSummary(LandscapeAnalysisResults landscapeAnalysisResults) {
+        LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
+        int thresholdContributors = configuration.getProjectThresholdContributors();
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(getProjects().size()), "projects",
+                "", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
+        int extensionsCount = getLinesOfCodePerExtension().size();
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "lines of code (main)", "", getExtraLocInfo());
+        int mainLocActive = landscapeAnalysisResults.getMainLocActive();
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocActive), "lines of code (active)", "", "files updated in past year");
+        int mainLocNew = landscapeAnalysisResults.getMainLocNew();
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocNew), "lines of code (new)", "", "files created in past year");
+    }
+
+    private void addBigContributorsSummary(LandscapeAnalysisResults landscapeAnalysisResults) {
+        List<ContributorProjects> contributors = landscapeAnalysisResults.getContributors();
+        long contributorsCount = contributors.size();
+        int mainLocActive = landscapeAnalysisResults.getMainLocActive();
+        int mainLocNew = landscapeAnalysisResults.getMainLocNew();
+        if (contributorsCount > 0) {
+            int recentContributorsCount = landscapeAnalysisResults.getRecentContributorsCount();
+            int locPerRecentContributor = 0;
+            int locNewPerRecentContributor = 0;
+            if (recentContributorsCount > 0) {
+                locPerRecentContributor = (int) Math.round((double) mainLocActive / recentContributorsCount);
+                locNewPerRecentContributor = (int) Math.round((double) mainLocNew / recentContributorsCount);
+            }
+            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(recentContributorsCount), "recent contributors",
+                    "(past 30 days)", getExtraPeopleInfo(contributors, contributorsCount) + "\n" + FormattingUtils.getFormattedCount(locPerRecentContributor) + " active lines of code per recent contributor");
+            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getRookiesContributorsCount()), "active rookies",
+                    "(started in past year)", "active contributors with the first commit in past year");
+            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(locPerRecentContributor), "contributor load",
+                    "(active LOC/contributor)", "active lines of code per recent contributor\n\n" + FormattingUtils.getPlainTextForNumber(locNewPerRecentContributor) + " new LOC/recent contributor");
+            List<ComponentDependency> peopleDependencies = this.getPeopleDependencies(30);
+            peopleDependencies.sort((a, b) -> b.getCount() - a.getCount());
+            List<ContributorConnections> names = names(peopleDependencies, 30);
+            int cIndex = getCIndex(names);
+            int pIndex = getPIndex(names);
+            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(cIndex), "C-Index",
+                    "30 days", "You have " + cIndex + " active contributes connected to " + cIndex + " or more of other contributers via commits to shared projects in past 30 days.");
+            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pIndex), "P-Index",
+                    "30 days", "You have " + pIndex + " active contributes committing to " + pIndex + " or more of projects in past 30 days.");
+        }
+
+        addContributorsPerYear(true);
     }
 
     private void addIFrames(LandscapeConfiguration configuration) {
@@ -244,26 +316,6 @@ public class LandscapeReportGenerator {
         landscapeReport.endSpan();
     }
 
-    private int getContributorsCount(List<ContributorProject> contributors) {
-        return contributors.size();
-    }
-
-    private int getRecentContributorsCount(List<ContributorProject> contributors) {
-        return (int) contributors.stream().filter(c -> c.getContributor().isActive(RECENT_THRESHOLD_DAYS)).count();
-    }
-
-    private int getRecentContributorsCount6Months(List<ContributorProject> contributors) {
-        return (int) contributors.stream().filter(c -> c.getContributor().isActive(180)).count();
-    }
-
-    private int getRecentContributorsCount3Months(List<ContributorProject> contributors) {
-        return (int) contributors.stream().filter(c -> c.getContributor().isActive(90)).count();
-    }
-
-    private int getRookiesContributorsCount(List<ContributorProject> contributors) {
-        return (int) contributors.stream().filter(c -> c.getContributor().isRookie(RECENT_THRESHOLD_DAYS)).count();
-    }
-
     private void addExtensions() {
         int threshold = landscapeAnalysisResults.getConfiguration().getExtensionThresholdLoc();
 
@@ -300,13 +352,15 @@ public class LandscapeReportGenerator {
     private List<NumericMetric> getLinesOfCodePerExtension() {
         int threshold = landscapeAnalysisResults.getConfiguration().getExtensionThresholdLoc();
         return landscapeAnalysisResults.getLinesOfCodePerExtension().stream()
+                .filter(e -> !e.getName().endsWith("="))
+                .filter(e -> !e.getName().startsWith("h-"))
                 .filter(e -> e.getValue().intValue() >= threshold)
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private void addContributors() {
-        List<ContributorProject> contributors = landscapeAnalysisResults.getContributors();
-        int contributorsCount = getContributorsCount(contributors);
+        List<ContributorProjects> contributors = landscapeAnalysisResults.getContributors();
+        int contributorsCount = landscapeAnalysisResults.getContributorsCount();
 
         if (contributorsCount > 0) {
             int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
@@ -340,6 +394,7 @@ public class LandscapeReportGenerator {
             }
             landscapeReport.endSection();
         }
+
     }
 
     private void addContributorsPerExtension() {
@@ -382,7 +437,7 @@ public class LandscapeReportGenerator {
         landscapeReport.addLineBreak();
     }
 
-    private void addContributor(int totalCommits, int[] counter, ContributorProject contributor) {
+    private void addContributor(int totalCommits, int[] counter, ContributorProjects contributor) {
         landscapeReport.startTableRow(contributor.getContributor().isActive(RECENT_THRESHOLD_DAYS) ? "font-weight: bold;"
                 : "color: " + (contributor.getContributor().isActive(90) ? "grey" : "lightgrey"));
         counter[0] += 1;
@@ -399,14 +454,14 @@ public class LandscapeReportGenerator {
         landscapeReport.startTableCell();
         int projectsCount = contributor.getProjects().size();
         landscapeReport.startShowMoreBlock(projectsCount + (projectsCount == 1 ? " project" : " projects"));
-        for (int i = 0; i < projectsCount; i++) {
-            String projectName = contributor.getProjects().get(i).getAnalysisResults().getMetadata().getName();
-            int commits = contributor.getProjectsCommits().get(i);
+        contributor.getProjects().forEach(contributorProjectInfo -> {
+            String projectName = contributorProjectInfo.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName();
+            int commits = contributorProjectInfo.getCommitsCount();
             if (projectInfo.length() > 0) {
                 projectInfo.append("<br/>");
             }
             projectInfo.append(projectName + " <span style='color: grey'>(" + commits + (commits == 1 ? " commit" : " commit") + ")</span>");
-        }
+        });
         landscapeReport.addHtmlContent(projectInfo.toString());
         landscapeReport.endTableCell();
         landscapeReport.endTableRow();
@@ -548,12 +603,12 @@ public class LandscapeReportGenerator {
         return info;
     }
 
-    private String getExtraPeopleInfo(List<ContributorProject> contributors, long contributorsCount) {
+    private String getExtraPeopleInfo(List<ContributorProjects> contributors, long contributorsCount) {
         String info = "";
 
-        int recentContributorsCount6Months = getRecentContributorsCount6Months(contributors);
-        int recentContributorsCount3Months = getRecentContributorsCount3Months(contributors);
-        info += FormattingUtils.getPlainTextForNumber(getRecentContributorsCount(contributors)) + " contributors (30 days)\n";
+        int recentContributorsCount6Months = landscapeAnalysisResults.getRecentContributorsCount6Months();
+        int recentContributorsCount3Months = landscapeAnalysisResults.getRecentContributorsCount3Months();
+        info += FormattingUtils.getPlainTextForNumber(landscapeAnalysisResults.getRecentContributorsCount()) + " contributors (30 days)\n";
         info += FormattingUtils.getPlainTextForNumber(recentContributorsCount3Months) + " contributors (3 months)\n";
         info += FormattingUtils.getPlainTextForNumber(recentContributorsCount6Months) + " contributors (6 months)\n";
 
@@ -627,7 +682,7 @@ public class LandscapeReportGenerator {
         return reports;
     }
 
-    private void addContributorsPerYear() {
+    private void addContributorsPerYear(boolean showContributorsCount) {
         List<ContributionYear> contributorsPerYear = landscapeAnalysisResults.getContributorsPerYear();
         if (contributorsPerYear.size() > 0) {
             int limit = 20;
@@ -659,19 +714,31 @@ public class LandscapeReportGenerator {
             });
             landscapeReport.endTableRow();
 
-            /*
-            landscapeReport.startTableRow();
-            landscapeReport.addTableCell("Contributors", "border: none;");
-            contributorsPerYear.forEach(year -> {
-                landscapeReport.startTableCell(style);
-                int count = year.getContributorsCount();
-                landscapeReport.addParagraph(count + "", "margin: 2px");
-                int height = 1 + (int) (64.0 * count / maxContributors);
-                landscapeReport.addHtmlContent("<div style='width: 100%; background-color: skyblue; height:" + height + "px'></div>");
+            if (showContributorsCount) {
+                int maxContributors[] = {1};
+                contributorsPerYear.forEach(year -> {
+                    int count = getContributorsCountPerYear(year.getYear());
+                    maxContributors[0] = Math.max(maxContributors[0], count);
+                });
+                landscapeReport.startTableRow();
+                landscapeReport.startTableCell("border: none; height: 100px");
+                int contributorsCount = landscapeAnalysisResults.getContributors().size();
+                if (contributorsCount > 0) {
+                    landscapeReport.startDiv("max-height: 105px");
+                    addSmallInfoBlock(FormattingUtils.getSmallTextForNumber(contributorsCount), "contributors", "white", "");
+                    landscapeReport.endDiv();
+                }
                 landscapeReport.endTableCell();
-            });
-            landscapeReport.endTableRow();
-             */
+                contributorsPerYear.forEach(year -> {
+                    landscapeReport.startTableCell(style);
+                    int count = getContributorsCountPerYear(year.getYear());
+                    landscapeReport.addParagraph(count + "", "margin: 2px");
+                    int height = 1 + (int) (64.0 * count / maxContributors[0]);
+                    landscapeReport.addHtmlContent("<div style='width: 100%; background-color: skyblue; height:" + height + "px'></div>");
+                    landscapeReport.endTableCell();
+                });
+                landscapeReport.endTableRow();
+            }
 
             landscapeReport.startTableRow();
             landscapeReport.addTableCell("", "border: none; ");
@@ -682,8 +749,242 @@ public class LandscapeReportGenerator {
 
             landscapeReport.endTable();
 
+            landscapeReport.addLineBreak();
         }
     }
 
+    private int getContributorsCountPerYear(String year) {
+        int count[] = {0};
+
+        landscapeAnalysisResults.getContributors().forEach(contributorProjects -> {
+            if (contributorProjects.getContributor().getActiveYears().contains(year)) {
+                count[0] += 1;
+            }
+        });
+
+        return count[0];
+    }
+
+    private List<ComponentDependency> getPeopleDependencies(int daysAgo) {
+        Map<String, List<String>> projectsMap = new HashMap<>();
+
+        landscapeAnalysisResults.getContributors().stream()
+                .forEach(contributorProjects -> {
+                    contributorProjects.getProjects().stream()
+                            .filter(project -> DateUtils.isCommittedLessThanDaysAgo(project.getLatestCommitDate(), daysAgo))
+                            .forEach(project -> {
+                                String email = contributorProjects.getContributor().getEmail();
+                                String projectName = project.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName();
+                                if (projectsMap.containsKey(projectName)) {
+                                    List<String> emails = projectsMap.get(projectName);
+                                    if (!emails.contains(email)) {
+                                        emails.add(email);
+                                    }
+                                } else {
+                                    projectsMap.put(projectName, new ArrayList<>(Arrays.asList(email)));
+                                }
+                            });
+                });
+
+        List<ComponentDependency> dependencies = new ArrayList<>();
+        Map<String, ComponentDependency> dependenciesMap = new HashMap<>();
+        Map<String, List<String>> projectNamesMap = new HashMap<>();
+
+        projectsMap.keySet().forEach(projectName -> {
+            List<String> emails = projectsMap.get(projectName);
+            emails.forEach(email1 -> {
+                emails.stream().filter(email2 -> !email1.equalsIgnoreCase(email2)).forEach(email2 -> {
+                    String key1 = email1 + "::" + email2;
+                    String key2 = email2 + "::" + email1;
+
+                    if (dependenciesMap.containsKey(key1)) {
+                        if (!projectNamesMap.get(key1).contains(projectName)) {
+                            dependenciesMap.get(key1).increment(1);
+                            projectNamesMap.get(key1).add(projectName);
+                        }
+                    } else if (dependenciesMap.containsKey(key2)) {
+                        if (!projectNamesMap.get(key2).contains(projectName)) {
+                            dependenciesMap.get(key2).increment(1);
+                            projectNamesMap.get(key2).add(projectName);
+                        }
+                    } else {
+                        ComponentDependency dependency = new ComponentDependency(email1, email2);
+                        dependenciesMap.put(key1, dependency);
+                        dependencies.add(dependency);
+                        projectNamesMap.put(key1, new ArrayList<>(Arrays.asList(projectName)));
+                    }
+                });
+            });
+        });
+
+        return dependencies;
+    }
+
+    private int getProjectCount(String email, int daysAgo) {
+        Set<String> projectNames = new HashSet<>();
+        landscapeAnalysisResults.getContributors().stream()
+                .filter(c -> c.getContributor().getEmail().equalsIgnoreCase(email))
+                .forEach(contributorProjects -> {
+                    List<ContributorProjectInfo> projects = contributorProjects.getProjects();
+                    projects.stream()
+                            .filter(p -> DateUtils.isCommittedLessThanDaysAgo(p.getLatestCommitDate(), daysAgo))
+                            .forEach(project -> {
+                                projectNames.add(project.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName());
+                            });
+                });
+
+        return projectNames.size();
+    }
+
+    private void renderPeopleDependencies(int daysAgo) {
+        landscapeReport.addLevel2Header("People Dependencies (" + daysAgo + " days)", "margin-top: 40px");
+        landscapeReport.addParagraph("The number of same repositories that two persons committed to in the past " + daysAgo + " days.", "color: grey");
+        GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
+        graphvizDependencyRenderer.setMaxNumberOfDependencies(200);
+        graphvizDependencyRenderer.setType("graph");
+        graphvizDependencyRenderer.setArrow("--");
+
+        List<ComponentDependency> peopleDependencies = this.getPeopleDependencies(daysAgo);
+        peopleDependencies.sort((a, b) -> b.getCount() - a.getCount());
+        List<ContributorConnections> names = names(peopleDependencies, daysAgo);
+
+        int cIndex = getCIndex(names);
+        landscapeReport.addParagraph("C-index: <b>" + cIndex + "</b> <span style='color: grey'>You have " + cIndex + " people with " + cIndex + " or more project connections with other people.)</span>.");
+        int pIndex = getPIndex(names);
+        landscapeReport.addParagraph("P-index: <b>" + pIndex + "</b> <span style='color: grey'>(You have " + pIndex + " people commiting to " + pIndex + " or more projects.)</span>.");
+        landscapeReport.startShowMoreBlock("show most connected people...<br>");
+        landscapeReport.startTable();
+        int index[] = {0};
+        names.subList(0, Math.min(500000, names.size())).forEach(name -> {
+            index[0] += 1;
+            landscapeReport.startTableRow();
+            landscapeReport.addTableCell(index[0] + "", "");
+            landscapeReport.addTableCell(name.email, "");
+            landscapeReport.addTableCell(name.projectsCount + "&nbsp;projects");
+            landscapeReport.addTableCell(name.connectionsCount + " connections", "");
+            landscapeReport.endTableRow();
+        });
+        landscapeReport.endTable();
+        landscapeReport.endShowMoreBlock();
+
+        landscapeReport.startShowMoreBlock("show top connections...<br>");
+        landscapeReport.startTable();
+        peopleDependencies.subList(0, Math.min(50, peopleDependencies.size())).forEach(dependency -> {
+            landscapeReport.startTableRow();
+            String from = dependency.getFromComponent();
+            String to = dependency.getToComponent();
+            landscapeReport.addTableCell(from + "<br><span style='color: grey'>" + getProjectCount(from, daysAgo) + " projects</span>", "");
+            landscapeReport.addTableCell(to + "<br><span style='color: grey'>" + getProjectCount(to, daysAgo) + " projects</span>", "");
+            landscapeReport.addTableCell(dependency.getCount() + " shared projects", "");
+            landscapeReport.endTableRow();
+        });
+        landscapeReport.endTable();
+        landscapeReport.endShowMoreBlock();
+
+
+        landscapeReport.startShowMoreBlock("show graph...<br>");
+        Set<String> emails = new HashSet<>();
+        peopleDependencies.forEach(peopleDependency -> {
+            emails.add(peopleDependency.getFromComponent());
+            emails.add(peopleDependency.getToComponent());
+        });
+
+        String prefix = "people_dependencies_" + daysAgo + "_";
+        addDependencyGraphVisuals(peopleDependencies, new ArrayList<>(), graphvizDependencyRenderer, prefix);
+        landscapeReport.endShowMoreBlock();
+    }
+
+    private int getCIndex(List<ContributorConnections> names) {
+        List<ContributorConnections> list = new ArrayList<>(names);
+        list.sort((a, b) -> b.connectionsCount - a.connectionsCount);
+        for (int factor = 0; factor < list.size(); factor++) {
+            if (factor == list.get(factor).connectionsCount) {
+                return factor;
+            } else if (factor > list.get(factor).connectionsCount) {
+                return factor - 1;
+            }
+        }
+        return 0;
+    }
+
+    private int getPIndex(List<ContributorConnections> names) {
+        List<ContributorConnections> list = new ArrayList<>(names);
+        list.sort((a, b) -> b.projectsCount - a.projectsCount);
+        for (int factor = 0; factor < list.size(); factor++) {
+            if (factor == list.get(factor).projectsCount) {
+                return factor;
+            } else if (factor > list.get(factor).projectsCount) {
+                return factor - 1;
+            }
+        }
+        return 0;
+    }
+
+    private List<ContributorConnections> names(List<ComponentDependency> peopleDependencies, int daysAgo) {
+        Map<String, ContributorConnections> map = new HashMap<>();
+
+        peopleDependencies.forEach(dependency -> {
+            String from = dependency.getFromComponent();
+            String to = dependency.getToComponent();
+
+            ContributorConnections contributorConnections1 = map.get(from);
+            ContributorConnections contributorConnections2 = map.get(to);
+
+            if (contributorConnections1 == null) {
+                contributorConnections1 = new ContributorConnections();
+                contributorConnections1.email = from;
+                contributorConnections1.projectsCount = getProjectCount(from, daysAgo);
+                contributorConnections1.connectionsCount = 1;
+                map.put(from, contributorConnections1);
+            } else {
+                contributorConnections1.connectionsCount += 1;
+            }
+
+            if (contributorConnections2 == null) {
+                contributorConnections2 = new ContributorConnections();
+                contributorConnections2.email = to;
+                contributorConnections2.projectsCount = getProjectCount(to, daysAgo);
+                contributorConnections2.connectionsCount = 1;
+                map.put(to, contributorConnections2);
+            } else {
+                contributorConnections2.connectionsCount += 1;
+            }
+        });
+
+        List<ContributorConnections> names = new ArrayList<>(map.values());
+        names.sort((a, b) -> b.connectionsCount - a.connectionsCount);
+        // names.sort((a, b) -> b.projectsCount - a.projectsCount);
+
+        return names;
+    }
+
+    private void addDependencyGraphVisuals(List<ComponentDependency> componentDependencies, List<String> componentNames, GraphvizDependencyRenderer graphvizDependencyRenderer, String prefix) {
+        String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(
+                componentNames,
+                componentDependencies);
+        String graphId = prefix + dependencyVisualCounter++;
+        landscapeReport.addGraphvizFigure(graphId, "", graphvizContent);
+        landscapeReport.addLineBreak();
+        landscapeReport.addLineBreak();
+        addDownloadLinks(graphId);
+    }
+
+    private void addDownloadLinks(String graphId) {
+        landscapeReport.startDiv("");
+        landscapeReport.addHtmlContent("Download: ");
+        landscapeReport.addNewTabLink("SVG", "visuals/" + graphId + ".svg");
+        landscapeReport.addHtmlContent(" ");
+        landscapeReport.addNewTabLink("DOT", "visuals/" + graphId + ".dot.txt");
+        landscapeReport.addHtmlContent(" ");
+        landscapeReport.addNewTabLink("(open online Graphviz editor)", "https://www.zeljkoobrenovic.com/tools/graphviz/");
+        landscapeReport.endDiv();
+    }
+
+
+    class ContributorConnections {
+        String email = "";
+        int projectsCount;
+        int connectionsCount;
+    }
 }
 

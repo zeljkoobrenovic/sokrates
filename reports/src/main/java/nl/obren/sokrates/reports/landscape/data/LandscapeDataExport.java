@@ -1,16 +1,15 @@
 package nl.obren.sokrates.reports.landscape.data;
 
-import nl.obren.sokrates.common.utils.FormattingUtils;
+import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProject;
+import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjects;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ProjectAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,6 +17,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class LandscapeDataExport {
     private LandscapeAnalysisResults analysisResults;
@@ -91,7 +92,7 @@ public class LandscapeDataExport {
 
         builder.append("Contributor\t# commits\tFirst commit\tLatest commit\tProjects\n");
 
-        List<ContributorProject> contributors = analysisResults.getContributors();
+        List<ContributorProjects> contributors = analysisResults.getContributors();
 
         contributors.forEach(contributor -> {
             builder.append(contributor.getContributor().getEmail()).append("\t");
@@ -99,11 +100,15 @@ public class LandscapeDataExport {
             builder.append(contributerCommits).append("\t");
             builder.append(contributor.getContributor().getFirstCommitDate()).append("\t");
             builder.append(contributor.getContributor().getLatestCommitDate()).append("\t");
-            builder.append(contributor.getProjects().stream().map(p -> p.getAnalysisResults().getMetadata().getName()).collect(Collectors.joining(", ")));
+            builder.append(contributor.getProjects().stream().map(p -> p.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName()).collect(Collectors.joining(", ")));
             builder.append("\n");
         });
+    }
+
+    public void exportAnalysisResults() {
         try {
-            FileUtils.write(new File(dataFolder, "contributors.txt"), builder.toString(), StandardCharsets.UTF_8);
+            String analysisResultsJson = new JsonGenerator().generate(analysisResults);
+            FileUtils.write(new File(dataFolder, "landscapeAnalysisResults.json"), analysisResultsJson, StandardCharsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }

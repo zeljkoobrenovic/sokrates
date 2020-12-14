@@ -20,21 +20,29 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class LandscapeAnalysisResults {
+    public static final int RECENT_THRESHOLD_DAYS = 40;
+
+    @JsonIgnore
     private LandscapeConfiguration configuration = new LandscapeConfiguration();
+
+    @JsonIgnore
     private List<ProjectAnalysisResults> projectAnalysisResults = new ArrayList<>();
 
     public LandscapeConfiguration getConfiguration() {
         return configuration;
     }
 
+    @JsonIgnore
     public void setConfiguration(LandscapeConfiguration configuration) {
         this.configuration = configuration;
     }
 
+    @JsonIgnore
     public List<ProjectAnalysisResults> getProjectAnalysisResults() {
         return projectAnalysisResults;
     }
 
+    @JsonIgnore
     public void setProjectAnalysisResults(List<ProjectAnalysisResults> projectAnalysisResults) {
         this.projectAnalysisResults = projectAnalysisResults;
     }
@@ -59,12 +67,10 @@ public class LandscapeAnalysisResults {
         return this.projectAnalysisResults;
     }
 
-    @JsonIgnore
     public int getProjectsCount() {
         return projectAnalysisResults.size();
     }
 
-    @JsonIgnore
     public int getMainLoc() {
         int count[] = {0};
         getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
@@ -73,7 +79,6 @@ public class LandscapeAnalysisResults {
         return count[0];
     }
 
-    @JsonIgnore
     public int getMainLocActive() {
         int count[] = {0};
         getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
@@ -86,7 +91,6 @@ public class LandscapeAnalysisResults {
         return count[0];
     }
 
-    @JsonIgnore
     public int getMainLocNew() {
         int count[] = {0};
         getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
@@ -99,12 +103,6 @@ public class LandscapeAnalysisResults {
         return count[0];
     }
 
-    @JsonIgnore
-    public int getMainLocMaintenance() {
-        return getMainLocActive() - getMainLocNew();
-    }
-
-    @JsonIgnore
     public int getTestLoc() {
         int count[] = {0};
         getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
@@ -113,7 +111,6 @@ public class LandscapeAnalysisResults {
         return count[0];
     }
 
-    @JsonIgnore
     public int getGeneratedLoc() {
         int count[] = {0};
         getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
@@ -122,7 +119,6 @@ public class LandscapeAnalysisResults {
         return count[0];
     }
 
-    @JsonIgnore
     public int getBuildAndDeploymentLoc() {
         int count[] = {0};
         getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
@@ -131,7 +127,6 @@ public class LandscapeAnalysisResults {
         return count[0];
     }
 
-    @JsonIgnore
     public int getOtherLoc() {
         int count[] = {0};
         getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
@@ -140,7 +135,6 @@ public class LandscapeAnalysisResults {
         return count[0];
     }
 
-    @JsonIgnore
     public int getAllLoc() {
         int count[] = {0};
         getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
@@ -190,9 +184,9 @@ public class LandscapeAnalysisResults {
     }
 
     @JsonIgnore
-    public List<ContributorProject> getContributors() {
+    public List<ContributorProjects> getContributors() {
         int thresholdCommits = configuration.getContributorThresholdCommits();
-        List<ContributorProject> contributorProjects = getAllContributors().stream()
+        List<ContributorProjects> contributorProjects = getAllContributors().stream()
                 .filter(c -> c.getContributor().getCommitsCount() >= thresholdCommits)
                 .collect(Collectors.toCollection(ArrayList::new));
 
@@ -257,9 +251,9 @@ public class LandscapeAnalysisResults {
     }
 
     @JsonIgnore
-    public List<ContributorProject> getAllContributors() {
-        List<ContributorProject> list = new ArrayList<>();
-        Map<String, ContributorProject> map = new HashMap<>();
+    public List<ContributorProjects> getAllContributors() {
+        List<ContributorProjects> list = new ArrayList<>();
+        Map<String, ContributorProjects> map = new HashMap<>();
 
         getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
             ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
@@ -270,21 +264,26 @@ public class LandscapeAnalysisResults {
                 int projectCommits90Days = contributor.getCommitsCount90Days();
 
                 if (map.containsKey(contributorId)) {
-                    ContributorProject existingContributor = map.get(contributorId);
-                    existingContributor.getContributor().setCommitsCount(existingContributor.getContributor().getCommitsCount() + projectCommits);
+                    ContributorProjects existingContributor = map.get(contributorId);
+                    Contributor contributorInfo = existingContributor.getContributor();
+                    contributorInfo.setCommitsCount(contributorInfo.getCommitsCount() + projectCommits);
 
-                    existingContributor.getContributor().setCommitsCount30Days(
-                            existingContributor.getContributor().getCommitsCount30Days() + projectCommits30Days);
+                    contributorInfo.setCommitsCount30Days(
+                            contributorInfo.getCommitsCount30Days() + projectCommits30Days);
 
-                    existingContributor.getContributor().setCommitsCount90Days(
-                            existingContributor.getContributor().getCommitsCount30Days() + projectCommits90Days);
+                    contributorInfo.setCommitsCount90Days(
+                            contributorInfo.getCommitsCount30Days() + projectCommits90Days);
 
-                    existingContributor.addProject(projectAnalysisResults, projectCommits);
-                    if (contributor.getFirstCommitDate().compareTo(existingContributor.getContributor().getFirstCommitDate()) < 0) {
-                        existingContributor.getContributor().setFirstCommitDate(contributor.getFirstCommitDate());
+                    contributorInfo.getActiveYears().addAll(contributor.getActiveYears());
+
+                    existingContributor.addProject(projectAnalysisResults,
+                            contributorInfo.getFirstCommitDate(), contributorInfo.getLatestCommitDate(), projectCommits);
+
+                    if (contributor.getFirstCommitDate().compareTo(contributorInfo.getFirstCommitDate()) < 0) {
+                        contributorInfo.setFirstCommitDate(contributor.getFirstCommitDate());
                     }
-                    if (contributor.getLatestCommitDate().compareTo(existingContributor.getContributor().getLatestCommitDate()) > 0) {
-                        existingContributor.getContributor().setLatestCommitDate(contributor.getLatestCommitDate());
+                    if (contributor.getLatestCommitDate().compareTo(contributorInfo.getLatestCommitDate()) > 0) {
+                        contributorInfo.setLatestCommitDate(contributor.getLatestCommitDate());
                     }
                 } else {
                     Contributor newContributor = new Contributor();
@@ -295,9 +294,12 @@ public class LandscapeAnalysisResults {
                     newContributor.setCommitsCount90Days(projectCommits90Days);
                     newContributor.setFirstCommitDate(contributor.getFirstCommitDate());
                     newContributor.setLatestCommitDate(contributor.getLatestCommitDate());
+                    newContributor.setActiveYears(contributor.getActiveYears());
 
-                    ContributorProject newContributorWithProjects = new ContributorProject(newContributor);
-                    newContributorWithProjects.addProject(projectAnalysisResults, projectCommits);
+                    ContributorProjects newContributorWithProjects = new ContributorProjects(newContributor);
+
+                    newContributorWithProjects.addProject(projectAnalysisResults,
+                            newContributor.getFirstCommitDate(), newContributor.getLatestCommitDate(), projectCommits);
 
                     map.put(contributorId, newContributorWithProjects);
                     list.add(newContributorWithProjects);
@@ -310,6 +312,7 @@ public class LandscapeAnalysisResults {
         return list;
     }
 
+    @JsonIgnore
     public List<ContributionYear> getContributorsPerYear() {
         List<ContributionYear> list = new ArrayList<>();
         Map<String, ContributionYear> map = new HashMap<>();
@@ -337,10 +340,30 @@ public class LandscapeAnalysisResults {
         return list;
     }
 
-    @JsonIgnore
     public int getCommitsCount() {
         return this.projectAnalysisResults.stream()
                 .mapToInt(p -> p.getAnalysisResults()
                         .getContributorsAnalysisResults().getCommitsCount()).sum();
     }
+
+    public int getContributorsCount() {
+        return getContributors().size();
+    }
+
+    public int getRecentContributorsCount() {
+        return (int) getContributors().stream().filter(c -> c.getContributor().isActive(RECENT_THRESHOLD_DAYS)).count();
+    }
+
+    public int getRecentContributorsCount6Months() {
+        return (int) getContributors().stream().filter(c -> c.getContributor().isActive(180)).count();
+    }
+
+    public int getRecentContributorsCount3Months() {
+        return (int) getContributors().stream().filter(c -> c.getContributor().isActive(90)).count();
+    }
+
+    public int getRookiesContributorsCount() {
+        return (int) getContributors().stream().filter(c -> c.getContributor().isRookie(RECENT_THRESHOLD_DAYS)).count();
+    }
+
 }
