@@ -100,9 +100,9 @@ public class TrendReportGenerator {
 
             report.startTableRow();
             report.addTableCell(labels.get(index[0]));
-            report.addTableCell(FormattingUtils.getFormattedCount(mainLoc), "text-align: right");
+            report.addTableCell(FormattingUtils.formatCount(mainLoc), "text-align: right");
             report.addTableCell(getVolumeSvgBarChart(maxTotalLoc, mainLoc, testLoc));
-            report.addTableCell(FormattingUtils.getFormattedCount(testLoc), "text-align: right");
+            report.addTableCell(FormattingUtils.formatCount(testLoc), "text-align: right");
             report.addTableCell(getDuplicationChart(duplicationPercentage));
             report.endTableRow();
             index[0]++;

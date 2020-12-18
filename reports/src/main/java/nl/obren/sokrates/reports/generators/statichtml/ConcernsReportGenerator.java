@@ -221,7 +221,7 @@ public class ConcernsReportGenerator {
 
     private String getCodePercentageSvg(double percentage, String aspectName, int numberOfFiles, int linesOfCode, int maxSize, int barHeight) {
         String displayText = "in " + numberOfFiles + (numberOfFiles == 1 ? " file " : " files, ")
-                + " " + FormattingUtils.getFormattedCount(linesOfCode) + " LOC ("
+                + " " + FormattingUtils.formatCount(linesOfCode) + " LOC ("
                 + FormattingUtils.getFormattedPercentage(percentage) + "%)";
 
         SimpleOneBarChart chart = new SimpleOneBarChart();
@@ -241,7 +241,7 @@ public class ConcernsReportGenerator {
                 filesFragment += " | <u><a href='../data/text/aspect_" + fileListPath + "_found_text_per_file.txt'>found text per file</a></u>";
             }
         }
-        String displayText = FormattingUtils.getFormattedCount(linesOfCode) + " LOC ("
+        String displayText = FormattingUtils.formatCount(linesOfCode) + " LOC ("
                 + FormattingUtils.getFormattedPercentage(percentage) + "%) "
                 + filesFragment;
 

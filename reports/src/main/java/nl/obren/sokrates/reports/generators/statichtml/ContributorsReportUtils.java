@@ -21,7 +21,6 @@ public class ContributorsReportUtils {
     public static void addContributorsSection(CodeAnalysisResults analysisResults, RichTextReport report) {
         ContributorsAnalysisResults contributorsAnalysisResults = analysisResults.getContributorsAnalysisResults();
         List<Contributor> contributors = contributorsAnalysisResults.getContributors();
-        List<ContributionYear> contributorsPerYear = contributorsAnalysisResults.getContributorsPerYear();
         if (contributors.size() > 0) {
             addContributors(report, contributors);
         }

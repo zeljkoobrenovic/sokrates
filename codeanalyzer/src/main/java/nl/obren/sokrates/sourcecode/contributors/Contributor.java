@@ -28,6 +28,8 @@ public class Contributor {
     private String latestCommitDate = "";
     private List<String> activeYears = new ArrayList<>();
 
+    private List<String> commitDates = new ArrayList<>();
+
     public Contributor() {
     }
 
@@ -35,13 +37,11 @@ public class Contributor {
         this.email = email;
     }
 
-    public Contributor(String email, int commitsCount) {
-        this.email = email;
-        this.commitsCount = commitsCount;
-    }
-
     @JsonIgnore
     public void addCommit(String date) {
+        if (!commitDates.contains(date)) {
+            commitDates.add(date);
+        }
         if (StringUtils.isBlank(firstCommitDate) || date.compareTo(firstCommitDate) < 0) {
             firstCommitDate = date;
         }
@@ -168,5 +168,13 @@ public class Contributor {
 
     public void setCommitsCount365Days(int commitsCount365Days) {
         this.commitsCount365Days = commitsCount365Days;
+    }
+
+    public List<String> getCommitDates() {
+        return commitDates;
+    }
+
+    public void setCommitDates(List<String> commitDates) {
+        this.commitDates = commitDates;
     }
 }

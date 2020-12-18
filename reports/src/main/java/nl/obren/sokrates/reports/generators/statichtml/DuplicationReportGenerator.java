@@ -125,10 +125,10 @@ public class DuplicationReportGenerator {
         report.startUnorderedList();
         report.addListItem("<b>" + FormattingUtils.getFormattedPercentage(duplicationAnalysisResults.getOverallDuplication().getDuplicationPercentage().doubleValue()) + "%</b> duplication:");
         report.startUnorderedList();
-        report.addListItem("<b>" + FormattingUtils.getFormattedCount(duplicationAnalysisResults.getOverallDuplication().getCleanedLinesOfCode()) + "</b> cleaned lines of cleaned code (without empty lines, comments, and frequently duplicated constructs such as imports)");
-        report.addListItem("<b>" + FormattingUtils.getFormattedCount(duplicationAnalysisResults.getOverallDuplication().getDuplicatedLinesOfCode()) + "</b> duplicated lines");
+        report.addListItem("<b>" + FormattingUtils.formatCount(duplicationAnalysisResults.getOverallDuplication().getCleanedLinesOfCode()) + "</b> cleaned lines of cleaned code (without empty lines, comments, and frequently duplicated constructs such as imports)");
+        report.addListItem("<b>" + FormattingUtils.formatCount(duplicationAnalysisResults.getOverallDuplication().getDuplicatedLinesOfCode()) + "</b> duplicated lines");
         report.endUnorderedList();
-        report.addListItem("<a href='../data/text/duplicates.txt'><b>" + FormattingUtils.getFormattedCount(duplicationAnalysisResults.getAllDuplicates().size()) + " duplicates</b></a>");
+        report.addListItem("<a href='../data/text/duplicates.txt'><b>" + FormattingUtils.formatCount(duplicationAnalysisResults.getAllDuplicates().size()) + " duplicates</b></a>");
         report.endUnorderedList();
         DuplicationReportUtils.addOverallDuplication(report, duplicationAnalysisResults.getOverallDuplication());
         report.endSection();
@@ -309,7 +309,7 @@ public class DuplicationReportGenerator {
         report.addHtmlContent(" ");
         report.addNewTabLink("DOT", "visuals/" + graphId + ".dot.txt");
         report.addHtmlContent(" ");
-        report.addNewTabLink("(open online Graphviz editor)", "https://www.zeljkoobrenovic.com/tools/graphviz/");
+        report.addNewTabLink("(open online Graphviz editor)", "https://obren.io/tools/graphviz/");
         report.endDiv();
     }
 

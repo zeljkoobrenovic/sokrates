@@ -19,7 +19,7 @@ public class LandscapeConfiguration {
     private int projectThresholdLocMain = 0;
     private int projectThresholdContributors = 2;
     private int contributorThresholdCommits = 2;
-    private int peopleDependenciesCommitsThreshold = 10;
+    private int commitsMaxYears = 10;
     private boolean anonymizeContributors = false;
 
     private List<CustomMetric> customMetrics = new ArrayList<>();
@@ -150,11 +150,11 @@ public class LandscapeConfiguration {
         this.anonymizeContributors = anonymizeContributors;
     }
 
-    public int getPeopleDependenciesCommitsThreshold() {
-        return peopleDependenciesCommitsThreshold;
+    public int getCommitsMaxYears() {
+        return commitsMaxYears;
     }
 
-    public void setPeopleDependenciesCommitsThreshold(int peopleDependenciesCommitsThreshold) {
-        this.peopleDependenciesCommitsThreshold = peopleDependenciesCommitsThreshold;
+    public void setCommitsMaxYears(int commitsMaxYears) {
+        this.commitsMaxYears = commitsMaxYears;
     }
 }

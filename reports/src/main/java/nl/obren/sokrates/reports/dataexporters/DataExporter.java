@@ -703,8 +703,8 @@ public class DataExporter {
             html = html.replace("${file-and-lines}", fileAndLines);
             html = html.replace("${language}", unit.getSourceFile().getExtension());
             html = html.replace("${code}", StringEscapeUtils.escapeHtml4(unit.getBody()));
-            html = html.replace("${lines-of-code}", FormattingUtils.getFormattedCount(unit.getLinesOfCode()));
-            html = html.replace("${mccabe-index}", FormattingUtils.getFormattedCount(unit.getMcCabeIndex()));
+            html = html.replace("${lines-of-code}", FormattingUtils.formatCount(unit.getLinesOfCode()));
+            html = html.replace("${mccabe-index}", FormattingUtils.formatCount(unit.getMcCabeIndex()));
 
             File htmlFile = new File(fragmentsFolder, fileName + ".html");
             FileUtils.write(htmlFile, html, UTF_8);
@@ -725,7 +725,7 @@ public class DataExporter {
             String defaultLangName = DefaultLanguageAnalyzer.class.getSimpleName().replace("Analyzer", "");
             html = html.replace("${language}", langName.equalsIgnoreCase(defaultLangName) ? sourceFile.getExtension() : langName);
             html = html.replace("${code}", StringEscapeUtils.escapeHtml4(sourceFile.getContent()));
-            html = html.replace("${lines-of-code}", FormattingUtils.getFormattedCount(sourceFile.getLinesOfCode()));
+            html = html.replace("${lines-of-code}", FormattingUtils.formatCount(sourceFile.getLinesOfCode()));
 
             FileUtils.write(htmlFile, html, UTF_8);
 

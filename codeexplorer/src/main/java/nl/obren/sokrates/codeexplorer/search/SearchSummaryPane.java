@@ -25,8 +25,8 @@ public class SearchSummaryPane extends BorderPane {
         int foundFilesCount = cachedFiles.size();
         int foundLoc = getLoc(cachedFiles);
         double percentage = 100.0 * foundLoc / aspect.getLinesOfCode();
-        TextField label = new TextField(" " + FormattingUtils.getFormattedCount(foundFilesCount) + " files and "
-                + FormattingUtils.getFormattedCount(foundLoc) + " LOC ("
+        TextField label = new TextField(" " + FormattingUtils.formatCount(foundFilesCount) + " files and "
+                + FormattingUtils.formatCount(foundLoc) + " LOC ("
                 + FormattingUtils.getFormattedPercentage(percentage) + "%)");
         label.setEditable(false);
 

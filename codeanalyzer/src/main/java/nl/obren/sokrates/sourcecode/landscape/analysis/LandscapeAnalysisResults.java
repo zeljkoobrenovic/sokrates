@@ -11,6 +11,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributionYear;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
+import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
@@ -20,10 +21,61 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class LandscapeAnalysisResults {
-    public static final int RECENT_THRESHOLD_DAYS = 40;
+    public static final int RECENT_THRESHOLD_DAYS = 30;
+
+    @JsonIgnore
+    private List<ComponentDependency> peopleDependencies30Days = new ArrayList<>();
+
+    @JsonIgnore
+    private List<ComponentDependency> peopleDependencies90Days = new ArrayList<>();
+
+    @JsonIgnore
+    private List<ComponentDependency> peopleDependencies180Days = new ArrayList<>();
+
+    @JsonIgnore
+    private List<ContributorConnections> connectionsViaProjects30Days = new ArrayList<>();
+
+    @JsonIgnore
+    private List<ContributorConnections> connectionsViaProjects90Days = new ArrayList<>();
+
+    @JsonIgnore
+    private List<ContributorConnections> connectionsViaProjects180Days = new ArrayList<>();
 
     @JsonIgnore
     private LandscapeConfiguration configuration = new LandscapeConfiguration();
+
+    private double cIndex30Days;
+    private double cIndex90Days;
+    private double cIndex180Days;
+
+    private double cMean30Days;
+    private double cMean90Days;
+    private double cMean180Days;
+
+    private double cMedian30Days;
+    private double cMedian90Days;
+    private double cMedian180Days;
+
+    private double pIndex30Days;
+    private double pIndex90Days;
+    private double pIndex180Days;
+
+    private double pMean30Days;
+    private double pMean90Days;
+    private double pMean180Days;
+
+    private double pMedian30Days;
+    private double pMedian90Days;
+    private double pMedian180Days;
+
+    private List<Double> cIndex30DaysHistory = new ArrayList<>();
+    private List<Double> pIndex30DaysHistory = new ArrayList<>();
+
+    private List<Double> cMean30DaysHistory = new ArrayList<>();
+    private List<Double> pMean30DaysHistory = new ArrayList<>();
+
+    private List<Double> cMedian30DaysHistory = new ArrayList<>();
+    private List<Double> pMedian30DaysHistory = new ArrayList<>();
 
     @JsonIgnore
     private List<ProjectAnalysisResults> projectAnalysisResults = new ArrayList<>();
@@ -260,6 +312,7 @@ public class LandscapeAnalysisResults {
             contributorsAnalysisResults.getContributors().forEach(contributor -> {
                 String contributorId = contributor.getEmail();
                 int projectCommits = contributor.getCommitsCount();
+                List<String> commitDates = contributor.getCommitDates();
                 int projectCommits30Days = contributor.getCommitsCount30Days();
                 int projectCommits90Days = contributor.getCommitsCount90Days();
 
@@ -268,16 +321,13 @@ public class LandscapeAnalysisResults {
                     Contributor contributorInfo = existingContributor.getContributor();
                     contributorInfo.setCommitsCount(contributorInfo.getCommitsCount() + projectCommits);
 
-                    contributorInfo.setCommitsCount30Days(
-                            contributorInfo.getCommitsCount30Days() + projectCommits30Days);
+                    contributorInfo.setCommitsCount30Days(contributorInfo.getCommitsCount30Days() + projectCommits30Days);
 
-                    contributorInfo.setCommitsCount90Days(
-                            contributorInfo.getCommitsCount30Days() + projectCommits90Days);
+                    contributorInfo.setCommitsCount90Days(contributorInfo.getCommitsCount30Days() + projectCommits90Days);
 
                     contributorInfo.getActiveYears().addAll(contributor.getActiveYears());
 
-                    existingContributor.addProject(projectAnalysisResults,
-                            contributorInfo.getFirstCommitDate(), contributorInfo.getLatestCommitDate(), projectCommits);
+                    existingContributor.addProject(projectAnalysisResults, contributorInfo.getFirstCommitDate(), contributorInfo.getLatestCommitDate(), projectCommits, commitDates);
 
                     if (contributor.getFirstCommitDate().compareTo(contributorInfo.getFirstCommitDate()) < 0) {
                         contributorInfo.setFirstCommitDate(contributor.getFirstCommitDate());
@@ -298,8 +348,7 @@ public class LandscapeAnalysisResults {
 
                     ContributorProjects newContributorWithProjects = new ContributorProjects(newContributor);
 
-                    newContributorWithProjects.addProject(projectAnalysisResults,
-                            newContributor.getFirstCommitDate(), newContributor.getLatestCommitDate(), projectCommits);
+                    newContributorWithProjects.addProject(projectAnalysisResults, newContributor.getFirstCommitDate(), newContributor.getLatestCommitDate(), projectCommits, commitDates);
 
                     map.put(contributorId, newContributorWithProjects);
                     list.add(newContributorWithProjects);
@@ -366,4 +415,255 @@ public class LandscapeAnalysisResults {
         return (int) getContributors().stream().filter(c -> c.getContributor().isRookie(RECENT_THRESHOLD_DAYS)).count();
     }
 
+    @JsonIgnore
+    public List<ComponentDependency> getPeopleDependencies30Days() {
+        return peopleDependencies30Days;
+    }
+
+    @JsonIgnore
+    public void setPeopleDependencies30Days(List<ComponentDependency> peopleDependencies30Days) {
+        this.peopleDependencies30Days = peopleDependencies30Days;
+    }
+
+    @JsonIgnore
+    public List<ComponentDependency> getPeopleDependencies90Days() {
+        return peopleDependencies90Days;
+    }
+
+    @JsonIgnore
+    public void setPeopleDependencies90Days(List<ComponentDependency> peopleDependencies90Days) {
+        this.peopleDependencies90Days = peopleDependencies90Days;
+    }
+
+    @JsonIgnore
+    public List<ComponentDependency> getPeopleDependencies180Days() {
+        return peopleDependencies180Days;
+    }
+
+    @JsonIgnore
+    public void setPeopleDependencies180Days(List<ComponentDependency> peopleDependencies180Days) {
+        this.peopleDependencies180Days = peopleDependencies180Days;
+    }
+
+    @JsonIgnore
+    public List<ContributorConnections> getConnectionsViaProjects30Days() {
+        return connectionsViaProjects30Days;
+    }
+
+    @JsonIgnore
+    public void setConnectionsViaProjects30Days(List<ContributorConnections> connectionsViaProjects30Days) {
+        this.connectionsViaProjects30Days = connectionsViaProjects30Days;
+    }
+
+    @JsonIgnore
+    public List<ContributorConnections> getConnectionsViaProjects90Days() {
+        return connectionsViaProjects90Days;
+    }
+
+    @JsonIgnore
+    public void setConnectionsViaProjects90Days(List<ContributorConnections> connectionsViaProjects90Days) {
+        this.connectionsViaProjects90Days = connectionsViaProjects90Days;
+    }
+
+    @JsonIgnore
+    public List<ContributorConnections> getConnectionsViaProjects180Days() {
+        return connectionsViaProjects180Days;
+    }
+
+    @JsonIgnore
+    public void setConnectionsViaProjects180Days(List<ContributorConnections> connectionsViaProjects180Days) {
+        this.connectionsViaProjects180Days = connectionsViaProjects180Days;
+    }
+
+    public double getcIndex30Days() {
+        return cIndex30Days;
+    }
+
+    public void setcIndex30Days(double cIndex30Days) {
+        this.cIndex30Days = cIndex30Days;
+    }
+
+    public double getcIndex90Days() {
+        return cIndex90Days;
+    }
+
+    public void setcIndex90Days(double cIndex90Days) {
+        this.cIndex90Days = cIndex90Days;
+    }
+
+    public double getcIndex180Days() {
+        return cIndex180Days;
+    }
+
+    public void setcIndex180Days(double cIndex180Days) {
+        this.cIndex180Days = cIndex180Days;
+    }
+
+    public double getcMean30Days() {
+        return cMean30Days;
+    }
+
+    public void setcMean30Days(double cMean30Days) {
+        this.cMean30Days = cMean30Days;
+    }
+
+    public double getcMean90Days() {
+        return cMean90Days;
+    }
+
+    public void setcMean90Days(double cMean90Days) {
+        this.cMean90Days = cMean90Days;
+    }
+
+    public double getcMean180Days() {
+        return cMean180Days;
+    }
+
+    public void setcMean180Days(double cMean180Days) {
+        this.cMean180Days = cMean180Days;
+    }
+
+    public double getcMedian30Days() {
+        return cMedian30Days;
+    }
+
+    public void setcMedian30Days(double cMedian30Days) {
+        this.cMedian30Days = cMedian30Days;
+    }
+
+    public double getcMedian90Days() {
+        return cMedian90Days;
+    }
+
+    public void setcMedian90Days(double cMedian90Days) {
+        this.cMedian90Days = cMedian90Days;
+    }
+
+    public double getcMedian180Days() {
+        return cMedian180Days;
+    }
+
+    public void setcMedian180Days(double cMedian180Days) {
+        this.cMedian180Days = cMedian180Days;
+    }
+
+    public double getpIndex30Days() {
+        return pIndex30Days;
+    }
+
+    public void setpIndex30Days(double pIndex30Days) {
+        this.pIndex30Days = pIndex30Days;
+    }
+
+    public double getpIndex90Days() {
+        return pIndex90Days;
+    }
+
+    public void setpIndex90Days(double pIndex90Days) {
+        this.pIndex90Days = pIndex90Days;
+    }
+
+    public double getpIndex180Days() {
+        return pIndex180Days;
+    }
+
+    public void setpIndex180Days(double pIndex180Days) {
+        this.pIndex180Days = pIndex180Days;
+    }
+
+    public double getpMean30Days() {
+        return pMean30Days;
+    }
+
+    public void setpMean30Days(double pMean30Days) {
+        this.pMean30Days = pMean30Days;
+    }
+
+    public double getpMean90Days() {
+        return pMean90Days;
+    }
+
+    public void setpMean90Days(double pMean90Days) {
+        this.pMean90Days = pMean90Days;
+    }
+
+    public double getpMean180Days() {
+        return pMean180Days;
+    }
+
+    public void setpMean180Days(double pMean180Days) {
+        this.pMean180Days = pMean180Days;
+    }
+
+    public double getpMedian30Days() {
+        return pMedian30Days;
+    }
+
+    public void setpMedian30Days(double pMedian30Days) {
+        this.pMedian30Days = pMedian30Days;
+    }
+
+    public double getpMedian90Days() {
+        return pMedian90Days;
+    }
+
+    public void setpMedian90Days(double pMedian90Days) {
+        this.pMedian90Days = pMedian90Days;
+    }
+
+    public double getpMedian180Days() {
+        return pMedian180Days;
+    }
+
+    public void setpMedian180Days(double pMedian180Days) {
+        this.pMedian180Days = pMedian180Days;
+    }
+
+    public List<Double> getcIndex30DaysHistory() {
+        return cIndex30DaysHistory;
+    }
+
+    public void setcIndex30DaysHistory(List<Double> cIndex30DaysHistory) {
+        this.cIndex30DaysHistory = cIndex30DaysHistory;
+    }
+
+    public List<Double> getpIndex30DaysHistory() {
+        return pIndex30DaysHistory;
+    }
+
+    public void setpIndex30DaysHistory(List<Double> pIndex30DaysHistory) {
+        this.pIndex30DaysHistory = pIndex30DaysHistory;
+    }
+
+    public List<Double> getcMean30DaysHistory() {
+        return cMean30DaysHistory;
+    }
+
+    public void setcMean30DaysHistory(List<Double> cMean30DaysHistory) {
+        this.cMean30DaysHistory = cMean30DaysHistory;
+    }
+
+    public List<Double> getpMean30DaysHistory() {
+        return pMean30DaysHistory;
+    }
+
+    public void setpMean30DaysHistory(List<Double> pMean30DaysHistory) {
+        this.pMean30DaysHistory = pMean30DaysHistory;
+    }
+
+    public List<Double> getcMedian30DaysHistory() {
+        return cMedian30DaysHistory;
+    }
+
+    public void setcMedian30DaysHistory(List<Double> cMedian30DaysHistory) {
+        this.cMedian30DaysHistory = cMedian30DaysHistory;
+    }
+
+    public List<Double> getpMedian30DaysHistory() {
+        return pMedian30DaysHistory;
+    }
+
+    public void setpMedian30DaysHistory(List<Double> pMedian30DaysHistory) {
+        this.pMedian30DaysHistory = pMedian30DaysHistory;
+    }
 }

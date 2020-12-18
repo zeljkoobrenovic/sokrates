@@ -64,7 +64,7 @@ public class DuplicationReportUtils {
             double percentage = 100.0 * metric.getDuplicatedLinesOfCode() / metric.getCleanedLinesOfCode();
             String textRight = StringEscapeUtils.escapeHtml4(
                     FormattingUtils.getFormattedPercentage(percentage)
-                            + "% (" + FormattingUtils.getFormattedCount(metric.getDuplicatedLinesOfCode()) + " lines)");
+                            + "% (" + FormattingUtils.formatCount(metric.getDuplicatedLinesOfCode()) + " lines)");
             String svg = chart.getPercentageSvg(percentage, metric.getKey(), textRight);
             report.addContentInDiv(svg);
         });
@@ -83,7 +83,7 @@ public class DuplicationReportUtils {
         double percentage = 100.0 * metric.getDuplicatedLinesOfCode() / metric.getCleanedLinesOfCode();
         String textRight = StringEscapeUtils.escapeHtml4(
                 FormattingUtils.getFormattedPercentage(percentage)
-                        + "% (" + FormattingUtils.getFormattedCount(metric.getDuplicatedLinesOfCode()) + " lines)");
+                        + "% (" + FormattingUtils.formatCount(metric.getDuplicatedLinesOfCode()) + " lines)");
         String svg = chart.getPercentageSvg(percentage, metric.getKey(), textRight);
         report.startDiv("width: 100%; overflow-x: auto");
         report.addContentInDiv(svg);

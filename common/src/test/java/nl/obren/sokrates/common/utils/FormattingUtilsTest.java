@@ -5,7 +5,6 @@
 package nl.obren.sokrates.common.utils;
 
 import junit.framework.TestCase;
-import nl.obren.sokrates.common.utils.FormattingUtils;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertEquals;
@@ -39,15 +38,15 @@ public class FormattingUtilsTest {
 
     @Test
     public void getFormattedCount() throws Exception {
-        assertEquals(FormattingUtils.getFormattedCount(100), "100");
-        assertEquals(FormattingUtils.getFormattedCount(1000), "1,000");
-        assertEquals(FormattingUtils.getFormattedCount(10000), "10,000");
-        assertEquals(FormattingUtils.getFormattedCount(100000), "100,000");
-        assertEquals(FormattingUtils.getFormattedCount(1000000), "1,000,000");
-        assertEquals(FormattingUtils.getFormattedCount(10000000), "10,000,000");
-        assertEquals(FormattingUtils.getFormattedCount(10), "10");
-        assertEquals(FormattingUtils.getFormattedCount(1), "1");
-        assertEquals(FormattingUtils.getFormattedCount(0), "0");
+        assertEquals(FormattingUtils.formatCount(100), "100");
+        assertEquals(FormattingUtils.formatCount(1000), "1,000");
+        assertEquals(FormattingUtils.formatCount(10000), "10,000");
+        assertEquals(FormattingUtils.formatCount(100000), "100,000");
+        assertEquals(FormattingUtils.formatCount(1000000), "1,000,000");
+        assertEquals(FormattingUtils.formatCount(10000000), "10,000,000");
+        assertEquals(FormattingUtils.formatCount(10), "10");
+        assertEquals(FormattingUtils.formatCount(1), "1");
+        assertEquals(FormattingUtils.formatCount(0), "0");
     }
 
     @Test

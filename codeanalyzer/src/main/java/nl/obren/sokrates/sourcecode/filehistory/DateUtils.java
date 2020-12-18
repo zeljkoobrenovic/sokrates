@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.List;
 
 public class DateUtils {
     public static final String ENV_SOKRATES_SOURCE_CODE_DATE = "SOKRATES_SOURCE_CODE_DATE";
@@ -29,12 +30,28 @@ public class DateUtils {
     }
 
     public static boolean isCommittedLessThanDaysAgo(String date, int daysAgo) {
-        Calendar cal = DateUtils.getCalendar();
-        cal.add(Calendar.DATE, -daysAgo);
+        return isCommittedBetween(date, 0, daysAgo);
+    }
 
-        String thresholdDate = new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime());
+    public static boolean isAnyDateCommittedBetween(List<String> dates, int daysAgo1, int daysAgo2) {
+        for (String date : dates) {
+            if (isCommittedBetween(date, daysAgo1, daysAgo2)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-        return date.compareTo(thresholdDate) > 0;
+    public static boolean isCommittedBetween(String date, int daysAgo1, int daysAgo2) {
+        Calendar cal1 = DateUtils.getCalendar();
+        cal1.add(Calendar.DATE, -daysAgo1);
+        String thresholdDate1 = new SimpleDateFormat("yyyy-MM-dd").format(cal1.getTime());
+
+        Calendar cal2 = DateUtils.getCalendar();
+        cal2.add(Calendar.DATE, -daysAgo2);
+        String thresholdDate2 = new SimpleDateFormat("yyyy-MM-dd").format(cal2.getTime());
+
+        return date.compareTo(thresholdDate2) >= 0 && date.compareTo(thresholdDate1) <= 0;
     }
 
 

@@ -23,11 +23,11 @@ public class FormattingUtils {
         return percentage == 0 ? "100" : percentage < 1 ? ">99" : "" + (100 - (int) percentage);
     }
 
-    public static String getFormattedCount(int value) {
+    public static String formatCount(int value) {
         return new DecimalFormat("#,###").format(value);
     }
 
-    public static String getFormattedCount(int value, String textForZero) {
+    public static String formatCount(int value, String textForZero) {
         return value == 0 ? textForZero : new DecimalFormat("#,###").format(value);
     }
 

@@ -9,13 +9,19 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributorsImport;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
+import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
+import nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 
 import java.io.File;
+import java.util.List;
+
+import static nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils.getPeopleDependencies;
 
 public class ContributorsAnalyzer extends Analyzer {
     private CodeConfiguration codeConfiguration;
     private MetricsList metricsList;
+    private CodeAnalysisResults codeAnalysisResults;
     private File sokratesFolder;
 
     private ContributorsAnalysisResults analysisResults;
@@ -24,6 +30,7 @@ public class ContributorsAnalyzer extends Analyzer {
         this.analysisResults = results.getContributorsAnalysisResults();
         this.codeConfiguration = results.getCodeConfiguration();
         this.metricsList = results.getMetricsList();
+        codeAnalysisResults = results;
         this.sokratesFolder = sokratesFolder;
     }
 
@@ -33,6 +40,12 @@ public class ContributorsAnalyzer extends Analyzer {
             analysisResults.setContributors(contributorsImport.getContributors());
             analysisResults.setContributorsPerYear(contributorsImport.getContributorsPerYear());
             analysisResults.setCommitsPerExtensions(codeConfiguration.getFileHistoryAnalysis().getCommitsPerExtension(sokratesFolder));
+
+            analysisResults.setPeopleDependencies30Days(getPeopleDependencies(codeAnalysisResults, 30));
+            analysisResults.setPeopleDependencies90Days(getPeopleDependencies(codeAnalysisResults, 90));
+            analysisResults.setPeopleDependencies180Days(getPeopleDependencies(codeAnalysisResults, 180));
+            analysisResults.setPeopleDependencies365Days(getPeopleDependencies(codeAnalysisResults, 365));
+            analysisResults.setPeopleDependenciesAllTime(getPeopleDependencies(codeAnalysisResults, 36500));
 
             addMetrics();
         }

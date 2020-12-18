@@ -212,7 +212,7 @@ public class LogicalComponentsReportGenerator {
         report.addHtmlContent(" ");
         report.addNewTabLink("DOT", "visuals/" + graphId + ".dot.txt");
         report.addHtmlContent(" ");
-        report.addNewTabLink("(open online Graphviz editor)", "https://www.zeljkoobrenovic.com/tools/graphviz/");
+        report.addNewTabLink("(open online Graphviz editor)", "https://obren.io/tools/graphviz/");
         report.endDiv();
     }
 

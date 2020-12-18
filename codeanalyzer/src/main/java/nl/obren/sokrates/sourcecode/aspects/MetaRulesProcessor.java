@@ -135,22 +135,23 @@ public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
     private void processMatchingString(SourceFile sourceFile, MetaRule metaRule, String matchingString) {
         updateAlreadyPrcessedFiles(sourceFile);
         String name = new ComplexOperation(metaRule.getNameOperations()).exec(matchingString);
-        name = StringUtils.defaultIfBlank(name, "ROOT");
-        if (map.containsKey(name)) {
-            T sourceCodeAspect = map.get(name);
-            List<SourceFile> sourceFiles = sourceCodeAspect.getSourceFiles();
-            if (!sourceFiles.contains(sourceFile)) {
-                sourceFiles.add(sourceFile);
+        if (StringUtils.isNotBlank(name)) {
+            if (map.containsKey(name)) {
+                T sourceCodeAspect = map.get(name);
+                List<SourceFile> sourceFiles = sourceCodeAspect.getSourceFiles();
+                if (!sourceFiles.contains(sourceFile)) {
+                    sourceFiles.add(sourceFile);
+                    sourceCodeAspectFactory.updateSourceFile(sourceFile, sourceCodeAspect);
+                }
+            } else {
+                NamedSourceCodeAspect sourceCodeAspect = sourceCodeAspectFactory.getInstance(name);
+                sourceCodeAspect.getSourceFiles().add(sourceFile);
+
                 sourceCodeAspectFactory.updateSourceFile(sourceFile, sourceCodeAspect);
+
+                map.put(name, (T) sourceCodeAspect);
+                concerns.add((T) sourceCodeAspect);
             }
-        } else {
-            NamedSourceCodeAspect sourceCodeAspect = sourceCodeAspectFactory.getInstance(name);
-            sourceCodeAspect.getSourceFiles().add(sourceFile);
-
-            sourceCodeAspectFactory.updateSourceFile(sourceFile, sourceCodeAspect);
-
-            map.put(name, (T) sourceCodeAspect);
-            concerns.add((T) sourceCodeAspect);
         }
     }
 
