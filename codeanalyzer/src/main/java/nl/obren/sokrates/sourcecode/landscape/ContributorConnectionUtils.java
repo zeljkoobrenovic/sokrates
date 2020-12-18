@@ -240,7 +240,7 @@ public class ContributorConnectionUtils {
     }
 
     public static double getCMedian(List<ContributorConnections> contributorConnections) {
-        List<ContributorConnections> list = contributorConnections.stream().filter(c -> c.getConnectionsCount() > 0).collect(Collectors.toCollection(ArrayList::new));
+        List<ContributorConnections> list = new ArrayList<>(contributorConnections);
         list.sort((a, b) -> b.getConnectionsCount() - a.getConnectionsCount());
         int n = list.size();
         if (n > 0) {
@@ -255,7 +255,7 @@ public class ContributorConnectionUtils {
     }
 
     public static double getCMean(List<ContributorConnections> contributorConnections) {
-        List<ContributorConnections> list = contributorConnections.stream().filter(c -> c.getConnectionsCount() > 0).collect(Collectors.toCollection(ArrayList::new));
+        List<ContributorConnections> list = new ArrayList<>(contributorConnections);
         list.sort((a, b) -> b.getConnectionsCount() - a.getConnectionsCount());
         if (list.size() > 0) {
             int total[] = {0};
@@ -266,7 +266,7 @@ public class ContributorConnectionUtils {
     }
 
     public static double getPMedian(List<ContributorConnections> contributorConnections) {
-        List<ContributorConnections> list = contributorConnections.stream().filter(c -> c.getProjectsCount() > 0).collect(Collectors.toCollection(ArrayList::new));;
+        List<ContributorConnections> list = new ArrayList<>(contributorConnections);;
         list.sort((a, b) -> b.getProjectsCount() - a.getProjectsCount());
         int n = list.size();
         if (n > 0) {
@@ -281,7 +281,7 @@ public class ContributorConnectionUtils {
     }
 
     public static double getPMean(List<ContributorConnections> contributorConnections) {
-        List<ContributorConnections> list = contributorConnections.stream().filter(c -> c.getProjectsCount() > 0).collect(Collectors.toCollection(ArrayList::new));;
+        List<ContributorConnections> list = new ArrayList<>(contributorConnections);;
         if (list.size() > 0) {
             int total[] = {0};
             list.forEach(connections -> total[0] += connections.getProjectsCount());

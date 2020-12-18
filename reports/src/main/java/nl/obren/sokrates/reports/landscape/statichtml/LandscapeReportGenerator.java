@@ -255,15 +255,13 @@ public class LandscapeReportGenerator {
             double cMedian = landscapeAnalysisResults.getcMedian30Days();
             double pMedian = landscapeAnalysisResults.getpMedian30Days();
 
+            int connectionSum = landscapeAnalysisResults.getConnectionsViaProjects30Days().stream().mapToInt(c -> c.getConnectionsCount()).sum();
+            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(peopleDependencies.size()), "C2C connections", "30 days", "");
+            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(connectionSum), "project dependencies", "30 days", "");
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cMedian)), "C-Median", "30 days", "");
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cMean)), "C-Mean", "30 days", "");
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cIndex)), "C-Index",
                     "30 days", "" + (int) Math.round(cIndex) + " active contributes connected to " + (int) Math.round(cIndex) + " or more of other contributers via commits to shared projects in past 30 days.");
-
-            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(pMedian)), "P-Median", "30 days", "");
-            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(pMean)), "P-Mean", "30 days", "");
-            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(pIndex)), "P-Index",
-                    "30 days", "" + (int) Math.round(pIndex) + " active contributes committing to " + (int) Math.round(pIndex) + " or more of projects in past 30 days.");
         }
 
         addContributorsPerYear(true);
@@ -808,7 +806,9 @@ public class LandscapeReportGenerator {
                                           int daysAgo) {
         landscapeReport.addLevel2Header("People Dependencies (" + daysAgo + " days)", "margin-top: 40px");
         landscapeReport.addParagraph("Based on the number of same repositories that two persons committed to in the past " + daysAgo + " days.", "color: grey");
-        landscapeReport.addParagraph("In total there are <b>" + FormattingUtils.formatCount(peopleDependencies.size()) +  "</b> peer-to-peer connections between contributors.");
+        int connectionSum = contributorConnections.stream().mapToInt(c -> c.getConnectionsCount()).sum();
+        landscapeReport.addParagraph("In total there are <b>" + FormattingUtils.formatCount(peopleDependencies.size()) + "</b> " +
+                "contributor-to-contributor (C2C) connections via <b>" + FormattingUtils.formatCount(connectionSum) + " project dependencies.</b>.");
 
         addDataSection("C-median", cMedian, daysAgo, landscapeAnalysisResults.getcMedian30DaysHistory(), "");
         addDataSection("C-mean", cMean, daysAgo, landscapeAnalysisResults.getcMean30DaysHistory(), "");
