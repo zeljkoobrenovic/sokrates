@@ -36,6 +36,15 @@ public class LandscapeAnalysisResults {
     private List<ContributorConnections> connectionsViaProjects30Days = new ArrayList<>();
 
     @JsonIgnore
+    private List<Double> connectionsViaProjects30DaysCountHistory = new ArrayList<>();
+
+    @JsonIgnore
+    private List<Double> peopleDependenciesCount30DaysHistory = new ArrayList<>();
+
+    @JsonIgnore
+    private List<Double> activeContributors30DaysHistory = new ArrayList<>();
+
+    @JsonIgnore
     private List<ContributorConnections> connectionsViaProjects90Days = new ArrayList<>();
 
     @JsonIgnore
@@ -43,6 +52,9 @@ public class LandscapeAnalysisResults {
 
     @JsonIgnore
     private LandscapeConfiguration configuration = new LandscapeConfiguration();
+
+    private double c2cConnectionsCount30Days;
+    private double c2pConnectionsCount30Days;
 
     private double cIndex30Days;
     private double cIndex90Days;
@@ -665,5 +677,45 @@ public class LandscapeAnalysisResults {
 
     public void setpMedian30DaysHistory(List<Double> pMedian30DaysHistory) {
         this.pMedian30DaysHistory = pMedian30DaysHistory;
+    }
+
+    public List<Double> getConnectionsViaProjects30DaysCountHistory() {
+        return connectionsViaProjects30DaysCountHistory;
+    }
+
+    public void setConnectionsViaProjects30DaysCountHistory(List<Double> connectionsViaProjects30DaysCountHistory) {
+        this.connectionsViaProjects30DaysCountHistory = connectionsViaProjects30DaysCountHistory;
+    }
+
+    public List<Double> getPeopleDependenciesCount30DaysHistory() {
+        return peopleDependenciesCount30DaysHistory;
+    }
+
+    public void setPeopleDependenciesCount30DaysHistory(List<Double> peopleDependenciesCount30DaysHistory) {
+        this.peopleDependenciesCount30DaysHistory = peopleDependenciesCount30DaysHistory;
+    }
+
+    public List<Double> getActiveContributors30DaysHistory() {
+        return activeContributors30DaysHistory;
+    }
+
+    public void setActiveContributors30DaysHistory(List<Double> activeContributors30DaysHistory) {
+        this.activeContributors30DaysHistory = activeContributors30DaysHistory;
+    }
+
+    public double getC2cConnectionsCount30Days() {
+        return c2cConnectionsCount30Days;
+    }
+
+    public void setC2cConnectionsCount30Days(double c2cConnectionsCount30Days) {
+        this.c2cConnectionsCount30Days = c2cConnectionsCount30Days;
+    }
+
+    public double getC2pConnectionsCount30Days() {
+        return c2pConnectionsCount30Days;
+    }
+
+    public void setC2pConnectionsCount30Days(double c2pConnectionsCount30Days) {
+        this.c2pConnectionsCount30Days = c2pConnectionsCount30Days;
     }
 }

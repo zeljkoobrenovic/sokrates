@@ -257,7 +257,7 @@ public class LandscapeReportGenerator {
 
             int connectionSum = landscapeAnalysisResults.getConnectionsViaProjects30Days().stream().mapToInt(c -> c.getConnectionsCount()).sum();
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(peopleDependencies.size()), "C2C connections", "30 days", "");
-            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(connectionSum), "project dependencies", "30 days", "");
+            // addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(connectionSum), "all C2C connections", "30 days", "");
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cMedian)), "C-Median", "30 days", "");
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cMean)), "C-Mean", "30 days", "");
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cIndex)), "C-Index",
@@ -810,6 +810,19 @@ public class LandscapeReportGenerator {
         landscapeReport.addParagraph("In total there are <b>" + FormattingUtils.formatCount(peopleDependencies.size()) + "</b> " +
                 "contributor-to-contributor (C2C) connections via <b>" + FormattingUtils.formatCount(connectionSum) + " project dependencies.</b>.");
 
+        List<Double> activeContributors30DaysHistory = landscapeAnalysisResults.getActiveContributors30DaysHistory();
+        if (activeContributors30DaysHistory.size() > 0) {
+            addDataSection("Active Contributors", activeContributors30DaysHistory.get(0), daysAgo, activeContributors30DaysHistory, "");
+        }
+        List<Double> peopleDependenciesCount30DaysHistory = landscapeAnalysisResults.getPeopleDependenciesCount30DaysHistory();
+        if (peopleDependenciesCount30DaysHistory.size() > 0) {
+            addDataSection("Unique Contributor-to-Contributor (C2C) Connections", peopleDependenciesCount30DaysHistory.get(0), daysAgo, peopleDependenciesCount30DaysHistory, "");
+        }
+
+        /*List<Double> connectionsViaProjects30DaysCountHistory = landscapeAnalysisResults.getConnectionsViaProjects30DaysCountHistory();
+        if (connectionsViaProjects30DaysCountHistory.size() > 0) {
+            addDataSection("All Contributor-to-Contributor (C2C) Connections", connectionsViaProjects30DaysCountHistory.get(0), daysAgo, connectionsViaProjects30DaysCountHistory, "");
+        }*/
         addDataSection("C-median", cMedian, daysAgo, landscapeAnalysisResults.getcMedian30DaysHistory(), "");
         addDataSection("C-mean", cMean, daysAgo, landscapeAnalysisResults.getcMean30DaysHistory(), "");
         addDataSection("C-index", cIndex, daysAgo, landscapeAnalysisResults.getcIndex30DaysHistory(),
@@ -855,7 +868,7 @@ public class LandscapeReportGenerator {
             });
             landscapeReport.endTableRow();
             landscapeReport.startTableRow("font-size: 70%;");
-            landscapeReport.addTableCell("now", "border: none");
+            landscapeReport.addTableCell("<b>now</b>", "border: none");
             landscapeReport.addTableCell("1m<br>ago", "text-align: center; border: none");
             for (int i = 0; i < history.size() - 2; i++) {
                 landscapeReport.addTableCell((i + 2) + "m<br>ago", "text-align: center; border: none");
@@ -915,10 +928,19 @@ public class LandscapeReportGenerator {
             landscapeReport.startTableRow();
             String from = dependency.getFromComponent();
             String to = dependency.getToComponent();
+            int dependencyCount = dependency.getCount();
             landscapeReport.addTableCell(index[0] + ".");
-            landscapeReport.addTableCell(from + "<br><span style='color: grey'>" + ContributorConnectionUtils.getProjectCount(contributors, from, 0, daysAgo) + " projects</span>", "");
-            landscapeReport.addTableCell(to + "<br><span style='color: grey'>" + ContributorConnectionUtils.getProjectCount(contributors, to, 0, daysAgo) + " projects</span>", "");
-            landscapeReport.addTableCell(dependency.getCount() + " shared projects", "");
+            int projectCount1 = ContributorConnectionUtils.getProjectCount(contributors, from, 0, daysAgo);
+            int projectCount2 = ContributorConnectionUtils.getProjectCount(contributors, to, 0, daysAgo);
+            double perc1 = 0;
+            double perc2 = 0;
+            if (dependencyCount > 0) {
+                perc1 = 100.0 * projectCount1 / dependencyCount;
+                perc2 = 100.0 * projectCount2 / dependencyCount;
+            }
+            landscapeReport.addTableCell(from + "<br><span style='color: grey'>" + projectCount1 + " projects (" + FormattingUtils.getFormattedPercentage(perc1) + "%)</span>", "");
+            landscapeReport.addTableCell(to + "<br><span style='color: grey'>" + projectCount2 + " projects (" + FormattingUtils.getFormattedPercentage(perc2) + "</span>", "");
+            landscapeReport.addTableCell(dependencyCount + " shared projects", "");
             landscapeReport.endTableRow();
         });
         landscapeReport.endTable();

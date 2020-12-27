@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class LandscapeAnalyzer {
     private File landscapeConfigurationFile;
@@ -58,7 +59,6 @@ public class LandscapeAnalyzer {
         List<ComponentDependency> peopleDependencies180Days = ContributorConnectionUtils.getPeopleDependencies(contributors, 0, 180);
         landscapeAnalysisResults.setPeopleDependencies180Days(peopleDependencies180Days);
 
-
         List<ContributorConnections> connectionsViaProjects30Days = ContributorConnectionUtils.getConnectionsViaProjects(contributors, peopleDependencies30Days, 0, 30);
         List<ContributorConnections> connectionsViaProjects90Days = ContributorConnectionUtils.getConnectionsViaProjects(contributors, peopleDependencies90Days, 0, 90);
         List<ContributorConnections> connectionsViaProjects180Days = ContributorConnectionUtils.getConnectionsViaProjects(contributors, peopleDependencies180Days, 0, 180);
@@ -94,20 +94,29 @@ public class LandscapeAnalyzer {
         landscapeAnalysisResults.setcMedian180Days(ContributorConnectionUtils.getCMedian(connectionsViaProjects180Days));
         landscapeAnalysisResults.setpMedian180Days(ContributorConnectionUtils.getPMedian(connectionsViaProjects180Days));
 
+        landscapeAnalysisResults.setC2cConnectionsCount30Days(peopleDependencies30Days.size());
+        landscapeAnalysisResults.setC2pConnectionsCount30Days(connectionsViaProjects30Days.stream().mapToInt(c -> c.getConnectionsCount()).sum());
+
         addHistory(landscapeAnalysisResults);
     }
 
     private void addHistory(LandscapeAnalysisResults landscapeAnalysisResults) {
         List<ContributorProjects> contributors = landscapeAnalysisResults.getContributors();
         for (int i = 0; i < 12; i++) {
-            List<ComponentDependency> peopleDependencies30Days = ContributorConnectionUtils.getPeopleDependencies(contributors, i * 30, (i + 1) * 30);
-            List<ContributorConnections> connectionsViaProjects30Days = ContributorConnectionUtils.getConnectionsViaProjects(contributors, peopleDependencies30Days, 0, 30);
+            int daysAgo1 = i * 30;
+            int daysAgo2 = (i + 1) * 30;
+            List<ComponentDependency> peopleDependencies30Days = ContributorConnectionUtils.getPeopleDependencies(contributors, daysAgo1, daysAgo2);
+            List<ContributorConnections> connectionsViaProjects30Days = ContributorConnectionUtils.getConnectionsViaProjects(contributors, peopleDependencies30Days, daysAgo1, daysAgo2);
             landscapeAnalysisResults.getcIndex30DaysHistory().add(ContributorConnectionUtils.getCIndex(connectionsViaProjects30Days));
             landscapeAnalysisResults.getpIndex30DaysHistory().add(ContributorConnectionUtils.getPIndex(connectionsViaProjects30Days));
             landscapeAnalysisResults.getcMean30DaysHistory().add(ContributorConnectionUtils.getCMean(connectionsViaProjects30Days));
             landscapeAnalysisResults.getpMean30DaysHistory().add(ContributorConnectionUtils.getPMean(connectionsViaProjects30Days));
             landscapeAnalysisResults.getcMedian30DaysHistory().add(ContributorConnectionUtils.getCMedian(connectionsViaProjects30Days));
             landscapeAnalysisResults.getpMedian30DaysHistory().add(ContributorConnectionUtils.getPMedian(connectionsViaProjects30Days));
+            int connectionSum = connectionsViaProjects30Days.stream().mapToInt(c -> c.getConnectionsCount()).sum();
+            landscapeAnalysisResults.getConnectionsViaProjects30DaysCountHistory().add((double) connectionSum);
+            landscapeAnalysisResults.getPeopleDependenciesCount30DaysHistory().add((double) peopleDependencies30Days.size());
+            landscapeAnalysisResults.getActiveContributors30DaysHistory().add((double) ContributorConnectionUtils.getContributorsActiveInPeriodCount(contributors, daysAgo1, daysAgo2));
         }
     }
 

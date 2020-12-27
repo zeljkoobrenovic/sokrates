@@ -266,7 +266,8 @@ public class ContributorConnectionUtils {
     }
 
     public static double getPMedian(List<ContributorConnections> contributorConnections) {
-        List<ContributorConnections> list = new ArrayList<>(contributorConnections);;
+        List<ContributorConnections> list = new ArrayList<>(contributorConnections);
+        ;
         list.sort((a, b) -> b.getProjectsCount() - a.getProjectsCount());
         int n = list.size();
         if (n > 0) {
@@ -281,7 +282,8 @@ public class ContributorConnectionUtils {
     }
 
     public static double getPMean(List<ContributorConnections> contributorConnections) {
-        List<ContributorConnections> list = new ArrayList<>(contributorConnections);;
+        List<ContributorConnections> list = new ArrayList<>(contributorConnections);
+        ;
         if (list.size() > 0) {
             int total[] = {0};
             list.forEach(connections -> total[0] += connections.getProjectsCount());
@@ -301,5 +303,25 @@ public class ContributorConnectionUtils {
             }
         }
         return 0;
+    }
+
+    public static long getContributorsActiveInPeriodCount(List<ContributorProjects> contributors, int daysAgo1, int daysAgo2) {
+        int count[] = {0};
+
+        contributors.forEach(contributorProjects -> {
+            boolean active[] = {false};
+            contributorProjects.getProjects().forEach(contributorProject -> {
+                if (DateUtils.isAnyDateCommittedBetween(contributorProject.getCommitDates(), daysAgo1, daysAgo2)) {
+                    active[0] = true;
+                    return;
+                }
+            });
+
+            if (active[0]) {
+                count[0] += 1;
+            }
+        });
+
+        return count[0];
     }
 }
