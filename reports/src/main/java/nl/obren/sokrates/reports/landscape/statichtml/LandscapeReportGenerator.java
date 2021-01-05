@@ -12,9 +12,11 @@ import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.contributors.ContributionYear;
+import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
+import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.landscape.*;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorConnections;
@@ -265,6 +267,7 @@ public class LandscapeReportGenerator {
         }
 
         addContributorsPerYear(true);
+        addContributorsPerWeek();
     }
 
     private void addIFrames(LandscapeConfiguration configuration) {
@@ -717,7 +720,7 @@ public class LandscapeReportGenerator {
     }
 
     private void addContributorsPerYear(boolean showContributorsCount) {
-        List<ContributionYear> contributorsPerYear = landscapeAnalysisResults.getContributorsPerYear();
+        List<ContributionTimeSlot> contributorsPerYear = landscapeAnalysisResults.getContributorsPerYear();
         if (contributorsPerYear.size() > 0) {
             int limit = landscapeAnalysisResults.getConfiguration().getCommitsMaxYears();
             if (contributorsPerYear.size() > limit) {
@@ -751,7 +754,7 @@ public class LandscapeReportGenerator {
             if (showContributorsCount) {
                 int maxContributors[] = {1};
                 contributorsPerYear.forEach(year -> {
-                    int count = getContributorsCountPerYear(year.getYear());
+                    int count = getContributorsCountPerYear(year.getTimeSlot());
                     maxContributors[0] = Math.max(maxContributors[0], count);
                 });
                 landscapeReport.startTableRow();
@@ -765,7 +768,7 @@ public class LandscapeReportGenerator {
                 landscapeReport.endTableCell();
                 contributorsPerYear.forEach(year -> {
                     landscapeReport.startTableCell(style);
-                    int count = getContributorsCountPerYear(year.getYear());
+                    int count = getContributorsCountPerYear(year.getTimeSlot());
                     landscapeReport.addParagraph(count + "", "margin: 2px");
                     int height = 1 + (int) (64.0 * count / maxContributors[0]);
                     landscapeReport.addHtmlContent("<div style='width: 100%; background-color: skyblue; height:" + height + "px'></div>");
@@ -777,7 +780,51 @@ public class LandscapeReportGenerator {
             landscapeReport.startTableRow();
             landscapeReport.addTableCell("", "border: none; ");
             contributorsPerYear.forEach(year -> {
-                landscapeReport.addTableCell(year.getYear(), "border: none; text-align: center; font-size: 90%");
+                landscapeReport.addTableCell(year.getTimeSlot(), "border: none; text-align: center; font-size: 90%");
+            });
+            landscapeReport.endTableRow();
+
+            landscapeReport.endTable();
+
+            landscapeReport.addLineBreak();
+        }
+    }
+
+    private List<ContributionTimeSlot> getContributionWeeks(List<ContributionTimeSlot> contributorsPerWeekOriginal, int pastWeeks) {
+        List<ContributionTimeSlot> contributorsPerWeek = new ArrayList<>(contributorsPerWeekOriginal);
+        List<String> slots = contributorsPerWeek.stream().map(slot -> slot.getTimeSlot()).collect(Collectors.toCollection(ArrayList::new));
+        List<String> pastDates = DateUtils.getPastWeeks(pastWeeks);
+        pastDates.forEach(pastDate -> {
+            if (!slots.contains(pastDate)) {
+                contributorsPerWeek.add(new ContributionTimeSlot(pastDate));
+            }
+        });
+        return contributorsPerWeek;
+    }
+
+    private void addContributorsPerWeek() {
+        landscapeReport.addLevel2Header("Commits Per Week (past two years)");
+        int limit = 104;
+        List<ContributionTimeSlot> contributorsPerWeek = getContributionWeeks(landscapeAnalysisResults.getContributorsPerWeek(), limit);
+        if (contributorsPerWeek.size() > 0) {
+            if (contributorsPerWeek.size() > limit) {
+                contributorsPerWeek = contributorsPerWeek.subList(contributorsPerWeek.size() - limit, contributorsPerWeek.size());
+            }
+
+            int maxCommits = contributorsPerWeek.stream().mapToInt(c -> c.getCommitsCount()).max().orElse(1);
+
+            landscapeReport.startTable();
+
+            landscapeReport.startTableRow();
+            String style = "max-width: 10px; padding: 0; margin: 1px; border: none; text-align: center; vertical-align: bottom; font-size: 80%; height: 100px";
+            contributorsPerWeek.forEach(week -> {
+                landscapeReport.startTableCell(style);
+                int count = week.getCommitsCount();
+                landscapeReport.addParagraph("&nbsp;", "margin: 1px");
+                int height = 1 + (int) (64.0 * count / maxCommits);
+                String title = "week of " + week.getTimeSlot() + " = " + count + " commits";
+                landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: darkgrey; height:" + height + "px; margin: 1px'></div>");
+                landscapeReport.endTableCell();
             });
             landscapeReport.endTableRow();
 

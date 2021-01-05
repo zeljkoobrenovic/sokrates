@@ -10,8 +10,10 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
+import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.landscape.ContributionCounter;
 import nl.obren.sokrates.sourcecode.landscape.ContributorConnection;
 import nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils;
@@ -19,6 +21,7 @@ import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorConnections;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ContributorsReportGenerator {
     private final CodeAnalysisResults codeAnalysisResults;
@@ -31,10 +34,6 @@ public class ContributorsReportGenerator {
 
     public void addContributorsAnalysisToReport(RichTextReport report) {
         this.report = report;
-        ContributorsAnalysisResults analysis = codeAnalysisResults.getContributorsAnalysisResults();
-        ContributorsReportUtils.addContributorsPerYear(report, analysis.getContributorsPerYear());
-        ;
-        report.addLineBreak();
 
         report.startTabGroup();
         report.addTab("visuals", "Overview", true);
@@ -46,9 +45,23 @@ public class ContributorsReportGenerator {
         report.addTab("data", "Data", false);
         report.endTabGroup();
 
+        ContributorsAnalysisResults analysis = codeAnalysisResults.getContributorsAnalysisResults();
         List<Contributor> contributors = analysis.getContributors();
 
         report.startTabContentSection("visuals", true);
+        report.addLevel2Header("Per Year");
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, analysis.getContributorsPerYear(), 20, true, 4);
+        report.addLevel2Header("Per Month");
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, analysis.getContributorsPerMonth(), 24, true, 2);
+        report.addLevel2Header("Per Week");
+        int pastWeeks = 104;
+        List<ContributionTimeSlot> contributorsPerWeek = getContributionWeeks(analysis, pastWeeks);
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerWeek, pastWeeks, false, 2);
+        report.addLevel2Header("Per Day");
+        int pastDays = 365;
+        List<ContributionTimeSlot> contributorsPerDay = getContributionDays(analysis, pastDays);
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerDay, pastDays, false, 1);
+        report.addLineBreak();
         ContributorsReportUtils.addContributorsSection(codeAnalysisResults, report);
         report.endTabContentSection();
 
@@ -92,6 +105,30 @@ public class ContributorsReportGenerator {
         report.endListItem();
         report.endUnorderedList();
         report.endTabContentSection();
+    }
+
+    private List<ContributionTimeSlot> getContributionWeeks(ContributorsAnalysisResults analysis, int pastWeeks) {
+        List<ContributionTimeSlot> contributorsPerWeek = new ArrayList<>(analysis.getContributorsPerWeek());
+        List<String> slots = contributorsPerWeek.stream().map(slot -> slot.getTimeSlot()).collect(Collectors.toCollection(ArrayList::new));
+        List<String> pastDates = DateUtils.getPastWeeks(pastWeeks);
+        pastDates.forEach(pastDate -> {
+            if (!slots.contains(pastDate)) {
+                contributorsPerWeek.add(new ContributionTimeSlot(pastDate));
+            }
+        });
+        return contributorsPerWeek;
+    }
+
+    private List<ContributionTimeSlot> getContributionDays(ContributorsAnalysisResults analysis, int pastDays) {
+        List<ContributionTimeSlot> contributorsPerDay = new ArrayList<>(analysis.getContributorsPerDay());
+        List<String> slots = contributorsPerDay.stream().map(slot -> slot.getTimeSlot()).collect(Collectors.toCollection(ArrayList::new));
+        List<String> pastDates = DateUtils.getPastDays(pastDays);
+        pastDates.forEach(pastDate -> {
+            if (!slots.contains(pastDate)) {
+                contributorsPerDay.add(new ContributionTimeSlot(pastDate));
+            }
+        });
+        return contributorsPerDay;
     }
 
     private void renderPeopleDependencies(List<ComponentDependency> peopleDependencies, int daysAgo,

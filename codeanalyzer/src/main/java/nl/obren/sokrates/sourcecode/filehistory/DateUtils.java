@@ -4,10 +4,12 @@
 
 package nl.obren.sokrates.sourcecode.filehistory;
 
+import nl.obren.sokrates.sourcecode.githistory.AuthorCommit;
 import org.apache.commons.lang3.StringUtils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
@@ -27,6 +29,33 @@ public class DateUtils {
         String thresholdDate = new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime());
 
         return date.compareTo(thresholdDate) > 0;
+    }
+
+    public static List<String> getPastDays(int numberOfDays) {
+        List<String> dates = new ArrayList<>();
+
+
+        for (int i = 0; i <= numberOfDays; i++) {
+            Calendar cal = getCalendar();
+            cal.add(Calendar.DATE, -i);
+            dates.add(new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime()));
+        }
+
+        return dates;
+    }
+
+    public static List<String> getPastWeeks(int numberOfWeeks) {
+        List<String> dates = new ArrayList<>();
+
+
+        for (int i = 0; i <= numberOfWeeks; i++) {
+            Calendar cal = getCalendar();
+            cal.add(Calendar.DATE, -(i * 7));
+            String stringDate = new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime());
+            dates.add(new AuthorCommit(stringDate, "").getWeekOfYear());
+        }
+
+        return dates;
     }
 
     public static boolean isCommittedLessThanDaysAgo(String date, int daysAgo) {

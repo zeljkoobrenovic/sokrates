@@ -11,15 +11,23 @@ import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 
 import java.io.File;
 import java.util.*;
+import java.util.function.Function;
 
 public class GitContributorsUtil {
     public static ContributorsImport importGitContributorsExport(File file) {
         ContributorsImport contributorsImport = new ContributorsImport();
         List<AuthorCommit> authorCommits = GitHistoryUtils.getAuthorCommits(file);
         contributorsImport.setContributors(getContributors(authorCommits));
-        List<ContributionYear> contributorsPerYear = getContributorsPerYear(authorCommits);
+
+        List<ContributionTimeSlot> contributorsPerYear = getContributorsPerTimeSlot(authorCommits, (commit) -> commit.getYear());
+        List<ContributionTimeSlot> contributorsPerMonth = getContributorsPerTimeSlot(authorCommits, (commit) -> commit.getMonth());
+        List<ContributionTimeSlot> contributorsPerWeek = getContributorsPerTimeSlot(authorCommits, (commit) -> commit.getWeekOfYear());
+        List<ContributionTimeSlot> contributorsPerDay = getContributorsPerTimeSlot(authorCommits, (commit) -> commit.getDate());
 
         contributorsImport.setContributorsPerYear(contributorsPerYear);
+        contributorsImport.setContributorsPerMonth(contributorsPerMonth);
+        contributorsImport.setContributorsPerWeek(contributorsPerWeek);
+        contributorsImport.setContributorsPerDay(contributorsPerDay);
 
         return contributorsImport;
     }
@@ -49,13 +57,13 @@ public class GitContributorsUtil {
         return list;
     }
 
-    public static List<ContributionYear> getContributorsPerYear(List<AuthorCommit> authorCommits) {
-        List<ContributionYear> list = new ArrayList<>();
-        Map<String, ContributionYear> map = new HashMap<>();
+    public static List<ContributionTimeSlot> getContributorsPerTimeSlot(List<AuthorCommit> authorCommits, Function<AuthorCommit, String> idFunction) {
+        List<ContributionTimeSlot> list = new ArrayList<>();
+        Map<String, ContributionTimeSlot> map = new HashMap<>();
         Map<String, List<String>> peopleIds = new HashMap<>();
 
         authorCommits.forEach(authorCommit -> {
-            String year = authorCommit.getYear();
+            String year = idFunction.apply(authorCommit);
             Contributor contributor = new Contributor(authorCommit.getAuthorEmail());
             String id = contributor.getEmail();
             List<String> ids = peopleIds.get(year);
@@ -66,17 +74,17 @@ public class GitContributorsUtil {
             if (!ids.contains(id)) {
                 ids.add(id);
             }
-            ContributionYear contributionYear = map.get(year);
-            if (contributionYear == null) {
-                contributionYear = new ContributionYear(year);
-                map.put(year, contributionYear);
-                list.add(contributionYear);
+            ContributionTimeSlot contributionTimeSlot = map.get(year);
+            if (contributionTimeSlot == null) {
+                contributionTimeSlot = new ContributionTimeSlot(year);
+                map.put(year, contributionTimeSlot);
+                list.add(contributionTimeSlot);
             }
-            contributionYear.incrementCommitsCount();
-            contributionYear.setContributorsCount(ids.size());
+            contributionTimeSlot.incrementCommitsCount();
+            contributionTimeSlot.setContributorsCount(ids.size());
         });
 
-        Collections.sort(list, Comparator.comparing(ContributionYear::getYear));
+        Collections.sort(list, Comparator.comparing(ContributionTimeSlot::getTimeSlot));
 
         return list;
     }

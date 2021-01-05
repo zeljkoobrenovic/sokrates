@@ -6,24 +6,24 @@ package nl.obren.sokrates.sourcecode.contributors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public class ContributionYear {
-    private String year;
+public class ContributionTimeSlot {
+    private String timeSlot;
     private int contributorsCount;
     private int commitsCount;
 
-    public ContributionYear() {
+    public ContributionTimeSlot() {
     }
 
-    public ContributionYear(String year) {
-        this.year = year;
+    public ContributionTimeSlot(String timeSlot) {
+        this.timeSlot = timeSlot;
     }
 
-    public String getYear() {
-        return year;
+    public String getTimeSlot() {
+        return timeSlot;
     }
 
-    public void setYear(String year) {
-        this.year = year;
+    public void setTimeSlot(String timeSlot) {
+        this.timeSlot = timeSlot;
     }
 
     public int getContributorsCount() {

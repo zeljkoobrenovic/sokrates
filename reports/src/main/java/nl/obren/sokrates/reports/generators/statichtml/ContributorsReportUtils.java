@@ -9,7 +9,7 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
-import nl.obren.sokrates.sourcecode.contributors.ContributionYear;
+import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import org.apache.commons.text.StringEscapeUtils;
 
@@ -26,51 +26,70 @@ public class ContributorsReportUtils {
         }
     }
 
-    public static void addContributorsPerYear(RichTextReport report, List<ContributionYear> contributorsPerYear) {
-        if (contributorsPerYear.size() > 0) {
-            int limit = 20;
-            if (contributorsPerYear.size() > limit) {
-                contributorsPerYear = contributorsPerYear.subList(contributorsPerYear.size() - limit, contributorsPerYear.size());
+    public static void addContributorsPerTimeSlot(RichTextReport report, List<ContributionTimeSlot> contributorsPerTimeSlot, int limit, boolean showTimeSlot, int padding) {
+        Collections.sort(contributorsPerTimeSlot, (a, b) -> b.getTimeSlot().compareTo(a.getTimeSlot()));
+        if (contributorsPerTimeSlot.size() > 0) {
+            if (contributorsPerTimeSlot.size() > limit) {
+                contributorsPerTimeSlot = contributorsPerTimeSlot.subList(0, limit);
             }
 
-            int maxContributors = contributorsPerYear.stream().mapToInt(c -> c.getContributorsCount()).max().orElse(1);
-            int maxCommits = contributorsPerYear.stream().mapToInt(c -> c.getCommitsCount()).max().orElse(1);
+            int maxContributors = contributorsPerTimeSlot.stream().mapToInt(c -> c.getContributorsCount()).max().orElse(1);
+            int maxCommits = contributorsPerTimeSlot.stream().mapToInt(c -> c.getCommitsCount()).max().orElse(1);
 
+            report.startDiv("overflow-y: scroll; font-size: 90%");
             report.startTable();
 
             report.startTableRow();
             report.addTableCell("Commits", "border: none;");
-            String style = "border: none; text-align: center; vertical-align: bottom; font-size: 80%";
-            contributorsPerYear.forEach(year -> {
+            String style;
+            if (showTimeSlot) {
+                style = "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: bottom; font-size: 80%";
+            } else {
+                style = "border: none; padding: " + padding + "px; vertical-align: bottom; font-size: 80%";
+            }
+            contributorsPerTimeSlot.forEach(timeSlot -> {
                 report.startTableCell(style);
-                int count = year.getCommitsCount();
-                report.addParagraph(count + "", "margin: 2px");
+                int count = timeSlot.getCommitsCount();
+                if (showTimeSlot) {
+                    report.addParagraph(count + "", "margin: 0px");
+                } else {
+                    report.addParagraph("&nbsp;", "margin: 0px");
+                }
                 int height = 1 + (int) (64.0 * count / maxCommits);
-                report.addHtmlContent("<div style='width: 100%; background-color: darkgrey; height:" + height + "px'></div>");
+                String title = timeSlot.getTimeSlot() + ": " + count;
+                report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: darkgrey; height:" + height + "px'></div>");
                 report.endTableCell();
             });
             report.endTableRow();
 
             report.startTableRow();
             report.addTableCell("Contributors", "border: none;");
-            contributorsPerYear.forEach(year -> {
+            contributorsPerTimeSlot.forEach(timeSlot -> {
                 report.startTableCell(style);
-                int count = year.getContributorsCount();
-                report.addParagraph(count + "", "margin: 2px");
+                int count = timeSlot.getContributorsCount();
+                if (showTimeSlot) {
+                    report.addParagraph(count + "", "margin: 0px");
+                } else {
+                    report.addParagraph("&nbsp;", "margin: 0px");
+                }
                 int height = 1 + (int) (64.0 * count / maxContributors);
-                report.addHtmlContent("<div style='width: 100%; background-color: skyblue; height:" + height + "px'></div>");
+                String title = timeSlot.getTimeSlot() + ": " + count;
+                report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: skyblue; height:" + height + "px'></div>");
                 report.endTableCell();
             });
             report.endTableRow();
 
-            report.startTableRow();
-            report.addTableCell("", "border: none; ");
-            contributorsPerYear.forEach(year -> {
-                report.addTableCell(year.getYear(), "border: none; text-align: center; font-size: 90%");
-            });
-            report.endTableRow();
+            if (showTimeSlot) {
+                report.startTableRow();
+                report.addTableCell("", "border: none; ");
+                contributorsPerTimeSlot.forEach(year -> {
+                    report.addTableCell(year.getTimeSlot().replace("-", "<br>"), "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: top; font-size: 80%");
+                });
+                report.endTableRow();
+            }
 
             report.endTable();
+            report.endDiv();
         }
     }
 

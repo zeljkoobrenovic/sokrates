@@ -9,7 +9,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
-import nl.obren.sokrates.sourcecode.contributors.ContributionYear;
+import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
@@ -374,31 +374,51 @@ public class LandscapeAnalysisResults {
     }
 
     @JsonIgnore
-    public List<ContributionYear> getContributorsPerYear() {
-        List<ContributionYear> list = new ArrayList<>();
-        Map<String, ContributionYear> map = new HashMap<>();
+    public List<ContributionTimeSlot> getContributorsPerYear() {
+        List<ContributionTimeSlot> list = new ArrayList<>();
+        Map<String, ContributionTimeSlot> map = new HashMap<>();
 
         getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
             ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
-            contributorsAnalysisResults.getContributorsPerYear().forEach(year -> {
-                ContributionYear contributionYear = map.get(year.getYear());
-                if (contributionYear == null) {
-                    contributionYear = new ContributionYear();
-                    contributionYear.setYear(year.getYear());
-                    contributionYear.setContributorsCount(year.getContributorsCount());
-                    contributionYear.setCommitsCount(year.getCommitsCount());
-                    list.add(contributionYear);
-                    map.put(year.getYear(), contributionYear);
-                } else {
-                    contributionYear.setContributorsCount(contributionYear.getContributorsCount() + year.getContributorsCount());
-                    contributionYear.setCommitsCount(contributionYear.getCommitsCount() + year.getCommitsCount());
-                }
-            });
+            updateContributors(list, map, contributorsAnalysisResults.getContributorsPerYear());
         });
 
-        Collections.sort(list, Comparator.comparing(ContributionYear::getYear));
+        Collections.sort(list, Comparator.comparing(ContributionTimeSlot::getTimeSlot));
 
         return list;
+    }
+
+    @JsonIgnore
+    public List<ContributionTimeSlot> getContributorsPerWeek() {
+        List<ContributionTimeSlot> list = new ArrayList<>();
+        Map<String, ContributionTimeSlot> map = new HashMap<>();
+
+        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
+            ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
+            List<ContributionTimeSlot> contributorsPerWeek = contributorsAnalysisResults.getContributorsPerWeek();
+            updateContributors(list, map, contributorsPerWeek);
+        });
+
+        Collections.sort(list, Comparator.comparing(ContributionTimeSlot::getTimeSlot));
+
+        return list;
+    }
+
+    private void updateContributors(List<ContributionTimeSlot> list, Map<String, ContributionTimeSlot> map, List<ContributionTimeSlot> contributorsPerTimeSlot) {
+        contributorsPerTimeSlot.forEach(timeSlot -> {
+            ContributionTimeSlot contributionTimeSlot = map.get(timeSlot.getTimeSlot());
+            if (contributionTimeSlot == null) {
+                contributionTimeSlot = new ContributionTimeSlot();
+                contributionTimeSlot.setTimeSlot(timeSlot.getTimeSlot());
+                contributionTimeSlot.setContributorsCount(timeSlot.getContributorsCount());
+                contributionTimeSlot.setCommitsCount(timeSlot.getCommitsCount());
+                list.add(contributionTimeSlot);
+                map.put(timeSlot.getTimeSlot(), contributionTimeSlot);
+            } else {
+                contributionTimeSlot.setContributorsCount(contributionTimeSlot.getContributorsCount() + timeSlot.getContributorsCount());
+                contributionTimeSlot.setCommitsCount(contributionTimeSlot.getCommitsCount() + timeSlot.getCommitsCount());
+            }
+        });
     }
 
     public int getCommitsCount() {

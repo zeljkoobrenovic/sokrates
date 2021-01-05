@@ -4,31 +4,24 @@
 
 package nl.obren.sokrates.reports.core;
 
-import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.generators.statichtml.ContributorsReportUtils;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.contributors.ContributionYear;
-import nl.obren.sokrates.sourcecode.contributors.Contributor;
-import nl.obren.sokrates.sourcecode.contributors.ContributorsImport;
+import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class ReportFileExporter {
     private static String htmlReportsSubFolder = "html";
@@ -90,9 +83,9 @@ public class ReportFileExporter {
         summarize(indexReport, analysisResults);
         indexReport.endDiv();
         indexReport.endSection();
-        List<ContributionYear> contributorsPerYear = analysisResults.getContributorsAnalysisResults().getContributorsPerYear();
+        List<ContributionTimeSlot> contributorsPerYear = analysisResults.getContributorsAnalysisResults().getContributorsPerYear();
         indexReport.startSection("Commits Trend <a href='Commits.html'>...</a>", "");
-        ContributorsReportUtils.addContributorsPerYear(indexReport, contributorsPerYear);
+        ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsPerYear, 20, true, 8);
         indexReport.endSection();
         indexReport.startSection("Reports", "");
         for (String[] report : reportList) {

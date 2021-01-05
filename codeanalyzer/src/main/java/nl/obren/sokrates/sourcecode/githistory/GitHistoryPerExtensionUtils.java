@@ -1,5 +1,7 @@
 package nl.obren.sokrates.sourcecode.githistory;
 
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
+
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -13,23 +15,14 @@ public class GitHistoryPerExtensionUtils {
     private Map<String, List<String>> paths30Days = new HashMap<>();
     private Map<String, List<String>> paths90Days = new HashMap<>();
 
-    private static boolean isLessThanDaysAgo(String date, int daysAgo) {
-        Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DATE, -daysAgo);
-
-        String thresholdDate = new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime());
-
-        return date.compareTo(thresholdDate) > 0;
-    }
-
     public List<CommitsPerExtension> getCommitsPerExtensions(File file) {
         GitHistoryUtils.getHistoryFromFile(file).forEach(fileUpdate -> {
             String extension = fileUpdate.getExtension();
             String path = fileUpdate.getPath();
             String email = fileUpdate.getAuthorEmail();
             String date = fileUpdate.getDate();
-            boolean isLessThan30DaysAgo = isLessThanDaysAgo(date, 30);
-            boolean isLessThan90DaysAgo = isLessThanDaysAgo(date, 90);
+            boolean isLessThan30DaysAgo = DateUtils.isCommittedLessThanDaysAgo(date, 30);
+            boolean isLessThan90DaysAgo = DateUtils.isCommittedLessThanDaysAgo(date, 90);
 
             CommitsPerExtension commitsPerExtension = getCommitsPerExtension(extension);
 
