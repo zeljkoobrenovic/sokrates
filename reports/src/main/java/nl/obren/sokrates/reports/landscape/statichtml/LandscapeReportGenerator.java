@@ -12,7 +12,6 @@ import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
@@ -24,18 +23,21 @@ import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjects;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ProjectAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class LandscapeReportGenerator {
     public static final int RECENT_THRESHOLD_DAYS = 40;
@@ -43,8 +45,10 @@ public class LandscapeReportGenerator {
     private RichTextReport landscapeReport = new RichTextReport("Landscape Report", "index.html");
     private LandscapeAnalysisResults landscapeAnalysisResults;
     private int dependencyVisualCounter = 1;
+    private File folder;
 
     public LandscapeReportGenerator(LandscapeAnalysisResults landscapeAnalysisResults, File folder) {
+        this.folder = folder;
         LandscapeDataExport dataExport = new LandscapeDataExport(landscapeAnalysisResults, folder);
         dataExport.exportProjects();
         dataExport.exportContributors();
@@ -816,14 +820,23 @@ public class LandscapeReportGenerator {
             landscapeReport.startTable();
 
             landscapeReport.startTableRow();
-            String style = "max-width: 10px; padding: 0; margin: 1px; border: none; text-align: center; vertical-align: bottom; font-size: 80%; height: 100px";
+            String style = "max-width: 20px; padding: 0; margin: 1px; border: none; text-align: center; vertical-align: bottom; font-size: 80%; height: 100px";
             contributorsPerWeek.forEach(week -> {
                 landscapeReport.startTableCell(style);
                 int count = week.getCommitsCount();
                 landscapeReport.addParagraph("&nbsp;", "margin: 1px");
                 int height = 1 + (int) (64.0 * count / maxCommits);
                 String title = "week of " + week.getTimeSlot() + " = " + count + " commits";
-                landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: darkgrey; height:" + height + "px; margin: 1px'></div>");
+                String yearString = week.getTimeSlot().split("[-]")[0];
+
+                String color = "darkgrey";
+
+                if (StringUtils.isNumeric(yearString)) {
+                    int year = Integer.parseInt(yearString);
+                    color = year % 2 == 0 ? "#89CFF0" : "#588BAE";
+                }
+
+                landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + color + "; height:" + height + "px; margin: 1px'></div>");
                 landscapeReport.endTableCell();
             });
             landscapeReport.endTableRow();
@@ -883,13 +896,24 @@ public class LandscapeReportGenerator {
         peopleDependencies.sort((a, b) -> b.getCount() - a.getCount());
         List<ContributorProjects> contributors = landscapeAnalysisResults.getContributors();
 
-        addMostConnectedPeopleSection(contributorConnections);
-        addMostProjectsPeopleSection(contributorConnections);
+        addMostConnectedPeopleSection(contributorConnections, daysAgo);
+        addMostProjectsPeopleSection(contributorConnections, daysAgo);
         addTopConnectionsSection(peopleDependencies, daysAgo, contributors);
         addPeopleGraph(peopleDependencies, daysAgo);
+        addProjectContributors(contributors, daysAgo);
         List<ComponentDependency> projectDependenciesViaPeople = addProjectDependenciesViaPeople(daysAgo, contributors);
 
         landscapeReport.startShowMoreBlock("show project dependencies graph...<br>");
+        StringBuilder builder = new StringBuilder();
+        builder.append("Project 1\tProject 2\t# people\n");
+        projectDependenciesViaPeople.forEach(d -> builder
+                .append(d.getFromComponent()).append("\t")
+                .append(d.getToComponent()).append("\t")
+                .append(d.getCount()).append("\n"));
+        String fileName = "projects_dependencies_via_people_" + daysAgo + "_days.txt";
+        saveData(fileName, builder.toString());
+
+        landscapeReport.addNewTabLink("> see details...", "data/" + fileName);
         addDependencyGraphVisuals(projectDependenciesViaPeople, new ArrayList<>(), "project_dependencies_" + daysAgo + "_");
         landscapeReport.endShowMoreBlock();
 
@@ -950,8 +974,68 @@ public class LandscapeReportGenerator {
         return projectDependenciesViaPeople;
     }
 
+    private void addProjectContributors(List<ContributorProjects> contributors, int daysAgo) {
+        Map<String, Pair<String, Integer>> map = new HashMap<>();
+        final List<String> list = new ArrayList<>();
+
+        contributors.forEach(contributorProjects -> {
+            contributorProjects.getProjects().stream().filter(project -> DateUtils.isAnyDateCommittedBetween(project.getCommitDates(), 0, daysAgo)).forEach(project -> {
+                String key = project.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName();
+                if (map.containsKey(key)) {
+                    Integer currentValue = map.get(key).getRight();
+                    map.put(key, Pair.of(key, currentValue + 1));
+                } else {
+                    Pair<String, Integer> pair = Pair.of(key, 1);
+                    map.put(key, pair);
+                    list.add(key);
+                }
+            });
+        });
+
+        Collections.sort(list, (a, b) -> map.get(b).getRight() - map.get(a).getRight());
+
+        List<String> displayList = list;
+        if (list.size() > 100) {
+            displayList = list.subList(0, 100);
+        }
+
+        landscapeReport.startShowMoreBlock("show project with most people...<br>");
+        StringBuilder builder = new StringBuilder();
+        builder.append("Contributor\t# people\n");
+        list.forEach(project -> builder.append(map.get(project).getLeft()).append("\t")
+                .append(map.get(project).getRight()).append("\n"));
+        String fileName = "projects_with_most_people_" + daysAgo + "_days.txt";
+        saveData(fileName, builder.toString());
+
+        if (displayList.size() < list.size()) {
+            landscapeReport.addParagraph("Showing top 100 items (out of " + list.size() + ").");
+        }
+        landscapeReport.addNewTabLink("> see details...", "data/" + fileName);
+        landscapeReport.startTable();
+        displayList.forEach(project -> {
+            landscapeReport.startTableRow();
+            landscapeReport.addTableCell(map.get(project).getLeft());
+            Integer count = map.get(project).getRight();
+            landscapeReport.addTableCell(count + (count == 1 ? " person" : " people"));
+            landscapeReport.endTableRow();
+        });
+        landscapeReport.endTable();
+        landscapeReport.endShowMoreBlock();
+    }
+
     private void addPeopleGraph(List<ComponentDependency> peopleDependencies, int daysAgo) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Contributor 1\tContributor 2\t# shared projects\n");
+        peopleDependencies.forEach(d -> builder
+                .append(d.getFromComponent()).append("\t")
+                .append(d.getToComponent()).append("\t")
+                .append(d.getCount()).append("\n"));
+        String fileName = "projects_shared_projects_" + daysAgo + "_days.txt";
+        saveData(fileName, builder.toString());
+
         landscapeReport.startShowMoreBlock("show people graph...<br>");
+        landscapeReport.addNewTabLink("> see details...", "data/" + fileName);
+
         GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
         graphvizDependencyRenderer.setMaxNumberOfDependencies(100);
         graphvizDependencyRenderer.setType("graph");
@@ -981,12 +1065,14 @@ public class LandscapeReportGenerator {
             int projectCount2 = ContributorConnectionUtils.getProjectCount(contributors, to, 0, daysAgo);
             double perc1 = 0;
             double perc2 = 0;
-            if (dependencyCount > 0) {
-                perc1 = 100.0 * projectCount1 / dependencyCount;
-                perc2 = 100.0 * projectCount2 / dependencyCount;
+            if (projectCount1 > 0) {
+                perc1 = 100.0 *  dependencyCount / projectCount1;
+            }
+            if (projectCount2 > 0) {
+                perc2 = 100.0 * dependencyCount / projectCount2;
             }
             landscapeReport.addTableCell(from + "<br><span style='color: grey'>" + projectCount1 + " projects (" + FormattingUtils.getFormattedPercentage(perc1) + "%)</span>", "");
-            landscapeReport.addTableCell(to + "<br><span style='color: grey'>" + projectCount2 + " projects (" + FormattingUtils.getFormattedPercentage(perc2) + "</span>", "");
+            landscapeReport.addTableCell(to + "<br><span style='color: grey'>" + projectCount2 + " projects (" + FormattingUtils.getFormattedPercentage(perc2) + "%)</span>", "");
             landscapeReport.addTableCell(dependencyCount + " shared projects", "");
             landscapeReport.endTableRow();
         });
@@ -994,16 +1080,27 @@ public class LandscapeReportGenerator {
         landscapeReport.endShowMoreBlock();
     }
 
-    private void addMostConnectedPeopleSection(List<ContributorConnections> contributorConnections) {
+    private void addMostConnectedPeopleSection(List<ContributorConnections> contributorConnections, int daysAgo) {
         landscapeReport.startShowMoreBlock("show most connected people...<br>");
-        landscapeReport.startTable();
+        StringBuilder builder = new StringBuilder();
+        builder.append("Contributor\t# projects\t# connections\n");
+        contributorConnections.forEach(c -> builder.append(c.getEmail()).append("\t")
+                .append(c.getProjectsCount()).append("\t")
+                .append(c.getConnectionsCount()).append("\n"));
+        String fileName = "most_connected_people_" + daysAgo + "_days.txt";
+        saveData(fileName, builder.toString());
+
+
         List<ContributorConnections> displayListPeople = contributorConnections.subList(0, Math.min(100, contributorConnections.size()));
         if (displayListPeople.size() < contributorConnections.size()) {
-            landscapeReport.addParagraph("Showing top " + displayListPeople.size() + " items (out of " + contributorConnections.size() + ").");
+            landscapeReport.addHtmlContent("<p>Showing top " + displayListPeople.size() + " items (out of " + contributorConnections.size() + "). ");
         } else {
-            landscapeReport.addParagraph("Showing all " + displayListPeople.size() + (displayListPeople.size() == 1 ? " item" : " items") + ".");
+            landscapeReport.addHtmlContent("<p>Showing all " + displayListPeople.size() + (displayListPeople.size() == 1 ? " item" : " items") + ". ");
         }
+        landscapeReport.addNewTabLink("See details...", "data/" + fileName);
+        landscapeReport.addHtmlContent("</p>");
         int index[] = {0};
+        landscapeReport.startTable();
         displayListPeople.forEach(name -> {
             index[0] += 1;
             landscapeReport.startTableRow();
@@ -1017,18 +1114,21 @@ public class LandscapeReportGenerator {
         landscapeReport.endShowMoreBlock();
     }
 
-    private void addMostProjectsPeopleSection(List<ContributorConnections> contributorConnections) {
+    private void addMostProjectsPeopleSection(List<ContributorConnections> contributorConnections, int daysAgo) {
         landscapeReport.startShowMoreBlock("show people with most projects...<br>");
-        landscapeReport.startTable();
         List<ContributorConnections> sorted = new ArrayList<>(contributorConnections);
         sorted.sort((a, b) -> b.getProjectsCount() - a.getProjectsCount());
         List<ContributorConnections> displayListPeople = sorted.subList(0, Math.min(100, sorted.size()));
-        if (displayListPeople.size() < sorted.size()) {
-            landscapeReport.addParagraph("Showing top " + displayListPeople.size() + " items (out of " + sorted.size() + ").");
+        if (displayListPeople.size() < contributorConnections.size()) {
+            landscapeReport.addHtmlContent("<p>Showing top " + displayListPeople.size() + " items (out of " + contributorConnections.size() + "). ");
         } else {
-            landscapeReport.addParagraph("Showing all " + displayListPeople.size() + (displayListPeople.size() == 1 ? " item" : " items") + ".");
+            landscapeReport.addHtmlContent("<p>Showing all " + displayListPeople.size() + (displayListPeople.size() == 1 ? " item" : " items") + ". ");
         }
+        String fileName = "most_connected_people_" + daysAgo + "_days.txt";
+        landscapeReport.addNewTabLink("See details...", "data/" + fileName);
+        landscapeReport.addHtmlContent("</p>");
         int index[] = {0};
+        landscapeReport.startTable();
         displayListPeople.forEach(name -> {
             index[0] += 1;
             landscapeReport.startTableRow();
@@ -1058,6 +1158,7 @@ public class LandscapeReportGenerator {
         landscapeReport.addGraphvizFigure(graphId, "", graphvizContent);
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
+
         addDownloadLinks(graphId);
     }
 
@@ -1072,6 +1173,18 @@ public class LandscapeReportGenerator {
         landscapeReport.endDiv();
     }
 
+    private void saveData(String fileName, String content) {
+        File reportsFolder = Paths.get(this.folder.getParent(), "").toFile();
+        File folder = Paths.get(reportsFolder.getPath(), "_sokrates_landscape/data").toFile();
+        folder.mkdirs();
 
+        try {
+            File file = new File(folder, fileName);
+            System.out.println(file.getPath());
+            FileUtils.writeStringToFile(file, content, UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
 

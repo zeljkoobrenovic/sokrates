@@ -7,7 +7,7 @@ package nl.obren.sokrates.sourcecode.contributors;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class ContributionTimeSlot {
-    private String timeSlot;
+    private String timeSlot = "";
     private int contributorsCount;
     private int commitsCount;
 
