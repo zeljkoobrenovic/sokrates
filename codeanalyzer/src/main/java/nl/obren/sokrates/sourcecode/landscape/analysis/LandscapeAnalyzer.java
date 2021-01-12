@@ -20,7 +20,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class LandscapeAnalyzer {
     private File landscapeConfigurationFile;
@@ -40,6 +39,13 @@ public class LandscapeAnalyzer {
                 if (projectAnalysisResults != null) {
                     landscapeAnalysisResults.getProjectAnalysisResults().add(new ProjectAnalysisResults(link, projectAnalysisResults));
                 }
+                projectAnalysisResults.getContributorsAnalysisResults().getContributors().forEach(contributor -> {
+                    contributor.getCommitDates().forEach(commitDate -> {
+                        if (landscapeAnalysisResults.getLatestCommitDate() == "" || commitDate.compareTo(landscapeAnalysisResults.getLatestCommitDate()) > 0) {
+                            landscapeAnalysisResults.setLatestCommitDate(commitDate);
+                        }
+                    });
+                });
             });
         } catch (IOException e) {
             e.printStackTrace();

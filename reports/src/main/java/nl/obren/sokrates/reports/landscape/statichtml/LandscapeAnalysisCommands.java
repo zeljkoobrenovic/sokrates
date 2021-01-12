@@ -44,17 +44,16 @@ public class LandscapeAnalysisCommands {
 
     public static void generateReport(File landscapeConfigFile) {
         File reportsFolder = Paths.get(landscapeConfigFile.getParent(), "").toFile();
+        reportsFolder.mkdirs();
 
         LandscapeAnalyzer analyzer = new LandscapeAnalyzer();
 
         LandscapeAnalysisResults landscapeAnalysisResults = analyzer.analyze(landscapeConfigFile);
 
-        LandscapeReportGenerator reportGenerator = new LandscapeReportGenerator(landscapeAnalysisResults, landscapeConfigFile.getParentFile());
+        LandscapeReportGenerator reportGenerator = new LandscapeReportGenerator(landscapeAnalysisResults, landscapeConfigFile.getParentFile(), reportsFolder);
         List<RichTextReport> reports = reportGenerator.report();
 
         try {
-            reportsFolder.mkdirs();
-
             File finalReportsFolder = reportsFolder;
             reports.forEach(report -> {
                 ReportFileExporter.exportHtml(finalReportsFolder, "", report);

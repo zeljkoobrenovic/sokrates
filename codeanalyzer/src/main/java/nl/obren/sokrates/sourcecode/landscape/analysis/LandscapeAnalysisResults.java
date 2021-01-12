@@ -80,6 +80,8 @@ public class LandscapeAnalysisResults {
     private double pMedian90Days;
     private double pMedian180Days;
 
+    private String latestCommitDate = "";
+
     private List<Double> cIndex30DaysHistory = new ArrayList<>();
     private List<Double> pIndex30DaysHistory = new ArrayList<>();
 
@@ -737,5 +739,13 @@ public class LandscapeAnalysisResults {
 
     public void setC2pConnectionsCount30Days(double c2pConnectionsCount30Days) {
         this.c2pConnectionsCount30Days = c2pConnectionsCount30Days;
+    }
+
+    public String getLatestCommitDate() {
+        return latestCommitDate;
+    }
+
+    public void setLatestCommitDate(String latestCommitDate) {
+        this.latestCommitDate = latestCommitDate;
     }
 }
