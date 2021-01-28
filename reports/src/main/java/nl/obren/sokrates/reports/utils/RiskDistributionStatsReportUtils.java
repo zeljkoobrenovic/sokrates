@@ -34,7 +34,7 @@ public class RiskDistributionStatsReportUtils {
 
         final String[] html = {""};
 
-        int[] maxTotalValue = {0};
+        int[] maxTotalValue = {1};
         distributions.forEach(distribution -> {
             maxTotalValue[0] = Math.max(maxTotalValue[0], distribution.getTotalValue());
         });
@@ -49,7 +49,7 @@ public class RiskDistributionStatsReportUtils {
                 .sorted((o1, o2) -> o2.getVeryHighRiskValue() - o1.getVeryHighRiskValue())
                 .forEach(distribution -> {
                     int totalValue = distribution.getTotalValue();
-                    chart.setMaxBarWidth(Math.max(1, (int) Math.round(300.0 * totalValue / maxTotalValue[0])));
+                    chart.setMaxBarWidth(Math.max(1, (int) Math.round(300.0 * (totalValue / maxTotalValue[0]))));
 
                     List<Integer> values = getRowData(distribution);
 

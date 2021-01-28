@@ -33,18 +33,27 @@ public class SimpleOneBarChart {
     public String getStackedBarSvg(List<Integer> values, Palette palette, String textLeft, String textRight) {
         String svg = "<svg width='" + width + "' height='" + (barHeight + 4) + "'>";
 
-        double sum = values.stream().mapToDouble(Number::doubleValue).sum();
+        double sum = values.stream().mapToDouble(n -> n.doubleValue()).sum();
 
         svg += getBackgroundBarSvg(maxBarWidth);
 
         int x = barStartXOffset;
 
         for (int i = 0; i < values.size(); i++) {
-            int value = values.get(i).intValue();
+            double value = values.get(i).doubleValue();
             String color = palette.nextColor();
-            if (value > 0) {
-                int barSize = (int) (maxBarWidth * value / sum);
-                svg += getBarSvg(x, barSize, color);
+            if (value > 0.0000000001) {
+                int barSize = (int) (maxBarWidth * (value / sum));
+                if (barSize == 0 && value > 0) {
+                    barSize = 1;
+                }
+                if (x < maxBarWidth + barStartXOffset) {
+                    if (x + barSize <= maxBarWidth + barStartXOffset) {
+                        svg += getBarSvg(x, barSize, color);
+                    } else {
+                        svg += getBarSvg(x, maxBarWidth + barStartXOffset - x, color);
+                    }
+                }
                 x += barSize;
             }
         }

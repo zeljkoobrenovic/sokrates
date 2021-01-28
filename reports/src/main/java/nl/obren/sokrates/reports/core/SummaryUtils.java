@@ -394,7 +394,6 @@ public class SummaryUtils {
     }
 
     private String getVolumeVisual(List<NumericMetric> linesOfCodePerExtension, int totalLoc, int mainLoc, String text) {
-
         int barWidth = Math.min(BAR_WIDTH, (int) ((double) BAR_WIDTH * totalLoc / mainLoc));
         SimpleOneBarChart chart = new SimpleOneBarChart();
         chart.setWidth(barWidth);
@@ -402,7 +401,6 @@ public class SummaryUtils {
         chart.setMaxBarWidth(barWidth);
         chart.setBarStartXOffset(0);
         chart.setFontSize("small");
-
 
         List<Integer> values = linesOfCodePerExtension.stream().map(metric -> metric.getValue().intValue()).collect(Collectors.toList());
         Collections.sort(values);
