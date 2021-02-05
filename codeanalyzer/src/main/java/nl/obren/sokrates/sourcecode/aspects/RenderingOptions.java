@@ -7,6 +7,7 @@ package nl.obren.sokrates.sourcecode.aspects;
 public class RenderingOptions {
     private String orientation = "TB";
     private boolean renderComponentsWithoutDependencies = true;
+    private boolean renderIndirectDependencies = false;
 
     public String getOrientation() {
         return orientation;
@@ -22,5 +23,13 @@ public class RenderingOptions {
 
     public void setRenderComponentsWithoutDependencies(boolean renderComponentsWithoutDependencies) {
         this.renderComponentsWithoutDependencies = renderComponentsWithoutDependencies;
+    }
+
+    public boolean isRenderIndirectDependencies() {
+        return renderIndirectDependencies;
+    }
+
+    public void setRenderIndirectDependencies(boolean renderIndirectDependencies) {
+        this.renderIndirectDependencies = renderIndirectDependencies;
     }
 }

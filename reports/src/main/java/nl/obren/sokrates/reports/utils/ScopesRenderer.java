@@ -162,7 +162,11 @@ public class ScopesRenderer {
                     report.addLineBreak();
                     report.addLineBreak();
                 }
+
+                report.startDiv("max-height: 300px; overflow-y: scroll; overflow-x: hidden;");
                 getSvgBars(report, renderingList);
+                report.endDiv();
+
                 if (inSection) report.endSection();
             }
         }

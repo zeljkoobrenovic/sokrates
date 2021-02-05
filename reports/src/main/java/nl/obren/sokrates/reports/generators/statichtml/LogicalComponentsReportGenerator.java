@@ -16,20 +16,14 @@ import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.LogicalDecompositionAnalysisResults;
-import nl.obren.sokrates.sourcecode.aspects.DependencyFinderPattern;
-import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
-import nl.obren.sokrates.sourcecode.aspects.MetaRule;
-import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.*;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.dependencies.DependencyEvidence;
 import nl.obren.sokrates.sourcecode.dependencies.DependencyUtils;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class LogicalComponentsReportGenerator {
@@ -151,20 +145,68 @@ public class LogicalComponentsReportGenerator {
         logicalDecomposition.getComponents().forEach(c -> componentNames.add(c.getName()));
         GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
         graphvizDependencyRenderer.setMaxNumberOfDependencies(100);
-        graphvizDependencyRenderer.setOrientation(logicalDecomposition.getLogicalDecomposition().getRenderingOptions().getOrientation());
+        RenderingOptions renderingOptions = logicalDecomposition.getLogicalDecomposition().getRenderingOptions();
+        graphvizDependencyRenderer.setOrientation(renderingOptions.getOrientation());
 
-        boolean renderComponentsWithoutDependencies = logicalDecomposition.getLogicalDecomposition().getRenderingOptions().isRenderComponentsWithoutDependencies();
+        boolean renderWithoutDependencies = renderingOptions.isRenderComponentsWithoutDependencies();
         int linkThreshold = logicalDecomposition.getLogicalDecomposition().getDependencyLinkThreshold();
         List<ComponentDependency> dependenciesAboveThreshold = componentDependencies.stream().filter(d -> d.getCount() >= linkThreshold).collect(Collectors.toCollection(ArrayList::new));
-        addDependencyGraphVisuals(
-                dependenciesAboveThreshold,
-                componentNames.stream().filter(c -> renderComponentsWithoutDependencies || isComponentInDependency(dependenciesAboveThreshold, c)).collect(Collectors.toCollection(ArrayList::new)), graphvizDependencyRenderer);
+        addDependencyGraphVisuals(dependenciesAboveThreshold,
+                componentNames.stream()
+                        .filter(c -> renderWithoutDependencies || isComponentInDependency(dependenciesAboveThreshold, c))
+                        .collect(Collectors.toCollection(ArrayList::new)), graphvizDependencyRenderer);
         report.addLineBreak();
         report.addLineBreak();
+
+        if (renderingOptions.isRenderIndirectDependencies()) {
+            List<ComponentDependency> indirectDependencies = getIndirectDependencies(dependenciesAboveThreshold);
+            if (indirectDependencies.size() > 0) {
+                graphvizDependencyRenderer.setType("graph");
+                graphvizDependencyRenderer.setArrow("--");
+                report.addLevel3Header("Indirect Dependencies");
+                report.addParagraph("Dependencies via shared target components.", "color: grey");
+                addDependencyGraphVisuals(indirectDependencies, componentNames.stream()
+                        .filter(c -> renderWithoutDependencies || isComponentInDependency(indirectDependencies, c))
+                        .collect(Collectors.toCollection(ArrayList::new)), graphvizDependencyRenderer);
+                report.addLineBreak();
+                report.addLineBreak();
+            }
+
+        }
         addMoreDetailsSection(logicalDecomposition, componentDependencies);
         report.addLineBreak();
         report.addLineBreak();
         report.addLineBreak();
+    }
+
+    private List<ComponentDependency> getIndirectDependencies(List<ComponentDependency> dependencies) {
+        ArrayList<ComponentDependency> indirect = new ArrayList<>();
+        Map<String, ComponentDependency> map = new HashMap<>();
+
+        dependencies.forEach(dependency1 -> {
+            dependencies.stream()
+                    .filter(dependency2 -> dependency1 != dependency2)
+                    .filter(dependency2 -> !dependency1.getFromComponent().equalsIgnoreCase(dependency2.getFromComponent()))
+                    .filter(dependency2 -> dependency1.getToComponent().equalsIgnoreCase(dependency2.getToComponent()))
+                    .forEach(dependency2 -> {
+                        String from1 = dependency1.getFromComponent();
+                        String from2 = dependency2.getFromComponent();
+                        String key1 = from1 + "::" + from2;
+                        String key2 = from2 + "::" + from1;
+
+                        if (map.containsKey(key1)) {
+                            map.get(key1).increment(1);
+                        } else if (map.containsKey(key2)) {
+                            map.get(key2).increment(1);
+                        } else {
+                            ComponentDependency indirectDependency = new ComponentDependency(from1, from2);
+                            map.put(key1, indirectDependency);
+                            indirect.add(indirectDependency);
+                        }
+                    });
+        });
+
+        return indirect;
     }
 
     private boolean isComponentInDependency(List<ComponentDependency> dependencies, String component) {
@@ -185,7 +227,9 @@ public class LogicalComponentsReportGenerator {
                 componentNames,
                 componentDependencies);
         String graphId = "dependencies_" + dependencyVisualCounter++;
+        report.startDiv("max-height: 400px; overflow-y: scroll; overflow-x: scroll;");
         report.addGraphvizFigure(graphId, "", graphvizContent);
+        report.endDiv();
         report.addLineBreak();
         report.addLineBreak();
         addDownloadLinks(graphId);
