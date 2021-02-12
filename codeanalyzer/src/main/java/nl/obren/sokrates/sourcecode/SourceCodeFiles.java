@@ -62,6 +62,7 @@ public class SourceCodeFiles {
         List<SourceFile> sourceFiles = new ArrayList<>();
 
         int fileIndex[] = {0};
+        final int allFilesCount = scopeSourceFiles.size();
         scopeSourceFiles.forEach(sourceFile -> {
             if (progressFeedback.canceled()) {
                 return;
@@ -82,7 +83,6 @@ public class SourceCodeFiles {
                         excluded[0] = true;
                     }
                 }
-                progressFeedback.progress(++fileIndex[0], allFiles.size());
             });
             if (included[0] && !excluded[0]) {
                 if (!sourceFiles.contains(sourceFile)) {
@@ -92,6 +92,7 @@ public class SourceCodeFiles {
                     aspect.getSourceFiles().add(sourceFile);
                 }
             }
+            progressFeedback.progress(++fileIndex[0], allFilesCount);
         });
         progressFeedback.end();
 

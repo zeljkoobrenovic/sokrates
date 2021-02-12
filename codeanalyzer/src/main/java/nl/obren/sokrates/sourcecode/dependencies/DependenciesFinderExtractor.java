@@ -16,7 +16,6 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.*;
 
 public class DependenciesFinderExtractor {
-    private static final int MAX_SEARCH_DEPTH_LINES = 200;
     private LogicalDecomposition logicalDecomposition;
     private List<ComponentDependency> dependencies = new ArrayList<>();
     private Set<String> fileComponentDependencies = new HashSet<>();
@@ -79,16 +78,16 @@ public class DependenciesFinderExtractor {
             return Arrays.asList(sourceFile.getRelativePath());
         }
         List<String> lines = metaRule.isIgnoreComments() ? sourceFile.getCleanedLines() : sourceFile.getLines();
-        if (lines.size() > MAX_SEARCH_DEPTH_LINES) {
-            lines = lines.subList(0, MAX_SEARCH_DEPTH_LINES);
+        if (lines.size() > logicalDecomposition.getMaxSearchDepthLines()) {
+            lines = lines.subList(0, logicalDecomposition.getMaxSearchDepthLines());
         }
         return lines;
     }
 
     private List<String> getSimpleLines(SourceFile sourceFile) {
         List<String> lines = sourceFile.getLines();
-        if (lines.size() > MAX_SEARCH_DEPTH_LINES) {
-            lines = lines.subList(0, MAX_SEARCH_DEPTH_LINES);
+        if (lines.size() > logicalDecomposition.getMaxSearchDepthLines()) {
+            lines = lines.subList(0, logicalDecomposition.getMaxSearchDepthLines());
         }
         return lines;
     }

@@ -40,7 +40,8 @@ public class ConcernsAnalyzer extends Analyzer {
             group.getConcerns().forEach(concern -> {
                 AspectAnalysisResults aspectAnalysisResults = new AspectAnalysisResults(concern.getName());
                 concernsAnalysisResults.getConcerns().add(aspectAnalysisResults);
-                AnalysisUtils.analyze("CONCERN_" + group.getName(), concern, progressFeedback, aspectAnalysisResults, metricsList, textSummary, start);
+                AnalysisUtils.analyze("CONCERN_" + group.getName(), concern, concern.getTextOperations(),
+                        progressFeedback, aspectAnalysisResults, metricsList, textSummary, start);
             });
         });
     }

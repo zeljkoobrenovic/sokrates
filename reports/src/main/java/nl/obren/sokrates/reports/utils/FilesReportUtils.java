@@ -16,7 +16,7 @@ public class FilesReportUtils {
     public static String getFilesTable(List<SourceFile> sourceFiles, boolean linkToFiles, boolean showAge) {
         StringBuilder table = new StringBuilder();
 
-        table.append("<div style='witdh: 100%; overflow-x: scroll'>\n");
+        table.append("<div style='witdh: 100%; overflow-x: scroll; overflow-y: scroll; max-height: 300px;'>\n");
         table.append("<table style='width: 80%'>\n");
         table.append("<tr>");
         String header = "<th>File</th><th># lines</th><th># units</th>";

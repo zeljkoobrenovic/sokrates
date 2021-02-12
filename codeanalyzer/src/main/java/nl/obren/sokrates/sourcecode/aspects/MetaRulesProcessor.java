@@ -133,7 +133,7 @@ public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
     }
 
     private void processMatchingString(SourceFile sourceFile, MetaRule metaRule, String matchingString) {
-        updateAlreadyPrcessedFiles(sourceFile);
+        updateAlreadyProcessedFiles(sourceFile);
         String name = new ComplexOperation(metaRule.getNameOperations()).exec(matchingString);
         if (StringUtils.isNotBlank(name)) {
             if (map.containsKey(name)) {
@@ -155,7 +155,7 @@ public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
         }
     }
 
-    private void updateAlreadyPrcessedFiles(SourceFile sourceFile) {
+    private void updateAlreadyProcessedFiles(SourceFile sourceFile) {
         if (uniqueClassification && !alreadyAddedFiles.contains(sourceFile)) {
             alreadyAddedFiles.add(sourceFile);
         }

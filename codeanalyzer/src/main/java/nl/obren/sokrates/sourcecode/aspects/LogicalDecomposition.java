@@ -32,6 +32,7 @@ public class LogicalDecomposition {
     private int dependencyLinkThreshold = 1;
     private int duplicationLinkThreshold = 50;
     private int temporalLinkThreshold = 2;
+    private int maxSearchDepthLines = 200;
 
     public LogicalDecomposition() {
     }
@@ -93,7 +94,6 @@ public class LogicalDecomposition {
         MetaRulesProcessor helper = MetaRulesProcessor.getLogicalDecompositionInstance();
         List<NamedSourceCodeAspect> metaComponents = helper.extractAspects(getSourceFiles(codeConfiguration), this.metaComponents);
         components.addAll(metaComponents);
-
         CodeConfigurationUtils.populateUnclassifiedAndMultipleAspectsFiles(components,
                 (includeRemainingFiles ? allSourceFiles : filteredSourceFiles),
                 sourceFileAspectPair -> {
@@ -219,5 +219,13 @@ public class LogicalDecomposition {
 
     public void setTemporalLinkThreshold(int temporalLinkThreshold) {
         this.temporalLinkThreshold = temporalLinkThreshold;
+    }
+
+    public int getMaxSearchDepthLines() {
+        return maxSearchDepthLines;
+    }
+
+    public void setMaxSearchDepthLines(int maxSearchDepthLines) {
+        this.maxSearchDepthLines = maxSearchDepthLines;
     }
 }

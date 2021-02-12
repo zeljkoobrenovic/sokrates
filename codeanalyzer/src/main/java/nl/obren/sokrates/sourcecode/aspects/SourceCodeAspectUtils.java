@@ -53,7 +53,7 @@ public class SourceCodeAspectUtils {
             }
             aspectName = StringUtils.defaultIfBlank(aspectName, "ROOT");
             NamedSourceCodeAspect aspect = new NamedSourceCodeAspect(aspectName);
-            String pathPattern = srcRoot + File.separator + path.toString() + File.separator + ".*";
+            String pathPattern = srcRoot + File.separator + path + File.separator + ".*";
             pathPattern = pathPattern.replace(File.separator + File.separator, File.separator);
             aspect.getSourceFileFilters().add(new SourceFileFilter(pathPattern, ""));
 

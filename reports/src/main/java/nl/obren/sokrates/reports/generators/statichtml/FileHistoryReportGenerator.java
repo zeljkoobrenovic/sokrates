@@ -214,13 +214,17 @@ public class FileHistoryReportGenerator {
 
     private void addFirstModifiedDetailsForLogicalDecomposition(RichTextReport report, String name, List<RiskDistributionStats> distributionsPerComponent) {
         report.startSubSection("" + name + " (" + FILE_AGE_DISTRIBUTION.toLowerCase() + ")", FILE_AGE_DESCRIPTION);
+        report.startDiv("max-height: 300px; overflow-x: none; overflow-y: auto");
         report.addHtmlContent(RiskDistributionStatsReportUtils.getRiskDistributionPerKeySvgBarChart(distributionsPerComponent, ageLabels, Palette.getAgePalette()));
+        report.endDiv();
         report.endSection();
     }
 
     private void addLastModifiedPerLogicalComponent(RichTextReport report, String name, List<RiskDistributionStats> distributionsPerComponent) {
         report.startSubSection("" + name + " (" + LATEST_CHANGE_DISTRIBUTION.toLowerCase() + ")", LATEST_CHANGE_DESCRIPTION);
+        report.startDiv("max-height: 300px; overflow-x: none; overflow-y: auto");
         report.addHtmlContent(RiskDistributionStatsReportUtils.getRiskDistributionPerKeySvgBarChart(distributionsPerComponent, ageLabels, Palette.getFreshnessPalette()));
+        report.endDiv();
         report.endSection();
     }
 

@@ -30,6 +30,7 @@ public class GraphvizDependencyRenderer {
     private String arrowColor = "#00688b";
     private String defaultNodeFillColor = "grey";
     private int maxNumberOfDependencies;
+    private boolean reverseDirection = false;
 
     public GraphvizDependencyRenderer() {
     }
@@ -131,9 +132,11 @@ public class GraphvizDependencyRenderer {
                     String color = isCyclic(componentDependencies, componentDependency) ? "#DC143C" : this.arrowColor;
                     int transparency = (int) (255.0 * (0.3 + 0.7 * thickness / 10.0));
                     color += String.format("%02X", transparency);
-                    graphviz.append("    \"" + encodeLabel(componentDependency.getFromComponent())
+                    String fromComponent = reverseDirection ? componentDependency.getToComponent() : componentDependency.getFromComponent();
+                    String toComponent = reverseDirection ? componentDependency.getFromComponent() : componentDependency.getToComponent();
+                    graphviz.append("    \"" + encodeLabel(fromComponent)
                             + "\" " + arrow + " \""
-                            + encodeLabel(componentDependency.getToComponent()) + "\""
+                            + encodeLabel(toComponent) + "\""
                             + " [label=\" " + encodeLabel(getLabel(componentDependency))
                             + " \", penwidth=\"" + Math.max(1, thickness) + "\""
                             + ", color=\"" + color + "\""
@@ -211,5 +214,13 @@ public class GraphvizDependencyRenderer {
 
     public void setArrowColorChanging(String arrowColorChanging) {
         this.arrowColorChanging = arrowColorChanging;
+    }
+
+    public boolean isReverseDirection() {
+        return reverseDirection;
+    }
+
+    public void setReverseDirection(boolean reverseDirection) {
+        this.reverseDirection = reverseDirection;
     }
 }

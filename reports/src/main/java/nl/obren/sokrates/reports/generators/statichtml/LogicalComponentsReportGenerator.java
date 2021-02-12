@@ -144,9 +144,10 @@ public class LogicalComponentsReportGenerator {
         List<String> componentNames = new ArrayList<>();
         logicalDecomposition.getComponents().forEach(c -> componentNames.add(c.getName()));
         GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
-        graphvizDependencyRenderer.setMaxNumberOfDependencies(100);
         RenderingOptions renderingOptions = logicalDecomposition.getLogicalDecomposition().getRenderingOptions();
+        graphvizDependencyRenderer.setMaxNumberOfDependencies(renderingOptions.getMaxNumberOfDependencies());
         graphvizDependencyRenderer.setOrientation(renderingOptions.getOrientation());
+        graphvizDependencyRenderer.setReverseDirection(renderingOptions.isReverseDirection());
 
         boolean renderWithoutDependencies = renderingOptions.isRenderComponentsWithoutDependencies();
         int linkThreshold = logicalDecomposition.getLogicalDecomposition().getDependencyLinkThreshold();
@@ -157,9 +158,19 @@ public class LogicalComponentsReportGenerator {
                         .collect(Collectors.toCollection(ArrayList::new)), graphvizDependencyRenderer);
         report.addLineBreak();
         report.addLineBreak();
+        addMoreDetailsSection(logicalDecomposition, componentDependencies);
+        report.addLineBreak();
+        report.addLineBreak();
 
+        renderIndirectDependencies(componentNames, graphvizDependencyRenderer, renderingOptions, renderWithoutDependencies, dependenciesAboveThreshold);
+        report.addLineBreak();
+        report.addLineBreak();
+        report.addLineBreak();
+    }
+
+    private void renderIndirectDependencies(List<String> componentNames, GraphvizDependencyRenderer graphvizDependencyRenderer, RenderingOptions renderingOptions, boolean renderWithoutDependencies, List<ComponentDependency> dependencies) {
         if (renderingOptions.isRenderIndirectDependencies()) {
-            List<ComponentDependency> indirectDependencies = getIndirectDependencies(dependenciesAboveThreshold);
+            List<ComponentDependency> indirectDependencies = getIndirectDependencies(dependencies, renderingOptions.isRenderInternalIndirectDependencies());
             if (indirectDependencies.size() > 0) {
                 graphvizDependencyRenderer.setType("graph");
                 graphvizDependencyRenderer.setArrow("--");
@@ -171,22 +182,30 @@ public class LogicalComponentsReportGenerator {
                 report.addLineBreak();
                 report.addLineBreak();
             }
+            List<ComponentDependency> sharedDependencies = getDependenciesWithSharedTargets(dependencies);
+            if (sharedDependencies.size() > 0) {
+                graphvizDependencyRenderer.setType("digraph");
+                graphvizDependencyRenderer.setArrow("->");
+                report.addLevel3Header("Indirect Dependencies With Targets");
+                report.addParagraph("Shared target components made visible.", "color: grey");
+                addDependencyGraphVisuals(sharedDependencies, componentNames.stream()
+                        .filter(c -> renderWithoutDependencies || isComponentInDependency(sharedDependencies, c))
+                        .collect(Collectors.toCollection(ArrayList::new)), graphvizDependencyRenderer);
+                report.addLineBreak();
+                report.addLineBreak();
+            }
 
         }
-        addMoreDetailsSection(logicalDecomposition, componentDependencies);
-        report.addLineBreak();
-        report.addLineBreak();
-        report.addLineBreak();
     }
 
-    private List<ComponentDependency> getIndirectDependencies(List<ComponentDependency> dependencies) {
+    private List<ComponentDependency> getIndirectDependencies(List<ComponentDependency> dependencies, boolean renderInternalIndirectDependencies) {
         ArrayList<ComponentDependency> indirect = new ArrayList<>();
         Map<String, ComponentDependency> map = new HashMap<>();
 
         dependencies.forEach(dependency1 -> {
             dependencies.stream()
-                    .filter(dependency2 -> dependency1 != dependency2)
-                    .filter(dependency2 -> !dependency1.getFromComponent().equalsIgnoreCase(dependency2.getFromComponent()))
+                    .filter(dependency2 -> renderInternalIndirectDependencies || dependency1 != dependency2)
+                    .filter(dependency2 -> renderInternalIndirectDependencies || !dependency1.getFromComponent().equalsIgnoreCase(dependency2.getFromComponent()))
                     .filter(dependency2 -> dependency1.getToComponent().equalsIgnoreCase(dependency2.getToComponent()))
                     .forEach(dependency2 -> {
                         String from1 = dependency1.getFromComponent();
@@ -207,6 +226,12 @@ public class LogicalComponentsReportGenerator {
         });
 
         return indirect;
+    }
+
+    private List<ComponentDependency> getDependenciesWithSharedTargets(List<ComponentDependency> dependencies) {
+        Map<String, Integer> map = new HashMap<>();
+        dependencies.stream().map(d -> d.getToComponent()).forEach(c -> map.put(c, map.containsKey(c) ? map.get(c) + 1 : 1));
+        return dependencies.stream().filter(d -> map.get(d.getToComponent()) > 1).collect(Collectors.toCollection(ArrayList::new));
     }
 
     private boolean isComponentInDependency(List<ComponentDependency> dependencies, String component) {

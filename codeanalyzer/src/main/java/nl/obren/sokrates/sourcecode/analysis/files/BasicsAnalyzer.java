@@ -83,9 +83,9 @@ public class BasicsAnalyzer extends Analyzer {
     }
 
     private void analyzeScopes() {
-        AnalysisUtils.analyze("", codeConfiguration.getMain(), progressFeedback, results.getMainAspectAnalysisResults(),
+        AnalysisUtils.analyze("", codeConfiguration.getMain(), null, progressFeedback, results.getMainAspectAnalysisResults(),
                 results.getMetricsList(), results.getTextSummary(), start);
-        AnalysisUtils.analyze("", codeConfiguration.getTest(), progressFeedback, results.getTestAspectAnalysisResults(),
+        AnalysisUtils.analyze("", codeConfiguration.getTest(), null, progressFeedback, results.getTestAspectAnalysisResults(),
                 results.getMetricsList(), results.getTextSummary(), start);
         results.getMetricsList().addMetric()
                 .id(AnalysisUtils.getMetricId("TEST_VS_MAIN_LINES_OF_CODE_PERCENTAGE"))
@@ -93,11 +93,11 @@ public class BasicsAnalyzer extends Analyzer {
                 .value(((int) (10000.0 * results.getTestAspectAnalysisResults().getLinesOfCode() / results.getMainAspectAnalysisResults().getLinesOfCode())) / 100.0
                 );
 
-        AnalysisUtils.analyze("", codeConfiguration.getGenerated(), progressFeedback, results.getGeneratedAspectAnalysisResults(),
+        AnalysisUtils.analyze("", codeConfiguration.getGenerated(), null, progressFeedback, results.getGeneratedAspectAnalysisResults(),
                 results.getMetricsList(), results.getTextSummary(), start);
-        AnalysisUtils.analyze("", codeConfiguration.getBuildAndDeployment(), progressFeedback, results.getBuildAndDeployAspectAnalysisResults(),
+        AnalysisUtils.analyze("", codeConfiguration.getBuildAndDeployment(), null, progressFeedback, results.getBuildAndDeployAspectAnalysisResults(),
                 results.getMetricsList(), results.getTextSummary(), start);
-        AnalysisUtils.analyze("", codeConfiguration.getOther(), progressFeedback, results.getOtherAspectAnalysisResults(),
+        AnalysisUtils.analyze("", codeConfiguration.getOther(), null, progressFeedback, results.getOtherAspectAnalysisResults(),
                 results.getMetricsList(), results.getTextSummary(), start);
     }
 }

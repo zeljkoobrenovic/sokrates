@@ -12,6 +12,9 @@ import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspectUtils;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
+import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
+import nl.obren.sokrates.sourcecode.operations.OperationStatement;
+import nl.obren.sokrates.sourcecode.search.FoundText;
 import nl.obren.sokrates.sourcecode.search.SearchExpression;
 import nl.obren.sokrates.sourcecode.search.SearchRequest;
 import nl.obren.sokrates.sourcecode.search.SearchResult;
@@ -21,11 +24,13 @@ import org.apache.commons.logging.LogFactory;
 
 import java.nio.file.FileSystems;
 import java.text.DecimalFormat;
+import java.util.*;
 
 public class AnalysisUtils {
     private static final Log LOG = LogFactory.getLog(AnalysisUtils.class);
 
-    public static void analyze(String group, NamedSourceCodeAspect aspect, ProgressFeedback progressFeedback, AspectAnalysisResults aspectAnalysisResults, MetricsList metricsList, StringBuffer textSummary, long start) {
+    public static void analyze(String group, NamedSourceCodeAspect aspect, List<OperationStatement> textOperations,
+                               ProgressFeedback progressFeedback, AspectAnalysisResults aspectAnalysisResults, MetricsList metricsList, StringBuffer textSummary, long start) {
         aspectAnalysisResults.setAspect(aspect);
         String prefix = StringUtils.isNotBlank(group) ? (group + FileSystems.getDefault().getSeparator()) : "";
 
@@ -55,7 +60,8 @@ public class AnalysisUtils {
                 LOG.info("Searching for path line \"" + searchRequest.getPathSearchExpression().getExpression() + "\" and/or content like \""
                         + searchRequest.getContentSearchExpression().getExpression() + "\"");
                 SearchResult searchResult = searcheableFilesCache.search(searchRequest, new ProgressFeedback());
-                aspectAnalysisResults.setFoundTextList(searchResult.getFoundTextList());
+                List<FoundText> foundTextList = getFoundTexts(searchResult, textOperations);
+                aspectAnalysisResults.setFoundTextList(foundTextList);
                 aspectAnalysisResults.setFoundFiles(searchResult.getFoundFiles());
                 aspectAnalysisResults.setNumberOfRegexLineMatches(aspectAnalysisResults.getNumberOfRegexLineMatches()
                         + searchResult.getTotalNumberOfMatchingLines());
@@ -76,6 +82,29 @@ public class AnalysisUtils {
             aspectAnalysisResults.getFileCountPerExtension().add(new NumericMetric(aspectPerExtension.getName(), aspectPerExtension.getSourceFiles().size()));
             aspectAnalysisResults.getLinesOfCodePerExtension().add(new NumericMetric(aspectPerExtension.getName(), aspectPerExtension.getLinesOfCode()));
         });
+    }
+
+    private static List<FoundText> getFoundTexts(SearchResult searchResult, List<OperationStatement> textOperations) {
+        List<FoundText> foundTextList;
+        ComplexOperation operation = new ComplexOperation(textOperations);
+        if (textOperations != null && textOperations.size() > 0) {
+            foundTextList = new ArrayList<>();
+            Map<String, FoundText> map = new HashMap<>();
+            searchResult.getFoundTextList().forEach(foundText -> {
+                String text = operation.exec(foundText.getText());
+                if (map.containsKey(text)) {
+                    map.get(text).setCount(map.get(text).getCount() + foundText.getCount());
+                } else {
+                    FoundText transformedFoundText = new FoundText(text, foundText.getCount());
+                    map.put(text, transformedFoundText);
+                    foundTextList.add(transformedFoundText);
+                }
+            });
+            Collections.sort(foundTextList, (a, b) -> b.getCount() - a.getCount());
+        } else {
+            foundTextList = searchResult.getFoundTextList();
+        }
+        return foundTextList;
     }
 
     public static String getMetricId(String name) {

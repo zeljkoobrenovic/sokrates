@@ -459,16 +459,23 @@ public class DataExporter {
         StringBuilder content = new StringBuilder();
 
         content.append("Text\tCount\n");
+        int total[] = {0};
+        int unique[] = {0};
         aspectAnalysisResults.getFoundTextList().forEach(foundText -> {
             content.append(foundText.getText().trim());
             content.append("\t");
             content.append(foundText.getCount());
             content.append("\n");
+
+            unique[0] += 1;
+            total[0] += foundText.getCount();
         });
 
         try {
             String fileName = DataExportUtils.getAspectFileListFileName(aspectAnalysisResults.getAspect(), prefix, FOUND_TEXT_SUFFIX);
-            FileUtils.write(new File(textDataFolder, fileName), content.toString(), UTF_8);
+            String data = "Summary: " + total[0] + " " + (total[0] == 1 ? "instance" : "instances") + ", " + unique[0] + " unique\n\n";
+            data += content.toString();
+            FileUtils.write(new File(textDataFolder, fileName), data, UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
