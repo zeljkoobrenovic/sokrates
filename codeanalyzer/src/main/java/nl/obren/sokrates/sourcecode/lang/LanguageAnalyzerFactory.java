@@ -7,12 +7,14 @@ package nl.obren.sokrates.sourcecode.lang;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.analysis.AnalyzerOverride;
+import nl.obren.sokrates.sourcecode.lang.cfg.CfgAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.clojure.ClojureLangAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.cpp.CStyleAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.cpp.CppAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.csharp.CSharpAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.css.CssAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.d.DAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.dbc.DbcAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.go.GoLangAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.groovy.GroovyAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.html.HtmlAnalyzer;
@@ -217,6 +219,9 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("tmux", ShellAnalyzer.class);
         analyzersMap.put("tool", ShellAnalyzer.class);
         analyzersMap.put("zsh", ShellAnalyzer.class);
+
+        analyzersMap.put("dbc", DbcAnalyzer.class);
+        analyzersMap.put("cfg", CfgAnalyzer.class);
 
         registerYaml();
 

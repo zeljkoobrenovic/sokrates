@@ -6,6 +6,7 @@ package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.utils.FormattingUtils;
+import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.dataexporters.DataExportUtils;
@@ -24,6 +25,7 @@ import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class LogicalComponentsReportGenerator {
@@ -152,10 +154,20 @@ public class LogicalComponentsReportGenerator {
         boolean renderWithoutDependencies = renderingOptions.isRenderComponentsWithoutDependencies();
         int linkThreshold = logicalDecomposition.getLogicalDecomposition().getDependencyLinkThreshold();
         List<ComponentDependency> dependenciesAboveThreshold = componentDependencies.stream().filter(d -> d.getCount() >= linkThreshold).collect(Collectors.toCollection(ArrayList::new));
-        addDependencyGraphVisuals(dependenciesAboveThreshold,
-                componentNames.stream()
-                        .filter(c -> renderWithoutDependencies || isComponentInDependency(dependenciesAboveThreshold, c))
-                        .collect(Collectors.toCollection(ArrayList::new)), graphvizDependencyRenderer);
+        ArrayList<String> componentsAboveThreshold = componentNames.stream()
+                .filter(c -> renderWithoutDependencies || isComponentInDependency(dependenciesAboveThreshold, c))
+                .collect(Collectors.toCollection(ArrayList::new));
+        List<ComponentGroup> componentGroups = getComponentGroups(logicalDecomposition, dependenciesAboveThreshold, componentsAboveThreshold);
+        addDependencyGraphVisuals(dependenciesAboveThreshold, componentsAboveThreshold, componentGroups, graphvizDependencyRenderer);
+
+        if (componentGroups.size() > 0) {
+            report.addLevel4Header("Group Dependencies");
+            List<ComponentDependency> groupDependencies = getGroupDependencies(dependenciesAboveThreshold, componentGroups);
+            addDependencyGraphVisuals(groupDependencies,
+                    componentsAboveThreshold.stream().filter(c -> c.equalsIgnoreCase(getGroup(c, componentGroups))).collect(Collectors.toCollection(ArrayList::new)),
+                    new ArrayList<>(), graphvizDependencyRenderer);
+        }
+
         report.addLineBreak();
         report.addLineBreak();
         addMoreDetailsSection(logicalDecomposition, componentDependencies);
@@ -168,6 +180,74 @@ public class LogicalComponentsReportGenerator {
         report.addLineBreak();
     }
 
+    private List<ComponentGroup> getComponentGroups(LogicalDecompositionAnalysisResults logicalDecomposition, List<ComponentDependency> dependencies, List<String> components) {
+        List<ComponentGroup> componentGroups = new ArrayList<>();
+        List<String> allNames = new ArrayList<>();
+        Consumer<String> stringConsumer = component -> {
+            if (!allNames.contains(component)) {
+                allNames.add(component);
+            }
+        };
+        components.forEach(stringConsumer);
+        dependencies.forEach(dependency -> {
+            stringConsumer.accept(dependency.getFromComponent());
+            stringConsumer.accept(dependency.getToComponent());
+        });
+
+        List<String> componentsInAnyGroup = new ArrayList<>();
+        logicalDecomposition.getLogicalDecomposition().getGroups().forEach(groupingRule -> {
+            List<String> componentsInGroupFiltered = allNames.stream().filter(name -> RegexUtils.matchesEntirely(groupingRule.getPattern(), name)).collect(Collectors.toCollection(ArrayList::new));
+            List<String> componentsInGroup = new ArrayList<>();
+            componentsInGroupFiltered.forEach(c -> {
+                if (!componentsInAnyGroup.contains(c)) {
+                    componentsInGroup.add(c);
+                    componentsInAnyGroup.add(c);
+                }
+            });
+            if (componentsInGroup.size() > 0) {
+                componentGroups.add(new ComponentGroup(groupingRule.getName(), componentsInGroup));
+            }
+        });
+
+        return componentGroups;
+    }
+
+    private List<ComponentDependency> getGroupDependencies(List<ComponentDependency> dependencies, List<ComponentGroup> componentGroups) {
+        List<ComponentDependency> groupDependencies = new ArrayList<>();
+        Map<String, ComponentDependency> groupDependenciesMap = new HashMap<>();
+
+        dependencies.forEach(dependency -> {
+            String from = getGroup(dependency.getFromComponent(), componentGroups);
+            String to = getGroup(dependency.getToComponent(), componentGroups);
+
+            String key1 = from + "::" + to;
+            String key2 = to + "::" + from;
+
+            if (groupDependenciesMap.containsKey(key1)) {
+                groupDependenciesMap.get(key1).setCount(groupDependenciesMap.get(key1).getCount() + dependency.getCount());
+            } else if (groupDependenciesMap.containsKey(key2)) {
+                groupDependenciesMap.get(key2).setCount(groupDependenciesMap.get(key1).getCount() + dependency.getCount());
+            } else {
+                ComponentDependency newDependency = new ComponentDependency(from, to);
+                newDependency.setCount(dependency.getCount());
+                groupDependencies.add(newDependency);
+                groupDependenciesMap.put(key1, newDependency);
+            }
+        });
+
+        return groupDependencies;
+    }
+
+    private String getGroup(String component, List<ComponentGroup> componentGroups) {
+        for (ComponentGroup componentGroup : componentGroups) {
+            if (componentGroup.getComponentNames().contains(component)) {
+                return componentGroup.getName() + " (" + componentGroup.getComponentNames().size() + ")";
+            }
+        }
+
+        return component;
+    }
+
     private void renderIndirectDependencies(List<String> componentNames, GraphvizDependencyRenderer graphvizDependencyRenderer, RenderingOptions renderingOptions, boolean renderWithoutDependencies, List<ComponentDependency> dependencies) {
         if (renderingOptions.isRenderIndirectDependencies()) {
             List<ComponentDependency> indirectDependencies = getIndirectDependencies(dependencies, renderingOptions.isRenderInternalIndirectDependencies());
@@ -178,7 +258,7 @@ public class LogicalComponentsReportGenerator {
                 report.addParagraph("Dependencies via shared target components.", "color: grey");
                 addDependencyGraphVisuals(indirectDependencies, componentNames.stream()
                         .filter(c -> renderWithoutDependencies || isComponentInDependency(indirectDependencies, c))
-                        .collect(Collectors.toCollection(ArrayList::new)), graphvizDependencyRenderer);
+                        .collect(Collectors.toCollection(ArrayList::new)), new ArrayList<>(), graphvizDependencyRenderer);
                 report.addLineBreak();
                 report.addLineBreak();
             }
@@ -190,7 +270,7 @@ public class LogicalComponentsReportGenerator {
                 report.addParagraph("Shared target components made visible.", "color: grey");
                 addDependencyGraphVisuals(sharedDependencies, componentNames.stream()
                         .filter(c -> renderWithoutDependencies || isComponentInDependency(sharedDependencies, c))
-                        .collect(Collectors.toCollection(ArrayList::new)), graphvizDependencyRenderer);
+                        .collect(Collectors.toCollection(ArrayList::new)), new ArrayList<>(), graphvizDependencyRenderer);
                 report.addLineBreak();
                 report.addLineBreak();
             }
@@ -247,10 +327,8 @@ public class LogicalComponentsReportGenerator {
         return false;
     }
 
-    private void addDependencyGraphVisuals(List<ComponentDependency> componentDependencies, List<String> componentNames, GraphvizDependencyRenderer graphvizDependencyRenderer) {
-        String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(
-                componentNames,
-                componentDependencies);
+    private void addDependencyGraphVisuals(List<ComponentDependency> componentDependencies, List<String> componentNames, List<ComponentGroup> componentGroups, GraphvizDependencyRenderer graphvizDependencyRenderer) {
+        String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(componentNames, componentDependencies, componentGroups);
         String graphId = "dependencies_" + dependencyVisualCounter++;
         report.startDiv("max-height: 400px; overflow-y: scroll; overflow-x: scroll;");
         report.addGraphvizFigure(graphId, "", graphvizContent);

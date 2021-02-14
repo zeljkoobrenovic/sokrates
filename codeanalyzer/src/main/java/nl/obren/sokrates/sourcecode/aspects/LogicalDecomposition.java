@@ -25,6 +25,7 @@ public class LogicalDecomposition {
     private int componentsFolderDepth = 1;
     private List<NamedSourceCodeAspect> components = new ArrayList<>();
     private List<MetaRule> metaComponents = new ArrayList<>();
+    private List<GroupingRule> groups = new ArrayList<>();
     private boolean includeRemainingFiles = true;
     private DependenciesFinder dependenciesFinder = new DependenciesFinder();
     private RenderingOptions renderingOptions = new RenderingOptions();
@@ -227,5 +228,13 @@ public class LogicalDecomposition {
 
     public void setMaxSearchDepthLines(int maxSearchDepthLines) {
         this.maxSearchDepthLines = maxSearchDepthLines;
+    }
+
+    public List<GroupingRule> getGroups() {
+        return groups;
+    }
+
+    public void setGroups(List<GroupingRule> groups) {
+        this.groups = groups;
     }
 }

@@ -4,9 +4,11 @@
 
 package nl.obren.sokrates.reports.utils;
 
+import nl.obren.sokrates.sourcecode.aspects.ComponentGroup;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -87,11 +89,12 @@ public class GraphvizDependencyRenderer {
                 "    compound=\"true\"\n" +
                 "    rankdir=\"" + orientation + "\"\n" +
                 "    bgcolor=\"white\"\n" +
+                "    fontname=\"Tahoma\"\n\n" +
                 "    node [\n" +
                 "        fixedsize=\"false\"\n" +
                 "        fontname=\"Tahoma\"\n" +
                 "        color=\"white\"\n" +
-                "        fillcolor=\""+ defaultNodeFillColor +"\"\n" +
+                "        fillcolor=\"" + defaultNodeFillColor + "\"\n" +
                 "        fontcolor=\"black\"\n" +
                 "        shape=\"box\"\n" +
                 "        style=\"filled\"\n" +
@@ -108,6 +111,10 @@ public class GraphvizDependencyRenderer {
     }
 
     public String getGraphvizContent(List<String> allComponents, List<ComponentDependency> componentDependencies) {
+        return this.getGraphvizContent(allComponents, componentDependencies, new ArrayList<>());
+    }
+
+    public String getGraphvizContent(List<String> allComponents, List<ComponentDependency> componentDependencies, List<ComponentGroup> groups) {
         int maxCount = getMaxDependencyCount(componentDependencies);
         StringBuilder graphviz = new StringBuilder();
         graphviz.append(getHeader());
@@ -115,6 +122,19 @@ public class GraphvizDependencyRenderer {
         graphviz.append("\n");
         allComponents.stream().filter(c -> StringUtils.isNotBlank(c)).forEach(c -> {
             graphviz.append("    \"" + encodeLabel(c) + "\" [fillcolor=\"deepskyblue2\"];\n");
+        });
+        graphviz.append("\n");
+
+        int[] clusterId = {0};
+        graphviz.append("\n");
+        groups.stream().filter(g -> StringUtils.isNotBlank(g.getName())).forEach(g -> {
+            clusterId[0] += 1;
+            graphviz.append("    subgraph cluster_" + clusterId[0] + " {\n");
+            graphviz.append("        label = \"" + encodeLabel(g.getName() + " (" + g.getComponentNames().size() + ")") + "\";\n");
+            g.getComponentNames().stream().filter(c -> StringUtils.isNotBlank(c)).forEach(c -> {
+                graphviz.append("        \"" + encodeLabel(c) + "\";\n");
+            });
+            graphviz.append("    }\n");
         });
         graphviz.append("\n");
 
@@ -192,12 +212,12 @@ public class GraphvizDependencyRenderer {
         this.defaultNodeFillColor = defaultNodeFillColor;
     }
 
-    public void setMaxNumberOfDependencies(int maxNumberOfDependencies) {
-        this.maxNumberOfDependencies = maxNumberOfDependencies;
-    }
-
     public int getMaxNumberOfDependencies() {
         return maxNumberOfDependencies;
+    }
+
+    public void setMaxNumberOfDependencies(int maxNumberOfDependencies) {
+        this.maxNumberOfDependencies = maxNumberOfDependencies;
     }
 
     public boolean isChangingArrowColor() {
