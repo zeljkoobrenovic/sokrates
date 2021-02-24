@@ -23,6 +23,7 @@ public class RichTextReport {
     private List<Finding> findings = new ArrayList<>();
     private File reportsFolder;
     private String parentUrl = "";
+    private boolean embedded = false;
 
     public RichTextReport() {
     }
@@ -421,5 +422,13 @@ public class RichTextReport {
 
     public void endTabContentSection() {
         addHtmlContent("</div>\n");
+    }
+
+    public boolean isEmbedded() {
+        return embedded;
+    }
+
+    public void setEmbedded(boolean embedded) {
+        this.embedded = embedded;
     }
 }

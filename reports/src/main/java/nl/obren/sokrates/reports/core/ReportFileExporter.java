@@ -37,7 +37,15 @@ public class ReportFileExporter {
         File reportFile = new File(folder, reportFileName);
         try {
             PrintWriter out = new PrintWriter(reportFile);
-            out.println(ReportConstants.REPORTS_HTML_HEADER + "\n<body><div id=\"report\">\n" + "\n");
+            String reportsHtmlHeader = ReportConstants.REPORTS_HTML_HEADER;
+            if (report.isEmbedded()) {
+                reportsHtmlHeader = reportsHtmlHeader.replace(" ${margin-left}", "0");
+                reportsHtmlHeader = reportsHtmlHeader.replace(" ${margin-right}", "0");
+            } else {
+                reportsHtmlHeader = reportsHtmlHeader.replace(" ${margin-left}", "5%");
+                reportsHtmlHeader = reportsHtmlHeader.replace(" ${margin-right}", "5%");
+            }
+            out.println(reportsHtmlHeader + "\n<body><div id=\"report\">\n" + "\n");
             new ReportRenderer().render(report, getReportRenderingClient(out, folder));
             out.println("</div>\n</body>\n</html>");
             out.flush();

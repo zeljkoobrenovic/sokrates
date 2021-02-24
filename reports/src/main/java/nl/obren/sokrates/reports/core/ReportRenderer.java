@@ -11,28 +11,38 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ReportRenderer {
     public void render(RichTextReport richTextReport, ReportRenderingClient reportRenderingClient) {
         StringBuilder content = new StringBuilder();
+        if (StringUtils.isNotBlank(richTextReport.getDisplayName())) {
+            renderHeader(richTextReport, content);
+        }
+        if (StringUtils.isNotBlank(richTextReport.getDescription())) {
+            content.append("<p style=\"font-style: italic; color: gray\">" + richTextReport.getDescription() + "</p>\n");
+        }
+        reportRenderingClient.append(content.toString());
+        richTextReport.getRichTextFragments().forEach(fragment -> {
+            renderFragment(reportRenderingClient, fragment);
+        });
+    }
+
+    private void renderHeader(RichTextReport richTextReport, StringBuilder content) {
         content.append("<h1>");
         String parentUrl = StringUtils.isNotBlank(richTextReport.getParentUrl()) ? richTextReport.getParentUrl() : "index.html";
-        content.append("<a href='" + parentUrl + "' style=\"text-decoration:none\">\n");
+        if (StringUtils.isNotBlank(parentUrl)) {
+            content.append("<a href='" + parentUrl + "' style=\"text-decoration:none\">\n");
+        }
         if (StringUtils.isNotBlank(richTextReport.getLogoLink())) {
             int size = richTextReport.getDisplayName().contains("<div") ? 24 : 36;
             String valign = richTextReport.getDisplayName().contains("<div") ? "middle" : "bottom";
             content.append("<img style='height: " + size + "px' valign='" + valign + "' src='" + richTextReport.getLogoLink() + "'>\n");
         }
         content.append(richTextReport.getDisplayName());
-        content.append("</a>\n");
+        if (StringUtils.isNotBlank(parentUrl)) {
+            content.append("</a>\n");
+        }
         content.append("</h1>\n");
-        content.append("<p style=\"font-style: italic; color: gray\">" + richTextReport.getDescription() + "</p>\n");
-        reportRenderingClient.append(content.toString());
-        richTextReport.getRichTextFragments().forEach(fragment -> {
-            renderFragment(reportRenderingClient, fragment);
-        });
     }
 
     private void renderFragment(ReportRenderingClient reportRenderingClient, RichTextFragment fragment) {

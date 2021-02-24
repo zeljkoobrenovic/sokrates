@@ -6,15 +6,12 @@ package nl.obren.sokrates.reports.landscape.statichtml;
 
 import nl.obren.sokrates.common.renderingutils.VisualizationItem;
 import nl.obren.sokrates.common.utils.FormattingUtils;
-import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.Metadata;
-import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
-import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
@@ -29,7 +26,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,9 +37,11 @@ import java.util.stream.Collectors;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class LandscapeReportGenerator {
-    public static final int RECENT_THRESHOLD_DAYS = 40;
+    public static final int RECENT_THRESHOLD_DAYS = 31;
     private static final Log LOG = LogFactory.getLog(LandscapeReportGenerator.class);
     private RichTextReport landscapeReport = new RichTextReport("Landscape Report", "index.html");
+    private RichTextReport landscapeProjectsReport = new RichTextReport("", "projects.html");
+    private RichTextReport landscapeContributorsReport = new RichTextReport("", "contributors.html");
     private LandscapeAnalysisResults landscapeAnalysisResults;
     private int dependencyVisualCounter = 1;
     private File folder;
@@ -52,6 +50,8 @@ public class LandscapeReportGenerator {
     public LandscapeReportGenerator(LandscapeAnalysisResults landscapeAnalysisResults, File folder, File reportsFolder) {
         this.folder = folder;
         this.reportsFolder = reportsFolder;
+        landscapeProjectsReport.setEmbedded(true);
+        landscapeContributorsReport.setEmbedded(true);
         LandscapeDataExport dataExport = new LandscapeDataExport(landscapeAnalysisResults, folder);
         dataExport.exportProjects();
         dataExport.exportContributors();
@@ -196,7 +196,9 @@ public class LandscapeReportGenerator {
             }
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(recentContributorsCount), "recent contributors",
                     "(past 30 days)", getExtraPeopleInfo(contributors, contributorsCount) + "\n" + FormattingUtils.formatCount(locPerRecentContributor) + " active lines of code per recent contributor");
-            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getRookiesContributorsCount()), "active rookies",
+            int rookiesContributorsCount = landscapeAnalysisResults.getRookiesContributorsCount();
+            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(rookiesContributorsCount),
+                    rookiesContributorsCount == 1 ? "active rookie" : "active rookies",
                     "(started in past year)", "active contributors with the first commit in past year");
         }
 
@@ -250,7 +252,9 @@ public class LandscapeReportGenerator {
             }
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(recentContributorsCount), "recent contributors",
                     "(past 30 days)", getExtraPeopleInfo(contributors, contributorsCount) + "\n" + FormattingUtils.formatCount(locPerRecentContributor) + " active lines of code per recent contributor");
-            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getRookiesContributorsCount()), "active rookies",
+            int rookiesContributorsCount = landscapeAnalysisResults.getRookiesContributorsCount();
+            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(rookiesContributorsCount),
+                    rookiesContributorsCount == 1 ? "active rookie" : "active rookies",
                     "(started in past year)", "active contributors with the first commit in past year");
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(locPerRecentContributor), "contributor load",
                     "(active LOC/contributor)", "active lines of code per recent contributor\n\n" + FormattingUtils.getPlainTextForNumber(locNewPerRecentContributor) + " new LOC/recent contributor");
@@ -418,26 +422,15 @@ public class LandscapeReportGenerator {
                 }
             });
 
-            landscapeReport.startSubSection("Contributors (" + contributorsCount + ")",
+            landscapeReport.startSubSection("<a href='contributors.html' target='_blank' style='text-decoration: none'>" +
+                            "Contributors (" + contributorsCount + ")</a>",
                     (thresholdCommits > 1 ? thresholdCommits + "+&nbsp;commits, " : "") + "latest commit " + latestCommit[0]);
 
             addContributorLinks();
 
-            if (contributorsCount > 100) {
-                landscapeReport.startShowMoreBlock("show details...");
-            }
-            landscapeReport.startTable("width: 100%");
-            landscapeReport.addTableHeader("", "Contributor", "# commits", "# commits<br>30 days", "# commits<br>90 days", "first", "latest", "projects");
+            landscapeReport.addHtmlContent("<iframe src='contributors.html' frameborder=0 style='height: 450px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
 
-            int counter[] = {0};
-
-            contributors.forEach(contributor -> {
-                addContributor(totalCommits, counter, contributor);
-            });
-            landscapeReport.endTable();
-            if (contributorsCount > 100) {
-                landscapeReport.endShowMoreBlock();
-            }
+            new LandscapeContributorsReport(landscapeAnalysisResults, landscapeContributorsReport).saveContributorsTable(contributors, totalCommits);
             landscapeReport.endSection();
         }
 
@@ -451,9 +444,8 @@ public class LandscapeReportGenerator {
             if (perExtension.size() > 0) {
                 landscapeReport.startSubSection("Commits & File Extensions (" + perExtension.size() + ")", "");
 
-                if (perExtension.size() > 100) {
-                    landscapeReport.startShowMoreBlock("show details...");
-                }
+                landscapeReport.startShowMoreBlock("show details...");
+
                 landscapeReport.startTable("width: 100%");
                 landscapeReport.addTableHeader("Extension",
                         "# contributors<br>30 days", "# commits<br>30 days", "# files<br>30 days",
@@ -464,9 +456,8 @@ public class LandscapeReportGenerator {
                     addCommitExtension(commitsPerExtension);
                 });
                 landscapeReport.endTable();
-                if (perExtension.size() > 100) {
-                    landscapeReport.endShowMoreBlock();
-                }
+
+                landscapeReport.endShowMoreBlock();
 
                 landscapeReport.endSection();
             }
@@ -481,36 +472,6 @@ public class LandscapeReportGenerator {
         landscapeReport.addNewTabLink("data", "data/contributors.txt");
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
-    }
-
-    private void addContributor(int totalCommits, int[] counter, ContributorProjects contributor) {
-        landscapeReport.startTableRow(contributor.getContributor().isActive(RECENT_THRESHOLD_DAYS) ? "font-weight: bold;"
-                : "color: " + (contributor.getContributor().isActive(90) ? "grey" : "lightgrey"));
-        counter[0] += 1;
-        landscapeReport.addTableCell("" + counter[0], "text-align: center; vertical-align: top; padding-top: 13px;");
-        landscapeReport.addTableCell(StringEscapeUtils.escapeHtml4(contributor.getContributor().getEmail()), "vertical-align: top; padding-top: 13px;");
-        int contributerCommits = contributor.getContributor().getCommitsCount();
-        double percentage = 100.0 * contributerCommits / totalCommits;
-        landscapeReport.addTableCell(contributerCommits + " (" + FormattingUtils.getFormattedPercentage(percentage) + "%)", "vertical-align: top; padding-top: 13px;");
-        landscapeReport.addTableCell(FormattingUtils.formatCount(contributor.getContributor().getCommitsCount30Days()), "vertical-align: top; padding-top: 13px;");
-        landscapeReport.addTableCell(FormattingUtils.formatCount(contributor.getContributor().getCommitsCount90Days()), "vertical-align: top; padding-top: 13px;");
-        landscapeReport.addTableCell(contributor.getContributor().getFirstCommitDate(), "vertical-align: top; padding-top: 13px;");
-        landscapeReport.addTableCell(contributor.getContributor().getLatestCommitDate(), "vertical-align: top; padding-top: 13px;");
-        StringBuilder projectInfo = new StringBuilder();
-        landscapeReport.startTableCell();
-        int projectsCount = contributor.getProjects().size();
-        landscapeReport.startShowMoreBlock(projectsCount + (projectsCount == 1 ? " project" : " projects"));
-        contributor.getProjects().forEach(contributorProjectInfo -> {
-            String projectName = contributorProjectInfo.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName();
-            int commits = contributorProjectInfo.getCommitsCount();
-            if (projectInfo.length() > 0) {
-                projectInfo.append("<br/>");
-            }
-            projectInfo.append(projectName + " <span style='color: grey'>(" + commits + (commits == 1 ? " commit" : " commit") + ")</span>");
-        });
-        landscapeReport.addHtmlContent(projectInfo.toString());
-        landscapeReport.endTableCell();
-        landscapeReport.endTableRow();
     }
 
     private void addCommitExtension(CommitsPerExtension commitsPerExtension) {
@@ -532,8 +493,7 @@ public class LandscapeReportGenerator {
 
     private void addProjectsSection(List<ProjectAnalysisResults> projectsAnalysisResults) {
         Collections.sort(projectsAnalysisResults, (a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode() - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
-        landscapeReport.startSubSection("Projects (" + projectsAnalysisResults.size() + ")", "");
-
+        landscapeReport.startSubSection("<a href='projects.html' target='_blank' style='text-decoration: none'>Projects (" + projectsAnalysisResults.size() + ")</a>", "");
         if (projectsAnalysisResults.size() > 0) {
             List<NumericMetric> projectSizes = new ArrayList<>();
             projectsAnalysisResults.forEach(projectAnalysisResults -> {
@@ -548,78 +508,13 @@ public class LandscapeReportGenerator {
             landscapeReport.addNewTabLink("data", "data/projects.txt");
             landscapeReport.addLineBreak();
             landscapeReport.addLineBreak();
-            if (projectsAnalysisResults.size() > 100) {
-                landscapeReport.startShowMoreBlock("show details...");
-            }
-            landscapeReport.startTable("width: 100%");
-            int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
-            int thresholdContributors = landscapeAnalysisResults.getConfiguration().getProjectThresholdContributors();
-            landscapeReport.addTableHeader("",
-                    "Project" + (thresholdContributors > 1 ? "<br/>(" + thresholdContributors + "+&nbsp;contributors)" : ""),
-                    "Main<br/>Language", "LOC<br/>(main)",
-                    "LOC<br/>(test)", "LOC<br/>(other)",
-                    "Age", "Contributors" + (thresholdCommits > 1 ? "<br/>(" + thresholdCommits + "+&nbsp;commits)" : ""),
-                    "Recent<br>Contributors<br>(30d)", "Rookies", "Commits<br>this year", "Report");
-            Collections.sort(projectsAnalysisResults,
-                    (a, b) -> b.getAnalysisResults().getContributorsAnalysisResults().getCommitsThisYear()
-                            - a.getAnalysisResults().getContributorsAnalysisResults().getCommitsThisYear());
-            projectsAnalysisResults.forEach(projectAnalysis -> {
-                addProjectRow(projectAnalysis);
-            });
-            landscapeReport.endTable();
-            if (projectsAnalysisResults.size() > 100) {
-                landscapeReport.endShowMoreBlock();
-            }
+
+            landscapeReport.addHtmlContent("<iframe src='projects.html' frameborder=0 style='height: 450px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
+
+            new LandscapeProjectsReport(landscapeAnalysisResults).saveProjectsReport(landscapeProjectsReport, projectsAnalysisResults);
         }
 
         landscapeReport.endSection();
-    }
-
-    private void addProjectRow(ProjectAnalysisResults projectAnalysis) {
-        CodeAnalysisResults analysisResults = projectAnalysis.getAnalysisResults();
-        Metadata metadata = analysisResults.getMetadata();
-        String logoLink = metadata.getLogoLink();
-
-        landscapeReport.startTableRow();
-        landscapeReport.addTableCell(StringUtils.isNotBlank(logoLink) ? "<img src='" + logoLink + "' style='width: 20px'>" : "", "text-align: center");
-        landscapeReport.addTableCell(metadata.getName());
-        AspectAnalysisResults main = analysisResults.getMainAspectAnalysisResults();
-        AspectAnalysisResults test = analysisResults.getTestAspectAnalysisResults();
-        AspectAnalysisResults generated = analysisResults.getGeneratedAspectAnalysisResults();
-        AspectAnalysisResults build = analysisResults.getBuildAndDeployAspectAnalysisResults();
-        AspectAnalysisResults other = analysisResults.getOtherAspectAnalysisResults();
-
-        int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
-        List<Contributor> contributors = analysisResults.getContributorsAnalysisResults().getContributors()
-                .stream().filter(c -> c.getCommitsCount() >= thresholdCommits).collect(Collectors.toCollection(ArrayList::new));
-
-        int contributorsCount = contributors.size();
-        int recentContributorsCount = (int) contributors.stream().filter(c -> c.isActive(RECENT_THRESHOLD_DAYS)).count();
-        int rookiesCount = (int) contributors.stream().filter(c -> c.isRookie(RECENT_THRESHOLD_DAYS)).count();
-
-        List<NumericMetric> linesOfCodePerExtension = main.getLinesOfCodePerExtension();
-        StringBuilder locSummary = new StringBuilder();
-        if (linesOfCodePerExtension.size() > 0) {
-            locSummary.append(linesOfCodePerExtension.get(0).getName().replace("*.", "").trim().toUpperCase());
-        } else {
-            locSummary.append("-");
-        }
-        landscapeReport.addTableCell(locSummary.toString().replace("> = ", ">"), "text-align: center");
-        landscapeReport.addTableCell(FormattingUtils.formatCount(main.getLinesOfCode(), "-"), "text-align: center");
-
-        landscapeReport.addTableCell(FormattingUtils.formatCount(test.getLinesOfCode(), "-"), "text-align: center");
-        landscapeReport.addTableCell(FormattingUtils.formatCount(generated.getLinesOfCode() + build.getLinesOfCode() + other.getLinesOfCode(), "-"), "text-align: center");
-        int projectAgeYears = (int) Math.round(analysisResults.getFilesHistoryAnalysisResults().getAgeInDays() / 365.0);
-        String age = projectAgeYears == 0 ? "<1y" : projectAgeYears + "y";
-        landscapeReport.addTableCell(age, "text-align: center");
-        landscapeReport.addTableCell(FormattingUtils.formatCount(contributorsCount, "-"), "text-align: center");
-        landscapeReport.addTableCell(FormattingUtils.formatCount(recentContributorsCount, "-"), "text-align: center");
-        landscapeReport.addTableCell(FormattingUtils.formatCount(rookiesCount, "-"), "text-align: center");
-        landscapeReport.addTableCell(FormattingUtils.formatCount(analysisResults.getContributorsAnalysisResults().getCommitsThisYear(), "-"), "text-align: center");
-        String projectReportUrl = landscapeAnalysisResults.getConfiguration().getProjectReportsUrlPrefix() + projectAnalysis.getSokratesProjectLink().getHtmlReportsRoot() + "/index.html";
-        landscapeReport.addTableCell("<a href='" + projectReportUrl + "' target='_blank'>"
-                + "<div style='height: 40px'>" + ReportFileExporter.getIconSvg("report", 40) + "</div></a>", "text-align: center");
-        landscapeReport.endTableRow();
     }
 
     private void addCustomInfoBlock(CustomMetric customMetric) {
@@ -725,6 +620,8 @@ public class LandscapeReportGenerator {
         List<RichTextReport> reports = new ArrayList<>();
 
         reports.add(this.landscapeReport);
+        reports.add(this.landscapeProjectsReport);
+        reports.add(this.landscapeContributorsReport);
 
         return reports;
     }
@@ -871,6 +768,10 @@ public class LandscapeReportGenerator {
                                           double cMedian, double pMedian,
                                           int daysAgo) {
         landscapeReport.addLevel2Header("People Dependencies (" + daysAgo + " days)", "margin-top: 40px");
+
+        if (daysAgo > 60) {
+            landscapeReport.startShowMoreBlock("show details...");
+        }
         landscapeReport.addParagraph("Based on the number of same repositories that two persons committed to in the past " + daysAgo + " days.", "color: grey");
         int connectionSum = contributorConnections.stream().mapToInt(c -> c.getConnectionsCount()).sum();
         landscapeReport.addParagraph("In total there are <b>" + FormattingUtils.formatCount(peopleDependencies.size()) + "</b> " +
@@ -923,6 +824,9 @@ public class LandscapeReportGenerator {
         landscapeReport.addNewTabLink("See data...", "data/" + fileName);
         addDependencyGraphVisuals(projectDependenciesViaPeople, new ArrayList<>(), "project_dependencies_" + daysAgo + "_");
         landscapeReport.endShowMoreBlock();
+        if (daysAgo > 60) {
+            landscapeReport.endShowMoreBlock();
+        }
 
     }
 

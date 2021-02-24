@@ -47,8 +47,8 @@ public class ReportConstants {
             "    <style type=\"text/css\" media=\"all\">\n" +
             "        body {\n" +
             "            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;\n" +
-            "            margin-left: 5%;\n" +
-            "            margin-right: 5%;\n" +
+            "            margin-left: ${margin-left};\n" +
+            "            margin-right: ${margin-right};\n" +
             "        }\n" +
             "\n" +
             "        table {\n" +
