@@ -429,6 +429,12 @@ public class LandscapeAnalysisResults {
                         .getContributorsAnalysisResults().getCommitsCount()).sum();
     }
 
+    public int getCommitsCount30Days() {
+        return this.projectAnalysisResults.stream()
+                .mapToInt(p -> p.getAnalysisResults()
+                        .getContributorsAnalysisResults().getCommitsCount30Days()).sum();
+    }
+
     public int getContributorsCount() {
         return getContributors().size();
     }

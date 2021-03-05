@@ -284,6 +284,7 @@ public class LogicalComponentsReportGenerator {
 
         dependencies.forEach(dependency1 -> {
             dependencies.stream()
+                    .filter(dependency2 -> dependency1.getFromComponent() != dependency2.getFromComponent())
                     .filter(dependency2 -> renderInternalIndirectDependencies || dependency1 != dependency2)
                     .filter(dependency2 -> renderInternalIndirectDependencies || !dependency1.getFromComponent().equalsIgnoreCase(dependency2.getFromComponent()))
                     .filter(dependency2 -> dependency1.getToComponent().equalsIgnoreCase(dependency2.getToComponent()))
@@ -374,14 +375,14 @@ public class LogicalComponentsReportGenerator {
             });
             report.endUnorderedList();
         }
-        List<MetaRule> metaRules = logicalDecomposition.getLogicalDecomposition().getDependenciesFinder().getMetaRules();
+        List<? extends MetaRule> metaRules = logicalDecomposition.getLogicalDecomposition().getDependenciesFinder().getMetaRules();
         if (metaRules.size() > 0) {
             report.addListItem("The following explicit meta-rules for finding dependencies are defined:");
             describeMetaRules(metaRules);
         }
     }
 
-    private void describeMetaRules(List<MetaRule> metaRules) {
+    private void describeMetaRules(List<? extends MetaRule> metaRules) {
         report.startUnorderedList();
         metaRules.forEach(rule -> {
             SourceFileFilter filter = new SourceFileFilter(rule.getPathPattern(), rule.getContentPattern());

@@ -5,6 +5,7 @@
 package nl.obren.sokrates.sourcecode.dependencies;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +17,7 @@ public class ComponentDependency {
     private String toComponent;
     private int count = 1;
     private String text = null;
+    private String color = "";
 
     public ComponentDependency() {
     }
@@ -89,7 +91,7 @@ public class ComponentDependency {
     }
 
     public String getDependencyString() {
-        return fromComponent + " -> " + toComponent;
+        return (StringUtils.isNotBlank(color) ? color + " / " : "") + fromComponent + " -> " + toComponent;
     }
 
     @JsonIgnore
@@ -100,5 +102,13 @@ public class ComponentDependency {
     @JsonIgnore
     public void increment(int delta) {
         count += delta;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
     }
 }

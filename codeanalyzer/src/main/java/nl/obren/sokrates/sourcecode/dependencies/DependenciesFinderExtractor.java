@@ -51,7 +51,7 @@ public class DependenciesFinderExtractor {
             if (sourceFileFilter.pathMatches(sourceFile.getRelativePath())) {
                 getSimpleLines(sourceFile).forEach(line -> {
                     if (RegexUtils.matchesEntirely(rule.getContentPattern(), line)) {
-                        addDependency(dependencies, dependenciesMap, sourceFile, rule.getComponent(), line);
+                        addDependency(dependencies, dependenciesMap, sourceFile, rule.getComponent(), line, rule.getColor(), rule.isReverseDirection());
                     }
                 });
             }
@@ -66,7 +66,7 @@ public class DependenciesFinderExtractor {
                 getLines(sourceFile, metaRule).forEach(line -> {
                     if (RegexUtils.matchesEntirely(metaRule.getContentPattern(), line)) {
                         String component = new ComplexOperation(metaRule.getNameOperations()).exec(line);
-                        addDependency(dependencies, dependenciesMap, sourceFile, component, line);
+                        addDependency(dependencies, dependenciesMap, sourceFile, component, line, metaRule.getColor(), metaRule.isReverseDirection());
                     }
                 });
             }
@@ -92,7 +92,8 @@ public class DependenciesFinderExtractor {
         return lines;
     }
 
-    private void addDependency(List<ComponentDependency> dependencies, Map<String, ComponentDependency> dependenciesMap, SourceFile sourceFile, String toComponent, String line) {
+    private void addDependency(List<ComponentDependency> dependencies, Map<String, ComponentDependency> dependenciesMap,
+                               SourceFile sourceFile, String toComponent, String line, String color, boolean reverseDirection) {
         if (StringUtils.isBlank(toComponent)) {
             return;
         }
@@ -101,9 +102,10 @@ public class DependenciesFinderExtractor {
             return;
         }
 
-        if (isInDuplicatedDependecies(sourceFile, toComponent)) return;
+        if (isInDuplicatedDependecies(sourceFile, toComponent, color)) return;
 
         ComponentDependency componentDependency = new ComponentDependency();
+        componentDependency.setColor(color);
         String group = logicalDecomposition.getName();
         List<NamedSourceCodeAspect> logicalComponents = sourceFile.getLogicalComponents(group);
 
@@ -113,8 +115,13 @@ public class DependenciesFinderExtractor {
 
         NamedSourceCodeAspect firstAspect = logicalComponents.get(0);
         String fromComponent = firstAspect.getName();
-        componentDependency.setFromComponent(fromComponent);
-        componentDependency.setToComponent(toComponent);
+        if (reverseDirection) {
+            componentDependency.setFromComponent(toComponent);
+            componentDependency.setToComponent(fromComponent);
+        } else {
+            componentDependency.setFromComponent(fromComponent);
+            componentDependency.setToComponent(toComponent);
+        }
 
         addFileDepedency(sourceFile, fromComponent, toComponent, line, firstAspect);
 
@@ -144,8 +151,8 @@ public class DependenciesFinderExtractor {
         allDependencies.add(fileDependency);
     }
 
-    private boolean isInDuplicatedDependecies(SourceFile sourceFile, String toComponent) {
-        String duplicationKey = sourceFile.getRelativePath() + " -> " + toComponent;
+    private boolean isInDuplicatedDependecies(SourceFile sourceFile, String toComponent, String color) {
+        String duplicationKey = color + " / " + sourceFile.getRelativePath() + " -> " + toComponent;
         if (fileComponentDependencies.contains(duplicationKey)) {
             return true;
         }

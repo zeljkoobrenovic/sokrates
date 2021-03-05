@@ -78,6 +78,11 @@ public class ContributorsAnalysisResults {
     }
 
     @JsonIgnore
+    public int getCommitsCount30Days() {
+        return contributors.stream().mapToInt(c -> c.getCommitsCount30Days()).sum();
+    }
+
+    @JsonIgnore
     public int getCommitsThisYear() {
         String year = "" + Calendar.getInstance().get(Calendar.YEAR);
 

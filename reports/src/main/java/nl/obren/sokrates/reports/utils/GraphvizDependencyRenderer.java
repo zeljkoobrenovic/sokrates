@@ -149,7 +149,10 @@ public class GraphvizDependencyRenderer {
                 .filter(d -> StringUtils.isNotBlank(d.getFromComponent()) && StringUtils.isNotBlank(d.getToComponent()))
                 .forEach(componentDependency -> {
                     int thickness = getThickness(componentDependency, maxCount);
-                    String color = isCyclic(componentDependencies, componentDependency) ? "#DC143C" : this.arrowColor;
+                    String color = componentDependency.getColor();
+                    if (StringUtils.isBlank(color)) {
+                        color = isCyclic(componentDependencies, componentDependency) ? "#DC143C" : this.arrowColor;
+                    }
                     int transparency = (int) (255.0 * (0.3 + 0.7 * thickness / 10.0));
                     color += String.format("%02X", transparency);
                     String fromComponent = reverseDirection ? componentDependency.getToComponent() : componentDependency.getFromComponent();

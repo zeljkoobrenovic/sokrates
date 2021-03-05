@@ -22,12 +22,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class LandscapeDataExport {
     private LandscapeAnalysisResults analysisResults;
-    private File folder;
     private File dataFolder;
 
     public LandscapeDataExport(LandscapeAnalysisResults analysisResults, File folder) {
         this.analysisResults = analysisResults;
-        this.folder = folder;
         folder.mkdirs();
         dataFolder = new File(folder, "data");
         dataFolder.mkdirs();
@@ -96,8 +94,8 @@ public class LandscapeDataExport {
 
         contributors.forEach(contributor -> {
             builder.append(contributor.getContributor().getEmail()).append("\t");
-            int contributerCommits = contributor.getContributor().getCommitsCount();
-            builder.append(contributerCommits).append("\t");
+            int contributorCommits = contributor.getContributor().getCommitsCount();
+            builder.append(contributorCommits).append("\t");
             builder.append(contributor.getContributor().getFirstCommitDate()).append("\t");
             builder.append(contributor.getContributor().getLatestCommitDate()).append("\t");
             builder.append(contributor.getProjects().stream().map(p -> p.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName()).collect(Collectors.joining(", ")));
