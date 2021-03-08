@@ -7,6 +7,7 @@ package nl.obren.sokrates.sourcecode.lang;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.analysis.AnalyzerOverride;
+import nl.obren.sokrates.sourcecode.lang.adabasnatural.AdabasNaturalAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.cfg.CfgAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.clojure.ClojureLangAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.cpp.CStyleAnalyzer;
@@ -240,6 +241,12 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("dpr", ObjectPascalAnalyzer.class);
         analyzersMap.put("lpr", ObjectPascalAnalyzer.class);
         analyzersMap.put("pascal", ObjectPascalAnalyzer.class);
+
+        analyzersMap.put("nsp", AdabasNaturalAnalyzer.class);
+        analyzersMap.put("nsm", AdabasNaturalAnalyzer.class);
+        analyzersMap.put("nsh", AdabasNaturalAnalyzer.class);
+        analyzersMap.put("nsd", AdabasNaturalAnalyzer.class);
+        analyzersMap.put("nsn", AdabasNaturalAnalyzer.class);
 
         analyzersMap.put("pp", PuppetAnalyzer.class);
     }

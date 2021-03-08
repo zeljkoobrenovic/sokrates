@@ -6,10 +6,12 @@ package nl.obren.sokrates.sourcecode.lang;
 
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SourceFile;
+import nl.obren.sokrates.sourcecode.aspects.MetaDependencyRule;
 import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
 import nl.obren.sokrates.sourcecode.dependencies.DependenciesAnalysis;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class LanguageAnalyzer {
@@ -35,4 +37,8 @@ public abstract class LanguageAnalyzer {
     public abstract DependenciesAnalysis extractDependencies(List<SourceFile> sourceFiles, ProgressFeedback progressFeedback);
 
     public abstract List<String> getFeaturesDescription();
+
+    public List<MetaDependencyRule> getMetaDependencyRules() {
+        return new ArrayList<>();
+    }
 }

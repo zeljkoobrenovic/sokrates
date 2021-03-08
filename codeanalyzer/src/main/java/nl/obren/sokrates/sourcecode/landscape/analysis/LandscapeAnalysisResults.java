@@ -15,6 +15,7 @@ import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
+import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 
 import java.util.*;
@@ -325,6 +326,10 @@ public class LandscapeAnalysisResults {
             ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
             contributorsAnalysisResults.getContributors().forEach(contributor -> {
                 String contributorId = contributor.getEmail();
+                if (configuration.getTransformContributorEmails().size() > 0) {
+                    ComplexOperation operation = new ComplexOperation(configuration.getTransformContributorEmails());
+                    contributorId = operation.exec(contributorId);
+                }
                 int projectCommits = contributor.getCommitsCount();
                 List<String> commitDates = contributor.getCommitDates();
                 int projectCommits30Days = contributor.getCommitsCount30Days();
@@ -352,7 +357,7 @@ public class LandscapeAnalysisResults {
                 } else {
                     Contributor newContributor = new Contributor();
 
-                    newContributor.setEmail(contributor.getEmail());
+                    newContributor.setEmail(contributorId);
                     newContributor.setCommitsCount(projectCommits);
                     newContributor.setCommitsCount30Days(projectCommits30Days);
                     newContributor.setCommitsCount90Days(projectCommits90Days);

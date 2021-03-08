@@ -7,9 +7,9 @@ package nl.obren.sokrates.sourcecode.dependencies;
 import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
-import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
-import nl.obren.sokrates.sourcecode.aspects.MetaRule;
-import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
+import nl.obren.sokrates.sourcecode.aspects.*;
+import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
 import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import org.apache.commons.lang3.StringUtils;
 
@@ -39,7 +39,15 @@ public class DependenciesFinderExtractor {
         dependenciesMap = new HashMap<>();
 
         aspect.getSourceFiles().forEach(sourceFile -> findComponentDependenciesViaSimpleRules(sourceFile));
-        aspect.getSourceFiles().forEach(sourceFile -> findComponentDependenciesViaMetaRules(sourceFile));
+        DependenciesFinder dependenciesFinder = logicalDecomposition.getDependenciesFinder();
+        List<MetaDependencyRule> metaRules = new ArrayList<>();
+        if (dependenciesFinder.isUseBuiltInDependencyFinders()) {
+            aspect.getSourceFiles().forEach(sourceFile -> {
+                LanguageAnalyzer languageAnalyzer = LanguageAnalyzerFactory.getInstance().getLanguageAnalyzer(sourceFile);
+                findComponentDependenciesViaMetaRules(languageAnalyzer.getMetaDependencyRules(), sourceFile);
+            });
+        }
+        aspect.getSourceFiles().forEach(sourceFile -> findComponentDependenciesViaMetaRules(dependenciesFinder.getMetaRules(), sourceFile));
 
         return dependencies;
     }
@@ -58,8 +66,8 @@ public class DependenciesFinderExtractor {
         });
     }
 
-    private void findComponentDependenciesViaMetaRules(SourceFile sourceFile) {
-        logicalDecomposition.getDependenciesFinder().getMetaRules().forEach(metaRule -> {
+    private void findComponentDependenciesViaMetaRules(List<MetaDependencyRule> metaRules, SourceFile sourceFile) {
+        metaRules.forEach(metaRule -> {
             SourceFileFilter sourceFileFilter = new SourceFileFilter(metaRule.getPathPattern(), "");
 
             if (sourceFileFilter.pathMatches(sourceFile.getRelativePath())) {

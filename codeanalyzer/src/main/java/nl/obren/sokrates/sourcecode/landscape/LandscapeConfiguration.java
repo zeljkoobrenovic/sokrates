@@ -5,6 +5,8 @@
 package nl.obren.sokrates.sourcecode.landscape;
 
 import nl.obren.sokrates.sourcecode.Metadata;
+import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
+import nl.obren.sokrates.sourcecode.operations.OperationStatement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +23,7 @@ public class LandscapeConfiguration {
     private int contributorThresholdCommits = 2;
     private int commitsMaxYears = 10;
     private boolean anonymizeContributors = false;
+    private List<OperationStatement> transformContributorEmails = new ArrayList<>();
 
     private List<CustomMetric> customMetrics = new ArrayList<>();
     private List<CustomMetric> customMetricsSmall = new ArrayList<>();
@@ -156,5 +159,13 @@ public class LandscapeConfiguration {
 
     public void setCommitsMaxYears(int commitsMaxYears) {
         this.commitsMaxYears = commitsMaxYears;
+    }
+
+    public List<OperationStatement> getTransformContributorEmails() {
+        return transformContributorEmails;
+    }
+
+    public void setTransformContributorEmails(List<OperationStatement> transformContributorEmails) {
+        this.transformContributorEmails = transformContributorEmails;
     }
 }
