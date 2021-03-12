@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class DuplicationAnalyzer extends Analyzer {
+    public static final int LIST_LIMIT = 50;
     private final StringBuffer textSummary;
     private final CodeConfiguration codeConfiguration;
     private final MetricsList metricsList;
@@ -95,7 +96,7 @@ public class DuplicationAnalyzer extends Analyzer {
         });
 
         Collections.sort(duplicates, (o1, o2) -> -new Integer(o1.getDuplicatedFileBlocks().size()).compareTo(o2.getDuplicatedFileBlocks().size()));
-        for (int i = 0; i < Math.min(20, duplicates.size()); i++) {
+        for (int i = 0; i < Math.min(LIST_LIMIT, duplicates.size()); i++) {
             DuplicationInstance duplicate = duplicates.get(i);
             if (duplicate.getDuplicatedFileBlocks().size() > 2) {
                 analysisResults.getMostFrequentDuplicates().add(duplicate);
@@ -103,7 +104,7 @@ public class DuplicationAnalyzer extends Analyzer {
         }
 
         Collections.sort(duplicates, (o1, o2) -> -new Integer(o1.getBlockSize()).compareTo(o2.getBlockSize()));
-        for (int i = 0; i < Math.min(20, duplicates.size()); i++) {
+        for (int i = 0; i < Math.min(LIST_LIMIT, duplicates.size()); i++) {
             analysisResults.getLongestDuplicates().add(duplicates.get(i));
         }
     }

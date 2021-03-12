@@ -98,7 +98,7 @@ public class ExtensionGroupExtractor {
             "8xktxt", "8xptxt", "tla", "toml", "txl", "tcl", "adp", "tm", "tcsh", "csh", "tex", "aux", "bbx", "cbx",
             "dtx", "ins", "lbx", "ltx", "mkii", "mkiv", "mkvi", "sty", "tea", "texinfo", "texi", "txi", "txt", "no",
             "textile", "thrift", "tu", "ttl", "twig", "tl", "upc", "anim", "asset", "mat", "meta", "prefab", "unity",
-            "uno", "uc", "ur", "urs", "bas", "frm", "frx", "vbs", "vcl", "vhdl", "vhd", "vhf", "vhi", "vho", "vhs",
+            "uno", "uc", "ur", "urs", "bas", "frm", "frx", "vbs", "vhdl", "vhd", "vhf", "vhi", "vho", "vhs",
             "vht", "vhw", "vala", "vapi", "veo", "snip", "snippet", "snippets", "vim", "vmb", "gvimrc", "nvimrc",
             "vimrc", "vb", "vbhtml", "volt", "vue", "mtl", "obj", "owl", "wast", "wat", "webidl", "vtt", "wgetrc",
             "reg", "wlk", "xbm", "xpm", "x10", "xc", "XCompose", "xml", "adml", "admx", "ant", "axml", "builds",
@@ -134,7 +134,7 @@ public class ExtensionGroupExtractor {
             "tiff", "tlz", "ttc", "ttf", "txz", "udf", "uvh", "uvi", "uvm", "uvp", "uvs", "uvu", "viv", "vob",
             "war", "wav", "wax", "wbmp", "wdp", "weba", "webm", "webp", "whl", "wim", "wm", "wma", "wmv", "wmx", "woff",
             "woff2", "wvx", "xbm", "xif", "xla", "xlam", "xls", "xlsb", "xlsm", "xlsx", "xlt", "xltm", "xltx", "xm", "xmind",
-            "xpi", "xpm", "xwd", "xz", "z", "zip", "zipx");
+            "xpi", "xpm", "xwd", "xz", "z", "zip", "zipx", "vcl");
 
     private static final List<String> knownIgnorableExtension = Arrays.asList(
             "ds_store", "iml", "ser");

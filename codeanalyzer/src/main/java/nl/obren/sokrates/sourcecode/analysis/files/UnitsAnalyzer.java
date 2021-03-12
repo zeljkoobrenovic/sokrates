@@ -34,9 +34,9 @@ public class UnitsAnalyzer extends Analyzer {
     private final FilesAnalysisResults filesAnalysisResults;
     private ProgressFeedback progressFeedback;
 
-    private UnitCategoryNames unitSizeCategoryNames = new UnitCategoryNames("1_20", "21_50", "51_100", "101_PLUS");
+    private UnitCategoryNames unitSizeCategoryNames = new UnitCategoryNames("1_10", "11_20", "21_50", "51_100", "101_PLUS");
 
-    private UnitCategoryNames conditionalComplexityCategoryNames = new UnitCategoryNames("1_5", "6_10", "10_25", "26_PLUS");
+    private UnitCategoryNames conditionalComplexityCategoryNames = new UnitCategoryNames("1_5", "6_10", "10_25", "26_50", "51_PLUS");
     private List<UnitInfo> allUnits;
 
     public UnitsAnalyzer(CodeAnalysisResults analysisResults, ProgressFeedback progressFeedback) {
@@ -176,12 +176,15 @@ public class UnitsAnalyzer extends Analyzer {
     private void printRiskDistributionStats(RiskDistributionStats riskDistributionStats, UnitCategoryNames categoryNames, String prefix) {
         String namePrefix = SystemUtils.getFileSystemFriendlyName(prefix.toUpperCase().replace(":", "") + "_").toUpperCase();
 
+        addNegligibleRiskMetrics(riskDistributionStats, categoryNames, prefix, namePrefix);
         addLowRiskMetrics(riskDistributionStats, categoryNames, prefix, namePrefix);
         addMediumRIskMetrics(riskDistributionStats, categoryNames, prefix, namePrefix);
         addHighRiskMetrics(riskDistributionStats, categoryNames, prefix, namePrefix);
         addVeryHighRiskMetrics(riskDistributionStats, categoryNames, prefix, namePrefix);
 
-        AnalysisUtils.detailedInfo(textSummary, progressFeedback, prefix + riskDistributionStats.getLowRiskValue() + " / "
+        AnalysisUtils.detailedInfo(textSummary, progressFeedback, prefix
+                + riskDistributionStats.getNegligibleRiskValue() + " / "
+                + riskDistributionStats.getLowRiskValue() + " / "
                 + riskDistributionStats.getMediumRiskValue() + " / "
                 + riskDistributionStats.getHighRiskValue() + " / "
                 + riskDistributionStats.getVeryHighRiskValue(), start);
@@ -245,6 +248,21 @@ public class UnitsAnalyzer extends Analyzer {
         metricsList.addMetric()
                 .id(safeId(AnalysisUtils.getMetricId(namePrefix + categoryNames.getLowRisk() + "_COUNT")))
                 .value(riskDistributionStats.getLowRiskCount());
+    }
+
+
+    private void addNegligibleRiskMetrics(RiskDistributionStats riskDistributionStats, UnitCategoryNames categoryNames, String prefix, String namePrefix) {
+        metricsList.addMetric()
+                .id(safeId(AnalysisUtils.getMetricId(namePrefix + categoryNames.getNegligibleRisk() + "_LOC")))
+                .value(riskDistributionStats.getNegligibleRiskValue());
+
+        metricsList.addMetric()
+                .id(safeId(AnalysisUtils.getMetricId(namePrefix + categoryNames.getNegligibleRisk() + "_PERCENTAGE")))
+                .value(riskDistributionStats.getNegligibleRiskPercentage());
+
+        metricsList.addMetric()
+                .id(safeId(AnalysisUtils.getMetricId(namePrefix + categoryNames.getNegligibleRisk() + "_COUNT")))
+                .value(riskDistributionStats.getNegligibleRiskCount());
     }
 
 

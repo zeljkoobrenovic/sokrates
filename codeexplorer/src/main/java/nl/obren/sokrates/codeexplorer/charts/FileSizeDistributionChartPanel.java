@@ -107,6 +107,8 @@ public class FileSizeDistributionChartPanel extends BorderPane {
 
     private ObservableList<PieChart.Data> getPieChartDistributionData(RiskDistributionStats distribution) {
         return FXCollections.observableArrayList(
+                new PieChart.Data(distribution.getNegligibleRiskLabel() + " (" + FormattingUtils.getFormattedPercentage(100.0 * distribution.getNegligibleRiskValue() / distribution.getTotalValue()) + "%)",
+                        distribution.getNegligibleRiskValue()),
                 new PieChart.Data(distribution.getLowRiskLabel() + " (" + FormattingUtils.getFormattedPercentage(100.0 * distribution.getLowRiskValue() / distribution.getTotalValue()) + "%)",
                         distribution.getLowRiskValue()),
                 new PieChart.Data(distribution.getMediumRiskLabel() + " (" + FormattingUtils.getFormattedPercentage(100.0 * distribution.getMediumRiskValue() / distribution.getTotalValue()) + "%)",

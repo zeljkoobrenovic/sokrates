@@ -137,7 +137,9 @@ public class FileChurnReportGenerator {
     private void addChangeDetailsForLogicalDecomposition(RichTextReport report, FileAgeDistributionPerLogicalDecomposition logicalDecomposition) {
         report.startSubSection("" + logicalDecomposition.getName()
                 + " (" + THE_NUMBER_OF_FILE_CHANGES.toLowerCase() + ")", THE_NUMBER_OF_FILE_CHANGES_DESCRIPTION);
+        report.startScrollingDiv();
         report.addHtmlContent(RiskDistributionStatsReportUtils.getRiskDistributionPerKeySvgBarChart(logicalDecomposition.getDistributionPerComponent(), changeFrequencyLabels, Palette.getHeatPalette()));
+        report.endDiv();
         report.endSection();
 
     }

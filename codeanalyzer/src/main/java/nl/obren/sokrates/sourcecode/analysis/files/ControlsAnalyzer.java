@@ -37,7 +37,7 @@ public class ControlsAnalyzer extends Analyzer {
                 controlStatus.setControl(control);
                 if (metric == null) {
                     controlStatus.setMetric(new Metric().id(control.getMetric()));
-                    controlStatus.setStatus("ERROR: metric does not exist");
+                    controlStatus.setStatus("IGNORED: metric does not exist");
                 } else {
                     controlStatus.setMetric(metric);
                     boolean inRange = control.getDesiredRange().isInRange(metric.getValue().doubleValue());

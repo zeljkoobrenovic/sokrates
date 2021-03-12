@@ -43,13 +43,14 @@ public class RiskDistributionStatsReportUtils {
         html[0] += "<div style='width: 100%; overflow-x: auto'>";
 
         distributions.stream()
+                .sorted((o1, o2) -> o2.getNegligibleRiskValue() - o1.getNegligibleRiskValue())
                 .sorted((o1, o2) -> o2.getLowRiskValue() - o1.getLowRiskValue())
                 .sorted((o1, o2) -> o2.getMediumRiskValue() - o1.getMediumRiskValue())
                 .sorted((o1, o2) -> o2.getHighRiskValue() - o1.getHighRiskValue())
                 .sorted((o1, o2) -> o2.getVeryHighRiskValue() - o1.getVeryHighRiskValue())
                 .forEach(distribution -> {
                     int totalValue = distribution.getTotalValue();
-                    chart.setMaxBarWidth(Math.max(1, (int) Math.round(300.0 * (totalValue / maxTotalValue[0]))));
+                    chart.setMaxBarWidth(Math.max(1, (int) Math.round(300.0 * ((double) totalValue / maxTotalValue[0]))));
 
                     List<Integer> values = getRowData(distribution);
 

@@ -19,7 +19,7 @@ public class ReportRenderer {
             renderHeader(richTextReport, content);
         }
         if (StringUtils.isNotBlank(richTextReport.getDescription())) {
-            content.append("<p style=\"font-style: italic; color: gray\">" + richTextReport.getDescription() + "</p>\n");
+            content.append("<p style=\"color: #787878; font-size: 94%; margin-top: 9px;\">" + richTextReport.getDescription() + "</p>\n");
         }
         reportRenderingClient.append(content.toString());
         richTextReport.getRichTextFragments().forEach(fragment -> {

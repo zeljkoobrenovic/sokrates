@@ -96,6 +96,11 @@ public class ScopingConventions {
 
         otherFilesConventions.add(new Convention(".*/Jenkinsfile", "", "Jenkinsfile"));
 
+        otherFilesConventions.add(new Convention(".*[.]storyboard", "", "Storyboard"));
+        otherFilesConventions.add(new Convention(".*[.]xib", "", "XIB files"));
+
+        otherFilesConventions.add(new Convention(".*[.]bash_[a-z]+", "", "Bash files"));
+
         // config
         otherFilesConventions.add(new Convention(".*[.]apacheconf", "", "Configuration"));
         otherFilesConventions.add(new Convention(".*[.]vhost", "", "Configuration"));
@@ -166,14 +171,22 @@ public class ScopingConventions {
 
 
         otherFilesConventions.add(new Convention(".*/[Dd]ocumentation/.*", "", "Documentation"));
+        otherFilesConventions.add(new Convention(".*/asciidoc/.*", "", "Documentation"));
         otherFilesConventions.add(new Convention(".*/[Mm]an/.*", "", "Documentation"));
         otherFilesConventions.add(new Convention(".*/[Ee]xamples/.*", "", "Documentation"));
         otherFilesConventions.add(new Convention(".*/[Ss]amples/.*", "", "Samples"));
         otherFilesConventions.add(new Convention(".*/[Dd]emos?/.*", "", "Documentation"));
+        otherFilesConventions.add(new Convention(".*[.]3pm", "", "Manual pages"));
+        otherFilesConventions.add(new Convention(".*[.]vim", "", "vim editor config"));
+
+        otherFilesConventions.add(new Convention(".*[.]_js", "", ""));
+        otherFilesConventions.add(new Convention(".*[.]sublime-project", "", ""));
+        otherFilesConventions.add(new Convention(".*[.]ini", "", "INI files"));
     }
 
     private void addBuildAndDeploymentConventions() {
         buildAndDeploymentFilesConventions.add(new Convention(".*/pom[.]xml", "", "Maven configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]nuspec", "", "NuSpec configuration"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/build[.]xml", "", "Build configuration"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/assembly[.]xml", "", "Maven assembly plugin configuration"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/assembly/src[.]xml", "", "Maven assembly plugin configuration"));
@@ -189,7 +202,6 @@ public class ScopingConventions {
         buildAndDeploymentFilesConventions.add(new Convention(".*/glide[.]lock", "", "Glide configuration"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/docker[-]compose[.]yaml", "", "Docker configuration"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/docker[-]compose[.]yml", "", "Docker configuration"));
-        buildAndDeploymentFilesConventions.add(new Convention(".*[.]thrift", "", "Docker configuration"));
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]dockerfile", "", "Docker configuration"));
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]mk", "", "Mk files"));
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]cvsignore", "", "CVS configuration files"));
@@ -206,6 +218,9 @@ public class ScopingConventions {
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]make", "", "Make files"));
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]mk", "", "Make files"));
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]mkfile", "", "Make files"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]dotsettings", "", ".Net settings files"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/jenkins/.*[.]groovy", "", "Jenkins files"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/fastlane/.*[.]rb", "", "Fastlane files"));
     }
 
     private void addGeneratedConventions() {
@@ -301,12 +316,18 @@ public class ScopingConventions {
         testFilesConventions.add(new Convention(".*/protractor[.]conf[.]js", "", "Protractor test files"));
         testFilesConventions.add(new Convention(".*/e2e/.*", "", "Protractor test files"));
 
+        testFilesConventions.add(new Convention(".*/RestAPIClientTests/.*", "", "API test files"));
+        testFilesConventions.add(new Convention(".*/ViewTests/.*", "", "Test files"));
+
         testFilesConventions.add(new Convention(".*/test[-]resources/.*", "", "Test resources"));
+        testFilesConventions.add(new Convention(".*/TestData/.*", "", "Test data"));
         testFilesConventions.add(new Convention(".*/__mocks?__/.*", "", "Mock resources"));
         testFilesConventions.add(new Convention(".*/mockapi/.*", "", "Mock resources"));
         testFilesConventions.add(new Convention(".*/mock[-]server/.*", "", "Mock resources"));
 
         testFilesConventions.add(new Convention(".*[.]snap", "", "Jest snapshots"));
+        testFilesConventions.add(new Convention(".*/TestUtilities/.*", "", "Test utilities"));
+        testFilesConventions.add(new Convention(".*/Mocks/.*", "", "Mocks"));
     }
 
     private void addIgnoreConventions() {

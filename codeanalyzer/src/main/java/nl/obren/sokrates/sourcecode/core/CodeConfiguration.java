@@ -68,7 +68,7 @@ public class CodeConfiguration {
         metricsWithGoal.getControls().add(new MetricRangeControl("LINES_OF_CODE_MAIN", "Total number of lines of main code", new Range("0", "200000", "20000")));
         metricsWithGoal.getControls().add(new MetricRangeControl("DUPLICATION_PERCENTAGE", "System duplication", new Range("0", "5", "1")));
         metricsWithGoal.getControls().add(new MetricRangeControl("NUMBER_OF_FILES_FILE_SIZE_1001_PLUS", "The number of very large files", new Range("0", "0", "1")));
-        metricsWithGoal.getControls().add(new MetricRangeControl("CONDITIONAL_COMPLEXITY_DISTRIBUTION_26_PLUS_COUNT", "Number of very complex units", new Range("0", "0", "1")));
+        metricsWithGoal.getControls().add(new MetricRangeControl("CONDITIONAL_COMPLEXITY_DISTRIBUTION_51_PLUS_COUNT", "Number of very complex units", new Range("0", "0", "1")));
         return metricsWithGoal;
     }
 

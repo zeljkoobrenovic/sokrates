@@ -104,7 +104,9 @@ public class FileSizeReportGenerator {
         report.startSection("File Size per Logical Decomposition", "");
         fileDistributionPerLogicalDecompositions.forEach(logicalDecomposition -> {
             report.startSubSection("" + logicalDecomposition.getName() + "", "");
+            report.startScrollingDiv();
             report.addHtmlContent(RiskDistributionStatsReportUtils.getRiskDistributionPerKeySvgBarChart(logicalDecomposition.getFileSizeDistributionPerComponent(), labels));
+            report.endDiv();
             report.endSection();
         });
         report.endSection();

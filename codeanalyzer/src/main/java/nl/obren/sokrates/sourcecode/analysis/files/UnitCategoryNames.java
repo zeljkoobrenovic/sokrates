@@ -5,6 +5,7 @@
 package nl.obren.sokrates.sourcecode.analysis.files;
 
 public class UnitCategoryNames {
+    private String negligibleRisk = "";
     private String lowRisk = "";
     private String mediumRisk = "";
     private String highRisk = "";
@@ -13,11 +14,20 @@ public class UnitCategoryNames {
     public UnitCategoryNames() {
     }
 
-    public UnitCategoryNames(String lowRisk, String mediumRisk, String highRisk, String veryHighRisk) {
+    public UnitCategoryNames(String negligibleRisk, String lowRisk, String mediumRisk, String highRisk, String veryHighRisk) {
+        this.negligibleRisk = negligibleRisk;
         this.lowRisk = lowRisk;
         this.mediumRisk = mediumRisk;
         this.highRisk = highRisk;
         this.veryHighRisk = veryHighRisk;
+    }
+
+    public String getNegligibleRisk() {
+        return negligibleRisk;
+    }
+
+    public void setNegligibleRisk(String negligibleRisk) {
+        this.negligibleRisk = negligibleRisk;
     }
 
     public String getLowRisk() {

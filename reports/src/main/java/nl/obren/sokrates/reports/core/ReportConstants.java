@@ -83,7 +83,7 @@ public class ReportConstants {
             "        }\n" +
             "\n" +
             "        h1 {\n" +
-            "            margin-bottom: 0;\n" +
+            "            margin-bottom: 6px;\n" +
             "        }\n" +
             "\n" +
             "        p {\n" +

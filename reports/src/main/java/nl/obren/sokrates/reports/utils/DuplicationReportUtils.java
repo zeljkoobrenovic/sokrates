@@ -58,7 +58,7 @@ public class DuplicationReportUtils {
 
         duplicationMetrics.forEach(metric -> maxCleanedLinesOfCode[0] = Math.max(maxCleanedLinesOfCode[0], metric.getCleanedLinesOfCode()));
 
-        report.startDiv("width: 100%; overflow-x: auto");
+        report.startDiv("width: 100%; overflow-x: auto; max-height: 300px; overflow-y: scroll;");
         duplicationMetrics.stream().sorted((o1, o2) -> o2.getDuplicatedLinesOfCode() - o1.getDuplicatedLinesOfCode()).forEach(metric -> {
             chart.setMaxBarWidth((int) (200.0 * metric.getCleanedLinesOfCode() / maxCleanedLinesOfCode[0]));
             double percentage = 100.0 * metric.getDuplicatedLinesOfCode() / metric.getCleanedLinesOfCode();

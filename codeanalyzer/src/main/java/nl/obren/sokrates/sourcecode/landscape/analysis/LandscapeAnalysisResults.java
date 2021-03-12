@@ -390,7 +390,7 @@ public class LandscapeAnalysisResults {
             updateContributors(list, map, contributorsAnalysisResults.getContributorsPerYear());
         });
 
-        Collections.sort(list, Comparator.comparing(ContributionTimeSlot::getTimeSlot));
+        Collections.sort(list, Comparator.comparing(ContributionTimeSlot::getTimeSlot).reversed());
 
         return list;
     }

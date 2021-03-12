@@ -186,6 +186,12 @@ public class RichTextReport {
         }
     }
 
+    public void addTableHeaderLeft(String... columns) {
+        for (String column : columns) {
+            addHtmlContent("<th style='text-align: left'>" + column + "</th>\n");
+        }
+    }
+
     public void startTable() {
         addHtmlContent("<table>\n");
     }
@@ -266,6 +272,14 @@ public class RichTextReport {
         addHtmlContent("<a name=\"" + anchor + "\"></a>");
     }
 
+    public void startScrollingDiv() {
+        startScrollingDiv(300);
+    }
+
+    public void startScrollingDiv(int height) {
+        startDiv("max-height: " + height + "px; overflow-y: scroll; overflow-x: hidden;");
+    }
+
     public void startDiv(String style) {
         addHtmlContent("<div style=\"" + style + "\">");
     }
@@ -340,6 +354,10 @@ public class RichTextReport {
 
     public void addTableCell(String text, String style) {
         addHtmlContent("<td style=\"" + style + "\">" + text + "</td>");
+    }
+
+    public void addTableCellWithTitle(String text, String style, String title) {
+        addHtmlContent("<td title='" + title + "' style=\"" + style + "\">" + text + "</td>");
 
     }
 

@@ -154,7 +154,7 @@ public class SimpleOneBarChart {
         return "<rect" +
                 " x='" + barStartXOffset + "'" +
                 " y='2'" +
-                " width='" + backgroundBarSize + "'" +
+                " width='" + ((int) backgroundBarSize) + "'" +
                 " height='" + barHeight + "'" +
                 " style='" + backgroundStyle + "fill:" + backgroundColor + "'" +
                 "/>";

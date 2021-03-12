@@ -16,6 +16,7 @@ public class Thresholds {
     public static final BasicColorInfo RISK_RED = getBasicColorInfo(0.863, 0.078, 0.235);
 
     public static final List<Threshold> UNIT_LINES = Arrays.asList(
+            new Threshold("0-10", 10, RISK_GREEN),
             new Threshold("0-20", 20, RISK_GREEN),
             new Threshold("21-50", 50, RISK_YELLOW),
             new Threshold("51-100", 100, RISK_ORANGE),
@@ -26,14 +27,16 @@ public class Thresholds {
             new Threshold("1-5", 5, RISK_GREEN),
             new Threshold("6-10", 10, RISK_YELLOW),
             new Threshold("11-25", 25, RISK_ORANGE),
-            new Threshold("26+", Integer.MAX_VALUE, RISK_RED)
+            new Threshold("26-50", 50, RISK_RED),
+            new Threshold("51+", Integer.MAX_VALUE, RISK_RED)
     );
 
     public static final List<Threshold> UNIT_PARAMS = Arrays.asList(
-            new Threshold("0-3", 2, RISK_GREEN),
-            new Threshold("4-6", 4, RISK_YELLOW),
-            new Threshold("7-10", 6, RISK_ORANGE),
-            new Threshold("11+", Integer.MAX_VALUE, RISK_RED)
+            new Threshold("0-2", 2, RISK_GREEN),
+            new Threshold("3-5", 5, RISK_GREEN),
+            new Threshold("6-10", 10, RISK_YELLOW),
+            new Threshold("11-15", 15, RISK_ORANGE),
+            new Threshold("16+", Integer.MAX_VALUE, RISK_RED)
     );
 
 

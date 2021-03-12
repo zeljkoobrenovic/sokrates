@@ -137,7 +137,6 @@ public class RiskDistributionStats {
     }
 
 
-
     public void setMediumRiskThreshold(int mediumRiskThreshold) {
         this.mediumRiskThreshold = mediumRiskThreshold;
     }
@@ -220,7 +219,7 @@ public class RiskDistributionStats {
         return totalValue() > 0 ? 100.0 * lowRiskValue / totalValue() : 0;
     }
 
-    public double getNeglictableRiskPercentage() {
+    public double getNegligibleRiskPercentage() {
         return totalValue() > 0 ? 100.0 * negligibleRiskValue / totalValue() : 0;
     }
 

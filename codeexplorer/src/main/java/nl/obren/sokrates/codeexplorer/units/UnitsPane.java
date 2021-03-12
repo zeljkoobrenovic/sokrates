@@ -147,7 +147,7 @@ public class UnitsPane extends BorderPane {
     private PieChart getUnitSizePieChart(RiskDistributionStats riskDistributionStats, List<Threshold> thresholds,
                                          String title) {
         ObservableList<PieChart.Data> pieChartData = getCategoryData(new int[]{
-                riskDistributionStats.getLowRiskValue(), riskDistributionStats.getMediumRiskValue(),
+                riskDistributionStats.getNegligibleRiskValue(), riskDistributionStats.getLowRiskValue(), riskDistributionStats.getMediumRiskValue(),
                 riskDistributionStats.getHighRiskValue(), riskDistributionStats.getVeryHighRiskValue()
         }, thresholds);
 

@@ -42,6 +42,7 @@ public class DuplicationReportGenerator {
 
     public void getDuplicatesTable(RichTextReport report, List<DuplicationInstance> sourceFiles, String fragmentType) {
         report.startDiv("width: 100%; overflow-x: auto");
+        report.startScrollingDiv();
         report.addHtmlContent("<table style='width: 80%'>\n");
         report.addHtmlContent("<th>Size</th><th>#</th><th>Folders</th><th>Files</th><th>Lines</th><th>Code</th>");
         int count[] = {0};
@@ -64,6 +65,7 @@ public class DuplicationReportGenerator {
             report.addHtmlContent("</tr>\n");
         });
         report.addHtmlContent("</table>\n");
+        report.endDiv();
         report.endDiv();
     }
 
