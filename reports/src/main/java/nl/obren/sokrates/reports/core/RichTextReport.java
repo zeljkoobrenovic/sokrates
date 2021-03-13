@@ -273,7 +273,7 @@ public class RichTextReport {
     }
 
     public void startScrollingDiv() {
-        startScrollingDiv(300);
+        startScrollingDiv(400);
     }
 
     public void startScrollingDiv(int height) {

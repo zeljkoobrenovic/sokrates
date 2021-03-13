@@ -98,14 +98,19 @@ public class ConditionalComplexityReportGenerator {
         List<List<RiskDistributionStats>> conditionalComplexityRiskDistributionPerComponent = unitsAnalysisResults.getConditionalComplexityRiskDistributionPerComponent();
         conditionalComplexityRiskDistributionPerComponent.forEach(stats -> {
             report.startSubSection(getLogicalDecompositionName(conditionalComplexityRiskDistributionPerComponent.indexOf(stats)) + " logical decomposition", "");
+            report.startScrollingDiv();
             report.addHtmlContent(RiskDistributionStatsReportUtils.getRiskDistributionPerKeySvgBarChart(stats, labels).toString());
+            report.endDiv();
             report.endSection();
         });
         report.endSection();
 
         List<UnitInfo> mostComplexUnits = unitsAnalysisResults.getMostComplexUnits();
         report.startSection("Most Complex Units", "Top " + mostComplexUnits.size() + " most complex units");
+        report.startScrollingDiv();
         report.addHtmlContent(UtilsReportUtils.getUnitsTable(mostComplexUnits, "most_complex_unit", cacheFiles).toString());
+        report.endDiv();
+        report.endSection();
     }
 
     private String getLogicalDecompositionName(int index) {

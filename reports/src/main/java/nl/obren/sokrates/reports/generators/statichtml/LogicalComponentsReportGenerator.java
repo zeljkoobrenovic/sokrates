@@ -79,6 +79,10 @@ public class LogicalComponentsReportGenerator {
 
     private void analyzeLogicalDecomposition(int sectionIndex, LogicalDecompositionAnalysisResults logicalDecomposition) {
         report.startSection("Logical Decomposition #" + sectionIndex + ": " + logicalDecomposition.getKey().toUpperCase(), getDecompositionDescription(logicalDecomposition));
+        report.startDiv("margin-top: -12px; margin-bottom: 18px;");
+        report.addHtmlContent("<a target='_blank' href='visuals/bubble_chart_components_" + (sectionIndex) + ".html'>Bubble Chart</a> | ");
+        report.addHtmlContent("<a target='_blank' href='visuals/tree_map_components_" + (sectionIndex) + ".html'>Tree Map</a>");
+        report.endDiv();
 
         List<NumericMetric> fileCountPerExtension = logicalDecomposition.getFileCountPerComponent();
         List<NumericMetric> linesOfCodePerExtension = logicalDecomposition.getLinesOfCodePerComponent();
@@ -105,13 +109,6 @@ public class LogicalComponentsReportGenerator {
             describeMetaRules(metaComponents);
             report.endSection();
         }
-
-        report.startSubSection("Alternative Visuals", "");
-        report.startUnorderedList();
-        report.addListItem("<a href='visuals/bubble_chart_components_" + (sectionIndex) + ".html'>Bubble Chart</a>");
-        report.addListItem("<a href='visuals/tree_map_components_" + (sectionIndex) + ".html'>Tree Map</a>");
-        report.endUnorderedList();
-        report.endSection();
 
         List<ComponentDependency> componentDependencies = logicalDecomposition.getComponentDependencies();
         report.startSubSection("Dependencies", "Dependencies among components are <b>static</b> code dependencies among files in different components.");

@@ -41,6 +41,7 @@ public class RiskDistributionStatsReportUtils {
 
         chart.calculateBarOffsetFromTexts(distributions.stream().map(d -> d.getKey()).collect(Collectors.toList()));
         html[0] += "<div style='width: 100%; overflow-x: auto'>";
+        html[0] += "<div style='font-size:90%;margin-bottom:20px;width:100%;text-alight:right'>" + chart.getLegend(labels, palette) + "</div>";
 
         distributions.stream()
                 .sorted((o1, o2) -> o2.getNegligibleRiskValue() - o1.getNegligibleRiskValue())
@@ -58,8 +59,6 @@ public class RiskDistributionStatsReportUtils {
                     String stackedBarSvg = chart.getStackedBarSvg(values, palette, distribution.getKey(), joinedValues);
                     html[0] += "<div>" + stackedBarSvg + "</div>";
                 });
-
-        html[0] += "<div style='font-size:90%;margin-top:20px;width:100%;text-alight:right'>Legend: " + chart.getLegend(labels, palette) + "</div>";
 
         html[0] += "</div>";
 

@@ -102,8 +102,10 @@ public class UnitsSizeReportGenerator {
         List<List<RiskDistributionStats>> unitSizeRiskDistributionPerComponent = unitsAnalysisResults.getUnitSizeRiskDistributionPerComponent();
         unitSizeRiskDistributionPerComponent.forEach(stats -> {
             report.startSubSection(getLogicalDecompositionName(unitSizeRiskDistributionPerComponent.indexOf(stats)) + " logical decomposition", "");
+            report.startScrollingDiv();
             report.addHtmlContent(RiskDistributionStatsReportUtils.getRiskDistributionPerKeySvgBarChart(stats, labels)
                     .toString());
+            report.endDiv();
             report.endSection();
         });
         report.endSection();
@@ -117,7 +119,9 @@ public class UnitsSizeReportGenerator {
         List<UnitInfo> longestUnits = unitsAnalysisResults.getLongestUnits();
         report.startSection("Longest Units", "Top " + longestUnits.size() + " longest units");
         boolean cacheFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+        report.startScrollingDiv();
         report.addHtmlContent(UtilsReportUtils.getUnitsTable(longestUnits, "longest_unit", cacheFiles).toString());
+        report.endDiv();
         report.endSection();
     }
 
