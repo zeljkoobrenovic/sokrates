@@ -72,10 +72,9 @@ public class ControlsReportGenerator {
 
     private String getColor(String status) {
         String upperCaseStatus = status.toUpperCase();
-        return upperCaseStatus.equals("OK")
-                ? "darkgreen"
-                : upperCaseStatus.equals("FAILED")
-                ? "crimson"
-                : "orange";
+        return upperCaseStatus.equals("OK") ? "darkgreen"
+                : upperCaseStatus.equals("FAILED") ? "crimson"
+                : (upperCaseStatus.startsWith("IGNORE") ? "grey"
+                : "orange");
     }
 }

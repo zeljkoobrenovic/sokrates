@@ -13,13 +13,16 @@ import java.util.List;
 
 public class FilesReportUtils {
 
-    public static String getFilesTable(List<SourceFile> sourceFiles, boolean linkToFiles, boolean showAge) {
+    public static String getFilesTable(List<SourceFile> sourceFiles, boolean linkToFiles, boolean showAge, boolean showLineLength) {
         StringBuilder table = new StringBuilder();
 
         table.append("<div style='witdh: 100%; overflow-x: scroll; overflow-y: scroll; max-height: 300px;'>\n");
         table.append("<table style='width: 80%'>\n");
         table.append("<tr>");
         String header = "<th>File</th><th># lines</th><th># units</th>";
+        if (showLineLength) {
+            header += "<th># long lines</th>";
+        }
         if (showAge) {
             header += "<th>last modified<br/>(days ago)</th>";
             header += "<th>created<br/>(days ago)</th>";
@@ -52,6 +55,9 @@ public class FilesReportUtils {
             } else {
                 table.append("<td style='text-align: center; color: lightgrey'>-</td>\n");
             }
+            if (showLineLength) {
+                table.append("<td style='text-align: center'>" + sourceFile.getLongLinesCount(120) + "</td>\n");
+            }
 
             if (sourceFile.getFileModificationHistory() != null && showAge) {
                 FileModificationHistory history = sourceFile.getFileModificationHistory();
@@ -62,7 +68,7 @@ public class FilesReportUtils {
                 } else {
                     table.append("<td style='text-align: center'></td>\n");
                     table.append("<td style='text-align: center'></td>\n");
-                    table.append("<td style='text-align: center'></td>\n");
+                    table.append("<td style='texgetLongLinesCount(threshold)t-align: center'></td>\n");
                 }
             }
 

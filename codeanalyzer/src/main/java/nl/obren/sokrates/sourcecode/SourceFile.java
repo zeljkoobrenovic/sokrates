@@ -10,6 +10,7 @@ import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
+import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -228,4 +229,10 @@ public class SourceFile {
         }
         return false;
     }
+
+    @JsonIgnore
+    public long getLongLinesCount(int threshold) {
+        return getCleanedLines().stream().filter(l -> l.length() > threshold).count();
+    }
+
 }
