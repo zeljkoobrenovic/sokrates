@@ -15,7 +15,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class Contributor {
-    public static final int RECENTLY_ACTIVITY_THRESHOLD_DAYS = 30;
+    public static final int RECENTLY_ACTIVITY_THRESHOLD_DAYS = 31;
     public static final int ACTIVITY_THRESHOLD_DAYS = 180;
     public static final int ROOKIE_THRESHOLD_DAYS = 365;
     private String email = "";
@@ -27,7 +27,6 @@ public class Contributor {
     private String firstCommitDate = "";
     private String latestCommitDate = "";
     private List<String> activeYears = new ArrayList<>();
-
     private List<String> commitDates = new ArrayList<>();
 
     public Contributor() {

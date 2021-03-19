@@ -13,8 +13,10 @@ public class ContributorProjects {
         this.contributor = contributor;
     }
 
-    public void addProject(ProjectAnalysisResults projectAnalysisResults, String firstCommitDate, String latestCommitDate, int commitsCount, List<String> commitDates) {
-        projects.add(new ContributorProjectInfo(projectAnalysisResults, firstCommitDate, latestCommitDate, commitsCount, commitDates));
+    public void addProject(ProjectAnalysisResults projectAnalysisResults, String firstCommitDate, String latestCommitDate,
+                           int commitsCount, int commits30Days, int commits90Days, List<String> commitDates) {
+        projects.add(new ContributorProjectInfo(projectAnalysisResults, firstCommitDate, latestCommitDate,
+                commitsCount, commits30Days, commits90Days, commitDates));
     }
 
     public void addProject(ContributorProjectInfo project) {

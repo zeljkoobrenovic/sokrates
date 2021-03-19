@@ -41,6 +41,7 @@ import nl.obren.sokrates.sourcecode.lang.scss.ScssAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.shell.ShellAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.sql.SqlAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.swift.SwiftAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.thrift.ThriftAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.ts.TypeScriptAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.vb.VisualBasicAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.xml.XmlAnalyzer;
@@ -554,6 +555,7 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("xqy", XmlAnalyzer.class);
         analyzersMap.put("xsl", XmlAnalyzer.class);
         analyzersMap.put("xslt", XmlAnalyzer.class);
+        analyzersMap.put("thrift", ThriftAnalyzer.class);
     }
 
     public static LanguageAnalyzerFactory getInstance() {

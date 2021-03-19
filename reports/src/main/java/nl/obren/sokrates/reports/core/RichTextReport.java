@@ -352,6 +352,14 @@ public class RichTextReport {
         }
     }
 
+    public void addParagraphWithTooltip(String text, String title, String style) {
+        if (StringUtils.isNotBlank(text)) {
+            addHtmlContent("<div title=\"" + title + "\" style=\"" + style + "\">" + text
+                    + "<div style=\"font-size: 80%; cursor: help; margin-left: 5px; display: inline-block; width: 15px; height:15px; border-radius: 50%; background-color: #c8c8c8; text-align: center\">i</div>"
+                    + "</div>\n");
+        }
+    }
+
     public void addTableCell(String text, String style) {
         addHtmlContent("<td style=\"" + style + "\">" + text + "</td>");
     }
@@ -382,7 +390,7 @@ public class RichTextReport {
     }
 
     public void addNewTabLink(String label, String href) {
-        this.addHtmlContent("<a target='_blank' href='" + href + "'>" + label + "</a>");
+        this.addHtmlContent("<a style='text-decoration: none' target='_blank' href='" + href + "'>" + label + "</a>");
     }
 
     public void startNewTabLink(String href, String style) {

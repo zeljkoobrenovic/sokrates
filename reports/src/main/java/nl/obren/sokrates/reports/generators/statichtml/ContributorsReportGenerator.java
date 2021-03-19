@@ -21,7 +21,6 @@ import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorConnections;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class ContributorsReportGenerator {
     private final CodeAnalysisResults codeAnalysisResults;
@@ -30,6 +29,41 @@ public class ContributorsReportGenerator {
 
     public ContributorsReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
+    }
+
+    public static List<ContributorConnections> contributorConnections(List<ComponentDependency> peopleDependencies) {
+        Map<String, ContributorConnections> map = new HashMap<>();
+
+        peopleDependencies.forEach(dependency -> {
+            String from = dependency.getFromComponent();
+            String to = dependency.getToComponent();
+
+            ContributorConnections contributorConnections1 = map.get(from);
+            ContributorConnections contributorConnections2 = map.get(to);
+
+            if (contributorConnections1 == null) {
+                contributorConnections1 = new ContributorConnections();
+                contributorConnections1.setEmail(from);
+                contributorConnections1.setConnectionsCount(1);
+                map.put(from, contributorConnections1);
+            } else {
+                contributorConnections1.setConnectionsCount(contributorConnections1.getConnectionsCount() + 1);
+            }
+
+            if (contributorConnections2 == null) {
+                contributorConnections2 = new ContributorConnections();
+                contributorConnections2.setEmail(to);
+                contributorConnections2.setConnectionsCount(1);
+                map.put(to, contributorConnections2);
+            } else {
+                contributorConnections2.setConnectionsCount(contributorConnections2.getConnectionsCount() + 1);
+            }
+        });
+
+        List<ContributorConnections> names = new ArrayList<>(map.values());
+        names.sort((a, b) -> b.getConnectionsCount() - a.getConnectionsCount());
+
+        return names;
     }
 
     public void addContributorsAnalysisToReport(RichTextReport report) {
@@ -72,23 +106,35 @@ public class ContributorsReportGenerator {
 
         report.startTabContentSection("30_days", false);
         List<Contributor> commits30Days = contributors.stream().filter(c -> c.getCommitsCount30Days() > 0).collect(Collectors.toList());
-        commits30Days.sort((a, b) -> b.getCommitsCount30Days() - a.getCommitsCount30Days());
-        addContributorsPanel(report, commits30Days, c -> c.getCommitsCount30Days());
-        renderPeopleDependencies(analysis.getPeopleDependencies30Days(), 30, c -> c.getCommitsCount30Days(), commits30Days);
+        if (commits30Days.size() > 0) {
+            commits30Days.sort((a, b) -> b.getCommitsCount30Days() - a.getCommitsCount30Days());
+            addContributorsPanel(report, commits30Days, c -> c.getCommitsCount30Days());
+            renderPeopleDependencies(analysis.getPeopleDependencies30Days(), 30, c -> c.getCommitsCount30Days(), commits30Days);
+        } else {
+            report.addParagraph("No commits in past 30 days.", "margin-top: 16px");
+        }
         report.endTabContentSection();
 
         report.startTabContentSection("90_days", false);
         List<Contributor> commits90Days = contributors.stream().filter(c -> c.getCommitsCount90Days() > 0).collect(Collectors.toList());
-        commits90Days.sort((a, b) -> b.getCommitsCount90Days() - a.getCommitsCount90Days());
-        addContributorsPanel(report, commits90Days, c -> c.getCommitsCount90Days());
-        renderPeopleDependencies(analysis.getPeopleDependencies90Days(), 90, c -> c.getCommitsCount90Days(), commits90Days);
+        if (commits90Days.size() > 0) {
+            commits90Days.sort((a, b) -> b.getCommitsCount90Days() - a.getCommitsCount90Days());
+            addContributorsPanel(report, commits90Days, c -> c.getCommitsCount90Days());
+            renderPeopleDependencies(analysis.getPeopleDependencies90Days(), 90, c -> c.getCommitsCount90Days(), commits90Days);
+        } else {
+            report.addParagraph("No commits in past 90 days.", "margin-top: 16px");
+        }
         report.endTabContentSection();
 
         report.startTabContentSection("180_days", false);
         List<Contributor> commits180Days = contributors.stream().filter(c -> c.getCommitsCount180Days() > 0).collect(Collectors.toList());
-        commits180Days.sort((a, b) -> b.getCommitsCount180Days() - a.getCommitsCount180Days());
-        addContributorsPanel(report, commits180Days, c -> c.getCommitsCount180Days());
-        renderPeopleDependencies(analysis.getPeopleDependencies180Days(), 180, c -> c.getCommitsCount180Days(), commits180Days);
+        if (commits180Days.size() > 0) {
+            commits180Days.sort((a, b) -> b.getCommitsCount180Days() - a.getCommitsCount180Days());
+            addContributorsPanel(report, commits180Days, c -> c.getCommitsCount180Days());
+            renderPeopleDependencies(analysis.getPeopleDependencies180Days(), 180, c -> c.getCommitsCount180Days(), commits180Days);
+        } else {
+            report.addParagraph("No commits in past 180 days.", "margin-top: 16px");
+        }
         report.endTabContentSection();
 
         report.startTabContentSection("365_days", false);
@@ -134,75 +180,43 @@ public class ContributorsReportGenerator {
     private void renderPeopleDependencies(List<ComponentDependency> peopleDependencies, int daysAgo,
                                           ContributionCounter contributionCounter,
                                           List<Contributor> contributors) {
-        report.addLevel2Header("People Dependencies", "margin-top: 40px");
-        report.startShowMoreBlock("show graph...");
-        report.addParagraph("The number on lines shows the number of same files that both persons changed in past <b>" + daysAgo + "</b> days.", "color: grey");
-        GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
-        graphvizDependencyRenderer.setMaxNumberOfDependencies(100);
-        graphvizDependencyRenderer.setType("graph");
-        graphvizDependencyRenderer.setArrow("--");
+        if (peopleDependencies.size() > 0) {
+            report.addLevel2Header("People Dependencies", "margin-top: 40px");
 
-        Set<String> emails = new HashSet<>();
-        peopleDependencies.forEach(peopleDependency -> {
-            emails.add(peopleDependency.getFromComponent());
-            emails.add(peopleDependency.getToComponent());
-        });
+            report.startShowMoreBlock("show graph...");
+            report.addParagraph("The number on lines shows the number of same files that both persons changed in past <b>" + daysAgo + "</b> days.", "color: grey");
+            GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
+            graphvizDependencyRenderer.setMaxNumberOfDependencies(100);
+            graphvizDependencyRenderer.setType("graph");
+            graphvizDependencyRenderer.setArrow("--");
 
-        String prefix = "people_dependencies_" + daysAgo + "_";
-        addDependencyGraphVisuals(peopleDependencies, new ArrayList<>(), graphvizDependencyRenderer, prefix);
-        report.endShowMoreBlock();
-        List<ContributorConnection> contributorConnections = ContributorConnectionUtils.getContributorConnections(peopleDependencies, contributors, contributionCounter);
-        report.addParagraph("C-median: " + ContributorConnectionUtils.getCMedian(contributorConnections(peopleDependencies)));
-        report.addParagraph("C-mean: " + ContributorConnectionUtils.getCMean(contributorConnections(peopleDependencies)));
-        report.addParagraph("C-index: " + ContributorConnectionUtils.getCIndex(contributorConnections(peopleDependencies)));
-        report.startTable();
-        report.addTableHeader("", "Contributor", "# connections", "# commits");
-        int index[] = {0};
-        contributorConnections.forEach(contributorConnection -> {
-            index[0]++;
-            report.startTableRow();
-            report.addTableCell(index[0] + ".");
-            report.addTableCell(contributorConnection.getEmail());
-            report.addTableCell(contributorConnection.getCount() + "");
-            report.addTableCell(contributorConnection.getCommits() + "");
-            report.endTableRow();
-        });
-        report.endTable();
-    }
+            Set<String> emails = new HashSet<>();
+            peopleDependencies.forEach(peopleDependency -> {
+                emails.add(peopleDependency.getFromComponent());
+                emails.add(peopleDependency.getToComponent());
+            });
 
-    public static List<ContributorConnections> contributorConnections(List<ComponentDependency> peopleDependencies) {
-        Map<String, ContributorConnections> map = new HashMap<>();
-
-        peopleDependencies.forEach(dependency -> {
-            String from = dependency.getFromComponent();
-            String to = dependency.getToComponent();
-
-            ContributorConnections contributorConnections1 = map.get(from);
-            ContributorConnections contributorConnections2 = map.get(to);
-
-            if (contributorConnections1 == null) {
-                contributorConnections1 = new ContributorConnections();
-                contributorConnections1.setEmail(from);
-                contributorConnections1.setConnectionsCount(1);
-                map.put(from, contributorConnections1);
-            } else {
-                contributorConnections1.setConnectionsCount(contributorConnections1.getConnectionsCount() + 1);
-            }
-
-            if (contributorConnections2 == null) {
-                contributorConnections2 = new ContributorConnections();
-                contributorConnections2.setEmail(to);
-                contributorConnections2.setConnectionsCount(1);
-                map.put(to, contributorConnections2);
-            } else {
-                contributorConnections2.setConnectionsCount(contributorConnections2.getConnectionsCount() + 1);
-            }
-        });
-
-        List<ContributorConnections> names = new ArrayList<>(map.values());
-        names.sort((a, b) -> b.getConnectionsCount() - a.getConnectionsCount());
-
-        return names;
+            String prefix = "people_dependencies_" + daysAgo + "_";
+            addDependencyGraphVisuals(peopleDependencies, new ArrayList<>(), graphvizDependencyRenderer, prefix);
+            report.endShowMoreBlock();
+            List<ContributorConnection> contributorConnections = ContributorConnectionUtils.getContributorConnections(peopleDependencies, contributors, contributionCounter);
+            report.addParagraph("C-median: " + ContributorConnectionUtils.getCMedian(contributorConnections(peopleDependencies)));
+            report.addParagraph("C-mean: " + ContributorConnectionUtils.getCMean(contributorConnections(peopleDependencies)));
+            report.addParagraph("C-index: " + ContributorConnectionUtils.getCIndex(contributorConnections(peopleDependencies)));
+            report.startTable();
+            report.addTableHeader("", "Contributor", "# connections", "# commits");
+            int index[] = {0};
+            contributorConnections.forEach(contributorConnection -> {
+                index[0]++;
+                report.startTableRow();
+                report.addTableCell(index[0] + ".");
+                report.addTableCell(contributorConnection.getEmail());
+                report.addTableCell(contributorConnection.getCount() + "");
+                report.addTableCell(contributorConnection.getCommits() + "");
+                report.endTableRow();
+            });
+            report.endTable();
+        }
     }
 
     private void addDependencyGraphVisuals(List<ComponentDependency> componentDependencies, List<String> componentNames, GraphvizDependencyRenderer graphvizDependencyRenderer, String prefix) {

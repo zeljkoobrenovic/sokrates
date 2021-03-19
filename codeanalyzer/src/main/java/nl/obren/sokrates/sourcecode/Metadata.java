@@ -10,6 +10,7 @@ import java.util.List;
 public class Metadata {
     private String name = "";
     private String description = "";
+    private String tooltip = "";
     private String logoLink = "";
     private List<Link> links = new ArrayList<>();
 
@@ -43,5 +44,13 @@ public class Metadata {
 
     public void setLinks(List<Link> links) {
         this.links = links;
+    }
+
+    public String getTooltip() {
+        return tooltip;
+    }
+
+    public void setTooltip(String tooltip) {
+        this.tooltip = tooltip;
     }
 }

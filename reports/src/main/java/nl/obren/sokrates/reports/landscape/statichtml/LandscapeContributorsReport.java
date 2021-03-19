@@ -2,12 +2,16 @@ package nl.obren.sokrates.reports.landscape.statichtml;
 
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjectInfo;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjects;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class LandscapeContributorsReport {
     private LandscapeAnalysisResults landscapeAnalysisResults;
@@ -25,7 +29,7 @@ public class LandscapeContributorsReport {
         if (recent) {
             report.addTableHeaderLeft("Contributor", "# commits<br>30 days", "# commits<br>90 days", "# commits<br>all time", "first", "latest", "projects");
         } else {
-            report.addTableHeaderLeft("Contributor", "# commits<br>all time", "# commits<br>30 days", "# commits<br>90 days", "first", "latest", "projects");
+            report.addTableHeaderLeft("Contributor", "# commits<br>all time", "# commits<br>90 days", "# commits<br>30 days", "first", "latest", "projects");
         }
         int counter[] = {0};
 
@@ -73,16 +77,33 @@ public class LandscapeContributorsReport {
         report.addTableCell(contributor.getContributor().getLatestCommitDate(), "vertical-align: middle;");
         StringBuilder projectInfo = new StringBuilder();
         report.startTableCell();
-        int projectsCount = contributor.getProjects().size();
-        report.startShowMoreBlock(projectsCount + (projectsCount == 1 ? " project" : " projects"));
-        contributor.getProjects().forEach(contributorProjectInfo -> {
-            String projectName = contributorProjectInfo.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName();
-            int commits = contributorProjectInfo.getCommitsCount();
-            if (projectInfo.length() > 0) {
-                projectInfo.append("<br/>");
-            }
-            projectInfo.append(projectName + " <span style='color: grey'>(" + commits + (commits == 1 ? " commit" : " commit") + ")</span>");
-        });
+        if (recent) {
+            List<ContributorProjectInfo> recentProjects = contributor.getProjects()
+                    .stream()
+                    .filter(p -> p.getCommits30Days() > 0)
+                    .collect(Collectors.toCollection(ArrayList::new));
+            int projectsCount = recentProjects.size();
+            report.startShowMoreBlock(projectsCount + (projectsCount == 1 ? " project" : " projects"));
+            recentProjects.forEach(contributorProjectInfo -> {
+                String projectName = contributorProjectInfo.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName();
+                int commits = contributorProjectInfo.getCommits30Days();
+                if (projectInfo.length() > 0) {
+                    projectInfo.append("<br/>");
+                }
+                projectInfo.append(projectName + " <span style='color: grey'>(" + commits + (commits == 1 ? " commit" : " commit") + ")</span>");
+            });
+        } else {
+            int projectsCount = contributor.getProjects().size();
+            report.startShowMoreBlock(projectsCount + (projectsCount == 1 ? " project" : " projects"));
+            contributor.getProjects().forEach(contributorProjectInfo -> {
+                String projectName = contributorProjectInfo.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName();
+                int commits = contributorProjectInfo.getCommitsCount();
+                if (projectInfo.length() > 0) {
+                    projectInfo.append("<br/>");
+                }
+                projectInfo.append(projectName + " <span style='color: grey'>(" + commits + (commits == 1 ? " commit" : " commit") + ")</span>");
+            });
+        }
         report.addHtmlContent(projectInfo.toString());
         report.endTableCell();
         report.endTableRow();

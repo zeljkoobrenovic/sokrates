@@ -24,6 +24,7 @@ public class LandscapeConfiguration {
     private boolean anonymizeContributors = false;
     private String contributorLinkTemplate = "";
     private String contributorAvatarLinkTemplate = "";
+    private List<String> ignoreContributors = new ArrayList<>();
     private List<OperationStatement> transformContributorEmails = new ArrayList<>();
 
     private List<CustomMetric> customMetrics = new ArrayList<>();
@@ -220,5 +221,13 @@ public class LandscapeConfiguration {
 
     public void setContributorAvatarLinkTemplate(String contributorAvatarLinkTemplate) {
         this.contributorAvatarLinkTemplate = contributorAvatarLinkTemplate;
+    }
+
+    public List<String> getIgnoreContributors() {
+        return ignoreContributors;
+    }
+
+    public void setIgnoreContributors(List<String> ignoreContributors) {
+        this.ignoreContributors = ignoreContributors;
     }
 }

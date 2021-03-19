@@ -13,6 +13,7 @@ import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
+import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
@@ -326,6 +327,9 @@ public class LandscapeAnalysisResults {
             ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
             contributorsAnalysisResults.getContributors().forEach(contributor -> {
                 String contributorId = contributor.getEmail();
+                if (GitHistoryUtils.shouldIgnore(contributorId, configuration.getIgnoreContributors())) {
+                    return;
+                }
                 if (configuration.getTransformContributorEmails().size() > 0) {
                     ComplexOperation operation = new ComplexOperation(configuration.getTransformContributorEmails());
                     contributorId = operation.exec(contributorId);
@@ -334,19 +338,22 @@ public class LandscapeAnalysisResults {
                 List<String> commitDates = contributor.getCommitDates();
                 int projectCommits30Days = contributor.getCommitsCount30Days();
                 int projectCommits90Days = contributor.getCommitsCount90Days();
+                int projectCommits180Days = contributor.getCommitsCount180Days();
 
                 if (map.containsKey(contributorId)) {
                     ContributorProjects existingContributor = map.get(contributorId);
                     Contributor contributorInfo = existingContributor.getContributor();
+
                     contributorInfo.setCommitsCount(contributorInfo.getCommitsCount() + projectCommits);
-
                     contributorInfo.setCommitsCount30Days(contributorInfo.getCommitsCount30Days() + projectCommits30Days);
-
-                    contributorInfo.setCommitsCount90Days(contributorInfo.getCommitsCount30Days() + projectCommits90Days);
+                    contributorInfo.setCommitsCount90Days(contributorInfo.getCommitsCount90Days() + projectCommits90Days);
+                    contributorInfo.setCommitsCount180Days(contributorInfo.getCommitsCount180Days() + projectCommits180Days);
 
                     contributorInfo.getActiveYears().addAll(contributor.getActiveYears());
 
-                    existingContributor.addProject(projectAnalysisResults, contributorInfo.getFirstCommitDate(), contributorInfo.getLatestCommitDate(), projectCommits, commitDates);
+                    existingContributor.addProject(projectAnalysisResults,
+                            contributorInfo.getFirstCommitDate(), contributorInfo.getLatestCommitDate(),
+                            projectCommits, projectCommits30Days, projectCommits90Days, commitDates);
 
                     if (contributor.getFirstCommitDate().compareTo(contributorInfo.getFirstCommitDate()) < 0) {
                         contributorInfo.setFirstCommitDate(contributor.getFirstCommitDate());
@@ -361,13 +368,15 @@ public class LandscapeAnalysisResults {
                     newContributor.setCommitsCount(projectCommits);
                     newContributor.setCommitsCount30Days(projectCommits30Days);
                     newContributor.setCommitsCount90Days(projectCommits90Days);
+                    newContributor.setCommitsCount180Days(projectCommits180Days);
                     newContributor.setFirstCommitDate(contributor.getFirstCommitDate());
                     newContributor.setLatestCommitDate(contributor.getLatestCommitDate());
                     newContributor.setActiveYears(contributor.getActiveYears());
 
                     ContributorProjects newContributorWithProjects = new ContributorProjects(newContributor);
 
-                    newContributorWithProjects.addProject(projectAnalysisResults, newContributor.getFirstCommitDate(), newContributor.getLatestCommitDate(), projectCommits, commitDates);
+                    newContributorWithProjects.addProject(projectAnalysisResults, newContributor.getFirstCommitDate(),
+                            newContributor.getLatestCommitDate(), projectCommits, projectCommits30Days, projectCommits90Days, commitDates);
 
                     map.put(contributorId, newContributorWithProjects);
                     list.add(newContributorWithProjects);
@@ -445,7 +454,7 @@ public class LandscapeAnalysisResults {
     }
 
     public int getRecentContributorsCount() {
-        return (int) getContributors().stream().filter(c -> c.getContributor().isActive(RECENT_THRESHOLD_DAYS)).count();
+        return (int) getContributors().stream().filter(c -> c.getContributor().getCommitsCount30Days() > 0).count();
     }
 
     public int getRecentContributorsCount6Months() {

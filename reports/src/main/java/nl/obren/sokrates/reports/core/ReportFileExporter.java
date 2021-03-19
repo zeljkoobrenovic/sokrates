@@ -91,10 +91,14 @@ public class ReportFileExporter {
         summarize(indexReport, analysisResults);
         indexReport.endDiv();
         indexReport.endSection();
-        List<ContributionTimeSlot> contributorsPerYear = analysisResults.getContributorsAnalysisResults().getContributorsPerYear();
-        indexReport.startSection("Commits Trend <a href='Commits.html'>...</a>", "");
-        ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsPerYear, 20, true, 8);
-        indexReport.endSection();
+
+        if (analysisResults.getContributorsAnalysisResults().getCommitsCount() > 0) {
+            List<ContributionTimeSlot> contributorsPerYear = analysisResults.getContributorsAnalysisResults().getContributorsPerYear();
+            indexReport.startSection("Commits Trend <a href='Commits.html'>...</a>", "");
+            ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsPerYear, 20, true, 8);
+            indexReport.endSection();
+        }
+
         indexReport.startSection("Reports", "");
         for (String[] report : reportList) {
             addReportFragment(htmlExportFolder, indexReport, report);

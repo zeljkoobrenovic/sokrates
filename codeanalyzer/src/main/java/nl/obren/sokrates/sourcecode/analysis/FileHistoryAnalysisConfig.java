@@ -5,12 +5,10 @@
 package nl.obren.sokrates.sourcecode.analysis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.contributors.ContributorsImport;
-import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
-import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.contributors.GitContributorsUtil;
+import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.filehistory.GitHistoryUtil;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
@@ -35,11 +33,7 @@ public class FileHistoryAnalysisConfig {
 
     @JsonIgnore
     public File getFilesHistoryFile(File sokratesConfigFolder) {
-        if (new File(importPath).exists()) {
-            return new File(importPath);
-        } else {
-            return new File(sokratesConfigFolder, importPath);
-        }
+        return new File(sokratesConfigFolder, importPath);
     }
 
     @JsonIgnore
@@ -59,11 +53,7 @@ public class FileHistoryAnalysisConfig {
 
     @JsonIgnore
     public File getContributorsFile(File sokratesConfigFolder) {
-        if (new File(importPath).exists()) {
-            return new File(importPath);
-        } else {
-            return new File(sokratesConfigFolder, importPath);
-        }
+        return new File(sokratesConfigFolder, importPath);
     }
 
     @JsonIgnore

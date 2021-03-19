@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.reports.landscape.statichtml;
 
+import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.renderingutils.VisualizationItem;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
@@ -16,10 +17,7 @@ import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.landscape.*;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorConnections;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjects;
-import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ProjectAnalysisResults;
+import nl.obren.sokrates.sourcecode.landscape.analysis.*;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -29,6 +27,7 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -67,11 +66,17 @@ public class LandscapeReportGenerator {
         landscapeReport.setParentUrl(landscapeAnalysisResults.getConfiguration().getParentUrl());
         landscapeReport.setLogoLink(metadata.getLogoLink());
         String description = metadata.getDescription();
+        String tooltip = metadata.getTooltip();
         if (StringUtils.isNotBlank(description)) {
-            landscapeReport.addParagraph(description, "color: #787878; margin-top: 8px;");
+            if (StringUtils.isBlank(tooltip)) {
+                landscapeReport.addParagraph(description, "font-size: 90%; color: #787878; margin-top: 8px; margin-bottom: 5px;");
+            }
+            if (StringUtils.isNotBlank(tooltip)) {
+                landscapeReport.addParagraphWithTooltip(description, tooltip, "font-size: 90%; color: #787878; margin-top: 8px;");
+            }
         }
         if (metadata.getLinks().size() > 0) {
-            landscapeReport.startDiv("");
+            landscapeReport.startDiv("font-size: 80%; margin-top: 2px;");
             boolean first[] = {true};
             metadata.getLinks().forEach(link -> {
                 if (!first[0]) {
@@ -153,28 +158,91 @@ public class LandscapeReportGenerator {
     private void addSubLandscapeSection(List<SubLandscapeLink> subLandscapes) {
         List<SubLandscapeLink> links = new ArrayList<>(subLandscapes);
         if (links.size() > 0) {
-            Collections.sort(links, (a, b) -> getLabel(a).compareTo(getLabel(b)));
+            Collections.sort(links, Comparator.comparing(a -> getLabel(a).toLowerCase()));
             landscapeReport.startSubSection("Sub-Landscapes (" + links.size() + ")", "");
 
-            landscapeReport.startUnorderedList();
-
+            landscapeReport.startTable();
+            landscapeReport.addTableHeader("", "main loc", "test loc", "other loc", "projects", "recent contributors", "commits (30 days)");
+            String prevRoot[] = {""};
             links.forEach(subLandscape -> {
-                landscapeReport.startListItem();
+                String label = StringUtils.removeEnd(getLabel(subLandscape), "/");
+                String style = "";
+                String root = label.replaceAll("/.*", "");
+                if (!prevRoot[0].equals(root)) {
+                    label = "<b>" + label + "</b>";
+                    style = "color: black; font-weight: bold;";
+                } else {
+                    int lastIndex = label.lastIndexOf("/");
+                    label = "<span style='color: lightgrey'>" + label.substring(0, lastIndex + 1) + "</span>" + label.substring(lastIndex + 1) + "";
+                    style = "color: grey; font-size: 90%";
+                }
+                landscapeReport.startTableRow(style);
+                landscapeReport.startTableCell();
                 String href = landscapeAnalysisResults.getConfiguration().getProjectReportsUrlPrefix() + subLandscape.getIndexFilePath();
-                String label = getLabel(subLandscape);
                 landscapeReport.addNewTabLink(label, href);
-                landscapeReport.endListItem();
-            });
+                LandscapeAnalysisResultsReadData subLandscapeAnalysisResults = getSubLandscapeAnalysisResults(subLandscape);
+                landscapeReport.endTableCell();
+                landscapeReport.startTableCell("text-align: right;");
+                if (subLandscapeAnalysisResults != null) {
+                    landscapeReport.addHtmlContent(FormattingUtils.formatCount(subLandscapeAnalysisResults.getMainLoc()) + "");
+                }
+                landscapeReport.endTableCell();
+                landscapeReport.startTableCell("text-align: right;");
+                if (subLandscapeAnalysisResults != null) {
+                    landscapeReport.addHtmlContent(FormattingUtils.formatCount(subLandscapeAnalysisResults.getTestLoc()) + "");
+                }
+                landscapeReport.endTableCell();
+                landscapeReport.endTableCell();
+                landscapeReport.startTableCell("text-align: right;");
+                if (subLandscapeAnalysisResults != null) {
+                    int other = subLandscapeAnalysisResults.getBuildAndDeploymentLoc()
+                            + subLandscapeAnalysisResults.getGeneratedLoc() + subLandscapeAnalysisResults.getOtherLoc();
+                    landscapeReport.addHtmlContent("<span style='color: lightgrey'>" + FormattingUtils.formatCount(other) + "</span>");
+                }
+                landscapeReport.endTableCell();
+                landscapeReport.startTableCell("text-align: right;");
+                if (subLandscapeAnalysisResults != null) {
+                    landscapeReport.addHtmlContent(FormattingUtils.formatCount(subLandscapeAnalysisResults.getProjectsCount()) + "");
+                }
+                landscapeReport.endTableCell();
+                landscapeReport.startTableCell("text-align: right;");
+                if (subLandscapeAnalysisResults != null) {
+                    landscapeReport.addHtmlContent(FormattingUtils.formatCount(subLandscapeAnalysisResults.getRecentContributorsCount()) + "");
+                }
+                landscapeReport.endTableCell();
+                landscapeReport.startTableCell("text-align: right;");
+                if (subLandscapeAnalysisResults != null) {
+                    landscapeReport.addHtmlContent(FormattingUtils.formatCount(subLandscapeAnalysisResults.getCommitsCount30Days()) + "");
+                }
+                landscapeReport.endTableCell();
+                landscapeReport.endTableRow();
 
-            landscapeReport.endUnorderedList();
+                prevRoot[0] = root;
+            });
+            landscapeReport.endTable();
 
             landscapeReport.endSection();
         }
 
     }
 
+    private LandscapeAnalysisResultsReadData getSubLandscapeAnalysisResults(SubLandscapeLink subLandscape) {
+        try {
+            String prefix = landscapeAnalysisResults.getConfiguration().getProjectReportsUrlPrefix();
+            File resultsFile = new File(new File(folder, prefix + subLandscape.getIndexFilePath()).getParentFile(), "data/landscapeAnalysisResults.json");
+            System.out.println(resultsFile.getPath());
+            String json = FileUtils.readFileToString(resultsFile, StandardCharsets.UTF_8);
+            return (LandscapeAnalysisResultsReadData) new JsonMapper().getObject(json, LandscapeAnalysisResultsReadData.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
     private String getLabel(SubLandscapeLink subLandscape) {
-        return subLandscape.getIndexFilePath().replaceAll("(/|\\\\)_sokrates_landscape(/|\\\\).*", "");
+        return subLandscape.getIndexFilePath()
+                .replaceAll("(/|\\\\)_sokrates_landscape(/|\\\\).*", "");
     }
 
     private void addBigSummary(LandscapeAnalysisResults landscapeAnalysisResults) {
@@ -424,10 +492,9 @@ public class LandscapeReportGenerator {
         if (contributorsCount > 0) {
             List<ContributorProjects> contributors = landscapeAnalysisResults.getContributors();
             List<ContributorProjects> recentContributors = landscapeAnalysisResults.getContributors().stream()
-                    .filter(c -> c.getContributor().isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS))
+                    .filter(c -> c.getContributor().getCommitsCount30Days() > 0)
                     .collect(Collectors.toCollection(ArrayList::new));
             Collections.sort(recentContributors, (a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days());
-            int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
             int totalCommits = contributors.stream().mapToInt(c -> c.getContributor().getCommitsCount()).sum();
             int totalRecentCommits = recentContributors.stream().mapToInt(c -> c.getContributor().getCommitsCount30Days()).sum();
             final String[] latestCommit = {""};
@@ -439,7 +506,7 @@ public class LandscapeReportGenerator {
 
             landscapeReport.startSubSection("<a href='contributors-recent.html' target='_blank' style='text-decoration: none'>" +
                             "Recent Contributors (" + recentContributors.size() + ")</a>",
-                    (thresholdCommits > 1 ? thresholdCommits + "+&nbsp;commits, " : "") + "latest commit " + latestCommit[0]);
+                    "latest commit " + latestCommit[0]);
             addRecentContributorLinks();
 
             landscapeReport.addHtmlContent("<iframe src='contributors-recent.html' frameborder=0 style='height: 450px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
@@ -448,7 +515,7 @@ public class LandscapeReportGenerator {
 
             landscapeReport.startSubSection("<a href='contributors.html' target='_blank' style='text-decoration: none'>" +
                             "All Contributors (" + contributorsCount + ")</a>",
-                    (thresholdCommits > 1 ? thresholdCommits + "+&nbsp;commits, " : "") + "latest commit " + latestCommit[0]);
+                    "latest commit " + latestCommit[0]);
 
             landscapeReport.startShowMoreBlock("show details...");
             addContributorLinks();
@@ -685,12 +752,15 @@ public class LandscapeReportGenerator {
             }
             landscapeReport.endTableCell();
             String style = "border: none; text-align: center; vertical-align: bottom; font-size: 80%; height: 100px";
+            int thisYear = Calendar.getInstance().get(Calendar.YEAR);
             contributorsPerYear.forEach(year -> {
                 landscapeReport.startTableCell(style);
                 int count = year.getCommitsCount();
-                landscapeReport.addParagraph(count + "", "margin: 2px");
+                String color = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "#989898";
+                landscapeReport.addParagraph(count + "", "margin: 2px; color: " + color);
                 int height = 1 + (int) (64.0 * count / maxCommits);
-                landscapeReport.addHtmlContent("<div style='width: 100%; background-color: darkgrey; height:" + height + "px'></div>");
+                String bgColor = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "lightgrey";
+                landscapeReport.addHtmlContent("<div style='width: 100%; background-color: " + bgColor + "; height:" + height + "px'></div>");
                 landscapeReport.endTableCell();
             });
             landscapeReport.endTableRow();
@@ -713,7 +783,8 @@ public class LandscapeReportGenerator {
                 contributorsPerYear.forEach(year -> {
                     landscapeReport.startTableCell(style);
                     int count = getContributorsCountPerYear(year.getTimeSlot());
-                    landscapeReport.addParagraph(count + "", "margin: 2px");
+                    String color = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "#989898";
+                    landscapeReport.addParagraph(count + "", "margin: 2px; color: " + color + ";");
                     int height = 1 + (int) (64.0 * count / maxContributors[0]);
                     landscapeReport.addHtmlContent("<div style='width: 100%; background-color: skyblue; height:" + height + "px'></div>");
                     landscapeReport.endTableCell();
@@ -724,7 +795,8 @@ public class LandscapeReportGenerator {
             landscapeReport.startTableRow();
             landscapeReport.addTableCell("", "border: none; ");
             contributorsPerYear.forEach(year -> {
-                landscapeReport.addTableCell(year.getTimeSlot(), "border: none; text-align: center; font-size: 90%");
+                String color = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "#989898";
+                landscapeReport.addTableCell(year.getTimeSlot(), "border: none; text-align: center; font-size: 90%; color: " + color);
             });
             landscapeReport.endTableRow();
 

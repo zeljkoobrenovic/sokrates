@@ -368,6 +368,9 @@ public class ScopingConventions {
         ignoredFilesConventions.add(new Convention(".*/bulma[.](css|sass|scss)", "", "Bulma css"));
         ignoredFilesConventions.add(new Convention(".*[.]min[.]js", "", "Minimized JS library"));
         ignoredFilesConventions.add(new Convention(".*[.]css[.]js", "", "Minimized CSS library"));
+        ignoredFilesConventions.add(new Convention(".*tiny_mce_src[.]js", "", "Tiny MCE JS library"));
+        ignoredFilesConventions.add(new Convention(".*/js/yui/.*", "", "YUI JS library"));
+        ignoredFilesConventions.add(new Convention(".*/js/flotr/.*", "", "Flotr JS library"));
         ignoredFilesConventions.add(new Convention(".*[.]import[.](css|less|scss|styl)", "", "Stylesheets imported from packages"));
         ignoredFilesConventions.add(new Convention(".*font-?awesome\\.(css|less|scss|styl)", "", "Font Awesome"));
         ignoredFilesConventions.add(new Convention(".*font-?awesome/.*\\.(css|less|scss|styl)", "", "Font Awesome"));

@@ -4,9 +4,14 @@
 
 package nl.obren.sokrates.sourcecode.landscape;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
+
 public class SubLandscapeLink {
     private String name = "";
     private String indexFilePath = "";
+    @JsonIgnore
+    private LandscapeAnalysisResults landscapeAnalysisResults;
 
     public SubLandscapeLink() {
     }
@@ -30,5 +35,15 @@ public class SubLandscapeLink {
 
     public void setIndexFilePath(String indexFilePath) {
         this.indexFilePath = indexFilePath;
+    }
+
+    @JsonIgnore
+    public LandscapeAnalysisResults getLandscapeAnalysisResults() {
+        return landscapeAnalysisResults;
+    }
+
+    @JsonIgnore
+    public void setLandscapeAnalysisResults(LandscapeAnalysisResults landscapeAnalysisResults) {
+        this.landscapeAnalysisResults = landscapeAnalysisResults;
     }
 }
