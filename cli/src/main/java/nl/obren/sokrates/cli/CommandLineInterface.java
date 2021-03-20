@@ -77,6 +77,8 @@ public class CommandLineInterface {
     public static final String ANALYSIS_ROOT = "analysisRoot";
     public static final String TIMEOUT = "timeout";
 
+    public static final String SKIP_DUPLICATION_ANALYSES = "skipDuplication";
+    public static final String ENABLE_DUPLICATION_ANALYSES = "enableDuplication";
     public static final String SKIP_COMPLEX_ANALYSES = "skipComplexAnalyses";
     public static final String SET_CACHE_FILES = "setCacheFiles";
 
@@ -110,6 +112,9 @@ public class CommandLineInterface {
     private Option outputFolder = new Option(OUTPUT_FOLDER, true, "[OPTIONAL] the folder where reports will be stored (default value is <currentFolder/_sokrates/reports>)");
 
     private Option skipComplexAnalyses = new Option(SKIP_COMPLEX_ANALYSES, false, "[OPTIONAL] skips complex analyses (duplication, dependencies, file caching)");
+
+    private Option skipDuplicationAnalyses = new Option(SKIP_DUPLICATION_ANALYSES, false, "[OPTIONAL] skips duplication analyses");
+    private Option enableDuplicationAnalyses = new Option(ENABLE_DUPLICATION_ANALYSES, false, "[OPTIONAL] enables duplication analyses");
 
     private Option setName = new Option(SET_NAME, true, "[OPTIONAL] sets a project name");
     private Option setDescription = new Option(SET_DESCRIPTION, true, "[OPTIONAL] sets a project description");
@@ -315,6 +320,14 @@ public class CommandLineInterface {
             codeConfiguration.getAnalysis().setSkipDependencies(true);
             codeConfiguration.getAnalysis().setSkipDuplication(true);
             codeConfiguration.getAnalysis().setCacheSourceFiles(false);
+        }
+
+        if (cmd.hasOption(skipDuplicationAnalyses.getOpt())) {
+            codeConfiguration.getAnalysis().setSkipDuplication(true);
+        }
+
+        if (cmd.hasOption(enableDuplicationAnalyses.getOpt())) {
+            codeConfiguration.getAnalysis().setSkipDuplication(false);
         }
 
         if (cmd.hasOption(setName.getOpt())) {
