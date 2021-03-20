@@ -59,26 +59,40 @@ public class LogicalComponentsReportGenerator {
         report.endSection();
 
         report.startSection("Logical Decompositions Overview", "");
-        int size = codeAnalysisResults.getLogicalDecompositionsAnalysisResults().size();
+        List<LogicalDecompositionAnalysisResults> logicalDecompositionsAnalysisResults = codeAnalysisResults.getLogicalDecompositionsAnalysisResults();
+        int size = logicalDecompositionsAnalysisResults.size();
         report.addParagraph("Analyzed system has <b>" + size + "</b> logical decomposition" + (size > 1 ? "s" : "") + ":");
         report.startUnorderedList();
-        codeAnalysisResults.getLogicalDecompositionsAnalysisResults().forEach(logicalDecomposition -> {
+        logicalDecompositionsAnalysisResults.forEach(logicalDecomposition -> {
             int componentsCount = logicalDecomposition.getComponents().size();
             report.addListItem(logicalDecomposition.getLogicalDecomposition().getName() + " (" + componentsCount + " component" + (componentsCount > 1 ? "s" : "") + ")");
         });
         report.endUnorderedList();
         report.endSection();
 
+        report.startTabGroup();
+        boolean active[] = {true};
+        logicalDecompositionsAnalysisResults.forEach(logicalDecomposition -> {
+            LogicalDecomposition decomposition = logicalDecomposition.getLogicalDecomposition();
+            report.addTab(decomposition.getName(), decomposition.getName(), active[0]);
+            active[0] = false;
+        });
+        report.endTabGroup();
+
         int[] sectionIndex = {1};
-        codeAnalysisResults.getLogicalDecompositionsAnalysisResults().forEach(logicalDecomposition -> {
+        active[0] = true;
+        logicalDecompositionsAnalysisResults.forEach(logicalDecomposition -> {
+            report.startTabContentSection(logicalDecomposition.getLogicalDecomposition().getName(), active[0]);
             analyzeLogicalDecomposition(sectionIndex[0], logicalDecomposition);
+            active[0] = false;
             sectionIndex[0]++;
         });
         report.endSection();
     }
 
     private void analyzeLogicalDecomposition(int sectionIndex, LogicalDecompositionAnalysisResults logicalDecomposition) {
-        report.startSection("Logical Decomposition #" + sectionIndex + ": " + logicalDecomposition.getKey().toUpperCase(), getDecompositionDescription(logicalDecomposition));
+        report.addLevel2Header("Logical Decomposition #" + sectionIndex + ": " + logicalDecomposition.getKey().toUpperCase(), "margin-bottom: 0;");
+        report.addParagraph(getDecompositionDescription(logicalDecomposition), "color: grey; margin-bottom: 24px;");
         report.startDiv("margin-top: -12px; margin-bottom: 18px;");
         report.addHtmlContent("<a target='_blank' href='visuals/bubble_chart_components_" + (sectionIndex) + ".html'>Bubble Chart</a> | ");
         report.addHtmlContent("<a target='_blank' href='visuals/tree_map_components_" + (sectionIndex) + ".html'>Tree Map</a>");
@@ -111,13 +125,13 @@ public class LogicalComponentsReportGenerator {
         }
 
         List<ComponentDependency> componentDependencies = logicalDecomposition.getComponentDependencies();
+
         report.startSubSection("Dependencies", "Dependencies among components are <b>static</b> code dependencies among files in different components.");
         if (componentDependencies != null && componentDependencies.size() > 0) {
             addComponentDependenciesSection(logicalDecomposition, componentDependencies);
         } else {
             report.addParagraph("No component dependencies found.");
         }
-        report.endSection();
         report.endSection();
     }
 
@@ -247,6 +261,7 @@ public class LogicalComponentsReportGenerator {
 
     private void renderIndirectDependencies(List<String> componentNames, GraphvizDependencyRenderer graphvizDependencyRenderer, RenderingOptions renderingOptions, boolean renderWithoutDependencies, List<ComponentDependency> dependencies) {
         if (renderingOptions.isRenderIndirectDependencies()) {
+            report.startSubSection("Indirect Dependencies", "Dependecies via shared target or source components.");
             renderIndirectDependencies("Shared Targets", componentNames, graphvizDependencyRenderer, renderWithoutDependencies, getIndirectViaTargetsDependencies(dependencies));
             renderIndirectDependencies("Shared Sources", componentNames, graphvizDependencyRenderer, renderWithoutDependencies, getIndirectViaSourcesDependencies(dependencies));
 
@@ -254,6 +269,7 @@ public class LogicalComponentsReportGenerator {
                 renderInternalsOfIndirectDependencies("Targets", componentNames, graphvizDependencyRenderer, renderWithoutDependencies, getDependenciesWithSharedTargets(dependencies));
                 renderInternalsOfIndirectDependencies("Sources", componentNames, graphvizDependencyRenderer, renderWithoutDependencies, getDependenciesWithSharedSources(dependencies));
             }
+            report.endSection();
         }
     }
 
@@ -261,11 +277,16 @@ public class LogicalComponentsReportGenerator {
         if (indirectDependencies.size() > 0) {
             graphvizDependencyRenderer.setType("graph");
             graphvizDependencyRenderer.setArrow("--");
+
             report.addLevel3Header("Indirect Dependencies (" + type + ")");
+            report.startShowMoreBlock("show details...");
             report.addParagraph("Dependencies via " + type.toLowerCase() + "  components.", "color: grey");
             addDependencyGraphVisuals(indirectDependencies, componentNames.stream()
                     .filter(c -> renderWithoutDependencies || isComponentInDependency(indirectDependencies, c))
                     .collect(Collectors.toCollection(ArrayList::new)), new ArrayList<>(), graphvizDependencyRenderer);
+
+            report.endShowMoreBlock();
+            report.addLineBreak();
             report.addLineBreak();
             report.addLineBreak();
         }
@@ -276,10 +297,13 @@ public class LogicalComponentsReportGenerator {
             graphvizDependencyRenderer.setType("digraph");
             graphvizDependencyRenderer.setArrow("->");
             report.addLevel3Header("Indirect Dependencies With Shared " + type + " Visible");
+            report.startShowMoreBlock("show details...");
             report.addParagraph("Shared target components made visible.", "color: grey");
             addDependencyGraphVisuals(sharedTargetDependencies, componentNames.stream()
                     .filter(c -> renderWithoutDependencies || isComponentInDependency(sharedTargetDependencies, c))
                     .collect(Collectors.toCollection(ArrayList::new)), new ArrayList<>(), graphvizDependencyRenderer);
+            report.endShowMoreBlock();
+            report.addLineBreak();
             report.addLineBreak();
             report.addLineBreak();
         }
@@ -405,7 +429,7 @@ public class LogicalComponentsReportGenerator {
     private void addDependencyGraphVisuals(List<ComponentDependency> componentDependencies, List<String> componentNames, List<ComponentGroup> componentGroups, GraphvizDependencyRenderer graphvizDependencyRenderer) {
         String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(componentNames, componentDependencies, componentGroups);
         String graphId = "dependencies_" + dependencyVisualCounter++;
-        report.startDiv("max-height: 400px; overflow-y: scroll; overflow-x: scroll;");
+        report.startDiv("max-height: 600px; overflow-y: scroll; overflow-x: scroll;");
         report.addGraphvizFigure(graphId, "", graphvizContent);
         report.endDiv();
         report.addLineBreak();
@@ -415,7 +439,7 @@ public class LogicalComponentsReportGenerator {
 
     private void addMoreDetailsSection(LogicalDecompositionAnalysisResults logicalDecomposition, List<ComponentDependency> componentDependencies) {
         report.startShowMoreBlock("Show more details about dependencies...");
-        report.startDiv("width: 100%; overflow-x: auto");
+        report.startDiv("width: 100%; overflow-x: auto; max-height: 600px");
         report.startTable();
         report.addTableHeader("From Component<br/>&nbsp;--> To Component", "From Component<br/>(files with dependencies)", "Details");
         Collections.sort(componentDependencies, (o1, o2) -> o2.getCount() - o1.getCount());

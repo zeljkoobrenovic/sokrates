@@ -83,6 +83,8 @@ public class ContributorsReportGenerator {
         List<Contributor> contributors = analysis.getContributors();
 
         report.startTabContentSection("visuals", true);
+        ContributorsReportUtils.addContributorsSection(codeAnalysisResults, report);
+        report.addLineBreak();
         report.addLevel2Header("Per Year");
         ContributorsReportUtils.addContributorsPerTimeSlot(report, analysis.getContributorsPerYear(), 20, true, 4);
         report.addLevel2Header("Per Month");
@@ -95,8 +97,6 @@ public class ContributorsReportGenerator {
         int pastDays = 365;
         List<ContributionTimeSlot> contributorsPerDay = getContributionDays(analysis, pastDays);
         ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerDay, pastDays, false, 1);
-        report.addLineBreak();
-        ContributorsReportUtils.addContributorsSection(codeAnalysisResults, report);
         report.endTabContentSection();
 
         report.startTabContentSection("all_time", false);

@@ -25,7 +25,7 @@ public class UnitInfo {
     @JsonIgnore
     private String cleanedBody;
     @JsonIgnore
-    private String body;
+    private String body = "";
     private List<UnitInfo> children = new ArrayList<>();
 
     public String getShortName() {
