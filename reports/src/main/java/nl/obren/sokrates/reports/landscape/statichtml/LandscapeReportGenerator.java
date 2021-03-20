@@ -251,7 +251,6 @@ public class LandscapeReportGenerator {
         int thresholdContributors = configuration.getProjectThresholdContributors();
         addInfoBlock(FormattingUtils.getSmallTextForNumber(getProjects().size()), "projects",
                 "", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
-        int extensionsCount = getLinesOfCodePerExtension().size();
         addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "lines of code (main)", "", getExtraLocInfo());
         int mainLocActive = landscapeAnalysisResults.getMainLocActive();
         addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocActive), "lines of code (active)", "", "files updated in past year");
@@ -303,7 +302,6 @@ public class LandscapeReportGenerator {
         int thresholdContributors = configuration.getProjectThresholdContributors();
         addInfoBlock(FormattingUtils.getSmallTextForNumber(getProjects().size()), "projects",
                 "", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
-        int extensionsCount = getLinesOfCodePerExtension().size();
         addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "lines of code (main)", "", getExtraLocInfo());
         int mainLocActive = landscapeAnalysisResults.getMainLocActive();
         addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocActive), "lines of code (active)", "", "files updated in past year");
@@ -444,19 +442,29 @@ public class LandscapeReportGenerator {
     }
 
     private void addExtensions() {
-        int threshold = landscapeAnalysisResults.getConfiguration().getExtensionThresholdLoc();
+        addMainExtensions("Main", getLinesOfCodePerExtension(landscapeAnalysisResults.getMainLinesOfCodePerExtension()), true);
+        landscapeReport.startShowMoreBlockDisappear("", "Show test and other code...");
+        addMainExtensions("Test", getLinesOfCodePerExtension(landscapeAnalysisResults.getTestLinesOfCodePerExtension()), false);
+        addMainExtensions("Other", getLinesOfCodePerExtension(landscapeAnalysisResults.getOtherLinesOfCodePerExtension()), false);
+        landscapeReport.endShowMoreBlock();
+        landscapeReport.addLineBreak();
+        landscapeReport.addLineBreak();
+        landscapeReport.addLineBreak();
+    }
 
-        List<NumericMetric> linesOfCodePerExtension = getLinesOfCodePerExtension();
-        landscapeReport.startSubSection("File Extensions in Main Code (" + linesOfCodePerExtension.size() + ")",
+    private void addMainExtensions(String type, List<NumericMetric> linesOfCodePerExtension, boolean linkCharts) {
+        int threshold = landscapeAnalysisResults.getConfiguration().getExtensionThresholdLoc();
+        landscapeReport.startSubSection("File Extensions in " + type + " Code (" + linesOfCodePerExtension.size() + ")",
                 threshold >= 1 ? threshold + "+ lines of code" : "");
-        landscapeReport.startDiv("");
-        landscapeReport.addHtmlContent("&nbsp;&nbsp;&nbsp;&nbsp;");
-        landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_extensions.html");
-        landscapeReport.addHtmlContent(" | ");
-        landscapeReport.addNewTabLink("tree map", "visuals/tree_map_extensions.html");
-        landscapeReport.addLineBreak();
-        landscapeReport.addLineBreak();
-        landscapeReport.endDiv();
+        if (linkCharts) {
+            landscapeReport.startDiv("");
+            landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_extensions.html");
+            landscapeReport.addHtmlContent(" | ");
+            landscapeReport.addNewTabLink("tree map", "visuals/tree_map_extensions.html");
+            landscapeReport.addLineBreak();
+            landscapeReport.addLineBreak();
+            landscapeReport.endDiv();
+        }
         landscapeReport.startDiv("");
         boolean tooLong = linesOfCodePerExtension.size() > 25;
         List<NumericMetric> linesOfCodePerExtensionDisplay = tooLong ? linesOfCodePerExtension.subList(0, 25) : linesOfCodePerExtension;
@@ -477,9 +485,9 @@ public class LandscapeReportGenerator {
         landscapeReport.endSection();
     }
 
-    private List<NumericMetric> getLinesOfCodePerExtension() {
+    private List<NumericMetric> getLinesOfCodePerExtension(List<NumericMetric> linesOfCodePerExtension) {
         int threshold = landscapeAnalysisResults.getConfiguration().getExtensionThresholdLoc();
-        return landscapeAnalysisResults.getLinesOfCodePerExtension().stream()
+        return linesOfCodePerExtension.stream()
                 .filter(e -> !e.getName().endsWith("="))
                 .filter(e -> !e.getName().startsWith("h-"))
                 .filter(e -> e.getValue().intValue() >= threshold)
@@ -603,16 +611,14 @@ public class LandscapeReportGenerator {
                 CodeAnalysisResults analysisResults = projectAnalysisResults.getAnalysisResults();
                 projectSizes.add(new NumericMetric(analysisResults.getMetadata().getName(), analysisResults.getMainAspectAnalysisResults().getLinesOfCode()));
             });
-            landscapeReport.addHtmlContent("&nbsp;&nbsp;&nbsp;&nbsp;");
             landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_projects.html");
             landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("tree map", "visuals/tree_map_projects.html");
             landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("data", "data/projects.txt");
             landscapeReport.addLineBreak();
-            landscapeReport.addLineBreak();
 
-            landscapeReport.addHtmlContent("<iframe src='projects.html' frameborder=0 style='height: 450px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
+            landscapeReport.addHtmlContent("<iframe src='projects.html' frameborder=0 style='height: 600px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
 
             new LandscapeProjectsReport(landscapeAnalysisResults).saveProjectsReport(landscapeProjectsReport, projectsAnalysisResults);
         }

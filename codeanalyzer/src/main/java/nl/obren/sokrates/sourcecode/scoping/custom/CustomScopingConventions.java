@@ -5,6 +5,7 @@
 package nl.obren.sokrates.sourcecode.scoping.custom;
 
 import nl.obren.sokrates.sourcecode.aspects.Concern;
+import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
 import nl.obren.sokrates.sourcecode.scoping.Convention;
 
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ public class CustomScopingConventions {
     private int maxLineLength = 0;
     private boolean ignoreStandardScopingConventions = false;
     private boolean removeStandardConcerns = false;
+    private String logoLink = "";
 
     private List<Convention> ignoredFilesConventions = new ArrayList<>();
     private List<Convention> testFilesConventions = new ArrayList<>();
@@ -24,6 +26,8 @@ public class CustomScopingConventions {
 
     private List<Concern> concerns = new ArrayList<>();
     private List<String> ignoreContributors = new ArrayList<>();
+
+    private AnalysisConfig analysis = new AnalysisConfig();
 
     public CustomExtensionConventions getExtensions() {
         return extensions;
@@ -111,5 +115,21 @@ public class CustomScopingConventions {
 
     public void setIgnoreContributors(List<String> ignoreContributors) {
         this.ignoreContributors = ignoreContributors;
+    }
+
+    public AnalysisConfig getAnalysis() {
+        return analysis;
+    }
+
+    public void setAnalysis(AnalysisConfig analysis) {
+        this.analysis = analysis;
+    }
+
+    public String getLogoLink() {
+        return logoLink;
+    }
+
+    public void setLogoLink(String logoLink) {
+        this.logoLink = logoLink;
     }
 }

@@ -65,7 +65,7 @@ public class LandscapeVisualsGenerator {
 
     private void exportLanguages(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {
         List<VisualizationItem> items = new ArrayList<>();
-        landscapeAnalysisResults.getLinesOfCodePerExtension().forEach(metric -> {
+        landscapeAnalysisResults.getMainLinesOfCodePerExtension().forEach(metric -> {
             items.add(new VisualizationItem(metric.getName().replace("*.", ""), metric.getValue().intValue()));
         });
         exportVisuals("extensions", items);

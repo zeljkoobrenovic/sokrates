@@ -166,15 +166,21 @@ public class CodeConfiguration {
             sourceCodeFiles.getSourceFiles(aspect);
         }
 
-        removeAspectIfNotNull(test);
-        removeAspectIfNotNull(generated);
-        removeAspectIfNotNull(buildAndDeployment);
-        removeAspectIfNotNull(other);
+        removeAspectIfNotNull(main, test);
+        removeAspectIfNotNull(main, generated);
+        removeAspectIfNotNull(main, buildAndDeployment);
+        removeAspectIfNotNull(main, other);
+
+        removeAspectIfNotNull(buildAndDeployment, other);
+        removeAspectIfNotNull(buildAndDeployment, generated);
+        removeAspectIfNotNull(buildAndDeployment, test);
+        removeAspectIfNotNull(test, other);
+        removeAspectIfNotNull(test, generated);
     }
 
-    private void removeAspectIfNotNull(NamedSourceCodeAspect aspect) {
-        if (main != null && aspect != null) {
-            main.remove(aspect);
+    private void removeAspectIfNotNull(NamedSourceCodeAspect removeFrom, NamedSourceCodeAspect aspect) {
+        if (removeFrom != null && aspect != null) {
+            removeFrom.remove(aspect);
         }
     }
 

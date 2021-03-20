@@ -54,6 +54,9 @@ public class CommandLineInterface {
     public static final String EXPORT_STANDARD_CONVENTIONS = "exportStandardConventions";
     public static final String SRC_ROOT = "srcRoot";
     public static final String CONVENTIONS_FILE = "conventionsFile";
+    public static final String NAME = "name";
+    public static final String DESCRIPTION = "description";
+    public static final String LOGO_LINK = "logoLink";
     public static final String CONF_FILE = "confFile";
     public static final String DATE = "date";
     public static final String REPORT_ALL = "reportAll";
@@ -90,6 +93,9 @@ public class CommandLineInterface {
     private static final Log LOG = LogFactory.getLog(CommandLineInterface.class);
     private Option srcRoot = new Option(SRC_ROOT, true, "[OPTIONAL] the folder where reports will be stored (default is \"<currentFolder>/_sokrates/reports/\")");
     private Option conventionsFile = new Option(CONVENTIONS_FILE, true, "the custom conventions JSON file path\")");
+    private Option name = new Option(NAME, true, "the project name\")");
+    private Option description = new Option(DESCRIPTION, true, "the project description\")");
+    private Option logoLink = new Option(LOGO_LINK, true, "the project logo link\")");
     private Option confFile = new Option(CONF_FILE, true, "[OPTIONAL] the path to configuration file (default is \"<currentFolder>/_sokrates/config.json\"");
     private Option date = new Option(DATE, true, "[OPTIONAL] last date of source code update (default today), used for reports on active contributors");
     private Option analysisRoot = new Option(ANALYSIS_ROOT, true, "[OPTIONAL] the path to configuration file (default is \"<currentFolder>/_sokrates/config.json\"");
@@ -258,6 +264,28 @@ public class CommandLineInterface {
                 customScopingConventions = CustomConventionsHelper.readFromFile(scopingConventionsFile);
             }
         }
+        String nameValue = "";
+        String descriptionValue = "";
+        String logoLinkValue = "";
+        if (cmd.hasOption(name.getOpt())) {
+            nameValue = cmd.getOptionValue(name.getOpt());
+        }
+        if (cmd.hasOption(description.getOpt())) {
+            descriptionValue = cmd.getOptionValue(description.getOpt());
+        }
+        if (cmd.hasOption(logoLink.getOpt())) {
+            logoLinkValue = cmd.getOptionValue(logoLink.getOpt());
+        }
+        Link link = null;
+        if (cmd.hasOption(addLink.getOpt())) {
+            String linkData[] = cmd.getOptionValues(addLink.getOpt());
+            if (linkData.length >= 1 && StringUtils.isNotBlank(linkData[0])) {
+                String href = linkData[0];
+                String label = linkData.length >= 1 ? linkData[1] : "";
+                link = new Link(label, href);
+            }
+        }
+
 
         File root = new File(strRootPath);
         if (!root.exists()) {
@@ -269,7 +297,7 @@ public class CommandLineInterface {
 
         updateDateParam(cmd);
 
-        new ScopeCreator(root, conf, customScopingConventions).createScopeFromConventions();
+        new ScopeCreator(root, conf, customScopingConventions).createScopeFromConventions(nameValue, descriptionValue, logoLinkValue, link);
 
         System.out.println("Configuration stored in " + conf.getPath());
     }
@@ -713,9 +741,20 @@ public class CommandLineInterface {
         options.addOption(srcRoot);
         options.addOption(confFile);
         options.addOption(conventionsFile);
+        options.addOption(name);
+        options.addOption(description);
+        options.addOption(logoLink);
+        options.addOption(addLink);
         options.addOption(timeout);
 
         confFile.setRequired(false);
+        conventionsFile.setRequired(false);
+        name.setRequired(false);
+        description.setRequired(false);
+        logoLink.setRequired(false);
+        addLink.setRequired(false);
+        addLink.setArgs(2);
+        timeout.setRequired(false);
 
         return options;
     }

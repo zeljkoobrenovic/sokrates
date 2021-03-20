@@ -68,8 +68,10 @@ public class ScopingConventions {
         otherFilesConventions.add(new Convention(".*[.]mkd", "", "Markdown files"));
         otherFilesConventions.add(new Convention(".*[.]mkdn", "", "Markdown files"));
         otherFilesConventions.add(new Convention(".*[.]mkdown", "", "Markdown files"));
+
         otherFilesConventions.add(new Convention(".*[.]ronn", "", "Markdown files"));
         otherFilesConventions.add(new Convention(".*[.]workbook", "", "Markdown files"));
+        otherFilesConventions.add(new Convention(".*[.]plist", "", "Property list files"));
 
         otherFilesConventions.add(new Convention(".*[.]json", "", "JSON files"));
         // otherFilesConventions.add(new Convention(".*[.]yml", "", "YAML files"));
@@ -182,6 +184,7 @@ public class ScopingConventions {
         otherFilesConventions.add(new Convention(".*[.]_js", "", ""));
         otherFilesConventions.add(new Convention(".*[.]sublime-project", "", ""));
         otherFilesConventions.add(new Convention(".*[.]ini", "", "INI files"));
+        otherFilesConventions.add(new Convention(".*[.]libsonnet", "", "Libsonnet files"));
     }
 
     private void addBuildAndDeploymentConventions() {
@@ -221,6 +224,7 @@ public class ScopingConventions {
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]dotsettings", "", ".Net settings files"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/jenkins/.*[.]groovy", "", "Jenkins files"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/fastlane/.*[.]rb", "", "Fastlane files"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]podspec", "", "Podspec files"));
     }
 
     private void addGeneratedConventions() {

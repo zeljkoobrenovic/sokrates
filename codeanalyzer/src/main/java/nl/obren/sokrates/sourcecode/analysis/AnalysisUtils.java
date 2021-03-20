@@ -30,7 +30,8 @@ public class AnalysisUtils {
     private static final Log LOG = LogFactory.getLog(AnalysisUtils.class);
 
     public static void analyze(String group, NamedSourceCodeAspect aspect, List<OperationStatement> textOperations,
-                               ProgressFeedback progressFeedback, AspectAnalysisResults aspectAnalysisResults, MetricsList metricsList, StringBuffer textSummary, long start) {
+                               ProgressFeedback progressFeedback, AspectAnalysisResults aspectAnalysisResults,
+                               MetricsList metricsList, StringBuffer textSummary, long start) {
         aspectAnalysisResults.setAspect(aspect);
         String prefix = StringUtils.isNotBlank(group) ? (group + FileSystems.getDefault().getSeparator()) : "";
 

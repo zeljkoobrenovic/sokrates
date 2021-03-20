@@ -6,8 +6,8 @@ package nl.obren.sokrates.sourcecode.scoping;
 
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
-import nl.obren.sokrates.sourcecode.ExtensionGroup;
 import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
+import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.SourceCodeFiles;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.aspects.ConcernsGroup;
@@ -16,6 +16,7 @@ import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.sourcecode.scoping.custom.CustomExtensionConventions;
 import nl.obren.sokrates.sourcecode.scoping.custom.CustomScopingConventions;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +35,7 @@ public class ScopeCreator {
         this.customScopingConventions = customScopingConventions;
     }
 
-    public void createScopeFromConventions() throws IOException {
+    public void createScopeFromConventions(String name, String description, String logoLink, Link link) throws IOException {
         List<String> extensions = getExtensions();
 
         CodeConfiguration codeConfiguration = getCodeConfiguration(extensions);
@@ -48,6 +49,19 @@ public class ScopeCreator {
         }
         if (customScopingConventions != null) {
             expandScopeWithCustomConventions(codeConfiguration, sourceCodeFiles);
+        }
+
+        if (StringUtils.isNotBlank(name)) {
+            codeConfiguration.getMetadata().setName(name);
+        }
+        if (StringUtils.isNotBlank(description)) {
+            codeConfiguration.getMetadata().setDescription(description);
+        }
+        if (StringUtils.isNotBlank(logoLink)) {
+            codeConfiguration.getMetadata().setLogoLink(logoLink);
+        }
+        if (link != null) {
+            codeConfiguration.getMetadata().getLinks().add(link);
         }
 
         saveScope(codeConfiguration);
@@ -78,6 +92,10 @@ public class ScopeCreator {
         }
 
         codeConfiguration.getFileHistoryAnalysis().getIgnoreContributors().addAll(customScopingConventions.getIgnoreContributors());
+
+        codeConfiguration.setAnalysis(customScopingConventions.getAnalysis());
+
+        codeConfiguration.getMetadata().setLogoLink(customScopingConventions.getLogoLink());
     }
 
     private List<String> getExtensions() {

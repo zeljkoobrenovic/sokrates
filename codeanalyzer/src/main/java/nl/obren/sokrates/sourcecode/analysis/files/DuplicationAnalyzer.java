@@ -41,7 +41,7 @@ public class DuplicationAnalyzer extends Analyzer {
     }
 
     public void analyze(ProgressFeedback progressFeedback) {
-        if (codeConfiguration.getAnalysis().isSkipDuplication()) {
+        if (skipDuplicationAnalysis()) {
             return;
         }
 
@@ -107,6 +107,10 @@ public class DuplicationAnalyzer extends Analyzer {
         for (int i = 0; i < Math.min(LIST_LIMIT, duplicates.size()); i++) {
             analysisResults.getLongestDuplicates().add(duplicates.get(i));
         }
+    }
+
+    private boolean skipDuplicationAnalysis() {
+        return codeConfiguration.getAnalysis().isSkipDuplication() || main.getLinesOfCode() > codeConfiguration.getAnalysis().getLocDuplicationThreshold();
     }
 
     private void addExtensionDuplicationMetrics(ExtensionDuplication extensionDuplication) {

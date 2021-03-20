@@ -14,6 +14,7 @@ public class AnalysisConfig {
     private boolean skipDependencies = false;
     private boolean cacheSourceFiles = true;
     private int maxLineLength = 1000;
+    private int locDuplicationThreshold = 10000000;
     private List<AnalyzerOverride> analyzerOverrides = new ArrayList<>();
 
     public boolean isSkipDuplication() {
@@ -54,5 +55,13 @@ public class AnalysisConfig {
 
     public void setCacheSourceFiles(boolean cacheSourceFiles) {
         this.cacheSourceFiles = cacheSourceFiles;
+    }
+
+    public int getLocDuplicationThreshold() {
+        return locDuplicationThreshold;
+    }
+
+    public void setLocDuplicationThreshold(int locDuplicationThreshold) {
+        this.locDuplicationThreshold = locDuplicationThreshold;
     }
 }

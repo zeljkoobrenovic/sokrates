@@ -216,11 +216,35 @@ public class LandscapeAnalysisResults {
     }
 
     @JsonIgnore
-    public List<NumericMetric> getLinesOfCodePerExtension() {
+    public List<NumericMetric> getMainLinesOfCodePerExtension() {
+        return getLinesOfCodePerExtension(CodeCategory.MAIN);
+    }
+
+    @JsonIgnore
+    public List<NumericMetric> getTestLinesOfCodePerExtension() {
+        return getLinesOfCodePerExtension(CodeCategory.TEST);
+    }
+
+    @JsonIgnore
+    public List<NumericMetric> getOtherLinesOfCodePerExtension() {
+        return getLinesOfCodePerExtension(CodeCategory.OTHER);
+    }
+
+    @JsonIgnore
+    public List<NumericMetric> getLinesOfCodePerExtension(CodeCategory type) {
         List<NumericMetric> linesOfCodePerExtension = new ArrayList<>();
         getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            AspectAnalysisResults main = projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults();
-            List<NumericMetric> projectLinesOfCodePerExtension = main.getLinesOfCodePerExtension();
+            List<NumericMetric> projectLinesOfCodePerExtension;
+            if (type == CodeCategory.TEST) {
+                projectLinesOfCodePerExtension = projectAnalysisResults.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCodePerExtension();
+            } else if (type == CodeCategory.OTHER) {
+                List<NumericMetric> build = projectAnalysisResults.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getLinesOfCodePerExtension();
+                List<NumericMetric> generated = projectAnalysisResults.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getLinesOfCodePerExtension();
+                List<NumericMetric> other = projectAnalysisResults.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getLinesOfCodePerExtension();
+                projectLinesOfCodePerExtension = merge(Arrays.asList(build, generated, other));
+            } else {
+                projectLinesOfCodePerExtension = projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension();
+            }
             projectLinesOfCodePerExtension.forEach(metric -> {
                 String id = metric.getName();
                 Optional<NumericMetric> existingMetric = linesOfCodePerExtension.stream().filter(c -> c.getName().equalsIgnoreCase(id)).findAny();
@@ -234,6 +258,25 @@ public class LandscapeAnalysisResults {
 
         Collections.sort(linesOfCodePerExtension, (a, b) -> b.getValue().intValue() - a.getValue().intValue());
         return linesOfCodePerExtension;
+    }
+
+    private List<NumericMetric> merge(List<List<NumericMetric>> metricLists) {
+        List<NumericMetric> merged = new ArrayList<>();
+        Map<String, NumericMetric> mergedMap = new HashMap<>();
+
+        metricLists.forEach(list -> {
+            list.forEach(metric -> {
+                if (mergedMap.containsKey(metric.getName())) {
+                    mergedMap.get(metric.getName()).setValue(mergedMap.get(metric.getName()).getValue().doubleValue() + metric.getValue().doubleValue());
+                } else {
+                    NumericMetric newMetric = new NumericMetric(metric.getName(), metric.getValue());
+                    merged.add(newMetric);
+                    mergedMap.put(newMetric.getName(), newMetric);
+                }
+            });
+        });
+
+        return merged;
     }
 
     @JsonIgnore
@@ -767,5 +810,9 @@ public class LandscapeAnalysisResults {
 
     public void setLatestCommitDate(String latestCommitDate) {
         this.latestCommitDate = latestCommitDate;
+    }
+
+    enum CodeCategory {
+        MAIN, TEST, OTHER
     }
 }
