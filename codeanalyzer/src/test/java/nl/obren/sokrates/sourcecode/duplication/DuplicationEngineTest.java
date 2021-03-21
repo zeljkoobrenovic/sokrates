@@ -63,7 +63,7 @@ public class DuplicationEngineTest {
         List<SourceFile> sourceFiles = Arrays.asList(sourceFile1, sourceFile2);
         List<DuplicationInstance> duplicates = engine.findDuplicates(sourceFiles, new ProgressFeedback());
 
-        assertEquals(duplicates.size(), 2);
+        assertEquals(duplicates.size(), 8);
 
         Collections.sort(duplicates, Comparator.comparingInt(d -> d.getDuplicatedFileBlocks().get(0).getStartLine()));
 
@@ -72,18 +72,18 @@ public class DuplicationEngineTest {
         assertEquals(duplicatedFileBlocks1.size(), 2);
         assertEquals(duplicatedFileBlocks1.get(0).getSourceFile().getFile().getName(), "file1.unknown");
         assertEquals(duplicatedFileBlocks1.get(0).getStartLine(), 1);
-        assertEquals(duplicatedFileBlocks1.get(0).getEndLine(), 7);
+        assertEquals(duplicatedFileBlocks1.get(0).getEndLine(), 6);
         assertEquals(duplicatedFileBlocks1.get(1).getSourceFile().getFile().getName(), "file2.unknown");
         assertEquals(duplicatedFileBlocks1.get(1).getStartLine(), 1);
-        assertEquals(duplicatedFileBlocks1.get(1).getEndLine(), 7);
+        assertEquals(duplicatedFileBlocks1.get(1).getEndLine(), 6);
 
         assertEquals(duplicatedFileBlocks2.size(), 2);
         assertEquals(duplicatedFileBlocks2.get(0).getSourceFile().getFile().getName(), "file1.unknown");
-        assertEquals(duplicatedFileBlocks2.get(0).getStartLine(), 9);
-        assertEquals(duplicatedFileBlocks2.get(0).getEndLine(), 19);
+        assertEquals(duplicatedFileBlocks2.get(0).getStartLine(), 2);
+        assertEquals(duplicatedFileBlocks2.get(0).getEndLine(), 7);
         assertEquals(duplicatedFileBlocks2.get(1).getSourceFile().getFile().getName(), "file2.unknown");
-        assertEquals(duplicatedFileBlocks2.get(1).getStartLine(), 9);
-        assertEquals(duplicatedFileBlocks2.get(1).getEndLine(), 19);
+        assertEquals(duplicatedFileBlocks2.get(1).getStartLine(), 2);
+        assertEquals(duplicatedFileBlocks2.get(1).getEndLine(), 7);
 
     }
 

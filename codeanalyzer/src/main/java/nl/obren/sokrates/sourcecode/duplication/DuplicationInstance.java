@@ -128,7 +128,8 @@ public class DuplicationInstance {
                 if (!stringBuilder.toString().isEmpty()) {
                     stringBuilder.append("\n");
                 }
-                String name = StringUtils.abbreviate(block.getSourceFile().getFile().getName(), 40);
+                String fileName = block.getSourceFile().getFile().getName();
+                String name = StringUtils.abbreviate(fileName, 40);
                 if (linkToFiles) {
                     stringBuilder.append("<a href='");
                     stringBuilder.append("../src/main/" + block.getSourceFile().getRelativePath() + ".html");
@@ -136,7 +137,7 @@ public class DuplicationInstance {
                     stringBuilder.append(name);
                     stringBuilder.append("</a>");
                 } else {
-                    stringBuilder.append(name);
+                    stringBuilder.append("<span title='" + fileName + "'>" + name + "</span>");
                 }
             }
             i[0]++;

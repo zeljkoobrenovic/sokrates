@@ -24,7 +24,7 @@ public class Blocks {
     private String progressText = "";
     private int currentProgressValue = 0;
     private int endProgressValue = 0;
-    private boolean optimize = false;
+    private boolean optimize = true;
 
     private Map<String, Pair<SourceFile, SourceFile>> filePairMap = new HashMap<>();
 

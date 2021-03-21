@@ -77,7 +77,11 @@ public class DuplicationReportGenerator {
         text = text.replace(" ", "&nbsp;");
         StringBuilder stringBuilder = new StringBuilder();
         for (String line : text.split("\n")) {
-            stringBuilder.append(StringUtils.abbreviateMiddle(line, "...", 50)).append("\n");
+            stringBuilder
+                    .append("<span title='" + line + "'>")
+                    .append(StringUtils.abbreviateMiddle(line, "...", 50))
+                    .append("</span>")
+                    .append("\n");
         }
         return stringBuilder.toString().replace("\n", "</br>");
     }
@@ -95,7 +99,7 @@ public class DuplicationReportGenerator {
         addDuplicationPerExtensionSection(report);
         addDuplicationPerLogicalDecomposition(report);
         addLongestDuplicatesList(report);
-        addMostFrequentDuplicatesList(report);
+        // addMostFrequentDuplicatesList(report);
     }
 
     private void addDuplicationPerLogicalDecomposition(RichTextReport report) {

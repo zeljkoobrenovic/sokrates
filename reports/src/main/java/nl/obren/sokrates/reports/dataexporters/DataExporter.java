@@ -10,6 +10,7 @@ import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.common.utils.SystemUtils;
 import nl.obren.sokrates.reports.dataexporters.dependencies.DependenciesExporter;
+import nl.obren.sokrates.reports.dataexporters.duplication.DuplicateExportInfo;
 import nl.obren.sokrates.reports.dataexporters.duplication.DuplicateFileBlockExportInfo;
 import nl.obren.sokrates.reports.dataexporters.duplication.DuplicationExportInfo;
 import nl.obren.sokrates.reports.dataexporters.duplication.DuplicationExporter;
@@ -65,6 +66,7 @@ public class DataExporter {
     public static final String FOUND_TEXT_PER_FILE_SIFFIX = "_found_text_per_file";
     public static final String FOUND_TEXT_SUFFIX = "_found_text";
     private static final Log LOG = LogFactory.getLog(DataExporter.class);
+    public static final int MAX_EXPORT_LIST_SIZE = 10000;
     private ProgressFeedback progressFeedback;
     private File sokratesConfigFile;
     private CodeConfiguration codeConfiguration;
@@ -197,7 +199,11 @@ public class DataExporter {
         StringBuilder content = new StringBuilder();
 
         int id[] = {1};
-        duplicationExportInfo.getDuplicates().forEach(duplicate -> {
+        List<DuplicateExportInfo> duplicates = duplicationExportInfo.getDuplicates();
+        if ((duplicates.size() > MAX_EXPORT_LIST_SIZE)) {
+            duplicates = duplicates.subList(0, MAX_EXPORT_LIST_SIZE);
+        }
+        duplicates.forEach(duplicate -> {
             List<DuplicateFileBlockExportInfo> duplicatedFileBlocks = duplicate.getDuplicatedFileBlocks();
             content.append("duplicated block id: " + id[0] + "\n");
             content.append("size: " + duplicate.getBlockSize() + " cleaned lines of code\n");
@@ -535,7 +541,7 @@ public class DataExporter {
 
         DuplicationAnalysisResults duplicationAnalysisResults = analysisResults.getDuplicationAnalysisResults();
         saveDuplicateFragmentFiles(duplicationAnalysisResults.getLongestDuplicates(), "longest_duplicates");
-        saveDuplicateFragmentFiles(duplicationAnalysisResults.getMostFrequentDuplicates(), "most_frequent_duplicates");
+        // saveDuplicateFragmentFiles(duplicationAnalysisResults.getMostFrequentDuplicates(), "most_frequent_duplicates");
     }
 
     private void exportInteractiveExplorers() throws IOException {
@@ -763,6 +769,12 @@ public class DataExporter {
                 });
 
                 FileUtils.write(file, body.toString(), UTF_8);
+            } catch (IllegalArgumentException e) {
+                duplicate.getDuplicatedFileBlocks().forEach(block -> {
+                    System.out.println(block.getSourceFile().getRelativePath() + " [" + block.getStartLine() + ":" + block.getEndLine() + "]:\n");
+                });
+                LOG.warn(e);
+                System.exit(0);
             } catch (IOException e) {
                 LOG.warn(e);
             }
