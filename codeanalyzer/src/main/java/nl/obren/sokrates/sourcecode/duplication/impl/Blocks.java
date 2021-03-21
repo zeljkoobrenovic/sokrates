@@ -136,20 +136,14 @@ public class Blocks {
             fileInfoForDuplication2Copy.setBlocks(files.getFilesMap().get(f2).getBlocks());
             fileInfoForDuplication2Copy.getLineIDs().addAll(files.getFilesMap().get(f2).getLineIDs());
 
-            int startBlockSize = optimize
-                    ? minDuplicationBlockSize
-                    : Math.min(fileInfoForDuplication1.getBiggestBlockSize(), fileInfoForDuplication2Copy.getBiggestBlockSize());
-
-            for (int blockSize = startBlockSize; blockSize >= minDuplicationBlockSize; blockSize--) {
-                addDuplicationInstances(fileInfoForDuplication1, fileInfoForDuplication2Copy, blockSize);
-            }
+            addDuplicationInstances(fileInfoForDuplication1, fileInfoForDuplication2Copy, minDuplicationBlockSize);
         });
         resetProgressValues(0);
     }
 
     private void addDuplicationInstances(FileInfoForDuplication fileInfoForDuplication1,
-                                        FileInfoForDuplication fileInfoForDuplication2,
-                                        final int blockSize) {
+                                         FileInfoForDuplication fileInfoForDuplication2,
+                                         final int blockSize) {
         final List<Block> blocks = fileInfoForDuplication1.extractBlocks(blockSize);
         blocks.forEach(block1 -> {
             List<Block> allPossibleSubBlocks = block1.extractAllPossibleSubBlocks(blockSize);

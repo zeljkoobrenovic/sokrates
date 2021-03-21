@@ -128,13 +128,13 @@ public class DuplicationAnalyzer extends Analyzer {
 
     private Map<String, DuplicationInstance> consolidate(Map<String, DuplicationInstance> merged) {
         Map<String, DuplicationInstance> mergedConsolidated = new HashMap<>(merged);
-        merged.values().forEach(currentInstance -> {
-            DuplicatedFileBlock file1 = currentInstance.getDuplicatedFileBlocks().get(0);
-            DuplicatedFileBlock file2 = currentInstance.getDuplicatedFileBlocks().get(1);
-            String key = getPairKey(file1, file2, 0);
+        merged.keySet().forEach(key -> {
             if (!mergedConsolidated.containsKey(key)) {
                 return;
             }
+            DuplicationInstance currentInstance = mergedConsolidated.get(key);
+            DuplicatedFileBlock file1 = currentInstance.getDuplicatedFileBlocks().get(0);
+            DuplicatedFileBlock file2 = currentInstance.getDuplicatedFileBlocks().get(1);
             int offset = 1;
             while (true) {
                 String nextKey = getPairKey(file1, file2, offset);
@@ -155,7 +155,6 @@ public class DuplicationAnalyzer extends Analyzer {
                     file2.setCleanedEndLine(nextBlock2.getCleanedEndLine());
 
                     mergedConsolidated.remove(nextKey);
-                    mergedConsolidated.put(key, currentInstance);
                     currentInstance.setBlockSize(file1.getCleanedEndLine() - file1.getCleanedStartLine() + 1);
                     offset += 1;
                 } else {
@@ -179,11 +178,11 @@ public class DuplicationAnalyzer extends Analyzer {
                                 String path1 = file1.getSourceFile().getRelativePath();
                                 String path2 = file2.getSourceFile().getRelativePath();
                                 if (path1.compareTo(path2) <= 0) {
-                                    duplicationInstance.getDuplicatedFileBlocks().add(file1);
-                                    duplicationInstance.getDuplicatedFileBlocks().add(file2);
+                                    duplicationInstance.getDuplicatedFileBlocks().add(copyOf(file1));
+                                    duplicationInstance.getDuplicatedFileBlocks().add(copyOf(file2));
                                 } else {
-                                    duplicationInstance.getDuplicatedFileBlocks().add(file2);
-                                    duplicationInstance.getDuplicatedFileBlocks().add(file1);
+                                    duplicationInstance.getDuplicatedFileBlocks().add(copyOf(file2));
+                                    duplicationInstance.getDuplicatedFileBlocks().add(copyOf(file1));
                                 }
                                 duplicationInstance.setBlockSize(d.getBlockSize());
                                 merged.put(key, duplicationInstance);
@@ -192,6 +191,17 @@ public class DuplicationAnalyzer extends Analyzer {
             });
         });
         return merged;
+    }
+
+    private DuplicatedFileBlock copyOf(DuplicatedFileBlock block) {
+        DuplicatedFileBlock newBlock = new DuplicatedFileBlock();
+        newBlock.setStartLine(block.getStartLine());
+        newBlock.setEndLine(block.getEndLine());
+        newBlock.setCleanedStartLine(block.getCleanedStartLine());
+        newBlock.setCleanedEndLine(block.getCleanedEndLine());
+        newBlock.setSourceFile(block.getSourceFile());
+        newBlock.setSourceFileCleanedLinesOfCode(block.getSourceFileCleanedLinesOfCode());
+        return newBlock;
     }
 
     public String getPairKey(DuplicatedFileBlock block1, DuplicatedFileBlock block2, int offset) {
