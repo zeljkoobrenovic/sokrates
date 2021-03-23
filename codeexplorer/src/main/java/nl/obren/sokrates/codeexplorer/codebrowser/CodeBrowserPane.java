@@ -125,18 +125,7 @@ public class CodeBrowserPane extends SplitPane {
         final Menu reportMenu = new Menu("Report");
         reportMenu.getItems().add(getMenuItem("Open Reports Folder...", e -> codeConfigurationView.openReportsFolder()));
         reportMenu.getItems().add(new SeparatorMenuItem());
-        reportMenu.getItems().add(getMenuItem("Generate All Reports...", e -> codeConfigurationView.generateFullReport()));
-        reportMenu.getItems().add(new SeparatorMenuItem());
-        reportMenu.getItems().add(getMenuItem("Update Overview Report...", e -> codeConfigurationView.generateFilesInScopeReport()));
-        reportMenu.getItems().add(getMenuItem("Update Duplication Report...", e -> codeConfigurationView.generateDuplicationReport()));
-        reportMenu.getItems().add(getMenuItem("Update Logical Decomposition Report...", e -> codeConfigurationView.generateLogicalDecompositionReport()));
-        reportMenu.getItems().add(getMenuItem("Update Concerns Report...", e -> codeConfigurationView.generateConcernsReport()));
-        reportMenu.getItems().add(getMenuItem("Update File Size Report...", e -> codeConfigurationView.generateFileSizeReport()));
-        reportMenu.getItems().add(getMenuItem("Update Unit Size Report...", e -> codeConfigurationView.generateUnitSizeReport()));
-        reportMenu.getItems().add(getMenuItem("Update Conditional Complexity Report...", e -> codeConfigurationView.generateConditionalComplexity()));
-        reportMenu.getItems().add(getMenuItem("Update Findings Report...", e -> codeConfigurationView.generateFindingsOverviewReport()));
-        reportMenu.getItems().add(getMenuItem("Update Metrics Overview Report...", e -> codeConfigurationView.generateMetricsOverviewReport()));
-        reportMenu.getItems().add(getMenuItem("Update Controls Report...", e -> codeConfigurationView.generateControlsReport()));
+        reportMenu.getItems().add(getMenuItem("Generate Reports...", e -> codeConfigurationView.generateFullReport()));
 
         MenuBar menuBar = new MenuBar();
         final String os = System.getProperty("os.name");

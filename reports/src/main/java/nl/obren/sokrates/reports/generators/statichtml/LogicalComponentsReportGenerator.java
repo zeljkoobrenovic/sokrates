@@ -86,6 +86,7 @@ public class LogicalComponentsReportGenerator {
             analyzeLogicalDecomposition(sectionIndex[0], logicalDecomposition);
             active[0] = false;
             sectionIndex[0]++;
+            report.endTabContentSection();
         });
         report.endSection();
     }

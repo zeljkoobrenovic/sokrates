@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AnalysisConfig {
-    private boolean skipDuplication = true;
+    private boolean skipDuplication = false;
     private boolean skipDependencies = false;
     private boolean cacheSourceFiles = true;
     private int maxLineLength = 1000;

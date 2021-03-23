@@ -13,7 +13,6 @@ import nl.obren.sokrates.sourcecode.analysis.results.FilesAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
-import nl.obren.sokrates.sourcecode.metrics.Metric;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
@@ -83,9 +82,20 @@ public class UnitsAnalyzer extends Analyzer {
             printRiskDistributionStats(extensionUnitSizeDistribution, unitSizeCategoryNames, "Unit Size Extension " + extensionUnitSizeDistribution.getKey() + ": ");
         });
 
-        RiskDistributionStats conditionalComplexityDistribution = UnitUtils.getConditionalComplexityDistribution(allUnits);
+        RiskDistributionStats conditionalComplexityDistributionAllUnits = UnitUtils.getConditionalComplexityDistribution(allUnits);
+        RiskDistributionStats conditionalComplexityDistribution = conditionalComplexityDistributionAllUnits;
         unitsAnalysisResults.setConditionalComplexityRiskDistribution(conditionalComplexityDistribution);
-        printRiskDistributionStats(UnitUtils.getConditionalComplexityDistribution(allUnits), conditionalComplexityCategoryNames, "Conditional complexity distribution: ");
+        printRiskDistributionStats(conditionalComplexityDistributionAllUnits, conditionalComplexityCategoryNames, "Conditional complexity distribution: ");
+
+        metricsList.addMetric()
+                .id(safeId(AnalysisUtils.getMetricId("CONDITIONAL_COMPLEXITY_DISTRIBUTION_26_PLUS_COUNT")))
+                .value(conditionalComplexityDistributionAllUnits.getHighRiskCount() + conditionalComplexityDistributionAllUnits.getVeryHighRiskCount());
+
+        metricsList.addMetric()
+                .id(safeId(AnalysisUtils.getMetricId("CONDITIONAL_COMPLEXITY_DISTRIBUTION_26_PLUS_LOC")))
+                .value(conditionalComplexityDistributionAllUnits.getHighRiskValue() + conditionalComplexityDistributionAllUnits.getVeryHighRiskValue());
+
+
         AnalysisUtils.detailedInfo(textSummary, progressFeedback, "Conditional complexity distribution per component:", start);
         UnitUtils.getConditionalComplexityDistributionPerComponent(codeConfiguration.getLogicalDecompositions(), allUnits).forEach(group -> {
             List<RiskDistributionStats> componentConditionalComplexityDistributionStats = new ArrayList<>();

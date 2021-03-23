@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class FileSizeReportGenerator {
-    public static final int LIST_LIMIT = 100;
+    public static final int LIST_LIMIT = 50;
     private CodeAnalysisResults codeAnalysisResults;
     private List<String> labels = Arrays.asList("1001+", "501-1000", "201-500", "101-200", "1-100");
 

@@ -310,6 +310,12 @@ public class RichTextReport {
         endDiv();
     }
 
+    public void addContentInDivWithTooltip(String content, String tooltip, String style) {
+        startDivWithLabel(tooltip, style);
+        addHtmlContent(content);
+        endDiv();
+    }
+
     public void startSection(String title, String subtitle) {
         this.addHtmlContent("<div class='section'>" +
                 "<div class='sectionHeader'>\n" +

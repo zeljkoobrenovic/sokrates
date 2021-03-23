@@ -294,7 +294,6 @@ public class LandscapeReportGenerator {
         landscapeReport.addLineBreak();
 
         addIFrames(configuration.getiFrames());
-        addCustomTags(configuration);
     }
 
     private void addBigProjectsSummary(LandscapeAnalysisResults landscapeAnalysisResults) {
@@ -380,65 +379,6 @@ public class LandscapeReportGenerator {
         if (StringUtils.isNotBlank(iframe.getTitle())) {
             landscapeReport.endSection();
         }
-    }
-
-    private void addCustomTags(LandscapeConfiguration configuration) {
-        if (configuration.getTags().getGroups().size() > 0) {
-            landscapeReport.startDiv("margin-bottom: 20px");
-            configuration.getTags().getGroups().forEach(tagGroup -> {
-                renderTagGroup(configuration, tagGroup);
-            });
-            landscapeReport.endDiv();
-        }
-    }
-
-    private void renderTagGroup(LandscapeConfiguration configuration, CustomTagGroup tagGroup) {
-        if (anyTagsPresent(tagGroup)) {
-            landscapeReport.startDiv("display: inline-block; border: 1px solid lightgrey; padding: 6px; border-radius: 6px;");
-            landscapeReport.addParagraph(tagGroup.getName(), "font-size: 70%; color: grey;");
-            tagGroup.getTags().forEach(tag -> {
-                renderTag(configuration, tag);
-            });
-            tagGroup.getSubGroups().forEach(subGroup -> {
-                renderTagGroup(configuration, subGroup);
-            });
-            landscapeReport.endDiv();
-        }
-    }
-
-    private boolean anyTagsPresent(CustomTagGroup tagGroup) {
-        if (tagGroup.getTags().size() > 0) {
-            return true;
-        }
-
-        for (CustomTagGroup subGroup : tagGroup.getSubGroups()) {
-            if (anyTagsPresent(subGroup)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private void renderTag(LandscapeConfiguration configuration, CustomTag tag) {
-        String logoSrc = configuration.getTags().getLogosRoot() + tag.getIcon();
-        landscapeReport.startSpan("position: relative;");
-        String imageStyle = "width: 80px; height: 60px; object-fit: contain;";
-        String title = tag.getTitle();
-        if (StringUtils.isNotBlank(tag.getDescription())) {
-            title += "\n\n" + tag.getDescription();
-        }
-        if (StringUtils.isNotBlank(tag.getLink())) {
-            landscapeReport.addHtmlContent("<a target='_blank' href='" + tag.getLink() + "'>");
-        }
-        landscapeReport.addHtmlContent("<img src='" + logoSrc + "' title='" + title + "' style='" + imageStyle + "'>");
-        if (StringUtils.isNotBlank(tag.getMark())) {
-            landscapeReport.addHtmlContent("<span style='border: 1px solid lightgrey; font-size: 80%; background-color: yellow; position: absolute; top: -44px; left: 0px;'>&nbsp;" + tag.getMark() + "&nbsp;</span>");
-        }
-        if (StringUtils.isNotBlank(tag.getLink())) {
-            landscapeReport.addHtmlContent("</a>");
-        }
-        landscapeReport.endSpan();
     }
 
     private void addExtensions() {

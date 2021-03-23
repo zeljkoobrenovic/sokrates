@@ -188,7 +188,7 @@ public class CodeConfigurationView extends ConfigurationEditorView {
         SystemUtils.openFile(reportsFolder);
     }
 
-    private void generateReports(String reportType) {
+    private void generateReports() {
         completeAndSave();
 
         File absoluteSrcRoot = new File(CodeConfiguration.getAbsoluteSrcRoot(getConfigurationFromEditor().getSrcRoot(), file));
@@ -199,18 +199,15 @@ public class CodeConfigurationView extends ConfigurationEditorView {
         commandLineInterface.setProgressFeedback(progressFeedback);
         Executors.newCachedThreadPool().execute(() -> {
             try {
-                String reportTypeOption = "-" + reportType;
                 String configFileOption = "-" + CommandLineInterface.CONF_FILE;
                 String outputFolderOption = "-" + CommandLineInterface.OUTPUT_FOLDER;
                 String commandLine = "java -jar sokrates.jar "
                         + CommandLineInterface.GENERATE_REPORTS + " "
-                        + reportTypeOption + " "
                         + configFileOption + " '" + file.getPath() + "' "
                         + outputFolderOption + " '" + reportsFolder.getPath() + "'";
                 progressFeedback.setText("Command line: <span style='background-color: #e5ffe5;'>" + commandLine + "</span>");
                 progressFeedback.setText("");
                 commandLineInterface.run(new String[]{CommandLineInterface.GENERATE_REPORTS,
-                        reportTypeOption,
                         configFileOption, file.getPath(),
                         outputFolderOption, reportsFolder.getPath()});
             } catch (IOException e) {
@@ -225,47 +222,7 @@ public class CodeConfigurationView extends ConfigurationEditorView {
     }
 
     public void generateFullReport() {
-        generateReports(CommandLineInterface.REPORT_ALL);
-    }
-
-    public void generateFilesInScopeReport() {
-        generateReports(CommandLineInterface.REPORT_OVERVIEW);
-    }
-
-    public void generateDuplicationReport() {
-        generateReports(CommandLineInterface.REPORT_DUPLICATION);
-    }
-
-    public void generateLogicalDecompositionReport() {
-        generateReports(CommandLineInterface.REPORT_LOGICAL_DECOMPOSITION);
-    }
-
-    public void generateConcernsReport() {
-        generateReports(CommandLineInterface.REPORT_CONCERNS);
-    }
-
-    public void generateFileSizeReport() {
-        generateReports(CommandLineInterface.REPORT_FILE_SIZE);
-    }
-
-    public void generateUnitSizeReport() {
-        generateReports(CommandLineInterface.REPORT_UNIT_SIZE);
-    }
-
-    public void generateConditionalComplexity() {
-        generateReports(CommandLineInterface.REPORT_CONDITIONAL_COMPLEXITY);
-    }
-
-    public void generateFindingsOverviewReport() {
-        generateReports(CommandLineInterface.REPORT_OVERVIEW);
-    }
-
-    public void generateMetricsOverviewReport() {
-        generateReports(CommandLineInterface.REPORT_OVERVIEW);
-    }
-
-    public void generateControlsReport() {
-        generateReports(CommandLineInterface.REPORT_CONTROLS);
+        generateReports();
     }
 
     public File getFile() {

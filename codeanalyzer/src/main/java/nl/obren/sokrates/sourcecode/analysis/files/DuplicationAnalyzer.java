@@ -19,7 +19,7 @@ import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 import java.util.*;
 
 public class DuplicationAnalyzer extends Analyzer {
-    public static final int LIST_LIMIT = 100;
+    public static final int LIST_LIMIT = 50;
     private final StringBuffer textSummary;
     private final CodeConfiguration codeConfiguration;
     private final MetricsList metricsList;

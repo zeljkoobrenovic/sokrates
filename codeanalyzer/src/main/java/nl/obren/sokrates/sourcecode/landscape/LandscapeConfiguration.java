@@ -34,7 +34,7 @@ public class LandscapeConfiguration {
     private List<WebFrameLink> iFramesProjectsAtStart = new ArrayList<>();
     private List<WebFrameLink> iFramesContributors = new ArrayList<>();
     private List<WebFrameLink> iFramesContributorsAtStart = new ArrayList<>();
-    private CustomTagsConfig tags = new CustomTagsConfig();
+    private List<ProjectTag> projectTags = new ArrayList<>();
 
     private List<SubLandscapeLink> subLandscapes = new ArrayList<>();
     private List<SokratesProjectLink> projects = new ArrayList<>();
@@ -175,12 +175,12 @@ public class LandscapeConfiguration {
         this.iFramesContributorsAtStart = iFramesContributorsAtStart;
     }
 
-    public CustomTagsConfig getTags() {
-        return tags;
+    public List<ProjectTag> getProjectTags() {
+        return projectTags;
     }
 
-    public void setTags(CustomTagsConfig tags) {
-        this.tags = tags;
+    public void setProjectTags(List<ProjectTag> projectTags) {
+        this.projectTags = projectTags;
     }
 
     public boolean isAnonymizeContributors() {

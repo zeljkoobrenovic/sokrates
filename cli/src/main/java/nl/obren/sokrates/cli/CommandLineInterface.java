@@ -6,7 +6,6 @@ package nl.obren.sokrates.cli;
 
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
-import nl.obren.sokrates.common.renderingutils.GraphvizUtil;
 import nl.obren.sokrates.common.renderingutils.Thresholds;
 import nl.obren.sokrates.common.renderingutils.VisualizationItem;
 import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
@@ -26,6 +25,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
+import nl.obren.sokrates.sourcecode.githistory.ExtractGitHistoryFileHandler;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
 import nl.obren.sokrates.sourcecode.scoping.ScopeCreator;
 import nl.obren.sokrates.sourcecode.scoping.custom.CustomConventionsHelper;
@@ -40,6 +40,7 @@ import org.apache.log4j.BasicConfigurator;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -48,10 +49,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class CommandLineInterface {
+    // commands
     public static final String INIT = "init";
     public static final String GENERATE_REPORTS = "generateReports";
     public static final String UPDATE_CONFIG = "updateConfig";
     public static final String EXPORT_STANDARD_CONVENTIONS = "exportStandardConventions";
+    public static final String EXTRACT_FILES = "extractFiles";
+    public static final String EXTRACT_GIT_HISTORY = "extractGitHistory";
+
+    // arguments
     public static final String SRC_ROOT = "srcRoot";
     public static final String CONVENTIONS_FILE = "conventionsFile";
     public static final String NAME = "name";
@@ -59,26 +65,16 @@ public class CommandLineInterface {
     public static final String LOGO_LINK = "logoLink";
     public static final String CONF_FILE = "confFile";
     public static final String DATE = "date";
-    public static final String REPORT_ALL = "reportAll";
-    public static final String REPORT_DATA = "reportData";
-    public static final String REPORT_OVERVIEW = "reportOverview";
-    public static final String REPORT_FINDINGS = "reportFindings";
-    public static final String REPORT_DUPLICATION = "reportDuplication";
-    public static final String REPORT_LOGICAL_DECOMPOSITION = "reportLogicalDecompositions";
-    public static final String REPORT_CONCERNS = "reportConcerns";
-    public static final String REPORT_FILE_SIZE = "reportFileSize";
-    public static final String REPORT_FILE_HISTORY = "reportFileHistory";
-    public static final String REPORT_METRICS = "reportMetrics";
-    public static final String REPORT_UNIT_SIZE = "reportUnitSize";
-    public static final String REPORT_CONDITIONAL_COMPLEXITY = "reportConditionalComplexity";
-    public static final String REPORT_CONTROLS = "reportControls";
     public static final String OUTPUT_FOLDER = "outputFolder";
     public static final String USE_INTERNAL_GRAPHVIZ = "internalGraphviz";
     public static final String HTML_REPORTS_FOLDER_NAME = "html";
-    public static final String INIT_LANDSCAPE = "initLandscape";
     public static final String UPDATE_LANDSCAPE = "updateLandscape";
     public static final String ANALYSIS_ROOT = "analysisRoot";
     public static final String TIMEOUT = "timeout";
+    public static final String PREFIX = "prefix";
+    public static final String PATTERN = "pattern";
+    public static final String DEST_FOLDER = "destFolder";
+    public static final String DEST_PARENT = "destParent";
 
     public static final String SKIP_DUPLICATION_ANALYSES = "skipDuplication";
     public static final String ENABLE_DUPLICATION_ANALYSES = "enableDuplication";
@@ -100,19 +96,10 @@ public class CommandLineInterface {
     private Option date = new Option(DATE, true, "[OPTIONAL] last date of source code update (default today), used for reports on active contributors");
     private Option analysisRoot = new Option(ANALYSIS_ROOT, true, "[OPTIONAL] the path to configuration file (default is \"<currentFolder>/_sokrates/config.json\"");
     private Option timeout = new Option(TIMEOUT, true, "[OPTIONAL] timeout in seconds");
-    private Option all = new Option(REPORT_ALL, false, "[DEFAULT] generate all reports");
-    private Option data = new Option(REPORT_DATA, false, "save analysis data in JSON and text format (in the _sokrates/reports/data folder)");
-    private Option scope = new Option(REPORT_OVERVIEW, false, "generate the report describing the overview of files in scope");
-    private Option findings = new Option(REPORT_FINDINGS, false, "generate the report describing the manual findings");
-    private Option duplication = new Option(REPORT_DUPLICATION, false, "generate the duplication report (stored in <outputFolder>/Duplication.html)");
-    private Option logicalDecomposition = new Option(REPORT_LOGICAL_DECOMPOSITION, false, "generate the logical decomposition report (stored in <outputFolder>/LogicalDecomposition.html)");
-    private Option concerns = new Option(REPORT_CONCERNS, false, "generate the concerns report (stored in <outputFolder>/Concerns.html)");
-    private Option fileSize = new Option(REPORT_FILE_SIZE, false, "generate the file size report (stored in <outputFolder>/FileSize.html)");
-    private Option fileHistory = new Option(REPORT_FILE_HISTORY, false, "generate the file history reports (stored in <outputFolder>/FileAge.html, FileChangeFrequency.html, and TemporalDependencies.html)");
-    private Option unitSize = new Option(REPORT_UNIT_SIZE, false, "generate the unit size report (stored in <outputFolder>/UnitSize.html)");
-    private Option conditionalComplexity = new Option(REPORT_CONDITIONAL_COMPLEXITY, false, "generate the conditional complexity report (stored in <outputFolder>/ConditionalComplexity.html)");
-    private Option metrics = new Option(REPORT_METRICS, false, "generate the metrics overview report (stored in <outputFolder>/Metrics.html)");
-    private Option controls = new Option(REPORT_CONTROLS, false, "generate the controls report (stored in <outputFolder>/Controls.html)");
+    private Option prefix = new Option(PREFIX, true, "the path prefix");
+    private Option pattern = new Option(PATTERN, true, "the file path regex pattern");
+    private Option destRoot = new Option(DEST_FOLDER, true, "the destination folder");
+    private Option destParent = new Option(DEST_PARENT, true, "[OPTIONAL] the destination parent folder");
     private Option internalGraphviz = new Option(USE_INTERNAL_GRAPHVIZ, false, "use internal Graphviz library (by default external dot program is used, you may specify the external dot path via the system variable GRAPHVIZ_DOT)");
 
     private Option outputFolder = new Option(OUTPUT_FOLDER, true, "[OPTIONAL] the folder where reports will be stored (default value is <currentFolder/_sokrates/reports>)");
@@ -160,8 +147,14 @@ public class CommandLineInterface {
             } else if (args[0].equalsIgnoreCase(EXPORT_STANDARD_CONVENTIONS)) {
                 exportConventions(args);
                 return;
-            } else if (args[0].equalsIgnoreCase(INIT_LANDSCAPE)) {
-                initLandscape(args);
+            } else if (args[0].equalsIgnoreCase(EXTRACT_FILES)) {
+                extractFiles(args);
+                return;
+            } else if (args[0].equalsIgnoreCase(EXTRACT_GIT_HISTORY)) {
+                extractGitHistory(args);
+                return;
+            } else if (args[0].equalsIgnoreCase(UPDATE_LANDSCAPE)) {
+                updateLandscape(args);
                 return;
             } else if (args[0].equalsIgnoreCase(UPDATE_LANDSCAPE)) {
                 updateLandscape(args);
@@ -178,12 +171,10 @@ public class CommandLineInterface {
         }
     }
 
-    private void initLandscape(String[] args) throws ParseException {
-        Options options = getInitLandscapeOptions();
+    private void extractGitHistory(String[] args) throws ParseException, IOException {
+        Options options = getExtractGitHistoryOption();
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
-
-        startTimeoutIfDefined(cmd);
 
         String strRootPath = cmd.getOptionValue(analysisRoot.getOpt());
         if (!cmd.hasOption(analysisRoot.getOpt())) {
@@ -196,11 +187,34 @@ public class CommandLineInterface {
             return;
         }
 
-        String confFilePath = cmd.getOptionValue(confFile.getOpt());
+        String prefixValue = cmd.getOptionValue(prefix.getOpt());
 
-        updateDateParam(cmd);
+        new ExtractGitHistoryFileHandler().extractSubHistory(new File(root, "git-history.txt"), prefixValue);
+    }
 
-        LandscapeAnalysisCommands.init(root, confFilePath != null ? new File(confFilePath) : null);
+    private void extractFiles(String[] args) throws ParseException, IOException {
+        Options options = getExtractFilesOption();
+        CommandLineParser parser = new DefaultParser();
+        CommandLine cmd = parser.parse(options, args);
+
+        File root = cmd.hasOption(analysisRoot.getOpt()) ? new File(cmd.getOptionValue(analysisRoot.getOpt())) : new File(".");
+        String patternValue = cmd.getOptionValue(pattern.getOpt());
+        String dest = cmd.getOptionValue(destRoot.getOpt());
+        String destParentValue = cmd.getOptionValue(destParent.getOpt());
+
+        if (patternValue == null) {
+            System.out.println("the pattern value is missing");
+            return;
+        }
+        if (dest == null) {
+            System.out.println("the destination folder value is missing");
+            return;
+        }
+        if (destParentValue == null) {
+            destParentValue = dest;
+        }
+
+        SokratesFileUtils.extractFiles(root, new File(root, dest), new File(root, destParentValue), patternValue);
     }
 
     private void updateDateParam(CommandLine cmd) {
@@ -212,7 +226,7 @@ public class CommandLineInterface {
     }
 
     private void updateLandscape(String[] args) throws ParseException {
-        Options options = getInitLandscapeOptions();
+        Options options = getExtractGitHistoryOption();
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
@@ -466,14 +480,10 @@ public class CommandLineInterface {
 
             boolean useDefault = noReportingOptions(cmd);
 
-            if (useDefault || cmd.hasOption(all.getOpt()) || cmd.hasOption(data.getOpt())) {
-                dataExporter.saveData(sokratesConfigFile, codeConfiguration, reportsFolder, analysisResults);
-                saveTextualSummary(reportsFolder, analysisResults);
-            }
+            dataExporter.saveData(sokratesConfigFile, codeConfiguration, reportsFolder, analysisResults);
+            saveTextualSummary(reportsFolder, analysisResults);
 
-            if (useDefault || cmd.hasOption(all.getOpt()) || cmd.hasOption(logicalDecomposition.getOpt())) {
-                generateVisuals(reportsFolder, analysisResults);
-            }
+            generateVisuals(reportsFolder, analysisResults);
 
             generateAndSaveReports(sokratesConfigFile, reportsFolder, sokratesConfigFile.getParentFile(), codeAnalyzer, analysisResults);
         } catch (Exception e) {
@@ -496,20 +506,6 @@ public class CommandLineInterface {
             }
         }
         return true;
-    }
-
-    private boolean dataReportsOnly(CommandLine cmd) {
-        boolean anyReports = false;
-        for (Option arg : cmd.getOptions()) {
-            String reportOption = arg.getOpt().toLowerCase();
-            if (reportOption.startsWith("report")) {
-                anyReports = true;
-                if (!reportOption.equalsIgnoreCase(data.getOpt())) {
-                    return false;
-                }
-            }
-        }
-        return anyReports;
     }
 
     private void info(String text) {
@@ -638,14 +634,22 @@ public class CommandLineInterface {
         System.out.println("\njava -jar sokrates.jar " + INIT + " [options]\n    Creates a Sokrates configuration file for a codebase");
         System.out.println("\njava -jar sokrates.jar " + GENERATE_REPORTS + " [options]\n    Generates Sokrates reports based on the configuration");
         System.out.println("\njava -jar sokrates.jar " + UPDATE_CONFIG + " [options]\n    Updates a configuration file and completes missing fields\n");
+        System.out.println("\njava -jar sokrates.jar " + UPDATE_LANDSCAPE + " [options]\n    Updates or creates a landscape report\n");
+        System.out.println("\njava -jar sokrates.jar " + EXPORT_STANDARD_CONVENTIONS + " [options]\n    Export standard scpoing conventiosn to a JSON file\n");
+        System.out.println("\njava -jar sokrates.jar " + EXTRACT_FILES + " [options]\n    Split files based on a path regex pattern\n");
+        System.out.println("\njava -jar sokrates.jar " + EXTRACT_GIT_HISTORY + " [options]\n    Split a git history file inot smaller ones\n");
         System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
         usage(INIT, getInitOptions());
         System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
         usage(GENERATE_REPORTS, getReportingOptions());
         System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
         usage(UPDATE_CONFIG, getUpdateConfigOptions());
-        usage(INIT_LANDSCAPE, getInitLandscapeOptions());
+        System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
         usage(UPDATE_LANDSCAPE, getUpdateLandscapeOptions());
+        System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
+        usage(EXTRACT_FILES, getExtractFilesOption());
+        System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
+        usage(EXTRACT_GIT_HISTORY, getExtractGitHistoryOption());
     }
 
     private void usage(String prefix, Options options) {
@@ -656,76 +660,14 @@ public class CommandLineInterface {
 
     private CodeAnalyzerSettings getCodeAnalyzerSettings(CommandLine cmd) {
         CodeAnalyzerSettings settings = new CodeAnalyzerSettings();
-        settings.setDataOnly(dataReportsOnly(cmd));
-
-        boolean useDefault = noReportingOptions(cmd);
-        settings.setUpdateIndex(useDefault || cmd.hasOption(all.getOpt()));
-
-        if (fullAnalysisNeeded(cmd)) {
-            return settings;
-        } else {
-            settings.deselectAll();
-
-            if (cmd.hasOption(scope.getOpt())) {
-                settings.setAnalyzeFilesInScope(true);
-            }
-            if (cmd.hasOption(findings.getOpt())) {
-                settings.setAnalyzeFilesInScope(true);
-            }
-            if (cmd.hasOption(duplication.getOpt())) {
-                settings.setAnalyzeDuplication(true);
-            }
-            if (cmd.hasOption(logicalDecomposition.getOpt())) {
-                settings.setAnalyzeLogicalDecomposition(true);
-            }
-            if (cmd.hasOption(concerns.getOpt())) {
-                settings.setAnalyzeConcerns(true);
-            }
-            if (cmd.hasOption(fileSize.getOpt())) {
-                settings.setAnalyzeFileSize(true);
-            }
-            if (cmd.hasOption(fileHistory.getOpt())) {
-                settings.setAnalyzeFileHistory(true);
-            }
-            if (cmd.hasOption(conditionalComplexity.getOpt())) {
-                settings.setAnalyzeConditionalComplexity(true);
-            }
-            if (cmd.hasOption(unitSize.getOpt())) {
-                settings.setAnalyzeUnitSize(true);
-            }
-            if (cmd.hasOption(metrics.getOpt())) {
-                settings.setCreateMetricsList(true);
-            }
-            if (cmd.hasOption(controls.getOpt())) {
-                settings.setAnalyzeControls(true);
-            }
-
-            GraphvizUtil.useExternalGraphviz = !cmd.hasOption(internalGraphviz.getOpt());
-        }
 
         return settings;
-    }
-
-    private boolean fullAnalysisNeeded(CommandLine cmd) {
-        return noReportingOptions(cmd) || cmd.hasOption(all.getOpt()) || cmd.hasOption(data.getOpt());
     }
 
     private Options getReportingOptions() {
         Options options = new Options();
         options.addOption(confFile);
         options.addOption(outputFolder);
-        options.addOption(all);
-        options.addOption(scope);
-        options.addOption(data);
-        options.addOption(duplication);
-        options.addOption(logicalDecomposition);
-        options.addOption(concerns);
-        options.addOption(fileSize);
-        options.addOption(unitSize);
-        options.addOption(conditionalComplexity);
-        options.addOption(metrics);
-        options.addOption(controls);
-        options.addOption(findings);
         options.addOption(internalGraphviz);
         options.addOption(timeout);
         options.addOption(date);
@@ -780,14 +722,26 @@ public class CommandLineInterface {
         return options;
     }
 
-    private Options getInitLandscapeOptions() {
+    private Options getExtractFilesOption() {
         Options options = new Options();
         options.addOption(analysisRoot);
-        options.addOption(confFile);
-        options.addOption(timeout);
-        options.addOption(date);
+        options.addOption(pattern);
+        options.addOption(destRoot);
+        options.addOption(destParent);
+        analysisRoot.setRequired(false);
+        pattern.setRequired(true);
+        destRoot.setRequired(true);
+        destParent.setRequired(false);
 
-        confFile.setRequired(false);
+        return options;
+    }
+
+    private Options getExtractGitHistoryOption() {
+        Options options = new Options();
+        options.addOption(prefix);
+        options.addOption(analysisRoot);
+        prefix.setRequired(true);
+        analysisRoot.setRequired(false);
 
         return options;
     }
