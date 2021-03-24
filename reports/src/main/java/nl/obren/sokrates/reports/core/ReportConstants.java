@@ -90,6 +90,10 @@ public class ReportConstants {
             "            margin-top: 0;\n" +
             "        }\n" +
             "\n" +
+            "        a {\n" +
+            "            text-decoration: none;\n" +
+            "        }\n" +
+            "\n" +
             "        .reportSubtitle {\n" +
             "            color: grey;\n" +
             "        }\n" +

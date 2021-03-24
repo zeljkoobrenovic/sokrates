@@ -239,8 +239,8 @@ public class LandscapeAnalysisResults {
                 projectLinesOfCodePerExtension = projectAnalysisResults.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCodePerExtension();
             } else if (type == CodeCategory.OTHER) {
                 List<NumericMetric> build = projectAnalysisResults.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getLinesOfCodePerExtension();
-                List<NumericMetric> generated = projectAnalysisResults.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getLinesOfCodePerExtension();
-                List<NumericMetric> other = projectAnalysisResults.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getLinesOfCodePerExtension();
+                List<NumericMetric> generated = projectAnalysisResults.getAnalysisResults().getGeneratedAspectAnalysisResults().getLinesOfCodePerExtension();
+                List<NumericMetric> other = projectAnalysisResults.getAnalysisResults().getOtherAspectAnalysisResults().getLinesOfCodePerExtension();
                 projectLinesOfCodePerExtension = merge(Arrays.asList(build, generated, other));
             } else {
                 projectLinesOfCodePerExtension = projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension();

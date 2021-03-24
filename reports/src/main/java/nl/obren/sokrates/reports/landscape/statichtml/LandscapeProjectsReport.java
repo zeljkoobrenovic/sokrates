@@ -62,9 +62,6 @@ public class LandscapeProjectsReport {
     }
 
     private void addTabStats(RichTextReport report) {
-        ArrayList<TagStats> tagStats = new ArrayList<>(this.tagStatsMap.values());
-        tagStats.sort((a, b) -> b.getProjectsAnalysisResults().size() - a.getProjectsAnalysisResults().size());
-
         report.startTable();
         report.addTableHeader("Tag", "# projects", "LOC<br>(main)", "LOC<br>(test)", "# commits<br>(this year)", "# contributors<br>(30 days)");
 
@@ -75,12 +72,79 @@ public class LandscapeProjectsReport {
         if (tagStatsMap.containsKey("")) {
             addTagRow(report, "", new ArrayList<>());
         }
-
         report.endTable();
+
+        visualizeTagProjects(report);
+    }
+
+    private void visualizeTagProjects(RichTextReport report) {
+        report.startDiv("");
+        int maxLoc = this.landscapeAnalysisResults.getProjectAnalysisResults().stream()
+                .map(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode())
+                .reduce((a, b) -> Math.max(a, b)).get();
+        int maxCommits = this.landscapeAnalysisResults.getProjectAnalysisResults().stream()
+                .map(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days())
+                .reduce((a, b) -> Math.max(a, b)).get();
+        this.landscapeAnalysisResults.getConfiguration().getProjectTags().forEach(tag -> {
+            String tagName = tag.getTag();
+            visualizeTag(report, maxLoc, maxCommits, tagName);
+        });
+        if (tagStatsMap.containsKey("")) {
+            visualizeTag(report, maxLoc, maxCommits, "");
+        }
+        report.endTable();
+    }
+
+    private void visualizeTag(RichTextReport report, int maxLoc, int maxCommits, String tagName) {
+        TagStats stats = tagStatsMap.get(tagName);
+        if (stats == null) {
+            return;
+        }
+        report.startDiv("margin: 18px;");
+        report.addContentInDiv("<b>" + (tagName.isBlank() ? "Untagged" : tagName) + "</b> (" + stats.getProjectsAnalysisResults().size() + ")", "margin-bottom: 5px");
+        List<ProjectAnalysisResults> projects = stats.getProjectsAnalysisResults();
+        projects.sort((a, b) -> b.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days() - a.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days());
+        projects.forEach(project -> {
+            int loc = project.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
+            int barSize = 3 + (int) Math.round(Math.sqrt(4900 * ((double) loc / maxLoc)));
+            int commitsCount30Days = project.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days();
+            double opacity = commitsCount30Days > 0 ? 0.4 + 0.6 * commitsCount30Days / maxCommits : 0.0;
+            report.startNewTabLink(getProjectReportUrl(project), "");
+            report.startDivWithLabel(tooltip(project),
+                    "border: 1px solid grey; border-radius: 50%;" +
+                    "display: inline-block; " +
+                    "padding: 0;" +
+                    "vertical-align: middle; " +
+                    "overflow: none; " +
+                    "width: " + (barSize + 2) + "px; " +
+                    "height: " + (barSize + 2) + "px; ");
+            report.startDiv(" margin: 0;border-radius: 50%;" +
+                    "opacity: " + opacity + ";" +
+                    "background-color: " + getTabColor(stats.getTag()) + "; " +
+                    "border: 1px solid lightgrey; cursor: pointer;" +
+                    "width: " + barSize + "px; " +
+                    "height: " + barSize + "px; ");
+            report.endDiv();
+            report.endDiv();
+            report.endNewTabLink();
+        });
+        report.endDiv();
+    }
+
+    private String tooltip(ProjectAnalysisResults project) {
+        CodeAnalysisResults analysis = project.getAnalysisResults();
+        return analysis.getMetadata().getName() + "\n\n" +
+                analysis.getContributorsAnalysisResults().getCommitsCount30Days() + " commits (30 days)" + "\n" +
+                analysis.getContributorsAnalysisResults().getContributors()
+                        .stream().filter(contributor -> contributor.getCommitsCount30Days() > 0).count() + " contributors (30 days)" + "\n" +
+                FormattingUtils.formatCount(analysis.getMainAspectAnalysisResults().getLinesOfCode()) + " LOC";
     }
 
     private void addTagRow(RichTextReport report, String tagName, List<String> patterns) {
         TagStats stats = tagStatsMap.get(tagName);
+        if (stats == null) {
+            return;
+        }
         report.startTableRow("text-align: center");
         report.startTableCell();
         if (StringUtils.isNotBlank(tagName)) {
@@ -101,9 +165,9 @@ public class LandscapeProjectsReport {
                 CodeAnalysisResults projectAnalysisResults = project.getAnalysisResults();
                 String projectReportUrl = getProjectReportUrl(project);
                 report.addContentInDiv(
-                        "<a href='" + projectReportUrl + "' target='_blank'>" + projectAnalysisResults.getMetadata().getName() + "</a> "
-                        + "<span color='lightgrey'>(<b>"
-                        + FormattingUtils.formatCount(projectAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode()) + "</b> LOC)</span>");
+                        "<a href='" + projectReportUrl + "' target='_blank' style='margin-left: 10px'>" + projectAnalysisResults.getMetadata().getName() + "</a> "
+                                + "<span color='lightgrey'>(<b>"
+                                + FormattingUtils.formatCount(projectAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode()) + "</b> LOC)</span>");
             });
             report.endShowMoreBlock();
             report.endTableCell();
@@ -201,6 +265,9 @@ public class LandscapeProjectsReport {
 
     private String getTags(ProjectAnalysisResults project) {
         String name = project.getAnalysisResults().getMetadata().getName();
+        List<NumericMetric> linesOfCodePerExtension = project.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension();
+        linesOfCodePerExtension.sort((a, b) -> b.getValue().intValue() - a.getValue().intValue());
+        String mainTech = linesOfCodePerExtension.size() > 0 ? linesOfCodePerExtension.get(0).getName().replaceAll(".*[.]", "") : "";
         List<ProjectTag> tags = this.landscapeAnalysisResults.getConfiguration().getProjectTags();
 
         StringBuilder tagsHtml = new StringBuilder();
@@ -208,7 +275,7 @@ public class LandscapeProjectsReport {
         boolean tagged[] = {false};
 
         tags.forEach(tag -> {
-            if (tag.matches(name)) {
+            if (!tag.exclude(name) && !tag.excludesMainTechnology(mainTech) && (tag.matches(name) || tag.matchesMainTechnology(mainTech))) {
                 tagsHtml.append("<div style='margin: 2px; padding: 5px; display: inline-block; background-color: " + getTabColor(tag) + "; font-size: 70%; border-radius: 10px'>");
                 tagsHtml.append(tag.getTag());
                 tagsHtml.append("</div>");
@@ -232,7 +299,7 @@ public class LandscapeProjectsReport {
     }
 
     private String getTabColor(ProjectTag tag) {
-        return StringUtils.isNotBlank(tag.getColor()) ? tag.getColor() : "lightgrey";
+        return StringUtils.isNotBlank(tag.getColor()) ? tag.getColor() : "deepskyblue";
     }
 
 

@@ -294,6 +294,7 @@ public class ScopingConventions {
         testFilesConventions.add(new Convention(".*/IntegrationTests?/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*/UITests?/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*/src/testPlay/.*", "", defaultNote));
+        testFilesConventions.add(new Convention(".*/Unit Tests/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*/src/ciTest/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*/src/ciTests/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*/src/androidTest/.*", "", defaultNote));
@@ -338,6 +339,7 @@ public class ScopingConventions {
         ignoredFilesConventions.add(new Convention(".*/[.][a-zA-Z0-9_]+.*", "", "Hidden files and folders"));
 
         ignoredFilesConventions.add(new Convention(".*/node_modules/.*", "", "Node dependencies"));
+        ignoredFilesConventions.add(new Convention(".*/git[-]history[.]txt", "", "Git history"));
         ignoredFilesConventions.add(new Convention(".*/bower_components/.*", "", "Bower components"));
 
         ignoredFilesConventions.add(new Convention(".*/[.]yarn/releases/.*", "", "Yarn releases"));

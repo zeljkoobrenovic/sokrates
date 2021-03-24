@@ -285,7 +285,7 @@ public class RichTextReport {
     }
 
     public void startDivWithLabel(String label, String style) {
-        addHtmlContent("<div style=\"" + style + "\" \"title\"=\"" + label + "\">");
+        addHtmlContent("<div style=\"" + style + "\" title=\"" + label + "\">");
     }
 
     public void startDiv(String style, String tooltip) {
