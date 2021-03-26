@@ -43,14 +43,17 @@ public class DuplicationDependenciesHelper {
         List<NamedSourceCodeAspect> logicalComponents1 = file1.getSourceFile().getLogicalComponents(group);
         List<NamedSourceCodeAspect> logicalComponents2 = file2.getSourceFile().getLogicalComponents(group);
 
-        String name1 = logicalComponents1.get(0).getName();
-        String name2 = logicalComponents2.get(0).getName();
+        NamedSourceCodeAspect component1 = logicalComponents1.get(0);
+        String name1 = component1.getName();
+        NamedSourceCodeAspect component2 = logicalComponents2.get(0);
+        String name2 = component2.getName();
 
         if (!name1.equalsIgnoreCase(name2)) {
             if (!instances.contains(instance)) instances.add(instance);
             Set<String> duplicatedLines = updateDuplicatedLines(file1, file2, name1, name2);
             ComponentDependency dependency = getDependency(name1, name2);
-            dependency.setCount(duplicatedLines.size());
+            int size = duplicatedLines.size();
+            dependency.setCount(size);
             updateUniqueFilePairs(file1, file2, dependency);
         }
     }

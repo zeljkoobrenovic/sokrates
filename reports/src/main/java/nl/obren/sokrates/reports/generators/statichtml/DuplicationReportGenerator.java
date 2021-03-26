@@ -109,7 +109,7 @@ public class DuplicationReportGenerator {
             report.startSection("Duplication per Component (" + logicalDecompositionName + ")", "");
             DuplicationReportUtils.addDuplicationPerAspect(report, duplicationPerComponent);
             report.startDiv("");
-            renderDependenciesViaDuplication(report, logicalDecomposition);
+            renderDependenciesViaDuplication(report, duplicationPerComponent, logicalDecomposition);
             report.endDiv();
             report.endSection();
         });
@@ -173,9 +173,21 @@ public class DuplicationReportGenerator {
         report.endSection();
     }
 
-    private void renderDependenciesViaDuplication(RichTextReport report, LogicalDecomposition logicalDecomposition) {
+    private void renderDependenciesViaDuplication(RichTextReport report, List<DuplicationMetric> duplicationPerComponent, LogicalDecomposition logicalDecomposition) {
         DuplicationDependenciesHelper duplicationDependenciesHelper = new DuplicationDependenciesHelper(logicalDecomposition.getName());
         List<ComponentDependency> allDuplicates = duplicationDependenciesHelper.extractDependencies(codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates());
+        allDuplicates.forEach(dependency -> {
+            duplicationPerComponent.stream().filter(duplication -> duplication.getKey().equalsIgnoreCase(dependency.getFromComponent())).findFirst()
+                    .ifPresent(c -> {
+                        int cleanedLinesOfCode = c.getCleanedLinesOfCode();
+                        dependency.setValueFrom(cleanedLinesOfCode > 0 ? 100.0 * (dependency.getCount() / 2.0) / cleanedLinesOfCode : 0);
+                    });
+            duplicationPerComponent.stream().filter(duplication -> duplication.getKey().equalsIgnoreCase(dependency.getToComponent())).findFirst()
+                    .ifPresent(c -> {
+                        int cleanedLinesOfCode = c.getCleanedLinesOfCode();
+                        dependency.setValueTo(cleanedLinesOfCode > 0 ? 100.0 * (dependency.getCount() / 2.0) / cleanedLinesOfCode : 0);
+                    });
+        });
         int threshold = logicalDecomposition.getDuplicationLinkThreshold();
         List<ComponentDependency> componentDependencies = allDuplicates.stream().filter(d -> d.getCount() >= threshold).collect(Collectors.toList());
 
@@ -217,8 +229,12 @@ public class DuplicationReportGenerator {
         componentDependencies.forEach(componentDependency -> {
             report.startTableRow();
 
-            report.addTableCell(componentDependency.getFromComponent() + "<br/>&nbsp&nbsp;-->&nbsp"
-                    + componentDependency.getToComponent());
+            String formattedPercentageFrom = FormattingUtils.getFormattedPercentage(componentDependency.getValueFrom());
+            String formattedPercentageTo = FormattingUtils.getFormattedPercentage(componentDependency.getValueTo());
+            report.addTableCell(componentDependency.getFromComponent()
+                    + (!formattedPercentageFrom.equals("0") ? " (" + formattedPercentageFrom + "%)" : "")
+                    + "<br/>&nbsp&nbsp;-->&nbsp"
+                    + componentDependency.getToComponent()+ (!formattedPercentageTo.equals("0") ? " (" + formattedPercentageTo + "%)" : ""));
 
             report.addTableCell(componentDependency.getCount() + "", "text-align: center");
 
