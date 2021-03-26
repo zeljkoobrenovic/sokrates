@@ -61,7 +61,7 @@ public class DuplicationEngineTest {
                 "k\n");
 
         List<SourceFile> sourceFiles = Arrays.asList(sourceFile1, sourceFile2);
-        List<DuplicationInstance> duplicates = engine.findDuplicates(sourceFiles, new ProgressFeedback());
+        List<DuplicationInstance> duplicates = engine.findDuplicates(sourceFiles, 6, new ProgressFeedback());
 
         assertEquals(duplicates.size(), 8);
 

@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class FileSizeReportGenerator {
-    public static final int LIST_LIMIT = 50;
     private CodeAnalysisResults codeAnalysisResults;
     private List<String> labels = Arrays.asList("1001+", "501-1000", "201-500", "101-200", "1-100");
 
@@ -126,11 +125,15 @@ public class FileSizeReportGenerator {
         List<SourceFile> filesList = codeAnalysisResults.getFilesAnalysisResults().getAllFiles()
                 .stream().filter(sourceFile -> sourceFile.getUnitsCount() > 0).collect(Collectors.toList());
         filesList.sort((o1, o2) -> o2.getUnitsCount() - o1.getUnitsCount());
-        filesList = filesList.subList(0, Math.min(LIST_LIMIT, filesList.size()));
+        filesList = filesList.subList(0, Math.min(getMaxTopListSize(), filesList.size()));
         report.startSection("Files With Most Units (Top " + filesList.size() + ")", "");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(filesList, cacheSourceFiles, false, false).toString());
         report.endSection();
+    }
+
+    private int getMaxTopListSize() {
+        return codeAnalysisResults.getCodeConfiguration().getAnalysis().getMaxTopListSize();
     }
 
     private void addFilesWithMostLongLines(RichTextReport report) {
@@ -140,7 +143,7 @@ public class FileSizeReportGenerator {
         int count = filesList.size();
         int sum = filesList.stream().map(s -> (int) s.getLongLinesCount(120)).collect(Collectors.summingInt(Integer::intValue));
         filesList.sort((o1, o2) -> (int) (o2.getLongLinesCount(threshold) - o1.getLongLinesCount(threshold)));
-        filesList = filesList.subList(0, Math.min(LIST_LIMIT, filesList.size()));
+        filesList = filesList.subList(0, Math.min(getMaxTopListSize(), filesList.size()));
         report.startSection("Files With Long Lines (Top " + filesList.size() + ")", "");
         report.addParagraph("There " + (count == 1 ? "is only one file" : "are <b>" + count + "</b> files") + " with lines longer than 120 characters. In total, there " + (sum == 1 ? "is only one long line" : "are <b>" + sum + "</b> long lines") + ".");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();

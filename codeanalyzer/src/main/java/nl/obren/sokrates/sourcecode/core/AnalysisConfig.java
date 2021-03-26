@@ -13,8 +13,11 @@ public class AnalysisConfig {
     private boolean skipDuplication = false;
     private boolean skipDependencies = false;
     private boolean cacheSourceFiles = true;
+    private boolean saveCodeFragments = true;
     private int maxLineLength = 1000;
     private int locDuplicationThreshold = 10000000;
+    private int minDuplicationBlockLoc = 6;
+    private int maxTopListSize = 50;
     private List<AnalyzerOverride> analyzerOverrides = new ArrayList<>();
 
     public boolean isSkipDuplication() {
@@ -63,5 +66,29 @@ public class AnalysisConfig {
 
     public void setLocDuplicationThreshold(int locDuplicationThreshold) {
         this.locDuplicationThreshold = locDuplicationThreshold;
+    }
+
+    public int getMinDuplicationBlockLoc() {
+        return minDuplicationBlockLoc;
+    }
+
+    public void setMinDuplicationBlockLoc(int minDuplicationBlockLoc) {
+        this.minDuplicationBlockLoc = minDuplicationBlockLoc;
+    }
+
+    public int getMaxTopListSize() {
+        return maxTopListSize;
+    }
+
+    public void setMaxTopListSize(int maxTopListSize) {
+        this.maxTopListSize = maxTopListSize;
+    }
+
+    public boolean isSaveCodeFragments() {
+        return saveCodeFragments;
+    }
+
+    public void setSaveCodeFragments(boolean saveCodeFragments) {
+        this.saveCodeFragments = saveCodeFragments;
     }
 }

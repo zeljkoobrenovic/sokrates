@@ -108,7 +108,7 @@ public class DataExporter {
         exportJson();
         exportDuplicates();
         exportUnits();
-        exportInteractiveExplorers();
+        // exportInteractiveExplorers();
         exportSourceFile();
         exportDependencies(analysisResults);
         saveTemporalDependencies(analysisResults);

@@ -39,10 +39,6 @@ public class FileHistoryAnalyzer extends Analyzer {
         this.sokratesFolder = sokratesFolder;
     }
 
-    private static String escapeRegex(String text) {
-        return ".*" + Pattern.quote(text);
-    }
-
     public void analyze() {
         if (codeConfiguration.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesFolder)) {
             List<FileModificationHistory> history = codeConfiguration.getFileHistoryAnalysis().getHistory(sokratesFolder);

@@ -59,7 +59,7 @@ public class FilesReportUtils {
                 table.append("<td style='text-align: center'>" + sourceFile.getLongLinesCount(120) + "</td>\n");
             }
 
-            if (sourceFile.getFileModificationHistory() != null && showAge) {
+            if (showAge) {
                 FileModificationHistory history = sourceFile.getFileModificationHistory();
                 if (history != null) {
                     table.append("<td style='text-align: center'>" + history.daysSinceLatestUpdate() + "</td>\n");

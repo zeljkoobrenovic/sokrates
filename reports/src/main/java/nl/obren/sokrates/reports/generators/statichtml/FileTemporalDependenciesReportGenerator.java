@@ -60,7 +60,7 @@ public class FileTemporalDependenciesReportGenerator {
             report.addParagraph("No file pairs changed together.");
             return;
         }
-        final int maxListSize = 50;
+        final int maxListSize = codeAnalysisResults.getCodeConfiguration().getAnalysis().getMaxTopListSize();
         if (filePairs.size() > maxListSize) {
             filePairs = filePairs.subList(0, maxListSize);
         }

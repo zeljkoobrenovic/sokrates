@@ -21,13 +21,12 @@ import java.util.Map;
 public class DuplicationEngine {
     private static final Log LOG = LogFactory.getLog(DuplicationEngine.class);
 
-    private int threshold = 6;
     private List<DuplicationInstance> duplicates = new ArrayList<>();
 
     private int totalCleanedLinesOfCode = 0;
     private int numberOfDuplicatedLines;
 
-    public List<DuplicationInstance> findDuplicates(List<SourceFile> sourceFiles, ProgressFeedback progressFeedback) {
+    public List<DuplicationInstance> findDuplicates(List<SourceFile> sourceFiles, int threshold, ProgressFeedback progressFeedback) {
         progressFeedback.setText(System.currentTimeMillis() / 1000 + "");
         duplicates = new ArrayList<>();
 

@@ -19,7 +19,6 @@ import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 import java.util.*;
 
 public class DuplicationAnalyzer extends Analyzer {
-    public static final int LIST_LIMIT = 50;
     private final StringBuffer textSummary;
     private final CodeConfiguration codeConfiguration;
     private final MetricsList metricsList;
@@ -46,7 +45,8 @@ public class DuplicationAnalyzer extends Analyzer {
         progressFeedback.start();
         progressFeedback.setDetailedText("");
         AnalysisUtils.info(textSummary, progressFeedback, "Analysing duplication...", start);
-        List<DuplicationInstance> duplicates = new DuplicationEngine().findDuplicates(main.getSourceFiles(), new ProgressFeedback());
+        List<DuplicationInstance> duplicates = new DuplicationEngine().findDuplicates(main.getSourceFiles(),
+                codeConfiguration.getAnalysis().getMinDuplicationBlockLoc(), new ProgressFeedback());
 
         Map<String, DuplicationInstance> mergedConsolidated = consolidate(merge(duplicates));
         ArrayList<DuplicationInstance> consolidatedDuplicationInstances = new ArrayList<>(mergedConsolidated.values());
@@ -82,14 +82,14 @@ public class DuplicationAnalyzer extends Analyzer {
     private void addLongestDuplicates(Map<String, DuplicationInstance> mergedConsolidated) {
         List<DuplicationInstance> filePairs = new ArrayList<>(mergedConsolidated.values());
         Collections.sort(filePairs, (o1, o2) -> -Integer.valueOf(o1.getBlockSize()).compareTo(o2.getBlockSize()));
-        for (int i = 0; i < Math.min(LIST_LIMIT, filePairs.size()); i++) {
+        for (int i = 0; i < Math.min(codeConfiguration.getAnalysis().getMaxTopListSize(), filePairs.size()); i++) {
             analysisResults.getLongestDuplicates().add(filePairs.get(i));
         }
     }
 
     private void addMostFrequentDuplicates(List<DuplicationInstance> duplicates) {
         Collections.sort(new ArrayList<>(duplicates), (o1, o2) -> -Integer.valueOf(o1.getDuplicatedFileBlocks().size()).compareTo(o2.getDuplicatedFileBlocks().size()));
-        for (int i = 0; i < Math.min(LIST_LIMIT, duplicates.size()); i++) {
+        for (int i = 0; i < Math.min(codeConfiguration.getAnalysis().getMaxTopListSize(), duplicates.size()); i++) {
             DuplicationInstance duplicate = duplicates.get(i);
             if (duplicate.getDuplicatedFileBlocks().size() > 2) {
                 analysisResults.getMostFrequentDuplicates().add(duplicate);

@@ -111,7 +111,7 @@ public class UnitsAnalyzer extends Analyzer {
             printRiskDistributionStats(extensionUnitSizeDistribution, conditionalComplexityCategoryNames, "Conditional Complexity Component " + extensionUnitSizeDistribution.getKey() + ": ");
         });
 
-        int sampleSize = 50;
+        int sampleSize = codeConfiguration.getAnalysis().getMaxTopListSize();
         addAllUnits(allUnits, unitsAnalysisResults);
         addLongestUnits(allUnits, unitsAnalysisResults, sampleSize);
         addMostComplexUnits(allUnits, unitsAnalysisResults, sampleSize);

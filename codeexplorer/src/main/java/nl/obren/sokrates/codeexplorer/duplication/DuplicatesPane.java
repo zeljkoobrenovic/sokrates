@@ -202,7 +202,7 @@ public class DuplicatesPane extends BorderPane {
                 progressFeedback.start();
                 DuplicationEngine duplicationEngine = new DuplicationEngine();
                 //DuplicationEngine duplicationEngine = new DuplicationEngine();
-                List<DuplicationInstance> duplicates = duplicationEngine.findDuplicates(sourceFiles, progressFeedback);
+                List<DuplicationInstance> duplicates = duplicationEngine.findDuplicates(sourceFiles, 6, progressFeedback);
                 int duplicatedLinesOfCode = duplicationEngine.getNumberOfDuplicatedLines();
                 int totalCleanedLinesOfCode = duplicationEngine.getTotalCleanedLinesOfCode();
                 Platform.runLater(() -> setTop(getPieChart(duplicatedLinesOfCode, totalCleanedLinesOfCode)));
