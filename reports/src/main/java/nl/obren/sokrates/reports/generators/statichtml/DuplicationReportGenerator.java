@@ -244,7 +244,9 @@ public class DuplicationReportGenerator {
         File file = new File(this.report.getReportsFolder(), "data/text/intercomponent_duplicated_file_pairs_" + filePairsCount++ + ".txt");
 
         try {
-            String content = componentDependency.getEvidence().stream().map(DependencyEvidence::getPathFrom).collect(Collectors.joining("\n\n"));
+            String content = componentDependency.getEvidence().stream()
+                    .map(d -> d.getPathFrom())
+                    .collect(Collectors.joining("\n\n"));
             FileUtils.write(file, content, StandardCharsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
@@ -294,6 +296,8 @@ public class DuplicationReportGenerator {
                 stringBuilder.append(block.getStartLine());
                 stringBuilder.append(":");
                 stringBuilder.append(block.getEndLine());
+                stringBuilder.append(", ");
+                stringBuilder.append(FormattingUtils.getFormattedPercentage(block.getPercentage())+ "%");
                 stringBuilder.append(")\n");
             });
             stringBuilder.append("\n");

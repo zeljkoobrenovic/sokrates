@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.sourcecode.duplication;
 
+import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.dependencies.DependencyEvidence;
@@ -55,7 +56,7 @@ public class DuplicationDependenciesHelper {
     }
 
     private void updateUniqueFilePairs(DuplicatedFileBlock file1, DuplicatedFileBlock file2, ComponentDependency dependency) {
-        String key = file1.getSourceFile().getRelativePath() + "\n" + file2.getSourceFile().getRelativePath();
+        String key = file1.getSourceFile().getRelativePath()+ "\n" + file2.getSourceFile().getRelativePath();
         String alternativeKey = file2.getSourceFile().getRelativePath() + "\n" + file1.getSourceFile().getRelativePath();
 
         if (!dependency.hasPathFrom(key) && !dependency.hasPathFrom(alternativeKey)) {

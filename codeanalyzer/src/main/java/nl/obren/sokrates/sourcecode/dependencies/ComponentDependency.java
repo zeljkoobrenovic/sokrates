@@ -13,6 +13,8 @@ import java.util.List;
 public class ComponentDependency {
     private String fromComponent;
     private int locFrom = 0;
+    private double valueFrom = 0;
+    private double valueTo = 0;
     private List<DependencyEvidence> evidence = new ArrayList<>();
     private String toComponent;
     private int count = 1;
@@ -41,6 +43,22 @@ public class ComponentDependency {
 
     public int getLocFrom() {
         return locFrom;
+    }
+
+    public double getValueFrom() {
+        return valueFrom;
+    }
+
+    public void setValueFrom(double valueFrom) {
+        this.valueFrom = valueFrom;
+    }
+
+    public double getValueTo() {
+        return valueTo;
+    }
+
+    public void setValueTo(double valueTo) {
+        this.valueTo = valueTo;
     }
 
     public void setLocFrom(int locFrom) {
