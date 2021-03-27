@@ -14,17 +14,20 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FileDistributionPerLogicalDecomposition;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileSizeDistribution;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class FileSizeReportGenerator {
+    private final Thresholds fileSizeThresholds;
     private CodeAnalysisResults codeAnalysisResults;
-    private List<String> labels = Arrays.asList("1001+", "501-1000", "201-500", "101-200", "1-100");
+    private List<String> labels;
 
     public FileSizeReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
+        fileSizeThresholds = codeAnalysisResults.getCodeConfiguration().getAnalysis().getFileSizeThresholds();
+        this.labels = fileSizeThresholds.getLabels();
     }
 
     public void addFileSizeToReport(RichTextReport report) {
@@ -32,7 +35,11 @@ public class FileSizeReportGenerator {
         report.startUnorderedList();
         report.addListItem("File size measurements show the distribution of size of files.");
         report.addListItem("Files are classified in four categories based on their size (lines of code): " +
-                "1-100 (very small files), 100-200 (small files), 200-500 (medium size files), 501-1000 (long files), 1001+ (very long files).");
+                fileSizeThresholds.getNegligibleRiskLabel() + " (very small files), " +
+                fileSizeThresholds.getLowRiskLabel() + " (small files), " +
+                fileSizeThresholds.getMediumRiskLabel() + " (medium size files), " +
+                fileSizeThresholds.getHighRiskLabel() + " (long files), " +
+                fileSizeThresholds.getVeryHighRiskLabel() + "(very long files).");
         report.addListItem("It is a good practice to keep files small. Long files may become \"bloaters\", code that have increased to such gargantuan proportions that they are hard to work with.");
         report.endUnorderedList();
         report.endUnorderedList();

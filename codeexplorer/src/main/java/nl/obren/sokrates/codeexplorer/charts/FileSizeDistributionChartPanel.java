@@ -21,6 +21,7 @@ import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileSizeDistribution;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.util.ArrayList;
@@ -40,7 +41,7 @@ public class FileSizeDistributionChartPanel extends BorderPane {
         setBottom(null);
 
         if (sourceFiles != null && sourceFiles.size() > 0) {
-            SourceFileSizeDistribution distribution = new SourceFileSizeDistribution().getOverallDistribution(sourceFiles);
+            SourceFileSizeDistribution distribution = new SourceFileSizeDistribution(Thresholds.defaultFileSizeThresholds()).getOverallDistribution(sourceFiles);
             if (distribution.getTotalValue() > 0) {
                 setCenter(getRiskPieChart("File size distribution", getPieChartDistributionData(distribution)));
                 setBottom(getToolBar());
@@ -66,7 +67,7 @@ public class FileSizeDistributionChartPanel extends BorderPane {
         if (divideByFactor != 0) {
             List<Unit3D> units = new ArrayList<>();
             sourceFiles.forEach(file -> {
-                SourceFileSizeDistribution sourceFileSizeDistribution = new SourceFileSizeDistribution();
+                SourceFileSizeDistribution sourceFileSizeDistribution = new SourceFileSizeDistribution(Thresholds.defaultFileSizeThresholds());
                 BasicColorInfo color = getRiskProfileColor(sourceFileSizeDistribution, file.getLinesOfCode());
                 units.add(new Unit3D(file.getFile().getPath(), file.getLinesOfCode(), color));
             });

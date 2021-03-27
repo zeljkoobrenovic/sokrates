@@ -20,6 +20,7 @@ import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileSizeDistribution;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -84,11 +85,12 @@ public class SummaryUtils {
                 report.startTableRow();
                 report.addTableCell(getIconSvg("file_size"), "border: none");
                 report.addTableCell(getRiskProfileVisual(distribution), "border: none");
+                Thresholds fileSizeThresholds = analysisResults.getCodeConfiguration().getAnalysis().getFileSizeThresholds();
                 report.addTableCell("File Size: <b>"
                         + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(mainLOC, veryLongFilesLOC))
-                        + "%</b> long (>1000 LOC), <b>"
+                        + "%</b> long (>" + fileSizeThresholds.getVeryHigh() + " LOC), <b>"
                         + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(mainLOC, shortFilesLOC))
-                        + "%</b> short (<= 200 LOC)", "border: none; vertical-align: top; padding-top: 11px;");
+                        + "%</b> short (<= " + fileSizeThresholds.getMedium() + " LOC)", "border: none; vertical-align: top; padding-top: 11px;");
                 report.addTableCell("<a href='" + reportRoot + "FileSize.html'  title='file size details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "border: none");
                 report.endTableRow();
             }
@@ -296,14 +298,20 @@ public class SummaryUtils {
         String ageSummary = FormattingUtils.formatPeriod(results.getAgeInDays()) + " old";
         report.addParagraph(ageSummary);
         report.startUnorderedList();
+        Thresholds fileAgeThresholds = analysisResults.getCodeConfiguration().getAnalysis().getFileAgeThresholds();
         report.addListItem("File Age Distribution: "
                 + FormattingUtils.getFormattedPercentage(age.getVeryHighRiskPercentage())
-                + "% older than a year, "
-                + FormattingUtils.getFormattedPercentage(age.getNegligibleRiskPercentage()) + "% less than a month");
+                + "% older than " + fileAgeThresholds.getVeryHigh() + " days, "
+                + FormattingUtils.getFormattedPercentage(age.getNegligibleRiskPercentage()) + "% less than "
+                + fileAgeThresholds.getLow() + " days old");
         report.addListItem("File Changes Distribution: "
                 + FormattingUtils.getFormattedPercentage(changes.getVeryHighRiskPercentage())
-                + "% more than a year ago, "
-                + FormattingUtils.getFormattedPercentage(changes.getNegligibleRiskPercentage()) + "% past month");
+                + "% changed more than "
+                + fileAgeThresholds.getVeryHigh()
+                + " days ago, "
+                + FormattingUtils.getFormattedPercentage(changes.getNegligibleRiskPercentage()) + "% in past "
+                + fileAgeThresholds.getLow() + " days"
+        );
         report.endUnorderedList();
         report.endTableCell();
         report.addTableCell("<a href='" + reportRoot + "FileAge.html'  title='file change history details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "border: none;  vertical-align: top");

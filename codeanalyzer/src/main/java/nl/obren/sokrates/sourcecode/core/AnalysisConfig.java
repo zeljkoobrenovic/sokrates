@@ -5,6 +5,7 @@
 package nl.obren.sokrates.sourcecode.core;
 
 import nl.obren.sokrates.sourcecode.analysis.AnalyzerOverride;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,11 @@ public class AnalysisConfig {
     private int minDuplicationBlockLoc = 6;
     private int maxTopListSize = 50;
     private List<AnalyzerOverride> analyzerOverrides = new ArrayList<>();
+    private Thresholds fileSizeThresholds = Thresholds.defaultFileSizeThresholds();
+    private Thresholds fileAgeThresholds = Thresholds.defaultFileAgeThresholds();
+    private Thresholds fileUpdateFrequencyThresholds = Thresholds.defaultFileUpdateFrequencyThresholds();
+    private Thresholds unitSizeThresholds = Thresholds.defaultUnitSizeThresholds();
+    private Thresholds conditionalComplexityThresholds = Thresholds.defaultConditionalComplexityThresholds();
 
     public boolean isSkipDuplication() {
         return skipDuplication;
@@ -90,5 +96,45 @@ public class AnalysisConfig {
 
     public void setSaveCodeFragments(boolean saveCodeFragments) {
         this.saveCodeFragments = saveCodeFragments;
+    }
+
+    public Thresholds getFileSizeThresholds() {
+        return fileSizeThresholds;
+    }
+
+    public void setFileSizeThresholds(Thresholds fileSizeThresholds) {
+        this.fileSizeThresholds = fileSizeThresholds;
+    }
+
+    public Thresholds getFileAgeThresholds() {
+        return fileAgeThresholds;
+    }
+
+    public void setFileAgeThresholds(Thresholds fileAgeThresholds) {
+        this.fileAgeThresholds = fileAgeThresholds;
+    }
+
+    public Thresholds getFileUpdateFrequencyThresholds() {
+        return fileUpdateFrequencyThresholds;
+    }
+
+    public void setFileUpdateFrequencyThresholds(Thresholds fileUpdateFrequencyThresholds) {
+        this.fileUpdateFrequencyThresholds = fileUpdateFrequencyThresholds;
+    }
+
+    public Thresholds getUnitSizeThresholds() {
+        return unitSizeThresholds;
+    }
+
+    public void setUnitSizeThresholds(Thresholds unitSizeThresholds) {
+        this.unitSizeThresholds = unitSizeThresholds;
+    }
+
+    public Thresholds getConditionalComplexityThresholds() {
+        return conditionalComplexityThresholds;
+    }
+
+    public void setConditionalComplexityThresholds(Thresholds conditionalComplexityThresholds) {
+        this.conditionalComplexityThresholds = conditionalComplexityThresholds;
     }
 }

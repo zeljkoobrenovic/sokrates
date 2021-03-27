@@ -166,7 +166,7 @@ public class BasicSourceCodeReportGenerator {
 
         if (codeAnalyzerSettings.isAnalyzeFileHistory()) {
             if (codeAnalysisResults.getCodeConfiguration().getFileHistoryAnalysis().filesHistoryImportPathExists(codeConfigurationFile.getParentFile())) {
-                new FileHistoryReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileHistoryReport);
+                new FileAgeReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileHistoryReport);
                 new FileChurnReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileChangeFrequencyReport);
                 new FileTemporalDependenciesReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileTemporalDependenciesReport);
                 new ContributorsReportGenerator(codeAnalysisResults).addContributorsAnalysisToReport(contributorsReport);

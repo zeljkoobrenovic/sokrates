@@ -22,6 +22,7 @@ import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.analysis.CodeAnalyzer;
 import nl.obren.sokrates.sourcecode.analysis.CodeAnalyzerSettings;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
@@ -573,6 +574,8 @@ public class CommandLineInterface {
     }
 
     private void generate3DUnitsView(File visualsFolder, CodeAnalysisResults analysisResults) {
+        AnalysisConfig analysisConfig = analysisResults.getCodeConfiguration().getAnalysis();
+
         List<Unit3D> unit3DConditionalComplexity = new ArrayList<>();
         analysisResults.getUnitsAnalysisResults().getAllUnits().forEach(unit -> {
             BasicColorInfo color = Thresholds.getColor(Thresholds.UNIT_MCCABE, unit.getMcCabeIndex());
@@ -587,7 +590,7 @@ public class CommandLineInterface {
 
         List<Unit3D> files3D = new ArrayList<>();
         analysisResults.getCodeConfiguration().getMain().getSourceFiles().forEach(file -> {
-            SourceFileSizeDistribution sourceFileSizeDistribution = new SourceFileSizeDistribution();
+            SourceFileSizeDistribution sourceFileSizeDistribution = new SourceFileSizeDistribution(analysisConfig.getFileSizeThresholds());
             BasicColorInfo color = getFileSizeColor(sourceFileSizeDistribution, file.getLinesOfCode());
             files3D.add(new Unit3D(file.getFile().getPath(), file.getLinesOfCode(), color));
         });

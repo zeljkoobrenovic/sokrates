@@ -620,7 +620,7 @@ public class DataExporter {
 
     private void saveConfigByFileChangeFrequency(String jsonContent) throws IOException {
         CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
-        codeConfiguration.setLogicalDecompositions(FileHistoryScopingUtils.getLogicalDecompositionsFileUpdateFrequency(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()));
+        codeConfiguration.setLogicalDecompositions(FileHistoryScopingUtils.getLogicalDecompositionsFileUpdateFrequency(analysisResults));
 
         codeConfiguration.getFileHistoryAnalysis().setImportPath("");
 
@@ -629,7 +629,7 @@ public class DataExporter {
 
     private void saveConfigByFileAge(String jsonContent) throws IOException {
         CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
-        codeConfiguration.setLogicalDecompositions(FileHistoryScopingUtils.getLogicalDecompositionsByAge(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()));
+        codeConfiguration.setLogicalDecompositions(FileHistoryScopingUtils.getLogicalDecompositionsByAge(analysisResults));
 
         codeConfiguration.getFileHistoryAnalysis().setImportPath("");
 
@@ -638,7 +638,7 @@ public class DataExporter {
 
     private void saveConfigByFileFreshness(String jsonContent) throws IOException {
         CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
-        codeConfiguration.setLogicalDecompositions(FileHistoryScopingUtils.getLogicalDecompositionsByFreshness(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()));
+        codeConfiguration.setLogicalDecompositions(FileHistoryScopingUtils.getLogicalDecompositionsByFreshness(analysisResults));
 
         codeConfiguration.getFileHistoryAnalysis().setImportPath("");
 

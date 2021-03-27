@@ -6,6 +6,7 @@ package nl.obren.sokrates.sourcecode.stats;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,16 +14,19 @@ import java.util.List;
 import java.util.Map;
 
 public class SourceFileSizeDistribution extends RiskDistributionStats {
-    public SourceFileSizeDistribution() {
+    public SourceFileSizeDistribution(Thresholds thresholds) {
+        super(thresholds);
+        /*
         super(100, 200, 500, 1000);
         setNegligibleRiskLabel("1-100 lines of code");
         setLowRiskLabel("101-200");
         setMediumRiskLabel("201-500");
         setHighRiskLabel("501-1000");
         setVeryHighRiskLabel("1001+");
+         */
     }
 
-    public static List<RiskDistributionStats> getFileSizeRiskDistributionPerExtension(List<SourceFile> files) {
+    public static List<RiskDistributionStats> getFileSizeRiskDistributionPerExtension(List<SourceFile> files, Thresholds thresholds) {
         ArrayList<RiskDistributionStats> distributions = new ArrayList<>();
 
         Map<String, SourceFileSizeDistribution> map = new HashMap<>();
@@ -31,7 +35,7 @@ public class SourceFileSizeDistribution extends RiskDistributionStats {
             files.forEach(sourceFile -> {
                 SourceFileSizeDistribution distribution = map.get(sourceFile.getExtension());
                 if (distribution == null) {
-                    distribution = new SourceFileSizeDistribution();
+                    distribution = new SourceFileSizeDistribution(thresholds);
                     distribution.setKey(sourceFile.getExtension());
                     distributions.add(distribution);
                     map.put(distribution.getKey(), distribution);
@@ -44,11 +48,11 @@ public class SourceFileSizeDistribution extends RiskDistributionStats {
         return distributions;
     }
 
-    public static List<RiskDistributionStats> getFileSizeRiskDistributionPerComponent(List<SourceFile> files, LogicalDecomposition logicalDecomposition) {
+    public static List<RiskDistributionStats> getFileSizeRiskDistributionPerComponent(LogicalDecomposition logicalDecomposition, Thresholds thresholds) {
         ArrayList<RiskDistributionStats> distributions = new ArrayList<>();
 
         logicalDecomposition.getComponents().forEach(component -> {
-            SourceFileSizeDistribution distribution = new SourceFileSizeDistribution();
+            SourceFileSizeDistribution distribution = new SourceFileSizeDistribution(thresholds);
             distribution.setKey(component.getName());
             distributions.add(distribution);
             component.getSourceFiles().forEach(sourceFile -> {

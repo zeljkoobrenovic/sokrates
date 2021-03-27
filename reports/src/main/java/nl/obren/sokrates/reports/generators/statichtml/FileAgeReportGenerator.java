@@ -6,36 +6,40 @@ package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
-import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
-import nl.obren.sokrates.reports.utils.*;
+import nl.obren.sokrates.reports.utils.FilesReportUtils;
+import nl.obren.sokrates.reports.utils.PieChartUtils;
+import nl.obren.sokrates.reports.utils.RiskDistributionStatsReportUtils;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.analysis.results.FileAgeDistributionPerLogicalDecomposition;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
-import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
-import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
-import nl.obren.sokrates.sourcecode.filehistory.*;
+import nl.obren.sokrates.sourcecode.filehistory.FileHistoryComponentsHelper;
+import nl.obren.sokrates.sourcecode.filehistory.FileHistoryUtils;
+import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
-import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 
-import java.util.*;
+import java.util.Date;
+import java.util.List;
 import java.util.stream.Collectors;
 
-public class FileHistoryReportGenerator {
+public class FileAgeReportGenerator {
     public static final String LATEST_CHANGE_DISTRIBUTION = "Latest Change Distribution";
     public static final String FILE_AGE_DISTRIBUTION = "File Age Distribution";
     public static final String FILE_AGE_DESCRIPTION = "Days since first update";
     public static final String LATEST_CHANGE_DESCRIPTION = "Days since last update";
+    private final Thresholds thresholds;
 
     private CodeAnalysisResults codeAnalysisResults;
-    private List<String> ageLabels = Arrays.asList("> 1y", "6-12m", "91-180d", "31-90d", "1-30d");
+    private List<String> ageLabels;
     private int daysBetween;
     private int estimatedWorkingDays;
 
-    public FileHistoryReportGenerator(CodeAnalysisResults codeAnalysisResults) {
+    public FileAgeReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
+        thresholds = codeAnalysisResults.getCodeConfiguration().getAnalysis().getFileAgeThresholds();
+        this.ageLabels = thresholds.getLabels();
     }
 
     public void addFileHistoryToReport(RichTextReport report) {
@@ -130,19 +134,24 @@ public class FileHistoryReportGenerator {
                 ".");
         report.startUnorderedList();
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getVeryHighRiskCount())
-                + " files older than 1 year (" + RichTextRenderingUtils.renderNumberStrong(distribution.getVeryHighRiskValue())
+                + " files that are " + thresholds.getVeryHighRiskLabel() + " days old ("
+                + RichTextRenderingUtils.renderNumberStrong(distribution.getVeryHighRiskValue())
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getHighRiskCount())
-                + " files are 180 days to 1 year old (" + RichTextRenderingUtils.renderNumberStrong(distribution.getHighRiskValue())
+                + " files that are " + thresholds.getHighRiskLabel() + " days old ("
+                + RichTextRenderingUtils.renderNumberStrong(distribution.getHighRiskValue())
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getMediumRiskCount())
-                + " files are 90 to 180 days old (" + RichTextRenderingUtils.renderNumberStrong(distribution.getMediumRiskValue())
+                + " files that are " + thresholds.getMediumRiskLabel() + " days old ("
+                + RichTextRenderingUtils.renderNumberStrong(distribution.getMediumRiskValue())
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskCount())
-                + " files are 30 to 90 days old (" + RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskValue())
+                + " files that are " + thresholds.getLowRiskLabel() + " days old ("
+                + RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskValue())
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskCount())
-                + " files are less than 30 days old (" + RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskValue())
+                + " files that are " + thresholds.getNegligibleRiskLabel() + " days old ("
+                + RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskValue())
                 + " lines of code)");
         report.endUnorderedList();
         report.endUnorderedList();
@@ -159,19 +168,19 @@ public class FileHistoryReportGenerator {
                 ".");
         report.startUnorderedList();
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getVeryHighRiskCount())
-                + " files have been last changed more than 1 year ago (" + RichTextRenderingUtils.renderNumberStrong(distribution.getVeryHighRiskValue())
+                + " files have been last changed " + thresholds.getVeryHighRiskLabel() + " days ago (" + RichTextRenderingUtils.renderNumberStrong(distribution.getVeryHighRiskValue())
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getHighRiskCount())
-                + "  files have been last changed 180 days to 1 year ago (" + RichTextRenderingUtils.renderNumberStrong(distribution.getHighRiskValue())
+                + "  files have been last changed " + thresholds.getHighRiskLabel() + " days ago (" + RichTextRenderingUtils.renderNumberStrong(distribution.getHighRiskValue())
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getMediumRiskCount())
-                + " files have been last changed 90 to 180 days ago (" + RichTextRenderingUtils.renderNumberStrong(distribution.getMediumRiskValue())
+                + " files have been last changed " + thresholds.getMediumRiskLabel() + " days ago (" + RichTextRenderingUtils.renderNumberStrong(distribution.getMediumRiskValue())
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskCount())
-                + " files have been last changed 30 to 90 days ago (" + RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskValue())
+                + " files have been last changed " + thresholds.getLowRiskLabel() + " days ago (" + RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskValue())
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskCount())
-                + " files have been last changed less than 30 days ago (" + RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskValue())
+                + " files have been last changed " + thresholds.getNegligibleRiskLabel() + " days ago (" + RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskValue())
                 + " lines of code)");
         report.endUnorderedList();
         report.endUnorderedList();

@@ -6,6 +6,7 @@ package nl.obren.sokrates.sourcecode.stats;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,20 +16,18 @@ import java.util.Map;
 import static nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution.Types.LAST_MODIFIED;
 
 public class SourceFileAgeDistribution extends RiskDistributionStats {
+    private Thresholds thresholds;
     private Types type;
 
-    public SourceFileAgeDistribution() {
-        super(30, 90, 180, 365);
-    }
-
-    public SourceFileAgeDistribution(Types type) {
-        super(30, 90, 180, 365);
+    public SourceFileAgeDistribution(Thresholds thresholds, Types type) {
+        super(thresholds.getLow(), thresholds.getMedium(), thresholds.getHigh(), thresholds.getVeryHigh());
+        this.thresholds = thresholds;
         this.type = type;
-        setNegligibleRiskLabel("1-30 days");
-        setLowRiskLabel("31-60 days");
-        setMediumRiskLabel("61-180 days");
-        setHighRiskLabel("181-365 days");
-        setVeryHighRiskLabel("366+ days");
+        setNegligibleRiskLabel(thresholds.getNegligibleRiskLabel() + " days");
+        setLowRiskLabel(thresholds.getLowRiskLabel() + " days");
+        setMediumRiskLabel(thresholds.getMediumRiskLabel() + " days");
+        setHighRiskLabel(thresholds.getHighRiskLabel() + " days");
+        setVeryHighRiskLabel(thresholds.getVeryHighRiskLabel() + " days");
     }
 
     public List<RiskDistributionStats> getFileAgeRiskDistributionPerExtension(List<SourceFile> files) {
@@ -40,7 +39,7 @@ public class SourceFileAgeDistribution extends RiskDistributionStats {
             files.forEach(sourceFile -> {
                 SourceFileAgeDistribution distribution = map.get(sourceFile.getExtension());
                 if (distribution == null) {
-                    distribution = new SourceFileAgeDistribution(LAST_MODIFIED);
+                    distribution = new SourceFileAgeDistribution(thresholds, LAST_MODIFIED);
                     distribution.setKey(sourceFile.getExtension());
                     distributions.add(distribution);
                     map.put(distribution.getKey(), distribution);
@@ -61,7 +60,7 @@ public class SourceFileAgeDistribution extends RiskDistributionStats {
         ArrayList<RiskDistributionStats> distributions = new ArrayList<>();
 
         logicalDecomposition.getComponents().forEach(component -> {
-            SourceFileAgeDistribution distribution = new SourceFileAgeDistribution(LAST_MODIFIED);
+            SourceFileAgeDistribution distribution = new SourceFileAgeDistribution(thresholds, LAST_MODIFIED);
             distribution.setKey(component.getName());
             distributions.add(distribution);
             component.getSourceFiles().stream().filter(f -> f.getFileModificationHistory() != null).forEach(sourceFile -> {

@@ -4,6 +4,8 @@
 
 package nl.obren.sokrates.sourcecode.stats;
 
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
+
 public class RiskDistributionStats {
     private String key = "";
 
@@ -42,6 +44,15 @@ public class RiskDistributionStats {
         this.mediumRiskThreshold = mediumRiskThreshold;
         this.highRiskThreshold = highRiskThreshold;
         this.veryHighRiskThreshold = veryHighRiskThreshold;
+    }
+
+    public RiskDistributionStats(Thresholds thresholds) {
+        this(thresholds.getLow(), thresholds.getMedium(), thresholds.getHigh(), thresholds.getVeryHigh());
+        setNegligibleRiskLabel(thresholds.getNegligibleRiskLabel());
+        setLowRiskLabel(thresholds.getLowRiskLabel());
+        setMediumRiskLabel(thresholds.getMediumRiskLabel());
+        setHighRiskLabel(thresholds.getHighRiskLabel());
+        setVeryHighRiskLabel(thresholds.getVeryHighRiskLabel());
     }
 
     public String getKey() {
@@ -118,6 +129,14 @@ public class RiskDistributionStats {
 
     public int getLowRiskCount() {
         return lowRiskCount;
+    }
+
+    public int getLowRiskThreshold() {
+        return lowRiskThreshold;
+    }
+
+    public void setLowRiskThreshold(int lowRiskThreshold) {
+        this.lowRiskThreshold = lowRiskThreshold;
     }
 
     public int getMediumRiskCount() {

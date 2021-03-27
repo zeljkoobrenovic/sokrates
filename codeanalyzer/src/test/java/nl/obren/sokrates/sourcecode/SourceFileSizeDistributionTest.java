@@ -5,6 +5,7 @@
 package nl.obren.sokrates.sourcecode;
 
 import nl.obren.sokrates.sourcecode.stats.SourceFileSizeDistribution;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ import static org.junit.Assert.*;
 public class SourceFileSizeDistributionTest {
     @Test
     public void calculate() throws Exception {
-        SourceFileSizeDistribution sourceFileSizeDistribution = new SourceFileSizeDistribution();
+        SourceFileSizeDistribution sourceFileSizeDistribution = new SourceFileSizeDistribution(Thresholds.defaultFileSizeThresholds());
 
         sourceFileSizeDistribution.getOverallDistribution(getSourceFile(2000));
 
