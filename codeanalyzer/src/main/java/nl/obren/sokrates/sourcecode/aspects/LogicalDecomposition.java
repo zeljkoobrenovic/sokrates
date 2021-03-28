@@ -23,6 +23,7 @@ public class LogicalDecomposition {
     private String scope = "main";
     private List<SourceFileFilter> filters = new ArrayList<>();
     private int componentsFolderDepth = 1;
+    private int minComponentsCount = 0;
     private List<NamedSourceCodeAspect> components = new ArrayList<>();
     private List<MetaRule> metaComponents = new ArrayList<>();
     private List<GroupingRule> groups = new ArrayList<>();
@@ -66,6 +67,14 @@ public class LogicalDecomposition {
         this.componentsFolderDepth = componentsFolderDepth;
     }
 
+    public int getMinComponentsCount() {
+        return minComponentsCount;
+    }
+
+    public void setMinComponentsCount(int minComponentsCount) {
+        this.minComponentsCount = minComponentsCount;
+    }
+
     public List<NamedSourceCodeAspect> getComponents() {
         return components;
     }
@@ -81,7 +90,7 @@ public class LogicalDecomposition {
         if (componentsFolderDepth > 0) {
             components.addAll(SourceCodeAspectUtils.getSourceCodeAspectBasedOnFolderDepth(
                     CodeConfiguration.getAbsoluteSrcRoot(codeConfiguration.getSrcRoot(), codeConfigurationFile),
-                    filteredSourceFiles, componentsFolderDepth));
+                    filteredSourceFiles, componentsFolderDepth, minComponentsCount));
         }
 
         for (NamedSourceCodeAspect aspect : components) {

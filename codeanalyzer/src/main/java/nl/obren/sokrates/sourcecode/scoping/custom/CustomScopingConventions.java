@@ -27,6 +27,8 @@ public class CustomScopingConventions {
     private List<Concern> concerns = new ArrayList<>();
     private List<String> ignoreContributors = new ArrayList<>();
 
+    private int searchByFolderDepthMin = 0;
+
     private AnalysisConfig analysis = new AnalysisConfig();
 
     public CustomExtensionConventions getExtensions() {
@@ -131,5 +133,13 @@ public class CustomScopingConventions {
 
     public void setLogoLink(String logoLink) {
         this.logoLink = logoLink;
+    }
+
+    public int getSearchByFolderDepthMin() {
+        return searchByFolderDepthMin;
+    }
+
+    public void setSearchByFolderDepthMin(int searchByFolderDepthMin) {
+        this.searchByFolderDepthMin = searchByFolderDepthMin;
     }
 }

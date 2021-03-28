@@ -17,6 +17,7 @@ import java.util.*;
 
 public class SourceCodeAspectUtils {
     private static final Log LOG = LogFactory.getLog(SourceCodeAspectUtils.class);
+    public static final int MAX_SEARCH_DEPTH = 20;
 
     public static int getMaxLinesOfCode(List<? extends NamedSourceCodeAspect> aspects) {
         int maxFileLinesOfCode = 0;
@@ -39,6 +40,22 @@ public class SourceCodeAspectUtils {
     }
 
     public static List<NamedSourceCodeAspect> getSourceCodeAspectBasedOnFolderDepth(String srcRoot, List<SourceFile>
+            sourceFiles, int depth, int minComponentCount) {
+
+        List<NamedSourceCodeAspect> aspects = new ArrayList<>();
+        int prevCount = 0;
+        for (int currentDepth = Math.max(1, depth); currentDepth <= MAX_SEARCH_DEPTH; currentDepth++) {
+            aspects = getComponentsBasedOnFolderDepth(srcRoot, sourceFiles, currentDepth);
+            int count = aspects.size();
+            if (count >= minComponentCount) {
+                break;
+            }
+            prevCount = count;
+        }
+        return aspects;
+    }
+
+    public static List<NamedSourceCodeAspect> getComponentsBasedOnFolderDepth(String srcRoot, List<SourceFile>
             sourceFiles, int depth) {
         List<String> paths = getUniquePaths(sourceFiles, depth);
 
