@@ -296,21 +296,15 @@ public class SummaryUtils {
 
         report.startTableCell("border: none; padding-top: 4px;");
         String ageSummary = FormattingUtils.formatPeriod(results.getAgeInDays()) + " old";
-        report.addParagraph(ageSummary);
-        report.startUnorderedList();
+        report.addParagraph(ageSummary, "margin-bottom: 0");
+        report.startUnorderedList("margin-top: 5px; font-size: 90%");
         Thresholds fileAgeThresholds = analysisResults.getCodeConfiguration().getAnalysis().getFileAgeThresholds();
-        report.addListItem("File Age Distribution: "
-                + FormattingUtils.getFormattedPercentage(age.getVeryHighRiskPercentage())
-                + "% older than " + fileAgeThresholds.getVeryHigh() + " days, "
-                + FormattingUtils.getFormattedPercentage(age.getNegligibleRiskPercentage()) + "% less than "
-                + fileAgeThresholds.getLow() + " days old");
-        report.addListItem("File Changes Distribution: "
-                + FormattingUtils.getFormattedPercentage(changes.getVeryHighRiskPercentage())
-                + "% changed more than "
+        report.addListItem(FormattingUtils.getFormattedPercentage(age.getVeryHighRiskPercentage())
+                + "% of code is older than " + fileAgeThresholds.getVeryHigh() + " days");
+        report.addListItem(FormattingUtils.getFormattedPercentage(changes.getVeryHighRiskPercentage())
+                + "% of code has last been changed more than "
                 + fileAgeThresholds.getVeryHigh()
-                + " days ago, "
-                + FormattingUtils.getFormattedPercentage(changes.getNegligibleRiskPercentage()) + "% in past "
-                + fileAgeThresholds.getLow() + " days"
+                + " days ago"
         );
         report.endUnorderedList();
         report.endTableCell();
@@ -365,14 +359,16 @@ public class SummaryUtils {
         int veryComplexUnitsLOC = distribution.getHighRiskValue() + distribution.getVeryHighRiskValue();
         int lowComplexUnitsLOC = distribution.getNegligibleRiskValue();
 
+        Thresholds thresholds = analysisResults.getCodeConfiguration().getAnalysis().getConditionalComplexityThresholds();
+
         report.startTableRow();
         report.addTableCell(getIconSvg("conditional"), "border: none");
         report.addTableCell(getRiskProfileVisual(distribution), "border: none");
         report.addTableCell("Conditional Complexity: <b>"
                 + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, veryComplexUnitsLOC))
-                + "%</b> complex (McCabe index > 25), <b>"
+                + "%</b> complex (McCabe index > " + thresholds.getVeryHigh() + "), <b>"
                 + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, lowComplexUnitsLOC))
-                + "%</b> simple (McCabe index <= 5)", "border: none; vertical-align: top; padding-top: 11px;");
+                + "%</b> simple (McCabe index <= " + thresholds.getLow() + ")", "border: none; vertical-align: top; padding-top: 11px;");
 
         report.addTableCell("<a href='" + reportRoot + "ConditionalComplexity.html'  title='conditional complexity details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "border: none");
         report.endTableRow();
@@ -383,15 +379,16 @@ public class SummaryUtils {
         RiskDistributionStats distribution = analysisResults.getUnitsAnalysisResults().getUnitSizeRiskDistribution();
         int veryLongUnitsLOC = distribution.getVeryHighRiskValue();
         int lowUnitsLOC = distribution.getLowRiskValue() + distribution.getNegligibleRiskValue();
+        Thresholds thresholds = analysisResults.getCodeConfiguration().getAnalysis().getUnitSizeThresholds();
 
         report.startTableRow();
         report.addTableCell(getIconSvg("unit_size"), "border: none");
         report.addTableCell(getRiskProfileVisual(distribution), "border: none");
         report.addTableCell("Unit Size: <b>"
                 + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, veryLongUnitsLOC))
-                + "%</b> long (>100 LOC), <b>"
+                + "%</b> long (>" + thresholds.getVeryHigh() + " LOC), <b>"
                 + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, lowUnitsLOC))
-                + "%</b> short (<= 20 LOC)", "border: none; vertical-align: top; padding-top: 11px;");
+                + "%</b> short (<= " + thresholds.getLow() + " LOC)", "border: none; vertical-align: top; padding-top: 11px;");
         report.addTableCell("<a href='" + reportRoot + "UnitSize.html'  title='unit size details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "border: none");
         report.endTableRow();
     }

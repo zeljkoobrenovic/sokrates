@@ -6,6 +6,7 @@ package nl.obren.sokrates.sourcecode.stats;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,13 +14,11 @@ import java.util.List;
 import java.util.Map;
 
 public class SourceFileChangeDistribution extends RiskDistributionStats {
-    public SourceFileChangeDistribution() {
-        super(5, 20, 50, 100);
-        setNegligibleRiskLabel("1-5 changes");
-        setLowRiskLabel("6-20");
-        setMediumRiskLabel("21-50");
-        setHighRiskLabel("51-100");
-        setVeryHighRiskLabel("101+");
+    private Thresholds thresholds;
+
+    public SourceFileChangeDistribution(Thresholds thresholds) {
+        super(thresholds);
+        this.thresholds = thresholds;
     }
 
     public List<RiskDistributionStats> getDistributionPerExtension(List<SourceFile> files) {
@@ -31,7 +30,7 @@ public class SourceFileChangeDistribution extends RiskDistributionStats {
             files.forEach(sourceFile -> {
                 SourceFileChangeDistribution distribution = map.get(sourceFile.getExtension());
                 if (distribution == null) {
-                    distribution = new SourceFileChangeDistribution();
+                    distribution = new SourceFileChangeDistribution(thresholds);
                     distribution.setKey(sourceFile.getExtension());
                     distributions.add(distribution);
                     map.put(distribution.getKey(), distribution);
@@ -52,7 +51,7 @@ public class SourceFileChangeDistribution extends RiskDistributionStats {
         ArrayList<RiskDistributionStats> distributions = new ArrayList<>();
 
         logicalDecomposition.getComponents().forEach(component -> {
-            SourceFileChangeDistribution distribution = new SourceFileChangeDistribution();
+            SourceFileChangeDistribution distribution = new SourceFileChangeDistribution(thresholds);
             distribution.setKey(component.getName());
             distributions.add(distribution);
             component.getSourceFiles().stream().filter(f -> f.getFileModificationHistory() != null).forEach(sourceFile -> {

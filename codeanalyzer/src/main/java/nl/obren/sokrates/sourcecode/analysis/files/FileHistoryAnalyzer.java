@@ -131,22 +131,23 @@ public class FileHistoryAnalyzer extends Analyzer {
         List<SourceFile> allFiles = codeConfiguration.getMain().getSourceFiles();
         List<SourceFile> sourceFiles = allFiles;
 
-        Thresholds thresholds = codeConfiguration.getAnalysis().getFileAgeThresholds();
+        Thresholds fileAgeThresholds = codeConfiguration.getAnalysis().getFileAgeThresholds();
+        Thresholds fileUpdateFrequencyThresholds = codeConfiguration.getAnalysis().getFileUpdateFrequencyThresholds();
 
-        SourceFileAgeDistribution lastModifiedDistribution = new SourceFileAgeDistribution(thresholds, LAST_MODIFIED).getOverallLastModifiedDistribution(sourceFiles);
-        SourceFileAgeDistribution firstModifiedDistribution = new SourceFileAgeDistribution(thresholds, LAST_MODIFIED).getOverallFirstModifiedDistribution(sourceFiles);
-        SourceFileChangeDistribution changeDistribution = new SourceFileChangeDistribution().getOverallDistribution(sourceFiles);
+        SourceFileAgeDistribution lastModifiedDistribution = new SourceFileAgeDistribution(fileAgeThresholds, LAST_MODIFIED).getOverallLastModifiedDistribution(sourceFiles);
+        SourceFileAgeDistribution firstModifiedDistribution = new SourceFileAgeDistribution(fileAgeThresholds, LAST_MODIFIED).getOverallFirstModifiedDistribution(sourceFiles);
+        SourceFileChangeDistribution changeDistribution = new SourceFileChangeDistribution(fileUpdateFrequencyThresholds).getOverallDistribution(sourceFiles);
 
         analysisResults.setOverallFileLastModifiedDistribution(lastModifiedDistribution);
         analysisResults.setOverallFileFirstModifiedDistribution(firstModifiedDistribution);
         analysisResults.setOverallFileChangeDistribution(changeDistribution);
 
         analysisResults.setChangeDistributionPerExtension(
-                new SourceFileChangeDistribution().getDistributionPerExtension(sourceFiles));
+                new SourceFileChangeDistribution(fileUpdateFrequencyThresholds).getDistributionPerExtension(sourceFiles));
         analysisResults.setFirstModifiedDistributionPerExtension(
-                new SourceFileAgeDistribution(thresholds, FIRST_MODIFIED).getFileAgeRiskDistributionPerExtension(sourceFiles));
+                new SourceFileAgeDistribution(fileAgeThresholds, FIRST_MODIFIED).getFileAgeRiskDistributionPerExtension(sourceFiles));
         analysisResults.setLastModifiedDistributionPerExtension(
-                new SourceFileAgeDistribution(thresholds, LAST_MODIFIED).getFileAgeRiskDistributionPerExtension(sourceFiles));
+                new SourceFileAgeDistribution(fileAgeThresholds, LAST_MODIFIED).getFileAgeRiskDistributionPerExtension(sourceFiles));
 
         codeConfiguration.getLogicalDecompositions().forEach(logicalDecomposition -> {
             addLogicalDecompositions(logicalDecomposition);
@@ -168,7 +169,7 @@ public class FileHistoryAnalyzer extends Analyzer {
         FileAgeDistributionPerLogicalDecomposition change = new FileAgeDistributionPerLogicalDecomposition();
         change.setName(logicalDecomposition.getName());
         change.setDistributionPerComponent(
-                new SourceFileChangeDistribution().getRiskDistributionPerComponent(logicalDecomposition));
+                new SourceFileChangeDistribution(codeConfiguration.getAnalysis().getFileUpdateFrequencyThresholds()).getRiskDistributionPerComponent(logicalDecomposition));
 
         analysisResults.getChangeDistributionPerLogicalDecomposition().add(change);
 

@@ -238,9 +238,9 @@ public class UnitsPane extends BorderPane {
     private void updateCharts(List<UnitInfo> units) {
         SplitPane splitPane = new SplitPane();
         splitPane.setOrientation(Orientation.HORIZONTAL);
-        splitPane.getItems().add(getUnitSizePieChart(UnitUtils.getUnitSizeDistribution(units), Thresholds.UNIT_LINES,
+        splitPane.getItems().add(getUnitSizePieChart(UnitUtils.getUnitSizeDistribution(units, nl.obren.sokrates.sourcecode.threshold.Thresholds.defaultUnitSizeThresholds()), Thresholds.UNIT_LINES,
                 "Lines of Code"));
-        splitPane.getItems().add(getUnitSizePieChart(UnitUtils.getConditionalComplexityDistribution(units), Thresholds
+        splitPane.getItems().add(getUnitSizePieChart(UnitUtils.getConditionalComplexityDistribution(units, nl.obren.sokrates.sourcecode.threshold.Thresholds.defaultConditionalComplexityThresholds()), Thresholds
                 .UNIT_MCCABE, "Conditional Complexity"));
         topPane.setCenter(splitPane);
     }

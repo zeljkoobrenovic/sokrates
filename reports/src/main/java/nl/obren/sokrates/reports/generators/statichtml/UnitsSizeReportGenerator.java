@@ -19,10 +19,11 @@ import java.util.List;
 
 public class UnitsSizeReportGenerator {
     private CodeAnalysisResults codeAnalysisResults;
-    private List<String> labels = Arrays.asList("101+", "51-100", "21-50", "11-20", "1-10");
+    private List<String> labels;
 
     public UnitsSizeReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
+        labels = codeAnalysisResults.getCodeConfiguration().getAnalysis().getUnitSizeThresholds().getLabels();
     }
 
     public void addUnitsSizeToReport(RichTextReport report) {

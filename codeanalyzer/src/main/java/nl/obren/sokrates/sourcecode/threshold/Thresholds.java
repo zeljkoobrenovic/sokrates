@@ -1,6 +1,7 @@
 package nl.obren.sokrates.sourcecode.threshold;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +13,13 @@ public class Thresholds {
     private int veryHigh;
 
     public Thresholds() {
+    }
+
+    public Thresholds(int low, int medium, int high, int veryHigh) {
+        this.low = low;
+        this.medium = medium;
+        this.high = high;
+        this.veryHigh = veryHigh;
     }
 
     @JsonIgnore
@@ -37,13 +45,6 @@ public class Thresholds {
     @JsonIgnore
     public static Thresholds defaultConditionalComplexityThresholds() {
         return new Thresholds(5, 10, 25, 50);
-    }
-
-    public Thresholds(int low, int medium, int high, int veryHigh) {
-        this.low = low;
-        this.medium = medium;
-        this.high = high;
-        this.veryHigh = veryHigh;
     }
 
     public int getLow() {
@@ -114,5 +115,17 @@ public class Thresholds {
     @JsonIgnore
     public String getNegligibleRiskLabel() {
         return "1-" + getLow();
+    }
+
+    @JsonIgnore
+    public RiskDistributionStats toRiskDistribution() {
+        RiskDistributionStats distributionStats = new RiskDistributionStats(getLow(), getMedium(), getHigh(), getVeryHigh());
+        distributionStats.setNegligibleRiskLabel(getNegligibleRiskLabel());
+        distributionStats.setLowRiskLabel(getLowRiskLabel());
+        distributionStats.setMediumRiskLabel(getMediumRiskLabel());
+        distributionStats.setHighRiskLabel(getHighRiskLabel());
+        distributionStats.setVeryHighRiskLabel(getVeryHighRiskLabel());
+
+        return distributionStats;
     }
 }

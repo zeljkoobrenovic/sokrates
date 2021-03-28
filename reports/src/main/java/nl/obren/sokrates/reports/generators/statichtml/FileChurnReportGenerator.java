@@ -6,37 +6,39 @@ package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
-import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
-import nl.obren.sokrates.reports.utils.*;
+import nl.obren.sokrates.reports.utils.FilesReportUtils;
+import nl.obren.sokrates.reports.utils.PieChartUtils;
+import nl.obren.sokrates.reports.utils.RiskDistributionStatsReportUtils;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FileAgeDistributionPerLogicalDecomposition;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
-import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
-import nl.obren.sokrates.sourcecode.filehistory.*;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
-import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 
-import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class FileChurnReportGenerator {
     public static final String THE_NUMBER_OF_FILE_CHANGES = "File Change Frequency";
     public static final String THE_NUMBER_OF_FILE_CHANGES_DESCRIPTION = "The number of recorded file updates";
+    private final Thresholds thresholds;
 
     private CodeAnalysisResults codeAnalysisResults;
-    private List<String> changeFrequencyLabels = Arrays.asList("101+", "51-100", "21-50", "6-20", "1-5 updates");
+    private List<String> changeFrequencyLabels;
     private int graphCounter = 1;
 
     public FileChurnReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
+        thresholds = codeAnalysisResults.getCodeConfiguration().getAnalysis().getFileUpdateFrequencyThresholds();
+        changeFrequencyLabels = thresholds.getLabels();
     }
 
     public void addFileHistoryToReport(RichTextReport report) {
-        report.addParagraph("File change frequency measurements show the distribution of the number of file updates (days with at least one commit).");
+        report.addParagraph("File change frequency (churn) measurements show the distribution of the number of file updates (days with at least one commit).");
 
         addOverallSections(report);
 
@@ -75,19 +77,21 @@ public class FileChurnReportGenerator {
                 ".");
         report.startUnorderedList();
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getVeryHighRiskCount())
-                + " files changed more than 100 times (" + RichTextRenderingUtils.renderNumberStrong(distribution.getVeryHighRiskValue())
+                + " files changed more than "
+                + thresholds.getVeryHigh()
+                + " times (" + RichTextRenderingUtils.renderNumberStrong(distribution.getVeryHighRiskValue())
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getHighRiskCount())
-                + " files 51 to 100 times (" + RichTextRenderingUtils.renderNumberStrong(distribution.getHighRiskValue())
+                + " files changed " + thresholds.getHighRiskLabel() + " times (" + RichTextRenderingUtils.renderNumberStrong(distribution.getHighRiskValue())
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getMediumRiskCount())
-                + " files changed 21 to 50 times (" + RichTextRenderingUtils.renderNumberStrong(distribution.getMediumRiskValue())
+                + " files changed " + thresholds.getMediumRiskLabel() + " times (" + RichTextRenderingUtils.renderNumberStrong(distribution.getMediumRiskValue())
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskCount())
-                + " files changed 6 to 20 times (" + RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskValue())
+                + " files changed " + thresholds.getLowRiskLabel() + " times (" + RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskValue())
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskCount())
-                + " files changed 5 or fewer times (" + RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskValue())
+                + " files changed " + thresholds.getNegligibleRiskLabel() + " times (" + RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskValue())
                 + " lines of code)");
         report.endUnorderedList();
         report.endUnorderedList();

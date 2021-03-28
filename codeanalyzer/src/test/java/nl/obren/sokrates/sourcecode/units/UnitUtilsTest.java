@@ -8,6 +8,7 @@ import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 import org.junit.Test;
 
 import java.io.File;
@@ -31,7 +32,7 @@ public class UnitUtilsTest {
 
     @Test
     public void getUnitSizeRiskDistributionInstance() throws Exception {
-        RiskDistributionStats instance = UnitUtils.getUnitSizeRiskDistributionInstance();
+        RiskDistributionStats instance = UnitUtils.getUnitSizeRiskDistributionInstance(Thresholds.defaultUnitSizeThresholds());
         assertTrue(instance.getMediumRiskThreshold() > 0);
         assertTrue(instance.getHighRiskThreshold() > instance.getMediumRiskThreshold());
         assertTrue(instance.getVeryHighRiskThreshold() > instance.getHighRiskThreshold());
@@ -39,7 +40,7 @@ public class UnitUtilsTest {
 
     @Test
     public void getConditionalComplexityRiskDistributionInstance() throws Exception {
-        RiskDistributionStats instance = UnitUtils.getConditionalComplexityRiskDistributionInstance();
+        RiskDistributionStats instance = UnitUtils.getConditionalComplexityRiskDistributionInstance(Thresholds.defaultConditionalComplexityThresholds());
         assertTrue(instance.getMediumRiskThreshold() > 0);
         assertTrue(instance.getHighRiskThreshold() > instance.getMediumRiskThreshold());
         assertTrue(instance.getVeryHighRiskThreshold() > instance.getHighRiskThreshold());
@@ -63,7 +64,7 @@ public class UnitUtilsTest {
         unit3.setSourceFile(new SourceFile(new File("B.java"), " "));
         units.add(unit3);
 
-        List<RiskDistributionStats> instance = UnitUtils.getUnitSizeDistributionPerExtension(units);
+        List<RiskDistributionStats> instance = UnitUtils.getUnitSizeDistributionPerExtension(units, Thresholds.defaultUnitSizeThresholds());
         assertEquals(instance.size(), 1);
         assertEquals(instance.get(0).getKey(), "java");
         assertEquals(instance.get(0).getNegligibleRiskValue(), 10);
@@ -94,7 +95,7 @@ public class UnitUtilsTest {
         unit3.setSourceFile(new SourceFile(new File("B.java"), " "));
         units.add(unit3);
 
-        List<RiskDistributionStats> instance = UnitUtils.getConditionalComplexityDistributionPerExtension(units);
+        List<RiskDistributionStats> instance = UnitUtils.getConditionalComplexityDistributionPerExtension(units, Thresholds.defaultConditionalComplexityThresholds());
         assertEquals(instance.size(), 1);
         assertEquals(instance.get(0).getKey(), "java");
         assertEquals(instance.get(0).getNegligibleRiskValue(), 10);
@@ -135,7 +136,7 @@ public class UnitUtilsTest {
             }
         };
 
-        List<RiskDistributionStats> instance = UnitUtils.getUnitSizeDistributionPerComponent(Arrays.asList(logicalDecomposition), units).get(0);
+        List<RiskDistributionStats> instance = UnitUtils.getUnitSizeDistributionPerComponent(Arrays.asList(logicalDecomposition), units, Thresholds.defaultUnitSizeThresholds()).get(0);
         assertEquals(instance.size(), 2);
         assertEquals(instance.get(0).getKey(), "A");
         assertEquals(instance.get(0).getNegligibleRiskValue(), 10);
@@ -184,7 +185,7 @@ public class UnitUtilsTest {
                 return true;
             }
         };
-        List<RiskDistributionStats> instance = UnitUtils.getConditionalComplexityDistributionPerComponent(Arrays.asList(logicalDecomposition), units).get(0);
+        List<RiskDistributionStats> instance = UnitUtils.getConditionalComplexityDistributionPerComponent(Arrays.asList(logicalDecomposition), units, Thresholds.defaultConditionalComplexityThresholds()).get(0);
         assertEquals(instance.size(), 2);
         assertEquals(instance.get(0).getKey(), "A");
         assertEquals(instance.get(0).getNegligibleRiskValue(), 20);
@@ -218,7 +219,7 @@ public class UnitUtilsTest {
         unit3.setSourceFile(new SourceFile(new File("B.java"), " "));
         units.add(unit3);
 
-        List<RiskDistributionStats> aggregateUnitSizeRiskDistribution = UnitUtils.getAggregateUnitSizeRiskDistribution(units, param -> "X");
+        List<RiskDistributionStats> aggregateUnitSizeRiskDistribution = UnitUtils.getAggregateUnitSizeRiskDistribution(units, Thresholds.defaultUnitSizeThresholds(), param -> "X");
         assertEquals(aggregateUnitSizeRiskDistribution.size(), 1);
         assertEquals(aggregateUnitSizeRiskDistribution.get(0).getKey(), "X");
         assertEquals(aggregateUnitSizeRiskDistribution.get(0).getNegligibleRiskValue(), 10);
@@ -249,7 +250,7 @@ public class UnitUtilsTest {
         unit3.setSourceFile(new SourceFile(new File("B.java"), " "));
         units.add(unit3);
 
-        List<RiskDistributionStats> aggregateConditionalComplexityRiskDistribution = UnitUtils.getAggregateConditionalComplexityRiskDistribution(units, param -> "Y");
+        List<RiskDistributionStats> aggregateConditionalComplexityRiskDistribution = UnitUtils.getAggregateConditionalComplexityRiskDistribution(units, Thresholds.defaultConditionalComplexityThresholds(), param -> "Y");
         assertEquals(aggregateConditionalComplexityRiskDistribution.size(), 1);
         assertEquals(aggregateConditionalComplexityRiskDistribution.get(0).getKey(), "Y");
         assertEquals(aggregateConditionalComplexityRiskDistribution.get(0).getNegligibleRiskValue(), 21);
@@ -282,11 +283,12 @@ public class UnitUtilsTest {
         unit5.setLinesOfCode(200);
         units.add(unit5);
 
-        assertEquals(UnitUtils.getUnitSizeDistribution(units).getNegligibleRiskValue(), 1);
-        assertEquals(UnitUtils.getUnitSizeDistribution(units).getLowRiskValue(), 20);
-        assertEquals(UnitUtils.getUnitSizeDistribution(units).getMediumRiskValue(), 50);
-        assertEquals(UnitUtils.getUnitSizeDistribution(units).getHighRiskValue(), 100);
-        assertEquals(UnitUtils.getUnitSizeDistribution(units).getVeryHighRiskValue(), 200);
+        Thresholds thresholds = Thresholds.defaultUnitSizeThresholds();
+        assertEquals(UnitUtils.getUnitSizeDistribution(units, thresholds).getNegligibleRiskValue(), 1);
+        assertEquals(UnitUtils.getUnitSizeDistribution(units, thresholds).getLowRiskValue(), 20);
+        assertEquals(UnitUtils.getUnitSizeDistribution(units, thresholds).getMediumRiskValue(), 50);
+        assertEquals(UnitUtils.getUnitSizeDistribution(units, thresholds).getHighRiskValue(), 100);
+        assertEquals(UnitUtils.getUnitSizeDistribution(units, thresholds).getVeryHighRiskValue(), 200);
     }
 
     @Test
@@ -317,10 +319,11 @@ public class UnitUtilsTest {
         unit5.setMcCabeIndex(1);
         units.add(unit5);
 
-        assertEquals(UnitUtils.getConditionalComplexityDistribution(units).getNegligibleRiskValue(), 11);
-        assertEquals(UnitUtils.getConditionalComplexityDistribution(units).getLowRiskValue(), 20);
-        assertEquals(UnitUtils.getConditionalComplexityDistribution(units).getMediumRiskValue(), 30);
-        assertEquals(UnitUtils.getConditionalComplexityDistribution(units).getHighRiskValue(), 0);
-        assertEquals(UnitUtils.getConditionalComplexityDistribution(units).getVeryHighRiskValue(), 200);
+        Thresholds thresholds = Thresholds.defaultConditionalComplexityThresholds();
+        assertEquals(UnitUtils.getConditionalComplexityDistribution(units, thresholds).getNegligibleRiskValue(), 11);
+        assertEquals(UnitUtils.getConditionalComplexityDistribution(units, thresholds).getLowRiskValue(), 20);
+        assertEquals(UnitUtils.getConditionalComplexityDistribution(units, thresholds).getMediumRiskValue(), 30);
+        assertEquals(UnitUtils.getConditionalComplexityDistribution(units, thresholds).getHighRiskValue(), 0);
+        assertEquals(UnitUtils.getConditionalComplexityDistribution(units, thresholds).getVeryHighRiskValue(), 200);
     }
 }

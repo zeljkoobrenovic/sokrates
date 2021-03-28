@@ -19,10 +19,11 @@ import java.util.List;
 
 public class ConditionalComplexityReportGenerator {
     private CodeAnalysisResults codeAnalysisResults;
-    private List<String> labels = Arrays.asList("51+", "26-50", "11-25", "6-10", "1-5");
+    private List<String> labels;
 
     public ConditionalComplexityReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
+        labels = codeAnalysisResults.getCodeConfiguration().getAnalysis().getConditionalComplexityThresholds().getLabels();
     }
 
     public void addConditionalComplexityToReport(RichTextReport report) {
