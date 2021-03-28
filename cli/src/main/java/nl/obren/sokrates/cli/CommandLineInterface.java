@@ -9,6 +9,7 @@ import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.renderingutils.Thresholds;
 import nl.obren.sokrates.common.renderingutils.VisualizationItem;
 import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
+import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.renderingutils.x3d.Unit3D;
 import nl.obren.sokrates.common.renderingutils.x3d.X3DomExporter;
 import nl.obren.sokrates.common.utils.BasicColorInfo;
@@ -595,16 +596,18 @@ public class CommandLineInterface {
             files3D.add(new Unit3D(file.getFile().getPath(), file.getLinesOfCode(), color));
         });
 
-        new X3DomExporter(new File(visualsFolder, "units_3d_complexity.html"), "A 3D View of All Units (Conditional Complexity)", "Each block is one unit. The height of the block represents the file unit size in lines of code. The color of the unit represents its conditional complexity category (green=0-5, yellow=6-10, orange=11-25, red=26+).").export(unit3DConditionalComplexity, false, 10);
+        new X3DomExporter(new File(visualsFolder, "units_3d_complexity.html"), "A 3D View of All Units (Conditional Complexity)", "Each block is one unit. The height of the block represents the file unit size in lines of code. The color of the unit represents its conditional complexity category.").export(unit3DConditionalComplexity, false, 10);
 
-        new X3DomExporter(new File(visualsFolder, "units_3d_size.html"), "A 3D View of All Units (Unit Size)", "Each block is one unit. The height of the block represents the file unit size in lines of code. The color of the unit represents its unit size category (green=0-20, yellow=21-50, orange=51-100, red=101+).").export(unit3DSize, false, 10);
+        new X3DomExporter(new File(visualsFolder, "units_3d_size.html"), "A 3D View of All Units (Unit Size)", "Each block is one unit. The height of the block represents the file unit size in lines of code. The color of the unit represents its unit size category.").export(unit3DSize, false, 10);
 
-        new X3DomExporter(new File(visualsFolder, "files_3d.html"), "A 3D View of All Files", "Each block is one file. The height of the block represents the file relative size in lines of code. The color of the file represents its unit size category (green=0-200, yellow=201-500, orange=501-1000, red=1001+).").export(files3D, false, 50);
+        new X3DomExporter(new File(visualsFolder, "files_3d.html"), "A 3D View of All Files", "Each block is one file. The height of the block represents the file relative size in lines of code. The color of the file represents its unit size category.").export(files3D, false, 50);
     }
 
     public BasicColorInfo getFileSizeColor(SourceFileSizeDistribution distribution, int linesOfCode) {
-        if (linesOfCode <= distribution.getMediumRiskThreshold()) {
+        if (linesOfCode <= distribution.getLowRiskThreshold()) {
             return Thresholds.RISK_GREEN;
+        } else if (linesOfCode <= distribution.getMediumRiskThreshold()) {
+            return Thresholds.RISK_LIGHT_GREEN;
         } else if (linesOfCode <= distribution.getHighRiskThreshold()) {
             return Thresholds.RISK_YELLOW;
         } else if (linesOfCode <= distribution.getVeryHighRiskThreshold()) {

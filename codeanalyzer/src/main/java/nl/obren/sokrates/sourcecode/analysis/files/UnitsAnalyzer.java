@@ -94,11 +94,11 @@ public class UnitsAnalyzer extends Analyzer {
         printRiskDistributionStats(conditionalComplexityDistributionAllUnits, conditionalComplexityCategoryNames, "Conditional complexity distribution: ");
 
         metricsList.addMetric()
-                .id(safeId(getMetricId("CONDITIONAL_COMPLEXITY_DISTRIBUTION_26_PLUS_COUNT")))
+                .id(safeId(getMetricId("CONDITIONAL_COMPLEXITY_HIGH_PLUS_RISK_COUNT")))
                 .value(conditionalComplexityDistributionAllUnits.getHighRiskCount() + conditionalComplexityDistributionAllUnits.getVeryHighRiskCount());
 
         metricsList.addMetric()
-                .id(safeId(getMetricId("CONDITIONAL_COMPLEXITY_DISTRIBUTION_26_PLUS_LOC")))
+                .id(safeId(getMetricId("CONDITIONAL_COMPLEXITY_HIGH_PLUS_RISK_LOC")))
                 .value(conditionalComplexityDistributionAllUnits.getHighRiskValue() + conditionalComplexityDistributionAllUnits.getVeryHighRiskValue());
 
 

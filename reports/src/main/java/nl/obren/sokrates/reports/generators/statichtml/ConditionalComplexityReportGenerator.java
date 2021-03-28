@@ -14,7 +14,6 @@ import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class ConditionalComplexityReportGenerator {
@@ -81,7 +80,7 @@ public class ConditionalComplexityReportGenerator {
                 + " lines of code)");
         report.endUnorderedList();
         report.endUnorderedList();
-        report.addHtmlContent(PieChartUtils.getRiskDistributionPieChart(unitMcCabeDistribution, labels));
+        report.addHtmlContent(PieChartUtils.getRiskDistributionChart(unitMcCabeDistribution, labels));
         report.endSection();
 
         report.startSection("Alternative Visuals", "");

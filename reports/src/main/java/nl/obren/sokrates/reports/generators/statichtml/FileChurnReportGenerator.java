@@ -95,7 +95,7 @@ public class FileChurnReportGenerator {
                 + " lines of code)");
         report.endUnorderedList();
         report.endUnorderedList();
-        report.addHtmlContent(PieChartUtils.getRiskDistributionPieChart(distribution, changeFrequencyLabels, Palette.getHeatPalette()));
+        report.addHtmlContent(PieChartUtils.getRiskDistributionChart(distribution, changeFrequencyLabels, Palette.getHeatPalette()));
         report.endSection();
     }
 

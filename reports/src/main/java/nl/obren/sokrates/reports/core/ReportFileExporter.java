@@ -160,6 +160,7 @@ public class ReportFileExporter {
         boolean showReport = reportFile.exists() && StringUtils.isNotBlank(reportFileName);
 
         if (showReport) {
+            indexReport.addHtmlContent("<a style='text-decoration: none' href=\"" + reportFileName + "\">");
             indexReport.addHtmlContent("<div class='group' style='padding: 10px; margin: 10px; width: 180px; height: 200px; text-align: center; display: inline-block; vertical-align: top'>");
             indexReport.startDiv("font-size:90%; color:deepskyblue");
             indexReport.addHtmlContent("Analysis Report");
@@ -179,8 +180,9 @@ public class ReportFileExporter {
         indexReport.endDiv();
         if (showReport) {
             indexReport.startDiv("color:blue; ");
-            indexReport.addHtmlContent("<b><a style='text-decoration: none' href=\"" + reportFileName + "\">" + reportTitle + "</a></b>");
+            indexReport.addHtmlContent("<b>" + reportTitle + "</b>");
             indexReport.endDiv();
+            indexReport.addHtmlContent("</a>");
         } else {
             indexReport.startDiv("");
             indexReport.addHtmlContent("<b>" + reportTitle + "</b>");

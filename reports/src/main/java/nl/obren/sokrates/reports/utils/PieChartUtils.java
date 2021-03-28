@@ -13,11 +13,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class PieChartUtils {
-    public static String getRiskDistributionPieChart(RiskDistributionStats distribution, List<String> labels) {
-        return getRiskDistributionPieChart(distribution, labels, Palette.getRiskPalette());
+    public static String getRiskDistributionChart(RiskDistributionStats distribution, List<String> labels) {
+        return getRiskDistributionChart(distribution, labels, Palette.getRiskPalette());
     }
 
-    public static String getRiskDistributionPieChart(RiskDistributionStats distribution, List<String> labels, Palette palette) {
+    public static String getRiskDistributionChart(RiskDistributionStats distribution, List<String> labels, Palette palette) {
         SimpleOneBarChart chart = new SimpleOneBarChart();
         chart.setWidth(800);
         chart.setBarHeight(100);

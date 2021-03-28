@@ -14,7 +14,6 @@ import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class UnitsSizeReportGenerator {
@@ -92,7 +91,7 @@ public class UnitsSizeReportGenerator {
         report.endUnorderedList();
         report.endUnorderedList();
 
-        report.addHtmlContent(PieChartUtils.getRiskDistributionPieChart(unitSizeDistribution, labels));
+        report.addHtmlContent(PieChartUtils.getRiskDistributionChart(unitSizeDistribution, labels));
         report.endSection();
 
         report.startSection("Unit Size per Extension", "");

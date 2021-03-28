@@ -146,7 +146,7 @@
         "tolerance" : "1"
       }
     }, {
-      "metric" : "CONDITIONAL_COMPLEXITY_DISTRIBUTION_26_PLUS_COUNT",
+      "metric" : "CONDITIONAL_COMPLEXITY_HIGH_PLUS_RISK_COUNT",
       "description" : "Number of very complex units",
       "desiredRange" : {
         "min" : "0",

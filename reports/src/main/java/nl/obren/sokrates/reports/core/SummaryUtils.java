@@ -300,11 +300,11 @@ public class SummaryUtils {
         report.startUnorderedList("margin-top: 5px; font-size: 90%");
         Thresholds fileAgeThresholds = analysisResults.getCodeConfiguration().getAnalysis().getFileAgeThresholds();
         report.addListItem(FormattingUtils.getFormattedPercentage(age.getVeryHighRiskPercentage())
-                + "% of code is older than " + fileAgeThresholds.getVeryHigh() + " days");
+                + "% of code older than " + fileAgeThresholds.getVeryHigh() + " days");
         report.addListItem(FormattingUtils.getFormattedPercentage(changes.getVeryHighRiskPercentage())
-                + "% of code has last been changed more than "
+                + "% of code not updated in the past "
                 + fileAgeThresholds.getVeryHigh()
-                + " days ago"
+                + " days"
         );
         report.endUnorderedList();
         report.endTableCell();

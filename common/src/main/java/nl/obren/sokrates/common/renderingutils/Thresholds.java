@@ -11,13 +11,14 @@ import java.util.List;
 
 public class Thresholds {
     public static final BasicColorInfo RISK_GREEN = getBasicColorInfo(0.02, 0.40, 0.03);
+    public static final BasicColorInfo RISK_LIGHT_GREEN = getBasicColorInfo(0.1	,0.59,	0.25);
     public static final BasicColorInfo RISK_YELLOW = getBasicColorInfo(0.855, 1, 0);
     public static final BasicColorInfo RISK_ORANGE = getBasicColorInfo(1, 0.647, 0);
     public static final BasicColorInfo RISK_RED = getBasicColorInfo(0.863, 0.078, 0.235);
 
     public static final List<Threshold> UNIT_LINES = Arrays.asList(
             new Threshold("0-10", 10, RISK_GREEN),
-            new Threshold("0-20", 20, RISK_GREEN),
+            new Threshold("0-20", 20, RISK_LIGHT_GREEN),
             new Threshold("21-50", 50, RISK_YELLOW),
             new Threshold("51-100", 100, RISK_ORANGE),
             new Threshold("101+", Integer.MAX_VALUE, RISK_RED)

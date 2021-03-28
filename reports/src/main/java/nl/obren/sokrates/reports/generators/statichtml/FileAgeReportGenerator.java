@@ -155,7 +155,7 @@ public class FileAgeReportGenerator {
                 + " lines of code)");
         report.endUnorderedList();
         report.endUnorderedList();
-        report.addHtmlContent(PieChartUtils.getRiskDistributionPieChart(distribution, ageLabels, palette));
+        report.addHtmlContent(PieChartUtils.getRiskDistributionChart(distribution, ageLabels, palette));
         report.endSection();
     }
 
@@ -184,7 +184,7 @@ public class FileAgeReportGenerator {
                 + " lines of code)");
         report.endUnorderedList();
         report.endUnorderedList();
-        report.addHtmlContent(PieChartUtils.getRiskDistributionPieChart(distribution, ageLabels, palette));
+        report.addHtmlContent(PieChartUtils.getRiskDistributionChart(distribution, ageLabels, palette));
         report.endSection();
     }
 

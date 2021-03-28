@@ -98,7 +98,7 @@ public class FileSizeReportGenerator {
                 + " lines of code)");
         report.endUnorderedList();
         report.endUnorderedList();
-        report.addHtmlContent(PieChartUtils.getRiskDistributionPieChart(distribution, labels));
+        report.addHtmlContent(PieChartUtils.getRiskDistributionChart(distribution, labels));
         report.endSection();
     }
 
