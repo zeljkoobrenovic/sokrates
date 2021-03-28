@@ -14,10 +14,10 @@ class ThresholdsTest {
 
         List<String> labels = thresholds.getLabels();
 
-        assertEquals(labels.get(0), "1-10");
-        assertEquals(labels.get(1), "11-20");
+        assertEquals(labels.get(4), "1-10");
+        assertEquals(labels.get(3), "11-20");
         assertEquals(labels.get(2), "21-30");
-        assertEquals(labels.get(3), "31-40");
-        assertEquals(labels.get(4), "41+");
+        assertEquals(labels.get(1), "31-40");
+        assertEquals(labels.get(0), "41+");
     }
 }
