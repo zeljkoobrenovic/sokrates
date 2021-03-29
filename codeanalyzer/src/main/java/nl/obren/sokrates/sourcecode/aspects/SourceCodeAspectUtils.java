@@ -43,14 +43,12 @@ public class SourceCodeAspectUtils {
             sourceFiles, int depth, int minComponentCount) {
 
         List<NamedSourceCodeAspect> aspects = new ArrayList<>();
-        int prevCount = 0;
         for (int currentDepth = Math.max(1, depth); currentDepth <= MAX_SEARCH_DEPTH; currentDepth++) {
             aspects = getComponentsBasedOnFolderDepth(srcRoot, sourceFiles, currentDepth);
             int count = aspects.size();
             if (count >= minComponentCount) {
                 break;
             }
-            prevCount = count;
         }
         return aspects;
     }

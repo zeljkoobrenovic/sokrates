@@ -547,7 +547,11 @@ public class LogicalComponentsReportGenerator {
         StringBuilder description = new StringBuilder();
         LogicalDecomposition definition = logicalDecomposition.getLogicalDecomposition();
         if (definition.getComponentsFolderDepth() > 0) {
-            description.append("The decompositions is based on folder structure at <b>level " + definition.getComponentsFolderDepth() + "</b> (relative to the source code root).");
+            if (definition.getMinComponentsCount() <= 1) {
+                description.append("The decompositions is based on the folder structure at <b>level " + definition.getComponentsFolderDepth() + "</b> (relative to the source code root).");
+            } else {
+                description.append("The decompositions is based on the folder structure (relative to the source code root), with automatically defined folder depth to have at least " + definition.getMinComponentsCount() + " components.");
+            }
         } else if (logicalDecomposition.getComponents() != null && numberOfComponents > 0) {
             description.append("The \"" + definition.getName() + "\" logical decomposition in based on <b>" + numberOfComponents + "</b> explicitly defined components.");
         }

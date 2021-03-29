@@ -122,9 +122,9 @@ public class DataExporter {
             FileUtils.write(new File(textDataFolder, "metrics_trend_loc_per_extension.txt"), exporter.getText("LINES_OF_CODE_MAIN_.*"), UTF_8);
             FileUtils.write(new File(textDataFolder, "metrics_trend_loc_duplication.txt"), exporter.getText("(DUPLICATION_NUMBER_OF_CLEANED_LINES|DUPLICATION_NUMBER_OF_DUPLICATED_LINES)"), UTF_8);
             FileUtils.write(new File(textDataFolder, "metrics_trend_unit_size_loc.txt"), exporter.getText("UNIT_SIZE_DISTRIBUTION_.*_LOC"), UTF_8);
-            FileUtils.write(new File(textDataFolder, "metrics_trend_conditional_complexity_loc.txt"), exporter.getText("CONDITIONAL_COMPLEXITY_DISTRIBUTION_.*_LOC"), UTF_8);
+            FileUtils.write(new File(textDataFolder, "metrics_trend_conditional_complexity_loc.txt"), exporter.getText("CONDITIONAL_COMPLEXITY_.*_LOC"), UTF_8);
             FileUtils.write(new File(textDataFolder, "metrics_trend_loc_logical_decompositions.txt"), exporter.getText("LINES_OF_CODE_DECOMPOSITION_.*", ".*_EXT_.*"), UTF_8);
-            FileUtils.write(new File(textDataFolder, "metrics_trend_loc_file_size.txt"), exporter.getText("LINES_OF_CODE_FILE_SIZE_.*", ".*_EXT_.*"), UTF_8);
+            FileUtils.write(new File(textDataFolder, "metrics_trend_loc_file_size.txt"), exporter.getText("FILE_SIZE_.*", ".*_EXT_.*"), UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }

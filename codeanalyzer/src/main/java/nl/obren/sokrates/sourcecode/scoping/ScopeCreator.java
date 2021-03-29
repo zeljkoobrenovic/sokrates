@@ -11,6 +11,7 @@ import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.SourceCodeFiles;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.aspects.ConcernsGroup;
+import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.sourcecode.scoping.custom.CustomExtensionConventions;
@@ -96,6 +97,10 @@ public class ScopeCreator {
         codeConfiguration.setAnalysis(customScopingConventions.getAnalysis());
 
         codeConfiguration.getMetadata().setLogoLink(customScopingConventions.getLogoLink());
+
+        LogicalDecomposition logicalDecomposition = codeConfiguration.getLogicalDecompositions().get(0);
+        logicalDecomposition.setComponentsFolderDepth(customScopingConventions.getComponentsFolderDepth());
+        logicalDecomposition.setMinComponentsCount(customScopingConventions.getMinComponentsCount());
     }
 
     private List<String> getExtensions() {

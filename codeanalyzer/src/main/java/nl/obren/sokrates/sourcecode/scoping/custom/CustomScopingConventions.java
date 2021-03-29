@@ -27,7 +27,8 @@ public class CustomScopingConventions {
     private List<Concern> concerns = new ArrayList<>();
     private List<String> ignoreContributors = new ArrayList<>();
 
-    private int searchByFolderDepthMin = 0;
+    private int componentsFolderDepth = 1;
+    private int minComponentsCount = 0;
 
     private AnalysisConfig analysis = new AnalysisConfig();
 
@@ -135,11 +136,19 @@ public class CustomScopingConventions {
         this.logoLink = logoLink;
     }
 
-    public int getSearchByFolderDepthMin() {
-        return searchByFolderDepthMin;
+    public int getMinComponentsCount() {
+        return minComponentsCount;
     }
 
-    public void setSearchByFolderDepthMin(int searchByFolderDepthMin) {
-        this.searchByFolderDepthMin = searchByFolderDepthMin;
+    public void setMinComponentsCount(int minComponentsCount) {
+        this.minComponentsCount = minComponentsCount;
+    }
+
+    public int getComponentsFolderDepth() {
+        return componentsFolderDepth;
+    }
+
+    public void setComponentsFolderDepth(int componentsFolderDepth) {
+        this.componentsFolderDepth = componentsFolderDepth;
     }
 }

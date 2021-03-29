@@ -67,8 +67,8 @@ public class CodeConfiguration {
         metricsWithGoal.setDescription("Aim at keeping the system size modest (less than 200,000 LOC is good), duplication low (less than 5% is good), files small (no files longer than 1000 LOC is good), and units simple (no units with more than 25 decision points is good).");
         metricsWithGoal.getControls().add(new MetricRangeControl("LINES_OF_CODE_MAIN", "Total number of lines of main code", new Range("0", "200000", "20000")));
         metricsWithGoal.getControls().add(new MetricRangeControl("DUPLICATION_PERCENTAGE", "System duplication", new Range("0", "5", "1")));
-        metricsWithGoal.getControls().add(new MetricRangeControl("NUMBER_OF_FILES_FILE_SIZE_1001_PLUS", "The number of very large files", new Range("0", "0", "1")));
-        metricsWithGoal.getControls().add(new MetricRangeControl("CONDITIONAL_COMPLEXITY_DISTRIBUTION_51_PLUS_COUNT", "Number of very complex units", new Range("0", "0", "1")));
+        metricsWithGoal.getControls().add(new MetricRangeControl("VERY_HIGH_RISK_FILE_SIZE_COUNT", "The number of very large files", new Range("0", "0", "1")));
+        metricsWithGoal.getControls().add(new MetricRangeControl("CONDITIONAL_COMPLEXITY_VERY_HIGH_RISK_COUNT", "Number of very complex units", new Range("0", "0", "1")));
         return metricsWithGoal;
     }
 

@@ -70,28 +70,28 @@ public class UnitsAnalyzer extends Analyzer {
 
         RiskDistributionStats unitSizeDistribution = UnitUtils.getUnitSizeDistribution(allUnits, unitSizeThresholds);
         unitsAnalysisResults.setUnitSizeRiskDistribution(unitSizeDistribution);
-        printRiskDistributionStats(unitSizeDistribution, unitSizeCategoryNames, "Unit size distribution ");
+        printRiskDistributionStats(unitSizeDistribution, "Unit size ");
 
-        AnalysisUtils.detailedInfo(textSummary, progressFeedback, "Unit size distribution per component:", start);
+        AnalysisUtils.detailedInfo(textSummary, progressFeedback, "Unit size per component:", start);
         UnitUtils.getUnitSizeDistributionPerComponent(codeConfiguration.getLogicalDecompositions(), allUnits, unitSizeThresholds).forEach(group -> {
             List<RiskDistributionStats> componentUnitSizeDistributionStats = new ArrayList<>();
             unitsAnalysisResults.getUnitSizeRiskDistributionPerComponent().add(componentUnitSizeDistributionStats);
             group.forEach(componentUnitSizeDistribution -> {
                 componentUnitSizeDistributionStats.add(componentUnitSizeDistribution);
-                printRiskDistributionStats(componentUnitSizeDistribution, unitSizeCategoryNames, "Unit Size Component " + componentUnitSizeDistribution.getKey() + ": ");
+                printRiskDistributionStats(componentUnitSizeDistribution, "Unit Size Component " + componentUnitSizeDistribution.getKey() + ": ");
             });
         });
 
-        AnalysisUtils.detailedInfo(textSummary, progressFeedback, "Unit size distribution per extension:", start);
+        AnalysisUtils.detailedInfo(textSummary, progressFeedback, "Unit size per extension:", start);
         UnitUtils.getUnitSizeDistributionPerExtension(allUnits, unitSizeThresholds).forEach(extensionUnitSizeDistribution -> {
             unitsAnalysisResults.getUnitSizeRiskDistributionPerExtension().add(extensionUnitSizeDistribution);
-            printRiskDistributionStats(extensionUnitSizeDistribution, unitSizeCategoryNames, "Unit Size Extension " + extensionUnitSizeDistribution.getKey() + ": ");
+            printRiskDistributionStats(extensionUnitSizeDistribution, "Unit Size Extension " + extensionUnitSizeDistribution.getKey() + ": ");
         });
 
         RiskDistributionStats conditionalComplexityDistributionAllUnits = UnitUtils.getConditionalComplexityDistribution(allUnits, conditionalComplexityThresholds);
         RiskDistributionStats conditionalComplexityDistribution = conditionalComplexityDistributionAllUnits;
         unitsAnalysisResults.setConditionalComplexityRiskDistribution(conditionalComplexityDistribution);
-        printRiskDistributionStats(conditionalComplexityDistributionAllUnits, conditionalComplexityCategoryNames, "Conditional complexity distribution: ");
+        printRiskDistributionStats(conditionalComplexityDistributionAllUnits, "Conditional complexity: ");
 
         metricsList.addMetric()
                 .id(safeId(getMetricId("CONDITIONAL_COMPLEXITY_HIGH_PLUS_RISK_COUNT")))
@@ -102,19 +102,19 @@ public class UnitsAnalyzer extends Analyzer {
                 .value(conditionalComplexityDistributionAllUnits.getHighRiskValue() + conditionalComplexityDistributionAllUnits.getVeryHighRiskValue());
 
 
-        AnalysisUtils.detailedInfo(textSummary, progressFeedback, "Conditional complexity distribution per component:", start);
+        AnalysisUtils.detailedInfo(textSummary, progressFeedback, "Conditional complexity per component:", start);
         UnitUtils.getConditionalComplexityDistributionPerComponent(codeConfiguration.getLogicalDecompositions(), allUnits, conditionalComplexityThresholds).forEach(group -> {
             List<RiskDistributionStats> componentConditionalComplexityDistributionStats = new ArrayList<>();
             unitsAnalysisResults.getConditionalComplexityRiskDistributionPerComponent().add(componentConditionalComplexityDistributionStats);
             group.forEach(componentConditionalComplexityDistribution -> {
                 componentConditionalComplexityDistributionStats.add(componentConditionalComplexityDistribution);
-                printRiskDistributionStats(componentConditionalComplexityDistribution, conditionalComplexityCategoryNames, "Conditional Complexity Component " + componentConditionalComplexityDistribution.getKey() + " ");
+                printRiskDistributionStats(componentConditionalComplexityDistribution, "Conditional Complexity Component " + componentConditionalComplexityDistribution.getKey() + " ");
             });
         });
-        AnalysisUtils.detailedInfo(textSummary, progressFeedback, "Conditional complexity distribution per extension:", start);
+        AnalysisUtils.detailedInfo(textSummary, progressFeedback, "Conditional complexity per extension:", start);
         UnitUtils.getConditionalComplexityDistributionPerExtension(allUnits, conditionalComplexityThresholds).forEach(extensionUnitSizeDistribution -> {
             unitsAnalysisResults.getConditionalComplexityRiskDistributionPerExtension().add(extensionUnitSizeDistribution);
-            printRiskDistributionStats(extensionUnitSizeDistribution, conditionalComplexityCategoryNames, "Conditional Complexity Component " + extensionUnitSizeDistribution.getKey() + ": ");
+            printRiskDistributionStats(extensionUnitSizeDistribution, "Conditional Complexity Component " + extensionUnitSizeDistribution.getKey() + ": ");
         });
 
         int sampleSize = codeConfiguration.getAnalysis().getMaxTopListSize();
@@ -189,7 +189,7 @@ public class UnitsAnalyzer extends Analyzer {
         });
     }
 
-    private void printRiskDistributionStats(RiskDistributionStats riskDistributionStats, UnitCategoryNames categoryNames, String prefix) {
+    private void printRiskDistributionStats(RiskDistributionStats riskDistributionStats, String prefix) {
         String namePrefix = SystemUtils.getFileSystemFriendlyName(prefix.toUpperCase().replace(":", "")).toUpperCase();
 
         addNegligibleRiskMetrics(riskDistributionStats, namePrefix);
@@ -210,8 +210,8 @@ public class UnitsAnalyzer extends Analyzer {
         String prefix = (namePrefix + "_" + riskCategory + "_RISK_").toUpperCase();
 
         metricsList.addMetric().id(safeId(getMetricId(prefix + "LOC"))).value(value);
-        metricsList.addMetric().id(safeId(getMetricId(namePrefix + "PERCENTAGE"))).value(percentage);
-        metricsList.addMetric().id(safeId(getMetricId(namePrefix + "COUNT"))).value(count);
+        metricsList.addMetric().id(safeId(getMetricId(prefix + "PERCENTAGE"))).value(percentage);
+        metricsList.addMetric().id(safeId(getMetricId(prefix + "COUNT"))).value(count);
     }
 
     private void addVeryHighRiskMetrics(RiskDistributionStats stats, String namePrefix) {
