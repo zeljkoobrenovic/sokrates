@@ -41,7 +41,7 @@ public class VisualizationTemplate {
         return render("treemap.html", items).replace(",\"children\":[]", "");
     }
 
-    public String renderPackHierarchy(List<VisualizationItem> items) {
-        return render("pack_hierarchy.html", items).replace(",\"children\":[]", "");
+    public String renderZoomableCircle(List<VisualizationItem> items) {
+        return render("zoomable_circles.html", items).replace(",\"children\":[]", "");
     }
 }
