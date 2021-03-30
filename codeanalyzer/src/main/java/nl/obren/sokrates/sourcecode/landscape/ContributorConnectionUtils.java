@@ -72,15 +72,22 @@ public class ContributorConnectionUtils {
                     String key1 = email1 + "::" + email2;
                     String key2 = email2 + "::" + email1;
 
+                    ComponentDependency dependency;
                     if (dependenciesMap.containsKey(key1)) {
-                        dependenciesMap.get(key1).increment(1);
+                        dependency = dependenciesMap.get(key1);
                     } else if (dependenciesMap.containsKey(key2)) {
-                        dependenciesMap.get(key2).increment(1);
+                        dependency = dependenciesMap.get(key2);
                     } else {
-                        ComponentDependency dependency = new ComponentDependency(email1, email2);
+                        dependency = new ComponentDependency(email1, email2);
                         dependenciesMap.put(key1, dependency);
                         dependencies.add(dependency);
                     }
+
+                    if (!dependency.getData().contains(path)) {
+                        dependency.getData().add(path);
+                    }
+
+                    dependency.setCount(dependency.getData().size());
                 });
             });
         });

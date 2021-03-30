@@ -9,7 +9,6 @@ import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.renderingutils.Thresholds;
 import nl.obren.sokrates.common.renderingutils.VisualizationItem;
 import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
-import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.renderingutils.x3d.Unit3D;
 import nl.obren.sokrates.common.renderingutils.x3d.X3DomExporter;
 import nl.obren.sokrates.common.utils.BasicColorInfo;
@@ -20,6 +19,7 @@ import nl.obren.sokrates.reports.dataexporters.DataExporter;
 import nl.obren.sokrates.reports.generators.statichtml.BasicSourceCodeReportGenerator;
 import nl.obren.sokrates.reports.landscape.statichtml.LandscapeAnalysisCommands;
 import nl.obren.sokrates.sourcecode.Link;
+import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.CodeAnalyzer;
 import nl.obren.sokrates.sourcecode.analysis.CodeAnalyzerSettings;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -42,7 +42,6 @@ import org.apache.log4j.BasicConfigurator;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -572,6 +571,37 @@ public class CommandLineInterface {
                 LOG.warn(e);
             }
         });
+
+        try {
+            File folder = new File(reportsFolder, "html/visuals");
+            folder.mkdirs();
+
+            generateFileStructureExplorers("main", folder, analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles());
+            generateFileStructureExplorers("test", folder, analysisResults.getTestAspectAnalysisResults().getAspect().getSourceFiles());
+            generateFileStructureExplorers("generated", folder, analysisResults.getGeneratedAspectAnalysisResults().getAspect().getSourceFiles());
+            generateFileStructureExplorers("build", folder, analysisResults.getBuildAndDeployAspectAnalysisResults().getAspect().getSourceFiles());
+            generateFileStructureExplorers("other", folder, analysisResults.getOtherAspectAnalysisResults().getAspect().getSourceFiles());
+
+            generate3DUnitsView(folder, analysisResults);
+        } catch (IOException e) {
+            LOG.warn(e);
+        }
+
+    }
+
+    private void generateFileStructureExplorers(String nameSuffix, File folder, List<SourceFile> sourceFiles) throws IOException {
+        List<VisualizationItem> items = getZoomableCirclesItems(sourceFiles);
+        FileUtils.write(new File(folder, "zoomable_circles_" + nameSuffix + ".html"), new VisualizationTemplate().renderZoomableCircles(items), UTF_8);
+        FileUtils.write(new File(folder, "zoomable_sunburst_" + nameSuffix + ".html"), new VisualizationTemplate().renderZoomableSunburst(items), UTF_8);
+    }
+
+    private List<VisualizationItem> getZoomableCirclesItems(List<SourceFile> sourceFiles) {
+        DirectoryNode directoryTree = PathStringsToTreeStructure.createDirectoryTree(sourceFiles);
+        if (directoryTree != null) {
+            return directoryTree.toVisualizationItems();
+        }
+
+        return new ArrayList<>();
     }
 
     private void generate3DUnitsView(File visualsFolder, CodeAnalysisResults analysisResults) {

@@ -41,7 +41,11 @@ public class VisualizationTemplate {
         return render("treemap.html", items).replace(",\"children\":[]", "");
     }
 
-    public String renderZoomableCircle(List<VisualizationItem> items) {
+    public String renderZoomableCircles(List<VisualizationItem> items) {
         return render("zoomable_circles.html", items).replace(",\"children\":[]", "");
+    }
+
+    public String renderZoomableSunburst(List<VisualizationItem> items) {
+        return render("zoomable_sunburst.html", items).replace(",\"children\":[]", "");
     }
 }

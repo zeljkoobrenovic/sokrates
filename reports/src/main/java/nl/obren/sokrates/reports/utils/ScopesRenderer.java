@@ -34,6 +34,8 @@ public class ScopesRenderer {
     private NamedSourceCodeAspect aspect;
     private boolean inSection = true;
     private String filesListPath;
+    private String explorers = "";
+    private boolean sort = true;
 
     public List<String> getAspectsFileListPaths() {
         return aspectsFileListPaths;
@@ -190,7 +192,9 @@ public class ScopesRenderer {
             items.add(item);
         }
 
-        Collections.sort(items, (o1, o2) -> -Integer.compare(o1.getLinesOfCode().getValue().intValue(), o2.getLinesOfCode().getValue().intValue()));
+        if (sort) {
+            Collections.sort(items, (o1, o2) -> -Integer.compare(o1.getLinesOfCode().getValue().intValue(), o2.getLinesOfCode().getValue().intValue()));
+        }
 
         return items;
     }
@@ -247,6 +251,15 @@ public class ScopesRenderer {
         updateCountVariables();
         if (renderTitle) {
             report.addHtmlContent("<h3>" + title + "</h3>");
+        }
+
+        if (StringUtils.isNotBlank(explorers)) {
+            report.startDiv("");
+            report.addHtmlContent("Explore:&nbsp;&nbsp;");
+            report.addNewTabLink("circles", "visuals/zoomable_circles_" +explorers + ".html");
+            report.addHtmlContent("&nbsp;|&nbsp;");
+            report.addNewTabLink("sunburst", "visuals/zoomable_sunburst_" +explorers + ".html");
+            report.endDiv();
         }
 
         boolean criteriaDefined = aspect != null && aspect.getSourceFileFilters().size() > 0;
@@ -316,5 +329,21 @@ public class ScopesRenderer {
 
     public void setAspect(NamedSourceCodeAspect aspect) {
         this.aspect = aspect;
+    }
+
+    public String getExplorers() {
+        return explorers;
+    }
+
+    public void setExplorers(String explorers) {
+        this.explorers = explorers;
+    }
+
+    public boolean isSort() {
+        return sort;
+    }
+
+    public void setSort(boolean sort) {
+        this.sort = sort;
     }
 }

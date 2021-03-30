@@ -19,6 +19,8 @@ public class ComponentDependency {
     private String toComponent;
     private int count = 1;
     private String text = null;
+    @JsonIgnore
+    private List<String> data = new ArrayList<>();
     private String color = "";
 
     public ComponentDependency() {
@@ -128,5 +130,15 @@ public class ComponentDependency {
 
     public void setColor(String color) {
         this.color = color;
+    }
+
+    @JsonIgnore
+    public List<String> getData() {
+        return data;
+    }
+
+    @JsonIgnore
+    public void setData(List<String> data) {
+        this.data = data;
     }
 }

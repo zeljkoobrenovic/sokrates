@@ -20,16 +20,22 @@ public class ReplaceOperation extends StringOperation {
 
     @Override
     public String exec(String input) {
-        if (getParams().size() != 2) {
+        if (getParams().size() < 2) {
             return input;
         }
 
-        String regex = getParams().get(0);
-        String replacement = getParams().get(1);
+        String result = input;
 
-        if (regex.equals(".*"))
-            return replacement;
-        else
-            return input.replaceAll(regex, replacement);
+        for (int i = 0; i + 1 < getParams().size(); i += 2) {
+            String regex = getParams().get(i);
+            String replacement = getParams().get(i + 1);
+
+            if (regex.equals(".*"))
+                result = replacement;
+            else
+                result = result.replaceAll(regex, replacement);
+        }
+
+        return result;
     }
 }

@@ -29,17 +29,24 @@ public class ReplaceOperationTest {
     }
 
     @Test
+    public void execChain() {
+        String input = "ABC def 123 \\path1\\path2\\file - data...";
+
+        StringOperation op = new ReplaceOperation(Arrays.asList("\\\\", "/", "(\\-|\\\\|/)", " "));
+        StringOperation opOneParamNotUsed = new ReplaceOperation(Arrays.asList("\\\\", "/", "(\\-|\\\\|/)", " ", "Not used"));
+
+        Assert.assertEquals("ABC def 123  path1 path2 file   data...", op.exec(input));
+        Assert.assertEquals("ABC def 123  path1 path2 file   data...", opOneParamNotUsed.exec(input));
+    }
+
+    @Test
     public void execWithWrongParameters() {
         String input = "ABC def 123 \\path1\\path2\\file - data...";
 
         StringOperation op1 = new ReplaceOperation(Arrays.asList());
         StringOperation op2 = new ReplaceOperation(Arrays.asList(".*"));
-        StringOperation op3 = new ReplaceOperation(Arrays.asList("", "/", ";"));
-        StringOperation op4 = new ReplaceOperation(Arrays.asList("", "/", ";", ";"));
 
         Assert.assertEquals(input, op1.exec(input));
         Assert.assertEquals(input, op2.exec(input));
-        Assert.assertEquals(input, op3.exec(input));
-        Assert.assertEquals(input, op4.exec(input));
     }
 }

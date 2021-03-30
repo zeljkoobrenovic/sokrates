@@ -94,7 +94,8 @@ public class ReportFileExporter {
 
         if (analysisResults.getContributorsAnalysisResults().getCommitsCount() > 0) {
             List<ContributionTimeSlot> contributorsPerYear = analysisResults.getContributorsAnalysisResults().getContributorsPerYear();
-            indexReport.startSection("Commits Trend <a href='Commits.html'>...</a>", "");
+            indexReport.startSection("Commits Trend " + "<a href='Commits.html'  title='metrics &amp; goals details' style='margin-left: 8px; vertical-align: top'>" + getDetailsIcon() + "</a>", "");
+
             ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsPerYear, 20, true, 8);
             indexReport.endSection();
         }
@@ -107,6 +108,10 @@ public class ReportFileExporter {
         appendLinks(indexReport, analysisResults);
         indexReport.addParagraph("<span style='color: grey; font-size: 90%'>updated: " + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + "</span>");
         export(htmlExportFolder, indexReport, "index.html");
+    }
+
+    private static String getDetailsIcon() {
+        return getIconSvg("details", 22);
     }
 
     private static void addExplorersSection(RichTextReport indexReport) {

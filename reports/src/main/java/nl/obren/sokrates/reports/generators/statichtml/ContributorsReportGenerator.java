@@ -181,8 +181,16 @@ public class ContributorsReportGenerator {
                                           ContributionCounter contributionCounter,
                                           List<Contributor> contributors) {
         if (peopleDependencies.size() > 0) {
-            report.addLevel2Header("People Dependencies", "margin-top: 40px");
+            report.addLevel2Header("Contributor Dependencies", "margin-top: 40px");
 
+
+            List<ContributorConnection> contributorConnections = ContributorConnectionUtils.getContributorConnections(peopleDependencies, contributors, contributionCounter);
+            report.addParagraph("C-median: " + getRoundedValueOf(ContributorConnectionUtils.getCMedian(contributorConnections(peopleDependencies))));
+            report.addParagraph("C-mean: " + getRoundedValueOf(ContributorConnectionUtils.getCMean(contributorConnections(peopleDependencies))));
+            report.addParagraph("C-index: " + getRoundedValueOf(ContributorConnectionUtils.getCIndex(contributorConnections(peopleDependencies))));
+            addContributors(contributorConnections);
+
+            report.addLevel3Header("Contributor Dependencies via Shared Files", "margin-top: 42px");
             report.startShowMoreBlock("show graph...");
             report.addParagraph("The number on lines shows the number of same files that both persons changed in past <b>" + daysAgo + "</b> days.", "color: grey");
             GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
@@ -199,24 +207,61 @@ public class ContributorsReportGenerator {
             String prefix = "people_dependencies_" + daysAgo + "_";
             addDependencyGraphVisuals(peopleDependencies, new ArrayList<>(), graphvizDependencyRenderer, prefix);
             report.endShowMoreBlock();
-            List<ContributorConnection> contributorConnections = ContributorConnectionUtils.getContributorConnections(peopleDependencies, contributors, contributionCounter);
-            report.addParagraph("C-median: " + ContributorConnectionUtils.getCMedian(contributorConnections(peopleDependencies)));
-            report.addParagraph("C-mean: " + ContributorConnectionUtils.getCMean(contributorConnections(peopleDependencies)));
-            report.addParagraph("C-index: " + ContributorConnectionUtils.getCIndex(contributorConnections(peopleDependencies)));
-            report.startTable();
-            report.addTableHeader("", "Contributor", "# connections", "# commits");
-            int index[] = {0};
-            contributorConnections.forEach(contributorConnection -> {
-                index[0]++;
-                report.startTableRow();
-                report.addTableCell(index[0] + ".");
-                report.addTableCell(contributorConnection.getEmail());
-                report.addTableCell(contributorConnection.getCount() + "");
-                report.addTableCell(contributorConnection.getCommits() + "");
-                report.endTableRow();
-            });
-            report.endTable();
+            report.addLineBreak();
+            report.addLineBreak();
+            addPeopleDependenciesTable(peopleDependencies);
         }
+    }
+
+    private void addContributors(List<ContributorConnection> contributorConnections) {
+        report.addLevel3Header("Most Connected Contributors");
+        report.startScrollingDiv();
+        report.startTable();
+        report.addTableHeader("", "Contributor", "# connections", "# commits");
+        int index[] = {0};
+        contributorConnections.forEach(contributorConnection -> {
+            index[0]++;
+            report.startTableRow();
+            report.addTableCell(index[0] + ".");
+            report.addTableCell(contributorConnection.getEmail());
+            report.addTableCell(contributorConnection.getCount() + "");
+            report.addTableCell(contributorConnection.getCommits() + "");
+            report.endTableRow();
+        });
+        report.endTable();
+        report.endDiv();
+    }
+
+    private void addPeopleDependenciesTable(List<ComponentDependency> peopleDependencies) {
+        report.startScrollingDiv();
+        report.startTable();
+        report.addTableHeader("", "Contributor 1", "Contributor 2", "# shared files");
+        int index[] = {0};
+        if (peopleDependencies.size() > 100) {
+            peopleDependencies = peopleDependencies.subList(0, 100);
+        }
+        peopleDependencies.forEach(dependency -> {
+            index[0]++;
+            int count = dependency.getCount();
+
+            report.startTableRow();
+            report.addTableCell(index[0] + ".");
+            report.addTableCell(dependency.getFromComponent());
+            report.addTableCell(dependency.getToComponent() + "");
+
+            report.startTableCell();
+            report.startShowMoreBlock(count + " shared " + (count == 1 ? "file" : "files"));
+            dependency.getData().forEach(path -> report.addHtmlContent("<br>" + path));
+            report.endShowMoreBlock();
+            report.endTableCell();
+            report.endTableRow();
+        });
+        report.endTable();
+        report.endDiv();
+    }
+
+    private String getRoundedValueOf(double value) {
+        return "" + (((int) (10 * value)) / 10.0);
     }
 
     private void addDependencyGraphVisuals(List<ComponentDependency> componentDependencies, List<String> componentNames, GraphvizDependencyRenderer graphvizDependencyRenderer, String prefix) {
@@ -276,6 +321,7 @@ public class ContributorsReportGenerator {
             report.addLineBreak();
             report.addLineBreak();
         }
+        report.startScrollingDiv();
         report.startTable();
         report.addTableHeader("#", "Contributor", "First Commit", "Latest Commit", "# commits");
         int index[] = {0};
@@ -300,5 +346,6 @@ public class ContributorsReportGenerator {
         });
 
         report.endTable();
+        report.endDiv();
     }
 }

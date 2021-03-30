@@ -63,7 +63,7 @@ public class OverviewReportGenerator {
         report.startSection("Overview of Analyzed Files", "Basic stats on analyzed files");
         report.startSubSection("Intro", "For analysis purposes we separate files in scope into several categories: <b>main</b>, <b>test</b>, <b>generated</b>, <b>deployment and build</b>, and <b>other</b>.");
         appendIntroduction(report);
-        ScopesRenderer renderer = getScopesRenderer("", "", counts, code);
+        ScopesRenderer renderer = getScopesRenderer("", "", counts, code, "");
         renderer.setInSection(false);
         renderer.setTitle("All Files in Scope");
         renderer.setAspectsFileListPaths(aspects.stream().map(aspect -> aspect.getAspect().getFileSystemFriendlyName("")).collect(Collectors.toList()));
@@ -71,11 +71,11 @@ public class OverviewReportGenerator {
 
         report.endSection();
 
-        renderScopes(report, codeAnalysisResults.getMainAspectAnalysisResults(), "Main Code", "All <b>manually</b> created or maintained source code that defines logic of the product that is  run in a <b>production</b> environment.");
-        renderScopes(report, codeAnalysisResults.getTestAspectAnalysisResults(), "Test Code", "Used only for testing of the product. Normally not deployed in a production environment.");
-        renderScopes(report, codeAnalysisResults.getGeneratedAspectAnalysisResults(), "Generated Code", "Automatically generated files, not manually changed after generation.");
-        renderScopes(report, codeAnalysisResults.getBuildAndDeployAspectAnalysisResults(), "Build and Deployment Code", "Source code used to configure or support build and deployment process.");
-        renderScopes(report, codeAnalysisResults.getOtherAspectAnalysisResults(), "Other Code", "");
+        renderScopes(report, codeAnalysisResults.getMainAspectAnalysisResults(), "Main Code", "All <b>manually</b> created or maintained source code that defines logic of the product that is  run in a <b>production</b> environment.", "main");
+        renderScopes(report, codeAnalysisResults.getTestAspectAnalysisResults(), "Test Code", "Used only for testing of the product. Normally not deployed in a production environment.", "test");
+        renderScopes(report, codeAnalysisResults.getGeneratedAspectAnalysisResults(), "Generated Code", "Automatically generated files, not manually changed after generation.", "generated");
+        renderScopes(report, codeAnalysisResults.getBuildAndDeployAspectAnalysisResults(), "Build and Deployment Code", "Source code used to configure or support build and deployment process.", "build");
+        renderScopes(report, codeAnalysisResults.getOtherAspectAnalysisResults(), "Other Code", "", "other");
 
         report.endSection();
 
@@ -124,12 +124,12 @@ public class OverviewReportGenerator {
         report.endUnorderedList();
     }
 
-    public void renderScopes(RichTextReport report, AspectAnalysisResults aspectAnalysisResults, String title, String description) {
+    public void renderScopes(RichTextReport report, AspectAnalysisResults aspectAnalysisResults, String title, String description, String explorers) {
         List<NumericMetric> fileCountPerExtension = aspectAnalysisResults.getFileCountPerExtension();
 
         if (fileCountPerExtension.size() > 0) {
             List<NumericMetric> linesOfCodePerExtension = aspectAnalysisResults.getLinesOfCodePerExtension();
-            ScopesRenderer renderer = getScopesRenderer(title, "", fileCountPerExtension, linesOfCodePerExtension);
+            ScopesRenderer renderer = getScopesRenderer(title, "", fileCountPerExtension, linesOfCodePerExtension, explorers);
             renderer.setTitle(title);
             renderer.setFilesListPath(DataExportUtils.getAspectFileListFileName(aspectAnalysisResults.getAspect(), ""));
             renderer.setAspect(aspectAnalysisResults.getAspect());
@@ -137,8 +137,10 @@ public class OverviewReportGenerator {
         }
     }
 
-    private ScopesRenderer getScopesRenderer(String title, String description, List<NumericMetric> fileCounts, List<NumericMetric> linesOfCode) {
+    private ScopesRenderer getScopesRenderer(String title, String description, List<NumericMetric> fileCounts, List<NumericMetric> linesOfCode, String explorers) {
         ScopesRenderer renderer = new ScopesRenderer();
+        renderer.setExplorers(explorers);
+        renderer.setSort(false);
         renderer.setLinesOfCodeInMain(codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode());
         renderer.setTitle(title.replace("-", "").trim());
         renderer.setDescription(description);
