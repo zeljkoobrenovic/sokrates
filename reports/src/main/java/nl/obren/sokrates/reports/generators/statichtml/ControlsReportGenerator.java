@@ -70,7 +70,7 @@ public class ControlsReportGenerator {
         report.endTableRow();
     }
 
-    private String getColor(String status) {
+    public static String getColor(String status) {
         String upperCaseStatus = status.toUpperCase();
         return upperCaseStatus.equals("OK") ? "darkgreen"
                 : upperCaseStatus.equals("FAILED") ? "crimson"

@@ -6,6 +6,7 @@ package nl.obren.sokrates.sourcecode.scoping.custom;
 
 import nl.obren.sokrates.sourcecode.aspects.Concern;
 import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
+import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
 import nl.obren.sokrates.sourcecode.scoping.Convention;
 
 import java.util.ArrayList;
@@ -29,6 +30,9 @@ public class CustomScopingConventions {
 
     private int componentsFolderDepth = 1;
     private int minComponentsCount = 0;
+
+    private boolean ignoreStandardControls = false;
+    List<MetricsWithGoal> goalsAndControls = new ArrayList<>();
 
     private AnalysisConfig analysis = new AnalysisConfig();
 
@@ -150,5 +154,21 @@ public class CustomScopingConventions {
 
     public void setComponentsFolderDepth(int componentsFolderDepth) {
         this.componentsFolderDepth = componentsFolderDepth;
+    }
+
+    public boolean isIgnoreStandardControls() {
+        return ignoreStandardControls;
+    }
+
+    public void setIgnoreStandardControls(boolean ignoreStandardControls) {
+        this.ignoreStandardControls = ignoreStandardControls;
+    }
+
+    public List<MetricsWithGoal> getGoalsAndControls() {
+        return goalsAndControls;
+    }
+
+    public void setGoalsAndControls(List<MetricsWithGoal> goalsAndControls) {
+        this.goalsAndControls = goalsAndControls;
     }
 }

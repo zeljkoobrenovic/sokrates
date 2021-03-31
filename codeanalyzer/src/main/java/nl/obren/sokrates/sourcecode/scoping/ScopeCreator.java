@@ -52,6 +52,10 @@ public class ScopeCreator {
         }
         if (customScopingConventions != null) {
             expandScopeWithCustomConventions(codeConfiguration, sourceCodeFiles);
+            if (customScopingConventions.isIgnoreStandardControls()) {
+                codeConfiguration.getGoalsAndControls().clear();
+            }
+            codeConfiguration.getGoalsAndControls().addAll(customScopingConventions.getGoalsAndControls());
         }
 
         if (StringUtils.isNotBlank(name)) {

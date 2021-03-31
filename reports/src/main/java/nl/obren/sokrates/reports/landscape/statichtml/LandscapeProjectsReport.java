@@ -3,6 +3,7 @@ package nl.obren.sokrates.reports.landscape.statichtml;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.generators.statichtml.ControlsReportGenerator;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -10,6 +11,7 @@ import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.landscape.ProjectTag;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ProjectAnalysisResults;
+import nl.obren.sokrates.sourcecode.metrics.MetricRangeControl;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.lang3.StringUtils;
 
@@ -41,10 +43,14 @@ public class LandscapeProjectsReport {
                 "Main<br/>Language", "LOC<br/>(main)",
                 "LOC<br/>(test)", "LOC<br/>(other)",
                 "Age", "Contributors" + (thresholdCommits > 1 ? "<br/>(" + thresholdCommits + "+&nbsp;commits)" : ""),
-                "Recent<br>Contributors<br>(30d)", "Rookies", "Commits<br>this year", "Report"));
+                "Recent<br>Contributors<br>(30d)", "Rookies", "Commits<br>this year"));
         if (showTags()) {
             headers.add(2, "Tags");
         }
+        if (showControls()) {
+            headers.add("Controls");
+        }
+        headers.add("Report");
         report.addTableHeader(headers.toArray(String[]::new));
         Collections.sort(projectsAnalysisResults,
                 (a, b) -> b.getAnalysisResults().getContributorsAnalysisResults().getCommitsThisYear()
@@ -59,6 +65,10 @@ public class LandscapeProjectsReport {
             addTabStats(report);
             report.endTabContentSection();
         }
+    }
+
+    private boolean showControls() {
+        return landscapeAnalysisResults.getConfiguration().isShowControls();
     }
 
     private void addTabStats(RichTextReport report) {
@@ -112,12 +122,12 @@ public class LandscapeProjectsReport {
             report.startNewTabLink(getProjectReportUrl(project), "");
             report.startDivWithLabel(tooltip(project),
                     "border: 1px solid grey; border-radius: 50%;" +
-                    "display: inline-block; " +
-                    "padding: 0;" +
-                    "vertical-align: middle; " +
-                    "overflow: none; " +
-                    "width: " + (barSize + 2) + "px; " +
-                    "height: " + (barSize + 2) + "px; ");
+                            "display: inline-block; " +
+                            "padding: 0;" +
+                            "vertical-align: middle; " +
+                            "overflow: none; " +
+                            "width: " + (barSize + 2) + "px; " +
+                            "height: " + (barSize + 2) + "px; ");
             report.startDiv(" margin: 0;border-radius: 50%;" +
                     "opacity: " + opacity + ";" +
                     "background-color: " + getTabColor(stats.getTag()) + "; " +
@@ -250,9 +260,27 @@ public class LandscapeProjectsReport {
         report.addTableCell(FormattingUtils.formatCount(rookiesCount, "-"), "text-align: center");
         report.addTableCell(FormattingUtils.formatCount(analysisResults.getContributorsAnalysisResults().getCommitsThisYear(), "-"), "text-align: center");
         String projectReportUrl = getProjectReportUrl(projectAnalysis);
+        if (showControls()) {
+            report.startTableCell("text-align: center");
+            addControls(report, analysisResults);
+            report.endTableCell();
+        }
         report.addTableCell("<a href='" + projectReportUrl + "' target='_blank'>"
                 + "<div style='height: 40px'>" + ReportFileExporter.getIconSvg("report", 40) + "</div></a>", "text-align: center");
         report.endTableRow();
+    }
+
+    private void addControls(RichTextReport report, CodeAnalysisResults analysisResults) {
+        analysisResults.getControlResults().getGoalsAnalysisResults().forEach(goalsAnalysisResults -> {
+            goalsAnalysisResults.getControlStatuses().forEach(status -> {
+                String style = "display: inline-block; border: 2px; border-radius: 50%; height: 12px; width: 12px; background-color: " + ControlsReportGenerator.getColor(status.getStatus());
+                MetricRangeControl control = status.getControl();
+                String tooltip = control.getDescription() + "\n"
+                        + control.getDesiredRange().getTextDescription() + "\n\n"
+                        + "" + status.getMetric().getValue();
+                report.addContentInDivWithTooltip(" ", tooltip, style);
+            });
+        });
     }
 
     private String getProjectReportUrl(ProjectAnalysisResults projectAnalysis) {

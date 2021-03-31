@@ -22,6 +22,7 @@ public class LandscapeConfiguration {
     private int contributorThresholdCommits = 2;
     private int commitsMaxYears = 10;
     private boolean anonymizeContributors = false;
+    private boolean showControls = true;
     private String contributorLinkTemplate = "";
     private String contributorAvatarLinkTemplate = "";
     private List<String> ignoreContributors = new ArrayList<>();
@@ -189,6 +190,14 @@ public class LandscapeConfiguration {
 
     public void setAnonymizeContributors(boolean anonymizeContributors) {
         this.anonymizeContributors = anonymizeContributors;
+    }
+
+    public boolean isShowControls() {
+        return showControls;
+    }
+
+    public void setShowControls(boolean showControls) {
+        this.showControls = showControls;
     }
 
     public int getCommitsMaxYears() {
