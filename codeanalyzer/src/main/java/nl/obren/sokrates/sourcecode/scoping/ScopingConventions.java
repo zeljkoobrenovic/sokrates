@@ -47,10 +47,15 @@ public class ScopingConventions {
     }
 
     public void addConventions(CodeConfiguration codeConfiguration, List<SourceFile> sourceFiles) {
+        System.out.println("\nAdding ignore conventions:");
         ConventionUtils.addConventions(ignoredFilesConventions, codeConfiguration.getIgnore(), sourceFiles);
+        System.out.println("\nAdding test files conventions:");
         ConventionUtils.addConventions(testFilesConventions, codeConfiguration.getTest().getSourceFileFilters(), sourceFiles);
+        System.out.println("\nAdding generated files conventions:");
         ConventionUtils.addConventions(generatedFilesConventions, codeConfiguration.getGenerated().getSourceFileFilters(), sourceFiles);
+        System.out.println("\nAdding build & deployment conventions:");
         ConventionUtils.addConventions(buildAndDeploymentFilesConventions, codeConfiguration.getBuildAndDeployment().getSourceFileFilters(), sourceFiles);
+        System.out.println("\nAdding other files conventions:");
         ConventionUtils.addConventions(otherFilesConventions, codeConfiguration.getOther().getSourceFileFilters(), sourceFiles);
     }
 
@@ -470,6 +475,7 @@ public class ScopingConventions {
 
         ignoredFilesConventions.add(new Convention(".*/jquery([^.]*)\\.validate(\\.unobtrusive)?\\.js", "", "jQuery validation plugin (MS bundles this with asp.net mvc)"));
         ignoredFilesConventions.add(new Convention(".*/jquery([^.]*)\\.unobtrusive\\-ajax\\.js", "", "jQuery validation plugin (MS bundles this with asp.net mvc)"));
+        ignoredFilesConventions.add(new Convention(".*jquery[.].*[.]js", "", "jQuery library"));
 
         ignoredFilesConventions.add(new Convention(".*/[Mm]icrosoft([Mm]vc)?([Aa]jax|[Vv]alidation)(\\.debug)?\\.js", "", "Microsoft Ajax"));
 

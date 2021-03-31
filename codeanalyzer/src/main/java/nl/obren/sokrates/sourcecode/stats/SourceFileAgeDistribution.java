@@ -19,6 +19,9 @@ public class SourceFileAgeDistribution extends RiskDistributionStats {
     private Thresholds thresholds;
     private Types type;
 
+    public SourceFileAgeDistribution() {
+    }
+
     public SourceFileAgeDistribution(Thresholds thresholds, Types type) {
         super(thresholds.getLow(), thresholds.getMedium(), thresholds.getHigh(), thresholds.getVeryHigh());
         this.thresholds = thresholds;

@@ -14,6 +14,9 @@ import java.util.List;
 import java.util.Map;
 
 public class SourceFileSizeDistribution extends RiskDistributionStats {
+    public SourceFileSizeDistribution() {
+    }
+
     public SourceFileSizeDistribution(Thresholds thresholds) {
         super(thresholds);
     }

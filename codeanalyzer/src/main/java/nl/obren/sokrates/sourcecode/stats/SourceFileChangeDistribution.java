@@ -16,6 +16,9 @@ import java.util.Map;
 public class SourceFileChangeDistribution extends RiskDistributionStats {
     private Thresholds thresholds;
 
+    public SourceFileChangeDistribution() {
+    }
+
     public SourceFileChangeDistribution(Thresholds thresholds) {
         super(thresholds);
         this.thresholds = thresholds;

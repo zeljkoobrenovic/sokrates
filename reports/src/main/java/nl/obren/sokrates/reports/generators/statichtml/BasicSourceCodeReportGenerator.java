@@ -157,7 +157,13 @@ public class BasicSourceCodeReportGenerator {
         }
 
         if (codeAnalyzerSettings.isAnalyzeDuplication()) {
-            new DuplicationReportGenerator(codeAnalysisResults).addDuplicationToReport(duplicationReport);
+            int threshold = codeAnalysisResults.getCodeConfiguration().getAnalysis().getLocDuplicationThreshold();
+            int mainLoc = codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode();
+            if (mainLoc <= threshold) {
+                new DuplicationReportGenerator(codeAnalysisResults).addDuplicationToReport(duplicationReport);
+            } else {
+                codeAnalyzerSettings.setAnalyzeDuplication(false);
+            }
         }
 
         if (codeAnalyzerSettings.isAnalyzeFileSize()) {

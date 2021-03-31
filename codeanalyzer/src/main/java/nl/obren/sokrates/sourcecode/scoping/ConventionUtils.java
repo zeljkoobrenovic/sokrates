@@ -15,6 +15,7 @@ public class ConventionUtils {
             conventions.forEach(convention -> {
                 if (isNotAdded(convention, sourceFileFilters) && convention.matches(sourceFile)) {
                     sourceFileFilters.add(convention);
+                    System.out.println("  - path like \"" + convention.getPathPattern() + "\" / content like \"" + convention.getContentPattern() + "\"");
                 }
             });
         });

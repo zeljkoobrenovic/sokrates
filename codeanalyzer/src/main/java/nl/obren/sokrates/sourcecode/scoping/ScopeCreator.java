@@ -43,6 +43,8 @@ public class ScopeCreator {
 
         codeConfiguration.getMetadata().setName(srcRoot.getCanonicalFile().getName());
 
+        System.out.println("Scanning source files...");
+
         SourceCodeFiles sourceCodeFiles = getSourceCodeFiles(extensions, codeConfiguration.getAnalysis().getMaxLineLength());
 
         if (customScopingConventions == null || !customScopingConventions.isIgnoreStandardScopingConventions()) {
