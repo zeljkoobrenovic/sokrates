@@ -10,10 +10,13 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ControlStatus;
 import nl.obren.sokrates.sourcecode.analysis.results.ControlsAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.GoalsAnalysisResults;
-import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.metrics.Metric;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
+import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ControlsAnalyzer extends Analyzer {
     private final CodeConfiguration codeConfiguration;
@@ -27,7 +30,14 @@ public class ControlsAnalyzer extends Analyzer {
     }
 
     public void analyze() {
-        codeConfiguration.getGoalsAndControls().forEach(goal -> {
+        List<MetricsWithGoal> goalsAndControls = codeConfiguration.getGoalsAndControls();
+        List<GoalsAnalysisResults> result = analyze(goalsAndControls, metricsList);
+        controlsAnalysisResults.getGoalsAnalysisResults().addAll(result);
+    }
+
+    public static List<GoalsAnalysisResults> analyze(List<MetricsWithGoal> goalsAndControls, MetricsList metricsList) {
+        List<GoalsAnalysisResults> result = new ArrayList<>();
+        goalsAndControls.forEach(goal -> {
             GoalsAnalysisResults goalsAnalysisResults = new GoalsAnalysisResults();
             goalsAnalysisResults.setMetricsWithGoal(goal);
 
@@ -47,7 +57,9 @@ public class ControlsAnalyzer extends Analyzer {
                 goalsAnalysisResults.getControlStatuses().add(controlStatus);
             });
 
-            controlsAnalysisResults.getGoalsAnalysisResults().add(goalsAnalysisResults);
+            result.add(goalsAnalysisResults);
         });
+
+        return result;
     }
 }

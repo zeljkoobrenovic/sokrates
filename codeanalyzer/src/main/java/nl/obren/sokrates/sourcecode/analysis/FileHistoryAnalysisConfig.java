@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class FileHistoryAnalysisConfig {
-    private String importPath = "../git-history.txt";
+    private String importPath = "../" + GitHistoryUtils.GIT_HISTORY_FILE_NAME;
     private List<String> ignoreContributors = new ArrayList<>();
 
     public String getImportPath() {

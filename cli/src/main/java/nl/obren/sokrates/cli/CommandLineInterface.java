@@ -28,6 +28,7 @@ import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.ExtractGitHistoryFileHandler;
+import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
 import nl.obren.sokrates.sourcecode.scoping.ScopeCreator;
 import nl.obren.sokrates.sourcecode.scoping.custom.CustomConventionsHelper;
@@ -190,7 +191,7 @@ public class CommandLineInterface {
 
         String prefixValue = cmd.getOptionValue(prefix.getOpt());
 
-        new ExtractGitHistoryFileHandler().extractSubHistory(new File(root, "git-history.txt"), prefixValue);
+        new ExtractGitHistoryFileHandler().extractSubHistory(new File(root, GitHistoryUtils.GIT_HISTORY_FILE_NAME), prefixValue);
     }
 
     private void extractFiles(String[] args) throws ParseException, IOException {

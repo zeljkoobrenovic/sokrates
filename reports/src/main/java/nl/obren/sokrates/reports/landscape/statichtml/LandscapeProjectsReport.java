@@ -68,7 +68,7 @@ public class LandscapeProjectsReport {
     }
 
     private boolean showControls() {
-        return landscapeAnalysisResults.getConfiguration().isShowControls();
+        return landscapeAnalysisResults.getConfiguration().isShowProjectControls();
     }
 
     private void addTabStats(RichTextReport report) {

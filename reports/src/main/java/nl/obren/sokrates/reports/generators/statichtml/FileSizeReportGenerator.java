@@ -60,12 +60,6 @@ public class FileSizeReportGenerator {
         addGraphPerExtension(report, codeAnalysisResults.getFilesAnalysisResults().getFileSizeDistributionPerExtension());
         addGraphsPerLogicalComponents(report, codeAnalysisResults.getFilesAnalysisResults().getFileSizeDistributionPerLogicalDecomposition());
 
-        report.startSection("Alternative Visuals", "");
-        report.startUnorderedList();
-        report.addListItem("<a target='_blank' href='visuals/files_3d.html'>3D view of all files</a>");
-        report.endUnorderedList();
-        report.endSection();
-
         addLongestFilesList(report);
         addFilesWithMostUnitsList(report);
         addFilesWithMostLongLines(report);
@@ -99,6 +93,9 @@ public class FileSizeReportGenerator {
         report.endUnorderedList();
         report.endUnorderedList();
         report.addHtmlContent(PieChartUtils.getRiskDistributionChart(distribution, labels));
+        report.addLineBreak();
+        report.addLineBreak();
+        report.addHtmlContent("<a target='_blank' href='visuals/files_3d.html'>3D view</a>");
         report.endSection();
     }
 

@@ -1,6 +1,7 @@
 package nl.obren.sokrates.cli;
 
 import nl.obren.sokrates.common.utils.RegexUtils;
+import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -16,8 +17,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class SokratesFileUtils {
-    public static final String GIT_HISTORY_FILE_NAME = "git-history.txt";
-
     public static void extractFiles(File srcRoot, File dest, File parentDest, String pattern) throws IOException {
         dest.mkdirs();
         Path rootPath = Paths.get(srcRoot.getPath());
@@ -36,7 +35,7 @@ public class SokratesFileUtils {
                 e.printStackTrace();
             }
         });
-        File gitHistoryFile = new File(srcRoot, GIT_HISTORY_FILE_NAME);
+        File gitHistoryFile = new File(srcRoot, GitHistoryUtils.GIT_HISTORY_FILE_NAME);
         if (gitHistoryFile.exists()) {
             if (parentDest != null && !parentDest.equals(dest)) {
                 String relativize = Paths.get(parentDest.getAbsolutePath()).relativize(Paths.get(dest.getAbsolutePath())).toString();

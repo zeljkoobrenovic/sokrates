@@ -5,6 +5,7 @@
 package nl.obren.sokrates.sourcecode.landscape;
 
 import nl.obren.sokrates.sourcecode.Metadata;
+import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
 import nl.obren.sokrates.sourcecode.operations.OperationStatement;
 
 import java.util.ArrayList;
@@ -22,7 +23,8 @@ public class LandscapeConfiguration {
     private int contributorThresholdCommits = 2;
     private int commitsMaxYears = 10;
     private boolean anonymizeContributors = false;
-    private boolean showControls = true;
+    private boolean showProjectControls = true;
+    private List<MetricsWithGoal> landscapeControls = new ArrayList<>();
     private String contributorLinkTemplate = "";
     private String contributorAvatarLinkTemplate = "";
     private List<String> ignoreContributors = new ArrayList<>();
@@ -31,6 +33,7 @@ public class LandscapeConfiguration {
     private List<CustomMetric> customMetrics = new ArrayList<>();
     private List<CustomMetric> customMetricsSmall = new ArrayList<>();
     private List<WebFrameLink> iFrames = new ArrayList<>();
+    private List<WebFrameLink> iFramesAtStart = new ArrayList<>();
     private List<WebFrameLink> iFramesProjects = new ArrayList<>();
     private List<WebFrameLink> iFramesProjectsAtStart = new ArrayList<>();
     private List<WebFrameLink> iFramesContributors = new ArrayList<>();
@@ -144,6 +147,14 @@ public class LandscapeConfiguration {
         this.iFrames = iFrames;
     }
 
+    public List<WebFrameLink> getiFramesAtStart() {
+        return iFramesAtStart;
+    }
+
+    public void setiFramesAtStart(List<WebFrameLink> iFramesAtStart) {
+        this.iFramesAtStart = iFramesAtStart;
+    }
+
     public List<WebFrameLink> getiFramesProjects() {
         return iFramesProjects;
     }
@@ -192,12 +203,20 @@ public class LandscapeConfiguration {
         this.anonymizeContributors = anonymizeContributors;
     }
 
-    public boolean isShowControls() {
-        return showControls;
+    public boolean isShowProjectControls() {
+        return showProjectControls;
     }
 
-    public void setShowControls(boolean showControls) {
-        this.showControls = showControls;
+    public void setShowProjectControls(boolean showProjectControls) {
+        this.showProjectControls = showProjectControls;
+    }
+
+    public List<MetricsWithGoal> getLandscapeControls() {
+        return landscapeControls;
+    }
+
+    public void setLandscapeControls(List<MetricsWithGoal> landscapeControls) {
+        this.landscapeControls = landscapeControls;
     }
 
     public int getCommitsMaxYears() {

@@ -58,12 +58,13 @@ public class LandscapeReportGenerator {
         dataExport.exportContributors();
         dataExport.exportAnalysisResults();
 
-        Metadata metadata = landscapeAnalysisResults.getConfiguration().getMetadata();
+        LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
+        Metadata metadata = configuration.getMetadata();
         String landscapeName = metadata.getName();
         if (StringUtils.isNotBlank(landscapeName)) {
             landscapeReport.setDisplayName(landscapeName);
         }
-        landscapeReport.setParentUrl(landscapeAnalysisResults.getConfiguration().getParentUrl());
+        landscapeReport.setParentUrl(configuration.getParentUrl());
         landscapeReport.setLogoLink(metadata.getLogoLink());
         String description = metadata.getDescription();
         String tooltip = metadata.getTooltip();
@@ -98,23 +99,25 @@ public class LandscapeReportGenerator {
 
         landscapeReport.startTabContentSection("overview", true);
         addBigSummary(landscapeAnalysisResults);
-        addSubLandscapeSection(landscapeAnalysisResults.getConfiguration().getSubLandscapes());
+        addIFrames(configuration.getiFramesAtStart());
+        addSubLandscapeSection(configuration.getSubLandscapes());
+        addIFrames(configuration.getiFrames());
         landscapeReport.endTabContentSection();
         landscapeReport.startTabContentSection("source code", false);
         addBigProjectsSummary(landscapeAnalysisResults);
-        addIFrames(landscapeAnalysisResults.getConfiguration().getiFramesProjectsAtStart());
+        addIFrames(configuration.getiFramesProjectsAtStart());
         addExtensions();
         addProjectsSection(getProjects());
-        addIFrames(landscapeAnalysisResults.getConfiguration().getiFramesProjects());
+        addIFrames(configuration.getiFramesProjects());
         landscapeReport.endTabContentSection();
 
         landscapeReport.startTabContentSection("commits", false);
         addBigContributorsSummary(landscapeAnalysisResults);
-        addIFrames(landscapeAnalysisResults.getConfiguration().getiFramesContributorsAtStart());
+        addIFrames(configuration.getiFramesContributorsAtStart());
         addContributors();
         addContributorsPerExtension();
         addPeopleDependencies();
-        addIFrames(landscapeAnalysisResults.getConfiguration().getiFramesContributors());
+        addIFrames(configuration.getiFramesContributors());
         landscapeReport.endTabContentSection();
         landscapeReport.addParagraph("<span style='color: grey; font-size: 90%'>updated: " + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + "</span>");
     }
@@ -292,8 +295,6 @@ public class LandscapeReportGenerator {
 
         landscapeReport.endDiv();
         landscapeReport.addLineBreak();
-
-        addIFrames(configuration.getiFrames());
     }
 
     private void addBigProjectsSummary(LandscapeAnalysisResults landscapeAnalysisResults) {
