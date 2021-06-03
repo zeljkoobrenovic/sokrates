@@ -11,7 +11,7 @@ import nl.obren.sokrates.sourcecode.cleaners.CommentsAndEmptyLinesCleaner;
 import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
 import nl.obren.sokrates.sourcecode.dependencies.DependenciesAnalysis;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
-import nl.obren.sokrates.sourcecode.units.CStyleHeuristicUnitsExtractor;
+import nl.obren.sokrates.sourcecode.units.CppUnitsExtractor;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 
 import java.util.ArrayList;
@@ -53,7 +53,7 @@ public class CppAnalyzer extends LanguageAnalyzer {
 
     @Override
     public List<UnitInfo> extractUnits(SourceFile sourceFile) {
-        return new CStyleHeuristicUnitsExtractor().extractUnits(sourceFile);
+        return new CppUnitsExtractor().extractUnits(sourceFile);
     }
 
     @Override

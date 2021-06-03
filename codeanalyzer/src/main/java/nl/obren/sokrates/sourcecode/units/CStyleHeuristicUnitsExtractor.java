@@ -177,7 +177,7 @@ public class CStyleHeuristicUnitsExtractor {
         } else {
             unit.setShortName(line.replace("{", "").trim() + "()");
         }
-        unit.setNumberOfParameters(getNumerOfParameters(cleanedBody));
+        unit.setNumberOfParameters(getNumberOfParameters(cleanedBody));
     }
 
     private CleanedContent getCleanContent(SourceFile sourceFile) {
@@ -189,7 +189,7 @@ public class CStyleHeuristicUnitsExtractor {
         return normallyCleanedContent;
     }
 
-    private int getNumerOfParameters(String body) {
+    private int getNumberOfParameters(String body) {
         String bodyForSearch = " " + body.replace("\n", " ");
 
         int startIndex = bodyForSearch.indexOf("(");
@@ -215,7 +215,7 @@ public class CStyleHeuristicUnitsExtractor {
         bodyForSearch = bodyForSearch.replace("{", " {");
 
         int mcCabeIndex = 1;
-        for (String mcCabeIndexLiteral : mcCabeIndexLiterals) {
+        for (String mcCabeIndexLiteral : getMcCabeIndexLiterals()) {
             mcCabeIndex += StringUtils.countMatches(bodyForSearch, mcCabeIndexLiteral);
         }
 
@@ -246,7 +246,10 @@ public class CStyleHeuristicUnitsExtractor {
             unitBody.append(line + "\n");
             startCount += StringUtils.countMatches(line, "{");
             endCount += StringUtils.countMatches(line, "}");
-            if (startCount > 0 && startCount == endCount) {
+
+            boolean hasValidBody = startCount > 0 && startCount == endCount;
+
+            if(hasValidBody) {
                 return i;
             }
         }
@@ -259,7 +262,7 @@ public class CStyleHeuristicUnitsExtractor {
         if (line.contains("(") && !line.contains(";") && !line.contains("new ") && !line.trim().startsWith("else ")
                 && !line.contains("return ") && !line.trim().startsWith("?") && !line.trim().startsWith(":")) {
             line = line.substring(0, line.indexOf("(") + 1);
-            String identifierPattern = "[a-zA-Z0-9_$?]+";
+            String identifierPattern = "[a-zA-Z0-9_$?:~]+";
             String startUnitRegex = "(" + identifierPattern + "[ ]+)+" + identifierPattern + "[ ]*[(]";
             Pattern pattern = Pattern.compile(startUnitRegex);
             Matcher matcher = pattern.matcher(line);

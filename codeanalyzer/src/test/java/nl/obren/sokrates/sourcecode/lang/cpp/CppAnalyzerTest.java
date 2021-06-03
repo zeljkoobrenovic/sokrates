@@ -165,6 +165,144 @@ public class CppAnalyzerTest {
     }
 
     @Test
+    public void extractUnitInClassDecl() {
+        CppAnalyzer analyzer = new CppAnalyzer();
+        String code = "class A {\n" +
+                "  public:\n" +
+                "  A();\n" +
+                "  int increment(int val){ return val+1; };\n" +
+                "}";
+        List<UnitInfo> units = analyzer.extractUnits(new SourceFile(new File("dummy.cpp"), code));
+        assertEquals(1, units.size());
+        assertEquals(units.get(0).getShortName(), "int increment()");
+        assertEquals(units.get(0).getLinesOfCode(), 1);
+        assertEquals(units.get(0).getMcCabeIndex(), 1);
+        assertEquals(units.get(0).getNumberOfParameters(), 1);
+    }
+
+    @Test
+    public void extractMultilineForwardDeclaration() {
+        CppAnalyzer analyzer = new CppAnalyzer();
+        String code = "#include <stdio.h>\n" +
+                " \n" +
+                "/* forward declaration spanning multiple lines */\n" +
+                "int max(int num1\n" +
+                ", int num2);\n" +
+                " \n" +
+                "int main () {\n" +
+                "\n" +
+                "   /* local variable definition */\n" +
+                "   int a = 100;\n" +
+                "   int b = 200;\n" +
+                "   int ret;\n" +
+                " \n" +
+                "   /* calling a function to get max value */\n" +
+                "   ret = max(a, b);\n" +
+                " \n" +
+                "   printf( \"Max value is : %d\\n\", ret );\n" +
+                " \n" +
+                "   return 0;\n" +
+                "}\n" +
+                " \n" +
+                "/* function returning the max between two numbers */\n" +
+                "int max(int num1, int num2) {\n" +
+                "\n" +
+                "   /* local variable declaration */\n" +
+                "   int result;\n" +
+                " \n" +
+                "   if (num1 > num2)\n" +
+                "      result = num1;\n" +
+                "   else\n" +
+                "      result = num2;\n" +
+                " \n" +
+                "   return result; \n" +
+                "}";
+        List<UnitInfo> units = analyzer.extractUnits(new SourceFile(new File("dummy.cpp"), code));
+
+        assertEquals(units.size(), 2);
+        assertEquals(units.get(0).getShortName(), "int main()");
+        assertEquals(units.get(0).getLinesOfCode(), 8);
+        assertEquals(units.get(0).getMcCabeIndex(), 1);
+        assertEquals(units.get(0).getNumberOfParameters(), 0);
+        assertEquals(units.get(1).getShortName(), "int max()");
+        assertEquals(units.get(1).getLinesOfCode(), 8);
+        assertEquals(units.get(1).getMcCabeIndex(), 2);
+        assertEquals(units.get(1).getNumberOfParameters(), 2);
+    }
+
+    @Test
+    public void extractUnits3() {
+        CppAnalyzer analyzer = new CppAnalyzer();
+        String code = "#include \"YourClass.h\"\n" +
+                "\n" +
+                "namespace SomeNamespace {\n" +
+                "  class FirstClass {\n" +
+                "    public:\n" +
+                "    FirstClass(){};\n" +
+                "    ~FirstClass(){};\n" +
+                "    void someFunction() {\n" +
+                "      int var1 = 0;\n" +
+                "      int var2;\n" +
+                "      var2 = 1;\n" +
+                "      var1 = var2;\n" +
+                "      var2 = var1 + var2;\n" +
+                "      if(var1 == 0) {\n" +
+                "        var1++;\n" +
+                "      }\n" +
+                "      anotherFunction(var1, var2);\n" +
+                "    };\n" +
+                "  }  \n" +
+                "}\n" +
+                "\n" +
+                "SecondClass::SecondClass() {\n" +
+                "  internalVar = 0;\n" +
+                "}\n" +
+                "\n" +
+                "SecondClass::~SecondClass() {\n" +
+                "}\n" +
+                "\n" +
+                "/* function returning the max between two numbers */ \n" +
+                "int SecondClass::max(int num1, int num2) {\n" +
+                "  /* local variable declaration */\n" +
+                "  int result;\n" +
+                "  if (num1 > num2)\n" +
+                "    result = num1;\n" +
+                "  else\n" +
+                "    result = num2;\n" +
+                "  return result;\n" +
+                "}";
+        List<UnitInfo> units = analyzer.extractUnits(new SourceFile(new File("dummy.cpp"), code));
+        assertEquals(2, units.size());
+
+        assertEquals(units.get(0).getShortName(), "void someFunction()");
+        assertEquals(units.get(0).getLinesOfCode(), 11);
+        assertEquals(units.get(0).getMcCabeIndex(), 2);
+        assertEquals(units.get(0).getNumberOfParameters(), 0);
+        assertEquals(units.get(1).getShortName(), "int SecondClass::max()");
+        assertEquals(units.get(1).getLinesOfCode(), 8);
+        assertEquals(units.get(1).getMcCabeIndex(), 2);
+        assertEquals(units.get(1).getNumberOfParameters(), 2);
+    }
+
+    @Test
+    public void extractOneLineUnit() {
+        CppAnalyzer analyzer = new CppAnalyzer();
+        String code = "#include \"YourClass.h\"\n" +
+                "\n" +
+                "namespace SomeNamespace {\n" +
+                "  class FirstClass {\n" +
+                "    public:\n" +
+                "    FirstClass(){};\n" +
+                "    ~FirstClass(){};\n" +
+                "    bool alwaysTrue();\n" +
+                "  }  \n" +
+                " bool FirstClass::alwaysTrue() {return true;}\n" +
+                "}";
+        List<UnitInfo> units = analyzer.extractUnits(new SourceFile(new File("dummy.cpp"), code));
+        assertEquals(1, units.size());
+    }
+
+    @Test
     public void extractDependencies() throws Exception {
         CppAnalyzer analyzer = new CppAnalyzer();
         String code1 = "#include \"b.h\"\n";
