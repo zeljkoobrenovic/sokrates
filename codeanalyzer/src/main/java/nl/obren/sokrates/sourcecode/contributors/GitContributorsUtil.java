@@ -8,6 +8,7 @@ import nl.obren.sokrates.sourcecode.githistory.AuthorCommit;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryPerExtensionUtils;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.util.*;
@@ -17,6 +18,15 @@ public class GitContributorsUtil {
     public static ContributorsImport importGitContributorsExport(File file) {
         ContributorsImport contributorsImport = new ContributorsImport();
         List<AuthorCommit> authorCommits = GitHistoryUtils.getAuthorCommits(file);
+        authorCommits.forEach(commit -> {
+            String date = commit.getDate();
+            if (StringUtils.isBlank(contributorsImport.getFirstCommitDate()) || date.compareTo(contributorsImport.getFirstCommitDate()) <= 0) {
+                contributorsImport.setFirstCommitDate(date);
+            }
+            if (StringUtils.isBlank(contributorsImport.getLatestCommitDate()) || date.compareTo(contributorsImport.getLatestCommitDate()) >= 0) {
+                contributorsImport.setLatestCommitDate(date);
+            }
+        });
         contributorsImport.setContributors(getContributors(authorCommits));
 
         List<ContributionTimeSlot> contributorsPerYear = getContributorsPerTimeSlot(authorCommits, (commit) -> commit.getYear());

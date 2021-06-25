@@ -544,7 +544,7 @@ public class CommandLineInterface {
         List<RichTextReport> reports = generator.report();
         reports.forEach(report -> {
             info("Generating the '" + report.getId().toUpperCase() + "' report...");
-            ReportFileExporter.exportHtml(reportsFolder, "html", report);
+            ReportFileExporter.exportHtml(reportsFolder, "html", report, analysisResults.getCodeConfiguration().getAnalysis().getCustomHtmlReportHeaderFragment());
         });
         if (!codeAnalyzerSettings.isDataOnly() && codeAnalyzerSettings.isUpdateIndex()) {
             ReportFileExporter.exportReportsIndexFile(reportsFolder, analysisResults, sokratesConfigFolder);

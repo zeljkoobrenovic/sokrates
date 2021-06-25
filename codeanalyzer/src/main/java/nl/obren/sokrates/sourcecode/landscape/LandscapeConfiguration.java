@@ -38,6 +38,7 @@ public class LandscapeConfiguration {
     private List<WebFrameLink> iFramesProjectsAtStart = new ArrayList<>();
     private List<WebFrameLink> iFramesContributors = new ArrayList<>();
     private List<WebFrameLink> iFramesContributorsAtStart = new ArrayList<>();
+    private String customHtmlReportHeaderFragment = "";
     private List<ProjectTag> projectTags = new ArrayList<>();
 
     private List<SubLandscapeLink> subLandscapes = new ArrayList<>();
@@ -257,5 +258,13 @@ public class LandscapeConfiguration {
 
     public void setIgnoreContributors(List<String> ignoreContributors) {
         this.ignoreContributors = ignoreContributors;
+    }
+
+    public String getCustomHtmlReportHeaderFragment() {
+        return customHtmlReportHeaderFragment;
+    }
+
+    public void setCustomHtmlReportHeaderFragment(String customHtmlReportHeaderFragment) {
+        this.customHtmlReportHeaderFragment = customHtmlReportHeaderFragment;
     }
 }

@@ -85,18 +85,25 @@ public class ContributorsReportGenerator {
         report.startTabContentSection("visuals", true);
         ContributorsReportUtils.addContributorsSection(codeAnalysisResults, report);
         report.addLineBreak();
-        report.addLevel2Header("Per Year");
+        report.startSubSection("Timeline", "");
+        report.addLevel2Header("Per Year", "margin-bottom: 0;");
+        report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
         ContributorsReportUtils.addContributorsPerTimeSlot(report, analysis.getContributorsPerYear(), 20, true, 4);
-        report.addLevel2Header("Per Month");
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, analysis.getContributorsPerMonth(), 24, true, 2);
-        report.addLevel2Header("Per Week");
+        report.addLevel2Header("Per Month", "margin-bottom: 0;");
+        report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
+        List<ContributionTimeSlot> contributorsPerMonth = getContributionMonths(analysis, 25);
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerMonth, 24, true, 2);
+        report.addLevel2Header("Per Week", "margin-bottom: 0;");
+        report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
         int pastWeeks = 104;
         List<ContributionTimeSlot> contributorsPerWeek = getContributionWeeks(analysis, pastWeeks);
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerWeek, pastWeeks, false, 2);
-        report.addLevel2Header("Per Day");
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerWeek, pastWeeks, true, 1);
+        report.addLevel2Header("Per Day", "margin-bottom: 0;");
+        report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
         int pastDays = 365;
         List<ContributionTimeSlot> contributorsPerDay = getContributionDays(analysis, pastDays);
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerDay, pastDays, false, 1);
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerDay, pastDays, true, 1);
+        report.endSection();
         report.endTabContentSection();
 
         report.startTabContentSection("all_time", false);
@@ -154,23 +161,53 @@ public class ContributorsReportGenerator {
     }
 
     private List<ContributionTimeSlot> getContributionWeeks(ContributorsAnalysisResults analysis, int pastWeeks) {
-        List<ContributionTimeSlot> contributorsPerWeek = new ArrayList<>(analysis.getContributorsPerWeek());
-        List<String> slots = contributorsPerWeek.stream().map(slot -> slot.getTimeSlot()).collect(Collectors.toCollection(ArrayList::new));
-        List<String> pastDates = DateUtils.getPastWeeks(pastWeeks);
+        List<ContributionTimeSlot> activeWeeks = analysis.getContributorsPerWeek();
+        Map<String, ContributionTimeSlot> map = new HashMap<>();
+        activeWeeks.forEach(week -> map.put(week.getTimeSlot(), week));
+
+        List<ContributionTimeSlot> contributorsPerWeek = new ArrayList<>();
+        List<String> pastDates = DateUtils.getPastWeeks(pastWeeks, analysis.getLatestCommitDate());
         pastDates.forEach(pastDate -> {
-            if (!slots.contains(pastDate)) {
+            ContributionTimeSlot contributionTimeSlot = map.get(pastDate);
+            if (contributionTimeSlot != null) {
+                contributorsPerWeek.add(contributionTimeSlot);
+            } else {
                 contributorsPerWeek.add(new ContributionTimeSlot(pastDate));
             }
         });
         return contributorsPerWeek;
     }
 
-    private List<ContributionTimeSlot> getContributionDays(ContributorsAnalysisResults analysis, int pastDays) {
-        List<ContributionTimeSlot> contributorsPerDay = new ArrayList<>(analysis.getContributorsPerDay());
-        List<String> slots = contributorsPerDay.stream().map(slot -> slot.getTimeSlot()).collect(Collectors.toCollection(ArrayList::new));
-        List<String> pastDates = DateUtils.getPastDays(pastDays);
+    private List<ContributionTimeSlot> getContributionMonths(ContributorsAnalysisResults analysis, int pastMonths) {
+        List<ContributionTimeSlot> activeMonth = analysis.getContributorsPerMonth();
+        Map<String, ContributionTimeSlot> map = new HashMap<>();
+        activeMonth.forEach(month -> map.put(month.getTimeSlot(), month));
+
+        List<ContributionTimeSlot> contributorsPerMonth = new ArrayList<>();
+        List<String> pastDates = DateUtils.getPastMonths(pastMonths, analysis.getLatestCommitDate());
         pastDates.forEach(pastDate -> {
-            if (!slots.contains(pastDate)) {
+            ContributionTimeSlot contributionTimeSlot = map.get(pastDate);
+            if (contributionTimeSlot != null) {
+                contributorsPerMonth.add(contributionTimeSlot);
+            } else {
+                contributorsPerMonth.add(new ContributionTimeSlot(pastDate));
+            }
+        });
+        return contributorsPerMonth;
+    }
+
+    private List<ContributionTimeSlot> getContributionDays(ContributorsAnalysisResults analysis, int pastDays) {
+        List<ContributionTimeSlot> activeDays = analysis.getContributorsPerDay();
+        Map<String, ContributionTimeSlot> map = new HashMap<>();
+        activeDays.forEach(activeDay -> map.put(activeDay.getTimeSlot(), activeDay));
+
+        List<ContributionTimeSlot> contributorsPerDay = new ArrayList<>();
+        List<String> pastDates = DateUtils.getPastDays(pastDays, analysis.getLatestCommitDate());
+        pastDates.forEach(pastDate -> {
+            ContributionTimeSlot contributionTimeSlot = map.get(pastDate);
+            if (contributionTimeSlot != null) {
+                contributorsPerDay.add(contributionTimeSlot);
+            } else {
                 contributorsPerDay.add(new ContributionTimeSlot(pastDate));
             }
         });
@@ -181,13 +218,20 @@ public class ContributorsReportGenerator {
                                           ContributionCounter contributionCounter,
                                           List<Contributor> contributors) {
         if (peopleDependencies.size() > 0) {
-            report.addLevel2Header("Contributor Dependencies", "margin-top: 40px");
-
+            report.addLevel2Header("Contributor Dependencies", "margin-top: 40px; margin-bottom: 0;");
+            report.addParagraph("A contributor dependency is detected if two contributors have changed the same files in the past " + daysAgo + " days.",
+                    "color: grey; font-size: 80%; margin-bottom: 12px;");
 
             List<ContributorConnection> contributorConnections = ContributorConnectionUtils.getContributorConnections(peopleDependencies, contributors, contributionCounter);
-            report.addParagraph("C-median: " + getRoundedValueOf(ContributorConnectionUtils.getCMedian(contributorConnections(peopleDependencies))));
-            report.addParagraph("C-mean: " + getRoundedValueOf(ContributorConnectionUtils.getCMean(contributorConnections(peopleDependencies))));
-            report.addParagraph("C-index: " + getRoundedValueOf(ContributorConnectionUtils.getCIndex(contributorConnections(peopleDependencies))));
+            String cMedian = getRoundedValueOf(ContributorConnectionUtils.getCMedian(contributorConnections(peopleDependencies)));
+            report.addParagraph("C-median: " + cMedian, "margin-bottom: 0;");
+            report.addParagraph("A half of the contributors has more than " + cMedian + " connections, and a half has less than this number.",
+                    "color: grey; font-size: 80%; margin-bottom: 20px");
+            report.addParagraph("C-mean: " + getRoundedValueOf(ContributorConnectionUtils.getCMean(contributorConnections(peopleDependencies))), "margin-bottom: 0;");
+            report.addParagraph("An average number of connections a contributor has with other contributors.", "color: grey; font-size: 80%; margin-bottom: 20px");
+            String cIndex = getRoundedValueOf(ContributorConnectionUtils.getCIndex(contributorConnections(peopleDependencies)));
+            report.addParagraph("C-index: " + cIndex, "margin-bottom: 0;");
+            report.addParagraph("There are " + cIndex + " contributors with " + cIndex + " or more connections.", "color: grey; font-size: 80%; margin-bottom: 40px");
             addContributors(contributorConnections);
 
             report.addLevel3Header("Contributor Dependencies via Shared Files", "margin-top: 42px");

@@ -183,5 +183,6 @@ public class ReportConstants {
             "          evt.currentTarget.className += \" active\";\n" +
             "        }\n" +
             "    </script>\n" +
+            "    <!-- CUSTOM HEADER FRAGMENT -->\n" +
             "</head>\n";
 }

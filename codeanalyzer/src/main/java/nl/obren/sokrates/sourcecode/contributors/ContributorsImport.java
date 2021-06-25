@@ -16,6 +16,9 @@ public class ContributorsImport {
     private List<ContributionTimeSlot> rookiesPerYear = new ArrayList<>();
     private List<ContributionTimeSlot> leaversPerYear = new ArrayList<>();
 
+    private String latestCommitDate = "";
+    private String firstCommitDate = "";
+
     public List<Contributor> getContributors() {
         return contributors;
     }
@@ -70,5 +73,21 @@ public class ContributorsImport {
 
     public void setContributorsPerWeek(List<ContributionTimeSlot> contributorsPerWeek) {
         this.contributorsPerWeek = contributorsPerWeek;
+    }
+
+    public String getLatestCommitDate() {
+        return latestCommitDate;
+    }
+
+    public void setLatestCommitDate(String latestCommitDate) {
+        this.latestCommitDate = latestCommitDate;
+    }
+
+    public String getFirstCommitDate() {
+        return firstCommitDate;
+    }
+
+    public void setFirstCommitDate(String firstCommitDate) {
+        this.firstCommitDate = firstCommitDate;
     }
 }

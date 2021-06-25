@@ -26,18 +26,19 @@ import java.util.List;
 public class ReportFileExporter {
     private static String htmlReportsSubFolder = "html";
 
-    public static void exportHtml(File folder, String subFolder, RichTextReport report) {
+    public static void exportHtml(File folder, String subFolder, RichTextReport report, String customHeaderFragment) {
         htmlReportsSubFolder = subFolder;
         File htmlReportsFolder = getHtmlReportsFolder(folder);
         String reportFileName = getReportFileName(report);
-        export(htmlReportsFolder, report, reportFileName);
+        export(htmlReportsFolder, report, reportFileName, customHeaderFragment);
     }
 
-    private static void export(File folder, RichTextReport report, String reportFileName) {
+    private static void export(File folder, RichTextReport report, String reportFileName, String customHeaderFragment) {
         File reportFile = new File(folder, reportFileName);
         try {
             PrintWriter out = new PrintWriter(reportFile);
             String reportsHtmlHeader = ReportConstants.REPORTS_HTML_HEADER;
+            reportsHtmlHeader = reportsHtmlHeader.replace("<!-- CUSTOM HEADER FRAGMENT -->", customHeaderFragment);
             if (report.isEmbedded()) {
                 reportsHtmlHeader = reportsHtmlHeader.replace(" ${margin-left}", "0");
                 reportsHtmlHeader = reportsHtmlHeader.replace(" ${margin-right}", "0");
@@ -107,7 +108,7 @@ public class ReportFileExporter {
         indexReport.endSection();
         appendLinks(indexReport, analysisResults);
         indexReport.addParagraph("<span style='color: grey; font-size: 90%'>updated: " + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + "</span>");
-        export(htmlExportFolder, indexReport, "index.html");
+        export(htmlExportFolder, indexReport, "index.html", analysisResults.getCodeConfiguration().getAnalysis().getCustomHtmlReportHeaderFragment());
     }
 
     private static String getDetailsIcon() {

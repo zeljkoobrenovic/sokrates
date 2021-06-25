@@ -16,13 +16,21 @@ public class ContributorsAnalysisResults {
     List<ComponentDependency> peopleDependencies180Days = new ArrayList<>();
     List<ComponentDependency> peopleDependencies365Days = new ArrayList<>();
     List<ComponentDependency> peopleDependenciesAllTime = new ArrayList<>();
-
+    private String latestCommitDate = "";
     private List<Contributor> contributors = new ArrayList<>();
     private List<ContributionTimeSlot> contributorsPerYear = new ArrayList<>();
     private List<ContributionTimeSlot> contributorsPerMonth = new ArrayList<>();
     private List<ContributionTimeSlot> contributorsPerDay = new ArrayList<>();
     private List<ContributionTimeSlot> contributorsPerWeek = new ArrayList<>();
     private List<CommitsPerExtension> commitsPerExtensions = new ArrayList<>();
+
+    public String getLatestCommitDate() {
+        return latestCommitDate;
+    }
+
+    public void setLatestCommitDate(String latestCommitDate) {
+        this.latestCommitDate = latestCommitDate;
+    }
 
     public List<Contributor> getContributors() {
         return contributors;

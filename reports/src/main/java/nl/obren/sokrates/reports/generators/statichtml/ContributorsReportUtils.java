@@ -101,6 +101,7 @@ public class ContributorsReportUtils {
         long rookiesCount = contributors.stream().filter(c -> c.isRookie()).count();
         long veteransCount = activeCount - rookiesCount;
         long historicalCount = contributors.size() - activeCount;
+        indexReport.startSubSection("Contributors", "");
         indexReport.addLevel2Header("Recent Contributors (" + activeCount
                 + " = " + veteransCount + " " + (veteransCount == 1 ? "veteran" : "veterans")
                 + " + " + rookiesCount + " " + (rookiesCount == 1 ? "rookie" : "rookies") + ")");
@@ -139,6 +140,7 @@ public class ContributorsReportUtils {
         contributors.stream().filter(c -> !c.isActive()).forEach(contributor -> {
             addContributor(indexReport, max, total, contributor);
         });
+        indexReport.endSection();
     }
 
     public static void addContributor(RichTextReport indexReport, int max, int total, Contributor contributor) {

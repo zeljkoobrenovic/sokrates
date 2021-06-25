@@ -34,6 +34,7 @@ public class ContributorsAnalyzer extends Analyzer {
     public void analyze() {
         if (codeConfiguration.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesFolder)) {
             ContributorsImport contributorsImport = codeConfiguration.getFileHistoryAnalysis().getContributors(sokratesFolder);
+            analysisResults.setLatestCommitDate(contributorsImport.getLatestCommitDate());
             analysisResults.setContributors(contributorsImport.getContributors());
             analysisResults.setContributorsPerYear(contributorsImport.getContributorsPerYear());
             analysisResults.setContributorsPerMonth(contributorsImport.getContributorsPerMonth());

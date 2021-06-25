@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class LandscapeReportGenerator {
-    public static final int RECENT_THRESHOLD_DAYS = 31;
+    public static final int RECENT_THRESHOLD_DAYS = 30;
     private static final Log LOG = LogFactory.getLog(LandscapeReportGenerator.class);
     private RichTextReport landscapeReport = new RichTextReport("Landscape Report", "index.html");
     private RichTextReport landscapeProjectsReport = new RichTextReport("", "projects.html");
@@ -265,10 +265,8 @@ public class LandscapeReportGenerator {
         if (contributorsCount > 0) {
             int recentContributorsCount = landscapeAnalysisResults.getRecentContributorsCount();
             int locPerRecentContributor = 0;
-            int locNewPerRecentContributor = 0;
             if (recentContributorsCount > 0) {
                 locPerRecentContributor = (int) Math.round((double) mainLocActive / recentContributorsCount);
-                locNewPerRecentContributor = (int) Math.round((double) mainLocNew / recentContributorsCount);
             }
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(recentContributorsCount), "recent contributors",
                     "(past 30 days)", getExtraPeopleInfo(contributors, contributorsCount) + "\n" + FormattingUtils.formatCount(locPerRecentContributor) + " active lines of code per recent contributor");
@@ -334,19 +332,15 @@ public class LandscapeReportGenerator {
             peopleDependencies.sort((a, b) -> b.getCount() - a.getCount());
 
             double cIndex = landscapeAnalysisResults.getcIndex30Days();
-            double pIndex = landscapeAnalysisResults.getpIndex30Days();
             double cMean = landscapeAnalysisResults.getcMean30Days();
-            double pMean = landscapeAnalysisResults.getpMean30Days();
             double cMedian = landscapeAnalysisResults.getcMedian30Days();
-            double pMedian = landscapeAnalysisResults.getpMedian30Days();
 
             int connectionSum = landscapeAnalysisResults.getConnectionsViaProjects30Days().stream().mapToInt(c -> c.getConnectionsCount()).sum();
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(peopleDependencies.size()), "C2C connections", "30 days", "");
-            // addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(connectionSum), "all C2C connections", "30 days", "");
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cMedian)), "C-Median", "30 days", "");
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cMean)), "C-Mean", "30 days", "");
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cIndex)), "C-Index",
-                    "30 days", "" + (int) Math.round(cIndex) + " active contributes connected to " + (int) Math.round(cIndex) + " or more of other contributers via commits to shared projects in past 30 days.");
+                    "30 days", "" + (int) Math.round(cIndex) + " active contributes connected to " + (int) Math.round(cIndex) + " or more of other contributors via commits to shared projects in past 30 days.");
         }
 
         addContributorsPerYear(true);
@@ -756,7 +750,7 @@ public class LandscapeReportGenerator {
     private List<ContributionTimeSlot> getContributionWeeks(List<ContributionTimeSlot> contributorsPerWeekOriginal, int pastWeeks) {
         List<ContributionTimeSlot> contributorsPerWeek = new ArrayList<>(contributorsPerWeekOriginal);
         List<String> slots = contributorsPerWeek.stream().map(slot -> slot.getTimeSlot()).collect(Collectors.toCollection(ArrayList::new));
-        List<String> pastDates = DateUtils.getPastWeeks(pastWeeks);
+        List<String> pastDates = DateUtils.getPastWeeks(pastWeeks, landscapeAnalysisResults.getLatestCommitDate());
         pastDates.forEach(pastDate -> {
             if (!slots.contains(pastDate)) {
                 contributorsPerWeek.add(new ContributionTimeSlot(pastDate));
@@ -829,33 +823,48 @@ public class LandscapeReportGenerator {
         if (daysAgo > 60) {
             landscapeReport.startShowMoreBlock("show details...");
         }
-        landscapeReport.addParagraph("Based on the number of same repositories that two persons committed to in the past " + daysAgo + " days.", "color: grey");
         int connectionSum = contributorConnections.stream().mapToInt(c -> c.getConnectionsCount()).sum();
-        landscapeReport.addParagraph("In total there are <b>" + FormattingUtils.formatCount(peopleDependencies.size()) + "</b> " +
-                "contributor-to-contributor (C2C) connections via <b>" + FormattingUtils.formatCount(connectionSum) + " project dependencies.</b>.");
 
         List<Double> activeContributors30DaysHistory = landscapeAnalysisResults.getActiveContributors30DaysHistory();
         if (activeContributors30DaysHistory.size() > 0) {
-            addDataSection("Active Contributors", activeContributors30DaysHistory.get(0), daysAgo, activeContributors30DaysHistory, "");
+            landscapeReport.addLineBreak();
+            landscapeReport.addLineBreak();
+            addDataSection("Active Contributors", activeContributors30DaysHistory.get(0), daysAgo, activeContributors30DaysHistory,
+                    "An active contributor is anyone who has committed code changes in past " + daysAgo + " days.");
         }
         List<Double> peopleDependenciesCount30DaysHistory = landscapeAnalysisResults.getPeopleDependenciesCount30DaysHistory();
         if (peopleDependenciesCount30DaysHistory.size() > 0) {
-            addDataSection("Unique Contributor-to-Contributor (C2C) Connections", peopleDependenciesCount30DaysHistory.get(0), daysAgo, peopleDependenciesCount30DaysHistory, "");
+            addDataSection("Unique Contributor-to-Contributor (C2C) Connections",
+                    peopleDependenciesCount30DaysHistory.get(0), daysAgo, peopleDependenciesCount30DaysHistory,
+                    "C2C dependencies are measured via the same repositories that two persons changed in the past " + daysAgo + " days. " +
+                            "<br>Currently there are <b>" + FormattingUtils.formatCount(peopleDependencies.size()) + "</b> " +
+                            "unique contributor-to-contributor (C2C) connections via <b>" +
+                            FormattingUtils.formatCount(connectionSum) + "</b> shared repositories.");
         }
 
-        /*List<Double> connectionsViaProjects30DaysCountHistory = landscapeAnalysisResults.getConnectionsViaProjects30DaysCountHistory();
-        if (connectionsViaProjects30DaysCountHistory.size() > 0) {
-            addDataSection("All Contributor-to-Contributor (C2C) Connections", connectionsViaProjects30DaysCountHistory.get(0), daysAgo, connectionsViaProjects30DaysCountHistory, "");
-        }*/
-        addDataSection("C-median", cMedian, daysAgo, landscapeAnalysisResults.getcMedian30DaysHistory(), "");
+        addDataSection("C-median", cMedian, daysAgo, landscapeAnalysisResults.getcMedian30DaysHistory(),
+                "C-median is the average number of contributes a person worked with in the past " + daysAgo + " days.");
+        landscapeReport.startShowMoreBlock("show c-mean and c-index...");
         addDataSection("C-mean", cMean, daysAgo, landscapeAnalysisResults.getcMean30DaysHistory(), "");
         addDataSection("C-index", cIndex, daysAgo, landscapeAnalysisResults.getcIndex30DaysHistory(),
                 "you have people with " + cIndex + " or more project connections with other people");
+        landscapeReport.endShowMoreBlock();
+        landscapeReport.addLineBreak();
+        landscapeReport.addLineBreak();
+        landscapeReport.addLineBreak();
+        landscapeReport.addLineBreak();
 
-        addDataSection("P-median", pMedian, daysAgo, landscapeAnalysisResults.getpMedian30DaysHistory(), "");
+        addDataSection("P-median", pMedian, daysAgo, landscapeAnalysisResults.getpMedian30DaysHistory(),
+                "P-median is the average number of projects (repositories) a person worked on in the past " + daysAgo + " days.");
+        landscapeReport.startShowMoreBlock("show p-mean and p-index...");
         addDataSection("P-mean", pMean, daysAgo, landscapeAnalysisResults.getpMean30DaysHistory(), "");
         addDataSection("P-index", pIndex, daysAgo, landscapeAnalysisResults.getpIndex30DaysHistory(),
                 "you have " + pIndex + " people committing to " + pIndex + " or more projects");
+        landscapeReport.endShowMoreBlock();
+        landscapeReport.addLineBreak();
+        landscapeReport.addLineBreak();
+        landscapeReport.addLineBreak();
+        landscapeReport.addLineBreak();
 
         peopleDependencies.sort((a, b) -> b.getCount() - a.getCount());
         List<ContributorProjects> contributors = landscapeAnalysisResults.getContributors();
@@ -889,7 +898,8 @@ public class LandscapeReportGenerator {
 
     private void addDataSection(String type, double value, int daysAgo, List<Double> history, String info) {
         if (StringUtils.isNotBlank(info)) {
-            landscapeReport.addParagraph(type + ": <b>" + ((int) Math.round(value)) + "</b> <span style='color: grey'>(" + info + ")</span>");
+            landscapeReport.addParagraph(type + ": <b>" + ((int) Math.round(value)) + "</b>");
+            landscapeReport.addParagraph("<span style='color: #a2a2a2; font-size: 90%;'>" + info + "</span>", "margin-top: -12px;");
         } else {
             landscapeReport.addParagraph(type + ": <b>" + ((int) Math.round(value)) + "</b>");
         }

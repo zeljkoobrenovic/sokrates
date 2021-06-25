@@ -56,7 +56,7 @@ public class LandscapeAnalysisCommands {
         try {
             File finalReportsFolder = reportsFolder;
             reports.forEach(report -> {
-                ReportFileExporter.exportHtml(finalReportsFolder, "", report);
+                ReportFileExporter.exportHtml(finalReportsFolder, "", report, landscapeAnalysisResults.getConfiguration().getCustomHtmlReportHeaderFragment());
             });
 
             LandscapeVisualsGenerator visualsGenerator = new LandscapeVisualsGenerator(reportsFolder);

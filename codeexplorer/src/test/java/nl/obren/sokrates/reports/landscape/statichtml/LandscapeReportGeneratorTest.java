@@ -38,7 +38,7 @@ public class LandscapeReportGeneratorTest {
             reportsFolder.mkdirs();
 
             reports.forEach(report -> {
-                ReportFileExporter.exportHtml(reportsFolder, "", report);
+                ReportFileExporter.exportHtml(reportsFolder, "", report, "");
             });
 
             LandscapeVisualsGenerator visualsGenerator = new LandscapeVisualsGenerator(reportsFolder);

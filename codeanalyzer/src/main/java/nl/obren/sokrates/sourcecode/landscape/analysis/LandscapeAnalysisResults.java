@@ -5,7 +5,6 @@
 package nl.obren.sokrates.sourcecode.landscape.analysis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
@@ -497,7 +496,7 @@ public class LandscapeAnalysisResults {
     }
 
     public int getRecentContributorsCount() {
-        return (int) getContributors().stream().filter(c -> c.getContributor().getCommitsCount30Days() > 0).count();
+        return (int) getContributors().stream().filter(c -> c.getContributor().isActive(RECENT_THRESHOLD_DAYS)).count();
     }
 
     public int getRecentContributorsCount6Months() {

@@ -9,6 +9,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.SokratesProjectLink;
@@ -43,6 +44,7 @@ public class LandscapeAnalyzer {
                     contributor.getCommitDates().forEach(commitDate -> {
                         if (landscapeAnalysisResults.getLatestCommitDate() == "" || commitDate.compareTo(landscapeAnalysisResults.getLatestCommitDate()) > 0) {
                             landscapeAnalysisResults.setLatestCommitDate(commitDate);
+                            DateUtils.setLatestCommitDate(commitDate);
                         }
                     });
                 });

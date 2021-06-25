@@ -25,6 +25,7 @@ public class AnalysisConfig {
     private Thresholds fileUpdateFrequencyThresholds = Thresholds.defaultFileUpdateFrequencyThresholds();
     private Thresholds unitSizeThresholds = Thresholds.defaultUnitSizeThresholds();
     private Thresholds conditionalComplexityThresholds = Thresholds.defaultConditionalComplexityThresholds();
+    private String customHtmlReportHeaderFragment = "";
 
     public boolean isSkipDuplication() {
         return skipDuplication;
@@ -136,5 +137,13 @@ public class AnalysisConfig {
 
     public void setConditionalComplexityThresholds(Thresholds conditionalComplexityThresholds) {
         this.conditionalComplexityThresholds = conditionalComplexityThresholds;
+    }
+
+    public String getCustomHtmlReportHeaderFragment() {
+        return customHtmlReportHeaderFragment;
+    }
+
+    public void setCustomHtmlReportHeaderFragment(String customHtmlReportHeaderFragment) {
+        this.customHtmlReportHeaderFragment = customHtmlReportHeaderFragment;
     }
 }

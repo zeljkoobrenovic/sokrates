@@ -15,7 +15,9 @@ import java.util.List;
 
 public class DateUtils {
     public static final String ENV_SOKRATES_SOURCE_CODE_DATE = "SOKRATES_SOURCE_CODE_DATE";
+    public static final String DATE_FORMAT = "yyyy-MM-dd";
     public static String dateParam = null;
+    private static String latestCommitDate = "";
 
     public static boolean isDateWithinRange(String date, int rangeInDays) {
         if (StringUtils.isBlank(date)) {
@@ -26,33 +28,46 @@ public class DateUtils {
 
         cal.add(Calendar.DATE, -rangeInDays);
 
-        String thresholdDate = new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime());
+        String thresholdDate = new SimpleDateFormat(DATE_FORMAT).format(cal.getTime());
 
-        return date.compareTo(thresholdDate) > 0;
+        return date.compareTo(thresholdDate) >= 0;
     }
 
-    public static List<String> getPastDays(int numberOfDays) {
+    public static List<String> getPastDays(int numberOfDays, String latestCommitDate) {
         List<String> dates = new ArrayList<>();
 
-
         for (int i = 0; i <= numberOfDays; i++) {
-            Calendar cal = getCalendar();
+            Calendar cal = getCalendar(latestCommitDate);
             cal.add(Calendar.DATE, -i);
-            dates.add(new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime()));
+            dates.add(new SimpleDateFormat(DATE_FORMAT).format(cal.getTime()));
         }
 
         return dates;
     }
 
-    public static List<String> getPastWeeks(int numberOfWeeks) {
+    public static List<String> getPastWeeks(int numberOfWeeks, String latestCommitDate) {
         List<String> dates = new ArrayList<>();
 
-
         for (int i = 0; i <= numberOfWeeks; i++) {
-            Calendar cal = getCalendar();
+            Calendar cal = getCalendar(latestCommitDate);
             cal.add(Calendar.DATE, -(i * 7));
-            String stringDate = new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime());
+
+            String stringDate = new SimpleDateFormat(DATE_FORMAT).format(cal.getTime());
             dates.add(new AuthorCommit(stringDate, "").getWeekOfYear());
+        }
+
+        return dates;
+    }
+
+    public static List<String> getPastMonths(int numberOfMonths, String latestCommitDate) {
+        List<String> dates = new ArrayList<>();
+
+        for (int i = 0; i <= numberOfMonths; i++) {
+            Calendar cal = getCalendar(latestCommitDate);
+            cal.add(Calendar.MONTH, -i);
+
+            String stringDate = new SimpleDateFormat(DATE_FORMAT).format(cal.getTime());
+            dates.add(new AuthorCommit(stringDate, "").getMonth());
         }
 
         return dates;
@@ -74,33 +89,47 @@ public class DateUtils {
     public static boolean isCommittedBetween(String date, int daysAgo1, int daysAgo2) {
         Calendar cal1 = DateUtils.getCalendar();
         cal1.add(Calendar.DATE, -daysAgo1);
-        String thresholdDate1 = new SimpleDateFormat("yyyy-MM-dd").format(cal1.getTime());
+        String thresholdDate1 = new SimpleDateFormat(DATE_FORMAT).format(cal1.getTime());
 
         Calendar cal2 = DateUtils.getCalendar();
         cal2.add(Calendar.DATE, -daysAgo2);
-        String thresholdDate2 = new SimpleDateFormat("yyyy-MM-dd").format(cal2.getTime());
+        String thresholdDate2 = new SimpleDateFormat(DATE_FORMAT).format(cal2.getTime());
 
         return date.compareTo(thresholdDate2) >= 0 && date.compareTo(thresholdDate1) <= 0;
     }
 
-
     public static Calendar getCalendar() {
-        Calendar cal = Calendar.getInstance();
+        Calendar calendar = Calendar.getInstance();
 
-        updateWithDateParams(cal);
+        updateWithDateParams(calendar);
 
-        return cal;
+        return calendar;
+    }
+
+    public static Calendar getCalendar(String date) {
+        Calendar calendar = Calendar.getInstance();
+
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
+            calendar.setTime(sdf.parse(date));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        return calendar;
     }
 
     private static void updateWithDateParams(Calendar cal) {
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
             if (StringUtils.isNotBlank(DateUtils.dateParam)) {
                 cal.setTime(sdf.parse(DateUtils.dateParam));
             } else {
                 String sourceCodeDate = System.getenv(ENV_SOKRATES_SOURCE_CODE_DATE);
                 if (StringUtils.isNotBlank(sourceCodeDate)) {
                     cal.setTime(sdf.parse(sourceCodeDate));
+                } else if (StringUtils.isNotBlank(latestCommitDate)) {
+                    cal.setTime(sdf.parse(latestCommitDate));
                 }
             }
         } catch (ParseException e) {
@@ -114,5 +143,13 @@ public class DateUtils {
 
     public static void setDateParam(String dateParam) {
         DateUtils.dateParam = dateParam;
+    }
+
+    public static String getLatestCommitDate() {
+        return latestCommitDate;
+    }
+
+    public static void setLatestCommitDate(String latestCommitDate) {
+        DateUtils.latestCommitDate = latestCommitDate;
     }
 }
