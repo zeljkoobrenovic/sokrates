@@ -38,6 +38,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class LandscapeReportGenerator {
     public static final int RECENT_THRESHOLD_DAYS = 30;
     private static final Log LOG = LogFactory.getLog(LandscapeReportGenerator.class);
+    public static final String OVERVIEW_TAB_ID = "overview";
+    public static final String SOURCE_CODE_TAB_ID = "source code";
+    public static final String CONTRIBUTORS_TAB_ID = "contributors";
+    public static final String CUSTOM_TAB_ID_PREFIX = "custom_tab_";
     private RichTextReport landscapeReport = new RichTextReport("Landscape Report", "index.html");
     private RichTextReport landscapeProjectsReport = new RichTextReport("", "projects.html");
     private RichTextReport landscapeRecentContributorsReport = new RichTextReport("", "contributors-recent.html");
@@ -92,18 +96,23 @@ public class LandscapeReportGenerator {
 
         landscapeReport.addLineBreak();
         landscapeReport.startTabGroup();
-        landscapeReport.addTab("overview", "Overview", true);
-        landscapeReport.addTab("source code", "Projects", false);
-        landscapeReport.addTab("commits", "Contributors", false);
+        landscapeReport.addTab(OVERVIEW_TAB_ID, "Overview", true);
+        landscapeReport.addTab(SOURCE_CODE_TAB_ID, "Projects", false);
+        landscapeReport.addTab(CONTRIBUTORS_TAB_ID, "Contributors", false);
+        configuration.getCustomTabs().forEach(tab -> {
+            int index = configuration.getCustomTabs().indexOf(tab);
+            landscapeReport.addTab(CUSTOM_TAB_ID_PREFIX + index, tab.getName(), false);
+        });
+
         landscapeReport.endTabGroup();
 
-        landscapeReport.startTabContentSection("overview", true);
+        landscapeReport.startTabContentSection(OVERVIEW_TAB_ID, true);
         addBigSummary(landscapeAnalysisResults);
         addIFrames(configuration.getiFramesAtStart());
         addSubLandscapeSection(configuration.getSubLandscapes());
         addIFrames(configuration.getiFrames());
         landscapeReport.endTabContentSection();
-        landscapeReport.startTabContentSection("source code", false);
+        landscapeReport.startTabContentSection(SOURCE_CODE_TAB_ID, false);
         addBigProjectsSummary(landscapeAnalysisResults);
         addIFrames(configuration.getiFramesProjectsAtStart());
         addExtensions();
@@ -111,7 +120,7 @@ public class LandscapeReportGenerator {
         addIFrames(configuration.getiFramesProjects());
         landscapeReport.endTabContentSection();
 
-        landscapeReport.startTabContentSection("commits", false);
+        landscapeReport.startTabContentSection(CONTRIBUTORS_TAB_ID, false);
         addBigContributorsSummary(landscapeAnalysisResults);
         addIFrames(configuration.getiFramesContributorsAtStart());
         addContributors();
@@ -119,6 +128,15 @@ public class LandscapeReportGenerator {
         addPeopleDependencies();
         addIFrames(configuration.getiFramesContributors());
         landscapeReport.endTabContentSection();
+
+        configuration.getCustomTabs().forEach(tab -> {
+            int index = configuration.getCustomTabs().indexOf(tab);
+            landscapeReport.startTabContentSection(CUSTOM_TAB_ID_PREFIX + index, false);
+            landscapeReport.addLineBreak();
+            addIFrames(tab.getiFrames());
+            landscapeReport.endTabContentSection();
+        });
+
         landscapeReport.addParagraph("<span style='color: grey; font-size: 90%'>updated: " + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + "</span>");
     }
 

@@ -38,6 +38,7 @@ public class LandscapeConfiguration {
     private List<WebFrameLink> iFramesProjectsAtStart = new ArrayList<>();
     private List<WebFrameLink> iFramesContributors = new ArrayList<>();
     private List<WebFrameLink> iFramesContributorsAtStart = new ArrayList<>();
+    private List<CustomTab> customTabs = new ArrayList<>();
     private String customHtmlReportHeaderFragment = "";
     private List<ProjectTag> projectTags = new ArrayList<>();
 
@@ -266,5 +267,13 @@ public class LandscapeConfiguration {
 
     public void setCustomHtmlReportHeaderFragment(String customHtmlReportHeaderFragment) {
         this.customHtmlReportHeaderFragment = customHtmlReportHeaderFragment;
+    }
+
+    public List<CustomTab> getCustomTabs() {
+        return customTabs;
+    }
+
+    public void setCustomTabs(List<CustomTab> customTabs) {
+        this.customTabs = customTabs;
     }
 }
