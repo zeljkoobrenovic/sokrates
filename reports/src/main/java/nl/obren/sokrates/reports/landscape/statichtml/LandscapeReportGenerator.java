@@ -141,8 +141,6 @@ public class LandscapeReportGenerator {
     }
 
     private void addPeopleDependencies() {
-        List<ContributorProjects> contributors = landscapeAnalysisResults.getContributors();
-
         landscapeReport.startSubSection("People Dependencies", "");
 
         List<ComponentDependency> peopleDependencies30Days = landscapeAnalysisResults.getPeopleDependencies30Days();

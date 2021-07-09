@@ -8,7 +8,6 @@ import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,7 +47,10 @@ public class LandscapeContributorsReport {
         String avatarHtml = "";
         String avatarUrl = this.getAvatarUrl(contributor.getContributor().getEmail());
         if (avatarUrl != null) {
-            avatarHtml = "<div style='vertical-align: middle; display: inline-block; width: 48px; margin-top: 2px;'><img style='border-radius: 50%; height: 40px; width: 40px; margin-right: 10px;' src='" + avatarUrl + "'></div>";
+            avatarHtml = "<div style='vertical-align: middle; display: inline-block; width: 48px; margin-top: 2px;'>" +
+                    "<img style='border-radius: 50%; height: 40px; width: 40px; margin-right: 10px;' src='" + avatarUrl + "' " +
+                    "onerror=\"this.onerror=null;this.src='" + DataImageResources.DEVELOPER + "';\">" +
+                    "</div>";
         }
         String link = this.getContributorUrl(contributor.getContributor().getEmail());
         String contributorBody = avatarHtml + StringEscapeUtils.escapeHtml4(contributor.getContributor().getEmail());
