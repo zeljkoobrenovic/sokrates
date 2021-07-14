@@ -39,7 +39,6 @@ public class SokratesFileUtils {
         if (gitHistoryFile.exists()) {
             if (parentDest != null && !parentDest.equals(dest)) {
                 String relativize = Paths.get(parentDest.getAbsolutePath()).relativize(Paths.get(dest.getAbsolutePath())).toString();
-                System.out.println(relativize);
                 extractSubHistory(gitHistoryFile, pattern, parentDest, relativize + "/");
             } else {
                 extractSubHistory(gitHistoryFile, pattern, dest, "");

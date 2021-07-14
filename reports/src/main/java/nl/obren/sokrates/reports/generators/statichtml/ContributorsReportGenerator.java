@@ -102,6 +102,7 @@ public class ContributorsReportGenerator {
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
         int pastDays = 365;
         List<ContributionTimeSlot> contributorsPerDay = getContributionDays(analysis, pastDays);
+        this.enrichTimeSlotsByMergesPerDay(contributorsPerDay);
         ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerDay, pastDays, true, 1);
         report.endSection();
         report.endTabContentSection();
@@ -391,5 +392,18 @@ public class ContributorsReportGenerator {
 
         report.endTable();
         report.endDiv();
+    }
+
+    private void enrichTimeSlotsByMergesPerDay(List<ContributionTimeSlot> contributorsPerDay) {
+        contributorsPerDay.forEach(slot -> slot.setMergesCount(this.getMergesCountByDay(slot.getTimeSlot())));
+    }
+
+    private int getMergesCountByDay(String date) {
+        System.out.println(date);
+        System.out.println((int) this.codeAnalysisResults.getFilesHistoryAnalysisResults().getMerges()
+                .stream().filter(m -> m.getDate() == date).count());
+        System.out.println();
+        return (int) this.codeAnalysisResults.getFilesHistoryAnalysisResults().getMerges()
+                .stream().filter(m -> m.getDate().trim().equals(date.trim())).count();
     }
 }

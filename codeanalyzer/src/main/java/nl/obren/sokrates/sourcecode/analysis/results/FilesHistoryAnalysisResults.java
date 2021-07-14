@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.filehistory.FilePairChangedTogether;
+import nl.obren.sokrates.sourcecode.githistory.MergeUpdate;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
@@ -43,6 +44,7 @@ public class FilesHistoryAnalysisResults {
     private List<SourceFile> allFiles = new ArrayList<>();
     @JsonIgnore
     private List<FileModificationHistory> history = new ArrayList<>();
+    private List<MergeUpdate> merges = new ArrayList<>();
 
     private List<SourceFile> oldestFiles = new ArrayList<>();
     private List<SourceFile> youngestFiles = new ArrayList<>();
@@ -297,5 +299,13 @@ public class FilesHistoryAnalysisResults {
 
     public void setAgeInDays(int ageInDays) {
         this.ageInDays = ageInDays;
+    }
+
+    public List<MergeUpdate> getMerges() {
+        return merges;
+    }
+
+    public void setMerges(List<MergeUpdate> merges) {
+        this.merges = merges;
     }
 }

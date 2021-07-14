@@ -10,6 +10,7 @@ public class ContributionTimeSlot {
     private String timeSlot = "";
     private int contributorsCount;
     private int commitsCount;
+    private int mergesCount;
 
     public ContributionTimeSlot() {
     }
@@ -42,8 +43,21 @@ public class ContributionTimeSlot {
         this.commitsCount = commitsCount;
     }
 
+    public int getMergesCount() {
+        return mergesCount;
+    }
+
+    public void setMergesCount(int mergesCount) {
+        this.mergesCount = mergesCount;
+    }
+
     @JsonIgnore
     public void incrementCommitsCount() {
         this.commitsCount += 1;
+    }
+
+    @JsonIgnore
+    public void incrementMergesCount() {
+        this.mergesCount += 1;
     }
 }
