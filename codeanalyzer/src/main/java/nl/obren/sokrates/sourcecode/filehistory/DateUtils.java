@@ -48,12 +48,14 @@ public class DateUtils {
     public static List<String> getPastWeeks(int numberOfWeeks, String latestCommitDate) {
         List<String> dates = new ArrayList<>();
 
-        for (int i = 0; i <= numberOfWeeks; i++) {
-            Calendar cal = getCalendar(latestCommitDate);
-            cal.add(Calendar.DATE, -(i * 7));
+        if (StringUtils.isNotEmpty(latestCommitDate)) {
+            for (int i = 0; i <= numberOfWeeks; i++) {
+                Calendar cal = getCalendar(latestCommitDate);
+                cal.add(Calendar.DATE, -(i * 7));
 
-            String stringDate = new SimpleDateFormat(DATE_FORMAT).format(cal.getTime());
-            dates.add(new AuthorCommit(stringDate, "").getWeekOfYear());
+                String stringDate = new SimpleDateFormat(DATE_FORMAT).format(cal.getTime());
+                dates.add(new AuthorCommit(stringDate, "").getWeekOfYear());
+            }
         }
 
         return dates;
@@ -151,5 +153,18 @@ public class DateUtils {
 
     public static void setLatestCommitDate(String latestCommitDate) {
         DateUtils.latestCommitDate = latestCommitDate;
+    }
+
+    public static String getWeekMonday(String date) {
+        Calendar calendar = getCalendar(date);
+
+        if (calendar != null) {
+            while (calendar.get(Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
+                calendar.add(Calendar.DATE, -1);
+            }
+            return new SimpleDateFormat("yyyy-MM-dd").format(calendar.getTime());
+        }
+
+        return "";
     }
 }

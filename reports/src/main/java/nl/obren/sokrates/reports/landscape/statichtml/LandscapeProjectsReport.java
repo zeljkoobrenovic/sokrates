@@ -7,6 +7,7 @@ import nl.obren.sokrates.reports.generators.statichtml.ControlsReportGenerator;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.landscape.ProjectTag;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
@@ -18,6 +19,10 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.*;
 import java.util.stream.Collectors;
 
+interface Counter {
+    int getCount(ContributionTimeSlot slot);
+}
+
 public class LandscapeProjectsReport {
     private LandscapeAnalysisResults landscapeAnalysisResults;
     private Map<String, TagStats> tagStatsMap = new HashMap<>();
@@ -27,15 +32,15 @@ public class LandscapeProjectsReport {
     }
 
     public void saveProjectsReport(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults) {
+        report.startTabGroup();
+        report.addTab("projects", "Projects", true);
+        report.addTab("commitsTrend", "Commits Trend", false);
+        report.addTab("contributorsTrend", "Contributors Trend", false);
         if (showTags()) {
-            report.startTabGroup();
-            report.addTab("projects", "Projects", true);
             report.addTab("tags", "Tags", false);
-            report.endTabGroup();
         }
-        if (showTags()) {
-            report.startTabContentSection("projects", true);
-        }
+        report.endTabGroup();
+        report.startTabContentSection("projects", true);
         report.startTable("width: 100%");
         int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
         int thresholdContributors = landscapeAnalysisResults.getConfiguration().getProjectThresholdContributors();
@@ -59,19 +64,64 @@ public class LandscapeProjectsReport {
             addProjectRow(report, projectAnalysis);
         });
         report.endTable();
+        report.endTabContentSection();
+        report.startTabContentSection("commitsTrend", false);
+        addCommitsTrend(report, projectsAnalysisResults, "Commits", "blue", (slot) -> slot.getCommitsCount());
+        report.endTabContentSection();
+        report.startTabContentSection("contributorsTrend", false);
+        addCommitsTrend(report, projectsAnalysisResults, "Contributors", "darkred", (slot) -> slot.getContributorsCount());
+        report.endTabContentSection();
         if (showTags()) {
-            report.endTabContentSection();
             report.startTabContentSection("tags", false);
-            addTabStats(report);
+            addTagStats(report);
             report.endTabContentSection();
         }
+        report.endTabContentSection();
+    }
+
+    private void addCommitsTrend(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults, String label, String color, Counter counter) {
+        report.startTable();
+        report.addTableHeader("Project", label + " per Week (past year)", "Details");
+        int maxCommits[] = {1};
+        int pastWeeks = 52;
+        projectsAnalysisResults.forEach(projectAnalysis -> {
+            List<ContributionTimeSlot> contributorsPerWeek = LandscapeReportGenerator.getContributionWeeks(projectAnalysis.getAnalysisResults().getContributorsAnalysisResults().getContributorsPerWeek(), pastWeeks, landscapeAnalysisResults.getLatestCommitDate());
+            contributorsPerWeek.sort(Comparator.comparing(ContributionTimeSlot::getTimeSlot).reversed());
+            if (contributorsPerWeek.size() > pastWeeks) {
+                contributorsPerWeek = contributorsPerWeek.subList(0, pastWeeks);
+            }
+            contributorsPerWeek.forEach(c -> maxCommits[0] = Math.max(counter.getCount(c), maxCommits[0]));
+        });
+        projectsAnalysisResults.forEach(projectAnalysis -> {
+            report.startTableRow();
+            report.addTableCell(projectAnalysis.getAnalysisResults().getMetadata().getName(), "min-width: 400px; max-width: 400px");
+            List<ContributionTimeSlot> contributorsPerWeek = LandscapeReportGenerator.getContributionWeeks(projectAnalysis.getAnalysisResults().getContributorsAnalysisResults().getContributorsPerWeek(), pastWeeks, landscapeAnalysisResults.getLatestCommitDate());
+            contributorsPerWeek.sort(Comparator.comparing(ContributionTimeSlot::getTimeSlot).reversed());
+            if (contributorsPerWeek.size() > pastWeeks) {
+                contributorsPerWeek = contributorsPerWeek.subList(0, pastWeeks);
+            }
+            report.startTableCell("white-space: nowrap; overflow-x: hidden;");
+            contributorsPerWeek.forEach(contributionTimeSlot -> {
+                int h = (int) (2 + 24.0 * counter.getCount(contributionTimeSlot) / maxCommits[0]);
+                report.addContentInDivWithTooltip("",  + counter.getCount(contributionTimeSlot) + " in the week of " + contributionTimeSlot.getTimeSlot(),
+                        "margin: 0; margin-right: -4px; padding: 0; display: inline-block; vertical-align: bottom; width: 12px; " +
+                                "background-color: " + (counter.getCount(contributionTimeSlot) == 0 ? "grey" : color) + "; " +
+                                "opacity: 0.5; height: " + (h + "px"));
+            });
+            report.endTableCell();
+            report.addTableCell("<a href='" + this.getCommitsProjectReportUrl(projectAnalysis) + "' target='_blank'>"
+                    + "<div style='height: 40px'>" + ReportFileExporter.getIconSvg("report", 38) + "</div></a>", "text-align: center");
+            report.endTableRow();
+        });
+
+        report.endTable();
     }
 
     private boolean showControls() {
         return landscapeAnalysisResults.getConfiguration().isShowProjectControls();
     }
 
-    private void addTabStats(RichTextReport report) {
+    private void addTagStats(RichTextReport report) {
         report.startTable();
         report.addTableHeader("Tag", "# projects", "LOC<br>(main)", "LOC<br>(test)", "# commits<br>(this year)", "# contributors<br>(30 days)");
 
@@ -287,6 +337,10 @@ public class LandscapeProjectsReport {
         return landscapeAnalysisResults.getConfiguration().getProjectReportsUrlPrefix() + projectAnalysis.getSokratesProjectLink().getHtmlReportsRoot() + "/index.html";
     }
 
+    private String getCommitsProjectReportUrl(ProjectAnalysisResults projectAnalysis) {
+        return landscapeAnalysisResults.getConfiguration().getProjectReportsUrlPrefix() + projectAnalysis.getSokratesProjectLink().getHtmlReportsRoot() + "/Commits.html";
+    }
+
     private boolean showTags() {
         return landscapeAnalysisResults.getConfiguration().getProjectTags().size() > 0;
     }
@@ -329,6 +383,5 @@ public class LandscapeProjectsReport {
     private String getTabColor(ProjectTag tag) {
         return StringUtils.isNotBlank(tag.getColor()) ? tag.getColor() : "deepskyblue";
     }
-
 
 }

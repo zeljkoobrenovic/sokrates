@@ -763,10 +763,10 @@ public class LandscapeReportGenerator {
         }
     }
 
-    private List<ContributionTimeSlot> getContributionWeeks(List<ContributionTimeSlot> contributorsPerWeekOriginal, int pastWeeks) {
+    public static List<ContributionTimeSlot> getContributionWeeks(List<ContributionTimeSlot> contributorsPerWeekOriginal, int pastWeeks, String lastCommitDate) {
         List<ContributionTimeSlot> contributorsPerWeek = new ArrayList<>(contributorsPerWeekOriginal);
         List<String> slots = contributorsPerWeek.stream().map(slot -> slot.getTimeSlot()).collect(Collectors.toCollection(ArrayList::new));
-        List<String> pastDates = DateUtils.getPastWeeks(pastWeeks, landscapeAnalysisResults.getLatestCommitDate());
+        List<String> pastDates = DateUtils.getPastWeeks(pastWeeks, lastCommitDate);
         pastDates.forEach(pastDate -> {
             if (!slots.contains(pastDate)) {
                 contributorsPerWeek.add(new ContributionTimeSlot(pastDate));
@@ -778,7 +778,7 @@ public class LandscapeReportGenerator {
     private void addContributorsPerWeek() {
         landscapeReport.addLevel2Header("Commits Per Week (past two years)");
         int limit = 104;
-        List<ContributionTimeSlot> contributorsPerWeek = getContributionWeeks(landscapeAnalysisResults.getContributorsPerWeek(), limit);
+        List<ContributionTimeSlot> contributorsPerWeek = getContributionWeeks(landscapeAnalysisResults.getContributorsPerWeek(), limit, landscapeAnalysisResults.getLatestCommitDate());
         contributorsPerWeek.sort(Comparator.comparing(ContributionTimeSlot::getTimeSlot).reversed());
         if (contributorsPerWeek.size() > 0) {
             if (contributorsPerWeek.size() > limit) {

@@ -58,7 +58,7 @@ public class ContributorsReportUtils {
                     }
                     int height = 1 + (int) (64.0 * count / maxCommits);
                     String title = timeSlot.getTimeSlot() + ": " + count;
-                    report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: darkgrey; height:" + height + "px'></div>");
+                    report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: grey; height:" + height + "px'></div>");
                     report.endTableCell();
                 });
                 report.endTableRow();

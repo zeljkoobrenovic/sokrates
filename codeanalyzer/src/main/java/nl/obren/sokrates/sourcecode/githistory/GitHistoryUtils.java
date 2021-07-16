@@ -3,7 +3,7 @@ package nl.obren.sokrates.sourcecode.githistory;
 /*
  * Assumes that you have generated the text file being read using the following git command:
  * git ls-files -z | xargs -0 -n1 -I{} -- git log --date=short --format="%ad %ae %H {}" {} > git-history.txt
- * git log --merges --first-parent master --date=short --format="%ad %ae" > testr.txt > git-merges.txt
+ * git log --merges --first-parent --date=short --format="%ad %ae" > git-merges.txt
  */
 
 import nl.obren.sokrates.common.utils.RegexUtils;
