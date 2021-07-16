@@ -7,6 +7,7 @@ import nl.obren.sokrates.reports.generators.statichtml.ControlsReportGenerator;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.landscape.ProjectTag;
@@ -48,7 +49,7 @@ public class LandscapeProjectsReport {
                 "Main<br/>Language", "LOC<br/>(main)",
                 "LOC<br/>(test)", "LOC<br/>(other)",
                 "Age", "Contributors" + (thresholdCommits > 1 ? "<br/>(" + thresholdCommits + "+&nbsp;commits)" : ""),
-                "Recent<br>Contributors<br>(30d)", "Rookies", "Commits<br>this year"));
+                "Contributors<br>(30d)", "Rookies<br>(30d)", "Commits<br>(30d)"));
         if (showTags()) {
             headers.add(2, "Tags");
         }
@@ -58,8 +59,8 @@ public class LandscapeProjectsReport {
         headers.add("Report");
         report.addTableHeader(headers.toArray(String[]::new));
         Collections.sort(projectsAnalysisResults,
-                (a, b) -> b.getAnalysisResults().getContributorsAnalysisResults().getCommitsThisYear()
-                        - a.getAnalysisResults().getContributorsAnalysisResults().getCommitsThisYear());
+                (a, b) -> b.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days()
+                        - a.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days());
         projectsAnalysisResults.forEach(projectAnalysis -> {
             addProjectRow(report, projectAnalysis);
         });
@@ -69,6 +70,9 @@ public class LandscapeProjectsReport {
         addCommitsTrend(report, projectsAnalysisResults, "Commits", "blue", (slot) -> slot.getCommitsCount());
         report.endTabContentSection();
         report.startTabContentSection("contributorsTrend", false);
+        Collections.sort(projectsAnalysisResults,
+                (a, b) -> (int) b.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count()
+                        - (int) a.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count());
         addCommitsTrend(report, projectsAnalysisResults, "Contributors", "darkred", (slot) -> slot.getContributorsCount());
         report.endTabContentSection();
         if (showTags()) {
@@ -81,7 +85,7 @@ public class LandscapeProjectsReport {
 
     private void addCommitsTrend(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults, String label, String color, Counter counter) {
         report.startTable();
-        report.addTableHeader("Project", label + " per Week (past year)", "Details");
+        report.addTableHeader("Project", "Commits<br>(30d)", "Contributors<br>(30d)", "Rookies<br>(30d)", label + " per Week (past year)", "Details");
         int maxCommits[] = {1};
         int pastWeeks = 52;
         projectsAnalysisResults.forEach(projectAnalysis -> {
@@ -95,7 +99,14 @@ public class LandscapeProjectsReport {
         projectsAnalysisResults.forEach(projectAnalysis -> {
             report.startTableRow();
             report.addTableCell(projectAnalysis.getAnalysisResults().getMetadata().getName(), "min-width: 400px; max-width: 400px");
-            List<ContributionTimeSlot> contributorsPerWeek = LandscapeReportGenerator.getContributionWeeks(projectAnalysis.getAnalysisResults().getContributorsAnalysisResults().getContributorsPerWeek(), pastWeeks, landscapeAnalysisResults.getLatestCommitDate());
+            ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysis.getAnalysisResults().getContributorsAnalysisResults();
+            report.addTableCell(contributorsAnalysisResults.getCommitsCount30Days() + "", "text-align: center");
+            List<Contributor> contributors = contributorsAnalysisResults.getContributors();
+            int recentContributorsCount = (int) contributors.stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count();
+            int rookiesCount = (int) contributors.stream().filter(c -> c.isRookie(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count();
+            report.addTableCell(recentContributorsCount + "", "text-align: center");
+            report.addTableCell(rookiesCount + "", "text-align: center");
+            List<ContributionTimeSlot> contributorsPerWeek = LandscapeReportGenerator.getContributionWeeks(contributorsAnalysisResults.getContributorsPerWeek(), pastWeeks, landscapeAnalysisResults.getLatestCommitDate());
             contributorsPerWeek.sort(Comparator.comparing(ContributionTimeSlot::getTimeSlot).reversed());
             if (contributorsPerWeek.size() > pastWeeks) {
                 contributorsPerWeek = contributorsPerWeek.subList(0, pastWeeks);
@@ -103,7 +114,7 @@ public class LandscapeProjectsReport {
             report.startTableCell("white-space: nowrap; overflow-x: hidden;");
             contributorsPerWeek.forEach(contributionTimeSlot -> {
                 int h = (int) (2 + 24.0 * counter.getCount(contributionTimeSlot) / maxCommits[0]);
-                report.addContentInDivWithTooltip("",  + counter.getCount(contributionTimeSlot) + " in the week of " + contributionTimeSlot.getTimeSlot(),
+                report.addContentInDivWithTooltip("", +counter.getCount(contributionTimeSlot) + " in the week of " + contributionTimeSlot.getTimeSlot(),
                         "margin: 0; margin-right: -4px; padding: 0; display: inline-block; vertical-align: bottom; width: 12px; " +
                                 "background-color: " + (counter.getCount(contributionTimeSlot) == 0 ? "grey" : color) + "; " +
                                 "opacity: 0.5; height: " + (h + "px"));
@@ -241,7 +252,7 @@ public class LandscapeProjectsReport {
                     .sum()), "text-align: center");
             report.addTableCell(FormattingUtils.formatCount(projectsAnalysisResults
                     .stream()
-                    .mapToInt(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsThisYear())
+                    .mapToInt(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days())
                     .sum()), "text-align: center");
             report.addTableCell(FormattingUtils.formatCount(getRecentContributorCount(projectsAnalysisResults)), "text-align: center");
         } else {
@@ -308,7 +319,7 @@ public class LandscapeProjectsReport {
         report.addTableCell(FormattingUtils.formatCount(contributorsCount, "-"), "text-align: center");
         report.addTableCell(FormattingUtils.formatCount(recentContributorsCount, "-"), "text-align: center");
         report.addTableCell(FormattingUtils.formatCount(rookiesCount, "-"), "text-align: center");
-        report.addTableCell(FormattingUtils.formatCount(analysisResults.getContributorsAnalysisResults().getCommitsThisYear(), "-"), "text-align: center");
+        report.addTableCell(FormattingUtils.formatCount(analysisResults.getContributorsAnalysisResults().getCommitsCount30Days(), "-"), "text-align: center");
         String projectReportUrl = getProjectReportUrl(projectAnalysis);
         if (showControls()) {
             report.startTableCell("text-align: center");
