@@ -5,6 +5,7 @@
 package nl.obren.sokrates.sourcecode.landscape.analysis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
@@ -233,6 +234,7 @@ public class LandscapeAnalysisResults {
     public List<NumericMetric> getLinesOfCodePerExtension(CodeCategory type) {
         List<NumericMetric> linesOfCodePerExtension = new ArrayList<>();
         getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
+            String projectName = projectAnalysisResults.getAnalysisResults().getMetadata().getName();
             List<NumericMetric> projectLinesOfCodePerExtension;
             if (type == CodeCategory.TEST) {
                 projectLinesOfCodePerExtension = projectAnalysisResults.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCodePerExtension();
@@ -248,9 +250,13 @@ public class LandscapeAnalysisResults {
                 String id = metric.getName();
                 Optional<NumericMetric> existingMetric = linesOfCodePerExtension.stream().filter(c -> c.getName().equalsIgnoreCase(id)).findAny();
                 if (existingMetric.isPresent()) {
-                    existingMetric.get().setValue(existingMetric.get().getValue().intValue() + metric.getValue().intValue());
+                    NumericMetric metricObject = existingMetric.get();
+                    metricObject.getDescription().add(new NumericMetric (projectName, metric.getValue()));
+                    metricObject.setValue(metricObject.getValue().intValue() + metric.getValue().intValue());
                 } else {
-                    linesOfCodePerExtension.add(new NumericMetric(metric.getName(), metric.getValue()));
+                    NumericMetric metricObject = new NumericMetric(metric.getName(), metric.getValue());
+                    metricObject.getDescription().add(new NumericMetric (projectName, metric.getValue()));
+                    linesOfCodePerExtension.add(metricObject);
                 }
             });
         });

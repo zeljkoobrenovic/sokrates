@@ -4,6 +4,9 @@ public class MergeUpdate {
     private String date = "";
     private String authorEmail = "";
 
+    public MergeUpdate() {
+    }
+
     public MergeUpdate(String date, String authorEmail) {
         this.date = date;
         this.authorEmail = authorEmail;

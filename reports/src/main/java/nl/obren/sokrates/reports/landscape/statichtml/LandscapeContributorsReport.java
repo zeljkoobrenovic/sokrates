@@ -2,6 +2,7 @@ package nl.obren.sokrates.reports.landscape.statichtml;
 
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjectInfo;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjects;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
@@ -49,7 +50,7 @@ public class LandscapeContributorsReport {
         if (avatarUrl != null) {
             avatarHtml = "<div style='vertical-align: middle; display: inline-block; width: 48px; margin-top: 2px;'>" +
                     "<img style='border-radius: 50%; height: 40px; width: 40px; margin-right: 10px;' src='" + avatarUrl + "' " +
-                    "onerror=\"this.onerror=null;this.src='" + DataImageResources.DEVELOPER + "';\">" +
+                    "onerror=\"this.onerror=null;this.src='" + DataImageUtils.DEVELOPER + "';\">" +
                     "</div>";
         }
         String link = this.getContributorUrl(contributor.getContributor().getEmail());

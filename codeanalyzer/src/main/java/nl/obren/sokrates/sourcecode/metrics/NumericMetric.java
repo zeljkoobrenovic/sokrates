@@ -4,9 +4,13 @@
 
 package nl.obren.sokrates.sourcecode.metrics;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class NumericMetric {
     private String name;
     private Number value;
+    private List<NumericMetric> description = new ArrayList<>();
 
     public NumericMetric() {
     }
@@ -30,5 +34,13 @@ public class NumericMetric {
 
     public void setValue(Number value) {
         this.value = value;
+    }
+
+    public List<NumericMetric> getDescription() {
+        return description;
+    }
+
+    public void setDescription(List<NumericMetric> description) {
+        this.description = description;
     }
 }

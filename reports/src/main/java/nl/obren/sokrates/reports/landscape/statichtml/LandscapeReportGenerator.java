@@ -9,6 +9,7 @@ import nl.obren.sokrates.common.renderingutils.VisualizationItem;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
+import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -37,11 +38,11 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class LandscapeReportGenerator {
     public static final int RECENT_THRESHOLD_DAYS = 30;
-    private static final Log LOG = LogFactory.getLog(LandscapeReportGenerator.class);
     public static final String OVERVIEW_TAB_ID = "overview";
     public static final String SOURCE_CODE_TAB_ID = "source code";
     public static final String CONTRIBUTORS_TAB_ID = "contributors";
     public static final String CUSTOM_TAB_ID_PREFIX = "custom_tab_";
+    private static final Log LOG = LogFactory.getLog(LandscapeReportGenerator.class);
     private RichTextReport landscapeReport = new RichTextReport("Landscape Report", "index.html");
     private RichTextReport landscapeProjectsReport = new RichTextReport("", "projects.html");
     private RichTextReport landscapeRecentContributorsReport = new RichTextReport("", "contributors-recent.html");
@@ -138,6 +139,18 @@ public class LandscapeReportGenerator {
         });
 
         landscapeReport.addParagraph("<span style='color: grey; font-size: 90%'>updated: " + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + "</span>");
+    }
+
+    public static List<ContributionTimeSlot> getContributionWeeks(List<ContributionTimeSlot> contributorsPerWeekOriginal, int pastWeeks, String lastCommitDate) {
+        List<ContributionTimeSlot> contributorsPerWeek = new ArrayList<>(contributorsPerWeekOriginal);
+        List<String> slots = contributorsPerWeek.stream().map(slot -> slot.getTimeSlot()).collect(Collectors.toCollection(ArrayList::new));
+        List<String> pastDates = DateUtils.getPastWeeks(pastWeeks, lastCommitDate);
+        pastDates.forEach(pastDate -> {
+            if (!slots.contains(pastDate)) {
+                contributorsPerWeek.add(new ContributionTimeSlot(pastDate));
+            }
+        });
+        return contributorsPerWeek;
     }
 
     private void addPeopleDependencies() {
@@ -421,19 +434,28 @@ public class LandscapeReportGenerator {
         List<NumericMetric> linesOfCodePerExtensionDisplay = tooLong ? linesOfCodePerExtension.subList(0, 25) : linesOfCodePerExtension;
         List<NumericMetric> linesOfCodePerExtensionHide = tooLong ? linesOfCodePerExtension.subList(25, linesOfCodePerExtension.size()) : new ArrayList<>();
         linesOfCodePerExtensionDisplay.forEach(extension -> {
-            String smallTextForNumber = FormattingUtils.getSmallTextForNumber(extension.getValue().intValue());
-            addSmallInfoBlockLoc(smallTextForNumber, extension.getName().replace("*.", ""), null);
+            addLangInfo(extension);
         });
         if (linesOfCodePerExtensionHide.size() > 0) {
             landscapeReport.startShowMoreBlockDisappear("", "show all...");
             linesOfCodePerExtensionHide.forEach(extension -> {
-                String smallTextForNumber = FormattingUtils.getSmallTextForNumber(extension.getValue().intValue());
-                addSmallInfoBlockLoc(smallTextForNumber, extension.getName().replace("*.", ""), null);
+                addLangInfo(extension);
             });
             landscapeReport.endShowMoreBlock();
         }
         landscapeReport.endDiv();
         landscapeReport.endSection();
+    }
+
+    private void addLangInfo(NumericMetric extension) {
+        String smallTextForNumber = FormattingUtils.getSmallTextForNumber(extension.getValue().intValue());
+        int size = extension.getDescription().size();
+        Collections.sort(extension.getDescription(), (a, b) -> b.getValue().intValue() - a.getValue().intValue());
+        addLangInfoBlock(smallTextForNumber, extension.getName().replace("*.", "").trim(),
+                size + " " + (size == 1 ? "project" : "projects") + ":\n  " +
+                        extension.getDescription().stream()
+                                .map(a -> a.getName() + " (" + FormattingUtils.formatCount(a.getValue().intValue()) + " LOC)")
+                                .collect(Collectors.joining("\n  ")));
     }
 
     private List<NumericMetric> getLinesOfCodePerExtension(List<NumericMetric> linesOfCodePerExtension) {
@@ -657,6 +679,28 @@ public class LandscapeReportGenerator {
         addSmallInfoBlock(value, subtitle, "lavender", link);
     }
 
+    private void addLangInfoBlock(String value, String lang, String description) {
+        String style = "border-radius: 8px; margin: 4px 4px 4px 0px; display: inline-block; " +
+                "width: 80px; height: 114px;background-color: #dedede; " +
+                "text-align: center; vertical-align: middle; margin-bottom: 16px;";
+
+        landscapeReport.startDivWithLabel(description, style);
+
+        String image = DataImageUtils.getLangDataImage(lang);
+        if (image != null) {
+            landscapeReport.addHtmlContent("<img style=\"background-color: #f1f1f1; border-radius: 50%; border: 1px solid lightgrey; margin-top: 8px; width: 42px; height: 42px; object-fit: contain;\" src=\"" +
+                    image + "\">");
+        } else {
+            landscapeReport.addHtmlContent("<div style=\"vertical-align: center; padding: auto;margin: auto; background-color: #f1f1f1; border-radius: 50%; border: 1px solid lightgrey; margin-top: 8px; width: 42px; height: 42px; object-fit: contain; overflow: hidden; color: darkblue; " +
+                    "font-size: " + (lang.length() <= 3 ? 120 : 100) + "%; font-weight: bold;\">" +
+                    "<div style=\"height: " + (lang.length() <= 3 ? 9 : 11) + "px\"></div>" + lang + "</div>");
+
+        }
+        landscapeReport.addHtmlContent("<div style='font-size: 24px; margin-top: 8px;'>" + value + "</div>");
+        landscapeReport.addHtmlContent("<div style='color: #434343; font-size: 13px'>" + lang + "</div>");
+        landscapeReport.endDiv();
+    }
+
     private void addSmallInfoBlock(String value, String subtitle, String color, String link) {
         String style = "border-radius: 8px;";
 
@@ -761,18 +805,6 @@ public class LandscapeReportGenerator {
 
             landscapeReport.addLineBreak();
         }
-    }
-
-    public static List<ContributionTimeSlot> getContributionWeeks(List<ContributionTimeSlot> contributorsPerWeekOriginal, int pastWeeks, String lastCommitDate) {
-        List<ContributionTimeSlot> contributorsPerWeek = new ArrayList<>(contributorsPerWeekOriginal);
-        List<String> slots = contributorsPerWeek.stream().map(slot -> slot.getTimeSlot()).collect(Collectors.toCollection(ArrayList::new));
-        List<String> pastDates = DateUtils.getPastWeeks(pastWeeks, lastCommitDate);
-        pastDates.forEach(pastDate -> {
-            if (!slots.contains(pastDate)) {
-                contributorsPerWeek.add(new ContributionTimeSlot(pastDate));
-            }
-        });
-        return contributorsPerWeek;
     }
 
     private void addContributorsPerWeek() {
