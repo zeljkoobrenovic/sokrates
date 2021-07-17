@@ -4,6 +4,7 @@ import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.generators.statichtml.ControlsReportGenerator;
+import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -54,7 +55,7 @@ public class LandscapeProjectsReport {
                 "Age", "Contributors" + (thresholdCommits > 1 ? "<br/>(" + thresholdCommits + "+&nbsp;commits)" : ""),
                 "Contributors<br>(30d)", "Rookies<br>(30d)", "Commits<br>(30d)"));
         if (showTags()) {
-            headers.add(2, "Tags");
+            headers.add(3, "Tags");
         }
         if (showControls()) {
             headers.add("Controls");
@@ -289,9 +290,6 @@ public class LandscapeProjectsReport {
         report.startTableRow();
         report.addTableCell(StringUtils.isNotBlank(logoLink) ? "<img src='" + logoLink + "' style='width: 20px'>" : "", "text-align: center");
         report.addTableCell(metadata.getName());
-        if (showTags()) {
-            report.addTableCell(getTags(projectAnalysis));
-        }
         AspectAnalysisResults main = analysisResults.getMainAspectAnalysisResults();
         AspectAnalysisResults test = analysisResults.getTestAspectAnalysisResults();
         AspectAnalysisResults generated = analysisResults.getGeneratedAspectAnalysisResults();
@@ -313,7 +311,25 @@ public class LandscapeProjectsReport {
         } else {
             locSummary.append("-");
         }
-        report.addTableCell(locSummary.toString().replace("> = ", ">"), "text-align: center");
+        String lang = locSummary.toString().replace("> = ", ">");
+        report.startTableCell("text-align: left");
+        String image = DataImageUtils.getLangDataImage(lang);
+        report.startDiv("min-width: 130px; white-space: nowrap; overflow: hidden");
+        if (image != null) {
+            report.addHtmlContent("<img style=\"vertical-align: middle; background-color: #f1f1f1; border-radius: 50%; border: 1px solid lightgrey; margin-top: 8px; width: 30px; height: 30px; object-fit: contain;\" src=\"" +
+                    image + "\">");
+        } else {
+            report.addHtmlContent("<div style=\"display: inline-block;vertical-align: middle; padding: auto;margin: auto; background-color: #f1f1f1; border-radius: 50%; border: 1px solid lightgrey; margin-top: 8px; width: 30px; height: 30px; object-fit: contain; overflow: hidden; color: darkblue; " +
+                    "font-size: " + (lang.length() <= 3 ? 90 : 70) + "%; font-weight: bold; text-align: center;\">" +
+                    "<div style=\"height: " + (lang.length() <= 3 ? 7 : 9) + "px\"></div>" + lang + "</div>");
+
+        }
+        report.addContentInDiv(lang, "vertical-align: middle; display: inline-block;margin-top: 5px");
+        report.endDiv();
+        report.endTableCell();
+        if (showTags()) {
+            report.addTableCell(getTags(projectAnalysis));
+        }
         report.addTableCell(FormattingUtils.formatCount(main.getLinesOfCode(), "-"), "text-align: center");
 
         report.addTableCell(FormattingUtils.formatCount(test.getLinesOfCode(), "-"), "text-align: center");

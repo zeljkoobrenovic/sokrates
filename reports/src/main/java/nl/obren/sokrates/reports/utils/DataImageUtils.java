@@ -20,6 +20,7 @@ public class DataImageUtils {
         map.put("py", "Python.png");
         map.put("sql", "SQL.png");
         map.put("php", "PHP.png");
+        map.put("inc", "PHP.png");
         map.put("vb", "Visual_Basic.png");
         map.put("asm", "Assembly_language.png");
         map.put("go", "Go.png");
@@ -37,6 +38,17 @@ public class DataImageUtils {
         map.put("vue", "vue.png");
         map.put("dockerfile", "docker.png");
         map.put("mustache", "mustache.png");
+        map.put("pm", "Perl.png");
+        map.put("pl", "Perl.png");
+        map.put("ftl", "freemarker.png");
+        map.put("r", "R.png");
+        map.put("m", "Objective_C.png");
+        map.put("mm", "Objective_C.png");
+        map.put("sh", "shell.png");
+        map.put("bash", "shell.png");
+        map.put("ksh", "shell.png");
+        map.put("zsh", "shell.png");
+        map.put("bat", "shell.png");
 
         map.put("groovy", "Groovy.png");
         map.put("gvy", "Groovy.png");
@@ -45,7 +57,9 @@ public class DataImageUtils {
 
         map.put("swift", "Swift.png");
         map.put("perl", "Perl.png");
+        map.put("hql", "hive.png");
         map.put("kt", "Kotlin.png");
+        map.put("kts", "Kotlin.png");
         map.put("jsx", "react.png");
         map.put("tsx", "react.png");
         map.put("htm", "html.png");
@@ -64,11 +78,24 @@ public class DataImageUtils {
         map.put("scala", "scala.png");
         map.put("jsp", "jsp.png");
         map.put("sls", "saltstack.png");
+        map.put("hbs", "handlebars.png");
+        map.put("handlebars", "handlebars.png");
+        map.put("rst", "rest.png");
+        map.put("sbt", "sbt.png");
+        map.put("ipynb", "Jupyter.png");
+        map.put("svg", "svg.png");
+        map.put("md", "md.png");
+        map.put("markdown", "md.png");
+        map.put("json", "json.png");
+        map.put("xml", "xml.png");
+        map.put("avsc", "avro.png");
+        map.put("xib", "xcode.png");
+
     }
 
     public static String getLangDataImage(String lang) {
         if (map.containsKey(lang.toLowerCase())) {
-            return getImageBase64("/lang/" + map.get(lang));
+            return getImageBase64("/lang/" + map.get(lang.toLowerCase()));
         }
 
         return null;
