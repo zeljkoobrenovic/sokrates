@@ -8,6 +8,7 @@ import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
+import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.reports.utils.ReportUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -213,6 +214,13 @@ public class SummaryUtils {
 
     private void summarizeMainVolume(CodeAnalysisResults analysisResults, RichTextReport report) {
         report.startTableRow();
+        StringBuilder icons = new StringBuilder("");
+        addIconsMainCode(analysisResults, icons);
+        report.addHtmlContent(icons.toString());
+        report.addTableCell("", "border: none");
+        report.endTableRow();
+
+        report.startTableRow();
         StringBuilder summary = new StringBuilder("");
         summarizeMainCode(analysisResults, summary);
         report.addHtmlContent(summary.toString());
@@ -234,6 +242,26 @@ public class SummaryUtils {
         summary.append("<td style='border: none; vertical-align: top; padding-top: 11px;'>Main Code: ");
         summary.append(RichTextRenderingUtils.renderNumberStrong(totalLoc) + " LOC");
         summarizeListOfLocAspects(summary, totalLoc, linesOfCodePerExtension);
+        summary.append("</td>");
+    }
+
+    private void addIconsMainCode(CodeAnalysisResults analysisResults, StringBuilder summary) {
+        List<NumericMetric> extensions = analysisResults.getMainAspectAnalysisResults().getLinesOfCodePerExtension();
+        summary.append("<td style='border: none'></td>");
+        summary.append("<td style='border: none;' colspan='2'>");
+        extensions.forEach(ext -> {
+            String lang = ext.getName().toUpperCase().replace("*.", "").trim();
+            String image = DataImageUtils.getLangDataImage(lang);
+            if (image != null) {
+                summary.append("<img style=\"margin-right: 3px; vertical-align: middle; background-color: #f1f1f1; border-radius: 50%; border: 1px solid lightgrey; width: 30px; height: 30px; object-fit: contain;\" src=\"" +
+                        image + "\">");
+            } else {
+                summary.append("<div style=\"margin-right: 3px; display: inline-block;vertical-align: middle; padding: auto;margin: auto; background-color: #f1f1f1; border-radius: 50%; border: 1px solid lightgrey; width: 30px; height: 30px; object-fit: contain; overflow: hidden; color: darkblue; " +
+                        "font-size: " + (lang.length() <= 3 ? 90 : 70) + "%; font-weight: bold; text-align: center;\">" +
+                        "<div style=\"height: " + (lang.length() <= 3 ? 7 : 9) + "px\"></div>" + lang + "</div>");
+
+            }
+        });
         summary.append("</td>");
     }
 
