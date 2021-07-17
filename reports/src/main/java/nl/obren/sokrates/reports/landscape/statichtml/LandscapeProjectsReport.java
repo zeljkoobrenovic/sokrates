@@ -35,8 +35,11 @@ public class LandscapeProjectsReport {
     public void saveProjectsReport(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults) {
         report.startTabGroup();
         report.addTab("projects", "Projects", true);
-        report.addTab("commitsTrend", "Commits Trend", false);
-        report.addTab("contributorsTrend", "Contributors Trend", false);
+        boolean showCommits = landscapeAnalysisResults.getCommitsCount() > 0;
+        if (showCommits) {
+            report.addTab("commitsTrend", "Commits Trend", false);
+            report.addTab("contributorsTrend", "Contributors Trend", false);
+        }
         if (showTags()) {
             report.addTab("tags", "Tags", false);
         }
@@ -66,15 +69,17 @@ public class LandscapeProjectsReport {
         });
         report.endTable();
         report.endTabContentSection();
-        report.startTabContentSection("commitsTrend", false);
-        addCommitsTrend(report, projectsAnalysisResults, "Commits", "blue", (slot) -> slot.getCommitsCount());
-        report.endTabContentSection();
-        report.startTabContentSection("contributorsTrend", false);
-        Collections.sort(projectsAnalysisResults,
-                (a, b) -> (int) b.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count()
-                        - (int) a.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count());
-        addCommitsTrend(report, projectsAnalysisResults, "Contributors", "darkred", (slot) -> slot.getContributorsCount());
-        report.endTabContentSection();
+        if (showCommits) {
+            report.startTabContentSection("commitsTrend", false);
+            addCommitsTrend(report, projectsAnalysisResults, "Commits", "blue", (slot) -> slot.getCommitsCount());
+            report.endTabContentSection();
+            report.startTabContentSection("contributorsTrend", false);
+            Collections.sort(projectsAnalysisResults,
+                    (a, b) -> (int) b.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count()
+                            - (int) a.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count());
+            addCommitsTrend(report, projectsAnalysisResults, "Contributors", "darkred", (slot) -> slot.getContributorsCount());
+            report.endTabContentSection();
+        }
         if (showTags()) {
             report.startTabContentSection("tags", false);
             addTagStats(report);
