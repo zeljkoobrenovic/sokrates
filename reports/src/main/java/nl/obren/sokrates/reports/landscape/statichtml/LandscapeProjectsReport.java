@@ -313,17 +313,8 @@ public class LandscapeProjectsReport {
         }
         String lang = locSummary.toString().replace("> = ", ">");
         report.startTableCell("text-align: left");
-        String image = DataImageUtils.getLangDataImage(lang);
         report.startDiv("min-width: 130px; white-space: nowrap; overflow: hidden");
-        if (image != null) {
-            report.addHtmlContent("<img style=\"vertical-align: middle; background-color: #f1f1f1; border-radius: 50%; border: 1px solid lightgrey; margin-top: 8px; width: 30px; height: 30px; object-fit: contain;\" src=\"" +
-                    image + "\">");
-        } else {
-            report.addHtmlContent("<div style=\"display: inline-block;vertical-align: middle; padding: auto;margin: auto; background-color: #f1f1f1; border-radius: 50%; border: 1px solid lightgrey; margin-top: 8px; width: 30px; height: 30px; object-fit: contain; overflow: hidden; color: darkblue; " +
-                    "font-size: " + (lang.length() <= 3 ? 90 : 70) + "%; font-weight: bold; text-align: center;\">" +
-                    "<div style=\"height: " + (lang.length() <= 3 ? 7 : 9) + "px\"></div>" + lang + "</div>");
-
-        }
+        report.addHtmlContent(DataImageUtils.getLangDataImageDiv(lang, 30));
         report.addContentInDiv(lang, "vertical-align: middle; display: inline-block;margin-top: 5px");
         report.endDiv();
         report.endTableCell();

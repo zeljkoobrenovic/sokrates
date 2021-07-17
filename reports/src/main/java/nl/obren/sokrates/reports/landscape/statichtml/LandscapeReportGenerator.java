@@ -686,16 +686,7 @@ public class LandscapeReportGenerator {
 
         landscapeReport.startDivWithLabel(description, style);
 
-        String image = DataImageUtils.getLangDataImage(lang);
-        if (image != null) {
-            landscapeReport.addHtmlContent("<img style=\"background-color: #f1f1f1; border-radius: 50%; border: 1px solid lightgrey; margin-top: 8px; width: 42px; height: 42px; object-fit: contain;\" src=\"" +
-                    image + "\">");
-        } else {
-            landscapeReport.addHtmlContent("<div style=\"vertical-align: center; padding: auto;margin: auto; background-color: #f1f1f1; border-radius: 50%; border: 1px solid lightgrey; margin-top: 8px; width: 42px; height: 42px; object-fit: contain; overflow: hidden; color: darkblue; " +
-                    "font-size: " + (lang.length() <= 3 ? 120 : 100) + "%; font-weight: bold;\">" +
-                    "<div style=\"height: " + (lang.length() <= 3 ? 9 : 11) + "px\"></div>" + lang + "</div>");
-
-        }
+        landscapeReport.addHtmlContent(DataImageUtils.getLangDataImageDiv(lang, 42));
         landscapeReport.addHtmlContent("<div style='font-size: 24px; margin-top: 8px;'>" + value + "</div>");
         landscapeReport.addHtmlContent("<div style='color: #434343; font-size: 13px'>" + lang + "</div>");
         landscapeReport.endDiv();

@@ -251,16 +251,7 @@ public class SummaryUtils {
         summary.append("<td style='border: none;' colspan='2'>");
         extensions.forEach(ext -> {
             String lang = ext.getName().toUpperCase().replace("*.", "").trim();
-            String image = DataImageUtils.getLangDataImage(lang);
-            if (image != null) {
-                summary.append("<img style=\"margin-right: 3px; vertical-align: middle; background-color: #f1f1f1; border-radius: 50%; border: 1px solid lightgrey; width: 30px; height: 30px; object-fit: contain;\" src=\"" +
-                        image + "\">");
-            } else {
-                summary.append("<div style=\"margin-right: 3px; display: inline-block;vertical-align: middle; padding: auto;margin: auto; background-color: #f1f1f1; border-radius: 50%; border: 1px solid lightgrey; width: 30px; height: 30px; object-fit: contain; overflow: hidden; color: darkblue; " +
-                        "font-size: " + (lang.length() <= 3 ? 90 : 70) + "%; font-weight: bold; text-align: center;\">" +
-                        "<div style=\"height: " + (lang.length() <= 3 ? 7 : 9) + "px\"></div>" + lang + "</div>");
-
-            }
+            summary.append(DataImageUtils.getLangDataImageDiv(lang, 30));
         });
         summary.append("</td>");
     }

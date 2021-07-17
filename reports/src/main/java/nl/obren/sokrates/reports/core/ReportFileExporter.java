@@ -88,7 +88,7 @@ public class ReportFileExporter {
             indexReport.addParagraph(metadata.getDescription());
         }
         indexReport.startSection("Summary", "");
-        indexReport.startDiv("");
+        indexReport.startDiv("margin-top: -10px");
         summarize(indexReport, analysisResults);
         indexReport.endDiv();
         indexReport.endSection();
