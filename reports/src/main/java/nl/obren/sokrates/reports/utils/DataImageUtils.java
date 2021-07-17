@@ -114,15 +114,15 @@ public class DataImageUtils {
         return null;
     }
 
-    public static String getLangDataImageDiv(String lang, int size) {
+    public static String getLangDataImageDiv(String lang, int size, int fontSize1, int fontSize2, int padding1, int padding2) {
         String image = DataImageUtils.getLangDataImage(lang);
         if (image != null) {
-            return "<img style=\"margin-right: 3px; vertical-align: middle; background-color: #f1f1f1; border-radius: 50%; border: 1px solid lightgrey; width: " + size + "px; height: " + size + "px; object-fit: contain;\" src=\"" +
+            return "<img style=\"margin-right: 3px; vertical-align: top; background-color: #f1f1f1; border-radius: 50%; border: 1px solid lightgrey; width: " + size + "px; height: " + size + "px; object-fit: contain;\" src=\"" +
                     image + "\">";
         } else {
-            return "<div style=\"margin-right: 3px; display: inline-block;vertical-align: middle; padding: auto; background-color: #f1f1f1; border-radius: 50%; border: 1px solid lightgrey; width: " + size + "px; height: " + size + "px; object-fit: contain; overflow: hidden; color: darkblue; " +
-                    "font-size: " + (lang.length() <= 3 ? 13 : 11) + "px; font-weight: bold; text-align: center;\">" +
-                    "<div style=\"height: " + (lang.length() <= 3 ? 7 : 9) + "px\"></div>" + lang + "</div>";
+            return "<div style=\"margin-right: 3px; display: inline-block;vertical-align: top; padding: auto; background-color: #f1f1f1; border-radius: 50%; border: 1px solid lightgrey; width: " + size + "px; height: " + size + "px; object-fit: contain; overflow: hidden; color: darkblue; " +
+                    "font-size: " + (lang.length() <= 3 ? fontSize1 : fontSize2) + "px; font-weight: bold; text-align: center;\">" +
+                    "<div style=\"height: " + (lang.length() <= 3 ? padding1 : padding2) + "px\"></div>" + lang + "</div>";
 
         }
 

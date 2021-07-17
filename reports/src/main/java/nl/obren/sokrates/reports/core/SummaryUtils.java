@@ -251,7 +251,7 @@ public class SummaryUtils {
         summary.append("<td style='border: none;' colspan='2'>");
         extensions.forEach(ext -> {
             String lang = ext.getName().toUpperCase().replace("*.", "").trim();
-            summary.append(DataImageUtils.getLangDataImageDiv(lang, 30));
+            summary.append(DataImageUtils.getLangDataImageDiv(lang, 30, 13, 11, 7, 9));
         });
         summary.append("</td>");
     }
