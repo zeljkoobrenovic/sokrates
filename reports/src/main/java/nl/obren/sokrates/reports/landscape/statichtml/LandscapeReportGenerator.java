@@ -800,7 +800,7 @@ public class LandscapeReportGenerator {
     }
 
     private void addContributorsPerWeek() {
-        landscapeReport.addLevel2Header("Commits Per Week (past two years)");
+        landscapeReport.addLevel2Header("Commits & Contributors Per Week (past two years)");
         int limit = 104;
         List<ContributionTimeSlot> contributorsPerWeek = getContributionWeeks(landscapeAnalysisResults.getContributorsPerWeek(), limit, landscapeAnalysisResults.getLatestCommitDate());
         contributorsPerWeek.sort(Comparator.comparing(ContributionTimeSlot::getTimeSlot).reversed());
@@ -809,36 +809,112 @@ public class LandscapeReportGenerator {
                 contributorsPerWeek = contributorsPerWeek.subList(0, limit);
             }
 
-            int maxCommits = contributorsPerWeek.stream().mapToInt(c -> c.getCommitsCount()).max().orElse(1);
-
             landscapeReport.startTable();
 
-            landscapeReport.startTableRow();
-            String style = "max-width: 20px; padding: 0; margin: 1px; border: none; text-align: center; vertical-align: bottom; font-size: 80%; height: 100px";
-            contributorsPerWeek.forEach(week -> {
-                landscapeReport.startTableCell(style);
-                int count = week.getCommitsCount();
-                landscapeReport.addParagraph("&nbsp;", "margin: 1px");
-                int height = 1 + (int) (64.0 * count / maxCommits);
-                String title = "week of " + week.getTimeSlot() + " = " + count + " commits";
-                String yearString = week.getTimeSlot().split("[-]")[0];
+            int minMaxWindow = contributorsPerWeek.size() >= 4 ? 4 : contributorsPerWeek.size();
 
-                String color = "darkgrey";
-
-                if (StringUtils.isNumeric(yearString)) {
-                    int year = Integer.parseInt(yearString);
-                    color = year % 2 == 0 ? "#89CFF0" : "#588BAE";
-                }
-
-                landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + color + "; height:" + height + "px; margin: 1px'></div>");
-                landscapeReport.endTableCell();
-            });
-            landscapeReport.endTableRow();
+            addCommitsPerWeekRow(contributorsPerWeek, minMaxWindow);
+            addContributersPerWeekRow(contributorsPerWeek, minMaxWindow);
+            addRookiesPerWeekRow(contributorsPerWeek, minMaxWindow);
 
             landscapeReport.endTable();
 
             landscapeReport.addLineBreak();
         }
+    }
+
+    private void addContributersPerWeekRow(List<ContributionTimeSlot> contributorsPerWeek, int minMaxWindow) {
+        landscapeReport.startTableRow();
+        int maxContributors = contributorsPerWeek.stream().mapToInt(c -> getContributorsPerWeek(c.getTimeSlot(), false).size()).max().orElse(1);
+        int maxContributors4Weeks = contributorsPerWeek.subList(0, minMaxWindow).stream().mapToInt(c -> getContributorsPerWeek(c.getTimeSlot(), false).size()).max().orElse(0);
+        int minContributors4Weeks = contributorsPerWeek.subList(0, minMaxWindow).stream().mapToInt(c -> getContributorsPerWeek(c.getTimeSlot(), false).size()).min().orElse(0);
+        landscapeReport.addTableCell("<b>Contributors</b>" +
+                "<div style='color: grey; font-size: 80%; margin-left: 8px; margin-top: 4px;'>"
+                + "min (" + minMaxWindow + " weeks): " + minContributors4Weeks
+                + "<br>max (" + minMaxWindow + " weeks): " + maxContributors4Weeks + "</div>", "border: none");
+        contributorsPerWeek.forEach(week -> {
+            landscapeReport.startTableCell("max-width: 20px; padding: 0; margin: 1px; border: none; text-align: center; vertical-align: bottom; font-size: 80%; height: 100px");
+            List<String> contributors = getContributorsPerWeek(week.getTimeSlot(), false);
+            int count = contributors.size();
+            landscapeReport.addParagraph("&nbsp;", "margin: 1px");
+            int height = 1 + (int) (64.0 * count / maxContributors);
+            String title = "week of " + week.getTimeSlot() + " = " + count + " contributors:\n\n" +
+                    contributors.subList(0, contributors.size() < 200 ? contributors.size() : 200).stream().collect(Collectors.joining(", "));
+            String yearString = week.getTimeSlot().split("[-]")[0];
+
+            String color = "darkgrey";
+
+            if (StringUtils.isNumeric(yearString)) {
+                int year = Integer.parseInt(yearString);
+                color = year % 2 == 0 ? "#89CFF0" : "#588BAE";
+            }
+
+            landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + color + "; height:" + height + "px; margin: 1px'></div>");
+            landscapeReport.endTableCell();
+        });
+        landscapeReport.endTableRow();
+    }
+
+    private void addRookiesPerWeekRow(List<ContributionTimeSlot> contributorsPerWeek, int minMaxWindow) {
+        landscapeReport.startTableRow();
+        int maxContributors = contributorsPerWeek.stream().mapToInt(c -> getContributorsPerWeek(c.getTimeSlot(), false).size()).max().orElse(1);
+        int maxRookies4Weeks = contributorsPerWeek.subList(0, minMaxWindow).stream().mapToInt(c -> getContributorsPerWeek(c.getTimeSlot(), true).size()).max().orElse(0);
+        int minRookies4Weeks = contributorsPerWeek.subList(0, minMaxWindow).stream().mapToInt(c -> getContributorsPerWeek(c.getTimeSlot(), true).size()).min().orElse(0);
+        landscapeReport.addTableCell("<b>Rookies</b>" +
+                "<div style='color: grey; font-size: 80%; margin-left: 8px; margin-top: 4px;'>"
+                + "min (" + minMaxWindow + " weeks): " + minRookies4Weeks
+                + "<br>max (" + minMaxWindow + " weeks): " + maxRookies4Weeks + "</div>", "border: none");
+        contributorsPerWeek.forEach(week -> {
+            landscapeReport.startTableCell("max-width: 20px; padding: 0; margin: 1px; border: none; text-align: center; vertical-align: bottom; font-size: 80%; height: 100px");
+            List<String> contributors = getContributorsPerWeek(week.getTimeSlot(), true);
+            int count = contributors.size();
+            landscapeReport.addParagraph("&nbsp;", "margin: 1px");
+            int height = 1 + (int) (64.0 * count / maxContributors);
+            String title = "week of " + week.getTimeSlot() + " = " + count + " contributors:\n\n" +
+                    contributors.subList(0, contributors.size() < 200 ? contributors.size() : 200).stream().collect(Collectors.joining(", "));
+            String yearString = week.getTimeSlot().split("[-]")[0];
+
+            String color = "darkgrey";
+
+            if (StringUtils.isNumeric(yearString)) {
+                int year = Integer.parseInt(yearString);
+                color = year % 2 == 0 ? "limegreen" : "darkgreen";
+            }
+
+            landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + color + "; height:" + height + "px; margin: 1px'></div>");
+            landscapeReport.endTableCell();
+        });
+        landscapeReport.endTableRow();
+    }
+
+    private void addCommitsPerWeekRow(List<ContributionTimeSlot> contributorsPerWeek, int minMaxWindow) {
+        landscapeReport.startTableRow();
+        int maxCommits = contributorsPerWeek.stream().mapToInt(c -> c.getCommitsCount()).max().orElse(1);
+        int maxCommits4Weeks = contributorsPerWeek.subList(0, minMaxWindow).stream().mapToInt(c -> c.getCommitsCount()).max().orElse(0);
+        int minCommits4Weeks = contributorsPerWeek.subList(0, minMaxWindow).stream().mapToInt(c -> c.getCommitsCount()).min().orElse(0);
+        landscapeReport.addTableCell("<b>Commits</b>" +
+                "<div style='color: grey; font-size: 80%; margin-left: 8px; margin-top: 4px;'>"
+                + "min (" + minMaxWindow + " weeks): " + minCommits4Weeks
+                + "<br>max (" + minMaxWindow + " weeks): " + maxCommits4Weeks + "</div>", "border: none");
+        contributorsPerWeek.forEach(week -> {
+            landscapeReport.startTableCell("max-width: 20px; padding: 0; margin: 1px; border: none; text-align: center; vertical-align: bottom; font-size: 80%; height: 100px");
+            int count = week.getCommitsCount();
+            landscapeReport.addParagraph("&nbsp;", "margin: 1px");
+            int height = 1 + (int) (64.0 * count / maxCommits);
+            String title = "week of " + week.getTimeSlot() + " = " + count + " commits";
+            String yearString = week.getTimeSlot().split("[-]")[0];
+
+            String color = "darkgrey";
+
+            if (StringUtils.isNumeric(yearString)) {
+                int year = Integer.parseInt(yearString);
+                color = year % 2 == 0 ? "#c9c9c9" : "#656565";
+            }
+
+            landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + color + "; height:" + height + "px; margin: 1px'></div>");
+            landscapeReport.endTableCell();
+        });
+        landscapeReport.endTableRow();
     }
 
     private int getContributorsCountPerYear(String year) {
@@ -851,6 +927,25 @@ public class LandscapeReportGenerator {
         });
 
         return count[0];
+    }
+
+    private List<String> getContributorsPerWeek(String week, boolean rookiesOnly) {
+        Map<String, String> emails = new HashMap();
+
+        landscapeAnalysisResults.getContributors().stream()
+                .sorted((a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days())
+                .filter(c -> !rookiesOnly || c.getContributor().isRookieAtDate(week)).forEach(contributorProjects -> {
+            List<String> commitDates = contributorProjects.getContributor().getCommitDates();
+            commitDates.stream().map(d -> DateUtils.getWeekMonday(d)).forEach(monday -> {
+                if (monday.equals(week)) {
+                    String email = contributorProjects.getContributor().getEmail();
+                    emails.put(email, email);
+                    return;
+                }
+            });
+        });
+
+        return new ArrayList<>(emails.values());
     }
 
     private void renderPeopleDependencies(List<ComponentDependency> peopleDependencies, List<ContributorConnections> contributorConnections,

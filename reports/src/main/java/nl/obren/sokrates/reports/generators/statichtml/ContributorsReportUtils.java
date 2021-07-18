@@ -39,31 +39,6 @@ public class ContributorsReportUtils {
             report.startDiv("overflow-y: scroll; font-size: 90%");
             report.startTable();
 
-            if (contributorsPerTimeSlot.stream().mapToInt(slot -> slot.getMergesCount()).sum() > 0) {
-                report.startTableRow();
-                report.addTableCell("Merges", "border: none;");
-                String style;
-                if (showTimeSlot) {
-                    style = "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: bottom; font-size: 80%";
-                } else {
-                    style = "border: none; padding: " + padding + "px; vertical-align: bottom; font-size: 80%";
-                }
-                contributorsPerTimeSlot.forEach(timeSlot -> {
-                    report.startTableCell(style);
-                    int count = timeSlot.getMergesCount();
-                    if (showTimeSlot) {
-                        report.addParagraph(count + "", "margin: 0px");
-                    } else {
-                        report.addParagraph("&nbsp;", "margin: 0px");
-                    }
-                    int height = 1 + (int) (64.0 * count / maxCommits);
-                    String title = timeSlot.getTimeSlot() + ": " + count;
-                    report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: grey; height:" + height + "px'></div>");
-                    report.endTableCell();
-                });
-                report.endTableRow();
-            }
-
             report.startTableRow();
             report.addTableCell("Commits", "border: none;");
             String style;

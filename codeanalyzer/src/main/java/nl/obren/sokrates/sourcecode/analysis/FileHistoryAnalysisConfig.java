@@ -10,10 +10,8 @@ import nl.obren.sokrates.sourcecode.contributors.ContributorsImport;
 import nl.obren.sokrates.sourcecode.contributors.GitContributorsUtil;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.filehistory.GitHistoryUtil;
-import nl.obren.sokrates.sourcecode.filehistory.GitMergesUtil;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
-import nl.obren.sokrates.sourcecode.githistory.MergeUpdate;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -23,7 +21,6 @@ import java.util.stream.Collectors;
 
 public class FileHistoryAnalysisConfig {
     private String importPath = "../" + GitHistoryUtils.GIT_HISTORY_FILE_NAME;
-    private String mergesPath = "../" + GitHistoryUtils.GIT_MERGES_FILE_NAME;
     private List<String> ignoreContributors = new ArrayList<>();
 
     public String getImportPath() {
@@ -34,32 +31,14 @@ public class FileHistoryAnalysisConfig {
         this.importPath = importPath;
     }
 
-    public String getMergesPath() {
-        return mergesPath;
-    }
-
-    public void setMergesPath(String mergesPath) {
-        this.mergesPath = mergesPath;
-    }
-
     @JsonIgnore
     public File getFilesHistoryFile(File sokratesConfigFolder) {
         return new File(sokratesConfigFolder, importPath);
     }
 
     @JsonIgnore
-    public File getFilesMergesFile(File sokratesConfigFolder) {
-        return new File(sokratesConfigFolder, mergesPath);
-    }
-
-    @JsonIgnore
     public List<FileModificationHistory> getHistory(File sokratesConfigFolder) {
         return new GitHistoryUtil().importGitLsFilesExport(getFilesHistoryFile(sokratesConfigFolder), ignoreContributors);
-    }
-
-    @JsonIgnore
-    public List<MergeUpdate> getMerges(File sokratesConfigFolder) {
-        return GitMergesUtil.getMergesFromFile(getFilesMergesFile(sokratesConfigFolder));
     }
 
     @JsonIgnore

@@ -405,6 +405,7 @@ public class ScopingConventions {
         ignoredFilesConventions.add(new Convention(".*/MochiKit\\.js", "", "MochiKit"));
         ignoredFilesConventions.add(new Convention(".*/yahoo-([^.]*)\\.js", "", "YUI"));
         ignoredFilesConventions.add(new Convention(".*/yui([^.]*)\\.js", "", "YUI"));
+        ignoredFilesConventions.add(new Convention(".*/underscore\\.js", "", "Underscore.js"));
 
         ignoredFilesConventions.add(new Convention(".*/Leaflet\\.Coordinates-\\d+\\.\\d+\\.\\d+\\.src\\.js", "", "Leaflet plugins"));
         ignoredFilesConventions.add(new Convention(".*/leaflet[.]draw[-]src[.]js", "", "Leaflet plugins"));

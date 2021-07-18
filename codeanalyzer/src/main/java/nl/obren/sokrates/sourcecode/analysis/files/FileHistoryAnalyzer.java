@@ -15,7 +15,6 @@ import nl.obren.sokrates.sourcecode.filehistory.FileHistoryComponentsHelper;
 import nl.obren.sokrates.sourcecode.filehistory.FileHistoryUtils;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.filehistory.FilePairsChangedTogether;
-import nl.obren.sokrates.sourcecode.githistory.MergeUpdate;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
@@ -42,8 +41,6 @@ public class FileHistoryAnalyzer extends Analyzer {
 
     public void analyze() {
         if (codeConfiguration.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesFolder)) {
-            List<MergeUpdate> merges = codeConfiguration.getFileHistoryAnalysis().getMerges(sokratesFolder);
-            analysisResults.setMerges(merges);
 
             List<FileModificationHistory> history = codeConfiguration.getFileHistoryAnalysis().getHistory(sokratesFolder);
             analysisResults.setHistory(history);

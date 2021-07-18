@@ -90,6 +90,7 @@ public class DataImageUtils {
         map.put("xml", "xml.png");
         map.put("avsc", "avro.png");
         map.put("xib", "xcode.png");
+        map.put("jinja", "jinja.png");
 
     }
 

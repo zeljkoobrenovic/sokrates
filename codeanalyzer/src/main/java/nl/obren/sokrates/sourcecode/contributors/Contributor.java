@@ -84,6 +84,19 @@ public class Contributor {
     }
 
     @JsonIgnore
+    public boolean isRookieAtDate(String date) {
+        String elements[] = date.split("-");
+        if (elements.length >= 3) {
+            Calendar cal = DateUtils.getCalendar(date);
+            cal.add(Calendar.YEAR, -1);
+
+            String rookieStartDate = new SimpleDateFormat("yyyy-MM-dd").format(cal.getTime());
+            return firstCommitDate.compareTo(rookieStartDate) >= 0;
+        }
+        return false;
+    }
+
+    @JsonIgnore
     public boolean isRookie(int activityThreshold) {
         if (StringUtils.isBlank(firstCommitDate) || !isActive(activityThreshold)) {
             return false;

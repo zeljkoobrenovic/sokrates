@@ -398,6 +398,7 @@ public class LandscapeAnalysisResults {
                     contributorInfo.setCommitsCount180Days(contributorInfo.getCommitsCount180Days() + projectCommits180Days);
 
                     contributorInfo.getActiveYears().addAll(contributor.getActiveYears());
+                    contributorInfo.getCommitDates().addAll(contributor.getCommitDates());
 
                     existingContributor.addProject(projectAnalysisResults,
                             contributorInfo.getFirstCommitDate(), contributorInfo.getLatestCommitDate(),

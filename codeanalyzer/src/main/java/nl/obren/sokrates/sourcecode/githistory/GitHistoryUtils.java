@@ -18,14 +18,9 @@ import java.util.*;
 
 public class GitHistoryUtils {
     public static final String GIT_HISTORY_FILE_NAME = "git-history.txt";
-    public static final String GIT_MERGES_FILE_NAME = "git-merges.txt";
 
     public static String printContributorsCommand() {
         return "git ls-files -z | xargs -0 -n1 -I{} -- git log --date=short --format=\"%ad %ae %H {}\" {} > " + GIT_HISTORY_FILE_NAME;
-    }
-
-    public static String printGitMergesCommand() {
-        return "git log --merges --first-parent master --date=short --format=\"%ad %ae\" > " + GIT_MERGES_FILE_NAME;
     }
 
     public static List<AuthorCommit> getAuthorCommits(File file) {

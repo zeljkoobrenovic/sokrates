@@ -88,24 +88,20 @@ public class ContributorsReportGenerator {
         report.startSubSection("Timeline", "");
         report.addLevel2Header("Per Year", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
-        this.enrichTimeSlotsByMergesPerYear(analysis.getContributorsPerYear());
         ContributorsReportUtils.addContributorsPerTimeSlot(report, analysis.getContributorsPerYear(), 20, true, 4);
         report.addLevel2Header("Per Month", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
         List<ContributionTimeSlot> contributorsPerMonth = getContributionMonths(analysis, 25);
-        this.enrichTimeSlotsByMergesPerMonth(contributorsPerMonth);
         ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerMonth, 24, true, 2);
         report.addLevel2Header("Per Week", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
         int pastWeeks = 104;
         List<ContributionTimeSlot> contributorsPerWeek = getContributionWeeks(analysis, pastWeeks);
-        this.enrichTimeSlotsByMergesPerWeek(contributorsPerWeek);
         ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerWeek, pastWeeks, true, 1);
         report.addLevel2Header("Per Day", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
         int pastDays = 365;
         List<ContributionTimeSlot> contributorsPerDay = getContributionDays(analysis, pastDays);
-        this.enrichTimeSlotsByMergesPerDay(contributorsPerDay);
         ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerDay, pastDays, true, 1);
         report.endSection();
         report.endTabContentSection();
@@ -395,29 +391,5 @@ public class ContributorsReportGenerator {
 
         report.endTable();
         report.endDiv();
-    }
-
-    private void enrichTimeSlotsByMergesPerDay(List<ContributionTimeSlot> contributorsPerDay) {
-        contributorsPerDay.forEach(slot -> slot.setMergesCount((int)
-                this.codeAnalysisResults.getFilesHistoryAnalysisResults().getMerges()
-                .stream().filter(m -> m.getDate().trim().equals(slot.getTimeSlot().trim())).count()));
-    }
-
-    private void enrichTimeSlotsByMergesPerMonth(List<ContributionTimeSlot> contributorsPerDay) {
-        contributorsPerDay.forEach(slot -> slot.setMergesCount((int)
-                this.codeAnalysisResults.getFilesHistoryAnalysisResults().getMerges()
-                .stream().filter(m -> m.getDate().substring(0, 7).trim().equals(slot.getTimeSlot().trim())).count()));
-    }
-
-    private void enrichTimeSlotsByMergesPerYear(List<ContributionTimeSlot> contributorsPerDay) {
-        contributorsPerDay.forEach(slot -> slot.setMergesCount((int)
-                this.codeAnalysisResults.getFilesHistoryAnalysisResults().getMerges()
-                .stream().filter(m -> m.getDate().substring(0, 4).trim().equals(slot.getTimeSlot().trim())).count()));
-    }
-
-    private void enrichTimeSlotsByMergesPerWeek(List<ContributionTimeSlot> contributorsPerDay) {
-        contributorsPerDay.forEach(slot -> slot.setMergesCount((int)
-                this.codeAnalysisResults.getFilesHistoryAnalysisResults().getMerges()
-                .stream().filter(m -> DateUtils.getWeekMonday(m.getDate()).equals(slot.getTimeSlot().trim())).count()));
     }
 }
