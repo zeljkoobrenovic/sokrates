@@ -314,7 +314,7 @@ public class LandscapeProjectsReport {
         String lang = locSummary.toString().replace("> = ", ">");
         report.startTableCell("text-align: left");
         report.startDiv("min-width: 130px; white-space: nowrap; overflow: hidden");
-        report.addHtmlContent(DataImageUtils.getLangDataImageDiv(lang, 30, 13, 11, 7, 9));
+        report.addHtmlContent(DataImageUtils.getLangDataImageDiv30(lang));
         report.addContentInDiv(lang, "vertical-align: middle; display: inline-block;margin-top: 5px");
         report.endDiv();
         report.endTableCell();

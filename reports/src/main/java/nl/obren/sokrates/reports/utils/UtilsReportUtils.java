@@ -5,6 +5,7 @@
 package nl.obren.sokrates.reports.utils;
 
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
+import org.apache.commons.io.FilenameUtils;
 
 import java.util.List;
 
@@ -27,14 +28,18 @@ public class UtilsReportUtils {
                     + unit.getSourceFile().getRelativePath()
                     + "</a>"
                     : unit.getSourceFile().getRelativePath();
-            table.append("<td><b><a target='_blank'" +
+            table.append("<td>" +
+                    "<div><div style='display: inline-block; vertical-align: top; margin-top: 3px; margin-right: 4px;'>" +
+                    DataImageUtils.getLangDataImageDiv30(FilenameUtils.getExtension(unit.getSourceFile().getFile().getName())) +
+                    "</div><div style='display: inline-block;'><b>" +
+                    "<a target='_blank'" +
                     "href='../src/fragments/" + fragmentType + "/" + fragmentType + "_"
                     + index[0] + "."
                     + unit.getSourceFile().getExtension()
                     + ".html'>"
                     + unit.getShortName() + "</a></b><br/>in "
                     + fileLink
-                    + "</td>\n");
+                    + "</div></div></td>\n");
             table.append("<td>" + unit.getLinesOfCode() + "</td>\n");
             table.append("<td>" + unit.getMcCabeIndex() + "</td>\n");
             table.append("<td>" + unit.getNumberOfParameters() + "</td>\n");

@@ -85,7 +85,9 @@ public class ReportFileExporter {
         String title = metadata.getName();
         RichTextReport indexReport = new RichTextReport(title, "", metadata.getLogoLink());
         if (StringUtils.isNotBlank(metadata.getDescription())) {
-            indexReport.addParagraph(metadata.getDescription());
+            indexReport.addParagraph(metadata.getDescription(), "margin-top: 6px; margin-bottom: 18px; color: grey; font-size: 90%");
+        } else {
+            indexReport.addContentInDiv("", "height: 12px");
         }
         indexReport.startSection("Summary", "");
         indexReport.startDiv("margin-top: -10px");

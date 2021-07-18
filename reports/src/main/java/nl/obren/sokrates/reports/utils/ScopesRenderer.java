@@ -142,12 +142,19 @@ public class ScopesRenderer {
     }
 
     public void renderReport(RichTextReport report, String description) {
+        renderReport(report, description, null);
+    }
+
+    public void renderReport(RichTextReport report, String description, String extraIntroHtmlFragment) {
         updateCountVariables();
         if (fileCountPerComponent.size() > 0) {
             if (linesOfCode.size() > 0 && linesCount > 0) {
                 List<ScopeRendererItem> renderingList = getRenderingList();
                 if (inSection) {
                     report.startSubSection(title, description);
+                    if (StringUtils.isNotBlank(extraIntroHtmlFragment)) {
+                        report.addHtmlContent(extraIntroHtmlFragment);
+                    }
                     renderDetails(report, false);
                     if (renderingList.size() > 1) {
                         report.startUnorderedList();
@@ -256,9 +263,9 @@ public class ScopesRenderer {
         if (StringUtils.isNotBlank(explorers)) {
             report.startDiv("");
             report.addHtmlContent("Explore:&nbsp;&nbsp;");
-            report.addNewTabLink("circles", "visuals/zoomable_circles_" +explorers + ".html");
+            report.addNewTabLink("circles", "visuals/zoomable_circles_" + explorers + ".html");
             report.addHtmlContent("&nbsp;|&nbsp;");
-            report.addNewTabLink("sunburst", "visuals/zoomable_sunburst_" +explorers + ".html");
+            report.addNewTabLink("sunburst", "visuals/zoomable_sunburst_" + explorers + ".html");
             report.endDiv();
         }
 

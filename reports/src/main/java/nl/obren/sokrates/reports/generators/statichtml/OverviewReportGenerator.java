@@ -8,6 +8,7 @@ import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.dataexporters.DataExportUtils;
+import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.ScopesRenderer;
 import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
@@ -126,14 +127,19 @@ public class OverviewReportGenerator {
 
     public void renderScopes(RichTextReport report, AspectAnalysisResults aspectAnalysisResults, String title, String description, String explorers) {
         List<NumericMetric> fileCountPerExtension = aspectAnalysisResults.getFileCountPerExtension();
-
+        StringBuilder langDivs = new StringBuilder("<div style='margin-bottom: 16px'>");
+        fileCountPerExtension.forEach(fileType -> {
+            String lang = fileType.getName().replace("*.", "").trim();
+            langDivs.append(DataImageUtils.getLangDataImageDiv42(lang));
+        });
+        langDivs.append("</div>");
         if (fileCountPerExtension.size() > 0) {
             List<NumericMetric> linesOfCodePerExtension = aspectAnalysisResults.getLinesOfCodePerExtension();
             ScopesRenderer renderer = getScopesRenderer(title, "", fileCountPerExtension, linesOfCodePerExtension, explorers);
             renderer.setTitle(title);
             renderer.setFilesListPath(DataExportUtils.getAspectFileListFileName(aspectAnalysisResults.getAspect(), ""));
             renderer.setAspect(aspectAnalysisResults.getAspect());
-            renderer.renderReport(report, description);
+            renderer.renderReport(report, description, langDivs.toString());
         }
     }
 
@@ -156,10 +162,15 @@ public class OverviewReportGenerator {
 
     private void appendHeader(RichTextReport report) {
         report.startSection("Source Code Analysis Scope", "Files includes and excluded from analyses");
+        List<String> extensions = codeAnalysisResults.getCodeConfiguration().getExtensions();
+        report.startDiv("margin-top: -8px; margin-bottomL: 12px;");
+        extensions.forEach(lang -> {
+            report.addHtmlContent(DataImageUtils.getLangDataImageDiv42(lang));
+        });
+        report.endDiv();
         report.startUnorderedList();
         int totalNumberOfFilesInScope = codeAnalysisResults.getTotalNumberOfFilesInScope();
         int numberOfExcludedFiles = codeAnalysisResults.getNumberOfExcludedFiles();
-        List<String> extensions = codeAnalysisResults.getCodeConfiguration().getExtensions();
         int extensionsCount = extensions.size();
         report.addListItem("<b>" + extensionsCount + "</b> extension" + (extensionsCount > 1 ? "s are" : " is") + " included in analyses: " + getExtensionsString(extensions));
         ArrayList<SourceFileFilter> exclusions = codeAnalysisResults.getCodeConfiguration().getIgnore();

@@ -687,7 +687,7 @@ public class LandscapeReportGenerator {
         landscapeReport.startDivWithLabel(description, style);
 
         landscapeReport.addContentInDiv("", "margin-top: 8px");
-        landscapeReport.addHtmlContent(DataImageUtils.getLangDataImageDiv(lang, 42, 16, 14, 11, 13  ));
+        landscapeReport.addHtmlContent(DataImageUtils.getLangDataImageDiv42(lang));
         landscapeReport.addHtmlContent("<div style='font-size: 24px; margin-top: 8px;'>" + value + "</div>");
         landscapeReport.addHtmlContent("<div style='color: #434343; font-size: 13px'>" + lang + "</div>");
         landscapeReport.endDiv();

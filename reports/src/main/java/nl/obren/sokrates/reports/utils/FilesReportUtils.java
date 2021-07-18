@@ -6,6 +6,7 @@ package nl.obren.sokrates.reports.utils;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -16,7 +17,7 @@ public class FilesReportUtils {
     public static String getFilesTable(List<SourceFile> sourceFiles, boolean linkToFiles, boolean showAge, boolean showLineLength) {
         StringBuilder table = new StringBuilder();
 
-        table.append("<div style='witdh: 100%; overflow-x: scroll; overflow-y: scroll; max-height: 300px;'>\n");
+        table.append("<div style='width: 100%; overflow-x: scroll; overflow-y: scroll; max-height: 300px;'>\n");
         table.append("<table style='width: 80%'>\n");
         table.append("<tr>");
         String header = "<th>File</th><th># lines</th><th># units</th>";
@@ -46,8 +47,12 @@ public class FilesReportUtils {
             }
 
             String parent = StringUtils.abbreviate(file.getParent(), 150);
-            table.append("<td><b>"
-                    + fileNameFragment + "</b><br/>in " + parent + "<br/>" +
+            table.append("<td>" +
+                    "<div><div style='display: inline-block; vertical-align: top; margin-top: 3px; margin-right: 4px;'>" +
+                    DataImageUtils.getLangDataImageDiv30(FilenameUtils.getExtension(file.getName())) +
+                    "</div><div style='display: inline-block;'><b>"
+                    + fileNameFragment + "</b><br/>in " + (parent != null ? parent : "root") + "<br/>" +
+                    "</div></div>" +
                     "</td>\n");
             table.append("<td style='text-align: center'>" + sourceFile.getLinesOfCode() + "</td>\n");
             if (sourceFile.getUnitsCount() > 0) {
