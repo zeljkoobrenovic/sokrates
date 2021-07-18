@@ -6,6 +6,7 @@ package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.DuplicationReportUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.SourceFile;
@@ -19,6 +20,7 @@ import nl.obren.sokrates.sourcecode.duplication.DuplicationDependenciesHelper;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
 import nl.obren.sokrates.sourcecode.metrics.DuplicationMetric;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -50,7 +52,8 @@ public class DuplicationReportGenerator {
             count[0]++;
             report.addHtmlContent("<tr>\n");
 
-            String extension = instance.getDuplicatedFileBlocks().get(0).getSourceFile().getExtension();
+            SourceFile firstSourceFile = instance.getDuplicatedFileBlocks().get(0).getSourceFile();
+            String extension = firstSourceFile.getExtension();
             String url = "../src/fragments/" + fragmentType + "/" + fragmentType + "_" + count[0] + "." + extension;
 
             report.addHtmlContent("<td>" + instance.getBlockSize() + "</td>");
@@ -58,7 +61,12 @@ public class DuplicationReportGenerator {
             String folderString = formatDisplayString(instance.getFoldersDisplayString());
             report.addHtmlContent("<td>" + folderString + "</td>");
             boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
-            report.addHtmlContent("<td>" + formatDisplayStringSimple(instance.getFilesDisplayString(cacheSourceFiles)) + "</td>");
+            report.addHtmlContent("<td>" +
+                    "<div><div style='display: inline-block; vertical-align: top; margin-top: 3px; margin-right: 4px;'>" +
+                            DataImageUtils.getLangDataImageDiv30(extension) +
+                            "</div><div style='display: inline-block;'>"
+                    + formatDisplayStringSimple(instance.getFilesDisplayString(cacheSourceFiles))
+                    + "</div></div></td>");
             report.addHtmlContent("<td>" + formatDisplayString(instance.getLinesDisplayString()) + "</td>");
             report.addHtmlContent("<td><a target='_blank' href='" + url + "'>view</a></td>");
 
