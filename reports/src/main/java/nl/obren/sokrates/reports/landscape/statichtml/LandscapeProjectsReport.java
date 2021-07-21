@@ -65,10 +65,17 @@ public class LandscapeProjectsReport {
         Collections.sort(projectsAnalysisResults,
                 (a, b) -> b.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days()
                         - a.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days());
-        projectsAnalysisResults.forEach(projectAnalysis -> {
+
+        int limit = landscapeAnalysisResults.getConfiguration().getProjectsListLimit();
+        projectsAnalysisResults.stream().limit(limit).forEach(projectAnalysis -> {
             addProjectRow(report, projectAnalysis);
         });
+
         report.endTable();
+        if (limit < projectsAnalysisResults.size()) {
+            report.addParagraph("The list is limited to " + limit + " items (out of " + projectsAnalysisResults.size() + ").",
+                    "color:grey; font-size: 90%; margin-top: 16px; margin-left: 11px");
+        }
         report.endTabContentSection();
         if (showCommits) {
             report.startTabContentSection("commitsTrend", false);
@@ -102,7 +109,8 @@ public class LandscapeProjectsReport {
             }
             contributorsPerWeek.forEach(c -> maxCommits[0] = Math.max(counter.getCount(c), maxCommits[0]));
         });
-        projectsAnalysisResults.forEach(projectAnalysis -> {
+        int limit = landscapeAnalysisResults.getConfiguration().getProjectsListLimit();
+        projectsAnalysisResults.stream().limit(limit).forEach(projectAnalysis -> {
             report.startTableRow();
             report.addTableCell(projectAnalysis.getAnalysisResults().getMetadata().getName(), "min-width: 400px; max-width: 400px");
             ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysis.getAnalysisResults().getContributorsAnalysisResults();
@@ -132,6 +140,12 @@ public class LandscapeProjectsReport {
         });
 
         report.endTable();
+
+        if (limit < projectsAnalysisResults.size()) {
+            report.addParagraph("The list is limited to " + limit + " items (out of " + projectsAnalysisResults.size() + ")." +
+                    "color:grey; font-size: 90%");
+        }
+
     }
 
     private boolean showControls() {

@@ -33,10 +33,16 @@ public class LandscapeContributorsReport {
         }
         int counter[] = {0};
 
-        contributors.forEach(contributor -> {
+        int limit = landscapeAnalysisResults.getConfiguration().getContributorsListLimit();
+        contributors.stream().limit(limit).forEach(contributor -> {
             addContributor(totalCommits, counter, contributor);
         });
         report.endTable();
+
+        if (limit < contributors.size()) {
+            report.addParagraph("The list is limited to " + limit + " items (out of " + contributors.size() + ").",
+                    "color:grey; font-size: 90%; margin-top: 16px; margin-left: 11px");
+        }
     }
 
 
@@ -113,14 +119,14 @@ public class LandscapeContributorsReport {
     }
 
     private String getContributorUrl(String contributorId) {
-        return getUrl(contributorId, this.landscapeAnalysisResults.getConfiguration().getContributorLinkTemplate());
+        return getContributorUrlFromTemplate(contributorId, this.landscapeAnalysisResults.getConfiguration().getContributorLinkTemplate());
     }
 
     private String getAvatarUrl(String contributorId) {
-        return getUrl(contributorId, this.landscapeAnalysisResults.getConfiguration().getContributorAvatarLinkTemplate());
+        return getContributorUrlFromTemplate(contributorId, this.landscapeAnalysisResults.getConfiguration().getContributorAvatarLinkTemplate());
     }
 
-    private String getUrl(String contributorId, String template) {
+    public static String getContributorUrlFromTemplate(String contributorId, String template) {
         String idVariable = "${contributorid}";
         if (StringUtils.isNotBlank(template) && template.contains(idVariable)) {
             return template.replace(idVariable, contributorId.replaceAll("[@].*", ""));

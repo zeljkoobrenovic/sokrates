@@ -5,7 +5,6 @@
 package nl.obren.sokrates.sourcecode.landscape.analysis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
@@ -18,6 +17,7 @@ import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -136,7 +136,7 @@ public class LandscapeAnalysisResults {
     }
 
     public int getProjectsCount() {
-        return projectAnalysisResults.size();
+        return getFilteredProjectAnalysisResults().size();
     }
 
     public int getMainLoc() {
@@ -251,11 +251,11 @@ public class LandscapeAnalysisResults {
                 Optional<NumericMetric> existingMetric = linesOfCodePerExtension.stream().filter(c -> c.getName().equalsIgnoreCase(id)).findAny();
                 if (existingMetric.isPresent()) {
                     NumericMetric metricObject = existingMetric.get();
-                    metricObject.getDescription().add(new NumericMetric (projectName, metric.getValue()));
+                    metricObject.getDescription().add(new NumericMetric(projectName, metric.getValue()));
                     metricObject.setValue(metricObject.getValue().intValue() + metric.getValue().intValue());
                 } else {
                     NumericMetric metricObject = new NumericMetric(metric.getName(), metric.getValue());
-                    metricObject.getDescription().add(new NumericMetric (projectName, metric.getValue()));
+                    metricObject.getDescription().add(new NumericMetric(projectName, metric.getValue()));
                     linesOfCodePerExtension.add(metricObject);
                 }
             });
@@ -382,11 +382,17 @@ public class LandscapeAnalysisResults {
                     ComplexOperation operation = new ComplexOperation(configuration.getTransformContributorEmails());
                     contributorId = operation.exec(contributorId);
                 }
+
+                if (StringUtils.isBlank(contributorId)) {
+                    return;
+                }
+
                 int projectCommits = contributor.getCommitsCount();
                 List<String> commitDates = contributor.getCommitDates();
                 int projectCommits30Days = contributor.getCommitsCount30Days();
                 int projectCommits90Days = contributor.getCommitsCount90Days();
                 int projectCommits180Days = contributor.getCommitsCount180Days();
+                int projectCommits365Days = contributor.getCommitsCount365Days();
 
                 if (map.containsKey(contributorId)) {
                     ContributorProjects existingContributor = map.get(contributorId);
@@ -396,9 +402,18 @@ public class LandscapeAnalysisResults {
                     contributorInfo.setCommitsCount30Days(contributorInfo.getCommitsCount30Days() + projectCommits30Days);
                     contributorInfo.setCommitsCount90Days(contributorInfo.getCommitsCount90Days() + projectCommits90Days);
                     contributorInfo.setCommitsCount180Days(contributorInfo.getCommitsCount180Days() + projectCommits180Days);
+                    contributorInfo.setCommitsCount365Days(contributorInfo.getCommitsCount365Days() + projectCommits365Days);
 
-                    contributorInfo.getActiveYears().addAll(contributor.getActiveYears());
-                    contributorInfo.getCommitDates().addAll(contributor.getCommitDates());
+                    contributor.getActiveYears().forEach(activeYear -> {
+                        if (!contributorInfo.getActiveYears().contains(activeYear)) {
+                            contributorInfo.getActiveYears().add(activeYear);
+                        }
+                    });
+                    contributor.getCommitDates().forEach(commitDate -> {
+                        if (!contributorInfo.getCommitDates().contains(commitDate)) {
+                            contributorInfo.getCommitDates().add(commitDate);
+                        }
+                    });
 
                     existingContributor.addProject(projectAnalysisResults,
                             contributorInfo.getFirstCommitDate(), contributorInfo.getLatestCommitDate(),
@@ -418,9 +433,11 @@ public class LandscapeAnalysisResults {
                     newContributor.setCommitsCount30Days(projectCommits30Days);
                     newContributor.setCommitsCount90Days(projectCommits90Days);
                     newContributor.setCommitsCount180Days(projectCommits180Days);
+                    newContributor.setCommitsCount365Days(projectCommits365Days);
                     newContributor.setFirstCommitDate(contributor.getFirstCommitDate());
                     newContributor.setLatestCommitDate(contributor.getLatestCommitDate());
                     newContributor.setActiveYears(contributor.getActiveYears());
+                    newContributor.setCommitDates(contributor.getCommitDates());
 
                     ContributorProjects newContributorWithProjects = new ContributorProjects(newContributor);
 
@@ -465,6 +482,22 @@ public class LandscapeAnalysisResults {
         });
 
         Collections.sort(list, Comparator.comparing(ContributionTimeSlot::getTimeSlot));
+
+        return list;
+    }
+
+    @JsonIgnore
+    public List<ContributionTimeSlot> getContributorsPerMonth() {
+        List<ContributionTimeSlot> list = new ArrayList<>();
+        Map<String, ContributionTimeSlot> map = new HashMap<>();
+
+        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
+            ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
+            List<ContributionTimeSlot> contributorsPerMonth = contributorsAnalysisResults.getContributorsPerMonth();
+            updateContributors(list, map, contributorsPerMonth);
+        });
+
+        Collections.sort(list, Comparator.comparing(ContributionTimeSlot::getTimeSlot).reversed());
 
         return list;
     }

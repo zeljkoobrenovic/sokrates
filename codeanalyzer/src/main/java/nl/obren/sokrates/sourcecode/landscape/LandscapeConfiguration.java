@@ -24,6 +24,8 @@ public class LandscapeConfiguration {
     private int commitsMaxYears = 10;
     private boolean anonymizeContributors = false;
     private boolean showProjectControls = true;
+    private int projectsListLimit = 1000;
+    private int contributorsListLimit = 1000;
     private List<MetricsWithGoal> landscapeControls = new ArrayList<>();
     private String contributorLinkTemplate = "";
     private String contributorAvatarLinkTemplate = "";
@@ -211,6 +213,22 @@ public class LandscapeConfiguration {
 
     public void setShowProjectControls(boolean showProjectControls) {
         this.showProjectControls = showProjectControls;
+    }
+
+    public int getProjectsListLimit() {
+        return projectsListLimit;
+    }
+
+    public void setProjectsListLimit(int projectsListLimit) {
+        this.projectsListLimit = projectsListLimit;
+    }
+
+    public int getContributorsListLimit() {
+        return contributorsListLimit;
+    }
+
+    public void setContributorsListLimit(int contributorsListLimit) {
+        this.contributorsListLimit = contributorsListLimit;
     }
 
     public List<MetricsWithGoal> getLandscapeControls() {

@@ -91,6 +91,9 @@ public class DataImageUtils {
         map.put("avsc", "avro.png");
         map.put("xib", "xcode.png");
         map.put("jinja", "jinja.png");
+        map.put("jsonnet", "jsonnet.png");
+        map.put("json5", "json5.png");
+        map.put("applescript", "applescript.png");
 
     }
 

@@ -8,6 +8,7 @@ import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
+import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils;
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class LandscapeAnalyzer {
@@ -155,6 +157,7 @@ public class LandscapeAnalyzer {
                 codeAnalysisResults.getBuildAndDeployAspectAnalysisResults().getAspect().getSourceFiles().clear();
                 codeAnalysisResults.getOtherAspectAnalysisResults().getAspect().getSourceFiles().clear();
             }
+
             return codeAnalysisResults;
         } catch (IOException e) {
             e.printStackTrace();

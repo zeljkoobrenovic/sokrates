@@ -45,6 +45,8 @@ public class LandscapeAnalysisCommands {
     public static void generateReport(File landscapeConfigFile) {
         File reportsFolder = Paths.get(landscapeConfigFile.getParent(), "").toFile();
         reportsFolder.mkdirs();
+        File individualReportsFolder = new File(reportsFolder, "contributors");
+        individualReportsFolder.mkdirs();
 
         LandscapeAnalyzer analyzer = new LandscapeAnalyzer();
 
@@ -55,8 +57,14 @@ public class LandscapeAnalysisCommands {
 
         try {
             File finalReportsFolder = reportsFolder;
+            String customHtmlReportHeaderFragment = landscapeAnalysisResults.getConfiguration().getCustomHtmlReportHeaderFragment();
             reports.forEach(report -> {
-                ReportFileExporter.exportHtml(finalReportsFolder, "", report, landscapeAnalysisResults.getConfiguration().getCustomHtmlReportHeaderFragment());
+                ReportFileExporter.exportHtml(finalReportsFolder, "", report, customHtmlReportHeaderFragment);
+            });
+
+            File finalIndividualReportsFolder = individualReportsFolder;
+            reportGenerator.getIndividualContributorReports().forEach(individualReport -> {
+                ReportFileExporter.exportHtml(finalIndividualReportsFolder, "", individualReport, customHtmlReportHeaderFragment);
             });
 
             LandscapeVisualsGenerator visualsGenerator = new LandscapeVisualsGenerator(reportsFolder);

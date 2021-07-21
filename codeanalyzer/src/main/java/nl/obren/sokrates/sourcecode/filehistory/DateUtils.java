@@ -167,4 +167,12 @@ public class DateUtils {
 
         return "";
     }
+
+    public static String getMonth(String date) {
+        return date.substring(0, 7);
+    }
+
+    public static String getYear(String date) {
+        return date.substring(0, 4);
+    }
 }
