@@ -23,6 +23,15 @@ public class LandscapeContributorsReport {
         this.report = report;
     }
 
+    public static String getContributorUrlFromTemplate(String contributorId, String template) {
+        String idVariable = "${contributorid}";
+        if (StringUtils.isNotBlank(template) && template.contains(idVariable)) {
+            return template.replace(idVariable, contributorId.replaceAll("[@].*", ""));
+        }
+
+        return null;
+    }
+
     public void saveContributorsTable(List<ContributorProjects> contributors, int totalCommits, boolean recent) {
         this.recent = recent;
         report.startTable("width: 100%");
@@ -45,7 +54,6 @@ public class LandscapeContributorsReport {
         }
     }
 
-
     private void addContributor(int totalCommits, int[] counter, ContributorProjects contributor) {
         String color = contributor.getContributor().getCommitsCount90Days() > 0 ? "grey" : "lightgrey";
         report.startTableRow(contributor.getContributor().getCommitsCount30Days() > 0 ? "font-weight: bold;"
@@ -61,12 +69,8 @@ public class LandscapeContributorsReport {
         }
         String link = this.getContributorUrl(contributor.getContributor().getEmail());
         String contributorBody = avatarHtml + StringEscapeUtils.escapeHtml4(contributor.getContributor().getEmail());
-        if (link != null) {
-            report.addTableCellWithTitle("<a target='_blank' style='color: " + color + "; text-decoration: none' href='" + link + "'>" + contributorBody + "</a>",
-                    "vertical-align: middle;", "" + counter[0]);
-        } else {
-            report.addTableCellWithTitle(contributorBody, "vertical-align: middle;", "" + counter[0]);
-        }
+        report.addTableCellWithTitle("<a target='_blank' style='color: " + color + "; text-decoration: none' href='" + link + "'>" + contributorBody + "</a>",
+                "vertical-align: middle;", "" + counter[0]);
         int commitsCountAllTime = contributor.getContributor().getCommitsCount();
         int commitsCount30Days = contributor.getContributor().getCommitsCount30Days();
         if (recent) {
@@ -118,21 +122,12 @@ public class LandscapeContributorsReport {
         report.endTableRow();
     }
 
-    private String getContributorUrl(String contributorId) {
-        return getContributorUrlFromTemplate(contributorId, this.landscapeAnalysisResults.getConfiguration().getContributorLinkTemplate());
+    private String getContributorUrl(String email) {
+        return "contributors/" + LandscapeIndividualContributorsReports.getContributorIndividualReportFileName(email);
     }
 
     private String getAvatarUrl(String contributorId) {
         return getContributorUrlFromTemplate(contributorId, this.landscapeAnalysisResults.getConfiguration().getContributorAvatarLinkTemplate());
-    }
-
-    public static String getContributorUrlFromTemplate(String contributorId, String template) {
-        String idVariable = "${contributorid}";
-        if (StringUtils.isNotBlank(template) && template.contains(idVariable)) {
-            return template.replace(idVariable, contributorId.replaceAll("[@].*", ""));
-        }
-
-        return null;
     }
 
     public boolean isRecent() {

@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class GitHistoryUtils {
     public static final String GIT_HISTORY_FILE_NAME = "git-history.txt";
@@ -23,11 +24,11 @@ public class GitHistoryUtils {
         return "git ls-files -z | xargs -0 -n1 -I{} -- git log --date=short --format=\"%ad %ae %H {}\" {} > " + GIT_HISTORY_FILE_NAME;
     }
 
-    public static List<AuthorCommit> getAuthorCommits(File file) {
+    public static List<AuthorCommit> getAuthorCommits(File file, List<String> ignoreContributors) {
         List<AuthorCommit> commits = new ArrayList<>();
         List<String> commitIds = new ArrayList<>();
 
-        getHistoryFromFile(file).forEach(fileUpdate -> {
+        getHistoryFromFile(file, ignoreContributors).forEach(fileUpdate -> {
             String commitId = fileUpdate.getCommitId();
             if (!commitIds.contains(commitId)) {
                 commitIds.add(commitId);
@@ -48,7 +49,7 @@ public class GitHistoryUtils {
     }
 
 
-    public static List<FileUpdate> getHistoryFromFile(File file) {
+    public static List<FileUpdate> getHistoryFromFile(File file, List<String> ignoreContributors) {
         List<FileUpdate> updates = new ArrayList<>();
         List<String> lines;
         try {
@@ -65,7 +66,7 @@ public class GitHistoryUtils {
             }
         });
 
-        return updates;
+        return updates.stream().filter(f -> !shouldIgnore(f.getAuthorEmail(), ignoreContributors)).collect(Collectors.toList());
     }
 
     public static FileUpdate parseLine(String line) {

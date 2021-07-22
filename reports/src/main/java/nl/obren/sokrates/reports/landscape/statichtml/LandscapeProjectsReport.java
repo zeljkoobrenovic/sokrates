@@ -50,7 +50,7 @@ public class LandscapeProjectsReport {
         int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
         int thresholdContributors = landscapeAnalysisResults.getConfiguration().getProjectThresholdContributors();
         List<String> headers = new ArrayList<>(Arrays.asList("", "Project" + (thresholdContributors > 1 ? "<br/>(" + thresholdContributors + "+&nbsp;contributors)" : ""),
-                "Main<br/>Language", "LOC<br/>(main)",
+                "Main<br/>Language", "LOC<br/>(main)*",
                 "LOC<br/>(test)", "LOC<br/>(other)",
                 "Age", "Contributors" + (thresholdCommits > 1 ? "<br/>(" + thresholdCommits + "+&nbsp;commits)" : ""),
                 "Contributors<br>(30d)", "Rookies<br>(30d)", "Commits<br>(30d)"));
@@ -63,8 +63,8 @@ public class LandscapeProjectsReport {
         headers.add("Report");
         report.addTableHeader(headers.toArray(String[]::new));
         Collections.sort(projectsAnalysisResults,
-                (a, b) -> b.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days()
-                        - a.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days());
+                (a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()
+                        - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
 
         int limit = landscapeAnalysisResults.getConfiguration().getProjectsListLimit();
         projectsAnalysisResults.stream().limit(limit).forEach(projectAnalysis -> {
@@ -79,6 +79,9 @@ public class LandscapeProjectsReport {
         report.endTabContentSection();
         if (showCommits) {
             report.startTabContentSection("commitsTrend", false);
+            Collections.sort(projectsAnalysisResults,
+                    (a, b) -> b.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days()
+                            - a.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days());
             addCommitsTrend(report, projectsAnalysisResults, "Commits", "blue", (slot) -> slot.getCommitsCount());
             report.endTabContentSection();
             report.startTabContentSection("contributorsTrend", false);
@@ -98,7 +101,8 @@ public class LandscapeProjectsReport {
 
     private void addCommitsTrend(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults, String label, String color, Counter counter) {
         report.startTable();
-        report.addTableHeader("Project", "Commits<br>(30d)", "Contributors<br>(30d)", "Rookies<br>(30d)", label + " per Week (past year)", "Details");
+        report.addTableHeader("Project", "Commits<br>(30d)" + (label.equalsIgnoreCase("Commits") ? "*" : ""),
+                "Contributors<br>(30d)" + (label.equalsIgnoreCase("Contributors") ? "*" : ""), "Rookies<br>(30d)", label + " per Week (past year)", "Details");
         int maxCommits[] = {1};
         int pastWeeks = 52;
         projectsAnalysisResults.forEach(projectAnalysis -> {

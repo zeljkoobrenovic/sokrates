@@ -115,14 +115,20 @@ public class LandscapeReportGenerator {
 
         landscapeReport.startTabContentSection(OVERVIEW_TAB_ID, true);
         addBigSummary(landscapeAnalysisResults);
+        if (configuration.isShowExtensionsOnFirstTab()) {
+            addExtensions();
+        }
         addIFrames(configuration.getiFramesAtStart());
         addSubLandscapeSection(configuration.getSubLandscapes());
         addIFrames(configuration.getiFrames());
         landscapeReport.endTabContentSection();
+
         landscapeReport.startTabContentSection(SOURCE_CODE_TAB_ID, false);
         addBigProjectsSummary(landscapeAnalysisResults);
         addIFrames(configuration.getiFramesProjectsAtStart());
-        addExtensions();
+        if (!configuration.isShowExtensionsOnFirstTab()) {
+            addExtensions();
+        }
         addProjectsSection(getProjects());
         addIFrames(configuration.getiFramesProjects());
         landscapeReport.endTabContentSection();
@@ -535,9 +541,9 @@ public class LandscapeReportGenerator {
 
             new LandscapeContributorsReport(landscapeAnalysisResults, landscapeRecentContributorsReport).saveContributorsTable(recentContributors, totalRecentCommits, true);
             new LandscapeContributorsReport(landscapeAnalysisResults, landscapeContributorsReport).saveContributorsTable(contributors, totalCommits, false);
-        }
 
-        individualContributorReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults).getIndividualReports();
+            individualContributorReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults).getIndividualReports(contributors);
+        }
     }
 
     private void addContributorsPerExtension() {
@@ -1021,28 +1027,15 @@ public class LandscapeReportGenerator {
     }
 
     private int getContributorsCountPerYear(String year) {
-        int count[] = {0};
+       Set<String> emails = new HashSet<>();
 
         landscapeAnalysisResults.getContributors().forEach(contributorProjects -> {
             if (contributorProjects.getContributor().getActiveYears().contains(year)) {
-                count[0] += 1;
+                emails.add(contributorProjects.getContributor().getEmail());
             }
         });
 
-        return count[0];
-    }
-
-    private int getLastContributorsCountPerYear(String year) {
-        int count[] = {0};
-
-        landscapeAnalysisResults.getContributors().forEach(contributorProjects -> {
-            if (DateUtils.getYear(contributorProjects.getContributor().getLatestCommitDate()).equals(year)) {
-                count[0] += 1;
-                return;
-            }
-        });
-
-        return count[0];
+        return emails.size();
     }
 
     private List<String> getContributorsPerWeek(String week, boolean rookiesOnly) {

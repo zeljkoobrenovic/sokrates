@@ -34,6 +34,7 @@ public class LandscapeConfiguration {
 
     private List<CustomMetric> customMetrics = new ArrayList<>();
     private List<CustomMetric> customMetricsSmall = new ArrayList<>();
+    private boolean showExtensionsOnFirstTab = false;
     private List<WebFrameLink> iFrames = new ArrayList<>();
     private List<WebFrameLink> iFramesAtStart = new ArrayList<>();
     private List<WebFrameLink> iFramesProjects = new ArrayList<>();
@@ -117,6 +118,14 @@ public class LandscapeConfiguration {
 
     public void setProjectThresholdContributors(int projectThresholdContributors) {
         this.projectThresholdContributors = projectThresholdContributors;
+    }
+
+    public boolean isShowExtensionsOnFirstTab() {
+        return showExtensionsOnFirstTab;
+    }
+
+    public void setShowExtensionsOnFirstTab(boolean showExtensionsOnFirstTab) {
+        this.showExtensionsOnFirstTab = showExtensionsOnFirstTab;
     }
 
     public String getParentUrl() {

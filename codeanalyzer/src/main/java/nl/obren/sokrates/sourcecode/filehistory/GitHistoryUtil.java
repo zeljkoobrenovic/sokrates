@@ -20,12 +20,9 @@ public class GitHistoryUtil {
     public List<FileModificationHistory> importGitLsFilesExport(File file, List<String> ignoreContributors) {
         files = new ArrayList<>();
         map = new HashMap<>();
-        GitHistoryUtils.getHistoryFromFile(file)
-                .stream()
-                .filter(fileUpdate -> !GitHistoryUtils.shouldIgnore(fileUpdate.getAuthorEmail(), ignoreContributors))
-                .forEach(fileUpdate -> {
-                    processUpdate(fileUpdate);
-                });
+        GitHistoryUtils.getHistoryFromFile(file, ignoreContributors).forEach(fileUpdate -> {
+            processUpdate(fileUpdate);
+        });
         return files;
     }
 

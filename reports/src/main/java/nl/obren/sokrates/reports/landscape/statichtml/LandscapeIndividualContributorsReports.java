@@ -22,9 +22,11 @@ public class LandscapeIndividualContributorsReports {
         this.landscapeAnalysisResults = landscapeAnalysisResults;
     }
 
-    public List<RichTextReport> getIndividualReports() {
-        List<ContributorProjects> contributors = landscapeAnalysisResults.getAllContributors();
+    public static String getContributorIndividualReportFileName(String email) {
+        return email.replaceAll("[\\-\\.\\@\\+]", "_") + ".html";
+    }
 
+    public List<RichTextReport> getIndividualReports(List<ContributorProjects> contributors) {
         contributors.forEach(contributor -> {
             reports.add(getIndividualReport(contributor));
         });
@@ -34,7 +36,7 @@ public class LandscapeIndividualContributorsReports {
 
     private RichTextReport getIndividualReport(ContributorProjects contributorProjects) {
         Contributor contributor = contributorProjects.getContributor();
-        RichTextReport report = new RichTextReport(contributor.getEmail(), contributor.getEmail().replaceAll("[\\-\\.\\@\\+]", "_") + ".html");
+        RichTextReport report = new RichTextReport(contributor.getEmail(), getContributorIndividualReportFileName(contributor.getEmail()));
         report.setDisplayName(contributor.getEmail());
         report.setLogoLink(DataImageUtils.DEVELOPER);
 
@@ -64,6 +66,10 @@ public class LandscapeIndividualContributorsReports {
         report.addTab("week", "Per Week", false);
         report.endTabGroup();
 
+        Collections.sort(contributorProjects.getProjects(), (a, b) -> 10000 * (b.getCommits30Days() - a.getCommits30Days()) +
+                100 * (b.getCommits90Days() - a.getCommits90Days()) +
+                (b.getCommitsCount() - a.getCommitsCount()));
+
         report.startTabContentSection("week", false);
         addPerWeek(contributorProjects, report);
         report.endTabContentSection();
@@ -76,6 +82,7 @@ public class LandscapeIndividualContributorsReports {
     }
 
     private void addPerWeek(ContributorProjects contributorProjects, RichTextReport report) {
+
         report.startDiv("width: 100%; overflow-x: scroll;");
         report.startTable();
 
@@ -84,7 +91,7 @@ public class LandscapeIndividualContributorsReports {
         report.addTableCell("", "min-width: 300px; border: none");
         report.addTableCell("Commits (30d)", "max-width: 100px; text-align: center; border: none");
         report.addTableCell("Active Days&nbsp;(2y)", "max-width: 100px; text-align: center; border: none");
-        List<ContributorProjectInfo> projects = contributorProjects.getProjects();
+        List<ContributorProjectInfo> projects = new ArrayList<>(contributorProjects.getProjects());
         pastWeeks.forEach(pastWeek -> {
             int projectCount[] = {0};
             projects.forEach(project -> {
@@ -125,6 +132,8 @@ public class LandscapeIndividualContributorsReports {
                 activeProjects.add(project);
             }
         });
+
+        Collections.sort(activeProjects, (a, b) -> b.getLatestCommitDate().compareTo(a.getLatestCommitDate()));
 
         activeProjects.forEach(project -> {
             report.startTableRow();
@@ -189,10 +198,7 @@ public class LandscapeIndividualContributorsReports {
         });
         report.endTableRow();
         List<ContributorProjectInfo> projects = new ArrayList<>(contributorProjects.getProjects());
-        Collections.sort(projects, (a, b) -> {
-            int diff = b.getCommits30Days() - a.getCommits30Days();
-            return diff == 0 ? b.getCommitDates().size() - a.getCommitDates().size() : diff;
-        });
+        Collections.sort(projects, (a, b) -> b.getLatestCommitDate().compareTo(a.getLatestCommitDate()));
 
         projects.forEach(project -> {
             report.startTableRow();

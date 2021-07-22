@@ -15,8 +15,8 @@ public class GitHistoryPerExtensionUtils {
     private Map<String, List<String>> paths30Days = new HashMap<>();
     private Map<String, List<String>> paths90Days = new HashMap<>();
 
-    public List<CommitsPerExtension> getCommitsPerExtensions(File file) {
-        GitHistoryUtils.getHistoryFromFile(file).forEach(fileUpdate -> {
+    public List<CommitsPerExtension> getCommitsPerExtensions(File file, List<String> ignoreContributors) {
+        GitHistoryUtils.getHistoryFromFile(file, ignoreContributors).forEach(fileUpdate -> {
             String extension = fileUpdate.getExtension();
             String path = fileUpdate.getPath();
             String email = fileUpdate.getAuthorEmail();

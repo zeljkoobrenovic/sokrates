@@ -12,6 +12,7 @@ import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 
 import java.io.File;
+import java.util.List;
 
 import static nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils.getPeopleDependencies;
 
@@ -33,14 +34,15 @@ public class ContributorsAnalyzer extends Analyzer {
 
     public void analyze() {
         if (codeConfiguration.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesFolder)) {
-            ContributorsImport contributorsImport = codeConfiguration.getFileHistoryAnalysis().getContributors(sokratesFolder);
+            List<String> ignoreContributors = codeConfiguration.getFileHistoryAnalysis().getIgnoreContributors();
+            ContributorsImport contributorsImport = codeConfiguration.getFileHistoryAnalysis().getContributors(sokratesFolder, ignoreContributors);
             analysisResults.setLatestCommitDate(contributorsImport.getLatestCommitDate());
             analysisResults.setContributors(contributorsImport.getContributors());
             analysisResults.setContributorsPerYear(contributorsImport.getContributorsPerYear());
             analysisResults.setContributorsPerMonth(contributorsImport.getContributorsPerMonth());
             analysisResults.setContributorsPerWeek(contributorsImport.getContributorsPerWeek());
             analysisResults.setContributorsPerDay(contributorsImport.getContributorsPerDay());
-            analysisResults.setCommitsPerExtensions(codeConfiguration.getFileHistoryAnalysis().getCommitsPerExtension(sokratesFolder));
+            analysisResults.setCommitsPerExtensions(codeConfiguration.getFileHistoryAnalysis().getCommitsPerExtension(sokratesFolder, ignoreContributors));
 
             analysisResults.setPeopleDependencies30Days(getPeopleDependencies(codeAnalysisResults, 30));
             analysisResults.setPeopleDependencies90Days(getPeopleDependencies(codeAnalysisResults, 90));

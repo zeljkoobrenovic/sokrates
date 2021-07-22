@@ -10,6 +10,7 @@ import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalyzer;
 import nl.obren.sokrates.sourcecode.landscape.init.LandscapeAnalysisInitiator;
 import nl.obren.sokrates.sourcecode.landscape.init.LandscapeAnalysisUpdater;
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,6 +47,11 @@ public class LandscapeAnalysisCommands {
         File reportsFolder = Paths.get(landscapeConfigFile.getParent(), "").toFile();
         reportsFolder.mkdirs();
         File individualReportsFolder = new File(reportsFolder, "contributors");
+        try {
+            FileUtils.deleteDirectory(individualReportsFolder);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         individualReportsFolder.mkdirs();
 
         LandscapeAnalyzer analyzer = new LandscapeAnalyzer();

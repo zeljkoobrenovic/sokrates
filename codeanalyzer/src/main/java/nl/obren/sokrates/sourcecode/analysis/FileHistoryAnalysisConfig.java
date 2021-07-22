@@ -57,8 +57,8 @@ public class FileHistoryAnalysisConfig {
     }
 
     @JsonIgnore
-    public ContributorsImport getContributors(File sokratesConfigFolder) {
-        ContributorsImport contributorsImport = GitContributorsUtil.importGitContributorsExport(getContributorsFile(sokratesConfigFolder));
+    public ContributorsImport getContributors(File sokratesConfigFolder, List<String> ignoreContributors) {
+        ContributorsImport contributorsImport = GitContributorsUtil.importGitContributorsExport(getContributorsFile(sokratesConfigFolder), ignoreContributors);
         List<Contributor> contributors = contributorsImport.getContributors()
                 .stream()
                 .filter(c -> !GitHistoryUtils.shouldIgnore(c.getEmail(), ignoreContributors))
@@ -68,8 +68,8 @@ public class FileHistoryAnalysisConfig {
     }
 
     @JsonIgnore
-    public List<CommitsPerExtension> getCommitsPerExtension(File sokratesConfigFolder) {
-        return GitContributorsUtil.getCommitsPerExtension(getContributorsFile(sokratesConfigFolder));
+    public List<CommitsPerExtension> getCommitsPerExtension(File sokratesConfigFolder, List<String> ignoreContributors) {
+        return GitContributorsUtil.getCommitsPerExtension(getContributorsFile(sokratesConfigFolder), ignoreContributors);
     }
 
     public List<String> getIgnoreContributors() {

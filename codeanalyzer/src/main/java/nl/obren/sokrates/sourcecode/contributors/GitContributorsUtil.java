@@ -15,9 +15,9 @@ import java.util.*;
 import java.util.function.Function;
 
 public class GitContributorsUtil {
-    public static ContributorsImport importGitContributorsExport(File file) {
+    public static ContributorsImport importGitContributorsExport(File file, List<String> ignoreContributors) {
         ContributorsImport contributorsImport = new ContributorsImport();
-        List<AuthorCommit> authorCommits = GitHistoryUtils.getAuthorCommits(file);
+        List<AuthorCommit> authorCommits = GitHistoryUtils.getAuthorCommits(file, ignoreContributors);
         authorCommits.forEach(commit -> {
             String date = commit.getDate();
             if (StringUtils.isBlank(contributorsImport.getFirstCommitDate()) || date.compareTo(contributorsImport.getFirstCommitDate()) <= 0) {
@@ -42,8 +42,8 @@ public class GitContributorsUtil {
         return contributorsImport;
     }
 
-    public static List<CommitsPerExtension> getCommitsPerExtension(File file) {
-        return new GitHistoryPerExtensionUtils().getCommitsPerExtensions(file);
+    public static List<CommitsPerExtension> getCommitsPerExtension(File file, List<String> ignoreContributors) {
+        return new GitHistoryPerExtensionUtils().getCommitsPerExtensions(file, ignoreContributors);
     }
 
     public static List<Contributor> getContributors(List<AuthorCommit> authorCommits) {
@@ -73,21 +73,20 @@ public class GitContributorsUtil {
         Map<String, List<String>> peopleIds = new HashMap<>();
 
         authorCommits.forEach(authorCommit -> {
-            String year = idFunction.apply(authorCommit);
-            Contributor contributor = new Contributor(authorCommit.getAuthorEmail());
-            String id = contributor.getEmail();
-            List<String> ids = peopleIds.get(year);
+            String timeSlot = idFunction.apply(authorCommit);
+            String id = authorCommit.getAuthorEmail();
+            List<String> ids = peopleIds.get(timeSlot);
             if (ids == null) {
                 ids = new ArrayList<>();
-                peopleIds.put(year, ids);
+                peopleIds.put(timeSlot, ids);
             }
             if (!ids.contains(id)) {
                 ids.add(id);
             }
-            ContributionTimeSlot contributionTimeSlot = map.get(year);
+            ContributionTimeSlot contributionTimeSlot = map.get(timeSlot);
             if (contributionTimeSlot == null) {
-                contributionTimeSlot = new ContributionTimeSlot(year);
-                map.put(year, contributionTimeSlot);
+                contributionTimeSlot = new ContributionTimeSlot(timeSlot);
+                map.put(timeSlot, contributionTimeSlot);
                 list.add(contributionTimeSlot);
             }
             contributionTimeSlot.incrementCommitsCount();

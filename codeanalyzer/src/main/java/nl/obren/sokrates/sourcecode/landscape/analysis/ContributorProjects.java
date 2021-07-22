@@ -16,13 +16,13 @@ public class ContributorProjects {
 
     public void addProject(ProjectAnalysisResults projectAnalysisResults, String firstCommitDate, String latestCommitDate,
                            int commitsCount, int commits30Days, int commits90Days, List<String> commitDates) {
-        String analysisResultsPath = projectAnalysisResults.getSokratesProjectLink().getAnalysisResultsPath();
-        ContributorProjectInfo projectByPath = getProjectByPath(analysisResultsPath);
+        String path = projectAnalysisResults.getAnalysisResults().getMetadata().getName();
+        ContributorProjectInfo projectByPath = getProjectByPath(path);
         if (projectByPath != null) {
             if (firstCommitDate.compareTo(projectByPath.getFirstCommitDate()) < 0) {
                 projectByPath.setFirstCommitDate(firstCommitDate);
             }
-            if (latestCommitDate.compareTo(projectByPath.getLatestCommitDate()) < 0) {
+            if (latestCommitDate.compareTo(projectByPath.getLatestCommitDate()) > 0) {
                 projectByPath.setLatestCommitDate(latestCommitDate);
             }
             projectByPath.setCommits30Days(projectByPath.getCommits30Days() + commits30Days);
@@ -46,7 +46,7 @@ public class ContributorProjects {
     @JsonIgnore
     private ContributorProjectInfo getProjectByPath(String path) {
         for (ContributorProjectInfo project : projects) {
-            if (project.getProjectAnalysisResults().getSokratesProjectLink().getAnalysisResultsPath().equalsIgnoreCase(path)) {
+            if (project.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName().equalsIgnoreCase(path)) {
                 return project;
             }
         }

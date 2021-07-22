@@ -394,6 +394,9 @@ public class LandscapeAnalysisResults {
                 int projectCommits180Days = contributor.getCommitsCount180Days();
                 int projectCommits365Days = contributor.getCommitsCount365Days();
 
+                String latestCommitDate = contributor.getLatestCommitDate();
+                String firstCommitDate = contributor.getFirstCommitDate();
+
                 if (map.containsKey(contributorId)) {
                     ContributorProjects existingContributor = map.get(contributorId);
                     Contributor contributorInfo = existingContributor.getContributor();
@@ -416,14 +419,14 @@ public class LandscapeAnalysisResults {
                     });
 
                     existingContributor.addProject(projectAnalysisResults,
-                            contributorInfo.getFirstCommitDate(), contributorInfo.getLatestCommitDate(),
-                            projectCommits, projectCommits30Days, projectCommits90Days, commitDates);
+                            firstCommitDate, latestCommitDate,
+                            projectCommits, projectCommits30Days, projectCommits90Days, new ArrayList<>(commitDates));
 
-                    if (contributor.getFirstCommitDate().compareTo(contributorInfo.getFirstCommitDate()) < 0) {
-                        contributorInfo.setFirstCommitDate(contributor.getFirstCommitDate());
+                    if (firstCommitDate.compareTo(contributorInfo.getFirstCommitDate()) < 0) {
+                        contributorInfo.setFirstCommitDate(firstCommitDate);
                     }
-                    if (contributor.getLatestCommitDate().compareTo(contributorInfo.getLatestCommitDate()) > 0) {
-                        contributorInfo.setLatestCommitDate(contributor.getLatestCommitDate());
+                    if (latestCommitDate.compareTo(contributorInfo.getLatestCommitDate()) > 0) {
+                        contributorInfo.setLatestCommitDate(latestCommitDate);
                     }
                 } else {
                     Contributor newContributor = new Contributor();
@@ -434,15 +437,15 @@ public class LandscapeAnalysisResults {
                     newContributor.setCommitsCount90Days(projectCommits90Days);
                     newContributor.setCommitsCount180Days(projectCommits180Days);
                     newContributor.setCommitsCount365Days(projectCommits365Days);
-                    newContributor.setFirstCommitDate(contributor.getFirstCommitDate());
-                    newContributor.setLatestCommitDate(contributor.getLatestCommitDate());
-                    newContributor.setActiveYears(contributor.getActiveYears());
-                    newContributor.setCommitDates(contributor.getCommitDates());
+                    newContributor.setFirstCommitDate(firstCommitDate);
+                    newContributor.setLatestCommitDate(latestCommitDate);
+                    newContributor.setActiveYears(new ArrayList<>(contributor.getActiveYears()));
+                    newContributor.setCommitDates(new ArrayList<>(contributor.getCommitDates()));
 
                     ContributorProjects newContributorWithProjects = new ContributorProjects(newContributor);
 
                     newContributorWithProjects.addProject(projectAnalysisResults, newContributor.getFirstCommitDate(),
-                            newContributor.getLatestCommitDate(), projectCommits, projectCommits30Days, projectCommits90Days, commitDates);
+                            newContributor.getLatestCommitDate(), projectCommits, projectCommits30Days, projectCommits90Days, new ArrayList<>(commitDates));
 
                     map.put(contributorId, newContributorWithProjects);
                     list.add(newContributorWithProjects);
