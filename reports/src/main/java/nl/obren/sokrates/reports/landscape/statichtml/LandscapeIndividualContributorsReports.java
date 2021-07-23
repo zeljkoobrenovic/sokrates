@@ -51,7 +51,11 @@ public class LandscapeIndividualContributorsReports {
         }
         report.addContentInDiv("First commit date: <b>" + contributor.getFirstCommitDate() + "</b>");
         report.addContentInDiv("Latest commit date: <b>" + contributor.getLatestCommitDate() + "</b>");
-        report.addContentInDiv("Projects count: <b>" + contributorProjects.getProjects().size() + "</b>");
+        report.addContentInDiv("Projects count: " +
+                "<b>" + contributorProjects.getProjects().stream().filter(p -> p.getCommits30Days() > 0).count()
+                + "</b><span style='color: lightgrey; font-size: 90%'> (30d)</span>&nbsp;&nbsp;&nbsp;" +                "<b>" + contributorProjects.getProjects().stream().filter(p -> p.getCommits90Days() > 0).count()
+                + "</b><span style='color: lightgrey; font-size: 90%'> (3m)</span>&nbsp;&nbsp;&nbsp;" +
+                "<b>" + contributorProjects.getProjects().size() + "</b> <span style='color: lightgrey; font-size: 90%'> (all time)</span>");
         report.addContentInDiv("Commits count: <b>" + contributor.getCommitsCount30Days() + "</b> " +
                 "<span style='color: lightgrey; font-size: 90%'>(30d)&nbsp;&nbsp;&nbsp;</span>" +
                 "<b>" + contributor.getCommitsCount90Days() + "</b><span style='color: lightgrey; font-size: 90%'> (3m)&nbsp;&nbsp;&nbsp;</span>" +
@@ -89,8 +93,8 @@ public class LandscapeIndividualContributorsReports {
         final List<String> pastWeeks = DateUtils.getPastWeeks(104, landscapeAnalysisResults.getLatestCommitDate());
         report.startTableRow();
         report.addTableCell("", "min-width: 300px; border: none");
-        report.addTableCell("Commits (30d)", "max-width: 100px; text-align: center; border: none");
-        report.addTableCell("Active Days&nbsp;(2y)", "max-width: 100px; text-align: center; border: none");
+        report.addTableCell("Commits<br>(3m)", "max-width: 100px; text-align: center; border: none");
+        report.addTableCell("Commit<br>Days", "max-width: 100px; text-align: center; border: none");
         List<ContributorProjectInfo> projects = new ArrayList<>(contributorProjects.getProjects());
         pastWeeks.forEach(pastWeek -> {
             int projectCount[] = {0};
@@ -136,12 +140,18 @@ public class LandscapeIndividualContributorsReports {
         Collections.sort(activeProjects, (a, b) -> b.getLatestCommitDate().compareTo(a.getLatestCommitDate()));
 
         activeProjects.forEach(project -> {
+            String textOpacity = project.getCommits90Days() > 0 ? "font-weight: bold;" : "opacity: 0.4";
             report.startTableRow();
-            report.addTableCell(project.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName(), "border: none");
-            report.addTableCell(project.getCommits30Days() + "", "text-align: center; border: none");
-            report.addTableCell(project.getCommitDates().size() + "", "text-align: center; border: none");
+            report.startTableCell("border: none;" + textOpacity);
+            report.addNewTabLink(project.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName(),
+                    "../../" + project.getProjectAnalysisResults().getSokratesProjectLink().getHtmlReportsRoot() + "/index.html");
+            report.endTableCell();
+            report.addTableCell(project.getCommits90Days() > 0 ? project.getCommits90Days() + "" : "-", "text-align: center; border: none; " + textOpacity);
+            report.addTableCell(project.getCommitDates().size() + "", "text-align: center; border: none; " + textOpacity);
+            int index[] = {0};
             pastWeeks.forEach(pastWeek -> {
                 int daysCount[] = {0};
+                index[0] += 1;
                 project.getCommitDates().forEach(date -> {
                     String weekMonday = DateUtils.getWeekMonday(date);
                     if (weekMonday.equals(pastWeek)) {
@@ -152,9 +162,10 @@ public class LandscapeIndividualContributorsReports {
                 if (daysCount[0] > 0) {
                     int size = 10 + daysCount[0] * 4;
                     String tooltip = "Week of " + pastWeek + ": " + daysCount[0] + (daysCount[0] == 1 ? " commit day" : " commit days");
+                    String opacity = "" + Math.max(0.9 - (index[0] - 1) * 0.05, 0.2);
                     report.addContentInDivWithTooltip("", tooltip,
                             "display: inline-block; padding: 0; margin: 0; " +
-                                    "background-color: skyblue; border-radius: 50%; width: " + size + "px; height: " + size + "px;");
+                                    "background-color: #483D8B; border-radius: 50%; width: " + size + "px; height: " + size + "px; opacity: " + opacity + ";");
                 } else {
                     report.addContentInDiv("-", "color: lightgrey; font-size: 80%");
                 }
@@ -173,8 +184,8 @@ public class LandscapeIndividualContributorsReports {
         final List<String> pastMonths = DateUtils.getPastMonths(24, landscapeAnalysisResults.getLatestCommitDate());
         report.startTableRow();
         report.addTableCell("", "min-width: 200px; border: none; border: none");
-        report.addTableCell("Commits (30d)", "max-width: 100px; text-align: center; border: none");
-        report.addTableCell("Active Days&nbsp;(2y)", "max-width: 100px; text-align: center; border: none");
+        report.addTableCell("Commits<br>(3m)", "max-width: 100px; text-align: center; border: none");
+        report.addTableCell("Commit<br>Days", "max-width: 100px; text-align: center; border: none");
         pastMonths.forEach(pastMonth -> {
             int projectCount[] = {0};
             contributorProjects.getProjects().forEach(project -> {
@@ -202,9 +213,14 @@ public class LandscapeIndividualContributorsReports {
 
         projects.forEach(project -> {
             report.startTableRow();
-            report.addTableCell(project.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName(), "border: none");
-            report.addTableCell(project.getCommits30Days() + "", "text-align: center; border: none");
-            report.addTableCell(project.getCommitDates().size() + "", "text-align: center; border: none");
+            String textOpacity = project.getCommits90Days() > 0 ? "font-weight: bold;" : "opacity: 0.4";
+            report.startTableCell("border: none; " + textOpacity);
+            report.addNewTabLink(project.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName(),
+                    "../../" + project.getProjectAnalysisResults().getSokratesProjectLink().getHtmlReportsRoot() + "/index.html");
+            report.endTableCell();
+            report.addTableCell(project.getCommits90Days() > 0 ? project.getCommits90Days() + "" : "-", "text-align: center; border: none; " + textOpacity);
+            report.addTableCell(project.getCommitDates().size() + "", "text-align: center; border: none; " + textOpacity);
+            int index[] = {0};
             pastMonths.forEach(pastMonth -> {
                 int count[] = {0};
                 project.getCommitDates().forEach(date -> {
@@ -213,12 +229,14 @@ public class LandscapeIndividualContributorsReports {
                         count[0] += 1;
                     }
                 });
-                report.startTableCell("text-align: center; padding: 0; border: none; vertical-align: middle");
+                index[0] += 1;
+                report.startTableCell("text-align: center; padding: 0; border: none; vertical-align: middle;");
                 if (count[0] > 0) {
                     int size = 10 + (count[0] / 4) * 4;
                     String tooltip = "Month " + pastMonth + ": " + count[0] + (count[0] == 1 ? " commit day" : " commit days");
+                    String opacity = "" + Math.max(0.9 - (index[0] - 1) * 0.2, 0.2);
                     report.addContentInDivWithTooltip("", tooltip,
-                            "padding: 0; margin: 0; display: inline-block; background-color: skyblue; border-radius: 50%; width: " + size + "px; height: " + size + "px;");
+                            "padding: 0; margin: 0; display: inline-block; background-color: #483D8B; opacity: " + opacity + "; border-radius: 50%; width: " + size + "px; height: " + size + "px;");
                 } else {
                     report.addContentInDiv("-", "color: lightgrey; font-size: 80%");
                 }

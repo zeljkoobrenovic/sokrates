@@ -111,11 +111,13 @@ public class DateUtils {
     public static Calendar getCalendar(String date) {
         Calendar calendar = Calendar.getInstance();
 
-        try {
-            SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
-            calendar.setTime(sdf.parse(date));
-        } catch (ParseException e) {
-            e.printStackTrace();
+        if (StringUtils.isNotBlank(date)) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
+                calendar.setTime(sdf.parse(date));
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
         }
 
         return calendar;
