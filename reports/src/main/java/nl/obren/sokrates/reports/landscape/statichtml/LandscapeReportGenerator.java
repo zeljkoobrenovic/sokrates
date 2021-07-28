@@ -105,8 +105,8 @@ public class LandscapeReportGenerator {
 
         landscapeReport.startTabGroup();
         landscapeReport.addTab(OVERVIEW_TAB_ID, "Overview", true);
-        landscapeReport.addTab(SOURCE_CODE_TAB_ID, "Projects", false);
-        landscapeReport.addTab(CONTRIBUTORS_TAB_ID, "Contributors", false);
+        landscapeReport.addTab(SOURCE_CODE_TAB_ID, "Projects (" + landscapeAnalysisResults.getFilteredProjectAnalysisResults().size() + ")", false);
+        landscapeReport.addTab(CONTRIBUTORS_TAB_ID, "Contributors (" + landscapeAnalysisResults.getRecentContributorsCount() + ")", false);
         configuration.getCustomTabs().forEach(tab -> {
             int index = configuration.getCustomTabs().indexOf(tab);
             landscapeReport.addTab(CUSTOM_TAB_ID_PREFIX + index, tab.getName(), false);
@@ -305,7 +305,8 @@ public class LandscapeReportGenerator {
         landscapeReport.startDiv("margin-top: 0px;");
         LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
         int thresholdContributors = configuration.getProjectThresholdContributors();
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(getProjects().size()), "projects",
+        int size = getProjects().size();
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(size), (size == 1 ? "active project" : "active projects"),
                 "", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
         addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "lines of code (main)", "", getExtraLocInfo());
         int mainLocActive = landscapeAnalysisResults.getMainLocActive();
@@ -351,7 +352,8 @@ public class LandscapeReportGenerator {
     private void addBigProjectsSummary(LandscapeAnalysisResults landscapeAnalysisResults) {
         LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
         int thresholdContributors = configuration.getProjectThresholdContributors();
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(getProjects().size()), "projects",
+        int size = getProjects().size();
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(size), (size == 1 ? "active project" : "active projects"),
                 "", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
         addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "lines of code (main)", "", getExtraLocInfo());
         int mainLocActive = landscapeAnalysisResults.getMainLocActive();

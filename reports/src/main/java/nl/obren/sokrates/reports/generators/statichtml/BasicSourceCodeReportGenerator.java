@@ -56,16 +56,21 @@ public class BasicSourceCodeReportGenerator {
     }
 
 
-    private void decorateReport(RichTextReport report, String prefix, String logoLink) {
+    private void decorateReport(RichTextReport report, String prefix, String logoLink, String headerInfo) {
         if (StringUtils.isNotBlank(prefix)) {
-            report.setDisplayName("<span style='color: #bbbbbb; font-size: 80%'>"
+            report.setDisplayName("<span style='color: #bbbbbb; font-size: 80%;'>"
                     + prefix
-                    + "<div style='height: 22px'></div></span>"
+                    + "</span>"
+                    + "<div style='color: #bbbbbb; font-size: 42%; margin-bottom: 22px'>"
+                    + headerInfo
+                    + "</div>"
                     + report.getDisplayName());
         }
+
         report.setReportsFolder(reportsFolder);
 
         report.setLogoLink(logoLink);
+        report.setParentUrl("index.html");
     }
 
     public List<RichTextReport> report() {
@@ -125,22 +130,23 @@ public class BasicSourceCodeReportGenerator {
         Metadata metadata = codeAnalysisResults.getCodeConfiguration().getMetadata();
         String name = metadata.getName();
         String logoLink = metadata.getLogoLink();
+        String headerInfo = metadata.getDescription();
 
-        decorateReport(overviewScopeReport, name, logoLink);
-        decorateReport(duplicationReport, name, logoLink);
-        decorateReport(unitSizeReport, name, logoLink);
-        decorateReport(conditionalComplexityReport, name, logoLink);
-        decorateReport(fileSizeReport, name, logoLink);
-        decorateReport(fileHistoryReport, name, logoLink);
-        decorateReport(fileChangeFrequencyReport, name, logoLink);
-        decorateReport(fileTemporalDependenciesReport, name, logoLink);
-        decorateReport(contributorsReport, name, logoLink);
-        decorateReport(controlsReport, name, logoLink);
-        decorateReport(metricsReport, name, logoLink);
-        decorateReport(comparisonReport, name, logoLink);
-        decorateReport(findingsReport, name, logoLink);
-        decorateReport(logicalComponentsReport, name, logoLink);
-        decorateReport(concernsReport, name, logoLink);
+        decorateReport(overviewScopeReport, name, logoLink, headerInfo);
+        decorateReport(duplicationReport, name, logoLink, headerInfo);
+        decorateReport(unitSizeReport, name, logoLink, headerInfo);
+        decorateReport(conditionalComplexityReport, name, logoLink, headerInfo);
+        decorateReport(fileSizeReport, name, logoLink, headerInfo);
+        decorateReport(fileHistoryReport, name, logoLink, headerInfo);
+        decorateReport(fileChangeFrequencyReport, name, logoLink, headerInfo);
+        decorateReport(fileTemporalDependenciesReport, name, logoLink, headerInfo);
+        decorateReport(contributorsReport, name, logoLink, headerInfo);
+        decorateReport(controlsReport, name, logoLink, headerInfo);
+        decorateReport(metricsReport, name, logoLink, headerInfo);
+        decorateReport(comparisonReport, name, logoLink, headerInfo);
+        decorateReport(findingsReport, name, logoLink, headerInfo);
+        decorateReport(logicalComponentsReport, name, logoLink, headerInfo);
+        decorateReport(concernsReport, name, logoLink, headerInfo);
     }
 
     private void createBasicReport() {

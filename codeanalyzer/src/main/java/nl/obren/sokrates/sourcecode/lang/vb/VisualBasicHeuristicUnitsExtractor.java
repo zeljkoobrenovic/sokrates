@@ -35,7 +35,7 @@ public class VisualBasicHeuristicUnitsExtractor {
                 if (line.trim().equalsIgnoreCase(unitEnd)) {
                     endLine = i;
                     loc = 0;
-                    String prefix = line.substring(0, line.indexOf(unitEnd));
+                    String prefix = line.substring(0, line.toLowerCase().indexOf(unitEnd.toLowerCase()));
                     String body = line;
                     String cleanedBody = line;
                     i--;

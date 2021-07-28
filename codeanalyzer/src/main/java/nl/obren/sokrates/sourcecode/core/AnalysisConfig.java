@@ -26,6 +26,7 @@ public class AnalysisConfig {
     private Thresholds unitSizeThresholds = Thresholds.defaultUnitSizeThresholds();
     private Thresholds conditionalComplexityThresholds = Thresholds.defaultConditionalComplexityThresholds();
     private String customHtmlReportHeaderFragment = "";
+    private boolean analyzeConcernOverlaps = false;
 
     public boolean isSkipDuplication() {
         return skipDuplication;
@@ -145,5 +146,13 @@ public class AnalysisConfig {
 
     public void setCustomHtmlReportHeaderFragment(String customHtmlReportHeaderFragment) {
         this.customHtmlReportHeaderFragment = customHtmlReportHeaderFragment;
+    }
+
+    public boolean getAnalyzeConcernOverlaps() {
+        return analyzeConcernOverlaps;
+    }
+
+    public void setAnalyzeConcernOverlaps(boolean analyzeConcernOverlaps) {
+        this.analyzeConcernOverlaps = analyzeConcernOverlaps;
     }
 }

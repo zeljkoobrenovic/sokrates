@@ -28,6 +28,7 @@ public class DataImageUtils {
         map.put("erb", "Ruby.png");
         map.put("graphql", "graphql.png");
         map.put("graphqls", "graphql.png");
+        map.put("gql", "graphql.png");
         map.put("clj", "clojure.png");
         map.put("pp", "puppet.png");
         map.put("dart", "dart.png");
@@ -54,6 +55,7 @@ public class DataImageUtils {
         map.put("gvy", "Groovy.png");
         map.put("gy", "Groovy.png");
         map.put("gsh", "Groovy.png");
+        map.put("gradle", "gradle.png");
 
         map.put("swift", "Swift.png");
         map.put("perl", "Perl.png");

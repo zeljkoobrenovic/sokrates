@@ -590,6 +590,7 @@ public class DataExporter {
         FileUtils.write(new File(dataFolder, "dependencies.json"), new JsonGenerator().generate(
                 new DependenciesExporter(analysisResults.getAllDependencies()).getDependenciesExportInfo()), UTF_8);
         FileUtils.write(new File(dataFolder, "contributors.json"), new JsonGenerator().generate(analysisResults.getContributorsAnalysisResults().getContributors()), UTF_8);
+        FileUtils.write(new File(dataFolder, "concerns.json"), new JsonGenerator().generate(analysisResults.getConcernsAnalysisResults()), UTF_8);
     }
 
     public File getTextDataFolder() {

@@ -29,12 +29,12 @@ public class ReportRenderer {
 
     private void renderHeader(RichTextReport richTextReport, StringBuilder content) {
         content.append("<h1>");
-        String parentUrl = StringUtils.isNotBlank(richTextReport.getParentUrl()) ? richTextReport.getParentUrl() : "index.html";
+        String parentUrl = richTextReport.getParentUrl();
         if (StringUtils.isNotBlank(parentUrl)) {
             content.append("<a href='" + parentUrl + "' style=\"text-decoration:none\">\n");
         }
         if (StringUtils.isNotBlank(richTextReport.getLogoLink())) {
-            int size = richTextReport.getDisplayName().contains("<div") ? 24 : 36;
+            int size = 36;
             String valign = richTextReport.getDisplayName().contains("<div") ? "middle" : "bottom";
             content.append("<img style='height: " + size + "px' valign='" + valign + "' src='" + richTextReport.getLogoLink() + "'>\n");
         }

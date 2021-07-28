@@ -244,9 +244,11 @@ public class CodeConfiguration {
             group.getConcerns().addAll(metaConcerns);
 
             populateUnclassifiedForConcern(group.getConcerns());
-            List<DerivedConcern> overlaps = getOverlaps(group.getConcerns());
 
-            group.getConcerns().addAll(overlaps);
+            if (this.analysis.getAnalyzeConcernOverlaps()) {
+                List<DerivedConcern> overlaps = getOverlaps(group.getConcerns());
+                group.getConcerns().addAll(overlaps);
+            }
         });
     }
 

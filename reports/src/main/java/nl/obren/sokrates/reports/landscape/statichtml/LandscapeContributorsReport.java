@@ -66,6 +66,10 @@ public class LandscapeContributorsReport {
                     "<img style='border-radius: 50%; height: 40px; width: 40px; margin-right: 10px;' src='" + avatarUrl + "' " +
                     "onerror=\"this.onerror=null;this.src='" + DataImageUtils.DEVELOPER + "';\">" +
                     "</div>";
+        } else {
+            avatarHtml = "<div style='vertical-align: middle; display: inline-block; width: 48px; margin-top: 2px;'>" +
+                    "<img style='border-radius: 50%; height: 40px; width: 40px; margin-right: 10px;' src='" + DataImageUtils.DEVELOPER + "'>" +
+                    "</div>";
         }
         String link = this.getContributorUrl(contributor.getContributor().getEmail());
         String contributorBody = avatarHtml + StringEscapeUtils.escapeHtml4(contributor.getContributor().getEmail());
