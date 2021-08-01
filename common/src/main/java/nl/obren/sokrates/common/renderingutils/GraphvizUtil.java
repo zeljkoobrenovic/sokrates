@@ -50,7 +50,9 @@ public final class GraphvizUtil {
 
     public static String getSvgFromDot(String dotCode, String extraDotArguments[]) {
         File dotFile = null;
+        double start = System.currentTimeMillis();
         try {
+            System.out.print("Calling dot process... ");
             dotFile = File.createTempFile("grapviz_dot_graph", ".dot");
             FileUtils.writeStringToFile(dotFile, dotCode, UTF_8);
             String svgFromDotFile = getSvgFromDotFileExternal(dotFile, extraDotArguments);
@@ -62,6 +64,7 @@ public final class GraphvizUtil {
         } catch (IOException e) {
             LOG.error(e);
         } finally {
+            System.out.println(" Done after " + ((System.currentTimeMillis() - start) / 1000) + " seconds.");
             if (dotFile != null) {
                 dotFile.delete();
             }

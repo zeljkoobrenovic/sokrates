@@ -57,16 +57,30 @@ public class LandscapeReportGenerator {
     private File folder;
     private File reportsFolder;
     private List<RichTextReport> individualContributorReports = new ArrayList<>();
+    private Map<String, List<String>> contributorsPerWeekMap = new HashMap<>();
+    private Map<String, List<String>> rookiesPerWeekMap = new HashMap<>();
+    private Map<String, List<String>> contributorsPerMonthMap = new HashMap<>();
+    private Map<String, List<String>> rookiesPerMonthMap = new HashMap<>();
+    private Map<String, List<String>> contributorsPerYearMap = new HashMap<>();
+    private Map<String, List<String>> rookiesPerYearMap = new HashMap<>();
 
     public LandscapeReportGenerator(LandscapeAnalysisResults landscapeAnalysisResults, File folder, File reportsFolder) {
         this.folder = folder;
         this.reportsFolder = reportsFolder;
+
+        this.landscapeAnalysisResults = landscapeAnalysisResults;
+        populateTimeSlotMaps();
+
         landscapeProjectsReport.setEmbedded(true);
         landscapeContributorsReport.setEmbedded(true);
         landscapeRecentContributorsReport.setEmbedded(true);
         LandscapeDataExport dataExport = new LandscapeDataExport(landscapeAnalysisResults, folder);
+
+        System.out.println("Exporting projects...");
         dataExport.exportProjects();
+        System.out.println("Exporting contributors...");
         dataExport.exportContributors();
+        System.out.println("Exporting analysis results...");
         dataExport.exportAnalysisResults();
 
         LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
@@ -99,7 +113,6 @@ public class LandscapeReportGenerator {
             });
             landscapeReport.endDiv();
         }
-        this.landscapeAnalysisResults = landscapeAnalysisResults;
 
         landscapeReport.addLineBreak();
 
@@ -119,25 +132,33 @@ public class LandscapeReportGenerator {
             addExtensions();
         }
         addIFrames(configuration.getiFramesAtStart());
+        System.out.println("Adding sub landscape section...");
         addSubLandscapeSection(configuration.getSubLandscapes());
         addIFrames(configuration.getiFrames());
         landscapeReport.endTabContentSection();
 
         landscapeReport.startTabContentSection(SOURCE_CODE_TAB_ID, false);
+        System.out.println("Adding big summary...");
         addBigProjectsSummary(landscapeAnalysisResults);
         addIFrames(configuration.getiFramesProjectsAtStart());
         if (!configuration.isShowExtensionsOnFirstTab()) {
+            System.out.println("Adding extensions...");
             addExtensions();
         }
+        System.out.println("Adding project section...");
         addProjectsSection(getProjects());
         addIFrames(configuration.getiFramesProjects());
         landscapeReport.endTabContentSection();
 
         landscapeReport.startTabContentSection(CONTRIBUTORS_TAB_ID, false);
+        System.out.println("Adding big contributors summary...");
         addBigContributorsSummary(landscapeAnalysisResults);
         addIFrames(configuration.getiFramesContributorsAtStart());
+        System.out.println("Adding contributors...");
         addContributors();
+        System.out.println("Adding contributors per extension...");
         addContributorsPerExtension();
+        System.out.println("Adding people dependencies...");
         addPeopleDependencies();
         addIFrames(configuration.getiFramesContributors());
         landscapeReport.endTabContentSection();
@@ -151,6 +172,7 @@ public class LandscapeReportGenerator {
         });
 
         landscapeReport.addParagraph("<span style='color: grey; font-size: 90%'>updated: " + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + "</span>");
+        System.out.println("Done report generation.");
     }
 
     public static List<ContributionTimeSlot> getContributionWeeks(List<ContributionTimeSlot> contributorsPerWeekOriginal, int pastWeeks, String lastCommitDate) {
@@ -221,6 +243,7 @@ public class LandscapeReportGenerator {
             landscapeReport.addTableHeader("", "main loc", "test loc", "other loc", "projects", "recent contributors", "commits (30 days)");
             String prevRoot[] = {""};
             links.forEach(subLandscape -> {
+                System.out.println("Adding " + subLandscape.getIndexFilePath());
                 String label = StringUtils.removeEnd(getLabel(subLandscape), "/");
                 String style = "";
                 String root = label.replaceAll("/.*", "");
@@ -390,7 +413,6 @@ public class LandscapeReportGenerator {
             double cMean = landscapeAnalysisResults.getcMean30Days();
             double cMedian = landscapeAnalysisResults.getcMedian30Days();
 
-            int connectionSum = landscapeAnalysisResults.getConnectionsViaProjects30Days().stream().mapToInt(c -> c.getConnectionsCount()).sum();
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(peopleDependencies.size()), "C2C connections", "30 days", "");
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cMedian)), "C-Median", "30 days", "");
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cMean)), "C-Mean", "30 days", "");
@@ -616,8 +638,9 @@ public class LandscapeReportGenerator {
         landscapeReport.startSubSection("<a href='projects.html' target='_blank' style='text-decoration: none'>Projects (" + projectsAnalysisResults.size() + ")</a>", "");
         if (projectsAnalysisResults.size() > 0) {
             List<NumericMetric> projectSizes = new ArrayList<>();
-            projectsAnalysisResults.forEach(projectAnalysisResults -> {
-                CodeAnalysisResults analysisResults = projectAnalysisResults.getAnalysisResults();
+            projectsAnalysisResults.forEach(project -> {
+                System.out.println("Adding " + project.getSokratesProjectLink().getAnalysisResultsPath());
+                CodeAnalysisResults analysisResults = project.getAnalysisResults();
                 projectSizes.add(new NumericMetric(analysisResults.getMetadata().getName(), analysisResults.getMainAspectAnalysisResults().getLinesOfCode()));
             });
             landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_projects.html");
@@ -899,7 +922,11 @@ public class LandscapeReportGenerator {
 
     private void addContributersPerWeekRow(List<ContributionTimeSlot> contributorsPerWeek, String unit, int minMaxWindow, ContributorsExtractor contributorsExtractor) {
         landscapeReport.startTableRow();
-        int maxContributors = contributorsPerWeek.stream().mapToInt(c -> contributorsExtractor.getContributors(c.getTimeSlot(), false).size()).max().orElse(1);
+        int max = 1;
+        for (ContributionTimeSlot contributionTimeSlot : contributorsPerWeek) {
+            max = Math.max(contributorsExtractor.getContributors(contributionTimeSlot.getTimeSlot(), false).size(), max);
+        }
+        int maxContributors = max;
         int maxContributors4Weeks = contributorsPerWeek.subList(0, minMaxWindow).stream().mapToInt(c -> contributorsExtractor.getContributors(c.getTimeSlot(), false).size()).max().orElse(0);
         int minContributors4Weeks = contributorsPerWeek.subList(0, minMaxWindow).stream().mapToInt(c -> contributorsExtractor.getContributors(c.getTimeSlot(), false).size()).min().orElse(0);
         landscapeReport.addTableCell("<b>Contributors</b>" +
@@ -1029,34 +1056,51 @@ public class LandscapeReportGenerator {
     }
 
     private int getContributorsCountPerYear(String year) {
-       Set<String> emails = new HashSet<>();
-
-        landscapeAnalysisResults.getContributors().forEach(contributorProjects -> {
-            if (contributorProjects.getContributor().getActiveYears().contains(year)) {
-                emails.add(contributorProjects.getContributor().getEmail());
-            }
-        });
-
-        return emails.size();
+        return this.contributorsPerYearMap.containsKey(year) ? contributorsPerYearMap.get(year).size() : 0;
     }
 
-    private List<String> getContributorsPerWeek(String week, boolean rookiesOnly) {
-        Map<String, String> emails = new HashMap();
-
-        landscapeAnalysisResults.getContributors().stream()
-                .sorted((a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days())
-                .filter(c -> !rookiesOnly || c.getContributor().isRookieAtDate(week)).forEach(contributorProjects -> {
+    private void populateTimeSlotMaps() {
+        landscapeAnalysisResults.getContributors().forEach(contributorProjects -> {
             List<String> commitDates = contributorProjects.getContributor().getCommitDates();
-            commitDates.stream().map(d -> DateUtils.getWeekMonday(d)).forEach(monday -> {
-                if (monday.equals(week)) {
-                    String email = contributorProjects.getContributor().getEmail();
-                    emails.put(email, email);
-                    return;
-                }
+            commitDates.forEach(day -> {
+                String week = DateUtils.getWeekMonday(day);
+                String month = DateUtils.getMonth(day);
+                String year = DateUtils.getYear(day);
+
+                updateTimeSlotMap(contributorProjects, contributorsPerWeekMap, rookiesPerWeekMap, week, week);
+                updateTimeSlotMap(contributorProjects, contributorsPerMonthMap, rookiesPerMonthMap, month, month + "-01");
+                updateTimeSlotMap(contributorProjects, contributorsPerYearMap, rookiesPerYearMap, year, year + "-01-01");
             });
         });
 
-        return new ArrayList<>(emails.values());
+    }
+
+    private void updateTimeSlotMap(ContributorProjects contributorProjects,
+                                   Map<String, List<String>> map, Map<String, List<String>> rookiesMap, String key, String rookieDate) {
+        boolean rookie = contributorProjects.getContributor().isRookieAtDate(rookieDate);
+
+        String email = contributorProjects.getContributor().getEmail();
+        if (map.containsKey(key)) {
+            if (!map.get(key).contains(email)) {
+                map.get(key).add(email);
+            }
+        } else {
+            map.put(key, new ArrayList<>(Arrays.asList(email)));
+        }
+        if (rookie) {
+            if (rookiesMap.containsKey(key)) {
+                if (!rookiesMap.get(key).contains(email)) {
+                    rookiesMap.get(key).add(email);
+                }
+            } else {
+                rookiesMap.put(key, new ArrayList<>(Arrays.asList(email)));
+            }
+        }
+    }
+
+    private List<String> getContributorsPerWeek(String week, boolean rookiesOnly) {
+        Map<String, List<String>> map = rookiesOnly ? rookiesPerWeekMap : contributorsPerWeekMap;
+        return map.containsKey(week) ? map.get(week) : new ArrayList<>();
     }
 
     private List<String> getLastContributorsPerWeek(String week, boolean first) {
@@ -1079,22 +1123,8 @@ public class LandscapeReportGenerator {
     }
 
     private List<String> getContributorsPerMonth(String month, boolean rookiesOnly) {
-        Map<String, String> emails = new HashMap();
-
-        landscapeAnalysisResults.getContributors().stream()
-                .sorted((a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days())
-                .filter(c -> !rookiesOnly || c.getContributor().isRookieAtDate(month + "-01")).forEach(contributorProjects -> {
-            List<String> commitDates = contributorProjects.getContributor().getCommitDates();
-            commitDates.stream().map(d -> d.substring(0, 7)).forEach(commitMonth -> {
-                if (commitMonth.equals(month)) {
-                    String email = contributorProjects.getContributor().getEmail();
-                    emails.put(email, email);
-                    return;
-                }
-            });
-        });
-
-        return new ArrayList<>(emails.values());
+        Map<String, List<String>> map = rookiesOnly ? rookiesPerMonthMap : contributorsPerMonthMap;
+        return map.containsKey(month) ? map.get(month) : new ArrayList<>();
     }
 
     private List<String> getLastContributorsPerMonth(String month, boolean first) {

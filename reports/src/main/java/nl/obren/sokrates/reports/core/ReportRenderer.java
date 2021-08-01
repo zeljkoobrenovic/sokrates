@@ -51,6 +51,7 @@ public class ReportRenderer {
                 renderAndSaveVisuals(reportRenderingClient, fragment);
             } else {
                 if (fragment.isShow()) {
+                    System.out.println("Rendering graphviz content: " + fragment.getId());
                     reportRenderingClient.append(GraphvizUtil.getSvgFromDot(fragment.getFragment()) + "\n");
                 }
             }
@@ -73,6 +74,7 @@ public class ReportRenderer {
             File dotFile = new File(folder, id + ".dot.txt");
             FileUtils.write(dotFile, fragment.getFragment(), StandardCharsets.UTF_8);
 
+            System.out.println("Rendering graphviz file " + fragment.getId());
             String svgContent = GraphvizUtil.getSvgFromDot(fragment.getFragment());
 
             if (fragment.isShow()) {

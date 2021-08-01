@@ -9,9 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
+import java.util.*;
 
 public class DateUtils {
     public static final String ENV_SOKRATES_SOURCE_CODE_DATE = "SOKRATES_SOURCE_CODE_DATE";
@@ -108,6 +106,14 @@ public class DateUtils {
         return calendar;
     }
 
+    public static String getAnalysisDate() {
+        Calendar calendar = Calendar.getInstance();
+
+        updateWithDateParams(calendar);
+
+        return new SimpleDateFormat(DATE_FORMAT).format(calendar.getTime());
+    }
+
     public static Calendar getCalendar(String date) {
         Calendar calendar = Calendar.getInstance();
 
@@ -157,14 +163,20 @@ public class DateUtils {
         DateUtils.latestCommitDate = latestCommitDate;
     }
 
+    private static Map<String,String> mondays = new HashMap<>();
     public static String getWeekMonday(String date) {
+        if (mondays.containsKey(date)) {
+            return mondays.get(date);
+        }
         Calendar calendar = getCalendar(date);
 
         if (calendar != null) {
             while (calendar.get(Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
                 calendar.add(Calendar.DATE, -1);
             }
-            return new SimpleDateFormat("yyyy-MM-dd").format(calendar.getTime());
+            String formatedDate = new SimpleDateFormat("yyyy-MM-dd").format(calendar.getTime());
+            mondays.put(date, formatedDate);
+            return formatedDate;
         }
 
         return "";

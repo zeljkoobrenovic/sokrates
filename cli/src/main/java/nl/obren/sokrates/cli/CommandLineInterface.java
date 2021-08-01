@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.cli;
 
+import nl.obren.sokrates.cli.git.GitHistoryExtractor;
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.renderingutils.Thresholds;
@@ -58,6 +59,7 @@ public class CommandLineInterface {
     public static final String EXPORT_STANDARD_CONVENTIONS = "exportStandardConventions";
     public static final String EXTRACT_FILES = "extractFiles";
     public static final String EXTRACT_GIT_HISTORY = "extractGitHistory";
+    public static final String EXTRACT_GIT_SUB_HISTORY = "extractGitSubHistory";
 
     // arguments
     public static final String SRC_ROOT = "srcRoot";
@@ -155,6 +157,9 @@ public class CommandLineInterface {
             } else if (args[0].equalsIgnoreCase(EXTRACT_GIT_HISTORY)) {
                 extractGitHistory(args);
                 return;
+            } else if (args[0].equalsIgnoreCase(EXTRACT_GIT_SUB_HISTORY)) {
+                extractGitSubHistory(args);
+                return;
             } else if (args[0].equalsIgnoreCase(UPDATE_LANDSCAPE)) {
                 updateLandscape(args);
                 return;
@@ -173,8 +178,26 @@ public class CommandLineInterface {
         }
     }
 
-    private void extractGitHistory(String[] args) throws ParseException, IOException {
+    private void extractGitHistory(String[] args) throws ParseException {
         Options options = getExtractGitHistoryOption();
+        CommandLineParser parser = new DefaultParser();
+        CommandLine cmd = parser.parse(options, args);
+
+        String strRootPath = cmd.getOptionValue(analysisRoot.getOpt());
+        if (!cmd.hasOption(analysisRoot.getOpt())) {
+            strRootPath = ".";
+        }
+
+        File root = new File(strRootPath);
+        if (!root.exists()) {
+            LOG.error("The analysis root \"" + root.getPath() + "\" does not exist.");
+            return;
+        }
+
+        new GitHistoryExtractor().extractGitHistory(root);
+    }
+    private void extractGitSubHistory(String[] args) throws ParseException, IOException {
+        Options options = getExtractGitSubHistoryOption();
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
@@ -228,7 +251,7 @@ public class CommandLineInterface {
     }
 
     private void updateLandscape(String[] args) throws ParseException {
-        Options options = getExtractGitHistoryOption();
+        Options options = getExtractGitSubHistoryOption();
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
@@ -674,7 +697,7 @@ public class CommandLineInterface {
         System.out.println("\njava -jar sokrates.jar " + UPDATE_LANDSCAPE + " [options]\n    Updates or creates a landscape report\n");
         System.out.println("\njava -jar sokrates.jar " + EXPORT_STANDARD_CONVENTIONS + " [options]\n    Export standard scpoing conventiosn to a JSON file\n");
         System.out.println("\njava -jar sokrates.jar " + EXTRACT_FILES + " [options]\n    Split files based on a path regex pattern\n");
-        System.out.println("\njava -jar sokrates.jar " + EXTRACT_GIT_HISTORY + " [options]\n    Split a git history file inot smaller ones\n");
+        System.out.println("\njava -jar sokrates.jar " + EXTRACT_GIT_SUB_HISTORY + " [options]\n    Split a git history file inot smaller ones\n");
         System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
         usage(INIT, getInitOptions());
         System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
@@ -686,7 +709,7 @@ public class CommandLineInterface {
         System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
         usage(EXTRACT_FILES, getExtractFilesOption());
         System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
-        usage(EXTRACT_GIT_HISTORY, getExtractGitHistoryOption());
+        usage(EXTRACT_GIT_SUB_HISTORY, getExtractGitSubHistoryOption());
     }
 
     private void usage(String prefix, Options options) {
@@ -774,6 +797,14 @@ public class CommandLineInterface {
     }
 
     private Options getExtractGitHistoryOption() {
+        Options options = new Options();
+        options.addOption(analysisRoot);
+        analysisRoot.setRequired(false);
+
+        return options;
+    }
+
+    private Options getExtractGitSubHistoryOption() {
         Options options = new Options();
         options.addOption(prefix);
         options.addOption(analysisRoot);

@@ -7,18 +7,17 @@ package nl.obren.sokrates.sourcecode.githistory;
  */
 
 import nl.obren.sokrates.common.utils.RegexUtils;
-import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GitHistoryUtils {
     public static final String GIT_HISTORY_FILE_NAME = "git-history.txt";
+    private static List<FileUpdate> updates = null;
 
     public static String printContributorsCommand() {
         return "git ls-files -z | xargs -0 -n1 -I{} -- git log --date=short --format=\"%ad %ae %H {}\" {} > " + GIT_HISTORY_FILE_NAME;
@@ -48,9 +47,12 @@ public class GitHistoryUtils {
         return false;
     }
 
-
     public static List<FileUpdate> getHistoryFromFile(File file, List<String> ignoreContributors) {
-        List<FileUpdate> updates = new ArrayList<>();
+        if (updates != null) {
+            return updates;
+        }
+        updates = new ArrayList<>();
+        System.out.println("Reading history from file");
         List<String> lines;
         try {
             lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
@@ -61,12 +63,12 @@ public class GitHistoryUtils {
 
         lines.stream().forEach(line -> {
             FileUpdate fileUpdate = GitHistoryUtils.parseLine(line);
-            if (fileUpdate != null) {
+            if (fileUpdate != null && !shouldIgnore(fileUpdate.getAuthorEmail(), ignoreContributors)) {
                 updates.add(fileUpdate);
             }
         });
 
-        return updates.stream().filter(f -> !shouldIgnore(f.getAuthorEmail(), ignoreContributors)).collect(Collectors.toList());
+        return updates;
     }
 
     public static FileUpdate parseLine(String line) {

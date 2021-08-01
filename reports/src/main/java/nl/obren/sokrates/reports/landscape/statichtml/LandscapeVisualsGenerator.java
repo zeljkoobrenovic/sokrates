@@ -72,6 +72,7 @@ public class LandscapeVisualsGenerator {
     }
 
     public void exportVisuals(String nameSuffix, List<VisualizationItem> items) throws IOException {
+        System.out.println("Exporting visuals for " + nameSuffix + ".");
         File folder = Paths.get(landscapeReportsFolder.getPath(), "visuals").toFile();
         folder.mkdirs();
         FileUtils.write(new File(folder, "bubble_chart_" + nameSuffix + ".html"), new VisualizationTemplate().renderBubbleChart(items), UTF_8);

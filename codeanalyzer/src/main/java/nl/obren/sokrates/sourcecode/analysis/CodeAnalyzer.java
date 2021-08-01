@@ -66,7 +66,7 @@ public class CodeAnalyzer {
         }
 
         if (shouldAnalyzeFileHistory()) {
-            AnalysisUtils.info(textSummary, progressFeedback, "Analysing commits history...", start);
+            AnalysisUtils.info(textSummary, progressFeedback, "Analysing commit history...", start);
             new FileHistoryAnalyzer(results, codeConfigurationFile.getParentFile()).analyze();
         }
 

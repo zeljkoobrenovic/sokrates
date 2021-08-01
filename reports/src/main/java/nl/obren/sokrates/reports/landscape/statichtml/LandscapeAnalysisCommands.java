@@ -65,11 +65,13 @@ public class LandscapeAnalysisCommands {
             File finalReportsFolder = reportsFolder;
             String customHtmlReportHeaderFragment = landscapeAnalysisResults.getConfiguration().getCustomHtmlReportHeaderFragment();
             reports.forEach(report -> {
+                System.out.println("Exporting " + report.getFileName() + ".");
                 ReportFileExporter.exportHtml(finalReportsFolder, "", report, customHtmlReportHeaderFragment);
             });
 
             File finalIndividualReportsFolder = individualReportsFolder;
             reportGenerator.getIndividualContributorReports().forEach(individualReport -> {
+                System.out.println("Exporting " + individualReport.getFileName() + ".");
                 ReportFileExporter.exportHtml(finalIndividualReportsFolder, "", individualReport, customHtmlReportHeaderFragment);
             });
 

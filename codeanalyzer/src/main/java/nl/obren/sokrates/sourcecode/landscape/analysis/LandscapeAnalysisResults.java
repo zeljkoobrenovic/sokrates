@@ -55,6 +55,12 @@ public class LandscapeAnalysisResults {
     @JsonIgnore
     private LandscapeConfiguration configuration = new LandscapeConfiguration();
 
+    @JsonIgnore
+    private Map<String, List<Contributor>> contributorsPerMonthMap = null;
+
+    @JsonIgnore
+    private Map<String, List<Contributor>> contributorsPerYearMap = null;
+
     private double c2cConnectionsCount30Days;
     private double c2pConnectionsCount30Days;
 
@@ -299,8 +305,15 @@ public class LandscapeAnalysisResults {
         return extensions;
     }
 
+
+    @JsonIgnore
+    private List<ContributorProjects> contributorsCache;
+
     @JsonIgnore
     public List<ContributorProjects> getContributors() {
+        if (contributorsCache != null) {
+            return contributorsCache;
+        }
         int thresholdCommits = configuration.getContributorThresholdCommits();
         List<ContributorProjects> contributorProjects = getAllContributors().stream()
                 .filter(c -> c.getContributor().getCommitsCount() >= thresholdCommits)
@@ -313,6 +326,7 @@ public class LandscapeAnalysisResults {
                 counter[0] += 1;
             });
         }
+        contributorsCache = contributorProjects;
         return contributorProjects;
     }
 
@@ -367,7 +381,7 @@ public class LandscapeAnalysisResults {
     }
 
     @JsonIgnore
-    public List<ContributorProjects> getAllContributors() {
+    private List<ContributorProjects> getAllContributors() {
         List<ContributorProjects> list = new ArrayList<>();
         Map<String, ContributorProjects> map = new HashMap<>();
 
@@ -381,6 +395,7 @@ public class LandscapeAnalysisResults {
                 if (configuration.getTransformContributorEmails().size() > 0) {
                     ComplexOperation operation = new ComplexOperation(configuration.getTransformContributorEmails());
                     contributorId = operation.exec(contributorId);
+                    System.out.println(contributor.getEmail() + " -> " + contributorId);
                 }
 
                 if (StringUtils.isBlank(contributorId)) {

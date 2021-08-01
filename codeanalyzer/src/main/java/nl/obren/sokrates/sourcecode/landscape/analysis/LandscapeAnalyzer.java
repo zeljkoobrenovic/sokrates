@@ -38,6 +38,7 @@ public class LandscapeAnalyzer {
             this.landscapeConfiguration = (LandscapeConfiguration) new JsonMapper().getObject(json, LandscapeConfiguration.class);
             landscapeAnalysisResults.setConfiguration(landscapeConfiguration);
             landscapeConfiguration.getProjects().forEach(link -> {
+                System.out.println("Analysing " + link.getAnalysisResultsPath() + "...");
                 CodeAnalysisResults projectAnalysisResults = this.getProjectAnalysisResults(link);
                 if (projectAnalysisResults != null) {
                     landscapeAnalysisResults.getProjectAnalysisResults().add(new ProjectAnalysisResults(link, projectAnalysisResults));
@@ -61,11 +62,15 @@ public class LandscapeAnalyzer {
     }
 
     private void updatePeopleDependencies(LandscapeAnalysisResults landscapeAnalysisResults) {
+        System.out.println("Updating people dependencies....");
         List<ContributorProjects> contributors = landscapeAnalysisResults.getContributors();
+        System.out.println("Updating people dependencies in past 30d....");
         List<ComponentDependency> peopleDependencies30Days = ContributorConnectionUtils.getPeopleDependencies(contributors, 0, 30);
         landscapeAnalysisResults.setPeopleDependencies30Days(peopleDependencies30Days);
+        System.out.println("Updating people dependencies in past 90d....");
         List<ComponentDependency> peopleDependencies90Days = ContributorConnectionUtils.getPeopleDependencies(contributors, 0, 90);
         landscapeAnalysisResults.setPeopleDependencies90Days(peopleDependencies90Days);
+        System.out.println("Updating people dependencies in past 180d....");
         List<ComponentDependency> peopleDependencies180Days = ContributorConnectionUtils.getPeopleDependencies(contributors, 0, 180);
         landscapeAnalysisResults.setPeopleDependencies180Days(peopleDependencies180Days);
 
@@ -107,7 +112,9 @@ public class LandscapeAnalyzer {
         landscapeAnalysisResults.setC2cConnectionsCount30Days(peopleDependencies30Days.size());
         landscapeAnalysisResults.setC2pConnectionsCount30Days(connectionsViaProjects30Days.stream().mapToInt(c -> c.getConnectionsCount()).sum());
 
+        System.out.println("Adding history....");
         addHistory(landscapeAnalysisResults);
+        System.out.println("Done updating people dependencies.");
     }
 
     private void addHistory(LandscapeAnalysisResults landscapeAnalysisResults) {
