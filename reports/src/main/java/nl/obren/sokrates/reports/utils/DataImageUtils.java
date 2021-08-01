@@ -56,6 +56,7 @@ public class DataImageUtils {
         map.put("gy", "Groovy.png");
         map.put("gsh", "Groovy.png");
         map.put("gradle", "gradle.png");
+        map.put("bzl", "bazel.png");
 
         map.put("swift", "Swift.png");
         map.put("perl", "Perl.png");

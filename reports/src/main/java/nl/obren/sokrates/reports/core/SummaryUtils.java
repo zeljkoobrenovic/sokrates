@@ -399,15 +399,22 @@ public class SummaryUtils {
         report.startTableCellColSpan("border: none", 2);
         report.addContentInDiv("Features of interest:", "font-size: 80%");
         Collections.sort(fileCount, (a, b) -> b.getValue().intValue() - a.getValue().intValue());
-        fileCount.subList(0, fileCount.size() > 10 ? 10 : fileCount.size()).forEach(concern -> {
+        int limit = 10;
+        fileCount.subList(0, fileCount.size() > limit ? limit : fileCount.size()).forEach(concern -> {
             int value = concern.getValue().intValue();
             report.addContentInDiv("<b>" + concern.getName() + "</b> " +
                             "<br><span style='font-size: 85%; color: grey'>" + value + " " + (value == 1 ? "file" : "files") + "",
                     "text-align: center; font-size: 80%; border: 1px solid grey; display: inline-block; border-radius: 4px; background-color: #f8f8f8; padding: 3px 9px 3px 9px; margin: 3px 2px 8px 2px");
         });
-        if (fileCount.size() > 10) {
-            report.addContentInDiv("...<br><span style='font-size: 85%; color: grey'>&nbsp;</span>",
-                    "text-align: center; font-size: 80%; border: 1px solid grey; display: inline-block; border-radius: 4px; background-color: #f8f8f8; padding: 3px 9px 3px 9px; margin: 3px 2px 8px 2px");
+        if (fileCount.size() > limit) {
+            report.startShowMoreBlockDisappear("", "<div style='vertical-align: middle; font-size: 80%; display: inline-block;'>show all...</div>");
+            fileCount.subList(limit, fileCount.size()).forEach(concern -> {
+                int value = concern.getValue().intValue();
+                report.addContentInDiv("<b>" + concern.getName() + "</b> " +
+                                "<br><span style='font-size: 85%; color: grey'>" + value + " " + (value == 1 ? "file" : "files") + "",
+                        "text-align: center; font-size: 80%; border: 1px solid grey; display: inline-block; border-radius: 4px; background-color: #f8f8f8; padding: 3px 9px 3px 9px; margin: 3px 2px 8px 2px");
+            });
+            report.endShowMoreBlock();
         }
         report.endTableCell();
         report.addTableCell("<a href='" + reportRoot + "FeaturesOfInterest.html'  title='metrics &amp; goals details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "border: none");
