@@ -4,6 +4,8 @@
 
 package nl.obren.sokrates.sourcecode.filehistory;
 
+import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
+import nl.obren.sokrates.sourcecode.githistory.AuthorCommit;
 import nl.obren.sokrates.sourcecode.githistory.FileUpdate;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 
@@ -17,10 +19,10 @@ public class GitHistoryUtil {
     List<FileModificationHistory> files = new ArrayList<>();
     Map<String, FileModificationHistory> map = new HashMap<>();
 
-    public List<FileModificationHistory> importGitLsFilesExport(File file, List<String> ignoreContributors) {
+    public List<FileModificationHistory> importGitLsFilesExport(File file, FileHistoryAnalysisConfig config) {
         files = new ArrayList<>();
         map = new HashMap<>();
-        GitHistoryUtils.getHistoryFromFile(file, ignoreContributors).forEach(fileUpdate -> {
+        GitHistoryUtils.getHistoryFromFile(file, config).forEach(fileUpdate -> {
             processUpdate(fileUpdate);
         });
         return files;

@@ -1,5 +1,6 @@
 package nl.obren.sokrates.sourcecode.githistory;
 
+import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 
 import java.io.File;
@@ -15,8 +16,8 @@ public class GitHistoryPerExtensionUtils {
     private Map<String, List<String>> paths30Days = new HashMap<>();
     private Map<String, List<String>> paths90Days = new HashMap<>();
 
-    public List<CommitsPerExtension> getCommitsPerExtensions(File file, List<String> ignoreContributors) {
-        GitHistoryUtils.getHistoryFromFile(file, ignoreContributors).forEach(fileUpdate -> {
+    public List<CommitsPerExtension> getCommitsPerExtensions(File file, FileHistoryAnalysisConfig config) {
+        GitHistoryUtils.getHistoryFromFile(file, config).forEach(fileUpdate -> {
             String extension = fileUpdate.getExtension();
             String path = fileUpdate.getPath();
             String email = fileUpdate.getAuthorEmail();

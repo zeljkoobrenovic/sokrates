@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.sourcecode.contributors;
 
+import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.githistory.AuthorCommit;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryPerExtensionUtils;
@@ -15,9 +16,9 @@ import java.util.*;
 import java.util.function.Function;
 
 public class GitContributorsUtil {
-    public static ContributorsImport importGitContributorsExport(File file, List<String> ignoreContributors) {
+    public static ContributorsImport importGitContributorsExport(File file, FileHistoryAnalysisConfig config) {
         ContributorsImport contributorsImport = new ContributorsImport();
-        List<AuthorCommit> authorCommits = GitHistoryUtils.getAuthorCommits(file, ignoreContributors);
+        List<AuthorCommit> authorCommits = GitHistoryUtils.getAuthorCommits(file, config);
         authorCommits.forEach(commit -> {
             String date = commit.getDate();
             if (StringUtils.isBlank(contributorsImport.getFirstCommitDate()) || date.compareTo(contributorsImport.getFirstCommitDate()) <= 0) {
@@ -42,8 +43,8 @@ public class GitContributorsUtil {
         return contributorsImport;
     }
 
-    public static List<CommitsPerExtension> getCommitsPerExtension(File file, List<String> ignoreContributors) {
-        return new GitHistoryPerExtensionUtils().getCommitsPerExtensions(file, ignoreContributors);
+    public static List<CommitsPerExtension> getCommitsPerExtension(File file, FileHistoryAnalysisConfig config) {
+        return new GitHistoryPerExtensionUtils().getCommitsPerExtensions(file, config);
     }
 
     public static List<Contributor> getContributors(List<AuthorCommit> authorCommits) {

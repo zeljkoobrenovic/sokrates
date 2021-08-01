@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.sourcecode.scoping.custom;
 
+import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.aspects.Concern;
 import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
 import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
@@ -34,6 +35,7 @@ public class CustomScopingConventions {
     private boolean ignoreStandardControls = false;
     List<MetricsWithGoal> goalsAndControls = new ArrayList<>();
 
+    private FileHistoryAnalysisConfig fileHistoryAnalysis = new FileHistoryAnalysisConfig();
     private AnalysisConfig analysis = new AnalysisConfig();
 
     public CustomExtensionConventions getExtensions() {
@@ -170,5 +172,13 @@ public class CustomScopingConventions {
 
     public void setGoalsAndControls(List<MetricsWithGoal> goalsAndControls) {
         this.goalsAndControls = goalsAndControls;
+    }
+
+    public FileHistoryAnalysisConfig getFileHistoryAnalysis() {
+        return fileHistoryAnalysis;
+    }
+
+    public void setFileHistoryAnalysis(FileHistoryAnalysisConfig fileHistoryAnalysis) {
+        this.fileHistoryAnalysis = fileHistoryAnalysis;
     }
 }

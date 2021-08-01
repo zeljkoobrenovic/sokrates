@@ -23,10 +23,14 @@ import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileSizeDistribution;
 import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils.FILES_IN_MULTIPLE_CLASSIFICATIONS;
+import static nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils.UNCLASSIFIED_FILES;
 
 public class SummaryUtils {
     private static final int BAR_WIDTH = 260;
@@ -69,6 +73,7 @@ public class SummaryUtils {
         if (showControls) {
             summarizeGoals(analysisResults, report);
         }
+        summarizeFeaturesOfInterest(analysisResults, report);
         addSummaryFindings(analysisResults, report);
         report.endTable();
         report.endDiv();
@@ -234,7 +239,7 @@ public class SummaryUtils {
 
     private void summarizeMainCode(CodeAnalysisResults analysisResults, StringBuilder summary) {
         summary.append("<td style='border: none'>" + getIconSvg("codebase") + "</td>");
-        summary.append("<td style='border: none'>");
+        summary.append("<td style='border: none; width: 300px; max-width: 300px'>");
         int totalLoc = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
         List<NumericMetric> linesOfCodePerExtension = analysisResults.getMainAspectAnalysisResults().getLinesOfCodePerExtension();
         summary.append("<div>" + getVolumeVisual(linesOfCodePerExtension, totalLoc, totalLoc, "") + "</div>");
@@ -368,6 +373,44 @@ public class SummaryUtils {
         });
         report.endTableCell();
         report.addTableCell("<a href='" + reportRoot + "Controls.html'  title='metrics &amp; goals details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "border: none");
+
+        report.endTableRow();
+    }
+
+    private void summarizeFeaturesOfInterest(CodeAnalysisResults analysisResults, RichTextReport report) {
+        List<NumericMetric> fileCount = new ArrayList<>();
+        analysisResults.getConcernsAnalysisResults().forEach(concernsGroupResults -> {
+            concernsGroupResults.getFileCountPerConcern().stream()
+                    .filter(c -> c.getValue().intValue() > 0)
+                    .filter(c -> !c.getName().equalsIgnoreCase(UNCLASSIFIED_FILES))
+                    .filter(c -> !c.getName().equalsIgnoreCase(FILES_IN_MULTIPLE_CLASSIFICATIONS))
+                    .forEach(concern -> {
+                        fileCount.add(concern);
+                    });
+        });
+
+        if (fileCount.size() == 0) {
+            return;
+        }
+
+        report.startTableRow();
+        report.addTableCell(getIconSvg("cross_cutting_concerns"), "border: none");
+
+        report.startTableCellColSpan("border: none", 2);
+        report.addContentInDiv("Features of interest:", "font-size: 80%");
+        Collections.sort(fileCount, (a, b) -> b.getValue().intValue() - a.getValue().intValue());
+        fileCount.subList(0, fileCount.size() > 10 ? 10 : fileCount.size()).forEach(concern -> {
+            int value = concern.getValue().intValue();
+            report.addContentInDiv("<b>" + concern.getName() + "</b> " +
+                            "<br><span style='font-size: 85%; color: grey'>" + value + " " + (value == 1 ? "file" : "files") + "",
+                    "text-align: center; font-size: 80%; border: 1px solid grey; display: inline-block; border-radius: 4px; background-color: #f8f8f8; padding: 3px 9px 3px 9px; margin: 3px 2px 8px 2px");
+        });
+        if (fileCount.size() > 10) {
+            report.addContentInDiv("...<br><span style='font-size: 85%; color: grey'>&nbsp;</span>",
+                    "text-align: center; font-size: 80%; border: 1px solid grey; display: inline-block; border-radius: 4px; background-color: #f8f8f8; padding: 3px 9px 3px 9px; margin: 3px 2px 8px 2px");
+        }
+        report.endTableCell();
+        report.addTableCell("<a href='" + reportRoot + "FeaturesOfInterest.html'  title='metrics &amp; goals details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "border: none");
 
         report.endTableRow();
     }

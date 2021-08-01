@@ -101,6 +101,7 @@ public class ScopeCreator {
         codeConfiguration.getFileHistoryAnalysis().getIgnoreContributors().addAll(customScopingConventions.getIgnoreContributors());
 
         codeConfiguration.setAnalysis(customScopingConventions.getAnalysis());
+        codeConfiguration.setFileHistoryAnalysis(customScopingConventions.getFileHistoryAnalysis());
 
         codeConfiguration.getMetadata().setLogoLink(customScopingConventions.getLogoLink());
 

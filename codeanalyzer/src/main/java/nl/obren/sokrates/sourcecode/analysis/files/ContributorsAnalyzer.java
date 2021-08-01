@@ -5,6 +5,7 @@
 package nl.obren.sokrates.sourcecode.analysis.files;
 
 import nl.obren.sokrates.sourcecode.analysis.Analyzer;
+import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributorsImport;
@@ -33,16 +34,16 @@ public class ContributorsAnalyzer extends Analyzer {
     }
 
     public void analyze() {
-        if (codeConfiguration.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesFolder)) {
-            List<String> ignoreContributors = codeConfiguration.getFileHistoryAnalysis().getIgnoreContributors();
-            ContributorsImport contributorsImport = codeConfiguration.getFileHistoryAnalysis().getContributors(sokratesFolder, ignoreContributors);
+        FileHistoryAnalysisConfig fileHistoryAnalysisConfig = codeConfiguration.getFileHistoryAnalysis();
+        if (fileHistoryAnalysisConfig.filesHistoryImportPathExists(sokratesFolder)) {
+            ContributorsImport contributorsImport = fileHistoryAnalysisConfig.getContributors(sokratesFolder, fileHistoryAnalysisConfig);
             analysisResults.setLatestCommitDate(contributorsImport.getLatestCommitDate());
             analysisResults.setContributors(contributorsImport.getContributors());
             analysisResults.setContributorsPerYear(contributorsImport.getContributorsPerYear());
             analysisResults.setContributorsPerMonth(contributorsImport.getContributorsPerMonth());
             analysisResults.setContributorsPerWeek(contributorsImport.getContributorsPerWeek());
             analysisResults.setContributorsPerDay(contributorsImport.getContributorsPerDay());
-            analysisResults.setCommitsPerExtensions(codeConfiguration.getFileHistoryAnalysis().getCommitsPerExtension(sokratesFolder, ignoreContributors));
+            analysisResults.setCommitsPerExtensions(fileHistoryAnalysisConfig.getCommitsPerExtension(sokratesFolder, fileHistoryAnalysisConfig));
 
             analysisResults.setPeopleDependencies30Days(getPeopleDependencies(codeAnalysisResults, 30));
             analysisResults.setPeopleDependencies90Days(getPeopleDependencies(codeAnalysisResults, 90));
