@@ -580,8 +580,8 @@ public class LandscapeReportGenerator {
 
                 landscapeReport.startShowMoreBlock("show details...");
 
-                landscapeReport.startTable("width: 100%");
-                landscapeReport.addTableHeader("Extension",
+                landscapeReport.startTable("");
+                landscapeReport.addTableHeader("", "Extension",
                         "# contributors<br>30 days", "# commits<br>30 days", "# files<br>30 days",
                         "# contributors<br>90 days", "# commits<br>90 days", "# files<br>90 days",
                         "# contributors", "# commits", "# files");
@@ -619,7 +619,9 @@ public class LandscapeReportGenerator {
     private void addCommitExtension(CommitsPerExtension commitsPerExtension) {
         landscapeReport.startTableRow(commitsPerExtension.getCommitters30Days().size() > 0 ? "font-weight: bold;"
                 : "color: " + (commitsPerExtension.getCommitters90Days().size() > 0 ? "grey" : "lightgrey"));
-        landscapeReport.addTableCell("" + commitsPerExtension.getExtension(), "text-align: center;");
+        String extension = commitsPerExtension.getExtension();
+        landscapeReport.addTableCell("" + DataImageUtils.getLangDataImageDiv42(extension), "text-align: center;");
+        landscapeReport.addTableCell("" + extension, "text-align: center; max-width: 100px; width: 100px");
         landscapeReport.addTableCell("" + commitsPerExtension.getCommitters30Days().size(), "text-align: center;");
         landscapeReport.addTableCell("" + commitsPerExtension.getCommitsCount30Days(), "text-align: center;");
         landscapeReport.addTableCell("" + commitsPerExtension.getFilesCount30Days(), "text-align: center;");

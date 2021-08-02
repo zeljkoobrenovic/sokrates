@@ -66,7 +66,7 @@ public class GitHistoryUtils {
 
         lines.stream().forEach(line -> {
             FileUpdate fileUpdate = GitHistoryUtils.parseLine(line, config);
-            if (fileUpdate != null && !shouldIgnore(fileUpdate.getAuthorEmail(), ignoreContributors)) {
+            if (fileUpdate != null) {
                 updates.add(fileUpdate);
             }
         });
@@ -75,6 +75,7 @@ public class GitHistoryUtils {
     }
 
     public static FileUpdate parseLine(String line, FileHistoryAnalysisConfig config) {
+        List<String> ignoreContributors = config.getIgnoreContributors();
         int index1 = line.indexOf(" ");
         if (index1 >= 10) {
             int index2 = line.indexOf(" ", index1 + 1);
@@ -83,6 +84,9 @@ public class GitHistoryUtils {
                 if (index3 > 0) {
                     String date = line.substring(0, 10).trim();
                     String author = line.substring(index1 + 1, index2).trim();
+                    if (shouldIgnore(author, ignoreContributors)) {
+                        return null;
+                    }
                     if (config.getTransformContributorEmails().size() > 0) {
                         ComplexOperation operation = new ComplexOperation(config.getTransformContributorEmails());
                         String original = author;

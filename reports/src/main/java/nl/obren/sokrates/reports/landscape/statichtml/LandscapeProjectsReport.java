@@ -158,7 +158,7 @@ public class LandscapeProjectsReport {
 
     private void addTagStats(RichTextReport report) {
         report.startTable();
-        report.addTableHeader("Tag", "# projects", "LOC<br>(main)", "LOC<br>(test)", "# commits<br>(this year)", "# contributors<br>(30 days)");
+        report.addTableHeader("Tag", "# projects", "LOC<br>(main)", "LOC<br>(test)", "# commits<br>(30 days)", "# contributors<br>(30 days)");
 
         this.landscapeAnalysisResults.getConfiguration().getProjectTags().forEach(projectTag -> {
             String tagName = projectTag.getTag();
