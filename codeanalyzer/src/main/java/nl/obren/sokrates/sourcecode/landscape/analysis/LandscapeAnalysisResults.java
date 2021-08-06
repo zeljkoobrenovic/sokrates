@@ -101,6 +101,32 @@ public class LandscapeAnalysisResults {
 
     @JsonIgnore
     private List<ProjectAnalysisResults> projectAnalysisResults = new ArrayList<>();
+    @JsonIgnore
+    private List<ContributorProjects> contributorsCache;
+
+    public static int getLocActive(List<ProjectAnalysisResults> projectsAnalysisResults) {
+        int count[] = {0};
+        projectsAnalysisResults.forEach(projectAnalysisResults -> {
+            FilesHistoryAnalysisResults filesHistoryAnalysisResults = projectAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
+            SourceFileAgeDistribution overallFileLastModifiedDistribution = filesHistoryAnalysisResults.getOverallFileLastModifiedDistribution();
+            if (overallFileLastModifiedDistribution != null) {
+                count[0] += overallFileLastModifiedDistribution.getTotalValue() - overallFileLastModifiedDistribution.getVeryHighRiskValue();
+            }
+        });
+        return count[0];
+    }
+
+    public static int getLocNew(List<ProjectAnalysisResults> projectsAnalysisResults) {
+        int count[] = {0};
+        projectsAnalysisResults.forEach(projectAnalysisResults -> {
+            FilesHistoryAnalysisResults filesHistoryAnalysisResults = projectAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
+            SourceFileAgeDistribution overallFileFirstModifiedDistribution = filesHistoryAnalysisResults.getOverallFileFirstModifiedDistribution();
+            if (overallFileFirstModifiedDistribution != null) {
+                count[0] += overallFileFirstModifiedDistribution.getTotalValue() - overallFileFirstModifiedDistribution.getVeryHighRiskValue();
+            }
+        });
+        return count[0];
+    }
 
     public LandscapeConfiguration getConfiguration() {
         return configuration;
@@ -154,27 +180,11 @@ public class LandscapeAnalysisResults {
     }
 
     public int getMainLocActive() {
-        int count[] = {0};
-        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            FilesHistoryAnalysisResults filesHistoryAnalysisResults = projectAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
-            SourceFileAgeDistribution overallFileLastModifiedDistribution = filesHistoryAnalysisResults.getOverallFileLastModifiedDistribution();
-            if (overallFileLastModifiedDistribution != null) {
-                count[0] += overallFileLastModifiedDistribution.getTotalValue() - overallFileLastModifiedDistribution.getVeryHighRiskValue();
-            }
-        });
-        return count[0];
+        return getLocActive(getFilteredProjectAnalysisResults());
     }
 
     public int getMainLocNew() {
-        int count[] = {0};
-        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            FilesHistoryAnalysisResults filesHistoryAnalysisResults = projectAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
-            SourceFileAgeDistribution overallFileFirstModifiedDistribution = filesHistoryAnalysisResults.getOverallFileFirstModifiedDistribution();
-            if (overallFileFirstModifiedDistribution != null) {
-                count[0] += overallFileFirstModifiedDistribution.getTotalValue() - overallFileFirstModifiedDistribution.getVeryHighRiskValue();
-            }
-        });
-        return count[0];
+        return getLocNew(getFilteredProjectAnalysisResults());
     }
 
     public int getTestLoc() {
@@ -304,10 +314,6 @@ public class LandscapeAnalysisResults {
 
         return extensions;
     }
-
-
-    @JsonIgnore
-    private List<ContributorProjects> contributorsCache;
 
     @JsonIgnore
     public List<ContributorProjects> getContributors() {

@@ -576,7 +576,12 @@ public class LandscapeReportGenerator {
             List<CommitsPerExtension> perExtension = landscapeAnalysisResults.getContributorsPerExtension();
 
             if (perExtension.size() > 0) {
-                landscapeReport.startSubSection("Commits & File Extensions (" + perExtension.size() + ")", "");
+                int count = perExtension.size();
+                int limit = 100;
+                if (perExtension.size() > limit) {
+                    perExtension = perExtension.subList(0, limit);
+                }
+                landscapeReport.startSubSection("Commits & File Extensions (" + count + ")", "");
 
                 landscapeReport.startShowMoreBlock("show details...");
 
@@ -590,6 +595,9 @@ public class LandscapeReportGenerator {
                     addCommitExtension(commitsPerExtension);
                 });
                 landscapeReport.endTable();
+                if (perExtension.size() < count) {
+                    landscapeReport.addParagraph("Showing top " + limit + " items (out of " + count + ").");
+                }
 
                 landscapeReport.endShowMoreBlock();
 
@@ -856,6 +864,11 @@ public class LandscapeReportGenerator {
 
             landscapeReport.endTable();
 
+            String latestCommitDate = landscapeAnalysisResults.getLatestCommitDate();
+            if (latestCommitDate.length() > 5) {
+                latestCommitDate = latestCommitDate.substring(5);
+            }
+            landscapeReport.addParagraph(latestCommitDate, "margin-top: -4px; margin-left: 115px; color: grey; text-align: left; font-size: 11px");
             landscapeReport.addLineBreak();
         }
     }

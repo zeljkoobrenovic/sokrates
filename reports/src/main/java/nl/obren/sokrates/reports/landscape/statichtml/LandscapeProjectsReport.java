@@ -9,13 +9,16 @@ import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.landscape.ProjectTag;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ProjectAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.MetricRangeControl;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
+import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
@@ -52,7 +55,7 @@ public class LandscapeProjectsReport {
         List<String> headers = new ArrayList<>(Arrays.asList("", "Project" + (thresholdContributors > 1 ? "<br/>(" + thresholdContributors + "+&nbsp;contributors)" : ""),
                 "Main<br/>Language", "LOC<br/>(main)*",
                 "LOC<br/>(test)", "LOC<br/>(other)",
-                "Age", "Contributors" + (thresholdCommits > 1 ? "<br/>(" + thresholdCommits + "+&nbsp;commits)" : ""),
+                "Age", "Latest<br>Commit Date",
                 "Contributors<br>(30d)", "Rookies<br>(30d)", "Commits<br>(30d)"));
         if (showTags()) {
             headers.add(3, "Tags");
@@ -158,7 +161,7 @@ public class LandscapeProjectsReport {
 
     private void addTagStats(RichTextReport report) {
         report.startTable();
-        report.addTableHeader("Tag", "# projects", "LOC<br>(main)", "LOC<br>(test)", "# commits<br>(30 days)", "# contributors<br>(30 days)");
+        report.addTableHeader("Tag", "# projects", "LOC<br>(main)", "LOC<br>(test)", "LOC<br>(active)", "LOC<br>(new)", "# commits<br>(30 days)", "# contributors<br>(30 days)");
 
         this.landscapeAnalysisResults.getConfiguration().getProjectTags().forEach(projectTag -> {
             String tagName = projectTag.getTag();
@@ -274,6 +277,8 @@ public class LandscapeProjectsReport {
                     .stream()
                     .mapToInt(p -> p.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCode())
                     .sum()), "text-align: center");
+            report.addTableCell(FormattingUtils.formatCount(LandscapeAnalysisResults.getLocActive(projectsAnalysisResults), "text-align: center"));
+            report.addTableCell(FormattingUtils.formatCount(LandscapeAnalysisResults.getLocNew(projectsAnalysisResults), "text-align: center"));
             report.addTableCell(FormattingUtils.formatCount(projectsAnalysisResults
                     .stream()
                     .mapToInt(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days())
@@ -290,6 +295,9 @@ public class LandscapeProjectsReport {
         report.endTableRow();
     }
 
+
+
+
     private int getRecentContributorCount(List<ProjectAnalysisResults> projectsAnalysisResults) {
         Set<String> ids = new HashSet<>();
         projectsAnalysisResults.forEach(project -> {
@@ -305,7 +313,10 @@ public class LandscapeProjectsReport {
         Metadata metadata = analysisResults.getMetadata();
         String logoLink = metadata.getLogoLink();
 
-        report.startTableRow();
+        String latestCommitDate = projectAnalysis.getAnalysisResults().getContributorsAnalysisResults().getLatestCommitDate();
+        DateUtils.isCommittedLessThanDaysAgo(latestCommitDate, 90);
+        report.startTableRow(DateUtils.isCommittedLessThanDaysAgo(latestCommitDate, 90) ? ""
+                : (DateUtils.isCommittedLessThanDaysAgo(latestCommitDate, 180) ? "color:#b0b0b0" : "color:#c3c3c3"));
         report.addTableCell(StringUtils.isNotBlank(logoLink) ? "<img src='" + logoLink + "' style='width: 20px'>" : "", "text-align: center");
         report.addTableCell(metadata.getName());
         AspectAnalysisResults main = analysisResults.getMainAspectAnalysisResults();
@@ -318,7 +329,6 @@ public class LandscapeProjectsReport {
         List<Contributor> contributors = analysisResults.getContributorsAnalysisResults().getContributors()
                 .stream().filter(c -> c.getCommitsCount() >= thresholdCommits).collect(Collectors.toCollection(ArrayList::new));
 
-        int contributorsCount = contributors.size();
         int recentContributorsCount = (int) contributors.stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count();
         int rookiesCount = (int) contributors.stream().filter(c -> c.isRookie(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count();
 
@@ -337,27 +347,27 @@ public class LandscapeProjectsReport {
         report.endDiv();
         report.endTableCell();
         if (showTags()) {
-            report.addTableCell(getTags(projectAnalysis));
+            report.addTableCell(getTags(projectAnalysis), "color: black");
         }
-        report.addTableCell(FormattingUtils.formatCount(main.getLinesOfCode(), "-"), "text-align: center");
+        report.addTableCell(FormattingUtils.formatCount(main.getLinesOfCode(), "-"), "text-align: center; font-size: 90%");
 
-        report.addTableCell(FormattingUtils.formatCount(test.getLinesOfCode(), "-"), "text-align: center");
-        report.addTableCell(FormattingUtils.formatCount(generated.getLinesOfCode() + build.getLinesOfCode() + other.getLinesOfCode(), "-"), "text-align: center");
+        report.addTableCell(FormattingUtils.formatCount(test.getLinesOfCode(), "-"), "text-align: center; font-size: 90%");
+        report.addTableCell(FormattingUtils.formatCount(generated.getLinesOfCode() + build.getLinesOfCode() + other.getLinesOfCode(), "-"), "text-align: center; font-size: 90%");
         int projectAgeYears = (int) Math.round(analysisResults.getFilesHistoryAnalysisResults().getAgeInDays() / 365.0);
         String age = projectAgeYears == 0 ? "<1y" : projectAgeYears + "y";
-        report.addTableCell(age, "text-align: center");
-        report.addTableCell(FormattingUtils.formatCount(contributorsCount, "-"), "text-align: center");
-        report.addTableCell(FormattingUtils.formatCount(recentContributorsCount, "-"), "text-align: center");
-        report.addTableCell(FormattingUtils.formatCount(rookiesCount, "-"), "text-align: center");
-        report.addTableCell(FormattingUtils.formatCount(analysisResults.getContributorsAnalysisResults().getCommitsCount30Days(), "-"), "text-align: center");
+        report.addTableCell(age, "text-align: center; font-size: 90%");
+        report.addTableCell(latestCommitDate, "text-align: center; font-size: 90%");
+        report.addTableCell(FormattingUtils.formatCount(recentContributorsCount, "-"), "text-align: center; font-size: 90%");
+        report.addTableCell(FormattingUtils.formatCount(rookiesCount, "-"), "text-align: center; font-size: 90%");
+        report.addTableCell(FormattingUtils.formatCount(analysisResults.getContributorsAnalysisResults().getCommitsCount30Days(), "-"), "text-align: center; font-size: 90%");
         String projectReportUrl = getProjectReportUrl(projectAnalysis);
         if (showControls()) {
-            report.startTableCell("text-align: center");
+            report.startTableCell("text-align: cente; font-size: 90%");
             addControls(report, analysisResults);
             report.endTableCell();
         }
         report.addTableCell("<a href='" + projectReportUrl + "' target='_blank'>"
-                + "<div style='height: 40px'>" + ReportFileExporter.getIconSvg("report", 40) + "</div></a>", "text-align: center");
+                + "<div style='height: 40px'>" + ReportFileExporter.getIconSvg("report", 40) + "</div></a>", "text-align: center; font-size: 90%");
         report.endTableRow();
     }
 
