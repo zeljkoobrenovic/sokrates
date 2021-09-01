@@ -5,6 +5,7 @@
 package nl.obren.sokrates.common.utils;
 
 import java.text.DecimalFormat;
+import java.util.Locale;
 
 public class FormattingUtils {
     public static String getFormattedPercentage(double percentage) {
@@ -35,11 +36,11 @@ public class FormattingUtils {
         if (number < 1000) {
             return "<b>" + number + "</b>" + "";
         } else if (number < 10000) {
-            return "<b>" + removeZeroDecimalIfNecessary(String.format("%.1f", number / 1000f)) + "</b>" + "K";
+            return "<b>" + removeZeroDecimalIfNecessary(String.format(Locale.US, "%.1f", number / 1000f)) + "</b>" + "K";
         } else if (number < 1000000) {
             return "<b>" + Math.round(number / 1000f) + "</b>" + "K";
         } else if (number < 10000000) {
-            return "<b>" + removeZeroDecimalIfNecessary(String.format("%.1f", number / 1000000f)) + "</b>" + "M";
+            return "<b>" + removeZeroDecimalIfNecessary(String.format(Locale.US, "%.1f", number / 1000000f)) + "</b>" + "M";
         } else {
             return "<b>" + Math.round(number / 1000000f) + "</b>" + "M";
         }

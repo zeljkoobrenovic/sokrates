@@ -46,6 +46,7 @@ public class ReportFileExporter {
                 reportsHtmlHeader = reportsHtmlHeader.replace(" ${margin-left}", "5%");
                 reportsHtmlHeader = reportsHtmlHeader.replace(" ${margin-right}", "5%");
             }
+            reportsHtmlHeader = minimize(reportsHtmlHeader);
             out.println(reportsHtmlHeader + "\n<body><div id=\"report\">\n" + "\n");
             new ReportRenderer().render(report, getReportRenderingClient(out, folder));
             out.println("</div>\n</body>\n</html>");
@@ -54,6 +55,12 @@ public class ReportFileExporter {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+    }
+
+    private static String minimize(String html) {
+        html = StringUtils.replace(html, "  ", " ");
+        html = StringUtils.replace(html, "\n\n", "\n");
+        return html;
     }
 
     private static ReportRenderingClient getReportRenderingClient(PrintWriter out, File reportsFolder) {

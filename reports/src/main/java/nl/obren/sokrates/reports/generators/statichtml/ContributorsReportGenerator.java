@@ -382,13 +382,25 @@ public class ContributorsReportGenerator {
 
             report.startTableCell();
             report.startShowMoreBlock(count + " shared " + (count == 1 ? "file" : "files"));
-            dependency.getData().forEach(path -> report.addHtmlContent("<br>" + path));
+            addSharedFiles(dependency);
             report.endShowMoreBlock();
             report.endTableCell();
             report.endTableRow();
         });
         report.endTable();
         report.endDiv();
+    }
+
+    private void addSharedFiles(ComponentDependency dependency) {
+        List<String> data = dependency.getData();
+        boolean tooLong = data.size() > 100;
+        if (tooLong) {
+            data = data.subList(0, 100);
+        }
+        data.forEach(path -> report.addHtmlContent("<br>" + path));
+        if (tooLong) {
+            report.addHtmlContent("<br>...");
+        }
     }
 
     private String getRoundedValueOf(double value) {

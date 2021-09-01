@@ -27,6 +27,12 @@ public class ReportRenderer {
         });
     }
 
+    private static String minimize(String html) {
+        html = StringUtils.replace(html, "  ", " ");
+        html = StringUtils.replace(html, "\n\n", "\n");
+        return html;
+    }
+
     private void renderHeader(RichTextReport richTextReport, StringBuilder content) {
         content.append("<h1>");
         String parentUrl = richTextReport.getParentUrl();
@@ -52,16 +58,16 @@ public class ReportRenderer {
             } else {
                 if (fragment.isShow()) {
                     System.out.println("Rendering graphviz content: " + fragment.getId());
-                    reportRenderingClient.append(GraphvizUtil.getSvgFromDot(fragment.getFragment()) + "\n");
+                    reportRenderingClient.append(minimize(GraphvizUtil.getSvgFromDot(fragment.getFragment()) + "\n"));
                 }
             }
         } else if (fragment.getType() == RichTextFragment.Type.SVG) {
             if (fragment.isShow()) {
-                reportRenderingClient.append(fragment.getFragment() + "\n");
+                reportRenderingClient.append(minimize(fragment.getFragment() + "\n"));
             }
         } else {
             if (fragment.isShow()) {
-                reportRenderingClient.append(fragment.getFragment() + "\n");
+                reportRenderingClient.append(minimize(fragment.getFragment() + "\n"));
             }
         }
     }
@@ -75,7 +81,7 @@ public class ReportRenderer {
             FileUtils.write(dotFile, fragment.getFragment(), StandardCharsets.UTF_8);
 
             System.out.println("Rendering graphviz file " + fragment.getId());
-            String svgContent = GraphvizUtil.getSvgFromDot(fragment.getFragment());
+            String svgContent = minimize(GraphvizUtil.getSvgFromDot(fragment.getFragment()));
 
             if (fragment.isShow()) {
                 reportRenderingClient.append(svgContent + "\n");
