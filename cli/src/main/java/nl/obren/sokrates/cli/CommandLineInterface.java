@@ -707,9 +707,7 @@ public class CommandLineInterface {
         System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
         usage(UPDATE_LANDSCAPE, getUpdateLandscapeOptions());
         System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
-        usage(EXTRACT_FILES, getExtractFilesOption());
-        System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
-        usage(EXTRACT_GIT_SUB_HISTORY, getExtractGitSubHistoryOption());
+        usage(EXTRACT_FILES, getExtractGitHistoryOption());
     }
 
     private void usage(String prefix, Options options) {
