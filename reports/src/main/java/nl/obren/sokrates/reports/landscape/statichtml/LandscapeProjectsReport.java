@@ -141,7 +141,7 @@ public class LandscapeProjectsReport {
                                 "opacity: 0.5; height: " + (h + "px"));
             });
             report.endTableCell();
-            report.addTableCell("<a href='" + this.getCommitsProjectReportUrl(projectAnalysis) + "' target='_blank'>"
+            report.addTableCell("<a href='" + this.getProjectReportUrl(projectAnalysis) + "' target='_blank'>"
                     + "<div style='height: 40px'>" + ReportFileExporter.getIconSvg("report", 38) + "</div></a>", "text-align: center");
             report.endTableRow();
         });

@@ -48,11 +48,17 @@ public class FileHistoryAnalyzer extends Analyzer {
             if (history.size() > 0) {
                 summarize(history);
 
+                System.out.println("Enriching files with age...");
                 enrichFilesWithAge(history);
+                System.out.println("Analyzing file age...");
                 analyzeFilesAge();
+                System.out.println("Analyzing files changed together...");
                 analyzeFilesChangedTogether(history);
+                System.out.println("Analyzing files changed together in past 30 days...");
                 analyzeFilesChangedTogether30Days(history);
+                System.out.println("Analyzing files changed together in past 90 days...");
                 analyzeFilesChangedTogether90Days(history);
+                System.out.println("Analyzing files changed together in past 180 days...");
                 analyzeFilesChangedTogether180Days(history);
             }
         }
@@ -105,7 +111,7 @@ public class FileHistoryAnalyzer extends Analyzer {
     }
 
     private void analyzeFilesChangedTogether(List<FileModificationHistory> history) {
-        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(-1);
+        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(codeConfiguration.getAnalysis().getMaxTemporalDependenciesDepthDays());
         filePairsChangedTogether.populate(codeConfiguration.getMain(), history);
         analysisResults.setFilePairsChangedTogether(filePairsChangedTogether.getFilePairs());
     }

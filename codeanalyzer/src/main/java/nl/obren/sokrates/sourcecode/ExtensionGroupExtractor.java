@@ -134,7 +134,7 @@ public class ExtensionGroupExtractor {
             "tiff", "tlz", "ttc", "ttf", "txz", "udf", "uvh", "uvi", "uvm", "uvp", "uvs", "uvu", "viv", "vob",
             "war", "wav", "wax", "wbmp", "wdp", "weba", "webm", "webp", "whl", "wim", "wm", "wma", "wmv", "wmx", "woff",
             "woff2", "wvx", "xbm", "xif", "xla", "xlam", "xls", "xlsb", "xlsm", "xlsx", "xlt", "xltm", "xltx", "xm", "xmind",
-            "xpi", "xpm", "xwd", "xz", "z", "zip", "zipx", "vcl");
+            "xpi", "xpm", "xwd", "xz", "z", "zip", "zipx", "vcl", "sfd");
 
     private static final List<String> knownIgnorableExtension = Arrays.asList(
             "ds_store", "iml", "ser");

@@ -220,6 +220,10 @@ public class RichTextReport {
         addHtmlContent("<td style=\"" + style + "\">");
     }
 
+    public void startTableCellColSpan(int colspan, String style) {
+        addHtmlContent("<td colspan=\"" + colspan + "\" style=\"" + style + "\">");
+    }
+
     public void startTableCellColSpan(String style, int colspan) {
         addHtmlContent("<td style=\"" + style + "\" colspan='" + colspan + "'>");
     }

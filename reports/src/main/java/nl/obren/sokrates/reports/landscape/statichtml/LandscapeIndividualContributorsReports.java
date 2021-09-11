@@ -9,6 +9,7 @@ import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjects;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import org.apache.commons.lang3.StringUtils;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -22,8 +23,21 @@ public class LandscapeIndividualContributorsReports {
         this.landscapeAnalysisResults = landscapeAnalysisResults;
     }
 
+    public static String getSafeFileName(String string) {
+        StringBuilder sb = new StringBuilder(string.length());
+        string = Normalizer.normalize(string, Normalizer.Form.NFD);
+        for (char c : string.toCharArray()) {
+            if (c == '.' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) {
+                sb.append(c);
+            } else {
+                sb.append("_");
+            }
+        }
+        return sb.toString();
+    }
+
     public static String getContributorIndividualReportFileName(String email) {
-        return email.replaceAll("[\\-\\.\\@\\+]", "_") + ".html";
+        return getSafeFileName(email).toLowerCase() + ".html";
     }
 
     public List<RichTextReport> getIndividualReports(List<ContributorProjects> contributors) {
@@ -53,7 +67,7 @@ public class LandscapeIndividualContributorsReports {
         report.addContentInDiv("Latest commit date: <b>" + contributor.getLatestCommitDate() + "</b>");
         report.addContentInDiv("Projects count: " +
                 "<b>" + contributorProjects.getProjects().stream().filter(p -> p.getCommits30Days() > 0).count()
-                + "</b><span style='color: lightgrey; font-size: 90%'> (30d)</span>&nbsp;&nbsp;&nbsp;" +                "<b>" + contributorProjects.getProjects().stream().filter(p -> p.getCommits90Days() > 0).count()
+                + "</b><span style='color: lightgrey; font-size: 90%'> (30d)</span>&nbsp;&nbsp;&nbsp;" + "<b>" + contributorProjects.getProjects().stream().filter(p -> p.getCommits90Days() > 0).count()
                 + "</b><span style='color: lightgrey; font-size: 90%'> (3m)</span>&nbsp;&nbsp;&nbsp;" +
                 "<b>" + contributorProjects.getProjects().size() + "</b> <span style='color: lightgrey; font-size: 90%'> (all time)</span>");
         report.addContentInDiv("Commits count: <b>" + contributor.getCommitsCount30Days() + "</b> " +

@@ -7,8 +7,11 @@ package nl.obren.sokrates.sourcecode.landscape;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
 import nl.obren.sokrates.sourcecode.operations.OperationStatement;
+import org.glassfish.jersey.internal.guava.Lists;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class LandscapeConfiguration {
@@ -29,12 +32,13 @@ public class LandscapeConfiguration {
     private List<MetricsWithGoal> landscapeControls = new ArrayList<>();
     private String contributorLinkTemplate = "";
     private String contributorAvatarLinkTemplate = "";
-    private List<String> ignoreContributors = new ArrayList<>();
+    private List<String> ignoreContributors = new ArrayList<>(Arrays.asList(".*\\[bot\\].*", ".*\\-bot\\@.*"));
     private List<OperationStatement> transformContributorEmails = new ArrayList<>();
 
     private List<CustomMetric> customMetrics = new ArrayList<>();
     private List<CustomMetric> customMetricsSmall = new ArrayList<>();
-    private boolean showExtensionsOnFirstTab = false;
+    private boolean showExtensionsOnFirstTab = true;
+    private boolean showContributorsTrendsOnFirstTab = true;
     private List<WebFrameLink> iFrames = new ArrayList<>();
     private List<WebFrameLink> iFramesAtStart = new ArrayList<>();
     private List<WebFrameLink> iFramesProjects = new ArrayList<>();
@@ -126,6 +130,14 @@ public class LandscapeConfiguration {
 
     public void setShowExtensionsOnFirstTab(boolean showExtensionsOnFirstTab) {
         this.showExtensionsOnFirstTab = showExtensionsOnFirstTab;
+    }
+
+    public boolean isShowContributorsTrendsOnFirstTab() {
+        return showContributorsTrendsOnFirstTab;
+    }
+
+    public void setShowContributorsTrendsOnFirstTab(boolean showContributorsTrendsOnFirstTab) {
+        this.showContributorsTrendsOnFirstTab = showContributorsTrendsOnFirstTab;
     }
 
     public String getParentUrl() {

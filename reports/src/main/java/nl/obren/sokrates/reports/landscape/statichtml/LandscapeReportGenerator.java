@@ -319,6 +319,20 @@ public class LandscapeReportGenerator {
         return null;
     }
 
+    private LandscapeConfiguration getSubLandscapeConfig(SubLandscapeLink subLandscape) {
+        try {
+            String prefix = landscapeAnalysisResults.getConfiguration().getProjectReportsUrlPrefix();
+            File resultsFile = new File(new File(folder, prefix + subLandscape.getIndexFilePath()).getParentFile(), "config.json");
+            System.out.println(resultsFile.getPath());
+            String json = FileUtils.readFileToString(resultsFile, StandardCharsets.UTF_8);
+            return (LandscapeConfiguration) new JsonMapper().getObject(json, LandscapeConfiguration.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
     private String getLabel(SubLandscapeLink subLandscape) {
         return subLandscape.getIndexFilePath()
                 .replaceAll("(/|\\\\)_sokrates_landscape(/|\\\\).*", "");
@@ -353,7 +367,7 @@ public class LandscapeReportGenerator {
                     "(started in past year)", "active contributors with the first commit in past year");
         }
 
-        addContributorsPerYear(false);
+        addContributorsPerYear(configuration.isShowContributorsTrendsOnFirstTab());
 
         landscapeReport.addLineBreak();
 
@@ -413,11 +427,11 @@ public class LandscapeReportGenerator {
             double cMean = landscapeAnalysisResults.getcMean30Days();
             double cMedian = landscapeAnalysisResults.getcMedian30Days();
 
-            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(peopleDependencies.size()), "C2C connections", "30 days", "");
+            // addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(peopleDependencies.size()), "C2C connections", "30 days", "");
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cMedian)), "C-Median", "30 days", "");
-            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cMean)), "C-Mean", "30 days", "");
-            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cIndex)), "C-Index",
-                    "30 days", "" + (int) Math.round(cIndex) + " active contributes connected to " + (int) Math.round(cIndex) + " or more of other contributors via commits to shared projects in past 30 days.");
+            // addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cMean)), "C-Mean", "30 days", "");
+            //addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cIndex)), "C-Index",
+            //        "30 days", "" + (int) Math.round(cIndex) + " active contributes connected to " + (int) Math.round(cIndex) + " or more of other contributors via commits to shared projects in past 30 days.");
         }
 
         addContributorsPerYear(true);
@@ -802,6 +816,7 @@ public class LandscapeReportGenerator {
 
             int maxCommits = contributorsPerYear.stream().mapToInt(c -> c.getCommitsCount()).max().orElse(1);
 
+            landscapeReport.startDiv("overflow-y: none;");
             landscapeReport.startTable();
 
             landscapeReport.startTableRow();
@@ -874,6 +889,7 @@ public class LandscapeReportGenerator {
             landscapeReport.endTableRow();
 
             landscapeReport.endTable();
+            landscapeReport.endDiv();
 
             landscapeReport.addLineBreak();
         }
@@ -891,6 +907,7 @@ public class LandscapeReportGenerator {
                 contributorsPerWeek = contributorsPerWeek.subList(0, limit);
             }
 
+            landscapeReport.startDiv("overflow: hidden");
             landscapeReport.startTable();
 
             int minMaxWindow = contributorsPerWeek.size() >= 4 ? 4 : contributorsPerWeek.size();
@@ -898,9 +915,10 @@ public class LandscapeReportGenerator {
             addChartRows(contributorsPerWeek, "weeks", minMaxWindow,
                     (timeSlot, rookiesOnly) -> getContributorsPerWeek(timeSlot, rookiesOnly),
                     (timeSlot, rookiesOnly) -> getLastContributorsPerWeek(timeSlot, true),
-                    (timeSlot, rookiesOnly) -> getLastContributorsPerWeek(timeSlot, false), 9);
+                    (timeSlot, rookiesOnly) -> getLastContributorsPerWeek(timeSlot, false), 14);
 
             landscapeReport.endTable();
+            landscapeReport.endDiv();
 
             landscapeReport.addLineBreak();
         }
@@ -918,6 +936,7 @@ public class LandscapeReportGenerator {
                 contributorsPerMonth = contributorsPerMonth.subList(0, limit);
             }
 
+            landscapeReport.startDiv("overflow: hidden");
             landscapeReport.startTable();
 
             int minMaxWindow = contributorsPerMonth.size() >= 3 ? 3 : contributorsPerMonth.size();
@@ -927,6 +946,7 @@ public class LandscapeReportGenerator {
                     (timeSlot, rookiesOnly) -> getLastContributorsPerMonth(timeSlot, false), 40);
 
             landscapeReport.endTable();
+            landscapeReport.endDiv();
 
             landscapeReport.addLineBreak();
         }
@@ -936,7 +956,6 @@ public class LandscapeReportGenerator {
         addTickMarksPerWeekRow(contributorsPerWeek, barWidth);
         addCommitsPerWeekRow(contributorsPerWeek, minMaxWindow, barWidth);
         addContributersPerWeekRow(contributorsPerWeek, unit, minMaxWindow, contributorsExtractor);
-        addRookiesPerWeekRow(contributorsPerWeek, unit, minMaxWindow, contributorsExtractor);
         int maxContributors = contributorsPerWeek.stream().mapToInt(c -> contributorsExtractor.getContributors(c.getTimeSlot(), false).size()).max().orElse(1);
         addContributorsPerTimeUnitRow(contributorsPerWeek, unit, minMaxWindow, firstContributorsExtractor, maxContributors, true, "bottom");
         addContributorsPerTimeUnitRow(contributorsPerWeek, unit, minMaxWindow, lastContributorsExtractor, maxContributors, false, "top");
@@ -952,15 +971,16 @@ public class LandscapeReportGenerator {
         int maxContributors4Weeks = contributorsPerWeek.subList(0, minMaxWindow).stream().mapToInt(c -> contributorsExtractor.getContributors(c.getTimeSlot(), false).size()).max().orElse(0);
         int minContributors4Weeks = contributorsPerWeek.subList(0, minMaxWindow).stream().mapToInt(c -> contributorsExtractor.getContributors(c.getTimeSlot(), false).size()).min().orElse(0);
         landscapeReport.addTableCell("<b>Contributors</b>" +
-                "<div style='color: grey; font-size: 80%; margin-left: 8px; margin-top: 4px;'>"
-                + "min (" + minMaxWindow + " " + unit + "): " + minContributors4Weeks
-                + "<br>max (" + minMaxWindow + " " + unit + "): " + maxContributors4Weeks + "</div>", "border: none");
+                "<div style='font-size: 80%; margin-left: 8px'><div style='color: green'>rookies</div> vs.<div style='color: #588BAE'>veterans</div></div>", "border: none");
         contributorsPerWeek.forEach(week -> {
             landscapeReport.startTableCell("max-width: 20px; padding: 0; margin: 1px; border: none; text-align: center; vertical-align: bottom; font-size: 80%; height: 100px");
             List<String> contributors = contributorsExtractor.getContributors(week.getTimeSlot(), false);
+            List<String> rookies = contributorsExtractor.getContributors(week.getTimeSlot(), true);
             int count = contributors.size();
-            int height = 1 + (int) (64.0 * count / maxContributors);
-            String title = "week of " + week.getTimeSlot() + " = " + count + " contributors:\n\n" +
+            int rookiesCount = rookies.size();
+            int height = 2 + (int) (64.0 * count / maxContributors);
+            int heightRookies = 1 + (int) (64.0 * rookiesCount / maxContributors);
+            String title = "week of " + week.getTimeSlot() + " = " + count + " contributors (" + rookiesCount + " rookies):\n\n" +
                     contributors.subList(0, contributors.size() < 200 ? contributors.size() : 200).stream().collect(Collectors.joining(", "));
             String yearString = week.getTimeSlot().split("[-]")[0];
 
@@ -971,38 +991,11 @@ public class LandscapeReportGenerator {
                 color = year % 2 == 0 ? "#89CFF0" : "#588BAE";
             }
 
-            landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + color + "; height:" + height + "px; margin: 1px'></div>");
-            landscapeReport.endTableCell();
-        });
-        landscapeReport.endTableRow();
-    }
-
-    private void addRookiesPerWeekRow(List<ContributionTimeSlot> contributorsPerWeek, String unit, int minMaxWindow, ContributorsExtractor contributorsExtractor) {
-        landscapeReport.startTableRow();
-        int maxContributors = contributorsPerWeek.stream().mapToInt(c -> contributorsExtractor.getContributors(c.getTimeSlot(), false).size()).max().orElse(1);
-        int maxRookies4Weeks = contributorsPerWeek.subList(0, minMaxWindow).stream().mapToInt(c -> contributorsExtractor.getContributors(c.getTimeSlot(), true).size()).max().orElse(0);
-        int minRookies4Weeks = contributorsPerWeek.subList(0, minMaxWindow).stream().mapToInt(c -> contributorsExtractor.getContributors(c.getTimeSlot(), true).size()).min().orElse(0);
-        landscapeReport.addTableCell("<b>Rookies</b>" +
-                "<div style='color: grey; font-size: 80%; margin-left: 8px; margin-top: 4px;'>"
-                + "min (" + minMaxWindow + " " + unit + "): " + minRookies4Weeks
-                + "<br>max (" + minMaxWindow + " " + unit + "): " + maxRookies4Weeks + "</div>", "border: none");
-        contributorsPerWeek.forEach(week -> {
-            landscapeReport.startTableCell("max-width: 20px; padding: 0; margin: 1px; border: none; text-align: center; vertical-align: bottom; font-size: 80%; height: 100px");
-            List<String> contributors = contributorsExtractor.getContributors(week.getTimeSlot(), true);
-            int count = contributors.size();
-            int height = 1 + (int) (64.0 * count / maxContributors);
-            String title = "week of " + week.getTimeSlot() + " = " + count + " contributors:\n\n" +
-                    contributors.subList(0, contributors.size() < 200 ? contributors.size() : 200).stream().collect(Collectors.joining(", "));
-            String yearString = week.getTimeSlot().split("[-]")[0];
-
-            String color = "darkgrey";
-
-            if (StringUtils.isNumeric(yearString)) {
-                int year = Integer.parseInt(yearString);
-                color = year % 2 == 0 ? "limegreen" : "darkgreen";
-            }
-
-            landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + color + "; height:" + height + "px; margin: 1px'></div>");
+            landscapeReport.addHtmlContent("<div>");
+            landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; color: grey; font-size: 80%; margin: 1px'>" + count + "</div>");
+            landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: green; height:" + (heightRookies) + "px; margin: 1px'></div>");
+            landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + color + "; height:" + (height - heightRookies) + "px; margin: 1px'></div>");
+            landscapeReport.addHtmlContent("</div>");
             landscapeReport.endTableCell();
         });
         landscapeReport.endTableRow();
@@ -1037,7 +1030,13 @@ public class LandscapeReportGenerator {
                 height = 1;
             }
 
+            if (first && count > 0) {
+                landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; color: grey; font-size: 80%; margin: 1px'>" + count + "</div>");
+            }
             landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + color + "; height:" + height + "px; margin: 1px'></div>");
+            if (!first && count > 0) {
+                landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; color: grey; font-size: 80%; margin: 1px'>" + count + "</div>");
+            }
             landscapeReport.endTableCell();
         });
         landscapeReport.endTableRow();
@@ -1046,11 +1045,10 @@ public class LandscapeReportGenerator {
     private void addTickMarksPerWeekRow(List<ContributionTimeSlot> contributorsPerWeek, int barWidth) {
         landscapeReport.startTableRow();
         landscapeReport.addTableCell("", "border: none");
-        int index[] = {0};
-        contributorsPerWeek.forEach(week -> {
-            landscapeReport.startTableCell("width: "
-                    + barWidth + "px; max-width: "
-                    + barWidth + "px; padding: 0; margin: 1px; border: none; text-align: center; vertical-align: bottom; font-size: 80%; height: 16px");
+
+        for (int i = 0; i < contributorsPerWeek.size(); i++) {
+            ContributionTimeSlot week = contributorsPerWeek.get(i);
+
             String yearString = week.getTimeSlot().split("[-]")[0];
 
             String color = "darkgrey";
@@ -1059,19 +1057,28 @@ public class LandscapeReportGenerator {
                 int year = Integer.parseInt(yearString);
                 color = year % 2 == 0 ? "#c9c9c9" : "#656565";
             }
-
-            String nextTimeSlot = contributorsPerWeek.size() > index[0] + 1 ? contributorsPerWeek.get(index[0] + 1).getTimeSlot() : "";
             String[] splitNow = week.getTimeSlot().split("-");
-            String[] splitNext = nextTimeSlot.split("-");
             String textNow = splitNow.length < 2 ? "" : splitNow[0] + "<br>" + splitNow[1];
-            String textNext = splitNext.length < 2 ? "" : splitNext[0] + "<br>" + splitNext[1];
-            String text = textNow.equalsIgnoreCase(textNext) ? "" : textNow;
 
+            int colspan = 1;
+
+            while (true) {
+                String nextTimeSlot = contributorsPerWeek.size() > i + 1 ? contributorsPerWeek.get(i + 1).getTimeSlot() : "";
+                String[] splitNext = nextTimeSlot.split("-");
+                String textNext = splitNext.length < 2 ? "" : splitNext[0] + "<br>" + splitNext[1];
+                if (contributorsPerWeek.size() <= i + 1 || !textNow.equalsIgnoreCase(textNext)) {
+                    break;
+                }
+                colspan++;
+                i++;
+            }
+            landscapeReport.startTableCellColSpan(colspan, "width: "
+                    + barWidth + "px; min-width: "
+                    + barWidth + "px; padding: 0; margin: 1px; border: none; text-align: center; vertical-align: bottom; font-size: 80%; height: 16px");
             landscapeReport.addHtmlContent("<div style='width: 100%; margin: 1px; font-size: 80%; color: '" + color + ">"
-                    + text + "</div>");
+                    + textNow + "</div>");
             landscapeReport.endTableCell();
-            index[0] += 1;
-        });
+        }
         landscapeReport.endTableRow();
     }
 
@@ -1085,7 +1092,7 @@ public class LandscapeReportGenerator {
                 + "min (" + minMaxWindow + " weeks): " + minCommits4Weeks
                 + "<br>max (" + minMaxWindow + " weeks): " + maxCommits4Weeks + "</div>", "border: none");
         contributorsPerWeek.forEach(week -> {
-            landscapeReport.startTableCell("width: " + barWidth + "px; max-width: " + barWidth + "px; padding: 0; margin: 1px; border: none; text-align: center; vertical-align: bottom; font-size: 80%; height: 100px");
+            landscapeReport.startTableCell("width: " + barWidth + "px; min-width: " + barWidth + "px; padding: 0; margin: 1px; border: none; text-align: center; vertical-align: bottom; font-size: 80%; height: 100px");
             int count = week.getCommitsCount();
             int height = 1 + (int) (64.0 * count / maxCommits);
             String title = "week of " + week.getTimeSlot() + " = " + count + " commits";
@@ -1098,6 +1105,7 @@ public class LandscapeReportGenerator {
                 color = year % 2 == 0 ? "#c9c9c9" : "#656565";
             }
 
+            landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; color: grey; font-size: 70%; margin: 0px'>" + count + "</div>");
             landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + color + "; height:" + height + "px; margin: 1px'></div>");
             landscapeReport.endTableCell();
         });

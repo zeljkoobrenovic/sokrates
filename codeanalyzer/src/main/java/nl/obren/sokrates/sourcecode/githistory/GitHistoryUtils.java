@@ -64,7 +64,8 @@ public class GitHistoryUtils {
             return updates;
         }
 
-        lines.stream().forEach(line -> {
+        lines.forEach(line -> {
+            System.out.println(line);
             FileUpdate fileUpdate = GitHistoryUtils.parseLine(line, config);
             if (fileUpdate != null) {
                 updates.add(fileUpdate);

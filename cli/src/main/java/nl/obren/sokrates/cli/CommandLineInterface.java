@@ -697,6 +697,7 @@ public class CommandLineInterface {
         System.out.println("\njava -jar sokrates.jar " + UPDATE_LANDSCAPE + " [options]\n    Updates or creates a landscape report\n");
         System.out.println("\njava -jar sokrates.jar " + EXPORT_STANDARD_CONVENTIONS + " [options]\n    Export standard scpoing conventiosn to a JSON file\n");
         System.out.println("\njava -jar sokrates.jar " + EXTRACT_FILES + " [options]\n    Split files based on a path regex pattern\n");
+        System.out.println("\njava -jar sokrates.jar " + EXTRACT_GIT_HISTORY + " [options]\n    Split a git history file inot smaller ones\n");
         System.out.println("\njava -jar sokrates.jar " + EXTRACT_GIT_SUB_HISTORY + " [options]\n    Split a git history file inot smaller ones\n");
         System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
         usage(INIT, getInitOptions());
@@ -707,7 +708,7 @@ public class CommandLineInterface {
         System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
         usage(UPDATE_LANDSCAPE, getUpdateLandscapeOptions());
         System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
-        usage(EXTRACT_FILES, getExtractFilesOption());
+        usage(EXTRACT_GIT_HISTORY, getExtractGitHistoryOption());
         System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
         usage(EXTRACT_GIT_SUB_HISTORY, getExtractGitSubHistoryOption());
     }

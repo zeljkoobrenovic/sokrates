@@ -3,8 +3,7 @@ package nl.obren.sokrates.sourcecode.githistory;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,16 +16,20 @@ public class ExtractGitHistoryFileHandler {
         File splitFolder = new File(folder, prefix);
         splitFolder.mkdirs();
 
-        String gitHistoryContent = FileUtils.readFileToString(gitHistoryFile, StandardCharsets.UTF_8);
-        String splitContent = extractSubHistory(gitHistoryContent, prefix);
+        List<String> originalLines = new ArrayList<>();
+        BufferedReader in = new BufferedReader(new FileReader(gitHistoryFile));
+        String line;
+        while ((line = in.readLine()) != null) {
+            originalLines.add(line);
+        }
+        List<String> splitContent = extractSubHistory(originalLines, prefix);
 
-        FileUtils.writeStringToFile(new File(splitFolder, gitHistoryFile.getName()), splitContent, StandardCharsets.UTF_8);
+        FileUtils.writeLines(new File(splitFolder, gitHistoryFile.getName()), splitContent);
 
         System.out.println("Extracted git history to " + new File(splitFolder, gitHistoryFile.getName()).getPath());
     }
 
-    public String extractSubHistory(String gitHistoryContent, String prefix) {
-        List<String> originalLines = Arrays.asList(gitHistoryContent.split("\n"));
+    public  List<String> extractSubHistory(List<String> originalLines, String prefix) {
         List<String> lines = new ArrayList<>();
 
         originalLines.forEach(line -> {
@@ -40,6 +43,6 @@ public class ExtractGitHistoryFileHandler {
             }
         });
 
-        return lines.stream().collect(Collectors.joining("\n"));
+        return lines;
     }
 }

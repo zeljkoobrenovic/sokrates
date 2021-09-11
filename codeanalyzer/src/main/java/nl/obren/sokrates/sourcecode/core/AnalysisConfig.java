@@ -16,6 +16,7 @@ public class AnalysisConfig {
     private boolean cacheSourceFiles = true;
     private boolean saveCodeFragments = true;
     private int maxLineLength = 1000;
+    private int maxTemporalDependenciesDepthDays = 365;
     private int locDuplicationThreshold = 10000000;
     private int minDuplicationBlockLoc = 6;
     private int maxTopListSize = 50;
@@ -154,5 +155,17 @@ public class AnalysisConfig {
 
     public void setAnalyzeConcernOverlaps(boolean analyzeConcernOverlaps) {
         this.analyzeConcernOverlaps = analyzeConcernOverlaps;
+    }
+
+    public int getMaxTemporalDependenciesDepthDays() {
+        return maxTemporalDependenciesDepthDays;
+    }
+
+    public void setMaxTemporalDependenciesDepthDays(int maxTemporalDependenciesDepthDays) {
+        this.maxTemporalDependenciesDepthDays = maxTemporalDependenciesDepthDays;
+    }
+
+    public boolean isAnalyzeConcernOverlaps() {
+        return analyzeConcernOverlaps;
     }
 }

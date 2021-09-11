@@ -42,7 +42,7 @@ public class LogicalDecompositionAnalyzer extends Analyzer {
         this.progressFeedback = progressFeedback;
         progressFeedback.start();
         progressFeedback.setDetailedText("");
-        boolean skipDependencies = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSkipDependencies();
+        boolean skipDependencies = codeConfiguration.getAnalysis().isSkipDependencies();
         DependenciesAnalysis dependenciesAnalysis = new DependenciesAnalysis();
         boolean shouldGetDependencies = false;
         if (!skipDependencies) {

@@ -33,7 +33,7 @@ public class LogicalDecomposition {
     private boolean includeExternalComponents = true;
     private int dependencyLinkThreshold = 1;
     private int duplicationLinkThreshold = 50;
-    private int temporalLinkThreshold = 2;
+    private int temporalLinkThreshold = 1;
     private int maxSearchDepthLines = 200;
 
     public LogicalDecomposition() {

@@ -29,10 +29,10 @@ public class FileTemporalDependenciesReportGenerator {
         report.addParagraph("A temporal dependency occurs when developers change two or more files at the same time (i.e. they are a part of the same commit).");
 
         report.startTabGroup();
-        report.addTab("all_time", "All Time", true);
-        report.addTab("30_days", "Past 30 Days", false);
+        report.addTab("30_days", "Past 30 Days", true);
         report.addTab("90_days", "Past 3 Months", false);
         report.addTab("180_days", "Past 6 Months", false);
+        report.addTab("all_time", "Past " + codeAnalysisResults.getCodeConfiguration().getAnalysis().getMaxTemporalDependenciesDepthDays() + " Days", false);
         report.endTabGroup();
 
         List<FilePairChangedTogether> filePairsChangedTogether = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether();
@@ -40,10 +40,10 @@ public class FileTemporalDependenciesReportGenerator {
         List<FilePairChangedTogether> filePairsChangedTogether90Days = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether90Days();
         List<FilePairChangedTogether> filePairsChangedTogether180Days = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether180Days();
 
-        addTab(report, "all_time", filePairsChangedTogether, true);
-        addTab(report, "30_days", filePairsChangedTogether30Days, false);
+        addTab(report, "30_days", filePairsChangedTogether30Days, true);
         addTab(report, "90_days", filePairsChangedTogether90Days, false);
         addTab(report, "180_days", filePairsChangedTogether180Days, false);
+        addTab(report, "all_time", filePairsChangedTogether, false);
     }
 
     private void addTab(RichTextReport report, String id, List<FilePairChangedTogether> filePairs, boolean active) {
@@ -136,7 +136,8 @@ public class FileTemporalDependenciesReportGenerator {
 
         report.startDiv("margin: 10px;");
 
-        report.startSubSection(logicalDecomposition.getName() + " (" + threshold + "+ commits)", "");
+        String thresholdInfo = threshold > 1 ? " (" + threshold + "+ shared commits)" : "";
+        report.startSubSection(logicalDecomposition.getName() + thresholdInfo, "The number on the lines shows the number of shared commits.");
         addChangeDependencies(report, logicalDecomposition, filePairsChangedTogether);
         report.endDiv();
 

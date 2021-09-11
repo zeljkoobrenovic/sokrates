@@ -23,22 +23,24 @@ public class FilePairsChangedTogether {
         Map<String, List<FileModificationHistory>> commitsIdMap = new HashMap<>();
 
         fileHistories.forEach(fileHistory -> {
-            fileHistory.getCommits().forEach(commitInfo -> {
-                if (rangeInDays <= 0 || DateUtils.isDateWithinRange(commitInfo.getDate(), rangeInDays)) {
-                    String commitId = commitInfo.getId();
-                    String commitDate = commitInfo.getDate();
-                    List<FileModificationHistory> list = commitsIdMap.get(commitId);
-                    if (list == null) {
-                        list = new ArrayList<>();
-                        commitsIdMap.put(commitId, list);
-                        list.add(fileHistory);
-                    } else if (!list.contains(fileHistory)) {
-                        list.forEach(sourceFileInSameCommit -> addFilePair(aspect, fileHistory,
-                                sourceFileInSameCommit, commitId, commitDate));
-                        list.add(fileHistory);
+            if (aspect.getSourceFileByPath(fileHistory.getPath()) != null) {
+                fileHistory.getCommits().forEach(commitInfo -> {
+                    if (rangeInDays <= 0 || DateUtils.isDateWithinRange(commitInfo.getDate(), rangeInDays)) {
+                        String commitId = commitInfo.getId();
+                        String commitDate = commitInfo.getDate();
+                        List<FileModificationHistory> list = commitsIdMap.get(commitId);
+                        if (list == null) {
+                            list = new ArrayList<>();
+                            commitsIdMap.put(commitId, list);
+                            list.add(fileHistory);
+                        } else if (!list.contains(fileHistory)) {
+                            list.forEach(sourceFileInSameCommit -> addFilePair(aspect, fileHistory,
+                                    sourceFileInSameCommit, commitId, commitDate));
+                            list.add(fileHistory);
+                        }
                     }
-                }
-            });
+                });
+            }
         });
 
         Collections.sort(filePairs, (a, b) -> b.getCommits().size() - a.getCommits().size());
