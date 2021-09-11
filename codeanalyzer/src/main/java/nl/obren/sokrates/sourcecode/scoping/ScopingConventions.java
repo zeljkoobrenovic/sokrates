@@ -74,6 +74,8 @@ public class ScopingConventions {
         otherFilesConventions.add(new Convention(".*[.]mkdn", "", "Markdown files"));
         otherFilesConventions.add(new Convention(".*[.]mkdown", "", "Markdown files"));
 
+        otherFilesConventions.add(new Convention(".*[.](rst|rest|resttxt|rsttxt)", "", "reST files"));
+
         otherFilesConventions.add(new Convention(".*[.]ronn", "", "Markdown files"));
         otherFilesConventions.add(new Convention(".*[.]workbook", "", "Markdown files"));
         otherFilesConventions.add(new Convention(".*[.]plist", "", "Property list files"));
