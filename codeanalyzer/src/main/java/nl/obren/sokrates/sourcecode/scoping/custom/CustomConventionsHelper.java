@@ -46,6 +46,17 @@ public class CustomConventionsHelper {
         }
     }
 
+    public static void saveEmptyConventionsToFile(File file) {
+        try {
+            String json = new JsonGenerator().generate(new CustomScopingConventions());
+            FileUtils.writeStringToFile(file, json, StandardCharsets.UTF_8);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static CustomScopingConventions readFromFile(File file) {
         try {
             String json = FileUtils.readFileToString(file, StandardCharsets.UTF_8);

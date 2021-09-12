@@ -9,6 +9,7 @@ import javafx.concurrent.Worker;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import nl.obren.sokrates.cli.CommandLineInterface;
+import nl.obren.sokrates.cli.Commands;
 import nl.obren.sokrates.codeexplorer.CodeExplorerLauncher;
 import nl.obren.sokrates.codeexplorer.codebrowser.CodeBrowserPane;
 import nl.obren.sokrates.codeexplorer.newproject.NewProjectDialog;
@@ -199,15 +200,15 @@ public class CodeConfigurationView extends ConfigurationEditorView {
         commandLineInterface.setProgressFeedback(progressFeedback);
         Executors.newCachedThreadPool().execute(() -> {
             try {
-                String configFileOption = "-" + CommandLineInterface.CONF_FILE;
-                String outputFolderOption = "-" + CommandLineInterface.OUTPUT_FOLDER;
+                String configFileOption = "-" + Commands.ARG_CONF_FILE;
+                String outputFolderOption = "-" + Commands.ARG_OUTPUT_FOLDER;
                 String commandLine = "java -jar sokrates.jar "
-                        + CommandLineInterface.GENERATE_REPORTS + " "
+                        + Commands.GENERATE_REPORTS + " "
                         + configFileOption + " '" + file.getPath() + "' "
                         + outputFolderOption + " '" + reportsFolder.getPath() + "'";
                 progressFeedback.setText("Command line: <span style='background-color: #e5ffe5;'>" + commandLine + "</span>");
                 progressFeedback.setText("");
-                commandLineInterface.run(new String[]{CommandLineInterface.GENERATE_REPORTS,
+                commandLineInterface.run(new String[]{Commands.GENERATE_REPORTS,
                         configFileOption, file.getPath(),
                         outputFolderOption, reportsFolder.getPath()});
             } catch (IOException e) {

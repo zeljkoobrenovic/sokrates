@@ -52,75 +52,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class CommandLineInterface {
-    // commands
-    public static final String INIT = "init";
-    public static final String GENERATE_REPORTS = "generateReports";
-    public static final String UPDATE_CONFIG = "updateConfig";
-    public static final String EXPORT_STANDARD_CONVENTIONS = "exportStandardConventions";
-    public static final String EXTRACT_FILES = "extractFiles";
-    public static final String EXTRACT_GIT_HISTORY = "extractGitHistory";
-    public static final String EXTRACT_GIT_SUB_HISTORY = "extractGitSubHistory";
-
-    // arguments
-    public static final String SRC_ROOT = "srcRoot";
-    public static final String CONVENTIONS_FILE = "conventionsFile";
-    public static final String NAME = "name";
-    public static final String DESCRIPTION = "description";
-    public static final String LOGO_LINK = "logoLink";
-    public static final String CONF_FILE = "confFile";
-    public static final String DATE = "date";
-    public static final String OUTPUT_FOLDER = "outputFolder";
-    public static final String USE_INTERNAL_GRAPHVIZ = "internalGraphviz";
-    public static final String HTML_REPORTS_FOLDER_NAME = "html";
-    public static final String UPDATE_LANDSCAPE = "updateLandscape";
-    public static final String ANALYSIS_ROOT = "analysisRoot";
-    public static final String TIMEOUT = "timeout";
-    public static final String PREFIX = "prefix";
-    public static final String PATTERN = "pattern";
-    public static final String DEST_FOLDER = "destFolder";
-    public static final String DEST_PARENT = "destParent";
-
-    public static final String SKIP_DUPLICATION_ANALYSES = "skipDuplication";
-    public static final String ENABLE_DUPLICATION_ANALYSES = "enableDuplication";
-    public static final String SKIP_COMPLEX_ANALYSES = "skipComplexAnalyses";
-    public static final String SET_CACHE_FILES = "setCacheFiles";
-
-    public static final String SET_NAME = "setName";
-    public static final String SET_LOGO_LINK = "setLogoLink";
-    public static final String SET_DESCRIPTION = "setDescription";
-    public static final String ADD_LINK = "addLink";
 
     private static final Log LOG = LogFactory.getLog(CommandLineInterface.class);
-    private Option srcRoot = new Option(SRC_ROOT, true, "[OPTIONAL] the folder where reports will be stored (default is \"<currentFolder>/_sokrates/reports/\")");
-    private Option conventionsFile = new Option(CONVENTIONS_FILE, true, "the custom conventions JSON file path\")");
-    private Option name = new Option(NAME, true, "the project name\")");
-    private Option description = new Option(DESCRIPTION, true, "the project description\")");
-    private Option logoLink = new Option(LOGO_LINK, true, "the project logo link\")");
-    private Option confFile = new Option(CONF_FILE, true, "[OPTIONAL] the path to configuration file (default is \"<currentFolder>/_sokrates/config.json\"");
-    private Option date = new Option(DATE, true, "[OPTIONAL] last date of source code update (default today), used for reports on active contributors");
-    private Option analysisRoot = new Option(ANALYSIS_ROOT, true, "[OPTIONAL] the path to configuration file (default is \"<currentFolder>/_sokrates/config.json\"");
-    private Option timeout = new Option(TIMEOUT, true, "[OPTIONAL] timeout in seconds");
-    private Option prefix = new Option(PREFIX, true, "the path prefix");
-    private Option pattern = new Option(PATTERN, true, "the file path regex pattern");
-    private Option destRoot = new Option(DEST_FOLDER, true, "the destination folder");
-    private Option destParent = new Option(DEST_PARENT, true, "[OPTIONAL] the destination parent folder");
-    private Option internalGraphviz = new Option(USE_INTERNAL_GRAPHVIZ, false, "use internal Graphviz library (by default external dot program is used, you may specify the external dot path via the system variable GRAPHVIZ_DOT)");
-
-    private Option outputFolder = new Option(OUTPUT_FOLDER, true, "[OPTIONAL] the folder where reports will be stored (default value is <currentFolder/_sokrates/reports>)");
-
-    private Option skipComplexAnalyses = new Option(SKIP_COMPLEX_ANALYSES, false, "[OPTIONAL] skips complex analyses (duplication, dependencies, file caching)");
-
-    private Option skipDuplicationAnalyses = new Option(SKIP_DUPLICATION_ANALYSES, false, "[OPTIONAL] skips duplication analyses");
-    private Option enableDuplicationAnalyses = new Option(ENABLE_DUPLICATION_ANALYSES, false, "[OPTIONAL] enables duplication analyses");
-
-    private Option setName = new Option(SET_NAME, true, "[OPTIONAL] sets a project name");
-    private Option setDescription = new Option(SET_DESCRIPTION, true, "[OPTIONAL] sets a project description");
-    private Option setLogoLink = new Option(SET_LOGO_LINK, true, "[OPTIONAL] sets a project logo link");
-    private Option setCacheFiles = new Option(SET_CACHE_FILES, true, "[OPTIONAL] sets a cahche file flag ('true' or 'false')");
-    private Option addLink = new Option(ADD_LINK, true, "link label [OPTIONAL] adds a new link to an external document");
 
     private ProgressFeedback progressFeedback;
     private DataExporter dataExporter = new DataExporter(this.progressFeedback);
+
+    private Commands commands = new Commands();
 
     public static void main(String args[]) throws ParseException, IOException {
         BasicConfigurator.configure();
@@ -133,7 +71,7 @@ public class CommandLineInterface {
 
     public void run(String args[]) throws IOException {
         if (args.length == 0) {
-            usage();
+            commands.usage();
             return;
         }
 
@@ -142,49 +80,57 @@ public class CommandLineInterface {
         }
 
         try {
-            if (args[0].equalsIgnoreCase(INIT)) {
+            if (args[0].equalsIgnoreCase(commands.INIT)) {
                 init(args);
                 return;
-            } else if (args[0].equalsIgnoreCase(UPDATE_CONFIG)) {
+            } else if (args[0].equalsIgnoreCase(commands.UPDATE_CONFIG)) {
                 updateConfig(args);
                 return;
-            } else if (args[0].equalsIgnoreCase(EXPORT_STANDARD_CONVENTIONS)) {
+            } else if (args[0].equalsIgnoreCase(commands.EXPORT_STANDARD_CONVENTIONS)) {
                 exportConventions(args);
                 return;
-            } else if (args[0].equalsIgnoreCase(EXTRACT_FILES)) {
-                extractFiles(args);
+            } else if (args[0].equalsIgnoreCase(commands.UPDATE_LANDSCAPE)) {
+                updateLandscape(args);
                 return;
-            } else if (args[0].equalsIgnoreCase(EXTRACT_GIT_HISTORY)) {
-                extractGitHistory(args);
+            } else if (args[0].equalsIgnoreCase(commands.INIT_CONVENTIONS)) {
+                createNewConventionsFile(args);
                 return;
-            } else if (args[0].equalsIgnoreCase(EXTRACT_GIT_SUB_HISTORY)) {
+            } else if (args[0].equalsIgnoreCase(commands.EXTRACT_GIT_SUB_HISTORY)) {
                 extractGitSubHistory(args);
                 return;
-            } else if (args[0].equalsIgnoreCase(UPDATE_LANDSCAPE)) {
+            } else if (args[0].equalsIgnoreCase(commands.EXTRACT_FILES)) {
+                extractFiles(args);
+                return;
+            } else if (args[0].equalsIgnoreCase(commands.EXTRACT_GIT_HISTORY)) {
+                extractGitHistory(args);
+                return;
+            } else if (args[0].equalsIgnoreCase(commands.UPDATE_LANDSCAPE)) {
                 updateLandscape(args);
                 return;
-            } else if (args[0].equalsIgnoreCase(UPDATE_LANDSCAPE)) {
-                updateLandscape(args);
-                return;
-            } else if (!args[0].equalsIgnoreCase(GENERATE_REPORTS)) {
-                usage();
+            } else if (!args[0].equalsIgnoreCase(commands.GENERATE_REPORTS)) {
+                commands.usage();
                 return;
             }
 
             generateReports(args);
         } catch (ParseException e) {
             System.out.println("ERROR: " + e.getMessage() + "\n");
-            usage();
+            commands.usage();
         }
     }
 
     private void extractGitHistory(String[] args) throws ParseException {
-        Options options = getExtractGitHistoryOption();
+        Options options = commands.getExtractGitHistoryOption();
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
-        String strRootPath = cmd.getOptionValue(analysisRoot.getOpt());
-        if (!cmd.hasOption(analysisRoot.getOpt())) {
+        if (cmd.hasOption(commands.getHelp().getOpt())) {
+            commands.usage(Commands.EXTRACT_GIT_HISTORY, commands.getExtractGitHistoryOption(), Commands.EXTRACT_GIT_HISTORY_DESCRIPTION);
+            return;
+        }
+
+        String strRootPath = cmd.getOptionValue(commands.getAnalysisRoot().getOpt());
+        if (!cmd.hasOption(commands.getAnalysisRoot().getOpt())) {
             strRootPath = ".";
         }
 
@@ -197,12 +143,17 @@ public class CommandLineInterface {
         new GitHistoryExtractor().extractGitHistory(root);
     }
     private void extractGitSubHistory(String[] args) throws ParseException, IOException {
-        Options options = getExtractGitSubHistoryOption();
+        Options options = commands.getExtractGitSubHistoryOption();
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
-        String strRootPath = cmd.getOptionValue(analysisRoot.getOpt());
-        if (!cmd.hasOption(analysisRoot.getOpt())) {
+        if (cmd.hasOption(commands.getHelp().getOpt())) {
+            commands.usage(Commands.EXTRACT_GIT_SUB_HISTORY, commands.getExtractGitSubHistoryOption(), Commands.EXTRACT_GIT_SUB_HISTORY_DESCRIPTION);
+            return;
+        }
+
+        String strRootPath = cmd.getOptionValue(commands.getAnalysisRoot().getOpt());
+        if (!cmd.hasOption(commands.getAnalysisRoot().getOpt())) {
             strRootPath = ".";
         }
 
@@ -212,20 +163,25 @@ public class CommandLineInterface {
             return;
         }
 
-        String prefixValue = cmd.getOptionValue(prefix.getOpt());
+        String prefixValue = cmd.getOptionValue(commands.getPrefix().getOpt());
 
         new ExtractGitHistoryFileHandler().extractSubHistory(new File(root, GitHistoryUtils.GIT_HISTORY_FILE_NAME), prefixValue);
     }
 
     private void extractFiles(String[] args) throws ParseException, IOException {
-        Options options = getExtractFilesOption();
+        Options options = commands.getExtractFilesOption();
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
-        File root = cmd.hasOption(analysisRoot.getOpt()) ? new File(cmd.getOptionValue(analysisRoot.getOpt())) : new File(".");
-        String patternValue = cmd.getOptionValue(pattern.getOpt());
-        String dest = cmd.getOptionValue(destRoot.getOpt());
-        String destParentValue = cmd.getOptionValue(destParent.getOpt());
+        if (cmd.hasOption(commands.getHelp().getOpt())) {
+            commands.usage(Commands.EXTRACT_FILES, commands.getExtractFilesOption(), Commands.EXTRACT_FILES_DESCRIPTION);
+            return;
+        }
+
+        File root = cmd.hasOption(commands.getAnalysisRoot().getOpt()) ? new File(cmd.getOptionValue(commands.getAnalysisRoot().getOpt())) : new File(".");
+        String patternValue = cmd.getOptionValue(commands.getPattern().getOpt());
+        String dest = cmd.getOptionValue(commands.getDestRoot().getOpt());
+        String destParentValue = cmd.getOptionValue(commands.getDestParent().getOpt());
 
         if (patternValue == null) {
             System.out.println("the pattern value is missing");
@@ -243,7 +199,7 @@ public class CommandLineInterface {
     }
 
     private void updateDateParam(CommandLine cmd) {
-        String dateString = cmd.getOptionValue(date.getOpt());
+        String dateString = cmd.getOptionValue(commands.getDate().getOpt());
         if (dateString != null) {
             System.out.println("Using '" + dateString + "' as latest source code update date for active contributors reports.");
             DateUtils.setDateParam(dateString);
@@ -251,14 +207,19 @@ public class CommandLineInterface {
     }
 
     private void updateLandscape(String[] args) throws ParseException {
-        Options options = getExtractGitSubHistoryOption();
+        Options options = commands.getExtractGitSubHistoryOption();
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
+        if (cmd.hasOption(commands.getHelp().getOpt())) {
+            commands.usage(Commands.UPDATE_LANDSCAPE, commands.getUpdateLandscapeOptions(), Commands.UPDATE_LANDSCAPE_DESCRIPTION);
+            return;
+        }
+
         startTimeoutIfDefined(cmd);
 
-        String strRootPath = cmd.getOptionValue(analysisRoot.getOpt());
-        if (!cmd.hasOption(analysisRoot.getOpt())) {
+        String strRootPath = cmd.getOptionValue(commands.getAnalysisRoot().getOpt());
+        if (!cmd.hasOption(commands.getAnalysisRoot().getOpt())) {
             strRootPath = ".";
         }
 
@@ -268,16 +229,21 @@ public class CommandLineInterface {
             return;
         }
 
-        String confFilePath = cmd.getOptionValue(confFile.getOpt());
+        String confFilePath = cmd.getOptionValue(commands.getConfFile().getOpt());
         updateDateParam(cmd);
 
         LandscapeAnalysisCommands.update(root, confFilePath != null ? new File(confFilePath) : null);
     }
 
     private void generateReports(String[] args) throws ParseException, IOException {
-        Options options = getReportingOptions();
+        Options options = commands.getReportingOptions();
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
+
+        if (cmd.hasOption(commands.getHelp().getOpt())) {
+            commands.usage(Commands.GENERATE_REPORTS, commands.getReportingOptions(), Commands.GENERATE_REPORTS_DESCRIPTION);
+            return;
+        }
 
         startTimeoutIfDefined(cmd);
 
@@ -285,20 +251,25 @@ public class CommandLineInterface {
     }
 
     private void init(String[] args) throws ParseException, IOException {
-        Options options = getInitOptions();
+        Options options = commands.getInitOptions();
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
+        if (cmd.hasOption(commands.getHelp().getOpt())) {
+            commands.usage(Commands.INIT, commands.getInitOptions(), Commands.INIT_DESCRIPTION);
+            return;
+        }
+
         startTimeoutIfDefined(cmd);
 
-        String strRootPath = cmd.getOptionValue(srcRoot.getOpt());
-        if (!cmd.hasOption(srcRoot.getOpt())) {
+        String strRootPath = cmd.getOptionValue(commands.getSrcRoot().getOpt());
+        if (!cmd.hasOption(commands.getSrcRoot().getOpt())) {
             strRootPath = ".";
         }
 
         CustomScopingConventions customScopingConventions = null;
-        if (cmd.hasOption(conventionsFile.getOpt())) {
-            File scopingConventionsFile = new File(cmd.getOptionValue(conventionsFile.getOpt()));
+        if (cmd.hasOption(commands.getConventionsFile().getOpt())) {
+            File scopingConventionsFile = new File(cmd.getOptionValue(commands.getConventionsFile().getOpt()));
             if (scopingConventionsFile.exists()) {
                 customScopingConventions = CustomConventionsHelper.readFromFile(scopingConventionsFile);
             }
@@ -306,18 +277,18 @@ public class CommandLineInterface {
         String nameValue = "";
         String descriptionValue = "";
         String logoLinkValue = "";
-        if (cmd.hasOption(name.getOpt())) {
-            nameValue = cmd.getOptionValue(name.getOpt());
+        if (cmd.hasOption(commands.getName().getOpt())) {
+            nameValue = cmd.getOptionValue(commands.getName().getOpt());
         }
-        if (cmd.hasOption(description.getOpt())) {
-            descriptionValue = cmd.getOptionValue(description.getOpt());
+        if (cmd.hasOption(commands.getDescription().getOpt())) {
+            descriptionValue = cmd.getOptionValue(commands.getDescription().getOpt());
         }
-        if (cmd.hasOption(logoLink.getOpt())) {
-            logoLinkValue = cmd.getOptionValue(logoLink.getOpt());
+        if (cmd.hasOption(commands.getLogoLink().getOpt())) {
+            logoLinkValue = cmd.getOptionValue(commands.getLogoLink().getOpt());
         }
         Link link = null;
-        if (cmd.hasOption(addLink.getOpt())) {
-            String linkData[] = cmd.getOptionValues(addLink.getOpt());
+        if (cmd.hasOption(commands.getAddLink().getOpt())) {
+            String linkData[] = cmd.getOptionValues(commands.getAddLink().getOpt());
             if (linkData.length >= 1 && StringUtils.isNotBlank(linkData[0])) {
                 String href = linkData[0];
                 String label = linkData.length >= 1 ? linkData[1] : "";
@@ -342,7 +313,7 @@ public class CommandLineInterface {
     }
 
     private void startTimeoutIfDefined(CommandLine cmd) {
-        String timeoutSeconds = cmd.getOptionValue(timeout.getOpt());
+        String timeoutSeconds = cmd.getOptionValue(commands.getTimeout().getOpt());
         if (StringUtils.isNumeric(timeoutSeconds)) {
             int seconds = Integer.parseInt(timeoutSeconds);
             System.out.println("Timeout timer set to " + seconds + " seconds.");
@@ -359,15 +330,20 @@ public class CommandLineInterface {
     }
 
     private void updateConfig(String[] args) throws ParseException, IOException {
-        Options options = getUpdateConfigOptions();
+        Options options = commands.getUpdateConfigOptions();
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
+        if (cmd.hasOption(commands.getHelp().getOpt())) {
+            commands.usage(Commands.UPDATE_CONFIG, commands.getUpdateConfigOptions(), Commands.UPDATE_CONFIG_DESCRIPTION);
+            return;
+        }
+
         startTimeoutIfDefined(cmd);
 
-        String strRootPath = cmd.getOptionValue(srcRoot.getOpt());
-        if (!cmd.hasOption(srcRoot.getOpt())) {
+        String strRootPath = cmd.getOptionValue(commands.getSrcRoot().getOpt());
+        if (!cmd.hasOption(commands.getSrcRoot().getOpt())) {
             strRootPath = ".";
         }
 
@@ -383,50 +359,50 @@ public class CommandLineInterface {
         String jsonContent = FileUtils.readFileToString(confFile, UTF_8);
         CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
 
-        if (cmd.hasOption(skipComplexAnalyses.getOpt())) {
+        if (cmd.hasOption(commands.getSkipComplexAnalyses().getOpt())) {
             codeConfiguration.getAnalysis().setSkipDependencies(true);
             codeConfiguration.getAnalysis().setSkipDuplication(true);
             codeConfiguration.getAnalysis().setCacheSourceFiles(false);
         }
 
-        if (cmd.hasOption(skipDuplicationAnalyses.getOpt())) {
+        if (cmd.hasOption(commands.getSkipDuplicationAnalyses().getOpt())) {
             codeConfiguration.getAnalysis().setSkipDuplication(true);
         }
 
-        if (cmd.hasOption(enableDuplicationAnalyses.getOpt())) {
+        if (cmd.hasOption(commands.getEnableDuplicationAnalyses().getOpt())) {
             codeConfiguration.getAnalysis().setSkipDuplication(false);
         }
 
-        if (cmd.hasOption(setName.getOpt())) {
-            String name = cmd.getOptionValue(setName.getOpt());
+        if (cmd.hasOption(commands.getSetName().getOpt())) {
+            String name = cmd.getOptionValue(commands.getSetName().getOpt());
             if (StringUtils.isNotBlank(name)) {
                 codeConfiguration.getMetadata().setName(name);
             }
         }
 
-        if (cmd.hasOption(setDescription.getOpt())) {
-            String description = cmd.getOptionValue(setDescription.getOpt());
+        if (cmd.hasOption(commands.getSetDescription().getOpt())) {
+            String description = cmd.getOptionValue(commands.getSetDescription().getOpt());
             if (StringUtils.isNotBlank(description)) {
                 codeConfiguration.getMetadata().setDescription(description);
             }
         }
 
-        if (cmd.hasOption(setLogoLink.getOpt())) {
-            String logoLink = cmd.getOptionValue(setLogoLink.getOpt());
+        if (cmd.hasOption(commands.getSetLogoLink().getOpt())) {
+            String logoLink = cmd.getOptionValue(commands.getSetLogoLink().getOpt());
             if (StringUtils.isNotBlank(logoLink)) {
                 codeConfiguration.getMetadata().setLogoLink(logoLink);
             }
         }
 
-        if (cmd.hasOption(setCacheFiles.getOpt())) {
-            String cacheFileValue = cmd.getOptionValue(setCacheFiles.getOpt());
+        if (cmd.hasOption(commands.getSetCacheFiles().getOpt())) {
+            String cacheFileValue = cmd.getOptionValue(commands.getSetCacheFiles().getOpt());
             if (StringUtils.isNotBlank(cacheFileValue)) {
                 codeConfiguration.getAnalysis().setCacheSourceFiles(cacheFileValue.equalsIgnoreCase("true"));
             }
         }
 
-        if (cmd.hasOption(addLink.getOpt())) {
-            String linkData[] = cmd.getOptionValues(addLink.getOpt());
+        if (cmd.hasOption(commands.getAddLink().getOpt())) {
+            String linkData[] = cmd.getOptionValues(commands.getAddLink().getOpt());
             if (linkData.length >= 1 && StringUtils.isNotBlank(linkData[0])) {
                 String href = linkData[0];
                 String label = linkData.length >= 1 ? linkData[1] : "";
@@ -438,17 +414,25 @@ public class CommandLineInterface {
     }
 
     private void exportConventions(String[] args) throws ParseException, IOException {
-        File file = new File("sokrates_standard_conventions.json");
+        File file = new File("standard_analysis_conventions.json");
 
         CustomConventionsHelper.saveStandardConventionsToFile(file);
 
-        System.out.println("Conventions saved to '" + file.getPath() + "'.");
+        System.out.println("A standard conventions file saved to '" + file.getPath() + "'.");
+    }
+
+    private void createNewConventionsFile(String[] args) throws ParseException, IOException {
+        File file = new File("analysis_conventions.json");
+
+        CustomConventionsHelper.saveEmptyConventionsToFile(file);
+
+        System.out.println("A new conventions file saved to '" + file.getPath() + "'.");
     }
 
     private File getConfigFile(CommandLine cmd, File root) {
         File conf;
-        if (cmd.hasOption(confFile.getOpt())) {
-            conf = new File(cmd.getOptionValue(confFile.getOpt()));
+        if (cmd.hasOption(commands.getConfFile().getOpt())) {
+            conf = new File(cmd.getOptionValue(commands.getConfFile().getOpt()));
         } else {
             conf = CodeConfigurationUtils.getDefaultSokratesConfigFile(root);
         }
@@ -460,11 +444,11 @@ public class CommandLineInterface {
 
         File sokratesConfigFile;
 
-        if (!cmd.hasOption(confFile.getOpt())) {
+        if (!cmd.hasOption(commands.getConfFile().getOpt())) {
             String confFilePath = "./_sokrates/config.json";
             sokratesConfigFile = new File(confFilePath);
         } else {
-            sokratesConfigFile = new File(cmd.getOptionValue(confFile.getOpt()));
+            sokratesConfigFile = new File(cmd.getOptionValue(commands.getConfFile().getOpt()));
         }
 
         System.out.println("Configuration file: " + sokratesConfigFile.getPath());
@@ -478,10 +462,10 @@ public class CommandLineInterface {
 
         File reportsFolder;
 
-        if (!cmd.hasOption(outputFolder.getOpt())) {
+        if (!cmd.hasOption(commands.getOutputFolder().getOpt())) {
             reportsFolder = prepareReportsFolder("./_sokrates/reports");
         } else {
-            reportsFolder = prepareReportsFolder(cmd.getOptionValue(outputFolder.getOpt()));
+            reportsFolder = prepareReportsFolder(cmd.getOptionValue(commands.getOutputFolder().getOpt()));
         }
 
         System.out.println("Reports folder: " + reportsFolder.getPath());
@@ -673,7 +657,7 @@ public class CommandLineInterface {
 
 
     private File getHtmlFolder(File reportsFolder) {
-        File folder = new File(reportsFolder, HTML_REPORTS_FOLDER_NAME);
+        File folder = new File(reportsFolder, commands.ARG_HTML_REPORTS_FOLDER_NAME);
         folder.mkdirs();
         return folder;
     }
@@ -690,144 +674,16 @@ public class CommandLineInterface {
         return reportsFolder;
     }
 
-    private void usage() {
-        System.out.println("\njava -jar sokrates.jar " + INIT + " [options]\n    Creates a Sokrates configuration file for a codebase");
-        System.out.println("\njava -jar sokrates.jar " + GENERATE_REPORTS + " [options]\n    Generates Sokrates reports based on the configuration");
-        System.out.println("\njava -jar sokrates.jar " + UPDATE_CONFIG + " [options]\n    Updates a configuration file and completes missing fields\n");
-        System.out.println("\njava -jar sokrates.jar " + UPDATE_LANDSCAPE + " [options]\n    Updates or creates a landscape report\n");
-        System.out.println("\njava -jar sokrates.jar " + EXPORT_STANDARD_CONVENTIONS + " [options]\n    Export standard scpoing conventiosn to a JSON file\n");
-        System.out.println("\njava -jar sokrates.jar " + EXTRACT_FILES + " [options]\n    Split files based on a path regex pattern\n");
-        System.out.println("\njava -jar sokrates.jar " + EXTRACT_GIT_HISTORY + " [options]\n    Split a git history file inot smaller ones\n");
-        System.out.println("\njava -jar sokrates.jar " + EXTRACT_GIT_SUB_HISTORY + " [options]\n    Split a git history file inot smaller ones\n");
-        System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
-        usage(INIT, getInitOptions());
-        System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
-        usage(GENERATE_REPORTS, getReportingOptions());
-        System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
-        usage(UPDATE_CONFIG, getUpdateConfigOptions());
-        System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
-        usage(UPDATE_LANDSCAPE, getUpdateLandscapeOptions());
-        System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
-        usage(EXTRACT_GIT_HISTORY, getExtractGitHistoryOption());
-        System.out.println("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
-        usage(EXTRACT_GIT_SUB_HISTORY, getExtractGitSubHistoryOption());
-    }
-
-    private void usage(String prefix, Options options) {
-        HelpFormatter formatter = new HelpFormatter();
-        formatter.setWidth(120);
-        formatter.printHelp("java -jar sokrates.jar " + prefix + " [options]", options);
-    }
-
     private CodeAnalyzerSettings getCodeAnalyzerSettings(CommandLine cmd) {
         CodeAnalyzerSettings settings = new CodeAnalyzerSettings();
 
         return settings;
     }
 
-    private Options getReportingOptions() {
-        Options options = new Options();
-        options.addOption(confFile);
-        options.addOption(outputFolder);
-        options.addOption(internalGraphviz);
-        options.addOption(timeout);
-        options.addOption(date);
-
-        outputFolder.setRequired(true);
-        confFile.setRequired(true);
-
-        return options;
-    }
-
-    private Options getInitOptions() {
-        Options options = new Options();
-        options.addOption(srcRoot);
-        options.addOption(confFile);
-        options.addOption(conventionsFile);
-        options.addOption(name);
-        options.addOption(description);
-        options.addOption(logoLink);
-        options.addOption(addLink);
-        options.addOption(timeout);
-
-        confFile.setRequired(false);
-        conventionsFile.setRequired(false);
-        name.setRequired(false);
-        description.setRequired(false);
-        logoLink.setRequired(false);
-        addLink.setRequired(false);
-        addLink.setArgs(2);
-        timeout.setRequired(false);
-
-        return options;
-    }
-
-    private Options getUpdateConfigOptions() {
-        Options options = new Options();
-        options.addOption(confFile);
-        options.addOption(skipComplexAnalyses);
-        options.addOption(setCacheFiles);
-        options.addOption(setName);
-        options.addOption(setDescription);
-        options.addOption(setLogoLink);
-        options.addOption(addLink);
-        options.addOption(timeout);
-
-        addLink.setArgs(2);
-        confFile.setRequired(false);
-        skipComplexAnalyses.setRequired(false);
-        setName.setRequired(false);
-        setDescription.setRequired(false);
-        setLogoLink.setRequired(false);
-
-        return options;
-    }
-
-    private Options getExtractFilesOption() {
-        Options options = new Options();
-        options.addOption(analysisRoot);
-        options.addOption(pattern);
-        options.addOption(destRoot);
-        options.addOption(destParent);
-        analysisRoot.setRequired(false);
-        pattern.setRequired(true);
-        destRoot.setRequired(true);
-        destParent.setRequired(false);
-
-        return options;
-    }
-
-    private Options getExtractGitHistoryOption() {
-        Options options = new Options();
-        options.addOption(analysisRoot);
-        analysisRoot.setRequired(false);
-
-        return options;
-    }
-
-    private Options getExtractGitSubHistoryOption() {
-        Options options = new Options();
-        options.addOption(prefix);
-        options.addOption(analysisRoot);
-        prefix.setRequired(true);
-        analysisRoot.setRequired(false);
-
-        return options;
-    }
-
-    private Options getUpdateLandscapeOptions() {
-        Options options = new Options();
-        options.addOption(analysisRoot);
-        options.addOption(confFile);
-        options.addOption(timeout);
-        options.addOption(date);
-
-        confFile.setRequired(false);
-
-        return options;
-    }
 
     public void setProgressFeedback(ProgressFeedback progressFeedback) {
         this.progressFeedback = progressFeedback;
     }
+    
+    
 }
