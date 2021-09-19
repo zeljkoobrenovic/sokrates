@@ -4,8 +4,13 @@
 
 package nl.obren.sokrates.sourcecode;
 
+import nl.obren.sokrates.sourcecode.docs.Documentation;
+
 public class Link {
+    @Documentation(description = "A link display label")
     private String label = "";
+
+    @Documentation(description = "A hyperlink href value")
     private String href = "";
 
     public Link() {

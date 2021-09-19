@@ -6,6 +6,7 @@ package nl.obren.sokrates.sourcecode;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.common.utils.RegexUtils;
+import nl.obren.sokrates.sourcecode.docs.Documentation;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -18,9 +19,16 @@ import java.util.regex.PatternSyntaxException;
 public class SourceFileFilter {
     private static final Log LOG = LogFactory.getLog(SourceFileFilter.class);
 
+    @Documentation(description = "A regex expression applied on the file path")
     private String pathPattern = "";
+
+    @Documentation(description = "A regex expression to find if any line in the file matches it")
     private String contentPattern = "";
+
+    @Documentation(description = "Is the rule an exception to other rules in the list (i.e. excludes some of the files included by previous rules)")
     private Boolean exception = false;
+
+    @Documentation(description = "A simple textual note descripting the rule")
     private String note = "";
 
     @JsonIgnore

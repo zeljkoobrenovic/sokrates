@@ -9,9 +9,10 @@ import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.SourceCodeFiles;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
-import nl.obren.sokrates.sourcecode.analysis.ContributorsAnalysisConfig;
 import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.aspects.*;
+import nl.obren.sokrates.sourcecode.docs.ComplexDocumentation;
+import nl.obren.sokrates.sourcecode.docs.Documentation;
 import nl.obren.sokrates.sourcecode.metrics.MetricRangeControl;
 import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
 
@@ -24,12 +25,20 @@ import java.util.Map;
 import static nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils.*;
 
 public class CodeConfiguration {
+    @ComplexDocumentation(description = "Project description (used in report generation)", clazz = Metadata.class)
     private Metadata metadata = new Metadata();
+
+    @Documentation(description = "A list of key findings displayed as a bullet list in a report")
     private List<String> summary = new ArrayList<>();
 
+    @Documentation(description = "A link to the location of the source code relative to the configuration file")
     private String srcRoot = "..";
+
+    @Documentation(description = "A list of file extension included in analyses")
     private List<String> extensions = new ArrayList<>();
-    private ArrayList<SourceFileFilter> ignore = new ArrayList<>();
+
+    @ComplexDocumentation(description = "A list of ignore rule, files matching these rules will be excluded from the analyses", clazz = SourceFileFilter.class, isList = true)
+    private List<SourceFileFilter> ignore = new ArrayList<>();
 
     private NamedSourceCodeAspect main;
     private NamedSourceCodeAspect test;
@@ -360,11 +369,11 @@ public class CodeConfiguration {
         this.srcRoot = srcRoot;
     }
 
-    public ArrayList<SourceFileFilter> getIgnore() {
+    public List<SourceFileFilter> getIgnore() {
         return ignore;
     }
 
-    public void setIgnore(ArrayList<SourceFileFilter> ignore) {
+    public void setIgnore(List<SourceFileFilter> ignore) {
         this.ignore = ignore;
     }
 
