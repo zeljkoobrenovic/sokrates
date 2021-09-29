@@ -162,7 +162,7 @@ public class OverviewReportGenerator {
 
     private void appendHeader(RichTextReport report) {
         report.startSection("Source Code Analysis Scope", "Files includes and excluded from analyses");
-        List<String> extensions = codeAnalysisResults.getCodeConfiguration().getExtensions();
+        ArrayList<String> extensions = codeAnalysisResults.getCodeConfiguration().getExtensions();
         report.startDiv("margin-top: -8px; margin-bottomL: 12px;");
         extensions.forEach(lang -> {
             report.addHtmlContent(DataImageUtils.getLangDataImageDiv42(lang));
