@@ -1,4 +1,4 @@
-package nl.obren.sokrates.sourcecode.lang.Abap;
+package nl.obren.sokrates.sourcecode.lang.abap;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
@@ -38,11 +38,10 @@ class AbapAnalyzerTest {
         SourceFile sourceFile = new SourceFile(new File("a.abap"), AbapExamples.CONTENT);
         sourceFile.setLinesOfCode(10);
         List<UnitInfo> unitInfos = analyzer.extractUnits(sourceFile);
-        //TODO
-        assertEquals(unitInfos.size(), 1);
-        assertEquals(unitInfos.get(0).getShortName(), "a.abap");
-        assertEquals(unitInfos.get(0).getLinesOfCode(), 10);
-        assertEquals(unitInfos.get(0).getMcCabeIndex(), 8);
-        assertEquals(unitInfos.get(0).getNumberOfParameters(), 14);
+        assertEquals(unitInfos.size(), 4);
+        assertEquals(unitInfos.get(0).getShortName(), "calculate_flight_price");
+        assertEquals(unitInfos.get(0).getLinesOfCode(), 11);
+        assertEquals(unitInfos.get(0).getMcCabeIndex(), 1);
+        assertEquals(unitInfos.get(0).getNumberOfParameters(), 0);
     }
 }
