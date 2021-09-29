@@ -162,7 +162,7 @@ public class OverviewReportGenerator {
 
     private void appendHeader(RichTextReport report) {
         report.startSection("Source Code Analysis Scope", "Files includes and excluded from analyses");
-        ArrayList<String> extensions = codeAnalysisResults.getCodeConfiguration().getExtensions();
+        List<String> extensions = codeAnalysisResults.getCodeConfiguration().getExtensions();
         report.startDiv("margin-top: -8px; margin-bottomL: 12px;");
         extensions.forEach(lang -> {
             report.addHtmlContent(DataImageUtils.getLangDataImageDiv42(lang));
@@ -173,7 +173,7 @@ public class OverviewReportGenerator {
         int numberOfExcludedFiles = codeAnalysisResults.getNumberOfExcludedFiles();
         int extensionsCount = extensions.size();
         report.addListItem("<b>" + extensionsCount + "</b> extension" + (extensionsCount > 1 ? "s are" : " is") + " included in analyses: " + getExtensionsString(extensions));
-        ArrayList<SourceFileFilter> exclusions = codeAnalysisResults.getCodeConfiguration().getIgnore();
+        List<SourceFileFilter> exclusions = codeAnalysisResults.getCodeConfiguration().getIgnore();
         if (exclusions != null && exclusions.size() > 0) {
             report.addListItem(RichTextRenderingUtils.renderNumberStrong(exclusions.size())
                     + (exclusions.size() == 1 ? " criterion is " : " criteria are ") +
