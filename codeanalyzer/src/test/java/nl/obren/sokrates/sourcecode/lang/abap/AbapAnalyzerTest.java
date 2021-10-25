@@ -3,16 +3,17 @@ package nl.obren.sokrates.sourcecode.lang.abap;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.List;
 
-import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertEquals;
 
-class AbapAnalyzerTest {
+
+public class AbapAnalyzerTest {
     @Test
-    void cleanForLinesOfCodeCalculations() {
+    public void cleanForLinesOfCodeCalculations() {
         AbapAnalyzer analyzer = new AbapAnalyzer();
 
         SourceFile sourceFile = new SourceFile(new File("a.abap"), AbapExamples.CONTENT);
@@ -22,7 +23,7 @@ class AbapAnalyzerTest {
     }
 
     @Test
-    void cleanForDuplicationCalculations() {
+    public void cleanForDuplicationCalculations() {
         AbapAnalyzer analyzer = new AbapAnalyzer();
 
         SourceFile sourceFile = new SourceFile(new File("a.abap"), AbapExamples.CONTENT);
@@ -32,7 +33,7 @@ class AbapAnalyzerTest {
     }
 
     @Test
-    void extractUnits() {
+    public void extractUnits() {
         AbapAnalyzer analyzer = new AbapAnalyzer();
 
         SourceFile sourceFile = new SourceFile(new File("a.abap"), AbapExamples.CONTENT);
@@ -41,7 +42,7 @@ class AbapAnalyzerTest {
         assertEquals(unitInfos.size(), 4);
         assertEquals(unitInfos.get(0).getShortName(), "calculate_flight_price");
         assertEquals(unitInfos.get(0).getLinesOfCode(), 11);
-        assertEquals(unitInfos.get(0).getMcCabeIndex(), 1);
+        assertEquals(unitInfos.get(0).getMcCabeIndex(), 5);
         assertEquals(unitInfos.get(0).getNumberOfParameters(), 0);
     }
 }
