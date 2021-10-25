@@ -41,7 +41,7 @@ public class AbapHeuristicUnitsExtractor {
                     unit.setCleanedBody(body.toString());
                     unit.setBody(body.toString());
                     unit.setMcCabeIndex(getMcCabeIndex(body.toString()));
-                    unit.setShortName(line.trim().replace("METHOD ", "").substring(0, line.indexOf(" ")).trim());
+                    unit.setShortName(line.trim().replace("METHOD ", "").replace(".", "").trim());
                     unit.setNumberOfParameters(getNumerOfParameters(body.toString()));
                     lineIndex = endOfUnitBodyIndex;
                     units.add(unit);
@@ -75,6 +75,7 @@ public class AbapHeuristicUnitsExtractor {
         mcCabeIndex += StringUtils.countMatches(bodyForSearch, " WHILE ");
         mcCabeIndex += StringUtils.countMatches(bodyForSearch, " LOOP ");
         mcCabeIndex += StringUtils.countMatches(bodyForSearch, " CASE ");
+        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " WHEN ");
 
         return mcCabeIndex;
     }

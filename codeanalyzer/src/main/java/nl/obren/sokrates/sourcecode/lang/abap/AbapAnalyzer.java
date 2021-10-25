@@ -66,22 +66,11 @@ public class AbapAnalyzer extends LanguageAnalyzer {
         return new AbapHeuristicUnitsExtractor().extractUnits(sourceFile);
     }
 
-    
-
     @Override
     public DependenciesAnalysis extractDependencies(List<SourceFile> sourceFiles, ProgressFeedback progressFeedback) {
         return new DependenciesAnalysis();
     }
 
-    //#TODO what should this be?
-    /*
-    @Override
-    public List<MetaDependencyRule> getMetaDependencyRules() {
-        MetaDependencyRule using = new MetaDependencyRule("", "[ ]*USING[ ]+.*", "content");
-        using.getNameOperations().add(new OperationStatement("replace", Arrays.asList("[ ]*USING[ ]+", "")));
-        return Arrays.asList(using);
-    }
-    */
     @Override
     public List<String> getFeaturesDescription() {
         List<String> features = new ArrayList<>();
