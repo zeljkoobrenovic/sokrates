@@ -7,6 +7,7 @@ package nl.obren.sokrates.sourcecode.lang;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.analysis.AnalyzerOverride;
+import nl.obren.sokrates.sourcecode.lang.abap.AbapAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.adabasnatural.AdabasNaturalAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.cfg.CfgAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.clojure.ClojureLangAnalyzer;
@@ -248,6 +249,8 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("nsh", AdabasNaturalAnalyzer.class);
         analyzersMap.put("nsd", AdabasNaturalAnalyzer.class);
         analyzersMap.put("nsn", AdabasNaturalAnalyzer.class);
+
+        analyzersMap.put("abap", AbapAnalyzer.class);
 
         analyzersMap.put("pp", PuppetAnalyzer.class);
     }
