@@ -460,6 +460,8 @@ public class LogicalComponentsReportGenerator {
         report.addNewTabLink("DOT", "visuals/" + graphId + ".dot.txt");
         report.addHtmlContent(" ");
         report.addNewTabLink("(open online Graphviz editor)", "https://obren.io/tools/graphviz/");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("3D force graph", "visuals/force_3d_" + graphId + ".html");
         report.endDiv();
     }
 

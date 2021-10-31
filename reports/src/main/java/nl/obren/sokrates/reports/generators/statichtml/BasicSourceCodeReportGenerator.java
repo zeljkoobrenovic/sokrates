@@ -181,7 +181,7 @@ public class BasicSourceCodeReportGenerator {
                 new FileAgeReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileHistoryReport);
                 new FileChurnReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileChangeFrequencyReport);
                 new FileTemporalDependenciesReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileTemporalDependenciesReport);
-                new ContributorsReportGenerator(codeAnalysisResults).addContributorsAnalysisToReport(contributorsReport);
+                new ContributorsReportGenerator(codeAnalysisResults).addContributorsAnalysisToReport(reportsFolder, contributorsReport);
             }
         }
 

@@ -5,6 +5,9 @@
 package nl.obren.sokrates.common.renderingutils;
 
 import nl.obren.sokrates.common.io.JsonGenerator;
+import nl.obren.sokrates.common.renderingutils.force3d.Force3DLink;
+import nl.obren.sokrates.common.renderingutils.force3d.Force3DNode;
+import nl.obren.sokrates.common.renderingutils.force3d.Force3DObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -47,5 +50,21 @@ public class VisualizationTemplate {
 
     public String renderZoomableSunburst(List<VisualizationItem> items) {
         return render("zoomable_sunburst.html", items).replace(",\"children\":[]", "");
+    }
+
+    public String render3DForceGraph(Force3DObject data) {
+        ClassLoader clazz = this.getClass().getClassLoader();
+        InputStream inputStream = clazz.getResourceAsStream("vis_templates/force_3d.html");
+
+        try {
+            String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+            content = content.replace("${data}", new JsonGenerator().generate(data));
+
+            return content;
+        } catch (IOException e) {
+            LOG.error(e);
+        }
+
+        return null;
     }
 }

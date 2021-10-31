@@ -10,6 +10,9 @@ import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.renderingutils.Thresholds;
 import nl.obren.sokrates.common.renderingutils.VisualizationItem;
 import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
+import nl.obren.sokrates.common.renderingutils.force3d.Force3DLink;
+import nl.obren.sokrates.common.renderingutils.force3d.Force3DNode;
+import nl.obren.sokrates.common.renderingutils.force3d.Force3DObject;
 import nl.obren.sokrates.common.renderingutils.x3d.Unit3D;
 import nl.obren.sokrates.common.renderingutils.x3d.X3DomExporter;
 import nl.obren.sokrates.common.utils.BasicColorInfo;
@@ -561,18 +564,25 @@ public class CommandLineInterface {
 
     private void generateVisuals(File reportsFolder, CodeAnalysisResults analysisResults) {
         AtomicInteger index = new AtomicInteger();
-        analysisResults.getCodeConfiguration().getLogicalDecompositions().forEach(logicalDecomposition -> {
+        analysisResults.getLogicalDecompositionsAnalysisResults().forEach(logicalDecomposition -> {
             index.getAndIncrement();
             List<VisualizationItem> items = new ArrayList<>();
+            Force3DObject force3DObject = new Force3DObject();
             logicalDecomposition.getComponents().forEach(component -> {
                 items.add(new VisualizationItem(component.getName(), component.getLinesOfCode()));
+                force3DObject.getNodes().add(new Force3DNode(component.getName(), component.getLinesOfCode()));
+            });
+            logicalDecomposition.getComponentDependencies().forEach(dependency -> {
+                force3DObject.getLinks().add(new Force3DLink(dependency.getFromComponent(), dependency.getToComponent(), dependency.getCount()));
             });
             try {
                 String nameSuffix = "components_" + index.toString() + ".html";
+                String nameSuffixDependencies = "dependencies_" + index.toString() + ".html";
                 File folder = new File(reportsFolder, "html/visuals");
                 folder.mkdirs();
                 FileUtils.write(new File(folder, "bubble_chart_" + nameSuffix), new VisualizationTemplate().renderBubbleChart(items), UTF_8);
                 FileUtils.write(new File(folder, "tree_map_" + nameSuffix), new VisualizationTemplate().renderTreeMap(items), UTF_8);
+                FileUtils.write(new File(folder, "force_3d_" + nameSuffixDependencies), new VisualizationTemplate().render3DForceGraph(force3DObject), UTF_8);
 
                 generate3DUnitsView(folder, analysisResults);
             } catch (IOException e) {

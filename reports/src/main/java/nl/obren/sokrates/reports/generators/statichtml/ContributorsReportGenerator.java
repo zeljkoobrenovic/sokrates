@@ -4,7 +4,11 @@
 
 package nl.obren.sokrates.reports.generators.statichtml;
 
+import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
+import nl.obren.sokrates.common.renderingutils.force3d.Force3DLink;
+import nl.obren.sokrates.common.renderingutils.force3d.Force3DNode;
+import nl.obren.sokrates.common.renderingutils.force3d.Force3DObject;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
@@ -18,13 +22,19 @@ import nl.obren.sokrates.sourcecode.landscape.ContributionCounter;
 import nl.obren.sokrates.sourcecode.landscape.ContributorConnection;
 import nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorConnections;
+import org.apache.commons.io.FileUtils;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ContributorsReportGenerator {
     private final CodeAnalysisResults codeAnalysisResults;
     private int dependencyVisualCounter = 1;
+    private File reportsFolder;
     private RichTextReport report;
 
     public ContributorsReportGenerator(CodeAnalysisResults codeAnalysisResults) {
@@ -66,7 +76,8 @@ public class ContributorsReportGenerator {
         return names;
     }
 
-    public void addContributorsAnalysisToReport(RichTextReport report) {
+    public void addContributorsAnalysisToReport(File reportsFolder, RichTextReport report) {
+        this.reportsFolder = reportsFolder;
         this.report = report;
 
         report.startTabGroup();
@@ -416,6 +427,36 @@ public class ContributorsReportGenerator {
         report.addLineBreak();
         report.addLineBreak();
         addDownloadLinks(graphId);
+
+        Force3DObject force3DObject = new Force3DObject();
+        Map<String, Integer> names = new HashMap<>();
+        componentDependencies.forEach(dependency -> {
+            String from = dependency.getFromComponent();
+            String to = dependency.getToComponent();
+            if (names.containsKey(from)) {
+                names.put(from, names.get(from) + 1);
+            } else {
+                names.put(from, 1);
+            }
+            if (names.containsKey(to)) {
+                names.put(to, names.get(to) + 1);
+            } else {
+                names.put(to, 1);
+            }
+            force3DObject.getLinks().add(new Force3DLink(from, to, dependency.getCount()));
+            force3DObject.getLinks().add(new Force3DLink(to, from, dependency.getCount()));
+        });
+        names.keySet().forEach(key -> {
+            force3DObject.getNodes().add(new Force3DNode(key, names.get(key)));
+        });
+        File folder = new File(reportsFolder, "html/visuals");
+        folder.mkdirs();
+        try {
+            FileUtils.write(new File(folder, graphId + "_force_3d.html"), new VisualizationTemplate().render3DForceGraph(force3DObject), UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     private void addDownloadLinks(String graphId) {
@@ -426,6 +467,8 @@ public class ContributorsReportGenerator {
         report.addNewTabLink("DOT", "visuals/" + graphId + ".dot.txt");
         report.addHtmlContent(" ");
         report.addNewTabLink("(open online Graphviz editor)", "https://obren.io/tools/graphviz/");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("3D force graph", "visuals/" + graphId + "_force_3d.html");
         report.endDiv();
     }
 
