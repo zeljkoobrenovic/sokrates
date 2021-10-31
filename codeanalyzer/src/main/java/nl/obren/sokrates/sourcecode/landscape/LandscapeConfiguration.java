@@ -32,7 +32,7 @@ public class LandscapeConfiguration {
     private List<MetricsWithGoal> landscapeControls = new ArrayList<>();
     private String contributorLinkTemplate = "";
     private String contributorAvatarLinkTemplate = "";
-    private List<String> ignoreContributors = new ArrayList<>(Arrays.asList(".*\\[bot\\].*", ".*\\-bot\\@.*"));
+    private List<String> ignoreContributors = new ArrayList<>();
     private List<OperationStatement> transformContributorEmails = new ArrayList<>();
 
     private List<CustomMetric> customMetrics = new ArrayList<>();

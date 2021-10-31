@@ -428,6 +428,10 @@ public class ContributorsReportGenerator {
         report.addLineBreak();
         addDownloadLinks(graphId);
 
+        export3DForceGraph(componentDependencies, graphId);
+    }
+
+    private void export3DForceGraph(List<ComponentDependency> componentDependencies, String graphId) {
         Force3DObject force3DObject = new Force3DObject();
         Map<String, Integer> names = new HashMap<>();
         componentDependencies.forEach(dependency -> {
@@ -456,7 +460,6 @@ public class ContributorsReportGenerator {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     private void addDownloadLinks(String graphId) {

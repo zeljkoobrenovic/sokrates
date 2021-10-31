@@ -6,6 +6,10 @@ package nl.obren.sokrates.reports.landscape.statichtml;
 
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.renderingutils.VisualizationItem;
+import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
+import nl.obren.sokrates.common.renderingutils.force3d.Force3DLink;
+import nl.obren.sokrates.common.renderingutils.force3d.Force3DNode;
+import nl.obren.sokrates.common.renderingutils.force3d.Force3DObject;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
@@ -1574,8 +1578,40 @@ public class LandscapeReportGenerator {
         landscapeReport.addLineBreak();
 
         addDownloadLinks(graphId);
+        export3DForceGraph(componentDependencies, graphId);
+
     }
 
+    private void export3DForceGraph(List<ComponentDependency> componentDependencies, String graphId) {
+        Force3DObject force3DObject = new Force3DObject();
+        Map<String, Integer> names = new HashMap<>();
+        componentDependencies.forEach(dependency -> {
+            String from = dependency.getFromComponent();
+            String to = dependency.getToComponent();
+            if (names.containsKey(from)) {
+                names.put(from, names.get(from) + 1);
+            } else {
+                names.put(from, 1);
+            }
+            if (names.containsKey(to)) {
+                names.put(to, names.get(to) + 1);
+            } else {
+                names.put(to, 1);
+            }
+            force3DObject.getLinks().add(new Force3DLink(from, to, dependency.getCount()));
+            force3DObject.getLinks().add(new Force3DLink(to, from, dependency.getCount()));
+        });
+        names.keySet().forEach(key -> {
+            force3DObject.getNodes().add(new Force3DNode(key, names.get(key)));
+        });
+        File folder = new File(reportsFolder, "visuals");
+        folder.mkdirs();
+        try {
+            FileUtils.write(new File(folder, graphId + "_force_3d.html"), new VisualizationTemplate().render3DForceGraph(force3DObject), UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     private void addDownloadLinks(String graphId) {
         landscapeReport.startDiv("");
         landscapeReport.addHtmlContent("Download: ");
@@ -1584,6 +1620,8 @@ public class LandscapeReportGenerator {
         landscapeReport.addNewTabLink("DOT", "visuals/" + graphId + ".dot.txt");
         landscapeReport.addHtmlContent(" ");
         landscapeReport.addNewTabLink("(open online Graphviz editor)", "https://obren.io/tools/graphviz/");
+        landscapeReport.addHtmlContent(" | ");
+        landscapeReport.addNewTabLink("3D force graph", "visuals/" + graphId + "_force_3d.html");
         landscapeReport.endDiv();
     }
 

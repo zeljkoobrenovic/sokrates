@@ -395,6 +395,9 @@ public class LandscapeAnalysisResults {
             ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
             contributorsAnalysisResults.getContributors().forEach(contributor -> {
                 String contributorId = contributor.getEmail();
+                if (contributorId.contains("commited-by-bot")) {
+                    System.out.println(contributorId);
+                }
                 if (GitHistoryUtils.shouldIgnore(contributorId, configuration.getIgnoreContributors())) {
                     return;
                 }
