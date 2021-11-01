@@ -11,19 +11,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Metadata {
-    @Documentation(description = "A project name")
+    // A project name
     private String name = "";
 
-    @Documentation(description = "a project description")
+    // A project description (included in the index page of HTML reports)
     private String description = "";
 
-    @Documentation(description = "Additional project description shown as a tooltip over documentation")
+    // Additional project description shown as a tooltip in the HTML index report
     private String tooltip = "";
 
-    @Documentation(description = "A link to an image file to be used as a logo in reports")
+    // A link to an image file to be used as a logo in generated HTML reports
     private String logoLink = "";
 
-    @ComplexDocumentation(description = "A list of web links to resources related to the project", clazz = Link.class)
+    // A list of web links to resources related to the project
     private List<Link> links = new ArrayList<>();
 
     public String getName() {
