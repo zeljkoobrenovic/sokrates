@@ -15,6 +15,7 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
+import nl.obren.sokrates.reports.utils.UtilsReportUtils;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
@@ -46,6 +47,9 @@ interface ContributorsExtractor {
 }
 
 public class LandscapeReportGenerator {
+    public static final String DEPENDENCIES_ICON = "\n" +
+            "<svg height='100px' width='100px'  fill=\"#000000\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 48 48\" enable-background=\"new 0 0 48 48\" xml:space=\"preserve\"><path d=\"M12,19.666v6.254l1.357-1.357c0.391-0.391,1.023-0.391,1.414,0s0.391,1.023,0,1.414l-3.064,3.064  c-0.195,0.195-0.451,0.293-0.707,0.293s-0.512-0.098-0.707-0.293l-3.064-3.064c-0.391-0.391-0.391-1.023,0-1.414  s1.023-0.391,1.414,0L10,25.92v-6.254c0-0.552,0.448-1,1-1S12,19.114,12,19.666z M28.334,36H22.08l1.357-1.357  c0.391-0.391,0.391-1.023,0-1.414s-1.023-0.391-1.414,0l-3.064,3.064c-0.391,0.391-0.391,1.023,0,1.414l3.064,3.064  c0.195,0.195,0.451,0.293,0.707,0.293s0.512-0.098,0.707-0.293c0.391-0.391,0.391-1.023,0-1.414L22.08,38h6.254c0.553,0,1-0.447,1-1  S28.887,36,28.334,36z M37,18.666c-0.553,0-1,0.448-1,1v6.254l-1.357-1.357c-0.391-0.391-1.023-0.391-1.414,0s-0.391,1.023,0,1.414  l3.064,3.064c0.195,0.195,0.451,0.293,0.707,0.293s0.512-0.098,0.707-0.293l3.064-3.064c0.391-0.391,0.391-1.023,0-1.414  s-1.023-0.391-1.414,0L38,25.92v-6.254C38,19.114,37.553,18.666,37,18.666z M31.58,16.421c-0.391-0.391-1.023-0.391-1.414,0  L18.127,28.458v-1.92c0-0.553-0.448-1-1-1s-1,0.447-1,1v4.334c0,0.13,0.027,0.26,0.077,0.382c0.101,0.245,0.296,0.439,0.541,0.541  c0.122,0.051,0.251,0.077,0.382,0.077h4.333c0.552,0,1-0.447,1-1s-0.448-1-1-1h-1.919L31.58,17.835  C31.971,17.444,31.971,16.812,31.58,16.421z M16.334,37c0,2.941-2.393,5.334-5.334,5.334S5.666,39.941,5.666,37  S8.059,31.666,11,31.666S16.334,34.059,16.334,37z M14.334,37c0-1.838-1.496-3.334-3.334-3.334S7.666,35.162,7.666,37  S9.162,40.334,11,40.334S14.334,38.838,14.334,37z M42.334,37c0,2.941-2.393,5.334-5.334,5.334S31.666,39.941,31.666,37  s2.393-5.334,5.334-5.334S42.334,34.059,42.334,37z M40.334,37c0-1.838-1.496-3.334-3.334-3.334S33.666,35.162,33.666,37  s1.496,3.334,3.334,3.334S40.334,38.838,40.334,37z M5.666,11c0-2.941,2.393-5.334,5.334-5.334S16.334,8.059,16.334,11  S13.941,16.334,11,16.334S5.666,13.941,5.666,11z M7.666,11c0,1.838,1.496,3.334,3.334,3.334s3.334-1.496,3.334-3.334  S12.838,7.666,11,7.666S7.666,9.162,7.666,11z M31.666,11c0-2.941,2.393-5.334,5.334-5.334S42.334,8.059,42.334,11  S39.941,16.334,37,16.334S31.666,13.941,31.666,11z M33.666,11c0,1.838,1.496,3.334,3.334,3.334s3.334-1.496,3.334-3.334  S38.838,7.666,37,7.666S33.666,9.162,33.666,11z\"></path></svg>";
+
     public static final int RECENT_THRESHOLD_DAYS = 30;
     public static final String OVERVIEW_TAB_ID = "overview";
     public static final String SOURCE_CODE_TAB_ID = "source code";
@@ -1211,7 +1215,22 @@ public class LandscapeReportGenerator {
                                           double cMean, double pMean,
                                           double cMedian, double pMedian,
                                           int daysAgo) {
-        landscapeReport.addLevel2Header("People Dependencies (" + daysAgo + " days)", "margin-top: 40px");
+        List<ContributorProjects> contributors = landscapeAnalysisResults.getContributors();
+        List<ComponentDependency> projectDependenciesViaPeople = ContributorConnectionUtils.getProjectDependenciesViaPeople(contributors, 0, daysAgo);
+
+        landscapeReport.addLevel2Header("People Dependencies (past " + daysAgo + " days)", "margin-top: 40px");
+
+        landscapeReport.startTable();
+        landscapeReport.startTableRow();
+        landscapeReport.startTableCell("border: none; vertical-align: top");
+        landscapeReport.addHtmlContent(DEPENDENCIES_ICON);
+        landscapeReport.endTableCell();
+        landscapeReport.startTableCell("border: none");
+        addPeopleGraph(peopleDependencies, daysAgo);
+        addProjectsGraph(daysAgo, projectDependenciesViaPeople);
+        landscapeReport.endTableCell();
+        landscapeReport.endTableRow();
+        landscapeReport.endTable();
 
         if (daysAgo > 60) {
             landscapeReport.startShowMoreBlock("show details...");
@@ -1260,15 +1279,20 @@ public class LandscapeReportGenerator {
         landscapeReport.addLineBreak();
 
         peopleDependencies.sort((a, b) -> b.getCount() - a.getCount());
-        List<ContributorProjects> contributors = landscapeAnalysisResults.getContributors();
 
         addMostConnectedPeopleSection(contributorConnections, daysAgo);
         addMostProjectsPeopleSection(contributorConnections, daysAgo);
         addTopConnectionsSection(peopleDependencies, daysAgo, contributors);
-        addPeopleGraph(peopleDependencies, daysAgo);
         addProjectContributors(contributors, daysAgo);
-        List<ComponentDependency> projectDependenciesViaPeople = addProjectDependenciesViaPeople(daysAgo, contributors);
+        addProjectDependenciesViaPeople(projectDependenciesViaPeople);
 
+        if (daysAgo > 60) {
+            landscapeReport.endShowMoreBlock();
+        }
+
+    }
+
+    private void addProjectsGraph(int daysAgo, List<ComponentDependency> projectDependenciesViaPeople) {
         landscapeReport.startShowMoreBlock("show project dependencies graph...<br>");
         StringBuilder builder = new StringBuilder();
         builder.append("Project 1\tProject 2\t# people\n");
@@ -1281,12 +1305,11 @@ public class LandscapeReportGenerator {
 
         landscapeReport.addHtmlContent("&nbsp;&nbsp;&nbsp;&nbsp;");
         landscapeReport.addNewTabLink("See data...", "data/" + fileName);
-        addDependencyGraphVisuals(projectDependenciesViaPeople, new ArrayList<>(), "project_dependencies_" + daysAgo + "_");
-        landscapeReport.endShowMoreBlock();
-        if (daysAgo > 60) {
-            landscapeReport.endShowMoreBlock();
-        }
+        String graphId = addDependencyGraphVisuals(projectDependenciesViaPeople, new ArrayList<>(), "project_dependencies_" + daysAgo + "_");
 
+        landscapeReport.endShowMoreBlock();
+        landscapeReport.addNewTabLink(" - show project dependencies as 3D force graph", "visuals/" + graphId + "_force_3d.html");
+        landscapeReport.addLineBreak();
     }
 
     private void addDataSection(String type, double value, int daysAgo, List<Double> history, String info) {
@@ -1322,9 +1345,7 @@ public class LandscapeReportGenerator {
         }
     }
 
-    private List<ComponentDependency> addProjectDependenciesViaPeople(int daysAgo, List<ContributorProjects> contributors) {
-        List<ComponentDependency> projectDependenciesViaPeople = ContributorConnectionUtils.getProjectDependenciesViaPeople(contributors, 0, daysAgo);
-
+    private void addProjectDependenciesViaPeople(List<ComponentDependency> projectDependenciesViaPeople) {
         landscapeReport.startShowMoreBlock("show project dependencies via people...<br>");
         landscapeReport.startTable();
         int maxListSize = Math.min(100, projectDependenciesViaPeople.size());
@@ -1342,7 +1363,6 @@ public class LandscapeReportGenerator {
         });
         landscapeReport.endTable();
         landscapeReport.endShowMoreBlock();
-        return projectDependenciesViaPeople;
     }
 
     private void addProjectContributors(List<ContributorProjects> contributors, int daysAgo) {
@@ -1414,7 +1434,7 @@ public class LandscapeReportGenerator {
         String fileName = "projects_shared_projects_" + daysAgo + "_days.txt";
         saveData(fileName, builder.toString());
 
-        landscapeReport.startShowMoreBlock("show people graph...<br>");
+        landscapeReport.startShowMoreBlock("show people dependencies graph...<br>");
         landscapeReport.addHtmlContent("&nbsp;&nbsp;&nbsp;&nbsp;");
         landscapeReport.addNewTabLink("See data...", "data/" + fileName);
 
@@ -1422,8 +1442,12 @@ public class LandscapeReportGenerator {
         graphvizDependencyRenderer.setMaxNumberOfDependencies(100);
         graphvizDependencyRenderer.setType("graph");
         graphvizDependencyRenderer.setArrow("--");
-        addDependencyGraphVisuals(peopleDependencies, new ArrayList<>(), "people_dependencies_" + daysAgo + "_");
+        String graphId = addDependencyGraphVisuals(peopleDependencies, new ArrayList<>(), "people_dependencies_" + daysAgo + "_");
         landscapeReport.endShowMoreBlock();
+
+        landscapeReport.addNewTabLink(" - show people dependencies as 3D force graph", "visuals/" + graphId + "_force_3d.html");
+        landscapeReport.addLineBreak();
+        landscapeReport.addLineBreak();
     }
 
     private void addTopConnectionsSection(List<ComponentDependency> peopleDependencies, int daysAgo, List<ContributorProjects> contributors) {
@@ -1560,7 +1584,7 @@ public class LandscapeReportGenerator {
         }
     }
 
-    private void addDependencyGraphVisuals(List<ComponentDependency> componentDependencies, List<String> componentNames, String prefix) {
+    private String addDependencyGraphVisuals(List<ComponentDependency> componentDependencies, List<String> componentNames, String prefix) {
         GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
         graphvizDependencyRenderer.setMaxNumberOfDependencies(100);
         graphvizDependencyRenderer.setType("graph");
@@ -1580,6 +1604,7 @@ public class LandscapeReportGenerator {
         addDownloadLinks(graphId);
         export3DForceGraph(componentDependencies, graphId);
 
+        return graphId;
     }
 
     private void export3DForceGraph(List<ComponentDependency> componentDependencies, String graphId) {
@@ -1612,6 +1637,7 @@ public class LandscapeReportGenerator {
             e.printStackTrace();
         }
     }
+
     private void addDownloadLinks(String graphId) {
         landscapeReport.startDiv("");
         landscapeReport.addHtmlContent("Download: ");
@@ -1620,8 +1646,6 @@ public class LandscapeReportGenerator {
         landscapeReport.addNewTabLink("DOT", "visuals/" + graphId + ".dot.txt");
         landscapeReport.addHtmlContent(" ");
         landscapeReport.addNewTabLink("(open online Graphviz editor)", "https://obren.io/tools/graphviz/");
-        landscapeReport.addHtmlContent(" | ");
-        landscapeReport.addNewTabLink("3D force graph", "visuals/" + graphId + "_force_3d.html");
         landscapeReport.endDiv();
     }
 
