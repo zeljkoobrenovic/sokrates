@@ -379,17 +379,6 @@ public class LandscapeReportGenerator {
 
         landscapeReport.addLineBreak();
 
-        if (configuration.getCustomMetrics().size() > 0) {
-            configuration.getCustomMetrics().forEach(customMetric -> addCustomInfoBlock(customMetric));
-            landscapeReport.addLineBreak();
-        }
-
-        if (configuration.getCustomMetricsSmall().size() > 0) {
-            configuration.getCustomMetricsSmall().forEach(customMetric -> {
-                addSmallInfoBlock(customMetric.getValue(), customMetric.getTitle(), customMetric.getColor(), customMetric.getLink());
-            });
-        }
-
         landscapeReport.endDiv();
         landscapeReport.addLineBreak();
     }
@@ -435,11 +424,7 @@ public class LandscapeReportGenerator {
             double cMean = landscapeAnalysisResults.getcMean30Days();
             double cMedian = landscapeAnalysisResults.getcMedian30Days();
 
-            // addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(peopleDependencies.size()), "C2C connections", "30 days", "");
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cMedian)), "C-Median", "30 days", "");
-            // addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cMean)), "C-Mean", "30 days", "");
-            //addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cIndex)), "C-Index",
-            //        "30 days", "" + (int) Math.round(cIndex) + " active contributes connected to " + (int) Math.round(cIndex) + " or more of other contributors via commits to shared projects in past 30 days.");
         }
 
         addContributorsPerYear(true);

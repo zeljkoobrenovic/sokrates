@@ -66,16 +66,37 @@ public class LandscapeConfiguration {
     // An optional list of string transformation used to transform contributor IDs (e.g. to remove domain from email)
     private List<OperationStatement> transformContributorEmails = new ArrayList<>();
 
+    // If true, the list with extensions will be displayed in the first "Overview" tab. If false, the list with extensions will be displayed in the first "Projects" tab.
     private boolean showExtensionsOnFirstTab = true;
+
+    // If true, the contributors and commits trend will be displayed in the first "Overview" tab in addition to it being shown in the "Contributors" tab.
     private boolean showContributorsTrendsOnFirstTab = true;
-    private List<WebFrameLink> iFrames = new ArrayList<>();
+
+    // A list of iFrames displayed at the start of the "Overview" tab
     private List<WebFrameLink> iFramesAtStart = new ArrayList<>();
-    private List<WebFrameLink> iFramesProjects = new ArrayList<>();
+
+    // A list of iFrames displayed at the end of the "Overview" tab
+    private List<WebFrameLink> iFrames = new ArrayList<>();
+
+    // A list of iFrames displayed at the start of the "Proejcts" tab
     private List<WebFrameLink> iFramesProjectsAtStart = new ArrayList<>();
-    private List<WebFrameLink> iFramesContributors = new ArrayList<>();
+
+    // A list of iFrames displayed at the end of the "Proejcts" tab
+    private List<WebFrameLink> iFramesProjects = new ArrayList<>();
+
+    // A list of iFrames displayed at the start of the "Contributors" tab
     private List<WebFrameLink> iFramesContributorsAtStart = new ArrayList<>();
+
+    // A list of iFrames displayed at the end of the "Contributors" tab
+    private List<WebFrameLink> iFramesContributors = new ArrayList<>();
+
+    // Optional additional tabs (with iFrames only)
     private List<CustomTab> customTabs = new ArrayList<>();
+
+    // An optional HTML fragment to be included in the report HTML header (e.g. Google Analytics smippet)
     private String customHtmlReportHeaderFragment = "";
+
+    // An optional list of tags to be used to mark projects
     private List<ProjectTag> projectTags = new ArrayList<>();
 
     // values automatically populated by Sokrates
