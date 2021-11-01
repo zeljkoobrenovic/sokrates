@@ -18,7 +18,7 @@ public class LandscapeConfiguration {
     // Basic info about the landscape (name, description, logo, links)
     private Metadata metadata = new Metadata();
 
-    // The relative path of the analysis (folders with project analyses)
+    // The relative path of the analysis (folders with project analysis results)
     private String analysisRoot = "";
 
     // A prefix attached to project reports
@@ -57,7 +57,7 @@ public class LandscapeConfiguration {
     // An optional template of the link to a web page with more info about a contributor. The string fragment "${contributorid}" will be replace with the actual contributor ID.
     private String contributorLinkTemplate = "";
 
-    // An optional template of the link to a avatar image of a contributor. The string fragment "${contributorid}" will be replace with the actual contributor ID.
+    // An optional template of the link to a avatar image of a contributor. The string fragment "${contributorid}" will be replaced with the actual contributor ID (e.g. transformed email).
     private String contributorAvatarLinkTemplate = "";
 
     // The list of regex expressions used to exclude contributors from analysis. If empty, all contributors are included.
