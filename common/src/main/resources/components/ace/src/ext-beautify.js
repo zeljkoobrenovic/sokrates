@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ * Copyright (c) 2021 Željko Obrenović. All rights reserved.
  */
 
 ace.define("ace/ext/beautify",["require","exports","module","ace/token_iterator"], function(require, exports, module) {

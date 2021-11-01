@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ * Copyright (c) 2021 Željko Obrenović. All rights reserved.
  */
 
 ace.define("ace/keyboard/sublime",["require","exports","module","ace/lib/keys","ace/lib/oop","ace/lib/useragent","ace/keyboard/hash_handler"], function(require, exports, module) {

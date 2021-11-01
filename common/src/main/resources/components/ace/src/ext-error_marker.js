@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ * Copyright (c) 2021 Željko Obrenović. All rights reserved.
  */
 
 ;                (function() {

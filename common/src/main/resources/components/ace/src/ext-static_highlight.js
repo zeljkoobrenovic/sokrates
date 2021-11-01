@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ * Copyright (c) 2021 Željko Obrenović. All rights reserved.
  */
 
 ace.define("ace/ext/static_highlight",["require","exports","module","ace/edit_session","ace/layer/text","ace/config","ace/lib/dom","ace/lib/lang"], function(require, exports, module) {

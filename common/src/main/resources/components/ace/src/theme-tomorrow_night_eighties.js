@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ * Copyright (c) 2021 Željko Obrenović. All rights reserved.
  */
 
 ace.define("ace/theme/tomorrow_night_eighties",["require","exports","module","ace/lib/dom"], function(require, exports, module) {

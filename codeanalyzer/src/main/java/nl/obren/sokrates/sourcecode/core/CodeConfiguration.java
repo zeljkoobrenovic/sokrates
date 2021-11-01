@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ * Copyright (c) 2021 Željko Obrenović. All rights reserved.
  */
 
 package nl.obren.sokrates.sourcecode.core;
@@ -25,25 +25,34 @@ import java.util.Map;
 import static nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils.*;
 
 public class CodeConfiguration {
-    @ComplexDocumentation(description = "Project description (used in report generation)", clazz = Metadata.class)
+    // Project description (used in report generation)
     private Metadata metadata = new Metadata();
 
-    @Documentation(description = "A list of key findings displayed as a bullet list in a report")
+    // A list of key findings displayed as a bullet list in a report
     private List<String> summary = new ArrayList<>();
 
-    @Documentation(description = "A link to the location of the source code relative to the configuration file")
+    // A link to the location of the source code relative to the configuration file
     private String srcRoot = "..";
 
-    @Documentation(description = "A list of file extension included in analyses")
+    // A list of file extensions included in analyses (other extensions are skipped)
     private List<String> extensions = new ArrayList<>();
 
-    @ComplexDocumentation(description = "A list of ignore rule, files matching these rules will be excluded from the analyses", clazz = SourceFileFilter.class, isList = true)
+    // A list of ignore rule (a combination of path and content expressions), files matching these rules will be excluded from the analyses
     private List<SourceFileFilter> ignore = new ArrayList<>();
 
+    // A configuration of files to be included in the main code scope
     private NamedSourceCodeAspect main;
+
+    // A configuration of files to be included in the test code scope
     private NamedSourceCodeAspect test;
+
+    // A configuration of files to be included in the generated code scope
     private NamedSourceCodeAspect generated;
+
+    // A configuration of files to be included in the build and deployment code scope
     private NamedSourceCodeAspect buildAndDeployment;
+
+    // A configuration of files to be included in the other code scope
     private NamedSourceCodeAspect other;
 
     private List<LogicalDecomposition> logicalDecompositions = new ArrayList<>();

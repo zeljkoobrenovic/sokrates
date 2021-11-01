@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ * Copyright (c) 2021 Željko Obrenović. All rights reserved.
  */
 
 package nl.obren.sokrates.sourcecode.aspects;
@@ -16,16 +16,21 @@ import java.util.List;
 import java.util.Map;
 
 public class NamedSourceCodeAspect {
+    // A name of the source code aspect
     private String name = "";
-    @JsonIgnore
-    private String filtering = "";
 
+    // A list of regex-based filters used to include files in the ascpect
     private List<SourceFileFilter> sourceFileFilters = new ArrayList<>();
+
+    // An optional explicitly defined list of files (relative paths) to be included in the aspect
     private List<String> files = new ArrayList<>();
+
     @JsonIgnore
     private List<SourceFile> sourceFiles = new ArrayList<>();
     @JsonIgnore
     private Map<String, SourceFile> sourceFilesPathMap = null;
+    @JsonIgnore
+    private String filtering = "";
 
     public NamedSourceCodeAspect() {
     }

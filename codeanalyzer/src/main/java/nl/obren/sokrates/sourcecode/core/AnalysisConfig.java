@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Željko Obrenović. All rights reserved.
+ * Copyright (c) 2021 Željko Obrenović. All rights reserved.
  */
 
 package nl.obren.sokrates.sourcecode.core;
@@ -11,22 +11,55 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AnalysisConfig {
+    // If set to true, Sokrates skips duplication analysis and reporting
     private boolean skipDuplication = false;
+
+    // If set to true, Sokrates skips analysis and reporting of component dependencies
     private boolean skipDependencies = false;
+
+    // If set to true, Sokrates creates a copy of source files linked from reports
     private boolean cacheSourceFiles = true;
+
+    // If set to true, Sokrates saves code fragments in files linked from reports
     private boolean saveCodeFragments = true;
+
+    // Sokrates will ignore files with any line longer than a given number of characters
     private int maxLineLength = 1000;
+
+    // A maximal number of days in source code history used to calculate temporal file dependencies
     private int maxTemporalDependenciesDepthDays = 365;
+
+    // Projects with more than a given number of lines of main code will skip duplication analyses even if skipDuplication flag is false
     private int locDuplicationThreshold = 10000000;
+
+    // A minimal size of duplicated code block included in duplication analyses
     private int minDuplicationBlockLoc = 6;
+
+    // A limit for lists of code examples in reports
     private int maxTopListSize = 50;
+
+    // Can override default mapping between file path and used source code analysers
     private List<AnalyzerOverride> analyzerOverrides = new ArrayList<>();
+
+    // Thresholds for risk profiles used in file size analyses
     private Thresholds fileSizeThresholds = Thresholds.defaultFileSizeThresholds();
+
+    // Thresholds for risk profiles used in file age analyses
     private Thresholds fileAgeThresholds = Thresholds.defaultFileAgeThresholds();
+
+    // Thresholds for risk profiles used in file update frequency analyses
     private Thresholds fileUpdateFrequencyThresholds = Thresholds.defaultFileUpdateFrequencyThresholds();
+
+    // Thresholds for risk profiles used in unit size analyses
     private Thresholds unitSizeThresholds = Thresholds.defaultUnitSizeThresholds();
+
+    // Thresholds for risk profiles used in unit conditional complexity analyses
     private Thresholds conditionalComplexityThresholds = Thresholds.defaultConditionalComplexityThresholds();
+
+    // An optional HTML code fragment to be included in a header section of generated HTML reports (e.g. Google Analytics snippet)
     private String customHtmlReportHeaderFragment = "";
+
+    // If true, in feature of interest analyses, additional features of interest will be generated if there is an overlap between defined features (i.e. if several features include the same files)
     private boolean analyzeConcernOverlaps = false;
 
     public boolean isSkipDuplication() {
