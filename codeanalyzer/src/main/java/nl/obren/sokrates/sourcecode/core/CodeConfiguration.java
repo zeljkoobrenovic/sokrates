@@ -61,11 +61,16 @@ public class CodeConfiguration {
     // A list of features of interest configurations used to group files in features
     private List<ConcernsGroup> concernGroups = new ArrayList<>();
 
+    // A list of metrics with goals
     private List<MetricsWithGoal> goalsAndControls = new ArrayList<>();
 
+    // A configuration of trend analysis (comparing multiple analysis snapshots in time)
     private TrendAnalysisConfig trendAnalysis = new TrendAnalysisConfig();
+
+    // A configuration of commit history input file and analyses
     private FileHistoryAnalysisConfig fileHistoryAnalysis = new FileHistoryAnalysisConfig();
 
+    // Parameters of source code analyses
     private AnalysisConfig analysis = new AnalysisConfig();
 
     public CodeConfiguration() {

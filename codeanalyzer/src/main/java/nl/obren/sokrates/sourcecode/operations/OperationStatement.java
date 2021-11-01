@@ -8,7 +8,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OperationStatement {
+    // A string transformation operation. Valid options include "extract", "remove", "replace", "trim", "uppercase", "lowercase", "append", "prepend"
     private String op = "";
+
+    // An optional list of parameters used by the operation
     private List<String> params = new ArrayList<>();
 
     public OperationStatement() {

@@ -8,8 +8,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MetricsWithGoal {
+    // A name of a goal
     private String goal = "";
+
+    // A description of a goal
     private String description = "";
+
+    // A list of controls
     private List<MetricRangeControl> controls = new ArrayList<>();
 
     public String getGoal() {

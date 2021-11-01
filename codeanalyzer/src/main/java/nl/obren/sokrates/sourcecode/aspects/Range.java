@@ -9,8 +9,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
 public class Range {
+    // A minimal value (has to be <= max)
     private String min = "";
+
+    // A maximal value (has to be >= min)
     private String max = "";
+
+    // If bigger than zero, the valid range is from [min - tolerance] to [max + tolerance]
     private String tolerance = "0";
 
     public Range() {

@@ -14,9 +14,16 @@ import java.util.Date;
 import java.util.List;
 
 public class TrendAnalysisConfig {
+    // A relative folder name where Sokrates will store history snapshots
     private String referenceAnalysesFolder = "history";
+
+    // If true, analysis will save a new snapshot with defined frequency
     private boolean saveHistory = false;
+
+    // Frequency of history saves
     private String frequency = "weekly";
+
+    // A maximal number of snapshots to be analyses
     private int maxReferencePointsForAnalysis = 20;
 
     public String getHistoryFolder() {

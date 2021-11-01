@@ -22,8 +22,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class FileHistoryAnalysisConfig {
+    // A path to commit history file
     private String importPath = "../" + GitHistoryUtils.GIT_HISTORY_FILE_NAME;
+
+    // An optional list of regex expression used to ignore commits from contributors
     private List<String> ignoreContributors = new ArrayList<>();
+
+    // An optional list of string transformation used to transform contributor IDs (e.g. to remove domain from email)
     private List<OperationStatement> transformContributorEmails = new ArrayList<>();
 
     public String getImportPath() {

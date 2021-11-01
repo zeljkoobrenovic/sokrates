@@ -7,8 +7,13 @@ package nl.obren.sokrates.sourcecode.metrics;
 import nl.obren.sokrates.sourcecode.aspects.Range;
 
 public class MetricRangeControl {
+    // A name of the Sokrates metric used for test
     private String metric = "";
+
+    // A description of the control
     private String description = "";
+
+    // A desired range of values of the metric
     private Range desiredRange = new Range();
 
     public MetricRangeControl() {

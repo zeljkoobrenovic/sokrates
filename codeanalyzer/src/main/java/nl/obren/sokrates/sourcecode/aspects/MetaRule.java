@@ -10,10 +10,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MetaRule {
+    // A regex rule for file paths included in analyses (if empty all paths are included)
     private String pathPattern = "";
+
+    // A regex rule for content (any source code loune) included in analyses (if empty all files are included)
     private String contentPattern = "";
-    private String use = "content"; // valid values are "content" or "path"
+
+    // The source of data (for each file) used as a starting value for transformations. Valid values are "content" (a source code line) or "path".
+    private String use = "content";
+
+    // If true, only content outside comments will be used for content-based analyses
     private boolean ignoreComments = false;
+
+    // A list of string transformations, applied in a pipeline, to get a component name based on path or content. If empty, the original content is used.
     private List<OperationStatement> nameOperations = new ArrayList<>();
 
     public MetaRule() {
