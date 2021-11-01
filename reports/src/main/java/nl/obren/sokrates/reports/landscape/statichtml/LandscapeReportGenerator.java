@@ -675,15 +675,6 @@ public class LandscapeReportGenerator {
         landscapeReport.endSection();
     }
 
-    private void addCustomInfoBlock(CustomMetric customMetric) {
-        String subtitle = customMetric.getTitle();
-        if (StringUtils.isNotBlank(customMetric.getSubTitle())) {
-            subtitle += "<br/><span style='color: grey; font-size: 80%'>" + customMetric.getSubTitle() + "</span>";
-        }
-        String color = StringUtils.isNotBlank(customMetric.getColor()) ? customMetric.getColor() : "lightgrey";
-        addInfoBlockWithColor(customMetric.getValue(), subtitle, color, "");
-    }
-
     private void addInfoBlock(String mainValue, String subtitle, String description, String tooltip) {
         if (StringUtils.isNotBlank(description)) {
             subtitle += "<br/><span style='color: grey; font-size: 80%'>" + description + "</span>";
