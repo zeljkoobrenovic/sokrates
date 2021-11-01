@@ -7,10 +7,10 @@ package nl.obren.sokrates.sourcecode;
 import nl.obren.sokrates.sourcecode.docs.Documentation;
 
 public class Link {
-    @Documentation(description = "A link display label")
+    // Display label
     private String label = "";
 
-    @Documentation(description = "A hyperlink href value")
+    // A hyperlink href value (a URL)
     private String href = "";
 
     public Link() {

@@ -19,21 +19,52 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class LogicalDecomposition {
+    // A name of logical decomposition
     private String name = "";
+
+    // A scope from which files are taken
     private String scope = "main";
+
+    // An optional list of source code filter applied the scoped files (if empty, all files from the scope are used)
     private List<SourceFileFilter> filters = new ArrayList<>();
+
+    // A folder depth used to automatically group files in components
     private int componentsFolderDepth = 1;
+
+    // If bigger than zero, the Sokrates will, if feasible, automatically look for the folder depth at which there are at least a given number of components
     private int minComponentsCount = 0;
+
+    // A list of explicitly defined components with regex-based rules for source files they should include
     private List<NamedSourceCodeAspect> components = new ArrayList<>();
+
+    // A list of rules used to identify components based on file paths or content patterns
     private List<MetaRule> metaComponents = new ArrayList<>();
+
+    // A list of regex-based rules used to group components (used in diagrams to display components in groups)
     private List<GroupingRule> groups = new ArrayList<>();
+
+    // If true and source filters are used, it will display in dependency diagram files not included via source file filters as one "Unclassified" component
     private boolean includeRemainingFiles = true;
+
+    // A configuration of dependency finders, used to identify links between components
     private DependenciesFinder dependenciesFinder = new DependenciesFinder();
+
+    // Rendering options for component and dependency visualizations
     private RenderingOptions renderingOptions = new RenderingOptions();
+
+    // If true, components that are not a part of source code will be displayed in diagrams
     private boolean includeExternalComponents = true;
+
+    // A minimal number of dependencies between components to be included in the duplication dependency diagrams
     private int dependencyLinkThreshold = 1;
+
+    // A minimal number of duplicated lines of code between components to be included in the duplication dependency diagrams
     private int duplicationLinkThreshold = 50;
+
+    // A minimal number of links between files to be included in the temporal dependency diagrams
     private int temporalLinkThreshold = 1;
+
+    // A maximal depth of files (lines of code from the beginning) used for dependency analyses
     private int maxSearchDepthLines = 200;
 
     public LogicalDecomposition() {

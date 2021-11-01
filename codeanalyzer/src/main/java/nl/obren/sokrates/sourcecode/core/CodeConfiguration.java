@@ -55,7 +55,10 @@ public class CodeConfiguration {
     // A configuration of files to be included in the other code scope
     private NamedSourceCodeAspect other;
 
+    // A list of logical decomposition configurations used to group files in components and measure dependencies
     private List<LogicalDecomposition> logicalDecompositions = new ArrayList<>();
+
+    // A list of features of interest configurations used to group files in features
     private List<ConcernsGroup> concernGroups = new ArrayList<>();
 
     private List<MetricsWithGoal> goalsAndControls = new ArrayList<>();
