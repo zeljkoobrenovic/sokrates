@@ -27,7 +27,7 @@ public class LandscapeConfiguration {
     // An optional parent URL, if defined a click on the title of the landscape report will go to this link
     private String parentUrl = "";
 
-    // Only extensions having more or equal to the given number of lines of main code will be included in the landscape report
+    // Only files with extensions taht have more or equal lines of main code will be included in the landscape report
     private int extensionThresholdLoc = 0;
 
     // Only project having more or equal to the given number of lines of main code will be included in the landscape report
