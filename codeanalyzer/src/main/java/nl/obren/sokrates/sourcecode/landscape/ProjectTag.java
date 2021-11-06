@@ -7,11 +7,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProjectTag {
+    // A tag name
     private String tag = "";
+
+    // A tag color
     private String color = "";
+
+    // A list of regex patterns to tag projects. Any project with a name matching any of the regex patterns will be tagged with this tag.
     private List<String> patterns = new ArrayList<>();
+
+    // A list of regex patterns used to exclude projects (if included in the patterns list)
     private List<String> excludePatterns = new ArrayList<>();
+
+    // A list of extensions to include project if a project has this extensions as biggest (most line of code)
     private List<String> mainExtensions = new ArrayList<>();
+
+    // A list of extensions to be excluded (if project has this extension as the biggest one)
     private List<String> excludeExtensions = new ArrayList<>();
 
     public String getTag() {

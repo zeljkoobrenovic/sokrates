@@ -1,10 +1,19 @@
 package nl.obren.sokrates.sourcecode.landscape;
 
 public class WebFrameLink {
+    // An iFrame title (header)
     private String title = "";
+
+    // An iFrame source
     private String src = "";
+
+    // An iFrame CSS-defined style
     private String style = "";
+
+    // If true, iFrame will allow scrolling
     private Boolean scrolling = true;
+
+    // An optional link to external page with more info (will go there on the click on the header)
     private String moreInfoLink = "";
 
     public WebFrameLink() {

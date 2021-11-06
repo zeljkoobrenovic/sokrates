@@ -4,7 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CustomTab {
+    // A tab name (label)
     private String name = "More";
+
+    // A list of iFrames to be included in the tab
     private List<WebFrameLink> iFrames = new ArrayList<>();
 
     public CustomTab() {

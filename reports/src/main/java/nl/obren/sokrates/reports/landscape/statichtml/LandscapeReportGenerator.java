@@ -376,17 +376,6 @@ public class LandscapeReportGenerator {
 
         landscapeReport.addLineBreak();
 
-        if (configuration.getCustomMetrics().size() > 0) {
-            configuration.getCustomMetrics().forEach(customMetric -> addCustomInfoBlock(customMetric));
-            landscapeReport.addLineBreak();
-        }
-
-        if (configuration.getCustomMetricsSmall().size() > 0) {
-            configuration.getCustomMetricsSmall().forEach(customMetric -> {
-                addSmallInfoBlock(customMetric.getValue(), customMetric.getTitle(), customMetric.getColor(), customMetric.getLink());
-            });
-        }
-
         landscapeReport.endDiv();
         landscapeReport.addLineBreak();
     }
@@ -784,15 +773,6 @@ public class LandscapeReportGenerator {
         }
 
         landscapeReport.endSection();
-    }
-
-    private void addCustomInfoBlock(CustomMetric customMetric) {
-        String subtitle = customMetric.getTitle();
-        if (StringUtils.isNotBlank(customMetric.getSubTitle())) {
-            subtitle += "<br/><span style='color: grey; font-size: 80%'>" + customMetric.getSubTitle() + "</span>";
-        }
-        String color = StringUtils.isNotBlank(customMetric.getColor()) ? customMetric.getColor() : "lightgrey";
-        addInfoBlockWithColor(customMetric.getValue(), subtitle, color, "");
     }
 
     private void addInfoBlock(String mainValue, String subtitle, String description, String tooltip) {
