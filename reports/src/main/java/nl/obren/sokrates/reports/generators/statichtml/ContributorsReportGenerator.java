@@ -337,8 +337,7 @@ public class ContributorsReportGenerator {
             report.addParagraph("The number on lines shows the number of same files that both persons changed in past <b>" + daysAgo + "</b> days.", "color: grey");
             GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
             graphvizDependencyRenderer.setMaxNumberOfDependencies(100);
-            graphvizDependencyRenderer.setType("graph");
-            graphvizDependencyRenderer.setArrow("--");
+            graphvizDependencyRenderer.setTypeGraph();
 
             Set<String> emails = new HashSet<>();
             peopleDependencies.forEach(peopleDependency -> {

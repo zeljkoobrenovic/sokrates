@@ -15,7 +15,6 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
-import nl.obren.sokrates.reports.utils.UtilsReportUtils;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
@@ -164,8 +163,6 @@ public class LandscapeReportGenerator {
         addIFrames(configuration.getiFramesContributorsAtStart());
         System.out.println("Adding contributors...");
         addContributors();
-        System.out.println("Adding contributors per extension...");
-        addContributorsPerExtension();
         System.out.println("Adding people dependencies...");
         addPeopleDependencies();
         addIFrames(configuration.getiFramesContributors());
@@ -431,18 +428,14 @@ public class LandscapeReportGenerator {
             List<ComponentDependency> peopleDependencies = ContributorConnectionUtils.getPeopleDependencies(contributors, 0, 30);
             peopleDependencies.sort((a, b) -> b.getCount() - a.getCount());
 
-            double cIndex = landscapeAnalysisResults.getcIndex30Days();
-            double cMean = landscapeAnalysisResults.getcMean30Days();
             double cMedian = landscapeAnalysisResults.getcMedian30Days();
 
-            // addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(peopleDependencies.size()), "C2C connections", "30 days", "");
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cMedian)), "C-Median", "30 days", "");
-            // addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cMean)), "C-Mean", "30 days", "");
-            //addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cIndex)), "C-Index",
-            //        "30 days", "" + (int) Math.round(cIndex) + " active contributes connected to " + (int) Math.round(cIndex) + " or more of other contributors via commits to shared projects in past 30 days.");
         }
 
         addContributorsPerYear(true);
+        System.out.println("Adding contributors per extension...");
+        addContributorsPerExtension(true);
 
         landscapeReport.startSubSection("Commits & Contributors Per Month", "Past two years");
         addContributorsPerMonth();
@@ -451,6 +444,8 @@ public class LandscapeReportGenerator {
         landscapeReport.startSubSection("Commits & Contributors Per Week", "Past two years");
         addContributorsPerWeek();
         landscapeReport.endSection();
+
+        addContributorsPerExtension();
 
 
         landscapeReport.addParagraph("latest commit date: <b>" + landscapeAnalysisResults.getLatestCommitDate() + "</b>", "color: grey");
@@ -524,6 +519,107 @@ public class LandscapeReportGenerator {
         }
         landscapeReport.endDiv();
         landscapeReport.endSection();
+    }
+
+
+    private void addContributorsPerExtension(boolean linkCharts) {
+        landscapeReport.startSubSection("Contributors per File Extensions (past 30 days)", "");
+        if (linkCharts) {
+            landscapeReport.startDiv("");
+            landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_extensions_contributors_30d.html");
+            landscapeReport.addHtmlContent(" | ");
+            landscapeReport.addNewTabLink("tree map", "visuals/tree_map_extensions_contributors_30d.html");
+            landscapeReport.addLineBreak();
+            landscapeReport.addLineBreak();
+            landscapeReport.endDiv();
+        }
+        landscapeReport.startDiv("");
+        List<String> mainExtensions = getMainExtensions();
+        List<CommitsPerExtension> contributorsPerExtension = landscapeAnalysisResults.getContributorsPerExtension()
+                .stream().filter(c -> mainExtensions.contains(c.getExtension())).collect(Collectors.toList());
+        Collections.sort(contributorsPerExtension, (a, b) -> b.getCommitsCount30Days() - a.getCommitsCount30Days());
+        boolean tooLong = contributorsPerExtension.size() > 25;
+        List<CommitsPerExtension> contributorsPerExtensionDisplay = tooLong ? contributorsPerExtension.subList(0, 25) : contributorsPerExtension;
+        List<CommitsPerExtension> linesOfCodePerExtensionHide = tooLong ? contributorsPerExtension.subList(25, contributorsPerExtension.size()) : new ArrayList<>();
+        contributorsPerExtensionDisplay.stream().filter(e -> e.getCommitters30Days().size() > 0).forEach(extension -> {
+            addLangInfo(extension, (e) -> e.getCommitters30Days(), extension.getCommitsCount30Days());
+        });
+        if (linesOfCodePerExtensionHide.stream().filter(e -> e.getCommitters30Days().size() > 0).count() > 0) {
+            landscapeReport.startShowMoreBlockDisappear("", "show all...");
+            linesOfCodePerExtensionHide.stream().filter(e -> e.getCommitters30Days().size() > 0).forEach(extension -> {
+                addLangInfo(extension, (e) -> e.getCommitters30Days(), extension.getCommitsCount30Days());
+            });
+            landscapeReport.endShowMoreBlock();
+        }
+        landscapeReport.endDiv();
+        addContributorDependencies(contributorsPerExtension);
+        landscapeReport.endSection();
+    }
+
+    private void addContributorDependencies(List<CommitsPerExtension> contributorsPerExtension) {
+        Map<String, List<String>> contrExtMap = new HashMap<>();
+        Set<String> extensionsNames = new HashSet<>();
+        contributorsPerExtension.stream().filter(e -> e.getCommitters30Days().size() > 0).forEach(commitsPerExtension -> {
+            String extensionDisplayLabel = commitsPerExtension.getExtension() + " (" + commitsPerExtension.getCommitters30Days().size() + ")";
+            extensionsNames.add(extensionDisplayLabel);
+            commitsPerExtension.getCommitters30Days().forEach(contributor -> {
+                if (contrExtMap.containsKey(contributor)) {
+                    contrExtMap.get(contributor).add(extensionDisplayLabel);
+                } else {
+                    contrExtMap.put(contributor, new ArrayList<>(Arrays.asList(extensionDisplayLabel)));
+                }
+            });
+        });
+        List<ComponentDependency> dependencies = new ArrayList<>();
+        Map<String, ComponentDependency> dependencyMap = new HashMap<>();
+
+        List<String> mainExtensions = getMainExtensions();
+        contrExtMap.values().stream().filter(v -> v.size() > 1).forEach(extensions -> {
+            extensions.stream().filter(extension1 -> mainExtensions.contains(extension1.replaceAll("\\(.*\\)", "").trim())).forEach(extension1 -> {
+                extensions.stream().filter(extension2 -> mainExtensions.contains(extension2.replaceAll("\\(.*\\)", "").trim())).filter(extension2 -> !extension1.equalsIgnoreCase(extension2)).forEach(extension2 -> {
+                    String key1 = extension1 + "::" + extension2;
+                    String key2 = extension2 + "::" + extension1;
+
+                    if (dependencyMap.containsKey(key1)) {
+                        dependencyMap.get(key1).increment(1);
+                    } else if (dependencyMap.containsKey(key2)) {
+                        dependencyMap.get(key2).increment(1);
+                    } else {
+                        ComponentDependency dependency = new ComponentDependency(extension1, extension2);
+                        dependencyMap.put(key1, dependency);
+                        dependencies.add(dependency);
+                    }
+                });
+            });
+        });
+
+        dependencies.forEach(dependency -> dependency.setCount(dependency.getCount() / 2));
+
+        GraphvizDependencyRenderer renderer = new GraphvizDependencyRenderer();
+        renderer.setMaxNumberOfDependencies(100);
+        renderer.setTypeGraph();
+        String graphvizContent = renderer.getGraphvizContent(new ArrayList<>(), dependencies);
+
+        landscapeReport.startShowMoreBlock("show extension dependencies...");
+        landscapeReport.addGraphvizFigure("extension_dependencies_30d", "Extension dependencies", graphvizContent);
+        addDownloadLinks("extension_dependencies_30d");
+        landscapeReport.endShowMoreBlock();
+        landscapeReport.addLineBreak();
+        landscapeReport.addNewTabLink(" - show extension dependencies as 3D force graph...", "visuals/extension_dependencies_30d_force_3d.html");
+        export3DForceGraph(dependencies, "extension_dependencies_30d");
+    }
+
+    private List<String> getMainExtensions() {
+        return landscapeAnalysisResults.getMainLinesOfCodePerExtension().stream().map(l -> l.getName().replace("*.", "").trim()).collect(Collectors.toList());
+    }
+
+    private void addLangInfo(CommitsPerExtension extension, ExtractStringListValue<CommitsPerExtension> extractor, int commitsCount) {
+        int size = extractor.getValue(extension).size();
+        String smallTextForNumber = FormattingUtils.getSmallTextForNumber(size);
+        addLangInfoBlockExtra(smallTextForNumber, extension.getExtension().replace("*.", "").trim(),
+                size + " " + (size == 1 ? "contributor" : "contributors (" + commitsCount + " commits)") + ":\n" +
+                        extractor.getValue(extension).stream().limit(100)
+                                .collect(Collectors.joining(", ")), FormattingUtils.getSmallTextForNumber(commitsCount) + " commits");
     }
 
     private void addLangInfo(NumericMetric extension) {
@@ -781,6 +877,21 @@ public class LandscapeReportGenerator {
         landscapeReport.addHtmlContent(DataImageUtils.getLangDataImageDiv42(lang));
         landscapeReport.addHtmlContent("<div style='font-size: 24px; margin-top: 8px;'>" + value + "</div>");
         landscapeReport.addHtmlContent("<div style='color: #434343; font-size: 13px'>" + lang + "</div>");
+        landscapeReport.endDiv();
+    }
+
+    private void addLangInfoBlockExtra(String value, String lang, String description, String extra) {
+        String style = "border-radius: 8px; margin: 4px 4px 4px 0px; display: inline-block; " +
+                "width: 80px; height: 114px;background-color: #dedede; " +
+                "text-align: center; vertical-align: middle; margin-bottom: 16px;";
+
+        landscapeReport.startDivWithLabel(description, style);
+
+        landscapeReport.addContentInDiv("", "margin-top: 8px");
+        landscapeReport.addHtmlContent(DataImageUtils.getLangDataImageDiv42(lang));
+        landscapeReport.addHtmlContent("<div style='font-size: 24px; margin-top: 8px;'>" + value + "</div>");
+        landscapeReport.addHtmlContent("<div style='color: #434343; font-size: 13px'>" + lang + "</div>");
+        landscapeReport.addHtmlContent("<div style='color: #767676; font-size: 9px; margin-top: 1px;'>" + extra + "</div>");
         landscapeReport.endDiv();
     }
 

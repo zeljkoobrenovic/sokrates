@@ -246,4 +246,14 @@ public class GraphvizDependencyRenderer {
     public void setReverseDirection(boolean reverseDirection) {
         this.reverseDirection = reverseDirection;
     }
+
+    public void setTypeGraph() {
+        setType("graph");
+        setArrow("--");
+    }
+
+    public void setTypeDigraph() {
+        setType("digraph");
+        setArrow("->");
+    }
 }

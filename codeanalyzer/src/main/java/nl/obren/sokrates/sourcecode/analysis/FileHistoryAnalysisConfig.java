@@ -78,7 +78,6 @@ public class FileHistoryAnalysisConfig {
 
     @JsonIgnore
     public List<CommitsPerExtension> getCommitsPerExtension(File sokratesConfigFolder, FileHistoryAnalysisConfig config) {
-        List<AuthorCommit> commits = new ArrayList<>();
         return GitContributorsUtil.getCommitsPerExtension(getContributorsFile(sokratesConfigFolder), config);
     }
 
