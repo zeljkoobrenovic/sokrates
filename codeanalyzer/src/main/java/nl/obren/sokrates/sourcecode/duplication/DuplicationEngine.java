@@ -34,9 +34,9 @@ public class DuplicationEngine {
         files.addAll(sourceFiles);
 
         Blocks blocks = new Blocks(files, threshold);
-        System.out.println(System.currentTimeMillis());
+        long startTime = System.currentTimeMillis();
         duplicates = blocks.extractDuplicatedBlocks(progressFeedback);
-        System.out.println(System.currentTimeMillis());
+        System.out.println("Extracted duplicated blocks in " + (System.currentTimeMillis() - startTime) + "ms.");
 
         totalCleanedLinesOfCode = files.getTotalCleanedLinesOfCode();
 

@@ -15,9 +15,13 @@ import java.util.List;
 public class FilesReportUtils {
 
     public static String getFilesTable(List<SourceFile> sourceFiles, boolean linkToFiles, boolean showAge, boolean showLineLength) {
+        return getFilesTable(sourceFiles, linkToFiles, showAge, showLineLength, 300);
+    }
+
+    public static String getFilesTable(List<SourceFile> sourceFiles, boolean linkToFiles, boolean showAge, boolean showLineLength, int maxHeight) {
         StringBuilder table = new StringBuilder();
 
-        table.append("<div style='width: 100%; overflow-x: scroll; overflow-y: scroll; max-height: 300px;'>\n");
+        table.append("<div style='width: 100%; overflow-x: scroll; overflow-y: scroll; max-height: " + maxHeight + "px;'>\n");
         table.append("<table style='width: 80%'>\n");
         table.append("<tr>");
         String header = "<th>File</th><th># lines</th><th># units</th>";

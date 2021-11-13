@@ -15,12 +15,10 @@ import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
-import nl.obren.sokrates.sourcecode.dependencies.DependencyEvidence;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationDependenciesHelper;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
 import nl.obren.sokrates.sourcecode.metrics.DuplicationMetric;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -32,23 +30,26 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class DuplicationReportGenerator {
+    public static final int MAX_TABLE_ROWS_COUNT = 100;
     private CodeAnalysisResults codeAnalysisResults;
+    private File reportsFolder;
     private RichTextReport report;
     private int graphCounter = 1;
     private int componentDuplicatesCount = 1;
     private int filePairsCount = 1;
 
-    public DuplicationReportGenerator(CodeAnalysisResults codeAnalysisResults) {
+    public DuplicationReportGenerator(CodeAnalysisResults codeAnalysisResults, File reportsFolder) {
         this.codeAnalysisResults = codeAnalysisResults;
+        this.reportsFolder = reportsFolder;
     }
 
-    public void getDuplicatesTable(RichTextReport report, List<DuplicationInstance> sourceFiles, String fragmentType) {
+    public void getDuplicatesTable(RichTextReport report, List<DuplicationInstance> duplicationInstances, String fragmentType) {
         report.startDiv("width: 100%; overflow-x: auto");
         report.startScrollingDiv();
         report.addHtmlContent("<table style='width: 80%'>\n");
         report.addHtmlContent("<th>Size</th><th>#</th><th>Folders</th><th>Files</th><th>Lines</th><th>Code</th>");
         int count[] = {0};
-        sourceFiles.forEach(instance -> {
+        duplicationInstances.stream().limit(MAX_TABLE_ROWS_COUNT).forEach(instance -> {
             count[0]++;
             report.addHtmlContent("<tr>\n");
 
@@ -63,8 +64,8 @@ public class DuplicationReportGenerator {
             boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
             report.addHtmlContent("<td>" +
                     "<div><div style='display: inline-block; vertical-align: top; margin-top: 3px; margin-right: 4px;'>" +
-                            DataImageUtils.getLangDataImageDiv30(extension) +
-                            "</div><div style='display: inline-block;'>"
+                    DataImageUtils.getLangDataImageDiv30(extension) +
+                    "</div><div style='display: inline-block;'>"
                     + formatDisplayStringSimple(instance.getFilesDisplayString(cacheSourceFiles))
                     + "</div></div></td>");
             report.addHtmlContent("<td>" + formatDisplayString(instance.getLinesDisplayString()) + "</td>");
@@ -107,7 +108,24 @@ public class DuplicationReportGenerator {
         addDuplicationPerExtensionSection(report);
         addDuplicationPerLogicalDecomposition(report);
         addLongestDuplicatesList(report);
+        addDuplicatedUnitsList(report);
         // addMostFrequentDuplicatesList(report);
+    }
+
+    private void addDuplicatedUnitsList(RichTextReport report) {
+        DuplicationAnalysisResults duplicationAnalysisResults = codeAnalysisResults.getDuplicationAnalysisResults();
+        if (duplicationAnalysisResults.getUnitDuplicates().size() > 0) {
+            List<DuplicationInstance> unitDuplicates = duplicationAnalysisResults.getUnitDuplicates();
+            int originalSize = unitDuplicates.size();
+            int maxTopListSize = codeAnalysisResults.getCodeConfiguration().getAnalysis().getMaxTopListSize();
+            if (unitDuplicates.size() > maxTopListSize) {
+                unitDuplicates = unitDuplicates.subList(0, maxTopListSize);
+            }
+            report.startSection("Duplicated Units", "The list of top " + unitDuplicates.size() + " duplicated units.");
+            report.addContentInDiv("<a href='../data/text/unit_duplicates.txt'>See data for all <b>" + FormattingUtils.formatCount(originalSize) + "</b> unit " + (originalSize == 1 ? "duplicate" : "duplicates...") + "</b></a>", "margin-bottom: 16px");
+            getDuplicatesTable(report, unitDuplicates, "unit_duplicates");
+            report.endSection();
+        }
     }
 
     private void addDuplicationPerLogicalDecomposition(RichTextReport report) {
@@ -216,8 +234,12 @@ public class DuplicationReportGenerator {
 
             report.addLineBreak();
 
-            addDownloadLinks(graphId);
+            VisualizationTools.addDownloadLinks(report, graphId);
+            report.addLineBreak();
+            String force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(componentDependencies, reportsFolder, graphId);
+            report.addNewTabLink("Open 3D force graph...", force3DGraphFilePath);
 
+            report.addLineBreak();
             report.addLineBreak();
 
             addMoreDetailsSection(report, componentDependencies, logicalDecomposition.getName(), instances);
@@ -225,6 +247,7 @@ public class DuplicationReportGenerator {
             report.addLineBreak();
         }
     }
+
 
     private void addMoreDetailsSection(RichTextReport report, List<ComponentDependency> componentDependencies, String logicalDecompositionName, List<DuplicationInstance> instances) {
         Collections.sort(componentDependencies, (o1, o2) -> o2.getCount() - o1.getCount());
@@ -242,7 +265,7 @@ public class DuplicationReportGenerator {
             report.addTableCell(componentDependency.getFromComponent()
                     + (!formattedPercentageFrom.equals("0") ? " (" + formattedPercentageFrom + "%)" : "")
                     + "<br/>&nbsp&nbsp;-->&nbsp"
-                    + componentDependency.getToComponent()+ (!formattedPercentageTo.equals("0") ? " (" + formattedPercentageTo + "%)" : ""));
+                    + componentDependency.getToComponent() + (!formattedPercentageTo.equals("0") ? " (" + formattedPercentageTo + "%)" : ""));
 
             report.addTableCell(componentDependency.getCount() + "", "text-align: center");
 
@@ -321,7 +344,7 @@ public class DuplicationReportGenerator {
                 stringBuilder.append(":");
                 stringBuilder.append(block.getEndLine());
                 stringBuilder.append(", ");
-                stringBuilder.append(FormattingUtils.getFormattedPercentage(block.getPercentage())+ "%");
+                stringBuilder.append(FormattingUtils.getFormattedPercentage(block.getPercentage()) + "%");
                 stringBuilder.append(")\n");
             });
             stringBuilder.append("\n");
@@ -336,28 +359,21 @@ public class DuplicationReportGenerator {
         return "../data/text/" + file.getName();
     }
 
-    private void addDownloadLinks(String graphId) {
-        report.startDiv("");
-        report.addHtmlContent("Download: ");
-        report.addNewTabLink("SVG", "visuals/" + graphId + ".svg");
-        report.addHtmlContent(" ");
-        report.addNewTabLink("DOT", "visuals/" + graphId + ".dot.txt");
-        report.addHtmlContent(" ");
-        report.addNewTabLink("(open online Graphviz editor)", "https://obren.io/tools/graphviz/");
-        report.endDiv();
-    }
-
-
     private LogicalDecomposition getLogicalDecomposition(int index) {
         return codeAnalysisResults.getCodeConfiguration().getLogicalDecompositions().get(index);
     }
 
     private void addLongestDuplicatesList(RichTextReport report) {
-        List<DuplicationInstance> longestDuplicates = codeAnalysisResults.getDuplicationAnalysisResults().getLongestDuplicates();
+        DuplicationAnalysisResults duplicationAnalysisResults = codeAnalysisResults.getDuplicationAnalysisResults();
+        List<DuplicationInstance> longestDuplicates = duplicationAnalysisResults.getLongestDuplicates();
         report.startSection("Longest Duplicates", "The list of " + longestDuplicates.size() + " longest duplicates.");
+        int size = duplicationAnalysisResults.getAllDuplicates().size();
+        report.addContentInDiv("<a href='../data/text/duplicates.txt'>See data for all <b>" + FormattingUtils.formatCount(size)
+                + "</b> " + (size == 1 ? "duplicate" : "duplicates...") + "</b></a>", "margin-bottom: 16px");
         getDuplicatesTable(report, longestDuplicates, "longest_duplicates");
         report.endSection();
     }
+
 
     private void addMostFrequentDuplicatesList(RichTextReport report) {
         List<DuplicationInstance> duplicates = codeAnalysisResults.getDuplicationAnalysisResults().getMostFrequentDuplicates();

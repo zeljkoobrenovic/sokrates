@@ -346,8 +346,10 @@ public class ContributorsReportGenerator {
             });
 
             String prefix = "people_dependencies_" + daysAgo + "_";
-            addDependencyGraphVisuals(peopleDependencies, new ArrayList<>(), graphvizDependencyRenderer, prefix);
+            String graphId = addDependencyGraphVisuals(peopleDependencies, new ArrayList<>(), graphvizDependencyRenderer, prefix);
             report.endShowMoreBlock();
+            report.addLineBreak();
+            report.addNewTabLink("- open 3D force graph", "visuals/" + graphId + "_force_3d.html");
             report.addLineBreak();
             report.addLineBreak();
             addPeopleDependenciesTable(peopleDependencies);
@@ -417,7 +419,7 @@ public class ContributorsReportGenerator {
         return "" + (((int) (10 * value)) / 10.0);
     }
 
-    private void addDependencyGraphVisuals(List<ComponentDependency> componentDependencies, List<String> componentNames, GraphvizDependencyRenderer graphvizDependencyRenderer, String prefix) {
+    private String addDependencyGraphVisuals(List<ComponentDependency> componentDependencies, List<String> componentNames, GraphvizDependencyRenderer graphvizDependencyRenderer, String prefix) {
         String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(
                 componentNames,
                 componentDependencies);
@@ -425,9 +427,11 @@ public class ContributorsReportGenerator {
         report.addGraphvizFigure(graphId, "", graphvizContent);
         report.addLineBreak();
         report.addLineBreak();
-        addDownloadLinks(graphId);
+        VisualizationTools.addDownloadLinks(report, graphId);
 
         export3DForceGraph(componentDependencies, graphId);
+
+        return graphId;
     }
 
     private void export3DForceGraph(List<ComponentDependency> componentDependencies, String graphId) {
@@ -459,19 +463,6 @@ public class ContributorsReportGenerator {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    private void addDownloadLinks(String graphId) {
-        report.startDiv("");
-        report.addHtmlContent("Download: ");
-        report.addNewTabLink("SVG", "visuals/" + graphId + ".svg");
-        report.addHtmlContent(" ");
-        report.addNewTabLink("DOT", "visuals/" + graphId + ".dot.txt");
-        report.addHtmlContent(" ");
-        report.addNewTabLink("(open online Graphviz editor)", "https://obren.io/tools/graphviz/");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("3D force graph", "visuals/" + graphId + "_force_3d.html");
-        report.endDiv();
     }
 
     public void addContributorsPanel(RichTextReport report, List<Contributor> contributors, ContributionCounter contributionCounter) {

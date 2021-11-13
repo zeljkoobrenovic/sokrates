@@ -13,6 +13,7 @@ import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.FilePairChangedTogether;
 import nl.obren.sokrates.sourcecode.filehistory.TemporalDependenciesHelper;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,12 +21,14 @@ import java.util.stream.Collectors;
 public class FileTemporalDependenciesReportGenerator {
     private final CodeAnalysisResults codeAnalysisResults;
     private int graphCounter = 1;
+    private File reportsFolder;
 
     public FileTemporalDependenciesReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
     }
 
-    public void addFileHistoryToReport(RichTextReport report) {
+    public void addFileHistoryToReport(File reportsFolder, RichTextReport report) {
+        this.reportsFolder = reportsFolder;
         report.addParagraph("A temporal dependency occurs when developers change two or more files at the same time (i.e. they are a part of the same commit).");
 
         report.startTabGroup();
@@ -166,6 +169,10 @@ public class FileTemporalDependenciesReportGenerator {
             String graphId = "file_changed_together_dependencies_" + graphCounter++;
             report.addGraphvizFigure(graphId, "File changed together in different components", graphvizContent);
 
+            VisualizationTools.addDownloadLinks(report, graphId);
+            report.addLineBreak();
+            String force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(componentDependencies, reportsFolder, graphId);
+            report.addNewTabLink("Open 3D force graph...", force3DGraphFilePath);
             report.addLineBreak();
         } else {
             report.addParagraph("No temporal cross-component dependencies found.");

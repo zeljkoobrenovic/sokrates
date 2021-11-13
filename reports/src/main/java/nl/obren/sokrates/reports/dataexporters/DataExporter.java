@@ -65,8 +65,8 @@ public class DataExporter {
     public static final String SEPARATOR = "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n";
     public static final String FOUND_TEXT_PER_FILE_SIFFIX = "_found_text_per_file";
     public static final String FOUND_TEXT_SUFFIX = "_found_text";
-    private static final Log LOG = LogFactory.getLog(DataExporter.class);
     public static final int MAX_EXPORT_LIST_SIZE = 10000;
+    private static final Log LOG = LogFactory.getLog(DataExporter.class);
     private ProgressFeedback progressFeedback;
     private File sokratesConfigFile;
     private CodeConfiguration codeConfiguration;
@@ -194,12 +194,16 @@ public class DataExporter {
     }
 
     private void exportDuplicates() {
-        DuplicationExportInfo duplicationExportInfo = new DuplicationExporter(analysisResults.getDuplicationAnalysisResults().getAllDuplicates()).getDuplicationExportInfo();
+        exportDuplicates(analysisResults.getDuplicationAnalysisResults().getAllDuplicates(), "duplicates");
+        exportDuplicates(analysisResults.getDuplicationAnalysisResults().getUnitDuplicates(), "unit_duplicates");
+    }
 
+    private void exportDuplicates(List<DuplicationInstance> instances, final String fileName) {
+        DuplicationExportInfo duplicationExportInfo = new DuplicationExporter(instances).getDuplicationExportInfo();
+        List<DuplicateExportInfo> duplicates = duplicationExportInfo.getDuplicates();
         StringBuilder content = new StringBuilder();
 
         int id[] = {1};
-        List<DuplicateExportInfo> duplicates = duplicationExportInfo.getDuplicates();
         if ((duplicates.size() > MAX_EXPORT_LIST_SIZE)) {
             duplicates = duplicates.subList(0, MAX_EXPORT_LIST_SIZE);
         }
@@ -218,7 +222,7 @@ public class DataExporter {
             id[0]++;
         });
         try {
-            FileUtils.write(new File(textDataFolder, "duplicates.txt"), content.toString(), UTF_8);
+            FileUtils.write(new File(textDataFolder, fileName + ".txt"), content.toString(), UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -541,6 +545,7 @@ public class DataExporter {
 
         DuplicationAnalysisResults duplicationAnalysisResults = analysisResults.getDuplicationAnalysisResults();
         saveDuplicateFragmentFiles(duplicationAnalysisResults.getLongestDuplicates(), "longest_duplicates");
+        saveDuplicateFragmentFiles(duplicationAnalysisResults.getUnitDuplicates(), "unit_duplicates");
         // saveDuplicateFragmentFiles(duplicationAnalysisResults.getMostFrequentDuplicates(), "most_frequent_duplicates");
     }
 

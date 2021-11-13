@@ -170,7 +170,9 @@ public class LogicalComponentsReportGenerator {
                 .filter(c -> renderWithoutDependencies || isComponentInDependency(dependenciesAboveThreshold, c))
                 .collect(Collectors.toCollection(ArrayList::new));
         List<ComponentGroup> componentGroups = getComponentGroups(logicalDecomposition, dependenciesAboveThreshold, componentsAboveThreshold);
-        addDependencyGraphVisuals(dependenciesAboveThreshold, componentsAboveThreshold, componentGroups, graphvizDependencyRenderer);
+        String graphId = addDependencyGraphVisuals(dependenciesAboveThreshold, componentsAboveThreshold, componentGroups, graphvizDependencyRenderer);
+        report.addLineBreak();
+        report.addNewTabLink("Open 3D force graph...", "visuals/force_3d_" + graphId + ".html");
 
         if (componentGroups.size() > 0) {
             report.addLevel4Header("Group Dependencies");
@@ -178,6 +180,7 @@ public class LogicalComponentsReportGenerator {
             addDependencyGraphVisuals(groupDependencies,
                     componentsAboveThreshold.stream().filter(c -> c.equalsIgnoreCase(getGroup(c, componentGroups))).collect(Collectors.toCollection(ArrayList::new)),
                     new ArrayList<>(), graphvizDependencyRenderer);
+            report.addLineBreak();
         }
 
         report.addLineBreak();
@@ -427,7 +430,7 @@ public class LogicalComponentsReportGenerator {
         return false;
     }
 
-    private void addDependencyGraphVisuals(List<ComponentDependency> componentDependencies, List<String> componentNames, List<ComponentGroup> componentGroups, GraphvizDependencyRenderer graphvizDependencyRenderer) {
+    private String addDependencyGraphVisuals(List<ComponentDependency> componentDependencies, List<String> componentNames, List<ComponentGroup> componentGroups, GraphvizDependencyRenderer graphvizDependencyRenderer) {
         String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(componentNames, componentDependencies, componentGroups);
         String graphId = "dependencies_" + dependencyVisualCounter++;
         report.startDiv("max-height: 600px; overflow-y: scroll; overflow-x: scroll;");
@@ -435,7 +438,9 @@ public class LogicalComponentsReportGenerator {
         report.endDiv();
         report.addLineBreak();
         report.addLineBreak();
-        addDownloadLinks(graphId);
+        VisualizationTools.addDownloadLinks(report, graphId);
+
+        return graphId;
     }
 
     private void addMoreDetailsSection(LogicalDecompositionAnalysisResults logicalDecomposition, List<ComponentDependency> componentDependencies) {
@@ -450,19 +455,6 @@ public class LogicalComponentsReportGenerator {
         report.endTable();
         report.endDiv();
         report.endShowMoreBlock();
-    }
-
-    private void addDownloadLinks(String graphId) {
-        report.startDiv("");
-        report.addHtmlContent("Download: ");
-        report.addNewTabLink("SVG", "visuals/" + graphId + ".svg");
-        report.addHtmlContent(" ");
-        report.addNewTabLink("DOT", "visuals/" + graphId + ".dot.txt");
-        report.addHtmlContent(" ");
-        report.addNewTabLink("(open online Graphviz editor)", "https://obren.io/tools/graphviz/");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("3D force graph", "visuals/force_3d_" + graphId + ".html");
-        report.endDiv();
     }
 
     private void describeDependencyFinder(LogicalDecompositionAnalysisResults logicalDecomposition) {

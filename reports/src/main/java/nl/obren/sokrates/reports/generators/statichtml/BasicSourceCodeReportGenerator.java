@@ -166,7 +166,7 @@ public class BasicSourceCodeReportGenerator {
             int threshold = codeAnalysisResults.getCodeConfiguration().getAnalysis().getLocDuplicationThreshold();
             int mainLoc = codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode();
             if (mainLoc <= threshold) {
-                new DuplicationReportGenerator(codeAnalysisResults).addDuplicationToReport(duplicationReport);
+                new DuplicationReportGenerator(codeAnalysisResults, reportsFolder).addDuplicationToReport(duplicationReport);
             } else {
                 codeAnalyzerSettings.setAnalyzeDuplication(false);
             }
@@ -180,7 +180,7 @@ public class BasicSourceCodeReportGenerator {
             if (codeAnalysisResults.getCodeConfiguration().getFileHistoryAnalysis().filesHistoryImportPathExists(codeConfigurationFile.getParentFile())) {
                 new FileAgeReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileHistoryReport);
                 new FileChurnReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileChangeFrequencyReport);
-                new FileTemporalDependenciesReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileTemporalDependenciesReport);
+                new FileTemporalDependenciesReportGenerator(codeAnalysisResults).addFileHistoryToReport(reportsFolder, fileTemporalDependenciesReport);
                 new ContributorsReportGenerator(codeAnalysisResults).addContributorsAnalysisToReport(reportsFolder, contributorsReport);
             }
         }

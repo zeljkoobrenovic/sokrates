@@ -23,16 +23,18 @@ public class DuplicationAnalyzer extends Analyzer {
     private final CodeConfiguration codeConfiguration;
     private final MetricsList metricsList;
     private final long start;
-    private final DuplicationAnalysisResults analysisResults;
+    private final DuplicationAnalysisResults duplcationAnalysisResults;
     private final NamedSourceCodeAspect main;
+    private CodeAnalysisResults analysisResults;
     private ProgressFeedback progressFeedback;
 
     public DuplicationAnalyzer(CodeAnalysisResults analysisResults) {
-        this.analysisResults = analysisResults.getDuplicationAnalysisResults();
+        this.duplcationAnalysisResults = analysisResults.getDuplicationAnalysisResults();
         this.codeConfiguration = analysisResults.getCodeConfiguration();
         this.metricsList = analysisResults.getMetricsList();
         this.start = analysisResults.getAnalysisStartTimeMs();
         this.textSummary = analysisResults.getTextSummary();
+        this.analysisResults = analysisResults;
         this.main = codeConfiguration.getMain();
     }
 
@@ -48,10 +50,16 @@ public class DuplicationAnalyzer extends Analyzer {
         List<DuplicationInstance> duplicates = new DuplicationEngine().findDuplicates(main.getSourceFiles(),
                 codeConfiguration.getAnalysis().getMinDuplicationBlockLoc(), new ProgressFeedback());
 
+        List<DuplicationInstance> duplicatedUnits = new UnitDuplicatesExtractor().findDuplicatedUnits(
+                analysisResults.getUnitsAnalysisResults().getAllUnits(),
+                analysisResults.getCodeConfiguration().getAnalysis().getMinDuplicationBlockLoc());
+
+        analysisResults.getDuplicationAnalysisResults().setUnitDuplicates(duplicatedUnits);
+
         Map<String, DuplicationInstance> mergedConsolidated = consolidate(merge(duplicates));
         ArrayList<DuplicationInstance> consolidatedDuplicationInstances = new ArrayList<>(mergedConsolidated.values());
         consolidatedDuplicationInstances.sort((a, b) -> b.getBlockSize() - a.getBlockSize());
-        analysisResults.setAllDuplicates(consolidatedDuplicationInstances);
+        duplcationAnalysisResults.setAllDuplicates(consolidatedDuplicationInstances);
 
         // analysisResults.setAllDuplicates(duplicates);
 
@@ -60,10 +68,10 @@ public class DuplicationAnalyzer extends Analyzer {
         int totalNumberOfCleanedLines = DuplicationUtils.getTotalNumberOfCleanedLines(main.getSourceFiles());
         int numberOfFilesWithDuplicates = DuplicationAggregator.getDuplicationPerSourceFile(duplicates).size();
 
-        analysisResults.getOverallDuplication().setNumberOfDuplicates(numberOfDuplicates);
-        analysisResults.getOverallDuplication().setCleanedLinesOfCode(totalNumberOfCleanedLines);
-        analysisResults.getOverallDuplication().setDuplicatedLinesOfCode(numberOfDuplicatedLines);
-        analysisResults.getOverallDuplication().setNumberOfFilesWithDuplicates(numberOfFilesWithDuplicates);
+        duplcationAnalysisResults.getOverallDuplication().setNumberOfDuplicates(numberOfDuplicates);
+        duplcationAnalysisResults.getOverallDuplication().setCleanedLinesOfCode(totalNumberOfCleanedLines);
+        duplcationAnalysisResults.getOverallDuplication().setDuplicatedLinesOfCode(numberOfDuplicatedLines);
+        duplcationAnalysisResults.getOverallDuplication().setNumberOfFilesWithDuplicates(numberOfFilesWithDuplicates);
 
         addSystemDuplicationMetrics(numberOfDuplicates, numberOfDuplicatedLines, totalNumberOfCleanedLines, numberOfFilesWithDuplicates);
 
@@ -83,7 +91,7 @@ public class DuplicationAnalyzer extends Analyzer {
         List<DuplicationInstance> filePairs = new ArrayList<>(mergedConsolidated.values());
         Collections.sort(filePairs, (o1, o2) -> -Integer.valueOf(o1.getBlockSize()).compareTo(o2.getBlockSize()));
         for (int i = 0; i < Math.min(codeConfiguration.getAnalysis().getMaxTopListSize(), filePairs.size()); i++) {
-            analysisResults.getLongestDuplicates().add(filePairs.get(i));
+            duplcationAnalysisResults.getLongestDuplicates().add(filePairs.get(i));
         }
     }
 
@@ -92,7 +100,7 @@ public class DuplicationAnalyzer extends Analyzer {
         for (int i = 0; i < Math.min(codeConfiguration.getAnalysis().getMaxTopListSize(), duplicates.size()); i++) {
             DuplicationInstance duplicate = duplicates.get(i);
             if (duplicate.getDuplicatedFileBlocks().size() > 2) {
-                analysisResults.getMostFrequentDuplicates().add(duplicate);
+                duplcationAnalysisResults.getMostFrequentDuplicates().add(duplicate);
             }
         }
     }
@@ -102,7 +110,7 @@ public class DuplicationAnalyzer extends Analyzer {
         AnalysisUtils.detailedInfo(textSummary, progressFeedback, "  - per extension:", start);
         duplicationPerExtension.forEach(extensionDuplication -> {
             String displayName = extensionDuplication.getExtension();
-            analysisResults.getDuplicationPerExtension().add(new DuplicationMetric(displayName,
+            duplcationAnalysisResults.getDuplicationPerExtension().add(new DuplicationMetric(displayName,
                     extensionDuplication.getCleanedLinesOfCode(), extensionDuplication.getDuplicatedLinesOfCode()));
             addExtensionDuplicationMetrics(extensionDuplication);
         });
@@ -112,7 +120,7 @@ public class DuplicationAnalyzer extends Analyzer {
         codeConfiguration.getLogicalDecompositions().forEach(logicalDecomposition -> {
             AnalysisUtils.detailedInfo(textSummary, progressFeedback, "  - per component:" + logicalDecomposition.getName(), start);
             ArrayList<DuplicationMetric> duplicationPerComponent = new ArrayList<>();
-            analysisResults.getDuplicationPerComponent().add(duplicationPerComponent);
+            duplcationAnalysisResults.getDuplicationPerComponent().add(duplicationPerComponent);
             duplicationPerLogicalComponent.stream()
                     .filter(componentDuplication -> componentDuplication.getAspect().getFiltering().equalsIgnoreCase(logicalDecomposition.getName()))
                     .forEach(componentDuplication -> {
@@ -311,6 +319,11 @@ public class DuplicationAnalyzer extends Analyzer {
                 .id(AnalysisUtils.getMetricId("DUPLICATION_PERCENTAGE"))
                 .description("Duplication percentage")
                 .value(100.0 * numberOfDuplicatedLines / totalNumberOfCleanedLines);
+
+        metricsList.addMetric()
+                .id(AnalysisUtils.getMetricId("UNIT_DUPLICATES_COUNT"))
+                .description("Unit duplicates")
+                .value(analysisResults.getDuplicationAnalysisResults().getUnitDuplicates().size());
     }
 
 }

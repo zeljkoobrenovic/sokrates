@@ -20,6 +20,8 @@ public class DuplicationAnalysisResults {
 
     @JsonIgnore
     private List<DuplicationInstance> allDuplicates = new ArrayList<>();
+    @JsonIgnore
+    private List<DuplicationInstance> unitDuplicates = new ArrayList<>();
     private List<DuplicationInstance> longestDuplicates = new ArrayList<>();
     private List<DuplicationInstance> mostFrequentDuplicates = new ArrayList<>();
 
@@ -79,5 +81,15 @@ public class DuplicationAnalysisResults {
     @JsonIgnore
     public void setAllDuplicates(List<DuplicationInstance> allDuplicates) {
         this.allDuplicates = allDuplicates;
+    }
+
+    @JsonIgnore
+    public List<DuplicationInstance> getUnitDuplicates() {
+        return unitDuplicates;
+    }
+
+    @JsonIgnore
+    public void setUnitDuplicates(List<DuplicationInstance> unitDuplicates) {
+        this.unitDuplicates = unitDuplicates;
     }
 }
