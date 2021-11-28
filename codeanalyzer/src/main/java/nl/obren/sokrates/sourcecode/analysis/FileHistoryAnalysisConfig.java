@@ -66,7 +66,6 @@ public class FileHistoryAnalysisConfig {
 
     @JsonIgnore
     public ContributorsImport getContributors(File sokratesConfigFolder, FileHistoryAnalysisConfig config) {
-        List<String> ignoreContributors = config.getIgnoreContributors();
         ContributorsImport contributorsImport = GitContributorsUtil.importGitContributorsExport(getContributorsFile(sokratesConfigFolder), config);
         List<Contributor> contributors = contributorsImport.getContributors()
                 .stream()

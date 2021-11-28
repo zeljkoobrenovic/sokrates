@@ -18,6 +18,7 @@ import nl.obren.sokrates.sourcecode.lang.css.CssAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.d.DAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.dbc.DbcAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.go.GoLangAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.gradle.GradleAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.groovy.GroovyAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.html.HtmlAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.java.JavaAnalyzer;
@@ -190,6 +191,9 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("grt", GroovyAnalyzer.class);
         analyzersMap.put("gtpl", GroovyAnalyzer.class);
         analyzersMap.put("gvy", GroovyAnalyzer.class);
+
+        // gradle
+        analyzersMap.put("gradle", GradleAnalyzer.class);
 
         analyzersMap.put("css", CssAnalyzer.class);
         analyzersMap.put("less", LessAnalyzer.class);
@@ -422,6 +426,7 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("JSON-tmLanguage", JsonAnalyzer.class);
         analyzersMap.put("jsonl", JsonAnalyzer.class);
         analyzersMap.put("mcmeta", JsonAnalyzer.class);
+        analyzersMap.put("tf", YamlAnalyzer.class);
         analyzersMap.put("tfstate", JsonAnalyzer.class);
         analyzersMap.put("tfstate.backup", JsonAnalyzer.class);
         analyzersMap.put("topojson", JsonAnalyzer.class);

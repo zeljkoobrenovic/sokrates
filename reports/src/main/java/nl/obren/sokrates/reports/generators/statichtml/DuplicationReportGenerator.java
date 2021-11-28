@@ -224,7 +224,7 @@ public class DuplicationReportGenerator {
             graphvizDependencyRenderer.setDefaultNodeFillColor("deepskyblue2");
             graphvizDependencyRenderer.setType("graph");
             graphvizDependencyRenderer.setArrow("--");
-            graphvizDependencyRenderer.setArrowColor("crimson");
+            graphvizDependencyRenderer.setArrowColor("#DC143C");
             graphvizDependencyRenderer.setMaxNumberOfDependencies(50);
             String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), componentDependencies);
             report.addLevel3Header("Duplication Between Components (" + threshold + "+ lines)", "margin-top: 30px");
@@ -369,7 +369,7 @@ public class DuplicationReportGenerator {
         report.startSection("Longest Duplicates", "The list of " + longestDuplicates.size() + " longest duplicates.");
         int size = duplicationAnalysisResults.getAllDuplicates().size();
         report.addContentInDiv("<a href='../data/text/duplicates.txt'>See data for all <b>" + FormattingUtils.formatCount(size)
-                + "</b> " + (size == 1 ? "duplicate" : "duplicates...") + "</b></a>", "margin-bottom: 16px");
+                + "</b> " + (size == 1 ? "duplicate" : "duplicates...") + "</a>", "margin-bottom: 16px");
         getDuplicatesTable(report, longestDuplicates, "longest_duplicates");
         report.endSection();
     }

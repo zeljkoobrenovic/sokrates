@@ -53,7 +53,6 @@ public class GitHistoryUtils {
         if (updates != null) {
             return updates;
         }
-        List<String> ignoreContributors = config.getIgnoreContributors();
         updates = new ArrayList<>();
         System.out.println("Reading history from file");
         List<String> lines;
@@ -85,15 +84,17 @@ public class GitHistoryUtils {
                 if (index3 > 0) {
                     String date = line.substring(0, 10).trim();
                     String author = line.substring(index1 + 1, index2).trim();
-                    if (shouldIgnore(author, ignoreContributors)) {
-                        return null;
-                    }
                     if (config.getTransformContributorEmails().size() > 0) {
                         ComplexOperation operation = new ComplexOperation(config.getTransformContributorEmails());
                         String original = author;
                         author = operation.exec(author);
                         System.out.println(original + " -> " + author);
                     }
+
+                    if (shouldIgnore(author, ignoreContributors)) {
+                        return null;
+                    }
+
                     String commitId = line.substring(index2 + 1, index3).trim();
                     String path = line.substring(index3 + 1).trim();
 

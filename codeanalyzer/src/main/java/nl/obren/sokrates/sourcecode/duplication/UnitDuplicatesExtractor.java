@@ -70,6 +70,7 @@ public class UnitDuplicatesExtractor {
         block1.setEndLine(unit.getEndLine());
         block1.setCleanedStartLine(unit.getStartLine());
         block1.setCleanedEndLine(unit.getEndLine());
+        block1.setSourceFileCleanedLinesOfCode(0);
         return block1;
     }
 

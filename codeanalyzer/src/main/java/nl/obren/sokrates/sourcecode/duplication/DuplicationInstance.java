@@ -71,7 +71,10 @@ public class DuplicationInstance {
                     stringBuilder.append("\n");
                 }
                 stringBuilder.append(block.getStartLine() + ":" + block.getEndLine() + " ");
-                stringBuilder.append("(" + FormattingUtils.getFormattedPercentage(block.getPercentage()) + "%)");
+                double percentage = block.getPercentage();
+                if (percentage > 0) {
+                    stringBuilder.append("(" + FormattingUtils.getFormattedPercentage(percentage) + "%)");
+                }
             }
             i[0]++;
         });

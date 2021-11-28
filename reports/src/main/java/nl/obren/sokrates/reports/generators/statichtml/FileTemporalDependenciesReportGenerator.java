@@ -162,7 +162,7 @@ public class FileTemporalDependenciesReportGenerator {
             graphvizDependencyRenderer.setDefaultNodeFillColor("deepskyblue2");
             graphvizDependencyRenderer.setType("graph");
             graphvizDependencyRenderer.setArrow("--");
-            graphvizDependencyRenderer.setArrowColor("deepskyblue4");
+            graphvizDependencyRenderer.setArrowColor("#00688b");
             graphvizDependencyRenderer.setMaxNumberOfDependencies(50);
             String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), componentDependencies);
 

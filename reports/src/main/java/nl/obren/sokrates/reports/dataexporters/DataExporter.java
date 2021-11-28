@@ -585,17 +585,24 @@ public class DataExporter {
 
         FileUtils.write(new File(textDataFolder, "mainFiles.txt"), getFilesAsTxt(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
         FileUtils.write(new File(textDataFolder, "mainFilesWithHistory.txt"), getFilesWithHistoryAsTxt(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
-        FileUtils.write(new File(dataFolder, "testFiles.json"), new JsonGenerator().generate(analysisResults.getTestAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
-        FileUtils.write(new File(dataFolder, "units.json"), new JsonGenerator().generate(new UnitListExporter(analysisResults.getUnitsAnalysisResults().getAllUnits()).getAllUnitsData()), UTF_8);
-        FileUtils.write(new File(dataFolder, "files.json"), new FileListExporter(analysisResults.getFilesAnalysisResults().getAllFiles()).getJson(), UTF_8);
-        FileUtils.write(new File(dataFolder, "duplicates.json"), new JsonGenerator().generate(new DuplicationExporter(
-                analysisResults.getDuplicationAnalysisResults().getAllDuplicates()).getDuplicationExportInfo()), UTF_8);
-        FileUtils.write(new File(dataFolder, "logical_decompositions.json"), new JsonGenerator().generate(
-                analysisResults.getLogicalDecompositionsAnalysisResults()), UTF_8);
-        FileUtils.write(new File(dataFolder, "dependencies.json"), new JsonGenerator().generate(
-                new DependenciesExporter(analysisResults.getAllDependencies()).getDependenciesExportInfo()), UTF_8);
-        FileUtils.write(new File(dataFolder, "contributors.json"), new JsonGenerator().generate(analysisResults.getContributorsAnalysisResults().getContributors()), UTF_8);
-        FileUtils.write(new File(dataFolder, "concerns.json"), new JsonGenerator().generate(analysisResults.getConcernsAnalysisResults()), UTF_8);
+        try {
+            FileUtils.write(new File(dataFolder, "testFiles.json"), new JsonGenerator().generate(analysisResults.getTestAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
+            FileUtils.write(new File(dataFolder, "units.json"), new JsonGenerator().generate(new UnitListExporter(analysisResults.getUnitsAnalysisResults().getAllUnits()).getAllUnitsData()), UTF_8);
+            FileUtils.write(new File(dataFolder, "files.json"), new FileListExporter(analysisResults.getFilesAnalysisResults().getAllFiles()).getJson(), UTF_8);
+            List<DuplicationInstance> allDuplicates = analysisResults.getDuplicationAnalysisResults().getAllDuplicates();
+            Collections.sort(allDuplicates, (a, b) -> b.getBlockSize() - a.getBlockSize());
+            allDuplicates = allDuplicates.stream().limit(10000).collect(Collectors.toList());
+            FileUtils.write(new File(dataFolder, "duplicates.json"), new JsonGenerator().generate(new DuplicationExporter(
+                    allDuplicates).getDuplicationExportInfo()), UTF_8);
+            FileUtils.write(new File(dataFolder, "logical_decompositions.json"), new JsonGenerator().generate(
+                    analysisResults.getLogicalDecompositionsAnalysisResults()), UTF_8);
+            FileUtils.write(new File(dataFolder, "dependencies.json"), new JsonGenerator().generate(
+                    new DependenciesExporter(analysisResults.getAllDependencies()).getDependenciesExportInfo()), UTF_8);
+            FileUtils.write(new File(dataFolder, "contributors.json"), new JsonGenerator().generate(analysisResults.getContributorsAnalysisResults().getContributors()), UTF_8);
+            FileUtils.write(new File(dataFolder, "concerns.json"), new JsonGenerator().generate(analysisResults.getConcernsAnalysisResults()), UTF_8);
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
     }
 
     public File getTextDataFolder() {

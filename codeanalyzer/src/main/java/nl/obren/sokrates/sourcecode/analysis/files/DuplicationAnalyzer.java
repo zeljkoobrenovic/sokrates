@@ -56,14 +56,13 @@ public class DuplicationAnalyzer extends Analyzer {
 
         analysisResults.getDuplicationAnalysisResults().setUnitDuplicates(duplicatedUnits);
 
+
         Map<String, DuplicationInstance> mergedConsolidated = consolidate(merge(duplicates));
         ArrayList<DuplicationInstance> consolidatedDuplicationInstances = new ArrayList<>(mergedConsolidated.values());
         consolidatedDuplicationInstances.sort((a, b) -> b.getBlockSize() - a.getBlockSize());
         duplcationAnalysisResults.setAllDuplicates(consolidatedDuplicationInstances);
 
-        // analysisResults.setAllDuplicates(duplicates);
-
-        int numberOfDuplicates = duplicates.size();
+        int numberOfDuplicates = mergedConsolidated.size();
         int numberOfDuplicatedLines = DuplicationUtils.getNumberOfDuplicatedLines(duplicates);
         int totalNumberOfCleanedLines = DuplicationUtils.getTotalNumberOfCleanedLines(main.getSourceFiles());
         int numberOfFilesWithDuplicates = DuplicationAggregator.getDuplicationPerSourceFile(duplicates).size();
