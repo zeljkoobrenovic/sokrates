@@ -32,6 +32,7 @@ import nl.obren.sokrates.sourcecode.lang.lua.LuaAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.objectpascal.ObjectPascalAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.perl.PerlAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.php.PhpAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.plsql.PlSqlAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.puppet.PuppetAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.python.PythonAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.r.RAnalyzer;
@@ -154,6 +155,7 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("ctp", PhpAnalyzer.class);
         analyzersMap.put("aw", PhpAnalyzer.class);
 
+        registerPlSql();
         registerPython();
 
         // scala
@@ -395,7 +397,7 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("pkb", SqlAnalyzer.class);
         analyzersMap.put("pks", SqlAnalyzer.class);
         analyzersMap.put("plb", SqlAnalyzer.class);
-        analyzersMap.put("plsql", SqlAnalyzer.class);
+//        analyzersMap.put("plsql", SqlAnalyzer.class);
         analyzersMap.put("prc", SqlAnalyzer.class);
         analyzersMap.put("spc", SqlAnalyzer.class);
         analyzersMap.put("tpb", SqlAnalyzer.class);
@@ -410,6 +412,10 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("udf", SqlAnalyzer.class);
         analyzersMap.put("viw", SqlAnalyzer.class);
 
+    }
+
+    private void registerPlSql() {
+        analyzersMap.put("plsql", PlSqlAnalyzer.class);
     }
 
     private void registerJson() {
