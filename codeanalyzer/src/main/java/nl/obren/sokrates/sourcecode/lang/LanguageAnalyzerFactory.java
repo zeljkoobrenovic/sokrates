@@ -390,13 +390,13 @@ public class LanguageAnalyzerFactory {
     }
 
     private void registerSql() {
-        analyzersMap.put("pls", SqlAnalyzer.class);
+//        analyzersMap.put("pls", SqlAnalyzer.class);
         analyzersMap.put("bdy", SqlAnalyzer.class);
         analyzersMap.put("fnc", SqlAnalyzer.class);
-        analyzersMap.put("pck", SqlAnalyzer.class);
-        analyzersMap.put("pkb", SqlAnalyzer.class);
-        analyzersMap.put("pks", SqlAnalyzer.class);
-        analyzersMap.put("plb", SqlAnalyzer.class);
+//        analyzersMap.put("pck", SqlAnalyzer.class);
+//        analyzersMap.put("pkb", SqlAnalyzer.class);
+//        analyzersMap.put("pks", SqlAnalyzer.class);
+//        analyzersMap.put("plb", SqlAnalyzer.class);
 //        analyzersMap.put("plsql", SqlAnalyzer.class);
         analyzersMap.put("prc", SqlAnalyzer.class);
         analyzersMap.put("spc", SqlAnalyzer.class);
@@ -416,6 +416,12 @@ public class LanguageAnalyzerFactory {
 
     private void registerPlSql() {
         analyzersMap.put("plsql", PlSqlAnalyzer.class);
+        analyzersMap.put("pls", PlSqlAnalyzer.class);
+        analyzersMap.put("pks", PlSqlAnalyzer.class);
+        analyzersMap.put("pck", PlSqlAnalyzer.class);
+        analyzersMap.put("pkb", PlSqlAnalyzer.class);
+        analyzersMap.put("plb", PlSqlAnalyzer.class);
+
     }
 
     private void registerJson() {

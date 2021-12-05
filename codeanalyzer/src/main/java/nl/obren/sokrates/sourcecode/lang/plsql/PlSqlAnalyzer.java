@@ -12,6 +12,7 @@ import nl.obren.sokrates.sourcecode.units.UnitInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class PlSqlAnalyzer extends LanguageAnalyzer {
     public PlSqlAnalyzer() {
@@ -19,7 +20,10 @@ public class PlSqlAnalyzer extends LanguageAnalyzer {
 
     @Override
     public CleanedContent cleanForLinesOfCodeCalculations(SourceFile sourceFile) {
-        return getCleaner().clean(sourceFile.getContent());
+
+        return getCleaner().clean(
+                SourceCodeCleanerUtils.emptyLinesMatchingPattern("/\n", sourceFile.getContent())
+        );
     }
 
     private CommentsAndEmptyLinesCleaner getCleaner() {
@@ -28,8 +32,7 @@ public class PlSqlAnalyzer extends LanguageAnalyzer {
 
         cleaner.addCommentBlockHelper("/*", "*/");
         cleaner.addCommentBlockHelper("--", "\n");
-        // cleaner.addStringBlockHelper("\"", "\\");
-        // cleaner.addStringBlockHelper("'", "\\");
+        cleaner.addStringBlockHelper("'", "\\");
 
         return cleaner;
     }
@@ -50,7 +53,6 @@ public class PlSqlAnalyzer extends LanguageAnalyzer {
 
     @Override
     public DependenciesAnalysis extractDependencies(List<SourceFile> sourceFiles, ProgressFeedback progressFeedback) {
-//        return new DependenciesAnalysis();
         return new PlSqlHeuristicDependenciesExtractor().extractDependencies(sourceFiles, progressFeedback);
     }
 
@@ -62,7 +64,7 @@ public class PlSqlAnalyzer extends LanguageAnalyzer {
         features.add(FEATURE_ADVANCED_CODE_CLEANING);
         features.add(FEATURE_UNIT_SIZE_ANALYSIS);
         features.add(FEATURE_CONDITIONAL_COMPLEXITY_ANALYSIS);
-        features.add(FEATURE_NO_DEPENDENCIES_ANALYSIS);
+        features.add(FEATURE_ADVANCED_DEPENDENCIES_ANALYSIS + " (based on package names)");
 
         return features;
     }
