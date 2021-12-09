@@ -22,10 +22,7 @@ import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
-import nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils;
-import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
-import nl.obren.sokrates.sourcecode.landscape.SubLandscapeLink;
-import nl.obren.sokrates.sourcecode.landscape.WebFrameLink;
+import nl.obren.sokrates.sourcecode.landscape.*;
 import nl.obren.sokrates.sourcecode.landscape.analysis.*;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.io.FileUtils;
@@ -548,10 +545,10 @@ public class LandscapeReportGenerator {
     }
 
     private void addExtensions() {
-        addMainExtensions("Main", getLinesOfCodePerExtension(landscapeAnalysisResults.getMainLinesOfCodePerExtension()), true);
+        addMainExtensions("Main", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getMainLinesOfCodePerExtension()), true);
         landscapeReport.startShowMoreBlockDisappear("", "Show test and other code...");
-        addMainExtensions("Test", getLinesOfCodePerExtension(landscapeAnalysisResults.getTestLinesOfCodePerExtension()), false);
-        addMainExtensions("Other", getLinesOfCodePerExtension(landscapeAnalysisResults.getOtherLinesOfCodePerExtension()), false);
+        addMainExtensions("Test", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getTestLinesOfCodePerExtension()), false);
+        addMainExtensions("Other", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getOtherLinesOfCodePerExtension()), false);
         landscapeReport.endShowMoreBlock();
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
@@ -701,14 +698,7 @@ public class LandscapeReportGenerator {
                                 .collect(Collectors.joining("\n  ")));
     }
 
-    private List<NumericMetric> getLinesOfCodePerExtension(List<NumericMetric> linesOfCodePerExtension) {
-        int threshold = landscapeAnalysisResults.getConfiguration().getExtensionThresholdLoc();
-        return linesOfCodePerExtension.stream()
-                .filter(e -> !e.getName().endsWith("="))
-                .filter(e -> !e.getName().startsWith("h-"))
-                .filter(e -> e.getValue().intValue() >= threshold)
-                .collect(Collectors.toCollection(ArrayList::new));
-    }
+
 
     private void addContributors() {
         int contributorsCount = landscapeAnalysisResults.getContributorsCount();
@@ -1447,7 +1437,7 @@ public class LandscapeReportGenerator {
         }
 
         addDataSection("C-median", cMedian, daysAgo, landscapeAnalysisResults.getcMedian30DaysHistory(),
-                "C-median is the average number of contributes a person worked with in the past " + daysAgo + " days.");
+                "C-median is the average number of contributors a person worked with in the past " + daysAgo + " days.");
         landscapeReport.startShowMoreBlock("show c-mean and c-index...");
         addDataSection("C-mean", cMean, daysAgo, landscapeAnalysisResults.getcMean30DaysHistory(), "");
         addDataSection("C-index", cIndex, daysAgo, landscapeAnalysisResults.getcIndex30DaysHistory(),

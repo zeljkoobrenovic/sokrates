@@ -5,13 +5,9 @@
 package nl.obren.sokrates.sourcecode.landscape;
 
 import nl.obren.sokrates.sourcecode.Metadata;
-import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
 import nl.obren.sokrates.sourcecode.operations.OperationStatement;
-import org.glassfish.jersey.internal.guava.Lists;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class LandscapeConfiguration {
@@ -62,6 +58,12 @@ public class LandscapeConfiguration {
 
     // The list of regex expressions used to exclude contributors from analysis. If empty, all contributors are included.
     private List<String> ignoreContributors = new ArrayList<>();
+
+    // The list of extensions to ignore
+    private List<String> ignoreExtensions = new ArrayList<>();
+
+    // The list of extensions to merge (e.g. yml => yaml)
+    private List<MergeExtension> mergeExtensions = new ArrayList<>();
 
     // An optional list of string transformation used to transform contributor IDs (e.g. to remove domain from email)
     private List<OperationStatement> transformContributorEmails = new ArrayList<>();
@@ -325,6 +327,22 @@ public class LandscapeConfiguration {
 
     public void setIgnoreContributors(List<String> ignoreContributors) {
         this.ignoreContributors = ignoreContributors;
+    }
+
+    public List<String> getIgnoreExtensions() {
+        return ignoreExtensions;
+    }
+
+    public void setIgnoreExtensions(List<String> ignoreExtensions) {
+        this.ignoreExtensions = ignoreExtensions;
+    }
+
+    public List<MergeExtension> getMergeExtensions() {
+        return mergeExtensions;
+    }
+
+    public void setMergeExtensions(List<MergeExtension> mergeExtensions) {
+        this.mergeExtensions = mergeExtensions;
     }
 
     public String getCustomHtmlReportHeaderFragment() {

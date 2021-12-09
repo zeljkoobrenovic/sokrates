@@ -11,6 +11,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
+import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -69,10 +70,15 @@ public class LandscapeVisualsGenerator {
 
     private void exportLanguages(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {
         List<VisualizationItem> items = new ArrayList<>();
-        landscapeAnalysisResults.getMainLinesOfCodePerExtension().forEach(metric -> {
+        List<NumericMetric> mainLinesOfCodePerExtension = getMergedMainLocPerExtension(landscapeAnalysisResults);
+        mainLinesOfCodePerExtension.forEach(metric -> {
             items.add(new VisualizationItem(metric.getName().replace("*.", ""), metric.getValue().intValue()));
         });
         exportVisuals("extensions", items);
+    }
+
+    private List<NumericMetric> getMergedMainLocPerExtension(LandscapeAnalysisResults landscapeAnalysisResults) {
+        return LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getMainLinesOfCodePerExtension());
     }
 
     private void exportContributorPerLanguage(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {
@@ -95,6 +101,6 @@ public class LandscapeVisualsGenerator {
     }
 
     private List<String> getMainExtensions(LandscapeAnalysisResults landscapeAnalysisResults) {
-        return landscapeAnalysisResults.getMainLinesOfCodePerExtension().stream().map(l -> l.getName().replace("*.", "").trim()).collect(Collectors.toList());
+        return getMergedMainLocPerExtension(landscapeAnalysisResults).stream().map(l -> l.getName().replace("*.", "").trim()).collect(Collectors.toList());
     }
 }
