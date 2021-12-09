@@ -23,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -87,9 +88,21 @@ public class SourceFile {
 
             setRelativePath(rootPath.relativize(sourceFilePath).toString());
         } catch (InvalidPathException e) {
+            Path rootPath = Paths.get(flattenToAscii(root.getPath()));
+            Path sourceFilePath = Paths.get(flattenToAscii(file.getPath()));
+            setRelativePath(rootPath.relativize(sourceFilePath).toString());
             e.printStackTrace();
         }
         return this;
+    }
+
+    public static String flattenToAscii(String string) {
+        StringBuilder sb = new StringBuilder(string.length());
+        string = Normalizer.normalize(string, Normalizer.Form.NFD);
+        for (char c : string.toCharArray()) {
+            if (c <= '\u007F') sb.append(c);
+        }
+        return sb.toString();
     }
 
     public String getExtension() {
