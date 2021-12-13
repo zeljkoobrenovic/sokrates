@@ -44,7 +44,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.log4j.BasicConfigurator;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,8 +64,6 @@ public class CommandLineInterface {
     private Commands commands = new Commands();
 
     public static void main(String args[]) throws ParseException, IOException {
-        BasicConfigurator.configure();
-
         CommandLineInterface commandLineInterface = new CommandLineInterface();
         commandLineInterface.run(args);
 

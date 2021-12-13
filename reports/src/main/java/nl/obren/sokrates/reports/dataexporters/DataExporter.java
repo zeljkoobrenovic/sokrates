@@ -776,9 +776,13 @@ public class DataExporter {
                 StringBuilder body = new StringBuilder();
 
                 duplicate.getDuplicatedFileBlocks().forEach(block -> {
-                    body.append(block.getSourceFile().getRelativePath() + " [" + block.getStartLine() + ":" + block.getEndLine() + "]:\n");
-                    body.append(SEPARATOR);
-                    body.append(block.getSourceFile().getLines().subList(block.getStartLine() - 1, block.getEndLine()).stream().collect(Collectors.joining("\n")) + "\n" + SEPARATOR + "\n\n\n");
+                    int fromIndex = block.getStartLine() - 1;
+                    int endLine = block.getEndLine();
+                    if (fromIndex >= 0 && endLine > fromIndex) {
+                        body.append(block.getSourceFile().getRelativePath() + " [" + block.getStartLine() + ":" + endLine + "]:\n");
+                        body.append(SEPARATOR);
+                        body.append(block.getSourceFile().getLines().subList(fromIndex, endLine).stream().collect(Collectors.joining("\n")) + "\n" + SEPARATOR + "\n\n\n");
+                    }
                 });
 
                 FileUtils.write(file, body.toString(), UTF_8);

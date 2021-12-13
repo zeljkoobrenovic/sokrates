@@ -5,7 +5,6 @@
 package nl.obren.sokrates.common.utils;
 
 import nl.obren.sokrates.common.io.JsonGenerator;
-import org.apache.log4j.BasicConfigurator;
 import org.junit.Test;
 
 import static junit.framework.TestCase.*;
@@ -13,7 +12,6 @@ import static junit.framework.TestCase.*;
 public class ReflectionUtilsTest {
     @Test
     public void compareWithDefaultJson() throws Exception {
-        BasicConfigurator.configure();
         assertTrue(ReflectionUtils.compareWithDefaultJson(TestClassA.class, new JsonGenerator().generate(new TestClassA())));
         assertFalse(ReflectionUtils.compareWithDefaultJson(TestClassA.class, new JsonGenerator().generate(new TestClassA("b"))));
     }

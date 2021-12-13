@@ -49,7 +49,8 @@ public class SummaryUtils {
         CodeConfiguration config = analysisResults.getCodeConfiguration();
 
         boolean mainExists = analysisResults.getMainAspectAnalysisResults().getFilesCount() > 0;
-        boolean showDuplication = mainExists && !config.getAnalysis().isSkipDuplication();
+        boolean showDuplication = mainExists && !config.getAnalysis().isSkipDuplication() && analysisResults.getDuplicationAnalysisResults().getAllDuplicates().size() > 0;
+        boolean showCommitReports = mainExists && analysisResults.getFilesHistoryAnalysisResults().getHistory().size() > 0 && analysisResults.getContributorsAnalysisResults().getCommitsCount() > 0;
         boolean showControls = mainExists && config.getGoalsAndControls().size() > 0;
         boolean showUnits = mainExists && analysisResults.getUnitsAnalysisResults().getTotalNumberOfUnits() > 0;
 
@@ -67,7 +68,7 @@ public class SummaryUtils {
             }
             summarizeComponents(analysisResults, report);
         }
-        if (analysisResults.getFilesHistoryAnalysisResults().getHistory().size() > 0) {
+        if (showCommitReports) {
             summarizeFileChangeHistory(analysisResults, report);
         }
         if (showControls) {

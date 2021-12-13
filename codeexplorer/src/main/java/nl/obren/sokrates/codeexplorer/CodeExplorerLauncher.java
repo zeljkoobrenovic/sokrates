@@ -10,7 +10,6 @@ import javafx.scene.Scene;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import nl.obren.sokrates.codeexplorer.codebrowser.CodeBrowserPane;
-import org.apache.log4j.BasicConfigurator;
 
 public class CodeExplorerLauncher extends Application {
     public static String initSrcRoot = null;
@@ -23,8 +22,6 @@ public class CodeExplorerLauncher extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        BasicConfigurator.configure();
-
         primaryStage.setTitle("Sokrates Code Explorer");
         CodeBrowserPane codeBrowserPane = new CodeBrowserPane(primaryStage);
 
