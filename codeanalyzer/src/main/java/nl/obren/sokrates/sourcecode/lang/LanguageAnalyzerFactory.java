@@ -32,6 +32,7 @@ import nl.obren.sokrates.sourcecode.lang.lua.LuaAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.objectpascal.ObjectPascalAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.perl.PerlAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.php.PhpAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.plsql.PlSqlAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.puppet.PuppetAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.python.PythonAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.r.RAnalyzer;
@@ -154,6 +155,7 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("ctp", PhpAnalyzer.class);
         analyzersMap.put("aw", PhpAnalyzer.class);
 
+        registerPlSql();
         registerPython();
 
         // scala
@@ -388,14 +390,14 @@ public class LanguageAnalyzerFactory {
     }
 
     private void registerSql() {
-        analyzersMap.put("pls", SqlAnalyzer.class);
+//        analyzersMap.put("pls", SqlAnalyzer.class);
         analyzersMap.put("bdy", SqlAnalyzer.class);
         analyzersMap.put("fnc", SqlAnalyzer.class);
-        analyzersMap.put("pck", SqlAnalyzer.class);
-        analyzersMap.put("pkb", SqlAnalyzer.class);
-        analyzersMap.put("pks", SqlAnalyzer.class);
-        analyzersMap.put("plb", SqlAnalyzer.class);
-        analyzersMap.put("plsql", SqlAnalyzer.class);
+//        analyzersMap.put("pck", SqlAnalyzer.class);
+//        analyzersMap.put("pkb", SqlAnalyzer.class);
+//        analyzersMap.put("pks", SqlAnalyzer.class);
+//        analyzersMap.put("plb", SqlAnalyzer.class);
+//        analyzersMap.put("plsql", SqlAnalyzer.class);
         analyzersMap.put("prc", SqlAnalyzer.class);
         analyzersMap.put("spc", SqlAnalyzer.class);
         analyzersMap.put("tpb", SqlAnalyzer.class);
@@ -409,6 +411,16 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("tab", SqlAnalyzer.class);
         analyzersMap.put("udf", SqlAnalyzer.class);
         analyzersMap.put("viw", SqlAnalyzer.class);
+
+    }
+
+    private void registerPlSql() {
+        analyzersMap.put("plsql", PlSqlAnalyzer.class);
+        analyzersMap.put("pls", PlSqlAnalyzer.class);
+        analyzersMap.put("pks", PlSqlAnalyzer.class);
+        analyzersMap.put("pck", PlSqlAnalyzer.class);
+        analyzersMap.put("pkb", PlSqlAnalyzer.class);
+        analyzersMap.put("plb", PlSqlAnalyzer.class);
 
     }
 
