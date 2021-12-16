@@ -24,6 +24,22 @@ public class PlSqlAnalyzer extends LanguageAnalyzer {
         return getCleaner().clean(
                 SourceCodeCleanerUtils.emptyLinesMatchingPattern("/\n", sourceFile.getContent())
         );
+//        return getCleaner().clean(getLinesWithoutComments(sourceFile));
+    }
+
+    private String getLinesWithoutComments(SourceFile sourceFile) {
+        List<String> lines = sourceFile.getLines();
+        List<String> linesWithoutComments = new ArrayList<>();
+        lines.forEach(line -> {
+            if (line.trim().startsWith("/*") || line.trim().startsWith("--")
+                    || line.trim().startsWith("*") || line.trim().startsWith("*/")
+                    || line.trim().startsWith("/")) {
+                linesWithoutComments.add("");
+            } else {
+                linesWithoutComments.add(line);
+            }
+        });
+        return String.join("\n", linesWithoutComments);
     }
 
     private CommentsAndEmptyLinesCleaner getCleaner() {
@@ -40,6 +56,7 @@ public class PlSqlAnalyzer extends LanguageAnalyzer {
     @Override
     public CleanedContent cleanForDuplicationCalculations(SourceFile sourceFile) {
         String content = getCleaner().cleanKeepEmptyLines(sourceFile.getContent());
+//        String content = getCleaner().cleanKeepEmptyLines(getLinesWithoutComments(sourceFile));
 
         content = SourceCodeCleanerUtils.trimLines(content);
 

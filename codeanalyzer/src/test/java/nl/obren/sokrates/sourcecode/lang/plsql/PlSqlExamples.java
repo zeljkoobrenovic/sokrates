@@ -222,4 +222,54 @@ public class PlSqlExamples {
             "  FETCH sr_pkg.c INTO v_name;\n" +
             "    c_package.PUT_LINE('Fetched: ' || v_name);\n" +
             "END fetch_from_cursor;";
+    public static final String CONTENT_9 = "CREATE OR REPLACE PACKAGE \"msrepsrvc.GF_PR_Print_P049\" AS\n" +
+            "   -- Adds a customer\n" +
+            "   PROCEDURE addCustomer(c_id   customers.id%type,\n" +
+            "   c_name customers.Name%type,\n" +
+            "   c_age  customers.age%type,\n" +
+            "   c_addr customers.address%type,\n" +
+            "   c_sal  customers.salary%type);\n" +
+            "   \n" +
+            "   -- Removes a customer\n" +
+            "   PROCEDURE delCustomer(c_id  customers.id%TYPE);\n" +
+            "   --Lists all customers\n" +
+            "   PROCEDURE listCustomer;\n" +
+            "  \n" +
+            "END GF_PR_Print_P049;\n" +
+            "/\n" +
+            "CREATE OR REPLACE PACKAGE BODY \"msrepsrvc.GF_PR_Print_P049\" AS\n" +
+            "   PROCEDURE addCustomer(c_id  customers.id%type,\n" +
+            "      c_name customers.Name%type,\n" +
+            "      c_age  customers.age%type,\n" +
+            "      c_addr  customers.address%type,\n" +
+            "      c_sal   customers.salary%type)\n" +
+            "   IS\n" +
+            "   BEGIN\n" +
+            "      INSERT INTO customers (id,name,age,address,salary)\n" +
+            "         VALUES(c_id, c_name, c_age, c_addr, c_sal);\n" +
+            "   END addCustomer;\n" +
+            "   \n" +
+            "   PROCEDURE delCustomer(c_id   customers.id%type) IS\n" +
+            "   BEGIN\n" +
+            "      DELETE FROM customers\n" +
+            "      WHERE id = c_id;\n" +
+            "   END delCustomer;\n" +
+            "   \n" +
+            "   PROCEDURE listCustomer IS\n" +
+            "   CURSOR c_customers is\n" +
+            "      SELECT  name FROM customers;\n" +
+            "   TYPE c_list is TABLE OF customers.Name%type;\n" +
+            "   name_list c_list := c_list();\n" +
+            "   counter integer :=0;\n" +
+            "   BEGIN\n" +
+            "      FOR n IN c_customers LOOP\n" +
+            "      counter := counter +1;\n" +
+            "      name_list.extend;\n" +
+            "      name_list(counter) := n.name;\n" +
+            "      dbms_output.put_line('Customer(' ||counter|| ')'||name_list(counter));\n" +
+            "      END LOOP;\n" +
+            "   END listCustomer;\n" +
+            "\n" +
+            "END GF_PR_Print_P049;\n" +
+            "/\n";
 }
