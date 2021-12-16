@@ -356,6 +356,7 @@ public class ScopingConventions {
 
     private void addIgnoreConventions() {
         ignoredFilesConventions.add(new Convention(".*/[.][a-zA-Z0-9_]+.*", "", "Hidden files and folders"));
+        ignoredFilesConventions.add(new Convention(".*[.]resx", "", "The resx resource files"));
 
         ignoredFilesConventions.add(new Convention(".*/node_modules/.*", "", "Node dependencies"));
         ignoredFilesConventions.add(new Convention(".*/git[-]history[.]txt", "", "Git history"));

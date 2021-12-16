@@ -61,6 +61,8 @@ public class Commands {
     public static final String ARG_SKIP_COMPLEX_ANALYSES = "skipComplexAnalyses";
     public static final String ARG_SET_CACHE_FILES = "setCacheFiles";
 
+    public static final String RECURSIVE = "recursive";
+
     public static final String ARG_SET_NAME = "setName";
     public static final String ARG_SET_LOGO_LINK = "setLogoLink";
     public static final String ARG_SET_DESCRIPTION = "setDescription";
@@ -85,6 +87,7 @@ public class Commands {
     private Option outputFolder = new Option(ARG_OUTPUT_FOLDER, true, "[OPTIONAL] the folder where reports will be stored (default value is <currentFolder/_sokrates/reports>)");
 
     private Option skipComplexAnalyses = new Option(ARG_SKIP_COMPLEX_ANALYSES, false, "[OPTIONAL] skips complex analyses (duplication, dependencies, file caching)");
+    private Option recursive = new Option(RECURSIVE, false, "[OPTIONAL] performs the operation recursively in all sub-folders");
 
     private Option skipDuplicationAnalyses = new Option(ARG_SKIP_DUPLICATION_ANALYSES, false, "[OPTIONAL] skips duplication analyses");
     private Option enableDuplicationAnalyses = new Option(ARG_ENABLE_DUPLICATION_ANALYSES, false, "[OPTIONAL] enables duplication analyses");
@@ -248,6 +251,7 @@ public class Commands {
         Options options = new Options();
         options.addOption(analysisRoot);
         options.addOption(confFile);
+        options.addOption(recursive);
         options.addOption(timeout);
         options.addOption(date);
         options.addOption(help);
@@ -351,5 +355,9 @@ public class Commands {
 
     public Option getHelp() {
         return help;
+    }
+
+    public Option getRecursive() {
+        return recursive;
     }
 }

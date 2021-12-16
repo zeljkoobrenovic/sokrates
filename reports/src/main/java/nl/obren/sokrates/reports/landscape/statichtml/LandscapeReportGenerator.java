@@ -54,6 +54,9 @@ public class LandscapeReportGenerator {
     public static final String SOURCE_CODE_TAB_ID = "source code";
     public static final String CONTRIBUTORS_TAB_ID = "contributors";
     public static final String CUSTOM_TAB_ID_PREFIX = "custom_tab_";
+    public static final String CONTRIBUTORS_30_D = "contributors_30d_";
+    public static final String COMMITS_30_D = "commits_30d_";
+    public static final String MAIN_LOC = "main_loc_";
     private static final Log LOG = LogFactory.getLog(LandscapeReportGenerator.class);
     private RichTextReport landscapeReport = new RichTextReport("Landscape Report", "index.html");
     private RichTextReport landscapeProjectsReport = new RichTextReport("", "projects.html");
@@ -243,10 +246,25 @@ public class LandscapeReportGenerator {
         if (links.size() > 0) {
             Collections.sort(links, Comparator.comparing(a -> getLabel(a).toLowerCase()));
             landscapeReport.startSubSection("Sub-Landscapes (" + links.size() + ")", "");
-
+            landscapeReport.addHtmlContent("zoomable circles: ");
+            landscapeReport.addNewTabLink("contributors (30d)", "visuals/sub_landscapes_zoomable_circles_" + CONTRIBUTORS_30_D + ".html");
+            landscapeReport.addHtmlContent(" | ");
+            landscapeReport.addNewTabLink("commits (30d)", "visuals/sub_landscapes_zoomable_circles_" + COMMITS_30_D + ".html");
+            landscapeReport.addHtmlContent(" | ");
+            landscapeReport.addNewTabLink("lines of code (main)", "visuals/sub_landscapes_zoomable_circles_" + MAIN_LOC + ".html");
+            landscapeReport.addLineBreak();
+            landscapeReport.addHtmlContent("zoomable sunburst: ");
+            landscapeReport.addNewTabLink("contributors (30d)", "visuals/sub_landscapes_zoomable_sunburst_" + CONTRIBUTORS_30_D + ".html");
+            landscapeReport.addHtmlContent(" | ");
+            landscapeReport.addNewTabLink("commits (30d)", "visuals/sub_landscapes_zoomable_sunburst_" + COMMITS_30_D + ".html");
+            landscapeReport.addHtmlContent(" | ");
+            landscapeReport.addNewTabLink("lines of code (main)", "visuals/sub_landscapes_zoomable_sunburst_" + MAIN_LOC + ".html");
+            landscapeReport.addLineBreak();
+            landscapeReport.addLineBreak();
             landscapeReport.startTable();
             landscapeReport.addTableHeader("", "main loc", "test loc", "other loc", "projects", "recent contributors", "commits (30 days)");
             String prevRoot[] = {""};
+            List<LandscapeAnalysisResultsReadData> loadedSubLandscapes = new ArrayList<>();
             links.forEach(subLandscape -> {
                 System.out.println("Adding " + subLandscape.getIndexFilePath());
                 String label = StringUtils.removeEnd(getLabel(subLandscape), "/");
@@ -265,6 +283,7 @@ public class LandscapeReportGenerator {
                 String href = landscapeAnalysisResults.getConfiguration().getProjectReportsUrlPrefix() + subLandscape.getIndexFilePath();
                 landscapeReport.addNewTabLink(label, href);
                 LandscapeAnalysisResultsReadData subLandscapeAnalysisResults = getSubLandscapeAnalysisResults(subLandscape);
+                loadedSubLandscapes.add(subLandscapeAnalysisResults);
                 landscapeReport.endTableCell();
                 landscapeReport.startTableCell("text-align: right;");
                 if (subLandscapeAnalysisResults != null) {
@@ -308,6 +327,63 @@ public class LandscapeReportGenerator {
             landscapeReport.endSection();
         }
 
+    }
+
+    private VisualizationItem getParent(Map<String, VisualizationItem> parents, List<String> pathElements) {
+        String parentName = "";
+        for (int i = 0; i < pathElements.size() - 1; i++) {
+            if (parentName.length() > 0) {
+                parentName += "/";
+            }
+            parentName += pathElements.get(i);
+        }
+
+        if (parents.containsKey(parentName)) {
+            return parents.get(parentName);
+        }
+
+        VisualizationItem newParent = new VisualizationItem(parentName, 0);
+        parents.put(parentName, newParent);
+
+        if (parentName.length() > 0) {
+            getParent(parents, pathElements.subList(0, pathElements.size() - 1)).getChildren().add(newParent);
+        }
+
+        return newParent;
+    }
+
+    private void exportZoomableCircles(String type, List<ProjectAnalysisResults> projectsAnalysisResults, ZommableCircleCountExtractors zommableCircleCountExtractors) {
+        Map<String, VisualizationItem> parents = new HashMap<>();
+        VisualizationItem root = new VisualizationItem("", 0);
+        parents.put("", root);
+
+        projectsAnalysisResults.forEach(analysisResults -> {
+            String name = getProjectCircleName(analysisResults);
+            String[] elements = name.split("/");
+            System.out.println(name);
+            if (elements.length > 1) {
+                name = name.substring(elements[0].length() + 1);
+            }
+            int count = zommableCircleCountExtractors.getCount(analysisResults);
+            if (count > 0) {
+                VisualizationItem item = new VisualizationItem(name + " (" + FormattingUtils.getPlainTextForNumber(count) + ")", count);
+                getParent(parents, Arrays.asList(elements)).getChildren().add(item);
+            }
+        });
+        try {
+            File folder = new File(reportsFolder, "visuals");
+            folder.mkdirs();
+            FileUtils.write(new File(folder, "sub_landscapes_zoomable_circles_" + type + ".html"), new VisualizationTemplate().renderZoomableCircles(root.getChildren()), UTF_8);
+            FileUtils.write(new File(folder, "sub_landscapes_zoomable_sunburst_" + type + ".html"), new VisualizationTemplate().renderZoomableSunburst(root.getChildren()), UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String getProjectCircleName(ProjectAnalysisResults analysisResults) {
+        String name = analysisResults.getSokratesProjectLink().getAnalysisResultsPath().replace("\\", "/");
+        name = name.replace("/data/analysisResults.json", "");
+        return name;
     }
 
     private LandscapeAnalysisResultsReadData getSubLandscapeAnalysisResults(SubLandscapeLink subLandscape) {
@@ -469,10 +545,10 @@ public class LandscapeReportGenerator {
     }
 
     private void addExtensions() {
-        addMainExtensions("Main", getLinesOfCodePerExtension(landscapeAnalysisResults.getMainLinesOfCodePerExtension()), true);
+        addMainExtensions("Main", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getMainLinesOfCodePerExtension()), true);
         landscapeReport.startShowMoreBlockDisappear("", "Show test and other code...");
-        addMainExtensions("Test", getLinesOfCodePerExtension(landscapeAnalysisResults.getTestLinesOfCodePerExtension()), false);
-        addMainExtensions("Other", getLinesOfCodePerExtension(landscapeAnalysisResults.getOtherLinesOfCodePerExtension()), false);
+        addMainExtensions("Test", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getTestLinesOfCodePerExtension()), false);
+        addMainExtensions("Other", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getOtherLinesOfCodePerExtension()), false);
         landscapeReport.endShowMoreBlock();
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
@@ -622,14 +698,7 @@ public class LandscapeReportGenerator {
                                 .collect(Collectors.joining("\n  ")));
     }
 
-    private List<NumericMetric> getLinesOfCodePerExtension(List<NumericMetric> linesOfCodePerExtension) {
-        int threshold = landscapeAnalysisResults.getConfiguration().getExtensionThresholdLoc();
-        return linesOfCodePerExtension.stream()
-                .filter(e -> !e.getName().endsWith("="))
-                .filter(e -> !e.getName().startsWith("h-"))
-                .filter(e -> e.getValue().intValue() >= threshold)
-                .collect(Collectors.toCollection(ArrayList::new));
-    }
+
 
     private void addContributors() {
         int contributorsCount = landscapeAnalysisResults.getContributorsCount();
@@ -752,6 +821,28 @@ public class LandscapeReportGenerator {
 
     private void addProjectsSection(List<ProjectAnalysisResults> projectsAnalysisResults) {
         Collections.sort(projectsAnalysisResults, (a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode() - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
+        exportZoomableCircles(CONTRIBUTORS_30_D, projectsAnalysisResults, new ZommableCircleCountExtractors() {
+            @Override
+            public int getCount(ProjectAnalysisResults projectAnalysisResults) {
+                List<ContributionTimeSlot> contributorsPerMonth = projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults().getContributorsPerMonth();
+                if (contributorsPerMonth.size() > 0) {
+                    return contributorsPerMonth.get(0).getContributorsCount();
+                }
+                return 0;
+            }
+        });
+        exportZoomableCircles(COMMITS_30_D, projectsAnalysisResults, new ZommableCircleCountExtractors() {
+            @Override
+            public int getCount(ProjectAnalysisResults projectAnalysisResults) {
+                return projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days();
+            }
+        });
+        exportZoomableCircles(MAIN_LOC, projectsAnalysisResults, new ZommableCircleCountExtractors() {
+            @Override
+            public int getCount(ProjectAnalysisResults projectAnalysisResults) {
+                return projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
+            }
+        });
         landscapeReport.startSubSection("<a href='projects.html' target='_blank' style='text-decoration: none'>Projects (" + projectsAnalysisResults.size() + ")</a>", "");
         if (projectsAnalysisResults.size() > 0) {
             List<NumericMetric> projectSizes = new ArrayList<>();
@@ -1346,7 +1437,7 @@ public class LandscapeReportGenerator {
         }
 
         addDataSection("C-median", cMedian, daysAgo, landscapeAnalysisResults.getcMedian30DaysHistory(),
-                "C-median is the average number of contributes a person worked with in the past " + daysAgo + " days.");
+                "C-median is the average number of contributors a person worked with in the past " + daysAgo + " days.");
         landscapeReport.startShowMoreBlock("show c-mean and c-index...");
         addDataSection("C-mean", cMean, daysAgo, landscapeAnalysisResults.getcMean30DaysHistory(), "");
         addDataSection("C-index", cIndex, daysAgo, landscapeAnalysisResults.getcIndex30DaysHistory(),
@@ -1759,5 +1850,9 @@ public class LandscapeReportGenerator {
 
     public void setIndividualContributorReports(List<RichTextReport> individualContributorReports) {
         this.individualContributorReports = individualContributorReports;
+    }
+
+    abstract class ZommableCircleCountExtractors {
+        public abstract int getCount(ProjectAnalysisResults projectAnalysisResults);
     }
 }

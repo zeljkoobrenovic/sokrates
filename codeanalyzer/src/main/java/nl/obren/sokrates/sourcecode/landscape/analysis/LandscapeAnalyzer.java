@@ -144,8 +144,8 @@ public class LandscapeAnalyzer {
 
     private File getProjectAnalysisFile(SokratesProjectLink sokratesProjectLink) {
         String analysisRoot = landscapeConfiguration.getAnalysisRoot();
-        if (analysisRoot.startsWith("..")) {
-            analysisRoot = Paths.get(landscapeConfigurationFile.getParentFile().getPath(), analysisRoot).toFile().getPath();
+        if (analysisRoot.startsWith(".")) {
+            analysisRoot = Paths.get(landscapeConfigurationFile.getParentFile().getParentFile().getPath(), analysisRoot).toFile().getPath();
         }
         return Paths.get(analysisRoot, sokratesProjectLink.getAnalysisResultsPath()).toFile();
     }

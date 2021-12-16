@@ -9,7 +9,6 @@ import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
-import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
@@ -18,7 +17,6 @@ import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ProjectAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.MetricRangeControl;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
-import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
@@ -43,6 +41,7 @@ public class LandscapeProjectsReport {
         if (showCommits) {
             report.addTab("commitsTrend", "Commits Trend", false);
             report.addTab("contributorsTrend", "Contributors Trend", false);
+            report.addTab("correlations", "Correlations", false);
         }
         if (showTags()) {
             report.addTab("tags", "Tags", false);
@@ -92,6 +91,23 @@ public class LandscapeProjectsReport {
                     (a, b) -> (int) b.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count()
                             - (int) a.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count());
             addCommitsTrend(report, projectsAnalysisResults, "Contributors", "darkred", (slot) -> slot.getContributorsCount());
+            report.endTabContentSection();
+            report.startTabContentSection("correlations", false);
+
+            CorrelationDiagramGenerator correlationDiagramGenerator = new CorrelationDiagramGenerator(report, projectsAnalysisResults);
+
+            correlationDiagramGenerator.addCorrelations("Recent Contributors vs. Commits (30 days)", "commits (30d)", "recent contributors (30d)",
+                    p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days(),
+                    p -> p.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count());
+
+            correlationDiagramGenerator.addCorrelations("Recent Contributors vs. Project Main LOC", "main LOC", "recent contributors (30d)",
+                    p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
+                    p -> p.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count());
+
+            correlationDiagramGenerator.addCorrelations("Recent Commits (30 days) vs. Project Main LOC", "main LOC", "commits (30d)",
+                    p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
+                    p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days());
+
             report.endTabContentSection();
         }
         if (showTags()) {
@@ -296,8 +312,6 @@ public class LandscapeProjectsReport {
     }
 
 
-
-
     private int getRecentContributorCount(List<ProjectAnalysisResults> projectsAnalysisResults) {
         Set<String> ids = new HashSet<>();
         projectsAnalysisResults.forEach(project -> {
@@ -362,7 +376,7 @@ public class LandscapeProjectsReport {
         report.addTableCell(FormattingUtils.formatCount(analysisResults.getContributorsAnalysisResults().getCommitsCount30Days(), "-"), "text-align: center; font-size: 90%");
         String projectReportUrl = getProjectReportUrl(projectAnalysis);
         if (showControls()) {
-            report.startTableCell("text-align: cente; font-size: 90%");
+            report.startTableCell("text-align: center; font-size: 90%");
             addControls(report, analysisResults);
             report.endTableCell();
         }

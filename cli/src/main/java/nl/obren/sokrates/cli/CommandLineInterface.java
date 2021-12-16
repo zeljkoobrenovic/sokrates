@@ -33,6 +33,7 @@ import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.ExtractGitHistoryFileHandler;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
+import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisUtils;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
 import nl.obren.sokrates.sourcecode.scoping.ScopeCreator;
 import nl.obren.sokrates.sourcecode.scoping.custom.CustomConventionsHelper;
@@ -43,7 +44,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.log4j.BasicConfigurator;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,8 +64,6 @@ public class CommandLineInterface {
     private Commands commands = new Commands();
 
     public static void main(String args[]) throws ParseException, IOException {
-        BasicConfigurator.configure();
-
         CommandLineInterface commandLineInterface = new CommandLineInterface();
         commandLineInterface.run(args);
 
@@ -145,6 +143,7 @@ public class CommandLineInterface {
 
         new GitHistoryExtractor().extractGitHistory(root);
     }
+
     private void extractGitSubHistory(String[] args) throws ParseException, IOException {
         Options options = commands.getExtractGitSubHistoryOption();
         CommandLineParser parser = new DefaultParser();
@@ -210,7 +209,7 @@ public class CommandLineInterface {
     }
 
     private void updateLandscape(String[] args) throws ParseException {
-        Options options = commands.getExtractGitSubHistoryOption();
+        Options options = commands.getUpdateLandscapeOptions();
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
@@ -235,7 +234,23 @@ public class CommandLineInterface {
         String confFilePath = cmd.getOptionValue(commands.getConfFile().getOpt());
         updateDateParam(cmd);
 
-        LandscapeAnalysisCommands.update(root, confFilePath != null ? new File(confFilePath) : null);
+        if (cmd.hasOption(commands.getRecursive().getOpt())) {
+            List<File> landscapeConfigFiles = LandscapeAnalysisUtils.findAllSokratesLandscapeConfigFiles(root);
+            landscapeConfigFiles.forEach(landscapeConfigFile -> {
+                File landscapeFolder = landscapeConfigFile.getParentFile().getParentFile();
+                String absolutePath = landscapeFolder.getAbsolutePath().replace("/./", "/");
+                System.out.println(System.getProperty("user.dir"));
+                System.setProperty("user.dir", absolutePath);
+                System.out.println(System.getProperty("user.dir"));
+                LandscapeAnalysisCommands.update(new File(landscapeFolder.getAbsolutePath()), null);
+            });
+            System.out.println("Analysed " + landscapeConfigFiles + " landscape(s):");
+            landscapeConfigFiles.forEach(landscapeConfigFile -> {
+                System.out.println(" -  " + landscapeConfigFile.getPath());
+            });
+        } else {
+            LandscapeAnalysisCommands.update(root, confFilePath != null ? new File(confFilePath) : null);
+        }
     }
 
     private void generateReports(String[] args) throws ParseException, IOException {
@@ -694,6 +709,6 @@ public class CommandLineInterface {
     public void setProgressFeedback(ProgressFeedback progressFeedback) {
         this.progressFeedback = progressFeedback;
     }
-    
-    
+
+
 }
