@@ -102,6 +102,14 @@ public class PlSqlHeuristicUnitsExtractor {
             strippedLine = strippedLine.substring(0, strippedLine.indexOf("(")).trim();
         }
 
+        if(strippedLine.contains("RETURN")) {
+            strippedLine = strippedLine.substring(0, strippedLine.indexOf("RETURN")).trim();
+        }
+
+        if(strippedLine.contains("return")) {
+            strippedLine = strippedLine.substring(0, strippedLine.indexOf("return")).trim();
+        }
+
         if(strippedLine.contains(".")) {
             strippedLine = strippedLine.substring(strippedLine.indexOf(".")+1).trim();
         }
