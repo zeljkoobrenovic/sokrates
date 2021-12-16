@@ -74,6 +74,9 @@ public class LandscapeConfiguration {
     // If true, the contributors and commits trend will be displayed in the first "Overview" tab in addition to it being shown in the "Contributors" tab.
     private boolean showContributorsTrendsOnFirstTab = true;
 
+    // Maximal depth of indexed sub-landsacpes
+    private int maxSublandscapeDepth = 0;
+
     // A list of iFrames displayed at the start of the "Overview" tab
     private List<WebFrameLink> iFramesAtStart = new ArrayList<>();
 
@@ -207,6 +210,14 @@ public class LandscapeConfiguration {
 
     public void setiFrames(List<WebFrameLink> iFrames) {
         this.iFrames = iFrames;
+    }
+
+    public int getMaxSublandscapeDepth() {
+        return maxSublandscapeDepth;
+    }
+
+    public void setMaxSublandscapeDepth(int maxSublandscapeDepth) {
+        this.maxSublandscapeDepth = maxSublandscapeDepth;
     }
 
     public List<WebFrameLink> getiFramesAtStart() {

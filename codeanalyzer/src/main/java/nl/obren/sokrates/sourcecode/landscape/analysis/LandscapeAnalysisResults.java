@@ -14,6 +14,7 @@ import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
+import nl.obren.sokrates.sourcecode.landscape.MergeExtension;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
@@ -378,6 +379,33 @@ public class LandscapeAnalysisResults {
                     });
                 }
             });
+        });
+
+
+        Map<String, MergeExtension> mapMerge = new HashMap<>();
+        configuration.getMergeExtensions().forEach(merge -> {
+            CommitsPerExtension primary = commitsPerExtensions.get(merge.getPrimary());
+            CommitsPerExtension secondary = commitsPerExtensions.get(merge.getSecondary());
+
+            if (primary != null && secondary != null) {
+                primary.setCommitsCount(primary.getCommitsCount() + secondary.getCommitsCount());
+                primary.setCommitsCount30Days(primary.getCommitsCount30Days() + secondary.getCommitsCount30Days());
+                primary.setCommitsCount90Days(primary.getCommitsCount90Days() + secondary.getCommitsCount90Days());
+                primary.setFilesCount(primary.getFilesCount() + secondary.getFilesCount());
+                primary.setFilesCount30Days(primary.getFilesCount30Days() + secondary.getFilesCount30Days());
+                primary.setFilesCount90Days(primary.getFilesCount90Days() + secondary.getFilesCount90Days());
+                secondary.getCommitters().stream()
+                        .filter(c -> !primary.getCommitters().contains(c))
+                        .forEach(commiter -> primary.getCommitters().add(commiter));
+                secondary.getCommitters30Days().stream()
+                        .filter(c -> !primary.getCommitters30Days().contains(c))
+                        .forEach(commiter -> primary.getCommitters30Days().add(commiter));
+                secondary.getCommitters90Days().stream()
+                        .filter(c -> !primary.getCommitters90Days().contains(c))
+                        .forEach(commiter -> primary.getCommitters90Days().add(commiter));
+
+                commitsPerExtensions.remove(merge.getSecondary());
+            }
         });
 
         ArrayList<CommitsPerExtension> list = new ArrayList<>(commitsPerExtensions.values());

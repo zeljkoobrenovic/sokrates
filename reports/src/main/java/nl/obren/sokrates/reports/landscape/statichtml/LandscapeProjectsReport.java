@@ -108,6 +108,10 @@ public class LandscapeProjectsReport {
                     p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
                     p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days());
 
+            correlationDiagramGenerator.addCorrelations("Age in Days vs. Project Main LOC", "main LOC", "age (days)",
+                    p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
+                    p -> p.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays());
+
             report.endTabContentSection();
         }
         if (showTags()) {

@@ -6,11 +6,9 @@ package nl.obren.sokrates.sourcecode.landscape.init;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import nl.obren.sokrates.common.io.JsonGenerator;
-import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.SokratesProjectLink;
 import nl.obren.sokrates.sourcecode.landscape.SubLandscapeLink;
-import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -71,10 +69,14 @@ public class LandscapeAnalysisInitiator {
 
         File parent = new File(relativePath).getParentFile().getParentFile();
         if (parent != null) {
-            SubLandscapeLink subLandscapeLink = new SubLandscapeLink(parent.getName(), relativePath);
-            configuration.getSubLandscapes().add(subLandscapeLink);
-            if (saveFile) {
-                System.out.println("Adding sub-landscape: " + relativePath);
+            int maxDepth = configuration.getMaxSublandscapeDepth();
+            int depth = relativePath.replace("\\", "/").split("/").length;
+            if (maxDepth == 0 || depth <= maxDepth) {
+                SubLandscapeLink subLandscapeLink = new SubLandscapeLink(parent.getName(), relativePath);
+                configuration.getSubLandscapes().add(subLandscapeLink);
+                if (saveFile) {
+                    System.out.println("Adding sub-landscape: " + relativePath);
+                }
             }
         }
     }

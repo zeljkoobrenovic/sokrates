@@ -25,6 +25,8 @@ public class CodeAnalysisResults {
 
     private MetricsList metricsList = new MetricsList();
     private ControlsAnalysisResults controlResults = new ControlsAnalysisResults();
+
+    @JsonIgnore
     private StringBuffer textSummary = new StringBuffer();
 
     private int totalNumberOfFilesInScope;
@@ -71,10 +73,13 @@ public class CodeAnalysisResults {
         this.metricsList = metricsList;
     }
 
+
+    @JsonIgnore
     public StringBuffer getTextSummary() {
         return textSummary;
     }
 
+    @JsonIgnore
     public void setTextSummary(StringBuffer textSummary) {
         this.textSummary = textSummary;
     }
