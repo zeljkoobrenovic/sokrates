@@ -36,9 +36,9 @@ public class LandscapeContributorsReport {
         this.recent = recent;
         report.startTable("width: 100%");
         if (recent) {
-            report.addTableHeaderLeft("Contributor", "# commits<br>30 days", "# commits<br>90 days", "# commits<br>all time", "first", "latest", "projects");
+            report.addTableHeaderLeft("Contributor", "# commits<br>30 days", "# commits<br>90 days", "# commits<br>past year", "# commits<br>all time", "first", "latest", "projects");
         } else {
-            report.addTableHeaderLeft("Contributor", "# commits<br>all time", "# commits<br>90 days", "# commits<br>30 days", "first", "latest", "projects");
+            report.addTableHeaderLeft("Contributor", "# commits<br>all time", "# commits<br>past year", "# commits<br>90 days", "# commits<br>30 days", "first", "latest", "projects");
         }
         int counter[] = {0};
 
@@ -82,11 +82,13 @@ public class LandscapeContributorsReport {
             String percText = " (" + FormattingUtils.getFormattedPercentage(percentage) + "%)";
             report.addTableCell(FormattingUtils.formatCount(commitsCount30Days) + percText, "vertical-align: middle;");
             report.addTableCell(FormattingUtils.formatCount(contributor.getContributor().getCommitsCount90Days()), "vertical-align: middle;");
+            report.addTableCell(FormattingUtils.formatCount(contributor.getContributor().getCommitsCount365Days()), "vertical-align: middle;");
             report.addTableCell(commitsCountAllTime + "", "vertical-align: middle;");
         } else {
             double percentage = 100.0 * commitsCountAllTime / totalCommits;
             String percText = " (" + FormattingUtils.getFormattedPercentage(percentage) + "%)";
             report.addTableCell(commitsCountAllTime + percText, "vertical-align: middle;");
+            report.addTableCell(FormattingUtils.formatCount(contributor.getContributor().getCommitsCount365Days()), "vertical-align: middle;");
             report.addTableCell(FormattingUtils.formatCount(contributor.getContributor().getCommitsCount90Days()), "vertical-align: middle;");
             report.addTableCell(FormattingUtils.formatCount(commitsCount30Days), "vertical-align: middle;");
         }

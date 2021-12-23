@@ -69,14 +69,10 @@ public class LandscapeAnalysisInitiator {
 
         File parent = new File(relativePath).getParentFile().getParentFile();
         if (parent != null) {
-            int maxDepth = configuration.getMaxSublandscapeDepth();
-            int depth = relativePath.replace("\\", "/").split("/").length;
-            if (maxDepth == 0 || depth <= maxDepth) {
-                SubLandscapeLink subLandscapeLink = new SubLandscapeLink(parent.getName(), relativePath);
-                configuration.getSubLandscapes().add(subLandscapeLink);
-                if (saveFile) {
-                    System.out.println("Adding sub-landscape: " + relativePath);
-                }
+            SubLandscapeLink subLandscapeLink = new SubLandscapeLink(parent.getName(), relativePath);
+            configuration.getSubLandscapes().add(subLandscapeLink);
+            if (saveFile) {
+                System.out.println("Adding sub-landscape: " + relativePath);
             }
         }
     }

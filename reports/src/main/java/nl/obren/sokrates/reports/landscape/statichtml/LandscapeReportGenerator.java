@@ -33,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import java.io.File;
 import java.io.IOException;
@@ -252,8 +253,15 @@ public class LandscapeReportGenerator {
         return landscapeAnalysisResults.getFilteredProjectAnalysisResults();
     }
 
+    private int getPathDepth(String path) {
+        return path.replace("\\", "/")
+                .replace("/_sokrates_landscape/index.html", "")
+                .split("/").length;
+    }
+
     private void addSubLandscapeSection(List<SubLandscapeLink> subLandscapes) {
-        List<SubLandscapeLink> links = new ArrayList<>(subLandscapes);
+        final int maxDepth = landscapeAnalysisResults.getConfiguration().getMaxSublandscapeDepth();
+        List<SubLandscapeLink> links = subLandscapes.stream().filter(l -> maxDepth == 0 || getPathDepth(l.getIndexFilePath()) <= maxDepth).collect(Collectors.toList());
         if (links.size() > 0) {
             Collections.sort(links, Comparator.comparing(a -> getLabel(a).toLowerCase()));
             landscapeReport.startSubSection("Sub-Landscapes (" + links.size() + ")", "");
@@ -732,7 +740,15 @@ public class LandscapeReportGenerator {
             landscapeReport.startSubSection("<a href='contributors-recent.html' target='_blank' style='text-decoration: none'>" +
                             "Recent Contributors (" + recentContributors.size() + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
                     "latest commit " + latestCommit[0]);
+
             addRecentContributorLinks();
+
+            DescriptiveStatistics stats = new DescriptiveStatistics();
+            recentContributors.forEach(c -> stats.addValue(c.getContributor().getCommitsCount30Days()));
+            for (int p = 90; p >= 10; p -= 10) {
+                double percentile = stats.getPercentile(p);
+                landscapeReport.addHtmlContent("p(" + p + ") = " + (int) Math.round(percentile) + "; ");
+            }
 
             landscapeReport.addHtmlContent("<iframe src='contributors-recent.html' frameborder=0 style='height: 450px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
 
@@ -865,9 +881,24 @@ public class LandscapeReportGenerator {
                 CodeAnalysisResults analysisResults = project.getAnalysisResults();
                 projectSizes.add(new NumericMetric(analysisResults.getMetadata().getName(), analysisResults.getMainAspectAnalysisResults().getLinesOfCode()));
             });
-            landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_projects.html");
+            landscapeReport.addHtmlContent("lines of code: ");
+            landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_projects_loc.html");
             landscapeReport.addHtmlContent(" | ");
-            landscapeReport.addNewTabLink("tree map", "visuals/tree_map_projects.html");
+            landscapeReport.addNewTabLink("tree map", "visuals/tree_map_projects_loc.html");
+            landscapeReport.addHtmlContent(" | ");
+            landscapeReport.addNewTabLink("data", "data/projects.txt");
+            landscapeReport.addLineBreak();
+            landscapeReport.addHtmlContent("commits (30d): ");
+            landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_projects_commits.html");
+            landscapeReport.addHtmlContent(" | ");
+            landscapeReport.addNewTabLink("tree map", "visuals/tree_map_projects_commits.html");
+            landscapeReport.addHtmlContent(" | ");
+            landscapeReport.addNewTabLink("data", "data/projects.txt");
+            landscapeReport.addLineBreak();
+            landscapeReport.addHtmlContent("contributors (30d): ");
+            landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_projects_contributors.html");
+            landscapeReport.addHtmlContent(" | ");
+            landscapeReport.addNewTabLink("tree map", "visuals/tree_map_projects_contributors.html");
             landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("data", "data/projects.txt");
             landscapeReport.addLineBreak();

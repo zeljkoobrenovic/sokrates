@@ -15,11 +15,14 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class GitHistoryUtils {
     public static final String GIT_HISTORY_FILE_NAME = "git-history.txt";
     private static List<FileUpdate> updates = null;
+    private static Map<String, String> anonymizeEmails = new HashMap<>();
 
     public static String printContributorsCommand() {
         return "git ls-files -z | xargs -0 -n1 -I{} -- git log --date=short --format=\"%ad %ae %H {}\" {} > " + GIT_HISTORY_FILE_NAME;
@@ -76,6 +79,8 @@ public class GitHistoryUtils {
 
     public static FileUpdate parseLine(String line, FileHistoryAnalysisConfig config) {
         List<String> ignoreContributors = config.getIgnoreContributors();
+        boolean anonymize = config.isAnonymizeContributors();
+
         int index1 = line.indexOf(" ");
         if (index1 >= 10) {
             int index2 = line.indexOf(" ", index1 + 1);
@@ -84,15 +89,25 @@ public class GitHistoryUtils {
                 if (index3 > 0) {
                     String date = line.substring(0, 10).trim();
                     String author = line.substring(index1 + 1, index2).trim();
-                    if (config.getTransformContributorEmails().size() > 0) {
+                    if (anonymize) {
+                        if (shouldIgnore(author, ignoreContributors)) {
+                            return null;
+                        }
+                        String anonymizedAuthor = anonymizeEmails.get(author);
+                        if (anonymizedAuthor == null) {
+                            anonymizedAuthor = "Contributor " + (anonymizeEmails.keySet().size() + 1);
+                            anonymizeEmails.put(author, anonymizedAuthor);
+                        }
+                        author = anonymizedAuthor;
+                        System.out.println(author + " -> " + anonymizedAuthor);
+                    } else if (config.getTransformContributorEmails().size() > 0) {
                         ComplexOperation operation = new ComplexOperation(config.getTransformContributorEmails());
                         String original = author;
                         author = operation.exec(author);
                         System.out.println(original + " -> " + author);
-                    }
-
-                    if (shouldIgnore(author, ignoreContributors)) {
-                        return null;
+                        if (shouldIgnore(author, ignoreContributors)) {
+                            return null;
+                        }
                     }
 
                     String commitId = line.substring(index2 + 1, index3).trim();

@@ -28,6 +28,9 @@ public class FileHistoryAnalysisConfig {
     // An optional list of regex expression used to ignore commits from contributors
     private List<String> ignoreContributors = new ArrayList<>();
 
+    // If true, contributors IDs (e.g. emails) will be replaces with anonymous IDs (e.g. Contributor 1, Contributor 2)
+    private boolean anonymizeContributors = false;
+
     // An optional list of string transformation used to transform contributor IDs (e.g. to remove domain from email)
     private List<OperationStatement> transformContributorEmails = new ArrayList<>();
 
@@ -94,5 +97,13 @@ public class FileHistoryAnalysisConfig {
 
     public void setTransformContributorEmails(List<OperationStatement> transformContributorEmails) {
         this.transformContributorEmails = transformContributorEmails;
+    }
+
+    public boolean isAnonymizeContributors() {
+        return anonymizeContributors;
+    }
+
+    public void setAnonymizeContributors(boolean anonymizeContributors) {
+        this.anonymizeContributors = anonymizeContributors;
     }
 }

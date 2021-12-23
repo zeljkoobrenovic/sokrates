@@ -6,9 +6,7 @@ package nl.obren.sokrates.reports.landscape.statichtml;
 
 import nl.obren.sokrates.common.renderingutils.VisualizationItem;
 import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
-import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
@@ -17,7 +15,8 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -38,16 +37,23 @@ public class LandscapeVisualsGenerator {
     }
 
     private void exportProjects(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {
-        List<VisualizationItem> items = new ArrayList<>();
+        List<VisualizationItem> itemsLinesOfCode = new ArrayList<>();
+        List<VisualizationItem> itemsCommits = new ArrayList<>();
+        List<VisualizationItem> itemsContributors = new ArrayList<>();
         landscapeAnalysisResults.getAllProjects().forEach(projectAnalysisResults -> {
             CodeAnalysisResults analysisResults = projectAnalysisResults.getAnalysisResults();
 
             String name = analysisResults.getMetadata().getName();
-            int linesOfCode = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
 
-            items.add(new VisualizationItem(name, linesOfCode));
+            itemsLinesOfCode.add(new VisualizationItem(name, analysisResults.getMainAspectAnalysisResults().getLinesOfCode()));
+            itemsCommits.add(new VisualizationItem(name, analysisResults.getContributorsAnalysisResults().getCommitsCount30Days()));
+            if (analysisResults.getContributorsAnalysisResults().getContributorsPerMonth().size() > 0) {
+                itemsContributors.add(new VisualizationItem(name, analysisResults.getContributorsAnalysisResults().getContributorsPerMonth().get(0).getContributorsCount()));
+            }
         });
-        exportVisuals("projects", items);
+        exportVisuals("projects_loc", itemsLinesOfCode);
+        exportVisuals("projects_commits", itemsCommits);
+        exportVisuals("projects_contributors", itemsContributors);
     }
 
     private void exportContributors(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {

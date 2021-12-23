@@ -20,6 +20,7 @@ import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
+import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileSizeDistribution;
 import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 
@@ -70,6 +71,7 @@ public class SummaryUtils {
         }
         if (showCommitReports) {
             summarizeFileChangeHistory(analysisResults, report);
+            summarizeFileUpdateFrequency(analysisResults, report);
         }
         if (showControls) {
             summarizeGoals(analysisResults, report);
@@ -334,6 +336,26 @@ public class SummaryUtils {
         report.endUnorderedList();
         report.endTableCell();
         report.addTableCell("<a href='" + reportRoot + "FileAge.html'  title='file change history details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "border: none;  vertical-align: top");
+
+        report.endTableRow();
+    }
+
+    private void summarizeFileUpdateFrequency(CodeAnalysisResults analysisResults, RichTextReport report) {
+        report.startTableRow();
+        report.addTableCell(getIconSvg("change"), "border: none;  vertical-align: top");
+
+        FilesHistoryAnalysisResults results = analysisResults.getFilesHistoryAnalysisResults();
+        report.startTableCell("border: none; padding-top: 4px; vertical-align: top");
+        SourceFileChangeDistribution age = results.getOverallFileChangeDistribution();
+        report.addContentInDiv(getRiskProfileVisual(age, Palette.getHeatPalette()));
+        report.endTableCell();
+
+        report.startTableCell("border: none; padding-top: 4px;");
+        Thresholds thresholds = analysisResults.getCodeConfiguration().getAnalysis().getFileUpdateFrequencyThresholds();
+        report.addParagraph(FormattingUtils.getFormattedPercentage(age.getVeryHighRiskPercentage() + age.getHighRiskValue())
+                + "% of code updated more that " + thresholds.getHigh() + " times");
+        report.endTableCell();
+        report.addTableCell("<a href='" + reportRoot + "FileChangeFrequency.html'  title='file change frequency details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "border: none;  vertical-align: top");
 
         report.endTableRow();
     }

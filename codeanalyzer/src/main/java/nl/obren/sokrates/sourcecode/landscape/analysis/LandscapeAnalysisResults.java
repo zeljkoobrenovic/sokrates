@@ -14,7 +14,6 @@ import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
-import nl.obren.sokrates.sourcecode.landscape.MergeExtension;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
@@ -302,12 +301,13 @@ public class LandscapeAnalysisResults {
     }
 
     @JsonIgnore
-    public List<String> getAllExtension() {
+    public List<String> getAllExtensions() {
         List<String> extensions = new ArrayList<>();
+        List<String> ignoreExtensions = configuration.getIgnoreExtensions();
         getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
             projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults().getCommitsPerExtensions().forEach(perExtension -> {
                 String extension = perExtension.getExtension();
-                if (!extensions.contains(extension)) {
+                if (!ignoreExtensions.contains(extension) && !extensions.contains(extension)) {
                     extensions.add(extension);
                 }
             });
@@ -339,10 +339,9 @@ public class LandscapeAnalysisResults {
 
     @JsonIgnore
     public List<CommitsPerExtension> getContributorsPerExtension() {
-        int thresholdCommits = configuration.getContributorThresholdCommits();
         Map<String, CommitsPerExtension> commitsPerExtensions = new HashMap<>();
 
-        getAllExtension().forEach(extension -> {
+        getAllExtensions().forEach(extension -> {
             commitsPerExtensions.put(extension, new CommitsPerExtension(extension));
         });
 
@@ -382,7 +381,6 @@ public class LandscapeAnalysisResults {
         });
 
 
-        Map<String, MergeExtension> mapMerge = new HashMap<>();
         configuration.getMergeExtensions().forEach(merge -> {
             CommitsPerExtension primary = commitsPerExtensions.get(merge.getPrimary());
             CommitsPerExtension secondary = commitsPerExtensions.get(merge.getSecondary());

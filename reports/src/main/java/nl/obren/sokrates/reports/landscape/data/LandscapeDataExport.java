@@ -89,19 +89,33 @@ public class LandscapeDataExport {
     public void exportContributors() {
         StringBuilder builder = new StringBuilder();
 
-        builder.append("Contributor\t# commits\tFirst commit\tLatest commit\tProjects\n");
+        builder.append("Contributor\t# commits (all time)\t# commits (30 days)\t# commits (90 days)\t# commits (180 days)\t# commits (365 days)\tFirst commit\tLatest commit\tProjects\n");
 
         List<ContributorProjects> contributors = analysisResults.getContributors();
 
         contributors.forEach(contributor -> {
             builder.append(contributor.getContributor().getEmail()).append("\t");
             int contributorCommits = contributor.getContributor().getCommitsCount();
+            int contributorCommits30Days = contributor.getContributor().getCommitsCount30Days();
+            int contributorCommits90Days = contributor.getContributor().getCommitsCount90Days();
+            int contributorCommits180Days = contributor.getContributor().getCommitsCount180Days();
+            int contributorCommits365Days = contributor.getContributor().getCommitsCount365Days();
             builder.append(contributorCommits).append("\t");
+            builder.append(contributorCommits30Days).append("\t");
+            builder.append(contributorCommits90Days).append("\t");
+            builder.append(contributorCommits180Days).append("\t");
+            builder.append(contributorCommits365Days).append("\t");
             builder.append(contributor.getContributor().getFirstCommitDate()).append("\t");
             builder.append(contributor.getContributor().getLatestCommitDate()).append("\t");
             builder.append(contributor.getProjects().stream().map(p -> p.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName()).collect(Collectors.joining(", ")));
             builder.append("\n");
         });
+
+        try {
+            FileUtils.write(new File(dataFolder, "contributors.txt"), builder.toString(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void exportAnalysisResults() {
