@@ -2,6 +2,7 @@ package nl.obren.sokrates.reports.landscape.statichtml;
 
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.core.SummaryUtils;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjectInfo;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjects;
@@ -36,9 +37,9 @@ public class LandscapeContributorsReport {
         this.recent = recent;
         report.startTable("width: 100%");
         if (recent) {
-            report.addTableHeaderLeft("Contributor", "# commits<br>30 days", "# commits<br>90 days", "# commits<br>past year", "# commits<br>all time", "first", "latest", "projects");
+            report.addTableHeaderLeft("Contributor", "# commits<br>30 days", "# commits<br>90 days", "# commits<br>past year", "# commits<br>all time", "first", "latest", "projects", "");
         } else {
-            report.addTableHeaderLeft("Contributor", "# commits<br>all time", "# commits<br>past year", "# commits<br>90 days", "# commits<br>30 days", "first", "latest", "projects");
+            report.addTableHeaderLeft("Contributor", "# commits<br>all time", "# commits<br>past year", "# commits<br>90 days", "# commits<br>30 days", "first", "latest", "projects", "");
         }
         int counter[] = {0};
 
@@ -125,8 +126,13 @@ public class LandscapeContributorsReport {
         }
         report.addHtmlContent(projectInfo.toString());
         report.endTableCell();
+        report.addTableCell("<a target='_blank' href='" + link + "'  title='volume details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "text-align: center");
         report.endTableRow();
     }
+    private String getDetailsIcon() {
+        return SummaryUtils.getIconSvg("details", 22, 22);
+    }
+
 
     private String getContributorUrl(String email) {
         return "contributors/" + LandscapeIndividualContributorsReports.getContributorIndividualReportFileName(email);

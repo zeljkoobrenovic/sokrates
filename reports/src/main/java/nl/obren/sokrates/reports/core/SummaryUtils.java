@@ -106,7 +106,7 @@ public class SummaryUtils {
         }
     }
 
-    private String getIconSvg(String icon, int w, int h) {
+    public static String getIconSvg(String icon, int w, int h) {
         String svg = HtmlTemplateUtils.getResource("/icons/" + icon + ".svg");
         svg = svg.replaceAll("height='.*?'", "height='" + w + "px'");
         svg = svg.replaceAll("width='.*?'", "width='" + h + "px'");

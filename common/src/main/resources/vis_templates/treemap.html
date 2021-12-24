@@ -98,7 +98,7 @@
 
     cell.append("title")
             .text(function (d) {
-                return d.data.id + "\n" + format(d.value);
+                return d.data.name + ": " + format(d.value);
             });
 
     d3.selectAll("input")

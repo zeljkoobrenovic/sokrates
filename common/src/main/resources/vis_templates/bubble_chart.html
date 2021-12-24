@@ -53,7 +53,7 @@
 
     node.append("title")
         .text(function(d) {
-            return d.name + ": " + d.size;
+            return d.data.name + ": " + d.data.size;
         });
 
     node.append("circle")

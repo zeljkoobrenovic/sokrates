@@ -745,10 +745,48 @@ public class LandscapeReportGenerator {
 
             DescriptiveStatistics stats = new DescriptiveStatistics();
             recentContributors.forEach(c -> stats.addValue(c.getContributor().getCommitsCount30Days()));
+            double max = Math.max(stats.getMax(), 1);
+            double sum = Math.max(stats.getSum(), 1);
+
+            int cumulativeCount[] = {0};
+            double prevCumulativePercentage[] = {0};
+            int index[] = {0};
+
+            StringBuilder html = new StringBuilder();
+
+            recentContributors.stream().limit(1000).forEach(c -> {
+                index[0] += 1;
+                Contributor contributor = c.getContributor();
+                int count = contributor.getCommitsCount30Days();
+                int height = (int) (Math.round(64 * count / max)) + 1;
+                cumulativeCount[0] += count;
+                double cumulativePercentage = Math.round(1000.0 * cumulativeCount[0] / sum) / 10;
+                double contributorPercentage = Math.round(10000.0 * index[0] / recentContributors.size()) / 100;
+                String tooltip = contributor.getEmail()
+                        + "\n - commits (30d): " + count
+                        + "\n - cumulative commits (top " + index[0] + "): " + cumulativeCount[0]
+                        + "\n - cumulative percentage (top " + contributorPercentage + "% " + "): " + cumulativePercentage + "%";
+                String color = (prevCumulativePercentage[0] < 50 && cumulativePercentage >= 50) || (prevCumulativePercentage[0] < 80 && cumulativePercentage >= 80) ? "blue" : "skyblue";
+                String style = "margin-right: 1px; vertical-align: bottom; width: 8px; background-color: " + color + "; display: inline-block; height: " + height + "px";
+
+                if (contributor.isRookie()) {
+                    style += "; border-bottom: 4px solid green;";
+                } else {
+                    style += "; border-bottom: 4px solid " + color + ";";
+                }
+
+                html.append("<div title='" + tooltip + "' style='" + style + "'></div>");
+                prevCumulativePercentage[0] = cumulativePercentage;
+            });
+            landscapeReport.startDiv("white-space: nowrap; width: 100%; overflow-x: scroll;");
+            landscapeReport.addHtmlContent(html.toString());
+            landscapeReport.endDiv();
+            landscapeReport.startDiv("color: grey; font-size: 70%");
             for (int p = 90; p >= 10; p -= 10) {
                 double percentile = stats.getPercentile(p);
                 landscapeReport.addHtmlContent("p(" + p + ") = " + (int) Math.round(percentile) + "; ");
             }
+            landscapeReport.endDiv();
 
             landscapeReport.addHtmlContent("<iframe src='contributors-recent.html' frameborder=0 style='height: 450px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
 
@@ -1243,14 +1281,15 @@ public class LandscapeReportGenerator {
         landscapeReport.addTableCell("<b>" + (first ? "First" : "Last") + " Contribution</b>" +
                 "<div style='color: grey; font-size: 80%; margin-left: 8px; margin-top: 4px;'>"
                 + "</div>", "border: none; vertical-align: " + (first ? "bottom" : "top"));
-        contributorsPerWeek.forEach(week -> {
+        boolean firstItem[] = {true};
+        contributorsPerWeek.forEach(timeUnit -> {
             landscapeReport.startTableCell("max-width: 20px; padding: 0; margin: 1px; border: none; text-align: center; vertical-align: " + valign + "; font-size: 80%; height: 100px");
-            List<String> contributors = contributorsExtractor.getContributors(week.getTimeSlot(), true);
+            List<String> contributors = contributorsExtractor.getContributors(timeUnit.getTimeSlot(), true);
             int count = contributors.size();
             int height = 4 + (int) (64.0 * count / maxContributors);
-            String title = "week of " + week.getTimeSlot() + " = " + count + " contributors:\n\n" +
+            String title = "timeUnit of " + timeUnit.getTimeSlot() + " = " + count + " contributors:\n\n" +
                     contributors.subList(0, contributors.size() < 200 ? contributors.size() : 200).stream().collect(Collectors.joining(", "));
-            String yearString = week.getTimeSlot().split("[-]")[0];
+            String yearString = timeUnit.getTimeSlot().split("[-]")[0];
 
             String color = "lightgrey";
 
@@ -1259,7 +1298,11 @@ public class LandscapeReportGenerator {
                 if (first) {
                     color = year % 2 == 0 ? "limegreen" : "darkgreen";
                 } else {
-                    color = year % 2 == 0 ? "crimson" : "rgba(100,0,0,100)";
+                    if (firstItem[0]) {
+                        color = "rgba(220,220,220,100)";
+                    } else {
+                        color = year % 2 == 0 ? "crimson" : "rgba(100,0,0,100)";
+                    }
                 }
             } else {
                 height = 1;
@@ -1273,6 +1316,7 @@ public class LandscapeReportGenerator {
                 landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; color: grey; font-size: 80%; margin: 1px'>" + count + "</div>");
             }
             landscapeReport.endTableCell();
+            firstItem[0] = false;
         });
         landscapeReport.endTableRow();
     }
