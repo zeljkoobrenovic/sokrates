@@ -61,7 +61,7 @@ public class LandscapeContributorsReport {
                 : "color: " + color);
         counter[0] += 1;
         String avatarHtml = "";
-        String avatarUrl = this.getAvatarUrl(contributor.getContributor().getEmail());
+        String avatarUrl = this.getAvatarUrl(contributor.getContributor().getEmail(), this.landscapeAnalysisResults.getConfiguration().getContributorAvatarLinkTemplate());
         if (avatarUrl != null) {
             avatarHtml = "<div style='vertical-align: middle; display: inline-block; width: 48px; margin-top: 2px;'>" +
                     "<img style='border-radius: 50%; height: 40px; width: 40px; margin-right: 10px;' src='" + avatarUrl + "' " +
@@ -138,8 +138,8 @@ public class LandscapeContributorsReport {
         return "contributors/" + LandscapeIndividualContributorsReports.getContributorIndividualReportFileName(email);
     }
 
-    private String getAvatarUrl(String contributorId) {
-        return getContributorUrlFromTemplate(contributorId, this.landscapeAnalysisResults.getConfiguration().getContributorAvatarLinkTemplate());
+    public static String getAvatarUrl(String contributorId, String linkTemplate) {
+        return getContributorUrlFromTemplate(contributorId, linkTemplate);
     }
 
     public boolean isRecent() {

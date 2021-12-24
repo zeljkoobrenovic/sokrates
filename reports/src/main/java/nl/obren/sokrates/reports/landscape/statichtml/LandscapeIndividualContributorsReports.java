@@ -51,8 +51,21 @@ public class LandscapeIndividualContributorsReports {
     private RichTextReport getIndividualReport(ContributorProjects contributorProjects) {
         Contributor contributor = contributorProjects.getContributor();
         RichTextReport report = new RichTextReport(contributor.getEmail(), getContributorIndividualReportFileName(contributor.getEmail()));
-        report.setDisplayName(contributor.getEmail());
-        report.setLogoLink(DataImageUtils.DEVELOPER);
+
+        String avatarHtml = "";
+        String avatarUrl = LandscapeContributorsReport.getAvatarUrl(contributor.getEmail(), landscapeAnalysisResults.getConfiguration().getContributorAvatarLinkTemplate());
+        if (avatarUrl != null) {
+            avatarHtml = "<div style='vertical-align: middle; display: inline-block; width: 48px; margin-top: 2px;'>" +
+                    "<img style='border-radius: 50%; height: 40px; width: 40px; margin-right: 10px;' src='" + avatarUrl + "' " +
+                    "onerror=\"this.onerror=null;this.src='" + DataImageUtils.DEVELOPER + "';\">" +
+                    "</div>";
+        } else {
+            avatarHtml = "<div style='vertical-align: middle; display: inline-block; width: 48px; margin-top: 2px;'>" +
+                    "<img style='border-radius: 50%; height: 40px; width: 40px; margin-right: 10px;' src='" + DataImageUtils.DEVELOPER + "'>" +
+                    "</div>";
+        }
+
+        report.setDisplayName(avatarHtml + contributor.getEmail());
 
         report.startDiv("margin-top: 10px; margin-bottom: 22px;");
         String template = this.landscapeAnalysisResults.getConfiguration().getContributorLinkTemplate();
