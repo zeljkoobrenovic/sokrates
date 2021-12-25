@@ -2,9 +2,9 @@ package nl.obren.sokrates.sourcecode.githistory;
 
 public class ContributorPerExtensionStats {
     private String contributor = "";
-    private int commitsCount30Days = 0;
-    private int commitsCount90Days = 0;
-    private int commitsCount = 0;
+    private int fileUpdates30Days = 0;
+    private int fileUpdates90Days = 0;
+    private int fileUpdates = 0;
 
     public ContributorPerExtensionStats() {
     }
@@ -21,27 +21,27 @@ public class ContributorPerExtensionStats {
         this.contributor = contributor;
     }
 
-    public int getCommitsCount30Days() {
-        return commitsCount30Days;
+    public int getFileUpdates30Days() {
+        return fileUpdates30Days;
     }
 
-    public void setCommitsCount30Days(int commitsCount30Days) {
-        this.commitsCount30Days = commitsCount30Days;
+    public void setFileUpdates30Days(int fileUpdates30Days) {
+        this.fileUpdates30Days = fileUpdates30Days;
     }
 
-    public int getCommitsCount90Days() {
-        return commitsCount90Days;
+    public int getFileUpdates90Days() {
+        return fileUpdates90Days;
     }
 
-    public void setCommitsCount90Days(int commitsCount90Days) {
-        this.commitsCount90Days = commitsCount90Days;
+    public void setFileUpdates90Days(int fileUpdates90Days) {
+        this.fileUpdates90Days = fileUpdates90Days;
     }
 
-    public int getCommitsCount() {
-        return commitsCount;
+    public int getFileUpdates() {
+        return fileUpdates;
     }
 
-    public void setCommitsCount(int commitsCount) {
-        this.commitsCount = commitsCount;
+    public void setFileUpdates(int fileUpdates) {
+        this.fileUpdates = fileUpdates;
     }
 }

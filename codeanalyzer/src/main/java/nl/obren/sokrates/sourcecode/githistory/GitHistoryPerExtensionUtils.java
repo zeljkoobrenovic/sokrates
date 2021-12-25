@@ -4,7 +4,6 @@ import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class GitHistoryPerExtensionUtils {
@@ -46,12 +45,12 @@ public class GitHistoryPerExtensionUtils {
             }
 
             ContributorPerExtensionStats contributorStats = contributorPerExtensionStatsMap.get(extension).get(email);
-            contributorStats.setCommitsCount(contributorStats.getCommitsCount() + 1);
+            contributorStats.setFileUpdates(contributorStats.getFileUpdates() + 1);
             if (isLessThan30DaysAgo) {
-                contributorStats.setCommitsCount30Days(contributorStats.getCommitsCount30Days() + 1);
+                contributorStats.setFileUpdates30Days(contributorStats.getFileUpdates30Days() + 1);
             }
             if (isLessThan90DaysAgo) {
-                contributorStats.setCommitsCount90Days(contributorStats.getCommitsCount90Days() + 1);
+                contributorStats.setFileUpdates90Days(contributorStats.getFileUpdates90Days() + 1);
             }
 
         });

@@ -131,7 +131,7 @@ public class ContributorsReportGenerator {
         report.endTabContentSection();
 
         report.startTabContentSection("all_time", false);
-        addContributorsPanel(report, contributors, c -> c.getCommitsCount(), true, e -> e.getCommitsCount());
+        addContributorsPanel(report, contributors, c -> c.getCommitsCount(), true, e -> e.getFileUpdates());
         renderPeopleDependencies(analysis.getPeopleDependenciesAllTime(), 35600, c -> c.getCommitsCount(), contributors);
         report.endTabContentSection();
 
@@ -139,7 +139,7 @@ public class ContributorsReportGenerator {
         List<Contributor> commits30Days = contributors.stream().filter(c -> c.getCommitsCount30Days() > 0).collect(Collectors.toList());
         if (commits30Days.size() > 0) {
             commits30Days.sort((a, b) -> b.getCommitsCount30Days() - a.getCommitsCount30Days());
-            addContributorsPanel(report, commits30Days, c -> c.getCommitsCount30Days(), true, e -> e.getCommitsCount30Days());
+            addContributorsPanel(report, commits30Days, c -> c.getCommitsCount30Days(), true, e -> e.getFileUpdates30Days());
             renderPeopleDependencies(analysis.getPeopleDependencies30Days(), 30, c -> c.getCommitsCount30Days(), commits30Days);
         } else {
             report.addParagraph("No commits in past 30 days.", "margin-top: 16px");
@@ -150,7 +150,7 @@ public class ContributorsReportGenerator {
         List<Contributor> commits90Days = contributors.stream().filter(c -> c.getCommitsCount90Days() > 0).collect(Collectors.toList());
         if (commits90Days.size() > 0) {
             commits90Days.sort((a, b) -> b.getCommitsCount90Days() - a.getCommitsCount90Days());
-            addContributorsPanel(report, commits90Days, c -> c.getCommitsCount90Days(), true, e -> e.getCommitsCount90Days());
+            addContributorsPanel(report, commits90Days, c -> c.getCommitsCount90Days(), true, e -> e.getFileUpdates90Days());
             renderPeopleDependencies(analysis.getPeopleDependencies90Days(), 90, c -> c.getCommitsCount90Days(), commits90Days);
         } else {
             report.addParagraph("No commits in past 90 days.", "margin-top: 16px");
@@ -542,6 +542,7 @@ public class ContributorsReportGenerator {
 
             if (showPerExtension && perExtensionCounter != null) {
                 String perExtension = emailStatsMap.get(contributor.getEmail()).stream()
+                        .filter(e -> perExtensionCounter.count(e.getRight()) > 0)
                         .sorted((a, b) -> perExtensionCounter.count(b.getRight()) - perExtensionCounter.count(a.getRight()))
                         .limit(5)
                         .map(stats -> stats.getLeft() + " (" + perExtensionCounter.count(stats.getRight()) + ")")
