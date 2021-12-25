@@ -55,8 +55,8 @@ public class LandscapeIndividualContributorsReports {
         String avatarHtml = "";
         String avatarUrl = LandscapeContributorsReport.getAvatarUrl(contributor.getEmail(), landscapeAnalysisResults.getConfiguration().getContributorAvatarLinkTemplate());
         if (avatarUrl != null) {
-            avatarHtml = "<div style='vertical-align: middle; display: inline-block; width: 48px; margin-top: 2px;'>" +
-                    "<img style='border-radius: 50%; height: 40px; width: 40px; margin-right: 10px;' src='" + avatarUrl + "' " +
+            avatarHtml = "<div style='vertical-align: middle; display: inline-block; width: 88px; margin-top: 2px;'>" +
+                    "<img style='border-radius: 50%; height: 80px; width: 80px; margin-right: 10px;' src='" + avatarUrl + "' " +
                     "onerror=\"this.onerror=null;this.src='" + DataImageUtils.DEVELOPER + "';\">" +
                     "</div>";
         } else {

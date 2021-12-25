@@ -15,6 +15,7 @@ public class GitHistoryPerExtensionUtils {
     private Map<String, List<String>> paths = new HashMap<>();
     private Map<String, List<String>> paths30Days = new HashMap<>();
     private Map<String, List<String>> paths90Days = new HashMap<>();
+    private Map<String, Map<String,ContributorPerExtensionStats>> contributorPerExtensionStatsMap = new HashMap<>();
 
     public List<CommitsPerExtension> getCommitsPerExtensions(File file, FileHistoryAnalysisConfig config) {
         GitHistoryUtils.getHistoryFromFile(file, config).forEach(fileUpdate -> {
@@ -36,6 +37,27 @@ public class GitHistoryPerExtensionUtils {
                 update90DaysCounts(extension, path, email, commitsPerExtension);
             }
 
+            if (!contributorPerExtensionStatsMap.containsKey(extension)) {
+                contributorPerExtensionStatsMap.put(extension, new HashMap<>());
+            }
+
+            if (!contributorPerExtensionStatsMap.get(extension).containsKey(email)) {
+                contributorPerExtensionStatsMap.get(extension).put(email, new ContributorPerExtensionStats(email));
+            }
+
+            ContributorPerExtensionStats contributorStats = contributorPerExtensionStatsMap.get(extension).get(email);
+            contributorStats.setCommitsCount(contributorStats.getCommitsCount() + 1);
+            if (isLessThan30DaysAgo) {
+                contributorStats.setCommitsCount30Days(contributorStats.getCommitsCount30Days() + 1);
+            }
+            if (isLessThan90DaysAgo) {
+                contributorStats.setCommitsCount90Days(contributorStats.getCommitsCount90Days() + 1);
+            }
+
+        });
+
+        map.keySet().forEach(extension -> {
+            map.get(extension).setContributorPerExtensionStats(new ArrayList<>(contributorPerExtensionStatsMap.get(extension).values()));
         });
 
         ArrayList<CommitsPerExtension> list = new ArrayList<>(map.values());

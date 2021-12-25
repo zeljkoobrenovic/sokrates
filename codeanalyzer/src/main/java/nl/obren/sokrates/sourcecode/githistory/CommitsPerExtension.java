@@ -18,6 +18,7 @@ public class CommitsPerExtension {
     private int commitsCount90Days = 0;
     private List<String> committers90Days = new ArrayList<>();
     private int filesCount90Days = 0;
+    private List<ContributorPerExtensionStats> contributorPerExtensionStats = new ArrayList<>();
 
     public CommitsPerExtension() {
     }
@@ -104,5 +105,13 @@ public class CommitsPerExtension {
 
     public void setCommitters90Days(List<String> committers90Days) {
         this.committers90Days = committers90Days;
+    }
+
+    public List<ContributorPerExtensionStats> getContributorPerExtensionStats() {
+        return contributorPerExtensionStats;
+    }
+
+    public void setContributorPerExtensionStats(List<ContributorPerExtensionStats> contributorPerExtensionStats) {
+        this.contributorPerExtensionStats = contributorPerExtensionStats;
     }
 }

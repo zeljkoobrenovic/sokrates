@@ -18,11 +18,13 @@ import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
+import nl.obren.sokrates.sourcecode.githistory.ContributorPerExtensionStats;
 import nl.obren.sokrates.sourcecode.landscape.ContributionCounter;
 import nl.obren.sokrates.sourcecode.landscape.ContributorConnection;
 import nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorConnections;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,9 +38,19 @@ public class ContributorsReportGenerator {
     private int dependencyVisualCounter = 1;
     private File reportsFolder;
     private RichTextReport report;
+    private Map<String, List<Pair<String, ContributorPerExtensionStats>>> emailStatsMap = new HashMap<>();
 
     public ContributorsReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
+        codeAnalysisResults.getContributorsAnalysisResults().getCommitsPerExtensions().forEach(commitsPerExtension -> {
+            commitsPerExtension.getContributorPerExtensionStats().forEach(contributorPerExtensionStats -> {
+                String email = contributorPerExtensionStats.getContributor();
+                if (!emailStatsMap.containsKey(email)) {
+                    emailStatsMap.put(email, new ArrayList<>());
+                }
+                emailStatsMap.get(email).add(Pair.of(commitsPerExtension.getExtension(), contributorPerExtensionStats));
+            });
+        });
     }
 
     public static List<ContributorConnections> contributorConnections(List<ComponentDependency> peopleDependencies) {
@@ -119,7 +131,7 @@ public class ContributorsReportGenerator {
         report.endTabContentSection();
 
         report.startTabContentSection("all_time", false);
-        addContributorsPanel(report, contributors, c -> c.getCommitsCount());
+        addContributorsPanel(report, contributors, c -> c.getCommitsCount(), true, e -> e.getCommitsCount());
         renderPeopleDependencies(analysis.getPeopleDependenciesAllTime(), 35600, c -> c.getCommitsCount(), contributors);
         report.endTabContentSection();
 
@@ -127,7 +139,7 @@ public class ContributorsReportGenerator {
         List<Contributor> commits30Days = contributors.stream().filter(c -> c.getCommitsCount30Days() > 0).collect(Collectors.toList());
         if (commits30Days.size() > 0) {
             commits30Days.sort((a, b) -> b.getCommitsCount30Days() - a.getCommitsCount30Days());
-            addContributorsPanel(report, commits30Days, c -> c.getCommitsCount30Days());
+            addContributorsPanel(report, commits30Days, c -> c.getCommitsCount30Days(), true, e -> e.getCommitsCount30Days());
             renderPeopleDependencies(analysis.getPeopleDependencies30Days(), 30, c -> c.getCommitsCount30Days(), commits30Days);
         } else {
             report.addParagraph("No commits in past 30 days.", "margin-top: 16px");
@@ -138,7 +150,7 @@ public class ContributorsReportGenerator {
         List<Contributor> commits90Days = contributors.stream().filter(c -> c.getCommitsCount90Days() > 0).collect(Collectors.toList());
         if (commits90Days.size() > 0) {
             commits90Days.sort((a, b) -> b.getCommitsCount90Days() - a.getCommitsCount90Days());
-            addContributorsPanel(report, commits90Days, c -> c.getCommitsCount90Days());
+            addContributorsPanel(report, commits90Days, c -> c.getCommitsCount90Days(), true, e -> e.getCommitsCount90Days());
             renderPeopleDependencies(analysis.getPeopleDependencies90Days(), 90, c -> c.getCommitsCount90Days(), commits90Days);
         } else {
             report.addParagraph("No commits in past 90 days.", "margin-top: 16px");
@@ -149,7 +161,7 @@ public class ContributorsReportGenerator {
         List<Contributor> commits180Days = contributors.stream().filter(c -> c.getCommitsCount180Days() > 0).collect(Collectors.toList());
         if (commits180Days.size() > 0) {
             commits180Days.sort((a, b) -> b.getCommitsCount180Days() - a.getCommitsCount180Days());
-            addContributorsPanel(report, commits180Days, c -> c.getCommitsCount180Days());
+            addContributorsPanel(report, commits180Days, c -> c.getCommitsCount180Days(), false, null);
             renderPeopleDependencies(analysis.getPeopleDependencies180Days(), 180, c -> c.getCommitsCount180Days(), commits180Days);
         } else {
             report.addParagraph("No commits in past 180 days.", "margin-top: 16px");
@@ -159,7 +171,7 @@ public class ContributorsReportGenerator {
         report.startTabContentSection("365_days", false);
         List<Contributor> commits365Days = contributors.stream().filter(c -> c.getCommitsCount365Days() > 0).collect(Collectors.toList());
         commits365Days.sort((a, b) -> b.getCommitsCount365Days() - a.getCommitsCount365Days());
-        addContributorsPanel(report, commits365Days, c -> c.getCommitsCount365Days());
+        addContributorsPanel(report, commits365Days, c -> c.getCommitsCount365Days(), false, null);
         renderPeopleDependencies(analysis.getPeopleDependencies365Days(), 365, c -> c.getCommitsCount365Days(), commits365Days);
         report.endTabContentSection();
 
@@ -369,6 +381,7 @@ public class ContributorsReportGenerator {
             report.addTableCell(contributorConnection.getEmail());
             report.addTableCell(contributorConnection.getCount() + "");
             report.addTableCell(contributorConnection.getCommits() + "");
+
             report.endTableRow();
         });
         report.endTable();
@@ -465,7 +478,8 @@ public class ContributorsReportGenerator {
         }
     }
 
-    public void addContributorsPanel(RichTextReport report, List<Contributor> contributors, ContributionCounter contributionCounter) {
+    public void addContributorsPanel(RichTextReport report, List<Contributor> contributors
+            , ContributionCounter contributionCounter, boolean showPerExtension, PerExtensionCounter perExtensionCounter) {
         int count = contributors.size();
         if (count == 0) {
             return;
@@ -502,7 +516,11 @@ public class ContributorsReportGenerator {
         }
         report.startScrollingDiv();
         report.startTable();
-        report.addTableHeader("#", "Contributor", "First Commit", "Latest Commit", "# commits");
+        if (showPerExtension && perExtensionCounter != null) {
+            report.addTableHeader("#", "Contributor<br>", "First<br>Commit", "Latest<br>Commit", "Commits<br>Count", "File Updates<br>(per extension)");
+        } else {
+            report.addTableHeader("#", "Contributor<br>", "First<br>Commit", "Latest<br>Commit", "Commits<br>Count");
+        }
         int index[] = {0};
         contributors.forEach(contributor -> {
             index[0]++;
@@ -521,10 +539,25 @@ public class ContributorsReportGenerator {
             String formattedCount = FormattingUtils.formatCount(contributorCommitsCount);
             String formattedPercentage = FormattingUtils.getFormattedPercentage(100.0 * contributorCommitsCount / total[0]);
             report.addTableCell(formattedCount + " (" + formattedPercentage + "%)");
+
+            if (showPerExtension && perExtensionCounter != null) {
+                String perExtension = emailStatsMap.get(contributor.getEmail()).stream()
+                        .sorted((a, b) -> perExtensionCounter.count(b.getRight()) - perExtensionCounter.count(a.getRight()))
+                        .limit(5)
+                        .map(stats -> stats.getLeft() + " (" + perExtensionCounter.count(stats.getRight()) + ")")
+                        .collect(Collectors.joining(", "));
+
+                report.addTableCell(perExtension + "");
+            }
+
             report.endTableRow();
         });
 
         report.endTable();
         report.endDiv();
+    }
+
+    static interface PerExtensionCounter {
+        int count(ContributorPerExtensionStats perExtensionStats);
     }
 }
