@@ -1,23 +1,24 @@
 package nl.obren.sokrates.reports.landscape.statichtml;
 
+import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
+import nl.obren.sokrates.sourcecode.githistory.ContributorPerExtensionStats;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjectInfo;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjects;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.text.Normalizer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Stream;
 
 public class LandscapeIndividualContributorsReports {
     private LandscapeAnalysisResults landscapeAnalysisResults;
     private List<RichTextReport> reports = new ArrayList<>();
-    private boolean recent = false;
 
     public LandscapeIndividualContributorsReports(LandscapeAnalysisResults landscapeAnalysisResults) {
         this.landscapeAnalysisResults = landscapeAnalysisResults;
@@ -92,6 +93,31 @@ public class LandscapeIndividualContributorsReports {
         );
         report.endDiv();
 
+        List<Pair<String, ContributorPerExtensionStats>> extensionUpdates = getContributorStatsPerExtension(contributorProjects, contributor);
+
+        report.addContentInDiv("File updates per extension (30 days):");
+        report.startTable();
+        report.startTableRow();
+        int max = getContributorsPerExtsnionsStream(extensionUpdates).mapToInt(e -> e.getRight().getFileUpdates30Days()).max().orElse(1);
+
+        getContributorsPerExtsnionsStream(extensionUpdates).forEach(extensionUpdate -> {
+            report.startTableCell("border: 0; text-align: center; vertical-align: bottom");
+            int fileUpdates30Days = extensionUpdate.getRight().getFileUpdates30Days();
+            report.addContentInDiv(FormattingUtils.getSmallTextForNumber(fileUpdates30Days), "text-align: center; font-size: 70%; color: lightgrey;");
+            int height = (int) (64.0 * fileUpdates30Days / max) + 1;
+            report.addContentInDiv("", "background-color: skyblue; width: 35px; height: " + height + "px;");
+            report.endTableCell();
+        });
+        report.endTableRow();
+        report.startTableRow();
+        getContributorsPerExtsnionsStream(extensionUpdates).forEach(extensionUpdate -> {
+            report.addTableCell(DataImageUtils.getLangDataImageDiv30(extensionUpdate.getLeft()), "border: 0");
+        });
+        report.endTableRow();
+        report.endTable();
+
+        report.addLineBreak();
+
         report.startTabGroup();
         report.addTab("month", "Project Activity Per Month", true);
         report.addTab("week", "Per Week", false);
@@ -110,6 +136,40 @@ public class LandscapeIndividualContributorsReports {
         report.endTabContentSection();
 
         return report;
+    }
+
+    private Stream<Pair<String, ContributorPerExtensionStats>> getContributorsPerExtsnionsStream(List<Pair<String, ContributorPerExtensionStats>> extensionUpdates) {
+        return extensionUpdates.stream().filter(e -> e.getRight().getFileUpdates30Days() > 0).limit(20);
+    }
+
+    private List<Pair<String, ContributorPerExtensionStats>> getContributorStatsPerExtension(ContributorProjects contributorProjects, Contributor contributor) {
+        Map<String, Pair<String,ContributorPerExtensionStats>> updatesPerExtensionMap = new HashMap<>();
+
+        contributorProjects.getProjects().stream().filter(p -> p.getCommits30Days() > 0).forEach(project -> {
+            project.getProjectAnalysisResults().getAnalysisResults().getContributorsAnalysisResults().getCommitsPerExtensions().forEach(commitsPerExtension -> {
+                String extension = commitsPerExtension.getExtension();
+                commitsPerExtension.getContributorPerExtensionStats().stream()
+                        .filter(stats -> stats.getContributor().equalsIgnoreCase(contributor.getEmail()))
+                        .forEach(stats -> {
+                            if (updatesPerExtensionMap.containsKey(extension)) {
+                                ContributorPerExtensionStats existingStats = updatesPerExtensionMap.get(extension).getRight();
+                                existingStats.setFileUpdates(existingStats.getFileUpdates() + stats.getFileUpdates());
+                                existingStats.setFileUpdates30Days(existingStats.getFileUpdates30Days() + stats.getFileUpdates30Days());
+                                existingStats.setFileUpdates90Days(existingStats.getFileUpdates90Days() + stats.getFileUpdates90Days());
+                            } else {
+                                ContributorPerExtensionStats newStats = new ContributorPerExtensionStats(contributor.getEmail());
+                                updatesPerExtensionMap.put(extension, Pair.of(extension, newStats));
+                                newStats.setFileUpdates(stats.getFileUpdates());
+                                newStats.setFileUpdates30Days(stats.getFileUpdates30Days());
+                                newStats.setFileUpdates90Days(stats.getFileUpdates90Days());
+                            }
+                });
+            });
+        });
+
+        List<Pair<String,ContributorPerExtensionStats>> extensionUpdates = new ArrayList<>(updatesPerExtensionMap.values());
+        Collections.sort(extensionUpdates, (a, b) -> b.getRight().getFileUpdates30Days() - a.getRight().getFileUpdates30Days());
+        return extensionUpdates;
     }
 
     private void addPerWeek(ContributorProjects contributorProjects, RichTextReport report) {
