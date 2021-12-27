@@ -352,8 +352,8 @@ public class SummaryUtils {
 
         report.startTableCell("border: none; padding-top: 4px;");
         Thresholds thresholds = analysisResults.getCodeConfiguration().getAnalysis().getFileUpdateFrequencyThresholds();
-        report.addParagraph(FormattingUtils.getFormattedPercentage(age.getVeryHighRiskPercentage() + age.getHighRiskValue())
-                + "% of code updated more that " + thresholds.getHigh() + " times");
+        report.addParagraph(FormattingUtils.getFormattedPercentage(age.getVeryHighRiskPercentage() + age.getHighRiskPercentage())
+                + "% of code updated more than " + thresholds.getHigh() + " times");
         report.endTableCell();
         report.addTableCell("<a href='" + reportRoot + "FileChangeFrequency.html'  title='file change frequency details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "border: none;  vertical-align: top");
 
