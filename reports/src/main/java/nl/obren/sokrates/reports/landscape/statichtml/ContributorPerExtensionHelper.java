@@ -2,7 +2,9 @@ package nl.obren.sokrates.reports.landscape.statichtml;
 
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.githistory.ContributorPerExtensionStats;
+import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjects;
+import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
@@ -13,7 +15,16 @@ public class ContributorPerExtensionHelper {
         return extensionUpdates.stream().filter(e -> e.getRight().getFileUpdates90Days() > 0).limit(20);
     }
 
-    public List<Pair<String, ContributorPerExtensionStats>> getContributorStatsPerExtension(ContributorProjects contributorProjects) {
+    private static String transformEmail(LandscapeConfiguration configuration, String email) {
+        if (configuration.getTransformContributorEmails().size() > 0) {
+            ComplexOperation operation = new ComplexOperation(configuration.getTransformContributorEmails());
+            return operation.exec(email);
+        }
+
+        return email;
+    }
+
+    public List<Pair<String, ContributorPerExtensionStats>> getContributorStatsPerExtension(LandscapeConfiguration configuration, ContributorProjects contributorProjects) {
         Map<String, Pair<String,ContributorPerExtensionStats>> updatesPerExtensionMap = new HashMap<>();
 
         contributorProjects.getProjects().stream().filter(p -> p.getCommits90Days() > 0).forEach(project -> {
@@ -21,7 +32,7 @@ public class ContributorPerExtensionHelper {
                 String extension = commitsPerExtension.getExtension();
                 String email = contributorProjects.getContributor().getEmail();
                 commitsPerExtension.getContributorPerExtensionStats().stream()
-                        .filter(stats -> stats.getContributor().equalsIgnoreCase(email))
+                        .filter(stats -> transformEmail(configuration, stats.getContributor()).equalsIgnoreCase(email))
                         .forEach(stats -> {
                             if (updatesPerExtensionMap.containsKey(extension)) {
                                 ContributorPerExtensionStats existingStats = updatesPerExtensionMap.get(extension).getRight();
@@ -44,8 +55,8 @@ public class ContributorPerExtensionHelper {
         return extensionUpdates;
     }
 
-    public String getBiggestExtension(ContributorProjects contributorProjects) {
-        List<Pair<String, ContributorPerExtensionStats>> contributorStatsPerExtension = this.getContributorStatsPerExtension(contributorProjects);
+    public String getBiggestExtension(LandscapeConfiguration configuration, ContributorProjects contributorProjects) {
+        List<Pair<String, ContributorPerExtensionStats>> contributorStatsPerExtension = this.getContributorStatsPerExtension(configuration, contributorProjects);
 
         if (contributorStatsPerExtension.size() > 0) {
             return contributorStatsPerExtension.get(0).getLeft();

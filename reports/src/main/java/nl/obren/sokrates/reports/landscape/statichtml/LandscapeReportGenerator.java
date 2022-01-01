@@ -766,7 +766,7 @@ public class LandscapeReportGenerator {
                         + "\n - commits (30d): " + count
                         + "\n - cumulative commits (top " + index[0] + "): " + cumulativeCount[0]
                         + "\n - cumulative percentage (top " + contributorPercentage + "% " + "): " + cumulativePercentage + "%";
-                String color = (prevCumulativePercentage[0] < 50 && cumulativePercentage >= 50) || (prevCumulativePercentage[0] < 80 && cumulativePercentage >= 80) ? "blue" : "skyblue";
+                String color = (prevCumulativePercentage[0] < 50 && cumulativePercentage >= 50) ? "blue" : "skyblue";
                 String style = "margin-right: 1px; vertical-align: bottom; width: 8px; background-color: " + color + "; display: inline-block; height: " + height + "px";
 
                 if (contributor.isRookie()) {

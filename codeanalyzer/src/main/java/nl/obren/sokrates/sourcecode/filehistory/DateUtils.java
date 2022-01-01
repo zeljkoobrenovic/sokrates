@@ -73,6 +73,20 @@ public class DateUtils {
         return dates;
     }
 
+    public static List<String> getPastYears(int numberOfYears, String latestCommitDate) {
+        List<String> dates = new ArrayList<>();
+
+        for (int i = 0; i <= numberOfYears; i++) {
+            Calendar cal = getCalendar(latestCommitDate);
+            cal.add(Calendar.YEAR, -i);
+
+            String stringDate = new SimpleDateFormat(DATE_FORMAT).format(cal.getTime());
+            dates.add(new AuthorCommit(stringDate, "").getYear());
+        }
+
+        return dates;
+    }
+
     public static boolean isCommittedLessThanDaysAgo(String date, int daysAgo) {
         return isCommittedBetween(date, 0, daysAgo);
     }

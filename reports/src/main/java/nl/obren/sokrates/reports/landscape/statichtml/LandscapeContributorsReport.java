@@ -126,7 +126,7 @@ public class LandscapeContributorsReport {
         }
         report.addHtmlContent(projectInfo.toString());
         report.endTableCell();
-        String biggestExtension = new ContributorPerExtensionHelper().getBiggestExtension(contributor);
+        String biggestExtension = new ContributorPerExtensionHelper().getBiggestExtension(landscapeAnalysisResults.getConfiguration(), contributor);
         String icon;
         if (biggestExtension == null) {
             icon = "";
