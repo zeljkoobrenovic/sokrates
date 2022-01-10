@@ -96,4 +96,17 @@ public class PlSqlAnalyzerTest {
         assertEquals(0, unitInfos.get(3).getNumberOfParameters());
     }
 
+    @Test
+    public void extractUnitsWithoutParameters() {
+        PlSqlAnalyzer analyzer = new PlSqlAnalyzer();
+        SourceFile sourceFile = new SourceFile(new File("test_units4.pls"), PlSqlExamples.CONTENT_10);
+
+        List<UnitInfo> unitInfos = analyzer.extractUnits(sourceFile);
+        assertEquals(1, unitInfos.size());
+        assertEquals("get_p1100_date", unitInfos.get(0).getShortName());
+        assertEquals(4, unitInfos.get(0).getLinesOfCode());
+        assertEquals(1, unitInfos.get(0).getMcCabeIndex());
+        assertEquals(0, unitInfos.get(0).getNumberOfParameters());
+    }
+
 }
