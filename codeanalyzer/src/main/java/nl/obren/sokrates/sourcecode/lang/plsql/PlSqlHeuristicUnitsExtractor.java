@@ -106,6 +106,11 @@ public class PlSqlHeuristicUnitsExtractor {
             strippedLine = strippedLine.substring(strippedLine.indexOf(".")+1).trim();
         }
 
+        String return_literal = "RETURN ";
+        if(strippedLine.contains(return_literal) || strippedLine.contains(return_literal.toLowerCase())) {
+            strippedLine = strippedLine.substring(0, strippedLine.toLowerCase().indexOf(return_literal.toLowerCase())).trim();
+        }
+
         name = strippedLine.trim();
         return name;
     }
