@@ -22,19 +22,21 @@ public class PlSqlHeuristicUnitsExtractor {
         List<String> normalLines = sourceFile.getLines();
         List<String> lines = SourceCodeCleanerUtils.splitInLines(cleanedContent.getCleanedContent());
 
-        int packageStart = findPackageStart(lines);
-
+        //Find start of body
+        int packageStartLine = findPackageStart(lines);
 
         for (int lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
             String line = lines.get(lineIndex).trim();
-            if (isUnitSignature(line) && (lineIndex > packageStart)) {
+            if (isUnitSignature(line) && (packageStartLine <= lineIndex ) && !line.toLowerCase().contains("body ")) {
                 String blockName = "";
                 if(line.trim().startsWith("CREATE ") || line.trim().startsWith("create ")
                 || line.trim().startsWith("PROCEDURE ") || line.trim().startsWith("procedure ")
                 || line.trim().startsWith("FUNCTION ") || line.trim().startsWith("function ")) {
                     blockName = getName(line);
                 }
+
                 int endOfUnitBodyIndex = getEndOfUnitBodyIndex(lines, lineIndex, blockName);
+               
                 if (endOfUnitBodyIndex >= lineIndex) {
                     StringBuilder body = new StringBuilder();
                     for (int bodyIndex = cleanedContent.getFileLineIndexes().get(lineIndex);
@@ -101,17 +103,18 @@ public class PlSqlHeuristicUnitsExtractor {
         strippedLine = strippedLine.replace("\"", "");
         strippedLine = strippedLine.replace("'", "");
 
-        if(strippedLine.contains("(")) {
+        if (strippedLine.contains("(")) {
             strippedLine = strippedLine.substring(0, strippedLine.indexOf("(")).trim();
         }
 
-        if(strippedLine.contains(".")) {
-            strippedLine = strippedLine.substring(strippedLine.indexOf(".")+1).trim();
+        if (strippedLine.contains(".")) {
+            strippedLine = strippedLine.substring(strippedLine.indexOf(".") + 1).trim();
         }
 
         String return_literal = "RETURN ";
-        if(strippedLine.contains(return_literal) || strippedLine.contains(return_literal.toLowerCase())) {
-            strippedLine = strippedLine.substring(0, strippedLine.toLowerCase().indexOf(return_literal.toLowerCase())).trim();
+        if (strippedLine.contains(return_literal) || strippedLine.contains(return_literal.toLowerCase())) {
+            strippedLine = strippedLine.substring(0, strippedLine.toLowerCase().indexOf(return_literal.toLowerCase()))
+                    .trim();
         }
 
         name = strippedLine.trim();
@@ -139,7 +142,8 @@ public class PlSqlHeuristicUnitsExtractor {
         String bodyForSearch = body.replace("\n", " ");
 
         int startIndex = -1;
-        if(firstLine.contains("(")) startIndex = bodyForSearch.indexOf("(");
+        if (firstLine.contains("("))
+            startIndex = bodyForSearch.indexOf("(");
         if (startIndex >= 0) {
             int endIndex = bodyForSearch.indexOf(")", startIndex + 1);
             if (endIndex > startIndex) {
@@ -161,15 +165,14 @@ public class PlSqlHeuristicUnitsExtractor {
         bodyForSearch = bodyForSearch.replace("(", " (");
 
         List<String> mcCabeIndexLiterals = Arrays.asList(
-                " IF ", " ELSE ", " ELSEIF ", " CASE ", " WHEN ", " LOOP ", " AND ", " OR "
-        );
+                " IF ", " ELSE ", " ELSEIF ", " CASE ", " WHEN ", " LOOP ", " AND ", " OR ");
         int mcCabeIndex = 1;
 
         for (String literal : mcCabeIndexLiterals) {
             mcCabeIndex += StringUtils.countMatches(bodyForSearch, literal);
             mcCabeIndex += StringUtils.countMatches(bodyForSearch, literal.toLowerCase());
         }
-//        mcCabeIndex += StringUtils.countMatches(bodyForSearch, " OR ");
+        // mcCabeIndex += StringUtils.countMatches(bodyForSearch, " OR ");
         mcCabeIndex -= StringUtils.countMatches(bodyForSearch, " REPLACE ");
         mcCabeIndex -= StringUtils.countMatches(bodyForSearch, "REPLACE".toLowerCase());
 
@@ -183,8 +186,8 @@ public class PlSqlHeuristicUnitsExtractor {
             if (!line.trim().isEmpty()) {
                 if ((line.trim().startsWith("END;") || line.trim().startsWith("end;"))
                         || ((line.trim().startsWith("END ") || line.trim().startsWith("end "))
-                        && line.contains(blockName))) {
-                    return index - 1;
+                                && line.contains(blockName))) {
+                    return index;
                 }
             }
             index++;
