@@ -112,10 +112,7 @@ public class PlSqlExamples {
             "  TYPE aa_type IS TABLE OF INTEGER INDEX BY VARCHAR2(15);\n" +
             "END;\n" +
             "/\n" +
-            "CREATE OR REPLACE PROCEDURE print_aa (\n" +
-            "  aa aa_pkg.aa_type\n" +
-            ") AUTHID DEFINER IS\n" +
-            "  i  VARCHAR2(15);\n" +
+            "CREATE OR REPLACE PROCEDURE print_aa (aa aa_pkg.aa_type) AUTHID DEFINER IS i  VARCHAR2(15);\n" +
             "BEGIN\n" +
             "  i := aa.FIRST;\n" +
             " \n" +
@@ -271,5 +268,22 @@ public class PlSqlExamples {
             "   END listCustomer;\n" +
             "\n" +
             "END GF_PR_Print_P049;\n" +
+            "/\n";
+public static final String CONTENT_10 = "package gf_BI is\n" +
+            "   -- Add a comment\n" +
+            "   function get_p1100_date return date;\n" +
+            "end gf_BI;\n" +
+            "/\n" +
+            "PACKAGE BODY \"GF_BI\" is\n" +
+            " -- #produkt_BI\n" +
+            " -- #AutoIT\n" +
+            " -- #omtegning\n" +
+            " c_this_package constant varchar2(11) := 'GF_BI.';\n" +
+            " function get_p1100_date return date is\n" +
+            " begin\n" +
+            "  return p1100.policy_line_rec.cover_start_date;\n" +
+            " end get_p1100_date;\n" +
+            "\n" +
+            "end gf_BI;\n" +
             "/\n";
 }

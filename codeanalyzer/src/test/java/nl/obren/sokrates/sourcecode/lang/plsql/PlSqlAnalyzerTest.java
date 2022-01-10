@@ -53,7 +53,7 @@ public class PlSqlAnalyzerTest {
         List<UnitInfo> unitInfos = analyzer.extractUnits(sourceFile);
         assertEquals(1, unitInfos.size());
         assertEquals("create_email_address", unitInfos.get(0).getShortName());
-        assertEquals(13, unitInfos.get(0).getLinesOfCode());
+        assertEquals(14, unitInfos.get(0).getLinesOfCode());
         assertEquals(2, unitInfos.get(0).getMcCabeIndex());
         assertEquals(4, unitInfos.get(0).getNumberOfParameters());
     }
@@ -66,7 +66,7 @@ public class PlSqlAnalyzerTest {
         List<UnitInfo> unitInfos = analyzer.extractUnits(sourceFile);
         assertEquals(2, unitInfos.size());
         assertEquals("print_aa", unitInfos.get(1).getShortName());
-        assertEquals(10, unitInfos.get(1).getLinesOfCode());
+        assertEquals(8, unitInfos.get(1).getLinesOfCode());
         assertEquals(2, unitInfos.get(1).getMcCabeIndex());
         assertEquals(1, unitInfos.get(1).getNumberOfParameters());
     }
@@ -77,23 +77,32 @@ public class PlSqlAnalyzerTest {
         SourceFile sourceFile = new SourceFile(new File("test_units3.pls"), PlSqlExamples.CONTENT_9);
 
         List<UnitInfo> unitInfos = analyzer.extractUnits(sourceFile);
-        assertEquals(4, unitInfos.size());
-        assertEquals("GF_PR_Print_P049", unitInfos.get(0).getShortName());
-        assertEquals("addCustomer", unitInfos.get(1).getShortName());
-        assertEquals("delCustomer", unitInfos.get(2).getShortName());
-        assertEquals("listCustomer", unitInfos.get(3).getShortName());
-        assertEquals(8, unitInfos.get(0).getLinesOfCode());
+        assertEquals(3, unitInfos.size());
+        assertEquals("addCustomer", unitInfos.get(0).getShortName());
+        assertEquals("delCustomer", unitInfos.get(1).getShortName());
+        assertEquals("listCustomer", unitInfos.get(2).getShortName());
+        assertEquals(10, unitInfos.get(0).getLinesOfCode());
+        assertEquals(1, unitInfos.get(0).getMcCabeIndex());
+        assertEquals(5, unitInfos.get(0).getNumberOfParameters());
+        assertEquals(5, unitInfos.get(1).getLinesOfCode());
+        assertEquals(1, unitInfos.get(1).getMcCabeIndex());
+        assertEquals(1, unitInfos.get(1).getNumberOfParameters());
+        assertEquals(14, unitInfos.get(2).getLinesOfCode());
+        assertEquals(2, unitInfos.get(2).getMcCabeIndex());
+        assertEquals(0, unitInfos.get(2).getNumberOfParameters());
+    }
+
+    @Test
+    public void extractUnitsWithoutParameters() {
+        PlSqlAnalyzer analyzer = new PlSqlAnalyzer();
+        SourceFile sourceFile = new SourceFile(new File("test_units4.pls"), PlSqlExamples.CONTENT_10);
+
+        List<UnitInfo> unitInfos = analyzer.extractUnits(sourceFile);
+        assertEquals(1, unitInfos.size());
+        assertEquals("get_p1100_date", unitInfos.get(0).getShortName());
+        assertEquals(4, unitInfos.get(0).getLinesOfCode());
         assertEquals(1, unitInfos.get(0).getMcCabeIndex());
         assertEquals(0, unitInfos.get(0).getNumberOfParameters());
-        assertEquals(9, unitInfos.get(1).getLinesOfCode());
-        assertEquals(1, unitInfos.get(1).getMcCabeIndex());
-        assertEquals(5, unitInfos.get(1).getNumberOfParameters());
-        assertEquals(4, unitInfos.get(2).getLinesOfCode());
-        assertEquals(1, unitInfos.get(2).getMcCabeIndex());
-        assertEquals(1, unitInfos.get(2).getNumberOfParameters());
-        assertEquals(13, unitInfos.get(3).getLinesOfCode());
-        assertEquals(2, unitInfos.get(3).getMcCabeIndex());
-        assertEquals(0, unitInfos.get(3).getNumberOfParameters());
     }
 
 }
