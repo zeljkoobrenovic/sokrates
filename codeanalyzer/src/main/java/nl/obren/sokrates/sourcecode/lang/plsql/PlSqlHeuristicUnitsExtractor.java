@@ -22,9 +22,12 @@ public class PlSqlHeuristicUnitsExtractor {
         List<String> normalLines = sourceFile.getLines();
         List<String> lines = SourceCodeCleanerUtils.splitInLines(cleanedContent.getCleanedContent());
 
+        int packageStart = findPackageStart(lines);
+
+
         for (int lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
             String line = lines.get(lineIndex).trim();
-            if (isUnitSignature(line) && !(line.contains("BODY") || line.contains("body"))) {
+            if (isUnitSignature(line) && (lineIndex > packageStart)) {
                 String blockName = "";
                 if(line.trim().startsWith("CREATE ") || line.trim().startsWith("create ")
                 || line.trim().startsWith("PROCEDURE ") || line.trim().startsWith("procedure ")
@@ -41,7 +44,7 @@ public class PlSqlHeuristicUnitsExtractor {
                     }
                     UnitInfo unit = new UnitInfo();
                     unit.setSourceFile(sourceFile);
-                    unit.setLinesOfCode(endOfUnitBodyIndex - lineIndex + 1);
+                    unit.setLinesOfCode((endOfUnitBodyIndex - lineIndex) + 1);
                     unit.setCleanedBody(body.toString());
                     unit.setBody(body.toString());
                     unit.setStartLine(cleanedContent.getFileLineIndexes().get(lineIndex) + 1);
@@ -113,6 +116,21 @@ public class PlSqlHeuristicUnitsExtractor {
 
         name = strippedLine.trim();
         return name;
+    }
+
+    private int findPackageStart(List<String> lines) {
+        int packageStart = 0;
+        int lineIndex = 0;
+        String packageStartLiteral = "body ";
+        for (String line : lines) {
+            if (line.toLowerCase().contains(packageStartLiteral)) {
+                packageStart = lineIndex;
+                return packageStart;
+            }
+            lineIndex++;
+        }
+
+        return packageStart;
     }
 
     private int getNumberOfParameters(String body) {
