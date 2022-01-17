@@ -220,6 +220,7 @@ public class ScopingConventions {
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]git[a-z]+", "", "Git configuration files"));
         buildAndDeploymentFilesConventions.add(new Convention(".*([.]|/)webpack([.]|/).*", "", "Webpack configuration files"));
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]csproj", "", "C# project files"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]vbproj", "", "VB project files"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/[.]gitignore", "", "Git ignore files"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/[.]gitattributes", "", "Git attributes"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/[.]gitconfig", "", "Git config"));

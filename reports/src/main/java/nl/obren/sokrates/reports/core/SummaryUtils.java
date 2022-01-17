@@ -24,10 +24,7 @@ import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileSizeDistribution;
 import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils.FILES_IN_MULTIPLE_CLASSIFICATIONS;
@@ -37,6 +34,13 @@ public class SummaryUtils {
     private static final int BAR_WIDTH = 260;
     private static final int BAR_HEIGHT = 20;
     private String reportRoot = "";
+
+    public static String getIconSvg(String icon, int w, int h) {
+        String svg = HtmlTemplateUtils.getResource("/icons/" + icon + ".svg");
+        svg = svg.replaceAll("height='.*?'", "height='" + w + "px'");
+        svg = svg.replaceAll("width='.*?'", "width='" + h + "px'");
+        return svg;
+    }
 
     public String getReportRoot() {
         return reportRoot;
@@ -104,13 +108,6 @@ public class SummaryUtils {
                 report.endTableRow();
             }
         }
-    }
-
-    public static String getIconSvg(String icon, int w, int h) {
-        String svg = HtmlTemplateUtils.getResource("/icons/" + icon + ".svg");
-        svg = svg.replaceAll("height='.*?'", "height='" + w + "px'");
-        svg = svg.replaceAll("width='.*?'", "width='" + h + "px'");
-        return svg;
     }
 
     private String getIconSvg(String icon) {
@@ -257,9 +254,16 @@ public class SummaryUtils {
         List<NumericMetric> extensions = analysisResults.getMainAspectAnalysisResults().getLinesOfCodePerExtension();
         summary.append("<td style='border: none'></td>");
         summary.append("<td style='border: none;' colspan='2'>");
+        Set<String> alreadyAddedImage = new HashSet<>();
         extensions.forEach(ext -> {
             String lang = ext.getName().toUpperCase().replace("*.", "").trim();
-            summary.append(DataImageUtils.getLangDataImageDiv30(lang));
+            String image = DataImageUtils.getLangDataImage(lang);
+            if (image == null || !alreadyAddedImage.contains(image)) {
+                summary.append(DataImageUtils.getLangDataImageDiv30(lang));
+                if (image != null) {
+                    alreadyAddedImage.add(image);
+                }
+            }
         });
         summary.append("</td>");
     }

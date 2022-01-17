@@ -6,6 +6,7 @@ package nl.obren.sokrates.reports.core;
 
 import nl.obren.sokrates.common.analysis.Finding;
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
+import nl.obren.sokrates.sourcecode.Link;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -23,6 +24,7 @@ public class RichTextReport {
     private List<Finding> findings = new ArrayList<>();
     private File reportsFolder;
     private String parentUrl = "";
+    private List<Link> breadcrumbs = new ArrayList<>();
     private boolean embedded = false;
 
     public RichTextReport() {
@@ -435,6 +437,14 @@ public class RichTextReport {
 
     public void setParentUrl(String parentUrl) {
         this.parentUrl = parentUrl;
+    }
+
+    public List<Link> getBreadcrumbs() {
+        return breadcrumbs;
+    }
+
+    public void setBreadcrumbs(List<Link> breadcrumbs) {
+        this.breadcrumbs = breadcrumbs;
     }
 
     public void startTabGroup() {

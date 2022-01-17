@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
@@ -165,6 +166,30 @@ public class LandscapeAnalysisResults {
     @JsonIgnore
     public List<ProjectAnalysisResults> getAllProjects() {
         return this.projectAnalysisResults;
+    }
+
+    private boolean ignoreExtension(String extension) {
+        return configuration.getIgnoreExtensions().contains(extension);
+    }
+
+    @JsonIgnore
+    public List<HistoryPerExtension> getYearlyCommitHistoryPerExtension() {
+        Map<String, HistoryPerExtension> map = new HashMap<>();
+        this.projectAnalysisResults.forEach(project -> {
+            List<HistoryPerExtension> history = project.getAnalysisResults().getFilesHistoryAnalysisResults().getHistoryPerExtensionPerYear();
+            history.stream().filter(e -> !ignoreExtension(e.getExtension())).forEach(extensionYear -> {
+                String key = extensionYear.getExtension() + "::" + extensionYear.getYear();
+                if (map.containsKey(key)) {
+                    map.get(key).setCommitsCount(map.get(key).getCommitsCount() + extensionYear.getCommitsCount());
+                    map.get(key).setContributorsCount(map.get(key).getContributorsCount() + extensionYear.getContributorsCount());
+                } else {
+                    HistoryPerExtension newHistoryPerExtension = new HistoryPerExtension(extensionYear.getExtension(),
+                            extensionYear.getYear(), extensionYear.getCommitsCount(), extensionYear.getContributorsCount());
+                    map.put(key, newHistoryPerExtension);
+                }
+            });
+        });
+        return new ArrayList<>(map.values());
     }
 
     public int getProjectsCount() {
@@ -431,6 +456,9 @@ public class LandscapeAnalysisResults {
                     ComplexOperation operation = new ComplexOperation(configuration.getTransformContributorEmails());
                     contributorId = operation.exec(contributorId);
                     System.out.println(contributor.getEmail() + " -> " + contributorId);
+                }
+                if (GitHistoryUtils.shouldIgnore(contributorId, configuration.getIgnoreContributors())) {
+                    return;
                 }
 
                 if (StringUtils.isBlank(contributorId)) {

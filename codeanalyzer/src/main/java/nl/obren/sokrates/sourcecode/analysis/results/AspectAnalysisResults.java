@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class AspectAnalysisResults {
     private String name;
@@ -78,15 +79,14 @@ public class AspectAnalysisResults {
         this.linesOfCodePerExtension = linesOfCodePerExtension;
     }
 
+    @JsonIgnore
+    public NamedSourceCodeAspect getAspect() {
+        return aspect;
+    }
 
     @JsonIgnore
     public void setAspect(NamedSourceCodeAspect aspect) {
         this.aspect = aspect;
-    }
-
-    @JsonIgnore
-    public NamedSourceCodeAspect getAspect() {
-        return aspect;
     }
 
     public int getNumberOfRegexLineMatches() {
@@ -98,13 +98,18 @@ public class AspectAnalysisResults {
     }
 
     @JsonIgnore
+    public List<FoundText> getFoundTextList() {
+        return foundTextList;
+    }
+
+    @JsonIgnore
     public void setFoundTextList(List<FoundText> foundTextList) {
         this.foundTextList = foundTextList;
     }
 
     @JsonIgnore
-    public List<FoundText> getFoundTextList() {
-        return foundTextList;
+    public Map<File, SourceFileWithSearchData> getFoundFiles() {
+        return foundFiles;
     }
 
     @JsonIgnore
@@ -113,7 +118,7 @@ public class AspectAnalysisResults {
     }
 
     @JsonIgnore
-    public Map<File, SourceFileWithSearchData> getFoundFiles() {
-        return foundFiles;
+    public List<String> getExtensions() {
+        return this.linesOfCodePerExtension.stream().map(e -> e.getName().replaceAll(".*[.]", "").trim()).collect(Collectors.toList());
     }
 }

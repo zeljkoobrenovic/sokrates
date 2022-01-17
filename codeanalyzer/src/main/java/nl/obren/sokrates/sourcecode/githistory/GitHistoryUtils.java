@@ -104,7 +104,9 @@ public class GitHistoryUtils {
                         ComplexOperation operation = new ComplexOperation(config.getTransformContributorEmails());
                         String original = author;
                         author = operation.exec(author);
-                        System.out.println(original + " -> " + author);
+                        if (!original.equalsIgnoreCase(author)) {
+                            System.out.println(original + " -> " + author);
+                        }
                         if (shouldIgnore(author, ignoreContributors)) {
                             return null;
                         }

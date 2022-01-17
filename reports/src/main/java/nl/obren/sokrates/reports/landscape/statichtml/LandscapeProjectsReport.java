@@ -1,5 +1,6 @@
 package nl.obren.sokrates.reports.landscape.statichtml;
 
+import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
@@ -47,9 +48,166 @@ public class LandscapeProjectsReport {
             report.addTab("tags", "Tags", false);
         }
         report.endTabGroup();
+        addProjectsBySize(report, projectsAnalysisResults);
+        if (showCommits) {
+            addCommitBasedLists(report, projectsAnalysisResults);
+        }
+        if (showTags()) {
+            report.startTabContentSection("tags", false);
+            addTagStats(report);
+            report.endTabContentSection();
+        }
+        report.endTabContentSection();
+    }
+
+    public void addCommitBasedLists(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults) {
+        report.startTabContentSection("commitsTrend", false);
+        Collections.sort(projectsAnalysisResults,
+                (a, b) -> b.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days()
+                        - a.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days());
+        addSummaryGraphCommits(report, projectsAnalysisResults);
+        addCommitsTrend(report, projectsAnalysisResults, "Commits", "blue", (slot) -> slot.getCommitsCount());
+        report.endTabContentSection();
+        report.startTabContentSection("contributorsTrend", false);
+        Collections.sort(projectsAnalysisResults,
+                (a, b) -> (int) b.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count()
+                        - (int) a.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count());
+        addSummaryGraphContributors(report, projectsAnalysisResults);
+        addCommitsTrend(report, projectsAnalysisResults, "Contributors", "darkred", (slot) -> slot.getContributorsCount());
+        report.endTabContentSection();
+        report.startTabContentSection("correlations", false);
+
+        CorrelationDiagramGenerator correlationDiagramGenerator = new CorrelationDiagramGenerator(report, projectsAnalysisResults);
+
+        correlationDiagramGenerator.addCorrelations("Recent Contributors vs. Commits (30 days)", "commits (30d)", "recent contributors (30d)",
+                p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days(),
+                p -> p.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count());
+
+        correlationDiagramGenerator.addCorrelations("Recent Contributors vs. Project Main LOC", "main LOC", "recent contributors (30d)",
+                p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
+                p -> p.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count());
+
+        correlationDiagramGenerator.addCorrelations("Recent Commits (30 days) vs. Project Main LOC", "main LOC", "commits (30d)",
+                p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
+                p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days());
+
+        correlationDiagramGenerator.addCorrelations("Age in Days vs. Project Main LOC", "main LOC", "age (days)",
+                p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
+                p -> p.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays());
+
+        report.endTabContentSection();
+    }
+
+    public void addSummaryGraphCommits(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults) {
+        report.startDiv("white-space: nowrap; overflow-x: scroll; width: 100%");
+        int max = Math.max(projectsAnalysisResults.stream()
+                .mapToInt(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days())
+                .max().orElse(1), 1);
+        int sum = projectsAnalysisResults.stream()
+                .mapToInt(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days())
+                .sum();
+        int maxHeight = 64;
+        int cummulative[] = {0};
+        int index[] = {0};
+        boolean breakPointReached[] = {false};
+        int projectsCount = projectsAnalysisResults.size();
+        projectsAnalysisResults.forEach(projectAnalysis -> {
+            int commits30d = projectAnalysis.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days();
+            cummulative[0] += commits30d;
+            index[0] += 1;
+            int height = (int) (1 + maxHeight * (double) commits30d / max);
+            String name = projectAnalysis.getAnalysisResults().getMetadata().getName();
+            double percentage = RichTextRenderingUtils.getPercentage(sum, cummulative[0]);
+            double percentageProjects = RichTextRenderingUtils.getPercentage(projectsCount, index[0]);
+            String color = commits30d > 0 ? (!breakPointReached[0] && percentage >= 50 ? "blue" : "blue; opacity: 0.5") : "lightgrey; opacity: 0.5;";
+            if (percentage >= 50) {
+                breakPointReached[0] = true;
+            }
+            report.addContentInDivWithTooltip("",
+                    name + ": " + commits30d + " lines of code (main)\n" +
+                            "cumulative: top " + index[0] + " projects (" + percentageProjects + "%) = "
+                            + cummulative[0] + " commits in past 30 days (" + percentage + "%)",
+                    "margin: 0; padding: 0; margin-right: 1px; background-color: " + color + "; display: inline-block; width: 8px; height: " + height + "px");
+        });
+        report.endDiv();
+        report.startDiv("font-size: 80%; margin-bottom: 6px;");
+        report.addNewTabLink("bubble chart", "visuals/bubble_chart_projects_commits.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("tree map", "visuals/tree_map_projects_commits.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("data", "data/projects.txt");
+        report.endDiv();
+    }
+
+    public void addSummaryGraphContributors(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults) {
+        report.startDiv("white-space: nowrap; overflow-x: scroll; width: 100%");
+        int max = Math.max(projectsAnalysisResults.stream()
+                .mapToInt(p -> (int) p.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count())
+                .max().orElse(1), 1);
+        int maxHeight = 64;
+        projectsAnalysisResults.forEach(projectAnalysis -> {
+            int contributors30d = (int) projectAnalysis.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count();
+            int height = (int) (1 + maxHeight * (double) contributors30d / max);
+            String color = contributors30d > 0 ? "darkred" : "lightgrey";
+            report.addContentInDivWithTooltip("",
+                    projectAnalysis.getAnalysisResults().getMetadata().getName() + ": " + contributors30d + " contributors (30 days)",
+                    "margin: 0; padding: 0; opacity: 0.5; margin-right: 1px; background-color: " + color + "; display: inline-block; width: 8px; height: " + height + "px");
+        });
+        report.endDiv();
+        report.startDiv("font-size: 80%; margin-bottom: 6px;");
+        report.addNewTabLink("bubble chart", "visuals/bubble_chart_projects_contributors.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("tree map", "visuals/tree_map_projects_contributors.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("data", "data/projects.txt");
+        report.endDiv();
+    }
+
+    public void addSummaryGraphMainLoc(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults) {
+        report.startDiv("white-space: nowrap; overflow-x: scroll; width: 100%");
+        int max = Math.max(projectsAnalysisResults.stream()
+                .mapToInt(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode())
+                .max().orElse(1), 1);
+        int sum = projectsAnalysisResults.stream()
+                .mapToInt(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode())
+                .sum();
+        int cummulative[] = {0};
+        int index[] = {0};
+        int maxHeight = 64;
+        boolean breakPointReached[] = {false};
+        int projectsCount = projectsAnalysisResults.size();
+        projectsAnalysisResults.forEach(projectAnalysis -> {
+            int mainLoc = projectAnalysis.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
+            cummulative[0] += mainLoc;
+            index[0] += 1;
+            int height = (int) (1 + maxHeight * (double) mainLoc / max);
+            String name = projectAnalysis.getAnalysisResults().getMetadata().getName();
+            double percentage = RichTextRenderingUtils.getPercentage(sum, cummulative[0]);
+            double percentageProjects = RichTextRenderingUtils.getPercentage(projectsCount, index[0]);
+            String color = mainLoc > 0 ? (!breakPointReached[0] && percentage >= 50 ? "blue" : "skyblue") : "lightgrey";
+            if (percentage >= 50) {
+                breakPointReached[0] = true;
+            }
+            report.addContentInDivWithTooltip("",
+                    name + ": " + mainLoc + " lines of code (main)\n" +
+                            "cumulative: top " + index[0] + " projects (" + percentageProjects + "%) = "
+                            + cummulative[0] + " LOC (" + percentage + "%)",
+                    "margin: 0; padding: 0; opacity: 0.9; margin-right: 1px; background-color: " + color + "; display: inline-block; width: 8px; height: " + height + "px");
+        });
+        report.endDiv();
+        report.startDiv("font-size: 80%; margin-bottom: 6px;");
+        report.addNewTabLink("bubble chart", "visuals/bubble_chart_projects_loc.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("tree map", "visuals/tree_map_projects_loc.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("data", "data/projects.txt");
+        report.endDiv();
+    }
+
+    public void addProjectsBySize(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults) {
         report.startTabContentSection("projects", true);
+        addSummaryGraphMainLoc(report, projectsAnalysisResults);
         report.startTable("width: 100%");
-        int thresholdCommits = landscapeAnalysisResults.getConfiguration().getContributorThresholdCommits();
         int thresholdContributors = landscapeAnalysisResults.getConfiguration().getProjectThresholdContributors();
         List<String> headers = new ArrayList<>(Arrays.asList("", "Project" + (thresholdContributors > 1 ? "<br/>(" + thresholdContributors + "+&nbsp;contributors)" : ""),
                 "Main<br/>Language", "LOC<br/>(main)*",
@@ -77,47 +235,6 @@ public class LandscapeProjectsReport {
         if (limit < projectsAnalysisResults.size()) {
             report.addParagraph("The list is limited to " + limit + " items (out of " + projectsAnalysisResults.size() + ").",
                     "color:grey; font-size: 90%; margin-top: 16px; margin-left: 11px");
-        }
-        report.endTabContentSection();
-        if (showCommits) {
-            report.startTabContentSection("commitsTrend", false);
-            Collections.sort(projectsAnalysisResults,
-                    (a, b) -> b.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days()
-                            - a.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days());
-            addCommitsTrend(report, projectsAnalysisResults, "Commits", "blue", (slot) -> slot.getCommitsCount());
-            report.endTabContentSection();
-            report.startTabContentSection("contributorsTrend", false);
-            Collections.sort(projectsAnalysisResults,
-                    (a, b) -> (int) b.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count()
-                            - (int) a.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count());
-            addCommitsTrend(report, projectsAnalysisResults, "Contributors", "darkred", (slot) -> slot.getContributorsCount());
-            report.endTabContentSection();
-            report.startTabContentSection("correlations", false);
-
-            CorrelationDiagramGenerator correlationDiagramGenerator = new CorrelationDiagramGenerator(report, projectsAnalysisResults);
-
-            correlationDiagramGenerator.addCorrelations("Recent Contributors vs. Commits (30 days)", "commits (30d)", "recent contributors (30d)",
-                    p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days(),
-                    p -> p.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count());
-
-            correlationDiagramGenerator.addCorrelations("Recent Contributors vs. Project Main LOC", "main LOC", "recent contributors (30d)",
-                    p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
-                    p -> p.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count());
-
-            correlationDiagramGenerator.addCorrelations("Recent Commits (30 days) vs. Project Main LOC", "main LOC", "commits (30d)",
-                    p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
-                    p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days());
-
-            correlationDiagramGenerator.addCorrelations("Age in Days vs. Project Main LOC", "main LOC", "age (days)",
-                    p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
-                    p -> p.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays());
-
-            report.endTabContentSection();
-        }
-        if (showTags()) {
-            report.startTabContentSection("tags", false);
-            addTagStats(report);
-            report.endTabContentSection();
         }
         report.endTabContentSection();
     }

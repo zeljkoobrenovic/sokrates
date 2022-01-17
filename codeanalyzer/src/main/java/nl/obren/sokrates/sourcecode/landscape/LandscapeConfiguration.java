@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.sourcecode.landscape;
 
+import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.operations.OperationStatement;
 
@@ -22,6 +23,9 @@ public class LandscapeConfiguration {
 
     // An optional parent URL, if defined a click on the title of the landscape report will go to this link
     private String parentUrl = "";
+
+    // An optional list of links representing breadcrumps, to reflect the hierarchy of the landscape pages
+    private List<Link> breadcrumbs = new ArrayList<>();
 
     // Only files with extensions that have more or equal lines of main code will be included in the landscape report
     private int extensionThresholdLoc = 0;
@@ -202,6 +206,14 @@ public class LandscapeConfiguration {
 
     public void setParentUrl(String parentUrl) {
         this.parentUrl = parentUrl;
+    }
+
+    public List<Link> getBreadcrumbs() {
+        return breadcrumbs;
+    }
+
+    public void setBreadcrumbs(List<Link> breadcrumbs) {
+        this.breadcrumbs = breadcrumbs;
     }
 
     public List<WebFrameLink> getiFrames() {

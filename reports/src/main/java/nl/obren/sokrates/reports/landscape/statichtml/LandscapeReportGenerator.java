@@ -12,6 +12,7 @@ import nl.obren.sokrates.common.renderingutils.force3d.Force3DNode;
 import nl.obren.sokrates.common.renderingutils.force3d.Force3DObject;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
@@ -115,6 +116,7 @@ public class LandscapeReportGenerator {
         }
         landscapeReport.setParentUrl(configuration.getParentUrl());
         landscapeReport.setLogoLink(metadata.getLogoLink());
+        landscapeReport.setBreadcrumbs(configuration.getBreadcrumbs());
         String description = metadata.getDescription();
         String tooltip = metadata.getTooltip();
         if (StringUtils.isNotBlank(description)) {
@@ -125,6 +127,7 @@ public class LandscapeReportGenerator {
                 landscapeReport.addParagraphWithTooltip(description, tooltip, "font-size: 90%; color: #787878; margin-top: 8px;");
             }
         }
+
         if (metadata.getLinks().size() > 0) {
             landscapeReport.startDiv("font-size: 80%; margin-top: 2px;");
             boolean first[] = {true};
@@ -565,10 +568,21 @@ public class LandscapeReportGenerator {
     }
 
     private void addExtensions() {
-        addMainExtensions("Main", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getMainLinesOfCodePerExtension()), true);
+        List<NumericMetric> linesOfCodePerExtensionMain = LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getMainLinesOfCodePerExtension());
+        addMainExtensions("Main", linesOfCodePerExtensionMain, true);
         landscapeReport.startShowMoreBlockDisappear("", "Show test and other code...");
         addMainExtensions("Test", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getTestLinesOfCodePerExtension()), false);
         addMainExtensions("Other", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getOtherLinesOfCodePerExtension()), false);
+        landscapeReport.endShowMoreBlock();
+        landscapeReport.addLineBreak();
+        landscapeReport.addLineBreak();
+        landscapeReport.startShowMoreBlockDisappear("", "Show commit history per extension...");
+        landscapeReport.startSubSection("Commit history per file extension", "");
+        landscapeReport.startDiv("max-height: 600px; overflow-y: auto;");
+        List<String> extensions = linesOfCodePerExtensionMain.stream().map(loc -> loc.getName().replaceAll(".*[.]", "").trim()).collect(Collectors.toList());
+        HistoryPerLanguageGenerator.getInstanceCommits(landscapeAnalysisResults.getYearlyCommitHistoryPerExtension(), extensions).addHistoryPerLanguage(landscapeReport);
+        landscapeReport.endDiv();
+        landscapeReport.endSection();
         landscapeReport.endShowMoreBlock();
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
@@ -919,27 +933,6 @@ public class LandscapeReportGenerator {
                 CodeAnalysisResults analysisResults = project.getAnalysisResults();
                 projectSizes.add(new NumericMetric(analysisResults.getMetadata().getName(), analysisResults.getMainAspectAnalysisResults().getLinesOfCode()));
             });
-            landscapeReport.addHtmlContent("lines of code: ");
-            landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_projects_loc.html");
-            landscapeReport.addHtmlContent(" | ");
-            landscapeReport.addNewTabLink("tree map", "visuals/tree_map_projects_loc.html");
-            landscapeReport.addHtmlContent(" | ");
-            landscapeReport.addNewTabLink("data", "data/projects.txt");
-            landscapeReport.addLineBreak();
-            landscapeReport.addHtmlContent("commits (30d): ");
-            landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_projects_commits.html");
-            landscapeReport.addHtmlContent(" | ");
-            landscapeReport.addNewTabLink("tree map", "visuals/tree_map_projects_commits.html");
-            landscapeReport.addHtmlContent(" | ");
-            landscapeReport.addNewTabLink("data", "data/projects.txt");
-            landscapeReport.addLineBreak();
-            landscapeReport.addHtmlContent("contributors (30d): ");
-            landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_projects_contributors.html");
-            landscapeReport.addHtmlContent(" | ");
-            landscapeReport.addNewTabLink("tree map", "visuals/tree_map_projects_contributors.html");
-            landscapeReport.addHtmlContent(" | ");
-            landscapeReport.addNewTabLink("data", "data/projects.txt");
-            landscapeReport.addLineBreak();
 
             landscapeReport.addHtmlContent("<iframe src='projects.html' frameborder=0 style='height: 600px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
 

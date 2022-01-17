@@ -128,9 +128,16 @@ public class OverviewReportGenerator {
     public void renderScopes(RichTextReport report, AspectAnalysisResults aspectAnalysisResults, String title, String description, String explorers) {
         List<NumericMetric> fileCountPerExtension = aspectAnalysisResults.getFileCountPerExtension();
         StringBuilder langDivs = new StringBuilder("<div style='margin-bottom: 16px'>");
+        Set<String> alreadyAddedImage = new HashSet<>();
         fileCountPerExtension.forEach(fileType -> {
             String lang = fileType.getName().replace("*.", "").trim();
-            langDivs.append(DataImageUtils.getLangDataImageDiv42(lang));
+            String image = DataImageUtils.getLangDataImage(lang);
+            if (image == null || !alreadyAddedImage.contains(image)) {
+                langDivs.append(DataImageUtils.getLangDataImageDiv42(lang));
+                if (image != null) {
+                    alreadyAddedImage.add(image);
+                }
+            }
         });
         langDivs.append("</div>");
         if (fileCountPerExtension.size() > 0) {
@@ -164,8 +171,15 @@ public class OverviewReportGenerator {
         report.startSection("Source Code Analysis Scope", "Files includes and excluded from analyses");
         List<String> extensions = codeAnalysisResults.getCodeConfiguration().getExtensions();
         report.startDiv("margin-top: -8px; margin-bottomL: 12px;");
+        Set<String> alreadyAddedImage = new HashSet<>();
         extensions.forEach(lang -> {
-            report.addHtmlContent(DataImageUtils.getLangDataImageDiv42(lang));
+            String image = DataImageUtils.getLangDataImage(lang);
+            if (image == null || !alreadyAddedImage.contains(image)) {
+                report.addHtmlContent(DataImageUtils.getLangDataImageDiv42(lang));
+                if (image != null) {
+                    alreadyAddedImage.add(image);
+                }
+            }
         });
         report.endDiv();
         report.startUnorderedList();

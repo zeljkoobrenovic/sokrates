@@ -5,10 +5,12 @@
 package nl.obren.sokrates.reports.core;
 
 import nl.obren.sokrates.reports.generators.statichtml.ContributorsReportUtils;
+import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
@@ -107,6 +109,31 @@ public class ReportFileExporter {
             indexReport.startSection("Commits Trend " + "<a href='Commits.html'  title='metrics &amp; goals details' style='margin-left: 8px; vertical-align: top'>" + getDetailsIcon() + "</a>", "");
 
             ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsPerYear, 20, true, 8);
+            indexReport.startDiv("font-size: 80%");
+            indexReport.startShowMoreBlock("show commits trend per language");
+            indexReport.startTable();
+            indexReport.startTableRow();
+            indexReport.addTableCell("Commits", "border: none");
+            indexReport.startTableCell("border: none");
+            List<HistoryPerExtension> historyPerExtensionPerYear = analysisResults.getFilesHistoryAnalysisResults().getHistoryPerExtensionPerYear();
+            List<String> extensions = analysisResults.getMainAspectAnalysisResults().getExtensions();
+            HistoryPerLanguageGenerator.getInstanceCommits(historyPerExtensionPerYear, extensions).addHistoryPerLanguage(indexReport);
+            indexReport.endTableCell();
+            indexReport.endTableRow();
+            indexReport.startTableRow();
+            indexReport.addTableCell("&nbsp;", "border: none");
+            indexReport.addTableCell("&nbsp;", "border: none");
+            indexReport.endTableRow();
+            indexReport.startTableRow();
+            indexReport.addTableCell("Contributors", "border: none");
+            indexReport.startTableCell("border: none");
+            HistoryPerLanguageGenerator.getInstanceContributors(historyPerExtensionPerYear, extensions).addHistoryPerLanguage(indexReport);
+            indexReport.endTableCell();
+            indexReport.endTableRow();
+            indexReport.endTable();
+            indexReport.endTabContentSection();
+            indexReport.endShowMoreBlock();
+            indexReport.endDiv();
             indexReport.endSection();
         }
 

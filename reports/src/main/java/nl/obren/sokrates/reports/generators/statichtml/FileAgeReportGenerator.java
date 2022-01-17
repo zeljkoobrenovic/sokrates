@@ -7,6 +7,7 @@ package nl.obren.sokrates.reports.generators.statichtml;
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.FilesReportUtils;
 import nl.obren.sokrates.reports.utils.PieChartUtils;
 import nl.obren.sokrates.reports.utils.RiskDistributionStatsReportUtils;
@@ -20,8 +21,7 @@ import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class FileAgeReportGenerator {

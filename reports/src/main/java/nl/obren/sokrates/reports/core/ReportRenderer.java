@@ -5,14 +5,22 @@
 package nl.obren.sokrates.reports.core;
 
 import nl.obren.sokrates.common.renderingutils.GraphvizUtil;
+import nl.obren.sokrates.sourcecode.Link;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 public class ReportRenderer {
+    private static String minimize(String html) {
+        html = StringUtils.replace(html, "  ", " ");
+        html = StringUtils.replace(html, "\n\n", "\n");
+        return html;
+    }
+
     public void render(RichTextReport richTextReport, ReportRenderingClient reportRenderingClient) {
         StringBuilder content = new StringBuilder();
         if (StringUtils.isNotBlank(richTextReport.getDisplayName())) {
@@ -27,20 +35,15 @@ public class ReportRenderer {
         });
     }
 
-    private static String minimize(String html) {
-        html = StringUtils.replace(html, "  ", " ");
-        html = StringUtils.replace(html, "\n\n", "\n");
-        return html;
-    }
-
     private void renderHeader(RichTextReport richTextReport, StringBuilder content) {
+        content.append(renderBreadcrumbsInDiv(richTextReport.getBreadcrumbs()));
         content.append("<h1>");
         String parentUrl = richTextReport.getParentUrl();
         if (StringUtils.isNotBlank(parentUrl)) {
-            content.append("<a href='" + parentUrl + "' style=\"text-decoration:none\">\n");
+            content.append("<a href='" + parentUrl + "' style=\"font-size: 110%;text-decoration:none\">\n");
         }
         if (StringUtils.isNotBlank(richTextReport.getLogoLink())) {
-            int size = 36;
+            int size = 39;
             String valign = richTextReport.getDisplayName().contains("<div") ? "middle" : "bottom";
             content.append("<img style='height: " + size + "px' valign='" + valign + "' src='" + richTextReport.getLogoLink() + "'>\n");
         }
@@ -49,6 +52,24 @@ public class ReportRenderer {
             content.append("</a>\n");
         }
         content.append("</h1>\n");
+    }
+
+    public static String renderBreadcrumbsInDiv(List<Link> breadcrumbs) {
+        StringBuilder content = new StringBuilder();
+        if (breadcrumbs.size() > 0) {
+            content.append("<div style='opacity: 0.6; font-size: 80%; margin-bottom: -12px'>");
+            boolean first[] = {true};
+            breadcrumbs.forEach(breadcrumb -> {
+                if (!first[0]) {
+                    content.append(" / ");
+                }
+                content.append("<a href='" + breadcrumb.getHref() + "'>" + breadcrumb.getLabel() + "</a>");
+                first[0] = false;
+            });
+            content.append("</div>");
+        }
+
+        return content.toString();
     }
 
     private void renderFragment(ReportRenderingClient reportRenderingClient, RichTextFragment fragment) {

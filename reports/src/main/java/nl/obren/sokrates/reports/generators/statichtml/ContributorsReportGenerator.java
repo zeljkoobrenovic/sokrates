@@ -14,6 +14,7 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
@@ -94,6 +95,9 @@ public class ContributorsReportGenerator {
 
         report.startTabGroup();
         report.addTab("visuals", "Overview", true);
+        report.addTab("per_language", "Overview Per Language", false);
+        report.addTab("contributors", "Contributors", false);
+        report.addTab("matrix", "Contributors Matrix", false);
         report.addTab("30_days", "Past 30 Days", false);
         report.addTab("90_days", "Past 3 Months", false);
         report.addTab("180_days", "Past 6 Months", false);
@@ -106,8 +110,6 @@ public class ContributorsReportGenerator {
         List<Contributor> contributors = analysis.getContributors();
 
         report.startTabContentSection("visuals", true);
-        addPerMonth(new ArrayList<>(contributors));
-        ContributorsReportUtils.addContributorsSection(codeAnalysisResults, report);
         report.addLineBreak();
         report.startSubSection("Timeline", "");
         report.addLevel2Header("Per Year", "margin-bottom: 0;");
@@ -130,10 +132,21 @@ public class ContributorsReportGenerator {
         report.endSection();
         report.endTabContentSection();
 
+        report.startTabContentSection("contributors", false);
+        ContributorsReportUtils.addContributorsSection(codeAnalysisResults, report);
+        report.endTabContentSection();
+
+        report.startTabContentSection("matrix", false);
+        addMatrix(new ArrayList<>(contributors));
+        report.endTabContentSection();
+
+        addPerLanguageTabContent(report);
+
         report.startTabContentSection("all_time", false);
         addContributorsPanel(report, contributors, c -> c.getCommitsCount(), true, e -> e.getFileUpdates());
         renderPeopleDependencies(analysis.getPeopleDependenciesAllTime(), 35600, c -> c.getCommitsCount(), contributors);
         report.endTabContentSection();
+
 
         report.startTabContentSection("30_days", false);
         List<Contributor> commits30Days = contributors.stream().filter(c -> c.getCommitsCount30Days() > 0).collect(Collectors.toList());
@@ -184,7 +197,32 @@ public class ContributorsReportGenerator {
         report.endTabContentSection();
     }
 
-    private void addPerMonth(List<Contributor> contributors) {
+    public void addPerLanguageTabContent(RichTextReport report) {
+        report.startTabContentSection("per_language", false);
+        report.startTable();
+        report.startTableRow();
+        report.addTableCell("Commits", "border: none");
+        report.startTableCell("border: none");
+        List<HistoryPerExtension> historyPerExtensionPerYear = codeAnalysisResults.getFilesHistoryAnalysisResults().getHistoryPerExtensionPerYear();
+        List<String> extensions = codeAnalysisResults.getMainAspectAnalysisResults().getExtensions();
+        HistoryPerLanguageGenerator.getInstanceCommits(historyPerExtensionPerYear, extensions).addHistoryPerLanguage(report);
+        report.endTableCell();
+        report.endTableRow();
+        report.startTableRow();
+        report.addTableCell("&nbsp;", "border: none");
+        report.addTableCell("&nbsp;", "border: none");
+        report.endTableRow();
+        report.startTableRow();
+        report.addTableCell("Contributors", "border: none");
+        report.startTableCell("border: none");
+        HistoryPerLanguageGenerator.getInstanceContributors(historyPerExtensionPerYear, extensions).addHistoryPerLanguage(report);
+        report.endTableCell();
+        report.endTableRow();
+        report.endTable();
+        report.endTabContentSection();
+    }
+
+    private void addMatrix(List<Contributor> contributors) {
         report.addContentInDiv("&nbsp;", "height: 20px");
         report.startSubSection("Contributors Matrix (Per Month)", "");
         report.startDiv("width: 100%; overflow-x: scroll; overflow-y: scroll; max-height: 600px");

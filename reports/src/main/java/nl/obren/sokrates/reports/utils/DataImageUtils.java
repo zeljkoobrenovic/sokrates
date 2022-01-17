@@ -15,6 +15,7 @@ public class DataImageUtils {
         map.put("java", "Java.png");
         map.put("cs", "C_.png");
         map.put("c", "C.png");
+        map.put("h", "C.png");
         map.put("js", "JavaScript.png");
         map.put("py", "Python.png");
         map.put("sql", "SQL.png");
@@ -97,7 +98,14 @@ public class DataImageUtils {
         map.put("jsonnet", "jsonnet.png");
         map.put("json5", "json5.png");
         map.put("applescript", "applescript.png");
-
+        map.put("erl", "erlang.png");
+        map.put("hrl", "erlang.png");
+        map.put("escript", "erlang.png");
+        map.put("exs", "elixir.png");
+        map.put("ex", "elixir.png");
+        map.put("es", "es.png");
+        map.put("gitignore", "git.png");
+        map.put("nomad", "nomad.png");
     }
 
     public static String getLangDataImage(String lang) {

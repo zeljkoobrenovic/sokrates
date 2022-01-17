@@ -6,15 +6,16 @@ package nl.obren.sokrates.sourcecode.analysis.results;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.SourceFile;
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.filehistory.FilePairChangedTogether;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
+import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class FilesHistoryAnalysisResults {
@@ -57,6 +58,8 @@ public class FilesHistoryAnalysisResults {
     private int estimatedWorkindDays;
     private int activeDays;
     private int ageInDays;
+
+    private List<HistoryPerExtension> historyPerExtensionPerYear = null;
 
     @JsonIgnore
     public List<SourceFile> getAllFiles() {
@@ -241,6 +244,45 @@ public class FilesHistoryAnalysisResults {
     @JsonIgnore
     public void setHistory(List<FileModificationHistory> history) {
         this.history = history;
+    }
+
+    public List<HistoryPerExtension> getHistoryPerExtensionPerYear() {
+        if (historyPerExtensionPerYear != null) {
+            return historyPerExtensionPerYear;
+        }
+        Map<String, HistoryPerExtension> map = new HashMap<>();
+        Map<String, Set<String>> contributorsPerExtensionAndYear = new HashMap<>();
+        Map<String, Set<String>> commitsPerExtensionAndYear = new HashMap<>();
+        this.history.forEach(item -> {
+            String extension = FilenameUtils.getExtension(item.getPath());
+            item.getCommits().forEach(commit -> {
+                String date = commit.getDate();
+                String year = DateUtils.getYear(date);
+                String key = extension + "::" + year;
+                if (!map.containsKey(key)) {
+                    map.put(key, new HistoryPerExtension(extension, year, 0, 0));
+                }
+
+                if (!commitsPerExtensionAndYear.containsKey(key)) {
+                    commitsPerExtensionAndYear.put(key, new HashSet<>());
+                }
+                commitsPerExtensionAndYear.get(key).add(commit.getId());
+
+                if (!contributorsPerExtensionAndYear.containsKey(key)) {
+                    contributorsPerExtensionAndYear.put(key, new HashSet<>());
+                }
+                contributorsPerExtensionAndYear.get(key).add(commit.getEmail());
+
+                map.get(key).setCommitsCount(commitsPerExtensionAndYear.get(key).size());
+                map.get(key).setContributorsCount(contributorsPerExtensionAndYear.get(key).size());
+            });
+        });
+
+        return new ArrayList<>(map.values());
+    }
+
+    public void setHistoryPerExtensionPerYear(List<HistoryPerExtension> historyPerExtensionPerYear) {
+        this.historyPerExtensionPerYear = historyPerExtensionPerYear;
     }
 
     public String getFirstDate() {
