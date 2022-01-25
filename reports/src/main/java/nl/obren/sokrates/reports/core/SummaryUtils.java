@@ -11,6 +11,7 @@ import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.reports.utils.ReportUtils;
+import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
@@ -244,10 +245,28 @@ public class SummaryUtils {
         List<NumericMetric> linesOfCodePerExtension = analysisResults.getMainAspectAnalysisResults().getLinesOfCodePerExtension();
         summary.append("<div>" + getVolumeVisual(linesOfCodePerExtension, totalLoc, totalLoc, "") + "</div>");
         summary.append("</td>");
-        summary.append("<td style='border: none; vertical-align: top; padding-top: 11px;'>Main Code: ");
-        summary.append(RichTextRenderingUtils.renderNumberStrong(totalLoc) + " LOC");
+        summary.append("<td style='border: none; vertical-align: top; padding-top: 11px;'>");
+        summary.append("<a target='_blank' href='visuals/zoomable_circles_main.html'>Main Code</a>");
+        summary.append(": " + RichTextRenderingUtils.renderNumberStrong(totalLoc) + " LOC (" + analysisResults.getMainAspectAnalysisResults().getFilesCount() + " files)");
         summarizeListOfLocAspects(summary, totalLoc, linesOfCodePerExtension);
+        summary.append("<div style='font-size: 80%; color: grey; margin-top: 5px;'>");
+        summary.append("Secondary code: ");
+        addSecondaryCodeInfo(summary, analysisResults.getTestAspectAnalysisResults(), "Test", "test");
+        addSecondaryCodeInfo(summary, analysisResults.getGeneratedAspectAnalysisResults(), "Generated", "generated");
+        addSecondaryCodeInfo(summary, analysisResults.getBuildAndDeployAspectAnalysisResults(), "Build & Deploy", "build");
+        addSecondaryCodeInfo(summary, analysisResults.getOtherAspectAnalysisResults(), "Other", "other");
+        summary.append("<div>");
         summary.append("</td>");
+    }
+
+    private void addSecondaryCodeInfo(StringBuilder summary, AspectAnalysisResults aspectAnalysisResults, String label, String fileSuffix) {
+        int loc = aspectAnalysisResults.getLinesOfCode();
+        if (loc > 0) {
+            summary.append("<a target='_blank' href='visuals/zoomable_circles_" + fileSuffix + ".html'>" + label + "</a>");
+        } else {
+            summary.append(label);
+        }
+        summary.append(": " + RichTextRenderingUtils.renderNumberStrong(loc) + " LOC (" + aspectAnalysisResults.getFilesCount() + "); ");
     }
 
     private void addIconsMainCode(CodeAnalysisResults analysisResults, StringBuilder summary) {
@@ -298,13 +317,18 @@ public class SummaryUtils {
         report.startTableCell("border: none; vertical-align: top; padding-top: 11px;");
         report.addHtmlContent("Logical Component Decomposition:");
         boolean first[] = {true};
+        int index[] = {1};
         analysisResults.getLogicalDecompositionsAnalysisResults().forEach(decomposition -> {
             if (!first[0]) {
                 report.addHtmlContent(", ");
             } else {
                 first[0] = false;
             }
-            report.addHtmlContent(decomposition.getKey() + " (" + decomposition.getComponents().size() + " components)");
+            int componentsCount = decomposition.getComponents().size();
+            report.addHtmlContent(decomposition.getKey() +
+                    " (<a href='visuals/bubble_chart_components_" + index[0] + ".html' target='_blank'>" +
+                    componentsCount + " " + (componentsCount == 1 ? "component" : "components") + "</a>)");
+            index[0] += 1;
         });
         report.endTableCell();
         report.addTableCell("<a href='" + reportRoot + "Components.html'  title='logical decomposition details'>" + getDetailsIcon() + "</a>",
@@ -357,7 +381,8 @@ public class SummaryUtils {
         report.startTableCell("border: none; padding-top: 4px;");
         Thresholds thresholds = analysisResults.getCodeConfiguration().getAnalysis().getFileUpdateFrequencyThresholds();
         report.addParagraph(FormattingUtils.getFormattedPercentage(age.getVeryHighRiskPercentage() + age.getHighRiskPercentage())
-                + "% of code updated more than " + thresholds.getHigh() + " times");
+                + "% of code updated more than " + thresholds.getHigh() + " times", "margin-bottom: 2px");
+        report.addParagraph("Also see <a href='FileTemporalDependencies.html' target='_blank'>temporal dependencies</a> for files frequently changed in same commits.", "font-size: 80%; color: grey;");
         report.endTableCell();
         report.addTableCell("<a href='" + reportRoot + "FileChangeFrequency.html'  title='file change frequency details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "border: none;  vertical-align: top");
 

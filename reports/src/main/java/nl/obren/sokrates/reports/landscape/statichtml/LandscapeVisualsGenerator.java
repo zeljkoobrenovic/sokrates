@@ -39,6 +39,7 @@ public class LandscapeVisualsGenerator {
     private void exportProjects(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {
         List<VisualizationItem> itemsLinesOfCode = new ArrayList<>();
         List<VisualizationItem> itemsCommits = new ArrayList<>();
+        List<VisualizationItem> itemsAge = new ArrayList<>();
         List<VisualizationItem> itemsContributors = new ArrayList<>();
         landscapeAnalysisResults.getAllProjects().forEach(projectAnalysisResults -> {
             CodeAnalysisResults analysisResults = projectAnalysisResults.getAnalysisResults();
@@ -47,12 +48,14 @@ public class LandscapeVisualsGenerator {
 
             itemsLinesOfCode.add(new VisualizationItem(name, analysisResults.getMainAspectAnalysisResults().getLinesOfCode()));
             itemsCommits.add(new VisualizationItem(name, analysisResults.getContributorsAnalysisResults().getCommitsCount30Days()));
+            itemsCommits.add(new VisualizationItem(name, analysisResults.getFilesHistoryAnalysisResults().getAgeInDays()));
             if (analysisResults.getContributorsAnalysisResults().getContributorsPerMonth().size() > 0) {
                 itemsContributors.add(new VisualizationItem(name, analysisResults.getContributorsAnalysisResults().getContributorsPerMonth().get(0).getContributorsCount()));
             }
         });
         exportVisuals("projects_loc", itemsLinesOfCode);
         exportVisuals("projects_commits", itemsCommits);
+        exportVisuals("projects_age", itemsCommits);
         exportVisuals("projects_contributors", itemsContributors);
     }
 

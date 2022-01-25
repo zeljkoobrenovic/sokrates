@@ -48,7 +48,6 @@ public class ConcernsReportGenerator {
 
     private void addSummary(RichTextReport report) {
         report.startSection("Overview", "");
-
         codeAnalysisResults.getConcernsAnalysisResults().forEach(concernsAnalysisResults -> {
             String group = concernsAnalysisResults.getKey();
             report.addLevel2Header(group.toUpperCase());
@@ -92,10 +91,12 @@ public class ConcernsReportGenerator {
     }
 
     private void addIntro(RichTextReport report) {
+        report.addParagraph("Aspects in the source code identified through RegEx patterns.", "margin-top: 12px; color: grey");
         report.startSection("Intro", "");
         report.startUnorderedList();
         report.addListItem("Features of interest are any aspects of a software system that can be identified through patterns in code.");
-        report.addListItem("Features of interest provide you with a way to focus your attention on relevant parts of the codebase. Typical examples include, security, TODOs, logging.");
+        report.addListItem("Features of interest provide you with a way to focus your attention on relevant parts of the codebase.");
+        report.addListItem("Typical examples include, security, TODOs, logging.");
         report.addListItem("A feature of interest may be present in multiple files. Any source code file may be in zero or multiple features of interest.");
         report.endUnorderedList();
         report.endSection();

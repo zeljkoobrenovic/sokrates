@@ -13,6 +13,8 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
 
 public class CodeAnalyzer {
     private static final Log LOG = LogFactory.getLog(CodeAnalyzer.class);
@@ -125,7 +127,9 @@ public class CodeAnalyzer {
                 .description("Total analysis time in milliseconds")
                 .value(System.currentTimeMillis() - start);
 
-        AnalysisUtils.info(results.getTextSummary(), progressFeedback, "Total analysis time: " + new DecimalFormat("#.00").format(((System.currentTimeMillis() - start) / 10) * 0.01) + "s", start);
+        DecimalFormat decimalFormat = new DecimalFormat("#.00");
+        decimalFormat.setDecimalFormatSymbols( new DecimalFormatSymbols(Locale.ENGLISH));
+        AnalysisUtils.info(results.getTextSummary(), progressFeedback, "Total analysis time: " + decimalFormat.format(((System.currentTimeMillis() - start) / 10) * 0.01) + "s", start);
         AnalysisUtils.info(results.getTextSummary(), progressFeedback, "", start);
     }
 

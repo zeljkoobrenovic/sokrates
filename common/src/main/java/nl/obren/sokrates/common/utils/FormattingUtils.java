@@ -5,6 +5,7 @@
 package nl.obren.sokrates.common.utils;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 
 public class FormattingUtils {
@@ -25,11 +26,15 @@ public class FormattingUtils {
     }
 
     public static String formatCount(int value) {
-        return new DecimalFormat("#,###").format(value);
+        DecimalFormat decimalFormat = new DecimalFormat("#,###");
+        decimalFormat.setDecimalFormatSymbols( new DecimalFormatSymbols(Locale.ENGLISH));
+        return decimalFormat.format(value);
     }
 
     public static String formatCount(int value, String textForZero) {
-        return value == 0 ? textForZero : new DecimalFormat("#,###").format(value);
+        DecimalFormat decimalFormat = new DecimalFormat("#,###");
+        decimalFormat.setDecimalFormatSymbols( new DecimalFormatSymbols(Locale.ENGLISH));
+        return value == 0 ? textForZero : decimalFormat.format(value);
     }
 
     public static String getSmallTextForNumber(int number) {

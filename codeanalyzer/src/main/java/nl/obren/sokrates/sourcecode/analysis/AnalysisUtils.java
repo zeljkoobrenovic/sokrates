@@ -24,6 +24,7 @@ import org.apache.commons.logging.LogFactory;
 
 import java.nio.file.FileSystems;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.*;
 
 public class AnalysisUtils {
@@ -121,6 +122,7 @@ public class AnalysisUtils {
 
     public static void info(StringBuffer textSummary, ProgressFeedback progressFeedback, String line, long start) {
         DecimalFormat formatter = new DecimalFormat("#.00");
+        formatter.setDecimalFormatSymbols( new DecimalFormatSymbols(Locale.ENGLISH));
         LOG.info(formatter.format(((System.currentTimeMillis() - start) / 10) * 0.01) + "s\t\t" + line.replaceAll("<.*?>", ""));
         textSummary.append(line + "\n");
         if (progressFeedback != null) {
@@ -130,6 +132,8 @@ public class AnalysisUtils {
 
     public static void detailedInfo(StringBuffer textSummary, ProgressFeedback progressFeedback, String line, long start) {
         DecimalFormat formatter = new DecimalFormat("#.00");
+        formatter.setDecimalFormatSymbols( new DecimalFormatSymbols(Locale.ENGLISH));
+
         LOG.info(formatter.format(((System.currentTimeMillis() - start) / 10) * 0.01) + "s\t\t" + line.replaceAll("<.*?>", ""));
         textSummary.append(line + "\n");
         if (progressFeedback != null) {

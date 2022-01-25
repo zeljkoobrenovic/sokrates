@@ -29,6 +29,7 @@ public class ConditionalComplexityReportGenerator {
         boolean cacheFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
         UnitsAnalysisResults unitsAnalysisResults = codeAnalysisResults.getUnitsAnalysisResults();
         RiskDistributionStats unitMcCabeDistribution = unitsAnalysisResults.getConditionalComplexityRiskDistribution();
+        report.addParagraph("The distribution of complexity of units (measured with McCabe index).", "margin-top: 12px; color: grey");
 
         report.startSection("Intro", "");
         report.startUnorderedList();

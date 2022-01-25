@@ -53,6 +53,7 @@ public class LandscapeIndividualContributorsReports {
     private RichTextReport getIndividualReport(ContributorProjects contributorProjects) {
         Contributor contributor = contributorProjects.getContributor();
         RichTextReport report = new RichTextReport(contributor.getEmail(), getContributorIndividualReportFileName(contributor.getEmail()));
+        report.setRenderLogo(false);
 
         String avatarHtml = "";
         String avatarUrl = LandscapeContributorsReport.getAvatarUrl(contributor.getEmail(), landscapeAnalysisResults.getConfiguration().getContributorAvatarLinkTemplate());

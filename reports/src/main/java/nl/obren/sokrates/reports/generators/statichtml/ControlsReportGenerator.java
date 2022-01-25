@@ -17,10 +17,11 @@ public class ControlsReportGenerator {
 
     public RichTextReport generateReport(CodeAnalysisResults codeAnalysisResults, RichTextReport metricsReport) {
         this.report = metricsReport;
+        report.addParagraph("Traffic lights for selected metrics.", "margin-top: 12px; color: grey");
 
         report.startSection("Intro", "");
         report.startUnorderedList();
-        report.addListItem("Controls enable you to set alarms for any of the <a href='Metrics.html'>Sokrates metrics</a>. An alarm is defined with a desired range and tolerance.");
+        report.addListItem("Controls enable you to set traffic lights or alarms for any of the <a href='Metrics.html'>Sokrates metrics</a>. An alarm is defined with a desired range and tolerance.");
         report.endUnorderedList();
 
         report.startShowMoreBlock("Learn more...");

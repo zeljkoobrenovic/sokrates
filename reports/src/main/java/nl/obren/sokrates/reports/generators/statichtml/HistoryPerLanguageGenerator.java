@@ -61,7 +61,7 @@ public class HistoryPerLanguageGenerator {
             String key = mergedExtension + "::" + year;
 
             if (mergedHistoryMap.containsKey(key)) {
-                HistoryPerExtension existing = mergedHistoryMap.get(extension);
+                HistoryPerExtension existing = mergedHistoryMap.get(key);
                 existing.setCommitsCount(existing.getCommitsCount() + languageHistory.getCommitsCount());
                 existing.setContributorsCount(existing.getContributorsCount() + languageHistory.getContributorsCount());
             } else {

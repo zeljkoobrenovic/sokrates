@@ -8,6 +8,7 @@ package nl.obren.sokrates.sourcecode.githistory;
 
 import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import org.apache.commons.io.FileUtils;
 
@@ -88,6 +89,10 @@ public class GitHistoryUtils {
                 int index3 = line.indexOf(" ", index2 + 1);
                 if (index3 > 0) {
                     String date = line.substring(0, 10).trim();
+                    if (date.compareTo(DateUtils.getAnalysisDate()) >= 0) {
+                        System.out.println("Ignoring future date: " + line);
+                        return null;
+                    }
                     String author = line.substring(index1 + 1, index2).trim();
                     if (anonymize) {
                         if (shouldIgnore(author, ignoreContributors)) {

@@ -5,6 +5,8 @@
 package nl.obren.sokrates.reports.utils;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
 
 public class ReportUtils {
 
@@ -29,6 +31,7 @@ public class ReportUtils {
     public static String formatNumber(Number number) {
         try {
             DecimalFormat df = new DecimalFormat("###,###,###.##");
+            df.setDecimalFormatSymbols( new DecimalFormatSymbols(Locale.ENGLISH));
             String formattedValue = df.format(number);
             if (formattedValue.equalsIgnoreCase("NaN")) {
                 formattedValue = "-";

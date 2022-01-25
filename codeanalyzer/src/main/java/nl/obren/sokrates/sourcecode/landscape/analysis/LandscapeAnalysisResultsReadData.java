@@ -4,7 +4,10 @@
 
 package nl.obren.sokrates.sourcecode.landscape.analysis;
 
+import nl.obren.sokrates.sourcecode.Metadata;
+
 public class LandscapeAnalysisResultsReadData {
+    private Metadata metadata = new Metadata();
     private String latestCommitDate = "";
     private int commitsCount = 0;
     private int commitsCount30Days = 0;
@@ -22,6 +25,14 @@ public class LandscapeAnalysisResultsReadData {
     private int recentContributorsCount6Months = 0;
     private int recentContributorsCount3Months = 0;
     private int rookiesContributorsCount = 0;
+
+    public Metadata getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Metadata metadata) {
+        this.metadata = metadata;
+    }
 
     public String getLatestCommitDate() {
         return latestCommitDate;

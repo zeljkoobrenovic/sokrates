@@ -52,6 +52,7 @@ public class LogicalComponentsReportGenerator {
     }
 
     private void addSummary() {
+        report.addParagraph("An overview of source code logical components.", "margin-top: 12px; color: grey");
         report.startSection("Intro", "");
         if (elaborate) {
             appendIntroduction();
@@ -94,7 +95,7 @@ public class LogicalComponentsReportGenerator {
     private void analyzeLogicalDecomposition(int sectionIndex, LogicalDecompositionAnalysisResults logicalDecomposition) {
         report.addLevel2Header("Logical Decomposition #" + sectionIndex + ": " + logicalDecomposition.getKey().toUpperCase(), "margin-bottom: 0;");
         report.addParagraph(getDecompositionDescription(logicalDecomposition), "color: grey; margin-bottom: 24px;");
-        report.startDiv("margin-top: -12px; margin-bottom: 18px;");
+        report.startDiv("margin-top: -8px; margin-bottom: 18px;");
         report.addHtmlContent("<a target='_blank' href='visuals/bubble_chart_components_" + (sectionIndex) + ".html'>Bubble Chart</a> | ");
         report.addHtmlContent("<a target='_blank' href='visuals/tree_map_components_" + (sectionIndex) + ".html'>Tree Map</a>");
         report.endDiv();

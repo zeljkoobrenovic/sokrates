@@ -2,6 +2,7 @@ package nl.obren.sokrates.reports.landscape.statichtml;
 
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.utils.FormattingUtils;
+import nl.obren.sokrates.reports.core.ReportConstants;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.generators.statichtml.ControlsReportGenerator;
@@ -10,6 +11,7 @@ import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
@@ -37,11 +39,12 @@ public class LandscapeProjectsReport {
 
     public void saveProjectsReport(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults) {
         report.startTabGroup();
-        report.addTab("projects", "Projects", true);
+        report.addTab("projects", "Projects by Size", true);
         boolean showCommits = landscapeAnalysisResults.getCommitsCount() > 0;
         if (showCommits) {
             report.addTab("commitsTrend", "Commits Trend", false);
             report.addTab("contributorsTrend", "Contributors Trend", false);
+            report.addTab("history", "History", false);
             report.addTab("correlations", "Correlations", false);
         }
         if (showTags()) {
@@ -51,12 +54,23 @@ public class LandscapeProjectsReport {
         addProjectsBySize(report, projectsAnalysisResults);
         if (showCommits) {
             addCommitBasedLists(report, projectsAnalysisResults);
+            addHistory(report, projectsAnalysisResults);
         }
         if (showTags()) {
             report.startTabContentSection("tags", false);
             addTagStats(report);
             report.endTabContentSection();
         }
+        report.endTabContentSection();
+    }
+
+    public void addHistory(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults) {
+        report.startTabContentSection("history", false);
+        Collections.sort(projectsAnalysisResults,
+                (a, b) -> b.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays()
+                        - a.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays());
+        addSummaryGraphHistory(report, projectsAnalysisResults);
+        addHistory(report, projectsAnalysisResults, "Commits", "blue", (slot) -> slot.getCommitsCount());
         report.endTabContentSection();
     }
 
@@ -134,6 +148,33 @@ public class LandscapeProjectsReport {
         report.addNewTabLink("bubble chart", "visuals/bubble_chart_projects_commits.html");
         report.addHtmlContent(" | ");
         report.addNewTabLink("tree map", "visuals/tree_map_projects_commits.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("data", "data/projects.txt");
+        report.endDiv();
+    }
+
+    public void addSummaryGraphHistory(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults) {
+        report.startDiv("white-space: nowrap; overflow-x: scroll; width: 100%");
+        int max = Math.max(projectsAnalysisResults.stream()
+                .mapToInt(p -> p.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays())
+                .max().orElse(1), 1);
+        int maxHeight = 64;
+        projectsAnalysisResults.forEach(projectAnalysis -> {
+            FilesHistoryAnalysisResults filesHistoryAnalysisResults = projectAnalysis.getAnalysisResults().getFilesHistoryAnalysisResults();
+            int ageInDays = filesHistoryAnalysisResults.getAgeInDays();
+            int height = (int) (1 + maxHeight * (double) ageInDays / max);
+            String color = ageInDays > 0 ? "darkgreen" : "lightgrey";
+            int projectAgeYears = (int) Math.round(filesHistoryAnalysisResults.getAgeInDays() / 365.0);
+            String age = projectAgeYears == 0 ? "<1y" : projectAgeYears + "y";
+            report.addContentInDivWithTooltip("",
+                    projectAnalysis.getAnalysisResults().getMetadata().getName() + ": " + ageInDays + " days (" + age + ")",
+                    "margin: 0; padding: 0; opacity: 0.5; margin-right: 1px; background-color: " + color + "; display: inline-block; width: 8px; height: " + height + "px");
+        });
+        report.endDiv();
+        report.startDiv("font-size: 80%; margin-bottom: 6px;");
+        report.addNewTabLink("bubble chart", "visuals/bubble_chart_projects_age.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("tree map", "visuals/tree_map_projects_age.html");
         report.addHtmlContent(" | ");
         report.addNewTabLink("data", "data/projects.txt");
         report.endDiv();
@@ -241,7 +282,7 @@ public class LandscapeProjectsReport {
 
     private void addCommitsTrend(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults, String label, String color, Counter counter) {
         report.startTable();
-        report.addTableHeader("Project", "Commits<br>(30d)" + (label.equalsIgnoreCase("Commits") ? "*" : ""),
+        report.addTableHeader("", "Project", "Commits<br>(30d)" + (label.equalsIgnoreCase("Commits") ? "*" : ""),
                 "Contributors<br>(30d)" + (label.equalsIgnoreCase("Contributors") ? "*" : ""), "Rookies<br>(30d)", label + " per Week (past year)", "Details");
         int maxCommits[] = {1};
         int pastWeeks = 52;
@@ -256,7 +297,11 @@ public class LandscapeProjectsReport {
         int limit = landscapeAnalysisResults.getConfiguration().getProjectsListLimit();
         projectsAnalysisResults.stream().limit(limit).forEach(projectAnalysis -> {
             report.startTableRow();
-            report.addTableCell(projectAnalysis.getAnalysisResults().getMetadata().getName(), "min-width: 400px; max-width: 400px");
+            String name = projectAnalysis.getAnalysisResults().getMetadata().getName();
+            String logoLink = projectAnalysis.getAnalysisResults().getMetadata().getLogoLink();
+            report.addTableCell(getImageWithLink(projectAnalysis, logoLink), "text-align: center");
+            report.addTableCell("<a href='" + this.getProjectReportUrl(projectAnalysis) + "' target='_blank'>"
+                    + "<div>" + name + "</div></a>", "vertical-align: middle; min-width: 400px; max-width: 400px");
             ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysis.getAnalysisResults().getContributorsAnalysisResults();
             report.addTableCell(contributorsAnalysisResults.getCommitsCount30Days() + "", "text-align: center");
             List<Contributor> contributors = contributorsAnalysisResults.getContributors();
@@ -278,6 +323,94 @@ public class LandscapeProjectsReport {
                                 "opacity: 0.5; height: " + (h + "px"));
             });
             report.endTableCell();
+            report.addTableCell("<a href='" + this.getProjectReportUrl(projectAnalysis) + "' target='_blank'>"
+                    + "<div style='height: 40px'>" + ReportFileExporter.getIconSvg("report", 38) + "</div></a>", "text-align: center");
+            report.endTableRow();
+        });
+
+        report.endTable();
+
+        if (limit < projectsAnalysisResults.size()) {
+            report.addParagraph("The list is limited to " + limit + " items (out of " + projectsAnalysisResults.size() + ")." +
+                    "color:grey; font-size: 90%");
+        }
+
+    }
+
+    private String getImageWithLink(ProjectAnalysisResults projectAnalysis, String logoLink) {
+        return "<a href='" + this.getProjectReportUrl(projectAnalysis) + "' target='_blank'>" +
+                (StringUtils.isNotBlank(logoLink)
+                        ? ("<img src='" + logoLink + "' " +
+                        "style='width: 20px' " +
+                        "onerror=\"this.onerror=null;this.src='" + ReportConstants.SOKRATES_SVG_ICON_SMALL_BASE64 + "'\">")
+                        : ReportConstants.SOKRATES_SVG_ICON_SMALL) +
+                "</a>";
+    }
+
+    private void addHistory(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults, String label, String color, Counter counter) {
+        report.startTable();
+        report.addTableHeader("", "Project",
+                "Age", label + " per Year", "Contributors", "Commits", "Details");
+        int pastYears = landscapeAnalysisResults.getConfiguration().getProjectsHistoryLimit();
+        int maxCommits[] = {1};
+        projectsAnalysisResults.forEach(projectAnalysis -> {
+            List<ContributionTimeSlot> contributorsPerYear = LandscapeReportGenerator.getContributionYears(projectAnalysis.getAnalysisResults().getContributorsAnalysisResults().getContributorsPerYear(), pastYears, landscapeAnalysisResults.getLatestCommitDate());
+            contributorsPerYear.sort(Comparator.comparing(ContributionTimeSlot::getTimeSlot).reversed());
+            if (contributorsPerYear.size() > pastYears) {
+                contributorsPerYear = contributorsPerYear.subList(0, pastYears);
+            }
+            contributorsPerYear.forEach(c -> maxCommits[0] = Math.max(counter.getCount(c), maxCommits[0]));
+        });
+
+        int limit = landscapeAnalysisResults.getConfiguration().getProjectsListLimit();
+        projectsAnalysisResults.stream().limit(limit).forEach(projectAnalysis -> {
+            report.startTableRow();
+            String name = projectAnalysis.getAnalysisResults().getMetadata().getName();
+            String logoLink = projectAnalysis.getAnalysisResults().getMetadata().getLogoLink();
+
+            report.addTableCell(getImageWithLink(projectAnalysis, logoLink), "text-align: center");
+
+            report.addTableCell("<a href='" + this.getProjectReportUrl(projectAnalysis) + "' target='_blank'>"
+                    + "<div>" + name + "</div></a>", "vertical-align: middle; min-width: 400px; max-width: 400px");
+
+            ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysis.getAnalysisResults().getContributorsAnalysisResults();
+            FilesHistoryAnalysisResults filesHistoryAnalysisResults = projectAnalysis.getAnalysisResults().getFilesHistoryAnalysisResults();
+            int projectAgeYears = (int) Math.round(filesHistoryAnalysisResults.getAgeInDays() / 365.0);
+            String age = projectAgeYears == 0 ? "<1y" : projectAgeYears + "y";
+            report.addTableCell(age, "text-align: center; font-size: 90%");
+
+            List<ContributionTimeSlot> contributorsPerYear = LandscapeReportGenerator.getContributionYears(contributorsAnalysisResults.getContributorsPerYear(), pastYears, landscapeAnalysisResults.getLatestCommitDate());
+            contributorsPerYear.sort(Comparator.comparing(ContributionTimeSlot::getTimeSlot).reversed());
+            if (contributorsPerYear.size() > pastYears) {
+                contributorsPerYear = contributorsPerYear.subList(0, pastYears);
+            }
+            report.startTableCell("white-space: nowrap; overflow-x: hidden;");
+            String firstDate = filesHistoryAnalysisResults.getFirstDate();
+            String firstYear = firstDate.length() >= 4 ? firstDate.substring(0, 4) : "";
+            boolean reachedFirstYear[] = {false};
+            contributorsPerYear.forEach(contributionTimeSlot -> {
+                int count = counter.getCount(contributionTimeSlot);
+                if (count > 0) {
+                    int h = (int) (6 + 24.0 * count / maxCommits[0]);
+                    report.addContentInDivWithTooltip("", +count + " in " + contributionTimeSlot.getTimeSlot(),
+                            "margin: 0; margin-right: -4px; padding: 0; display: inline-block; vertical-align: bottom; width: 16px; " +
+                                    "background-color: " + color + "; " +
+                                    "opacity: 0.5; height: " + (h + "px"));
+                } else {
+                    if (contributionTimeSlot.getTimeSlot().substring(0, 4).compareTo(firstYear) >= 0) {
+                        report.addContentInDivWithTooltip("", +count + " in the week of " + contributionTimeSlot.getTimeSlot(),
+                                "margin: 0; margin-right: -4px; padding: 0; display: inline-block; vertical-align: bottom; width: 16px; " +
+                                        "background-color: lightgrey; " +
+                                        "opacity: 0.5; height: 5px;");
+                    } else if (!reachedFirstYear[0]) {
+                        reachedFirstYear[0] = true;
+                        report.addContentInDiv(firstDate, "color: grey; vertical-align: top; margin-left: 6px; display: inline-block; font-size: 70%");
+                    }
+                }
+            });
+            report.endTableCell();
+            report.addTableCell(contributorsAnalysisResults.getContributors().size() + "", "text-align: center; font-size: 90%");
+            report.addTableCell(contributorsAnalysisResults.getCommitsCount() + "", "text-align: center; font-size: 90%");
             report.addTableCell("<a href='" + this.getProjectReportUrl(projectAnalysis) + "' target='_blank'>"
                     + "<div style='height: 40px'>" + ReportFileExporter.getIconSvg("report", 38) + "</div></a>", "text-align: center");
             report.endTableRow();
@@ -452,8 +585,9 @@ public class LandscapeProjectsReport {
         DateUtils.isCommittedLessThanDaysAgo(latestCommitDate, 90);
         report.startTableRow(DateUtils.isCommittedLessThanDaysAgo(latestCommitDate, 90) ? ""
                 : (DateUtils.isCommittedLessThanDaysAgo(latestCommitDate, 180) ? "color:#b0b0b0" : "color:#c3c3c3"));
-        report.addTableCell(StringUtils.isNotBlank(logoLink) ? "<img src='" + logoLink + "' style='width: 20px'>" : "", "text-align: center");
-        report.addTableCell(metadata.getName());
+        report.addTableCell(getImageWithLink(projectAnalysis, logoLink), "text-align: center");
+        report.addTableCell("<a href='" + this.getProjectReportUrl(projectAnalysis) + "' target='_blank'>"
+                + "<div>" + metadata.getName() + "</div></a>", "vertical-align: middle; min-width: 400px; max-width: 400px");
         AspectAnalysisResults main = analysisResults.getMainAspectAnalysisResults();
         AspectAnalysisResults test = analysisResults.getTestAspectAnalysisResults();
         AspectAnalysisResults generated = analysisResults.getGeneratedAspectAnalysisResults();

@@ -7,6 +7,8 @@ package nl.obren.sokrates.common.renderingutils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
 
 public class RichTextRenderingUtils {
     @JsonIgnore
@@ -18,26 +20,31 @@ public class RichTextRenderingUtils {
 
     public static String renderNumber(int number) {
         DecimalFormat decimalFormat = new DecimalFormat("###,###");
+        decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.ENGLISH));
         return decimalFormat.format(number);
     }
 
     public static String renderNumberStrong(int number) {
         DecimalFormat decimalFormat = new DecimalFormat("###,###");
+        decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.ENGLISH));
         return "<b>" + decimalFormat.format(number) + "</b>";
     }
 
     public static String renderNumber(double number) {
         DecimalFormat format = new DecimalFormat("0.0");
+        format.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.ENGLISH));
         return format.format(number);
     }
 
     public static String renderNumberStrong(double number) {
         DecimalFormat format = new DecimalFormat("0.0");
+        format.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.ENGLISH));
         return "<b>" + format.format(number) + "</b>";
     }
 
     public static String renderNumberStrongWithSuffix(int number, String singularSuffix, String pluralSuffix) {
         DecimalFormat format = new DecimalFormat("###,###");
+        format.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.ENGLISH));
         return "<b>" + format.format(number) + "</b> " + (number == 1 ? singularSuffix : pluralSuffix);
     }
 

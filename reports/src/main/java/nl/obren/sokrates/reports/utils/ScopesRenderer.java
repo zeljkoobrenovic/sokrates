@@ -15,9 +15,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 public class ScopesRenderer {
     private List<String> aspectsFileListPaths;
@@ -160,11 +162,13 @@ public class ScopesRenderer {
                         report.startUnorderedList();
                         NumericMetric firstMetric = renderingList.get(0).getLinesOfCode();
                         double firstPercentage = 100.0 * firstMetric.getValue().doubleValue() / linesCount;
-                        report.addListItem("\"" + firstMetric.getName() + "\" is biggest, containing <b>" + new DecimalFormat("##.##").format(firstPercentage) + "%</b> of code.");
+                        DecimalFormat decimalFormat = new DecimalFormat("##.##");
+                        decimalFormat.setDecimalFormatSymbols( new DecimalFormatSymbols(Locale.ENGLISH));
+                        report.addListItem("\"" + firstMetric.getName() + "\" is biggest, containing <b>" + decimalFormat.format(firstPercentage) + "%</b> of code.");
                         if (renderingList.size() >= 2) {
                             NumericMetric lastMetric = renderingList.get(renderingList.size() - 1).getLinesOfCode();
                             double lastPercentage = 100.0 * lastMetric.getValue().doubleValue() / linesCount;
-                            report.addListItem("\"" + lastMetric.getName() + "\" is smallest, containing <b>" + new DecimalFormat("##.##").format(lastPercentage) + "%</b> of code.");
+                            report.addListItem("\"" + lastMetric.getName() + "\" is smallest, containing <b>" + decimalFormat.format(lastPercentage) + "%</b> of code.");
                         }
                         report.endUnorderedList();
                     }

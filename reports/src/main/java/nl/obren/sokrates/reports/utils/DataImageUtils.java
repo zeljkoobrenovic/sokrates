@@ -143,9 +143,15 @@ public class DataImageUtils {
             return "<img title='" + lang + "' style=\"margin-right: 3px; vertical-align: top; background-color: #f1f1f1; border-radius: 50%; border: 1px solid lightgrey; width: " + size + "px; height: " + size + "px; object-fit: contain;\" src=\"" +
                     image + "\">";
         } else {
-            return "<div title='" + lang + "' style=\"margin-right: 3px; display: inline-block; vertical-align: top; padding: auto; background-color: #f1f1f1; border-radius: 50%; border: 1px solid lightgrey; width: " + size + "px; height: " + size + "px; object-fit: contain; overflow: hidden; color: darkblue; " +
-                    "font-size: " + (lang.length() <= 3 ? fontSize1 : fontSize2) + "px; font-weight: bold; text-align: center;\">" +
-                    "<div style=\"height: " + (lang.length() <= 3 ? padding1 : padding2) + "px\"></div>" + lang + "</div>";
+            int nameLength = lang.length();
+            return "<div title='" + lang + "' style=\"" +
+                    "margin-right: 3px; display: inline-block; vertical-align: top; " +
+                    "padding: auto; background-color: #f1f1f1; border-radius: 50%; border: 1px solid grey; " +
+                    "object-fit: contain; overflow: hidden; color: darkblue; " +
+                    "width: " + size + "px; " +
+                    "height: " + size + "px; " +
+                    "font-size: " + (nameLength <= 3 ? fontSize1 : fontSize2) + "px; font-weight: bold; text-align: center;\">" +
+                    "<div style=\"height: " + (nameLength <= 3 ? padding1 : padding2) + "px\"></div>" + lang + "</div>";
 
         }
 

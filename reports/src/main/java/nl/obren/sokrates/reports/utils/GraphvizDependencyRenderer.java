@@ -19,7 +19,7 @@ public class GraphvizDependencyRenderer {
             "<head>\n" +
             "    <style type=\"text/css\" media=\"screen\">\n" +
             "        body {\n" +
-            "            font-family: Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;\n" +
+            "            font-family: Roboto, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;\n" +
             "        }\n" +
             "    </style>\n" +
             "</head>\n";

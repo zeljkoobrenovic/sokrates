@@ -51,6 +51,9 @@ public class LandscapeConfiguration {
     // A maximal number of projects shown in project pages
     private int projectsListLimit = 1000;
 
+    // A maximal number of years to be displayed for projects' history
+    private int projectsHistoryLimit = 30;
+
     // A maximal number of contributors shown in contributor pages
     private int contributorsListLimit = 1000;
 
@@ -298,6 +301,14 @@ public class LandscapeConfiguration {
 
     public int getProjectsListLimit() {
         return projectsListLimit;
+    }
+
+    public int getProjectsHistoryLimit() {
+        return projectsHistoryLimit;
+    }
+
+    public void setProjectsHistoryLimit(int projectsHistoryLimit) {
+        this.projectsHistoryLimit = projectsHistoryLimit;
     }
 
     public void setProjectsListLimit(int projectsListLimit) {

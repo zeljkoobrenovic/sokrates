@@ -93,6 +93,8 @@ public class ContributorsReportGenerator {
         this.reportsFolder = reportsFolder;
         this.report = report;
 
+        report.addParagraph("An overview of commit and contributor trends.", "color: grey;");
+
         report.startTabGroup();
         report.addTab("visuals", "Overview", true);
         report.addTab("per_language", "Overview Per Language", false);

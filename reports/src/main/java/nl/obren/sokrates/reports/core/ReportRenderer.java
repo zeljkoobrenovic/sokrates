@@ -21,6 +21,24 @@ public class ReportRenderer {
         return html;
     }
 
+    public static String renderBreadcrumbsInDiv(List<Link> breadcrumbs) {
+        StringBuilder content = new StringBuilder();
+        if (breadcrumbs.size() > 0) {
+            content.append("<div style='opacity: 0.6; font-size: 80%; margin-bottom: -8px; margin-top: 12px;'>");
+            boolean first[] = {true};
+            breadcrumbs.forEach(breadcrumb -> {
+                if (!first[0]) {
+                    content.append(" / ");
+                }
+                content.append("<a href='" + breadcrumb.getHref() + "'>" + breadcrumb.getLabel() + "</a>");
+                first[0] = false;
+            });
+            content.append("</div>");
+        }
+
+        return content.toString();
+    }
+
     public void render(RichTextReport richTextReport, ReportRenderingClient reportRenderingClient) {
         StringBuilder content = new StringBuilder();
         if (StringUtils.isNotBlank(richTextReport.getDisplayName())) {
@@ -37,36 +55,50 @@ public class ReportRenderer {
 
     private void renderHeader(RichTextReport richTextReport, StringBuilder content) {
         content.append(renderBreadcrumbsInDiv(richTextReport.getBreadcrumbs()));
-        content.append("<h1>");
+        content.append("<div style='font-size: 36px; margin-top: 15px;'>");
+
         String parentUrl = richTextReport.getParentUrl();
         if (StringUtils.isNotBlank(parentUrl)) {
-            content.append("<a href='" + parentUrl + "' style=\"font-size: 110%;text-decoration:none\">\n");
+            content.append("<a href='" + parentUrl + "' style=\"font-size: 100%;text-decoration:none\">\n");
         }
-        if (StringUtils.isNotBlank(richTextReport.getLogoLink())) {
-            int size = 39;
-            String valign = richTextReport.getDisplayName().contains("<div") ? "middle" : "bottom";
-            content.append("<img style='height: " + size + "px' valign='" + valign + "' src='" + richTextReport.getLogoLink() + "'>\n");
-        }
-        content.append(richTextReport.getDisplayName());
+
+        content.append(renderLogo(richTextReport));
+
+        content.append("<div style='display: inline-block; vertical-align: middle'>" +
+                richTextReport.getDisplayName() + "</div>\n");
+
         if (StringUtils.isNotBlank(parentUrl)) {
             content.append("</a>\n");
         }
-        content.append("</h1>\n");
+
+        content.append("</div>\n");
     }
 
-    public static String renderBreadcrumbsInDiv(List<Link> breadcrumbs) {
+    private String renderLogo(RichTextReport richTextReport) {
         StringBuilder content = new StringBuilder();
-        if (breadcrumbs.size() > 0) {
-            content.append("<div style='opacity: 0.6; font-size: 80%; margin-bottom: -12px'>");
-            boolean first[] = {true};
-            breadcrumbs.forEach(breadcrumb -> {
-                if (!first[0]) {
-                    content.append(" / ");
+        if (richTextReport.isRenderLogo()) {
+            String logoLink = richTextReport.getLogoLink();
+            boolean complexHeader = richTextReport.getDisplayName().contains("<div");
+            String valign = "middle";
+            if (StringUtils.isNotBlank(logoLink)) {
+                int size = 48;
+                content.append("<img style='");
+                if (complexHeader) {
+                    content.append("transform: scale(0.8); ");
                 }
-                content.append("<a href='" + breadcrumb.getHref() + "'>" + breadcrumb.getLabel() + "</a>");
-                first[0] = false;
-            });
-            content.append("</div>");
+                content.append("height: " + size + "px' valign='" + valign + "' src='" +
+                        logoLink + "'>\n");
+            } else {
+                content.append("<div style='display: inline-block; vertical-align: " + valign + "'>" +
+                        "<div style='");
+                if (complexHeader) {
+                    content.append("transform: scale(0.8); ");
+                }
+                content.append("height: 52px; vertical-align: middle'>" +
+                        ReportConstants.SOKRATES_SVG_ICON +
+                        "</div>" +
+                        "</div>\n");
+            }
         }
 
         return content.toString();

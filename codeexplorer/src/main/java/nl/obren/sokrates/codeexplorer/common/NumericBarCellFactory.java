@@ -13,7 +13,9 @@ import nl.obren.sokrates.common.renderingutils.Threshold;
 import nl.obren.sokrates.common.utils.BasicColorInfo;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.List;
+import java.util.Locale;
 
 public class NumericBarCellFactory<T> implements Callback<TableColumn<T, Number>, TableCell<T, Number>> {
     private Callback<Void, Number> maxCountCallback;
@@ -66,6 +68,7 @@ public class NumericBarCellFactory<T> implements Callback<TableColumn<T, Number>
 
         String pattern = "###,###";
         DecimalFormat decimalFormat = new DecimalFormat(pattern);
+        decimalFormat.setDecimalFormatSymbols( new DecimalFormatSymbols(Locale.ENGLISH));
 
         String text = decimalFormat.format(itemValue);
         if (compareToValueCallback != null && compareToValueCallback.call(null).doubleValue() > 0) {

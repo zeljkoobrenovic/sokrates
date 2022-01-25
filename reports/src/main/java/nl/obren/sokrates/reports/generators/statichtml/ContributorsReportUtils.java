@@ -37,7 +37,7 @@ public class ContributorsReportUtils {
             int maxContributors = contributorsPerTimeSlot.stream().mapToInt(c -> c.getContributorsCount()).max().orElse(1);
             int maxCommits = contributorsPerTimeSlot.stream().mapToInt(c -> c.getCommitsCount()).max().orElse(1);
 
-            report.startDiv("overflow-y: scroll; font-size: 90%");
+            report.startDiv("overflow-y: auto; font-size: 90%");
             report.startTable();
 
             report.startTableRow();

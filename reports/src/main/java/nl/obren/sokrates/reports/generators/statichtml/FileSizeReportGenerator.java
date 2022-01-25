@@ -31,6 +31,7 @@ public class FileSizeReportGenerator {
     }
 
     public void addFileSizeToReport(RichTextReport report) {
+        report.addParagraph("The distribution of size of files (measured in lines of code).", "margin-top: 12px; color: grey");
         report.startSection("Intro", "");
         report.startUnorderedList();
         report.addListItem("File size measurements show the distribution of size of files.");
@@ -95,6 +96,9 @@ public class FileSizeReportGenerator {
         report.addHtmlContent(PieChartUtils.getRiskDistributionChart(distribution, labels));
         report.addLineBreak();
         report.addLineBreak();
+        report.addHtmlContent("explore: ");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main.html'>zoomable circles</a> | ");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_sunburst_main.html'>sunburst</a> | ");
         report.addHtmlContent("<a target='_blank' href='visuals/files_3d.html'>3D view</a>");
         report.endSection();
     }

@@ -11,6 +11,8 @@ import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.codeexplorer.common.ProgressFeedbackPane;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
 
 public class TextAreaConsole extends BorderPane implements Console {
     private TextArea textArea = new TextArea();
@@ -30,6 +32,7 @@ public class TextAreaConsole extends BorderPane implements Console {
         long minutes = timeInSeconds / 60;
         long seconds = timeInSeconds % 60;
         DecimalFormat decimalFormat = new DecimalFormat("00");
+        decimalFormat.setDecimalFormatSymbols( new DecimalFormatSymbols(Locale.ENGLISH));
         return decimalFormat.format(minutes) + ":" + decimalFormat.format(seconds) + "\t";
     }
 

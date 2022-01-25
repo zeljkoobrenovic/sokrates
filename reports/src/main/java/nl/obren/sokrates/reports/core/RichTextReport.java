@@ -21,6 +21,7 @@ public class RichTextReport {
     private String group = "";
     private String description = "";
     private String logoLink = "";
+    private boolean renderLogo = true;
     private List<Finding> findings = new ArrayList<>();
     private File reportsFolder;
     private String parentUrl = "";
@@ -480,5 +481,13 @@ public class RichTextReport {
 
     public void setEmbedded(boolean embedded) {
         this.embedded = embedded;
+    }
+
+    public boolean isRenderLogo() {
+        return renderLogo;
+    }
+
+    public void setRenderLogo(boolean renderLogo) {
+        this.renderLogo = renderLogo;
     }
 }

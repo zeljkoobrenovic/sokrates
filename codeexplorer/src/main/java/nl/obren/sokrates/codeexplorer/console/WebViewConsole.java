@@ -19,6 +19,8 @@ import org.w3c.dom.events.EventListener;
 import org.w3c.dom.events.EventTarget;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
 
 public class WebViewConsole extends BorderPane implements Console {
     public final static String HTML_HEADER = "<!DOCTYPE html>\n" +
@@ -68,6 +70,7 @@ public class WebViewConsole extends BorderPane implements Console {
         long minutes = timeInSeconds / 60;
         long seconds = timeInSeconds % 60;
         DecimalFormat decimalFormat = new DecimalFormat("00");
+        decimalFormat.setDecimalFormatSymbols( new DecimalFormatSymbols(Locale.ENGLISH));
         String prefix = decimalFormat.format(minutes) + ":" + decimalFormat.format(seconds) + "&nbsp;&nbsp;&nbsp;&nbsp;";
         return "<span style='color:grey'>" + prefix + "</span>";
     }

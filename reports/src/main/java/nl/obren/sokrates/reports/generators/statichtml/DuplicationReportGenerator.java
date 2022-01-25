@@ -167,9 +167,11 @@ public class DuplicationReportGenerator {
     }
 
     private void addIntro(RichTextReport report) {
+        int locDuplicationThreshold = codeAnalysisResults.getCodeConfiguration().getAnalysis().getMinDuplicationBlockLoc();
+        report.addParagraph("Places in code with " + locDuplicationThreshold + " or more lines that are exactly the same.", "margin-top: 12px; color: grey");
         report.startSection("Intro", "");
         report.startUnorderedList();
-        report.addListItem("For duplication, we look at places in code where there are six or more lines of code that are exactly the same.");
+        report.addListItem("For duplication, we look at places in code where there are " + locDuplicationThreshold + " or more lines of code that are exactly the same.");
         report.addListItem("Before duplication is calculated, the code is cleaned to remove empty lines, comments, and frequently duplicated constructs such as imports.");
         report.addListItem("You should aim at having as little as possible (<5%) of duplicated code as high-level of duplication can lead to maintenance difficulties, poor factoring, and logical contradictions.");
         report.endUnorderedList();

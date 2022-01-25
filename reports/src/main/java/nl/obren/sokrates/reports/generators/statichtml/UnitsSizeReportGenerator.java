@@ -29,6 +29,7 @@ public class UnitsSizeReportGenerator {
 
         UnitsAnalysisResults unitsAnalysisResults = codeAnalysisResults.getUnitsAnalysisResults();
         RiskDistributionStats unitSizeDistribution = unitsAnalysisResults.getUnitSizeRiskDistribution();
+        report.addParagraph("The distribution of size of units (measured in lines of code).", "margin-top: 12px; color: grey");
 
         report.startSection("Intro", "");
         report.startUnorderedList();

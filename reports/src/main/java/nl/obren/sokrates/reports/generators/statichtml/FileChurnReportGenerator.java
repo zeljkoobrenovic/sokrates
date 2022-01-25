@@ -38,7 +38,7 @@ public class FileChurnReportGenerator {
     }
 
     public void addFileHistoryToReport(RichTextReport report) {
-        report.addParagraph("File change frequency (churn) measurements show the distribution of the number of file updates (days with at least one commit).");
+        report.addParagraph("File change frequency (churn) shows the distribution of file updates (days with at least one commit).", "margin-top: 12px; color: grey");
 
         addOverallSections(report);
 

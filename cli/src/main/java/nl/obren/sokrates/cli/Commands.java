@@ -110,8 +110,7 @@ public class Commands {
 
         commands.add(new CommandUsage(INIT_CONVENTIONS, INIT_CONVENTIONS_DESCRIPTION, null));
         commands.add(new CommandUsage(EXPORT_STANDARD_CONVENTIONS, EXPORT_STANDARD_CONVENTIONS_DESCRIPTION, null));
-        commands.add(new CommandUsage(EXTRACT_GIT_SUB_HISTORY, EXTRACT_GIT_SUB_HISTORY_DESCRIPTION, getInitOptions()));
-        // commands.add(new CommandUsage(EXTRACT_FILES, EXTRACT_FILES_DESCRIPTION, getInitOptions()));
+        commands.add(new CommandUsage(EXTRACT_GIT_SUB_HISTORY, EXTRACT_GIT_SUB_HISTORY_DESCRIPTION, getExtractGitSubHistoryOption()));
 
         return commands;
     }
