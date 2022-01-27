@@ -9,6 +9,7 @@ import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.operations.OperationStatement;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class LandscapeConfiguration {
@@ -63,8 +64,11 @@ public class LandscapeConfiguration {
     // An optional template of the link to a avatar image of a contributor. The string fragment "${contributorid}" will be replaced with the actual contributor ID (e.g. transformed email).
     private String contributorAvatarLinkTemplate = "";
 
+    // An optional list of string transformation used to transform contributor IDs for embedding in avatar link
+    private List<OperationStatement> transformContributorEmailsForAvatarLink = new ArrayList<>();
+
     // The list of regex expressions used to exclude contributors from analysis. If empty, all contributors are included.
-    private List<String> ignoreContributors = new ArrayList<>();
+    private List<String> ignoreContributors = new ArrayList<>(Arrays.asList(".*\\[bot\\].*", ".*[-]bot[@].*"));
 
     // The list of extensions to ignore
     private List<String> ignoreExtensions = new ArrayList<>();
@@ -353,6 +357,14 @@ public class LandscapeConfiguration {
 
     public void setContributorAvatarLinkTemplate(String contributorAvatarLinkTemplate) {
         this.contributorAvatarLinkTemplate = contributorAvatarLinkTemplate;
+    }
+
+    public List<OperationStatement> getTransformContributorEmailsForAvatarLink() {
+        return transformContributorEmailsForAvatarLink;
+    }
+
+    public void setTransformContributorEmailsForAvatarLink(List<OperationStatement> transformContributorEmailsForAvatarLink) {
+        this.transformContributorEmailsForAvatarLink = transformContributorEmailsForAvatarLink;
     }
 
     public List<String> getIgnoreContributors() {

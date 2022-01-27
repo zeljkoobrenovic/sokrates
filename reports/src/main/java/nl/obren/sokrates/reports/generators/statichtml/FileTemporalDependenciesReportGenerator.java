@@ -29,13 +29,22 @@ public class FileTemporalDependenciesReportGenerator {
 
     public void addFileHistoryToReport(File reportsFolder, RichTextReport report) {
         this.reportsFolder = reportsFolder;
-        report.addParagraph("A temporal dependency occurs when developers change two or more files at the same time (i.e. they are a part of the same commit).");
+        report.addParagraph("A temporal dependency occurs when developers change two or more files " +
+                "at the same time (i.e. they are a part of the same commit).", "margin-top: 12px; color: grey");
+
+        int maxTemporalDependenciesDepthDays = codeAnalysisResults.getCodeConfiguration().getAnalysis().getMaxTemporalDependenciesDepthDays();
 
         report.startTabGroup();
         report.addTab("30_days", "Past 30 Days", true);
-        report.addTab("90_days", "Past 3 Months", false);
-        report.addTab("180_days", "Past 6 Months", false);
-        report.addTab("all_time", "Past " + codeAnalysisResults.getCodeConfiguration().getAnalysis().getMaxTemporalDependenciesDepthDays() + " Days", false);
+        if (maxTemporalDependenciesDepthDays >= 90) {
+            report.addTab("90_days", "Past 3 Months", false);
+        }
+        if (maxTemporalDependenciesDepthDays >= 180) {
+            report.addTab("180_days", "Past 6 Months", false);
+        }
+        if (maxTemporalDependenciesDepthDays > 180) {
+            report.addTab("all_time", "Past " + maxTemporalDependenciesDepthDays + " Days", false);
+        }
         report.endTabGroup();
 
         List<FilePairChangedTogether> filePairsChangedTogether = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether();
@@ -44,9 +53,15 @@ public class FileTemporalDependenciesReportGenerator {
         List<FilePairChangedTogether> filePairsChangedTogether180Days = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether180Days();
 
         addTab(report, "30_days", filePairsChangedTogether30Days, true);
-        addTab(report, "90_days", filePairsChangedTogether90Days, false);
-        addTab(report, "180_days", filePairsChangedTogether180Days, false);
-        addTab(report, "all_time", filePairsChangedTogether, false);
+        if (maxTemporalDependenciesDepthDays >= 90) {
+            addTab(report, "90_days", filePairsChangedTogether90Days, false);
+        }
+        if (maxTemporalDependenciesDepthDays >= 180) {
+            addTab(report, "180_days", filePairsChangedTogether180Days, false);
+        }
+        if (maxTemporalDependenciesDepthDays > 180) {
+            addTab(report, "all_time", filePairsChangedTogether, false);
+        }
     }
 
     private void addTab(RichTextReport report, String id, List<FilePairChangedTogether> filePairs, boolean active) {
@@ -129,8 +144,8 @@ public class FileTemporalDependenciesReportGenerator {
             codeAnalysisResults.getFilesHistoryAnalysisResults()
                     .getChangeDistributionPerLogicalDecomposition().stream()
                     .filter(d -> d.getName().equalsIgnoreCase(name)).forEach(distribution -> {
-                addDependenciesSection(report, logicalDecomposition, filePairsChangedTogether);
-            });
+                        addDependenciesSection(report, logicalDecomposition, filePairsChangedTogether);
+                    });
         });
     }
 

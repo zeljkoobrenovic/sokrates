@@ -41,7 +41,7 @@ public class MetricsListReportGenerator {
     }
 
     private void addIntro() {
-        report.addParagraph("All numeric values measured by Sokrates.", "margin-top: 8px; color: grey");
+        report.addParagraph("All numeric values measured by Sokrates.", "margin-top: 12px; color: grey");
         report.startSection("Intro", "");
         report.startUnorderedList();
         report.addListItem("Metrics are all numeric values measured by Sokrates.");

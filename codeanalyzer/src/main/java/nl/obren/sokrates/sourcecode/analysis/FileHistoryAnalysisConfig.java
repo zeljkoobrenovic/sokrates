@@ -18,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,7 +27,7 @@ public class FileHistoryAnalysisConfig {
     private String importPath = "../" + GitHistoryUtils.GIT_HISTORY_FILE_NAME;
 
     // An optional list of regex expression used to ignore commits from contributors
-    private List<String> ignoreContributors = new ArrayList<>();
+    private List<String> ignoreContributors = new ArrayList<>(Arrays.asList(".*\\[bot\\].*"));
 
     // If true, contributors IDs (e.g. emails) will be replaces with anonymous IDs (e.g. Contributor 1, Contributor 2)
     private boolean anonymizeContributors = false;

@@ -20,6 +20,7 @@ import nl.obren.sokrates.sourcecode.lang.dbc.DbcAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.go.GoLangAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.gradle.GradleAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.groovy.GroovyAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.hack.HackAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.html.HtmlAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.java.JavaAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.js.JavaScriptAnalyzer;
@@ -154,6 +155,9 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("phpt", PhpAnalyzer.class);
         analyzersMap.put("ctp", PhpAnalyzer.class);
         analyzersMap.put("aw", PhpAnalyzer.class);
+
+        // Hack
+        analyzersMap.put("hack", HackAnalyzer.class);
 
         registerPlSql();
         registerPython();
@@ -373,7 +377,6 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("rtml", HtmlAnalyzer.class);
         analyzersMap.put("vue", HtmlAnalyzer.class);
         analyzersMap.put("phtml", HtmlAnalyzer.class);
-        analyzersMap.put("hack", HtmlAnalyzer.class);
         analyzersMap.put("hhi", HtmlAnalyzer.class);
         analyzersMap.put("hbs", HtmlAnalyzer.class);
         analyzersMap.put("handlebars", HtmlAnalyzer.class);

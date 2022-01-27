@@ -93,7 +93,7 @@ public class ContributorsReportGenerator {
         this.reportsFolder = reportsFolder;
         this.report = report;
 
-        report.addParagraph("An overview of commit and contributor trends.", "color: grey;");
+        report.addParagraph("An overview of commit and contributor trends.", "margin-top: 12px; color: grey");
 
         report.startTabGroup();
         report.addTab("visuals", "Overview", true);

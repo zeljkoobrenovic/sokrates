@@ -17,6 +17,7 @@ public class DataImageUtils {
         map.put("c", "C.png");
         map.put("h", "C.png");
         map.put("js", "JavaScript.png");
+        map.put("cjs", "commonjs.png");
         map.put("py", "Python.png");
         map.put("sql", "SQL.png");
         map.put("php", "PHP.png");
@@ -27,6 +28,7 @@ public class DataImageUtils {
         map.put("pas", "Delphi_Object_Pascal.png");
         map.put("rb", "Ruby.png");
         map.put("erb", "Ruby.png");
+        map.put("gemspec", "Ruby.png");
         map.put("graphql", "graphql.png");
         map.put("graphqls", "graphql.png");
         map.put("gql", "graphql.png");
@@ -34,7 +36,9 @@ public class DataImageUtils {
         map.put("pp", "puppet.png");
         map.put("dart", "dart.png");
         map.put("cpp", "cpp.png");
+        map.put("cc", "cpp.png");
         map.put("hpp", "cpp.png");
+        map.put("hh", "cpp.png");
         map.put("thrift", "thrift.png");
         map.put("vue", "vue.png");
         map.put("dockerfile", "docker.png");
@@ -106,6 +110,21 @@ public class DataImageUtils {
         map.put("es", "es.png");
         map.put("gitignore", "git.png");
         map.put("nomad", "nomad.png");
+        map.put("unity", "unity.png");
+        map.put("hack", "hack.png");
+        map.put("toml", "toml.png");
+        map.put("ps1", "powershell.png");
+        map.put("ps1xml", "powershell.png");
+        map.put("psc1", "powershell.png");
+        map.put("psd1", "powershell.png");
+        map.put("psm1", "powershell.png");
+        map.put("pssc", "powershell.png");
+        map.put("psrc", "powershell.png");
+        map.put("cdxml", "powershell.png");
+        map.put("d", "d.png");
+        map.put("prefab", "unity.png");
+        map.put("cu", "nvidia.png");
+        map.put("cuh", "nvidia.png");
     }
 
     public static String getLangDataImage(String lang) {

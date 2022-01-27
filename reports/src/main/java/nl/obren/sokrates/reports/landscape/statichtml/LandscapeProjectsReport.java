@@ -338,13 +338,21 @@ public class LandscapeProjectsReport {
     }
 
     private String getImageWithLink(ProjectAnalysisResults projectAnalysis, String logoLink) {
+        String prefix = landscapeAnalysisResults.getConfiguration().getProjectReportsUrlPrefix();
         return "<a href='" + this.getProjectReportUrl(projectAnalysis) + "' target='_blank'>" +
                 (StringUtils.isNotBlank(logoLink)
-                        ? ("<img src='" + logoLink + "' " +
+                        ? ("<img src='" + getLogoLink(prefix + projectAnalysis.getSokratesProjectLink()
+                        .getHtmlReportsRoot().replace("/index.html", ""), logoLink) + "' " +
                         "style='width: 20px' " +
                         "onerror=\"this.onerror=null;this.src='" + ReportConstants.SOKRATES_SVG_ICON_SMALL_BASE64 + "'\">")
                         : ReportConstants.SOKRATES_SVG_ICON_SMALL) +
                 "</a>";
+    }
+
+    private String getLogoLink(String projectLinkPrefix, String link) {
+        return link.startsWith("/") || link.contains("://") || link.startsWith("data:image")
+                ? link
+                : StringUtils.appendIfMissing(projectLinkPrefix, "/") + link;
     }
 
     private void addHistory(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults, String label, String color, Counter counter) {

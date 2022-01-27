@@ -307,7 +307,8 @@ public class LandscapeReportGenerator {
             List<LandscapeAnalysisResultsReadData> loadedSubLandscapes = new ArrayList<>();
             links.forEach(subLandscape -> {
                 System.out.println("Adding " + subLandscape.getIndexFilePath());
-                String label = StringUtils.removeEnd(getLabel(subLandscape), "/");
+                String labelText = StringUtils.removeEnd(getLabel(subLandscape), "/");
+                String label = labelText;
                 String style = "";
                 String root = label.replaceAll("/.*", "");
                 if (!prevRoot[0].equals(root)) {
@@ -321,14 +322,15 @@ public class LandscapeReportGenerator {
                 String href = configuration.getProjectReportsUrlPrefix() + subLandscape.getIndexFilePath();
                 LandscapeAnalysisResultsReadData subLandscapeAnalysisResults = getSubLandscapeAnalysisResults(subLandscape);
                 landscapeReport.startTableRow(style);
-                Metadata metadata = getSubLandscapeConfig(subLandscape).getMetadata();
-                landscapeReport.addTableCell("<a href='" + href + "' target='_blank'>" +
+                LandscapeConfiguration subLandscapeConfig = getSubLandscapeConfig(subLandscape);
+                Metadata metadata = subLandscapeConfig.getMetadata();
+                landscapeReport.addTableCell(!labelText.contains("/") ? ("<a href='" + href + "' target='_blank'>" +
                         (StringUtils.isNotBlank(metadata.getLogoLink())
-                                ? "<img src='" + metadata.getLogoLink() + "' " +
-                                "style='width: 20px' " +
+                                ? "<img src='" + getLogoLink(configuration.getProjectReportsUrlPrefix() + subLandscape.getIndexFilePath().replace("/index.html", ""), metadata.getLogoLink()) + "' " +
+                                "style='vertical-align: middle; width: 24px' " +
                                 "onerror=\"this.onerror=null;this.src='" + ReportConstants.SOKRATES_SVG_ICON_SMALL_BASE64 + "'\">"
                                 : ReportConstants.SOKRATES_SVG_ICON_SMALL) +
-                        "</a>", "text-align: center");
+                        "</a>") : "", "text-align: center;");
 
                 landscapeReport.startTableCell();
                 landscapeReport.addNewTabLink(label, href);
@@ -376,6 +378,12 @@ public class LandscapeReportGenerator {
             landscapeReport.endSection();
         }
 
+    }
+
+    private String getLogoLink(String projectLinkPrefix, String link) {
+        return link.startsWith("/") || link.contains("://") || link.startsWith("data:image")
+                ? link
+                : StringUtils.appendIfMissing(projectLinkPrefix, "/") + link;
     }
 
     private VisualizationItem getParent(Map<String, VisualizationItem> parents, List<String> pathElements) {
@@ -608,6 +616,15 @@ public class LandscapeReportGenerator {
         landscapeReport.startDiv("max-height: 600px; overflow-y: auto;");
         List<String> extensions = linesOfCodePerExtensionMain.stream().map(loc -> loc.getName().replaceAll(".*[.]", "").trim()).collect(Collectors.toList());
         HistoryPerLanguageGenerator.getInstanceCommits(landscapeAnalysisResults.getYearlyCommitHistoryPerExtension(), extensions).addHistoryPerLanguage(landscapeReport);
+        landscapeReport.endDiv();
+        landscapeReport.endSection();
+        landscapeReport.endShowMoreBlock();
+        landscapeReport.addLineBreak();
+        landscapeReport.addLineBreak();
+        landscapeReport.startShowMoreBlockDisappear("", "Show contributors history per extension...");
+        landscapeReport.startSubSection("Contributors history per file extension", "");
+        landscapeReport.startDiv("max-height: 600px; overflow-y: auto;");
+        HistoryPerLanguageGenerator.getInstanceContributors(landscapeAnalysisResults.getYearlyCommitHistoryPerExtension(), extensions).addHistoryPerLanguage(landscapeReport);
         landscapeReport.endDiv();
         landscapeReport.endSection();
         landscapeReport.endShowMoreBlock();
