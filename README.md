@@ -10,7 +10,7 @@ For details and examples visit the website [sokrates.dev](https://sokrates.dev).
 * Sokrates comes with both command line interface and interactive GUI code explorer.
 
 ### Prerequirements
-* Java 8+
+* Java
 * Maven
 
 ### Build
