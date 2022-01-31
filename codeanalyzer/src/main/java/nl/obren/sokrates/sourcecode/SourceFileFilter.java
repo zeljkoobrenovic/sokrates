@@ -6,7 +6,6 @@ package nl.obren.sokrates.sourcecode;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.common.utils.RegexUtils;
-import nl.obren.sokrates.sourcecode.docs.Documentation;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

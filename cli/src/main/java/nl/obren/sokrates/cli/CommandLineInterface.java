@@ -115,7 +115,7 @@ public class CommandLineInterface {
 
             generateReports(args);
         } catch (ParseException e) {
-            System.out.println("ERROR: " + e.getMessage() + "\n");
+            LOG.info("ERROR: " + e.getMessage() + "\n");
             commands.usage();
         }
     }
@@ -186,11 +186,11 @@ public class CommandLineInterface {
         String destParentValue = cmd.getOptionValue(commands.getDestParent().getOpt());
 
         if (patternValue == null) {
-            System.out.println("the pattern value is missing");
+            LOG.info("the pattern value is missing");
             return;
         }
         if (dest == null) {
-            System.out.println("the destination folder value is missing");
+            LOG.info("the destination folder value is missing");
             return;
         }
         if (destParentValue == null) {
@@ -203,7 +203,7 @@ public class CommandLineInterface {
     private void updateDateParam(CommandLine cmd) {
         String dateString = cmd.getOptionValue(commands.getDate().getOpt());
         if (dateString != null) {
-            System.out.println("Using '" + dateString + "' as latest source code update date for active contributors reports.");
+            LOG.info("Using '" + dateString + "' as latest source code update date for active contributors reports.");
             DateUtils.setDateParam(dateString);
         }
     }
@@ -239,14 +239,14 @@ public class CommandLineInterface {
             landscapeConfigFiles.forEach(landscapeConfigFile -> {
                 File landscapeFolder = landscapeConfigFile.getParentFile().getParentFile();
                 String absolutePath = landscapeFolder.getAbsolutePath().replace("/./", "/");
-                System.out.println(System.getProperty("user.dir"));
+                LOG.info(System.getProperty("user.dir"));
                 System.setProperty("user.dir", absolutePath);
-                System.out.println(System.getProperty("user.dir"));
+                LOG.info(System.getProperty("user.dir"));
                 LandscapeAnalysisCommands.update(new File(landscapeFolder.getAbsolutePath()), null);
             });
-            System.out.println("Analysed " + landscapeConfigFiles + " landscape(s):");
+            LOG.info("Analysed " + landscapeConfigFiles + " landscape(s):");
             landscapeConfigFiles.forEach(landscapeConfigFile -> {
-                System.out.println(" -  " + landscapeConfigFile.getPath());
+                LOG.info(" -  " + landscapeConfigFile.getPath());
             });
         } else {
             LandscapeAnalysisCommands.update(root, confFilePath != null ? new File(confFilePath) : null);
@@ -327,18 +327,18 @@ public class CommandLineInterface {
 
         new ScopeCreator(root, conf, customScopingConventions).createScopeFromConventions(nameValue, descriptionValue, logoLinkValue, link);
 
-        System.out.println("Configuration stored in " + conf.getPath());
+        LOG.info("Configuration stored in " + conf.getPath());
     }
 
     private void startTimeoutIfDefined(CommandLine cmd) {
         String timeoutSeconds = cmd.getOptionValue(commands.getTimeout().getOpt());
         if (StringUtils.isNumeric(timeoutSeconds)) {
             int seconds = Integer.parseInt(timeoutSeconds);
-            System.out.println("Timeout timer set to " + seconds + " seconds.");
+            LOG.info("Timeout timer set to " + seconds + " seconds.");
             Executors.newCachedThreadPool().execute(() -> {
                 try {
                     Thread.sleep(seconds * 1000);
-                    System.out.println("Timeout after " + seconds + " seconds.");
+                    LOG.info("Timeout after " + seconds + " seconds.");
                     System.exit(-1);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -372,7 +372,7 @@ public class CommandLineInterface {
         }
 
         File confFile = getConfigFile(cmd, root);
-        System.out.println("Configuration file '" + confFile.getPath() + "'.");
+        LOG.info("Configuration file '" + confFile.getPath() + "'.");
 
         String jsonContent = FileUtils.readFileToString(confFile, UTF_8);
         CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
@@ -436,7 +436,7 @@ public class CommandLineInterface {
 
         CustomConventionsHelper.saveStandardConventionsToFile(file);
 
-        System.out.println("A standard conventions file saved to '" + file.getPath() + "'.");
+        LOG.info("A standard conventions file saved to '" + file.getPath() + "'.");
     }
 
     private void createNewConventionsFile(String[] args) throws ParseException, IOException {
@@ -444,7 +444,7 @@ public class CommandLineInterface {
 
         CustomConventionsHelper.saveEmptyConventionsToFile(file);
 
-        System.out.println("A new conventions file saved to '" + file.getPath() + "'.");
+        LOG.info("A new conventions file saved to '" + file.getPath() + "'.");
     }
 
     private File getConfigFile(CommandLine cmd, File root) {
@@ -469,7 +469,7 @@ public class CommandLineInterface {
             sokratesConfigFile = new File(cmd.getOptionValue(commands.getConfFile().getOpt()));
         }
 
-        System.out.println("Configuration file: " + sokratesConfigFile.getPath());
+        LOG.info("Configuration file: " + sokratesConfigFile.getPath());
         if (noFileError(sokratesConfigFile)) return;
 
         String jsonContent = FileUtils.readFileToString(sokratesConfigFile, UTF_8);
@@ -486,17 +486,17 @@ public class CommandLineInterface {
             reportsFolder = prepareReportsFolder(cmd.getOptionValue(commands.getOutputFolder().getOpt()));
         }
 
-        System.out.println("Reports folder: " + reportsFolder.getPath());
+        LOG.info("Reports folder: " + reportsFolder.getPath());
         if (noFileError(reportsFolder)) return;
 
         if (this.progressFeedback == null) {
             this.progressFeedback = new ProgressFeedback() {
                 public void setText(String text) {
-                    System.out.println(text);
+                    LOG.info(text);
                 }
 
                 public void setDetailedText(String text) {
-                    System.out.println(text);
+                    LOG.info(text);
                 }
             };
         }
@@ -520,7 +520,7 @@ public class CommandLineInterface {
 
     private boolean noFileError(File inputFile) {
         if (!inputFile.exists()) {
-            System.out.println("ERROR: " + inputFile.getPath() + " does not exist.");
+            LOG.info("ERROR: " + inputFile.getPath() + " does not exist.");
             return true;
         }
         return false;

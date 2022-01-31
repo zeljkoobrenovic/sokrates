@@ -18,6 +18,8 @@ import nl.obren.sokrates.sourcecode.scoping.custom.CustomExtensionConventions;
 import nl.obren.sokrates.sourcecode.scoping.custom.CustomScopingConventions;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,6 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ScopeCreator {
+    private static final Log LOG = LogFactory.getLog(ScopeCreator.class);
+
     private File srcRoot;
     private File confFile;
     private CustomScopingConventions customScopingConventions;
@@ -43,7 +47,7 @@ public class ScopeCreator {
 
         codeConfiguration.getMetadata().setName(srcRoot.getCanonicalFile().getName());
 
-        System.out.println("Scanning source files...");
+        LOG.info("Scanning source files...");
 
         SourceCodeFiles sourceCodeFiles = getSourceCodeFiles(extensions, codeConfiguration.getAnalysis().getMaxLineLength());
 

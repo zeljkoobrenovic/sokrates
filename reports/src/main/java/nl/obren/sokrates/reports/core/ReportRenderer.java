@@ -8,6 +8,8 @@ import nl.obren.sokrates.common.renderingutils.GraphvizUtil;
 import nl.obren.sokrates.sourcecode.Link;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,6 +17,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class ReportRenderer {
+    private static final Log LOG = LogFactory.getLog(ReportRenderer.class);
+
     private static String minimize(String html) {
         html = StringUtils.replace(html, "  ", " ");
         html = StringUtils.replace(html, "\n\n", "\n");
@@ -110,7 +114,7 @@ public class ReportRenderer {
                 renderAndSaveVisuals(reportRenderingClient, fragment);
             } else {
                 if (fragment.isShow()) {
-                    System.out.println("Rendering graphviz content: " + fragment.getId());
+                    LOG.info("Rendering graphviz content: " + fragment.getId());
                     reportRenderingClient.append(minimize(GraphvizUtil.getSvgFromDot(fragment.getFragment()) + "\n"));
                 }
             }
@@ -133,7 +137,7 @@ public class ReportRenderer {
             File dotFile = new File(folder, id + ".dot.txt");
             FileUtils.write(dotFile, fragment.getFragment(), StandardCharsets.UTF_8);
 
-            System.out.println("Rendering graphviz file " + fragment.getId());
+            LOG.info("Rendering graphviz file " + fragment.getId());
             String svgContent = minimize(GraphvizUtil.getSvgFromDot(fragment.getFragment()));
 
             if (fragment.isShow()) {

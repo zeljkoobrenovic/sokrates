@@ -14,6 +14,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
+import nl.obren.sokrates.cli.SokratesFileUtils;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.ExtensionGroup;
 import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
@@ -23,6 +24,8 @@ import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.sourcecode.scoping.ScopingConventions;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.controlsfx.control.CheckListView;
 
 import java.io.File;
@@ -32,6 +35,8 @@ import java.util.List;
 import java.util.Optional;
 
 public class NewProjectDialog extends BorderPane {
+    private static final Log LOG = LogFactory.getLog(NewProjectDialog.class);
+
     private TextField srcFolder = new TextField();
     private TextField configurationFilePath = new TextField();
     private Stage stage;
@@ -115,7 +120,7 @@ public class NewProjectDialog extends BorderPane {
         codeConfiguration.getMetadata().setName("[" + root.getName() + "]");
         sourceCodeFiles.load(root, new ProgressFeedback() {
             public void setText(String text) {
-                System.out.println(text);
+                LOG.info(text);
             }
         });
 

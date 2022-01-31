@@ -6,6 +6,8 @@ package nl.obren.sokrates.sourcecode.scoping;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +18,8 @@ import java.util.List;
 // - https://github.com/github/linguist/blob/master/lib/linguist/languages.yml
 // - https://github.com/github/linguist/blob/master/lib/linguist/vendor.yml
 public class ScopingConventions {
+    private static final Log LOG = LogFactory.getLog(ScopingConventions.class);
+
     private List<Convention> ignoredFilesConventions = new ArrayList<>();
     private List<Convention> testFilesConventions = new ArrayList<>();
     private List<Convention> generatedFilesConventions = new ArrayList<>();
@@ -39,23 +43,23 @@ public class ScopingConventions {
     }
 
     private static void printText(String s, List<Convention> ignoredFilesConventions, String s2) {
-        System.out.println(s);
+        LOG.info(s);
         ignoredFilesConventions.forEach(convention -> {
-            System.out.println(s2 + convention.toString() + " (" + convention.getNote() + ")");
+            LOG.info(s2 + convention.toString() + " (" + convention.getNote() + ")");
         });
-        System.out.println();
+        LOG.info("");
     }
 
     public void addConventions(CodeConfiguration codeConfiguration, List<SourceFile> sourceFiles) {
-        System.out.println("\nAdding ignore conventions:");
+        LOG.info("\nAdding ignore conventions:");
         ConventionUtils.addConventions(ignoredFilesConventions, codeConfiguration.getIgnore(), sourceFiles);
-        System.out.println("\nAdding test files conventions:");
+        LOG.info("\nAdding test files conventions:");
         ConventionUtils.addConventions(testFilesConventions, codeConfiguration.getTest().getSourceFileFilters(), sourceFiles);
-        System.out.println("\nAdding generated files conventions:");
+        LOG.info("\nAdding generated files conventions:");
         ConventionUtils.addConventions(generatedFilesConventions, codeConfiguration.getGenerated().getSourceFileFilters(), sourceFiles);
-        System.out.println("\nAdding build & deployment conventions:");
+        LOG.info("\nAdding build & deployment conventions:");
         ConventionUtils.addConventions(buildAndDeploymentFilesConventions, codeConfiguration.getBuildAndDeployment().getSourceFileFilters(), sourceFiles);
-        System.out.println("\nAdding other files conventions:");
+        LOG.info("\nAdding other files conventions:");
         ConventionUtils.addConventions(otherFilesConventions, codeConfiguration.getOther().getSourceFileFilters(), sourceFiles);
     }
 

@@ -2,6 +2,8 @@ package nl.obren.sokrates.sourcecode.githistory;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -11,6 +13,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ExtractGitHistoryFileHandler {
+    private static final Log LOG = LogFactory.getLog(ExtractGitHistoryFileHandler.class);
+
     public void extractSubHistory(File gitHistoryFile, String prefix) throws IOException {
         File folder = gitHistoryFile.getParentFile();
         File splitFolder = new File(folder, prefix);
@@ -26,7 +30,7 @@ public class ExtractGitHistoryFileHandler {
 
         FileUtils.writeLines(new File(splitFolder, gitHistoryFile.getName()), splitContent);
 
-        System.out.println("Extracted git history to " + new File(splitFolder, gitHistoryFile.getName()).getPath());
+        LOG.info("Extracted git history to " + new File(splitFolder, gitHistoryFile.getName()).getPath());
     }
 
     public  List<String> extractSubHistory(List<String> originalLines, String prefix) {

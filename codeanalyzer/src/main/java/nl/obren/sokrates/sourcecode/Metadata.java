@@ -4,9 +4,6 @@
 
 package nl.obren.sokrates.sourcecode;
 
-import nl.obren.sokrates.sourcecode.docs.ComplexDocumentation;
-import nl.obren.sokrates.sourcecode.docs.Documentation;
-
 import java.util.ArrayList;
 import java.util.List;
 

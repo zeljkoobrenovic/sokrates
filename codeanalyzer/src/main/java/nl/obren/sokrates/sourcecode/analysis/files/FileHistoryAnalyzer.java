@@ -19,6 +19,8 @@ import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
 import nl.obren.sokrates.sourcecode.threshold.Thresholds;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.util.*;
@@ -27,6 +29,8 @@ import static nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution.Types
 import static nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution.Types.LAST_MODIFIED;
 
 public class FileHistoryAnalyzer extends Analyzer {
+    private static final Log LOG = LogFactory.getLog(FileHistoryAnalyzer.class);
+
     private CodeConfiguration codeConfiguration;
     private MetricsList metricsList;
     private File sokratesFolder;
@@ -48,17 +52,17 @@ public class FileHistoryAnalyzer extends Analyzer {
             if (history.size() > 0) {
                 summarize(history);
 
-                System.out.println("Enriching files with age...");
+                LOG.info("Enriching files with age...");
                 enrichFilesWithAge(history);
-                System.out.println("Analyzing file age...");
+                LOG.info("Analyzing file age...");
                 analyzeFilesAge();
-                System.out.println("Analyzing files changed together...");
+                LOG.info("Analyzing files changed together...");
                 analyzeFilesChangedTogether(history);
-                System.out.println("Analyzing files changed together in past 30 days...");
+                LOG.info("Analyzing files changed together in past 30 days...");
                 analyzeFilesChangedTogether30Days(history);
-                System.out.println("Analyzing files changed together in past 90 days...");
+                LOG.info("Analyzing files changed together in past 90 days...");
                 analyzeFilesChangedTogether90Days(history);
-                System.out.println("Analyzing files changed together in past 180 days...");
+                LOG.info("Analyzing files changed together in past 180 days...");
                 analyzeFilesChangedTogether180Days(history);
             }
         }

@@ -19,15 +19,22 @@ import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class LandscapeAnalysisResults {
+    private static final Log LOG = LogFactory.getLog(LandscapeAnalysisResults.class);
+
     public static final int RECENT_THRESHOLD_DAYS = 30;
 
     @JsonIgnore
     private List<ComponentDependency> peopleDependencies30Days = new ArrayList<>();
+
+    @JsonIgnore
+    private List<ComponentDependency> peopleProjectDependencies30Days = new ArrayList<>();
 
     @JsonIgnore
     private List<ComponentDependency> peopleDependencies90Days = new ArrayList<>();
@@ -447,7 +454,7 @@ public class LandscapeAnalysisResults {
             contributorsAnalysisResults.getContributors().forEach(contributor -> {
                 String contributorId = contributor.getEmail();
                 if (contributorId.contains("commited-by-bot")) {
-                    System.out.println(contributorId);
+                    LOG.info(contributorId);
                 }
                 if (GitHistoryUtils.shouldIgnore(contributorId, configuration.getIgnoreContributors())) {
                     return;
@@ -455,7 +462,7 @@ public class LandscapeAnalysisResults {
                 if (configuration.getTransformContributorEmails().size() > 0) {
                     ComplexOperation operation = new ComplexOperation(configuration.getTransformContributorEmails());
                     contributorId = operation.exec(contributorId);
-                    System.out.println(contributor.getEmail() + " -> " + contributorId);
+                    LOG.info(contributor.getEmail() + " -> " + contributorId);
                 }
                 if (GitHistoryUtils.shouldIgnore(contributorId, configuration.getIgnoreContributors())) {
                     return;
@@ -640,6 +647,14 @@ public class LandscapeAnalysisResults {
     @JsonIgnore
     public void setPeopleDependencies30Days(List<ComponentDependency> peopleDependencies30Days) {
         this.peopleDependencies30Days = peopleDependencies30Days;
+    }
+
+    public List<ComponentDependency> getPeopleProjectDependencies30Days() {
+        return peopleProjectDependencies30Days;
+    }
+
+    public void setPeopleProjectDependencies30Days(List<ComponentDependency> peopleProjectDependencies30Days) {
+        this.peopleProjectDependencies30Days = peopleProjectDependencies30Days;
     }
 
     @JsonIgnore

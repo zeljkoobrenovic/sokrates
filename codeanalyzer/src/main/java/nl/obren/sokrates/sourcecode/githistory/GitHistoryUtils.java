@@ -11,6 +11,8 @@ import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 
 public class GitHistoryUtils {
+    private static final Log LOG = LogFactory.getLog(GitHistoryUtils.class);
+
     public static final String GIT_HISTORY_FILE_NAME = "git-history.txt";
     private static List<FileUpdate> updates = null;
     private static Map<String, String> anonymizeEmails = new HashMap<>();
@@ -58,17 +62,17 @@ public class GitHistoryUtils {
             return updates;
         }
         updates = new ArrayList<>();
-        System.out.println("Reading history from file");
+        LOG.info("Reading history from file");
         List<String> lines;
         try {
             lines = FileUtils.readLines(file, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+            LOG.info(e.getMessage());
             return updates;
         }
 
         lines.forEach(line -> {
-            System.out.println(line);
+            LOG.info(line);
             FileUpdate fileUpdate = GitHistoryUtils.parseLine(line, config);
             if (fileUpdate != null) {
                 updates.add(fileUpdate);
@@ -90,7 +94,7 @@ public class GitHistoryUtils {
                 if (index3 > 0) {
                     String date = line.substring(0, 10).trim();
                     if (date.compareTo(DateUtils.getAnalysisDate()) >= 0) {
-                        System.out.println("Ignoring future date: " + line);
+                        LOG.info("Ignoring future date: " + line);
                         return null;
                     }
                     String author = line.substring(index1 + 1, index2).trim();
@@ -104,13 +108,13 @@ public class GitHistoryUtils {
                             anonymizeEmails.put(author, anonymizedAuthor);
                         }
                         author = anonymizedAuthor;
-                        System.out.println(author + " -> " + anonymizedAuthor);
+                        LOG.info(author + " -> " + anonymizedAuthor);
                     } else if (config.getTransformContributorEmails().size() > 0) {
                         ComplexOperation operation = new ComplexOperation(config.getTransformContributorEmails());
                         String original = author;
                         author = operation.exec(author);
                         if (!original.equalsIgnoreCase(author)) {
-                            System.out.println(original + " -> " + author);
+                            LOG.info(original + " -> " + author);
                         }
                         if (shouldIgnore(author, ignoreContributors)) {
                             return null;

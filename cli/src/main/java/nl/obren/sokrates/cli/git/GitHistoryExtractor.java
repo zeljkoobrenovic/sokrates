@@ -1,6 +1,8 @@
 package nl.obren.sokrates.cli.git;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
@@ -26,6 +28,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class GitHistoryExtractor {
+    private static final Log LOG = LogFactory.getLog(GitHistoryExtractor.class);
+
     public static void main(String args[]) throws IOException, GitAPIException {
         new GitHistoryExtractor().extractGitHistory(new File("/Users/zobrenovic/Downloads/test/temp_clone_dir/"));
     }
@@ -58,7 +62,6 @@ public class GitHistoryExtractor {
                 }
 
                 paths.forEach(path -> {
-                    System.out.print(count.incrementAndGet() + " ");
                     SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
                     String line = format.format(rev.getAuthorIdent().getWhen()) + " "
                             + rev.getAuthorIdent().getEmailAddress() + " "
@@ -68,7 +71,7 @@ public class GitHistoryExtractor {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    System.out.println(line);
+                    LOG.info(count.incrementAndGet() + " " + line);
                 });
             }
         } catch (IOException | GitAPIException e) {

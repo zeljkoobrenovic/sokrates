@@ -11,6 +11,8 @@ import nl.obren.sokrates.sourcecode.landscape.SokratesProjectLink;
 import nl.obren.sokrates.sourcecode.landscape.SubLandscapeLink;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +23,8 @@ import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 public class LandscapeAnalysisInitiator {
+    private static final Log LOG = LogFactory.getLog(LandscapeAnalysisInitiator.class);
+
     private boolean saveFile;
 
     public LandscapeConfiguration initConfiguration(File analysisRoot, File landscapeConfigFile, boolean saveFile) {
@@ -72,14 +76,14 @@ public class LandscapeAnalysisInitiator {
             SubLandscapeLink subLandscapeLink = new SubLandscapeLink(parent.getName(), relativePath);
             configuration.getSubLandscapes().add(subLandscapeLink);
             if (saveFile) {
-                System.out.println("Adding sub-landscape: " + relativePath);
+                LOG.info("Adding sub-landscape: " + relativePath);
             }
         }
     }
 
     private void save(File landscapeConfigFile, LandscapeConfiguration landscapeConfiguration) {
         try {
-            System.out.println("Saving landscape configuration file in " + landscapeConfigFile.getCanonicalPath());
+            LOG.info("Saving landscape configuration file in " + landscapeConfigFile.getCanonicalPath());
             String json = new JsonGenerator().generate(landscapeConfiguration);
             FileUtils.write(landscapeConfigFile, json, StandardCharsets.UTF_8);
         } catch (JsonProcessingException e) {
@@ -101,6 +105,6 @@ public class LandscapeAnalysisInitiator {
         String relativePath = root.toPath().relativize(file).toString();
         configuration.getProjects().add(new SokratesProjectLink(relativePath));
 
-        System.out.println("Adding project: " + relativePath);
+        LOG.info("Adding project: " + relativePath);
     }
 }

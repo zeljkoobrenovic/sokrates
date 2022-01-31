@@ -11,6 +11,8 @@ import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +24,8 @@ import java.util.stream.Collectors;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class LandscapeVisualsGenerator {
+    private static final Log LOG = LogFactory.getLog(LandscapeVisualsGenerator.class);
+
     private File landscapeReportsFolder;
 
     public LandscapeVisualsGenerator(File landscapeReportsFolder) {
@@ -102,7 +106,7 @@ public class LandscapeVisualsGenerator {
     }
 
     public void exportVisuals(String nameSuffix, List<VisualizationItem> items) throws IOException {
-        System.out.println("Exporting visuals for " + nameSuffix + ".");
+        LOG.info("Exporting visuals for " + nameSuffix + ".");
         File folder = Paths.get(landscapeReportsFolder.getPath(), "visuals").toFile();
         folder.mkdirs();
         FileUtils.write(new File(folder, "bubble_chart_" + nameSuffix + ".html"), new VisualizationTemplate().renderBubbleChart(items), UTF_8);

@@ -15,6 +15,8 @@ import nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.SokratesProjectLink;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +27,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class LandscapeAnalyzer {
+    private static final Log LOG = LogFactory.getLog(LandscapeAnalyzer.class);
+
     private File landscapeConfigurationFile;
     private LandscapeConfiguration landscapeConfiguration;
 
@@ -35,11 +39,11 @@ public class LandscapeAnalyzer {
 
         try {
             String json = FileUtils.readFileToString(landscapeConfigurationFile, StandardCharsets.UTF_8);
-            System.out.println(json);
+            LOG.info(json);
             this.landscapeConfiguration = (LandscapeConfiguration) new JsonMapper().getObject(json, LandscapeConfiguration.class);
             landscapeAnalysisResults.setConfiguration(landscapeConfiguration);
             landscapeConfiguration.getProjects().forEach(link -> {
-                System.out.println("Analysing " + link.getAnalysisResultsPath() + "...");
+                LOG.info("Analysing " + link.getAnalysisResultsPath() + "...");
                 CodeAnalysisResults projectAnalysisResults = this.getProjectAnalysisResults(link);
                 if (projectAnalysisResults != null) {
                     landscapeAnalysisResults.getProjectAnalysisResults().add(new ProjectAnalysisResults(link, projectAnalysisResults));
@@ -63,15 +67,17 @@ public class LandscapeAnalyzer {
     }
 
     private void updatePeopleDependencies(LandscapeAnalysisResults landscapeAnalysisResults) {
-        System.out.println("Updating people dependencies....");
+        LOG.info("Updating people dependencies....");
         List<ContributorProjects> contributors = landscapeAnalysisResults.getContributors();
-        System.out.println("Updating people dependencies in past 30d....");
+        LOG.info("Updating people dependencies in past 30d....");
         List<ComponentDependency> peopleDependencies30Days = ContributorConnectionUtils.getPeopleDependencies(contributors, 0, 30);
         landscapeAnalysisResults.setPeopleDependencies30Days(peopleDependencies30Days);
-        System.out.println("Updating people dependencies in past 90d....");
+        List<ComponentDependency> peopleProjectDependencies30Days = ContributorConnectionUtils.getPeopleProjectDependencies(contributors, 0, 30);
+        landscapeAnalysisResults.setPeopleProjectDependencies30Days(peopleProjectDependencies30Days);
+        LOG.info("Updating people dependencies in past 90d....");
         List<ComponentDependency> peopleDependencies90Days = ContributorConnectionUtils.getPeopleDependencies(contributors, 0, 90);
         landscapeAnalysisResults.setPeopleDependencies90Days(peopleDependencies90Days);
-        System.out.println("Updating people dependencies in past 180d....");
+        LOG.info("Updating people dependencies in past 180d....");
         List<ComponentDependency> peopleDependencies180Days = ContributorConnectionUtils.getPeopleDependencies(contributors, 0, 180);
         landscapeAnalysisResults.setPeopleDependencies180Days(peopleDependencies180Days);
 
@@ -113,9 +119,9 @@ public class LandscapeAnalyzer {
         landscapeAnalysisResults.setC2cConnectionsCount30Days(peopleDependencies30Days.size());
         landscapeAnalysisResults.setC2pConnectionsCount30Days(connectionsViaProjects30Days.stream().mapToInt(c -> c.getConnectionsCount()).sum());
 
-        System.out.println("Adding history....");
+        LOG.info("Adding history....");
         addHistory(landscapeAnalysisResults);
-        System.out.println("Done updating people dependencies.");
+        LOG.info("Done updating people dependencies.");
     }
 
     private void addHistory(LandscapeAnalysisResults landscapeAnalysisResults) {

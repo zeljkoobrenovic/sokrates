@@ -4,8 +4,6 @@
 
 package nl.obren.sokrates.sourcecode;
 
-import nl.obren.sokrates.sourcecode.docs.Documentation;
-
 public class Link {
     // Display label
     private String label = "";

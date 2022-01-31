@@ -104,7 +104,7 @@ public class ContributorConnectionUtils {
                             .filter(project -> DateUtils.isAnyDateCommittedBetween(project.getCommitDates(), daysAgo1, daysAgo2))
                             .forEach(project -> {
                                 String email = contributorProjects.getContributor().getEmail();
-                                String projectName = project.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName();
+                                String projectName = "[" + project.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName() + "]";
                                 if (projectsMap.containsKey(projectName)) {
                                     List<String> emails = projectsMap.get(projectName);
                                     if (!emails.contains(email)) {
@@ -146,6 +146,43 @@ public class ContributorConnectionUtils {
                 });
             });
         });
+
+        return dependencies;
+    }
+
+    public static List<ComponentDependency> getPeopleProjectDependencies(List<ContributorProjects> contributors, int daysAgo1, int daysAgo2) {
+        List<ComponentDependency> dependencies = new ArrayList<>();
+        Map<String, ComponentDependency> dependenciesMap = new HashMap<>();
+        Map<String, List<String>> projectNamesMap = new HashMap<>();
+
+        contributors.stream()
+                .forEach(contributorProjects -> {
+                    contributorProjects.getProjects().stream()
+                            .filter(project -> DateUtils.isAnyDateCommittedBetween(project.getCommitDates(), daysAgo1, daysAgo2))
+                            .forEach(project -> {
+                                String email = contributorProjects.getContributor().getEmail();
+                                String projectName = "[" + project.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName() + "]";
+                                String key1 = email + "::" + projectName;
+                                String key2 = projectName + "::" + email;
+
+                                if (dependenciesMap.containsKey(key1)) {
+                                    if (!projectNamesMap.get(key1).contains(projectName)) {
+                                        dependenciesMap.get(key1).increment(1);
+                                        projectNamesMap.get(key1).add(projectName);
+                                    }
+                                } else if (dependenciesMap.containsKey(key2)) {
+                                    if (!projectNamesMap.get(key2).contains(projectName)) {
+                                        dependenciesMap.get(key2).increment(1);
+                                        projectNamesMap.get(key2).add(projectName);
+                                    }
+                                } else {
+                                    ComponentDependency dependency = new ComponentDependency(email, projectName);
+                                    dependenciesMap.put(key1, dependency);
+                                    dependencies.add(dependency);
+                                    projectNamesMap.put(key1, new ArrayList<>(Arrays.asList(projectName)));
+                                }
+                            });
+                });
 
         return dependencies;
     }
@@ -209,8 +246,8 @@ public class ContributorConnectionUtils {
                 projects.forEach(project2 -> {
                     if (project1 == project2) return;
 
-                    String name1 = project1.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName();
-                    String name2 = project2.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName();
+                    String name1 = "[" + project1.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName() + "]";
+                    String name2 = "[" + project2.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName() + "]";
 
                     String key1 = name1 + "::" + name2;
                     String key2 = name2 + "::" + name1;

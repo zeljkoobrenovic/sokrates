@@ -1,5 +1,8 @@
 package nl.obren.sokrates.sourcecode.landscape.analysis;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,8 +14,10 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class LandscapeAnalysisUtils {
+    private static final Log LOG = LogFactory.getLog(LandscapeAnalysisUtils.class);
+
     public static List<File> findAllSokratesLandscapeConfigFiles(File root) {
-        System.out.println("Scanning files...");
+        LOG.info("Scanning files...");
         List<File> files = new ArrayList<>();
         try (Stream<Path> paths = Files.walk(Paths.get(root.getPath()))) {
             paths.filter(path -> isSokratesLandscapeConfigFile(path)).forEach(path -> {
@@ -34,6 +39,6 @@ public class LandscapeAnalysisUtils {
     }
 
     public static void main(String args[]) {
-        findAllSokratesLandscapeConfigFiles(new File("/Users/zobrenovic/Documents/landscapes/landscapes")).forEach(file -> System.out.println(file.getPath()));
+        findAllSokratesLandscapeConfigFiles(new File("/Users/zobrenovic/Documents/landscapes/landscapes")).forEach(file -> LOG.info(file.getPath()));
     }
 }

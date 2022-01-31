@@ -790,7 +790,7 @@ public class DataExporter {
                 FileUtils.write(file, body.toString(), UTF_8);
             } catch (IllegalArgumentException e) {
                 duplicate.getDuplicatedFileBlocks().forEach(block -> {
-                    System.out.println(block.getSourceFile().getRelativePath() + " [" + block.getStartLine() + ":" + block.getEndLine() + "]:\n");
+                    LOG.info(block.getSourceFile().getRelativePath() + " [" + block.getStartLine() + ":" + block.getEndLine() + "]:\n");
                 });
                 LOG.warn(e);
                 System.exit(0);

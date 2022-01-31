@@ -1,8 +1,11 @@
 package nl.obren.sokrates.cli;
 
 import nl.obren.sokrates.common.utils.RegexUtils;
+import nl.obren.sokrates.reports.generators.statichtml.BasicSourceCodeReportGenerator;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +20,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class SokratesFileUtils {
+    private static final Log LOG = LogFactory.getLog(SokratesFileUtils.class);
+
     public static void extractFiles(File srcRoot, File dest, File parentDest, String pattern) throws IOException {
         dest.mkdirs();
         Path rootPath = Paths.get(srcRoot.getPath());
@@ -28,7 +33,7 @@ public class SokratesFileUtils {
             File srcFile = path.toFile();
             String relPath = rootPath.relativize(path).toFile().getPath();
             File destFile = new File(dest, relPath);
-            System.out.println(counter[0] + ". " + relPath);
+            LOG.info(counter[0] + ". " + relPath);
             try {
                 FileUtils.copyFile(srcFile, destFile);
             } catch (IOException e) {
@@ -62,7 +67,7 @@ public class SokratesFileUtils {
 
         FileUtils.writeStringToFile(new File(splitFolder, gitHistoryFile.getName()), splitContent, StandardCharsets.UTF_8);
 
-        System.out.println("Extracted git history to " + new File(splitFolder, gitHistoryFile.getName()).getPath());
+        LOG.info("Extracted git history to " + new File(splitFolder, gitHistoryFile.getName()).getPath());
     }
 
     public static String extractSubHistory(String gitHistoryContent, String pattern, String addPrefix) {

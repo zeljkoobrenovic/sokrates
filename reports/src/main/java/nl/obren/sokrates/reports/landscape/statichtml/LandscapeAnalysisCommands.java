@@ -11,6 +11,8 @@ import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalyzer;
 import nl.obren.sokrates.sourcecode.landscape.init.LandscapeAnalysisInitiator;
 import nl.obren.sokrates.sourcecode.landscape.init.LandscapeAnalysisUpdater;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,20 +20,22 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class LandscapeAnalysisCommands {
+    private static final Log LOG = LogFactory.getLog(LandscapeAnalysisCommands.class);
+
     public static void init(File analysisRoot, File landscapeConfigFile) {
         landscapeConfigFile = getConfigFile(analysisRoot, landscapeConfigFile);
         LandscapeAnalysisInitiator initiator = new LandscapeAnalysisInitiator();
         initiator.initConfiguration(analysisRoot, landscapeConfigFile, true);
         generateReport(landscapeConfigFile);
 
-        System.out.println("Configuration file: " + landscapeConfigFile.getPath());
+        LOG.info("Configuration file: " + landscapeConfigFile.getPath());
     }
 
     public static void update(File analysisRoot, File landscapeConfigFile) {
         landscapeConfigFile = getConfigFile(analysisRoot, landscapeConfigFile);
         LandscapeAnalysisUpdater updater = new LandscapeAnalysisUpdater();
         updater.updateConfiguration(analysisRoot, landscapeConfigFile);
-        System.out.println("Configuration file: " + landscapeConfigFile.getPath());
+        LOG.info("Configuration file: " + landscapeConfigFile.getPath());
         generateReport(landscapeConfigFile);
     }
 
@@ -65,20 +69,20 @@ public class LandscapeAnalysisCommands {
             File finalReportsFolder = reportsFolder;
             String customHtmlReportHeaderFragment = landscapeAnalysisResults.getConfiguration().getCustomHtmlReportHeaderFragment();
             reports.forEach(report -> {
-                System.out.println("Exporting " + report.getFileName() + ".");
+                LOG.info("Exporting " + report.getFileName() + ".");
                 ReportFileExporter.exportHtml(finalReportsFolder, "", report, customHtmlReportHeaderFragment);
             });
 
             File finalIndividualReportsFolder = individualReportsFolder;
             reportGenerator.getIndividualContributorReports().forEach(individualReport -> {
-                System.out.println("Exporting " + individualReport.getFileName() + ".");
+                LOG.info("Exporting " + individualReport.getFileName() + ".");
                 ReportFileExporter.exportHtml(finalIndividualReportsFolder, "", individualReport, customHtmlReportHeaderFragment);
             });
 
             LandscapeVisualsGenerator visualsGenerator = new LandscapeVisualsGenerator(reportsFolder);
             visualsGenerator.exportVisuals(landscapeAnalysisResults);
 
-            System.out.println("Report file: " + finalReportsFolder.getPath() + "/index.html");
+            LOG.info("Report file: " + finalReportsFolder.getPath() + "/index.html");
         } catch (IOException e) {
             e.printStackTrace();
         }

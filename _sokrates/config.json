@@ -168,7 +168,7 @@
   "analysis" : {
     "skipDuplication" : false,
     "skipDependencies" : false,
-    "cacheSourceFiles" : true,
+    "cacheSourceFiles" : false,
     "maxLineLength" : 1000,
     "analyzerOverrides" : [ ]
   }

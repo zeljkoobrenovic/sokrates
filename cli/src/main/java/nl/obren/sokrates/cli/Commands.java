@@ -3,12 +3,16 @@ package nl.obren.sokrates.cli;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class Commands {
+    private static final Log LOG = LogFactory.getLog(Commands.class);
+
     // commands
     public static final String INIT = "init";
     public static final String INIT_DESCRIPTION = "Creates a new Sokrates analysis configuration file based on standard and optional custom conventions";
@@ -117,12 +121,12 @@ public class Commands {
 
     public void usage() {
         List<CommandUsage> commandUsages = usageInfo();
-        System.out.println("Usage: java -jar sokrates.jar <command> <options>");
-        System.out.println("Help: java -jar sokrates.jar <command> -help");
-        System.out.println("Commands: " + commandUsages.stream().map(c -> c.getName()).collect(Collectors.joining(", ")));
-        System.out.println("");
+        LOG.info("Usage: java -jar sokrates.jar <command> <options>");
+        LOG.info("Help: java -jar sokrates.jar <command> -help");
+        LOG.info("Commands: " + commandUsages.stream().map(c -> c.getName()).collect(Collectors.joining(", ")));
+        LOG.info("");
         commandUsages.forEach(commandUsage -> {
-            System.out.println("* " + commandUsage.getName() + ": " + commandUsage.getDescription());
+            LOG.info("* " + commandUsage.getName() + ": " + commandUsage.getDescription());
             if (commandUsage.getOptions() != null) {
                 String options = commandUsage.getOptions().getOptions().stream().map(o -> {
                     String text = "";
@@ -138,9 +142,8 @@ public class Commands {
                     }
                     return text;
                 }).collect(Collectors.joining(" "));
-                System.out.println("   - options: " + options);
+                LOG.info("   - options: " + options);
             }
-            System.out.println();
         });
     }
 

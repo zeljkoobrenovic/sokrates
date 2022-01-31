@@ -9,7 +9,10 @@ import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.SokratesProjectLink;
+import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LandscapeAnalysisUpdater {
+    private static final Log LOG = LogFactory.getLog(LandscapeAnalysisUtils.class);
+
     public LandscapeConfiguration updateConfiguration(File analysisRoot, File landscapeConfigFile) {
         landscapeConfigFile = getLandscapeConfigFile(analysisRoot, landscapeConfigFile);
         LandscapeConfiguration newConfig = getNewConfig(analysisRoot, landscapeConfigFile);
@@ -62,7 +67,7 @@ public class LandscapeAnalysisUpdater {
 
         allProjects.forEach(project -> {
             if (!(allPreviousProjects.stream().filter(prevProject -> prevProject.getAnalysisResultsPath().equalsIgnoreCase(project.getAnalysisResultsPath())).findAny().isPresent())) {
-                System.out.println("Adding project: " + project.getAnalysisResultsPath());
+                LOG.info("Adding project: " + project.getAnalysisResultsPath());
                 newProjects.add(project);
             }
         });
@@ -76,7 +81,7 @@ public class LandscapeAnalysisUpdater {
         landscapeConfiguration.getProjects().forEach(project -> {
             File analysisFile = Paths.get(analysisRoot, project.getAnalysisResultsPath()).toFile();
             if (!analysisFile.exists()) {
-                System.out.println("Removing project: " + project.getAnalysisResultsPath());
+                LOG.info("Removing project: " + project.getAnalysisResultsPath());
                 removedProjects.add(project);
             }
         });
