@@ -125,7 +125,7 @@ public class LandscapeProjectsReport {
         int index[] = {0};
         boolean breakPointReached[] = {false};
         int projectsCount = projectsAnalysisResults.size();
-        projectsAnalysisResults.forEach(projectAnalysis -> {
+        projectsAnalysisResults.stream().limit(landscapeAnalysisResults.getConfiguration().getProjectsListLimit()).forEach(projectAnalysis -> {
             int commits30d = projectAnalysis.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days();
             cummulative[0] += commits30d;
             index[0] += 1;
@@ -159,7 +159,7 @@ public class LandscapeProjectsReport {
                 .mapToInt(p -> p.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays())
                 .max().orElse(1), 1);
         int maxHeight = 64;
-        projectsAnalysisResults.forEach(projectAnalysis -> {
+        projectsAnalysisResults.stream().limit(landscapeAnalysisResults.getConfiguration().getProjectsListLimit()).forEach(projectAnalysis -> {
             FilesHistoryAnalysisResults filesHistoryAnalysisResults = projectAnalysis.getAnalysisResults().getFilesHistoryAnalysisResults();
             int ageInDays = filesHistoryAnalysisResults.getAgeInDays();
             int height = (int) (1 + maxHeight * (double) ageInDays / max);
@@ -186,7 +186,7 @@ public class LandscapeProjectsReport {
                 .mapToInt(p -> (int) p.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count())
                 .max().orElse(1), 1);
         int maxHeight = 64;
-        projectsAnalysisResults.forEach(projectAnalysis -> {
+        projectsAnalysisResults.stream().limit(landscapeAnalysisResults.getConfiguration().getProjectsListLimit()).forEach(projectAnalysis -> {
             int contributors30d = (int) projectAnalysis.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count();
             int height = (int) (1 + maxHeight * (double) contributors30d / max);
             String color = contributors30d > 0 ? "darkred" : "lightgrey";
@@ -217,7 +217,7 @@ public class LandscapeProjectsReport {
         int maxHeight = 64;
         boolean breakPointReached[] = {false};
         int projectsCount = projectsAnalysisResults.size();
-        projectsAnalysisResults.forEach(projectAnalysis -> {
+        projectsAnalysisResults.stream().limit(landscapeAnalysisResults.getConfiguration().getProjectsListLimit()).forEach(projectAnalysis -> {
             int mainLoc = projectAnalysis.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
             cummulative[0] += mainLoc;
             index[0] += 1;
@@ -331,7 +331,7 @@ public class LandscapeProjectsReport {
         report.endTable();
 
         if (limit < projectsAnalysisResults.size()) {
-            report.addParagraph("The list is limited to " + limit + " items (out of " + projectsAnalysisResults.size() + ")." +
+            report.addParagraph("The list is limited to " + limit + " items (out of " + projectsAnalysisResults.size() + ").",
                     "color:grey; font-size: 90%");
         }
 
@@ -427,7 +427,7 @@ public class LandscapeProjectsReport {
         report.endTable();
 
         if (limit < projectsAnalysisResults.size()) {
-            report.addParagraph("The list is limited to " + limit + " items (out of " + projectsAnalysisResults.size() + ")." +
+            report.addParagraph("The list is limited to " + limit + " items (out of " + projectsAnalysisResults.size() + ").",
                     "color:grey; font-size: 90%");
         }
 

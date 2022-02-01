@@ -17,11 +17,11 @@ phases:
       - mkdir builds
       - cp cli/target/cli-1.0-jar-with-dependencies.jar sokrates.jar
       - cp codeexplorer/target/codeexplorer-1.0-jar-with-dependencies.jar sokrates-explorer.jar
-      - cp sokrates.jar sokrates-0.9.jar
-      - cp sokrates-explorer.jar sokrates-explorer-0.9.jar
+      - cp sokrates.jar sokrates-LATEST.jar
+      - cp sokrates-explorer.jar sokrates-explorer-LATEST.jar
 artifacts:
   files:
     - sokrates.jar
     - sokrates-explorer.jar
-    - sokrates-0.9.jar
-    - sokrates-explorer-0.9.jar
+    - sokrates-LATEST.jar
+    - sokrates-explorer-LATEST.jar
