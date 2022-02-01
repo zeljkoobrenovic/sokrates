@@ -5,6 +5,7 @@
 package nl.obren.sokrates.sourcecode.analysis.results;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
@@ -254,7 +255,7 @@ public class FilesHistoryAnalysisResults {
         Map<String, Set<String>> contributorsPerExtensionAndYear = new HashMap<>();
         Map<String, Set<String>> commitsPerExtensionAndYear = new HashMap<>();
         this.history.forEach(item -> {
-            String extension = FilenameUtils.getExtension(item.getPath());
+            String extension = ExtensionGroupExtractor.getExtension(item.getPath());
             item.getCommits().forEach(commit -> {
                 String date = commit.getDate();
                 String year = DateUtils.getYear(date);

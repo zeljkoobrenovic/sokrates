@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.sourcecode.duplication;
 
+import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.aspects.Concern;
@@ -110,7 +111,7 @@ public class DuplicationAggregator {
         Map<String, ExtensionDuplication> map = new HashMap<>();
 
         duplicates.forEach(sourceFileDuplication -> {
-            String extension = FilenameUtils.getExtension(sourceFileDuplication.getSourceFile().getFile().getPath());
+            String extension = ExtensionGroupExtractor.getExtension(sourceFileDuplication.getSourceFile().getFile().getPath());
             ExtensionDuplication extensionDuplication = map.get(extension);
             if (extensionDuplication == null) {
                 extensionDuplication = new ExtensionDuplication();

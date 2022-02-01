@@ -4,33 +4,30 @@
 
 package nl.obren.sokrates.sourcecode.filehistory;
 
-import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TemporalDependenciesHelper {
     private List<ComponentDependency> componentDependencies = new ArrayList<>();
     private Map<String, ComponentDependency> componentDependenciesMap = new HashMap<>();
     private Map<ComponentDependency, List<String>> datesMap = new HashMap<>();
 
-    private String group = "";
-
-    public TemporalDependenciesHelper(String group) {
-        this.group = group;
+    public TemporalDependenciesHelper() {
     }
 
     public List<ComponentDependency> extractDependencies(List<FilePairChangedTogether> filePairInstances) {
         filePairInstances.forEach(filePairChangedTogether -> {
-            List<NamedSourceCodeAspect> logicalComponents1 = filePairChangedTogether.getSourceFile1().getLogicalComponents(group);
-            List<NamedSourceCodeAspect> logicalComponents2 = filePairChangedTogether.getSourceFile2().getLogicalComponents(group);
-            if (logicalComponents1.size() > 0 && logicalComponents2.size() > 0) {
-                String component1 = logicalComponents1.get(0).getName();
-                String component2 = logicalComponents2.get(0).getName();
+            String file1 = filePairChangedTogether.getSourceFile1().getRelativePath();
+            String file2 = filePairChangedTogether.getSourceFile2().getRelativePath();
+            String component1 = "[" + file1 + "]";
+            String component2 = "[" + file2 + "]";
 
-                if (!component1.equalsIgnoreCase(component2)) {
-                    addDependency(filePairChangedTogether, component1, component2);
-                }
+            if (!component1.equalsIgnoreCase(component2)) {
+                addDependency(filePairChangedTogether, component1, component2);
             }
         });
 

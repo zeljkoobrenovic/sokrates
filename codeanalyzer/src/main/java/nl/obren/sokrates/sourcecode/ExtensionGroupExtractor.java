@@ -164,8 +164,18 @@ public class ExtensionGroupExtractor {
         }
     }
 
+    public static String getExtension(String path) {
+        try {
+            return FilenameUtils.getExtension(path);
+        } catch (IllegalArgumentException e) {
+        }
+
+        return "";
+
+    }
+
     private void updateExtensionInfo(File file) {
-        String extension = FilenameUtils.getExtension(file.getPath());
+        String extension = getExtension(file.getPath());
         if (!extension.isEmpty() && !isKnownBinaryExtension(extension) && !isKnownIgnorableExtension(extension)) {
             updateMap(file, extension);
         }

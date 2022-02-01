@@ -16,6 +16,7 @@ import java.io.File;
 import java.util.List;
 
 import static nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils.getPeopleDependencies;
+import static nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils.getPeopleFileDependencies;
 
 public class ContributorsAnalyzer extends Analyzer {
     private CodeConfiguration codeConfiguration;
@@ -44,6 +45,12 @@ public class ContributorsAnalyzer extends Analyzer {
             analysisResults.setContributorsPerWeek(contributorsImport.getContributorsPerWeek());
             analysisResults.setContributorsPerDay(contributorsImport.getContributorsPerDay());
             analysisResults.setCommitsPerExtensions(fileHistoryAnalysisConfig.getCommitsPerExtension(sokratesFolder, fileHistoryAnalysisConfig));
+
+            analysisResults.setPeopleFileDependencies30Days(getPeopleFileDependencies(codeAnalysisResults, 30));
+            analysisResults.setPeopleFileDependencies90Days(getPeopleFileDependencies(codeAnalysisResults, 90));
+            analysisResults.setPeopleFileDependencies180Days(getPeopleFileDependencies(codeAnalysisResults, 180));
+            analysisResults.setPeopleFileDependencies365Days(getPeopleFileDependencies(codeAnalysisResults, 365));
+            analysisResults.setPeopleFileDependenciesAllTime(getPeopleFileDependencies(codeAnalysisResults, 36500));
 
             analysisResults.setPeopleDependencies30Days(getPeopleDependencies(codeAnalysisResults, 30));
             analysisResults.setPeopleDependencies90Days(getPeopleDependencies(codeAnalysisResults, 90));

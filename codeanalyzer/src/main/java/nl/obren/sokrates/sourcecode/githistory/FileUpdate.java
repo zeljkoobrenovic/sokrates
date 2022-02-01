@@ -1,7 +1,6 @@
 package nl.obren.sokrates.sourcecode.githistory;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.apache.commons.io.FilenameUtils;
+import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
 
 public class FileUpdate {
     private String date = "";
@@ -49,6 +48,6 @@ public class FileUpdate {
     }
 
     public String getExtension() {
-        return FilenameUtils.getExtension(getPath());
+        return ExtensionGroupExtractor.getExtension(getPath());
     }
 }

@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.reports.utils;
 
+import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import org.apache.commons.io.FilenameUtils;
@@ -53,7 +54,7 @@ public class FilesReportUtils {
             String parent = StringUtils.abbreviate(file.getParent(), 150);
             table.append("<td>" +
                     "<div><div style='display: inline-block; vertical-align: top; margin-top: 3px; margin-right: 4px;'>" +
-                    DataImageUtils.getLangDataImageDiv30(FilenameUtils.getExtension(file.getName())) +
+                    DataImageUtils.getLangDataImageDiv30(ExtensionGroupExtractor.getExtension(file.getName())) +
                     "</div><div style='display: inline-block;'><b>"
                     + fileNameFragment + "</b><br/>in " + (parent != null ? parent : "root") + "<br/>" +
                     "</div></div>" +

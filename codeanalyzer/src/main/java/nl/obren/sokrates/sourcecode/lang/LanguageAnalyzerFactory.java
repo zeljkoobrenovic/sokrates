@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.sourcecode.lang;
 
+import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.analysis.AnalyzerOverride;
@@ -629,7 +630,7 @@ public class LanguageAnalyzerFactory {
                 return override.getAnalyzer();
             }
         }
-        return FilenameUtils.getExtension(sourceFile.getFile().getPath()).toLowerCase();
+        return ExtensionGroupExtractor.getExtension(sourceFile.getFile().getPath()).toLowerCase();
     }
 
 }

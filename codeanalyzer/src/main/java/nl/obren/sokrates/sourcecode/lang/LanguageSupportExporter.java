@@ -32,6 +32,8 @@ public class LanguageSupportExporter {
         analyzerMap.keySet().forEach(key -> {
             export.add(analyzerMap.get(key));
         });
+
+        System.out.println(new JsonGenerator().generate(export));
     }
 
     private void processAnalyzer(String extension, LanguageAnalyzer languageAnalyzerByExtension) {

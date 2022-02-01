@@ -146,7 +146,7 @@ public class ContributorsReportGenerator {
 
         report.startTabContentSection("all_time", false);
         addContributorsPanel(report, contributors, c -> c.getCommitsCount(), true, e -> e.getFileUpdates());
-        renderPeopleDependencies(analysis.getPeopleDependenciesAllTime(), 35600, c -> c.getCommitsCount(), contributors);
+        renderPeopleDependencies(analysis.getPeopleDependenciesAllTime(), null,35600, c -> c.getCommitsCount(), contributors);
         report.endTabContentSection();
 
 
@@ -155,7 +155,7 @@ public class ContributorsReportGenerator {
         if (commits30Days.size() > 0) {
             commits30Days.sort((a, b) -> b.getCommitsCount30Days() - a.getCommitsCount30Days());
             addContributorsPanel(report, commits30Days, c -> c.getCommitsCount30Days(), true, e -> e.getFileUpdates30Days());
-            renderPeopleDependencies(analysis.getPeopleDependencies30Days(), 30, c -> c.getCommitsCount30Days(), commits30Days);
+            renderPeopleDependencies(analysis.getPeopleDependencies30Days(), analysis.getPeopleFileDependencies30Days(), 30, c -> c.getCommitsCount30Days(), commits30Days);
         } else {
             report.addParagraph("No commits in past 30 days.", "margin-top: 16px");
         }
@@ -166,7 +166,7 @@ public class ContributorsReportGenerator {
         if (commits90Days.size() > 0) {
             commits90Days.sort((a, b) -> b.getCommitsCount90Days() - a.getCommitsCount90Days());
             addContributorsPanel(report, commits90Days, c -> c.getCommitsCount90Days(), true, e -> e.getFileUpdates90Days());
-            renderPeopleDependencies(analysis.getPeopleDependencies90Days(), 90, c -> c.getCommitsCount90Days(), commits90Days);
+            renderPeopleDependencies(analysis.getPeopleDependencies90Days(), analysis.getPeopleFileDependencies90Days(), 90, c -> c.getCommitsCount90Days(), commits90Days);
         } else {
             report.addParagraph("No commits in past 90 days.", "margin-top: 16px");
         }
@@ -177,7 +177,7 @@ public class ContributorsReportGenerator {
         if (commits180Days.size() > 0) {
             commits180Days.sort((a, b) -> b.getCommitsCount180Days() - a.getCommitsCount180Days());
             addContributorsPanel(report, commits180Days, c -> c.getCommitsCount180Days(), false, null);
-            renderPeopleDependencies(analysis.getPeopleDependencies180Days(), 180, c -> c.getCommitsCount180Days(), commits180Days);
+            renderPeopleDependencies(analysis.getPeopleDependencies180Days(), analysis.getPeopleFileDependencies180Days(), 180, c -> c.getCommitsCount180Days(), commits180Days);
         } else {
             report.addParagraph("No commits in past 180 days.", "margin-top: 16px");
         }
@@ -187,7 +187,7 @@ public class ContributorsReportGenerator {
         List<Contributor> commits365Days = contributors.stream().filter(c -> c.getCommitsCount365Days() > 0).collect(Collectors.toList());
         commits365Days.sort((a, b) -> b.getCommitsCount365Days() - a.getCommitsCount365Days());
         addContributorsPanel(report, commits365Days, c -> c.getCommitsCount365Days(), false, null);
-        renderPeopleDependencies(analysis.getPeopleDependencies365Days(), 365, c -> c.getCommitsCount365Days(), commits365Days);
+        renderPeopleDependencies(analysis.getPeopleDependencies365Days(), analysis.getPeopleFileDependencies365Days(), 365, c -> c.getCommitsCount365Days(), commits365Days);
         report.endTabContentSection();
 
         report.startTabContentSection("data", false);
@@ -364,17 +364,21 @@ public class ContributorsReportGenerator {
         return contributorsPerDay;
     }
 
-    private void renderPeopleDependencies(List<ComponentDependency> peopleDependencies, int daysAgo,
+    private void renderPeopleDependencies(List<ComponentDependency> peopleDependencies,
+                                          List<ComponentDependency> peopleFileDependencies,
+                                          int daysAgo,
                                           ContributionCounter contributionCounter,
                                           List<Contributor> contributors) {
         if (peopleDependencies.size() > 0) {
             report.addLevel2Header("Contributor Dependencies", "margin-top: 40px; margin-bottom: 0;");
             report.addParagraph("A contributor dependency is detected if two contributors have changed the same files in the past " + daysAgo + " days.",
                     "color: grey; font-size: 80%; margin-bottom: 12px;");
+            addDependenciesViaSharedFiles(peopleDependencies, peopleFileDependencies, daysAgo);
 
             List<ContributorConnection> contributorConnections = ContributorConnectionUtils.getContributorConnections(peopleDependencies, contributors, contributionCounter);
+            addContributors(contributorConnections);
             String cMedian = getRoundedValueOf(ContributorConnectionUtils.getCMedian(contributorConnections(peopleDependencies)));
-            report.addParagraph("C-median: " + cMedian, "margin-bottom: 0;");
+            report.addParagraph("C-median: " + cMedian, "margin-bottom: 0; margin-top: 10px;");
             report.addParagraph("A half of the contributors has more than " + cMedian + " connections, and a half has less than this number.",
                     "color: grey; font-size: 80%; margin-bottom: 20px");
             report.addParagraph("C-mean: " + getRoundedValueOf(ContributorConnectionUtils.getCMean(contributorConnections(peopleDependencies))), "margin-bottom: 0;");
@@ -382,34 +386,42 @@ public class ContributorsReportGenerator {
             String cIndex = getRoundedValueOf(ContributorConnectionUtils.getCIndex(contributorConnections(peopleDependencies)));
             report.addParagraph("C-index: " + cIndex, "margin-bottom: 0;");
             report.addParagraph("There are " + cIndex + " contributors with " + cIndex + " or more connections.", "color: grey; font-size: 80%; margin-bottom: 40px");
-            addContributors(contributorConnections);
 
-            report.addLevel3Header("Contributor Dependencies via Shared Files", "margin-top: 42px");
-            report.startShowMoreBlock("show graph...");
-            report.addParagraph("The number on lines shows the number of same files that both persons changed in past <b>" + daysAgo + "</b> days.", "color: grey");
-            GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
-            graphvizDependencyRenderer.setMaxNumberOfDependencies(100);
-            graphvizDependencyRenderer.setTypeGraph();
-
-            Set<String> emails = new HashSet<>();
-            peopleDependencies.forEach(peopleDependency -> {
-                emails.add(peopleDependency.getFromComponent());
-                emails.add(peopleDependency.getToComponent());
-            });
-
-            String prefix = "people_dependencies_" + daysAgo + "_";
-            String graphId = addDependencyGraphVisuals(peopleDependencies, new ArrayList<>(), graphvizDependencyRenderer, prefix);
-            report.endShowMoreBlock();
-            report.addLineBreak();
-            report.addNewTabLink("- open 3D force graph", "visuals/" + graphId + "_force_3d.html");
-            report.addLineBreak();
-            report.addLineBreak();
-            addPeopleDependenciesTable(peopleDependencies);
         }
     }
 
+    private void addDependenciesViaSharedFiles(List<ComponentDependency> peopleDependencies, List<ComponentDependency> peopleFileDependencies, int daysAgo) {
+        report.addLevel3Header("Contributor Dependencies via Shared Files", "margin-top: 20px");
+        report.startShowMoreBlock("show graph...");
+        report.addParagraph("The number on lines shows the number of same files that both persons changed in past <b>" + daysAgo + "</b> days.", "color: grey");
+        GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
+        graphvizDependencyRenderer.setMaxNumberOfDependencies(100);
+        graphvizDependencyRenderer.setTypeGraph();
+
+        Set<String> emails = new HashSet<>();
+        peopleDependencies.forEach(peopleDependency -> {
+            emails.add(peopleDependency.getFromComponent());
+            emails.add(peopleDependency.getToComponent());
+        });
+
+        String prefix = "people_dependencies_" + daysAgo + "_";
+        String graphId = addDependencyGraphVisuals(peopleDependencies, new ArrayList<>(), graphvizDependencyRenderer, prefix);
+        report.endShowMoreBlock();
+        report.addLineBreak();
+        report.addNewTabLink("- open 3D force graph", "visuals/" + graphId + "_force_3d.html");
+        report.addLineBreak();
+        if (peopleFileDependencies != null) {
+            String prefixFile = "people_dependencies_via_files_" + daysAgo + "_";
+            String graphIdFile = add3DDependencyGraphVisuals(peopleFileDependencies, prefixFile);
+            report.addNewTabLink("- open 3D force graph (including files)", "visuals/" + graphIdFile + "_force_3d.html");
+        }
+        report.addLineBreak();
+        report.addLineBreak();
+        addPeopleDependenciesTable(peopleDependencies);
+    }
+
     private void addContributors(List<ContributorConnection> contributorConnections) {
-        report.addLevel3Header("Most Connected Contributors");
+        report.addLevel3Header("Most Connected Contributors", "margin-top: 20px");
         report.startScrollingDiv();
         report.startTable();
         report.addTableHeader("", "Contributor", "# connections", "# commits");
@@ -482,6 +494,13 @@ public class ContributorsReportGenerator {
         report.addLineBreak();
         VisualizationTools.addDownloadLinks(report, graphId);
 
+        export3DForceGraph(componentDependencies, graphId);
+
+        return graphId;
+    }
+
+    private String add3DDependencyGraphVisuals(List<ComponentDependency> componentDependencies, String prefix) {
+        String graphId = prefix + dependencyVisualCounter++;
         export3DForceGraph(componentDependencies, graphId);
 
         return graphId;

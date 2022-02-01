@@ -95,6 +95,37 @@ public class ContributorConnectionUtils {
         return dependencies;
     }
 
+    public static List<ComponentDependency> getPeopleFileDependencies(CodeAnalysisResults codeAnalysisResults, int daysAgo) {
+        List<ComponentDependency> dependencies = new ArrayList<>();
+        Map<String, ComponentDependency> dependenciesMap = new HashMap<>();
+
+        codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory().forEach(fileModificationHistory -> {
+            fileModificationHistory.getCommits().stream()
+                    .filter(commit -> DateUtils.isCommittedBetween(commit.getDate(), 0, daysAgo))
+                    .forEach(commit -> {
+                        String path = "[" + fileModificationHistory.getPath() + "]";
+                        String email = commit.getEmail();
+                        String key1 = email + "::" + path;
+                        String key2 = path + "::" + email;
+
+                        ComponentDependency dependency;
+                        if (dependenciesMap.containsKey(key1)) {
+                            dependency = dependenciesMap.get(key1);
+                        } else if (dependenciesMap.containsKey(key2)) {
+                            dependency = dependenciesMap.get(key2);
+                        } else {
+                            dependency = new ComponentDependency(email, path);
+                            dependenciesMap.put(key1, dependency);
+                            dependencies.add(dependency);
+                        }
+
+                        dependency.setCount(dependency.getCount() + 1);
+                    });
+        });
+        dependencies.sort((a, b) -> b.getCount() - a.getCount());
+        return dependencies;
+    }
+
     public static List<ComponentDependency> getPeopleDependencies(List<ContributorProjects> contributors, int daysAgo1, int daysAgo2) {
         Map<String, List<String>> projectsMap = new HashMap<>();
 

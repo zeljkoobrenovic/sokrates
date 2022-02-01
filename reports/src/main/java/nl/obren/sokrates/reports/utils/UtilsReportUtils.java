@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.reports.utils;
 
+import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 import org.apache.commons.io.FilenameUtils;
 
@@ -30,7 +31,7 @@ public class UtilsReportUtils {
                     : unit.getSourceFile().getRelativePath();
             table.append("<td>" +
                     "<div><div style='display: inline-block; vertical-align: top; margin-top: 3px; margin-right: 4px;'>" +
-                    DataImageUtils.getLangDataImageDiv30(FilenameUtils.getExtension(unit.getSourceFile().getFile().getName())) +
+                    DataImageUtils.getLangDataImageDiv30(ExtensionGroupExtractor.getExtension(unit.getSourceFile().getFile().getName())) +
                     "</div><div style='display: inline-block;'><b>" +
                     "<a target='_blank'" +
                     "href='../src/fragments/" + fragmentType + "/" + fragmentType + "_"

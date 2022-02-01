@@ -69,7 +69,7 @@ public class SourceFile {
     @JsonIgnore
     public void setFile(File file) {
         this.file = file;
-        this.extension = FilenameUtils.getExtension(file.getPath());
+        this.extension = ExtensionGroupExtractor.getExtension(file.getPath());
     }
 
 

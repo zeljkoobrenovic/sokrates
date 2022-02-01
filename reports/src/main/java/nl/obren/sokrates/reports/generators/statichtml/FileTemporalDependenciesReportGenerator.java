@@ -8,7 +8,6 @@ import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.FilePairChangedTogether;
 import nl.obren.sokrates.sourcecode.filehistory.TemporalDependenciesHelper;
@@ -82,9 +81,10 @@ public class FileTemporalDependenciesReportGenerator {
         if (filePairs.size() > maxListSize) {
             filePairs = filePairs.subList(0, maxListSize);
         }
-        report.startSubSection("Files Most Frequently Changed Together (Top " + filePairs.size() + ")", "");
+        report.startSubSection("Files Most Frequently Changed Together (Top " + filePairs.size() + ")", "margin-top: 20px");
         report.addParagraph("<a href='../data/text/temporal_dependencies.txt' target='_blank'>data...</a>");
         addTable(report, filePairs);
+        report.endSection();
     }
 
     private void addFileChangedTogetherInDifferentFoldersList(RichTextReport report, List<FilePairChangedTogether> filePairsChangedTogether) {
@@ -95,9 +95,11 @@ public class FileTemporalDependenciesReportGenerator {
         report.startSection("Files from Different Folders Most Frequently Changed Together (Top " + filePairs.size() + ")", "");
         report.addParagraph("<a href='../data/text/temporal_dependencies_different_folders.txt' target='_blank'>data...</a>");
         addTable(report, filePairs);
+        report.endSection();
     }
 
     private void addTable(RichTextReport report, List<FilePairChangedTogether> filePairs) {
+        report.startDiv("max-height: 400px; overflow-y: auto");
         report.startTable();
         report.addTableHeader("Pairs", "# same commits", "# commits 1", "# commits 2", "latest commit");
         filePairs.forEach(filePair -> {
@@ -122,55 +124,31 @@ public class FileTemporalDependenciesReportGenerator {
             report.endTableRow();
         });
         report.endTable();
-        report.endSection();
+        report.endDiv();
     }
 
     private void addGraphsPerLogicalComponents(RichTextReport report, List<FilePairChangedTogether> filePairsChangedTogether) {
-        String components = codeAnalysisResults.getCodeConfiguration().getLogicalDecompositions().stream().map(c -> c.getName()).collect(Collectors.joining(", "));
-
-        report.startSubSection("File Change History per Logical Decomposition", components);
-
-        addChangesPerLogicalDecomposition(report, filePairsChangedTogether);
-
-        report.endSection();
+        addDependenciesSection(report, filePairsChangedTogether);
     }
 
-    private void addChangesPerLogicalDecomposition(RichTextReport report, List<FilePairChangedTogether> filePairsChangedTogether) {
-        int[] logicalDecompositionCounter = {0};
-        codeAnalysisResults.getCodeConfiguration().getLogicalDecompositions().forEach(logicalDecomposition -> {
-            logicalDecompositionCounter[0]++;
-
-            String name = logicalDecomposition.getName();
-            codeAnalysisResults.getFilesHistoryAnalysisResults()
-                    .getChangeDistributionPerLogicalDecomposition().stream()
-                    .filter(d -> d.getName().equalsIgnoreCase(name)).forEach(distribution -> {
-                        addDependenciesSection(report, logicalDecomposition, filePairsChangedTogether);
-                    });
-        });
-    }
-
-    private void addDependenciesSection(RichTextReport report, LogicalDecomposition logicalDecomposition, List<FilePairChangedTogether> filePairsChangedTogether) {
-        int threshold = logicalDecomposition.getTemporalLinkThreshold();
-
+    private void addDependenciesSection(RichTextReport report, List<FilePairChangedTogether> filePairsChangedTogether) {
         report.startDiv("margin: 10px;");
 
-        String thresholdInfo = threshold > 1 ? " (" + threshold + "+ shared commits)" : "";
-        report.startSubSection(logicalDecomposition.getName() + thresholdInfo, "The number on the lines shows the number of shared commits.");
-        addChangeDependencies(report, logicalDecomposition, filePairsChangedTogether);
+        report.startSubSection("Dependencies between files in same commits", "The number on the lines shows the number of shared commits.");
+        addChangeDependencies(report, filePairsChangedTogether);
         report.endDiv();
 
         report.endSection();
     }
 
-    private void addChangeDependencies(RichTextReport report, LogicalDecomposition logicalDecomposition, List<FilePairChangedTogether> filePairsChangedTogether) {
-        int threshold = logicalDecomposition.getTemporalLinkThreshold();
-        renderDependencies(report, logicalDecomposition.getName(), threshold, filePairsChangedTogether);
+    private void addChangeDependencies(RichTextReport report, List<FilePairChangedTogether> filePairsChangedTogether) {
+        renderDependencies(report, filePairsChangedTogether);
     }
 
-    private void renderDependencies(RichTextReport report, String logicalDecompositionName, int threshold, List<FilePairChangedTogether> filePairsChangedTogether) {
-        TemporalDependenciesHelper dependenciesHelper = new TemporalDependenciesHelper(logicalDecompositionName);
+    private void renderDependencies(RichTextReport report, List<FilePairChangedTogether> filePairsChangedTogether) {
+        TemporalDependenciesHelper dependenciesHelper = new TemporalDependenciesHelper();
         List<ComponentDependency> dependencies = dependenciesHelper.extractDependencies(filePairsChangedTogether);
-        List<ComponentDependency> componentDependencies = dependencies.stream().filter(d -> d.getCount() >= threshold).collect(Collectors.toList());
+        List<ComponentDependency> componentDependencies = dependencies.stream().collect(Collectors.toList());
 
         if (componentDependencies.size() > 0) {
             GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();

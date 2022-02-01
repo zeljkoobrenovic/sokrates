@@ -5,6 +5,7 @@
 package nl.obren.sokrates.sourcecode.aspects;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import org.apache.commons.io.FilenameUtils;
@@ -159,7 +160,7 @@ public class SourceCodeAspectUtils {
         Map<String, NamedSourceCodeAspect> map = new HashMap<>();
 
         aspect.getSourceFiles().forEach(sourceFile -> {
-            String extension = FilenameUtils.getExtension(sourceFile.getFile().getPath()).toLowerCase();
+            String extension = ExtensionGroupExtractor.getExtension(sourceFile.getFile().getPath()).toLowerCase();
             NamedSourceCodeAspect extensionAspect = map.get(extension);
             if (extensionAspect == null) {
                 extensionAspect = new NamedSourceCodeAspect("  *." + extension);

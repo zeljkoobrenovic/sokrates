@@ -23,6 +23,7 @@ import nl.obren.sokrates.reports.generators.explorers.FilesExplorerGenerator;
 import nl.obren.sokrates.reports.generators.explorers.UnitsExplorerGenerator;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.reports.utils.ZipUtils;
+import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
 import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileWithSearchData;
@@ -330,7 +331,7 @@ public class DataExporter {
         Map<String, List<SourceFile>> extensionsMap = new HashMap<>();
 
         analysisResults.getFilesExcludedByExtension().forEach(sourceFile -> {
-            String extension = FilenameUtils.getExtension(sourceFile.getRelativePath());
+            String extension = ExtensionGroupExtractor.getExtension(sourceFile.getRelativePath());
             List<SourceFile> files = extensionsMap.get(extension);
             if (files == null) {
                 files = new ArrayList<>();

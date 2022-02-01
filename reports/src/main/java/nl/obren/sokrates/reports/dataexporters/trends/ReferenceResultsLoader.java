@@ -7,6 +7,7 @@ package nl.obren.sokrates.reports.dataexporters.trends;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.reports.utils.ZipEntryContent;
 import nl.obren.sokrates.reports.utils.ZipUtils;
+import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import org.apache.commons.io.FilenameUtils;
@@ -33,7 +34,7 @@ public class ReferenceResultsLoader {
             file = new File(file, "analysisResults.zip");
         }
 
-        if (FilenameUtils.getExtension(file.getName()).equalsIgnoreCase("zip")) {
+        if (ExtensionGroupExtractor.getExtension(file.getName()).equalsIgnoreCase("zip")) {
             Map<String, ZipEntryContent> entries = ZipUtils.unzipAllEntriesAsStrings(file);
 
             if (entries.get("analysisResults.json") != null) {
