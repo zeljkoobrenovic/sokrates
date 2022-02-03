@@ -56,14 +56,23 @@ public class FileHistoryAnalyzer extends Analyzer {
                 enrichFilesWithAge(history);
                 LOG.info("Analyzing file age...");
                 analyzeFilesAge();
-                LOG.info("Analyzing files changed together (all time)...");
-                analyzeFilesChangedTogether(history);
-                LOG.info("Analyzing files changed together in past 30 days...");
-                analyzeFilesChangedTogether30Days(history);
-                LOG.info("Analyzing files changed together in past 90 days...");
-                analyzeFilesChangedTogether90Days(history);
-                LOG.info("Analyzing files changed together in past 180 days...");
-                analyzeFilesChangedTogether180Days(history);
+                int maxDays = codeConfiguration.getAnalysis().getMaxTemporalDependenciesDepthDays();
+                if (maxDays > 180) {
+                    LOG.info("Analyzing files changed together (all time)...");
+                    analyzeFilesChangedTogether(history);
+                }
+                if (maxDays >= 30) {
+                    LOG.info("Analyzing files changed together in past 30 days...");
+                    analyzeFilesChangedTogether30Days(history);
+                }
+                if (maxDays >= 90) {
+                    LOG.info("Analyzing files changed together in past 90 days...");
+                    analyzeFilesChangedTogether90Days(history);
+                }
+                if (maxDays >= 180) {
+                    LOG.info("Analyzing files changed together in past 180 days...");
+                    analyzeFilesChangedTogether180Days(history);
+                }
             }
         }
     }

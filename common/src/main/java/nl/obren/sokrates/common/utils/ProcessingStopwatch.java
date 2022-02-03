@@ -13,14 +13,22 @@ public class ProcessingStopwatch {
 
     private static List<ProcessingTimes> monitors = new ArrayList<>();
     private static Map<String, ProcessingTimes> monitorsMap = new HashMap<>();
+    private static ProcessingTimes referenceTimes = null;
 
-    public static void start(String processingName) {
+    public static void startAsReference(String processingName) {
+        ProcessingTimes times = start(processingName);
+        referenceTimes = times;
+    }
+
+    public static ProcessingTimes start(String processingName) {
         ProcessingTimes times = new ProcessingTimes(processingName);
 
         monitors.add(times);
         monitorsMap.put(processingName, times);
 
-        LOG.info("Starting " + processingName);
+        LOG.info("Running " + processingName);
+
+        return times;
     }
 
     public static void end(String processingName) {
@@ -40,7 +48,12 @@ public class ProcessingStopwatch {
     public static void print() {
         LOG.info("Processing times summary:");
         monitors.forEach(monitor -> {
-            LOG.info("Executed '" + monitor.getProcessing() + "' in " + monitor.getDuration() + "ms");
+            long duration = monitor.getDuration();
+            String percentageString = "";
+            if (referenceTimes != null && referenceTimes.getDuration() > 0) {
+                percentageString = " (" + FormattingUtils.getFormattedPercentage(100.0 * duration / referenceTimes.getDuration(), "<1") + "%)";
+            }
+            LOG.info("Executed '" + monitor.getProcessing() + "' in " + duration + "ms" + percentageString);
         });
     }
 }

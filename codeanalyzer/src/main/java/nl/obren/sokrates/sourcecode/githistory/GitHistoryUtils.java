@@ -100,14 +100,14 @@ public class GitHistoryUtils {
                 int index3 = line.indexOf(" ", index2 + 1);
                 if (index3 > 0) {
                     String date = line.substring(0, 10).trim();
-                    if (ignoreCommit(line, date)) {
+                    if (ignoreCommitByDate(line, date)) {
                         return null;
                     }
                     String author = line.substring(index1 + 1, index2).trim();
+                    if (shouldIgnore(author, ignoreContributors)) {
+                        return null;
+                    }
                     if (anonymize) {
-                        if (shouldIgnore(author, ignoreContributors)) {
-                            return null;
-                        }
                         String anonymizedAuthor = anonymizeEmails.get(author);
                         if (anonymizedAuthor == null) {
                             anonymizedAuthor = "Contributor " + (anonymizeEmails.keySet().size() + 1);
@@ -138,7 +138,7 @@ public class GitHistoryUtils {
         return null;
     }
 
-    private static boolean ignoreCommit(String line, String date) {
+    private static boolean ignoreCommitByDate(String line, String date) {
         if (date.compareTo(DateUtils.getAnalysisDate()) > 0) {
             LOG.info("Ignoring future date: " + line);
             return true;

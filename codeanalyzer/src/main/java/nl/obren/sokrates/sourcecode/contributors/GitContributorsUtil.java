@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.sourcecode.contributors;
 
+import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.githistory.AuthorCommit;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;

@@ -46,8 +46,10 @@ public class ContributorsAnalyzer extends Analyzer {
             analysisResults.setContributorsPerMonth(contributorsImport.getContributorsPerMonth());
             analysisResults.setContributorsPerWeek(contributorsImport.getContributorsPerWeek());
             analysisResults.setContributorsPerDay(contributorsImport.getContributorsPerDay());
-            analysisResults.setCommitsPerExtensions(fileHistoryAnalysisConfig.getCommitsPerExtension(sokratesFolder, fileHistoryAnalysisConfig));
             ProcessingStopwatch.end("analysis/contributors/loading");
+            ProcessingStopwatch.start("analysis/contributors/per extension");
+            analysisResults.setCommitsPerExtensions(fileHistoryAnalysisConfig.getCommitsPerExtension(sokratesFolder, fileHistoryAnalysisConfig));
+            ProcessingStopwatch.end("analysis/contributors/per extension");
 
             ProcessingStopwatch.start("analysis/contributors/get people file dependencies");
             analysisResults.setPeopleFileDependencies30Days(getPeopleFileDependencies(codeAnalysisResults, 30));

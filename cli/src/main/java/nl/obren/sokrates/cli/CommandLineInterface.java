@@ -65,7 +65,7 @@ public class CommandLineInterface {
     private Commands commands = new Commands();
 
     public static void main(String args[]) throws IOException {
-        ProcessingStopwatch.start("everything");
+        ProcessingStopwatch.startAsReference("everything");
         CommandLineInterface commandLineInterface = new CommandLineInterface();
         commandLineInterface.run(args);
 
@@ -499,11 +499,11 @@ public class CommandLineInterface {
         if (this.progressFeedback == null) {
             this.progressFeedback = new ProgressFeedback() {
                 public void setText(String text) {
-                    LOG.info(text);
+                    LOG.info(text.replaceAll("<.*?>", ""));
                 }
 
                 public void setDetailedText(String text) {
-                    LOG.info(text);
+                    LOG.info(text.replaceAll("<.*?>", ""));
                 }
             };
         }
@@ -558,7 +558,7 @@ public class CommandLineInterface {
         if (progressFeedback != null) {
             progressFeedback.setText(text);
         } else {
-            LOG.info(text);
+            LOG.info(text.replaceAll("<.*?>", ""));
         }
     }
 
