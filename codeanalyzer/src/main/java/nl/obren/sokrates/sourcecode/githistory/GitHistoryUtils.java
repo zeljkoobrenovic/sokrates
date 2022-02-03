@@ -18,10 +18,7 @@ import org.apache.commons.logging.LogFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class GitHistoryUtils {
     public static final String GIT_HISTORY_FILE_NAME = "git-history.txt";
@@ -36,7 +33,7 @@ public class GitHistoryUtils {
 
     public static List<AuthorCommit> getAuthorCommits(File file, FileHistoryAnalysisConfig config) {
         List<AuthorCommit> commits = new ArrayList<>();
-        List<String> commitIds = new ArrayList<>();
+        Set<String> commitIds = new HashSet<>();
 
         int index[] = {0};
 

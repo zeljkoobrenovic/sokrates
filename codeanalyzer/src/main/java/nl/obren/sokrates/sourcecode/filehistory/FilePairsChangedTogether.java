@@ -15,6 +15,7 @@ import java.util.*;
 
 public class FilePairsChangedTogether {
     private static final Log LOG = LogFactory.getLog(FilePairsChangedTogether.class);
+    public static final int PAIR_LIST_LIMIT = 1000000;
 
     private Map<String, FilePairChangedTogether> filePairsMap = new HashMap<>();
     private List<FilePairChangedTogether> filePairs = new ArrayList<>();
@@ -30,7 +31,7 @@ public class FilePairsChangedTogether {
         fileHistories.forEach(fileHistory -> {
             if (aspect.getSourceFileByPath(fileHistory.getPath()) != null) {
                 fileHistory.getCommits().forEach(commitInfo -> {
-                    if (filePairs.size() > 1000000 || rangeInDays <= 0 || DateUtils.isDateWithinRange(commitInfo.getDate(), rangeInDays)) {
+                    if (filePairs.size() > PAIR_LIST_LIMIT || rangeInDays <= 0 || DateUtils.isDateWithinRange(commitInfo.getDate(), rangeInDays)) {
                         String commitId = commitInfo.getId();
                         String commitDate = commitInfo.getDate();
                         List<FileModificationHistory> list = commitsIdMap.get(commitId);
