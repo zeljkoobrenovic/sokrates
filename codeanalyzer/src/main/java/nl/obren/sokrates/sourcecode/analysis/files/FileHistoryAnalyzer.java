@@ -126,25 +126,25 @@ public class FileHistoryAnalyzer extends Analyzer {
     private void analyzeFilesChangedTogether(List<FileModificationHistory> history) {
         FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(codeConfiguration.getAnalysis().getMaxTemporalDependenciesDepthDays());
         filePairsChangedTogether.populate(codeConfiguration.getMain(), history);
-        analysisResults.setFilePairsChangedTogether(filePairsChangedTogether.getFilePairs());
+        analysisResults.setFilePairsChangedTogether(filePairsChangedTogether.getFilePairsList());
     }
 
     private void analyzeFilesChangedTogether30Days(List<FileModificationHistory> history) {
         FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(30);
         filePairsChangedTogether.populate(codeConfiguration.getMain(), history);
-        analysisResults.setFilePairsChangedTogether30Days(filePairsChangedTogether.getFilePairs());
+        analysisResults.setFilePairsChangedTogether30Days(filePairsChangedTogether.getFilePairsList());
     }
 
     private void analyzeFilesChangedTogether90Days(List<FileModificationHistory> history) {
         FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(90);
         filePairsChangedTogether.populate(codeConfiguration.getMain(), history);
-        analysisResults.setFilePairsChangedTogether90Days(filePairsChangedTogether.getFilePairs());
+        analysisResults.setFilePairsChangedTogether90Days(filePairsChangedTogether.getFilePairsList());
     }
 
     private void analyzeFilesChangedTogether180Days(List<FileModificationHistory> history) {
         FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(180);
         filePairsChangedTogether.populate(codeConfiguration.getMain(), history);
-        analysisResults.setFilePairsChangedTogether180Days(filePairsChangedTogether.getFilePairs());
+        analysisResults.setFilePairsChangedTogether180Days(filePairsChangedTogether.getFilePairsList());
     }
 
     private void analyzeFilesAge() {
