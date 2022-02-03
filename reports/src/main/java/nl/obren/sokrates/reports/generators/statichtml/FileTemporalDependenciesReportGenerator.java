@@ -12,12 +12,16 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.FilePairChangedTogether;
 import nl.obren.sokrates.sourcecode.filehistory.TemporalDependenciesHelper;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 public class FileTemporalDependenciesReportGenerator {
+    private static final Log LOG = LogFactory.getLog(FileTemporalDependenciesReportGenerator.class);
+
     private final CodeAnalysisResults codeAnalysisResults;
     private int graphCounter = 1;
     private File reportsFolder;
@@ -138,10 +142,14 @@ public class FileTemporalDependenciesReportGenerator {
     }
 
     private void renderDependencies(RichTextReport report, List<FilePairChangedTogether> filePairsChangedTogether) {
+        ProcessingStopwatch.start("reporting/temporal dependencies/extract dependencies");
         TemporalDependenciesHelper dependenciesHelper = new TemporalDependenciesHelper();
         List<ComponentDependency> dependencies = dependenciesHelper.extractDependencies(filePairsChangedTogether);
+        LOG.info("Extracted " + dependencies.size() + " dependencies");
+        ProcessingStopwatch.end("reporting/temporal dependencies/extract dependencies");
 
         if (dependencies.size() > 0) {
+            ProcessingStopwatch.start("reporting/temporal dependencies/graphviz");
             GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
             graphvizDependencyRenderer.setDefaultNodeFillColor("deepskyblue2");
             graphvizDependencyRenderer.setType("graph");
@@ -158,18 +166,22 @@ public class FileTemporalDependenciesReportGenerator {
             String force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(dependencies, reportsFolder, graphId);
             report.addNewTabLink("Open 3D force graph...", force3DGraphFilePath);
             report.addLineBreak();
+            ProcessingStopwatch.end("reporting/temporal dependencies/graphviz");
         } else {
             report.addParagraph("No temporal cross-component dependencies found.");
         }
 
         ProcessingStopwatch.start("reporting/temporal dependencies/extract dependencies with commits");
         List<ComponentDependency> dependenciesWithCommits = dependenciesHelper.extractDependenciesWithCommits(filePairsChangedTogether);
+        LOG.info("Extracted " + dependenciesWithCommits.size() + " dependencies with commits");
         ProcessingStopwatch.end("reporting/temporal dependencies/extract dependencies with commits");
         if (dependenciesWithCommits.size() > 0) {
+            ProcessingStopwatch.start("reporting/temporal dependencies/export graph");
             String graphId = "file_changed_together_dependencies_with_commits_" + graphCounter++;
             String force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(dependenciesWithCommits, reportsFolder, graphId);
             report.addNewTabLink("Open 3D force graph (with commits)...", force3DGraphFilePath);
             report.addLineBreak();
+            ProcessingStopwatch.end("reporting/temporal dependencies/export graph");
         }
     }
 
