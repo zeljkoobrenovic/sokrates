@@ -58,7 +58,7 @@ public class FileHistoryAnalyzer extends Analyzer {
                 analyzeFilesAge();
                 int maxDays = codeConfiguration.getAnalysis().getMaxTemporalDependenciesDepthDays();
                 if (maxDays > 180) {
-                    LOG.info("Analyzing files changed together (all time)...");
+                    LOG.info("Analyzing files changed together (all time=" + maxDays + " days)...");
                     analyzeFilesChangedTogether(history);
                 }
                 if (maxDays >= 30) {

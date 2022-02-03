@@ -27,7 +27,7 @@ public class AnalysisConfig {
     private int maxLineLength = 1000;
 
     // A maximal number of days in source code history used to calculate temporal file dependencies
-    private int maxTemporalDependenciesDepthDays = 365;
+    private int maxTemporalDependenciesDepthDays = 180;
 
     // Projects with more than a given number of lines of main code will skip duplication analyses even if skipDuplication flag is false
     private int locDuplicationThreshold = 10000000;

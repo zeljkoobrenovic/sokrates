@@ -79,9 +79,6 @@ public class ScopeCreator {
     }
 
     private void expandScopeWithCustomConventions(CodeConfiguration codeConfiguration, SourceCodeFiles sourceCodeFiles) {
-        if (customScopingConventions.getMaxLineLength() > 0) {
-            codeConfiguration.getAnalysis().setMaxLineLength(customScopingConventions.getMaxLineLength());
-        }
         List<SourceFile> sourceFiles = sourceCodeFiles.getFilesInBroadScope();
         ConventionUtils.addConventions(customScopingConventions.getIgnoredFilesConventions(), codeConfiguration.getIgnore(), sourceFiles);
         ConventionUtils.addConventions(customScopingConventions.getTestFilesConventions(), codeConfiguration.getTest().getSourceFileFilters(), sourceFiles);
