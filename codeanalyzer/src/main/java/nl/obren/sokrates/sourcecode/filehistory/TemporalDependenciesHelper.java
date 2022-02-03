@@ -5,6 +5,8 @@
 package nl.obren.sokrates.sourcecode.filehistory;
 
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 
 public class TemporalDependenciesHelper {
+    private static final Log LOG = LogFactory.getLog(TemporalDependenciesHelper.class);
+
     private List<ComponentDependency> componentDependencies = new ArrayList<>();
     private Map<String, ComponentDependency> componentDependenciesMap = new HashMap<>();
     private Map<ComponentDependency, List<String>> datesMap = new HashMap<>();
@@ -51,6 +55,11 @@ public class TemporalDependenciesHelper {
                     ComponentDependency dependency2 = getDependency(commitId, component2, componentDependencies, componentDependenciesMap);
                     dependency2.setCount(dependency2.getCount() + 1);
                 });
+            }
+
+            if (componentDependencies.size() > 100000) {
+                LOG.info("Reached the limit of graphsize");
+                return;
             }
         });
 

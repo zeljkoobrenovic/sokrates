@@ -5,6 +5,7 @@
 package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
+import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.FilesReportUtils;
 import nl.obren.sokrates.reports.utils.PieChartUtils;
@@ -57,13 +58,25 @@ public class FileSizeReportGenerator {
         report.endShowMoreBlock();
         report.endSection();
 
+        ProcessingStopwatch.start("reporting/file size/overall");
         addGraphOverall(report, codeAnalysisResults.getFilesAnalysisResults().getOveralFileSizeDistribution());
+        ProcessingStopwatch.end("reporting/file size/overall");
+        ProcessingStopwatch.start("reporting/file size/per extension");
         addGraphPerExtension(report, codeAnalysisResults.getFilesAnalysisResults().getFileSizeDistributionPerExtension());
+        ProcessingStopwatch.end("reporting/file size/per extension");
+        ProcessingStopwatch.start("reporting/file size/per logical component");
         addGraphsPerLogicalComponents(report, codeAnalysisResults.getFilesAnalysisResults().getFileSizeDistributionPerLogicalDecomposition());
+        ProcessingStopwatch.end("reporting/file size/per logical component");
 
+        ProcessingStopwatch.start("reporting/file size/longest files");
         addLongestFilesList(report);
+        ProcessingStopwatch.end("reporting/file size/longest files");
+        ProcessingStopwatch.start("reporting/file size/files with most units");
         addFilesWithMostUnitsList(report);
+        ProcessingStopwatch.end("reporting/file size/files with most units");
+        ProcessingStopwatch.start("reporting/file size/files with most long lines");
         addFilesWithMostLongLines(report);
+        ProcessingStopwatch.end("reporting/file size/files with most long lines");
     }
 
     private void addGraphOverall(RichTextReport report, SourceFileSizeDistribution distribution) {

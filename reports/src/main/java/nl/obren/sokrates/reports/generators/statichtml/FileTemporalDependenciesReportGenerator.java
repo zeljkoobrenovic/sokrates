@@ -5,6 +5,7 @@
 package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.common.utils.FormattingUtils;
+import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -15,7 +16,6 @@ import nl.obren.sokrates.sourcecode.filehistory.TemporalDependenciesHelper;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class FileTemporalDependenciesReportGenerator {
     private final CodeAnalysisResults codeAnalysisResults;
@@ -26,7 +26,7 @@ public class FileTemporalDependenciesReportGenerator {
         this.codeAnalysisResults = codeAnalysisResults;
     }
 
-    public void addFileHistoryToReport(File reportsFolder, RichTextReport report) {
+    public void addTemporalDependenciesToReport(File reportsFolder, RichTextReport report) {
         this.reportsFolder = reportsFolder;
         report.addParagraph("A temporal dependency occurs when developers change two or more files " +
                 "at the same time (i.e. they are a part of the same commit).", "margin-top: 12px; color: grey");
@@ -162,7 +162,9 @@ public class FileTemporalDependenciesReportGenerator {
             report.addParagraph("No temporal cross-component dependencies found.");
         }
 
+        ProcessingStopwatch.start("reporting/temporal dependencies/extract dependencies with commits");
         List<ComponentDependency> dependenciesWithCommits = dependenciesHelper.extractDependenciesWithCommits(filePairsChangedTogether);
+        ProcessingStopwatch.end("reporting/temporal dependencies/extract dependencies with commits");
         if (dependenciesWithCommits.size() > 0) {
             String graphId = "file_changed_together_dependencies_with_commits_" + graphCounter++;
             String force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(dependenciesWithCommits, reportsFolder, graphId);

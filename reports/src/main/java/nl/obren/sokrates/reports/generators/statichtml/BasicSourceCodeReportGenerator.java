@@ -191,9 +191,9 @@ public class BasicSourceCodeReportGenerator {
                 ProcessingStopwatch.start("reporting/file change frequency");
                 new FileChurnReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileChangeFrequencyReport);
                 ProcessingStopwatch.end("reporting/file change frequency");
-                ProcessingStopwatch.start("reporting/");
-                new FileTemporalDependenciesReportGenerator(codeAnalysisResults).addFileHistoryToReport(reportsFolder, fileTemporalDependenciesReport);
-                ProcessingStopwatch.end("reporting/");
+                ProcessingStopwatch.start("reporting/temporal dependencies");
+                new FileTemporalDependenciesReportGenerator(codeAnalysisResults).addTemporalDependenciesToReport(reportsFolder, fileTemporalDependenciesReport);
+                ProcessingStopwatch.end("reporting/temporal dependencies");
                 ProcessingStopwatch.start("reporting/contributors");
                 new ContributorsReportGenerator(codeAnalysisResults).addContributorsAnalysisToReport(reportsFolder, contributorsReport);
                 ProcessingStopwatch.end("reporting/contributors");

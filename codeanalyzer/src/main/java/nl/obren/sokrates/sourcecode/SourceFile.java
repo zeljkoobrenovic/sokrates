@@ -10,9 +10,7 @@ import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
-import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -48,6 +46,7 @@ public class SourceFile {
     private String content;
 
     private int linesOfCodeInUnits;
+    private List<String> cleanedLines = null;
 
     public SourceFile() {
     }
@@ -61,6 +60,15 @@ public class SourceFile {
         setContent(content);
     }
 
+    public static String flattenToAscii(String string) {
+        StringBuilder sb = new StringBuilder(string.length());
+        string = Normalizer.normalize(string, Normalizer.Form.NFD);
+        for (char c : string.toCharArray()) {
+            if (c <= '\u007F') sb.append(c);
+        }
+        return sb.toString();
+    }
+
     @JsonIgnore
     public File getFile() {
         return file;
@@ -71,7 +79,6 @@ public class SourceFile {
         this.file = file;
         this.extension = ExtensionGroupExtractor.getExtension(file.getPath());
     }
-
 
     public String getRelativePath() {
         return relativePath;
@@ -94,15 +101,6 @@ public class SourceFile {
             e.printStackTrace();
         }
         return this;
-    }
-
-    public static String flattenToAscii(String string) {
-        StringBuilder sb = new StringBuilder(string.length());
-        string = Normalizer.normalize(string, Normalizer.Form.NFD);
-        for (char c : string.toCharArray()) {
-            if (c <= '\u007F') sb.append(c);
-        }
-        return sb.toString();
     }
 
     public String getExtension() {
@@ -202,8 +200,11 @@ public class SourceFile {
 
     @JsonIgnore
     public List<String> getCleanedLines() {
-        LanguageAnalyzer languageAnalyzer = LanguageAnalyzerFactory.getInstance().getLanguageAnalyzer(this);
-        return SourceCodeCleanerUtils.splitInLines(languageAnalyzer.cleanForLinesOfCodeCalculations(this).getCleanedContent());
+        if (cleanedLines == null) {
+            LanguageAnalyzer languageAnalyzer = LanguageAnalyzerFactory.getInstance().getLanguageAnalyzer(this);
+            cleanedLines = SourceCodeCleanerUtils.splitInLines(languageAnalyzer.cleanForLinesOfCodeCalculations(this).getCleanedContent());
+        }
+        return cleanedLines;
     }
 
     @JsonIgnore
