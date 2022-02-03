@@ -49,11 +49,16 @@ public class UnitDuplicatesExtractor {
         if (cleanedUnitsMap.containsKey(key)) {
             return cleanedUnitsMap.get(key);
         }
-        String linesSplit[] = unit.getCleanedBody().split("\n");
         List<String> lines = new ArrayList<>();
-        for (String line : linesSplit) {
-            if (StringUtils.isNotBlank(line)) {
-                lines.add(line.trim());
+        if (unit != null) {
+            String cleanedBody = unit.getCleanedBody();
+            if (cleanedBody != null) {
+                String linesSplit[] = cleanedBody.split("\n");
+                for (String line : linesSplit) {
+                    if (StringUtils.isNotBlank(line)) {
+                        lines.add(line.trim());
+                    }
+                }
             }
         }
 

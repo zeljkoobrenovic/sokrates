@@ -31,10 +31,21 @@ interface Counter {
 
 public class LandscapeProjectsReport {
     private LandscapeAnalysisResults landscapeAnalysisResults;
+    private int limit = 1000;
+    private String link;
+    private String linkLabel;
     private Map<String, TagStats> tagStatsMap = new HashMap<>();
 
-    public LandscapeProjectsReport(LandscapeAnalysisResults landscapeAnalysisResults) {
+    public LandscapeProjectsReport(LandscapeAnalysisResults landscapeAnalysisResults, int limit) {
         this.landscapeAnalysisResults = landscapeAnalysisResults;
+        this.limit = limit;
+    }
+
+    public LandscapeProjectsReport(LandscapeAnalysisResults landscapeAnalysisResults, int limit, String link, String linkLabel) {
+        this.landscapeAnalysisResults = landscapeAnalysisResults;
+        this.limit = limit;
+        this.link = link;
+        this.linkLabel = linkLabel;
     }
 
     public void saveProjectsReport(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults) {
@@ -246,6 +257,10 @@ public class LandscapeProjectsReport {
     }
 
     public void addProjectsBySize(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults) {
+        Collections.sort(projectsAnalysisResults,
+                (a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()
+                        - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
+
         report.startTabContentSection("projects", true);
         addSummaryGraphMainLoc(report, projectsAnalysisResults);
         report.startTable("width: 100%");
@@ -263,19 +278,22 @@ public class LandscapeProjectsReport {
         }
         headers.add("Report");
         report.addTableHeader(headers.toArray(String[]::new));
-        Collections.sort(projectsAnalysisResults,
-                (a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()
-                        - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
 
-        int limit = landscapeAnalysisResults.getConfiguration().getProjectsListLimit();
         projectsAnalysisResults.stream().limit(limit).forEach(projectAnalysis -> {
             addProjectRow(report, projectAnalysis);
         });
 
         report.endTable();
         if (limit < projectsAnalysisResults.size()) {
-            report.addParagraph("The list is limited to " + limit + " items (out of " + projectsAnalysisResults.size() + ").",
-                    "color:grey; font-size: 90%; margin-top: 16px; margin-left: 11px");
+            report.startDiv("color:grey; font-size: 90%; margin-top: 16px;");
+            report.addParagraph("The list is limited to " + limit +
+                            " items (out of " + projectsAnalysisResults.size() + ").", "margin-left: 11px");
+            if (link != null && linkLabel != null) {
+                report.startDiv("margin-left: 10px; margin-bottom: 12px;");
+                report.addNewTabLink(link, linkLabel);
+                report.endDiv();
+            }
+            report.endDiv();
         }
         report.endTabContentSection();
     }
@@ -294,7 +312,6 @@ public class LandscapeProjectsReport {
             }
             contributorsPerWeek.forEach(c -> maxCommits[0] = Math.max(counter.getCount(c), maxCommits[0]));
         });
-        int limit = landscapeAnalysisResults.getConfiguration().getProjectsListLimit();
         projectsAnalysisResults.stream().limit(limit).forEach(projectAnalysis -> {
             report.startTableRow();
             String name = projectAnalysis.getAnalysisResults().getMetadata().getName();
@@ -370,7 +387,6 @@ public class LandscapeProjectsReport {
             contributorsPerYear.forEach(c -> maxCommits[0] = Math.max(counter.getCount(c), maxCommits[0]));
         });
 
-        int limit = landscapeAnalysisResults.getConfiguration().getProjectsListLimit();
         projectsAnalysisResults.stream().limit(limit).forEach(projectAnalysis -> {
             report.startTableRow();
             String name = projectAnalysis.getAnalysisResults().getMetadata().getName();

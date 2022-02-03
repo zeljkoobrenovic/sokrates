@@ -49,13 +49,19 @@ public class LandscapeConfiguration {
     // If true, the projects report will shows the status of controls of each project
     private boolean showProjectControls = true;
 
-    // A maximal number of projects shown in project pages
+    // A maximal number of projects shown in the short project pages (embedded in the index page)
+    private int projectsShortListLimit = 100;
+
+    // A maximal number of projects shown in project pages (linked from the short page)
     private int projectsListLimit = 1000;
 
     // A maximal number of years to be displayed for projects' history
     private int projectsHistoryLimit = 30;
 
-    // A maximal number of contributors shown in contributor pages
+    // A maximal number of contributors shown in contributor pages (embedded in the index page)
+    private int contributorsShortListLimit = 100;
+
+    // A maximal number of contributors shown in contributor pages (linked from the short page)
     private int contributorsListLimit = 1000;
 
     // An optional template of the link to a web page with more info about a contributor. The string fragment "${contributorid}" will be replace with the actual contributor ID.
@@ -304,6 +310,10 @@ public class LandscapeConfiguration {
         return projectsListLimit;
     }
 
+    public void setProjectsListLimit(int projectsListLimit) {
+        this.projectsListLimit = projectsListLimit;
+    }
+
     public int getProjectsHistoryLimit() {
         return projectsHistoryLimit;
     }
@@ -312,8 +322,20 @@ public class LandscapeConfiguration {
         this.projectsHistoryLimit = projectsHistoryLimit;
     }
 
-    public void setProjectsListLimit(int projectsListLimit) {
-        this.projectsListLimit = projectsListLimit;
+    public int getProjectsShortListLimit() {
+        return projectsShortListLimit;
+    }
+
+    public void setProjectsShortListLimit(int projectsShortListLimit) {
+        this.projectsShortListLimit = projectsShortListLimit;
+    }
+
+    public int getContributorsShortListLimit() {
+        return contributorsShortListLimit;
+    }
+
+    public void setContributorsShortListLimit(int contributorsShortListLimit) {
+        this.contributorsShortListLimit = contributorsShortListLimit;
     }
 
     public int getContributorsListLimit() {

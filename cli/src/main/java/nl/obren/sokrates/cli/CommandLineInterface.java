@@ -569,7 +569,6 @@ public class CommandLineInterface {
     }
 
     private void generateAndSaveReports(File inputFile, File reportsFolder, File sokratesConfigFolder, CodeAnalyzer codeAnalyzer, CodeAnalysisResults analysisResults) {
-        ProcessingStopwatch.start("reporting");
         File htmlReports = getHtmlFolder(reportsFolder);
         File dataReports = dataExporter.getDataFolder();
         File srcCache = dataExporter.getCodeCacheFolder();
@@ -583,21 +582,25 @@ public class CommandLineInterface {
         if (analysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles()) {
             info("Source code cache : <a href='" + srcCache.getPath() + "'>" + srcCache.getPath() + "</a>");
         }
+        ProcessingStopwatch.start("reporting");
         BasicSourceCodeReportGenerator generator = new BasicSourceCodeReportGenerator(codeAnalyzerSettings, analysisResults, inputFile, reportsFolder);
         List<RichTextReport> reports = generator.report();
+        ProcessingStopwatch.end("reporting");
+
+        ProcessingStopwatch.start("saving report");
         reports.forEach(report -> {
             info("Generating the '" + report.getId().toUpperCase() + "' report...");
-            String processingName = "reporting/" + report.getId().toLowerCase() + "";
+            String processingName = "saving report/" + report.getId().toLowerCase() + "";
             ProcessingStopwatch.start(processingName);
             ReportFileExporter.exportHtml(reportsFolder, "html", report, analysisResults.getCodeConfiguration().getAnalysis().getCustomHtmlReportHeaderFragment());
             ProcessingStopwatch.end(processingName);
         });
-        ProcessingStopwatch.start("reporting/index");
+        ProcessingStopwatch.start("saving report/index");
         if (!codeAnalyzerSettings.isDataOnly() && codeAnalyzerSettings.isUpdateIndex()) {
             ReportFileExporter.exportReportsIndexFile(reportsFolder, analysisResults, sokratesConfigFolder);
         }
-        ProcessingStopwatch.end("reporting/index");
-        ProcessingStopwatch.end("reporting");
+        ProcessingStopwatch.end("saving report/index");
+        ProcessingStopwatch.end("saving report");
     }
 
 

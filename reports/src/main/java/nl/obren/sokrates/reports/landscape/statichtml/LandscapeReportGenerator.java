@@ -76,7 +76,8 @@ public class LandscapeReportGenerator {
             "</svg>";
     ;
     private RichTextReport landscapeReport = new RichTextReport("Landscape Report", "index.html");
-    private RichTextReport landscapeProjectsReport = new RichTextReport("", "projects.html");
+    private RichTextReport landscapeProjectsReportShort = new RichTextReport("", "projects-short.html");
+    private RichTextReport landscapeProjectsReportLong = new RichTextReport("", "projects.html");
     private RichTextReport landscapeRecentContributorsReport = new RichTextReport("", "contributors-recent.html");
     private RichTextReport landscapeContributorsReport = new RichTextReport("", "contributors.html");
     private LandscapeAnalysisResults landscapeAnalysisResults;
@@ -98,7 +99,8 @@ public class LandscapeReportGenerator {
         this.landscapeAnalysisResults = landscapeAnalysisResults;
         populateTimeSlotMaps();
 
-        landscapeProjectsReport.setEmbedded(true);
+        landscapeProjectsReportShort.setEmbedded(true);
+        landscapeProjectsReportLong.setEmbedded(true);
         landscapeContributorsReport.setEmbedded(true);
         landscapeRecentContributorsReport.setEmbedded(true);
         LandscapeDataExport dataExport = new LandscapeDataExport(landscapeAnalysisResults, folder);
@@ -1051,9 +1053,16 @@ public class LandscapeReportGenerator {
                 projectSizes.add(new NumericMetric(analysisResults.getMetadata().getName(), analysisResults.getMainAspectAnalysisResults().getLinesOfCode()));
             });
 
-            landscapeReport.addHtmlContent("<iframe src='projects.html' frameborder=0 style='height: 600px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
+            landscapeReport.addHtmlContent("<iframe src='projects-short.html' frameborder=0 style='height: 600px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
 
-            new LandscapeProjectsReport(landscapeAnalysisResults).saveProjectsReport(landscapeProjectsReport, projectsAnalysisResults);
+            int shortLimit = configuration.getProjectsShortListLimit();
+            new LandscapeProjectsReport(landscapeAnalysisResults, shortLimit,
+                    "See the full list of projects...", "projects.html")
+                    .saveProjectsReport(landscapeProjectsReportShort, projectsAnalysisResults);
+            if (projectsAnalysisResults.size() > shortLimit) {
+                new LandscapeProjectsReport(landscapeAnalysisResults, configuration.getProjectsListLimit())
+                        .saveProjectsReport(landscapeProjectsReportLong, projectsAnalysisResults);
+            }
         }
 
         landscapeReport.endSection();
@@ -1182,7 +1191,10 @@ public class LandscapeReportGenerator {
         List<RichTextReport> reports = new ArrayList<>();
 
         reports.add(this.landscapeReport);
-        reports.add(this.landscapeProjectsReport);
+        reports.add(this.landscapeProjectsReportShort);
+        if (landscapeAnalysisResults.getProjectAnalysisResults().size() > landscapeAnalysisResults.getConfiguration().getProjectsShortListLimit()) {
+            reports.add(this.landscapeProjectsReportLong);
+        }
         reports.add(this.landscapeContributorsReport);
         reports.add(this.landscapeRecentContributorsReport);
 
