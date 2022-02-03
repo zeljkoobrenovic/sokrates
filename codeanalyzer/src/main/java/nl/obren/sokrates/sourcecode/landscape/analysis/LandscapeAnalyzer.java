@@ -39,7 +39,6 @@ public class LandscapeAnalyzer {
 
         try {
             String json = FileUtils.readFileToString(landscapeConfigurationFile, StandardCharsets.UTF_8);
-            LOG.info(json);
             this.landscapeConfiguration = (LandscapeConfiguration) new JsonMapper().getObject(json, LandscapeConfiguration.class);
             landscapeAnalysisResults.setConfiguration(landscapeConfiguration);
             landscapeConfiguration.getProjects().forEach(link -> {

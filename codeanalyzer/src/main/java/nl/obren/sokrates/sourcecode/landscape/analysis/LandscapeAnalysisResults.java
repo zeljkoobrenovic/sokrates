@@ -26,10 +26,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class LandscapeAnalysisResults {
-    private static final Log LOG = LogFactory.getLog(LandscapeAnalysisResults.class);
-
     public static final int RECENT_THRESHOLD_DAYS = 30;
-
+    private static final Log LOG = LogFactory.getLog(LandscapeAnalysisResults.class);
     @JsonIgnore
     private List<ComponentDependency> peopleDependencies30Days = new ArrayList<>();
 
@@ -462,7 +460,9 @@ public class LandscapeAnalysisResults {
                 if (configuration.getTransformContributorEmails().size() > 0) {
                     ComplexOperation operation = new ComplexOperation(configuration.getTransformContributorEmails());
                     contributorId = operation.exec(contributorId);
-                    LOG.info(contributor.getEmail() + " -> " + contributorId);
+                    if (!contributorId.equals(contributor.getEmail())) {
+                        LOG.info(contributor.getEmail() + " -> " + contributorId);
+                    }
                 }
                 if (GitHistoryUtils.shouldIgnore(contributorId, configuration.getIgnoreContributors())) {
                     return;

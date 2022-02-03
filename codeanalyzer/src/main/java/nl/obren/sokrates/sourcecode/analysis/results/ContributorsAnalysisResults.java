@@ -15,7 +15,6 @@ public class ContributorsAnalysisResults {
     List<ComponentDependency> peopleDependencies90Days = new ArrayList<>();
     List<ComponentDependency> peopleDependencies180Days = new ArrayList<>();
     List<ComponentDependency> peopleDependencies365Days = new ArrayList<>();
-    List<ComponentDependency> peopleDependenciesAllTime = new ArrayList<>();
     private String latestCommitDate = "";
     private List<Contributor> contributors = new ArrayList<>();
     private List<ContributionTimeSlot> contributorsPerYear = new ArrayList<>();
@@ -27,7 +26,6 @@ public class ContributorsAnalysisResults {
     private List<ComponentDependency> peopleFileDependencies90Days;
     private List<ComponentDependency> peopleFileDependencies180Days;
     private List<ComponentDependency> peopleFileDependencies365Days;
-    private List<ComponentDependency> peopleFileDependenciesAllTime;
 
     public String getLatestCommitDate() {
         return latestCommitDate;
@@ -134,16 +132,6 @@ public class ContributorsAnalysisResults {
     }
 
     @JsonIgnore
-    public List<ComponentDependency> getPeopleDependenciesAllTime() {
-        return peopleDependenciesAllTime;
-    }
-
-    @JsonIgnore
-    public void setPeopleDependenciesAllTime(List<ComponentDependency> peopleDependenciesAllTime) {
-        this.peopleDependenciesAllTime = peopleDependenciesAllTime;
-    }
-
-    @JsonIgnore
     public List<ComponentDependency> getPeopleDependencies365Days() {
         return peopleDependencies365Days;
     }
@@ -191,15 +179,5 @@ public class ContributorsAnalysisResults {
     @JsonIgnore
     public void setPeopleFileDependencies365Days(List<ComponentDependency> peopleFileDependencies365Days) {
         this.peopleFileDependencies365Days = peopleFileDependencies365Days;
-    }
-
-    @JsonIgnore
-    public List<ComponentDependency> getPeopleFileDependenciesAllTime() {
-        return peopleFileDependenciesAllTime;
-    }
-
-    @JsonIgnore
-    public void setPeopleFileDependenciesAllTime(List<ComponentDependency> peopleFileDependenciesAllTime) {
-        this.peopleFileDependenciesAllTime = peopleFileDependenciesAllTime;
     }
 }

@@ -1,5 +1,6 @@
 package nl.obren.sokrates.sourcecode.landscape;
 
+import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
@@ -40,6 +41,8 @@ public class ContributorConnectionUtils {
     }
 
     public static List<ComponentDependency> getPeopleDependencies(CodeAnalysisResults codeAnalysisResults, int daysAgo) {
+        String processingName = "analysis/contributors/get people dependencies/" + daysAgo + " days";
+        ProcessingStopwatch.start(processingName);
         Map<String, List<String>> contributionMap = new HashMap<>();
 
         codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory().forEach(fileModificationHistory -> {
@@ -92,10 +95,13 @@ public class ContributorConnectionUtils {
             });
         });
         dependencies.sort((a, b) -> b.getCount() - a.getCount());
+        ProcessingStopwatch.end(processingName);
         return dependencies;
     }
 
     public static List<ComponentDependency> getPeopleFileDependencies(CodeAnalysisResults codeAnalysisResults, int daysAgo) {
+        String processingName = "analysis/contributors/get people file dependencies/" + daysAgo + " days";
+        ProcessingStopwatch.start(processingName);
         List<ComponentDependency> dependencies = new ArrayList<>();
         Map<String, ComponentDependency> dependenciesMap = new HashMap<>();
 
@@ -123,6 +129,7 @@ public class ContributorConnectionUtils {
                     });
         });
         dependencies.sort((a, b) -> b.getCount() - a.getCount());
+        ProcessingStopwatch.end(processingName);
         return dependencies;
     }
 

@@ -22,8 +22,11 @@ public class UnitsExtractor {
             if (progressFeedback.canceled()) {
                 return;
             }
-            progressFeedback.setDetailedText(sourceFile.getRelativePath());
             progressFeedback.progress(++index[0], sourceFiles.size());
+            if (index[0] % 1000 == 1 || index[0] == sourceFiles.size()) {
+                progressFeedback.setDetailedText("Analyzing units of file " + index[0] + "/" + sourceFiles.size() +
+                        ": " + sourceFile.getRelativePath());
+            }
             LanguageAnalyzer languageAnalyzer = LanguageAnalyzerFactory.getInstance().getLanguageAnalyzer(sourceFile);
             units.addAll(languageAnalyzer.extractUnits(sourceFile));
         });

@@ -56,7 +56,7 @@ public class FileHistoryAnalyzer extends Analyzer {
                 enrichFilesWithAge(history);
                 LOG.info("Analyzing file age...");
                 analyzeFilesAge();
-                LOG.info("Analyzing files changed together...");
+                LOG.info("Analyzing files changed together (all time)...");
                 analyzeFilesChangedTogether(history);
                 LOG.info("Analyzing files changed together in past 30 days...");
                 analyzeFilesChangedTogether30Days(history);

@@ -114,7 +114,10 @@ public class ReportFileExporter {
             List<ContributionTimeSlot> contributorsPerYear = contributorsAnalysisResults.getContributorsPerYear();
             indexReport.startSection("Commits Trend " + "<a href='Commits.html'  title='metrics &amp; goals details' style='margin-left: 8px; vertical-align: top'>" + getDetailsIcon() + "</a>", "");
 
-            indexReport.addParagraph("Latest commit date: " + contributorsAnalysisResults.getLatestCommitDate() + "", "color: grey; font-size: 80%");
+            indexReport.addParagraph("Latest commit date: " + contributorsAnalysisResults.getLatestCommitDate() + "",
+                    "color: grey; font-size: 80%; margin-bottom: 2px;");
+            indexReport.addParagraph("Reference analysis date: " + DateUtils.getAnalysisDate() + "",
+                    "color: grey; font-size: 80%;");
 
             indexReport.startTable();
             indexReport.startTableRow();

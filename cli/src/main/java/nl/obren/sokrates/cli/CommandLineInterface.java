@@ -16,6 +16,7 @@ import nl.obren.sokrates.common.renderingutils.force3d.Force3DObject;
 import nl.obren.sokrates.common.renderingutils.x3d.Unit3D;
 import nl.obren.sokrates.common.renderingutils.x3d.X3DomExporter;
 import nl.obren.sokrates.common.utils.BasicColorInfo;
+import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
@@ -63,9 +64,13 @@ public class CommandLineInterface {
 
     private Commands commands = new Commands();
 
-    public static void main(String args[]) throws ParseException, IOException {
+    public static void main(String args[]) throws IOException {
+        ProcessingStopwatch.start("everything");
         CommandLineInterface commandLineInterface = new CommandLineInterface();
         commandLineInterface.run(args);
+
+        ProcessingStopwatch.end("everything");
+        ProcessingStopwatch.print();
 
         System.exit(0);
     }
@@ -472,6 +477,7 @@ public class CommandLineInterface {
         LOG.info("Configuration file: " + sokratesConfigFile.getPath());
         if (noFileError(sokratesConfigFile)) return;
 
+        ProcessingStopwatch.start("configuring");
         String jsonContent = FileUtils.readFileToString(sokratesConfigFile, UTF_8);
         CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
         LanguageAnalyzerFactory.getInstance().setOverrides(codeConfiguration.getAnalysis().getAnalyzerOverrides());
@@ -487,6 +493,7 @@ public class CommandLineInterface {
         }
 
         LOG.info("Reports folder: " + reportsFolder.getPath());
+        ProcessingStopwatch.end("configuring");
         if (noFileError(reportsFolder)) return;
 
         if (this.progressFeedback == null) {
@@ -505,16 +512,28 @@ public class CommandLineInterface {
             CodeAnalyzer codeAnalyzer = new CodeAnalyzer(getCodeAnalyzerSettings(cmd), codeConfiguration, sokratesConfigFile);
             CodeAnalysisResults analysisResults = codeAnalyzer.analyze(progressFeedback);
 
-            boolean useDefault = noReportingOptions(cmd);
-
+            ProcessingStopwatch.start("saving data");
             dataExporter.saveData(sokratesConfigFile, codeConfiguration, reportsFolder, analysisResults);
             saveTextualSummary(reportsFolder, analysisResults);
+            ProcessingStopwatch.end("saving data");
 
+            ProcessingStopwatch.start("generating visuals");
             generateVisuals(reportsFolder, analysisResults);
+            ProcessingStopwatch.end("generating visuals");
 
             generateAndSaveReports(sokratesConfigFile, reportsFolder, sokratesConfigFile.getParentFile(), codeAnalyzer, analysisResults);
+            saveExecutionStats(dataExporter.getDataFolder());
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void saveExecutionStats(File dataFolder) {
+        try {
+            String json = new JsonGenerator().generate(ProcessingStopwatch.getMonitors());
+            FileUtils.write(new File(dataFolder, "executionTimes.json"), json, UTF_8);
+        } catch (IOException e) {
+            LOG.error(e);
         }
     }
 
@@ -536,9 +555,10 @@ public class CommandLineInterface {
     }
 
     private void info(String text) {
-        LOG.info(text);
         if (progressFeedback != null) {
             progressFeedback.setText(text);
+        } else {
+            LOG.info(text);
         }
     }
 
@@ -550,6 +570,7 @@ public class CommandLineInterface {
     }
 
     private void generateAndSaveReports(File inputFile, File reportsFolder, File sokratesConfigFolder, CodeAnalyzer codeAnalyzer, CodeAnalysisResults analysisResults) {
+        ProcessingStopwatch.start("reporting");
         File htmlReports = getHtmlFolder(reportsFolder);
         File dataReports = dataExporter.getDataFolder();
         File srcCache = dataExporter.getCodeCacheFolder();
@@ -563,17 +584,21 @@ public class CommandLineInterface {
         if (analysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles()) {
             info("Source code cache : <a href='" + srcCache.getPath() + "'>" + srcCache.getPath() + "</a>");
         }
-        info("");
-        info("");
         BasicSourceCodeReportGenerator generator = new BasicSourceCodeReportGenerator(codeAnalyzerSettings, analysisResults, inputFile, reportsFolder);
         List<RichTextReport> reports = generator.report();
         reports.forEach(report -> {
             info("Generating the '" + report.getId().toUpperCase() + "' report...");
+            String processingName = "reporting/" + report.getId().toLowerCase() + "";
+            ProcessingStopwatch.start(processingName);
             ReportFileExporter.exportHtml(reportsFolder, "html", report, analysisResults.getCodeConfiguration().getAnalysis().getCustomHtmlReportHeaderFragment());
+            ProcessingStopwatch.end(processingName);
         });
+        ProcessingStopwatch.start("reporting/index");
         if (!codeAnalyzerSettings.isDataOnly() && codeAnalyzerSettings.isUpdateIndex()) {
             ReportFileExporter.exportReportsIndexFile(reportsFolder, analysisResults, sokratesConfigFolder);
         }
+        ProcessingStopwatch.end("reporting/index");
+        ProcessingStopwatch.end("reporting");
     }
 
 

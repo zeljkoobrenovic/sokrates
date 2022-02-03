@@ -5,12 +5,17 @@
 package nl.obren.sokrates.sourcecode.filehistory;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
+import nl.obren.sokrates.sourcecode.analysis.files.FileHistoryAnalyzer;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.util.*;
 
 public class FilePairsChangedTogether {
+    private static final Log LOG = LogFactory.getLog(FilePairsChangedTogether.class);
+
     private Map<String, FilePairChangedTogether> filePairsMap = new HashMap<>();
     private List<FilePairChangedTogether> filePairs = new ArrayList<>();
     private int rangeInDays = -1;

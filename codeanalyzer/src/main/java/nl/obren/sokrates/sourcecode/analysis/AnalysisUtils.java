@@ -122,7 +122,7 @@ public class AnalysisUtils {
 
     public static void info(StringBuffer textSummary, ProgressFeedback progressFeedback, String line, long start) {
         DecimalFormat formatter = new DecimalFormat("#.00");
-        formatter.setDecimalFormatSymbols( new DecimalFormatSymbols(Locale.ENGLISH));
+        formatter.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.ENGLISH));
         LOG.info(formatter.format(((System.currentTimeMillis() - start) / 10) * 0.01) + "s\t\t" + line.replaceAll("<.*?>", ""));
         textSummary.append(line + "\n");
         if (progressFeedback != null) {
@@ -132,7 +132,7 @@ public class AnalysisUtils {
 
     public static void detailedInfo(StringBuffer textSummary, ProgressFeedback progressFeedback, String line, long start) {
         DecimalFormat formatter = new DecimalFormat("#.00");
-        formatter.setDecimalFormatSymbols( new DecimalFormatSymbols(Locale.ENGLISH));
+        formatter.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.ENGLISH));
 
         LOG.info(formatter.format(((System.currentTimeMillis() - start) / 10) * 0.01) + "s\t\t" + line.replaceAll("<.*?>", ""));
         textSummary.append(line + "\n");

@@ -66,8 +66,7 @@ public class FileTemporalDependenciesReportGenerator {
     private void addTab(RichTextReport report, String id, List<FilePairChangedTogether> filePairs, boolean active) {
         report.startTabContentSection(id, active);
         addFileChangedTogetherList(report, filePairs);
-        addGraphsPerLogicalComponents(report, filePairs);
-        // addFileChangedTogetherInDifferentFoldersList(report, filePairs);
+        addDependenciesSection(report, filePairs);
         report.endTabGroup();
 
     }
@@ -81,7 +80,8 @@ public class FileTemporalDependenciesReportGenerator {
         if (filePairs.size() > maxListSize) {
             filePairs = filePairs.subList(0, maxListSize);
         }
-        report.startSubSection("Files Most Frequently Changed Together (Top " + filePairs.size() + ")", "margin-top: 20px");
+        report.addLineBreak();
+        report.startSubSection("Files Most Frequently Changed Together (Top " + filePairs.size() + ")", "");
         report.addParagraph("<a href='../data/text/temporal_dependencies.txt' target='_blank'>data...</a>");
         addTable(report, filePairs);
         report.endSection();
@@ -127,48 +127,47 @@ public class FileTemporalDependenciesReportGenerator {
         report.endDiv();
     }
 
-    private void addGraphsPerLogicalComponents(RichTextReport report, List<FilePairChangedTogether> filePairsChangedTogether) {
-        addDependenciesSection(report, filePairsChangedTogether);
-    }
-
     private void addDependenciesSection(RichTextReport report, List<FilePairChangedTogether> filePairsChangedTogether) {
         report.startDiv("margin: 10px;");
 
         report.startSubSection("Dependencies between files in same commits", "The number on the lines shows the number of shared commits.");
-        addChangeDependencies(report, filePairsChangedTogether);
+        renderDependencies(report, filePairsChangedTogether);
         report.endDiv();
 
         report.endSection();
     }
 
-    private void addChangeDependencies(RichTextReport report, List<FilePairChangedTogether> filePairsChangedTogether) {
-        renderDependencies(report, filePairsChangedTogether);
-    }
-
     private void renderDependencies(RichTextReport report, List<FilePairChangedTogether> filePairsChangedTogether) {
         TemporalDependenciesHelper dependenciesHelper = new TemporalDependenciesHelper();
         List<ComponentDependency> dependencies = dependenciesHelper.extractDependencies(filePairsChangedTogether);
-        List<ComponentDependency> componentDependencies = dependencies.stream().collect(Collectors.toList());
 
-        if (componentDependencies.size() > 0) {
+        if (dependencies.size() > 0) {
             GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
             graphvizDependencyRenderer.setDefaultNodeFillColor("deepskyblue2");
             graphvizDependencyRenderer.setType("graph");
             graphvizDependencyRenderer.setArrow("--");
             graphvizDependencyRenderer.setArrowColor("#00688b");
             graphvizDependencyRenderer.setMaxNumberOfDependencies(50);
-            String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), componentDependencies);
+            String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), dependencies);
 
             String graphId = "file_changed_together_dependencies_" + graphCounter++;
             report.addGraphvizFigure(graphId, "File changed together in different components", graphvizContent);
 
             VisualizationTools.addDownloadLinks(report, graphId);
             report.addLineBreak();
-            String force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(componentDependencies, reportsFolder, graphId);
+            String force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(dependencies, reportsFolder, graphId);
             report.addNewTabLink("Open 3D force graph...", force3DGraphFilePath);
             report.addLineBreak();
         } else {
             report.addParagraph("No temporal cross-component dependencies found.");
+        }
+
+        List<ComponentDependency> dependenciesWithCommits = dependenciesHelper.extractDependenciesWithCommits(filePairsChangedTogether);
+        if (dependenciesWithCommits.size() > 0) {
+            String graphId = "file_changed_together_dependencies_with_commits_" + graphCounter++;
+            String force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(dependenciesWithCommits, reportsFolder, graphId);
+            report.addNewTabLink("Open 3D force graph (with commits)...", force3DGraphFilePath);
+            report.addLineBreak();
         }
     }
 

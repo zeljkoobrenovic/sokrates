@@ -1,5 +1,6 @@
 package nl.obren.sokrates.cli;
 
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -79,7 +80,8 @@ public class Commands {
     private Option description = new Option(ARG_DESCRIPTION, true, "[OPTIONAL] the project description");
     private Option logoLink = new Option(ARG_LOGO_LINK, true, "[OPTIONAL] the project logo link");
     private Option confFile = new Option(ARG_CONF_FILE, true, "[OPTIONAL] the path to configuration file (default is \"<currentFolder>/_sokrates/config.json\")");
-    private Option date = new Option(ARG_DATE, true, "[OPTIONAL] last date of source code update (default today), used for reports on active contributors");
+    private Option date = new Option(ARG_DATE, true, "[OPTIONAL] last date of source code update (default today), used for reports on active contributors. " +
+            "You can also specify this date via the system variable \"" + DateUtils.ENV_SOKRATES_ANALYSIS_DATE + "\".");
     private Option analysisRoot = new Option(ARG_ANALYSIS_ROOT, true, "[OPTIONAL] the path to configuration file (default is \"<currentFolder>/_sokrates/config.json\")");
     private Option timeout = new Option(ARG_TIMEOUT, true, "[OPTIONAL] timeout in seconds");
     private Option prefix = new Option(ARG_PREFIX, true, "the path prefix");
@@ -124,7 +126,6 @@ public class Commands {
         LOG.info("Usage: java -jar sokrates.jar <command> <options>");
         LOG.info("Help: java -jar sokrates.jar <command> -help");
         LOG.info("Commands: " + commandUsages.stream().map(c -> c.getName()).collect(Collectors.joining(", ")));
-        LOG.info("");
         commandUsages.forEach(commandUsage -> {
             LOG.info("* " + commandUsage.getName() + ": " + commandUsage.getDescription());
             if (commandUsage.getOptions() != null) {

@@ -11,6 +11,7 @@ import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -23,9 +24,9 @@ import java.util.List;
 import java.util.Map;
 
 public class GitHistoryUtils {
-    private static final Log LOG = LogFactory.getLog(GitHistoryUtils.class);
-
     public static final String GIT_HISTORY_FILE_NAME = "git-history.txt";
+    public static final String EARLIEST_DATE = "1980-01-01";
+    private static final Log LOG = LogFactory.getLog(GitHistoryUtils.class);
     private static List<FileUpdate> updates = null;
     private static Map<String, String> anonymizeEmails = new HashMap<>();
 
@@ -71,8 +72,14 @@ public class GitHistoryUtils {
             return updates;
         }
 
+        int displayCounter[] = {0};
         lines.forEach(line -> {
-            LOG.info(line);
+            displayCounter[0] += 1;
+            boolean lastLine = displayCounter[0] == lines.size();
+            if (displayCounter[0] % 1000 == 1 || lastLine) {
+                LOG.info("Reading commit line " + displayCounter[0] + "/" + lines.size() +
+                        ": " + StringUtils.abbreviate(line, 64));
+            }
             FileUpdate fileUpdate = GitHistoryUtils.parseLine(line, config);
             if (fileUpdate != null) {
                 updates.add(fileUpdate);
@@ -93,8 +100,7 @@ public class GitHistoryUtils {
                 int index3 = line.indexOf(" ", index2 + 1);
                 if (index3 > 0) {
                     String date = line.substring(0, 10).trim();
-                    if (date.compareTo(DateUtils.getAnalysisDate()) >= 0) {
-                        LOG.info("Ignoring future date: " + line);
+                    if (ignoreCommit(line, date)) {
                         return null;
                     }
                     String author = line.substring(index1 + 1, index2).trim();
@@ -130,5 +136,17 @@ public class GitHistoryUtils {
         }
 
         return null;
+    }
+
+    private static boolean ignoreCommit(String line, String date) {
+        if (date.compareTo(DateUtils.getAnalysisDate()) > 0) {
+            LOG.info("Ignoring future date: " + line);
+            return true;
+        }
+        if (date.compareTo(EARLIEST_DATE) < 0) {
+            LOG.info("Ignoring dates before the initial git release: " + line);
+            return true;
+        }
+        return false;
     }
 }

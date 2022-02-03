@@ -104,7 +104,6 @@ public class ContributorsReportGenerator {
         report.addTab("90_days", "Past 3 Months", false);
         report.addTab("180_days", "Past 6 Months", false);
         report.addTab("365_days", "Past Year", false);
-        report.addTab("all_time", "All Time", false);
         report.addTab("data", "Data", false);
         report.endTabGroup();
 
@@ -143,12 +142,6 @@ public class ContributorsReportGenerator {
         report.endTabContentSection();
 
         addPerLanguageTabContent(report);
-
-        report.startTabContentSection("all_time", false);
-        addContributorsPanel(report, contributors, c -> c.getCommitsCount(), true, e -> e.getFileUpdates());
-        renderPeopleDependencies(analysis.getPeopleDependenciesAllTime(), null,35600, c -> c.getCommitsCount(), contributors);
-        report.endTabContentSection();
-
 
         report.startTabContentSection("30_days", false);
         List<Contributor> commits30Days = contributors.stream().filter(c -> c.getCommitsCount30Days() > 0).collect(Collectors.toList());

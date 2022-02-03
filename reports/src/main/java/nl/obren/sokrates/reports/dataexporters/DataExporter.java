@@ -101,17 +101,28 @@ public class DataExporter {
         this.extraAnalysisDataFolder = getExtraAnalysisDataFolder();
         this.historyFolder = getDataHistoryFolder();
 
+        LOG.info("Saving file lists");
         exportFileLists();
+        LOG.info("Saving metrics data");
         exportMetrics();
+        LOG.info("Saving trends data");
         exportTrends();
+        LOG.info("Saving controls data");
         exportControls();
+        LOG.info("Saving contributors data");
         exportContributors();
+        LOG.info("Saving JSON data");
         exportJson();
+        LOG.info("Saving duplication data");
         exportDuplicates();
+        LOG.info("Saving units data");
         exportUnits();
         // exportInteractiveExplorers();
+        LOG.info("Saving source files");
         exportSourceFile();
+        LOG.info("Saving logical dependencies data");
         exportDependencies(analysisResults);
+        LOG.info("Saving temporal dependencies data");
         saveTemporalDependencies(analysisResults);
     }
 
@@ -900,7 +911,7 @@ public class DataExporter {
     }
 
     public void detailedInfo(String text) {
-        LOG.info(text);
+        LOG.info(text.replaceAll("<.*?>", ""));
         if (progressFeedback != null) {
             progressFeedback.setDetailedText(text);
         }

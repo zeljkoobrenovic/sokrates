@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.sourcecode.duplication;
 
+import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
@@ -34,13 +35,15 @@ public class DuplicationEngine {
         files.addAll(sourceFiles);
 
         Blocks blocks = new Blocks(files, threshold);
-        long startTime = System.currentTimeMillis();
+        ProcessingStopwatch.start("analysis/duplication/extracting blocks");
         duplicates = blocks.extractDuplicatedBlocks(progressFeedback);
-        LOG.info("Extracted duplicated blocks in " + (System.currentTimeMillis() - startTime) + "ms.");
+        ProcessingStopwatch.end("analysis/duplication/extracting blocks");
 
         totalCleanedLinesOfCode = files.getTotalCleanedLinesOfCode();
 
+        ProcessingStopwatch.start("analysis/duplication/getting number of duplicated lines");
         numberOfDuplicatedLines = DuplicationUtils.getNumberOfDuplicatedLines(duplicates);
+        ProcessingStopwatch.end("analysis/duplication/getting number of duplicated lines");
 
         progressFeedback.setText(System.currentTimeMillis() / 1000 + "");
 

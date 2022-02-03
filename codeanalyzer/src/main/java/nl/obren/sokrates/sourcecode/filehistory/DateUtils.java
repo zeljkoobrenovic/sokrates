@@ -12,7 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class DateUtils {
-    public static final String ENV_SOKRATES_SOURCE_CODE_DATE = "SOKRATES_SOURCE_CODE_DATE";
+    public static final String ENV_SOKRATES_ANALYSIS_DATE = "SOKRATES_ANALYSIS_DATE";
     public static final String DATE_FORMAT = "yyyy-MM-dd";
     public static String dateParam = null;
     private static String latestCommitDate = "";
@@ -149,7 +149,7 @@ public class DateUtils {
             if (StringUtils.isNotBlank(DateUtils.dateParam)) {
                 cal.setTime(sdf.parse(DateUtils.dateParam));
             } else {
-                String sourceCodeDate = System.getenv(ENV_SOKRATES_SOURCE_CODE_DATE);
+                String sourceCodeDate = System.getenv(ENV_SOKRATES_ANALYSIS_DATE);
                 if (StringUtils.isNotBlank(sourceCodeDate)) {
                     cal.setTime(sdf.parse(sourceCodeDate));
                 } else if (StringUtils.isNotBlank(latestCommitDate)) {

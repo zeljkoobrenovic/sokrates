@@ -47,19 +47,18 @@ public class ScopingConventions {
         ignoredFilesConventions.forEach(convention -> {
             LOG.info(s2 + convention.toString() + " (" + convention.getNote() + ")");
         });
-        LOG.info("");
     }
 
     public void addConventions(CodeConfiguration codeConfiguration, List<SourceFile> sourceFiles) {
-        LOG.info("\nAdding ignore conventions:");
+        LOG.info("Adding ignore conventions:");
         ConventionUtils.addConventions(ignoredFilesConventions, codeConfiguration.getIgnore(), sourceFiles);
-        LOG.info("\nAdding test files conventions:");
+        LOG.info("Adding test files conventions:");
         ConventionUtils.addConventions(testFilesConventions, codeConfiguration.getTest().getSourceFileFilters(), sourceFiles);
-        LOG.info("\nAdding generated files conventions:");
+        LOG.info("Adding generated files conventions:");
         ConventionUtils.addConventions(generatedFilesConventions, codeConfiguration.getGenerated().getSourceFileFilters(), sourceFiles);
-        LOG.info("\nAdding build & deployment conventions:");
+        LOG.info("Adding build & deployment conventions:");
         ConventionUtils.addConventions(buildAndDeploymentFilesConventions, codeConfiguration.getBuildAndDeployment().getSourceFileFilters(), sourceFiles);
-        LOG.info("\nAdding other files conventions:");
+        LOG.info("Adding other files conventions:");
         ConventionUtils.addConventions(otherFilesConventions, codeConfiguration.getOther().getSourceFileFilters(), sourceFiles);
     }
 

@@ -34,6 +34,29 @@ public class TemporalDependenciesHelper {
         return componentDependencies;
     }
 
+    public List<ComponentDependency> extractDependenciesWithCommits(List<FilePairChangedTogether> filePairInstances) {
+        List<ComponentDependency> componentDependencies = new ArrayList<>();
+        Map<String, ComponentDependency> componentDependenciesMap = new HashMap<>();
+        filePairInstances.forEach(filePairChangedTogether -> {
+            String file1 = filePairChangedTogether.getSourceFile1().getRelativePath();
+            String file2 = filePairChangedTogether.getSourceFile2().getRelativePath();
+            String component1 = "[" + file1 + "]";
+            String component2 = "[" + file2 + "]";
+
+            if (!component1.equalsIgnoreCase(component2)) {
+                filePairChangedTogether.getCommits().forEach(commit -> {
+                    String commitId = "commit_" + commit;
+                    ComponentDependency dependency1 = getDependency(commitId, component1, componentDependencies, componentDependenciesMap);
+                    dependency1.setCount(dependency1.getCount() + 1);
+                    ComponentDependency dependency2 = getDependency(commitId, component2, componentDependencies, componentDependenciesMap);
+                    dependency2.setCount(dependency2.getCount() + 1);
+                });
+            }
+        });
+
+        return componentDependencies;
+    }
+
     private void addDependency(FilePairChangedTogether filePairChangedTogether, String component1, String component2) {
         ComponentDependency dependency = getDependency(component1, component2);
 
@@ -54,7 +77,8 @@ public class TemporalDependenciesHelper {
         dependency.setCount(finalCommits.size());
     }
 
-    private ComponentDependency getDependency(String name1, String name2) {
+    private ComponentDependency getDependency(String name1, String name2,
+                                              List<ComponentDependency> componentDependencies,  Map<String, ComponentDependency> componentDependenciesMap) {
         String key = name1 + "::" + name2;
         String alternativeKey = name2 + "::" + name1;
 
@@ -71,5 +95,9 @@ public class TemporalDependenciesHelper {
         }
 
         return componentDependency;
+    }
+
+    private ComponentDependency getDependency(String name1, String name2) {
+        return getDependency(name1, name2, componentDependencies, componentDependenciesMap);
     }
 }
