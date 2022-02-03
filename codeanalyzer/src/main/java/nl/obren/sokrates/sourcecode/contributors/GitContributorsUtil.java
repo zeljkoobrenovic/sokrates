@@ -11,15 +11,20 @@ import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryPerExtensionUtils;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.util.*;
 import java.util.function.Function;
 
 public class GitContributorsUtil {
+    private static final Log LOG = LogFactory.getLog(GitContributorsUtil.class);
+
     public static ContributorsImport importGitContributorsExport(File file, FileHistoryAnalysisConfig config) {
         ContributorsImport contributorsImport = new ContributorsImport();
         List<AuthorCommit> authorCommits = GitHistoryUtils.getAuthorCommits(file, config);
+        int index[] = {0};
         authorCommits.forEach(commit -> {
             String date = commit.getDate();
             if (StringUtils.isBlank(contributorsImport.getFirstCommitDate()) || date.compareTo(contributorsImport.getFirstCommitDate()) <= 0) {

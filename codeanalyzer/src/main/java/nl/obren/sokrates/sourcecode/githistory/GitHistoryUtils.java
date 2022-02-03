@@ -38,7 +38,14 @@ public class GitHistoryUtils {
         List<AuthorCommit> commits = new ArrayList<>();
         List<String> commitIds = new ArrayList<>();
 
-        getHistoryFromFile(file, config).forEach(fileUpdate -> {
+        int index[] = {0};
+
+        List<FileUpdate> historyFromFile = getHistoryFromFile(file, config);
+        historyFromFile.forEach(fileUpdate -> {
+            index[0] += 1;
+            if (index[0] % 1000 == 1 || index[0] == historyFromFile.size()) {
+                LOG.info("Importing " + fileUpdate.getAuthorEmail() + " " + fileUpdate.getDate() + " (" + index[0] + " / " + historyFromFile.size() + ")");
+            }
             String commitId = fileUpdate.getCommitId();
             if (!commitIds.contains(commitId)) {
                 commitIds.add(commitId);

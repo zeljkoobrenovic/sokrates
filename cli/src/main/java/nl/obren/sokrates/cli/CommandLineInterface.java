@@ -56,7 +56,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class CommandLineInterface {
-
     private static final Log LOG = LogFactory.getLog(CommandLineInterface.class);
 
     private ProgressFeedback progressFeedback;
