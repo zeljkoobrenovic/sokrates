@@ -1,6 +1,7 @@
 package nl.obren.sokrates.reports.landscape.statichtml;
 
 import nl.obren.sokrates.common.utils.FormattingUtils;
+import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
@@ -54,6 +55,8 @@ public class LandscapeIndividualContributorsReports {
         Contributor contributor = contributorProjects.getContributor();
         RichTextReport report = new RichTextReport(contributor.getEmail(), getContributorIndividualReportFileName(contributor.getEmail()));
         report.setRenderLogo(false);
+        String breadcrumbsLabel = landscapeAnalysisResults.getConfiguration().getMetadata().getName() + " / Contributors";
+        String breadcrumbsHtml = "<div style='opacity: 0.7; font-size: 13px; margin-bottom: 12px;'><a href='../index.html'>" + breadcrumbsLabel + "</a></div>";
 
         String avatarHtml = "";
         String avatarUrl = LandscapeContributorsReport.getAvatarUrl(contributor.getEmail(), landscapeAnalysisResults.getConfiguration().getContributorAvatarLinkTemplate());
@@ -68,7 +71,7 @@ public class LandscapeIndividualContributorsReports {
                     "</div>";
         }
 
-        report.setDisplayName(avatarHtml + contributor.getEmail());
+        report.setDisplayName(breadcrumbsHtml + avatarHtml + contributor.getEmail());
 
         report.startDiv("margin-top: 10px; margin-bottom: 22px;");
         String template = this.landscapeAnalysisResults.getConfiguration().getContributorLinkTemplate();

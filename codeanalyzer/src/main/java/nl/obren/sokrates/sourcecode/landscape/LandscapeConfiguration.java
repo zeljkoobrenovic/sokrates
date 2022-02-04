@@ -58,9 +58,6 @@ public class LandscapeConfiguration {
     // A maximal number of years to be displayed for projects' history
     private int projectsHistoryLimit = 30;
 
-    // A maximal number of contributors shown in contributor pages (embedded in the index page)
-    private int contributorsShortListLimit = 100;
-
     // A maximal number of contributors shown in contributor pages (linked from the short page)
     private int contributorsListLimit = 1000;
 
@@ -328,14 +325,6 @@ public class LandscapeConfiguration {
 
     public void setProjectsShortListLimit(int projectsShortListLimit) {
         this.projectsShortListLimit = projectsShortListLimit;
-    }
-
-    public int getContributorsShortListLimit() {
-        return contributorsShortListLimit;
-    }
-
-    public void setContributorsShortListLimit(int contributorsShortListLimit) {
-        this.contributorsShortListLimit = contributorsShortListLimit;
     }
 
     public int getContributorsListLimit() {

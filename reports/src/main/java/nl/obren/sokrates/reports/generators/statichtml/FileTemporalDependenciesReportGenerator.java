@@ -164,7 +164,7 @@ public class FileTemporalDependenciesReportGenerator {
             VisualizationTools.addDownloadLinks(report, graphId);
             report.addLineBreak();
             String force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(dependencies, reportsFolder, graphId);
-            report.addNewTabLink("Open 3D force graph...", force3DGraphFilePath);
+            report.addNewTabLink("Open 3D force graph (file dependencies)...", force3DGraphFilePath);
             report.addLineBreak();
             ProcessingStopwatch.end("reporting/temporal dependencies/graphviz");
         } else {
@@ -179,7 +179,7 @@ public class FileTemporalDependenciesReportGenerator {
             ProcessingStopwatch.start("reporting/temporal dependencies/export graph");
             String graphId = "file_changed_together_dependencies_with_commits_" + graphCounter++;
             String force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(dependenciesWithCommits, reportsFolder, graphId);
-            report.addNewTabLink("Open 3D force graph (with commits)...", force3DGraphFilePath);
+            report.addNewTabLink("Open 3D force graph (file dependencies with commits)...", force3DGraphFilePath);
             report.addLineBreak();
             ProcessingStopwatch.end("reporting/temporal dependencies/export graph");
         }

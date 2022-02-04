@@ -114,7 +114,7 @@ public class CodeConfiguration {
 
     @JsonIgnore
     public void load(SourceCodeFiles sourceCodeFiles, File codeConfigurationFile) {
-        sourceCodeFiles.createBroadScope(extensions, ignore, analysis.getMaxLineLength());
+        sourceCodeFiles.createBroadScope(extensions, ignore, analysis.getMaxFileSizeBytes(), analysis.getMaxLineLength());
         updateScopesFiles(sourceCodeFiles);
         logicalDecompositions.forEach(logicalDecomposition -> {
             logicalDecomposition.updateLogicalComponentsFiles(sourceCodeFiles, CodeConfiguration.this, codeConfigurationFile);

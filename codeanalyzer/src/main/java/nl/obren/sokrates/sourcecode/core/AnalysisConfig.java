@@ -24,6 +24,9 @@ public class AnalysisConfig {
     private boolean saveCodeFragments = true;
 
     // Sokrates will ignore files with any line longer than a given number of characters
+    private int maxFileSizeBytes = 1000000;
+
+    // Sokrates will ignore files with any line longer than a given number of characters
     private int maxLineLength = 1000;
 
     // A maximal number of days in source code history used to calculate temporal file dependencies
@@ -84,6 +87,14 @@ public class AnalysisConfig {
 
     public void setAnalyzerOverrides(List<AnalyzerOverride> analyzerOverrides) {
         this.analyzerOverrides = analyzerOverrides;
+    }
+
+    public int getMaxFileSizeBytes() {
+        return maxFileSizeBytes;
+    }
+
+    public void setMaxFileSizeBytes(int maxFileSizeBytes) {
+        this.maxFileSizeBytes = maxFileSizeBytes;
     }
 
     public int getMaxLineLength() {

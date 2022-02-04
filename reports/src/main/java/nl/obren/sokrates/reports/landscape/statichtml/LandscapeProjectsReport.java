@@ -50,11 +50,13 @@ public class LandscapeProjectsReport {
 
     public void saveProjectsReport(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults) {
         report.startTabGroup();
-        report.addTab("projects", "Projects by Size", true);
         boolean showCommits = landscapeAnalysisResults.getCommitsCount() > 0;
         if (showCommits) {
-            report.addTab("commitsTrend", "Commits Trend", false);
+            report.addTab("commitsTrend", "Commits Trend", true);
             report.addTab("contributorsTrend", "Contributors Trend", false);
+        }
+        report.addTab("projects", "Projects by Size", !showCommits);
+        if (showCommits) {
             report.addTab("history", "History", false);
             report.addTab("correlations", "Correlations", false);
         }
@@ -86,7 +88,7 @@ public class LandscapeProjectsReport {
     }
 
     public void addCommitBasedLists(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults) {
-        report.startTabContentSection("commitsTrend", false);
+        report.startTabContentSection("commitsTrend", true);
         Collections.sort(projectsAnalysisResults,
                 (a, b) -> b.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days()
                         - a.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days());
@@ -261,7 +263,8 @@ public class LandscapeProjectsReport {
                 (a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()
                         - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
 
-        report.startTabContentSection("projects", true);
+        boolean showCommits = landscapeAnalysisResults.getCommitsCount() > 0;
+        report.startTabContentSection("projects", !showCommits);
         addSummaryGraphMainLoc(report, projectsAnalysisResults);
         report.startTable("width: 100%");
         int thresholdContributors = landscapeAnalysisResults.getConfiguration().getProjectThresholdContributors();
@@ -285,17 +288,21 @@ public class LandscapeProjectsReport {
 
         report.endTable();
         if (limit < projectsAnalysisResults.size()) {
-            report.startDiv("color:grey; font-size: 90%; margin-top: 16px;");
-            report.addParagraph("The list is limited to " + limit +
-                            " items (out of " + projectsAnalysisResults.size() + ").", "margin-left: 11px");
-            if (link != null && linkLabel != null) {
-                report.startDiv("margin-left: 10px; margin-bottom: 12px;");
-                report.addNewTabLink(link, linkLabel);
-                report.endDiv();
-            }
-            report.endDiv();
+            addShowMoreFooter(report, projectsAnalysisResults);
         }
         report.endTabContentSection();
+    }
+
+    private void addShowMoreFooter(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults) {
+        report.startDiv("color:grey; font-size: 90%; margin-top: 16px;");
+        report.addParagraph("The list is limited to " + limit +
+                        " items (out of " + projectsAnalysisResults.size() + ").", "margin-left: 11px");
+        if (link != null && linkLabel != null) {
+            report.startDiv("margin-left: 10px; margin-bottom: 12px;");
+            report.addNewTabLink(link, linkLabel);
+            report.endDiv();
+        }
+        report.endDiv();
     }
 
     private void addCommitsTrend(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults, String label, String color, Counter counter) {
@@ -348,8 +355,7 @@ public class LandscapeProjectsReport {
         report.endTable();
 
         if (limit < projectsAnalysisResults.size()) {
-            report.addParagraph("The list is limited to " + limit + " items (out of " + projectsAnalysisResults.size() + ").",
-                    "color:grey; font-size: 90%");
+            addShowMoreFooter(report, projectsAnalysisResults);
         }
 
     }
@@ -443,8 +449,7 @@ public class LandscapeProjectsReport {
         report.endTable();
 
         if (limit < projectsAnalysisResults.size()) {
-            report.addParagraph("The list is limited to " + limit + " items (out of " + projectsAnalysisResults.size() + ").",
-                    "color:grey; font-size: 90%");
+            addShowMoreFooter(report, projectsAnalysisResults);
         }
 
     }

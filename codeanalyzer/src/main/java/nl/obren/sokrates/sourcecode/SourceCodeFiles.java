@@ -99,11 +99,11 @@ public class SourceCodeFiles {
         return sourceFiles;
     }
 
-    public void createBroadScope(List<String> extensions, List<SourceFileFilter> exclusions, int maxLineLength) {
-        createBroadScope(extensions, exclusions, true, maxLineLength);
+    public void createBroadScope(List<String> extensions, List<SourceFileFilter> exclusions, long lengthInBytes, int maxLineLength) {
+        createBroadScope(extensions, exclusions, true, lengthInBytes, maxLineLength);
     }
 
-    public void createBroadScope(List<String> extensions, List<SourceFileFilter> exclusions, boolean addLoc, int maxLineLength) {
+    public void createBroadScope(List<String> extensions, List<SourceFileFilter> exclusions, boolean addLoc, long lengthInBytes, int maxLineLength) {
         progressFeedback.start();
         filesInBroadScope.clear();
 
@@ -122,7 +122,7 @@ public class SourceCodeFiles {
                         + ": " + sourceFile.getFile().getName());
             }
             if (FilenameUtils.isExtension(sourceFile.getFile().getPath(), extensions)) {
-                if (!shouldExcludeFile(sourceFile, exclusions, maxLineLength)) {
+                if (!shouldExcludeFile(sourceFile, exclusions, lengthInBytes, maxLineLength)) {
                     if (addLoc) {
                         sourceFile.setLinesOfCodeFromContent();
                     }
@@ -136,8 +136,17 @@ public class SourceCodeFiles {
         progressFeedback.end();
     }
 
-    boolean shouldExcludeFile(SourceFile sourceFile, List<SourceFileFilter> exclusions, int maxLineLength) {
-        if (hasTooLongLines(sourceFile, maxLineLength)) {
+    boolean shouldExcludeFile(SourceFile sourceFile, List<SourceFileFilter> exclusions, long lengthInBytes, int maxLineLength) {
+        if (sourceFile.getFile().length() > lengthInBytes) {
+            String key = "Too long file (" + lengthInBytes + "+ bytes)";
+            IgnoredFilesGroup ignoredFilesGroup = ignoredFilesGroups.get(key);
+            if (ignoredFilesGroup == null) {
+                ignoredFilesGroup = new IgnoredFilesGroup(new SourceFileFilter());
+                ignoredFilesGroups.put(key, ignoredFilesGroup);
+            }
+            ignoredFilesGroup.getSourceFiles().add(sourceFile);
+            return true;
+        } else if (hasTooLongLines(sourceFile, maxLineLength)) {
             String key = "Too long lines (" + maxLineLength + "+ characters)";
             IgnoredFilesGroup ignoredFilesGroup = ignoredFilesGroups.get(key);
             if (ignoredFilesGroup == null) {

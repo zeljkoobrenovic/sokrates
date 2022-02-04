@@ -172,7 +172,8 @@ public class SourceFile {
     @JsonIgnore
     public String getContent() {
         try {
-            return StringUtils.isNotBlank(content) ? content : getFile() != null ? FileUtils.readFileToString(getFile(), StandardCharsets.UTF_8) : "";
+            File file = getFile();
+            return StringUtils.isNotBlank(content) ? content : file != null ? FileUtils.readFileToString(file, StandardCharsets.UTF_8) : "";
         } catch (IOException e) {
             LOG.debug(e);
         }
