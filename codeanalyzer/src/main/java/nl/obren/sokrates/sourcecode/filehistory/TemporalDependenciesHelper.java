@@ -15,6 +15,7 @@ import java.util.Map;
 
 public class TemporalDependenciesHelper {
     private static final Log LOG = LogFactory.getLog(TemporalDependenciesHelper.class);
+    public static final int DEPENDENCIES_LIST_LIMIT = 1000000;
 
     private List<ComponentDependency> componentDependencies = new ArrayList<>();
     private Map<String, ComponentDependency> componentDependenciesMap = new HashMap<>();
@@ -32,6 +33,10 @@ public class TemporalDependenciesHelper {
 
             if (!component1.equalsIgnoreCase(component2)) {
                 addDependency(filePairChangedTogether, component1, component2);
+            }
+
+            if (componentDependencies.size() > DEPENDENCIES_LIST_LIMIT) {
+                return;
             }
         });
 
@@ -57,8 +62,8 @@ public class TemporalDependenciesHelper {
                 });
             }
 
-            if (componentDependencies.size() > 100000) {
-                LOG.info("Reached the limit of graphsize");
+            if (componentDependencies.size() > DEPENDENCIES_LIST_LIMIT) {
+                LOG.info("Reached the limit of the graph size (" + DEPENDENCIES_LIST_LIMIT + " dependecies)");
                 return;
             }
         });

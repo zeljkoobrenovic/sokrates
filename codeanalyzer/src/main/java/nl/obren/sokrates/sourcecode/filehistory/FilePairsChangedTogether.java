@@ -31,7 +31,7 @@ public class FilePairsChangedTogether {
         fileHistories.forEach(fileHistory -> {
             if (aspect.getSourceFileByPath(fileHistory.getPath()) != null) {
                 fileHistory.getCommits().forEach(commitInfo -> {
-                    if (filePairs.size() > PAIR_LIST_LIMIT || rangeInDays <= 0 || DateUtils.isDateWithinRange(commitInfo.getDate(), rangeInDays)) {
+                    if (filePairs.size() < PAIR_LIST_LIMIT && (rangeInDays <= 0 || DateUtils.isDateWithinRange(commitInfo.getDate(), rangeInDays))) {
                         String commitId = commitInfo.getId();
                         String commitDate = commitInfo.getDate();
                         Set<FileModificationHistory> list = commitsIdMap.get(commitId);
