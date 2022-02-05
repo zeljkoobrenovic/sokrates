@@ -23,8 +23,11 @@ public class AnalysisConfig {
     // If set to true, Sokrates saves code fragments in files linked from reports
     private boolean saveCodeFragments = true;
 
-    // Sokrates will ignore files with any line longer than a given number of characters
+    // Sokrates will ignore files longer than a given number of bytes
     private int maxFileSizeBytes = 1000000;
+
+    // Sokrates will ignore files with more than a given number of lines of code
+    private int maxLines = 10000;
 
     // Sokrates will ignore files with any line longer than a given number of characters
     private int maxLineLength = 1000;
@@ -95,6 +98,14 @@ public class AnalysisConfig {
 
     public void setMaxFileSizeBytes(int maxFileSizeBytes) {
         this.maxFileSizeBytes = maxFileSizeBytes;
+    }
+
+    public int getMaxLines() {
+        return maxLines;
+    }
+
+    public void setMaxLines(int maxLines) {
+        this.maxLines = maxLines;
     }
 
     public int getMaxLineLength() {

@@ -51,7 +51,7 @@ public class ScopeCreator {
         LOG.info("Scanning source files...");
 
         AnalysisConfig analysis = codeConfiguration.getAnalysis();
-        SourceCodeFiles sourceCodeFiles = getSourceCodeFiles(extensions, analysis.getMaxFileSizeBytes(), analysis.getMaxLineLength());
+        SourceCodeFiles sourceCodeFiles = getSourceCodeFiles(extensions, analysis);
 
         if (customScopingConventions == null || !customScopingConventions.isIgnoreStandardScopingConventions()) {
             expandScopeWithConventions(codeConfiguration, sourceCodeFiles);
@@ -159,9 +159,9 @@ public class ScopeCreator {
         return codeConfiguration;
     }
 
-    private SourceCodeFiles getSourceCodeFiles(List<String> extensions, long lengthInBytes, int maxLineLength) {
+    private SourceCodeFiles getSourceCodeFiles(List<String> extensions, AnalysisConfig analysisConfig) {
         SourceCodeFiles sourceCodeFiles = getSourceCodeFiles();
-        sourceCodeFiles.createBroadScope(extensions, new ArrayList<>(), lengthInBytes, maxLineLength);
+        sourceCodeFiles.createBroadScope(extensions, new ArrayList<>(), analysisConfig);
         return sourceCodeFiles;
     }
 

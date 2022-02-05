@@ -174,7 +174,7 @@ public class LandscapeReportGenerator {
         landscapeReport.endTabContentSection();
 
         if (subLandscapes.size() > 0) {
-            landscapeReport.startTabContentSection(SUB_LANDSCAPES_TAB_ID, true);
+            landscapeReport.startTabContentSection(SUB_LANDSCAPES_TAB_ID, false);
             LOG.info("Adding sub landscape section...");
             addSubLandscapeSection(subLandscapes);
             WebFrameLink iframe = new WebFrameLink();
@@ -384,6 +384,7 @@ public class LandscapeReportGenerator {
         if (links.size() > 0) {
             Collections.sort(links, Comparator.comparing(a -> getLabel(a).toLowerCase()));
             landscapeReport.startDiv("margin: 12px; margin-bottom: 22px");
+
             landscapeReport.addHtmlContent("zoomable circles: ");
             landscapeReport.addNewTabLink("contributors (30d)", "visuals/sub_landscapes_zoomable_circles_" + CONTRIBUTORS_30_D + ".html");
             landscapeReport.addHtmlContent(" | ");
@@ -399,6 +400,7 @@ public class LandscapeReportGenerator {
             landscapeReport.addNewTabLink("lines of code (main)", "visuals/sub_landscapes_zoomable_sunburst_" + MAIN_LOC + ".html");
             landscapeReport.addLineBreak();
             landscapeReport.addLineBreak();
+
             landscapeReport.startTable();
             landscapeReport.addTableHeader("", "", "projects", "main loc", "test loc", "other loc", "recent contributors", "commits (30 days)");
             String prevRoot[] = {""};
@@ -708,22 +710,27 @@ public class LandscapeReportGenerator {
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
         landscapeReport.startShowMoreBlockDisappear("", "Show commit history per extension...");
+
         landscapeReport.startSubSection("Commit history per file extension", "");
         landscapeReport.startDiv("max-height: 600px; overflow-y: auto;");
         List<String> extensions = linesOfCodePerExtensionMain.stream().map(loc -> loc.getName().replaceAll(".*[.]", "").trim()).collect(Collectors.toList());
         HistoryPerLanguageGenerator.getInstanceCommits(landscapeAnalysisResults.getYearlyCommitHistoryPerExtension(), extensions).addHistoryPerLanguage(landscapeReport);
         landscapeReport.endDiv();
         landscapeReport.endSection();
+
         landscapeReport.endShowMoreBlock();
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
         landscapeReport.startShowMoreBlockDisappear("", "Show contributors history per extension...");
+
         landscapeReport.startSubSection("Contributors history per file extension", "");
         landscapeReport.startDiv("max-height: 600px; overflow-y: auto;");
         HistoryPerLanguageGenerator.getInstanceContributors(landscapeAnalysisResults.getYearlyCommitHistoryPerExtension(), extensions).addHistoryPerLanguage(landscapeReport);
         landscapeReport.endDiv();
         landscapeReport.endSection();
+
         landscapeReport.endShowMoreBlock();
+
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
@@ -967,12 +974,19 @@ public class LandscapeReportGenerator {
             ProcessingStopwatch.end("contributors/table");
 
             ProcessingStopwatch.start("contributors/saving tables");
-            new LandscapeContributorsReport(landscapeAnalysisResults, landscapeRecentContributorsReport).saveContributorsTable(recentContributors, totalRecentCommits, true);
-            new LandscapeContributorsReport(landscapeAnalysisResults, landscapeContributorsReport).saveContributorsTable(contributors, totalCommits, false);
+            Set<String> contributorsLinkedFromTables = new HashSet<>();
+            new LandscapeContributorsReport(landscapeAnalysisResults, landscapeRecentContributorsReport, contributorsLinkedFromTables)
+                    .saveContributorsTable(recentContributors, totalRecentCommits, true);
+            new LandscapeContributorsReport(landscapeAnalysisResults, landscapeContributorsReport, contributorsLinkedFromTables)
+                    .saveContributorsTable(contributors, totalCommits, false);
             ProcessingStopwatch.end("contributors/saving tables");
 
             ProcessingStopwatch.start("contributors/individual reports");
-            individualContributorReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults).getIndividualReports(contributors);
+            List<ContributorProjects> linkedContributors = contributors.stream()
+                    .filter(c -> contributorsLinkedFromTables.contains(c.getContributor().getEmail()))
+                    .collect(Collectors.toList());
+            LOG.info("Saving individual reports for " + linkedContributors.size() + " contributor(s) linked from tables (out of " + contributors.size() + ")");
+            individualContributorReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults).getIndividualReports(linkedContributors);
             ProcessingStopwatch.end("contributors/individual reports");
         }
         ProcessingStopwatch.end("contributors");

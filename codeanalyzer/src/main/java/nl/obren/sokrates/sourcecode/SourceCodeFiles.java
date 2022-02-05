@@ -7,6 +7,7 @@ package nl.obren.sokrates.sourcecode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
+import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import org.apache.commons.io.FilenameUtils;
 
@@ -99,11 +100,11 @@ public class SourceCodeFiles {
         return sourceFiles;
     }
 
-    public void createBroadScope(List<String> extensions, List<SourceFileFilter> exclusions, long lengthInBytes, int maxLineLength) {
-        createBroadScope(extensions, exclusions, true, lengthInBytes, maxLineLength);
+    public void createBroadScope(List<String> extensions, List<SourceFileFilter> exclusions, AnalysisConfig analysisConfig) {
+        createBroadScope(extensions, exclusions, true, analysisConfig);
     }
 
-    public void createBroadScope(List<String> extensions, List<SourceFileFilter> exclusions, boolean addLoc, long lengthInBytes, int maxLineLength) {
+    public void createBroadScope(List<String> extensions, List<SourceFileFilter> exclusions, boolean addLoc, AnalysisConfig analysisConfig) {
         progressFeedback.start();
         filesInBroadScope.clear();
 
@@ -122,7 +123,7 @@ public class SourceCodeFiles {
                         + ": " + sourceFile.getFile().getName());
             }
             if (FilenameUtils.isExtension(sourceFile.getFile().getPath(), extensions)) {
-                if (!shouldExcludeFile(sourceFile, exclusions, lengthInBytes, maxLineLength)) {
+                if (!shouldExcludeFile(sourceFile, exclusions, analysisConfig)) {
                     if (addLoc) {
                         sourceFile.setLinesOfCodeFromContent();
                     }
@@ -136,9 +137,9 @@ public class SourceCodeFiles {
         progressFeedback.end();
     }
 
-    boolean shouldExcludeFile(SourceFile sourceFile, List<SourceFileFilter> exclusions, long lengthInBytes, int maxLineLength) {
-        if (sourceFile.getFile().length() > lengthInBytes) {
-            String key = "Too long file (" + lengthInBytes + "+ bytes)";
+    boolean shouldExcludeFile(SourceFile sourceFile, List<SourceFileFilter> exclusions, AnalysisConfig analysisConfig) {
+        if (sourceFile.getFile().length() > analysisConfig.getMaxFileSizeBytes()) {
+            String key = "Too long file (" + analysisConfig.getMaxFileSizeBytes() + "+ bytes)";
             IgnoredFilesGroup ignoredFilesGroup = ignoredFilesGroups.get(key);
             if (ignoredFilesGroup == null) {
                 ignoredFilesGroup = new IgnoredFilesGroup(new SourceFileFilter());
@@ -146,8 +147,17 @@ public class SourceCodeFiles {
             }
             ignoredFilesGroup.getSourceFiles().add(sourceFile);
             return true;
-        } else if (hasTooLongLines(sourceFile, maxLineLength)) {
-            String key = "Too long lines (" + maxLineLength + "+ characters)";
+        } else if (hasTooManyLines(sourceFile, analysisConfig.getMaxLines())) {
+            String key = "Too many lines (" + analysisConfig.getMaxLines() + ")";
+            IgnoredFilesGroup ignoredFilesGroup = ignoredFilesGroups.get(key);
+            if (ignoredFilesGroup == null) {
+                ignoredFilesGroup = new IgnoredFilesGroup(new SourceFileFilter());
+                ignoredFilesGroups.put(key, ignoredFilesGroup);
+            }
+            ignoredFilesGroup.getSourceFiles().add(sourceFile);
+            return true;
+        } else if (hasTooLongLines(sourceFile, analysisConfig.getMaxLineLength())) {
+            String key = "Too long lines (" + analysisConfig.getMaxLineLength() + "+ characters)";
             IgnoredFilesGroup ignoredFilesGroup = ignoredFilesGroups.get(key);
             if (ignoredFilesGroup == null) {
                 ignoredFilesGroup = new IgnoredFilesGroup(new SourceFileFilter());
@@ -172,6 +182,14 @@ public class SourceCodeFiles {
             }
             return exclude;
         }
+    }
+
+    private boolean hasTooManyLines(SourceFile sourceFile, int maxLines) {
+        if (sourceFile.getLines().size() > maxLines) {
+            return true;
+        }
+
+        return false;
     }
 
     private boolean hasTooLongLines(SourceFile sourceFile, int maxLineLength) {
