@@ -20,6 +20,7 @@ import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
@@ -216,7 +217,7 @@ public class LandscapeReportGenerator {
 
         landscapeReport.startTabContentSection(TOPOLOGIES_TAB_ID, false);
         LOG.info("Adding Contributor Dependencies...");
-        addPeopleDependencies();
+        addTeamTopology(landscapeAnalysisResults);
         landscapeReport.endTabContentSection();
 
         configuration.getCustomTabs().forEach(tab -> {
@@ -269,6 +270,34 @@ public class LandscapeReportGenerator {
             }
         });
         return contributorsPerMonth;
+    }
+
+    private void addTeamTopology(LandscapeAnalysisResults landscapeAnalysisResults) {
+        int recentContributorsCount = landscapeAnalysisResults.getRecentContributorsCount();
+        double c2cMax = recentContributorsCount * (recentContributorsCount - 1) / 2.0; // n * (n - 1) / 2
+
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(recentContributorsCount), "contributors", "30 days", "");
+
+        int c2c = (int) Math.round(landscapeAnalysisResults.getC2cConnectionsCount30Days());
+        int cMedian = (int) Math.round(landscapeAnalysisResults.getcMedian30Days());
+        int cMean = (int) Math.round(landscapeAnalysisResults.getcMean30Days());
+        int cIndex = (int) Math.round(landscapeAnalysisResults.getcIndex30Days());
+        String formattedPercentage = c2cMax > 0 ? FormattingUtils.getFormattedPercentage(100.0 * c2c / c2cMax) : "0";
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(c2c), "C2C connections", "30 days (" + formattedPercentage + "%)", "unique contributor to contributor connections (via shared projects)");
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(cMedian), "C-Median", "30 days", "half of contributors have >= than this number of connections to other contributors");
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(cMean), "C-Mean", "30 days", "average number of contributor connections");
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(cIndex), "C-Index", "30 days", "N contributors have at least N contributor connections");
+
+        int pMedian = (int) Math.round(landscapeAnalysisResults.getpMedian30Days());
+        int pMean = (int) Math.round(landscapeAnalysisResults.getpMean30Days());
+        int pIndex = (int) Math.round(landscapeAnalysisResults.getpIndex30Days());
+        this.landscapeReport.addLineBreak();
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getProjectsCount()), "projects", "", "");
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pMedian), "P-Median", "30 days", "half of contributors have >= than this number of connections to projects");
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pMean), "P-Mean", "30 days", "average number of contributor project connections");
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pIndex), "P-Index", "30 days", "N contributors have at least N project connections");
+
+        addPeopleDependencies();
     }
 
     private void addPeopleDependencies() {
@@ -647,10 +676,6 @@ public class LandscapeReportGenerator {
                     "(active LOC/contributor)", "active lines of code per recent contributor\n\n" + FormattingUtils.getPlainTextForNumber(locNewPerRecentContributor) + " new LOC/recent contributor");
             List<ComponentDependency> peopleDependencies = ContributorConnectionUtils.getPeopleDependencies(contributors, 0, 30);
             peopleDependencies.sort((a, b) -> b.getCount() - a.getCount());
-
-            double cMedian = landscapeAnalysisResults.getcMedian30Days();
-
-            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cMedian)), "C-Median", "30 days", "");
         }
     }
 
@@ -703,33 +728,43 @@ public class LandscapeReportGenerator {
     private void addExtensions() {
         List<NumericMetric> linesOfCodePerExtensionMain = LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getMainLinesOfCodePerExtension());
         addMainExtensions("Main", linesOfCodePerExtensionMain, true);
-        landscapeReport.startShowMoreBlockDisappear("", "Show test and other code...");
+        landscapeReport.startShowMoreBlockDisappear("", "&nbsp;&nbsp;Show test and other code...");
         addMainExtensions("Test", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getTestLinesOfCodePerExtension()), false);
         addMainExtensions("Other", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getOtherLinesOfCodePerExtension()), false);
         landscapeReport.endShowMoreBlock();
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
-        landscapeReport.startShowMoreBlockDisappear("", "Show commit history per extension...");
+        landscapeReport.startShowMoreBlockDisappear("", "&nbsp;&nbsp;Show commit history per extension...");
 
         landscapeReport.startSubSection("Commit history per file extension", "");
         landscapeReport.startDiv("max-height: 600px; overflow-y: auto;");
+        landscapeReport.startDiv("margin-bottom: 16px;");
+        landscapeReport.addHtmlContent("animated commit history: ");
+        landscapeReport.addNewTabLink("all time cumulative", "visuals/racing_charts_extensions_commits.html?tickDuration=1200");
+        landscapeReport.addHtmlContent(" | ");
+        landscapeReport.addNewTabLink("12 months window", "visuals/racing_charts_extensions_commits_window.html?tickDuration=1200");
+        landscapeReport.endDiv();
         List<String> extensions = linesOfCodePerExtensionMain.stream().map(loc -> loc.getName().replaceAll(".*[.]", "").trim()).collect(Collectors.toList());
-        HistoryPerLanguageGenerator.getInstanceCommits(landscapeAnalysisResults.getYearlyCommitHistoryPerExtension(), extensions).addHistoryPerLanguage(landscapeReport);
+        List<HistoryPerExtension> yearlyCommitHistoryPerExtension = landscapeAnalysisResults.getYearlyCommitHistoryPerExtension();
+        HistoryPerLanguageGenerator.getInstanceCommits(yearlyCommitHistoryPerExtension, extensions).addHistoryPerLanguage(landscapeReport);
+        new RacingLanguagesBarChartsExporter(landscapeAnalysisResults, yearlyCommitHistoryPerExtension, extensions).exportRacingChart(reportsFolder);
         landscapeReport.endDiv();
         landscapeReport.endSection();
 
         landscapeReport.endShowMoreBlock();
+        /*
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
-        landscapeReport.startShowMoreBlockDisappear("", "Show contributors history per extension...");
+        landscapeReport.startShowMoreBlockDisappear("", "&nbsp;&nbsp;Show contributors history per extension...");
 
         landscapeReport.startSubSection("Contributors history per file extension", "");
         landscapeReport.startDiv("max-height: 600px; overflow-y: auto;");
-        HistoryPerLanguageGenerator.getInstanceContributors(landscapeAnalysisResults.getYearlyCommitHistoryPerExtension(), extensions).addHistoryPerLanguage(landscapeReport);
+        HistoryPerLanguageGenerator.getInstanceContributors(yearlyCommitHistoryPerExtension, extensions).addHistoryPerLanguage(landscapeReport);
         landscapeReport.endDiv();
         landscapeReport.endSection();
 
         landscapeReport.endShowMoreBlock();
+        */
 
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
@@ -1367,7 +1402,9 @@ public class LandscapeReportGenerator {
 
     private void addContributorsPerMonth() {
         int limit = 24;
-        List<ContributionTimeSlot> contributorsPerMonth = getContributionMonths(landscapeAnalysisResults.getContributorsPerMonth(),
+        List<ContributionTimeSlot> monthlyContributions = landscapeAnalysisResults.getContributorsPerMonth();
+        new RacingProjectsBarChartsExporter(landscapeAnalysisResults).exportRacingChart(reportsFolder);
+        List<ContributionTimeSlot> contributorsPerMonth = getContributionMonths(monthlyContributions,
                 limit, landscapeAnalysisResults.getLatestCommitDate());
 
         contributorsPerMonth.sort(Comparator.comparing(ContributionTimeSlot::getTimeSlot).reversed());
@@ -1695,7 +1732,7 @@ public class LandscapeReportGenerator {
                     "C2C dependencies are measured via the same repositories that two persons changed in the past " + daysAgo + " days. " +
                             "<br>Currently there are <b>" + FormattingUtils.formatCount(peopleDependencies.size()) + "</b> " +
                             "unique contributor-to-contributor (C2C) connections via <b>" +
-                            FormattingUtils.formatCount(connectionSum) + "</b> shared repositories.");
+                            landscapeAnalysisResults.getProjectsCount() + "</b> shared repositories.");
         }
 
         addDataSection("C-median", cMedian, daysAgo, landscapeAnalysisResults.getcMedian30DaysHistory(),

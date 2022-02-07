@@ -19,6 +19,7 @@ import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -186,10 +187,11 @@ public class LandscapeAnalysisResults {
                 String key = extensionYear.getExtension() + "::" + extensionYear.getYear();
                 if (map.containsKey(key)) {
                     map.get(key).setCommitsCount(map.get(key).getCommitsCount() + extensionYear.getCommitsCount());
-                    map.get(key).setContributorsCount(map.get(key).getContributorsCount() + extensionYear.getContributorsCount());
+                    map.get(key).getContributors().addAll(extensionYear.getContributors());
                 } else {
                     HistoryPerExtension newHistoryPerExtension = new HistoryPerExtension(extensionYear.getExtension(),
-                            extensionYear.getYear(), extensionYear.getCommitsCount(), extensionYear.getContributorsCount());
+                            extensionYear.getYear(), extensionYear.getCommitsCount());
+                    newHistoryPerExtension.getContributors().addAll(extensionYear.getContributors());
                     map.put(key, newHistoryPerExtension);
                 }
             });
@@ -586,6 +588,21 @@ public class LandscapeAnalysisResults {
         });
 
         Collections.sort(list, Comparator.comparing(ContributionTimeSlot::getTimeSlot).reversed());
+
+        return list;
+    }
+
+    @JsonIgnore
+    public List<Pair<String, List<ContributionTimeSlot>>> getContributorsPerProjectAndMonth() {
+        List<Pair<String, List<ContributionTimeSlot>>> list = new ArrayList<>();
+
+        getFilteredProjectAnalysisResults().forEach(project -> {
+            ContributorsAnalysisResults contributorsAnalysisResults = project.getAnalysisResults().getContributorsAnalysisResults();
+            List<ContributionTimeSlot> contributorsPerMonth = new ArrayList<>(contributorsAnalysisResults.getContributorsPerMonth());
+            Collections.sort(contributorsPerMonth, Comparator.comparing(ContributionTimeSlot::getTimeSlot));
+            String name = project.getAnalysisResults().getMetadata().getName();
+            list.add(Pair.of(name, contributorsPerMonth));
+        });
 
         return list;
     }

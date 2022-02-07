@@ -162,6 +162,10 @@ public class LandscapeProjectsReport {
         report.addHtmlContent(" | ");
         report.addNewTabLink("tree map", "visuals/tree_map_projects_commits.html");
         report.addHtmlContent(" | ");
+        report.addNewTabLink("animated history (all time)", "visuals/racing_charts_commits.html?tickDuration=1200");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("animated history (12 months window)", "visuals/racing_charts_commits_window.html?tickDuration=1200");
+        report.addHtmlContent(" | ");
         report.addNewTabLink("data", "data/projects.txt");
         report.endDiv();
     }
@@ -212,6 +216,8 @@ public class LandscapeProjectsReport {
         report.addNewTabLink("bubble chart", "visuals/bubble_chart_projects_contributors.html");
         report.addHtmlContent(" | ");
         report.addNewTabLink("tree map", "visuals/tree_map_projects_contributors.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("animated contributors per month (12 months average)", "visuals/racing_charts_contributors_per_month.html?tickDuration=1200");
         report.addHtmlContent(" | ");
         report.addNewTabLink("data", "data/projects.txt");
         report.endDiv();

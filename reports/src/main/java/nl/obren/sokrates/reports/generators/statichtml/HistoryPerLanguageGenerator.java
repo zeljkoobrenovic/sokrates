@@ -63,11 +63,12 @@ public class HistoryPerLanguageGenerator {
             if (mergedHistoryMap.containsKey(key)) {
                 HistoryPerExtension existing = mergedHistoryMap.get(key);
                 existing.setCommitsCount(existing.getCommitsCount() + languageHistory.getCommitsCount());
-                existing.setContributorsCount(existing.getContributorsCount() + languageHistory.getContributorsCount());
+                existing.getContributors().addAll(languageHistory.getContributors());
             } else {
                 HistoryPerExtension newItem = new HistoryPerExtension(languageHistory.getExtension(),
                         languageHistory.getYear(),
-                        languageHistory.getCommitsCount(), languageHistory.getContributorsCount());
+                        languageHistory.getCommitsCount());
+                newItem.getContributors().addAll(languageHistory.getContributors());
                 mergedHistoryMap.put(key, newItem);
                 mergedHistory.add(newItem);
             }
@@ -122,7 +123,7 @@ public class HistoryPerLanguageGenerator {
     }
 
     public int getValue(HistoryPerExtension value) {
-        return mode == Mode.COMMITS ? value.getCommitsCount() : value.getContributorsCount();
+        return mode == Mode.COMMITS ? value.getCommitsCount() : value.getContributors().size();
     }
 
     private void addExtensionRow(String extension) {

@@ -125,29 +125,6 @@ public final class GraphvizUtil {
         return null;
     }
 
-    public static String saveToPngFileReturnSvg(String dotCode, File file) {
-        try {
-            String svg = getSvgFromDot(dotCode);
-            //MutableGraph g = new Parser().read(dotCode);
-            //Graphviz graphviz = Graphviz.fromGraph(g);
-            //Graphviz graphvizStandardWidth = graphviz;
-
-            //Renderer renderPng = graphvizStandardWidth.render(Format.PNG);
-            //renderPng.toFile(file);
-
-            int svgBeginIndex = svg.indexOf("<svg");
-            if (svgBeginIndex >= 0) {
-                svg = svg.substring(svgBeginIndex);
-            }
-
-            return svg;
-        } catch (Throwable e) {
-            LOG.error(e);
-        }
-
-        return null;
-    }
-
     private static void runDot(List<String> dotArguments) throws IOException, InterruptedException {
         ProcessBuilder processBuilder = new ProcessBuilder(dotArguments.toArray(new String[dotArguments.size()]));
         String graphVizDotPath = GraphvizSettings.getGraphVizDotPath();

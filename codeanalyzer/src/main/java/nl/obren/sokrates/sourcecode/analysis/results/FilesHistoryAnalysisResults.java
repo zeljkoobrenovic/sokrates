@@ -261,7 +261,7 @@ public class FilesHistoryAnalysisResults {
                 String year = DateUtils.getYear(date);
                 String key = extension + "::" + year;
                 if (!map.containsKey(key)) {
-                    map.put(key, new HistoryPerExtension(extension, year, 0, 0));
+                    map.put(key, new HistoryPerExtension(extension, year, 0));
                 }
 
                 if (!commitsPerExtensionAndYear.containsKey(key)) {
@@ -275,7 +275,7 @@ public class FilesHistoryAnalysisResults {
                 contributorsPerExtensionAndYear.get(key).add(commit.getEmail());
 
                 map.get(key).setCommitsCount(commitsPerExtensionAndYear.get(key).size());
-                map.get(key).setContributorsCount(contributorsPerExtensionAndYear.get(key).size());
+                map.get(key).getContributors().addAll(contributorsPerExtensionAndYear.get(key));
             });
         });
 
