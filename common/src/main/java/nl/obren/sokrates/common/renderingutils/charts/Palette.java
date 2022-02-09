@@ -26,11 +26,12 @@ public class Palette {
     }
 
     public static Palette getAgePalette() {
-        return new Palette(Arrays.asList("#252525", "#636363", "#969696", "#cccccc", "#f7f7f7"));
+        // return new Palette(Arrays.asList("#252525", "#636363", "#969696", "#cccccc", "#f7f7f7"));
+        return new Palette(Arrays.asList( "#041E02", "#a12424", "#ee7b06", "#ffa904", "#ffdb00"));
     }
 
     public static Palette getFreshnessPalette() {
-        return new Palette(Arrays.asList( "#252525", "#006d2c", "#31a354", "#74c476", "#bae4b3"));
+        return new Palette(Arrays.asList( "#041E02", "#006d2c", "#31a354", "#74c476", "#bae4b3"));
     }
 
     public static Palette getDuplicationPalette() {

@@ -582,7 +582,7 @@ public class LandscapeProjectsReport {
                     .stream()
                     .mapToInt(p -> p.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCode())
                     .sum()), "text-align: center");
-            report.addTableCell(FormattingUtils.formatCount(LandscapeAnalysisResults.getLocActive(projectsAnalysisResults), "text-align: center"));
+            report.addTableCell(FormattingUtils.formatCount(LandscapeAnalysisResults.getLoc1YearActive(projectsAnalysisResults), "text-align: center"));
             report.addTableCell(FormattingUtils.formatCount(LandscapeAnalysisResults.getLocNew(projectsAnalysisResults), "text-align: center"));
             report.addTableCell(FormattingUtils.formatCount(projectsAnalysisResults
                     .stream()

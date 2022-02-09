@@ -24,6 +24,7 @@ import nl.obren.sokrates.reports.dataexporters.DataExporter;
 import nl.obren.sokrates.reports.generators.statichtml.BasicSourceCodeReportGenerator;
 import nl.obren.sokrates.reports.landscape.statichtml.LandscapeAnalysisCommands;
 import nl.obren.sokrates.sourcecode.Link;
+import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.CodeAnalyzer;
 import nl.obren.sokrates.sourcecode.analysis.CodeAnalyzerSettings;
@@ -120,6 +121,7 @@ public class CommandLineInterface {
             generateReports(args);
         } catch (ParseException e) {
             LOG.info("ERROR: " + e.getMessage() + "\n");
+            e.printStackTrace();
             commands.usage();
         }
     }
@@ -235,6 +237,10 @@ public class CommandLineInterface {
             return;
         }
 
+        Metadata metadata = new Metadata();
+
+        updateMetadataFromCommandLine(cmd, metadata);
+
         String confFilePath = cmd.getOptionValue(commands.getConfFile().getOpt());
         updateDateParam(cmd);
 
@@ -246,14 +252,14 @@ public class CommandLineInterface {
                 LOG.info(System.getProperty("user.dir"));
                 System.setProperty("user.dir", absolutePath);
                 LOG.info(System.getProperty("user.dir"));
-                LandscapeAnalysisCommands.update(new File(landscapeFolder.getAbsolutePath()), null);
+                LandscapeAnalysisCommands.update(new File(landscapeFolder.getAbsolutePath()), null, metadata);
             });
             LOG.info("Analysed " + landscapeConfigFiles + " landscape(s):");
             landscapeConfigFiles.forEach(landscapeConfigFile -> {
                 LOG.info(" -  " + landscapeConfigFile.getPath());
             });
         } else {
-            LandscapeAnalysisCommands.update(root, confFilePath != null ? new File(confFilePath) : null);
+            LandscapeAnalysisCommands.update(root, confFilePath != null ? new File(confFilePath) : null, metadata);
         }
     }
 
@@ -395,26 +401,8 @@ public class CommandLineInterface {
             codeConfiguration.getAnalysis().setSkipDuplication(false);
         }
 
-        if (cmd.hasOption(commands.getSetName().getOpt())) {
-            String name = cmd.getOptionValue(commands.getSetName().getOpt());
-            if (StringUtils.isNotBlank(name)) {
-                codeConfiguration.getMetadata().setName(name);
-            }
-        }
-
-        if (cmd.hasOption(commands.getSetDescription().getOpt())) {
-            String description = cmd.getOptionValue(commands.getSetDescription().getOpt());
-            if (StringUtils.isNotBlank(description)) {
-                codeConfiguration.getMetadata().setDescription(description);
-            }
-        }
-
-        if (cmd.hasOption(commands.getSetLogoLink().getOpt())) {
-            String logoLink = cmd.getOptionValue(commands.getSetLogoLink().getOpt());
-            if (StringUtils.isNotBlank(logoLink)) {
-                codeConfiguration.getMetadata().setLogoLink(logoLink);
-            }
-        }
+        Metadata metadata = codeConfiguration.getMetadata();
+        updateMetadataFromCommandLine(cmd, metadata);
 
         if (cmd.hasOption(commands.getSetCacheFiles().getOpt())) {
             String cacheFileValue = cmd.getOptionValue(commands.getSetCacheFiles().getOpt());
@@ -423,16 +411,39 @@ public class CommandLineInterface {
             }
         }
 
+        FileUtils.write(confFile, new JsonGenerator().generate(codeConfiguration), UTF_8);
+    }
+
+    private void updateMetadataFromCommandLine(CommandLine cmd, Metadata metadata) {
+        if (cmd.hasOption(commands.getSetName().getOpt())) {
+            String name = cmd.getOptionValue(commands.getSetName().getOpt());
+            if (StringUtils.isNotBlank(name)) {
+                metadata.setName(name);
+            }
+        }
+
+        if (cmd.hasOption(commands.getSetDescription().getOpt())) {
+            String description = cmd.getOptionValue(commands.getSetDescription().getOpt());
+            if (StringUtils.isNotBlank(description)) {
+                metadata.setDescription(description);
+            }
+        }
+
+        if (cmd.hasOption(commands.getSetLogoLink().getOpt())) {
+            String logoLink = cmd.getOptionValue(commands.getSetLogoLink().getOpt());
+            if (StringUtils.isNotBlank(logoLink)) {
+                metadata.setLogoLink(logoLink);
+            }
+        }
+
         if (cmd.hasOption(commands.getAddLink().getOpt())) {
             String linkData[] = cmd.getOptionValues(commands.getAddLink().getOpt());
             if (linkData.length >= 1 && StringUtils.isNotBlank(linkData[0])) {
                 String href = linkData[0];
-                String label = linkData.length >= 1 ? linkData[1] : "";
-                codeConfiguration.getMetadata().getLinks().add(new Link(label, href));
+                String label = linkData.length > 1 ? linkData[1] : "";
+                metadata.getLinks().add(new Link(label, href));
             }
         }
-
-        FileUtils.write(confFile, new JsonGenerator().generate(codeConfiguration), UTF_8);
     }
 
     private void exportConventions(String[] args) throws ParseException, IOException {

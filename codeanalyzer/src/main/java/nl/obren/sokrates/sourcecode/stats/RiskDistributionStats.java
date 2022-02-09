@@ -4,6 +4,8 @@
 
 package nl.obren.sokrates.sourcecode.stats;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 
 public class RiskDistributionStats {
@@ -107,28 +109,56 @@ public class RiskDistributionStats {
         return negligibleRiskValue;
     }
 
+    public void setNegligibleRiskValue(int negligibleRiskValue) {
+        this.negligibleRiskValue = negligibleRiskValue;
+    }
+
     public int getLowRiskValue() {
         return lowRiskValue;
+    }
+
+    public void setLowRiskValue(int lowRiskValue) {
+        this.lowRiskValue = lowRiskValue;
     }
 
     public int getMediumRiskValue() {
         return mediumRiskValue;
     }
 
+    public void setMediumRiskValue(int mediumRiskValue) {
+        this.mediumRiskValue = mediumRiskValue;
+    }
+
     public int getHighRiskValue() {
         return highRiskValue;
+    }
+
+    public void setHighRiskValue(int highRiskValue) {
+        this.highRiskValue = highRiskValue;
     }
 
     public int getVeryHighRiskValue() {
         return veryHighRiskValue;
     }
 
+    public void setVeryHighRiskValue(int veryHighRiskValue) {
+        this.veryHighRiskValue = veryHighRiskValue;
+    }
+
     public int getNegligibleRiskCount() {
         return negligibleRiskCount;
     }
 
+    public void setNegligibleRiskCount(int negligibleRiskCount) {
+        this.negligibleRiskCount = negligibleRiskCount;
+    }
+
     public int getLowRiskCount() {
         return lowRiskCount;
+    }
+
+    public void setLowRiskCount(int lowRiskCount) {
+        this.lowRiskCount = lowRiskCount;
     }
 
     public int getLowRiskThreshold() {
@@ -143,18 +173,29 @@ public class RiskDistributionStats {
         return mediumRiskCount;
     }
 
+    public void setMediumRiskCount(int mediumRiskCount) {
+        this.mediumRiskCount = mediumRiskCount;
+    }
+
     public int getHighRiskCount() {
         return highRiskCount;
+    }
+
+    public void setHighRiskCount(int highRiskCount) {
+        this.highRiskCount = highRiskCount;
     }
 
     public int getVeryHighRiskCount() {
         return veryHighRiskCount;
     }
 
+    public void setVeryHighRiskCount(int veryHighRiskCount) {
+        this.veryHighRiskCount = veryHighRiskCount;
+    }
+
     public int getMediumRiskThreshold() {
         return mediumRiskThreshold;
     }
-
 
     public void setMediumRiskThreshold(int mediumRiskThreshold) {
         this.mediumRiskThreshold = mediumRiskThreshold;
@@ -228,11 +269,9 @@ public class RiskDistributionStats {
         return totalValue() > 0 ? 100.0 * highRiskValue / totalValue() : 0;
     }
 
-
     public double getMediumRiskPercentage() {
         return totalValue() > 0 ? 100.0 * mediumRiskValue / totalValue() : 0;
     }
-
 
     public double getLowRiskPercentage() {
         return totalValue() > 0 ? 100.0 * lowRiskValue / totalValue() : 0;
@@ -240,6 +279,24 @@ public class RiskDistributionStats {
 
     public double getNegligibleRiskPercentage() {
         return totalValue() > 0 ? 100.0 * negligibleRiskValue / totalValue() : 0;
+    }
+
+    @JsonIgnore
+    public String getDescription() {
+        StringBuilder text = new StringBuilder();
+
+        text.append(FormattingUtils.getFormattedPercentage(getVeryHighRiskPercentage()) + "% " + veryHighRiskLabel + ": " +
+                FormattingUtils.formatCount(veryHighRiskValue) + " LOC in " + FormattingUtils.formatCount(veryHighRiskCount) + " files;\n");
+        text.append(FormattingUtils.getFormattedPercentage(getHighRiskPercentage()) + "% " + highRiskLabel + ": " +
+                FormattingUtils.formatCount(highRiskValue) + " LOC in " + FormattingUtils.formatCount(highRiskCount) + " files;\n");
+        text.append(FormattingUtils.getFormattedPercentage(getMediumRiskPercentage()) + "% " + mediumRiskLabel + ": " +
+                FormattingUtils.formatCount(mediumRiskValue) + " LOC in " + FormattingUtils.formatCount(mediumRiskCount) + " files;\n");
+        text.append(FormattingUtils.getFormattedPercentage(getLowRiskPercentage()) + "% " + lowRiskLabel + ": " +
+                FormattingUtils.formatCount(lowRiskValue) + " LOC in " + FormattingUtils.formatCount(lowRiskCount) + " files;\n");
+        text.append(FormattingUtils.getFormattedPercentage(getNegligibleRiskPercentage()) + "% " + negligibleRiskLabel + ": " +
+                FormattingUtils.formatCount(negligibleRiskValue) + " LOC in " + FormattingUtils.formatCount(negligibleRiskCount) + " files;\n");
+
+        return text.toString();
     }
 
 }

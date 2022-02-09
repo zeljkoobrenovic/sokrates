@@ -111,13 +111,69 @@ public class LandscapeAnalysisResults {
     @JsonIgnore
     private List<ContributorProjects> contributorsCache;
 
-    public static int getLocActive(List<ProjectAnalysisResults> projectsAnalysisResults) {
+    public static SourceFileAgeDistribution getOverallFileLastModifiedDistribution(List<ProjectAnalysisResults> projectsAnalysisResults) {
+        SourceFileAgeDistribution distribution = new SourceFileAgeDistribution();
+        projectsAnalysisResults.forEach(projectAnalysisResults -> {
+            FilesHistoryAnalysisResults filesHistoryAnalysisResults = projectAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
+            SourceFileAgeDistribution projectDistribution = filesHistoryAnalysisResults.getOverallFileLastModifiedDistribution();
+            if (projectDistribution == null) {
+                return;
+            }
+            updateDistribution(distribution, projectDistribution);
+        });
+        return distribution;
+    }
+
+    public static SourceFileAgeDistribution getOverallFileFirstModifiedDistribution(List<ProjectAnalysisResults> projectsAnalysisResults) {
+        SourceFileAgeDistribution distribution = new SourceFileAgeDistribution();
+        projectsAnalysisResults.forEach(projectAnalysisResults -> {
+            FilesHistoryAnalysisResults filesHistoryAnalysisResults = projectAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
+            SourceFileAgeDistribution projectDistribution = filesHistoryAnalysisResults.getOverallFileFirstModifiedDistribution();
+            if (projectDistribution == null) {
+                return;
+            }
+            updateDistribution(distribution, projectDistribution);
+        });
+        return distribution;
+    }
+
+    private static void updateDistribution(SourceFileAgeDistribution distribution, SourceFileAgeDistribution projectDistribution) {
+        distribution.setNegligibleRiskLabel(projectDistribution.getNegligibleRiskLabel());
+        distribution.setNegligibleRiskCount(distribution.getNegligibleRiskCount() + projectDistribution.getNegligibleRiskCount());
+        distribution.setNegligibleRiskValue(distribution.getNegligibleRiskValue() + projectDistribution.getNegligibleRiskValue());
+        distribution.setLowRiskLabel(projectDistribution.getLowRiskLabel());
+        distribution.setLowRiskCount(distribution.getLowRiskCount() + projectDistribution.getLowRiskCount());
+        distribution.setLowRiskValue(distribution.getLowRiskValue() + projectDistribution.getLowRiskValue());
+        distribution.setMediumRiskLabel(projectDistribution.getMediumRiskLabel());
+        distribution.setMediumRiskCount(distribution.getMediumRiskCount() + projectDistribution.getMediumRiskCount());
+        distribution.setMediumRiskValue(distribution.getMediumRiskValue() + projectDistribution.getMediumRiskValue());
+        distribution.setHighRiskLabel(projectDistribution.getHighRiskLabel());
+        distribution.setHighRiskCount(distribution.getHighRiskCount() + projectDistribution.getHighRiskCount());
+        distribution.setHighRiskValue(distribution.getHighRiskValue() + projectDistribution.getHighRiskValue());
+        distribution.setVeryHighRiskLabel(projectDistribution.getVeryHighRiskLabel());
+        distribution.setVeryHighRiskCount(distribution.getVeryHighRiskCount() + projectDistribution.getVeryHighRiskCount());
+        distribution.setVeryHighRiskValue(distribution.getVeryHighRiskValue() + projectDistribution.getVeryHighRiskValue());
+    }
+
+    public static int getLoc1YearActive(List<ProjectAnalysisResults> projectsAnalysisResults) {
         int count[] = {0};
         projectsAnalysisResults.forEach(projectAnalysisResults -> {
             FilesHistoryAnalysisResults filesHistoryAnalysisResults = projectAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
             SourceFileAgeDistribution overallFileLastModifiedDistribution = filesHistoryAnalysisResults.getOverallFileLastModifiedDistribution();
             if (overallFileLastModifiedDistribution != null) {
                 count[0] += overallFileLastModifiedDistribution.getTotalValue() - overallFileLastModifiedDistribution.getVeryHighRiskValue();
+            }
+        });
+        return count[0];
+    }
+
+    public static int getLoc30DaysActive(List<ProjectAnalysisResults> projectsAnalysisResults) {
+        int count[] = {0};
+        projectsAnalysisResults.forEach(projectAnalysisResults -> {
+            FilesHistoryAnalysisResults filesHistoryAnalysisResults = projectAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
+            SourceFileAgeDistribution overallFileLastModifiedDistribution = filesHistoryAnalysisResults.getOverallFileLastModifiedDistribution();
+            if (overallFileLastModifiedDistribution != null) {
+                count[0] += overallFileLastModifiedDistribution.getNegligibleRiskValue();
             }
         });
         return count[0];
@@ -133,6 +189,14 @@ public class LandscapeAnalysisResults {
             }
         });
         return count[0];
+    }
+
+    public SourceFileAgeDistribution getOverallFileLastModifiedDistribution() {
+        return getOverallFileLastModifiedDistribution(this.projectAnalysisResults);
+    }
+
+    public SourceFileAgeDistribution getOverallFileFirstModifiedDistribution() {
+        return getOverallFileFirstModifiedDistribution(this.projectAnalysisResults);
     }
 
     public LandscapeConfiguration getConfiguration() {
@@ -211,8 +275,12 @@ public class LandscapeAnalysisResults {
         return count[0];
     }
 
-    public int getMainLocActive() {
-        return getLocActive(getFilteredProjectAnalysisResults());
+    public int getMainLoc1YearActive() {
+        return getLoc1YearActive(getFilteredProjectAnalysisResults());
+    }
+
+    public int getMainLoc30DaysActive() {
+        return getLoc30DaysActive(getFilteredProjectAnalysisResults());
     }
 
     public int getMainLocNew() {

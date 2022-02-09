@@ -255,10 +255,20 @@ public class Commands {
         options.addOption(analysisRoot);
         options.addOption(confFile);
         options.addOption(recursive);
+        options.addOption(setName);
+        options.addOption(setDescription);
+        options.addOption(setLogoLink);
+        options.addOption(addLink);
         options.addOption(timeout);
         options.addOption(date);
         options.addOption(help);
 
+        setName.setRequired(false);
+        setDescription.setRequired(false);
+        setLogoLink.setRequired(false);
+        addLink.setRequired(false);
+
+        addLink.setArgs(2);
         help.setArgs(0);
 
         return options;
