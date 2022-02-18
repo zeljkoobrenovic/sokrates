@@ -1,4 +1,4 @@
-package nl.obren.sokrates.reports.landscape.statichtml;
+package nl.obren.sokrates.reports.landscape.utils;
 
 import nl.obren.sokrates.common.renderingutils.RacingChartItem;
 import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
@@ -29,10 +29,12 @@ public class RacingProjectsBarChartsExporter {
     private List<RacingChartItem> items = new ArrayList<>();
     private List<RacingChartItem> itemsContributorsPerMonth = new ArrayList<>();
     private List<RacingChartItem> items12Month = new ArrayList<>();
+    private String suffix = "";
 
-    public RacingProjectsBarChartsExporter(LandscapeAnalysisResults landscapeAnalysisResults) {
+    public RacingProjectsBarChartsExporter(LandscapeAnalysisResults landscapeAnalysisResults, List<Pair<String, List<ContributionTimeSlot>>> contributions, String suffix) {
         this.landscapeAnalysisResults = landscapeAnalysisResults;
-        this.contributions = landscapeAnalysisResults.getContributorsPerProjectAndMonth();
+        this.contributions = contributions;
+        this.suffix = suffix;
     }
 
     public void exportRacingChart(File reportsFolder) {
@@ -73,28 +75,29 @@ public class RacingProjectsBarChartsExporter {
                 } else {
                     valueCommits += firstTwoMonthsCommits / 10.0;
                 }
-                RacingChartItem itemCommits = new RacingChartItem(name);
-                itemCommits.setLastValue(cumulativeCommits > 0 ? cumulativeCommits : 0.1);
-                cumulativeCommits += valueCommits;
-                itemCommits.setValue(cumulativeCommits > 0 ? cumulativeCommits : 0.1);
-                itemCommits.setYear(year + (month - 2) / 10.0);
-                items.add(itemCommits);
+                if (Math.round(cumulativeCommits) > 0) {
+                    RacingChartItem itemCommits = new RacingChartItem(name);
+                    cumulativeCommits += valueCommits;
+                    itemCommits.setValue(Math.round(cumulativeCommits) > 0 ? Math.round(cumulativeCommits) : 0.1);
+                    itemCommits.setYear(year + (month - 2) / 10.0);
+                    items.add(itemCommits);
+                }
 
                 double averageContributorsPerMonth = cumulativeContributorsList.stream().collect(Collectors.averagingDouble(Integer::intValue));
-                RacingChartItem itemContributorsPerMonth = new RacingChartItem(name);
-                itemContributorsPerMonth.setLastValue(prevAverageMontlhyContributors > 0 ? prevAverageMontlhyContributors : 0.1);
-                prevAverageMontlhyContributors = averageContributorsPerMonth;
-                itemContributorsPerMonth.setValue(averageContributorsPerMonth > 0 ? averageContributorsPerMonth : 0.1);
-                itemContributorsPerMonth.setYear(year + (month - 2) / 10.0);
-                itemsContributorsPerMonth.add(itemContributorsPerMonth);
+                if (averageContributorsPerMonth > 0.1) {
+                    RacingChartItem itemContributorsPerMonth = new RacingChartItem(name);
+                    itemContributorsPerMonth.setValue(averageContributorsPerMonth > 0.1 ? Math.round(100.0 * averageContributorsPerMonth) / 100 : 0.1);
+                    itemContributorsPerMonth.setYear(year + (month - 2) / 10.0);
+                    itemsContributorsPerMonth.add(itemContributorsPerMonth);
+                }
 
                 int sumCommits = cumulativeCommitsList.stream().collect(Collectors.summingInt(Integer::intValue));
-                RacingChartItem itemCommitsSum12Months = new RacingChartItem(name);
-                itemCommitsSum12Months.setLastValue(prevSumCommits > 0 ? prevSumCommits : 0.1);
-                prevSumCommits = sumCommits;
-                itemCommitsSum12Months.setValue(sumCommits > 0 ? sumCommits : 0.1);
-                itemCommitsSum12Months.setYear(year + (month - 2) / 10.0);
-                items12Month.add(itemCommitsSum12Months);
+                if (Math.round(sumCommits) > 0) {
+                    RacingChartItem itemCommitsSum12Months = new RacingChartItem(name);
+                    itemCommitsSum12Months.setValue(Math.round(sumCommits) > 0 ? Math.round(sumCommits) : 0.1);
+                    itemCommitsSum12Months.setYear(year + (month - 2) / 10.0);
+                    items12Month.add(itemCommitsSum12Months);
+                }
             }
         }
     }
@@ -104,14 +107,16 @@ public class RacingProjectsBarChartsExporter {
         folder.mkdirs();
         try {
             String start = startYear + "." + (startMonth <= 2 ? 1 : startMonth - 3);
-            FileUtils.write(new File(folder, "racing_charts_commits.html"),
+            FileUtils.write(new File(folder, "racing_charts_commits_" + suffix + ".html"),
                     new VisualizationTemplate().renderRacingCharts(items, start, "Commits since " + startYear + " (cumulative)"), UTF_8);
-            FileUtils.write(new File(folder, "racing_charts_commits_window.html"),
+            FileUtils.write(new File(folder, "racing_charts_commits_window_" + suffix + ".html"),
                     new VisualizationTemplate().renderRacingCharts(items12Month, start, "Commits since " + startYear + " (" + windowSize + " months window)"), UTF_8);
-            FileUtils.write(new File(folder, "racing_charts_contributors_per_month.html"),
-                    new VisualizationTemplate().renderRacingCharts(itemsContributorsPerMonth, start,
-                            "Contributors per month since " + startYear + " (average over " + windowSize + " months)"), UTF_8);
 
+            if (suffix.equalsIgnoreCase("projects")) {
+                FileUtils.write(new File(folder, "racing_charts_contributors_per_month_" + suffix + ".html"),
+                        new VisualizationTemplate().renderRacingCharts(itemsContributorsPerMonth, start,
+                                "Contributors per month since " + startYear + " (average over " + windowSize + " months)"), UTF_8);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -6,13 +6,13 @@ package nl.obren.sokrates.reports.landscape.statichtml;
 
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.landscape.utils.LandscapeVisualsGenerator;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalyzer;
 import nl.obren.sokrates.sourcecode.landscape.init.LandscapeAnalysisInitiator;
 import nl.obren.sokrates.sourcecode.landscape.init.LandscapeAnalysisUpdater;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 

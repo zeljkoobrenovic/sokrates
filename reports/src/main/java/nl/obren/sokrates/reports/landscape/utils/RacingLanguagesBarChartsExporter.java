@@ -1,4 +1,4 @@
-package nl.obren.sokrates.reports.landscape.statichtml;
+package nl.obren.sokrates.reports.landscape.utils;
 
 import nl.obren.sokrates.common.renderingutils.RacingChartItem;
 import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
@@ -61,13 +61,13 @@ public class RacingLanguagesBarChartsExporter {
             for (int i = 0; i < 10; i++) {
                 RacingChartItem itemCommits = new RacingChartItem(extension);
                 double prevSum = values.stream().collect(Collectors.summingDouble(Double::doubleValue));
-                itemCommits.setLastValue(prevSum > 0 ? prevSum : 0.1);
+                //itemCommits.setLastValue(prevSum > 0 ? prevSum : 0.1);
                 values.add(tickCommits);
                 if (values.size() > windowSize * 10) {
                     values.remove(0);
                 }
                 double sum = values.stream().collect(Collectors.summingDouble(Double::doubleValue));
-                itemCommits.setValue(sum > 0 ? sum : 0.1);
+                itemCommits.setValue(Math.round(sum) > 0 ? Math.round(sum) : 0.1);
                 itemCommits.setYear(year + 0.1 * i);
                 list.add(itemCommits);
             }
@@ -84,9 +84,9 @@ public class RacingLanguagesBarChartsExporter {
             double tick = delta / 10.0;
             for (int i = 0; i < 10; i++) {
                 RacingChartItem itemContributors = new RacingChartItem(extension);
-                itemContributors.setLastValue(contributorsValue > 0 ? contributorsValue : 0.1);
+                //itemContributors.setLastValue(contributorsValue > 0 ? contributorsValue : 0.1);
                 contributorsValue += tick;
-                itemContributors.setValue(contributorsValue > 0 ? contributorsValue : 0.1);
+                itemContributors.setValue(Math.round(contributorsValue) > 0 ? Math.round(contributorsValue) : 0.1);
                 itemContributors.setYear(year + 0.1 * i);
                 contributors.add(itemContributors);
             }

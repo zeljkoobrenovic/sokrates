@@ -86,6 +86,18 @@
         tickDuration = parseInt(durationParam);
     }
 
+    var factor = 1;
+    var factorParam = findGetParameter('valueFactor');
+    if (factorParam) {
+        factor = parseFloat(factorParam);
+    }
+
+    var start = 0;
+    var startParam = findGetParameter('start');
+    if (startParam) {
+        start = parseInt(startParam);
+    }
+
     var top_n = 50;
 
     const margin = {
@@ -113,17 +125,29 @@
         .attr('y', height - 5)
         .style('text-anchor', 'end');
 
-    let year = ${startYear};
+    let year = start > 0 ? start : ${startYear};
 
 
     const data = ${data};
 
-    console.log(data);
+    let prevItem = null;
+
+    data.forEach(item => {
+        if (prevItem != null) {
+            if (prevItem.name == item.name) {
+                item.lastValue = prevItem.value;
+            } else {
+                item.lastValue = 0.0;
+            }
+        } else {
+            item.lastValue = 0.0;
+        }
+        prevItem = item;
+    });
 
     data.sort((a, b) => a.name.localeCompare(b.name)).forEach(d => {
         d.value = +d.value,
             d.lastValue = +d.lastValue,
-            d.value = isNaN(d.value) ? 0 : d.value,
             d.year = +d.year,
             d.colour = d3.hsl(Math.random() * 360, 0.75, 0.75)
     });

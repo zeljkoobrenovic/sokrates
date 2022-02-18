@@ -1,4 +1,4 @@
-package nl.obren.sokrates.reports.landscape.statichtml;
+package nl.obren.sokrates.reports.landscape.utils;
 
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.MergeExtension;

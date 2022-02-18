@@ -8,7 +8,6 @@ import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
-import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils;
@@ -23,7 +22,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class LandscapeAnalyzer {
@@ -46,15 +44,15 @@ public class LandscapeAnalyzer {
                 CodeAnalysisResults projectAnalysisResults = this.getProjectAnalysisResults(link);
                 if (projectAnalysisResults != null) {
                     landscapeAnalysisResults.getProjectAnalysisResults().add(new ProjectAnalysisResults(link, projectAnalysisResults));
-                }
-                projectAnalysisResults.getContributorsAnalysisResults().getContributors().forEach(contributor -> {
-                    contributor.getCommitDates().forEach(commitDate -> {
-                        if (landscapeAnalysisResults.getLatestCommitDate() == "" || commitDate.compareTo(landscapeAnalysisResults.getLatestCommitDate()) > 0) {
-                            landscapeAnalysisResults.setLatestCommitDate(commitDate);
-                            DateUtils.setLatestCommitDate(commitDate);
-                        }
+                    projectAnalysisResults.getContributorsAnalysisResults().getContributors().forEach(contributor -> {
+                        contributor.getCommitDates().forEach(commitDate -> {
+                            if (landscapeAnalysisResults.getLatestCommitDate() == "" || commitDate.compareTo(landscapeAnalysisResults.getLatestCommitDate()) > 0) {
+                                landscapeAnalysisResults.setLatestCommitDate(commitDate);
+                                DateUtils.setLatestCommitDate(commitDate);
+                            }
+                        });
                     });
-                });
+                }
             });
         } catch (IOException e) {
             e.printStackTrace();
@@ -159,8 +157,8 @@ public class LandscapeAnalyzer {
         try {
             String json = FileUtils.readFileToString(projectAnalysisResultsFile, StandardCharsets.UTF_8);
             CodeAnalysisResults codeAnalysisResults = (CodeAnalysisResults) new JsonMapper().getObject(json, CodeAnalysisResults.class);
-            codeAnalysisResults.setUnitsAnalysisResults(new UnitsAnalysisResults());
-            codeAnalysisResults.setFilesAnalysisResults(new FilesAnalysisResults());
+            // codeAnalysisResults.setUnitsAnalysisResults(new UnitsAnalysisResults());
+            // codeAnalysisResults.setFilesAnalysisResults(new FilesAnalysisResults());
             codeAnalysisResults.setAllDependencies(new ArrayList<>());
             codeAnalysisResults.setFilesExcludedByExtension(new ArrayList<>());
             if (codeAnalysisResults.getMainAspectAnalysisResults().getAspect() != null) {

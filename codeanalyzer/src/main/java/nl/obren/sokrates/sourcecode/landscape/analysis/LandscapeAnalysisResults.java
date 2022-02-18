@@ -12,6 +12,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
@@ -671,6 +672,51 @@ public class LandscapeAnalysisResults {
             String name = project.getAnalysisResults().getMetadata().getName();
             list.add(Pair.of(name, contributorsPerMonth));
         });
+
+        return list;
+    }
+
+    public List<Pair<String, List<ContributionTimeSlot>>> getContributorsCommits() {
+        Map<String, Pair<String, Map<String, ContributionTimeSlot>>> map = new HashMap<>();
+
+        getAllContributors().forEach(contributor -> {
+            Map<String, ContributionTimeSlot> commits = new HashMap<>();
+            contributor.getContributor().getCommitDates().forEach(commitDate -> {
+                String month = DateUtils.getMonth(commitDate);
+                if (commits.containsKey(month)) {
+                    commits.get(month).setCommitsCount(commits.get(month).getCommitsCount() + 1);
+                } else {
+                    ContributionTimeSlot timeSlot = new ContributionTimeSlot(month);
+                    timeSlot.setContributorsCount(1);
+                    commits.put(month, timeSlot);
+                }
+            });
+            String email = contributor.getContributor().getEmail();
+
+            Pair<String, Map<String, ContributionTimeSlot>> pair = map.get(email);
+
+            if (pair == null) {
+                pair = Pair.of(email, new HashMap<>());
+                map.put(email, pair);
+            }
+
+            Pair<String, Map<String, ContributionTimeSlot>> finalPair = pair;
+            commits.values().forEach(commitTimeSlot -> {
+                String timeSlot = commitTimeSlot.getTimeSlot();
+                if (finalPair.getRight().containsKey(timeSlot)) {
+                    finalPair.getRight().get(timeSlot).setCommitsCount(finalPair.getRight().get(timeSlot).getCommitsCount() + commitTimeSlot.getCommitsCount());
+                } else {
+                    ContributionTimeSlot contributionTimeSlot = new ContributionTimeSlot(timeSlot);
+                    contributionTimeSlot.setCommitsCount(commitTimeSlot.getCommitsCount());
+                    contributionTimeSlot.setContributorsCount(1);
+                    finalPair.getRight().put(timeSlot, contributionTimeSlot);
+                }
+            });
+        });
+
+        List<Pair<String, List<ContributionTimeSlot>>> list = new ArrayList<>();
+
+        map.values().forEach(pair -> list.add(Pair.of(pair.getLeft(), new ArrayList<>(pair.getRight().values()))));
 
         return list;
     }

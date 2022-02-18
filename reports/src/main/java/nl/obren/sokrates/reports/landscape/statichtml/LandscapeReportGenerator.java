@@ -18,6 +18,7 @@ import nl.obren.sokrates.reports.core.ReportConstants;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
+import nl.obren.sokrates.reports.landscape.utils.*;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.Metadata;
@@ -52,10 +53,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-
-interface ContributorsExtractor {
-    List<String> getContributors(String timeSlot, boolean rookiesOnly);
-}
 
 public class LandscapeReportGenerator {
     public static final String DEPENDENCIES_ICON = "\n" +
@@ -768,7 +765,8 @@ public class LandscapeReportGenerator {
 
         landscapeReport.startSubSection("Commit history per file extension", "");
         landscapeReport.startDiv("max-height: 600px; overflow-y: auto;");
-        landscapeReport.startDiv("margin-bottom: 16px;");
+        landscapeReport.startDiv("margin-bottom: 16px; vertical-align: middle;");
+        landscapeReport.addContentInDiv(ReportConstants.ANIMATION_SVG_ICON, "display: inline-block; vertical-align: middle; margin: 4px;");
         landscapeReport.addHtmlContent("animated commit history: ");
         landscapeReport.addNewTabLink("all time cumulative", "visuals/racing_charts_extensions_commits.html?tickDuration=1200");
         landscapeReport.addHtmlContent(" | ");
@@ -1027,6 +1025,13 @@ public class LandscapeReportGenerator {
                 landscapeReport.endSection();
             }
 
+            landscapeReport.startDiv("margin-bottom: 16px; margin-top: -6px; vertical-align: middle;");
+            landscapeReport.addContentInDiv(ReportConstants.ANIMATION_SVG_ICON, "display: inline-block; vertical-align: middle; margin: 4px;");
+            landscapeReport.addNewTabLink("animated contributors history (all time)", "visuals/racing_charts_commits_contributors.html?tickDuration=1200");
+            landscapeReport.addHtmlContent(" | ");
+            landscapeReport.addNewTabLink("animated contributors history (12 months window)", "visuals/racing_charts_commits_window_contributors.html?tickDuration=1200");
+            landscapeReport.endDiv();
+
             landscapeReport.startSubSection("<a href='contributors.html' target='_blank' style='text-decoration: none'>" +
                             "All Contributors (" + contributorsCount + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
                     "latest commit " + latestCommit[0]);
@@ -1157,7 +1162,7 @@ public class LandscapeReportGenerator {
             }
         });
 
-        landscapeReport.startSubSection("<a href='projects.html' target='_blank' style='text-decoration: none'>" +
+        landscapeReport.startSubSection("<a href='projects-short.html' target='_blank' style='text-decoration: none'>" +
                 "All Projects (" + projectsAnalysisResults.size() + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "");
         if (projectsAnalysisResults.size() > 0) {
             List<NumericMetric> projectSizes = new ArrayList<>();
@@ -1490,7 +1495,8 @@ public class LandscapeReportGenerator {
     private void addContributorsPerMonth() {
         int limit = 24;
         List<ContributionTimeSlot> monthlyContributions = landscapeAnalysisResults.getContributorsPerMonth();
-        new RacingProjectsBarChartsExporter(landscapeAnalysisResults).exportRacingChart(reportsFolder);
+        new RacingProjectsBarChartsExporter(landscapeAnalysisResults, landscapeAnalysisResults.getContributorsPerProjectAndMonth(), "projects").exportRacingChart(reportsFolder);
+        new RacingProjectsBarChartsExporter(landscapeAnalysisResults, landscapeAnalysisResults.getContributorsCommits(), "contributors").exportRacingChart(reportsFolder);
         List<ContributionTimeSlot> contributorsPerMonth = getContributionMonths(monthlyContributions,
                 limit, landscapeAnalysisResults.getLatestCommitDate());
 

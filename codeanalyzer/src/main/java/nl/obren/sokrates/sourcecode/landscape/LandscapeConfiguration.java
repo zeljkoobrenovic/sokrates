@@ -16,8 +16,8 @@ public class LandscapeConfiguration {
     // Basic info about the landscape (name, description, logo, links)
     private Metadata metadata = new Metadata();
 
-    // The relative path of the analysis (folders with project analysis results)
-    private String analysisRoot = "";
+    // The relative path of the analysis (contains sub-folders with project analysis results)
+    private String analysisRoot = ".";
 
     // A prefix attached to project reports
     private String projectReportsUrlPrefix = "../";

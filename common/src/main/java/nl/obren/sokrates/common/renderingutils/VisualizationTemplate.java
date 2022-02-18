@@ -73,7 +73,7 @@ public class VisualizationTemplate {
             String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             content = content.replace("${title}", title);
             content = content.replace("${startYear}", startYear + "");
-            content = content.replace("${data}", new JsonGenerator().generate(items));
+            content = content.replace("${data}", new JsonGenerator().generateCompressed(items));
 
             return content;
         } catch (IOException e) {

@@ -6,6 +6,7 @@ package nl.obren.sokrates.reports.landscape.statichtml;
 
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.landscape.utils.LandscapeVisualsGenerator;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalyzer;
 import org.apache.commons.io.FileUtils;

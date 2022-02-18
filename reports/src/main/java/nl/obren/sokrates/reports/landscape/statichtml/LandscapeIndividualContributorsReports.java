@@ -1,8 +1,8 @@
 package nl.obren.sokrates.reports.landscape.statichtml;
 
 import nl.obren.sokrates.common.utils.FormattingUtils;
-import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.landscape.utils.ContributorPerExtensionHelper;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;

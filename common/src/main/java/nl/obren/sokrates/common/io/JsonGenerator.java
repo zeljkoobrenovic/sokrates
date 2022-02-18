@@ -11,4 +11,8 @@ public class JsonGenerator {
     public String generate(Object data) throws JsonProcessingException {
         return new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(data);
     }
+
+    public String generateCompressed(Object data) throws JsonProcessingException {
+        return new ObjectMapper().writer().writeValueAsString(data);
+    }
 }

@@ -49,11 +49,15 @@ public class ProcessingStopwatch {
         LOG.info("Processing times summary:");
         monitors.forEach(monitor -> {
             long duration = monitor.getDuration();
-            String percentageString = "";
-            if (referenceTimes != null && referenceTimes.getDuration() > 0) {
-                percentageString = " (" + FormattingUtils.getFormattedPercentage(100.0 * duration / referenceTimes.getDuration(), "<1") + "%)";
+            if (duration >= 0) {
+                String percentageString = "";
+                if (referenceTimes != null && referenceTimes.getDuration() > 0) {
+                    percentageString = " (" + FormattingUtils.getFormattedPercentage(100.0 * duration / referenceTimes.getDuration(), "<1") + "%)";
+                }
+                LOG.info("Executed '" + monitor.getProcessing() + "' in " + duration + "ms" + percentageString);
+            } else {
+                LOG.info("Executing '" + monitor.getProcessing() + "' not finished");
             }
-            LOG.info("Executed '" + monitor.getProcessing() + "' in " + duration + "ms" + percentageString);
         });
     }
 }
