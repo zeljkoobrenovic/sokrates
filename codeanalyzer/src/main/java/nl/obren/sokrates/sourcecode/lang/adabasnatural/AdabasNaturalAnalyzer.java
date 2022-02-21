@@ -122,7 +122,7 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
 
     @Override
     public DependenciesAnalysis extractDependencies(List<SourceFile> sourceFiles, ProgressFeedback progressFeedback) {
-        return new DependenciesAnalysis();
+        return new AdabasDependenciesExtractor().extractDependencies(sourceFiles, progressFeedback);
     }
 
     @Override
@@ -140,7 +140,7 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
         features.add(FEATURE_ADVANCED_CODE_CLEANING);
         features.add(FEATURE_UNIT_SIZE_ANALYSIS);
         features.add(FEATURE_CONDITIONAL_COMPLEXITY_ANALYSIS);
-        features.add(FEATURE_NO_DEPENDENCIES_ANALYSIS);
+        features.add(FEATURE_BASIC_DEPENDENCIES_ANALYSIS);
 
         return features;
     }
