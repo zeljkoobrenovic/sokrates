@@ -6,8 +6,6 @@ package nl.obren.sokrates.sourcecode.landscape.analysis;
 
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.analysis.results.FilesAnalysisResults;
-import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils;
@@ -22,7 +20,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class LandscapeAnalyzer {
     private static final Log LOG = LogFactory.getLog(LandscapeAnalyzer.class);
@@ -35,6 +35,8 @@ public class LandscapeAnalyzer {
 
         LandscapeAnalysisResults landscapeAnalysisResults = new LandscapeAnalysisResults();
 
+        Set<String> projectNames = new HashSet<>();
+
         try {
             String json = FileUtils.readFileToString(landscapeConfigurationFile, StandardCharsets.UTF_8);
             this.landscapeConfiguration = (LandscapeConfiguration) new JsonMapper().getObject(json, LandscapeConfiguration.class);
@@ -43,15 +45,19 @@ public class LandscapeAnalyzer {
                 LOG.info("Analysing " + link.getAnalysisResultsPath() + "...");
                 CodeAnalysisResults projectAnalysisResults = this.getProjectAnalysisResults(link);
                 if (projectAnalysisResults != null) {
-                    landscapeAnalysisResults.getProjectAnalysisResults().add(new ProjectAnalysisResults(link, projectAnalysisResults));
-                    projectAnalysisResults.getContributorsAnalysisResults().getContributors().forEach(contributor -> {
-                        contributor.getCommitDates().forEach(commitDate -> {
-                            if (landscapeAnalysisResults.getLatestCommitDate() == "" || commitDate.compareTo(landscapeAnalysisResults.getLatestCommitDate()) > 0) {
-                                landscapeAnalysisResults.setLatestCommitDate(commitDate);
-                                DateUtils.setLatestCommitDate(commitDate);
-                            }
+                    String projectName = projectAnalysisResults.getMetadata().getName();
+                    if (!landscapeConfiguration.isIncludeOnlyFirstProjectWithSameName() || !projectNames.contains(projectName)) {
+                        projectNames.add(projectName);
+                        landscapeAnalysisResults.getProjectAnalysisResults().add(new ProjectAnalysisResults(link, projectAnalysisResults));
+                        projectAnalysisResults.getContributorsAnalysisResults().getContributors().forEach(contributor -> {
+                            contributor.getCommitDates().forEach(commitDate -> {
+                                if (landscapeAnalysisResults.getLatestCommitDate() == "" || commitDate.compareTo(landscapeAnalysisResults.getLatestCommitDate()) > 0) {
+                                    landscapeAnalysisResults.setLatestCommitDate(commitDate);
+                                    DateUtils.setLatestCommitDate(commitDate);
+                                }
+                            });
                         });
-                    });
+                    }
                 }
             });
         } catch (IOException e) {

@@ -73,6 +73,9 @@ public class LandscapeConfiguration {
     // The list of extensions to ignore
     private List<String> ignoreExtensions = new ArrayList<>();
 
+    // If true, only one project with the same project name will be included in the landscape analyses (the first one found in file scan). Otherwise, all projects will be included.
+    private boolean includeOnlyFirstProjectWithSameName = true;
+
     // The list of extensions to merge (e.g. yml => yaml)
     private List<MergeExtension> mergeExtensions = new ArrayList<>();
 
@@ -405,5 +408,13 @@ public class LandscapeConfiguration {
 
     public void setCustomTabs(List<CustomTab> customTabs) {
         this.customTabs = customTabs;
+    }
+
+    public boolean isIncludeOnlyFirstProjectWithSameName() {
+        return includeOnlyFirstProjectWithSameName;
+    }
+
+    public void setIncludeOnlyFirstProjectWithSameName(boolean includeOnlyFirstProjectWithSameName) {
+        this.includeOnlyFirstProjectWithSameName = includeOnlyFirstProjectWithSameName;
     }
 }
