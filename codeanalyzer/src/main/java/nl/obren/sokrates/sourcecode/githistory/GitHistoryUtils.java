@@ -55,7 +55,7 @@ public class GitHistoryUtils {
 
     public static boolean shouldIgnore(String email, List<String> ignoreContributors) {
         for (String ignorePattern : ignoreContributors) {
-            if (RegexUtils.matchesEntirely(ignorePattern, email)) {
+            if (RegexUtils.matchesEntirely(ignorePattern.toLowerCase(), email.toLowerCase())) {
                 return true;
             }
         }
@@ -107,7 +107,7 @@ public class GitHistoryUtils {
                     if (ignoreCommitByDate(line, date)) {
                         return null;
                     }
-                    String author = line.substring(index1 + 1, index2).trim();
+                    String author = line.substring(index1 + 1, index2).trim().toLowerCase();
                     if (shouldIgnore(author, ignoreContributors)) {
                         return null;
                     }

@@ -224,7 +224,12 @@ public class LandscapeAnalysisResults {
         int thresholdLoc = configuration.getProjectThresholdLocMain();
         int thresholdContributors = configuration.getProjectThresholdContributors();
 
-        return projectAnalysisResults.stream()
+        String updatedBefore = configuration.getIgnoreProjectsLastUpdatedBefore();
+
+        return projectAnalysisResults
+                .stream()
+                .filter(p -> StringUtils.isBlank(updatedBefore) ||
+                        p.getAnalysisResults().getContributorsAnalysisResults().getLatestCommitDate().compareTo(updatedBefore) >= 0)
                 .filter(p -> {
                     CodeAnalysisResults results = p.getAnalysisResults();
                     int contributorsCount = results.getContributorsAnalysisResults().getContributors().size();
@@ -521,10 +526,7 @@ public class LandscapeAnalysisResults {
         getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
             ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
             contributorsAnalysisResults.getContributors().forEach(contributor -> {
-                String contributorId = contributor.getEmail();
-                if (contributorId.contains("commited-by-bot")) {
-                    LOG.info(contributorId);
-                }
+                String contributorId = contributor.getEmail().toLowerCase();
                 if (GitHistoryUtils.shouldIgnore(contributorId, configuration.getIgnoreContributors())) {
                     return;
                 }

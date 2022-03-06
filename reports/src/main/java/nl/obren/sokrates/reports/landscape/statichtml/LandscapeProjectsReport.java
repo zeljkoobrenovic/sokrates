@@ -1,5 +1,6 @@
 package nl.obren.sokrates.reports.landscape.statichtml;
 
+import nl.obren.sokrates.common.renderingutils.GraphvizUtil;
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.utils.FormattingUtils;
@@ -10,6 +11,7 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.generators.statichtml.ControlsReportGenerator;
 import nl.obren.sokrates.reports.landscape.utils.*;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
+import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -17,6 +19,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
+import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.landscape.ProjectTag;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
@@ -24,17 +27,26 @@ import nl.obren.sokrates.sourcecode.landscape.analysis.ProjectAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.MetricRangeControl;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class LandscapeProjectsReport {
+    private static final Log LOG = LogFactory.getLog(LandscapeProjectsReport.class);
+
     private LandscapeAnalysisResults landscapeAnalysisResults;
     private int limit = 1000;
     private String link;
     private String linkLabel;
     private Map<String, TagStats> tagStatsMap = new HashMap<>();
+    private File reportsFolder;
 
     public LandscapeProjectsReport(LandscapeAnalysisResults landscapeAnalysisResults, int limit) {
         this.landscapeAnalysisResults = landscapeAnalysisResults;
@@ -48,14 +60,15 @@ public class LandscapeProjectsReport {
         this.linkLabel = linkLabel;
     }
 
-    public void saveProjectsReport(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults) {
+    public void saveProjectsReport(RichTextReport report, File reportsFolder, List<ProjectAnalysisResults> projectsAnalysisResults) {
+        this.reportsFolder = reportsFolder;
         report.startTabGroup();
         boolean showCommits = landscapeAnalysisResults.getCommitsCount() > 0;
         if (showCommits) {
             report.addTab("commitsTrend", "Commits Trend", true);
             report.addTab("contributorsTrend", "Contributors Trend", false);
         }
-        report.addTab("projects", "Size", !showCommits);
+        report.addTab("projects", "Size & Details", !showCommits);
         if (showCommits) {
             report.addTab("history", "History", false);
         }
@@ -371,10 +384,10 @@ public class LandscapeProjectsReport {
                 "LOC<br/>(test)", "LOC<br/>(other)",
                 "Age", "Latest<br>Commit Date",
                 "Contributors<br>(30d)", "Rookies<br>(30d)", "Commits<br>(30d)"));
-        if (showTags()) {
-            headers.add(3, "Tags");
-        }
         headers.add("Report");
+        if (showTags()) {
+            headers.add("Tags");
+        }
         report.addTableHeader(headers.toArray(String[]::new));
 
         projectsAnalysisResults.stream().limit(limit).forEach(projectAnalysis -> {
@@ -513,7 +526,7 @@ public class LandscapeProjectsReport {
             String locText = FormattingUtils.formatCount(main.getLinesOfCode());
             String commits90DaysText = commits90Days > 0 ? ", <b>" + FormattingUtils.formatCount(commits90Days) + "</b> commits (90d)" : "";
             report.addTableCell("<a href='" + this.getProjectReportUrl(projectAnalysis) + "' target='_blank'>"
-                    + "<div>" + name + "</div><div style='color: black; font-size: 80%'><b>" + locText + "</b> LOC (main)" + commits90DaysText + "</div></a>",
+                            + "<div>" + name + "</div><div style='color: black; font-size: 80%'><b>" + locText + "</b> LOC (main)" + commits90DaysText + "</div></a>",
                     "vertical-align: middle; max-width: 400px");
 
             List<NumericMetric> linesOfCodePerExtension = main.getLinesOfCodePerExtension();
@@ -695,6 +708,14 @@ public class LandscapeProjectsReport {
     }
 
     private void addTagStats(RichTextReport report) {
+        renderTagDependencies();
+
+        report.startDiv("margin: 12px; font-size: 90%");
+        report.addHtmlContent("tags dependencies: ");
+        report.addNewTabLink("3D graph", "visuals/tags_graph_force_3d.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("2D graph", "visuals/tags_graph.svg");
+        report.endDiv();
         report.startTable();
         report.addTableHeader("Tag", "# projects", "LOC<br>(main)", "LOC<br>(test)", "LOC<br>(active)", "LOC<br>(new)", "# commits<br>(30 days)", "# contributors<br>(30 days)");
 
@@ -708,6 +729,32 @@ public class LandscapeProjectsReport {
         report.endTable();
 
         visualizeTagProjects(report);
+    }
+
+    private void renderTagDependencies() {
+        List<ComponentDependency> dependencies = new ArrayList<>();
+        this.landscapeAnalysisResults.getConfiguration().getProjectTags().stream().filter(tag -> tagStatsMap.get(tag.getTag()) != null)
+                .forEach(tag -> {
+                    TagStats stats = tagStatsMap.get(tag.getTag());
+                    stats.getProjectsAnalysisResults().forEach(project -> {
+                        String name = project.getAnalysisResults().getMetadata().getName();
+                        dependencies.add(new ComponentDependency("[" + name + "]", tag.getTag() ));
+                    });
+                });
+        new Force3DGraphExporter().export3DForceGraph(dependencies, reportsFolder, "tags_graph");
+
+        GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
+        graphvizDependencyRenderer.setMaxNumberOfDependencies(1000);
+        graphvizDependencyRenderer.setTypeGraph();
+        graphvizDependencyRenderer.setOrientation("RL");
+        List<String> keys = tagStatsMap.keySet().stream().filter(t -> tagStatsMap.get(t) != null).collect(Collectors.toList());
+        String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(keys), dependencies);
+        String svg = GraphvizUtil.getSvgFromDot(graphvizContent);
+        try {
+            FileUtils.write(new File(reportsFolder, "visuals/tags_graph.svg"), svg, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            LOG.info(e);
+        }
     }
 
     private void visualizeTagProjects(RichTextReport report) {
@@ -800,7 +847,7 @@ public class LandscapeProjectsReport {
                 report.addContentInDiv(
                         "<a href='" + projectReportUrl + "' target='_blank' style='margin-left: 10px'>" + projectAnalysisResults.getMetadata().getName() + "</a> "
                                 + "<span color='lightgrey'>(<b>"
-                                + FormattingUtils.formatCount(projectAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode()) + "</b> LOC)</span>");
+                                + FormattingUtils.formatCount(projectAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode(), "-") + "</b> LOC)</span>");
             });
             report.endShowMoreBlock();
             report.endTableCell();
@@ -811,14 +858,14 @@ public class LandscapeProjectsReport {
             report.addTableCell(FormattingUtils.formatCount(projectsAnalysisResults
                     .stream()
                     .mapToInt(p -> p.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCode())
-                    .sum()), "text-align: center");
-            report.addTableCell(FormattingUtils.formatCount(LandscapeAnalysisResults.getLoc1YearActive(projectsAnalysisResults), "text-align: center"));
-            report.addTableCell(FormattingUtils.formatCount(LandscapeAnalysisResults.getLocNew(projectsAnalysisResults), "text-align: center"));
+                    .sum(), "-"), "text-align: center");
+            report.addTableCell(FormattingUtils.formatCount(LandscapeAnalysisResults.getLoc1YearActive(projectsAnalysisResults), "-"), "text-align: center");
+            report.addTableCell(FormattingUtils.formatCount(LandscapeAnalysisResults.getLocNew(projectsAnalysisResults), "-"), "text-align: center");
             report.addTableCell(FormattingUtils.formatCount(projectsAnalysisResults
                     .stream()
                     .mapToInt(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days())
-                    .sum()), "text-align: center");
-            report.addTableCell(FormattingUtils.formatCount(getRecentContributorCount(projectsAnalysisResults)), "text-align: center");
+                    .sum(), "-"), "text-align: center");
+            report.addTableCell(FormattingUtils.formatCount(getRecentContributorCount(projectsAnalysisResults), "-"), "text-align: center");
         } else {
             report.addTableCell("");
             report.addTableCell("");
@@ -878,9 +925,6 @@ public class LandscapeProjectsReport {
         report.addContentInDiv(lang, "vertical-align: middle; display: inline-block;margin-top: 5px");
         report.endDiv();
         report.endTableCell();
-        if (showTags()) {
-            report.addTableCell(getTags(projectAnalysis), "color: black");
-        }
         report.addTableCell(FormattingUtils.formatCount(main.getLinesOfCode(), "-"), "text-align: center; font-size: 90%");
 
         report.addTableCell(FormattingUtils.formatCount(test.getLinesOfCode(), "-"), "text-align: center; font-size: 90%");
@@ -895,6 +939,9 @@ public class LandscapeProjectsReport {
         String projectReportUrl = getProjectReportUrl(projectAnalysis);
         report.addTableCell("<a href='" + projectReportUrl + "' target='_blank'>"
                 + "<div style='height: 40px'>" + ReportFileExporter.getIconSvg("report", 40) + "</div></a>", "text-align: center; font-size: 90%");
+        if (showTags()) {
+            report.addTableCell(getTags(projectAnalysis), "color: black");
+        }
         report.endTableRow();
     }
 
@@ -991,7 +1038,7 @@ public class LandscapeProjectsReport {
     }
 
     private String getTabColor(ProjectTag tag) {
-        return StringUtils.isNotBlank(tag.getColor()) ? tag.getColor() : "deepskyblue";
+        return StringUtils.isNotBlank(tag.getColor()) ? tag.getColor() : "#99badd";
     }
 
 }

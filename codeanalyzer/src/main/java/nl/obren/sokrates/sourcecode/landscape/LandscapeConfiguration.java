@@ -40,6 +40,9 @@ public class LandscapeConfiguration {
     // Only project having more or equal to the given number of commits will be included in the landscape report
     private int contributorThresholdCommits = 2;
 
+    // If not empty, only project before the given date (in the "YYYY-MM-dd" format) will be included in the landscape report
+    private String ignoreProjectsLastUpdatedBefore = "2020-01-01";
+
     // A maximal number of years of commit history dispalyed in the report
     private int commitsMaxYears = 10;
 
@@ -184,6 +187,14 @@ public class LandscapeConfiguration {
 
     public void setContributorThresholdCommits(int contributorThresholdCommits) {
         this.contributorThresholdCommits = contributorThresholdCommits;
+    }
+
+    public String getIgnoreProjectsLastUpdatedBefore() {
+        return ignoreProjectsLastUpdatedBefore;
+    }
+
+    public void setIgnoreProjectsLastUpdatedBefore(String ignoreProjectsLastUpdatedBefore) {
+        this.ignoreProjectsLastUpdatedBefore = ignoreProjectsLastUpdatedBefore;
     }
 
     public int getProjectThresholdContributors() {

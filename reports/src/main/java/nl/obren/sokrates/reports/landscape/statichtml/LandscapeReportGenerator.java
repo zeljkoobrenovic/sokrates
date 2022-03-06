@@ -915,7 +915,7 @@ public class LandscapeReportGenerator {
         landscapeReport.endShowMoreBlock();
         landscapeReport.addLineBreak();
         landscapeReport.addNewTabLink(" - show extension dependencies as 3D force graph...", "visuals/extension_dependencies_30d_force_3d.html");
-        export3DForceGraph(dependencies, "extension_dependencies_30d");
+        new Force3DGraphExporter().export3DForceGraph(dependencies, reportsFolder, "extension_dependencies_30d");
     }
 
     private List<String> getMainExtensions() {
@@ -1014,6 +1014,7 @@ public class LandscapeReportGenerator {
                 landscapeReport.addHtmlContent(html.toString());
                 landscapeReport.endDiv();
                 landscapeReport.startDiv("color: grey; font-size: 70%");
+                landscapeReport.addHtmlContent("commits per contributor | ");
                 for (int p = 90; p >= 10; p -= 10) {
                     double percentile = stats.getPercentile(p);
                     landscapeReport.addHtmlContent("p(" + p + ") = " + (int) Math.round(percentile) + "; ");
@@ -1177,10 +1178,10 @@ public class LandscapeReportGenerator {
             int shortLimit = configuration.getProjectsShortListLimit();
             new LandscapeProjectsReport(landscapeAnalysisResults, shortLimit,
                     "See the full list of projects...", "projects.html")
-                    .saveProjectsReport(landscapeProjectsReportShort, projectsAnalysisResults);
+                    .saveProjectsReport(landscapeProjectsReportShort, reportsFolder, projectsAnalysisResults);
             if (projectsAnalysisResults.size() > shortLimit) {
                 new LandscapeProjectsReport(landscapeAnalysisResults, configuration.getProjectsListLimit())
-                        .saveProjectsReport(landscapeProjectsReportLong, projectsAnalysisResults);
+                        .saveProjectsReport(landscapeProjectsReportLong, reportsFolder, projectsAnalysisResults);
             }
 
         }
@@ -2177,40 +2178,9 @@ public class LandscapeReportGenerator {
         landscapeReport.addLineBreak();
 
         addDownloadLinks(graphId);
-        export3DForceGraph(componentDependencies, graphId);
+        new Force3DGraphExporter().export3DForceGraph(componentDependencies, reportsFolder, graphId);
 
         return graphId;
-    }
-
-    private void export3DForceGraph(List<ComponentDependency> componentDependencies, String graphId) {
-        Force3DObject force3DObject = new Force3DObject();
-        Map<String, Integer> names = new HashMap<>();
-        componentDependencies.forEach(dependency -> {
-            String from = dependency.getFromComponent();
-            String to = dependency.getToComponent();
-            if (names.containsKey(from)) {
-                names.put(from, names.get(from) + 1);
-            } else {
-                names.put(from, 1);
-            }
-            if (names.containsKey(to)) {
-                names.put(to, names.get(to) + 1);
-            } else {
-                names.put(to, 1);
-            }
-            force3DObject.getLinks().add(new Force3DLink(from, to, dependency.getCount()));
-            force3DObject.getLinks().add(new Force3DLink(to, from, dependency.getCount()));
-        });
-        names.keySet().forEach(key -> {
-            force3DObject.getNodes().add(new Force3DNode(key, names.get(key)));
-        });
-        File folder = new File(reportsFolder, "visuals");
-        folder.mkdirs();
-        try {
-            FileUtils.write(new File(folder, graphId + "_force_3d.html"), new VisualizationTemplate().render3DForceGraph(force3DObject), UTF_8);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     private void addDownloadLinks(String graphId) {
