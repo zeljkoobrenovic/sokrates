@@ -165,7 +165,7 @@ public class HistoryPerLanguageGenerator {
     private Integer getCommitsCount(String name, int year) {
         Stream<HistoryPerExtension> historyPerExtensionFiltered = this.history.stream().filter(h -> h.getExtension().equalsIgnoreCase(name) && h.getYear().equalsIgnoreCase(year + ""));
         List<HistoryPerExtension> list = historyPerExtensionFiltered.collect(Collectors.toList());
-        return list.size() > 0 ? getValue(list.get(0)) : null;
+        return list.size() > 0 ? list.stream().mapToInt(item -> getValue(item)).sum() : null;
     }
 
     private void addHeader() {

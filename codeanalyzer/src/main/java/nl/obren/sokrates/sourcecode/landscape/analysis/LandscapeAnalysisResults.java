@@ -254,12 +254,13 @@ public class LandscapeAnalysisResults {
         this.projectAnalysisResults.forEach(project -> {
             List<HistoryPerExtension> history = project.getAnalysisResults().getFilesHistoryAnalysisResults().getHistoryPerExtensionPerYear();
             history.stream().filter(e -> !ignoreExtension(e.getExtension())).forEach(extensionYear -> {
-                String key = extensionYear.getExtension() + "::" + extensionYear.getYear();
+                String extension = extensionYear.getExtension().toLowerCase();
+                String key = extension + "::" + extensionYear.getYear();
                 if (map.containsKey(key)) {
                     map.get(key).setCommitsCount(map.get(key).getCommitsCount() + extensionYear.getCommitsCount());
                     map.get(key).getContributors().addAll(extensionYear.getContributors());
                 } else {
-                    HistoryPerExtension newHistoryPerExtension = new HistoryPerExtension(extensionYear.getExtension(),
+                    HistoryPerExtension newHistoryPerExtension = new HistoryPerExtension(extension,
                             extensionYear.getYear(), extensionYear.getCommitsCount());
                     newHistoryPerExtension.getContributors().addAll(extensionYear.getContributors());
                     map.put(key, newHistoryPerExtension);
@@ -369,14 +370,14 @@ public class LandscapeAnalysisResults {
                 projectLinesOfCodePerExtension = projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension();
             }
             projectLinesOfCodePerExtension.forEach(metric -> {
-                String id = metric.getName();
+                String id = metric.getName().toLowerCase();
                 Optional<NumericMetric> existingMetric = linesOfCodePerExtension.stream().filter(c -> c.getName().equalsIgnoreCase(id)).findAny();
                 if (existingMetric.isPresent()) {
                     NumericMetric metricObject = existingMetric.get();
                     metricObject.getDescription().add(new NumericMetric(projectName, metric.getValue()));
                     metricObject.setValue(metricObject.getValue().intValue() + metric.getValue().intValue());
                 } else {
-                    NumericMetric metricObject = new NumericMetric(metric.getName(), metric.getValue());
+                    NumericMetric metricObject = new NumericMetric(id, metric.getValue());
                     metricObject.getDescription().add(new NumericMetric(projectName, metric.getValue()));
                     linesOfCodePerExtension.add(metricObject);
                 }

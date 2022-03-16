@@ -11,10 +11,7 @@ import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.search.FoundText;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class AspectAnalysisResults {
@@ -119,6 +116,8 @@ public class AspectAnalysisResults {
 
     @JsonIgnore
     public List<String> getExtensions() {
-        return this.linesOfCodePerExtension.stream().map(e -> e.getName().replaceAll(".*[.]", "").trim()).collect(Collectors.toList());
+        Set<String> set = new HashSet<>();
+        this.linesOfCodePerExtension.stream().map(e -> e.getName().replaceAll(".*[.]", "").trim().toLowerCase()).forEach(e -> set.add(e));
+        return new ArrayList<>(set);
     }
 }

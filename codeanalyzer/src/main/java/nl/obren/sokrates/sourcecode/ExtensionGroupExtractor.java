@@ -166,7 +166,7 @@ public class ExtensionGroupExtractor {
 
     public static String getExtension(String path) {
         try {
-            return FilenameUtils.getExtension(path);
+            return FilenameUtils.getExtension(path).toLowerCase();
         } catch (IllegalArgumentException e) {
         }
 

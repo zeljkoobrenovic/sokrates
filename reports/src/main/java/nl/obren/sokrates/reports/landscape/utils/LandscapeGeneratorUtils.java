@@ -5,10 +5,7 @@ import nl.obren.sokrates.sourcecode.landscape.MergeExtension;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class LandscapeGeneratorUtils {
@@ -24,7 +21,7 @@ public class LandscapeGeneratorUtils {
         config.getMergeExtensions().forEach(merge -> mapMerge.put(merge.getSecondary(), merge));
 
         linesOfCodePerExtension.forEach(ext -> {
-            String key = ext.getName().replaceAll(".*[.]", "");
+            String key = ext.getName().replaceAll(".*[.]", "").toLowerCase();
             if (mapMerge.containsKey(key) && map.containsKey(mapMerge.get(key).getPrimary())) {
                 NumericMetric primary = map.get(mapMerge.get(key).getPrimary());
                 NumericMetric secondary = map.get(key);
