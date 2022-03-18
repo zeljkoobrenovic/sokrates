@@ -45,4 +45,31 @@ class AdabasNaturalAnalyzerTest {
         assertEquals(unitInfos.get(0).getMcCabeIndex(), 8);
         assertEquals(unitInfos.get(0).getNumberOfParameters(), 14);
     }
+
+    @Test
+    void extractMultipleUnits() {
+        AdabasNaturalAnalyzer analyzer = new AdabasNaturalAnalyzer();
+
+        SourceFile sourceFile = new SourceFile(new File("a.nsp"), AdabasExamples.UNITCONTENT);
+        
+        List<UnitInfo> unitInfos = analyzer.extractUnits(sourceFile);
+
+        assertEquals(unitInfos.size(), 3);
+        assertEquals(unitInfos.get(0).getShortName(), "F#MULTI");
+        assertEquals(unitInfos.get(0).getLinesOfCode(), 11);
+        assertEquals(unitInfos.get(0).getMcCabeIndex(), 2);
+        assertEquals(unitInfos.get(0).getNumberOfParameters(), 2);
+
+        assertEquals(unitInfos.get(1).getShortName(), "F2#MULTI");
+        assertEquals(unitInfos.get(1).getLinesOfCode(), 11);
+        assertEquals(unitInfos.get(1).getMcCabeIndex(), 2);
+        assertEquals(unitInfos.get(1).getNumberOfParameters(), 2);
+
+        assertEquals(unitInfos.get(2).getShortName(), "F3#MULTI");
+        assertEquals(unitInfos.get(2).getLinesOfCode(), 11);
+        assertEquals(unitInfos.get(2).getMcCabeIndex(), 2);
+        assertEquals(unitInfos.get(2).getNumberOfParameters(), 2);
+
+    }
+
 }

@@ -1,7 +1,61 @@
 package nl.obren.sokrates.sourcecode.lang.adabasnatural;
 
 class AdabasExamples {
-    public static final String CONTENT = "* >Natural Source Header 000000\n" +
+        public static final String UNITCONTENT = "** Example 'FUNCBX02': Declare result value and parameters (Function)\n" +  
+        "************************************************************************\n" +
+        "DEFINE FUNCTION F#MULTI\n" +                                                 
+        "  RETURNS #RESULT (I4) BY VALUE\n" +                                         
+        "  DEFINE DATA PARAMETER\n" +                                                 
+        "    1 #FACTOR1 (I4) BY VALUE OPTIONAL\n" +                                            
+        "    1 #FACTOR2 (I4) BY VALUE\n" +                                                     
+        "  END-DEFINE\n" +                                                            
+        "  /*\n" +                                                                    
+        "  IF #FACTOR1 SPECIFIED\n" +                                                 
+        "    #RESULT := #FACTOR1 * #FACTOR2\n" +                                      
+        "  ELSE\n" +                                                                  
+        "    #RESULT := #FACTOR2 * 10\n" +                                            
+        "  END-IF\n" +                                                                
+        "  /*\n" +                                                                    
+        "END-FUNCTION\n" +                                                            
+        "*\n" +                                                                       
+        "END \n" +
+        "** Example 'FUNCBX02': Declare result value and parameters (Function)\n" +  
+        "************************************************************************\n" +
+        "DEFINE FUNCTION F2#MULTI\n" +                                                 
+        "  RETURNS #RESULT (I4) BY VALUE\n" +                                         
+        "  DEFINE DATA PARAMETER\n" +                                                 
+        "    1 #FACTOR1 (I4) BY VALUE OPTIONAL\n" +                                            
+        "    1 #FACTOR2 (I4) BY VALUE\n" +                                                     
+        "  END-DEFINE\n" +                                                            
+        "  /*\n" +                                                                    
+        "  IF #FACTOR1 SPECIFIED\n" +                                                 
+        "    #RESULT := #FACTOR1 * #FACTOR2\n" +                                      
+        "  ELSE\n" +                                                                  
+        "    #RESULT := #FACTOR2 * 10\n" +                                            
+        "  END-IF\n" +                                                                
+        "  /*\n" +                                                                    
+        "END-FUNCTION\n" +                                                            
+        "*\n" +                                                                       
+        "END \n" +
+        "** Example 'FUNCBX02': Declare result value and parameters (Function)\n" +  
+        "************************************************************************\n" +
+        "DEFINE FUNCTION F3#MULTI\n" +                                                 
+        "  RETURNS #RESULT (I4) BY VALUE\n" +                                         
+        "  DEFINE DATA PARAMETER\n" +                                                 
+        "    1 #FACTOR1 (I4) BY VALUE OPTIONAL\n" +                                            
+        "    1 #FACTOR2 (I4) BY VALUE\n" +                                                     
+        "  END-DEFINE\n" +                                                            
+        "  /*\n" +                                                                    
+        "  IF #FACTOR1 SPECIFIED\n" +                                                 
+        "    #RESULT := #FACTOR1 * #FACTOR2\n" +                                      
+        "  ELSE\n" +                                                                  
+        "    #RESULT := #FACTOR2 * 10\n" +                                            
+        "  END-IF\n" +                                                                
+        "  /*\n" +                                                                    
+        "END-FUNCTION\n" +                                                            
+        "*\n" +                                                                       
+        "END ";
+        public static final String CONTENT = "* >Natural Source Header 000000\n" +
             "* :Mode S\n" +
             "* :CP\n" +
             "* <Natural Source Header\n" +
