@@ -260,6 +260,7 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("nsh", AdabasNaturalAnalyzer.class);
         analyzersMap.put("nsd", AdabasNaturalAnalyzer.class);
         analyzersMap.put("nsn", AdabasNaturalAnalyzer.class);
+        analyzersMap.put("nsc", AdabasNaturalAnalyzer.class);
 
         analyzersMap.put("abap", AbapAnalyzer.class);
 
