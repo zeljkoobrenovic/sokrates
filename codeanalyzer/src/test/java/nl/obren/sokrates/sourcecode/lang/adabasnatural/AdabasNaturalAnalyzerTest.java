@@ -65,10 +65,10 @@ class AdabasNaturalAnalyzerTest {
         assertEquals(unitInfos.get(1).getMcCabeIndex(), 2);
         assertEquals(unitInfos.get(1).getNumberOfParameters(), 2);
 
-        assertEquals(unitInfos.get(2).getShortName(), "F3#MULTI");
-        assertEquals(unitInfos.get(2).getLinesOfCode(), 11);
-        assertEquals(unitInfos.get(2).getMcCabeIndex(), 2);
-        assertEquals(unitInfos.get(2).getNumberOfParameters(), 2);
+        assertEquals(unitInfos.get(2).getShortName(), "SUBR01");
+        assertEquals(unitInfos.get(2).getLinesOfCode(), 3);
+        assertEquals(unitInfos.get(2).getMcCabeIndex(), 1);
+        assertEquals(unitInfos.get(2).getNumberOfParameters(), 0);
 
     }
 

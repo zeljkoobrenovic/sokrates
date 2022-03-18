@@ -39,20 +39,13 @@ class AdabasExamples {
         "END \n" +
         "** Example 'FUNCBX02': Declare result value and parameters (Function)\n" +  
         "************************************************************************\n" +
-        "DEFINE FUNCTION F3#MULTI\n" +                                                 
-        "  RETURNS #RESULT (I4) BY VALUE\n" +                                         
-        "  DEFINE DATA PARAMETER\n" +                                                 
-        "    1 #FACTOR1 (I4) BY VALUE OPTIONAL\n" +                                            
-        "    1 #FACTOR2 (I4) BY VALUE\n" +                                                     
-        "  END-DEFINE\n" +                                                            
+        "DEFINE SUBROUTINE SUBR01\n" +                                                 
         "  /*\n" +                                                                    
-        "  IF #FACTOR1 SPECIFIED\n" +                                                 
-        "    #RESULT := #FACTOR1 * #FACTOR2\n" +                                      
-        "  ELSE\n" +                                                                  
-        "    #RESULT := #FACTOR2 * 10\n" +                                            
-        "  END-IF\n" +                                                                
+        "  WRITE NOTITLE (AD=OI) #ARRAY(*)\n" +         
+        "  RESET #ARRAY(*)\n" +                         
+        "  SKIP 1\n" +                                                                
         "  /*\n" +                                                                    
-        "END-FUNCTION\n" +                                                            
+        "END-SUBROUTINE\n" +                                                            
         "*\n" +                                                                       
         "END ";
         public static final String CONTENT = "* >Natural Source Header 000000\n" +
