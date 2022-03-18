@@ -14,6 +14,7 @@ import nl.obren.sokrates.sourcecode.dependencies.DependenciesAnalysis;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
 import nl.obren.sokrates.sourcecode.operations.OperationStatement;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,12 +22,22 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
+    private CleanedContent cleanedContent;
+
+    private List<String> cleanedLines;
+    private List<UnitInfo> units;
+
     public AdabasNaturalAnalyzer() {
     }
 
+    private List<String> unitLiterals = Arrays.asList(
+            " function ",
+            " subroutine ");
+
     @Override
     public CleanedContent cleanForLinesOfCodeCalculations(SourceFile sourceFile) {
-        return getCleaner().clean(getLinesWithoutComments(sourceFile));
+        cleanedContent = getCleaner().clean(getLinesWithoutComments(sourceFile));
+        return cleanedContent;
     }
 
     private String getLinesWithoutComments(SourceFile sourceFile) {
@@ -61,18 +72,91 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
 
     @Override
     public List<UnitInfo> extractUnits(SourceFile sourceFile) {
-        UnitInfo unitInfo = new UnitInfo();
-        unitInfo.setShortName(sourceFile.getFile().getName());
-        unitInfo.setSourceFile(sourceFile);
-        unitInfo.setLinesOfCode(sourceFile.getLinesOfCode());
-        String cleanedContent = this.cleanForLinesOfCodeCalculations(sourceFile).getCleanedContent();
-        updateUnitInfo(cleanedContent, unitInfo);
-        unitInfo.setBody(sourceFile.getContent());
-        unitInfo.setCleanedBody(cleanedContent);
-        unitInfo.setStartLine(0);
-        unitInfo.setEndLine(sourceFile.getLinesOfCode());
-        unitInfo.setLongName(sourceFile.getFile().getName());
-        return Arrays.asList(unitInfo);
+
+        units = new ArrayList<>();
+        cleanedLines = SourceCodeCleanerUtils
+                .splitInLines(cleanForLinesOfCodeCalculations(sourceFile).getCleanedContent());
+
+        for (int lineIndex = 0; lineIndex < cleanedLines.size(); lineIndex++) {
+            String line = cleanedLines.get(lineIndex).trim();
+            if (isUnitSignature(line)) {
+                lineIndex = extractUnit(sourceFile, lineIndex, line);
+            }
+        }
+
+        return units;
+    }
+
+    private int extractUnit(SourceFile sourceFile, int lineIndex, String line) {
+        int endOfUnitBodyIndex = getEndOfUnitBodyIndex(cleanedLines, lineIndex);
+        if (endOfUnitBodyIndex >= lineIndex) {
+            UnitInfo unitInfo = new UnitInfo();
+            unitInfo.setShortName(getUnitName(line, sourceFile));
+            unitInfo.setSourceFile(sourceFile);
+            unitInfo.setLinesOfCode(endOfUnitBodyIndex - lineIndex);
+            String cleanedUnitContent = getCleanedBody(lineIndex, endOfUnitBodyIndex);
+            unitInfo.setCleanedBody(getCleanedBody(lineIndex, endOfUnitBodyIndex));
+            unitInfo.setStartLine(cleanedContent.getFileLineIndexes().get(lineIndex) + 1);
+            unitInfo.setBody(getBody(lineIndex, endOfUnitBodyIndex, sourceFile));
+            updateUnitInfo(cleanedUnitContent, unitInfo);
+
+            units.add(unitInfo);
+        }
+        return lineIndex;
+    }
+
+    private int getEndOfUnitBodyIndex(List<String> lines, int startIndex) {
+        int startCount = 0;
+        int endCount = 0;
+        for (int i = startIndex; i < lines.size(); i++) {
+            String line = lines.get(i).trim();
+            for (String unitLiteral : unitLiterals) {
+                startCount += StringUtils.countMatches(line.toLowerCase(), "define" + unitLiteral);
+                endCount += StringUtils.countMatches(line.toLowerCase(), "end-" + unitLiteral.trim());
+            }
+            boolean hasValidBody = startCount > 0 && startCount == endCount;
+            if (hasValidBody) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private String getCleanedBody(int lineIndex, int endOfUnitBodyIndex) {
+        return cleanedContent.getCleanedContent().substring(lineIndex, endOfUnitBodyIndex);
+    }
+
+    private String getBody(int lineIndex, int endOfUnitBodyIndex, SourceFile sourceFile) {
+        StringBuilder body = new StringBuilder();
+        List<Integer> lineIndexes = cleanedContent.getFileLineIndexes();
+            for (int bodyIndex = lineIndexes.get(lineIndex); bodyIndex <= lineIndexes.get(endOfUnitBodyIndex); bodyIndex++) {
+
+                body.append(sourceFile.getLines().get(bodyIndex) + "\n");
+            }
+        
+        
+            return body.toString();
+    }
+
+    private boolean isUnitSignature(String line) {
+        for (String unitLiteral : unitLiterals) {
+            if (line.toLowerCase().contains("define" + unitLiteral)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String getUnitName(String line, SourceFile sourceFile) {
+        String unitName = sourceFile.getFile().getName();
+
+        line.replace("DEFINE", "");
+        for (String unitLiteral : unitLiterals) {
+            line.replace(unitLiteral.toUpperCase(), "");
+        }
+        unitName = line.trim().split(" ")[0];
+        return unitName;
     }
 
     private void updateUnitInfo(String cleanedContent, UnitInfo unitInfo) {
@@ -87,7 +171,7 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
                 if (trimmedLine.startsWith("END-DECIDE")) {
                     inDecideBlock = false;
                 } else {
-                        if (trimmedLine.startsWith("VALUE ") || trimmedLine.startsWith("NONE ")) {
+                    if (trimmedLine.startsWith("VALUE ") || trimmedLine.startsWith("NONE ")) {
                         index += 1;
                     }
                 }
@@ -118,7 +202,6 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
         unitInfo.setMcCabeIndex(index);
         unitInfo.setNumberOfParameters(params);
     }
-
 
     @Override
     public DependenciesAnalysis extractDependencies(List<SourceFile> sourceFiles, ProgressFeedback progressFeedback) {
