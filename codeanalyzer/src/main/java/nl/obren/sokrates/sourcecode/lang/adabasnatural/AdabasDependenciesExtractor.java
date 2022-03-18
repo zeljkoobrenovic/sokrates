@@ -18,7 +18,7 @@ public class AdabasDependenciesExtractor extends HeuristicDependenciesExtractor 
         List<DependencyAnchor> anchors = new ArrayList<>();
 
         anchors.add(addIncludeDependencyAnchor(sourceFile, ""));
-        anchors.add(addUsingDependencyAnchor(sourceFile, ""));
+        anchors.add(addCallDependencyAnchor(sourceFile, ""));
 
         return anchors;
     }
@@ -38,14 +38,14 @@ public class AdabasDependenciesExtractor extends HeuristicDependenciesExtractor 
         return dependencyAnchor;
     }
 
-    private DependencyAnchor addUsingDependencyAnchor(SourceFile sourceFile, String pathPrefix) {
+    private DependencyAnchor addCallDependencyAnchor(SourceFile sourceFile, String pathPrefix) {
         String fileName = sourceFile.getFile().getName();
         DependencyAnchor dependencyAnchor = new DependencyAnchor(fileName);
         dependencyAnchor.setCodeFragment(sourceFile.getRelativePath());
         if (fileName.contains(".")){
             fileName = fileName.split("\\.")[0];
         }
-        dependencyAnchor.getDependencyPatterns().add(0, "USING *" + fileName + "*");
+        dependencyAnchor.getDependencyPatterns().add(0, "CALLNAT *" + fileName + "*");
 
         dependencyAnchor.getSourceFiles().add(sourceFile);
 

@@ -25,7 +25,7 @@ public class AdabasDependenciesExtractorTest {
         assertEquals(anchors.get(0).getDependencyPatterns().size(), 2);
         assertEquals(anchors.get(0).getDependencyPatterns().get(0), "INCLUDE *\"file\"*");
         assertEquals(anchors.get(0).getDependencyPatterns().get(1), "INCLUDE *file*");
-        assertEquals(anchors.get(1).getDependencyPatterns().get(0), "USING *file*");
+        assertEquals(anchors.get(1).getDependencyPatterns().get(0), "CALLNAT *file*");
 
         }
 
