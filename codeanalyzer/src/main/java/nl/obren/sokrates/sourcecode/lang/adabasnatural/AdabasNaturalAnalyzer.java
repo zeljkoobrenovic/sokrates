@@ -31,8 +31,8 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
     }
 
     private List<String> unitLiterals = Arrays.asList(
-            " function ",
-            " subroutine ");
+            " function",
+            " subroutine");
 
     @Override
     public CleanedContent cleanForLinesOfCodeCalculations(SourceFile sourceFile) {
@@ -98,8 +98,13 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
             unitInfo.setCleanedBody(getCleanedBody(lineIndex, endOfUnitBodyIndex));
             unitInfo.setStartLine(cleanedContent.getFileLineIndexes().get(lineIndex) + 1);
             unitInfo.setBody(getBody(lineIndex, endOfUnitBodyIndex, sourceFile));
-            updateUnitInfo(cleanedUnitContent, unitInfo);
-
+            unitInfo = updateUnitInfo(cleanedUnitContent, unitInfo);
+/*
+            System.out.println("Unit Name: " + unitInfo.getShortName());
+            System.out.println("Unit Size: " + unitInfo.getLinesOfCode());
+            System.out.println("Unit CleanedBody: " + unitInfo.getCleanedBody());
+            System.out.println("Unit Body: " + unitInfo.getBody());
+*/
             units.add(unitInfo);
         }
         return lineIndex;
@@ -124,19 +129,24 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
     }
 
     private String getCleanedBody(int lineIndex, int endOfUnitBodyIndex) {
-        return cleanedContent.getCleanedContent().substring(lineIndex, endOfUnitBodyIndex);
+        StringBuilder body = new StringBuilder();
+
+        for (int bodyIndex = lineIndex; bodyIndex <= endOfUnitBodyIndex; bodyIndex++) {
+            body.append(cleanedLines.get(bodyIndex) + "\n");
+        }
+        return body.toString();
     }
 
     private String getBody(int lineIndex, int endOfUnitBodyIndex, SourceFile sourceFile) {
         StringBuilder body = new StringBuilder();
         List<Integer> lineIndexes = cleanedContent.getFileLineIndexes();
-            for (int bodyIndex = lineIndexes.get(lineIndex); bodyIndex <= lineIndexes.get(endOfUnitBodyIndex); bodyIndex++) {
+        for (int bodyIndex = lineIndexes.get(lineIndex); bodyIndex <= lineIndexes
+                .get(endOfUnitBodyIndex); bodyIndex++) {
 
-                body.append(sourceFile.getLines().get(bodyIndex) + "\n");
-            }
-        
-        
-            return body.toString();
+            body.append(sourceFile.getLines().get(bodyIndex) + "\n");
+        }
+
+        return body.toString();
     }
 
     private boolean isUnitSignature(String line) {
@@ -151,20 +161,19 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
     private String getUnitName(String line, SourceFile sourceFile) {
         String unitName = sourceFile.getFile().getName();
 
-        line.replace("DEFINE", "");
+        line = line.replace("DEFINE", "");
         for (String unitLiteral : unitLiterals) {
-            line.replace(unitLiteral.toUpperCase(), "");
+            line = line.replace(unitLiteral.toUpperCase(), "");
         }
         unitName = line.trim().split(" ")[0];
         return unitName;
     }
 
-    private void updateUnitInfo(String cleanedContent, UnitInfo unitInfo) {
+    private UnitInfo updateUnitInfo(String cleanedContent, UnitInfo unitInfo) {
         int index = 1;
         int params = 0;
         boolean inDecideBlock = false;
         boolean inDataParamsBlock = false;
-
         for (String line : cleanedContent.split("\n")) {
             String trimmedLine = line.trim() + " ";
             if (inDecideBlock) {
@@ -201,6 +210,7 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
 
         unitInfo.setMcCabeIndex(index);
         unitInfo.setNumberOfParameters(params);
+        return unitInfo;
     }
 
     @Override

@@ -9,13 +9,11 @@ class AdabasExamples {
         "    1 #FACTOR1 (I4) BY VALUE OPTIONAL\n" +                                            
         "    1 #FACTOR2 (I4) BY VALUE\n" +                                                     
         "  END-DEFINE\n" +                                                            
-        "  /*\n" +                                                                    
         "  IF #FACTOR1 SPECIFIED\n" +                                                 
         "    #RESULT := #FACTOR1 * #FACTOR2\n" +                                      
         "  ELSE\n" +                                                                  
         "    #RESULT := #FACTOR2 * 10\n" +                                            
         "  END-IF\n" +                                                                
-        "  /*\n" +                                                                    
         "END-FUNCTION\n" +                                                            
         "*\n" +                                                                       
         "END \n" +
@@ -27,24 +25,20 @@ class AdabasExamples {
         "    1 #FACTOR1 (I4) BY VALUE OPTIONAL\n" +                                            
         "    1 #FACTOR2 (I4) BY VALUE\n" +                                                     
         "  END-DEFINE\n" +                                                            
-        "  /*\n" +                                                                    
-        "  IF #FACTOR1 SPECIFIED\n" +                                                 
-        "    #RESULT := #FACTOR1 * #FACTOR2\n" +                                      
-        "  ELSE\n" +                                                                  
-        "    #RESULT := #FACTOR2 * 10\n" +                                            
-        "  END-IF\n" +                                                                
-        "  /*\n" +                                                                    
+        "  ** IF #FACTOR1 SPECIFIED\n" +                                                 
+        "  **  #RESULT := #FACTOR1 * #FACTOR2\n" +                                      
+        "  ** ELSE\n" +                                                                  
+        "  **  #RESULT := #FACTOR2 * 10\n" +                                            
+        "  ** END-IF\n" +                                                                
         "END-FUNCTION\n" +                                                            
         "*\n" +                                                                       
         "END \n" +
         "** Example 'FUNCBX02': Declare result value and parameters (Function)\n" +  
         "************************************************************************\n" +
         "DEFINE SUBROUTINE SUBR01\n" +                                                 
-        "  /*\n" +                                                                    
         "  WRITE NOTITLE (AD=OI) #ARRAY(*)\n" +         
         "  RESET #ARRAY(*)\n" +                         
         "  SKIP 1\n" +                                                                
-        "  /*\n" +                                                                    
         "END-SUBROUTINE\n" +                                                            
         "*\n" +                                                                       
         "END ";
@@ -56,6 +50,7 @@ class AdabasExamples {
             "* INPUT USING MAP 'XXXXXXXX'\n" +
             "*     #CR-ED #CR-ET #CR-FROMH #CR-ID #CR-ID-CONTROL #CR-ID-FIND #CR-P1W #CR-P2W\n" +
             "*     #CR-P3W #CR-SD #CR-ST #CR-STATUS #CR-TOH #CR-YACHT-NAME\n" +
+            "DEFINE SUBROUTINE EXAMPLE\n"+
             "DEFINE DATA PARAMETER\n" +
             "1 #CR-ED (A013)\n" +
             "1 #CR-ET (A007)\n" +
@@ -175,8 +170,10 @@ class AdabasExamples {
             "    TERMINATE\n" +
             "  NONE REINPUT 'Sorry - Function key not allocated'\n" +
             "END-DECIDE\n" +
+            "END-SUBROUTINE\n" +
             "END\n";
-    public static final String CLEANED = "DEFINE DATA PARAMETER\n" +
+    public static final String CLEANED = "DEFINE SUBROUTINE EXAMPLE\n"+
+            "DEFINE DATA PARAMETER\n" +
             "1 #CR-ED (A013)\n" +
             "1 #CR-ET (A007)\n" +
             "1 #CR-FROMH (A020)\n" +
@@ -287,8 +284,10 @@ class AdabasExamples {
             "    TERMINATE\n" +
             "  NONE REINPUT 'Sorry - Function key not allocated'\n" +
             "END-DECIDE\n" +
+            "END-SUBROUTINE\n" +
             "END";
-    public static final String CLEANED_FOR_DUPLICATION = "DEFINE DATA PARAMETER\n" +
+    public static final String CLEANED_FOR_DUPLICATION = "DEFINE SUBROUTINE EXAMPLE\n"+
+            "DEFINE DATA PARAMETER\n" +
             "1 #CR-ED (A013)\n" +
             "1 #CR-ET (A007)\n" +
             "1 #CR-FROMH (A020)\n" +
@@ -399,5 +398,6 @@ class AdabasExamples {
             "TERMINATE\n" +
             "NONE REINPUT 'Sorry - Function key not allocated'\n" +
             "END-DECIDE\n" +
+            "END-SUBROUTINE\n" +
             "END";
 }
