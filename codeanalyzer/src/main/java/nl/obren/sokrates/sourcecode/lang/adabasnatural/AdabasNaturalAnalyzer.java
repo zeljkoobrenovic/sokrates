@@ -99,12 +99,6 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
             unitInfo.setStartLine(cleanedContent.getFileLineIndexes().get(lineIndex) + 1);
             unitInfo.setBody(getBody(lineIndex, endOfUnitBodyIndex, sourceFile));
             unitInfo = updateUnitInfo(cleanedUnitContent, unitInfo);
-/*
-            System.out.println("Unit Name: " + unitInfo.getShortName());
-            System.out.println("Unit Size: " + unitInfo.getLinesOfCode());
-            System.out.println("Unit CleanedBody: " + unitInfo.getCleanedBody());
-            System.out.println("Unit Body: " + unitInfo.getBody());
-*/
             units.add(unitInfo);
         }
         return lineIndex;
