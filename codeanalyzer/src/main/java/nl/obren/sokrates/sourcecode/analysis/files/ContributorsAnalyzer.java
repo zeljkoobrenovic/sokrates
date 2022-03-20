@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.sourcecode.analysis.files;
 
+import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.sourcecode.analysis.Analyzer;
 import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -37,6 +38,7 @@ public class ContributorsAnalyzer extends Analyzer {
     public void analyze() {
         FileHistoryAnalysisConfig fileHistoryAnalysisConfig = codeConfiguration.getFileHistoryAnalysis();
         if (fileHistoryAnalysisConfig.filesHistoryImportPathExists(sokratesFolder)) {
+            ProcessingStopwatch.start("analysis/contributors/loading");
             ContributorsImport contributorsImport = fileHistoryAnalysisConfig.getContributors(sokratesFolder, fileHistoryAnalysisConfig);
             analysisResults.setLatestCommitDate(contributorsImport.getLatestCommitDate());
             analysisResults.setContributors(contributorsImport.getContributors());
@@ -44,19 +46,24 @@ public class ContributorsAnalyzer extends Analyzer {
             analysisResults.setContributorsPerMonth(contributorsImport.getContributorsPerMonth());
             analysisResults.setContributorsPerWeek(contributorsImport.getContributorsPerWeek());
             analysisResults.setContributorsPerDay(contributorsImport.getContributorsPerDay());
+            ProcessingStopwatch.end("analysis/contributors/loading");
+            ProcessingStopwatch.start("analysis/contributors/per extension");
             analysisResults.setCommitsPerExtensions(fileHistoryAnalysisConfig.getCommitsPerExtension(sokratesFolder, fileHistoryAnalysisConfig));
+            ProcessingStopwatch.end("analysis/contributors/per extension");
 
+            ProcessingStopwatch.start("analysis/contributors/get people file dependencies");
             analysisResults.setPeopleFileDependencies30Days(getPeopleFileDependencies(codeAnalysisResults, 30));
             analysisResults.setPeopleFileDependencies90Days(getPeopleFileDependencies(codeAnalysisResults, 90));
             analysisResults.setPeopleFileDependencies180Days(getPeopleFileDependencies(codeAnalysisResults, 180));
             analysisResults.setPeopleFileDependencies365Days(getPeopleFileDependencies(codeAnalysisResults, 365));
-            analysisResults.setPeopleFileDependenciesAllTime(getPeopleFileDependencies(codeAnalysisResults, 36500));
+            ProcessingStopwatch.end("analysis/contributors/get people file dependencies");
 
+            ProcessingStopwatch.start("analysis/contributors/get people dependencies");
             analysisResults.setPeopleDependencies30Days(getPeopleDependencies(codeAnalysisResults, 30));
             analysisResults.setPeopleDependencies90Days(getPeopleDependencies(codeAnalysisResults, 90));
             analysisResults.setPeopleDependencies180Days(getPeopleDependencies(codeAnalysisResults, 180));
             analysisResults.setPeopleDependencies365Days(getPeopleDependencies(codeAnalysisResults, 365));
-            analysisResults.setPeopleDependenciesAllTime(getPeopleDependencies(codeAnalysisResults, 36500));
+            ProcessingStopwatch.end("analysis/contributors/get people dependencies");
 
             addMetrics();
         }

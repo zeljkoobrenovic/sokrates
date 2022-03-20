@@ -1,4 +1,4 @@
-package nl.obren.sokrates.reports.generators.statichtml;
+package nl.obren.sokrates.reports.landscape.utils;
 
 import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
 import nl.obren.sokrates.common.renderingutils.force3d.Force3DLink;
@@ -15,14 +15,11 @@ import java.util.Map;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class ForceGraphExporter {
-
-    public static final int MAX_DEPENDECIES_GRAPH_SIZE = 10000;
-
-    public static String export3DForceGraph(List<ComponentDependency> componentDependencies, File reportsFolder, String graphId) {
+public class Force3DGraphExporter {
+    public void export3DForceGraph(List<ComponentDependency> componentDependencies, File reportsFolder, String graphId) {
         Force3DObject force3DObject = new Force3DObject();
         Map<String, Integer> names = new HashMap<>();
-        componentDependencies.stream().limit(MAX_DEPENDECIES_GRAPH_SIZE).forEach(dependency -> {
+        componentDependencies.forEach(dependency -> {
             String from = dependency.getFromComponent();
             String to = dependency.getToComponent();
             if (names.containsKey(from)) {
@@ -41,16 +38,12 @@ public class ForceGraphExporter {
         names.keySet().forEach(key -> {
             force3DObject.getNodes().add(new Force3DNode(key, names.get(key)));
         });
-        String visualsPath = "html/visuals";
-        File folder = new File(reportsFolder, visualsPath);
+        File folder = new File(reportsFolder, "visuals");
         folder.mkdirs();
-        String fileName = graphId + "_force_3d.html";
         try {
-            FileUtils.write(new File(folder, fileName), new VisualizationTemplate().render3DForceGraph(force3DObject), UTF_8);
+            FileUtils.write(new File(folder, graphId + "_force_3d.html"), new VisualizationTemplate().render3DForceGraph(force3DObject), UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        return "visuals/" + fileName;
     }
 }

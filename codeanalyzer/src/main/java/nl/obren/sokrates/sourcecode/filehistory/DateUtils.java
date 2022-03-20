@@ -12,14 +12,22 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class DateUtils {
-    public static final String ENV_SOKRATES_SOURCE_CODE_DATE = "SOKRATES_SOURCE_CODE_DATE";
+    public static final String ENV_SOKRATES_ANALYSIS_DATE = "SOKRATES_ANALYSIS_DATE";
     public static final String DATE_FORMAT = "yyyy-MM-dd";
     public static String dateParam = null;
     private static String latestCommitDate = "";
 
+    private static Map<String, Boolean> dateInRangeCache = new HashMap<>();
+    private static Map<String, Boolean> dateBetweenCache = new HashMap<>();
+
     public static boolean isDateWithinRange(String date, int rangeInDays) {
         if (StringUtils.isBlank(date)) {
             return true;
+        }
+
+        String key = date + "[" + rangeInDays + "]";
+        if (dateInRangeCache.containsKey(key)) {
+            return dateInRangeCache.get(key);
         }
 
         Calendar cal = getCalendar();
@@ -28,7 +36,10 @@ public class DateUtils {
 
         String thresholdDate = new SimpleDateFormat(DATE_FORMAT).format(cal.getTime());
 
-        return date.compareTo(thresholdDate) >= 0;
+        boolean inRange = date.compareTo(thresholdDate) >= 0;
+        dateInRangeCache.put(key, inRange);
+
+        return inRange;
     }
 
     public static List<String> getPastDays(int numberOfDays, String latestCommitDate) {
@@ -101,6 +112,11 @@ public class DateUtils {
     }
 
     public static boolean isCommittedBetween(String date, int daysAgo1, int daysAgo2) {
+        String key = date + "[" + daysAgo1 + ":" + daysAgo2 + "]";
+        if (dateBetweenCache.containsKey(key)) {
+            return dateBetweenCache.get(key);
+        }
+
         Calendar cal1 = DateUtils.getCalendar();
         cal1.add(Calendar.DATE, -daysAgo1);
         String thresholdDate1 = new SimpleDateFormat(DATE_FORMAT).format(cal1.getTime());
@@ -109,7 +125,10 @@ public class DateUtils {
         cal2.add(Calendar.DATE, -daysAgo2);
         String thresholdDate2 = new SimpleDateFormat(DATE_FORMAT).format(cal2.getTime());
 
-        return date.compareTo(thresholdDate2) >= 0 && date.compareTo(thresholdDate1) <= 0;
+        boolean inRange = date.compareTo(thresholdDate2) >= 0 && date.compareTo(thresholdDate1) <= 0;
+        dateBetweenCache.put(key, inRange);
+
+        return inRange;
     }
 
     public static Calendar getCalendar() {
@@ -149,7 +168,7 @@ public class DateUtils {
             if (StringUtils.isNotBlank(DateUtils.dateParam)) {
                 cal.setTime(sdf.parse(DateUtils.dateParam));
             } else {
-                String sourceCodeDate = System.getenv(ENV_SOKRATES_SOURCE_CODE_DATE);
+                String sourceCodeDate = System.getenv(ENV_SOKRATES_ANALYSIS_DATE);
                 if (StringUtils.isNotBlank(sourceCodeDate)) {
                     cal.setTime(sdf.parse(sourceCodeDate));
                 } else if (StringUtils.isNotBlank(latestCommitDate)) {

@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.sourcecode.analysis.files;
 
+import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.analysis.AnalysisUtils;
 import nl.obren.sokrates.sourcecode.analysis.Analyzer;
@@ -50,22 +51,28 @@ public class DuplicationAnalyzer extends Analyzer {
         List<DuplicationInstance> duplicates = new DuplicationEngine().findDuplicates(main.getSourceFiles(),
                 codeConfiguration.getAnalysis().getMinDuplicationBlockLoc(), new ProgressFeedback());
 
+        ProcessingStopwatch.start("analysis/duplication/finding duplicated units");
         List<DuplicationInstance> duplicatedUnits = new UnitDuplicatesExtractor().findDuplicatedUnits(
                 analysisResults.getUnitsAnalysisResults().getAllUnits(),
                 analysisResults.getCodeConfiguration().getAnalysis().getMinDuplicationBlockLoc());
 
         analysisResults.getDuplicationAnalysisResults().setUnitDuplicates(duplicatedUnits);
+        ProcessingStopwatch.end("analysis/duplication/finding duplicated units");
 
 
+        ProcessingStopwatch.start("analysis/duplication/consolidating duplicates");
         Map<String, DuplicationInstance> mergedConsolidated = consolidate(merge(duplicates));
         ArrayList<DuplicationInstance> consolidatedDuplicationInstances = new ArrayList<>(mergedConsolidated.values());
         consolidatedDuplicationInstances.sort((a, b) -> b.getBlockSize() - a.getBlockSize());
         duplcationAnalysisResults.setAllDuplicates(consolidatedDuplicationInstances);
+        ProcessingStopwatch.end("analysis/duplication/consolidating duplicates");
 
+        ProcessingStopwatch.start("analysis/duplication/counting duplicates");
         int numberOfDuplicates = mergedConsolidated.size();
         int numberOfDuplicatedLines = DuplicationUtils.getNumberOfDuplicatedLines(duplicates);
         int totalNumberOfCleanedLines = DuplicationUtils.getTotalNumberOfCleanedLines(main.getSourceFiles());
         int numberOfFilesWithDuplicates = DuplicationAggregator.getDuplicationPerSourceFile(duplicates).size();
+        ProcessingStopwatch.end("analysis/duplication/counting duplicates");
 
         duplcationAnalysisResults.getOverallDuplication().setNumberOfDuplicates(numberOfDuplicates);
         duplcationAnalysisResults.getOverallDuplication().setCleanedLinesOfCode(totalNumberOfCleanedLines);

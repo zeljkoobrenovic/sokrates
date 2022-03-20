@@ -21,8 +21,6 @@ public class CustomConventionsHelper {
         CodeConfiguration defaultCodeConfiguration = CodeConfiguration.getDefaultConfiguration();
         CustomScopingConventions conventions = new CustomScopingConventions();
 
-        conventions.setMaxLineLength(defaultCodeConfiguration.getAnalysis().getMaxLineLength());
-
         defaultCodeConfiguration.getConcernGroups().forEach(concernsGroup -> {
             conventions.getConcerns().addAll(concernsGroup.getConcerns());
         });
@@ -31,6 +29,8 @@ public class CustomConventionsHelper {
         conventions.setGeneratedFilesConventions(standardConventions.getGeneratedFilesConventions());
         conventions.setBuildAndDeploymentFilesConventions(standardConventions.getBuildAndDeploymentFilesConventions());
         conventions.setOtherFilesConventions(standardConventions.getOtherFilesConventions());
+
+        conventions.setAnalysis(defaultCodeConfiguration.getAnalysis());
 
         return conventions;
     }

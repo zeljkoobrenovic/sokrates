@@ -7,18 +7,23 @@ package nl.obren.sokrates.reports.landscape.statichtml;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.renderingutils.VisualizationItem;
 import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
+import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.renderingutils.force3d.Force3DLink;
 import nl.obren.sokrates.common.renderingutils.force3d.Force3DNode;
 import nl.obren.sokrates.common.renderingutils.force3d.Force3DObject;
 import nl.obren.sokrates.common.utils.FormattingUtils;
+import nl.obren.sokrates.common.utils.ProcessingStopwatch;
+import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.ReportConstants;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
+import nl.obren.sokrates.reports.landscape.utils.*;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
@@ -30,6 +35,8 @@ import nl.obren.sokrates.sourcecode.landscape.SubLandscapeLink;
 import nl.obren.sokrates.sourcecode.landscape.WebFrameLink;
 import nl.obren.sokrates.sourcecode.landscape.analysis.*;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
+import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
+import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -47,16 +54,13 @@ import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-interface ContributorsExtractor {
-    List<String> getContributors(String timeSlot, boolean rookiesOnly);
-}
-
 public class LandscapeReportGenerator {
     public static final String DEPENDENCIES_ICON = "\n" +
             "<svg height='100px' width='100px'  fill=\"#000000\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 48 48\" enable-background=\"new 0 0 48 48\" xml:space=\"preserve\"><path d=\"M12,19.666v6.254l1.357-1.357c0.391-0.391,1.023-0.391,1.414,0s0.391,1.023,0,1.414l-3.064,3.064  c-0.195,0.195-0.451,0.293-0.707,0.293s-0.512-0.098-0.707-0.293l-3.064-3.064c-0.391-0.391-0.391-1.023,0-1.414  s1.023-0.391,1.414,0L10,25.92v-6.254c0-0.552,0.448-1,1-1S12,19.114,12,19.666z M28.334,36H22.08l1.357-1.357  c0.391-0.391,0.391-1.023,0-1.414s-1.023-0.391-1.414,0l-3.064,3.064c-0.391,0.391-0.391,1.023,0,1.414l3.064,3.064  c0.195,0.195,0.451,0.293,0.707,0.293s0.512-0.098,0.707-0.293c0.391-0.391,0.391-1.023,0-1.414L22.08,38h6.254c0.553,0,1-0.447,1-1  S28.887,36,28.334,36z M37,18.666c-0.553,0-1,0.448-1,1v6.254l-1.357-1.357c-0.391-0.391-1.023-0.391-1.414,0s-0.391,1.023,0,1.414  l3.064,3.064c0.195,0.195,0.451,0.293,0.707,0.293s0.512-0.098,0.707-0.293l3.064-3.064c0.391-0.391,0.391-1.023,0-1.414  s-1.023-0.391-1.414,0L38,25.92v-6.254C38,19.114,37.553,18.666,37,18.666z M31.58,16.421c-0.391-0.391-1.023-0.391-1.414,0  L18.127,28.458v-1.92c0-0.553-0.448-1-1-1s-1,0.447-1,1v4.334c0,0.13,0.027,0.26,0.077,0.382c0.101,0.245,0.296,0.439,0.541,0.541  c0.122,0.051,0.251,0.077,0.382,0.077h4.333c0.552,0,1-0.447,1-1s-0.448-1-1-1h-1.919L31.58,17.835  C31.971,17.444,31.971,16.812,31.58,16.421z M16.334,37c0,2.941-2.393,5.334-5.334,5.334S5.666,39.941,5.666,37  S8.059,31.666,11,31.666S16.334,34.059,16.334,37z M14.334,37c0-1.838-1.496-3.334-3.334-3.334S7.666,35.162,7.666,37  S9.162,40.334,11,40.334S14.334,38.838,14.334,37z M42.334,37c0,2.941-2.393,5.334-5.334,5.334S31.666,39.941,31.666,37  s2.393-5.334,5.334-5.334S42.334,34.059,42.334,37z M40.334,37c0-1.838-1.496-3.334-3.334-3.334S33.666,35.162,33.666,37  s1.496,3.334,3.334,3.334S40.334,38.838,40.334,37z M5.666,11c0-2.941,2.393-5.334,5.334-5.334S16.334,8.059,16.334,11  S13.941,16.334,11,16.334S5.666,13.941,5.666,11z M7.666,11c0,1.838,1.496,3.334,3.334,3.334s3.334-1.496,3.334-3.334  S12.838,7.666,11,7.666S7.666,9.162,7.666,11z M31.666,11c0-2.941,2.393-5.334,5.334-5.334S42.334,8.059,42.334,11  S39.941,16.334,37,16.334S31.666,13.941,31.666,11z M33.666,11c0,1.838,1.496,3.334,3.334,3.334s3.334-1.496,3.334-3.334  S38.838,7.666,37,7.666S33.666,9.162,33.666,11z\"></path></svg>";
 
     public static final int RECENT_THRESHOLD_DAYS = 30;
     public static final String OVERVIEW_TAB_ID = "overview";
+    public static final String SUB_LANDSCAPES_TAB_ID = "sub-landscapes";
     public static final String SOURCE_CODE_TAB_ID = "source code";
     public static final String CONTRIBUTORS_TAB_ID = "contributors";
     public static final String TOPOLOGIES_TAB_ID = "topologies";
@@ -75,8 +79,11 @@ public class LandscapeReportGenerator {
             " <path d=\"m87.5 16.918-35.289 35.289c-1.2266 1.1836-3.1719 1.168-4.3789-0.039062s-1.2227-3.1523-0.039062-4.3789l35.289-35.289h-23.707c-1.7266 0-3.125-1.3984-3.125-3.125s1.3984-3.125 3.125-3.125h31.25c0.82812 0 1.625 0.32812 2.2109 0.91406 0.58594 0.58594 0.91406 1.3828 0.91406 2.2109v31.25c0 1.7266-1.3984 3.125-3.125 3.125s-3.125-1.3984-3.125-3.125zm-56.25 1.832h-15.633c-5.1719 0-9.3672 4.1797-9.3672 9.3516v56.305c0 5.1562 4.2422 9.3516 9.3867 9.3516h56.219c2.4922 0 4.8828-0.98437 6.6406-2.7461 1.7617-1.7617 2.75-4.1523 2.7461-6.6445v-15.613 0.003906c0-1.7266-1.3984-3.125-3.125-3.125-1.7227 0-3.125 1.3984-3.125 3.125v15.613-0.003906c0.003906 0.83594-0.32422 1.6328-0.91406 2.2227s-1.3906 0.91797-2.2227 0.91797h-56.219c-1.7148-0.007812-3.1094-1.3867-3.1367-3.1016v-56.305c0-1.7148 1.3945-3.1016 3.1172-3.1016h15.633c1.7266 0 3.125-1.3984 3.125-3.125s-1.3984-3.125-3.125-3.125z\"/>\n" +
             "</svg>";
     ;
+    private static final int BAR_WIDTH = 800;
+    private static final int BAR_HEIGHT = 42;
     private RichTextReport landscapeReport = new RichTextReport("Landscape Report", "index.html");
-    private RichTextReport landscapeProjectsReport = new RichTextReport("", "projects.html");
+    private RichTextReport landscapeProjectsReportShort = new RichTextReport("", "projects-short.html");
+    private RichTextReport landscapeProjectsReportLong = new RichTextReport("", "projects.html");
     private RichTextReport landscapeRecentContributorsReport = new RichTextReport("", "contributors-recent.html");
     private RichTextReport landscapeContributorsReport = new RichTextReport("", "contributors.html");
     private LandscapeAnalysisResults landscapeAnalysisResults;
@@ -98,7 +105,8 @@ public class LandscapeReportGenerator {
         this.landscapeAnalysisResults = landscapeAnalysisResults;
         populateTimeSlotMaps();
 
-        landscapeProjectsReport.setEmbedded(true);
+        landscapeProjectsReportShort.setEmbedded(true);
+        landscapeProjectsReportLong.setEmbedded(true);
         landscapeContributorsReport.setEmbedded(true);
         landscapeRecentContributorsReport.setEmbedded(true);
         LandscapeDataExport dataExport = new LandscapeDataExport(landscapeAnalysisResults, folder);
@@ -147,8 +155,13 @@ public class LandscapeReportGenerator {
 
         landscapeReport.startTabGroup();
         landscapeReport.addTab(OVERVIEW_TAB_ID, "Overview", true);
+        List<SubLandscapeLink> subLandscapes = configuration.getSubLandscapes();
+        if (subLandscapes.size() > 0) {
+            landscapeReport.addTab(SUB_LANDSCAPES_TAB_ID, "Sub-Landscapes (" + subLandscapes.size() + ")", false);
+        }
         landscapeReport.addTab(SOURCE_CODE_TAB_ID, "Projects (" + landscapeAnalysisResults.getFilteredProjectAnalysisResults().size() + ")", false);
-        landscapeReport.addTab(CONTRIBUTORS_TAB_ID, "Contributors (" + landscapeAnalysisResults.getRecentContributorsCount() + ")", false);
+        int recentContributorsCount = landscapeAnalysisResults.getRecentContributorsCount();
+        landscapeReport.addTab(CONTRIBUTORS_TAB_ID, "Contributors" + (recentContributorsCount > 0 ? " (" + recentContributorsCount + ")" + "" : ""), false);
         landscapeReport.addTab(TOPOLOGIES_TAB_ID, "Team Topology", false);
         configuration.getCustomTabs().forEach(tab -> {
             int index = configuration.getCustomTabs().indexOf(tab);
@@ -165,6 +178,20 @@ public class LandscapeReportGenerator {
         addIFrames(configuration.getiFrames());
         landscapeReport.endTabContentSection();
 
+        if (subLandscapes.size() > 0) {
+            landscapeReport.startTabContentSection(SUB_LANDSCAPES_TAB_ID, false);
+            LOG.info("Adding sub landscape section...");
+            addSubLandscapeSection(subLandscapes);
+            WebFrameLink iframe = new WebFrameLink();
+            iframe.setSrc("visuals/sub_landscapes_zoomable_circles_main_loc_.html");
+            iframe.setMoreInfoLink("visuals/sub_landscapes_zoomable_circles_main_loc_.html");
+            iframe.setTitle("Sub-Landscape projects (by size)");
+            iframe.setStyle("width: 100%; height: 970px;");
+            iframe.setScrolling(false);
+            addIFrame(iframe);
+            landscapeReport.endTabContentSection();
+        }
+
         landscapeReport.startTabContentSection(SOURCE_CODE_TAB_ID, false);
         LOG.info("Adding big summary...");
         addBigProjectsSummary(landscapeAnalysisResults);
@@ -180,16 +207,23 @@ public class LandscapeReportGenerator {
 
         landscapeReport.startTabContentSection(CONTRIBUTORS_TAB_ID, false);
         LOG.info("Adding big contributors summary...");
-        addBigContributorsSummary(landscapeAnalysisResults);
+        addBigContributorsSummary();
         addIFrames(configuration.getiFramesContributorsAtStart());
         LOG.info("Adding contributors...");
         addContributors();
+        if (recentContributorsCount > 0) {
+            addContributorsPerExtension(true);
+        }
+        addContributorsPerExtension();
+        LOG.info("Adding trends...");
+        landscapeReport.addLevel2Header("Contribution Trends");
+        addContributionTrends();
         addIFrames(configuration.getiFramesContributors());
         landscapeReport.endTabContentSection();
 
         landscapeReport.startTabContentSection(TOPOLOGIES_TAB_ID, false);
         LOG.info("Adding Contributor Dependencies...");
-        addPeopleDependencies();
+        addTeamTopology(landscapeAnalysisResults);
         landscapeReport.endTabContentSection();
 
         configuration.getCustomTabs().forEach(tab -> {
@@ -244,9 +278,37 @@ public class LandscapeReportGenerator {
         return contributorsPerMonth;
     }
 
+    private void addTeamTopology(LandscapeAnalysisResults landscapeAnalysisResults) {
+        int recentContributorsCount = landscapeAnalysisResults.getRecentContributorsCount();
+        double c2cMax = recentContributorsCount * (recentContributorsCount - 1) / 2.0; // n * (n - 1) / 2
+
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(recentContributorsCount), "contributors", "30 days", "");
+
+        int c2c = (int) Math.round(landscapeAnalysisResults.getC2cConnectionsCount30Days());
+        int cMedian = (int) Math.round(landscapeAnalysisResults.getcMedian30Days());
+        int cMean = (int) Math.round(landscapeAnalysisResults.getcMean30Days());
+        int cIndex = (int) Math.round(landscapeAnalysisResults.getcIndex30Days());
+        String formattedPercentage = c2cMax > 0 ? FormattingUtils.getFormattedPercentage(100.0 * c2c / c2cMax) : "0";
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(c2c), "C2C connections", "30 days (" + formattedPercentage + "%)", "unique contributor to contributor connections (via shared projects)");
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(cMedian), "C-Median", "30 days", "half of contributors have >= than this number of connections to other contributors");
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(cMean), "C-Mean", "30 days", "average number of contributor connections");
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(cIndex), "C-Index", "30 days", "N contributors have at least N contributor connections");
+
+        int pMedian = (int) Math.round(landscapeAnalysisResults.getpMedian30Days());
+        int pMean = (int) Math.round(landscapeAnalysisResults.getpMean30Days());
+        int pIndex = (int) Math.round(landscapeAnalysisResults.getpIndex30Days());
+        this.landscapeReport.addLineBreak();
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getProjectsCount()), "projects", "", "");
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pMedian), "P-Median", "30 days", "half of contributors have >= than this number of connections to projects");
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pMean), "P-Mean", "30 days", "average number of contributor project connections");
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pIndex), "P-Index", "30 days", "N contributors have at least N project connections");
+
+        addPeopleDependencies();
+    }
+
     private void addPeopleDependencies() {
+        boolean recentlyActive = landscapeAnalysisResults.getRecentContributorsCount() > 0;
         landscapeReport.addLevel2Header("Highlights");
-        boolean recentlyActive = landscapeAnalysisResults.getCommitsCount30Days() > 0;
 
         landscapeReport.startSubSection("Contributor Topology (past 30 days)", "");
 
@@ -356,7 +418,8 @@ public class LandscapeReportGenerator {
         List<SubLandscapeLink> links = subLandscapes.stream().filter(l -> maxDepth == 0 || getPathDepth(l.getIndexFilePath()) <= maxDepth).collect(Collectors.toList());
         if (links.size() > 0) {
             Collections.sort(links, Comparator.comparing(a -> getLabel(a).toLowerCase()));
-            landscapeReport.startSubSection("Sub-Landscapes (" + links.size() + ")", "");
+            landscapeReport.startDiv("margin: 12px; margin-bottom: 22px");
+
             landscapeReport.addHtmlContent("zoomable circles: ");
             landscapeReport.addNewTabLink("contributors (30d)", "visuals/sub_landscapes_zoomable_circles_" + CONTRIBUTORS_30_D + ".html");
             landscapeReport.addHtmlContent(" | ");
@@ -372,6 +435,7 @@ public class LandscapeReportGenerator {
             landscapeReport.addNewTabLink("lines of code (main)", "visuals/sub_landscapes_zoomable_sunburst_" + MAIN_LOC + ".html");
             landscapeReport.addLineBreak();
             landscapeReport.addLineBreak();
+
             landscapeReport.startTable();
             landscapeReport.addTableHeader("", "", "projects", "main loc", "test loc", "other loc", "recent contributors", "commits (30 days)");
             String prevRoot[] = {""};
@@ -446,7 +510,7 @@ public class LandscapeReportGenerator {
             });
             landscapeReport.endTable();
 
-            landscapeReport.endSection();
+            landscapeReport.endDiv();
         }
 
     }
@@ -552,13 +616,13 @@ public class LandscapeReportGenerator {
         LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
         int thresholdContributors = configuration.getProjectThresholdContributors();
         int size = getProjects().size();
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(size), (size == 1 ? "active project" : "active projects"),
+        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(size), (size == 1 ? "project" : "projects"),
                 "", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "lines of code (main)", "", getExtraLocInfo());
-        int mainLocActive = landscapeAnalysisResults.getMainLocActive();
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocActive), "lines of code (active)", "", "files updated in past year");
+        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "lines of code (main)", "", getExtraLocInfo());
+        int mainLoc1YearActive = landscapeAnalysisResults.getMainLoc1YearActive();
+        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(mainLoc1YearActive), "lines of code (active)", "", "files updated in past year");
         int mainLocNew = landscapeAnalysisResults.getMainLocNew();
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocNew), "lines of code (new)", "", "files created in past year");
+        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocNew), "lines of code (new)", "", "files created in past year");
 
         List<ContributorProjects> contributors = landscapeAnalysisResults.getContributors();
         long contributorsCount = contributors.size();
@@ -566,7 +630,7 @@ public class LandscapeReportGenerator {
             int recentContributorsCount = landscapeAnalysisResults.getRecentContributorsCount();
             int locPerRecentContributor = 0;
             if (recentContributorsCount > 0) {
-                locPerRecentContributor = (int) Math.round((double) mainLocActive / recentContributorsCount);
+                locPerRecentContributor = (int) Math.round((double) mainLoc1YearActive / recentContributorsCount);
             }
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(recentContributorsCount), "recent contributors",
                     "(past 30 days)", getExtraPeopleInfo(contributors, contributorsCount) + "\n" + FormattingUtils.formatCount(locPerRecentContributor) + " active lines of code per recent contributor");
@@ -578,29 +642,44 @@ public class LandscapeReportGenerator {
 
         addContributorsPerYear(configuration.isShowContributorsTrendsOnFirstTab());
 
-        landscapeReport.addLineBreak();
-
         landscapeReport.endDiv();
         landscapeReport.addLineBreak();
     }
 
     private void addBigProjectsSummary(LandscapeAnalysisResults landscapeAnalysisResults) {
         LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
+        landscapeAnalysisResults.getRecentContributorsCount();
         int thresholdContributors = configuration.getProjectThresholdContributors();
-        int size = getProjects().size();
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(size), (size == 1 ? "active project" : "active projects"),
-                "", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "lines of code (main)", "", getExtraLocInfo());
-        int mainLocActive = landscapeAnalysisResults.getMainLocActive();
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocActive), "lines of code (active)", "", "files updated in past year");
+        List<ProjectAnalysisResults> projects = getProjects();
+        int recentSize = (int) projects.stream().filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days() > 0).count();
+        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(recentSize), (recentSize == 1 ? "recent project" : "recent projects"),
+                "30 days", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
+        int mainLoc = landscapeAnalysisResults.getMainLoc();
+        int mainLoc30DaysActive = landscapeAnalysisResults.getMainLoc30DaysActive();
+        double percentage30Days = mainLoc > 0 ? Math.round(100.0 * mainLoc30DaysActive / mainLoc) : 0;
+        String percentageText = FormattingUtils.getFormattedPercentage(percentage30Days) + "%";
+        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(mainLoc30DaysActive), "lines of code touched",
+                "30 days (" + percentageText + ")", "files updated in past 30 days");
+        int size = projects.size();
+        int size90Days = (int) projects.stream().filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount90Days() > 0).count();
+        int size180Days = (int) projects.stream().filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount180Days() > 0).count();
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(size90Days), (size90Days == 1 ? "3m project" : "3m projects"),
+                "90 days", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(size180Days), (size == 1 ? "6m project" : "6m projects"),
+                "180 days", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(size), (size == 1 ? "project" : "projects"),
+                "all time", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLoc), "lines of code (main)", "", getExtraLocInfo());
+        int mainLocActive = landscapeAnalysisResults.getMainLoc1YearActive();
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocActive), "lines of code touched", "1 year", "files updated in past year");
         int mainLocNew = landscapeAnalysisResults.getMainLocNew();
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocNew), "lines of code (new)", "", "files created in past year");
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocNew), "lines of code (new)", "1 year", "files created in past year");
     }
 
-    private void addBigContributorsSummary(LandscapeAnalysisResults landscapeAnalysisResults) {
+    private void addBigContributorsSummary() {
         List<ContributorProjects> contributors = landscapeAnalysisResults.getContributors();
         long contributorsCount = contributors.size();
-        int mainLocActive = landscapeAnalysisResults.getMainLocActive();
+        int mainLocActive = landscapeAnalysisResults.getMainLoc1YearActive();
         int mainLocNew = landscapeAnalysisResults.getMainLocNew();
         if (contributorsCount > 0) {
             int recentContributorsCount = landscapeAnalysisResults.getRecentContributorsCount();
@@ -612,6 +691,10 @@ public class LandscapeReportGenerator {
             }
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(recentContributorsCount), "recent contributors",
                     "(past 30 days)", getExtraPeopleInfo(contributors, contributorsCount) + "\n" + FormattingUtils.formatCount(locPerRecentContributor) + " active lines of code per recent contributor");
+            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getRecentContributorsCount3Months()), "3m contributors",
+                    "(past 90 days)", getExtraPeopleInfo(contributors, contributorsCount));
+            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getRecentContributorsCount6Months()), "6m contributors",
+                    "(past 180 days)", getExtraPeopleInfo(contributors, contributorsCount));
             int rookiesContributorsCount = landscapeAnalysisResults.getRookiesContributorsCount();
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(rookiesContributorsCount),
                     rookiesContributorsCount == 1 ? "active rookie" : "active rookies",
@@ -620,15 +703,14 @@ public class LandscapeReportGenerator {
                     "(active LOC/contributor)", "active lines of code per recent contributor\n\n" + FormattingUtils.getPlainTextForNumber(locNewPerRecentContributor) + " new LOC/recent contributor");
             List<ComponentDependency> peopleDependencies = ContributorConnectionUtils.getPeopleDependencies(contributors, 0, 30);
             peopleDependencies.sort((a, b) -> b.getCount() - a.getCount());
-
-            double cMedian = landscapeAnalysisResults.getcMedian30Days();
-
-            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber((int) Math.round(cMedian)), "C-Median", "30 days", "");
         }
+    }
 
+    private void addContributionTrends() {
+        landscapeReport.startSubSection("Commits & Contributors Per Year", "Past " + landscapeAnalysisResults.getConfiguration().getCommitsMaxYears() + " years");
         addContributorsPerYear(true);
+        landscapeReport.endSection();
         LOG.info("Adding contributors per extension...");
-        addContributorsPerExtension(true);
 
         landscapeReport.startSubSection("Commits & Contributors Per Month", "Past two years");
         addContributorsPerMonth();
@@ -637,9 +719,6 @@ public class LandscapeReportGenerator {
         landscapeReport.startSubSection("Commits & Contributors Per Week", "Past two years");
         addContributorsPerWeek();
         landscapeReport.endSection();
-
-        addContributorsPerExtension();
-
 
         landscapeReport.addParagraph("latest commit date: <b>" + landscapeAnalysisResults.getLatestCommitDate() + "</b>", "color: grey");
     }
@@ -676,29 +755,45 @@ public class LandscapeReportGenerator {
     private void addExtensions() {
         List<NumericMetric> linesOfCodePerExtensionMain = LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getMainLinesOfCodePerExtension());
         addMainExtensions("Main", linesOfCodePerExtensionMain, true);
-        landscapeReport.startShowMoreBlockDisappear("", "Show test and other code...");
+        landscapeReport.startShowMoreBlockDisappear("", "&nbsp;&nbsp;Show test and other code...");
         addMainExtensions("Test", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getTestLinesOfCodePerExtension()), false);
         addMainExtensions("Other", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getOtherLinesOfCodePerExtension()), false);
         landscapeReport.endShowMoreBlock();
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
-        landscapeReport.startShowMoreBlockDisappear("", "Show commit history per extension...");
+        landscapeReport.startShowMoreBlockDisappear("", "&nbsp;&nbsp;Show commit history per extension...");
+
         landscapeReport.startSubSection("Commit history per file extension", "");
         landscapeReport.startDiv("max-height: 600px; overflow-y: auto;");
+        landscapeReport.startDiv("margin-bottom: 16px; vertical-align: middle;");
+        landscapeReport.addContentInDiv(ReportConstants.ANIMATION_SVG_ICON, "display: inline-block; vertical-align: middle; margin: 4px;");
+        landscapeReport.addHtmlContent("animated commit history: ");
+        landscapeReport.addNewTabLink("all time cumulative", "visuals/racing_charts_extensions_commits.html?tickDuration=1200");
+        landscapeReport.addHtmlContent(" | ");
+        landscapeReport.addNewTabLink("12 months window", "visuals/racing_charts_extensions_commits_window.html?tickDuration=1200");
+        landscapeReport.endDiv();
         List<String> extensions = linesOfCodePerExtensionMain.stream().map(loc -> loc.getName().replaceAll(".*[.]", "").trim()).collect(Collectors.toList());
-        HistoryPerLanguageGenerator.getInstanceCommits(landscapeAnalysisResults.getYearlyCommitHistoryPerExtension(), extensions).addHistoryPerLanguage(landscapeReport);
+        List<HistoryPerExtension> yearlyCommitHistoryPerExtension = landscapeAnalysisResults.getYearlyCommitHistoryPerExtension();
+        HistoryPerLanguageGenerator.getInstanceCommits(yearlyCommitHistoryPerExtension, extensions).addHistoryPerLanguage(landscapeReport);
+        new RacingLanguagesBarChartsExporter(landscapeAnalysisResults, yearlyCommitHistoryPerExtension, extensions).exportRacingChart(reportsFolder);
         landscapeReport.endDiv();
         landscapeReport.endSection();
+
         landscapeReport.endShowMoreBlock();
+        /*
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
-        landscapeReport.startShowMoreBlockDisappear("", "Show contributors history per extension...");
+        landscapeReport.startShowMoreBlockDisappear("", "&nbsp;&nbsp;Show contributors history per extension...");
+
         landscapeReport.startSubSection("Contributors history per file extension", "");
         landscapeReport.startDiv("max-height: 600px; overflow-y: auto;");
-        HistoryPerLanguageGenerator.getInstanceContributors(landscapeAnalysisResults.getYearlyCommitHistoryPerExtension(), extensions).addHistoryPerLanguage(landscapeReport);
+        HistoryPerLanguageGenerator.getInstanceContributors(yearlyCommitHistoryPerExtension, extensions).addHistoryPerLanguage(landscapeReport);
         landscapeReport.endDiv();
         landscapeReport.endSection();
+
         landscapeReport.endShowMoreBlock();
+        */
+
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
@@ -734,7 +829,6 @@ public class LandscapeReportGenerator {
         landscapeReport.endDiv();
         landscapeReport.endSection();
     }
-
 
     private void addContributorsPerExtension(boolean linkCharts) {
         landscapeReport.startSubSection("Contributors per File Extensions (past 30 days)", "");
@@ -821,7 +915,7 @@ public class LandscapeReportGenerator {
         landscapeReport.endShowMoreBlock();
         landscapeReport.addLineBreak();
         landscapeReport.addNewTabLink(" - show extension dependencies as 3D force graph...", "visuals/extension_dependencies_30d_force_3d.html");
-        export3DForceGraph(dependencies, "extension_dependencies_30d");
+        new Force3DGraphExporter().export3DForceGraph(dependencies, reportsFolder, "extension_dependencies_30d");
     }
 
     private List<String> getMainExtensions() {
@@ -849,14 +943,16 @@ public class LandscapeReportGenerator {
                                 .collect(Collectors.joining("\n  ")));
     }
 
-
     private void addContributors() {
+        ProcessingStopwatch.start("contributors");
         int contributorsCount = landscapeAnalysisResults.getContributorsCount();
 
         if (contributorsCount > 0) {
+            ProcessingStopwatch.start("contributors/preparing");
+
             List<ContributorProjects> contributors = landscapeAnalysisResults.getContributors();
             List<ContributorProjects> recentContributors = landscapeAnalysisResults.getContributors().stream()
-                    .filter(c -> c.getContributor().getCommitsCount30Days() > 0)
+                    .filter(c -> c.getContributor().isActive(RECENT_THRESHOLD_DAYS))
                     .collect(Collectors.toCollection(ArrayList::new));
             Collections.sort(recentContributors, (a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days());
             int totalCommits = contributors.stream().mapToInt(c -> c.getContributor().getCommitsCount()).sum();
@@ -868,60 +964,74 @@ public class LandscapeReportGenerator {
                 }
             });
 
-            landscapeReport.startSubSection("<a href='contributors-recent.html' target='_blank' style='text-decoration: none'>" +
-                            "Recent Contributors (" + recentContributors.size() + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
-                    "latest commit " + latestCommit[0]);
+            int recentContributorsCount = recentContributors.size();
 
-            addRecentContributorLinks();
+            if (recentContributorsCount > 0) {
+                landscapeReport.startSubSection("<a href='contributors-recent.html' target='_blank' style='text-decoration: none'>" +
+                                "Recent Contributors (" + recentContributorsCount + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
+                        "latest commit " + latestCommit[0]);
 
-            DescriptiveStatistics stats = new DescriptiveStatistics();
-            recentContributors.forEach(c -> stats.addValue(c.getContributor().getCommitsCount30Days()));
-            double max = Math.max(stats.getMax(), 1);
-            double sum = Math.max(stats.getSum(), 1);
+                addRecentContributorLinks();
 
-            int cumulativeCount[] = {0};
-            double prevCumulativePercentage[] = {0};
-            int index[] = {0};
+                DescriptiveStatistics stats = new DescriptiveStatistics();
+                recentContributors.forEach(c -> stats.addValue(c.getContributor().getCommitsCount30Days()));
+                double max = Math.max(stats.getMax(), 1);
+                double sum = Math.max(stats.getSum(), 1);
 
-            StringBuilder html = new StringBuilder();
+                int cumulativeCount[] = {0};
+                double prevCumulativePercentage[] = {0};
+                int index[] = {0};
 
-            recentContributors.stream().limit(1000).forEach(c -> {
-                index[0] += 1;
-                Contributor contributor = c.getContributor();
-                int count = contributor.getCommitsCount30Days();
-                int height = (int) (Math.round(64 * count / max)) + 1;
-                cumulativeCount[0] += count;
-                double cumulativePercentage = Math.round(1000.0 * cumulativeCount[0] / sum) / 10;
-                double contributorPercentage = Math.round(10000.0 * index[0] / recentContributors.size()) / 100;
-                String tooltip = contributor.getEmail()
-                        + "\n - commits (30d): " + count
-                        + "\n - cumulative commits (top " + index[0] + "): " + cumulativeCount[0]
-                        + "\n - cumulative percentage (top " + contributorPercentage + "% " + "): " + cumulativePercentage + "%";
-                String color = (prevCumulativePercentage[0] < 50 && cumulativePercentage >= 50) ? "blue" : "skyblue";
-                String style = "margin-right: 1px; vertical-align: bottom; width: 8px; background-color: " + color + "; display: inline-block; height: " + height + "px";
+                StringBuilder html = new StringBuilder();
+                ProcessingStopwatch.end("contributors/preparing");
 
-                if (contributor.isRookie()) {
-                    style += "; border-bottom: 4px solid green;";
-                } else {
-                    style += "; border-bottom: 4px solid " + color + ";";
+                ProcessingStopwatch.start("contributors/table");
+                recentContributors.stream().limit(landscapeAnalysisResults.getConfiguration().getContributorsListLimit()).forEach(c -> {
+                    index[0] += 1;
+                    Contributor contributor = c.getContributor();
+                    int count = contributor.getCommitsCount30Days();
+                    int height = (int) (Math.round(64 * count / max)) + 1;
+                    cumulativeCount[0] += count;
+                    double cumulativePercentage = Math.round(1000.0 * cumulativeCount[0] / sum) / 10;
+                    double contributorPercentage = Math.round(10000.0 * index[0] / recentContributorsCount) / 100;
+                    String tooltip = contributor.getEmail()
+                            + "\n - commits (30d): " + count
+                            + "\n - cumulative commits (top " + index[0] + "): " + cumulativeCount[0]
+                            + "\n - cumulative percentage (top " + contributorPercentage + "% " + "): " + cumulativePercentage + "%";
+                    String color = (prevCumulativePercentage[0] < 50 && cumulativePercentage >= 50) ? "blue" : "skyblue";
+                    String style = "margin-right: 1px; vertical-align: bottom; width: 8px; background-color: " + color + "; display: inline-block; height: " + height + "px";
+
+                    if (contributor.isRookie()) {
+                        style += "; border-bottom: 4px solid green;";
+                    } else {
+                        style += "; border-bottom: 4px solid " + color + ";";
+                    }
+
+                    html.append("<div title='" + tooltip + "' style='" + style + "'></div>");
+                    prevCumulativePercentage[0] = cumulativePercentage;
+                });
+                landscapeReport.startDiv("white-space: nowrap; width: 100%; overflow-x: scroll;");
+                landscapeReport.addHtmlContent(html.toString());
+                landscapeReport.endDiv();
+                landscapeReport.startDiv("color: grey; font-size: 70%");
+                landscapeReport.addHtmlContent("commits per contributor | ");
+                for (int p = 90; p >= 10; p -= 10) {
+                    double percentile = stats.getPercentile(p);
+                    landscapeReport.addHtmlContent("p(" + p + ") = " + (int) Math.round(percentile) + "; ");
                 }
+                landscapeReport.endDiv();
 
-                html.append("<div title='" + tooltip + "' style='" + style + "'></div>");
-                prevCumulativePercentage[0] = cumulativePercentage;
-            });
-            landscapeReport.startDiv("white-space: nowrap; width: 100%; overflow-x: scroll;");
-            landscapeReport.addHtmlContent(html.toString());
-            landscapeReport.endDiv();
-            landscapeReport.startDiv("color: grey; font-size: 70%");
-            for (int p = 90; p >= 10; p -= 10) {
-                double percentile = stats.getPercentile(p);
-                landscapeReport.addHtmlContent("p(" + p + ") = " + (int) Math.round(percentile) + "; ");
+                landscapeReport.addHtmlContent("<iframe src='contributors-recent.html' frameborder=0 style='height: 450px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
+
+                landscapeReport.endSection();
             }
+
+            landscapeReport.startDiv("margin-bottom: 16px; margin-top: -6px; vertical-align: middle;");
+            landscapeReport.addContentInDiv(ReportConstants.ANIMATION_SVG_ICON, "display: inline-block; vertical-align: middle; margin: 4px;");
+            landscapeReport.addNewTabLink("animated contributors history (all time)", "visuals/racing_charts_commits_contributors.html?tickDuration=1200");
+            landscapeReport.addHtmlContent(" | ");
+            landscapeReport.addNewTabLink("animated contributors history (12 months window)", "visuals/racing_charts_commits_window_contributors.html?tickDuration=1200");
             landscapeReport.endDiv();
-
-            landscapeReport.addHtmlContent("<iframe src='contributors-recent.html' frameborder=0 style='height: 450px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
-
-            landscapeReport.endSection();
 
             landscapeReport.startSubSection("<a href='contributors.html' target='_blank' style='text-decoration: none'>" +
                             "All Contributors (" + contributorsCount + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
@@ -934,12 +1044,25 @@ public class LandscapeReportGenerator {
 
             landscapeReport.endShowMoreBlock();
             landscapeReport.endSection();
+            ProcessingStopwatch.end("contributors/table");
 
-            new LandscapeContributorsReport(landscapeAnalysisResults, landscapeRecentContributorsReport).saveContributorsTable(recentContributors, totalRecentCommits, true);
-            new LandscapeContributorsReport(landscapeAnalysisResults, landscapeContributorsReport).saveContributorsTable(contributors, totalCommits, false);
+            ProcessingStopwatch.start("contributors/saving tables");
+            Set<String> contributorsLinkedFromTables = new HashSet<>();
+            new LandscapeContributorsReport(landscapeAnalysisResults, landscapeRecentContributorsReport, contributorsLinkedFromTables)
+                    .saveContributorsTable(recentContributors, totalRecentCommits, true);
+            new LandscapeContributorsReport(landscapeAnalysisResults, landscapeContributorsReport, contributorsLinkedFromTables)
+                    .saveContributorsTable(contributors, totalCommits, false);
+            ProcessingStopwatch.end("contributors/saving tables");
 
-            individualContributorReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults).getIndividualReports(contributors);
+            ProcessingStopwatch.start("contributors/individual reports");
+            List<ContributorProjects> linkedContributors = contributors.stream()
+                    .filter(c -> contributorsLinkedFromTables.contains(c.getContributor().getEmail()))
+                    .collect(Collectors.toList());
+            LOG.info("Saving individual reports for " + linkedContributors.size() + " contributor(s) linked from tables (out of " + contributors.size() + ")");
+            individualContributorReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults).getIndividualReports(linkedContributors);
+            ProcessingStopwatch.end("contributors/individual reports");
         }
+        ProcessingStopwatch.end("contributors");
     }
 
     private void addContributorsPerExtension() {
@@ -1039,9 +1162,8 @@ public class LandscapeReportGenerator {
                 return projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
             }
         });
-        LOG.info("Adding sub landscape section...");
-        addSubLandscapeSection(configuration.getSubLandscapes());
-        landscapeReport.startSubSection("<a href='projects.html' target='_blank' style='text-decoration: none'>" +
+
+        landscapeReport.startSubSection("<a href='projects-short.html' target='_blank' style='text-decoration: none'>" +
                 "All Projects (" + projectsAnalysisResults.size() + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "");
         if (projectsAnalysisResults.size() > 0) {
             List<NumericMetric> projectSizes = new ArrayList<>();
@@ -1051,15 +1173,58 @@ public class LandscapeReportGenerator {
                 projectSizes.add(new NumericMetric(analysisResults.getMetadata().getName(), analysisResults.getMainAspectAnalysisResults().getLinesOfCode()));
             });
 
-            landscapeReport.addHtmlContent("<iframe src='projects.html' frameborder=0 style='height: 600px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
+            landscapeReport.addHtmlContent("<iframe src='projects-short.html' frameborder=0 style='height: 600px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
 
-            new LandscapeProjectsReport(landscapeAnalysisResults).saveProjectsReport(landscapeProjectsReport, projectsAnalysisResults);
+            int shortLimit = configuration.getProjectsShortListLimit();
+            new LandscapeProjectsReport(landscapeAnalysisResults, shortLimit,
+                    "See the full list of projects...", "projects.html")
+                    .saveProjectsReport(landscapeProjectsReportShort, reportsFolder, projectsAnalysisResults);
+            if (projectsAnalysisResults.size() > shortLimit) {
+                new LandscapeProjectsReport(landscapeAnalysisResults, configuration.getProjectsListLimit())
+                        .saveProjectsReport(landscapeProjectsReportLong, reportsFolder, projectsAnalysisResults);
+            }
+
         }
+
+        landscapeReport.endSection();
+
+        landscapeReport.startSubSection("File Age and Freshness", "Lines of code in files first/last updated more than a year ago | 6 to 12 months ago | 3 to 6 months ago | 1 to 3 months ago | month or less ago");
+
+        landscapeReport.startTable();
+        landscapeReport.startTableRow();
+        landscapeReport.addTableCell("old", "border: none");
+        landscapeReport.startTableCell("border: none");
+        SourceFileAgeDistribution overallFileFirstModifiedDistribution = landscapeAnalysisResults.getOverallFileFirstModifiedDistribution();
+        landscapeReport.startDivWithLabel("file age:\n" + overallFileFirstModifiedDistribution.getDescription(), "");
+        landscapeReport.addHtmlContent(getRiskProfileVisual(overallFileFirstModifiedDistribution, Palette.getAgePalette()));
+        landscapeReport.endDiv();
+        landscapeReport.endTableCell();
+        landscapeReport.addTableCell("new", "border: none");
+        landscapeReport.endTableRow();
+
+        landscapeReport.startTableRow();
+        landscapeReport.addTableCell("stale", "border: none");
+        landscapeReport.startTableCell("border: none");
+        SourceFileAgeDistribution overallFileLastModifiedDistribution = landscapeAnalysisResults.getOverallFileLastModifiedDistribution();
+        landscapeReport.startDivWithLabel("file freshness:\n" + overallFileLastModifiedDistribution.getDescription(), "");
+        landscapeReport.addHtmlContent(getRiskProfileVisual(overallFileLastModifiedDistribution, Palette.getFreshnessPalette()));
+        landscapeReport.endDiv();
+        landscapeReport.endTableCell();
+        landscapeReport.addTableCell("fresh", "border: none");
+        landscapeReport.endTableRow();
+        landscapeReport.endTable();
 
         landscapeReport.endSection();
     }
 
     private void addInfoBlock(String mainValue, String subtitle, String description, String tooltip) {
+        if (StringUtils.isNotBlank(description)) {
+            subtitle += "<br/><span style='color: grey; font-size: 80%'>" + description + "</span>";
+        }
+        addInfoBlockWithColor(mainValue, subtitle, "skyblue; opacity: 0.8", tooltip);
+    }
+
+    private void addFreshInfoBlock(String mainValue, String subtitle, String description, String tooltip) {
         if (StringUtils.isNotBlank(description)) {
             subtitle += "<br/><span style='color: grey; font-size: 80%'>" + description + "</span>";
         }
@@ -1118,9 +1283,27 @@ public class LandscapeReportGenerator {
 
         landscapeReport.startDiv(style, tooltip);
         landscapeReport.addHtmlContent("<div style='font-size: 50px; margin-top: 20px'>" + mainValue + "</div>");
-        landscapeReport.addHtmlContent("<div style='color: #434343; font-size: 16px'>" + subtitle + "</div>");
+        landscapeReport.addHtmlContent("<div style='color: #434343; font-size: 15px'>" + subtitle + "</div>");
         landscapeReport.endDiv();
     }
+
+    private String getRiskProfileVisual(RiskDistributionStats distributionStats, Palette palette) {
+        SimpleOneBarChart chart = new SimpleOneBarChart();
+        chart.setWidth(BAR_WIDTH + 20);
+        chart.setBarHeight(BAR_HEIGHT);
+        chart.setMaxBarWidth(BAR_WIDTH);
+        chart.setBarStartXOffset(0);
+
+        List<Integer> values = Arrays.asList(
+                distributionStats.getVeryHighRiskValue(),
+                distributionStats.getHighRiskValue(),
+                distributionStats.getMediumRiskValue(),
+                distributionStats.getLowRiskValue(),
+                distributionStats.getNegligibleRiskValue());
+
+        return chart.getStackedBarSvg(values, palette, "", "");
+    }
+
 
     private void addSmallInfoBlockLoc(String value, String subtitle, String link) {
         addSmallInfoBlock(value, subtitle, "skyblue", link);
@@ -1182,7 +1365,10 @@ public class LandscapeReportGenerator {
         List<RichTextReport> reports = new ArrayList<>();
 
         reports.add(this.landscapeReport);
-        reports.add(this.landscapeProjectsReport);
+        reports.add(this.landscapeProjectsReportShort);
+        if (landscapeAnalysisResults.getProjectAnalysisResults().size() > landscapeAnalysisResults.getConfiguration().getProjectsShortListLimit()) {
+            reports.add(this.landscapeProjectsReportLong);
+        }
         reports.add(this.landscapeContributorsReport);
         reports.add(this.landscapeRecentContributorsReport);
 
@@ -1309,7 +1495,10 @@ public class LandscapeReportGenerator {
 
     private void addContributorsPerMonth() {
         int limit = 24;
-        List<ContributionTimeSlot> contributorsPerMonth = getContributionMonths(landscapeAnalysisResults.getContributorsPerMonth(),
+        List<ContributionTimeSlot> monthlyContributions = landscapeAnalysisResults.getContributorsPerMonth();
+        new RacingProjectsBarChartsExporter(landscapeAnalysisResults, landscapeAnalysisResults.getContributorsPerProjectAndMonth(), "projects").exportRacingChart(reportsFolder);
+        new RacingProjectsBarChartsExporter(landscapeAnalysisResults, landscapeAnalysisResults.getContributorsCommits(), "contributors").exportRacingChart(reportsFolder);
+        List<ContributionTimeSlot> contributorsPerMonth = getContributionMonths(monthlyContributions,
                 limit, landscapeAnalysisResults.getLatestCommitDate());
 
         contributorsPerMonth.sort(Comparator.comparing(ContributionTimeSlot::getTimeSlot).reversed());
@@ -1637,7 +1826,7 @@ public class LandscapeReportGenerator {
                     "C2C dependencies are measured via the same repositories that two persons changed in the past " + daysAgo + " days. " +
                             "<br>Currently there are <b>" + FormattingUtils.formatCount(peopleDependencies.size()) + "</b> " +
                             "unique contributor-to-contributor (C2C) connections via <b>" +
-                            FormattingUtils.formatCount(connectionSum) + "</b> shared repositories.");
+                            landscapeAnalysisResults.getProjectsCount() + "</b> shared repositories.");
         }
 
         addDataSection("C-median", cMedian, daysAgo, landscapeAnalysisResults.getcMedian30DaysHistory(),
@@ -1989,40 +2178,9 @@ public class LandscapeReportGenerator {
         landscapeReport.addLineBreak();
 
         addDownloadLinks(graphId);
-        export3DForceGraph(componentDependencies, graphId);
+        new Force3DGraphExporter().export3DForceGraph(componentDependencies, reportsFolder, graphId);
 
         return graphId;
-    }
-
-    private void export3DForceGraph(List<ComponentDependency> componentDependencies, String graphId) {
-        Force3DObject force3DObject = new Force3DObject();
-        Map<String, Integer> names = new HashMap<>();
-        componentDependencies.forEach(dependency -> {
-            String from = dependency.getFromComponent();
-            String to = dependency.getToComponent();
-            if (names.containsKey(from)) {
-                names.put(from, names.get(from) + 1);
-            } else {
-                names.put(from, 1);
-            }
-            if (names.containsKey(to)) {
-                names.put(to, names.get(to) + 1);
-            } else {
-                names.put(to, 1);
-            }
-            force3DObject.getLinks().add(new Force3DLink(from, to, dependency.getCount()));
-            force3DObject.getLinks().add(new Force3DLink(to, from, dependency.getCount()));
-        });
-        names.keySet().forEach(key -> {
-            force3DObject.getNodes().add(new Force3DNode(key, names.get(key)));
-        });
-        File folder = new File(reportsFolder, "visuals");
-        folder.mkdirs();
-        try {
-            FileUtils.write(new File(folder, graphId + "_force_3d.html"), new VisualizationTemplate().render3DForceGraph(force3DObject), UTF_8);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     private void addDownloadLinks(String graphId) {

@@ -48,7 +48,7 @@ public class SimpleOneBarChart {
                     barSize = 1;
                 }
                 if (x < maxBarWidth + barStartXOffset) {
-                    if (x + barSize <= maxBarWidth + barStartXOffset) {
+                    if (i < values.size() - 1 && x + barSize <= maxBarWidth + barStartXOffset) {
                         svg += getBarSvg(x, barSize, color);
                     } else {
                         svg += getBarSvg(x, maxBarWidth + barStartXOffset - x, color);

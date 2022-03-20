@@ -6,6 +6,8 @@ package nl.obren.sokrates.reports.landscape.statichtml;
 
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.landscape.utils.LandscapeVisualsGenerator;
+import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalyzer;
 import nl.obren.sokrates.sourcecode.landscape.init.LandscapeAnalysisInitiator;
@@ -31,10 +33,10 @@ public class LandscapeAnalysisCommands {
         LOG.info("Configuration file: " + landscapeConfigFile.getPath());
     }
 
-    public static void update(File analysisRoot, File landscapeConfigFile) {
+    public static void update(File analysisRoot, File landscapeConfigFile, Metadata metadata) {
         landscapeConfigFile = getConfigFile(analysisRoot, landscapeConfigFile);
         LandscapeAnalysisUpdater updater = new LandscapeAnalysisUpdater();
-        updater.updateConfiguration(analysisRoot, landscapeConfigFile);
+        updater.updateConfiguration(analysisRoot, landscapeConfigFile, metadata);
         LOG.info("Configuration file: " + landscapeConfigFile.getPath());
         generateReport(landscapeConfigFile);
     }

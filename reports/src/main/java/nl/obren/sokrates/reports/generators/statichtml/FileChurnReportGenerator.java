@@ -157,4 +157,13 @@ public class FileChurnReportGenerator {
         report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true, false, 500).toString());
         report.endSection();
     }
+
+    private void addFilesWithMostContributors(RichTextReport report) {
+        List<SourceFile> youngestFiles = codeAnalysisResults.getFilesHistoryAnalysisResults().getMostChangedFiles();
+        report.startSection("Most Frequently Changed Files (Top " + youngestFiles.size() + ")", "");
+        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+        report.addParagraph("<a href='../data/text/mainFilesWithHistory.txt' target='_blank'>See data for all files...</a>");
+        report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true, false, 500).toString());
+        report.endSection();
+    }
 }

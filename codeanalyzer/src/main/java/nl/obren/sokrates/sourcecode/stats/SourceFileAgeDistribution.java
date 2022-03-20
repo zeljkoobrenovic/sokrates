@@ -100,7 +100,6 @@ public class SourceFileAgeDistribution extends RiskDistributionStats {
         return this;
     }
 
-    public static enum Types {LAST_MODIFIED, FIRST_MODIFIED}
-
+    public enum Types {LAST_MODIFIED, FIRST_MODIFIED}
 }
 

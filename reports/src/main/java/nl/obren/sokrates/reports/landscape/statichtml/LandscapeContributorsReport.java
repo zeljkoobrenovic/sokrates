@@ -3,6 +3,7 @@ package nl.obren.sokrates.reports.landscape.statichtml;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.core.SummaryUtils;
+import nl.obren.sokrates.reports.landscape.utils.ContributorPerExtensionHelper;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjectInfo;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjects;
@@ -12,16 +13,20 @@ import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class LandscapeContributorsReport {
     private LandscapeAnalysisResults landscapeAnalysisResults;
     private RichTextReport report;
+    private Set<String> contributorsLinkedFromTables;
     private boolean recent = false;
 
-    public LandscapeContributorsReport(LandscapeAnalysisResults landscapeAnalysisResults, RichTextReport report) {
+    public LandscapeContributorsReport(LandscapeAnalysisResults landscapeAnalysisResults, RichTextReport report, Set<String> contributorsLinkedFromTables) {
         this.landscapeAnalysisResults = landscapeAnalysisResults;
         this.report = report;
+        this.contributorsLinkedFromTables = contributorsLinkedFromTables;
     }
 
     public static String getContributorUrlFromTemplate(String contributorId, String template) {
@@ -45,6 +50,7 @@ public class LandscapeContributorsReport {
 
         int limit = landscapeAnalysisResults.getConfiguration().getContributorsListLimit();
         contributors.stream().limit(limit).forEach(contributor -> {
+            contributorsLinkedFromTables.add(contributor.getContributor().getEmail());
             addContributor(totalCommits, counter, contributor);
         });
         report.endTable();

@@ -33,7 +33,7 @@ public class FileSizeAnalyzer extends Analyzer {
         List<SourceFile> allFiles = codeConfiguration.getMain().getSourceFiles();
         List<SourceFile> sourceFiles = allFiles;
         SourceFileSizeDistribution overallDistribution = fileSizeDistribution.getOverallDistribution(sourceFiles);
-        analysisResults.setOveralFileSizeDistribution(overallDistribution);
+        analysisResults.setOverallFileSizeDistribution(overallDistribution);
         analysisResults.setFileSizeDistributionPerExtension(SourceFileSizeDistribution.getFileSizeRiskDistributionPerExtension(sourceFiles, codeConfiguration.getAnalysis().getFileSizeThresholds()));
         codeConfiguration.getLogicalDecompositions().forEach(logicalDecomposition -> {
             FileDistributionPerLogicalDecomposition distributionPerLogicalDecomposition = new FileDistributionPerLogicalDecomposition();

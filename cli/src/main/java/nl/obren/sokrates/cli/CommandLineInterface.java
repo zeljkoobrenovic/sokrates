@@ -16,6 +16,7 @@ import nl.obren.sokrates.common.renderingutils.force3d.Force3DObject;
 import nl.obren.sokrates.common.renderingutils.x3d.Unit3D;
 import nl.obren.sokrates.common.renderingutils.x3d.X3DomExporter;
 import nl.obren.sokrates.common.utils.BasicColorInfo;
+import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
@@ -23,6 +24,7 @@ import nl.obren.sokrates.reports.dataexporters.DataExporter;
 import nl.obren.sokrates.reports.generators.statichtml.BasicSourceCodeReportGenerator;
 import nl.obren.sokrates.reports.landscape.statichtml.LandscapeAnalysisCommands;
 import nl.obren.sokrates.sourcecode.Link;
+import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.CodeAnalyzer;
 import nl.obren.sokrates.sourcecode.analysis.CodeAnalyzerSettings;
@@ -55,7 +57,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class CommandLineInterface {
-
     private static final Log LOG = LogFactory.getLog(CommandLineInterface.class);
 
     private ProgressFeedback progressFeedback;
@@ -63,9 +64,13 @@ public class CommandLineInterface {
 
     private Commands commands = new Commands();
 
-    public static void main(String args[]) throws ParseException, IOException {
+    public static void main(String args[]) throws IOException {
+        ProcessingStopwatch.startAsReference("everything");
         CommandLineInterface commandLineInterface = new CommandLineInterface();
         commandLineInterface.run(args);
+
+        ProcessingStopwatch.end("everything");
+        ProcessingStopwatch.print();
 
         System.exit(0);
     }
@@ -116,6 +121,7 @@ public class CommandLineInterface {
             generateReports(args);
         } catch (ParseException e) {
             LOG.info("ERROR: " + e.getMessage() + "\n");
+            e.printStackTrace();
             commands.usage();
         }
     }
@@ -231,6 +237,10 @@ public class CommandLineInterface {
             return;
         }
 
+        Metadata metadata = new Metadata();
+
+        updateMetadataFromCommandLine(cmd, metadata);
+
         String confFilePath = cmd.getOptionValue(commands.getConfFile().getOpt());
         updateDateParam(cmd);
 
@@ -242,14 +252,14 @@ public class CommandLineInterface {
                 LOG.info(System.getProperty("user.dir"));
                 System.setProperty("user.dir", absolutePath);
                 LOG.info(System.getProperty("user.dir"));
-                LandscapeAnalysisCommands.update(new File(landscapeFolder.getAbsolutePath()), null);
+                LandscapeAnalysisCommands.update(new File(landscapeFolder.getAbsolutePath()), null, metadata);
             });
             LOG.info("Analysed " + landscapeConfigFiles + " landscape(s):");
             landscapeConfigFiles.forEach(landscapeConfigFile -> {
                 LOG.info(" -  " + landscapeConfigFile.getPath());
             });
         } else {
-            LandscapeAnalysisCommands.update(root, confFilePath != null ? new File(confFilePath) : null);
+            LandscapeAnalysisCommands.update(root, confFilePath != null ? new File(confFilePath) : null, metadata);
         }
     }
 
@@ -391,26 +401,8 @@ public class CommandLineInterface {
             codeConfiguration.getAnalysis().setSkipDuplication(false);
         }
 
-        if (cmd.hasOption(commands.getSetName().getOpt())) {
-            String name = cmd.getOptionValue(commands.getSetName().getOpt());
-            if (StringUtils.isNotBlank(name)) {
-                codeConfiguration.getMetadata().setName(name);
-            }
-        }
-
-        if (cmd.hasOption(commands.getSetDescription().getOpt())) {
-            String description = cmd.getOptionValue(commands.getSetDescription().getOpt());
-            if (StringUtils.isNotBlank(description)) {
-                codeConfiguration.getMetadata().setDescription(description);
-            }
-        }
-
-        if (cmd.hasOption(commands.getSetLogoLink().getOpt())) {
-            String logoLink = cmd.getOptionValue(commands.getSetLogoLink().getOpt());
-            if (StringUtils.isNotBlank(logoLink)) {
-                codeConfiguration.getMetadata().setLogoLink(logoLink);
-            }
-        }
+        Metadata metadata = codeConfiguration.getMetadata();
+        updateMetadataFromCommandLine(cmd, metadata);
 
         if (cmd.hasOption(commands.getSetCacheFiles().getOpt())) {
             String cacheFileValue = cmd.getOptionValue(commands.getSetCacheFiles().getOpt());
@@ -419,16 +411,39 @@ public class CommandLineInterface {
             }
         }
 
+        FileUtils.write(confFile, new JsonGenerator().generate(codeConfiguration), UTF_8);
+    }
+
+    private void updateMetadataFromCommandLine(CommandLine cmd, Metadata metadata) {
+        if (cmd.hasOption(commands.getSetName().getOpt())) {
+            String name = cmd.getOptionValue(commands.getSetName().getOpt());
+            if (StringUtils.isNotBlank(name)) {
+                metadata.setName(name);
+            }
+        }
+
+        if (cmd.hasOption(commands.getSetDescription().getOpt())) {
+            String description = cmd.getOptionValue(commands.getSetDescription().getOpt());
+            if (StringUtils.isNotBlank(description)) {
+                metadata.setDescription(description);
+            }
+        }
+
+        if (cmd.hasOption(commands.getSetLogoLink().getOpt())) {
+            String logoLink = cmd.getOptionValue(commands.getSetLogoLink().getOpt());
+            if (StringUtils.isNotBlank(logoLink)) {
+                metadata.setLogoLink(logoLink);
+            }
+        }
+
         if (cmd.hasOption(commands.getAddLink().getOpt())) {
             String linkData[] = cmd.getOptionValues(commands.getAddLink().getOpt());
             if (linkData.length >= 1 && StringUtils.isNotBlank(linkData[0])) {
                 String href = linkData[0];
-                String label = linkData.length >= 1 ? linkData[1] : "";
-                codeConfiguration.getMetadata().getLinks().add(new Link(label, href));
+                String label = linkData.length > 1 ? linkData[1] : "";
+                metadata.getLinks().add(new Link(label, href));
             }
         }
-
-        FileUtils.write(confFile, new JsonGenerator().generate(codeConfiguration), UTF_8);
     }
 
     private void exportConventions(String[] args) throws ParseException, IOException {
@@ -472,6 +487,7 @@ public class CommandLineInterface {
         LOG.info("Configuration file: " + sokratesConfigFile.getPath());
         if (noFileError(sokratesConfigFile)) return;
 
+        ProcessingStopwatch.start("configuring");
         String jsonContent = FileUtils.readFileToString(sokratesConfigFile, UTF_8);
         CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
         LanguageAnalyzerFactory.getInstance().setOverrides(codeConfiguration.getAnalysis().getAnalyzerOverrides());
@@ -487,16 +503,17 @@ public class CommandLineInterface {
         }
 
         LOG.info("Reports folder: " + reportsFolder.getPath());
+        ProcessingStopwatch.end("configuring");
         if (noFileError(reportsFolder)) return;
 
         if (this.progressFeedback == null) {
             this.progressFeedback = new ProgressFeedback() {
                 public void setText(String text) {
-                    LOG.info(text);
+                    LOG.info(text.replaceAll("<.*?>", ""));
                 }
 
                 public void setDetailedText(String text) {
-                    LOG.info(text);
+                    LOG.info(text.replaceAll("<.*?>", ""));
                 }
             };
         }
@@ -505,16 +522,28 @@ public class CommandLineInterface {
             CodeAnalyzer codeAnalyzer = new CodeAnalyzer(getCodeAnalyzerSettings(cmd), codeConfiguration, sokratesConfigFile);
             CodeAnalysisResults analysisResults = codeAnalyzer.analyze(progressFeedback);
 
-            boolean useDefault = noReportingOptions(cmd);
-
+            ProcessingStopwatch.start("saving data");
             dataExporter.saveData(sokratesConfigFile, codeConfiguration, reportsFolder, analysisResults);
             saveTextualSummary(reportsFolder, analysisResults);
+            ProcessingStopwatch.end("saving data");
 
+            ProcessingStopwatch.start("generating visuals");
             generateVisuals(reportsFolder, analysisResults);
+            ProcessingStopwatch.end("generating visuals");
 
             generateAndSaveReports(sokratesConfigFile, reportsFolder, sokratesConfigFile.getParentFile(), codeAnalyzer, analysisResults);
+            saveExecutionStats(dataExporter.getDataFolder());
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void saveExecutionStats(File dataFolder) {
+        try {
+            String json = new JsonGenerator().generate(ProcessingStopwatch.getMonitors());
+            FileUtils.write(new File(dataFolder, "executionTimes.json"), json, UTF_8);
+        } catch (IOException e) {
+            LOG.error(e);
         }
     }
 
@@ -536,9 +565,10 @@ public class CommandLineInterface {
     }
 
     private void info(String text) {
-        LOG.info(text);
         if (progressFeedback != null) {
             progressFeedback.setText(text);
+        } else {
+            LOG.info(text.replaceAll("<.*?>", ""));
         }
     }
 
@@ -563,17 +593,25 @@ public class CommandLineInterface {
         if (analysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles()) {
             info("Source code cache : <a href='" + srcCache.getPath() + "'>" + srcCache.getPath() + "</a>");
         }
-        info("");
-        info("");
+        ProcessingStopwatch.start("reporting");
         BasicSourceCodeReportGenerator generator = new BasicSourceCodeReportGenerator(codeAnalyzerSettings, analysisResults, inputFile, reportsFolder);
         List<RichTextReport> reports = generator.report();
+        ProcessingStopwatch.end("reporting");
+
+        ProcessingStopwatch.start("saving report");
         reports.forEach(report -> {
             info("Generating the '" + report.getId().toUpperCase() + "' report...");
+            String processingName = "saving report/" + report.getId().toLowerCase() + "";
+            ProcessingStopwatch.start(processingName);
             ReportFileExporter.exportHtml(reportsFolder, "html", report, analysisResults.getCodeConfiguration().getAnalysis().getCustomHtmlReportHeaderFragment());
+            ProcessingStopwatch.end(processingName);
         });
+        ProcessingStopwatch.start("saving report/index");
         if (!codeAnalyzerSettings.isDataOnly() && codeAnalyzerSettings.isUpdateIndex()) {
             ReportFileExporter.exportReportsIndexFile(reportsFolder, analysisResults, sokratesConfigFolder);
         }
+        ProcessingStopwatch.end("saving report/index");
+        ProcessingStopwatch.end("saving report");
     }
 
 

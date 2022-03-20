@@ -58,6 +58,7 @@ public class UnitsAnalyzer extends Analyzer {
         this.allUnits = new UnitsExtractor().getUnits(main.getSourceFiles(), progressFeedback);
 
         int linesOfCode = UnitUtils.getLinesOfCode(allUnits);
+        AnalysisUtils.info(textSummary, progressFeedback, "Basic unit metrics...", start);
         addBasicUnitMetrics(allUnits, linesOfCode);
 
         AnalysisUtils.detailedInfo(textSummary, progressFeedback, "  - found " + allUnits.size() + " units (" + linesOfCode + " lines of code in units)", start);

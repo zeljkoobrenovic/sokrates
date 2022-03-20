@@ -9,18 +9,33 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class RegexUtils {
-    private static final Log LOG = LogFactory.getLog(RegexUtils.class);
     public static final int MAX_TEXT_LENGTH = 1000;
+    private static final Log LOG = LogFactory.getLog(RegexUtils.class);
+    private static Map<String, Pattern> compiledPatterns = new HashMap<>();
+    private static Map<String, Boolean> matchedPatterns = new HashMap<>();
 
     public static boolean matchesEntirely(String regexPattern, String content) {
         try {
-            return Pattern.compile(regexPattern).matcher(content).matches();
+            String key = regexPattern + " ::->:: " + content;
+            if (matchedPatterns.containsKey(key)) {
+                return matchedPatterns.get(key);
+            }
+            Pattern pattern = compiledPatterns.get(regexPattern);
+            if (pattern == null) {
+                pattern = Pattern.compile(regexPattern);
+                compiledPatterns.put(regexPattern, pattern);
+            }
+            boolean matches = pattern.matcher(content).matches();
+            matchedPatterns.put(key, matches);
+            return matches;
         } catch (PatternSyntaxException e) {
             LOG.debug(e);
             return false;

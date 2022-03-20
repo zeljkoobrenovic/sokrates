@@ -90,7 +90,7 @@ public class SummaryUtils {
     private void summarizeFileSize(RichTextReport report, CodeAnalysisResults analysisResults) {
         FilesAnalysisResults filesAnalysisResults = analysisResults.getFilesAnalysisResults();
         if (filesAnalysisResults != null) {
-            SourceFileSizeDistribution distribution = filesAnalysisResults.getOveralFileSizeDistribution();
+            SourceFileSizeDistribution distribution = filesAnalysisResults.getOverallFileSizeDistribution();
             if (distribution != null) {
                 int mainLOC = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
                 int veryLongFilesLOC = distribution.getVeryHighRiskValue();

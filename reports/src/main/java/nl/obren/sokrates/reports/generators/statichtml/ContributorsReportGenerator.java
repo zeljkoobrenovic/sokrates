@@ -104,7 +104,6 @@ public class ContributorsReportGenerator {
         report.addTab("90_days", "Past 3 Months", false);
         report.addTab("180_days", "Past 6 Months", false);
         report.addTab("365_days", "Past Year", false);
-        report.addTab("all_time", "All Time", false);
         report.addTab("data", "Data", false);
         report.endTabGroup();
 
@@ -143,12 +142,6 @@ public class ContributorsReportGenerator {
         report.endTabContentSection();
 
         addPerLanguageTabContent(report);
-
-        report.startTabContentSection("all_time", false);
-        addContributorsPanel(report, contributors, c -> c.getCommitsCount(), true, e -> e.getFileUpdates());
-        renderPeopleDependencies(analysis.getPeopleDependenciesAllTime(), null,35600, c -> c.getCommitsCount(), contributors);
-        report.endTabContentSection();
-
 
         report.startTabContentSection("30_days", false);
         List<Contributor> commits30Days = contributors.stream().filter(c -> c.getCommitsCount30Days() > 0).collect(Collectors.toList());
@@ -413,7 +406,9 @@ public class ContributorsReportGenerator {
         if (peopleFileDependencies != null) {
             String prefixFile = "people_dependencies_via_files_" + daysAgo + "_";
             String graphIdFile = add3DDependencyGraphVisuals(peopleFileDependencies, prefixFile);
-            report.addNewTabLink("- open 3D force graph (including files)", "visuals/" + graphIdFile + "_force_3d.html");
+            report.addNewTabLink("- open 3D force graph (including all files)", "visuals/" + graphIdFile + "_force_3d.html");
+            report.addLineBreak();
+            report.addNewTabLink("- open 3D force graph (including only shared files)", "visuals/" + graphIdFile + "_force_3d_only_shared_file.html");
         }
         report.addLineBreak();
         report.addLineBreak();
@@ -508,6 +503,7 @@ public class ContributorsReportGenerator {
 
     private void export3DForceGraph(List<ComponentDependency> componentDependencies, String graphId) {
         Force3DObject force3DObject = new Force3DObject();
+        Force3DObject force3DObjectOnlyLinked = new Force3DObject();
         Map<String, Integer> names = new HashMap<>();
         componentDependencies.forEach(dependency -> {
             String from = dependency.getFromComponent();
@@ -528,10 +524,20 @@ public class ContributorsReportGenerator {
         names.keySet().forEach(key -> {
             force3DObject.getNodes().add(new Force3DNode(key, names.get(key)));
         });
+
+        force3DObjectOnlyLinked.setNodes(force3DObject.getNodes().stream().filter(n -> n.getSize() > 1).collect(Collectors.toList()));
+        Map<String, Force3DNode> force3DNodeMapLinked = new HashMap<>();
+        force3DObjectOnlyLinked.getNodes().forEach(node -> force3DNodeMapLinked.put(node.getId(), node));
+        force3DObjectOnlyLinked.setLinks(force3DObject.getLinks().stream()
+                .filter(l -> force3DNodeMapLinked.containsKey(l.getSource()) && force3DNodeMapLinked.containsKey(l.getTarget()))
+                .collect(Collectors.toList()));
+
         File folder = new File(reportsFolder, "html/visuals");
         folder.mkdirs();
+
         try {
             FileUtils.write(new File(folder, graphId + "_force_3d.html"), new VisualizationTemplate().render3DForceGraph(force3DObject), UTF_8);
+            FileUtils.write(new File(folder, graphId + "_force_3d_only_shared_file.html"), new VisualizationTemplate().render3DForceGraph(force3DObjectOnlyLinked), UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }

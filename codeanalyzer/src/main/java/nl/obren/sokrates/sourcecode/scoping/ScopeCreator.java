@@ -12,6 +12,7 @@ import nl.obren.sokrates.sourcecode.SourceCodeFiles;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.aspects.ConcernsGroup;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
+import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.sourcecode.scoping.custom.CustomExtensionConventions;
@@ -49,7 +50,8 @@ public class ScopeCreator {
 
         LOG.info("Scanning source files...");
 
-        SourceCodeFiles sourceCodeFiles = getSourceCodeFiles(extensions, codeConfiguration.getAnalysis().getMaxLineLength());
+        AnalysisConfig analysis = codeConfiguration.getAnalysis();
+        SourceCodeFiles sourceCodeFiles = getSourceCodeFiles(extensions, analysis);
 
         if (customScopingConventions == null || !customScopingConventions.isIgnoreStandardScopingConventions()) {
             expandScopeWithConventions(codeConfiguration, sourceCodeFiles);
@@ -79,9 +81,6 @@ public class ScopeCreator {
     }
 
     private void expandScopeWithCustomConventions(CodeConfiguration codeConfiguration, SourceCodeFiles sourceCodeFiles) {
-        if (customScopingConventions.getMaxLineLength() > 0) {
-            codeConfiguration.getAnalysis().setMaxLineLength(customScopingConventions.getMaxLineLength());
-        }
         List<SourceFile> sourceFiles = sourceCodeFiles.getFilesInBroadScope();
         ConventionUtils.addConventions(customScopingConventions.getIgnoredFilesConventions(), codeConfiguration.getIgnore(), sourceFiles);
         ConventionUtils.addConventions(customScopingConventions.getTestFilesConventions(), codeConfiguration.getTest().getSourceFileFilters(), sourceFiles);
@@ -160,9 +159,9 @@ public class ScopeCreator {
         return codeConfiguration;
     }
 
-    private SourceCodeFiles getSourceCodeFiles(List<String> extensions, int maxLineLength) {
+    private SourceCodeFiles getSourceCodeFiles(List<String> extensions, AnalysisConfig analysisConfig) {
         SourceCodeFiles sourceCodeFiles = getSourceCodeFiles();
-        sourceCodeFiles.createBroadScope(extensions, new ArrayList<>(), maxLineLength);
+        sourceCodeFiles.createBroadScope(extensions, new ArrayList<>(), analysisConfig);
         return sourceCodeFiles;
     }
 

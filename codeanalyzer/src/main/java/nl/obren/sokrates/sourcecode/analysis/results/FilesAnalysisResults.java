@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FilesAnalysisResults {
-    private SourceFileSizeDistribution overalFileSizeDistribution;
+    private SourceFileSizeDistribution overallFileSizeDistribution;
     private List<RiskDistributionStats> fileSizeDistributionPerExtension = new ArrayList<>();
     private List<FileDistributionPerLogicalDecomposition> fileSizeDistributionPerLogicalDecomposition = new ArrayList<>();
 
@@ -24,6 +24,11 @@ public class FilesAnalysisResults {
     @JsonIgnore
     public List<SourceFile> getAllFiles() {
         return allFiles;
+    }
+
+    @JsonIgnore
+    public SourceFile getSourceFileByRelativePath(String relativePath) {
+        return allFiles.stream().filter(f -> f.getRelativePath().equalsIgnoreCase(relativePath)).findAny().orElse(null);
     }
 
     @JsonIgnore
@@ -39,12 +44,16 @@ public class FilesAnalysisResults {
         this.longestFiles = longestFiles;
     }
 
-    public SourceFileSizeDistribution getOveralFileSizeDistribution() {
-        return overalFileSizeDistribution;
+    public SourceFileSizeDistribution getOverallFileSizeDistribution() {
+        return overallFileSizeDistribution;
     }
 
-    public void setOveralFileSizeDistribution(SourceFileSizeDistribution overalFileSizeDistribution) {
-        this.overalFileSizeDistribution = overalFileSizeDistribution;
+    public void setOveralFileSizeDistribution(SourceFileSizeDistribution overallFileSizeDistribution) {
+        this.overallFileSizeDistribution = overallFileSizeDistribution;
+    }
+
+    public void setOverallFileSizeDistribution(SourceFileSizeDistribution overallFileSizeDistribution) {
+        this.overallFileSizeDistribution = overallFileSizeDistribution;
     }
 
     public List<RiskDistributionStats> getFileSizeDistributionPerExtension() {

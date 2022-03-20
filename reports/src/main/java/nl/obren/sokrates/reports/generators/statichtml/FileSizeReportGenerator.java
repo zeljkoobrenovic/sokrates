@@ -5,13 +5,17 @@
 package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
+import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.landscape.utils.CorrelationDiagramGenerator;
 import nl.obren.sokrates.reports.utils.FilesReportUtils;
 import nl.obren.sokrates.reports.utils.PieChartUtils;
 import nl.obren.sokrates.reports.utils.RiskDistributionStatsReportUtils;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FileDistributionPerLogicalDecomposition;
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
+import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileSizeDistribution;
 import nl.obren.sokrates.sourcecode.threshold.Thresholds;
@@ -57,13 +61,51 @@ public class FileSizeReportGenerator {
         report.endShowMoreBlock();
         report.endSection();
 
-        addGraphOverall(report, codeAnalysisResults.getFilesAnalysisResults().getOveralFileSizeDistribution());
+        ProcessingStopwatch.start("reporting/file size/overall");
+        addGraphOverall(report, codeAnalysisResults.getFilesAnalysisResults().getOverallFileSizeDistribution());
+        ProcessingStopwatch.end("reporting/file size/overall");
+        ProcessingStopwatch.start("reporting/file size/per extension");
         addGraphPerExtension(report, codeAnalysisResults.getFilesAnalysisResults().getFileSizeDistributionPerExtension());
+        ProcessingStopwatch.end("reporting/file size/per extension");
+        ProcessingStopwatch.start("reporting/file size/per logical component");
         addGraphsPerLogicalComponents(report, codeAnalysisResults.getFilesAnalysisResults().getFileSizeDistributionPerLogicalDecomposition());
+        ProcessingStopwatch.end("reporting/file size/per logical component");
 
+        ProcessingStopwatch.start("reporting/file size/longest files");
         addLongestFilesList(report);
+        ProcessingStopwatch.end("reporting/file size/longest files");
+        ProcessingStopwatch.start("reporting/file size/files with most units");
         addFilesWithMostUnitsList(report);
+        ProcessingStopwatch.end("reporting/file size/files with most units");
+        ProcessingStopwatch.start("reporting/file size/files with most long lines");
         addFilesWithMostLongLines(report);
+        ProcessingStopwatch.end("reporting/file size/files with most long lines");
+
+        report.startSection("Correlations", "");
+        CorrelationDiagramGenerator<FileModificationHistory> correlationDiagramGenerator = new CorrelationDiagramGenerator<>(report, codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory());
+
+        ProcessingStopwatch.start("reporting/file size/correlations");
+        correlationDiagramGenerator.addCorrelations("File Size vs. Commits (30 days)", "commits (30d)", "lines of code",
+                p -> p.getCommits().stream().filter(c -> DateUtils.isDateWithinRange(c.getDate(), 30)).count(),
+                p -> {
+                    SourceFile sourceFileByRelativePath = codeAnalysisResults.getFilesAnalysisResults().getSourceFileByRelativePath(p.getPath());
+                    int linesOfCode = sourceFileByRelativePath != null ? sourceFileByRelativePath.getLinesOfCode() : 0;
+                    return linesOfCode;
+                },
+                p -> p.getPath());
+
+        correlationDiagramGenerator.addCorrelations("File Size vs. Commits (90 days)", "commits (90d)", "lines of code",
+                p -> p.getCommits().stream().filter(c -> DateUtils.isDateWithinRange(c.getDate(), 90)).count(),
+                p -> {
+                    SourceFile sourceFileByRelativePath = codeAnalysisResults.getFilesAnalysisResults().getSourceFileByRelativePath(p.getPath());
+                    int linesOfCode = sourceFileByRelativePath != null ? sourceFileByRelativePath.getLinesOfCode() : 0;
+                    return linesOfCode;
+                },
+                p -> p.getPath());
+
+
+        ProcessingStopwatch.end("reporting/file size/correlations");
+        report.endSection();
     }
 
     private void addGraphOverall(RichTextReport report, SourceFileSizeDistribution distribution) {

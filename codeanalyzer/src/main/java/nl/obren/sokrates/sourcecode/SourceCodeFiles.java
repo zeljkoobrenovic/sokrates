@@ -7,6 +7,7 @@ package nl.obren.sokrates.sourcecode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
+import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import org.apache.commons.io.FilenameUtils;
 
@@ -99,24 +100,30 @@ public class SourceCodeFiles {
         return sourceFiles;
     }
 
-    public void createBroadScope(List<String> extensions, List<SourceFileFilter> exclusions, int maxLineLength) {
-        createBroadScope(extensions, exclusions, true, maxLineLength);
+    public void createBroadScope(List<String> extensions, List<SourceFileFilter> exclusions, AnalysisConfig analysisConfig) {
+        createBroadScope(extensions, exclusions, true, analysisConfig);
     }
 
-    public void createBroadScope(List<String> extensions, List<SourceFileFilter> exclusions, boolean addLoc, int maxLineLength) {
+    public void createBroadScope(List<String> extensions, List<SourceFileFilter> exclusions, boolean addLoc, AnalysisConfig analysisConfig) {
         progressFeedback.start();
         filesInBroadScope.clear();
 
         int fileIndex[] = {0};
         progressFeedback.setText("Loading files...");
         progressFeedback.setText("");
+        int displayCounter[] = {0};
         allFiles.forEach(sourceFile -> {
             if (progressFeedback.canceled()) {
                 return;
             }
-            progressFeedback.setDetailedText("Loading " + sourceFile.getFile().getName());
+            displayCounter[0] += 1;
+            boolean lastFile = displayCounter[0] == allFiles.size();
+            if (displayCounter[0] % 1000 == 1 || lastFile) {
+                progressFeedback.setDetailedText("Loading file " + displayCounter[0] + "/" + allFiles.size()
+                        + ": " + sourceFile.getFile().getName());
+            }
             if (FilenameUtils.isExtension(sourceFile.getFile().getPath(), extensions)) {
-                if (!shouldExcludeFile(sourceFile, exclusions, maxLineLength)) {
+                if (!shouldExcludeFile(sourceFile, exclusions, analysisConfig)) {
                     if (addLoc) {
                         sourceFile.setLinesOfCodeFromContent();
                     }
@@ -130,9 +137,27 @@ public class SourceCodeFiles {
         progressFeedback.end();
     }
 
-    boolean shouldExcludeFile(SourceFile sourceFile, List<SourceFileFilter> exclusions, int maxLineLength) {
-        if (hasTooLongLines(sourceFile, maxLineLength)) {
-            String key = "Too long lines (" + maxLineLength + "+ characters)";
+    boolean shouldExcludeFile(SourceFile sourceFile, List<SourceFileFilter> exclusions, AnalysisConfig analysisConfig) {
+        if (sourceFile.getFile().length() > analysisConfig.getMaxFileSizeBytes()) {
+            String key = "Too long file (" + analysisConfig.getMaxFileSizeBytes() + "+ bytes)";
+            IgnoredFilesGroup ignoredFilesGroup = ignoredFilesGroups.get(key);
+            if (ignoredFilesGroup == null) {
+                ignoredFilesGroup = new IgnoredFilesGroup(new SourceFileFilter());
+                ignoredFilesGroups.put(key, ignoredFilesGroup);
+            }
+            ignoredFilesGroup.getSourceFiles().add(sourceFile);
+            return true;
+        } else if (hasTooManyLines(sourceFile, analysisConfig.getMaxLines())) {
+            String key = "Too many lines (" + analysisConfig.getMaxLines() + ")";
+            IgnoredFilesGroup ignoredFilesGroup = ignoredFilesGroups.get(key);
+            if (ignoredFilesGroup == null) {
+                ignoredFilesGroup = new IgnoredFilesGroup(new SourceFileFilter());
+                ignoredFilesGroups.put(key, ignoredFilesGroup);
+            }
+            ignoredFilesGroup.getSourceFiles().add(sourceFile);
+            return true;
+        } else if (hasTooLongLines(sourceFile, analysisConfig.getMaxLineLength())) {
+            String key = "Too long lines (" + analysisConfig.getMaxLineLength() + "+ characters)";
             IgnoredFilesGroup ignoredFilesGroup = ignoredFilesGroups.get(key);
             if (ignoredFilesGroup == null) {
                 ignoredFilesGroup = new IgnoredFilesGroup(new SourceFileFilter());
@@ -157,6 +182,14 @@ public class SourceCodeFiles {
             }
             return exclude;
         }
+    }
+
+    private boolean hasTooManyLines(SourceFile sourceFile, int maxLines) {
+        if (sourceFile.getLines().size() > maxLines) {
+            return true;
+        }
+
+        return false;
     }
 
     private boolean hasTooLongLines(SourceFile sourceFile, int maxLineLength) {

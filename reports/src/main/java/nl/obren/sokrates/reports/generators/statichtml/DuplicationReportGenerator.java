@@ -5,6 +5,7 @@
 package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.common.utils.FormattingUtils;
+import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.DuplicationReportUtils;
@@ -104,12 +105,21 @@ public class DuplicationReportGenerator {
             return;
         }
 
+        ProcessingStopwatch.start("reporting/duplication/overall");
         addOverallDuplicationSection(report);
+        ProcessingStopwatch.end("reporting/duplication/overall");
+        ProcessingStopwatch.start("reporting/duplication/per extension");
         addDuplicationPerExtensionSection(report);
+        ProcessingStopwatch.end("reporting/duplication/per extension");
+        ProcessingStopwatch.start("reporting/duplication/per logical decomposition");
         addDuplicationPerLogicalDecomposition(report);
+        ProcessingStopwatch.end("reporting/duplication/per logical decomposition");
+        ProcessingStopwatch.start("reporting/duplication/longest duplicates");
         addLongestDuplicatesList(report);
+        ProcessingStopwatch.end("reporting/duplication/longest duplicates");
+        ProcessingStopwatch.start("reporting/duplication/duplicated units");
         addDuplicatedUnitsList(report);
-        // addMostFrequentDuplicatesList(report);
+        ProcessingStopwatch.end("reporting/duplication/duplicated units");
     }
 
     private void addDuplicatedUnitsList(RichTextReport report) {
@@ -129,14 +139,23 @@ public class DuplicationReportGenerator {
     }
 
     private void addDuplicationPerLogicalDecomposition(RichTextReport report) {
+        int index[] = {0};
         codeAnalysisResults.getDuplicationAnalysisResults().getDuplicationPerComponent().forEach(duplicationPerComponent -> {
+            index[0] += 1;
+            String prefix = "reporting/duplication/per logical decomposition/" + index[0] + "/";
+
+            ProcessingStopwatch.start(prefix + "table");
             LogicalDecomposition logicalDecomposition = getLogicalDecomposition(codeAnalysisResults.getDuplicationAnalysisResults().getDuplicationPerComponent().indexOf(duplicationPerComponent));
             String logicalDecompositionName = logicalDecomposition.getName();
             report.startSection("Duplication per Component (" + logicalDecompositionName + ")", "");
             DuplicationReportUtils.addDuplicationPerAspect(report, duplicationPerComponent);
+            ProcessingStopwatch.end(prefix + "table");
+
+            ProcessingStopwatch.start(prefix + "rendering");
             report.startDiv("");
-            renderDependenciesViaDuplication(report, duplicationPerComponent, logicalDecomposition);
+            renderDependenciesViaDuplication(report, duplicationPerComponent, logicalDecomposition, prefix + "rendering");
             report.endDiv();
+            ProcessingStopwatch.end(prefix + "rendering");
             report.endSection();
         });
     }
@@ -202,9 +221,13 @@ public class DuplicationReportGenerator {
         report.endSection();
     }
 
-    private void renderDependenciesViaDuplication(RichTextReport report, List<DuplicationMetric> duplicationPerComponent, LogicalDecomposition logicalDecomposition) {
+    private void renderDependenciesViaDuplication(RichTextReport report, List<DuplicationMetric> duplicationPerComponent,
+                                                  LogicalDecomposition logicalDecomposition, String monitoringPrefix) {
+        ProcessingStopwatch.start(monitoringPrefix + "/extracting dependencies");
         DuplicationDependenciesHelper duplicationDependenciesHelper = new DuplicationDependenciesHelper(logicalDecomposition.getName());
         List<ComponentDependency> allDuplicates = duplicationDependenciesHelper.extractDependencies(codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates());
+        ProcessingStopwatch.end(monitoringPrefix + "/extracting dependencies");
+        ProcessingStopwatch.start(monitoringPrefix + "/updating dependencies");
         allDuplicates.forEach(dependency -> {
             duplicationPerComponent.stream().filter(duplication -> duplication.getKey().equalsIgnoreCase(dependency.getFromComponent())).findFirst()
                     .ifPresent(c -> {
@@ -219,9 +242,11 @@ public class DuplicationReportGenerator {
         });
         int threshold = logicalDecomposition.getDuplicationLinkThreshold();
         List<ComponentDependency> componentDependencies = allDuplicates.stream().filter(d -> d.getCount() >= threshold).collect(Collectors.toList());
+        ProcessingStopwatch.end(monitoringPrefix + "/updating dependencies");
 
         List<DuplicationInstance> instances = duplicationDependenciesHelper.getInstances();
 
+        ProcessingStopwatch.end(monitoringPrefix + "/rendering");
         if (componentDependencies.size() > 0) {
             GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
             graphvizDependencyRenderer.setDefaultNodeFillColor("deepskyblue2");
@@ -249,6 +274,7 @@ public class DuplicationReportGenerator {
 
             report.addLineBreak();
         }
+        ProcessingStopwatch.end(monitoringPrefix + "/rendering");
     }
 
 

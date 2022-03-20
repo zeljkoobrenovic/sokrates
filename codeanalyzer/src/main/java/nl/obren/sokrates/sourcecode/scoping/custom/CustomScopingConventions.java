@@ -17,9 +17,6 @@ public class CustomScopingConventions {
     // Lists of file extensions that Sokrates will include or exclude rom scoping
     private CustomExtensionConventions extensions = new CustomExtensionConventions();
 
-    // A maximal line length. If zero, Sokrates will use the default value (1000).
-    private int maxLineLength = 0;
-
     // If true, Sokrates will use only custom conventions. If false, Sokrates will combine custom conventions with standard ones.
     private boolean ignoreStandardScopingConventions = false;
 
@@ -74,14 +71,6 @@ public class CustomScopingConventions {
 
     public void setExtensions(CustomExtensionConventions extensions) {
         this.extensions = extensions;
-    }
-
-    public int getMaxLineLength() {
-        return maxLineLength;
-    }
-
-    public void setMaxLineLength(int maxLineLength) {
-        this.maxLineLength = maxLineLength;
     }
 
     public boolean isIgnoreStandardScopingConventions() {

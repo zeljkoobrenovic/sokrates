@@ -11,21 +11,19 @@ import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class GitHistoryUtils {
-    private static final Log LOG = LogFactory.getLog(GitHistoryUtils.class);
-
     public static final String GIT_HISTORY_FILE_NAME = "git-history.txt";
+    public static final String EARLIEST_DATE = "1980-01-01";
+    private static final Log LOG = LogFactory.getLog(GitHistoryUtils.class);
     private static List<FileUpdate> updates = null;
     private static Map<String, String> anonymizeEmails = new HashMap<>();
 
@@ -35,9 +33,16 @@ public class GitHistoryUtils {
 
     public static List<AuthorCommit> getAuthorCommits(File file, FileHistoryAnalysisConfig config) {
         List<AuthorCommit> commits = new ArrayList<>();
-        List<String> commitIds = new ArrayList<>();
+        Set<String> commitIds = new HashSet<>();
 
-        getHistoryFromFile(file, config).forEach(fileUpdate -> {
+        int index[] = {0};
+
+        List<FileUpdate> historyFromFile = getHistoryFromFile(file, config);
+        historyFromFile.forEach(fileUpdate -> {
+            index[0] += 1;
+            if (index[0] % 1000 == 1 || index[0] == historyFromFile.size()) {
+                LOG.info("Importing " + fileUpdate.getAuthorEmail() + " " + fileUpdate.getDate() + " (" + index[0] + " / " + historyFromFile.size() + ")");
+            }
             String commitId = fileUpdate.getCommitId();
             if (!commitIds.contains(commitId)) {
                 commitIds.add(commitId);
@@ -50,7 +55,7 @@ public class GitHistoryUtils {
 
     public static boolean shouldIgnore(String email, List<String> ignoreContributors) {
         for (String ignorePattern : ignoreContributors) {
-            if (RegexUtils.matchesEntirely(ignorePattern, email)) {
+            if (RegexUtils.matchesEntirely(ignorePattern.toLowerCase(), email.toLowerCase())) {
                 return true;
             }
         }
@@ -71,8 +76,14 @@ public class GitHistoryUtils {
             return updates;
         }
 
+        int displayCounter[] = {0};
         lines.forEach(line -> {
-            LOG.info(line);
+            displayCounter[0] += 1;
+            boolean lastLine = displayCounter[0] == lines.size();
+            if (displayCounter[0] % 1000 == 1 || lastLine) {
+                LOG.info("Reading commit line " + displayCounter[0] + "/" + lines.size() +
+                        ": " + StringUtils.abbreviate(line, 64));
+            }
             FileUpdate fileUpdate = GitHistoryUtils.parseLine(line, config);
             if (fileUpdate != null) {
                 updates.add(fileUpdate);
@@ -93,15 +104,14 @@ public class GitHistoryUtils {
                 int index3 = line.indexOf(" ", index2 + 1);
                 if (index3 > 0) {
                     String date = line.substring(0, 10).trim();
-                    if (date.compareTo(DateUtils.getAnalysisDate()) >= 0) {
-                        LOG.info("Ignoring future date: " + line);
+                    if (ignoreCommitByDate(line, date)) {
                         return null;
                     }
-                    String author = line.substring(index1 + 1, index2).trim();
+                    String author = line.substring(index1 + 1, index2).trim().toLowerCase();
+                    if (shouldIgnore(author, ignoreContributors)) {
+                        return null;
+                    }
                     if (anonymize) {
-                        if (shouldIgnore(author, ignoreContributors)) {
-                            return null;
-                        }
                         String anonymizedAuthor = anonymizeEmails.get(author);
                         if (anonymizedAuthor == null) {
                             anonymizedAuthor = "Contributor " + (anonymizeEmails.keySet().size() + 1);
@@ -130,5 +140,17 @@ public class GitHistoryUtils {
         }
 
         return null;
+    }
+
+    private static boolean ignoreCommitByDate(String line, String date) {
+        if (date.compareTo(DateUtils.getAnalysisDate()) > 0) {
+            LOG.info("Ignoring future date: " + line);
+            return true;
+        }
+        if (date.compareTo(EARLIEST_DATE) < 0) {
+            LOG.info("Ignoring dates before the initial git release: " + line);
+            return true;
+        }
+        return false;
     }
 }

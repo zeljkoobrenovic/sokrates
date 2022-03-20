@@ -15,7 +15,6 @@ public class ContributorsAnalysisResults {
     List<ComponentDependency> peopleDependencies90Days = new ArrayList<>();
     List<ComponentDependency> peopleDependencies180Days = new ArrayList<>();
     List<ComponentDependency> peopleDependencies365Days = new ArrayList<>();
-    List<ComponentDependency> peopleDependenciesAllTime = new ArrayList<>();
     private String latestCommitDate = "";
     private List<Contributor> contributors = new ArrayList<>();
     private List<ContributionTimeSlot> contributorsPerYear = new ArrayList<>();
@@ -27,7 +26,6 @@ public class ContributorsAnalysisResults {
     private List<ComponentDependency> peopleFileDependencies90Days;
     private List<ComponentDependency> peopleFileDependencies180Days;
     private List<ComponentDependency> peopleFileDependencies365Days;
-    private List<ComponentDependency> peopleFileDependenciesAllTime;
 
     public String getLatestCommitDate() {
         return latestCommitDate;
@@ -96,6 +94,15 @@ public class ContributorsAnalysisResults {
     }
 
     @JsonIgnore
+    public int getCommitsCount90Days() {
+        return contributors.stream().mapToInt(c -> c.getCommitsCount90Days()).sum();
+    }
+    @JsonIgnore
+    public int getCommitsCount180Days() {
+        return contributors.stream().mapToInt(c -> c.getCommitsCount180Days()).sum();
+    }
+
+    @JsonIgnore
     public int getCommitsThisYear() {
         String year = "" + Calendar.getInstance().get(Calendar.YEAR);
 
@@ -131,16 +138,6 @@ public class ContributorsAnalysisResults {
     @JsonIgnore
     public void setPeopleDependencies180Days(List<ComponentDependency> peopleDependencies180Days) {
         this.peopleDependencies180Days = peopleDependencies180Days;
-    }
-
-    @JsonIgnore
-    public List<ComponentDependency> getPeopleDependenciesAllTime() {
-        return peopleDependenciesAllTime;
-    }
-
-    @JsonIgnore
-    public void setPeopleDependenciesAllTime(List<ComponentDependency> peopleDependenciesAllTime) {
-        this.peopleDependenciesAllTime = peopleDependenciesAllTime;
     }
 
     @JsonIgnore
@@ -191,15 +188,5 @@ public class ContributorsAnalysisResults {
     @JsonIgnore
     public void setPeopleFileDependencies365Days(List<ComponentDependency> peopleFileDependencies365Days) {
         this.peopleFileDependencies365Days = peopleFileDependencies365Days;
-    }
-
-    @JsonIgnore
-    public List<ComponentDependency> getPeopleFileDependenciesAllTime() {
-        return peopleFileDependenciesAllTime;
-    }
-
-    @JsonIgnore
-    public void setPeopleFileDependenciesAllTime(List<ComponentDependency> peopleFileDependenciesAllTime) {
-        this.peopleFileDependenciesAllTime = peopleFileDependenciesAllTime;
     }
 }

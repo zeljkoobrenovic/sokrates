@@ -1,19 +1,22 @@
 package nl.obren.sokrates.sourcecode.analysis.results;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class HistoryPerExtension {
     private String extension = "";
     private String year = "";
     private int commitsCount = 0;
-    private int contributorsCount = 0;
+    private Set<String> contributors = new HashSet<>();
 
     public HistoryPerExtension() {
     }
 
-    public HistoryPerExtension(String extension, String year, int commitsCount, int contributorsCount) {
+    public HistoryPerExtension(String extension, String year, int commitsCount) {
         this.extension = extension;
         this.year = year;
         this.commitsCount = commitsCount;
-        this.contributorsCount = contributorsCount;
+        this.contributors = contributors;
     }
 
     public String getExtension() {
@@ -40,11 +43,11 @@ public class HistoryPerExtension {
         this.commitsCount = commitsCount;
     }
 
-    public int getContributorsCount() {
-        return contributorsCount;
+    public Set<String> getContributors() {
+        return contributors;
     }
 
-    public void setContributorsCount(int contributorsCount) {
-        this.contributorsCount = contributorsCount;
+    public void setContributors(Set<String> contributors) {
+        this.contributors = contributors;
     }
 }

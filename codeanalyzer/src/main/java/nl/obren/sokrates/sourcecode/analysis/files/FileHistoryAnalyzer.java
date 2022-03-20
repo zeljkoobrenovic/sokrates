@@ -56,14 +56,23 @@ public class FileHistoryAnalyzer extends Analyzer {
                 enrichFilesWithAge(history);
                 LOG.info("Analyzing file age...");
                 analyzeFilesAge();
-                LOG.info("Analyzing files changed together...");
-                analyzeFilesChangedTogether(history);
-                LOG.info("Analyzing files changed together in past 30 days...");
-                analyzeFilesChangedTogether30Days(history);
-                LOG.info("Analyzing files changed together in past 90 days...");
-                analyzeFilesChangedTogether90Days(history);
-                LOG.info("Analyzing files changed together in past 180 days...");
-                analyzeFilesChangedTogether180Days(history);
+                int maxDays = codeConfiguration.getAnalysis().getMaxTemporalDependenciesDepthDays();
+                if (maxDays > 180) {
+                    LOG.info("Analyzing files changed together (all time=" + maxDays + " days)...");
+                    analyzeFilesChangedTogether(history);
+                }
+                if (maxDays >= 30) {
+                    LOG.info("Analyzing files changed together in past 30 days...");
+                    analyzeFilesChangedTogether30Days(history);
+                }
+                if (maxDays >= 90) {
+                    LOG.info("Analyzing files changed together in past 90 days...");
+                    analyzeFilesChangedTogether90Days(history);
+                }
+                if (maxDays >= 180) {
+                    LOG.info("Analyzing files changed together in past 180 days...");
+                    analyzeFilesChangedTogether180Days(history);
+                }
             }
         }
     }
@@ -117,25 +126,25 @@ public class FileHistoryAnalyzer extends Analyzer {
     private void analyzeFilesChangedTogether(List<FileModificationHistory> history) {
         FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(codeConfiguration.getAnalysis().getMaxTemporalDependenciesDepthDays());
         filePairsChangedTogether.populate(codeConfiguration.getMain(), history);
-        analysisResults.setFilePairsChangedTogether(filePairsChangedTogether.getFilePairs());
+        analysisResults.setFilePairsChangedTogether(filePairsChangedTogether.getFilePairsList());
     }
 
     private void analyzeFilesChangedTogether30Days(List<FileModificationHistory> history) {
         FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(30);
         filePairsChangedTogether.populate(codeConfiguration.getMain(), history);
-        analysisResults.setFilePairsChangedTogether30Days(filePairsChangedTogether.getFilePairs());
+        analysisResults.setFilePairsChangedTogether30Days(filePairsChangedTogether.getFilePairsList());
     }
 
     private void analyzeFilesChangedTogether90Days(List<FileModificationHistory> history) {
         FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(90);
         filePairsChangedTogether.populate(codeConfiguration.getMain(), history);
-        analysisResults.setFilePairsChangedTogether90Days(filePairsChangedTogether.getFilePairs());
+        analysisResults.setFilePairsChangedTogether90Days(filePairsChangedTogether.getFilePairsList());
     }
 
     private void analyzeFilesChangedTogether180Days(List<FileModificationHistory> history) {
         FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(180);
         filePairsChangedTogether.populate(codeConfiguration.getMain(), history);
-        analysisResults.setFilePairsChangedTogether180Days(filePairsChangedTogether.getFilePairs());
+        analysisResults.setFilePairsChangedTogether180Days(filePairsChangedTogether.getFilePairsList());
     }
 
     private void analyzeFilesAge() {

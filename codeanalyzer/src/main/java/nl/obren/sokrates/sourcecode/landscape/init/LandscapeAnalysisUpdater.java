@@ -7,10 +7,12 @@ package nl.obren.sokrates.sourcecode.landscape.init;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
+import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.SokratesProjectLink;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -24,7 +26,7 @@ import java.util.List;
 public class LandscapeAnalysisUpdater {
     private static final Log LOG = LogFactory.getLog(LandscapeAnalysisUtils.class);
 
-    public LandscapeConfiguration updateConfiguration(File analysisRoot, File landscapeConfigFile) {
+    public LandscapeConfiguration updateConfiguration(File analysisRoot, File landscapeConfigFile, Metadata metadata) {
         landscapeConfigFile = getLandscapeConfigFile(analysisRoot, landscapeConfigFile);
         LandscapeConfiguration newConfig = getNewConfig(analysisRoot, landscapeConfigFile);
         if (landscapeConfigFile.exists()) {
@@ -33,14 +35,33 @@ public class LandscapeAnalysisUpdater {
                 LandscapeConfiguration existingConfiguration = (LandscapeConfiguration) new JsonMapper().getObject(json, LandscapeConfiguration.class);
                 existingConfiguration.setSubLandscapes(newConfig.getSubLandscapes());
                 existingConfiguration.setProjects(newConfig.getProjects());
+                updateMetadata(existingConfiguration, metadata);
                 save(landscapeConfigFile, existingConfiguration);
                 return existingConfiguration;
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+        updateMetadata(newConfig, metadata);
         save(landscapeConfigFile, newConfig);
         return newConfig;
+    }
+
+    private void updateMetadata(LandscapeConfiguration configuration, Metadata metadata) {
+        if (metadata != null) {
+            if (StringUtils.isNotBlank(metadata.getName())) {
+                configuration.getMetadata().setName(metadata.getName());
+            }
+            if (StringUtils.isNotBlank(metadata.getDescription())) {
+                configuration.getMetadata().setDescription(metadata.getDescription());
+            }
+            if (StringUtils.isNotBlank(metadata.getLogoLink())) {
+                configuration.getMetadata().setLogoLink(metadata.getLogoLink());
+            }
+            if (metadata.getLinks().size() > 0) {
+                configuration.getMetadata().setLinks(metadata.getLinks());
+            }
+        }
     }
 
     private File getLandscapeConfigFile(File analysisRoot, File landscapeConfigFile) {

@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.reports.generators.statichtml;
 
+import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.sourcecode.Metadata;
@@ -147,18 +148,25 @@ public class BasicSourceCodeReportGenerator {
 
     private void createBasicReport() {
         if (codeAnalyzerSettings.isAnalyzeFilesInScope()) {
+            ProcessingStopwatch.start("reporting/basic");
             new OverviewReportGenerator(codeAnalysisResults, codeConfigurationFile).addScopeAnalysisToReport(overviewScopeReport);
+            ProcessingStopwatch.end("reporting/basic");
         }
 
         if (codeAnalyzerSettings.isAnalyzeLogicalDecomposition()) {
+            ProcessingStopwatch.start("reporting/logical decomposition");
             new LogicalComponentsReportGenerator(codeAnalysisResults).addCodeOrganizationToReport(logicalComponentsReport);
+            ProcessingStopwatch.end("reporting/logical decomposition");
         }
 
         if (codeAnalyzerSettings.isAnalyzeConcerns()) {
+            ProcessingStopwatch.start("reporting/features of interest");
             new ConcernsReportGenerator(codeAnalysisResults).addConcernsToReport(concernsReport);
+            ProcessingStopwatch.end("reporting/features of interest");
         }
 
         if (codeAnalyzerSettings.isAnalyzeDuplication()) {
+            ProcessingStopwatch.start("reporting/duplication");
             int threshold = codeAnalysisResults.getCodeConfiguration().getAnalysis().getLocDuplicationThreshold();
             int mainLoc = codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode();
             if (mainLoc <= threshold) {
@@ -166,38 +174,61 @@ public class BasicSourceCodeReportGenerator {
             } else {
                 codeAnalyzerSettings.setAnalyzeDuplication(false);
             }
+            ProcessingStopwatch.end("reporting/duplication");
         }
 
         if (codeAnalyzerSettings.isAnalyzeFileSize()) {
+            ProcessingStopwatch.start("reporting/file size");
             new FileSizeReportGenerator(codeAnalysisResults).addFileSizeToReport(fileSizeReport);
+            ProcessingStopwatch.end("reporting/file size");
         }
 
         if (codeAnalyzerSettings.isAnalyzeFileHistory()) {
             if (codeAnalysisResults.getCodeConfiguration().getFileHistoryAnalysis().filesHistoryImportPathExists(codeConfigurationFile.getParentFile())) {
-                new FileAgeReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileHistoryReport);
+                ProcessingStopwatch.start("reporting/file age");
+                new FileAgeReportGenerator(codeAnalysisResults).addFileAgeToReport(fileHistoryReport);
+                ProcessingStopwatch.end("reporting/file age");
+                ProcessingStopwatch.start("reporting/file change frequency");
                 new FileChurnReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileChangeFrequencyReport);
-                new FileTemporalDependenciesReportGenerator(codeAnalysisResults).addFileHistoryToReport(reportsFolder, fileTemporalDependenciesReport);
+                ProcessingStopwatch.end("reporting/file change frequency");
+                ProcessingStopwatch.start("reporting/temporal dependencies");
+                new FileTemporalDependenciesReportGenerator(codeAnalysisResults).addTemporalDependenciesToReport(reportsFolder, fileTemporalDependenciesReport);
+                ProcessingStopwatch.end("reporting/temporal dependencies");
+                ProcessingStopwatch.start("reporting/contributors");
                 new ContributorsReportGenerator(codeAnalysisResults).addContributorsAnalysisToReport(reportsFolder, contributorsReport);
+                ProcessingStopwatch.end("reporting/contributors");
             }
         }
 
         if (codeAnalyzerSettings.isAnalyzeUnitSize()) {
+            ProcessingStopwatch.start("reporting/unit size");
             new UnitsSizeReportGenerator(codeAnalysisResults).addUnitsSizeToReport(unitSizeReport);
+            ProcessingStopwatch.end("reporting/unit size");
         }
 
         if (codeAnalyzerSettings.isAnalyzeConditionalComplexity()) {
+            ProcessingStopwatch.start("reporting/conditional complexity");
             new ConditionalComplexityReportGenerator(codeAnalysisResults).addConditionalComplexityToReport(conditionalComplexityReport);
+            ProcessingStopwatch.end("reporting/conditional complexity");
         }
 
+        ProcessingStopwatch.start("reporting/findings");
         new FindingsReportGenerator(codeConfigurationFile).generateReport(codeAnalysisResults, findingsReport);
+        ProcessingStopwatch.end("reporting/findings");
 
         if (codeAnalyzerSettings.isCreateMetricsList()) {
+            ProcessingStopwatch.start("reporting/metrics");
             new MetricsListReportGenerator().generateReport(codeAnalysisResults, metricsReport);
+            ProcessingStopwatch.end("reporting/metrics");
+            ProcessingStopwatch.start("reporting/trend");
             new TrendReportGenerator(codeConfigurationFile).generateReport(codeAnalysisResults, comparisonReport);
+            ProcessingStopwatch.end("reporting/trend");
         }
 
         if (codeAnalyzerSettings.isAnalyzeControls()) {
+            ProcessingStopwatch.start("reporting/controls");
             new ControlsReportGenerator().generateReport(codeAnalysisResults, controlsReport);
+            ProcessingStopwatch.end("reporting/controls");
         }
     }
 }

@@ -115,16 +115,16 @@ public class ReportRenderer {
             } else {
                 if (fragment.isShow()) {
                     LOG.info("Rendering graphviz content: " + fragment.getId());
-                    reportRenderingClient.append(minimize(GraphvizUtil.getSvgFromDot(fragment.getFragment()) + "\n"));
+                    reportRenderingClient.append(minimize(GraphvizUtil.getSvgFromDot(fragment.getFragment())));
                 }
             }
         } else if (fragment.getType() == RichTextFragment.Type.SVG) {
             if (fragment.isShow()) {
-                reportRenderingClient.append(minimize(fragment.getFragment() + "\n"));
+                reportRenderingClient.append(minimize(fragment.getFragment()));
             }
         } else {
             if (fragment.isShow()) {
-                reportRenderingClient.append(minimize(fragment.getFragment() + "\n"));
+                reportRenderingClient.append(minimize(fragment.getFragment()));
             }
         }
     }

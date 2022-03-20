@@ -23,11 +23,17 @@ public class AnalysisConfig {
     // If set to true, Sokrates saves code fragments in files linked from reports
     private boolean saveCodeFragments = true;
 
+    // Sokrates will ignore files longer than a given number of bytes
+    private int maxFileSizeBytes = 1000000;
+
+    // Sokrates will ignore files with more than a given number of lines of code
+    private int maxLines = 10000;
+
     // Sokrates will ignore files with any line longer than a given number of characters
     private int maxLineLength = 1000;
 
     // A maximal number of days in source code history used to calculate temporal file dependencies
-    private int maxTemporalDependenciesDepthDays = 365;
+    private int maxTemporalDependenciesDepthDays = 180;
 
     // Projects with more than a given number of lines of main code will skip duplication analyses even if skipDuplication flag is false
     private int locDuplicationThreshold = 10000000;
@@ -84,6 +90,22 @@ public class AnalysisConfig {
 
     public void setAnalyzerOverrides(List<AnalyzerOverride> analyzerOverrides) {
         this.analyzerOverrides = analyzerOverrides;
+    }
+
+    public int getMaxFileSizeBytes() {
+        return maxFileSizeBytes;
+    }
+
+    public void setMaxFileSizeBytes(int maxFileSizeBytes) {
+        this.maxFileSizeBytes = maxFileSizeBytes;
+    }
+
+    public int getMaxLines() {
+        return maxLines;
+    }
+
+    public void setMaxLines(int maxLines) {
+        this.maxLines = maxLines;
     }
 
     public int getMaxLineLength() {

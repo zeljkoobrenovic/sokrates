@@ -55,6 +55,7 @@ public class DataImageUtils {
         map.put("zsh", "shell.png");
         map.put("bat", "shell.png");
         map.put("rs", "rust.png");
+        map.put("dhall", "dhall.png");
 
         map.put("groovy", "Groovy.png");
         map.put("gvy", "Groovy.png");

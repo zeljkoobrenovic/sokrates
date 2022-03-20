@@ -5,6 +5,7 @@
 package nl.obren.sokrates.sourcecode.analysis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.contributors.ContributorsImport;
 import nl.obren.sokrates.sourcecode.contributors.GitContributorsUtil;
@@ -70,12 +71,16 @@ public class FileHistoryAnalysisConfig {
 
     @JsonIgnore
     public ContributorsImport getContributors(File sokratesConfigFolder, FileHistoryAnalysisConfig config) {
+        ProcessingStopwatch.start("analysis/contributors/loading/import");
         ContributorsImport contributorsImport = GitContributorsUtil.importGitContributorsExport(getContributorsFile(sokratesConfigFolder), config);
+        ProcessingStopwatch.end("analysis/contributors/loading/import");
+        ProcessingStopwatch.start("analysis/contributors/loading/ignore filtering");
         List<Contributor> contributors = contributorsImport.getContributors()
                 .stream()
                 .filter(c -> !GitHistoryUtils.shouldIgnore(c.getEmail(), ignoreContributors))
                 .collect(Collectors.toList());
         contributorsImport.setContributors(contributors);
+        ProcessingStopwatch.end("analysis/contributors/loading/ignore filtering");
         return contributorsImport;
     }
 

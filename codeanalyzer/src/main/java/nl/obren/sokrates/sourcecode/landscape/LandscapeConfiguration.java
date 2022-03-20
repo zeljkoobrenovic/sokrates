@@ -16,8 +16,8 @@ public class LandscapeConfiguration {
     // Basic info about the landscape (name, description, logo, links)
     private Metadata metadata = new Metadata();
 
-    // The relative path of the analysis (folders with project analysis results)
-    private String analysisRoot = "";
+    // The relative path of the analysis (contains sub-folders with project analysis results)
+    private String analysisRoot = ".";
 
     // A prefix attached to project reports
     private String projectReportsUrlPrefix = "../";
@@ -40,6 +40,9 @@ public class LandscapeConfiguration {
     // Only project having more or equal to the given number of commits will be included in the landscape report
     private int contributorThresholdCommits = 2;
 
+    // If not empty, only project before the given date (in the "YYYY-MM-dd" format) will be included in the landscape report
+    private String ignoreProjectsLastUpdatedBefore = "2020-01-01";
+
     // A maximal number of years of commit history dispalyed in the report
     private int commitsMaxYears = 10;
 
@@ -49,13 +52,16 @@ public class LandscapeConfiguration {
     // If true, the projects report will shows the status of controls of each project
     private boolean showProjectControls = true;
 
-    // A maximal number of projects shown in project pages
+    // A maximal number of projects shown in the short project pages (embedded in the index page)
+    private int projectsShortListLimit = 100;
+
+    // A maximal number of projects shown in project pages (linked from the short page)
     private int projectsListLimit = 1000;
 
     // A maximal number of years to be displayed for projects' history
     private int projectsHistoryLimit = 30;
 
-    // A maximal number of contributors shown in contributor pages
+    // A maximal number of contributors shown in contributor pages (linked from the short page)
     private int contributorsListLimit = 1000;
 
     // An optional template of the link to a web page with more info about a contributor. The string fragment "${contributorid}" will be replace with the actual contributor ID.
@@ -64,14 +70,14 @@ public class LandscapeConfiguration {
     // An optional template of the link to a avatar image of a contributor. The string fragment "${contributorid}" will be replaced with the actual contributor ID (e.g. transformed email).
     private String contributorAvatarLinkTemplate = "";
 
-    // An optional list of string transformation used to transform contributor IDs for embedding in avatar link
-    private List<OperationStatement> transformContributorEmailsForAvatarLink = new ArrayList<>();
-
     // The list of regex expressions used to exclude contributors from analysis. If empty, all contributors are included.
     private List<String> ignoreContributors = new ArrayList<>(Arrays.asList(".*\\[bot\\].*", ".*[-]bot[@].*"));
 
     // The list of extensions to ignore
     private List<String> ignoreExtensions = new ArrayList<>();
+
+    // If true, only one project with the same project name will be included in the landscape analyses (the first one found in file scan). Otherwise, all projects will be included.
+    private boolean includeOnlyFirstProjectWithSameName = true;
 
     // The list of extensions to merge (e.g. yml => yaml)
     private List<MergeExtension> mergeExtensions = new ArrayList<>();
@@ -181,6 +187,14 @@ public class LandscapeConfiguration {
 
     public void setContributorThresholdCommits(int contributorThresholdCommits) {
         this.contributorThresholdCommits = contributorThresholdCommits;
+    }
+
+    public String getIgnoreProjectsLastUpdatedBefore() {
+        return ignoreProjectsLastUpdatedBefore;
+    }
+
+    public void setIgnoreProjectsLastUpdatedBefore(String ignoreProjectsLastUpdatedBefore) {
+        this.ignoreProjectsLastUpdatedBefore = ignoreProjectsLastUpdatedBefore;
     }
 
     public int getProjectThresholdContributors() {
@@ -307,6 +321,10 @@ public class LandscapeConfiguration {
         return projectsListLimit;
     }
 
+    public void setProjectsListLimit(int projectsListLimit) {
+        this.projectsListLimit = projectsListLimit;
+    }
+
     public int getProjectsHistoryLimit() {
         return projectsHistoryLimit;
     }
@@ -315,8 +333,12 @@ public class LandscapeConfiguration {
         this.projectsHistoryLimit = projectsHistoryLimit;
     }
 
-    public void setProjectsListLimit(int projectsListLimit) {
-        this.projectsListLimit = projectsListLimit;
+    public int getProjectsShortListLimit() {
+        return projectsShortListLimit;
+    }
+
+    public void setProjectsShortListLimit(int projectsShortListLimit) {
+        this.projectsShortListLimit = projectsShortListLimit;
     }
 
     public int getContributorsListLimit() {
@@ -359,14 +381,6 @@ public class LandscapeConfiguration {
         this.contributorAvatarLinkTemplate = contributorAvatarLinkTemplate;
     }
 
-    public List<OperationStatement> getTransformContributorEmailsForAvatarLink() {
-        return transformContributorEmailsForAvatarLink;
-    }
-
-    public void setTransformContributorEmailsForAvatarLink(List<OperationStatement> transformContributorEmailsForAvatarLink) {
-        this.transformContributorEmailsForAvatarLink = transformContributorEmailsForAvatarLink;
-    }
-
     public List<String> getIgnoreContributors() {
         return ignoreContributors;
     }
@@ -405,5 +419,13 @@ public class LandscapeConfiguration {
 
     public void setCustomTabs(List<CustomTab> customTabs) {
         this.customTabs = customTabs;
+    }
+
+    public boolean isIncludeOnlyFirstProjectWithSameName() {
+        return includeOnlyFirstProjectWithSameName;
+    }
+
+    public void setIncludeOnlyFirstProjectWithSameName(boolean includeOnlyFirstProjectWithSameName) {
+        this.includeOnlyFirstProjectWithSameName = includeOnlyFirstProjectWithSameName;
     }
 }
