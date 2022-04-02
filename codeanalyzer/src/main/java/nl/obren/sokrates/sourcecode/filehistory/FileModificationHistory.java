@@ -4,9 +4,8 @@
 
 package nl.obren.sokrates.sourcecode.filehistory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Stream;
 
 public class FileModificationHistory {
     private List<String> dates = new ArrayList<>();
@@ -64,5 +63,11 @@ public class FileModificationHistory {
 
     public void setCommits(List<CommitInfo> commits) {
         this.commits = commits;
+    }
+
+    public int countContributors() {
+        Set<String> contributorIds = new HashSet<>();
+        commits.forEach(commit -> contributorIds.add(commit.getEmail()));
+        return contributorIds.size();
     }
 }

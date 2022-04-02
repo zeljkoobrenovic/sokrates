@@ -11,10 +11,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.FileAgeDistributionPerLogic
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
-import nl.obren.sokrates.sourcecode.filehistory.FileHistoryComponentsHelper;
-import nl.obren.sokrates.sourcecode.filehistory.FileHistoryUtils;
-import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
-import nl.obren.sokrates.sourcecode.filehistory.FilePairsChangedTogether;
+import nl.obren.sokrates.sourcecode.filehistory.*;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
@@ -24,6 +21,7 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution.Types.FIRST_MODIFIED;
 import static nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution.Types.LAST_MODIFIED;
@@ -181,6 +179,7 @@ public class FileHistoryAnalyzer extends Analyzer {
         addMostRecentlyChangedFiles(allFiles, analysisResults, maxTopListSize);
         addMostPreviouslyChangedFiles(allFiles, analysisResults, maxTopListSize);
         addMostChangedFiles(allFiles, analysisResults, maxTopListSize);
+        addFilesWithMostContributors(allFiles, analysisResults, maxTopListSize);
 
         addMetrics(lastModifiedDistribution);
     }
@@ -311,5 +310,23 @@ public class FileHistoryAnalyzer extends Analyzer {
             }
             filesHistoryAnalysisResults.getMostChangedFiles().add(sourceFile);
         });
+    }
+
+    private void addFilesWithMostContributors(List<SourceFile> sourceFiles, FilesHistoryAnalysisResults filesHistoryAnalysisResults, int sampleSize) {
+        List<SourceFile> files = new ArrayList<>(sourceFiles);
+        Collections.sort(files, (o1, o2) -> Integer.compare(getCountContributors(o2), getCountContributors(o1)));
+        Collections.sort(files, Comparator.comparingInt(o -> (o.getFileModificationHistory() == null ? 0 : o.getFileModificationHistory().getDates().size())));
+        Collections.reverse(files);
+        int index[] = {0};
+        files.forEach(sourceFile -> {
+            if (index[0]++ >= sampleSize) {
+                return;
+            }
+            filesHistoryAnalysisResults.getFilesWithMostContributors().add(sourceFile);
+        });
+    }
+
+    private int getCountContributors(SourceFile sourceFile) {
+        return sourceFile.getFileModificationHistory() != null ? sourceFile.getFileModificationHistory().countContributors() : 0;
     }
 }

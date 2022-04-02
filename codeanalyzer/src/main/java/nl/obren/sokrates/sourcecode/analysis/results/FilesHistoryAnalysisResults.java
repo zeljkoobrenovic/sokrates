@@ -13,7 +13,6 @@ import nl.obren.sokrates.sourcecode.filehistory.FilePairChangedTogether;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
-import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
 import java.util.*;
@@ -52,6 +51,7 @@ public class FilesHistoryAnalysisResults {
     private List<SourceFile> mostRecentlyChangedFiles = new ArrayList<>();
     private List<SourceFile> mostPreviouslyChangedFiles = new ArrayList<>();
     private List<SourceFile> mostChangedFiles = new ArrayList<>();
+    private List<SourceFile> filesWithMostContributors = new ArrayList<>();
     private String firstDate = "";
     private String latestDate = "";
     private int daysBetweenFirstAndLastDate;
@@ -342,4 +342,11 @@ public class FilesHistoryAnalysisResults {
         this.ageInDays = ageInDays;
     }
 
+    public List<SourceFile> getFilesWithMostContributors() {
+        return filesWithMostContributors;
+    }
+
+    public void setFilesWithMostContributors(List<SourceFile> filesWithMostContributors) {
+        this.filesWithMostContributors = filesWithMostContributors;
+    }
 }

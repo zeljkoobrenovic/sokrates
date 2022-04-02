@@ -33,6 +33,7 @@ public class FilesReportUtils {
             header += "<th>last modified<br/>(days ago)</th>";
             header += "<th>created<br/>(days ago)</th>";
             header += "<th># changes</th>";
+            header += "<th># contributors</th>";
         }
         table.append(header + "\n");
         table.append("<tr>");
@@ -75,10 +76,12 @@ public class FilesReportUtils {
                     table.append("<td style='text-align: center'>" + history.daysSinceLatestUpdate() + "</td>\n");
                     table.append("<td style='text-align: center'>" + history.daysSinceFirstUpdate() + "</td>\n");
                     table.append("<td style='text-align: center'>" + history.getDates().size() + "</td>\n");
+                    table.append("<td style='text-align: center'>" + history.countContributors() + "</td>\n");
                 } else {
                     table.append("<td style='text-align: center'></td>\n");
                     table.append("<td style='text-align: center'></td>\n");
-                    table.append("<td style='texgetLongLinesCount(threshold)t-align: center'></td>\n");
+                    table.append("<td style='text-align: center'></td>\n");
+                    table.append("<td style='text-align: center'></td>\n");
                 }
             }
 

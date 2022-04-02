@@ -6,7 +6,9 @@ package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
+import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.landscape.utils.CorrelationDiagramGenerator;
 import nl.obren.sokrates.reports.utils.FilesReportUtils;
 import nl.obren.sokrates.reports.utils.PieChartUtils;
 import nl.obren.sokrates.reports.utils.RiskDistributionStatsReportUtils;
@@ -15,6 +17,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FileAgeDistributionPerLogicalDecomposition;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
+import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
 import nl.obren.sokrates.sourcecode.threshold.Thresholds;
@@ -46,7 +49,10 @@ public class FileChurnReportGenerator {
         addGraphsPerExtension(report);
         addGraphsPerLogicalComponents(report);
         addMostChangedFilesList(report);
+        addFilesWithMostContributors(report);
+        addCorrelations(report);
     }
+
 
     private void addGraphsPerExtension(RichTextReport report) {
         FilesHistoryAnalysisResults ageAnalysisResults = codeAnalysisResults.getFilesHistoryAnalysisResults();
@@ -134,8 +140,8 @@ public class FileChurnReportGenerator {
             String name = logicalDecomposition.getName();
             codeAnalysisResults.getFilesHistoryAnalysisResults().getChangeDistributionPerLogicalDecomposition().stream()
                     .filter(d -> d.getName().equalsIgnoreCase(name)).forEach(distribution -> {
-                addChangeDetailsForLogicalDecomposition(report, distribution);
-            });
+                        addChangeDetailsForLogicalDecomposition(report, distribution);
+                    });
         });
     }
 
@@ -159,11 +165,41 @@ public class FileChurnReportGenerator {
     }
 
     private void addFilesWithMostContributors(RichTextReport report) {
-        List<SourceFile> youngestFiles = codeAnalysisResults.getFilesHistoryAnalysisResults().getMostChangedFiles();
-        report.startSection("Most Frequently Changed Files (Top " + youngestFiles.size() + ")", "");
+        List<SourceFile> files = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilesWithMostContributors();
+        report.startSection("Files With Most Contributors (Top " + files.size() + ")", "Files sorted by the number of unique email addresses found in commits.");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
         report.addParagraph("<a href='../data/text/mainFilesWithHistory.txt' target='_blank'>See data for all files...</a>");
-        report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true, false, 500).toString());
+        report.addHtmlContent(FilesReportUtils.getFilesTable(files, cacheSourceFiles, true, false, 500).toString());
         report.endSection();
+    }
+
+    private void addCorrelations(RichTextReport report) {
+        if (codeAnalysisResults.getContributorsAnalysisResults().getContributors().size() > 0) {
+            report.startSection("Correlations", "");
+            CorrelationDiagramGenerator<FileModificationHistory> correlationDiagramGenerator = new CorrelationDiagramGenerator<>(report,
+                    codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory());
+
+            ProcessingStopwatch.start("reporting/file update frequency/correlations");
+            correlationDiagramGenerator.addCorrelations("File Size vs. Number of Changes", "lines of code", "# changes",
+                    p -> {
+                        SourceFile sourceFileByRelativePath = codeAnalysisResults.getFilesAnalysisResults().getSourceFileByRelativePath(p.getPath());
+                        int linesOfCode = sourceFileByRelativePath != null ? sourceFileByRelativePath.getLinesOfCode() : 0;
+                        return linesOfCode;
+                    },
+                    p -> p.getDates().size(),
+                    p -> p.getPath());
+
+            correlationDiagramGenerator.addCorrelations("Number of Contributors vs. Number of Changes", "# contributors", "# changes",
+                    p -> {
+                        SourceFile sourceFileByRelativePath = codeAnalysisResults.getFilesAnalysisResults().getSourceFileByRelativePath(p.getPath());
+                        int linesOfCode = sourceFileByRelativePath != null ? sourceFileByRelativePath.getLinesOfCode() : 0;
+                        return linesOfCode > 0 ? p.countContributors() : 0;
+                    },
+                    p -> p.getDates().size(),
+                    p -> p.getPath());
+
+            ProcessingStopwatch.end("reporting/file update frequency/correlations");
+            report.endSection();
+        }
     }
 }
