@@ -156,6 +156,9 @@ public class FileAgeReportGenerator {
         report.endUnorderedList();
         report.endUnorderedList();
         report.addHtmlContent(PieChartUtils.getRiskDistributionChart(distribution, ageLabels, palette));
+        report.addLineBreak();
+        report.addHtmlContent("explore: ");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_age_coloring.html'>zoomable circles</a>");
         report.endSection();
     }
 
@@ -185,6 +188,9 @@ public class FileAgeReportGenerator {
         report.endUnorderedList();
         report.endUnorderedList();
         report.addHtmlContent(PieChartUtils.getRiskDistributionChart(distribution, ageLabels, palette));
+        report.addLineBreak();
+        report.addHtmlContent("explore: ");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_freshness_coloring.html'>zoomable circles</a>");
         report.endSection();
     }
 

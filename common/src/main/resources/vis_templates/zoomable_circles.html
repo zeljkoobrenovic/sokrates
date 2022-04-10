@@ -71,7 +71,7 @@
             return d.parent ? d.children ? "node" : "node node--leaf" : "node node--root";
         })
         .style("fill", function (d) {
-            return d.children ? color(d.depth) : null;
+            return d.children ? color(d.depth) : (d.data.color ? d.data.color : null);
         })
         .on("click", function (d) {
             if (focus !== d) zoom(d), d3.event.stopPropagation();

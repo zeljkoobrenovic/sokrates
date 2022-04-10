@@ -93,12 +93,10 @@ public class ContributorsReportGenerator {
         this.reportsFolder = reportsFolder;
         this.report = report;
 
-        report.addParagraph("An overview of commit and contributor trends.", "margin-top: 12px; color: grey");
+        report.addParagraph("An overview of contributor trends.", "margin-top: 12px; color: grey");
 
         report.startTabGroup();
-        report.addTab("visuals", "Overview", true);
-        report.addTab("per_language", "Overview Per Language", false);
-        report.addTab("contributors", "Contributors", false);
+        report.addTab("contributors", "Overview", true);
         report.addTab("matrix", "Contributors Matrix", false);
         report.addTab("30_days", "Past 30 Days", false);
         report.addTab("90_days", "Past 3 Months", false);
@@ -110,38 +108,14 @@ public class ContributorsReportGenerator {
         ContributorsAnalysisResults analysis = codeAnalysisResults.getContributorsAnalysisResults();
         List<Contributor> contributors = analysis.getContributors();
 
-        report.startTabContentSection("visuals", true);
-        report.addLineBreak();
-        report.startSubSection("Timeline", "");
-        report.addLevel2Header("Per Year", "margin-bottom: 0;");
-        report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, analysis.getContributorsPerYear(), 20, true, 4);
-        report.addLevel2Header("Per Month", "margin-bottom: 0;");
-        report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
-        List<ContributionTimeSlot> contributorsPerMonth = getContributionMonths(analysis, 25);
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerMonth, 24, true, 2);
-        report.addLevel2Header("Per Week", "margin-bottom: 0;");
-        report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
-        int pastWeeks = 104;
-        List<ContributionTimeSlot> contributorsPerWeek = getContributionWeeks(analysis, pastWeeks);
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerWeek, pastWeeks, true, 1);
-        report.addLevel2Header("Per Day", "margin-bottom: 0;");
-        report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
-        int pastDays = 365;
-        List<ContributionTimeSlot> contributorsPerDay = getContributionDays(analysis, pastDays);
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerDay, pastDays, true, 1);
-        report.endSection();
-        report.endTabContentSection();
-
-        report.startTabContentSection("contributors", false);
+        report.startTabContentSection("contributors", true);
+        addZoomableCircleLinks(report);
         ContributorsReportUtils.addContributorsSection(codeAnalysisResults, report);
         report.endTabContentSection();
 
         report.startTabContentSection("matrix", false);
         addMatrix(new ArrayList<>(contributors));
         report.endTabContentSection();
-
-        addPerLanguageTabContent(report);
 
         report.startTabContentSection("30_days", false);
         List<Contributor> commits30Days = contributors.stream().filter(c -> c.getCommitsCount30Days() > 0).collect(Collectors.toList());
@@ -192,30 +166,22 @@ public class ContributorsReportGenerator {
         report.endTabContentSection();
     }
 
-    public void addPerLanguageTabContent(RichTextReport report) {
-        report.startTabContentSection("per_language", false);
-        report.startTable();
-        report.startTableRow();
-        report.addTableCell("Commits", "border: none");
-        report.startTableCell("border: none");
-        List<HistoryPerExtension> historyPerExtensionPerYear = codeAnalysisResults.getFilesHistoryAnalysisResults().getHistoryPerExtensionPerYear();
-        List<String> extensions = codeAnalysisResults.getMainAspectAnalysisResults().getExtensions();
-        HistoryPerLanguageGenerator.getInstanceCommits(historyPerExtensionPerYear, extensions).addHistoryPerLanguage(report);
-        report.endTableCell();
-        report.endTableRow();
-        report.startTableRow();
-        report.addTableCell("&nbsp;", "border: none");
-        report.addTableCell("&nbsp;", "border: none");
-        report.endTableRow();
-        report.startTableRow();
-        report.addTableCell("Contributors", "border: none");
-        report.startTableCell("border: none");
-        HistoryPerLanguageGenerator.getInstanceContributors(historyPerExtensionPerYear, extensions).addHistoryPerLanguage(report);
-        report.endTableCell();
-        report.endTableRow();
-        report.endTable();
-        report.endTabContentSection();
+    private void addZoomableCircleLinks(RichTextReport report) {
+        report.startDiv("margin-top: 10px");
+        report.addHtmlContent("Zoomable circles (number of contributors per file): ");
+        report.addNewTabLink("30 days", "visuals/zoomable_circles_contributors_30_main.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("90 days", "visuals/zoomable_circles_contributors_90_main.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("6 months", "visuals/zoomable_circles_contributors_180_main.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("past year", "visuals/zoomable_circles_contributors_365_main.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("all time", "visuals/zoomable_circles_contributors_main.html");
+        report.addContentInDiv("Files with only one contributor are shown as grey.", "color: grey; font-size: 80%");
+        report.endDiv();
     }
+
 
     private void addMatrix(List<Contributor> contributors) {
         report.addContentInDiv("&nbsp;", "height: 20px");
@@ -301,60 +267,6 @@ public class ContributorsReportGenerator {
         }
         report.endDiv();
         report.endSection();
-    }
-
-    private List<ContributionTimeSlot> getContributionWeeks(ContributorsAnalysisResults analysis, int pastWeeks) {
-        List<ContributionTimeSlot> activeWeeks = analysis.getContributorsPerWeek();
-        Map<String, ContributionTimeSlot> map = new HashMap<>();
-        activeWeeks.forEach(week -> map.put(week.getTimeSlot(), week));
-
-        List<ContributionTimeSlot> contributorsPerWeek = new ArrayList<>();
-        List<String> pastDates = DateUtils.getPastWeeks(pastWeeks, analysis.getLatestCommitDate());
-        pastDates.forEach(pastDate -> {
-            ContributionTimeSlot contributionTimeSlot = map.get(pastDate);
-            if (contributionTimeSlot != null) {
-                contributorsPerWeek.add(contributionTimeSlot);
-            } else {
-                contributorsPerWeek.add(new ContributionTimeSlot(pastDate));
-            }
-        });
-        return contributorsPerWeek;
-    }
-
-    private List<ContributionTimeSlot> getContributionMonths(ContributorsAnalysisResults analysis, int pastMonths) {
-        List<ContributionTimeSlot> activeMonth = analysis.getContributorsPerMonth();
-        Map<String, ContributionTimeSlot> map = new HashMap<>();
-        activeMonth.forEach(month -> map.put(month.getTimeSlot(), month));
-
-        List<ContributionTimeSlot> contributorsPerMonth = new ArrayList<>();
-        List<String> pastDates = DateUtils.getPastMonths(pastMonths, analysis.getLatestCommitDate());
-        pastDates.forEach(pastDate -> {
-            ContributionTimeSlot contributionTimeSlot = map.get(pastDate);
-            if (contributionTimeSlot != null) {
-                contributorsPerMonth.add(contributionTimeSlot);
-            } else {
-                contributorsPerMonth.add(new ContributionTimeSlot(pastDate));
-            }
-        });
-        return contributorsPerMonth;
-    }
-
-    private List<ContributionTimeSlot> getContributionDays(ContributorsAnalysisResults analysis, int pastDays) {
-        List<ContributionTimeSlot> activeDays = analysis.getContributorsPerDay();
-        Map<String, ContributionTimeSlot> map = new HashMap<>();
-        activeDays.forEach(activeDay -> map.put(activeDay.getTimeSlot(), activeDay));
-
-        List<ContributionTimeSlot> contributorsPerDay = new ArrayList<>();
-        List<String> pastDates = DateUtils.getPastDays(pastDays, analysis.getLatestCommitDate());
-        pastDates.forEach(pastDate -> {
-            ContributionTimeSlot contributionTimeSlot = map.get(pastDate);
-            if (contributionTimeSlot != null) {
-                contributorsPerDay.add(contributionTimeSlot);
-            } else {
-                contributorsPerDay.add(new ContributionTimeSlot(pastDate));
-            }
-        });
-        return contributorsPerDay;
     }
 
     private void renderPeopleDependencies(List<ComponentDependency> peopleDependencies,

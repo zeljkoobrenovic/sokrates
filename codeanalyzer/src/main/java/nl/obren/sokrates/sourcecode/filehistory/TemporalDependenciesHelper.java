@@ -4,19 +4,18 @@
 
 package nl.obren.sokrates.sourcecode.filehistory;
 
+import nl.obren.sokrates.sourcecode.SourceFile;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class TemporalDependenciesHelper {
-    private static final Log LOG = LogFactory.getLog(TemporalDependenciesHelper.class);
     public static final int DEPENDENCIES_LIST_LIMIT = 1000000;
-
+    private static final Log LOG = LogFactory.getLog(TemporalDependenciesHelper.class);
     private List<ComponentDependency> componentDependencies = new ArrayList<>();
     private Map<String, ComponentDependency> componentDependenciesMap = new HashMap<>();
     private Map<ComponentDependency, List<String>> datesMap = new HashMap<>();
@@ -24,7 +23,50 @@ public class TemporalDependenciesHelper {
     public TemporalDependenciesHelper() {
     }
 
-    public List<ComponentDependency> extractDependencies(List<FilePairChangedTogether> filePairInstances) {
+
+    public List<ComponentDependency> extractComponentDependencies(String logicalDecompositionKey, List<FilePairChangedTogether> filePairsChangedTogether) {
+        List<ComponentDependency> dependencies = new ArrayList<>();
+        Map<String, ComponentDependency> dependenciesMap = new HashMap<>();
+        Map<String, Set<String>> commitsMap = new HashMap<>();
+
+        filePairsChangedTogether.forEach(pair -> {
+            SourceFile sourceFile1 = pair.getSourceFile1();
+            SourceFile sourceFile2 = pair.getSourceFile2();
+
+            String component1 = getLogicalComponentName(logicalDecompositionKey, sourceFile1);
+            String component2 = getLogicalComponentName(logicalDecompositionKey, sourceFile2);
+
+            if (component1 != null && component2 != null) {
+                String key1 = component1 + "::" + component2;
+                String key2 = component2 + "::" + component1;
+
+                ComponentDependency dependency = dependenciesMap.get(key1);
+                Set<String> commits = commitsMap.get(key1);
+                if (dependency == null) {
+                    dependency = dependenciesMap.get(key2);
+                    commits = commitsMap.get(key2);
+                }
+                if (dependency == null) {
+                    dependency = new ComponentDependency(component1, component2);
+                    dependenciesMap.put(key1, dependency);
+                    dependencies.add(dependency);
+                    commits = new HashSet<>();
+                    commitsMap.put(key1, commits);
+                }
+                commits.addAll(pair.getCommits());
+                dependency.setCount(commits.size());
+            }
+        });
+
+        return dependencies;
+    }
+
+    private String getLogicalComponentName(String key, SourceFile sourceFile) {
+        List<NamedSourceCodeAspect> compoenents = sourceFile.getLogicalComponents(key).stream().collect(Collectors.toList());
+        return compoenents.size() > 0 ? compoenents.get(0).getName() : null;
+    }
+
+    public List<ComponentDependency> extractFileDependencies(List<FilePairChangedTogether> filePairInstances) {
         filePairInstances.forEach(filePairChangedTogether -> {
             String file1 = filePairChangedTogether.getSourceFile1().getRelativePath();
             String file2 = filePairChangedTogether.getSourceFile2().getRelativePath();
@@ -92,7 +134,7 @@ public class TemporalDependenciesHelper {
     }
 
     private ComponentDependency getDependency(String name1, String name2,
-                                              List<ComponentDependency> componentDependencies,  Map<String, ComponentDependency> componentDependenciesMap) {
+                                              List<ComponentDependency> componentDependencies, Map<String, ComponentDependency> componentDependenciesMap) {
         String key = name1 + "::" + name2;
         String alternativeKey = name2 + "::" + name1;
 

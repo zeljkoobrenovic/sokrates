@@ -70,7 +70,9 @@ public class FileChurnReportGenerator {
         report.startSection("File Change Frequency Overall", "");
         addGraphOverallChange(report, codeAnalysisResults.getFilesHistoryAnalysisResults().getOverallFileChangeDistribution(),
                 THE_NUMBER_OF_FILE_CHANGES + " Overall", THE_NUMBER_OF_FILE_CHANGES_DESCRIPTION);
-        report.addParagraph("<a href='../data/text/mainFilesWithHistory.txt' target='_blank'>Detailed data...</a>");
+        report.addHtmlContent("explore: ");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_update_frequency_coloring.html'>zoomable circles</a> | ");
+        report.addHtmlContent("<a target='_blank' href='../data/text/mainFilesWithHistory.txt'>data</a>");
         report.endSection();
     }
 

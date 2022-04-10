@@ -707,16 +707,16 @@ public class LandscapeReportGenerator {
     }
 
     private void addContributionTrends() {
-        landscapeReport.startSubSection("Commits & Contributors Per Year", "Past " + landscapeAnalysisResults.getConfiguration().getCommitsMaxYears() + " years");
+        landscapeReport.startSubSection("Contributors Per Year", "Past " + landscapeAnalysisResults.getConfiguration().getCommitsMaxYears() + " years");
         addContributorsPerYear(true);
         landscapeReport.endSection();
         LOG.info("Adding contributors per extension...");
 
-        landscapeReport.startSubSection("Commits & Contributors Per Month", "Past two years");
+        landscapeReport.startSubSection("Contributors Per Month", "Past two years");
         addContributorsPerMonth();
         landscapeReport.endSection();
 
-        landscapeReport.startSubSection("Commits & Contributors Per Week", "Past two years");
+        landscapeReport.startSubSection("Contributors Per Week", "Past two years");
         addContributorsPerWeek();
         landscapeReport.endSection();
 

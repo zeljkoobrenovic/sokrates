@@ -9,6 +9,7 @@ import java.util.List;
 
 public class VisualizationItem {
     private String name;
+    private String color = "";
     private Integer size;
     private List<VisualizationItem> children = new ArrayList<>();
 
@@ -39,5 +40,13 @@ public class VisualizationItem {
 
     public void setChildren(List<VisualizationItem> children) {
         this.children = children;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
     }
 }

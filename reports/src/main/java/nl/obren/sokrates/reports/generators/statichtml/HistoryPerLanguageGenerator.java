@@ -85,6 +85,43 @@ public class HistoryPerLanguageGenerator {
         report.endTable();
     }
 
+    public void addHistoryPerComponent(RichTextReport report) {
+        this.report = report;
+        List<HistoryPerExtension> mergedHistory = new ArrayList<>();
+        Map<String, HistoryPerExtension> mergedHistoryMap = new HashMap<>();
+
+        this.history.forEach(languageHistory -> {
+            String extension = languageHistory.getExtension();
+            String mergedExtension = this.getMergedExtension(extension);
+            String year = languageHistory.getYear();
+
+            String key = mergedExtension + "::" + year;
+
+            if (mergedHistoryMap.containsKey(key)) {
+                HistoryPerExtension existing = mergedHistoryMap.get(key);
+                existing.setCommitsCount(existing.getCommitsCount() + languageHistory.getCommitsCount());
+                existing.getContributors().addAll(languageHistory.getContributors());
+            } else {
+                HistoryPerExtension newItem = new HistoryPerExtension(languageHistory.getExtension(),
+                        languageHistory.getYear(),
+                        languageHistory.getCommitsCount());
+                newItem.getContributors().addAll(languageHistory.getContributors());
+                mergedHistoryMap.put(key, newItem);
+                mergedHistory.add(newItem);
+            }
+        });
+
+        this.max = mergedHistory.stream().mapToInt(value -> getValue(value)).max().orElse(0);
+        this.firstYear = mergedHistory.stream().mapToInt(value -> getYearInteger(value)).min().orElse(0);
+
+        report.startTable();
+        addHeader();
+        getExtensions().stream().limit(MAX_NUMBER_OF_EXTENSIONS).forEach(extension -> {
+            addComponentRow(extension);
+        });
+        report.endTable();
+    }
+
     public int getYearInteger(HistoryPerExtension value) {
         try {
             return Integer.parseInt(value.getYear());
@@ -124,6 +161,15 @@ public class HistoryPerLanguageGenerator {
 
     public int getValue(HistoryPerExtension value) {
         return mode == Mode.COMMITS ? value.getCommitsCount() : value.getContributors().size();
+    }
+
+    private void addComponentRow(String extension) {
+        report.startTableRow();
+        report.addTableCell(extension, "text-align: right; color: grey; font-size: 80%; vertical-align: middle; border: none;");
+        for (int year = endYear(); year >= startYear(); year--) {
+            addCell(extension, year);
+        }
+        report.endTableRow();
     }
 
     private void addExtensionRow(String extension) {

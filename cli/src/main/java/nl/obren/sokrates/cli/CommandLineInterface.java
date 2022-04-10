@@ -10,6 +10,7 @@ import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.renderingutils.Thresholds;
 import nl.obren.sokrates.common.renderingutils.VisualizationItem;
 import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
+import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.renderingutils.force3d.Force3DLink;
 import nl.obren.sokrates.common.renderingutils.force3d.Force3DNode;
 import nl.obren.sokrates.common.renderingutils.force3d.Force3DObject;
@@ -57,12 +58,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class CommandLineInterface {
+    public static final int THOUSAND_YEARS = 365 * 1000;
     private static final Log LOG = LogFactory.getLog(CommandLineInterface.class);
-
     private ProgressFeedback progressFeedback;
     private DataExporter dataExporter = new DataExporter(this.progressFeedback);
 
     private Commands commands = new Commands();
+    private File sokratesConfigFile;
+    private CodeConfiguration codeConfiguration;
 
     public static void main(String args[]) throws IOException {
         ProcessingStopwatch.startAsReference("everything");
@@ -475,8 +478,6 @@ public class CommandLineInterface {
     private void generateReports(CommandLine cmd) throws IOException {
         updateDateParam(cmd);
 
-        File sokratesConfigFile;
-
         if (!cmd.hasOption(commands.getConfFile().getOpt())) {
             String confFilePath = "./_sokrates/config.json";
             sokratesConfigFile = new File(confFilePath);
@@ -489,7 +490,7 @@ public class CommandLineInterface {
 
         ProcessingStopwatch.start("configuring");
         String jsonContent = FileUtils.readFileToString(sokratesConfigFile, UTF_8);
-        CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
+        this.codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
         LanguageAnalyzerFactory.getInstance().setOverrides(codeConfiguration.getAnalysis().getAnalyzerOverrides());
 
         detailedInfo("Starting analysis based on the configuration file " + sokratesConfigFile.getPath());
@@ -647,11 +648,35 @@ public class CommandLineInterface {
             File folder = new File(reportsFolder, "html/visuals");
             folder.mkdirs();
 
-            generateFileStructureExplorers("main", folder, analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles());
+            List<SourceFile> mainSourceFiles = analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles();
+            generateFileStructureExplorers("main", folder, mainSourceFiles);
             generateFileStructureExplorers("test", folder, analysisResults.getTestAspectAnalysisResults().getAspect().getSourceFiles());
             generateFileStructureExplorers("generated", folder, analysisResults.getGeneratedAspectAnalysisResults().getAspect().getSourceFiles());
             generateFileStructureExplorers("build", folder, analysisResults.getBuildAndDeployAspectAnalysisResults().getAspect().getSourceFiles());
             generateFileStructureExplorers("other", folder, analysisResults.getOtherAspectAnalysisResults().getAspect().getSourceFiles());
+
+            addCommitZoomableCircles("main", folder, mainSourceFiles, 30);
+            addCommitZoomableCircles("main", folder, mainSourceFiles, 90);
+            addCommitZoomableCircles("main", folder, mainSourceFiles, 180);
+            addCommitZoomableCircles("main", folder, mainSourceFiles, 365);
+            addCommitZoomableCircles("main", folder, mainSourceFiles, 0);
+
+            addContributorsZoomableCircles("main", folder, mainSourceFiles, 30);
+            addContributorsZoomableCircles("main", folder, mainSourceFiles, 90);
+            addContributorsZoomableCircles("main", folder, mainSourceFiles, 180);
+            addContributorsZoomableCircles("main", folder, mainSourceFiles, 365);
+            addContributorsZoomableCircles("main", folder, mainSourceFiles, 0);
+
+            addRiskColoredZoomableCircles(folder, mainSourceFiles, "loc", codeConfiguration.getAnalysis().getFileSizeThresholds(), Palette.getRiskPalette(),
+                    (sourceFile) -> sourceFile.getLinesOfCode());
+
+            addRiskColoredZoomableCircles(folder, mainSourceFiles, "age", codeConfiguration.getAnalysis().getFileAgeThresholds(), Palette.getAgePalette(),
+                    (sourceFile) -> sourceFile.getFileModificationHistory() != null ? sourceFile.getFileModificationHistory().daysSinceFirstUpdate() : 0);
+            addRiskColoredZoomableCircles(folder, mainSourceFiles, "freshness", codeConfiguration.getAnalysis().getFileAgeThresholds(), Palette.getFreshnessPalette(),
+                    (sourceFile) -> sourceFile.getFileModificationHistory() != null ? sourceFile.getFileModificationHistory().daysSinceLatestUpdate() : 0);
+
+            addRiskColoredZoomableCircles(folder, mainSourceFiles, "update_frequency", codeConfiguration.getAnalysis().getFileUpdateFrequencyThresholds(), Palette.getHeatPalette(),
+                    (sourceFile) -> sourceFile.getFileModificationHistory() != null ? sourceFile.getFileModificationHistory().getDates().size() : 0);
 
             generate3DUnitsView(folder, analysisResults);
         } catch (IOException e) {
@@ -666,10 +691,58 @@ public class CommandLineInterface {
         FileUtils.write(new File(folder, "zoomable_sunburst_" + nameSuffix + ".html"), new VisualizationTemplate().renderZoomableSunburst(items), UTF_8);
     }
 
+    private void addCommitZoomableCircles(String nameSuffix, File folder, List<SourceFile> sourceFiles, int daysAgo) throws IOException {
+        List<VisualizationItem> commitItems = getZoomableCirclesCommitItems(sourceFiles, daysAgo > 0 ? daysAgo : THOUSAND_YEARS);
+        String suffix = daysAgo > 0 ? "_" + daysAgo + "_" + nameSuffix : "";
+        FileUtils.write(new File(folder, "zoomable_circles_commits" + suffix + ".html"), new VisualizationTemplate().renderZoomableCircles(commitItems), UTF_8);
+        FileUtils.write(new File(folder, "zoomable_sunburst_commits" + suffix + ".html"), new VisualizationTemplate().renderZoomableSunburst(commitItems), UTF_8);
+    }
+
+    private void addContributorsZoomableCircles(String nameSuffix, File folder, List<SourceFile> sourceFiles, int daysAgo) throws IOException {
+        List<VisualizationItem> commitItems = getZoomableCirclesContributorItems(sourceFiles, daysAgo > 0 ? daysAgo : THOUSAND_YEARS);
+        String suffix = (daysAgo > 0 ? ("_" + daysAgo) : "") + ("_" + nameSuffix);
+        FileUtils.write(new File(folder, "zoomable_circles_contributors" + suffix + ".html"), new VisualizationTemplate().renderZoomableCircles(commitItems), UTF_8);
+        FileUtils.write(new File(folder, "zoomable_sunburst_contributors" + suffix + ".html"), new VisualizationTemplate().renderZoomableSunburst(commitItems), UTF_8);
+    }
+
+    private void addRiskColoredZoomableCircles(File folder, List<SourceFile> sourceFiles, String type,
+                                               nl.obren.sokrates.sourcecode.threshold.Thresholds thresholds, Palette palette, DirectoryNode.SourceFileValueExtractor valueExtractor) throws IOException {
+        List<VisualizationItem> items = getZoomableCirclesRiskProfileItems(sourceFiles, thresholds, palette, valueExtractor);
+        FileUtils.write(new File(folder, "zoomable_circles_main_" + type + "_coloring.html"), new VisualizationTemplate().renderZoomableCircles(items), UTF_8);
+    }
+
     private List<VisualizationItem> getZoomableCirclesItems(List<SourceFile> sourceFiles) {
         DirectoryNode directoryTree = PathStringsToTreeStructure.createDirectoryTree(sourceFiles);
         if (directoryTree != null) {
             return directoryTree.toVisualizationItems();
+        }
+
+        return new ArrayList<>();
+    }
+
+    private List<VisualizationItem> getZoomableCirclesCommitItems(List<SourceFile> sourceFiles, int daysAgo) {
+        DirectoryNode directoryTree = PathStringsToTreeStructure.createDirectoryTree(sourceFiles);
+        if (directoryTree != null) {
+            return directoryTree.toVisualizationCommitItems(daysAgo);
+        }
+
+        return new ArrayList<>();
+    }
+
+    private List<VisualizationItem> getZoomableCirclesContributorItems(List<SourceFile> sourceFiles, int daysAgo) {
+        DirectoryNode directoryTree = PathStringsToTreeStructure.createDirectoryTree(sourceFiles);
+        if (directoryTree != null) {
+            return directoryTree.toVisualizationContributorItems(daysAgo);
+        }
+
+        return new ArrayList<>();
+    }
+
+    private List<VisualizationItem> getZoomableCirclesRiskProfileItems(
+            List<SourceFile> sourceFiles, nl.obren.sokrates.sourcecode.threshold.Thresholds thresholds, Palette palette, DirectoryNode.SourceFileValueExtractor valueExtractor) {
+        DirectoryNode directoryTree = PathStringsToTreeStructure.createDirectoryTree(sourceFiles);
+        if (directoryTree != null) {
+            return directoryTree.toVisualizationRiskColoringItems(thresholds, palette, valueExtractor);
         }
 
         return new ArrayList<>();

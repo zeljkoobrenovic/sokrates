@@ -1,9 +1,14 @@
 package nl.obren.sokrates.cli;
 
 import nl.obren.sokrates.common.renderingutils.VisualizationItem;
+import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.sourcecode.SourceFile;
+import nl.obren.sokrates.sourcecode.filehistory.CommitInfo;
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 public class PathStringsToTreeStructure {
     public static DirectoryNode createDirectoryTree(final List<SourceFile> list) {
@@ -131,5 +136,94 @@ class DirectoryNode {
         });
 
         return items;
+    }
+
+    public List<VisualizationItem> toVisualizationCommitItems(int daysAgo) {
+        List<VisualizationItem> items = new ArrayList<>();
+
+        children.forEach(child -> {
+            String name = child.value;
+            int size = child.getSourceFile() != null && child.getSourceFile().getRelativePath().endsWith(name) && child.getSourceFile().getFileModificationHistory() != null
+                    ? (int) child.getSourceFile().getFileModificationHistory().getCommits().stream().filter(c -> DateUtils.isCommittedLessThanDaysAgo(c.getDate(), daysAgo)).count()
+                    : 0;
+            VisualizationItem item = new VisualizationItem(name + (size > 0 ? " (" + size + ")" : ""), size);
+            List<VisualizationItem> children = child.toVisualizationCommitItems(daysAgo);
+            if (size > 0 || children.size() > 0) {
+                if (size == 1) {
+                    item.setColor("grey");
+                }
+                items.add(item);
+                item.getChildren().addAll(children);
+            }
+        });
+
+        return items;
+    }
+
+    public List<VisualizationItem> toVisualizationContributorItems(int daysAgo) {
+        List<VisualizationItem> items = new ArrayList<>();
+
+        children.forEach(child -> {
+            String name = child.value;
+            int size;
+            if (child.getSourceFile() != null && child.getSourceFile().getRelativePath().endsWith(name) && child.getSourceFile().getFileModificationHistory() != null) {
+                Stream<CommitInfo> commitInfoStream = child.getSourceFile().getFileModificationHistory().getCommits().stream().filter(c -> DateUtils.isCommittedLessThanDaysAgo(c.getDate(), daysAgo));
+                Set<String> emails = new HashSet<>();
+                commitInfoStream.forEach(commitInfo -> emails.add(commitInfo.getEmail()));
+                size = emails.size();
+            } else {
+                size = 0;
+            }
+            VisualizationItem item = new VisualizationItem(name + (size > 0 ? " (" + size + ")" : ""), size);
+            List<VisualizationItem> children = child.toVisualizationContributorItems(daysAgo);
+            if (size > 0 || children.size() > 0) {
+                if (size == 1) {
+                    item.setColor("grey");
+                }
+                items.add(item);
+                item.getChildren().addAll(children);
+            }
+        });
+
+        return items;
+    }
+
+    public List<VisualizationItem> toVisualizationRiskColoringItems(Thresholds thresholds, Palette palette, SourceFileValueExtractor valueExtractor) {
+        List<VisualizationItem> items = new ArrayList<>();
+
+        children.forEach(child -> {
+            String name = child.value;
+            int value;
+            if (child.getSourceFile() != null && child.getSourceFile().getRelativePath().endsWith(name)) {
+                value = valueExtractor.getValue(child.getSourceFile());
+            } else {
+                value = 0;
+            }
+            VisualizationItem item = new VisualizationItem(name + (value > 0 ? " (" + value + ")" : ""), value);
+            List<VisualizationItem> children = child.toVisualizationRiskColoringItems(thresholds, palette, valueExtractor);
+            if (value > 0 || children.size() > 0) {
+                item.setColor(getColor(thresholds, palette, value));
+                items.add(item);
+                item.getChildren().addAll(children);
+            }
+        });
+
+        return items;
+    }
+
+    private String getColor(Thresholds thresholds, Palette palette, int size) {
+        List<String> colors = palette.getColors();
+        if (colors.size() < 5) return "";
+
+        if (size <= thresholds.getLow()) return colors.get(4);
+        if (size <= thresholds.getMedium()) return colors.get(3);
+        if (size <= thresholds.getHigh()) return colors.get(2);
+        if (size <= thresholds.getVeryHigh()) return colors.get(1);
+
+        return colors.get(0);
+    }
+
+    public interface SourceFileValueExtractor {
+        int getValue(SourceFile sourceFile);
     }
 }

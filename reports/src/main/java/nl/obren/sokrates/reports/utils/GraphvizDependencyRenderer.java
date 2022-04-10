@@ -30,6 +30,7 @@ public class GraphvizDependencyRenderer {
     private boolean changingArrowColor = false;
     private String arrowColorChanging = "#00688b";
     private String arrowColor = "#00688b";
+    private String cyclicArrowColor = "#DC143C";
     private String defaultNodeFillColor = "grey";
     private int maxNumberOfDependencies;
     private boolean reverseDirection = false;
@@ -151,7 +152,7 @@ public class GraphvizDependencyRenderer {
                     int thickness = getThickness(componentDependency, maxCount);
                     String color = componentDependency.getColor();
                     if (StringUtils.isBlank(color)) {
-                        color = isCyclic(componentDependencies, componentDependency) ? "#DC143C" : this.arrowColor;
+                        color = isCyclic(componentDependencies, componentDependency) ? this.cyclicArrowColor : this.arrowColor;
                     }
                     int transparency = (int) (255.0 * (0.3 + 0.7 * thickness / 10.0));
                     color += String.format("%02X", transparency);
@@ -205,6 +206,14 @@ public class GraphvizDependencyRenderer {
 
     public void setArrowColor(String arrowColor) {
         this.arrowColor = arrowColor;
+    }
+
+    public String getCyclicArrowColor() {
+        return cyclicArrowColor;
+    }
+
+    public void setCyclicArrowColor(String cyclicArrowColor) {
+        this.cyclicArrowColor = cyclicArrowColor;
     }
 
     public String getDefaultNodeFillColor() {

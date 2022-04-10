@@ -11,7 +11,6 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.Collections;
@@ -19,6 +18,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ContributorsReportUtils {
+
+    public static final int MAX_CONTRIBUTOR_LIST_SIZE = 500;
+
     public static void addContributorsSection(CodeAnalysisResults analysisResults, RichTextReport report) {
         ContributorsAnalysisResults contributorsAnalysisResults = analysisResults.getContributorsAnalysisResults();
         List<Contributor> contributors = contributorsAnalysisResults.getContributors();
@@ -102,7 +104,7 @@ public class ContributorsReportUtils {
         long rookiesCount = contributors.stream().filter(c -> c.isRookie()).count();
         long veteransCount = activeCount - rookiesCount;
         long historicalCount = contributors.size() - activeCount;
-        indexReport.startSubSection("Contributors", "");
+        indexReport.startDiv("");
         indexReport.addLevel2Header("Recent Contributors (" + activeCount
                 + " = " + veteransCount + " " + (veteransCount == 1 ? "veteran" : "veterans")
                 + " + " + rookiesCount + " " + (rookiesCount == 1 ? "rookie" : "rookies") + ")");
@@ -138,10 +140,10 @@ public class ContributorsReportUtils {
         }
         indexReport.addLevel2Header("Historical Contributors (" + historicalCount + ")", "margin-top: 40px");
         indexReport.addParagraph("Last contributed more than 6 months ago", "color: grey");
-        contributors.stream().filter(c -> !c.isActive()).forEach(contributor -> {
+        contributors.stream().limit(MAX_CONTRIBUTOR_LIST_SIZE).filter(c -> !c.isActive()).forEach(contributor -> {
             addContributor(indexReport, max, total, contributor);
         });
-        indexReport.endSection();
+        indexReport.endDiv();
     }
 
     public static void addContributor(RichTextReport indexReport, int max, int total, Contributor contributor) {
