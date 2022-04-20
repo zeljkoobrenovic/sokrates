@@ -31,6 +31,19 @@ public class PathStringsToTreeStructure {
 
         return treeRootNode;
     }
+
+    public static String getColor(Thresholds thresholds, Palette palette, int size) {
+        List<String> colors = palette.getColors();
+        if (colors.size() < 5) return "";
+
+        if (size <= thresholds.getLow()) return colors.get(4);
+        if (size <= thresholds.getMedium()) return colors.get(3);
+        if (size <= thresholds.getHigh()) return colors.get(2);
+        if (size <= thresholds.getVeryHigh()) return colors.get(1);
+
+        return colors.get(0);
+    }
+
 }
 
 class DirectoryNode {
@@ -202,25 +215,13 @@ class DirectoryNode {
             VisualizationItem item = new VisualizationItem(name + (value > 0 ? " (" + value + ")" : ""), value);
             List<VisualizationItem> children = child.toVisualizationRiskColoringItems(thresholds, palette, valueExtractor);
             if (value > 0 || children.size() > 0) {
-                item.setColor(getColor(thresholds, palette, value));
+                item.setColor(PathStringsToTreeStructure.getColor(thresholds, palette, value));
                 items.add(item);
                 item.getChildren().addAll(children);
             }
         });
 
         return items;
-    }
-
-    private String getColor(Thresholds thresholds, Palette palette, int size) {
-        List<String> colors = palette.getColors();
-        if (colors.size() < 5) return "";
-
-        if (size <= thresholds.getLow()) return colors.get(4);
-        if (size <= thresholds.getMedium()) return colors.get(3);
-        if (size <= thresholds.getHigh()) return colors.get(2);
-        if (size <= thresholds.getVeryHigh()) return colors.get(1);
-
-        return colors.get(0);
     }
 
     public interface SourceFileValueExtractor {

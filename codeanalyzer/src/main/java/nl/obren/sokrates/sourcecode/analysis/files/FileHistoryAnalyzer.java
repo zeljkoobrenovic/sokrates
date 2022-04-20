@@ -331,7 +331,7 @@ public class FileHistoryAnalyzer extends Analyzer {
 
     private void addFilesWithLeastContributors(List<SourceFile> sourceFiles, FilesHistoryAnalysisResults filesHistoryAnalysisResults, int sampleSize) {
         List<SourceFile> files = new ArrayList<>(sourceFiles);
-        Collections.sort(files, Comparator.comparingInt(o -> (o.getFileModificationHistory() == null ? 0 : -o.getFileModificationHistory().getDates().size())));
+        Collections.sort(files, Comparator.comparingInt(o -> -o.getLinesOfCode()));
         Collections.sort(files, Comparator.comparingInt(this::getCountContributors));
         int index[] = {0};
         files.forEach(sourceFile -> {

@@ -79,7 +79,10 @@ public class FileChurnReportGenerator {
         addGraphOverallChange(report, codeAnalysisResults.getFilesHistoryAnalysisResults().getOverallFileChangeDistribution());
         report.addLineBreak();
         report.addHtmlContent("explore: ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_update_frequency_coloring.html'>zoomable circles</a> | ");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_update_frequency_coloring.html'>grouped by folders</a>");
+        report.addHtmlContent(" | ");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_update_frequency_coloring_categories.html'>grouped by update frequency</a>");
+        report.addHtmlContent(" | ");
         report.addHtmlContent("<a target='_blank' href='../data/text/mainFilesWithHistory.txt'>data</a>");
         report.endSection();
 
@@ -87,7 +90,10 @@ public class FileChurnReportGenerator {
         addGraphOverallContributorCount(report, codeAnalysisResults.getFilesHistoryAnalysisResults().getOverallContributorsCountDistribution());
         report.addLineBreak();
         report.addHtmlContent("explore: ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_contributors_count_coloring.html'>zoomable circles</a> | ");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_contributors_count_coloring.html'>grouped by folders</a>");
+        report.addHtmlContent(" | ");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_contributors_count_coloring_categories.html'>grouped by contributors count</a>");
+        report.addHtmlContent(" | ");
         report.addHtmlContent("<a target='_blank' href='../data/text/mainFilesWithHistory.txt'>data</a>");
         report.endSection();
         report.endSection();

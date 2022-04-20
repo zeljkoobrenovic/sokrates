@@ -158,7 +158,9 @@ public class FileAgeReportGenerator {
         report.addHtmlContent(PieChartUtils.getRiskDistributionChart(distribution, ageLabels, palette));
         report.addLineBreak();
         report.addHtmlContent("explore: ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_age_coloring.html'>zoomable circles</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_age_coloring.html'>grouped by folders</a>");
+        report.addHtmlContent(" | ");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_age_coloring_categories.html'>grouped by age</a>");
         report.endSection();
     }
 
@@ -190,7 +192,9 @@ public class FileAgeReportGenerator {
         report.addHtmlContent(PieChartUtils.getRiskDistributionChart(distribution, ageLabels, palette));
         report.addLineBreak();
         report.addHtmlContent("explore: ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_freshness_coloring.html'>zoomable circles</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_freshness_coloring.html'>grouped by folders</a>");
+        report.addHtmlContent(" | ");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_freshness_coloring_categories.html'>grouped by freshness</a>");
         report.endSection();
     }
 

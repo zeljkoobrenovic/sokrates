@@ -51,6 +51,7 @@ import org.apache.commons.logging.LogFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -712,6 +713,9 @@ public class CommandLineInterface {
                                                nl.obren.sokrates.sourcecode.threshold.Thresholds thresholds, Palette palette, DirectoryNode.SourceFileValueExtractor valueExtractor) throws IOException {
         List<VisualizationItem> items = getZoomableCirclesRiskProfileItems(sourceFiles, thresholds, palette, valueExtractor);
         FileUtils.write(new File(folder, "zoomable_circles_main_" + type + "_coloring.html"), new VisualizationTemplate().renderZoomableCircles(items), UTF_8);
+
+        List<VisualizationItem> itemsByCategory = getZoomableCirclesRiskProfileItemsCategories(sourceFiles, thresholds, palette, valueExtractor);
+        FileUtils.write(new File(folder, "zoomable_circles_main_" + type + "_coloring_categories.html"), new VisualizationTemplate().renderZoomableCircles(itemsByCategory), UTF_8);
     }
 
     private List<VisualizationItem> getZoomableCirclesItems(List<SourceFile> sourceFiles) {
@@ -749,6 +753,35 @@ public class CommandLineInterface {
         }
 
         return new ArrayList<>();
+    }
+
+    private List<VisualizationItem> getZoomableCirclesRiskProfileItemsCategories(
+            List<SourceFile> sourceFiles, nl.obren.sokrates.sourcecode.threshold.Thresholds thresholds, Palette palette, DirectoryNode.SourceFileValueExtractor valueExtractor) {
+
+        VisualizationItem item1 = new VisualizationItem(thresholds.getNegligibleRiskLabel(), 0);
+        VisualizationItem item2 = new VisualizationItem(thresholds.getLowRiskLabel(), 0);
+        VisualizationItem item3 = new VisualizationItem(thresholds.getMediumRiskLabel(), 0);
+        VisualizationItem item4 = new VisualizationItem(thresholds.getHighRiskLabel(), 0);
+        VisualizationItem item5 = new VisualizationItem(thresholds.getVeryHighRiskLabel(), 0);
+
+        sourceFiles.forEach(sourceFile -> {
+            int value = valueExtractor.getValue(sourceFile);
+            String path = sourceFile.getRelativePath();
+            int loc = sourceFile.getLinesOfCode();
+            if (value <= thresholds.getLow()) {
+                item1.getChildren().add(new VisualizationItem(path, loc, PathStringsToTreeStructure.getColor(thresholds, palette, value)));
+            } else if (value <= thresholds.getMedium()) {
+                item2.getChildren().add(new VisualizationItem(path, loc, PathStringsToTreeStructure.getColor(thresholds, palette, value)));
+            } else if (value <= thresholds.getHigh()) {
+                item3.getChildren().add(new VisualizationItem(path, loc, PathStringsToTreeStructure.getColor(thresholds, palette, value)));
+            } else if (value <= thresholds.getVeryHigh()) {
+                item4.getChildren().add(new VisualizationItem(path, loc, PathStringsToTreeStructure.getColor(thresholds, palette, value)));
+            } else {
+                item5.getChildren().add(new VisualizationItem(path, loc, PathStringsToTreeStructure.getColor(thresholds, palette, value)));
+            }
+        });
+
+        return new ArrayList<>(Arrays.asList(item1, item2, item3, item4, item5));
     }
 
     private void generate3DUnitsView(File visualsFolder, CodeAnalysisResults analysisResults) {

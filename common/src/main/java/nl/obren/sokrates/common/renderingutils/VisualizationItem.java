@@ -18,6 +18,12 @@ public class VisualizationItem {
         this.size = size;
     }
 
+    public VisualizationItem(String name, Integer size, String color) {
+        this.name = name;
+        this.color = color;
+        this.size = size;
+    }
+
     public String getName() {
         return name;
     }
