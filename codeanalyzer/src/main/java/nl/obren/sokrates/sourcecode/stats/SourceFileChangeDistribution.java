@@ -75,6 +75,17 @@ public class SourceFileChangeDistribution extends RiskDistributionStats {
         return this;
     }
 
+    public SourceFileChangeDistribution getOverallContributorsCountDistribution(List<SourceFile> files) {
+        reset();
+        if (files != null) {
+            files.stream().filter(f -> f.getFileModificationHistory() != null).forEach(sourceFile -> {
+                update(sourceFile.getFileModificationHistory() != null ? sourceFile.getFileModificationHistory().countContributors() : 0,
+                        sourceFile.getLinesOfCode());
+            });
+        }
+        return this;
+    }
+
     private int getNumberOfChanges(SourceFile sourceFile) {
         return sourceFile.getFileModificationHistory().getDates().size();
     }

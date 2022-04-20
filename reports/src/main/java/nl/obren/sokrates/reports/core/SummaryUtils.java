@@ -374,13 +374,15 @@ public class SummaryUtils {
 
         FilesHistoryAnalysisResults results = analysisResults.getFilesHistoryAnalysisResults();
         report.startTableCell("border: none; padding-top: 4px; vertical-align: top");
-        SourceFileChangeDistribution age = results.getOverallFileChangeDistribution();
-        report.addContentInDiv(getRiskProfileVisual(age, Palette.getHeatPalette()));
+        SourceFileChangeDistribution fileChange = results.getOverallFileChangeDistribution();
+        SourceFileChangeDistribution contributorsCount = results.getOverallContributorsCountDistribution();
+        report.addContentInDiv(getRiskProfileVisual(fileChange, Palette.getHeatPalette()));
+        report.addContentInDiv(getRiskProfileVisual(contributorsCount, Palette.getHeatPalette()));
         report.endTableCell();
 
         report.startTableCell("border: none; padding-top: 4px;");
         Thresholds thresholds = analysisResults.getCodeConfiguration().getAnalysis().getFileUpdateFrequencyThresholds();
-        report.addParagraph(FormattingUtils.getFormattedPercentage(age.getVeryHighRiskPercentage() + age.getHighRiskPercentage())
+        report.addParagraph(FormattingUtils.getFormattedPercentage(fileChange.getVeryHighRiskPercentage() + fileChange.getHighRiskPercentage())
                 + "% of code updated more than " + thresholds.getHigh() + " times", "margin-bottom: 2px");
         report.addParagraph("Also see <a href='FileTemporalDependencies.html' target='_blank'>temporal dependencies</a> for files frequently changed in same commits.", "font-size: 80%; color: grey;");
         report.endTableCell();

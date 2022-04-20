@@ -30,10 +30,12 @@ public class FilesReportUtils {
             header += "<th># long lines</th>";
         }
         if (showAge) {
-            header += "<th>last modified<br/>(days ago)</th>";
-            header += "<th>created<br/>(days ago)</th>";
-            header += "<th># changes</th>";
+            header += "<th>created</th>";
+            header += "<th>last modified</th>";
+            header += "<th># changes<br>(days)</th>";
             header += "<th># contributors</th>";
+            header += "<th>first<br>contributor</th>";
+            header += "<th>latest<br>contributor</th>";
         }
         table.append(header + "\n");
         table.append("<tr>");
@@ -73,10 +75,12 @@ public class FilesReportUtils {
             if (showAge) {
                 FileModificationHistory history = sourceFile.getFileModificationHistory();
                 if (history != null) {
-                    table.append("<td style='text-align: center'>" + history.daysSinceLatestUpdate() + "</td>\n");
-                    table.append("<td style='text-align: center'>" + history.daysSinceFirstUpdate() + "</td>\n");
+                    table.append("<td style='text-align: center'>" + history.getOldestDate() + "</td>\n");
+                    table.append("<td style='text-align: center'>" + history.getLatestDate() + "</td>\n");
                     table.append("<td style='text-align: center'>" + history.getDates().size() + "</td>\n");
                     table.append("<td style='text-align: center'>" + history.countContributors() + "</td>\n");
+                    table.append("<td style='text-align: center; font-size: 80%; color: grey'>" + StringUtils.abbreviate(history.getOldestContributor(), 30) + "</td>\n");
+                    table.append("<td style='text-align: center; font-size: 80%; color: grey'>" + StringUtils.abbreviate(history.getLatestContributor(), 30) + "</td>\n");
                 } else {
                     table.append("<td style='text-align: center'></td>\n");
                     table.append("<td style='text-align: center'></td>\n");

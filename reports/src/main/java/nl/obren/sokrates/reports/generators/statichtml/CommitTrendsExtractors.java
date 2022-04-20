@@ -1,5 +1,6 @@
 package nl.obren.sokrates.reports.generators.statichtml;
 
+import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
@@ -17,7 +18,8 @@ public class CommitTrendsExtractors {
 
     public Map<String, Map<String, Integer>> getCommitsPerYear(String logicalDecompositionKey) {
         Map<String, Map<String, Integer>> componentsMap = new HashMap<>();
-        analysisResults.getFilesHistoryAnalysisResults().getAllFiles().forEach(item -> {
+        List<SourceFile> allFiles = analysisResults.getFilesHistoryAnalysisResults().getAllFiles();
+        allFiles.stream().filter(item -> item.getFileModificationHistory() != null).forEach(item -> {
             List<NamedSourceCodeAspect> logicalComponents = item.getLogicalComponents(logicalDecompositionKey);
             if (logicalComponents.size() > 0) {
                 String componentName = logicalComponents.get(0).getName();

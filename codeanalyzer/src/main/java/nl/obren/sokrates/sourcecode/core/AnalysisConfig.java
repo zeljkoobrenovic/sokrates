@@ -56,6 +56,9 @@ public class AnalysisConfig {
     // Thresholds for risk profiles used in file update frequency analyses
     private Thresholds fileUpdateFrequencyThresholds = Thresholds.defaultFileUpdateFrequencyThresholds();
 
+    // Thresholds for risk profiles used in file update frequency analyses
+    private Thresholds fileContributorsCountThresholds = Thresholds.defaultFileContributorsCountThresholds();
+
     // Thresholds for risk profiles used in unit size analyses
     private Thresholds unitSizeThresholds = Thresholds.defaultUnitSizeThresholds();
 
@@ -179,6 +182,16 @@ public class AnalysisConfig {
     public void setFileUpdateFrequencyThresholds(Thresholds fileUpdateFrequencyThresholds) {
         this.fileUpdateFrequencyThresholds = fileUpdateFrequencyThresholds;
     }
+
+
+    public Thresholds getFileContributorsCountThresholds() {
+        return fileContributorsCountThresholds;
+    }
+
+    public void setFileContributorsCountThresholds(Thresholds fileContributorsCountThresholds) {
+        this.fileContributorsCountThresholds = fileContributorsCountThresholds;
+    }
+
 
     public Thresholds getUnitSizeThresholds() {
         return unitSizeThresholds;

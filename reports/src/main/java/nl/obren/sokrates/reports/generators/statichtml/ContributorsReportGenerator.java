@@ -297,7 +297,7 @@ public class ContributorsReportGenerator {
 
     private void addDependenciesViaSharedFiles(List<ComponentDependency> peopleDependencies, List<ComponentDependency> peopleFileDependencies, int daysAgo) {
         report.addLevel3Header("Contributor Dependencies via Shared Files", "margin-top: 20px");
-        report.startShowMoreBlock("show graph...");
+        report.startShowMoreBlock(" - show contributor dependencies 2D graph");
         report.addParagraph("The number on lines shows the number of same files that both persons changed in past <b>" + daysAgo + "</b> days.", "color: grey");
         GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
         graphvizDependencyRenderer.setMaxNumberOfDependencies(100);

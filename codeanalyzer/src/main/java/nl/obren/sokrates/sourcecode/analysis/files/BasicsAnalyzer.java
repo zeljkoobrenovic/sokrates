@@ -40,8 +40,7 @@ public class BasicsAnalyzer extends Analyzer {
     public void analyze() {
         SourceCodeFiles sourceCodeFiles = new SourceCodeFiles();
 
-        sourceCodeFiles.load(new File(CodeConfiguration.getAbsoluteSrcRoot(codeConfiguration.getSrcRoot(), codeConfigurationFile)),
-                progressFeedback);
+        sourceCodeFiles.load(new File(CodeConfiguration.getAbsoluteSrcRoot(codeConfiguration.getSrcRoot(), codeConfigurationFile)), progressFeedback);
 
         results.setFilesExcludedByExtension(sourceCodeFiles.getFilesExcludedByExtension());
         results.setIgnoredFilesGroups(sourceCodeFiles.getIgnoredFilesGroups());

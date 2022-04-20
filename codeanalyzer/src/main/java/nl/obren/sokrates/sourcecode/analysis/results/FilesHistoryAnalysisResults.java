@@ -22,6 +22,7 @@ public class FilesHistoryAnalysisResults {
     private SourceFileAgeDistribution overallFileLastModifiedDistribution;
     private SourceFileAgeDistribution overallFileFirstModifiedDistribution;
     private SourceFileChangeDistribution overallFileChangeDistribution;
+    private SourceFileChangeDistribution overallContributorsCountDistribution;
 
     private List<RiskDistributionStats> changeDistributionPerExtension = new ArrayList<>();
     private List<RiskDistributionStats> lastModifiedDistributionPerExtension = new ArrayList<>();
@@ -52,6 +53,7 @@ public class FilesHistoryAnalysisResults {
     private List<SourceFile> mostPreviouslyChangedFiles = new ArrayList<>();
     private List<SourceFile> mostChangedFiles = new ArrayList<>();
     private List<SourceFile> filesWithMostContributors = new ArrayList<>();
+    private List<SourceFile> filesWithLeastContributors = new ArrayList<>();
     private String firstDate = "";
     private String latestDate = "";
     private int daysBetweenFirstAndLastDate;
@@ -168,6 +170,16 @@ public class FilesHistoryAnalysisResults {
     public void setOverallFileChangeDistribution(SourceFileChangeDistribution overallFileChangeDistribution) {
         this.overallFileChangeDistribution = overallFileChangeDistribution;
     }
+
+    public SourceFileChangeDistribution getOverallContributorsCountDistribution() {
+        return overallContributorsCountDistribution;
+    }
+
+    public void setOverallContributorsCountDistribution(SourceFileChangeDistribution overallContributorsCountDistribution) {
+        this.overallContributorsCountDistribution = overallContributorsCountDistribution;
+    }
+
+
 
     public List<RiskDistributionStats> getChangeDistributionPerExtension() {
         return changeDistributionPerExtension;
@@ -348,5 +360,13 @@ public class FilesHistoryAnalysisResults {
 
     public void setFilesWithMostContributors(List<SourceFile> filesWithMostContributors) {
         this.filesWithMostContributors = filesWithMostContributors;
+    }
+
+    public List<SourceFile> getFilesWithLeastContributors() {
+        return filesWithLeastContributors;
+    }
+
+    public void setFilesWithLeastContributors(List<SourceFile> filesWithLeastContributors) {
+        this.filesWithLeastContributors = filesWithLeastContributors;
     }
 }

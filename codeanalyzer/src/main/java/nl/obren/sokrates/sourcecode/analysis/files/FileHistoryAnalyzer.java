@@ -151,14 +151,17 @@ public class FileHistoryAnalyzer extends Analyzer {
 
         Thresholds fileAgeThresholds = codeConfiguration.getAnalysis().getFileAgeThresholds();
         Thresholds fileUpdateFrequencyThresholds = codeConfiguration.getAnalysis().getFileUpdateFrequencyThresholds();
+        Thresholds fileContributorCountThresholds = codeConfiguration.getAnalysis().getFileContributorsCountThresholds();
 
         SourceFileAgeDistribution lastModifiedDistribution = new SourceFileAgeDistribution(fileAgeThresholds, LAST_MODIFIED).getOverallLastModifiedDistribution(sourceFiles);
         SourceFileAgeDistribution firstModifiedDistribution = new SourceFileAgeDistribution(fileAgeThresholds, LAST_MODIFIED).getOverallFirstModifiedDistribution(sourceFiles);
         SourceFileChangeDistribution changeDistribution = new SourceFileChangeDistribution(fileUpdateFrequencyThresholds).getOverallDistribution(sourceFiles);
+        SourceFileChangeDistribution contributorCountDistribution = new SourceFileChangeDistribution(fileContributorCountThresholds).getOverallContributorsCountDistribution(sourceFiles);
 
         analysisResults.setOverallFileLastModifiedDistribution(lastModifiedDistribution);
         analysisResults.setOverallFileFirstModifiedDistribution(firstModifiedDistribution);
         analysisResults.setOverallFileChangeDistribution(changeDistribution);
+        analysisResults.setOverallContributorsCountDistribution(contributorCountDistribution);
 
         analysisResults.setChangeDistributionPerExtension(
                 new SourceFileChangeDistribution(fileUpdateFrequencyThresholds).getDistributionPerExtension(sourceFiles));
@@ -180,6 +183,7 @@ public class FileHistoryAnalyzer extends Analyzer {
         addMostPreviouslyChangedFiles(allFiles, analysisResults, maxTopListSize);
         addMostChangedFiles(allFiles, analysisResults, maxTopListSize);
         addFilesWithMostContributors(allFiles, analysisResults, maxTopListSize);
+        addFilesWithLeastContributors(allFiles, analysisResults, maxTopListSize);
 
         addMetrics(lastModifiedDistribution);
     }
@@ -314,15 +318,27 @@ public class FileHistoryAnalyzer extends Analyzer {
 
     private void addFilesWithMostContributors(List<SourceFile> sourceFiles, FilesHistoryAnalysisResults filesHistoryAnalysisResults, int sampleSize) {
         List<SourceFile> files = new ArrayList<>(sourceFiles);
-        Collections.sort(files, (o1, o2) -> Integer.compare(getCountContributors(o2), getCountContributors(o1)));
-        Collections.sort(files, Comparator.comparingInt(o -> (o.getFileModificationHistory() == null ? 0 : o.getFileModificationHistory().getDates().size())));
-        Collections.reverse(files);
+        Collections.sort(files, Comparator.comparingInt(o -> (o.getFileModificationHistory() == null ? 0 : -o.getFileModificationHistory().getDates().size())));
+        Collections.sort(files, (o1, o2) -> getCountContributors(o2) - getCountContributors(o1));
         int index[] = {0};
         files.forEach(sourceFile -> {
             if (index[0]++ >= sampleSize) {
                 return;
             }
             filesHistoryAnalysisResults.getFilesWithMostContributors().add(sourceFile);
+        });
+    }
+
+    private void addFilesWithLeastContributors(List<SourceFile> sourceFiles, FilesHistoryAnalysisResults filesHistoryAnalysisResults, int sampleSize) {
+        List<SourceFile> files = new ArrayList<>(sourceFiles);
+        Collections.sort(files, Comparator.comparingInt(o -> (o.getFileModificationHistory() == null ? 0 : -o.getFileModificationHistory().getDates().size())));
+        Collections.sort(files, Comparator.comparingInt(this::getCountContributors));
+        int index[] = {0};
+        files.forEach(sourceFile -> {
+            if (index[0]++ >= sampleSize) {
+                return;
+            }
+            filesHistoryAnalysisResults.getFilesWithLeastContributors().add(sourceFile);
         });
     }
 

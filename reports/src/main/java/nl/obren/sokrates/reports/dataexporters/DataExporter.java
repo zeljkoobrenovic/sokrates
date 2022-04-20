@@ -45,7 +45,6 @@ import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
 import nl.obren.sokrates.sourcecode.search.FoundLine;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -690,30 +689,26 @@ public class DataExporter {
     private String getFilesWithHistoryAsTxt(List<SourceFile> sourceFiles) {
         StringBuilder builder = new StringBuilder();
 
-        builder
-                .append("path\t")
-                .append("# lines of code\t")
-                .append("number of updates\tdays since first update\tdays since last update\t")
-                .append("first updated\tlast updated\t")
+        builder.append("path\t# lines of code\t")
+                .append("# active days\tdays since first update\tdays since last update\t")
+                .append("# commits\t# contributors\t")
+                .append("first updated\tlast updated\tfirst contributor\tlast contributor")
                 .append("\n");
 
         sourceFiles.forEach(sourceFile -> {
             FileModificationHistory history = sourceFile.getFileModificationHistory();
             if (history != null) {
-                builder.append(sourceFile.getRelativePath())
-                        .append("\t")
-                        .append(sourceFile.getLinesOfCode())
-                        .append("\t")
-                        .append(history.getDates().size())
-                        .append("\t")
-                        .append(history.daysSinceFirstUpdate())
-                        .append("\t")
-                        .append(history.daysSinceLatestUpdate())
-                        .append("\t")
-                        .append(history.getOldestDate())
-                        .append("\t")
-                        .append(history.getLatestDate())
-                        .append("\n");
+                builder.append(sourceFile.getRelativePath()).append("\t")
+                        .append(sourceFile.getLinesOfCode()).append("\t")
+                        .append(history.getDates().size()).append("\t")
+                        .append(history.daysSinceFirstUpdate()).append("\t")
+                        .append(history.daysSinceLatestUpdate()).append("\t")
+                        .append(history.getCommits().size()).append("\t")
+                        .append(history.countContributors()).append("\t")
+                        .append(history.getOldestDate()).append("\t")
+                        .append(history.getLatestDate()).append("\t")
+                        .append(history.getOldestContributor()).append("\t")
+                        .append(history.getLatestContributor()).append("\n");
             }
         });
 

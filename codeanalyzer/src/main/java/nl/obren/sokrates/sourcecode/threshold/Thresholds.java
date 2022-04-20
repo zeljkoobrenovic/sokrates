@@ -38,6 +38,11 @@ public class Thresholds {
     }
 
     @JsonIgnore
+    public static Thresholds defaultFileContributorsCountThresholds() {
+        return new Thresholds(1, 5, 10, 25);
+    }
+
+    @JsonIgnore
     public static Thresholds defaultUnitSizeThresholds() {
         return new Thresholds(10, 20, 50, 100);
     }
@@ -114,7 +119,7 @@ public class Thresholds {
 
     @JsonIgnore
     public String getNegligibleRiskLabel() {
-        return "1-" + getLow();
+        return getLow() > 1 ? "1-" + getLow() : "1";
     }
 
     @JsonIgnore

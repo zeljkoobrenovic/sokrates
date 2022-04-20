@@ -28,16 +28,22 @@ import java.util.stream.Collectors;
 public class FileChurnReportGenerator {
     public static final String THE_NUMBER_OF_FILE_CHANGES = "File Change Frequency";
     public static final String THE_NUMBER_OF_FILE_CHANGES_DESCRIPTION = "The number of recorded file updates";
+    public static final String THE_CONTRIBUTORS_COUNT = "Contributors Count Frequency";
+    public static final String THE_CONTRIBUTORS_COUNT_DESCRIPTION = "The number of file contributors";
     private final Thresholds thresholds;
+    private final Thresholds thresholdsContributors;
 
     private CodeAnalysisResults codeAnalysisResults;
     private List<String> changeFrequencyLabels;
+    private List<String> contributorsCountFrequencyLabels;
     private int graphCounter = 1;
 
     public FileChurnReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
         thresholds = codeAnalysisResults.getCodeConfiguration().getAnalysis().getFileUpdateFrequencyThresholds();
+        thresholdsContributors = codeAnalysisResults.getCodeConfiguration().getAnalysis().getFileContributorsCountThresholds();
         changeFrequencyLabels = thresholds.getLabels();
+        contributorsCountFrequencyLabels = thresholdsContributors.getLabels();
     }
 
     public void addFileHistoryToReport(RichTextReport report) {
@@ -50,6 +56,7 @@ public class FileChurnReportGenerator {
         addGraphsPerLogicalComponents(report);
         addMostChangedFilesList(report);
         addFilesWithMostContributors(report);
+        addFilesWithLeastContributors(report);
         addCorrelations(report);
     }
 
@@ -67,17 +74,26 @@ public class FileChurnReportGenerator {
     }
 
     private void addOverallSections(RichTextReport report) {
-        report.startSection("File Change Frequency Overall", "");
-        addGraphOverallChange(report, codeAnalysisResults.getFilesHistoryAnalysisResults().getOverallFileChangeDistribution(),
-                THE_NUMBER_OF_FILE_CHANGES + " Overall", THE_NUMBER_OF_FILE_CHANGES_DESCRIPTION);
+        report.startSection("Overview", "");
+        report.startSubSection("File Change Frequency Overall", "");
+        addGraphOverallChange(report, codeAnalysisResults.getFilesHistoryAnalysisResults().getOverallFileChangeDistribution());
+        report.addLineBreak();
         report.addHtmlContent("explore: ");
         report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_update_frequency_coloring.html'>zoomable circles</a> | ");
         report.addHtmlContent("<a target='_blank' href='../data/text/mainFilesWithHistory.txt'>data</a>");
         report.endSection();
+
+        report.startSubSection("Contributors Count Frequency Overall", "");
+        addGraphOverallContributorCount(report, codeAnalysisResults.getFilesHistoryAnalysisResults().getOverallContributorsCountDistribution());
+        report.addLineBreak();
+        report.addHtmlContent("explore: ");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_contributors_count_coloring.html'>zoomable circles</a> | ");
+        report.addHtmlContent("<a target='_blank' href='../data/text/mainFilesWithHistory.txt'>data</a>");
+        report.endSection();
+        report.endSection();
     }
 
-    private void addGraphOverallChange(RichTextReport report, SourceFileChangeDistribution distribution, String title, String subtitle) {
-        report.startSubSection(title, subtitle);
+    private void addGraphOverallChange(RichTextReport report, SourceFileChangeDistribution distribution) {
         report.startUnorderedList();
         report.addListItem("There are <b>"
                 + RichTextRenderingUtils.renderNumberStrong(distribution.getTotalCount())
@@ -86,26 +102,56 @@ public class FileChurnReportGenerator {
                 ".");
         report.startUnorderedList();
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getVeryHighRiskCount())
-                + " files changed more than "
+                + " " + (distribution.getVeryHighRiskCount() == 1 ? "file" : "files") + " changed more than "
                 + thresholds.getVeryHigh()
                 + " times (" + RichTextRenderingUtils.renderNumberStrong(distribution.getVeryHighRiskValue())
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getHighRiskCount())
-                + " files changed " + thresholds.getHighRiskLabel() + " times (" + RichTextRenderingUtils.renderNumberStrong(distribution.getHighRiskValue())
+                + " " + (distribution.getHighRiskCount() == 1 ? "file" : "files") + " changed " + thresholds.getHighRiskLabel() + " times (" + RichTextRenderingUtils.renderNumberStrong(distribution.getHighRiskValue())
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getMediumRiskCount())
-                + " files changed " + thresholds.getMediumRiskLabel() + " times (" + RichTextRenderingUtils.renderNumberStrong(distribution.getMediumRiskValue())
+                + " " + (distribution.getMediumRiskCount() == 1 ? "file" : "files") + " changed " + thresholds.getMediumRiskLabel() + " times (" + RichTextRenderingUtils.renderNumberStrong(distribution.getMediumRiskValue())
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskCount())
-                + " files changed " + thresholds.getLowRiskLabel() + " times (" + RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskValue())
+                + " " + (distribution.getLowRiskCount() == 1 ? "file" : "files") + " changed " + thresholds.getLowRiskLabel() + " times (" + RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskValue())
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskCount())
-                + " files changed " + thresholds.getNegligibleRiskLabel() + " times (" + RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskValue())
+                + " " + (distribution.getNegligibleRiskCount() == 1 ? "file" : "files") + " changed " + thresholds.getNegligibleRiskLabel() + " times (" + RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskValue())
                 + " lines of code)");
         report.endUnorderedList();
         report.endUnorderedList();
         report.addHtmlContent(PieChartUtils.getRiskDistributionChart(distribution, changeFrequencyLabels, Palette.getHeatPalette()));
-        report.endSection();
+    }
+
+    private void addGraphOverallContributorCount(RichTextReport report, SourceFileChangeDistribution distribution) {
+        report.startUnorderedList();
+        report.addListItem("There are <b>"
+                + RichTextRenderingUtils.renderNumberStrong(distribution.getTotalCount())
+                + "</b> files with " + RichTextRenderingUtils.renderNumberStrong(distribution.getTotalValue())
+                + " lines of code" +
+                ".");
+        report.startUnorderedList();
+        report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getVeryHighRiskCount())
+                + " " + (distribution.getVeryHighRiskCount() == 1 ? "file" : "files") + " changed by more than "
+                + thresholdsContributors.getVeryHigh()
+                + " contributors (" + RichTextRenderingUtils.renderNumberStrong(distribution.getVeryHighRiskValue())
+                + " lines of code)");
+        report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getHighRiskCount())
+                + " " + (distribution.getHighRiskCount() == 1 ? "file" : "files") + " changed by " + thresholdsContributors.getHighRiskLabel() + " contributors (" + RichTextRenderingUtils.renderNumberStrong(distribution.getHighRiskValue())
+                + " lines of code)");
+        report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getMediumRiskCount())
+                + " " + (distribution.getMediumRiskCount() == 1 ? "file" : "files") + " changed by " + thresholdsContributors.getMediumRiskLabel() + " contributors (" + RichTextRenderingUtils.renderNumberStrong(distribution.getMediumRiskValue())
+                + " lines of code)");
+        report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskCount())
+                + " " + (distribution.getLowRiskCount() == 1 ? "file" : "files") + " changed by " + thresholdsContributors.getLowRiskLabel() + " contributors (" + RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskValue())
+                + " lines of code)");
+        report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskCount())
+                + " " + (distribution.getNegligibleRiskCount() == 1 ? "file" : "files") + " changed by " + thresholdsContributors.getNegligibleRiskLabel()
+                + " " + (thresholdsContributors.getLow() == 1 ? "contributor" : "contributors") + " (" + RichTextRenderingUtils.renderNumberStrong(distribution.getNegligibleRiskValue())
+                + " lines of code)");
+        report.endUnorderedList();
+        report.endUnorderedList();
+        report.addHtmlContent(PieChartUtils.getRiskDistributionChart(distribution, contributorsCountFrequencyLabels, Palette.getHeatPalette()));
     }
 
     private void addChangesGraphPerExtension(RichTextReport report, List<RiskDistributionStats> sourceFileAgeDistribution, String title, String subtitle) {
@@ -168,7 +214,16 @@ public class FileChurnReportGenerator {
 
     private void addFilesWithMostContributors(RichTextReport report) {
         List<SourceFile> files = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilesWithMostContributors();
-        report.startSection("Files With Most Contributors (Top " + files.size() + ")", "Files sorted by the number of unique email addresses found in commits.");
+        report.startSection("Files With Most Contributors (Top " + files.size() + ")", "Based on the number of unique email addresses found in commits.");
+        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+        report.addParagraph("<a href='../data/text/mainFilesWithHistory.txt' target='_blank'>See data for all files...</a>");
+        report.addHtmlContent(FilesReportUtils.getFilesTable(files, cacheSourceFiles, true, false, 500).toString());
+        report.endSection();
+    }
+
+    private void addFilesWithLeastContributors(RichTextReport report) {
+        List<SourceFile> files = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilesWithLeastContributors();
+        report.startSection("Files With Least Contributors (Top " + files.size() + ")", "Based on the number of unique email addresses found in commits.");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
         report.addParagraph("<a href='../data/text/mainFilesWithHistory.txt' target='_blank'>See data for all files...</a>");
         report.addHtmlContent(FilesReportUtils.getFilesTable(files, cacheSourceFiles, true, false, 500).toString());
@@ -198,6 +253,19 @@ public class FileChurnReportGenerator {
                         return linesOfCode > 0 ? p.countContributors() : 0;
                     },
                     p -> p.getDates().size(),
+                    p -> p.getPath());
+
+            correlationDiagramGenerator.addCorrelations("Number of Contributors vs. File Size", "# contributors", "lines of code",
+                    p -> {
+                        SourceFile sourceFileByRelativePath = codeAnalysisResults.getFilesAnalysisResults().getSourceFileByRelativePath(p.getPath());
+                        int linesOfCode = sourceFileByRelativePath != null ? sourceFileByRelativePath.getLinesOfCode() : 0;
+                        return linesOfCode > 0 ? p.countContributors() : 0;
+                    },
+                    p -> {
+                        SourceFile sourceFileByRelativePath = codeAnalysisResults.getFilesAnalysisResults().getSourceFileByRelativePath(p.getPath());
+                        int linesOfCode = sourceFileByRelativePath != null ? sourceFileByRelativePath.getLinesOfCode() : 0;
+                        return linesOfCode;
+                    },
                     p -> p.getPath());
 
             ProcessingStopwatch.end("reporting/file update frequency/correlations");

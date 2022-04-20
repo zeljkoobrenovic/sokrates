@@ -11,6 +11,7 @@ public class FileModificationHistory {
     private List<String> dates = new ArrayList<>();
     private List<CommitInfo> commits = new ArrayList<>();
     private String path = "";
+    private boolean sorted = false;
 
     public FileModificationHistory() {
     }
@@ -45,8 +46,22 @@ public class FileModificationHistory {
         return dates.get(dates.size() - 1);
     }
 
+    public String getOldestContributor() {
+        sortOldestFirst();
+        return commits.get(0).getEmail();
+    }
+
+    public String getLatestContributor() {
+        sortOldestFirst();
+        return commits.get(commits.size() - 1).getEmail();
+    }
+
     public void sortOldestFirst() {
-        Collections.sort(dates);
+        if (!sorted) {
+            sorted = true;
+            Collections.sort(dates);
+            Collections.sort(commits, (a, b) -> a.getDate().compareTo(b.getDate()));
+        }
     }
 
     public int daysSinceFirstUpdate() {

@@ -9,17 +9,22 @@ import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.util.Comparator;
 import java.util.List;
 
 public class ConventionUtils {
     private static final Log LOG = LogFactory.getLog(ConventionUtils.class);
 
     public static void addConventions(List<Convention> conventions, List<SourceFileFilter> sourceFileFilters, List<SourceFile> sourceFiles) {
+        int index[] = {0};
         sourceFiles.forEach(sourceFile -> {
-            conventions.forEach(convention -> {
+            index[0] += 1;
+            conventions.stream().sorted(Comparator.comparingInt(a -> a.getContentPattern().length())).forEach(convention -> {
+                String prefix = index[0] + " / " + sourceFiles.size() + ": ";
                 if (isNotAdded(convention, sourceFileFilters) && convention.matches(sourceFile)) {
                     sourceFileFilters.add(convention);
-                    LOG.info("  - path like \"" + convention.getPathPattern() + "\" / content like \"" + convention.getContentPattern() + "\"");
+                    LOG.info(prefix + "  - path like \"" + convention.getPathPattern() + "\" / content like \"" + convention.getContentPattern() + "\"");
+                    return;
                 }
             });
         });
