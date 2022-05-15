@@ -88,7 +88,7 @@
             return d.parent === root ? "inline" : "none";
         })
         .text(function (d) {
-            return d.data.name;
+            return d.data.name.length > 33 ? (d.data.name.substr(0, 14) + "..." + d.data.name.substr(d.data.name.length - 14))  : d.data.name;
         });
 
     var node = g.selectAll("circle,text");

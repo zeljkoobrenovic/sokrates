@@ -13,17 +13,23 @@ public class ProjectTag {
     // A tag color
     private String color = "";
 
-    // A list of regex patterns to tag projects. Any project with a name matching any of the regex patterns will be tagged with this tag.
+    // A list of regex name patterns to tag projects. Any project with a name matching any of the regex patterns will be tagged with this tag.
     private List<String> patterns = new ArrayList<>();
 
-    // A list of regex patterns used to exclude projects (if included in the patterns list)
+    // A list of regex name patterns used to exclude projects (if included in the name patterns list)
     private List<String> excludePatterns = new ArrayList<>();
 
-    // A list of extensions to include project if a project has this extensions as biggest (most line of code)
+    // A list of extensions to include project if a project has these extensions as biggest (most line of code)
     private List<String> mainExtensions = new ArrayList<>();
 
     // A list of extensions to be excluded (if project has this extension as the biggest one)
     private List<String> excludeExtensions = new ArrayList<>();
+
+    // A list of regex path patterns to tag projects. Any project with at least one file matching any of the regex patterns will be tagged with this tag.
+    private List<String> pathPatterns = new ArrayList<>();
+
+    // A list of regex path patterns used to exclude projects (if included in the path patterns list)
+    private List<String> excludePathPatterns = new ArrayList<>();
 
     public String getTag() {
         return tag;
@@ -73,8 +79,24 @@ public class ProjectTag {
         this.excludeExtensions = excludeExtensions;
     }
 
+    public List<String> getPathPatterns() {
+        return pathPatterns;
+    }
+
+    public void setPathPatterns(List<String> pathPatterns) {
+        this.pathPatterns = pathPatterns;
+    }
+
+    public List<String> getExcludePathPatterns() {
+        return excludePathPatterns;
+    }
+
+    public void setExcludePathPatterns(List<String> excludePathPatterns) {
+        this.excludePathPatterns = excludePathPatterns;
+    }
+
     @JsonIgnore
-    public boolean exclude(String name) {
+    public boolean excludeName(String name) {
         for (String pattern : excludePatterns) {
             if (RegexUtils.matchesEntirely(pattern, name)) {
                 return true;
@@ -85,10 +107,34 @@ public class ProjectTag {
     }
 
     @JsonIgnore
-    public boolean matches(String name) {
+    public boolean matchesName(String name) {
         for (String pattern : patterns) {
             if (RegexUtils.matchesEntirely(pattern, name)) {
                 return true;
+            }
+        }
+
+        return false;
+    }
+
+    @JsonIgnore
+    public boolean excludePath(String path) {
+        for (String pattern : excludePathPatterns) {
+            if (RegexUtils.matchesEntirely(pattern, path)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @JsonIgnore
+    public boolean matchesPath(List<String> paths) {
+        for (String path : paths) {
+            for (String pattern : pathPatterns) {
+                if (RegexUtils.matchesEntirely(pattern, path)) {
+                    return true;
+                }
             }
         }
 

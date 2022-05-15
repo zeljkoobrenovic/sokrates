@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class LandscapeAnalyzer {
     private static final Log LOG = LogFactory.getLog(LandscapeAnalyzer.class);
@@ -48,7 +49,8 @@ public class LandscapeAnalyzer {
                     String projectName = projectAnalysisResults.getMetadata().getName();
                     if (!landscapeConfiguration.isIncludeOnlyFirstProjectWithSameName() || !projectNames.contains(projectName)) {
                         projectNames.add(projectName);
-                        landscapeAnalysisResults.getProjectAnalysisResults().add(new ProjectAnalysisResults(link, projectAnalysisResults));
+                        List<String> files = this.getProjectFiles(link);
+                        landscapeAnalysisResults.getProjectAnalysisResults().add(new ProjectAnalysisResults(link, projectAnalysisResults, files));
                         projectAnalysisResults.getContributorsAnalysisResults().getContributors().forEach(contributor -> {
                             contributor.getCommitDates().forEach(commitDate -> {
                                 if (landscapeAnalysisResults.getLatestCommitDate() == "" || commitDate.compareTo(landscapeAnalysisResults.getLatestCommitDate()) > 0) {
@@ -182,4 +184,38 @@ public class LandscapeAnalyzer {
 
         return null;
     }
+
+    private List<String> getProjectFiles(SokratesProjectLink sokratesProjectLink) {
+        List<String> files = new ArrayList<>();
+
+        files.addAll(getProjectFilesByScope(sokratesProjectLink, "aspect_main.txt"));
+        files.addAll(getProjectFilesByScope(sokratesProjectLink, "aspect_test.txt"));
+        files.addAll(getProjectFilesByScope(sokratesProjectLink, "aspect_generated.txt"));
+        files.addAll(getProjectFilesByScope(sokratesProjectLink, "aspect_build_and_deployment.txt"));
+        files.addAll(getProjectFilesByScope(sokratesProjectLink, "aspect_other.txt"));
+        files.addAll(getProjectFilesByScope(sokratesProjectLink, "excluded_files_ignored_extensions.txt"));
+        files.addAll(getProjectFilesByScope(sokratesProjectLink, "excluded_files_ignored_rules.txt"));
+
+        return files;
+    }
+
+    private List<String> getProjectFilesByScope(SokratesProjectLink sokratesProjectLink, String scopeFile) {
+        try {
+            File txtDataFolder = new File(getProjectAnalysisFile(sokratesProjectLink).getParentFile(), "text");
+            File mainFile = new File(txtDataFolder, scopeFile);
+            if (mainFile.exists()) {
+                LOG.info(mainFile.getPath());
+                return FileUtils.readLines(mainFile, StandardCharsets.UTF_8).stream()
+                        .skip(1)
+                        .map(line -> line.replaceAll("\t.*", ""))
+                        .collect(Collectors.toList());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return new ArrayList<>();
+    }
+
+
 }

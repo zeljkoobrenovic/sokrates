@@ -4,7 +4,11 @@
 
 package nl.obren.sokrates.sourcecode.landscape.analysis;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.Metadata;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class LandscapeAnalysisResultsReadData {
     private Metadata metadata = new Metadata();

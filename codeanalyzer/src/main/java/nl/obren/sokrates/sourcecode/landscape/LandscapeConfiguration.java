@@ -46,6 +46,9 @@ public class LandscapeConfiguration {
     // A maximal number of years of commit history dispalyed in the report
     private int commitsMaxYears = 10;
 
+    // A minimal number of commits days per year for a contributor to be classified as a "significant" contributor
+    private int significantContributorMinCommitDaysPerYear = 10;
+
     // If true, contributors IDs (e.g. emails) will be replaces with anonymous IDs (e.g. Contributor 1, Contributor 2)
     private boolean anonymizeContributors = false;
 
@@ -351,6 +354,14 @@ public class LandscapeConfiguration {
 
     public int getCommitsMaxYears() {
         return commitsMaxYears;
+    }
+
+    public int getSignificantContributorMinCommitDaysPerYear() {
+        return significantContributorMinCommitDaysPerYear;
+    }
+
+    public void setSignificantContributorMinCommitDaysPerYear(int significantContributorMinCommitDaysPerYear) {
+        this.significantContributorMinCommitDaysPerYear = significantContributorMinCommitDaysPerYear;
     }
 
     public void setCommitsMaxYears(int commitsMaxYears) {

@@ -394,6 +394,8 @@ public class LandscapeProjectsReport {
             addProjectRow(report, projectAnalysis);
         });
 
+        updateTagMap(projectsAnalysisResults);
+
         report.endTable();
         if (limit < projectsAnalysisResults.size()) {
             addShowMoreFooter(report, projectsAnalysisResults.size());
@@ -712,9 +714,11 @@ public class LandscapeProjectsReport {
 
         report.startDiv("margin: 12px; font-size: 90%");
         report.addHtmlContent("tags dependencies: ");
-        report.addNewTabLink("3D graph", "visuals/tags_graph_force_3d.html");
+        report.addNewTabLink("3D graph (via projects)", "visuals/tags_graph_force_3d.html");
         report.addHtmlContent(" | ");
-        report.addNewTabLink("2D graph", "visuals/tags_graph.svg");
+        report.addNewTabLink("2D graph (via projects)", "visuals/tags_graph.svg");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("2D graph (excluding projects)", "visuals/tags_graph_direct.svg");
         report.endDiv();
         report.startTable();
         report.addTableHeader("Tag", "# projects", "LOC<br>(main)", "LOC<br>(test)", "LOC<br>(active)", "LOC<br>(new)", "# commits<br>(30 days)", "# contributors<br>(30 days)");
@@ -733,15 +737,44 @@ public class LandscapeProjectsReport {
 
     private void renderTagDependencies() {
         List<ComponentDependency> dependencies = new ArrayList<>();
+        Map<String, Set<String>> projectTagsMap = new HashMap<>();
         this.landscapeAnalysisResults.getConfiguration().getProjectTags().stream().filter(tag -> tagStatsMap.get(tag.getTag()) != null)
                 .forEach(tag -> {
                     TagStats stats = tagStatsMap.get(tag.getTag());
                     stats.getProjectsAnalysisResults().forEach(project -> {
                         String name = project.getAnalysisResults().getMetadata().getName();
-                        dependencies.add(new ComponentDependency("[" + name + "]", tag.getTag() ));
+                        dependencies.add(new ComponentDependency("[" + name + "]", tag.getTag()));
+                        if (!projectTagsMap.containsKey(name)) {
+                            projectTagsMap.put(name, new HashSet<>());
+                        }
+                        projectTagsMap.get(name).add(tag.getTag());
                     });
                 });
         new Force3DGraphExporter().export3DForceGraph(dependencies, reportsFolder, "tags_graph");
+
+        List<ComponentDependency> directDependencies = new ArrayList<>();
+        Map<String, ComponentDependency> directDependenciesMap = new HashMap<>();
+        projectTagsMap.values().forEach(projectTags -> {
+            projectTags.forEach(tag1 -> {
+                projectTags.stream().filter(tag2 -> !tag1.equals(tag2)).forEach(tag2 -> {
+                    String key1 = tag1 + "::" + tag2;
+                    String key2 = tag2 + "::" + tag1;
+                    if (directDependenciesMap.containsKey(key1)) {
+                        directDependenciesMap.get(key1).increment(1);
+                    } else if (directDependenciesMap.containsKey(key2)) {
+                        directDependenciesMap.get(key2).increment(1);
+                    } else {
+                        ComponentDependency directDependency = new ComponentDependency(
+                                tag1 + " (" + tagStatsMap.get(tag1).getProjectsAnalysisResults().size() + ")",
+                                tag2 + " (" + tagStatsMap.get(tag2).getProjectsAnalysisResults().size() + ")");
+                        directDependencies.add(directDependency);
+                        directDependenciesMap.put(key1, directDependency);
+                    }
+                });
+            });
+        });
+
+        directDependencies.forEach(d -> d.setCount(d.getCount() / 2));
 
         GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
         graphvizDependencyRenderer.setMaxNumberOfDependencies(1000);
@@ -749,9 +782,10 @@ public class LandscapeProjectsReport {
         graphvizDependencyRenderer.setOrientation("RL");
         List<String> keys = tagStatsMap.keySet().stream().filter(t -> tagStatsMap.get(t) != null).collect(Collectors.toList());
         String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(keys), dependencies);
-        String svg = GraphvizUtil.getSvgFromDot(graphvizContent);
+        String graphvizContentDirect = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), directDependencies);
         try {
-            FileUtils.write(new File(reportsFolder, "visuals/tags_graph.svg"), svg, StandardCharsets.UTF_8);
+            FileUtils.write(new File(reportsFolder, "visuals/tags_graph.svg"), GraphvizUtil.getSvgFromDot(graphvizContent), StandardCharsets.UTF_8);
+            FileUtils.write(new File(reportsFolder, "visuals/tags_graph_direct.svg"), GraphvizUtil.getSvgFromDot(graphvizContentDirect), StandardCharsets.UTF_8);
         } catch (IOException e) {
             LOG.info(e);
         }
@@ -1003,7 +1037,6 @@ public class LandscapeProjectsReport {
     }
 
     private String getTags(ProjectAnalysisResults project) {
-        String name = project.getAnalysisResults().getMetadata().getName();
         List<NumericMetric> linesOfCodePerExtension = project.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension();
         linesOfCodePerExtension.sort((a, b) -> b.getValue().intValue() - a.getValue().intValue());
         String mainTech = linesOfCodePerExtension.size() > 0 ? linesOfCodePerExtension.get(0).getName().replaceAll(".*[.]", "") : "";
@@ -1014,27 +1047,51 @@ public class LandscapeProjectsReport {
         boolean tagged[] = {false};
 
         tags.forEach(tag -> {
-            if (!tag.exclude(name) && !tag.excludesMainTechnology(mainTech) && (tag.matches(name) || tag.matchesMainTechnology(mainTech))) {
+            if (isTagged(project, mainTech, tag)) {
                 tagsHtml.append("<div style='margin: 2px; padding: 5px; display: inline-block; background-color: " + getTabColor(tag) + "; font-size: 70%; border-radius: 10px'>");
                 tagsHtml.append(tag.getTag());
                 tagsHtml.append("</div>");
 
-                if (!tagStatsMap.containsKey(tag.getTag())) {
-                    tagStatsMap.put(tag.getTag(), new TagStats(tag));
-                }
-                tagStatsMap.get(tag.getTag()).getProjectsAnalysisResults().add(project);
                 tagged[0] = true;
             }
         });
 
-        if (!tagged[0]) {
-            if (!tagStatsMap.containsKey("")) {
-                tagStatsMap.put("", new TagStats(new ProjectTag()));
-            }
-            tagStatsMap.get("").getProjectsAnalysisResults().add(project);
-        }
-
         return tagsHtml.toString();
+    }
+
+    private void updateTagMap(List<ProjectAnalysisResults> projects) {
+        projects.forEach(project -> {
+            List<NumericMetric> linesOfCodePerExtension = project.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension();
+            linesOfCodePerExtension.sort((a, b) -> b.getValue().intValue() - a.getValue().intValue());
+            String mainTech = linesOfCodePerExtension.size() > 0 ? linesOfCodePerExtension.get(0).getName().replaceAll(".*[.]", "") : "";
+            List<ProjectTag> tags = this.landscapeAnalysisResults.getConfiguration().getProjectTags();
+
+            boolean tagged[] = {false};
+
+            tags.forEach(tag -> {
+                if (isTagged(project, mainTech, tag)) {
+                    if (!tagStatsMap.containsKey(tag.getTag())) {
+                        tagStatsMap.put(tag.getTag(), new TagStats(tag));
+                    }
+                    tagStatsMap.get(tag.getTag()).getProjectsAnalysisResults().add(project);
+                    tagged[0] = true;
+                }
+            });
+
+            if (!tagged[0]) {
+                if (!tagStatsMap.containsKey("")) {
+                    tagStatsMap.put("", new TagStats(new ProjectTag()));
+                }
+                tagStatsMap.get("").getProjectsAnalysisResults().add(project);
+            }
+
+        });
+    }
+
+    private boolean isTagged(ProjectAnalysisResults project, String mainTech, ProjectTag tag) {
+        String name = project.getAnalysisResults().getMetadata().getName();
+        return !tag.excludesMainTechnology(mainTech) &&
+                ((tag.matchesName(name) && !tag.excludeName(name)) || tag.matchesMainTechnology(mainTech) || tag.matchesPath(project.getFiles()));
     }
 
     private String getTabColor(ProjectTag tag) {

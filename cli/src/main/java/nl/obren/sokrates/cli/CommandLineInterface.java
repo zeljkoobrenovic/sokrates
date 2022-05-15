@@ -781,6 +781,12 @@ public class CommandLineInterface {
             }
         });
 
+        item1.setName(item1.getName() + " (" + item1.getChildren().size() + ")");
+        item2.setName(item2.getName() + " (" + item2.getChildren().size() + ")");
+        item3.setName(item3.getName() + " (" + item3.getChildren().size() + ")");
+        item4.setName(item4.getName() + " (" + item4.getChildren().size() + ")");
+        item5.setName(item5.getName() + " (" + item5.getChildren().size() + ")");
+
         return new ArrayList<>(Arrays.asList(item1, item2, item3, item4, item5));
     }
 
