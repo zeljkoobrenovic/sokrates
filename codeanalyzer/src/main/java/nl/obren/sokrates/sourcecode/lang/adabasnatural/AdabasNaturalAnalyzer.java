@@ -33,6 +33,8 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
     private List<String> unitLiterals = Arrays.asList(
             " function",
             " subroutine");
+    private List<String> conditionalLiterals = Arrays.asList(
+                " ACCEPT"," REJECT"," AT BREAK"," BEFORE BREAK PROCESSING", " DECIDE FOR"," DECIDE ON"," IF"," FOR", " REPEAT");
 
     @Override
     public CleanedContent cleanForLinesOfCodeCalculations(SourceFile sourceFile) {
@@ -174,7 +176,7 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
                 if (trimmedLine.startsWith("END-DECIDE")) {
                     inDecideBlock = false;
                 } else {
-                    if (trimmedLine.startsWith("VALUE ") || trimmedLine.startsWith("NONE ")) {
+                    if (trimmedLine.startsWith("VALUE ") || trimmedLine.startsWith("WHEN ") || trimmedLine.startsWith("NONE ")) {
                         index += 1;
                     }
                 }
@@ -182,23 +184,22 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
                 if (trimmedLine.startsWith("END-DEFINE")) {
                     inDataParamsBlock = false;
                 } else {
-                    if (trimmedLine.startsWith("USING ") || trimmedLine.contains("#")) {
+                    if (trimmedLine.startsWith("USING ") ) {
                         params += 1;
                     }
                 }
             } else {
-                if (trimmedLine.startsWith("IF ")) {
-                    index += 1;
+                for (String mcCabeIndexLiteral : conditionalLiterals) {
+                    index += StringUtils.countMatches(trimmedLine, mcCabeIndexLiteral);
                 }
+                
                 if (trimmedLine.startsWith("DECIDE ")) {
                     inDecideBlock = true;
                 }
                 if (trimmedLine.startsWith("DEFINE DATA PARAMETER")) {
                     inDataParamsBlock = true;
                 }
-                if (trimmedLine.startsWith("FIND ")) {
-                    index += 1;
-                }
+                
             }
         }
 

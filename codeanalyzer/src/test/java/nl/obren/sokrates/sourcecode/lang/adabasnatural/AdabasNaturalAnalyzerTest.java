@@ -42,8 +42,8 @@ public class AdabasNaturalAnalyzerTest {
         
         assertEquals(unitInfos.get(0).getShortName(), "EXAMPLE");
         assertEquals(unitInfos.get(0).getLinesOfCode(), 112);
-        assertEquals(unitInfos.get(0).getMcCabeIndex(), 8);
-        assertEquals(unitInfos.get(0).getNumberOfParameters(), 14);
+        assertEquals(unitInfos.get(0).getMcCabeIndex(), 6);
+        assertEquals(unitInfos.get(0).getNumberOfParameters(), 0);
         
     }
 
@@ -58,13 +58,13 @@ public class AdabasNaturalAnalyzerTest {
         assertEquals(unitInfos.size(), 3);
         assertEquals(unitInfos.get(0).getShortName(), "F#MULTI");
         assertEquals(unitInfos.get(0).getLinesOfCode(), 11);
-        assertEquals(unitInfos.get(0).getMcCabeIndex(), 2);
-        assertEquals(unitInfos.get(0).getNumberOfParameters(), 2);
+        assertEquals(unitInfos.get(0).getMcCabeIndex(), 1);
+        assertEquals(unitInfos.get(0).getNumberOfParameters(), 0);
 
         assertEquals(unitInfos.get(1).getShortName(), "F2#MULTI");
         assertEquals(unitInfos.get(1).getLinesOfCode(), 6);
         assertEquals(unitInfos.get(1).getMcCabeIndex(), 1);
-        assertEquals(unitInfos.get(1).getNumberOfParameters(), 2);
+        assertEquals(unitInfos.get(1).getNumberOfParameters(), 0);
 
         assertEquals(unitInfos.get(2).getShortName(), "SUBR01");
         assertEquals(unitInfos.get(2).getLinesOfCode(), 4);
