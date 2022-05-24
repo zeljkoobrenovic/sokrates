@@ -215,6 +215,14 @@ public class RichTextReport {
         addHtmlContent("<td colspan='" + colspan + "'>" + text + "</td>");
     }
 
+    public void addMultiColumnTableCell(String text, int colspan, String style) {
+        addHtmlContent("<td colspan='" + colspan + "' style='" + style + "'>" + text + "</td>");
+    }
+
+    public void startMultiColumnTableCell(int colspan, String style) {
+        addHtmlContent("<td colspan='" + colspan + "' style='" + style + "'>");
+    }
+
     public void startTableCell() {
         addHtmlContent("<td>");
     }

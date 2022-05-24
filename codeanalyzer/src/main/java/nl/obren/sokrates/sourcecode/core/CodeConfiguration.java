@@ -15,10 +15,7 @@ import nl.obren.sokrates.sourcecode.metrics.MetricRangeControl;
 import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils.*;
 
@@ -71,6 +68,9 @@ public class CodeConfiguration {
     // Parameters of source code analyses
     private AnalysisConfig analysis = new AnalysisConfig();
 
+    // Simple rules to tag a project based on path regex expressions
+    private List<TagRule> tagRules = new ArrayList<>();
+
     public CodeConfiguration() {
         createDefaultScope();
     }
@@ -81,6 +81,7 @@ public class CodeConfiguration {
         codeConfiguration.createDefaultConcerns();
 
         codeConfiguration.getGoalsAndControls().add(getDefaultMetricsWithGoal());
+        codeConfiguration.getTagRules().addAll(getDefaultTagRules());
 
         return codeConfiguration;
     }
@@ -94,6 +95,30 @@ public class CodeConfiguration {
         metricsWithGoal.getControls().add(new MetricRangeControl("VERY_HIGH_RISK_FILE_SIZE_COUNT", "The number of very large files", new Range("0", "0", "1")));
         metricsWithGoal.getControls().add(new MetricRangeControl("CONDITIONAL_COMPLEXITY_VERY_HIGH_RISK_COUNT", "Number of very complex units", new Range("0", "0", "1")));
         return metricsWithGoal;
+    }
+
+    private static List<TagRule> getDefaultTagRules() {
+        List<TagRule> rules = new ArrayList<>();
+
+        rules.add(new TagRule("maven", "#f0f0f0", Arrays.asList("(|.*/)pom[.]xml")));
+        rules.add(new TagRule("npm", "#f0f0f0", Arrays.asList("(|.*/)package[.]json")));
+        rules.add(new TagRule("yarn", "#f0f0f0", Arrays.asList("(|.*/)[.]yarnrc", "(|.*/)yarn[.]lock")));
+        rules.add(new TagRule("bable", "#f0f0f0", Arrays.asList("(|.*/)[.]babel[.]config[.]json")));
+        rules.add(new TagRule("gradle", "#f0f0f0", Arrays.asList("(|.*/)build[.]gradle")));
+        rules.add(new TagRule("sbt", "#f0f0f0", Arrays.asList("(|.*/)build[.]sbt")));
+        rules.add(new TagRule("bazel", "#f0f0f0", Arrays.asList("(|.*/)BUILD[.]bazel")));
+        rules.add(new TagRule("pip", "#f0f0f0", Arrays.asList("(|.*/)pip[.]conf")));
+        rules.add(new TagRule("nuget", "#f0f0f0", Arrays.asList("(|.*/)[.]nuget/.*]")));
+
+        rules.add(new TagRule("jenkins", "#e0e0e0", Arrays.asList("(|.*/)Jenkinsfile")));
+        rules.add(new TagRule("travis", "#e0e0e0", Arrays.asList("(|.*/)[.]travis[.]yml")));
+        rules.add(new TagRule("github actions", "#e0e0e0", Arrays.asList("(|.*/)[.]github[/]workflows[/].*")));
+
+        rules.add(new TagRule("renovate", "#c0c0c0", Arrays.asList("(|.*/)renovate[.]json")));
+
+        rules.add(new TagRule("docker", "#b0b0b0", Arrays.asList("(|.*/)Dockerfile")));
+
+        return rules;
     }
 
     @JsonIgnore
@@ -406,6 +431,14 @@ public class CodeConfiguration {
 
     public void setAnalysis(AnalysisConfig analysis) {
         this.analysis = analysis;
+    }
+
+    public List<TagRule> getTagRules() {
+        return tagRules;
+    }
+
+    public void setTagRules(List<TagRule> tagRules) {
+        this.tagRules = tagRules;
     }
 
     @JsonIgnore

@@ -7,6 +7,7 @@ package nl.obren.sokrates.sourcecode.scoping.custom;
 import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.aspects.Concern;
 import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
+import nl.obren.sokrates.sourcecode.core.TagRule;
 import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
 import nl.obren.sokrates.sourcecode.scoping.Convention;
 
@@ -64,6 +65,9 @@ public class CustomScopingConventions {
 
     // Default settings of analysis parameters
     private AnalysisConfig analysis = new AnalysisConfig();
+
+    // Default tag finders
+    private List<TagRule> tagRules = new ArrayList<>();
 
     public CustomExtensionConventions getExtensions() {
         return extensions;
@@ -151,6 +155,14 @@ public class CustomScopingConventions {
 
     public void setAnalysis(AnalysisConfig analysis) {
         this.analysis = analysis;
+    }
+
+    public List<TagRule> getTagRules() {
+        return tagRules;
+    }
+
+    public void setTagRules(List<TagRule> tagRules) {
+        this.tagRules = tagRules;
     }
 
     public String getLogoLink() {

@@ -16,6 +16,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
+import nl.obren.sokrates.sourcecode.core.TagRule;
 import nl.obren.sokrates.sourcecode.metrics.DuplicationMetric;
 import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
@@ -24,6 +25,7 @@ import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
 import nl.obren.sokrates.sourcecode.stats.SourceFileSizeDistribution;
 import nl.obren.sokrates.sourcecode.threshold.Thresholds;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -82,6 +84,7 @@ public class SummaryUtils {
             summarizeGoals(analysisResults, report);
         }
         summarizeFeaturesOfInterest(analysisResults, report);
+        summarizeTags(analysisResults, report);
         addSummaryFindings(analysisResults, report);
         report.endTable();
         report.endDiv();
@@ -472,6 +475,27 @@ public class SummaryUtils {
         }
         report.endTableCell();
         report.addTableCell("<a href='" + reportRoot + "FeaturesOfInterest.html'  title='metrics &amp; goals details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "border: none");
+
+        report.endTableRow();
+    }
+
+
+    private void summarizeTags(CodeAnalysisResults analysisResults, RichTextReport report) {
+        List<TagRule> tags = analysisResults.getFoundTags();
+        if (tags.size() == 0) {
+            return;
+        }
+
+        report.startTableRow();
+        report.addTableCell(getIconSvg("tags"), "border: none; padding-top: 9px");
+
+        report.startTableCellColSpan("border: none", 2);
+        tags.forEach(tag -> {
+            String tooltip = "added if at least one file matches:\n  - " + tag.getPathPatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
+            String color = StringUtils.isNotBlank(tag.getColor()) ? tag.getColor() : "white";
+            report.addContentInDivWithTooltip(tag.getTag(), tooltip, "cursor: help; font-size: 90%; border: 1px lightgrey solid; padding: 4px 10px 5px 10px; display: inline-block; background-color: " + color + "; border-radius: 3px");
+        });
+        report.endTableCell();
 
         report.endTableRow();
     }

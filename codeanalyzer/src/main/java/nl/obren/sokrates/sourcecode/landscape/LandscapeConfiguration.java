@@ -122,7 +122,7 @@ public class LandscapeConfiguration {
     private String customHtmlReportHeaderFragment = "";
 
     // An optional list of tags to be used to mark projects
-    private List<ProjectTag> projectTags = new ArrayList<>();
+    private List<ProjectTagGroup> projectTagGroups = new ArrayList<>(Arrays.asList(new ProjectTagGroup("default")));
 
     // values automatically populated by Sokrates
     private List<SubLandscapeLink> subLandscapes = new ArrayList<>();
@@ -296,14 +296,6 @@ public class LandscapeConfiguration {
         this.iFramesContributorsAtStart = iFramesContributorsAtStart;
     }
 
-    public List<ProjectTag> getProjectTags() {
-        return projectTags;
-    }
-
-    public void setProjectTags(List<ProjectTag> projectTags) {
-        this.projectTags = projectTags;
-    }
-
     public boolean isAnonymizeContributors() {
         return anonymizeContributors;
     }
@@ -438,5 +430,13 @@ public class LandscapeConfiguration {
 
     public void setIncludeOnlyFirstProjectWithSameName(boolean includeOnlyFirstProjectWithSameName) {
         this.includeOnlyFirstProjectWithSameName = includeOnlyFirstProjectWithSameName;
+    }
+
+    public List<ProjectTagGroup> getProjectTagGroups() {
+        return projectTagGroups;
+    }
+
+    public void setProjectTagGroups(List<ProjectTagGroup> projectTagGroups) {
+        this.projectTagGroups = projectTagGroups;
     }
 }

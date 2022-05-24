@@ -100,6 +100,7 @@ public class LandscapeReportGenerator {
         this.reportsFolder = reportsFolder;
 
         this.landscapeAnalysisResults = landscapeAnalysisResults;
+
         populateTimeSlotMaps();
 
         landscapeProjectsReportShort.setEmbedded(true);

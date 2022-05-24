@@ -63,6 +63,8 @@ public class LandscapeAnalysisCommands {
         LandscapeAnalyzer analyzer = new LandscapeAnalyzer();
 
         LandscapeAnalysisResults landscapeAnalysisResults = analyzer.analyze(landscapeConfigFile);
+        landscapeAnalysisResults.getConfiguration().getProjectTagGroups()
+                .forEach(group -> group.getProjectTags().forEach(tag -> tag.setGroup(group)));
 
         LandscapeReportGenerator reportGenerator = new LandscapeReportGenerator(landscapeAnalysisResults, landscapeConfigFile.getParentFile(), reportsFolder);
         List<RichTextReport> reports = reportGenerator.report();

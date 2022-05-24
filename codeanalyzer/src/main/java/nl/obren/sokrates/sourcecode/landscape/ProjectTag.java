@@ -10,9 +10,6 @@ public class ProjectTag {
     // A tag name
     private String tag = "";
 
-    // A tag color
-    private String color = "";
-
     // A list of regex name patterns to tag projects. Any project with a name matching any of the regex patterns will be tagged with this tag.
     private List<String> patterns = new ArrayList<>();
 
@@ -31,20 +28,15 @@ public class ProjectTag {
     // A list of regex path patterns used to exclude projects (if included in the path patterns list)
     private List<String> excludePathPatterns = new ArrayList<>();
 
+    @JsonIgnore
+    private ProjectTagGroup group;
+
     public String getTag() {
         return tag;
     }
 
     public void setTag(String tag) {
         this.tag = tag;
-    }
-
-    public String getColor() {
-        return color;
-    }
-
-    public void setColor(String color) {
-        this.color = color;
     }
 
     public List<String> getPatterns() {
@@ -159,5 +151,15 @@ public class ProjectTag {
             }
         }
         return false;
+    }
+
+    @JsonIgnore
+    public ProjectTagGroup getGroup() {
+        return group;
+    }
+
+    @JsonIgnore
+    public void setGroup(ProjectTagGroup group) {
+        this.group = group;
     }
 }

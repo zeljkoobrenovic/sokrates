@@ -15,6 +15,7 @@ import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
+import nl.obren.sokrates.sourcecode.core.TagRule;
 import nl.obren.sokrates.sourcecode.scoping.custom.CustomExtensionConventions;
 import nl.obren.sokrates.sourcecode.scoping.custom.CustomScopingConventions;
 import org.apache.commons.io.FileUtils;
@@ -104,6 +105,10 @@ public class ScopeCreator {
         codeConfiguration.getFileHistoryAnalysis().getIgnoreContributors().addAll(customScopingConventions.getIgnoreContributors());
 
         codeConfiguration.setAnalysis(customScopingConventions.getAnalysis());
+        List<TagRule> tagRules = customScopingConventions.getTagRules();
+        if (tagRules.size() > 0) {
+            codeConfiguration.setTagRules(tagRules);
+        }
         codeConfiguration.setFileHistoryAnalysis(customScopingConventions.getFileHistoryAnalysis());
 
         codeConfiguration.getMetadata().setLogoLink(customScopingConventions.getLogoLink());

@@ -22,6 +22,7 @@ import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.landscape.ProjectTag;
+import nl.obren.sokrates.sourcecode.landscape.ProjectTagGroup;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ProjectAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.MetricRangeControl;
@@ -713,32 +714,75 @@ public class LandscapeProjectsReport {
         renderTagDependencies();
 
         report.startDiv("margin: 12px; font-size: 90%");
-        report.addHtmlContent("tags dependencies: ");
+        report.addHtmlContent("all tag dependencies: ");
         report.addNewTabLink("3D graph (via projects)", "visuals/tags_graph_force_3d.html");
         report.addHtmlContent(" | ");
         report.addNewTabLink("2D graph (via projects)", "visuals/tags_graph.svg");
         report.addHtmlContent(" | ");
         report.addNewTabLink("2D graph (excluding projects)", "visuals/tags_graph_direct.svg");
         report.endDiv();
+
         report.startTable();
         report.addTableHeader("Tag", "# projects", "LOC<br>(main)", "LOC<br>(test)", "LOC<br>(active)", "LOC<br>(new)", "# commits<br>(30 days)", "# contributors<br>(30 days)");
+        int index[] = {0};
+        this.landscapeAnalysisResults.getConfiguration().getProjectTagGroups().forEach(tagGroup -> {
+            index[0] += 1;
+            report.startTableRow();
+            report.startMultiColumnTableCell(8, "background-color: " + tagGroup.getColor());
+            report.startDiv("margin-top: 8px");
+            report.addHtmlContent(tagGroup.getName());
+            if (StringUtils.isNotBlank(tagGroup.getDescription())) {
+                report.addHtmlContent("<span style='color: grey;'>(" + tagGroup.getDescription() + "</span>)");
+            }
+            report.startDiv("margin: 5px; font-size: 80%");
+            report.addHtmlContent("tag dependencies: ");
+            report.addNewTabLink("3D graph (via projects)", "visuals/tags_graph_" + index[0] + "_force_3d.html");
+            report.addHtmlContent(" | ");
+            report.addNewTabLink("2D graph (via projects)", "visuals/tags_graph_" + index[0] + ".svg");
+            report.addHtmlContent(" | ");
+            report.addNewTabLink("2D graph (excluding projects)", "visuals/tags_graph_" + index[0] + "_direct.svg");
+            report.endDiv();
 
-        this.landscapeAnalysisResults.getConfiguration().getProjectTags().forEach(projectTag -> {
-            String tagName = projectTag.getTag();
-            addTagRow(report, tagName, projectTag.getPatterns());
+            report.endTableCell();
+            report.endTableRow();
+            tagGroup.getProjectTags().stream()
+                    .sorted((a, b) -> (tagStatsMap.get(a.getTag()) != null && tagStatsMap.get(b.getTag()) != null) ? tagStatsMap.get(b.getTag()).getProjectsAnalysisResults().size() - tagStatsMap.get(a.getTag()).getProjectsAnalysisResults().size() : 0)
+                    .forEach(projectTag -> {
+                        String tagName = projectTag.getTag();
+                        addTagRow(report, tagName, projectTag, tagGroup.getColor());
+                    });
         });
         if (tagStatsMap.containsKey("")) {
-            addTagRow(report, "", new ArrayList<>());
+            report.addMultiColumnTableCell("&nbsp;", 8);
+            addTagRow(report, "", new ProjectTag(), "lightgrey");
         }
         report.endTable();
+
 
         visualizeTagProjects(report);
     }
 
     private void renderTagDependencies() {
+        int index[] = {0};
+        this.landscapeAnalysisResults.getConfiguration().getProjectTagGroups().forEach(tagGroup -> {
+            index[0] += 1;
+            String prefix = "tags_graph_" + index[0];
+            List<ProjectTag> groupTags = tagGroup.getProjectTags();
+            exportTagGraphs(prefix, groupTags);
+        });
+
+        List<ProjectTag> allTags = new ArrayList<>();
+        this.landscapeAnalysisResults.getConfiguration().getProjectTagGroups().forEach(tagGroup -> {
+            allTags.addAll(tagGroup.getProjectTags());
+        });
+        String prefix = "tags_graph";
+        exportTagGraphs(prefix, allTags);
+    }
+
+    private void exportTagGraphs(String prefix, List<ProjectTag> groupTags) {
         List<ComponentDependency> dependencies = new ArrayList<>();
         Map<String, Set<String>> projectTagsMap = new HashMap<>();
-        this.landscapeAnalysisResults.getConfiguration().getProjectTags().stream().filter(tag -> tagStatsMap.get(tag.getTag()) != null)
+        groupTags.stream().filter(tag -> tagStatsMap.get(tag.getTag()) != null)
                 .forEach(tag -> {
                     TagStats stats = tagStatsMap.get(tag.getTag());
                     stats.getProjectsAnalysisResults().forEach(project -> {
@@ -750,7 +794,7 @@ public class LandscapeProjectsReport {
                         projectTagsMap.get(name).add(tag.getTag());
                     });
                 });
-        new Force3DGraphExporter().export3DForceGraph(dependencies, reportsFolder, "tags_graph");
+        new Force3DGraphExporter().export3DForceGraph(dependencies, reportsFolder, prefix);
 
         List<ComponentDependency> directDependencies = new ArrayList<>();
         Map<String, ComponentDependency> directDependenciesMap = new HashMap<>();
@@ -784,28 +828,32 @@ public class LandscapeProjectsReport {
         String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(keys), dependencies);
         String graphvizContentDirect = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), directDependencies);
         try {
-            FileUtils.write(new File(reportsFolder, "visuals/tags_graph.svg"), GraphvizUtil.getSvgFromDot(graphvizContent), StandardCharsets.UTF_8);
-            FileUtils.write(new File(reportsFolder, "visuals/tags_graph_direct.svg"), GraphvizUtil.getSvgFromDot(graphvizContentDirect), StandardCharsets.UTF_8);
+            FileUtils.write(new File(reportsFolder, "visuals/" + prefix + ".svg"), GraphvizUtil.getSvgFromDot(graphvizContent), StandardCharsets.UTF_8);
+            FileUtils.write(new File(reportsFolder, "visuals/" + prefix + "_direct.svg"), GraphvizUtil.getSvgFromDot(graphvizContentDirect), StandardCharsets.UTF_8);
         } catch (IOException e) {
             LOG.info(e);
         }
     }
 
     private void visualizeTagProjects(RichTextReport report) {
-        report.startDiv("");
+        report.startDiv("margin: 6px; margin-top: 44px;");
+        report.startShowMoreBlock("show visuals...");
         int maxLoc = this.landscapeAnalysisResults.getProjectAnalysisResults().stream()
                 .map(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode())
                 .reduce((a, b) -> Math.max(a, b)).get();
         int maxCommits = this.landscapeAnalysisResults.getProjectAnalysisResults().stream()
                 .map(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days())
                 .reduce((a, b) -> Math.max(a, b)).get();
-        this.landscapeAnalysisResults.getConfiguration().getProjectTags().forEach(tag -> {
-            String tagName = tag.getTag();
-            visualizeTag(report, maxLoc, maxCommits, tagName);
+        this.landscapeAnalysisResults.getConfiguration().getProjectTagGroups().forEach(tagGroup -> {
+            tagGroup.getProjectTags().forEach(tag -> {
+                String tagName = tag.getTag();
+                visualizeTag(report, maxLoc, maxCommits, tagName);
+            });
         });
         if (tagStatsMap.containsKey("")) {
             visualizeTag(report, maxLoc, maxCommits, "");
         }
+        report.endShowMoreBlock();
         report.endDiv();
     }
 
@@ -814,6 +862,7 @@ public class LandscapeProjectsReport {
         if (stats == null) {
             return;
         }
+
         report.startDiv("margin: 18px;");
         report.addContentInDiv("<b>" + (tagName.isBlank() ? "Untagged" : tagName) + "</b> (" + stats.getProjectsAnalysisResults().size() + ")", "margin-bottom: 5px");
         List<ProjectAnalysisResults> projects = stats.getProjectsAnalysisResults();
@@ -854,7 +903,7 @@ public class LandscapeProjectsReport {
                 FormattingUtils.formatCount(analysis.getMainAspectAnalysisResults().getLinesOfCode()) + " LOC";
     }
 
-    private void addTagRow(RichTextReport report, String tagName, List<String> patterns) {
+    private void addTagRow(RichTextReport report, String tagName, ProjectTag tag, String color) {
         TagStats stats = tagStatsMap.get(tagName);
         if (stats == null) {
             return;
@@ -862,9 +911,27 @@ public class LandscapeProjectsReport {
         report.startTableRow("text-align: center");
         report.startTableCell();
         if (StringUtils.isNotBlank(tagName)) {
+            String tooltip = "";
+
+            if (tag.getPatterns().size() > 0) {
+                tooltip += "includes projects with names like:\n  - " + tag.getPatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
+            }
+            if (tag.getExcludePatterns().size() > 0) {
+                tooltip += "excludes projects with names like:\n  - " + tag.getExcludePatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
+            }
+            if (tag.getPathPatterns().size() > 0) {
+                tooltip += "includes projects with at least one file matching:\n  - " + tag.getPathPatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
+            }
+            if (tag.getExcludePathPatterns().size() > 0) {
+                tooltip += "excludes projects with at least one file matching:\n  - " + tag.getExcludePathPatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
+            }
+            if (tag.getMainExtensions().size() > 0) {
+                tooltip += "includes projects with main extensions:\n  - " + tag.getMainExtensions().stream().collect(Collectors.joining("\n  - ")) + "\n";
+            }
+
             report.addContentInDivWithTooltip(tagName,
-                    patterns.stream().collect(Collectors.joining(", ")),
-                    "padding: 4px; border-radius: 6px; background-color: " + getTabColor(stats.getTag()));
+                    tooltip,
+                    "cursor: help; padding: 4px; border-radius: 6px; background-color: " + color);
         } else {
             report.addContentInDiv("Untagged");
         }
@@ -1033,14 +1100,18 @@ public class LandscapeProjectsReport {
     }
 
     private boolean showTags() {
-        return landscapeAnalysisResults.getConfiguration().getProjectTags().size() > 0;
+        for (ProjectTagGroup tagGroup : landscapeAnalysisResults.getConfiguration().getProjectTagGroups()) {
+            if (tagGroup.getProjectTags().size() > 0) return true;
+        }
+        return false;
     }
 
     private String getTags(ProjectAnalysisResults project) {
         List<NumericMetric> linesOfCodePerExtension = project.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension();
         linesOfCodePerExtension.sort((a, b) -> b.getValue().intValue() - a.getValue().intValue());
         String mainTech = linesOfCodePerExtension.size() > 0 ? linesOfCodePerExtension.get(0).getName().replaceAll(".*[.]", "") : "";
-        List<ProjectTag> tags = this.landscapeAnalysisResults.getConfiguration().getProjectTags();
+        List<ProjectTag> tags = new ArrayList<>();
+        this.landscapeAnalysisResults.getConfiguration().getProjectTagGroups().forEach(tagGroup -> tags.addAll(tagGroup.getProjectTags()));
 
         StringBuilder tagsHtml = new StringBuilder();
 
@@ -1064,7 +1135,8 @@ public class LandscapeProjectsReport {
             List<NumericMetric> linesOfCodePerExtension = project.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension();
             linesOfCodePerExtension.sort((a, b) -> b.getValue().intValue() - a.getValue().intValue());
             String mainTech = linesOfCodePerExtension.size() > 0 ? linesOfCodePerExtension.get(0).getName().replaceAll(".*[.]", "") : "";
-            List<ProjectTag> tags = this.landscapeAnalysisResults.getConfiguration().getProjectTags();
+            List<ProjectTag> tags = new ArrayList<>();
+            this.landscapeAnalysisResults.getConfiguration().getProjectTagGroups().forEach(tagGroup -> tags.addAll(tagGroup.getProjectTags()));
 
             boolean tagged[] = {false};
 
@@ -1095,7 +1167,7 @@ public class LandscapeProjectsReport {
     }
 
     private String getTabColor(ProjectTag tag) {
-        return StringUtils.isNotBlank(tag.getColor()) ? tag.getColor() : "#99badd";
+        return tag.getGroup() != null && StringUtils.isNotBlank(tag.getGroup().getColor()) ? tag.getGroup().getColor() : "#99badd";
     }
 
 }

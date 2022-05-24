@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.sourcecode.analysis.files;
 
+import com.kitfox.svg.A;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SourceCodeFiles;
 import nl.obren.sokrates.sourcecode.SourceFile;
@@ -11,14 +12,17 @@ import nl.obren.sokrates.sourcecode.analysis.AnalysisUtils;
 import nl.obren.sokrates.sourcecode.analysis.Analyzer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
+import nl.obren.sokrates.sourcecode.core.TagRule;
 import nl.obren.sokrates.sourcecode.metrics.Metric;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class BasicsAnalyzer extends Analyzer {
     private final StringBuffer textSummary;
@@ -42,6 +46,8 @@ public class BasicsAnalyzer extends Analyzer {
 
         sourceCodeFiles.load(new File(CodeConfiguration.getAbsoluteSrcRoot(codeConfiguration.getSrcRoot(), codeConfigurationFile)), progressFeedback);
 
+        results.setFoundTags(findTags(sourceCodeFiles));
+
         results.setFilesExcludedByExtension(sourceCodeFiles.getFilesExcludedByExtension());
         results.setIgnoredFilesGroups(sourceCodeFiles.getIgnoredFilesGroups());
         results.setCodeConfiguration(codeConfiguration);
@@ -58,6 +64,18 @@ public class BasicsAnalyzer extends Analyzer {
         results.setExcludedExtensions(getExcludedExtensions(excludedFiles));
 
         AnalysisUtils.detailedInfo(textSummary, progressFeedback, "Excluded from analyses " + (excludedFiles.size()) + " files", start);
+    }
+
+    private List<TagRule> findTags(SourceCodeFiles sourceCodeFiles) {
+        List<TagRule> foundTags = new ArrayList<>();
+
+        codeConfiguration.getTagRules().forEach(tagRule -> {
+            if (tagRule.matchesPath(sourceCodeFiles.getAllFiles().stream().map(f -> f.getRelativePath()).collect(Collectors.toList()))) {
+                foundTags.add(tagRule);
+            }
+        });
+
+        return foundTags;
     }
 
     private Map<String, Integer> getExcludedExtensions(List<SourceFile> excludedFiles) {
