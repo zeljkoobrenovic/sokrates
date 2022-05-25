@@ -12,6 +12,7 @@ import nl.obren.sokrates.sourcecode.analysis.AnalysisUtils;
 import nl.obren.sokrates.sourcecode.analysis.Analyzer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
+import nl.obren.sokrates.sourcecode.core.FoundTag;
 import nl.obren.sokrates.sourcecode.core.TagRule;
 import nl.obren.sokrates.sourcecode.metrics.Metric;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
@@ -66,12 +67,13 @@ public class BasicsAnalyzer extends Analyzer {
         AnalysisUtils.detailedInfo(textSummary, progressFeedback, "Excluded from analyses " + (excludedFiles.size()) + " files", start);
     }
 
-    private List<TagRule> findTags(SourceCodeFiles sourceCodeFiles) {
-        List<TagRule> foundTags = new ArrayList<>();
+    private List<FoundTag> findTags(SourceCodeFiles sourceCodeFiles) {
+        List<FoundTag> foundTags = new ArrayList<>();
 
         codeConfiguration.getTagRules().forEach(tagRule -> {
-            if (tagRule.matchesPath(sourceCodeFiles.getAllFiles().stream().map(f -> f.getRelativePath()).collect(Collectors.toList()))) {
-                foundTags.add(tagRule);
+            String foundPath = tagRule.matchesPath(sourceCodeFiles.getAllFiles().stream().map(f -> f.getRelativePath()).collect(Collectors.toList()));
+            if (foundPath != null) {
+                foundTags.add(new FoundTag(tagRule, foundPath));
             }
         });
 

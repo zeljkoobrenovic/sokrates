@@ -107,7 +107,7 @@ public class CodeConfiguration {
         rules.add(new TagRule("gradle", "#f0f0f0", Arrays.asList("(|.*/)build[.]gradle")));
         rules.add(new TagRule("sbt", "#f0f0f0", Arrays.asList("(|.*/)build[.]sbt")));
         rules.add(new TagRule("bazel", "#f0f0f0", Arrays.asList("(|.*/)BUILD[.]bazel")));
-        rules.add(new TagRule("pip", "#f0f0f0", Arrays.asList("(|.*/)pip[.]conf")));
+        rules.add(new TagRule("pip", "#f0f0f0", Arrays.asList("(|.*/)pip[.]conf", "(|.*/)Pipfile")));
         rules.add(new TagRule("nuget", "#f0f0f0", Arrays.asList("(|.*/)[.]nuget/.*]")));
 
         rules.add(new TagRule("jenkins", "#e0e0e0", Arrays.asList("(|.*/)Jenkinsfile")));

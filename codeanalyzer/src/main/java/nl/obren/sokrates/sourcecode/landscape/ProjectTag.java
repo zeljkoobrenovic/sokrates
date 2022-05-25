@@ -124,7 +124,7 @@ public class ProjectTag {
     public boolean matchesPath(List<String> paths) {
         for (String path : paths) {
             for (String pattern : pathPatterns) {
-                if (RegexUtils.matchesEntirely(pattern, path)) {
+                if (RegexUtils.matchesEntirely(pattern, path) && !excludePath(path)) {
                     return true;
                 }
             }

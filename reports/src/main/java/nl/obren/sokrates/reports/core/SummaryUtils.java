@@ -16,6 +16,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
+import nl.obren.sokrates.sourcecode.core.FoundTag;
 import nl.obren.sokrates.sourcecode.core.TagRule;
 import nl.obren.sokrates.sourcecode.metrics.DuplicationMetric;
 import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
@@ -481,7 +482,7 @@ public class SummaryUtils {
 
 
     private void summarizeTags(CodeAnalysisResults analysisResults, RichTextReport report) {
-        List<TagRule> tags = analysisResults.getFoundTags();
+        List<FoundTag> tags = analysisResults.getFoundTags();
         if (tags.size() == 0) {
             return;
         }
@@ -490,10 +491,13 @@ public class SummaryUtils {
         report.addTableCell(getIconSvg("tags"), "border: none; padding-top: 9px");
 
         report.startTableCellColSpan("border: none", 2);
-        tags.forEach(tag -> {
-            String tooltip = "added if at least one file matches:\n  - " + tag.getPathPatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
-            String color = StringUtils.isNotBlank(tag.getColor()) ? tag.getColor() : "white";
-            report.addContentInDivWithTooltip(tag.getTag(), tooltip, "cursor: help; font-size: 90%; border: 1px lightgrey solid; padding: 4px 10px 5px 10px; display: inline-block; background-color: " + color + "; border-radius: 3px");
+        tags.forEach(foundTag -> {
+            TagRule tagRule = foundTag.getTagRule();
+            String tooltip = "added if at least one file matches:\n  - "
+                    + tagRule.getPathPatterns().stream().collect(Collectors.joining("\n  - ")) + "\n\n\nmatching path:\n  - "
+                    + foundTag.getPath();
+            String color = StringUtils.isNotBlank(tagRule.getColor()) ? tagRule.getColor() : "white";
+            report.addContentInDivWithTooltip(tagRule.getTag(), tooltip, "cursor: help; font-size: 90%; border: 1px lightgrey solid; padding: 4px 10px 5px 10px; display: inline-block; background-color: " + color + "; border-radius: 3px");
         });
         report.endTableCell();
 

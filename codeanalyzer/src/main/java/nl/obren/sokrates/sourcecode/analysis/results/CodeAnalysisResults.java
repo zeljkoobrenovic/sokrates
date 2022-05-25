@@ -9,6 +9,7 @@ import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
+import nl.obren.sokrates.sourcecode.core.FoundTag;
 import nl.obren.sokrates.sourcecode.core.TagRule;
 import nl.obren.sokrates.sourcecode.dependencies.Dependency;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
@@ -39,7 +40,7 @@ public class CodeAnalysisResults {
     private List<LogicalDecompositionAnalysisResults> logicalDecompositionsAnalysisResults = new ArrayList<>();
     private List<ConcernsAnalysisResults> concernsAnalysisResults = new ArrayList<>();
 
-    private List<TagRule> foundTags = new ArrayList<>();
+    private List<FoundTag> foundTags = new ArrayList<>();
 
     @JsonIgnore
     private List<Dependency> allDependencies = new ArrayList<>();
@@ -284,11 +285,11 @@ public class CodeAnalysisResults {
         this.contributorsAnalysisResults = contributorsAnalysisResults;
     }
 
-    public List<TagRule> getFoundTags() {
+    public List<FoundTag> getFoundTags() {
         return foundTags;
     }
 
-    public void setFoundTags(List<TagRule> foundTags) {
+    public void setFoundTags(List<FoundTag> foundTags) {
         this.foundTags = foundTags;
     }
 }

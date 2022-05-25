@@ -16,6 +16,9 @@ public class TagRule {
     // A list of regex path patterns to tag projects. Any project with at least one file matching any of the regex patterns will be tagged with this tag.
     private List<String> pathPatterns = new ArrayList<>();
 
+    // A list of regex path patterns ignore for tagging.
+    private List<String> excludePathPatterns = new ArrayList<>();
+
     public TagRule() {
     }
 
@@ -49,13 +52,32 @@ public class TagRule {
         this.pathPatterns = pathPatterns;
     }
 
+    public List<String> getExcludePathPatterns() {
+        return excludePathPatterns;
+    }
+
+    public void setExcludePathPatterns(List<String> excludePathPatterns) {
+        this.excludePathPatterns = excludePathPatterns;
+    }
+
     @JsonIgnore
-    public boolean matchesPath(List<String> paths) {
+    public String matchesPath(List<String> paths) {
         for (String path : paths) {
             for (String pattern : pathPatterns) {
-                if (RegexUtils.matchesEntirely(pattern, path)) {
-                    return true;
+                if (RegexUtils.matchesEntirely(pattern, path) && !excludePath(path)) {
+                    return path;
                 }
+            }
+        }
+
+        return null;
+    }
+
+    @JsonIgnore
+    public boolean excludePath(String path) {
+        for (String pattern : excludePathPatterns) {
+            if (RegexUtils.matchesEntirely(pattern, path)) {
+                return true;
             }
         }
 
