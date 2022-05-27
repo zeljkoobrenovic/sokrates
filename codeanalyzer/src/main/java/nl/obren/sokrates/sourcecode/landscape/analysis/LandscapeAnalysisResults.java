@@ -282,6 +282,10 @@ public class LandscapeAnalysisResults {
         return count[0];
     }
 
+    public int getSecondaryLoc() {
+        return getTestLoc() + getGeneratedLoc() + getBuildAndDeploymentLoc() + getOtherLoc();
+    }
+
     public int getMainLoc1YearActive() {
         return getLoc1YearActive(getFilteredProjectAnalysisResults());
     }

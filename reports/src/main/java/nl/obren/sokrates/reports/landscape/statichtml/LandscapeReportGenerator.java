@@ -616,11 +616,12 @@ public class LandscapeReportGenerator {
         int size = getProjects().size();
         addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(size), (size == 1 ? "project" : "projects"),
                 "", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
-        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "lines of code (main)", "", getExtraLocInfo());
+        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "total lines of code<br>(main)", "", "");
         int mainLoc1YearActive = landscapeAnalysisResults.getMainLoc1YearActive();
-        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(mainLoc1YearActive), "lines of code (active)", "", "files updated in past year");
+        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(mainLoc1YearActive), "active lines of code<br>(main)", "", "files updated in past year");
         int mainLocNew = landscapeAnalysisResults.getMainLocNew();
-        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocNew), "lines of code (new)", "", "files created in past year");
+        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocNew), "new lines of code<br>(main)", "", "files created in past year");
+        addSecondaryFreshInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getSecondaryLoc()), "total lines of code<br>(test and other)", "", getSecondaryLocInfo());
 
         List<ContributorProjects> contributors = landscapeAnalysisResults.getContributors();
         long contributorsCount = contributors.size();
@@ -650,14 +651,17 @@ public class LandscapeReportGenerator {
         int thresholdContributors = configuration.getProjectThresholdContributors();
         List<ProjectAnalysisResults> projects = getProjects();
         int recentSize = (int) projects.stream().filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days() > 0).count();
+
+        String style = "border-top: 2px solid lightgrey; border-right: 2px solid lightgrey; display: inline-block; margin-right: 8px";
+        landscapeReport.startDiv(style);
         addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(recentSize), (recentSize == 1 ? "recent project" : "recent projects"),
                 "30 days", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
         int mainLoc = landscapeAnalysisResults.getMainLoc();
+        int secondaryLoc = landscapeAnalysisResults.getSecondaryLoc();
         int mainLoc30DaysActive = landscapeAnalysisResults.getMainLoc30DaysActive();
         double percentage30Days = mainLoc > 0 ? Math.round(100.0 * mainLoc30DaysActive / mainLoc) : 0;
         String percentageText = FormattingUtils.getFormattedPercentage(percentage30Days) + "%";
-        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(mainLoc30DaysActive), "lines of code touched",
-                "30 days (" + percentageText + ")", "files updated in past 30 days");
+
         int size = projects.size();
         int size90Days = (int) projects.stream().filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount90Days() > 0).count();
         int size180Days = (int) projects.stream().filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount180Days() > 0).count();
@@ -667,11 +671,17 @@ public class LandscapeReportGenerator {
                 "180 days", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
         addInfoBlock(FormattingUtils.getSmallTextForNumber(size), (size == 1 ? "project" : "projects"),
                 "all time", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLoc), "lines of code (main)", "", getExtraLocInfo());
+        landscapeReport.endDiv();
+        landscapeReport.startDiv(style);
+        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(mainLoc), "total lines of code<br>(main)", "", "");
+        addSecondaryFreshInfoBlock(FormattingUtils.getSmallTextForNumber(secondaryLoc), "total lines of code<br>(test and other)", "", getSecondaryLocInfo());
+        landscapeReport.endDiv();
+        landscapeReport.startDiv(style);
         int mainLocActive = landscapeAnalysisResults.getMainLoc1YearActive();
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocActive), "lines of code touched", "1 year", "files updated in past year");
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocActive), "main code touched", "1 year", "files updated in past year");
         int mainLocNew = landscapeAnalysisResults.getMainLocNew();
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocNew), "lines of code (new)", "1 year", "files created in past year");
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocNew), "new main code", "1 year", "files created in past year");
+        landscapeReport.endDiv();
     }
 
     private void addBigContributorsSummary() {
@@ -1237,10 +1247,28 @@ public class LandscapeReportGenerator {
         addInfoBlockWithColor(mainValue, subtitle, "skyblue", tooltip);
     }
 
+    private void addSecondaryFreshInfoBlock(String mainValue, String subtitle, String description, String tooltip) {
+        if (StringUtils.isNotBlank(description)) {
+            subtitle += "<br/><span style='color: grey; font-size: 60%'>" + description + "</span>";
+        }
+        addInfoBlockWithColor(mainValue, subtitle, "lightgrey", tooltip);
+    }
+
     private String getExtraLocInfo() {
         String info = "";
 
         info += FormattingUtils.getPlainTextForNumber(landscapeAnalysisResults.getMainLoc()) + " LOC (main)\n";
+        info += FormattingUtils.getPlainTextForNumber(landscapeAnalysisResults.getTestLoc()) + " LOC (test)\n";
+        info += FormattingUtils.getPlainTextForNumber(landscapeAnalysisResults.getGeneratedLoc()) + " LOC (generated)\n";
+        info += FormattingUtils.getPlainTextForNumber(landscapeAnalysisResults.getBuildAndDeploymentLoc()) + " LOC (build and deployment)\n";
+        info += FormattingUtils.getPlainTextForNumber(landscapeAnalysisResults.getOtherLoc()) + " LOC (other)";
+
+        return info;
+    }
+
+    private String getSecondaryLocInfo() {
+        String info = "";
+
         info += FormattingUtils.getPlainTextForNumber(landscapeAnalysisResults.getTestLoc()) + " LOC (test)\n";
         info += FormattingUtils.getPlainTextForNumber(landscapeAnalysisResults.getGeneratedLoc()) + " LOC (generated)\n";
         info += FormattingUtils.getPlainTextForNumber(landscapeAnalysisResults.getBuildAndDeploymentLoc()) + " LOC (build and deployment)\n";
