@@ -654,7 +654,8 @@ public class LandscapeReportGenerator {
 
         String style = "border-top: 2px solid lightgrey; border-right: 2px solid lightgrey; display: inline-block; margin-right: 8px";
         landscapeReport.startDiv(style);
-        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(recentSize), (recentSize == 1 ? "recent project" : "recent projects"),
+        landscapeReport.addContentInDiv("active projects", "text-align: center; margin-bottom: -7px; margin-top: 2px; margin-left: 4px; color: grey; font-size: 70%;");
+        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(recentSize), (recentSize == 1 ? "30d project" : "30d projects"),
                 "30 days", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
         int mainLoc = landscapeAnalysisResults.getMainLoc();
         int secondaryLoc = landscapeAnalysisResults.getSecondaryLoc();
@@ -673,10 +674,12 @@ public class LandscapeReportGenerator {
                 "all time", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
         landscapeReport.endDiv();
         landscapeReport.startDiv(style);
+        landscapeReport.addContentInDiv("size (LOC)", "text-align: center; margin-bottom: -7px; margin-top: 2px; margin-left: 4px; color: grey; font-size: 70%;");
         addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(mainLoc), "total lines of code<br>(main)", "", "");
         addSecondaryFreshInfoBlock(FormattingUtils.getSmallTextForNumber(secondaryLoc), "total lines of code<br>(test and other)", "", getSecondaryLocInfo());
         landscapeReport.endDiv();
         landscapeReport.startDiv(style);
+        landscapeReport.addContentInDiv("1y code activity", "text-align: center; margin-bottom: -7px; margin-top: 2px; margin-left: 4px; color: grey; font-size: 70%;");
         int mainLocActive = landscapeAnalysisResults.getMainLoc1YearActive();
         addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocActive), "main code touched", "1 year", "files updated in past year");
         int mainLocNew = landscapeAnalysisResults.getMainLocNew();
