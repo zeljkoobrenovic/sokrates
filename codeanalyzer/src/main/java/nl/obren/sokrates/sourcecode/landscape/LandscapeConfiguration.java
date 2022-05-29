@@ -122,9 +122,9 @@ public class LandscapeConfiguration {
     private String customHtmlReportHeaderFragment = "";
 
     // An optional list of tags to be used to mark projects
-    private List<ProjectTagGroup> projectTagGroups = new ArrayList<>(Arrays.asList(new ProjectTagGroup("default")));
+    private List<ProjectTagGroup> projectTagGroups = new DefaultProjectTags().defaultTagGroups();
 
-    // values automatically populated by Sokrates
+    // values automatically populated by Sokrates, do not change manually
     private List<SubLandscapeLink> subLandscapes = new ArrayList<>();
     private List<SokratesProjectLink> projects = new ArrayList<>();
 

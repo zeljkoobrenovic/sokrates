@@ -17,6 +17,11 @@ public class ProjectTagGroup {
         this.name = name;
     }
 
+    public ProjectTagGroup(String name, String color) {
+        this.name = name;
+        this.color = color;
+    }
+
     public String getName() {
         return name;
     }

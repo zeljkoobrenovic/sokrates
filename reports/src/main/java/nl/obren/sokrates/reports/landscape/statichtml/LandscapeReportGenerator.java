@@ -1192,7 +1192,7 @@ public class LandscapeReportGenerator {
                 projectSizes.add(new NumericMetric(analysisResults.getMetadata().getName(), analysisResults.getMainAspectAnalysisResults().getLinesOfCode()));
             });
 
-            landscapeReport.addHtmlContent("<iframe src='projects-short.html' frameborder=0 style='height: 600px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
+            landscapeReport.addHtmlContent("<iframe src='projects-short.html' frameborder=0 style='height: 800px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
 
             int shortLimit = configuration.getProjectsShortListLimit();
             new LandscapeProjectsReport(landscapeAnalysisResults, shortLimit,

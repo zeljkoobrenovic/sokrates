@@ -109,12 +109,12 @@ public class CodeConfiguration {
         rules.add(new TagRule("bazel", "#f0f0f0", Arrays.asList("(|.*/)BUILD[.]bazel")));
         rules.add(new TagRule("pip", "#f0f0f0", Arrays.asList("(|.*/)pip[.]conf", "(|.*/)Pipfile")));
         rules.add(new TagRule("nuget", "#f0f0f0", Arrays.asList("(|.*/)[.]nuget/.*]")));
+        rules.add(new TagRule("renovate", "#f0f0f0", Arrays.asList("(|.*/)renovate[.]json")));
 
         rules.add(new TagRule("jenkins", "#e0e0e0", Arrays.asList("(|.*/)Jenkinsfile")));
         rules.add(new TagRule("travis", "#e0e0e0", Arrays.asList("(|.*/)[.]travis[.]yml")));
         rules.add(new TagRule("github actions", "#e0e0e0", Arrays.asList("(|.*/)[.]github[/]workflows[/].*")));
 
-        rules.add(new TagRule("renovate", "#c0c0c0", Arrays.asList("(|.*/)renovate[.]json")));
 
         rules.add(new TagRule("docker", "#b0b0b0", Arrays.asList("(|.*/)Dockerfile")));
 

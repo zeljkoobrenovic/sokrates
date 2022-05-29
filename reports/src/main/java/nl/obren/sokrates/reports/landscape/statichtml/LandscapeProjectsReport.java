@@ -725,33 +725,41 @@ public class LandscapeProjectsReport {
         report.startTable();
         report.addTableHeader("Tag", "# projects", "LOC<br>(main)", "LOC<br>(test)", "LOC<br>(active)", "LOC<br>(new)", "# commits<br>(30 days)", "# contributors<br>(30 days)");
         int index[] = {0};
-        this.landscapeAnalysisResults.getConfiguration().getProjectTagGroups().forEach(tagGroup -> {
-            index[0] += 1;
-            report.startTableRow();
-            report.startMultiColumnTableCell(8, "background-color: " + tagGroup.getColor());
-            report.startDiv("margin-top: 8px");
-            report.addHtmlContent(tagGroup.getName());
-            if (StringUtils.isNotBlank(tagGroup.getDescription())) {
-                report.addHtmlContent("<span style='color: grey;'>(" + tagGroup.getDescription() + "</span>)");
-            }
-            report.startDiv("margin: 5px; font-size: 80%");
-            report.addHtmlContent("tag dependencies: ");
-            report.addNewTabLink("3D graph (via projects)", "visuals/tags_graph_" + index[0] + "_force_3d.html");
-            report.addHtmlContent(" | ");
-            report.addNewTabLink("2D graph (via projects)", "visuals/tags_graph_" + index[0] + ".svg");
-            report.addHtmlContent(" | ");
-            report.addNewTabLink("2D graph (excluding projects)", "visuals/tags_graph_" + index[0] + "_direct.svg");
-            report.endDiv();
-
-            report.endTableCell();
-            report.endTableRow();
-            tagGroup.getProjectTags().stream()
-                    .sorted((a, b) -> (tagStatsMap.get(a.getTag()) != null && tagStatsMap.get(b.getTag()) != null) ? tagStatsMap.get(b.getTag()).getProjectsAnalysisResults().size() - tagStatsMap.get(a.getTag()).getProjectsAnalysisResults().size() : 0)
-                    .forEach(projectTag -> {
-                        String tagName = projectTag.getTag();
-                        addTagRow(report, tagName, projectTag, tagGroup.getColor());
+        this.landscapeAnalysisResults.getConfiguration().getProjectTagGroups().stream()
+                .filter(tagGroup -> tagGroup.getProjectTags().size() > 0).forEach(tagGroup -> {
+                    int count[] = {0};
+                    tagGroup.getProjectTags().stream().forEach(projectTag -> {
+                        if (tagStatsMap.get(projectTag.getTag()) != null) count[0] += 1;
                     });
-        });
+                    if (count[0] == 0) {
+                        return;
+                    }
+                    index[0] += 1;
+                    report.startTableRow();
+                    report.startMultiColumnTableCell(8, "");
+                    report.startDiv("padding: 4px; margin-top: 16px; border: 1px solid lightgrey;  background-color: " + tagGroup.getColor());
+                    report.addHtmlContent(tagGroup.getName());
+                    if (StringUtils.isNotBlank(tagGroup.getDescription())) {
+                        report.addHtmlContent("<span style='color: grey;'>(" + tagGroup.getDescription() + "</span>)");
+                    }
+                    report.startDiv("margin: 5px; font-size: 80%");
+                    report.addHtmlContent("tag dependencies: ");
+                    report.addNewTabLink("3D graph (via projects)", "visuals/tags_graph_" + index[0] + "_force_3d.html");
+                    report.addHtmlContent(" | ");
+                    report.addNewTabLink("2D graph (via projects)", "visuals/tags_graph_" + index[0] + ".svg");
+                    report.addHtmlContent(" | ");
+                    report.addNewTabLink("2D graph (excluding projects)", "visuals/tags_graph_" + index[0] + "_direct.svg");
+                    report.endDiv();
+
+                    report.endTableCell();
+                    report.endTableRow();
+                    tagGroup.getProjectTags().stream()
+                            .sorted((a, b) -> (tagStatsMap.get(a.getTag()) != null && tagStatsMap.get(b.getTag()) != null) ? tagStatsMap.get(b.getTag()).getProjectsAnalysisResults().size() - tagStatsMap.get(a.getTag()).getProjectsAnalysisResults().size() : 0)
+                            .forEach(projectTag -> {
+                                String tagName = projectTag.getTag();
+                                addTagRow(report, tagName, projectTag, tagGroup.getColor());
+                            });
+                });
         if (tagStatsMap.containsKey("")) {
             report.addMultiColumnTableCell("&nbsp;", 8);
             addTagRow(report, "", new ProjectTag(), "lightgrey");
@@ -931,7 +939,7 @@ public class LandscapeProjectsReport {
 
             report.addContentInDivWithTooltip(tagName,
                     tooltip,
-                    "cursor: help; padding: 4px; border-radius: 6px; background-color: " + color);
+                    "cursor: help; padding: 4px; border-radius: 6px; border: 1px solid lightgrey; background-color: " + color);
         } else {
             report.addContentInDiv("Untagged");
         }
