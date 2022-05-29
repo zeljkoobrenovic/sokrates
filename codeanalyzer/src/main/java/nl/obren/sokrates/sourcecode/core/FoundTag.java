@@ -4,6 +4,9 @@ public class FoundTag {
     private TagRule tagRule;
     private String path;
 
+    public FoundTag() {
+    }
+
     public FoundTag(TagRule tagRule, String path) {
         this.tagRule = tagRule;
         this.path = path;
