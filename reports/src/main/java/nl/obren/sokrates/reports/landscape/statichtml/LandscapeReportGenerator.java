@@ -846,6 +846,10 @@ public class LandscapeReportGenerator {
             landscapeReport.endShowMoreBlock();
         }
         landscapeReport.endDiv();
+        String excludedExtensions = landscapeAnalysisResults.getConfiguration().getIgnoreExtensions().stream().collect(Collectors.joining(", "));
+        if (StringUtils.isNotBlank(excludedExtensions)) {
+            landscapeReport.addParagraph("The following extensions are configured not to be displayed: [" + excludedExtensions + "]", "margin-top: 12px; font-size: 70%; color: grey;");
+        }
         landscapeReport.endSection();
     }
 
