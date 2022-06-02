@@ -4,7 +4,6 @@
 
 package nl.obren.sokrates.sourcecode.dependencies;
 
-import com.kitfox.svg.A;
 import nl.obren.sokrates.sourcecode.aspects.MetaDependencyRule;
 
 import java.util.ArrayList;

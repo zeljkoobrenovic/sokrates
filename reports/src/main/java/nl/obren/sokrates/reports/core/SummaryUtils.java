@@ -483,19 +483,25 @@ public class SummaryUtils {
 
     private void summarizeTags(CodeAnalysisResults analysisResults, RichTextReport report) {
         List<FoundTag> tags = analysisResults.getFoundTags();
-        if (tags.size() == 0) {
-            return;
-        }
 
         report.startTableRow();
         report.addTableCell(getIconSvg("tags"), "border: none; padding-top: 9px");
 
         report.startTableCellColSpan("border: none", 2);
+        List<NumericMetric> linesOfCodePerExtension = analysisResults.getMainAspectAnalysisResults().getLinesOfCodePerExtension();
+        String mainLanguage;
+        if (linesOfCodePerExtension.size() > 0) {
+            mainLanguage = linesOfCodePerExtension.get(0).getName().replace("*.", "").trim().toLowerCase();
+        } else {
+            mainLanguage = "-";
+        }
+
+        report.addContentInDivWithTooltip(mainLanguage, "\"" + mainLanguage + "\" is the file extension with most lines of code", "cursor: help; font-size: 90%; border: 1px lightgrey solid; padding: 4px 10px 5px 10px; display: inline-block; background-color: white; border-radius: 3px");
         tags.forEach(foundTag -> {
             TagRule tagRule = foundTag.getTagRule();
             String tooltip = "added if at least one file matches:\n  - "
-                    + tagRule.getPathPatterns().stream().collect(Collectors.joining("\n  - ")) + "\n\n\nmatching path:\n  - "
-                    + foundTag.getPath();
+                    + tagRule.getPathPatterns().stream().collect(Collectors.joining("\n  - ")) + "\n\n\nmatches:\n  - "
+                    + foundTag.getEvidence().replace("\n", "\n  - ");
             String color = StringUtils.isNotBlank(tagRule.getColor()) ? tagRule.getColor() : "white";
             report.addContentInDivWithTooltip(tagRule.getTag(), tooltip, "cursor: help; font-size: 90%; border: 1px lightgrey solid; padding: 4px 10px 5px 10px; display: inline-block; background-color: " + color + "; border-radius: 3px");
         });

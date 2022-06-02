@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -42,7 +43,7 @@ class ExtractGitHistoryFileHandlerTest {
     void splitFile() {
         ExtractGitHistoryFileHandler handler = new ExtractGitHistoryFileHandler();
 
-        assertEquals(handler.extractSubHistory(Arrays.asList(SAMPLE.split("\n")), "common"), RESULT_1);
-        assertEquals(handler.extractSubHistory(Arrays.asList(SAMPLE.split("\n")), "codeexplorer"), RESULT_2);
+        assertEquals(handler.extractSubHistory(Arrays.asList(SAMPLE.split("\n")), "common").stream().collect(Collectors.joining("\n")), RESULT_1);
+        assertEquals(handler.extractSubHistory(Arrays.asList(SAMPLE.split("\n")), "codeexplorer").stream().collect(Collectors.joining("\n")), RESULT_2);
     }
 }

@@ -10,6 +10,6 @@ class DataImageUtilsTest {
     void getLangDataImage() {
         assertNotEquals(DataImageUtils.getLangDataImage("java"), DataImageUtils.DEVELOPER);
         assertNotEquals(DataImageUtils.getLangDataImage("c"), DataImageUtils.DEVELOPER);
-        assertNotEquals(DataImageUtils.getLangDataImage("java"), DataImageUtils.getLangDataImage("Java"));
+        assertEquals(DataImageUtils.getLangDataImage("java"), DataImageUtils.getLangDataImage("Java"));
     }
 }

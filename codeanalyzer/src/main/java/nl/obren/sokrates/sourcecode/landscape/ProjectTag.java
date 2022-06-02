@@ -2,6 +2,7 @@ package nl.obren.sokrates.sourcecode.landscape;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.common.utils.RegexUtils;
+import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,9 @@ public class ProjectTag {
     // A list of extensions to include project if a project has these extensions as biggest (most line of code)
     private List<String> mainExtensions = new ArrayList<>();
 
+    // A list of extensions to include project if a project has any file with this extensions
+    private List<String> anyExtensions = new ArrayList<>();
+
     // A list of extensions to be excluded (if project has this extension as the biggest one)
     private List<String> excludeExtensions = new ArrayList<>();
 
@@ -30,6 +34,9 @@ public class ProjectTag {
 
     @JsonIgnore
     private ProjectTagGroup group;
+
+    public ProjectTag() {
+    }
 
     public String getTag() {
         return tag;
@@ -53,6 +60,14 @@ public class ProjectTag {
 
     public void setMainExtensions(List<String> mainExtensions) {
         this.mainExtensions = mainExtensions;
+    }
+
+    public List<String> getAnyExtensions() {
+        return anyExtensions;
+    }
+
+    public void setAnyExtensions(List<String> anyExtensions) {
+        this.anyExtensions = anyExtensions;
     }
 
     public List<String> getExcludePatterns() {
@@ -135,9 +150,20 @@ public class ProjectTag {
 
     @JsonIgnore
     public boolean matchesMainTechnology(String mainTech) {
-        for (String tech : mainExtensions) {
-            if (tech.equalsIgnoreCase(mainTech)) {
+        for (String extension : mainExtensions) {
+            if (extension.equalsIgnoreCase(mainTech)) {
                 return true;
+            }
+        }
+        return false;
+    }
+    @JsonIgnore
+    public boolean matchesAnyTechnology(List<NumericMetric> technologies) {
+        for (NumericMetric tech : technologies) {
+            for (String extension : anyExtensions) {
+                if (extension.equalsIgnoreCase(tech.getName().replaceAll(".*[.]", ""))) {
+                    return true;
+                }
             }
         }
         return false;
@@ -161,5 +187,9 @@ public class ProjectTag {
     @JsonIgnore
     public void setGroup(ProjectTagGroup group) {
         this.group = group;
+    }
+    @JsonIgnore
+    public String getKey() {
+        return (group != null ? group.getName() : "") + " / " + tag;
     }
 }

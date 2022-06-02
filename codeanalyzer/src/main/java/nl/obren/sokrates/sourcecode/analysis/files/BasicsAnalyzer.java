@@ -4,7 +4,6 @@
 
 package nl.obren.sokrates.sourcecode.analysis.files;
 
-import com.kitfox.svg.A;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SourceCodeFiles;
 import nl.obren.sokrates.sourcecode.SourceFile;
@@ -13,12 +12,9 @@ import nl.obren.sokrates.sourcecode.analysis.Analyzer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.FoundTag;
-import nl.obren.sokrates.sourcecode.core.TagRule;
-import nl.obren.sokrates.sourcecode.metrics.Metric;
-import nl.obren.sokrates.sourcecode.metrics.MetricsList;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -71,9 +67,9 @@ public class BasicsAnalyzer extends Analyzer {
         List<FoundTag> foundTags = new ArrayList<>();
 
         codeConfiguration.getTagRules().forEach(tagRule -> {
-            String foundPath = tagRule.matchesPath(sourceCodeFiles.getAllFiles().stream().map(f -> f.getRelativePath()).collect(Collectors.toList()));
-            if (foundPath != null) {
-                foundTags.add(new FoundTag(tagRule, foundPath));
+            String evidence = tagRule.matchesPath(sourceCodeFiles.getAllFiles().stream().map(f -> f.getRelativePath()).collect(Collectors.toList()));
+            if (StringUtils.isNoneBlank(evidence)) {
+                foundTags.add(new FoundTag(tagRule, evidence));
             }
         });
 

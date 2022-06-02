@@ -41,7 +41,7 @@ public class LandscapeConfiguration {
     private int contributorThresholdCommits = 2;
 
     // If not empty, only project before the given date (in the "YYYY-MM-dd" format) will be included in the landscape report
-    private String ignoreProjectsLastUpdatedBefore = "2020-01-01";
+    private String ignoreProjectsLastUpdatedBefore = "";
 
     // A maximal number of years of commit history dispalyed in the report
     private int commitsMaxYears = 10;
@@ -52,7 +52,7 @@ public class LandscapeConfiguration {
     // If true, contributors IDs (e.g. emails) will be replaces with anonymous IDs (e.g. Contributor 1, Contributor 2)
     private boolean anonymizeContributors = false;
 
-    // If true, the projects report will shows the status of controls of each project
+    // If true, the projects report will show the status of controls of each project
     private boolean showProjectControls = true;
 
     // A maximal number of projects shown in the short project pages (embedded in the index page)

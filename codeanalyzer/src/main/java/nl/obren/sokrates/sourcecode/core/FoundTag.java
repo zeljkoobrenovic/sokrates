@@ -2,14 +2,14 @@ package nl.obren.sokrates.sourcecode.core;
 
 public class FoundTag {
     private TagRule tagRule;
-    private String path;
+    private String evidence = "";
 
     public FoundTag() {
     }
 
-    public FoundTag(TagRule tagRule, String path) {
+    public FoundTag(TagRule tagRule, String evidence) {
         this.tagRule = tagRule;
-        this.path = path;
+        this.evidence = evidence;
     }
 
     public TagRule getTagRule() {
@@ -20,11 +20,11 @@ public class FoundTag {
         this.tagRule = tagRule;
     }
 
-    public String getPath() {
-        return path;
+    public String getEvidence() {
+        return evidence;
     }
 
-    public void setPath(String path) {
-        this.path = path;
+    public void setEvidence(String evidence) {
+        this.evidence = evidence;
     }
 }

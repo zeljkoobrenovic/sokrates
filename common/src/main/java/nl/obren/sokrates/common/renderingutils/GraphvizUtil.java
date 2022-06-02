@@ -4,12 +4,7 @@
 
 package nl.obren.sokrates.common.renderingutils;
 
-import guru.nidi.graphviz.engine.Format;
-import guru.nidi.graphviz.engine.Graphviz;
-import guru.nidi.graphviz.engine.GraphvizJdkEngine;
-import guru.nidi.graphviz.engine.Renderer;
-import guru.nidi.graphviz.model.MutableGraph;
-import guru.nidi.graphviz.parse.Parser;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -24,28 +19,15 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public final class GraphvizUtil {
     private static final Log LOG = LogFactory.getLog(GraphvizUtil.class);
-
-    public static boolean useExternalGraphviz = true;
-
-    static {
-        Graphviz.useEngine(new GraphvizJdkEngine());
-    }
+    public static final String ERROR_SVG = "<svg viewBox=\"0 0 240 80\"><text x=\"20\" y=\"35\">ERROR: Graphviz not found.</text></svg>";
 
     private GraphvizUtil() {
 
     }
 
     public static String getSvgFromDot(String dotCode) {
-        if (useExternalGraphviz()) {
-            String svg = getSvgFromDot(dotCode, new String[]{});
-            return svg != null ? svg : getSvgInternal(dotCode);
-        } else {
-            return getSvgInternal(dotCode);
-        }
-    }
-
-    private static boolean useExternalGraphviz() {
-        return useExternalGraphviz && GraphvizSettings.getGraphVizDotPath() != null;
+        String svg = getSvgFromDot(dotCode, new String[]{});
+        return svg != null ? svg : ERROR_SVG;
     }
 
     public static String getSvgFromDot(String dotCode, String extraDotArguments[]) {
@@ -92,34 +74,6 @@ public final class GraphvizUtil {
             if (svgFile != null) {
                 svgFile.delete();
             }
-        }
-
-        return null;
-    }
-
-
-    private static String getSvgInternal(String dotCode) {
-        try {
-            Parser parser = new Parser();
-            MutableGraph g = parser.read(dotCode);
-            Graphviz graphviz = Graphviz.fromGraph(g);
-            Graphviz graphvizStandardWidth = graphviz;
-            Renderer renderSvg = graphvizStandardWidth.render(Format.SVG);
-
-            String svg = renderSvg.toString();
-
-            int svgBeginIndex = svg.indexOf("<svg");
-            if (svgBeginIndex >= 0) {
-                svg = svg.substring(svgBeginIndex);
-            }
-
-            return svg;
-        } catch (IOException e) {
-            LOG.error(e);
-        } catch (Exception e) {
-            LOG.error(e);
-        } catch (Throwable e) {
-            LOG.error(e);
         }
 
         return null;

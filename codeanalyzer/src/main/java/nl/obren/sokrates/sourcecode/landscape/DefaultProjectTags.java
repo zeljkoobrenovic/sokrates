@@ -26,8 +26,11 @@ public class DefaultProjectTags {
         buildTags.getProjectTags().add(newPathPatternTagInstance("sbt", Arrays.asList("(|.*/)build[.]sbt")));
         buildTags.getProjectTags().add(newPathPatternTagInstance("bazel", Arrays.asList("(|.*/)BUILD[.]bazel")));
         buildTags.getProjectTags().add(newPathPatternTagInstance("pip", Arrays.asList("(|.*/)pip[.]conf", "(|.*/)Pipfile")));
-        buildTags.getProjectTags().add(newPathPatternTagInstance("nuget", Arrays.asList("(|.*/)[.]nuget/.*]")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("nuget", Arrays.asList("(|.*/)[.]nuget/.*")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("aws codebuild", Arrays.asList("(|.*/)buildspec[.]yml")));
         buildTags.getProjectTags().add(newPathPatternTagInstance("renovate", Arrays.asList("(|.*/)renovate[.]json")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("gemfile", Arrays.asList("(|.*/)Gemfile")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("Podfile", Arrays.asList("(|.*/)Podfile")));
 
         ciCdTags.getProjectTags().add(newPathPatternTagInstance("jenkins", Arrays.asList("(|.*/)Jenkinsfile")));
         ciCdTags.getProjectTags().add(newPathPatternTagInstance("travis", Arrays.asList("(|.*/)[.]travis[.]yml")));

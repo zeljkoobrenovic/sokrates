@@ -5,6 +5,7 @@ import nl.obren.sokrates.common.utils.RegexUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TagRule {
     // A tag name
@@ -62,15 +63,24 @@ public class TagRule {
 
     @JsonIgnore
     public String matchesPath(List<String> paths) {
+        List<String> foundPaths = new ArrayList<>();
         for (String path : paths) {
             for (String pattern : pathPatterns) {
                 if (RegexUtils.matchesEntirely(pattern, path) && !excludePath(path)) {
-                    return path;
+                    foundPaths.add(path);
                 }
             }
         }
 
-        return null;
+        int limit = 20;
+        String evidence = foundPaths.stream().sorted().limit(limit).collect(Collectors.joining("\n"));
+
+        if (foundPaths.size() > limit) {
+            evidence += "\n...\n(found " + (foundPaths.size() - limit) + " more files)";
+        }
+
+
+        return evidence;
     }
 
     @JsonIgnore
