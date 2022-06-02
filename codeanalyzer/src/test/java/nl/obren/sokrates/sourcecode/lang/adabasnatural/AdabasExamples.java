@@ -173,22 +173,6 @@ class AdabasExamples {
             "END-SUBROUTINE\n" +
             "END\n";
     public static final String CLEANED = "DEFINE SUBROUTINE EXAMPLE\n"+
-            "DEFINE DATA PARAMETER\n" +
-            "1 #CR-ED (A013)\n" +
-            "1 #CR-ET (A007)\n" +
-            "1 #CR-FROMH (A020)\n" +
-            "1 #CR-ID (N08.0)\n" +
-            "1  #CR-ID-CONTROL (C)\n" +
-            "1 #CR-ID-FIND (N08.0)\n" +
-            "1 #CR-P1W (A020)\n" +
-            "1 #CR-P2W (A020)\n" +
-            "1 #CR-P3W (A020)\n" +
-            "1 #CR-SD (A013)\n" +
-            "1 #CR-ST (A007)\n" +
-            "1 #CR-STATUS (A020)\n" +
-            "1 #CR-TOH (A020)\n" +
-            "1 #CR-YACHT-NAME (A020)\n" +
-            "END-DEFINE\n" +
             "FIND NCYACHT YACHT-ID = NCCRUISE.ID-YACH\n" +
             "FORMAT PS=024 LS=080 ZP=OFF SG=OFF KD=OFF IP=OFF\n" +
             "INPUT          (     IP=OFF                                           \n" +
@@ -286,24 +270,7 @@ class AdabasExamples {
             "END-DECIDE\n" +
             "END-SUBROUTINE\n" +
             "END";
-    public static final String CLEANED_FOR_DUPLICATION = "DEFINE SUBROUTINE EXAMPLE\n"+
-            "DEFINE DATA PARAMETER\n" +
-            "1 #CR-ED (A013)\n" +
-            "1 #CR-ET (A007)\n" +
-            "1 #CR-FROMH (A020)\n" +
-            "1 #CR-ID (N08.0)\n" +
-            "1 #CR-ID-CONTROL (C)\n" +
-            "1 #CR-ID-FIND (N08.0)\n" +
-            "1 #CR-P1W (A020)\n" +
-            "1 #CR-P2W (A020)\n" +
-            "1 #CR-P3W (A020)\n" +
-            "1 #CR-SD (A013)\n" +
-            "1 #CR-ST (A007)\n" +
-            "1 #CR-STATUS (A020)\n" +
-            "1 #CR-TOH (A020)\n" +
-            "1 #CR-YACHT-NAME (A020)\n" +
-            "END-DEFINE\n" +
-            "FIND NCYACHT YACHT-ID = NCCRUISE.ID-YACH\n" +
+    public static final String CLEANED_FOR_DUPLICATION = "DEFINE SUBROUTINE EXAMPLE\n"+ "FIND NCYACHT YACHT-ID = NCCRUISE.ID-YACH\n" +
             "FORMAT PS=024 LS=080 ZP=OFF SG=OFF KD=OFF IP=OFF\n" +
             "INPUT ( IP=OFF\n" +
             ")\n" +
