@@ -1,6 +1,85 @@
 package nl.obren.sokrates.sourcecode.lang.adabasnatural;
 
 class AdabasExamples {
+        public static final String SPECIELUNITCONTENT = "/* In case ON ERROR was performed earlier in this session\n" +
+        "IF NOT SE--CTEA.CALL-EARNIX\n" +
+        "  ESCAPE MODULE\n" +
+        "END-IF\n" +
+        "*\n" +
+        "INCLUDE SDTRCHDC '''Tarifer 653 Earnix''' '''T OR = P'''\n" +
+        "INCLUDE ZXINFOPC /* Set program data\n" +
+        "INCLUDE SZINFR-C /* Reset ZXINFOPA\n" +
+        "INCLUDE SE--NØ-C /* PN -> PNK\n" +
+        "*\n" +
+        "IF GD.LÆST = ' '\n" +
+        "  /* Get the GD area\n" +
+        "  PN.INSTRUKTION := 'LÆS'\n" +
+        "  CALLNAT 'SE53GDAN' PN GD ZXINFOPA\n" +
+        "END-IF\n" +
+        "*\n" +
+        "INCLUDE SE--EGPC /* Create General Purpose area\n" +
+        "EW.DIX1 := SE--CTEA.COVERAGE-COUNT\n" +
+        "*\n" +
+        "INCLUDE SE--EFFC 'PN.INDEKS-TYPE' 'N/A'\n" +
+        "INCLUDE SE--EIDC 'P-PREFIX' '''IndexPremiumType''' 'STRING'\n" +
+        "*\n" +
+        "INCLUDE SE--EFFC 'PN.DÆKNING-TYPE' 'N/A'\n" +
+        "INCLUDE SE--EIDC 'P-PREFIX' '''CoverageName''' 'STRING'\n" +
+        "*\n" +
+        "PERFORM FETCH-IPF-FROM-DATABASE\n" +
+        "*\n" +
+        "EW.HIX1 := 4\n" +
+        "INCLUDE SE--EIIC 'EW.HIX1'\n" +
+        "SZKONV2A.KONV-N := EW.IPF-FIELD\n" +
+        "INCLUDE SE--EFFC 'EW.IPF-FIELD' 'NZ-037'\n" +
+        "INCLUDE SE--EIDC 'P-PREFIX' '''IPF_Conversion''' 'DECIMAL'\n" +
+        "*\n" +
+        "EW.HIX1 := 3\n" +
+        "INCLUDE SE--EIIC 'EW.HIX1'\n" +
+        "SZKONV2A.KONV-N := EW.IPF-FIELD\n" +
+        "INCLUDE SE--EFFC 'EW.IPF-FIELD' 'NZ-037'\n" +
+        "INCLUDE SE--EIDC 'P-PREFIX' '''IPF_Neutralization''' 'DECIMAL'\n" +
+        "*\n" +
+        "INCLUDE SE--EDRC /* Fetch Rabat/Tilleg types\n" +
+        "*\n" +
+        "IF EXT.SANE-PCT NE 0\n" +
+        "  SZKONV2A.KONV-N := EXT.SANE-PCT\n" +
+        "  INCLUDE SE--EFFC 'EXT.SANE-PCT' 'NZ-BEL'\n" +
+        "END-IF\n" +
+        "INCLUDE SE--EIDC 'P-PREFIX' '''CoverSanetationIncrease''' 'DECIMAL'\n" +
+        "*\n" +
+        "INCLUDE SE--EFFC 'EXT.POLICE-TYPE-PCT' 'N/A'\n" +
+        "INCLUDE SE--EIDC 'P-PREFIX' '''CoverRSPctName''' 'TEXT'\n" +
+        "*\n" +
+        "INCLUDE SE--EFFC 'EXT.POLICE-PCT-A' 'N/A'\n" +
+        "INCLUDE SE--EIDC 'P-PREFIX' '''CoverRSPctValue''' 'TEXT'\n" +
+        "**********************************************************************\n" +
+        "DEFINE SUBROUTINE FETCH-IPF-FROM-DATABASE\n" +
+        "**********************************************************************\n" +
+        "*\n" +
+        " RESET SE--EFIA.SE--EFIA-IN\n" +
+        " IF GD.PRÆMIE EQ 0\n" +
+        "   PN.INSTRUKTION := 'LÆS'\n" +
+        "   CALLNAT 'SE--EFIN' PN SE--EFIA SE--CTEA ZXINFOPA\n" +
+        " END-IF\n" +
+        "*\n" +
+        "END-SUBROUTINE\n" +
+        "*\n" +
+        "INCLUDE SE--EFFC 'EXT.POLICE-TYPE-KR' 'N/A'\n" +
+        "INCLUDE SE--EIDC 'P-PREFIX' '''CoverRSMtryName''' 'TEXT'\n" 
+        "*\n" +
+        "INCLUDE SE--EFFC 'EXT.POLICE-KR-A' 'N/A'\n" +
+        "INCLUDE SE--EIDC 'P-PREFIX' '''CoverRSMtryValue''' 'TEXT'\n" +
+        "*\n" +
+        "SZKONV2A.KONV-N := GD.PRÆMIE\n" +
+        "INCLUDE SE--EFFC 'GD.PRÆMIE' 'NZ-TAL'\n" +
+        "INCLUDE SE--EIDC 'P-PREFIX' '''PremiumCoverManual''' 'INTEGER'\n" +
+        "*\n" +
+        
+        "INCLUDE SE--NØ1C /* PNK -> PN\n" +
+        "INCLUDE SE--EOEC /* ON ERROR\n" +
+        "*\n" +
+        "END";
         public static final String UNITCONTENT = "** Example 'FUNCBX02': Declare result value and parameters (Function)\n" +  
         "************************************************************************\n" +
         "DEFINE FUNCTION F#MULTI\n" +                                                 

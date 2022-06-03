@@ -60,7 +60,7 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
     private String getLinesWithoutDataDefinitionAndComments(SourceFile sourceFile) {
         String startDataDifinition = "DEFINE DATA";
         String endDataDifinition = "END-DEFINE";
-        List<String> lines = new ArrayList(SourceCodeCleanerUtils
+        ArrayList<String> lines = new ArrayList(SourceCodeCleanerUtils
                 .splitInLines(getCleaner().clean(getLinesWithoutComments(sourceFile)).getCleanedContent()));
         int removeLinesBelowLineNo = 0;
         int removeLinesAboveLineNo = 0;
@@ -75,8 +75,8 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
                 break;
             }
         }
-        if (removeLinesBelowLineNo != 0 && removeLinesAboveLineNo != 0) {
-            lines.subList(removeLinesBelowLineNo, removeLinesAboveLineNo+1).clear();
+        if (removeLinesBelowLineNo != 0 || removeLinesAboveLineNo != 0) {
+            lines.subList(removeLinesBelowLineNo, removeLinesAboveLineNo + 1).clear();
         }
         return lines.stream().collect(Collectors.joining("\n"));
 
@@ -112,8 +112,29 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
                 lineIndex = extractUnit(sourceFile, lineIndex, line);
             }
         }
+        // Add all code outside normal units to one single unit, with the name of the
+        // file
+        extractClassUnit(sourceFile);
 
         return units;
+    }
+
+    private void extractClassUnit(SourceFile sourceFile) {
+        int linesInUnits = units.stream().collect(Collectors.summingInt(u -> u.getLinesOfCode()));
+        if (cleanedLines.size() - linesInUnits > 0) {
+            UnitInfo unitInfo = new UnitInfo();
+            unitInfo.setLinesOfCode(cleanedLines.size() - linesInUnits);
+            unitInfo.setShortName(sourceFile.getFile().getName());
+            unitInfo.setSourceFile(sourceFile);
+            String cleanedUnitContent = cleanForDuplicationCalculations(sourceFile).getCleanedContent();
+            for (UnitInfo unit : units) {
+                cleanedUnitContent = cleanedUnitContent.replace(unit.getCleanedBody(), "\n");
+            }
+            unitInfo.setCleanedBody(cleanedUnitContent);
+            unitInfo.setStartLine(0);
+            unitInfo = updateUnitInfo(cleanedUnitContent, unitInfo);
+            units.add(unitInfo);
+        }
     }
 
     private int extractUnit(SourceFile sourceFile, int lineIndex, String line) {
