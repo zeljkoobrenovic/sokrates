@@ -28,12 +28,12 @@ public class DefaultProjectTags {
         buildTags.getProjectTags().add(newPathPatternTagInstance("pip", Arrays.asList("(|.*/)pip[.]conf", "(|.*/)Pipfile")));
         buildTags.getProjectTags().add(newPathPatternTagInstance("nuget", Arrays.asList("(|.*/)[.]nuget/.*")));
         buildTags.getProjectTags().add(newPathPatternTagInstance("aws codebuild", Arrays.asList("(|.*/)buildspec[.]yml")));
-        buildTags.getProjectTags().add(newPathPatternTagInstance("renovate", Arrays.asList("(|.*/)renovate[.]json")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("renovate", Arrays.asList("(|.*/)renovate[.]json5?")));
         buildTags.getProjectTags().add(newPathPatternTagInstance("gemfile", Arrays.asList("(|.*/)Gemfile")));
         buildTags.getProjectTags().add(newPathPatternTagInstance("Podfile", Arrays.asList("(|.*/)Podfile")));
 
         ciCdTags.getProjectTags().add(newPathPatternTagInstance("jenkins", Arrays.asList("(|.*/)Jenkinsfile")));
-        ciCdTags.getProjectTags().add(newPathPatternTagInstance("travis", Arrays.asList("(|.*/)[.]travis[.]yml")));
+        ciCdTags.getProjectTags().add(newPathPatternTagInstance("travis", Arrays.asList("(|.*/)[.]travis[.]ya?ml")));
         ciCdTags.getProjectTags().add(newPathPatternTagInstance("github actions", Arrays.asList("(|.*/)[.]github[/]workflows[/].*")));
 
         techTags.getProjectTags().add(newPathPatternTagInstance("docker", Arrays.asList("(|.*/)Dockerfile")));
