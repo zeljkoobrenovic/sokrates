@@ -66,7 +66,7 @@ class AdabasExamples {
         "END-SUBROUTINE\n" +
         "*\n" +
         "INCLUDE SE--EFFC 'EXT.POLICE-TYPE-KR' 'N/A'\n" +
-        "INCLUDE SE--EIDC 'P-PREFIX' '''CoverRSMtryName''' 'TEXT'\n" 
+        "INCLUDE SE--EIDC 'P-PREFIX' '''CoverRSMtryName''' 'TEXT'\n" +
         "*\n" +
         "INCLUDE SE--EFFC 'EXT.POLICE-KR-A' 'N/A'\n" +
         "INCLUDE SE--EIDC 'P-PREFIX' '''CoverRSMtryValue''' 'TEXT'\n" +

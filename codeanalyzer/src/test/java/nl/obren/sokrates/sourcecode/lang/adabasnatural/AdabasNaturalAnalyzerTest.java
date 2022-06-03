@@ -90,7 +90,7 @@ public class AdabasNaturalAnalyzerTest {
         assertEquals(unitInfos.get(0).getNumberOfParameters(), 0);
 
         assertEquals(unitInfos.get(1).getShortName(), "SE53EGDN.nsp");
-        assertEquals(unitInfos.get(1).getLinesOfCode(), 41);
+        assertEquals(unitInfos.get(1).getLinesOfCode(), 49);
         assertEquals(unitInfos.get(1).getMcCabeIndex(), 1);
         assertEquals(unitInfos.get(1).getNumberOfParameters(), 0);
 

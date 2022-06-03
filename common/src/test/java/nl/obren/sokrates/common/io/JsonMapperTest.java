@@ -20,7 +20,7 @@ public class JsonMapperTest {
     public void testGetMessage() throws Exception {
         JsonMapper mapper = new JsonMapper();
         String originalMessage = "An error message";
-        JsonLocation jsonLocation = new JsonLocation(null, 0, 10, 20);
+        JsonLocation jsonLocation = new JsonLocation(null, 0l, 10, 20);
 
         String message = mapper.getMessage(originalMessage, jsonLocation);
 
