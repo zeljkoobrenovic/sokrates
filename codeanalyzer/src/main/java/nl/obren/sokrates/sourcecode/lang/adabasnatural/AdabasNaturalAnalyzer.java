@@ -31,14 +31,16 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
     }
 
     private List<String> unitLiterals = Arrays.asList(
-            " function",
-            " subroutine");
+            " FUNCTION",
+            " SUBROUTINE");
+
     private List<String> conditionalLiterals = Arrays.asList(
-                " ACCEPT"," REJECT"," AT BREAK"," BEFORE BREAK PROCESSING", " DECIDE FOR"," DECIDE ON"," IF"," FOR", " REPEAT");
+            " ACCEPT", " REJECT", " AT BREAK", " BEFORE BREAK PROCESSING", " DECIDE FOR", " DECIDE ON", " IF", " FOR",
+            " REPEAT");
 
     @Override
     public CleanedContent cleanForLinesOfCodeCalculations(SourceFile sourceFile) {
-        cleanedContent = getCleaner().clean(getLinesWithoutComments(sourceFile));
+        cleanedContent = getCleaner().clean(getLinesWithoutDataDefinitionAndComments(sourceFile));
         return cleanedContent;
     }
 
@@ -55,6 +57,31 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
         return linesWithoutComments.stream().collect(Collectors.joining("\n"));
     }
 
+    private String getLinesWithoutDataDefinitionAndComments(SourceFile sourceFile) {
+        String startDataDifinition = "DEFINE DATA";
+        String endDataDifinition = "END-DEFINE";
+        ArrayList<String> lines = new ArrayList(SourceCodeCleanerUtils
+                .splitInLines(getCleaner().clean(getLinesWithoutComments(sourceFile)).getCleanedContent()));
+        int removeLinesBelowLineNo = 0;
+        int removeLinesAboveLineNo = 0;
+        for (int lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
+            String line = lines.get(lineIndex).trim();
+            if (line.toUpperCase().contains(startDataDifinition)) {
+                removeLinesBelowLineNo = lineIndex;
+            }
+            // First END-DEFINE is teh end of DEFINE DATA
+            if (line.toUpperCase().contains(endDataDifinition)) {
+                removeLinesAboveLineNo = lineIndex;
+                break;
+            }
+        }
+        if (removeLinesBelowLineNo != 0 || removeLinesAboveLineNo != 0) {
+            lines.subList(removeLinesBelowLineNo, removeLinesAboveLineNo + 1).clear();
+        }
+        return lines.stream().collect(Collectors.joining("\n"));
+
+    }
+
     private CommentsAndEmptyLinesCleaner getCleaner() {
         CommentsAndEmptyLinesCleaner cleaner = new CommentsAndEmptyLinesCleaner();
 
@@ -65,7 +92,7 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
 
     @Override
     public CleanedContent cleanForDuplicationCalculations(SourceFile sourceFile) {
-        String content = getCleaner().cleanKeepEmptyLines(getLinesWithoutComments(sourceFile));
+        String content = getCleaner().cleanKeepEmptyLines(getLinesWithoutDataDefinitionAndComments(sourceFile));
 
         content = SourceCodeCleanerUtils.trimLines(content);
 
@@ -85,8 +112,29 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
                 lineIndex = extractUnit(sourceFile, lineIndex, line);
             }
         }
+        // Add all code outside normal units to one single unit, with the name of the
+        // file
+        extractClassUnit(sourceFile);
 
         return units;
+    }
+
+    private void extractClassUnit(SourceFile sourceFile) {
+        int linesInUnits = units.stream().collect(Collectors.summingInt(u -> u.getLinesOfCode()));
+        if (cleanedLines.size() - linesInUnits > 0) {
+            UnitInfo unitInfo = new UnitInfo();
+            unitInfo.setLinesOfCode(cleanedLines.size() - linesInUnits);
+            unitInfo.setShortName(sourceFile.getFile().getName());
+            unitInfo.setSourceFile(sourceFile);
+            String cleanedUnitContent = cleanForDuplicationCalculations(sourceFile).getCleanedContent();
+            for (UnitInfo unit : units) {
+                cleanedUnitContent = cleanedUnitContent.replace(unit.getCleanedBody(), "\n");
+            }
+            unitInfo.setCleanedBody(cleanedUnitContent);
+            unitInfo.setStartLine(0);
+            unitInfo = updateUnitInfo(cleanedUnitContent, unitInfo);
+            units.add(unitInfo);
+        }
     }
 
     private int extractUnit(SourceFile sourceFile, int lineIndex, String line) {
@@ -112,8 +160,8 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
         for (int i = startIndex; i < lines.size(); i++) {
             String line = lines.get(i).trim();
             for (String unitLiteral : unitLiterals) {
-                startCount += StringUtils.countMatches(line.toLowerCase(), "define" + unitLiteral);
-                endCount += StringUtils.countMatches(line.toLowerCase(), "end-" + unitLiteral.trim());
+                startCount += StringUtils.countMatches(line.toUpperCase(), "DEFINE" + unitLiteral);
+                endCount += StringUtils.countMatches(line.toUpperCase(), "END-" + unitLiteral.trim());
             }
             boolean hasValidBody = startCount > 0 && startCount == endCount;
             if (hasValidBody) {
@@ -147,7 +195,7 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
 
     private boolean isUnitSignature(String line) {
         for (String unitLiteral : unitLiterals) {
-            if (line.toLowerCase().contains("define" + unitLiteral)) {
+            if (line.toUpperCase().contains("DEFINE" + unitLiteral)) {
                 return true;
             }
         }
@@ -170,13 +218,17 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
         int params = 0;
         boolean inDecideBlock = false;
         boolean inDataParamsBlock = false;
+
+        // Simplify here, as the END-DEFINE is out of scope
+
         for (String line : cleanedContent.split("\n")) {
             String trimmedLine = line.trim() + " ";
             if (inDecideBlock) {
                 if (trimmedLine.startsWith("END-DECIDE")) {
                     inDecideBlock = false;
                 } else {
-                    if (trimmedLine.startsWith("VALUE ") || trimmedLine.startsWith("WHEN ") || trimmedLine.startsWith("NONE ")) {
+                    if (trimmedLine.startsWith("VALUE ") || trimmedLine.startsWith("WHEN ")
+                            || trimmedLine.startsWith("NONE ")) {
                         index += 1;
                     }
                 }
@@ -184,7 +236,7 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
                 if (trimmedLine.startsWith("END-DEFINE")) {
                     inDataParamsBlock = false;
                 } else {
-                    if (trimmedLine.startsWith("USING ") ) {
+                    if (trimmedLine.startsWith("USING ")) {
                         params += 1;
                     }
                 }
@@ -192,14 +244,14 @@ public class AdabasNaturalAnalyzer extends LanguageAnalyzer {
                 for (String mcCabeIndexLiteral : conditionalLiterals) {
                     index += StringUtils.countMatches(trimmedLine, mcCabeIndexLiteral);
                 }
-                
+
                 if (trimmedLine.startsWith("DECIDE ")) {
                     inDecideBlock = true;
                 }
                 if (trimmedLine.startsWith("DEFINE DATA PARAMETER")) {
                     inDataParamsBlock = true;
                 }
-                
+
             }
         }
 

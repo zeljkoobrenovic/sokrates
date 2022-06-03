@@ -38,10 +38,10 @@ public class AdabasNaturalAnalyzerTest {
         SourceFile sourceFile = new SourceFile(new File("a.nsp"), AdabasExamples.CONTENT);
         sourceFile.setLinesOfCode(10);
         List<UnitInfo> unitInfos = analyzer.extractUnits(sourceFile);
-        assertEquals(unitInfos.size(), 1);
+        assertEquals(unitInfos.size(), 2);
         
         assertEquals(unitInfos.get(0).getShortName(), "EXAMPLE");
-        assertEquals(unitInfos.get(0).getLinesOfCode(), 112);
+        assertEquals(unitInfos.get(0).getLinesOfCode(), 96);
         assertEquals(unitInfos.get(0).getMcCabeIndex(), 6);
         assertEquals(unitInfos.get(0).getNumberOfParameters(), 0);
         
@@ -55,9 +55,9 @@ public class AdabasNaturalAnalyzerTest {
         
         List<UnitInfo> unitInfos = analyzer.extractUnits(sourceFile);
 
-        assertEquals(unitInfos.size(), 3);
+        assertEquals(unitInfos.size(), 4);
         assertEquals(unitInfos.get(0).getShortName(), "F#MULTI");
-        assertEquals(unitInfos.get(0).getLinesOfCode(), 11);
+        assertEquals(unitInfos.get(0).getLinesOfCode(), 7);
         assertEquals(unitInfos.get(0).getMcCabeIndex(), 1);
         assertEquals(unitInfos.get(0).getNumberOfParameters(), 0);
 
@@ -70,6 +70,29 @@ public class AdabasNaturalAnalyzerTest {
         assertEquals(unitInfos.get(2).getLinesOfCode(), 4);
         assertEquals(unitInfos.get(2).getMcCabeIndex(), 1);
         assertEquals(unitInfos.get(2).getNumberOfParameters(), 0);
+
+    }
+
+    @Test
+    public void unitInfoWithCollectedCodeInClassUnit() {
+        AdabasNaturalAnalyzer analyzer = new AdabasNaturalAnalyzer();
+
+        SourceFile sourceFile = new SourceFile(new File("SE53EGDN.nsp"), AdabasExamples.SPECIELUNITCONTENT);
+        sourceFile.setLinesOfCode(108);
+       
+        List<UnitInfo> unitInfos = analyzer.extractUnits(sourceFile);
+
+        assertEquals(unitInfos.size(), 2);
+
+        assertEquals(unitInfos.get(0).getShortName(), "FETCH-IPF-FROM-DATABASE");
+        assertEquals(unitInfos.get(0).getLinesOfCode(), 6);
+        assertEquals(unitInfos.get(0).getMcCabeIndex(), 1);
+        assertEquals(unitInfos.get(0).getNumberOfParameters(), 0);
+
+        assertEquals(unitInfos.get(1).getShortName(), "SE53EGDN.nsp");
+        assertEquals(unitInfos.get(1).getLinesOfCode(), 41);
+        assertEquals(unitInfos.get(1).getMcCabeIndex(), 1);
+        assertEquals(unitInfos.get(1).getNumberOfParameters(), 0);
 
     }
 
