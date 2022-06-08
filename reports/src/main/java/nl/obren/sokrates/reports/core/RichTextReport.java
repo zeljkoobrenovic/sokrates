@@ -495,4 +495,8 @@ public class RichTextReport {
     public void setRenderLogo(boolean renderLogo) {
         this.renderLogo = renderLogo;
     }
+
+    public void addContentInSpan(String content, String style) {
+        addHtmlContent("<span style='" + style + "'>" + content + "</span>");
+    }
 }

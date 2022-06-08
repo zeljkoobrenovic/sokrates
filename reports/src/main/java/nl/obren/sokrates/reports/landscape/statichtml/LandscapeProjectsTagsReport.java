@@ -246,7 +246,7 @@ public class LandscapeProjectsTagsReport {
             return;
         }
         report.startTableRow("text-align: center");
-        report.startTableCell();
+        report.startTableCell("vertical-align: top;");
         if (StringUtils.isNotBlank(tagName)) {
             String tooltip = getTagTooltip(tag);
 
@@ -266,40 +266,58 @@ public class LandscapeProjectsTagsReport {
         }
         report.endTableCell();
         if (stats != null) {
+            int totalProjectsCount = landscapeAnalysisResults.getProjectsCount();
             List<ProjectAnalysisResults> projectsAnalysisResults = new ArrayList<>(stats.getProjectsAnalysisResults());
             projectsAnalysisResults.sort((a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode() - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
             int count = projectsAnalysisResults.size();
-            report.startTableCell("text-align: left;");
-            report.startShowMoreBlock("<b>" + count + "</b>" + (count == 1 ? " project" : " projects"));
+            report.startTableCell("text-align: left");
+            String projectPercText = FormattingUtils.getFormattedPercentage(totalProjectsCount > 0 ? (100.0 * count / totalProjectsCount) : 0);
+            report.startShowMoreBlock("<b>" + count + "</b>" + (count == 1 ? " project" : " projects")
+                    +  (count == 0 ? "" : " <span style='color: grey; font-size: 90%'>(" + projectPercText + "%)</span>"));
+            report.startDiv("border-left: 2px solid lightgrey; margin-left: 5px; font-size: 80%");
             projectsAnalysisResults.forEach(project -> {
                 CodeAnalysisResults projectAnalysisResults = project.getAnalysisResults();
                 String projectReportUrl = getProjectReportUrl(project);
                 report.addContentInDiv(
-                        "<a href='" + projectReportUrl + "' target='_blank' style='margin-left: 10px'>" + projectAnalysisResults.getMetadata().getName() + "</a> "
+                        "<a href='" + projectReportUrl + "' target='_blank' style='margin-left: 6px'>" + projectAnalysisResults.getMetadata().getName() + "</a> "
                                 + "<span color='lightgrey'>(<b>"
                                 + FormattingUtils.formatCount(projectAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode(), "-") + "</b> LOC)</span>");
             });
+            report.endDiv();
             report.endShowMoreBlock();
             report.endTableCell();
-            report.addTableCell(FormattingUtils.formatCount(projectsAnalysisResults
-                    .stream()
+            int mainLoc = landscapeAnalysisResults.getMainLoc();
+            int tagMainLoc = projectsAnalysisResults.stream()
                     .mapToInt(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode())
-                    .sum()), "text-align: center");
+                    .sum();
+            String mainLocPercText = FormattingUtils.getFormattedPercentage(totalProjectsCount > 0 ? (100.0 * tagMainLoc / mainLoc) : 0);
+            report.addTableCell(FormattingUtils.formatCount(tagMainLoc) + " <span style='color: grey; font-size: 90%'>(" + mainLocPercText + "%)</span>", "");
             report.addTableCell(FormattingUtils.formatCount(projectsAnalysisResults
                     .stream()
                     .mapToInt(p -> p.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCode())
-                    .sum(), "-"), "text-align: center");
-            report.addTableCell(FormattingUtils.formatCount(LandscapeAnalysisResults.getLoc1YearActive(projectsAnalysisResults), "-"), "text-align: center");
-            report.addTableCell(FormattingUtils.formatCount(LandscapeAnalysisResults.getLocNew(projectsAnalysisResults), "-"), "text-align: center");
-            report.addTableCell(FormattingUtils.formatCount(projectsAnalysisResults
+                    .sum(), "-"), "");
+            report.addTableCell(FormattingUtils.formatCount(LandscapeAnalysisResults.getLoc1YearActive(projectsAnalysisResults), "-"), "r");
+            report.addTableCell(FormattingUtils.formatCount(LandscapeAnalysisResults.getLocNew(projectsAnalysisResults), "-"), "");
+            int commitsCount30Days = landscapeAnalysisResults.getCommitsCount30Days();
+            int tagCommitsCount30Days = projectsAnalysisResults
                     .stream()
                     .mapToInt(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days())
-                    .sum(), "-"), "text-align: center");
+                    .sum();
+            String commits30DaysPercText = FormattingUtils.getFormattedPercentage(commitsCount30Days > 0 ? (100.0 * tagCommitsCount30Days / commitsCount30Days) : 0);
+            report.addTableCell(FormattingUtils.formatCount(tagCommitsCount30Days, "-") + (tagCommitsCount30Days == 0 ? "" : " <span style='color: grey; font-size: 90%'>(" + commits30DaysPercText + "%)</span>"), "");
+            int totalRecentContributorCount = landscapeAnalysisResults.getRecentContributorsCount();
             int recentContributorCount = getRecentContributorCount(projectsAnalysisResults);
+            String recentContributorsPercText = FormattingUtils.getFormattedPercentage(totalRecentContributorCount > 0 ? (100.0 * recentContributorCount / totalRecentContributorCount) : 0);
             if (recentContributorCount > 0) {
-                report.addTableCell("<div style='vertical-align: middle; display: inline-block'>" + FormattingUtils.formatCount(recentContributorCount, "-") + "</div><div style='vertical-align: middle; display: inline-block'>" + LandscapeReportGenerator.DEVELOPER_SVG_ICON + "</div>", "text-align: center; vertical-align: middle");
+                report.addTableCell("<div style='vertical-align: middle; display: inline-block'>"
+                                + FormattingUtils.formatCount(recentContributorCount, "-")
+                                + "</div><div style='vertical-align: middle; display: inline-block'>"
+                                + LandscapeReportGenerator.DEVELOPER_SVG_ICON
+                                + "</div>"
+                                +  (recentContributorCount == 0 ? "" : " <span style='color: grey; font-size: 90%'>(" + recentContributorsPercText + "%)</span>"),
+                        "vertical-align: middle");
             } else {
-                report.addTableCell("-", "text-align: center; vertical-align: middle");
+                report.addTableCell("-", "vertical-align: middle");
             }
         } else {
             report.addTableCell("");

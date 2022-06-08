@@ -1219,7 +1219,7 @@ public class LandscapeReportGenerator {
         landscapeReport.endSection();
 
         landscapeReport.startSubSection("<a href='projects-extensions.html' target='_blank' style='text-decoration: none'>" +
-                "File Extension Project Tags</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "");
+                "File Extension Tags</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "");
         landscapeReport.addHtmlContent("<iframe src='projects-extensions.html' frameborder=0 style='height: 600px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
         landscapeReport.endSection();
 
