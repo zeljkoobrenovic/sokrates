@@ -107,8 +107,6 @@ public class ScopingConventions {
 
         otherFilesConventions.add(new Convention(".*/[.]cpplint[.]py", "", "Linter"));
 
-        otherFilesConventions.add(new Convention(".*/Jenkinsfile", "", "Jenkinsfile"));
-
         otherFilesConventions.add(new Convention(".*[.]storyboard", "", "Storyboard"));
         otherFilesConventions.add(new Convention(".*[.]xib", "", "XIB files"));
 
@@ -239,6 +237,11 @@ public class ScopingConventions {
         buildAndDeploymentFilesConventions.add(new Convention(".*/jenkins/.*[.]groovy", "", "Jenkins files"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/fastlane/.*[.]rb", "", "Fastlane files"));
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]podspec", "", "Podspec files"));
+
+
+        buildAndDeploymentFilesConventions.add(new Convention(".*/Jenkinsfile", "", "Jenkinsfile"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/Makefile", "", "Makefile"));
+
     }
 
     private void addGeneratedConventions() {

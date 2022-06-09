@@ -1,8 +1,9 @@
-package nl.obren.sokrates.reports.landscape.statichtml;
+package nl.obren.sokrates.reports.landscape.statichtml.projects;
 
 import nl.obren.sokrates.common.renderingutils.GraphvizUtil;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator;
 import nl.obren.sokrates.reports.landscape.utils.Force3DGraphExporter;
 import nl.obren.sokrates.reports.landscape.utils.LandscapeGeneratorUtils;
 import nl.obren.sokrates.reports.landscape.utils.TagStats;
@@ -35,12 +36,14 @@ public class LandscapeProjectsTagsReport {
 
     private List<ProjectTagGroup> projectTagGroups = new ArrayList<>();
     private String type;
+    private String matrixReportFileName;
     private boolean renderLangIcons;
 
-    public LandscapeProjectsTagsReport(LandscapeAnalysisResults landscapeAnalysisResults, List<ProjectTagGroup> projectTagGroups, String type, boolean renderLangIcons) {
+    public LandscapeProjectsTagsReport(LandscapeAnalysisResults landscapeAnalysisResults, List<ProjectTagGroup> projectTagGroups, String type, String matrixReportFileName, boolean renderLangIcons) {
         this.landscapeAnalysisResults = landscapeAnalysisResults;
         this.projectTagGroups = projectTagGroups;
         this.type = type;
+        this.matrixReportFileName = matrixReportFileName;
         this.renderLangIcons = renderLangIcons;
     }
 
@@ -57,7 +60,9 @@ public class LandscapeProjectsTagsReport {
     private void addTagStats(RichTextReport report) {
         renderTagDependencies();
 
-        // addAllTagDependencies(report);
+        report.startDiv("margin-bottom: 20px; margin-top: -6px;");
+        report.addNewTabLink("<b>Open expanded view</b> (stats per sub-folder)...", matrixReportFileName);
+        report.endDiv();
 
         report.startTable();
         report.addTableHeader("Tag", "# projects", "LOC<br>(main)", "LOC<br>(test)", "LOC<br>(active)", "LOC<br>(new)", "# commits<br>(30 days)", "# contributors<br>(30 days)");
@@ -275,7 +280,7 @@ public class LandscapeProjectsTagsReport {
             report.startShowMoreBlock("<b>" + count + "</b>" + (count == 1 ? " project" : " projects")
                     +  (count == 0 ? "" : " <span style='color: grey; font-size: 90%'>(" + projectPercText + "%)</span>"));
             report.startDiv("border-left: 2px solid lightgrey; margin-left: 5px; font-size: 80%");
-            projectsAnalysisResults.forEach(project -> {
+            projectsAnalysisResults.stream().limit(100).forEach(project -> {
                 CodeAnalysisResults projectAnalysisResults = project.getAnalysisResults();
                 String projectReportUrl = getProjectReportUrl(project);
                 report.addContentInDiv(

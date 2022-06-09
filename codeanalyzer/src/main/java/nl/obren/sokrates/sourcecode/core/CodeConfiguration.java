@@ -112,14 +112,15 @@ public class CodeConfiguration {
         rules.add(new TagRule("aws-codebuild", "#f0f0f0", Arrays.asList("(|.*/)buildspec[.]yml")));
         rules.add(new TagRule("gemfile", "#f0f0f0", Arrays.asList("(|.*/)Gemfile")));
         rules.add(new TagRule("podfile", "#f0f0f0", Arrays.asList("(|.*/)Podfile")));
+        rules.add(new TagRule("makefile", "#f0f0f0", Arrays.asList("(|.*/)Makefile")));
         rules.add(new TagRule("renovate", "#f0f0f0", Arrays.asList("(|.*/)renovate[.]json5?")));
 
         rules.add(new TagRule("jenkins", "#e0e0e0", Arrays.asList("(|.*/)Jenkinsfile")));
         rules.add(new TagRule("travis", "#e0e0e0", Arrays.asList("(|.*/)[.]travis[.]ya?ml")));
         rules.add(new TagRule("github actions", "#e0e0e0", Arrays.asList("(|.*/)[.]github[/]workflows[/].*")));
 
-
         rules.add(new TagRule("docker", "#b0b0b0", Arrays.asList("(|.*/)Dockerfile")));
+        rules.add(new TagRule("helm", "#b0b0b0", Arrays.asList("(|.*/)helmfile[.]ya?ml")));
 
         return rules;
     }

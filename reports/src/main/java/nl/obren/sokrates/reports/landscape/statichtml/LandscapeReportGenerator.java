@@ -15,6 +15,9 @@ import nl.obren.sokrates.reports.core.ReportConstants;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
+import nl.obren.sokrates.reports.landscape.statichtml.projects.LandscapeProjectsReport;
+import nl.obren.sokrates.reports.landscape.statichtml.projects.LandscapeProjectsTagsMatrixReport;
+import nl.obren.sokrates.reports.landscape.statichtml.projects.LandscapeProjectsTagsReport;
 import nl.obren.sokrates.reports.landscape.utils.*;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
@@ -79,8 +82,11 @@ public class LandscapeReportGenerator {
     private RichTextReport landscapeProjectsReportShort = new RichTextReport("", "projects-short.html");
 
     private RichTextReport landscapeProjectsTags = new RichTextReport("", "projects-tags.html");
+    private RichTextReport landscapeProjectsTagsMatrix = new RichTextReport("", "projects-tags-matrix.html");
 
     private RichTextReport landscapeProjectsExtensionTags = new RichTextReport("", "projects-extensions.html");
+    private RichTextReport
+            landscapeProjectsExtensionTagsMatrix = new RichTextReport("", "projects-extensions-matrix.html");
     private RichTextReport landscapeProjectsReportLong = new RichTextReport("", "projects.html");
     private RichTextReport landscapeRecentContributorsReport = new RichTextReport("", "contributors-recent.html");
     private RichTextReport landscapeContributorsReport = new RichTextReport("", "contributors.html");
@@ -1205,10 +1211,16 @@ public class LandscapeReportGenerator {
             new LandscapeProjectsReport(landscapeAnalysisResults, shortLimit,
                     "See the full list of projects...", "projects.html")
                     .saveProjectsReport(landscapeProjectsReportShort, reportsFolder, projectsAnalysisResults);
-            new LandscapeProjectsTagsReport(landscapeAnalysisResults, configuration.getProjectTagGroups(), "custom", false)
+
+            new LandscapeProjectsTagsReport(landscapeAnalysisResults, configuration.getProjectTagGroups(), "custom", "projects-tags-matrix.html",false)
                     .saveProjectsReport(landscapeProjectsTags, reportsFolder, projectsAnalysisResults);
-            new LandscapeProjectsTagsReport(landscapeAnalysisResults, getExtensionTagGroups(), "extension", true)
+            new LandscapeProjectsTagsReport(landscapeAnalysisResults, getExtensionTagGroups(), "extension", "projects-extensions-matrix.html", true)
                     .saveProjectsReport(landscapeProjectsExtensionTags, reportsFolder, projectsAnalysisResults);
+
+            new LandscapeProjectsTagsMatrixReport(landscapeAnalysisResults, configuration.getProjectTagGroups(), "custom-matrix", false)
+                    .saveProjectsReport(landscapeProjectsTagsMatrix, reportsFolder, projectsAnalysisResults);
+            new LandscapeProjectsTagsMatrixReport(landscapeAnalysisResults, getExtensionTagGroups(), "extension-matrix", true)
+                    .saveProjectsReport(landscapeProjectsExtensionTagsMatrix, reportsFolder, projectsAnalysisResults);
             if (projectsAnalysisResults.size() > shortLimit) {
                 new LandscapeProjectsReport(landscapeAnalysisResults, configuration.getProjectsListLimit())
                         .saveProjectsReport(landscapeProjectsReportLong, reportsFolder, projectsAnalysisResults);
@@ -1458,6 +1470,8 @@ public class LandscapeReportGenerator {
         reports.add(this.landscapeProjectsReportShort);
         reports.add(this.landscapeProjectsTags);
         reports.add(this.landscapeProjectsExtensionTags);
+        reports.add(this.landscapeProjectsTagsMatrix);
+        reports.add(this.landscapeProjectsExtensionTagsMatrix);
         if (landscapeAnalysisResults.getProjectAnalysisResults().size() > landscapeAnalysisResults.getConfiguration().getProjectsShortListLimit()) {
             reports.add(this.landscapeProjectsReportLong);
         }

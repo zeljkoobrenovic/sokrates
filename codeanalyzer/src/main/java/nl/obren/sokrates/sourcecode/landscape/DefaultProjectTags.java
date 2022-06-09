@@ -30,13 +30,15 @@ public class DefaultProjectTags {
         buildTags.getProjectTags().add(newPathPatternTagInstance("aws codebuild", Arrays.asList("(|.*/)buildspec[.]yml")));
         buildTags.getProjectTags().add(newPathPatternTagInstance("renovate", Arrays.asList("(|.*/)renovate[.]json5?")));
         buildTags.getProjectTags().add(newPathPatternTagInstance("gemfile", Arrays.asList("(|.*/)Gemfile")));
-        buildTags.getProjectTags().add(newPathPatternTagInstance("Podfile", Arrays.asList("(|.*/)Podfile")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("podfile", Arrays.asList("(|.*/)Podfile")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("makefile", Arrays.asList("(|.*/)Makefile")));
 
         ciCdTags.getProjectTags().add(newPathPatternTagInstance("jenkins", Arrays.asList("(|.*/)Jenkinsfile")));
         ciCdTags.getProjectTags().add(newPathPatternTagInstance("travis", Arrays.asList("(|.*/)[.]travis[.]ya?ml")));
         ciCdTags.getProjectTags().add(newPathPatternTagInstance("github actions", Arrays.asList("(|.*/)[.]github[/]workflows[/].*")));
 
         techTags.getProjectTags().add(newPathPatternTagInstance("docker", Arrays.asList("(|.*/)Dockerfile")));
+        techTags.getProjectTags().add(newPathPatternTagInstance("helm", Arrays.asList("(|.*/)helmfile[.]ya?ml")));
 
         return groups;
     }

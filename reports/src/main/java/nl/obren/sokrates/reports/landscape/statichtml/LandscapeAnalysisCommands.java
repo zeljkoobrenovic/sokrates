@@ -24,15 +24,6 @@ import java.util.List;
 public class LandscapeAnalysisCommands {
     private static final Log LOG = LogFactory.getLog(LandscapeAnalysisCommands.class);
 
-    public static void init(File analysisRoot, File landscapeConfigFile) {
-        landscapeConfigFile = getConfigFile(analysisRoot, landscapeConfigFile);
-        LandscapeAnalysisInitiator initiator = new LandscapeAnalysisInitiator();
-        initiator.initConfiguration(analysisRoot, landscapeConfigFile, true);
-        generateReport(landscapeConfigFile);
-
-        LOG.info("Configuration file: " + landscapeConfigFile.getPath());
-    }
-
     public static void update(File analysisRoot, File landscapeConfigFile, Metadata metadata) {
         landscapeConfigFile = getConfigFile(analysisRoot, landscapeConfigFile);
         LandscapeAnalysisUpdater updater = new LandscapeAnalysisUpdater();
