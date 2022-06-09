@@ -90,10 +90,10 @@ public class LandscapeProjectsTagsMatrixReport {
     private void addHeaderRow(RichTextReport report, List<Pair<String, Integer>> roots) {
         report.startTableRow("font-size: 80%");
         report.addTableCell("");
-        report.addTableCell("all projects", "background-color: #f2f2f2; text-align: center; border-right: 4px solid lightgrey;");
+        report.addTableCell("all projects", "text-align: center; border-right: 4px solid lightgrey;");
         roots.forEach(root -> {
             String text = StringUtils.abbreviate(root.getKey(), 20) + "<br>(" + root.getValue() + ")";
-            report.addTableCell(text, "text-align: center");
+            report.addTableCell(text, "background-color: #f2f2f2; text-align: center");
         });
         report.endTableRow();
     }
@@ -150,12 +150,12 @@ public class LandscapeProjectsTagsMatrixReport {
         int recentContributorCount = getRecentContributorCount(projectsAnalysisResults);
         if (count > 0) {
             if (StringUtils.isNoneBlank(root)) {
-                report.startTableCell("text-align: center; vertical-align: top");
+                report.startTableCell("background-color: #f2f2f2; text-align: center; vertical-align: top");
             } else {
-                report.startTableCell("background-color: #f2f2f2; text-align: center; border-right: 4px solid lightgrey; vertical-align: top");
+                report.startTableCell("text-align: center; border-right: 4px solid lightgrey; vertical-align: top");
             }
             report.startDiv("margin: 2px; display: inline-block; border-radius: 4px; padding: 4px; background-color: " +
-                    (StringUtils.isNoneBlank(root) ? "#e0e0e0" : "#d1d1d1"));
+                    (StringUtils.isNoneBlank(root) ? "#d1d1d1" : "#e0e0e0"));
             report.startShowMoreBlock("<b>" + count + "</b>");
             report.startDiv("background-color: #e0e0e0; a margin-left: 5px; font-size: 80%; text-align: left");
             report.addContentInDiv("<b>" + FormattingUtils.formatCount(tagMainLoc) + "</b> LOC (main)<br>"
@@ -175,7 +175,7 @@ public class LandscapeProjectsTagsMatrixReport {
             report.endDiv();
             report.endTableCell();
         } else {
-            report.addTableCell("-", "text-align: center");
+            report.addTableCell("", "text-align: center");
         }
     }
 
