@@ -90,10 +90,10 @@ public class LandscapeProjectsTagsMatrixReport {
     private void addHeaderRow(RichTextReport report, List<Pair<String, Integer>> roots) {
         report.startTableRow("font-size: 80%");
         report.addTableCell("");
-        report.addTableCell("all projects", "text-align: center; border-right: 4px solid lightgrey;");
+        report.addTableCell("all projects", "text-align: center; border-right: 4px solid lightgrey");
         roots.forEach(root -> {
             String text = StringUtils.abbreviate(root.getKey(), 20) + "<br>(" + root.getValue() + ")";
-            report.addTableCell(text, "background-color: #f2f2f2; text-align: center");
+            report.addTableCell(text, "text-align: center");
         });
         report.endTableRow();
     }
@@ -150,17 +150,19 @@ public class LandscapeProjectsTagsMatrixReport {
         int recentContributorCount = getRecentContributorCount(projectsAnalysisResults);
         if (count > 0) {
             if (StringUtils.isNoneBlank(root)) {
-                report.startTableCell("background-color: #f2f2f2; text-align: center; vertical-align: top");
+                report.startTableCell("background-color: " + stats.getTag().getGroup().getColor() + "; text-align: center; vertical-align: top");
             } else {
                 report.startTableCell("text-align: center; border-right: 4px solid lightgrey; vertical-align: top");
             }
-            report.startDiv("margin: 2px; display: inline-block; border-radius: 4px; padding: 4px; background-color: " +
-                    (StringUtils.isNoneBlank(root) ? "#d1d1d1" : "#e0e0e0"));
+            String bgColor = StringUtils.isNoneBlank(root) ? "#f0f0f0" : "white";
+            int margin = renderLangIcons ? 7 : 2;
+            report.startDiv("box-shadow: 0 1px 2px 0 rgb(0 0 0 / 20%), 0 2px 5px 0 rgb(0 0 0 / 19%); margin: " + margin + "px; display: inline-block; border-radius: 4px; padding: 4px; background-color: " +
+                    bgColor);
             report.startShowMoreBlock("<b>" + count + "</b>");
-            report.startDiv("background-color: #e0e0e0; a margin-left: 5px; font-size: 80%; text-align: left");
+            report.startDiv("background-color: " + bgColor + "; a margin-left: 5px; font-size: 80%; text-align: left");
             report.addContentInDiv("<b>" + FormattingUtils.formatCount(tagMainLoc) + "</b> LOC (main)<br>"
-                    + "<b>" + FormattingUtils.formatCount(tagCommitsCount30Days) + "</b> commits (30d)<br>"
-                    + "<b>" + FormattingUtils.formatCount(recentContributorCount) + "</b> contributors (30d)",
+                            + "<b>" + FormattingUtils.formatCount(tagCommitsCount30Days) + "</b> commits (30d)<br>"
+                            + "<b>" + FormattingUtils.formatCount(recentContributorCount) + "</b> contributors (30d)",
                     "border-top: 2px solid lightgrey; border-bottom: 2px solid lightgrey; padding: 2px");
             projectsAnalysisResults.stream().limit(100).forEach(project -> {
                 CodeAnalysisResults projectAnalysisResults = project.getAnalysisResults();
