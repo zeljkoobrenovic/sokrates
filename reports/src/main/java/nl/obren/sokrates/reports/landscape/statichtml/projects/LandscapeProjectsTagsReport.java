@@ -60,12 +60,8 @@ public class LandscapeProjectsTagsReport {
     private void addTagStats(RichTextReport report) {
         renderTagDependencies();
 
-        report.startDiv("margin-bottom: 20px; margin-top: -6px;");
-        report.addNewTabLink("<b>Open expanded view</b> (stats per sub-folder)...", matrixReportFileName);
-        report.endDiv();
-
         report.startTable();
-        report.addTableHeader("Tag", "# projects", "LOC<br>(main)", "LOC<br>(test)", "LOC<br>(active)", "LOC<br>(new)", "# commits<br>(30 days)", "# contributors<br>(30 days)");
+        report.addTableHeader("Tag", "# repositories", "LOC<br>(main)", "LOC<br>(test)", "LOC<br>(active)", "LOC<br>(new)", "# commits<br>(30 days)", "# contributors<br>(30 days)");
         int index[] = {0};
         projectTagGroups.stream().filter(tagGroup -> tagGroup.getProjectTags().size() > 0).forEach(tagGroup -> {
             int count[] = {0};
@@ -106,14 +102,14 @@ public class LandscapeProjectsTagsReport {
     private void addDependencyLinks(RichTextReport report, int[] index) {
         report.startDiv("margin: 5px; font-size: 80%");
         report.addHtmlContent("tag dependencies: ");
-        report.addNewTabLink("3D graph (via projects)", "visuals/" + type + "_tags_graph_" + index[0] + "_force_3d.html");
+        report.addNewTabLink("3D graph (via repositories)", "visuals/" + type + "_tags_graph_" + index[0] + "_force_3d.html");
         report.addHtmlContent(" | ");
-        report.addNewTabLink("3D graph (excluding projects)", "visuals/" + type + "_tags_graph_" + index[0] + "_direct_force_3d.html");
+        report.addNewTabLink("3D graph (excluding repositories)", "visuals/" + type + "_tags_graph_" + index[0] + "_direct_force_3d.html");
         report.addHtmlContent(" | ");
-        report.addNewTabLink("2D graph (via projects)", "visuals/" + type + "_tags_graph_" + index[0] + ".svg");
+        report.addNewTabLink("2D graph (via repositories)", "visuals/" + type + "_tags_graph_" + index[0] + ".svg");
         report.addHtmlContent(" | ");
-        report.addNewTabLink("2D graph (excluding projects)", "visuals/" + type + "_tags_graph_" + index[0] + "_direct.svg");
-        report.addNewTabLink("2D graph (excluding projects)", "visuals/" + type + "_tags_graph_" + index[0] + "_direct.svg");
+        report.addNewTabLink("2D graph (excluding repositories)", "visuals/" + type + "_tags_graph_" + index[0] + "_direct.svg");
+        report.addNewTabLink("2D graph (excluding repositories)", "visuals/" + type + "_tags_graph_" + index[0] + "_direct.svg");
         report.endDiv();
     }
 
@@ -140,7 +136,7 @@ public class LandscapeProjectsTagsReport {
         int locSecondary = locTest + locGenerated + locBuildAndDeployment + locOther;
 
         report.startDiv("margin: 5px; font-size: 80%");
-        report.addContentInDiv("<b>" + FormattingUtils.formatCountPlural(count, "project", "projects") + "</b>, " +
+        report.addContentInDiv("<b>" + FormattingUtils.formatCountPlural(count, "repository", "repositories") + "</b>, " +
                 "<b>" + FormattingUtils.getSmallTextForNumber(locMain) + "</b> main lines of code, " +
                 "<b>" + FormattingUtils.getSmallTextForNumber(locSecondary) + "</b> other lines of code");
         report.endDiv();
@@ -221,7 +217,7 @@ public class LandscapeProjectsTagsReport {
     }
 
     private void visualizeTagProjects(RichTextReport report) {
-        report.startDiv("margin: 2px; margin-top: 18px;");
+        report.startDiv("margin: 2px; margin-top: 18px; margin-bottom: 42px;");
         report.startShowMoreBlock("show visuals...");
         int maxLoc = this.landscapeAnalysisResults.getProjectAnalysisResults().stream()
                 .map(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode())
@@ -311,7 +307,7 @@ public class LandscapeProjectsTagsReport {
             int count = projectsAnalysisResults.size();
             report.startTableCell("text-align: left");
             String projectPercText = FormattingUtils.getFormattedPercentage(totalProjectsCount > 0 ? (100.0 * count / totalProjectsCount) : 0);
-            report.startShowMoreBlock("<b>" + count + "</b>" + (count == 1 ? " project" : " projects")
+            report.startShowMoreBlock("<b>" + count + "</b>" + (count == 1 ? " repository" : " repositories")
                     + (count == 0 ? "" : " <span style='color: grey; font-size: 90%'>(" + projectPercText + "%)</span>"));
             report.startDiv("border-left: 2px solid lightgrey; margin-left: 5px; font-size: 80%");
             int maxListSize = 100;
@@ -377,22 +373,22 @@ public class LandscapeProjectsTagsReport {
         String tooltip = "";
 
         if (tag.getPatterns().size() > 0) {
-            tooltip += "includes projects with names like:\n  - " + tag.getPatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
+            tooltip += "includes repositories with names like:\n  - " + tag.getPatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
         }
         if (tag.getExcludePatterns().size() > 0) {
-            tooltip += "excludes projects with names like:\n  - " + tag.getExcludePatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
+            tooltip += "excludes repositories with names like:\n  - " + tag.getExcludePatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
         }
         if (tag.getPathPatterns().size() > 0) {
-            tooltip += "includes projects with at least one file matching:\n  - " + tag.getPathPatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
+            tooltip += "includes repositories with at least one file matching:\n  - " + tag.getPathPatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
         }
         if (tag.getExcludePathPatterns().size() > 0) {
-            tooltip += "excludes projects with at least one file matching:\n  - " + tag.getExcludePathPatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
+            tooltip += "excludes repositories with at least one file matching:\n  - " + tag.getExcludePathPatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
         }
         if (tag.getMainExtensions().size() > 0) {
-            tooltip += "includes projects with main extensions:\n  - " + tag.getMainExtensions().stream().collect(Collectors.joining("\n  - ")) + "\n";
+            tooltip += "includes repositories with main extensions:\n  - " + tag.getMainExtensions().stream().collect(Collectors.joining("\n  - ")) + "\n";
         }
         if (tag.getAnyExtensions().size() > 0) {
-            tooltip += "includes projects with any file with extensions:\n  - " + tag.getMainExtensions().stream().collect(Collectors.joining("\n  - ")) + "\n";
+            tooltip += "includes repositories with any file with extensions:\n  - " + tag.getMainExtensions().stream().collect(Collectors.joining("\n  - ")) + "\n";
         }
         return tooltip;
     }

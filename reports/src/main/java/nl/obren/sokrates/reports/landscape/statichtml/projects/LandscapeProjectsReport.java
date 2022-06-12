@@ -65,7 +65,7 @@ public class LandscapeProjectsReport {
     }
 
     public void saveProjectsReport(RichTextReport report, File reportsFolder, List<ProjectAnalysisResults> projectsAnalysisResults, List<ProjectTagGroup> tagGroups) {
-        ProcessingStopwatch.start("reporting/projects/" + type + "/preparing");
+        ProcessingStopwatch.start("reporting/repositories/" + type + "/preparing");
         this.reportsFolder = reportsFolder;
         this.tagGroups = tagGroups;
         report.startTabGroup();
@@ -74,7 +74,7 @@ public class LandscapeProjectsReport {
             report.addTab("commitsTrend", "Commits Trend", true);
             report.addTab("contributorsTrend", "Contributors Trend", false);
         }
-        report.addTab("projects", "Size & Details", !showCommits);
+        report.addTab("repositories", "Size & Details", !showCommits);
         if (showCommits) {
             report.addTab("history", "History", false);
         }
@@ -84,30 +84,30 @@ public class LandscapeProjectsReport {
         }
         report.addTab("features", "Features of Interest", false);
         report.endTabGroup();
-        ProcessingStopwatch.end("reporting/projects/" + type + "/preparing");
+        ProcessingStopwatch.end("reporting/repositories/" + type + "/preparing");
 
-        ProcessingStopwatch.start("reporting/projects/" + type + "/size");
+        ProcessingStopwatch.start("reporting/repositories/" + type + "/size");
         addProjectsBySize(report, projectsAnalysisResults);
-        ProcessingStopwatch.end("reporting/projects/" + type + "/size");
+        ProcessingStopwatch.end("reporting/repositories/" + type + "/size");
         if (showCommits) {
-            ProcessingStopwatch.start("reporting/projects/" + type + "/commits");
+            ProcessingStopwatch.start("reporting/repositories/" + type + "/commits");
             addCommitBasedLists(report, projectsAnalysisResults);
-            ProcessingStopwatch.end("reporting/projects/" + type + "/commits");
-            ProcessingStopwatch.start("reporting/projects/" + type + "/history");
+            ProcessingStopwatch.end("reporting/repositories/" + type + "/commits");
+            ProcessingStopwatch.start("reporting/repositories/" + type + "/history");
             addHistory(report, projectsAnalysisResults);
-            ProcessingStopwatch.end("reporting/projects/" + type + "/history");
+            ProcessingStopwatch.end("reporting/repositories/" + type + "/history");
         }
 
         report.startTabContentSection("metrics", false);
-        ProcessingStopwatch.start("reporting/projects/" + type + "/metrics");
+        ProcessingStopwatch.start("reporting/repositories/" + type + "/metrics");
         addMetrics(report, projectsAnalysisResults);
-        ProcessingStopwatch.end("reporting/projects/" + type + "/metrics");
+        ProcessingStopwatch.end("reporting/repositories/" + type + "/metrics");
         report.endTabContentSection();
 
         report.startTabContentSection("features", false);
-        ProcessingStopwatch.start("reporting/projects/" + type + "/features of interest");
+        ProcessingStopwatch.start("reporting/repositories/" + type + "/features of interest");
         addFeaturesOfInterest(report);
-        ProcessingStopwatch.end("reporting/projects/" + type + "/features of interest");
+        ProcessingStopwatch.end("reporting/repositories/" + type + "/features of interest");
         report.endTabContentSection();
     }
 
@@ -121,7 +121,7 @@ public class LandscapeProjectsReport {
         List<List<ProjectConcernData>> projects = aggregator.getProjects();
 
         if (concerns.size() == 0) {
-            report.addParagraph("No features of interest found in projects.");
+            report.addParagraph("No features of interest found in repositories.");
             return;
         }
 
@@ -140,7 +140,7 @@ public class LandscapeProjectsReport {
 
         report.startTableRow();
         report.addTableCell("", "border-left: none; border-top: none");
-        report.addTableCell("Projects (" + aggregator.getProjectsMap().size() + ")", "");
+        report.addTableCell("Repositories (" + aggregator.getProjectsMap().size() + ")", "");
         concerns.stream().filter(concern -> concern.size() > 0).forEach(concern -> {
             int concernsCount = concern.stream().mapToInt(c -> c.getConcern().getNumberOfRegexLineMatches()).reduce((a, b) -> a + b).orElse(0);
             report.addTableCell(concernsCount + " matches", "font-size: 70%; text-align: center;");
@@ -223,17 +223,17 @@ public class LandscapeProjectsReport {
                 p -> p.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count(),
                 p -> p.getAnalysisResults().getMetadata().getName());
 
-        correlationDiagramGenerator.addCorrelations("Recent Contributors vs. Project Main LOC", "main LOC", "recent contributors (30d)",
+        correlationDiagramGenerator.addCorrelations("Recent Contributors vs. Repository Main LOC", "main LOC", "recent contributors (30d)",
                 p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
                 p -> p.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count(),
                 p -> p.getAnalysisResults().getMetadata().getName());
 
-        correlationDiagramGenerator.addCorrelations("Recent Commits (30 days) vs. Project Main LOC", "main LOC", "commits (30d)",
+        correlationDiagramGenerator.addCorrelations("Recent Commits (30 days) vs. Repository Main LOC", "main LOC", "commits (30d)",
                 p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
                 p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days(),
                 p -> p.getAnalysisResults().getMetadata().getName());
 
-        correlationDiagramGenerator.addCorrelations("Age in Years vs. Project Main LOC", "main LOC", "age (years)",
+        correlationDiagramGenerator.addCorrelations("Age in Years vs. Repository Main LOC", "main LOC", "age (years)",
                 p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
                 p -> Math.round(10 * p.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays() / 365.0) / 10,
                 p -> p.getAnalysisResults().getMetadata().getName());
@@ -268,7 +268,7 @@ public class LandscapeProjectsReport {
             }
             report.addContentInDivWithTooltip("",
                     name + ": " + commits30d + " lines of code (main)\n" +
-                            "cumulative: top " + index[0] + " projects (" + percentageProjects + "%) = "
+                            "cumulative: top " + index[0] + " repositories (" + percentageProjects + "%) = "
                             + cummulative[0] + " commits in past 30 days (" + percentage + "%)",
                     "margin: 0; padding: 0; margin-right: 1px; background-color: " + color + "; display: inline-block; width: 8px; height: " + height + "px");
         });
@@ -366,7 +366,7 @@ public class LandscapeProjectsReport {
             }
             report.addContentInDivWithTooltip("",
                     name + ": " + mainLoc + " lines of code (main)\n" +
-                            "cumulative: top " + index[0] + " projects (" + percentageProjects + "%) = "
+                            "cumulative: top " + index[0] + " repositories (" + percentageProjects + "%) = "
                             + cummulative[0] + " LOC (" + percentage + "%)",
                     "margin: 0; padding: 0; opacity: 0.9; margin-right: 1px; background-color: " + color + "; display: inline-block; width: 8px; height: " + height + "px");
         });
@@ -393,11 +393,11 @@ public class LandscapeProjectsReport {
                         - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
 
         boolean showCommits = landscapeAnalysisResults.getCommitsCount() > 0;
-        report.startTabContentSection("projects", !showCommits);
+        report.startTabContentSection("repositories", !showCommits);
         addSummaryGraphMainLoc(report, projectsAnalysisResults);
         report.startTable("width: 100%");
         int thresholdContributors = landscapeAnalysisResults.getConfiguration().getProjectThresholdContributors();
-        List<String> headers = new ArrayList<>(Arrays.asList("", "Project" + (thresholdContributors > 1 ? "<br/>(" + thresholdContributors + "+&nbsp;contributors)" : ""),
+        List<String> headers = new ArrayList<>(Arrays.asList("", "Repository" + (thresholdContributors > 1 ? "<br/>(" + thresholdContributors + "+&nbsp;contributors)" : ""),
                 "Main<br/>Language", "LOC<br/>(main)*",
                 "LOC<br/>(test)", "LOC<br/>(other)",
                 "Age", "Latest<br>Commit Date",
@@ -434,7 +434,7 @@ public class LandscapeProjectsReport {
 
     private void addCommitsTrend(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults, String label, String color, Counter counter) {
         report.startTable();
-        report.addTableHeader("", "Project", "Commits<br>(30d)" + (label.equalsIgnoreCase("Commits") ? "*" : ""),
+        report.addTableHeader("", "Repository", "Commits<br>(30d)" + (label.equalsIgnoreCase("Commits") ? "*" : ""),
                 "Contributors<br>(30d)" + (label.equalsIgnoreCase("Contributors") ? "*" : ""), "Rookies<br>(30d)", label + " per Week (past year)", "Details");
         int maxCommits[] = {1};
         int pastWeeks = 52;
@@ -508,7 +508,7 @@ public class LandscapeProjectsReport {
     private void addMetricsTable(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults) {
         report.startTable();
         List<String> headers = new ArrayList<>();
-        headers.addAll(Arrays.asList(new String[]{"", "Project", "Main<br>Lang", "Duplication", "File Size",
+        headers.addAll(Arrays.asList(new String[]{"", "Repository", "Main<br>Lang", "Duplication", "File Size",
                 "Unit Size", "Conditional<br>Complexity", "Newness", "Freshness", "Update<br>Frequency"}));
         if (showControls()) {
             headers.add("Controls");
@@ -525,13 +525,13 @@ public class LandscapeProjectsReport {
             if (commits90Days == 0 && commits180Days > 0 && !startedInactiveSection90Days[0]) {
                 startedInactiveSection90Days[0] = true;
                 report.startTableRow();
-                report.addMultiColumnTableCell("<h3 style='margin: 0; margin-top: 14px; margin-bottom: 6px;'>Project not active in past 90 days</h3>", 11);
+                report.addMultiColumnTableCell("<h3 style='margin: 0; margin-top: 14px; margin-bottom: 6px;'>Repository not active in past 90 days</h3>", 11);
                 report.endTableRow();
             }
             if (commits180Days == 0 && !startedInactiveSection180Days[0]) {
                 startedInactiveSection180Days[0] = true;
                 report.startTableRow();
-                report.addMultiColumnTableCell("<h3 style='margin: 0; margin-top: 14px; margin-bottom: 6px;'>Project not active in past 180 days</h3>", 11);
+                report.addMultiColumnTableCell("<h3 style='margin: 0; margin-top: 14px; margin-bottom: 6px;'>Repository not active in past 180 days</h3>", 11);
                 report.endTableRow();
             }
             report.startTableRow(commits90Days > 0 ? "" : "opacity: 0.7");
@@ -608,7 +608,7 @@ public class LandscapeProjectsReport {
 
     private void addHistory(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults, String label, String color, Counter counter) {
         report.startTable();
-        report.addTableHeader("", "Project",
+        report.addTableHeader("", "Repository",
                 "Age", label + " per Year", "Contributors", "Commits", "Freshness", "Details");
         int pastYears = landscapeAnalysisResults.getConfiguration().getProjectsHistoryLimit();
         int maxCommits[] = {1};

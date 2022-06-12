@@ -42,9 +42,9 @@ public class LandscapeContributorsReport {
         this.recent = recent;
         report.startTable("width: 100%");
         if (recent) {
-            report.addTableHeaderLeft("Contributor", "# commits<br>30 days", "# commits<br>90 days", "# commits<br>past year", "# commits<br>all time", "first", "latest", "projects", "main", "details");
+            report.addTableHeaderLeft("Contributor", "# commits<br>30 days", "# commits<br>90 days", "# commits<br>past year", "# commits<br>all time", "first", "latest", "repositories", "main", "details");
         } else {
-            report.addTableHeaderLeft("Contributor", "# commits<br>all time", "# commits<br>past year", "# commits<br>90 days", "# commits<br>30 days", "first", "latest", "projects", "main", "details");
+            report.addTableHeaderLeft("Contributor", "# commits<br>all time", "# commits<br>past year", "# commits<br>90 days", "# commits<br>30 days", "first", "latest", "repositories", "main", "details");
         }
         int counter[] = {0};
 
@@ -109,7 +109,7 @@ public class LandscapeContributorsReport {
                     .filter(p -> p.getCommits30Days() > 0)
                     .collect(Collectors.toCollection(ArrayList::new));
             int projectsCount = recentProjects.size();
-            report.startShowMoreBlock(projectsCount + (projectsCount == 1 ? " project" : " projects"));
+            report.startShowMoreBlock(projectsCount + (projectsCount == 1 ? " repository" : " repositories"));
             recentProjects.forEach(contributorProjectInfo -> {
                 String projectName = contributorProjectInfo.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName();
                 int commits = contributorProjectInfo.getCommits30Days();
@@ -120,7 +120,7 @@ public class LandscapeContributorsReport {
             });
         } else {
             int projectsCount = contributor.getProjects().size();
-            report.startShowMoreBlock(projectsCount + (projectsCount == 1 ? " project" : " projects"));
+            report.startShowMoreBlock(projectsCount + (projectsCount == 1 ? " repository" : " repositories"));
             contributor.getProjects().forEach(contributorProjectInfo -> {
                 String projectName = contributorProjectInfo.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName();
                 int commits = contributorProjectInfo.getCommitsCount();

@@ -84,7 +84,7 @@ public class LandscapeIndividualContributorsReports {
         }
         report.addContentInDiv("First commit date: <b>" + contributor.getFirstCommitDate() + "</b>");
         report.addContentInDiv("Latest commit date: <b>" + contributor.getLatestCommitDate() + "</b>");
-        report.addContentInDiv("Projects count: " +
+        report.addContentInDiv("Repositories count: " +
                 "<b>" + contributorProjects.getProjects().stream().filter(p -> p.getCommits30Days() > 0).count()
                 + "</b><span style='color: lightgrey; font-size: 90%'> (30d)</span>&nbsp;&nbsp;&nbsp;" + "<b>" + contributorProjects.getProjects().stream().filter(p -> p.getCommits90Days() > 0).count()
                 + "</b><span style='color: lightgrey; font-size: 90%'> (3m)</span>&nbsp;&nbsp;&nbsp;" +
@@ -126,7 +126,7 @@ public class LandscapeIndividualContributorsReports {
         report.addLineBreak();
 
         report.startTabGroup();
-        report.addTab("year", "Project Activity Per Year", true);
+        report.addTab("year", "Repository Activity Per Year", true);
         report.addTab("month", "Per Month", false);
         report.addTab("week", "Per Week", false);
         report.endTabGroup();
@@ -178,7 +178,7 @@ public class LandscapeIndividualContributorsReports {
                     return;
                 }
             });
-            String tooltip = "Week of " + pastWeek + ": " + projectCount[0] + (projectCount[0] == 1 ? " project" : " projects");
+            String tooltip = "Week of " + pastWeek + ": " + projectCount[0] + (projectCount[0] == 1 ? " repository" : " repositories");
             report.startTableCell("font-size: 70%; border: none; color: lightgrey; text-align: center");
             report.addContentInDivWithTooltip(projectCount[0] + "", tooltip, "text-align: center");
             report.endTableCell();
@@ -268,7 +268,7 @@ public class LandscapeIndividualContributorsReports {
                     return;
                 }
             });
-            String tooltip = "Month " + pastMonth + ": " + projectCount[0] + (projectCount[0] == 1 ? " project" : " projects");
+            String tooltip = "Month " + pastMonth + ": " + projectCount[0] + (projectCount[0] == 1 ? " repository" : " repositories");
             report.startTableCell("font-size: 70%; border: none; color: lightgrey; text-align: center");
             report.addContentInDivWithTooltip(projectCount[0] + "", tooltip, "text-align: center");
             report.endTableCell();
@@ -363,7 +363,7 @@ public class LandscapeIndividualContributorsReports {
                     return;
                 }
             });
-            String tooltip = "Month " + pastYear + ": " + projectCount[0] + (projectCount[0] == 1 ? " project" : " projects"
+            String tooltip = "Month " + pastYear + ": " + projectCount[0] + (projectCount[0] == 1 ? " repository" : " repositories"
                     + ", " + projectDays[0] + " commit " + (projectDays[0] == 1 ? "day" : "days"));
             report.startTableCell("vertical-align: bottom; font-size: 70%; border: none; color: lightgrey; text-align: center");
             String content = projectCount[0] + "&nbsp;p<br>" + projectDays[0] + "&nbsp;cd";

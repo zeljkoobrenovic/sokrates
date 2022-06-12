@@ -11,6 +11,7 @@ import nl.obren.sokrates.sourcecode.operations.OperationStatement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class LandscapeConfiguration {
     // Basic info about the landscape (name, description, logo, links)
@@ -151,6 +152,9 @@ public class LandscapeConfiguration {
 
     public List<SubLandscapeLink> getSubLandscapes() {
         return subLandscapes;
+    }
+    public List<SubLandscapeLink> getLevel1SubLandscapes() {
+        return subLandscapes.stream().filter(l -> l.getIndexFilePath().split("(\\/\\\\)").length == 3).collect(Collectors.toList());
     }
 
     public void setSubLandscapes(List<SubLandscapeLink> subLandscapes) {

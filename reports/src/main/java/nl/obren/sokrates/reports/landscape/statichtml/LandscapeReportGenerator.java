@@ -59,7 +59,9 @@ public class LandscapeReportGenerator {
     public static final int RECENT_THRESHOLD_DAYS = 30;
     public static final String OVERVIEW_TAB_ID = "overview";
     public static final String SUB_LANDSCAPES_TAB_ID = "sub-landscapes";
-    public static final String SOURCE_CODE_TAB_ID = "source code";
+    public static final String PROJECTS_TAB_ID = "repositories";
+
+    public static final String TAGS_TAB_ID = "tags";
     public static final String CONTRIBUTORS_TAB_ID = "contributors";
     public static final String TOPOLOGIES_TAB_ID = "topologies";
     public static final String CUSTOM_TAB_ID_PREFIX = "custom_tab_";
@@ -84,6 +86,9 @@ public class LandscapeReportGenerator {
     public static final String MAIN_LOC_COLOR = "#A0BCC2";
     public static final String TEST_LOC_COLOR = "#c0c0c0";
     public static final String PEOPLE_COLOR = "lavender";
+    private final TagMap customTagsMap;
+    private TagMap extensionsTagsMap;
+    private List<ProjectTagGroup> extensionTagGroups;
     private RichTextReport landscapeReport = new RichTextReport("Landscape Report", "index.html");
     private RichTextReport landscapeProjectsReportShort = new RichTextReport("", "projects-short.html");
 
@@ -124,7 +129,7 @@ public class LandscapeReportGenerator {
         landscapeRecentContributorsReport.setEmbedded(true);
         LandscapeDataExport dataExport = new LandscapeDataExport(landscapeAnalysisResults, folder);
 
-        LOG.info("Exporting projects...");
+        LOG.info("Exporting repositories...");
         dataExport.exportProjects();
         LOG.info("Exporting contributors...");
         dataExport.exportContributors();
@@ -169,10 +174,16 @@ public class LandscapeReportGenerator {
         landscapeReport.startTabGroup();
         landscapeReport.addTab(OVERVIEW_TAB_ID, "Overview", true);
         List<SubLandscapeLink> subLandscapes = configuration.getSubLandscapes();
+        List<SubLandscapeLink> level1SubLandscapes = configuration.getSubLandscapes().stream().filter(l -> getPathDepth(l.getIndexFilePath()) == 1).collect(Collectors.toList());
         if (subLandscapes.size() > 0) {
-            landscapeReport.addTab(SUB_LANDSCAPES_TAB_ID, "Sub-Landscapes (" + subLandscapes.size() + ")", false);
+            landscapeReport.addTab(SUB_LANDSCAPES_TAB_ID, "Sub-Landscapes (" + (level1SubLandscapes.size() == 0 ? subLandscapes.size() : level1SubLandscapes.size()) + ")", false);
         }
-        landscapeReport.addTab(SOURCE_CODE_TAB_ID, "Projects (" + landscapeAnalysisResults.getFilteredProjectAnalysisResults().size() + ")", false);
+        landscapeReport.addTab(PROJECTS_TAB_ID, "Repositories (" + landscapeAnalysisResults.getFilteredProjectAnalysisResults().size() + ")", false);
+
+        List<ProjectAnalysisResults> projects = getProjects();
+        customTagsMap = updateTagsData(landscapeAnalysisResults, tagGroups, projects);
+
+        landscapeReport.addTab(TAGS_TAB_ID, "Tags (" + customTagsMap.tagsCount() + ")", false);
         int recentContributorsCount = landscapeAnalysisResults.getRecentContributorsCount();
         landscapeReport.addTab(CONTRIBUTORS_TAB_ID, "Contributors" + (recentContributorsCount > 0 ? " (" + recentContributorsCount + ")" + "" : ""), false);
         landscapeReport.addTab(TOPOLOGIES_TAB_ID, "Team Topology", false);
@@ -201,7 +212,7 @@ public class LandscapeReportGenerator {
             WebFrameLink iframe = new WebFrameLink();
             iframe.setSrc("visuals/sub_landscapes_zoomable_circles_main_loc_.html");
             iframe.setMoreInfoLink("visuals/sub_landscapes_zoomable_circles_main_loc_.html");
-            iframe.setTitle("Sub-Landscape projects (by size)");
+            iframe.setTitle("Sub-Landscape repositories (by size)");
             iframe.setStyle("width: 100%; height: 970px;");
             iframe.setScrolling(false);
             addIFrame(iframe);
@@ -209,7 +220,7 @@ public class LandscapeReportGenerator {
             landscapeReport.endTabContentSection();
         }
 
-        landscapeReport.startTabContentSection(SOURCE_CODE_TAB_ID, false);
+        landscapeReport.startTabContentSection(PROJECTS_TAB_ID, false);
         ProcessingStopwatch.start("reporting/big summary");
         LOG.info("Adding big summary...");
         addBigProjectsSummary(landscapeAnalysisResults);
@@ -219,12 +230,20 @@ public class LandscapeReportGenerator {
             addExtensions();
         }
         ProcessingStopwatch.end("reporting/big summary");
-        LOG.info("Adding project section...");
-        ProcessingStopwatch.start("reporting/projects");
-        addProjectsSection(configuration, getProjects());
+
+        LOG.info("Adding repository section...");
+        ProcessingStopwatch.start("reporting/repositories");
+        addProjectsSection(configuration, projects);
         addIFrames(configuration.getiFramesProjects());
-        ProcessingStopwatch.end("reporting/projects");
+        ProcessingStopwatch.end("reporting/repositories");
         landscapeReport.endTabContentSection();
+
+        landscapeReport.startTabContentSection(TAGS_TAB_ID, false);
+        ProcessingStopwatch.start("reporting/tags");
+        addTagsSection(projects);
+        ProcessingStopwatch.end("reporting/tags");
+        landscapeReport.endTabContentSection();
+
 
         landscapeReport.startTabContentSection(CONTRIBUTORS_TAB_ID, false);
         ProcessingStopwatch.start("reporting/summary");
@@ -261,10 +280,25 @@ public class LandscapeReportGenerator {
 
         String generationDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
         landscapeReport.addContentInDiv("generated by <a target='_blank' href='https://sokrates.dev/'>sokrates.dev</a> " +
-                        " (<a href='config.json' target='_blank'>configuration</a>) " +
+                        " (<a href='config.json' target='_blank'>configuration</a> | <a href='config-tags.json' target='_blank'>tag definitions</a>) " +
                         " on " + generationDate,
                 "color: grey; font-size: 80%; margin: 10px");
         LOG.info("Done report generation.");
+    }
+
+    private TagMap updateTagsData(LandscapeAnalysisResults landscapeAnalysisResults, List<ProjectTagGroup> tagGroups, List<ProjectAnalysisResults> projects) {
+        final TagMap customTagsMap;
+        ProcessingStopwatch.start("reporting/tags/custom tags map");
+        customTagsMap = new TagMap(landscapeAnalysisResults, tagGroups);
+        customTagsMap.updateTagMap(projects);
+        ProcessingStopwatch.end("reporting/tags/custom tags map");
+
+        ProcessingStopwatch.start("reporting/tags/extensions tags map");
+        extensionTagGroups = getExtensionTagGroups();
+        extensionsTagsMap = new TagMap(landscapeAnalysisResults, extensionTagGroups);
+        extensionsTagsMap.updateTagMap(projects);
+        ProcessingStopwatch.end("reporting/tags/extensions tags map");
+        return customTagsMap;
     }
 
     public static List<ContributionTimeSlot> getContributionWeeks(List<ContributionTimeSlot> contributorsPerWeekOriginal, int pastWeeks, String lastCommitDate) {
@@ -314,7 +348,7 @@ public class LandscapeReportGenerator {
         int cMean = (int) Math.round(landscapeAnalysisResults.getcMean30Days());
         int cIndex = (int) Math.round(landscapeAnalysisResults.getcIndex30Days());
         String formattedPercentage = c2cMax > 0 ? FormattingUtils.getFormattedPercentage(100.0 * c2c / c2cMax) : "0";
-        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(c2c), "C2C connections", "30 days (" + formattedPercentage + "%)", "unique contributor to contributor connections (via shared projects)");
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(c2c), "C2C connections", "30 days (" + formattedPercentage + "%)", "unique contributor to contributor connections (via shared repositories)");
         addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(cMedian), "C-Median", "30 days", "half of contributors have >= than this number of connections to other contributors");
         addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(cMean), "C-Mean", "30 days", "average number of contributor connections");
         addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(cIndex), "C-Index", "30 days", "N contributors have at least N contributor connections");
@@ -324,10 +358,10 @@ public class LandscapeReportGenerator {
         int pIndex = (int) Math.round(landscapeAnalysisResults.getpIndex30Days());
         this.landscapeReport.addLineBreak();
         int projectsCount = landscapeAnalysisResults.getProjectsCount();
-        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(projectsCount), projectsCount == 1 ? "project" : "projects", "", "", PROJECTS_COLOR);
-        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pMedian), "P-Median", "30 days", "half of contributors have >= than this number of connections to projects", PROJECTS_COLOR);
-        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pMean), "P-Mean", "30 days", "average number of contributor project connections", PROJECTS_COLOR);
-        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pIndex), "P-Index", "30 days", "N contributors have at least N project connections", PROJECTS_COLOR);
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(projectsCount), projectsCount == 1 ? "repository" : "repositories", "", "", PROJECTS_COLOR);
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pMedian), "R-Median", "30 days", "half of contributors have >= than this number of connections to repositories", PROJECTS_COLOR);
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pMean), "R-Mean", "30 days", "average number of contributor repository connections", PROJECTS_COLOR);
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pIndex), "R-Index", "30 days", "N contributors have at least N repository connections", PROJECTS_COLOR);
 
         addPeopleDependencies();
     }
@@ -340,9 +374,9 @@ public class LandscapeReportGenerator {
 
         if (recentlyActive) {
             landscapeReport.addParagraph("The diagram shows contributor collaborations defined as working on " +
-                    "the same projects in the past 30 days. The lines display the number of shared projects " +
+                    "the same repositories in the past 30 days. The lines display the number of shared repositories " +
                     "between two contributors.\n", "color: grey");
-            landscapeReport.addNewTabLink("<div style='font-weight: bold; font-size: 110%; margin-bottom: 8px;'>3D graph (including projects)</div>", "visuals/people_dependencies_including_projects_30_2_force_3d.html");
+            landscapeReport.addNewTabLink("<div style='font-weight: bold; font-size: 110%; margin-bottom: 8px;'>3D graph (including repositories)&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON + "</div>", "visuals/people_dependencies_including_projects_30_2_force_3d.html");
             landscapeReport.startDiv("font-size: 90%");
             landscapeReport.addNewTabLink("2D graph", "visuals/people_dependencies_30_1.svg");
             landscapeReport.addHtmlContent(" | ");
@@ -351,6 +385,7 @@ public class LandscapeReportGenerator {
             landscapeReport.addNewTabLink("3D graph", "visuals/people_dependencies_30_1_force_3d.html");
             landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("data", "data/projects_shared_projects_30_days.txt");
+            landscapeReport.addHtmlContent("&nbsp;&nbsp;" +  OPEN_IN_NEW_TAB_SVG_ICON);
             landscapeReport.endDiv();
             landscapeReport.addLineBreak();
             landscapeReport.addHtmlContent("<iframe src=\"visuals/people_dependencies_30_1.svg\" " +
@@ -359,11 +394,11 @@ public class LandscapeReportGenerator {
             landscapeReport.addParagraph("No commits in past 30 days.", "color: grey");
         }
         landscapeReport.endSection();
-        landscapeReport.startSubSection("Project Topology (past 30 days)", "");
+        landscapeReport.startSubSection("Repository Topology (past 30 days)", "");
         if (recentlyActive) {
-            landscapeReport.addParagraph("The diagram shows project dependencies defined as having the same " +
-                    "contributors working on the same projects in the past 30 days. " +
-                    "The lines between projects display the number of contributors working on both projects.", "color: grey");
+            landscapeReport.addParagraph("The diagram shows repository dependencies defined as having the same " +
+                    "contributors working on the same repositories in the past 30 days. " +
+                    "The lines between repositories display the number of contributors working on both repositories.", "color: grey");
             landscapeReport.addNewTabLink("2D graph", "visuals/project_dependencies_30_3.svg");
             landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("2D graph (including contributors)", "visuals/people_dependencies_including_projects_30_2.svg");
@@ -373,6 +408,7 @@ public class LandscapeReportGenerator {
             landscapeReport.addNewTabLink("3D graph (including contributors)", "visuals/people_dependencies_including_projects_30_2_force_3d.html");
             landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("data", "data/projects_shared_projects_30_days.txt");
+            landscapeReport.addHtmlContent("&nbsp;&nbsp;" +  OPEN_IN_NEW_TAB_SVG_ICON);
             landscapeReport.addLineBreak();
             landscapeReport.addLineBreak();
             landscapeReport.addHtmlContent("<iframe src=\"visuals/project_dependencies_30_3.svg\" " +
@@ -384,10 +420,11 @@ public class LandscapeReportGenerator {
         landscapeReport.startSubSection("Knowledge Topology (past 30 days)", "");
         if (recentlyActive) {
             landscapeReport.addParagraph("The diagram shows dependencies between programming languages (file extensions) defined as having the same contributors committing to files with these etensions in the past 30 days. " +
-                    "The lines between projects display the number of contributors committing to files with both extensions in ht past 30 days.", "color: grey");
+                    "The lines between repositories display the number of contributors committing to files with both extensions in ht past 30 days.", "color: grey");
             landscapeReport.addNewTabLink("2D graph", "visuals/extension_dependencies_30d.svg");
             landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("3D graph", "visuals/extension_dependencies_30d_force_3d.html");
+            landscapeReport.addHtmlContent("&nbsp;&nbsp;" +  OPEN_IN_NEW_TAB_SVG_ICON);
             landscapeReport.addLineBreak();
             landscapeReport.addLineBreak();
             landscapeReport.addHtmlContent("<iframe src=\"visuals/extension_dependencies_30d.svg\" " +
@@ -463,7 +500,7 @@ public class LandscapeReportGenerator {
             landscapeReport.addLineBreak();
 
             landscapeReport.startTable();
-            landscapeReport.addTableHeader("", "", "projects", "main loc", "test loc", "other loc", "recent contributors", "commits (30 days)");
+            landscapeReport.addTableHeader("", "", "repositories", "main loc", "test loc", "other loc", "recent contributors", "commits (30 days)");
             String prevRoot[] = {""};
             List<LandscapeAnalysisResultsReadData> loadedSubLandscapes = new ArrayList<>();
             links.forEach(subLandscape -> {
@@ -641,8 +678,8 @@ public class LandscapeReportGenerator {
         landscapeReport.startDiv("margin-top: 0px;");
         LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
         int size = getProjects().size();
-        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(size), (size == 1 ? "project" : "projects"),
-                "", "all projects updated after " + configuration.getIgnoreProjectsLastUpdatedBefore() + " with at least " + FormattingUtils.formatCountPlural(configuration.getProjectThresholdContributors(), "contributor", "contributors"), PROJECTS_COLOR);
+        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(size), (size == 1 ? "repository" : "repositories"),
+                "", "all repositories updated after " + configuration.getIgnoreProjectsLastUpdatedBefore() + " with at least " + FormattingUtils.formatCountPlural(configuration.getProjectThresholdContributors(), "contributor", "contributors"), PROJECTS_COLOR);
         addLocInfoBlock(landscapeAnalysisResults);
         int mainLoc1YearActive = landscapeAnalysisResults.getMainLoc1YearActive();
         addActiveCodeBlock(landscapeAnalysisResults, landscapeAnalysisResults.getMainLoc());
@@ -679,7 +716,7 @@ public class LandscapeReportGenerator {
 
         String style = "border-top: 2px solid lightgrey; border-right: 2px solid lightgrey; display: inline-block; margin-right: 8px";
         landscapeReport.startDiv(style);
-        landscapeReport.addContentInDiv("active projects", "text-align: center; margin-bottom: -7px; margin-top: 2px; margin-left: 4px; color: grey; font-size: 70%;");
+        landscapeReport.addContentInDiv("active repositories", "text-align: center; margin-bottom: -7px; margin-top: 2px; margin-left: 4px; color: grey; font-size: 70%;");
 
         int size = projects.size();
         int locAll = landscapeAnalysisResults.getMainLoc();
@@ -692,19 +729,19 @@ public class LandscapeReportGenerator {
         String contributorConstraint = " with at least " + FormattingUtils.formatCountPlural(configuration.getProjectThresholdContributors(), "contributor", "contributors");
         addInfoBlock(FormattingUtils.getSmallTextForNumber(size), "all time",
                 FormattingUtils.getSmallTextForNumber(locAll) + " LOC",
-                "all projects updated after " + configuration.getIgnoreProjectsLastUpdatedBefore() + " with at least " + contributorConstraint, PROJECTS_COLOR);
+                "all repositories updated after " + configuration.getIgnoreProjectsLastUpdatedBefore() + " with at least " + contributorConstraint, PROJECTS_COLOR);
         addInfoBlock(FormattingUtils.getSmallTextForNumber(size365Days), "past 365d",
                 FormattingUtils.getSmallTextForNumber(loc365Days) + " LOC (" + FormattingUtils.getFormattedPercentage(100.0 * loc365Days / Math.max(1, locAll)) + "%)",
-                "all projects updated in the past 365 days with at least " + contributorConstraint, PROJECTS_COLOR);
+                "all repositories updated in the past 365 days with at least " + contributorConstraint, PROJECTS_COLOR);
         addInfoBlock(FormattingUtils.getSmallTextForNumber(size180Days), "past 180d",
                 FormattingUtils.getSmallTextForNumber(loc180Days) + " LOC (" + FormattingUtils.getFormattedPercentage(100.0 * loc180Days / Math.max(1, locAll)) + "%)",
-                "all projects updated in the past 180 days with at least " + contributorConstraint, PROJECTS_COLOR);
+                "all repositories updated in the past 180 days with at least " + contributorConstraint, PROJECTS_COLOR);
         addInfoBlock(FormattingUtils.getSmallTextForNumber(size90Days), "past 90d",
                 FormattingUtils.getSmallTextForNumber(loc180Days) + " LOC (" + FormattingUtils.getFormattedPercentage(100.0 * loc90Days / Math.max(1, locAll)) + "%)",
-                "all projects updated in the past 90 days with at least " + contributorConstraint, PROJECTS_COLOR);
+                "all repositories updated in the past 90 days with at least " + contributorConstraint, PROJECTS_COLOR);
         addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(recentSize), "past 30d",
                 FormattingUtils.getSmallTextForNumber(recentLoc) + " LOC (" + FormattingUtils.getFormattedPercentage(100.0 * recentLoc / Math.max(1, locAll)) + "%)",
-                "all projects updated in the past 30 days with at least " + contributorConstraint, PROJECTS_COLOR);
+                "all repositories updated in the past 30 days with at least " + contributorConstraint, PROJECTS_COLOR);
         landscapeReport.endDiv();
         landscapeReport.startDiv(style);
         landscapeReport.addContentInDiv("size (LOC)", "text-align: center; margin-bottom: -7px; margin-top: 2px; margin-left: 4px; color: grey; font-size: 70%;");
@@ -983,7 +1020,7 @@ public class LandscapeReportGenerator {
         addDownloadLinks("extension_dependencies_30d");
         landscapeReport.endShowMoreBlock();
         landscapeReport.addLineBreak();
-        landscapeReport.addNewTabLink(" - show extension dependencies as 3D force graph...", "visuals/extension_dependencies_30d_force_3d.html");
+        landscapeReport.addNewTabLink(" - show extension dependencies as 3D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/extension_dependencies_30d_force_3d.html");
         new Force3DGraphExporter().export3DForceGraph(dependencies, reportsFolder, "extension_dependencies_30d");
     }
 
@@ -1006,7 +1043,7 @@ public class LandscapeReportGenerator {
         int size = extension.getDescription().size();
         Collections.sort(extension.getDescription(), (a, b) -> b.getValue().intValue() - a.getValue().intValue());
         addLangInfoBlock(smallTextForNumber, extension.getName().replace("*.", "").trim(),
-                size + " " + (size == 1 ? "project" : "projects") + ":\n  " +
+                size + " " + (size == 1 ? "repository" : "repositories") + ":\n  " +
                         extension.getDescription().stream()
                                 .map(a -> a.getName() + " (" + FormattingUtils.formatCount(a.getValue().intValue()) + " LOC)")
                                 .collect(Collectors.joining("\n  ")));
@@ -1209,9 +1246,9 @@ public class LandscapeReportGenerator {
 
     private void addProjectsSection(LandscapeConfiguration configuration, List<ProjectAnalysisResults> projectsAnalysisResults) {
         Collections.sort(projectsAnalysisResults, (a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode() - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
-        ProcessingStopwatch.end("reporting/projects/preparing");
+        ProcessingStopwatch.end("reporting/repositories/preparing");
 
-        ProcessingStopwatch.start("reporting/projects/export visuals");
+        ProcessingStopwatch.start("reporting/repositories/export visuals");
         exportZoomableCircles(CONTRIBUTORS_30_D, projectsAnalysisResults, new ZommableCircleCountExtractors() {
             @Override
             public int getCount(ProjectAnalysisResults projectAnalysisResults) {
@@ -1234,15 +1271,21 @@ public class LandscapeReportGenerator {
                 return projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
             }
         });
-        ProcessingStopwatch.end("reporting/projects/export visuals");
+        ProcessingStopwatch.end("reporting/repositories/export visuals");
 
-        ProcessingStopwatch.start("reporting/projects/file age & freshness");
+        ProcessingStopwatch.start("reporting/repositories/file age & freshness");
         addFileAgeAndFreshnessSection();
-        ProcessingStopwatch.end("reporting/projects/file age & freshness");
+        ProcessingStopwatch.end("reporting/repositories/file age & freshness");
 
         landscapeReport.startSubSection("<a href='projects-short.html' target='_blank' style='text-decoration: none'>" +
-                "All Projects (" + projectsAnalysisResults.size() + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "");
+                "All Repositories (" + projectsAnalysisResults.size() + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "");
         if (projectsAnalysisResults.size() > 0) {
+            int shortLimit = configuration.getProjectsShortListLimit();
+            ProcessingStopwatch.start("reporting/repositories/short report");
+            new LandscapeProjectsReport(landscapeAnalysisResults, shortLimit, "See the full list of repositories...", "projects.html", customTagsMap)
+                    .saveProjectsReport(landscapeProjectsReportShort, reportsFolder, projectsAnalysisResults, tagGroups);
+            ProcessingStopwatch.end("reporting/repositories/short report");
+
             List<NumericMetric> projectSizes = new ArrayList<>();
             projectsAnalysisResults.forEach(project -> {
                 LOG.info("Adding " + project.getSokratesProjectLink().getAnalysisResultsPath());
@@ -1252,73 +1295,65 @@ public class LandscapeReportGenerator {
 
             landscapeReport.addHtmlContent("<iframe src='projects-short.html' frameborder=0 style='height: 600px; width: 100%; margin-left: 0; margin-bottom: 0px; padding: 0;'></iframe>");
 
-            ProcessingStopwatch.start("reporting/projects/tags/custom tags map");
-            TagMap customTagsMap = new TagMap(landscapeAnalysisResults, tagGroups);
-            customTagsMap.updateTagMap(projectsAnalysisResults);
-            ProcessingStopwatch.end("reporting/projects/tags/custom tags map");
-
-            ProcessingStopwatch.start("reporting/projects/tags/extensions tags map");
-            List<ProjectTagGroup> extensionTagGroups = getExtensionTagGroups();
-            TagMap extensionsTagsMap = new TagMap(landscapeAnalysisResults, extensionTagGroups);
-            extensionsTagsMap.updateTagMap(projectsAnalysisResults);
-            ProcessingStopwatch.end("reporting/projects/tags/extensions tags map");
-
-            int shortLimit = configuration.getProjectsShortListLimit();
-
-            ProcessingStopwatch.start("reporting/projects/short report");
-            new LandscapeProjectsReport(landscapeAnalysisResults, shortLimit, "See the full list of projects...", "projects.html", customTagsMap)
-                    .saveProjectsReport(landscapeProjectsReportShort, reportsFolder, projectsAnalysisResults, tagGroups);
-            ProcessingStopwatch.end("reporting/projects/short report");
-
-            ProcessingStopwatch.start("reporting/projects/tags");
-
-            ProcessingStopwatch.start("reporting/projects/tags/custom");
-            new LandscapeProjectsTagsReport(landscapeAnalysisResults, tagGroups, customTagsMap, "custom", "projects-tags-matrix.html",false)
-                    .saveProjectsReport(landscapeProjectsTags, reportsFolder, projectsAnalysisResults);
-            ProcessingStopwatch.end("reporting/projects/tags/custom");
-
-            ProcessingStopwatch.start("reporting/projects/tags/custom-matrix");
-            new LandscapeProjectsTagsMatrixReport(landscapeAnalysisResults, tagGroups, customTagsMap, "custom-matrix", false)
-                    .saveProjectsReport(landscapeProjectsTagsMatrix, reportsFolder, projectsAnalysisResults);
-            ProcessingStopwatch.end("reporting/projects/tags/custom-matrix");
-
-            ProcessingStopwatch.start("reporting/projects/tags/extensions");
-            new LandscapeProjectsTagsReport(landscapeAnalysisResults, extensionTagGroups, extensionsTagsMap, "extension", "projects-extensions-matrix.html", true)
-                    .saveProjectsReport(landscapeProjectsExtensionTags, reportsFolder, projectsAnalysisResults);
-            ProcessingStopwatch.end("reporting/projects/tags/extensions");
-
-            ProcessingStopwatch.start("reporting/projects/tags/extensions-matrix");
-            new LandscapeProjectsTagsMatrixReport(landscapeAnalysisResults, extensionTagGroups, extensionsTagsMap, "extension-matrix", true)
-                    .saveProjectsReport(landscapeProjectsExtensionTagsMatrix, reportsFolder, projectsAnalysisResults);
-            ProcessingStopwatch.end("reporting/projects/tags/extensions-matrix");
-            ProcessingStopwatch.end("reporting/projects/tags");
-
             if (projectsAnalysisResults.size() > shortLimit) {
-                ProcessingStopwatch.start("reporting/projects/long report");
+                ProcessingStopwatch.start("reporting/repositories/long report");
                 new LandscapeProjectsReport(landscapeAnalysisResults, configuration.getProjectsListLimit(), customTagsMap)
                         .saveProjectsReport(landscapeProjectsReportLong, reportsFolder, projectsAnalysisResults, tagGroups);
-                ProcessingStopwatch.end("reporting/projects/long report");
+                ProcessingStopwatch.end("reporting/repositories/long report");
             }
-
         }
 
         landscapeReport.endSection();
 
         landscapeReport.startSubSection("<a href='projects-extensions.html' target='_blank' style='text-decoration: none'>" +
-                "File Extension Tags</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "");
+                "File Extension Stats</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "");
+        landscapeReport.startDiv("margin-bottom: 18px;");
+        landscapeReport.addNewTabLink("<b>Open expanded view</b> (stats per sub-folder)&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "projects-extensions-matrix.html");
+        landscapeReport.endDiv();
         landscapeReport.addHtmlContent("<iframe src='projects-extensions.html' frameborder=0 style='height: 600px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
         landscapeReport.endSection();
+    }
 
-        landscapeReport.startSubSection("<a href='projects-tags.html' target='_blank' style='text-decoration: none'>" +
-                "Custom Project Tags</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "");
-        landscapeReport.addHtmlContent("<iframe src='projects-tags.html' frameborder=0 style='height: 600px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
-        landscapeReport.endSection();
+    private void addTagsSection(List<ProjectAnalysisResults> projectsAnalysisResults) {
+        if (projectsAnalysisResults.size() > 0) {
+            landscapeReport.startDiv("margin-top: 14px;");
+            landscapeReport.addNewTabLink("<b>Open in a new tab&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "projects-tags.html");
+            landscapeReport.addHtmlContent("&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;");
+            landscapeReport.addNewTabLink("<b>Open expanded view</b> (stats per sub-folder)&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "projects-tags-matrix.html");
+            landscapeReport.endDiv();
+
+            ProcessingStopwatch.start("reporting/repositories/tags");
+
+            ProcessingStopwatch.start("reporting/tags/custom");
+            new LandscapeProjectsTagsReport(landscapeAnalysisResults, tagGroups, customTagsMap, "custom", "projects-tags-matrix.html", false)
+                    .saveProjectsReport(landscapeProjectsTags, reportsFolder, projectsAnalysisResults);
+            ProcessingStopwatch.end("reporting/tags/custom");
+
+            ProcessingStopwatch.start("reporting/tags/custom-matrix");
+            new LandscapeProjectsTagsMatrixReport(landscapeAnalysisResults, tagGroups, customTagsMap, "custom-matrix", false)
+                    .saveProjectsReport(landscapeProjectsTagsMatrix, "Custom Tags / Expanded View");
+            ProcessingStopwatch.end("reporting/tags/custom-matrix");
+
+            ProcessingStopwatch.start("reporting/tags/extensions");
+            new LandscapeProjectsTagsReport(landscapeAnalysisResults, extensionTagGroups, extensionsTagsMap, "extension", "projects-extensions-matrix.html", true)
+                    .saveProjectsReport(landscapeProjectsExtensionTags, reportsFolder, projectsAnalysisResults);
+            ProcessingStopwatch.end("reporting/tags/extensions");
+
+            ProcessingStopwatch.start("reporting/tags/extensions-matrix");
+            new LandscapeProjectsTagsMatrixReport(landscapeAnalysisResults, extensionTagGroups, extensionsTagsMap, "extension-matrix", true)
+                    .saveProjectsReport(landscapeProjectsExtensionTagsMatrix, "Extensions Tags / Expanded View");
+            ProcessingStopwatch.end("reporting/tags/extensions-matrix");
+            ProcessingStopwatch.end("reporting/repositories/tags");
+        }
+
+        landscapeReport.addLineBreak();
+        landscapeReport.addHtmlContent("<iframe src='projects-tags.html' frameborder=0 style='height: calc(100vh - 290px); width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
     }
 
     private List<ProjectTagGroup> getExtensionTagGroups() {
         List<ProjectTagGroup> groups = new ArrayList<>();
         ProjectTagGroup mainProgrammingLanguages = new ProjectTagGroup("main file extensions", "#ffefd5");
-        mainProgrammingLanguages.setDescription("file extensions with most lines of code in a project");
+        mainProgrammingLanguages.setDescription("file extensions with most lines of code in a repository");
         LandscapeGeneratorUtils.getLinesOfCodePerExtension(this.landscapeAnalysisResults, this.landscapeAnalysisResults.getMainLinesOfCodePerExtension()).forEach(extension -> {
             String lang = extension.getName().replaceAll(".*[.]", "").trim();
             ProjectTag langTag = new ProjectTag();
@@ -1328,7 +1363,7 @@ public class LandscapeReportGenerator {
             mainProgrammingLanguages.getProjectTags().add(langTag);
         });
         ProjectTagGroup programmingLanguages = new ProjectTagGroup("all file extensions", "#f0f0f0");
-        programmingLanguages.setDescription("file extensions with at least one file in a project");
+        programmingLanguages.setDescription("file extensions with at least one file in a repository");
         LandscapeGeneratorUtils.getLinesOfCodePerExtension(this.landscapeAnalysisResults, this.landscapeAnalysisResults.getMainLinesOfCodePerExtension()).forEach(extension -> {
             String lang = extension.getName().replaceAll(".*[.]", "").trim();
             ProjectTag langTag = new ProjectTag();
@@ -2051,7 +2086,7 @@ public class LandscapeReportGenerator {
         landscapeReport.startTableCell("border: none");
         addPeopleGraph(peopleDependencies, daysAgo, "", "");
         if (peopleProjectDependencies != null) {
-            addPeopleGraph(peopleProjectDependencies, daysAgo, "including_projects_", " (including projects)");
+            addPeopleGraph(peopleProjectDependencies, daysAgo, "including_projects_", " (including repositories)");
         }
         addProjectsGraph(daysAgo, projectDependenciesViaPeople);
         landscapeReport.endTableCell();
@@ -2083,15 +2118,15 @@ public class LandscapeReportGenerator {
         addDataSection("C-mean", cMean, daysAgo, landscapeAnalysisResults.getcMean30DaysHistory(),
                 "C-mean is the mean number of contributors a person worked with in the past " + daysAgo + " days.");
         addDataSection("C-index", cIndex, daysAgo, landscapeAnalysisResults.getcIndex30DaysHistory(),
-                "you have people with " + cIndex + " or more project connections with other people");
+                "you have people with " + cIndex + " or more repository connections with other people");
         landscapeReport.addLineBreak();
 
-        addDataSection("P-median", pMedian, daysAgo, landscapeAnalysisResults.getpMedian30DaysHistory(),
-                "P-median is the average number of projects (repositories) a person worked on in the past " + daysAgo + " days.");
-        addDataSection("P-mean", pMean, daysAgo, landscapeAnalysisResults.getpMean30DaysHistory(),
-                "P-mean is the mean number of projects (repositories) a person worked on in the past " + daysAgo + " days.");
-        addDataSection("P-index", pIndex, daysAgo, landscapeAnalysisResults.getpIndex30DaysHistory(),
-                "you have " + pIndex + " people committing to " + pIndex + " or more projects");
+        addDataSection("R-median", pMedian, daysAgo, landscapeAnalysisResults.getpMedian30DaysHistory(),
+                "R-median is the average number of repositories a person worked on in the past " + daysAgo + " days.");
+        addDataSection("R-mean", pMean, daysAgo, landscapeAnalysisResults.getpMean30DaysHistory(),
+                "R-mean is the mean number of repositories a person worked on in the past " + daysAgo + " days.");
+        addDataSection("R-index", pIndex, daysAgo, landscapeAnalysisResults.getpIndex30DaysHistory(),
+                "you have " + pIndex + " people committing to " + pIndex + " or more repositories");
         landscapeReport.addLineBreak();
 
         peopleDependencies.sort((a, b) -> b.getCount() - a.getCount());
@@ -2107,9 +2142,9 @@ public class LandscapeReportGenerator {
     }
 
     private void addProjectsGraph(int daysAgo, List<ComponentDependency> projectDependenciesViaPeople) {
-        landscapeReport.startShowMoreBlock("show project dependencies graph...<br>");
+        landscapeReport.startShowMoreBlock("show repository dependencies graph...<br>");
         StringBuilder builder = new StringBuilder();
-        builder.append("Project 1\tProject 2\t# people\n");
+        builder.append("Repository 1\tRepository 2\t# people\n");
         projectDependenciesViaPeople.subList(0, Math.min(10000, projectDependenciesViaPeople.size())).forEach(d -> builder
                 .append(d.getFromComponent()).append("\t")
                 .append(d.getToComponent()).append("\t")
@@ -2128,7 +2163,7 @@ public class LandscapeReportGenerator {
         String graphId = addDependencyGraphVisuals(projectDependenciesViaPeople, new ArrayList<>(projectNames), "project_dependencies_" + daysAgo + "_", "TB");
 
         landscapeReport.endShowMoreBlock();
-        landscapeReport.addNewTabLink(" - show project dependencies as 3D force graph", "visuals/" + graphId + "_force_3d.html");
+        landscapeReport.addNewTabLink(" - show repository dependencies as 3D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/" + graphId + "_force_3d.html");
         landscapeReport.addLineBreak();
     }
 
@@ -2166,7 +2201,7 @@ public class LandscapeReportGenerator {
     }
 
     private void addProjectDependenciesViaPeople(List<ComponentDependency> projectDependenciesViaPeople) {
-        landscapeReport.startShowMoreBlock("show project dependencies via people...<br>");
+        landscapeReport.startShowMoreBlock("show repository dependencies via people...<br>");
         landscapeReport.startTable();
         int maxListSize = Math.min(100, projectDependenciesViaPeople.size());
         if (maxListSize < projectDependenciesViaPeople.size()) {
@@ -2210,7 +2245,7 @@ public class LandscapeReportGenerator {
             displayList = list.subList(0, 100);
         }
 
-        landscapeReport.startShowMoreBlock("show projects with most people...<br>");
+        landscapeReport.startShowMoreBlock("show repositories with most people...<br>");
         StringBuilder builder = new StringBuilder();
         builder.append("Contributor\t# people\n");
         list.forEach(project -> builder.append(map.get(project).getLeft()).append("\t")
@@ -2246,7 +2281,7 @@ public class LandscapeReportGenerator {
 
     private void addPeopleGraph(List<ComponentDependency> peopleDependencies, int daysAgo, String suffix, String extraLabel) {
         StringBuilder builder = new StringBuilder();
-        builder.append("Contributor 1\tContributor 2\t# shared projects\n");
+        builder.append("Contributor 1\tContributor 2\t# shared repositories\n");
         peopleDependencies.forEach(d -> builder
                 .append(d.getFromComponent()).append("\t")
                 .append(d.getToComponent()).append("\t")
@@ -2266,7 +2301,7 @@ public class LandscapeReportGenerator {
         landscapeReport.endDiv();
         landscapeReport.endShowMoreBlock();
 
-        landscapeReport.addNewTabLink(" - show contributor dependencies as 3D force graph" + extraLabel,
+        landscapeReport.addNewTabLink(" - show contributor dependencies as 3D force graph" + extraLabel + "&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
                 "visuals/" + graphId + "_force_3d.html");
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
@@ -2299,9 +2334,9 @@ public class LandscapeReportGenerator {
             if (projectCount2 > 0) {
                 perc2 = 100.0 * dependencyCount / projectCount2;
             }
-            landscapeReport.addTableCell(from + "<br><span style='color: grey'>" + projectCount1 + " projects (" + FormattingUtils.getFormattedPercentage(perc1) + "%)</span>", "");
-            landscapeReport.addTableCell(to + "<br><span style='color: grey'>" + projectCount2 + " projects (" + FormattingUtils.getFormattedPercentage(perc2) + "%)</span>", "");
-            landscapeReport.addTableCell(dependencyCount + " shared projects", "");
+            landscapeReport.addTableCell(from + "<br><span style='color: grey'>" + projectCount1 + " repositories (" + FormattingUtils.getFormattedPercentage(perc1) + "%)</span>", "");
+            landscapeReport.addTableCell(to + "<br><span style='color: grey'>" + projectCount2 + " repositories (" + FormattingUtils.getFormattedPercentage(perc2) + "%)</span>", "");
+            landscapeReport.addTableCell(dependencyCount + " shared repositories", "");
             landscapeReport.endTableRow();
         });
         landscapeReport.endTable();
@@ -2311,7 +2346,7 @@ public class LandscapeReportGenerator {
     private void addMostConnectedPeopleSection(List<ContributorConnections> contributorConnections, int daysAgo) {
         landscapeReport.startShowMoreBlock("show most connected people...<br>");
         StringBuilder builder = new StringBuilder();
-        builder.append("Contributor\t# projects\t# connections\n");
+        builder.append("Contributor\t# repositories\t# connections\n");
         contributorConnections.forEach(c -> builder.append(c.getEmail()).append("\t")
                 .append(c.getProjectsCount()).append("\t")
                 .append(c.getConnectionsCount()).append("\n"));
@@ -2344,7 +2379,7 @@ public class LandscapeReportGenerator {
             landscapeReport.startTableRow();
             landscapeReport.addTableCell(index[0] + ".", "");
             landscapeReport.addTableCell(name.getEmail(), "");
-            landscapeReport.addTableCell(name.getProjectsCount() + "&nbsp;projects");
+            landscapeReport.addTableCell(name.getProjectsCount() + "&nbsp;repositories");
             landscapeReport.addTableCell(name.getConnectionsCount() + " connections", "");
             landscapeReport.endTableRow();
         });
@@ -2354,7 +2389,7 @@ public class LandscapeReportGenerator {
     }
 
     private void addMostProjectsPeopleSection(List<ContributorConnections> contributorConnections, int daysAgo) {
-        landscapeReport.startShowMoreBlock("show people with most projects...<br>");
+        landscapeReport.startShowMoreBlock("show people with most repositories...<br>");
         List<ContributorConnections> sorted = new ArrayList<>(contributorConnections);
         sorted.sort((a, b) -> b.getProjectsCount() - a.getProjectsCount());
         List<ContributorConnections> displayListPeople = sorted.subList(0, Math.min(100, sorted.size()));
@@ -2365,7 +2400,7 @@ public class LandscapeReportGenerator {
         }
         String prefix = "most_projects_people_" + daysAgo + "_days";
         StringBuilder builder = new StringBuilder();
-        builder.append("Contributor\t# projects\t# connections\n");
+        builder.append("Contributor\t# repositories\t# connections\n");
         contributorConnections.forEach(c -> builder.append(c.getEmail()).append("\t")
                 .append(c.getProjectsCount()).append("\t")
                 .append(c.getConnectionsCount()).append("\n"));
@@ -2388,7 +2423,7 @@ public class LandscapeReportGenerator {
             landscapeReport.startTableRow();
             landscapeReport.addTableCell(index[0] + ".", "");
             landscapeReport.addTableCell(name.getEmail(), "");
-            landscapeReport.addTableCell(name.getProjectsCount() + "&nbsp;projects");
+            landscapeReport.addTableCell(name.getProjectsCount() + "&nbsp;repositories");
             landscapeReport.addTableCell(name.getConnectionsCount() + " connections", "");
             landscapeReport.endTableRow();
         });

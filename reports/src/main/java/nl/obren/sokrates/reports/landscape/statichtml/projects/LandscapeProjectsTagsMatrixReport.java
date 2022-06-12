@@ -37,11 +37,13 @@ public class LandscapeProjectsTagsMatrixReport {
         this.renderLangIcons = renderLangIcons;
     }
 
-    public void saveProjectsReport(RichTextReport report, File reportsFolder, List<ProjectAnalysisResults> projectsAnalysisResults) {
-        report.startDiv("position: absolute; left: 1px");
-        ProcessingStopwatch.start("reporting/projects/tags/" + type + "/adding report sections");
+    public void saveProjectsReport(RichTextReport report, String title) {
+        report.startDiv("margin-bottom: 42px");
+        report.addLevel1Header(title);
+        report.addParagraph("Tags per sub-folder", "color: grey");
+        ProcessingStopwatch.start("reporting/repositories/tags/" + type + "/adding report sections");
         addTagStats(report);
-        ProcessingStopwatch.end("reporting/projects/tags/" + type + "/adding report sections");
+        ProcessingStopwatch.end("reporting/repositories/tags/" + type + "/adding report sections");
         report.endDiv();
     }
 
@@ -80,7 +82,7 @@ public class LandscapeProjectsTagsMatrixReport {
     private void addHeaderRow(RichTextReport report, List<Pair<String, Integer>> roots) {
         report.startTableRow("font-size: 80%");
         report.addTableCell("");
-        report.addTableCell("all projects", "text-align: center; border-right: 4px solid lightgrey");
+        report.addTableCell("all repositories", "text-align: center; border-right: 4px solid lightgrey");
         roots.forEach(root -> {
             String text = StringUtils.abbreviate(root.getKey(), 20) + "<br>(" + root.getValue() + ")";
             report.addTableCell(text, "text-align: center");
@@ -201,22 +203,22 @@ public class LandscapeProjectsTagsMatrixReport {
         String tooltip = "";
 
         if (tag.getPatterns().size() > 0) {
-            tooltip += "includes projects with names like:\n  - " + tag.getPatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
+            tooltip += "includes repositories with names like:\n  - " + tag.getPatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
         }
         if (tag.getExcludePatterns().size() > 0) {
-            tooltip += "excludes projects with names like:\n  - " + tag.getExcludePatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
+            tooltip += "excludes repositories with names like:\n  - " + tag.getExcludePatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
         }
         if (tag.getPathPatterns().size() > 0) {
-            tooltip += "includes projects with at least one file matching:\n  - " + tag.getPathPatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
+            tooltip += "includes repositories with at least one file matching:\n  - " + tag.getPathPatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
         }
         if (tag.getExcludePathPatterns().size() > 0) {
-            tooltip += "excludes projects with at least one file matching:\n  - " + tag.getExcludePathPatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
+            tooltip += "excludes repositories with at least one file matching:\n  - " + tag.getExcludePathPatterns().stream().collect(Collectors.joining("\n  - ")) + "\n";
         }
         if (tag.getMainExtensions().size() > 0) {
-            tooltip += "includes projects with main extensions:\n  - " + tag.getMainExtensions().stream().collect(Collectors.joining("\n  - ")) + "\n";
+            tooltip += "includes repositories with main extensions:\n  - " + tag.getMainExtensions().stream().collect(Collectors.joining("\n  - ")) + "\n";
         }
         if (tag.getAnyExtensions().size() > 0) {
-            tooltip += "includes projects with any file with extensions:\n  - " + tag.getMainExtensions().stream().collect(Collectors.joining("\n  - ")) + "\n";
+            tooltip += "includes repositories with any file with extensions:\n  - " + tag.getMainExtensions().stream().collect(Collectors.joining("\n  - ")) + "\n";
         }
         return tooltip;
     }

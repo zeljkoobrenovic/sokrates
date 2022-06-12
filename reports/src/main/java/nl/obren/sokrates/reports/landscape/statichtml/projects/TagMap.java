@@ -102,4 +102,8 @@ public class TagMap {
         String projectKey = getProjectKey(project);
         return projectTags.containsKey(projectKey) ? projectTags.get(projectKey) : new ArrayList<>();
     }
+
+    public int tagsCount() {
+        return tagStatsMap.containsKey("") ? tagStatsMap.size() - 1 : tagStatsMap.size();
+    }
 }

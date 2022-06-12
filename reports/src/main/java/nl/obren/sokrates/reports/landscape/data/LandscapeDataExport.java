@@ -34,7 +34,7 @@ public class LandscapeDataExport {
     public void exportProjects() {
         StringBuilder builder = new StringBuilder();
 
-        builder.append("Project\tMain Lanuguage\tLOC (main)\tLOC (test)\tLOC (other)\tAge (years)\tContributors\tRecent Contributors\tRookies\tCommits this year\tLatest commit\n");
+        builder.append("Repository\tMain Lanuguage\tLOC (main)\tLOC (test)\tLOC (other)\tAge (years)\tContributors\tRecent Contributors\tRookies\tCommits this year\tLatest commit\n");
 
         int thresholdCommits = analysisResults.getConfiguration().getContributorThresholdCommits();
 
@@ -89,7 +89,7 @@ public class LandscapeDataExport {
     public void exportContributors() {
         StringBuilder builder = new StringBuilder();
 
-        builder.append("Contributor\t# commits (all time)\t# commits (30 days)\t# commits (90 days)\t# commits (180 days)\t# commits (365 days)\tFirst commit\tLatest commit\tProjects\n");
+        builder.append("Contributor\t# commits (all time)\t# commits (30 days)\t# commits (90 days)\t# commits (180 days)\t# commits (365 days)\tFirst commit\tLatest commit\tRepositories\n");
 
         List<ContributorProjects> contributors = analysisResults.getContributors();
 
