@@ -7,6 +7,7 @@ package nl.obren.sokrates.sourcecode.landscape.init;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
+import nl.obren.sokrates.sourcecode.landscape.ProjectTagGroup;
 import nl.obren.sokrates.sourcecode.landscape.SokratesProjectLink;
 import nl.obren.sokrates.sourcecode.landscape.SubLandscapeLink;
 import org.apache.commons.io.FileUtils;
@@ -20,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.stream.Stream;
 
 public class LandscapeAnalysisInitiator {

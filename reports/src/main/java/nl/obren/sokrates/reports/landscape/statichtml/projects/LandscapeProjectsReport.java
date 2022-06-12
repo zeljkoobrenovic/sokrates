@@ -3,6 +3,7 @@ package nl.obren.sokrates.reports.landscape.statichtml.projects;
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.utils.FormattingUtils;
+import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.ReportConstants;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
@@ -39,24 +40,34 @@ public class LandscapeProjectsReport {
 
     private LandscapeAnalysisResults landscapeAnalysisResults;
     private int limit = 1000;
+    private TagMap customTagsMap;
     private String link;
     private String linkLabel;
     private File reportsFolder;
+    private List<ProjectTagGroup> tagGroups = new ArrayList<>();
 
-    public LandscapeProjectsReport(LandscapeAnalysisResults landscapeAnalysisResults, int limit) {
+    private String type = "";
+
+    public LandscapeProjectsReport(LandscapeAnalysisResults landscapeAnalysisResults, int limit, TagMap customTagsMap) {
         this.landscapeAnalysisResults = landscapeAnalysisResults;
         this.limit = limit;
+        this.customTagsMap = customTagsMap;
+        this.type = "long report";
     }
 
-    public LandscapeProjectsReport(LandscapeAnalysisResults landscapeAnalysisResults, int limit, String link, String linkLabel) {
+    public LandscapeProjectsReport(LandscapeAnalysisResults landscapeAnalysisResults, int limit, String link, String linkLabel, TagMap customTagsMap) {
         this.landscapeAnalysisResults = landscapeAnalysisResults;
         this.limit = limit;
         this.link = link;
         this.linkLabel = linkLabel;
+        this.customTagsMap = customTagsMap;
+        this.type = "short report";
     }
 
-    public void saveProjectsReport(RichTextReport report, File reportsFolder, List<ProjectAnalysisResults> projectsAnalysisResults) {
+    public void saveProjectsReport(RichTextReport report, File reportsFolder, List<ProjectAnalysisResults> projectsAnalysisResults, List<ProjectTagGroup> tagGroups) {
+        ProcessingStopwatch.start("reporting/projects/" + type + "/preparing");
         this.reportsFolder = reportsFolder;
+        this.tagGroups = tagGroups;
         report.startTabGroup();
         boolean showCommits = landscapeAnalysisResults.getCommitsCount() > 0;
         if (showCommits) {
@@ -73,18 +84,30 @@ public class LandscapeProjectsReport {
         }
         report.addTab("features", "Features of Interest", false);
         report.endTabGroup();
+        ProcessingStopwatch.end("reporting/projects/" + type + "/preparing");
+
+        ProcessingStopwatch.start("reporting/projects/" + type + "/size");
         addProjectsBySize(report, projectsAnalysisResults);
+        ProcessingStopwatch.end("reporting/projects/" + type + "/size");
         if (showCommits) {
+            ProcessingStopwatch.start("reporting/projects/" + type + "/commits");
             addCommitBasedLists(report, projectsAnalysisResults);
+            ProcessingStopwatch.end("reporting/projects/" + type + "/commits");
+            ProcessingStopwatch.start("reporting/projects/" + type + "/history");
             addHistory(report, projectsAnalysisResults);
+            ProcessingStopwatch.end("reporting/projects/" + type + "/history");
         }
 
         report.startTabContentSection("metrics", false);
+        ProcessingStopwatch.start("reporting/projects/" + type + "/metrics");
         addMetrics(report, projectsAnalysisResults);
+        ProcessingStopwatch.end("reporting/projects/" + type + "/metrics");
         report.endTabContentSection();
 
         report.startTabContentSection("features", false);
+        ProcessingStopwatch.start("reporting/projects/" + type + "/features of interest");
         addFeaturesOfInterest(report);
+        ProcessingStopwatch.end("reporting/projects/" + type + "/features of interest");
         report.endTabContentSection();
     }
 
@@ -358,11 +381,12 @@ public class LandscapeProjectsReport {
     }
 
     private boolean showTags() {
-        for (ProjectTagGroup tagGroup : landscapeAnalysisResults.getConfiguration().getProjectTagGroups()) {
+        for (ProjectTagGroup tagGroup : tagGroups) {
             if (tagGroup.getProjectTags().size() > 0) return true;
         }
         return false;
     }
+
     public void addProjectsBySize(RichTextReport report, List<ProjectAnalysisResults> projectsAnalysisResults) {
         Collections.sort(projectsAnalysisResults,
                 (a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()
@@ -708,7 +732,6 @@ public class LandscapeProjectsReport {
         String logoLink = metadata.getLogoLink();
 
         String latestCommitDate = projectAnalysis.getAnalysisResults().getContributorsAnalysisResults().getLatestCommitDate();
-        DateUtils.isCommittedLessThanDaysAgo(latestCommitDate, 90);
         report.startTableRow(DateUtils.isCommittedLessThanDaysAgo(latestCommitDate, 90) ? ""
                 : (DateUtils.isCommittedLessThanDaysAgo(latestCommitDate, 180) ? "color:#b0b0b0" : "color:#c3c3c3"));
         report.addTableCell(getImageWithLink(projectAnalysis, logoLink), "text-align: center");
@@ -815,33 +838,15 @@ public class LandscapeProjectsReport {
     }
 
     private String getTags(ProjectAnalysisResults project) {
-        List<NumericMetric> linesOfCodePerExtension = project.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension();
-        linesOfCodePerExtension.sort((a, b) -> b.getValue().intValue() - a.getValue().intValue());
-        String mainTech = linesOfCodePerExtension.size() > 0 ? linesOfCodePerExtension.get(0).getName().replaceAll(".*[.]", "") : "";
-        List<ProjectTag> tags = new ArrayList<>();
-        this.landscapeAnalysisResults.getConfiguration().getProjectTagGroups().forEach(tagGroup -> tags.addAll(tagGroup.getProjectTags()));
-
         StringBuilder tagsHtml = new StringBuilder();
 
-        boolean tagged[] = {false};
-
-        tags.forEach(tag -> {
-            if (isTagged(project, mainTech, tag)) {
-                tagsHtml.append("<div style='margin: 2px; padding: 5px; display: inline-block; background-color: " + getTabColor(tag) + "; font-size: 70%; border-radius: 10px'>");
-                tagsHtml.append(tag.getTag());
-                tagsHtml.append("</div>");
-
-                tagged[0] = true;
-            }
+        customTagsMap.getProjectTags(project).forEach(tag -> {
+            tagsHtml.append("<div style='margin: 2px; padding: 5px; display: inline-block; background-color: " + getTabColor(tag) + "; font-size: 70%; border-radius: 10px'>");
+            tagsHtml.append(tag.getTag());
+            tagsHtml.append("</div>");
         });
 
         return tagsHtml.toString();
-    }
-
-    private boolean isTagged(ProjectAnalysisResults project, String mainTech, ProjectTag tag) {
-        String name = project.getAnalysisResults().getMetadata().getName();
-        return !tag.excludesMainTechnology(mainTech) &&
-                ((tag.matchesName(name) && !tag.excludeName(name)) || tag.matchesMainTechnology(mainTech) || tag.matchesAnyTechnology(LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, project.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension())) || tag.matchesPath(project.getFiles()));
     }
 
     private String getTabColor(ProjectTag tag) {

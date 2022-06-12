@@ -1,29 +1,21 @@
 package nl.obren.sokrates.reports.landscape.statichtml.projects;
 
-import nl.obren.sokrates.common.renderingutils.GraphvizUtil;
 import nl.obren.sokrates.common.utils.FormattingUtils;
+import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.RichTextReport;
-import nl.obren.sokrates.reports.landscape.utils.Force3DGraphExporter;
-import nl.obren.sokrates.reports.landscape.utils.LandscapeGeneratorUtils;
 import nl.obren.sokrates.reports.landscape.utils.TagStats;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
-import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.landscape.ProjectTag;
 import nl.obren.sokrates.sourcecode.landscape.ProjectTagGroup;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ProjectAnalysisResults;
-import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,27 +23,25 @@ public class LandscapeProjectsTagsMatrixReport {
     private static final Log LOG = LogFactory.getLog(LandscapeProjectsTagsMatrixReport.class);
 
     private LandscapeAnalysisResults landscapeAnalysisResults;
-    private Map<String, TagStats> tagStatsMap = new HashMap<>();
-    private File reportsFolder;
 
-    private List<ProjectTagGroup> projectTagGroups = new ArrayList<>();
+    private List<ProjectTagGroup> projectTagGroups;
+    private TagMap tagsMap;
     private String type;
     private boolean renderLangIcons;
 
-    public LandscapeProjectsTagsMatrixReport(LandscapeAnalysisResults landscapeAnalysisResults, List<ProjectTagGroup> projectTagGroups, String type, boolean renderLangIcons) {
+    public LandscapeProjectsTagsMatrixReport(LandscapeAnalysisResults landscapeAnalysisResults, List<ProjectTagGroup> projectTagGroups, TagMap tagsMap, String type, boolean renderLangIcons) {
         this.landscapeAnalysisResults = landscapeAnalysisResults;
         this.projectTagGroups = projectTagGroups;
+        this.tagsMap = tagsMap;
         this.type = type;
         this.renderLangIcons = renderLangIcons;
     }
 
     public void saveProjectsReport(RichTextReport report, File reportsFolder, List<ProjectAnalysisResults> projectsAnalysisResults) {
-        this.reportsFolder = reportsFolder;
-
-        updateTagMap(projectsAnalysisResults);
-
         report.startDiv("position: absolute; left: 1px");
+        ProcessingStopwatch.start("reporting/projects/tags/" + type + "/adding report sections");
         addTagStats(report);
+        ProcessingStopwatch.end("reporting/projects/tags/" + type + "/adding report sections");
         report.endDiv();
     }
 
@@ -60,7 +50,7 @@ public class LandscapeProjectsTagsMatrixReport {
         projectTagGroups.stream().filter(tagGroup -> tagGroup.getProjectTags().size() > 0).forEach(tagGroup -> {
             int count[] = {0};
             tagGroup.getProjectTags().stream().forEach(projectTag -> {
-                if (tagStatsMap.get(projectTag.getKey()) != null) count[0] += 1;
+                if (tagsMap.getTagStats(projectTag.getKey()) != null) count[0] += 1;
             });
             if (count[0] == 0) {
                 return;
@@ -80,8 +70,8 @@ public class LandscapeProjectsTagsMatrixReport {
             addHeaderRow(report, roots);
 
             tagGroup.getProjectTags().stream()
-                    .filter(t -> (tagStatsMap.get(t.getKey()) != null))
-                    .sorted((a, b) -> tagStatsMap.get(b.getKey()).getProjectsAnalysisResults().size() - tagStatsMap.get(a.getKey()).getProjectsAnalysisResults().size())
+                    .filter(t -> (tagsMap.getTagStats(t.getKey()) != null))
+                    .sorted((a, b) -> tagsMap.getTagStats(b.getKey()).getProjectsAnalysisResults().size() - tagsMap.getTagStats(a.getKey()).getProjectsAnalysisResults().size())
                     .forEach(projectTag -> addTagRow(report, roots, projectTag.getTag(), projectTag, tagGroup.getColor()));
             report.endTable();
         });
@@ -100,8 +90,8 @@ public class LandscapeProjectsTagsMatrixReport {
 
     private List<Pair<String, Integer>> getRoots(ProjectTagGroup tagGroup) {
         Map<String, List<String>> roots = new HashMap<>();
-        tagGroup.getProjectTags().stream().filter(t -> tagStatsMap.get(t.getKey()) != null).forEach(projectTag -> {
-            tagStatsMap.get(projectTag.getKey()).getProjectsAnalysisResults().forEach(project -> {
+        tagGroup.getProjectTags().stream().filter(t -> tagsMap.getTagStats(t.getKey()) != null).forEach(projectTag -> {
+            tagsMap.getTagStats(projectTag.getKey()).getProjectsAnalysisResults().forEach(project -> {
                 String root = project.getSokratesProjectLink().getAnalysisResultsPath().split("(\\/|\\\\)")[0];
                 if (!roots.containsKey(root)) {
                     roots.put(root, new ArrayList<>());
@@ -120,7 +110,7 @@ public class LandscapeProjectsTagsMatrixReport {
     }
 
     private void addTagRow(RichTextReport report, List<Pair<String, Integer>> roots, String tagName, ProjectTag tag, String color) {
-        TagStats stats = tagStatsMap.get(tag.getKey());
+        TagStats stats = tagsMap.getTagStats(tag.getKey());
         if (stats == null) {
             return;
         }
@@ -164,7 +154,8 @@ public class LandscapeProjectsTagsMatrixReport {
                             + "<b>" + FormattingUtils.formatCount(tagCommitsCount30Days) + "</b> commits (30d)<br>"
                             + "<b>" + FormattingUtils.formatCount(recentContributorCount) + "</b> contributors (30d)",
                     "border-top: 2px solid lightgrey; border-bottom: 2px solid lightgrey; padding: 2px");
-            projectsAnalysisResults.stream().limit(100).forEach(project -> {
+            int maxListSize = 100;
+            projectsAnalysisResults.stream().limit(maxListSize).forEach(project -> {
                 CodeAnalysisResults projectAnalysisResults = project.getAnalysisResults();
                 String projectReportUrl = getProjectReportUrl(project);
                 report.addContentInDiv(
@@ -172,6 +163,9 @@ public class LandscapeProjectsTagsMatrixReport {
                                 + "<span color='lightgrey'>(<b>"
                                 + FormattingUtils.formatCount(projectAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode(), "-") + "</b> LOC)</span>");
             });
+            if (projectsAnalysisResults.size() > maxListSize) {
+                report.addContentInDiv("...", "margin-bottom: 10px; margin-left: 7px; font-size: 160%");
+            }
             report.endDiv();
             report.endShowMoreBlock();
             report.endDiv();
@@ -227,42 +221,6 @@ public class LandscapeProjectsTagsMatrixReport {
         return tooltip;
     }
 
-    private void updateTagMap(List<ProjectAnalysisResults> projects) {
-        projects.forEach(project -> {
-            List<NumericMetric> linesOfCodePerExtension = project.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension();
-            linesOfCodePerExtension.sort((a, b) -> b.getValue().intValue() - a.getValue().intValue());
-            String mainTech = linesOfCodePerExtension.size() > 0 ? linesOfCodePerExtension.get(0).getName().replaceAll(".*[.]", "") : "";
-            List<ProjectTag> tags = new ArrayList<>();
-            projectTagGroups.forEach(tagGroup -> tags.addAll(tagGroup.getProjectTags()));
-
-            boolean tagged[] = {false};
-
-            tags.forEach(tag -> {
-                if (isTagged(project, mainTech, tag)) {
-                    String key = tag.getKey();
-                    if (!tagStatsMap.containsKey(key)) {
-                        tagStatsMap.put(key, new TagStats(tag));
-                    }
-                    tagStatsMap.get(key).getProjectsAnalysisResults().add(project);
-                    tagged[0] = true;
-                }
-            });
-
-            if (!tagged[0]) {
-                if (!tagStatsMap.containsKey("")) {
-                    tagStatsMap.put("", new TagStats(new ProjectTag()));
-                }
-                tagStatsMap.get("").getProjectsAnalysisResults().add(project);
-            }
-
-        });
-    }
-
-    private boolean isTagged(ProjectAnalysisResults project, String mainTech, ProjectTag tag) {
-        String name = project.getAnalysisResults().getMetadata().getName();
-        return !tag.excludesMainTechnology(mainTech) &&
-                ((tag.matchesName(name) && !tag.excludeName(name)) || tag.matchesMainTechnology(mainTech) || tag.matchesAnyTechnology(LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, project.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension())) || tag.matchesPath(project.getFiles()));
-    }
 
     private String getProjectReportFolderUrl(ProjectAnalysisResults projectAnalysis) {
         return landscapeAnalysisResults.getConfiguration().getProjectReportsUrlPrefix() + projectAnalysis.getSokratesProjectLink().getHtmlReportsRoot() + "/";

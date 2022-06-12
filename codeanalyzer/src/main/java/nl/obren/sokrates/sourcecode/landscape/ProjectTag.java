@@ -3,11 +3,14 @@ package nl.obren.sokrates.sourcecode.landscape;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ProjectTag {
+    private static final Log LOG = LogFactory.getLog(ProjectTag.class);
     // A tag name
     private String tag = "";
 

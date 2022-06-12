@@ -6,6 +6,7 @@ package nl.obren.sokrates.common.io;
 
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,6 +30,17 @@ public class JsonMapper {
             LOG.error(e);
             throw new IllegalArgumentException(message);
         }
+    }
+
+    public static <T> T getObject(final String json, final TypeReference<T> type) {
+        T data = null;
+
+        try {
+            data = new ObjectMapper().readValue(json, type);
+        } catch (Exception e) {
+            LOG.error(e);
+        }
+        return data;
     }
 
     private ObjectMapper getObjectMapper() {

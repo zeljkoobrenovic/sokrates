@@ -15,6 +15,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class LandscapeReportGeneratorTest {
@@ -29,9 +30,9 @@ public class LandscapeReportGeneratorTest {
         File reportsFolder = new File("");
 
 
-        LandscapeAnalysisResults landscapeAnalysisResults = analyzer.analyze(landscapeConfigFile);
+        LandscapeAnalysisResults landscapeAnalysisResults = analyzer.analyze(new File("."), landscapeConfigFile);
 
-        LandscapeReportGenerator reportGenerator = new LandscapeReportGenerator(landscapeAnalysisResults, landscapeConfigFile.getParentFile(), reportsFolder);
+        LandscapeReportGenerator reportGenerator = new LandscapeReportGenerator(landscapeAnalysisResults, new ArrayList<>(), landscapeConfigFile.getParentFile(), reportsFolder);
         List<RichTextReport> reports = reportGenerator.report();
 
         try {

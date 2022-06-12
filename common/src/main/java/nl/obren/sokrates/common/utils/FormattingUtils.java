@@ -30,6 +30,9 @@ public class FormattingUtils {
         decimalFormat.setDecimalFormatSymbols( new DecimalFormatSymbols(Locale.ENGLISH));
         return decimalFormat.format(value);
     }
+    public static String formatCountPlural(int value, String singleSuffix, String pluralSuffix) {
+        return formatCount(value) + " " + (value == 1 ? singleSuffix : pluralSuffix);
+    }
 
     public static String formatCount(int value, String textForZero) {
         DecimalFormat decimalFormat = new DecimalFormat("#,###");

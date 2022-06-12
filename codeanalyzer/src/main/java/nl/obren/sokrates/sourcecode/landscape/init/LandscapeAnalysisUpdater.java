@@ -8,7 +8,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.sourcecode.Metadata;
+import nl.obren.sokrates.sourcecode.landscape.DefaultProjectTags;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
+import nl.obren.sokrates.sourcecode.landscape.ProjectTagGroup;
 import nl.obren.sokrates.sourcecode.landscape.SokratesProjectLink;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisUtils;
 import org.apache.commons.io.FileUtils;
@@ -47,6 +49,7 @@ public class LandscapeAnalysisUpdater {
         return newConfig;
     }
 
+
     private void updateMetadata(LandscapeConfiguration configuration, Metadata metadata) {
         if (metadata != null) {
             if (StringUtils.isNotBlank(metadata.getName())) {
@@ -71,6 +74,7 @@ public class LandscapeAnalysisUpdater {
         }
         return landscapeConfigFile;
     }
+
 
     private void addNewProjects(LandscapeConfiguration newConfig, LandscapeConfiguration existingConfiguration) {
         List<SokratesProjectLink> allProjects = newConfig.getProjects();

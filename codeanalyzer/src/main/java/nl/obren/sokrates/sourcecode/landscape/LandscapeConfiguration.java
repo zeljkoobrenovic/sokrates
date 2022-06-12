@@ -121,9 +121,6 @@ public class LandscapeConfiguration {
     // An optional HTML fragment to be included in the report HTML header (e.g. Google Analytics smippet)
     private String customHtmlReportHeaderFragment = "";
 
-    // An optional list of tags to be used to mark projects
-    private List<ProjectTagGroup> projectTagGroups = new DefaultProjectTags().defaultTagGroups();
-
     // values automatically populated by Sokrates, do not change manually
     private List<SubLandscapeLink> subLandscapes = new ArrayList<>();
     private List<SokratesProjectLink> projects = new ArrayList<>();
@@ -430,13 +427,5 @@ public class LandscapeConfiguration {
 
     public void setIncludeOnlyFirstProjectWithSameName(boolean includeOnlyFirstProjectWithSameName) {
         this.includeOnlyFirstProjectWithSameName = includeOnlyFirstProjectWithSameName;
-    }
-
-    public List<ProjectTagGroup> getProjectTagGroups() {
-        return projectTagGroups;
-    }
-
-    public void setProjectTagGroups(List<ProjectTagGroup> projectTagGroups) {
-        this.projectTagGroups = projectTagGroups;
     }
 }

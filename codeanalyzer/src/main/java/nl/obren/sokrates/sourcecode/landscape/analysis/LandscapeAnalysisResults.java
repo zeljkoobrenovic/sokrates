@@ -281,9 +281,20 @@ public class LandscapeAnalysisResults {
         });
         return count[0];
     }
+    public int getMainFilesCount() {
+        int count[] = {0};
+        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
+            count[0] += projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getFilesCount();
+        });
+        return count[0];
+    }
 
     public int getSecondaryLoc() {
         return getTestLoc() + getGeneratedLoc() + getBuildAndDeploymentLoc() + getOtherLoc();
+    }
+
+    public int getSecondaryFilesCount() {
+        return getTestFilesCount() + getGeneratedFilesCount() + getBuildAndDeploymentFilesCount() + getOtherFilesCount();
     }
 
     public int getMainLoc1YearActive() {
@@ -326,6 +337,37 @@ public class LandscapeAnalysisResults {
         int count[] = {0};
         getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
             count[0] += projectAnalysisResults.getAnalysisResults().getOtherAspectAnalysisResults().getLinesOfCode();
+        });
+        return count[0];
+    }
+    public int getTestFilesCount() {
+        int count[] = {0};
+        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
+            count[0] += projectAnalysisResults.getAnalysisResults().getTestAspectAnalysisResults().getFilesCount();
+        });
+        return count[0];
+    }
+
+    public int getGeneratedFilesCount() {
+        int count[] = {0};
+        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
+            count[0] += projectAnalysisResults.getAnalysisResults().getGeneratedAspectAnalysisResults().getFilesCount();
+        });
+        return count[0];
+    }
+
+    public int getBuildAndDeploymentFilesCount() {
+        int count[] = {0};
+        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
+            count[0] += projectAnalysisResults.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getFilesCount();
+        });
+        return count[0];
+    }
+
+    public int getOtherFilesCount() {
+        int count[] = {0};
+        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
+            count[0] += projectAnalysisResults.getAnalysisResults().getOtherAspectAnalysisResults().getFilesCount();
         });
         return count[0];
     }

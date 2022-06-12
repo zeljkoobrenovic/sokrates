@@ -31,7 +31,7 @@ public class DefaultProjectTags {
         buildTags.getProjectTags().add(newPathPatternTagInstance("renovate", Arrays.asList("(|.*/)renovate[.]json5?")));
         buildTags.getProjectTags().add(newPathPatternTagInstance("gemfile", Arrays.asList("(|.*/)Gemfile")));
         buildTags.getProjectTags().add(newPathPatternTagInstance("podfile", Arrays.asList("(|.*/)Podfile")));
-        buildTags.getProjectTags().add(newPathPatternTagInstance("makefile", Arrays.asList("(|.*/)Makefile")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("make", Arrays.asList("(|.*/)Makefile")));
 
         ciCdTags.getProjectTags().add(newPathPatternTagInstance("jenkins", Arrays.asList("(|.*/)Jenkinsfile")));
         ciCdTags.getProjectTags().add(newPathPatternTagInstance("travis", Arrays.asList("(|.*/)[.]travis[.]ya?ml")));

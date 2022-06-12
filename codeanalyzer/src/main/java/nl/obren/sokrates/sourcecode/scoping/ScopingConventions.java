@@ -240,8 +240,8 @@ public class ScopingConventions {
 
 
         buildAndDeploymentFilesConventions.add(new Convention(".*/Jenkinsfile", "", "Jenkinsfile"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/Jenkinsfile[.][a-zA-Z0-9]+", "", "Jenkinsfile"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/Makefile", "", "Makefile"));
-
     }
 
     private void addGeneratedConventions() {

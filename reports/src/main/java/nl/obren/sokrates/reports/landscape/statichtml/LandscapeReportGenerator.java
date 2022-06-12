@@ -18,6 +18,7 @@ import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
 import nl.obren.sokrates.reports.landscape.statichtml.projects.LandscapeProjectsReport;
 import nl.obren.sokrates.reports.landscape.statichtml.projects.LandscapeProjectsTagsMatrixReport;
 import nl.obren.sokrates.reports.landscape.statichtml.projects.LandscapeProjectsTagsReport;
+import nl.obren.sokrates.reports.landscape.statichtml.projects.TagMap;
 import nl.obren.sokrates.reports.landscape.utils.*;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
@@ -78,6 +79,11 @@ public class LandscapeReportGenerator {
     ;
     private static final int BAR_WIDTH = 800;
     private static final int BAR_HEIGHT = 42;
+    public static final String PROJECTS_COLOR = "#F1F0C0";
+    public static final String MAIN_LOC_FRESH_COLOR = "#B7E5DD";
+    public static final String MAIN_LOC_COLOR = "#A0BCC2";
+    public static final String TEST_LOC_COLOR = "#c0c0c0";
+    public static final String PEOPLE_COLOR = "lavender";
     private RichTextReport landscapeReport = new RichTextReport("Landscape Report", "index.html");
     private RichTextReport landscapeProjectsReportShort = new RichTextReport("", "projects-short.html");
 
@@ -92,6 +98,7 @@ public class LandscapeReportGenerator {
     private RichTextReport landscapeContributorsReport = new RichTextReport("", "contributors.html");
     private LandscapeAnalysisResults landscapeAnalysisResults;
     private int dependencyVisualCounter = 1;
+    private List<ProjectTagGroup> tagGroups;
     private File folder;
     private File reportsFolder;
     private List<RichTextReport> individualContributorReports = new ArrayList<>();
@@ -102,7 +109,8 @@ public class LandscapeReportGenerator {
     private Map<String, List<String>> contributorsPerYearMap = new HashMap<>();
     private Map<String, List<String>> rookiesPerYearMap = new HashMap<>();
 
-    public LandscapeReportGenerator(LandscapeAnalysisResults landscapeAnalysisResults, File folder, File reportsFolder) {
+    public LandscapeReportGenerator(LandscapeAnalysisResults landscapeAnalysisResults, List<ProjectTagGroup> tagGroups, File folder, File reportsFolder) {
+        this.tagGroups = tagGroups;
         this.folder = folder;
         this.reportsFolder = reportsFolder;
 
@@ -175,16 +183,19 @@ public class LandscapeReportGenerator {
         landscapeReport.endTabGroup();
 
         landscapeReport.startTabContentSection(OVERVIEW_TAB_ID, true);
+        ProcessingStopwatch.start("reporting/overview");
         addBigSummary(landscapeAnalysisResults);
         if (configuration.isShowExtensionsOnFirstTab()) {
             addExtensions();
         }
         addIFrames(configuration.getiFramesAtStart());
         addIFrames(configuration.getiFrames());
+        ProcessingStopwatch.end("reporting/overview");
         landscapeReport.endTabContentSection();
 
         if (subLandscapes.size() > 0) {
             landscapeReport.startTabContentSection(SUB_LANDSCAPES_TAB_ID, false);
+            ProcessingStopwatch.start("reporting/sub-landscapes");
             LOG.info("Adding sub landscape section...");
             addSubLandscapeSection(subLandscapes);
             WebFrameLink iframe = new WebFrameLink();
@@ -194,10 +205,12 @@ public class LandscapeReportGenerator {
             iframe.setStyle("width: 100%; height: 970px;");
             iframe.setScrolling(false);
             addIFrame(iframe);
+            ProcessingStopwatch.end("reporting/sub-landscapes");
             landscapeReport.endTabContentSection();
         }
 
         landscapeReport.startTabContentSection(SOURCE_CODE_TAB_ID, false);
+        ProcessingStopwatch.start("reporting/big summary");
         LOG.info("Adding big summary...");
         addBigProjectsSummary(landscapeAnalysisResults);
         addIFrames(configuration.getiFramesProjectsAtStart());
@@ -205,12 +218,16 @@ public class LandscapeReportGenerator {
             LOG.info("Adding extensions...");
             addExtensions();
         }
+        ProcessingStopwatch.end("reporting/big summary");
         LOG.info("Adding project section...");
+        ProcessingStopwatch.start("reporting/projects");
         addProjectsSection(configuration, getProjects());
         addIFrames(configuration.getiFramesProjects());
+        ProcessingStopwatch.end("reporting/projects");
         landscapeReport.endTabContentSection();
 
         landscapeReport.startTabContentSection(CONTRIBUTORS_TAB_ID, false);
+        ProcessingStopwatch.start("reporting/summary");
         LOG.info("Adding big contributors summary...");
         addBigContributorsSummary();
         addIFrames(configuration.getiFramesContributorsAtStart());
@@ -224,11 +241,14 @@ public class LandscapeReportGenerator {
         landscapeReport.addLevel2Header("Contribution Trends");
         addContributionTrends();
         addIFrames(configuration.getiFramesContributors());
+        ProcessingStopwatch.end("reporting/summary");
         landscapeReport.endTabContentSection();
 
         landscapeReport.startTabContentSection(TOPOLOGIES_TAB_ID, false);
+        ProcessingStopwatch.start("reporting/team topologies");
         LOG.info("Adding Contributor Dependencies...");
         addTeamTopology(landscapeAnalysisResults);
+        ProcessingStopwatch.end("reporting/team topologies");
         landscapeReport.endTabContentSection();
 
         configuration.getCustomTabs().forEach(tab -> {
@@ -304,10 +324,10 @@ public class LandscapeReportGenerator {
         int pIndex = (int) Math.round(landscapeAnalysisResults.getpIndex30Days());
         this.landscapeReport.addLineBreak();
         int projectsCount = landscapeAnalysisResults.getProjectsCount();
-        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(projectsCount), projectsCount == 1 ? "project" : "projects", "", "");
-        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pMedian), "P-Median", "30 days", "half of contributors have >= than this number of connections to projects");
-        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pMean), "P-Mean", "30 days", "average number of contributor project connections");
-        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pIndex), "P-Index", "30 days", "N contributors have at least N project connections");
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(projectsCount), projectsCount == 1 ? "project" : "projects", "", "", PROJECTS_COLOR);
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pMedian), "P-Median", "30 days", "half of contributors have >= than this number of connections to projects", PROJECTS_COLOR);
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pMean), "P-Mean", "30 days", "average number of contributor project connections", PROJECTS_COLOR);
+        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pIndex), "P-Index", "30 days", "N contributors have at least N project connections", PROJECTS_COLOR);
 
         addPeopleDependencies();
     }
@@ -620,16 +640,12 @@ public class LandscapeReportGenerator {
     private void addBigSummary(LandscapeAnalysisResults landscapeAnalysisResults) {
         landscapeReport.startDiv("margin-top: 0px;");
         LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
-        int thresholdContributors = configuration.getProjectThresholdContributors();
         int size = getProjects().size();
         addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(size), (size == 1 ? "project" : "projects"),
-                "", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
-        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getMainLoc()), "total lines of code<br>(main)", "", "");
+                "", "all projects updated after " + configuration.getIgnoreProjectsLastUpdatedBefore() + " with at least " + FormattingUtils.formatCountPlural(configuration.getProjectThresholdContributors(), "contributor", "contributors"), PROJECTS_COLOR);
+        addLocInfoBlock(landscapeAnalysisResults);
         int mainLoc1YearActive = landscapeAnalysisResults.getMainLoc1YearActive();
-        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(mainLoc1YearActive), "active lines of code<br>(main)", "", "files updated in past year");
-        int mainLocNew = landscapeAnalysisResults.getMainLocNew();
-        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocNew), "new lines of code<br>(main)", "", "files created in past year");
-        addSecondaryFreshInfoBlock(FormattingUtils.getSmallTextForNumber(landscapeAnalysisResults.getSecondaryLoc()), "total lines of code<br>(test and other)", "", getSecondaryLocInfo());
+        addActiveCodeBlock(landscapeAnalysisResults, landscapeAnalysisResults.getMainLoc());
 
         List<ContributorProjects> contributors = landscapeAnalysisResults.getContributors();
         long contributorsCount = contributors.size();
@@ -659,39 +675,62 @@ public class LandscapeReportGenerator {
         int thresholdContributors = configuration.getProjectThresholdContributors();
         List<ProjectAnalysisResults> projects = getProjects();
         int recentSize = (int) projects.stream().filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days() > 0).count();
+        int recentLoc = projects.stream().filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days() > 0).map(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
 
         String style = "border-top: 2px solid lightgrey; border-right: 2px solid lightgrey; display: inline-block; margin-right: 8px";
         landscapeReport.startDiv(style);
         landscapeReport.addContentInDiv("active projects", "text-align: center; margin-bottom: -7px; margin-top: 2px; margin-left: 4px; color: grey; font-size: 70%;");
-        int mainLoc = landscapeAnalysisResults.getMainLoc();
-        int secondaryLoc = landscapeAnalysisResults.getSecondaryLoc();
-        int mainLoc30DaysActive = landscapeAnalysisResults.getMainLoc30DaysActive();
-        double percentage30Days = mainLoc > 0 ? Math.round(100.0 * mainLoc30DaysActive / mainLoc) : 0;
 
         int size = projects.size();
+        int locAll = landscapeAnalysisResults.getMainLoc();
         int size90Days = (int) projects.stream().filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount90Days() > 0).count();
+        int loc90Days = projects.stream().filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount90Days() > 0).map(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
         int size180Days = (int) projects.stream().filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount180Days() > 0).count();
+        int loc180Days = projects.stream().filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount180Days() > 0).map(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
+        int size365Days = (int) projects.stream().filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount365Days() > 0).count();
+        int loc365Days = projects.stream().filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount365Days() > 0).map(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
+        String contributorConstraint = " with at least " + FormattingUtils.formatCountPlural(configuration.getProjectThresholdContributors(), "contributor", "contributors");
         addInfoBlock(FormattingUtils.getSmallTextForNumber(size), "all time",
-                "project count", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
+                FormattingUtils.getSmallTextForNumber(locAll) + " LOC",
+                "all projects updated after " + configuration.getIgnoreProjectsLastUpdatedBefore() + " with at least " + contributorConstraint, PROJECTS_COLOR);
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(size365Days), "past 365d",
+                FormattingUtils.getSmallTextForNumber(loc365Days) + " LOC (" + FormattingUtils.getFormattedPercentage(100.0 * loc365Days / Math.max(1, locAll)) + "%)",
+                "all projects updated in the past 365 days with at least " + contributorConstraint, PROJECTS_COLOR);
         addInfoBlock(FormattingUtils.getSmallTextForNumber(size180Days), "past 180d",
-                "project count", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
+                FormattingUtils.getSmallTextForNumber(loc180Days) + " LOC (" + FormattingUtils.getFormattedPercentage(100.0 * loc180Days / Math.max(1, locAll)) + "%)",
+                "all projects updated in the past 180 days with at least " + contributorConstraint, PROJECTS_COLOR);
         addInfoBlock(FormattingUtils.getSmallTextForNumber(size90Days), "past 90d",
-                "project count", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
+                FormattingUtils.getSmallTextForNumber(loc180Days) + " LOC (" + FormattingUtils.getFormattedPercentage(100.0 * loc90Days / Math.max(1, locAll)) + "%)",
+                "all projects updated in the past 90 days with at least " + contributorConstraint, PROJECTS_COLOR);
         addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(recentSize), "past 30d",
-                "project count", "active project with " + (thresholdContributors > 1 ? "(" + thresholdContributors + "+&nbsp;contributors)" : ""));
+                FormattingUtils.getSmallTextForNumber(recentLoc) + " LOC (" + FormattingUtils.getFormattedPercentage(100.0 * recentLoc / Math.max(1, locAll)) + "%)",
+                "all projects updated in the past 30 days with at least " + contributorConstraint, PROJECTS_COLOR);
         landscapeReport.endDiv();
         landscapeReport.startDiv(style);
         landscapeReport.addContentInDiv("size (LOC)", "text-align: center; margin-bottom: -7px; margin-top: 2px; margin-left: 4px; color: grey; font-size: 70%;");
-        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(mainLoc), "total lines of code<br>(main)", "", "");
-        addSecondaryFreshInfoBlock(FormattingUtils.getSmallTextForNumber(secondaryLoc), "total lines of code<br>(test and other)", "", getSecondaryLocInfo());
+        addLocInfoBlock(landscapeAnalysisResults);
         landscapeReport.endDiv();
         landscapeReport.startDiv(style);
         landscapeReport.addContentInDiv("1y code activity", "text-align: center; margin-bottom: -7px; margin-top: 2px; margin-left: 4px; color: grey; font-size: 70%;");
-        int mainLocActive = landscapeAnalysisResults.getMainLoc1YearActive();
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocActive), "main code touched", "1 year", "files updated in past year");
-        int mainLocNew = landscapeAnalysisResults.getMainLocNew();
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocNew), "new main code", "1 year", "files created in past year");
+        addActiveCodeBlock(landscapeAnalysisResults, locAll);
         landscapeReport.endDiv();
+    }
+
+    private void addActiveCodeBlock(LandscapeAnalysisResults landscapeAnalysisResults, int locAll) {
+        int mainLocActive = landscapeAnalysisResults.getMainLoc1YearActive();
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocActive), "main code touched", "1 year (" + FormattingUtils.getFormattedPercentage(100.0 * mainLocActive / Math.max(1, locAll)) + "%)",
+                "files updated in past year", MAIN_LOC_FRESH_COLOR);
+        int mainLocNew = landscapeAnalysisResults.getMainLocNew();
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocNew), "new main code", "1 year (+" + FormattingUtils.getFormattedPercentage(100.0 * mainLocNew / Math.max(1, locAll)) + "%)", "files created in past year", MAIN_LOC_FRESH_COLOR);
+    }
+
+    private void addLocInfoBlock(LandscapeAnalysisResults landscapeAnalysisResults) {
+        int mainLoc = landscapeAnalysisResults.getMainLoc();
+        int secondaryLoc = landscapeAnalysisResults.getSecondaryLoc();
+        int mainFilesCount = landscapeAnalysisResults.getMainFilesCount();
+        int secondaryFilesCount = landscapeAnalysisResults.getSecondaryFilesCount();
+        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(mainLoc), "main lines of code", FormattingUtils.getSmallTextForNumber(mainFilesCount) + " files", "main lines of code", MAIN_LOC_COLOR);
+        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(secondaryLoc), "other lines of code", FormattingUtils.getSmallTextForNumber(secondaryFilesCount) + " files", "test, build & deployment, generated, all other code in scope", TEST_LOC_COLOR);
     }
 
     private void addBigContributorsSummary() {
@@ -974,11 +1013,11 @@ public class LandscapeReportGenerator {
     }
 
     private void addContributors() {
-        ProcessingStopwatch.start("contributors");
+        ProcessingStopwatch.start("reporting/contributors");
         int contributorsCount = landscapeAnalysisResults.getContributorsCount();
 
         if (contributorsCount > 0) {
-            ProcessingStopwatch.start("contributors/preparing");
+            ProcessingStopwatch.start("reporting/contributors/preparing");
 
             List<ContributorProjects> contributors = landscapeAnalysisResults.getContributors();
             List<ContributorProjects> recentContributors = landscapeAnalysisResults.getContributors().stream()
@@ -1013,9 +1052,9 @@ public class LandscapeReportGenerator {
                 int index[] = {0};
 
                 StringBuilder html = new StringBuilder();
-                ProcessingStopwatch.end("contributors/preparing");
+                ProcessingStopwatch.end("reporting/contributors/preparing");
 
-                ProcessingStopwatch.start("contributors/table");
+                ProcessingStopwatch.start("reporting/contributors/table");
                 recentContributors.stream().limit(landscapeAnalysisResults.getConfiguration().getContributorsListLimit()).forEach(c -> {
                     index[0] += 1;
                     Contributor contributor = c.getContributor();
@@ -1074,25 +1113,25 @@ public class LandscapeReportGenerator {
 
             landscapeReport.endShowMoreBlock();
             landscapeReport.endSection();
-            ProcessingStopwatch.end("contributors/table");
+            ProcessingStopwatch.end("reporting/contributors/table");
 
-            ProcessingStopwatch.start("contributors/saving tables");
+            ProcessingStopwatch.start("reporting/contributors/saving tables");
             Set<String> contributorsLinkedFromTables = new HashSet<>();
             new LandscapeContributorsReport(landscapeAnalysisResults, landscapeRecentContributorsReport, contributorsLinkedFromTables)
                     .saveContributorsTable(recentContributors, totalRecentCommits, true);
             new LandscapeContributorsReport(landscapeAnalysisResults, landscapeContributorsReport, contributorsLinkedFromTables)
                     .saveContributorsTable(contributors, totalCommits, false);
-            ProcessingStopwatch.end("contributors/saving tables");
+            ProcessingStopwatch.end("reporting/contributors/saving tables");
 
-            ProcessingStopwatch.start("contributors/individual reports");
+            ProcessingStopwatch.start("reporting/contributors/individual reports");
             List<ContributorProjects> linkedContributors = contributors.stream()
                     .filter(c -> contributorsLinkedFromTables.contains(c.getContributor().getEmail()))
                     .collect(Collectors.toList());
             LOG.info("Saving individual reports for " + linkedContributors.size() + " contributor(s) linked from tables (out of " + contributors.size() + ")");
             individualContributorReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults).getIndividualReports(linkedContributors);
-            ProcessingStopwatch.end("contributors/individual reports");
+            ProcessingStopwatch.end("reporting/contributors/individual reports");
         }
-        ProcessingStopwatch.end("contributors");
+        ProcessingStopwatch.end("reporting/contributors");
     }
 
     private void addContributorsPerExtension() {
@@ -1170,6 +1209,9 @@ public class LandscapeReportGenerator {
 
     private void addProjectsSection(LandscapeConfiguration configuration, List<ProjectAnalysisResults> projectsAnalysisResults) {
         Collections.sort(projectsAnalysisResults, (a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode() - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
+        ProcessingStopwatch.end("reporting/projects/preparing");
+
+        ProcessingStopwatch.start("reporting/projects/export visuals");
         exportZoomableCircles(CONTRIBUTORS_30_D, projectsAnalysisResults, new ZommableCircleCountExtractors() {
             @Override
             public int getCount(ProjectAnalysisResults projectAnalysisResults) {
@@ -1192,8 +1234,11 @@ public class LandscapeReportGenerator {
                 return projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
             }
         });
+        ProcessingStopwatch.end("reporting/projects/export visuals");
 
+        ProcessingStopwatch.start("reporting/projects/file age & freshness");
         addFileAgeAndFreshnessSection();
+        ProcessingStopwatch.end("reporting/projects/file age & freshness");
 
         landscapeReport.startSubSection("<a href='projects-short.html' target='_blank' style='text-decoration: none'>" +
                 "All Projects (" + projectsAnalysisResults.size() + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "");
@@ -1207,23 +1252,52 @@ public class LandscapeReportGenerator {
 
             landscapeReport.addHtmlContent("<iframe src='projects-short.html' frameborder=0 style='height: 600px; width: 100%; margin-left: 0; margin-bottom: 0px; padding: 0;'></iframe>");
 
+            ProcessingStopwatch.start("reporting/projects/tags/custom tags map");
+            TagMap customTagsMap = new TagMap(landscapeAnalysisResults, tagGroups);
+            customTagsMap.updateTagMap(projectsAnalysisResults);
+            ProcessingStopwatch.end("reporting/projects/tags/custom tags map");
+
+            ProcessingStopwatch.start("reporting/projects/tags/extensions tags map");
+            List<ProjectTagGroup> extensionTagGroups = getExtensionTagGroups();
+            TagMap extensionsTagsMap = new TagMap(landscapeAnalysisResults, extensionTagGroups);
+            extensionsTagsMap.updateTagMap(projectsAnalysisResults);
+            ProcessingStopwatch.end("reporting/projects/tags/extensions tags map");
+
             int shortLimit = configuration.getProjectsShortListLimit();
-            new LandscapeProjectsReport(landscapeAnalysisResults, shortLimit,
-                    "See the full list of projects...", "projects.html")
-                    .saveProjectsReport(landscapeProjectsReportShort, reportsFolder, projectsAnalysisResults);
 
-            new LandscapeProjectsTagsReport(landscapeAnalysisResults, configuration.getProjectTagGroups(), "custom", "projects-tags-matrix.html",false)
+            ProcessingStopwatch.start("reporting/projects/short report");
+            new LandscapeProjectsReport(landscapeAnalysisResults, shortLimit, "See the full list of projects...", "projects.html", customTagsMap)
+                    .saveProjectsReport(landscapeProjectsReportShort, reportsFolder, projectsAnalysisResults, tagGroups);
+            ProcessingStopwatch.end("reporting/projects/short report");
+
+            ProcessingStopwatch.start("reporting/projects/tags");
+
+            ProcessingStopwatch.start("reporting/projects/tags/custom");
+            new LandscapeProjectsTagsReport(landscapeAnalysisResults, tagGroups, customTagsMap, "custom", "projects-tags-matrix.html",false)
                     .saveProjectsReport(landscapeProjectsTags, reportsFolder, projectsAnalysisResults);
-            new LandscapeProjectsTagsReport(landscapeAnalysisResults, getExtensionTagGroups(), "extension", "projects-extensions-matrix.html", true)
-                    .saveProjectsReport(landscapeProjectsExtensionTags, reportsFolder, projectsAnalysisResults);
+            ProcessingStopwatch.end("reporting/projects/tags/custom");
 
-            new LandscapeProjectsTagsMatrixReport(landscapeAnalysisResults, configuration.getProjectTagGroups(), "custom-matrix", false)
+            ProcessingStopwatch.start("reporting/projects/tags/custom-matrix");
+            new LandscapeProjectsTagsMatrixReport(landscapeAnalysisResults, tagGroups, customTagsMap, "custom-matrix", false)
                     .saveProjectsReport(landscapeProjectsTagsMatrix, reportsFolder, projectsAnalysisResults);
-            new LandscapeProjectsTagsMatrixReport(landscapeAnalysisResults, getExtensionTagGroups(), "extension-matrix", true)
+            ProcessingStopwatch.end("reporting/projects/tags/custom-matrix");
+
+            ProcessingStopwatch.start("reporting/projects/tags/extensions");
+            new LandscapeProjectsTagsReport(landscapeAnalysisResults, extensionTagGroups, extensionsTagsMap, "extension", "projects-extensions-matrix.html", true)
+                    .saveProjectsReport(landscapeProjectsExtensionTags, reportsFolder, projectsAnalysisResults);
+            ProcessingStopwatch.end("reporting/projects/tags/extensions");
+
+            ProcessingStopwatch.start("reporting/projects/tags/extensions-matrix");
+            new LandscapeProjectsTagsMatrixReport(landscapeAnalysisResults, extensionTagGroups, extensionsTagsMap, "extension-matrix", true)
                     .saveProjectsReport(landscapeProjectsExtensionTagsMatrix, reportsFolder, projectsAnalysisResults);
+            ProcessingStopwatch.end("reporting/projects/tags/extensions-matrix");
+            ProcessingStopwatch.end("reporting/projects/tags");
+
             if (projectsAnalysisResults.size() > shortLimit) {
-                new LandscapeProjectsReport(landscapeAnalysisResults, configuration.getProjectsListLimit())
-                        .saveProjectsReport(landscapeProjectsReportLong, reportsFolder, projectsAnalysisResults);
+                ProcessingStopwatch.start("reporting/projects/long report");
+                new LandscapeProjectsReport(landscapeAnalysisResults, configuration.getProjectsListLimit(), customTagsMap)
+                        .saveProjectsReport(landscapeProjectsReportLong, reportsFolder, projectsAnalysisResults, tagGroups);
+                ProcessingStopwatch.end("reporting/projects/long report");
             }
 
         }
@@ -1307,18 +1381,29 @@ public class LandscapeReportGenerator {
         addInfoBlockWithColor(mainValue, subtitle, "skyblue; opacity: 0.8", tooltip);
     }
 
-    private void addFreshInfoBlock(String mainValue, String subtitle, String description, String tooltip) {
+    private void addInfoBlock(String mainValue, String subtitle, String description, String tooltip, String color) {
         if (StringUtils.isNotBlank(description)) {
             subtitle += "<br/><span style='color: grey; font-size: 80%'>" + description + "</span>";
         }
-        addInfoBlockWithColor(mainValue, subtitle, "skyblue", tooltip);
+        addInfoBlockWithColor(mainValue, subtitle, color + "; opacity: 0.8", tooltip);
+    }
+
+    private void addFreshInfoBlock(String mainValue, String subtitle, String description, String tooltip) {
+        addFreshInfoBlock(mainValue, subtitle, description, tooltip, "skyblue");
+    }
+
+    private void addFreshInfoBlock(String mainValue, String subtitle, String description, String tooltip, String color) {
+        if (StringUtils.isNotBlank(description)) {
+            subtitle += "<br/><span style='color: grey; font-size: 80%'>" + description + "</span>";
+        }
+        addInfoBlockWithColor(mainValue, subtitle, color, tooltip);
     }
 
     private void addSecondaryFreshInfoBlock(String mainValue, String subtitle, String description, String tooltip) {
         if (StringUtils.isNotBlank(description)) {
             subtitle += "<br/><span style='color: grey; font-size: 60%'>" + description + "</span>";
         }
-        addInfoBlockWithColor(mainValue, subtitle, "lightgrey", tooltip);
+        addInfoBlockWithColor(mainValue, subtitle, "#c0c0c0", tooltip);
     }
 
     private String getExtraLocInfo() {
@@ -1362,10 +1447,14 @@ public class LandscapeReportGenerator {
     }
 
     private void addPeopleInfoBlock(String mainValue, String subtitle, String description, String tooltip) {
+        addPeopleInfoBlock(mainValue, subtitle, description, tooltip, PEOPLE_COLOR);
+    }
+
+    private void addPeopleInfoBlock(String mainValue, String subtitle, String description, String tooltip, String color) {
         if (StringUtils.isNotBlank(description)) {
             subtitle += "<br/><span style='color: grey; font-size: 80%'>" + description + "</span>";
         }
-        addInfoBlockWithColor(mainValue, subtitle, "lavender", tooltip);
+        addInfoBlockWithColor(mainValue, subtitle, color, tooltip);
     }
 
     private void addCommitsInfoBlock(String mainValue, String subtitle, String description, String tooltip) {

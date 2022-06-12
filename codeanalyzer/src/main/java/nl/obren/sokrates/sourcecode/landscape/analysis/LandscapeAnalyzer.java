@@ -4,13 +4,13 @@
 
 package nl.obren.sokrates.sourcecode.landscape.analysis;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
-import nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils;
-import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
-import nl.obren.sokrates.sourcecode.landscape.SokratesProjectLink;
+import nl.obren.sokrates.sourcecode.landscape.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -31,7 +31,7 @@ public class LandscapeAnalyzer {
     private File landscapeConfigurationFile;
     private LandscapeConfiguration landscapeConfiguration;
 
-    public LandscapeAnalysisResults analyze(File landscapeConfigFile) {
+    public LandscapeAnalysisResults analyze(File analysisRoot, File landscapeConfigFile) {
         this.landscapeConfigurationFile = landscapeConfigFile;
 
         LandscapeAnalysisResults landscapeAnalysisResults = new LandscapeAnalysisResults();
@@ -216,6 +216,5 @@ public class LandscapeAnalyzer {
 
         return new ArrayList<>();
     }
-
 
 }
