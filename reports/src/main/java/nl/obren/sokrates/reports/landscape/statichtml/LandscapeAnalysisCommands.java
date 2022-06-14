@@ -116,7 +116,8 @@ public class LandscapeAnalysisCommands {
             }
         } else {
             try {
-                tagGroups = new JsonMapper().getObject(FileUtils.readFileToString(landscapeTagsConfigFile, StandardCharsets.UTF_8), new TypeReference<List<ProjectTagGroup>>() {});
+                tagGroups = new JsonMapper().getObject(FileUtils.readFileToString(landscapeTagsConfigFile, StandardCharsets.UTF_8), new TypeReference<>() {});
+                FileUtils.write(landscapeTagsConfigFile, new JsonGenerator().generate(tagGroups), StandardCharsets.UTF_8);
             } catch (IOException e) {
                 LOG.error(e);
             }

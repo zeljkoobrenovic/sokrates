@@ -590,14 +590,16 @@ public class DataExporter {
                             {"analysisResults.json", analysisResultsJson}});
         }
 
-        FileUtils.write(new File(dataFolder, "mainFiles.json"), new JsonGenerator().generate(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
+        List<SourceFile> sourceFiles = analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles();
+        FileUtils.write(new File(dataFolder, "mainFiles.json"), new JsonGenerator().generate(sourceFiles), UTF_8);
 
         if (codeConfiguration.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesConfigFile.getParentFile())) {
             saveExtraAnalysesConfig();
         }
 
-        FileUtils.write(new File(textDataFolder, "mainFiles.txt"), getFilesAsTxt(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
-        FileUtils.write(new File(textDataFolder, "mainFilesWithHistory.txt"), getFilesWithHistoryAsTxt(analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
+        FileUtils.write(new File(textDataFolder, "mainFiles.txt"), getFilesAsTxt(sourceFiles), UTF_8);
+        FileUtils.write(new File(textDataFolder, "mainFilesWithHistory.txt"), getFilesWithHistoryAsTxt(sourceFiles), UTF_8);
+        FileUtils.write(new File(textDataFolder, "mainFilesWithoutHistory.txt"), getFilesWithoutHistoryAsTxt(sourceFiles), UTF_8);
         try {
             FileUtils.write(new File(dataFolder, "testFiles.json"), new JsonGenerator().generate(analysisResults.getTestAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
             FileUtils.write(new File(dataFolder, "units.json"), new JsonGenerator().generate(new UnitListExporter(analysisResults.getUnitsAnalysisResults().getAllUnits()).getAllUnitsData()), UTF_8);
@@ -709,6 +711,22 @@ public class DataExporter {
                         .append(history.getLatestDate()).append("\t")
                         .append(history.getOldestContributor()).append("\t")
                         .append(history.getLatestContributor()).append("\n");
+            }
+        });
+
+        return builder.toString();
+    }
+    private String getFilesWithoutHistoryAsTxt(List<SourceFile> sourceFiles) {
+        StringBuilder builder = new StringBuilder();
+
+        builder.append("path\t# lines of code\n");
+
+        sourceFiles.forEach(sourceFile -> {
+            FileModificationHistory history = sourceFile.getFileModificationHistory();
+            if (history == null) {
+                builder.append(sourceFile.getRelativePath()).append("\t")
+                        .append(sourceFile.getLinesOfCode()).append("\t")
+                        .append("\n");
             }
         });
 

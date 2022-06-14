@@ -153,8 +153,15 @@ public class FileHistoryAnalyzer extends Analyzer {
         Thresholds fileUpdateFrequencyThresholds = codeConfiguration.getAnalysis().getFileUpdateFrequencyThresholds();
         Thresholds fileContributorCountThresholds = codeConfiguration.getAnalysis().getFileContributorsCountThresholds();
 
+        if (sourceFiles != null) {
+            sourceFiles.stream().filter(f -> f.getFileModificationHistory() == null).forEach(sourceFile -> {
+                analysisResults.setFilesWithoutCommitHistoryCount(analysisResults.getFilesWithoutCommitHistoryCount() + 1);
+                analysisResults.setFilesWithoutCommitHistoryLinesOfCode(analysisResults.getFilesWithoutCommitHistoryLinesOfCode() + sourceFile.getLinesOfCode());
+            });
+        }
+
         SourceFileAgeDistribution lastModifiedDistribution = new SourceFileAgeDistribution(fileAgeThresholds, LAST_MODIFIED).getOverallLastModifiedDistribution(sourceFiles);
-        SourceFileAgeDistribution firstModifiedDistribution = new SourceFileAgeDistribution(fileAgeThresholds, LAST_MODIFIED).getOverallFirstModifiedDistribution(sourceFiles);
+        SourceFileAgeDistribution firstModifiedDistribution = new SourceFileAgeDistribution(fileAgeThresholds, FIRST_MODIFIED).getOverallFirstModifiedDistribution(sourceFiles);
         SourceFileChangeDistribution changeDistribution = new SourceFileChangeDistribution(fileUpdateFrequencyThresholds).getOverallDistribution(sourceFiles);
         SourceFileChangeDistribution contributorCountDistribution = new SourceFileChangeDistribution(fileContributorCountThresholds).getOverallContributorsCountDistribution(sourceFiles);
 

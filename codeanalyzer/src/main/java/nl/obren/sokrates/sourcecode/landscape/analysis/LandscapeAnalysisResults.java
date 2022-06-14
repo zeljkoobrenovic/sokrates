@@ -142,15 +142,19 @@ public class LandscapeAnalysisResults {
         distribution.setNegligibleRiskLabel(projectDistribution.getNegligibleRiskLabel());
         distribution.setNegligibleRiskCount(distribution.getNegligibleRiskCount() + projectDistribution.getNegligibleRiskCount());
         distribution.setNegligibleRiskValue(distribution.getNegligibleRiskValue() + projectDistribution.getNegligibleRiskValue());
+
         distribution.setLowRiskLabel(projectDistribution.getLowRiskLabel());
         distribution.setLowRiskCount(distribution.getLowRiskCount() + projectDistribution.getLowRiskCount());
         distribution.setLowRiskValue(distribution.getLowRiskValue() + projectDistribution.getLowRiskValue());
+
         distribution.setMediumRiskLabel(projectDistribution.getMediumRiskLabel());
         distribution.setMediumRiskCount(distribution.getMediumRiskCount() + projectDistribution.getMediumRiskCount());
         distribution.setMediumRiskValue(distribution.getMediumRiskValue() + projectDistribution.getMediumRiskValue());
+
         distribution.setHighRiskLabel(projectDistribution.getHighRiskLabel());
         distribution.setHighRiskCount(distribution.getHighRiskCount() + projectDistribution.getHighRiskCount());
         distribution.setHighRiskValue(distribution.getHighRiskValue() + projectDistribution.getHighRiskValue());
+
         distribution.setVeryHighRiskLabel(projectDistribution.getVeryHighRiskLabel());
         distribution.setVeryHighRiskCount(distribution.getVeryHighRiskCount() + projectDistribution.getVeryHighRiskCount());
         distribution.setVeryHighRiskValue(distribution.getVeryHighRiskValue() + projectDistribution.getVeryHighRiskValue());
@@ -193,11 +197,11 @@ public class LandscapeAnalysisResults {
     }
 
     public SourceFileAgeDistribution getOverallFileLastModifiedDistribution() {
-        return getOverallFileLastModifiedDistribution(this.projectAnalysisResults);
+        return getOverallFileLastModifiedDistribution(this.getFilteredProjectAnalysisResults());
     }
 
     public SourceFileAgeDistribution getOverallFileFirstModifiedDistribution() {
-        return getOverallFileFirstModifiedDistribution(this.projectAnalysisResults);
+        return getOverallFileFirstModifiedDistribution(this.getFilteredProjectAnalysisResults());
     }
 
     public LandscapeConfiguration getConfiguration() {
@@ -238,6 +242,15 @@ public class LandscapeAnalysisResults {
                 })
                 .collect(Collectors.toList());
     }
+    @JsonIgnore
+    public List<ProjectAnalysisResults> getIgnoredProjectAnalysisResults() {
+        List<ProjectAnalysisResults> filteredProjectAnalysisResults = getFilteredProjectAnalysisResults();
+
+        return projectAnalysisResults
+                .stream()
+                .filter(p -> !filteredProjectAnalysisResults.contains(p))
+                .collect(Collectors.toList());
+    }
 
     @JsonIgnore
     public List<ProjectAnalysisResults> getAllProjects() {
@@ -275,11 +288,11 @@ public class LandscapeAnalysisResults {
     }
 
     public int getMainLoc() {
-        int count[] = {0};
+        int loc[] = {0};
         getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            count[0] += projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
+            loc[0] += projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
         });
-        return count[0];
+        return loc[0];
     }
     public int getMainFilesCount() {
         int count[] = {0};

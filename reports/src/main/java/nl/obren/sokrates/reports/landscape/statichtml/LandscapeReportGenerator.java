@@ -15,10 +15,7 @@ import nl.obren.sokrates.reports.core.ReportConstants;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
-import nl.obren.sokrates.reports.landscape.statichtml.projects.LandscapeProjectsReport;
-import nl.obren.sokrates.reports.landscape.statichtml.projects.LandscapeProjectsTagsMatrixReport;
-import nl.obren.sokrates.reports.landscape.statichtml.projects.LandscapeProjectsTagsReport;
-import nl.obren.sokrates.reports.landscape.statichtml.projects.TagMap;
+import nl.obren.sokrates.reports.landscape.statichtml.projects.*;
 import nl.obren.sokrates.reports.landscape.utils.*;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
@@ -75,7 +72,7 @@ public class LandscapeReportGenerator {
             "  <path d=\"m50 42.102c9.1016 0 16.5-7.3984 16.5-16.5 0-9.2031-7.3984-16.602-16.5-16.602s-16.5 7.3984-16.5 16.5c0 9.1992 7.3984 16.602 16.5 16.602zm0-27.102c5.8008 0 10.5 4.6992 10.5 10.5s-4.6992 10.602-10.5 10.602-10.5-4.6992-10.5-10.5c0-5.8008 4.6992-10.602 10.5-10.602z\"></path>\n" +
             " </g>\n" +
             "</svg>";
-    private static final String OPEN_IN_NEW_TAB_SVG_ICON = "<svg width=\"14pt\" height=\"14pt\" version=\"1.1\" viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\">\n" +
+    public static final String OPEN_IN_NEW_TAB_SVG_ICON = "<svg width=\"14pt\" height=\"14pt\" version=\"1.1\" viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\">\n" +
             " <path d=\"m87.5 16.918-35.289 35.289c-1.2266 1.1836-3.1719 1.168-4.3789-0.039062s-1.2227-3.1523-0.039062-4.3789l35.289-35.289h-23.707c-1.7266 0-3.125-1.3984-3.125-3.125s1.3984-3.125 3.125-3.125h31.25c0.82812 0 1.625 0.32812 2.2109 0.91406 0.58594 0.58594 0.91406 1.3828 0.91406 2.2109v31.25c0 1.7266-1.3984 3.125-3.125 3.125s-3.125-1.3984-3.125-3.125zm-56.25 1.832h-15.633c-5.1719 0-9.3672 4.1797-9.3672 9.3516v56.305c0 5.1562 4.2422 9.3516 9.3867 9.3516h56.219c2.4922 0 4.8828-0.98437 6.6406-2.7461 1.7617-1.7617 2.75-4.1523 2.7461-6.6445v-15.613 0.003906c0-1.7266-1.3984-3.125-3.125-3.125-1.7227 0-3.125 1.3984-3.125 3.125v15.613-0.003906c0.003906 0.83594-0.32422 1.6328-0.91406 2.2227s-1.3906 0.91797-2.2227 0.91797h-56.219c-1.7148-0.007812-3.1094-1.3867-3.1367-3.1016v-56.305c0-1.7148 1.3945-3.1016 3.1172-3.1016h15.633c1.7266 0 3.125-1.3984 3.125-3.125s-1.3984-3.125-3.125-3.125z\"/>\n" +
             "</svg>";
     ;
@@ -113,6 +110,8 @@ public class LandscapeReportGenerator {
     private Map<String, List<String>> rookiesPerMonthMap = new HashMap<>();
     private Map<String, List<String>> contributorsPerYearMap = new HashMap<>();
     private Map<String, List<String>> rookiesPerYearMap = new HashMap<>();
+    private SourceFileAgeDistribution overallFileLastModifiedDistribution;
+    private SourceFileAgeDistribution overallFileFirstModifiedDistribution;
 
     public LandscapeReportGenerator(LandscapeAnalysisResults landscapeAnalysisResults, List<ProjectTagGroup> tagGroups, File folder, File reportsFolder) {
         this.tagGroups = tagGroups;
@@ -121,6 +120,8 @@ public class LandscapeReportGenerator {
 
         this.landscapeAnalysisResults = landscapeAnalysisResults;
 
+        overallFileFirstModifiedDistribution = landscapeAnalysisResults.getOverallFileFirstModifiedDistribution();
+        overallFileLastModifiedDistribution = landscapeAnalysisResults.getOverallFileLastModifiedDistribution();
         populateTimeSlotMaps();
 
         landscapeProjectsReportShort.setEmbedded(true);
@@ -385,7 +386,7 @@ public class LandscapeReportGenerator {
             landscapeReport.addNewTabLink("3D graph", "visuals/people_dependencies_30_1_force_3d.html");
             landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("data", "data/projects_shared_projects_30_days.txt");
-            landscapeReport.addHtmlContent("&nbsp;&nbsp;" +  OPEN_IN_NEW_TAB_SVG_ICON);
+            landscapeReport.addHtmlContent("&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON);
             landscapeReport.endDiv();
             landscapeReport.addLineBreak();
             landscapeReport.addHtmlContent("<iframe src=\"visuals/people_dependencies_30_1.svg\" " +
@@ -408,7 +409,7 @@ public class LandscapeReportGenerator {
             landscapeReport.addNewTabLink("3D graph (including contributors)", "visuals/people_dependencies_including_projects_30_2_force_3d.html");
             landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("data", "data/projects_shared_projects_30_days.txt");
-            landscapeReport.addHtmlContent("&nbsp;&nbsp;" +  OPEN_IN_NEW_TAB_SVG_ICON);
+            landscapeReport.addHtmlContent("&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON);
             landscapeReport.addLineBreak();
             landscapeReport.addLineBreak();
             landscapeReport.addHtmlContent("<iframe src=\"visuals/project_dependencies_30_3.svg\" " +
@@ -424,7 +425,7 @@ public class LandscapeReportGenerator {
             landscapeReport.addNewTabLink("2D graph", "visuals/extension_dependencies_30d.svg");
             landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("3D graph", "visuals/extension_dependencies_30d_force_3d.html");
-            landscapeReport.addHtmlContent("&nbsp;&nbsp;" +  OPEN_IN_NEW_TAB_SVG_ICON);
+            landscapeReport.addHtmlContent("&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON);
             landscapeReport.addLineBreak();
             landscapeReport.addLineBreak();
             landscapeReport.addHtmlContent("<iframe src=\"visuals/extension_dependencies_30d.svg\" " +
@@ -682,7 +683,8 @@ public class LandscapeReportGenerator {
                 "", "all repositories updated after " + configuration.getIgnoreProjectsLastUpdatedBefore() + " with at least " + FormattingUtils.formatCountPlural(configuration.getProjectThresholdContributors(), "contributor", "contributors"), PROJECTS_COLOR);
         addLocInfoBlock(landscapeAnalysisResults);
         int mainLoc1YearActive = landscapeAnalysisResults.getMainLoc1YearActive();
-        addActiveCodeBlock(landscapeAnalysisResults, landscapeAnalysisResults.getMainLoc());
+        int totalValue = getSumOfValues(overallFileLastModifiedDistribution);
+        addActiveCodeBlock(landscapeAnalysisResults, totalValue);
 
         List<ContributorProjects> contributors = landscapeAnalysisResults.getContributors();
         long contributorsCount = contributors.size();
@@ -749,7 +751,8 @@ public class LandscapeReportGenerator {
         landscapeReport.endDiv();
         landscapeReport.startDiv(style);
         landscapeReport.addContentInDiv("1y code activity", "text-align: center; margin-bottom: -7px; margin-top: 2px; margin-left: 4px; color: grey; font-size: 70%;");
-        addActiveCodeBlock(landscapeAnalysisResults, locAll);
+        int totalValue = getSumOfValues(overallFileLastModifiedDistribution);
+        addActiveCodeBlock(landscapeAnalysisResults, totalValue);
         landscapeReport.endDiv();
     }
 
@@ -766,8 +769,8 @@ public class LandscapeReportGenerator {
         int secondaryLoc = landscapeAnalysisResults.getSecondaryLoc();
         int mainFilesCount = landscapeAnalysisResults.getMainFilesCount();
         int secondaryFilesCount = landscapeAnalysisResults.getSecondaryFilesCount();
-        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(mainLoc), "main lines of code", FormattingUtils.getSmallTextForNumber(mainFilesCount) + " files", "main lines of code", MAIN_LOC_COLOR);
-        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(secondaryLoc), "other lines of code", FormattingUtils.getSmallTextForNumber(secondaryFilesCount) + " files", "test, build & deployment, generated, all other code in scope", TEST_LOC_COLOR);
+        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(mainLoc), "lines of main code", FormattingUtils.getSmallTextForNumber(mainFilesCount) + " files", "main lines of code", MAIN_LOC_COLOR);
+        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(secondaryLoc), "lines of other code", FormattingUtils.getSmallTextForNumber(secondaryFilesCount) + " files", "test, build & deployment, generated, all other code in scope", TEST_LOC_COLOR);
     }
 
     private void addBigContributorsSummary() {
@@ -882,22 +885,14 @@ public class LandscapeReportGenerator {
         landscapeReport.endSection();
 
         landscapeReport.endShowMoreBlock();
-        /*
-        landscapeReport.addLineBreak();
-        landscapeReport.addLineBreak();
-        landscapeReport.startShowMoreBlockDisappear("", "&nbsp;&nbsp;Show contributors history per extension...");
 
-        landscapeReport.startSubSection("Contributors history per file extension", "");
-        landscapeReport.startDiv("max-height: 600px; overflow-y: auto;");
-        HistoryPerLanguageGenerator.getInstanceContributors(yearlyCommitHistoryPerExtension, extensions).addHistoryPerLanguage(landscapeReport);
-        landscapeReport.endDiv();
+        landscapeReport.addLineBreak();
+        landscapeReport.addLineBreak();
+        landscapeReport.addLineBreak();
+        landscapeReport.startSubSection("Tags (" + customTagsMap.tagsCount()  + ")", "");
+        new LandscapeProjectsTagsLine(tagGroups, customTagsMap).addTagsLine(landscapeReport);
         landscapeReport.endSection();
 
-        landscapeReport.endShowMoreBlock();
-        */
-
-        landscapeReport.addLineBreak();
-        landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
     }
 
@@ -1303,6 +1298,20 @@ public class LandscapeReportGenerator {
             }
         }
 
+        List<ProjectAnalysisResults> ignoredProjects = landscapeAnalysisResults.getIgnoredProjectAnalysisResults();
+        if (ignoredProjects.size() > 0) {
+            String lastUpdatedBefore = configuration.getIgnoreProjectsLastUpdatedBefore();
+            int thresholdContributors = configuration.getProjectThresholdContributors();
+            int thresholdLocMain = configuration.getProjectThresholdLocMain();
+            int ignoredLocMain = ignoredProjects.stream().mapToInt(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
+            landscapeReport.addContentInDiv("<a href='data/ignoredRepositories.txt' target='_blank'>" + ignoredProjects.size() +
+                            " repositories (" + FormattingUtils.getSmallTextForNumber(ignoredLocMain) + " lines of main code) are ignored</a> based on any of the following criteria: " +
+                            (StringUtils.isNoneBlank(lastUpdatedBefore) ? "not updated after " + lastUpdatedBefore + "; " : "") +
+                            ((thresholdContributors > 0) ? "have less than " + FormattingUtils.formatCountPlural(thresholdContributors, "contributors", "contributors") + "; " : "") +
+                            (thresholdLocMain > 0 ? "have less than " + thresholdLocMain + " lines of main code" : ""),
+                    "color: grey; margin: 10px; font-size: 80%");
+        }
+
         landscapeReport.endSection();
 
         landscapeReport.startSubSection("<a href='projects-extensions.html' target='_blank' style='text-decoration: none'>" +
@@ -1312,6 +1321,7 @@ public class LandscapeReportGenerator {
         landscapeReport.endDiv();
         landscapeReport.addHtmlContent("<iframe src='projects-extensions.html' frameborder=0 style='height: 600px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
         landscapeReport.endSection();
+
     }
 
     private void addTagsSection(List<ProjectAnalysisResults> projectsAnalysisResults) {
@@ -1386,7 +1396,6 @@ public class LandscapeReportGenerator {
         landscapeReport.startTableRow();
         landscapeReport.addTableCell("old", "border: none");
         landscapeReport.startTableCell("border: none");
-        SourceFileAgeDistribution overallFileFirstModifiedDistribution = landscapeAnalysisResults.getOverallFileFirstModifiedDistribution();
         landscapeReport.startDivWithLabel("file age:\n" + overallFileFirstModifiedDistribution.getDescription(), "");
         landscapeReport.addHtmlContent(getRiskProfileVisual(overallFileFirstModifiedDistribution, Palette.getAgePalette()));
         landscapeReport.endDiv();
@@ -1397,16 +1406,53 @@ public class LandscapeReportGenerator {
         landscapeReport.startTableRow();
         landscapeReport.addTableCell("stale", "border: none");
         landscapeReport.startTableCell("border: none");
-        SourceFileAgeDistribution overallFileLastModifiedDistribution = landscapeAnalysisResults.getOverallFileLastModifiedDistribution();
         landscapeReport.startDivWithLabel("file freshness:\n" + overallFileLastModifiedDistribution.getDescription(), "");
         landscapeReport.addHtmlContent(getRiskProfileVisual(overallFileLastModifiedDistribution, Palette.getFreshnessPalette()));
         landscapeReport.endDiv();
         landscapeReport.endTableCell();
         landscapeReport.addTableCell("fresh", "border: none");
         landscapeReport.endTableRow();
+
+        addNoHistoryRow();
+
         landscapeReport.endTable();
 
         landscapeReport.endSection();
+    }
+
+    private void addNoHistoryRow() {
+        int mainLoc = landscapeAnalysisResults.getMainLoc();
+        int mainFilesCount = landscapeAnalysisResults.getMainFilesCount();
+        int values = getSumOfValues(overallFileLastModifiedDistribution);
+        int counts = getSumOfCounts(overallFileLastModifiedDistribution);
+        int filesWithoutHistoryCount = mainFilesCount - counts;
+        int locWithoutHistory = mainLoc - values;
+        if (filesWithoutHistoryCount > 0 && locWithoutHistory > 0) {
+            landscapeReport.startTableRow();
+            landscapeReport.addTableCell("no<br>history", "border: none");
+            landscapeReport.startTableCell("border: none; padding-top: 3px;");
+            landscapeReport.startDivWithLabel(FormattingUtils.formatCount(filesWithoutHistoryCount) + " files without commit history, " + FormattingUtils.formatCount(locWithoutHistory) + " lines of code (" + FormattingUtils.getFormattedPercentage(100.0 * locWithoutHistory / mainLoc) + "%)", "");
+            landscapeReport.addHtmlContent(addFilesWithoutHistoryBar(locWithoutHistory, mainLoc));
+            landscapeReport.endDiv();
+            landscapeReport.endTableCell();
+            landscapeReport.addTableCell("", "border: none");
+            landscapeReport.endTableRow();
+        }
+    }
+
+    private int getSumOfValues(SourceFileAgeDistribution distribution) {
+        return distribution.getNegligibleRiskValue() + distribution.getLowRiskValue() + distribution.getMediumRiskValue() + distribution.getHighRiskValue() + distribution.getVeryHighRiskValue();
+    }
+
+    private int getSumOfCounts(SourceFileAgeDistribution distribution) {
+        return distribution.getNegligibleRiskCount() + distribution.getLowRiskCount() + distribution.getMediumRiskCount() + distribution.getHighRiskCount() + distribution.getVeryHighRiskCount();
+    }
+
+    private String addFilesWithoutHistoryBar(int value, int total) {
+        int width = (int) (BAR_WIDTH * (double) value / total);
+        return "<svg width='" + (width + 2) + "' height='" + (BAR_HEIGHT) + "'>" +
+                "<rect width='" + width + "' height='" + (BAR_HEIGHT - 2) + "' style='fill:rgb(200,200,200);stroke-width:1;stroke:rgb(150,150,150)'/>\n" +
+                "</svg>";
     }
 
     private void addInfoBlock(String mainValue, String subtitle, String description, String tooltip) {

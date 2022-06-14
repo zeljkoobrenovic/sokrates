@@ -35,6 +35,8 @@ public class ProjectTag {
     // A list of regex path patterns used to exclude projects (if included in the path patterns list)
     private List<String> excludePathPatterns = new ArrayList<>();
 
+    private String imageLink = "";
+
     @JsonIgnore
     private ProjectTagGroup group;
 
@@ -194,5 +196,13 @@ public class ProjectTag {
     @JsonIgnore
     public String getKey() {
         return (group != null ? group.getName() : "") + " / " + tag;
+    }
+
+    public String getImageLink() {
+        return imageLink;
+    }
+
+    public void setImageLink(String imageLink) {
+        this.imageLink = imageLink;
     }
 }

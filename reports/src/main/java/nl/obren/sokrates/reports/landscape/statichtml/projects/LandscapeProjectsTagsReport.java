@@ -2,7 +2,6 @@ package nl.obren.sokrates.reports.landscape.statichtml.projects;
 
 import nl.obren.sokrates.common.renderingutils.GraphvizUtil;
 import nl.obren.sokrates.common.utils.FormattingUtils;
-import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator;
 import nl.obren.sokrates.reports.landscape.utils.Force3DGraphExporter;
@@ -16,7 +15,6 @@ import nl.obren.sokrates.sourcecode.landscape.ProjectTag;
 import nl.obren.sokrates.sourcecode.landscape.ProjectTagGroup;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ProjectAnalysisResults;
-import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -137,8 +135,8 @@ public class LandscapeProjectsTagsReport {
 
         report.startDiv("margin: 5px; font-size: 80%");
         report.addContentInDiv("<b>" + FormattingUtils.formatCountPlural(count, "repository", "repositories") + "</b>, " +
-                "<b>" + FormattingUtils.getSmallTextForNumber(locMain) + "</b> main lines of code, " +
-                "<b>" + FormattingUtils.getSmallTextForNumber(locSecondary) + "</b> other lines of code");
+                "<b>" + FormattingUtils.getSmallTextForNumber(locMain) + "</b> lines of main code, " +
+                "<b>" + FormattingUtils.getSmallTextForNumber(locSecondary) + "</b> lines of other code");
         report.endDiv();
     }
 
@@ -281,7 +279,7 @@ public class LandscapeProjectsTagsReport {
             return;
         }
         report.startTableRow("text-align: center");
-        report.startTableCell("vertical-align: top;");
+        report.startTableCell("vertical-align: top; white-space: nowrap;");
         if (StringUtils.isNotBlank(tagName)) {
             String tooltip = getTagTooltip(tag);
 
@@ -291,6 +289,12 @@ public class LandscapeProjectsTagsReport {
             if (renderLangIcons) {
                 String imageHtml = DataImageUtils.getLangDataImageDiv30(tagName);
                 htmlFragment = imageHtml + "<div style='margin: 6px; display: inline-block;'>" + tagName + "</div>";
+            } else if (StringUtils.isNoneBlank(tag.getImageLink())) {
+                int size = 36;
+                String imgStyle = "border: 1px solid grey; border-radius: 50%; padding: 1px; background-color: #fcfcfc; vertical-align: middle; margin-right: 5px; width: " + size + "px; height: " + size + "px; object-fit: contain;";
+                String imageHtml = "<img title='" + tag.getTag() + "' style=\"" + imgStyle + "\" src=\"" +
+                        tag.getImageLink() + "\">";
+                htmlFragment = imageHtml + "<div style='vertical-align: middle; display: inline-block;'>" + tagName + "</div>";
             } else {
                 htmlFragment = tagName;
             }

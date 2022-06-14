@@ -32,24 +32,27 @@ public class LandscapeDataExport {
     }
 
     public void exportProjects() {
+        exportRepositories(analysisResults.getFilteredProjectAnalysisResults(), "projects.txt");
+        exportRepositories(analysisResults.getIgnoredProjectAnalysisResults(), "ignoredRepositories.txt");
+    }
+
+    private void exportRepositories(List<ProjectAnalysisResults> repositories, String fileName) {
         StringBuilder builder = new StringBuilder();
 
         builder.append("Repository\tMain Lanuguage\tLOC (main)\tLOC (test)\tLOC (other)\tAge (years)\tContributors\tRecent Contributors\tRookies\tCommits this year\tLatest commit\n");
 
-        int thresholdCommits = analysisResults.getConfiguration().getContributorThresholdCommits();
-
-        analysisResults.getProjectAnalysisResults().forEach(project -> {
-            appendProject(builder, thresholdCommits, project);
+        repositories.forEach(project -> {
+            appendProject(builder, project);
         });
 
         try {
-            FileUtils.write(new File(dataFolder, "projects.txt"), builder.toString(), StandardCharsets.UTF_8);
+            FileUtils.write(new File(dataFolder, fileName), builder.toString(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void appendProject(StringBuilder builder, int thresholdCommits, ProjectAnalysisResults project) {
+    private void appendProject(StringBuilder builder, ProjectAnalysisResults project) {
         CodeAnalysisResults projectAnalysis = project.getAnalysisResults();
         builder.append(projectAnalysis.getMetadata().getName()).append("\t");
         AspectAnalysisResults main = projectAnalysis.getMainAspectAnalysisResults();
@@ -71,8 +74,7 @@ public class LandscapeDataExport {
         int projectAgeYears = (int) Math.round(projectAnalysis.getFilesHistoryAnalysisResults().getAgeInDays() / 365.0);
         builder.append(projectAgeYears).append("\t");
 
-        List<Contributor> contributors = projectAnalysis.getContributorsAnalysisResults().getContributors()
-                .stream().filter(c -> c.getCommitsCount() >= thresholdCommits).collect(Collectors.toCollection(ArrayList::new));
+        List<Contributor> contributors = projectAnalysis.getContributorsAnalysisResults().getContributors();
 
         int contributorsCount = contributors.size();
         int recentContributorsCount = (int) contributors.stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count();

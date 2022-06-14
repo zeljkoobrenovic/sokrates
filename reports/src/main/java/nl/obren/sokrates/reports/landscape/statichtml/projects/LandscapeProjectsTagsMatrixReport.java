@@ -178,7 +178,7 @@ public class LandscapeProjectsTagsMatrixReport {
     }
 
     private void addTagCell(RichTextReport report, String tagName, ProjectTag tag, String color) {
-        report.startTableCell("vertical-align: top;");
+        report.startTableCell("vertical-align: top; white-space: nowrap;");
         if (StringUtils.isNotBlank(tagName)) {
             String tooltip = getTagTooltip(tag);
 
@@ -188,6 +188,12 @@ public class LandscapeProjectsTagsMatrixReport {
             if (renderLangIcons) {
                 String imageHtml = DataImageUtils.getLangDataImageDiv30(tagName);
                 htmlFragment = imageHtml + "<div style='margin: 6px; display: inline-block;'>" + tagName + "</div>";
+            } else if (StringUtils.isNoneBlank(tag.getImageLink())) {
+                int size = 26;
+                String imgStyle = "border: 1px solid grey; border-radius: 50%; padding: 1px; background-color: #fcfcfc; vertical-align: middle; margin-right: 5px; width: " + size + "px; height: " + size + "px; object-fit: contain;";
+                String imageHtml = "<img title='" + tag.getTag() + "' style=\"" + imgStyle + "\" src=\"" +
+                        tag.getImageLink() + "\">";
+                htmlFragment = imageHtml + "<div style='vertical-align: middle; display: inline-block;'>" + tagName + "</div>";
             } else {
                 htmlFragment = tagName;
             }

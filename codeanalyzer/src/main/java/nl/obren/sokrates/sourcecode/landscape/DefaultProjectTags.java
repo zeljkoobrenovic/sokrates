@@ -18,35 +18,36 @@ public class DefaultProjectTags {
         groups.add(ciCdTags);
         groups.add(techTags);
 
-        buildTags.getProjectTags().add(newPathPatternTagInstance("maven", Arrays.asList("(|.*/)pom[.]xml")));
-        buildTags.getProjectTags().add(newPathPatternTagInstance("npm", Arrays.asList("(|.*/)package[.]json")));
-        buildTags.getProjectTags().add(newPathPatternTagInstance("yarn", Arrays.asList("(|.*/)[.]yarnrc", "(|.*/)yarn[.]lock")));
-        buildTags.getProjectTags().add(newPathPatternTagInstance("bable", Arrays.asList("(|.*/)[.]babel[.]config[.]json")));
-        buildTags.getProjectTags().add(newPathPatternTagInstance("gradle", Arrays.asList("(|.*/)build[.]gradle")));
-        buildTags.getProjectTags().add(newPathPatternTagInstance("sbt", Arrays.asList("(|.*/)build[.]sbt")));
-        buildTags.getProjectTags().add(newPathPatternTagInstance("bazel", Arrays.asList("(|.*/)BUILD[.]bazel")));
-        buildTags.getProjectTags().add(newPathPatternTagInstance("pip", Arrays.asList("(|.*/)pip[.]conf", "(|.*/)Pipfile")));
-        buildTags.getProjectTags().add(newPathPatternTagInstance("nuget", Arrays.asList("(|.*/)[.]nuget/.*")));
-        buildTags.getProjectTags().add(newPathPatternTagInstance("aws codebuild", Arrays.asList("(|.*/)buildspec[.]yml")));
-        buildTags.getProjectTags().add(newPathPatternTagInstance("renovate", Arrays.asList("(|.*/)renovate[.]json5?")));
-        buildTags.getProjectTags().add(newPathPatternTagInstance("gemfile", Arrays.asList("(|.*/)Gemfile")));
-        buildTags.getProjectTags().add(newPathPatternTagInstance("podfile", Arrays.asList("(|.*/)Podfile")));
-        buildTags.getProjectTags().add(newPathPatternTagInstance("make", Arrays.asList("(|.*/)Makefile")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("maven", "general/maven", Arrays.asList("(|.*/)pom[.]xml")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("npm", "general/npm", Arrays.asList("(|.*/)package[.]json")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("yarn", "general/yarn", Arrays.asList("(|.*/)[.]yarnrc", "(|.*/)yarn[.]lock")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("babel", "general/babel", Arrays.asList("(|.*/)[.]babel[.]config[.]json")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("gradle", "general/gradle", Arrays.asList("(|.*/)build[.]gradle")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("sbt", "general/sbt", Arrays.asList("(|.*/)build[.]sbt")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("bazel", "general/bazel", Arrays.asList("(|.*/)BUILD[.]bazel")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("pip", "general/python", Arrays.asList("(|.*/)pip[.]conf", "(|.*/)Pipfile")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("nuget", "general/nuget", Arrays.asList("(|.*/)[.]nuget/.*")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("aws codebuild", "aws/AWS-CodeBuild", Arrays.asList("(|.*/)buildspec[.]yml")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("renovate", "general/renovate", Arrays.asList("(|.*/)renovate[.]json5?")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("gemfile", "lang/ruby", Arrays.asList("(|.*/)Gemfile")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("podfile", "general/cocoa-pods", Arrays.asList("(|.*/)Podfile")));
+        buildTags.getProjectTags().add(newPathPatternTagInstance("make", "general/gnu", Arrays.asList("(|.*/)Makefile")));
 
-        ciCdTags.getProjectTags().add(newPathPatternTagInstance("jenkins", Arrays.asList("(|.*/)Jenkinsfile")));
-        ciCdTags.getProjectTags().add(newPathPatternTagInstance("travis", Arrays.asList("(|.*/)[.]travis[.]ya?ml")));
-        ciCdTags.getProjectTags().add(newPathPatternTagInstance("github actions", Arrays.asList("(|.*/)[.]github[/]workflows[/].*")));
+        ciCdTags.getProjectTags().add(newPathPatternTagInstance("jenkins", "general/jenkins", Arrays.asList("(|.*/)Jenkinsfile")));
+        ciCdTags.getProjectTags().add(newPathPatternTagInstance("travis", "general/travis", Arrays.asList("(|.*/)[.]travis[.]ya?ml")));
+        ciCdTags.getProjectTags().add(newPathPatternTagInstance("github actions", "general/github-actions", Arrays.asList("(|.*/)[.]github[/]workflows[/].*")));
 
-        techTags.getProjectTags().add(newPathPatternTagInstance("docker", Arrays.asList("(|.*/)Dockerfile")));
-        techTags.getProjectTags().add(newPathPatternTagInstance("helm", Arrays.asList("(|.*/)helmfile[.]ya?ml")));
+        techTags.getProjectTags().add(newPathPatternTagInstance("docker", "general/docker", Arrays.asList("(|.*/)Dockerfile")));
+        techTags.getProjectTags().add(newPathPatternTagInstance("helm", "general/helm", Arrays.asList("(|.*/)helmfile[.]ya?ml")));
 
         return groups;
     }
 
-    private ProjectTag newPathPatternTagInstance(String name, List<String> patterns) {
+    private ProjectTag newPathPatternTagInstance(String name, String logo, List<String> patterns) {
         ProjectTag tag = new ProjectTag();
 
         tag.setTag(name);
+        tag.setImageLink("https://zeljkoobrenovic.github.io/sokrates-media/" + logo + ".png");
         tag.setPathPatterns(patterns);
 
         return tag;
