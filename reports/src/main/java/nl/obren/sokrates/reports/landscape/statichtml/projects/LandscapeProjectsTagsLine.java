@@ -36,7 +36,7 @@ public class LandscapeProjectsTagsLine {
             if (count[0] == 0) {
                 return;
             }
-            report.startDiv("border: 3px solid " + tagGroup.getColor() + "; border-radius: 5px; display: inline-block; vertical-align: top;");
+            report.startDiv("border: 1px solid " + tagGroup.getColor() + "; background-color: #fcfcfc; border-radius: 5px; display: inline-block; vertical-align: top; margin-right: 10px; margin-bottom: 5px;");
             report.addContentInDiv(tagGroup.getName(), "width: 100%; margin: 4px; color: grey; font-size: 70%; white-space: nowrap; overflow: hidden;");
             tagGroup.getProjectTags().stream()
                     .filter(t -> (tagsMap.getTagStats(t.getKey()) != null))
@@ -65,10 +65,10 @@ public class LandscapeProjectsTagsLine {
             String tooltip = getTagTooltip(tag, count);
 
             String htmlFragment = "";
-            String style = "vertical-align: top; cursor: help; padding: 4px;";
+            String style = "vertical-align: top; cursor: help; padding: 4px; #f0f0f0";
 
             int size = 48;
-            String imgStyle = "margin: 4px; padding: 1px; background-color: #fcfcfc; vertical-align: middle; width: " + size + "px; height: " + size + "px; object-fit: contain;";
+            String imgStyle = "margin: 4px; padding: 1px; vertical-align: middle; width: " + size + "px; height: " + size + "px; object-fit: contain;";
             if (StringUtils.isNoneBlank(tag.getImageLink())) {
                 htmlFragment = "<img title='" + tag.getTag() + "' style=\"" + imgStyle + "\" src=\"" + tag.getImageLink() + "\">";
             } else {
