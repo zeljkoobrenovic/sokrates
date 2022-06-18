@@ -191,7 +191,7 @@ public class UnitsAnalyzer extends Analyzer {
     }
 
     private void printRiskDistributionStats(RiskDistributionStats riskDistributionStats, String prefix) {
-        String namePrefix = SystemUtils.getFileSystemFriendlyName(prefix.toUpperCase().replace(":", "")).toUpperCase();
+        String namePrefix = SystemUtils.getSafeFileName(prefix.toUpperCase().replace(":", "")).toUpperCase();
 
         addNegligibleRiskMetrics(riskDistributionStats, namePrefix);
         addLowRiskMetrics(riskDistributionStats, namePrefix);
@@ -241,7 +241,7 @@ public class UnitsAnalyzer extends Analyzer {
     }
 
     private String safeId(String id) {
-        return SystemUtils.getFileSystemFriendlyName(id).toUpperCase();
+        return SystemUtils.getSafeFileName(id).toUpperCase();
     }
 
 

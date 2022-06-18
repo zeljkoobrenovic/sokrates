@@ -104,11 +104,11 @@ public class FileHistoryAnalyzer extends Analyzer {
             analysisResults.setActiveDays(activeDays);
 
             metricsList.addMetric().id("FILE_CHANGE_HISTORY_TOTAL_AGE_DAYS")
-                    .description("The age of the project in days")
+                    .description("The age of the repository in days")
                     .value(totalAge);
 
             metricsList.addMetric().id("FILE_CHANGE_HISTORY_ACTIVE_DAYS")
-                    .description("The number of daty with at least one file change")
+                    .description("The number of days with at least one file change")
                     .value(activeDays);
 
             metricsList.addMetric().id("FILE_CHANGE_HISTORY_WEEKS")

@@ -1,37 +1,37 @@
 package nl.obren.sokrates.reports.landscape.utils;
 
 import nl.obren.sokrates.sourcecode.analysis.results.ConcernsAnalysisResults;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ProjectAnalysisResults;
+import nl.obren.sokrates.sourcecode.landscape.analysis.RepositoryAnalysisResults;
 
 import java.util.*;
 
 public class FeaturesOfInterestAggregator {
-    private List<ProjectAnalysisResults> projectAnalysisResults;
-    private Map<String, List<ProjectConcernData>> concernsMap = new HashMap<>();
-    private Map<String, List<ProjectConcernData>> projectsMap = new HashMap<>();
-    private Map<String, ProjectConcernData> projectsConcernMap = new HashMap<>();
-    private List<List<ProjectConcernData>> projects = new ArrayList<>();
-    private List<List<ProjectConcernData>> concerns = new ArrayList<>();
+    private List<RepositoryAnalysisResults> repositoryAnalysisResults;
+    private Map<String, List<RepositoryConcernData>> concernsMap = new HashMap<>();
+    private Map<String, List<RepositoryConcernData>> repositoriesMap = new HashMap<>();
+    private Map<String, RepositoryConcernData> repositoriesConcernMap = new HashMap<>();
+    private List<List<RepositoryConcernData>> repositories = new ArrayList<>();
+    private List<List<RepositoryConcernData>> concerns = new ArrayList<>();
 
-    public FeaturesOfInterestAggregator(List<ProjectAnalysisResults> projectAnalysisResults) {
-        this.projectAnalysisResults = projectAnalysisResults;
+    public FeaturesOfInterestAggregator(List<RepositoryAnalysisResults> repositoryAnalysisResults) {
+        this.repositoryAnalysisResults = repositoryAnalysisResults;
     }
 
-    public List<ProjectAnalysisResults> getProjectAnalysisResults() {
-        return projectAnalysisResults;
+    public List<RepositoryAnalysisResults> getRepositoryAnalysisResults() {
+        return repositoryAnalysisResults;
     }
 
-    public void setProjectAnalysisResults(List<ProjectAnalysisResults> projectAnalysisResults) {
-        this.projectAnalysisResults = projectAnalysisResults;
+    public void setRepositoryAnalysisResults(List<RepositoryAnalysisResults> repositoryAnalysisResults) {
+        this.repositoryAnalysisResults = repositoryAnalysisResults;
     }
 
     public void aggregateFeaturesOfInterest(int limit) {
-        projectAnalysisResults.stream()
+        repositoryAnalysisResults.stream()
                 .filter(p -> p.getAnalysisResults().getConcernsAnalysisResults().size() > 0)
-                .forEach(project -> {
-                    List<ConcernsAnalysisResults> concernsAnalysisResults = project.getAnalysisResults().getConcernsAnalysisResults();
+                .forEach(repository -> {
+                    List<ConcernsAnalysisResults> concernsAnalysisResults = repository.getAnalysisResults().getConcernsAnalysisResults();
                     concernsAnalysisResults.forEach(concernResults -> {
-                        String projectName = project.getAnalysisResults().getMetadata().getName();
+                        String repositoryName = repository.getAnalysisResults().getMetadata().getName();
                         concernResults.getConcerns().stream()
                                 .filter(c -> c.getFilesCount() > 0)
                                 .filter(c -> !c.getName().equalsIgnoreCase("Unclassified"))
@@ -40,77 +40,77 @@ public class FeaturesOfInterestAggregator {
                                     if (!concernsMap.containsKey(concernName)) {
                                         concernsMap.put(concernName, new ArrayList<>());
                                     }
-                                    if (!projectsMap.containsKey(projectName)) {
-                                        projectsMap.put(projectName, new ArrayList<>());
+                                    if (!repositoriesMap.containsKey(repositoryName)) {
+                                        repositoriesMap.put(repositoryName, new ArrayList<>());
                                     }
 
-                                    ProjectConcernData projectConcertData = new ProjectConcernData(projectName, concern, project);
-                                    concernsMap.get(concernName).add(projectConcertData);
-                                    projectsMap.get(projectName).add(projectConcertData);
-                                    projectsConcernMap.put(projectName + "::" + concernName, projectConcertData);
+                                    RepositoryConcernData repositoryConcertData = new RepositoryConcernData(repositoryName, concern, repository);
+                                    concernsMap.get(concernName).add(repositoryConcertData);
+                                    repositoriesMap.get(repositoryName).add(repositoryConcertData);
+                                    repositoriesConcernMap.put(repositoryName + "::" + concernName, repositoryConcertData);
                                 });
                     });
                 });
 
-        concernsMap.values().forEach(projectList -> {
-            Collections.sort(projectList, (a, b) -> b.getConcern().getFilesCount() - a.getConcern().getFilesCount());
+        concernsMap.values().forEach(repositoryList -> {
+            Collections.sort(repositoryList, (a, b) -> b.getConcern().getFilesCount() - a.getConcern().getFilesCount());
         });
 
-        projectsMap.values().forEach(projectList -> {
-            Collections.sort(projectList, (a, b) -> b.getConcern().getFilesCount() - a.getConcern().getFilesCount());
+        repositoriesMap.values().forEach(repositoryList -> {
+            Collections.sort(repositoryList, (a, b) -> b.getConcern().getFilesCount() - a.getConcern().getFilesCount());
         });
 
-        projects = new ArrayList(projectsMap.values());
-        Collections.sort(projects, (a, b) -> ((b.stream().mapToInt(c -> c.getConcern().getNumberOfRegexLineMatches()).sum()) -
+        repositories = new ArrayList(repositoriesMap.values());
+        Collections.sort(repositories, (a, b) -> ((b.stream().mapToInt(c -> c.getConcern().getNumberOfRegexLineMatches()).sum()) -
                 (a.stream().mapToInt(c -> c.getConcern().getNumberOfRegexLineMatches()).sum())));
 
         concerns = new ArrayList(concernsMap.values());
         Collections.sort(concerns, (a, b) -> ((b.stream().mapToInt(c -> c.getConcern().getFilesCount()).sum()) -
                 (a.stream().mapToInt(c -> c.getConcern().getFilesCount()).sum())));
 
-        if (projects.size() > limit) {
-            projects = projects.subList(0, limit);
+        if (repositories.size() > limit) {
+            repositories = repositories.subList(0, limit);
         }
 
     }
 
-    public Map<String, List<ProjectConcernData>> getConcernsMap() {
+    public Map<String, List<RepositoryConcernData>> getConcernsMap() {
         return concernsMap;
     }
 
-    public void setConcernsMap(Map<String, List<ProjectConcernData>> concernsMap) {
+    public void setConcernsMap(Map<String, List<RepositoryConcernData>> concernsMap) {
         this.concernsMap = concernsMap;
     }
 
-    public Map<String, List<ProjectConcernData>> getProjectsMap() {
-        return projectsMap;
+    public Map<String, List<RepositoryConcernData>> getRepositoriesMap() {
+        return repositoriesMap;
     }
 
-    public void setProjectsMap(Map<String, List<ProjectConcernData>> projectsMap) {
-        this.projectsMap = projectsMap;
+    public void setRepositoriesMap(Map<String, List<RepositoryConcernData>> repositoriesMap) {
+        this.repositoriesMap = repositoriesMap;
     }
 
-    public Map<String, ProjectConcernData> getProjectsConcernMap() {
-        return projectsConcernMap;
+    public Map<String, RepositoryConcernData> getRepositoriesConcernMap() {
+        return repositoriesConcernMap;
     }
 
-    public void setProjectsConcernMap(Map<String, ProjectConcernData> projectsConcernMap) {
-        this.projectsConcernMap = projectsConcernMap;
+    public void setRepositoriesConcernMap(Map<String, RepositoryConcernData> repositoriesConcernMap) {
+        this.repositoriesConcernMap = repositoriesConcernMap;
     }
 
-    public List<List<ProjectConcernData>> getProjects() {
-        return projects;
+    public List<List<RepositoryConcernData>> getRepositories() {
+        return repositories;
     }
 
-    public void setProjects(List<List<ProjectConcernData>> projects) {
-        this.projects = projects;
+    public void setRepositories(List<List<RepositoryConcernData>> repositories) {
+        this.repositories = repositories;
     }
 
-    public List<List<ProjectConcernData>> getConcerns() {
+    public List<List<RepositoryConcernData>> getConcerns() {
         return concerns;
     }
 
-    public void setConcerns(List<List<ProjectConcernData>> concerns) {
+    public void setConcerns(List<List<RepositoryConcernData>> concerns) {
         this.concerns = concerns;
     }
 }

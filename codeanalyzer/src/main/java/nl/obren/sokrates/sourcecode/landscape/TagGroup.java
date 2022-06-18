@@ -3,21 +3,21 @@ package nl.obren.sokrates.sourcecode.landscape;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProjectTagGroup {
+public class TagGroup {
     private String name = "";
     private String description = "";
     private String color = "";
 
-    private List<ProjectTag> projectTags = new ArrayList<>();
+    private List<RepositoryTag> repositoryTags = new ArrayList<>();
 
-    public ProjectTagGroup() {
+    public TagGroup() {
     }
 
-    public ProjectTagGroup(String name) {
+    public TagGroup(String name) {
         this.name = name;
     }
 
-    public ProjectTagGroup(String name, String color) {
+    public TagGroup(String name, String color) {
         this.name = name;
         this.color = color;
     }
@@ -38,12 +38,15 @@ public class ProjectTagGroup {
         this.description = description;
     }
 
-    public List<ProjectTag> getProjectTags() {
-        return projectTags;
+    public List<RepositoryTag> getRepositoryTags() {
+        return repositoryTags;
     }
 
-    public void setProjectTags(List<ProjectTag> projectTags) {
-        this.projectTags = projectTags;
+    public void setRepositoryTags(List<RepositoryTag> repositoryTags) {
+        this.repositoryTags = repositoryTags;
+    }
+    public void setProjectTags(List<RepositoryTag> repositoryTags) {
+        this.repositoryTags = repositoryTags;
     }
 
     public String getColor() {

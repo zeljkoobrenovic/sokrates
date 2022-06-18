@@ -34,7 +34,7 @@ public class LandscapeAnalysisResults {
     private List<ComponentDependency> peopleDependencies30Days = new ArrayList<>();
 
     @JsonIgnore
-    private List<ComponentDependency> peopleProjectDependencies30Days = new ArrayList<>();
+    private List<ComponentDependency> peopleRepositoryDependencies30Days = new ArrayList<>();
 
     @JsonIgnore
     private List<ComponentDependency> peopleDependencies90Days = new ArrayList<>();
@@ -43,10 +43,10 @@ public class LandscapeAnalysisResults {
     private List<ComponentDependency> peopleDependencies180Days = new ArrayList<>();
 
     @JsonIgnore
-    private List<ContributorConnections> connectionsViaProjects30Days = new ArrayList<>();
+    private List<ContributorConnections> connectionsViaRepositories30Days = new ArrayList<>();
 
     @JsonIgnore
-    private List<Double> connectionsViaProjects30DaysCountHistory = new ArrayList<>();
+    private List<Double> connectionsViaRepositories30DaysCountHistory = new ArrayList<>();
 
     @JsonIgnore
     private List<Double> peopleDependenciesCount30DaysHistory = new ArrayList<>();
@@ -55,10 +55,10 @@ public class LandscapeAnalysisResults {
     private List<Double> activeContributors30DaysHistory = new ArrayList<>();
 
     @JsonIgnore
-    private List<ContributorConnections> connectionsViaProjects90Days = new ArrayList<>();
+    private List<ContributorConnections> connectionsViaRepositories90Days = new ArrayList<>();
 
     @JsonIgnore
-    private List<ContributorConnections> connectionsViaProjects180Days = new ArrayList<>();
+    private List<ContributorConnections> connectionsViaRepositories180Days = new ArrayList<>();
 
     @JsonIgnore
     private LandscapeConfiguration configuration = new LandscapeConfiguration();
@@ -108,62 +108,62 @@ public class LandscapeAnalysisResults {
     private List<Double> pMedian30DaysHistory = new ArrayList<>();
 
     @JsonIgnore
-    private List<ProjectAnalysisResults> projectAnalysisResults = new ArrayList<>();
+    private List<RepositoryAnalysisResults> repositoryAnalysisResults = new ArrayList<>();
     @JsonIgnore
-    private List<ContributorProjects> contributorsCache;
+    private List<ContributorRepositories> contributorsCache;
 
-    public static SourceFileAgeDistribution getOverallFileLastModifiedDistribution(List<ProjectAnalysisResults> projectsAnalysisResults) {
+    public static SourceFileAgeDistribution getOverallFileLastModifiedDistribution(List<RepositoryAnalysisResults> repositoriesAnalysisResults) {
         SourceFileAgeDistribution distribution = new SourceFileAgeDistribution();
-        projectsAnalysisResults.forEach(projectAnalysisResults -> {
-            FilesHistoryAnalysisResults filesHistoryAnalysisResults = projectAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
-            SourceFileAgeDistribution projectDistribution = filesHistoryAnalysisResults.getOverallFileLastModifiedDistribution();
-            if (projectDistribution == null) {
+        repositoriesAnalysisResults.forEach(repositoryAnalysisResults -> {
+            FilesHistoryAnalysisResults filesHistoryAnalysisResults = repositoryAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
+            SourceFileAgeDistribution repositoryDistribution = filesHistoryAnalysisResults.getOverallFileLastModifiedDistribution();
+            if (repositoryDistribution == null) {
                 return;
             }
-            updateDistribution(distribution, projectDistribution);
+            updateDistribution(distribution, repositoryDistribution);
         });
         return distribution;
     }
 
-    public static SourceFileAgeDistribution getOverallFileFirstModifiedDistribution(List<ProjectAnalysisResults> projectsAnalysisResults) {
+    public static SourceFileAgeDistribution getOverallFileFirstModifiedDistribution(List<RepositoryAnalysisResults> repositoriesAnalysisResults) {
         SourceFileAgeDistribution distribution = new SourceFileAgeDistribution();
-        projectsAnalysisResults.forEach(projectAnalysisResults -> {
-            FilesHistoryAnalysisResults filesHistoryAnalysisResults = projectAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
-            SourceFileAgeDistribution projectDistribution = filesHistoryAnalysisResults.getOverallFileFirstModifiedDistribution();
-            if (projectDistribution == null) {
+        repositoriesAnalysisResults.forEach(repositoryAnalysisResults -> {
+            FilesHistoryAnalysisResults filesHistoryAnalysisResults = repositoryAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
+            SourceFileAgeDistribution repositoryDistribution = filesHistoryAnalysisResults.getOverallFileFirstModifiedDistribution();
+            if (repositoryDistribution == null) {
                 return;
             }
-            updateDistribution(distribution, projectDistribution);
+            updateDistribution(distribution, repositoryDistribution);
         });
         return distribution;
     }
 
-    private static void updateDistribution(SourceFileAgeDistribution distribution, SourceFileAgeDistribution projectDistribution) {
-        distribution.setNegligibleRiskLabel(projectDistribution.getNegligibleRiskLabel());
-        distribution.setNegligibleRiskCount(distribution.getNegligibleRiskCount() + projectDistribution.getNegligibleRiskCount());
-        distribution.setNegligibleRiskValue(distribution.getNegligibleRiskValue() + projectDistribution.getNegligibleRiskValue());
+    private static void updateDistribution(SourceFileAgeDistribution distribution, SourceFileAgeDistribution repositoryDistribution) {
+        distribution.setNegligibleRiskLabel(repositoryDistribution.getNegligibleRiskLabel());
+        distribution.setNegligibleRiskCount(distribution.getNegligibleRiskCount() + repositoryDistribution.getNegligibleRiskCount());
+        distribution.setNegligibleRiskValue(distribution.getNegligibleRiskValue() + repositoryDistribution.getNegligibleRiskValue());
 
-        distribution.setLowRiskLabel(projectDistribution.getLowRiskLabel());
-        distribution.setLowRiskCount(distribution.getLowRiskCount() + projectDistribution.getLowRiskCount());
-        distribution.setLowRiskValue(distribution.getLowRiskValue() + projectDistribution.getLowRiskValue());
+        distribution.setLowRiskLabel(repositoryDistribution.getLowRiskLabel());
+        distribution.setLowRiskCount(distribution.getLowRiskCount() + repositoryDistribution.getLowRiskCount());
+        distribution.setLowRiskValue(distribution.getLowRiskValue() + repositoryDistribution.getLowRiskValue());
 
-        distribution.setMediumRiskLabel(projectDistribution.getMediumRiskLabel());
-        distribution.setMediumRiskCount(distribution.getMediumRiskCount() + projectDistribution.getMediumRiskCount());
-        distribution.setMediumRiskValue(distribution.getMediumRiskValue() + projectDistribution.getMediumRiskValue());
+        distribution.setMediumRiskLabel(repositoryDistribution.getMediumRiskLabel());
+        distribution.setMediumRiskCount(distribution.getMediumRiskCount() + repositoryDistribution.getMediumRiskCount());
+        distribution.setMediumRiskValue(distribution.getMediumRiskValue() + repositoryDistribution.getMediumRiskValue());
 
-        distribution.setHighRiskLabel(projectDistribution.getHighRiskLabel());
-        distribution.setHighRiskCount(distribution.getHighRiskCount() + projectDistribution.getHighRiskCount());
-        distribution.setHighRiskValue(distribution.getHighRiskValue() + projectDistribution.getHighRiskValue());
+        distribution.setHighRiskLabel(repositoryDistribution.getHighRiskLabel());
+        distribution.setHighRiskCount(distribution.getHighRiskCount() + repositoryDistribution.getHighRiskCount());
+        distribution.setHighRiskValue(distribution.getHighRiskValue() + repositoryDistribution.getHighRiskValue());
 
-        distribution.setVeryHighRiskLabel(projectDistribution.getVeryHighRiskLabel());
-        distribution.setVeryHighRiskCount(distribution.getVeryHighRiskCount() + projectDistribution.getVeryHighRiskCount());
-        distribution.setVeryHighRiskValue(distribution.getVeryHighRiskValue() + projectDistribution.getVeryHighRiskValue());
+        distribution.setVeryHighRiskLabel(repositoryDistribution.getVeryHighRiskLabel());
+        distribution.setVeryHighRiskCount(distribution.getVeryHighRiskCount() + repositoryDistribution.getVeryHighRiskCount());
+        distribution.setVeryHighRiskValue(distribution.getVeryHighRiskValue() + repositoryDistribution.getVeryHighRiskValue());
     }
 
-    public static int getLoc1YearActive(List<ProjectAnalysisResults> projectsAnalysisResults) {
+    public static int getLoc1YearActive(List<RepositoryAnalysisResults> repositoriesAnalysisResults) {
         int count[] = {0};
-        projectsAnalysisResults.forEach(projectAnalysisResults -> {
-            FilesHistoryAnalysisResults filesHistoryAnalysisResults = projectAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
+        repositoriesAnalysisResults.forEach(repositoryAnalysisResults -> {
+            FilesHistoryAnalysisResults filesHistoryAnalysisResults = repositoryAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
             SourceFileAgeDistribution overallFileLastModifiedDistribution = filesHistoryAnalysisResults.getOverallFileLastModifiedDistribution();
             if (overallFileLastModifiedDistribution != null) {
                 count[0] += overallFileLastModifiedDistribution.getTotalValue() - overallFileLastModifiedDistribution.getVeryHighRiskValue();
@@ -172,10 +172,10 @@ public class LandscapeAnalysisResults {
         return count[0];
     }
 
-    public static int getLoc30DaysActive(List<ProjectAnalysisResults> projectsAnalysisResults) {
+    public static int getLoc30DaysActive(List<RepositoryAnalysisResults> repositoriesAnalysisResults) {
         int count[] = {0};
-        projectsAnalysisResults.forEach(projectAnalysisResults -> {
-            FilesHistoryAnalysisResults filesHistoryAnalysisResults = projectAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
+        repositoriesAnalysisResults.forEach(repositoryAnalysisResults -> {
+            FilesHistoryAnalysisResults filesHistoryAnalysisResults = repositoryAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
             SourceFileAgeDistribution overallFileLastModifiedDistribution = filesHistoryAnalysisResults.getOverallFileLastModifiedDistribution();
             if (overallFileLastModifiedDistribution != null) {
                 count[0] += overallFileLastModifiedDistribution.getNegligibleRiskValue();
@@ -184,10 +184,10 @@ public class LandscapeAnalysisResults {
         return count[0];
     }
 
-    public static int getLocNew(List<ProjectAnalysisResults> projectsAnalysisResults) {
+    public static int getLocNew(List<RepositoryAnalysisResults> repositoriesAnalysisResults) {
         int count[] = {0};
-        projectsAnalysisResults.forEach(projectAnalysisResults -> {
-            FilesHistoryAnalysisResults filesHistoryAnalysisResults = projectAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
+        repositoriesAnalysisResults.forEach(repositoryAnalysisResults -> {
+            FilesHistoryAnalysisResults filesHistoryAnalysisResults = repositoryAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
             SourceFileAgeDistribution overallFileFirstModifiedDistribution = filesHistoryAnalysisResults.getOverallFileFirstModifiedDistribution();
             if (overallFileFirstModifiedDistribution != null) {
                 count[0] += overallFileFirstModifiedDistribution.getTotalValue() - overallFileFirstModifiedDistribution.getVeryHighRiskValue();
@@ -197,11 +197,11 @@ public class LandscapeAnalysisResults {
     }
 
     public SourceFileAgeDistribution getOverallFileLastModifiedDistribution() {
-        return getOverallFileLastModifiedDistribution(this.getFilteredProjectAnalysisResults());
+        return getOverallFileLastModifiedDistribution(this.getFilteredRepositoryAnalysisResults());
     }
 
     public SourceFileAgeDistribution getOverallFileFirstModifiedDistribution() {
-        return getOverallFileFirstModifiedDistribution(this.getFilteredProjectAnalysisResults());
+        return getOverallFileFirstModifiedDistribution(this.getFilteredRepositoryAnalysisResults());
     }
 
     public LandscapeConfiguration getConfiguration() {
@@ -214,23 +214,23 @@ public class LandscapeAnalysisResults {
     }
 
     @JsonIgnore
-    public List<ProjectAnalysisResults> getProjectAnalysisResults() {
-        return projectAnalysisResults;
+    public List<RepositoryAnalysisResults> getRepositoryAnalysisResults() {
+        return repositoryAnalysisResults;
     }
 
     @JsonIgnore
-    public void setProjectAnalysisResults(List<ProjectAnalysisResults> projectAnalysisResults) {
-        this.projectAnalysisResults = projectAnalysisResults;
+    public void setRepositoryAnalysisResults(List<RepositoryAnalysisResults> repositoryAnalysisResults) {
+        this.repositoryAnalysisResults = repositoryAnalysisResults;
     }
 
     @JsonIgnore
-    public List<ProjectAnalysisResults> getFilteredProjectAnalysisResults() {
-        int thresholdLoc = configuration.getProjectThresholdLocMain();
-        int thresholdContributors = configuration.getProjectThresholdContributors();
+    public List<RepositoryAnalysisResults> getFilteredRepositoryAnalysisResults() {
+        int thresholdLoc = configuration.getRepositoryThresholdLocMain();
+        int thresholdContributors = configuration.getRepositoryThresholdContributors();
 
-        String updatedBefore = configuration.getIgnoreProjectsLastUpdatedBefore();
+        String updatedBefore = configuration.getIgnoreRepositoriesLastUpdatedBefore();
 
-        return projectAnalysisResults
+        return repositoryAnalysisResults
                 .stream()
                 .filter(p -> StringUtils.isBlank(updatedBefore) ||
                         p.getAnalysisResults().getContributorsAnalysisResults().getLatestCommitDate().compareTo(updatedBefore) >= 0)
@@ -243,18 +243,18 @@ public class LandscapeAnalysisResults {
                 .collect(Collectors.toList());
     }
     @JsonIgnore
-    public List<ProjectAnalysisResults> getIgnoredProjectAnalysisResults() {
-        List<ProjectAnalysisResults> filteredProjectAnalysisResults = getFilteredProjectAnalysisResults();
+    public List<RepositoryAnalysisResults> getIgnoredRepositoryAnalysisResults() {
+        List<RepositoryAnalysisResults> filteredRepositoryAnalysisResults = getFilteredRepositoryAnalysisResults();
 
-        return projectAnalysisResults
+        return repositoryAnalysisResults
                 .stream()
-                .filter(p -> !filteredProjectAnalysisResults.contains(p))
+                .filter(p -> !filteredRepositoryAnalysisResults.contains(p))
                 .collect(Collectors.toList());
     }
 
     @JsonIgnore
-    public List<ProjectAnalysisResults> getAllProjects() {
-        return this.projectAnalysisResults;
+    public List<RepositoryAnalysisResults> getAllRepositories() {
+        return this.repositoryAnalysisResults;
     }
 
     private boolean ignoreExtension(String extension) {
@@ -264,8 +264,8 @@ public class LandscapeAnalysisResults {
     @JsonIgnore
     public List<HistoryPerExtension> getYearlyCommitHistoryPerExtension() {
         Map<String, HistoryPerExtension> map = new HashMap<>();
-        this.projectAnalysisResults.forEach(project -> {
-            List<HistoryPerExtension> history = project.getAnalysisResults().getFilesHistoryAnalysisResults().getHistoryPerExtensionPerYear();
+        this.repositoryAnalysisResults.forEach(repository -> {
+            List<HistoryPerExtension> history = repository.getAnalysisResults().getFilesHistoryAnalysisResults().getHistoryPerExtensionPerYear();
             history.stream().filter(e -> !ignoreExtension(e.getExtension())).forEach(extensionYear -> {
                 String extension = extensionYear.getExtension().toLowerCase();
                 String key = extension + "::" + extensionYear.getYear();
@@ -283,21 +283,21 @@ public class LandscapeAnalysisResults {
         return new ArrayList<>(map.values());
     }
 
-    public int getProjectsCount() {
-        return getFilteredProjectAnalysisResults().size();
+    public int getRepositoriesCount() {
+        return getFilteredRepositoryAnalysisResults().size();
     }
 
     public int getMainLoc() {
         int loc[] = {0};
-        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            loc[0] += projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
+        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
+            loc[0] += repositoryAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
         });
         return loc[0];
     }
     public int getMainFilesCount() {
         int count[] = {0};
-        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            count[0] += projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getFilesCount();
+        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
+            count[0] += repositoryAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getFilesCount();
         });
         return count[0];
     }
@@ -311,88 +311,88 @@ public class LandscapeAnalysisResults {
     }
 
     public int getMainLoc1YearActive() {
-        return getLoc1YearActive(getFilteredProjectAnalysisResults());
+        return getLoc1YearActive(getFilteredRepositoryAnalysisResults());
     }
 
     public int getMainLoc30DaysActive() {
-        return getLoc30DaysActive(getFilteredProjectAnalysisResults());
+        return getLoc30DaysActive(getFilteredRepositoryAnalysisResults());
     }
 
     public int getMainLocNew() {
-        return getLocNew(getFilteredProjectAnalysisResults());
+        return getLocNew(getFilteredRepositoryAnalysisResults());
     }
 
     public int getTestLoc() {
         int count[] = {0};
-        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            count[0] += projectAnalysisResults.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCode();
+        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
+            count[0] += repositoryAnalysisResults.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCode();
         });
         return count[0];
     }
 
     public int getGeneratedLoc() {
         int count[] = {0};
-        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            count[0] += projectAnalysisResults.getAnalysisResults().getGeneratedAspectAnalysisResults().getLinesOfCode();
+        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
+            count[0] += repositoryAnalysisResults.getAnalysisResults().getGeneratedAspectAnalysisResults().getLinesOfCode();
         });
         return count[0];
     }
 
     public int getBuildAndDeploymentLoc() {
         int count[] = {0};
-        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            count[0] += projectAnalysisResults.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getLinesOfCode();
+        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
+            count[0] += repositoryAnalysisResults.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getLinesOfCode();
         });
         return count[0];
     }
 
     public int getOtherLoc() {
         int count[] = {0};
-        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            count[0] += projectAnalysisResults.getAnalysisResults().getOtherAspectAnalysisResults().getLinesOfCode();
+        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
+            count[0] += repositoryAnalysisResults.getAnalysisResults().getOtherAspectAnalysisResults().getLinesOfCode();
         });
         return count[0];
     }
     public int getTestFilesCount() {
         int count[] = {0};
-        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            count[0] += projectAnalysisResults.getAnalysisResults().getTestAspectAnalysisResults().getFilesCount();
+        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
+            count[0] += repositoryAnalysisResults.getAnalysisResults().getTestAspectAnalysisResults().getFilesCount();
         });
         return count[0];
     }
 
     public int getGeneratedFilesCount() {
         int count[] = {0};
-        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            count[0] += projectAnalysisResults.getAnalysisResults().getGeneratedAspectAnalysisResults().getFilesCount();
+        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
+            count[0] += repositoryAnalysisResults.getAnalysisResults().getGeneratedAspectAnalysisResults().getFilesCount();
         });
         return count[0];
     }
 
     public int getBuildAndDeploymentFilesCount() {
         int count[] = {0};
-        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            count[0] += projectAnalysisResults.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getFilesCount();
+        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
+            count[0] += repositoryAnalysisResults.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getFilesCount();
         });
         return count[0];
     }
 
     public int getOtherFilesCount() {
         int count[] = {0};
-        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            count[0] += projectAnalysisResults.getAnalysisResults().getOtherAspectAnalysisResults().getFilesCount();
+        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
+            count[0] += repositoryAnalysisResults.getAnalysisResults().getOtherAspectAnalysisResults().getFilesCount();
         });
         return count[0];
     }
 
     public int getAllLoc() {
         int count[] = {0};
-        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            count[0] += projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
-            count[0] += projectAnalysisResults.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCode();
-            count[0] += projectAnalysisResults.getAnalysisResults().getGeneratedAspectAnalysisResults().getLinesOfCode();
-            count[0] += projectAnalysisResults.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getLinesOfCode();
-            count[0] += projectAnalysisResults.getAnalysisResults().getOtherAspectAnalysisResults().getLinesOfCode();
+        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
+            count[0] += repositoryAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
+            count[0] += repositoryAnalysisResults.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCode();
+            count[0] += repositoryAnalysisResults.getAnalysisResults().getGeneratedAspectAnalysisResults().getLinesOfCode();
+            count[0] += repositoryAnalysisResults.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getLinesOfCode();
+            count[0] += repositoryAnalysisResults.getAnalysisResults().getOtherAspectAnalysisResults().getLinesOfCode();
         });
         return count[0];
     }
@@ -415,29 +415,29 @@ public class LandscapeAnalysisResults {
     @JsonIgnore
     public List<NumericMetric> getLinesOfCodePerExtension(CodeCategory type) {
         List<NumericMetric> linesOfCodePerExtension = new ArrayList<>();
-        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            String projectName = projectAnalysisResults.getAnalysisResults().getMetadata().getName();
-            List<NumericMetric> projectLinesOfCodePerExtension;
+        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
+            String repositoryName = repositoryAnalysisResults.getAnalysisResults().getMetadata().getName();
+            List<NumericMetric> repositoryLinesOfCodePerExtension;
             if (type == CodeCategory.TEST) {
-                projectLinesOfCodePerExtension = projectAnalysisResults.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCodePerExtension();
+                repositoryLinesOfCodePerExtension = repositoryAnalysisResults.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCodePerExtension();
             } else if (type == CodeCategory.OTHER) {
-                List<NumericMetric> build = projectAnalysisResults.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getLinesOfCodePerExtension();
-                List<NumericMetric> generated = projectAnalysisResults.getAnalysisResults().getGeneratedAspectAnalysisResults().getLinesOfCodePerExtension();
-                List<NumericMetric> other = projectAnalysisResults.getAnalysisResults().getOtherAspectAnalysisResults().getLinesOfCodePerExtension();
-                projectLinesOfCodePerExtension = merge(Arrays.asList(build, generated, other));
+                List<NumericMetric> build = repositoryAnalysisResults.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getLinesOfCodePerExtension();
+                List<NumericMetric> generated = repositoryAnalysisResults.getAnalysisResults().getGeneratedAspectAnalysisResults().getLinesOfCodePerExtension();
+                List<NumericMetric> other = repositoryAnalysisResults.getAnalysisResults().getOtherAspectAnalysisResults().getLinesOfCodePerExtension();
+                repositoryLinesOfCodePerExtension = merge(Arrays.asList(build, generated, other));
             } else {
-                projectLinesOfCodePerExtension = projectAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension();
+                repositoryLinesOfCodePerExtension = repositoryAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension();
             }
-            projectLinesOfCodePerExtension.forEach(metric -> {
+            repositoryLinesOfCodePerExtension.forEach(metric -> {
                 String id = metric.getName().toLowerCase();
                 Optional<NumericMetric> existingMetric = linesOfCodePerExtension.stream().filter(c -> c.getName().equalsIgnoreCase(id)).findAny();
                 if (existingMetric.isPresent()) {
                     NumericMetric metricObject = existingMetric.get();
-                    metricObject.getDescription().add(new NumericMetric(projectName, metric.getValue()));
+                    metricObject.getDescription().add(new NumericMetric(repositoryName, metric.getValue()));
                     metricObject.setValue(metricObject.getValue().intValue() + metric.getValue().intValue());
                 } else {
                     NumericMetric metricObject = new NumericMetric(id, metric.getValue());
-                    metricObject.getDescription().add(new NumericMetric(projectName, metric.getValue()));
+                    metricObject.getDescription().add(new NumericMetric(repositoryName, metric.getValue()));
                     linesOfCodePerExtension.add(metricObject);
                 }
             });
@@ -470,8 +470,8 @@ public class LandscapeAnalysisResults {
     public List<String> getAllExtensions() {
         List<String> extensions = new ArrayList<>();
         List<String> ignoreExtensions = configuration.getIgnoreExtensions();
-        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults().getCommitsPerExtensions().forEach(perExtension -> {
+        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
+            repositoryAnalysisResults.getAnalysisResults().getContributorsAnalysisResults().getCommitsPerExtensions().forEach(perExtension -> {
                 String extension = perExtension.getExtension();
                 if (!ignoreExtensions.contains(extension) && !extensions.contains(extension)) {
                     extensions.add(extension);
@@ -483,24 +483,24 @@ public class LandscapeAnalysisResults {
     }
 
     @JsonIgnore
-    public List<ContributorProjects> getContributors() {
+    public List<ContributorRepositories> getContributors() {
         if (contributorsCache != null) {
             return contributorsCache;
         }
         int thresholdCommits = configuration.getContributorThresholdCommits();
-        List<ContributorProjects> contributorProjects = getAllContributors().stream()
+        List<ContributorRepositories> contributorRepositories = getAllContributors().stream()
                 .filter(c -> c.getContributor().getCommitsCount() >= thresholdCommits)
                 .collect(Collectors.toCollection(ArrayList::new));
 
         if (configuration.isAnonymizeContributors()) {
             int counter[] = {1};
-            contributorProjects.forEach(contributorProject -> {
-                contributorProject.getContributor().setEmail("Contributor " + counter[0]);
+            contributorRepositories.forEach(contributorRepository -> {
+                contributorRepository.getContributor().setEmail("Contributor " + counter[0]);
                 counter[0] += 1;
             });
         }
-        contributorsCache = contributorProjects;
-        return contributorProjects;
+        contributorsCache = contributorRepositories;
+        return contributorRepositories;
     }
 
     @JsonIgnore
@@ -511,33 +511,33 @@ public class LandscapeAnalysisResults {
             commitsPerExtensions.put(extension, new CommitsPerExtension(extension));
         });
 
-        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            List<CommitsPerExtension> projectData = projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults().getCommitsPerExtensions();
+        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
+            List<CommitsPerExtension> repositoryData = repositoryAnalysisResults.getAnalysisResults().getContributorsAnalysisResults().getCommitsPerExtensions();
 
-            projectData.forEach(projectExtData -> {
-                String extension = projectExtData.getExtension();
+            repositoryData.forEach(repositoryExtData -> {
+                String extension = repositoryExtData.getExtension();
                 if (commitsPerExtensions.containsKey(extension)) {
                     CommitsPerExtension commitsPerExtension = commitsPerExtensions.get(extension);
-                    commitsPerExtension.setCommitsCount(commitsPerExtension.getCommitsCount() + projectExtData.getCommitsCount());
+                    commitsPerExtension.setCommitsCount(commitsPerExtension.getCommitsCount() + repositoryExtData.getCommitsCount());
 
-                    commitsPerExtension.setCommitsCount30Days(commitsPerExtension.getCommitsCount30Days() + projectExtData.getCommitsCount30Days());
-                    commitsPerExtension.setCommitsCount90Days(commitsPerExtension.getCommitsCount90Days() + projectExtData.getCommitsCount90Days());
+                    commitsPerExtension.setCommitsCount30Days(commitsPerExtension.getCommitsCount30Days() + repositoryExtData.getCommitsCount30Days());
+                    commitsPerExtension.setCommitsCount90Days(commitsPerExtension.getCommitsCount90Days() + repositoryExtData.getCommitsCount90Days());
 
-                    commitsPerExtension.setFilesCount(commitsPerExtension.getFilesCount() + projectExtData.getFilesCount());
-                    commitsPerExtension.setFilesCount30Days(commitsPerExtension.getFilesCount30Days() + projectExtData.getFilesCount30Days());
-                    commitsPerExtension.setFilesCount90Days(commitsPerExtension.getFilesCount90Days() + projectExtData.getFilesCount90Days());
+                    commitsPerExtension.setFilesCount(commitsPerExtension.getFilesCount() + repositoryExtData.getFilesCount());
+                    commitsPerExtension.setFilesCount30Days(commitsPerExtension.getFilesCount30Days() + repositoryExtData.getFilesCount30Days());
+                    commitsPerExtension.setFilesCount90Days(commitsPerExtension.getFilesCount90Days() + repositoryExtData.getFilesCount90Days());
 
-                    projectExtData.getCommitters().forEach(email -> {
+                    repositoryExtData.getCommitters().forEach(email -> {
                         if (!commitsPerExtension.getCommitters().contains(email)) {
                             commitsPerExtension.getCommitters().add(email);
                         }
                     });
-                    projectExtData.getCommitters30Days().forEach(email -> {
+                    repositoryExtData.getCommitters30Days().forEach(email -> {
                         if (!commitsPerExtension.getCommitters30Days().contains(email)) {
                             commitsPerExtension.getCommitters30Days().add(email);
                         }
                     });
-                    projectExtData.getCommitters90Days().forEach(email -> {
+                    repositoryExtData.getCommitters90Days().forEach(email -> {
                         if (!commitsPerExtension.getCommitters90Days().contains(email)) {
                             commitsPerExtension.getCommitters90Days().add(email);
                         }
@@ -579,12 +579,12 @@ public class LandscapeAnalysisResults {
     }
 
     @JsonIgnore
-    private List<ContributorProjects> getAllContributors() {
-        List<ContributorProjects> list = new ArrayList<>();
-        Map<String, ContributorProjects> map = new HashMap<>();
+    private List<ContributorRepositories> getAllContributors() {
+        List<ContributorRepositories> list = new ArrayList<>();
+        Map<String, ContributorRepositories> map = new HashMap<>();
 
-        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
+        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
+            ContributorsAnalysisResults contributorsAnalysisResults = repositoryAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
             contributorsAnalysisResults.getContributors().forEach(contributor -> {
                 String contributorId = contributor.getEmail().toLowerCase();
                 if (GitHistoryUtils.shouldIgnore(contributorId, configuration.getIgnoreContributors())) {
@@ -605,25 +605,25 @@ public class LandscapeAnalysisResults {
                     return;
                 }
 
-                int projectCommits = contributor.getCommitsCount();
+                int repositoryCommits = contributor.getCommitsCount();
                 List<String> commitDates = contributor.getCommitDates();
-                int projectCommits30Days = contributor.getCommitsCount30Days();
-                int projectCommits90Days = contributor.getCommitsCount90Days();
-                int projectCommits180Days = contributor.getCommitsCount180Days();
-                int projectCommits365Days = contributor.getCommitsCount365Days();
+                int repositoryCommits30Days = contributor.getCommitsCount30Days();
+                int repositoryCommits90Days = contributor.getCommitsCount90Days();
+                int repositoryCommits180Days = contributor.getCommitsCount180Days();
+                int repositoryCommits365Days = contributor.getCommitsCount365Days();
 
                 String latestCommitDate = contributor.getLatestCommitDate();
                 String firstCommitDate = contributor.getFirstCommitDate();
 
                 if (map.containsKey(contributorId)) {
-                    ContributorProjects existingContributor = map.get(contributorId);
+                    ContributorRepositories existingContributor = map.get(contributorId);
                     Contributor contributorInfo = existingContributor.getContributor();
 
-                    contributorInfo.setCommitsCount(contributorInfo.getCommitsCount() + projectCommits);
-                    contributorInfo.setCommitsCount30Days(contributorInfo.getCommitsCount30Days() + projectCommits30Days);
-                    contributorInfo.setCommitsCount90Days(contributorInfo.getCommitsCount90Days() + projectCommits90Days);
-                    contributorInfo.setCommitsCount180Days(contributorInfo.getCommitsCount180Days() + projectCommits180Days);
-                    contributorInfo.setCommitsCount365Days(contributorInfo.getCommitsCount365Days() + projectCommits365Days);
+                    contributorInfo.setCommitsCount(contributorInfo.getCommitsCount() + repositoryCommits);
+                    contributorInfo.setCommitsCount30Days(contributorInfo.getCommitsCount30Days() + repositoryCommits30Days);
+                    contributorInfo.setCommitsCount90Days(contributorInfo.getCommitsCount90Days() + repositoryCommits90Days);
+                    contributorInfo.setCommitsCount180Days(contributorInfo.getCommitsCount180Days() + repositoryCommits180Days);
+                    contributorInfo.setCommitsCount365Days(contributorInfo.getCommitsCount365Days() + repositoryCommits365Days);
 
                     contributor.getActiveYears().forEach(activeYear -> {
                         if (!contributorInfo.getActiveYears().contains(activeYear)) {
@@ -636,9 +636,9 @@ public class LandscapeAnalysisResults {
                         }
                     });
 
-                    existingContributor.addProject(projectAnalysisResults,
+                    existingContributor.addRepository(repositoryAnalysisResults,
                             firstCommitDate, latestCommitDate,
-                            projectCommits, projectCommits30Days, projectCommits90Days, new ArrayList<>(commitDates));
+                            repositoryCommits, repositoryCommits30Days, repositoryCommits90Days, new ArrayList<>(commitDates));
 
                     if (firstCommitDate.compareTo(contributorInfo.getFirstCommitDate()) < 0) {
                         contributorInfo.setFirstCommitDate(firstCommitDate);
@@ -650,23 +650,23 @@ public class LandscapeAnalysisResults {
                     Contributor newContributor = new Contributor();
 
                     newContributor.setEmail(contributorId);
-                    newContributor.setCommitsCount(projectCommits);
-                    newContributor.setCommitsCount30Days(projectCommits30Days);
-                    newContributor.setCommitsCount90Days(projectCommits90Days);
-                    newContributor.setCommitsCount180Days(projectCommits180Days);
-                    newContributor.setCommitsCount365Days(projectCommits365Days);
+                    newContributor.setCommitsCount(repositoryCommits);
+                    newContributor.setCommitsCount30Days(repositoryCommits30Days);
+                    newContributor.setCommitsCount90Days(repositoryCommits90Days);
+                    newContributor.setCommitsCount180Days(repositoryCommits180Days);
+                    newContributor.setCommitsCount365Days(repositoryCommits365Days);
                     newContributor.setFirstCommitDate(firstCommitDate);
                     newContributor.setLatestCommitDate(latestCommitDate);
                     newContributor.setActiveYears(new ArrayList<>(contributor.getActiveYears()));
                     newContributor.setCommitDates(new ArrayList<>(contributor.getCommitDates()));
 
-                    ContributorProjects newContributorWithProjects = new ContributorProjects(newContributor);
+                    ContributorRepositories newContributorWithRepositories = new ContributorRepositories(newContributor);
 
-                    newContributorWithProjects.addProject(projectAnalysisResults, newContributor.getFirstCommitDate(),
-                            newContributor.getLatestCommitDate(), projectCommits, projectCommits30Days, projectCommits90Days, new ArrayList<>(commitDates));
+                    newContributorWithRepositories.addRepository(repositoryAnalysisResults, newContributor.getFirstCommitDate(),
+                            newContributor.getLatestCommitDate(), repositoryCommits, repositoryCommits30Days, repositoryCommits90Days, new ArrayList<>(commitDates));
 
-                    map.put(contributorId, newContributorWithProjects);
-                    list.add(newContributorWithProjects);
+                    map.put(contributorId, newContributorWithRepositories);
+                    list.add(newContributorWithRepositories);
                 }
             });
         });
@@ -681,8 +681,8 @@ public class LandscapeAnalysisResults {
         List<ContributionTimeSlot> list = new ArrayList<>();
         Map<String, ContributionTimeSlot> map = new HashMap<>();
 
-        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
+        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
+            ContributorsAnalysisResults contributorsAnalysisResults = repositoryAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
             updateContributors(list, map, contributorsAnalysisResults.getContributorsPerYear());
         });
 
@@ -696,8 +696,8 @@ public class LandscapeAnalysisResults {
         List<ContributionTimeSlot> list = new ArrayList<>();
         Map<String, ContributionTimeSlot> map = new HashMap<>();
 
-        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
+        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
+            ContributorsAnalysisResults contributorsAnalysisResults = repositoryAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
             List<ContributionTimeSlot> contributorsPerWeek = contributorsAnalysisResults.getContributorsPerWeek();
             updateContributors(list, map, contributorsPerWeek);
         });
@@ -712,8 +712,8 @@ public class LandscapeAnalysisResults {
         List<ContributionTimeSlot> list = new ArrayList<>();
         Map<String, ContributionTimeSlot> map = new HashMap<>();
 
-        getFilteredProjectAnalysisResults().forEach(projectAnalysisResults -> {
-            ContributorsAnalysisResults contributorsAnalysisResults = projectAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
+        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
+            ContributorsAnalysisResults contributorsAnalysisResults = repositoryAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
             List<ContributionTimeSlot> contributorsPerMonth = contributorsAnalysisResults.getContributorsPerMonth();
             updateContributors(list, map, contributorsPerMonth);
         });
@@ -724,14 +724,14 @@ public class LandscapeAnalysisResults {
     }
 
     @JsonIgnore
-    public List<Pair<String, List<ContributionTimeSlot>>> getContributorsPerProjectAndMonth() {
+    public List<Pair<String, List<ContributionTimeSlot>>> getContributorsPerRepositoryAndMonth() {
         List<Pair<String, List<ContributionTimeSlot>>> list = new ArrayList<>();
 
-        getFilteredProjectAnalysisResults().forEach(project -> {
-            ContributorsAnalysisResults contributorsAnalysisResults = project.getAnalysisResults().getContributorsAnalysisResults();
+        getFilteredRepositoryAnalysisResults().forEach(repository -> {
+            ContributorsAnalysisResults contributorsAnalysisResults = repository.getAnalysisResults().getContributorsAnalysisResults();
             List<ContributionTimeSlot> contributorsPerMonth = new ArrayList<>(contributorsAnalysisResults.getContributorsPerMonth());
             Collections.sort(contributorsPerMonth, Comparator.comparing(ContributionTimeSlot::getTimeSlot));
-            String name = project.getAnalysisResults().getMetadata().getName();
+            String name = repository.getAnalysisResults().getMetadata().getName();
             list.add(Pair.of(name, contributorsPerMonth));
         });
 
@@ -801,13 +801,13 @@ public class LandscapeAnalysisResults {
     }
 
     public int getCommitsCount() {
-        return this.projectAnalysisResults.stream()
+        return this.repositoryAnalysisResults.stream()
                 .mapToInt(p -> p.getAnalysisResults()
                         .getContributorsAnalysisResults().getCommitsCount()).sum();
     }
 
     public int getCommitsCount30Days() {
-        return this.projectAnalysisResults.stream()
+        return this.repositoryAnalysisResults.stream()
                 .mapToInt(p -> p.getAnalysisResults()
                         .getContributorsAnalysisResults().getCommitsCount30Days()).sum();
     }
@@ -842,12 +842,12 @@ public class LandscapeAnalysisResults {
         this.peopleDependencies30Days = peopleDependencies30Days;
     }
 
-    public List<ComponentDependency> getPeopleProjectDependencies30Days() {
-        return peopleProjectDependencies30Days;
+    public List<ComponentDependency> getPeopleRepositoryDependencies30Days() {
+        return peopleRepositoryDependencies30Days;
     }
 
-    public void setPeopleProjectDependencies30Days(List<ComponentDependency> peopleProjectDependencies30Days) {
-        this.peopleProjectDependencies30Days = peopleProjectDependencies30Days;
+    public void setPeopleRepositoryDependencies30Days(List<ComponentDependency> peopleRepositoryDependencies30Days) {
+        this.peopleRepositoryDependencies30Days = peopleRepositoryDependencies30Days;
     }
 
     @JsonIgnore
@@ -871,33 +871,33 @@ public class LandscapeAnalysisResults {
     }
 
     @JsonIgnore
-    public List<ContributorConnections> getConnectionsViaProjects30Days() {
-        return connectionsViaProjects30Days;
+    public List<ContributorConnections> getConnectionsViaRepositories30Days() {
+        return connectionsViaRepositories30Days;
     }
 
     @JsonIgnore
-    public void setConnectionsViaProjects30Days(List<ContributorConnections> connectionsViaProjects30Days) {
-        this.connectionsViaProjects30Days = connectionsViaProjects30Days;
+    public void setConnectionsViaRepositories30Days(List<ContributorConnections> connectionsViaRepositories30Days) {
+        this.connectionsViaRepositories30Days = connectionsViaRepositories30Days;
     }
 
     @JsonIgnore
-    public List<ContributorConnections> getConnectionsViaProjects90Days() {
-        return connectionsViaProjects90Days;
+    public List<ContributorConnections> getConnectionsViaRepositories90Days() {
+        return connectionsViaRepositories90Days;
     }
 
     @JsonIgnore
-    public void setConnectionsViaProjects90Days(List<ContributorConnections> connectionsViaProjects90Days) {
-        this.connectionsViaProjects90Days = connectionsViaProjects90Days;
+    public void setConnectionsViaRepositories90Days(List<ContributorConnections> connectionsViaRepositories90Days) {
+        this.connectionsViaRepositories90Days = connectionsViaRepositories90Days;
     }
 
     @JsonIgnore
-    public List<ContributorConnections> getConnectionsViaProjects180Days() {
-        return connectionsViaProjects180Days;
+    public List<ContributorConnections> getConnectionsViaRepositories180Days() {
+        return connectionsViaRepositories180Days;
     }
 
     @JsonIgnore
-    public void setConnectionsViaProjects180Days(List<ContributorConnections> connectionsViaProjects180Days) {
-        this.connectionsViaProjects180Days = connectionsViaProjects180Days;
+    public void setConnectionsViaRepositories180Days(List<ContributorConnections> connectionsViaRepositories180Days) {
+        this.connectionsViaRepositories180Days = connectionsViaRepositories180Days;
     }
 
     public double getcIndex30Days() {
@@ -1092,12 +1092,12 @@ public class LandscapeAnalysisResults {
         this.pMedian30DaysHistory = pMedian30DaysHistory;
     }
 
-    public List<Double> getConnectionsViaProjects30DaysCountHistory() {
-        return connectionsViaProjects30DaysCountHistory;
+    public List<Double> getConnectionsViaRepositories30DaysCountHistory() {
+        return connectionsViaRepositories30DaysCountHistory;
     }
 
-    public void setConnectionsViaProjects30DaysCountHistory(List<Double> connectionsViaProjects30DaysCountHistory) {
-        this.connectionsViaProjects30DaysCountHistory = connectionsViaProjects30DaysCountHistory;
+    public void setConnectionsViaRepositories30DaysCountHistory(List<Double> connectionsViaRepositories30DaysCountHistory) {
+        this.connectionsViaRepositories30DaysCountHistory = connectionsViaRepositories30DaysCountHistory;
     }
 
     public List<Double> getPeopleDependenciesCount30DaysHistory() {

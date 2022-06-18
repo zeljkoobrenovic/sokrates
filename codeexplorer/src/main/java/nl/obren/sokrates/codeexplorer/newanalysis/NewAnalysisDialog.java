@@ -2,7 +2,7 @@
  * Copyright (c) 2021 Željko Obrenović. All rights reserved.
  */
 
-package nl.obren.sokrates.codeexplorer.newproject;
+package nl.obren.sokrates.codeexplorer.newanalysis;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -14,7 +14,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
-import nl.obren.sokrates.cli.SokratesFileUtils;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.ExtensionGroup;
 import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
@@ -34,19 +33,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-public class NewProjectDialog extends BorderPane {
-    private static final Log LOG = LogFactory.getLog(NewProjectDialog.class);
+public class NewAnalysisDialog extends BorderPane {
+    private static final Log LOG = LogFactory.getLog(NewAnalysisDialog.class);
 
     private TextField srcFolder = new TextField();
     private TextField configurationFilePath = new TextField();
     private Stage stage;
     private CheckListView<ExtensionGroup> checkListView;
     private CodeConfiguration codeConfiguration = CodeConfiguration.getDefaultConfiguration();
-    private Callback<Pair<File, CodeConfiguration>, Void> onNewProjectCreated;
-    private Button createProjectButton;
+    private Callback<Pair<File, CodeConfiguration>, Void> onNewAnalysisCreated;
+    private Button createAnalysisButton;
 
-    public NewProjectDialog() {
-        setId("new_project_dialog");
+    public NewAnalysisDialog() {
+        setId("new_analysis_dialog");
         setCenter(getCheckListViewPane());
         setTop(getSrcFolderSelectorPane());
         setBottom(getConfigurationFilePath());
@@ -77,7 +76,7 @@ public class NewProjectDialog extends BorderPane {
         if (selectedDirectory != null) {
             String selectedDirectoryPath = selectedDirectory.getPath();
             srcFolder.setText(selectedDirectoryPath);
-            createProjectButton.disableProperty().setValue(!new File(selectedDirectoryPath).exists());
+            createAnalysisButton.disableProperty().setValue(!new File(selectedDirectoryPath).exists());
             File sokratesConfigFile = CodeConfigurationUtils.getDefaultSokratesConfigFile(selectedDirectory);
             configurationFilePath.setText(sokratesConfigFile.getPath());
             updateExtensions(selectedDirectory);
@@ -89,16 +88,16 @@ public class NewProjectDialog extends BorderPane {
 
         pane.setLeft(new Label(" Configuration file: "));
         pane.setCenter(configurationFilePath);
-        createProjectButton = new Button("Create New Project");
-        createProjectButton.setDefaultButton(true);
-        createProjectButton.disableProperty().setValue(true);
-        createProjectButton.setOnAction(event -> createNewProject());
-        pane.setBottom(new BorderPane(createProjectButton));
+        createAnalysisButton = new Button("Create New Analysis");
+        createAnalysisButton.setDefaultButton(true);
+        createAnalysisButton.disableProperty().setValue(true);
+        createAnalysisButton.setOnAction(event -> createNewAnalysis());
+        pane.setBottom(new BorderPane(createAnalysisButton));
 
         return pane;
     }
 
-    private void createNewProject() {
+    private void createNewAnalysis() {
         File file = new File(configurationFilePath.getText());
         if (file.exists()) {
             if (userDoesNotConfirmOverwriting()) {
@@ -131,7 +130,7 @@ public class NewProjectDialog extends BorderPane {
         scopingConventions.addConventions(codeConfiguration, sourceCodeFiles.getFilesInBroadScope());
 
         Platform.runLater(() -> stage.close());
-        Platform.runLater(() -> onNewProjectCreated.call(new ImmutablePair<>(file, codeConfiguration)));
+        Platform.runLater(() -> onNewAnalysisCreated.call(new ImmutablePair<>(file, codeConfiguration)));
     }
 
     private boolean userDoesNotConfirmOverwriting() {
@@ -180,10 +179,10 @@ public class NewProjectDialog extends BorderPane {
         return titledPane;
     }
 
-    public void showAndWait(Callback<Pair<File, CodeConfiguration>, Void> onNewProjectCreated) {
-        this.onNewProjectCreated = onNewProjectCreated;
+    public void showAndWait(Callback<Pair<File, CodeConfiguration>, Void> onNewAnalysisCreated) {
+        this.onNewAnalysisCreated = onNewAnalysisCreated;
         stage = new Stage();
-        stage.setTitle("New Project");
+        stage.setTitle("New Analysis");
         stage.setScene(new Scene(this, 600, 400));
         stage.showAndWait();
     }

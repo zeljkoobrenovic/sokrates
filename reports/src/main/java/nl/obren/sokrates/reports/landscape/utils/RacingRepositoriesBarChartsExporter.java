@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class RacingProjectsBarChartsExporter {
+public class RacingRepositoriesBarChartsExporter {
     private int windowSize = 12;
 
     private LandscapeAnalysisResults landscapeAnalysisResults;
@@ -31,7 +31,7 @@ public class RacingProjectsBarChartsExporter {
     private List<RacingChartItem> items12Month = new ArrayList<>();
     private String suffix = "";
 
-    public RacingProjectsBarChartsExporter(LandscapeAnalysisResults landscapeAnalysisResults, List<Pair<String, List<ContributionTimeSlot>>> contributions, String suffix) {
+    public RacingRepositoriesBarChartsExporter(LandscapeAnalysisResults landscapeAnalysisResults, List<Pair<String, List<ContributionTimeSlot>>> contributions, String suffix) {
         this.landscapeAnalysisResults = landscapeAnalysisResults;
         this.contributions = contributions;
         this.suffix = suffix;
@@ -41,13 +41,13 @@ public class RacingProjectsBarChartsExporter {
         findStartYearAndMonth();
 
         for (Pair<String, List<ContributionTimeSlot>> contribution : contributions) {
-            processProjectMonth(contribution);
+            processRepositoryMonth(contribution);
         }
 
         save(reportsFolder);
     }
 
-    private void processProjectMonth(Pair<String, List<ContributionTimeSlot>> contribution) {
+    private void processRepositoryMonth(Pair<String, List<ContributionTimeSlot>> contribution) {
         int cumulativeCommits = 0;
         int prevSumCommits = 0;
         double prevAverageMontlhyContributors = 0;
@@ -112,7 +112,7 @@ public class RacingProjectsBarChartsExporter {
             FileUtils.write(new File(folder, "racing_charts_commits_window_" + suffix + ".html"),
                     new VisualizationTemplate().renderRacingCharts(items12Month, start, "Commits since " + startYear + " (" + windowSize + " months window)"), UTF_8);
 
-            if (suffix.equalsIgnoreCase("projects")) {
+            if (suffix.equalsIgnoreCase("repositories")) {
                 FileUtils.write(new File(folder, "racing_charts_contributors_per_month_" + suffix + ".html"),
                         new VisualizationTemplate().renderRacingCharts(itemsContributorsPerMonth, start,
                                 "Contributors per month since " + startYear + " (average over " + windowSize + " months)"), UTF_8);

@@ -12,7 +12,7 @@ import nl.obren.sokrates.cli.CommandLineInterface;
 import nl.obren.sokrates.cli.Commands;
 import nl.obren.sokrates.codeexplorer.CodeExplorerLauncher;
 import nl.obren.sokrates.codeexplorer.codebrowser.CodeBrowserPane;
-import nl.obren.sokrates.codeexplorer.newproject.NewProjectDialog;
+import nl.obren.sokrates.codeexplorer.newanalysis.NewAnalysisDialog;
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.io.UserProperties;
@@ -74,7 +74,7 @@ public class CodeConfigurationView extends ConfigurationEditorView {
     }
 
     public void newConfiguration() {
-        new NewProjectDialog().showAndWait(configuration -> {
+        new NewAnalysisDialog().showAndWait(configuration -> {
             executeScript(configuration.getRight());
             goToLine(0);
             file = configuration.getLeft();

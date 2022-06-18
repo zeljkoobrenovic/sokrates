@@ -9,38 +9,38 @@ import org.apache.commons.logging.LogFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProjectTag {
-    private static final Log LOG = LogFactory.getLog(ProjectTag.class);
+public class RepositoryTag {
+    private static final Log LOG = LogFactory.getLog(RepositoryTag.class);
     // A tag name
     private String tag = "";
 
-    // A list of regex name patterns to tag projects. Any project with a name matching any of the regex patterns will be tagged with this tag.
+    // A list of regex name patterns to tag repositories. Any repository with a name matching any of the regex patterns will be tagged with this tag.
     private List<String> patterns = new ArrayList<>();
 
-    // A list of regex name patterns used to exclude projects (if included in the name patterns list)
+    // A list of regex name patterns used to exclude repositories (if included in the name patterns list)
     private List<String> excludePatterns = new ArrayList<>();
 
-    // A list of extensions to include project if a project has these extensions as biggest (most line of code)
+    // A list of extensions to include repository if a repository has these extensions as biggest (most line of code)
     private List<String> mainExtensions = new ArrayList<>();
 
-    // A list of extensions to include project if a project has any file with this extensions
+    // A list of extensions to include repository if a repository has any file with this extensions
     private List<String> anyExtensions = new ArrayList<>();
 
-    // A list of extensions to be excluded (if project has this extension as the biggest one)
+    // A list of extensions to be excluded (if repository has this extension as the biggest one)
     private List<String> excludeExtensions = new ArrayList<>();
 
-    // A list of regex path patterns to tag projects. Any project with at least one file matching any of the regex patterns will be tagged with this tag.
+    // A list of regex path patterns to tag repositories. Any repository with at least one file matching any of the regex patterns will be tagged with this tag.
     private List<String> pathPatterns = new ArrayList<>();
 
-    // A list of regex path patterns used to exclude projects (if included in the path patterns list)
+    // A list of regex path patterns used to exclude repositories (if included in the path patterns list)
     private List<String> excludePathPatterns = new ArrayList<>();
 
     private String imageLink = "";
 
     @JsonIgnore
-    private ProjectTagGroup group;
+    private TagGroup group;
 
-    public ProjectTag() {
+    public RepositoryTag() {
     }
 
     public String getTag() {
@@ -185,12 +185,12 @@ public class ProjectTag {
     }
 
     @JsonIgnore
-    public ProjectTagGroup getGroup() {
+    public TagGroup getGroup() {
         return group;
     }
 
     @JsonIgnore
-    public void setGroup(ProjectTagGroup group) {
+    public void setGroup(TagGroup group) {
         this.group = group;
     }
     @JsonIgnore

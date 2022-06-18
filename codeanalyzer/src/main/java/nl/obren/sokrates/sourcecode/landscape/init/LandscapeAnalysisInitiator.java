@@ -7,8 +7,7 @@ package nl.obren.sokrates.sourcecode.landscape.init;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
-import nl.obren.sokrates.sourcecode.landscape.ProjectTagGroup;
-import nl.obren.sokrates.sourcecode.landscape.SokratesProjectLink;
+import nl.obren.sokrates.sourcecode.landscape.SokratesRepositoryLink;
 import nl.obren.sokrates.sourcecode.landscape.SubLandscapeLink;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -21,7 +20,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.stream.Stream;
 
 public class LandscapeAnalysisInitiator {
@@ -105,8 +103,8 @@ public class LandscapeAnalysisInitiator {
 
     private void processAnalysisResultFile(File root, LandscapeConfiguration configuration, Path file) {
         String relativePath = root.toPath().relativize(file).toString();
-        configuration.getProjects().add(new SokratesProjectLink(relativePath));
+        configuration.getRepositories().add(new SokratesRepositoryLink(relativePath));
 
-        LOG.info("Adding project: " + relativePath);
+        LOG.info("Adding repositories: " + relativePath);
     }
 }

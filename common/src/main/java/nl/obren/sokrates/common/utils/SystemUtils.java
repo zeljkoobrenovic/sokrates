@@ -11,6 +11,7 @@ import org.apache.commons.logging.LogFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 
 public class SystemUtils {
     private static final Log LOG = LogFactory.getLog(SystemUtils.class);
@@ -18,21 +19,18 @@ public class SystemUtils {
     private SystemUtils() {
     }
 
-    public static String getFileSystemFriendlyName(String name) {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        name.chars().forEach(i -> {
-            char c = (char) i;
-            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c >= '0' && c <= '9')
-                stringBuilder.append(c);
-            else
-                stringBuilder.append('_');
-        });
-        
-        return stringBuilder.toString();
+    public static String getSafeFileName(String string) {
+        StringBuilder sb = new StringBuilder(string.length());
+        string = Normalizer.normalize(string, Normalizer.Form.NFD);
+        for (char c : string.toCharArray()) {
+            if (c == '.' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) {
+                sb.append(c);
+            } else {
+                sb.append("_");
+            }
+        }
+        return sb.toString();
     }
-
-
     public static void openFile(String path) {
         exec(new String[]{"open", path}, null);
     }
@@ -65,4 +63,6 @@ public class SystemUtils {
             LOG.error(e);
         }
     }
+
+
 }

@@ -83,9 +83,9 @@ public class DataExporter {
     }
 
     public static String dependenciesFileNamePrefix(String fromComponent, String toComponent, String logicalDecompositionName) {
-        String fileNamePrefix = "dependencies_" + SystemUtils.getFileSystemFriendlyName(logicalDecompositionName);
+        String fileNamePrefix = "dependencies_" + SystemUtils.getSafeFileName(logicalDecompositionName);
         if (StringUtils.isNotBlank(fromComponent) && StringUtils.isNotBlank(toComponent)) {
-            fileNamePrefix += "_" + SystemUtils.getFileSystemFriendlyName(fromComponent + "_" + toComponent);
+            fileNamePrefix += "_" + SystemUtils.getSafeFileName(fromComponent + "_" + toComponent);
         }
         return fileNamePrefix;
     }

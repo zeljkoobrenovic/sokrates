@@ -106,7 +106,7 @@ public class NamedSourceCodeAspect {
 
     @JsonIgnore
     public String getFileSystemFriendlyName(String prefix) {
-        return SystemUtils.getFileSystemFriendlyName(prefix + name);
+        return SystemUtils.getSafeFileName(prefix + name);
     }
 
     @JsonIgnore

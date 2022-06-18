@@ -4,8 +4,6 @@
 
 package nl.obren.sokrates.sourcecode.landscape.analysis;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
@@ -31,27 +29,34 @@ public class LandscapeAnalyzer {
     private File landscapeConfigurationFile;
     private LandscapeConfiguration landscapeConfiguration;
 
-    public LandscapeAnalysisResults analyze(File analysisRoot, File landscapeConfigFile) {
+    public LandscapeAnalysisResults analyze(File landscapeConfigFile) {
         this.landscapeConfigurationFile = landscapeConfigFile;
 
         LandscapeAnalysisResults landscapeAnalysisResults = new LandscapeAnalysisResults();
 
-        Set<String> projectNames = new HashSet<>();
+        Set<String> repositoryNames = new HashSet<>();
 
         try {
             String json = FileUtils.readFileToString(landscapeConfigurationFile, StandardCharsets.UTF_8);
+            File infoFile = new File(landscapeConfigFile.getParentFile(), "info.json");
+            String jsonInfo = infoFile.exists() ? FileUtils.readFileToString(infoFile, StandardCharsets.UTF_8) : null;
             this.landscapeConfiguration = (LandscapeConfiguration) new JsonMapper().getObject(json, LandscapeConfiguration.class);
+            if (jsonInfo != null) {
+                LandscapeInfo info = (LandscapeInfo) new JsonMapper().getObject(jsonInfo, LandscapeInfo.class);
+                landscapeConfiguration.setSubLandscapes(info.getSubLandscapes());
+                landscapeConfiguration.setRepositories(info.getRepositories());
+            }
             landscapeAnalysisResults.setConfiguration(landscapeConfiguration);
-            landscapeConfiguration.getProjects().forEach(link -> {
+            landscapeConfiguration.getRepositories().forEach(link -> {
                 LOG.info("Analysing " + link.getAnalysisResultsPath() + "...");
-                CodeAnalysisResults projectAnalysisResults = this.getProjectAnalysisResults(link);
-                if (projectAnalysisResults != null) {
-                    String projectName = projectAnalysisResults.getMetadata().getName();
-                    if (!landscapeConfiguration.isIncludeOnlyFirstProjectWithSameName() || !projectNames.contains(projectName)) {
-                        projectNames.add(projectName);
-                        List<String> files = this.getProjectFiles(link);
-                        landscapeAnalysisResults.getProjectAnalysisResults().add(new ProjectAnalysisResults(link, projectAnalysisResults, files));
-                        projectAnalysisResults.getContributorsAnalysisResults().getContributors().forEach(contributor -> {
+                CodeAnalysisResults repositoryAnalysisResults = this.getRepositoryAnalysisResults(link);
+                if (repositoryAnalysisResults != null) {
+                    String repositoryName = repositoryAnalysisResults.getMetadata().getName();
+                    if (!landscapeConfiguration.isIncludeOnlyOneRepositoryWithSameName() || !repositoryNames.contains(repositoryName)) {
+                        repositoryNames.add(repositoryName);
+                        List<String> files = this.getRepositoryFiles(link);
+                        landscapeAnalysisResults.getRepositoryAnalysisResults().add(new RepositoryAnalysisResults(link, repositoryAnalysisResults, files));
+                        repositoryAnalysisResults.getContributorsAnalysisResults().getContributors().forEach(contributor -> {
                             contributor.getCommitDates().forEach(commitDate -> {
                                 if (landscapeAnalysisResults.getLatestCommitDate() == "" || commitDate.compareTo(landscapeAnalysisResults.getLatestCommitDate()) > 0) {
                                     landscapeAnalysisResults.setLatestCommitDate(commitDate);
@@ -73,12 +78,12 @@ public class LandscapeAnalyzer {
 
     private void updatePeopleDependencies(LandscapeAnalysisResults landscapeAnalysisResults) {
         LOG.info("Updating people dependencies....");
-        List<ContributorProjects> contributors = landscapeAnalysisResults.getContributors();
+        List<ContributorRepositories> contributors = landscapeAnalysisResults.getContributors();
         LOG.info("Updating people dependencies in past 30d....");
         List<ComponentDependency> peopleDependencies30Days = ContributorConnectionUtils.getPeopleDependencies(contributors, 0, 30);
         landscapeAnalysisResults.setPeopleDependencies30Days(peopleDependencies30Days);
-        List<ComponentDependency> peopleProjectDependencies30Days = ContributorConnectionUtils.getPeopleProjectDependencies(contributors, 0, 30);
-        landscapeAnalysisResults.setPeopleProjectDependencies30Days(peopleProjectDependencies30Days);
+        List<ComponentDependency> peopleRepositoryDependencies30Days = ContributorConnectionUtils.getPeopleRepositoryDependencies(contributors, 0, 30);
+        landscapeAnalysisResults.setPeopleRepositoryDependencies30Days(peopleRepositoryDependencies30Days);
         LOG.info("Updating people dependencies in past 90d....");
         List<ComponentDependency> peopleDependencies90Days = ContributorConnectionUtils.getPeopleDependencies(contributors, 0, 90);
         landscapeAnalysisResults.setPeopleDependencies90Days(peopleDependencies90Days);
@@ -86,43 +91,43 @@ public class LandscapeAnalyzer {
         List<ComponentDependency> peopleDependencies180Days = ContributorConnectionUtils.getPeopleDependencies(contributors, 0, 180);
         landscapeAnalysisResults.setPeopleDependencies180Days(peopleDependencies180Days);
 
-        List<ContributorConnections> connectionsViaProjects30Days = ContributorConnectionUtils.getConnectionsViaProjects(contributors, peopleDependencies30Days, 0, 30);
-        List<ContributorConnections> connectionsViaProjects90Days = ContributorConnectionUtils.getConnectionsViaProjects(contributors, peopleDependencies90Days, 0, 90);
-        List<ContributorConnections> connectionsViaProjects180Days = ContributorConnectionUtils.getConnectionsViaProjects(contributors, peopleDependencies180Days, 0, 180);
+        List<ContributorConnections> connectionsViaRepositories30Days = ContributorConnectionUtils.getConnectionsViaRepositories(contributors, peopleDependencies30Days, 0, 30);
+        List<ContributorConnections> connectionsViaRepositories90Days = ContributorConnectionUtils.getConnectionsViaRepositories(contributors, peopleDependencies90Days, 0, 90);
+        List<ContributorConnections> connectionsViaRepositories180Days = ContributorConnectionUtils.getConnectionsViaRepositories(contributors, peopleDependencies180Days, 0, 180);
 
-        landscapeAnalysisResults.setConnectionsViaProjects30Days(connectionsViaProjects30Days);
-        landscapeAnalysisResults.setConnectionsViaProjects90Days(connectionsViaProjects90Days);
-        landscapeAnalysisResults.setConnectionsViaProjects180Days(connectionsViaProjects180Days);
+        landscapeAnalysisResults.setConnectionsViaRepositories30Days(connectionsViaRepositories30Days);
+        landscapeAnalysisResults.setConnectionsViaRepositories90Days(connectionsViaRepositories90Days);
+        landscapeAnalysisResults.setConnectionsViaRepositories180Days(connectionsViaRepositories180Days);
 
-        landscapeAnalysisResults.setcIndex30Days(ContributorConnectionUtils.getCIndex(connectionsViaProjects30Days));
-        landscapeAnalysisResults.setpIndex30Days(ContributorConnectionUtils.getPIndex(connectionsViaProjects30Days));
+        landscapeAnalysisResults.setcIndex30Days(ContributorConnectionUtils.getCIndex(connectionsViaRepositories30Days));
+        landscapeAnalysisResults.setpIndex30Days(ContributorConnectionUtils.getPIndex(connectionsViaRepositories30Days));
 
-        landscapeAnalysisResults.setcIndex90Days(ContributorConnectionUtils.getCIndex(connectionsViaProjects90Days));
-        landscapeAnalysisResults.setpIndex90Days(ContributorConnectionUtils.getPIndex(connectionsViaProjects90Days));
+        landscapeAnalysisResults.setcIndex90Days(ContributorConnectionUtils.getCIndex(connectionsViaRepositories90Days));
+        landscapeAnalysisResults.setpIndex90Days(ContributorConnectionUtils.getPIndex(connectionsViaRepositories90Days));
 
-        landscapeAnalysisResults.setcIndex180Days(ContributorConnectionUtils.getCIndex(connectionsViaProjects180Days));
-        landscapeAnalysisResults.setpIndex180Days(ContributorConnectionUtils.getPIndex(connectionsViaProjects180Days));
+        landscapeAnalysisResults.setcIndex180Days(ContributorConnectionUtils.getCIndex(connectionsViaRepositories180Days));
+        landscapeAnalysisResults.setpIndex180Days(ContributorConnectionUtils.getPIndex(connectionsViaRepositories180Days));
 
-        landscapeAnalysisResults.setcMean30Days(ContributorConnectionUtils.getCMean(connectionsViaProjects30Days));
-        landscapeAnalysisResults.setpMean30Days(ContributorConnectionUtils.getPMean(connectionsViaProjects30Days));
+        landscapeAnalysisResults.setcMean30Days(ContributorConnectionUtils.getCMean(connectionsViaRepositories30Days));
+        landscapeAnalysisResults.setpMean30Days(ContributorConnectionUtils.getPMean(connectionsViaRepositories30Days));
 
-        landscapeAnalysisResults.setcMean90Days(ContributorConnectionUtils.getCMean(connectionsViaProjects90Days));
-        landscapeAnalysisResults.setpMean90Days(ContributorConnectionUtils.getPMean(connectionsViaProjects90Days));
+        landscapeAnalysisResults.setcMean90Days(ContributorConnectionUtils.getCMean(connectionsViaRepositories90Days));
+        landscapeAnalysisResults.setpMean90Days(ContributorConnectionUtils.getPMean(connectionsViaRepositories90Days));
 
-        landscapeAnalysisResults.setcMean180Days(ContributorConnectionUtils.getCMean(connectionsViaProjects180Days));
-        landscapeAnalysisResults.setpMean180Days(ContributorConnectionUtils.getPMean(connectionsViaProjects180Days));
+        landscapeAnalysisResults.setcMean180Days(ContributorConnectionUtils.getCMean(connectionsViaRepositories180Days));
+        landscapeAnalysisResults.setpMean180Days(ContributorConnectionUtils.getPMean(connectionsViaRepositories180Days));
 
-        landscapeAnalysisResults.setcMedian30Days(ContributorConnectionUtils.getCMedian(connectionsViaProjects30Days));
-        landscapeAnalysisResults.setpMedian30Days(ContributorConnectionUtils.getPMedian(connectionsViaProjects30Days));
+        landscapeAnalysisResults.setcMedian30Days(ContributorConnectionUtils.getCMedian(connectionsViaRepositories30Days));
+        landscapeAnalysisResults.setpMedian30Days(ContributorConnectionUtils.getPMedian(connectionsViaRepositories30Days));
 
-        landscapeAnalysisResults.setcMedian90Days(ContributorConnectionUtils.getCMedian(connectionsViaProjects90Days));
-        landscapeAnalysisResults.setpMedian90Days(ContributorConnectionUtils.getPMedian(connectionsViaProjects90Days));
+        landscapeAnalysisResults.setcMedian90Days(ContributorConnectionUtils.getCMedian(connectionsViaRepositories90Days));
+        landscapeAnalysisResults.setpMedian90Days(ContributorConnectionUtils.getPMedian(connectionsViaRepositories90Days));
 
-        landscapeAnalysisResults.setcMedian180Days(ContributorConnectionUtils.getCMedian(connectionsViaProjects180Days));
-        landscapeAnalysisResults.setpMedian180Days(ContributorConnectionUtils.getPMedian(connectionsViaProjects180Days));
+        landscapeAnalysisResults.setcMedian180Days(ContributorConnectionUtils.getCMedian(connectionsViaRepositories180Days));
+        landscapeAnalysisResults.setpMedian180Days(ContributorConnectionUtils.getPMedian(connectionsViaRepositories180Days));
 
         landscapeAnalysisResults.setC2cConnectionsCount30Days(peopleDependencies30Days.size());
-        landscapeAnalysisResults.setC2pConnectionsCount30Days(connectionsViaProjects30Days.stream().mapToInt(c -> c.getConnectionsCount()).sum());
+        landscapeAnalysisResults.setC2pConnectionsCount30Days(connectionsViaRepositories30Days.stream().mapToInt(c -> c.getConnectionsCount()).sum());
 
         LOG.info("Adding history....");
         addHistory(landscapeAnalysisResults);
@@ -130,40 +135,40 @@ public class LandscapeAnalyzer {
     }
 
     private void addHistory(LandscapeAnalysisResults landscapeAnalysisResults) {
-        List<ContributorProjects> contributors = landscapeAnalysisResults.getContributors();
+        List<ContributorRepositories> contributors = landscapeAnalysisResults.getContributors();
         for (int i = 0; i < 12; i++) {
             int daysAgo1 = i * 30;
             int daysAgo2 = (i + 1) * 30;
             List<ComponentDependency> peopleDependencies30Days = ContributorConnectionUtils.getPeopleDependencies(contributors, daysAgo1, daysAgo2);
-            List<ContributorConnections> connectionsViaProjects30Days = ContributorConnectionUtils.getConnectionsViaProjects(contributors, peopleDependencies30Days, daysAgo1, daysAgo2);
-            landscapeAnalysisResults.getcIndex30DaysHistory().add(ContributorConnectionUtils.getCIndex(connectionsViaProjects30Days));
-            landscapeAnalysisResults.getpIndex30DaysHistory().add(ContributorConnectionUtils.getPIndex(connectionsViaProjects30Days));
-            landscapeAnalysisResults.getcMean30DaysHistory().add(ContributorConnectionUtils.getCMean(connectionsViaProjects30Days));
-            landscapeAnalysisResults.getpMean30DaysHistory().add(ContributorConnectionUtils.getPMean(connectionsViaProjects30Days));
-            landscapeAnalysisResults.getcMedian30DaysHistory().add(ContributorConnectionUtils.getCMedian(connectionsViaProjects30Days));
-            landscapeAnalysisResults.getpMedian30DaysHistory().add(ContributorConnectionUtils.getPMedian(connectionsViaProjects30Days));
-            int connectionSum = connectionsViaProjects30Days.stream().mapToInt(c -> c.getConnectionsCount()).sum();
-            landscapeAnalysisResults.getConnectionsViaProjects30DaysCountHistory().add((double) connectionSum);
+            List<ContributorConnections> connectionsViaRepositories30Days = ContributorConnectionUtils.getConnectionsViaRepositories(contributors, peopleDependencies30Days, daysAgo1, daysAgo2);
+            landscapeAnalysisResults.getcIndex30DaysHistory().add(ContributorConnectionUtils.getCIndex(connectionsViaRepositories30Days));
+            landscapeAnalysisResults.getpIndex30DaysHistory().add(ContributorConnectionUtils.getPIndex(connectionsViaRepositories30Days));
+            landscapeAnalysisResults.getcMean30DaysHistory().add(ContributorConnectionUtils.getCMean(connectionsViaRepositories30Days));
+            landscapeAnalysisResults.getpMean30DaysHistory().add(ContributorConnectionUtils.getPMean(connectionsViaRepositories30Days));
+            landscapeAnalysisResults.getcMedian30DaysHistory().add(ContributorConnectionUtils.getCMedian(connectionsViaRepositories30Days));
+            landscapeAnalysisResults.getpMedian30DaysHistory().add(ContributorConnectionUtils.getPMedian(connectionsViaRepositories30Days));
+            int connectionSum = connectionsViaRepositories30Days.stream().mapToInt(c -> c.getConnectionsCount()).sum();
+            landscapeAnalysisResults.getConnectionsViaRepositories30DaysCountHistory().add((double) connectionSum);
             landscapeAnalysisResults.getPeopleDependenciesCount30DaysHistory().add((double) peopleDependencies30Days.size());
             landscapeAnalysisResults.getActiveContributors30DaysHistory().add((double) ContributorConnectionUtils.getContributorsActiveInPeriodCount(contributors, daysAgo1, daysAgo2));
         }
     }
 
-    private CodeAnalysisResults getProjectAnalysisResults(SokratesProjectLink sokratesProjectLink) {
-        return getProjectAnalysisResults(getProjectAnalysisFile(sokratesProjectLink));
+    private CodeAnalysisResults getRepositoryAnalysisResults(SokratesRepositoryLink sokratesRepositoryLink) {
+        return getRepositoryAnalysisResults(getRepositoryAnalysisFile(sokratesRepositoryLink));
     }
 
-    private File getProjectAnalysisFile(SokratesProjectLink sokratesProjectLink) {
+    private File getRepositoryAnalysisFile(SokratesRepositoryLink sokratesRepositoryLink) {
         String analysisRoot = landscapeConfiguration.getAnalysisRoot();
         if (analysisRoot.startsWith(".")) {
             analysisRoot = Paths.get(landscapeConfigurationFile.getParentFile().getParentFile().getPath(), analysisRoot).toFile().getPath();
         }
-        return Paths.get(analysisRoot, sokratesProjectLink.getAnalysisResultsPath()).toFile();
+        return Paths.get(analysisRoot, sokratesRepositoryLink.getAnalysisResultsPath()).toFile();
     }
 
-    private CodeAnalysisResults getProjectAnalysisResults(File projectAnalysisResultsFile) {
+    private CodeAnalysisResults getRepositoryAnalysisResults(File repositoryAnalysisResultsFile) {
         try {
-            String json = FileUtils.readFileToString(projectAnalysisResultsFile, StandardCharsets.UTF_8);
+            String json = FileUtils.readFileToString(repositoryAnalysisResultsFile, StandardCharsets.UTF_8);
             CodeAnalysisResults codeAnalysisResults = (CodeAnalysisResults) new JsonMapper().getObject(json, CodeAnalysisResults.class);
             // codeAnalysisResults.setUnitsAnalysisResults(new UnitsAnalysisResults());
             // codeAnalysisResults.setFilesAnalysisResults(new FilesAnalysisResults());
@@ -185,23 +190,23 @@ public class LandscapeAnalyzer {
         return null;
     }
 
-    private List<String> getProjectFiles(SokratesProjectLink sokratesProjectLink) {
+    private List<String> getRepositoryFiles(SokratesRepositoryLink sokratesRepositoryLink) {
         List<String> files = new ArrayList<>();
 
-        files.addAll(getProjectFilesByScope(sokratesProjectLink, "aspect_main.txt"));
-        files.addAll(getProjectFilesByScope(sokratesProjectLink, "aspect_test.txt"));
-        files.addAll(getProjectFilesByScope(sokratesProjectLink, "aspect_generated.txt"));
-        files.addAll(getProjectFilesByScope(sokratesProjectLink, "aspect_build_and_deployment.txt"));
-        files.addAll(getProjectFilesByScope(sokratesProjectLink, "aspect_other.txt"));
-        files.addAll(getProjectFilesByScope(sokratesProjectLink, "excluded_files_ignored_extensions.txt"));
-        files.addAll(getProjectFilesByScope(sokratesProjectLink, "excluded_files_ignored_rules.txt"));
+        files.addAll(getRepositoryFilesByScope(sokratesRepositoryLink, "aspect_main.txt"));
+        files.addAll(getRepositoryFilesByScope(sokratesRepositoryLink, "aspect_test.txt"));
+        files.addAll(getRepositoryFilesByScope(sokratesRepositoryLink, "aspect_generated.txt"));
+        files.addAll(getRepositoryFilesByScope(sokratesRepositoryLink, "aspect_build_and_deployment.txt"));
+        files.addAll(getRepositoryFilesByScope(sokratesRepositoryLink, "aspect_other.txt"));
+        files.addAll(getRepositoryFilesByScope(sokratesRepositoryLink, "excluded_files_ignored_extensions.txt"));
+        files.addAll(getRepositoryFilesByScope(sokratesRepositoryLink, "excluded_files_ignored_rules.txt"));
 
         return files;
     }
 
-    private List<String> getProjectFilesByScope(SokratesProjectLink sokratesProjectLink, String scopeFile) {
+    private List<String> getRepositoryFilesByScope(SokratesRepositoryLink sokratesRepositoryLink, String scopeFile) {
         try {
-            File txtDataFolder = new File(getProjectAnalysisFile(sokratesProjectLink).getParentFile(), "text");
+            File txtDataFolder = new File(getRepositoryAnalysisFile(sokratesRepositoryLink).getParentFile(), "text");
             File mainFile = new File(txtDataFolder, scopeFile);
             if (mainFile.exists()) {
                 LOG.info(mainFile.getPath());

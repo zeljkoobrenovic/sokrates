@@ -12,11 +12,10 @@ import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.utils.LandscapeVisualsGenerator;
 import nl.obren.sokrates.sourcecode.Metadata;
-import nl.obren.sokrates.sourcecode.landscape.DefaultProjectTags;
-import nl.obren.sokrates.sourcecode.landscape.ProjectTagGroup;
+import nl.obren.sokrates.sourcecode.landscape.DefaultTags;
+import nl.obren.sokrates.sourcecode.landscape.TagGroup;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalyzer;
-import nl.obren.sokrates.sourcecode.landscape.init.LandscapeAnalysisInitiator;
 import nl.obren.sokrates.sourcecode.landscape.init.LandscapeAnalysisUpdater;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
@@ -64,8 +63,8 @@ public class LandscapeAnalysisCommands {
         LandscapeAnalyzer analyzer = new LandscapeAnalyzer();
 
         ProcessingStopwatch.start("analyzing");
-        LandscapeAnalysisResults landscapeAnalysisResults = analyzer.analyze(analysisRoot, landscapeConfigFile);
-        List<ProjectTagGroup> tagGroups = getTagGroups(analysisRoot, landscapeConfigFile);
+        LandscapeAnalysisResults landscapeAnalysisResults = analyzer.analyze(landscapeConfigFile);
+        List<TagGroup> tagGroups = getTagGroups(analysisRoot, landscapeConfigFile);
         ProcessingStopwatch.end("analyzing");
 
         ProcessingStopwatch.start("reporting");
@@ -104,29 +103,31 @@ public class LandscapeAnalysisCommands {
         ProcessingStopwatch.end("reporting");
     }
 
-    private static List<ProjectTagGroup> getTagGroups(File analysisRoot, File landscapeConfigFile) {
+    private static List<TagGroup> getTagGroups(File analysisRoot, File landscapeConfigFile) {
         File landscapeTagsConfigFile = getLandscapeTagsConfigFile(analysisRoot, new File(landscapeConfigFile.getParentFile(), "config-tags.json"));
-        List<ProjectTagGroup> tagGroups = new ArrayList<>();
+        List<TagGroup> tagGroups = new ArrayList<>();
         if (!landscapeTagsConfigFile.exists()) {
             try {
-                tagGroups = new DefaultProjectTags().defaultTagGroups();
+                tagGroups = new DefaultTags().defaultTagGroups();
                 FileUtils.write(landscapeTagsConfigFile, new JsonGenerator().generate(tagGroups), StandardCharsets.UTF_8);
             } catch (IOException e) {
                 LOG.error(e);
             }
         } else {
             try {
-                tagGroups = new JsonMapper().getObject(FileUtils.readFileToString(landscapeTagsConfigFile, StandardCharsets.UTF_8), new TypeReference<>() {});
+                tagGroups = new JsonMapper().getObject(FileUtils.readFileToString(landscapeTagsConfigFile, StandardCharsets.UTF_8), new TypeReference<>() {
+                });
                 FileUtils.write(landscapeTagsConfigFile, new JsonGenerator().generate(tagGroups), StandardCharsets.UTF_8);
             } catch (IOException e) {
                 LOG.error(e);
             }
         }
 
-        tagGroups.forEach(group -> group.getProjectTags().forEach(tag -> tag.setGroup(group)));
+        tagGroups.forEach(group -> group.getRepositoryTags().forEach(tag -> tag.setGroup(group)));
 
         return tagGroups;
     }
+
     private static File getLandscapeTagsConfigFile(File analysisRoot, File landscapeTagsConfigFile) {
         if (landscapeTagsConfigFile == null) {
             File landscapeAnalysisRoot = new File(analysisRoot, "_sokrates_landscape");

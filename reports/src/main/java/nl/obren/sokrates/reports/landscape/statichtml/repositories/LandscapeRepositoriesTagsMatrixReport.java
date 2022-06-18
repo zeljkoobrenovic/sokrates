@@ -1,4 +1,4 @@
-package nl.obren.sokrates.reports.landscape.statichtml.projects;
+package nl.obren.sokrates.reports.landscape.statichtml.repositories;
 
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
@@ -6,38 +6,37 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.utils.TagStats;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.landscape.ProjectTag;
-import nl.obren.sokrates.sourcecode.landscape.ProjectTagGroup;
+import nl.obren.sokrates.sourcecode.landscape.RepositoryTag;
+import nl.obren.sokrates.sourcecode.landscape.TagGroup;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ProjectAnalysisResults;
+import nl.obren.sokrates.sourcecode.landscape.analysis.RepositoryAnalysisResults;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class LandscapeProjectsTagsMatrixReport {
-    private static final Log LOG = LogFactory.getLog(LandscapeProjectsTagsMatrixReport.class);
+public class LandscapeRepositoriesTagsMatrixReport {
+    private static final Log LOG = LogFactory.getLog(LandscapeRepositoriesTagsMatrixReport.class);
 
     private LandscapeAnalysisResults landscapeAnalysisResults;
 
-    private List<ProjectTagGroup> projectTagGroups;
+    private List<TagGroup> tagGroups;
     private TagMap tagsMap;
     private String type;
     private boolean renderLangIcons;
 
-    public LandscapeProjectsTagsMatrixReport(LandscapeAnalysisResults landscapeAnalysisResults, List<ProjectTagGroup> projectTagGroups, TagMap tagsMap, String type, boolean renderLangIcons) {
+    public LandscapeRepositoriesTagsMatrixReport(LandscapeAnalysisResults landscapeAnalysisResults, List<TagGroup> tagGroups, TagMap tagsMap, String type, boolean renderLangIcons) {
         this.landscapeAnalysisResults = landscapeAnalysisResults;
-        this.projectTagGroups = projectTagGroups;
+        this.tagGroups = tagGroups;
         this.tagsMap = tagsMap;
         this.type = type;
         this.renderLangIcons = renderLangIcons;
     }
 
-    public void saveProjectsReport(RichTextReport report, String title) {
+    public void saveRepositoriesReport(RichTextReport report, String title) {
         report.startDiv("margin-bottom: 42px");
         report.addLevel1Header(title);
         report.addParagraph("Tags per sub-folder", "color: grey");
@@ -49,10 +48,10 @@ public class LandscapeProjectsTagsMatrixReport {
 
     private void addTagStats(RichTextReport report) {
         int index[] = {0};
-        projectTagGroups.stream().filter(tagGroup -> tagGroup.getProjectTags().size() > 0).forEach(tagGroup -> {
+        tagGroups.stream().filter(tagGroup -> tagGroup.getRepositoryTags().size() > 0).forEach(tagGroup -> {
             int count[] = {0};
-            tagGroup.getProjectTags().stream().forEach(projectTag -> {
-                if (tagsMap.getTagStats(projectTag.getKey()) != null) count[0] += 1;
+            tagGroup.getRepositoryTags().stream().forEach(repositoryTag -> {
+                if (tagsMap.getTagStats(repositoryTag.getKey()) != null) count[0] += 1;
             });
             if (count[0] == 0) {
                 return;
@@ -71,10 +70,10 @@ public class LandscapeProjectsTagsMatrixReport {
 
             addHeaderRow(report, roots);
 
-            tagGroup.getProjectTags().stream()
+            tagGroup.getRepositoryTags().stream()
                     .filter(t -> (tagsMap.getTagStats(t.getKey()) != null))
-                    .sorted((a, b) -> tagsMap.getTagStats(b.getKey()).getProjectsAnalysisResults().size() - tagsMap.getTagStats(a.getKey()).getProjectsAnalysisResults().size())
-                    .forEach(projectTag -> addTagRow(report, roots, projectTag.getTag(), projectTag, tagGroup.getColor()));
+                    .sorted((a, b) -> tagsMap.getTagStats(b.getKey()).getRepositoryAnalysisResults().size() - tagsMap.getTagStats(a.getKey()).getRepositoryAnalysisResults().size())
+                    .forEach(repositoryTag -> addTagRow(report, roots, repositoryTag.getTag(), repositoryTag, tagGroup.getColor()));
             report.endTable();
         });
     }
@@ -90,15 +89,15 @@ public class LandscapeProjectsTagsMatrixReport {
         report.endTableRow();
     }
 
-    private List<Pair<String, Integer>> getRoots(ProjectTagGroup tagGroup) {
+    private List<Pair<String, Integer>> getRoots(TagGroup tagGroup) {
         Map<String, List<String>> roots = new HashMap<>();
-        tagGroup.getProjectTags().stream().filter(t -> tagsMap.getTagStats(t.getKey()) != null).forEach(projectTag -> {
-            tagsMap.getTagStats(projectTag.getKey()).getProjectsAnalysisResults().forEach(project -> {
-                String root = project.getSokratesProjectLink().getAnalysisResultsPath().split("(\\/|\\\\)")[0];
+        tagGroup.getRepositoryTags().stream().filter(t -> tagsMap.getTagStats(t.getKey()) != null).forEach(repositoryTag -> {
+            tagsMap.getTagStats(repositoryTag.getKey()).getRepositoryAnalysisResults().forEach(repository -> {
+                String root = repository.getSokratesRepositoryLink().getAnalysisResultsPath().split("(\\/|\\\\)")[0];
                 if (!roots.containsKey(root)) {
                     roots.put(root, new ArrayList<>());
                 }
-                roots.get(root).add(project.getSokratesProjectLink().getAnalysisResultsPath());
+                roots.get(root).add(repository.getSokratesRepositoryLink().getAnalysisResultsPath());
             });
         });
 
@@ -111,7 +110,7 @@ public class LandscapeProjectsTagsMatrixReport {
         return rootsList;
     }
 
-    private void addTagRow(RichTextReport report, List<Pair<String, Integer>> roots, String tagName, ProjectTag tag, String color) {
+    private void addTagRow(RichTextReport report, List<Pair<String, Integer>> roots, String tagName, RepositoryTag tag, String color) {
         TagStats stats = tagsMap.getTagStats(tag.getKey());
         if (stats == null) {
             return;
@@ -119,27 +118,27 @@ public class LandscapeProjectsTagsMatrixReport {
         report.startTableRow("text-align: center");
         addTagCell(report, tagName, tag, color);
 
-        addProjectsTagCell(report, stats, "");
+        addRepositoriesTagCell(report, stats, "");
 
-        roots.forEach(root -> addProjectsTagCell(report, stats, root.getKey()));
+        roots.forEach(root -> addRepositoriesTagCell(report, stats, root.getKey()));
 
         report.endTableRow();
     }
 
-    private void addProjectsTagCell(RichTextReport report, TagStats stats, String root) {
-        List<ProjectAnalysisResults> projectsAnalysisResults = new ArrayList<>(stats.getProjectsAnalysisResults()).stream()
-                .filter(project -> StringUtils.isBlank(root) || project.getSokratesProjectLink().getAnalysisResultsPath().startsWith(root + "/"))
+    private void addRepositoriesTagCell(RichTextReport report, TagStats stats, String root) {
+        List<RepositoryAnalysisResults> repositoriesAnalysisResults = new ArrayList<>(stats.getRepositoryAnalysisResults()).stream()
+                .filter(repository -> StringUtils.isBlank(root) || repository.getSokratesRepositoryLink().getAnalysisResultsPath().startsWith(root + "/"))
                 .collect(Collectors.toList());
-        projectsAnalysisResults.sort((a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode() - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
-        int count = projectsAnalysisResults.size();
-        int tagMainLoc = projectsAnalysisResults.stream()
+        repositoriesAnalysisResults.sort((a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode() - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
+        int count = repositoriesAnalysisResults.size();
+        int tagMainLoc = repositoriesAnalysisResults.stream()
                 .mapToInt(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode())
                 .sum();
-        int tagCommitsCount30Days = projectsAnalysisResults
+        int tagCommitsCount30Days = repositoriesAnalysisResults
                 .stream()
                 .mapToInt(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days())
                 .sum();
-        int recentContributorCount = getRecentContributorCount(projectsAnalysisResults);
+        int recentContributorCount = getRecentContributorCount(repositoriesAnalysisResults);
         if (count > 0) {
             if (StringUtils.isNoneBlank(root)) {
                 report.startTableCell("background-color: " + stats.getTag().getGroup().getColor() + "; text-align: center; vertical-align: top");
@@ -157,15 +156,15 @@ public class LandscapeProjectsTagsMatrixReport {
                             + "<b>" + FormattingUtils.formatCount(recentContributorCount) + "</b> contributors (30d)",
                     "border-top: 2px solid lightgrey; border-bottom: 2px solid lightgrey; padding: 2px");
             int maxListSize = 100;
-            projectsAnalysisResults.stream().limit(maxListSize).forEach(project -> {
-                CodeAnalysisResults projectAnalysisResults = project.getAnalysisResults();
-                String projectReportUrl = getProjectReportUrl(project);
+            repositoriesAnalysisResults.stream().limit(maxListSize).forEach(repository -> {
+                CodeAnalysisResults repositoryAnalysisResults = repository.getAnalysisResults();
+                String repositoryReportUrl = getrepositoryReportUrl(repository);
                 report.addContentInDiv(
-                        "<a href='" + projectReportUrl + "' target='_blank' style='margin-left: 6px'>" + projectAnalysisResults.getMetadata().getName() + "</a> "
+                        "<a href='" + repositoryReportUrl + "' target='_blank' style='margin-left: 6px'>" + repositoryAnalysisResults.getMetadata().getName() + "</a> "
                                 + "<span color='lightgrey'>(<b>"
-                                + FormattingUtils.formatCount(projectAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode(), "-") + "</b> LOC)</span>");
+                                + FormattingUtils.formatCount(repositoryAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode(), "-") + "</b> LOC)</span>");
             });
-            if (projectsAnalysisResults.size() > maxListSize) {
+            if (repositoriesAnalysisResults.size() > maxListSize) {
                 report.addContentInDiv("...", "margin-bottom: 10px; margin-left: 7px; font-size: 160%");
             }
             report.endDiv();
@@ -177,7 +176,7 @@ public class LandscapeProjectsTagsMatrixReport {
         }
     }
 
-    private void addTagCell(RichTextReport report, String tagName, ProjectTag tag, String color) {
+    private void addTagCell(RichTextReport report, String tagName, RepositoryTag tag, String color) {
         report.startTableCell("vertical-align: top; white-space: nowrap;");
         if (StringUtils.isNotBlank(tagName)) {
             String tooltip = getTagTooltip(tag);
@@ -205,7 +204,7 @@ public class LandscapeProjectsTagsMatrixReport {
         report.endTableCell();
     }
 
-    private String getTagTooltip(ProjectTag tag) {
+    private String getTagTooltip(RepositoryTag tag) {
         String tooltip = "";
 
         if (tag.getPatterns().size() > 0) {
@@ -230,18 +229,18 @@ public class LandscapeProjectsTagsMatrixReport {
     }
 
 
-    private String getProjectReportFolderUrl(ProjectAnalysisResults projectAnalysis) {
-        return landscapeAnalysisResults.getConfiguration().getProjectReportsUrlPrefix() + projectAnalysis.getSokratesProjectLink().getHtmlReportsRoot() + "/";
+    private String getRepositoryReportFolderUrl(RepositoryAnalysisResults repositoryAnalysis) {
+        return landscapeAnalysisResults.getConfiguration().getRepositoryReportsUrlPrefix() + repositoryAnalysis.getSokratesRepositoryLink().getHtmlReportsRoot() + "/";
     }
 
-    private String getProjectReportUrl(ProjectAnalysisResults projectAnalysis) {
-        return getProjectReportFolderUrl(projectAnalysis) + "index.html";
+    private String getrepositoryReportUrl(RepositoryAnalysisResults repositoryAnalysis) {
+        return getRepositoryReportFolderUrl(repositoryAnalysis) + "index.html";
     }
 
-    private int getRecentContributorCount(List<ProjectAnalysisResults> projectsAnalysisResults) {
+    private int getRecentContributorCount(List<RepositoryAnalysisResults> repositoryAnalysisResults) {
         Set<String> ids = new HashSet<>();
-        projectsAnalysisResults.forEach(project -> {
-            project.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream()
+        repositoryAnalysisResults.forEach(repository -> {
+            repository.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream()
                     .filter(c -> c.getCommitsCount30Days() > 0).forEach(c -> ids.add(c.getEmail()));
         });
         return ids.size();

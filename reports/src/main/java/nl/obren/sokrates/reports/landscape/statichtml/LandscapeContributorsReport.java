@@ -5,15 +5,14 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.core.SummaryUtils;
 import nl.obren.sokrates.reports.landscape.utils.ContributorPerExtensionHelper;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjectInfo;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjects;
+import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositoryInfo;
+import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -38,7 +37,7 @@ public class LandscapeContributorsReport {
         return null;
     }
 
-    public void saveContributorsTable(List<ContributorProjects> contributors, int totalCommits, boolean recent) {
+    public void saveContributorsTable(List<ContributorRepositories> contributors, int totalCommits, boolean recent) {
         this.recent = recent;
         report.startTable("width: 100%");
         if (recent) {
@@ -61,7 +60,7 @@ public class LandscapeContributorsReport {
         }
     }
 
-    private void addContributor(int totalCommits, int[] counter, ContributorProjects contributor) {
+    private void addContributor(int totalCommits, int[] counter, ContributorRepositories contributor) {
         String color = contributor.getContributor().getCommitsCount90Days() > 0 ? "grey" : "lightgrey";
         report.startTableRow(contributor.getContributor().getCommitsCount30Days() > 0 ? "font-weight: bold;"
                 : "color: " + color);
@@ -101,36 +100,36 @@ public class LandscapeContributorsReport {
         }
         report.addTableCell(contributor.getContributor().getFirstCommitDate(), "vertical-align: middle;");
         report.addTableCell(contributor.getContributor().getLatestCommitDate(), "vertical-align: middle;");
-        StringBuilder projectInfo = new StringBuilder();
+        StringBuilder repositoryInfo = new StringBuilder();
         report.startTableCell();
         if (recent) {
-            List<ContributorProjectInfo> recentProjects = contributor.getProjects()
+            List<ContributorRepositoryInfo> recentRepositories = contributor.getRepositories()
                     .stream()
                     .filter(p -> p.getCommits30Days() > 0)
                     .collect(Collectors.toCollection(ArrayList::new));
-            int projectsCount = recentProjects.size();
-            report.startShowMoreBlock(projectsCount + (projectsCount == 1 ? " repository" : " repositories"));
-            recentProjects.forEach(contributorProjectInfo -> {
-                String projectName = contributorProjectInfo.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName();
-                int commits = contributorProjectInfo.getCommits30Days();
-                if (projectInfo.length() > 0) {
-                    projectInfo.append("<br/>");
+            int repositoriesCount = recentRepositories.size();
+            report.startShowMoreBlock(repositoriesCount + (repositoriesCount == 1 ? " repository" : " repositories"));
+            recentRepositories.forEach(contributorRepositoryInfo -> {
+                String repositoryName = contributorRepositoryInfo.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName();
+                int commits = contributorRepositoryInfo.getCommits30Days();
+                if (repositoryInfo.length() > 0) {
+                    repositoryInfo.append("<br/>");
                 }
-                projectInfo.append(projectName + " <span style='color: grey'>(" + commits + (commits == 1 ? " commit" : " commit") + ")</span>");
+                repositoryInfo.append(repositoryName + " <span style='color: grey'>(" + commits + (commits == 1 ? " commit" : " commit") + ")</span>");
             });
         } else {
-            int projectsCount = contributor.getProjects().size();
-            report.startShowMoreBlock(projectsCount + (projectsCount == 1 ? " repository" : " repositories"));
-            contributor.getProjects().forEach(contributorProjectInfo -> {
-                String projectName = contributorProjectInfo.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName();
-                int commits = contributorProjectInfo.getCommitsCount();
-                if (projectInfo.length() > 0) {
-                    projectInfo.append("<br/>");
+            int repositoriesCount = contributor.getRepositories().size();
+            report.startShowMoreBlock(repositoriesCount + (repositoriesCount == 1 ? " repository" : " repositories"));
+            contributor.getRepositories().forEach(contributorRepositoryInfo -> {
+                String repositoryName = contributorRepositoryInfo.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName();
+                int commits = contributorRepositoryInfo.getCommitsCount();
+                if (repositoryInfo.length() > 0) {
+                    repositoryInfo.append("<br/>");
                 }
-                projectInfo.append(projectName + " <span style='color: grey'>(" + commits + (commits == 1 ? " commit" : " commit") + ")</span>");
+                repositoryInfo.append(repositoryName + " <span style='color: grey'>(" + commits + (commits == 1 ? " commit" : " commit") + ")</span>");
             });
         }
-        report.addHtmlContent(projectInfo.toString());
+        report.addHtmlContent(repositoryInfo.toString());
         report.endTableCell();
         String biggestExtension = new ContributorPerExtensionHelper().getBiggestExtension(landscapeAnalysisResults.getConfiguration(), contributor);
         String icon;

@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.sourcecode.landscape;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.operations.OperationStatement;
@@ -11,17 +12,16 @@ import nl.obren.sokrates.sourcecode.operations.OperationStatement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class LandscapeConfiguration {
     // Basic info about the landscape (name, description, logo, links)
     private Metadata metadata = new Metadata();
 
-    // The relative path of the analysis (contains sub-folders with project analysis results)
+    // The relative path of the analysis (contains sub-folders with repository analysis results)
     private String analysisRoot = ".";
 
-    // A prefix attached to project reports
-    private String projectReportsUrlPrefix = "../";
+    // A prefix attached to repository reports
+    private String repositoryReportsUrlPrefix = "../";
 
     // An optional parent URL, if defined a click on the title of the landscape report will go to this link
     private String parentUrl = "";
@@ -32,17 +32,17 @@ public class LandscapeConfiguration {
     // Only files with extensions that have more or equal lines of main code will be included in the landscape report
     private int extensionThresholdLoc = 0;
 
-    // Only project having more or equal to the given number of lines of main code will be included in the landscape report
-    private int projectThresholdLocMain = 0;
+    // Only repositories having more or equal to the given number of lines of main code will be included in the landscape report
+    private int repositoryThresholdLocMain = 0;
 
-    // Only project having more or equal to the given number of unique contributors will be included in the landscape report
-    private int projectThresholdContributors = 2;
+    // Only repositories having more or equal to the given number of unique contributors will be included in the landscape report
+    private int repositoryThresholdContributors = 2;
 
-    // Only project having more or equal to the given number of commits will be included in the landscape report
+    // Only repositories having more or equal to the given number of commits will be included in the landscape report
     private int contributorThresholdCommits = 2;
 
-    // If not empty, only project before the given date (in the "YYYY-MM-dd" format) will be included in the landscape report
-    private String ignoreProjectsLastUpdatedBefore = "";
+    // If not empty, only repositories before the given date (in the "YYYY-MM-dd" format) will be included in the landscape report
+    private String ignoreRepositoriesLastUpdatedBefore = "";
 
     // A maximal number of years of commit history dispalyed in the report
     private int commitsMaxYears = 10;
@@ -53,17 +53,17 @@ public class LandscapeConfiguration {
     // If true, contributors IDs (e.g. emails) will be replaces with anonymous IDs (e.g. Contributor 1, Contributor 2)
     private boolean anonymizeContributors = false;
 
-    // If true, the projects report will show the status of controls of each project
-    private boolean showProjectControls = true;
+    // If true, the repositories report will show the status of controls of each repository
+    private boolean showRepositoryControls = true;
 
-    // A maximal number of projects shown in the short project pages (embedded in the index page)
-    private int projectsShortListLimit = 100;
+    // A maximal number of repositories shown in the short repository pages (embedded in the index page)
+    private int repositoriesShortListLimit = 100;
 
-    // A maximal number of projects shown in project pages (linked from the short page)
-    private int projectsListLimit = 1000;
+    // A maximal number of repositories shown in repository pages (linked from the short page)
+    private int repositoriesListLimit = 1000;
 
-    // A maximal number of years to be displayed for projects' history
-    private int projectsHistoryLimit = 30;
+    // A maximal number of years to be displayed for repositories' history
+    private int repositoriesHistoryLimit = 30;
 
     // A maximal number of contributors shown in contributor pages (linked from the short page)
     private int contributorsListLimit = 1000;
@@ -80,8 +80,8 @@ public class LandscapeConfiguration {
     // The list of extensions to ignore
     private List<String> ignoreExtensions = new ArrayList<>();
 
-    // If true, only one project with the same project name will be included in the landscape analyses (the first one found in file scan). Otherwise, all projects will be included.
-    private boolean includeOnlyFirstProjectWithSameName = true;
+    // If true, only one repository with the same repository name will be included in the landscape analyses (the first one found in file scan). Otherwise, all repositories will be included.
+    private boolean includeOnlyOneRepositoryWithSameName = true;
 
     // The list of extensions to merge (e.g. yml => yaml)
     private List<MergeExtension> mergeExtensions = new ArrayList<>();
@@ -89,7 +89,7 @@ public class LandscapeConfiguration {
     // An optional list of string transformation used to transform contributor IDs (e.g. to remove domain from email)
     private List<OperationStatement> transformContributorEmails = new ArrayList<>();
 
-    // If true, the list with extensions will be displayed in the first "Overview" tab. If false, the list with extensions will be displayed in the first "Projects" tab.
+    // If true, the list with extensions will be displayed in the first "Overview" tab. If false, the list with extensions will be displayed in the first "Repositories" tab.
     private boolean showExtensionsOnFirstTab = true;
 
     // If true, the contributors and commits trend will be displayed in the first "Overview" tab in addition to it being shown in the "Contributors" tab.
@@ -105,10 +105,10 @@ public class LandscapeConfiguration {
     private List<WebFrameLink> iFrames = new ArrayList<>();
 
     // A list of iFrames displayed at the start of the "Proejcts" tab
-    private List<WebFrameLink> iFramesProjectsAtStart = new ArrayList<>();
+    private List<WebFrameLink> iFramesRepositoriesAtStart = new ArrayList<>();
 
     // A list of iFrames displayed at the end of the "Proejcts" tab
-    private List<WebFrameLink> iFramesProjects = new ArrayList<>();
+    private List<WebFrameLink> iFramesRepositories = new ArrayList<>();
 
     // A list of iFrames displayed at the start of the "Contributors" tab
     private List<WebFrameLink> iFramesContributorsAtStart = new ArrayList<>();
@@ -123,8 +123,10 @@ public class LandscapeConfiguration {
     private String customHtmlReportHeaderFragment = "";
 
     // values automatically populated by Sokrates, do not change manually
+    @JsonIgnore
     private List<SubLandscapeLink> subLandscapes = new ArrayList<>();
-    private List<SokratesProjectLink> projects = new ArrayList<>();
+    @JsonIgnore
+    private List<SokratesRepositoryLink> repositories = new ArrayList<>();
 
     public Metadata getMetadata() {
         return metadata;
@@ -142,31 +144,32 @@ public class LandscapeConfiguration {
         this.analysisRoot = analysisRoot;
     }
 
-    public String getProjectReportsUrlPrefix() {
-        return projectReportsUrlPrefix;
+    public String getRepositoryReportsUrlPrefix() {
+        return repositoryReportsUrlPrefix;
     }
 
-    public void setProjectReportsUrlPrefix(String projectReportsUrlPrefix) {
-        this.projectReportsUrlPrefix = projectReportsUrlPrefix;
+    public void setRepositoryReportsUrlPrefix(String repositoryReportsUrlPrefix) {
+        this.repositoryReportsUrlPrefix = repositoryReportsUrlPrefix;
     }
 
+    @JsonIgnore
     public List<SubLandscapeLink> getSubLandscapes() {
         return subLandscapes;
     }
-    public List<SubLandscapeLink> getLevel1SubLandscapes() {
-        return subLandscapes.stream().filter(l -> l.getIndexFilePath().split("(\\/\\\\)").length == 3).collect(Collectors.toList());
-    }
 
+    @JsonIgnore
     public void setSubLandscapes(List<SubLandscapeLink> subLandscapes) {
         this.subLandscapes = subLandscapes;
     }
 
-    public List<SokratesProjectLink> getProjects() {
-        return projects;
+    @JsonIgnore
+    public List<SokratesRepositoryLink> getRepositories() {
+        return repositories;
     }
 
-    public void setProjects(List<SokratesProjectLink> projects) {
-        this.projects = projects;
+    @JsonIgnore
+    public void setRepositories(List<SokratesRepositoryLink> repositories) {
+        this.repositories = repositories;
     }
 
     public int getExtensionThresholdLoc() {
@@ -177,12 +180,12 @@ public class LandscapeConfiguration {
         this.extensionThresholdLoc = extensionThresholdLoc;
     }
 
-    public int getProjectThresholdLocMain() {
-        return projectThresholdLocMain;
+    public int getRepositoryThresholdLocMain() {
+        return repositoryThresholdLocMain;
     }
 
-    public void setProjectThresholdLocMain(int projectThresholdLocMain) {
-        this.projectThresholdLocMain = projectThresholdLocMain;
+    public void setRepositoryThresholdLocMain(int repositoryThresholdLocMain) {
+        this.repositoryThresholdLocMain = repositoryThresholdLocMain;
     }
 
     public int getContributorThresholdCommits() {
@@ -193,20 +196,20 @@ public class LandscapeConfiguration {
         this.contributorThresholdCommits = contributorThresholdCommits;
     }
 
-    public String getIgnoreProjectsLastUpdatedBefore() {
-        return ignoreProjectsLastUpdatedBefore;
+    public String getIgnoreRepositoriesLastUpdatedBefore() {
+        return ignoreRepositoriesLastUpdatedBefore;
     }
 
-    public void setIgnoreProjectsLastUpdatedBefore(String ignoreProjectsLastUpdatedBefore) {
-        this.ignoreProjectsLastUpdatedBefore = ignoreProjectsLastUpdatedBefore;
+    public void setIgnoreRepositoriesLastUpdatedBefore(String ignoreRepositoriesLastUpdatedBefore) {
+        this.ignoreRepositoriesLastUpdatedBefore = ignoreRepositoriesLastUpdatedBefore;
     }
 
-    public int getProjectThresholdContributors() {
-        return projectThresholdContributors;
+    public int getRepositoryThresholdContributors() {
+        return repositoryThresholdContributors;
     }
 
-    public void setProjectThresholdContributors(int projectThresholdContributors) {
-        this.projectThresholdContributors = projectThresholdContributors;
+    public void setRepositoryThresholdContributors(int repositoryThresholdContributors) {
+        this.repositoryThresholdContributors = repositoryThresholdContributors;
     }
 
     public boolean isShowExtensionsOnFirstTab() {
@@ -265,12 +268,12 @@ public class LandscapeConfiguration {
         this.iFramesAtStart = iFramesAtStart;
     }
 
-    public List<WebFrameLink> getiFramesProjects() {
-        return iFramesProjects;
+    public List<WebFrameLink> getiFramesRepositories() {
+        return iFramesRepositories;
     }
 
-    public void setiFramesProjects(List<WebFrameLink> iFramesProjects) {
-        this.iFramesProjects = iFramesProjects;
+    public void setiFramesRepositories(List<WebFrameLink> iFramesRepositories) {
+        this.iFramesRepositories = iFramesRepositories;
     }
 
     public List<WebFrameLink> getiFramesContributors() {
@@ -281,12 +284,12 @@ public class LandscapeConfiguration {
         this.iFramesContributors = iFramesContributors;
     }
 
-    public List<WebFrameLink> getiFramesProjectsAtStart() {
-        return iFramesProjectsAtStart;
+    public List<WebFrameLink> getiFramesRepositoriesAtStart() {
+        return iFramesRepositoriesAtStart;
     }
 
-    public void setiFramesProjectsAtStart(List<WebFrameLink> iFramesProjectsAtStart) {
-        this.iFramesProjectsAtStart = iFramesProjectsAtStart;
+    public void setiFramesRepositoriesAtStart(List<WebFrameLink> iFramesRepositoriesAtStart) {
+        this.iFramesRepositoriesAtStart = iFramesRepositoriesAtStart;
     }
 
     public List<WebFrameLink> getiFramesContributorsAtStart() {
@@ -305,36 +308,36 @@ public class LandscapeConfiguration {
         this.anonymizeContributors = anonymizeContributors;
     }
 
-    public boolean isShowProjectControls() {
-        return showProjectControls;
+    public boolean isShowRepositoryControls() {
+        return showRepositoryControls;
     }
 
-    public void setShowProjectControls(boolean showProjectControls) {
-        this.showProjectControls = showProjectControls;
+    public void setShowRepositoryControls(boolean showRepositoryControls) {
+        this.showRepositoryControls = showRepositoryControls;
     }
 
-    public int getProjectsListLimit() {
-        return projectsListLimit;
+    public int getRepositoriesListLimit() {
+        return repositoriesListLimit;
     }
 
-    public void setProjectsListLimit(int projectsListLimit) {
-        this.projectsListLimit = projectsListLimit;
+    public void setRepositoriesListLimit(int repositoriesListLimit) {
+        this.repositoriesListLimit = repositoriesListLimit;
     }
 
-    public int getProjectsHistoryLimit() {
-        return projectsHistoryLimit;
+    public int getRepositoriesHistoryLimit() {
+        return repositoriesHistoryLimit;
     }
 
-    public void setProjectsHistoryLimit(int projectsHistoryLimit) {
-        this.projectsHistoryLimit = projectsHistoryLimit;
+    public void setRepositoriesHistoryLimit(int repositoriesHistoryLimit) {
+        this.repositoriesHistoryLimit = repositoriesHistoryLimit;
     }
 
-    public int getProjectsShortListLimit() {
-        return projectsShortListLimit;
+    public int getRepositoriesShortListLimit() {
+        return repositoriesShortListLimit;
     }
 
-    public void setProjectsShortListLimit(int projectsShortListLimit) {
-        this.projectsShortListLimit = projectsShortListLimit;
+    public void setRepositoriesShortListLimit(int repositoriesShortListLimit) {
+        this.repositoriesShortListLimit = repositoriesShortListLimit;
     }
 
     public int getContributorsListLimit() {
@@ -425,11 +428,47 @@ public class LandscapeConfiguration {
         this.customTabs = customTabs;
     }
 
-    public boolean isIncludeOnlyFirstProjectWithSameName() {
-        return includeOnlyFirstProjectWithSameName;
+    public boolean isIncludeOnlyOneRepositoryWithSameName() {
+        return includeOnlyOneRepositoryWithSameName;
     }
 
-    public void setIncludeOnlyFirstProjectWithSameName(boolean includeOnlyFirstProjectWithSameName) {
-        this.includeOnlyFirstProjectWithSameName = includeOnlyFirstProjectWithSameName;
+    public void setIncludeOnlyOneRepositoryWithSameName(boolean includeOnlyOneRepositoryWithSameName) {
+        this.includeOnlyOneRepositoryWithSameName = includeOnlyOneRepositoryWithSameName;
     }
+
+
+    // legacy tolerant reader
+
+    public void setProjectReportsUrlPrefix(String repositoryReportsUrlPrefix) {
+        this.repositoryReportsUrlPrefix = repositoryReportsUrlPrefix;
+    }
+
+    public void setProjectThresholdLocMain(int repositoryThresholdLocMain) {
+        this.repositoryThresholdLocMain = repositoryThresholdLocMain;
+    }
+
+    public void setProjectThresholdContributors(int repositoryThresholdContributors) {
+        this.repositoryThresholdContributors = repositoryThresholdContributors;
+    }
+
+    public void setIgnoreProjectsLastUpdatedBefore(String ignoreRepositoriesLastUpdatedBefore) {
+        this.ignoreRepositoriesLastUpdatedBefore = ignoreRepositoriesLastUpdatedBefore;
+    }
+
+    public void setProjectsShortListLimit(int repositoriesShortListLimit) {
+        this.repositoriesShortListLimit = repositoriesShortListLimit;
+    }
+
+    public void setProjectsListLimit(int repositoriesListLimit) {
+        this.repositoriesListLimit = repositoriesListLimit;
+    }
+
+    public void setProjectsHistoryLimit(int repositoriesHistoryLimit) {
+        this.repositoriesHistoryLimit = repositoriesHistoryLimit;
+    }
+
+    public void setiFramesProjectsAtStart(List<WebFrameLink> iFramesRepositoriesAtStart) {
+        this.iFramesRepositoriesAtStart = iFramesRepositoriesAtStart;
+    }
+
 }

@@ -3,8 +3,8 @@ package nl.obren.sokrates.sourcecode.landscape.analysis;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ContributorProjectInfo {
-    private ProjectAnalysisResults projectAnalysisResults = new ProjectAnalysisResults();
+public class ContributorRepositoryInfo {
+    private RepositoryAnalysisResults repositoryAnalysisResults = new RepositoryAnalysisResults();
     private String firstCommitDate = "";
     private String latestCommitDate = "";
     private int commitsCount = 0;
@@ -12,12 +12,12 @@ public class ContributorProjectInfo {
     private int commits90Days;
     private List<String> commitDates = new ArrayList<>();
 
-    public ContributorProjectInfo() {
+    public ContributorRepositoryInfo() {
     }
 
-    public ContributorProjectInfo(ProjectAnalysisResults projectAnalysisResults, String firstCommitDate, String latestCommitDate,
-                                  int commitsCount, int commits30Days, int commits90Days, List<String> commitDates) {
-        this.projectAnalysisResults = projectAnalysisResults;
+    public ContributorRepositoryInfo(RepositoryAnalysisResults repositoryAnalysisResults, String firstCommitDate, String latestCommitDate,
+                                     int commitsCount, int commits30Days, int commits90Days, List<String> commitDates) {
+        this.repositoryAnalysisResults = repositoryAnalysisResults;
         this.firstCommitDate = firstCommitDate;
         this.latestCommitDate = latestCommitDate;
         this.commitsCount = commitsCount;
@@ -26,12 +26,12 @@ public class ContributorProjectInfo {
         this.commitDates = commitDates;
     }
 
-    public ProjectAnalysisResults getProjectAnalysisResults() {
-        return projectAnalysisResults;
+    public RepositoryAnalysisResults getRepositoryAnalysisResults() {
+        return repositoryAnalysisResults;
     }
 
-    public void setProjectAnalysisResults(ProjectAnalysisResults projectAnalysisResults) {
-        this.projectAnalysisResults = projectAnalysisResults;
+    public void setRepositoryAnalysisResults(RepositoryAnalysisResults repositoryAnalysisResults) {
+        this.repositoryAnalysisResults = repositoryAnalysisResults;
     }
 
     public String getFirstCommitDate() {

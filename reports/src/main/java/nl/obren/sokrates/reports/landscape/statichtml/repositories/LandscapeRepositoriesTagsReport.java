@@ -1,8 +1,9 @@
-package nl.obren.sokrates.reports.landscape.statichtml.projects;
+package nl.obren.sokrates.reports.landscape.statichtml.repositories;
 
 import nl.obren.sokrates.common.renderingutils.GraphvizUtil;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
 import nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator;
 import nl.obren.sokrates.reports.landscape.utils.Force3DGraphExporter;
 import nl.obren.sokrates.reports.landscape.utils.LandscapeGeneratorUtils;
@@ -11,10 +12,10 @@ import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
-import nl.obren.sokrates.sourcecode.landscape.ProjectTag;
-import nl.obren.sokrates.sourcecode.landscape.ProjectTagGroup;
+import nl.obren.sokrates.sourcecode.landscape.RepositoryTag;
+import nl.obren.sokrates.sourcecode.landscape.TagGroup;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ProjectAnalysisResults;
+import nl.obren.sokrates.sourcecode.landscape.analysis.RepositoryAnalysisResults;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -26,28 +27,28 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class LandscapeProjectsTagsReport {
-    private static final Log LOG = LogFactory.getLog(LandscapeProjectsTagsReport.class);
+public class LandscapeRepositoriesTagsReport {
+    private static final Log LOG = LogFactory.getLog(LandscapeRepositoriesTagsReport.class);
 
     private LandscapeAnalysisResults landscapeAnalysisResults;
     private File reportsFolder;
 
-    private List<ProjectTagGroup> projectTagGroups = new ArrayList<>();
+    private List<TagGroup> tagGroups = new ArrayList<>();
     private TagMap tagsMap;
     private String type;
     private String matrixReportFileName;
     private boolean renderLangIcons;
 
-    public LandscapeProjectsTagsReport(LandscapeAnalysisResults landscapeAnalysisResults, List<ProjectTagGroup> projectTagGroups, TagMap tagsMap, String type, String matrixReportFileName, boolean renderLangIcons) {
+    public LandscapeRepositoriesTagsReport(LandscapeAnalysisResults landscapeAnalysisResults, List<TagGroup> tagGroups, TagMap tagsMap, String type, String matrixReportFileName, boolean renderLangIcons) {
         this.landscapeAnalysisResults = landscapeAnalysisResults;
-        this.projectTagGroups = projectTagGroups;
+        this.tagGroups = tagGroups;
         this.tagsMap = tagsMap;
         this.type = type;
         this.matrixReportFileName = matrixReportFileName;
         this.renderLangIcons = renderLangIcons;
     }
 
-    public void saveProjectsReport(RichTextReport report, File reportsFolder, List<ProjectAnalysisResults> projectsAnalysisResults) {
+    public void saveRepositoriesReport(RichTextReport report, File reportsFolder) {
         this.reportsFolder = reportsFolder;
 
         report.startDiv("position: absolute; left: 1px");
@@ -61,10 +62,10 @@ public class LandscapeProjectsTagsReport {
         report.startTable();
         report.addTableHeader("Tag", "# repositories", "LOC<br>(main)", "LOC<br>(test)", "LOC<br>(active)", "LOC<br>(new)", "# commits<br>(30 days)", "# contributors<br>(30 days)");
         int index[] = {0};
-        projectTagGroups.stream().filter(tagGroup -> tagGroup.getProjectTags().size() > 0).forEach(tagGroup -> {
+        tagGroups.stream().filter(tagGroup -> tagGroup.getRepositoryTags().size() > 0).forEach(tagGroup -> {
             int count[] = {0};
-            tagGroup.getProjectTags().stream().forEach(projectTag -> {
-                if (tagsMap.getTagStats(projectTag.getKey()) != null) count[0] += 1;
+            tagGroup.getRepositoryTags().stream().forEach(repositoryTag -> {
+                if (tagsMap.getTagStats(repositoryTag.getKey()) != null) count[0] += 1;
             });
             if (count[0] == 0) {
                 return;
@@ -82,19 +83,19 @@ public class LandscapeProjectsTagsReport {
 
             report.endTableCell();
             report.endTableRow();
-            tagGroup.getProjectTags().stream()
+            tagGroup.getRepositoryTags().stream()
                     .filter(t -> (tagsMap.getTagStats(t.getKey()) != null))
-                    .sorted((a, b) -> tagsMap.getTagStats(b.getKey()).getProjectsAnalysisResults().size() - tagsMap.getTagStats(a.getKey()).getProjectsAnalysisResults().size())
-                    .forEach(projectTag -> addTagRow(report, projectTag.getTag(), projectTag, tagGroup.getColor()));
+                    .sorted((a, b) -> tagsMap.getTagStats(b.getKey()).getRepositoryAnalysisResults().size() - tagsMap.getTagStats(a.getKey()).getRepositoryAnalysisResults().size())
+                    .forEach(repositoryTag -> addTagRow(report, repositoryTag.getTag(), repositoryTag, tagGroup.getColor()));
         });
         if (tagsMap.containsKey("")) {
             report.addMultiColumnTableCell("&nbsp;", 8);
-            addTagRow(report, "", new ProjectTag(), "lightgrey");
+            addTagRow(report, "", new RepositoryTag(), "lightgrey");
         }
         report.endTable();
 
 
-        visualizeTagProjects(report);
+        visualizeTagRepositories(report);
     }
 
     private void addDependencyLinks(RichTextReport report, int[] index) {
@@ -111,25 +112,25 @@ public class LandscapeProjectsTagsReport {
         report.endDiv();
     }
 
-    private void addTagGroupSummary(ProjectTagGroup tagGroup, RichTextReport report) {
-        Map<String, ProjectAnalysisResults> projects = new HashMap<>();
+    private void addTagGroupSummary(TagGroup tagGroup, RichTextReport report) {
+        Map<String, RepositoryAnalysisResults> repositories = new HashMap<>();
 
-        tagGroup.getProjectTags().forEach(tag -> {
+        tagGroup.getRepositoryTags().forEach(tag -> {
             TagStats stats = tagsMap.getTagStats(tag.getKey());
             if (stats == null) {
                 return;
             }
-            stats.getProjectsAnalysisResults().forEach(project -> {
-                projects.put(project.getSokratesProjectLink().getAnalysisResultsPath(), project);
+            stats.getRepositoryAnalysisResults().forEach(repository -> {
+                repositories.put(repository.getSokratesRepositoryLink().getAnalysisResultsPath(), repository);
             });
         });
 
-        int count = projects.size();
-        int locMain = projects.values().stream().mapToInt(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
-        int locTest = projects.values().stream().mapToInt(p -> p.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
-        int locGenerated = projects.values().stream().mapToInt(p -> p.getAnalysisResults().getGeneratedAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
-        int locBuildAndDeployment = projects.values().stream().mapToInt(p -> p.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
-        int locOther = projects.values().stream().mapToInt(p -> p.getAnalysisResults().getOtherAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
+        int count = repositories.size();
+        int locMain = repositories.values().stream().mapToInt(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
+        int locTest = repositories.values().stream().mapToInt(p -> p.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
+        int locGenerated = repositories.values().stream().mapToInt(p -> p.getAnalysisResults().getGeneratedAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
+        int locBuildAndDeployment = repositories.values().stream().mapToInt(p -> p.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
+        int locOther = repositories.values().stream().mapToInt(p -> p.getAnalysisResults().getOtherAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
 
         int locSecondary = locTest + locGenerated + locBuildAndDeployment + locOther;
 
@@ -142,43 +143,43 @@ public class LandscapeProjectsTagsReport {
 
     private void renderTagDependencies() {
         int index[] = {0};
-        projectTagGroups.forEach(tagGroup -> {
+        tagGroups.forEach(tagGroup -> {
             index[0] += 1;
             String prefix = type + "_tags_graph_" + index[0];
-            List<ProjectTag> groupTags = tagGroup.getProjectTags();
+            List<RepositoryTag> groupTags = tagGroup.getRepositoryTags();
             exportTagGraphs(prefix, groupTags);
         });
 
-        List<ProjectTag> allTags = new ArrayList<>();
-        projectTagGroups.forEach(tagGroup -> {
-            allTags.addAll(tagGroup.getProjectTags());
+        List<RepositoryTag> allTags = new ArrayList<>();
+        tagGroups.forEach(tagGroup -> {
+            allTags.addAll(tagGroup.getRepositoryTags());
         });
         String prefix = type + "_tags_graph";
         exportTagGraphs(prefix, allTags);
     }
 
-    private void exportTagGraphs(String prefix, List<ProjectTag> groupTags) {
+    private void exportTagGraphs(String prefix, List<RepositoryTag> groupTags) {
         List<ComponentDependency> dependencies = new ArrayList<>();
-        Map<String, Set<String>> projectTagsMap = new HashMap<>();
+        Map<String, Set<String>> repositoryTagsMap = new HashMap<>();
         groupTags.stream().filter(tag -> tagsMap.getTagStats(tag.getKey()) != null)
                 .forEach(tag -> {
                     TagStats stats = tagsMap.getTagStats(tag.getKey());
-                    stats.getProjectsAnalysisResults().forEach(project -> {
-                        String name = project.getAnalysisResults().getMetadata().getName();
+                    stats.getRepositoryAnalysisResults().forEach(repository -> {
+                        String name = repository.getAnalysisResults().getMetadata().getName();
                         dependencies.add(new ComponentDependency("[" + name + "]", tag.getTag()));
-                        if (!projectTagsMap.containsKey(name)) {
-                            projectTagsMap.put(name, new HashSet<>());
+                        if (!repositoryTagsMap.containsKey(name)) {
+                            repositoryTagsMap.put(name, new HashSet<>());
                         }
-                        projectTagsMap.get(name).add(tag.getKey());
+                        repositoryTagsMap.get(name).add(tag.getKey());
                     });
                 });
         new Force3DGraphExporter().export3DForceGraph(dependencies, reportsFolder, prefix);
 
         List<ComponentDependency> directDependencies = new ArrayList<>();
         Map<String, ComponentDependency> directDependenciesMap = new HashMap<>();
-        projectTagsMap.values().forEach(projectTags -> {
-            projectTags.forEach(tag1 -> {
-                projectTags.stream().filter(tag2 -> !tag1.equals(tag2)).forEach(tag2 -> {
+        repositoryTagsMap.values().forEach(repositoryTags -> {
+            repositoryTags.forEach(tag1 -> {
+                repositoryTags.stream().filter(tag2 -> !tag1.equals(tag2)).forEach(tag2 -> {
                     String key1 = tag1 + "::" + tag2;
                     String key2 = tag2 + "::" + tag1;
                     if (directDependenciesMap.containsKey(key1)) {
@@ -187,8 +188,8 @@ public class LandscapeProjectsTagsReport {
                         directDependenciesMap.get(key2).increment(1);
                     } else {
                         ComponentDependency directDependency = new ComponentDependency(
-                                tag1 + " (" + tagsMap.getTagStats(tag1).getProjectsAnalysisResults().size() + ")",
-                                tag2 + " (" + tagsMap.getTagStats(tag2).getProjectsAnalysisResults().size() + ")");
+                                tag1 + " (" + tagsMap.getTagStats(tag1).getRepositoryAnalysisResults().size() + ")",
+                                tag2 + " (" + tagsMap.getTagStats(tag2).getRepositoryAnalysisResults().size() + ")");
                         directDependencies.add(directDependency);
                         directDependenciesMap.put(key1, directDependency);
                     }
@@ -214,28 +215,28 @@ public class LandscapeProjectsTagsReport {
         }
     }
 
-    private void visualizeTagProjects(RichTextReport report) {
+    private void visualizeTagRepositories(RichTextReport report) {
         report.startDiv("margin: 2px; margin-top: 18px; margin-bottom: 42px;");
         report.startShowMoreBlock("show visuals...");
-        int maxLoc = this.landscapeAnalysisResults.getProjectAnalysisResults().stream()
+        int maxLoc = this.landscapeAnalysisResults.getRepositoryAnalysisResults().stream()
                 .map(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode())
                 .reduce((a, b) -> Math.max(a, b)).get();
-        int maxCommits = this.landscapeAnalysisResults.getProjectAnalysisResults().stream()
+        int maxCommits = this.landscapeAnalysisResults.getRepositoryAnalysisResults().stream()
                 .map(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days())
                 .reduce((a, b) -> Math.max(a, b)).get();
-        projectTagGroups.forEach(tagGroup -> {
-            tagGroup.getProjectTags().forEach(tag -> {
+        tagGroups.forEach(tagGroup -> {
+            tagGroup.getRepositoryTags().forEach(tag -> {
                 visualizeTag(report, maxLoc, maxCommits, tag);
             });
         });
         if (tagsMap.containsKey("")) {
-            visualizeTag(report, maxLoc, maxCommits, new ProjectTag());
+            visualizeTag(report, maxLoc, maxCommits, new RepositoryTag());
         }
         report.endShowMoreBlock();
         report.endDiv();
     }
 
-    private void visualizeTag(RichTextReport report, int maxLoc, int maxCommits, ProjectTag tag) {
+    private void visualizeTag(RichTextReport report, int maxLoc, int maxCommits, RepositoryTag tag) {
         TagStats stats = tagsMap.getTagStats(tag.getKey());
         if (stats == null) {
             return;
@@ -243,16 +244,16 @@ public class LandscapeProjectsTagsReport {
 
         String tagName = tag.getKey();
         report.startDiv("margin: 18px;");
-        report.addContentInDiv("<b>" + (tagName.isBlank() ? "Untagged" : tagName) + "</b> (" + stats.getProjectsAnalysisResults().size() + ")", "margin-bottom: 5px");
-        List<ProjectAnalysisResults> projects = stats.getProjectsAnalysisResults();
-        projects.sort((a, b) -> b.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days() - a.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days());
-        projects.forEach(project -> {
-            int loc = project.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
+        report.addContentInDiv("<b>" + (tagName.isBlank() ? "Untagged" : tagName) + "</b> (" + stats.getRepositoryAnalysisResults().size() + ")", "margin-bottom: 5px");
+        List<RepositoryAnalysisResults> repositories = stats.getRepositoryAnalysisResults();
+        repositories.sort((a, b) -> b.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days() - a.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days());
+        repositories.forEach(repository -> {
+            int loc = repository.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
             int barSize = 3 + (int) Math.round(Math.sqrt(4900 * ((double) loc / maxLoc)));
-            int commitsCount30Days = project.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days();
+            int commitsCount30Days = repository.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days();
             double opacity = commitsCount30Days > 0 ? 0.4 + 0.6 * commitsCount30Days / maxCommits : 0.0;
-            report.startNewTabLink(getProjectReportUrl(project), "");
-            report.startDivWithLabel(tooltip(project),
+            report.startNewTabLink(getRepositoryReportUrl(repository), "");
+            report.startDivWithLabel(tooltip(repository),
                     "border: 1px solid grey; border-radius: 50%;" +
                             "display: inline-block; " +
                             "padding: 0;" +
@@ -273,7 +274,7 @@ public class LandscapeProjectsTagsReport {
         report.endDiv();
     }
 
-    private void addTagRow(RichTextReport report, String tagName, ProjectTag tag, String color) {
+    private void addTagRow(RichTextReport report, String tagName, RepositoryTag tag, String color) {
         TagStats stats = tagsMap.getTagStats(tag.getKey());
         if (stats == null) {
             return;
@@ -305,51 +306,54 @@ public class LandscapeProjectsTagsReport {
         }
         report.endTableCell();
         if (stats != null) {
-            int totalProjectsCount = landscapeAnalysisResults.getProjectsCount();
-            List<ProjectAnalysisResults> projectsAnalysisResults = new ArrayList<>(stats.getProjectsAnalysisResults());
-            projectsAnalysisResults.sort((a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode() - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
-            int count = projectsAnalysisResults.size();
+            int totalRepositoriesCount = landscapeAnalysisResults.getRepositoriesCount();
+            List<RepositoryAnalysisResults> repositoriesAnalysisResults = new ArrayList<>(stats.getRepositoryAnalysisResults());
+            repositoriesAnalysisResults.sort((a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode() - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
+            int count = repositoriesAnalysisResults.size();
             report.startTableCell("text-align: left");
-            String projectPercText = FormattingUtils.getFormattedPercentage(totalProjectsCount > 0 ? (100.0 * count / totalProjectsCount) : 0);
+            String repositoryPercText = FormattingUtils.getFormattedPercentage(totalRepositoriesCount > 0 ? (100.0 * count / totalRepositoriesCount) : 0);
             report.startShowMoreBlock("<b>" + count + "</b>" + (count == 1 ? " repository" : " repositories")
-                    + (count == 0 ? "" : " <span style='color: grey; font-size: 90%'>(" + projectPercText + "%)</span>"));
+                    + (count == 0 ? "" : " <span style='color: grey; font-size: 90%'>(" + repositoryPercText + "%)</span>"));
             report.startDiv("border-left: 2px solid lightgrey; margin-left: 5px; font-size: 80%");
             int maxListSize = 100;
-            projectsAnalysisResults.stream().limit(maxListSize).forEach(project -> {
-                CodeAnalysisResults projectAnalysisResults = project.getAnalysisResults();
-                String projectReportUrl = getProjectReportUrl(project);
+            repositoriesAnalysisResults.stream().limit(maxListSize).forEach(repository -> {
+                CodeAnalysisResults repositoryAnalysisResults = repository.getAnalysisResults();
+                String repositoryReportUrl = getRepositoryReportUrl(repository);
                 report.addContentInDiv(
-                        "<a href='" + projectReportUrl + "' target='_blank' style='margin-left: 6px'>" + projectAnalysisResults.getMetadata().getName() + "</a> "
+                        "<a href='" + repositoryReportUrl + "' target='_blank' style='margin-left: 6px'>" + repositoryAnalysisResults.getMetadata().getName() + "</a> "
                                 + "<span color='lightgrey'>(<b>"
-                                + FormattingUtils.formatCount(projectAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode(), "-") + "</b> LOC)</span>");
+                                + FormattingUtils.formatCount(repositoryAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode(), "-") + "</b> LOC)</span>");
             });
-            if (projectsAnalysisResults.size() > maxListSize) {
+            if (repositoriesAnalysisResults.size() > maxListSize) {
                 report.addContentInDiv("...", "margin-bottom: 10px; margin-left: 7px; font-size: 160%");
             }
+            report.startDiv("margin-top: 12px; margin-left: 5px; margin-bottom: 8px");
+            report.addNewTabLink("see details...", "data/" + LandscapeDataExport.getTagRepositoriesFileName(tag.getKey()));
+            report.endDiv();
             report.endDiv();
             report.endShowMoreBlock();
             report.endTableCell();
             int mainLoc = landscapeAnalysisResults.getMainLoc();
-            int tagMainLoc = projectsAnalysisResults.stream()
+            int tagMainLoc = repositoriesAnalysisResults.stream()
                     .mapToInt(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode())
                     .sum();
-            String mainLocPercText = FormattingUtils.getFormattedPercentage(totalProjectsCount > 0 ? (100.0 * tagMainLoc / mainLoc) : 0);
+            String mainLocPercText = FormattingUtils.getFormattedPercentage(totalRepositoriesCount > 0 ? (100.0 * tagMainLoc / mainLoc) : 0);
             report.addTableCell(FormattingUtils.formatCount(tagMainLoc) + " <span style='color: grey; font-size: 90%'>(" + mainLocPercText + "%)</span>", "");
-            report.addTableCell(FormattingUtils.formatCount(projectsAnalysisResults
+            report.addTableCell(FormattingUtils.formatCount(repositoriesAnalysisResults
                     .stream()
                     .mapToInt(p -> p.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCode())
                     .sum(), "-"), "");
-            report.addTableCell(FormattingUtils.formatCount(LandscapeAnalysisResults.getLoc1YearActive(projectsAnalysisResults), "-"), "r");
-            report.addTableCell(FormattingUtils.formatCount(LandscapeAnalysisResults.getLocNew(projectsAnalysisResults), "-"), "");
+            report.addTableCell(FormattingUtils.formatCount(LandscapeAnalysisResults.getLoc1YearActive(repositoriesAnalysisResults), "-"), "r");
+            report.addTableCell(FormattingUtils.formatCount(LandscapeAnalysisResults.getLocNew(repositoriesAnalysisResults), "-"), "");
             int commitsCount30Days = landscapeAnalysisResults.getCommitsCount30Days();
-            int tagCommitsCount30Days = projectsAnalysisResults
+            int tagCommitsCount30Days = repositoriesAnalysisResults
                     .stream()
                     .mapToInt(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days())
                     .sum();
             String commits30DaysPercText = FormattingUtils.getFormattedPercentage(commitsCount30Days > 0 ? (100.0 * tagCommitsCount30Days / commitsCount30Days) : 0);
             report.addTableCell(FormattingUtils.formatCount(tagCommitsCount30Days, "-") + (tagCommitsCount30Days == 0 ? "" : " <span style='color: grey; font-size: 90%'>(" + commits30DaysPercText + "%)</span>"), "");
             int totalRecentContributorCount = landscapeAnalysisResults.getRecentContributorsCount();
-            int recentContributorCount = getRecentContributorCount(projectsAnalysisResults);
+            int recentContributorCount = getRecentContributorCount(repositoriesAnalysisResults);
             String recentContributorsPercText = FormattingUtils.getFormattedPercentage(totalRecentContributorCount > 0 ? (100.0 * recentContributorCount / totalRecentContributorCount) : 0);
             if (recentContributorCount > 0) {
                 report.addTableCell("<div style='vertical-align: middle; display: inline-block'>"
@@ -368,12 +372,13 @@ public class LandscapeProjectsTagsReport {
             report.addTableCell("");
             report.addTableCell("");
             report.addTableCell("");
+            report.addTableCell("");
         }
 
         report.endTableRow();
     }
 
-    private String getTagTooltip(ProjectTag tag) {
+    private String getTagTooltip(RepositoryTag tag) {
         String tooltip = "";
 
         if (tag.getPatterns().size() > 0) {
@@ -397,26 +402,26 @@ public class LandscapeProjectsTagsReport {
         return tooltip;
     }
 
-    private boolean isTagged(ProjectAnalysisResults project, String mainTech, ProjectTag tag) {
-        String name = project.getAnalysisResults().getMetadata().getName();
+    private boolean isTagged(RepositoryAnalysisResults repository, String mainTech, RepositoryTag tag) {
+        String name = repository.getAnalysisResults().getMetadata().getName();
         return !tag.excludesMainTechnology(mainTech) &&
-                ((tag.matchesName(name) && !tag.excludeName(name)) || tag.matchesMainTechnology(mainTech) || tag.matchesAnyTechnology(LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, project.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension())) || tag.matchesPath(project.getFiles()));
+                ((tag.matchesName(name) && !tag.excludeName(name)) || tag.matchesMainTechnology(mainTech) || tag.matchesAnyTechnology(LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, repository.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension())) || tag.matchesPath(repository.getFiles()));
     }
 
-    private String getTabColor(ProjectTag tag) {
+    private String getTabColor(RepositoryTag tag) {
         return tag.getGroup() != null && StringUtils.isNotBlank(tag.getGroup().getColor()) ? tag.getGroup().getColor() : "#99badd";
     }
 
-    private String getProjectReportFolderUrl(ProjectAnalysisResults projectAnalysis) {
-        return landscapeAnalysisResults.getConfiguration().getProjectReportsUrlPrefix() + projectAnalysis.getSokratesProjectLink().getHtmlReportsRoot() + "/";
+    private String getRepositoryReportFolderUrl(RepositoryAnalysisResults repositoryAnalysis) {
+        return landscapeAnalysisResults.getConfiguration().getRepositoryReportsUrlPrefix() + repositoryAnalysis.getSokratesRepositoryLink().getHtmlReportsRoot() + "/";
     }
 
-    private String getProjectReportUrl(ProjectAnalysisResults projectAnalysis) {
-        return getProjectReportFolderUrl(projectAnalysis) + "index.html";
+    private String getRepositoryReportUrl(RepositoryAnalysisResults repositoryAnalysis) {
+        return getRepositoryReportFolderUrl(repositoryAnalysis) + "index.html";
     }
 
-    private String tooltip(ProjectAnalysisResults project) {
-        CodeAnalysisResults analysis = project.getAnalysisResults();
+    private String tooltip(RepositoryAnalysisResults repository) {
+        CodeAnalysisResults analysis = repository.getAnalysisResults();
         return analysis.getMetadata().getName() + "\n\n" +
                 analysis.getContributorsAnalysisResults().getCommitsCount30Days() + " commits (30 days)" + "\n" +
                 analysis.getContributorsAnalysisResults().getContributors()
@@ -424,10 +429,10 @@ public class LandscapeProjectsTagsReport {
                 FormattingUtils.formatCount(analysis.getMainAspectAnalysisResults().getLinesOfCode()) + " LOC";
     }
 
-    private int getRecentContributorCount(List<ProjectAnalysisResults> projectsAnalysisResults) {
+    private int getRecentContributorCount(List<RepositoryAnalysisResults> repositoryAnalysisResults) {
         Set<String> ids = new HashSet<>();
-        projectsAnalysisResults.forEach(project -> {
-            project.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream()
+        repositoryAnalysisResults.forEach(repository -> {
+            repository.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream()
                     .filter(c -> c.getCommitsCount30Days() > 0).forEach(c -> ids.add(c.getEmail()));
         });
         return ids.size();

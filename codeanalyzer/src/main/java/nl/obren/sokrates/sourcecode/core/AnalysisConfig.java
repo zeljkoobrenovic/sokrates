@@ -35,7 +35,7 @@ public class AnalysisConfig {
     // A maximal number of days in source code history used to calculate temporal file dependencies
     private int maxTemporalDependenciesDepthDays = 180;
 
-    // Projects with more than a given number of lines of main code will skip duplication analyses even if skipDuplication flag is false
+    // Repositories with more than a given number of lines of main code will skip duplication analyses even if skipDuplication flag is false
     private int locDuplicationThreshold = 10000000;
 
     // A minimal size of duplicated code block included in duplication analyses

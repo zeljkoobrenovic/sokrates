@@ -1,11 +1,10 @@
-package nl.obren.sokrates.reports.landscape.statichtml.projects;
+package nl.obren.sokrates.reports.landscape.statichtml.repositories;
 
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
-import nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator;
 import nl.obren.sokrates.reports.landscape.utils.TagStats;
-import nl.obren.sokrates.sourcecode.landscape.ProjectTag;
-import nl.obren.sokrates.sourcecode.landscape.ProjectTagGroup;
+import nl.obren.sokrates.sourcecode.landscape.RepositoryTag;
+import nl.obren.sokrates.sourcecode.landscape.TagGroup;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -16,44 +15,44 @@ import java.util.stream.Collectors;
 
 import static nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator.OPEN_IN_NEW_TAB_SVG_ICON;
 
-public class LandscapeProjectsTagsLine {
-    private static final Log LOG = LogFactory.getLog(LandscapeProjectsTagsLine.class);
+public class LandscapeRepositoriesTagsLine {
+    private static final Log LOG = LogFactory.getLog(LandscapeRepositoriesTagsLine.class);
 
-    private List<ProjectTagGroup> projectTagGroups = new ArrayList<>();
+    private List<TagGroup> tagGroups = new ArrayList<>();
     private final TagMap tagsMap;
 
-    public LandscapeProjectsTagsLine(List<ProjectTagGroup> projectTagGroups, TagMap tagsMap) {
-        this.projectTagGroups = projectTagGroups;
+    public LandscapeRepositoriesTagsLine(List<TagGroup> tagGroups, TagMap tagsMap) {
+        this.tagGroups = tagGroups;
         this.tagsMap = tagsMap;
     }
 
     public void addTagsLine(RichTextReport report) {
-        projectTagGroups.stream().filter(tagGroup -> tagGroup.getProjectTags().size() > 0).forEach(tagGroup -> {
+        tagGroups.stream().filter(tagGroup -> tagGroup.getRepositoryTags().size() > 0).forEach(tagGroup -> {
             int[] count = {0};
-            tagGroup.getProjectTags().stream().forEach(projectTag -> {
-                if (tagsMap.getTagStats(projectTag.getKey()) != null) count[0] += 1;
+            tagGroup.getRepositoryTags().stream().forEach(repositoryTag -> {
+                if (tagsMap.getTagStats(repositoryTag.getKey()) != null) count[0] += 1;
             });
             if (count[0] == 0) {
                 return;
             }
             report.startDiv("border: 1px solid " + tagGroup.getColor() + "; background-color: #fcfcfc; border-radius: 5px; display: inline-block; vertical-align: top; margin-right: 10px; margin-bottom: 5px;");
             report.addContentInDiv(tagGroup.getName(), "width: 100%; margin: 4px; color: grey; font-size: 70%; white-space: nowrap; overflow: hidden;");
-            tagGroup.getProjectTags().stream()
+            tagGroup.getRepositoryTags().stream()
                     .filter(t -> (tagsMap.getTagStats(t.getKey()) != null))
-                    .sorted((a, b) -> tagsMap.getTagStats(b.getKey()).getProjectsAnalysisResults().size() - tagsMap.getTagStats(a.getKey()).getProjectsAnalysisResults().size())
-                    .forEach(tag -> addTagDiv(report, tag.getTag(), tag, tagGroup.getColor(), tagsMap.getTagStats(tag.getKey()).getProjectsAnalysisResults().size()));
+                    .sorted((a, b) -> tagsMap.getTagStats(b.getKey()).getRepositoryAnalysisResults().size() - tagsMap.getTagStats(a.getKey()).getRepositoryAnalysisResults().size())
+                    .forEach(tag -> addTagDiv(report, tag.getTag(), tag, tagGroup.getColor(), tagsMap.getTagStats(tag.getKey()).getRepositoryAnalysisResults().size()));
             report.endDiv();
         });
 
         report.startDiv("margin-bottom: 14px; margin-top: 18px; margin-left: 5px;");
-        report.addNewTabLink("<b>see details&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "projects-tags.html");
+        report.addNewTabLink("<b>see details&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "repositories-tags.html");
         report.addHtmlContent("&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;");
-        report.addNewTabLink("<b>see expanded view</b> (tag stats per sub-folder)&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "projects-tags-matrix.html");
+        report.addNewTabLink("<b>see expanded view</b> (tag stats per sub-folder)&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "repositories-tags-matrix.html");
         report.endDiv();
 
     }
 
-    private void addTagDiv(RichTextReport report, String tagName, ProjectTag tag, String color, int count) {
+    private void addTagDiv(RichTextReport report, String tagName, RepositoryTag tag, String color, int count) {
         TagStats stats = tagsMap.getTagStats(tag.getKey());
         if (stats == null) {
             return;
@@ -85,7 +84,7 @@ public class LandscapeProjectsTagsLine {
         report.endDiv();
     }
 
-    private String getTagTooltip(ProjectTag tag, int count) {
+    private String getTagTooltip(RepositoryTag tag, int count) {
         String tooltip = "";
 
         if (tag.getPatterns().size() > 0) {

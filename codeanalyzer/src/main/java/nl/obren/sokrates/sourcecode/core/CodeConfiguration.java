@@ -11,8 +11,8 @@ import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.aspects.*;
-import nl.obren.sokrates.sourcecode.landscape.DefaultProjectTags;
-import nl.obren.sokrates.sourcecode.landscape.ProjectTagGroup;
+import nl.obren.sokrates.sourcecode.landscape.DefaultTags;
+import nl.obren.sokrates.sourcecode.landscape.TagGroup;
 import nl.obren.sokrates.sourcecode.metrics.MetricRangeControl;
 import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
 
@@ -22,7 +22,7 @@ import java.util.*;
 import static nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils.*;
 
 public class CodeConfiguration {
-    // Project description (used in report generation)
+    // Repository description (used for reports generation)
     private Metadata metadata = new Metadata();
 
     // A list of key findings displayed as a bullet list in a report
@@ -70,7 +70,7 @@ public class CodeConfiguration {
     // Parameters of source code analyses
     private AnalysisConfig analysis = new AnalysisConfig();
 
-    // Simple rules to tag a project based on path regex expressions
+    // Simple rules to tag a repository based on path regex expressions
     private List<TagRule> tagRules = new ArrayList<>();
 
     public CodeConfiguration() {
@@ -102,11 +102,11 @@ public class CodeConfiguration {
     private static List<TagRule> getDefaultTagRules() {
         List<TagRule> rules = new ArrayList<>();
 
-        List<ProjectTagGroup> tagGroups = new DefaultProjectTags().defaultTagGroups();
+        List<TagGroup> tagGroups = new DefaultTags().defaultTagGroups();
 
         tagGroups.forEach(group -> {
             String color = group.getColor();
-            group.getProjectTags().forEach(tag -> {
+            group.getRepositoryTags().forEach(tag -> {
                 rules.add(new TagRule(tag.getTag(), color, tag.getPathPatterns()));
             });
         });

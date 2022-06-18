@@ -1,9 +1,8 @@
 package nl.obren.sokrates.reports.landscape.utils;
 
-import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.githistory.ContributorPerExtensionStats;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjects;
+import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
 import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -24,13 +23,13 @@ public class ContributorPerExtensionHelper {
         return email;
     }
 
-    public List<Pair<String, ContributorPerExtensionStats>> getContributorStatsPerExtension(LandscapeConfiguration configuration, ContributorProjects contributorProjects) {
+    public List<Pair<String, ContributorPerExtensionStats>> getContributorStatsPerExtension(LandscapeConfiguration configuration, ContributorRepositories contributorRepositories) {
         Map<String, Pair<String,ContributorPerExtensionStats>> updatesPerExtensionMap = new HashMap<>();
 
-        contributorProjects.getProjects().stream().filter(p -> p.getCommits90Days() > 0).forEach(project -> {
-            project.getProjectAnalysisResults().getAnalysisResults().getContributorsAnalysisResults().getCommitsPerExtensions().forEach(commitsPerExtension -> {
+        contributorRepositories.getRepositories().stream().filter(p -> p.getCommits90Days() > 0).forEach(repository -> {
+            repository.getRepositoryAnalysisResults().getAnalysisResults().getContributorsAnalysisResults().getCommitsPerExtensions().forEach(commitsPerExtension -> {
                 String extension = commitsPerExtension.getExtension();
-                String email = contributorProjects.getContributor().getEmail();
+                String email = contributorRepositories.getContributor().getEmail();
                 commitsPerExtension.getContributorPerExtensionStats().stream()
                         .filter(stats -> transformEmail(configuration, stats.getContributor()).equalsIgnoreCase(email))
                         .forEach(stats -> {
@@ -55,8 +54,8 @@ public class ContributorPerExtensionHelper {
         return extensionUpdates;
     }
 
-    public String getBiggestExtension(LandscapeConfiguration configuration, ContributorProjects contributorProjects) {
-        List<Pair<String, ContributorPerExtensionStats>> contributorStatsPerExtension = this.getContributorStatsPerExtension(configuration, contributorProjects);
+    public String getBiggestExtension(LandscapeConfiguration configuration, ContributorRepositories contributorRepositories) {
+        List<Pair<String, ContributorPerExtensionStats>> contributorStatsPerExtension = this.getContributorStatsPerExtension(configuration, contributorRepositories);
 
         if (contributorStatsPerExtension.size() > 0) {
             return contributorStatsPerExtension.get(0).getLeft();

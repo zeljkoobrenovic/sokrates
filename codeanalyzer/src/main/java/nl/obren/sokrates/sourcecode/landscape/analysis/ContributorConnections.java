@@ -2,7 +2,7 @@ package nl.obren.sokrates.sourcecode.landscape.analysis;
 
 public class ContributorConnections {
     private String email = "";
-    private int projectsCount;
+    private int repositoriesCount;
     private int connectionsCount;
 
     public String getEmail() {
@@ -13,12 +13,12 @@ public class ContributorConnections {
         this.email = email;
     }
 
-    public int getProjectsCount() {
-        return projectsCount;
+    public int getRepositoriesCount() {
+        return repositoriesCount;
     }
 
-    public void setProjectsCount(int projectsCount) {
-        this.projectsCount = projectsCount;
+    public void setRepositoriesCount(int repositoriesCount) {
+        this.repositoriesCount = repositoriesCount;
     }
 
     public int getConnectionsCount() {

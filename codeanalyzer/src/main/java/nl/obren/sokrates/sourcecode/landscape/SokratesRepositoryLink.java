@@ -6,15 +6,15 @@ package nl.obren.sokrates.sourcecode.landscape;
 
 import java.io.File;
 
-public class SokratesProjectLink {
+public class SokratesRepositoryLink {
     private String analysisResultsPath = "";
     private String htmlReportsRoot = "";
     private String note = "";
 
-    public SokratesProjectLink() {
+    public SokratesRepositoryLink() {
     }
 
-    public SokratesProjectLink(String analysisResultsPath) {
+    public SokratesRepositoryLink(String analysisResultsPath) {
         this.analysisResultsPath = analysisResultsPath;
         File reportsRoot = new File(analysisResultsPath).getParentFile().getParentFile();
         this.htmlReportsRoot = new File(reportsRoot, "html").getPath();

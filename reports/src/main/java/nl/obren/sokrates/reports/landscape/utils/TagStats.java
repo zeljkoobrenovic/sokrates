@@ -1,33 +1,32 @@
 package nl.obren.sokrates.reports.landscape.utils;
 
-import nl.obren.sokrates.sourcecode.landscape.ProjectTag;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjectInfo;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ProjectAnalysisResults;
+import nl.obren.sokrates.sourcecode.landscape.RepositoryTag;
+import nl.obren.sokrates.sourcecode.landscape.analysis.RepositoryAnalysisResults;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class TagStats {
-    private ProjectTag tag;
-    private List<ProjectAnalysisResults> projectsAnalysisResults = new ArrayList<>();
+    private RepositoryTag tag;
+    private List<RepositoryAnalysisResults> repositoryAnalysisResults = new ArrayList<>();
 
-    public TagStats(ProjectTag tag) {
+    public TagStats(RepositoryTag tag) {
         this.tag = tag;
     }
 
-    public ProjectTag getTag() {
+    public RepositoryTag getTag() {
         return tag;
     }
 
-    public void setTag(ProjectTag tag) {
+    public void setTag(RepositoryTag tag) {
         this.tag = tag;
     }
 
-    public List<ProjectAnalysisResults> getProjectsAnalysisResults() {
-        return projectsAnalysisResults;
+    public List<RepositoryAnalysisResults> getRepositoryAnalysisResults() {
+        return repositoryAnalysisResults;
     }
 
-    public void setProjectsAnalysisResults(List<ProjectAnalysisResults> projectsAnalysisResults) {
-        this.projectsAnalysisResults = projectsAnalysisResults;
+    public void setRepositoryAnalysisResults(List<RepositoryAnalysisResults> repositoryAnalysisResults) {
+        this.repositoryAnalysisResults = repositoryAnalysisResults;
     }
 }

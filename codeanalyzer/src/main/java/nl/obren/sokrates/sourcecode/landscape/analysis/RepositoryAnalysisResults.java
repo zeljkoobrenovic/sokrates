@@ -6,33 +6,33 @@ package nl.obren.sokrates.sourcecode.landscape.analysis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.landscape.SokratesProjectLink;
+import nl.obren.sokrates.sourcecode.landscape.SokratesRepositoryLink;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProjectAnalysisResults {
-    private SokratesProjectLink sokratesProjectLink;
+public class RepositoryAnalysisResults {
+    private SokratesRepositoryLink sokratesRepositoryLink;
     private CodeAnalysisResults analysisResults;
 
     @JsonIgnore
     List<String> files = new ArrayList<>();
 
-    public ProjectAnalysisResults() {
+    public RepositoryAnalysisResults() {
     }
 
-    public ProjectAnalysisResults(SokratesProjectLink sokratesProjectLink, CodeAnalysisResults analysisResults, List<String> files) {
-        this.sokratesProjectLink = sokratesProjectLink;
+    public RepositoryAnalysisResults(SokratesRepositoryLink sokratesRepositoryLink, CodeAnalysisResults analysisResults, List<String> files) {
+        this.sokratesRepositoryLink = sokratesRepositoryLink;
         this.analysisResults = analysisResults;
         this.files = files;
     }
 
-    public SokratesProjectLink getSokratesProjectLink() {
-        return sokratesProjectLink;
+    public SokratesRepositoryLink getSokratesRepositoryLink() {
+        return sokratesRepositoryLink;
     }
 
-    public void setSokratesProjectLink(SokratesProjectLink sokratesProjectLink) {
-        this.sokratesProjectLink = sokratesProjectLink;
+    public void setSokratesRepositoryLink(SokratesRepositoryLink sokratesRepositoryLink) {
+        this.sokratesRepositoryLink = sokratesRepositoryLink;
     }
 
     public CodeAnalysisResults getAnalysisResults() {

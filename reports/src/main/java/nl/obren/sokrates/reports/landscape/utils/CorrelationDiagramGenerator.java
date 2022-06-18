@@ -26,9 +26,9 @@ public class CorrelationDiagramGenerator<T> {
     public void addCorrelations(String title, String xLabel, String yLabel, ToDoubleFunction<T> xValueFunction, ToDoubleFunction<T> yValueFunction, ToStringFunction<T> nameFunction) {
         DescriptiveStatistics xStats = new DescriptiveStatistics();
         DescriptiveStatistics yStats = new DescriptiveStatistics();
-        items.forEach(project -> {
-            double xValue = xValueFunction.applyAsDouble(project);
-            double yValue = yValueFunction.applyAsDouble(project);
+        items.forEach(repository -> {
+            double xValue = xValueFunction.applyAsDouble(repository);
+            double yValue = yValueFunction.applyAsDouble(repository);
             if (xValue > 0 && yValue > 0) {
                 xStats.addValue(xValue);
                 yStats.addValue(yValue);
@@ -51,12 +51,12 @@ public class CorrelationDiagramGenerator<T> {
         report.addHtmlContent(" <rect width=\"" + width + "\" height=\"" + height + "\" style=\"fill:rgb(200,200,200);stroke-width:1;stroke:rgb(100,100,100)\" />");
         Map<String, String> sameLocationMap = new HashMap<>();
         int count[] = {1};
-        items.forEach(project -> {
+        items.forEach(repository -> {
             if (count[0] > maxNumberOfPointsOnDiagram) {
                 return;
             }
-            double xValue = xValueFunction.applyAsDouble(project);
-            double yValue = yValueFunction.applyAsDouble(project);
+            double xValue = xValueFunction.applyAsDouble(repository);
+            double yValue = yValueFunction.applyAsDouble(repository);
             if (xValue > 0 && yValue > 0) {
                 double x = getX(xStats.getMax(), xValue);
                 double y = getY(yStats.getMax(), yValue);
@@ -66,7 +66,7 @@ public class CorrelationDiagramGenerator<T> {
                 }
                 sameLocationMap.put(key, key);
                 report.addHtmlContent(" <circle cx=\"" + (int) x + "\" cy=\"" + (int) y + "\" r=\"" + r + "\" fill=\"black\" fill-opacity=\"0.2\">");
-                report.addHtmlContent(" <title>" + nameFunction.toString(project)
+                report.addHtmlContent(" <title>" + nameFunction.toString(repository)
                         + "\n  x: " + (int) xValue + " " + xLabel
                         + "\n  y: " + (int) yValue + " " + yLabel + "</title>");
                 report.addHtmlContent(" </circle>");

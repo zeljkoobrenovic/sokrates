@@ -76,9 +76,9 @@ public class Commands {
     // options
     private Option srcRoot = new Option(ARG_SRC_ROOT, true, "[OPTIONAL] the folder where reports will be stored (default is \"<currentFolder>/_sokrates/reports/)");
     private Option conventionsFile = new Option(ARG_CONVENTIONS_FILE, true, "[OPTIONAL] the custom conventions JSON file path");
-    private Option name = new Option(ARG_NAME, true, "[OPTIONAL] the project name");
-    private Option description = new Option(ARG_DESCRIPTION, true, "[OPTIONAL] the project description");
-    private Option logoLink = new Option(ARG_LOGO_LINK, true, "[OPTIONAL] the project logo link");
+    private Option name = new Option(ARG_NAME, true, "[OPTIONAL] the repository name");
+    private Option description = new Option(ARG_DESCRIPTION, true, "[OPTIONAL] the repository description");
+    private Option logoLink = new Option(ARG_LOGO_LINK, true, "[OPTIONAL] the repository logo link");
     private Option confFile = new Option(ARG_CONF_FILE, true, "[OPTIONAL] the path to configuration file (default is \"<currentFolder>/_sokrates/config.json\")");
     private Option date = new Option(ARG_DATE, true, "[OPTIONAL] last date of source code update (default today), used for reports on active contributors. " +
             "You can also specify this date via the system variable \"" + DateUtils.ENV_SOKRATES_ANALYSIS_DATE + "\".");
@@ -98,9 +98,9 @@ public class Commands {
     private Option skipDuplicationAnalyses = new Option(ARG_SKIP_DUPLICATION_ANALYSES, false, "[OPTIONAL] skips duplication analyses");
     private Option enableDuplicationAnalyses = new Option(ARG_ENABLE_DUPLICATION_ANALYSES, false, "[OPTIONAL] enables duplication analyses");
 
-    private Option setName = new Option(ARG_SET_NAME, true, "[OPTIONAL] sets a project name");
-    private Option setDescription = new Option(ARG_SET_DESCRIPTION, true, "[OPTIONAL] sets a project description");
-    private Option setLogoLink = new Option(ARG_SET_LOGO_LINK, true, "[OPTIONAL] sets a project logo link");
+    private Option setName = new Option(ARG_SET_NAME, true, "[OPTIONAL] sets a repository name");
+    private Option setDescription = new Option(ARG_SET_DESCRIPTION, true, "[OPTIONAL] sets a repository description");
+    private Option setLogoLink = new Option(ARG_SET_LOGO_LINK, true, "[OPTIONAL] sets a repository logo link");
     private Option setCacheFiles = new Option(ARG_SET_CACHE_FILES, true, "[OPTIONAL] sets a cache file flag ('true' or 'false')");
     private Option addLink = new Option(ARG_ADD_LINK, true, "[OPTIONAL] adds a new link");
     private Option help = new Option(ARG_HELP, true, "[OPTIONAL] gives extra details about a command usage");
