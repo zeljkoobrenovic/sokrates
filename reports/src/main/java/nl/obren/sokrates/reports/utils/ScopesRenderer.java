@@ -21,6 +21,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
+import static nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator.OPEN_IN_NEW_TAB_SVG_ICON;
+
 public class ScopesRenderer {
     private List<String> aspectsFileListPaths;
     private List<NumericMetric> fileCountPerComponent;
@@ -163,7 +165,7 @@ public class ScopesRenderer {
                         NumericMetric firstMetric = renderingList.get(0).getLinesOfCode();
                         double firstPercentage = 100.0 * firstMetric.getValue().doubleValue() / linesCount;
                         DecimalFormat decimalFormat = new DecimalFormat("##.##");
-                        decimalFormat.setDecimalFormatSymbols( new DecimalFormatSymbols(Locale.ENGLISH));
+                        decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.ENGLISH));
                         report.addListItem("\"" + firstMetric.getName() + "\" is biggest, containing <b>" + decimalFormat.format(firstPercentage) + "%</b> of code.");
                         if (renderingList.size() >= 2) {
                             NumericMetric lastMetric = renderingList.get(renderingList.size() - 1).getLinesOfCode();
@@ -193,10 +195,13 @@ public class ScopesRenderer {
             String filesFragment = "";
             if (fileCountPerComponent.size() > i) {
                 item.setFilesCount(fileCountPerComponent.get(i));
-                filesFragment = fileCountPerComponent.get(i).getValue() + " files";
+                int count = fileCountPerComponent.get(i).getValue().intValue();
+                filesFragment = FormattingUtils.formatCountPlural(count, "file", "files");
                 if (aspectsFileListPaths != null && aspectsFileListPaths.size() > i) {
-                    filesFragment = "<u><a href='../data/text/aspect_" + aspectsFileListPaths.get(i)
-                            + ".txt'>" + filesFragment + "</a></u>";
+                    if (count > 0) {
+                        filesFragment = "<u><a target='_blank' href='../data/text/aspect_" + aspectsFileListPaths.get(i)
+                                + ".txt'>" + filesFragment + "</a></u>";
+                    }
                 }
                 item.setFilesFragment(filesFragment);
             }

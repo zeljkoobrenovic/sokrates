@@ -1,5 +1,6 @@
 package nl.obren.sokrates.reports.landscape.statichtml.repositories;
 
+import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.landscape.utils.LandscapeGeneratorUtils;
 import nl.obren.sokrates.reports.landscape.utils.TagStats;
 import nl.obren.sokrates.sourcecode.landscape.RepositoryTag;
@@ -7,6 +8,8 @@ import nl.obren.sokrates.sourcecode.landscape.TagGroup;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.RepositoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.util.*;
 
@@ -15,6 +18,7 @@ public class TagMap {
     private List<TagGroup> tagGroups;
     private Map<String, TagStats> tagStatsMap = new HashMap<>();
     private Map<String, List<RepositoryTag>> repositoryTags = new HashMap<>();
+    private static final Log LOG = LogFactory.getLog(TagMap.class);
 
     public TagMap(LandscapeAnalysisResults landscapeAnalysisResults, List<TagGroup> tagGroups) {
         this.landscapeAnalysisResults = landscapeAnalysisResults;
@@ -22,6 +26,10 @@ public class TagMap {
     }
 
     public void updateTagMap(List<RepositoryAnalysisResults> repositories) {
+        int filesCount = repositories.stream().mapToInt(r -> r.getFiles().size()).sum();
+
+        LOG.info("Searching for tag patterns in " + FormattingUtils.formatCount(filesCount) + " files...");
+
         repositories.forEach(repository -> {
             List<NumericMetric> linesOfCodePerExtension = LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, repository.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension());
             linesOfCodePerExtension.sort((a, b) -> b.getValue().intValue() - a.getValue().intValue());
@@ -79,6 +87,7 @@ public class TagMap {
         boolean matchesName = tag.matchesName(name);
         boolean matchesMainTechnology = tag.matchesMainTechnology(mainTech);
         boolean matchesAnyTechnology = tag.matchesAnyTechnology(linesOfCodePerExtension);
+
         boolean matchesPath = tag.matchesPath(repository.getFiles());
 
         return matchesName || matchesMainTechnology || matchesAnyTechnology || matchesPath;

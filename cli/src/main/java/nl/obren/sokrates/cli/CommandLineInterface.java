@@ -255,7 +255,10 @@ public class CommandLineInterface {
                 LOG.info(System.getProperty("user.dir"));
                 System.setProperty("user.dir", absolutePath);
                 LOG.info(System.getProperty("user.dir"));
-                File reportsFolder = LandscapeAnalysisCommands.update(new File(landscapeFolder.getAbsolutePath()), null, metadata);
+                LandscapeAnalysisCommands.update(new File(landscapeFolder.getAbsolutePath()), null, metadata);
+                DateUtils.reset();
+                RegexUtils.reset();
+                System.gc();
             });
             LOG.info("Analysed " + landscapeConfigFiles + " landscape(s):");
             landscapeConfigFiles.forEach(landscapeConfigFile -> {

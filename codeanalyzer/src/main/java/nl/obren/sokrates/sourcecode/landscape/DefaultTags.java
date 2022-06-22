@@ -31,7 +31,7 @@ public class DefaultTags {
         buildTags.getRepositoryTags().add(newPathPatternTagInstance("podfile", "general/cocoa-pods", Arrays.asList("(|.*/)Podfile")));
         buildTags.getRepositoryTags().add(newPathPatternTagInstance("make", "general/gnu", Arrays.asList("(|.*/)Makefile")));
 
-        ciCdTags.getRepositoryTags().add(newPathPatternTagInstance("jenkins", "general/jenkins", Arrays.asList("(|.*/)Jenkinsfile")));
+        ciCdTags.getRepositoryTags().add(newPathPatternTagInstance("jenkins", "general/jenkins", Arrays.asList("(|.*/)Jenkinsfile", "(|.*/)Jenkinsfile[.][a-z0-9_]+")));
         ciCdTags.getRepositoryTags().add(newPathPatternTagInstance("travis", "general/travis", Arrays.asList("(|.*/)[.]travis[.]ya?ml")));
         ciCdTags.getRepositoryTags().add(newPathPatternTagInstance("github actions", "general/github-actions", Arrays.asList("(|.*/)[.]github[/]workflows[/].*")));
 

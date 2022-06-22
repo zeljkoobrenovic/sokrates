@@ -19,6 +19,7 @@ public class DateUtils {
 
     private static Map<String, Boolean> dateInRangeCache = new HashMap<>();
     private static Map<String, Boolean> dateBetweenCache = new HashMap<>();
+    private static Map<String, String> mondays = new HashMap<>();
 
     public static boolean isDateWithinRange(String date, int rangeInDays) {
         if (StringUtils.isBlank(date)) {
@@ -196,7 +197,7 @@ public class DateUtils {
         DateUtils.latestCommitDate = latestCommitDate;
     }
 
-    private static Map<String,String> mondays = new HashMap<>();
+
     public static String getWeekMonday(String date) {
         if (mondays.containsKey(date)) {
             return mondays.get(date);
@@ -221,5 +222,11 @@ public class DateUtils {
 
     public static String getYear(String date) {
         return date.substring(0, 4);
+    }
+
+    public static void reset() {
+        dateBetweenCache.clear();
+        dateInRangeCache.clear();
+        mondays.clear();
     }
 }

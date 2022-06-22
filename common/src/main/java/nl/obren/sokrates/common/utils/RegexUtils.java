@@ -20,21 +20,15 @@ public class RegexUtils {
     public static final int MAX_TEXT_LENGTH = 1000;
     private static final Log LOG = LogFactory.getLog(RegexUtils.class);
     private static Map<String, Pattern> compiledPatterns = new HashMap<>();
-    private static Map<String, Boolean> matchedPatterns = new HashMap<>();
-
     public static boolean matchesEntirely(String regexPattern, String content) {
         try {
             String key = regexPattern + " ::->:: " + content;
-            if (matchedPatterns.containsKey(key)) {
-                return matchedPatterns.get(key);
-            }
             Pattern pattern = compiledPatterns.get(regexPattern);
             if (pattern == null) {
                 pattern = Pattern.compile(regexPattern);
                 compiledPatterns.put(regexPattern, pattern);
             }
             boolean matches = pattern.matcher(content).matches();
-            matchedPatterns.put(key, matches);
             return matches;
         } catch (PatternSyntaxException e) {
             LOG.debug(e);
@@ -118,5 +112,9 @@ public class RegexUtils {
 
     private static String unifyEndOfLineCharacters(String content) {
         return content.replace("\r\n", "\n").replace("\r", "\n").replace("\t", "    ");
+    }
+
+    public static void reset() {
+        compiledPatterns.clear();
     }
 }
