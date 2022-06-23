@@ -18,7 +18,7 @@ public class AnalysisConfig {
     private boolean skipDependencies = false;
 
     // If set to true, Sokrates creates a copy of source files linked from reports
-    private boolean cacheSourceFiles = true;
+    private boolean saveSourceFiles = true;
 
     // If set to true, Sokrates saves code fragments in files linked from reports
     private boolean saveCodeFragments = true;
@@ -119,12 +119,12 @@ public class AnalysisConfig {
         this.maxLineLength = maxLineLength;
     }
 
-    public boolean isCacheSourceFiles() {
-        return cacheSourceFiles;
+    public boolean isSaveSourceFiles() {
+        return saveSourceFiles;
     }
 
-    public void setCacheSourceFiles(boolean cacheSourceFiles) {
-        this.cacheSourceFiles = cacheSourceFiles;
+    public void setSaveSourceFiles(boolean saveSourceFiles) {
+        this.saveSourceFiles = saveSourceFiles;
     }
 
     public int getLocDuplicationThreshold() {
@@ -235,5 +235,8 @@ public class AnalysisConfig {
 
     public boolean isAnalyzeConcernOverlaps() {
         return analyzeConcernOverlaps;
+    }
+    public void setCacheSourceFiles(boolean cacheSourceFiles) {
+        this.saveSourceFiles = cacheSourceFiles;
     }
 }

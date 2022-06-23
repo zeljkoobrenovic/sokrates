@@ -257,7 +257,7 @@ public class FileAgeReportGenerator {
     private void addOldestFilesList(RichTextReport report) {
         List<SourceFile> longestFiles = codeAnalysisResults.getFilesHistoryAnalysisResults().getOldestFiles();
         report.startSection("Oldest Files (Top " + longestFiles.size() + ")", "");
-        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(longestFiles, cacheSourceFiles, true, false).toString());
         report.endSection();
     }
@@ -265,7 +265,7 @@ public class FileAgeReportGenerator {
     private void addYoungestFilesList(RichTextReport report) {
         List<SourceFile> youngestFiles = codeAnalysisResults.getFilesHistoryAnalysisResults().getYoungestFiles();
         report.startSection("Most Recently Created Files (Top " + youngestFiles.size() + ")", "");
-        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true, false).toString());
         report.endSection();
     }
@@ -273,7 +273,7 @@ public class FileAgeReportGenerator {
     private void addMostRecentlyChangedFilesList(RichTextReport report) {
         List<SourceFile> youngestFiles = codeAnalysisResults.getFilesHistoryAnalysisResults().getMostRecentlyChangedFiles();
         report.startSection("Most Recently Changed Files (Top " + youngestFiles.size() + ")", "");
-        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true, false).toString());
         report.endSection();
     }
@@ -281,7 +281,7 @@ public class FileAgeReportGenerator {
     private void addMostPreviouslyChangedFilesList(RichTextReport report) {
         List<SourceFile> youngestFiles = codeAnalysisResults.getFilesHistoryAnalysisResults().getMostPreviouslyChangedFiles();
         report.startSection("Files Not Recently Changed (Top " + youngestFiles.size() + ")", "");
-        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true, false).toString());
         report.endSection();
     }

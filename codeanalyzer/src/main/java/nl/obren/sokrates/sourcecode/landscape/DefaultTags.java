@@ -9,7 +9,8 @@ public class DefaultTags {
     public List<TagGroup> defaultTagGroups() {
         TagGroup buildTags = new TagGroup("build and dependencies management tools", "#B9D9EB");
         TagGroup ciCdTags = new TagGroup("CI/CD tools", "#7CB9E8");
-        TagGroup techTags = new TagGroup("interesting technologies", "#A3C1AD");
+        TagGroup techTags = new TagGroup("tech", "#A3C1AD");
+        TagGroup uiTags = new TagGroup("ui tech", "#7E9185");
 
         List<TagGroup> groups = new ArrayList<>();
         groups.add(buildTags);
@@ -37,6 +38,10 @@ public class DefaultTags {
 
         techTags.getRepositoryTags().add(newPathPatternTagInstance("docker", "general/docker", Arrays.asList("(|.*/)Dockerfile")));
         techTags.getRepositoryTags().add(newPathPatternTagInstance("helm", "general/helm", Arrays.asList("(|.*/)helmfile[.]ya?ml")));
+
+        uiTags.getRepositoryTags().add(newPathPatternTagInstance("react", "general/react", Arrays.asList(".*[.]tsx", ".*[.]jsx")));
+        uiTags.getRepositoryTags().add(newPathPatternTagInstance("android", "general/android", Arrays.asList("(|.*/)android[.]json5?")));
+        uiTags.getRepositoryTags().add(newPathPatternTagInstance("vue", "general/vuejs", Arrays.asList(".*[.]vue")));
 
         return groups;
     }

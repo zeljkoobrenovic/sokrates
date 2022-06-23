@@ -540,19 +540,21 @@ public class DataExporter {
         this.codeCacheFolder = getCodeCacheFolder();
 
         detailedInfo("Saving details and source code cache:");
-        if (codeConfiguration.getAnalysis().isCacheSourceFiles()) {
-            saveAspectJsonFiles(codeConfiguration.getMain(), "main");
-            saveAspectJsonFiles(codeConfiguration.getTest(), "test");
-            saveAspectJsonFiles(codeConfiguration.getGenerated(), "generated");
-            saveAspectJsonFiles(codeConfiguration.getBuildAndDeployment(), "buildAndDeployment");
-            saveAspectJsonFiles(codeConfiguration.getOther(), "other");
+        if (codeConfiguration.getAnalysis().isSaveSourceFiles()) {
+            Set<SourceFile> referencedFiles = getReferencedFiles();
+
+            saveAspectJsonFiles(codeConfiguration.getMain(), "main", referencedFiles);
+            saveAspectJsonFiles(codeConfiguration.getTest(), "test", referencedFiles);
+            saveAspectJsonFiles(codeConfiguration.getGenerated(), "generated", referencedFiles);
+            saveAspectJsonFiles(codeConfiguration.getBuildAndDeployment(), "buildAndDeployment", referencedFiles);
+            saveAspectJsonFiles(codeConfiguration.getOther(), "other", referencedFiles);
         }
 
         UnitsAnalysisResults unitsAnalysisResults = analysisResults.getUnitsAnalysisResults();
         saveUnitFragmentFiles(unitsAnalysisResults.getLongestUnits(), "longest_unit");
         saveUnitFragmentFiles(unitsAnalysisResults.getMostComplexUnits(), "most_complex_unit");
 
-        if (codeConfiguration.getAnalysis().isCacheSourceFiles()) {
+        if (codeConfiguration.getAnalysis().isSaveSourceFiles()) {
             //    saveAllUnitFragmentFiles(unitsAnalysisResults.getAllUnits(), "all_units");
         }
 
@@ -560,6 +562,25 @@ public class DataExporter {
         saveDuplicateFragmentFiles(duplicationAnalysisResults.getLongestDuplicates(), "longest_duplicates");
         saveDuplicateFragmentFiles(duplicationAnalysisResults.getUnitDuplicates(), "unit_duplicates");
         // saveDuplicateFragmentFiles(duplicationAnalysisResults.getMostFrequentDuplicates(), "most_frequent_duplicates");
+    }
+
+    private Set<SourceFile> getReferencedFiles() {
+        Set<SourceFile> referencedFiles = new HashSet<>();
+
+        referencedFiles.addAll(analysisResults.getFilesAnalysisResults().getLongestFiles());
+        referencedFiles.addAll(analysisResults.getFilesAnalysisResults().getFilesWithMostUnits());
+        referencedFiles.addAll(analysisResults.getFilesHistoryAnalysisResults().getFilesWithLeastContributors());
+        referencedFiles.addAll(analysisResults.getFilesHistoryAnalysisResults().getFilesWithMostContributors());
+        referencedFiles.addAll(analysisResults.getFilesHistoryAnalysisResults().getMostChangedFiles());
+        referencedFiles.addAll(analysisResults.getFilesHistoryAnalysisResults().getOldestFiles());
+        referencedFiles.addAll(analysisResults.getFilesHistoryAnalysisResults().getMostPreviouslyChangedFiles());
+        referencedFiles.addAll(analysisResults.getFilesHistoryAnalysisResults().getMostRecentlyChangedFiles());
+        referencedFiles.addAll(analysisResults.getFilesHistoryAnalysisResults().getYoungestFiles());
+        analysisResults.getDuplicationAnalysisResults().getLongestDuplicates().forEach(duplicationInstance -> {
+            referencedFiles.addAll(duplicationInstance.getDuplicatedFileBlocks().stream().map(d -> d.getSourceFile()).collect(Collectors.toList()));
+        });
+
+        return referencedFiles;
     }
 
     private void exportInteractiveExplorers() throws IOException {
@@ -858,7 +879,7 @@ public class DataExporter {
     }
 
 
-    private void saveAspectJsonFiles(NamedSourceCodeAspect aspect, String aspectName) throws IOException {
+    private void saveAspectJsonFiles(NamedSourceCodeAspect aspect, String aspectName, Set<SourceFile> referencedFiles) throws IOException {
         File filesListFile = new File(dataFolder, aspectName + "FilesPaths.json");
         detailedInfo(" - storing the file list for the <b>" + aspectName + "</b> aspect in <a href='" + filesListFile.getPath() + "'>" + filesListFile.getPath() + "</a>");
         List<String> files = new ArrayList<>();
@@ -871,7 +892,7 @@ public class DataExporter {
 
         Map<String, List<String>> contents = new HashMap<>();
         detailedInfo(" - saving source code cache for the <b>" + aspectName + "</b> aspect in <a href='" + aspectCodeCacheFolder.getPath() + "'>" + aspectCodeCacheFolder.getPath() + "</a>");
-        aspect.getSourceFiles().forEach(sourceFile -> {
+        aspect.getSourceFiles().stream().filter(f -> referencedFiles.contains(f)).forEach(sourceFile -> {
             contents.put(sourceFile.getRelativePath(), sourceFile.getLines());
             try {
                 FileUtils.write(new File(aspectCodeCacheFolder, sourceFile.getRelativePath()), sourceFile.getContent(), UTF_8);

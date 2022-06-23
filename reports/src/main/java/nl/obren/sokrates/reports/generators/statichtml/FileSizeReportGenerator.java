@@ -224,18 +224,17 @@ public class FileSizeReportGenerator {
     private void addLongestFilesList(RichTextReport report) {
         List<SourceFile> longestFiles = codeAnalysisResults.getFilesAnalysisResults().getLongestFiles();
         report.startSection("Longest Files (Top " + longestFiles.size() + ")", "");
-        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(longestFiles, cacheSourceFiles, false, false).toString());
         report.endSection();
     }
 
     private void addFilesWithMostUnitsList(RichTextReport report) {
-        List<SourceFile> filesList = codeAnalysisResults.getFilesAnalysisResults().getAllFiles()
-                .stream().filter(sourceFile -> sourceFile.getUnitsCount() > 0).collect(Collectors.toList());
+        List<SourceFile> filesList = codeAnalysisResults.getFilesAnalysisResults().getFilesWithMostUnits();
         filesList.sort((o1, o2) -> o2.getUnitsCount() - o1.getUnitsCount());
         filesList = filesList.subList(0, Math.min(getMaxTopListSize(), filesList.size()));
         report.startSection("Files With Most Units (Top " + filesList.size() + ")", "");
-        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(filesList, cacheSourceFiles, false, false).toString());
         report.endSection();
     }
@@ -254,7 +253,7 @@ public class FileSizeReportGenerator {
         filesList = filesList.subList(0, Math.min(getMaxTopListSize(), filesList.size()));
         report.startSection("Files With Long Lines (Top " + filesList.size() + ")", "");
         report.addParagraph("There " + (count == 1 ? "is only one file" : "are <b>" + count + "</b> files") + " with lines longer than 120 characters. In total, there " + (sum == 1 ? "is only one long line" : "are <b>" + sum + "</b> long lines") + ".");
-        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(filesList, cacheSourceFiles, false, true).toString());
         report.endSection();
     }

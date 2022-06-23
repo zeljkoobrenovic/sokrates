@@ -62,7 +62,7 @@ public class DuplicationReportGenerator {
             report.addHtmlContent("<td>x&nbsp;" + instance.getDuplicatedFileBlocks().size() + "</td>");
             String folderString = formatDisplayString(instance.getFoldersDisplayString());
             report.addHtmlContent("<td>" + folderString + "</td>");
-            boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+            boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
             report.addHtmlContent("<td>" +
                     "<div><div style='display: inline-block; vertical-align: top; margin-top: 3px; margin-right: 4px;'>" +
                     DataImageUtils.getLangDataImageDiv30(extension) +

@@ -119,7 +119,7 @@ public class UnitsSizeReportGenerator {
 
         List<UnitInfo> longestUnits = unitsAnalysisResults.getLongestUnits();
         report.startSection("Longest Units", "Top " + longestUnits.size() + " longest units");
-        boolean cacheFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+        boolean cacheFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
         report.startScrollingDiv();
         report.addHtmlContent(UtilsReportUtils.getUnitsTable(longestUnits, "longest_unit", cacheFiles).toString());
         report.endDiv();

@@ -400,7 +400,7 @@ public class CommandLineInterface {
         if (cmd.hasOption(commands.getSkipComplexAnalyses().getOpt())) {
             codeConfiguration.getAnalysis().setSkipDependencies(true);
             codeConfiguration.getAnalysis().setSkipDuplication(true);
-            codeConfiguration.getAnalysis().setCacheSourceFiles(false);
+            codeConfiguration.getAnalysis().setSaveSourceFiles(false);
         }
 
         if (cmd.hasOption(commands.getSkipDuplicationAnalyses().getOpt())) {
@@ -417,7 +417,7 @@ public class CommandLineInterface {
         if (cmd.hasOption(commands.getSetCacheFiles().getOpt())) {
             String cacheFileValue = cmd.getOptionValue(commands.getSetCacheFiles().getOpt());
             if (StringUtils.isNotBlank(cacheFileValue)) {
-                codeConfiguration.getAnalysis().setCacheSourceFiles(cacheFileValue.equalsIgnoreCase("true"));
+                codeConfiguration.getAnalysis().setSaveSourceFiles(cacheFileValue.equalsIgnoreCase("true"));
             }
         }
 
@@ -604,7 +604,7 @@ public class CommandLineInterface {
             info("HTML reports: <a href='" + htmlReports.getPath() + "'>" + htmlReports.getPath() + "</a>");
         }
         info("Raw data: <a href='" + dataReports.getPath() + "'>" + dataReports.getPath() + "</a>");
-        if (analysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles()) {
+        if (analysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles()) {
             info("Source code cache : <a href='" + srcCache.getPath() + "'>" + srcCache.getPath() + "</a>");
         }
         ProcessingStopwatch.start("reporting");
