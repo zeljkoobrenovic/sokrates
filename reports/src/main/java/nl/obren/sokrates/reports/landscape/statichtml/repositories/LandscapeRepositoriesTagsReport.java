@@ -6,7 +6,6 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
 import nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator;
 import nl.obren.sokrates.reports.landscape.utils.Force3DGraphExporter;
-import nl.obren.sokrates.reports.landscape.utils.LandscapeGeneratorUtils;
 import nl.obren.sokrates.reports.landscape.utils.TagStats;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
@@ -27,8 +26,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static nl.obren.sokrates.common.utils.FormattingUtils.formatCountPlural;
+
 public class LandscapeRepositoriesTagsReport {
     private static final Log LOG = LogFactory.getLog(LandscapeRepositoriesTagsReport.class);
+    public static final String TAG_GROUP_ANCHOR_PREFIX = "tag_group_";
 
     private LandscapeAnalysisResults landscapeAnalysisResults;
     private File reportsFolder;
@@ -61,7 +63,40 @@ public class LandscapeRepositoriesTagsReport {
 
         report.startTable();
         report.addTableHeader("Tag", "# repositories", "LOC<br>(main)", "LOC<br>(test)", "LOC<br>(active)", "LOC<br>(new)", "# commits<br>(30 days)", "# contributors<br>(30 days)");
+        int tagGroupsCount[] = {0};
+        int tagCount[] = {0};
+        tagGroups.stream().filter(tagGroup -> tagGroup.getRepositoryTags().size() > 0).forEach(tagGroup -> {
+            int count[] = {0};
+            tagGroup.getRepositoryTags().stream().forEach(repositoryTag -> {
+                if (tagsMap.getTagStats(repositoryTag.getKey()) != null) count[0] += 1;
+            });
+            if (count[0] > 0) {
+                tagGroupsCount[0] += 1;
+                tagCount[0] += count[0];
+            }
+
+        });
         int index[] = {0};
+        report.addParagraph(formatCountPlural(tagGroupsCount[0], "group", "groups") + " (" + formatCountPlural(tagCount[0], "tag", "tags") + "):");
+        report.startUnorderedList();
+        tagGroups.stream().filter(tagGroup -> tagGroup.getRepositoryTags().size() > 0).forEach(tagGroup -> {
+            int count[] = {0};
+            tagGroup.getRepositoryTags().stream().forEach(repositoryTag -> {
+                if (tagsMap.getTagStats(repositoryTag.getKey()) != null) count[0] += 1;
+            });
+            if (count[0] == 0) {
+                return;
+            }
+            index[0] += 1;
+            String item = "<a href='#" + TAG_GROUP_ANCHOR_PREFIX + index[0] + "'><b>" + tagGroup.getName() + "</b></a> (" + count[0] + ")";
+            if (StringUtils.isNotBlank(tagGroup.getDescription())) {
+                item += "<span style='color: grey;'>: " + tagGroup.getDescription() + "</span>";
+            }
+            report.addListItem(item);
+        });
+        report.endUnorderedList();
+        report.addLineBreak();
+        index[0] = 0;
         tagGroups.stream().filter(tagGroup -> tagGroup.getRepositoryTags().size() > 0).forEach(tagGroup -> {
             int count[] = {0};
             tagGroup.getRepositoryTags().stream().forEach(repositoryTag -> {
@@ -73,6 +108,7 @@ public class LandscapeRepositoriesTagsReport {
             index[0] += 1;
             report.startTableRow();
             report.startMultiColumnTableCell(8, "");
+            report.addAnchor(TAG_GROUP_ANCHOR_PREFIX + index[0]);
             report.startDiv("border-radius: 9px; padding: 6px; margin-top: 16px; border: 1px solid lightgrey; background-color: " + tagGroup.getColor());
             report.addHtmlContent(tagGroup.getName() + " (" + count[0] + ")");
             if (StringUtils.isNotBlank(tagGroup.getDescription())) {
@@ -135,7 +171,7 @@ public class LandscapeRepositoriesTagsReport {
         int locSecondary = locTest + locGenerated + locBuildAndDeployment + locOther;
 
         report.startDiv("margin: 5px; font-size: 80%");
-        report.addContentInDiv("<b>" + FormattingUtils.formatCountPlural(count, "repository", "repositories") + "</b>, " +
+        report.addContentInDiv("<b>" + formatCountPlural(count, "repository", "repositories") + "</b>, " +
                 "<b>" + FormattingUtils.getSmallTextForNumber(locMain) + "</b> lines of main code, " +
                 "<b>" + FormattingUtils.getSmallTextForNumber(locSecondary) + "</b> lines of other code");
         report.endDiv();
@@ -400,12 +436,6 @@ public class LandscapeRepositoriesTagsReport {
             tooltip += "includes repositories with any file with extensions:\n  - " + tag.getMainExtensions().stream().collect(Collectors.joining("\n  - ")) + "\n";
         }
         return tooltip;
-    }
-
-    private boolean isTagged(RepositoryAnalysisResults repository, String mainTech, RepositoryTag tag) {
-        String name = repository.getAnalysisResults().getMetadata().getName();
-        return !tag.excludesMainTechnology(mainTech) &&
-                ((tag.matchesName(name) && !tag.excludeName(name)) || tag.matchesMainTechnology(mainTech) || tag.matchesAnyTechnology(LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, repository.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension())) || tag.matchesPath(repository.getFiles()));
     }
 
     private String getTabColor(RepositoryTag tag) {

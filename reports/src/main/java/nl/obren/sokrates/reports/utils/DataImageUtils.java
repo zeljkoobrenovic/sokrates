@@ -126,6 +126,24 @@ public class DataImageUtils {
         map.put("prefab", "unity.png");
         map.put("cu", "nvidia.png");
         map.put("cuh", "nvidia.png");
+
+        map.put(".github", "github.png");
+        map.put(".gh-pages", "github.png");
+        map.put(".gitignore", "git.png");
+        map.put(".gitmodules", "git.png");
+        map.put(".gitattributes", "git.png");
+        map.put(".githooks", "git.png");
+        map.put(".idea", "jetbrains.png");
+        map.put(".vscode", "vscode.png");
+        map.put(".mvn", "maven.png");
+        map.put(".travis", "travis.png");
+        map.put(".travis.yml", "travis.png");
+        map.put(".travis.yaml", "travis.png");
+        map.put(".travis-build", "travis.png");
+        map.put(".yarn", "yarn.png");
+        map.put(".dockerignore", "docker.png");
+        map.put(".editorconfig", "editorconfig.png");
+        map.put(".zuul.d", "zuul.png");
     }
 
     public static String getLangDataImage(String lang) {

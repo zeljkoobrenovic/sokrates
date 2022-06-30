@@ -132,6 +132,7 @@ public class LandscapeReportGenerator {
 
         LOG.info("Exporting repositories...");
         List<RepositoryAnalysisResults> repositories = getRepositories();
+
         customTagsMap = updateTagsData(landscapeAnalysisResults, tagGroups, repositories);
 
         dataExport.exportRepositories(customTagsMap);
@@ -287,6 +288,54 @@ public class LandscapeReportGenerator {
         LOG.info("Done report generation.");
     }
 
+    private void getHiddenFilesTagGroup(List<RepositoryAnalysisResults> repositories, List<TagGroup> extensionTagGroups) {
+        Set<String> hiddenFiles = new HashSet<>();
+        Set<String> hiddenFolders = new HashSet<>();
+        repositories.forEach(repository -> {
+            repository.getFiles().forEach(path -> {
+                File file = new File(path);
+                String name = file.getName();
+                if (name.startsWith(".")) {
+                    hiddenFiles.add(name);
+                }
+                File parentFile = file.getParentFile();
+                while (parentFile != null) {
+                    if (parentFile.getName().startsWith(".")) {
+                        hiddenFolders.add(parentFile.getName());
+                    }
+                    parentFile = parentFile.getParentFile();
+                }
+            });
+        });
+
+        TagGroup hiddenFoldersTags = new TagGroup("hidden folders");
+        hiddenFoldersTags.setDescription("folders with \".*\" like names");
+        hiddenFoldersTags.setColor("lightgrey");
+
+        hiddenFolders.forEach(hiddenFolder -> {
+            RepositoryTag tag = new RepositoryTag();
+            tag.setGroup(hiddenFoldersTags);
+            tag.setTag(hiddenFolder);
+            tag.getPathPatterns().add("(|\\/)" + hiddenFolder.replaceAll("\\.", "[.]").replaceAll("\\-", "[-]") + "/.*");
+            hiddenFoldersTags.getRepositoryTags().add(tag);
+        });
+
+        TagGroup hiddenFileTags = new TagGroup("hidden files");
+        hiddenFileTags.setDescription("files with \".*\" like names");
+        hiddenFileTags.setColor("lightgrey");
+
+        hiddenFiles.forEach(hiddenFile -> {
+            RepositoryTag tag = new RepositoryTag();
+            tag.setGroup(hiddenFileTags);
+            tag.setTag(hiddenFile);
+            tag.getPathPatterns().add("(|\\/)" + hiddenFile.replaceAll("\\.", "[.]").replaceAll("\\-", "[-]"));
+            hiddenFileTags.getRepositoryTags().add(tag);
+        });
+
+        extensionTagGroups.add(hiddenFoldersTags);
+        extensionTagGroups.add(hiddenFileTags);
+    }
+
     private TagMap updateTagsData(LandscapeAnalysisResults landscapeAnalysisResults, List<TagGroup> tagGroups, List<RepositoryAnalysisResults> repositories) {
         final TagMap customTagsMap;
         ProcessingStopwatch.start("reporting/tags/custom tags map");
@@ -296,9 +345,12 @@ public class LandscapeReportGenerator {
 
         ProcessingStopwatch.start("reporting/tags/extensions tags map");
         extensionTagGroups = getExtensionTagGroups();
+        getHiddenFilesTagGroup(repositories, extensionTagGroups);
         extensionsTagsMap = new TagMap(landscapeAnalysisResults, extensionTagGroups);
         extensionsTagsMap.updateTagMap(repositories);
         ProcessingStopwatch.end("reporting/tags/extensions tags map");
+
+
         return customTagsMap;
     }
 
@@ -888,7 +940,7 @@ public class LandscapeReportGenerator {
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
-        landscapeReport.startSubSection("Tags (" + customTagsMap.tagsCount()  + ")", "");
+        landscapeReport.startSubSection("Tags (" + customTagsMap.tagsCount() + ")", "");
         new LandscapeRepositoriesTagsLine(tagGroups, customTagsMap).addTagsLine(landscapeReport);
         landscapeReport.endSection();
 

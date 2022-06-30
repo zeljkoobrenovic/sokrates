@@ -87,7 +87,6 @@ public class TagMap {
         boolean matchesName = tag.matchesName(name);
         boolean matchesMainTechnology = tag.matchesMainTechnology(mainTech);
         boolean matchesAnyTechnology = tag.matchesAnyTechnology(linesOfCodePerExtension);
-
         boolean matchesPath = tag.matchesPath(repository.getFiles());
 
         return matchesName || matchesMainTechnology || matchesAnyTechnology || matchesPath;
