@@ -19,6 +19,7 @@ public class DataImageUtils {
         map.put("js", "JavaScript.png");
         map.put("cjs", "commonjs.png");
         map.put("py", "Python.png");
+        map.put("py3", "Python.png");
         map.put("sql", "SQL.png");
         map.put("php", "PHP.png");
         map.put("inc", "PHP.png");
@@ -134,6 +135,8 @@ public class DataImageUtils {
         map.put(".gitattributes", "git.png");
         map.put(".githooks", "git.png");
         map.put(".git-blame-ignore-revs", "git.png");
+        map.put(".husky", "git.png");
+        map.put(".huskyrc", "git.png");
         map.put(".idea", "jetbrains.png");
         map.put(".vscode", "vscode.png");
         map.put(".mvn", "maven.png");
@@ -176,6 +179,7 @@ public class DataImageUtils {
         map.put(".eslintrc-common.yaml", "eslint.png");
         map.put(".gitlab-ci.yml", "gitlab.png");
         map.put(".bazelrc", "bazel.png");
+        map.put(".buildkite", "buildkite.png");
     }
 
     public static String getLangDataImage(String lang) {
