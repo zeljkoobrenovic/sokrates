@@ -136,6 +136,8 @@ public class DataImageUtils {
         map.put(".idea", "jetbrains.png");
         map.put(".vscode", "vscode.png");
         map.put(".mvn", "maven.png");
+        map.put(".m2", "maven.png");
+        map.put(".jenkins", "jenkins.png");
         map.put(".travis", "travis.png");
         map.put(".travis.yml", "travis.png");
         map.put(".travis.yaml", "travis.png");
@@ -144,6 +146,9 @@ public class DataImageUtils {
         map.put(".dockerignore", "docker.png");
         map.put(".editorconfig", "editorconfig.png");
         map.put(".zuul.d", "zuul.png");
+        map.put(".circleci", "circle-cli.png");
+        map.put(".settings", "eclipse.png");
+        map.put(".classpath", "Java.png");
     }
 
     public static String getLangDataImage(String lang) {
