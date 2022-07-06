@@ -32,8 +32,10 @@ public class LandscapeGeneratorUtils {
             }
         });
 
+        mergedLinesOfCodePerExtension.forEach(ext -> ext.setName(ext.getName().replaceAll(".*[.]", "")));
+
         return mergedLinesOfCodePerExtension.stream()
-                .filter(e -> !ignoreExtension(landscapeAnalysisResults, e.getName().replaceAll(".*[.]", "")))
+                .filter(e -> !ignoreExtension(landscapeAnalysisResults, e.getName()))
                 .filter(e -> !e.getName().endsWith("="))
                 .filter(e -> !e.getName().startsWith("h-"))
                 .filter(e -> e.getValue().intValue() >= threshold)

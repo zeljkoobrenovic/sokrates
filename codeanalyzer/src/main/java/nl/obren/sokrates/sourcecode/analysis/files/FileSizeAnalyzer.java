@@ -16,8 +16,10 @@ import nl.obren.sokrates.sourcecode.stats.SourceFileSizeDistribution;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class FileSizeAnalyzer extends Analyzer {
+    public static final int SAMPLE_SIZE = 50;
     private CodeConfiguration codeConfiguration;
     private MetricsList metricsList;
     private FilesAnalysisResults analysisResults;
@@ -42,7 +44,7 @@ public class FileSizeAnalyzer extends Analyzer {
             analysisResults.getFileSizeDistributionPerLogicalDecomposition().add(distributionPerLogicalDecomposition);
         });
         analysisResults.setAllFiles(allFiles);
-        addLongestFiles(allFiles, analysisResults, 50);
+        addLongestFiles(allFiles, analysisResults, SAMPLE_SIZE);
 
         addMetrics(overallDistribution);
     }
@@ -96,4 +98,5 @@ public class FileSizeAnalyzer extends Analyzer {
             filesAnalysisResults.getLongestFiles().add(sourceFile);
         });
     }
+
 }

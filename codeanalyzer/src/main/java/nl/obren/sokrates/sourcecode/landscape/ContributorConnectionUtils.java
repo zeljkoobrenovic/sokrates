@@ -6,8 +6,8 @@ import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorConnections;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjectInfo;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjects;
+import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositoryInfo;
+import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -133,53 +133,53 @@ public class ContributorConnectionUtils {
         return dependencies;
     }
 
-    public static List<ComponentDependency> getPeopleDependencies(List<ContributorProjects> contributors, int daysAgo1, int daysAgo2) {
-        Map<String, List<String>> projectsMap = new HashMap<>();
+    public static List<ComponentDependency> getPeopleDependencies(List<ContributorRepositories> contributors, int daysAgo1, int daysAgo2) {
+        Map<String, List<String>> repositoriesMap = new HashMap<>();
 
         contributors.stream()
-                .forEach(contributorProjects -> {
-                    contributorProjects.getProjects().stream()
-                            .filter(project -> DateUtils.isAnyDateCommittedBetween(project.getCommitDates(), daysAgo1, daysAgo2))
-                            .forEach(project -> {
-                                String email = contributorProjects.getContributor().getEmail();
-                                String projectName = "[" + project.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName() + "]";
-                                if (projectsMap.containsKey(projectName)) {
-                                    List<String> emails = projectsMap.get(projectName);
+                .forEach(contributorRepositories -> {
+                    contributorRepositories.getRepositories().stream()
+                            .filter(repository -> DateUtils.isAnyDateCommittedBetween(repository.getCommitDates(), daysAgo1, daysAgo2))
+                            .forEach(repository -> {
+                                String email = contributorRepositories.getContributor().getEmail();
+                                String repositoryName = "[" + repository.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName() + "]";
+                                if (repositoriesMap.containsKey(repositoryName)) {
+                                    List<String> emails = repositoriesMap.get(repositoryName);
                                     if (!emails.contains(email)) {
                                         emails.add(email);
                                     }
                                 } else {
-                                    projectsMap.put(projectName, new ArrayList<>(Arrays.asList(email)));
+                                    repositoriesMap.put(repositoryName, new ArrayList<>(Arrays.asList(email)));
                                 }
                             });
                 });
 
         List<ComponentDependency> dependencies = new ArrayList<>();
         Map<String, ComponentDependency> dependenciesMap = new HashMap<>();
-        Map<String, List<String>> projectNamesMap = new HashMap<>();
+        Map<String, List<String>> repositoryNamesMap = new HashMap<>();
 
-        projectsMap.keySet().forEach(projectName -> {
-            List<String> emails = projectsMap.get(projectName);
+        repositoriesMap.keySet().forEach(repositoryName -> {
+            List<String> emails = repositoriesMap.get(repositoryName);
             emails.forEach(email1 -> {
                 emails.stream().filter(email2 -> !email1.equalsIgnoreCase(email2)).forEach(email2 -> {
                     String key1 = email1 + "::" + email2;
                     String key2 = email2 + "::" + email1;
 
                     if (dependenciesMap.containsKey(key1)) {
-                        if (!projectNamesMap.get(key1).contains(projectName)) {
+                        if (!repositoryNamesMap.get(key1).contains(repositoryName)) {
                             dependenciesMap.get(key1).increment(1);
-                            projectNamesMap.get(key1).add(projectName);
+                            repositoryNamesMap.get(key1).add(repositoryName);
                         }
                     } else if (dependenciesMap.containsKey(key2)) {
-                        if (!projectNamesMap.get(key2).contains(projectName)) {
+                        if (!repositoryNamesMap.get(key2).contains(repositoryName)) {
                             dependenciesMap.get(key2).increment(1);
-                            projectNamesMap.get(key2).add(projectName);
+                            repositoryNamesMap.get(key2).add(repositoryName);
                         }
                     } else {
                         ComponentDependency dependency = new ComponentDependency(email1, email2);
                         dependenciesMap.put(key1, dependency);
                         dependencies.add(dependency);
-                        projectNamesMap.put(key1, new ArrayList<>(Arrays.asList(projectName)));
+                        repositoryNamesMap.put(key1, new ArrayList<>(Arrays.asList(repositoryName)));
                     }
                 });
             });
@@ -188,36 +188,36 @@ public class ContributorConnectionUtils {
         return dependencies;
     }
 
-    public static List<ComponentDependency> getPeopleProjectDependencies(List<ContributorProjects> contributors, int daysAgo1, int daysAgo2) {
+    public static List<ComponentDependency> getPeopleRepositoryDependencies(List<ContributorRepositories> contributors, int daysAgo1, int daysAgo2) {
         List<ComponentDependency> dependencies = new ArrayList<>();
         Map<String, ComponentDependency> dependenciesMap = new HashMap<>();
-        Map<String, List<String>> projectNamesMap = new HashMap<>();
+        Map<String, List<String>> repositoryNamesMap = new HashMap<>();
 
         contributors.stream()
-                .forEach(contributorProjects -> {
-                    contributorProjects.getProjects().stream()
-                            .filter(project -> DateUtils.isAnyDateCommittedBetween(project.getCommitDates(), daysAgo1, daysAgo2))
-                            .forEach(project -> {
-                                String email = contributorProjects.getContributor().getEmail();
-                                String projectName = "[" + project.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName() + "]";
-                                String key1 = email + "::" + projectName;
-                                String key2 = projectName + "::" + email;
+                .forEach(contributorRepositories -> {
+                    contributorRepositories.getRepositories().stream()
+                            .filter(repository -> DateUtils.isAnyDateCommittedBetween(repository.getCommitDates(), daysAgo1, daysAgo2))
+                            .forEach(repository -> {
+                                String email = contributorRepositories.getContributor().getEmail();
+                                String repositoryName = "[" + repository.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName() + "]";
+                                String key1 = email + "::" + repositoryName;
+                                String key2 = repositoryName + "::" + email;
 
                                 if (dependenciesMap.containsKey(key1)) {
-                                    if (!projectNamesMap.get(key1).contains(projectName)) {
+                                    if (!repositoryNamesMap.get(key1).contains(repositoryName)) {
                                         dependenciesMap.get(key1).increment(1);
-                                        projectNamesMap.get(key1).add(projectName);
+                                        repositoryNamesMap.get(key1).add(repositoryName);
                                     }
                                 } else if (dependenciesMap.containsKey(key2)) {
-                                    if (!projectNamesMap.get(key2).contains(projectName)) {
+                                    if (!repositoryNamesMap.get(key2).contains(repositoryName)) {
                                         dependenciesMap.get(key2).increment(1);
-                                        projectNamesMap.get(key2).add(projectName);
+                                        repositoryNamesMap.get(key2).add(repositoryName);
                                     }
                                 } else {
-                                    ComponentDependency dependency = new ComponentDependency(email, projectName);
+                                    ComponentDependency dependency = new ComponentDependency(email, repositoryName);
                                     dependenciesMap.put(key1, dependency);
                                     dependencies.add(dependency);
-                                    projectNamesMap.put(key1, new ArrayList<>(Arrays.asList(projectName)));
+                                    repositoryNamesMap.put(key1, new ArrayList<>(Arrays.asList(repositoryName)));
                                 }
                             });
                 });
@@ -225,19 +225,19 @@ public class ContributorConnectionUtils {
         return dependencies;
     }
 
-    public static int getProjectCount(List<ContributorProjects> contributors, String email, int daysAgo1, int daysAgo2) {
-        Set<String> projectNames = new HashSet<>();
-        contributors.stream().filter(c -> c.getContributor().getEmail().equalsIgnoreCase(email)).forEach(contributorProjects -> {
-            List<ContributorProjectInfo> projects = contributorProjects.getProjects();
-            projects.stream().filter(p -> DateUtils.isAnyDateCommittedBetween(p.getCommitDates(), daysAgo1, daysAgo2)).forEach(project -> {
-                projectNames.add(project.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName());
+    public static int getRepositoryCount(List<ContributorRepositories> contributors, String email, int daysAgo1, int daysAgo2) {
+        Set<String> repositoryNames = new HashSet<>();
+        contributors.stream().filter(c -> c.getContributor().getEmail().equalsIgnoreCase(email)).forEach(contributorRepositories -> {
+            List<ContributorRepositoryInfo> repositories = contributorRepositories.getRepositories();
+            repositories.stream().filter(p -> DateUtils.isAnyDateCommittedBetween(p.getCommitDates(), daysAgo1, daysAgo2)).forEach(repository -> {
+                repositoryNames.add(repository.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName());
             });
         });
 
-        return projectNames.size();
+        return repositoryNames.size();
     }
 
-    public static List<ContributorConnections> getConnectionsViaProjects(List<ContributorProjects> contributors, List<ComponentDependency> peopleDependencies, int daysAgo1, int daysAgo2) {
+    public static List<ContributorConnections> getConnectionsViaRepositories(List<ContributorRepositories> contributors, List<ComponentDependency> peopleDependencies, int daysAgo1, int daysAgo2) {
         Map<String, ContributorConnections> map = new HashMap<>();
 
         peopleDependencies.forEach(dependency -> {
@@ -250,7 +250,7 @@ public class ContributorConnectionUtils {
             if (contributorConnections1 == null) {
                 contributorConnections1 = new ContributorConnections();
                 contributorConnections1.setEmail(from);
-                contributorConnections1.setProjectsCount(ContributorConnectionUtils.getProjectCount(contributors, from, daysAgo1, daysAgo2));
+                contributorConnections1.setRepositoriesCount(ContributorConnectionUtils.getRepositoryCount(contributors, from, daysAgo1, daysAgo2));
                 contributorConnections1.setConnectionsCount(1);
                 map.put(from, contributorConnections1);
             } else {
@@ -260,7 +260,7 @@ public class ContributorConnectionUtils {
             if (contributorConnections2 == null) {
                 contributorConnections2 = new ContributorConnections();
                 contributorConnections2.setEmail(to);
-                contributorConnections2.setProjectsCount(ContributorConnectionUtils.getProjectCount(contributors, to, daysAgo1, daysAgo2));
+                contributorConnections2.setRepositoriesCount(ContributorConnectionUtils.getRepositoryCount(contributors, to, daysAgo1, daysAgo2));
                 contributorConnections2.setConnectionsCount(1);
                 map.put(to, contributorConnections2);
             } else {
@@ -274,18 +274,18 @@ public class ContributorConnectionUtils {
         return names;
     }
 
-    public static List<ComponentDependency> getProjectDependenciesViaPeople(List<ContributorProjects> contributors, int daysAgo1, int daysAgo2) {
+    public static List<ComponentDependency> getRepositoryDependenciesViaPeople(List<ContributorRepositories> contributors, int daysAgo1, int daysAgo2) {
         Map<String, ComponentDependency> map = new HashMap<>();
 
-        contributors.forEach(contributorProjects -> {
-            List<ContributorProjectInfo> projects = contributorProjects.getProjects().stream()
+        contributors.forEach(contributorRepositories -> {
+            List<ContributorRepositoryInfo> repositories = contributorRepositories.getRepositories().stream()
                     .filter(p -> DateUtils.isAnyDateCommittedBetween(p.getCommitDates(), daysAgo1, daysAgo2)).collect(Collectors.toList());
-            projects.forEach(project1 -> {
-                projects.forEach(project2 -> {
-                    if (project1 == project2) return;
+            repositories.forEach(repository1 -> {
+                repositories.forEach(repository2 -> {
+                    if (repository1 == repository2) return;
 
-                    String name1 = "[" + project1.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName() + "]";
-                    String name2 = "[" + project2.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName() + "]";
+                    String name1 = "[" + repository1.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName() + "]";
+                    String name2 = "[" + repository2.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName() + "]";
 
                     String key1 = name1 + "::" + name2;
                     String key2 = name2 + "::" + name1;
@@ -302,10 +302,10 @@ public class ContributorConnectionUtils {
             });
         });
 
-        List<ComponentDependency> projectDependencies = new ArrayList<>(map.values());
-        projectDependencies.sort((a, b) -> b.getCount() - a.getCount());
+        List<ComponentDependency> repositoryDependencies = new ArrayList<>(map.values());
+        repositoryDependencies.sort((a, b) -> b.getCount() - a.getCount());
 
-        return projectDependencies;
+        return repositoryDependencies;
     }
 
     public static double getCIndex(List<ContributorConnections> contributorConnections) {
@@ -350,14 +350,14 @@ public class ContributorConnectionUtils {
     public static double getPMedian(List<ContributorConnections> contributorConnections) {
         List<ContributorConnections> list = new ArrayList<>(contributorConnections);
         ;
-        list.sort((a, b) -> b.getProjectsCount() - a.getProjectsCount());
+        list.sort((a, b) -> b.getRepositoriesCount() - a.getRepositoriesCount());
         int n = list.size();
         if (n > 0) {
             int middle = n / 2;
             if (n % 2 == 1) {
-                return list.get(middle).getProjectsCount();
+                return list.get(middle).getRepositoriesCount();
             } else {
-                return (list.get(middle - 1).getProjectsCount() + list.get(middle).getProjectsCount()) / 2.0;
+                return (list.get(middle - 1).getRepositoriesCount() + list.get(middle).getRepositoriesCount()) / 2.0;
             }
         }
         return 0;
@@ -368,7 +368,7 @@ public class ContributorConnectionUtils {
         ;
         if (list.size() > 0) {
             int total[] = {0};
-            list.forEach(connections -> total[0] += connections.getProjectsCount());
+            list.forEach(connections -> total[0] += connections.getRepositoriesCount());
             return (double) total[0] / list.size();
         }
         return 0;
@@ -376,24 +376,24 @@ public class ContributorConnectionUtils {
 
     public static double getPIndex(List<ContributorConnections> contributorConnections) {
         List<ContributorConnections> list = new ArrayList<>(contributorConnections);
-        list.sort((a, b) -> b.getProjectsCount() - a.getProjectsCount());
+        list.sort((a, b) -> b.getRepositoriesCount() - a.getRepositoriesCount());
         for (int factor = 0; factor < list.size(); factor++) {
-            if (factor == list.get(factor).getProjectsCount()) {
+            if (factor == list.get(factor).getRepositoriesCount()) {
                 return factor;
-            } else if (factor > list.get(factor).getProjectsCount()) {
+            } else if (factor > list.get(factor).getRepositoriesCount()) {
                 return factor - 1;
             }
         }
         return 0;
     }
 
-    public static long getContributorsActiveInPeriodCount(List<ContributorProjects> contributors, int daysAgo1, int daysAgo2) {
+    public static long getContributorsActiveInPeriodCount(List<ContributorRepositories> contributors, int daysAgo1, int daysAgo2) {
         int count[] = {0};
 
-        contributors.forEach(contributorProjects -> {
+        contributors.forEach(contributorRepoistories -> {
             boolean active[] = {false};
-            contributorProjects.getProjects().forEach(contributorProject -> {
-                if (DateUtils.isAnyDateCommittedBetween(contributorProject.getCommitDates(), daysAgo1, daysAgo2)) {
+            contributorRepoistories.getRepositories().forEach(contributorRepository -> {
+                if (DateUtils.isAnyDateCommittedBetween(contributorRepository.getCommitDates(), daysAgo1, daysAgo2)) {
                     active[0] = true;
                     return;
                 }

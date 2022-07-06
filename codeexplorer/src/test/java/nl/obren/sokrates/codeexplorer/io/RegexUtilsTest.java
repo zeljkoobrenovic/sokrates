@@ -39,7 +39,7 @@ public class RegexUtilsTest {
         assertFalse(RegexUtils.matchesEntirely(".*Z.*", "ABC DG"));
         assertFalse(RegexUtils.matchesEntirely(".*Z","ABC DG"));
 
-        assertTrue(RegexUtils.matchesEntirely(".*", "GHH7k/Projects/DFF/Source/Prg_999.xml"));
+        assertTrue(RegexUtils.matchesEntirely(".*", "GHH7k/Repos/DFF/Source/Prg_999.xml"));
     }
 
 }

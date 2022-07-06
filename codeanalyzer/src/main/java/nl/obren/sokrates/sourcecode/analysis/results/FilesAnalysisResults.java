@@ -21,6 +21,8 @@ public class FilesAnalysisResults {
     private List<SourceFile> allFiles = new ArrayList<>();
     private List<SourceFile> longestFiles = new ArrayList<>();
 
+    private List<SourceFile> filesWithMostUnits = new ArrayList<>();
+
     @JsonIgnore
     public List<SourceFile> getAllFiles() {
         return allFiles;
@@ -42,6 +44,14 @@ public class FilesAnalysisResults {
 
     public void setLongestFiles(List<SourceFile> longestFiles) {
         this.longestFiles = longestFiles;
+    }
+
+    public List<SourceFile> getFilesWithMostUnits() {
+        return filesWithMostUnits;
+    }
+
+    public void setFilesWithMostUnits(List<SourceFile> filesWithMostUnits) {
+        this.filesWithMostUnits = filesWithMostUnits;
     }
 
     public SourceFileSizeDistribution getOverallFileSizeDistribution() {

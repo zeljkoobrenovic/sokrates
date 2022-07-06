@@ -304,11 +304,11 @@ public class RichTextReport {
     }
 
     public void startDivWithLabel(String label, String style) {
-        addHtmlContent("<div style=\"" + style + "\" title=\"" + label + "\">");
+        addHtmlContent("<div style=\"cursor: help;" + style + "\" title=\"" + label + "\">");
     }
 
     public void startDiv(String style, String tooltip) {
-        addHtmlContent("<div style=\"" + style + "\" title=\"" + tooltip + "\">");
+        addHtmlContent("<div style=\"cursor: help;" + style + "\" title=\"" + tooltip + "\">");
     }
 
     public void startSpan(String style) {
@@ -494,5 +494,9 @@ public class RichTextReport {
 
     public void setRenderLogo(boolean renderLogo) {
         this.renderLogo = renderLogo;
+    }
+
+    public void addContentInSpan(String content, String style) {
+        addHtmlContent("<span style='" + style + "'>" + content + "</span>");
     }
 }

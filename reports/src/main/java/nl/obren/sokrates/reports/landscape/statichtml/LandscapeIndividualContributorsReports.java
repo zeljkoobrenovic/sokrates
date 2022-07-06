@@ -1,19 +1,19 @@
 package nl.obren.sokrates.reports.landscape.statichtml;
 
 import nl.obren.sokrates.common.utils.FormattingUtils;
+import nl.obren.sokrates.common.utils.SystemUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.utils.ContributorPerExtensionHelper;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.ContributorPerExtensionStats;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjectInfo;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjects;
+import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositoryInfo;
+import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,24 +26,11 @@ public class LandscapeIndividualContributorsReports {
         this.landscapeAnalysisResults = landscapeAnalysisResults;
     }
 
-    public static String getSafeFileName(String string) {
-        StringBuilder sb = new StringBuilder(string.length());
-        string = Normalizer.normalize(string, Normalizer.Form.NFD);
-        for (char c : string.toCharArray()) {
-            if (c == '.' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) {
-                sb.append(c);
-            } else {
-                sb.append("_");
-            }
-        }
-        return sb.toString();
-    }
-
     public static String getContributorIndividualReportFileName(String email) {
-        return getSafeFileName(email).toLowerCase() + ".html";
+        return SystemUtils.getSafeFileName(email).toLowerCase() + ".html";
     }
 
-    public List<RichTextReport> getIndividualReports(List<ContributorProjects> contributors) {
+    public List<RichTextReport> getIndividualReports(List<ContributorRepositories> contributors) {
         contributors.forEach(contributor -> {
             reports.add(getIndividualReport(contributor));
         });
@@ -51,8 +38,8 @@ public class LandscapeIndividualContributorsReports {
         return reports;
     }
 
-    private RichTextReport getIndividualReport(ContributorProjects contributorProjects) {
-        Contributor contributor = contributorProjects.getContributor();
+    private RichTextReport getIndividualReport(ContributorRepositories contributorRepositories) {
+        Contributor contributor = contributorRepositories.getContributor();
         RichTextReport report = new RichTextReport(contributor.getEmail(), getContributorIndividualReportFileName(contributor.getEmail()));
         report.setRenderLogo(false);
         String breadcrumbsLabel = landscapeAnalysisResults.getConfiguration().getMetadata().getName() + " / Contributors";
@@ -84,11 +71,11 @@ public class LandscapeIndividualContributorsReports {
         }
         report.addContentInDiv("First commit date: <b>" + contributor.getFirstCommitDate() + "</b>");
         report.addContentInDiv("Latest commit date: <b>" + contributor.getLatestCommitDate() + "</b>");
-        report.addContentInDiv("Projects count: " +
-                "<b>" + contributorProjects.getProjects().stream().filter(p -> p.getCommits30Days() > 0).count()
-                + "</b><span style='color: lightgrey; font-size: 90%'> (30d)</span>&nbsp;&nbsp;&nbsp;" + "<b>" + contributorProjects.getProjects().stream().filter(p -> p.getCommits90Days() > 0).count()
+        report.addContentInDiv("Repositories count: " +
+                "<b>" + contributorRepositories.getRepositories().stream().filter(p -> p.getCommits30Days() > 0).count()
+                + "</b><span style='color: lightgrey; font-size: 90%'> (30d)</span>&nbsp;&nbsp;&nbsp;" + "<b>" + contributorRepositories.getRepositories().stream().filter(p -> p.getCommits90Days() > 0).count()
                 + "</b><span style='color: lightgrey; font-size: 90%'> (3m)</span>&nbsp;&nbsp;&nbsp;" +
-                "<b>" + contributorProjects.getProjects().size() + "</b> <span style='color: lightgrey; font-size: 90%'> (all time)</span>");
+                "<b>" + contributorRepositories.getRepositories().size() + "</b> <span style='color: lightgrey; font-size: 90%'> (all time)</span>");
         report.addContentInDiv("Commits count: <b>" + contributor.getCommitsCount30Days() + "</b> " +
                 "<span style='color: lightgrey; font-size: 90%'>(30d)&nbsp;&nbsp;&nbsp;</span>" +
                 "<b>" + contributor.getCommitsCount90Days() + "</b><span style='color: lightgrey; font-size: 90%'> (3m)&nbsp;&nbsp;&nbsp;</span>" +
@@ -100,7 +87,7 @@ public class LandscapeIndividualContributorsReports {
 
         ContributorPerExtensionHelper helper = new ContributorPerExtensionHelper();
 
-        List<Pair<String, ContributorPerExtensionStats>> extensionUpdates = helper.getContributorStatsPerExtension(landscapeAnalysisResults.getConfiguration(), contributorProjects);
+        List<Pair<String, ContributorPerExtensionStats>> extensionUpdates = helper.getContributorStatsPerExtension(landscapeAnalysisResults.getConfiguration(), contributorRepositories);
 
         report.addContentInDiv("File updates per extension (90 days):");
         report.startTable();
@@ -126,32 +113,32 @@ public class LandscapeIndividualContributorsReports {
         report.addLineBreak();
 
         report.startTabGroup();
-        report.addTab("year", "Project Activity Per Year", true);
+        report.addTab("year", "Repository Activity Per Year", true);
         report.addTab("month", "Per Month", false);
         report.addTab("week", "Per Week", false);
         report.endTabGroup();
 
-        Collections.sort(contributorProjects.getProjects(), (a, b) -> 10000 * (b.getCommits30Days() - a.getCommits30Days()) +
+        Collections.sort(contributorRepositories.getRepositories(), (a, b) -> 10000 * (b.getCommits30Days() - a.getCommits30Days()) +
                 100 * (b.getCommits90Days() - a.getCommits90Days()) +
                 (b.getCommitsCount() - a.getCommitsCount()));
 
         report.startTabContentSection("week", false);
-        addPerWeek(contributorProjects, report);
+        addPerWeek(contributorRepositories, report);
         report.endTabContentSection();
 
         report.startTabContentSection("month", false);
-        addPerMonth(contributorProjects, report);
+        addPerMonth(contributorRepositories, report);
         report.endTabContentSection();
 
         report.startTabContentSection("year", true);
-        addPerYear(contributorProjects, report);
+        addPerYear(contributorRepositories, report);
         report.endTabContentSection();
 
         return report;
     }
 
 
-    private void addPerWeek(ContributorProjects contributorProjects, RichTextReport report) {
+    private void addPerWeek(ContributorRepositories contributorRepositories, RichTextReport report) {
 
         report.startDiv("width: 100%; overflow-x: scroll;");
         report.startTable();
@@ -161,12 +148,12 @@ public class LandscapeIndividualContributorsReports {
         report.addTableCell("", "min-width: 300px; border: none");
         report.addTableCell("Commits<br>(3m)", "max-width: 100px; text-align: center; border: none");
         report.addTableCell("Commit<br>Days", "max-width: 100px; text-align: center; border: none");
-        List<ContributorProjectInfo> projects = new ArrayList<>(contributorProjects.getProjects());
+        List<ContributorRepositoryInfo> repositories = new ArrayList<>(contributorRepositories.getRepositories());
         pastWeeks.forEach(pastWeek -> {
-            int projectCount[] = {0};
-            projects.forEach(project -> {
+            int repositoryCount[] = {0};
+            repositories.forEach(repository -> {
                 boolean found[] = {false};
-                project.getCommitDates().forEach(date -> {
+                repository.getCommitDates().forEach(date -> {
                     String weekMonday = DateUtils.getWeekMonday(date);
                     if (weekMonday.equals(pastWeek)) {
                         found[0] = true;
@@ -174,23 +161,23 @@ public class LandscapeIndividualContributorsReports {
                     }
                 });
                 if (found[0]) {
-                    projectCount[0] += 1;
+                    repositoryCount[0] += 1;
                     return;
                 }
             });
-            String tooltip = "Week of " + pastWeek + ": " + projectCount[0] + (projectCount[0] == 1 ? " project" : " projects");
+            String tooltip = "Week of " + pastWeek + ": " + repositoryCount[0] + (repositoryCount[0] == 1 ? " repository" : " repositories");
             report.startTableCell("font-size: 70%; border: none; color: lightgrey; text-align: center");
-            report.addContentInDivWithTooltip(projectCount[0] + "", tooltip, "text-align: center");
+            report.addContentInDivWithTooltip(repositoryCount[0] + "", tooltip, "text-align: center");
             report.endTableCell();
         });
         report.endTableRow();
 
-        List<ContributorProjectInfo> activeProjects = new ArrayList<>();
+        List<ContributorRepositoryInfo> activeRepositories = new ArrayList<>();
 
-        projects.forEach(project -> {
+        repositories.forEach(repository -> {
             int daysCount[] = {0};
             pastWeeks.forEach(pastWeek -> {
-                project.getCommitDates().forEach(date -> {
+                repository.getCommitDates().forEach(date -> {
                     String weekMonday = DateUtils.getWeekMonday(date);
                     if (weekMonday.equals(pastWeek)) {
                         daysCount[0] += 1;
@@ -199,26 +186,26 @@ public class LandscapeIndividualContributorsReports {
 
             });
             if (daysCount[0] > 0) {
-                activeProjects.add(project);
+                activeRepositories.add(repository);
             }
         });
 
-        Collections.sort(activeProjects, (a, b) -> b.getLatestCommitDate().compareTo(a.getLatestCommitDate()));
+        Collections.sort(activeRepositories, (a, b) -> b.getLatestCommitDate().compareTo(a.getLatestCommitDate()));
 
-        activeProjects.forEach(project -> {
-            String textOpacity = project.getCommits90Days() > 0 ? "font-weight: bold;" : "opacity: 0.4";
+        activeRepositories.forEach(repository -> {
+            String textOpacity = repository.getCommits90Days() > 0 ? "font-weight: bold;" : "opacity: 0.4";
             report.startTableRow();
             report.startTableCell("border: none;" + textOpacity);
-            report.addNewTabLink(project.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName(),
-                    "../../" + project.getProjectAnalysisResults().getSokratesProjectLink().getHtmlReportsRoot() + "/index.html");
+            report.addNewTabLink(repository.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName(),
+                    "../../" + repository.getRepositoryAnalysisResults().getSokratesRepositoryLink().getHtmlReportsRoot() + "/index.html");
             report.endTableCell();
-            report.addTableCell(project.getCommits90Days() > 0 ? project.getCommits90Days() + "" : "-", "text-align: center; border: none; " + textOpacity);
-            report.addTableCell(project.getCommitDates().size() + "", "text-align: center; border: none; " + textOpacity);
+            report.addTableCell(repository.getCommits90Days() > 0 ? repository.getCommits90Days() + "" : "-", "text-align: center; border: none; " + textOpacity);
+            report.addTableCell(repository.getCommitDates().size() + "", "text-align: center; border: none; " + textOpacity);
             int index[] = {0};
             pastWeeks.forEach(pastWeek -> {
                 int daysCount[] = {0};
                 index[0] += 1;
-                project.getCommitDates().forEach(date -> {
+                repository.getCommitDates().forEach(date -> {
                     String weekMonday = DateUtils.getWeekMonday(date);
                     if (weekMonday.equals(pastWeek)) {
                         daysCount[0] += 1;
@@ -243,7 +230,7 @@ public class LandscapeIndividualContributorsReports {
         report.endDiv();
     }
 
-    private void addPerMonth(ContributorProjects contributorProjects, RichTextReport report) {
+    private void addPerMonth(ContributorRepositories contributorRepositories, RichTextReport report) {
         report.startDiv("width: 100%; overflow-x: scroll;");
         report.startTable();
 
@@ -253,10 +240,10 @@ public class LandscapeIndividualContributorsReports {
         report.addTableCell("Commits<br>(3m)", "max-width: 100px; text-align: center; border: none");
         report.addTableCell("Commit<br>Days", "max-width: 100px; text-align: center; border: none");
         pastMonths.forEach(pastMonth -> {
-            int projectCount[] = {0};
-            contributorProjects.getProjects().forEach(project -> {
+            int repositoryCount[] = {0};
+            contributorRepositories.getRepositories().forEach(repository -> {
                 boolean found[] = {false};
-                project.getCommitDates().forEach(date -> {
+                repository.getCommitDates().forEach(date -> {
                     String weekMonday = DateUtils.getMonth(date);
                     if (weekMonday.equals(pastMonth)) {
                         found[0] = true;
@@ -264,32 +251,32 @@ public class LandscapeIndividualContributorsReports {
                     }
                 });
                 if (found[0]) {
-                    projectCount[0] += 1;
+                    repositoryCount[0] += 1;
                     return;
                 }
             });
-            String tooltip = "Month " + pastMonth + ": " + projectCount[0] + (projectCount[0] == 1 ? " project" : " projects");
+            String tooltip = "Month " + pastMonth + ": " + repositoryCount[0] + (repositoryCount[0] == 1 ? " repository" : " repositories");
             report.startTableCell("font-size: 70%; border: none; color: lightgrey; text-align: center");
-            report.addContentInDivWithTooltip(projectCount[0] + "", tooltip, "text-align: center");
+            report.addContentInDivWithTooltip(repositoryCount[0] + "", tooltip, "text-align: center");
             report.endTableCell();
         });
         report.endTableRow();
-        List<ContributorProjectInfo> projects = new ArrayList<>(contributorProjects.getProjects());
-        Collections.sort(projects, (a, b) -> b.getLatestCommitDate().compareTo(a.getLatestCommitDate()));
+        List<ContributorRepositoryInfo> repositories = new ArrayList<>(contributorRepositories.getRepositories());
+        Collections.sort(repositories, (a, b) -> b.getLatestCommitDate().compareTo(a.getLatestCommitDate()));
 
-        projects.forEach(project -> {
+        repositories.forEach(repository -> {
             report.startTableRow();
-            String textOpacity = project.getCommits90Days() > 0 ? "font-weight: bold;" : "opacity: 0.4";
+            String textOpacity = repository.getCommits90Days() > 0 ? "font-weight: bold;" : "opacity: 0.4";
             report.startTableCell("border: none; " + textOpacity);
-            report.addNewTabLink(project.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName(),
-                    "../../" + project.getProjectAnalysisResults().getSokratesProjectLink().getHtmlReportsRoot() + "/index.html");
+            report.addNewTabLink(repository.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName(),
+                    "../../" + repository.getRepositoryAnalysisResults().getSokratesRepositoryLink().getHtmlReportsRoot() + "/index.html");
             report.endTableCell();
-            report.addTableCell(project.getCommits90Days() > 0 ? project.getCommits90Days() + "" : "-", "text-align: center; border: none; " + textOpacity);
-            report.addTableCell(project.getCommitDates().size() + "", "text-align: center; border: none; " + textOpacity);
+            report.addTableCell(repository.getCommits90Days() > 0 ? repository.getCommits90Days() + "" : "-", "text-align: center; border: none; " + textOpacity);
+            report.addTableCell(repository.getCommitDates().size() + "", "text-align: center; border: none; " + textOpacity);
             int index[] = {0};
             pastMonths.forEach(pastMonth -> {
                 int count[] = {0};
-                project.getCommitDates().forEach(date -> {
+                repository.getCommitDates().forEach(date -> {
                     String month = DateUtils.getMonth(date);
                     if (month.equals(pastMonth)) {
                         count[0] += 1;
@@ -314,7 +301,7 @@ public class LandscapeIndividualContributorsReports {
         report.endDiv();
     }
 
-    private void addPerYear(ContributorProjects contributorProjects, RichTextReport report) {
+    private void addPerYear(ContributorRepositories contributorRepositories, RichTextReport report) {
         report.startDiv("width: 100%; overflow-x: scroll;");
         report.startTable();
 
@@ -323,13 +310,13 @@ public class LandscapeIndividualContributorsReports {
         report.addTableCell("", "min-width: 200px; border: none; border: none");
         report.addTableCell("Commits<br>(3m)", "max-width: 100px; text-align: center; border: none");
         report.addTableCell("Commit<br>Days", "max-width: 100px; text-align: center; border: none");
-        int maxProjectDays[] = {1};
+        int maxRepositoryDays[] = {1};
         pastYears.forEach(pastYear -> {
-            int projectCount[] = {0};
-            int projectDays[] = {0};
-            contributorProjects.getProjects().forEach(project -> {
+            int repositoryCount[] = {0};
+            int repositoryDays[] = {0};
+            contributorRepositories.getRepositories().forEach(repository -> {
                 boolean found[] = {false};
-                project.getCommitDates().forEach(date -> {
+                repository.getCommitDates().forEach(date -> {
                     String year = DateUtils.getYear(date);
                     if (year.equals(pastYear)) {
                         found[0] = true;
@@ -337,20 +324,20 @@ public class LandscapeIndividualContributorsReports {
                     }
                 });
                 if (found[0]) {
-                    projectCount[0] += 1;
-                    projectDays[0] += project.getCommitDates().stream().filter(date -> date.startsWith(pastYear + "-")).count();
+                    repositoryCount[0] += 1;
+                    repositoryDays[0] += repository.getCommitDates().stream().filter(date -> date.startsWith(pastYear + "-")).count();
                     return;
                 }
             });
 
-            maxProjectDays[0] = Math.max(projectDays[0], maxProjectDays[0]);
+            maxRepositoryDays[0] = Math.max(repositoryDays[0], maxRepositoryDays[0]);
         });
         pastYears.forEach(pastYear -> {
-            int projectCount[] = {0};
-            int projectDays[] = {0};
-            contributorProjects.getProjects().forEach(project -> {
+            int repositoryCount[] = {0};
+            int repositoryDays[] = {0};
+            contributorRepositories.getRepositories().forEach(repository -> {
                 boolean found[] = {false};
-                project.getCommitDates().forEach(date -> {
+                repository.getCommitDates().forEach(date -> {
                     String year = DateUtils.getYear(date);
                     if (year.equals(pastYear)) {
                         found[0] = true;
@@ -358,39 +345,39 @@ public class LandscapeIndividualContributorsReports {
                     }
                 });
                 if (found[0]) {
-                    projectCount[0] += 1;
-                    projectDays[0] += project.getCommitDates().stream().filter(date -> date.startsWith(pastYear + "-")).count();
+                    repositoryCount[0] += 1;
+                    repositoryDays[0] += repository.getCommitDates().stream().filter(date -> date.startsWith(pastYear + "-")).count();
                     return;
                 }
             });
-            String tooltip = "Month " + pastYear + ": " + projectCount[0] + (projectCount[0] == 1 ? " project" : " projects"
-                    + ", " + projectDays[0] + " commit " + (projectDays[0] == 1 ? "day" : "days"));
+            String tooltip = "Month " + pastYear + ": " + repositoryCount[0] + (repositoryCount[0] == 1 ? " repository" : " repositories"
+                    + ", " + repositoryDays[0] + " commit " + (repositoryDays[0] == 1 ? "day" : "days"));
             report.startTableCell("vertical-align: bottom; font-size: 70%; border: none; color: lightgrey; text-align: center");
-            String content = projectCount[0] + "&nbsp;p<br>" + projectDays[0] + "&nbsp;cd";
+            String content = repositoryCount[0] + "&nbsp;p<br>" + repositoryDays[0] + "&nbsp;cd";
             content += "<div style='vertical-align: bottom; text-align: center; margin: auto; background-color: skyblue; width: 32px; height: "
-                    + ((int) (1 + 32 * ((double) projectDays[0] / maxProjectDays[0]))) +
+                    + ((int) (1 + 32 * ((double) repositoryDays[0] / maxRepositoryDays[0]))) +
                     "px;'> </div>" + pastYear;
             report.addContentInDivWithTooltip(content, tooltip, "text-align: center");
             report.endTableCell();
 
         });
         report.endTableRow();
-        List<ContributorProjectInfo> projects = new ArrayList<>(contributorProjects.getProjects());
-        Collections.sort(projects, (a, b) -> b.getLatestCommitDate().compareTo(a.getLatestCommitDate()));
+        List<ContributorRepositoryInfo> repositories = new ArrayList<>(contributorRepositories.getRepositories());
+        Collections.sort(repositories, (a, b) -> b.getLatestCommitDate().compareTo(a.getLatestCommitDate()));
 
-        projects.forEach(project -> {
+        repositories.forEach(repository -> {
             report.startTableRow();
-            String textOpacity = project.getCommits90Days() > 0 ? "font-weight: bold;" : "opacity: 0.4";
+            String textOpacity = repository.getCommits90Days() > 0 ? "font-weight: bold;" : "opacity: 0.4";
             report.startTableCell("border: none; " + textOpacity);
-            report.addNewTabLink(project.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName(),
-                    "../../" + project.getProjectAnalysisResults().getSokratesProjectLink().getHtmlReportsRoot() + "/index.html");
+            report.addNewTabLink(repository.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName(),
+                    "../../" + repository.getRepositoryAnalysisResults().getSokratesRepositoryLink().getHtmlReportsRoot() + "/index.html");
             report.endTableCell();
-            report.addTableCell(project.getCommits90Days() > 0 ? project.getCommits90Days() + "" : "-", "text-align: center; border: none; " + textOpacity);
-            report.addTableCell(project.getCommitDates().size() + "", "text-align: center; border: none; " + textOpacity);
+            report.addTableCell(repository.getCommits90Days() > 0 ? repository.getCommits90Days() + "" : "-", "text-align: center; border: none; " + textOpacity);
+            report.addTableCell(repository.getCommitDates().size() + "", "text-align: center; border: none; " + textOpacity);
             int index[] = {0};
             pastYears.forEach(pastYear -> {
                 int count[] = {0};
-                project.getCommitDates().forEach(date -> {
+                repository.getCommitDates().forEach(date -> {
                     String year = DateUtils.getYear(date);
                     if (year.equals(pastYear)) {
                         count[0] += 1;

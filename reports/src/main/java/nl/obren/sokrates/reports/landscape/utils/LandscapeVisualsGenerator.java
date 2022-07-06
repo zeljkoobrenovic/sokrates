@@ -33,20 +33,20 @@ public class LandscapeVisualsGenerator {
     }
 
     public void exportVisuals(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {
-        exportProjects(landscapeAnalysisResults);
+        exportRepositories(landscapeAnalysisResults);
         exportContributors(landscapeAnalysisResults);
         exportRecentContributors(landscapeAnalysisResults);
         exportLanguages(landscapeAnalysisResults);
         exportContributorPerLanguage(landscapeAnalysisResults);
     }
 
-    private void exportProjects(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {
+    private void exportRepositories(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {
         List<VisualizationItem> itemsLinesOfCode = new ArrayList<>();
         List<VisualizationItem> itemsCommits = new ArrayList<>();
         List<VisualizationItem> itemsAge = new ArrayList<>();
         List<VisualizationItem> itemsContributors = new ArrayList<>();
-        landscapeAnalysisResults.getAllProjects().forEach(projectAnalysisResults -> {
-            CodeAnalysisResults analysisResults = projectAnalysisResults.getAnalysisResults();
+        landscapeAnalysisResults.getAllRepositories().forEach(repositoryAnalysisResults -> {
+            CodeAnalysisResults analysisResults = repositoryAnalysisResults.getAnalysisResults();
 
             String name = analysisResults.getMetadata().getName();
 
@@ -57,26 +57,26 @@ public class LandscapeVisualsGenerator {
                 itemsContributors.add(new VisualizationItem(name, analysisResults.getContributorsAnalysisResults().getContributorsPerMonth().get(0).getContributorsCount()));
             }
         });
-        exportVisuals("projects_loc", itemsLinesOfCode);
-        exportVisuals("projects_commits", itemsCommits);
-        exportVisuals("projects_age", itemsCommits);
-        exportVisuals("projects_contributors", itemsContributors);
+        exportVisuals("repositories_loc", itemsLinesOfCode);
+        exportVisuals("repositories_commits", itemsCommits);
+        exportVisuals("repositories_age", itemsCommits);
+        exportVisuals("repositories_contributors", itemsContributors);
     }
 
     private void exportContributors(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {
         List<VisualizationItem> items = new ArrayList<>();
-        landscapeAnalysisResults.getContributors().forEach(contributorProject -> {
-            String name = contributorProject.getContributor().getEmail();
-            items.add(new VisualizationItem(name, contributorProject.getContributor().getCommitsCount()));
+        landscapeAnalysisResults.getContributors().forEach(contributorRepository -> {
+            String name = contributorRepository.getContributor().getEmail();
+            items.add(new VisualizationItem(name, contributorRepository.getContributor().getCommitsCount()));
         });
         exportVisuals("contributors", items);
     }
 
     private void exportRecentContributors(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {
         List<VisualizationItem> items = new ArrayList<>();
-        landscapeAnalysisResults.getContributors().stream().filter(c -> c.getContributor().getCommitsCount30Days() > 0).forEach(contributorProject -> {
-            String name = contributorProject.getContributor().getEmail();
-            items.add(new VisualizationItem(name, contributorProject.getContributor().getCommitsCount30Days()));
+        landscapeAnalysisResults.getContributors().stream().filter(c -> c.getContributor().getCommitsCount30Days() > 0).forEach(contributorRepository -> {
+            String name = contributorRepository.getContributor().getEmail();
+            items.add(new VisualizationItem(name, contributorRepository.getContributor().getCommitsCount30Days()));
         });
         exportVisuals("contributors_30_days", items);
     }

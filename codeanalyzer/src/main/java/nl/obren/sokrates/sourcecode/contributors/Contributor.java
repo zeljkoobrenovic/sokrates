@@ -5,6 +5,7 @@
 package nl.obren.sokrates.sourcecode.contributors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import nl.obren.sokrates.sourcecode.duplication.DuplicatedFileBlock;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -188,5 +189,16 @@ public class Contributor {
 
     public void setCommitDates(List<String> commitDates) {
         this.commitDates = commitDates;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || !(obj instanceof Contributor)) {
+            return false;
+        }
+
+        Contributor contributor = (Contributor) obj;
+
+        return contributor.getEmail().equalsIgnoreCase(this.getEmail());
     }
 }

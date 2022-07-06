@@ -8,19 +8,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Metadata {
-    // A project name
+    // A repository name
     private String name = "";
 
-    // A project description (included in the index page of HTML reports)
+    // A repository description (included in the index page of HTML reports)
     private String description = "";
 
-    // Additional project description shown as a tooltip in the HTML index report
+    // Additional repository description shown as a tooltip in the HTML index report
     private String tooltip = "";
 
     // A link to an image file to be used as a logo in generated HTML reports
     private String logoLink = "";
 
-    // A list of web links to resources related to the project
+    // A list of web links to resources related to the repository
     private List<Link> links = new ArrayList<>();
 
     public String getName() {

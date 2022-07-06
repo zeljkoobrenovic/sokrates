@@ -16,9 +16,7 @@ import nl.obren.sokrates.common.renderingutils.force3d.Force3DNode;
 import nl.obren.sokrates.common.renderingutils.force3d.Force3DObject;
 import nl.obren.sokrates.common.renderingutils.x3d.Unit3D;
 import nl.obren.sokrates.common.renderingutils.x3d.X3DomExporter;
-import nl.obren.sokrates.common.utils.BasicColorInfo;
-import nl.obren.sokrates.common.utils.ProcessingStopwatch;
-import nl.obren.sokrates.common.utils.ProgressFeedback;
+import nl.obren.sokrates.common.utils.*;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.dataexporters.DataExporter;
@@ -55,6 +53,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -257,13 +256,20 @@ public class CommandLineInterface {
                 System.setProperty("user.dir", absolutePath);
                 LOG.info(System.getProperty("user.dir"));
                 LandscapeAnalysisCommands.update(new File(landscapeFolder.getAbsolutePath()), null, metadata);
+                DateUtils.reset();
+                RegexUtils.reset();
+                System.gc();
             });
             LOG.info("Analysed " + landscapeConfigFiles + " landscape(s):");
             landscapeConfigFiles.forEach(landscapeConfigFile -> {
                 LOG.info(" -  " + landscapeConfigFile.getPath());
             });
+            if (landscapeConfigFiles.size() > 0) {
+                saveExecutionStats(new File(landscapeConfigFiles.get(landscapeConfigFiles.size() - 1).getParentFile(), "data"));
+            }
         } else {
-            LandscapeAnalysisCommands.update(root, confFilePath != null ? new File(confFilePath) : null, metadata);
+            File reportsFolder = LandscapeAnalysisCommands.update(root, confFilePath != null ? new File(confFilePath) : null, metadata);
+            saveExecutionStats(new File(reportsFolder, "data"));
         }
     }
 
@@ -394,7 +400,7 @@ public class CommandLineInterface {
         if (cmd.hasOption(commands.getSkipComplexAnalyses().getOpt())) {
             codeConfiguration.getAnalysis().setSkipDependencies(true);
             codeConfiguration.getAnalysis().setSkipDuplication(true);
-            codeConfiguration.getAnalysis().setCacheSourceFiles(false);
+            codeConfiguration.getAnalysis().setSaveSourceFiles(false);
         }
 
         if (cmd.hasOption(commands.getSkipDuplicationAnalyses().getOpt())) {
@@ -411,7 +417,7 @@ public class CommandLineInterface {
         if (cmd.hasOption(commands.getSetCacheFiles().getOpt())) {
             String cacheFileValue = cmd.getOptionValue(commands.getSetCacheFiles().getOpt());
             if (StringUtils.isNotBlank(cacheFileValue)) {
-                codeConfiguration.getAnalysis().setCacheSourceFiles(cacheFileValue.equalsIgnoreCase("true"));
+                codeConfiguration.getAnalysis().setSaveSourceFiles(cacheFileValue.equalsIgnoreCase("true"));
             }
         }
 
@@ -542,8 +548,14 @@ public class CommandLineInterface {
 
     private void saveExecutionStats(File dataFolder) {
         try {
-            String json = new JsonGenerator().generate(ProcessingStopwatch.getMonitors());
+            List<ProcessingTimes> monitors = ProcessingStopwatch.getMonitors();
+
+            String json = new JsonGenerator().generate(monitors);
+            List<String> lines = monitors.stream().map(m -> m.getDurationMs() / 1000.0 + "s => " + m.getProcessing() + " " + ProcessingStopwatch.getPercentage(m.getDurationMs())).collect(Collectors.toList());
+            String text = lines.stream().map(l -> StringUtils.repeat("  ", StringUtils.countMatches(l, '/')) + l).collect(Collectors.joining("\n"));
+
             FileUtils.write(new File(dataFolder, "executionTimes.json"), json, UTF_8);
+            FileUtils.write(new File(dataFolder, "executionTimes.txt"), text, UTF_8);
         } catch (IOException e) {
             LOG.error(e);
         }
@@ -592,7 +604,7 @@ public class CommandLineInterface {
             info("HTML reports: <a href='" + htmlReports.getPath() + "'>" + htmlReports.getPath() + "</a>");
         }
         info("Raw data: <a href='" + dataReports.getPath() + "'>" + dataReports.getPath() + "</a>");
-        if (analysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles()) {
+        if (analysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles()) {
             info("Source code cache : <a href='" + srcCache.getPath() + "'>" + srcCache.getPath() + "</a>");
         }
         ProcessingStopwatch.start("reporting");

@@ -104,11 +104,11 @@ public class FileHistoryAnalyzer extends Analyzer {
             analysisResults.setActiveDays(activeDays);
 
             metricsList.addMetric().id("FILE_CHANGE_HISTORY_TOTAL_AGE_DAYS")
-                    .description("The age of the project in days")
+                    .description("The age of the repository in days")
                     .value(totalAge);
 
             metricsList.addMetric().id("FILE_CHANGE_HISTORY_ACTIVE_DAYS")
-                    .description("The number of daty with at least one file change")
+                    .description("The number of days with at least one file change")
                     .value(activeDays);
 
             metricsList.addMetric().id("FILE_CHANGE_HISTORY_WEEKS")
@@ -153,8 +153,15 @@ public class FileHistoryAnalyzer extends Analyzer {
         Thresholds fileUpdateFrequencyThresholds = codeConfiguration.getAnalysis().getFileUpdateFrequencyThresholds();
         Thresholds fileContributorCountThresholds = codeConfiguration.getAnalysis().getFileContributorsCountThresholds();
 
+        if (sourceFiles != null) {
+            sourceFiles.stream().filter(f -> f.getFileModificationHistory() == null).forEach(sourceFile -> {
+                analysisResults.setFilesWithoutCommitHistoryCount(analysisResults.getFilesWithoutCommitHistoryCount() + 1);
+                analysisResults.setFilesWithoutCommitHistoryLinesOfCode(analysisResults.getFilesWithoutCommitHistoryLinesOfCode() + sourceFile.getLinesOfCode());
+            });
+        }
+
         SourceFileAgeDistribution lastModifiedDistribution = new SourceFileAgeDistribution(fileAgeThresholds, LAST_MODIFIED).getOverallLastModifiedDistribution(sourceFiles);
-        SourceFileAgeDistribution firstModifiedDistribution = new SourceFileAgeDistribution(fileAgeThresholds, LAST_MODIFIED).getOverallFirstModifiedDistribution(sourceFiles);
+        SourceFileAgeDistribution firstModifiedDistribution = new SourceFileAgeDistribution(fileAgeThresholds, FIRST_MODIFIED).getOverallFirstModifiedDistribution(sourceFiles);
         SourceFileChangeDistribution changeDistribution = new SourceFileChangeDistribution(fileUpdateFrequencyThresholds).getOverallDistribution(sourceFiles);
         SourceFileChangeDistribution contributorCountDistribution = new SourceFileChangeDistribution(fileContributorCountThresholds).getOverallContributorsCountDistribution(sourceFiles);
 

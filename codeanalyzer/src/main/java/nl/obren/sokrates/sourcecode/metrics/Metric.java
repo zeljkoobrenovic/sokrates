@@ -17,7 +17,7 @@ public class Metric {
     }
 
     public Metric id(String name) {
-        this.id = SystemUtils.getFileSystemFriendlyName(name).toUpperCase();
+        this.id = SystemUtils.getSafeFileName(name).toUpperCase();
         return this;
     }
 

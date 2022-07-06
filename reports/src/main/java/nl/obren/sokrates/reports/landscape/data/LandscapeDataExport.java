@@ -1,26 +1,27 @@
 package nl.obren.sokrates.reports.landscape.data;
 
 import nl.obren.sokrates.common.io.JsonGenerator;
+import nl.obren.sokrates.common.utils.SystemUtils;
 import nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator;
+import nl.obren.sokrates.reports.landscape.statichtml.repositories.TagMap;
+import nl.obren.sokrates.reports.landscape.utils.TagStats;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorProjects;
+import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ProjectAnalysisResults;
+import nl.obren.sokrates.sourcecode.landscape.analysis.RepositoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 public class LandscapeDataExport {
+    public static final String REPOSITORIES_DATA_FILE_NAME = "repositories.txt";
     private LandscapeAnalysisResults analysisResults;
     private File dataFolder;
 
@@ -31,28 +32,39 @@ public class LandscapeDataExport {
         dataFolder.mkdirs();
     }
 
-    public void exportProjects() {
+    public void exportRepositories(TagMap tagMap) {
+        exportRepositories(analysisResults.getFilteredRepositoryAnalysisResults(), REPOSITORIES_DATA_FILE_NAME);
+        tagMap.keySet().forEach(key -> {
+            TagStats tagStats = tagMap.getTagStats(key);
+            exportRepositories(tagStats.getRepositoryAnalysisResults(), getTagRepositoriesFileName(key));
+        });
+        exportRepositories(analysisResults.getIgnoredRepositoryAnalysisResults(), "ignoredRepositories.txt");
+    }
+
+    public static String getTagRepositoriesFileName(String key) {
+        return "tag_" + SystemUtils.getSafeFileName(key) + "_repositories.txt";
+    }
+
+    private void exportRepositories(List<RepositoryAnalysisResults> repositories, String fileName) {
         StringBuilder builder = new StringBuilder();
 
-        builder.append("Project\tMain Lanuguage\tLOC (main)\tLOC (test)\tLOC (other)\tAge (years)\tContributors\tRecent Contributors\tRookies\tCommits this year\tLatest commit\n");
+        builder.append("Repository\tMain Lanuguage\tLOC (main)\tLOC (test)\tLOC (other)\tAge (years)\tContributors\tRecent Contributors\tRookies\tCommits this year\tLatest commit\n");
 
-        int thresholdCommits = analysisResults.getConfiguration().getContributorThresholdCommits();
-
-        analysisResults.getProjectAnalysisResults().forEach(project -> {
-            appendProject(builder, thresholdCommits, project);
+        repositories.forEach(repository -> {
+            appendRepository(builder, repository);
         });
 
         try {
-            FileUtils.write(new File(dataFolder, "projects.txt"), builder.toString(), StandardCharsets.UTF_8);
+            FileUtils.write(new File(dataFolder, fileName), builder.toString(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void appendProject(StringBuilder builder, int thresholdCommits, ProjectAnalysisResults project) {
-        CodeAnalysisResults projectAnalysis = project.getAnalysisResults();
-        builder.append(projectAnalysis.getMetadata().getName()).append("\t");
-        AspectAnalysisResults main = projectAnalysis.getMainAspectAnalysisResults();
+    private void appendRepository(StringBuilder builder, RepositoryAnalysisResults repository) {
+        CodeAnalysisResults repositoryAnalysis = repository.getAnalysisResults();
+        builder.append(repositoryAnalysis.getMetadata().getName()).append("\t");
+        AspectAnalysisResults main = repositoryAnalysis.getMainAspectAnalysisResults();
 
         List<NumericMetric> linesOfCodePerExtension = main.getLinesOfCodePerExtension();
         StringBuilder locSummary = new StringBuilder();
@@ -63,16 +75,15 @@ public class LandscapeDataExport {
         }
         builder.append(locSummary.toString().replace("> = ", ">")).append("\t");
         builder.append(main.getLinesOfCode()).append("\t");
-        builder.append(projectAnalysis.getTestAspectAnalysisResults().getLinesOfCode()).append("\t");
-        builder.append(projectAnalysis.getGeneratedAspectAnalysisResults().getLinesOfCode()
-                + projectAnalysis.getBuildAndDeployAspectAnalysisResults().getLinesOfCode()
-                + projectAnalysis.getOtherAspectAnalysisResults().getLinesOfCode()).append("\t");
+        builder.append(repositoryAnalysis.getTestAspectAnalysisResults().getLinesOfCode()).append("\t");
+        builder.append(repositoryAnalysis.getGeneratedAspectAnalysisResults().getLinesOfCode()
+                + repositoryAnalysis.getBuildAndDeployAspectAnalysisResults().getLinesOfCode()
+                + repositoryAnalysis.getOtherAspectAnalysisResults().getLinesOfCode()).append("\t");
 
-        int projectAgeYears = (int) Math.round(projectAnalysis.getFilesHistoryAnalysisResults().getAgeInDays() / 365.0);
-        builder.append(projectAgeYears).append("\t");
+        int repositoryAgeYears = (int) Math.round(repositoryAnalysis.getFilesHistoryAnalysisResults().getAgeInDays() / 365.0);
+        builder.append(repositoryAgeYears).append("\t");
 
-        List<Contributor> contributors = projectAnalysis.getContributorsAnalysisResults().getContributors()
-                .stream().filter(c -> c.getCommitsCount() >= thresholdCommits).collect(Collectors.toCollection(ArrayList::new));
+        List<Contributor> contributors = repositoryAnalysis.getContributorsAnalysisResults().getContributors();
 
         int contributorsCount = contributors.size();
         int recentContributorsCount = (int) contributors.stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count();
@@ -80,8 +91,8 @@ public class LandscapeDataExport {
         builder.append(contributorsCount).append("\t");
         builder.append(recentContributorsCount).append("\t");
         builder.append(rookiesCount).append("\t");
-        builder.append(projectAnalysis.getContributorsAnalysisResults().getCommitsThisYear()).append("\t");
-        builder.append(projectAnalysis.getContributorsAnalysisResults().getLatestCommitDate());
+        builder.append(repositoryAnalysis.getContributorsAnalysisResults().getCommitsThisYear()).append("\t");
+        builder.append(repositoryAnalysis.getContributorsAnalysisResults().getLatestCommitDate());
         builder.append("\n");
     }
 
@@ -89,9 +100,9 @@ public class LandscapeDataExport {
     public void exportContributors() {
         StringBuilder builder = new StringBuilder();
 
-        builder.append("Contributor\t# commits (all time)\t# commits (30 days)\t# commits (90 days)\t# commits (180 days)\t# commits (365 days)\tFirst commit\tLatest commit\tProjects\n");
+        builder.append("Contributor\t# commits (all time)\t# commits (30 days)\t# commits (90 days)\t# commits (180 days)\t# commits (365 days)\tFirst commit\tLatest commit\tRepositories\n");
 
-        List<ContributorProjects> contributors = analysisResults.getContributors();
+        List<ContributorRepositories> contributors = analysisResults.getContributors();
 
         contributors.forEach(contributor -> {
             builder.append(contributor.getContributor().getEmail()).append("\t");
@@ -107,7 +118,7 @@ public class LandscapeDataExport {
             builder.append(contributorCommits365Days).append("\t");
             builder.append(contributor.getContributor().getFirstCommitDate()).append("\t");
             builder.append(contributor.getContributor().getLatestCommitDate()).append("\t");
-            builder.append(contributor.getProjects().stream().map(p -> p.getProjectAnalysisResults().getAnalysisResults().getMetadata().getName()).collect(Collectors.joining(", ")));
+            builder.append(contributor.getRepositories().stream().map(p -> p.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName()).collect(Collectors.joining(", ")));
             builder.append("\n");
         });
 

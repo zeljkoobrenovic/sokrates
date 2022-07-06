@@ -14,7 +14,7 @@ public class TagRule {
     // A tag color
     private String color = "";
 
-    // A list of regex path patterns to tag projects. Any project with at least one file matching any of the regex patterns will be tagged with this tag.
+    // A list of regex path patterns to tag repositories. Any repository with at least one file matching any of the regex patterns will be tagged with this tag.
     private List<String> pathPatterns = new ArrayList<>();
 
     // A list of regex path patterns ignore for tagging.

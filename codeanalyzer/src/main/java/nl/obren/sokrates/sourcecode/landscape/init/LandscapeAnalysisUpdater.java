@@ -9,7 +9,8 @@ import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
-import nl.obren.sokrates.sourcecode.landscape.SokratesProjectLink;
+import nl.obren.sokrates.sourcecode.landscape.LandscapeInfo;
+import nl.obren.sokrates.sourcecode.landscape.SokratesRepositoryLink;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -28,24 +29,28 @@ public class LandscapeAnalysisUpdater {
 
     public LandscapeConfiguration updateConfiguration(File analysisRoot, File landscapeConfigFile, Metadata metadata) {
         landscapeConfigFile = getLandscapeConfigFile(analysisRoot, landscapeConfigFile);
+        File landscapeInfoFile = getLandscapeInfoFile(analysisRoot);
         LandscapeConfiguration newConfig = getNewConfig(analysisRoot, landscapeConfigFile);
+
         if (landscapeConfigFile.exists()) {
             try {
                 String json = FileUtils.readFileToString(landscapeConfigFile, StandardCharsets.UTF_8);
+                LOG.info("Updating landscape '" + landscapeConfigFile.getAbsolutePath() + "' ...");
                 LandscapeConfiguration existingConfiguration = (LandscapeConfiguration) new JsonMapper().getObject(json, LandscapeConfiguration.class);
                 existingConfiguration.setSubLandscapes(newConfig.getSubLandscapes());
-                existingConfiguration.setProjects(newConfig.getProjects());
+                existingConfiguration.setRepositories(newConfig.getRepositories());
                 updateMetadata(existingConfiguration, metadata);
-                save(landscapeConfigFile, existingConfiguration);
+                save(landscapeConfigFile, landscapeInfoFile, existingConfiguration);
                 return existingConfiguration;
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
         updateMetadata(newConfig, metadata);
-        save(landscapeConfigFile, newConfig);
+        save(landscapeConfigFile, landscapeInfoFile, newConfig);
         return newConfig;
     }
+
 
     private void updateMetadata(LandscapeConfiguration configuration, Metadata metadata) {
         if (metadata != null) {
@@ -72,44 +77,9 @@ public class LandscapeAnalysisUpdater {
         return landscapeConfigFile;
     }
 
-    private void addNewProjects(LandscapeConfiguration newConfig, LandscapeConfiguration existingConfiguration) {
-        List<SokratesProjectLink> allProjects = newConfig.getProjects();
-        List<SokratesProjectLink> allPreviousProjects = existingConfiguration.getProjects();
-
-        List<SokratesProjectLink> newProjects = getNewProjects(allProjects, allPreviousProjects);
-
-        if (newProjects.size() > 0) {
-            existingConfiguration.getProjects().addAll(newProjects);
-        }
-    }
-
-    private List<SokratesProjectLink> getNewProjects(List<SokratesProjectLink> allProjects, List<SokratesProjectLink> allPreviousProjects) {
-        List<SokratesProjectLink> newProjects = new ArrayList<>();
-
-        allProjects.forEach(project -> {
-            if (!(allPreviousProjects.stream().filter(prevProject -> prevProject.getAnalysisResultsPath().equalsIgnoreCase(project.getAnalysisResultsPath())).findAny().isPresent())) {
-                LOG.info("Adding project: " + project.getAnalysisResultsPath());
-                newProjects.add(project);
-            }
-        });
-
-        return newProjects;
-    }
-
-    private List<SokratesProjectLink> removeNonExistingProjects(LandscapeConfiguration landscapeConfiguration) {
-        String analysisRoot = landscapeConfiguration.getAnalysisRoot();
-        List<SokratesProjectLink> removedProjects = new ArrayList<>();
-        landscapeConfiguration.getProjects().forEach(project -> {
-            File analysisFile = Paths.get(analysisRoot, project.getAnalysisResultsPath()).toFile();
-            if (!analysisFile.exists()) {
-                LOG.info("Removing project: " + project.getAnalysisResultsPath());
-                removedProjects.add(project);
-            }
-        });
-
-        removedProjects.forEach(removedProject -> landscapeConfiguration.getProjects().remove(removedProject));
-
-        return removedProjects;
+    private File getLandscapeInfoFile(File analysisRoot) {
+        File landscapeAnalysisRoot = new File(analysisRoot, "_sokrates_landscape");
+        return new File(landscapeAnalysisRoot, "info.json");
     }
 
     private LandscapeConfiguration getNewConfig(File analysisRoot, File landscapeConfigFile) {
@@ -118,8 +88,14 @@ public class LandscapeAnalysisUpdater {
         return newConfig;
     }
 
-    private void save(File landscapeConfigFile, LandscapeConfiguration landscapeConfiguration) {
+    private void save(File landscapeConfigFile, File landscapeInfoFile, LandscapeConfiguration landscapeConfiguration) {
         try {
+            LandscapeInfo info = new LandscapeInfo();
+            info.setSubLandscapes(landscapeConfiguration.getSubLandscapes());
+            info.setRepositories(landscapeConfiguration.getRepositories());
+            String jsonInfo = new JsonGenerator().generate(info);
+            FileUtils.write(landscapeInfoFile, jsonInfo, StandardCharsets.UTF_8);
+
             String json = new JsonGenerator().generate(landscapeConfiguration);
             FileUtils.write(landscapeConfigFile, json, StandardCharsets.UTF_8);
         } catch (JsonProcessingException e) {

@@ -6,6 +6,7 @@ package nl.obren.sokrates.sourcecode.analysis.files;
 
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.common.utils.SystemUtils;
+import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.AnalysisUtils;
 import nl.obren.sokrates.sourcecode.analysis.Analyzer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -23,6 +24,7 @@ import nl.obren.sokrates.sourcecode.units.UnitsExtractor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static nl.obren.sokrates.sourcecode.analysis.AnalysisUtils.getMetricId;
 
@@ -122,6 +124,7 @@ public class UnitsAnalyzer extends Analyzer {
         addAllUnits(allUnits, unitsAnalysisResults);
         addLongestUnits(allUnits, unitsAnalysisResults, sampleSize);
         addMostComplexUnits(allUnits, unitsAnalysisResults, sampleSize);
+        addFilesWithMostUnits(filesAnalysisResults.getAllFiles(), filesAnalysisResults, FileSizeAnalyzer.SAMPLE_SIZE);
     }
 
     private void addBasicUnitMetrics(List<UnitInfo> allUnits, int linesOfCode) {
@@ -191,7 +194,7 @@ public class UnitsAnalyzer extends Analyzer {
     }
 
     private void printRiskDistributionStats(RiskDistributionStats riskDistributionStats, String prefix) {
-        String namePrefix = SystemUtils.getFileSystemFriendlyName(prefix.toUpperCase().replace(":", "")).toUpperCase();
+        String namePrefix = SystemUtils.getSafeFileName(prefix.toUpperCase().replace(":", "")).toUpperCase();
 
         addNegligibleRiskMetrics(riskDistributionStats, namePrefix);
         addLowRiskMetrics(riskDistributionStats, namePrefix);
@@ -241,7 +244,20 @@ public class UnitsAnalyzer extends Analyzer {
     }
 
     private String safeId(String id) {
-        return SystemUtils.getFileSystemFriendlyName(id).toUpperCase();
+        return SystemUtils.getSafeFileName(id).toUpperCase();
+    }
+
+
+    private void addFilesWithMostUnits(List<SourceFile> sourceFiles, FilesAnalysisResults filesAnalysisResults, int sampleSize) {
+        List<SourceFile> files = new ArrayList<>(sourceFiles).stream().filter(sourceFile -> sourceFile.getUnitsCount() > 0).collect(Collectors.toList());
+        files.sort((o1, o2) -> o2.getUnitsCount() - o1.getUnitsCount());
+        int index[] = {0};
+        files.forEach(sourceFile -> {
+            if (index[0]++ >= sampleSize) {
+                return;
+            }
+            filesAnalysisResults.getFilesWithMostUnits().add(sourceFile);
+        });
     }
 
 

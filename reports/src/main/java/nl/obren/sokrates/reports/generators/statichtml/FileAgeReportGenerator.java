@@ -6,6 +6,7 @@ package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
+import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.FilesReportUtils;
 import nl.obren.sokrates.reports.utils.PieChartUtils;
@@ -78,13 +79,19 @@ public class FileAgeReportGenerator {
 
             report.startUnorderedList();
 
-            report.addListItem("Number of files: <b>" + codeAnalysisResults.getMainAspectAnalysisResults().getFilesCount() + "</b>");
+            report.addListItem("Number of files: <b>" + FormattingUtils.formatCount(codeAnalysisResults.getMainAspectAnalysisResults().getFilesCount()) + "</b>");
             report.addListItem("Daily file updates (only one update per file and date counted): <b>" + history.size() + "</b>");
             report.addListItem("First update: <b>" + firstDateString + "</b>");
             report.addListItem("Latest update: <b>" + latestDateString + "</b>");
-            report.addListItem("Days between first and latest update: <b>" + daysBetween + "</b> (" + weeks + " weeks, estimated " + estimatedWorkingDays + " working days)");
-            report.addListItem("Active days (at least one file change): <b>" + uniqueDates.size() + "</b>");
-
+            report.addListItem("Days between first and latest update: <b>" + FormattingUtils.formatCount(daysBetween) + "</b> (" + weeks + " weeks, estimated " + FormattingUtils.formatCount(estimatedWorkingDays) + " working days)");
+            report.addListItem("Active days (at least one file change): <b>" + FormattingUtils.formatCount(uniqueDates.size()) + "</b>");
+            int ignoredFiles = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilesWithoutCommitHistoryCount();
+            if (ignoredFiles > 0) {
+                report.addListItem("Files without commit history (ignored): <b>" + FormattingUtils.formatCount(ignoredFiles) + " (" + FormattingUtils.formatCount(codeAnalysisResults.getFilesHistoryAnalysisResults().getFilesWithoutCommitHistoryLinesOfCode()) + " lines of code)</b>");
+                report.startUnorderedList();
+                report.addListItem("<a href='../data/text/mainFilesWithoutHistory.txt' target='_blank'>Files without history</a>");
+                report.endUnorderedList();
+            }
             report.addListItem("Data:");
             report.startUnorderedList();
             report.addListItem("<a href='../data/text/mainFilesWithHistory.txt' target='_blank'>Organized per file</a>");
@@ -250,7 +257,7 @@ public class FileAgeReportGenerator {
     private void addOldestFilesList(RichTextReport report) {
         List<SourceFile> longestFiles = codeAnalysisResults.getFilesHistoryAnalysisResults().getOldestFiles();
         report.startSection("Oldest Files (Top " + longestFiles.size() + ")", "");
-        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(longestFiles, cacheSourceFiles, true, false).toString());
         report.endSection();
     }
@@ -258,7 +265,7 @@ public class FileAgeReportGenerator {
     private void addYoungestFilesList(RichTextReport report) {
         List<SourceFile> youngestFiles = codeAnalysisResults.getFilesHistoryAnalysisResults().getYoungestFiles();
         report.startSection("Most Recently Created Files (Top " + youngestFiles.size() + ")", "");
-        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true, false).toString());
         report.endSection();
     }
@@ -266,7 +273,7 @@ public class FileAgeReportGenerator {
     private void addMostRecentlyChangedFilesList(RichTextReport report) {
         List<SourceFile> youngestFiles = codeAnalysisResults.getFilesHistoryAnalysisResults().getMostRecentlyChangedFiles();
         report.startSection("Most Recently Changed Files (Top " + youngestFiles.size() + ")", "");
-        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true, false).toString());
         report.endSection();
     }
@@ -274,7 +281,7 @@ public class FileAgeReportGenerator {
     private void addMostPreviouslyChangedFilesList(RichTextReport report) {
         List<SourceFile> youngestFiles = codeAnalysisResults.getFilesHistoryAnalysisResults().getMostPreviouslyChangedFiles();
         report.startSection("Files Not Recently Changed (Top " + youngestFiles.size() + ")", "");
-        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true, false).toString());
         report.endSection();
     }

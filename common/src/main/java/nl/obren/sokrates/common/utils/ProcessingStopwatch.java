@@ -35,7 +35,7 @@ public class ProcessingStopwatch {
         if (monitorsMap.containsKey(processingName)) {
             ProcessingTimes times = monitorsMap.get(processingName);
             times.end();
-            LOG.info("Done '" + times.getProcessing() + "' in " + times.getDuration() + "ms");
+            LOG.info("Done '" + times.getProcessing() + "' in " + times.getDurationMs() + "ms");
         } else {
             LOG.error("No processing with the name '" + processingName + "'");
         }
@@ -48,64 +48,25 @@ public class ProcessingStopwatch {
     public static void print() {
         LOG.info("Processing times summary:");
         monitors.forEach(monitor -> {
-            long duration = monitor.getDuration();
+            long duration = monitor.getDurationMs();
             if (duration >= 0) {
-                String percentageString = "";
-                if (referenceTimes != null && referenceTimes.getDuration() > 0) {
-                    percentageString = " (" + FormattingUtils.getFormattedPercentage(100.0 * duration / referenceTimes.getDuration(), "<1") + "%)";
-                }
-                LOG.info("Executed '" + monitor.getProcessing() + "' in " + duration + "ms" + percentageString);
+                String percentageString = getPercentage(duration);
+                LOG.info("Executed '" + monitor.getProcessing() + "' in " + duration + "ms " + percentageString);
             } else {
                 LOG.info("Executing '" + monitor.getProcessing() + "' not finished");
             }
         });
     }
-}
 
-class ProcessingTimes {
-    private String processing = "";
-    private long start;
-    private long end;
+    public static String getPercentage(long duration) {
+        String percentageString = "";
+        if (duration >= 0) {
+            if (referenceTimes != null && referenceTimes.getDurationMs() > 0) {
+                percentageString = "(" + FormattingUtils.getFormattedPercentage(100.0 * duration / referenceTimes.getDurationMs(), "<1") + "%)";
+            }
+        }
 
-    public ProcessingTimes(String processing) {
-        this.processing = processing;
-        this.start();
-    }
-
-    public void start() {
-        this.start = System.currentTimeMillis();
-        this.end = 0;
-    }
-
-    public void end() {
-        this.end = System.currentTimeMillis();
-    }
-
-    public long getDuration() {
-        return end - start;
-    }
-
-    public String getProcessing() {
-        return processing;
-    }
-
-    public void setProcessing(String processing) {
-        this.processing = processing;
-    }
-
-    public long getStart() {
-        return start;
-    }
-
-    public void setStart(long start) {
-        this.start = start;
-    }
-
-    public long getEnd() {
-        return end;
-    }
-
-    public void setEnd(long end) {
-        this.end = end;
+        return percentageString;
     }
 }
+

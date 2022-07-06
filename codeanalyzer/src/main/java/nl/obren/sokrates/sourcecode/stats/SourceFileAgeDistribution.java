@@ -42,7 +42,7 @@ public class SourceFileAgeDistribution extends RiskDistributionStats {
             files.forEach(sourceFile -> {
                 SourceFileAgeDistribution distribution = map.get(sourceFile.getExtension());
                 if (distribution == null) {
-                    distribution = new SourceFileAgeDistribution(thresholds, LAST_MODIFIED);
+                    distribution = new SourceFileAgeDistribution(thresholds, type);
                     distribution.setKey(sourceFile.getExtension());
                     distributions.add(distribution);
                     map.put(distribution.getKey(), distribution);

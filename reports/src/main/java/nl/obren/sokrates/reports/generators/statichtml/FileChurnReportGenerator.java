@@ -212,7 +212,7 @@ public class FileChurnReportGenerator {
     private void addMostChangedFilesList(RichTextReport report) {
         List<SourceFile> youngestFiles = codeAnalysisResults.getFilesHistoryAnalysisResults().getMostChangedFiles();
         report.startSection("Most Frequently Changed Files (Top " + youngestFiles.size() + ")", "");
-        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
         report.addParagraph("<a href='../data/text/mainFilesWithHistory.txt' target='_blank'>See data for all files...</a>");
         report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true, false, 500).toString());
         report.endSection();
@@ -221,7 +221,7 @@ public class FileChurnReportGenerator {
     private void addFilesWithMostContributors(RichTextReport report) {
         List<SourceFile> files = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilesWithMostContributors();
         report.startSection("Files With Most Contributors (Top " + files.size() + ")", "Based on the number of unique email addresses found in commits.");
-        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
         report.addParagraph("<a href='../data/text/mainFilesWithHistory.txt' target='_blank'>See data for all files...</a>");
         report.addHtmlContent(FilesReportUtils.getFilesTable(files, cacheSourceFiles, true, false, 500).toString());
         report.endSection();
@@ -230,7 +230,7 @@ public class FileChurnReportGenerator {
     private void addFilesWithLeastContributors(RichTextReport report) {
         List<SourceFile> files = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilesWithLeastContributors();
         report.startSection("Files With Least Contributors (Top " + files.size() + ")", "Based on the number of unique email addresses found in commits.");
-        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isCacheSourceFiles();
+        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
         report.addParagraph("<a href='../data/text/mainFilesWithHistory.txt' target='_blank'>See data for all files...</a>");
         report.addHtmlContent(FilesReportUtils.getFilesTable(files, cacheSourceFiles, true, false, 500).toString());
         report.endSection();

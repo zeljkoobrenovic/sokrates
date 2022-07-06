@@ -101,6 +101,10 @@ public class ContributorsAnalysisResults {
     public int getCommitsCount180Days() {
         return contributors.stream().mapToInt(c -> c.getCommitsCount180Days()).sum();
     }
+    @JsonIgnore
+    public int getCommitsCount365Days() {
+        return contributors.stream().mapToInt(c -> c.getCommitsCount365Days()).sum();
+    }
 
     @JsonIgnore
     public int getCommitsThisYear() {

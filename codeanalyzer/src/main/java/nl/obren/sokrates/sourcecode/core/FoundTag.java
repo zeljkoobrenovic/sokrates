@@ -4,6 +4,8 @@ public class FoundTag {
     private TagRule tagRule;
     private String evidence = "";
 
+    private int filesCount;
+
     public FoundTag() {
     }
 

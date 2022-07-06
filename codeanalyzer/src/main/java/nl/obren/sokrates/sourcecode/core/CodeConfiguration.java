@@ -11,6 +11,8 @@ import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.aspects.*;
+import nl.obren.sokrates.sourcecode.landscape.DefaultTags;
+import nl.obren.sokrates.sourcecode.landscape.TagGroup;
 import nl.obren.sokrates.sourcecode.metrics.MetricRangeControl;
 import nl.obren.sokrates.sourcecode.metrics.MetricsWithGoal;
 
@@ -20,7 +22,7 @@ import java.util.*;
 import static nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils.*;
 
 public class CodeConfiguration {
-    // Project description (used in report generation)
+    // Repository description (used for reports generation)
     private Metadata metadata = new Metadata();
 
     // A list of key findings displayed as a bullet list in a report
@@ -68,7 +70,7 @@ public class CodeConfiguration {
     // Parameters of source code analyses
     private AnalysisConfig analysis = new AnalysisConfig();
 
-    // Simple rules to tag a project based on path regex expressions
+    // Simple rules to tag a repository based on path regex expressions
     private List<TagRule> tagRules = new ArrayList<>();
 
     public CodeConfiguration() {
@@ -100,26 +102,14 @@ public class CodeConfiguration {
     private static List<TagRule> getDefaultTagRules() {
         List<TagRule> rules = new ArrayList<>();
 
-        rules.add(new TagRule("maven", "#f0f0f0", Arrays.asList("(|.*/)pom[.]xml")));
-        rules.add(new TagRule("npm", "#f0f0f0", Arrays.asList("(|.*/)package[.]json")));
-        rules.add(new TagRule("yarn", "#f0f0f0", Arrays.asList("(|.*/)[.]yarnrc", "(|.*/)yarn[.]lock")));
-        rules.add(new TagRule("bable", "#f0f0f0", Arrays.asList("(|.*/)[.]babel[.]config[.]json")));
-        rules.add(new TagRule("gradle", "#f0f0f0", Arrays.asList("(|.*/)build[.]gradle")));
-        rules.add(new TagRule("scala-sbt", "#f0f0f0", Arrays.asList("(|.*/)build[.]sbt")));
-        rules.add(new TagRule("bazel", "#f0f0f0", Arrays.asList("(|.*/)BUILD[.]bazel")));
-        rules.add(new TagRule("pip", "#f0f0f0", Arrays.asList("(|.*/)pip[.]conf", "(|.*/)Pipfile")));
-        rules.add(new TagRule("nuget", "#f0f0f0", Arrays.asList("(|.*/)[.]nuget/.*")));
-        rules.add(new TagRule("aws-codebuild", "#f0f0f0", Arrays.asList("(|.*/)buildspec[.]yml")));
-        rules.add(new TagRule("gemfile", "#f0f0f0", Arrays.asList("(|.*/)Gemfile")));
-        rules.add(new TagRule("podfile", "#f0f0f0", Arrays.asList("(|.*/)Podfile")));
-        rules.add(new TagRule("renovate", "#f0f0f0", Arrays.asList("(|.*/)renovate[.]json")));
+        List<TagGroup> tagGroups = new DefaultTags().defaultTagGroups();
 
-        rules.add(new TagRule("jenkins", "#e0e0e0", Arrays.asList("(|.*/)Jenkinsfile")));
-        rules.add(new TagRule("travis", "#e0e0e0", Arrays.asList("(|.*/)[.]travis[.]yml")));
-        rules.add(new TagRule("github actions", "#e0e0e0", Arrays.asList("(|.*/)[.]github[/]workflows[/].*")));
-
-
-        rules.add(new TagRule("docker", "#b0b0b0", Arrays.asList("(|.*/)Dockerfile")));
+        tagGroups.forEach(group -> {
+            String color = group.getColor();
+            group.getRepositoryTags().forEach(tag -> {
+                rules.add(new TagRule(tag.getTag(), color, tag.getPathPatterns()));
+            });
+        });
 
         return rules;
     }

@@ -4,11 +4,7 @@
 
 package nl.obren.sokrates.sourcecode.landscape.analysis;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.Metadata;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class LandscapeAnalysisResultsReadData {
     private Metadata metadata = new Metadata();
@@ -16,7 +12,7 @@ public class LandscapeAnalysisResultsReadData {
     private int commitsCount = 0;
     private int commitsCount30Days = 0;
     private int contributorsCount = 0;
-    private int projectsCount = 0;
+    private int repositoriesCount = 0;
     private int mainLoc = 0;
     private int mainLocActive = 0;
     private int mainLocNew = 0;
@@ -70,12 +66,12 @@ public class LandscapeAnalysisResultsReadData {
         this.contributorsCount = contributorsCount;
     }
 
-    public int getProjectsCount() {
-        return projectsCount;
+    public int getRepositoriesCount() {
+        return repositoriesCount;
     }
 
-    public void setProjectsCount(int projectsCount) {
-        this.projectsCount = projectsCount;
+    public void setRepositoriesCount(int repositoriesCount) {
+        this.repositoriesCount = repositoriesCount;
     }
 
     public int getMainLoc() {

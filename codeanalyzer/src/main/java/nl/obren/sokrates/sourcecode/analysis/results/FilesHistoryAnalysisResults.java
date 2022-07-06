@@ -24,6 +24,9 @@ public class FilesHistoryAnalysisResults {
     private SourceFileChangeDistribution overallFileChangeDistribution;
     private SourceFileChangeDistribution overallContributorsCountDistribution;
 
+    private int filesWithoutCommitHistoryCount;
+    private int filesWithoutCommitHistoryLinesOfCode;
+
     private List<RiskDistributionStats> changeDistributionPerExtension = new ArrayList<>();
     private List<RiskDistributionStats> lastModifiedDistributionPerExtension = new ArrayList<>();
     private List<RiskDistributionStats> firstModifiedDistributionPerExtension = new ArrayList<>();
@@ -178,7 +181,6 @@ public class FilesHistoryAnalysisResults {
     public void setOverallContributorsCountDistribution(SourceFileChangeDistribution overallContributorsCountDistribution) {
         this.overallContributorsCountDistribution = overallContributorsCountDistribution;
     }
-
 
 
     public List<RiskDistributionStats> getChangeDistributionPerExtension() {
@@ -368,5 +370,21 @@ public class FilesHistoryAnalysisResults {
 
     public void setFilesWithLeastContributors(List<SourceFile> filesWithLeastContributors) {
         this.filesWithLeastContributors = filesWithLeastContributors;
+    }
+
+    public int getFilesWithoutCommitHistoryCount() {
+        return filesWithoutCommitHistoryCount;
+    }
+
+    public void setFilesWithoutCommitHistoryCount(int filesWithoutCommitHistoryCount) {
+        this.filesWithoutCommitHistoryCount = filesWithoutCommitHistoryCount;
+    }
+
+    public int getFilesWithoutCommitHistoryLinesOfCode() {
+        return filesWithoutCommitHistoryLinesOfCode;
+    }
+
+    public void setFilesWithoutCommitHistoryLinesOfCode(int filesWithoutCommitHistoryLinesOfCode) {
+        this.filesWithoutCommitHistoryLinesOfCode = filesWithoutCommitHistoryLinesOfCode;
     }
 }

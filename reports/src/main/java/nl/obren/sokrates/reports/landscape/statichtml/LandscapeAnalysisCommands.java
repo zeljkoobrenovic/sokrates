@@ -4,13 +4,18 @@
 
 package nl.obren.sokrates.reports.landscape.statichtml;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import nl.obren.sokrates.common.io.JsonGenerator;
+import nl.obren.sokrates.common.io.JsonMapper;
+import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.utils.LandscapeVisualsGenerator;
 import nl.obren.sokrates.sourcecode.Metadata;
+import nl.obren.sokrates.sourcecode.landscape.DefaultTags;
+import nl.obren.sokrates.sourcecode.landscape.TagGroup;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalyzer;
-import nl.obren.sokrates.sourcecode.landscape.init.LandscapeAnalysisInitiator;
 import nl.obren.sokrates.sourcecode.landscape.init.LandscapeAnalysisUpdater;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
@@ -18,27 +23,22 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 public class LandscapeAnalysisCommands {
     private static final Log LOG = LogFactory.getLog(LandscapeAnalysisCommands.class);
 
-    public static void init(File analysisRoot, File landscapeConfigFile) {
-        landscapeConfigFile = getConfigFile(analysisRoot, landscapeConfigFile);
-        LandscapeAnalysisInitiator initiator = new LandscapeAnalysisInitiator();
-        initiator.initConfiguration(analysisRoot, landscapeConfigFile, true);
-        generateReport(landscapeConfigFile);
-
-        LOG.info("Configuration file: " + landscapeConfigFile.getPath());
-    }
-
-    public static void update(File analysisRoot, File landscapeConfigFile, Metadata metadata) {
+    public static File update(File analysisRoot, File landscapeConfigFile, Metadata metadata) {
         landscapeConfigFile = getConfigFile(analysisRoot, landscapeConfigFile);
         LandscapeAnalysisUpdater updater = new LandscapeAnalysisUpdater();
         updater.updateConfiguration(analysisRoot, landscapeConfigFile, metadata);
         LOG.info("Configuration file: " + landscapeConfigFile.getPath());
-        generateReport(landscapeConfigFile);
+        generateReport(analysisRoot, landscapeConfigFile);
+
+        return landscapeConfigFile.getParentFile();
     }
 
     private static File getConfigFile(File analysisRoot, File landscapeConfigFile) {
@@ -49,7 +49,7 @@ public class LandscapeAnalysisCommands {
         return landscapeConfigFile;
     }
 
-    public static void generateReport(File landscapeConfigFile) {
+    public static void generateReport(File analysisRoot, File landscapeConfigFile) {
         File reportsFolder = Paths.get(landscapeConfigFile.getParent(), "").toFile();
         reportsFolder.mkdirs();
         File individualReportsFolder = new File(reportsFolder, "contributors");
@@ -62,33 +62,78 @@ public class LandscapeAnalysisCommands {
 
         LandscapeAnalyzer analyzer = new LandscapeAnalyzer();
 
+        ProcessingStopwatch.start("analyzing");
         LandscapeAnalysisResults landscapeAnalysisResults = analyzer.analyze(landscapeConfigFile);
-        landscapeAnalysisResults.getConfiguration().getProjectTagGroups()
-                .forEach(group -> group.getProjectTags().forEach(tag -> tag.setGroup(group)));
+        List<TagGroup> tagGroups = getTagGroups(analysisRoot, landscapeConfigFile);
+        ProcessingStopwatch.end("analyzing");
 
-        LandscapeReportGenerator reportGenerator = new LandscapeReportGenerator(landscapeAnalysisResults, landscapeConfigFile.getParentFile(), reportsFolder);
+        ProcessingStopwatch.start("reporting");
+        LandscapeReportGenerator reportGenerator = new LandscapeReportGenerator(landscapeAnalysisResults, tagGroups, landscapeConfigFile.getParentFile(), reportsFolder);
         List<RichTextReport> reports = reportGenerator.report();
 
         try {
+            ProcessingStopwatch.start("reporting/saving");
+            ProcessingStopwatch.start("reporting/saving/reports");
             File finalReportsFolder = reportsFolder;
             String customHtmlReportHeaderFragment = landscapeAnalysisResults.getConfiguration().getCustomHtmlReportHeaderFragment();
             reports.forEach(report -> {
                 LOG.info("Exporting " + report.getFileName() + ".");
                 ReportFileExporter.exportHtml(finalReportsFolder, "", report, customHtmlReportHeaderFragment);
             });
+            ProcessingStopwatch.end("reporting/saving/reports");
 
+            ProcessingStopwatch.start("reporting/saving/contributors");
             File finalIndividualReportsFolder = individualReportsFolder;
             reportGenerator.getIndividualContributorReports().forEach(individualReport -> {
                 LOG.info("Exporting " + individualReport.getFileName() + ".");
                 ReportFileExporter.exportHtml(finalIndividualReportsFolder, "", individualReport, customHtmlReportHeaderFragment);
             });
+            ProcessingStopwatch.end("reporting/saving/contributors");
 
+            ProcessingStopwatch.start("reporting/saving/generating visuals");
             LandscapeVisualsGenerator visualsGenerator = new LandscapeVisualsGenerator(reportsFolder);
             visualsGenerator.exportVisuals(landscapeAnalysisResults);
+            ProcessingStopwatch.end("reporting/saving/generating visuals");
 
             LOG.info("Report file: " + finalReportsFolder.getPath() + "/index.html");
+            ProcessingStopwatch.end("reporting/saving");
         } catch (IOException e) {
             e.printStackTrace();
         }
+        ProcessingStopwatch.end("reporting");
     }
+
+    private static List<TagGroup> getTagGroups(File analysisRoot, File landscapeConfigFile) {
+        File landscapeTagsConfigFile = getLandscapeTagsConfigFile(analysisRoot, new File(landscapeConfigFile.getParentFile(), "config-tags.json"));
+        List<TagGroup> tagGroups = new ArrayList<>();
+        if (!landscapeTagsConfigFile.exists()) {
+            try {
+                tagGroups = new DefaultTags().defaultTagGroups();
+                FileUtils.write(landscapeTagsConfigFile, new JsonGenerator().generate(tagGroups), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                LOG.error(e);
+            }
+        } else {
+            try {
+                tagGroups = new JsonMapper().getObject(FileUtils.readFileToString(landscapeTagsConfigFile, StandardCharsets.UTF_8), new TypeReference<>() {
+                });
+                FileUtils.write(landscapeTagsConfigFile, new JsonGenerator().generate(tagGroups), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                LOG.error(e);
+            }
+        }
+
+        tagGroups.forEach(group -> group.getRepositoryTags().forEach(tag -> tag.setGroup(group)));
+
+        return tagGroups;
+    }
+
+    private static File getLandscapeTagsConfigFile(File analysisRoot, File landscapeTagsConfigFile) {
+        if (landscapeTagsConfigFile == null) {
+            File landscapeAnalysisRoot = new File(analysisRoot, "_sokrates_landscape");
+            landscapeTagsConfigFile = new File(landscapeAnalysisRoot, "config-tags.json");
+        }
+        return landscapeTagsConfigFile;
+    }
+
 }
