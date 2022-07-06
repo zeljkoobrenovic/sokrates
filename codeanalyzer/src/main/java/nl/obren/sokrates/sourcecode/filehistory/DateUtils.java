@@ -221,7 +221,7 @@ public class DateUtils {
     }
 
     public static String getYear(String date) {
-        return date.substring(0, 4);
+        return date.length() > 4 ? date.substring(0, 4) : "";
     }
 
     public static void reset() {

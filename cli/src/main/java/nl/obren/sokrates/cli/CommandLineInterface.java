@@ -67,19 +67,25 @@ public class CommandLineInterface {
     private File sokratesConfigFile;
     private CodeConfiguration codeConfiguration;
 
+    private static boolean helpMode = false;
+
     public static void main(String args[]) throws IOException {
         ProcessingStopwatch.startAsReference("everything");
         CommandLineInterface commandLineInterface = new CommandLineInterface();
         commandLineInterface.run(args);
 
         ProcessingStopwatch.end("everything");
-        ProcessingStopwatch.print();
+
+        if (!helpMode) {
+            ProcessingStopwatch.print();
+        }
 
         System.exit(0);
     }
 
     public void run(String args[]) throws IOException {
         if (args.length == 0) {
+            helpMode = true;
             commands.usage();
             return;
         }
@@ -117,6 +123,7 @@ public class CommandLineInterface {
                 updateLandscape(args);
                 return;
             } else if (!args[0].equalsIgnoreCase(commands.GENERATE_REPORTS)) {
+                helpMode = true;
                 commands.usage();
                 return;
             }
@@ -125,6 +132,7 @@ public class CommandLineInterface {
         } catch (ParseException e) {
             LOG.info("ERROR: " + e.getMessage() + "\n");
             e.printStackTrace();
+            helpMode = true;
             commands.usage();
         }
     }
@@ -135,6 +143,7 @@ public class CommandLineInterface {
         CommandLine cmd = parser.parse(options, args);
 
         if (cmd.hasOption(commands.getHelp().getOpt())) {
+            helpMode = true;
             commands.usage(Commands.EXTRACT_GIT_HISTORY, commands.getExtractGitHistoryOption(), Commands.EXTRACT_GIT_HISTORY_DESCRIPTION);
             return;
         }
@@ -159,6 +168,7 @@ public class CommandLineInterface {
         CommandLine cmd = parser.parse(options, args);
 
         if (cmd.hasOption(commands.getHelp().getOpt())) {
+            helpMode = true;
             commands.usage(Commands.EXTRACT_GIT_SUB_HISTORY, commands.getExtractGitSubHistoryOption(), Commands.EXTRACT_GIT_SUB_HISTORY_DESCRIPTION);
             return;
         }
@@ -185,6 +195,7 @@ public class CommandLineInterface {
         CommandLine cmd = parser.parse(options, args);
 
         if (cmd.hasOption(commands.getHelp().getOpt())) {
+            helpMode = true;
             commands.usage(Commands.EXTRACT_FILES, commands.getExtractFilesOption(), Commands.EXTRACT_FILES_DESCRIPTION);
             return;
         }
@@ -223,6 +234,7 @@ public class CommandLineInterface {
         CommandLine cmd = parser.parse(options, args);
 
         if (cmd.hasOption(commands.getHelp().getOpt())) {
+            helpMode = true;
             commands.usage(Commands.UPDATE_LANDSCAPE, commands.getUpdateLandscapeOptions(), Commands.UPDATE_LANDSCAPE_DESCRIPTION);
             return;
         }
@@ -279,6 +291,7 @@ public class CommandLineInterface {
         CommandLine cmd = parser.parse(options, args);
 
         if (cmd.hasOption(commands.getHelp().getOpt())) {
+            helpMode = true;
             commands.usage(Commands.GENERATE_REPORTS, commands.getReportingOptions(), Commands.GENERATE_REPORTS_DESCRIPTION);
             return;
         }
@@ -294,6 +307,7 @@ public class CommandLineInterface {
         CommandLine cmd = parser.parse(options, args);
 
         if (cmd.hasOption(commands.getHelp().getOpt())) {
+            helpMode = true;
             commands.usage(Commands.INIT, commands.getInitOptions(), Commands.INIT_DESCRIPTION);
             return;
         }
@@ -374,6 +388,7 @@ public class CommandLineInterface {
         CommandLine cmd = parser.parse(options, args);
 
         if (cmd.hasOption(commands.getHelp().getOpt())) {
+            helpMode = true;
             commands.usage(Commands.UPDATE_CONFIG, commands.getUpdateConfigOptions(), Commands.UPDATE_CONFIG_DESCRIPTION);
             return;
         }

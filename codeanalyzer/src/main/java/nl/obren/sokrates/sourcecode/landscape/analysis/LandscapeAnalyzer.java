@@ -58,6 +58,9 @@ public class LandscapeAnalyzer {
                         landscapeAnalysisResults.getRepositoryAnalysisResults().add(new RepositoryAnalysisResults(link, repositoryAnalysisResults, files));
                         repositoryAnalysisResults.getContributorsAnalysisResults().getContributors().forEach(contributor -> {
                             contributor.getCommitDates().forEach(commitDate -> {
+                                if (landscapeAnalysisResults.getFirstCommitDate() == "" || commitDate.compareTo(landscapeAnalysisResults.getFirstCommitDate()) < 0) {
+                                    landscapeAnalysisResults.setFirstCommitDate(commitDate);
+                                }
                                 if (landscapeAnalysisResults.getLatestCommitDate() == "" || commitDate.compareTo(landscapeAnalysisResults.getLatestCommitDate()) > 0) {
                                     landscapeAnalysisResults.setLatestCommitDate(commitDate);
                                     DateUtils.setLatestCommitDate(commitDate);

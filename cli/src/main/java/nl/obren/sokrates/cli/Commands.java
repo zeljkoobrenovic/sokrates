@@ -123,11 +123,15 @@ public class Commands {
 
     public void usage() {
         List<CommandUsage> commandUsages = usageInfo();
-        LOG.info("Usage: java -jar sokrates.jar <command> <options>");
-        LOG.info("Help: java -jar sokrates.jar <command> -help");
-        LOG.info("Commands: " + commandUsages.stream().map(c -> c.getName()).collect(Collectors.joining(", ")));
+        printlnUsage("");
+        printlnUsage("Usage: java -jar sokrates.jar <command> <options>");
+        printlnUsage("");
+        printlnUsage("Help: java -jar sokrates.jar <command> -help");
+        printlnUsage("");
+        printlnUsage("Commands: " + commandUsages.stream().map(c -> c.getName()).collect(Collectors.joining(", ")));
         commandUsages.forEach(commandUsage -> {
-            LOG.info("* " + commandUsage.getName() + ": " + commandUsage.getDescription());
+            printlnUsage("");
+            printlnUsage("* " + commandUsage.getName() + ": " + commandUsage.getDescription());
             if (commandUsage.getOptions() != null) {
                 String options = commandUsage.getOptions().getOptions().stream().map(o -> {
                     String text = "";
@@ -143,20 +147,28 @@ public class Commands {
                     }
                     return text;
                 }).collect(Collectors.joining(" "));
-                LOG.info("   - options: " + options);
+                printlnUsage("   - options: " + options);
             }
         });
+        printlnUsage("");
+        printlnUsage("");
+    }
+
+    private void printlnUsage(String line) {
+        System.out.println(line);
     }
 
     public void usage(String prefix, Options options, String description) {
         HelpFormatter formatter = new HelpFormatter();
         formatter.setWidth(80);
-        String cmdLineSyntax = "java -jar sokrates.jar " + prefix + "\ndescription: " + description + "\n\noptions:\n";
+        String cmdLineSyntax = "java -jar sokrates.jar " + prefix + "\n\ndescription: " + description + "\n\noptions:\n";
+        printlnUsage("");
         if (options != null) {
             formatter.printHelp(cmdLineSyntax + "", options);
         } else {
             formatter.printHelp(cmdLineSyntax, new Options());
         }
+        printlnUsage("");
     }
 
 

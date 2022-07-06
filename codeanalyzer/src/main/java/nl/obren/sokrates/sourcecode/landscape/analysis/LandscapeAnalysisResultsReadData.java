@@ -8,6 +8,7 @@ import nl.obren.sokrates.sourcecode.Metadata;
 
 public class LandscapeAnalysisResultsReadData {
     private Metadata metadata = new Metadata();
+    private String firstCommitDate = "";
     private String latestCommitDate = "";
     private int commitsCount = 0;
     private int commitsCount30Days = 0;
@@ -32,6 +33,14 @@ public class LandscapeAnalysisResultsReadData {
 
     public void setMetadata(Metadata metadata) {
         this.metadata = metadata;
+    }
+
+    public String getFirstCommitDate() {
+        return firstCommitDate;
+    }
+
+    public void setFirstCommitDate(String firstCommitDate) {
+        this.firstCommitDate = firstCommitDate;
     }
 
     public String getLatestCommitDate() {

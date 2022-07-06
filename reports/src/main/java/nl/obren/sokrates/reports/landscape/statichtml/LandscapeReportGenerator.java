@@ -553,19 +553,22 @@ public class LandscapeReportGenerator {
             landscapeReport.addLineBreak();
 
             landscapeReport.startTable();
-            landscapeReport.addTableHeader("", "", "repositories", "main loc", "test loc", "other loc", "recent contributors", "commits (30 days)");
+            landscapeReport.addTableHeader("", "", "repositories", "main loc", "test loc", "other loc", "commits<br>(all time)", "contributors<br>(30 days)", "commits<br>(30 days)", "commit period");
             String prevRoot[] = {""};
             List<LandscapeAnalysisResultsReadData> loadedSubLandscapes = new ArrayList<>();
-            links.forEach(subLandscape -> {
+            links.stream().sorted((a, b) -> compareSubLandscapeLinks(a, b)).forEach(subLandscape -> {
                 LOG.info("Adding " + subLandscape.getIndexFilePath());
                 String labelText = StringUtils.removeEnd(getLabel(subLandscape), "/");
                 String label = labelText;
                 String style = "";
                 String root = label.replaceAll("/.*", "");
+                boolean isRoot;
                 if (!prevRoot[0].equals(root)) {
+                    isRoot = true;
                     label = "<b>" + label + "</b>";
                     style = "color: black; font-weight: bold;";
                 } else {
+                    isRoot = false;
                     int lastIndex = label.lastIndexOf("/");
                     label = "<span style='color: lightgrey'>" + label.substring(0, lastIndex + 1) + "</span>" + label.substring(lastIndex + 1) + "";
                     style = "color: grey; font-size: 90%";
@@ -612,12 +615,41 @@ public class LandscapeReportGenerator {
                 landscapeReport.endTableCell();
                 landscapeReport.startTableCell("text-align: right;");
                 if (subLandscapeAnalysisResults != null) {
+                    landscapeReport.addHtmlContent(FormattingUtils.formatCount(subLandscapeAnalysisResults.getCommitsCount()) + "");
+                }
+                landscapeReport.endTableCell();
+                landscapeReport.startTableCell("text-align: right;");
+                if (subLandscapeAnalysisResults != null) {
                     landscapeReport.addHtmlContent(FormattingUtils.formatCount(subLandscapeAnalysisResults.getRecentContributorsCount()) + "");
                 }
                 landscapeReport.endTableCell();
                 landscapeReport.startTableCell("text-align: right;");
                 if (subLandscapeAnalysisResults != null) {
                     landscapeReport.addHtmlContent(FormattingUtils.formatCount(subLandscapeAnalysisResults.getCommitsCount30Days()) + "");
+                }
+                landscapeReport.endTableCell();
+                landscapeReport.startTableCell("text-align: right; font-size: 70%");
+                if (subLandscapeAnalysisResults != null) {
+                    String firstYear = DateUtils.getYear(subLandscapeAnalysisResults.getFirstCommitDate());
+                    String lastYear = DateUtils.getYear(subLandscapeAnalysisResults.getLatestCommitDate());
+                    landscapeReport.addHtmlContent(firstYear);
+                    landscapeReport.addHtmlContent("-");
+                    landscapeReport.addHtmlContent(lastYear);
+                    try {
+                        int first = Integer.parseInt(firstYear);
+                        int last = Integer.parseInt(lastYear);
+                        if (last >= first) {
+                            int width = Math.min(20, last - first + 1) * 7;
+                            String periodStyle = "margin-left: auto; margin-right: 0; margin-top: 2px; padding: 0; width: " + width + "px;";
+                            if (!isRoot) {
+                                periodStyle += "background-color: lightgrey; height: 4px;";
+                            } else {
+                                periodStyle += "height: 7px; background-color: green;";
+                            }
+                            landscapeReport.addContentInDiv("", periodStyle);
+                        }
+                    } catch (NumberFormatException e) {
+                    }
                 }
                 landscapeReport.endTableCell();
                 landscapeReport.endTableRow();
@@ -629,6 +661,14 @@ public class LandscapeReportGenerator {
             landscapeReport.endDiv();
         }
 
+    }
+
+    private int compareSubLandscapeLinks(SubLandscapeLink a, SubLandscapeLink b) {
+        if (a.getLandscapeAnalysisResults() != null && b.getLandscapeAnalysisResults() != null) {
+            return b.getLandscapeAnalysisResults().getFirstCommitDate().compareTo(a.getLandscapeAnalysisResults().getFirstCommitDate());
+        }
+
+        return 0;
     }
 
     private String getLogoLink(String repositoryLinkPrefix, String link) {
