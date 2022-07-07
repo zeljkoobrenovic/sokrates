@@ -96,6 +96,8 @@ public class LandscapeAnalysisResults {
     private double pMedian90Days;
     private double pMedian180Days;
 
+    private String firstCommitDate = "";
+
     private String latestCommitDate = "";
 
     private List<Double> cIndex30DaysHistory = new ArrayList<>();
@@ -242,6 +244,7 @@ public class LandscapeAnalysisResults {
                 })
                 .collect(Collectors.toList());
     }
+
     @JsonIgnore
     public List<RepositoryAnalysisResults> getIgnoredRepositoryAnalysisResults() {
         List<RepositoryAnalysisResults> filteredRepositoryAnalysisResults = getFilteredRepositoryAnalysisResults();
@@ -294,6 +297,7 @@ public class LandscapeAnalysisResults {
         });
         return loc[0];
     }
+
     public int getMainFilesCount() {
         int count[] = {0};
         getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
@@ -353,6 +357,7 @@ public class LandscapeAnalysisResults {
         });
         return count[0];
     }
+
     public int getTestFilesCount() {
         int count[] = {0};
         getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
@@ -1130,6 +1135,14 @@ public class LandscapeAnalysisResults {
 
     public void setC2pConnectionsCount30Days(double c2pConnectionsCount30Days) {
         this.c2pConnectionsCount30Days = c2pConnectionsCount30Days;
+    }
+
+    public String getFirstCommitDate() {
+        return firstCommitDate;
+    }
+
+    public void setFirstCommitDate(String firstCommitDate) {
+        this.firstCommitDate = firstCommitDate;
     }
 
     public String getLatestCommitDate() {

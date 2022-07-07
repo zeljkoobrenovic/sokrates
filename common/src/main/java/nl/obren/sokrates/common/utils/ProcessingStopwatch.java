@@ -11,6 +11,8 @@ import java.util.Map;
 public class ProcessingStopwatch {
     private static final Log LOG = LogFactory.getLog(ProcessingStopwatch.class);
 
+    public static final String EVERYTHING = "everything";
+
     private static List<ProcessingTimes> monitors = new ArrayList<>();
     private static Map<String, ProcessingTimes> monitorsMap = new HashMap<>();
     private static ProcessingTimes referenceTimes = null;
@@ -26,7 +28,9 @@ public class ProcessingStopwatch {
         monitors.add(times);
         monitorsMap.put(processingName, times);
 
-        LOG.info("Running " + processingName);
+        if (!processingName.equalsIgnoreCase(EVERYTHING)) {
+            LOG.info("Starting " + processingName);
+        }
 
         return times;
     }
@@ -35,7 +39,9 @@ public class ProcessingStopwatch {
         if (monitorsMap.containsKey(processingName)) {
             ProcessingTimes times = monitorsMap.get(processingName);
             times.end();
-            LOG.info("Done '" + times.getProcessing() + "' in " + times.getDurationMs() + "ms");
+            if (!processingName.equalsIgnoreCase(EVERYTHING)) {
+                LOG.info("Done '" + times.getProcessing() + "' in " + times.getDurationMs() + "ms");
+            }
         } else {
             LOG.error("No processing with the name '" + processingName + "'");
         }
