@@ -28,10 +28,16 @@ public class DuplicationInstanceTest {
     @EnabledOnOs(WINDOWS)
     public void testToStringOnWindows() {
         DuplicationInstance instance = prepTestData();
-        assertEquals(instance.toString(), "3 lines: 'folder\\file.ext[10:16]a\n" +
+        //After change in SourceFile: 
+        /*assertEquals(instance.toString(), "3 lines: 'folder\\file.ext[10:16]a\n" +
                 "b\n" +
                 "c");
-    }
+        */
+        assertEquals(instance.toString(), "3 lines: 'folder/file.ext[10:16]a\n" +
+                "b\n" +
+                "c");
+        
+            }
 
     private DuplicationInstance prepTestData() {
         DuplicationInstance instance = new DuplicationInstance();

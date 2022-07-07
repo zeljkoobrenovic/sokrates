@@ -7,6 +7,7 @@ import nl.obren.sokrates.sourcecode.filehistory.CommitInfo;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 
+import java.io.File;
 import java.util.*;
 import java.util.stream.Stream;
 

@@ -620,6 +620,9 @@ public class DataExporter {
 
         FileUtils.write(new File(textDataFolder, "mainFiles.txt"), getFilesAsTxt(sourceFiles), UTF_8);
         FileUtils.write(new File(textDataFolder, "mainFilesWithHistory.txt"), getFilesWithHistoryAsTxt(sourceFiles), UTF_8);
+        
+        FileUtils.write(new File(dataFolder, "mainFilesWithHistory.json"), new JsonGenerator().generate(getFilesWithHistory(sourceFiles)), UTF_8);
+        
         FileUtils.write(new File(textDataFolder, "mainFilesWithoutHistory.txt"), getFilesWithoutHistoryAsTxt(sourceFiles), UTF_8);
         try {
             FileUtils.write(new File(dataFolder, "testFiles.json"), new JsonGenerator().generate(analysisResults.getTestAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
@@ -707,6 +710,17 @@ public class DataExporter {
         });
 
         return builder.toString();
+    }
+
+    private List<SourceFile> getFilesWithHistory(List<SourceFile> sourceFiles) {
+        List<SourceFile> result = new ArrayList<SourceFile>();
+                sourceFiles.forEach(sourceFile -> {
+                    FileModificationHistory history = sourceFile.getFileModificationHistory();
+                    if (history != null) {
+                        result.add(sourceFile);
+                    }});
+             return result;
+
     }
 
     private String getFilesWithHistoryAsTxt(List<SourceFile> sourceFiles) {

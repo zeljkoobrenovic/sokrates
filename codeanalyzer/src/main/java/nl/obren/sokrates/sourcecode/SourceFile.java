@@ -33,7 +33,6 @@ public class SourceFile {
     private String relativePath;
     private String extension;
     private int linesOfCode;
-    @JsonIgnore
     private FileModificationHistory fileModificationHistory = null;
     private int unitsCount = 0;
     private int unitsMcCabeIndexSum = 0;
@@ -64,7 +63,8 @@ public class SourceFile {
         StringBuilder sb = new StringBuilder(string.length());
         string = Normalizer.normalize(string, Normalizer.Form.NFD);
         for (char c : string.toCharArray()) {
-            if (c <= '\u007F') sb.append(c);
+            if (c <= '\u007F')
+                sb.append(c);
         }
         return sb.toString();
     }
@@ -85,7 +85,7 @@ public class SourceFile {
     }
 
     public void setRelativePath(String relativePath) {
-        this.relativePath = relativePath;
+       this.relativePath = relativePath.replace('\\', '/');
     }
 
     public SourceFile relativize(File root) {
@@ -129,7 +129,8 @@ public class SourceFile {
 
     public List<NamedSourceCodeAspect> getLogicalComponents(String filer) {
         List<NamedSourceCodeAspect> filteredLogicalComponents = new ArrayList<>();
-        logicalComponents.stream().filter(comp -> comp.getFiltering().equals(filer)).forEach(filteredLogicalComponents::add);
+        logicalComponents.stream().filter(comp -> comp.getFiltering().equals(filer))
+                .forEach(filteredLogicalComponents::add);
         return filteredLogicalComponents;
     }
 
@@ -173,7 +174,8 @@ public class SourceFile {
     public String getContent() {
         try {
             File file = getFile();
-            return StringUtils.isNotBlank(content) ? content : file != null ? FileUtils.readFileToString(file, StandardCharsets.UTF_8) : "";
+            return StringUtils.isNotBlank(content) ? content
+                    : file != null ? FileUtils.readFileToString(file, StandardCharsets.UTF_8) : "";
         } catch (IOException e) {
             LOG.debug(e);
         }
@@ -190,8 +192,10 @@ public class SourceFile {
     public List<String> getLines() {
         try {
             List<String> lines = StringUtils.isNotBlank(content)
-                    ? SourceCodeCleanerUtils.splitInLines(content) : getFile() != null
-                    ? FileUtils.readLines(getFile(), StandardCharsets.UTF_8) : new ArrayList<>();
+                    ? SourceCodeCleanerUtils.splitInLines(content)
+                    : getFile() != null
+                            ? FileUtils.readLines(getFile(), StandardCharsets.UTF_8)
+                            : new ArrayList<>();
             return lines;
         } catch (IOException e) {
             LOG.debug(e);
@@ -203,14 +207,16 @@ public class SourceFile {
     public List<String> getCleanedLines() {
         if (cleanedLines == null) {
             LanguageAnalyzer languageAnalyzer = LanguageAnalyzerFactory.getInstance().getLanguageAnalyzer(this);
-            cleanedLines = SourceCodeCleanerUtils.splitInLines(languageAnalyzer.cleanForLinesOfCodeCalculations(this).getCleanedContent());
+            cleanedLines = SourceCodeCleanerUtils
+                    .splitInLines(languageAnalyzer.cleanForLinesOfCodeCalculations(this).getCleanedContent());
         }
         return cleanedLines;
     }
 
     @JsonIgnore
     public List<String> getCleanedLinesForDuplication() {
-        return SourceCodeCleanerUtils.splitInLines(LanguageAnalyzerFactory.getInstance().getLanguageAnalyzer(this).cleanForDuplicationCalculations(this).getCleanedContent());
+        return SourceCodeCleanerUtils.splitInLines(LanguageAnalyzerFactory.getInstance().getLanguageAnalyzer(this)
+                .cleanForDuplicationCalculations(this).getCleanedContent());
     }
 
     @JsonIgnore

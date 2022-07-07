@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.io.File;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,7 +25,8 @@ public class SourceFileFilter {
     // A regex expression to find if any line in the file matches it
     private String contentPattern = "";
 
-    // Is the rule an exception to other rules in the list (i.e. excludes some of the files included by previous rules)
+    // Is the rule an exception to other rules in the list (i.e. excludes some of
+    // the files included by previous rules)
     private Boolean exception = false;
 
     // A simple textual note describing the rule
@@ -76,7 +78,6 @@ public class SourceFileFilter {
             LOG.debug(e);
         }
 
-
         return count;
     }
 
@@ -119,12 +120,13 @@ public class SourceFileFilter {
 
     public boolean pathMatches(String path) {
         boolean pathMatches;
+        
         if (StringUtils.isNotBlank(pathPattern)) {
             pathMatches = RegexUtils.matchesEntirely(pathPattern, path)
                     || RegexUtils.matchesEntirely(pathPattern, path.replace("\\", "/"))
                     || RegexUtils.matchesEntirely(pathPattern, path.replace("/", "\\"))
                     || RegexUtils.matchesEntirely(pathPattern.replace("\\", "/"), path.replace("\\", "/"))
-                    || RegexUtils.matchesEntirely(pathPattern.replace("\\", "/"), path.replace("/", "\\"));
+                    || RegexUtils.matchesEntirely(pathPattern.replace("\\", "/"), path.replace("/", "\\")) ;
         } else {
             pathMatches = true;
         }

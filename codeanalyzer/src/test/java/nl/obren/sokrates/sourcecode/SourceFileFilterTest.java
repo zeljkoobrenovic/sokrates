@@ -23,6 +23,8 @@ public class SourceFileFilterTest {
         assertTrue(new SourceFileFilter("\\\\root\\\\a\\\\b.*", "").pathMatches("/root/a/b/c"));
         assertTrue(new SourceFileFilter("\\\\root\\\\a\\\\b.*", "").pathMatches("\\root\\a\\b\\c"));
         assertTrue(new SourceFileFilter("\\\\root\\\\a\\\\b.*", "").pathMatches("\\root/a/b\\c"));
+        assertTrue(new SourceFileFilter("\\root\\a\\b.*", "").pathMatches("/root/a/b/c"));
+        
     }
 
     @Test
