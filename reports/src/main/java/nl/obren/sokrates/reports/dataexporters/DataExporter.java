@@ -53,6 +53,7 @@ import org.apache.commons.text.StringEscapeUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -619,6 +620,7 @@ public class DataExporter {
         }
 
         FileUtils.write(new File(textDataFolder, "mainFiles.txt"), getFilesAsTxt(sourceFiles), UTF_8);
+        FileUtils.write(new File(dataFolder, "mainFilesWithHistory.json"), getFilesWithHistoryAsJson(sourceFiles), UTF_8);
         FileUtils.write(new File(textDataFolder, "mainFilesWithHistory.txt"), getFilesWithHistoryAsTxt(sourceFiles), UTF_8);
         FileUtils.write(new File(textDataFolder, "mainFilesWithoutHistory.txt"), getFilesWithoutHistoryAsTxt(sourceFiles), UTF_8);
         try {
@@ -737,6 +739,37 @@ public class DataExporter {
 
         return builder.toString();
     }
+
+    private String getFilesWithHistoryAsJson(List<SourceFile> sourceFiles) {
+        StringBuilder builder = new StringBuilder();
+        AtomicInteger runCount = new AtomicInteger(0);
+        builder.append("[");
+        sourceFiles.forEach(sourceFile -> {
+            FileModificationHistory history = sourceFile.getFileModificationHistory();
+            if (history != null) {
+                if (runCount.getAndIncrement() != 0) {
+                    builder.append(",");
+                }
+                builder.append("{").append("\"").append("relativePath\": ").append("\"").append(sourceFile.getRelativePath()).append("\"")
+                        .append(",")
+                        .append("\"").append("linesOfCode\": ").append(sourceFile.getLinesOfCode()).append(",")
+                        .append("\"").append("activeDays\": ").append(history.getDates().size()).append(",")
+                        .append("\"").append("daysSinceFirstUpdate\": ").append(history.daysSinceFirstUpdate())
+                        .append(",").append("\"").append("daysSinceLatestUpdate\": ")
+                        .append(history.daysSinceLatestUpdate()).append(",").append("\"").append("commits\": ")
+                        .append(history.getCommits().size()).append(",").append("\"").append("contributors\": ")
+                        .append(history.countContributors()).append(",").append("\"").append("firstUpdated\": ").append("\"")
+                        .append(history.getOldestDate()).append("\"").append(",").append("\"").append("lastUpdated\": ").append("\"")
+                        .append(history.getLatestDate()).append("\"").append(",").append("\"").append("firstContributor\": ").append("\"")
+                        .append(history.getOldestContributor()).append("\"").append(",").append("\"").append("lastContributor\": ").append("\"")
+                        .append(history.getLatestContributor()).append("\"").append("}");
+            }
+            
+        });
+        builder.append("]");
+        return builder.toString();
+    }
+
     private String getFilesWithoutHistoryAsTxt(List<SourceFile> sourceFiles) {
         StringBuilder builder = new StringBuilder();
 
