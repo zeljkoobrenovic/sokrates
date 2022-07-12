@@ -152,6 +152,7 @@ public class DataImageUtils {
         map.put("prefab", "unity.png");
         map.put("cu", "nvidia.png");
         map.put("cuh", "nvidia.png");
+        map.put("bazel", "bazel.png");
 
         map.put(".github", "github.png");
         map.put(".gh-pages", "github.png");

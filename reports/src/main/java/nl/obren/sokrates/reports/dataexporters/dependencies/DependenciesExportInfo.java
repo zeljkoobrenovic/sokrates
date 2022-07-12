@@ -9,7 +9,7 @@ import nl.obren.sokrates.reports.utils.DateUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DependeciesExportInfo {
+public class DependenciesExportInfo {
     private String title = "Dependencies";
     private String timestamp = DateUtils.getCurrentDateTime();
 

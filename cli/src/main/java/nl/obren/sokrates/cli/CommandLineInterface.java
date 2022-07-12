@@ -119,9 +119,6 @@ public class CommandLineInterface {
             } else if (args[0].equalsIgnoreCase(commands.EXTRACT_GIT_HISTORY)) {
                 extractGitHistory(args);
                 return;
-            } else if (args[0].equalsIgnoreCase(commands.UPDATE_LANDSCAPE)) {
-                updateLandscape(args);
-                return;
             } else if (!args[0].equalsIgnoreCase(commands.GENERATE_REPORTS)) {
                 helpMode = true;
                 commands.usage();

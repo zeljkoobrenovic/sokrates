@@ -131,7 +131,7 @@ public class LandscapeRepositoriesReport {
 
         report.startTable();
 
-        report.startTableRow();
+        report.startTableRow("white-space: nowrap");
         report.addTableCell("", "border: none");
         report.addTableCell("", "border: none");
         concerns.stream().filter(concern -> concern.size() > 0).forEach(concern -> {
@@ -142,7 +142,7 @@ public class LandscapeRepositoriesReport {
         report.addTableCell("", "border: none");
         report.endTableRow();
 
-        report.startTableRow();
+        report.startTableRow("white-space: nowrap");
         report.addTableCell("", "border-left: none; border-top: none");
         report.addTableCell("Repositories (" + aggregator.getRepositoriesMap().size() + ")", "");
         concerns.stream().filter(concern -> concern.size() > 0).forEach(concern -> {
@@ -155,7 +155,7 @@ public class LandscapeRepositoriesReport {
         report.endTableRow();
 
         repositories.forEach(repository -> {
-            report.startTableRow();
+            report.startTableRow("white-space: nowrap");
             RepositoryConcernData repositoryConcernData = repository.get(0);
             String logoLink = repositoryConcernData.getRepository().getAnalysisResults().getMetadata().getLogoLink();
             report.addTableCell(getImageWithLink(repositoryConcernData.getRepository(), logoLink), "text-align: center");
@@ -449,7 +449,7 @@ public class LandscapeRepositoriesReport {
             contributorsPerWeek.forEach(c -> maxCommits[0] = Math.max(counter.getCount(c), maxCommits[0]));
         });
         repositoryAnalysisResults.stream().limit(limit).forEach(repositoryAnalysis -> {
-            report.startTableRow();
+            report.startTableRow("white-space: nowrap");
             String name = repositoryAnalysis.getAnalysisResults().getMetadata().getName();
             String logoLink = repositoryAnalysis.getAnalysisResults().getMetadata().getLogoLink();
             report.addTableCell(getImageWithLink(repositoryAnalysis, logoLink), "text-align: center");
@@ -526,17 +526,17 @@ public class LandscapeRepositoriesReport {
             int commits180Days = repositoryAnalysis.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount180Days();
             if (commits90Days == 0 && commits180Days > 0 && !startedInactiveSection90Days[0]) {
                 startedInactiveSection90Days[0] = true;
-                report.startTableRow();
+                report.startTableRow("white-space: nowrap");
                 report.addMultiColumnTableCell("<h3 style='margin: 0; margin-top: 14px; margin-bottom: 6px;'>Repository not active in past 90 days</h3>", 11);
                 report.endTableRow();
             }
             if (commits180Days == 0 && !startedInactiveSection180Days[0]) {
                 startedInactiveSection180Days[0] = true;
-                report.startTableRow();
+                report.startTableRow("white-space: nowrap");
                 report.addMultiColumnTableCell("<h3 style='margin: 0; margin-top: 14px; margin-bottom: 6px;'>Repository not active in past 180 days</h3>", 11);
                 report.endTableRow();
             }
-            report.startTableRow(commits90Days > 0 ? "" : "opacity: 0.7");
+            report.startTableRow("white-space: nowrap" + (commits90Days > 0 ? "" : "; opacity: 0.7"));
             CodeAnalysisResults repositoryAnalysisResults = repositoryAnalysis.getAnalysisResults();
             String name = repositoryAnalysisResults.getMetadata().getName();
             String logoLink = repositoryAnalysisResults.getMetadata().getLogoLink();
@@ -624,7 +624,7 @@ public class LandscapeRepositoriesReport {
         });
 
         repositoriesAnalysisResults.stream().limit(limit).forEach(repositoryAnalysis -> {
-            report.startTableRow();
+            report.startTableRow("white-space: nowrap");
             CodeAnalysisResults repositoryAnalysisAnalysisResults = repositoryAnalysis.getAnalysisResults();
             String name = repositoryAnalysisAnalysisResults.getMetadata().getName();
             String logoLink = repositoryAnalysisAnalysisResults.getMetadata().getLogoLink();
@@ -734,8 +734,8 @@ public class LandscapeRepositoriesReport {
         String logoLink = metadata.getLogoLink();
 
         String latestCommitDate = repositoryAnalysis.getAnalysisResults().getContributorsAnalysisResults().getLatestCommitDate();
-        report.startTableRow(DateUtils.isCommittedLessThanDaysAgo(latestCommitDate, 90) ? ""
-                : (DateUtils.isCommittedLessThanDaysAgo(latestCommitDate, 180) ? "color:#b0b0b0" : "color:#c3c3c3"));
+        report.startTableRow("white-space: nowrap;" + (DateUtils.isCommittedLessThanDaysAgo(latestCommitDate, 90) ? ""
+                : (DateUtils.isCommittedLessThanDaysAgo(latestCommitDate, 180) ? "color:#b0b0b0" : "color:#c3c3c3")));
         report.addTableCell(getImageWithLink(repositoryAnalysis, logoLink), "text-align: center");
         report.addTableCell("<a href='" + this.getRepositoryReportUrl(repositoryAnalysis) + "' target='_blank'>"
                 + "<div>" + metadata.getName() + "</div></a>", "vertical-align: middle; min-width: 400px; max-width: 400px");

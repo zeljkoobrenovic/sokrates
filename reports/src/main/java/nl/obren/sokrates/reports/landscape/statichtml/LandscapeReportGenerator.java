@@ -1398,7 +1398,7 @@ public class LandscapeReportGenerator {
             landscapeReport.addContentInDiv("<a href='data/ignoredRepositories.txt' target='_blank'>" + ignoredRepositoriess.size() +
                             " repositories (" + FormattingUtils.getSmallTextForNumber(ignoredLocMain) + " lines of main code) are ignored</a> based on any of the following criteria: " +
                             (StringUtils.isNoneBlank(lastUpdatedBefore) ? "not updated after " + lastUpdatedBefore + "; " : "") +
-                            ((thresholdContributors > 0) ? "have less than " + FormattingUtils.formatCountPlural(thresholdContributors, "contributors", "contributors") + "; " : "") +
+                            ((thresholdContributors > 0) ? "have ≤ " + FormattingUtils.formatCountPlural(thresholdContributors, "contributor", "contributors") + "; " : "") +
                             (thresholdLocMain > 0 ? "have less than " + thresholdLocMain + " lines of main code" : ""),
                     "color: grey; margin: 10px; font-size: 80%");
         }
