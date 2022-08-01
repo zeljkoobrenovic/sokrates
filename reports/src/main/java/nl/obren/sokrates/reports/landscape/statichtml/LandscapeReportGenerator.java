@@ -148,7 +148,11 @@ public class LandscapeReportGenerator {
             landscapeReport.setDisplayName(landscapeName);
         }
         landscapeReport.setParentUrl(configuration.getParentUrl());
-        landscapeReport.setLogoLink(metadata.getLogoLink());
+        String logoLink = metadata.getLogoLink();
+        if (StringUtils.isBlank(logoLink)) {
+            logoLink = "https://zeljkoobrenovic.github.io/sokrates-media/icons/landscape.png";
+        }
+        landscapeReport.setLogoLink(logoLink);
         landscapeReport.setBreadcrumbs(configuration.getBreadcrumbs());
         String description = metadata.getDescription();
         String tooltip = metadata.getTooltip();

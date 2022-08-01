@@ -6,8 +6,10 @@ package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.utils.FormattingUtils;
+import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
+import nl.obren.sokrates.reports.core.ReportConstants;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.dataexporters.DataExportUtils;
 import nl.obren.sokrates.reports.dataexporters.DataExporter;
@@ -16,11 +18,14 @@ import nl.obren.sokrates.reports.utils.ScopesRenderer;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
 import nl.obren.sokrates.sourcecode.analysis.results.LogicalDecompositionAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.*;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.dependencies.DependencyEvidence;
 import nl.obren.sokrates.sourcecode.dependencies.DependencyUtils;
+import nl.obren.sokrates.sourcecode.filehistory.FilePairChangedTogether;
+import nl.obren.sokrates.sourcecode.filehistory.TemporalDependenciesHelper;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 
 import java.text.SimpleDateFormat;
@@ -33,6 +38,7 @@ public class LogicalComponentsReportGenerator {
     private boolean elaborate = true;
     private RichTextReport report;
     private int dependencyVisualCounter = 1;
+    private int graphCounter = 1;
 
     public LogicalComponentsReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
@@ -100,17 +106,17 @@ public class LogicalComponentsReportGenerator {
         report.addHtmlContent("<a target='_blank' href='visuals/tree_map_components_" + (sectionIndex) + ".html'>Tree Map</a>");
         report.endDiv();
 
-        List<NumericMetric> fileCountPerExtension = logicalDecomposition.getFileCountPerComponent();
-        List<NumericMetric> linesOfCodePerExtension = logicalDecomposition.getLinesOfCodePerComponent();
+        List<NumericMetric> fileCountPerComponent = logicalDecomposition.getFileCountPerComponent();
+        List<NumericMetric> linesOfCodePerComponent = logicalDecomposition.getLinesOfCodePerComponent();
 
         ScopesRenderer renderer = new ScopesRenderer();
         renderer.setLinesOfCodeInMain(codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode());
 
-        renderer.setTitle("Components");
+        renderer.setTitle("Component Sizes (Lines of Code)");
         renderer.setDescription("");
-        renderer.setFileCountPerComponent(fileCountPerExtension);
+        renderer.setFileCountPerComponent(fileCountPerComponent);
 
-        renderer.setLinesOfCode(linesOfCodePerExtension);
+        renderer.setLinesOfCode(linesOfCodePerComponent);
         renderer.setMaxFileCount(codeAnalysisResults.getMaxFileCount());
         renderer.setMaxLinesOfCode(codeAnalysisResults.getMaxLinesOfCode());
         List<AspectAnalysisResults> components = logicalDecomposition.getComponents();
@@ -126,14 +132,121 @@ public class LogicalComponentsReportGenerator {
             report.endSection();
         }
 
-        List<ComponentDependency> componentDependencies = logicalDecomposition.getComponentDependencies();
+        addStaticDependencies(logicalDecomposition);
 
-        report.startSubSection("Dependencies", "Dependencies among components are <b>static</b> code dependencies among files in different components.");
+        if (codeAnalysisResults.getContributorsAnalysisResults().getCommitsCount() > 0) {
+            report.startSubSection("Component Commits", "Components ordered by number of commits");
+            addCommitsSection(logicalDecomposition);
+            addCommitsTrendSection(sectionIndex, logicalDecomposition.getKey());
+            addTemporalDependenciesSection(logicalDecomposition);
+            report.endSection();
+        }
+
+    }
+
+    private void addStaticDependencies(LogicalDecompositionAnalysisResults logicalDecomposition) {
+        List<ComponentDependency> componentDependencies = logicalDecomposition.getComponentDependencies();
+        report.startSubSection("Static Dependencies", "Dependencies among components are <b>static</b> code dependencies among files in different components.");
         if (componentDependencies != null && componentDependencies.size() > 0) {
             addComponentDependenciesSection(logicalDecomposition, componentDependencies);
         } else {
             report.addParagraph("No component dependencies found.");
         }
+        report.endSection();
+    }
+
+    private void addTemporalDependenciesSection(LogicalDecompositionAnalysisResults logicalDecomposition) {
+        List<FilePairChangedTogether> filePairsChangedTogether180Days = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether180Days();
+
+        addDependenciesSection(filePairsChangedTogether180Days);
+    }
+    private void addDependenciesSection(List<FilePairChangedTogether> filePairsChangedTogether) {
+        report.startDiv("margin: 10px;");
+        codeAnalysisResults.getLogicalDecompositionsAnalysisResults().forEach(logicalDecompositionAnalysisResults -> {
+            String logicalDecompositionKey = logicalDecompositionAnalysisResults.getKey();
+
+            report.startSubSection("Dependencies between components in same commits (past 180 days)",
+                    "The number on the lines shows the number of shared commits.");
+
+            report.addNewTabLink("See detailed temporal dependencies report...", "FileTemporalDependencies.html");
+            report.addLineBreak();
+            report.addLineBreak();
+            TemporalDependenciesHelper helper = new TemporalDependenciesHelper();
+            List<ComponentDependency> componentDependencies = helper.extractComponentDependencies(logicalDecompositionKey, filePairsChangedTogether);
+            renderComponentDependencies(report, componentDependencies);
+
+            report.endSection();
+        });
+        report.endDiv();
+    }
+
+    private void renderComponentDependencies(RichTextReport report, List<ComponentDependency> dependencies) {
+        if (dependencies.size() > 0) {
+            GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
+            graphvizDependencyRenderer.setDefaultNodeFillColor("deepskyblue2");
+            graphvizDependencyRenderer.setType("graph");
+            graphvizDependencyRenderer.setArrow("--");
+            graphvizDependencyRenderer.setArrowColor("#00688b");
+            graphvizDependencyRenderer.setCyclicArrowColor("#a0a0a0");
+            graphvizDependencyRenderer.setMaxNumberOfDependencies(50);
+            String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), dependencies);
+
+            String graphId = "logical_decomposition_file_changed_together_dependencies_" + graphCounter++;
+            report.addGraphvizFigure(graphId, "File changed together in different components", graphvizContent);
+        } else {
+            report.addParagraph("No temporal dependencies found.");
+        }
+    }
+
+    private void addCommitsSection(LogicalDecompositionAnalysisResults logicalDecomposition) {
+        List<NumericMetric> fileCountPerComponent = logicalDecomposition.getFileCountPerComponent();
+        List<NumericMetric> linesOfCodePerComponent = new CommitTrendsExtractors(codeAnalysisResults).getTotalCommits(logicalDecomposition.getKey());
+        ScopesRenderer renderer = new ScopesRenderer();
+        renderer.setLinesOfCodeInMain(codeAnalysisResults.getContributorsAnalysisResults().getCommitsCount());
+
+        renderer.setTitle("Total Commits per Component");
+        renderer.setDescription("");
+        renderer.setMetric("commits");
+        renderer.setDescribe(false);
+        renderer.setActiveColor("grey");
+        renderer.setFileCountPerComponent(fileCountPerComponent);
+
+        renderer.setLinesOfCode(linesOfCodePerComponent);
+        renderer.setMaxFileCount(codeAnalysisResults.getMaxFileCount());
+        renderer.setMaxLinesOfCode(codeAnalysisResults.getContributorsAnalysisResults().getCommitsCount());
+        List<AspectAnalysisResults> components = logicalDecomposition.getComponents();
+        String filePathPrefix = DataExportUtils.getComponentFilePrefix(logicalDecomposition.getKey());
+        renderer.setAspectsFileListPaths(components.stream().map(aspect -> aspect.getAspect().getFileSystemFriendlyName(filePathPrefix)).collect(Collectors.toList()));
+        renderer.renderReport(report, "All commits, some commits may include files from multiple components.");
+    }
+    private void addCommitsTrendSection(int sectionIndex, String key) {
+        report.startSubSection("Yearly File Updates Trend per Components", "The number of file changes in commits");
+        report.addContentInDiv(ReportConstants.ANIMATION_SVG_ICON, "display: inline-block; vertical-align: middle; margin: 4px;");
+        report.addHtmlContent("animated commit history: ");
+        report.addNewTabLink("all time cumulative", "visuals/racing_charts_component_commits_" + sectionIndex + ".html?tickDuration=1200");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("12 months window", "visuals/racing_charts_component_commits_12_months_window_" + sectionIndex + ".html?tickDuration=1200");
+
+        report.startTable();
+        report.startTableRow();
+        report.startTableCell("border: none");
+        List<HistoryPerExtension> historyPerExtensionPerYear = new ArrayList<>();
+        Map<String, Map<String, Integer>> commitsPerYear = new CommitTrendsExtractors(codeAnalysisResults).getCommitsPerYear(key);
+        commitsPerYear.keySet().forEach(component -> {
+            Map<String, Integer> componentYears = commitsPerYear.get(component);
+            componentYears.keySet().forEach(year -> {
+                int count = componentYears.get(year);
+                historyPerExtensionPerYear.add(new HistoryPerExtension(component, year, count));
+            });
+        });
+        List<String> componentNames = new ArrayList<>(commitsPerYear.keySet());
+        HistoryPerLanguageGenerator.getInstanceCommits(historyPerExtensionPerYear, componentNames).addHistoryPerComponent(report);
+        report.endTableCell();
+        report.endTableRow();
+        report.endTable();
+
+        report.addLineBreak();
+        report.addLineBreak();
         report.endSection();
     }
 

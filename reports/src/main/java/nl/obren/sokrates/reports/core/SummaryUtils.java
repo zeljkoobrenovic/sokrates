@@ -100,16 +100,17 @@ public class SummaryUtils {
                 int veryLongFilesLOC = distribution.getVeryHighRiskValue();
                 int shortFilesLOC = distribution.getLowRiskValue() + distribution.getNegligibleRiskValue();
 
+                String linkPrefix = "<a href='" + reportRoot + "FileSize.html'  title='file size details' style='vertical-align: top'>";
                 report.startTableRow();
-                report.addTableCell(getIconSvg("file_size"), "border: none");
-                report.addTableCell(getRiskProfileVisual(distribution), "border: none");
+                report.addTableCell(linkPrefix + getIconSvg("file_size") + "</a>", "border: none");
+                report.addTableCell(linkPrefix + getRiskProfileVisual(distribution) + "</a>", "border: none");
                 Thresholds fileSizeThresholds = analysisResults.getCodeConfiguration().getAnalysis().getFileSizeThresholds();
                 report.addTableCell("File Size: <b>"
                         + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(mainLOC, veryLongFilesLOC))
                         + "%</b> long (>" + fileSizeThresholds.getVeryHigh() + " LOC), <b>"
                         + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(mainLOC, shortFilesLOC))
                         + "%</b> short (<= " + fileSizeThresholds.getMedium() + " LOC)", "border: none; vertical-align: top; padding-top: 11px;");
-                report.addTableCell("<a href='" + reportRoot + "FileSize.html'  title='file size details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "border: none");
+                report.addTableCell(linkPrefix + getDetailsIcon() + "</a>", "border: none");
                 report.endTableRow();
             }
         }
@@ -144,12 +145,12 @@ public class SummaryUtils {
 
     public void summarizeAndCompare(CodeAnalysisResults analysisResults, CodeAnalysisResults refData, RichTextReport report) {
         StringBuilder summary = new StringBuilder("");
-        summarizeMainCode(analysisResults, summary);
+        summarizeMainCode(analysisResults, summary, null);
 
         summary.append(addDiffDiv(analysisResults.getMainAspectAnalysisResults().getLinesOfCode(),
                 refData.getMainAspectAnalysisResults().getLinesOfCode()));
         summary.append("<div style='margin-top: 24px;font-size:80%;margin-bottom:46px;opacity: 0.5;'>");
-        summarizeMainCode(refData, summary);
+        summarizeMainCode(refData, summary, null);
         summary.append("</div>");
 
         report.addParagraph(summary.toString());
@@ -223,6 +224,8 @@ public class SummaryUtils {
     }
 
     private void summarizeMainVolume(CodeAnalysisResults analysisResults, RichTextReport report) {
+        String linkPrefix = "<a href='" + reportRoot + "SourceCodeOverview.html'  title='volume details' style='vertical-align: top'>";
+
         report.startTableRow();
         StringBuilder icons = new StringBuilder("");
         addIconsMainCode(analysisResults, icons);
@@ -232,9 +235,9 @@ public class SummaryUtils {
 
         report.startTableRow();
         StringBuilder summary = new StringBuilder("");
-        summarizeMainCode(analysisResults, summary);
+        summarizeMainCode(analysisResults, summary, linkPrefix);
         report.addHtmlContent(summary.toString());
-        report.addTableCell("<a href='" + reportRoot + "SourceCodeOverview.html'  title='volume details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "border: none");
+        report.addTableCell(linkPrefix + getDetailsIcon() + "</a>", "border: none");
         report.endTableRow();
     }
 
@@ -242,12 +245,20 @@ public class SummaryUtils {
         return getIconSvg("details", 22, 22);
     }
 
-    private void summarizeMainCode(CodeAnalysisResults analysisResults, StringBuilder summary) {
-        summary.append("<td style='border: none'>" + getIconSvg("codebase") + "</td>");
-        summary.append("<td style='border: none; width: 300px; max-width: 300px'>");
+    private void summarizeMainCode(CodeAnalysisResults analysisResults, StringBuilder summary, String linkPrefix) {
+        if (linkPrefix != null) {
+            summary.append("<td style='border: none'>" + linkPrefix + getIconSvg("codebase") + "</a></td>");
+            summary.append("<td style='border: none; width: 300px; max-width: 300px'>" + linkPrefix);
+        } else {
+            summary.append("<td style='border: none'>" + getIconSvg("codebase") + "</td>");
+            summary.append("<td style='border: none; width: 300px; max-width: 300px'>" + linkPrefix);
+        }
         int totalLoc = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
         List<NumericMetric> linesOfCodePerExtension = analysisResults.getMainAspectAnalysisResults().getLinesOfCodePerExtension();
         summary.append("<div>" + getVolumeVisual(linesOfCodePerExtension, totalLoc, totalLoc, "") + "</div>");
+        if (linkPrefix != null) {
+            summary.append("</a>");
+        }
         summary.append("</td>");
         summary.append("<td style='border: none; vertical-align: top; padding-top: 11px;'>");
         summary.append("<a target='_blank' href='visuals/zoomable_circles_main.html'>Main Code</a>");
@@ -305,9 +316,13 @@ public class SummaryUtils {
 
     private void summarizeComponents(CodeAnalysisResults analysisResults, RichTextReport report) {
         report.startTableRow();
-        report.addTableCell(getIconSvg("dependencies"), "border: none");
+        String linkPrefix = "<a href='" + reportRoot + "Components.html'  title='logical decomposition details'>";
+        report.addTableCell(
+                linkPrefix + getIconSvg("dependencies") + "</a>",
+                "border: none");
 
         report.startTableCell("border: none");
+        report.addHtmlContent(linkPrefix);
         analysisResults.getLogicalDecompositionsAnalysisResults().forEach(decomposition -> {
             int mainLoc = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
             int totalLoc[] = {0};
@@ -316,6 +331,7 @@ public class SummaryUtils {
 
             report.addContentInDiv(getVolumeVisual(linesOfCodePerComponent, totalLoc[0], mainLoc, ""));
         });
+        report.addHtmlContent("</a>");
         report.endTableCell();
 
         report.startTableCell("border: none; vertical-align: top; padding-top: 11px;");
@@ -335,22 +351,25 @@ public class SummaryUtils {
             index[0] += 1;
         });
         report.endTableCell();
-        report.addTableCell("<a href='" + reportRoot + "Components.html'  title='logical decomposition details'>" + getDetailsIcon() + "</a>",
+        report.addTableCell(linkPrefix + getDetailsIcon() + "</a>",
                 "border: none;");
 
         report.endTableRow();
     }
 
     private void summarizeFileChangeHistory(CodeAnalysisResults analysisResults, RichTextReport report) {
+        String linkPrefix = "<a href='" + reportRoot + "FileAge.html'  title='file change history details' style='vertical-align: top'>";
         report.startTableRow();
-        report.addTableCell(getIconSvg("file_history"), "border: none;  vertical-align: top");
+        report.addTableCell(linkPrefix + getIconSvg("file_history") + "</a>", "border: none;  vertical-align: top");
 
         FilesHistoryAnalysisResults results = analysisResults.getFilesHistoryAnalysisResults();
         report.startTableCell("border: none; padding-top: 4px; vertical-align: top");
+        report.addHtmlContent(linkPrefix);
         SourceFileAgeDistribution age = results.getOverallFileFirstModifiedDistribution();
         report.addContentInDiv(getRiskProfileVisual(age, Palette.getAgePalette()));
         SourceFileAgeDistribution changes = results.getOverallFileLastModifiedDistribution();
         report.addContentInDiv(getRiskProfileVisual(changes, Palette.getFreshnessPalette()));
+        report.addHtmlContent("</a>");
         report.endTableCell();
 
         report.startTableCell("border: none; padding-top: 4px;");
@@ -367,21 +386,25 @@ public class SummaryUtils {
         );
         report.endUnorderedList();
         report.endTableCell();
-        report.addTableCell("<a href='" + reportRoot + "FileAge.html'  title='file change history details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "border: none;  vertical-align: top");
+        report.addTableCell(linkPrefix + getDetailsIcon() + "</a>", "border: none;  vertical-align: top");
 
         report.endTableRow();
     }
 
     private void summarizeFileUpdateFrequency(CodeAnalysisResults analysisResults, RichTextReport report) {
+        String linkPrefix = "<a href='" + reportRoot + "FileChangeFrequency.html'  title='file change frequency details' style='vertical-align: top'>";
+
         report.startTableRow();
-        report.addTableCell(getIconSvg("change"), "border: none;  vertical-align: top");
+        report.addTableCell(linkPrefix + getIconSvg("change") + "</a>", "border: none;  vertical-align: top");
 
         FilesHistoryAnalysisResults results = analysisResults.getFilesHistoryAnalysisResults();
         report.startTableCell("border: none; padding-top: 4px; vertical-align: top");
+        report.addHtmlContent(linkPrefix);
         SourceFileChangeDistribution fileChange = results.getOverallFileChangeDistribution();
         SourceFileChangeDistribution contributorsCount = results.getOverallContributorsCountDistribution();
         report.addContentInDiv(getRiskProfileVisual(fileChange, Palette.getHeatPalette()));
         report.addContentInDiv(getRiskProfileVisual(contributorsCount, Palette.getHeatPalette()));
+        report.addHtmlContent("</a>");
         report.endTableCell();
 
         report.startTableCell("border: none; padding-top: 4px;");
@@ -390,7 +413,7 @@ public class SummaryUtils {
                 + "% of code updated more than " + thresholds.getHigh() + " times", "margin-bottom: 2px");
         report.addParagraph("Also see <a href='FileTemporalDependencies.html' target='_blank'>temporal dependencies</a> for files frequently changed in same commits.", "font-size: 80%; color: grey;");
         report.endTableCell();
-        report.addTableCell("<a href='" + reportRoot + "FileChangeFrequency.html'  title='file change frequency details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "border: none;  vertical-align: top");
+        report.addTableCell(linkPrefix + getDetailsIcon() + "</a>", "border: none;  vertical-align: top");
 
         report.endTableRow();
     }
@@ -406,15 +429,19 @@ public class SummaryUtils {
 
 
     private void summarizeGoals(CodeAnalysisResults analysisResults, RichTextReport report) {
+        String linkPrefix = "<a href='" + reportRoot + "Controls.html'  title='metrics &amp; goals details' style='vertical-align: top'>";
+
         report.startTableRow();
-        report.addTableCell(getIconSvg("goal"), "border: none");
+        report.addTableCell(linkPrefix + getIconSvg("goal") + "</a>", "border: none");
 
         report.startTableCell("border: none");
+        report.addHtmlContent(linkPrefix);
         analysisResults.getControlResults().getGoalsAnalysisResults().forEach(goalsAnalysisResults -> {
             goalsAnalysisResults.getControlStatuses().forEach(controlStatus -> {
                 report.addHtmlContent(ReportUtils.getSvgCircle(getControlColor(controlStatus.getStatus())) + " ");
             });
         });
+        report.addHtmlContent("</a>");
         report.endTableCell();
 
         report.startTableCell("border: none; vertical-align: top; padding-top: 11px;");
@@ -430,7 +457,7 @@ public class SummaryUtils {
             report.addHtmlContent(metricsWithGoal.getGoal() + " (" + metricsWithGoal.getControls().size() + ")");
         });
         report.endTableCell();
-        report.addTableCell("<a href='" + reportRoot + "Controls.html'  title='metrics &amp; goals details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "border: none");
+        report.addTableCell(linkPrefix + getDetailsIcon() + "</a>", "border: none");
 
         report.endTableRow();
     }
@@ -451,8 +478,9 @@ public class SummaryUtils {
             return;
         }
 
+        String linkPrefix = "<a href='" + reportRoot + "FeaturesOfInterest.html'  title='metrics &amp; goals details' style='vertical-align: top'>";
         report.startTableRow();
-        report.addTableCell(getIconSvg("cross_cutting_concerns"), "border: none");
+        report.addTableCell(linkPrefix + getIconSvg("cross_cutting_concerns") + "</a>", "border: none");
 
         report.startTableCellColSpan("border: none", 2);
         report.addContentInDiv("Features of interest:", "font-size: 80%");
@@ -475,7 +503,7 @@ public class SummaryUtils {
             report.endShowMoreBlock();
         }
         report.endTableCell();
-        report.addTableCell("<a href='" + reportRoot + "FeaturesOfInterest.html'  title='metrics &amp; goals details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "border: none");
+        report.addTableCell(linkPrefix + getDetailsIcon() + "</a>", "border: none");
 
         report.endTableRow();
     }
@@ -518,16 +546,17 @@ public class SummaryUtils {
 
         Thresholds thresholds = analysisResults.getCodeConfiguration().getAnalysis().getConditionalComplexityThresholds();
 
+        String linkPrefix = "<a href='" + reportRoot + "ConditionalComplexity.html'  title='conditional complexity details' style='vertical-align: top'>";
         report.startTableRow();
-        report.addTableCell(getIconSvg("conditional"), "border: none");
-        report.addTableCell(getRiskProfileVisual(distribution), "border: none");
+        report.addTableCell(linkPrefix + getIconSvg("conditional") + "</a>", "border: none");
+        report.addTableCell(linkPrefix + getRiskProfileVisual(distribution) + "</a>", "border: none");
         report.addTableCell("Conditional Complexity: <b>"
                 + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, veryComplexUnitsLOC))
                 + "%</b> complex (McCabe index > " + thresholds.getVeryHigh() + "), <b>"
                 + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, lowComplexUnitsLOC))
                 + "%</b> simple (McCabe index <= " + thresholds.getLow() + ")", "border: none; vertical-align: top; padding-top: 11px;");
 
-        report.addTableCell("<a href='" + reportRoot + "ConditionalComplexity.html'  title='conditional complexity details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "border: none");
+        report.addTableCell(linkPrefix + getDetailsIcon() + "</a>", "border: none");
         report.endTableRow();
     }
 
@@ -538,15 +567,16 @@ public class SummaryUtils {
         int lowUnitsLOC = distribution.getLowRiskValue() + distribution.getNegligibleRiskValue();
         Thresholds thresholds = analysisResults.getCodeConfiguration().getAnalysis().getUnitSizeThresholds();
 
+        String linkPrefix = "<a href='" + reportRoot + "UnitSize.html'  title='unit size details' style='vertical-align: top'>";
         report.startTableRow();
-        report.addTableCell(getIconSvg("unit_size"), "border: none");
-        report.addTableCell(getRiskProfileVisual(distribution), "border: none");
+        report.addTableCell(linkPrefix + getIconSvg("unit_size") + "</a>", "border: none");
+        report.addTableCell(linkPrefix + getRiskProfileVisual(distribution) + "</a>", "border: none");
         report.addTableCell("Unit Size: <b>"
                 + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, veryLongUnitsLOC))
                 + "%</b> long (>" + thresholds.getVeryHigh() + " LOC), <b>"
                 + FormattingUtils.getFormattedPercentage(RichTextRenderingUtils.getPercentage(linesOfCodeInUnits, lowUnitsLOC))
                 + "%</b> short (<= " + thresholds.getLow() + " LOC)", "border: none; vertical-align: top; padding-top: 11px;");
-        report.addTableCell("<a href='" + reportRoot + "UnitSize.html'  title='unit size details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "border: none");
+        report.addTableCell(linkPrefix + getDetailsIcon() + "</a>", "border: none");
         report.endTableRow();
     }
 
@@ -555,11 +585,12 @@ public class SummaryUtils {
         Number duplicationPercentage = overallDuplication.getDuplicationPercentage();
         double duplication = duplicationPercentage.doubleValue();
         if (!analysisResults.getCodeConfiguration().getAnalysis().isSkipDuplication()) {
+            String linkPrefix = "<a href='" + reportRoot + "Duplication.html'  title='duplication details' style='vertical-align: top'>";
             report.startTableRow();
-            report.addTableCell(getIconSvg("duplication"), "border: none");
-            report.addTableCell(getDuplicationVisual(duplicationPercentage), "border: none");
+            report.addTableCell(linkPrefix + getIconSvg("duplication") + "</a>", "border: none");
+            report.addTableCell(linkPrefix + getDuplicationVisual(duplicationPercentage) + "</a>", "border: none");
             report.addTableCell("Duplication: <b>" + FormattingUtils.getFormattedPercentage(duplication) + "%</b>", "margin-bottom: 0;  border: none; vertical-align: top; padding-top: 11px;");
-            report.addTableCell("<a href='" + reportRoot + "Duplication.html'  title='duplication details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "border: none");
+            report.addTableCell(linkPrefix + getDetailsIcon() + "</a>", "border: none");
             report.endTableRow();
         }
     }

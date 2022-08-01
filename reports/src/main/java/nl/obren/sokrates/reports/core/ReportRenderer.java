@@ -69,7 +69,7 @@ public class ReportRenderer {
         content.append(renderLogo(richTextReport));
 
         content.append("<div style='display: inline-block; vertical-align: middle'>" +
-                richTextReport.getDisplayName() + "</div>\n");
+                richTextReport.getDisplayName() + "</div></div>\n");
 
         if (StringUtils.isNotBlank(parentUrl)) {
             content.append("</a>\n");
@@ -82,6 +82,9 @@ public class ReportRenderer {
         StringBuilder content = new StringBuilder();
         if (richTextReport.isRenderLogo()) {
             String logoLink = richTextReport.getLogoLink();
+            if (StringUtils.isBlank(logoLink)) {
+                logoLink = "https://zeljkoobrenovic.github.io/sokrates-media/icons/repository.png";
+            }
             boolean complexHeader = richTextReport.getDisplayName().contains("<div");
             String valign = "middle";
             if (StringUtils.isNotBlank(logoLink)) {
@@ -93,15 +96,7 @@ public class ReportRenderer {
                 content.append("height: " + size + "px' valign='" + valign + "' src='" +
                         logoLink + "'>\n");
             } else {
-                content.append("<div style='display: inline-block; vertical-align: " + valign + "'>" +
-                        "<div style='");
-                if (complexHeader) {
-                    content.append("transform: scale(0.8); ");
-                }
-                content.append("height: 52px; vertical-align: middle'>" +
-                        ReportConstants.SOKRATES_SVG_ICON +
-                        "</div>" +
-                        "</div>\n");
+
             }
         }
 

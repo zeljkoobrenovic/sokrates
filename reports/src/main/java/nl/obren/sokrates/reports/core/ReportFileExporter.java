@@ -333,7 +333,7 @@ public class ReportFileExporter {
             list.add(new String[]{"FileSize.html", "File Size", "file_size"});
         }
         if (showHistoryReport) {
-            list.add(new String[]{"FileAge.html", "File Age", "file_history"});
+            list.add(new String[]{"FileAge.html", "File Age & Freshness", "file_history"});
             list.add(new String[]{"FileChangeFrequency.html", "File Change Frequency", "change"});
             list.add(new String[]{"FileTemporalDependencies.html", "Temporal Dependencies", "temporal_dependency"});
             list.add(new String[]{"Commits.html", "Commits", "commits"});
@@ -368,7 +368,7 @@ public class ReportFileExporter {
             list.add(new String[]{"", "File Size", "file_size"});
         }
         if (!showHistoryReport) {
-            list.add(new String[]{"", "File Age", "file_history"});
+            list.add(new String[]{"", "File Age & Freshness", "file_history"});
             list.add(new String[]{"", "File Change Frequency", "change"});
             list.add(new String[]{"", "Temporal Dependencies", "temporal_dependency"});
             list.add(new String[]{"", "Contributors", "contributors"});

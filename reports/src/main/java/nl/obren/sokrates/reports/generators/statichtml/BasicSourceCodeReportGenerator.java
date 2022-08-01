@@ -26,7 +26,7 @@ public class BasicSourceCodeReportGenerator {
     private RichTextReport concernsReport = new RichTextReport("Features of Interest", "FeaturesOfInterest.html");
     private RichTextReport duplicationReport = new RichTextReport("Duplication", "Duplication.html");
     private RichTextReport fileSizeReport = new RichTextReport("File Size", "FileSize.html");
-    private RichTextReport fileHistoryReport = new RichTextReport("File Age", "FileAge.html");
+    private RichTextReport fileHistoryReport = new RichTextReport("File Age & Freshness", "FileAge.html");
     private RichTextReport fileChangeFrequencyReport = new RichTextReport("File Change Frequency", "FileChangeFrequency.html");
     private RichTextReport fileTemporalDependenciesReport = new RichTextReport("Temporal Dependencies", "FileTemporalDependencies.html");
     private RichTextReport unitSizeReport = new RichTextReport("Unit Size", "UnitSize.html");

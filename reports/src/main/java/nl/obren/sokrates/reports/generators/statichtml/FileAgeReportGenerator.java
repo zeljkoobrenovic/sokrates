@@ -25,7 +25,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class FileAgeReportGenerator {
-    public static final String LATEST_CHANGE_DISTRIBUTION = "Latest Change Distribution";
+    public static final String LATEST_CHANGE_DISTRIBUTION = "File Freshness Distribution";
     public static final String FILE_AGE_DISTRIBUTION = "File Age Distribution";
     public static final String FILE_AGE_DESCRIPTION = "Days since first update";
     public static final String LATEST_CHANGE_DESCRIPTION = "Days since last update";
@@ -129,7 +129,7 @@ public class FileAgeReportGenerator {
 
     private void describe(RichTextReport report) {
         report.addParagraph("File age measurements show the distribution of file ages (days since the first commit)" +
-                " and the recency of file updates (days since the latest commit).", "margin-top: 12px; color: grey");
+                " and the file freshness (days since the latest commit).", "margin-top: 12px; color: grey");
     }
 
     private void addAgeGraphOverall(RichTextReport report, SourceFileAgeDistribution distribution, String title, String subtitle, Palette palette) {

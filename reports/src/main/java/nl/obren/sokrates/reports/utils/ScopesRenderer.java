@@ -40,6 +40,9 @@ public class ScopesRenderer {
     private String filesListPath;
     private String explorers = "";
     private boolean sort = true;
+    private String metric = "LOC";
+    private boolean describe = true;
+    private String activeColor = "#00aced";
 
     public List<String> getAspectsFileListPaths() {
         return aspectsFileListPaths;
@@ -156,26 +159,28 @@ public class ScopesRenderer {
                 List<ScopeRendererItem> renderingList = getRenderingList();
                 if (inSection) {
                     report.startSubSection(title, description);
-                    if (StringUtils.isNotBlank(extraIntroHtmlFragment)) {
-                        report.addHtmlContent(extraIntroHtmlFragment);
-                    }
-                    renderDetails(report, false);
-                    if (renderingList.size() > 1) {
-                        report.startUnorderedList();
-                        NumericMetric firstMetric = renderingList.get(0).getLinesOfCode();
-                        double firstPercentage = 100.0 * firstMetric.getValue().doubleValue() / linesCount;
-                        DecimalFormat decimalFormat = new DecimalFormat("##.##");
-                        decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.ENGLISH));
-                        report.addListItem("\"" + firstMetric.getName() + "\" is biggest, containing <b>" + decimalFormat.format(firstPercentage) + "%</b> of code.");
-                        if (renderingList.size() >= 2) {
-                            NumericMetric lastMetric = renderingList.get(renderingList.size() - 1).getLinesOfCode();
-                            double lastPercentage = 100.0 * lastMetric.getValue().doubleValue() / linesCount;
-                            report.addListItem("\"" + lastMetric.getName() + "\" is smallest, containing <b>" + decimalFormat.format(lastPercentage) + "%</b> of code.");
+                    if (describe) {
+                        if (StringUtils.isNotBlank(extraIntroHtmlFragment)) {
+                            report.addHtmlContent(extraIntroHtmlFragment);
                         }
-                        report.endUnorderedList();
+                        renderDetails(report, false);
+                        if (renderingList.size() > 1) {
+                            report.startUnorderedList();
+                            NumericMetric firstMetric = renderingList.get(0).getLinesOfCode();
+                            double firstPercentage = 100.0 * firstMetric.getValue().doubleValue() / linesCount;
+                            DecimalFormat decimalFormat = new DecimalFormat("##.##");
+                            decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.ENGLISH));
+                            report.addListItem("\"" + firstMetric.getName() + "\" is biggest, containing <b>" + decimalFormat.format(firstPercentage) + "%</b> of " + metric + ".");
+                            if (renderingList.size() >= 2) {
+                                NumericMetric lastMetric = renderingList.get(renderingList.size() - 1).getLinesOfCode();
+                                double lastPercentage = 100.0 * lastMetric.getValue().doubleValue() / linesCount;
+                                report.addListItem("\"" + lastMetric.getName() + "\" is smallest, containing <b>" + decimalFormat.format(lastPercentage) + "%</b> of " + metric + ".");
+                            }
+                            report.endUnorderedList();
+                        }
+                        report.addLineBreak();
+                        report.addLineBreak();
                     }
-                    report.addLineBreak();
-                    report.addLineBreak();
                 }
 
                 report.startScrollingDiv();
@@ -193,7 +198,7 @@ public class ScopesRenderer {
             ScopeRendererItem item = new ScopeRendererItem();
             item.setLinesOfCode(linesOfCode.get(i));
             String filesFragment = "";
-            if (fileCountPerComponent.size() > i) {
+            if (describe && fileCountPerComponent.size() > i) {
                 item.setFilesCount(fileCountPerComponent.get(i));
                 int count = fileCountPerComponent.get(i).getValue().intValue();
                 filesFragment = FormattingUtils.formatCountPlural(count, "file", "files");
@@ -220,6 +225,7 @@ public class ScopesRenderer {
         chart.setWidth(800);
         chart.setMaxBarWidth(200);
         chart.setBarHeight(20);
+        chart.setActiveColor(activeColor);
 
         report.startDiv("width: 100%; overflow-x: auto");
         report.startDiv("min-width: 1000px");
@@ -229,7 +235,7 @@ public class ScopesRenderer {
             String filesFragment = StringUtils.defaultIfBlank(rendererItem.getFilesFragment(), "");
 
             report.addContentInDiv(chart.getPercentageSvg(percentage, rendererItem.getLinesOfCode().getName(),
-                    "" + metricLinesOfCode + " LOC (" +
+                    "" + metricLinesOfCode + " " + metric + " (" +
                             StringEscapeUtils.escapeHtml4(FormattingUtils.getFormattedPercentage(percentage))
                             + "%) " + filesFragment), "");
         });
@@ -310,7 +316,7 @@ public class ScopesRenderer {
                 filesFragment = "<b>" + filesCount + "</b> " + filesPhrase;
             }
             report.addListItem(filesFragment + " match" + (filesCount == 1 ? "es" : "") + " defined criteria (" +
-                    "<b>" + RichTextRenderingUtils.renderNumber(linesCount) + "</b> lines of code, "
+                    "<b>" + RichTextRenderingUtils.renderNumber(linesCount) + "</b> " + metric + ", "
                     + "<b>" + RichTextRenderingUtils.renderNumber(100.0 * linesCount / linesOfCodeInMain) + "%</b> vs. main code)"
                     + (fileCountPerComponent.size() == 1 ? ". All matches are in " + fileCountPerComponent.get(0).getName() + " files." : ":"));
             report.startUnorderedList();
@@ -320,7 +326,7 @@ public class ScopesRenderer {
                     NumericMetric linesOfCodeMetric = linesOfCode.get(i);
                     report.addListItem("<b>" + RichTextRenderingUtils.renderNumber(fileCountMetric.getValue().intValue()) + "</b>"
                             + " " + fileCountMetric.getName() + " files"
-                            + " (<b>" + RichTextRenderingUtils.renderNumber(linesOfCodeMetric.getValue().intValue()) + "</b> lines of code)");
+                            + " (<b>" + RichTextRenderingUtils.renderNumber(linesOfCodeMetric.getValue().intValue()) + "</b> " + metric + ")");
                 }
             }
             report.endUnorderedList();
@@ -331,7 +337,7 @@ public class ScopesRenderer {
             }
         } else {
             report.addListItem("<b>" + RichTextRenderingUtils.renderNumber(filesCount) + "</b> files, " +
-                    "<b>" + RichTextRenderingUtils.renderNumber(linesCount) + "</b> lines of code ("
+                    "<b>" + RichTextRenderingUtils.renderNumber(linesCount) + "</b> " + metric + " ("
                     + "<b>" + RichTextRenderingUtils.renderNumber(100.0 * linesCount / maxLinesOfCode) + "%</b> vs. main code).");
         }
 
@@ -361,5 +367,29 @@ public class ScopesRenderer {
 
     public void setSort(boolean sort) {
         this.sort = sort;
+    }
+
+    public String getMetric() {
+        return metric;
+    }
+
+    public void setMetric(String metric) {
+        this.metric = metric;
+    }
+
+    public void setDescribe(boolean describe) {
+        this.describe = describe;
+    }
+
+    public boolean isDescribe() {
+        return describe;
+    }
+
+    public String getActiveColor() {
+        return activeColor;
+    }
+
+    public void setActiveColor(String activeColor) {
+        this.activeColor = activeColor;
     }
 }

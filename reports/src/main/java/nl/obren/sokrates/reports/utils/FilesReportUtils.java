@@ -56,10 +56,10 @@ public class FilesReportUtils {
 
             String parent = StringUtils.abbreviate(file.getParent(), 150);
             table.append("<td>" +
-                    "<div><div style='display: inline-block; vertical-align: top; margin-top: 3px; margin-right: 4px;'>" +
+                    "<div style='white-space: nowrap; '><div style='display: inline-block; vertical-align: top; margin-top: 3px; margin-right: 4px;'>" +
                     DataImageUtils.getLangDataImageDiv30(ExtensionGroupExtractor.getExtension(file.getName())) +
                     "</div><div style='display: inline-block;'><b>"
-                    + fileNameFragment + "</b><br/>in " + (parent != null ? parent : "root") + "<br/>" +
+                    + fileNameFragment + "</b><div style='white-space: nowrap; overflow: hidden'>in " + (parent != null ? parent : "root") + "</div>" +
                     "</div></div>" +
                     "</td>\n");
             table.append("<td style='text-align: center'>" + sourceFile.getLinesOfCode() + "</td>\n");
@@ -75,8 +75,8 @@ public class FilesReportUtils {
             if (showAge) {
                 FileModificationHistory history = sourceFile.getFileModificationHistory();
                 if (history != null) {
-                    table.append("<td style='text-align: center'>" + history.getOldestDate() + "</td>\n");
-                    table.append("<td style='text-align: center'>" + history.getLatestDate() + "</td>\n");
+                    table.append("<td style='text-align: center; white-space: nowrap; font-size: 80%'>" + history.getOldestDate() + "</td>\n");
+                    table.append("<td style='text-align: center; white-space: nowrap; font-size: 80%;'>" + history.getLatestDate() + "</td>\n");
                     table.append("<td style='text-align: center'>" + history.getDates().size() + "</td>\n");
                     table.append("<td style='text-align: center'>" + history.countContributors() + "</td>\n");
                     table.append("<td style='text-align: center; font-size: 80%; color: grey'>" + StringUtils.abbreviate(history.getOldestContributor(), 30) + "</td>\n");

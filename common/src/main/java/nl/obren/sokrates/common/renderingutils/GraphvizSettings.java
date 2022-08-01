@@ -44,7 +44,7 @@ public final class GraphvizSettings {
             DEFAULT_EDGE_HEADER;
 
     private static final Log LOG = LogFactory.getLog(GraphvizSettings.class);
-    private static final String POSSIBLE_DOT_PATHS[] = {"/opt/local/bin/dot", "/usr/local/bin/dot", "/usr/bin/dot",
+    private static final String POSSIBLE_DOT_PATHS[] = {"/opt/local/bin/dot", "/usr/local/bin/dot", "/usr/bin/dot", "/opt/homebrew/bin/dot",
             "c:\\Program Files\\Graphviz\\dot.exe", "c:\\Program Files (x86)\\Graphviz\\dot.exe"};
     private static GraphvizSettings graphvizSetting;
 
