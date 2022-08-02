@@ -8,10 +8,10 @@ import org.junit.Test;
 
 import java.io.File;
 
-import static java.nio.file.FileSystems.getDefault;
 import static org.junit.Assert.assertEquals;
 
 public class SourceFileTest {
+    private String SEPARATOR = "/";
     @Test
     public void setLinesOfCodeFromLines() throws Exception {
         SourceFile sourceFile = new SourceFile(new File("test"), "");
@@ -76,7 +76,7 @@ public class SourceFileTest {
 
         sourceFile.relativize(new File("/testproject"));
 
-        assertEquals(sourceFile.getRelativePath(), "src" + getDefault().getSeparator() + "main" + getDefault().getSeparator() + "java" + getDefault().getSeparator() + "A.java");
+        assertEquals(sourceFile.getRelativePath(), "src" + SEPARATOR + "main" + SEPARATOR + "java" + SEPARATOR + "A.java");
 
         sourceFile.relativize(new File("/testproject/src/main/java"));
         assertEquals(sourceFile.getRelativePath(), "A.java");

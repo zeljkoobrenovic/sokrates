@@ -81,11 +81,11 @@ public class SourceFile {
     }
 
     public String getRelativePath() {
-        return relativePath;
+        return  relativePath;
     }
 
     public void setRelativePath(String relativePath) {
-        this.relativePath = relativePath;
+        this.relativePath = relativePath.replace('\\','/');
     }
 
     public SourceFile relativize(File root) {
