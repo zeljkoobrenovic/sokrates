@@ -227,13 +227,6 @@ public class SummaryUtils {
         String linkPrefix = "<a href='" + reportRoot + "SourceCodeOverview.html'  title='volume details' style='vertical-align: top'>";
 
         report.startTableRow();
-        StringBuilder icons = new StringBuilder("");
-        addIconsMainCode(analysisResults, icons);
-        report.addHtmlContent(icons.toString());
-        report.addTableCell("", "border: none");
-        report.endTableRow();
-
-        report.startTableRow();
         StringBuilder summary = new StringBuilder("");
         summarizeMainCode(analysisResults, summary, linkPrefix);
         report.addHtmlContent(summary.toString());
@@ -286,20 +279,25 @@ public class SummaryUtils {
 
     private void addIconsMainCode(CodeAnalysisResults analysisResults, StringBuilder summary) {
         List<NumericMetric> extensions = analysisResults.getMainAspectAnalysisResults().getLinesOfCodePerExtension();
-        summary.append("<td style='border: none'></td>");
-        summary.append("<td style='border: none;' colspan='2'>");
+        summary.append("<div>");
         Set<String> alreadyAddedImage = new HashSet<>();
         extensions.forEach(ext -> {
             String lang = ext.getName().toUpperCase().replace("*.", "").trim();
             String image = DataImageUtils.getLangDataImage(lang);
             if (image == null || !alreadyAddedImage.contains(image)) {
-                summary.append(DataImageUtils.getLangDataImageDiv30(lang));
+                int loc = ext.getValue().intValue();
+                int fontSize = loc >= 1000 ? 18 : 13;
+                summary.append("<div style='width: 42px; text-align: center; display: inline-block; border-radius: 5px; background-color: #f0f0f0; padding: 8px; margin-right: 4px;'>"
+                        + DataImageUtils.getLangDataImageDiv30(lang)
+                        + "<div style='margin-top: 3px; font-size: " + fontSize + "px'>" + FormattingUtils.getSmallTextForNumber(loc) + "</div>"
+                        + "<div style='font-size: 10px; white-space: no-wrap; overflow: hidden; color: grey;'>" + lang.toLowerCase() + "</div>"
+                        + "</div>");
                 if (image != null) {
                     alreadyAddedImage.add(image);
                 }
             }
         });
-        summary.append("</td>");
+        summary.append("</div>");
     }
 
     private void addSummaryFindings(CodeAnalysisResults analysisResults, RichTextReport report) {
@@ -517,14 +515,6 @@ public class SummaryUtils {
 
         report.startTableCellColSpan("border: none", 2);
         List<NumericMetric> linesOfCodePerExtension = analysisResults.getMainAspectAnalysisResults().getLinesOfCodePerExtension();
-        String mainLanguage;
-        if (linesOfCodePerExtension.size() > 0) {
-            mainLanguage = linesOfCodePerExtension.get(0).getName().replace("*.", "").trim().toLowerCase();
-        } else {
-            mainLanguage = "-";
-        }
-
-        report.addContentInDivWithTooltip(mainLanguage, "\"" + mainLanguage + "\" is the file extension with most lines of code", "cursor: help; font-size: 90%; border: 1px lightgrey solid; padding: 4px 10px 5px 10px; display: inline-block; background-color: white; border-radius: 3px");
         tags.forEach(foundTag -> {
             TagRule tagRule = foundTag.getTagRule();
             String tooltip = "added if at least one file matches:\n  - "

@@ -248,6 +248,8 @@ public class ScopesRenderer {
         linesCount = 0;
         for (int i = 0; i < fileCountPerComponent.size(); i++) {
             filesCount += fileCountPerComponent.get(i).getValue().intValue();
+        }
+        for (int i = 0; i < linesOfCode.size(); i++) {
             linesCount += linesOfCode.get(i).getValue().intValue();
         }
     }

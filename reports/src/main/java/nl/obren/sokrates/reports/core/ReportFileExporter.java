@@ -7,6 +7,7 @@ package nl.obren.sokrates.reports.core;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.generators.statichtml.ContributorsReportUtils;
 import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
+import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
@@ -18,6 +19,8 @@ import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
+import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
+import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -25,10 +28,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+
+import static nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator.*;
 
 public class ReportFileExporter {
     private static String htmlReportsSubFolder = "html";
@@ -104,18 +106,46 @@ public class ReportFileExporter {
 
         appendLinks(indexReport, analysisResults);
 
-        indexReport.addContentInDiv("&nbsp;", "height; 20px;");
+        indexReport.addContentInDiv("", "height; 10px;");
 
-        indexReport.startSection("Summary", "");
+        int mainLoc = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
+        int mainFilesCount = analysisResults.getMainAspectAnalysisResults().getFilesCount();
+        int secondaryLoc = analysisResults.getTestAspectAnalysisResults().getLinesOfCode()
+                + analysisResults.getBuildAndDeployAspectAnalysisResults().getLinesOfCode()
+                + analysisResults.getGeneratedAspectAnalysisResults().getLinesOfCode()
+                + analysisResults.getOtherAspectAnalysisResults().getLinesOfCode();
+        int secondaryFilesCount = analysisResults.getTestAspectAnalysisResults().getFilesCount()
+                + analysisResults.getBuildAndDeployAspectAnalysisResults().getFilesCount()
+                + analysisResults.getGeneratedAspectAnalysisResults().getFilesCount()
+                + analysisResults.getOtherAspectAnalysisResults().getFilesCount();
+
+        addInfoBlockWithColor(indexReport, FormattingUtils.getSmallTextForNumber(mainLoc), "lines of main code", FormattingUtils.getSmallTextForNumber(mainFilesCount) + " files", MAIN_LOC_COLOR, "main lines of code");
+        addInfoBlockWithColor(indexReport, FormattingUtils.getSmallTextForNumber(secondaryLoc), "lines of other code", FormattingUtils.getSmallTextForNumber(secondaryFilesCount) + " files", TEST_LOC_COLOR, "test, build & deployment, generated, all other code in scope");
+        ContributorsAnalysisResults contributorsAnalysisResults = analysisResults.getContributorsAnalysisResults();
+        if (contributorsAnalysisResults.getCommitsCount() > 0) {
+            int notChanged = (int) analysisResults.getFilesHistoryAnalysisResults().getOverallFileChangeDistribution().getVeryHighRiskValue();
+            int notChangedPerc = (int) analysisResults.getFilesHistoryAnalysisResults().getOverallFileChangeDistribution().getVeryHighRiskPercentage();
+            int old = (int) analysisResults.getFilesHistoryAnalysisResults().getOverallFileFirstModifiedDistribution().getVeryHighRiskValue();
+            int oldPerc = (int) analysisResults.getFilesHistoryAnalysisResults().getOverallFileFirstModifiedDistribution().getVeryHighRiskPercentage();
+            addInfoBlockWithColor(indexReport, FormattingUtils.getSmallTextForNumber(mainLoc - notChanged), "main code touched", "1 year (" + FormattingUtils.getFormattedPercentage(100 - notChangedPerc) + "%)", MAIN_LOC_FRESH_COLOR, "");
+            addInfoBlockWithColor(indexReport, FormattingUtils.getSmallTextForNumber(mainLoc - old), "new main code", "1 year (" + FormattingUtils.getFormattedPercentage(100 - oldPerc) + "%)", MAIN_LOC_FRESH_COLOR, "");
+            addInfoBlockWithColor(indexReport, FormattingUtils.getSmallTextForNumber(analysisResults.getContributorsAnalysisResults().getCommitsCount30Days()), "recent contributors", "past 30 days", PEOPLE_COLOR, "");
+        }
+        StringBuilder icons = new StringBuilder("");
+        addIconsMainCode(analysisResults, icons);
+        indexReport.startSubSection("File Extensions in Main Code", "");
+        indexReport.addHtmlContent(icons.toString());
+        indexReport.endSection();
+
+        indexReport.startSubSection("Analysis Summary", "");
         indexReport.startDiv("margin-top: -10px");
         summarize(indexReport, analysisResults);
         indexReport.endDiv();
         indexReport.endSection();
 
-        ContributorsAnalysisResults contributorsAnalysisResults = analysisResults.getContributorsAnalysisResults();
         if (contributorsAnalysisResults.getCommitsCount() > 0) {
             List<ContributionTimeSlot> contributorsPerYear = contributorsAnalysisResults.getContributorsPerYear();
-            indexReport.startSection("Commits Trend " + "<a href='Commits.html'  title='metrics &amp; goals details' style='margin-left: 8px; vertical-align: top'>" + getDetailsIcon() + "</a>", "");
+            indexReport.startSubSection("Commits Trend " + "<a href='Commits.html'  title='metrics &amp; goals details' style='margin-left: 8px; vertical-align: top'>" + getDetailsIcon() + "</a>", "");
 
             indexReport.addParagraph("Latest commit date: " + contributorsAnalysisResults.getLatestCommitDate() + "",
                     "color: grey; font-size: 80%; margin-bottom: 2px;");
@@ -176,7 +206,7 @@ public class ReportFileExporter {
             indexReport.endSection();
         }
 
-        indexReport.startSection("Reports", "");
+        indexReport.startSubSection("Reports", "");
         for (String[] report : reportList) {
             addReportFragment(htmlExportFolder, indexReport, report);
         }
@@ -184,10 +214,49 @@ public class ReportFileExporter {
         String dateOfUpdate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
         String referenceDate = new SimpleDateFormat("yyyy-MM-dd").format(DateUtils.getCalendar().getTime());
         indexReport.addParagraph("generated by <a target='_blank' href='https://sokrates.dev/'>sokrates.dev</a> " +
-                " (<a href='../data/config.json' target='_blank'>configuration</a>)" +
-                " on " + dateOfUpdate + (!referenceDate.equals(dateOfUpdate) ? "; reference date: " + referenceDate : ""),
+                        " (<a href='../data/config.json' target='_blank'>configuration</a>)" +
+                        " on " + dateOfUpdate + (!referenceDate.equals(dateOfUpdate) ? "; reference date: " + referenceDate : ""),
                 "color: grey; font-size: 80%; margin-left: 10px; margin-bottom: 30px");
         export(htmlExportFolder, indexReport, "index.html", analysisResults.getCodeConfiguration().getAnalysis().getCustomHtmlReportHeaderFragment());
+    }
+
+    private static void addInfoBlockWithColor(RichTextReport report, String mainValue, String subtitle, String extra, String color, String tooltip) {
+        String style = "border-radius: 12px;";
+
+        style += "margin: 12px 12px 12px 0px;";
+        style += "display: inline-block; width: 130px; height: 93px;";
+        style += "background-color: " + color + "; text-align: center; vertical-align: middle; margin-bottom: 36px;";
+
+        report.startDiv(style, tooltip);
+        String specialColor = mainValue.equals("<b>0</b>") ? " color: grey;" : "";
+        report.addHtmlContent("<div style='font-size: 40px; margin-top: 10px;" + specialColor + "'>" + mainValue + "</div>");
+        report.addHtmlContent("<div style='color: #434343; font-size: 12px;" + specialColor + "'>" + subtitle + "</div>");
+        report.addHtmlContent("<div style='color: #434343; font-size: 11px;color: grey'>" + extra + "</div>");
+        report.endDiv();
+    }
+
+    private static void addIconsMainCode(CodeAnalysisResults analysisResults, StringBuilder summary) {
+        List<NumericMetric> extensions = analysisResults.getMainAspectAnalysisResults().getLinesOfCodePerExtension();
+        summary.append("<div style='margin-bottom: 20px;'>");
+        Set<String> alreadyAddedImage = new HashSet<>();
+        extensions.forEach(ext -> {
+            String lang = ext.getName().toUpperCase().replace("*.", "").trim();
+            String image = DataImageUtils.getLangDataImage(lang);
+            if (image == null || !alreadyAddedImage.contains(image)) {
+                int loc = ext.getValue().intValue();
+                int fontSize = loc >= 1000 ? 20 : 13;
+                int width = loc >= 1000 ? 42 : 30;
+                summary.append("<div style='width: " + width + "px; text-align: center; display: inline-block; border-radius: 5px; background-color: #f0f0f0; padding: 8px; margin-right: 4px;'>"
+                        + DataImageUtils.getLangDataImageDiv30(lang)
+                        + "<div style='margin-top: 3px; font-size: " + fontSize + "px'>" + FormattingUtils.getSmallTextForNumber(loc) + "</div>"
+                        + "<div style='font-size: 10px; white-space: no-wrap; overflow: hidden; color: grey;'>" + lang.toLowerCase() + "</div>"
+                        + "</div>");
+                if (image != null) {
+                    alreadyAddedImage.add(image);
+                }
+            }
+        });
+        summary.append("</div>");
     }
 
     private static String getDetailsIcon() {
@@ -201,6 +270,7 @@ public class ReportFileExporter {
         }
         indexReport.endSection();
     }
+
 
     private static void summarize(RichTextReport indexReport, CodeAnalysisResults analysisResults) {
         new SummaryUtils().summarize(analysisResults, indexReport);
