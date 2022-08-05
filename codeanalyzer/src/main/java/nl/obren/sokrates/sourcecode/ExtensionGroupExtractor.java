@@ -101,7 +101,7 @@ public class ExtensionGroupExtractor {
             "uno", "uc", "ur", "urs", "bas", "frm", "frx", "vbs", "vhdl", "vhd", "vhf", "vhi", "vho", "vhs",
             "vht", "vhw", "vala", "vapi", "veo", "snip", "snippet", "snippets", "vim", "vmb", "gvimrc", "nvimrc",
             "vimrc", "vb", "vbhtml", "volt", "vue", "mtl", "obj", "owl", "wast", "wat", "webidl", "vtt", "wgetrc",
-            "reg", "wlk", "xbm", "xpm", "x10", "xc", "XCompose", "xml", "adml", "admx", "ant", "axml", "builds",
+            "reg", "wlk", "xbm", "xpm", "x10", "xc", "XCompose", "xml", "dtsx", "adml", "admx", "ant", "axml", "builds",
             "ccproj", "ccxml", "clixml", "cscfg", "csdef", "csl", "csproj", "ct", "depproj", "dita", "ditamap",
             "ditaval", "dllconfig", "dotsettings", "filters", "fsproj", "fxml", "glade", "gmx", "grxml", "iml", "ivy",
             "jelly", "jsproj", "kml", "launch", "mdpolicy", "mjml", "mxml", "natvis", "ndproj", "nproj", "nuspec",

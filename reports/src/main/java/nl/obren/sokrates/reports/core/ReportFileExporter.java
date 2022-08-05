@@ -129,7 +129,8 @@ public class ReportFileExporter {
             int oldPerc = (int) analysisResults.getFilesHistoryAnalysisResults().getOverallFileFirstModifiedDistribution().getVeryHighRiskPercentage();
             addInfoBlockWithColor(indexReport, FormattingUtils.getSmallTextForNumber(mainLoc - notChanged), "main code touched", "1 year (" + FormattingUtils.getFormattedPercentage(100 - notChangedPerc) + "%)", MAIN_LOC_FRESH_COLOR, "");
             addInfoBlockWithColor(indexReport, FormattingUtils.getSmallTextForNumber(mainLoc - old), "new main code", "1 year (" + FormattingUtils.getFormattedPercentage(100 - oldPerc) + "%)", MAIN_LOC_FRESH_COLOR, "");
-            addInfoBlockWithColor(indexReport, FormattingUtils.getSmallTextForNumber(analysisResults.getContributorsAnalysisResults().getCommitsCount30Days()), "recent contributors", "past 30 days", PEOPLE_COLOR, "");
+            int recentContributors = (int) analysisResults.getContributorsAnalysisResults().getContributors().stream().filter(c -> c.getCommitsCount30Days() > 0).count();
+            addInfoBlockWithColor(indexReport, FormattingUtils.getSmallTextForNumber(recentContributors), "recent contributors", "past 30 days", PEOPLE_COLOR, "");
         }
         StringBuilder icons = new StringBuilder("");
         addIconsMainCode(analysisResults, icons);

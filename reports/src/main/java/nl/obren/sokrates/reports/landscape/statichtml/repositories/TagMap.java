@@ -28,7 +28,7 @@ public class TagMap {
     public void updateTagMap(List<RepositoryAnalysisResults> repositories) {
         int filesCount = repositories.stream().mapToInt(r -> r.getFiles().size()).sum();
 
-        LOG.info("Searching for tag patterns in " + FormattingUtils.formatCount(filesCount) + " files...");
+        LOG.info("Searching for tag patterns in " + FormattingUtils.formatCount(filesCount) + " file paths...");
 
         repositories.forEach(repository -> {
             List<NumericMetric> linesOfCodePerExtension = LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, repository.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension());

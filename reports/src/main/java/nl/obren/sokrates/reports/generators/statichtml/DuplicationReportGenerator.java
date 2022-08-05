@@ -246,7 +246,7 @@ public class DuplicationReportGenerator {
 
         List<DuplicationInstance> instances = duplicationDependenciesHelper.getInstances();
 
-        ProcessingStopwatch.end(monitoringPrefix + "/rendering");
+        ProcessingStopwatch.start(monitoringPrefix + "/rendering");
         if (componentDependencies.size() > 0) {
             GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
             graphvizDependencyRenderer.setDefaultNodeFillColor("deepskyblue2");

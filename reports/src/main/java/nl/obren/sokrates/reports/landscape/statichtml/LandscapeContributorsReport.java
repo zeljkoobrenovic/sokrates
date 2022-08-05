@@ -80,7 +80,7 @@ public class LandscapeContributorsReport {
         String link = this.getContributorUrl(contributor.getContributor().getEmail());
         String contributorBody = avatarHtml + StringEscapeUtils.escapeHtml4(contributor.getContributor().getEmail());
         report.addTableCellWithTitle("<a target='_blank' style='color: " + color + "; text-decoration: none' href='" + link + "'>" + contributorBody + "</a>",
-                "vertical-align: middle;", "" + counter[0]);
+                "vertical-align: middle; white-space: nowrap; overflow: hidden;", "" + counter[0]);
         int commitsCountAllTime = contributor.getContributor().getCommitsCount();
         int commitsCount30Days = contributor.getContributor().getCommitsCount30Days();
         if (recent) {

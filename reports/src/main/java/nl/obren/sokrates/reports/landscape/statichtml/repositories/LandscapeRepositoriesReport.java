@@ -454,7 +454,7 @@ public class LandscapeRepositoriesReport {
             String logoLink = repositoryAnalysis.getAnalysisResults().getMetadata().getLogoLink();
             report.addTableCell(getImageWithLink(repositoryAnalysis, logoLink), "text-align: center");
             report.addTableCell("<a href='" + this.getRepositoryReportUrl(repositoryAnalysis) + "' target='_blank'>"
-                    + "<div>" + name + "</div></a>", "vertical-align: middle; min-width: 400px; max-width: 400px");
+                    + "<div>" + name + "</div></a>", "overflow: hidden; white-space: nowrap; vertical-align: middle; min-width: 400px; max-width: 400px");
             ContributorsAnalysisResults contributorsAnalysisResults = repositoryAnalysis.getAnalysisResults().getContributorsAnalysisResults();
             report.addTableCell(contributorsAnalysisResults.getCommitsCount30Days() + "", "text-align: center");
             List<Contributor> contributors = contributorsAnalysisResults.getContributors();
@@ -548,7 +548,7 @@ public class LandscapeRepositoriesReport {
             String commits90DaysText = commits90Days > 0 ? ", <b>" + FormattingUtils.formatCount(commits90Days) + "</b> commits (90d)" : "";
             report.addTableCell("<a href='" + this.getRepositoryReportUrl(repositoryAnalysis) + "' target='_blank'>"
                             + "<div>" + name + "</div><div style='color: black; font-size: 80%'><b>" + locText + "</b> LOC (main)" + commits90DaysText + "</div></a>",
-                    "vertical-align: middle; max-width: 400px");
+                    "overflow: hidden; white-space: nowrap; vertical-align: middle; max-width: 400px");
 
             List<NumericMetric> linesOfCodePerExtension = main.getLinesOfCodePerExtension();
             StringBuilder locSummary = new StringBuilder();
@@ -632,7 +632,7 @@ public class LandscapeRepositoriesReport {
             report.addTableCell(getImageWithLink(repositoryAnalysis, logoLink), "text-align: center");
 
             report.addTableCell("<a href='" + this.getRepositoryReportUrl(repositoryAnalysis) + "' target='_blank'>"
-                    + "<div>" + name + "</div></a>", "vertical-align: middle; min-width: 400px; max-width: 400px");
+                    + "<div>" + name + "</div></a>", "overflow: hidden; white-space: nowrap; vertical-align: middle; min-width: 400px; max-width: 400px");
 
             ContributorsAnalysisResults contributorsAnalysisResults = repositoryAnalysisAnalysisResults.getContributorsAnalysisResults();
             FilesHistoryAnalysisResults filesHistoryAnalysisResults = repositoryAnalysisAnalysisResults.getFilesHistoryAnalysisResults();
@@ -738,7 +738,7 @@ public class LandscapeRepositoriesReport {
                 : (DateUtils.isCommittedLessThanDaysAgo(latestCommitDate, 180) ? "color:#b0b0b0" : "color:#c3c3c3")));
         report.addTableCell(getImageWithLink(repositoryAnalysis, logoLink), "text-align: center");
         report.addTableCell("<a href='" + this.getRepositoryReportUrl(repositoryAnalysis) + "' target='_blank'>"
-                + "<div>" + metadata.getName() + "</div></a>", "vertical-align: middle; min-width: 400px; max-width: 400px");
+                + "<div>" + metadata.getName() + "</div></a>", "overflow: hidden; white-space: nowrap; vertical-align: middle; min-width: 400px; max-width: 400px");
         AspectAnalysisResults main = analysisResults.getMainAspectAnalysisResults();
         AspectAnalysisResults test = analysisResults.getTestAspectAnalysisResults();
         AspectAnalysisResults generated = analysisResults.getGeneratedAspectAnalysisResults();
