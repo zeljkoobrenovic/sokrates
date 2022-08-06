@@ -87,6 +87,7 @@ public class ReportConstants {
             "<html lang=\"en\">\n" +
             "<head>\n" +
             "    <meta charset=\"utf-8\">\n" +
+            "    <title></title>\n" +
             "    <style type=\"text/css\" media=\"all\">\n" +
             "        body {\n" +
             "            font-family: Roboto, Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;\n" +

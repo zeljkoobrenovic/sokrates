@@ -48,7 +48,8 @@ public class DuplicationReportGenerator {
         report.startDiv("width: 100%; overflow-x: auto");
         report.startScrollingDiv();
         report.addHtmlContent("<table style='width: 80%'>\n");
-        report.addHtmlContent("<th>Size</th><th>#</th><th>Folders</th><th>Files</th><th>Lines</th><th>Code</th>");
+        boolean saveCodeFragments = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveCodeFragments();
+        report.addHtmlContent("<th>Size</th><th>#</th><th>Folders</th><th>Files</th><th>Lines</th>" + (saveCodeFragments ? "<th>Code</th>" : ""));
         int count[] = {0};
         duplicationInstances.stream().limit(MAX_TABLE_ROWS_COUNT).forEach(instance -> {
             count[0]++;
@@ -56,7 +57,6 @@ public class DuplicationReportGenerator {
 
             SourceFile firstSourceFile = instance.getDuplicatedFileBlocks().get(0).getSourceFile();
             String extension = firstSourceFile.getExtension();
-            String url = "../src/fragments/" + fragmentType + "/" + fragmentType + "_" + count[0] + "." + extension;
 
             report.addHtmlContent("<td>" + instance.getBlockSize() + "</td>");
             report.addHtmlContent("<td>x&nbsp;" + instance.getDuplicatedFileBlocks().size() + "</td>");
@@ -70,8 +70,10 @@ public class DuplicationReportGenerator {
                     + formatDisplayStringSimple(instance.getFilesDisplayString(cacheSourceFiles))
                     + "</div></div></td>");
             report.addHtmlContent("<td>" + formatDisplayString(instance.getLinesDisplayString()) + "</td>");
-            report.addHtmlContent("<td><a target='_blank' href='" + url + "'>view</a></td>");
-
+            if (saveCodeFragments) {
+                String url = "../src/fragments/" + fragmentType + "/" + fragmentType + "_" + count[0] + "." + extension;
+                report.addHtmlContent("<td><a target='_blank' href='" + url + "'>view</a></td>");
+            }
             report.addHtmlContent("</tr>\n");
         });
         report.addHtmlContent("</table>\n");

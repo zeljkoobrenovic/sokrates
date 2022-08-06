@@ -27,6 +27,7 @@ public class ConditionalComplexityReportGenerator {
 
     public void addConditionalComplexityToReport(RichTextReport report) {
         boolean cacheFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
+        boolean saveCodeFragments = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveCodeFragments();
         UnitsAnalysisResults unitsAnalysisResults = codeAnalysisResults.getUnitsAnalysisResults();
         RiskDistributionStats unitMcCabeDistribution = unitsAnalysisResults.getConditionalComplexityRiskDistribution();
         report.addParagraph("The distribution of complexity of units (measured with McCabe index).", "margin-top: 12px; color: grey");
@@ -109,7 +110,7 @@ public class ConditionalComplexityReportGenerator {
         List<UnitInfo> mostComplexUnits = unitsAnalysisResults.getMostComplexUnits();
         report.startSection("Most Complex Units", "Top " + mostComplexUnits.size() + " most complex units");
         report.startScrollingDiv();
-        report.addHtmlContent(UtilsReportUtils.getUnitsTable(mostComplexUnits, "most_complex_unit", cacheFiles).toString());
+        report.addHtmlContent(UtilsReportUtils.getUnitsTable(mostComplexUnits, "most_complex_unit", cacheFiles, saveCodeFragments).toString());
         report.endDiv();
         report.endSection();
     }

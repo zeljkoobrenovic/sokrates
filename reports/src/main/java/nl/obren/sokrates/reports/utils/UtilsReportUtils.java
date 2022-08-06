@@ -12,7 +12,7 @@ import java.util.List;
 
 public class UtilsReportUtils {
 
-    public static String getUnitsTable(List<UnitInfo> units, String fragmentType, boolean cacheFiles) {
+    public static String getUnitsTable(List<UnitInfo> units, String fragmentType, boolean cacheFiles, boolean saveCodeFragments) {
         StringBuilder table = new StringBuilder();
 
         table.append("<div style='width: 100%; overflow-x: scroll'>\n");
@@ -29,16 +29,18 @@ public class UtilsReportUtils {
                     + unit.getSourceFile().getRelativePath()
                     + "</a>"
                     : unit.getSourceFile().getRelativePath();
-            table.append("<td>" +
-                    "<div><div style='display: inline-block; vertical-align: top; margin-top: 3px; margin-right: 4px;'>" +
-                    DataImageUtils.getLangDataImageDiv30(ExtensionGroupExtractor.getExtension(unit.getSourceFile().getFile().getName())) +
-                    "</div><div style='display: inline-block;'><b>" +
-                    "<a target='_blank'" +
+            String unitNameFragment = saveCodeFragments ? ("<a target='_blank'" +
                     "href='../src/fragments/" + fragmentType + "/" + fragmentType + "_"
                     + index[0] + "."
                     + unit.getSourceFile().getExtension()
                     + ".html'>"
-                    + unit.getShortName() + "</a></b><br/>in "
+                    + unit.getShortName() + "</a>")
+                    : (unit.getShortName());
+            table.append("<td>" +
+                    "<div><div style='display: inline-block; vertical-align: top; margin-top: 3px; margin-right: 4px;'>" +
+                    DataImageUtils.getLangDataImageDiv30(ExtensionGroupExtractor.getExtension(unit.getSourceFile().getFile().getName())) +
+                    "</div><div style='display: inline-block;'><b>" +
+                    unitNameFragment + "</b><br/>in "
                     + fileLink
                     + "</div></div></td>\n");
             table.append("<td>" + unit.getLinesOfCode() + "</td>\n");

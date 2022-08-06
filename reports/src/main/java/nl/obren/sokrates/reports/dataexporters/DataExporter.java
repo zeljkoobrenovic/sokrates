@@ -550,18 +550,15 @@ public class DataExporter {
             saveAspectJsonFiles(codeConfiguration.getOther(), "other", referencedFiles);
         }
 
-        UnitsAnalysisResults unitsAnalysisResults = analysisResults.getUnitsAnalysisResults();
-        saveUnitFragmentFiles(unitsAnalysisResults.getLongestUnits(), "longest_unit");
-        saveUnitFragmentFiles(unitsAnalysisResults.getMostComplexUnits(), "most_complex_unit");
+        if (codeConfiguration.getAnalysis().isSaveCodeFragments()) {
+            UnitsAnalysisResults unitsAnalysisResults = analysisResults.getUnitsAnalysisResults();
+            saveUnitFragmentFiles(unitsAnalysisResults.getLongestUnits(), "longest_unit");
+            saveUnitFragmentFiles(unitsAnalysisResults.getMostComplexUnits(), "most_complex_unit");
 
-        if (codeConfiguration.getAnalysis().isSaveSourceFiles()) {
-            //    saveAllUnitFragmentFiles(unitsAnalysisResults.getAllUnits(), "all_units");
+            DuplicationAnalysisResults duplicationAnalysisResults = analysisResults.getDuplicationAnalysisResults();
+            saveDuplicateFragmentFiles(duplicationAnalysisResults.getLongestDuplicates(), "longest_duplicates");
+            saveDuplicateFragmentFiles(duplicationAnalysisResults.getUnitDuplicates(), "unit_duplicates");
         }
-
-        DuplicationAnalysisResults duplicationAnalysisResults = analysisResults.getDuplicationAnalysisResults();
-        saveDuplicateFragmentFiles(duplicationAnalysisResults.getLongestDuplicates(), "longest_duplicates");
-        saveDuplicateFragmentFiles(duplicationAnalysisResults.getUnitDuplicates(), "unit_duplicates");
-        // saveDuplicateFragmentFiles(duplicationAnalysisResults.getMostFrequentDuplicates(), "most_frequent_duplicates");
     }
 
     private Set<SourceFile> getReferencedFiles() {
@@ -737,6 +734,7 @@ public class DataExporter {
 
         return builder.toString();
     }
+
     private String getFilesWithoutHistoryAsTxt(List<SourceFile> sourceFiles) {
         StringBuilder builder = new StringBuilder();
 
@@ -854,30 +852,6 @@ public class DataExporter {
         fragmentsFolder.mkdirs();
         return fragmentsFolder;
     }
-
-    private void saveAllUnitFragmentFiles(List<UnitInfo> units, String fragmentType) throws IOException {
-        File fragmentsFolder = recreateFolder("fragments/" + fragmentType);
-
-        detailedInfo(" - saving source code cache for the " + fragmentType + "fragments");
-        int count[] = {0};
-        units.forEach(unit -> {
-            count[0]++;
-            try {
-                SourceFile sourceFile = unit.getSourceFile();
-                File fragmentsSubFolder = new File(fragmentsFolder, sourceFile.getRelativePath());
-                fragmentsSubFolder.mkdirs();
-                String fileName = fragmentType + "_" + count[0] + "." + sourceFile.getExtension();
-                File file = new File(fragmentsSubFolder, fileName);
-                String body = sourceFile.getRelativePath() + " ["
-                        + unit.getStartLine() + ":" + unit.getEndLine() + "]:\n\n"
-                        + unit.getBody();
-                FileUtils.write(file, body, UTF_8);
-            } catch (IOException e) {
-                LOG.warn(e);
-            }
-        });
-    }
-
 
     private void saveAspectJsonFiles(NamedSourceCodeAspect aspect, String aspectName, Set<SourceFile> referencedFiles) throws IOException {
         File filesListFile = new File(dataFolder, aspectName + "FilesPaths.json");
