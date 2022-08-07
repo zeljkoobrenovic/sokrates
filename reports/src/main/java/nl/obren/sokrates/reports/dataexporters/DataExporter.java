@@ -63,7 +63,7 @@ public class DataExporter {
     public static final String DATA_FOLDER_NAME = "data";
     public static final String HISTORY_FOLDER_NAME = "history";
     public static final String SEPARATOR = "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n";
-    public static final String FOUND_TEXT_PER_FILE_SIFFIX = "_found_text_per_file";
+    public static final String FOUND_TEXT_PER_FILE_SUFFIX = "_found_text_per_file";
     public static final String FOUND_TEXT_SUFFIX = "_found_text";
     public static final int MAX_EXPORT_LIST_SIZE = 10000;
     private static final Log LOG = LogFactory.getLog(DataExporter.class);
@@ -529,7 +529,7 @@ public class DataExporter {
         });
 
         try {
-            String fileName = DataExportUtils.getAspectFileListFileName(aspectAnalysisResults.getAspect(), prefix, FOUND_TEXT_PER_FILE_SIFFIX);
+            String fileName = DataExportUtils.getAspectFileListFileName(aspectAnalysisResults.getAspect(), prefix, FOUND_TEXT_PER_FILE_SUFFIX);
             FileUtils.write(new File(textDataFolder, fileName), content.toString(), UTF_8);
         } catch (IOException e) {
             e.printStackTrace();

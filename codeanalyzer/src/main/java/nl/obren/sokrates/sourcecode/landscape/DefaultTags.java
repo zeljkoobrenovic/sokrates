@@ -34,6 +34,7 @@ public class DefaultTags {
         buildTags.getRepositoryTags().add(newPathPatternTagInstance("nuget", "general/nuget", Arrays.asList("(|.*/)[.]nuget/.*", "(|.*/)[.]nuget[.]config")));
         buildTags.getRepositoryTags().add(newPathPatternTagInstance("aws codebuild", "aws/AWS-CodeBuild", Arrays.asList("(|.*/)buildspec[.]yml")));
         buildTags.getRepositoryTags().add(newPathPatternTagInstance("renovate", "general/renovate", Arrays.asList("(|.*/)renovate[.]json5?")));
+        buildTags.getRepositoryTags().add(newPathPatternTagInstance("dependabot", "general/dependabot", Arrays.asList("(|.*/)dependabot[.]ya?ml")));
         buildTags.getRepositoryTags().add(newPathPatternTagInstance("gemfile", "lang/ruby", Arrays.asList("(|.*/)Gemfile")));
         buildTags.getRepositoryTags().add(newPathPatternTagInstance("podfile", "general/cocoa-pods", Arrays.asList("(|.*/)Podfile")));
         buildTags.getRepositoryTags().add(newPathPatternTagInstance("make", "general/gnu", Arrays.asList("(|.*/)Makefile")));

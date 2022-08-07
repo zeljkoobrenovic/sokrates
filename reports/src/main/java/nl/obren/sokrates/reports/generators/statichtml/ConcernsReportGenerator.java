@@ -59,7 +59,7 @@ public class ConcernsReportGenerator {
                         int concernLoc = concern.getLinesOfCode();
                         double relativeConcernSizeInPerc = 100.0 * concernLoc / mainLoc;
                         String fileListPath = concern.getAspect().getFileSystemFriendlyName(DataExportUtils.getConcernFilePrefix(group));
-                        String svg = getOverviewCodePercentageSvg(relativeConcernSizeInPerc,
+                        String svg = getOverviewCodePercentageSvg(concern, relativeConcernSizeInPerc,
                                 concern.getFilesCount(), concernLoc, 400, 20, fileListPath, isDerivedConcern(concern.getName()));
                         report.startDiv("");
                         report.addContentInDiv(concern.getName());
@@ -165,7 +165,7 @@ public class ConcernsReportGenerator {
 
         report.startSubSection(renderer.getTitle(), "");
         String fileListPath = aspectAnalysisResults.getAspect().getFileSystemFriendlyName(DataExportUtils.getConcernFilePrefix(key));
-        report.addContentInDiv(getOverviewCodePercentageSvg(relativeSizeInPerc, numberOfFiles, linesOfCode,
+        report.addContentInDiv(getOverviewCodePercentageSvg(aspectAnalysisResults, relativeSizeInPerc, numberOfFiles, linesOfCode,
                 200, 20, fileListPath, isDerivedConcern(name)), fileListPath);
 
         if (name.contains(" - ") && name.contains(" AND ")) {
@@ -233,13 +233,17 @@ public class ConcernsReportGenerator {
         return chart.getPercentageSvg(percentage, aspectName, displayText);
     }
 
-    private String getOverviewCodePercentageSvg(double percentage, int numberOfFiles, int linesOfCode, int maxSize, int barHeight, String fileListPath, boolean derivedConcern) {
+    private String getOverviewCodePercentageSvg(AspectAnalysisResults concern, double percentage, int numberOfFiles, int linesOfCode, int maxSize, int barHeight, String fileListPath, boolean derivedConcern) {
         String filesFragment = numberOfFiles + (numberOfFiles == 1 ? " file " : " files");
         if (StringUtils.isNotBlank(fileListPath)) {
             filesFragment = "<u><a href='../data/text/aspect_" + fileListPath + ".txt'>" + filesFragment + "</a></u>";
             if (!derivedConcern) {
-                filesFragment += " | <u><a href='../data/text/aspect_" + fileListPath + "_found_text.txt'>found text</a></u>";
-                filesFragment += " | <u><a href='../data/text/aspect_" + fileListPath + "_found_text_per_file.txt'>found text per file</a></u>";
+                if (concern.getFoundFiles().size() > 0) {
+                    filesFragment += " | <u><a href='../data/text/aspect_" + fileListPath + "_found_text_per_file.txt'>found text per file</a></u>";
+                }
+                if (concern.getFoundTextList().size() > 0) {
+                    filesFragment += " | <u><a href='../data/text/aspect_" + fileListPath + "_found_text_per_file.txt'>found text per file</a></u>";
+                }
             }
         }
         String displayText = FormattingUtils.formatCount(linesOfCode) + " LOC ("

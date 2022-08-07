@@ -46,7 +46,8 @@ public class ReportFileExporter {
         File reportFile = new File(folder, reportFileName);
         try {
             PrintWriter out = new PrintWriter(reportFile);
-            String reportsHtmlHeader = ReportConstants.REPORTS_HTML_HEADER.replace("<title></title>", "<title>" + report.getDisplayName() + "</title>");
+            String reportsHtmlHeader = ReportConstants.REPORTS_HTML_HEADER.replace("<title></title>", "<title>" +
+                    report.getDisplayName().replaceAll("<.*?>", "").replaceAll("\\[.*?\\]", "") + "</title>");
             reportsHtmlHeader = reportsHtmlHeader.replace("<!-- CUSTOM HEADER FRAGMENT -->", customHeaderFragment);
             if (report.isEmbedded()) {
                 reportsHtmlHeader = reportsHtmlHeader.replace(" ${margin-left}", "0");

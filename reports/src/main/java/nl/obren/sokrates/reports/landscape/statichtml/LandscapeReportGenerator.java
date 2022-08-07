@@ -205,7 +205,6 @@ public class LandscapeReportGenerator {
         if (configuration.isShowExtensionsOnFirstTab()) {
             addExtensions();
         }
-        addIFrames(configuration.getiFramesAtStart());
         addIFrames(configuration.getiFrames());
         ProcessingStopwatch.end("reporting/overview");
         landscapeReport.endTabContentSection();
@@ -984,6 +983,9 @@ public class LandscapeReportGenerator {
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
+
+        addIFrames(landscapeAnalysisResults.getConfiguration().getiFramesAtStart());
+
         landscapeReport.startSubSection("Tags (" + customTagsMap.tagsCount() + ")", "");
         new LandscapeRepositoriesTagsLine(tagGroups, customTagsMap).addTagsLine(landscapeReport);
         landscapeReport.endSection();
