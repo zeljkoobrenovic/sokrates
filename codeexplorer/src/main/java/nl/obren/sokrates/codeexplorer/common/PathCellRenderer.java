@@ -52,6 +52,6 @@ public class PathCellRenderer<T> implements Callback<TableColumn<T, String>, Tab
     }
 
     String getPathPrefix(File file) {
-        return file.getParent() != null ? file.getParent() + File.separator : "";
+        return file.getParent() != null ? file.getParent() + "/" : "";
     }
 }

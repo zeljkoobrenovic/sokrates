@@ -69,8 +69,8 @@ public class SourceCodeAspectUtils {
             }
             aspectName = StringUtils.defaultIfBlank(aspectName, "ROOT");
             NamedSourceCodeAspect aspect = new NamedSourceCodeAspect(aspectName);
-            String pathPattern = srcRoot + File.separator + path + File.separator + ".*";
-            pathPattern = pathPattern.replace(File.separator + File.separator, File.separator);
+            String pathPattern = srcRoot + "/" + path + "/" + ".*";
+            pathPattern = pathPattern.replace("//", "/");
             aspect.getSourceFileFilters().add(new SourceFileFilter(pathPattern, ""));
 
             paths.forEach(otherPath -> {
@@ -88,8 +88,7 @@ public class SourceCodeAspectUtils {
     private static void addExclusiveFilterIfNeeded(String path, String otherPath, String srcRoot, NamedSourceCodeAspect
             aspect) {
         if (otherPath.startsWith(path)) {
-            String otherPathPattern = srcRoot + File.separator + otherPath + File.separator + ".*";
-            otherPathPattern = otherPathPattern.replace(File.separator + File.separator, File.separator);
+            String otherPathPattern = srcRoot + "/" + otherPath + "/" + ".*";
             SourceFileFilter otherSourceFileFilter = new SourceFileFilter(otherPathPattern, "");
             otherSourceFileFilter.setException(true);
             aspect.getSourceFileFilters().add(otherSourceFileFilter);
@@ -113,11 +112,11 @@ public class SourceCodeAspectUtils {
         String[] subFolders = relativePath.split("/");
         StringBuilder aspectPath = new StringBuilder();
         for (int i = 0; i < Math.min(depth, subFolders.length - 1); i++) {
-            aspectPath.append(subFolders[i] + File.separator);
+            aspectPath.append(subFolders[i] + "/");
         }
         String componentName = aspectPath.toString().trim();
         if (componentName.length() > 1) {
-            componentName = componentName.substring(0, componentName.lastIndexOf(File.separator));
+            componentName = componentName.substring(0, componentName.lastIndexOf("/"));
         }
         return componentName;
     }
