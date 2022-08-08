@@ -20,12 +20,11 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
-import static java.nio.file.FileSystems.getDefault;
 import static junit.framework.TestCase.assertEquals;
 
 public class SearchResultDependenciesTest {
     private SearchResult searchResult;
-
+    private String SEPARATOR = "/";
     @BeforeEach
     public void createSearchResults() {
         SourceFile sourceFile1 = new SourceFile(new File("/root/path/name1.ext"));
@@ -58,8 +57,8 @@ public class SearchResultDependenciesTest {
 
         assertEquals(dependencyList.size(), 2);
         assertEquals(componentDependencies.size(), 2);
-        assertEquals(dependencyList.get(0).getDependencyString(), "path" + getDefault().getSeparator() + "name2.ext -> START MIDNOISEDLE END");
-        assertEquals(dependencyList.get(1).getDependencyString(), "path" + getDefault().getSeparator() + "name1.ext -> start midNOISEdle end");
+        assertEquals(dependencyList.get(0).getDependencyString(), "path" + SEPARATOR + "name2.ext -> START MIDNOISEDLE END");
+        assertEquals(dependencyList.get(1).getDependencyString(), "path" + SEPARATOR + "name1.ext -> start midNOISEdle end");
         assertEquals(componentDependencies.get(0).getDependencyString(), "ComponentB -> START MIDNOISEDLE END");
         assertEquals(componentDependencies.get(1).getDependencyString(), "ComponentA -> start midNOISEdle end");
     }
@@ -75,8 +74,8 @@ public class SearchResultDependenciesTest {
 
         assertEquals(dependencyList.size(), 2);
         assertEquals(componentDependencies.size(), 2);
-        assertEquals(dependencyList.get(1).getDependencyString(), "path" + getDefault().getSeparator() + "name2.ext -> START MIDNOISEDLE END");
-        assertEquals(dependencyList.get(0).getDependencyString(), "path" + getDefault().getSeparator() + "name1.ext -> start midNOISEdle end");
+        assertEquals(dependencyList.get(1).getDependencyString(), "path" + SEPARATOR + "name2.ext -> START MIDNOISEDLE END");
+        assertEquals(dependencyList.get(0).getDependencyString(), "path" + SEPARATOR + "name1.ext -> start midNOISEdle end");
         assertEquals(componentDependencies.get(1).getDependencyString(), "ComponentB -> START MIDNOISEDLE END");
         assertEquals(componentDependencies.get(0).getDependencyString(), "ComponentA -> start midNOISEdle end");
     }
@@ -97,8 +96,8 @@ public class SearchResultDependenciesTest {
         List<ComponentDependency> componentDependencies = searchDependencies.getComponentDependencies(dependencyList, "");
         assertEquals(dependencyList.size(), 2);
         assertEquals(componentDependencies.size(), 2);
-        assertEquals(dependencyList.get(0).getDependencyString(), "path" + getDefault().getSeparator() + "name2.ext -> MIDDLE");
-        assertEquals(dependencyList.get(1).getDependencyString(), "path" + getDefault().getSeparator() + "name1.ext -> middle");
+        assertEquals(dependencyList.get(0).getDependencyString(), "path" + SEPARATOR + "name2.ext -> MIDDLE");
+        assertEquals(dependencyList.get(1).getDependencyString(), "path" + SEPARATOR + "name1.ext -> middle");
         assertEquals(componentDependencies.get(0).getDependencyString(), "name2.ext -> MIDDLE");
         assertEquals(componentDependencies.get(1).getDependencyString(), "name1.ext -> middle");
     }
@@ -119,8 +118,8 @@ public class SearchResultDependenciesTest {
         List<ComponentDependency> componentDependencies = searchDependencies.getComponentDependencies(dependencyList, "");
         assertEquals(dependencyList.size(), 2);
         assertEquals(componentDependencies.size(), 2);
-        assertEquals(dependencyList.get(1).getDependencyString(), "path" + getDefault().getSeparator() + "name2.ext -> MIDDLE");
-        assertEquals(dependencyList.get(0).getDependencyString(), "path" + getDefault().getSeparator() + "name1.ext -> middle");
+        assertEquals(dependencyList.get(1).getDependencyString(), "path" + SEPARATOR + "name2.ext -> MIDDLE");
+        assertEquals(dependencyList.get(0).getDependencyString(), "path" + SEPARATOR + "name1.ext -> middle");
         assertEquals(componentDependencies.get(1).getDependencyString(), "name2.ext -> MIDDLE");
         assertEquals(componentDependencies.get(0).getDependencyString(), "name1.ext -> middle");
     }

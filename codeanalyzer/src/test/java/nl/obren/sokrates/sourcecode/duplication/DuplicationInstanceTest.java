@@ -16,19 +16,10 @@ import static org.junit.jupiter.api.condition.OS.*;
 
 public class DuplicationInstanceTest {
     @Test
-    @EnabledOnOs({LINUX, MAC})
+    @EnabledOnOs({LINUX, MAC, WINDOWS})
     public void testToStringOnLinuxOrMac() {
         DuplicationInstance instance = prepTestData();
         assertEquals(instance.toString(), "3 lines: 'folder/file.ext[10:16]a\n" +
-                "b\n" +
-                "c");
-    }
-
-    @Test
-    @EnabledOnOs(WINDOWS)
-    public void testToStringOnWindows() {
-        DuplicationInstance instance = prepTestData();
-        assertEquals(instance.toString(), "3 lines: 'folder\\file.ext[10:16]a\n" +
                 "b\n" +
                 "c");
     }
