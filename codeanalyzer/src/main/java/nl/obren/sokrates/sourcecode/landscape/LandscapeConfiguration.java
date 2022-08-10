@@ -77,6 +77,9 @@ public class LandscapeConfiguration {
     // The list of regex expressions used to exclude contributors from analysis. If empty, all contributors are included.
     private List<String> ignoreContributors = new ArrayList<>(Arrays.asList(".*\\[bot\\].*", ".*[-]bot[@].*"));
 
+    // The list of contributor tagging rules (regex expressions for email).
+    private List<ContributorTag> tagContributors = new ArrayList<>();
+
     // The list of extensions to ignore
     private List<String> ignoreExtensions = new ArrayList<>();
 
@@ -471,4 +474,11 @@ public class LandscapeConfiguration {
         this.iFramesRepositoriesAtStart = iFramesRepositoriesAtStart;
     }
 
+    public List<ContributorTag> getTagContributors() {
+        return tagContributors;
+    }
+
+    public void setTagContributors(List<ContributorTag> tagContributors) {
+        this.tagContributors = tagContributors;
+    }
 }

@@ -1,19 +1,19 @@
 package nl.obren.sokrates.reports.landscape.statichtml;
 
 import nl.obren.sokrates.common.utils.FormattingUtils;
+import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.core.SummaryUtils;
 import nl.obren.sokrates.reports.landscape.utils.ContributorPerExtensionHelper;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
+import nl.obren.sokrates.sourcecode.landscape.ContributorTag;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositoryInfo;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class LandscapeContributorsReport {
@@ -21,6 +21,10 @@ public class LandscapeContributorsReport {
     private RichTextReport report;
     private Set<String> contributorsLinkedFromTables;
     private boolean recent = false;
+
+    private Map<String, List<String>> contributorTagMap = new HashMap<>();
+    private Map<String, List<String>> tagMap = new HashMap<>();
+    private List<String> tags = new ArrayList<>();
 
     public LandscapeContributorsReport(LandscapeAnalysisResults landscapeAnalysisResults, RichTextReport report, Set<String> contributorsLinkedFromTables) {
         this.landscapeAnalysisResults = landscapeAnalysisResults;
@@ -37,7 +41,50 @@ public class LandscapeContributorsReport {
         return null;
     }
 
+    private void tag(List<ContributorRepositories> contributors) {
+        contributorTagMap.clear();
+        tagMap.clear();
+        tags.clear();
+
+        List<ContributorTag> tagRules = landscapeAnalysisResults.getConfiguration().getTagContributors();
+
+        tagRules.forEach(tagRule -> {
+            tagMap.put(tagRule.getName(), new ArrayList<>());
+        });
+
+        contributors.forEach(contributor -> {
+            String email = contributor.getContributor().getEmail();
+            contributorTagMap.put(email, new ArrayList<>());
+            tagRules.forEach(tagRule -> {
+                if (RegexUtils.matchesAnyPattern(email, tagRule.getPatterns())) {
+                    String tag = tagRule.getName();
+                    contributorTagMap.get(email).add(tag);
+                    tagMap.get(tag).add(email);
+                }
+            });
+        });
+
+
+        tagMap.keySet().stream().filter(key -> tagMap.get(key).size() > 0)
+                .sorted((a, b) -> tagMap.get(b).size() - tagMap.get(a).size())
+                .forEach(key -> {
+                    tags.add(key);
+                });
+    }
+
+
     public void saveContributorsTable(List<ContributorRepositories> contributors, int totalCommits, boolean recent) {
+        this.tag(contributors);
+
+        if (tags.size() > 0) {
+            report.startDiv("font-size: 80%; ");
+            report.addHtmlContent("tags: ");
+            tags.forEach(tag -> {
+                report.addContentInDiv(tag + " (" + tagMap.get(tag).size() + ")", "background-color: skyblue; border-radius: 10px; display: inline-block; padding: 5px 5px 7px 5px; margin: 5px;");
+            });
+            report.endDiv();
+        }
+
         this.recent = recent;
         report.startTable("width: 100%");
         if (recent) {
@@ -78,7 +125,12 @@ public class LandscapeContributorsReport {
                     "</div>";
         }
         String link = this.getContributorUrl(contributor.getContributor().getEmail());
-        String contributorBody = avatarHtml + StringEscapeUtils.escapeHtml4(contributor.getContributor().getEmail());
+        StringBuilder contributorBody = new StringBuilder(avatarHtml + StringEscapeUtils.escapeHtml4(contributor.getContributor().getEmail()));
+
+        contributorTagMap.get(contributor.getContributor().getEmail()).forEach(tag -> {
+            contributorBody.append("<div style='vertical-align: top; font-size: 60%; background-color: skyblue; border-radius: 7px; display: inline-block; padding: 3px 3px 5px 3px; margin: 5px;'>" + tag + "</tag>");
+        });
+
         report.addTableCellWithTitle("<a target='_blank' style='color: " + color + "; text-decoration: none' href='" + link + "'>" + contributorBody + "</a>",
                 "vertical-align: middle; white-space: nowrap; overflow: hidden;", "" + counter[0]);
         int commitsCountAllTime = contributor.getContributor().getCommitsCount();
@@ -142,6 +194,7 @@ public class LandscapeContributorsReport {
         report.addTableCell("<a target='_blank' href='" + link + "'  title='volume details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "text-align: center");
         report.endTableRow();
     }
+
     private String getDetailsIcon() {
         return SummaryUtils.getIconSvg("details", 22, 22);
     }
