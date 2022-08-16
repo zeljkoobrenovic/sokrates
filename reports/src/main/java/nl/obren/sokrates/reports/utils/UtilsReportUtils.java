@@ -36,7 +36,7 @@ public class UtilsReportUtils {
                     + ".html'>"
                     + unit.getShortName() + "</a>")
                     : (unit.getShortName());
-            table.append("<td>" +
+            table.append("<td style='white-space: nowrap; overflow: hidden'>" +
                     "<div><div style='display: inline-block; vertical-align: top; margin-top: 3px; margin-right: 4px;'>" +
                     DataImageUtils.getLangDataImageDiv30(ExtensionGroupExtractor.getExtension(unit.getSourceFile().getFile().getName())) +
                     "</div><div style='display: inline-block;'><b>" +
