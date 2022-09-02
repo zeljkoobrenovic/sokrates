@@ -13,6 +13,8 @@ For details and examples visit the website [sokrates.dev](https://sokrates.dev).
 * Java
 * Maven
 
+Note: [*There is an experimental docker support for the CLI*](docker/README.md).
+
 ### Build
 
 > mvn clean install
@@ -20,3 +22,4 @@ For details and examples visit the website [sokrates.dev](https://sokrates.dev).
 The build will create two jar files:
 * the command line interface in the cli/target folder
 * the interactive explorer in the codeexplorer/target folder
+
