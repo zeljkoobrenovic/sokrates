@@ -223,6 +223,16 @@ public class LandscapeReportGenerator {
             iframe.setScrolling(false);
             addIFrame(iframe);
             ProcessingStopwatch.end("reporting/sub-landscapes");
+
+            landscapeReport.startSubSection("Level 1 Sub-Landscape Dependencies", "");
+            landscapeReport.startSubSection("Via Recent Contributors (30 days)", "");
+            renderSubLandscapeDependenciesViaContributors();
+            landscapeReport.endSection();
+            landscapeReport.startSubSection("Via Same Repository Names", "");
+            renderSubLandscapeDependenciesViaRepoName();
+            landscapeReport.endSection();
+            landscapeReport.endSection();
+
             landscapeReport.endTabContentSection();
         }
 
@@ -255,12 +265,12 @@ public class LandscapeReportGenerator {
         ProcessingStopwatch.start("reporting/summary");
         LOG.info("Adding big contributors summary...");
         addBigContributorsSummary();
-        addIFrames(configuration.getiFramesContributorsAtStart());
-        LOG.info("Adding contributors...");
-        addContributors();
         if (recentContributorsCount > 0) {
             addContributorsPerExtension(true);
         }
+        addIFrames(configuration.getiFramesContributorsAtStart());
+        LOG.info("Adding contributors...");
+        addContributors();
         addContributorsPerExtension();
         LOG.info("Adding trends...");
         landscapeReport.addLevel2Header("Contribution Trends");
@@ -290,6 +300,44 @@ public class LandscapeReportGenerator {
                         " on " + generationDate,
                 "color: grey; font-size: 80%; margin: 10px");
         LOG.info("Done report generation.");
+    }
+
+    private void renderSubLandscapeDependenciesViaContributors() {
+        GraphvizDependencyRenderer renderer = new GraphvizDependencyRenderer();
+        renderer.setMaxNumberOfDependencies(100);
+        renderer.setDefaultNodeFillColor("deepskyblue2");
+        renderer.setOrientation("LR");
+        renderer.setTypeGraph();
+        List<ComponentDependency> dependencies = landscapeAnalysisResults.getSubLandscapeDependenciesViaRepositoriesWithSameContributors();
+        String graphvizContent = renderer.getGraphvizContent(new ArrayList<>(), landscapeAnalysisResults.getSubLandscapeIndirectDependenciesViaRepositoriesWithSameContributors());
+
+        landscapeReport.startShowMoreBlock("show sub-landscape/repository dependencies...");
+        landscapeReport.addGraphvizFigure("sub_landscape_dependencies_same_contributors", "Extension dependencies", graphvizContent);
+        addDownloadLinks("sub_landscape_dependencies_same_contributors");
+        landscapeReport.endShowMoreBlock();
+        landscapeReport.addLineBreak();
+        landscapeReport.addNewTabLink(" - show dependencies as 3D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/sub_landscape_dependencies_same_contributors_force_3d.html");
+        new Force3DGraphExporter().export3DForceGraph(dependencies, reportsFolder, "sub_landscape_dependencies_same_contributors");
+
+    }
+
+    private void renderSubLandscapeDependenciesViaRepoName() {
+        GraphvizDependencyRenderer renderer = new GraphvizDependencyRenderer();
+        renderer.setMaxNumberOfDependencies(100);
+        renderer.setDefaultNodeFillColor("deepskyblue2");
+        renderer.setOrientation("LR");
+        renderer.setTypeGraph();
+        List<ComponentDependency> dependencies = landscapeAnalysisResults.getSubLandscapeDependenciesViaRepositoriesWithSameName();
+        String graphvizContent = renderer.getGraphvizContent(new ArrayList<>(), landscapeAnalysisResults.getSubLandscapeIndirectDependenciesViaRepositoriesWithSameName());
+
+        landscapeReport.startShowMoreBlock("show sub-landscape/repository dependencies...");
+        landscapeReport.addGraphvizFigure("sub_landscape_dependencies_same_name_repos", "Extension dependencies", graphvizContent);
+        addDownloadLinks("sub_landscape_dependencies_same_name_repos");
+        landscapeReport.endShowMoreBlock();
+        landscapeReport.addLineBreak();
+        landscapeReport.addNewTabLink(" - show dependencies as 3D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/sub_landscape_dependencies_same_name_repos_force_3d.html");
+        new Force3DGraphExporter().export3DForceGraph(dependencies, reportsFolder, "sub_landscape_dependencies_same_name_repos");
+
     }
 
     private void getHiddenFilesTagGroup(List<RepositoryAnalysisResults> repositories, List<TagGroup> extensionTagGroups) {
@@ -955,6 +1003,9 @@ public class LandscapeReportGenerator {
     private void addExtensions() {
         List<NumericMetric> linesOfCodePerExtensionMain = LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getMainLinesOfCodePerExtension());
         addMainExtensions("Main", linesOfCodePerExtensionMain, true);
+        if (landscapeAnalysisResults.getRecentContributorsCount() > 0) {
+            addContributorsPerExtension(true);
+        }
         landscapeReport.startShowMoreBlockDisappear("", "&nbsp;&nbsp;Show test and other code...");
         addMainExtensions("Test", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getTestLinesOfCodePerExtension()), false);
         addMainExtensions("Other", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getOtherLinesOfCodePerExtension()), false);
@@ -996,7 +1047,7 @@ public class LandscapeReportGenerator {
 
     private void addMainExtensions(String type, List<NumericMetric> linesOfCodePerExtension, boolean linkCharts) {
         int threshold = landscapeAnalysisResults.getConfiguration().getExtensionThresholdLoc();
-        landscapeReport.startSubSection("File Extensions in " + type + " Code (" + linesOfCodePerExtension.size() + ")",
+        landscapeReport.startSubSection("Lines of Code in " + type + " Code (" + linesOfCodePerExtension.size() + ")",
                 threshold >= 1 ? threshold + "+ lines of code" : "");
         if (linkCharts) {
             landscapeReport.startDiv("");
@@ -1150,9 +1201,7 @@ public class LandscapeReportGenerator {
             ProcessingStopwatch.start("reporting/contributors/preparing");
 
             List<ContributorRepositories> contributors = landscapeAnalysisResults.getContributors();
-            List<ContributorRepositories> recentContributors = landscapeAnalysisResults.getContributors().stream()
-                    .filter(c -> c.getContributor().isActive(RECENT_THRESHOLD_DAYS))
-                    .collect(Collectors.toCollection(ArrayList::new));
+            List<ContributorRepositories> recentContributors = landscapeAnalysisResults.getRecentContributors();
             Collections.sort(recentContributors, (a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days());
             int totalCommits = contributors.stream().mapToInt(c -> c.getContributor().getCommitsCount()).sum();
             int totalRecentCommits = recentContributors.stream().mapToInt(c -> c.getContributor().getCommitsCount30Days()).sum();

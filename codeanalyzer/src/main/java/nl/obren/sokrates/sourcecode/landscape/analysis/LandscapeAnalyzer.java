@@ -6,6 +6,7 @@ package nl.obren.sokrates.sourcecode.landscape.analysis;
 
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.landscape.*;
@@ -35,6 +36,8 @@ public class LandscapeAnalyzer {
         LandscapeAnalysisResults landscapeAnalysisResults = new LandscapeAnalysisResults();
 
         Set<String> repositoryNames = new HashSet<>();
+        DependenciesCreator subLandscapesViaContributors = new DependenciesCreator();
+        DependenciesCreator subLandscapesViaSameName = new DependenciesCreator();
 
         try {
             String json = FileUtils.readFileToString(landscapeConfigurationFile, StandardCharsets.UTF_8);
@@ -52,6 +55,11 @@ public class LandscapeAnalyzer {
                 CodeAnalysisResults repositoryAnalysisResults = this.getRepositoryAnalysisResults(link);
                 if (repositoryAnalysisResults != null) {
                     String repositoryName = repositoryAnalysisResults.getMetadata().getName();
+                    String level1SubLandscape = link.getAnalysisResultsPath().replaceAll("/.*", "");
+                    repositoryAnalysisResults.getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).forEach(contributor -> {
+                        subLandscapesViaContributors.add("[" + level1SubLandscape + "]", contributor.getEmail());
+                    });
+                    subLandscapesViaSameName.add(level1SubLandscape, "[" + repositoryName + "]");
                     if (!landscapeConfiguration.isIncludeOnlyOneRepositoryWithSameName() || !repositoryNames.contains(repositoryName)) {
                         repositoryNames.add(repositoryName);
                         List<String> files = this.getRepositoryFiles(link);
@@ -70,6 +78,10 @@ public class LandscapeAnalyzer {
                     }
                 }
             });
+            landscapeAnalysisResults.setSubLandscapeDependenciesViaRepositoriesWithSameContributors(subLandscapesViaContributors.getDependencies());
+            landscapeAnalysisResults.setSubLandscapeIndirectDependenciesViaRepositoriesWithSameContributors(subLandscapesViaContributors.getIndirectDependencies());
+            landscapeAnalysisResults.setSubLandscapeDependenciesViaRepositoriesWithSameName(subLandscapesViaSameName.getDependencies());
+            landscapeAnalysisResults.setSubLandscapeIndirectDependenciesViaRepositoriesWithSameName(subLandscapesViaSameName.getIndirectDependencies());
         } catch (IOException e) {
             e.printStackTrace();
         }

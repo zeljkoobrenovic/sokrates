@@ -30,6 +30,19 @@ import java.util.stream.Collectors;
 public class LandscapeAnalysisResults {
     public static final int RECENT_THRESHOLD_DAYS = 30;
     private static final Log LOG = LogFactory.getLog(LandscapeAnalysisResults.class);
+
+    @JsonIgnore
+    private List<ComponentDependency> subLandscapeDependenciesViaRepositoriesWithSameContributors = new ArrayList<>();
+
+    @JsonIgnore
+    private List<ComponentDependency> subLandscapeIndirectDependenciesViaRepositoriesWithSameContributors = new ArrayList<>();
+
+    @JsonIgnore
+    private List<ComponentDependency> subLandscapeDependenciesViaRepositoriesWithSameName = new ArrayList<>();
+
+    @JsonIgnore
+    private List<ComponentDependency> subLandscapeIndirectDependenciesViaRepositoriesWithSameName = new ArrayList<>();
+
     @JsonIgnore
     private List<ComponentDependency> peopleDependencies30Days = new ArrayList<>();
 
@@ -108,6 +121,46 @@ public class LandscapeAnalysisResults {
 
     private List<Double> cMedian30DaysHistory = new ArrayList<>();
     private List<Double> pMedian30DaysHistory = new ArrayList<>();
+
+    @JsonIgnore
+    public List<ComponentDependency> getSubLandscapeDependenciesViaRepositoriesWithSameContributors() {
+        return subLandscapeDependenciesViaRepositoriesWithSameContributors;
+    }
+
+    @JsonIgnore
+    public void setSubLandscapeDependenciesViaRepositoriesWithSameContributors(List<ComponentDependency> subLandscapeDependenciesViaRepositoriesWithSameContributors) {
+        this.subLandscapeDependenciesViaRepositoriesWithSameContributors = subLandscapeDependenciesViaRepositoriesWithSameContributors;
+    }
+
+    @JsonIgnore
+    public List<ComponentDependency> getSubLandscapeIndirectDependenciesViaRepositoriesWithSameContributors() {
+        return subLandscapeIndirectDependenciesViaRepositoriesWithSameContributors;
+    }
+
+    @JsonIgnore
+    public void setSubLandscapeIndirectDependenciesViaRepositoriesWithSameContributors(List<ComponentDependency> subLandscapeIndirectDependenciesViaRepositoriesWithSameContributors) {
+        this.subLandscapeIndirectDependenciesViaRepositoriesWithSameContributors = subLandscapeIndirectDependenciesViaRepositoriesWithSameContributors;
+    }
+
+    @JsonIgnore
+    public List<ComponentDependency> getSubLandscapeDependenciesViaRepositoriesWithSameName() {
+        return subLandscapeDependenciesViaRepositoriesWithSameName;
+    }
+
+    @JsonIgnore
+    public void setSubLandscapeDependenciesViaRepositoriesWithSameName(List<ComponentDependency> subLandscapeDependenciesViaRepositoriesWithSameName) {
+        this.subLandscapeDependenciesViaRepositoriesWithSameName = subLandscapeDependenciesViaRepositoriesWithSameName;
+    }
+
+    @JsonIgnore
+    public List<ComponentDependency> getSubLandscapeIndirectDependenciesViaRepositoriesWithSameName() {
+        return subLandscapeIndirectDependenciesViaRepositoriesWithSameName;
+    }
+
+    @JsonIgnore
+    public void setSubLandscapeIndirectDependenciesViaRepositoriesWithSameName(List<ComponentDependency> subLandscapeIndirectDependenciesViaRepositoriesWithSameName) {
+        this.subLandscapeIndirectDependenciesViaRepositoriesWithSameName = subLandscapeIndirectDependenciesViaRepositoriesWithSameName;
+    }
 
     @JsonIgnore
     private List<RepositoryAnalysisResults> repositoryAnalysisResults = new ArrayList<>();
@@ -821,8 +874,13 @@ public class LandscapeAnalysisResults {
         return getContributors().size();
     }
 
+    @JsonIgnore
+    public List<ContributorRepositories> getRecentContributors() {
+        return getContributors().stream().filter(c -> c.getContributor().isActive(RECENT_THRESHOLD_DAYS)).collect(Collectors.toCollection(ArrayList::new));
+    }
+
     public int getRecentContributorsCount() {
-        return (int) getContributors().stream().filter(c -> c.getContributor().isActive(RECENT_THRESHOLD_DAYS)).count();
+        return (int) getRecentContributors().size();
     }
 
     public int getRecentContributorsCount6Months() {
