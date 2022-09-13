@@ -167,7 +167,7 @@ public class RichTextReport {
     }
 
     public void addGraphvizFigure(String id, String description, String graphvizCode) {
-        this.startDiv("width: 100%; overflow: auto");
+        this.startDiv("width: 100%; overflow: auto; font-weight: normal;");
         RichTextFragment fragment = new RichTextFragment(id, graphvizCode, RichTextFragment.Type.GRAPHVIZ);
         fragment.setDescription(description);
         richTextFragments.add(fragment);
@@ -175,7 +175,7 @@ public class RichTextReport {
     }
 
     public void addHiddenGraphvizFigure(String id, String description, String graphvizCode) {
-        this.startDiv("width: 100%; overflow: auto");
+        this.startDiv("width: 100%; overflow: auto; font-weight: normal;");
         RichTextFragment fragment = new RichTextFragment(id, graphvizCode, RichTextFragment.Type.GRAPHVIZ);
         fragment.setDescription(description);
         fragment.setShow(false);

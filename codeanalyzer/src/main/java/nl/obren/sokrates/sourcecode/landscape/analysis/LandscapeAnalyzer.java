@@ -50,16 +50,12 @@ public class LandscapeAnalyzer {
                 landscapeConfiguration.setRepositories(info.getRepositories());
             }
             landscapeAnalysisResults.setConfiguration(landscapeConfiguration);
+            landscapeConfiguration.getRepositories().forEach(link -> {});
             landscapeConfiguration.getRepositories().forEach(link -> {
                 LOG.info("Analysing " + link.getAnalysisResultsPath() + "...");
                 CodeAnalysisResults repositoryAnalysisResults = this.getRepositoryAnalysisResults(link);
                 if (repositoryAnalysisResults != null) {
                     String repositoryName = repositoryAnalysisResults.getMetadata().getName();
-                    String level1SubLandscape = link.getAnalysisResultsPath().replaceAll("/.*", "");
-                    repositoryAnalysisResults.getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).forEach(contributor -> {
-                        subLandscapesViaContributors.add("[" + level1SubLandscape + "]", contributor.getEmail());
-                    });
-                    subLandscapesViaSameName.add(level1SubLandscape, "[" + repositoryName + "]");
                     if (!landscapeConfiguration.isIncludeOnlyOneRepositoryWithSameName() || !repositoryNames.contains(repositoryName)) {
                         repositoryNames.add(repositoryName);
                         List<String> files = this.getRepositoryFiles(link);
@@ -76,6 +72,12 @@ public class LandscapeAnalyzer {
                             });
                         });
                     }
+                    String level1SubLandscape = link.getAnalysisResultsPath().replaceAll("/.*", "");
+                    landscapeAnalysisResults.getLevel1SubLandscapes().add(level1SubLandscape);
+                    repositoryAnalysisResults.getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).forEach(contributor -> {
+                        subLandscapesViaContributors.add("[" + level1SubLandscape + "]", contributor.getEmail());
+                    });
+                    subLandscapesViaSameName.add("[" + level1SubLandscape + "]", repositoryName);
                 }
             });
             landscapeAnalysisResults.setSubLandscapeDependenciesViaRepositoriesWithSameContributors(subLandscapesViaContributors.getDependencies());

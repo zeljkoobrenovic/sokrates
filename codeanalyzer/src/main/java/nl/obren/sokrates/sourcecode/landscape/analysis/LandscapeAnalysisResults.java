@@ -32,6 +32,8 @@ public class LandscapeAnalysisResults {
     private static final Log LOG = LogFactory.getLog(LandscapeAnalysisResults.class);
 
     @JsonIgnore
+    private Set<String> level1SubLandscapes = new HashSet<>();
+    @JsonIgnore
     private List<ComponentDependency> subLandscapeDependenciesViaRepositoriesWithSameContributors = new ArrayList<>();
 
     @JsonIgnore
@@ -121,6 +123,16 @@ public class LandscapeAnalysisResults {
 
     private List<Double> cMedian30DaysHistory = new ArrayList<>();
     private List<Double> pMedian30DaysHistory = new ArrayList<>();
+
+    @JsonIgnore
+    public Set<String> getLevel1SubLandscapes() {
+        return level1SubLandscapes;
+    }
+
+    @JsonIgnore
+    public void setLevel1SubLandscapes(Set<String> level1SubLandscapes) {
+        this.level1SubLandscapes = level1SubLandscapes;
+    }
 
     @JsonIgnore
     public List<ComponentDependency> getSubLandscapeDependenciesViaRepositoriesWithSameContributors() {

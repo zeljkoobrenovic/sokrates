@@ -309,7 +309,7 @@ public class LandscapeReportGenerator {
         renderer.setOrientation("LR");
         renderer.setTypeGraph();
         List<ComponentDependency> dependencies = landscapeAnalysisResults.getSubLandscapeDependenciesViaRepositoriesWithSameContributors();
-        String graphvizContent = renderer.getGraphvizContent(new ArrayList<>(), landscapeAnalysisResults.getSubLandscapeIndirectDependenciesViaRepositoriesWithSameContributors());
+        String graphvizContent = renderer.getGraphvizContent(landscapeAnalysisResults.getLevel1SubLandscapes().stream().map(s -> "[" + s + "]").collect(Collectors.toCollection(ArrayList::new)), landscapeAnalysisResults.getSubLandscapeIndirectDependenciesViaRepositoriesWithSameContributors());
 
         landscapeReport.startShowMoreBlock("show sub-landscape/repository dependencies...");
         landscapeReport.addGraphvizFigure("sub_landscape_dependencies_same_contributors", "Extension dependencies", graphvizContent);
@@ -328,7 +328,7 @@ public class LandscapeReportGenerator {
         renderer.setOrientation("LR");
         renderer.setTypeGraph();
         List<ComponentDependency> dependencies = landscapeAnalysisResults.getSubLandscapeDependenciesViaRepositoriesWithSameName();
-        String graphvizContent = renderer.getGraphvizContent(new ArrayList<>(), landscapeAnalysisResults.getSubLandscapeIndirectDependenciesViaRepositoriesWithSameName());
+        String graphvizContent = renderer.getGraphvizContent(landscapeAnalysisResults.getLevel1SubLandscapes().stream().map(s -> "[" + s + "]").collect(Collectors.toCollection(ArrayList::new)), landscapeAnalysisResults.getSubLandscapeIndirectDependenciesViaRepositoriesWithSameName());
 
         landscapeReport.startShowMoreBlock("show sub-landscape/repository dependencies...");
         landscapeReport.addGraphvizFigure("sub_landscape_dependencies_same_name_repos", "Extension dependencies", graphvizContent);
