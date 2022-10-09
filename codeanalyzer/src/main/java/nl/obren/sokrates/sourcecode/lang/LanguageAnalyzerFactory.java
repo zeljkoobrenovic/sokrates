@@ -15,6 +15,7 @@ import nl.obren.sokrates.sourcecode.lang.clojure.ClojureLangAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.cpp.CStyleAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.cpp.CppAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.csharp.CSharpAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.fsharp.FSharpAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.css.CssAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.d.DAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.dbc.DbcAnalyzer;
@@ -108,6 +109,14 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("cs", CSharpAnalyzer.class);
         analyzersMap.put("cake", CSharpAnalyzer.class);
         analyzersMap.put("csx", CSharpAnalyzer.class);
+
+        // F#
+        analyzersMap.put("fs", FSharpAnalyzer.class);
+        analyzersMap.put("ml", FSharpAnalyzer.class);
+        analyzersMap.put("fsi", FSharpAnalyzer.class);
+        analyzersMap.put("mli", FSharpAnalyzer.class);
+        analyzersMap.put("fsx", FSharpAnalyzer.class);
+        analyzersMap.put("fsscript", FSharpAnalyzer.class);
 
         analyzersMap.put("lua", LuaAnalyzer.class);
         analyzersMap.put("nse", LuaAnalyzer.class);

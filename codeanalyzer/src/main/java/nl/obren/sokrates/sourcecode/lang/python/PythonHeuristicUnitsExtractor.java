@@ -54,7 +54,7 @@ public class PythonHeuristicUnitsExtractor {
                     unit.setBody(body.toString());
                     unit.setMcCabeIndex(getMcCabeIndex(body.toString()));
                     unit.setShortName(line.substring(0, line.indexOf("(")).trim() + "()");
-                    unit.setNumberOfParameters(getNumerOfParameters(body.toString()));
+                    unit.setNumberOfParameters(getNumberOfParameters(body.toString()));
                     lineIndex = endOfUnitBodyIndex;
                     units.add(unit);
                 }
@@ -72,7 +72,7 @@ public class PythonHeuristicUnitsExtractor {
         return normallyCleanedContent;
     }
 
-    private int getNumerOfParameters(String body) {
+    private int getNumberOfParameters(String body) {
         String bodyForSearch = " " + body.replace("\n", " ");
 
         int startIndex = bodyForSearch.indexOf("(");
