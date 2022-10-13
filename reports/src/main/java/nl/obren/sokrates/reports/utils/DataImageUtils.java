@@ -14,6 +14,7 @@ public class DataImageUtils {
     static {
         map.put("java", "Java.png");
         map.put("cs", "C_.png");
+        map.put("fs", "fsharp.png");
         map.put("c", "C.png");
         map.put("h", "C.png");
         map.put("js", "JavaScript.png");

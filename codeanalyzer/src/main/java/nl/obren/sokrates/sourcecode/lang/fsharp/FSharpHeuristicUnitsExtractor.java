@@ -30,6 +30,8 @@ public class FSharpHeuristicUnitsExtractor {
                         body.append(normalLines.get(bodyIndex)).append("\n");
                     }
                     UnitInfo unit = new UnitInfo();
+                    unit.setStartLine(lineIndex);
+                    unit.setEndLine(endOfUnitBodyIndex);
                     unit.setSourceFile(sourceFile);
                     unit.setLinesOfCode(endOfUnitBodyIndex - lineIndex + 1);
                     unit.setCleanedBody(body.toString());
@@ -65,33 +67,22 @@ public class FSharpHeuristicUnitsExtractor {
     }
 
     private Queue<String> getParameters(String body) {
-        Queue<String> result = new LinkedList<String>();
+        Queue<String> result = new LinkedList<>();
         String bodyForSearch = " " + body.replace("\n", " ");
-
-        int endIndex = bodyForSearch.indexOf("=");
+        int endIndex = bodyForSearch.indexOf(" = ");
         String paramString = bodyForSearch.substring(0, endIndex).trim();
-        paramString = paramString.replaceAll("\\(.+?\\)", "p");
+        paramString = StringUtils.normalizeSpace(paramString.replaceAll("\\(.+?\\)", "p"));
+
         if (StringUtils.isNotBlank(paramString)) {
-             result = new LinkedList<String>(Arrays.asList(paramString.split(" ")));
+             result = new LinkedList<>(Arrays.asList(paramString.split(" ")));
         }
         
         return result;
     }
 
     protected boolean isUnitSignature(String line) {
-        boolean result = false;
-
         String l = replaceTabs(line).trim();
-        if (l.contains("=")) {
-            String[] leftSide = l.split("=");
-            if (leftSide.length > 0) {
-                String ls = l.split("=")[0];
-                if (StringUtils.isNotBlank(ls)) {
-                    String[] parts = ls.split(" ");
-                    result = parts[0].equals("let") && parts.length > 2;
-                }
-            }
-        }
+        boolean result = l.startsWith("let ");
         return result;
     }
 
