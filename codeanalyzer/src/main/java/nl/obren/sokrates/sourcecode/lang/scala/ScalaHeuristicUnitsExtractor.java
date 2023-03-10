@@ -18,9 +18,7 @@ public class ScalaHeuristicUnitsExtractor extends CStyleHeuristicUnitsExtractor 
             String startUnitRegex = "(.* |)def .*";
             Pattern pattern = Pattern.compile(startUnitRegex);
             Matcher matcher = pattern.matcher(line);
-            if (matcher.matches()) {
-                return true;
-            }
+            return matcher.matches();
 
         }
         return false;

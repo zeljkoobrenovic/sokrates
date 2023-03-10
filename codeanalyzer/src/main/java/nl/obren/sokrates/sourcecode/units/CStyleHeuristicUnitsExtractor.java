@@ -113,9 +113,7 @@ public class CStyleHeuristicUnitsExtractor {
 
     private void removeOverlaps(List<UnitInfo> units) {
         if (extractRecursively) {
-            units.forEach(unit -> {
-                removeOverlaps(unit);
-            });
+            units.forEach(this::removeOverlaps);
         }
     }
 
@@ -145,7 +143,7 @@ public class CStyleHeuristicUnitsExtractor {
             List<Integer> lineIndexes = cleanedContent.getFileLineIndexes();
             for (int bodyIndex = lineIndexes.get(lineIndex); bodyIndex <= lineIndexes.get(endOfUnitBodyIndex); bodyIndex++) {
 
-                body.append(normalLines.get(bodyIndex) + "\n");
+                body.append(normalLines.get(bodyIndex)).append("\n");
             }
         }
         return body.toString();
@@ -198,7 +196,7 @@ public class CStyleHeuristicUnitsExtractor {
             if (endIndex > startIndex) {
                 String paramString = bodyForSearch.substring(startIndex + 1, endIndex).trim();
                 if (StringUtils.isNotBlank(paramString)) {
-                    String params[] = paramString.split(",");
+                    String[] params = paramString.split(",");
                     return params.length;
                 } else {
                     return 0;
@@ -238,12 +236,10 @@ public class CStyleHeuristicUnitsExtractor {
     }
 
     protected int getEndOfUnitBodyIndex(List<String> lines, int startIndex) {
-        StringBuilder unitBody = new StringBuilder();
         int startCount = 0;
         int endCount = 0;
         for (int i = startIndex; i < lines.size(); i++) {
             String line = lines.get(i).trim();
-            unitBody.append(line + "\n");
             startCount += StringUtils.countMatches(line, "{");
             endCount += StringUtils.countMatches(line, "}");
 
@@ -266,9 +262,7 @@ public class CStyleHeuristicUnitsExtractor {
             String startUnitRegex = "(" + identifierPattern + "[ ]+)+" + identifierPattern + "[ ]*[(]";
             Pattern pattern = Pattern.compile(startUnitRegex);
             Matcher matcher = pattern.matcher(line);
-            if (matcher.matches()) {
-                return true;
-            }
+            return matcher.matches();
         }
         return false;
     }

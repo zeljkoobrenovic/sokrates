@@ -1,4 +1,4 @@
-package nl.obren.sokrates.sourcecode.lang.fsharp;
+package nl.obren.sokrates.sourcecode.lang.bicep;
 
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.SourceFile;
@@ -12,10 +12,9 @@ import nl.obren.sokrates.sourcecode.units.UnitInfo;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FSharpAnalyzer extends LanguageAnalyzer {
+public class BicepAnalyzer extends LanguageAnalyzer {
 
-    public FSharpAnalyzer() {
-
+    public BicepAnalyzer() {
     }
 
     public CleanedContent cleanForLinesOfCodeCalculations(SourceFile sourceFile) {
@@ -25,10 +24,11 @@ public class FSharpAnalyzer extends LanguageAnalyzer {
     private CommentsAndEmptyLinesCleaner getCleaner() {
         CommentsAndEmptyLinesCleaner cleaner = new CommentsAndEmptyLinesCleaner();
 
-        cleaner.addCommentBlockHelper("(*", "*)");
+        cleaner.addCommentBlockHelper("/*", "*/");
         cleaner.addCommentBlockHelper("//", "\n");
         cleaner.addStringBlockHelper("\"", "\\");
         cleaner.addStringBlockHelper("@\"", "\"", "\"");
+        cleaner.addStringBlockHelper("'''", "'''", "");
         cleaner.addStringBlockHelper("'", "\\");
 
         return cleaner;
@@ -39,25 +39,20 @@ public class FSharpAnalyzer extends LanguageAnalyzer {
         String content = getCleaner().cleanKeepEmptyLines(sourceFile.getContent());
 
         content = SourceCodeCleanerUtils.trimLines(content);
-        content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("namespace .*", content);
-        content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("open .*", content);
-        content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("begin", content);
-        content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("end", content);
-        content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("with", content);
-        content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("done", content);
-        content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("in", content);
+        content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("[{]", content);
+        content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("[}]", content);
 
         return SourceCodeCleanerUtils.cleanEmptyLinesWithLineIndexes(content);
     }
 
     @Override
     public List<UnitInfo> extractUnits(SourceFile sourceFile) {
-        return new FSharpHeuristicUnitsExtractor().extractUnits(sourceFile);
+        return new BicepHeuristicUnitExtractor().extractUnits(sourceFile);
     }
 
     @Override
     public DependenciesAnalysis extractDependencies(List<SourceFile> sourceFiles, ProgressFeedback progressFeedback) {
-        return new FSharpHeuristicDependenciesExtractor().extractDependencies(sourceFiles, progressFeedback);
+        return new DependenciesAnalysis();
     }
 
     @Override
@@ -68,8 +63,8 @@ public class FSharpAnalyzer extends LanguageAnalyzer {
         features.add(FEATURE_ADVANCED_CODE_CLEANING);
         features.add(FEATURE_UNIT_SIZE_ANALYSIS);
         features.add(FEATURE_CONDITIONAL_COMPLEXITY_ANALYSIS);
-        features.add(FEATURE_ADVANCED_DEPENDENCIES_ANALYSIS + " (based on namespace heuristics)");
 
         return features;
     }
 }
+

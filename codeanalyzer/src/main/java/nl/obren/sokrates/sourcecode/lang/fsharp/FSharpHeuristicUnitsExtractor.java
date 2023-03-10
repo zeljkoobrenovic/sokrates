@@ -82,8 +82,7 @@ public class FSharpHeuristicUnitsExtractor {
 
     protected boolean isUnitSignature(String line) {
         String l = replaceTabs(line).trim();
-        boolean result = l.startsWith("let ");
-        return result;
+        return l.startsWith("let ");
     }
 
     private CleanedContent getCleanContent(SourceFile sourceFile) {

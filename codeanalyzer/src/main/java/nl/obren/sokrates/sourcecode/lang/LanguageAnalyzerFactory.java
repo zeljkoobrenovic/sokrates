@@ -10,8 +10,10 @@ import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.analysis.AnalyzerOverride;
 import nl.obren.sokrates.sourcecode.lang.abap.AbapAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.adabasnatural.AdabasNaturalAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.bicep.BicepAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.cfg.CfgAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.clojure.ClojureLangAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.cobol.CobolLangAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.cpp.CStyleAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.cpp.CppAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.csharp.CSharpAnalyzer;
@@ -98,6 +100,9 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("xsjs", JavaScriptAnalyzer.class);
         analyzersMap.put("xsjslib", JavaScriptAnalyzer.class);
 
+        // cobol
+        analyzersMap.put("lst", CobolLangAnalyzer.class);
+
         // typescript
         analyzersMap.put("ts", TypeScriptAnalyzer.class);
         analyzersMap.put("tsx", TypeScriptAnalyzer.class);
@@ -109,6 +114,9 @@ public class LanguageAnalyzerFactory {
         analyzersMap.put("cs", CSharpAnalyzer.class);
         analyzersMap.put("cake", CSharpAnalyzer.class);
         analyzersMap.put("csx", CSharpAnalyzer.class);
+
+        // bicep
+        analyzersMap.put("bicep", BicepAnalyzer.class);
 
         // F#
         analyzersMap.put("fs", FSharpAnalyzer.class);

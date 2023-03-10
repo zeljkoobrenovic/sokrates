@@ -111,6 +111,7 @@ public class SourceCodeFiles {
         int fileIndex[] = {0};
         progressFeedback.setText("Loading files...");
         progressFeedback.setText("");
+
         int displayCounter[] = {0};
         allFiles.forEach(sourceFile -> {
             if (progressFeedback.canceled()) {
@@ -122,7 +123,7 @@ public class SourceCodeFiles {
                 progressFeedback.setDetailedText("Loading file " + displayCounter[0] + "/" + allFiles.size()
                         + ": " + sourceFile.getFile().getName());
             }
-            if (FilenameUtils.isExtension(sourceFile.getFile().getPath(), extensions)) {
+            if (FilenameUtils.isExtension(sourceFile.getFile().getPath().toLowerCase(), extensions)) {
                 if (!shouldExcludeFile(sourceFile, exclusions, analysisConfig)) {
                     if (addLoc) {
                         sourceFile.setLinesOfCodeFromContent();
