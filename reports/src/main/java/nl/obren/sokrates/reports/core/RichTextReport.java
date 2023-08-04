@@ -345,12 +345,15 @@ public class RichTextReport {
     }
 
     public void startSubSection(String title, String subtitle) {
-        this.addHtmlContent("<div class='subSection'>" +
-                "<div class='subSectionHeader'>" +
-                "    <span class='subSectionTitle'>" + title + "</span>" +
-                (StringUtils.isNotBlank(subtitle) ? "    <div class='subSectionSubtitle'>" + subtitle + "</div>" : "") +
-                "</div>" +
-                "<div class='sectionBody'>");
+        String html = "<div class='subSection'>";
+        if (StringUtils.isNotBlank(title) || StringUtils.isNotBlank(subtitle)) {
+            html += "<div class='subSectionHeader'>" +
+                    "    <span class='subSectionTitle'>" + title + "</span>" +
+                    (StringUtils.isNotBlank(subtitle) ? "    <div class='subSectionSubtitle'>" + subtitle + "</div>" : "") +
+                    "</div>";
+        }
+        html += "<div class='sectionBody'>";
+        this.addHtmlContent(html);
     }
 
     public void startTocSection() {

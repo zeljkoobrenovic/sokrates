@@ -18,12 +18,12 @@ import java.util.List;
 import java.util.Map;
 
 public class SearcheableFilesCache {
-    private Map<File, SourceFileWithSearchData> files = new HashMap<>();
+    private final Map<File, SourceFileWithSearchData> files = new HashMap<>();
     private SearchResult searchResult;
 
     public static SearcheableFilesCache getInstance(List<SourceFile> sourceFiles) {
         SearcheableFilesCache searcheableFilesCache = new SearcheableFilesCache();
-        sourceFiles.forEach(sourceFile -> searcheableFilesCache.addSearcheableFile(sourceFile));
+        sourceFiles.forEach(searcheableFilesCache::addSearcheableFile);
         return searcheableFilesCache;
     }
 
@@ -41,10 +41,9 @@ public class SearcheableFilesCache {
         return count[0];
     }
 
-    public SourceFileWithSearchData addSearcheableFile(SourceFile sourceFile) {
+    public void addSearcheableFile(SourceFile sourceFile) {
         SourceFileWithSearchData sourceFileWithSearchData = new SourceFileWithSearchData(sourceFile);
         files.put(sourceFile.getFile(), sourceFileWithSearchData);
-        return sourceFileWithSearchData;
     }
 
     public SearchResult search(SearchRequest searchRequest, ProgressFeedback progressFeedback) {

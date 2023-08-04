@@ -102,7 +102,7 @@ public class AnalysisUtils {
                     foundTextList.add(transformedFoundText);
                 }
             });
-            Collections.sort(foundTextList, (a, b) -> b.getCount() - a.getCount());
+            foundTextList.sort((a, b) -> b.getCount() - a.getCount());
         } else {
             foundTextList = searchResult.getFoundTextList();
         }
@@ -124,7 +124,7 @@ public class AnalysisUtils {
         DecimalFormat formatter = new DecimalFormat("#.00");
         formatter.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.ENGLISH));
         LOG.info(formatter.format(((System.currentTimeMillis() - start) / 10) * 0.01) + "s\t\t" + line.replaceAll("<.*?>", ""));
-        textSummary.append(line + "\n");
+        textSummary.append(line).append("\n");
         if (progressFeedback != null) {
             progressFeedback.setText(line);
         }

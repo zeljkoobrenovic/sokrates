@@ -30,10 +30,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class GitHistoryExtractor {
     private static final Log LOG = LogFactory.getLog(GitHistoryExtractor.class);
 
-    public static void main(String args[]) throws IOException, GitAPIException {
-        new GitHistoryExtractor().extractGitHistory(new File("/Users/zobrenovic/Downloads/test/temp_clone_dir/"));
-    }
-
     public void extractGitHistory(File root) {
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
         File gitHistoryFile = new File(root, "git-history.txt");

@@ -49,7 +49,7 @@ public class ReportRenderer {
             renderHeader(richTextReport, content);
         }
         if (StringUtils.isNotBlank(richTextReport.getDescription())) {
-            content.append("<p style=\"color: #787878; font-size: 94%; margin-top: 9px;\">" + richTextReport.getDescription() + "</p>\n");
+            content.append("<p style=\"color: #787878; font-size: 94%; margin-top: 9px; white-space: nowrap; overflow: hidden;\">" + richTextReport.getDescription() + "</p>\n");
         }
         reportRenderingClient.append(content.toString());
         richTextReport.getRichTextFragments().forEach(fragment -> {
@@ -59,7 +59,7 @@ public class ReportRenderer {
 
     private void renderHeader(RichTextReport richTextReport, StringBuilder content) {
         content.append(renderBreadcrumbsInDiv(richTextReport.getBreadcrumbs()));
-        content.append("<div style='font-size: 36px; margin-top: 15px;'>");
+        content.append("<div style='font-size: 36px; margin-top: 15px; padding-bottom: 20px; white-space: nowrap; overflow: hidden;'>");
 
         String parentUrl = richTextReport.getParentUrl();
         if (StringUtils.isNotBlank(parentUrl)) {
@@ -68,7 +68,7 @@ public class ReportRenderer {
 
         content.append(renderLogo(richTextReport));
 
-        content.append("<div style='display: inline-block; vertical-align: middle'>" +
+        content.append("<div style='margin-left: 12px; display: inline-block; vertical-align: middle; font-size: 120%'>" +
                 richTextReport.getDisplayName() + "</div></div>\n");
 
         if (StringUtils.isNotBlank(parentUrl)) {
@@ -88,10 +88,10 @@ public class ReportRenderer {
             boolean complexHeader = richTextReport.getDisplayName().contains("<div");
             String valign = "middle";
             if (StringUtils.isNotBlank(logoLink)) {
-                int size = 48;
+                int size = 64;
                 content.append("<img style='");
                 if (complexHeader) {
-                    content.append("transform: scale(0.8); ");
+                    // content.append("transform: scale(0.8); ");
                 }
                 content.append("height: " + size + "px' valign='" + valign + "' src='" +
                         logoLink + "'>\n");

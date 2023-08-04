@@ -72,7 +72,7 @@ public class DuplicatedFileBlock {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null || !(obj instanceof DuplicatedFileBlock)) {
+        if (!(obj instanceof DuplicatedFileBlock)) {
             return false;
         }
 

@@ -20,6 +20,7 @@ import nl.obren.sokrates.reports.landscape.statichtml.repositories.*;
 import nl.obren.sokrates.reports.landscape.utils.*;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
+import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
@@ -1698,6 +1699,7 @@ public class LandscapeReportGenerator {
         style += "margin: 12px 12px 12px 0px;";
         style += "display: inline-block; width: 160px; height: 120px;";
         style += "background-color: " + color + "; text-align: center; vertical-align: middle; margin-bottom: 36px;";
+        style += "box-shadow: rgb(0 0 0 / 12%) 0px 1px 3px, rgb(0 0 0 / 24%) 0px 1px 2px;";
 
         landscapeReport.startDiv(style, tooltip);
         String specialColor = mainValue.equals("<b>0</b>") ? " color: grey;" : "";

@@ -26,6 +26,7 @@ public class DefaultTags {
         buildTags.getRepositoryTags().add(newPathPatternTagInstance("maven", "general/maven", Arrays.asList("(|.*/)pom[.]xml")));
         buildTags.getRepositoryTags().add(newPathPatternTagInstance("npm", "general/npm", Arrays.asList("(|.*/)package[.]json")));
         buildTags.getRepositoryTags().add(newPathPatternTagInstance("yarn", "general/yarn", Arrays.asList("(|.*/)[.]yarnrc", "(|.*/)yarn[.]lock")));
+        buildTags.getRepositoryTags().add(newPathPatternTagInstance("jest", "general/jest", Arrays.asList("(|.*/)jest[.].*")));
         buildTags.getRepositoryTags().add(newPathPatternTagInstance("babel", "general/babel", Arrays.asList("(|.*/)[.]babel[.]config[.]json")));
         buildTags.getRepositoryTags().add(newPathPatternTagInstance("gradle", "general/gradle", Arrays.asList("(|.*/)build[.]gradle")));
         buildTags.getRepositoryTags().add(newPathPatternTagInstance("sbt", "general/sbt", Arrays.asList("(|.*/)build[.]sbt")));

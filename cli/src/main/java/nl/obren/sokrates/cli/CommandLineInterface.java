@@ -61,15 +61,14 @@ public class CommandLineInterface {
     public static final int THOUSAND_YEARS = 365 * 1000;
     private static final Log LOG = LogFactory.getLog(CommandLineInterface.class);
     private ProgressFeedback progressFeedback;
-    private DataExporter dataExporter = new DataExporter(this.progressFeedback);
+    private final DataExporter dataExporter = new DataExporter(this.progressFeedback);
 
-    private Commands commands = new Commands();
-    private File sokratesConfigFile;
+    private final Commands commands = new Commands();
     private CodeConfiguration codeConfiguration;
 
     private static boolean helpMode = false;
 
-    public static void main(String args[]) throws IOException {
+    public static void main(String[] args) throws IOException {
         ProcessingStopwatch.startAsReference("everything");
         CommandLineInterface commandLineInterface = new CommandLineInterface();
         commandLineInterface.run(args);
@@ -83,7 +82,7 @@ public class CommandLineInterface {
         System.exit(0);
     }
 
-    public void run(String args[]) throws IOException {
+    public void run(String[] args) throws IOException {
         if (args.length == 0) {
             helpMode = true;
             commands.usage();
@@ -95,31 +94,31 @@ public class CommandLineInterface {
         }
 
         try {
-            if (args[0].equalsIgnoreCase(commands.INIT)) {
+            if (args[0].equalsIgnoreCase(Commands.INIT)) {
                 init(args);
                 return;
-            } else if (args[0].equalsIgnoreCase(commands.UPDATE_CONFIG)) {
+            } else if (args[0].equalsIgnoreCase(Commands.UPDATE_CONFIG)) {
                 updateConfig(args);
                 return;
-            } else if (args[0].equalsIgnoreCase(commands.EXPORT_STANDARD_CONVENTIONS)) {
+            } else if (args[0].equalsIgnoreCase(Commands.EXPORT_STANDARD_CONVENTIONS)) {
                 exportConventions(args);
                 return;
-            } else if (args[0].equalsIgnoreCase(commands.UPDATE_LANDSCAPE)) {
+            } else if (args[0].equalsIgnoreCase(Commands.UPDATE_LANDSCAPE)) {
                 updateLandscape(args);
                 return;
-            } else if (args[0].equalsIgnoreCase(commands.INIT_CONVENTIONS)) {
+            } else if (args[0].equalsIgnoreCase(Commands.INIT_CONVENTIONS)) {
                 createNewConventionsFile(args);
                 return;
-            } else if (args[0].equalsIgnoreCase(commands.EXTRACT_GIT_SUB_HISTORY)) {
+            } else if (args[0].equalsIgnoreCase(Commands.EXTRACT_GIT_SUB_HISTORY)) {
                 extractGitSubHistory(args);
                 return;
-            } else if (args[0].equalsIgnoreCase(commands.EXTRACT_FILES)) {
+            } else if (args[0].equalsIgnoreCase(Commands.EXTRACT_FILES)) {
                 extractFiles(args);
                 return;
-            } else if (args[0].equalsIgnoreCase(commands.EXTRACT_GIT_HISTORY)) {
+            } else if (args[0].equalsIgnoreCase(Commands.EXTRACT_GIT_HISTORY)) {
                 extractGitHistory(args);
                 return;
-            } else if (!args[0].equalsIgnoreCase(commands.GENERATE_REPORTS)) {
+            } else if (!args[0].equalsIgnoreCase(Commands.GENERATE_REPORTS)) {
                 helpMode = true;
                 commands.usage();
                 return;
@@ -337,10 +336,10 @@ public class CommandLineInterface {
         }
         Link link = null;
         if (cmd.hasOption(commands.getAddLink().getOpt())) {
-            String linkData[] = cmd.getOptionValues(commands.getAddLink().getOpt());
+            String[] linkData = cmd.getOptionValues(commands.getAddLink().getOpt());
             if (linkData.length >= 1 && StringUtils.isNotBlank(linkData[0])) {
                 String href = linkData[0];
-                String label = linkData.length >= 1 ? linkData[1] : "";
+                String label = linkData.length > 1 ? linkData[1] : "";
                 link = new Link(label, href);
             }
         }
@@ -368,7 +367,7 @@ public class CommandLineInterface {
             LOG.info("Timeout timer set to " + seconds + " seconds.");
             Executors.newCachedThreadPool().execute(() -> {
                 try {
-                    Thread.sleep(seconds * 1000);
+                    Thread.sleep(seconds * 1000L);
                     LOG.info("Timeout after " + seconds + " seconds.");
                     System.exit(-1);
                 } catch (InterruptedException e) {
@@ -459,7 +458,7 @@ public class CommandLineInterface {
         }
 
         if (cmd.hasOption(commands.getAddLink().getOpt())) {
-            String linkData[] = cmd.getOptionValues(commands.getAddLink().getOpt());
+            String[] linkData = cmd.getOptionValues(commands.getAddLink().getOpt());
             if (linkData.length >= 1 && StringUtils.isNotBlank(linkData[0])) {
                 String href = linkData[0];
                 String label = linkData.length > 1 ? linkData[1] : "";
@@ -497,6 +496,7 @@ public class CommandLineInterface {
     private void generateReports(CommandLine cmd) throws IOException {
         updateDateParam(cmd);
 
+        File sokratesConfigFile;
         if (!cmd.hasOption(commands.getConfFile().getOpt())) {
             String confFilePath = "./_sokrates/config.json";
             sokratesConfigFile = new File(confFilePath);
@@ -859,7 +859,7 @@ public class CommandLineInterface {
 
 
     private File getHtmlFolder(File reportsFolder) {
-        File folder = new File(reportsFolder, commands.ARG_HTML_REPORTS_FOLDER_NAME);
+        File folder = new File(reportsFolder, Commands.ARG_HTML_REPORTS_FOLDER_NAME);
         folder.mkdirs();
         return folder;
     }

@@ -1,7 +1,6 @@
 package nl.obren.sokrates.cli;
 
 import nl.obren.sokrates.common.utils.RegexUtils;
-import nl.obren.sokrates.reports.generators.statichtml.BasicSourceCodeReportGenerator;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
@@ -27,7 +26,7 @@ public class SokratesFileUtils {
         Path rootPath = Paths.get(srcRoot.getPath());
         FileUtils.deleteDirectory(dest);
         dest.mkdirs();
-        int counter[] = {0};
+        int[] counter = {0};
         SokratesFileUtils.listFiles(pattern, rootPath).forEach(path -> {
             counter[0] += 1;
             File srcFile = path.toFile();
@@ -75,16 +74,16 @@ public class SokratesFileUtils {
         List<String> lines = new ArrayList<>();
 
         originalLines.forEach(line -> {
-            String elements[] = line.split(" ");
+            String[] elements = line.split(" ");
             if (elements.length >= 4) {
                 String path = elements[3];
                 if (RegexUtils.matchesEntirely(pattern, path)) {
                     elements[3] = addPrefix + elements[3];
-                    lines.add(Arrays.asList(elements).stream().collect(Collectors.joining(" ")));
+                    lines.add(String.join(" ", elements));
                 }
             }
         });
 
-        return lines.stream().collect(Collectors.joining("\n"));
+        return String.join("\n", lines);
     }
 }

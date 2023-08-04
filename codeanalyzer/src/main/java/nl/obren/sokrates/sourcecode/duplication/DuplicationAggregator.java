@@ -8,7 +8,6 @@ import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.aspects.Concern;
-import org.apache.commons.io.FilenameUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;

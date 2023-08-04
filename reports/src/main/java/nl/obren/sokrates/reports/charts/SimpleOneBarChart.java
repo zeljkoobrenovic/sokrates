@@ -31,11 +31,11 @@ public class SimpleOneBarChart {
     }
 
     public String getStackedBarSvg(List<Integer> values, Palette palette, String textLeft, String textRight) {
-        String svg = "<svg width='" + width + "' height='" + (barHeight + 4) + "'>";
+        StringBuilder svg = new StringBuilder("<svg width='" + width + "' height='" + (barHeight + 4) + "'>");
 
-        double sum = values.stream().mapToDouble(n -> n.doubleValue()).sum();
+        double sum = values.stream().mapToDouble(Integer::doubleValue).sum();
 
-        svg += getBackgroundBarSvg(maxBarWidth);
+        svg.append(getBackgroundBarSvg(maxBarWidth));
 
         int x = barStartXOffset;
 
@@ -44,14 +44,14 @@ public class SimpleOneBarChart {
             String color = palette.nextColor();
             if (value > 0.0000000001) {
                 int barSize = (int) (maxBarWidth * (value / sum));
-                if (barSize == 0 && value > 0) {
+                if (barSize == 0) {
                     barSize = 1;
                 }
                 if (x < maxBarWidth + barStartXOffset) {
                     if (i < values.size() - 1 && x + barSize <= maxBarWidth + barStartXOffset) {
-                        svg += getBarSvg(x, barSize, color);
+                        svg.append(getBarSvg(x, barSize, color));
                     } else {
-                        svg += getBarSvg(x, maxBarWidth + barStartXOffset - x, color);
+                        svg.append(getBarSvg(x, maxBarWidth + barStartXOffset - x, color));
                     }
                 }
                 x += barSize;
@@ -59,26 +59,26 @@ public class SimpleOneBarChart {
         }
 
 
-        svg += getRightAlignedTextSvg(textLeft, barStartXOffset - 4);
-        svg += getTextSvg(textRight, (barStartXOffset + 8 + maxBarWidth));
+        svg.append(getRightAlignedTextSvg(textLeft, barStartXOffset - 4));
+        svg.append(getTextSvg(textRight, (barStartXOffset + 8 + maxBarWidth)));
 
-        svg += "</svg>";
+        svg.append("</svg>");
 
-        return svg;
+        return svg.toString();
     }
 
     public String getLegend(List<String> labels, Palette palette) {
-        String html = "<div style='display: inline-block'>";
+        StringBuilder html = new StringBuilder("<div style='display: inline-block'>");
 
         for (int i = 0; i < labels.size(); i++) {
             String label = labels.get(i);
             String color = palette.nextColor();
-            html += "<div style='margin: 4px; vertical-align:middle;display:inline-block;width:14px;height:14px;background-color:" + color + "; border: 1px solid #a0a0a0;'></div>";
-            html += "<div style='margin-right:10px; display:inline-block'>" + label + "</div>";
+            html.append("<div style='margin: 4px; vertical-align:middle;display:inline-block;width:14px;height:14px;background-color:").append(color).append("; border: 1px solid #a0a0a0;'></div>");
+            html.append("<div style='margin-right:10px; display:inline-block'>").append(label).append("</div>");
         }
 
-        html += "</div>";
-        return html;
+        html.append("</div>");
+        return html.toString();
     }
 
     private String getBarSvg(int x, int activeBarSize, String color) {

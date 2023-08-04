@@ -63,8 +63,9 @@ public class SummaryUtils {
         boolean showControls = mainExists && config.getGoalsAndControls().size() > 0;
         boolean showUnits = mainExists && analysisResults.getUnitsAnalysisResults().getTotalNumberOfUnits() > 0;
 
-        report.startDiv("width: 100%; overflow-x: auto");
+        report.startDiv("width: 100%; overflow-x: auto; margin-top: -10px");
         report.startTable("border: none; min-width: 800px; ");
+        summarizeTags(analysisResults, report);
         summarizeMainVolume(analysisResults, report);
         if (mainExists) {
             if (showDuplication) {
@@ -85,7 +86,6 @@ public class SummaryUtils {
             summarizeGoals(analysisResults, report);
         }
         summarizeFeaturesOfInterest(analysisResults, report);
-        summarizeTags(analysisResults, report);
         addSummaryFindings(analysisResults, report);
         report.endTable();
         report.endDiv();
@@ -511,10 +511,9 @@ public class SummaryUtils {
         List<FoundTag> tags = analysisResults.getFoundTags();
 
         report.startTableRow();
-        report.addTableCell(getIconSvg("tags"), "border: none; padding-top: 9px");
+        report.addTableCell(getIconSvg("tags"), "border: none; padding-bottom: 16px; margin-top: -20px");
 
         report.startTableCellColSpan("border: none", 2);
-        List<NumericMetric> linesOfCodePerExtension = analysisResults.getMainAspectAnalysisResults().getLinesOfCodePerExtension();
         tags.forEach(foundTag -> {
             TagRule tagRule = foundTag.getTagRule();
             String tooltip = "added if at least one file matches:\n  - "
@@ -523,6 +522,8 @@ public class SummaryUtils {
             String color = StringUtils.isNotBlank(tagRule.getColor()) ? tagRule.getColor() : "white";
             report.addContentInDivWithTooltip(tagRule.getTag(), tooltip, "cursor: help; font-size: 90%; border: 1px lightgrey solid; padding: 4px 10px 5px 10px; display: inline-block; background-color: " + color + "; border-radius: 3px");
         });
+        report.addLineBreak();
+        report.addLineBreak();
         report.endTableCell();
 
         report.endTableRow();
