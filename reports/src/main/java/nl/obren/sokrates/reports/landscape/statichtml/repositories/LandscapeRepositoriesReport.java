@@ -15,6 +15,7 @@ import nl.obren.sokrates.reports.landscape.utils.CorrelationDiagramGenerator;
 import nl.obren.sokrates.reports.landscape.utils.Counter;
 import nl.obren.sokrates.reports.landscape.utils.FeaturesOfInterestAggregator;
 import nl.obren.sokrates.reports.landscape.utils.RepositoryConcernData;
+import nl.obren.sokrates.reports.utils.AnimalIcons;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
@@ -399,7 +400,7 @@ public class LandscapeRepositoriesReport {
         addSummaryGraphMainLoc(report, repositoryAnalysisResults);
         report.startTable("width: 100%");
         int thresholdContributors = landscapeAnalysisResults.getConfiguration().getRepositoryThresholdContributors();
-        List<String> headers = new ArrayList<>(Arrays.asList("", "Repository" + (thresholdContributors > 1 ? "<br/>(" + thresholdContributors + "+&nbsp;contributors)" : ""),
+        List<String> headers = new ArrayList<>(Arrays.asList("", "", "Repository" + (thresholdContributors > 1 ? "<br/>(" + thresholdContributors + "+&nbsp;contributors)" : ""),
                 "Main<br/>Language", "LOC<br/>(main)*",
                 "LOC<br/>(test)", "LOC<br/>(other)",
                 "Age", "Latest<br>Commit Date",
@@ -736,7 +737,9 @@ public class LandscapeRepositoriesReport {
         String latestCommitDate = repositoryAnalysis.getAnalysisResults().getContributorsAnalysisResults().getLatestCommitDate();
         report.startTableRow("white-space: nowrap;" + (DateUtils.isCommittedLessThanDaysAgo(latestCommitDate, 90) ? ""
                 : (DateUtils.isCommittedLessThanDaysAgo(latestCommitDate, 180) ? "color:#b0b0b0" : "color:#c3c3c3")));
-        report.addTableCell(getImageWithLink(repositoryAnalysis, logoLink), "text-align: center");
+        AnimalIcons animalIcons = new AnimalIcons(42);
+        String icon = "<div style='cursor: help' title='" + animalIcons.getInfo() + "'>" + animalIcons.getAnimalIconsForMainLoc(analysisResults.getMainAspectAnalysisResults().getLinesOfCode()) + "</div>";
+        report.addTableCell(icon, "text-align: center");
         report.addTableCell("<a href='" + this.getRepositoryReportUrl(repositoryAnalysis) + "' target='_blank'>"
                 + "<div>" + metadata.getName() + "</div></a>", "overflow: hidden; white-space: nowrap; vertical-align: middle; min-width: 400px; max-width: 400px");
         AspectAnalysisResults main = analysisResults.getMainAspectAnalysisResults();

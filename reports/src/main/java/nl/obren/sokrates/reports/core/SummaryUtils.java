@@ -8,6 +8,7 @@ import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
+import nl.obren.sokrates.reports.utils.AnimalIcons;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.reports.utils.ReportUtils;
@@ -225,8 +226,6 @@ public class SummaryUtils {
 
     private void summarizeMainVolume(CodeAnalysisResults analysisResults, RichTextReport report) {
         String linkPrefix = "<a href='" + reportRoot + "SourceCodeOverview.html'  title='volume details' style='vertical-align: top'>";
-
-        report.startTableRow();
         StringBuilder summary = new StringBuilder("");
         summarizeMainCode(analysisResults, summary, linkPrefix);
         report.addHtmlContent(summary.toString());
