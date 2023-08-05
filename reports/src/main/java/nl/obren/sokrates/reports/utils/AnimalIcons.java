@@ -8,6 +8,19 @@ public class AnimalIcons {
         this.size = size;
     }
 
+    public String getAnimalForMainLoc(int linesOfCode) {
+        if (linesOfCode <= 1000) return "mouse";
+        else if (linesOfCode <= 2000) return "bird";
+        else if (linesOfCode <= 5000) return "cat";
+        else if (linesOfCode <= 10000) return "dog";
+        else if (linesOfCode <= 20000) return "sheep";
+        else if (linesOfCode <= 50000) return "donkey";
+        else if (linesOfCode <= 100000) return "horse";
+        else if (linesOfCode <= 200000) return "hippo";
+        else if (linesOfCode <= 500000) return "rhino";
+        else if (linesOfCode <= 1000000) return "elephant";
+        else return getIconSvg("whale");
+    }
     public String getAnimalIconsForMainLoc(int linesOfCode) {
         if (linesOfCode <= 1000) return getIconSvg("mouse");
         else if (linesOfCode <= 2000) return getIconSvg("bird");
@@ -22,9 +35,12 @@ public class AnimalIcons {
         else return getIconSvg("whale");
     }
 
-    public String getInfo() {
+    public String getInfo(int linesOfCode) {
+        String animal = getAnimalForMainLoc(linesOfCode);
+
         StringBuilder stringBuilder = new StringBuilder();
 
+        stringBuilder.append(animal.toUpperCase() + "\n\n\n");
         stringBuilder.append("Animal icons graphically illustrate the size (lines of code), based on average weights of animals:\n\n\n");
         stringBuilder.append(" - mouse: < 1000 LOC\n");
         stringBuilder.append(" - bird: 1,000 to 2000 LOC\n");

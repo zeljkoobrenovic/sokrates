@@ -223,9 +223,9 @@ public class LogicalComponentsReportGenerator {
         report.startSubSection("Yearly File Updates Trend per Components", "The number of file changes in commits");
         report.addContentInDiv(ReportConstants.ANIMATION_SVG_ICON, "display: inline-block; vertical-align: middle; margin: 4px;");
         report.addHtmlContent("animated commit history: ");
-        report.addNewTabLink("all time cumulative", "visuals/racing_charts_component_commits_" + sectionIndex + ".html?tickDuration=1200");
+        report.addNewTabLink("all time cumulative", "visuals/racing_charts_component_commits_" + sectionIndex + ".html?tickDuration=600");
         report.addHtmlContent(" | ");
-        report.addNewTabLink("12 months window", "visuals/racing_charts_component_commits_12_months_window_" + sectionIndex + ".html?tickDuration=1200");
+        report.addNewTabLink("12 months window", "visuals/racing_charts_component_commits_12_months_window_" + sectionIndex + ".html?tickDuration=600");
 
         report.startTable();
         report.startTableRow();

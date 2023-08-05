@@ -283,9 +283,9 @@ public class LandscapeRepositoriesReport {
         report.addHtmlContent(" | ");
         report.addNewTabLink("tree map", "visuals/tree_map_repositories_commits.html");
         report.addHtmlContent(" | ");
-        report.addNewTabLink("animated history (all time)", "visuals/racing_charts_commits_repositories.html?tickDuration=1200");
+        report.addNewTabLink("animated history (all time)", "visuals/racing_charts_commits_repositories.html?tickDuration=600");
         report.addHtmlContent(" | ");
-        report.addNewTabLink("animated history (12 months window)", "visuals/racing_charts_commits_window_repositories.html?tickDuration=1200");
+        report.addNewTabLink("animated history (12 months window)", "visuals/racing_charts_commits_window_repositories.html?tickDuration=600");
         report.addHtmlContent(" | ");
         report.addNewTabLink("data", "data/" + LandscapeDataExport.REPOSITORIES_DATA_FILE_NAME);
         report.endDiv();
@@ -738,7 +738,8 @@ public class LandscapeRepositoriesReport {
         report.startTableRow("white-space: nowrap;" + (DateUtils.isCommittedLessThanDaysAgo(latestCommitDate, 90) ? ""
                 : (DateUtils.isCommittedLessThanDaysAgo(latestCommitDate, 180) ? "color:#b0b0b0" : "color:#c3c3c3")));
         AnimalIcons animalIcons = new AnimalIcons(42);
-        String icon = "<div style='cursor: help' title='" + animalIcons.getInfo() + "'>" + animalIcons.getAnimalIconsForMainLoc(analysisResults.getMainAspectAnalysisResults().getLinesOfCode()) + "</div>";
+        int linesOfCode = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
+        String icon = "<div style='cursor: help' title='" + animalIcons.getInfo(linesOfCode) + "'>" + animalIcons.getAnimalIconsForMainLoc(linesOfCode) + "</div>";
         report.addTableCell(icon, "text-align: center");
         report.addTableCell("<a href='" + this.getRepositoryReportUrl(repositoryAnalysis) + "' target='_blank'>"
                 + "<div>" + metadata.getName() + "</div></a>", "overflow: hidden; white-space: nowrap; vertical-align: middle; min-width: 400px; max-width: 400px");

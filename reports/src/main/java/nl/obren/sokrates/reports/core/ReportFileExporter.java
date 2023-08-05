@@ -112,7 +112,8 @@ public class ReportFileExporter {
         boolean hasLinks = metadata.getLinks().size() > 0;
         indexReport.addContentInDiv("", "height; 10px; border-top: 1px solid #ccc; margin-top: " + (hasLinks ? 6 : 0) + "px; margin-bottom: 6px;");
 
-        int mainLoc = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
+        int linesOfCodeMain = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
+        int mainLoc = linesOfCodeMain;
         int mainFilesCount = analysisResults.getMainAspectAnalysisResults().getFilesCount();
         int testLoc = analysisResults.getTestAspectAnalysisResults().getLinesOfCode();
         int secondaryLoc = analysisResults.getBuildAndDeployAspectAnalysisResults().getLinesOfCode()
@@ -143,7 +144,7 @@ public class ReportFileExporter {
         indexReport.endDiv();
         StringBuilder icons = new StringBuilder("");
         AnimalIcons animalIcons = new AnimalIcons(70);
-        String icon = "<div style='cursor: help' title='" + animalIcons.getInfo() + "'>" + animalIcons.getAnimalIconsForMainLoc(analysisResults.getMainAspectAnalysisResults().getLinesOfCode()) + "</div>";
+        String icon = "<div style='cursor: help' title='" + animalIcons.getInfo(linesOfCodeMain) + "'>" + animalIcons.getAnimalIconsForMainLoc(linesOfCodeMain) + "</div>";
         addIconsMainCode(analysisResults, icons);
         indexReport.startDiv("margin-left: 0px; border-left: 8px solid " + MAIN_LOC_COLOR + "; margin-top: -50px; padding-top: 32px; margin-bottom: 10px; padding-left: 9px; padding-bottom: 10px");
         indexReport.startTable("margin-bottom: -30px");
@@ -339,10 +340,10 @@ public class ReportFileExporter {
             report.addNewTabLink("Duplication Graph", "visuals/duplication_dependencies_" + index[0] + ".svg");
             report.endTableCell();
             report.startTableCell("text-align: center");
-            report.addNewTabLink("All Time", "visuals/racing_charts_component_commits_" + index[0] + ".html");
+            report.addNewTabLink("All Time", "visuals/racing_charts_component_commits_" + index[0] + ".html?tickDuration=600");
             report.endTableCell();
             report.startTableCell("text-align: center");
-            report.addNewTabLink("12 Months", "visuals/racing_charts_component_commits_12_months_window_" + index[0] + ".html");
+            report.addNewTabLink("12 Months", "visuals/racing_charts_component_commits_12_months_window_" + index[0] + ".html?tickDuration=600");
             report.endTableCell();
             report.endTableRow();
         });
@@ -626,16 +627,11 @@ public class ReportFileExporter {
 
         if (showReport) {
             indexReport.addHtmlContent("<a target='_blank' style='text-decoration: none' href=\"" + reportFileName + "\">");
-            indexReport.addHtmlContent("<div class='group' style='padding: 10px; margin: 10px; width: 180px; height: 200px; text-align: center; display: inline-block; vertical-align: top'>");
-            indexReport.startDiv("font-size:90%; color:deepskyblue");
-            indexReport.addHtmlContent("Analysis Report");
+            indexReport.addHtmlContent("<div class='group' style='border-radius: 8px; padding: 0px 20px 5px 20px; margin: 10px; width: 130px; height: 175px; text-align: center; display: inline-block; vertical-align: top'>");
         } else {
-            indexReport.addHtmlContent("<div class='group' style='padding: 10px; margin: 10px; width: 180px; height: 200px; text-align: center; display: inline-block; vertical-align: top; opacity: 0.4'>");
-            indexReport.startDiv("font-size:90%;");
-            indexReport.addHtmlContent("Analysis Report");
+            indexReport.addHtmlContent("<div class='group' style='border-radius: 8px; padding: 0px 20px 5px 20px; margin: 10px; width: 130px; height: 175px; text-align: center; display: inline-block; vertical-align: top; opacity: 0.4'>");
         }
 
-        indexReport.endDiv();
         indexReport.startDiv("padding: 20px;");
         if (StringUtils.isNotBlank(report[2])) {
             indexReport.addHtmlContent(getIconSvg(report[2]));
