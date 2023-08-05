@@ -23,7 +23,7 @@ public class FileTemporalDependenciesReportGenerator {
     private static final Log LOG = LogFactory.getLog(FileTemporalDependenciesReportGenerator.class);
 
     private final CodeAnalysisResults codeAnalysisResults;
-    private int graphCounter = 1;
+    // private int graphCounter = 1;
     private File reportsFolder;
 
     public FileTemporalDependenciesReportGenerator(CodeAnalysisResults codeAnalysisResults) {
@@ -70,7 +70,7 @@ public class FileTemporalDependenciesReportGenerator {
     private void addTabContentSection(RichTextReport report, String id, List<FilePairChangedTogether> filePairs, boolean active) {
         report.startTabContentSection(id, active);
         addFileChangedTogetherList(report, filePairs);
-        addDependenciesSection(report, filePairs);
+        addDependenciesSection(report, filePairs, id);
         report.endTabContentSection();
 
     }
@@ -131,16 +131,18 @@ public class FileTemporalDependenciesReportGenerator {
         report.endDiv();
     }
 
-    private void addDependenciesSection(RichTextReport report, List<FilePairChangedTogether> filePairsChangedTogether) {
+    private void addDependenciesSection(RichTextReport report, List<FilePairChangedTogether> filePairsChangedTogether, String id) {
         report.startDiv("margin: 10px;");
 
         report.startSubSection("Dependencies between files in same commits", "The number on the lines shows the number of shared commits.");
-        renderFileDependencies(report, filePairsChangedTogether);
+        renderFileDependencies(report, filePairsChangedTogether, id);
         report.endSection();
         report.endDiv();
 
         report.startDiv("margin: 10px;");
+        int index[] = {0};
         codeAnalysisResults.getLogicalDecompositionsAnalysisResults().forEach(logicalDecompositionAnalysisResults -> {
+            index[0] += 1;
             String logicalDecompositionKey = logicalDecompositionAnalysisResults.getKey();
 
             report.startSubSection("Dependencies between components in same commits (" + logicalDecompositionKey + ")",
@@ -148,7 +150,7 @@ public class FileTemporalDependenciesReportGenerator {
 
             TemporalDependenciesHelper helper = new TemporalDependenciesHelper();
             List<ComponentDependency> componentDependencies = helper.extractComponentDependencies(logicalDecompositionKey, filePairsChangedTogether);
-            renderComponentDependencies(report, componentDependencies);
+            renderComponentDependencies(report, componentDependencies, "logical_decomposition_" + index[0] + "_" + id);
 
             report.endSection();
         });
@@ -156,14 +158,14 @@ public class FileTemporalDependenciesReportGenerator {
     }
 
 
-    private void renderFileDependencies(RichTextReport report, List<FilePairChangedTogether> filePairsChangedTogether) {
+    private void renderFileDependencies(RichTextReport report, List<FilePairChangedTogether> filePairsChangedTogether, String suffix) {
         ProcessingStopwatch.start("reporting/temporal dependencies/extract dependencies");
         TemporalDependenciesHelper dependenciesHelper = new TemporalDependenciesHelper();
         List<ComponentDependency> dependencies = dependenciesHelper.extractFileDependencies(filePairsChangedTogether);
         LOG.info("Extracted " + dependencies.size() + " dependencies");
         ProcessingStopwatch.end("reporting/temporal dependencies/extract dependencies");
 
-        renderComponentDependencies(report, dependencies);
+        renderComponentDependencies(report, dependencies, "files_" + suffix);
 
         ProcessingStopwatch.start("reporting/temporal dependencies/extract dependencies with commits");
         List<ComponentDependency> dependenciesWithCommits = dependenciesHelper.extractDependenciesWithCommits(filePairsChangedTogether);
@@ -171,7 +173,7 @@ public class FileTemporalDependenciesReportGenerator {
         ProcessingStopwatch.end("reporting/temporal dependencies/extract dependencies with commits");
         if (dependenciesWithCommits.size() > 0) {
             ProcessingStopwatch.start("reporting/temporal dependencies/export graph");
-            String graphId = "file_changed_together_dependencies_with_commits_" + graphCounter++;
+            String graphId = "file_changed_together_dependencies_with_commits_components_" + suffix;
             String force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(dependenciesWithCommits, reportsFolder, graphId);
             report.addNewTabLink("Open 3D force graph (file dependencies with commits)...", force3DGraphFilePath);
             report.addLineBreak();
@@ -179,7 +181,7 @@ public class FileTemporalDependenciesReportGenerator {
         }
     }
 
-    private void renderComponentDependencies(RichTextReport report, List<ComponentDependency> dependencies) {
+    private void renderComponentDependencies(RichTextReport report, List<ComponentDependency> dependencies, String suffix) {
         if (dependencies.size() > 0) {
             ProcessingStopwatch.start("reporting/temporal dependencies/graphviz");
             GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
@@ -191,7 +193,7 @@ public class FileTemporalDependenciesReportGenerator {
             graphvizDependencyRenderer.setMaxNumberOfDependencies(50);
             String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), dependencies);
 
-            String graphId = "file_changed_together_dependencies_" + graphCounter++;
+            String graphId = "file_changed_together_dependencies_" + suffix;
             report.addGraphvizFigure(graphId, "File changed together in different components", graphvizContent);
 
             VisualizationTools.addDownloadLinks(report, graphId);
