@@ -116,7 +116,7 @@ public class SourceCodeCleanerUtils {
         return cleaner.clean(content);
     }
 
-    public static CleanedContent cleanSingeLineCommentsAndEmptyLines(String content, List<String> singleLineCommentStarts) {
+    public static CleanedContent cleanSingleLineCommentsAndEmptyLines(String content, List<String> singleLineCommentStarts) {
         content = SourceCodeCleanerUtils.normalizeLineEnds(content);
         content = SourceCodeCleanerUtils.emptyStringsLookingLikeComments(content);
 
