@@ -165,6 +165,9 @@ public class ReportFileExporter {
         indexReport.endDiv();
 
         indexReport.startTabContentSection("structure", false);
+        indexReport.addNewTabLink("<div style='display:inline-block; vertical-align: middle; margin-left: 6px; '>Open in new tab...</div> " +
+                "<div style='display:inline-block; vertical-align: middle'>" + getIconSvg("new_tab", 26) + "</div>", "Structure.html");
+        indexReport.addLineBreak();
         indexReport.addHtmlContent("<iframe src='Structure.html' style='border: none; width: 1000px; height: 1090px; overflow: hidden'></iframe>");
         indexReport.endTabContentSection();
 
