@@ -253,7 +253,7 @@ public class ReportFileExporter {
 
         indexReport.startTabContentSection("visuals", false);
         indexReport.startDiv("margin: 24px");
-        addVisuals(indexReport, analysisResults);
+        addVisuals(indexReport, analysisResults, htmlExportFolder);
         indexReport.endDiv();
         indexReport.endTabContentSection();
 
@@ -272,7 +272,7 @@ public class ReportFileExporter {
         export(htmlExportFolder, indexReport, "index.html", analysisResults.getCodeConfiguration().getAnalysis().getCustomHtmlReportHeaderFragment());
     }
 
-    private static void addVisuals(RichTextReport report, CodeAnalysisResults analysisResults) {
+    private static void addVisuals(RichTextReport report, CodeAnalysisResults analysisResults, File htmlExportFolder) {
         AspectAnalysisResults main = analysisResults.getMainAspectAnalysisResults();
         AspectAnalysisResults test = analysisResults.getTestAspectAnalysisResults();
         AspectAnalysisResults build = analysisResults.getBuildAndDeployAspectAnalysisResults();
@@ -462,7 +462,12 @@ public class ReportFileExporter {
             }
             report.endTableCell();
             report.startTableCell("text-align: center");
-            report.addNewTabLink("Duplication Graph", "visuals/duplication_dependencies_" + index[0] + ".svg");
+            String duplicationGraphPath = "visuals/duplication_dependencies_" + index[0] + ".svg";
+            if (new File(htmlExportFolder, duplicationGraphPath).exists()) {
+                report.addNewTabLink("Duplication Graph", duplicationGraphPath);
+            } else {
+                report.addContentInDiv("Duplication Graph", "color: #c0c0c0");
+            }
             report.endTableCell();
             report.startTableCell("text-align: center");
             report.addNewTabLink("All Time", "visuals/racing_charts_component_commits_" + index[0] + ".html?tickDuration=600");
