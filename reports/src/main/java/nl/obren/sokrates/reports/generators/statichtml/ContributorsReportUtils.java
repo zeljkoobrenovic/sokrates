@@ -165,7 +165,7 @@ public class ContributorsReportUtils {
     }
 
     public static String getIconSvg(String icon) {
-        return getIconSvg(icon, 80);
+        return getIconSvg(icon, 40);
     }
 
     public static String getIconSvg(String icon, int size) {

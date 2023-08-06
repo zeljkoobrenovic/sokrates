@@ -386,6 +386,59 @@ public class ReportFileExporter {
         report.endTable();
 
         report.addLineBreak();
+        report.addLevel2Header("Contributor Visualizations");
+        report.addParagraph("<a target='_blank' href='Contributors.html'>Contributor dependency</a> views:", "margin-bottom: 0;");
+        report.startTable("");
+        report.startTableRow();
+        report.startTableCell("border: none");
+        report.addHtmlContent(getIconSvg("contributors", 50));
+        report.endTableCell();
+        report.startTableCell("border: none");
+        report.startUnorderedList();
+        report.startListItem();
+        report.addHtmlContent("past 30 days: ");
+        report.addNewTabLink("2D graph", "visuals/people_dependencies_30_1.svg");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("3D graph", "visuals/people_dependencies_30_1_force_3d.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("3D graph (with files)", "visuals/people_dependencies_via_files_30_2_force_3d.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("3D graph (with shared files only)", "visuals/people_dependencies_via_files_30_2_force_3d_only_shared_file.html");
+        report.endListItem();
+        report.startListItem();
+        report.addHtmlContent("past 3 months: ");
+        report.addNewTabLink("2D graph", "visuals/people_dependencies_90_3.svg");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("3D graph", "visuals/people_dependencies_90_3_force_3d.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("3D graph (with files)", "visuals/people_dependencies_via_files_90_4_force_3d.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("3D graph (with shared files only)", "visuals/people_dependencies_via_files_90_4_force_3d_only_shared_file.html");
+        report.endListItem();
+        report.startListItem();
+        report.addHtmlContent("past 6 months: ");
+        report.addNewTabLink("2D graph", "visuals/people_dependencies_180_5.svg");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("3D graph", "visuals/people_dependencies_180_5_force_3d.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("3D graph (with files)", "visuals/people_dependencies_via_files_180_6_force_3d.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("3D graph (with shared files only)", "visuals/people_dependencies_via_files_180_6_force_3d_only_shared_file.html");
+        report.endListItem();
+        report.startListItem();
+        report.addHtmlContent("past year: ");
+        report.addNewTabLink("2D graph", "visuals/people_dependencies_365_7.svg");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("3D graph", "visuals/people_dependencies_365_7_force_3d.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("3D graph (with files)", "visuals/people_dependencies_via_files_365_8_force_3d.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("3D graph (with shared files only)", "visuals/people_dependencies_via_files_365_8_force_3d_only_shared_file.html");
+        report.endListItem();
+        report.endTableRow();
+        report.endTable();
+
+        report.addLineBreak();
         report.addLevel2Header("Components and Dependencies Visualizations");
 
         report.startTable("text-align: center");
@@ -493,37 +546,37 @@ public class ReportFileExporter {
         report.startTableCell("border: none");
         report.startUnorderedList();
         report.startListItem();
-        report.addHtmlContent("30 days: ");
+        report.addHtmlContent("past 30 days: ");
         if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days().size() > 0) {
-            report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_files_30_days.svg");
+            report.addNewTabLink("2D graph", "visuals/file_changed_together_dependencies_files_30_days.svg");
             report.addHtmlContent(" | ");
-            report.addNewTabLink("3D", "visuals/file_changed_together_dependencies_files_30_days_force_3d.html");
+            report.addNewTabLink("3D graph", "visuals/file_changed_together_dependencies_files_30_days_force_3d.html");
             report.addHtmlContent(" | ");
-            report.addNewTabLink("3D (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_30_days_force_3d.html");
+            report.addNewTabLink("3D graph (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_30_days_force_3d.html");
         } else {
             report.addHtmlContent("no dependencies");
         }
         report.endListItem();
         report.startListItem();
-        report.addHtmlContent("3 months: ");
+        report.addHtmlContent("past 3 months: ");
         if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether90Days().size() > 0) {
-            report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_files_90_days.svg");
+            report.addNewTabLink("2D graph", "visuals/file_changed_together_dependencies_files_90_days.svg");
             report.addHtmlContent(" | ");
-            report.addNewTabLink("3D", "visuals/file_changed_together_dependencies_files_90_days_force_3d.html");
+            report.addNewTabLink("3D graph", "visuals/file_changed_together_dependencies_files_90_days_force_3d.html");
             report.addHtmlContent(" | ");
-            report.addNewTabLink("3D (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_90_days_force_3d.html");
+            report.addNewTabLink("3D graph (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_90_days_force_3d.html");
         } else {
             report.addHtmlContent("no dependencies");
         }
         report.endListItem();
         report.startListItem();
-        report.addHtmlContent("6 months: ");
+        report.addHtmlContent("past 6 months: ");
         if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether180Days().size() > 0) {
-            report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_files_180_days.svg");
+            report.addNewTabLink("2D graph", "visuals/file_changed_together_dependencies_files_180_days.svg");
             report.addHtmlContent(" | ");
-            report.addNewTabLink("3D", "visuals/file_changed_together_dependencies_files_180_days_force_3d.html");
+            report.addNewTabLink("3D graph", "visuals/file_changed_together_dependencies_files_180_days_force_3d.html");
             report.addHtmlContent(" | ");
-            report.addNewTabLink("3D (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_180_days_force_3d.html");
+            report.addNewTabLink("3D graph (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_180_days_force_3d.html");
         } else {
             report.addHtmlContent("no dependencies");
         }
