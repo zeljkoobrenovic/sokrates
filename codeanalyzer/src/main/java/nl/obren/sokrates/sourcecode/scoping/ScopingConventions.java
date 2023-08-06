@@ -307,6 +307,7 @@ public class ScopingConventions {
         generatedFilesConventions.add(new Convention(".*[.](html|html|xhtml)", "[ ]*[<]meta name[=]\"generator\" .*", 31, "A generated HTML source file"));
         generatedFilesConventions.add(new Convention(".*[.](cxx|cpp|c|hxx|hpp|h)", ".*autogen include statement, do not remove.*", 31, "A generated C(PP) source file"));
         generatedFilesConventions.add(new Convention(".*/src/gen/.*", "", defaultNote));
+        generatedFilesConventions.add(new Convention(".*_generated[.][a-z]+", "", defaultNote));
     }
 
     private void addTestConventions() {
@@ -397,7 +398,7 @@ public class ScopingConventions {
         ignoredFilesConventions.add(new Convention(".*/docs/.*", "", "Documentation"));
         ignoredFilesConventions.add(new Convention(".*/bootstrap[.](js|css|less|scss|styl)", "", "Bootstrap"));
         ignoredFilesConventions.add(new Convention(".*[.]bootstrap[.](js|css|less|scss|styl)", "", "Bootstrap"));
-        ignoredFilesConventions.add(new Convention(".*/bootstrap-datepicker/.*", "", "Bootstrap"));
+        ignoredFilesConventions.add(new Convention(".*/bootstrap[-][a-z]+/.*", "", "Bootstrap"));
         ignoredFilesConventions.add(new Convention(".*/foundation[.](css|less|scss|styl)", "", "Foundation css"));
         ignoredFilesConventions.add(new Convention(".*/normalize[.](css|less|scss|styl)", "", "Normalize css"));
         ignoredFilesConventions.add(new Convention(".*/skeleton[.](css|less|scss|styl)", "", "Skeleton css"));
@@ -430,6 +431,7 @@ public class ScopingConventions {
         ignoredFilesConventions.add(new Convention(".*/yahoo-([^.]*)\\.js", "", "YUI"));
         ignoredFilesConventions.add(new Convention(".*/yui([^.]*)\\.js", "", "YUI"));
         ignoredFilesConventions.add(new Convention(".*/underscore\\.js", "", "Underscore.js"));
+        ignoredFilesConventions.add(new Convention(".*/typeahead\\.js", "", "Typeahead.js"));
 
         ignoredFilesConventions.add(new Convention(".*/Leaflet\\.Coordinates-\\d+\\.\\d+\\.\\d+\\.src\\.js", "", "Leaflet plugins"));
         ignoredFilesConventions.add(new Convention(".*/leaflet[.]draw[-]src[.]js", "", "Leaflet plugins"));
