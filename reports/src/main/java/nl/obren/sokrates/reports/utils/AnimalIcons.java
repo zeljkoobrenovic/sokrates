@@ -19,7 +19,7 @@ public class AnimalIcons {
         else if (linesOfCode <= 200000) return "hippo";
         else if (linesOfCode <= 500000) return "rhino";
         else if (linesOfCode <= 1000000) return "elephant";
-        else return getIconSvg("whale");
+        else return "whale";
     }
     public String getAnimalIconsForMainLoc(int linesOfCode) {
         if (linesOfCode <= 1000) return getIconSvg("mouse");
@@ -42,7 +42,7 @@ public class AnimalIcons {
 
         stringBuilder.append(animal.toUpperCase() + "\n\n\n");
         stringBuilder.append("Animal icons graphically illustrate the size (lines of code), based on average weights of animals:\n\n\n");
-        stringBuilder.append(" - mouse: < 1000 LOC\n");
+        stringBuilder.append(" - mouse: &lt; 1000 LOC\n");
         stringBuilder.append(" - bird: 1,000 to 2000 LOC\n");
         stringBuilder.append(" - cat: 2,000 to 5,000 LOC\n");
         stringBuilder.append(" - dog: 5,000 to 10,000 LOC\n");
@@ -52,7 +52,7 @@ public class AnimalIcons {
         stringBuilder.append(" - hippo: 100,000 to 200,000 LOC\n");
         stringBuilder.append(" - rhino: 200,000 to 500,000 LOC\n");
         stringBuilder.append(" - elephant: 500,000 to 1,000,000 LOC\n");
-        stringBuilder.append(" - whale: > 1,000,000 LOC\n");
+        stringBuilder.append(" - whale: &gt; 1,000,000 LOC\n");
 
         return stringBuilder.toString();
     }

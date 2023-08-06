@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Structure</title>
+    <style type="text/css" media="all">
+        body {
+            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+        }
+
+        a {
+        }
+
+        .tab {
+            overflow: hidden;
+            background-color: #f1f1f1;
+        }
+
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 10px 10px;
+            transition: 0.3s;
+            font-size: 15px;
+        }
+
+        .tab button:hover {
+            background-color: #ddd;
+        }
+
+        .tab button.active {
+            background-color: #ccc;
+        }
+
+        .tabcontent {
+            display: none;
+            padding: 0;
+            border: 1px solid #ccc;
+            border-top: none;
+        }
+    </style>
+    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Lato">
+    <script>
+        function openTab(evt, cityName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(cityName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+    </script>
+</head>
+<body>
+<div style="margin-left: -5px; margin-bottom: 10px">
+    <div class="tab">
+        <button class="tablinks active" onclick="openTab(event, 'structure1')">Default</button>
+        <button class="tablinks" onclick="openTab(event, 'structure2')">Hotspots</button>
+        <button class="tablinks" onclick="openTab(event, 'structure3')">Age</button>
+        <button class="tablinks" onclick="openTab(event, 'structure4')">Size</button>
+        <button class="tablinks" onclick="openTab(event, 'structure5')">Contributors</button>
+    </div>
+
+    <div id="structure1" class="tabcontent" style="display: block">
+        <iframe src="visuals/zoomable_circles_main.html"
+                style="border: none; width: calc(100%); height: calc(100vh - 80px)">
+        </iframe>
+    </div>
+
+    <div id="structure2" class="tabcontent" style="">
+        <iframe src="visuals/zoomable_circles_main_update_frequency_coloring.html"
+                style="border: none; width: calc(100%); height: calc(100vh - 80px)">
+        </iframe>
+    </div>
+
+    <div id="structure5" class="tabcontent" style="">
+        <iframe src="visuals/zoomable_circles_main_contributors_count_coloring.html"
+                style="border: none; width: calc(100%); height: calc(100vh - 80px)">
+        </iframe>
+    </div>
+
+    <div id="structure4" class="tabcontent" style="">
+        <iframe src="visuals/zoomable_circles_main_loc_coloring.html"
+                style="border: none; width: calc(100%); height: calc(100vh - 80px)">
+        </iframe>
+    </div>
+
+    <div id="structure3" class="tabcontent" style="">
+        <iframe src="visuals/zoomable_circles_main_age_coloring.html"
+                style="border: none; width: calc(100%); height: calc(100vh - 80px)">
+        </iframe>
+    </div>
+</div>
+
+</body>
+</html>

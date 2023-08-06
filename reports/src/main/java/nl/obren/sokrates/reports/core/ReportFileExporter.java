@@ -157,11 +157,16 @@ public class ReportFileExporter {
 
         indexReport.startTabGroup();
         indexReport.addTab("overview", "Overview", true);
+        indexReport.addTab("structure", "Structure", false);
         indexReport.addTab("commits", "Activity", false);
-        indexReport.addTab("reports", "All Reports", false);
+        indexReport.addTab("reports", "Reports", false);
         indexReport.addTab("visuals", "Visuals", false);
         indexReport.addTab("data", "Data", false);
         indexReport.endDiv();
+
+        indexReport.startTabContentSection("structure", false);
+        indexReport.addHtmlContent("<iframe src='Structure.html' style='border: none; width: 1000px; height: 1090px; overflow: hidden'></iframe>");
+        indexReport.endTabContentSection();
 
         indexReport.startTabContentSection("overview", true);
         indexReport.addLineBreak();
@@ -285,6 +290,87 @@ public class ReportFileExporter {
         report.endTable();
 
         report.addLineBreak();
+        report.addLineBreak();
+        report.addLevel2Header("File Visualizations");
+
+        report.addParagraph("<a target='_blank' href='FileSize.html'>File size</a> views:", "margin-bottom: 0;");
+        report.startTable("");
+        report.startTableRow();
+        report.startTableCell("border: none");
+        report.addHtmlContent(getIconSvg("file_size", 50));
+        report.endTableCell();
+        report.startTableCell("border: none");
+        report.startUnorderedList();
+        report.startListItem();
+        report.addNewTabLink("3D view of file size", "visuals/files_3d.html");
+        report.endListItem();
+        report.startListItem();
+        report.addNewTabLink("files grouped by size", "visuals/zoomable_circles_main_loc_coloring_categories.html");
+        report.endListItem();
+        report.startListItem();
+        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles_main_loc_coloring.html");
+        report.endListItem();
+        report.endUnorderedList();
+        report.endTable();
+
+        report.addParagraph("<a target='_blank' href='FileAge.html'>File age</a> views:", "margin-bottom: 0;");
+        report.startTable("");
+        report.startTableRow();
+        report.startTableCell("border: none");
+        report.addHtmlContent(getIconSvg("file_history", 50));
+        report.endTableCell();
+        report.startTableCell("border: none");
+        report.startUnorderedList();
+        report.startListItem();
+        report.addNewTabLink("files grouped by age", "visuals/zoomable_circles_main_age_coloring_categories.html");
+        report.endListItem();
+        report.startListItem();
+        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles_main_age_coloring.html");
+        report.endListItem();
+        report.endUnorderedList();
+        report.endTableCell();
+        report.endTableRow();
+        report.endTable();
+
+        report.addParagraph("<a target='_blank' href='FileChangeFrequency.html'>File change frequency</a> views:", "margin-bottom: 0;");
+        report.startTable("");
+        report.startTableRow();
+        report.startTableCell("border: none");
+        report.addHtmlContent(getIconSvg("change", 50));
+        report.endTableCell();
+        report.startTableCell("border: none");
+        report.startUnorderedList();
+        report.startListItem();
+        report.addNewTabLink("files grouped by change frequency", "visuals/zoomable_circles_main_update_frequency_coloring_categories.html");
+        report.endListItem();
+        report.startListItem();
+        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles_main_update_frequency_coloring.html");
+        report.endListItem();
+        report.endUnorderedList();
+        report.endTableCell();
+        report.endTableRow();
+        report.endTable();
+
+        report.addParagraph("<a target='_blank' href='FileChangeFrequency.html'>Contributors per file</a> views:", "margin-bottom: 0;");
+        report.startTable("");
+        report.startTableRow();
+        report.startTableCell("border: none");
+        report.addHtmlContent(getIconSvg("change", 50));
+        report.endTableCell();
+        report.startTableCell("border: none");
+        report.startUnorderedList();
+        report.startListItem();
+        report.addNewTabLink("files grouped by number of contributors", "visuals/zoomable_circles_main_contributors_count_coloring_categories.html");
+        report.endListItem();
+        report.startListItem();
+        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles_main_contributors_count_coloring.html");
+        report.endListItem();
+        report.endUnorderedList();
+        report.endTableCell();
+        report.endTableRow();
+        report.endTable();
+
+        report.addLineBreak();
         report.addLevel2Header("Components and Dependencies Visualizations");
 
         report.startTable("text-align: center");
@@ -319,22 +405,46 @@ public class ReportFileExporter {
             report.addNewTabLink("Tree Map", "visuals/tree_map_components_" + index[0] + ".html");
             report.endTableCell();
             report.startTableCell("text-align: center");
-            report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_30_days.svg");
+            if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days().size() > 0) {
+                report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_30_days.svg");
+            } else {
+                report.addContentInDiv("2D", "color: #c0c0c0");
+            }
             report.endTableCell();
             report.startTableCell("text-align: center");
-            report.addNewTabLink("3D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_30_days_force_3d.html");
+            if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days().size() > 0) {
+                report.addNewTabLink("3D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_30_days_force_3d.html");
+            } else {
+                report.addContentInDiv("3D", "color: #c0c0c0");
+            }
             report.endTableCell();
             report.startTableCell("text-align: center");
-            report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_90_days.svg");
+            if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether90Days().size() > 0) {
+                report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_90_days.svg");
+            } else {
+                report.addContentInDiv("2D", "color: #c0c0c0");
+            }
             report.endTableCell();
             report.startTableCell("text-align: center");
-            report.addNewTabLink("3D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_90_days_force_3d.html");
+            if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether90Days().size() > 0) {
+                report.addNewTabLink("3D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_90_days_force_3d.html");
+            } else {
+                report.addContentInDiv("3D", "color: #c0c0c0");
+            }
             report.endTableCell();
             report.startTableCell("text-align: center");
-            report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_180_days.svg");
+            if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether180Days().size() > 0) {
+                report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_180_days.svg");
+            } else {
+                report.addContentInDiv("2D", "color: #c0c0c0");
+            }
             report.endTableCell();
             report.startTableCell("text-align: center");
-            report.addNewTabLink("3D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_180_days_force_3d.html");
+            if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether180Days().size() > 0) {
+                report.addNewTabLink("3D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_180_days_force_3d.html");
+            } else {
+                report.addContentInDiv("3D", "color: #c0c0c0");
+            }
             report.endTableCell();
             report.startTableCell("text-align: center");
             report.addNewTabLink("Duplication Graph", "visuals/duplication_dependencies_" + index[0] + ".svg");
@@ -364,27 +474,62 @@ public class ReportFileExporter {
         report.startUnorderedList();
         report.startListItem();
         report.addHtmlContent("30 days: ");
-        report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_files_30_days.svg");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("3D", "visuals/file_changed_together_dependencies_files_30_days_force_3d.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("3D (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_30_days_force_3d.html");
+        if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days().size() > 0) {
+            report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_files_30_days.svg");
+            report.addHtmlContent(" | ");
+            report.addNewTabLink("3D", "visuals/file_changed_together_dependencies_files_30_days_force_3d.html");
+            report.addHtmlContent(" | ");
+            report.addNewTabLink("3D (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_30_days_force_3d.html");
+        } else {
+            report.addHtmlContent("no dependencies");
+        }
         report.endListItem();
         report.startListItem();
         report.addHtmlContent("3 months: ");
-        report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_files_90_days.svg");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("3D", "visuals/file_changed_together_dependencies_files_90_days_force_3d.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("3D (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_90_days_force_3d.html");
+        if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether90Days().size() > 0) {
+            report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_files_90_days.svg");
+            report.addHtmlContent(" | ");
+            report.addNewTabLink("3D", "visuals/file_changed_together_dependencies_files_90_days_force_3d.html");
+            report.addHtmlContent(" | ");
+            report.addNewTabLink("3D (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_90_days_force_3d.html");
+        } else {
+            report.addHtmlContent("no dependencies");
+        }
         report.endListItem();
         report.startListItem();
         report.addHtmlContent("6 months: ");
-        report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_files_180_days.svg");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("3D", "visuals/file_changed_together_dependencies_files_180_days_force_3d.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("3D (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_180_days_force_3d.html");
+        if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether180Days().size() > 0) {
+            report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_files_180_days.svg");
+            report.addHtmlContent(" | ");
+            report.addNewTabLink("3D", "visuals/file_changed_together_dependencies_files_180_days_force_3d.html");
+            report.addHtmlContent(" | ");
+            report.addNewTabLink("3D (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_180_days_force_3d.html");
+        } else {
+            report.addHtmlContent("no dependencies");
+        }
+        report.endListItem();
+        report.endUnorderedList();
+        report.endTableCell();
+        report.endTableRow();
+        report.endTable();
+
+        report.addLineBreak();
+        report.addLineBreak();
+        report.addLevel2Header("Units Visualizations");
+
+        report.addParagraph("Unit <a target='_blank' href='UnitSize.html'>size</a> and <a target='_blank' href='ConditionalComplexity.html'>conditional complexity</a> views:", "margin-bottom: 0;");
+        report.startTable("");
+        report.startTableRow();
+        report.startTableCell("border: none");
+        report.addHtmlContent(getIconSvg("unit_size", 50));
+        report.endTableCell();
+        report.startTableCell("border: none");
+        report.startUnorderedList();
+        report.startListItem();
+        report.addNewTabLink("3D view of unit size", "visuals/units_3d_size.html");
+        report.endListItem();
+        report.startListItem();
+        report.addNewTabLink("3D view of unit complexity", "visuals/units_3d_complexity.html");
         report.endListItem();
         report.endUnorderedList();
         report.endTableCell();
@@ -410,6 +555,10 @@ public class ReportFileExporter {
         addListsOfFilesInScope(report, "build and deployment", build.getFilesCount());
         addListsOfFilesInScope(report, "generated", generated.getFilesCount());
         addListsOfFilesInScope(report, "other", other.getFilesCount());
+        report.startListItem();
+        report.addHtmlContent("FILES: ");
+        report.addNewTabLink("History Data", "../data/text/mainFilesWithHistory.txt");
+        report.endListItem();
         report.startListItem();
         report.addHtmlContent("IGNORED FILES: ");
         report.addNewTabLink("By Extension", "../data/text/excluded_files_ignored_extensions.txt");

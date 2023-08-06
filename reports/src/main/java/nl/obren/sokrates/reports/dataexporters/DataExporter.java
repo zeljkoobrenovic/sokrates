@@ -540,6 +540,9 @@ public class DataExporter {
         this.codeCacheFolder = getCodeCacheFolder();
 
         detailedInfo("Saving details and source code cache:");
+
+        saveStructureFile();
+
         if (codeConfiguration.getAnalysis().isSaveSourceFiles()) {
             Set<SourceFile> referencedFiles = getReferencedFiles();
 
@@ -779,6 +782,18 @@ public class DataExporter {
             html = html.replace("${mccabe-index}", FormattingUtils.formatCount(unit.getMcCabeIndex()));
 
             File htmlFile = new File(fragmentsFolder, fileName + ".html");
+            FileUtils.write(htmlFile, html, UTF_8);
+
+        } catch (IOException e) {
+            LOG.warn(e);
+        }
+    }
+    private void saveStructureFile() {
+        try {
+
+            String html = HtmlTemplateUtils.getResource("/templates/Structure.html");
+
+            File htmlFile = new File(new File(reportsFolder, "html"), "Structure.html");
             FileUtils.write(htmlFile, html, UTF_8);
 
         } catch (IOException e) {
