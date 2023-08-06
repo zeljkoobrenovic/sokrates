@@ -165,9 +165,6 @@ public class ReportFileExporter {
         indexReport.endDiv();
 
         indexReport.startTabContentSection("structure", false);
-        indexReport.addNewTabLink("<div style='display:inline-block; vertical-align: middle; margin-left: 6px; '>Open in new tab...</div> " +
-                "<div style='display:inline-block; vertical-align: middle'>" + getIconSvg("new_tab", 26) + "</div>", "Structure.html");
-        indexReport.addLineBreak();
         indexReport.addHtmlContent("<iframe src='Structure.html' style='border: none; width: 1000px; height: 1090px; overflow: hidden'></iframe>");
         indexReport.endTabContentSection();
 
@@ -308,7 +305,7 @@ public class ReportFileExporter {
         report.addNewTabLink("3D view of file size", "visuals/files_3d.html");
         report.endListItem();
         report.startListItem();
-        report.addNewTabLink("files grouped by size", "visuals/zoomable_circles_main_loc_coloring_categories.html");
+        report.addNewTabLink("files grouped by size category", "visuals/zoomable_circles_main_loc_coloring_categories.html");
         report.endListItem();
         report.startListItem();
         report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles_main_loc_coloring.html");
@@ -325,10 +322,25 @@ public class ReportFileExporter {
         report.startTableCell("border: none");
         report.startUnorderedList();
         report.startListItem();
-        report.addNewTabLink("files grouped by age", "visuals/zoomable_circles_main_age_coloring_categories.html");
+        report.addNewTabLink("files grouped by age category", "visuals/zoomable_circles_main_age_coloring_categories.html");
         report.endListItem();
         report.startListItem();
         report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles_main_age_coloring.html");
+        report.endListItem();
+        report.endUnorderedList();
+        report.endTableCell();
+        report.endTableRow();
+        report.startTableRow();
+        report.startTableCell("border: none");
+        report.addHtmlContent(getIconSvg("file_history", 50));
+        report.endTableCell();
+        report.startTableCell("border: none");
+        report.startUnorderedList();
+        report.startListItem();
+        report.addNewTabLink("files grouped by freshness category", "visuals/zoomable_circles_main_freshness_coloring_categories.html");
+        report.endListItem();
+        report.startListItem();
+        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles_main_freshness_coloring.html");
         report.endListItem();
         report.endUnorderedList();
         report.endTableCell();
@@ -344,7 +356,7 @@ public class ReportFileExporter {
         report.startTableCell("border: none");
         report.startUnorderedList();
         report.startListItem();
-        report.addNewTabLink("files grouped by change frequency", "visuals/zoomable_circles_main_update_frequency_coloring_categories.html");
+        report.addNewTabLink("files grouped by change frequency category", "visuals/zoomable_circles_main_update_frequency_coloring_categories.html");
         report.endListItem();
         report.startListItem();
         report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles_main_update_frequency_coloring.html");
@@ -363,7 +375,7 @@ public class ReportFileExporter {
         report.startTableCell("border: none");
         report.startUnorderedList();
         report.startListItem();
-        report.addNewTabLink("files grouped by number of contributors", "visuals/zoomable_circles_main_contributors_count_coloring_categories.html");
+        report.addNewTabLink("files grouped by number of contributors category", "visuals/zoomable_circles_main_contributors_count_coloring_categories.html");
         report.endListItem();
         report.startListItem();
         report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles_main_contributors_count_coloring.html");

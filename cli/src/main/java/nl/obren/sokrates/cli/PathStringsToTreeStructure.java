@@ -201,21 +201,27 @@ class DirectoryNode {
         return items;
     }
 
-    public List<VisualizationItem> toVisualizationRiskColoringItems(Thresholds thresholds, Palette palette, SourceFileValueExtractor valueExtractor) {
+    public List<VisualizationItem> toVisualizationRiskColoringItems(Thresholds thresholds, Palette palette, SourceFileValueExtractor colorValueExtractor, SourceFileValueExtractor sizeValueExtractor) {
         List<VisualizationItem> items = new ArrayList<>();
 
         children.forEach(child -> {
             String name = child.value;
-            int value;
+            int valueForSize;
             if (child.getSourceFile() != null && child.getSourceFile().getRelativePath().endsWith(name)) {
-                value = valueExtractor.getValue(child.getSourceFile());
+                valueForSize = sizeValueExtractor.getValue(child.getSourceFile());
             } else {
-                value = 0;
+                valueForSize = 0;
             }
-            VisualizationItem item = new VisualizationItem(name + (value > 0 ? " (" + value + ")" : ""), value);
-            List<VisualizationItem> children = child.toVisualizationRiskColoringItems(thresholds, palette, valueExtractor);
-            if (value > 0 || children.size() > 0) {
-                item.setColor(PathStringsToTreeStructure.getColor(thresholds, palette, value));
+            int valueForColoring;
+            if (child.getSourceFile() != null && child.getSourceFile().getRelativePath().endsWith(name)) {
+                valueForColoring = colorValueExtractor.getValue(child.getSourceFile());
+            } else {
+                valueForColoring = 0;
+            }
+            VisualizationItem item = new VisualizationItem(name + (valueForColoring > 0 ? " (" + valueForColoring + ")" : ""), valueForSize);
+            List<VisualizationItem> children = child.toVisualizationRiskColoringItems(thresholds, palette, colorValueExtractor, sizeValueExtractor);
+            if (valueForColoring > 0 || children.size() > 0) {
+                item.setColor(PathStringsToTreeStructure.getColor(thresholds, palette, valueForColoring));
                 items.add(item);
                 item.getChildren().addAll(children);
             }

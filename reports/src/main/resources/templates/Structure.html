@@ -18,7 +18,9 @@
         .tab button {
             background-color: inherit;
             float: left;
-            border: none;
+            border: 1px solid lightgrey;
+            margin-left: 8px;
+            border-radius: 10px;
             outline: none;
             cursor: pointer;
             padding: 10px 10px;
@@ -61,39 +63,88 @@
 <body>
 <div style="margin-left: -5px; margin-bottom: 10px">
     <div class="tab">
-        <button class="tablinks active" onclick="openTab(event, 'structure1')">Default</button>
-        <button class="tablinks" onclick="openTab(event, 'structure2')">Hotspots</button>
-        <button class="tablinks" onclick="openTab(event, 'structure3')">Age</button>
-        <button class="tablinks" onclick="openTab(event, 'structure4')">Size</button>
-        <button class="tablinks" onclick="openTab(event, 'structure5')">Contributors</button>
+        <button class="tablinks active" onclick="openTab(event, 'default')" title="Main files: size = lines of code, no coloring">Default</button>
+        <button class="tablinks" onclick="openTab(event, 'hotspots')" title="Hotspots: size = lines of code, color = change frequency category">Hotspots</button>
+        <button class="tablinks" onclick="openTab(event, 'age')" title="Age: size = lines of code, color = age category">Age</button>
+        <button class="tablinks" onclick="openTab(event, 'freshness')" title="Freshness: size = lines of code, color = change frequency category">Freshness</button>
+        <button class="tablinks" onclick="openTab(event, 'size')" title="Size: size = lines of code, color = file size category">Size</button>
+        <button class="tablinks" onclick="openTab(event, 'contributors')" title="Contributors: size = lines of code, color = contributors category">Contributors</button>
+        <button class="tablinks" onclick="openTab(event, 'test')" title="Test files: size = lines of code, no coloring">Test Code</button>
+        <button class="tablinks" onclick="openTab(event, 'build')" title="Build and deployment code files: size = lines of code, no coloring">Build</button>
+        <button class="tablinks" onclick="openTab(event, 'generated')" title="Generated files: size = lines of code, no coloring">Generated</button>
+        <button class="tablinks" onclick="openTab(event, 'other')" title="Other files: size = lines of code, no coloring">Other</button>
     </div>
 
-    <div id="structure1" class="tabcontent" style="display: block">
+    <div style="margin-left: 900px; margin-top: -42px">
+        <a target="_blank" href="Structure.html">
+            <div style="display:inline-block; vertical-align: middle;">
+                <svg width='38px' height='38px' version="1.1" viewBox="0 0 1200 1200"
+                     xmlns="http://www.w3.org/2000/svg">
+                    <g>
+                        <path d="m345.6 985.2h432c73.199 0 132-58.801 132-132v-264c0-7.1992-4.8008-12-12-12-7.1992 0-12 4.8008-12 12v264c0 60-48 108-108 108h-432c-60 0-108-48-108-108v-432c0-60 48-108 108-108h264c7.1992 0 12-4.8008 12-12s-4.8008-12-12-12h-264c-73.199 0-132 58.801-132 132v432c0 73.199 58.797 132 132 132z"/>
+                        <path d="m974.4 458.4c7.1992 0 12-4.8008 12-12v-219.6c0-7.1992-4.8008-12-12-12h-220.8c-7.1992 0-12 4.8008-12 12s4.8008 12 12 12h190.8l-372 370.8c-4.8008 4.8008-4.8008 12 0 16.801 4.8008 4.8008 12 4.8008 16.801 0l372-370.8v190.8c1.1953 5.9961 5.9961 11.996 13.195 11.996z"/>
+                    </g>
+                </svg>
+            </div>
+        </a>
+    </div>
+
+    <div id="default" class="tabcontent" style="display: block">
         <iframe src="visuals/zoomable_circles_main.html"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
 
-    <div id="structure2" class="tabcontent" style="">
+    <div id="hotspots" class="tabcontent" style="">
         <iframe src="visuals/zoomable_circles_main_update_frequency_coloring.html"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
 
-    <div id="structure5" class="tabcontent" style="">
+    <div id="contributors" class="tabcontent" style="">
         <iframe src="visuals/zoomable_circles_main_contributors_count_coloring.html"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
 
-    <div id="structure4" class="tabcontent" style="">
+    <div id="size" class="tabcontent" style="">
         <iframe src="visuals/zoomable_circles_main_loc_coloring.html"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
 
-    <div id="structure3" class="tabcontent" style="">
+    <div id="age" class="tabcontent" style="">
         <iframe src="visuals/zoomable_circles_main_age_coloring.html"
+                style="border: none; width: calc(100%); height: calc(100vh - 80px)">
+        </iframe>
+    </div>
+
+    <div id="freshness" class="tabcontent" style="">
+        <iframe src="visuals/zoomable_circles_main_freshness_coloring.html"
+                style="border: none; width: calc(100%); height: calc(100vh - 80px)">
+        </iframe>
+    </div>
+
+    <div id="test" class="tabcontent" style="">
+        <iframe src="visuals/zoomable_circles_test.html"
+                style="border: none; width: calc(100%); height: calc(100vh - 80px)">
+        </iframe>
+    </div>
+
+    <div id="build" class="tabcontent" style="">
+        <iframe src="visuals/zoomable_circles_build.html"
+                style="border: none; width: calc(100%); height: calc(100vh - 80px)">
+        </iframe>
+    </div>
+
+    <div id="generated" class="tabcontent" style="">
+        <iframe src="visuals/zoomable_circles_generated.html"
+                style="border: none; width: calc(100%); height: calc(100vh - 80px)">
+        </iframe>
+    </div>
+
+    <div id="other" class="tabcontent" style="">
+        <iframe src="visuals/zoomable_circles_other.html"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>

@@ -400,7 +400,7 @@ public class LandscapeRepositoriesReport {
         addSummaryGraphMainLoc(report, repositoryAnalysisResults);
         report.startTable("width: 100%");
         int thresholdContributors = landscapeAnalysisResults.getConfiguration().getRepositoryThresholdContributors();
-        List<String> headers = new ArrayList<>(Arrays.asList("", "", "Repository" + (thresholdContributors > 1 ? "<br/>(" + thresholdContributors + "+&nbsp;contributors)" : ""),
+        List<String> headers = new ArrayList<>(Arrays.asList("", "Repository" + (thresholdContributors > 1 ? "<br/>(" + thresholdContributors + "+&nbsp;contributors)" : ""),
                 "Main<br/>Language", "LOC<br/>(main)*",
                 "LOC<br/>(test)", "LOC<br/>(other)",
                 "Age", "Latest<br>Commit Date",
@@ -732,7 +732,6 @@ public class LandscapeRepositoriesReport {
     private void addRepositoryRow(RichTextReport report, RepositoryAnalysisResults repositoryAnalysis) {
         CodeAnalysisResults analysisResults = repositoryAnalysis.getAnalysisResults();
         Metadata metadata = analysisResults.getMetadata();
-        String logoLink = metadata.getLogoLink();
 
         String latestCommitDate = repositoryAnalysis.getAnalysisResults().getContributorsAnalysisResults().getLatestCommitDate();
         report.startTableRow("white-space: nowrap;" + (DateUtils.isCommittedLessThanDaysAgo(latestCommitDate, 90) ? ""
