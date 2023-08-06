@@ -53,7 +53,7 @@ public class VisualBasicAnalyzer extends LanguageAnalyzer {
         content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("[ ]*End [A-Z][a-z]+[ ]*", content);
         content = SourceCodeCleanerUtils.emptyLinesMatchingPattern("[ ]*Imports .*", content);
 
-        return SourceCodeCleanerUtils.cleanSingeLineCommentsAndEmptyLines(content, Arrays.asList("'", "REM "));
+        return SourceCodeCleanerUtils.cleanSingleLineCommentsAndEmptyLines(content, Arrays.asList("'", "REM "));
     }
 
     @Override
