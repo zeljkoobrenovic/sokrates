@@ -209,6 +209,8 @@ public class ScopingConventions {
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]sh", "", "Scripts"));
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]bat", "", "Scripts"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/AndroidManifest[.]xml", "", "Scripts"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/pnpm.*[.]json", "", "pnpm configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/pnpm.*[.]ya?ml", "", "pnpm configuration"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/package[.]json", "", "npm configuration"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/package[-]lock[.]json", "", "npm configuration"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/glide[.]yml", "", "Glide configuration"));

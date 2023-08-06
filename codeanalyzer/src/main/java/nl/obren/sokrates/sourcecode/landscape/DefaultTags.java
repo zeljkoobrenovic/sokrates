@@ -24,6 +24,7 @@ public class DefaultTags {
         ciCdTags.getRepositoryTags().add(newPathPatternTagInstance("gitlab", "general/gitlab", Arrays.asList("(|.*/)[.]gitlab.*")));
 
         buildTags.getRepositoryTags().add(newPathPatternTagInstance("maven", "general/maven", Arrays.asList("(|.*/)pom[.]xml")));
+        buildTags.getRepositoryTags().add(newPathPatternTagInstance("pnpm", "general/pnpm", Arrays.asList("(|.*/)pnpm.*[.](ya?ml|json)")));
         buildTags.getRepositoryTags().add(newPathPatternTagInstance("npm", "general/npm", Arrays.asList("(|.*/)package[.]json")));
         buildTags.getRepositoryTags().add(newPathPatternTagInstance("yarn", "general/yarn", Arrays.asList("(|.*/)[.]yarnrc", "(|.*/)yarn[.]lock")));
         buildTags.getRepositoryTags().add(newPathPatternTagInstance("jest", "general/jest", Arrays.asList("(|.*/)jest[.].*")));
