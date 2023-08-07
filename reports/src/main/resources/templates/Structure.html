@@ -41,6 +41,21 @@
             padding: 0;
             border-top: none;
         }
+
+        .category-color {
+            vertical-align: top;
+            margin-top: 5px;
+            height: 6px;
+            width: 14px;
+            display: inline-block;
+        }
+
+        .legend-container {
+            margin-left: 7px;
+            margin-bottom: -7px;
+            font-size: 13px;
+            color: #a0a0a0;
+        }
     </style>
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Lato">
@@ -63,16 +78,36 @@
 <body>
 <div style="margin-left: -5px; margin-bottom: 10px">
     <div class="tab">
-        <button class="tablinks active" onclick="openTab(event, 'default')" title="Main files: size = lines of code, no coloring">Default</button>
-        <button class="tablinks" onclick="openTab(event, 'hotspots')" title="Hotspots: size = lines of code, color = change frequency category">Hotspots</button>
-        <button class="tablinks" onclick="openTab(event, 'age')" title="Age: size = lines of code, color = age category">Age</button>
-        <button class="tablinks" onclick="openTab(event, 'freshness')" title="Freshness: size = lines of code, color = change frequency category">Freshness</button>
-        <button class="tablinks" onclick="openTab(event, 'size')" title="Size: size = lines of code, color = file size category">Size</button>
-        <button class="tablinks" onclick="openTab(event, 'contributors')" title="Contributors: size = lines of code, color = contributors category">Contributors</button>
-        <button class="tablinks" onclick="openTab(event, 'test')" title="Test files: size = lines of code, no coloring">Test Code</button>
-        <button class="tablinks" onclick="openTab(event, 'build')" title="Build and deployment code files: size = lines of code, no coloring">Build</button>
-        <button class="tablinks" onclick="openTab(event, 'generated')" title="Generated files: size = lines of code, no coloring">Generated</button>
-        <button class="tablinks" onclick="openTab(event, 'other')" title="Other files: size = lines of code, no coloring">Other</button>
+        <button class="tablinks active" onclick="openTab(event, 'default')"
+                title="Main files: size = lines of code, no coloring">Default
+        </button>
+        <button class="tablinks" onclick="openTab(event, 'hotspots')"
+                title="Hotspots: size = lines of code, color = change frequency category">Hotspots
+        </button>
+        <button class="tablinks" onclick="openTab(event, 'age')"
+                title="Age: size = lines of code, color = age category">Age
+        </button>
+        <button class="tablinks" onclick="openTab(event, 'freshness')"
+                title="Freshness: size = lines of code, color = change frequency category">Freshness
+        </button>
+        <button class="tablinks" onclick="openTab(event, 'size')"
+                title="Size: size = lines of code, color = file size category">Size
+        </button>
+        <button class="tablinks" onclick="openTab(event, 'contributors')"
+                title="Contributors: size = lines of code, color = contributors category">Contributors
+        </button>
+        <button class="tablinks" onclick="openTab(event, 'test')" title="Test files: size = lines of code, no coloring">
+            Test Code
+        </button>
+        <button class="tablinks" onclick="openTab(event, 'build')"
+                title="Build and deployment code files: size = lines of code, no coloring">Build
+        </button>
+        <button class="tablinks" onclick="openTab(event, 'generated')"
+                title="Generated files: size = lines of code, no coloring">Generated
+        </button>
+        <button class="tablinks" onclick="openTab(event, 'other')"
+                title="Other files: size = lines of code, no coloring">Other
+        </button>
     </div>
 
     <div style="margin-left: 900px; margin-top: -42px">
@@ -90,60 +125,175 @@
     </div>
 
     <div id="default" class="tabcontent" style="display: block">
+        <div class="legend-container">
+            <table>
+                <tr>
+                    <td>circle size = lines of code</td>
+                </tr>
+            </table>
+        </div>
         <iframe src="visuals/zoomable_circles_main.html"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
 
     <div id="hotspots" class="tabcontent" style="">
+        <div class="legend-container" slot="margin-left: 10px">
+            <table>
+                <tr>
+                    <td>&lt;5</td>
+                    <td>
+                        <div class="category-color" style="background-color: #6192c3" title="1-5"></div>
+                        <div class="category-color" style="background-color: #b0d8e9" title="6-20"></div>
+                        <div class="category-color" style="background-color: #e6f5df" title="21-50"></div>
+                        <div class="category-color" style="background-color: #f7844e" title="51-100"></div>
+                        <div class="category-color" style="background-color: #b21227" title="100+"></div>
+                    </td>
+                    <td>100+ changes</td>
+                    <td style="padding-left: 22px">circle size = lines of code</td>
+                </tr>
+            </table>
+        </div>
         <iframe src="visuals/zoomable_circles_main_update_frequency_coloring.html"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
 
     <div id="contributors" class="tabcontent" style="">
+        <div class="legend-container" slot="margin-left: 10px">
+            <table>
+                <tr>
+                    <td>1</td>
+                    <td>
+                        <div class="category-color" style="background-color: #6192c3" title="1"></div>
+                        <div class="category-color" style="background-color: #b0d8e9" title="2-5"></div>
+                        <div class="category-color" style="background-color: #e6f5df" title="6-10"></div>
+                        <div class="category-color" style="background-color: #f7844e" title="11-25"></div>
+                        <div class="category-color" style="background-color: #b21227" title="26+"></div>
+                    </td>
+                    <td>&gt;25 contributors/td>
+                    <td style="padding-left: 22px">circle size = lines of code</td>
+                </tr>
+            </table>
+        </div>
         <iframe src="visuals/zoomable_circles_main_contributors_count_coloring.html"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
 
     <div id="size" class="tabcontent" style="">
+        <div class="legend-container" slot="margin-left: 10px">
+            <table>
+                <tr>
+                    <td>&lt;100</td>
+                    <td>
+                        <div class="category-color" style="background-color: #1a9641" title="1-100"></div>
+                        <div class="category-color" style="background-color: #a6d96a" title="101-200"></div>
+                        <div class="category-color" style="background-color: #ffffbf" title="201-500"></div>
+                        <div class="category-color" style="background-color: #fdae61" title="501-1000"></div>
+                        <div class="category-color" style="background-color: #d7191c" title="1000+"></div>
+                    </td>
+                    <td>1000+ lines of code</td>
+                    <td style="padding-left: 22px">circle size = lines of code</td>
+                </tr>
+            </table>
+        </div>
         <iframe src="visuals/zoomable_circles_main_loc_coloring.html"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
 
     <div id="age" class="tabcontent" style="">
+        <div class="legend-container" slot="margin-left: 10px">
+            <table>
+                <tr>
+                    <td>&lt;30 days</td>
+                    <td>
+                        <div class="category-color" style="background-color: #fcf4cb" title="1-30"></div>
+                        <div class="category-color" style="background-color: #fff18e" title="31-90"></div>
+                        <div class="category-color" style="background-color: #ffdf44" title="91-180"></div>
+                        <div class="category-color" style="background-color: #fac831" title="181-365"></div>
+                        <div class="category-color" style="background-color: #4a3c31" title="366+"></div>
+                    </td>
+                    <td>&gt;1y old</td>
+                    <td style="padding-left: 22px">circle size = lines of code</td>
+                </tr>
+            </table>
+        </div>
         <iframe src="visuals/zoomable_circles_main_age_coloring.html"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
 
     <div id="freshness" class="tabcontent" style="">
+        <div class="legend-container" slot="margin-left: 10px">
+            <table>
+                <tr>
+                    <td>&lt;30 days</td>
+                    <td>
+                        <div class="category-color" style="background-color: #bae4b3" title="1-30"></div>
+                        <div class="category-color" style="background-color: #74c476" title="31-90"></div>
+                        <div class="category-color" style="background-color: #31a354" title="91-180"></div>
+                        <div class="category-color" style="background-color: #006d2c" title="181-365"></div>
+                        <div class="category-color" style="background-color: #041E02" title="366+"></div>
+                    </td>
+                    <td>&gt;1y ago</td>
+                    <td style="padding-left: 22px">circle size = lines of code</td>
+                </tr>
+            </table>
+        </div>
         <iframe src="visuals/zoomable_circles_main_freshness_coloring.html"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
 
     <div id="test" class="tabcontent" style="">
+        <div class="legend-container">
+            <table>
+                <tr>
+                    <td>circle size = lines of code</td>
+                </tr>
+            </table>
+        </div>
         <iframe src="visuals/zoomable_circles_test.html"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
 
     <div id="build" class="tabcontent" style="">
+        <div class="legend-container">
+            <table>
+                <tr>
+                    <td>circle size = lines of code</td>
+                </tr>
+            </table>
+        </div>
         <iframe src="visuals/zoomable_circles_build.html"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
 
     <div id="generated" class="tabcontent" style="">
+        <div class="legend-container">
+            <table>
+                <tr>
+                    <td>circle size = lines of code</td>
+                </tr>
+            </table>
+        </div>
         <iframe src="visuals/zoomable_circles_generated.html"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
 
     <div id="other" class="tabcontent" style="">
+        <div class="legend-container">
+            <table>
+                <tr>
+                    <td>circle size = lines of code</td>
+                </tr>
+            </table>
+        </div>
         <iframe src="visuals/zoomable_circles_other.html"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
