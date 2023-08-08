@@ -140,6 +140,9 @@ public class ReportFileExporter {
             addInfoBlockWithColor(indexReport, FormattingUtils.getFormattedPercentage(100 - oldPerc) + "%", "new main code", "1 year (" + FormattingUtils.getSmallTextForNumber(mainLoc - old) + " LOC)", MAIN_LOC_FRESH_COLOR, "", "new", "FileAge.html");
             int recentContributors = (int) analysisResults.getContributorsAnalysisResults().getContributors().stream().filter(c -> c.getCommitsCount30Days() > 0).count();
             addInfoBlockWithColor(indexReport, FormattingUtils.getSmallTextForNumber(recentContributors), "recent contributors", "past 30 days", PEOPLE_COLOR, "", "contributors", "Contributors.html");
+            int ageInDays = analysisResults.getFilesHistoryAnalysisResults().getAgeInDays();
+            String age = ageInDays < 365 ? "<1y" : (int) Math.round(ageInDays / 365.0) + "y";
+            addInfoBlockWithColor(indexReport, age, "age", FormattingUtils.formatCount(ageInDays) + " days", PEOPLE_COLOR, "", "file_history", "FileAge.html");
         }
         indexReport.endDiv();
         StringBuilder icons = new StringBuilder("");
@@ -305,6 +308,23 @@ public class ReportFileExporter {
         report.addNewTabLink("3D view of file size", "visuals/files_3d.html");
         report.endListItem();
         report.startListItem();
+        report.addNewTabLink("files grouped by size category", "visuals/zoomable_circles_main_loc_coloring_categories.html");
+        report.endListItem();
+        report.startListItem();
+        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles_main_loc_coloring.html");
+        report.endListItem();
+        report.endUnorderedList();
+        report.endTable();
+
+        report.addParagraph("<a target='_blank' href='Duplication.html'>Duplication</a> views:", "margin-bottom: 0;");
+        report.startTable("");
+        report.startTableRow();
+        report.startTableCell("border: none");
+        report.addHtmlContent(getIconSvg("duplication", 50));
+        report.endTableCell();
+        report.startTableCell("border: none");
+        report.startUnorderedList();
+        report.startListItem();
         report.addNewTabLink("2D graph of duplication among files", "visuals/duplication_among_files.svg");
         report.endListItem();
         report.startListItem();
@@ -312,12 +332,6 @@ public class ReportFileExporter {
         report.endListItem();
         report.startListItem();
         report.addNewTabLink("3D view of duplication among files (with duplicates)", "visuals/duplication_among_files_with_duplicates_force_3d.html");
-        report.endListItem();
-        report.startListItem();
-        report.addNewTabLink("files grouped by size category", "visuals/zoomable_circles_main_loc_coloring_categories.html");
-        report.endListItem();
-        report.startListItem();
-        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles_main_loc_coloring.html");
         report.endListItem();
         report.endUnorderedList();
         report.endTable();
