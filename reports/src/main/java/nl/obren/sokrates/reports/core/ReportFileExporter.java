@@ -305,6 +305,15 @@ public class ReportFileExporter {
         report.addNewTabLink("3D view of file size", "visuals/files_3d.html");
         report.endListItem();
         report.startListItem();
+        report.addNewTabLink("2D graph of duplication among files", "visuals/duplication_among_files.svg");
+        report.endListItem();
+        report.startListItem();
+        report.addNewTabLink("3D view of duplication among files", "visuals/duplication_among_files_force_3d.html");
+        report.endListItem();
+        report.startListItem();
+        report.addNewTabLink("3D view of duplication among files (with duplicates)", "visuals/duplication_among_files_with_duplicates_force_3d.html");
+        report.endListItem();
+        report.startListItem();
         report.addNewTabLink("files grouped by size category", "visuals/zoomable_circles_main_loc_coloring_categories.html");
         report.endListItem();
         report.startListItem();

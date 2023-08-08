@@ -4,9 +4,11 @@
 
 package nl.obren.sokrates.reports.generators.statichtml;
 
+import nl.obren.sokrates.common.renderingutils.GraphvizUtil;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.landscape.utils.Force3DGraphExporter;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.DuplicationReportUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
@@ -25,9 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class DuplicationReportGenerator {
@@ -64,7 +64,7 @@ public class DuplicationReportGenerator {
             report.addHtmlContent("<td>" + folderString + "</td>");
             boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
             report.addHtmlContent("<td>" +
-                    "<div><div style='display: inline-block; vertical-align: top; margin-top: 3px; margin-right: 4px;'>" +
+                    "<div style='white-space: nowrap;'><div style='display: inline-block; vertical-align: top; margin-top: 3px; margin-right: 4px;'>" +
                     DataImageUtils.getLangDataImageDiv30(extension) +
                     "</div><div style='display: inline-block;'>"
                     + formatDisplayStringSimple(instance.getFilesDisplayString(cacheSourceFiles))
@@ -184,6 +184,13 @@ public class DuplicationReportGenerator {
         report.addListItem("<a href='../data/text/duplicates.txt'><b>" + FormattingUtils.formatCount(duplicationAnalysisResults.getAllDuplicates().size()) + " duplicates</b></a>");
         report.endUnorderedList();
         DuplicationReportUtils.addOverallDuplication(report, duplicationAnalysisResults.getOverallDuplication());
+        export3DFileDependencies();
+        report.addHtmlContent("dependency graphs: ");
+        report.addNewTabLink("2D graph", "visuals/duplication_among_files.svg" );
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("3D graph", "visuals/duplication_among_files_force_3d.html" );
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("3D graph (with duplicates)...", "visuals/duplication_among_files_with_duplicates_force_3d.html" );
         report.endSection();
     }
 
@@ -276,7 +283,74 @@ public class DuplicationReportGenerator {
 
             report.addLineBreak();
         }
+
         ProcessingStopwatch.end(monitoringPrefix + "/rendering");
+    }
+
+    private void export3DFileDependencies() {
+        List<ComponentDependency> duplicatesAsFileDependencies = getDuplicatesAsFileDependencies();
+        new Force3DGraphExporter().export3DForceGraph(duplicatesAsFileDependencies, new File(reportsFolder, "html"), "duplication_among_files");
+        new Force3DGraphExporter().export3DForceGraph(getDuplicatesAsDependencies(), new File(reportsFolder, "html"), "duplication_among_files_with_duplicates");
+        GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
+        graphvizDependencyRenderer.setDefaultNodeFillColor("deepskyblue2");
+        graphvizDependencyRenderer.setType("graph");
+        graphvizDependencyRenderer.setArrow("--");
+        graphvizDependencyRenderer.setArrowColor("#DC143C");
+        graphvizDependencyRenderer.setMaxNumberOfDependencies(200);
+        String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), duplicatesAsFileDependencies);
+        String svgContent = GraphvizUtil.getSvgFromDot(graphvizContent);
+        try {
+            FileUtils.write(new File(reportsFolder, "html/visuals/duplication_among_files.svg"), svgContent);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private List<ComponentDependency> getDuplicatesAsDependencies() {
+        List<DuplicationInstance> duplicates = codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates();
+        List<ComponentDependency> dependencies = new ArrayList<>();
+
+        int index[] = {0};
+        duplicates.forEach(duplicate -> {
+            index[0] += 1;
+            duplicate.getDuplicatedFileBlocks().forEach(block -> {
+                ComponentDependency dependency = new ComponentDependency();
+                dependency.setFromComponent("[" + block.getSourceFile().getRelativePath() + " " + block.getStartLine() + ":" + block.getEndLine() + "]");
+                dependency.setToComponent("duplicate" + index[0] + duplicate.getDisplayContent() + "");
+                dependencies.add(dependency);
+            });
+        });
+        return dependencies;
+    }
+
+    private List<ComponentDependency> getDuplicatesAsFileDependencies() {
+        List<DuplicationInstance> duplicates = codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates();
+        Map<String, ComponentDependency> dependenciesMap = new HashMap<>();
+        List<ComponentDependency> dependencies = new ArrayList<>();
+
+        int index[] = {0};
+        duplicates.forEach(duplicate -> {
+            duplicate.getDuplicatedFileBlocks().forEach(block1 -> {
+                duplicate.getDuplicatedFileBlocks().stream().filter(block2 -> block1 != block2).forEach(block2 -> {
+                    String path1 = "[" + block1.getSourceFile().getRelativePath() + "]";
+                    String path2 = "[" + block2.getSourceFile().getRelativePath() + "]";
+                    String key1 = path1 + "::" + path2;
+                    String key2 = path2 + "::" + path1;
+
+                    if (dependenciesMap.containsKey(key1)) {
+                        dependenciesMap.get(key1).increment(duplicate.getBlockSize());
+                    } else if (dependenciesMap.containsKey(key2)) {
+                        dependenciesMap.get(key2).increment(duplicate.getBlockSize());
+                    } else {
+                        ComponentDependency dependency = new ComponentDependency(path1, path2);
+                        dependency.setCount(duplicate.getBlockSize());
+                        dependencies.add(dependency);
+                        dependenciesMap.put(key1, dependency);
+                    }
+                });
+            });
+        });
+        return dependencies;
     }
 
 
