@@ -148,6 +148,14 @@ public class DateUtils {
         return new SimpleDateFormat(DATE_FORMAT).format(calendar.getTime());
     }
 
+    public static int getAnalysisYear() {
+        Calendar calendar = Calendar.getInstance();
+
+        updateWithDateParams(calendar);
+
+        return calendar.get(Calendar.YEAR);
+    }
+
     public static Calendar getCalendar(String date) {
         Calendar calendar = Calendar.getInstance();
 

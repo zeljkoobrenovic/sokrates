@@ -9,8 +9,10 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
+import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.Collections;
@@ -29,8 +31,18 @@ public class ContributorsReportUtils {
         }
     }
 
+    private static ContributionTimeSlot findSlot(List<ContributionTimeSlot> slots, int year) {
+        for (ContributionTimeSlot slot : slots) {
+            if (slot.getTimeSlot().endsWith(year + "")) return slot;
+        }
+        return null;
+    }
+
     public static void addContributorsPerTimeSlot(RichTextReport report, List<ContributionTimeSlot> contributorsPerTimeSlot, int limit, boolean showTimeSlot, int padding) {
         Collections.sort(contributorsPerTimeSlot, (a, b) -> b.getTimeSlot().compareTo(a.getTimeSlot()));
+        int startYear = DateUtils.getAnalysisYear();
+        int endYear = startYear - limit;
+
         if (contributorsPerTimeSlot.size() > 0) {
             if (contributorsPerTimeSlot.size() > limit) {
                 contributorsPerTimeSlot = contributorsPerTimeSlot.subList(0, limit);
@@ -43,51 +55,66 @@ public class ContributorsReportUtils {
             report.startTable();
 
             report.startTableRow();
-            report.addTableCell("Commits", "border: none;");
+            report.addTableCell(getIconSvg("commits", 64), "border: none; vertical-align: bottom;");
             String style;
             if (showTimeSlot) {
                 style = "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: bottom; font-size: 80%";
             } else {
                 style = "border: none; padding: " + padding + "px; vertical-align: bottom; font-size: 80%";
             }
-            contributorsPerTimeSlot.forEach(timeSlot -> {
+            for (int year = startYear; year >= endYear; year -= 1) {
+                ContributionTimeSlot timeSlot = findSlot(contributorsPerTimeSlot, year);
                 report.startTableCell(style);
-                int count = timeSlot.getCommitsCount();
-                if (showTimeSlot) {
-                    report.addParagraph(count + "", "margin: 0px");
+                if (timeSlot != null) {
+                    int count = timeSlot.getCommitsCount();
+                    if (showTimeSlot) {
+                        report.addParagraph(count + "", "margin: 0px");
+                    } else {
+                        report.addParagraph("&nbsp;", "margin: 0px");
+                    }
+                    int height = 1 + (int) (64.0 * count / maxCommits);
+                    String title = timeSlot.getTimeSlot() + ": " + count;
+                    report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: darkgrey; height:" + height + "px'></div>");
                 } else {
-                    report.addParagraph("&nbsp;", "margin: 0px");
+                    report.addHtmlContent("<div style='width: 100%; background-color: #d0d0d0; height:1px'></div>");
                 }
-                int height = 1 + (int) (64.0 * count / maxCommits);
-                String title = timeSlot.getTimeSlot() + ": " + count;
-                report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: darkgrey; height:" + height + "px'></div>");
                 report.endTableCell();
-            });
+            }
             report.endTableRow();
 
             report.startTableRow();
-            report.addTableCell("Contributors", "border: none;");
-            contributorsPerTimeSlot.forEach(timeSlot -> {
+            report.addTableCell(getIconSvg("contributors", 64), "border: none; vertical-align: bottom;");
+            for (int year = startYear; year >= endYear; year -= 1) {
+                ContributionTimeSlot timeSlot = findSlot(contributorsPerTimeSlot, year);
                 report.startTableCell(style);
-                int count = timeSlot.getContributorsCount();
-                if (showTimeSlot) {
-                    report.addParagraph(count + "", "margin: 0px");
+                if (timeSlot != null) {
+                    int count = timeSlot.getContributorsCount();
+                    if (showTimeSlot) {
+                        report.addParagraph(count + "", "margin: 0px");
+                    } else {
+                        report.addParagraph("&nbsp;", "margin: 0px");
+                    }
+                    int height = 1 + (int) (64.0 * count / maxContributors);
+                    String title = timeSlot.getTimeSlot() + ": " + count;
+                    report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: skyblue; height:" + height + "px'></div>");
                 } else {
-                    report.addParagraph("&nbsp;", "margin: 0px");
+                    report.addHtmlContent("<div style='width: 100%; background-color: #d0d0d0; height:1px'></div>");
                 }
-                int height = 1 + (int) (64.0 * count / maxContributors);
-                String title = timeSlot.getTimeSlot() + ": " + count;
-                report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: skyblue; height:" + height + "px'></div>");
                 report.endTableCell();
-            });
+            }
             report.endTableRow();
 
             if (showTimeSlot) {
                 report.startTableRow();
                 report.addTableCell("", "border: none; ");
-                contributorsPerTimeSlot.forEach(year -> {
-                    report.addTableCell(year.getTimeSlot().replace("-", "<br>"), "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: top; font-size: 80%");
-                });
+                for (int year = startYear; year >= endYear; year -= 1) {
+                    ContributionTimeSlot timeSlot = findSlot(contributorsPerTimeSlot, year);
+                    if (timeSlot != null && (timeSlot.getCommitsCount() > 0 || timeSlot.getContributorsCount() > 0)) {
+                        report.addTableCell(year + "", "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: top; font-size: 80%");
+                    } else {
+                        report.addTableCell(year + "", "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: top; font-size: 80%; color: #c0c0c0");
+                    }
+                }
                 report.endTableRow();
             }
 

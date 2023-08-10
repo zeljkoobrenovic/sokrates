@@ -3,6 +3,7 @@ package nl.obren.sokrates.reports.generators.statichtml;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.landscape.MergeExtension;
 
 import java.util.*;
@@ -15,7 +16,7 @@ public class HistoryPerLanguageGenerator {
     private Mode mode = Mode.COMMITS;
     private List<String> extensions = null;
 
-    private int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+    private int currentYear = DateUtils.getAnalysisYear();
     private int max = 1;
     private int firstYear = 0;
     private List<HistoryPerExtension> history = new ArrayList<>();
