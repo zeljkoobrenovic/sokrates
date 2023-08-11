@@ -79,6 +79,8 @@ public class ScopingConventions {
         otherFilesConventions.add(new Convention(".*[.]mkdn", "", "Markdown files"));
         otherFilesConventions.add(new Convention(".*[.]mkdown", "", "Markdown files"));
 
+        otherFilesConventions.add(new Convention(".*[.]adoc", "", "AsciiDoc documentation"));
+
         otherFilesConventions.add(new Convention(".*[.](rst|rest|resttxt|rsttxt)", "", "reST files"));
 
         otherFilesConventions.add(new Convention(".*[.]ronn", "", "Markdown files"));
@@ -126,6 +128,7 @@ public class ScopingConventions {
         otherFilesConventions.add(new Convention(".*[.]npmrc", "", "Editor configuration"));
 
         otherFilesConventions.add(new Convention(".*[.]properties", "", "Properties"));
+        otherFilesConventions.add(new Convention(".*[.]po", "", "Properties"));
 
         otherFilesConventions.add(new Convention(".*[.]dsp", "", "Microsoft Developer Studio repository"));
 
