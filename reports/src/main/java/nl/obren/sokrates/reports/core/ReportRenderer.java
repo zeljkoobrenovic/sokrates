@@ -68,7 +68,7 @@ public class ReportRenderer {
 
         content.append(renderLogo(richTextReport));
 
-        content.append("<div style='margin-left: 12px; display: inline-block; vertical-align: middle; font-size: 120%'>" +
+        content.append("<div style='margin-left: 4px; display: inline-block; vertical-align: middle; font-size: 120%'>" +
                 richTextReport.getDisplayName() + "</div></div>\n");
 
         if (StringUtils.isNotBlank(parentUrl)) {

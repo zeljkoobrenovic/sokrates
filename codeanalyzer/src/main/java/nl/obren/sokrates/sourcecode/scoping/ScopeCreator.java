@@ -47,7 +47,8 @@ public class ScopeCreator {
 
         CodeConfiguration codeConfiguration = getCodeConfiguration(extensions);
 
-        codeConfiguration.getMetadata().setName(srcRoot.getCanonicalFile().getName());
+        String analysisName = StringUtils.capitalize(srcRoot.getCanonicalFile().getName().toLowerCase());
+        codeConfiguration.getMetadata().setName(analysisName);
 
         LOG.info("Scanning source files...");
 

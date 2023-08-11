@@ -6,6 +6,8 @@ package nl.obren.sokrates.sourcecode.landscape.init;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import nl.obren.sokrates.common.io.JsonGenerator;
+import nl.obren.sokrates.sourcecode.Link;
+import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.SokratesRepositoryLink;
 import nl.obren.sokrates.sourcecode.landscape.SubLandscapeLink;
@@ -53,9 +55,12 @@ public class LandscapeAnalysisInitiator {
             landscapeConfigFile = new File(landscapeAnalysisRoot, "config.json");
         }
 
-        if (StringUtils.isBlank(landscapeConfiguration.getMetadata().getName())) {
+        Metadata metadata = landscapeConfiguration.getMetadata();
+        if (StringUtils.isBlank(metadata.getName())) {
             try {
-                landscapeConfiguration.getMetadata().setName(analysisRoot.getCanonicalFile().getName());
+                String name = analysisRoot.getCanonicalFile().getName();
+                name = StringUtils.capitalize(name.toLowerCase());
+                metadata.setName(name);
             } catch (IOException e) {
                 e.printStackTrace();
             }
