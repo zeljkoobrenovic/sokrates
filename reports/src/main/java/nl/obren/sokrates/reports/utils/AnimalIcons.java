@@ -1,11 +1,18 @@
 package nl.obren.sokrates.reports.utils;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class AnimalIcons {
 
     int size;
 
     public AnimalIcons(int size) {
         this.size = size;
+    }
+
+    public List<String> getAnimals() {
+        return Arrays.asList(new String[]{"mouse", "bird", "cat", "dog", "sheep", "donkey", "horse", "hippo", "rhino", "elephant", "whale"});
     }
 
     public String getAnimalForMainLoc(int linesOfCode) {
@@ -21,6 +28,7 @@ public class AnimalIcons {
         else if (linesOfCode <= 1000000) return "elephant";
         else return "whale";
     }
+
     public String getAnimalIconsForMainLoc(int linesOfCode) {
         if (linesOfCode <= 1000) return getIconSvg("mouse");
         else if (linesOfCode <= 2000) return getIconSvg("bird");
@@ -38,6 +46,10 @@ public class AnimalIcons {
     public String getInfo(int linesOfCode) {
         String animal = getAnimalForMainLoc(linesOfCode);
 
+        return getInfoForAnimal(animal);
+    }
+
+    public static String getInfoForAnimal(String animal) {
         StringBuilder stringBuilder = new StringBuilder();
 
         stringBuilder.append(animal.toUpperCase() + "\n\n\n");
@@ -53,11 +65,10 @@ public class AnimalIcons {
         stringBuilder.append(" - rhino: 200,000 to 500,000 LOC\n");
         stringBuilder.append(" - elephant: 500,000 to 1,000,000 LOC\n");
         stringBuilder.append(" - whale: &gt; 1,000,000 LOC\n");
-
         return stringBuilder.toString();
     }
 
-    private String getIconSvg(String icon) {
+    public String getIconSvg(String icon) {
         String svg = HtmlTemplateUtils.getResource("/icons/" + icon + ".svg");
         svg = svg.replaceAll("height='.*?'", "height='" + size + "px'");
         svg = svg.replaceAll("width='.*?'", "width='" + size + "px'");

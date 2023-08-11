@@ -18,6 +18,7 @@ import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerat
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.*;
 import nl.obren.sokrates.reports.landscape.utils.*;
+import nl.obren.sokrates.reports.utils.AnimalIcons;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.Link;
@@ -1418,6 +1419,7 @@ public class LandscapeReportGenerator {
 
         ProcessingStopwatch.start("reporting/repositories/file age & freshness");
         addFileAgeAndFreshnessSection();
+        addZooSection();
         ProcessingStopwatch.end("reporting/repositories/file age & freshness");
 
         landscapeReport.startSubSection("<a href='repositories-short.html' target='_blank' style='text-decoration: none'>" +
@@ -1563,6 +1565,81 @@ public class LandscapeReportGenerator {
 
         addNoHistoryRow();
 
+        landscapeReport.endTable();
+
+        landscapeReport.endSection();
+    }
+
+    public void addZooSection() {
+        AnimalIcons icons = new AnimalIcons(64);
+        List<String> animals = icons.getAnimals();
+        Collections.reverse(animals);
+
+        int totalLoc = landscapeAnalysisResults.getMainLoc();
+
+        Map<String, List<RepositoryAnalysisResults>> animalCounts = new HashMap<>();
+        landscapeAnalysisResults.getRepositoryAnalysisResults().forEach(repositoryAnalysis -> {
+            String animal = icons.getAnimalForMainLoc(repositoryAnalysis.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
+            if (!animalCounts.containsKey(animal)) {
+                animalCounts.put(animal, new ArrayList<>());
+            }
+            animalCounts.get(animal).add(repositoryAnalysis);
+        });
+        int maxCount[] = {0};
+        animals.forEach(animal -> {
+            int count = animalCounts.containsKey(animal) ? animalCounts.get(animal).size() : 0;
+            maxCount[0] = Math.max(count, maxCount[0]);
+        });
+
+        landscapeReport.startSubSection("Repositories Zoo", "Size of repositories (main lines of code) as animal icons");
+        landscapeReport.startTable("font-size: 80%; margin-bottom: 6px;");
+        landscapeReport.startTableRow();
+        animals.forEach(animal -> {
+            int count = animalCounts.containsKey(animal) ? animalCounts.get(animal).size() : 0;
+            landscapeReport.startTableCell("vertical-align: bottom; border: none;" + (count > 0 ? "" : "color: grey; opacity: 0.2"));
+            int height = maxCount[0] > 0 ? (int) Math.round(64.0 * count / maxCount[0]) + 1 : 1;
+            String info = "";
+            if (count > 0) {
+                info += animalCounts.get(animal).stream()
+                        .map(a -> a.getAnalysisResults().getMetadata().getName() + " " + a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode())
+                        .collect(Collectors.joining("\n"));
+            }
+            landscapeReport.addContentInDivWithTooltip(count + "", info, "width: 100%; font-size: 32px; text-align: center");
+            landscapeReport.addContentInDiv("", "background-color: lightgrey; width: 100%; height: " + height + "px");
+            landscapeReport.endTableCell();
+        });
+        landscapeReport.endTableRow();
+        landscapeReport.startTableRow();
+        animals.forEach(animal -> {
+            int count = animalCounts.containsKey(animal) ? animalCounts.get(animal).size() : 0;
+            landscapeReport.startTableCell("border: none;" + (count > 0 ? "" : "color: grey; opacity: 0.2"));
+            landscapeReport.addContentInDivWithTooltip(icons.getIconSvg(animal), icons.getInfoForAnimal(animal), "");
+            landscapeReport.endTableCell();
+        });
+        landscapeReport.endTableRow();
+        landscapeReport.startTableRow();
+        animals.forEach(animal -> {
+            int count = animalCounts.containsKey(animal) ? animalCounts.get(animal).size() : 0;
+            landscapeReport.startTableCell("text-align: center; border: none;" + (count > 0 ? "" : "color: grey; opacity: 0.4"));
+            int loc = 0;
+            if (count > 0) {
+                loc += animalCounts.get(animal).stream()
+                        .mapToInt(a -> a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode())
+                        .sum();
+            }
+            double percentage = 100.0 * loc / totalLoc;
+            int width = (int) (64.0 * loc / totalLoc);
+            if (count > 0 && width == 0) {
+                width = 1;
+            }
+            landscapeReport.addContentInDiv(FormattingUtils.getFormattedPercentage(percentage) + "%", "font-size: 13px; ");
+            landscapeReport.startDiv("border: 1px solid #d0d0d0; width: 100%; margin-bottom: 4px; ");
+            landscapeReport.addContentInDiv("", "background-color: grey; height: 6px; width: " + width + "px");
+            landscapeReport.endDiv();
+            landscapeReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(loc), "font-size: 11px;");
+            landscapeReport.endTableCell();
+        });
+        landscapeReport.endTableRow();
         landscapeReport.endTable();
 
         landscapeReport.endSection();

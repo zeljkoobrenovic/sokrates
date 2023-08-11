@@ -315,8 +315,8 @@ public class DuplicationReportGenerator {
             index[0] += 1;
             duplicate.getDuplicatedFileBlocks().forEach(block -> {
                 ComponentDependency dependency = new ComponentDependency();
-                dependency.setFromComponent("[" + block.getSourceFile().getRelativePath() + " " + block.getStartLine() + ":" + block.getEndLine() + "]");
-                dependency.setToComponent("duplicate" + index[0] + duplicate.getDisplayContent() + "");
+                dependency.setFromComponent("[" + block.getSourceFile().getRelativePath() + "]");
+                dependency.setToComponent("duplicate" + index[0] + "");
                 dependencies.add(dependency);
             });
         });

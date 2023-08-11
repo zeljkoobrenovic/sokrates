@@ -350,18 +350,18 @@ public class LandscapeRepositoriesReport {
         int sum = repositoryAnalysisResults.stream()
                 .mapToInt(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode())
                 .sum();
-        int cummulative[] = {0};
+        int cumulative[] = {0};
         int index[] = {0};
         int maxHeight = 64;
         boolean breakPointReached[] = {false};
         int repositoriesCount = repositoryAnalysisResults.size();
         repositoryAnalysisResults.stream().limit(landscapeAnalysisResults.getConfiguration().getRepositoriesListLimit()).forEach(repositoryAnalysis -> {
             int mainLoc = repositoryAnalysis.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
-            cummulative[0] += mainLoc;
+            cumulative[0] += mainLoc;
             index[0] += 1;
             int height = (int) (1 + maxHeight * (double) mainLoc / max);
             String name = repositoryAnalysis.getAnalysisResults().getMetadata().getName();
-            double percentage = RichTextRenderingUtils.getPercentage(sum, cummulative[0]);
+            double percentage = RichTextRenderingUtils.getPercentage(sum, cumulative[0]);
             double percentageRepositories = RichTextRenderingUtils.getPercentage(repositoriesCount, index[0]);
             String color = mainLoc > 0 ? (!breakPointReached[0] && percentage >= 50 ? "blue" : "skyblue") : "lightgrey";
             if (percentage >= 50) {
@@ -370,7 +370,7 @@ public class LandscapeRepositoriesReport {
             report.addContentInDivWithTooltip("",
                     name + ": " + mainLoc + " lines of code (main)\n" +
                             "cumulative: top " + index[0] + " repositories (" + percentageRepositories + "%) = "
-                            + cummulative[0] + " LOC (" + percentage + "%)",
+                            + cumulative[0] + " LOC (" + percentage + "%)",
                     "margin: 0; padding: 0; opacity: 0.9; margin-right: 1px; background-color: " + color + "; display: inline-block; width: 8px; height: " + height + "px");
         });
         report.endDiv();
@@ -382,6 +382,7 @@ public class LandscapeRepositoriesReport {
         report.addNewTabLink("data", "data/" + LandscapeDataExport.REPOSITORIES_DATA_FILE_NAME);
         report.endDiv();
     }
+
 
     private boolean showTags() {
         for (TagGroup tagGroup : tagGroups) {

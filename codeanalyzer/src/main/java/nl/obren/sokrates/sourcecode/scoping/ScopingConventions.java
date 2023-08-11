@@ -201,6 +201,7 @@ public class ScopingConventions {
         otherFilesConventions.add(new Convention(".*changers[.]xml", "", "Changes documentation"));
         otherFilesConventions.add(new Convention(".*/resources/.*[.]xsd", "", "XSD files"));
         otherFilesConventions.add(new Convention(".*/wp[-]includes/.*", "", "WordPress includes"));
+        otherFilesConventions.add(new Convention(".*/changes[.]xml", "", "Changes log"));
     }
 
     private void addBuildAndDeploymentConventions() {
