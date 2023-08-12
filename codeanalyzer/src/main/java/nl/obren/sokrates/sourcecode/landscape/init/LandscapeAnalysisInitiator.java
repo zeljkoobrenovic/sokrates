@@ -59,7 +59,7 @@ public class LandscapeAnalysisInitiator {
         if (StringUtils.isBlank(metadata.getName())) {
             try {
                 String name = analysisRoot.getCanonicalFile().getName();
-                name = StringUtils.capitalize(name.toLowerCase());
+                name = StringUtils.capitalize(name.toLowerCase()) + " Landscape";
                 metadata.setName(name);
             } catch (IOException e) {
                 e.printStackTrace();
