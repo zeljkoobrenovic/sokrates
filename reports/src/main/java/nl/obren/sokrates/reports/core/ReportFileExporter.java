@@ -316,25 +316,28 @@ public class ReportFileExporter {
         report.endUnorderedList();
         report.endTable();
 
-        report.addParagraph("<a target='_blank' href='Duplication.html'>Duplication</a> views:", "margin-bottom: 0;");
-        report.startTable("");
-        report.startTableRow();
-        report.startTableCell("border: none");
-        report.addHtmlContent(getIconSvg("duplication", 50));
-        report.endTableCell();
-        report.startTableCell("border: none");
-        report.startUnorderedList();
-        report.startListItem();
-        report.addNewTabLink("2D graph of duplication among files", "visuals/duplication_among_files.svg");
-        report.endListItem();
-        report.startListItem();
-        report.addNewTabLink("3D view of duplication among files", "visuals/duplication_among_files_force_3d.html");
-        report.endListItem();
-        report.startListItem();
-        report.addNewTabLink("3D view of duplication among files (with duplicates)", "visuals/duplication_among_files_with_duplicates_force_3d.html");
-        report.endListItem();
-        report.endUnorderedList();
-        report.endTable();
+        boolean showDuplication = !analysisResults.getCodeConfiguration().getAnalysis().isSkipDuplication() && analysisResults.getDuplicationAnalysisResults().getAllDuplicates().size() > 0;
+        if (showDuplication) {
+            report.addParagraph("<a target='_blank' href='Duplication.html'>Duplication</a> views:", "margin-bottom: 0;");
+            report.startTable("");
+            report.startTableRow();
+            report.startTableCell("border: none");
+            report.addHtmlContent(getIconSvg("duplication", 50));
+            report.endTableCell();
+            report.startTableCell("border: none");
+            report.startUnorderedList();
+            report.startListItem();
+            report.addNewTabLink("2D graph of duplication among files", "visuals/duplication_among_files.svg");
+            report.endListItem();
+            report.startListItem();
+            report.addNewTabLink("3D view of duplication among files", "visuals/duplication_among_files_force_3d.html");
+            report.endListItem();
+            report.startListItem();
+            report.addNewTabLink("3D view of duplication among files (with duplicates)", "visuals/duplication_among_files_with_duplicates_force_3d.html");
+            report.endListItem();
+            report.endUnorderedList();
+            report.endTable();
+        }
 
         report.addParagraph("<a target='_blank' href='FileAge.html'>File age</a> views:", "margin-bottom: 0;");
         report.startTable("");
