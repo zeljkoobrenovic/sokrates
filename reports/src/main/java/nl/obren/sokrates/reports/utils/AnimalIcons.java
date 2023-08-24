@@ -14,6 +14,9 @@ public class AnimalIcons {
     public List<String> getAnimals() {
         return Arrays.asList(new String[]{"mouse", "bird", "cat", "dog", "sheep", "donkey", "horse", "hippo", "rhino", "elephant", "whale"});
     }
+    public List<String> getAnimalsLOCInfo() {
+        return Arrays.asList(new String[]{"&lt;1K", "&gt;1K", "&gt;2K", "&gt;5K", "&gt;10K", "&gt;20K", "&gt;50K", "&gt;100K", "&gt;200K", "&gt;500K", "&gt;1M"});
+    }
 
     public String getAnimalForMainLoc(int linesOfCode) {
         if (linesOfCode <= 1000) return "mouse";

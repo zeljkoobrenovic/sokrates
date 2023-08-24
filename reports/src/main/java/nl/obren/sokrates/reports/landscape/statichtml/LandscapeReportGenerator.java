@@ -1573,7 +1573,9 @@ public class LandscapeReportGenerator {
     public void addZooSection() {
         AnimalIcons icons = new AnimalIcons(64);
         List<String> animals = icons.getAnimals();
+        List<String> animalsLocInfo = icons.getAnimalsLOCInfo();
         Collections.reverse(animals);
+        Collections.reverse(animalsLocInfo);
 
         int totalLoc = landscapeAnalysisResults.getMainLoc();
 
@@ -1593,6 +1595,13 @@ public class LandscapeReportGenerator {
 
         landscapeReport.startSubSection("Repositories Zoo", "Size of repositories (main lines of code) as animal icons");
         landscapeReport.startTable("font-size: 80%; margin-bottom: 6px;");
+        landscapeReport.startTableRow();
+        animalsLocInfo.forEach(animalInfo -> {
+            landscapeReport.startTableCell("text-align: center; border: none; color: grey; opacity: 0.4");
+            landscapeReport.addContentInDiv(animalInfo);
+            landscapeReport.endTableCell();
+        });
+        landscapeReport.endTableRow();
         landscapeReport.startTableRow();
         animals.forEach(animal -> {
             int count = animalCounts.containsKey(animal) ? animalCounts.get(animal).size() : 0;
@@ -1640,6 +1649,7 @@ public class LandscapeReportGenerator {
             landscapeReport.endTableCell();
         });
         landscapeReport.endTableRow();
+
         landscapeReport.endTable();
 
         landscapeReport.endSection();
