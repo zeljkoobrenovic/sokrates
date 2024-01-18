@@ -60,6 +60,7 @@ public class LandscapeReportGenerator {
     public static final String OVERVIEW_TAB_ID = "overview";
     public static final String SUB_LANDSCAPES_TAB_ID = "sub-landscapes";
     public static final String REPOSITORIES_TAB_ID = "repositories";
+    public static final String STATS_TAB_ID = "stats";
 
     public static final String TAGS_TAB_ID = "tags";
     public static final String CONTRIBUTORS_TAB_ID = "contributors";
@@ -191,6 +192,7 @@ public class LandscapeReportGenerator {
             landscapeReport.addTab(SUB_LANDSCAPES_TAB_ID, "Sub-Landscapes (" + (level1SubLandscapes.size() == 0 ? subLandscapes.size() : level1SubLandscapes.size()) + ")", false);
         }
         landscapeReport.addTab(REPOSITORIES_TAB_ID, "Repositories (" + landscapeAnalysisResults.getFilteredRepositoryAnalysisResults().size() + ")", false);
+        landscapeReport.addTab(STATS_TAB_ID, "Statistics", false);
 
         landscapeReport.addTab(TAGS_TAB_ID, "Tags (" + customTagsMap.tagsCount() + ")", false);
         int recentContributorsCount = landscapeAnalysisResults.getRecentContributorsCount();
@@ -239,6 +241,13 @@ public class LandscapeReportGenerator {
         }
 
         landscapeReport.startTabContentSection(REPOSITORIES_TAB_ID, false);
+        LOG.info("Adding repository section...");
+        ProcessingStopwatch.start("reporting/repositories");
+        addRepositoriesSection(configuration, repositories);
+        ProcessingStopwatch.end("reporting/repositories");
+        landscapeReport.endTabContentSection();
+
+        landscapeReport.startTabContentSection(STATS_TAB_ID, false);
         ProcessingStopwatch.start("reporting/big summary");
         LOG.info("Adding big summary...");
         addBigRepositoriesSummary(landscapeAnalysisResults);
@@ -251,7 +260,7 @@ public class LandscapeReportGenerator {
 
         LOG.info("Adding repository section...");
         ProcessingStopwatch.start("reporting/repositories");
-        addRepositoriesSection(configuration, repositories);
+        addRepositoriesStatisticsSection(configuration, repositories);
         addIFrames(configuration.getiFramesRepositories());
         ProcessingStopwatch.end("reporting/repositories");
         landscapeReport.endTabContentSection();
@@ -1390,6 +1399,49 @@ public class LandscapeReportGenerator {
 
     private void addRepositoriesSection(LandscapeConfiguration configuration, List<RepositoryAnalysisResults> repositoryAnalysisResults) {
         Collections.sort(repositoryAnalysisResults, (a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode() - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
+
+        if (repositoryAnalysisResults.size() > 0) {
+            int shortLimit = configuration.getRepositoriesShortListLimit();
+            ProcessingStopwatch.start("reporting/repositories/short report");
+            new LandscapeRepositoriesReport(landscapeAnalysisResults, shortLimit, "See the full list of repositories...", "repositories.html", customTagsMap)
+                    .saveRepositoriesReport(landscapeRepositoriesReportShort, reportsFolder, repositoryAnalysisResults, tagGroups);
+            ProcessingStopwatch.end("reporting/repositories/short report");
+
+            List<NumericMetric> repositorySizes = new ArrayList<>();
+            repositoryAnalysisResults.forEach(repository -> {
+                LOG.info("Adding " + repository.getSokratesRepositoryLink().getAnalysisResultsPath());
+                CodeAnalysisResults analysisResults = repository.getAnalysisResults();
+                repositorySizes.add(new NumericMetric(analysisResults.getMetadata().getName(), analysisResults.getMainAspectAnalysisResults().getLinesOfCode()));
+            });
+
+            landscapeReport.addHtmlContent("<iframe src='repositories-short.html' frameborder=0 style='height: calc(100vh - 300px); width: 100%; margin-left: 0; margin-bottom: 0px; padding: 0;'></iframe>");
+
+            if (repositoryAnalysisResults.size() > shortLimit) {
+                ProcessingStopwatch.start("reporting/repositories/long report");
+                new LandscapeRepositoriesReport(landscapeAnalysisResults, configuration.getRepositoriesListLimit(), customTagsMap)
+                        .saveRepositoriesReport(landscapeRepositoriesReportLong, reportsFolder, repositoryAnalysisResults, tagGroups);
+                ProcessingStopwatch.end("reporting/repositories/long report");
+            }
+        }
+
+        List<RepositoryAnalysisResults> ignoredRepositoriess = landscapeAnalysisResults.getIgnoredRepositoryAnalysisResults();
+        if (ignoredRepositoriess.size() > 0) {
+            String lastUpdatedBefore = configuration.getIgnoreRepositoriesLastUpdatedBefore();
+            int thresholdContributors = configuration.getRepositoryThresholdContributors();
+            int thresholdLocMain = configuration.getRepositoryThresholdLocMain();
+            int ignoredLocMain = ignoredRepositoriess.stream().mapToInt(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
+            landscapeReport.addContentInDiv("<a href='data/ignoredRepositories.txt' target='_blank'>" + ignoredRepositoriess.size() +
+                            " repositories (" + FormattingUtils.getSmallTextForNumber(ignoredLocMain) + " lines of main code) are ignored</a> based on any of the following criteria: " +
+                            (StringUtils.isNoneBlank(lastUpdatedBefore) ? "not updated after " + lastUpdatedBefore + "; " : "") +
+                            ((thresholdContributors > 0) ? "have < " + FormattingUtils.formatCountPlural(thresholdContributors, "contributor", "contributors") + "; " : "") +
+                            (thresholdLocMain > 0 ? "have less than " + thresholdLocMain + " lines of main code" : ""),
+                    "color: grey; margin: 10px; font-size: 80%");
+        }
+
+    }
+
+    private void addRepositoriesStatisticsSection(LandscapeConfiguration configuration, List<RepositoryAnalysisResults> repositoryAnalysisResults) {
+        Collections.sort(repositoryAnalysisResults, (a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode() - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
         ProcessingStopwatch.end("reporting/repositories/preparing");
 
         ProcessingStopwatch.start("reporting/repositories/export visuals");
@@ -1421,48 +1473,6 @@ public class LandscapeReportGenerator {
         addFileAgeAndFreshnessSection();
         addZooSection();
         ProcessingStopwatch.end("reporting/repositories/file age & freshness");
-
-        landscapeReport.startSubSection("<a href='repositories-short.html' target='_blank' style='text-decoration: none'>" +
-                "All Repositories (" + repositoryAnalysisResults.size() + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "");
-        if (repositoryAnalysisResults.size() > 0) {
-            int shortLimit = configuration.getRepositoriesShortListLimit();
-            ProcessingStopwatch.start("reporting/repositories/short report");
-            new LandscapeRepositoriesReport(landscapeAnalysisResults, shortLimit, "See the full list of repositories...", "repositories.html", customTagsMap)
-                    .saveRepositoriesReport(landscapeRepositoriesReportShort, reportsFolder, repositoryAnalysisResults, tagGroups);
-            ProcessingStopwatch.end("reporting/repositories/short report");
-
-            List<NumericMetric> repositorySizes = new ArrayList<>();
-            repositoryAnalysisResults.forEach(repository -> {
-                LOG.info("Adding " + repository.getSokratesRepositoryLink().getAnalysisResultsPath());
-                CodeAnalysisResults analysisResults = repository.getAnalysisResults();
-                repositorySizes.add(new NumericMetric(analysisResults.getMetadata().getName(), analysisResults.getMainAspectAnalysisResults().getLinesOfCode()));
-            });
-
-            landscapeReport.addHtmlContent("<iframe src='repositories-short.html' frameborder=0 style='height: 600px; width: 100%; margin-left: 0; margin-bottom: 0px; padding: 0;'></iframe>");
-
-            if (repositoryAnalysisResults.size() > shortLimit) {
-                ProcessingStopwatch.start("reporting/repositories/long report");
-                new LandscapeRepositoriesReport(landscapeAnalysisResults, configuration.getRepositoriesListLimit(), customTagsMap)
-                        .saveRepositoriesReport(landscapeRepositoriesReportLong, reportsFolder, repositoryAnalysisResults, tagGroups);
-                ProcessingStopwatch.end("reporting/repositories/long report");
-            }
-        }
-
-        List<RepositoryAnalysisResults> ignoredRepositoriess = landscapeAnalysisResults.getIgnoredRepositoryAnalysisResults();
-        if (ignoredRepositoriess.size() > 0) {
-            String lastUpdatedBefore = configuration.getIgnoreRepositoriesLastUpdatedBefore();
-            int thresholdContributors = configuration.getRepositoryThresholdContributors();
-            int thresholdLocMain = configuration.getRepositoryThresholdLocMain();
-            int ignoredLocMain = ignoredRepositoriess.stream().mapToInt(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
-            landscapeReport.addContentInDiv("<a href='data/ignoredRepositories.txt' target='_blank'>" + ignoredRepositoriess.size() +
-                            " repositories (" + FormattingUtils.getSmallTextForNumber(ignoredLocMain) + " lines of main code) are ignored</a> based on any of the following criteria: " +
-                            (StringUtils.isNoneBlank(lastUpdatedBefore) ? "not updated after " + lastUpdatedBefore + "; " : "") +
-                            ((thresholdContributors > 0) ? "have < " + FormattingUtils.formatCountPlural(thresholdContributors, "contributor", "contributors") + "; " : "") +
-                            (thresholdLocMain > 0 ? "have less than " + thresholdLocMain + " lines of main code" : ""),
-                    "color: grey; margin: 10px; font-size: 80%");
-        }
-
-        landscapeReport.endSection();
 
         landscapeReport.startSubSection("<a href='repositories-extensions.html' target='_blank' style='text-decoration: none'>" +
                 "File Extension Stats</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "");

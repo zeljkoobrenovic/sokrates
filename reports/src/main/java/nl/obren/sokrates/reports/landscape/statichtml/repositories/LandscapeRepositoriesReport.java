@@ -82,6 +82,7 @@ public class LandscapeRepositoriesReport {
         report.addTab("repositories", "Size & Details", !showCommits);
         if (showCommits) {
             report.addTab("history", "History", false);
+            report.addTab("newest", "Newest", false);
         }
         report.addTab("metrics", "Metrics", false);
         if (showCommits) {
@@ -100,6 +101,7 @@ public class LandscapeRepositoriesReport {
             ProcessingStopwatch.end("reporting/repositories/" + type + "/commits");
             ProcessingStopwatch.start("reporting/repositories/" + type + "/history");
             addHistory(report, repositoryAnalysisResults);
+            addNewest(report, repositoryAnalysisResults);
             ProcessingStopwatch.end("reporting/repositories/" + type + "/history");
         }
 
@@ -201,6 +203,16 @@ public class LandscapeRepositoriesReport {
                         - a.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays());
         addSummaryGraphHistory(report, repositoryAnalysisResults);
         addHistory(report, repositoryAnalysisResults, "Commits", "blue", (slot) -> slot.getCommitsCount());
+        report.endTabContentSection();
+    }
+
+    public void addNewest(RichTextReport report, List<RepositoryAnalysisResults> repositoryAnalysisResults) {
+        report.startTabContentSection("newest", false);
+        List<RepositoryAnalysisResults> sorted = new ArrayList<>(repositoryAnalysisResults);
+        Collections.sort(sorted,
+                (a, b) -> a.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays()
+                        - b.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays());
+        addHistory(report, sorted, "Commits", "blue", (slot) -> slot.getCommitsCount());
         report.endTabContentSection();
     }
 
@@ -625,7 +637,7 @@ public class LandscapeRepositoriesReport {
             contributorsPerYear.forEach(c -> maxCommits[0] = Math.max(counter.getCount(c), maxCommits[0]));
         });
 
-        repositoriesAnalysisResults.stream().limit(limit).forEach(repositoryAnalysis -> {
+        repositoriesAnalysisResults.stream().limit(limit).filter(r -> r.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays() > 0).forEach(repositoryAnalysis -> {
             report.startTableRow("white-space: nowrap");
             CodeAnalysisResults repositoryAnalysisAnalysisResults = repositoryAnalysis.getAnalysisResults();
             String name = repositoryAnalysisAnalysisResults.getMetadata().getName();
@@ -638,8 +650,9 @@ public class LandscapeRepositoriesReport {
 
             ContributorsAnalysisResults contributorsAnalysisResults = repositoryAnalysisAnalysisResults.getContributorsAnalysisResults();
             FilesHistoryAnalysisResults filesHistoryAnalysisResults = repositoryAnalysisAnalysisResults.getFilesHistoryAnalysisResults();
-            int repositoryAgeYears = (int) Math.round(filesHistoryAnalysisResults.getAgeInDays() / 365.0);
-            String age = repositoryAgeYears == 0 ? "<1y" : repositoryAgeYears + "y";
+            int ageInDays = filesHistoryAnalysisResults.getAgeInDays();
+            int repositoryAgeYears = (int) Math.round(ageInDays / 365.0);
+            String age = repositoryAgeYears == 0 ? ageInDays + "d" : repositoryAgeYears + "y";
             report.addTableCell(age, "text-align: center; font-size: 90%");
 
             List<ContributionTimeSlot> contributorsPerYear = LandscapeReportGenerator.getContributionYears(contributorsAnalysisResults.getContributorsPerYear(), pastYears, landscapeAnalysisResults.getLatestCommitDate());
