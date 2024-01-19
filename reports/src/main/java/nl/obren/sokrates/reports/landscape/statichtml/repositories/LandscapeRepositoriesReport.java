@@ -641,6 +641,13 @@ public class LandscapeRepositoriesReport {
             report.startTableRow("white-space: nowrap");
             CodeAnalysisResults repositoryAnalysisAnalysisResults = repositoryAnalysis.getAnalysisResults();
             String name = repositoryAnalysisAnalysisResults.getMetadata().getName();
+            if (name.contains("/")) {
+                int index = name.indexOf("/");
+                String context = name.substring(0, index).trim();
+                String remainder = name.substring(index + 1).trim();
+
+                name = "<div style='font-size: 90%; color: grey'>" + context + "</div>" + "<div>" + remainder + "</div>";
+            }
             String logoLink = repositoryAnalysisAnalysisResults.getMetadata().getLogoLink();
 
             report.addTableCell(getImageWithLink(repositoryAnalysis, logoLink), "text-align: center");
