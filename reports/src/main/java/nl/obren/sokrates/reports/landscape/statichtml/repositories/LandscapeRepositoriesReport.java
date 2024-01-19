@@ -163,8 +163,10 @@ public class LandscapeRepositoriesReport {
             String logoLink = repositoryConcernData.getRepository().getAnalysisResults().getMetadata().getLogoLink();
             report.addTableCell(getImageWithLink(repositoryConcernData.getRepository(), logoLink), "text-align: center");
             String repositoryName = repositoryConcernData.getRepositoryName();
+            String name = getRepositoryDisplayHtml(repositoryName);
+
             report.addTableCell("<a href='" + this.getFeaturesReportUrl(repositoryConcernData.getRepository()) + "' target='_blank'>"
-                    + "" + repositoryName + "</a>", "");
+                    + "" + name + "</a>", "");
             concerns.stream().filter(concern -> concern.size() > 0).forEach(concern -> {
                 String key = repositoryName + "::" + concern.get(0).getConcern().getName();
                 int instancesCount = aggregator.getRepositoriesConcernMap().containsKey(key) ? aggregator.getRepositoriesConcernMap().get(key).getConcern().getNumberOfRegexLineMatches() : 0;
@@ -276,7 +278,7 @@ public class LandscapeRepositoriesReport {
             cummulative[0] += commits30d;
             index[0] += 1;
             int height = (int) (1 + maxHeight * (double) commits30d / max);
-            String name = repositoryAnalysis.getAnalysisResults().getMetadata().getName();
+            String name = getRepositoryDisplayHtml(repositoryAnalysis.getAnalysisResults().getMetadata().getName());
             double percentage = RichTextRenderingUtils.getPercentage(sum, cummulative[0]);
             double percentageRepositories = RichTextRenderingUtils.getPercentage(repositoriesCount, index[0]);
             String color = commits30d > 0 ? (!breakPointReached[0] && percentage >= 50 ? "blue" : "blue; opacity: 0.5") : "lightgrey; opacity: 0.5;";
@@ -372,7 +374,7 @@ public class LandscapeRepositoriesReport {
             cumulative[0] += mainLoc;
             index[0] += 1;
             int height = (int) (1 + maxHeight * (double) mainLoc / max);
-            String name = repositoryAnalysis.getAnalysisResults().getMetadata().getName();
+            String name = getRepositoryDisplayHtml(repositoryAnalysis.getAnalysisResults().getMetadata().getName());
             double percentage = RichTextRenderingUtils.getPercentage(sum, cumulative[0]);
             double percentageRepositories = RichTextRenderingUtils.getPercentage(repositoriesCount, index[0]);
             String color = mainLoc > 0 ? (!breakPointReached[0] && percentage >= 50 ? "blue" : "skyblue") : "lightgrey";
@@ -464,7 +466,7 @@ public class LandscapeRepositoriesReport {
         });
         repositoryAnalysisResults.stream().limit(limit).forEach(repositoryAnalysis -> {
             report.startTableRow("white-space: nowrap");
-            String name = repositoryAnalysis.getAnalysisResults().getMetadata().getName();
+            String name = getRepositoryDisplayHtml(repositoryAnalysis.getAnalysisResults().getMetadata().getName());
             String logoLink = repositoryAnalysis.getAnalysisResults().getMetadata().getLogoLink();
             report.addTableCell(getImageWithLink(repositoryAnalysis, logoLink), "text-align: center");
             report.addTableCell("<a href='" + this.getRepositoryReportUrl(repositoryAnalysis) + "' target='_blank'>"
@@ -552,7 +554,7 @@ public class LandscapeRepositoriesReport {
             }
             report.startTableRow("white-space: nowrap" + (commits90Days > 0 ? "" : "; opacity: 0.7"));
             CodeAnalysisResults repositoryAnalysisResults = repositoryAnalysis.getAnalysisResults();
-            String name = repositoryAnalysisResults.getMetadata().getName();
+            String name = getRepositoryDisplayHtml(repositoryAnalysis.getAnalysisResults().getMetadata().getName());
             String logoLink = repositoryAnalysisResults.getMetadata().getLogoLink();
 
             report.addTableCell(getImageWithLink(repositoryAnalysis, logoLink), "text-align: center");
@@ -640,14 +642,7 @@ public class LandscapeRepositoriesReport {
         repositoriesAnalysisResults.stream().limit(limit).filter(r -> r.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays() > 0).forEach(repositoryAnalysis -> {
             report.startTableRow("white-space: nowrap");
             CodeAnalysisResults repositoryAnalysisAnalysisResults = repositoryAnalysis.getAnalysisResults();
-            String name = repositoryAnalysisAnalysisResults.getMetadata().getName();
-            if (name.contains("/")) {
-                int index = name.indexOf("/");
-                String context = name.substring(0, index).trim();
-                String remainder = name.substring(index + 1).trim();
-
-                name = "<div style='font-size: 90%; color: grey'>" + context + "</div>" + "<div>" + remainder + "</div>";
-            }
+            String name = getRepositoryDisplayHtml(repositoryAnalysisAnalysisResults.getMetadata().getName());
             String logoLink = repositoryAnalysisAnalysisResults.getMetadata().getLogoLink();
 
             report.addTableCell(getImageWithLink(repositoryAnalysis, logoLink), "text-align: center");
@@ -708,6 +703,17 @@ public class LandscapeRepositoriesReport {
 
     }
 
+    private static String getRepositoryDisplayHtml(String name) {
+        if (name.contains("/")) {
+            int index = name.indexOf("/");
+            String context = name.substring(0, index).trim();
+            String remainder = name.substring(index + 1).trim();
+
+            name = "<div style='font-size: 90%; color: grey'>" + context + "</div>" + "<div>" + remainder + "</div>";
+        }
+        return name;
+    }
+
     private String getDuplicationVisual(Number duplicationPercentage) {
         if (duplicationPercentage.doubleValue() == 0) {
             return "<span style='color: grey; font-size: 70%'>not measured</span>";
@@ -761,8 +767,9 @@ public class LandscapeRepositoriesReport {
         int linesOfCode = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
         String icon = "<div style='cursor: help' title='" + animalIcons.getInfo(linesOfCode) + "'>" + animalIcons.getAnimalIconsForMainLoc(linesOfCode) + "</div>";
         report.addTableCell(icon, "text-align: center");
+        String name = getRepositoryDisplayHtml(metadata.getName());
         report.addTableCell("<a href='" + this.getRepositoryReportUrl(repositoryAnalysis) + "' target='_blank'>"
-                + "<div>" + metadata.getName() + "</div></a>", "overflow: hidden; white-space: nowrap; vertical-align: middle; min-width: 400px; max-width: 400px");
+                + "<div>" + name + "</div></a>", "overflow: hidden; white-space: nowrap; vertical-align: middle; min-width: 400px; max-width: 400px");
         AspectAnalysisResults main = analysisResults.getMainAspectAnalysisResults();
         AspectAnalysisResults test = analysisResults.getTestAspectAnalysisResults();
         AspectAnalysisResults generated = analysisResults.getGeneratedAspectAnalysisResults();
