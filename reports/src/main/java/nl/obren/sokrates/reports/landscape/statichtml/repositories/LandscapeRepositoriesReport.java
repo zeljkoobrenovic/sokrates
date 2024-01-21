@@ -575,7 +575,7 @@ public class LandscapeRepositoriesReport {
             }
             String lang = locSummary.toString().replace("> = ", ">");
             report.startTableCell("text-align: left; max-width: 32px;");
-            report.startDiv("min-width: 130px; white-space: nowrap; overflow: hidden; filter: grayscale(100%);");
+            report.startDiv("white-space: nowrap; overflow: hidden; filter: grayscale(100%);");
             report.addHtmlContent(DataImageUtils.getLangDataImageDiv30(lang));
             report.endDiv();
             report.endTableCell();
