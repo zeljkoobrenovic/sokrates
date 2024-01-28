@@ -82,7 +82,7 @@ public class LandscapeRepositoriesReport {
         report.addTab("repositories", "Size & Details", !showCommits);
         if (showCommits) {
             report.addTab("history", "History", false);
-            report.addTab("newest", "Newest", false);
+            report.addTab("newest", "Creation", false);
         }
         report.addTab("metrics", "Metrics", false);
         if (showCommits) {
@@ -214,6 +214,7 @@ public class LandscapeRepositoriesReport {
         Collections.sort(sorted,
                 (a, b) -> a.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays()
                         - b.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays());
+        addSummaryGraphNewReposPerYear(report, repositoryAnalysisResults);
         addHistory(report, sorted, "Commits", "blue", (slot) -> slot.getCommitsCount());
         report.endTabContentSection();
     }
@@ -329,6 +330,57 @@ public class LandscapeRepositoriesReport {
         report.addNewTabLink("tree map", "visuals/tree_map_repositories_age.html");
         report.addHtmlContent(" | ");
         report.addNewTabLink("data", "data/" + LandscapeDataExport.REPOSITORIES_DATA_FILE_NAME);
+        report.endDiv();
+    }
+
+    public void addSummaryGraphNewReposPerYear(RichTextReport report, List<RepositoryAnalysisResults> repositoryAnalysisResults) {
+        report.startDiv("white-space: nowrap; overflow-x: scroll; width: 100%");
+        report.addContentInDiv("repository creation per year:", "font-size: 80%; color: grey; margin-bottom: 5px;");
+
+        int yearNow = Calendar.getInstance().get(Calendar.YEAR);
+        List<List<RepositoryAnalysisResults>> perYear = new ArrayList<>();
+
+        int goingBack = 20;
+        for (int i = 0; i < goingBack; i++) {
+            int year = yearNow - i;
+            ArrayList<RepositoryAnalysisResults> yearRepos = new ArrayList<>();
+            perYear.add(yearRepos);
+
+            repositoryAnalysisResults.forEach(analysis -> {
+                String firstDate = analysis.getAnalysisResults().getFilesHistoryAnalysisResults().getFirstDate();
+                if (firstDate != null && firstDate.startsWith(year + "")) {
+                    yearRepos.add(analysis);
+                }
+            });
+        }
+
+        int max = Math.max(perYear.stream().mapToInt(p -> p.size()).max().orElse(1), 1);
+
+        int maxHeight = 64;
+
+        for (int i = 0; i < goingBack; i++) {
+            int year = yearNow - i;
+            List<RepositoryAnalysisResults> yearRepos = perYear.get(i);
+
+            int height = (int) (1 + maxHeight * (double) yearRepos.size() / max);
+            String color = "skyblue";
+            String info = year + ": " + yearRepos.size() + " repos";
+
+            info += "\n\n";
+
+            info += yearRepos.stream().map(r -> r.getAnalysisResults().getMetadata().getName()).collect(Collectors.joining("\n"));
+
+            report.startDiv("display: inline-block");
+
+            report.addContentInDivWithTooltip(yearRepos.size()> 0 ? "+" + yearRepos.size() + "" : "", "",
+                    "font-size: 80%; text-align: center");
+            report.addContentInDivWithTooltip("", info,
+                    "margin: 0; padding: 0; opacity: 0.5; margin-right: 1px; background-color: " + color + "; display: inline-block; width: 44px; height: " + height + "px");
+            report.addContentInDivWithTooltip(year + "", "",
+                    "font-size: 70%; text-align: center; color: grey");
+
+            report.endDiv();
+        }
         report.endDiv();
     }
 

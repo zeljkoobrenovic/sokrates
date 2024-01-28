@@ -10,7 +10,6 @@ import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
-import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.ReportConstants;
 import nl.obren.sokrates.reports.core.RichTextReport;
@@ -21,7 +20,6 @@ import nl.obren.sokrates.reports.landscape.utils.*;
 import nl.obren.sokrates.reports.utils.AnimalIcons;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
-import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
@@ -79,7 +77,6 @@ public class LandscapeReportGenerator {
     public static final String OPEN_IN_NEW_TAB_SVG_ICON = "<svg width=\"14pt\" height=\"14pt\" version=\"1.1\" viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\">\n" +
             " <path d=\"m87.5 16.918-35.289 35.289c-1.2266 1.1836-3.1719 1.168-4.3789-0.039062s-1.2227-3.1523-0.039062-4.3789l35.289-35.289h-23.707c-1.7266 0-3.125-1.3984-3.125-3.125s1.3984-3.125 3.125-3.125h31.25c0.82812 0 1.625 0.32812 2.2109 0.91406 0.58594 0.58594 0.91406 1.3828 0.91406 2.2109v31.25c0 1.7266-1.3984 3.125-3.125 3.125s-3.125-1.3984-3.125-3.125zm-56.25 1.832h-15.633c-5.1719 0-9.3672 4.1797-9.3672 9.3516v56.305c0 5.1562 4.2422 9.3516 9.3867 9.3516h56.219c2.4922 0 4.8828-0.98437 6.6406-2.7461 1.7617-1.7617 2.75-4.1523 2.7461-6.6445v-15.613 0.003906c0-1.7266-1.3984-3.125-3.125-3.125-1.7227 0-3.125 1.3984-3.125 3.125v15.613-0.003906c0.003906 0.83594-0.32422 1.6328-0.91406 2.2227s-1.3906 0.91797-2.2227 0.91797h-56.219c-1.7148-0.007812-3.1094-1.3867-3.1367-3.1016v-56.305c0-1.7148 1.3945-3.1016 3.1172-3.1016h15.633c1.7266 0 3.125-1.3984 3.125-3.125s-1.3984-3.125-3.125-3.125z\"/>\n" +
             "</svg>";
-    ;
     private static final int BAR_WIDTH = 800;
     private static final int BAR_HEIGHT = 42;
     public static final String REPOSITORIES_COLOR = "#F1F0C0";
@@ -645,8 +642,8 @@ public class LandscapeReportGenerator {
                         (StringUtils.isNotBlank(metadata.getLogoLink())
                                 ? "<img src='" + getLogoLink(configuration.getRepositoryReportsUrlPrefix() + subLandscape.getIndexFilePath().replace("/index.html", ""), metadata.getLogoLink()) + "' " +
                                 "style='vertical-align: middle; width: 24px' " +
-                                "onerror=\"this.onerror=null;this.src='" + ReportConstants.SOKRATES_SVG_ICON_SMALL_BASE64 + "'\">"
-                                : ReportConstants.SOKRATES_SVG_ICON_SMALL) +
+                                "onerror=\"this.onerror=null;this.src='https://zeljkoobrenovic.github.io/sokrates-media/icons/landscape.png'\">"
+                                : "<img src='https://zeljkoobrenovic.github.io/sokrates-media/icons/landscape.png' style='vertical-align: middle; width: 24px'>") +
                         "</a>") : "", "text-align: center;");
 
                 landscapeReport.startTableCell();
@@ -2291,7 +2288,7 @@ public class LandscapeReportGenerator {
     }
 
     private List<String> getLastContributorsPerWeek(String week, boolean first) {
-        Map<String, String> emails = new HashMap();
+        Map<String, String> emails = new HashMap<>();
 
         landscapeAnalysisResults.getContributors().stream()
                 .sorted((a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days())
@@ -2320,7 +2317,7 @@ public class LandscapeReportGenerator {
     }
 
     private List<String> getLastContributorsPerYear(String year, boolean first) {
-        Map<String, String> emails = new HashMap();
+        Map<String, String> emails = new HashMap<>();
 
         landscapeAnalysisResults.getContributors().stream()
                 .sorted((a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days())
@@ -2341,7 +2338,7 @@ public class LandscapeReportGenerator {
     }
 
     private List<String> getLastContributorsPerMonth(String month, boolean first) {
-        Map<String, String> emails = new HashMap();
+        Map<String, String> emails = new HashMap<>();
 
         landscapeAnalysisResults.getContributors().stream()
                 .sorted((a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days())
