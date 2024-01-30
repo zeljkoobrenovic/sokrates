@@ -36,21 +36,21 @@ public class LandscapeConfiguration {
     private int repositoryThresholdLocMain = 0;
 
     // Only repositories having more or equal to the given number of unique contributors will be included in the landscape report
-    private int repositoryThresholdContributors = 2;
+    private int repositoryThresholdContributors = 1;
 
     // Only repositories having more or equal to the given number of commits will be included in the landscape report
-    private int contributorThresholdCommits = 2;
+    private int contributorThresholdCommits = 1;
 
     // If not empty, only repositories before the given date (in the "YYYY-MM-dd" format) will be included in the landscape report
     private String ignoreRepositoriesLastUpdatedBefore = "";
 
-    // A maximal number of years of commit history dispalyed in the report
+    // A maximal number of years of commit history displayed in the report
     private int commitsMaxYears = 10;
 
     // A minimal number of commits days per year for a contributor to be classified as a "significant" contributor
     private int significantContributorMinCommitDaysPerYear = 10;
 
-    // If true, contributors IDs (e.g. emails) will be replaces with anonymous IDs (e.g. Contributor 1, Contributor 2)
+    // If true, contributors IDs (e.g. emails) will be replaced with anonymous IDs (e.g. Contributor 1, Contributor 2)
     private boolean anonymizeContributors = false;
 
     // If true, the repositories report will show the status of controls of each repository
@@ -98,7 +98,7 @@ public class LandscapeConfiguration {
     // If true, the contributors and commits trend will be displayed in the first "Overview" tab in addition to it being shown in the "Contributors" tab.
     private boolean showContributorsTrendsOnFirstTab = true;
 
-    // Maximal depth of indexed sub-landsacpes
+    // Maximal depth of indexed sub-landscapes
     private int maxSublandscapeDepth = 0;
 
     // A list of iFrames displayed at the start of the "Overview" tab
