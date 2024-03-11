@@ -20,3 +20,11 @@ For details and examples visit the website [sokrates.dev](https://sokrates.dev).
 The build will create two jar files:
 * the command line interface in the cli/target folder
 * the interactive explorer in the codeexplorer/target folder
+
+### Docker
+
+Build the docker image:
+> docker build -t sokrates .
+
+Run init command:
+> docker run -v "$(pwd):/code" -w /code sokrates init
