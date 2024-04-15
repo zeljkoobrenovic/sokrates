@@ -331,6 +331,8 @@ public class ScopingConventions {
         testFilesConventions.add(new Convention(".*[.][Tt]est[.].*", "", defaultNote));
         testFilesConventions.add(new Convention(".*[.][Tt]ests[.].*", "", defaultNote));
         testFilesConventions.add(new Convention(".*/UnitTests?/.*", "", defaultNote));
+        testFilesConventions.add(new Convention(".*[.]UnitTests/.*", "", defaultNote));
+        testFilesConventions.add(new Convention(".*UnitTests[.][a-zA-Z0-9_]+", "", defaultNote));
         testFilesConventions.add(new Convention(".*/IntegrationTests?/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*/UITests?/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*/src/testPlay/.*", "", defaultNote));
