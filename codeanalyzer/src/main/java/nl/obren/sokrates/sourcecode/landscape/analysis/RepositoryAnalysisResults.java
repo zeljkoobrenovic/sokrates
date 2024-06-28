@@ -16,12 +16,12 @@ public class RepositoryAnalysisResults {
     private CodeAnalysisResults analysisResults;
 
     @JsonIgnore
-    List<String> files = new ArrayList<>();
+    List<FileExport> files = new ArrayList<>();
 
     public RepositoryAnalysisResults() {
     }
 
-    public RepositoryAnalysisResults(SokratesRepositoryLink sokratesRepositoryLink, CodeAnalysisResults analysisResults, List<String> files) {
+    public RepositoryAnalysisResults(SokratesRepositoryLink sokratesRepositoryLink, CodeAnalysisResults analysisResults, List<FileExport> files) {
         this.sokratesRepositoryLink = sokratesRepositoryLink;
         this.analysisResults = analysisResults;
         this.files = files;
@@ -43,11 +43,11 @@ public class RepositoryAnalysisResults {
         this.analysisResults = analysisResults;
     }
 
-    public List<String> getFiles() {
+    public List<FileExport> getFiles() {
         return files;
     }
 
-    public void setFiles(List<String> files) {
+    public void setFiles(List<FileExport> files) {
         this.files = files;
     }
 }

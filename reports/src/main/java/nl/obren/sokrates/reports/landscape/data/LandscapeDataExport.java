@@ -1,6 +1,7 @@
 package nl.obren.sokrates.reports.landscape.data;
 
 import nl.obren.sokrates.common.io.JsonGenerator;
+import nl.obren.sokrates.common.renderingutils.ExplorerTemplate;
 import nl.obren.sokrates.common.utils.SystemUtils;
 import nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.TagMap;
@@ -9,6 +10,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
+import nl.obren.sokrates.sourcecode.landscape.analysis.FileExport;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.RepositoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
@@ -17,28 +19,68 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 public class LandscapeDataExport {
     public static final String REPOSITORIES_DATA_FILE_NAME = "repositories.txt";
+    public static final String REPOSITORIES_DATA_JSON_FILE_NAME = "repositories.json";
     private LandscapeAnalysisResults analysisResults;
     private File dataFolder;
+    private File reportsFolder;
 
     public LandscapeDataExport(LandscapeAnalysisResults analysisResults, File folder) {
         this.analysisResults = analysisResults;
         folder.mkdirs();
         dataFolder = new File(folder, "data");
         dataFolder.mkdirs();
+
+        this.reportsFolder = folder;
     }
 
     public void exportRepositories(TagMap tagMap) {
+        exportJson();
+
         exportRepositories(analysisResults.getFilteredRepositoryAnalysisResults(), REPOSITORIES_DATA_FILE_NAME);
         tagMap.keySet().forEach(key -> {
             TagStats tagStats = tagMap.getTagStats(key);
             exportRepositories(tagStats.getRepositoryAnalysisResults(), getTagRepositoriesFileName(key));
         });
         exportRepositories(analysisResults.getIgnoredRepositoryAnalysisResults(), "ignoredRepositories.txt");
+    }
+
+    private void exportJson() {
+        try {
+            List<RepositoryExport> repositoryExports = new ArrayList<>();
+            List<FileExport> files = new ArrayList<>();
+
+            analysisResults.getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
+                RepositoryExport repositoryExport = new RepositoryExport(repositoryAnalysisResults);
+                repositoryExports.add(repositoryExport);
+                repositoryAnalysisResults.getFiles().forEach(file -> {
+                    if (!files.contains(file) && !file.getPath().startsWith("- -")) {
+                        files.add(file);
+                    }
+                });
+            });
+
+
+            FileUtils.write(new File(dataFolder, REPOSITORIES_DATA_JSON_FILE_NAME), new JsonGenerator().generate(repositoryExports), UTF_8);
+            ExplorerTemplate explorerTemplate = new ExplorerTemplate();
+
+            FileUtils.write(new File(dataFolder, "files.json"), new JsonGenerator().generate(files), UTF_8);
+
+            String htmlExplorer = explorerTemplate.render("repository-explorer.html", repositoryExports);
+            FileUtils.write(new File(reportsFolder, "repositories-explorer.html"), htmlExplorer, UTF_8);
+
+            String filesExplorer = explorerTemplate.render("files-explorer.html", files);
+            FileUtils.write(new File(reportsFolder, "files-explorer.html"), filesExplorer, UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static String getTagRepositoriesFileName(String key) {

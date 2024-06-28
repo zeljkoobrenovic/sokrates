@@ -11,6 +11,7 @@ import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.landscape.*;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -50,7 +51,8 @@ public class LandscapeAnalyzer {
                 landscapeConfiguration.setRepositories(info.getRepositories());
             }
             landscapeAnalysisResults.setConfiguration(landscapeConfiguration);
-            landscapeConfiguration.getRepositories().forEach(link -> {});
+            landscapeConfiguration.getRepositories().forEach(link -> {
+            });
             landscapeConfiguration.getRepositories().forEach(link -> {
                 LOG.info("Analysing " + link.getAnalysisResultsPath() + "...");
                 CodeAnalysisResults repositoryAnalysisResults = this.getRepositoryAnalysisResults(link);
@@ -58,7 +60,7 @@ public class LandscapeAnalyzer {
                     String repositoryName = repositoryAnalysisResults.getMetadata().getName();
                     if (!landscapeConfiguration.isIncludeOnlyOneRepositoryWithSameName() || !repositoryNames.contains(repositoryName)) {
                         repositoryNames.add(repositoryName);
-                        List<String> files = this.getRepositoryFiles(link);
+                        List<FileExport> files = this.getRepositoryFiles(link);
                         landscapeAnalysisResults.getRepositoryAnalysisResults().add(new RepositoryAnalysisResults(link, repositoryAnalysisResults, files));
                         repositoryAnalysisResults.getContributorsAnalysisResults().getContributors().forEach(contributor -> {
                             contributor.getCommitDates().forEach(commitDate -> {
@@ -186,7 +188,12 @@ public class LandscapeAnalyzer {
     private CodeAnalysisResults getRepositoryAnalysisResults(File repositoryAnalysisResultsFile) {
         try {
             String json = FileUtils.readFileToString(repositoryAnalysisResultsFile, StandardCharsets.UTF_8);
-            CodeAnalysisResults codeAnalysisResults = (CodeAnalysisResults) new JsonMapper().getObject(json, CodeAnalysisResults.class);
+            CodeAnalysisResults codeAnalysisResults = new CodeAnalysisResults();
+            try {
+                codeAnalysisResults = (CodeAnalysisResults) new JsonMapper().getObject(json, CodeAnalysisResults.class);
+            } catch (RuntimeException e) {
+                e.printStackTrace();
+            }
             // codeAnalysisResults.setUnitsAnalysisResults(new UnitsAnalysisResults());
             // codeAnalysisResults.setFilesAnalysisResults(new FilesAnalysisResults());
             codeAnalysisResults.setAllDependencies(new ArrayList<>());
@@ -207,8 +214,8 @@ public class LandscapeAnalyzer {
         return null;
     }
 
-    private List<String> getRepositoryFiles(SokratesRepositoryLink sokratesRepositoryLink) {
-        List<String> files = new ArrayList<>();
+    private List<FileExport> getRepositoryFiles(SokratesRepositoryLink sokratesRepositoryLink) {
+        List<FileExport> files = new ArrayList<>();
 
         files.addAll(getRepositoryFilesByScope(sokratesRepositoryLink, "aspect_main.txt"));
         files.addAll(getRepositoryFilesByScope(sokratesRepositoryLink, "aspect_test.txt"));
@@ -221,16 +228,24 @@ public class LandscapeAnalyzer {
         return files;
     }
 
-    private List<String> getRepositoryFilesByScope(SokratesRepositoryLink sokratesRepositoryLink, String scopeFile) {
+    private List<FileExport> getRepositoryFilesByScope(SokratesRepositoryLink sokratesRepositoryLink, String scopeFile) {
         try {
             File txtDataFolder = new File(getRepositoryAnalysisFile(sokratesRepositoryLink).getParentFile(), "text");
             File mainFile = new File(txtDataFolder, scopeFile);
             if (mainFile.exists()) {
                 LOG.info(mainFile.getPath());
-                return FileUtils.readLines(mainFile, StandardCharsets.UTF_8).stream()
+                List<FileExport> fileExports = new ArrayList<>();
+                FileUtils.readLines(mainFile, StandardCharsets.UTF_8).stream()
                         .skip(1)
-                        .map(line -> line.replaceAll("\t.*", ""))
-                        .collect(Collectors.toList());
+                        .forEach(file -> {
+                            String data[] = file.split("\t");
+                            if (data.length > 1 && NumberUtils.isDigits(data[1])) {
+                                String repoName = sokratesRepositoryLink.getAnalysisResultsPath().replaceAll("/.*", "");
+                                fileExports.add(new FileExport(repoName, data[0], scopeFile, Integer.parseInt(data[1])));
+                            }
+                        });
+
+                return fileExports;
             }
         } catch (Exception e) {
             e.printStackTrace();

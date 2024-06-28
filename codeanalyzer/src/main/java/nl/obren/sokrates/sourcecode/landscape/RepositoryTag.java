@@ -2,6 +2,7 @@ package nl.obren.sokrates.sourcecode.landscape;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.common.utils.RegexUtils;
+import nl.obren.sokrates.sourcecode.landscape.analysis.FileExport;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -141,10 +142,10 @@ public class RepositoryTag {
     }
 
     @JsonIgnore
-    public boolean matchesPath(List<String> paths) {
-        for (String path : paths) {
+    public boolean matchesPath(List<FileExport> paths) {
+        for (FileExport path : paths) {
             for (String pattern : pathPatterns) {
-                if (RegexUtils.matchesEntirely(pattern, path) && !excludePath(path)) {
+                if (RegexUtils.matchesEntirely(pattern, path.getPath()) && !excludePath(path.getPath())) {
                     return true;
                 }
             }

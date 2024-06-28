@@ -353,7 +353,7 @@ public class LandscapeReportGenerator {
         Set<String> hiddenFolders = new HashSet<>();
         repositories.forEach(repository -> {
             repository.getFiles().forEach(path -> {
-                File file = new File(path);
+                File file = new File(path.getPath());
                 String name = file.getName();
                 if (name.startsWith(".")) {
                     hiddenFiles.add(name);

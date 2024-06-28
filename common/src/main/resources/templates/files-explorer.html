@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Files Explorer</title>
+    <style>
+        body {
+            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+        }
+
+        .group {
+            display: inline-block;
+            border: 1px solid lightgrey;
+            border-radius: 6px;
+            margin: 8px 18px 8px 8px;
+            padding: 5px;
+            background-color: #f8f8f8;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .icon {
+            width: 140px;
+            height: 140px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-top: 26px;
+            margin-bottom: 20px;
+            filter: grayscale(100%);
+        }
+
+        body {
+            margin: 40px;
+        }
+
+        ::placeholder {
+            color: lightgrey;
+            opacity: 1;
+        }
+
+        :-ms-input-placeholder {
+            color: lightgrey;
+        }
+
+        ::-ms-input-placeholder {
+            color: lightgrey;
+        }
+    </style>
+    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Lato">
+</head>
+<body>
+
+<div style="margin-left: 0px; margin-top: 20px; margin-bottom: 0px; color: grey">
+    <div>
+        <input id="filter" type="text" placeholder="search..."
+               style="font-size: 16px; height: 32px; width: 320px; margin-bottom: 10px"
+               onkeyup="update()">
+        <div id="search-summary" style="display: inline-block"></div>
+    </div>
+</div>
+
+<div id="content"></div>
+
+<script>
+    let importedFiles = ${data};
+
+    const importedFileMap = {};
+
+    files = [];
+
+    importedFiles.forEach(file => {
+        const key = file.repository + '/' + file.path;
+        if (!importedFileMap[key]) {
+            importedFileMap[key] = true;
+            files.push(file);
+        }
+    });
+
+    files = files.sort((a, b) => b.linesOfCode - a.linesOfCode);
+
+    const allReposMap = {};
+    let reposCount = 0;
+
+    files.forEach(file => {
+        if (!allReposMap[file.repository]) {
+            allReposMap[file.repository] = true;
+            reposCount++;
+        }
+    });
+
+    let count = files.length;
+    let mainLoc = files.map(item => item.linesOfCode).reduce((a, b) => a + b, 0);
+
+    function update() {
+        const filter = document.getElementById('filter').value.toLowerCase().trim();
+        let html = '';
+
+        const filteredData = files.filter(item => item.path && (!filter || (item.repository + ' ' + item.path).toLowerCase().includes(filter)));
+
+        const filteredReposMap = {};
+        let filteredReposCount = 0;
+
+        filteredData.forEach(file => {
+            if (!filteredReposMap[file.repository]) {
+                filteredReposMap[file.repository] = true;
+                filteredReposCount++;
+            }
+        });
+
+        let totalCount = filteredData.length;
+        let totalMainLoc = filteredData.map(item => item.linesOfCode).reduce((a, b) => a + b, 0);
+
+        document.getElementById('search-summary').innerHTML = ' = ' + filteredData.length.toLocaleString('en-US') + ' ' + (filteredData.length === 1 ? 'file' : 'files') + ' (' + totalMainLoc.toLocaleString('en-US') + ' LOC, ' + filteredReposCount + ' repositories)';
+
+        if (totalMainLoc < mainLoc) {
+            html += '<div style="width: 400px; margin: 0; padding: 0; white-space: nowrap">';
+            const w1count = Math.round(100 * totalCount / count);
+            const w2count = 100 - w1count;
+            html += '<div style="margin: 0; display: inline-block; width: ' + w1count + '%; background-color: #303030; height: 12px"></div>';
+            html += '<div style="margin: 0; display: inline-block; width: ' + w2count + '%; background-color: #c0c0c0; height: 12px"></div>';
+            html += '<div style="margin: 0; display: inline-block; font-size: 80%; width: 100px; color: grey; vertical-align: top">&nbsp;' + (totalMainLoc == 0 || w1count > 0 ? w1count : '<1') + '% of files</div>';
+            html += '</div>';
+            html += '<div style="width: 400px; margin: 0; padding: 0; white-space: nowrap">';
+            const w1repo = Math.round(100 * filteredReposCount / reposCount);
+            const w2repo = 100 - w1repo;
+            html += '<div style="margin: 0; display: inline-block; width: ' + w1repo + '%; background-color: #303030; height: 12px"></div>';
+            html += '<div style="margin: 0; display: inline-block; width: ' + w2repo + '%; background-color: #c0c0c0; height: 12px"></div>';
+            html += '<div style="margin: 0; display: inline-block; font-size: 80%; width: 100px; color: grey; vertical-align: top">&nbsp;' + (totalMainLoc == 0 || w1repo > 0 ? w1repo : '<1') + '% of repositories</div>';
+            html += '</div>';
+            html += '<div style="width: 400px; margin: 0; padding: 0; white-space: nowrap">';
+            const w1loc = Math.round(100 * totalMainLoc / mainLoc);
+            const w2loc = 100 - w1loc;
+            html += '<div style="margin: 0; display: inline-block; width: ' + w1loc + '%; background-color: skyblue; height: 12px"></div>';
+            html += '<div style="margin: 0; display: inline-block; width: ' + w2loc + '%; background-color: #c0c0c0; height: 12px"></div>';
+            html += '<div style="margin: 0; display: inline-block; font-size: 80%; width: 100px; color: grey; vertical-align: top">&nbsp;' + (totalMainLoc == 0 || w1loc > 0 ? w1loc : '<1') + '% of LOC</div>';
+            html += '</div>';
+            html += '<div style="width: 400px; margin: 0; padding: 0; white-space: nowrap">';
+
+        }
+
+        html += '<table style="width: 100%">';
+
+        html += '<tr style="color: #777777">';
+        html += '<td style="text-align: left">repo</td>';
+        html += '<td style="text-align: left">file</td>';
+        html += '<td style="text-align: center">LOC</td>';
+        html += '<td style="text-align: center">scope</td>';
+        html += '</tr>';
+
+        let displayCounter = 0;
+
+        filteredData.forEach(item => {
+            if (displayCounter > 1000) {
+                return;
+            }
+            displayCounter++;
+            html += '<tr>';
+            html += '<td>';
+            html += item.repository;
+            html += '</td>';
+            html += '<td>';
+            html += item.path;
+            html += '</td>';
+            html += '<td style="text-align: right; padding-right: 5px; padding-left: 5px;">';
+            html += '<div style="border: 1px solid #d0d0d0; border-radius: 4px; padding 2px;">';
+            html += item.linesOfCode.toLocaleString("en-US");
+            html += '</div>';
+            html += '</td>';
+            html += '<td style="text-align: left; padding-right: 5px; padding-left: 5px;">';
+            html += '<div style="border: 1px solid #d0d0d0; border-radius: 4px; padding 2px;">';
+            html += item.scope.replace('.txt', '').replace('aspect_', '');
+            html += '</div>';
+            html += '</td>';
+            html += '<td style="text-align: left; padding-right: 5px; padding-left: 5px;">';
+            html += '</td>';
+            html += '</tr>';
+        });
+
+        html += '</table>';
+
+        document.getElementById('content').innerHTML = html;
+    }
+
+    update();
+</script>
+</body>
+</html>

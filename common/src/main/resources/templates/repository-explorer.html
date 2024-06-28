@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Repository Explorer</title>
+    <style>
+        body {
+            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+        }
+
+        .group {
+            display: inline-block;
+            border: 1px solid lightgrey;
+            border-radius: 6px;
+            margin: 8px 18px 8px 8px;
+            padding: 5px;
+            background-color: #f8f8f8;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .icon {
+            width: 140px;
+            height: 140px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-top: 26px;
+            margin-bottom: 20px;
+            filter: grayscale(100%);
+        }
+
+        body {
+            margin: 40px;
+        }
+
+        ::placeholder {
+            color: lightgrey;
+            opacity: 1;
+        }
+
+        :-ms-input-placeholder {
+            color: lightgrey;
+        }
+
+        ::-ms-input-placeholder {
+            color: lightgrey;
+        }
+    </style>
+    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Lato">
+</head>
+<body>
+
+<div style="margin-left: 0px; margin-top: 20px; margin-bottom: 0px; color: grey">
+    <div>
+        <input id="filter" type="text" placeholder="search..."
+               style="font-size: 16px; height: 32px; width: 320px; margin-bottom: 10px"
+               onkeyup="update()">
+        <div id="search-summary" style="display: inline-block"></div>
+    </div>
+</div>
+
+<div id="content"></div>
+
+<script>
+    const repositories = ${data};
+
+    function update() {
+        const filter = document.getElementById('filter').value.toLowerCase().trim();
+        let html = '';
+
+        let count = repositories.length;
+        let mainLoc = repositories.map(item => item.mainLinesOfCode).reduce((a, b) => a + b, 0);
+        let commits = repositories.map(item => item.commitsCount).reduce((a, b) => a + b, 0);
+
+        const filteredData = repositories
+            .filter(item => item.metadata.name && (!filter || item.metadata.name.toLowerCase().includes(filter)))
+            .sort((a, b) => b.latestCommitDate.localeCompare(a.latestCommitDate))
+            .sort((a, b) => b.commitsCount30Days - a.commitsCount30Days);
+
+        let totalCount = filteredData.length;
+        let totalMainLoc = filteredData.map(item => item.mainLinesOfCode).reduce((a, b) => a + b, 0);
+        let totalCommits = filteredData.map(item => item.commitsCount).reduce((a, b) => a + b, 0);
+
+        document.getElementById('search-summary').innerHTML = ' = ' + filteredData.length + ' ' + (filteredData.length === 1 ? 'repository' : 'repositories') + ' (' + totalMainLoc.toLocaleString('en-US') + ' LOC main, ' + totalCommits.toLocaleString('en-US') + ' commits)';
+
+        if (totalMainLoc < mainLoc) {
+            html += '<div style="width: 400px; margin: 0; padding: 0; white-space: nowrap">';
+            const w1count = Math.round(100 * totalCount / count);
+            const w2count = 100 - w1count;
+            html += '<div style="margin: 0; display: inline-block; width: ' + w1count + '%; background-color: #303030; height: 12px"></div>';
+            html += '<div style="margin: 0; display: inline-block; width: ' + w2count + '%; background-color: #c0c0c0; height: 12px"></div>';
+            html += '<div style="margin: 0; display: inline-block; font-size: 80%; width: 100px; color: grey; vertical-align: top">&nbsp;' + (totalMainLoc == 0 || w1count > 0 ? w1count : '<1') + '% of repositories</div>';
+            html += '</div>';
+            html += '<div style="width: 400px; margin: 0; padding: 0; white-space: nowrap">';
+            const w1loc = Math.round(100 * totalMainLoc / mainLoc);
+            const w2loc = 100 - w1loc;
+            html += '<div style="margin: 0; display: inline-block; width: ' + w1loc + '%; background-color: skyblue; height: 12px"></div>';
+            html += '<div style="margin: 0; display: inline-block; width: ' + w2loc + '%; background-color: #c0c0c0; height: 12px"></div>';
+            html += '<div style="margin: 0; display: inline-block; font-size: 80%; width: 100px; color: grey; vertical-align: top">&nbsp;' + (totalMainLoc == 0 || w1loc > 0 ? w1loc : '<1') + '% of LOC</div>';
+            html += '</div>';
+            html += '<div style="width: 400px; margin: 0; padding: 0; white-space: nowrap">';
+            const w1commits = Math.round(100 * totalCommits / commits);
+            const w2commits = 100 - w1commits;
+            html += '<div style="margin: 0; display: inline-block; width: ' + w1commits + '%; background-color: green; height: 12px"></div>';
+            html += '<div style="margin: 0; display: inline-block; width: ' + w2commits + '%; background-color: #c0c0c0; height: 12px"></div>';
+            html += '<div style="margin: 0; display: inline-block; font-size: 80%; width: 100px; color: grey; vertical-align: top">&nbsp;' + (totalMainLoc == 0 || w1commits > 0 ? w1commits : '<1') + '% of commits</div>';
+            html += '</div>';
+        }
+
+        html += '<table>';
+        html += '<tr>';
+        html += '<td></td>';
+        html += '<td style="text-align: center; border-bottom: 2px solid lightgrey" colspan="3">LOC</td>';
+        html += '<td></td>';
+        html += '<td style="text-align: center; border-bottom: 2px solid lightgrey" colspan="3">Activity</td>';
+        html += '</tr>';
+
+        html += '<tr style="color: #777777">';
+        html += '<td>';
+        html += '</td>';
+        html += '<td style="text-align: right; padding-right: 5px; padding-left: 5px;">main</td>';
+        html += '<td style="text-align: right; padding-right: 5px; padding-left: 5px;">test</td>';
+        html += '<td style="text-align: right; padding-right: 5px; padding-left: 5px;">other</td>';
+        html += '<td style="text-align: right; padding-right: 5px; padding-left: 5px;"></td>';
+        html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">last<br>commit</td>';
+        html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">commits<br>(30d)</td>';
+        html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">commits<br>(all time)</td>';
+        html += '</tr>';
+
+        filteredData.forEach(item => {
+            let commitsCount30Days = item.commitsCount30Days;
+            if (commitsCount30Days === 0) {
+                html += '<tr style="opacity: 0.5">';
+            } else {
+                html += '<tr>';
+            }
+            html += '<td>';
+            html += item.metadata.name;
+            html += '</td>';
+            html += '<td style="text-align: right; padding-right: 5px; padding-left: 5px;">';
+            html += '<div style="border: 1px solid #d0d0d0; border-radius: 4px; padding 2px;">';
+            html += item.mainLinesOfCode.toLocaleString("en-US");
+            html += '</div>';
+            html += '</td>';
+            html += '<td style="text-align: right; padding-right: 5px; padding-left: 5px;">';
+            html += '<div style="border: 1px solid #d0d0d0; border-radius: 4px; padding 2px;">';
+            html += item.testLinesOfCode.toLocaleString("en-US");
+            html += '</div>';
+            html += '</td>';
+            html += '<td style="text-align: right; padding-right: 5px; padding-left: 5px;">';
+            html += '<div style="border: 1px solid #d0d0d0; border-radius: 4px; padding 2px;">';
+            html += (item.buildAndDeployLinesOfCode + item.generatedLinesOfCode + item.otherLinesOfCode).toLocaleString("en-US");
+            html += '</div>';
+            html += '</td>';
+            html += '<td>';
+            html += '</td>';
+            html += '<td style="text-align: right; padding-right: 5px; padding-left: 5px; font-size: 90%">';
+            html += item.latestCommitDate;
+            html += '</td>';
+            html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">';
+            html += commitsCount30Days.toLocaleString("en-US");
+            html += '</td>';
+            html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">';
+            html += '</td>';
+            html += '</tr>';
+        });
+
+        html += '</table>';
+
+        document.getElementById('content').innerHTML = html;
+    }
+
+    update();
+</script>
+</body>
+</html>
