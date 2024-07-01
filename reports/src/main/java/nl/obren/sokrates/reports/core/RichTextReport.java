@@ -470,6 +470,13 @@ public class RichTextReport {
                 + label + "</button>");
     }
 
+    public void addLinkInTab(String label, String link) {
+        String styleClass = "tablinks";
+        addHtmlContent("    <button class='" + styleClass + "' onclick='window.open(\""
+                + link + "\", \"_blank\")'>"
+                + label + "</button>");
+    }
+
     public void endTabGroup() {
         addHtmlContent("</div>");
     }

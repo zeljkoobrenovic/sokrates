@@ -89,6 +89,8 @@ public class LandscapeRepositoriesReport {
             report.addTab("correlations", "Correlations", false);
         }
         report.addTab("features", "Features of Interest", false);
+        report.addLinkInTab("Explorer...", "repositories-explorer.html");
+        report.addLinkInTab("Files...", "files-explorer.html");
         report.endTabGroup();
         ProcessingStopwatch.end("reporting/repositories/" + type + "/preparing");
 
@@ -372,7 +374,7 @@ public class LandscapeRepositoriesReport {
 
             report.startDiv("display: inline-block");
 
-            report.addContentInDivWithTooltip(yearRepos.size()> 0 ? "+" + yearRepos.size() + "" : "", "",
+            report.addContentInDivWithTooltip(yearRepos.size() > 0 ? "+" + yearRepos.size() + "" : "", "",
                     "font-size: 80%; text-align: center");
             report.addContentInDivWithTooltip("", info,
                     "margin: 0; padding: 0; opacity: 0.5; margin-right: 1px; background-color: " + color + "; display: inline-block; width: 44px; height: " + height + "px");
