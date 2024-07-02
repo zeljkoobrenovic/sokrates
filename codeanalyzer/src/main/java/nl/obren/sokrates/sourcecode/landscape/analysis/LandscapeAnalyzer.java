@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class LandscapeAnalyzer {
     private static final Log LOG = LogFactory.getLog(LandscapeAnalyzer.class);
@@ -60,7 +59,7 @@ public class LandscapeAnalyzer {
                     String repositoryName = repositoryAnalysisResults.getMetadata().getName();
                     if (!landscapeConfiguration.isIncludeOnlyOneRepositoryWithSameName() || !repositoryNames.contains(repositoryName)) {
                         repositoryNames.add(repositoryName);
-                        List<FileExport> files = this.getRepositoryFiles(link);
+                        List<FileExport> files = this.getRepositoryFiles(repositoryName, link);
                         landscapeAnalysisResults.getRepositoryAnalysisResults().add(new RepositoryAnalysisResults(link, repositoryAnalysisResults, files));
                         repositoryAnalysisResults.getContributorsAnalysisResults().getContributors().forEach(contributor -> {
                             contributor.getCommitDates().forEach(commitDate -> {
@@ -214,21 +213,21 @@ public class LandscapeAnalyzer {
         return null;
     }
 
-    private List<FileExport> getRepositoryFiles(SokratesRepositoryLink sokratesRepositoryLink) {
+    private List<FileExport> getRepositoryFiles(String repositoryName, SokratesRepositoryLink sokratesRepositoryLink) {
         List<FileExport> files = new ArrayList<>();
 
-        files.addAll(getRepositoryFilesByScope(sokratesRepositoryLink, "aspect_main.txt"));
-        files.addAll(getRepositoryFilesByScope(sokratesRepositoryLink, "aspect_test.txt"));
-        files.addAll(getRepositoryFilesByScope(sokratesRepositoryLink, "aspect_generated.txt"));
-        files.addAll(getRepositoryFilesByScope(sokratesRepositoryLink, "aspect_build_and_deployment.txt"));
-        files.addAll(getRepositoryFilesByScope(sokratesRepositoryLink, "aspect_other.txt"));
-        files.addAll(getRepositoryFilesByScope(sokratesRepositoryLink, "excluded_files_ignored_extensions.txt"));
-        files.addAll(getRepositoryFilesByScope(sokratesRepositoryLink, "excluded_files_ignored_rules.txt"));
+        files.addAll(getRepositoryFilesByScope(repositoryName, sokratesRepositoryLink, "aspect_main.txt"));
+        files.addAll(getRepositoryFilesByScope(repositoryName, sokratesRepositoryLink, "aspect_test.txt"));
+        files.addAll(getRepositoryFilesByScope(repositoryName, sokratesRepositoryLink, "aspect_generated.txt"));
+        files.addAll(getRepositoryFilesByScope(repositoryName, sokratesRepositoryLink, "aspect_build_and_deployment.txt"));
+        files.addAll(getRepositoryFilesByScope(repositoryName, sokratesRepositoryLink, "aspect_other.txt"));
+        files.addAll(getRepositoryFilesByScope(repositoryName, sokratesRepositoryLink, "excluded_files_ignored_extensions.txt"));
+        files.addAll(getRepositoryFilesByScope(repositoryName, sokratesRepositoryLink, "excluded_files_ignored_rules.txt"));
 
         return files;
     }
 
-    private List<FileExport> getRepositoryFilesByScope(SokratesRepositoryLink sokratesRepositoryLink, String scopeFile) {
+    private List<FileExport> getRepositoryFilesByScope(String repositoryName, SokratesRepositoryLink sokratesRepositoryLink, String scopeFile) {
         try {
             File txtDataFolder = new File(getRepositoryAnalysisFile(sokratesRepositoryLink).getParentFile(), "text");
             File mainFile = new File(txtDataFolder, scopeFile);
@@ -240,8 +239,7 @@ public class LandscapeAnalyzer {
                         .forEach(file -> {
                             String data[] = file.split("\t");
                             if (data.length > 1 && NumberUtils.isDigits(data[1])) {
-                                String repoName = sokratesRepositoryLink.getAnalysisResultsPath().replaceAll("/.*", "");
-                                fileExports.add(new FileExport(repoName, data[0], scopeFile, Integer.parseInt(data[1])));
+                                fileExports.add(new FileExport(repositoryName, data[0], scopeFile, Integer.parseInt(data[1])));
                             }
                         });
 
