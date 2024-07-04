@@ -372,9 +372,9 @@ public class ScopingConventions {
         testFilesConventions.add(new Convention(".*/test[-]resources/.*", "", "Test resources"));
         testFilesConventions.add(new Convention(".*/test[-]helpers/.*", "", "Test helpers"));
         testFilesConventions.add(new Convention(".*/TestData/.*", "", "Test data"));
-        testFilesConventions.add(new Convention(".*/__mocks?__/.*", "", "Mock resources"));
         testFilesConventions.add(new Convention(".*/mockapi/.*", "", "Mock resources"));
-        testFilesConventions.add(new Convention(".*/mock[-]server/.*", "", "Mock resources"));
+        testFilesConventions.add(new Convention(".*/__mock[a-zA-Z0-9_\\- ]+/.*", "", "Mock resources"));
+        testFilesConventions.add(new Convention(".*/mock[a-zA-Z0-9_\\- ]+/.*", "", "Mock resources"));
 
         testFilesConventions.add(new Convention(".*[.]snap", "", "Jest snapshots"));
         testFilesConventions.add(new Convention(".*/jest[.][a-zA-Z0-9\\.]+", "", "Jest files"));
