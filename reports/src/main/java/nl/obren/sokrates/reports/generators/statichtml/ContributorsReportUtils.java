@@ -38,7 +38,7 @@ public class ContributorsReportUtils {
         return null;
     }
 
-    public static void addContributorsPerTimeSlot(RichTextReport report, List<ContributionTimeSlot> contributorsPerTimeSlot, int limit, boolean showTimeSlot, int padding) {
+    public static void addContributorsPerTimeSlot(RichTextReport report, List<ContributionTimeSlot> contributorsPerTimeSlot, int limit, boolean showTimeSlot, boolean showContributors, int padding) {
         Collections.sort(contributorsPerTimeSlot, (a, b) -> b.getTimeSlot().compareTo(a.getTimeSlot()));
         int startYear = DateUtils.getAnalysisYear();
         int endYear = startYear - limit;
@@ -82,27 +82,29 @@ public class ContributorsReportUtils {
             }
             report.endTableRow();
 
-            report.startTableRow();
-            report.addTableCell(getIconSvg("contributors", 64), "border: none; vertical-align: bottom;");
-            for (int year = startYear; year >= endYear; year -= 1) {
-                ContributionTimeSlot timeSlot = findSlot(contributorsPerTimeSlot, year);
-                report.startTableCell(style);
-                if (timeSlot != null) {
-                    int count = timeSlot.getContributorsCount();
-                    if (showTimeSlot) {
-                        report.addParagraph(count + "", "margin: 0px");
+            if (showContributors) {
+                report.startTableRow();
+                report.addTableCell(getIconSvg("contributors", 64), "border: none; vertical-align: bottom;");
+                for (int year = startYear; year >= endYear; year -= 1) {
+                    ContributionTimeSlot timeSlot = findSlot(contributorsPerTimeSlot, year);
+                    report.startTableCell(style);
+                    if (timeSlot != null) {
+                        int count = timeSlot.getContributorsCount();
+                        if (showTimeSlot) {
+                            report.addParagraph(count + "", "margin: 0px");
+                        } else {
+                            report.addParagraph("&nbsp;", "margin: 0px");
+                        }
+                        int height = 1 + (int) (64.0 * count / maxContributors);
+                        String title = timeSlot.getTimeSlot() + ": " + count;
+                        report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: skyblue; height:" + height + "px'></div>");
                     } else {
-                        report.addParagraph("&nbsp;", "margin: 0px");
+                        report.addHtmlContent("<div style='width: 100%; background-color: #d0d0d0; height:1px'></div>");
                     }
-                    int height = 1 + (int) (64.0 * count / maxContributors);
-                    String title = timeSlot.getTimeSlot() + ": " + count;
-                    report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: skyblue; height:" + height + "px'></div>");
-                } else {
-                    report.addHtmlContent("<div style='width: 100%; background-color: #d0d0d0; height:1px'></div>");
+                    report.endTableCell();
                 }
-                report.endTableCell();
+                report.endTableRow();
             }
-            report.endTableRow();
 
             if (showTimeSlot) {
                 report.startTableRow();

@@ -140,18 +140,45 @@ public class ReportFileExporter {
             addInfoBlockWithColor(indexReport, age, "age", FormattingUtils.formatCount(ageInDays) + " days", MAIN_LOC_FRESH_COLOR, "", "file_history", "FileAge.html");
             addInfoBlockWithColor(indexReport, FormattingUtils.getFormattedPercentage(100 - notChangedPerc) + "%", "main code touched", "1 year (" + FormattingUtils.getSmallTextForNumber(mainLoc - notChanged) + " LOC)", MAIN_LOC_FRESH_COLOR, "", "touch", "FileAge.html");
             addInfoBlockWithColor(indexReport, FormattingUtils.getFormattedPercentage(100 - oldPerc) + "%", "new main code", "1 year (" + FormattingUtils.getSmallTextForNumber(mainLoc - old) + " LOC)", MAIN_LOC_FRESH_COLOR, "", "new", "FileAge.html");
-            int recentContributors = (int) analysisResults.getContributorsAnalysisResults().getContributors().stream().filter(c -> c.getCommitsCount30Days() > 0).count();
-            addInfoBlockWithColor(indexReport, FormattingUtils.getSmallTextForNumber(recentContributors), "recent contributors", "past 30 days", PEOPLE_COLOR, "", "contributors", "Contributors.html");
         }
         indexReport.endDiv();
         StringBuilder icons = new StringBuilder("");
         addIconsMainCode(analysisResults, icons);
-        indexReport.startDiv("margin-left: 0px; border-left: 4px solid " + MAIN_LOC_COLOR + "; margin-top: -65px; padding-top: 32px; margin-bottom: 0px; padding-left: 0px; padding-bottom: 10px");
-        indexReport.startTable("margin-bottom: -30px");
+        indexReport.startDiv("margin-left: 0px; border-left: 1px solid " + MAIN_LOC_COLOR + "; margin-top: -65px; padding-top: 32px; margin-bottom: 0px; padding-left: 0px; padding-bottom: 10px");
+        indexReport.startTable("margin-bottom: -20px");
         indexReport.startTableRow();
         indexReport.addTableCell(icons.toString(), "border: none;");
         indexReport.endTableRow();
         indexReport.endTable();
+        indexReport.startDiv("");
+        List<ContributionTimeSlot> contributorsPerYear = contributorsAnalysisResults.getContributorsPerYear();
+
+        indexReport.startTable("margin-bottom: -20px; border-top: 1px dashed grey; padding-top: 10px; margin-top: 10px;");
+        indexReport.startTableRow();
+
+        indexReport.startTableCell("border: none; vertical-align: top;");
+
+        long contributorsCount = contributorsAnalysisResults.getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count();
+        indexReport.startDiv("margin-top: 8px; width: 70px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
+        indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(contributorsAnalysisResults.getCommitsCount30Days()),
+                "padding-top: 12px; font-size: 36px;");
+        indexReport.addContentInDiv("commits<br>(30 days)", "color: black; font-size: 80%");
+        indexReport.startDiv("margin-top: 32px; width: 70px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
+        indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber((int) contributorsCount),
+                "padding-top: 12px; font-size: 36px;");
+        indexReport.addContentInDiv("contributors<br>(30 days)", "color: black; font-size: 80%");
+
+        indexReport.endDiv();
+
+
+        indexReport.endTableCell();
+        indexReport.startTableCell("border: none");
+        ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsPerYear, 20, true, true, 8);
+        indexReport.endTableCell();
+        indexReport.endTableRow();
+        indexReport.endTable();
+
+        indexReport.endDiv();
         indexReport.endDiv();
 
         indexReport.startTabGroup();
@@ -186,7 +213,6 @@ public class ReportFileExporter {
         if (contributorsAnalysisResults.getCommitsCount() > 0) {
             indexReport.startDiv("margin: 32px; font-size: 110%");
             indexReport.addLevel2Header("Overall Activity Per Year", "");
-            List<ContributionTimeSlot> contributorsPerYear = contributorsAnalysisResults.getContributorsPerYear();
 
             indexReport.addParagraph("Latest commit date: " + contributorsAnalysisResults.getLatestCommitDate() + "",
                     "color: grey; font-size: 80%; margin-bottom: 2px;");
@@ -198,7 +224,6 @@ public class ReportFileExporter {
 
             indexReport.startTableCell("border: none; vertical-align: top;");
 
-            long contributorsCount = contributorsAnalysisResults.getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count();
             indexReport.startDiv("margin-top: 8px; width: 70px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
             indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(contributorsAnalysisResults.getCommitsCount30Days()),
                     "padding-top: 12px; font-size: 36px;");
@@ -214,7 +239,7 @@ public class ReportFileExporter {
 
             indexReport.endTableCell();
             indexReport.startTableCell("border: none");
-            ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsPerYear, 20, true, 8);
+            ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsPerYear, 20, true, true, 8);
             indexReport.endTableCell();
             indexReport.endTableRow();
             indexReport.endTable();
