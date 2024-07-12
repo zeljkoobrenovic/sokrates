@@ -59,7 +59,7 @@ public class ReportRenderer {
 
     private void renderHeader(RichTextReport richTextReport, StringBuilder content) {
         content.append(renderBreadcrumbsInDiv(richTextReport.getBreadcrumbs()));
-        content.append("<div style='font-size: 36px; margin-top: 15px; padding-bottom: 6px; white-space: nowrap; overflow: hidden;'>");
+        content.append("<div style='font-size: 36px; margin-top: 15px; padding-bottom: 15px; white-space: nowrap; overflow: hidden;'>");
 
         String parentUrl = richTextReport.getParentUrl();
         if (StringUtils.isNotBlank(parentUrl)) {
