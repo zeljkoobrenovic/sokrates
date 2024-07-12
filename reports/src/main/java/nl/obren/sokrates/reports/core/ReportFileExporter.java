@@ -7,7 +7,6 @@ package nl.obren.sokrates.reports.core;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.generators.statichtml.ContributorsReportUtils;
 import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
-import nl.obren.sokrates.reports.utils.AnimalIcons;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.sourcecode.Link;
@@ -104,7 +103,7 @@ public class ReportFileExporter {
         String title = metadata.getName();
         RichTextReport indexReport = new RichTextReport(title, "", metadata.getLogoLink());
         if (StringUtils.isNotBlank(metadata.getDescription())) {
-            indexReport.addContentInDiv(metadata.getDescription(), "white-space: nowrap; overflow: hidden; margin-left: 2px; margin-top: -8px; margin-bottom: 6px; color: grey; font-size: 90%");
+            indexReport.addContentInDiv(metadata.getDescription(), "white-space: nowrap; overflow: hidden; margin-left: 2px; margin-top: 0px; margin-bottom: 14px; color: grey; font-size: 90%");
         }
 
         appendLinks(indexReport, analysisResults);
@@ -125,9 +124,9 @@ public class ReportFileExporter {
                 + analysisResults.getOtherAspectAnalysisResults().getFilesCount();
         indexReport.startDiv("white-space: nowrap; overflow: hidden");
 
-        addInfoBlockWithColor(indexReport, FormattingUtils.getSmallTextForNumber(mainLoc), "lines of main code", FormattingUtils.getSmallTextForNumber(mainFilesCount) + " files", MAIN_LOC_COLOR, "main lines of code", "main", "SourceCodeOverview.html");
-        addInfoBlockWithColor(indexReport, FormattingUtils.getSmallTextForNumber(testLoc), "lines of test code", FormattingUtils.getSmallTextForNumber(testFilesCount) + " files", TEST_LOC_COLOR, "test code in scope", "test", "SourceCodeOverview.html");
-        addInfoBlockWithColor(indexReport, FormattingUtils.getSmallTextForNumber(secondaryLoc), "lines of other code", FormattingUtils.getSmallTextForNumber(secondaryFilesCount) + " files", TEST_LOC_COLOR, "build & deployment, generated, all other code in scope", "build", "SourceCodeOverview.html");
+        addInfoBlockWithColor(indexReport, FormattingUtils.getSmallTextForNumberMinK(mainLoc), "lines of main code", FormattingUtils.getSmallTextForNumber(mainFilesCount) + " files", MAIN_LOC_COLOR, "main lines of code", "main", "SourceCodeOverview.html");
+        addInfoBlockWithColor(indexReport, FormattingUtils.getSmallTextForNumberMinK(testLoc), "lines of test code", FormattingUtils.getSmallTextForNumber(testFilesCount) + " files", TEST_LOC_COLOR, "test code in scope", "test", "SourceCodeOverview.html");
+        addInfoBlockWithColor(indexReport, FormattingUtils.getSmallTextForNumberMinK(secondaryLoc), "lines of other code", FormattingUtils.getSmallTextForNumber(secondaryFilesCount) + " files", TEST_LOC_COLOR, "build & deployment, generated, all other code in scope", "build", "SourceCodeOverview.html");
         ContributorsAnalysisResults contributorsAnalysisResults = analysisResults.getContributorsAnalysisResults();
         if (contributorsAnalysisResults.getCommitsCount() > 0) {
             SourceFileAgeDistribution lastModified = analysisResults.getFilesHistoryAnalysisResults().getOverallFileLastModifiedDistribution();
@@ -136,49 +135,52 @@ public class ReportFileExporter {
             double notChangedPerc = lastModified.getVeryHighRiskPercentage();
             int old = firstChange.getVeryHighRiskValue();
             double oldPerc = firstChange.getVeryHighRiskPercentage();
+            int ageInDays = analysisResults.getFilesHistoryAnalysisResults().getAgeInDays();
+            String age = ageInDays < 365 ? "<1y" : (int) Math.round(ageInDays / 365.0) + "y";
+            addInfoBlockWithColor(indexReport, age, "age", FormattingUtils.formatCount(ageInDays) + " days", MAIN_LOC_FRESH_COLOR, "", "file_history", "FileAge.html");
             addInfoBlockWithColor(indexReport, FormattingUtils.getFormattedPercentage(100 - notChangedPerc) + "%", "main code touched", "1 year (" + FormattingUtils.getSmallTextForNumber(mainLoc - notChanged) + " LOC)", MAIN_LOC_FRESH_COLOR, "", "touch", "FileAge.html");
             addInfoBlockWithColor(indexReport, FormattingUtils.getFormattedPercentage(100 - oldPerc) + "%", "new main code", "1 year (" + FormattingUtils.getSmallTextForNumber(mainLoc - old) + " LOC)", MAIN_LOC_FRESH_COLOR, "", "new", "FileAge.html");
             int recentContributors = (int) analysisResults.getContributorsAnalysisResults().getContributors().stream().filter(c -> c.getCommitsCount30Days() > 0).count();
             addInfoBlockWithColor(indexReport, FormattingUtils.getSmallTextForNumber(recentContributors), "recent contributors", "past 30 days", PEOPLE_COLOR, "", "contributors", "Contributors.html");
-            int ageInDays = analysisResults.getFilesHistoryAnalysisResults().getAgeInDays();
-            String age = ageInDays < 365 ? "<1y" : (int) Math.round(ageInDays / 365.0) + "y";
-            addInfoBlockWithColor(indexReport, age, "age", FormattingUtils.formatCount(ageInDays) + " days", PEOPLE_COLOR, "", "file_history", "FileAge.html");
         }
         indexReport.endDiv();
         StringBuilder icons = new StringBuilder("");
-        AnimalIcons animalIcons = new AnimalIcons(70);
-        String icon = "<div style='cursor: help' title='" + animalIcons.getInfo(linesOfCodeMain) + "'>" + animalIcons.getAnimalIconsForMainLoc(linesOfCodeMain) + "</div>";
         addIconsMainCode(analysisResults, icons);
-        indexReport.startDiv("margin-left: 0px; border-left: 8px solid " + MAIN_LOC_COLOR + "; margin-top: -50px; padding-top: 32px; margin-bottom: 10px; padding-left: 9px; padding-bottom: 10px");
+        indexReport.startDiv("margin-left: 0px; border-left: 4px solid " + MAIN_LOC_COLOR + "; margin-top: -65px; padding-top: 32px; margin-bottom: 0px; padding-left: 0px; padding-bottom: 10px");
         indexReport.startTable("margin-bottom: -30px");
         indexReport.startTableRow();
-        indexReport.addTableCell(icon, "border: none; vertical-align: middle; width: 80px; text-align: center; padding-right: 30px; padding-bottom: 34px");
         indexReport.addTableCell(icons.toString(), "border: none;");
         indexReport.endTableRow();
         indexReport.endTable();
         indexReport.endDiv();
 
         indexReport.startTabGroup();
-        indexReport.addTab("overview", "Overview", true);
-        indexReport.addTab("structure", "Structure", false);
+        indexReport.addTab("structure", "Structure", true);
+        indexReport.addTab("quality", "Analyses", false);
         indexReport.addTab("commits", "Activity", false);
-        indexReport.addTab("reports", "Reports", false);
         indexReport.addTab("visuals", "Visuals", false);
         indexReport.addTab("data", "Data", false);
         indexReport.endDiv();
 
-        indexReport.startTabContentSection("structure", false);
+        indexReport.startTabContentSection("structure", true);
         indexReport.addHtmlContent("<iframe src='Structure.html' style='border: none; width: 1000px; height: 1090px; overflow: hidden'></iframe>");
         indexReport.endTabContentSection();
 
-        indexReport.startTabContentSection("overview", true);
+        indexReport.startTabContentSection("quality", false);
         indexReport.addLineBreak();
         indexReport.startDiv("margin: 10px");
         summarize(indexReport, analysisResults);
         indexReport.addLineBreak();
         indexReport.endDiv();
+        indexReport.startDiv("margin: 24px");
+        indexReport.addLevel2Header("All Analysis Reports");
+        for (String[] report : reportList) {
+            addReportFragment(htmlExportFolder, indexReport, report);
+        }
+        indexReport.endDiv();
 
         indexReport.endTabContentSection();
+
         indexReport.startTabContentSection("commits", false);
 
         if (contributorsAnalysisResults.getCommitsCount() > 0) {
@@ -244,14 +246,6 @@ public class ReportFileExporter {
             indexReport.endDiv();
             indexReport.endDiv();
         }
-        indexReport.endTabContentSection();
-
-        indexReport.startTabContentSection("reports", false);
-        indexReport.startDiv("margin: 24px");
-        for (String[] report : reportList) {
-            addReportFragment(htmlExportFolder, indexReport, report);
-        }
-        indexReport.endDiv();
         indexReport.endTabContentSection();
 
         indexReport.startTabContentSection("visuals", false);
@@ -773,15 +767,16 @@ public class ReportFileExporter {
         style += "margin: 12px 12px 12px 0px;";
         style += "display: inline-block; width: 130px; height: 102px; z-index: 2;";
         style += "background-color: " + color + "; text-align: center; vertical-align: middle; margin-bottom: 36px;";
+        style += "box-shadow: rgba(0, 0, 0, 0.15) 2.4px 2.4px 3.2px;";
 
         String specialColor = isZero ? " color: grey;" : "color: black;";
         report.startNewTabLink(link, specialColor + "");
         report.startDiv("display: inline-block; text-align: center; margin-top: 12px; cursor: pointer;");
-        report.addHtmlContent("<div style='vertical-alignment: bottom; margin: 0px; margin-bottom: -10px; z-index: 3;" + (isZero ? "opacity: 0.4;" : "") + "'>" + getIconSvg(icon, 60) + "</div>");
+        report.addHtmlContent("<div style='vertical-alignment: bottom; margin: 0px; margin-bottom: -10px; z-index: 3;" + (isZero ? "opacity: 0.4;" : "") + "'>" + getIconSvg(icon, 40) + "</div>");
         report.startDiv(style, tooltip);
         report.addHtmlContent("<div style='font-size: 40px; margin-top: 12px;" + specialColor + "'>" + mainValue + "</div>");
         report.addHtmlContent("<div style='color: #434343; font-size: 12px;" + specialColor + "'>" + subtitle + "</div>");
-        report.addHtmlContent("<div style='color: #434343; font-size: 11px; color: grey'>" + extra + "</div>");
+        report.addHtmlContent("<div style='margin-top: 4px; color: #434343; font-size: 11px;'>" + extra + "</div>");
         report.endDiv();
         report.endDiv();
         report.endNewTabLink();
@@ -806,22 +801,24 @@ public class ReportFileExporter {
         List<NumericMetric> extensions = analysisResults.getMainAspectAnalysisResults().getLinesOfCodePerExtension();
         summary.append("<div style='margin-bottom: 20px; white-space: nowrap; overflow: hidden;'>");
         Set<String> alreadyAddedImage = new HashSet<>();
+        boolean first[] = {true};
         extensions.forEach(ext -> {
             String lang = ext.getName().toUpperCase().replace("*.", "").trim();
             String image = DataImageUtils.getLangDataImage(lang);
             if (image == null || !alreadyAddedImage.contains(image)) {
                 int loc = ext.getValue().intValue();
                 int fontSize = loc >= 1000 ? 20 : 20;
-                int width = loc >= 1000 ? 42 : 43;
+                int width = (first[0] ? loc >= 1000 ? 64 : 65 : loc >= 1000 ? 42 : 43);
                 summary.append("<div style='width: " + width + "px; text-align: center; display: inline-block; border-radius: 5px; background-color: white; padding: 8px; margin-right: 4px;'>"
-                        + DataImageUtils.getLangDataImageDiv42(lang)
-                        + "<div style='margin-top: 3px; font-size: " + fontSize + "px'>" + FormattingUtils.getSmallTextForNumber(loc) + "</div>"
+                        + (first[0] ? DataImageUtils.getLangDataImageDiv64(lang) : DataImageUtils.getLangDataImageDiv42(lang))
+                        + "<div style='margin-top: 3px; font-size: " + fontSize + "px'>" + FormattingUtils.getSmallTextForNumberMinK(loc) + "</div>"
                         + "<div style='font-size: 10px; white-space: no-wrap; overflow: hidden; color: grey;'>" + lang.toLowerCase() + "</div>"
                         + "</div>");
                 if (image != null) {
                     alreadyAddedImage.add(image);
                 }
             }
+            first[0] = false;
         });
         summary.append("</div>");
     }
@@ -843,7 +840,7 @@ public class ReportFileExporter {
                 if (links.indexOf(link) > 0) {
                     report.addHtmlContent(" | ");
                 }
-                report.addNewTabLink(link.getLabel(), link.getHref());
+                report.addNewTabLink(link.getLabel() + "&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON_SMALL, link.getHref());
             });
             report.endDiv();
         }

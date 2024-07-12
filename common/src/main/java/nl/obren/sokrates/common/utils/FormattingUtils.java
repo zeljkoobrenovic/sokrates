@@ -27,17 +27,31 @@ public class FormattingUtils {
 
     public static String formatCount(int value) {
         DecimalFormat decimalFormat = new DecimalFormat("#,###");
-        decimalFormat.setDecimalFormatSymbols( new DecimalFormatSymbols(Locale.ENGLISH));
+        decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.ENGLISH));
         return decimalFormat.format(value);
     }
+
     public static String formatCountPlural(int value, String singleSuffix, String pluralSuffix) {
         return formatCount(value) + " " + (value == 1 ? singleSuffix : pluralSuffix);
     }
 
     public static String formatCount(int value, String textForZero) {
         DecimalFormat decimalFormat = new DecimalFormat("#,###");
-        decimalFormat.setDecimalFormatSymbols( new DecimalFormatSymbols(Locale.ENGLISH));
+        decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.ENGLISH));
         return value == 0 ? textForZero : decimalFormat.format(value);
+    }
+
+    public static String getSmallTextForNumberMinK(int number) {
+        if (number == 0) {
+            return "<b>0</b>";
+        } else if (number < 1000) {
+            if (number <= 10) return "<b>0.01</b>K";
+            else if (number <= 100) return "<b>" + (Math.round(number / 10.0) / 100.0) + "</b>" + "K";
+            else if ((int) Math.round(number / 100.0) == 10) return "<b>1</b>K";
+            else return "<b>" + (Math.round(number / 100.0) / 10.0) + "</b>" + "K";
+        } else {
+            return getSmallTextForNumber(number);
+        }
     }
 
     public static String getSmallTextForNumber(int number) {

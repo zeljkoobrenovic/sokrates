@@ -84,4 +84,24 @@ public class FormattingUtilsTest {
         assertEquals(FormattingUtils.formatPeriod(440), "1 year, 2 months");
         assertEquals(FormattingUtils.formatPeriod(1440), "3 years, 11 months");
     }
+
+    @Test
+    public void getSmallTextForNumberMinK() {
+        assertEquals(FormattingUtils.getSmallTextForNumberMinK(0), "<b>0</b>");
+        assertEquals(FormattingUtils.getSmallTextForNumberMinK(5), "<b>0.01</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumberMinK(10), "<b>0.01</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumberMinK(22), "<b>0.02</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumberMinK(53), "<b>0.05</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumberMinK(100), "<b>0.1</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumberMinK(230), "<b>0.2</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumberMinK(520), "<b>0.5</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumberMinK(570), "<b>0.6</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumberMinK(998), "<b>1</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumberMinK(1000), "<b>1</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumberMinK(2000), "<b>2</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumberMinK(10000), "<b>10</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumberMinK(100000), "<b>100</b>K");
+        assertEquals(FormattingUtils.getSmallTextForNumberMinK(1000000), "<b>1</b>M");
+        assertEquals(FormattingUtils.getSmallTextForNumberMinK(10000000), "<b>10</b>M");
+        }
 }

@@ -273,6 +273,10 @@ public class DataImageUtils {
         return null;
     }
 
+    public static String getLangDataImageDiv64(String lang) {
+        return getLangDataImageDiv(lang, 60, 20, 16, 11, 13);
+    }
+
     public static String getLangDataImageDiv42(String lang) {
         return getLangDataImageDiv(lang, 42, 16, 14, 11, 13);
     }

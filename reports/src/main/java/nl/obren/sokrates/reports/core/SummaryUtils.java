@@ -65,7 +65,7 @@ public class SummaryUtils {
         boolean showUnits = mainExists && analysisResults.getUnitsAnalysisResults().getTotalNumberOfUnits() > 0;
 
         report.startDiv("width: 100%; overflow-x: auto; margin-top: -10px");
-        report.startTable("border: none; min-width: 800px; ");
+        report.startTable("border: none; min-width: 800px; width: 100%");
         summarizeTags(analysisResults, report);
         summarizeMainVolume(analysisResults, report);
         if (mainExists) {
@@ -252,7 +252,7 @@ public class SummaryUtils {
             summary.append("</a>");
         }
         summary.append("</td>");
-        summary.append("<td style='max-width: 800px; overflow: hidden; white-space: nowrap; border: none; vertical-align: top; padding-top: 11px;'>");
+        summary.append("<td style='max-width: 800px; overflow: hidden; border: none; vertical-align: top; padding-top: 11px;'>");
         summary.append("<a target='_blank' href='visuals/zoomable_circles_main.html'>Main Code</a>");
         summary.append(": " + RichTextRenderingUtils.renderNumberStrong(totalLoc) + " LOC (" + analysisResults.getMainAspectAnalysisResults().getFilesCount() + " files)");
         summarizeListOfLocAspects(summary, totalLoc, linesOfCodePerExtension);
