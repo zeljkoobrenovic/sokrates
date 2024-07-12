@@ -153,30 +153,32 @@ public class ReportFileExporter {
         indexReport.startDiv("");
         List<ContributionTimeSlot> contributorsPerYear = contributorsAnalysisResults.getContributorsPerYear();
 
-        indexReport.startTable("margin-bottom: -20px; border-top: 1px dashed grey; padding-top: 10px; margin-top: 10px;");
-        indexReport.startTableRow();
-
-        indexReport.startTableCell("border: none; vertical-align: top;");
-
         long contributorsCount = contributorsAnalysisResults.getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count();
-        indexReport.startDiv("margin-top: 8px; width: 70px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
-        indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(contributorsAnalysisResults.getCommitsCount30Days()),
-                "padding-top: 12px; font-size: 36px;");
-        indexReport.addContentInDiv("commits<br>(30 days)", "color: black; font-size: 80%");
-        indexReport.startDiv("margin-top: 32px; width: 70px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
-        indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber((int) contributorsCount),
-                "padding-top: 12px; font-size: 36px;");
-        indexReport.addContentInDiv("contributors<br>(30 days)", "color: black; font-size: 80%");
+        if (contributorsAnalysisResults.getCommitsCount() > 0) {
+            indexReport.startTable("margin-bottom: -20px; border-top: 1px dashed grey; padding-top: 10px; margin-top: 10px;");
+            indexReport.startTableRow();
 
-        indexReport.endDiv();
+            indexReport.startTableCell("border: none; vertical-align: top;");
+
+            indexReport.startDiv("margin-top: 8px; width: 70px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
+            indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(contributorsAnalysisResults.getCommitsCount30Days()),
+                    "padding-top: 12px; font-size: 36px;");
+            indexReport.addContentInDiv("commits<br>(30 days)", "color: black; font-size: 80%");
+            indexReport.startDiv("margin-top: 32px; width: 70px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
+            indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber((int) contributorsCount),
+                    "padding-top: 12px; font-size: 36px;");
+            indexReport.addContentInDiv("contributors<br>(30 days)", "color: black; font-size: 80%");
+
+            indexReport.endDiv();
 
 
-        indexReport.endTableCell();
-        indexReport.startTableCell("border: none");
-        ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsPerYear, 20, true, true, 8);
-        indexReport.endTableCell();
-        indexReport.endTableRow();
-        indexReport.endTable();
+            indexReport.endTableCell();
+            indexReport.startTableCell("border: none");
+            ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsPerYear, 20, true, true, 8);
+            indexReport.endTableCell();
+            indexReport.endTableRow();
+            indexReport.endTable();
+        }
 
         indexReport.endDiv();
         indexReport.endDiv();
@@ -270,6 +272,8 @@ public class ReportFileExporter {
             indexReport.endTabContentSection();
             indexReport.endDiv();
             indexReport.endDiv();
+        } else {
+            indexReport.addParagraph("No commit history found.", "color: grey; margin-left: 10px; margin: 15px");
         }
         indexReport.endTabContentSection();
 
