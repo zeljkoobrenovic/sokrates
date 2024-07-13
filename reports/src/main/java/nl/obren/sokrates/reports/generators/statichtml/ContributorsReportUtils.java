@@ -62,8 +62,7 @@ public class ContributorsReportUtils {
             } else {
                 style = "border: none; padding: " + padding + "px; vertical-align: bottom; font-size: 80%";
             }
-            for (int year = startYear; year >= endYear; year -= 1) {
-                ContributionTimeSlot timeSlot = findSlot(contributorsPerTimeSlot, year);
+            for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
                 report.startTableCell(style);
                 if (timeSlot != null) {
                     int count = timeSlot.getCommitsCount();
@@ -85,8 +84,7 @@ public class ContributorsReportUtils {
             if (showContributors) {
                 report.startTableRow();
                 report.addTableCell(getIconSvg("contributors", 64), "border: none; vertical-align: bottom;");
-                for (int year = startYear; year >= endYear; year -= 1) {
-                    ContributionTimeSlot timeSlot = findSlot(contributorsPerTimeSlot, year);
+                for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
                     report.startTableCell(style);
                     if (timeSlot != null) {
                         int count = timeSlot.getContributorsCount();
@@ -109,12 +107,12 @@ public class ContributorsReportUtils {
             if (showTimeSlot) {
                 report.startTableRow();
                 report.addTableCell("", "border: none; ");
-                for (int year = startYear; year >= endYear; year -= 1) {
-                    ContributionTimeSlot timeSlot = findSlot(contributorsPerTimeSlot, year);
+                for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
+                    String slotString = timeSlot.getTimeSlot().replaceAll("\\-", "<br>");
                     if (timeSlot != null && (timeSlot.getCommitsCount() > 0 || timeSlot.getContributorsCount() > 0)) {
-                        report.addTableCell(year + "", "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: top; font-size: 80%");
+                        report.addTableCell(slotString + "", "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: top; font-size: 80%");
                     } else {
-                        report.addTableCell(year + "", "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: top; font-size: 80%; color: #c0c0c0");
+                        report.addTableCell(slotString + "", "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: top; font-size: 80%; color: #c0c0c0");
                     }
                 }
                 report.endTableRow();

@@ -78,8 +78,8 @@ public class CommitsReportGenerator {
         ContributorsReportUtils.addContributorsPerTimeSlot(report, analysis.getContributorsPerYear(), 20, true, true, 4);
         report.addLevel2Header("Per Month", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
-        List<ContributionTimeSlot> contributorsPerMonth = getContributionMonths(analysis, 25);
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerMonth, 24, true, true, 2);
+        List<ContributionTimeSlot> contributorsPerMonth = getContributionMonths(analysis, 60);
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerMonth, 60, true, true, 2);
         report.addLevel2Header("Per Week", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
         int pastWeeks = 104;
@@ -103,8 +103,8 @@ public class CommitsReportGenerator {
         report.addNewTabLink("6 months", "visuals/zoomable_circles_commits_180_main.html");
         report.addHtmlContent(" | ");
         report.addNewTabLink("past year", "visuals/zoomable_circles_commits_365_main.html");
-        report.addHtmlContent(" | ");
-        report.addNewTabLink("all time", "visuals/zoomable_circles_commits_main.html");
+//        report.addHtmlContent(" | ");
+//        report.addNewTabLink("all time", "visuals/zoomable_circles_commits_main.html");
         report.addContentInDiv("Files with only one commit are shown as grey.", "color: grey; font-size: 80%");
         report.endDiv();
     }
