@@ -154,24 +154,28 @@ public class ReportFileExporter {
         List<ContributionTimeSlot> contributorsPerYear = contributorsAnalysisResults.getContributorsPerYear();
 
         long contributorsCount = contributorsAnalysisResults.getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count();
+        int commitsCount30Days = contributorsAnalysisResults.getCommitsCount30Days();
         if (contributorsAnalysisResults.getCommitsCount() > 0) {
             indexReport.startTable("margin-bottom: -20px; border-top: 1px dashed grey; padding-top: 10px; margin-top: 10px;");
             indexReport.startTableRow();
 
             indexReport.startTableCell("border: none; vertical-align: top;");
 
-            indexReport.startDiv("margin-top: 8px; width: 70px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
-            indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(contributorsAnalysisResults.getCommitsCount30Days()),
+            indexReport.startDiv("margin-top: 8px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
+            indexReport.startNewTabLink("Commits.html" , "");
+            indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(commitsCount30Days),
                     "padding-top: 12px; font-size: 36px;");
-            indexReport.addContentInDiv("commits<br>(30 days)", "color: black; font-size: 80%");
-            indexReport.startDiv("margin-top: 32px; width: 70px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
-            indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber((int) contributorsCount),
-                    "padding-top: 12px; font-size: 36px;");
-            indexReport.addContentInDiv("contributors<br>(30 days)", "color: black; font-size: 80%");
-
+            indexReport.addContentInDiv((commitsCount30Days == 1 ? "commit" : "commits") + "<br>(30 days)", "color: black; font-size: 80%");
+            indexReport.endNewTabLink();
             indexReport.endDiv();
 
-
+            indexReport.startDiv("margin-top: 32px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
+            indexReport.startNewTabLink("Contributors.html" , "");
+            indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber((int) contributorsCount),
+                    "padding-top: 12px; font-size: 36px;");
+            indexReport.addContentInDiv((contributorsCount == 1 ? "contributor" : "contributors") + "<br>(30 days)", "color: black; font-size: 80%");
+            indexReport.endNewTabLink();
+            indexReport.endDiv();
             indexReport.endTableCell();
             indexReport.startTableCell("border: none");
             ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsPerYear, 20, true, true, 8);
@@ -226,20 +230,24 @@ public class ReportFileExporter {
 
             indexReport.startTableCell("border: none; vertical-align: top;");
 
-            indexReport.startDiv("margin-top: 8px; width: 70px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
-            indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(contributorsAnalysisResults.getCommitsCount30Days()),
+            indexReport.startDiv("margin-top: 8px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
+            indexReport.startNewTabLink("Commits.html" , "");
+            indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(commitsCount30Days),
                     "padding-top: 12px; font-size: 36px;");
-            indexReport.addContentInDiv("commits<br>(30 days)", "color: black; font-size: 80%");
+            indexReport.addContentInDiv((commitsCount30Days == 1 ? "commit" : "commits") + "<br>(30 days)", "color: black; font-size: 80%");
+            indexReport.endNewTabLink();
+            indexReport.endDiv();
 
-
-            indexReport.startDiv("margin-top: 32px; width: 70px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
+            indexReport.startDiv("margin-top: 32px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
+            indexReport.startNewTabLink("Contributors.html" , "");
             indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber((int) contributorsCount),
                     "padding-top: 12px; font-size: 36px;");
-            indexReport.addContentInDiv("contributors<br>(30 days)", "color: black; font-size: 80%");
-
+            indexReport.addContentInDiv((contributorsCount == 1 ? "contributor" : "contributors") + "<br>(30 days)", "color: black; font-size: 80%");
+            indexReport.endNewTabLink();
             indexReport.endDiv();
 
             indexReport.endTableCell();
+
             indexReport.startTableCell("border: none");
             ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsPerYear, 20, true, true, 8);
             indexReport.endTableCell();
