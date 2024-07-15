@@ -16,7 +16,9 @@ import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ContributorsReportUtils {
@@ -38,10 +40,8 @@ public class ContributorsReportUtils {
         return null;
     }
 
-    public static void addContributorsPerTimeSlot(RichTextReport report, List<ContributionTimeSlot> contributorsPerTimeSlot, int limit, boolean showTimeSlot, boolean showContributors, int padding) {
+    public static void addContributorsPerTimeSlot(RichTextReport report, List<ContributionTimeSlot> contributorsPerTimeSlot, int limit, boolean showTimeSlot, boolean showContributors, int padding, boolean fade) {
         Collections.sort(contributorsPerTimeSlot, (a, b) -> b.getTimeSlot().compareTo(a.getTimeSlot()));
-        int startYear = DateUtils.getAnalysisYear();
-        int endYear = startYear - limit;
 
         if (contributorsPerTimeSlot.size() > 0) {
             if (contributorsPerTimeSlot.size() > limit) {
@@ -55,7 +55,7 @@ public class ContributorsReportUtils {
             report.startTable();
 
             report.startTableRow();
-            report.addTableCell(getIconSvg("commits", 64), "border: none; vertical-align: bottom;");
+            report.addTableCell(getIconSvg("commits", 64), "border: none; vertical-align: bottom;" + (fade ? "opacity: 0.4" : ""));
             String style;
             if (showTimeSlot) {
                 style = "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: bottom; font-size: 80%";
@@ -67,7 +67,7 @@ public class ContributorsReportUtils {
                 if (timeSlot != null) {
                     int count = timeSlot.getCommitsCount();
                     if (showTimeSlot) {
-                        report.addParagraph(count + "", "margin: 0px");
+                        report.addParagraph(count + "", "margin: 0px" + (count == 0 ? "; color: #d0d0d0" : ""));
                     } else {
                         report.addParagraph("&nbsp;", "margin: 0px");
                     }
@@ -83,13 +83,13 @@ public class ContributorsReportUtils {
 
             if (showContributors) {
                 report.startTableRow();
-                report.addTableCell(getIconSvg("contributors", 64), "border: none; vertical-align: bottom;");
+                report.addTableCell(getIconSvg("contributors", 64), "border: none; vertical-align: bottom;" + (fade ? "opacity: 0.4" : ""));
                 for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
                     report.startTableCell(style);
                     if (timeSlot != null) {
                         int count = timeSlot.getContributorsCount();
                         if (showTimeSlot) {
-                            report.addParagraph(count + "", "margin: 0px");
+                            report.addParagraph(count + "", "margin: 0px" + (count == 0 ? "; color: #d0d0d0" : ""));
                         } else {
                             report.addParagraph("&nbsp;", "margin: 0px");
                         }

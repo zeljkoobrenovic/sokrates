@@ -75,21 +75,21 @@ public class CommitsReportGenerator {
 
         report.addLevel2Header("Per Year", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, analysis.getContributorsPerYear(), 20, true, true, 4);
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, analysis.getContributorsPerYear(), 20, true, true, 4, false);
         report.addLevel2Header("Per Month", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
         List<ContributionTimeSlot> contributorsPerMonth = getContributionMonths(analysis, 60);
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerMonth, 60, true, true, 2);
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerMonth, 60, true, true, 2, false);
         report.addLevel2Header("Per Week", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
         int pastWeeks = 104;
         List<ContributionTimeSlot> contributorsPerWeek = getContributionWeeks(analysis, pastWeeks);
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerWeek, pastWeeks, true, true, 1);
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerWeek, pastWeeks, true, true, 1, false);
         report.addLevel2Header("Per Day", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
         int pastDays = 365;
         List<ContributionTimeSlot> contributorsPerDay = getContributionDays(analysis, pastDays);
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerDay, pastDays, true, true, 1);
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerDay, pastDays, true, true, 1, false);
         report.endTabContentSection();
     }
 
