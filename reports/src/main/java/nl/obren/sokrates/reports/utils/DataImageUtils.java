@@ -153,6 +153,9 @@ public class DataImageUtils {
         map.put("cu", "nvidia.png");
         map.put("cuh", "nvidia.png");
         map.put("bazel", "bazel.png");
+        map.put("xlf", "xliff.png");
+        map.put("twig", "twig.png");
+        map.put("pug", "pug.png");
 
         map.put(".github", "github.png");
         map.put(".gh-pages", "github.png");
@@ -254,7 +257,7 @@ public class DataImageUtils {
 
     public static String getLangDataImage(String lang) {
         if (map.containsKey(lang.toLowerCase())) {
-            return getImageBase64("/lang/" + map.get(lang.toLowerCase()));
+            return getImageBase64("/lang/" + map.get(lang.toLowerCase().trim()));
         }
 
         return null;
@@ -279,6 +282,9 @@ public class DataImageUtils {
 
     public static String getLangDataImageDiv42(String lang) {
         return getLangDataImageDiv(lang, 42, 16, 14, 11, 13);
+    }
+    public static String getLangDataImageDiv36(String lang) {
+        return getLangDataImageDiv(lang, 36, 14, 12, 9, 11);
     }
 
     public static String getLangDataImageDiv30(String lang) {

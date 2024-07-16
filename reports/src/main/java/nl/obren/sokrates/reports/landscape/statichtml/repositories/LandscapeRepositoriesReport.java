@@ -162,8 +162,7 @@ public class LandscapeRepositoriesReport {
         repositories.forEach(repository -> {
             report.startTableRow("white-space: nowrap");
             RepositoryConcernData repositoryConcernData = repository.get(0);
-            String logoLink = repositoryConcernData.getRepository().getAnalysisResults().getMetadata().getLogoLink();
-            report.addTableCell(getImageWithLink(repositoryConcernData.getRepository(), logoLink), "text-align: center");
+            addLangTableCell(report, repository.get(0).getRepository().getAnalysisResults().getMainAspectAnalysisResults());
             String repositoryName = repositoryConcernData.getRepositoryName();
             String name = getRepositoryDisplayHtml(repositoryName);
 
@@ -202,11 +201,12 @@ public class LandscapeRepositoriesReport {
 
     public void addHistory(RichTextReport report, List<RepositoryAnalysisResults> repositoryAnalysisResults) {
         report.startTabContentSection("history", false);
-        Collections.sort(repositoryAnalysisResults,
+        List<RepositoryAnalysisResults> sorted = new ArrayList<>(repositoryAnalysisResults);
+        Collections.sort(sorted,
                 (a, b) -> b.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays()
                         - a.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays());
-        addSummaryGraphHistory(report, repositoryAnalysisResults);
-        addHistory(report, repositoryAnalysisResults, "Commits", "blue", (slot) -> slot.getCommitsCount());
+        addSummaryGraphHistory(report, sorted);
+        addHistory(report, sorted, "Commits", "blue", (slot) -> slot.getCommitsCount());
         report.endTabContentSection();
     }
 
@@ -216,7 +216,7 @@ public class LandscapeRepositoriesReport {
         Collections.sort(sorted,
                 (a, b) -> a.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays()
                         - b.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays());
-        addSummaryGraphNewReposPerYear(report, repositoryAnalysisResults);
+        addSummaryGraphNewReposPerYear(report, sorted);
         addHistory(report, sorted, "Commits", "blue", (slot) -> slot.getCommitsCount());
         report.endTabContentSection();
     }
@@ -470,7 +470,7 @@ public class LandscapeRepositoriesReport {
         report.startTable("width: 100%");
         int thresholdContributors = landscapeAnalysisResults.getConfiguration().getRepositoryThresholdContributors();
         List<String> headers = new ArrayList<>(Arrays.asList("", "Repository" + (thresholdContributors > 1 ? "<br/>(" + thresholdContributors + "+&nbsp;contributors)" : ""),
-                "Main<br/>Language", "LOC<br/>(main)*",
+                "LOC<br/>(main)*",
                 "LOC<br/>(test)", "LOC<br/>(other)",
                 "Age", "Latest<br>Commit Date",
                 "Contributors<br>(30d)", "Rookies<br>(30d)", "Commits<br>(30d)"));
@@ -521,8 +521,7 @@ public class LandscapeRepositoriesReport {
         repositoryAnalysisResults.stream().limit(limit).forEach(repositoryAnalysis -> {
             report.startTableRow("white-space: nowrap");
             String name = getRepositoryDisplayHtml(repositoryAnalysis.getAnalysisResults().getMetadata().getName());
-            String logoLink = repositoryAnalysis.getAnalysisResults().getMetadata().getLogoLink();
-            report.addTableCell(getImageWithLink(repositoryAnalysis, logoLink), "text-align: center");
+            addLangTableCell(report, repositoryAnalysis.getAnalysisResults().getMainAspectAnalysisResults());
             report.addTableCell("<a href='" + this.getRepositoryReportUrl(repositoryAnalysis) + "' target='_blank'>"
                     + "<div>" + name + "</div></a>", "overflow: hidden; white-space: nowrap; vertical-align: middle; min-width: 400px; max-width: 400px");
             ContributorsAnalysisResults contributorsAnalysisResults = repositoryAnalysis.getAnalysisResults().getContributorsAnalysisResults();
@@ -580,7 +579,7 @@ public class LandscapeRepositoriesReport {
     private void addMetricsTable(RichTextReport report, List<RepositoryAnalysisResults> repositoriesAnalysisResults) {
         report.startTable();
         List<String> headers = new ArrayList<>();
-        headers.addAll(Arrays.asList(new String[]{"", "Repository", "Main<br>Lang", "Duplication", "File Size",
+        headers.addAll(Arrays.asList(new String[]{"Main<br>Lang", "Repository", "Duplication", "File Size",
                 "Unit Size", "Conditional<br>Complexity", "Newness", "Freshness", "Update<br>Frequency"}));
         if (showControls()) {
             headers.add("Controls");
@@ -609,31 +608,16 @@ public class LandscapeRepositoriesReport {
             report.startTableRow("white-space: nowrap" + (commits90Days > 0 ? "" : "; opacity: 0.7"));
             CodeAnalysisResults repositoryAnalysisResults = repositoryAnalysis.getAnalysisResults();
             String name = getRepositoryDisplayHtml(repositoryAnalysis.getAnalysisResults().getMetadata().getName());
-            String logoLink = repositoryAnalysisResults.getMetadata().getLogoLink();
-
-            report.addTableCell(getImageWithLink(repositoryAnalysis, logoLink), "text-align: center");
 
             AspectAnalysisResults main = repositoryAnalysis.getAnalysisResults().getMainAspectAnalysisResults();
+
+            addLangTableCell(report, main);
+
             String locText = FormattingUtils.formatCount(main.getLinesOfCode());
             String commits90DaysText = commits90Days > 0 ? ", <b>" + FormattingUtils.formatCount(commits90Days) + "</b> commits (90d)" : "";
             report.addTableCell("<a href='" + this.getRepositoryReportUrl(repositoryAnalysis) + "' target='_blank'>"
                             + "<div>" + name + "</div><div style='color: black; font-size: 80%'><b>" + locText + "</b> LOC (main)" + commits90DaysText + "</div></a>",
                     "overflow: hidden; white-space: nowrap; vertical-align: middle; max-width: 400px");
-
-            List<NumericMetric> linesOfCodePerExtension = main.getLinesOfCodePerExtension();
-            StringBuilder locSummary = new StringBuilder();
-            if (linesOfCodePerExtension.size() > 0) {
-                locSummary.append(linesOfCodePerExtension.get(0).getName().replace("*.", "").trim().toUpperCase());
-            } else {
-                locSummary.append("-");
-            }
-            String lang = locSummary.toString().replace("> = ", ">");
-            report.startTableCell("text-align: left; max-width: 32px;");
-            report.startDiv("white-space: nowrap; overflow: hidden; filter: grayscale(100%);");
-            report.addHtmlContent(DataImageUtils.getLangDataImageDiv30(lang));
-            report.endDiv();
-            report.endTableCell();
-
 
             report.addTableCell("<a href='" + this.getDuplicationReportUrl(repositoryAnalysis) + "' target='_blank'>" +
                     getDuplicationVisual(repositoryAnalysisResults.getDuplicationAnalysisResults().getOverallDuplication().getDuplicationPercentage()) +
@@ -678,6 +662,22 @@ public class LandscapeRepositoriesReport {
 
     }
 
+    private static void addLangTableCell(RichTextReport report, AspectAnalysisResults main) {
+        List<NumericMetric> linesOfCodePerExtension = main.getLinesOfCodePerExtension();
+        StringBuilder locSummary = new StringBuilder();
+        if (linesOfCodePerExtension.size() > 0) {
+            locSummary.append(linesOfCodePerExtension.get(0).getName().replace("*.", "").trim().toUpperCase());
+        } else {
+            locSummary.append("-");
+        }
+        String lang = locSummary.toString().replace("> = ", ">");
+        report.startTableCell("text-align: left; max-width: 38px;");
+        report.startDiv("white-space: nowrap; overflow: hidden");
+        report.addHtmlContent(DataImageUtils.getLangDataImageDiv36(lang));
+        report.endDiv();
+        report.endTableCell();
+    }
+
     private void addHistory(RichTextReport report, List<RepositoryAnalysisResults> repositoriesAnalysisResults, String label, String color, Counter counter) {
         report.startTable();
         report.addTableHeader("", "Repository",
@@ -693,13 +693,18 @@ public class LandscapeRepositoriesReport {
             contributorsPerYear.forEach(c -> maxCommits[0] = Math.max(counter.getCount(c), maxCommits[0]));
         });
 
-        repositoriesAnalysisResults.stream().limit(limit).filter(r -> r.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays() > 0).forEach(repositoryAnalysis -> {
+        int listCount[] = {0};
+        repositoriesAnalysisResults.forEach(repositoryAnalysis -> {
+            if (repositoryAnalysis.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays() == 0) {
+                return;
+            }
+            listCount[0]++;
+            if (listCount[0] > limit) return;
             report.startTableRow("white-space: nowrap");
             CodeAnalysisResults repositoryAnalysisAnalysisResults = repositoryAnalysis.getAnalysisResults();
             String name = getRepositoryDisplayHtml(repositoryAnalysisAnalysisResults.getMetadata().getName());
-            String logoLink = repositoryAnalysisAnalysisResults.getMetadata().getLogoLink();
 
-            report.addTableCell(getImageWithLink(repositoryAnalysis, logoLink), "text-align: center");
+            addLangTableCell(report, repositoryAnalysis.getAnalysisResults().getMainAspectAnalysisResults());
 
             report.addTableCell("<a href='" + this.getRepositoryReportUrl(repositoryAnalysis) + "' target='_blank'>"
                     + "<div>" + name + "</div></a>", "overflow: hidden; white-space: nowrap; vertical-align: middle; min-width: 400px; max-width: 400px");
@@ -716,6 +721,7 @@ public class LandscapeRepositoriesReport {
             if (contributorsPerYear.size() > pastYears) {
                 contributorsPerYear = contributorsPerYear.subList(0, pastYears);
             }
+
             report.startTableCell("white-space: nowrap; overflow-x: hidden;");
             String firstDate = filesHistoryAnalysisResults.getFirstDate();
             String firstYear = firstDate.length() >= 4 ? firstDate.substring(0, 4) : "";
@@ -741,6 +747,7 @@ public class LandscapeRepositoriesReport {
                 }
             });
             report.endTableCell();
+
             report.addTableCell(contributorsAnalysisResults.getContributors().size() + "", "text-align: center; font-size: 90%");
             report.addTableCell(contributorsAnalysisResults.getCommitsCount() + "", "text-align: center; font-size: 90%");
             report.addTableCell(getRiskProfileVisual(repositoryAnalysisAnalysisResults.getFilesHistoryAnalysisResults().getOverallFileLastModifiedDistribution(), Palette.getFreshnessPalette()));
@@ -817,10 +824,7 @@ public class LandscapeRepositoriesReport {
         String latestCommitDate = repositoryAnalysis.getAnalysisResults().getContributorsAnalysisResults().getLatestCommitDate();
         report.startTableRow("white-space: nowrap;" + (DateUtils.isCommittedLessThanDaysAgo(latestCommitDate, 90) ? ""
                 : (DateUtils.isCommittedLessThanDaysAgo(latestCommitDate, 180) ? "color:#b0b0b0" : "color:#c3c3c3")));
-        AnimalIcons animalIcons = new AnimalIcons(42);
-        int linesOfCode = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
-        String icon = "<div style='cursor: help' title='" + animalIcons.getInfo(linesOfCode) + "'>" + animalIcons.getAnimalIconsForMainLoc(linesOfCode) + "</div>";
-        report.addTableCell(icon, "text-align: center");
+        addLangTableCell(report, repositoryAnalysis.getAnalysisResults().getMainAspectAnalysisResults());
         String name = getRepositoryDisplayHtml(metadata.getName());
         report.addTableCell("<a href='" + this.getRepositoryReportUrl(repositoryAnalysis) + "' target='_blank'>"
                 + "<div>" + name + "</div></a>", "overflow: hidden; white-space: nowrap; vertical-align: middle; min-width: 400px; max-width: 400px");
@@ -837,20 +841,6 @@ public class LandscapeRepositoriesReport {
         int recentContributorsCount = (int) contributors.stream().filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count();
         int rookiesCount = (int) contributors.stream().filter(c -> c.isRookie(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count();
 
-        List<NumericMetric> linesOfCodePerExtension = main.getLinesOfCodePerExtension();
-        StringBuilder locSummary = new StringBuilder();
-        if (linesOfCodePerExtension.size() > 0) {
-            locSummary.append(linesOfCodePerExtension.get(0).getName().replace("*.", "").trim().toUpperCase());
-        } else {
-            locSummary.append("-");
-        }
-        String lang = locSummary.toString().replace("> = ", ">");
-        report.startTableCell("text-align: left");
-        report.startDiv("min-width: 130px; white-space: nowrap; overflow: hidden");
-        report.addHtmlContent(DataImageUtils.getLangDataImageDiv30(lang));
-        report.addContentInDiv(lang, "vertical-align: middle; display: inline-block;margin-top: 5px");
-        report.endDiv();
-        report.endTableCell();
         report.addTableCell(FormattingUtils.formatCount(main.getLinesOfCode(), "-"), "text-align: center; font-size: 90%");
 
         report.addTableCell(FormattingUtils.formatCount(test.getLinesOfCode(), "-"), "text-align: center; font-size: 90%");
