@@ -205,6 +205,11 @@ public class ScopingConventions {
         otherFilesConventions.add(new Convention(".*/resources/.*[.]xsd", "", "XSD files"));
         otherFilesConventions.add(new Convention(".*/wp[-]includes/.*", "", "WordPress includes"));
         otherFilesConventions.add(new Convention(".*/changes[.]xml", "", "Changes log"));
+
+        otherFilesConventions.add(new Convention(".*[.]pb", "", "Protocol buffer (protobuf) files"));
+        otherFilesConventions.add(new Convention(".*[.]obj", "", "Geometry definition files"));
+        otherFilesConventions.add(new Convention(".*[.]mtl", "", "Material Template Library files"));
+        otherFilesConventions.add(new Convention(".*[.]urdf", "", "URDF files"));
     }
 
     private void addBuildAndDeploymentConventions() {

@@ -156,6 +156,8 @@ public class DataImageUtils {
         map.put("xlf", "xliff.png");
         map.put("twig", "twig.png");
         map.put("pug", "pug.png");
+        map.put("cls", "cls.png");
+        map.put("phtml", "phtml.png");
 
         map.put(".github", "github.png");
         map.put(".gh-pages", "github.png");
