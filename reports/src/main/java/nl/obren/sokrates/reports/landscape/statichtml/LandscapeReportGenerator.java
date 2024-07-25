@@ -1226,63 +1226,7 @@ public class LandscapeReportGenerator {
             int recentContributorsCount = recentContributors.size();
 
             if (recentContributorsCount > 0) {
-                landscapeReport.startSubSection("<a href='contributors-recent.html' target='_blank' style='text-decoration: none'>" +
-                                "Recent Contributors (" + recentContributorsCount + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
-                        "latest commit " + latestCommit[0]);
-
-                addRecentContributorLinks();
-
-                DescriptiveStatistics stats = new DescriptiveStatistics();
-                recentContributors.forEach(c -> stats.addValue(c.getContributor().getCommitsCount30Days()));
-                double max = Math.max(stats.getMax(), 1);
-                double sum = Math.max(stats.getSum(), 1);
-
-                int cumulativeCount[] = {0};
-                double prevCumulativePercentage[] = {0};
-                int index[] = {0};
-
-                StringBuilder html = new StringBuilder();
-                ProcessingStopwatch.end("reporting/contributors/preparing");
-
-                ProcessingStopwatch.start("reporting/contributors/table");
-                recentContributors.stream().limit(landscapeAnalysisResults.getConfiguration().getContributorsListLimit()).forEach(c -> {
-                    index[0] += 1;
-                    Contributor contributor = c.getContributor();
-                    int count = contributor.getCommitsCount30Days();
-                    int height = (int) (Math.round(64 * count / max)) + 1;
-                    cumulativeCount[0] += count;
-                    double cumulativePercentage = Math.round(1000.0 * cumulativeCount[0] / sum) / 10;
-                    double contributorPercentage = Math.round(10000.0 * index[0] / recentContributorsCount) / 100;
-                    String tooltip = contributor.getEmail()
-                            + "\n - commits (30d): " + count
-                            + "\n - cumulative commits (top " + index[0] + "): " + cumulativeCount[0]
-                            + "\n - cumulative percentage (top " + contributorPercentage + "% " + "): " + cumulativePercentage + "%";
-                    String color = (prevCumulativePercentage[0] < 50 && cumulativePercentage >= 50) ? "blue" : "skyblue";
-                    String style = "margin-right: 1px; vertical-align: bottom; width: 8px; background-color: " + color + "; display: inline-block; height: " + height + "px";
-
-                    if (contributor.isRookie()) {
-                        style += "; border-bottom: 4px solid green;";
-                    } else {
-                        style += "; border-bottom: 4px solid " + color + ";";
-                    }
-
-                    html.append("<div title='" + tooltip + "' style='" + style + "'></div>");
-                    prevCumulativePercentage[0] = cumulativePercentage;
-                });
-                landscapeReport.startDiv("white-space: nowrap; width: 100%; overflow-x: scroll;");
-                landscapeReport.addHtmlContent(html.toString());
-                landscapeReport.endDiv();
-                landscapeReport.startDiv("color: grey; font-size: 70%");
-                landscapeReport.addHtmlContent("commits per contributor | ");
-                for (int p = 90; p >= 10; p -= 10) {
-                    double percentile = stats.getPercentile(p);
-                    landscapeReport.addHtmlContent("p(" + p + ") = " + (int) Math.round(percentile) + "; ");
-                }
-                landscapeReport.endDiv();
-
-                landscapeReport.addHtmlContent("<iframe src='contributors-recent.html' frameborder=0 style='height: 450px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
-
-                landscapeReport.endSection();
+                addRecentContributorsSection(recentContributorsCount, latestCommit, recentContributors);
             }
 
             landscapeReport.startDiv("margin-bottom: 16px; margin-top: -6px; vertical-align: middle;");
@@ -1322,6 +1266,94 @@ public class LandscapeReportGenerator {
             ProcessingStopwatch.end("reporting/contributors/individual reports");
         }
         ProcessingStopwatch.end("reporting/contributors");
+    }
+
+    private void addRecentContributorsSection(int recentContributorsCount, String[] latestCommit, List<ContributorRepositories> recentContributors) {
+        landscapeReport.startSubSection("<a href='contributors-recent.html' target='_blank' style='text-decoration: none'>" +
+                        "Recent Contributors (" + recentContributorsCount + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
+                "latest commit " + latestCommit[0]);
+
+        addRecentContributorLinks();
+
+        DescriptiveStatistics stats = new DescriptiveStatistics();
+        recentContributors.forEach(c -> stats.addValue(c.getContributor().getCommitsCount30Days()));
+        double max = Math.max(stats.getMax(), 1);
+        double sum = Math.max(stats.getSum(), 1);
+
+        int cumulativeCount[] = {0};
+        double prevCumulativePercentage[] = {0};
+        int index[] = {0};
+
+        StringBuilder barsHtml = new StringBuilder();
+        ProcessingStopwatch.end("reporting/contributors/preparing");
+
+        ProcessingStopwatch.start("reporting/contributors/table");
+        recentContributors.stream().limit(landscapeAnalysisResults.getConfiguration().getContributorsListLimit()).forEach(c -> {
+            index[0] += 1;
+            Contributor contributor = c.getContributor();
+            int count = contributor.getCommitsCount30Days();
+            int height = (int) (Math.round(64 * count / max)) + 1;
+            cumulativeCount[0] += count;
+            double cumulativePercentage = Math.round(1000.0 * cumulativeCount[0] / sum) / 10;
+            double contributorPercentage = Math.round(10000.0 * index[0] / recentContributorsCount) / 100;
+            String tooltip = contributor.getEmail()
+                    + "\n - commits (30d): " + count
+                    + "\n - cumulative commits (top " + index[0] + "): " + cumulativeCount[0]
+                    + "\n - cumulative percentage (top " + contributorPercentage + "% " + "): " + cumulativePercentage + "%";
+            String color = (prevCumulativePercentage[0] < 50 && cumulativePercentage >= 50) ? "blue" : "skyblue";
+            String style = "cursor: help; margin-right: 1px; vertical-align: bottom; width: 8px; background-color: " + color + "; display: inline-block; height: " + height + "px";
+
+            if (contributor.isRookie()) {
+                style += "; border-bottom: 4px solid green;";
+            } else {
+                style += "; border-bottom: 4px solid " + color + ";";
+            }
+
+            barsHtml.append("<div title='" + tooltip + "' style='" + style + "'></div>");
+            prevCumulativePercentage[0] = cumulativePercentage;
+        });
+
+        StringBuilder distHtml = new StringBuilder();
+
+        long most = 1;
+
+        for (int i = 1; i <= max; i++) {
+            final int d = i;
+            most = Math.max(most, recentContributors.stream().filter(c -> c.getContributor().getCommitsCount30Days() == d).count());
+        }
+
+        for (int i = 1; i <= max; i++) {
+            final int d = i;
+            long count = recentContributors.stream().filter(c -> c.getContributor().getCommitsCount30Days() == d).count();
+            long height = count > 0 ? (int) (80.0 * count / most) + 5 : 0;
+            double median = stats.getPercentile(50);
+            String color = d == median ? "blue" : "#990000";
+            String style = "cursor: help; margin-right: 1px; vertical-align: bottom; width: 4px; background-color: " + color + "; display: inline-block; height: " + height + "px";
+            String title = count + " contributor(s) (" + (Math.round(10000.0 * count / recentContributorsCount) / 100.0) + "%) with " + d + " commit(s)";
+            distHtml.append("<div title='" + title + "' style='" + style + "'></div>");
+        }
+
+        landscapeReport.startDiv("white-space: nowrap; width: 100%; overflow-x: scroll;");
+        landscapeReport.addParagraph("commits distribution:", "font-size: 70%;");
+        landscapeReport.addHtmlContent(distHtml.toString());
+        landscapeReport.endDiv();
+        landscapeReport.startDiv("color: grey; font-size: 70%");
+        landscapeReport.addHtmlContent("commits per contributor | ");
+        for (int p = 90; p >= 10; p -= 10) {
+            double percentile = stats.getPercentile(p);
+            landscapeReport.addHtmlContent("p(" + p + ") = " + (int) Math.round(percentile) + "; ");
+        }
+        landscapeReport.endDiv();
+
+        landscapeReport.addParagraph("contributors sorted by recent commits:", "font-size: 70%; margin-top: 12px;");
+        landscapeReport.startDiv("white-space: nowrap; width: 100%; overflow-x: scroll;");
+        landscapeReport.addHtmlContent(barsHtml.toString());
+        landscapeReport.endDiv();
+
+
+        landscapeReport.addHtmlContent("<iframe src='contributors-recent.html' frameborder=0 style='height: 450px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
+
+        landscapeReport.endSection();
     }
 
     private void addContributorsPerExtension() {
