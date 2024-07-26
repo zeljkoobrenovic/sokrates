@@ -283,7 +283,7 @@ public class DataImageUtils {
     }
 
     public static String getLangDataImageDiv42(String lang) {
-        return getLangDataImageDiv(lang, 42, 16, 14, 11, 13);
+        return getLangDataImageDiv(lang, 42, 16, 14, 12, 13);
     }
     public static String getLangDataImageDiv36(String lang) {
         return getLangDataImageDiv(lang, 36, 14, 12, 9, 11);
@@ -302,7 +302,7 @@ public class DataImageUtils {
             int nameLength = lang.length();
             return "<div title='" + lang + "' style=\"" +
                     "margin-right: 3px; display: inline-block; vertical-align: top; " +
-                    "padding: auto; background-color: #f1f1f1; border-radius: 50%; border: 1px solid grey; " +
+                    "padding: auto; background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; " +
                     "object-fit: contain; overflow: hidden; color: darkblue; " +
                     "width: " + size + "px; " +
                     "height: " + size + "px; " +

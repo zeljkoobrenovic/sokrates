@@ -305,7 +305,7 @@ public class ReportFileExporter {
         indexReport.startTableCell("border: none; vertical-align: top;");
 
         indexReport.startDiv("margin-top: 8px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
-        indexReport.startNewTabLink("Commits.html", commitsCount30Days == 0 ? "opacity: 0.4": "");
+        indexReport.startNewTabLink("Commits.html", commitsCount30Days == 0 ? "opacity: 0.4" : "");
         indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(commitsCount30Days),
                 "padding-top: 12px; font-size: 36px;");
         indexReport.addContentInDiv((commitsCount30Days == 1 ? "commit" : "commits") + "<br>(30 days)", "color: black; font-size: 80%");
@@ -313,7 +313,7 @@ public class ReportFileExporter {
         indexReport.endDiv();
 
         indexReport.startDiv("margin-top: 32px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
-        indexReport.startNewTabLink("Contributors.html", contributorsCount == 0 ? "opacity: 0.4": "");
+        indexReport.startNewTabLink("Contributors.html", contributorsCount == 0 ? "opacity: 0.4" : "");
         indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber((int) contributorsCount),
                 "padding-top: 12px; font-size: 36px;");
         indexReport.addContentInDiv((contributorsCount == 1 ? "contributor" : "contributors") + "<br>(30 days)", "color: black; font-size: 80%");
@@ -858,24 +858,17 @@ public class ReportFileExporter {
     private static void addIconsMainCode(CodeAnalysisResults analysisResults, StringBuilder summary) {
         List<NumericMetric> extensions = analysisResults.getMainAspectAnalysisResults().getLinesOfCodePerExtension();
         summary.append("<div style='margin-bottom: 20px; white-space: nowrap; overflow: hidden;'>");
-        Set<String> alreadyAddedImage = new HashSet<>();
         boolean first[] = {true};
-        extensions.forEach(ext -> {
+        extensions.stream().limit(16).forEach(ext -> {
             String lang = ext.getName().toUpperCase().replace("*.", "").trim();
-            String image = DataImageUtils.getLangDataImage(lang);
-            if (image == null || !alreadyAddedImage.contains(image)) {
-                int loc = ext.getValue().intValue();
-                int fontSize = loc >= 1000 ? 20 : 20;
-                int width = (first[0] ? loc >= 1000 ? 64 : 65 : loc >= 1000 ? 42 : 43);
-                summary.append("<div style='width: " + width + "px; text-align: center; display: inline-block; border-radius: 5px; background-color: white; padding: 8px; margin-right: 4px;'>"
-                        + (first[0] ? DataImageUtils.getLangDataImageDiv64(lang) : DataImageUtils.getLangDataImageDiv42(lang))
-                        + "<div style='margin-top: 3px; font-size: " + fontSize + "px'>" + FormattingUtils.getSmallTextForNumberMinK(loc) + "</div>"
-                        + "<div style='font-size: 10px; white-space: no-wrap; overflow: hidden; color: grey;'>" + lang.toLowerCase() + "</div>"
-                        + "</div>");
-                if (image != null) {
-                    alreadyAddedImage.add(image);
-                }
-            }
+            int loc = ext.getValue().intValue();
+            int fontSize = loc >= 1000 ? 20 : 20;
+            int width = (first[0] ? loc >= 1000 ? 64 : 65 : loc >= 1000 ? 42 : 43);
+            summary.append("<div style='width: " + width + "px; text-align: center; display: inline-block; border-radius: 5px; background-color: white; padding: 8px; margin-right: 4px;'>"
+                    + (first[0] ? DataImageUtils.getLangDataImageDiv64(lang) : DataImageUtils.getLangDataImageDiv42(lang))
+                    + "<div style='margin-top: 3px; font-size: " + fontSize + "px'>" + FormattingUtils.getSmallTextForNumberMinK(loc) + "</div>"
+                    + "<div style='font-size: 10px; white-space: no-wrap; overflow: hidden; color: grey;'>" + lang.toLowerCase() + "</div>"
+                    + "</div>");
             first[0] = false;
         });
         summary.append("</div>");
