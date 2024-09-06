@@ -85,7 +85,11 @@ public class LandscapeAnalysisCommands {
             ProcessingStopwatch.start("reporting/saving/contributors");
             File finalIndividualReportsFolder = individualReportsFolder;
             reportGenerator.getIndividualContributorReports().forEach(individualReport -> {
-                LOG.info("Exporting " + individualReport.getFileName() + ".");
+                LOG.info("Exporting person " + individualReport.getFileName() + ".");
+                ReportFileExporter.exportHtml(finalIndividualReportsFolder, "", individualReport, customHtmlReportHeaderFragment);
+            });
+            reportGenerator.getIndividualBotReports().forEach(individualReport -> {
+                LOG.info("Exporting bot " + individualReport.getFileName() + ".");
                 ReportFileExporter.exportHtml(finalIndividualReportsFolder, "", individualReport, customHtmlReportHeaderFragment);
             });
             ProcessingStopwatch.end("reporting/saving/contributors");

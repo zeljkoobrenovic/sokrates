@@ -28,9 +28,15 @@ public class ContributorsReportUtils {
     public static void addContributorsSection(CodeAnalysisResults analysisResults, RichTextReport report) {
         ContributorsAnalysisResults contributorsAnalysisResults = analysisResults.getContributorsAnalysisResults();
         List<Contributor> contributors = contributorsAnalysisResults.getContributors();
-        if (contributors.size() > 0) {
-            addContributors(report, contributors.stream().filter(c -> !c.isBot()).collect(Collectors.toList()), "Contributors");
-            addContributors(report, contributors.stream().filter(c -> c.isBot()).collect(Collectors.toList()), "Bots");
+        List<Contributor> people = contributors.stream().filter(c -> !c.isBot()).collect(Collectors.toList());
+        List<Contributor> bots = contributors.stream().filter(c -> c.isBot()).collect(Collectors.toList());
+
+        if (people.size() > 0) {
+            addContributors(report, people, "Contributors");
+        }
+
+        if (bots.size() > 0) {
+            addContributors(report, bots, "Bots");
         }
     }
 

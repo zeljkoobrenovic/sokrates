@@ -109,6 +109,7 @@ public class LandscapeReportGenerator {
     private File folder;
     private File reportsFolder;
     private List<RichTextReport> individualContributorReports = new ArrayList<>();
+    private List<RichTextReport> individualBotReports = new ArrayList<>();
     private Map<String, List<String>> contributorsPerWeekMap = new HashMap<>();
     private Map<String, List<String>> rookiesPerWeekMap = new HashMap<>();
     private Map<String, List<String>> contributorsPerMonthMap = new HashMap<>();
@@ -1284,7 +1285,12 @@ public class LandscapeReportGenerator {
                     .filter(c -> contributorsLinkedFromTables.contains(c.getContributor().getEmail()))
                     .collect(Collectors.toList());
             LOG.info("Saving individual reports for " + linkedContributors.size() + " contributor(s) linked from tables (out of " + contributors.size() + ")");
+            List<ContributorRepositories> linkedBots = bots.stream()
+                    .filter(c -> contributorsLinkedFromTables.contains(c.getContributor().getEmail()))
+                    .collect(Collectors.toList());
+            LOG.info("Saving bot reports for " + linkedBots.size() + " contributor(s) linked from tables (out of " + linkedBots.size() + ")");
             individualContributorReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults).getIndividualReports(linkedContributors);
+            individualBotReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults).getIndividualReports(linkedBots);
             ProcessingStopwatch.end("reporting/contributors/individual reports");
         }
         ProcessingStopwatch.end("reporting/contributors");
@@ -2857,7 +2863,23 @@ public class LandscapeReportGenerator {
         this.individualContributorReports = individualContributorReports;
     }
 
+    public RichTextReport getLandscapeBotsReport() {
+        return landscapeBotsReport;
+    }
+
+    public void setLandscapeBotsReport(RichTextReport landscapeBotsReport) {
+        this.landscapeBotsReport = landscapeBotsReport;
+    }
+
     abstract class ZommableCircleCountExtractors {
         public abstract int getCount(RepositoryAnalysisResults repositoryAnalysisResults);
+    }
+
+    public List<RichTextReport> getIndividualBotReports() {
+        return individualBotReports;
+    }
+
+    public void setIndividualBotReports(List<RichTextReport> individualBotReports) {
+        this.individualBotReports = individualBotReports;
     }
 }
