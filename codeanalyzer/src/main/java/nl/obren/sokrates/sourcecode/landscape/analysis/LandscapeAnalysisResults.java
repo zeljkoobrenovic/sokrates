@@ -5,6 +5,7 @@
 package nl.obren.sokrates.sourcecode.landscape.analysis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
@@ -178,6 +179,8 @@ public class LandscapeAnalysisResults {
     private List<RepositoryAnalysisResults> repositoryAnalysisResults = new ArrayList<>();
     @JsonIgnore
     private List<ContributorRepositories> contributorsCache;
+    @JsonIgnore
+    private List<ContributorRepositories> botsCache;
 
     public static SourceFileAgeDistribution getOverallFileLastModifiedDistribution(List<RepositoryAnalysisResults> repositoriesAnalysisResults) {
         SourceFileAgeDistribution distribution = new SourceFileAgeDistribution();
@@ -560,6 +563,7 @@ public class LandscapeAnalysisResults {
         int thresholdCommits = configuration.getContributorThresholdCommits();
         List<ContributorRepositories> contributorRepositories = getAllContributors().stream()
                 .filter(c -> c.getContributor().getCommitsCount() >= thresholdCommits)
+                .filter(c -> !isBot(c.getContributor().getEmail()))
                 .collect(Collectors.toCollection(ArrayList::new));
 
         if (configuration.isAnonymizeContributors()) {
@@ -570,6 +574,25 @@ public class LandscapeAnalysisResults {
             });
         }
         contributorsCache = contributorRepositories;
+        return contributorRepositories;
+    }
+
+    private boolean isBot(String email) {
+          return RegexUtils.matchesAnyPattern(email, configuration.getBots());
+    }
+
+    @JsonIgnore
+    public List<ContributorRepositories> getBots() {
+        if (botsCache != null) {
+            return botsCache;
+        }
+        int thresholdCommits = configuration.getContributorThresholdCommits();
+        List<ContributorRepositories> contributorRepositories = getAllContributors().stream()
+                .filter(c -> c.getContributor().getCommitsCount() >= thresholdCommits)
+                .filter(c -> isBot(c.getContributor().getEmail()))
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        botsCache = contributorRepositories;
         return contributorRepositories;
     }
 

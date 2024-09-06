@@ -46,7 +46,7 @@ public class GitHistoryUtils {
             String commitId = fileUpdate.getCommitId();
             if (!commitIds.contains(commitId)) {
                 commitIds.add(commitId);
-                commits.add(new AuthorCommit(fileUpdate.getDate(), fileUpdate.getAuthorEmail()));
+                commits.add(new AuthorCommit(fileUpdate.getDate(), fileUpdate.getAuthorEmail(), fileUpdate.isBot()));
             }
         });
 
@@ -85,6 +85,7 @@ public class GitHistoryUtils {
                         ": " + StringUtils.abbreviate(line, 64));
             }
             FileUpdate fileUpdate = GitHistoryUtils.parseLine(line, config);
+            fileUpdate.setBot(fileUpdate.isBot());
             if (fileUpdate != null) {
                 updates.add(fileUpdate);
             }
@@ -111,6 +112,7 @@ public class GitHistoryUtils {
                     if (shouldIgnore(author, ignoreContributors)) {
                         return null;
                     }
+                    boolean bot = isBot(author, config.getBots());
                     if (anonymize) {
                         String anonymizedAuthor = anonymizeEmails.get(author);
                         if (anonymizedAuthor == null) {
@@ -134,7 +136,10 @@ public class GitHistoryUtils {
                     String commitId = line.substring(index2 + 1, index3).trim();
                     String path = line.substring(index3 + 1).trim();
 
-                    return new FileUpdate(date, author, commitId, path);
+                    bot = bot || isBot(author, config.getBots());
+
+                    FileUpdate fileUpdate = new FileUpdate(date, author, commitId, path, bot);
+                    return fileUpdate;
                 }
             }
         }
@@ -152,5 +157,9 @@ public class GitHistoryUtils {
             return true;
         }
         return false;
+    }
+
+    public static boolean isBot(String email, List<String> bots) {
+        return RegexUtils.matchesAnyPattern(email, bots);
     }
 }

@@ -75,7 +75,8 @@ public class LandscapeConfiguration {
     private String contributorAvatarLinkTemplate = "";
 
     // The list of regex expressions used to exclude contributors from analysis. If empty, all contributors are included.
-    private List<String> ignoreContributors = new ArrayList<>(Arrays.asList(".*\\[bot\\].*", ".*[-]bot[@].*"));
+    private List<String> ignoreContributors = new ArrayList<>();
+    private List<String> bots = new ArrayList<>(Arrays.asList(".*\\[bot\\].*", ".*[-]bot[@].*"));
 
     // The list of contributor tagging rules (regex expressions for email).
     private List<ContributorTag> tagContributors = new ArrayList<>();
@@ -397,6 +398,14 @@ public class LandscapeConfiguration {
 
     public void setIgnoreContributors(List<String> ignoreContributors) {
         this.ignoreContributors = ignoreContributors;
+    }
+
+    public List<String> getBots() {
+        return bots;
+    }
+
+    public void setBots(List<String> bots) {
+        this.bots = bots;
     }
 
     public List<String> getIgnoreExtensions() {

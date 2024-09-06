@@ -102,6 +102,7 @@ public class LandscapeReportGenerator {
     private RichTextReport landscapeRepositoriesReportLong = new RichTextReport("", "repositories.html");
     private RichTextReport landscapeRecentContributorsReport = new RichTextReport("", "contributors-recent.html");
     private RichTextReport landscapeContributorsReport = new RichTextReport("", "contributors.html");
+    private RichTextReport landscapeBotsReport = new RichTextReport("", "bots.html");
     private LandscapeAnalysisResults landscapeAnalysisResults;
     private int dependencyVisualCounter = 1;
     private List<TagGroup> tagGroups;
@@ -131,6 +132,7 @@ public class LandscapeReportGenerator {
         landscapeRepositoriesReportShort.setEmbedded(true);
         landscapeRepositoriesReportLong.setEmbedded(true);
         landscapeContributorsReport.setEmbedded(true);
+        landscapeBotsReport.setEmbedded(true);
         landscapeRecentContributorsReport.setEmbedded(true);
         LandscapeDataExport dataExport = new LandscapeDataExport(landscapeAnalysisResults, folder);
 
@@ -1212,9 +1214,14 @@ public class LandscapeReportGenerator {
             ProcessingStopwatch.start("reporting/contributors/preparing");
 
             List<ContributorRepositories> contributors = landscapeAnalysisResults.getContributors();
+            List<ContributorRepositories> bots = landscapeAnalysisResults.getBots();
+            Collections.sort(bots, (a, b) -> b.getContributor().getCommitsCount180Days() - a.getContributor().getCommitsCount180Days());
+            Collections.sort(bots, (a, b) -> b.getContributor().getCommitsCount90Days() - a.getContributor().getCommitsCount90Days());
+            Collections.sort(bots, (a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days());
             List<ContributorRepositories> recentContributors = landscapeAnalysisResults.getRecentContributors();
             Collections.sort(recentContributors, (a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days());
             int totalCommits = contributors.stream().mapToInt(c -> c.getContributor().getCommitsCount()).sum();
+            int botCommits = bots.stream().mapToInt(c -> c.getContributor().getCommitsCount()).sum();
             int totalRecentCommits = recentContributors.stream().mapToInt(c -> c.getContributor().getCommitsCount30Days()).sum();
             final String[] latestCommit = {""};
             contributors.forEach(c -> {
@@ -1247,6 +1254,19 @@ public class LandscapeReportGenerator {
 
             landscapeReport.endShowMoreBlock();
             landscapeReport.endSection();
+
+            landscapeReport.startSubSection("<a href='bots.html' target='_blank' style='text-decoration: none'>" +
+                            "Bots (" + bots.size() + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
+                    "commits of bots");
+
+            landscapeReport.startShowMoreBlock("show details...");
+
+            landscapeReport.addHtmlContent("<iframe src='bots.html' frameborder=0 style='height: 450px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
+
+            landscapeReport.endShowMoreBlock();
+            landscapeReport.endSection();
+
+
             ProcessingStopwatch.end("reporting/contributors/table");
 
             ProcessingStopwatch.start("reporting/contributors/saving tables");
@@ -1255,6 +1275,8 @@ public class LandscapeReportGenerator {
                     .saveContributorsTable(recentContributors, totalRecentCommits, true);
             new LandscapeContributorsReport(landscapeAnalysisResults, landscapeContributorsReport, contributorsLinkedFromTables)
                     .saveContributorsTable(contributors, totalCommits, false);
+            new LandscapeContributorsReport(landscapeAnalysisResults, landscapeBotsReport, contributorsLinkedFromTables)
+                    .saveContributorsTable(bots, botCommits, false);
             ProcessingStopwatch.end("reporting/contributors/saving tables");
 
             ProcessingStopwatch.start("reporting/contributors/individual reports");
@@ -1312,6 +1334,8 @@ public class LandscapeReportGenerator {
             barsHtml.append("<div title='" + tooltip + "' style='" + style + "'></div>");
             prevCumulativePercentage[0] = cumulativePercentage;
         });
+
+
 
         StringBuilder distHtml = new StringBuilder();
 
@@ -1933,6 +1957,7 @@ public class LandscapeReportGenerator {
             reports.add(this.landscapeRepositoriesReportLong);
         }
         reports.add(this.landscapeContributorsReport);
+        reports.add(this.landscapeBotsReport);
         reports.add(this.landscapeRecentContributorsReport);
 
         return reports;

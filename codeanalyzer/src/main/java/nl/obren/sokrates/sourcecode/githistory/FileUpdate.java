@@ -8,11 +8,14 @@ public class FileUpdate {
     private String commitId = "";
     private String path = "";
 
-    public FileUpdate(String date, String authorEmail, String commitId, String path) {
+    private boolean bot = false;
+
+    public FileUpdate(String date, String authorEmail, String commitId, String path, boolean bot) {
         this.date = date;
         this.authorEmail = authorEmail;
         this.commitId = commitId;
         this.path = path;
+        this.bot = bot;
     }
 
     public String getDate() {
@@ -49,5 +52,13 @@ public class FileUpdate {
 
     public String getExtension() {
         return ExtensionGroupExtractor.getExtension(getPath());
+    }
+
+    public boolean isBot() {
+        return bot;
+    }
+
+    public void setBot(boolean bot) {
+        this.bot = bot;
     }
 }

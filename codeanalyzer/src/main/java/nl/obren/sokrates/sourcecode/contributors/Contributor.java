@@ -30,6 +30,8 @@ public class Contributor {
     private List<String> activeYears = new ArrayList<>();
     private List<String> commitDates = new ArrayList<>();
 
+    private boolean bot = false;
+
     public Contributor() {
     }
 
@@ -200,5 +202,13 @@ public class Contributor {
         Contributor contributor = (Contributor) obj;
 
         return contributor.getEmail().equalsIgnoreCase(this.getEmail());
+    }
+
+    public boolean isBot() {
+        return bot;
+    }
+
+    public void setBot(boolean bot) {
+        this.bot = bot;
     }
 }

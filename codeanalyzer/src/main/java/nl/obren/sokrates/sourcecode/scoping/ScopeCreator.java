@@ -104,6 +104,7 @@ public class ScopeCreator {
         }
 
         codeConfiguration.getFileHistoryAnalysis().getIgnoreContributors().addAll(customScopingConventions.getIgnoreContributors());
+        codeConfiguration.getFileHistoryAnalysis().getBots().addAll(customScopingConventions.getBots());
 
         codeConfiguration.setAnalysis(customScopingConventions.getAnalysis());
         List<TagRule> tagRules = customScopingConventions.getTagRules();

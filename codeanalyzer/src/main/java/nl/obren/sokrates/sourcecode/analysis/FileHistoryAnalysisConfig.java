@@ -6,6 +6,7 @@ package nl.obren.sokrates.sourcecode.analysis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
+import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.contributors.ContributorsImport;
 import nl.obren.sokrates.sourcecode.contributors.GitContributorsUtil;
@@ -28,9 +29,12 @@ public class FileHistoryAnalysisConfig {
     private String importPath = "../" + GitHistoryUtils.GIT_HISTORY_FILE_NAME;
 
     // An optional list of regex expression used to ignore commits from contributors
-    private List<String> ignoreContributors = new ArrayList<>(Arrays.asList(".*\\[bot\\].*"));
+    private List<String> ignoreContributors = new ArrayList<>();
 
-    // If true, contributors IDs (e.g. emails) will be replaces with anonymous IDs (e.g. Contributor 1, Contributor 2)
+    // An optional list of regex expression used to detect bots
+    private List<String> bots = new ArrayList<>(Arrays.asList(".*\\[bot\\].*", ".*[-]bot[@].*"));
+
+    // If true, contributors IDs (e.g. emails) will be replaced with anonymous IDs (e.g. Contributor 1, Contributor 2)
     private boolean anonymizeContributors = false;
 
     // An optional list of string transformation used to transform contributor IDs (e.g. to remove domain from email)
@@ -97,6 +101,14 @@ public class FileHistoryAnalysisConfig {
         this.ignoreContributors = ignoreContributors;
     }
 
+    public List<String> getBots() {
+        return bots;
+    }
+
+    public void setBots(List<String> bots) {
+        this.bots = bots;
+    }
+
     public List<OperationStatement> getTransformContributorEmails() {
         return transformContributorEmails;
     }
@@ -112,4 +124,5 @@ public class FileHistoryAnalysisConfig {
     public void setAnonymizeContributors(boolean anonymizeContributors) {
         this.anonymizeContributors = anonymizeContributors;
     }
+
 }

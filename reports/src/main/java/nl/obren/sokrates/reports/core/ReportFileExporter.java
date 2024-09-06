@@ -197,7 +197,7 @@ public class ReportFileExporter {
             indexReport.addParagraph("Reference analysis date: " + DateUtils.getAnalysisDate() + "",
                     "color: grey; font-size: 80%;");
 
-            long contributorsCount = contributorsAnalysisResults.getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count();
+            long contributorsCount = contributorsAnalysisResults.getContributors().stream().filter(c -> !c.isBot() && c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count();
             int commitsCount30Days = contributorsAnalysisResults.getCommitsCount30Days();
 
             indexReport.startTable();
@@ -297,7 +297,7 @@ public class ReportFileExporter {
             year = currentYear + "";
         }
 
-        long contributorsCount = contributorsAnalysisResults.getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count();
+        long contributorsCount = contributorsAnalysisResults.getContributors().stream().filter(c -> !c.isBot() && c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count();
         int commitsCount30Days = contributorsAnalysisResults.getCommitsCount30Days();
         indexReport.startTable("margin-bottom: -20px; border-top: 1px dashed grey; padding-top: 10px; margin-top: 10px;");
         indexReport.startTableRow();

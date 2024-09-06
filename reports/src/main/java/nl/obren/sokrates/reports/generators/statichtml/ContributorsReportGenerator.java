@@ -93,6 +93,7 @@ public class ContributorsReportGenerator {
         this.reportsFolder = reportsFolder;
         this.report = report;
 
+
         report.addParagraph("An overview of contributor trends.", "margin-top: 12px; color: grey");
 
         report.startTabGroup();
@@ -108,20 +109,27 @@ public class ContributorsReportGenerator {
         ContributorsAnalysisResults analysis = codeAnalysisResults.getContributorsAnalysisResults();
         List<Contributor> contributors = analysis.getContributors();
 
+        List<Contributor> people = contributors.stream().filter(c -> !c.isBot()).collect(Collectors.toList());
+        List<Contributor> bots = contributors.stream().filter(c -> c.isBot()).collect(Collectors.toList());
+
         report.startTabContentSection("contributors", true);
         addZoomableCircleLinks(report);
         ContributorsReportUtils.addContributorsSection(codeAnalysisResults, report);
         report.endTabContentSection();
 
         report.startTabContentSection("matrix", false);
-        addMatrix(new ArrayList<>(contributors));
+        addMatrix(new ArrayList<>(people), "Contributors");
+        addMatrix(new ArrayList<>(bots), "Bots");
         report.endTabContentSection();
 
         report.startTabContentSection("30_days", false);
         List<Contributor> commits30Days = contributors.stream().filter(c -> c.getCommitsCount30Days() > 0).collect(Collectors.toList());
         if (commits30Days.size() > 0) {
+            List<Contributor> peopleCommits30Days = people.stream().filter(c -> c.getCommitsCount30Days() > 0).collect(Collectors.toList());
+            List<Contributor> botCommits30Days = bots.stream().filter(c -> c.getCommitsCount30Days() > 0).collect(Collectors.toList());
             commits30Days.sort((a, b) -> b.getCommitsCount30Days() - a.getCommitsCount30Days());
-            addContributorsPanel(report, commits30Days, c -> c.getCommitsCount30Days(), true, e -> e.getFileUpdates30Days());
+            addContributorsPanel(report, peopleCommits30Days, c -> c.getCommitsCount30Days(), true, e -> e.getFileUpdates30Days(), "Contributor");
+            addContributorsPanel(report, botCommits30Days, c -> c.getCommitsCount30Days(), true, e -> e.getFileUpdates30Days(), "Bot");
             renderPeopleDependencies(analysis.getPeopleDependencies30Days(), analysis.getPeopleFileDependencies30Days(), 30, c -> c.getCommitsCount30Days(), commits30Days);
         } else {
             report.addParagraph("No commits in past 30 days.", "margin-top: 16px");
@@ -131,8 +139,11 @@ public class ContributorsReportGenerator {
         report.startTabContentSection("90_days", false);
         List<Contributor> commits90Days = contributors.stream().filter(c -> c.getCommitsCount90Days() > 0).collect(Collectors.toList());
         if (commits90Days.size() > 0) {
+            List<Contributor> peopleCommits90Days = people.stream().filter(c -> c.getCommitsCount90Days() > 0).collect(Collectors.toList());
+            List<Contributor> botCommits90Days = bots.stream().filter(c -> c.getCommitsCount90Days() > 0).collect(Collectors.toList());
             commits90Days.sort((a, b) -> b.getCommitsCount90Days() - a.getCommitsCount90Days());
-            addContributorsPanel(report, commits90Days, c -> c.getCommitsCount90Days(), true, e -> e.getFileUpdates90Days());
+            addContributorsPanel(report, peopleCommits90Days, c -> c.getCommitsCount90Days(), true, e -> e.getFileUpdates90Days(), "Contributor");
+            addContributorsPanel(report, botCommits90Days, c -> c.getCommitsCount90Days(), true, e -> e.getFileUpdates90Days(), "Bot");
             renderPeopleDependencies(analysis.getPeopleDependencies90Days(), analysis.getPeopleFileDependencies90Days(), 90, c -> c.getCommitsCount90Days(), commits90Days);
         } else {
             report.addParagraph("No commits in past 90 days.", "margin-top: 16px");
@@ -142,8 +153,11 @@ public class ContributorsReportGenerator {
         report.startTabContentSection("180_days", false);
         List<Contributor> commits180Days = contributors.stream().filter(c -> c.getCommitsCount180Days() > 0).collect(Collectors.toList());
         if (commits180Days.size() > 0) {
+            List<Contributor> peopleCommits180Days = people.stream().filter(c -> c.getCommitsCount180Days() > 0).collect(Collectors.toList());
+            List<Contributor> botCommits180Days = bots.stream().filter(c -> c.getCommitsCount180Days() > 0).collect(Collectors.toList());
             commits180Days.sort((a, b) -> b.getCommitsCount180Days() - a.getCommitsCount180Days());
-            addContributorsPanel(report, commits180Days, c -> c.getCommitsCount180Days(), false, null);
+            addContributorsPanel(report, peopleCommits180Days, c -> c.getCommitsCount180Days(), true, null, "Contributor");
+            addContributorsPanel(report, botCommits180Days, c -> c.getCommitsCount180Days(), true, null, "Bot");
             renderPeopleDependencies(analysis.getPeopleDependencies180Days(), analysis.getPeopleFileDependencies180Days(), 180, c -> c.getCommitsCount180Days(), commits180Days);
         } else {
             report.addParagraph("No commits in past 180 days.", "margin-top: 16px");
@@ -153,7 +167,11 @@ public class ContributorsReportGenerator {
         report.startTabContentSection("365_days", false);
         List<Contributor> commits365Days = contributors.stream().filter(c -> c.getCommitsCount365Days() > 0).collect(Collectors.toList());
         commits365Days.sort((a, b) -> b.getCommitsCount365Days() - a.getCommitsCount365Days());
-        addContributorsPanel(report, commits365Days, c -> c.getCommitsCount365Days(), false, null);
+        List<Contributor> peopleCommits365Days = people.stream().filter(c -> c.getCommitsCount365Days() > 0).collect(Collectors.toList());
+        List<Contributor> botCommits365Days = bots.stream().filter(c -> c.getCommitsCount365Days() > 0).collect(Collectors.toList());
+        commits365Days.sort((a, b) -> b.getCommitsCount365Days() - a.getCommitsCount365Days());
+        addContributorsPanel(report, peopleCommits365Days, c -> c.getCommitsCount365Days(), true, null, "Contributor");
+        addContributorsPanel(report, botCommits365Days, c -> c.getCommitsCount365Days(), true, null, "Bot");
         renderPeopleDependencies(analysis.getPeopleDependencies365Days(), analysis.getPeopleFileDependencies365Days(), 365, c -> c.getCommitsCount365Days(), commits365Days);
         report.endTabContentSection();
 
@@ -183,9 +201,9 @@ public class ContributorsReportGenerator {
     }
 
 
-    private void addMatrix(List<Contributor> contributors) {
+    private void addMatrix(List<Contributor> contributors, String type) {
         report.addContentInDiv("&nbsp;", "height: 20px");
-        report.startSubSection("Contributors Matrix (Per Month)", "");
+        report.startSubSection(type + " Matrix (Per Month)", "");
         report.startDiv("width: 100%; overflow-x: scroll; overflow-y: scroll; max-height: 600px");
         report.startTable();
 
@@ -456,7 +474,7 @@ public class ContributorsReportGenerator {
     }
 
     public void addContributorsPanel(RichTextReport report, List<Contributor> contributors
-            , ContributionCounter contributionCounter, boolean showPerExtension, PerExtensionCounter perExtensionCounter) {
+            , ContributionCounter contributionCounter, boolean showPerExtension, PerExtensionCounter perExtensionCounter, String type) {
         int count = contributors.size();
         if (count == 0) {
             return;
@@ -465,7 +483,7 @@ public class ContributorsReportGenerator {
         int total[] = {0};
         contributors.forEach(contributor -> total[0] += contributionCounter.count(contributor));
         if (total[0] > 0) {
-            report.addParagraph("<b>" + FormattingUtils.formatCount(count) + "</b> " + (count == 1 ? "contributor" : "contributors") + " (" + "<b>" + FormattingUtils.formatCount(total[0]) + "</b> " + (count == 1 ? "commit" : "commits") + "):");
+            report.addParagraph("<b>" + FormattingUtils.formatCount(count) + "</b> " + (count == 1 ? type.toLowerCase() : type.toLowerCase() + "s") + " (" + "<b>" + FormattingUtils.formatCount(total[0]) + "</b> " + (count == 1 ? "commit" : "commits") + "):");
             StringBuilder map = new StringBuilder("");
             Palette palette = Palette.getDefaultPalette();
             int index[] = {0};
@@ -479,9 +497,9 @@ public class ContributorsReportGenerator {
                 String cumulativeText = "";
                 if (index[0] > 1) {
                     cumulativeText = "\n\ntop " + index[0]
-                            + " contributors together ("
+                            + type.toLowerCase() + "s together ("
                             + FormattingUtils.getFormattedPercentage(100.0 * index[0] / contributors.size())
-                            + "% of contributors) = "
+                            + "% of " + type.toLowerCase() + "s) = "
                             + FormattingUtils.getFormattedPercentage(100.0 * cumulative[0] / total[0])
                             + "% of all commits";
                 }
@@ -494,9 +512,9 @@ public class ContributorsReportGenerator {
         report.startScrollingDiv();
         report.startTable();
         if (showPerExtension && perExtensionCounter != null) {
-            report.addTableHeader("#", "Contributor<br>", "First<br>Commit", "Latest<br>Commit", "Commits<br>Count", "File Updates<br>(per extension)");
+            report.addTableHeader("#", type + "<br>", "First<br>Commit", "Latest<br>Commit", "Commits<br>Count", "File Updates<br>(per extension)");
         } else {
-            report.addTableHeader("#", "Contributor<br>", "First<br>Commit", "Latest<br>Commit", "Commits<br>Count");
+            report.addTableHeader("#", type + "<br>", "First<br>Commit", "Latest<br>Commit", "Commits<br>Count");
         }
         int index[] = {0};
         contributors.forEach(contributor -> {

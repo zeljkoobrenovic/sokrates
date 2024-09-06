@@ -1,6 +1,7 @@
 package nl.obren.sokrates.sourcecode.analysis.results;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
@@ -38,7 +39,6 @@ public class ContributorsAnalysisResults {
     public List<Contributor> getContributors() {
         return contributors;
     }
-
     public void setContributors(List<Contributor> contributors) {
         this.contributors = contributors;
     }

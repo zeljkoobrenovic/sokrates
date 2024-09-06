@@ -29,7 +29,8 @@ public class ContributorsReportUtils {
         ContributorsAnalysisResults contributorsAnalysisResults = analysisResults.getContributorsAnalysisResults();
         List<Contributor> contributors = contributorsAnalysisResults.getContributors();
         if (contributors.size() > 0) {
-            addContributors(report, contributors);
+            addContributors(report, contributors.stream().filter(c -> !c.isBot()).collect(Collectors.toList()), "Contributors");
+            addContributors(report, contributors.stream().filter(c -> c.isBot()).collect(Collectors.toList()), "Bots");
         }
     }
 
@@ -123,7 +124,9 @@ public class ContributorsReportUtils {
         }
     }
 
-    public static void addContributors(RichTextReport indexReport, List<Contributor> contributors) {
+    public static void addContributors(RichTextReport indexReport, List<Contributor> contributors, String type) {
+        indexReport.addLineBreak();
+        indexReport.startSubSection(type, "");
         Collections.sort(contributors, (a, b) -> b.getCommitsCount() - a.getCommitsCount());
         int max = contributors.get(0).getCommitsCount();
         int total = contributors.stream().mapToInt(c -> c.getCommitsCount()).sum();
@@ -132,10 +135,8 @@ public class ContributorsReportUtils {
         long veteransCount = activeCount - rookiesCount;
         long historicalCount = contributors.size() - activeCount;
         indexReport.startDiv("");
-        indexReport.addLevel2Header("Recent Contributors (" + activeCount
-                + " = " + veteransCount + " " + (veteransCount == 1 ? "veteran" : "veterans")
-                + " + " + rookiesCount + " " + (rookiesCount == 1 ? "rookie" : "rookies") + ")");
-        indexReport.addParagraph("Contributed in past 6 months (a rookie = the first contribution in past year)", "color: grey");
+        indexReport.addLevel2Header("Recent " + type + " (" + activeCount + ")");
+        indexReport.addParagraph("Committed in past 6 months (a rookie = the first commit in past year)", "color: grey");
         List<Contributor> contributor30Days = contributors.stream().filter(c -> c.isActive(30)).collect(Collectors.toList());
         List<Contributor> contributor90Days = contributors.stream().filter(c -> c.isActive(90) && !c.isActive(30)).collect(Collectors.toList());
         List<Contributor> contributor180Days = contributors.stream().filter(c -> c.isActive(180) && !c.isActive(90)).collect(Collectors.toList());
@@ -145,7 +146,7 @@ public class ContributorsReportUtils {
                 addContributor(indexReport, max, total, contributor);
             });
         } else {
-            indexReport.addParagraph("No contributors in past 30 days.", "font-size: 80%");
+            indexReport.addParagraph("No " + type.toLowerCase() + " in past 30 days.", "font-size: 80%");
         }
         indexReport.addHorizontalLine();
         if (contributor90Days.size() > 0) {
@@ -154,7 +155,7 @@ public class ContributorsReportUtils {
                 addContributor(indexReport, max, total, contributor);
             });
         } else {
-            indexReport.addParagraph("No contributors in past 31 to 90 days.", "font-size: 80%");
+            indexReport.addParagraph("No " + type.toLowerCase() + " in past 31 to 90 days.", "font-size: 80%");
         }
         indexReport.addHorizontalLine();
         if (contributor180Days.size() > 0) {
@@ -163,14 +164,15 @@ public class ContributorsReportUtils {
                 addContributor(indexReport, max, total, contributor);
             });
         } else {
-            indexReport.addParagraph("No contributors in past 91 to 180 days.", "font-size: 80%");
+            indexReport.addParagraph("No " + type.toLowerCase() + " in past 91 to 180 days.", "font-size: 80%");
         }
-        indexReport.addLevel2Header("Historical Contributors (" + historicalCount + ")", "margin-top: 40px");
-        indexReport.addParagraph("Last contributed more than 6 months ago", "color: grey");
+        indexReport.addLevel2Header("Historical " + type + " (" + historicalCount + ")", "margin-top: 40px");
+        indexReport.addParagraph("Last " + type.toLowerCase() + " more than 6 months ago", "color: grey");
         contributors.stream().limit(MAX_CONTRIBUTOR_LIST_SIZE).filter(c -> !c.isActive()).forEach(contributor -> {
             addContributor(indexReport, max, total, contributor);
         });
         indexReport.endDiv();
+        indexReport.endSection();
     }
 
     public static void addContributor(RichTextReport indexReport, int max, int total, Contributor contributor) {
@@ -183,11 +185,15 @@ public class ContributorsReportUtils {
                 + " between " + contributor.getFirstCommitDate() + " and " + contributor.getLatestCommitDate());
 
         if (contributor.isRookie()) {
-            indexReport.addHtmlContent("<div style='border:2px solid green; border-radius: 5px; display: inline-block;opacity:" + opacity + "' title='" + info + "'>");
+            indexReport.addHtmlContent("<div style='margin: 4px; box-shadow: rgba(9, 30, 66, 0.25) 0px 4px 8px -2px, rgba(9, 30, 66, 0.08) 0px 0px 0px 1px; text-align: center; border-bottom:2px solid green; display: inline-block;opacity:" + opacity + "' title='" + info + "'>");
         } else {
-            indexReport.addHtmlContent("<div style='display: inline-block;opacity:" + opacity + "' title='" + info + "'>");
+            indexReport.addHtmlContent("<div style='margin: 4px; box-shadow: rgba(9, 30, 66, 0.25) 0px 4px 8px -2px, rgba(9, 30, 66, 0.08) 0px 0px 0px 1px; text-align: center; display: inline-block;opacity:" + opacity + "' title='" + info + "'>");
         }
-        indexReport.addHtmlContent(contributor.isActive() ? getIconSvg("contributor") : getIconSvg("contributor_historical"));
+        String icon = contributor.isBot() ? "bot" : "contributor";
+        indexReport.addHtmlContent(contributor.isActive() ? getIconSvg(icon, 64) : getIconSvg(icon, 64));
+        indexReport.addHtmlContent("<div style='padding: 4px; font-size: 10px; width: 64px; overflow: hidden; max-height: 22px; min-height: 22px;'>");
+        indexReport.addHtmlContent(contributor.getEmail());
+        indexReport.addHtmlContent("</div>");
         indexReport.addHtmlContent("</div>");
     }
 

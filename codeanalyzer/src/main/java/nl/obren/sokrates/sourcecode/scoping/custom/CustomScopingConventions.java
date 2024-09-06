@@ -49,6 +49,9 @@ public class CustomScopingConventions {
     // A list of regex expressions that Sokrates uses to configure ignoring of contributors (e.g. bots)
     private List<String> ignoreContributors = new ArrayList<>();
 
+    // A list of regex expressions that Sokrates uses to configure ignoring of contributors (e.g. bots)
+    private List<String> bots = new ArrayList<>();
+
     // Sokrates uses this value to define components by folder depth
     private int componentsFolderDepth = 1;
 
@@ -151,6 +154,14 @@ public class CustomScopingConventions {
 
     public void setIgnoreContributors(List<String> ignoreContributors) {
         this.ignoreContributors = ignoreContributors;
+    }
+
+    public List<String> getBots() {
+        return bots;
+    }
+
+    public void setBots(List<String> bots) {
+        this.bots = bots;
     }
 
     public AnalysisConfig getAnalysis() {

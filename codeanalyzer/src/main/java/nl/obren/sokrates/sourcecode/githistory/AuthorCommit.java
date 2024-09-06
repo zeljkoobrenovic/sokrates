@@ -12,12 +12,15 @@ public class AuthorCommit {
     private String date = "";
     private String authorEmail = "";
 
+    private boolean bot = false;
+
     public AuthorCommit() {
     }
 
-    public AuthorCommit(String date, String authorEmail) {
+    public AuthorCommit(String date, String authorEmail, boolean bot) {
         this.date = date;
         this.authorEmail = authorEmail;
+        this.bot = bot;
     }
 
     public String getDate() {
@@ -76,5 +79,13 @@ public class AuthorCommit {
         }
 
         return "";
+    }
+
+    public boolean isBot() {
+        return bot;
+    }
+
+    public void setBot(boolean bot) {
+        this.bot = bot;
     }
 }

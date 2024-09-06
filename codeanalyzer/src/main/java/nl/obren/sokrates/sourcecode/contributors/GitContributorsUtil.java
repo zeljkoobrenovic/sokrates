@@ -60,6 +60,7 @@ public class GitContributorsUtil {
         authorCommits.forEach(authorCommit -> {
             String date = authorCommit.getDate();
             Contributor contributor = new Contributor(authorCommit.getAuthorEmail());
+            contributor.setBot(authorCommit.isBot());
             String id = contributor.getEmail();
             if (map.containsKey(id)) {
                 map.get(id).addCommit(date);
