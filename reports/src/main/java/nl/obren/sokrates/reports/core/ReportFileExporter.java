@@ -109,7 +109,7 @@ public class ReportFileExporter {
         appendLinks(indexReport, analysisResults);
 
         boolean hasLinks = metadata.getLinks().size() > 0;
-        indexReport.addContentInDiv("", "height; 10px; border-top: 1px solid #ccc; margin-top: " + (hasLinks ? 6 : 0) + "px; margin-bottom: 6px;");
+        indexReport.addContentInDiv("", "height; 10px; margin-top: " + (hasLinks ? 6 : 0) + "px; margin-bottom: 6px;");
 
         int linesOfCodeMain = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
         int mainLoc = linesOfCodeMain;
@@ -122,6 +122,18 @@ public class ReportFileExporter {
         int secondaryFilesCount = analysisResults.getBuildAndDeployAspectAnalysisResults().getFilesCount()
                 + analysisResults.getGeneratedAspectAnalysisResults().getFilesCount()
                 + analysisResults.getOtherAspectAnalysisResults().getFilesCount();
+
+
+        indexReport.startTabGroup();
+        indexReport.addTab("overview", "Overview", true);
+        indexReport.addTab("quality", "Analyses", false);
+        indexReport.addTab("commits", "Activity", false);
+        indexReport.addTab("visuals", "Visuals", false);
+        indexReport.addTab("data", "Data", false);
+        indexReport.endDiv();
+
+        indexReport.startTabContentSection("overview", true);
+
         indexReport.startDiv("white-space: nowrap; overflow: hidden");
 
         addInfoBlockWithColor(indexReport, FormattingUtils.getSmallTextForNumberMinK(mainLoc), "lines of main code", FormattingUtils.getSmallTextForNumber(mainFilesCount) + " files", MAIN_LOC_COLOR, "main lines of code", "main", "SourceCodeOverview.html");
@@ -144,7 +156,7 @@ public class ReportFileExporter {
         indexReport.endDiv();
         StringBuilder icons = new StringBuilder("");
         addIconsMainCode(analysisResults, icons);
-        indexReport.startDiv("margin-left: 0px; border-left: 1px solid " + MAIN_LOC_COLOR + "; margin-top: -65px; padding-top: 32px; margin-bottom: 0px; padding-left: 0px; padding-bottom: 10px");
+        indexReport.startDiv("margin-left: 0px; margin-top: -65px; padding-top: 32px; margin-bottom: 0px; padding-left: 0px; padding-bottom: 10px");
         indexReport.startTable("margin-bottom: -20px");
         indexReport.startTableRow();
         indexReport.addTableCell(icons.toString(), "border: none;");
@@ -159,15 +171,6 @@ public class ReportFileExporter {
         indexReport.endDiv();
         indexReport.endDiv();
 
-        indexReport.startTabGroup();
-        indexReport.addTab("structure", "Structure", true);
-        indexReport.addTab("quality", "Analyses", false);
-        indexReport.addTab("commits", "Activity", false);
-        indexReport.addTab("visuals", "Visuals", false);
-        indexReport.addTab("data", "Data", false);
-        indexReport.endDiv();
-
-        indexReport.startTabContentSection("structure", true);
         indexReport.addHtmlContent("<iframe src='Structure.html' style='border: none; width: 1000px; height: 1090px; overflow: hidden'></iframe>");
         indexReport.endTabContentSection();
 
@@ -299,7 +302,7 @@ public class ReportFileExporter {
 
         long contributorsCount = contributorsAnalysisResults.getContributors().stream().filter(c -> !c.isBot() && c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count();
         int commitsCount30Days = contributorsAnalysisResults.getCommitsCount30Days();
-        indexReport.startTable("margin-bottom: -20px; border-top: 1px dashed grey; padding-top: 10px; margin-top: 10px;");
+        indexReport.startTable("margin-bottom: -20px; border-top: 1px dashed grey; border-bottom: 1px dashed grey; padding-top: 10px; margin-top: 10px; margin-bottom: 10px;");
         indexReport.startTableRow();
 
         indexReport.startTableCell("border: none; vertical-align: top;");
