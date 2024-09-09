@@ -216,6 +216,11 @@ public class OverviewReportGenerator {
         report.addListItem("<a target='_blank' href='../data/text/excluded_files_ignored_rules.txt'>" +RichTextRenderingUtils.renderNumberStrong(numberOfExcludedFiles - filesExcludedByExtensionCount) + " based on ignore rules</a>.");
         report.endUnorderedList();
         report.endUnorderedList();
+        report.endUnorderedList();
+
+        report.startUnorderedList();
+        report.addListItem("<a target='_blank' href='../explorers/files-explorer.html'><b>Explore all files...</b></a>.");
+        report.endUnorderedList();
 
 
         report.endSection();

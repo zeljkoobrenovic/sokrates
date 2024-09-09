@@ -128,6 +128,7 @@ public class ReportFileExporter {
         indexReport.addTab("overview", "Overview", true);
         indexReport.addTab("quality", "Analyses", false);
         indexReport.addTab("commits", "Activity", false);
+        indexReport.addTab("files", "Files", false);
         indexReport.addTab("visuals", "Visuals", false);
         indexReport.addTab("data", "Data", false);
         indexReport.endDiv();
@@ -186,6 +187,12 @@ public class ReportFileExporter {
             addReportFragment(htmlExportFolder, indexReport, report);
         }
         indexReport.endDiv();
+
+        indexReport.endTabContentSection();
+
+        indexReport.startTabContentSection("files", false);
+        indexReport.addLineBreak();
+        indexReport.addHtmlContent("<iframe src='../explorers/files-explorer.html' style='width: 100%; border: none; height: calc(100vh - 220px); overflow: hidden; margin-top: -12px'></iframe>");
 
         indexReport.endTabContentSection();
 

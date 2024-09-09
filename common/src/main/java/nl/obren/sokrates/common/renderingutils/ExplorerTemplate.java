@@ -24,7 +24,7 @@ public class ExplorerTemplate {
 
         try {
             String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            content = content.replace("${data}", new JsonGenerator().generate(data));
+            content = content.replace("${data}", new JsonGenerator().generateCompressed(data));
 
             return content;
         } catch (IOException e) {

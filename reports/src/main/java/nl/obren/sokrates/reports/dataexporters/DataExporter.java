@@ -17,10 +17,6 @@ import nl.obren.sokrates.reports.dataexporters.duplication.DuplicationExporter;
 import nl.obren.sokrates.reports.dataexporters.files.FileListExporter;
 import nl.obren.sokrates.reports.dataexporters.trends.MetricsTrendExporter;
 import nl.obren.sokrates.reports.dataexporters.units.UnitListExporter;
-import nl.obren.sokrates.reports.generators.explorers.DependenciesExplorerGenerator;
-import nl.obren.sokrates.reports.generators.explorers.DuplicationExplorerGenerator;
-import nl.obren.sokrates.reports.generators.explorers.FilesExplorerGenerator;
-import nl.obren.sokrates.reports.generators.explorers.UnitsExplorerGenerator;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.reports.utils.ZipUtils;
 import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
@@ -581,18 +577,6 @@ public class DataExporter {
         });
 
         return referencedFiles;
-    }
-
-    private void exportInteractiveExplorers() throws IOException {
-        File interactiveHtmlFolder = getInteractiveHtmlFolder();
-        FileUtils.write(new File(interactiveHtmlFolder, "MainFiles.html"),
-                new FilesExplorerGenerator(analysisResults).generateExplorer(), UTF_8);
-        FileUtils.write(new File(interactiveHtmlFolder, "Units.html"),
-                new UnitsExplorerGenerator(analysisResults).generateExplorer(), UTF_8);
-        FileUtils.write(new File(interactiveHtmlFolder, "Duplicates.html"),
-                new DuplicationExplorerGenerator(analysisResults).generateExplorer(), UTF_8);
-        FileUtils.write(new File(interactiveHtmlFolder, "Dependencies.html"),
-                new DependenciesExplorerGenerator(analysisResults).generateExplorer(), UTF_8);
     }
 
     private void exportJson() throws IOException {
