@@ -896,7 +896,7 @@ public class ReportFileExporter {
     private static void appendLinks(RichTextReport report, CodeAnalysisResults analysisResults) {
         List<Link> links = analysisResults.getCodeConfiguration().getMetadata().getLinks();
         if (links.size() > 0) {
-            report.startDiv("font-size: 80%; margin-top: 8px; margin-left: 2px;");
+            report.startDiv("font-size: 80%; margin-top: 0px; margin-bottom: 12px; margin-left: 2px;");
             links.forEach(link -> {
                 if (links.indexOf(link) > 0) {
                     report.addHtmlContent(" | ");
