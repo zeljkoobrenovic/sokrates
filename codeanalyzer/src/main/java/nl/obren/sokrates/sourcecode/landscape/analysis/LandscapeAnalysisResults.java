@@ -803,6 +803,21 @@ public class LandscapeAnalysisResults {
 
         return list;
     }
+    @JsonIgnore
+    public List<ContributionTimeSlot> getContributorsPerDay() {
+        List<ContributionTimeSlot> list = new ArrayList<>();
+        Map<String, ContributionTimeSlot> map = new HashMap<>();
+
+        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
+            ContributorsAnalysisResults contributorsAnalysisResults = repositoryAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
+            List<ContributionTimeSlot> contributorsPerDay = contributorsAnalysisResults.getContributorsPerDay();
+            updateContributors(list, map, contributorsPerDay);
+        });
+
+        Collections.sort(list, Comparator.comparing(ContributionTimeSlot::getTimeSlot));
+
+        return list;
+    }
 
     @JsonIgnore
     public List<ContributionTimeSlot> getContributorsPerMonth() {
