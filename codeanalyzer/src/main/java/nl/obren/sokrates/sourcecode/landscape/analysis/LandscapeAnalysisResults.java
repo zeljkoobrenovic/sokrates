@@ -911,7 +911,8 @@ public class LandscapeAnalysisResults {
 
     @JsonIgnore
     public List<ContributorRepositories> getRecentContributors() {
-        return getContributors().stream().filter(c -> c.getContributor().isActive(RECENT_THRESHOLD_DAYS)).collect(Collectors.toCollection(ArrayList::new));
+        // return getContributors().stream().filter(c -> c.getContributor().isActive(RECENT_THRESHOLD_DAYS)).collect(Collectors.toCollection(ArrayList::new));
+        return getContributors().stream().filter(c -> c.getContributor().getCommitsCount30Days() > 0).collect(Collectors.toCollection(ArrayList::new));
     }
 
     public int getRecentContributorsCount() {

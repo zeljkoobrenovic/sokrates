@@ -7,11 +7,19 @@ import nl.obren.sokrates.sourcecode.landscape.SokratesRepositoryLink;
 import nl.obren.sokrates.sourcecode.landscape.analysis.RepositoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class RepositoryExport {
     private final Metadata metadata;
     private final String latestCommitDate;
     private final int commitsCount30Days;
+    private final int commitsCount90Days;
     private final int commitsCount;
+
+    private List<String> contributors30Days;
+    private List<String> contributors90Days;
+    private List<String> contributors;
     private SokratesRepositoryLink sokratesRepositoryLink;
     private MetricsList metrics;
     private int mainFilesCount;
@@ -26,6 +34,7 @@ public class RepositoryExport {
     private int otherLinesOfCode;
 
     public RepositoryExport(RepositoryAnalysisResults repository) {
+        this.contributors30Days = contributors30Days;
         CodeAnalysisResults analysis = repository.getAnalysisResults();
 
         metadata = analysis.getMetadata();
@@ -33,6 +42,21 @@ public class RepositoryExport {
         latestCommitDate = repository.getAnalysisResults().getContributorsAnalysisResults().getLatestCommitDate();
         commitsCount = repository.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount();
         commitsCount30Days = repository.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days();
+        commitsCount90Days = repository.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount90Days();
+
+        contributors30Days = new ArrayList<>();
+        contributors90Days = new ArrayList<>();
+        contributors = new ArrayList<>();
+
+        repository.getAnalysisResults().getContributorsAnalysisResults().getContributors().forEach(contributor -> {
+            if (contributor.getCommitsCount30Days() > 0) {
+                contributors30Days.add(contributor.getEmail());
+            }
+            if (contributor.getCommitsCount90Days() > 0) {
+                contributors90Days.add(contributor.getEmail());
+            }
+            contributors.add(contributor.getEmail());
+        });
 
         sokratesRepositoryLink = repository.getSokratesRepositoryLink();
 
@@ -116,6 +140,22 @@ public class RepositoryExport {
 
     public int getCommitsCount30Days() {
         return commitsCount30Days;
+    }
+
+    public int getCommitsCount90Days() {
+        return commitsCount90Days;
+    }
+
+    public List<String> getContributors30Days() {
+        return contributors30Days;
+    }
+
+    public List<String> getContributors90Days() {
+        return contributors90Days;
+    }
+
+    public List<String> getContributors() {
+        return contributors;
     }
 
     public int getCommitsCount() {

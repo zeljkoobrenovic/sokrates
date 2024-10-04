@@ -292,6 +292,9 @@ public class DataImageUtils {
     public static String getLangDataImageDiv30(String lang) {
         return getLangDataImageDiv(lang, 30, 13, 11, 7, 9);
     }
+    public static String getLangDataImageDiv28(String lang) {
+        return getLangDataImageDiv(lang, 28, 13, 10, 6, 8);
+    }
 
     public static String getLangDataImageDiv(String lang, int size, int fontSize1, int fontSize2, int padding1, int padding2) {
         String image = DataImageUtils.getLangDataImage(lang);

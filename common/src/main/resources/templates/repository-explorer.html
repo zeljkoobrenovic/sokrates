@@ -77,8 +77,10 @@
 
         const filteredData = repositories
             .filter(item => item.metadata.name && (!filter || item.metadata.name.toLowerCase().includes(filter)))
-            .sort((a, b) => b.latestCommitDate.localeCompare(a.latestCommitDate))
-            .sort((a, b) => b.commitsCount30Days - a.commitsCount30Days);
+            .sort((a, b) => b.commitsCount - a.commitsCount)
+            .sort((a, b) => b.commitsCount90Days - a.commitsCount90Days)
+            .sort((a, b) => b.commitsCount30Days - a.commitsCount30Days)
+            .sort((a, b) => b.latestCommitDate.localeCompare(a.latestCommitDate));
 
         let totalCount = filteredData.length;
         let totalMainLoc = filteredData.map(item => item.mainLinesOfCode).reduce((a, b) => a + b, 0);
@@ -115,7 +117,9 @@
         html += '<td></td>';
         html += '<td style="text-align: center; border-bottom: 2px solid lightgrey" colspan="3">LOC</td>';
         html += '<td></td>';
-        html += '<td style="text-align: center; border-bottom: 2px solid lightgrey" colspan="3">Activity</td>';
+        html += '<td style="text-align: center; border-bottom: 2px solid lightgrey" colspan="4">Activity</td>';
+        html += '<td></td>';
+        html += '<td style="text-align: center; border-bottom: 2px solid lightgrey" colspan="3">Contributors</td>';
         html += '</tr>';
 
         html += '<tr style="color: #777777">';
@@ -127,7 +131,12 @@
         html += '<td style="text-align: right; padding-right: 5px; padding-left: 5px;"></td>';
         html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">last<br>commit</td>';
         html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">commits<br>(30d)</td>';
+        html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">commits<br>(90d)</td>';
         html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">commits<br>(all time)</td>';
+        html += '<td style="text-align: right; padding-right: 5px; padding-left: 5px;"></td>';
+        html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">contributors<br>(30d)</td>';
+        html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">contributors<br>(90d)</td>';
+        html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">contributors<br>(all time)</td>';
         html += '</tr>';
 
         filteredData.forEach(item => {
@@ -157,13 +166,28 @@
             html += '</td>';
             html += '<td>';
             html += '</td>';
-            html += '<td style="text-align: right; padding-right: 5px; padding-left: 5px; font-size: 90%">';
+            html += '<td style="text-align: right; padding-right: 5px; padding-left: 5px; font-size: 90%; white-space: nowrap">';
             html += item.latestCommitDate;
             html += '</td>';
             html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">';
             html += commitsCount30Days.toLocaleString("en-US");
             html += '</td>';
             html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">';
+            html += item.commitsCount90Days.toLocaleString("en-US");
+            html += '</td>';
+            html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">';
+            html += item.commitsCount.toLocaleString("en-US");
+            html += '</td>';
+            html += '<td>';
+            html += '</td>';
+            html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; cursor:help;" title="' + item.contributors30Days.join('\n') + '">';
+            html += item.contributors30Days.length.toLocaleString("en-US");
+            html += '</td>';
+            html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; cursor:help;" title="' + item.contributors90Days.join('\n') + '">';
+            html += item.contributors90Days.length.toLocaleString("en-US");
+            html += '</td>';
+            html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; cursor:help;" title="' + item.contributors.join('\n') + '">';
+            html += item.contributors.length.toLocaleString("en-US");
             html += '</td>';
             html += '</tr>';
         });

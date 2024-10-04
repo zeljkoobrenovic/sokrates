@@ -5,12 +5,14 @@ import nl.obren.sokrates.common.utils.SystemUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.utils.ContributorPerExtensionHelper;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
+import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.ContributorPerExtensionStats;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositoryInfo;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
+import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -145,6 +147,7 @@ public class LandscapeIndividualContributorsReports {
 
         final List<String> pastWeeks = DateUtils.getPastWeeks(104, landscapeAnalysisResults.getLatestCommitDate());
         report.startTableRow();
+        report.addTableCell("", "border: none");
         report.addTableCell("", "min-width: 300px; border: none");
         report.addTableCell("Commits<br>(3m)", "max-width: 100px; text-align: center; border: none");
         report.addTableCell("Commit<br>Days", "max-width: 100px; text-align: center; border: none");
@@ -195,6 +198,7 @@ public class LandscapeIndividualContributorsReports {
         activeRepositories.forEach(repository -> {
             String textOpacity = repository.getCommits90Days() > 0 ? "font-weight: bold;" : "opacity: 0.4";
             report.startTableRow();
+            addLangTableCell(report, repository.getRepositoryAnalysisResults().getAnalysisResults().getMainAspectAnalysisResults());
             report.startTableCell("border: none;" + textOpacity);
             report.addNewTabLink(repository.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName(),
                     "../../" + repository.getRepositoryAnalysisResults().getSokratesRepositoryLink().getHtmlReportsRoot() + "/index.html");
@@ -236,7 +240,8 @@ public class LandscapeIndividualContributorsReports {
 
         final List<String> pastMonths = DateUtils.getPastMonths(24, landscapeAnalysisResults.getLatestCommitDate());
         report.startTableRow();
-        report.addTableCell("", "min-width: 200px; border: none; border: none");
+        report.addTableCell("", "border: none");
+        report.addTableCell("", "min-width: 200px; border: none");
         report.addTableCell("Commits<br>(3m)", "max-width: 100px; text-align: center; border: none");
         report.addTableCell("Commit<br>Days", "max-width: 100px; text-align: center; border: none");
         pastMonths.forEach(pastMonth -> {
@@ -266,6 +271,7 @@ public class LandscapeIndividualContributorsReports {
 
         repositories.forEach(repository -> {
             report.startTableRow();
+            addLangTableCell(report, repository.getRepositoryAnalysisResults().getAnalysisResults().getMainAspectAnalysisResults());
             String textOpacity = repository.getCommits90Days() > 0 ? "font-weight: bold;" : "opacity: 0.4";
             report.startTableCell("border: none; " + textOpacity);
             report.addNewTabLink(repository.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName(),
@@ -301,13 +307,31 @@ public class LandscapeIndividualContributorsReports {
         report.endDiv();
     }
 
+    private static void addLangTableCell(RichTextReport report, AspectAnalysisResults main) {
+        List<NumericMetric> linesOfCodePerExtension = main.getLinesOfCodePerExtension();
+        StringBuilder locSummary = new StringBuilder();
+        if (linesOfCodePerExtension.size() > 0) {
+            locSummary.append(linesOfCodePerExtension.get(0).getName().replace("*.", "").trim().toUpperCase());
+        } else {
+            locSummary.append("-");
+        }
+        String lang = locSummary.toString().replace("> = ", ">");
+        report.startTableCell("text-align: left; max-width: 32px; border: none");
+        report.startDiv("white-space: nowrap; overflow: hidden;");
+        report.addHtmlContent(DataImageUtils.getLangDataImageDiv28(lang));
+        report.endDiv();
+        report.endTableCell();
+    }
+
+
     private void addPerYear(ContributorRepositories contributorRepositories, RichTextReport report) {
         report.startDiv("width: 100%; overflow-x: scroll;");
         report.startTable();
 
         final List<String> pastYears = DateUtils.getPastYears(landscapeAnalysisResults.getConfiguration().getCommitsMaxYears(), landscapeAnalysisResults.getLatestCommitDate());
         report.startTableRow();
-        report.addTableCell("", "min-width: 200px; border: none; border: none");
+        report.addTableCell("", "border: none");
+        report.addTableCell("", "min-width: 200px; border: none; max-width: 500px; white-space: nowrap; overflow: hidden");
         report.addTableCell("Commits<br>(3m)", "max-width: 100px; text-align: center; border: none");
         report.addTableCell("Commit<br>Days", "max-width: 100px; text-align: center; border: none");
         int maxRepositoryDays[] = {1};
@@ -341,13 +365,11 @@ public class LandscapeIndividualContributorsReports {
                     String year = DateUtils.getYear(date);
                     if (year.equals(pastYear)) {
                         found[0] = true;
-                        return;
                     }
                 });
                 if (found[0]) {
                     repositoryCount[0] += 1;
                     repositoryDays[0] += repository.getCommitDates().stream().filter(date -> date.startsWith(pastYear + "-")).count();
-                    return;
                 }
             });
             String tooltip = "Month " + pastYear + ": " + repositoryCount[0] + (repositoryCount[0] == 1 ? " repository" : " repositories"
@@ -368,7 +390,9 @@ public class LandscapeIndividualContributorsReports {
         repositories.forEach(repository -> {
             report.startTableRow();
             String textOpacity = repository.getCommits90Days() > 0 ? "font-weight: bold;" : "opacity: 0.4";
-            report.startTableCell("border: none; " + textOpacity);
+            addLangTableCell(report, repository.getRepositoryAnalysisResults().getAnalysisResults().getMainAspectAnalysisResults());
+
+            report.startTableCell("padding: 0; border: none; " + textOpacity);
             report.addNewTabLink(repository.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName(),
                     "../../" + repository.getRepositoryAnalysisResults().getSokratesRepositoryLink().getHtmlReportsRoot() + "/index.html");
             report.endTableCell();

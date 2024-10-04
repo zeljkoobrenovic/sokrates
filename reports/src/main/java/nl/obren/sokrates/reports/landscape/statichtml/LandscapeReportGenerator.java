@@ -1687,8 +1687,8 @@ public class LandscapeReportGenerator {
                         .mapToInt(a -> a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode())
                         .sum();
             }
-            double percentage = 100.0 * loc / totalLoc;
-            int width = (int) (200 * loc / totalLoc);
+            double percentage = totalLoc > 0 ? 100.0 * loc / totalLoc : 0;
+            int width = totalLoc > 0 ? (200 * loc / totalLoc) : 0;
             if (count > 0 && width == 0) {
                 width = 1;
             }

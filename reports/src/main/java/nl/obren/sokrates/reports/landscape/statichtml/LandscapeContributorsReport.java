@@ -88,9 +88,9 @@ public class LandscapeContributorsReport {
         this.recent = recent;
         report.startTable("width: 100%");
         if (recent) {
-            report.addTableHeaderLeft("Contributor", "# commits<br>30 days", "# commits<br>90 days", "# commits<br>past year", "# commits<br>all time", "first", "latest", "repositories", "main", "details");
+            report.addTableHeaderLeft("", "contributor", "# commits<br>30 days", "# commits<br>90 days", "# commits<br>past year", "# commits<br>all time", "first", "latest", "repositories", "details");
         } else {
-            report.addTableHeaderLeft("Contributor", "# commits<br>all time", "# commits<br>past year", "# commits<br>90 days", "# commits<br>30 days", "first", "latest", "repositories", "main", "details");
+            report.addTableHeaderLeft("", "contributor", "# commits<br>all time", "# commits<br>past year", "# commits<br>90 days", "# commits<br>30 days", "first", "latest", "repositories", "details");
         }
         int counter[] = {0};
 
@@ -112,6 +112,14 @@ public class LandscapeContributorsReport {
         report.startTableRow(contributor.getContributor().getCommitsCount30Days() > 0 ? "font-weight: bold;"
                 : "color: " + color);
         counter[0] += 1;
+        String biggestExtension = new ContributorPerExtensionHelper().getBiggestExtension(landscapeAnalysisResults.getConfiguration(), contributor);
+        String icon;
+        if (biggestExtension == null) {
+            icon = "";
+        } else {
+            icon = DataImageUtils.getLangDataImageDiv30(biggestExtension);
+        }
+        report.addTableCell(icon, "text-align: center; width: 32px; max-width: 32px");
         String avatarHtml = "";
         String avatarUrl = this.getAvatarUrl(contributor.getContributor().getEmail(), this.landscapeAnalysisResults.getConfiguration().getContributorAvatarLinkTemplate());
         if (avatarUrl != null) {
@@ -183,14 +191,6 @@ public class LandscapeContributorsReport {
         }
         report.addHtmlContent(repositoryInfo.toString());
         report.endTableCell();
-        String biggestExtension = new ContributorPerExtensionHelper().getBiggestExtension(landscapeAnalysisResults.getConfiguration(), contributor);
-        String icon;
-        if (biggestExtension == null) {
-            icon = "";
-        } else {
-            icon = DataImageUtils.getLangDataImageDiv30(biggestExtension);
-        }
-        report.addTableCell(icon, "text-align: center; width: 32px; max-width: 32px");
         report.addTableCell("<a target='_blank' href='" + link + "'  title='volume details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "text-align: center");
         report.endTableRow();
     }
