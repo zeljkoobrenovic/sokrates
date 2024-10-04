@@ -729,9 +729,10 @@ public class LandscapeAnalysisResults {
                         }
                     });
 
-                    existingContributor.addRepository(repositoryAnalysisResults,
-                            firstCommitDate, latestCommitDate,
-                            repositoryCommits, repositoryCommits30Days, repositoryCommits90Days, new ArrayList<>(commitDates));
+                    existingContributor.addRepository(repositoryAnalysisResults, firstCommitDate, latestCommitDate,
+                            repositoryCommits, repositoryCommits30Days, repositoryCommits90Days,
+                            repositoryCommits180Days, repositoryCommits365Days,
+                            new ArrayList<>(commitDates));
 
                     if (firstCommitDate.compareTo(contributorInfo.getFirstCommitDate()) < 0) {
                         contributorInfo.setFirstCommitDate(firstCommitDate);
@@ -756,7 +757,10 @@ public class LandscapeAnalysisResults {
                     ContributorRepositories newContributorWithRepositories = new ContributorRepositories(newContributor);
 
                     newContributorWithRepositories.addRepository(repositoryAnalysisResults, newContributor.getFirstCommitDate(),
-                            newContributor.getLatestCommitDate(), repositoryCommits, repositoryCommits30Days, repositoryCommits90Days, new ArrayList<>(commitDates));
+                            newContributor.getLatestCommitDate(),
+                            repositoryCommits, repositoryCommits30Days, repositoryCommits90Days,
+                            repositoryCommits180Days, repositoryCommits365Days,
+                            new ArrayList<>(commitDates));
 
                     map.put(contributorId, newContributorWithRepositories);
                     list.add(newContributorWithRepositories);

@@ -15,7 +15,7 @@ public class ContributorRepositories {
     }
 
     public void addRepository(RepositoryAnalysisResults repositoryAnalysisResults, String firstCommitDate, String latestCommitDate,
-                              int commitsCount, int commits30Days, int commits90Days, List<String> commitDates) {
+                              int commitsCount, int commits30Days, int commits90Days, int commits180Days, int commits365Days, List<String> commitDates) {
         String path = repositoryAnalysisResults.getAnalysisResults().getMetadata().getName();
         ContributorRepositoryInfo repositoryByPath = getRepositoryByPath(path);
         if (repositoryByPath != null) {
@@ -27,6 +27,8 @@ public class ContributorRepositories {
             }
             repositoryByPath.setCommits30Days(repositoryByPath.getCommits30Days() + commits30Days);
             repositoryByPath.setCommits90Days(repositoryByPath.getCommits90Days() + commits90Days);
+            repositoryByPath.setCommits180Days(repositoryByPath.getCommits180Days() + commits180Days);
+            repositoryByPath.setCommits365Days(repositoryByPath.getCommits180Days() + commits365Days);
             repositoryByPath.setCommitsCount(repositoryByPath.getCommitsCount() + commitsCount);
             commitDates.forEach(date -> {
                 if (!repositoryByPath.getCommitDates().contains(date)) {
@@ -35,7 +37,7 @@ public class ContributorRepositories {
             });
         } else {
             repositories.add(new ContributorRepositoryInfo(repositoryAnalysisResults, firstCommitDate, latestCommitDate,
-                    commitsCount, commits30Days, commits90Days, commitDates));
+                    commitsCount, commits30Days, commits90Days, commits180Days, commits365Days, commitDates));
         }
     }
 

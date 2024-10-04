@@ -75,8 +75,13 @@ public class LandscapeIndividualContributorsReports {
         report.addContentInDiv("Latest commit date: <b>" + contributor.getLatestCommitDate() + "</b>");
         report.addContentInDiv("Repositories count: " +
                 "<b>" + contributorRepositories.getRepositories().stream().filter(p -> p.getCommits30Days() > 0).count()
-                + "</b><span style='color: lightgrey; font-size: 90%'> (30d)</span>&nbsp;&nbsp;&nbsp;" + "<b>" + contributorRepositories.getRepositories().stream().filter(p -> p.getCommits90Days() > 0).count()
-                + "</b><span style='color: lightgrey; font-size: 90%'> (3m)</span>&nbsp;&nbsp;&nbsp;" +
+                + "</b><span style='color: lightgrey; font-size: 90%'> (30d)</span>&nbsp;&nbsp;&nbsp;"
+                + "<b>" + contributorRepositories.getRepositories().stream().filter(p -> p.getCommits90Days() > 0).count()
+                + "</b><span style='color: lightgrey; font-size: 90%'> (3m)</span>&nbsp;&nbsp;&nbsp;"
+                + "<b>" + contributorRepositories.getRepositories().stream().filter(p -> p.getCommits180Days() > 0).count()
+                + "</b><span style='color: lightgrey; font-size: 90%'> (6m)</span>&nbsp;&nbsp;&nbsp;"
+                + "<b>" + contributorRepositories.getRepositories().stream().filter(p -> p.getCommits365Days() > 0).count()
+                + "</b><span style='color: lightgrey; font-size: 90%'> (1y)</span>&nbsp;&nbsp;&nbsp;" +
                 "<b>" + contributorRepositories.getRepositories().size() + "</b> <span style='color: lightgrey; font-size: 90%'> (all time)</span>");
         report.addContentInDiv("Commits count: <b>" + contributor.getCommitsCount30Days() + "</b> " +
                 "<span style='color: lightgrey; font-size: 90%'>(30d)&nbsp;&nbsp;&nbsp;</span>" +

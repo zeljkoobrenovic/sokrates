@@ -10,19 +10,23 @@ public class ContributorRepositoryInfo {
     private int commitsCount = 0;
     private int commits30Days;
     private int commits90Days;
+    private int commits180Days;
+    private int commits365Days;
     private List<String> commitDates = new ArrayList<>();
 
     public ContributorRepositoryInfo() {
     }
 
     public ContributorRepositoryInfo(RepositoryAnalysisResults repositoryAnalysisResults, String firstCommitDate, String latestCommitDate,
-                                     int commitsCount, int commits30Days, int commits90Days, List<String> commitDates) {
+                                     int commitsCount, int commits30Days, int commits90Days, int commits180Days, int commits365Days, List<String> commitDates) {
         this.repositoryAnalysisResults = repositoryAnalysisResults;
         this.firstCommitDate = firstCommitDate;
         this.latestCommitDate = latestCommitDate;
         this.commitsCount = commitsCount;
         this.commits30Days = commits30Days;
         this.commits90Days = commits90Days;
+        this.commits180Days = commits180Days;
+        this.commits365Days = commits365Days;
         this.commitDates = commitDates;
     }
 
@@ -80,5 +84,21 @@ public class ContributorRepositoryInfo {
 
     public void setCommits90Days(int commits90Days) {
         this.commits90Days = commits90Days;
+    }
+
+    public int getCommits180Days() {
+        return commits180Days;
+    }
+
+    public void setCommits180Days(int commits180Days) {
+        this.commits180Days = commits180Days;
+    }
+
+    public int getCommits365Days() {
+        return commits365Days;
+    }
+
+    public void setCommits365Days(int commits365Days) {
+        this.commits365Days = commits365Days;
     }
 }
