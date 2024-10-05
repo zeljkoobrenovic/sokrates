@@ -145,8 +145,11 @@ public class LandscapeDataExport {
         builder.append("Contributor\t# commits (all time)\t# commits (30 days)\t# commits (90 days)\t# commits (180 days)\t# commits (365 days)\tFirst commit\tLatest commit\tRepositories\n");
 
         List<ContributorRepositories> contributors = analysisResults.getContributors();
+        List<ContributorExport> contributorsExport = new ArrayList<>();
 
         contributors.forEach(contributor -> {
+            ContributorExport contributorExport = new ContributorExport(contributor);
+            contributorsExport.add(contributorExport);
             builder.append(contributor.getContributor().getEmail()).append("\t");
             int contributorCommits = contributor.getContributor().getCommitsCount();
             int contributorCommits30Days = contributor.getContributor().getCommitsCount30Days();
@@ -166,6 +169,7 @@ public class LandscapeDataExport {
 
         try {
             FileUtils.write(new File(dataFolder, "contributors.txt"), builder.toString(), StandardCharsets.UTF_8);
+            FileUtils.write(new File(dataFolder, "contributors.json"), new JsonGenerator().generate(contributorsExport), StandardCharsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
