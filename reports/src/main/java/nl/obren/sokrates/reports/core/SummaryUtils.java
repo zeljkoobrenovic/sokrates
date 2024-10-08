@@ -67,16 +67,15 @@ public class SummaryUtils {
         report.startDiv("width: 100%; overflow-x: auto; margin-top: -10px");
         report.startTable("border: none; min-width: 800px; width: 100%");
         summarizeTags(analysisResults, report);
+        report.startTableRow();
+        report.addMultiColumnTableCell("Standard analyses:", 2, "border: none; padding-top: 0px");
+        report.endTableRow();
         summarizeMainVolume(analysisResults, report);
         if (mainExists) {
             if (showDuplication) {
                 summarizeDuplication(analysisResults, report);
             }
             summarizeFileSize(report, analysisResults);
-            if (showUnits) {
-                summarizeUnitSize(analysisResults, report);
-                summarizeUnitComplexity(analysisResults, report);
-            }
             summarizeComponents(analysisResults, report);
         }
         if (showCommitReports) {
@@ -85,6 +84,15 @@ public class SummaryUtils {
         }
         if (showControls) {
             summarizeGoals(analysisResults, report);
+        }
+        if (mainExists) {
+            if (showUnits) {
+                report.startTableRow();
+                report.addMultiColumnTableCell("Experimental heuristic unit analyses:", 2, "border: none; padding-top: 12px");
+                report.endTableRow();
+                summarizeUnitSize(analysisResults, report);
+                summarizeUnitComplexity(analysisResults, report);
+            }
         }
         summarizeFeaturesOfInterest(analysisResults, report);
         addSummaryFindings(analysisResults, report);
