@@ -88,7 +88,7 @@ public class SummaryUtils {
         if (mainExists) {
             if (showUnits) {
                 report.startTableRow();
-                report.addMultiColumnTableCell("Experimental heuristic unit analyses:", 2, "border: none; padding-top: 12px");
+                report.addMultiColumnTableCell("Experimental unit analyses (less reliable heuristic analyses):", 3, "border: none; padding-top: 12px");
                 report.endTableRow();
                 summarizeUnitSize(analysisResults, report);
                 summarizeUnitComplexity(analysisResults, report);
@@ -485,9 +485,12 @@ public class SummaryUtils {
 
         String linkPrefix = "<a target='_blank' href='" + reportRoot + "FeaturesOfInterest.html'  title='metrics &amp; goals details' style='vertical-align: top'>";
         report.startTableRow();
-        report.addTableCell(linkPrefix + getIconSvg("cross_cutting_concerns") + "</a>", "border: none");
+        report.addTableCell("", "border: none; height: 8px");
+        report.endTableRow();
+        report.startTableRow();
+        report.addTableCell(linkPrefix + getIconSvg("cross_cutting_concerns") + "</a>", "border: none; border-top: 2px solid lightgrey; padding-top: 10px");
 
-        report.startTableCellColSpan("border: none", 2);
+        report.startTableCellColSpan("border: none; border-top: 2px solid lightgrey; padding-top: 10px", 2);
         report.addContentInDiv("Features of interest:", "font-size: 80%");
         Collections.sort(fileCount, (a, b) -> b.getValue().intValue() - a.getValue().intValue());
         int limit = 10;
@@ -508,7 +511,7 @@ public class SummaryUtils {
             report.endShowMoreBlock();
         }
         report.endTableCell();
-        report.addTableCell(linkPrefix + getDetailsIcon() + "</a>", "border: none");
+        report.addTableCell(linkPrefix + getDetailsIcon() + "</a>", "border: none; border-top: 2px solid lightgrey; padding-top: 10px");
 
         report.endTableRow();
     }
