@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 public class ContributorExport {
     private Contributor contributor = new Contributor();
 
+    private String mainLang = "";
+
     private List<ContributorRepositoryInfoExport> repositories = new ArrayList<>();
 
     public ContributorExport(ContributorRepositories contributor) {
@@ -32,5 +34,13 @@ public class ContributorExport {
 
     public void setRepositories(List<ContributorRepositoryInfoExport> repositories) {
         this.repositories = repositories;
+    }
+
+    public String getMainLang() {
+        return mainLang;
+    }
+
+    public void setMainLang(String mainLang) {
+        this.mainLang = mainLang;
     }
 }

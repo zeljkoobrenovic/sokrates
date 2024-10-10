@@ -5,6 +5,7 @@ import nl.obren.sokrates.common.renderingutils.ExplorerTemplate;
 import nl.obren.sokrates.common.utils.SystemUtils;
 import nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.TagMap;
+import nl.obren.sokrates.reports.landscape.utils.ContributorPerExtensionHelper;
 import nl.obren.sokrates.reports.landscape.utils.TagStats;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -147,8 +148,12 @@ public class LandscapeDataExport {
         List<ContributorRepositories> contributors = analysisResults.getContributors();
         List<ContributorExport> contributorsExport = new ArrayList<>();
 
+
+
         contributors.forEach(contributor -> {
             ContributorExport contributorExport = new ContributorExport(contributor);
+            String mostCommittedLang = new ContributorPerExtensionHelper().getBiggestExtension(analysisResults.getConfiguration(), contributor);
+            contributorExport.setMainLang(mostCommittedLang);
             contributorsExport.add(contributorExport);
             builder.append(contributor.getContributor().getEmail()).append("\t");
             int contributorCommits = contributor.getContributor().getCommitsCount();
