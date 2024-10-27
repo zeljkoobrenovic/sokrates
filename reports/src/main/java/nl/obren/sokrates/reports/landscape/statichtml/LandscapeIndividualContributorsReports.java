@@ -205,7 +205,16 @@ public class LandscapeIndividualContributorsReports {
             report.startTableRow();
             addLangTableCell(report, repository.getRepositoryAnalysisResults().getAnalysisResults().getMainAspectAnalysisResults());
             report.startTableCell("border: none;" + textOpacity);
-            report.addNewTabLink(repository.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName(),
+            String fullName = repository.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName();
+            String nameElements[] = fullName.split("/");
+            String parent = nameElements.length == 2 ? nameElements[0] : null;
+            String name = nameElements.length == 2 ? nameElements[1] : fullName;
+            String nameHtml = "";
+            if (parent != null) {
+                nameHtml = "<div style='font-size: 90%; color: lightgrey; padding-top: 2px'>" + parent + "</div>";
+            }
+            nameHtml += "<div style='font-size: 110%;'>" + name + "</div>";
+            report.addNewTabLink(nameHtml,
                     "../../" + repository.getRepositoryAnalysisResults().getSokratesRepositoryLink().getHtmlReportsRoot() + "/index.html");
             report.endTableCell();
             report.addTableCell(repository.getCommits90Days() > 0 ? repository.getCommits90Days() + "" : "-", "text-align: center; border: none; " + textOpacity);
@@ -279,7 +288,16 @@ public class LandscapeIndividualContributorsReports {
             addLangTableCell(report, repository.getRepositoryAnalysisResults().getAnalysisResults().getMainAspectAnalysisResults());
             String textOpacity = repository.getCommits90Days() > 0 ? "font-weight: bold;" : "opacity: 0.4";
             report.startTableCell("border: none; " + textOpacity);
-            report.addNewTabLink(repository.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName(),
+            String fullName = repository.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName();
+            String nameElements[] = fullName.split("/");
+            String parent = nameElements.length == 2 ? nameElements[0] : null;
+            String name = nameElements.length == 2 ? nameElements[1] : fullName;
+            String nameHtml = "";
+            if (parent != null) {
+                nameHtml = "<div style='font-size: 90%; color: lightgrey; padding-top: 2px'>" + parent + "</div>";
+            }
+            nameHtml += "<div style='font-size: 110%;'>" + name + "</div>";
+            report.addNewTabLink(nameHtml,
                     "../../" + repository.getRepositoryAnalysisResults().getSokratesRepositoryLink().getHtmlReportsRoot() + "/index.html");
             report.endTableCell();
             report.addTableCell(repository.getCommits90Days() > 0 ? repository.getCommits90Days() + "" : "-", "text-align: center; border: none; " + textOpacity);
@@ -380,7 +398,7 @@ public class LandscapeIndividualContributorsReports {
             String tooltip = "Month " + pastYear + ": " + repositoryCount[0] + (repositoryCount[0] == 1 ? " repository" : " repositories"
                     + ", " + repositoryDays[0] + " commit " + (repositoryDays[0] == 1 ? "day" : "days"));
             report.startTableCell("vertical-align: bottom; font-size: 70%; border: none; color: lightgrey; text-align: center");
-            String content = repositoryCount[0] + "&nbsp;p<br>" + repositoryDays[0] + "&nbsp;cd";
+            String content = repositoryCount[0] + "&nbsp;r<br>" + repositoryDays[0] + "&nbsp;cd";
             content += "<div style='vertical-align: bottom; text-align: center; margin: auto; background-color: skyblue; width: 32px; height: "
                     + ((int) (1 + 32 * ((double) repositoryDays[0] / maxRepositoryDays[0]))) +
                     "px;'> </div>" + pastYear;
@@ -398,7 +416,16 @@ public class LandscapeIndividualContributorsReports {
             addLangTableCell(report, repository.getRepositoryAnalysisResults().getAnalysisResults().getMainAspectAnalysisResults());
 
             report.startTableCell("padding: 0; border: none; " + textOpacity);
-            report.addNewTabLink(repository.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName(),
+            String fullName = repository.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName();
+            String nameElements[] = fullName.split("/");
+            String parent = nameElements.length == 2 ? nameElements[0] : null;
+            String name = nameElements.length == 2 ? nameElements[1] : fullName;
+            String nameHtml = "";
+            if (parent != null) {
+                nameHtml = "<div style='font-size: 90%; color: lightgrey; padding-top: 2px'>" + parent + "</div>";
+            }
+            nameHtml += "<div style='font-size: 110%;'>" + name + "</div>";
+            report.addNewTabLink(nameHtml,
                     "../../" + repository.getRepositoryAnalysisResults().getSokratesRepositoryLink().getHtmlReportsRoot() + "/index.html");
             report.endTableCell();
             report.addTableCell(repository.getCommits90Days() > 0 ? repository.getCommits90Days() + "" : "-", "text-align: center; border: none; " + textOpacity);
