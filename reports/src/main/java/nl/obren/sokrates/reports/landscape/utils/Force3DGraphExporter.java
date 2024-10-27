@@ -17,7 +17,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class Force3DGraphExporter {
     public String export3DForceGraph(List<ComponentDependency> componentDependencies, File reportsFolder, String graphId) {
-        Force3DObject force3DObject = new Force3DObject();
+        Force3DObject forceGraphObject = new Force3DObject();
         Map<String, Integer> names = new HashMap<>();
         componentDependencies.forEach(dependency -> {
             String from = dependency.getFromComponent();
@@ -32,21 +32,23 @@ public class Force3DGraphExporter {
             } else {
                 names.put(to, 1);
             }
-            force3DObject.getLinks().add(new Force3DLink(from, to, dependency.getCount()));
-            force3DObject.getLinks().add(new Force3DLink(to, from, dependency.getCount()));
+            forceGraphObject.getLinks().add(new Force3DLink(from, to, dependency.getCount()));
+            forceGraphObject.getLinks().add(new Force3DLink(to, from, dependency.getCount()));
         });
         names.keySet().forEach(key -> {
-            force3DObject.getNodes().add(new Force3DNode(key, names.get(key)));
+            forceGraphObject.getNodes().add(new Force3DNode(key, names.get(key)));
         });
         File folder = new File(reportsFolder, "visuals");
         folder.mkdirs();
-        String fileName = graphId + "_force_3d.html";
+        String fileName2D = graphId + "_force_2d.html";
+        String fileName3D = graphId + "_force_3d.html";
         try {
-            FileUtils.write(new File(folder, fileName), new VisualizationTemplate().render3DForceGraph(force3DObject), UTF_8);
+            FileUtils.write(new File(folder, fileName2D), new VisualizationTemplate().render2DForceGraph(forceGraphObject), UTF_8);
+            FileUtils.write(new File(folder, fileName3D), new VisualizationTemplate().render3DForceGraph(forceGraphObject), UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return "visuals/" + fileName;
+        return "visuals/" + fileName3D;
     }
 }

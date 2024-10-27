@@ -331,14 +331,21 @@ public class ContributorsReportGenerator {
         String graphId = addDependencyGraphVisuals(peopleDependencies, new ArrayList<>(), graphvizDependencyRenderer, prefix);
         report.endShowMoreBlock();
         report.addLineBreak();
+        report.addNewTabLink("- open 2D force graph", "visuals/" + graphId + "_force_2d.html");
+        report.addLineBreak();
         report.addNewTabLink("- open 3D force graph", "visuals/" + graphId + "_force_3d.html");
         report.addLineBreak();
         if (peopleFileDependencies != null) {
             String prefixFile = "people_dependencies_via_files_" + daysAgo + "_";
             String graphIdFile = add3DDependencyGraphVisuals(peopleFileDependencies, prefixFile);
+            report.addNewTabLink("- open 2D force graph (including all files)", "visuals/" + graphIdFile + "_force_2d.html");
+            report.addLineBreak();
+            report.addNewTabLink("- open 2D force graph (including only shared files)", "visuals/" + graphIdFile + "_force_2d_only_shared_file.html");
+            report.addLineBreak();
             report.addNewTabLink("- open 3D force graph (including all files)", "visuals/" + graphIdFile + "_force_3d.html");
             report.addLineBreak();
             report.addNewTabLink("- open 3D force graph (including only shared files)", "visuals/" + graphIdFile + "_force_3d_only_shared_file.html");
+            report.addLineBreak();
         }
         report.addLineBreak();
         report.addLineBreak();
@@ -466,6 +473,8 @@ public class ContributorsReportGenerator {
         folder.mkdirs();
 
         try {
+            FileUtils.write(new File(folder, graphId + "_force_2d.html"), new VisualizationTemplate().render2DForceGraph(force3DObject), UTF_8);
+            FileUtils.write(new File(folder, graphId + "_force_2d_only_shared_file.html"), new VisualizationTemplate().render2DForceGraph(force3DObjectOnlyLinked), UTF_8);
             FileUtils.write(new File(folder, graphId + "_force_3d.html"), new VisualizationTemplate().render3DForceGraph(force3DObject), UTF_8);
             FileUtils.write(new File(folder, graphId + "_force_3d_only_shared_file.html"), new VisualizationTemplate().render3DForceGraph(force3DObjectOnlyLinked), UTF_8);
         } catch (IOException e) {

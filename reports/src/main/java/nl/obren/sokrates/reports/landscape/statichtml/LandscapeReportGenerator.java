@@ -332,6 +332,7 @@ public class LandscapeReportGenerator {
         addDownloadLinks("sub_landscape_dependencies_same_contributors");
         landscapeReport.endShowMoreBlock();
         landscapeReport.addLineBreak();
+        landscapeReport.addNewTabLink(" - show dependencies as 2D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/sub_landscape_dependencies_same_contributors_force_2d.html");
         landscapeReport.addNewTabLink(" - show dependencies as 3D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/sub_landscape_dependencies_same_contributors_force_3d.html");
         new Force3DGraphExporter().export3DForceGraph(dependencies, reportsFolder, "sub_landscape_dependencies_same_contributors");
 
@@ -351,6 +352,7 @@ public class LandscapeReportGenerator {
         addDownloadLinks("sub_landscape_dependencies_same_name_repos");
         landscapeReport.endShowMoreBlock();
         landscapeReport.addLineBreak();
+        landscapeReport.addNewTabLink(" - show dependencies as 2D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/sub_landscape_dependencies_same_name_repos_force_2d.html");
         landscapeReport.addNewTabLink(" - show dependencies as 3D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/sub_landscape_dependencies_same_name_repos_force_3d.html");
         new Force3DGraphExporter().export3DForceGraph(dependencies, reportsFolder, "sub_landscape_dependencies_same_name_repos");
 
@@ -509,13 +511,17 @@ public class LandscapeReportGenerator {
             landscapeReport.addParagraph("The diagram shows contributor collaborations defined as working on " +
                     "the same repositories in the past 30 days. The lines display the number of shared repositories " +
                     "between two contributors.\n", "color: grey");
-            landscapeReport.addNewTabLink("<div style='font-weight: bold; font-size: 110%; margin-bottom: 8px;'>3D graph (including repositories)&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON + "</div>", "visuals/people_dependencies_including_repositories_30_2_force_3d.html");
+            landscapeReport.addNewTabLink("<div style='font-weight: bold; font-size: 110%; margin-bottom: 8px;'>2D force graph (including repositories)&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON + "</div>", "visuals/people_dependencies_including_repositories_30_2_force_2d.html");
+            landscapeReport.addNewTabLink("<div style='font-weight: bold; font-size: 110%; margin-bottom: 8px;'>3D force graph (including repositories)&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON + "</div>", "visuals/people_dependencies_including_repositories_30_2_force_3d.html");
             landscapeReport.startDiv("font-size: 90%");
-            landscapeReport.addNewTabLink("2D graph", "visuals/people_dependencies_30_1.svg");
+            landscapeReport.addHtmlContent("direct links: ");
+            landscapeReport.addNewTabLink("graphviz", "visuals/people_dependencies_30_1.svg");
             landscapeReport.addHtmlContent(" | ");
-            landscapeReport.addNewTabLink("2D graph (including contributors)", "visuals/people_dependencies_including_repositories_30_2.svg");
+            landscapeReport.addNewTabLink("graphviz (including contributors)", "visuals/people_dependencies_including_repositories_30_2.svg");
             landscapeReport.addHtmlContent(" | ");
-            landscapeReport.addNewTabLink("3D graph", "visuals/people_dependencies_30_1_force_3d.html");
+            landscapeReport.addNewTabLink("2D force graph", "visuals/people_dependencies_30_1_force_2d.html");
+            landscapeReport.addHtmlContent(" | ");
+            landscapeReport.addNewTabLink("3D force graph", "visuals/people_dependencies_30_1_force_3d.html");
             landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("data", "data/repository_shared_repositories_30_days.txt");
             landscapeReport.addHtmlContent("&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON);
@@ -532,13 +538,17 @@ public class LandscapeReportGenerator {
             landscapeReport.addParagraph("The diagram shows repository dependencies defined as having the same " +
                     "contributors working on the same repositories in the past 30 days. " +
                     "The lines between repositories display the number of contributors working on both repositories.", "color: grey");
-            landscapeReport.addNewTabLink("2D graph", "visuals/repository_dependencies_30_3.svg");
+            landscapeReport.addNewTabLink("graphviz", "visuals/repository_dependencies_30_3.svg");
             landscapeReport.addHtmlContent(" | ");
-            landscapeReport.addNewTabLink("2D graph (including contributors)", "visuals/people_dependencies_including_repositories_30_2.svg");
+            landscapeReport.addNewTabLink("graphviz (including contributors)", "visuals/people_dependencies_including_repositories_30_2.svg");
             landscapeReport.addHtmlContent(" | ");
-            landscapeReport.addNewTabLink("3D graph", "visuals/repository_dependencies_30_3_force_3d.html");
+            landscapeReport.addNewTabLink("2D force graph", "visuals/repository_dependencies_30_3_force_2d.html");
             landscapeReport.addHtmlContent(" | ");
-            landscapeReport.addNewTabLink("3D graph (including contributors)", "visuals/people_dependencies_including_repositories_30_2_force_3d.html");
+            landscapeReport.addNewTabLink("2D force graph (including contributors)", "visuals/people_dependencies_including_repositories_30_2_force_2d.html");
+            landscapeReport.addHtmlContent(" | ");
+            landscapeReport.addNewTabLink("3D force graph", "visuals/repository_dependencies_30_3_force_3d.html");
+            landscapeReport.addHtmlContent(" | ");
+            landscapeReport.addNewTabLink("3D force graph (including contributors)", "visuals/people_dependencies_including_repositories_30_2_force_3d.html");
             landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("data", "data/repository_shared_repositories_30_days.txt");
             landscapeReport.addHtmlContent("&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON);
@@ -554,9 +564,11 @@ public class LandscapeReportGenerator {
         if (recentlyActive) {
             landscapeReport.addParagraph("The diagram shows dependencies between programming languages (file extensions) defined as having the same contributors committing to files with these etensions in the past 30 days. " +
                     "The lines between repositories display the number of contributors committing to files with both extensions in ht past 30 days.", "color: grey");
-            landscapeReport.addNewTabLink("2D graph", "visuals/extension_dependencies_30d.svg");
+            landscapeReport.addNewTabLink("graphviz", "visuals/extension_dependencies_30d.svg");
             landscapeReport.addHtmlContent(" | ");
-            landscapeReport.addNewTabLink("3D graph", "visuals/extension_dependencies_30d_force_3d.html");
+            landscapeReport.addNewTabLink("2D force graph", "visuals/extension_dependencies_30d_force_2d.html");
+            landscapeReport.addHtmlContent(" | ");
+            landscapeReport.addNewTabLink("3D force graph", "visuals/extension_dependencies_30d_force_3d.html");
             landscapeReport.addHtmlContent("&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON);
             landscapeReport.addLineBreak();
             landscapeReport.addLineBreak();
@@ -1196,6 +1208,7 @@ public class LandscapeReportGenerator {
         addDownloadLinks("extension_dependencies_30d");
         landscapeReport.endShowMoreBlock();
         landscapeReport.addLineBreak();
+        landscapeReport.addNewTabLink(" - show extension dependencies as 2D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/extension_dependencies_30d_force_2d.html");
         landscapeReport.addNewTabLink(" - show extension dependencies as 3D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/extension_dependencies_30d_force_3d.html");
         new Force3DGraphExporter().export3DForceGraph(dependencies, reportsFolder, "extension_dependencies_30d");
     }
@@ -2595,6 +2608,8 @@ public class LandscapeReportGenerator {
         String graphId = addDependencyGraphVisuals(repositoryDependenciesViaPeople, new ArrayList<>(repositoryNames), "repository_dependencies_" + daysAgo + "_", "TB");
 
         landscapeReport.endShowMoreBlock();
+        landscapeReport.addNewTabLink(" - show repository dependencies as 2D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/" + graphId + "_force_2d.html");
+        landscapeReport.addLineBreak();
         landscapeReport.addNewTabLink(" - show repository dependencies as 3D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/" + graphId + "_force_3d.html");
         landscapeReport.addLineBreak();
     }
@@ -2733,6 +2748,9 @@ public class LandscapeReportGenerator {
         landscapeReport.endDiv();
         landscapeReport.endShowMoreBlock();
 
+        landscapeReport.addNewTabLink(" - show contributor dependencies as 2D force graph" + extraLabel + "&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
+                "visuals/" + graphId + "_force_2d.html");
+        landscapeReport.addLineBreak();
         landscapeReport.addNewTabLink(" - show contributor dependencies as 3D force graph" + extraLabel + "&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
                 "visuals/" + graphId + "_force_3d.html");
         landscapeReport.addLineBreak();

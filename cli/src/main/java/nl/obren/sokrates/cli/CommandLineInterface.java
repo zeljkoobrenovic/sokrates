@@ -666,6 +666,7 @@ public class CommandLineInterface {
                 folder.mkdirs();
                 FileUtils.write(new File(folder, "bubble_chart_" + nameSuffix), new VisualizationTemplate().renderBubbleChart(items), UTF_8);
                 FileUtils.write(new File(folder, "tree_map_" + nameSuffix), new VisualizationTemplate().renderTreeMap(items), UTF_8);
+                FileUtils.write(new File(folder, "force_2d_" + nameSuffixDependencies), new VisualizationTemplate().render2DForceGraph(force3DObject), UTF_8);
                 FileUtils.write(new File(folder, "force_3d_" + nameSuffixDependencies), new VisualizationTemplate().render3DForceGraph(force3DObject), UTF_8);
 
                 generate3DUnitsView(folder, analysisResults);

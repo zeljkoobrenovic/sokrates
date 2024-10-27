@@ -286,6 +286,8 @@ public class LogicalComponentsReportGenerator {
         List<ComponentGroup> componentGroups = getComponentGroups(logicalDecomposition, dependenciesAboveThreshold, componentsAboveThreshold);
         String graphId = addDependencyGraphVisuals(dependenciesAboveThreshold, componentsAboveThreshold, componentGroups, graphvizDependencyRenderer);
         report.addLineBreak();
+        report.addNewTabLink("Open 2D force graph...", "visuals/force_2d_" + graphId + ".html");
+        report.addLineBreak();
         report.addNewTabLink("Open 3D force graph...", "visuals/force_3d_" + graphId + ".html");
 
         if (componentGroups.size() > 0) {

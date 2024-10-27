@@ -14,6 +14,7 @@ import nl.obren.sokrates.sourcecode.filehistory.FilePairChangedTogether;
 import nl.obren.sokrates.sourcecode.filehistory.TemporalDependenciesHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.math3.util.Pair;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -174,8 +175,9 @@ public class FileTemporalDependenciesReportGenerator {
         if (dependenciesWithCommits.size() > 0) {
             ProcessingStopwatch.start("reporting/temporal dependencies/export graph");
             String graphId = "file_changed_together_dependencies_with_commits_components_" + suffix;
-            String force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(dependenciesWithCommits, reportsFolder, graphId);
-            report.addNewTabLink("Open 3D force graph (file dependencies with commits)...", force3DGraphFilePath);
+            Pair<String,String> force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(dependenciesWithCommits, reportsFolder, graphId);
+            report.addNewTabLink("Open 2D force graph (file dependencies with commits)...", force3DGraphFilePath.getFirst());
+            report.addNewTabLink("Open 3D force graph (file dependencies with commits)...", force3DGraphFilePath.getSecond());
             report.addLineBreak();
             ProcessingStopwatch.end("reporting/temporal dependencies/export graph");
         }
@@ -198,8 +200,9 @@ public class FileTemporalDependenciesReportGenerator {
 
             VisualizationTools.addDownloadLinks(report, graphId);
             report.addLineBreak();
-            String force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(dependencies, reportsFolder, graphId);
-            report.addNewTabLink("Open 3D force graph (file dependencies)...", force3DGraphFilePath);
+            Pair<String,String> force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(dependencies, reportsFolder, graphId);
+            report.addNewTabLink("Open 2D force graph (file dependencies)...", force3DGraphFilePath.getFirst());
+            report.addNewTabLink("Open 3D force graph (file dependencies)...", force3DGraphFilePath.getSecond());
             report.addLineBreak();
             ProcessingStopwatch.end("reporting/temporal dependencies/graphviz");
         } else {

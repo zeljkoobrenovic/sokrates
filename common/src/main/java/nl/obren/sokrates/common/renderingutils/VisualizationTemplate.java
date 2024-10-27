@@ -50,6 +50,22 @@ public class VisualizationTemplate {
         return render("zoomable_sunburst.html", items).replace(",\"children\":[]", "");
     }
 
+    public String render2DForceGraph(Force3DObject data) {
+        ClassLoader clazz = this.getClass().getClassLoader();
+        InputStream inputStream = clazz.getResourceAsStream("vis_templates/force_2d.html");
+
+        try {
+            String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+            content = content.replace("${data}", new JsonGenerator().generate(data));
+
+            return content;
+        } catch (IOException e) {
+            LOG.error(e);
+        }
+
+        return null;
+    }
+
     public String render3DForceGraph(Force3DObject data) {
         ClassLoader clazz = this.getClass().getClassLoader();
         InputStream inputStream = clazz.getResourceAsStream("vis_templates/force_3d.html");

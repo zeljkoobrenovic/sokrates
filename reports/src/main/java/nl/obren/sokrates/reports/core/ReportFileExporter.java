@@ -389,10 +389,16 @@ public class ReportFileExporter {
             report.startTableCell("border: none");
             report.startUnorderedList();
             report.startListItem();
-            report.addNewTabLink("2D graph of duplication among files", "visuals/duplication_among_files.svg");
+            report.addNewTabLink("graphviz graph of duplication among files", "visuals/duplication_among_files.svg");
             report.endListItem();
             report.startListItem();
-            report.addNewTabLink("3D view of duplication among files", "visuals/duplication_among_files_force_3d.html");
+            report.addNewTabLink("2D force graph of duplication among files", "visuals/duplication_among_files_force_2d.html");
+            report.endListItem();
+            report.startListItem();
+            report.addNewTabLink("3D force graph of duplication among files", "visuals/duplication_among_files_force_3d.html");
+            report.endListItem();
+            report.startListItem();
+            report.addNewTabLink("2D view of duplication among files (with duplicates)", "visuals/duplication_among_files_with_duplicates_force_2d.html");
             report.endListItem();
             report.startListItem();
             report.addNewTabLink("3D view of duplication among files (with duplicates)", "visuals/duplication_among_files_with_duplicates_force_3d.html");
@@ -485,7 +491,13 @@ public class ReportFileExporter {
         report.startUnorderedList();
         report.startListItem();
         report.addHtmlContent("past 30 days: ");
-        report.addNewTabLink("2D graph", "visuals/people_dependencies_30_1.svg");
+        report.addNewTabLink("graphviz", "visuals/people_dependencies_30_1.svg");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("2D graph", "visuals/people_dependencies_30_1_force_2d.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("2D graph (with files)", "visuals/people_dependencies_via_files_30_2_force_2d.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("2D graph (with shared files only)", "visuals/people_dependencies_via_files_30_2_force_2d_only_shared_file.html");
         report.addHtmlContent(" | ");
         report.addNewTabLink("3D graph", "visuals/people_dependencies_30_1_force_3d.html");
         report.addHtmlContent(" | ");
@@ -495,7 +507,13 @@ public class ReportFileExporter {
         report.endListItem();
         report.startListItem();
         report.addHtmlContent("past 3 months: ");
-        report.addNewTabLink("2D graph", "visuals/people_dependencies_90_3.svg");
+        report.addNewTabLink("graphviz", "visuals/people_dependencies_90_3.svg");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("2D graph", "visuals/people_dependencies_90_3_force_2d.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("2D graph (with files)", "visuals/people_dependencies_via_files_90_4_force_2d.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("2D graph (with shared files only)", "visuals/people_dependencies_via_files_90_4_force_2d_only_shared_file.html");
         report.addHtmlContent(" | ");
         report.addNewTabLink("3D graph", "visuals/people_dependencies_90_3_force_3d.html");
         report.addHtmlContent(" | ");
@@ -505,7 +523,13 @@ public class ReportFileExporter {
         report.endListItem();
         report.startListItem();
         report.addHtmlContent("past 6 months: ");
-        report.addNewTabLink("2D graph", "visuals/people_dependencies_180_5.svg");
+        report.addNewTabLink("graphviz", "visuals/people_dependencies_180_5.svg");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("2D graph", "visuals/people_dependencies_180_5_force_2d.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("2D graph (with files)", "visuals/people_dependencies_via_files_180_6_force_2d.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("2D graph (with shared files only)", "visuals/people_dependencies_via_files_180_6_force_2d_only_shared_file.html");
         report.addHtmlContent(" | ");
         report.addNewTabLink("3D graph", "visuals/people_dependencies_180_5_force_3d.html");
         report.addHtmlContent(" | ");
@@ -515,7 +539,13 @@ public class ReportFileExporter {
         report.endListItem();
         report.startListItem();
         report.addHtmlContent("past year: ");
-        report.addNewTabLink("2D graph", "visuals/people_dependencies_365_7.svg");
+        report.addNewTabLink("graphviz", "visuals/people_dependencies_365_7.svg");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("2D graph", "visuals/people_dependencies_365_7_force_2d.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("2D graph (with files)", "visuals/people_dependencies_via_files_365_8_force_2d.html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("2D graph (with shared files only)", "visuals/people_dependencies_via_files_365_8_force_2d_only_shared_file.html");
         report.addHtmlContent(" | ");
         report.addNewTabLink("3D graph", "visuals/people_dependencies_365_7_force_3d.html");
         report.addHtmlContent(" | ");
@@ -539,14 +569,14 @@ public class ReportFileExporter {
         report.addHtmlContent("</tr>");
         report.addHtmlContent("<tr>");
         report.addHtmlContent("<td colspan='2' rowspan='2' style='text-align: center'><a target='_blank' href='Components.html'>Components</a></td>");
-        report.addHtmlContent("<td colspan='6' style='text-align: center'><a target='_blank' href='FileTemporalDependencies.html'>Temporal Dependencies</a></td>");
+        report.addHtmlContent("<td colspan='9' style='text-align: center'><a target='_blank' href='FileTemporalDependencies.html'>Temporal Dependencies</a></td>");
         report.addHtmlContent("<td colspan='1' rowspan='2' style='text-align: center'><a target='_blank' href='Duplication.html'>Duplication</a></td>");
         report.addHtmlContent("<td colspan='2' rowspan='2' style='text-align: center'><a target='_blank' href='Commits.html'>Commits Racing Charts</a></td>");
         report.addHtmlContent("</tr>");
         report.addHtmlContent("<tr>");
-        report.addHtmlContent("<td colspan='2' style='text-align: center'>30 days</td>");
-        report.addHtmlContent("<td colspan='2' style='text-align: center'>3 months</td>");
-        report.addHtmlContent("<td colspan='2' style='text-align: center'>6 months</td>");
+        report.addHtmlContent("<td colspan='3' style='text-align: center'>30 days</td>");
+        report.addHtmlContent("<td colspan='3' style='text-align: center'>3 months</td>");
+        report.addHtmlContent("<td colspan='3' style='text-align: center'>6 months</td>");
         report.addHtmlContent("</tr>");
 
         int index[] = {0};
@@ -562,7 +592,14 @@ public class ReportFileExporter {
             report.endTableCell();
             report.startTableCell("text-align: center");
             if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days().size() > 0) {
-                report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_30_days.svg");
+                report.addNewTabLink("graphviz", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_30_days.svg");
+            } else {
+                report.addContentInDiv("graphviz", "color: #c0c0c0");
+            }
+            report.endTableCell();
+            report.startTableCell("text-align: center");
+            if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days().size() > 0) {
+                report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_30_days_force_2d.html");
             } else {
                 report.addContentInDiv("2D", "color: #c0c0c0");
             }
@@ -576,7 +613,14 @@ public class ReportFileExporter {
             report.endTableCell();
             report.startTableCell("text-align: center");
             if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether90Days().size() > 0) {
-                report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_90_days.svg");
+                report.addNewTabLink("graphviz", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_90_days.svg");
+            } else {
+                report.addContentInDiv("graphviz", "color: #c0c0c0");
+            }
+            report.endTableCell();
+            report.startTableCell("text-align: center");
+            if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether90Days().size() > 0) {
+                report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_90_days_force_2d.html");
             } else {
                 report.addContentInDiv("2D", "color: #c0c0c0");
             }
@@ -590,7 +634,14 @@ public class ReportFileExporter {
             report.endTableCell();
             report.startTableCell("text-align: center");
             if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether180Days().size() > 0) {
-                report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_180_days.svg");
+                report.addNewTabLink("graphviz", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_180_days.svg");
+            } else {
+                report.addContentInDiv("graphviz", "color: #c0c0c0");
+            }
+            report.endTableCell();
+            report.startTableCell("text-align: center");
+            if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether180Days().size() > 0) {
+                report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_180_days_force_2d.html");
             } else {
                 report.addContentInDiv("2D", "color: #c0c0c0");
             }
@@ -636,7 +687,11 @@ public class ReportFileExporter {
         report.startListItem();
         report.addHtmlContent("past 30 days: ");
         if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days().size() > 0) {
-            report.addNewTabLink("2D graph", "visuals/file_changed_together_dependencies_files_30_days.svg");
+            report.addNewTabLink("graphviz", "visuals/file_changed_together_dependencies_files_30_days.svg");
+            report.addHtmlContent(" | ");
+            report.addNewTabLink("2D graph", "visuals/file_changed_together_dependencies_files_30_days_force_2d.html");
+            report.addHtmlContent(" | ");
+            report.addNewTabLink("2D graph (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_30_days_force_2d.html");
             report.addHtmlContent(" | ");
             report.addNewTabLink("3D graph", "visuals/file_changed_together_dependencies_files_30_days_force_3d.html");
             report.addHtmlContent(" | ");
@@ -648,7 +703,11 @@ public class ReportFileExporter {
         report.startListItem();
         report.addHtmlContent("past 3 months: ");
         if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether90Days().size() > 0) {
-            report.addNewTabLink("2D graph", "visuals/file_changed_together_dependencies_files_90_days.svg");
+            report.addNewTabLink("graphviz", "visuals/file_changed_together_dependencies_files_90_days.svg");
+            report.addHtmlContent(" | ");
+            report.addNewTabLink("2D graph", "visuals/file_changed_together_dependencies_files_90_days_force_2d.html");
+            report.addHtmlContent(" | ");
+            report.addNewTabLink("2D graph (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_90_days_force_2d.html");
             report.addHtmlContent(" | ");
             report.addNewTabLink("3D graph", "visuals/file_changed_together_dependencies_files_90_days_force_3d.html");
             report.addHtmlContent(" | ");
@@ -660,7 +719,11 @@ public class ReportFileExporter {
         report.startListItem();
         report.addHtmlContent("past 6 months: ");
         if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether180Days().size() > 0) {
-            report.addNewTabLink("2D graph", "visuals/file_changed_together_dependencies_files_180_days.svg");
+            report.addNewTabLink("graphviz", "visuals/file_changed_together_dependencies_files_180_days.svg");
+            report.addHtmlContent(" | ");
+            report.addNewTabLink("2D graph", "visuals/file_changed_together_dependencies_files_180_days_force_2d.html");
+            report.addHtmlContent(" | ");
+            report.addNewTabLink("2D graph (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_180_days_force_2d.html");
             report.addHtmlContent(" | ");
             report.addNewTabLink("3D graph", "visuals/file_changed_together_dependencies_files_180_days_force_3d.html");
             report.addHtmlContent(" | ");

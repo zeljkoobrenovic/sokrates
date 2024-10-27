@@ -23,6 +23,7 @@ import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
 import nl.obren.sokrates.sourcecode.metrics.DuplicationMetric;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 
 import java.io.File;
 import java.io.IOException;
@@ -273,8 +274,9 @@ public class DuplicationReportGenerator {
 
             VisualizationTools.addDownloadLinks(report, graphId);
             report.addLineBreak();
-            String force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(componentDependencies, reportsFolder, graphId);
-            report.addNewTabLink("Open 3D force graph...", force3DGraphFilePath);
+            Pair<String,String> force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(componentDependencies, reportsFolder, graphId);
+            report.addNewTabLink("Open 2D force graph...", force3DGraphFilePath.getFirst());
+            report.addNewTabLink("Open 3D force graph...", force3DGraphFilePath.getSecond());
 
             report.addLineBreak();
             report.addLineBreak();
