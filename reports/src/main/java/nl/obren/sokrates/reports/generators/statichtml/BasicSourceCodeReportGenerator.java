@@ -22,7 +22,8 @@ public class BasicSourceCodeReportGenerator {
     private static final Log LOG = LogFactory.getLog(BasicSourceCodeReportGenerator.class);
 
     private RichTextReport overviewScopeReport = new RichTextReport("Source Code Overview", "SourceCodeOverview.html");
-    private RichTextReport logicalComponentsReport = new RichTextReport("Components & Dependencies", "Components.html");
+    private RichTextReport logicalComponentsReport = new RichTextReport("Components", "Components.html");
+    private RichTextReport logicalComponentsAndDependenciesReport = new RichTextReport("Static Component Dependencies", "ComponentsAndDependencies.html");
     private RichTextReport concernsReport = new RichTextReport("Features of Interest", "FeaturesOfInterest.html");
     private RichTextReport duplicationReport = new RichTextReport("Duplication", "Duplication.html");
     private RichTextReport fileSizeReport = new RichTextReport("File Size", "FileSize.html");
@@ -83,6 +84,7 @@ public class BasicSourceCodeReportGenerator {
             }
             if (codeAnalyzerSettings.isAnalyzeLogicalDecomposition()) {
                 reports.add(logicalComponentsReport);
+                reports.add(logicalComponentsAndDependenciesReport);
             }
             if (codeAnalyzerSettings.isAnalyzeDuplication()) {
                 reports.add(duplicationReport);
@@ -146,6 +148,7 @@ public class BasicSourceCodeReportGenerator {
         decorateReport(comparisonReport, name, logoLink);
         decorateReport(findingsReport, name, logoLink);
         decorateReport(logicalComponentsReport, name, logoLink);
+        decorateReport(logicalComponentsAndDependenciesReport, name, logoLink);
         decorateReport(concernsReport, name, logoLink);
     }
 
@@ -158,7 +161,8 @@ public class BasicSourceCodeReportGenerator {
 
         if (codeAnalyzerSettings.isAnalyzeLogicalDecomposition()) {
             ProcessingStopwatch.start("reporting/logical decomposition");
-            new LogicalComponentsReportGenerator(codeAnalysisResults).addCodeOrganizationToReport(logicalComponentsReport);
+            new LogicalComponentsReportGenerator(codeAnalysisResults, true).addCodeOrganizationToReport(logicalComponentsReport);
+            new LogicalComponentsReportGenerator(codeAnalysisResults, false).addCodeOrganizationToReport(logicalComponentsAndDependenciesReport);
             ProcessingStopwatch.end("reporting/logical decomposition");
         }
 

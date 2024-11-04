@@ -258,6 +258,8 @@ public class ScopingConventions {
         buildAndDeploymentFilesConventions.add(new Convention(".*/Jenkinsfile", "", "Jenkinsfile"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/Jenkinsfile[.][a-zA-Z0-9]+", "", "Jenkinsfile"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/Makefile", "", "Makefile"));
+
+        buildAndDeploymentFilesConventions.add(new Convention(".*/buildscripts/*", "", "Build scripts"));
     }
 
     private void addGeneratedConventions() {
@@ -370,6 +372,7 @@ public class ScopingConventions {
         testFilesConventions.add(new Convention(".*/e2e/.*", "", "Protractor test files"));
         testFilesConventions.add(new Convention(".*/cppunittests/.*", "", "CPP unit test files"));
         testFilesConventions.add(new Convention(".*/palmtests/.*", "", "Palm test files"));
+        testFilesConventions.add(new Convention(".*/jstests/.*", "", "JS test files"));
 
         testFilesConventions.add(new Convention(".*/RestAPIClientTests/.*", "", "API test files"));
         testFilesConventions.add(new Convention(".*/ViewTests/.*", "", "Test files"));

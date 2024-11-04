@@ -85,8 +85,8 @@ public class GitHistoryUtils {
                         ": " + StringUtils.abbreviate(line, 64));
             }
             FileUpdate fileUpdate = GitHistoryUtils.parseLine(line, config);
-            fileUpdate.setBot(fileUpdate.isBot());
             if (fileUpdate != null) {
+                fileUpdate.setBot(isBot(fileUpdate.getAuthorEmail(), config.getBots()));
                 updates.add(fileUpdate);
             }
         });

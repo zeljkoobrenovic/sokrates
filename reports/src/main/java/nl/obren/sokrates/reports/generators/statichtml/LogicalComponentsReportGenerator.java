@@ -6,7 +6,6 @@ package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.utils.FormattingUtils;
-import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.ReportConstants;
@@ -35,13 +34,15 @@ import java.util.stream.Collectors;
 
 public class LogicalComponentsReportGenerator {
     private CodeAnalysisResults codeAnalysisResults;
+    private final boolean forceSkipStaticDependencies;
     private boolean elaborate = true;
     private RichTextReport report;
     private int dependencyVisualCounter = 1;
     private int graphCounter = 1;
 
-    public LogicalComponentsReportGenerator(CodeAnalysisResults codeAnalysisResults) {
+    public LogicalComponentsReportGenerator(CodeAnalysisResults codeAnalysisResults, boolean forceSkipStaticDependencies) {
         this.codeAnalysisResults = codeAnalysisResults;
+        this.forceSkipStaticDependencies = forceSkipStaticDependencies;
     }
 
     public void addCodeOrganizationToReport(RichTextReport report) {
@@ -132,14 +133,16 @@ public class LogicalComponentsReportGenerator {
             report.endSection();
         }
 
-        addStaticDependencies(logicalDecomposition);
-
-        if (codeAnalysisResults.getContributorsAnalysisResults().getCommitsCount() > 0) {
-            report.startSubSection("Component Commits", "Components ordered by number of commits");
-            addCommitsSection(logicalDecomposition);
-            addCommitsTrendSection(sectionIndex, logicalDecomposition.getKey());
-            addTemporalDependenciesSection(logicalDecomposition);
-            report.endSection();
+        if (!forceSkipStaticDependencies) {
+            addStaticDependencies(logicalDecomposition);
+        } else {
+            if (codeAnalysisResults.getContributorsAnalysisResults().getCommitsCount() > 0) {
+                report.startSubSection("Component Commits", "Components ordered by number of commits");
+                addCommitsSection(logicalDecomposition);
+                addCommitsTrendSection(sectionIndex, logicalDecomposition.getKey());
+                addTemporalDependenciesSection(logicalDecomposition);
+                report.endSection();
+            }
         }
 
     }
@@ -160,6 +163,7 @@ public class LogicalComponentsReportGenerator {
 
         addDependenciesSection(filePairsChangedTogether180Days);
     }
+
     private void addDependenciesSection(List<FilePairChangedTogether> filePairsChangedTogether) {
         report.startDiv("margin: 10px;");
         codeAnalysisResults.getLogicalDecompositionsAnalysisResults().forEach(logicalDecompositionAnalysisResults -> {
@@ -219,6 +223,7 @@ public class LogicalComponentsReportGenerator {
         renderer.setAspectsFileListPaths(components.stream().map(aspect -> aspect.getAspect().getFileSystemFriendlyName(filePathPrefix)).collect(Collectors.toList()));
         renderer.renderReport(report, "All commits, some commits may include files from multiple components.");
     }
+
     private void addCommitsTrendSection(int sectionIndex, String key) {
         report.startSubSection("Yearly File Updates Trend per Components", "The number of file changes in commits");
         report.addContentInDiv(ReportConstants.ANIMATION_SVG_ICON, "display: inline-block; vertical-align: middle; margin: 4px;");
@@ -697,7 +702,7 @@ public class LogicalComponentsReportGenerator {
         longIntro += "<li>First approach is based on the <b>folders structure</b>. " +
                 "Components are mapped to folders at defined <b>folder depth</b> relative to the source code root.</li>\n";
         longIntro += "<li>Second approach is based on <b>explicit</b> definition of each component. In such explicit definitions, components are explicitly <b>named</b> and their files are selected based on explicitly defined path and content <b>filters</b>.</li>\n";
-        longIntro += "<li>A logical decomposition is considered <b>invalid</b> if a file is selected into <b>two or more components</b>." +
+        longIntro += "<li>A logical decomposition is considered <b>invalid</b> if a file is selected into <b>two or more components</b>. " +
                 "This constraint is introduced in order to facilitate measuring of <b>dependencies</b> among components.</li>\n";
         longIntro += "<li>Files not assigned to any component are put into a special \"<b>Unclassified</b>\" component.</li>\n";
 

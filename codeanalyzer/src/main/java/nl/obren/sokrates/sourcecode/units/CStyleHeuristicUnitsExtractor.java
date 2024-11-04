@@ -143,8 +143,7 @@ public class CStyleHeuristicUnitsExtractor {
         if (isValidLineRange(lineIndex, endOfUnitBodyIndex) && isValidPhysicalFileLineRange(cleanedContent,
                 lineIndex, endOfUnitBodyIndex)) {
             List<Integer> lineIndexes = cleanedContent.getFileLineIndexes();
-            for (int bodyIndex = lineIndexes.get(lineIndex); bodyIndex <= lineIndexes.get(endOfUnitBodyIndex); bodyIndex++) {
-
+            for (int bodyIndex = lineIndexes.get(lineIndex); bodyIndex < normalLines.size() && bodyIndex <= lineIndexes.get(endOfUnitBodyIndex); bodyIndex++) {
                 body.append(normalLines.get(bodyIndex) + "\n");
             }
         }

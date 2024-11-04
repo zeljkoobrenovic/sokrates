@@ -76,7 +76,7 @@ public class SummaryUtils {
                 summarizeDuplication(analysisResults, report);
             }
             summarizeFileSize(report, analysisResults);
-            summarizeComponents(analysisResults, report);
+            summarizeComponents(analysisResults, report, false);
         }
         if (showCommitReports) {
             summarizeFileChangeHistory(analysisResults, report);
@@ -88,10 +88,11 @@ public class SummaryUtils {
         if (mainExists) {
             if (showUnits) {
                 report.startTableRow();
-                report.addMultiColumnTableCell("Experimental unit analyses (less reliable heuristic analyses):", 3, "border: none; padding-top: 12px");
+                report.addMultiColumnTableCell("Experimental analyses (less reliable heuristic analyses):", 3, "border: none; padding-top: 12px");
                 report.endTableRow();
                 summarizeUnitSize(analysisResults, report);
                 summarizeUnitComplexity(analysisResults, report);
+                summarizeComponents(analysisResults, report, true);
             }
         }
         summarizeFeaturesOfInterest(analysisResults, report);
@@ -211,11 +212,11 @@ public class SummaryUtils {
 
         // components
         report.startDiv("color:black");
-        summarizeComponents(analysisResults, report);
+        summarizeComponents(analysisResults, report, false);
         report.endDiv();
 
         report.startDiv("margin-top: 24px;font-size:80%;margin-bottom:46px;opacity: 0.5;");
-        summarizeComponents(refData, report);
+        summarizeComponents(refData, report, false);
         report.endDiv();
         report.addHorizontalLine();
         report.addLineBreak();
@@ -319,11 +320,16 @@ public class SummaryUtils {
         }
     }
 
-    private void summarizeComponents(CodeAnalysisResults analysisResults, RichTextReport report) {
+    private void summarizeComponents(CodeAnalysisResults analysisResults, RichTextReport report, boolean withStaticDependencies) {
         report.startTableRow();
-        String linkPrefix = "<a target='_blank' href='" + reportRoot + "Components.html'  title='logical decomposition details'>";
+        String linkPrefix;
+        if (withStaticDependencies) {
+            linkPrefix = "<a target='_blank' href='" + reportRoot + "ComponentsAndDependencies.html'  title='compoennt dependencies'>";
+        } else {
+            linkPrefix = "<a target='_blank' href='" + reportRoot + "Components.html'  title='logical decomposition details'>";
+        }
         report.addTableCell(
-                linkPrefix + getIconSvg("dependencies") + "</a>",
+                linkPrefix + getIconSvg(withStaticDependencies ? "dependencies" : "code_organization") + "</a>",
                 "border: none");
 
         report.startTableCell("border: none");
@@ -340,7 +346,11 @@ public class SummaryUtils {
         report.endTableCell();
 
         report.startTableCell("border: none; vertical-align: top; padding-top: 11px;");
-        report.addHtmlContent("Logical Component Decomposition:");
+        if (withStaticDependencies) {
+            report.addHtmlContent("Static Component Dependencies:");
+        } else {
+            report.addHtmlContent("Logical Component Decomposition:");
+        }
         boolean first[] = {true};
         int index[] = {1};
         analysisResults.getLogicalDecompositionsAnalysisResults().forEach(decomposition -> {

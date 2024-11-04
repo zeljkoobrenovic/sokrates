@@ -166,7 +166,13 @@ public class ExtensionGroupExtractor {
 
     public static String getExtension(String path) {
         try {
-            return FilenameUtils.getExtension(path).toLowerCase();
+            String extension = FilenameUtils.getExtension(path).toLowerCase();
+
+            if (extension.equals("yml")) {
+                return "yaml";
+            }
+
+            return extension;
         } catch (IllegalArgumentException e) {
         }
 
