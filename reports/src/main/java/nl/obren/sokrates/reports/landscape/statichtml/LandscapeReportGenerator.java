@@ -12,6 +12,7 @@ import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.ReportConstants;
+import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
@@ -82,7 +83,7 @@ public class LandscapeReportGenerator {
             "</svg>";
     private static final int BAR_WIDTH = 800;
     private static final int BAR_HEIGHT = 42;
-    public static final String REPOSITORIES_COLOR = "#A4DDED";
+    public static final String REPOSITORIES_COLOR = "#EADDCA";
     public static final String MAIN_LOC_FRESH_COLOR = "#E0FFFF";
     public static final String MAIN_LOC_COLOR = "#D6E4E1";
     public static final String TEST_LOC_COLOR = "#f0f0f0";
@@ -478,32 +479,32 @@ public class LandscapeReportGenerator {
 
         addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(recentContributorsCount), "contributors", "30 days", "");
 
-        int c2c = (int) Math.round(landscapeAnalysisResults.getC2cConnectionsCount30Days());
-        int cMedian = (int) Math.round(landscapeAnalysisResults.getcMedian30Days());
-        int cMean = (int) Math.round(landscapeAnalysisResults.getcMean30Days());
-        int cIndex = (int) Math.round(landscapeAnalysisResults.getcIndex30Days());
-        String formattedPercentage = c2cMax > 0 ? FormattingUtils.getFormattedPercentage(100.0 * c2c / c2cMax) : "0";
-        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(c2c), "C2C connections", "30 days (" + formattedPercentage + "%)", "unique contributor to contributor connections (via shared repositories)");
-        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(cMedian), "C-Median", "30 days", "half of contributors have >= than this number of connections to other contributors");
-        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(cMean), "C-Mean", "30 days", "average number of contributor connections");
-        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(cIndex), "C-Index", "30 days", "N contributors have at least N contributor connections");
+//        int c2c = (int) Math.round(landscapeAnalysisResults.getC2cConnectionsCount30Days());
+//        int cMedian = (int) Math.round(landscapeAnalysisResults.getcMedian30Days());
+//        int cMean = (int) Math.round(landscapeAnalysisResults.getcMean30Days());
+//        int cIndex = (int) Math.round(landscapeAnalysisResults.getcIndex30Days());
+//        String formattedPercentage = c2cMax > 0 ? FormattingUtils.getFormattedPercentage(100.0 * c2c / c2cMax) : "0";
+//        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(c2c), "C2C connections", "30 days (" + formattedPercentage + "%)", "unique contributor to contributor connections (via shared repositories)");
+//        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(cMedian), "C-Median", "30 days", "half of contributors have >= than this number of connections to other contributors");
+//        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(cMean), "C-Mean", "30 days", "average number of contributor connections");
+//        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(cIndex), "C-Index", "30 days", "N contributors have at least N contributor connections");
 
-        int pMedian = (int) Math.round(landscapeAnalysisResults.getpMedian30Days());
-        int pMean = (int) Math.round(landscapeAnalysisResults.getpMean30Days());
-        int pIndex = (int) Math.round(landscapeAnalysisResults.getpIndex30Days());
-        this.landscapeReport.addLineBreak();
+//        int pMedian = (int) Math.round(landscapeAnalysisResults.getpMedian30Days());
+//        int pMean = (int) Math.round(landscapeAnalysisResults.getpMean30Days());
+//        int pIndex = (int) Math.round(landscapeAnalysisResults.getpIndex30Days());
+//        this.landscapeReport.addLineBreak();
         int repositoriesCount = landscapeAnalysisResults.getRepositoriesCount();
-        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(repositoriesCount), repositoriesCount == 1 ? "repository" : "repositories", "", "", REPOSITORIES_COLOR);
-        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pMedian), "R-Median", "30 days", "half of contributors have >= than this number of connections to repositories", REPOSITORIES_COLOR);
-        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pMean), "R-Mean", "30 days", "average number of contributor repository connections", REPOSITORIES_COLOR);
-        addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(pIndex), "R-Index", "30 days", "N contributors have at least N repository connections", REPOSITORIES_COLOR);
+        addRepositoriesInfoBlockWithColor(FormattingUtils.getSmallTextForNumber(repositoriesCount), repositoriesCount == 1 ? "repository" : "repositories", "", "", REPOSITORIES_COLOR);
+//        addRepositoriesInfoBlockWithColor(FormattingUtils.getSmallTextForNumber(pMedian), "R-Median", "30 days", "half of contributors have >= than this number of connections to repositories", REPOSITORIES_COLOR);
+//        addRepositoriesInfoBlockWithColor(FormattingUtils.getSmallTextForNumber(pMean), "R-Mean", "30 days", "average number of contributor repository connections", REPOSITORIES_COLOR);
+//        addRepositoriesInfoBlockWithColor(FormattingUtils.getSmallTextForNumber(pIndex), "R-Index", "30 days", "N contributors have at least N repository connections", REPOSITORIES_COLOR);
 
         addPeopleDependencies();
     }
 
     private void addPeopleDependencies() {
         boolean recentlyActive = landscapeAnalysisResults.getRecentContributorsCount() > 0;
-        landscapeReport.addLevel2Header("Highlights");
+        // landscapeReport.addLevel2Header("Highlights");
 
         landscapeReport.startSubSection("Contributor Topology (past 30 days)", "");
 
@@ -579,7 +580,7 @@ public class LandscapeReportGenerator {
         }
         landscapeReport.endSection();
         landscapeReport.addLineBreak();
-        landscapeReport.addLevel2Header("Details");
+//        landscapeReport.addLevel2Header("Details");
         landscapeReport.startSubSection("Contributor Dependencies Details", "");
 
         List<ComponentDependency> peopleDependencies30Days = landscapeAnalysisResults.getPeopleDependencies30Days();
@@ -864,7 +865,7 @@ public class LandscapeReportGenerator {
         LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
         int size = getRepositories().size();
         addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(size), (size == 1 ? "repository" : "repositories"),
-                "", "all repositories updated after " + configuration.getIgnoreRepositoriesLastUpdatedBefore() + " with at least " + FormattingUtils.formatCountPlural(configuration.getRepositoryThresholdContributors(), "contributor", "contributors"), REPOSITORIES_COLOR);
+                "", "all repositories updated after " + configuration.getIgnoreRepositoriesLastUpdatedBefore() + " with at least " + FormattingUtils.formatCountPlural(configuration.getRepositoryThresholdContributors(), "contributor", "contributors"), REPOSITORIES_COLOR, "repository");
         addLocInfoBlock(landscapeAnalysisResults);
         int mainLoc1YearActive = landscapeAnalysisResults.getMainLoc1YearActive();
         int totalValue = getSumOfValues(overallFileLastModifiedDistribution);
@@ -911,22 +912,22 @@ public class LandscapeReportGenerator {
         int loc180Days = repositories.stream().filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount180Days() > 0).map(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
         int size365Days = (int) repositories.stream().filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount365Days() > 0).count();
         int loc365Days = repositories.stream().filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount365Days() > 0).map(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
-        String contributorConstraint = " with at least " + FormattingUtils.formatCountPlural(configuration.getRepositoryThresholdContributors(), "contributor", "contributors");
+        String contributorConstraint = " with at least " + FormattingUtils.formatCountPlural(configuration.getRepositoryThresholdContributors(), "contributor", "repository");
         addInfoBlock(FormattingUtils.getSmallTextForNumber(size), "all time",
                 FormattingUtils.getSmallTextForNumber(locAll) + " LOC",
-                "all repositories updated after " + configuration.getIgnoreRepositoriesLastUpdatedBefore() + " with at least " + contributorConstraint, REPOSITORIES_COLOR);
+                "all repositories updated after " + configuration.getIgnoreRepositoriesLastUpdatedBefore() + " with at least " + contributorConstraint, REPOSITORIES_COLOR, "repository");
         addInfoBlock(FormattingUtils.getSmallTextForNumber(size365Days), "past 365d",
                 FormattingUtils.getSmallTextForNumber(loc365Days) + " LOC (" + FormattingUtils.getFormattedPercentage(100.0 * loc365Days / Math.max(1, locAll)) + "%)",
-                "all repositories updated in the past 365 days with at least " + contributorConstraint, REPOSITORIES_COLOR);
+                "all repositories updated in the past 365 days with at least " + contributorConstraint, REPOSITORIES_COLOR, "repository");
         addInfoBlock(FormattingUtils.getSmallTextForNumber(size180Days), "past 180d",
                 FormattingUtils.getSmallTextForNumber(loc180Days) + " LOC (" + FormattingUtils.getFormattedPercentage(100.0 * loc180Days / Math.max(1, locAll)) + "%)",
-                "all repositories updated in the past 180 days with at least " + contributorConstraint, REPOSITORIES_COLOR);
+                "all repositories updated in the past 180 days with at least " + contributorConstraint, REPOSITORIES_COLOR, "repository");
         addInfoBlock(FormattingUtils.getSmallTextForNumber(size90Days), "past 90d",
                 FormattingUtils.getSmallTextForNumber(loc180Days) + " LOC (" + FormattingUtils.getFormattedPercentage(100.0 * loc90Days / Math.max(1, locAll)) + "%)",
-                "all repositories updated in the past 90 days with at least " + contributorConstraint, REPOSITORIES_COLOR);
+                "all repositories updated in the past 90 days with at least " + contributorConstraint, REPOSITORIES_COLOR, "repository");
         addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(recentSize), "past 30d",
                 FormattingUtils.getSmallTextForNumber(recentLoc) + " LOC (" + FormattingUtils.getFormattedPercentage(100.0 * recentLoc / Math.max(1, locAll)) + "%)",
-                "all repositories updated in the past 30 days with at least " + contributorConstraint, REPOSITORIES_COLOR);
+                "all repositories updated in the past 30 days with at least " + contributorConstraint, REPOSITORIES_COLOR, "repository");
         landscapeReport.endDiv();
         landscapeReport.startDiv(style);
         landscapeReport.addContentInDiv("size (LOC)", "text-align: center; margin-bottom: -7px; margin-top: 2px; margin-left: 4px; color: grey; font-size: 70%;");
@@ -942,9 +943,11 @@ public class LandscapeReportGenerator {
     private void addActiveCodeBlock(LandscapeAnalysisResults landscapeAnalysisResults, int locAll) {
         int mainLocActive = landscapeAnalysisResults.getMainLoc1YearActive();
         addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocActive), "main code touched", "1 year (" + FormattingUtils.getFormattedPercentage(100.0 * mainLocActive / Math.max(1, locAll)) + "%)",
-                "files updated in past year", MAIN_LOC_FRESH_COLOR);
+                "files updated in past year", MAIN_LOC_FRESH_COLOR, "touch");
         int mainLocNew = landscapeAnalysisResults.getMainLocNew();
-        addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocNew), "new main code", "1 year (+" + FormattingUtils.getFormattedPercentage(100.0 * mainLocNew / Math.max(1, locAll)) + "%)", "files created in past year", MAIN_LOC_FRESH_COLOR);
+        addInfoBlock(FormattingUtils.getSmallTextForNumber(mainLocNew),
+                "new main code", "1 year (+" + FormattingUtils.getFormattedPercentage(100.0 * mainLocNew / Math.max(1, locAll)) + "%)",
+                "files created in past year", MAIN_LOC_FRESH_COLOR, "new");
     }
 
     private void addLocInfoBlock(LandscapeAnalysisResults landscapeAnalysisResults) {
@@ -952,8 +955,8 @@ public class LandscapeReportGenerator {
         int secondaryLoc = landscapeAnalysisResults.getSecondaryLoc();
         int mainFilesCount = landscapeAnalysisResults.getMainFilesCount();
         int secondaryFilesCount = landscapeAnalysisResults.getSecondaryFilesCount();
-        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(mainLoc), "lines of main code", FormattingUtils.getSmallTextForNumber(mainFilesCount) + " files", "main lines of code", MAIN_LOC_COLOR);
-        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(secondaryLoc), "lines of other code", FormattingUtils.getSmallTextForNumber(secondaryFilesCount) + " files", "test, build & deployment, generated, all other code in scope", TEST_LOC_COLOR);
+        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(mainLoc), "lines of main code", FormattingUtils.getSmallTextForNumber(mainFilesCount) + " files", "main lines of code", MAIN_LOC_COLOR, "main");
+        addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(secondaryLoc), "lines of other code", FormattingUtils.getSmallTextForNumber(secondaryFilesCount) + " files", "test, build & deployment, generated, all other code in scope", TEST_LOC_COLOR, "build");
     }
 
     private void addBigContributorsSummary() {
@@ -979,7 +982,7 @@ public class LandscapeReportGenerator {
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(rookiesContributorsCount),
                     rookiesContributorsCount == 1 ? "active rookie" : "active rookies",
                     "(started in past year)", "active contributors with the first commit in past year");
-            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(locPerRecentContributor), "contributor load",
+            addWorkloadInfoBlock(FormattingUtils.getSmallTextForNumber(locPerRecentContributor), "contributor load",
                     "(active LOC/contributor)", "active lines of code per recent contributor\n\n" + FormattingUtils.getPlainTextForNumber(locNewPerRecentContributor) + " new LOC/recent contributor");
             List<ComponentDependency> peopleDependencies = ContributorConnectionUtils.getPeopleDependencies(contributors, 0, 30);
             peopleDependencies.sort((a, b) -> b.getCount() - a.getCount());
@@ -1371,7 +1374,6 @@ public class LandscapeReportGenerator {
             barsHtml.append("<div title='" + tooltip + "' style='" + style + "'></div>");
             prevCumulativePercentage[0] = cumulativePercentage;
         });
-
 
 
         StringBuilder distHtml = new StringBuilder();
@@ -1802,36 +1804,25 @@ public class LandscapeReportGenerator {
                 "</svg>";
     }
 
-    private void addInfoBlock(String mainValue, String subtitle, String description, String tooltip) {
+    private void addInfoBlock(String mainValue, String subtitle, String description, String tooltip, String color, String icon) {
         if (StringUtils.isNotBlank(description)) {
             subtitle += "<br/><span style='color: grey; font-size: 80%'>" + description + "</span>";
         }
-        addInfoBlockWithColor(mainValue, subtitle, "skyblue; opacity: 0.8", tooltip);
+        addInfoBlockWithColor(mainValue, subtitle, color + "; opacity: 0.8", tooltip, icon);
     }
 
-    private void addInfoBlock(String mainValue, String subtitle, String description, String tooltip, String color) {
+    private void addFreshInfoBlock(String mainValue, String subtitle, String description, String tooltip, String color, String icon) {
         if (StringUtils.isNotBlank(description)) {
             subtitle += "<br/><span style='color: grey; font-size: 80%'>" + description + "</span>";
         }
-        addInfoBlockWithColor(mainValue, subtitle, color + "; opacity: 0.8", tooltip);
-    }
-
-    private void addFreshInfoBlock(String mainValue, String subtitle, String description, String tooltip) {
-        addFreshInfoBlock(mainValue, subtitle, description, tooltip, "skyblue");
-    }
-
-    private void addFreshInfoBlock(String mainValue, String subtitle, String description, String tooltip, String color) {
-        if (StringUtils.isNotBlank(description)) {
-            subtitle += "<br/><span style='color: grey; font-size: 80%'>" + description + "</span>";
-        }
-        addInfoBlockWithColor(mainValue, subtitle, color, tooltip);
+        addInfoBlockWithColor(mainValue, subtitle, color, tooltip, icon);
     }
 
     private void addSecondaryFreshInfoBlock(String mainValue, String subtitle, String description, String tooltip) {
         if (StringUtils.isNotBlank(description)) {
             subtitle += "<br/><span style='color: grey; font-size: 60%'>" + description + "</span>";
         }
-        addInfoBlockWithColor(mainValue, subtitle, "#c0c0c0", tooltip);
+        addInfoBlockWithColor(mainValue, subtitle, "#c0c0c0", tooltip, "contributors");
     }
 
     private String getExtraLocInfo() {
@@ -1875,24 +1866,44 @@ public class LandscapeReportGenerator {
     }
 
     private void addPeopleInfoBlock(String mainValue, String subtitle, String description, String tooltip) {
-        addPeopleInfoBlock(mainValue, subtitle, description, tooltip, PEOPLE_COLOR);
+        addPeopleInfoBlockWithColor(mainValue, subtitle, description, tooltip, PEOPLE_COLOR);
     }
 
-    private void addPeopleInfoBlock(String mainValue, String subtitle, String description, String tooltip, String color) {
+    private void addWorkloadInfoBlock(String mainValue, String subtitle, String description, String tooltip) {
+        addWorkloadInfoBlockWithColor(mainValue, subtitle, description, tooltip, "orange");
+    }
+
+    private void addRepositoriesInfoBlock(String mainValue, String subtitle, String description, String tooltip) {
+        addRepositoriesInfoBlockWithColor(mainValue, subtitle, description, tooltip, PEOPLE_COLOR);
+    }
+
+    private void addPeopleInfoBlockWithColor(String mainValue, String subtitle, String description, String tooltip, String color) {
+        if (StringUtils.isNotBlank(description)) {
+            subtitle += "<br/><span style='color: #707070; font-size: 80%'>" + description + "</span>";
+        }
+        addInfoBlockWithColor(mainValue, subtitle, color, tooltip, "contributors");
+    }
+    private void addWorkloadInfoBlockWithColor(String mainValue, String subtitle, String description, String tooltip, String color) {
         if (StringUtils.isNotBlank(description)) {
             subtitle += "<br/><span style='color: grey; font-size: 80%'>" + description + "</span>";
         }
-        addInfoBlockWithColor(mainValue, subtitle, color, tooltip);
+        addInfoBlockWithColor(mainValue, subtitle, color, tooltip, "workload");
+    }
+    private void addRepositoriesInfoBlockWithColor(String mainValue, String subtitle, String description, String tooltip, String color) {
+        if (StringUtils.isNotBlank(description)) {
+            subtitle += "<br/><span style='color: grey; font-size: 80%'>" + description + "</span>";
+        }
+        addInfoBlockWithColor(mainValue, subtitle, color, tooltip, "repository");
     }
 
     private void addCommitsInfoBlock(String mainValue, String subtitle, String description, String tooltip) {
         if (StringUtils.isNotBlank(description)) {
             subtitle += "<br/><span style='color: grey; font-size: 80%'>" + description + "</span>";
         }
-        addInfoBlockWithColor(mainValue, subtitle, "#fefefe", tooltip);
+        addInfoBlockWithColor(mainValue, subtitle, "#fefefe", tooltip, "contributors");
     }
 
-    private void addInfoBlockWithColor(String mainValue, String subtitle, String color, String tooltip) {
+    private void addInfoBlockWithColor(String mainValue, String subtitle, String color, String tooltip, String icon) {
         String style = "border-radius: 12px;";
 
         style += "margin: 12px 12px 12px 0px;";
@@ -1900,10 +1911,13 @@ public class LandscapeReportGenerator {
         style += "background-color: " + color + "; text-align: center; vertical-align: middle; margin-bottom: 36px;";
         style += "box-shadow: rgb(0 0 0 / 12%) 0px 1px 3px, rgb(0 0 0 / 24%) 0px 1px 2px;";
 
+        landscapeReport.startDiv("display: inline-block; text-align: center", tooltip);
+        landscapeReport.addContentInDiv(ReportFileExporter.getIconSvg(icon, 48), "margin-top: 18px; margin-bottom: -12px");
         landscapeReport.startDiv(style, tooltip);
         String specialColor = mainValue.equals("<b>0</b>") ? " color: grey;" : "";
         landscapeReport.addHtmlContent("<div style='font-size: 50px; margin-top: 20px;" + specialColor + "'>" + mainValue + "</div>");
         landscapeReport.addHtmlContent("<div style='color: #434343; font-size: 15px;" + specialColor + "'>" + subtitle + "</div>");
+        landscapeReport.endDiv();
         landscapeReport.endDiv();
     }
 
@@ -2117,6 +2131,7 @@ public class LandscapeReportGenerator {
             landscapeReport.addLineBreak();
         }
     }
+
     private void addContributorsPerDay() {
         int limit = 180;
         List<ContributionTimeSlot> contributorsPerDay = getContributionDays(landscapeAnalysisResults.getContributorsPerDay(),
@@ -2421,6 +2436,7 @@ public class LandscapeReportGenerator {
         Map<String, List<String>> map = rookiesOnly ? rookiesPerWeekMap : contributorsPerWeekMap;
         return map.containsKey(week) ? map.get(week) : new ArrayList<>();
     }
+
     private List<String> getContributorsPerDay(String day, boolean rookiesOnly) {
         Map<String, List<String>> map = rookiesOnly ? rookiesPerDayMap : contributorsPerDayMap;
         return map.containsKey(day) ? map.get(day) : new ArrayList<>();
@@ -2444,6 +2460,7 @@ public class LandscapeReportGenerator {
 
         return new ArrayList<>(emails.values());
     }
+
     private List<String> getLastContributorsPerDay(String day, boolean first) {
         Map<String, String> emails = new HashMap<>();
 
