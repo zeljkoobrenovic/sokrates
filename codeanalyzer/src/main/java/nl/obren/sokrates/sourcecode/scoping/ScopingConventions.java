@@ -356,6 +356,8 @@ public class ScopingConventions {
         testFilesConventions.add(new Convention(".*[.]test[.].*", "", defaultNote));
         testFilesConventions.add(new Convention(".*[.]tests[.].*", "", defaultNote));
         testFilesConventions.add(new Convention(".*/test_.*", "", defaultNote));
+        testFilesConventions.add(new Convention(".*/test[.].*", "", defaultNote));
+        testFilesConventions.add(new Convention(".*/testing[.].*", "", defaultNote));
         testFilesConventions.add(new Convention(".*/tests_.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*[-]test[-].*", "", defaultNote));
         testFilesConventions.add(new Convention(".*[-]tests[-].*", "", defaultNote));
@@ -364,6 +366,8 @@ public class ScopingConventions {
         testFilesConventions.add(new Convention(".*[.]feature", "", defaultNote));
         testFilesConventions.add(new Convention(".*[.]lint[-]test", "", defaultNote));
         testFilesConventions.add(new Convention(".*[.]lint[-]tests", "", defaultNote));
+        testFilesConventions.add(new Convention(".*/vitest[.].*", "", "Vitest configuration files"));
+        testFilesConventions.add(new Convention(".*/test[-]runner[.].*", "", "Vitest configuration files"));
         testFilesConventions.add(new Convention(".*[.]spec[.]ts", "", "TypeScript test files"));
         testFilesConventions.add(new Convention(".*[.]spec[.]tsx", "", "TSX (React) files"));
         testFilesConventions.add(new Convention(".*[.]spec[.]js", "", "JavaScript test files"));
