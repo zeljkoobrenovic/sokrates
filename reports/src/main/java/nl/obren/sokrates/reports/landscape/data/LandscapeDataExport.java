@@ -10,6 +10,7 @@ import nl.obren.sokrates.reports.landscape.utils.TagStats;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
+import nl.obren.sokrates.sourcecode.landscape.TeamsConfig;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
 import nl.obren.sokrates.sourcecode.landscape.analysis.FileExport;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
@@ -175,6 +176,44 @@ public class LandscapeDataExport {
         try {
             FileUtils.write(new File(dataFolder, "contributors.txt"), builder.toString(), StandardCharsets.UTF_8);
             FileUtils.write(new File(dataFolder, "contributors.json"), new JsonGenerator().generate(contributorsExport), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void exportTeams(TeamsConfig teamsConfig) {
+        StringBuilder builder = new StringBuilder();
+
+        builder.append("Team\t# commits (all time)\t# commits (30 days)\t# commits (90 days)\t# commits (180 days)\t# commits (365 days)\tFirst commit\tLatest commit\tRepositories\n");
+
+        List<ContributorRepositories> teams = analysisResults.getTeams(teamsConfig);
+        List<ContributorExport> contributorsExport = new ArrayList<>();
+
+        teams.forEach(contributor -> {
+            ContributorExport contributorExport = new ContributorExport(contributor);
+            String mostCommittedLang = new ContributorPerExtensionHelper().getBiggestExtension(analysisResults.getConfiguration(), contributor);
+            contributorExport.setMainLang(mostCommittedLang);
+            contributorsExport.add(contributorExport);
+            builder.append(contributor.getContributor().getEmail()).append("\t");
+            int contributorCommits = contributor.getContributor().getCommitsCount();
+            int contributorCommits30Days = contributor.getContributor().getCommitsCount30Days();
+            int contributorCommits90Days = contributor.getContributor().getCommitsCount90Days();
+            int contributorCommits180Days = contributor.getContributor().getCommitsCount180Days();
+            int contributorCommits365Days = contributor.getContributor().getCommitsCount365Days();
+            builder.append(contributorCommits).append("\t");
+            builder.append(contributorCommits30Days).append("\t");
+            builder.append(contributorCommits90Days).append("\t");
+            builder.append(contributorCommits180Days).append("\t");
+            builder.append(contributorCommits365Days).append("\t");
+            builder.append(contributor.getContributor().getFirstCommitDate()).append("\t");
+            builder.append(contributor.getContributor().getLatestCommitDate()).append("\t");
+            builder.append(contributor.getRepositories().stream().map(p -> p.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName()).collect(Collectors.joining(", ")));
+            builder.append("\n");
+        });
+
+        try {
+            FileUtils.write(new File(dataFolder, "teams.txt"), builder.toString(), StandardCharsets.UTF_8);
+            FileUtils.write(new File(dataFolder, "teams.json"), new JsonGenerator().generate(contributorsExport), StandardCharsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }

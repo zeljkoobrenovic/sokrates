@@ -14,6 +14,7 @@ import nl.obren.sokrates.reports.landscape.utils.LandscapeVisualsGenerator;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.landscape.DefaultTags;
 import nl.obren.sokrates.sourcecode.landscape.TagGroup;
+import nl.obren.sokrates.sourcecode.landscape.TeamsConfig;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalyzer;
 import nl.obren.sokrates.sourcecode.landscape.init.LandscapeAnalysisUpdater;
@@ -65,10 +66,11 @@ public class LandscapeAnalysisCommands {
         ProcessingStopwatch.start("analyzing");
         LandscapeAnalysisResults landscapeAnalysisResults = analyzer.analyze(landscapeConfigFile);
         List<TagGroup> tagGroups = getTagGroups(analysisRoot, landscapeConfigFile);
+        TeamsConfig teamsConfig = getTeams(analysisRoot, landscapeConfigFile);
         ProcessingStopwatch.end("analyzing");
 
         ProcessingStopwatch.start("reporting");
-        LandscapeReportGenerator reportGenerator = new LandscapeReportGenerator(landscapeAnalysisResults, tagGroups, landscapeConfigFile.getParentFile(), reportsFolder);
+        LandscapeReportGenerator reportGenerator = new LandscapeReportGenerator(landscapeAnalysisResults, tagGroups, teamsConfig, landscapeConfigFile.getParentFile(), reportsFolder);
         List<RichTextReport> reports = reportGenerator.report();
 
         try {
@@ -88,6 +90,10 @@ public class LandscapeAnalysisCommands {
                 LOG.info("Exporting person " + individualReport.getFileName() + ".");
                 ReportFileExporter.exportHtml(finalIndividualReportsFolder, "", individualReport, customHtmlReportHeaderFragment);
             });
+            reportGenerator.getIndividualTeamReports().forEach(individualReport -> {
+                LOG.info("Exporting team " + individualReport.getFileName() + ".");
+                ReportFileExporter.exportHtml(finalIndividualReportsFolder, "", individualReport, customHtmlReportHeaderFragment);
+            });
             reportGenerator.getIndividualBotReports().forEach(individualReport -> {
                 LOG.info("Exporting bot " + individualReport.getFileName() + ".");
                 ReportFileExporter.exportHtml(finalIndividualReportsFolder, "", individualReport, customHtmlReportHeaderFragment);
@@ -95,7 +101,7 @@ public class LandscapeAnalysisCommands {
             ProcessingStopwatch.end("reporting/saving/contributors");
 
             ProcessingStopwatch.start("reporting/saving/generating visuals");
-            LandscapeVisualsGenerator visualsGenerator = new LandscapeVisualsGenerator(reportsFolder);
+            LandscapeVisualsGenerator visualsGenerator = new LandscapeVisualsGenerator(reportsFolder, teamsConfig);
             visualsGenerator.exportVisuals(landscapeAnalysisResults);
             ProcessingStopwatch.end("reporting/saving/generating visuals");
 
@@ -132,6 +138,31 @@ public class LandscapeAnalysisCommands {
         tagGroups.forEach(group -> group.getRepositoryTags().forEach(tag -> tag.setGroup(group)));
 
         return tagGroups;
+    }
+
+    private static TeamsConfig getTeams(File analysisRoot, File landscapeConfigFile) {
+        File landscapePeopleConfigFile = getLandscapeTagsConfigFile(analysisRoot, new File(landscapeConfigFile.getParentFile(), "config-teams.json"));
+        TeamsConfig teamsConfig = new TeamsConfig();
+        if (!landscapePeopleConfigFile.exists()) {
+            try {
+                teamsConfig = new TeamsConfig();
+                FileUtils.write(landscapePeopleConfigFile, new JsonGenerator().generate(teamsConfig), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                LOG.error(e);
+            }
+        } else {
+            try {
+                teamsConfig = new JsonMapper().getObject(FileUtils.readFileToString(landscapePeopleConfigFile, StandardCharsets.UTF_8), new TypeReference<>() {
+                });
+                if (teamsConfig != null) {
+                    FileUtils.write(landscapePeopleConfigFile, new JsonGenerator().generate(teamsConfig), StandardCharsets.UTF_8);
+                }
+            } catch (IOException e) {
+                LOG.error(e);
+            }
+        }
+
+        return teamsConfig;
     }
 
     private static File getLandscapeTagsConfigFile(File analysisRoot, File landscapeTagsConfigFile) {

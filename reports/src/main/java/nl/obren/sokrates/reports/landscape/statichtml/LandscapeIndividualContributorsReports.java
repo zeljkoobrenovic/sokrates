@@ -123,6 +123,10 @@ public class LandscapeIndividualContributorsReports {
         report.addTab("year", "Repository Activity Per Year", true);
         report.addTab("month", "Per Month", false);
         report.addTab("week", "Per Week", false);
+        List<ContributorRepositories> members = contributorRepositories.getMembers();
+        if (members.size() > 0) {
+            report.addTab("members", "Members (" + FormattingUtils.formatCount(members.size()) + ")", false);
+        }
         report.endTabGroup();
 
         Collections.sort(contributorRepositories.getRepositories(), (a, b) -> 10000 * (b.getCommits30Days() - a.getCommits30Days()) +
@@ -141,7 +145,58 @@ public class LandscapeIndividualContributorsReports {
         addPerYear(contributorRepositories, report);
         report.endTabContentSection();
 
+        if (members.size() > 0) {
+            report.startTabContentSection("members", false);
+            addMembers(members, report);
+            report.endTabContentSection();
+        }
+
         return report;
+    }
+
+    private void addMembers(List<ContributorRepositories> members, RichTextReport report) {
+        report.startTable();
+        report.startTableRow("");
+        report.addTableCell("", "border: none; text-align: center");
+        report.addTableCell("", "border: none; text-align: center");
+        report.addMultiColumnTableCell("commits", 5, "border: none; text-align: center");
+        report.addMultiColumnTableCell("period", 2, "border: none; text-align: center");
+        report.endTableRow();
+        report.startTableRow();
+        report.addTableCell("", "border: none");
+        report.addTableCell("", "border: none");
+        report.addTableCell("30d", "border: none; text-align: center");
+        report.addTableCell("3m", "border: none; text-align: center");
+        report.addTableCell("6m", "border: none; text-align: center");
+        report.addTableCell("1y", "border: none; text-align: center");
+        report.addTableCell("all", "border: none; text-align: center");
+        report.addTableCell("first", "border: none; text-align: center");
+        report.addTableCell("last", "border: none; text-align: center");
+        report.endTableRow();
+
+        final int[] index = {0};
+        members.stream()
+                .sorted((a, b) -> b.getContributor().getCommitsCount() - a.getContributor().getCommitsCount())
+                .sorted((a, b) -> b.getContributor().getCommitsCount365Days() - a.getContributor().getCommitsCount365Days())
+                .sorted((a, b) -> b.getContributor().getCommitsCount180Days() - a.getContributor().getCommitsCount180Days())
+                .sorted((a, b) -> b.getContributor().getCommitsCount90Days() - a.getContributor().getCommitsCount90Days())
+                .sorted((a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days())
+                .forEach(member -> {
+                    report.startTableRow();
+
+                    report.addTableCell(++index[0] + ".&nbsp;", "border: none; text-align: right");
+                    report.addTableCell(member.getContributor().getEmail(), "border: none");
+                    report.addTableCell(member.getContributor().getCommitsCount30Days() + "", "border: none");
+                    report.addTableCell(member.getContributor().getCommitsCount90Days() + "", "border: none");
+                    report.addTableCell(member.getContributor().getCommitsCount180Days() + "", "border: none");
+                    report.addTableCell(member.getContributor().getCommitsCount365Days() + "", "border: none");
+                    report.addTableCell(member.getContributor().getCommitsCount() + "", "border: none");
+                    report.addTableCell(member.getContributor().getFirstCommitDate(), "border: none");
+                    report.addTableCell(member.getContributor().getLatestCommitDate(), "border: none");
+
+                    report.endTableRow();
+                });
+        report.endTable();
     }
 
 

@@ -291,8 +291,8 @@ public class DuplicationReportGenerator {
 
     private void export3DFileDependencies() {
         List<ComponentDependency> duplicatesAsFileDependencies = getDuplicatesAsFileDependencies();
-        new Force3DGraphExporter().export3DForceGraph(duplicatesAsFileDependencies, new File(reportsFolder, "html"), "duplication_among_files");
-        new Force3DGraphExporter().export3DForceGraph(getDuplicatesAsDependencies(), new File(reportsFolder, "html"), "duplication_among_files_with_duplicates");
+        new Force3DGraphExporter().export2D3DForceGraph(duplicatesAsFileDependencies, new File(reportsFolder, "html"), "duplication_among_files");
+        new Force3DGraphExporter().export2D3DForceGraph(getDuplicatesAsDependencies(), new File(reportsFolder, "html"), "duplication_among_files_with_duplicates");
         GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
         graphvizDependencyRenderer.setDefaultNodeFillColor("deepskyblue2");
         graphvizDependencyRenderer.setType("graph");

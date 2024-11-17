@@ -14,10 +14,12 @@ public class ContributorExport {
     private String mainLang = "";
 
     private List<ContributorRepositoryInfoExport> repositories = new ArrayList<>();
+    private List<String> members = new ArrayList<>();
 
     public ContributorExport(ContributorRepositories contributor) {
         this.contributor = contributor.getContributor();
         this.repositories = contributor.getRepositories().stream().map(r -> new ContributorRepositoryInfoExport(r)).collect(Collectors.toList());
+        this.members = contributor.getMembers().stream().map(m -> m.getContributor().getEmail()).collect(Collectors.toList());
     }
 
     public Contributor getContributor() {
@@ -42,5 +44,13 @@ public class ContributorExport {
 
     public void setMainLang(String mainLang) {
         this.mainLang = mainLang;
+    }
+
+    public List<String> getMembers() {
+        return members;
+    }
+
+    public void setMembers(List<String> members) {
+        this.members = members;
     }
 }

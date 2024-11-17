@@ -9,6 +9,8 @@ import java.util.List;
 public class ContributorRepositories {
     private Contributor contributor;
     private List<ContributorRepositoryInfo> repositories = new ArrayList<>();
+    @JsonIgnore
+    private List<ContributorRepositories> members = new ArrayList<>();
 
     public ContributorRepositories(Contributor contributor) {
         this.contributor = contributor;
@@ -69,5 +71,15 @@ public class ContributorRepositories {
 
     public void setRepositories(List<ContributorRepositoryInfo> repositories) {
         this.repositories = repositories;
+    }
+
+    @JsonIgnore
+    public List<ContributorRepositories> getMembers() {
+        return members;
+    }
+
+    @JsonIgnore
+    public void setMembers(List<ContributorRepositories> members) {
+        this.members = members;
     }
 }

@@ -16,7 +16,7 @@ import java.util.Map;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class Force3DGraphExporter {
-    public String export3DForceGraph(List<ComponentDependency> componentDependencies, File reportsFolder, String graphId) {
+    public String export2D3DForceGraph(List<ComponentDependency> componentDependencies, File reportsFolder, String graphId) {
         Force3DObject forceGraphObject = new Force3DObject();
         Map<String, Integer> names = new HashMap<>();
         componentDependencies.forEach(dependency -> {

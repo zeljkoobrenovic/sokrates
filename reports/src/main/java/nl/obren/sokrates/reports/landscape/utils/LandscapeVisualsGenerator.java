@@ -8,6 +8,8 @@ import nl.obren.sokrates.common.renderingutils.VisualizationItem;
 import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
+import nl.obren.sokrates.sourcecode.landscape.TeamsConfig;
+import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.io.FileUtils;
@@ -27,17 +29,22 @@ public class LandscapeVisualsGenerator {
     private static final Log LOG = LogFactory.getLog(LandscapeVisualsGenerator.class);
 
     private File landscapeReportsFolder;
+    private final TeamsConfig teamsConfig;
 
-    public LandscapeVisualsGenerator(File landscapeReportsFolder) {
+    public LandscapeVisualsGenerator(File landscapeReportsFolder, TeamsConfig teamsConfig) {
         this.landscapeReportsFolder = landscapeReportsFolder;
+        this.teamsConfig = teamsConfig;
     }
 
     public void exportVisuals(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {
         exportRepositories(landscapeAnalysisResults);
-        exportContributors(landscapeAnalysisResults);
-        exportRecentContributors(landscapeAnalysisResults);
+        exportContributors(landscapeAnalysisResults.getContributors(), "contributors");
+        exportContributors(landscapeAnalysisResults.getTeams(teamsConfig), "teams");
+        exportRecentContributors(landscapeAnalysisResults.getContributors(), "contributors");
+        exportRecentContributors(landscapeAnalysisResults.getTeams(teamsConfig), "teams");
         exportLanguages(landscapeAnalysisResults);
         exportContributorPerLanguage(landscapeAnalysisResults);
+        exportTeamsPerLanguage(landscapeAnalysisResults);
     }
 
     private void exportRepositories(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {
@@ -63,22 +70,22 @@ public class LandscapeVisualsGenerator {
         exportVisuals("repositories_contributors", itemsContributors);
     }
 
-    private void exportContributors(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {
+    private void exportContributors(List<ContributorRepositories> contributors, String prefix) throws IOException {
         List<VisualizationItem> items = new ArrayList<>();
-        landscapeAnalysisResults.getContributors().forEach(contributorRepository -> {
+        contributors.forEach(contributorRepository -> {
             String name = contributorRepository.getContributor().getEmail();
             items.add(new VisualizationItem(name, contributorRepository.getContributor().getCommitsCount()));
         });
-        exportVisuals("contributors", items);
+        exportVisuals(prefix, items);
     }
 
-    private void exportRecentContributors(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {
+    private void exportRecentContributors(List<ContributorRepositories> contributors, String prefix) throws IOException {
         List<VisualizationItem> items = new ArrayList<>();
-        landscapeAnalysisResults.getContributors().stream().filter(c -> c.getContributor().getCommitsCount30Days() > 0).forEach(contributorRepository -> {
+        contributors.stream().filter(c -> c.getContributor().getCommitsCount30Days() > 0).forEach(contributorRepository -> {
             String name = contributorRepository.getContributor().getEmail();
             items.add(new VisualizationItem(name, contributorRepository.getContributor().getCommitsCount30Days()));
         });
-        exportVisuals("contributors_30_days", items);
+        exportVisuals(prefix + "_30_days", items);
     }
 
     private void exportLanguages(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {
@@ -103,6 +110,17 @@ public class LandscapeVisualsGenerator {
             items.add(new VisualizationItem(commitsPerExtension.getExtension().replace("*.", ""), commitsPerExtension.getCommitters30Days().size()));
         });
         exportVisuals("extensions_contributors_30d", items);
+    }
+
+    private void exportTeamsPerLanguage(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {
+        List<VisualizationItem> items = new ArrayList<>();
+        List<String> mainExtensions = getMainExtensions(landscapeAnalysisResults);
+        List<CommitsPerExtension> contributorsPerExtension = landscapeAnalysisResults.getContributorsPerExtension()
+                .stream().filter(c -> mainExtensions.contains(c.getExtension())).collect(Collectors.toList());
+        contributorsPerExtension.stream().filter(e -> e.getTeams30Days(teamsConfig).size() > 0).forEach(commitsPerExtension -> {
+            items.add(new VisualizationItem(commitsPerExtension.getExtension().replace("*.", ""), commitsPerExtension.getTeams30Days(teamsConfig).size()));
+        });
+        exportVisuals("extensions_teams_30d", items);
     }
 
     public void exportVisuals(String nameSuffix, List<VisualizationItem> items) throws IOException {

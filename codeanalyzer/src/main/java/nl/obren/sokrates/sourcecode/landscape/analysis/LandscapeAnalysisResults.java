@@ -17,6 +17,7 @@ import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
+import nl.obren.sokrates.sourcecode.landscape.TeamsConfig;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
@@ -179,6 +180,8 @@ public class LandscapeAnalysisResults {
     private List<RepositoryAnalysisResults> repositoryAnalysisResults = new ArrayList<>();
     @JsonIgnore
     private List<ContributorRepositories> contributorsCache;
+    @JsonIgnore
+    private List<ContributorRepositories> teamsCache;
     @JsonIgnore
     private List<ContributorRepositories> botsCache;
 
@@ -577,8 +580,20 @@ public class LandscapeAnalysisResults {
         return contributorRepositories;
     }
 
+    @JsonIgnore
+    public List<ContributorRepositories> getTeams(TeamsConfig teamsConfig) {
+        if (teamsCache != null) {
+            return teamsCache;
+        }
+        List<ContributorRepositories> teamRepositories = getAllTeams(teamsConfig)
+                .stream().collect(Collectors.toCollection(ArrayList::new));
+
+        teamsCache = teamRepositories;
+        return teamRepositories;
+    }
+
     private boolean isBot(String email) {
-          return RegexUtils.matchesAnyPattern(email, configuration.getBots());
+        return RegexUtils.matchesAnyPattern(email, configuration.getBots());
     }
 
     @JsonIgnore
@@ -669,6 +684,83 @@ public class LandscapeAnalysisResults {
         Collections.sort(list, (a, b) -> b.getCommitters30Days().size() - a.getCommitters30Days().size());
 
         return list;
+    }
+
+    @JsonIgnore
+    private List<ContributorRepositories> getAllTeams(TeamsConfig teamsConfig) {
+        final List<ContributorRepositories> contributors = new ArrayList<>(getAllContributors());
+        if (teamsConfig.getTeams() == null || teamsConfig.getTeams().size() == 0) {
+            return contributors;
+        }
+
+        final List<ContributorRepositories> teams = new ArrayList<>();
+        final Map<String, ContributorRepositories> map = new HashMap<>();
+
+        ContributorRepositories remainder = new ContributorRepositories(new Contributor("Remainder"));
+
+        while (contributors.size() > 0) {
+            ContributorRepositories contributor = contributors.remove(0);
+            String email = contributor.getContributor().getEmail();
+
+            if (isBot(email)) continue;
+
+            final boolean[] added = {false};
+
+            teamsConfig.getTeams().forEach(teamConfig -> {
+                if (added[0]) return;
+
+                String name = teamConfig.getName();
+                if (RegexUtils.matchesAnyPattern(email, teamConfig.getEmailPatterns())) {
+                    ContributorRepositories teamTemp = map.get(name);
+
+                    if (teamTemp == null) {
+                        teamTemp = new ContributorRepositories(new Contributor(name));
+                        map.put(name, teamTemp);
+                        teams.add(teamTemp);
+                    }
+
+                    final ContributorRepositories team = teamTemp;
+                    team.getMembers().add(contributor);
+
+                    contributor.getRepositories().forEach(repo -> {
+                        addRepoToTeam(repo, team);
+                    });
+
+                    added[0] = true;
+                }
+            });
+
+            if (!added[0] && !remainder.getMembers().contains(email)) {
+                remainder.getMembers().add(contributor);
+                contributor.getRepositories().forEach(repo -> {
+                    addRepoToTeam(repo, remainder);
+                });
+            }
+        }
+
+        if (remainder.getMembers().size() > 0 && remainder.getRepositories().size() > 0) {
+            teams.add(remainder);
+        }
+
+        return teams;
+    }
+
+    private void addRepoToTeam(ContributorRepositoryInfo repo, ContributorRepositories team) {
+        Contributor teamData = team.getContributor();
+        teamData.setCommitsCount(teamData.getCommitsCount() + repo.getCommitsCount());
+        teamData.setCommitsCount30Days(teamData.getCommitsCount30Days() + repo.getCommits30Days());
+        teamData.setCommitsCount90Days(teamData.getCommitsCount90Days() + repo.getCommits90Days());
+        teamData.setCommitsCount180Days(teamData.getCommitsCount180Days() + repo.getCommits180Days());
+        teamData.setCommitsCount365Days(teamData.getCommitsCount365Days() + repo.getCommits365Days());
+        if (StringUtils.isBlank(teamData.getFirstCommitDate()) || repo.getFirstCommitDate().compareTo(teamData.getFirstCommitDate()) < 0) {
+            teamData.setFirstCommitDate(repo.getFirstCommitDate());
+        }
+        if (StringUtils.isBlank(teamData.getLatestCommitDate()) || repo.getLatestCommitDate().compareTo(teamData.getLatestCommitDate()) > 0) {
+            teamData.setLatestCommitDate(repo.getLatestCommitDate());
+        }
+        team.addRepository(repo.getRepositoryAnalysisResults(), repo.getFirstCommitDate(), repo.getLatestCommitDate(),
+                repo.getCommitsCount(), repo.getCommits30Days(), repo.getCommits90Days(),
+                repo.getCommits180Days(), repo.getCommits365Days(), repo.getCommitDates());
     }
 
     @JsonIgnore
@@ -803,6 +895,7 @@ public class LandscapeAnalysisResults {
 
         return list;
     }
+
     @JsonIgnore
     public List<ContributionTimeSlot> getContributorsPerDay() {
         List<ContributionTimeSlot> list = new ArrayList<>();
@@ -924,30 +1017,29 @@ public class LandscapeAnalysisResults {
                         .getContributorsAnalysisResults().getCommitsCount30Days()).sum();
     }
 
-    public int getContributorsCount() {
-        return getContributors().size();
+    public int getContributorsCount(List<ContributorRepositories> contributors) {
+        return contributors.size();
     }
 
     @JsonIgnore
-    public List<ContributorRepositories> getRecentContributors() {
-        // return getContributors().stream().filter(c -> c.getContributor().isActive(RECENT_THRESHOLD_DAYS)).collect(Collectors.toCollection(ArrayList::new));
-        return getContributors().stream().filter(c -> c.getContributor().getCommitsCount30Days() > 0).collect(Collectors.toCollection(ArrayList::new));
+    public List<ContributorRepositories> getRecentContributors(List<ContributorRepositories> contributors) {
+        return contributors.stream().filter(c -> c.getContributor().getCommitsCount30Days() > 0).collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public int getRecentContributorsCount() {
-        return (int) getRecentContributors().size();
+    public int getRecentContributorsCount(List<ContributorRepositories> contributors) {
+        return (int) getRecentContributors(contributors).size();
     }
 
-    public int getRecentContributorsCount6Months() {
-        return (int) getContributors().stream().filter(c -> c.getContributor().isActive(180)).count();
+    public int getRecentContributorsCount6Months(List<ContributorRepositories> contributors) {
+        return (int) contributors.stream().filter(c -> c.getContributor().isActive(180)).count();
     }
 
-    public int getRecentContributorsCount3Months() {
-        return (int) getContributors().stream().filter(c -> c.getContributor().isActive(90)).count();
+    public int getRecentContributorsCount3Months(List<ContributorRepositories> contributors) {
+        return (int) contributors.stream().filter(c -> c.getContributor().isActive(90)).count();
     }
 
-    public int getRookiesContributorsCount() {
-        return (int) getContributors().stream().filter(c -> c.getContributor().isRookie(RECENT_THRESHOLD_DAYS)).count();
+    public int getRookiesContributorsCount(List<ContributorRepositories> contributors) {
+        return (int) contributors.stream().filter(c -> c.getContributor().isRookie(RECENT_THRESHOLD_DAYS)).count();
     }
 
     @JsonIgnore

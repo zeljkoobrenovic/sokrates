@@ -209,7 +209,7 @@ public class LandscapeRepositoriesTagsReport {
                         repositoryTagsMap.get(name).add(tag.getKey());
                     });
                 });
-        new Force3DGraphExporter().export3DForceGraph(dependencies, reportsFolder, prefix);
+        new Force3DGraphExporter().export2D3DForceGraph(dependencies, reportsFolder, prefix);
 
         List<ComponentDependency> directDependencies = new ArrayList<>();
         Map<String, ComponentDependency> directDependenciesMap = new HashMap<>();
@@ -234,7 +234,7 @@ public class LandscapeRepositoriesTagsReport {
         });
 
         directDependencies.forEach(d -> d.setCount(d.getCount() / 2));
-        new Force3DGraphExporter().export3DForceGraph(directDependencies, reportsFolder, prefix + "_direct");
+        new Force3DGraphExporter().export2D3DForceGraph(directDependencies, reportsFolder, prefix + "_direct");
 
         GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
         graphvizDependencyRenderer.setMaxNumberOfDependencies(100);
@@ -388,7 +388,7 @@ public class LandscapeRepositoriesTagsReport {
                     .sum();
             String commits30DaysPercText = FormattingUtils.getFormattedPercentage(commitsCount30Days > 0 ? (100.0 * tagCommitsCount30Days / commitsCount30Days) : 0);
             report.addTableCell(FormattingUtils.formatCount(tagCommitsCount30Days, "-") + (tagCommitsCount30Days == 0 ? "" : " <span style='color: grey; font-size: 90%'>(" + commits30DaysPercText + "%)</span>"), "");
-            int totalRecentContributorCount = landscapeAnalysisResults.getRecentContributorsCount();
+            int totalRecentContributorCount = landscapeAnalysisResults.getRecentContributorsCount(landscapeAnalysisResults.getContributors());
             int recentContributorCount = getRecentContributorCount(repositoriesAnalysisResults);
             String recentContributorsPercText = FormattingUtils.getFormattedPercentage(totalRecentContributorCount > 0 ? (100.0 * recentContributorCount / totalRecentContributorCount) : 0);
             if (recentContributorCount > 0) {

@@ -4,6 +4,8 @@
 
 package nl.obren.sokrates.sourcecode.githistory;
 
+import nl.obren.sokrates.sourcecode.landscape.TeamsConfig;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,6 +95,19 @@ public class CommitsPerExtension {
 
     public List<String> getCommitters30Days() {
         return committers30Days;
+    }
+
+    public List<String> getTeams30Days(TeamsConfig teamsConfig) {
+        List<String> teams = new ArrayList<>();
+
+        for (String committer : committers30Days) {
+            String team = teamsConfig.getTeam(committer);
+            if (team != null && !teams.contains(team)) {
+                teams.add(team);
+            }
+        }
+
+        return teams;
     }
 
     public void setCommitters30Days(List<String> committers30Days) {

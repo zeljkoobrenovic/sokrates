@@ -135,6 +135,10 @@ public class LandscapeContributorsReport {
         String link = this.getContributorUrl(contributor.getContributor().getEmail());
         StringBuilder contributorBody = new StringBuilder(avatarHtml + StringEscapeUtils.escapeHtml4(contributor.getContributor().getEmail()));
 
+        if (contributor.getMembers().size() > 0) {
+            contributorBody.append(" (" + FormattingUtils.formatCount(contributor.getMembers().size()) + ")");
+        }
+
         contributorTagMap.get(contributor.getContributor().getEmail()).forEach(tag -> {
             contributorBody.append("<div style='vertical-align: top; font-size: 60%; background-color: skyblue; border-radius: 7px; display: inline-block; padding: 3px 3px 5px 3px; margin: 5px;'>" + tag + "</tag>");
         });
@@ -149,11 +153,11 @@ public class LandscapeContributorsReport {
             report.addTableCell(FormattingUtils.formatCount(commitsCount30Days) + percText, "vertical-align: middle;");
             report.addTableCell(FormattingUtils.formatCount(contributor.getContributor().getCommitsCount90Days()), "vertical-align: middle;");
             report.addTableCell(FormattingUtils.formatCount(contributor.getContributor().getCommitsCount365Days()), "vertical-align: middle;");
-            report.addTableCell(commitsCountAllTime + "", "vertical-align: middle;");
+            report.addTableCell(FormattingUtils.formatCount(commitsCountAllTime) + "", "vertical-align: middle;");
         } else {
             double percentage = 100.0 * commitsCountAllTime / totalCommits;
             String percText = " (" + FormattingUtils.getFormattedPercentage(percentage) + "%)";
-            report.addTableCell(commitsCountAllTime + percText, "vertical-align: middle;");
+            report.addTableCell(FormattingUtils.formatCount(commitsCountAllTime) + percText, "vertical-align: middle;");
             report.addTableCell(FormattingUtils.formatCount(contributor.getContributor().getCommitsCount365Days()), "vertical-align: middle;");
             report.addTableCell(FormattingUtils.formatCount(contributor.getContributor().getCommitsCount90Days()), "vertical-align: middle;");
             report.addTableCell(FormattingUtils.formatCount(commitsCount30Days), "vertical-align: middle;");
