@@ -191,7 +191,7 @@ public class RichTextReport {
 
     public void addTableHeaderLeft(String... columns) {
         for (String column : columns) {
-            addHtmlContent("<th style='text-align: left'>" + column + "</th>");
+            addHtmlContent("<th style='text-align: left; font-size: 90%'>" + column + "</th>");
         }
     }
 

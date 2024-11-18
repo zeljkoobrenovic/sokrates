@@ -696,7 +696,7 @@ public class LandscapeAnalysisResults {
         final List<ContributorRepositories> teams = new ArrayList<>();
         final Map<String, ContributorRepositories> map = new HashMap<>();
 
-        ContributorRepositories remainder = new ContributorRepositories(new Contributor("Remainder"));
+        ContributorRepositories remainder = new ContributorRepositories(new Contributor("Undefined Team"));
 
         while (contributors.size() > 0) {
             ContributorRepositories contributor = contributors.remove(0);

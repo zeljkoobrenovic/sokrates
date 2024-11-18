@@ -947,7 +947,7 @@ public class ReportFileExporter {
         summary.append("</div>");
     }
 
-    private static String getDetailsIcon() {
+    public static String getDetailsIcon() {
         return getIconSvg("details", 22);
     }
 

@@ -16,16 +16,21 @@ import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static nl.obren.sokrates.reports.core.ReportFileExporter.getDetailsIcon;
+
 public class LandscapeIndividualContributorsReports {
     private LandscapeAnalysisResults landscapeAnalysisResults;
+    private final File reportsFolder;
     private List<RichTextReport> reports = new ArrayList<>();
 
-    public LandscapeIndividualContributorsReports(LandscapeAnalysisResults landscapeAnalysisResults) {
+    public LandscapeIndividualContributorsReports(LandscapeAnalysisResults landscapeAnalysisResults, File reportsFolder) {
         this.landscapeAnalysisResults = landscapeAnalysisResults;
+        this.reportsFolder = reportsFolder;
     }
 
     public static String getContributorIndividualReportFileName(String email) {
@@ -49,14 +54,15 @@ public class LandscapeIndividualContributorsReports {
 
         String avatarHtml = "";
         String avatarUrl = LandscapeContributorsReport.getAvatarUrl(contributor.getEmail(), landscapeAnalysisResults.getConfiguration().getContributorAvatarLinkTemplate());
+        String defaultAvatar = contributorRepositories.getMembers().size() > 0 ? DataImageUtils.TEAM : DataImageUtils.DEVELOPER;
         if (avatarUrl != null) {
             avatarHtml = "<div style='vertical-align: middle; display: inline-block; width: 88px; margin-top: 2px;'>" +
                     "<img style='border-radius: 50%; height: 80px; width: 80px; margin-right: 10px;' src='" + avatarUrl + "' " +
-                    "onerror=\"this.onerror=null;this.src='" + DataImageUtils.DEVELOPER + "';\">" +
+                    "onerror=\"this.onerror=null;this.src='" + defaultAvatar + "';\">" +
                     "</div>";
         } else {
             avatarHtml = "<div style='vertical-align: middle; display: inline-block; width: 48px; margin-top: 2px;'>" +
-                    "<img style='border-radius: 50%; height: 40px; width: 40px; margin-right: 10px;' src='" + DataImageUtils.DEVELOPER + "'>" +
+                    "<img style='border-radius: 50%; height: 40px; width: 40px; margin-right: 10px;' src='" + defaultAvatar + "'>" +
                     "</div>";
         }
 
@@ -159,10 +165,12 @@ public class LandscapeIndividualContributorsReports {
         report.startTableRow("");
         report.addTableCell("", "border: none; text-align: center");
         report.addTableCell("", "border: none; text-align: center");
+        report.addTableCell("", "border: none; text-align: center");
         report.addMultiColumnTableCell("commits", 5, "border: none; text-align: center");
         report.addMultiColumnTableCell("period", 2, "border: none; text-align: center");
         report.endTableRow();
         report.startTableRow();
+        report.addTableCell("", "border: none");
         report.addTableCell("", "border: none");
         report.addTableCell("", "border: none");
         report.addTableCell("30d", "border: none; text-align: center");
@@ -182,10 +190,25 @@ public class LandscapeIndividualContributorsReports {
                 .sorted((a, b) -> b.getContributor().getCommitsCount90Days() - a.getContributor().getCommitsCount90Days())
                 .sorted((a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days())
                 .forEach(member -> {
-                    report.startTableRow();
+                    String email = member.getContributor().getEmail();
+                    String link = LandscapeContributorsReport.getContributorUrl(email).replace("contributors/", "");
+                    boolean reportExists = true; //new File(reportsFolder, link).exists();
+                    String color = member.getContributor().getCommitsCount90Days() > 0 ? "grey" : "lightgrey; opacity: 0.6;";
+                    report.startTableRow(member.getContributor().getCommitsCount30Days() > 0 ? "font-weight: bold;"
+                            : "color: " + color);
 
                     report.addTableCell(++index[0] + ".&nbsp;", "border: none; text-align: right");
-                    report.addTableCell(member.getContributor().getEmail(), "border: none");
+                    report.startTableCell("text-align: left; max-width: 32px; border: none");
+                    report.startDiv("white-space: nowrap; overflow: hidden;");
+                    String mostCommittedLang = StringUtils.defaultString(new ContributorPerExtensionHelper().getBiggestExtension(landscapeAnalysisResults.getConfiguration(), member), "");
+                    report.addHtmlContent(DataImageUtils.getLangDataImageDiv28(mostCommittedLang));
+                    report.endDiv();
+                    report.endTableCell();
+                    if (reportExists) {
+                        report.addTableCell("<a target='_blank' href='" + link + "'>" + email + "</a>", "border: none");
+                    } else {
+                        report.addTableCell(email, "border: none");
+                    }
                     report.addTableCell(member.getContributor().getCommitsCount30Days() + "", "border: none");
                     report.addTableCell(member.getContributor().getCommitsCount90Days() + "", "border: none");
                     report.addTableCell(member.getContributor().getCommitsCount180Days() + "", "border: none");
@@ -193,6 +216,9 @@ public class LandscapeIndividualContributorsReports {
                     report.addTableCell(member.getContributor().getCommitsCount() + "", "border: none");
                     report.addTableCell(member.getContributor().getFirstCommitDate(), "border: none");
                     report.addTableCell(member.getContributor().getLatestCommitDate(), "border: none");
+                    if (reportExists) {
+                        report.addTableCell("<a target='_blank' href='" + link + "'  title='volume details' style='vertical-align: top'>" + getDetailsIcon() + "</a>", "text-align: center; border: none");
+                    }
 
                     report.endTableRow();
                 });

@@ -34,7 +34,7 @@ import static nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGene
 
 public class LandscapeReportPeopleTopologyTab {
 
-    public static final String REMAINDER = "Remainder";
+    public static final String REMAINDER = "Undefined Team";
 
     private static final Log LOG = LogFactory.getLog(LandscapeReportPeopleTopologyTab.class);
     public static final String PEOPLE_COLOR = "#ADD8E6";
@@ -202,9 +202,13 @@ public class LandscapeReportPeopleTopologyTab {
                 String key2 = team2 + "::" + team1;
 
                 if (map.containsKey(key1)) {
-                    map.get(key1).increment(1);
+                    if (dependency.getFromComponent().startsWith("[") || dependency.getToComponent().startsWith("[")) {
+                        map.get(key1).increment(1);
+                    }
                 } else if (map.containsKey(key2)) {
-                    map.get(key2).increment(1);
+                    if (dependency.getFromComponent().startsWith("[") || dependency.getToComponent().startsWith("[")) {
+                        map.get(key2).increment(1);
+                    }
                 } else {
                     ComponentDependency teamDependency = new ComponentDependency(team1, team2);
                     teamDependency.setCount(1);

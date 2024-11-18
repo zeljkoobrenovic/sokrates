@@ -95,7 +95,13 @@ public class LandscapeContributorsReport {
         int counter[] = {0};
 
         int limit = landscapeAnalysisResults.getConfiguration().getContributorsListLimit();
-        contributors.stream().limit(limit).forEach(contributor -> {
+        contributors.stream()
+                .sorted((a, b) -> b.getContributor().getCommitsCount() - a.getContributor().getCommitsCount())
+                .sorted((a, b) -> b.getContributor().getCommitsCount365Days() - a.getContributor().getCommitsCount365Days())
+                .sorted((a, b) -> b.getContributor().getCommitsCount180Days() - a.getContributor().getCommitsCount180Days())
+                .sorted((a, b) -> b.getContributor().getCommitsCount90Days() - a.getContributor().getCommitsCount90Days())
+                .sorted((a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days())
+                .limit(limit).forEach(contributor -> {
             contributorsLinkedFromTables.add(contributor.getContributor().getEmail());
             addContributor(totalCommits, counter, contributor);
         });
@@ -122,14 +128,15 @@ public class LandscapeContributorsReport {
         report.addTableCell(icon, "text-align: center; width: 32px; max-width: 32px");
         String avatarHtml = "";
         String avatarUrl = this.getAvatarUrl(contributor.getContributor().getEmail(), this.landscapeAnalysisResults.getConfiguration().getContributorAvatarLinkTemplate());
+        String defaultAvatar = contributor.getMembers().size() > 0 ? DataImageUtils.TEAM : DataImageUtils.DEVELOPER;
         if (avatarUrl != null) {
             avatarHtml = "<div style='vertical-align: middle; display: inline-block; width: 48px; margin-top: 2px;'>" +
-                    "<img style='border-radius: 50%; height: 40px; width: 40px; margin-right: 10px;' src='" + avatarUrl + "' " +
-                    "onerror=\"this.onerror=null;this.src='" + DataImageUtils.DEVELOPER + "';\">" +
+                    "<img style='border-radius: 50%; height: 38px; width: 38px; margin-right: 10px;' src='" + avatarUrl + "' " +
+                    "onerror=\"this.onerror=null;this.src='" + defaultAvatar + "';\">" +
                     "</div>";
         } else {
             avatarHtml = "<div style='vertical-align: middle; display: inline-block; width: 48px; margin-top: 2px;'>" +
-                    "<img style='border-radius: 50%; height: 40px; width: 40px; margin-right: 10px;' src='" + DataImageUtils.DEVELOPER + "'>" +
+                    "<img style='border-radius: 50%; height: 38px; width: 38px; margin-right: 10px;' src='" + defaultAvatar + "'>" +
                     "</div>";
         }
         String link = this.getContributorUrl(contributor.getContributor().getEmail());
@@ -162,8 +169,8 @@ public class LandscapeContributorsReport {
             report.addTableCell(FormattingUtils.formatCount(contributor.getContributor().getCommitsCount90Days()), "vertical-align: middle;");
             report.addTableCell(FormattingUtils.formatCount(commitsCount30Days), "vertical-align: middle;");
         }
-        report.addTableCell(contributor.getContributor().getFirstCommitDate(), "vertical-align: middle;");
-        report.addTableCell(contributor.getContributor().getLatestCommitDate(), "vertical-align: middle;");
+        report.addTableCell(contributor.getContributor().getFirstCommitDate(), "vertical-align: middle; white-space: nowrap;");
+        report.addTableCell(contributor.getContributor().getLatestCommitDate(), "vertical-align: middle; white-space: nowrap;");
         StringBuilder repositoryInfo = new StringBuilder();
         report.startTableCell();
         if (recent) {
@@ -172,7 +179,7 @@ public class LandscapeContributorsReport {
                     .filter(p -> p.getCommits30Days() > 0)
                     .collect(Collectors.toCollection(ArrayList::new));
             int repositoriesCount = recentRepositories.size();
-            report.startShowMoreBlock(repositoriesCount + (repositoriesCount == 1 ? " repository" : " repositories"));
+            report.startShowMoreBlock(repositoriesCount + (repositoriesCount == 1 ? "&nbsp;repo" : "&nbsp;repos"));
             recentRepositories.forEach(contributorRepositoryInfo -> {
                 String repositoryName = contributorRepositoryInfo.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName();
                 int commits = contributorRepositoryInfo.getCommits30Days();
@@ -204,7 +211,7 @@ public class LandscapeContributorsReport {
     }
 
 
-    private String getContributorUrl(String email) {
+    public static String getContributorUrl(String email) {
         return "contributors/" + LandscapeIndividualContributorsReports.getContributorIndividualReportFileName(email);
     }
 

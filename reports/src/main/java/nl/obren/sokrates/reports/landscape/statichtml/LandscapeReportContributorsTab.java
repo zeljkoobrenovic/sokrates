@@ -474,8 +474,8 @@ public class LandscapeReportContributorsTab {
                     .filter(c -> contributorsLinkedFromTables.contains(c.getContributor().getEmail()))
                     .collect(Collectors.toList());
             LOG.info("Saving bot reports for " + linkedBots.size() + " contributor(s) linked from tables (out of " + linkedBots.size() + ")");
-            individualReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults).getIndividualReports(linkedContributors);
-            botReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults).getIndividualReports(linkedBots);
+            individualReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults, reportsFolder).getIndividualReports(linkedContributors);
+            botReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults, reportsFolder).getIndividualReports(linkedBots);
             ProcessingStopwatch.end("reporting/contributors/individual reports");
         }
         ProcessingStopwatch.end("reporting/contributors");
