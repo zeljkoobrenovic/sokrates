@@ -153,7 +153,7 @@ public class LandscapeDataExport {
 
         contributors.forEach(contributor -> {
             ContributorExport contributorExport = new ContributorExport(contributor);
-            String mostCommittedLang = new ContributorPerExtensionHelper().getBiggestExtension(analysisResults.getConfiguration(), contributor);
+            String mostCommittedLang = new ContributorPerExtensionHelper().getBiggestExtension(analysisResults.getConfiguration(), contributor, analysisResults.getPeopleConfig());
             contributorExport.setMainLang(mostCommittedLang);
             contributorsExport.add(contributorExport);
             builder.append(contributor.getContributor().getEmail()).append("\t");
@@ -186,12 +186,12 @@ public class LandscapeDataExport {
 
         builder.append("Team\t# commits (all time)\t# commits (30 days)\t# commits (90 days)\t# commits (180 days)\t# commits (365 days)\tFirst commit\tLatest commit\tRepositories\n");
 
-        List<ContributorRepositories> teams = analysisResults.getTeams(teamsConfig);
+        List<ContributorRepositories> teams = analysisResults.getTeams();
         List<ContributorExport> contributorsExport = new ArrayList<>();
 
         teams.forEach(contributor -> {
             ContributorExport contributorExport = new ContributorExport(contributor);
-            String mostCommittedLang = new ContributorPerExtensionHelper().getBiggestExtension(analysisResults.getConfiguration(), contributor);
+            String mostCommittedLang = new ContributorPerExtensionHelper().getBiggestExtension(analysisResults.getConfiguration(), contributor, analysisResults.getPeopleConfig());
             contributorExport.setMainLang(mostCommittedLang);
             contributorsExport.add(contributorExport);
             builder.append(contributor.getContributor().getEmail()).append("\t");

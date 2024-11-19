@@ -4,6 +4,8 @@
 
 package nl.obren.sokrates.sourcecode.landscape.analysis;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
@@ -33,7 +35,7 @@ public class LandscapeAnalyzer {
     public LandscapeAnalysisResults analyze(File landscapeConfigFile) {
         this.landscapeConfigurationFile = landscapeConfigFile;
 
-        LandscapeAnalysisResults landscapeAnalysisResults = new LandscapeAnalysisResults();
+        LandscapeAnalysisResults landscapeAnalysisResults = new LandscapeAnalysisResults(getTeams(), getPeopleConfig());
 
         Set<String> repositoryNames = new HashSet<>();
         DependenciesCreator subLandscapesViaContributors = new DependenciesCreator();
@@ -93,6 +95,57 @@ public class LandscapeAnalyzer {
 
         return landscapeAnalysisResults;
     }
+
+    private TeamsConfig getTeams() {
+        File landscapePeopleConfigFile = new File(landscapeConfigurationFile.getParentFile(), "config-teams.json");
+        TeamsConfig teamsConfig = new TeamsConfig();
+        if (!landscapePeopleConfigFile.exists()) {
+            try {
+                teamsConfig = new TeamsConfig();
+                FileUtils.write(landscapePeopleConfigFile, new JsonGenerator().generate(teamsConfig), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                LOG.error(e);
+            }
+        } else {
+            try {
+                teamsConfig = new JsonMapper().getObject(FileUtils.readFileToString(landscapePeopleConfigFile, StandardCharsets.UTF_8), new TypeReference<TeamsConfig>() {
+                });
+                if (teamsConfig != null) {
+                    FileUtils.write(landscapePeopleConfigFile, new JsonGenerator().generate(teamsConfig), StandardCharsets.UTF_8);
+                }
+            } catch (IOException e) {
+                LOG.error(e);
+            }
+        }
+
+        return teamsConfig;
+    }
+
+    private PeopleConfig getPeopleConfig() {
+        File peopleConfigFile = new File(landscapeConfigurationFile.getParentFile(), "config-people.json");
+        PeopleConfig peopleConfig = new PeopleConfig();
+        if (!peopleConfigFile.exists()) {
+            try {
+                peopleConfig = new PeopleConfig();
+                FileUtils.write(peopleConfigFile, new JsonGenerator().generate(peopleConfig), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                LOG.error(e);
+            }
+        } else {
+            try {
+                peopleConfig = new JsonMapper().getObject(FileUtils.readFileToString(peopleConfigFile, StandardCharsets.UTF_8), new TypeReference<PeopleConfig>() {
+                });
+                if (peopleConfig != null) {
+                    FileUtils.write(peopleConfigFile, new JsonGenerator().generate(peopleConfig), StandardCharsets.UTF_8);
+                }
+            } catch (IOException e) {
+                LOG.error(e);
+            }
+        }
+
+        return peopleConfig;
+    }
+
 
     private void updatePeopleDependencies(LandscapeAnalysisResults landscapeAnalysisResults) {
         LOG.info("Updating people dependencies....");

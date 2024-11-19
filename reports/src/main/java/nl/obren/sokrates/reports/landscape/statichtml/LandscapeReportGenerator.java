@@ -134,9 +134,9 @@ public class LandscapeReportGenerator {
     private SourceFileAgeDistribution overallFileLastModifiedDistribution;
     private SourceFileAgeDistribution overallFileFirstModifiedDistribution;
 
-    public LandscapeReportGenerator(LandscapeAnalysisResults analysisResults, List<TagGroup> tagGroups, TeamsConfig teamsConfig, File folder, File reportsFolder) {
+    public LandscapeReportGenerator(LandscapeAnalysisResults analysisResults, List<TagGroup> tagGroups, File folder, File reportsFolder) {
         this.tagGroups = tagGroups;
-        this.teamsConfig = teamsConfig;
+        this.teamsConfig = analysisResults.getTeamsConfig();
         this.folder = folder;
         this.reportsFolder = reportsFolder;
 
@@ -147,10 +147,10 @@ public class LandscapeReportGenerator {
         populateTimeSlotMaps();
 
         landscapeReportContributorsTab = new LandscapeReportContributorsTab(analysisResults, analysisResults.getContributors(), landscapeReport, folder, reportsFolder, LandscapeReportContributorsTab.Type.CONTRIBUTORS, teamsConfig);
-        landscapeReportTeamsTab = new LandscapeReportContributorsTab(analysisResults, analysisResults.getTeams(teamsConfig), landscapeReport, folder, reportsFolder, LandscapeReportContributorsTab.Type.TEAMS, teamsConfig);
+        landscapeReportTeamsTab = new LandscapeReportContributorsTab(analysisResults, analysisResults.getTeams(), landscapeReport, folder, reportsFolder, LandscapeReportContributorsTab.Type.TEAMS, teamsConfig);
 
         contributorsTopologyTab = new LandscapeReportPeopleTopologyTab(analysisResults, analysisResults.getContributors(), landscapeReport, folder, reportsFolder, LandscapeReportContributorsTab.Type.CONTRIBUTORS, teamsConfig);
-        teamsTopologyTab = new LandscapeReportPeopleTopologyTab(analysisResults, analysisResults.getTeams(teamsConfig), landscapeReport, folder, reportsFolder, LandscapeReportContributorsTab.Type.TEAMS, teamsConfig);
+        teamsTopologyTab = new LandscapeReportPeopleTopologyTab(analysisResults, analysisResults.getTeams(), landscapeReport, folder, reportsFolder, LandscapeReportContributorsTab.Type.TEAMS, teamsConfig);
 
         landscapeRepositoriesReportShort.setEmbedded(true);
         landscapeRepositoriesReportLong.setEmbedded(true);
@@ -292,7 +292,7 @@ public class LandscapeReportGenerator {
 
     private void addTabsLine() {
         int recentContributorsCount = landscapeAnalysisResults.getRecentContributorsCount(landscapeAnalysisResults.getContributors());
-        int recentTeamsCount = landscapeAnalysisResults.getRecentContributorsCount(landscapeAnalysisResults.getTeams(teamsConfig));
+        int recentTeamsCount = landscapeAnalysisResults.getRecentContributorsCount(landscapeAnalysisResults.getTeams());
         LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
         List<SubLandscapeLink> subLandscapes = configuration.getSubLandscapes();
 

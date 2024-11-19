@@ -100,7 +100,7 @@ public class LandscapeIndividualContributorsReports {
 
         ContributorPerExtensionHelper helper = new ContributorPerExtensionHelper();
 
-        List<Pair<String, ContributorPerExtensionStats>> extensionUpdates = helper.getContributorStatsPerExtension(landscapeAnalysisResults.getConfiguration(), contributorRepositories);
+        List<Pair<String, ContributorPerExtensionStats>> extensionUpdates = helper.getContributorStatsPerExtension(landscapeAnalysisResults.getConfiguration(), contributorRepositories, landscapeAnalysisResults.getPeopleConfig());
 
         report.addContentInDiv("File updates per extension (90 days):");
         report.startTable();
@@ -200,7 +200,7 @@ public class LandscapeIndividualContributorsReports {
                     report.addTableCell(++index[0] + ".&nbsp;", "border: none; text-align: right");
                     report.startTableCell("text-align: left; max-width: 32px; border: none");
                     report.startDiv("white-space: nowrap; overflow: hidden;");
-                    String mostCommittedLang = StringUtils.defaultString(new ContributorPerExtensionHelper().getBiggestExtension(landscapeAnalysisResults.getConfiguration(), member), "");
+                    String mostCommittedLang = StringUtils.defaultString(new ContributorPerExtensionHelper().getBiggestExtension(landscapeAnalysisResults.getConfiguration(), member, landscapeAnalysisResults.getPeopleConfig()), "");
                     report.addHtmlContent(DataImageUtils.getLangDataImageDiv28(mostCommittedLang));
                     report.endDiv();
                     report.endTableCell();

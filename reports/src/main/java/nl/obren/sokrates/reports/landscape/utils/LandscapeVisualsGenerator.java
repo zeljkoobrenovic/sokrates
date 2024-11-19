@@ -39,9 +39,9 @@ public class LandscapeVisualsGenerator {
     public void exportVisuals(LandscapeAnalysisResults landscapeAnalysisResults) throws IOException {
         exportRepositories(landscapeAnalysisResults);
         exportContributors(landscapeAnalysisResults.getContributors(), "contributors");
-        exportContributors(landscapeAnalysisResults.getTeams(teamsConfig), "teams");
+        exportContributors(landscapeAnalysisResults.getTeams(), "teams");
         exportRecentContributors(landscapeAnalysisResults.getContributors(), "contributors");
-        exportRecentContributors(landscapeAnalysisResults.getTeams(teamsConfig), "teams");
+        exportRecentContributors(landscapeAnalysisResults.getTeams(), "teams");
         exportLanguages(landscapeAnalysisResults);
         exportContributorPerLanguage(landscapeAnalysisResults);
         exportTeamsPerLanguage(landscapeAnalysisResults);

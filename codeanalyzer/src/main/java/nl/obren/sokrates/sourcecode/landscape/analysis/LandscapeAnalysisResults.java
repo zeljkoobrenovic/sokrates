@@ -17,9 +17,10 @@ import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
+import nl.obren.sokrates.sourcecode.landscape.PeopleConfig;
 import nl.obren.sokrates.sourcecode.landscape.TeamsConfig;
+import nl.obren.sokrates.sourcecode.landscape.utils.EmailTransformations;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
-import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -32,6 +33,11 @@ import java.util.stream.Collectors;
 public class LandscapeAnalysisResults {
     public static final int RECENT_THRESHOLD_DAYS = 30;
     private static final Log LOG = LogFactory.getLog(LandscapeAnalysisResults.class);
+
+    @JsonIgnore
+    private TeamsConfig teamsConfig;
+    @JsonIgnore
+    private PeopleConfig peopleConfig;
 
     @JsonIgnore
     private Set<String> level1SubLandscapes = new HashSet<>();
@@ -81,10 +87,10 @@ public class LandscapeAnalysisResults {
     private LandscapeConfiguration configuration = new LandscapeConfiguration();
 
     @JsonIgnore
-    private Map<String, List<Contributor>> contributorsPerMonthMap = null;
+    private final Map<String, List<Contributor>> contributorsPerMonthMap = null;
 
     @JsonIgnore
-    private Map<String, List<Contributor>> contributorsPerYearMap = null;
+    private final Map<String, List<Contributor>> contributorsPerYearMap = null;
 
     private double c2cConnectionsCount30Days;
     private double c2pConnectionsCount30Days;
@@ -125,57 +131,6 @@ public class LandscapeAnalysisResults {
 
     private List<Double> cMedian30DaysHistory = new ArrayList<>();
     private List<Double> pMedian30DaysHistory = new ArrayList<>();
-
-    @JsonIgnore
-    public Set<String> getLevel1SubLandscapes() {
-        return level1SubLandscapes;
-    }
-
-    @JsonIgnore
-    public void setLevel1SubLandscapes(Set<String> level1SubLandscapes) {
-        this.level1SubLandscapes = level1SubLandscapes;
-    }
-
-    @JsonIgnore
-    public List<ComponentDependency> getSubLandscapeDependenciesViaRepositoriesWithSameContributors() {
-        return subLandscapeDependenciesViaRepositoriesWithSameContributors;
-    }
-
-    @JsonIgnore
-    public void setSubLandscapeDependenciesViaRepositoriesWithSameContributors(List<ComponentDependency> subLandscapeDependenciesViaRepositoriesWithSameContributors) {
-        this.subLandscapeDependenciesViaRepositoriesWithSameContributors = subLandscapeDependenciesViaRepositoriesWithSameContributors;
-    }
-
-    @JsonIgnore
-    public List<ComponentDependency> getSubLandscapeIndirectDependenciesViaRepositoriesWithSameContributors() {
-        return subLandscapeIndirectDependenciesViaRepositoriesWithSameContributors;
-    }
-
-    @JsonIgnore
-    public void setSubLandscapeIndirectDependenciesViaRepositoriesWithSameContributors(List<ComponentDependency> subLandscapeIndirectDependenciesViaRepositoriesWithSameContributors) {
-        this.subLandscapeIndirectDependenciesViaRepositoriesWithSameContributors = subLandscapeIndirectDependenciesViaRepositoriesWithSameContributors;
-    }
-
-    @JsonIgnore
-    public List<ComponentDependency> getSubLandscapeDependenciesViaRepositoriesWithSameName() {
-        return subLandscapeDependenciesViaRepositoriesWithSameName;
-    }
-
-    @JsonIgnore
-    public void setSubLandscapeDependenciesViaRepositoriesWithSameName(List<ComponentDependency> subLandscapeDependenciesViaRepositoriesWithSameName) {
-        this.subLandscapeDependenciesViaRepositoriesWithSameName = subLandscapeDependenciesViaRepositoriesWithSameName;
-    }
-
-    @JsonIgnore
-    public List<ComponentDependency> getSubLandscapeIndirectDependenciesViaRepositoriesWithSameName() {
-        return subLandscapeIndirectDependenciesViaRepositoriesWithSameName;
-    }
-
-    @JsonIgnore
-    public void setSubLandscapeIndirectDependenciesViaRepositoriesWithSameName(List<ComponentDependency> subLandscapeIndirectDependenciesViaRepositoriesWithSameName) {
-        this.subLandscapeIndirectDependenciesViaRepositoriesWithSameName = subLandscapeIndirectDependenciesViaRepositoriesWithSameName;
-    }
-
     @JsonIgnore
     private List<RepositoryAnalysisResults> repositoryAnalysisResults = new ArrayList<>();
     @JsonIgnore
@@ -184,6 +139,11 @@ public class LandscapeAnalysisResults {
     private List<ContributorRepositories> teamsCache;
     @JsonIgnore
     private List<ContributorRepositories> botsCache;
+
+    public LandscapeAnalysisResults(TeamsConfig teamsConfig, PeopleConfig peopleConfig) {
+        this.teamsConfig = teamsConfig;
+        this.peopleConfig = peopleConfig;
+    }
 
     public static SourceFileAgeDistribution getOverallFileLastModifiedDistribution(List<RepositoryAnalysisResults> repositoriesAnalysisResults) {
         SourceFileAgeDistribution distribution = new SourceFileAgeDistribution();
@@ -234,7 +194,7 @@ public class LandscapeAnalysisResults {
     }
 
     public static int getLoc1YearActive(List<RepositoryAnalysisResults> repositoriesAnalysisResults) {
-        int count[] = {0};
+        int[] count = {0};
         repositoriesAnalysisResults.forEach(repositoryAnalysisResults -> {
             FilesHistoryAnalysisResults filesHistoryAnalysisResults = repositoryAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
             SourceFileAgeDistribution overallFileLastModifiedDistribution = filesHistoryAnalysisResults.getOverallFileLastModifiedDistribution();
@@ -246,7 +206,7 @@ public class LandscapeAnalysisResults {
     }
 
     public static int getLoc30DaysActive(List<RepositoryAnalysisResults> repositoriesAnalysisResults) {
-        int count[] = {0};
+        int[] count = {0};
         repositoriesAnalysisResults.forEach(repositoryAnalysisResults -> {
             FilesHistoryAnalysisResults filesHistoryAnalysisResults = repositoryAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
             SourceFileAgeDistribution overallFileLastModifiedDistribution = filesHistoryAnalysisResults.getOverallFileLastModifiedDistribution();
@@ -258,7 +218,7 @@ public class LandscapeAnalysisResults {
     }
 
     public static int getLocNew(List<RepositoryAnalysisResults> repositoriesAnalysisResults) {
-        int count[] = {0};
+        int[] count = {0};
         repositoriesAnalysisResults.forEach(repositoryAnalysisResults -> {
             FilesHistoryAnalysisResults filesHistoryAnalysisResults = repositoryAnalysisResults.getAnalysisResults().getFilesHistoryAnalysisResults();
             SourceFileAgeDistribution overallFileFirstModifiedDistribution = filesHistoryAnalysisResults.getOverallFileFirstModifiedDistribution();
@@ -267,6 +227,56 @@ public class LandscapeAnalysisResults {
             }
         });
         return count[0];
+    }
+
+    @JsonIgnore
+    public Set<String> getLevel1SubLandscapes() {
+        return level1SubLandscapes;
+    }
+
+    @JsonIgnore
+    public void setLevel1SubLandscapes(Set<String> level1SubLandscapes) {
+        this.level1SubLandscapes = level1SubLandscapes;
+    }
+
+    @JsonIgnore
+    public List<ComponentDependency> getSubLandscapeDependenciesViaRepositoriesWithSameContributors() {
+        return subLandscapeDependenciesViaRepositoriesWithSameContributors;
+    }
+
+    @JsonIgnore
+    public void setSubLandscapeDependenciesViaRepositoriesWithSameContributors(List<ComponentDependency> subLandscapeDependenciesViaRepositoriesWithSameContributors) {
+        this.subLandscapeDependenciesViaRepositoriesWithSameContributors = subLandscapeDependenciesViaRepositoriesWithSameContributors;
+    }
+
+    @JsonIgnore
+    public List<ComponentDependency> getSubLandscapeIndirectDependenciesViaRepositoriesWithSameContributors() {
+        return subLandscapeIndirectDependenciesViaRepositoriesWithSameContributors;
+    }
+
+    @JsonIgnore
+    public void setSubLandscapeIndirectDependenciesViaRepositoriesWithSameContributors(List<ComponentDependency> subLandscapeIndirectDependenciesViaRepositoriesWithSameContributors) {
+        this.subLandscapeIndirectDependenciesViaRepositoriesWithSameContributors = subLandscapeIndirectDependenciesViaRepositoriesWithSameContributors;
+    }
+
+    @JsonIgnore
+    public List<ComponentDependency> getSubLandscapeDependenciesViaRepositoriesWithSameName() {
+        return subLandscapeDependenciesViaRepositoriesWithSameName;
+    }
+
+    @JsonIgnore
+    public void setSubLandscapeDependenciesViaRepositoriesWithSameName(List<ComponentDependency> subLandscapeDependenciesViaRepositoriesWithSameName) {
+        this.subLandscapeDependenciesViaRepositoriesWithSameName = subLandscapeDependenciesViaRepositoriesWithSameName;
+    }
+
+    @JsonIgnore
+    public List<ComponentDependency> getSubLandscapeIndirectDependenciesViaRepositoriesWithSameName() {
+        return subLandscapeIndirectDependenciesViaRepositoriesWithSameName;
+    }
+
+    @JsonIgnore
+    public void setSubLandscapeIndirectDependenciesViaRepositoriesWithSameName(List<ComponentDependency> subLandscapeIndirectDependenciesViaRepositoriesWithSameName) {
+        this.subLandscapeIndirectDependenciesViaRepositoriesWithSameName = subLandscapeIndirectDependenciesViaRepositoriesWithSameName;
     }
 
     public SourceFileAgeDistribution getOverallFileLastModifiedDistribution() {
@@ -362,7 +372,7 @@ public class LandscapeAnalysisResults {
     }
 
     public int getMainLoc() {
-        int loc[] = {0};
+        int[] loc = {0};
         getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
             loc[0] += repositoryAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
         });
@@ -370,7 +380,7 @@ public class LandscapeAnalysisResults {
     }
 
     public int getMainFilesCount() {
-        int count[] = {0};
+        int[] count = {0};
         getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
             count[0] += repositoryAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getFilesCount();
         });
@@ -398,7 +408,7 @@ public class LandscapeAnalysisResults {
     }
 
     public int getTestLoc() {
-        int count[] = {0};
+        int[] count = {0};
         getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
             count[0] += repositoryAnalysisResults.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCode();
         });
@@ -406,7 +416,7 @@ public class LandscapeAnalysisResults {
     }
 
     public int getGeneratedLoc() {
-        int count[] = {0};
+        int[] count = {0};
         getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
             count[0] += repositoryAnalysisResults.getAnalysisResults().getGeneratedAspectAnalysisResults().getLinesOfCode();
         });
@@ -414,7 +424,7 @@ public class LandscapeAnalysisResults {
     }
 
     public int getBuildAndDeploymentLoc() {
-        int count[] = {0};
+        int[] count = {0};
         getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
             count[0] += repositoryAnalysisResults.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getLinesOfCode();
         });
@@ -422,7 +432,7 @@ public class LandscapeAnalysisResults {
     }
 
     public int getOtherLoc() {
-        int count[] = {0};
+        int[] count = {0};
         getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
             count[0] += repositoryAnalysisResults.getAnalysisResults().getOtherAspectAnalysisResults().getLinesOfCode();
         });
@@ -430,7 +440,7 @@ public class LandscapeAnalysisResults {
     }
 
     public int getTestFilesCount() {
-        int count[] = {0};
+        int[] count = {0};
         getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
             count[0] += repositoryAnalysisResults.getAnalysisResults().getTestAspectAnalysisResults().getFilesCount();
         });
@@ -438,7 +448,7 @@ public class LandscapeAnalysisResults {
     }
 
     public int getGeneratedFilesCount() {
-        int count[] = {0};
+        int[] count = {0};
         getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
             count[0] += repositoryAnalysisResults.getAnalysisResults().getGeneratedAspectAnalysisResults().getFilesCount();
         });
@@ -446,7 +456,7 @@ public class LandscapeAnalysisResults {
     }
 
     public int getBuildAndDeploymentFilesCount() {
-        int count[] = {0};
+        int[] count = {0};
         getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
             count[0] += repositoryAnalysisResults.getAnalysisResults().getBuildAndDeployAspectAnalysisResults().getFilesCount();
         });
@@ -454,7 +464,7 @@ public class LandscapeAnalysisResults {
     }
 
     public int getOtherFilesCount() {
-        int count[] = {0};
+        int[] count = {0};
         getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
             count[0] += repositoryAnalysisResults.getAnalysisResults().getOtherAspectAnalysisResults().getFilesCount();
         });
@@ -462,7 +472,7 @@ public class LandscapeAnalysisResults {
     }
 
     public int getAllLoc() {
-        int count[] = {0};
+        int[] count = {0};
         getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
             count[0] += repositoryAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
             count[0] += repositoryAnalysisResults.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCode();
@@ -570,7 +580,7 @@ public class LandscapeAnalysisResults {
                 .collect(Collectors.toCollection(ArrayList::new));
 
         if (configuration.isAnonymizeContributors()) {
-            int counter[] = {1};
+            int[] counter = {1};
             contributorRepositories.forEach(contributorRepository -> {
                 contributorRepository.getContributor().setEmail("Contributor " + counter[0]);
                 counter[0] += 1;
@@ -581,11 +591,11 @@ public class LandscapeAnalysisResults {
     }
 
     @JsonIgnore
-    public List<ContributorRepositories> getTeams(TeamsConfig teamsConfig) {
+    public List<ContributorRepositories> getTeams() {
         if (teamsCache != null) {
             return teamsCache;
         }
-        List<ContributorRepositories> teamRepositories = getAllTeams(teamsConfig)
+        List<ContributorRepositories> teamRepositories = getAllTeams()
                 .stream().collect(Collectors.toCollection(ArrayList::new));
 
         teamsCache = teamRepositories;
@@ -687,7 +697,7 @@ public class LandscapeAnalysisResults {
     }
 
     @JsonIgnore
-    private List<ContributorRepositories> getAllTeams(TeamsConfig teamsConfig) {
+    private List<ContributorRepositories> getAllTeams() {
         final List<ContributorRepositories> contributors = new ArrayList<>(getAllContributors());
         if (teamsConfig.getTeams() == null || teamsConfig.getTeams().size() == 0) {
             return contributors;
@@ -775,13 +785,7 @@ public class LandscapeAnalysisResults {
                 if (GitHistoryUtils.shouldIgnore(contributorId, configuration.getIgnoreContributors())) {
                     return;
                 }
-                if (configuration.getTransformContributorEmails().size() > 0) {
-                    ComplexOperation operation = new ComplexOperation(configuration.getTransformContributorEmails());
-                    contributorId = operation.exec(contributorId);
-                    if (!contributorId.equals(contributor.getEmail())) {
-                        LOG.info(contributor.getEmail() + " -> " + contributorId);
-                    }
-                }
+                contributorId = EmailTransformations.transformEmail(contributorId, configuration.getTransformContributorEmails(), peopleConfig);
                 if (GitHistoryUtils.shouldIgnore(contributorId, configuration.getIgnoreContributors())) {
                     return;
                 }
@@ -943,6 +947,7 @@ public class LandscapeAnalysisResults {
         return list;
     }
 
+    @JsonIgnore
     public List<Pair<String, List<ContributionTimeSlot>>> getContributorsCommits() {
         Map<String, Pair<String, Map<String, ContributionTimeSlot>>> map = new HashMap<>();
 
@@ -1027,7 +1032,7 @@ public class LandscapeAnalysisResults {
     }
 
     public int getRecentContributorsCount(List<ContributorRepositories> contributors) {
-        return (int) getRecentContributors(contributors).size();
+        return getRecentContributors(contributors).size();
     }
 
     public int getRecentContributorsCount6Months(List<ContributorRepositories> contributors) {
@@ -1356,6 +1361,22 @@ public class LandscapeAnalysisResults {
 
     public void setLatestCommitDate(String latestCommitDate) {
         this.latestCommitDate = latestCommitDate;
+    }
+
+    public TeamsConfig getTeamsConfig() {
+        return teamsConfig;
+    }
+
+    public void setTeamsConfig(TeamsConfig teamsConfig) {
+        this.teamsConfig = teamsConfig;
+    }
+
+    public PeopleConfig getPeopleConfig() {
+        return peopleConfig;
+    }
+
+    public void setPeopleConfig(PeopleConfig peopleConfig) {
+        this.peopleConfig = peopleConfig;
     }
 
     enum CodeCategory {

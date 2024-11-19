@@ -118,7 +118,7 @@ public class LandscapeContributorsReport {
         report.startTableRow(contributor.getContributor().getCommitsCount30Days() > 0 ? "font-weight: bold;"
                 : "color: " + color);
         counter[0] += 1;
-        String biggestExtension = new ContributorPerExtensionHelper().getBiggestExtension(landscapeAnalysisResults.getConfiguration(), contributor);
+        String biggestExtension = new ContributorPerExtensionHelper().getBiggestExtension(landscapeAnalysisResults.getConfiguration(), contributor, landscapeAnalysisResults.getPeopleConfig());
         String icon;
         if (biggestExtension == null) {
             icon = "";

@@ -86,8 +86,8 @@ public class LandscapeReportContributorsTab {
         this.type = type;
         this.teamsConfig = teamsConfig;
 
-        landscapeRecentContributorsReport.setFileName(type + "-recent.html");
-        landscapeContributorsReport.setFileName(type + ".html");
+        landscapeRecentContributorsReport.setFileName(type.plural() + "-recent.html");
+        landscapeContributorsReport.setFileName(type.plural() + ".html");
 
         this.landscapeAnalysisResults = landscapeAnalysisResults;
 

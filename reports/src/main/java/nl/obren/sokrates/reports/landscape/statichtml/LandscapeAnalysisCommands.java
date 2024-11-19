@@ -13,6 +13,7 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.utils.LandscapeVisualsGenerator;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.landscape.DefaultTags;
+import nl.obren.sokrates.sourcecode.landscape.PeopleConfig;
 import nl.obren.sokrates.sourcecode.landscape.TagGroup;
 import nl.obren.sokrates.sourcecode.landscape.TeamsConfig;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
@@ -66,11 +67,10 @@ public class LandscapeAnalysisCommands {
         ProcessingStopwatch.start("analyzing");
         LandscapeAnalysisResults landscapeAnalysisResults = analyzer.analyze(landscapeConfigFile);
         List<TagGroup> tagGroups = getTagGroups(analysisRoot, landscapeConfigFile);
-        TeamsConfig teamsConfig = getTeams(analysisRoot, landscapeConfigFile);
         ProcessingStopwatch.end("analyzing");
 
         ProcessingStopwatch.start("reporting");
-        LandscapeReportGenerator reportGenerator = new LandscapeReportGenerator(landscapeAnalysisResults, tagGroups, teamsConfig, landscapeConfigFile.getParentFile(), reportsFolder);
+        LandscapeReportGenerator reportGenerator = new LandscapeReportGenerator(landscapeAnalysisResults, tagGroups, landscapeConfigFile.getParentFile(), reportsFolder);
         List<RichTextReport> reports = reportGenerator.report();
 
         try {
@@ -101,7 +101,7 @@ public class LandscapeAnalysisCommands {
             ProcessingStopwatch.end("reporting/saving/contributors");
 
             ProcessingStopwatch.start("reporting/saving/generating visuals");
-            LandscapeVisualsGenerator visualsGenerator = new LandscapeVisualsGenerator(reportsFolder, teamsConfig);
+            LandscapeVisualsGenerator visualsGenerator = new LandscapeVisualsGenerator(reportsFolder, landscapeAnalysisResults.getTeamsConfig());
             visualsGenerator.exportVisuals(landscapeAnalysisResults);
             ProcessingStopwatch.end("reporting/saving/generating visuals");
 
@@ -114,7 +114,7 @@ public class LandscapeAnalysisCommands {
     }
 
     private static List<TagGroup> getTagGroups(File analysisRoot, File landscapeConfigFile) {
-        File landscapeTagsConfigFile = getLandscapeTagsConfigFile(analysisRoot, new File(landscapeConfigFile.getParentFile(), "config-tags.json"));
+        File landscapeTagsConfigFile = new File(landscapeConfigFile.getParentFile(), "config-tags.json");
         List<TagGroup> tagGroups = new ArrayList<>();
         if (!landscapeTagsConfigFile.exists()) {
             try {
@@ -139,38 +139,4 @@ public class LandscapeAnalysisCommands {
 
         return tagGroups;
     }
-
-    private static TeamsConfig getTeams(File analysisRoot, File landscapeConfigFile) {
-        File landscapePeopleConfigFile = getLandscapeTagsConfigFile(analysisRoot, new File(landscapeConfigFile.getParentFile(), "config-teams.json"));
-        TeamsConfig teamsConfig = new TeamsConfig();
-        if (!landscapePeopleConfigFile.exists()) {
-            try {
-                teamsConfig = new TeamsConfig();
-                FileUtils.write(landscapePeopleConfigFile, new JsonGenerator().generate(teamsConfig), StandardCharsets.UTF_8);
-            } catch (IOException e) {
-                LOG.error(e);
-            }
-        } else {
-            try {
-                teamsConfig = new JsonMapper().getObject(FileUtils.readFileToString(landscapePeopleConfigFile, StandardCharsets.UTF_8), new TypeReference<>() {
-                });
-                if (teamsConfig != null) {
-                    FileUtils.write(landscapePeopleConfigFile, new JsonGenerator().generate(teamsConfig), StandardCharsets.UTF_8);
-                }
-            } catch (IOException e) {
-                LOG.error(e);
-            }
-        }
-
-        return teamsConfig;
-    }
-
-    private static File getLandscapeTagsConfigFile(File analysisRoot, File landscapeTagsConfigFile) {
-        if (landscapeTagsConfigFile == null) {
-            File landscapeAnalysisRoot = new File(analysisRoot, "_sokrates_landscape");
-            landscapeTagsConfigFile = new File(landscapeAnalysisRoot, "config-tags.json");
-        }
-        return landscapeTagsConfigFile;
-    }
-
 }
