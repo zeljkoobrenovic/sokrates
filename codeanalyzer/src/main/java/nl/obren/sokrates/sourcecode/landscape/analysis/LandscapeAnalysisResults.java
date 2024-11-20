@@ -646,18 +646,21 @@ public class LandscapeAnalysisResults {
                     commitsPerExtension.setFilesCount90Days(commitsPerExtension.getFilesCount90Days() + repositoryExtData.getFilesCount90Days());
 
                     repositoryExtData.getCommitters().forEach(email -> {
-                        if (!commitsPerExtension.getCommitters().contains(email)) {
-                            commitsPerExtension.getCommitters().add(email);
+                        String contributorId = EmailTransformations.transformEmail(email, configuration.getTransformContributorEmails(), peopleConfig);
+                        if (!commitsPerExtension.getCommitters().contains(contributorId)) {
+                            commitsPerExtension.getCommitters().add(contributorId);
                         }
                     });
                     repositoryExtData.getCommitters30Days().forEach(email -> {
-                        if (!commitsPerExtension.getCommitters30Days().contains(email)) {
-                            commitsPerExtension.getCommitters30Days().add(email);
+                        String contributorId = EmailTransformations.transformEmail(email, configuration.getTransformContributorEmails(), peopleConfig);
+                        if (!commitsPerExtension.getCommitters30Days().contains(contributorId)) {
+                            commitsPerExtension.getCommitters30Days().add(contributorId);
                         }
                     });
                     repositoryExtData.getCommitters90Days().forEach(email -> {
-                        if (!commitsPerExtension.getCommitters90Days().contains(email)) {
-                            commitsPerExtension.getCommitters90Days().add(email);
+                        String contributorId = EmailTransformations.transformEmail(email, configuration.getTransformContributorEmails(), peopleConfig);
+                        if (!commitsPerExtension.getCommitters90Days().contains(contributorId)) {
+                            commitsPerExtension.getCommitters90Days().add(contributorId);
                         }
                     });
                 }

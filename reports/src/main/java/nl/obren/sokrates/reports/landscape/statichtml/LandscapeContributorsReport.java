@@ -7,6 +7,7 @@ import nl.obren.sokrates.reports.core.SummaryUtils;
 import nl.obren.sokrates.reports.landscape.utils.ContributorPerExtensionHelper;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.sourcecode.landscape.ContributorTag;
+import nl.obren.sokrates.sourcecode.landscape.TeamConfig;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositoryInfo;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
@@ -114,7 +115,7 @@ public class LandscapeContributorsReport {
     }
 
     private void addContributor(int totalCommits, int[] counter, ContributorRepositories contributor) {
-        String color = contributor.getContributor().getCommitsCount90Days() > 0 ? "grey" : "lightgrey";
+        String color = contributor.getContributor().getCommitsCount90Days() > 0 ? "black" : "lightgrey";
         report.startTableRow(contributor.getContributor().getCommitsCount30Days() > 0 ? "font-weight: bold;"
                 : "color: " + color);
         counter[0] += 1;
@@ -128,6 +129,7 @@ public class LandscapeContributorsReport {
         report.addTableCell(icon, "text-align: center; width: 32px; max-width: 32px");
         String avatarHtml = "";
         String avatarUrl = this.getAvatarUrl(contributor.getContributor().getEmail(), this.landscapeAnalysisResults.getConfiguration().getContributorAvatarLinkTemplate());
+
         String defaultAvatar = contributor.getMembers().size() > 0 ? DataImageUtils.TEAM : DataImageUtils.DEVELOPER;
         if (avatarUrl != null) {
             avatarHtml = "<div style='vertical-align: middle; display: inline-block; width: 48px; margin-top: 2px;'>" +
@@ -147,10 +149,15 @@ public class LandscapeContributorsReport {
         }
 
         contributorTagMap.get(contributor.getContributor().getEmail()).forEach(tag -> {
-            contributorBody.append("<div style='vertical-align: top; font-size: 60%; background-color: skyblue; border-radius: 7px; display: inline-block; padding: 3px 3px 5px 3px; margin: 5px;'>" + tag + "</tag>");
+            contributorBody.append("<div style='vertical-align: top; font-size: 60%; background-color: skyblue; border-radius: 7px; display: inline-block; padding: 3px 3px 5px 3px; margin: 5px;'>" + tag + "</div>");
         });
+        String team = getTeam(contributor.getContributor().getEmail());
+        String body = contributorBody.toString();
+        if (team != null) {
+            body = "<div><div style='vertical-align: top; font-size: 60%; background-color: lightyellow; border-radius: 12px; display: inline-block; padding: 3px; margin: 5px; color: black'>" + team + "</div><div style='margin-top: -15px; margin-bottom: -9px;'>" + body + "</div></div>";
+        }
 
-        report.addTableCellWithTitle("<a target='_blank' style='color: " + color + "; text-decoration: none' href='" + link + "'>" + contributorBody + "</a>",
+        report.addTableCellWithTitle("<a target='_blank' style='color: " + color + "; text-decoration: none' href='" + link + "'>" + body + "</a>",
                 "vertical-align: middle; white-space: nowrap; overflow: hidden;", "" + counter[0]);
         int commitsCountAllTime = contributor.getContributor().getCommitsCount();
         int commitsCount30Days = contributor.getContributor().getCommitsCount30Days();
@@ -225,5 +232,15 @@ public class LandscapeContributorsReport {
 
     public void setRecent(boolean recent) {
         this.recent = recent;
+    }
+
+    private String getTeam(String contributorId) {
+        for (TeamConfig teamConfig : landscapeAnalysisResults.getTeamsConfig().getTeams()) {
+            if (RegexUtils.matchesAnyPattern(contributorId, teamConfig.getEmailPatterns())) {
+                return teamConfig.getName();
+            }
+        }
+
+        return null;
     }
 }
