@@ -4,13 +4,18 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.common.utils.RegexUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PeopleConfig {
     private List<PersonConfig> people = new ArrayList<>();
 
     public PeopleConfig() {
     }
+
+    @JsonIgnore
+    private static final Map<String, PersonConfig> cache = new HashMap<>();
 
     public List<PersonConfig> getPeople() {
         return people;
@@ -21,12 +26,21 @@ public class PeopleConfig {
     }
 
     @JsonIgnore
-    public String getPerson(String contributorId) {
+    public PersonConfig getPerson(String contributorId) {
+        if (cache.containsKey(contributorId)) {
+            return cache.get(contributorId);
+        }
         for (PersonConfig person : people) {
             if (RegexUtils.matchesAnyPattern(contributorId, person.getEmailPatterns())) {
-                return person.getName();
+                cache.put(contributorId, person);
+                return person;
             }
         }
-        return contributorId;
+
+        PersonConfig newPersonConfig = new PersonConfig();
+        newPersonConfig.setName(contributorId);
+        cache.put(contributorId, newPersonConfig);
+
+        return newPersonConfig;
     }
 }
