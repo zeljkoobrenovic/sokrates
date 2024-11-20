@@ -32,8 +32,8 @@ import static nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGene
 
 public class LandscapeReportContributorsTab {
 
-    private List<RichTextReport> individualReports;
-    private List<RichTextReport> botReports;
+    private List<RichTextReport> individualReports = new ArrayList<>();
+    private List<RichTextReport> botReports = new ArrayList<>();
 
     enum Type {
         CONTRIBUTORS("contributor", "contributors", true),
