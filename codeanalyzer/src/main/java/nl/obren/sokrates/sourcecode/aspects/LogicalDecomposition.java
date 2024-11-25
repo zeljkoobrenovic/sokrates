@@ -153,7 +153,6 @@ public class LogicalDecomposition {
         components.forEach(component -> component.getSourceFiles().forEach(compSourceFile -> {
             if (compSourceFile.equals(sourceFile)) {
                 inScope[0] = true;
-                return;
             }
         }));
 

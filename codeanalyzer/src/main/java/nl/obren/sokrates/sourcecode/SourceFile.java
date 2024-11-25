@@ -224,7 +224,12 @@ public class SourceFile {
             return false;
         }
 
-        return ((SourceFile) obj).getFile().equals(this.getFile());
+        SourceFile sourceFile = (SourceFile) obj;
+        if (sourceFile.getFile() == null || this.getFile() == null) {
+            return false;
+        }
+
+        return sourceFile.getFile().equals(this.getFile());
     }
 
     public int getLinesOfCodeInUnits() {
