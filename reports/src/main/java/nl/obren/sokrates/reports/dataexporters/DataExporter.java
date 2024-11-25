@@ -821,12 +821,13 @@ public class DataExporter {
                 StringBuilder body = new StringBuilder();
 
                 duplicate.getDuplicatedFileBlocks().forEach(block -> {
+                    List<String> lines = block.getSourceFile().getLines();
                     int fromIndex = block.getStartLine() - 1;
                     int endLine = block.getEndLine();
-                    if (fromIndex >= 0 && endLine > fromIndex) {
+                    if (fromIndex >= 0 && endLine > fromIndex && endLine < lines.size()) {
                         body.append(block.getSourceFile().getRelativePath() + " [" + block.getStartLine() + ":" + endLine + "]:\n");
                         body.append(SEPARATOR);
-                        body.append(block.getSourceFile().getLines().subList(fromIndex, endLine).stream().collect(Collectors.joining("\n")) + "\n" + SEPARATOR + "\n\n\n");
+                        body.append(lines.subList(fromIndex, endLine).stream().collect(Collectors.joining("\n")) + "\n" + SEPARATOR + "\n\n\n");
                     }
                 });
 
