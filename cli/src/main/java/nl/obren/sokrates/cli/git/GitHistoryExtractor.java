@@ -34,6 +34,7 @@ public class GitHistoryExtractor {
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
         File gitHistoryFile = new File(root, "git-history.txt");
         try {
+            LOG.info("Extracted git history...");
             FileUtils.writeStringToFile(gitHistoryFile, "", StandardCharsets.UTF_8);
             Repository repo = builder.setGitDir(new File(root, ".git")).setMustExist(true).build();
             Git git = new Git(repo);
@@ -67,9 +68,10 @@ public class GitHistoryExtractor {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    LOG.info(count.incrementAndGet() + " " + line);
+                    count.incrementAndGet();
                 });
             }
+            LOG.info("Extracted " + count.get() + " commits");
         } catch (IOException | GitAPIException e) {
             e.printStackTrace();
         }
