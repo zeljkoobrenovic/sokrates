@@ -66,10 +66,11 @@
         const redirectFilter = findGetParameter('redirect');
         if (redirectFilter) {
             const redirectToRepo = repositories
-                .filter(item => item.metadata.name && (item.metadata.name.toLowerCase().includes(redirectFilter.toLowerCase())))[0];
+                .filter(item => item.metadata.name && (item.metadata.name.toLowerCase().includes(redirectFilter.toLowerCase())));
 
-            if (redirectToRepo) {
-                window.location.href = '../' + redirectToRepo.sokratesRepositoryLink.htmlReportsRoot + '/index.html'
+            // redirect only if there is exactly one match, otherwise show the list
+            if (redirectToRepo.length === 1) {
+                window.location.href = '../' + redirectToRepo[0].sokratesRepositoryLink.htmlReportsRoot + '/index.html'
             }
         }
 
@@ -89,7 +90,23 @@
 
 <script>
     function update() {
-        const filter = document.getElementById('filter').value.toLowerCase().trim();
+        const filters = document.getElementById('filter').value.toLowerCase().trim()
+            .split(',').map(item => item.trim()).filter(item => item.length);
+
+        function isFiltered(name) {
+            if (filters.length === 0) {
+                return true;
+            }
+            if (name) {
+                for (let filter of filters) {
+                    if (name.toLowerCase().includes(filter)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         let html = '';
 
         let count = repositories.length;
@@ -97,7 +114,7 @@
         let commits = repositories.map(item => item.commitsCount).reduce((a, b) => a + b, 0);
 
         const filteredData = repositories
-            .filter(item => item.metadata.name && (!filter || item.metadata.name.toLowerCase().includes(filter)))
+            .filter(item => isFiltered(item.metadata.name))
             .sort((a, b) => b.commitsCount - a.commitsCount)
             .sort((a, b) => b.commitsCount90Days - a.commitsCount90Days)
             .sort((a, b) => b.commitsCount30Days - a.commitsCount30Days)

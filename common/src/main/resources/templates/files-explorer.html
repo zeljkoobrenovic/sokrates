@@ -177,7 +177,8 @@
         const filteredData = scopedData
             .filter(item => item.path && (!filter || (item.repository + ' ' + item.path).toLowerCase().includes(filter)));
 
-        const maxLoc = Math.max(...filteredData.map(item => item.linesOfCode));
+        let maxLoc = 1;
+        filteredData.forEach(item => maxLoc = Math.max(maxLoc, item.linesOfCode));
 
         let filteredCount = filteredData.length;
         let filteredLoc = filteredData.map(item => item.linesOfCode).reduce((a, b) => a + b, 0);
