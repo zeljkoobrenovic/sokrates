@@ -13,6 +13,7 @@ public class CodeAnalyzerSettings {
     private boolean updateIndex = true;
     private boolean analyzeFilesInScope = true;
     private boolean analyzeLogicalDecomposition = true;
+    private boolean analyzeStaticDependencies = true;
     private boolean analyzeConcerns = true;
     private boolean analyzeDuplication = true;
     private boolean analyzeFileSize = true;
@@ -27,6 +28,7 @@ public class CodeAnalyzerSettings {
     public void selectAll() {
         analyzeFilesInScope = true;
         analyzeLogicalDecomposition = true;
+        analyzeStaticDependencies = true;
         analyzeConcerns = true;
         analyzeDuplication = true;
         analyzeFileSize = true;
@@ -45,6 +47,7 @@ public class CodeAnalyzerSettings {
     public void deselectAll() {
         analyzeFilesInScope = false;
         analyzeLogicalDecomposition = false;
+        analyzeStaticDependencies = false;
         analyzeConcerns = false;
         analyzeDuplication = false;
         analyzeFileSize = false;
@@ -90,6 +93,14 @@ public class CodeAnalyzerSettings {
 
     public void setAnalyzeLogicalDecomposition(boolean analyzeLogicalDecomposition) {
         this.analyzeLogicalDecomposition = analyzeLogicalDecomposition;
+    }
+
+    public boolean isAnalyzeStaticDependencies() {
+        return analyzeStaticDependencies;
+    }
+
+    public void setAnalyzeStaticDependencies(boolean analyzeStaticDependencies) {
+        this.analyzeStaticDependencies = analyzeStaticDependencies;
     }
 
     public boolean isAnalyzeConcerns() {

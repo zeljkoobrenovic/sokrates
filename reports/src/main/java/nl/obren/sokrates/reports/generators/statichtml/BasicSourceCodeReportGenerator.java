@@ -84,7 +84,9 @@ public class BasicSourceCodeReportGenerator {
             }
             if (codeAnalyzerSettings.isAnalyzeLogicalDecomposition()) {
                 reports.add(logicalComponentsReport);
-                reports.add(logicalComponentsAndDependenciesReport);
+                if (codeAnalyzerSettings.isAnalyzeStaticDependencies()) {
+                    reports.add(logicalComponentsAndDependenciesReport);
+                }
             }
             if (codeAnalyzerSettings.isAnalyzeDuplication()) {
                 reports.add(duplicationReport);

@@ -883,6 +883,10 @@ public class CommandLineInterface {
     private CodeAnalyzerSettings getCodeAnalyzerSettings(CommandLine cmd) {
         CodeAnalyzerSettings settings = new CodeAnalyzerSettings();
 
+        if (codeConfiguration.getAnalysis().isSkipDependencies()) {
+            settings.setAnalyzeStaticDependencies(false);
+        }
+
         return settings;
     }
 

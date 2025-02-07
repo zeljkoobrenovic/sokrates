@@ -97,12 +97,12 @@ public class ContributorsReportGenerator {
         report.addParagraph("An overview of contributor trends.", "margin-top: 12px; color: grey");
 
         report.startTabGroup();
-        report.addTab("contributors", "Overview", true);
-        report.addTab("matrix", "Contributors Matrix", false);
+        report.addTab("matrix", "Contributors Matrix", true);
         report.addTab("30_days", "Past 30 Days", false);
         report.addTab("90_days", "Past 3 Months", false);
         report.addTab("180_days", "Past 6 Months", false);
         report.addTab("365_days", "Past Year", false);
+        report.addTab("contributors", "Overview", false);
         report.addTab("data", "Data", false);
         report.endTabGroup();
 
@@ -112,12 +112,12 @@ public class ContributorsReportGenerator {
         List<Contributor> people = contributors.stream().filter(c -> !c.isBot()).collect(Collectors.toList());
         List<Contributor> bots = contributors.stream().filter(c -> c.isBot()).collect(Collectors.toList());
 
-        report.startTabContentSection("contributors", true);
+        report.startTabContentSection("contributors", false);
         addZoomableCircleLinks(report);
         ContributorsReportUtils.addContributorsSection(codeAnalysisResults, report);
         report.endTabContentSection();
 
-        report.startTabContentSection("matrix", false);
+        report.startTabContentSection("matrix", true);
         addMatrix(new ArrayList<>(people), "Contributors");
         addMatrix(new ArrayList<>(bots), "Bots");
         report.endTabContentSection();

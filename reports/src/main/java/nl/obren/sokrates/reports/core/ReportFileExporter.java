@@ -1067,7 +1067,10 @@ public class ReportFileExporter {
 
         list.add(new String[]{"SourceCodeOverview.html", "Source Code Overview", "codebase"});
         if (mainExists) {
-            list.add(new String[]{"Components.html", showDependencies ? "Components and Dependencies" : "Components", "dependencies"});
+            list.add(new String[]{"Components.html", "Components", "code_organization"});
+            if (showDependencies) {
+                list.add(new String[]{"ComponentsAndDependencies.html", "Component Dependencies*", "dependencies"});
+            }
         }
 
         if (showDuplication) {
@@ -1085,8 +1088,8 @@ public class ReportFileExporter {
             list.add(new String[]{"Contributors.html", "Contributors", "contributors"});
         }
         if (showUnits) {
-            list.add(new String[]{"UnitSize.html", "Unit Size", "unit_size"});
-            list.add(new String[]{"ConditionalComplexity.html", "Conditional Complexity", "conditional"});
+            list.add(new String[]{"UnitSize.html", "Unit Size*", "unit_size"});
+            list.add(new String[]{"ConditionalComplexity.html", "Conditional Complexity*", "conditional"});
         }
         if (showConcerns) {
             list.add(new String[]{"FeaturesOfInterest.html", "Features of Interest", "cross_cutting_concerns"});
@@ -1121,6 +1124,9 @@ public class ReportFileExporter {
         if (!showUnits) {
             list.add(new String[]{"", "Unit Size", "unit_size"});
             list.add(new String[]{"", "Conditional Complexity", "conditional"});
+        }
+        if (!showDependencies) {
+            list.add(new String[]{"ComponentsAndDependencies.html", "Component Dependencies*", "dependencies"});
         }
         if (!showConcerns) {
             list.add(new String[]{"", "Features of Interest", "cross_cutting_concerns"});
