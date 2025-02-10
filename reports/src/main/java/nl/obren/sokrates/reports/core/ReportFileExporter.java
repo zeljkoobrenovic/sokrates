@@ -1071,6 +1071,9 @@ public class ReportFileExporter {
             if (showDependencies) {
                 list.add(new String[]{"ComponentsAndDependencies.html", "Component Dependencies*", "dependencies"});
             }
+            if (showHistoryReport) {
+                list.add(new String[]{"FileTemporalDependencies.html", "Temporal Dependencies", "temporal_dependency"});
+            }
         }
 
         if (showDuplication) {
@@ -1083,7 +1086,6 @@ public class ReportFileExporter {
         if (showHistoryReport) {
             list.add(new String[]{"FileAge.html", "File Age & Freshness", "file_history"});
             list.add(new String[]{"FileChangeFrequency.html", "File Change Frequency", "change"});
-            list.add(new String[]{"FileTemporalDependencies.html", "Temporal Dependencies", "temporal_dependency"});
             list.add(new String[]{"Commits.html", "Commits", "commits"});
             list.add(new String[]{"Contributors.html", "Contributors", "contributors"});
         }
