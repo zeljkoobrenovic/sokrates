@@ -211,7 +211,7 @@ public class ScopingConventions {
         otherFilesConventions.add(new Convention(".*[.]mtl", "", "Material Template Library files"));
         otherFilesConventions.add(new Convention(".*[.]urdf", "", "URDF files"));
 
-        otherFilesConventions.add(new Convention("\".*/site[-]packages/.*", "", "3rd party libraries and artifacts"));
+        otherFilesConventions.add(new Convention(".*/site[-]packages/.*", "", "3rd party libraries and artifacts"));
     }
 
     private void addBuildAndDeploymentConventions() {
