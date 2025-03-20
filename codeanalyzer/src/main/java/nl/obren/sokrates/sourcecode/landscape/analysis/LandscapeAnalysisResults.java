@@ -1034,6 +1034,20 @@ public class LandscapeAnalysisResults {
         return contributors.stream().filter(c -> c.getContributor().getCommitsCount30Days() > 0).collect(Collectors.toCollection(ArrayList::new));
     }
 
+    public int getRecentContributorsCount() {
+        Set<String> ids = new HashSet<>();
+
+        for (RepositoryAnalysisResults repository: repositoryAnalysisResults) {
+            for (Contributor contributor : repository.getAnalysisResults().getContributorsAnalysisResults().getContributors()) {
+                if (contributor.getCommitsCount30Days() > 0) {
+                    ids.add(contributor.getEmail());
+                }
+            }
+
+        }
+        return ids.size();
+    }
+
     public int getRecentContributorsCount(List<ContributorRepositories> contributors) {
         return getRecentContributors(contributors).size();
     }
