@@ -47,8 +47,11 @@ public class ReportFileExporter {
         File reportFile = new File(folder, reportFileName);
         try {
             PrintWriter out = new PrintWriter(reportFile);
-            String reportsHtmlHeader = ReportConstants.REPORTS_HTML_HEADER.replace("<title></title>", "<title>" +
-                    report.getDisplayName().replaceAll("<.*?>", "").replaceAll("\\[.*?\\]", "") + "</title>");
+            String titleText = extractTitle(report.getDisplayName());
+            String reportsHtmlHeader = ReportConstants.REPORTS_HTML_HEADER.replace(
+                    "<title></title>",
+                    "<title>" + titleText + "</title>"
+            );
             reportsHtmlHeader = reportsHtmlHeader.replace("<!-- CUSTOM HEADER FRAGMENT -->", customHeaderFragment);
             if (report.isEmbedded()) {
                 reportsHtmlHeader = reportsHtmlHeader.replace(" ${margin-left}", "0");
@@ -65,6 +68,31 @@ public class ReportFileExporter {
             out.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
+        }
+    }
+
+    private static String extractTitle(String displayName) {
+        // check if displayName contains HTML tags
+        if (displayName.contains("<div")) {
+            // extract system name from first div
+            String systemName = "";
+            if (displayName.contains("<div")) {
+                systemName = displayName.replaceAll("(?s).*?<div[^>]*>(.*?)</div>.*", "$1").trim();
+            }
+            // extract report name from second div
+            String reportName = "";
+            if (displayName.contains("</div><div")) {
+                reportName = displayName.replaceAll("(?s).*?</div><div[^>]*>(.*?)</div>.*", "$1").trim();
+            }
+            // combine them with a separator
+            String titleText = systemName;
+            if (!systemName.isEmpty() && !reportName.isEmpty()) {
+                titleText += " - " + reportName;
+            }
+            return titleText;
+        } else {
+            // if no HTML tags, return the displayName as is
+            return displayName.trim();
         }
     }
 
