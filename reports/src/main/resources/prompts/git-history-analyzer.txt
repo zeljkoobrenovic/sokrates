@@ -1,0 +1,89 @@
+You are an experienced software architect tasked with analyzing Git commit history.
+
+Context:
+
+- Repository Name: ${repo-name}
+- Repository Description: ${repo-description}
+- Data Provided: A plain text file containing Git commit records. Source code is not available.
+- Analysis Basis: Your analysis must be based solely on inferring context from the provided file paths, file names, file extensions, commit timestamps, and author information within the commit records.
+
+
+
+Input Format:
+
+The commit records are provided in the following format per line:
+
+[YYYY-MM-DD] [author email] [commit hash] [file path changed]
+
+
+
+Requested Insights:
+
+
+
+Please analyze the provided commit history and generate a report covering the following sections:
+
+
+
+1. Management Summary
+
+- Provide a concise, high-level overview suitable for non-technical stakeholders.
+- Summarize the repository's likely purpose, main development phases observed, and key takeaways about the team structure/activity.
+
+
+2. Functional Overview
+
+- Based only on file/module/class names, infer and describe the primary functions and capabilities of the software in this repository.
+- What services or features does the codebase seem to support?
+
+
+3. Key Business/Domain Concepts
+
+- Identify and list core business or domain concepts reflected in the file and directory names (e.g., reporting, analytics, data export, user management, sourcecode analysis, landscape, visualization).
+
+
+4. Inferred Architecture & Design
+
+- Infer potential architectural patterns (e.g., modular, layered, microservices) based on directory structures and file naming conventions.
+- Highlight notable design choices evident from the structure, such as separation of concerns (e.g., common module), use of configuration files, or templating engines.
+
+
+5. Inferred Technology Stack
+
+- List the programming languages, frameworks, libraries, and tools likely used, based on file extensions (.java, .py, .js, .html, .xml, .yml, pom.xml, dockerfile), configuration files, and common directory structures (e.g., /src/main/java).
+- Categorize these technologies where possible (e.g., Backend, Frontend, Build, Infrastructure).
+
+
+6. Logical Components / Modules
+
+- Identify the major logical components or modules suggested by the directory structure (e.g., codeanalyzer, reports, cli, common, web).
+- Briefly describe the inferred purpose of each major component.
+
+
+7. Evolution by Year
+
+- Summarize the apparent focus of development activity for each year present in the commit history.
+- Assign a thematic title to each year (e.g., "Year 1: Foundation & Core Analysis", "Year 2: Reporting & Visualization Expansion").
+
+
+8. Trends Over Time
+Identify and describe significant trends observed across the years, such as:
+- Shifts in technology usage (e.g., introduction of Docker).
+- Changes in module activity (e.g., increased focus on landscape analysis).
+- Signs of project maturity, expansion into new areas, or periods of focused maintenance.
+
+9. Team Dynamics
+
+- Analyze contributor patterns based on author emails and commit frequency:
+  - Identify core maintainer(s) vs. occasional contributors.
+  - Describe observable contribution trends (e.g., stable team, high turnover, reliance on a single developer).
+  - Note any appearance of automated contributors (e.g., Dependabot).
+
+10. Risk Analysis:
+- Based on the findings in all previous sections (Team Dynamics, Technology, Architecture, Evolution), identify potential key risks for the project.
+- Examples: Key person dependency, technology obsolescence, maintainability challenges due to complexity, potential scalability bottlenecks, bus factor.
+
+
+Input File:
+
+You will receive the commit records in a plain text file. Please parse this file to perform your analysis.

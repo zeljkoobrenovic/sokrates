@@ -23,6 +23,7 @@ import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
 import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileWithSearchData;
+import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
@@ -36,6 +37,9 @@ import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
 import nl.obren.sokrates.sourcecode.filehistory.FileHistoryScopingUtils;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.filehistory.FilePairChangedTogether;
+import nl.obren.sokrates.sourcecode.filehistory.GitHistoryUtil;
+import nl.obren.sokrates.sourcecode.githistory.FileUpdate;
+import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import nl.obren.sokrates.sourcecode.lang.DefaultLanguageAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
 import nl.obren.sokrates.sourcecode.search.FoundLine;
@@ -48,6 +52,7 @@ import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -595,18 +600,27 @@ public class DataExporter {
                             {"analysisResults.json", analysisResultsJson}});
         }
 
-        List<SourceFile> sourceFiles = analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles();
-        FileUtils.write(new File(dataFolder, "mainFiles.json"), new JsonGenerator().generate(sourceFiles), UTF_8);
+        List<SourceFile> mainSourceFiles = analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles();
+        FileUtils.write(new File(dataFolder, "mainFiles.json"), new JsonGenerator().generate(mainSourceFiles), UTF_8);
 
         if (codeConfiguration.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesConfigFile.getParentFile())) {
             saveExtraAnalysesConfig();
         }
 
-        FileUtils.write(new File(textDataFolder, "mainFiles.txt"), getFilesAsTxt(sourceFiles), UTF_8);
-        FileUtils.write(new File(textDataFolder, "mainFilesWithHistory.txt"), getFilesWithHistoryAsTxt(sourceFiles), UTF_8);
-        FileUtils.write(new File(textDataFolder, "mainFilesWithoutHistory.txt"), getFilesWithoutHistoryAsTxt(sourceFiles), UTF_8);
+        FileUtils.write(new File(textDataFolder, "mainFiles.txt"), getFilesAsTxt(mainSourceFiles), UTF_8);
+        FileUtils.write(new File(textDataFolder, "mainFilesWithHistory.txt"), getFilesWithHistoryAsTxt(mainSourceFiles), UTF_8);
+        FileUtils.write(new File(textDataFolder, "mainFilesWithoutHistory.txt"), getFilesWithoutHistoryAsTxt(mainSourceFiles), UTF_8);
         try {
-            FileUtils.write(new File(dataFolder, "testFiles.json"), new JsonGenerator().generate(analysisResults.getTestAspectAnalysisResults().getAspect().getSourceFiles()), UTF_8);
+            List<SourceFile> testSourceFile = analysisResults.getTestAspectAnalysisResults().getAspect().getSourceFiles();
+            List<SourceFile> generatedSourceFiles = analysisResults.getGeneratedAspectAnalysisResults().getAspect().getSourceFiles();
+            List<SourceFile> buildAndDeploymentSourceFiles = analysisResults.getBuildAndDeployAspectAnalysisResults().getAspect().getSourceFiles();
+            List<SourceFile> otherSourceFiles = analysisResults.getOtherAspectAnalysisResults().getAspect().getSourceFiles();
+
+            FileUtils.write(new File(dataFolder, "testFiles.json"), new JsonGenerator().generate(testSourceFile), UTF_8);
+            FileUtils.write(new File(dataFolder, "generatedFiles.json"), new JsonGenerator().generate(generatedSourceFiles), UTF_8);
+            FileUtils.write(new File(dataFolder, "buildAndDeploymentFiles.json"), new JsonGenerator().generate(buildAndDeploymentSourceFiles), UTF_8);
+            FileUtils.write(new File(dataFolder, "otherFiles.json"), new JsonGenerator().generate(otherSourceFiles), UTF_8);
+
             FileUtils.write(new File(dataFolder, "units.json"), new JsonGenerator().generate(new UnitListExporter(analysisResults.getUnitsAnalysisResults().getAllUnits()).getAllUnitsData()), UTF_8);
             FileUtils.write(new File(dataFolder, "files.json"), new FileListExporter(analysisResults.getFilesAnalysisResults().getAllFiles()).getJson(), UTF_8);
             List<DuplicationInstance> allDuplicates = analysisResults.getDuplicationAnalysisResults().getAllDuplicates();
@@ -620,6 +634,22 @@ public class DataExporter {
                     new DependenciesExporter(analysisResults.getAllDependencies()).getDependenciesExportInfo()), UTF_8);
             FileUtils.write(new File(dataFolder, "contributors.json"), new JsonGenerator().generate(analysisResults.getContributorsAnalysisResults().getContributors()), UTF_8);
             FileUtils.write(new File(dataFolder, "concerns.json"), new JsonGenerator().generate(analysisResults.getConcernsAnalysisResults()), UTF_8);
+
+            File zipFolder = new File(dataFolder, "zips");
+            zipFolder.mkdirs();
+
+            ZipUtils.stringToZipFile(new File(zipFolder, "all_files.zip"), new String[][]{
+                    {"aspect_main.txt", FileUtils.readFileToString(new File(textDataFolder, "aspect_main.txt"), UTF_8)},
+                    {"aspect_test.txt", FileUtils.readFileToString(new File(textDataFolder, "aspect_test.txt"), UTF_8)},
+                    {"aspect_generated.txt", FileUtils.readFileToString(new File(textDataFolder, "aspect_generated.txt"), UTF_8)},
+                    {"aspect_build_and_deployment.txt", FileUtils.readFileToString(new File(textDataFolder, "aspect_build_and_deployment.txt"), UTF_8)},
+                    {"aspect_other.txt", FileUtils.readFileToString(new File(textDataFolder, "aspect_other.txt"), UTF_8)}
+            });
+            File gitHistoryFile = new File(reportsFolder, "../../git-history.txt");
+            if (gitHistoryFile.exists()) {
+                String gitHistoryContent = FileUtils.readFileToString(gitHistoryFile, UTF_8);
+                ZipUtils.stringToZipFile(new File(zipFolder, "git-history.zip"), "git-history.txt", gitHistoryContent);
+            }
         } catch (Throwable t) {
             t.printStackTrace();
         }
@@ -772,6 +802,7 @@ public class DataExporter {
             LOG.warn(e);
         }
     }
+
     private void saveStructureFile() {
         try {
 

@@ -509,4 +509,10 @@ public class RichTextReport {
     public void addContentInSpan(String content, String style) {
         addHtmlContent("<span style='" + style + "'>" + content + "</span>");
     }
+
+    public void addTextArea(String content, String style) {
+        addHtmlContent("<textarea style='" + style + "'>");
+        addHtmlContent(content);
+        addHtmlContent("</textarea>");
+    }
 }
