@@ -1,0 +1,24 @@
+Analyze the following JSON (or tabular) data, which contains a list of contributors and their commit activity across various repositories. Each record includes fields such as contributor name, total commits, date of first and last commit, and associated repositories.
+
+
+Based solely on this data, generate two comprehensive year-by-year narratives:
+
+
+1. Repository-Focused Year-by-Year Evolution Narrative
+For each year found in the data:
+    * Assign a short thematic name (e.g., “Project Kick-off”, “Platform Expansion”, “AI Focus”) that best summarizes the dominant trend that year.
+    * Summarize the major repositories that saw contributor activity.
+    * Highlight emerging trends in repository structure or naming conventions (e.g., “api_”, “datalake_”, etc.).
+    * Note any major shifts in focus, such as the transition from frontend to backend, from infrastructure to AI, or introduction of CI/CD, etc.
+    * Mention if there’s evidence of automation, bots, or system-generated commits beginning or ending.
+
+
+2. Contributor-Focused Year-by-Year Evolution Narrative
+For each year:
+    * Use a thematic title that captures the overall contributor dynamic of that year.
+    * List notable new contributors whose first commits are in that year.
+    * List notable departing contributors whose last commits are in that year.
+    * Summarize shifts in contributor patterns (e.g., rapid team growth, leadership changes, specialized contributors entering).
+    * Highlight if the number of contributors increased, decreased, or remained stable compared to the previous year.
+    * Format your response as clear, structured sections per year (with year headings), and present the repository and contributor narratives separately.
+    * Do not rely on external data—only use the fields in the input.

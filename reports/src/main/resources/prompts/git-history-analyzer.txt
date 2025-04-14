@@ -2,8 +2,8 @@ You are an experienced software architect tasked with analyzing Git commit histo
 
 Context:
 
-- Repository Name: ${repo-name}
-- Repository Description: ${repo-description}
+- Repository Name: ${name}
+- Repository Description: ${description}
 - Data Provided: A plain text file containing Git commit records. Source code is not available.
 - Analysis Basis: Your analysis must be based solely on inferring context from the provided file paths, file names, file extensions, commit timestamps, and author information within the commit records.
 

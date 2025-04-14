@@ -1,0 +1,36 @@
+Analyze the provided file containing repository data ([FILENAME or FILE REFERENCE]). The file includes columns such as: Repository Name, Main Language, LOC (main, test, other), Age, Contributors, Recent Contributors, Commits this year, and Latest commit date.
+
+
+Perform the following analysis and structure the output into separate, clearly marked sections:
+
+
+1.  **Management Summary:**
+    * Provide a concise, high-level overview suitable for non-technical stakeholders.
+
+
+2.  **Conceptual Grouping:**
+    * Based *only* on the repository names, identify and list the main business concepts, technical domains, or functional areas these repositories likely represent (e.g., Finance, Real Estate, UI/UX, Cloud Infrastructure, Data Pipelines, CRM, ML/AI, etc.).
+
+3.  **Naming Patterns and Inconsistencies:**
+    * Identify common naming patterns used for the repositories (e.g., use of prefixes, suffixes like `-ui` or `-service`, separators like `-` vs `_`, keywords).
+    * Identify any inconsistencies in these patterns (e.g., mixed separators, inconsistent prefix usage, cryptic names, unclear abbreviations, inconsistent casing).
+
+4.  **Size and Activity Analysis:**
+    * Summarize insights regarding repository size (using LOC data) and overall development activity (using Contributors, Commits this year, and Latest commit date) for the conceptual groups identified above.
+    * Highlight which groups appear to have the largest codebases, the most contributors, or the highest recent activity.
+
+5.  **Potentially Inactive Repositories:**
+    * Identify repositories that appear potentially inactive or are likely in maintenance mode. Use criteria like 0 commits in the last year and/or a latest commit date older than [Specify timeframe, e.g., 18 months ago].
+    * Provide a few examples.
+
+6.  **Potential Risks:**
+    * Based on the entire dataset analysis (including conceptual groups, naming conventions, size, activity, inactivity, contributor counts, LOC breakdown, language diversity), identify and describe potential risks. Consider aspects such as:
+        * Technical Debt / Lack of Maintenance (especially for inactive/old repos)
+        * Key Person Dependency / Low Contributor Count
+        * Code Complexity / Maintainability (especially for very large repos)
+        * Insufficient Testing (low test LOC relative to main LOC, or 0 test LOC)
+        * Technology Stack Fragmentation / Diversity
+        * Potential Security Risks (in old/unmaintained code)
+        * Naming inconsistencies hindering discoverability or understanding.
+
+Please ensure the analysis is based solely on the data within the provided file. Fetch the file content first if necessary.

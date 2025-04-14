@@ -9,6 +9,7 @@ import nl.obren.sokrates.reports.generators.statichtml.ContributorsReportUtils;
 import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
+import nl.obren.sokrates.reports.utils.PromptsUtils;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
@@ -330,20 +331,13 @@ public class ReportFileExporter {
     }
 
     private static void addPrompts(RichTextReport report, CodeAnalysisResults analysisResults) {
-        String promptGitHistory = HtmlTemplateUtils.getResource("/prompts/git-history-analyzer.txt");
-
-        Metadata metadata = analysisResults.getMetadata();
-        promptGitHistory = promptGitHistory.replace("${repo-name}", metadata.getName());
-        promptGitHistory = promptGitHistory.replace("${repo-description}", StringUtils.defaultIfBlank(metadata.getDescription(), "not provided"));
-
         report.addParagraph("Generative AI tools, like ChatGPT or Gemini, can help you explore and discuss various aspects of source code repositories using simple prompts and file uploads. Sokrates provides you with curated data that you can use to analyze your source code further.", "");
 
-        report.startSubSection("Repository Evolution Analyzer (based on git history)", "");
-        report.addParagraph("Try on: <a target='_blank' href='https://chatgpt.com/?q=" + URLEncoder.encode(promptGitHistory, StandardCharsets.UTF_8) + "'>OpenAI ChatGPT</a> | <a target='_blank' href='https://gemini.google.com/'>Google Gemini</a>", "");
-        report.addParagraph("Files to upload: <a target='_blank' href='../data/zips/git-history.zip'>git-history.zip</a>", "");
-        report.addParagraph("Prompt:", "");
-        report.addTextArea(promptGitHistory, "width: calc(100% - 5px); height: 20em");
-        report.endSection();
+        PromptsUtils.addRepositoryPromptSection("git-history-analyzer", report, analysisResults, "Example Prompt 1: Repository Evolution Analyzer (based on git history)", "", Arrays.asList(new Link[]{new Link("git-history.zip", "../data/zips/git-history.zip")}));
+
+        PromptsUtils.addRepositoryPromptSection("path-name-conventions-analyzer", report, analysisResults, "Example Prompt 2: File name conventions", "", Arrays.asList(new Link("files.json", "../data/files.json")));
+
+        PromptsUtils.addRepositoryPromptSection("technology-analyzer", report, analysisResults, "Example Prompt 3: Technology analyzer (based of file paths)", "", Arrays.asList(new Link("files.json", "../data/files.json")));
     }
 
     private static void addSummaryActivityTable(ContributorsAnalysisResults contributorsAnalysisResults, RichTextReport indexReport) {

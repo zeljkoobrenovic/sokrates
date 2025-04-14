@@ -1,0 +1,35 @@
+Analyze the provided list of file paths to identify as many technologies, frameworks, tools, programming languages, cloud services, and architectural patterns used in the project as possible.
+
+
+**Input:**
+Please analyze the following list of file structures (provided as a list of strings or a JSON object containing file paths and optionally extensions/metadata):
+
+
+*(Example: A JSON array like the one previously provided, or a simple list like `["src/server.ts", "Dockerfile", "tests/e2e/spec.cy.js", "infra/main.tf"]`)*
+
+
+**Analysis Instructions:**
+When performing the analysis, please consider the following:
+
+
+1.  **File Extensions:** Identify languages and configuration types (e.g., `.ts`, `.js`, `.py`, `.java`, `.tf`, `.yml`, `.hcl`, `.css`, `.html`).
+2.  **Directory Structure & Naming:** Look for conventional directory names (`src`, `tests`, `infra`, `docs`, `cicd`) and names indicating specific components or frameworks (`packages/bff`, `features`, `controllers`, `services`, `cypress`).
+3.  **Specific Filenames:** Identify standard configuration or definition files (e.g., `package.json`, `pom.xml`, `docker-compose.yml`, `Dockerfile`, `Jenkinsfile`, `webpack.config.js`, `tsconfig.json`, `requirements.txt`, `terragrunt.hcl`, `lint-staged.config.js`, `commitlint.config.js`).
+4.  **Keywords in Paths:** Look for names of known technologies, tools, frameworks, or cloud providers within the paths (e.g., `aws`, `azure`, `lambda`, `sqs`, `react`, `nest`, `k6`, `datadog`, `pm2`).
+
+
+
+**Output:**
+Please present the findings as a list of identified technologies. If possible, group them into relevant categories such as:
+
+
+* Programming Languages
+* Frameworks & Runtimes
+* Testing Tools
+* Infrastructure as Code / Cloud Providers
+* Containerization & Orchestration
+* Build Tools / Bundlers
+* Databases (if identifiable)
+* Monitoring & Logging
+* CI/CD & Dev Tools
+* Architectural Patterns

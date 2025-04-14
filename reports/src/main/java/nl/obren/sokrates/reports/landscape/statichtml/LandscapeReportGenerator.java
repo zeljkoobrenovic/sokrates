@@ -17,10 +17,15 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.*;
-import nl.obren.sokrates.reports.landscape.utils.*;
+import nl.obren.sokrates.reports.landscape.utils.ExtractStringListValue;
+import nl.obren.sokrates.reports.landscape.utils.Force3DGraphExporter;
+import nl.obren.sokrates.reports.landscape.utils.LandscapeGeneratorUtils;
+import nl.obren.sokrates.reports.landscape.utils.RacingLanguagesBarChartsExporter;
 import nl.obren.sokrates.reports.utils.AnimalIcons;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
+import nl.obren.sokrates.reports.utils.PromptsUtils;
+import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
@@ -29,7 +34,10 @@ import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.landscape.*;
-import nl.obren.sokrates.sourcecode.landscape.analysis.*;
+import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
+import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
+import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResultsReadData;
+import nl.obren.sokrates.sourcecode.landscape.analysis.RepositoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
@@ -60,6 +68,7 @@ public class LandscapeReportGenerator {
     public static final String TAGS_TAB_ID = "tags";
     public static final String CONTRIBUTORS_TAB_ID = "contributors";
     public static final String TOPOLOGIES_TAB_ID = "topologies";
+    public static final String PROMPTS_TAB_ID = "prompts";
     public static final String TEAMS_TAB_ID = "teams";
     public static final String CUSTOM_TAB_ID_PREFIX = "custom_tab_";
     public static final String CONTRIBUTORS_30_D = "contributors_30d_";
@@ -177,6 +186,7 @@ public class LandscapeReportGenerator {
         addStatsTab();
         addRepositoryTab(repositories);
         addTagsTab(repositories);
+        addPromptsTab();
 
         landscapeReportContributorsTab.addContributorsTabs(CONTRIBUTORS_TAB_ID);
         if (teamsConfig.getTeams().size() > 0) {
@@ -316,6 +326,7 @@ public class LandscapeReportGenerator {
             int index = configuration.getCustomTabs().indexOf(tab);
             landscapeReport.addTab(CUSTOM_TAB_ID_PREFIX + index, tab.getName(), false);
         });
+        landscapeReport.addTab(PROMPTS_TAB_ID, "AI Prompts", false);
         landscapeReport.endTabGroup();
     }
 
@@ -335,6 +346,23 @@ public class LandscapeReportGenerator {
         ProcessingStopwatch.start("reporting/tags");
         addTagsSection(repositories);
         ProcessingStopwatch.end("reporting/tags");
+        landscapeReport.endTabContentSection();
+    }
+
+    private void addPromptsTab() {
+        ProcessingStopwatch.start("reporting/prompts");
+
+        landscapeReport.startTabContentSection(PROMPTS_TAB_ID, false);
+        landscapeReport.startDiv("margin: 20px;");
+        landscapeReport.addParagraph("Generative AI tools, like ChatGPT or Gemini, can help you explore and discuss various aspects of source code repositories using simple prompts and file uploads. Sokrates provides you with curated data that you can use to analyze your source code further.", "");
+
+        PromptsUtils.addLandscapePromptSection("landscape-repository-insights", landscapeReport, landscapeAnalysisResults, "Prompt 1: Simple Repository Insights (based on repository names and basic stats)", "", Arrays.asList(new Link("repositories.txt", "data/repositories.txt"), new Link("repositories.json", "data/repositories.json")));
+
+        PromptsUtils.addLandscapePromptSection("landscape-commits-analyzer", landscapeReport, landscapeAnalysisResults, "Prompt 2: Simple Commits & Contributor Insights", "", Arrays.asList(new Link("contributors.txt", "data/contributors.txt"), new Link("contributors.json", "data/contributors.json")));
+
+        ProcessingStopwatch.end("reporting/prompts");
+
+        landscapeReport.endDiv();
         landscapeReport.endTabContentSection();
     }
 

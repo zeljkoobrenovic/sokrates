@@ -1,0 +1,14 @@
+Analyze the dataset below focusing only on file paths and names. Ignore all other metadata (e.g., commit count, dates, contributors).
+
+
+Identify and explain:
+
+
+* High-level folder structure and its purpose
+* Naming conventions and patterns in file names (e.g., common prefixes/suffixes)
+* Structural organization (e.g., mirrored folders, environment separation, brand duplication)
+* Any signs of convention-driven design or architecture decisions
+* Any potential improvements or inconsistencies in path or naming style
+
+
+Then provide a concise summary with examples.
