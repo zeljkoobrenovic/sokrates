@@ -20,7 +20,7 @@ public class PromptsUtils {
         promptContent = promptContent.replace("${description}", StringUtils.defaultIfBlank(metadata.getDescription(), "not provided"));
 
         report.startSubSection(title, subTitle);
-        report.addParagraph("Try on: <a target='_blank' href='https://chatgpt.com/?q=" + URLEncoder.encode(promptContent, StandardCharsets.UTF_8) + "'>OpenAI ChatGPT</a> | <a target='_blank' href='https://gemini.google.com/'>Google Gemini</a>", "");
+        report.addParagraph("Try on: <a target='_blank' href='https://chatgpt.com/?q=" + URLEncoder.encode(promptContent, StandardCharsets.UTF_8) + "'>OpenAI ChatGPT</a> | <a target='_blank' href='https://claude.ai/new?q=" + URLEncoder.encode(promptContent, StandardCharsets.UTF_8) + "'>Claude.ai Chat</a> | <a target='_blank' href='https://gemini.google.com/'>Google Gemini</a>", "");
 
         String links = "";
 
@@ -47,7 +47,7 @@ public class PromptsUtils {
         promptContent = promptContent.replace("${description}", StringUtils.defaultIfBlank(metadata.getDescription(), "not provided"));
 
         report.startSubSection(title, subTitle);
-        report.addParagraph("Try on: <a target='_blank' href='https://chatgpt.com/?q=" + URLEncoder.encode(promptContent, StandardCharsets.UTF_8) + "'>OpenAI ChatGPT</a> | <a target='_blank' href='https://gemini.google.com/'>Google Gemini</a>", "");
+        report.addParagraph("Try on: <a target='_blank' href='https://chatgpt.com/?q=" + URLEncoder.encode(promptContent, StandardCharsets.UTF_8) + "'>OpenAI ChatGPT</a> | <a target='_blank' href='https://claude.ai/new?q=" + URLEncoder.encode(promptContent, StandardCharsets.UTF_8) + "'>Claude.ai Chat</a> | <a target='_blank' href='https://gemini.google.com/'>Google Gemini</a>", "");
 
         String links = "";
 
