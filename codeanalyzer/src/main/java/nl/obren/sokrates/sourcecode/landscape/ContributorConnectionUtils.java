@@ -13,6 +13,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ContributorConnectionUtils {
+
+    public static final int MAX_PEOPLE_DEPENDENCIES_SIZE = 10000;
+
     public static List<ContributorConnection> getContributorConnections(List<ComponentDependency> peopleDependencies,
                                                                         List<Contributor> contributors, ContributionCounter contributionCounter) {
         List<ContributorConnection> contributorConnections = new ArrayList<>();
@@ -70,6 +73,9 @@ public class ContributorConnectionUtils {
             List<String> emails = contributionMap.get(path);
             emails.forEach(email1 -> {
                 emails.forEach(email2 -> {
+                    if (dependencies.size() > MAX_PEOPLE_DEPENDENCIES_SIZE) {
+                        return;
+                    }
                     if (email1.equalsIgnoreCase(email2)) return;
 
                     String key1 = email1 + "::" + email2;
@@ -109,6 +115,9 @@ public class ContributorConnectionUtils {
             fileModificationHistory.getCommits().stream()
                     .filter(commit -> DateUtils.isCommittedBetween(commit.getDate(), 0, daysAgo))
                     .forEach(commit -> {
+                        if (dependencies.size() > MAX_PEOPLE_DEPENDENCIES_SIZE) {
+                            return;
+                        }
                         String path = "[" + fileModificationHistory.getPath() + "]";
                         String email = commit.getEmail();
                         String key1 = email + "::" + path;
@@ -162,6 +171,9 @@ public class ContributorConnectionUtils {
             List<String> emails = repositoriesMap.get(repositoryName);
             emails.forEach(email1 -> {
                 emails.stream().filter(email2 -> !email1.equalsIgnoreCase(email2)).forEach(email2 -> {
+                    if (dependencies.size() > MAX_PEOPLE_DEPENDENCIES_SIZE) {
+                        return;
+                    }
                     String key1 = email1 + "::" + email2;
                     String key2 = email2 + "::" + email1;
 
@@ -198,6 +210,9 @@ public class ContributorConnectionUtils {
                     contributorRepositories.getRepositories().stream()
                             .filter(repository -> DateUtils.isAnyDateCommittedBetween(repository.getCommitDates(), daysAgo1, daysAgo2))
                             .forEach(repository -> {
+                                if (dependencies.size() > MAX_PEOPLE_DEPENDENCIES_SIZE) {
+                                    return;
+                                }
                                 String email = contributorRepositories.getContributor().getEmail();
                                 String repositoryName = "[" + repository.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName() + "]";
                                 String key1 = email + "::" + repositoryName;
