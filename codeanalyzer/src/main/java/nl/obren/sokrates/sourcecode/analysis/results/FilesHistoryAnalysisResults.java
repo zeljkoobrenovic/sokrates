@@ -252,8 +252,8 @@ public class FilesHistoryAnalysisResults {
     }
 
     @JsonIgnore
-    public List<FileModificationHistory> getHistory() {
-        return history;
+    public List<FileModificationHistory> getHistory(int maxHistoryLength) {
+        return history.stream().limit(maxHistoryLength).collect(Collectors.toList());
     }
 
     @JsonIgnore

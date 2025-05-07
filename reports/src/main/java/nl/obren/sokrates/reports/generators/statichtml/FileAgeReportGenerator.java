@@ -60,7 +60,7 @@ public class FileAgeReportGenerator {
     private void addSummary(RichTextReport report) {
         FileHistoryComponentsHelper helper = new FileHistoryComponentsHelper();
 
-        List<FileModificationHistory> history = codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory();
+        List<FileModificationHistory> history = codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory(Integer.MAX_VALUE);
         List<String> uniqueDates = helper.getUniqueDates(history);
 
         if (uniqueDates.size() > 1) {

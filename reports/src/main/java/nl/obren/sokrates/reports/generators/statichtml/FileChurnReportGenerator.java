@@ -240,7 +240,7 @@ public class FileChurnReportGenerator {
         if (codeAnalysisResults.getContributorsAnalysisResults().getContributors().size() > 0) {
             report.startSection("Correlations", "");
             CorrelationDiagramGenerator<FileModificationHistory> correlationDiagramGenerator = new CorrelationDiagramGenerator<>(report,
-                    codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory());
+                    codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory(Integer.MAX_VALUE));
 
             ProcessingStopwatch.start("reporting/file update frequency/correlations");
             correlationDiagramGenerator.addCorrelations("File Size vs. Number of Changes", "lines of code", "# changes",

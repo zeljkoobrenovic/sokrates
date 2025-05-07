@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 public class ContributorConnectionUtils {
 
+    public static final int MAX_HISTORY_LENGTH = 500000;
     public static final int MAX_PEOPLE_DEPENDENCIES_SIZE = 10000;
 
     public static List<ContributorConnection> getContributorConnections(List<ComponentDependency> peopleDependencies,
@@ -48,7 +49,7 @@ public class ContributorConnectionUtils {
         ProcessingStopwatch.start(processingName);
         Map<String, List<String>> contributionMap = new HashMap<>();
 
-        codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory().forEach(fileModificationHistory -> {
+        codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory(MAX_HISTORY_LENGTH).forEach(fileModificationHistory -> {
             fileModificationHistory.getCommits().stream()
                     .filter(commit -> DateUtils.isCommittedBetween(commit.getDate(), 0, daysAgo))
                     .forEach(commit -> {
@@ -111,7 +112,7 @@ public class ContributorConnectionUtils {
         List<ComponentDependency> dependencies = new ArrayList<>();
         Map<String, ComponentDependency> dependenciesMap = new HashMap<>();
 
-        codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory().forEach(fileModificationHistory -> {
+        codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory(MAX_HISTORY_LENGTH).forEach(fileModificationHistory -> {
             fileModificationHistory.getCommits().stream()
                     .filter(commit -> DateUtils.isCommittedBetween(commit.getDate(), 0, daysAgo))
                     .forEach(commit -> {
