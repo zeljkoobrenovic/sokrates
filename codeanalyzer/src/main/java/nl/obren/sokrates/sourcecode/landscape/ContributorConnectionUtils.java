@@ -49,7 +49,7 @@ public class ContributorConnectionUtils {
         ProcessingStopwatch.start(processingName);
         Map<String, List<String>> contributionMap = new HashMap<>();
 
-        codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory(MAX_HISTORY_LENGTH).forEach(fileModificationHistory -> {
+        codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory(Integer.MAX_VALUE).forEach(fileModificationHistory -> {
             fileModificationHistory.getCommits().stream()
                     .filter(commit -> DateUtils.isCommittedBetween(commit.getDate(), 0, daysAgo))
                     .forEach(commit -> {
@@ -112,7 +112,7 @@ public class ContributorConnectionUtils {
         List<ComponentDependency> dependencies = new ArrayList<>();
         Map<String, ComponentDependency> dependenciesMap = new HashMap<>();
 
-        codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory(MAX_HISTORY_LENGTH).forEach(fileModificationHistory -> {
+        codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory(Integer.MAX_VALUE).forEach(fileModificationHistory -> {
             fileModificationHistory.getCommits().stream()
                     .filter(commit -> DateUtils.isCommittedBetween(commit.getDate(), 0, daysAgo))
                     .forEach(commit -> {
