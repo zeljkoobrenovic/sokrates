@@ -13,6 +13,7 @@ import java.util.List;
 public class AnalysisConfig {
     // If set to true, Sokrates skips duplication analysis and reporting
     private boolean skipDuplication = false;
+    private boolean skipCorrelations = false;
 
     // If set to true, Sokrates skips analysis and reporting of component dependencies
     private boolean skipDependencies = false;
@@ -81,6 +82,14 @@ public class AnalysisConfig {
 
     public boolean isSkipDependencies() {
         return skipDependencies;
+    }
+
+    public boolean isSkipCorrelations() {
+        return skipCorrelations;
+    }
+
+    public void setSkipCorrelations(boolean skipCorrelations) {
+        this.skipCorrelations = skipCorrelations;
     }
 
     public void setSkipDependencies(boolean skipDependencies) {

@@ -85,7 +85,7 @@ public class FileSizeReportGenerator {
         addFilesWithMostLongLines(report);
         ProcessingStopwatch.end("reporting/file size/files with most long lines");
 
-        if (codeAnalysisResults.getContributorsAnalysisResults().getContributors().size() > 0) {
+        if (!codeAnalysisResults.getCodeConfiguration().getAnalysis().isSkipCorrelations() && codeAnalysisResults.getContributorsAnalysisResults().getContributors().size() > 0) {
             report.startSection("Correlations", "");
             CorrelationDiagramGenerator<FileModificationHistory> correlationDiagramGenerator = new CorrelationDiagramGenerator<>(report, codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory(Integer.MAX_VALUE));
 

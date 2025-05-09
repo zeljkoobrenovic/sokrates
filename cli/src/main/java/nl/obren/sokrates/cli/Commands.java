@@ -62,6 +62,7 @@ public class Commands {
     public static final String ARG_HELP = "help";
 
     public static final String ARG_SKIP_DUPLICATION_ANALYSES = "skipDuplication";
+    public static final String ARG_SKIP_CORRELATION_ANALYSES = "skipCorrelations";
     public static final String ARG_ENABLE_DUPLICATION_ANALYSES = "enableDuplication";
     public static final String ARG_SKIP_COMPLEX_ANALYSES = "skipComplexAnalyses";
     public static final String ARG_SET_CACHE_FILES = "setCacheFiles";
@@ -96,6 +97,7 @@ public class Commands {
     private Option recursive = new Option(RECURSIVE, false, "[OPTIONAL] performs the operation recursively in all sub-folders");
 
     private Option skipDuplicationAnalyses = new Option(ARG_SKIP_DUPLICATION_ANALYSES, false, "[OPTIONAL] skips duplication analyses");
+    private Option skipCorrelationAnalyses = new Option(ARG_SKIP_CORRELATION_ANALYSES, false, "[OPTIONAL] skips correlations analyses");
     private Option enableDuplicationAnalyses = new Option(ARG_ENABLE_DUPLICATION_ANALYSES, false, "[OPTIONAL] enables duplication analyses");
 
     private Option setName = new Option(ARG_SET_NAME, true, "[OPTIONAL] sets a repository name");
@@ -352,6 +354,9 @@ public class Commands {
 
     public Option getSkipDuplicationAnalyses() {
         return skipDuplicationAnalyses;
+    }
+    public Option getSkipCorrelationAnalyses() {
+        return skipCorrelationAnalyses;
     }
 
     public Option getEnableDuplicationAnalyses() {

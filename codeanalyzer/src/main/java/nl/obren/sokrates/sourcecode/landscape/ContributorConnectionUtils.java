@@ -6,8 +6,8 @@ import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorConnections;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositoryInfo;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
+import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositoryInfo;
 
 import java.util.*;
 import java.util.stream.Collectors;

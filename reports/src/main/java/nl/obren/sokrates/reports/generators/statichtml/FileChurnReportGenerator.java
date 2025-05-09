@@ -237,7 +237,7 @@ public class FileChurnReportGenerator {
     }
 
     private void addCorrelations(RichTextReport report) {
-        if (codeAnalysisResults.getContributorsAnalysisResults().getContributors().size() > 0) {
+        if (!codeAnalysisResults.getCodeConfiguration().getAnalysis().isSkipCorrelations() && codeAnalysisResults.getContributorsAnalysisResults().getContributors().size() > 0) {
             report.startSection("Correlations", "");
             CorrelationDiagramGenerator<FileModificationHistory> correlationDiagramGenerator = new CorrelationDiagramGenerator<>(report,
                     codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory(Integer.MAX_VALUE));

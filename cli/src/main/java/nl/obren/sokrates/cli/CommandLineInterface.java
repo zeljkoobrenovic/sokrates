@@ -412,11 +412,16 @@ public class CommandLineInterface {
         if (cmd.hasOption(commands.getSkipComplexAnalyses().getOpt())) {
             codeConfiguration.getAnalysis().setSkipDependencies(true);
             codeConfiguration.getAnalysis().setSkipDuplication(true);
+            codeConfiguration.getAnalysis().setSkipCorrelations(true);
             codeConfiguration.getAnalysis().setSaveSourceFiles(false);
         }
 
         if (cmd.hasOption(commands.getSkipDuplicationAnalyses().getOpt())) {
             codeConfiguration.getAnalysis().setSkipDuplication(true);
+        }
+
+        if (cmd.hasOption(commands.getSkipCorrelationAnalyses().getOpt())) {
+            codeConfiguration.getAnalysis().setSkipCorrelations(true);
         }
 
         if (cmd.hasOption(commands.getEnableDuplicationAnalyses().getOpt())) {
