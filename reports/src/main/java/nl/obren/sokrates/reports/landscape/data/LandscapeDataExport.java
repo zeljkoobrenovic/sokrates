@@ -92,7 +92,7 @@ public class LandscapeDataExport {
     private void exportRepositories(List<RepositoryAnalysisResults> repositories, String fileName) {
         StringBuilder builder = new StringBuilder();
 
-        builder.append("Repository\tMain Lanuguage\tLOC (main)\tLOC (test)\tLOC (other)\tAge (years)\tContributors\tRecent Contributors\tRookies\tCommits this year\tLatest commit\n");
+        builder.append("Repository\tMain language\tLOC (main)\tLOC (test)\tLOC (other)\tAge (years)\tContributors\tRecent contributors\tRookies\tCommits this year\tLatest commit\n");
 
         repositories.forEach(repository -> {
             appendRepository(builder, repository);
