@@ -59,7 +59,7 @@ public class SummaryUtils {
         CodeConfiguration config = analysisResults.getCodeConfiguration();
 
         boolean mainExists = analysisResults.getMainAspectAnalysisResults().getFilesCount() > 0;
-        boolean showDuplication = mainExists && !config.getAnalysis().isSkipDuplication() && analysisResults.getDuplicationAnalysisResults().getAllDuplicates().size() > 0;
+        boolean showDuplication = mainExists && !config.getAnalysis().isSkipDuplication();
         boolean showCommitReports = mainExists && analysisResults.getFilesHistoryAnalysisResults().getHistory(Integer.MAX_VALUE).size() > 0 && analysisResults.getContributorsAnalysisResults().getCommitsCount() > 0;
         boolean showControls = mainExists && config.getGoalsAndControls().size() > 0;
         boolean showUnits = mainExists && analysisResults.getUnitsAnalysisResults().getTotalNumberOfUnits() > 0;

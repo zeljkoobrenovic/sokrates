@@ -9,6 +9,7 @@ import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
+import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.landscape.*;
@@ -243,9 +244,16 @@ public class LandscapeAnalyzer {
             CodeAnalysisResults codeAnalysisResults = new CodeAnalysisResults();
             try {
                 codeAnalysisResults = (CodeAnalysisResults) new JsonMapper().getObject(json, CodeAnalysisResults.class);
+                File configFile = new File(repositoryAnalysisResultsFile.getParentFile(), "config.json");
+                if (configFile.exists()) {
+                    String configJson = FileUtils.readFileToString(configFile, StandardCharsets.UTF_8);
+                    CodeConfiguration config = (CodeConfiguration) new JsonMapper().getObject(configJson, CodeConfiguration.class);
+                    codeAnalysisResults.setCodeConfiguration(config);
+                }
             } catch (RuntimeException e) {
                 e.printStackTrace();
             }
+
             // codeAnalysisResults.setUnitsAnalysisResults(new UnitsAnalysisResults());
             // codeAnalysisResults.setFilesAnalysisResults(new FilesAnalysisResults());
             codeAnalysisResults.setAllDependencies(new ArrayList<>());
