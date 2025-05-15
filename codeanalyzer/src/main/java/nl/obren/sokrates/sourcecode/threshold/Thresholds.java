@@ -51,6 +51,10 @@ public class Thresholds {
     public static Thresholds defaultConditionalComplexityThresholds() {
         return new Thresholds(5, 10, 25, 50);
     }
+    @JsonIgnore
+    public static Thresholds defaultFileConditionalComplexityThresholds() {
+        return new Thresholds(50, 100, 250, 500);
+    }
 
     public int getLow() {
         return Math.max(1, low);

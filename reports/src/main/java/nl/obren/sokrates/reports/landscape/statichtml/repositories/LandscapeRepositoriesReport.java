@@ -236,31 +236,6 @@ public class LandscapeRepositoriesReport {
         addSummaryGraphContributors(report, repositoryAnalysisResults);
         addCommitsTrend(report, repositoryAnalysisResults, "Contributors", "darkred", (slot) -> slot.getContributorsCount());
         report.endTabContentSection();
-        report.startTabContentSection("correlations", false);
-
-        CorrelationDiagramGenerator<RepositoryAnalysisResults> correlationDiagramGenerator = new CorrelationDiagramGenerator<>(report, repositoryAnalysisResults);
-
-        correlationDiagramGenerator.addCorrelations("Recent Contributors vs. Commits (30 days)", "commits (30d)", "recent contributors (30d)",
-                p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days(),
-                p -> p.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count(),
-                p -> p.getAnalysisResults().getMetadata().getName());
-
-        correlationDiagramGenerator.addCorrelations("Recent Contributors vs. Repository Main LOC", "main LOC", "recent contributors (30d)",
-                p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
-                p -> p.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count(),
-                p -> p.getAnalysisResults().getMetadata().getName());
-
-        correlationDiagramGenerator.addCorrelations("Recent Commits (30 days) vs. Repository Main LOC", "main LOC", "commits (30d)",
-                p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
-                p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days(),
-                p -> p.getAnalysisResults().getMetadata().getName());
-
-        correlationDiagramGenerator.addCorrelations("Age in Years vs. Repository Main LOC", "main LOC", "age (years)",
-                p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
-                p -> Math.round(10 * p.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays() / 365.0) / 10,
-                p -> p.getAnalysisResults().getMetadata().getName());
-
-        report.endTabContentSection();
     }
 
     public void addSummaryGraphCommits(RichTextReport report, List<RepositoryAnalysisResults> repositoryAnalysisResults) {

@@ -65,6 +65,8 @@ public class AnalysisConfig {
 
     // Thresholds for risk profiles used in unit conditional complexity analyses
     private Thresholds conditionalComplexityThresholds = Thresholds.defaultConditionalComplexityThresholds();
+    // Thresholds for risk profiles used in unit conditional complexity analyses
+    private Thresholds fileConditionalComplexityThresholds = Thresholds.defaultConditionalComplexityThresholds();
 
     // An optional HTML code fragment to be included in a header section of generated HTML reports (e.g. Google Analytics snippet)
     private String customHtmlReportHeaderFragment = "";
@@ -216,6 +218,14 @@ public class AnalysisConfig {
 
     public void setConditionalComplexityThresholds(Thresholds conditionalComplexityThresholds) {
         this.conditionalComplexityThresholds = conditionalComplexityThresholds;
+    }
+
+    public Thresholds getFileConditionalComplexityThresholds() {
+        return fileConditionalComplexityThresholds;
+    }
+
+    public void setFileConditionalComplexityThresholds(Thresholds fileConditionalComplexityThresholds) {
+        this.fileConditionalComplexityThresholds = fileConditionalComplexityThresholds;
     }
 
     public String getCustomHtmlReportHeaderFragment() {

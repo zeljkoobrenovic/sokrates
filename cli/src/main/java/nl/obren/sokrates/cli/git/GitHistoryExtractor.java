@@ -9,6 +9,7 @@ import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectReader;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -60,9 +61,13 @@ public class GitHistoryExtractor {
 
                 paths.forEach(path -> {
                     SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-                    String line = format.format(rev.getAuthorIdent().getWhen()) + " "
-                            + rev.getAuthorIdent().getEmailAddress() + " "
-                            + rev.getId().getName() + " " + path;
+                    PersonIdent authorIdent = rev.getAuthorIdent();
+                    String safePath = path.replace(" ", "&nbsp;");
+                    String safeName = authorIdent.getName().replace(" ", "&nbsp;");
+                    String email = authorIdent.getEmailAddress();
+                    String line = format.format(authorIdent.getWhen()) + " "
+                            + email + " "
+                            + rev.getId().getName() + " " + safePath + " " + safeName;
                     try {
                         FileUtils.writeStringToFile(gitHistoryFile, line + "\n", StandardCharsets.UTF_8, true);
                     } catch (IOException e) {

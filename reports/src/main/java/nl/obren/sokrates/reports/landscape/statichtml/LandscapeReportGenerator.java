@@ -17,10 +17,7 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.*;
-import nl.obren.sokrates.reports.landscape.utils.ExtractStringListValue;
-import nl.obren.sokrates.reports.landscape.utils.Force3DGraphExporter;
-import nl.obren.sokrates.reports.landscape.utils.LandscapeGeneratorUtils;
-import nl.obren.sokrates.reports.landscape.utils.RacingLanguagesBarChartsExporter;
+import nl.obren.sokrates.reports.landscape.utils.*;
 import nl.obren.sokrates.reports.utils.AnimalIcons;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
@@ -30,6 +27,7 @@ import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
+import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
@@ -906,7 +904,43 @@ public class LandscapeReportGenerator {
         landscapeReport.addContentInDiv("1y code activity", "text-align: center; margin-bottom: -7px; margin-top: 2px; margin-left: 4px; color: grey; font-size: 70%;");
         int totalValue = getSumOfValues(overallFileLastModifiedDistribution);
         addActiveCodeBlock(landscapeAnalysisResults, totalValue);
+
         landscapeReport.endDiv();
+    }
+
+    private void addCorrelations() {
+        List<RepositoryAnalysisResults> repositories = landscapeAnalysisResults.getRepositoryAnalysisResults();
+        CorrelationDiagramGenerator<RepositoryAnalysisResults> correlationDiagramGenerator = new CorrelationDiagramGenerator<>(landscapeReport, repositories);
+
+        correlationDiagramGenerator.addCorrelations("Recent Contributors vs. Commits (30 days)", "commits (30d)", "recent contributors (30d)",
+                p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days(),
+                p -> p.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count(),
+                p -> p.getAnalysisResults().getMetadata().getName());
+
+        correlationDiagramGenerator.addCorrelations("Recent Contributors vs. Repository Main LOC", "main LOC", "recent contributors (30d)",
+                p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
+                p -> p.getAnalysisResults().getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count(),
+                p -> p.getAnalysisResults().getMetadata().getName());
+
+        correlationDiagramGenerator.addCorrelations("Recent Commits (30 days) vs. Repository Main LOC", "main LOC", "commits (30d)",
+                p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
+                p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days(),
+                p -> p.getAnalysisResults().getMetadata().getName());
+
+        correlationDiagramGenerator.addCorrelations("Age in Years vs. Repository Main LOC", "main LOC", "age (years)",
+                p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
+                p -> Math.round(10 * p.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays() / 365.0) / 10,
+                p -> p.getAnalysisResults().getMetadata().getName());
+
+        correlationDiagramGenerator.addCorrelations("Number of Files vs. Repository Main LOC", "main LOC", "# main files",
+                p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
+                p -> p.getAnalysisResults().getMainAspectAnalysisResults().getFilesCount(),
+                p -> p.getAnalysisResults().getMetadata().getName());
+
+        correlationDiagramGenerator.addCorrelations("Duplication vs. Repository Main LOC", "main LOC", "% duplication",
+                p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
+                p -> Math.round(10 * p.getAnalysisResults().getDuplicationAnalysisResults().getOverallDuplication().getDuplicationPercentage().doubleValue()) / 10,
+                p -> p.getAnalysisResults().getMetadata().getName());
     }
 
     private void addActiveCodeBlock(LandscapeAnalysisResults landscapeAnalysisResults, int locAll) {
@@ -1235,6 +1269,9 @@ public class LandscapeReportGenerator {
         landscapeReport.addNewTabLink("<b>Open expanded view</b> (stats per sub-folder)&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "repositories-extensions-matrix.html");
         landscapeReport.endDiv();
         landscapeReport.addHtmlContent("<iframe src='repositories-extensions.html' frameborder=0 style='height: 600px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
+        landscapeReport.endSection();
+        landscapeReport.startSubSection("Correlations", "");
+        addCorrelations();
         landscapeReport.endSection();
 
     }

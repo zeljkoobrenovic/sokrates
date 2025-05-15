@@ -57,6 +57,10 @@ public class CStyleHeuristicUnitsExtractor {
         removeOverlaps(units);
         return units;
     }
+    public int getMcCabeIndex(SourceFile sourceFile) {
+        String cleanedBody = getCleanedBody(cleanedLines, 0, cleanedLines.size());
+        return getMcCabeIndex(cleanedBody);
+    }
 
     private int extractUnit(int lineIndex, String line) {
         int endOfUnitBodyIndex = getEndOfUnitBodyIndex(cleanedLines, lineIndex);
