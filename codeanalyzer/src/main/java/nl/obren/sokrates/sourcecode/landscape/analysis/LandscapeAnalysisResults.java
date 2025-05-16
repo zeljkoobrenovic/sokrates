@@ -1399,4 +1399,5 @@ public class LandscapeAnalysisResults {
     enum CodeCategory {
         MAIN, TEST, OTHER
     }
+
 }

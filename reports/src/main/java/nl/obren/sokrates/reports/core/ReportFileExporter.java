@@ -426,7 +426,7 @@ public class ReportFileExporter {
         report.endUnorderedList();
         report.endTable();
 
-        boolean showDuplication = !analysisResults.getCodeConfiguration().getAnalysis().isSkipDuplication() && analysisResults.getDuplicationAnalysisResults().getAllDuplicates().size() > 0;
+        boolean showDuplication = !analysisResults.skipDuplicationAnalysis() && analysisResults.getDuplicationAnalysisResults().getAllDuplicates().size() > 0;
         if (showDuplication) {
             report.addParagraph("<a target='_blank' href='Duplication.html'>Duplication</a> views:", "margin-bottom: 0;");
             report.startTable("");
@@ -1117,7 +1117,7 @@ public class ReportFileExporter {
         CodeConfiguration config = analysisResults.getCodeConfiguration();
         boolean mainExists = analysisResults.getMainAspectAnalysisResults().getFilesCount() > 0;
         boolean showHistoryReport = mainExists && config.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesConfigFolder);
-        boolean showDuplication = mainExists && !config.getAnalysis().isSkipDuplication();
+        boolean showDuplication = mainExists && !analysisResults.skipDuplicationAnalysis();
         boolean showDependencies = mainExists && !config.getAnalysis().isSkipDependencies();
         boolean showTrends = mainExists && config.getTrendAnalysis().getReferenceAnalyses(sokratesConfigFolder).size() > 0;
         boolean showConcerns = mainExists && config.countAllConcernsDefinitions() > 1;

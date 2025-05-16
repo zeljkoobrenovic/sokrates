@@ -595,7 +595,7 @@ public class LandscapeRepositoriesReport {
                     "overflow: hidden; white-space: nowrap; vertical-align: middle; max-width: 400px");
 
             report.addTableCell("<a href='" + this.getDuplicationReportUrl(repositoryAnalysis) + "' target='_blank'>" +
-                    getDuplicationVisual(repositoryAnalysisResults.getCodeConfiguration(), repositoryAnalysisResults.getDuplicationAnalysisResults().getOverallDuplication().getDuplicationPercentage()) +
+                    getDuplicationVisual(repositoryAnalysisResults.skipDuplicationAnalysis(), repositoryAnalysisResults.getDuplicationAnalysisResults().getOverallDuplication().getDuplicationPercentage()) +
                     "</a>", "text-align: center");
             report.addTableCell("<a href='" + this.getFileSizeReportUrl(repositoryAnalysis) + "' target='_blank'>" +
                     getRiskProfileVisual(repositoryAnalysisResults.getFilesAnalysisResults().getOverallFileSizeDistribution(), Palette.getRiskPalette()) +
@@ -750,8 +750,8 @@ public class LandscapeRepositoriesReport {
         return name;
     }
 
-    private String getDuplicationVisual(CodeConfiguration codeConfiguration, Number duplicationPercentage) {
-        if (codeConfiguration.getAnalysis().isSkipDuplication()) {
+    private String getDuplicationVisual(boolean skipDuplication, Number duplicationPercentage) {
+        if (skipDuplication) {
             return "<span style='color: grey; font-size: 70%'>not measured</span>";
         }
         SimpleOneBarChart chart = new SimpleOneBarChart();

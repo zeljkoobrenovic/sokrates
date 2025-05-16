@@ -314,7 +314,7 @@ public class LandscapeReportGenerator {
         landscapeReport.addTab(REPOSITORIES_TAB_ID, "Repositories (" + landscapeAnalysisResults.getFilteredRepositoryAnalysisResults().size() + ")", false);
         landscapeReport.addTab(STATS_TAB_ID, "Statistics", false);
 
-        landscapeReport.addTab(TAGS_TAB_ID, "Tags (" + customTagsMap.tagsCount() + ")", false);
+        landscapeReport.addTab(TAGS_TAB_ID, "Tech", false);
         landscapeReport.addTab(CONTRIBUTORS_TAB_ID, "Contributors" + (recentContributorsCount > 0 ? " (" + recentContributorsCount + ")" + "" : ""), false);
         if (teamsConfig.getTeams().size() > 0) {
             landscapeReport.addTab(TEAMS_TAB_ID, "Teams" + (recentContributorsCount > 0 ? " (" + recentTeamsCount + ")" + "" : ""), false);
@@ -343,6 +343,16 @@ public class LandscapeReportGenerator {
         landscapeReport.startTabContentSection(TAGS_TAB_ID, false);
         ProcessingStopwatch.start("reporting/tags");
         addTagsSection(repositories);
+
+        landscapeReport.startSubSection("<a href='repositories-extensions.html' target='_blank' style='text-decoration: none'>" +
+                "File Extension Stats</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "");
+        landscapeReport.startDiv("margin-bottom: 18px;");
+        landscapeReport.addNewTabLink("<b>Open expanded view</b> (stats per sub-folder)&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "repositories-extensions-matrix.html");
+        landscapeReport.endDiv();
+        landscapeReport.addHtmlContent("<iframe src='repositories-extensions.html' frameborder=0 style='height: 600px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
+        landscapeReport.endSection();
+
+
         ProcessingStopwatch.end("reporting/tags");
         landscapeReport.endTabContentSection();
     }
@@ -1263,13 +1273,6 @@ public class LandscapeReportGenerator {
         addZooSection();
         ProcessingStopwatch.end("reporting/repositories/file age & freshness");
 
-        landscapeReport.startSubSection("<a href='repositories-extensions.html' target='_blank' style='text-decoration: none'>" +
-                "File Extension Stats</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "");
-        landscapeReport.startDiv("margin-bottom: 18px;");
-        landscapeReport.addNewTabLink("<b>Open expanded view</b> (stats per sub-folder)&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "repositories-extensions-matrix.html");
-        landscapeReport.endDiv();
-        landscapeReport.addHtmlContent("<iframe src='repositories-extensions.html' frameborder=0 style='height: 600px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
-        landscapeReport.endSection();
         landscapeReport.startSubSection("Correlations", "");
         addCorrelations();
         landscapeReport.endSection();
@@ -1277,8 +1280,10 @@ public class LandscapeReportGenerator {
     }
 
     private void addTagsSection(List<RepositoryAnalysisResults> repositoryAnalysisResults) {
+        landscapeReport.startSubSection("Custom Tags (" + customTagsMap.tagsCount() + ")", "");
+
         if (repositoryAnalysisResults.size() > 0) {
-            landscapeReport.startDiv("margin-top: 14px;");
+            landscapeReport.startDiv("margin-top: 14px; max-height: 400px");
             landscapeReport.addNewTabLink("<b>Open in a new tab&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "repositories-tags.html");
             landscapeReport.addHtmlContent("&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;");
             landscapeReport.addNewTabLink("<b>Open expanded view</b> (stats per sub-folder)&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "repositories-tags-matrix.html");
@@ -1310,6 +1315,8 @@ public class LandscapeReportGenerator {
 
         landscapeReport.addLineBreak();
         landscapeReport.addHtmlContent("<iframe src='repositories-tags.html' frameborder=0 style='height: calc(100vh - 290px); width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
+
+        landscapeReport.endSection();
     }
 
     private List<TagGroup> getExtensionTagGroups() {

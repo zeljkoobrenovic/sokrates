@@ -59,7 +59,7 @@ public class SummaryUtils {
         CodeConfiguration config = analysisResults.getCodeConfiguration();
 
         boolean mainExists = analysisResults.getMainAspectAnalysisResults().getFilesCount() > 0;
-        boolean showDuplication = mainExists && !config.getAnalysis().isSkipDuplication();
+        boolean showDuplication = mainExists && !analysisResults.skipDuplicationAnalysis();
         boolean showCommitReports = mainExists && analysisResults.getFilesHistoryAnalysisResults().getHistory(Integer.MAX_VALUE).size() > 0 && analysisResults.getContributorsAnalysisResults().getCommitsCount() > 0;
         boolean showControls = mainExists && config.getGoalsAndControls().size() > 0;
         boolean showUnits = mainExists && analysisResults.getUnitsAnalysisResults().getTotalNumberOfUnits() > 0;
@@ -595,7 +595,7 @@ public class SummaryUtils {
         DuplicationMetric overallDuplication = analysisResults.getDuplicationAnalysisResults().getOverallDuplication();
         Number duplicationPercentage = overallDuplication.getDuplicationPercentage();
         double duplication = duplicationPercentage.doubleValue();
-        if (!analysisResults.getCodeConfiguration().getAnalysis().isSkipDuplication()) {
+        if (!analysisResults.skipDuplicationAnalysis()) {
             String linkPrefix = "<a target='_blank' href='" + reportRoot + "Duplication.html'  title='duplication details' style='vertical-align: top'>";
             report.startTableRow();
             report.addTableCell(linkPrefix + getIconSvg("duplication") + "</a>", "border: none");

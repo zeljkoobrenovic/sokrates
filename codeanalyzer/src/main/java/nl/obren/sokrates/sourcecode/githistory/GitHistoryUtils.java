@@ -134,7 +134,7 @@ public class GitHistoryUtils {
                     }
 
                     String commitId = line.substring(index2 + 1, index3).trim();
-                    String path = line.substring(index3 + 1).trim();
+                    String path = line.substring(index3 + 1).replaceAll(" .*", "").replaceAll("[&]nbsp[;]", " ").trim();
 
                     bot = bot || isBot(author, config.getBots());
 

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.SourceFile;
+import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.FoundTag;
 import nl.obren.sokrates.sourcecode.core.TagRule;
@@ -292,4 +293,11 @@ public class CodeAnalysisResults {
     public void setFoundTags(List<FoundTag> foundTags) {
         this.foundTags = foundTags;
     }
+
+    @JsonIgnore
+    public boolean skipDuplicationAnalysis() {
+        AnalysisConfig analysis = getCodeConfiguration().getAnalysis();
+        return analysis.isSkipDuplication() || getMainAspectAnalysisResults().getLinesOfCode() > analysis.getLocDuplicationThreshold();
+    }
+
 }

@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.reports.generators.statichtml;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.common.renderingutils.GraphvizUtil;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
@@ -17,6 +18,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
+import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationDependenciesHelper;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
@@ -103,7 +105,7 @@ public class DuplicationReportGenerator {
         this.report = report;
         addIntro(report);
 
-        if (codeAnalysisResults.getCodeConfiguration().getAnalysis().isSkipDuplication()) {
+        if (codeAnalysisResults.skipDuplicationAnalysis()) {
             report.addParagraph("Duplication analysis has been skipped.");
             return;
         }
