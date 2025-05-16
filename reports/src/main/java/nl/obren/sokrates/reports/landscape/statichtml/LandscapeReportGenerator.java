@@ -314,7 +314,7 @@ public class LandscapeReportGenerator {
         landscapeReport.addTab(REPOSITORIES_TAB_ID, "Repositories (" + landscapeAnalysisResults.getFilteredRepositoryAnalysisResults().size() + ")", false);
         landscapeReport.addTab(STATS_TAB_ID, "Statistics", false);
 
-        landscapeReport.addTab(TAGS_TAB_ID, "Tech", false);
+        landscapeReport.addTab(TAGS_TAB_ID, "Tech Stats", false);
         landscapeReport.addTab(CONTRIBUTORS_TAB_ID, "Contributors" + (recentContributorsCount > 0 ? " (" + recentContributorsCount + ")" + "" : ""), false);
         if (teamsConfig.getTeams().size() > 0) {
             landscapeReport.addTab(TEAMS_TAB_ID, "Teams" + (recentContributorsCount > 0 ? " (" + recentTeamsCount + ")" + "" : ""), false);
@@ -341,9 +341,8 @@ public class LandscapeReportGenerator {
 
     private void addTagsTab(List<RepositoryAnalysisResults> repositories) {
         landscapeReport.startTabContentSection(TAGS_TAB_ID, false);
-        ProcessingStopwatch.start("reporting/tags");
-        addTagsSection(repositories);
 
+        landscapeReport.addLineBreak();
         landscapeReport.startSubSection("<a href='repositories-extensions.html' target='_blank' style='text-decoration: none'>" +
                 "File Extension Stats</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "");
         landscapeReport.startDiv("margin-bottom: 18px;");
@@ -351,6 +350,10 @@ public class LandscapeReportGenerator {
         landscapeReport.endDiv();
         landscapeReport.addHtmlContent("<iframe src='repositories-extensions.html' frameborder=0 style='height: 600px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
         landscapeReport.endSection();
+
+        ProcessingStopwatch.start("reporting/tags");
+        landscapeReport.addLineBreak();
+        addTagsSection(repositories);
 
 
         ProcessingStopwatch.end("reporting/tags");
@@ -1284,7 +1287,7 @@ public class LandscapeReportGenerator {
 
         if (repositoryAnalysisResults.size() > 0) {
             landscapeReport.startDiv("margin-top: 14px; max-height: 400px");
-            landscapeReport.addNewTabLink("<b>Open in a new tab&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "repositories-tags.html");
+            landscapeReport.addNewTabLink("<b>Open in a new tab</b>&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "repositories-tags.html");
             landscapeReport.addHtmlContent("&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;");
             landscapeReport.addNewTabLink("<b>Open expanded view</b> (stats per sub-folder)&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "repositories-tags-matrix.html");
             landscapeReport.endDiv();

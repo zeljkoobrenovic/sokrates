@@ -45,7 +45,7 @@ public class LandscapeRepositoriesTagsLine {
         });
 
         report.startDiv("margin-bottom: 14px; margin-top: 18px; margin-left: 5px;");
-        report.addNewTabLink("<b>see details&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "repositories-tags.html");
+        report.addNewTabLink("<b>see details</b>&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "repositories-tags.html");
         report.addHtmlContent("&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;");
         report.addNewTabLink("<b>see expanded view</b> (tag stats per sub-folder)&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "repositories-tags-matrix.html");
         report.endDiv();
