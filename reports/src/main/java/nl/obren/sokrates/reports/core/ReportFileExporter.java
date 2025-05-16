@@ -74,29 +74,8 @@ public class ReportFileExporter {
         }
     }
 
-    private static String extractTitle(String displayName) {
-        // check if displayName contains HTML tags
-        if (displayName.contains("<div")) {
-            // extract system name from first div
-            String systemName = "";
-            if (displayName.contains("<div")) {
-                systemName = displayName.replaceAll("(?s).*?<div[^>]*>(.*?)</div>.*", "$1").trim();
-            }
-            // extract report name from second div
-            String reportName = "";
-            if (displayName.contains("</div><div")) {
-                reportName = displayName.replaceAll("(?s).*?</div><div[^>]*>(.*?)</div>.*", "$1").trim();
-            }
-            // combine them with a separator
-            String titleText = systemName;
-            if (!systemName.isEmpty() && !reportName.isEmpty()) {
-                titleText += " - " + reportName;
-            }
-            return titleText;
-        } else {
-            // if no HTML tags, return the displayName as is
-            return displayName.trim();
-        }
+    protected static String extractTitle(String displayName) {
+        return displayName.replaceAll("<.*?>", " ").replaceAll("  ", " ").trim();
     }
 
     private static String minimize(String html) {

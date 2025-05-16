@@ -66,7 +66,7 @@ public class LandscapeIndividualContributorsReports {
                     "</div>";
         }
 
-        report.setDisplayName(breadcrumbsHtml + contributor.getEmail());
+        report.setDisplayName(breadcrumbsHtml + avatarHtml + contributor.getEmail());
 
         report.startDiv("margin-top: 10px; margin-bottom: 22px;");
         String template = this.landscapeAnalysisResults.getConfiguration().getContributorLinkTemplate();
