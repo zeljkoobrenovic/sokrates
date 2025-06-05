@@ -16,10 +16,13 @@ import java.util.Map;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class Force3DGraphExporter {
+
+    public static final int MAX_SIZE = 100000;
+
     public String export2D3DForceGraph(List<ComponentDependency> componentDependencies, File reportsFolder, String graphId) {
         Force3DObject forceGraphObject = new Force3DObject();
         Map<String, Integer> names = new HashMap<>();
-        componentDependencies.forEach(dependency -> {
+        componentDependencies.stream().limit(MAX_SIZE).forEach(dependency -> {
             String from = dependency.getFromComponent();
             String to = dependency.getToComponent();
             if (names.containsKey(from)) {

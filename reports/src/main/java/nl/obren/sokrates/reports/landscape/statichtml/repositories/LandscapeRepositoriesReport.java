@@ -85,9 +85,6 @@ public class LandscapeRepositoriesReport {
             report.addTab("newest", "Creation", false);
         }
         report.addTab("metrics", "Metrics", false);
-        if (showCommits) {
-            report.addTab("correlations", "Correlations", false);
-        }
         report.addTab("features", "Features of Interest", false);
         report.addLinkInTab("Explorer...", "repositories-explorer.html");
         report.addLinkInTab("Files...", "files-explorer.html");

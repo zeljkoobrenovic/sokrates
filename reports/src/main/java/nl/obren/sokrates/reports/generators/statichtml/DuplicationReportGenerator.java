@@ -354,6 +354,7 @@ public class DuplicationReportGenerator {
                 });
             });
         });
+
         return dependencies;
     }
 
