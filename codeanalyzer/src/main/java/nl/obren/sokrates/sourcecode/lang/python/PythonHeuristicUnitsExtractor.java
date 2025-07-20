@@ -45,7 +45,9 @@ public class PythonHeuristicUnitsExtractor {
                     for (int bodyIndex = cleanedContent.getFileLineIndexes().get(lineIndex);
                          bodyIndex <= cleanedContent.getFileLineIndexes().get(endOfUnitBodyIndex);
                          bodyIndex++) {
-                        body.append(normalLines.get(bodyIndex) + "\n");
+                        if (bodyIndex < normalLines.size()) {
+                            body.append(normalLines.get(bodyIndex) + "\n");
+                        }
                     }
                     UnitInfo unit = new UnitInfo();
                     unit.setSourceFile(sourceFile);

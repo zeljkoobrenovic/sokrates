@@ -7,9 +7,11 @@ import nl.obren.sokrates.reports.core.SummaryUtils;
 import nl.obren.sokrates.reports.landscape.utils.ContributorPerExtensionHelper;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.sourcecode.landscape.ContributorTag;
+import nl.obren.sokrates.sourcecode.landscape.PeopleConfig;
+import nl.obren.sokrates.sourcecode.landscape.PersonConfig;
 import nl.obren.sokrates.sourcecode.landscape.TeamConfig;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositoryInfo;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
+import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositoryInfo;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
@@ -103,9 +105,9 @@ public class LandscapeContributorsReport {
                 .sorted((a, b) -> b.getContributor().getCommitsCount90Days() - a.getContributor().getCommitsCount90Days())
                 .sorted((a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days())
                 .limit(limit).forEach(contributor -> {
-            contributorsLinkedFromTables.add(contributor.getContributor().getEmail());
-            addContributor(totalCommits, counter, contributor);
-        });
+                    contributorsLinkedFromTables.add(contributor.getContributor().getEmail());
+                    addContributor(totalCommits, counter, contributor);
+                });
         report.endTable();
 
         if (limit < contributors.size()) {
@@ -119,7 +121,8 @@ public class LandscapeContributorsReport {
         report.startTableRow(contributor.getContributor().getCommitsCount30Days() > 0 ? "font-weight: bold;"
                 : "color: " + color);
         counter[0] += 1;
-        String biggestExtension = new ContributorPerExtensionHelper().getBiggestExtension(landscapeAnalysisResults.getConfiguration(), contributor, landscapeAnalysisResults.getPeopleConfig());
+        PeopleConfig peopleConfig = landscapeAnalysisResults.getPeopleConfig();
+        String biggestExtension = new ContributorPerExtensionHelper().getBiggestExtension(landscapeAnalysisResults.getConfiguration(), contributor, peopleConfig);
         String icon;
         if (biggestExtension == null) {
             icon = "";
@@ -128,8 +131,16 @@ public class LandscapeContributorsReport {
         }
         report.addTableCell(icon, "text-align: center; width: 32px; max-width: 32px");
         String avatarHtml = "";
-        String avatarUrl = this.getAvatarUrl(contributor.getContributor().getEmail(), this.landscapeAnalysisResults.getConfiguration().getContributorAvatarLinkTemplate());
 
+        String contributorId = contributor.getContributor().getEmail();
+        PersonConfig personConfig = peopleConfig != null ? peopleConfig.getPersonByName(contributorId) : null;
+
+        String avatarUrl;
+        if (personConfig != null && StringUtils.isNotBlank(personConfig.getImage())) {
+            avatarUrl = personConfig.getImage();
+        } else {
+            avatarUrl = this.getAvatarUrl(contributorId, this.landscapeAnalysisResults.getConfiguration().getContributorAvatarLinkTemplate());
+        }
         String defaultAvatar = contributor.getMembers().size() > 0 ? DataImageUtils.TEAM : DataImageUtils.DEVELOPER;
         if (avatarUrl != null) {
             avatarHtml = "<div style='vertical-align: middle; display: inline-block; width: 48px; margin-top: 2px;'>" +
@@ -141,17 +152,17 @@ public class LandscapeContributorsReport {
                     "<img style='border-radius: 50%; height: 38px; width: 38px; margin-right: 10px;' src='" + defaultAvatar + "'>" +
                     "</div>";
         }
-        String link = this.getContributorUrl(contributor.getContributor().getEmail());
-        StringBuilder contributorBody = new StringBuilder(avatarHtml + StringEscapeUtils.escapeHtml4(contributor.getContributor().getEmail()));
+        String link = this.getContributorUrl(contributorId);
+        StringBuilder contributorBody = new StringBuilder(avatarHtml + StringEscapeUtils.escapeHtml4(contributorId));
 
         if (contributor.getMembers().size() > 0) {
             contributorBody.append(" (" + FormattingUtils.formatCount(contributor.getMembers().size()) + ")");
         }
 
-        contributorTagMap.get(contributor.getContributor().getEmail()).forEach(tag -> {
+        contributorTagMap.get(contributorId).forEach(tag -> {
             contributorBody.append("<div style='vertical-align: top; font-size: 60%; background-color: skyblue; border-radius: 7px; display: inline-block; padding: 3px 3px 5px 3px; margin: 5px;'>" + tag + "</div>");
         });
-        String team = getTeam(contributor.getContributor().getEmail());
+        String team = getTeam(contributorId);
         String body = contributorBody.toString();
         if (team != null) {
             body = "<div><div style='vertical-align: top; font-size: 60%; background-color: lightyellow; border-radius: 12px; display: inline-block; padding: 3px; margin: 5px; color: black'>" + team + "</div><div style='margin-top: -15px; margin-bottom: -9px;'>" + body + "</div></div>";

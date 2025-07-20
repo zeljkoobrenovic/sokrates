@@ -9,8 +9,10 @@ import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.ContributorPerExtensionStats;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositoryInfo;
+import nl.obren.sokrates.sourcecode.landscape.PeopleConfig;
+import nl.obren.sokrates.sourcecode.landscape.PersonConfig;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
+import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositoryInfo;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.lang3.StringUtils;
@@ -52,8 +54,16 @@ public class LandscapeIndividualContributorsReports {
         String breadcrumbsLabel = landscapeAnalysisResults.getConfiguration().getMetadata().getName() + " / Contributors";
         String breadcrumbsHtml = "<div style='opacity: 0.7; font-size: 13px; margin-bottom: 12px;'><a href='../index.html'>" + breadcrumbsLabel + "</a></div>";
 
+        PeopleConfig peopleConfig = landscapeAnalysisResults.getPeopleConfig();
+        PersonConfig personConfig = peopleConfig != null ? peopleConfig.getPersonByName(contributor.getEmail()) : null;
+
         String avatarHtml = "";
-        String avatarUrl = LandscapeContributorsReport.getAvatarUrl(contributor.getEmail(), landscapeAnalysisResults.getConfiguration().getContributorAvatarLinkTemplate());
+        String avatarUrl;
+        if (personConfig != null && StringUtils.isNotBlank(personConfig.getImage())) {
+            avatarUrl = personConfig.getImage();
+        } else {
+            avatarUrl = LandscapeContributorsReport.getAvatarUrl(contributor.getEmail(), landscapeAnalysisResults.getConfiguration().getContributorAvatarLinkTemplate());
+        }
         String defaultAvatar = contributorRepositories.getMembers().size() > 0 ? DataImageUtils.TEAM : DataImageUtils.DEVELOPER;
         if (avatarUrl != null) {
             avatarHtml = "<div style='vertical-align: middle; display: inline-block; width: 88px; margin-top: 2px;'>" +
@@ -76,6 +86,19 @@ public class LandscapeIndividualContributorsReports {
             report.setParentUrl(link);
             report.addLineBreak();
             report.addLineBreak();
+        }
+        if (personConfig != null && personConfig.getLinks().size() > 0) {
+            report.startDiv("margin-bottom: 14px; margin-top: -18px; font-size: 90%");
+            boolean first[] = {true};
+            personConfig.getLinks().stream().filter(l -> StringUtils.isNotBlank(l.getHref())).forEach(link -> {
+                if (!first[0]) {
+                    report.addHtmlContent("&nbsp;|&nbsp;&nbsp;");
+                }
+                report.addNewTabLink(link.getLabel(), link.getHref());
+                report.addHtmlContent(LandscapeReportGenerator.OPEN_IN_NEW_TAB_SVG_ICON_SMALL);
+                first[0] = false;
+            });
+            report.endDiv();
         }
         report.addContentInDiv("First commit date: <b>" + contributor.getFirstCommitDate() + "</b>");
         report.addContentInDiv("Latest commit date: <b>" + contributor.getLatestCommitDate() + "</b>");
@@ -100,7 +123,7 @@ public class LandscapeIndividualContributorsReports {
 
         ContributorPerExtensionHelper helper = new ContributorPerExtensionHelper();
 
-        List<Pair<String, ContributorPerExtensionStats>> extensionUpdates = helper.getContributorStatsPerExtension(landscapeAnalysisResults.getConfiguration(), contributorRepositories, landscapeAnalysisResults.getPeopleConfig());
+        List<Pair<String, ContributorPerExtensionStats>> extensionUpdates = helper.getContributorStatsPerExtension(landscapeAnalysisResults.getConfiguration(), contributorRepositories, peopleConfig);
 
         report.addContentInDiv("File updates per extension (90 days):");
         report.startTable();

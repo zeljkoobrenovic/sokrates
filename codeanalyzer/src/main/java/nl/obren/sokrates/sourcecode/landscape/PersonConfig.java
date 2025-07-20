@@ -1,11 +1,14 @@
 package nl.obren.sokrates.sourcecode.landscape;
 
+import nl.obren.sokrates.sourcecode.Link;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class PersonConfig {
     private String name = "";
     private String link = "";
+    private List<Link> links = new ArrayList<>();
     private String image = "";
     private List<String> emailPatterns = new ArrayList<>();
 
@@ -20,12 +23,16 @@ public class PersonConfig {
         this.name = name;
     }
 
-    public String getLink() {
-        return link;
+    public List<Link> getLinks() {
+        return links;
     }
 
     public void setLink(String link) {
         this.link = link;
+    }
+
+    public void setLink(List<Link> links) {
+        this.links = links;
     }
 
     public String getImage() {

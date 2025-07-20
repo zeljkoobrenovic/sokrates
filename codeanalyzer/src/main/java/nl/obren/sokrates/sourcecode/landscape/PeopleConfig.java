@@ -16,6 +16,8 @@ public class PeopleConfig {
 
     @JsonIgnore
     private static final Map<String, PersonConfig> cache = new HashMap<>();
+    @JsonIgnore
+    private static final Map<String, PersonConfig> nameCache = new HashMap<>();
 
     public List<PersonConfig> getPeople() {
         return people;
@@ -26,7 +28,7 @@ public class PeopleConfig {
     }
 
     @JsonIgnore
-    public PersonConfig getPerson(String contributorId) {
+    public PersonConfig getPersonFromEmailPatterns(String contributorId) {
         if (cache.containsKey(contributorId)) {
             return cache.get(contributorId);
         }
@@ -40,6 +42,24 @@ public class PeopleConfig {
         PersonConfig newPersonConfig = new PersonConfig();
         newPersonConfig.setName(contributorId);
         cache.put(contributorId, newPersonConfig);
+
+        return newPersonConfig;
+    }
+    @JsonIgnore
+    public PersonConfig getPersonByName(String name) {
+        if (nameCache.containsKey(name)) {
+            return nameCache.get(name);
+        }
+        for (PersonConfig person : people) {
+            if (person.getName().equals(name)) {
+                cache.put(name, person);
+                return person;
+            }
+        }
+
+        PersonConfig newPersonConfig = new PersonConfig();
+        newPersonConfig.setName(name);
+        cache.put(name, newPersonConfig);
 
         return newPersonConfig;
     }

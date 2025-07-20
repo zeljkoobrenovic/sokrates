@@ -2,7 +2,6 @@ package nl.obren.sokrates.sourcecode.landscape.utils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.landscape.PeopleConfig;
-import nl.obren.sokrates.sourcecode.landscape.PersonConfig;
 import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import nl.obren.sokrates.sourcecode.operations.OperationStatement;
 import org.apache.commons.logging.Log;
@@ -28,7 +27,9 @@ public class EmailTransformations {
             contributorId = operation.exec(contributorId);
         }
 
-        contributorId = peopleConfig.getPerson(contributorId).getName();
+        if (peopleConfig != null) {
+            contributorId = peopleConfig.getPersonFromEmailPatterns(contributorId).getName();
+        }
 
         if (!contributorId.equals(email)) {
             LOG.info(email + " -> " + contributorId);
