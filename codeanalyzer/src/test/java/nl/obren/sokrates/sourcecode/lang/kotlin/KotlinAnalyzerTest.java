@@ -62,4 +62,31 @@ public class KotlinAnalyzerTest {
         assertEquals(7, units.get(1).getStartLine());
         assertEquals(11, units.get(1).getEndLine());
     }
+
+    @Test
+    public void extractUnitsFromInterfaceMethods() {
+        String code = KotlinExampleFragments.INTERFACE_METHODS_FRAGMENT;
+
+        KotlinAnalyzer analyzer = new KotlinAnalyzer();
+
+        List<UnitInfo> units = analyzer.extractUnits(new SourceFile(new File(""), code));
+
+        // Should extract 4 units: 3 interface methods (0 LOC each) + 1 implemented method
+        assertEquals(4, units.size());
+
+        // Interface methods should have 0 lines of code
+        assertEquals("fun findAllByPropertyId()", units.get(0).getShortName());
+        assertEquals(0, units.get(0).getLinesOfCode());
+
+        assertEquals("fun findAllByPropertyIdAndUnitId()", units.get(1).getShortName());
+        assertEquals(0, units.get(1).getLinesOfCode());
+
+        assertEquals("fun simpleMethod()", units.get(2).getShortName());
+        assertEquals(0, units.get(2).getLinesOfCode());
+
+        // Implemented method should have > 0 lines of code
+        assertEquals("fun implementedMethod()", units.get(3).getShortName());
+        assertEquals(3, units.get(3).getLinesOfCode());
+    }
+
 }
