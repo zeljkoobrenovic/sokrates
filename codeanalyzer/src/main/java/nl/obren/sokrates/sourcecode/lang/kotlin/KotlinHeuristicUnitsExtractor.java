@@ -7,6 +7,7 @@ package nl.obren.sokrates.sourcecode.lang.kotlin;
 import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.sourcecode.units.CStyleHeuristicUnitsExtractor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class KotlinHeuristicUnitsExtractor extends CStyleHeuristicUnitsExtractor {
@@ -42,7 +43,7 @@ public class KotlinHeuristicUnitsExtractor extends CStyleHeuristicUnitsExtractor
             nl.obren.sokrates.sourcecode.SourceFile sourceFile) {
         
         List<String> lines = sourceFile.getLines();
-        List<nl.obren.sokrates.sourcecode.units.UnitInfo> adjustedUnits = new java.util.ArrayList<>();
+        List<nl.obren.sokrates.sourcecode.units.UnitInfo> adjustedUnits = new ArrayList<>();
         
         for (nl.obren.sokrates.sourcecode.units.UnitInfo unit : units) {
             if (isInterfaceMethodUnit(unit, lines)) {
