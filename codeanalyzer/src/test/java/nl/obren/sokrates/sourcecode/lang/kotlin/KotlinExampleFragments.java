@@ -62,4 +62,20 @@ public class KotlinExampleFragments {
             "    }\n" +
             "}";
 
+    // Test case for braces on separate lines (common Kotlin style)
+    public static String BRACE_ON_NEW_LINE_FRAGMENT = "interface Repository {\n" +
+            "    fun interfaceMethodWithBraceOnNewLine(\n" +
+            "        param1: String,\n" +
+            "        param2: Int\n" +
+            "    ): String\n" +
+            "\n" +
+            "    fun implementedMethodWithBraceOnNewLine(\n" +
+            "        param1: String,\n" +
+            "        param2: Int\n" +
+            "    ): String\n" +
+            "    {\n" +
+            "        return \"result\"\n" +
+            "    }\n" +
+            "}\n";
+
 }

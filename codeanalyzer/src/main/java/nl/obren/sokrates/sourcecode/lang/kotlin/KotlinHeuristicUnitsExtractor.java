@@ -67,51 +67,72 @@ public class KotlinHeuristicUnitsExtractor extends CStyleHeuristicUnitsExtractor
     }
     
     private boolean isInterfaceMethodUnit(nl.obren.sokrates.sourcecode.units.UnitInfo unit, List<String> lines) {
-        // Check if this unit represents an interface method by examining the source lines
+        // Better approach: Check if this unit contains multiple 'fun' keywords
+        // Interface methods should have exactly 1 'fun', implemented methods should also have 1 'fun'
+        // But if the unit has multiple 'fun' keywords, it means the original extractor 
+        // incorrectly included multiple methods due to missing braces (interface case)
+        
         int startLine = unit.getStartLine() - 1; // Convert to 0-based index
+        int endLine = Math.min(lines.size(), startLine + unit.getLinesOfCode());
+        
         if (startLine >= 0 && startLine < lines.size()) {
-            // Look for the function signature and check if it has no opening brace
-            for (int i = startLine; i < Math.min(lines.size(), startLine + unit.getLinesOfCode()); i++) {
+            int funCount = 0;
+            int firstFunLine = -1;
+            boolean hasOpeningBrace = false;
+            
+            // Count 'fun' keywords and check for opening braces
+            for (int i = startLine; i < endLine; i++) {
                 String line = lines.get(i).trim();
+                
                 if (line.contains("fun ")) {
-                    boolean hasImpl = hasImplementation(lines, i);
-                    return !hasImpl;
+                    funCount++;
+                    if (firstFunLine == -1) {
+                        firstFunLine = i;
+                    }
+                }
+                
+                // Check for opening brace (but not in strings/comments)
+                if (line.contains("{") && !line.trim().startsWith("//") && !isInString(line, "{")) {
+                    hasOpeningBrace = true;
                 }
             }
+            
+            // If we have exactly 1 'fun' and no opening brace, it's an interface method
+            if (funCount == 1 && !hasOpeningBrace) {
+                return true;
+            }
+            
+            // If we have multiple 'fun' keywords, the first one is likely an interface method
+            // that got merged with subsequent methods due to missing braces
+            if (funCount > 1) {
+                return true; // This unit represents multiple functions, first is interface method
+            }
         }
+        
         return false;
     }
     
-    private boolean hasImplementation(List<String> lines, int functionLineIndex) {
-        // Check if this function has an implementation (opening brace)
-        String currentLine = lines.get(functionLineIndex).trim();
+    private boolean isInString(String line, String target) {
+        // Simple check to avoid matching braces inside strings
+        // This is not perfect but good enough for most cases
+        boolean inString = false;
+        char quote = 0;
         
-        // If the opening brace is on the same line as the function signature
-        if (currentLine.contains("{")) {
-            return true;
-        }
-        
-        // Look at the next few lines for an opening brace
-        for (int i = functionLineIndex + 1; i < Math.min(lines.size(), functionLineIndex + 5); i++) {
-            String line = lines.get(i).trim();
+        for (int i = 0; i < line.length() - target.length() + 1; i++) {
+            char c = line.charAt(i);
             
-            // Skip empty lines and annotations
-            if (line.isEmpty() || line.startsWith("@")) {
-                continue;
-            }
-            
-            // If we encounter another function signature or end of interface, stop looking
-            if (line.contains("fun ") || line.equals("}")) {
-                break;
-            }
-            
-            // Found opening brace
-            if (line.contains("{")) {
-                return true;
+            if (!inString && (c == '"' || c == '\'')) {
+                inString = true;
+                quote = c;
+            } else if (inString && c == quote) {
+                inString = false;
+            } else if (!inString && line.substring(i, i + target.length()).equals(target)) {
+                return false; // Found target outside of string
             }
         }
         
-        return false; // No implementation found
+        return inString; // Target was inside string if we're still in string context
     }
+    
 
 }
