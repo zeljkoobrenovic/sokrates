@@ -64,7 +64,7 @@ public class DateUtils {
                 cal.add(Calendar.DATE, -(i * 7));
 
                 String stringDate = new SimpleDateFormat(DATE_FORMAT).format(cal.getTime());
-                dates.add(new AuthorCommit(stringDate, "", false).getWeekOfYear());
+                dates.add(new AuthorCommit(stringDate, "", "", false).getWeekOfYear());
             }
         }
 
@@ -79,7 +79,7 @@ public class DateUtils {
             cal.add(Calendar.MONTH, -i);
 
             String stringDate = new SimpleDateFormat(DATE_FORMAT).format(cal.getTime());
-            dates.add(new AuthorCommit(stringDate, "", false).getMonth());
+            dates.add(new AuthorCommit(stringDate, "", "", false).getMonth());
         }
 
         return dates;
@@ -93,7 +93,7 @@ public class DateUtils {
             cal.add(Calendar.YEAR, -i);
 
             String stringDate = new SimpleDateFormat(DATE_FORMAT).format(cal.getTime());
-            dates.add(new AuthorCommit(stringDate, "", false).getYear());
+            dates.add(new AuthorCommit(stringDate, "", "", false).getYear());
         }
 
         return dates;

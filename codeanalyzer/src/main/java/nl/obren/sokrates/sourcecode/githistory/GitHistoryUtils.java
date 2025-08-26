@@ -46,7 +46,7 @@ public class GitHistoryUtils {
             String commitId = fileUpdate.getCommitId();
             if (!commitIds.contains(commitId)) {
                 commitIds.add(commitId);
-                commits.add(new AuthorCommit(fileUpdate.getDate(), fileUpdate.getAuthorEmail(), fileUpdate.isBot()));
+                commits.add(new AuthorCommit(fileUpdate.getDate(), fileUpdate.getAuthorEmail(), fileUpdate.getUserName(), fileUpdate.isBot()));
             }
         });
 
@@ -108,27 +108,27 @@ public class GitHistoryUtils {
                     if (ignoreCommitByDate(line, date)) {
                         return null;
                     }
-                    String author = line.substring(index1 + 1, index2).trim().toLowerCase();
-                    if (shouldIgnore(author, ignoreContributors)) {
+                    String authorEmail = line.substring(index1 + 1, index2).trim().toLowerCase();
+                    if (shouldIgnore(authorEmail, ignoreContributors)) {
                         return null;
                     }
-                    boolean bot = isBot(author, config.getBots());
+                    boolean bot = isBot(authorEmail, config.getBots());
                     if (anonymize) {
-                        String anonymizedAuthor = anonymizeEmails.get(author);
+                        String anonymizedAuthor = anonymizeEmails.get(authorEmail);
                         if (anonymizedAuthor == null) {
                             anonymizedAuthor = "Contributor " + (anonymizeEmails.keySet().size() + 1);
-                            anonymizeEmails.put(author, anonymizedAuthor);
+                            anonymizeEmails.put(authorEmail, anonymizedAuthor);
                         }
-                        author = anonymizedAuthor;
-                        LOG.info(author + " -> " + anonymizedAuthor);
+                        authorEmail = anonymizedAuthor;
+                        LOG.info(authorEmail + " -> " + anonymizedAuthor);
                     } else if (config.getTransformContributorEmails().size() > 0) {
                         ComplexOperation operation = new ComplexOperation(config.getTransformContributorEmails());
-                        String original = author;
-                        author = operation.exec(author);
-                        if (!original.equalsIgnoreCase(author)) {
-                            LOG.info(original + " -> " + author);
+                        String original = authorEmail;
+                        authorEmail = operation.exec(authorEmail);
+                        if (!original.equalsIgnoreCase(authorEmail)) {
+                            LOG.info(original + " -> " + authorEmail);
                         }
-                        if (shouldIgnore(author, ignoreContributors)) {
+                        if (shouldIgnore(authorEmail, ignoreContributors)) {
                             return null;
                         }
                     }
@@ -136,9 +136,17 @@ public class GitHistoryUtils {
                     String commitId = line.substring(index2 + 1, index3).trim();
                     String path = line.substring(index3 + 1).replaceAll(" .*", "").replaceAll("[&]nbsp[;]", " ").trim();
 
-                    bot = bot || isBot(author, config.getBots());
+                    int index4 = line.indexOf(" ", index3 + 1);
 
-                    FileUpdate fileUpdate = new FileUpdate(date, author, commitId, path, bot);
+                    String userName = "";
+                    if (index4 > index3) {
+                        userName = line.substring(index4 + 1).replaceAll(" .*", "").replaceAll("[&]nbsp[;]", " ").trim();
+                    }
+
+
+                    bot = bot || isBot(authorEmail, config.getBots());
+
+                    FileUpdate fileUpdate = new FileUpdate(date, authorEmail, userName, commitId, path, bot);
                     return fileUpdate;
                 }
             }

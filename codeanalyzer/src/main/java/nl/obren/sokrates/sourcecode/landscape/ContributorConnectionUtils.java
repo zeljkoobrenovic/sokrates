@@ -22,7 +22,7 @@ public class ContributorConnectionUtils {
         List<ContributorConnection> contributorConnections = new ArrayList<>();
         Map<String, ContributorConnection> map = new HashMap<>();
         contributors.forEach(contributor -> {
-            ContributorConnection contributorConnection = new ContributorConnection(contributor.getEmail(), 0, contributionCounter.count(contributor));
+            ContributorConnection contributorConnection = new ContributorConnection(contributor.getEmail(), contributor.getUserName(), 0, contributionCounter.count(contributor));
             map.put(contributor.getEmail(), contributorConnection);
             contributorConnections.add(contributorConnection);
         });

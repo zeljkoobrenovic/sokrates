@@ -582,7 +582,8 @@ public class LandscapeAnalysisResults {
         if (configuration.isAnonymizeContributors()) {
             int[] counter = {1};
             contributorRepositories.forEach(contributorRepository -> {
-                contributorRepository.getContributor().setEmail("Contributor " + counter[0]);
+                contributorRepository.getContributor().setEmail("Email " + counter[0]);
+                contributorRepository.getContributor().setUserName("User " + counter[0]);
                 counter[0] += 1;
             });
         }
@@ -843,6 +844,7 @@ public class LandscapeAnalysisResults {
                     Contributor newContributor = new Contributor();
 
                     newContributor.setEmail(contributorId);
+                    newContributor.setEmail(contributor.getUserName());
                     newContributor.setCommitsCount(repositoryCommits);
                     newContributor.setCommitsCount30Days(repositoryCommits30Days);
                     newContributor.setCommitsCount90Days(repositoryCommits90Days);

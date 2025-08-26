@@ -11,15 +11,17 @@ import java.util.Date;
 public class AuthorCommit {
     private String date = "";
     private String authorEmail = "";
+    private String userName = "";
 
     private boolean bot = false;
 
     public AuthorCommit() {
     }
 
-    public AuthorCommit(String date, String authorEmail, boolean bot) {
+    public AuthorCommit(String date, String authorEmail, String userName, boolean bot) {
         this.date = date;
         this.authorEmail = authorEmail;
+        this.userName = userName;
         this.bot = bot;
     }
 
@@ -37,6 +39,14 @@ public class AuthorCommit {
 
     public void setAuthorEmail(String authorEmail) {
         this.authorEmail = authorEmail;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     @JsonIgnore

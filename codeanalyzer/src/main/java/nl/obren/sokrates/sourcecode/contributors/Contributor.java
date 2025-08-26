@@ -5,7 +5,6 @@
 package nl.obren.sokrates.sourcecode.contributors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import nl.obren.sokrates.sourcecode.duplication.DuplicatedFileBlock;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -20,6 +19,7 @@ public class Contributor {
     public static final int ACTIVITY_THRESHOLD_DAYS = 180;
     public static final int ROOKIE_THRESHOLD_DAYS = 365;
     private String email = "";
+    private String userName = "";
     private int commitsCount = 0;
     private int commitsCount30Days = 0;
     private int commitsCount90Days = 0;
@@ -119,6 +119,14 @@ public class Contributor {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     public int getCommitsCount() {

@@ -14,8 +14,6 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
-import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
-import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
@@ -25,6 +23,7 @@ import nl.obren.sokrates.sourcecode.landscape.ContributorConnection;
 import nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorConnections;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
@@ -39,10 +38,14 @@ public class ContributorsReportGenerator {
     private int dependencyVisualCounter = 1;
     private File reportsFolder;
     private RichTextReport report;
+    private Map<String, Contributor> emailContributorMap = new HashMap<>();
     private Map<String, List<Pair<String, ContributorPerExtensionStats>>> emailStatsMap = new HashMap<>();
 
     public ContributorsReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
+        codeAnalysisResults.getContributorsAnalysisResults().getContributors().forEach(contributor -> {
+            emailContributorMap.put(contributor.getEmail(), contributor);
+        });
         codeAnalysisResults.getContributorsAnalysisResults().getCommitsPerExtensions().forEach(commitsPerExtension -> {
             commitsPerExtension.getContributorPerExtensionStats().forEach(contributorPerExtensionStats -> {
                 String email = contributorPerExtensionStats.getContributor();
@@ -251,7 +254,11 @@ public class ContributorsReportGenerator {
             report.startTableRow();
             String textOpacity = contributor.getCommitsCount90Days() > 0 ? "font-weight: bold;" : "opacity: 0.4";
             report.startTableCell("border: none; " + textOpacity);
-            report.addHtmlContent(contributor.getEmail());
+            if (StringUtils.isNotBlank(contributor.getEmail()) && StringUtils.isNotBlank(contributor.getUserName())) {
+                report.addHtmlContent(contributor.getUserName() + " <div style='color: grey; font-size: 80%; margin-bottom: 6px;'>&lt;" + contributor.getEmail() + "&gt;</div>");
+            } else {
+                report.addHtmlContent((contributor.getUserName() + contributor.getEmail()).trim());
+            }
             report.endTableCell();
             report.addTableCell(contributor.getCommitsCount90Days() > 0 ? contributor.getCommitsCount90Days() + "" : "-", "text-align: center; border: none; " + textOpacity);
             report.addTableCell(contributor.getCommitDates().size() + "", "text-align: center; border: none; " + textOpacity);
@@ -362,7 +369,11 @@ public class ContributorsReportGenerator {
             index[0]++;
             report.startTableRow();
             report.addTableCell(index[0] + ".");
-            report.addTableCell(contributorConnection.getEmail());
+            if (StringUtils.isNotBlank(contributorConnection.getEmail()) && StringUtils.isNotBlank(contributorConnection.getUserName())) {
+                report.addTableCell(contributorConnection.getUserName() + " <div style='color: grey; font-size: 80%; margin-bottom: 6px;'>&lt;" + contributorConnection.getEmail() + "&gt;</div>");
+            } else {
+                report.addTableCell((contributorConnection.getUserName() + contributorConnection.getEmail()).trim());
+            }
             report.addTableCell(contributorConnection.getCount() + "");
             report.addTableCell(contributorConnection.getCommits() + "");
 
@@ -386,8 +397,22 @@ public class ContributorsReportGenerator {
 
             report.startTableRow();
             report.addTableCell(index[0] + ".");
-            report.addTableCell(dependency.getFromComponent());
-            report.addTableCell(dependency.getToComponent() + "");
+
+            String from = dependency.getFromComponent() + "";
+            String to = dependency.getToComponent() + "";
+
+            if (emailContributorMap.containsKey(from) && StringUtils.isNotBlank(emailContributorMap.get(from).getUserName())) {
+                report.addTableCell(emailContributorMap.get(from).getUserName() + " <div style='color: grey; font-size: 80%; margin-bottom: 6px;'>&lt;" + from + "&gt;</div>");
+            } else {
+                report.addTableCell(from);
+            }
+
+            if (emailContributorMap.containsKey(to) && StringUtils.isNotBlank(emailContributorMap.get(to).getUserName())) {
+                report.addTableCell(emailContributorMap.get(to).getUserName() + " <div style='color: grey; font-size: 80%; margin-bottom: 6px;'>&lt;" + to + "&gt;</div>");
+            } else {
+                report.addTableCell(to);
+            }
+
 
             report.startTableCell();
             report.startShowMoreBlock(count + " shared " + (count == 1 ? "file" : "files"));
@@ -536,7 +561,12 @@ public class ContributorsReportGenerator {
             }
             report.startTableRow(style);
             report.addTableCell(index[0] + ".");
-            report.addTableCell(contributor.getEmail());
+            if (StringUtils.isNotBlank(contributor.getEmail()) && StringUtils.isNotBlank(contributor.getUserName())) {
+                report.addTableCell(contributor.getUserName() + " <div style='color: grey; font-size: 80%; margin-bottom: 6px;'>&lt;" + contributor.getEmail() + "&gt;</div>");
+            } else {
+                report.addTableCell((contributor.getUserName() + contributor.getEmail()).trim());
+            }
+
             report.addTableCell(contributor.getFirstCommitDate());
             report.addTableCell(contributor.getLatestCommitDate());
             int contributorCommitsCount = contributionCounter.count(contributor);

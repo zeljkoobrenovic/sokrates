@@ -11,19 +11,19 @@ public class AuthorCommitTest {
 
     @Test
     public void getMonth() {
-        AuthorCommit authorCommit = new AuthorCommit("2020-12-12 12:10:11", "email@host.com", false);
+        AuthorCommit authorCommit = new AuthorCommit("2020-12-12 12:10:11", "email@host.com", "user", false);
         assertEquals("2020-12", authorCommit.getMonth());
     }
 
     @Test
     public void getDate() {
-        AuthorCommit authorCommit = new AuthorCommit("2020-12-12", "email@host.com", false);
+        AuthorCommit authorCommit = new AuthorCommit("2020-12-12", "email@host.com", "user", false);
         assertEquals("2020-12-12", authorCommit.getDate());
     }
 
     @Test
     public void getDateObject() {
-        AuthorCommit authorCommit = new AuthorCommit("2020-12-12", "email@host.com", false);
+        AuthorCommit authorCommit = new AuthorCommit("2020-12-12", "email@host.com", "user", false);
         Calendar calendar = authorCommit.getCalendar();
         assertEquals(2020, calendar.get(Calendar.YEAR));
         assertEquals(11, calendar.get(Calendar.MONTH));
@@ -32,7 +32,7 @@ public class AuthorCommitTest {
     }
     @Test
     public void getWeekOfYear() {
-        AuthorCommit authorCommit = new AuthorCommit("2020-12-12", "email@host.com", false);
+        AuthorCommit authorCommit = new AuthorCommit("2020-12-12", "email@host.com", "user", false);
         String weekOfYear = authorCommit.getWeekOfYear();
         assertEquals("2020-12-07", weekOfYear);
     }

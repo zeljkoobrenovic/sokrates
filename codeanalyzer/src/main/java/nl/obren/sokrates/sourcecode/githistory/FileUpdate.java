@@ -5,14 +5,16 @@ import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
 public class FileUpdate {
     private String date = "";
     private String authorEmail = "";
+    private String userName = "";
     private String commitId = "";
     private String path = "";
 
     private boolean bot = false;
 
-    public FileUpdate(String date, String authorEmail, String commitId, String path, boolean bot) {
+    public FileUpdate(String date, String authorEmail, String userName, String commitId, String path, boolean bot) {
         this.date = date;
         this.authorEmail = authorEmail;
+        this.userName = userName;
         this.commitId = commitId;
         this.path = path;
         this.bot = bot;
@@ -32,6 +34,14 @@ public class FileUpdate {
 
     public void setAuthorEmail(String authorEmail) {
         this.authorEmail = authorEmail;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     public String getPath() {
