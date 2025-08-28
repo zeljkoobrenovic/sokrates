@@ -844,7 +844,7 @@ public class LandscapeAnalysisResults {
                     Contributor newContributor = new Contributor();
 
                     newContributor.setEmail(contributorId);
-                    newContributor.setEmail(contributor.getUserName());
+                    newContributor.setUserName(contributor.getUserName());
                     newContributor.setCommitsCount(repositoryCommits);
                     newContributor.setCommitsCount30Days(repositoryCommits30Days);
                     newContributor.setCommitsCount90Days(repositoryCommits90Days);
