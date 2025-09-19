@@ -31,10 +31,6 @@ public class EmailTransformations {
             contributorId = peopleConfig.getPersonFromEmailPatterns(contributorId).getName();
         }
 
-        if (!contributorId.equals(email)) {
-            LOG.info(email + " -> " + contributorId);
-        }
-
         cache.put(email, contributorId);
 
         return contributorId;

@@ -120,14 +120,10 @@ public class GitHistoryUtils {
                             anonymizeEmails.put(authorEmail, anonymizedAuthor);
                         }
                         authorEmail = anonymizedAuthor;
-                        LOG.info(authorEmail + " -> " + anonymizedAuthor);
                     } else if (config.getTransformContributorEmails().size() > 0) {
                         ComplexOperation operation = new ComplexOperation(config.getTransformContributorEmails());
                         String original = authorEmail;
                         authorEmail = operation.exec(authorEmail);
-                        if (!original.equalsIgnoreCase(authorEmail)) {
-                            LOG.info(original + " -> " + authorEmail);
-                        }
                         if (shouldIgnore(authorEmail, ignoreContributors)) {
                             return null;
                         }

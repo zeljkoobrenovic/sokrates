@@ -22,7 +22,9 @@ import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
 import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class FileChurnReportGenerator {
@@ -242,36 +244,27 @@ public class FileChurnReportGenerator {
             CorrelationDiagramGenerator<FileModificationHistory> correlationDiagramGenerator = new CorrelationDiagramGenerator<>(report,
                     codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory(Integer.MAX_VALUE));
 
+            final Map<String,Integer> linesOfCodeMap = new HashMap<>();
+            final Map<String,Integer> countributorsCountMap = new HashMap<>();
+
+            codeAnalysisResults.getFilesAnalysisResults().getAllFiles().forEach(sourceFile -> {
+                linesOfCodeMap.put(sourceFile.getRelativePath(), sourceFile.getLinesOfCode());
+                countributorsCountMap.put(sourceFile.getRelativePath(), sourceFile.getFileModificationHistory().countContributors());
+            });
             ProcessingStopwatch.start("reporting/file update frequency/correlations");
             correlationDiagramGenerator.addCorrelations("File Size vs. Number of Changes", "lines of code", "# changes",
-                    p -> {
-                        SourceFile sourceFileByRelativePath = codeAnalysisResults.getFilesAnalysisResults().getSourceFileByRelativePath(p.getPath());
-                        int linesOfCode = sourceFileByRelativePath != null ? sourceFileByRelativePath.getLinesOfCode() : 0;
-                        return linesOfCode;
-                    },
+                    p -> linesOfCodeMap.getOrDefault(p.getPath(), 0),
                     p -> p.getDates().size(),
                     p -> p.getPath());
 
             correlationDiagramGenerator.addCorrelations("Number of Contributors vs. Number of Changes", "# contributors", "# changes",
-                    p -> {
-                        SourceFile sourceFileByRelativePath = codeAnalysisResults.getFilesAnalysisResults().getSourceFileByRelativePath(p.getPath());
-                        int linesOfCode = sourceFileByRelativePath != null ? sourceFileByRelativePath.getLinesOfCode() : 0;
-                        return linesOfCode > 0 ? p.countContributors() : 0;
-                    },
+                    p -> countributorsCountMap.getOrDefault(p.getPath(), 0),
                     p -> p.getDates().size(),
                     p -> p.getPath());
 
             correlationDiagramGenerator.addCorrelations("Number of Contributors vs. File Size", "# contributors", "lines of code",
-                    p -> {
-                        SourceFile sourceFileByRelativePath = codeAnalysisResults.getFilesAnalysisResults().getSourceFileByRelativePath(p.getPath());
-                        int linesOfCode = sourceFileByRelativePath != null ? sourceFileByRelativePath.getLinesOfCode() : 0;
-                        return linesOfCode > 0 ? p.countContributors() : 0;
-                    },
-                    p -> {
-                        SourceFile sourceFileByRelativePath = codeAnalysisResults.getFilesAnalysisResults().getSourceFileByRelativePath(p.getPath());
-                        int linesOfCode = sourceFileByRelativePath != null ? sourceFileByRelativePath.getLinesOfCode() : 0;
-                        return linesOfCode;
-                    },
+                    p -> countributorsCountMap.getOrDefault(p.getPath(), 0),
+                    p -> linesOfCodeMap.getOrDefault(p.getPath(), 0),
                     p -> p.getPath());
 
             ProcessingStopwatch.end("reporting/file update frequency/correlations");

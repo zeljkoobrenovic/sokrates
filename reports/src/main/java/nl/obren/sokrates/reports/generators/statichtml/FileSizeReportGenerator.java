@@ -21,9 +21,7 @@ import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileSizeDistribution;
 import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -89,23 +87,21 @@ public class FileSizeReportGenerator {
             report.startSection("Correlations", "");
             CorrelationDiagramGenerator<FileModificationHistory> correlationDiagramGenerator = new CorrelationDiagramGenerator<>(report, codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory(Integer.MAX_VALUE));
 
+            final Map<String,Integer> linesOfCodeMap = new HashMap<>();
+
+            codeAnalysisResults.getFilesAnalysisResults().getAllFiles().forEach(sourceFile -> {
+                linesOfCodeMap.put(sourceFile.getRelativePath(), sourceFile.getLinesOfCode());
+            });
+
             ProcessingStopwatch.start("reporting/file size/correlations");
             correlationDiagramGenerator.addCorrelations("File Size vs. Commits (all time)", "commits (all time)", "lines of code",
                     p -> p.getCommits().size(),
-                    p -> {
-                        SourceFile sourceFileByRelativePath = codeAnalysisResults.getFilesAnalysisResults().getSourceFileByRelativePath(p.getPath());
-                        int linesOfCode = sourceFileByRelativePath != null ? sourceFileByRelativePath.getLinesOfCode() : 0;
-                        return linesOfCode;
-                    },
+                    p -> linesOfCodeMap.getOrDefault(p.getPath(), 0),
                     p -> p.getPath());
 
             correlationDiagramGenerator.addCorrelations("File Size vs. Contributors (all time)", "contributors (all time)", "lines of code",
                     p -> p.countContributors(),
-                    p -> {
-                        SourceFile sourceFileByRelativePath = codeAnalysisResults.getFilesAnalysisResults().getSourceFileByRelativePath(p.getPath());
-                        int linesOfCode = sourceFileByRelativePath != null ? sourceFileByRelativePath.getLinesOfCode() : 0;
-                        return linesOfCode;
-                    },
+                    p -> linesOfCodeMap.getOrDefault(p.getPath(), 0),
                     p -> p.getPath());
 
 
@@ -113,41 +109,25 @@ public class FileSizeReportGenerator {
 
             correlationDiagramGenerator.addCorrelations("File Size vs. Commits (30 days)", "commits (30d)", "lines of code",
                     p -> p.getCommits().stream().filter(c -> DateUtils.isDateWithinRange(c.getDate(), 30)).count(),
-                    p -> {
-                        SourceFile sourceFileByRelativePath = codeAnalysisResults.getFilesAnalysisResults().getSourceFileByRelativePath(p.getPath());
-                        int linesOfCode = sourceFileByRelativePath != null ? sourceFileByRelativePath.getLinesOfCode() : 0;
-                        return linesOfCode;
-                    },
+                    p -> linesOfCodeMap.getOrDefault(p.getPath(), 0),
                     p -> p.getPath());
 
             correlationDiagramGenerator.addCorrelations("File Size vs. Contributors (30 days)", "contributors (30d)", "lines of code",
                     p -> countContributors(p, 30),
-                    p -> {
-                        SourceFile sourceFileByRelativePath = codeAnalysisResults.getFilesAnalysisResults().getSourceFileByRelativePath(p.getPath());
-                        int linesOfCode = sourceFileByRelativePath != null ? sourceFileByRelativePath.getLinesOfCode() : 0;
-                        return linesOfCode;
-                    },
+                    p -> linesOfCodeMap.getOrDefault(p.getPath(), 0),
                     p -> p.getPath());
 
             report.addHorizontalLine();
 
             correlationDiagramGenerator.addCorrelations("File Size vs. Commits (90 days)", "commits (90d)", "lines of code",
                     p -> p.getCommits().stream().filter(c -> DateUtils.isDateWithinRange(c.getDate(), 90)).count(),
-                    p -> {
-                        SourceFile sourceFileByRelativePath = codeAnalysisResults.getFilesAnalysisResults().getSourceFileByRelativePath(p.getPath());
-                        int linesOfCode = sourceFileByRelativePath != null ? sourceFileByRelativePath.getLinesOfCode() : 0;
-                        return linesOfCode;
-                    },
+                    p -> linesOfCodeMap.getOrDefault(p.getPath(), 0),
                     p -> p.getPath());
 
 
             correlationDiagramGenerator.addCorrelations("File Size vs. Contributors (90 days)", "contributors (90d)", "lines of code",
                     p -> countContributors(p, 90),
-                    p -> {
-                        SourceFile sourceFileByRelativePath = codeAnalysisResults.getFilesAnalysisResults().getSourceFileByRelativePath(p.getPath());
-                        int linesOfCode = sourceFileByRelativePath != null ? sourceFileByRelativePath.getLinesOfCode() : 0;
-                        return linesOfCode;
-                    },
+                    p -> linesOfCodeMap.getOrDefault(p.getPath(), 0),
                     p -> p.getPath());
 
 
