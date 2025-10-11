@@ -116,7 +116,7 @@ public class ExtensionGroupExtractor {
             "clang-format", "clang-tidy", "gemrc", "yang", "yar", "yara", "yasnippet", "y", "yacc", "zap", "xzap",
             "zil", "mud", "zeek", "bro", "zs", "zep", "zig", "zimpl", "zmpl", "zpl", "curlrc", "desktop", "desktopin",
             "dir_colors", "ec", "eh", "edn", "fish", "mrc", "mcfunction", "mu", "nc", "ooc", "rst", "rest", "resttxt",
-            "rsttxt", "sed", "wdl", "wisp", "prg", "prw", "proto", "policy", "snap"
+            "rsttxt", "sed", "wdl", "wisp", "prg", "prw", "proto", "policy", "snap", "rdl", "rsd", "tmdl"
     );
     private static final List<String> knownBinaryExtensions = Arrays.asList("3ds", "3g2", "3gp", "7z", "a", "aac", "adp",
             "ai", "aif", "aiff", "alz", "ape", "apk", "ar", "arj", "asf", "au", "avi", "bak", "bh", "bin", "bk", "bmp",
