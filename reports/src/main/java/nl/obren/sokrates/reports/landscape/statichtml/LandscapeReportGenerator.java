@@ -314,7 +314,7 @@ public class LandscapeReportGenerator {
         landscapeReport.addTab(REPOSITORIES_TAB_ID, "Repositories (" + landscapeAnalysisResults.getFilteredRepositoryAnalysisResults().size() + ")", false);
         landscapeReport.addTab(STATS_TAB_ID, "Statistics", false);
 
-        landscapeReport.addTab(TAGS_TAB_ID, "Tech Stats", false);
+        landscapeReport.addTab(TAGS_TAB_ID, "Tags & Extensions", false);
         landscapeReport.addTab(CONTRIBUTORS_TAB_ID, "Contributors" + (recentContributorsCount > 0 ? " (" + recentContributorsCount + ")" + "" : ""), false);
         if (teamsConfig.getTeams().size() > 0) {
             landscapeReport.addTab(TEAMS_TAB_ID, "Teams" + (recentContributorsCount > 0 ? " (" + recentTeamsCount + ")" + "" : ""), false);
