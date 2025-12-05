@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM maven:3.9.9-eclipse-temurin-11 AS build
+FROM maven:3.9.9-eclipse-temurin-17 AS build
 
 WORKDIR /build
 COPY . .
@@ -8,7 +8,7 @@ COPY . .
 RUN mvn clean install -DskipTests
 
 # Stage 2: Setup the runtime environment
-FROM eclipse-temurin:11-jre-noble
+FROM eclipse-temurin:17-jre
 
 # Install Graphviz (required for running Sokrates)
 RUN apt-get update && \

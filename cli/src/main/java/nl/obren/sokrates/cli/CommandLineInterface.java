@@ -71,6 +71,7 @@ public class CommandLineInterface {
 
     public static void main(String[] args) throws IOException {
         ProcessingStopwatch.startAsReference("everything");
+
         CommandLineInterface commandLineInterface = new CommandLineInterface();
         commandLineInterface.run(args);
 
