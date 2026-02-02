@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "kitnetic-wrapper"
+version = "0.1.0"
+description = "Interactive wrapper to run the Sokrates scanner across selected project folders"
+authors = ["James Sanders <james.sanders@kitnetic.co.uk>"]
+readme = "README.md"
+packages = [{ include = "kitnetic_wrapper", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+typer = "^0.21.1"
+rich = "^14.3.1"
+InquirerPy = "^0.3.4"
+
+[tool.poetry.scripts]
+kitnetic-wrapper = "kitnetic_wrapper.cli:main"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.6.9"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
