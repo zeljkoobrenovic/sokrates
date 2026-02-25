@@ -9,9 +9,12 @@ import java.util.Calendar;
 import java.util.Date;
 
 public class AuthorCommit {
+    public static final String ISO_DATE_FORMAT = "yyyy-MM-dd";
     private String date = "";
     private String authorEmail = "";
     private String userName = "";
+
+    private int fileUpdatesCount = 1;
 
     private boolean bot = false;
 
@@ -85,7 +88,7 @@ public class AuthorCommit {
             while (calendar.get(Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
                 calendar.add(Calendar.DATE, -1);
             }
-            return new SimpleDateFormat("yyyy-MM-dd").format(calendar.getTime());
+            return new SimpleDateFormat(ISO_DATE_FORMAT).format(calendar.getTime());
         }
 
         return "";
@@ -97,5 +100,18 @@ public class AuthorCommit {
 
     public void setBot(boolean bot) {
         this.bot = bot;
+    }
+
+    public int getFileUpdatesCount() {
+        return fileUpdatesCount;
+    }
+
+    public void setFileUpdatesCount(int fileUpdatesCount) {
+        this.fileUpdatesCount = fileUpdatesCount;
+    }
+
+    @JsonIgnore
+    public void incrementFileUpdatesCount() {
+        this.fileUpdatesCount += 1;
     }
 }

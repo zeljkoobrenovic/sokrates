@@ -94,6 +94,11 @@ public class ContributorsAnalysisResults {
     }
 
     @JsonIgnore
+    public int getFileUpdatesCount30Days() {
+        return contributors.stream().mapToInt(c -> c.getFileUpdatesCount30Days()).sum();
+    }
+
+    @JsonIgnore
     public int getCommitsCount90Days() {
         return contributors.stream().mapToInt(c -> c.getCommitsCount90Days()).sum();
     }

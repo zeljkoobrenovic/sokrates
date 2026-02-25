@@ -19,6 +19,7 @@ import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.landscape.*;
 import nl.obren.sokrates.sourcecode.landscape.analysis.*;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -134,7 +135,7 @@ public class LandscapeReportContributorsTab {
         List<String> pastDates = DateUtils.getPastDays(pastDays, lastCommitDate);
         pastDates.forEach(pastDate -> {
             if (!slots.contains(pastDate)) {
-                contributorsPerDay.add(new ContributionTimeSlot(pastDate));
+                contributorsPerDay.add(new ContributionTimeSlot(pastDate, Thresholds.defaultCommitFilesCountThresholds()));
             }
         });
         return contributorsPerDay;
@@ -146,7 +147,7 @@ public class LandscapeReportContributorsTab {
         List<String> pastDates = DateUtils.getPastWeeks(pastWeeks, lastCommitDate);
         pastDates.forEach(pastDate -> {
             if (!slots.contains(pastDate)) {
-                contributorsPerWeek.add(new ContributionTimeSlot(pastDate));
+                contributorsPerWeek.add(new ContributionTimeSlot(pastDate, Thresholds.defaultCommitFilesCountThresholds()));
             }
         });
         return contributorsPerWeek;
@@ -158,7 +159,7 @@ public class LandscapeReportContributorsTab {
         List<String> pastDates = DateUtils.getPastYears(pastYears, lastCommitDate);
         pastDates.forEach(pastDate -> {
             if (!slots.contains(pastDate)) {
-                contributorsPerWeek.add(new ContributionTimeSlot(pastDate));
+                contributorsPerWeek.add(new ContributionTimeSlot(pastDate, Thresholds.defaultCommitFilesCountThresholds()));
             }
         });
         return contributorsPerWeek;
@@ -170,7 +171,7 @@ public class LandscapeReportContributorsTab {
         List<String> pastDates = DateUtils.getPastMonths(pastMonths, lastCommitDate);
         pastDates.forEach(pastDate -> {
             if (!slots.contains(pastDate)) {
-                contributorsPerMonth.add(new ContributionTimeSlot(pastDate));
+                contributorsPerMonth.add(new ContributionTimeSlot(pastDate, Thresholds.defaultCommitFilesCountThresholds()));
             }
         });
         return contributorsPerMonth;

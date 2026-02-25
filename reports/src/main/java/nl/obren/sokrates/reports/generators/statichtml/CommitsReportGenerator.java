@@ -12,6 +12,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.ContributorPerExtensionStats;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
@@ -75,6 +76,7 @@ public class CommitsReportGenerator {
 
         report.addLevel2Header("Per Year", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
+        Thresholds fileUpdateFrequencyThresholds = this.codeAnalysisResults.getCodeConfiguration().getAnalysis().getFileUpdateFrequencyThresholds();
         ContributorsReportUtils.addContributorsPerTimeSlot(report, analysis.getContributorsPerYear(), 20, true, true, 4, false);
         report.addLevel2Header("Per Month", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
@@ -191,7 +193,7 @@ public class CommitsReportGenerator {
             if (contributionTimeSlot != null) {
                 contributorsPerWeek.add(contributionTimeSlot);
             } else {
-                contributorsPerWeek.add(new ContributionTimeSlot(pastDate));
+                contributorsPerWeek.add(new ContributionTimeSlot(pastDate, Thresholds.defaultCommitFilesCountThresholds()));
             }
         });
         return contributorsPerWeek;
@@ -209,7 +211,7 @@ public class CommitsReportGenerator {
             if (contributionTimeSlot != null) {
                 contributorsPerMonth.add(contributionTimeSlot);
             } else {
-                contributorsPerMonth.add(new ContributionTimeSlot(pastDate));
+                contributorsPerMonth.add(new ContributionTimeSlot(pastDate, Thresholds.defaultCommitFilesCountThresholds()));
             }
         });
         return contributorsPerMonth;
@@ -227,7 +229,7 @@ public class CommitsReportGenerator {
             if (contributionTimeSlot != null) {
                 contributorsPerDay.add(contributionTimeSlot);
             } else {
-                contributorsPerDay.add(new ContributionTimeSlot(pastDate));
+                contributorsPerDay.add(new ContributionTimeSlot(pastDate, Thresholds.defaultCommitFilesCountThresholds()));
             }
         });
         return contributorsPerDay;

@@ -34,6 +34,7 @@ public class GitHistoryUtils {
     public static List<AuthorCommit> getAuthorCommits(File file, FileHistoryAnalysisConfig config) {
         List<AuthorCommit> commits = new ArrayList<>();
         Set<String> commitIds = new HashSet<>();
+        Map<String, AuthorCommit> commitsMap = new HashMap<>();
 
         int index[] = {0};
 
@@ -46,7 +47,11 @@ public class GitHistoryUtils {
             String commitId = fileUpdate.getCommitId();
             if (!commitIds.contains(commitId)) {
                 commitIds.add(commitId);
-                commits.add(new AuthorCommit(fileUpdate.getDate(), fileUpdate.getAuthorEmail(), fileUpdate.getUserName(), fileUpdate.isBot()));
+                AuthorCommit authorCommit = new AuthorCommit(fileUpdate.getDate(), fileUpdate.getAuthorEmail(), fileUpdate.getUserName(), fileUpdate.isBot());
+                commits.add(authorCommit);
+                commitsMap.put(commitId, authorCommit);
+            } else {
+                commitsMap.get(commitId).incrementFileUpdatesCount();
             }
         });
 

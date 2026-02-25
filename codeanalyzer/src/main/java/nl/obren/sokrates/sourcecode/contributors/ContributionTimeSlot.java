@@ -5,17 +5,31 @@
 package nl.obren.sokrates.sourcecode.contributors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 
 public class ContributionTimeSlot {
     private String timeSlot = "";
     private int contributorsCount;
     private int commitsCount;
+    private int fileUpdatesCount;
 
-    public ContributionTimeSlot() {
+    private RiskDistributionStats fileUpdatesCountStats;
+
+    public ContributionTimeSlot(Thresholds fileUpdateFrequencyThresholds) {
+        this.fileUpdatesCountStats = new RiskDistributionStats(fileUpdateFrequencyThresholds);
+        this.fileUpdatesCountStats.setValueUnit("file updates");
+        this.fileUpdatesCountStats.setCountUnit("commits");
     }
 
-    public ContributionTimeSlot(String timeSlot) {
+    public ContributionTimeSlot(String timeSlot, Thresholds fileUpdateFrequencyThresholds) {
+        this(fileUpdateFrequencyThresholds);
+
         this.timeSlot = timeSlot;
+    }
+
+    public ContributionTimeSlot() {
+        this(Thresholds.defaultFileUpdateFrequencyThresholds());
     }
 
     public String getTimeSlot() {
@@ -47,4 +61,25 @@ public class ContributionTimeSlot {
         this.commitsCount += 1;
     }
 
+    public int getFileUpdatesCount() {
+        return fileUpdatesCount;
+    }
+
+    public void setFileUpdatesCount(int fileUpdatesCount) {
+        this.fileUpdatesCount = fileUpdatesCount;
+    }
+
+    public RiskDistributionStats getFileUpdatesCountStats() {
+        return fileUpdatesCountStats;
+    }
+
+    public void setFileUpdatesCountStats(RiskDistributionStats fileUpdatesCountStats) {
+        this.fileUpdatesCountStats = fileUpdatesCountStats;
+    }
+
+    @JsonIgnore
+    public void incrementFileUpdatesCount(int increment) {
+        this.fileUpdatesCount += increment;
+        this.fileUpdatesCountStats.update(increment, increment);
+    }
 }

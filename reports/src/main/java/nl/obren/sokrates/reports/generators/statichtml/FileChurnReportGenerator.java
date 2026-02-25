@@ -249,7 +249,9 @@ public class FileChurnReportGenerator {
 
             codeAnalysisResults.getFilesAnalysisResults().getAllFiles().forEach(sourceFile -> {
                 linesOfCodeMap.put(sourceFile.getRelativePath(), sourceFile.getLinesOfCode());
-                countributorsCountMap.put(sourceFile.getRelativePath(), sourceFile.getFileModificationHistory().countContributors());
+                if (sourceFile.getFileModificationHistory() != null) {
+                    countributorsCountMap.put(sourceFile.getRelativePath(), sourceFile.getFileModificationHistory().countContributors());
+                }
             });
             ProcessingStopwatch.start("reporting/file update frequency/correlations");
             correlationDiagramGenerator.addCorrelations("File Size vs. Number of Changes", "lines of code", "# changes",

@@ -56,6 +56,11 @@ public class Thresholds {
         return new Thresholds(50, 100, 250, 500);
     }
 
+    @JsonIgnore
+    public static Thresholds defaultCommitFilesCountThresholds() {
+        return new Thresholds(5, 20, 50, 100);
+    }
+
     public int getLow() {
         return Math.max(1, low);
     }

@@ -10,6 +10,7 @@ import nl.obren.sokrates.sourcecode.githistory.AuthorCommit;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryPerExtensionUtils;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -63,12 +64,13 @@ public class GitContributorsUtil {
             contributor.setUserName(authorCommit.getUserName());
             contributor.setBot(authorCommit.isBot());
             String id = contributor.getEmail();
+            int fileUpdatesCount = authorCommit.getFileUpdatesCount();
             if (map.containsKey(id)) {
-                map.get(id).addCommit(date);
+                map.get(id).addCommit(date, fileUpdatesCount);
             } else {
                 map.put(id, contributor);
                 list.add(contributor);
-                contributor.addCommit(date);
+                contributor.addCommit(date, fileUpdatesCount);
             }
         });
         Collections.sort(list, (a, b) -> b.getCommitsCount() - a.getCommitsCount());
@@ -94,12 +96,13 @@ public class GitContributorsUtil {
             }
             ContributionTimeSlot contributionTimeSlot = map.get(timeSlot);
             if (contributionTimeSlot == null) {
-                contributionTimeSlot = new ContributionTimeSlot(timeSlot);
+                contributionTimeSlot = new ContributionTimeSlot(timeSlot, Thresholds.defaultCommitFilesCountThresholds());
                 map.put(timeSlot, contributionTimeSlot);
                 list.add(contributionTimeSlot);
             }
             contributionTimeSlot.incrementCommitsCount();
             contributionTimeSlot.setContributorsCount(ids.size());
+            contributionTimeSlot.incrementFileUpdatesCount(authorCommit.getFileUpdatesCount());
         });
 
         Collections.sort(list, Comparator.comparing(ContributionTimeSlot::getTimeSlot));

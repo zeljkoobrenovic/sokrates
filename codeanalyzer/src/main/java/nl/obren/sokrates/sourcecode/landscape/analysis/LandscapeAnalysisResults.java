@@ -22,6 +22,7 @@ import nl.obren.sokrates.sourcecode.landscape.TeamsConfig;
 import nl.obren.sokrates.sourcecode.landscape.utils.EmailTransformations;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
@@ -963,7 +964,7 @@ public class LandscapeAnalysisResults {
                 if (commits.containsKey(month)) {
                     commits.get(month).setCommitsCount(commits.get(month).getCommitsCount() + 1);
                 } else {
-                    ContributionTimeSlot timeSlot = new ContributionTimeSlot(month);
+                    ContributionTimeSlot timeSlot = new ContributionTimeSlot(month, Thresholds.defaultCommitFilesCountThresholds());
                     timeSlot.setContributorsCount(1);
                     commits.put(month, timeSlot);
                 }
@@ -983,7 +984,7 @@ public class LandscapeAnalysisResults {
                 if (finalPair.getRight().containsKey(timeSlot)) {
                     finalPair.getRight().get(timeSlot).setCommitsCount(finalPair.getRight().get(timeSlot).getCommitsCount() + commitTimeSlot.getCommitsCount());
                 } else {
-                    ContributionTimeSlot contributionTimeSlot = new ContributionTimeSlot(timeSlot);
+                    ContributionTimeSlot contributionTimeSlot = new ContributionTimeSlot(timeSlot, Thresholds.defaultCommitFilesCountThresholds());
                     contributionTimeSlot.setCommitsCount(commitTimeSlot.getCommitsCount());
                     contributionTimeSlot.setContributorsCount(1);
                     finalPair.getRight().put(timeSlot, contributionTimeSlot);
@@ -1002,7 +1003,7 @@ public class LandscapeAnalysisResults {
         contributorsPerTimeSlot.forEach(timeSlot -> {
             ContributionTimeSlot contributionTimeSlot = map.get(timeSlot.getTimeSlot());
             if (contributionTimeSlot == null) {
-                contributionTimeSlot = new ContributionTimeSlot();
+                contributionTimeSlot = new ContributionTimeSlot(Thresholds.defaultFileUpdateFrequencyThresholds());
                 contributionTimeSlot.setTimeSlot(timeSlot.getTimeSlot());
                 contributionTimeSlot.setContributorsCount(timeSlot.getContributorsCount());
                 contributionTimeSlot.setCommitsCount(timeSlot.getCommitsCount());

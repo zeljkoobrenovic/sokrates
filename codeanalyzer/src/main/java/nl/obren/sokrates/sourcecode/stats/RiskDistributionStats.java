@@ -34,6 +34,9 @@ public class RiskDistributionStats {
     private String highRiskLabel = "";
     private String veryHighRiskLabel = "";
 
+    private String valueUnit = "LOC";
+    private String countUnit = "files";
+
     public RiskDistributionStats() {
     }
 
@@ -282,19 +285,35 @@ public class RiskDistributionStats {
     }
 
     @JsonIgnore
+    private String formatLine(double perc, String label, int value, int count) {
+        return FormattingUtils.getFormattedPercentage(perc) + "% " + label + ": " + FormattingUtils.formatCount(value) + " " + valueUnit + " in " + FormattingUtils.formatCount(count) + " " + countUnit + ";\n";
+    }
+
+    public String getValueUnit() {
+        return valueUnit;
+    }
+
+    public void setValueUnit(String valueUnit) {
+        this.valueUnit = valueUnit;
+    }
+
+    public String getCountUnit() {
+        return countUnit;
+    }
+
+    public void setCountUnit(String countUnit) {
+        this.countUnit = countUnit;
+    }
+
+    @JsonIgnore
     public String getDescription() {
         StringBuilder text = new StringBuilder();
 
-        text.append(FormattingUtils.getFormattedPercentage(getVeryHighRiskPercentage()) + "% " + veryHighRiskLabel + ": " +
-                FormattingUtils.formatCount(veryHighRiskValue) + " LOC in " + FormattingUtils.formatCount(veryHighRiskCount) + " files;\n");
-        text.append(FormattingUtils.getFormattedPercentage(getHighRiskPercentage()) + "% " + highRiskLabel + ": " +
-                FormattingUtils.formatCount(highRiskValue) + " LOC in " + FormattingUtils.formatCount(highRiskCount) + " files;\n");
-        text.append(FormattingUtils.getFormattedPercentage(getMediumRiskPercentage()) + "% " + mediumRiskLabel + ": " +
-                FormattingUtils.formatCount(mediumRiskValue) + " LOC in " + FormattingUtils.formatCount(mediumRiskCount) + " files;\n");
-        text.append(FormattingUtils.getFormattedPercentage(getLowRiskPercentage()) + "% " + lowRiskLabel + ": " +
-                FormattingUtils.formatCount(lowRiskValue) + " LOC in " + FormattingUtils.formatCount(lowRiskCount) + " files;\n");
-        text.append(FormattingUtils.getFormattedPercentage(getNegligibleRiskPercentage()) + "% " + negligibleRiskLabel + ": " +
-                FormattingUtils.formatCount(negligibleRiskValue) + " LOC in " + FormattingUtils.formatCount(negligibleRiskCount) + " files;\n");
+        text.append(formatLine(getVeryHighRiskPercentage(), veryHighRiskLabel, veryHighRiskValue, veryHighRiskCount));
+        text.append(formatLine(getHighRiskPercentage(), highRiskLabel, highRiskValue, highRiskCount));
+        text.append(formatLine(getMediumRiskPercentage(), mediumRiskLabel, mediumRiskValue, mediumRiskCount));
+        text.append(formatLine(getLowRiskPercentage(), lowRiskLabel, lowRiskValue, lowRiskCount));
+        text.append(formatLine(getNegligibleRiskPercentage(), negligibleRiskLabel, negligibleRiskValue, negligibleRiskCount));
 
         return text.toString();
     }

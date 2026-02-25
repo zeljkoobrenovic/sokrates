@@ -22,6 +22,7 @@ public class Contributor {
     private String userName = "";
     private int commitsCount = 0;
     private int commitsCount30Days = 0;
+    private int fileUpdatesCount30Days = 0;
     private int commitsCount90Days = 0;
     private int commitsCount180Days = 0;
     private int commitsCount365Days = 0;
@@ -40,7 +41,7 @@ public class Contributor {
     }
 
     @JsonIgnore
-    public void addCommit(String date) {
+    public void addCommit(String date, int fileUpdatesCount) {
         if (!commitDates.contains(date)) {
             commitDates.add(date);
         }
@@ -59,6 +60,7 @@ public class Contributor {
 
             if (DateUtils.isCommittedLessThanDaysAgo(date, RECENTLY_ACTIVITY_THRESHOLD_DAYS)) {
                 commitsCount30Days += 1;
+                fileUpdatesCount30Days += fileUpdatesCount;
             }
             if (DateUtils.isCommittedLessThanDaysAgo(date, 90)) {
                 commitsCount90Days += 1;
@@ -167,6 +169,14 @@ public class Contributor {
 
     public void setCommitsCount30Days(int commitsCount30Days) {
         this.commitsCount30Days = commitsCount30Days;
+    }
+
+    public int getFileUpdatesCount30Days() {
+        return fileUpdatesCount30Days;
+    }
+
+    public void setFileUpdatesCount30Days(int fileUpdatesCount30Days) {
+        this.fileUpdatesCount30Days = fileUpdatesCount30Days;
     }
 
     public int getCommitsCount90Days() {

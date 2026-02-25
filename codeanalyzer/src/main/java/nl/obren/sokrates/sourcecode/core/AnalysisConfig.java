@@ -68,6 +68,9 @@ public class AnalysisConfig {
     // Thresholds for risk profiles used in unit conditional complexity analyses
     private Thresholds fileConditionalComplexityThresholds = Thresholds.defaultConditionalComplexityThresholds();
 
+    // Thresholds for risk profiles used in commit analysis
+    private Thresholds commitFilesCountThresholds = Thresholds.defaultCommitFilesCountThresholds();
+
     // An optional HTML code fragment to be included in a header section of generated HTML reports (e.g. Google Analytics snippet)
     private String customHtmlReportHeaderFragment = "";
 
@@ -226,6 +229,14 @@ public class AnalysisConfig {
 
     public void setFileConditionalComplexityThresholds(Thresholds fileConditionalComplexityThresholds) {
         this.fileConditionalComplexityThresholds = fileConditionalComplexityThresholds;
+    }
+
+    public Thresholds getCommitFilesCountThresholds() {
+        return commitFilesCountThresholds;
+    }
+
+    public void setCommitFilesCountThresholds(Thresholds commitFilesCountThresholds) {
+        this.commitFilesCountThresholds = commitFilesCountThresholds;
     }
 
     public String getCustomHtmlReportHeaderFragment() {

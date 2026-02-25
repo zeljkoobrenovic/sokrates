@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.reports.core;
 
+import nl.obren.sokrates.common.renderingutils.Threshold;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.generators.statichtml.ContributorsReportUtils;
 import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
@@ -23,14 +24,13 @@ import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -220,11 +220,20 @@ public class ReportFileExporter {
 
             long contributorsCount = contributorsAnalysisResults.getContributors().stream().filter(c -> !c.isBot() && c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count();
             int commitsCount30Days = contributorsAnalysisResults.getCommitsCount30Days();
+            int fileUpdatesCount30Days = contributorsAnalysisResults.getFileUpdatesCount30Days();
 
             indexReport.startTable();
             indexReport.startTableRow();
 
             indexReport.startTableCell("border: none; vertical-align: top;");
+
+            indexReport.startDiv("margin-top: 8px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
+            indexReport.startNewTabLink("Commits.html", "");
+            indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(fileUpdatesCount30Days),
+                    "padding-top: 12px; font-size: 36px;");
+            indexReport.addContentInDiv((fileUpdatesCount30Days == 1 ? "file update" : "file updates") + "<br>(30 days)", "color: black; font-size: 80%");
+            indexReport.endNewTabLink();
+            indexReport.endDiv();
 
             indexReport.startDiv("margin-top: 8px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
             indexReport.startNewTabLink("Commits.html", "");
@@ -254,7 +263,9 @@ public class ReportFileExporter {
             indexReport.startDiv("font-size: 110%");
             indexReport.addLineBreak();
             indexReport.addLevel3Header("Activity Per File Extension");
+
             indexReport.startTable();
+
             indexReport.startTableRow();
             indexReport.addTableCell(getIconSvg("commits") + "<div style='font-size: 80%'>commits</div>", "border: none; text-align: center");
             indexReport.startTableCell("border: none");
@@ -263,17 +274,21 @@ public class ReportFileExporter {
             HistoryPerLanguageGenerator.getInstanceCommits(historyPerExtensionPerYear, extensions).addHistoryPerLanguage(indexReport);
             indexReport.endTableCell();
             indexReport.endTableRow();
+
             indexReport.startTableRow();
             indexReport.addTableCell("&nbsp;", "border: none");
             indexReport.addTableCell("&nbsp;", "border: none");
             indexReport.endTableRow();
+
             indexReport.startTableRow();
             indexReport.addTableCell(getIconSvg("contributors") + "<div style='font-size: 80%'>contributors</div>", "border: none; text-align: center");
             indexReport.startTableCell("border: none");
             HistoryPerLanguageGenerator.getInstanceContributors(historyPerExtensionPerYear, extensions).addHistoryPerLanguage(indexReport);
             indexReport.endTableCell();
             indexReport.endTableRow();
+
             indexReport.endTable();
+
             indexReport.endTabContentSection();
             indexReport.endDiv();
             indexReport.endDiv();
@@ -329,17 +344,26 @@ public class ReportFileExporter {
         String year = currentYear + "";
 
         while (!map.containsKey(year)) {
-            contributorsPerYear.add(new ContributionTimeSlot(year));
+            contributorsPerYear.add(new ContributionTimeSlot(year, Thresholds.defaultCommitFilesCountThresholds()));
             currentYear -= 1;
             year = currentYear + "";
         }
 
         long contributorsCount = contributorsAnalysisResults.getContributors().stream().filter(c -> !c.isBot() && c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count();
         int commitsCount30Days = contributorsAnalysisResults.getCommitsCount30Days();
+        int fileUpdatesCount30Days = contributorsAnalysisResults.getFileUpdatesCount30Days();
         indexReport.startTable("margin-bottom: -20px; border-top: 1px dashed grey; border-bottom: 1px dashed grey; padding-top: 10px; margin-top: 10px; margin-bottom: 10px;");
         indexReport.startTableRow();
 
         indexReport.startTableCell("border: none; vertical-align: top;");
+
+        indexReport.startDiv("margin-top: 8px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
+        indexReport.startNewTabLink("Commits.html", fileUpdatesCount30Days == 0 ? "opacity: 0.4" : "");
+        indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(fileUpdatesCount30Days),
+                "padding-top: 12px; font-size: 36px;");
+        indexReport.addContentInDiv((fileUpdatesCount30Days == 1 ? "file updates" : "file updates") + "<br>(30 days)", "color: black; font-size: 80%");
+        indexReport.endNewTabLink();
+        indexReport.endDiv();
 
         indexReport.startDiv("margin-top: 8px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
         indexReport.startNewTabLink("Commits.html", commitsCount30Days == 0 ? "opacity: 0.4" : "");

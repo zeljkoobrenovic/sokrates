@@ -39,6 +39,7 @@ import nl.obren.sokrates.sourcecode.landscape.analysis.RepositoryAnalysisResults
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -561,7 +562,7 @@ public class LandscapeReportGenerator {
         List<String> pastDates = DateUtils.getPastDays(pastDays, lastCommitDate);
         pastDates.forEach(pastDate -> {
             if (!slots.contains(pastDate)) {
-                contributorsPerDay.add(new ContributionTimeSlot(pastDate));
+                contributorsPerDay.add(new ContributionTimeSlot(pastDate, Thresholds.defaultCommitFilesCountThresholds()));
             }
         });
         return contributorsPerDay;
@@ -573,7 +574,7 @@ public class LandscapeReportGenerator {
         List<String> pastDates = DateUtils.getPastWeeks(pastWeeks, lastCommitDate);
         pastDates.forEach(pastDate -> {
             if (!slots.contains(pastDate)) {
-                contributorsPerWeek.add(new ContributionTimeSlot(pastDate));
+                contributorsPerWeek.add(new ContributionTimeSlot(pastDate, Thresholds.defaultCommitFilesCountThresholds()));
             }
         });
         return contributorsPerWeek;
@@ -585,7 +586,7 @@ public class LandscapeReportGenerator {
         List<String> pastDates = DateUtils.getPastYears(pastYears, lastCommitDate);
         pastDates.forEach(pastDate -> {
             if (!slots.contains(pastDate)) {
-                contributorsPerWeek.add(new ContributionTimeSlot(pastDate));
+                contributorsPerWeek.add(new ContributionTimeSlot(pastDate, Thresholds.defaultCommitFilesCountThresholds()));
             }
         });
         return contributorsPerWeek;

@@ -4,21 +4,19 @@
 
 package nl.obren.sokrates.reports.generators.statichtml;
 
+import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
-import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
-import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
+import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ContributorsReportUtils {
@@ -57,9 +55,57 @@ public class ContributorsReportUtils {
 
             int maxContributors = contributorsPerTimeSlot.stream().mapToInt(c -> c.getContributorsCount()).max().orElse(1);
             int maxCommits = contributorsPerTimeSlot.stream().mapToInt(c -> c.getCommitsCount()).max().orElse(1);
+            int maxFileUpdatesCount = contributorsPerTimeSlot.stream().mapToInt(c -> c.getFileUpdatesCount()).max().orElse(1);
 
             report.startDiv("overflow-y: auto; font-size: 90%");
             report.startTable();
+
+            report.startTableRow();
+            report.addTableCell(getIconSvg("change", 64), "border: none; vertical-align: bottom;" + (fade ? "opacity: 0.4" : ""));
+            String styleFileUpdatesCount;
+            if (showTimeSlot) {
+                styleFileUpdatesCount = "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: bottom; font-size: 80%";
+            } else {
+                styleFileUpdatesCount = "border: none; padding: " + padding + "px; vertical-align: bottom; font-size: 80%";
+            }
+            for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
+                report.startTableCell(styleFileUpdatesCount);
+                if (timeSlot != null) {
+                    int count = timeSlot.getFileUpdatesCount();
+                    if (showTimeSlot) {
+                        report.addParagraph(count + "", "margin: 0px" + (count == 0 ? "; color: #d0d0d0" : ""));
+                    } else {
+                        report.addParagraph("&nbsp;", "margin: 0px");
+                    }
+                    String title = timeSlot.getTimeSlot() + ": " + count + "\n\n";
+                    RiskDistributionStats stats = timeSlot.getFileUpdatesCountStats();
+                    title += stats.getDescription();
+
+                    Palette palette = Palette.getRiskPalette();
+
+                    int heightVeryHigh = 1 + (int) (64.0 * stats.getVeryHighRiskValue() / maxFileUpdatesCount);
+                    report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + palette.nextColor() + "; height:" + heightVeryHigh + "px'></div>");
+
+                    int heightHigh = 1 + (int) (64.0 * stats.getHighRiskValue() / maxFileUpdatesCount);
+                    report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + palette.nextColor() + "; height:" + heightHigh + "px'></div>");
+
+                    int heightMedium = 1 + (int) (64.0 * stats.getMediumRiskValue() / maxFileUpdatesCount);
+                    report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + palette.nextColor() + "; height:" + heightMedium + "px'></div>");
+
+                    int heightLow = 1 + (int) (64.0 * stats.getLowRiskValue() / maxFileUpdatesCount);
+                    report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + palette.nextColor() + "; height:" + heightLow + "px'></div>");
+
+                    int heightNegligible = 1 + (int) (64.0 * stats.getNegligibleRiskValue() / maxFileUpdatesCount);
+                    report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + palette.nextColor() + "; height:" + heightNegligible + "px'></div>");
+
+
+
+                } else {
+                    report.addHtmlContent("<div style='width: 100%; background-color: #d0d0d0; height:1px'></div>");
+                }
+                report.endTableCell();
+            }
+            report.endTableRow();
 
             report.startTableRow();
             report.addTableCell(getIconSvg("commits", 64), "border: none; vertical-align: bottom;" + (fade ? "opacity: 0.4" : ""));
