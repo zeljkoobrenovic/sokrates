@@ -231,6 +231,7 @@ public class CStyleHeuristicUnitsExtractor {
         cleanedContent = cleanedContent.replaceAll("@\".*?\"", "\"\"");
         cleanedContent = cleanedContent.replaceAll("\".*?\"", "\"\"");
         cleanedContent = cleanedContent.replaceAll("'.*?'", "''");
+        cleanedContent = cleanedContent.replaceAll("`[^`]*`", "``");
         cleanedContent = cleanedContent.replaceAll("/.+?/", "\"\"");
         cleanedContent = cleanedContent.replace("://", ":/ /");
         cleanedContent = cleanedContent.replaceAll("[<].*?[>]", "");
