@@ -114,15 +114,16 @@
 </head>
 <body>
 
+<div style="color: grey; margin: 8px 0 10px 0;">
+    <input id="filter" type="text" placeholder="search..."
+           style="font-size: 16px; height: 30px; width: 320px;"
+           onkeyup="render()">
+    <span id="search-summary" style="display: inline-block; margin-left: 6px;"></span>
+</div>
+
 <div class="tab" id="tabs"></div>
 
 <div class="tabcontent">
-    <div style="color: grey; margin: 10px 0 6px 0;">
-        <input id="filter" type="text" placeholder="search..."
-               style="font-size: 16px; height: 30px; width: 320px;"
-               onkeyup="render()">
-        <span id="search-summary" style="display: inline-block; margin-left: 6px;"></span>
-    </div>
     <div id="content"></div>
 </div>
 
