@@ -6,6 +6,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.SokratesRepositoryLink;
 import nl.obren.sokrates.sourcecode.landscape.analysis.RepositoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
+import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,7 @@ public class RepositoryExport {
     private int buildAndDeployLinesOfCode;
     private int otherFilesCount;
     private int otherLinesOfCode;
+    private String mainLang;
 
     public RepositoryExport(RepositoryAnalysisResults repository) {
         this.contributors30Days = contributors30Days;
@@ -80,6 +82,13 @@ public class RepositoryExport {
 
         otherFilesCount = other.getFilesCount();
         generatedLinesOfCode = other.getLinesOfCode();
+
+        // The dominant main-aspect extension is the repository's main language.
+        // getLinesOfCodePerExtension() is sorted by LOC descending; names look like "  *.java".
+        List<NumericMetric> mainPerExtension = main.getLinesOfCodePerExtension();
+        if (mainPerExtension != null && !mainPerExtension.isEmpty()) {
+            mainLang = mainPerExtension.get(0).getName().replace("*.", "").trim().toLowerCase();
+        }
     }
 
     public SokratesRepositoryLink getSokratesRepositoryLink() {
@@ -160,6 +169,10 @@ public class RepositoryExport {
 
     public int getCommitsCount() {
         return commitsCount;
+    }
+
+    public String getMainLang() {
+        return mainLang;
     }
 
 }

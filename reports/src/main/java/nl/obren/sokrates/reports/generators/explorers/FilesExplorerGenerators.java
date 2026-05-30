@@ -1,6 +1,7 @@
 package nl.obren.sokrates.reports.generators.explorers;
 
 import nl.obren.sokrates.common.renderingutils.ExplorerTemplate;
+import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.landscape.analysis.FileExport;
@@ -10,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -46,7 +48,9 @@ public class FilesExplorerGenerators {
 
             ExplorerTemplate explorerTemplate = new ExplorerTemplate();
 
-            String filesExplorer = explorerTemplate.render("files-explorer.html", files);
+            List<String> fileLangs = files.stream().map(FileExport::getMainLang).collect(Collectors.toList());
+            String fileLangIcons = DataImageUtils.getLangDataImageMapJson(fileLangs);
+            String filesExplorer = explorerTemplate.render("files-explorer.html", files, fileLangIcons);
             File folder = new File(reportsFolder, "explorers");
             folder.mkdirs();
             FileUtils.write(new File(folder, "files-explorer.html"), filesExplorer, UTF_8);

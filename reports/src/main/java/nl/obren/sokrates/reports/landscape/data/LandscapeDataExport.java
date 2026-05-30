@@ -7,6 +7,7 @@ import nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.TagMap;
 import nl.obren.sokrates.reports.landscape.utils.ContributorPerExtensionHelper;
 import nl.obren.sokrates.reports.landscape.utils.TagStats;
+import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
@@ -75,10 +76,14 @@ public class LandscapeDataExport {
 
             FileUtils.write(new File(dataFolder, "files.json"), new JsonGenerator().generate(files), UTF_8);
 
-            String htmlExplorer = explorerTemplate.render("repository-explorer.html", repositoryExports);
+            List<String> repositoryLangs = repositoryExports.stream().map(RepositoryExport::getMainLang).collect(Collectors.toList());
+            String repositoryLangIcons = DataImageUtils.getLangDataImageMapJson(repositoryLangs);
+            String htmlExplorer = explorerTemplate.render("repository-explorer.html", repositoryExports, repositoryLangIcons);
             FileUtils.write(new File(reportsFolder, "repositories-explorer.html"), htmlExplorer, UTF_8);
 
-            String filesExplorer = explorerTemplate.render("files-explorer.html", files);
+            List<String> fileLangs = files.stream().map(FileExport::getMainLang).collect(Collectors.toList());
+            String fileLangIcons = DataImageUtils.getLangDataImageMapJson(fileLangs);
+            String filesExplorer = explorerTemplate.render("files-explorer.html", files, fileLangIcons);
             FileUtils.write(new File(reportsFolder, "files-explorer.html"), filesExplorer, UTF_8);
         } catch (IOException e) {
             e.printStackTrace();

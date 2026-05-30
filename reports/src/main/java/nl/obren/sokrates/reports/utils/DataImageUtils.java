@@ -1,9 +1,14 @@
 package nl.obren.sokrates.reports.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class DataImageUtils {
@@ -259,11 +264,39 @@ public class DataImageUtils {
     }
 
     public static String getLangDataImage(String lang) {
-        if (map.containsKey(lang.toLowerCase())) {
+        if (lang != null && map.containsKey(lang.toLowerCase().trim())) {
             return getImageBase64("/lang/" + map.get(lang.toLowerCase().trim()));
         }
 
         return null;
+    }
+
+    /**
+     * Builds a JSON object literal mapping each given language/extension to its base64 image data URI,
+     * suitable for embedding directly in a generated HTML template (e.g. as <code>const langIcons = {...}</code>).
+     * Languages without a known icon are skipped, and each icon is emitted only once even if requested repeatedly.
+     */
+    public static String getLangDataImageMapJson(Collection<String> langs) {
+        Map<String, String> icons = new LinkedHashMap<>();
+        for (String lang : langs) {
+            if (lang == null) {
+                continue;
+            }
+            String key = lang.toLowerCase().trim();
+            if (key.isEmpty() || icons.containsKey(key)) {
+                continue;
+            }
+            String image = getLangDataImage(key);
+            if (image != null) {
+                icons.put(key, image);
+            }
+        }
+        try {
+            return new ObjectMapper().writer().writeValueAsString(icons);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return "{}";
+        }
     }
 
     public static String getImageBase64(String imageResourcePath) {

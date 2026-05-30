@@ -19,12 +19,22 @@ public class ExplorerTemplate {
     private static final Log LOG = LogFactory.getLog(ExplorerTemplate.class);
 
     public String render(String templateFileName, Object data) {
+        return render(templateFileName, data, "{}");
+    }
+
+    /**
+     * Renders an explorer template, substituting the <code>${data}</code> placeholder with the JSON
+     * serialization of <code>data</code> and the <code>${langIcons}</code> placeholder with the given
+     * pre-built JSON object literal mapping languages/extensions to base64 image data URIs.
+     */
+    public String render(String templateFileName, Object data, String langIconsJson) {
         ClassLoader clazz = this.getClass().getClassLoader();
         InputStream inputStream = clazz.getResourceAsStream("templates/" + templateFileName);
 
         try {
             String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             content = content.replace("${data}", new JsonGenerator().generateCompressed(data));
+            content = content.replace("${langIcons}", langIconsJson != null ? langIconsJson : "{}");
 
             return content;
         } catch (IOException e) {

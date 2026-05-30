@@ -103,6 +103,29 @@
 <script>
     let importedFiles = ${data};
 
+    // Map of language/extension -> base64 image data URI, injected at report-generation time.
+    const langIcons = ${langIcons};
+
+    // Renders a small round language badge: an icon when one is known, otherwise a text bubble
+    // with the language name (mirrors DataImageUtils.getLangDataImageDiv on the Java side).
+    function langIcon(lang) {
+        if (!lang) {
+            return '';
+        }
+        const key = lang.toLowerCase();
+        const size = 22;
+        if (langIcons[key]) {
+            return '<img title="' + lang + '" style="margin-right: 5px; vertical-align: middle; background-color: #f1f1f1; '
+                + 'border-radius: 50%; border: 1px solid lightgrey; width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
+                + langIcons[key] + '">';
+        }
+        const fontSize = lang.length <= 3 ? 9 : 8;
+        return '<div title="' + lang + '" style="margin-right: 5px; display: inline-block; vertical-align: middle; '
+            + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; overflow: hidden; color: darkblue; '
+            + 'width: ' + size + 'px; height: ' + size + 'px; line-height: ' + size + 'px; '
+            + 'font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">' + lang + '</div>';
+    }
+
     importedFiles.forEach(file => {
         let key = file.scope.replace('.txt', '').replace('aspect_', '').trim().toLowerCase();
         if (key == 'build_and_deployment') {
@@ -148,6 +171,7 @@
     // Sortable column definitions: each maps a key to a value accessor.
     // 'dir' is the default direction applied the first time a column is selected.
     const sortColumns = {
+        lang: {value: item => (item.mainLang || '').toLowerCase(), type: 'string', dir: 1},
         repo: {value: item => (item.repository || '').toLowerCase(), type: 'string', dir: 1},
         name: {value: item => (item.repository + '/' + item.path).toLowerCase(), type: 'string', dir: 1},
         loc: {value: item => item.linesOfCode, type: 'number', dir: -1},
@@ -268,6 +292,7 @@
         html += '<table style="width: 100%">';
 
         html += '<tr style="color: #777777; background-color: #f8f8f8">';
+        html += sortHeader('lang', 'lang', 'text-align: center');
         if (filteredReposCount) {
             html += sortHeader('repo', 'repo', 'text-align: left');
         }
@@ -284,6 +309,9 @@
             }
             displayCounter++;
             html += '<tr>';
+            html += '<td style="text-align: center; vertical-align: middle;">';
+            html += langIcon(item.mainLang);
+            html += '</td>';
             if (filteredReposCount) {
                 html += '<td>';
                 html += item.repository;

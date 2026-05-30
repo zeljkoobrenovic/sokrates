@@ -107,10 +107,34 @@
 <div id="content"></div>
 
 <script>
+    // Map of language/extension -> base64 image data URI, injected at report-generation time.
+    const langIcons = ${langIcons};
+
+    // Renders a small round language badge: an icon when one is known, otherwise a text bubble
+    // with the language name (mirrors DataImageUtils.getLangDataImageDiv on the Java side).
+    function langIcon(lang) {
+        if (!lang) {
+            return '';
+        }
+        const key = lang.toLowerCase();
+        const size = 24;
+        if (langIcons[key]) {
+            return '<img title="' + lang + '" style="margin-right: 5px; vertical-align: middle; background-color: #f1f1f1; '
+                + 'border-radius: 50%; border: 1px solid lightgrey; width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
+                + langIcons[key] + '">';
+        }
+        const fontSize = lang.length <= 3 ? 9 : 8;
+        return '<div title="' + lang + '" style="margin-right: 5px; display: inline-block; vertical-align: middle; '
+            + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; overflow: hidden; color: darkblue; '
+            + 'width: ' + size + 'px; height: ' + size + 'px; line-height: ' + size + 'px; '
+            + 'font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">' + lang + '</div>';
+    }
+
     // Sortable column definitions: each maps a key to a value accessor.
     // 'dir' is the default direction applied the first time a column is selected.
     const otherLoc = item => item.buildAndDeployLinesOfCode + item.generatedLinesOfCode + item.otherLinesOfCode;
     const sortColumns = {
+        lang: {value: item => (item.mainLang || '').toLowerCase(), type: 'string', dir: 1},
         name: {value: item => (item.metadata.name || '').toLowerCase(), type: 'string', dir: 1},
         mainLoc: {value: item => item.mainLinesOfCode, type: 'number', dir: -1},
         testLoc: {value: item => item.testLinesOfCode, type: 'number', dir: -1},
@@ -236,7 +260,7 @@
 
         html += '<table>';
         html += '<tr>';
-        html += '<td></td>';
+        html += '<td colspan="2"></td>';
         html += '<td style="text-align: center; border-bottom: 2px solid lightgrey" colspan="3">LOC</td>';
         html += '<td></td>';
         html += '<td style="text-align: center; border-bottom: 2px solid lightgrey" colspan="4">Activity</td>';
@@ -245,6 +269,7 @@
         html += '</tr>';
 
         html += '<tr style="color: #777777">';
+        html += sortHeader('lang', 'lang', 'text-align: center; padding-right: 5px; padding-left: 5px;');
         html += sortHeader('name', 'repository', 'text-align: left; padding-right: 5px; padding-left: 5px;');
         html += sortHeader('mainLoc', 'main', 'text-align: right; padding-right: 5px; padding-left: 5px;');
         html += sortHeader('testLoc', 'test', 'text-align: right; padding-right: 5px; padding-left: 5px;');
@@ -267,6 +292,9 @@
             } else {
                 html += '<tr>';
             }
+            html += '<td style="text-align: center; vertical-align: middle;">';
+            html += langIcon(item.mainLang);
+            html += '</td>';
             html += '<td>';
             const elements = item.metadata.name.split('/');
             const parent = elements.length == 2 ? elements[0] : null;
