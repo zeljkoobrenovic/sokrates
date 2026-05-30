@@ -57,6 +57,26 @@ public class CStyleHeuristicUnitsExtractorTest {
     }
 
     @Test
+    public void cleanContentBacktickTemplateLiterals() throws Exception {
+        CStyleHeuristicUnitsExtractor unitParser = new CStyleHeuristicUnitsExtractor();
+
+        // Backtick template literals should be emptied
+        assertEquals("``", unitParser.extraCleanContent("`hello world`"));
+        assertEquals("``", unitParser.extraCleanContent("`${apiUrl}/alpha/${id}/upload`"));
+        assertEquals("``", unitParser.extraCleanContent("`${apiUrl}/beta/${id}/upload`"));
+
+        // After cleaning, template literals with different content produce the same result
+        String cleaned1 = unitParser.extraCleanContent("const url = `${apiUrl}/alpha/${site}/${customer}/upload`;");
+        String cleaned2 = unitParser.extraCleanContent("const url = `${apiUrl}/beta/${site}/${customer}/upload`;");
+        assertEquals(cleaned1, cleaned2);
+
+        // Template literal without slashes should also be normalized
+        String cleaned3 = unitParser.extraCleanContent("const msg = `Processing alpha`;");
+        String cleaned4 = unitParser.extraCleanContent("const msg = `Processing beta`;");
+        assertEquals(cleaned3, cleaned4);
+    }
+
+    @Test
     public void getEndOfUnitBodyIndex1() throws Exception {
         CStyleHeuristicUnitsExtractor unitParser = new CStyleHeuristicUnitsExtractor();
 
