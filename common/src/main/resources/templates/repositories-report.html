@@ -497,7 +497,6 @@
         if (HAS_FEATURES) {
             html += '<button class="' + ('features' === activeTab ? 'active' : '') + '" onclick="selectTab(\'features\')">Features of Interest</button>';
         }
-        html += '<a class="tab-link" href="repositories-explorer.html" target="_blank">Explorer...</a>';
         html += '<a class="tab-link" href="files-explorer.html" target="_blank">Files...</a>';
         document.getElementById('tabs').innerHTML = html;
     }
@@ -540,10 +539,14 @@
         const column = tab.columns.find(c => c.key === tab.sortKey) || tab.columns[0];
         rows = rows.slice().sort(makeComparator(column, tab.sortDir));
 
+        const filteredMainLoc = rows.reduce((a, b) => a + (b.mainLinesOfCode || 0), 0);
+        const filteredCommits = rows.reduce((a, b) => a + (b.commitsCount || 0), 0);
         document.getElementById('search-summary').innerHTML = '= ' + rows.length + ' '
-            + (rows.length === 1 ? 'repository' : 'repositories');
+            + (rows.length === 1 ? 'repository' : 'repositories')
+            + ' (' + num(filteredMainLoc) + ' LOC main, ' + num(filteredCommits) + ' commits)';
 
-        let html = '<table style="width: 100%"><thead><tr>';
+        let html = proportionBars(rows.length, filteredMainLoc, filteredCommits);
+        html += '<table style="width: 100%"><thead><tr>';
         tab.columns.forEach(col => {
             if (col.sortable === false) {
                 html += '<th style="' + (col.headerStyle || '') + '">' + col.label + '</th>';
@@ -567,6 +570,34 @@
             return '';
         }
         return item.commitsCount180Days > 0 ? 'color:#b0b0b0' : 'color:#c3c3c3';
+    }
+
+    // Totals across all repositories, used to size the proportion bars.
+    const TOTAL_COUNT = repositories.length;
+    const TOTAL_MAIN_LOC = repositories.reduce((a, b) => a + (b.mainLinesOfCode || 0), 0);
+    const TOTAL_COMMITS = repositories.reduce((a, b) => a + (b.commitsCount || 0), 0);
+
+    // Three proportion bars (% of repositories / LOC / commits) shown above the table
+    // when the current view is a strict subset, mirroring the old repositories explorer.
+    function proportionBars(count, mainLoc, commits) {
+        if (mainLoc >= TOTAL_MAIN_LOC) {
+            return '';
+        }
+        function bar(part, whole, color, label) {
+            const w1 = whole > 0 ? Math.round(100 * part / whole) : 0;
+            const w2 = 100 - w1;
+            const shown = (part === 0 || w1 > 0) ? w1 : '<1';
+            return '<div style="width: 400px; margin: 0; padding: 0; white-space: nowrap">'
+                + '<div style="margin: 0; display: inline-block; width: ' + w1 + '%; background-color: ' + color + '; height: 12px"></div>'
+                + '<div style="margin: 0; display: inline-block; width: ' + w2 + '%; background-color: #c0c0c0; height: 12px"></div>'
+                + '<div style="margin: 0; display: inline-block; font-size: 80%; width: 140px; color: grey; vertical-align: top">&nbsp;' + shown + '% ' + label + '</div>'
+                + '</div>';
+        }
+        return '<div style="margin-bottom: 10px;">'
+            + bar(count, TOTAL_COUNT, '#303030', 'of repositories')
+            + bar(mainLoc, TOTAL_MAIN_LOC, 'skyblue', 'of LOC')
+            + bar(commits, TOTAL_COMMITS, 'green', 'of commits')
+            + '</div>';
     }
 
     function renderFeatures(filters) {

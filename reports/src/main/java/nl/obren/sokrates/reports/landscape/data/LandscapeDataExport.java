@@ -84,10 +84,10 @@ public class LandscapeDataExport {
 
             FileUtils.write(new File(dataFolder, "files.json"), new JsonGenerator().generate(files), UTF_8);
 
+            // The repositories explorer has been folded into the Size & Details tab of
+            // repositories.html; we only keep the shared language-icon map here.
             List<String> repositoryLangs = repositoryExports.stream().map(RepositoryExport::getMainLang).collect(Collectors.toList());
             String repositoryLangIcons = DataImageUtils.getLangDataImageMapJson(repositoryLangs);
-            String htmlExplorer = explorerTemplate.render("repository-explorer.html", repositoryExports, repositoryLangIcons);
-            FileUtils.write(new File(reportsFolder, "repositories-explorer.html"), htmlExplorer, UTF_8);
 
             List<String> fileLangs = files.stream().map(FileExport::getMainLang).collect(Collectors.toList());
             String fileLangIcons = DataImageUtils.getLangDataImageMapJson(fileLangs);
