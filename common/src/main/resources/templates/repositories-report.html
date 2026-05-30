@@ -3,11 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <title>Repositories</title>
-    <style>
+    <style type="text/css" media="all">
         body {
             font-family: Roboto, Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
-            margin: 12px;
+            margin-left: 0;
+            margin-right: 0;
+        }
+
+        table {
             color: #333;
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+
+        td, th {
+            border: 1px solid #CCC;
+            height: 30px;
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+
+        th {
+            background: #F3F3F3;
+            font-weight: bold;
+        }
+
+        td {
+            background: #FFFFFF;
+            text-align: left;
         }
 
         a {
@@ -19,86 +42,69 @@
             opacity: 1;
         }
 
-        .tabs {
-            margin: 6px 0 14px 0;
-            border-bottom: 1px solid #d0d0d0;
+        /* Classic Sokrates tab bar. */
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
         }
 
-        .tab-button {
-            display: inline-block;
-            padding: 8px 14px;
-            margin: 0;
+        .tab button {
+            font-family: Roboto, Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+            font-size: 100%;
+            background-color: inherit;
+            float: left;
             border: none;
-            background: none;
+            outline: none;
             cursor: pointer;
-            font-size: 14px;
-            color: #555;
-            border-bottom: 3px solid transparent;
+            padding: 14px 16px;
+            transition: 0.3s;
         }
 
-        .tab-button:hover {
-            color: #000;
+        .tab button:hover {
+            background-color: #ddd;
         }
 
-        .tab-button.active {
-            color: #000;
-            font-weight: bold;
-            border-bottom: 3px solid #4a90d9;
+        .tab button.active {
+            background-color: #ccc;
         }
 
-        .tab-link {
-            display: inline-block;
-            padding: 8px 14px;
-            font-size: 14px;
+        .tab a.tab-link {
+            float: left;
+            padding: 14px 16px;
             color: #4a90d9;
         }
 
-        table {
-            border-collapse: collapse;
-            border-spacing: 0;
-            width: 100%;
+        .tabcontent {
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            border-top: none;
+            overflow-y: auto;
         }
 
-        td, th {
-            padding: 3px 6px;
-        }
-
+        /* Sortable header affordance layered on top of the original th style. */
         .sortable {
             cursor: pointer;
             user-select: none;
-            color: #777;
             white-space: nowrap;
         }
 
         .sortable:hover {
-            color: #333;
+            background: #e8e8e8;
         }
 
         .sort-active {
-            color: #303030;
-            font-weight: bold;
+            background: #e2e2e2;
         }
 
         .sort-arrow {
             font-size: 80%;
-        }
-
-        .repo-row:hover {
-            background-color: #f4f8fc;
-        }
-
-        .loc-pill {
-            border: 1px solid #d0d0d0;
-            border-radius: 4px;
-            padding: 2px;
-            display: inline-block;
-            min-width: 40px;
-            text-align: right;
+            color: #555;
         }
 
         .tag-badge {
             margin: 2px;
-            padding: 3px 6px;
+            padding: 5px;
             display: inline-block;
             font-size: 70%;
             border-radius: 10px;
@@ -108,16 +114,17 @@
 </head>
 <body>
 
-<div style="color: grey; margin-bottom: 6px;">
-    <input id="filter" type="text" placeholder="search..."
-           style="font-size: 16px; height: 30px; width: 320px;"
-           onkeyup="render()">
-    <span id="search-summary" style="display: inline-block; margin-left: 6px;"></span>
+<div class="tab" id="tabs"></div>
+
+<div class="tabcontent">
+    <div style="color: grey; margin: 10px 0 6px 0;">
+        <input id="filter" type="text" placeholder="search..."
+               style="font-size: 16px; height: 30px; width: 320px;"
+               onkeyup="render()">
+        <span id="search-summary" style="display: inline-block; margin-left: 6px;"></span>
+    </div>
+    <div id="content"></div>
 </div>
-
-<div class="tabs" id="tabs"></div>
-
-<div id="content"></div>
 
 <script>
     const repositories = ${data};
@@ -136,34 +143,40 @@
     }
 
     // A single shared inline report icon (avoids per-row base64 bloat).
-    const REPORT_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" style="vertical-align: middle">'
+    const REPORT_ICON = '<svg width="26" height="26" viewBox="0 0 24 24" style="vertical-align: middle">'
         + '<rect x="4" y="2" width="16" height="20" rx="2" fill="none" stroke="#4a90d9" stroke-width="1.6"/>'
         + '<line x1="8" y1="7" x2="16" y2="7" stroke="#4a90d9" stroke-width="1.6"/>'
         + '<line x1="8" y1="11" x2="16" y2="11" stroke="#4a90d9" stroke-width="1.6"/>'
         + '<line x1="8" y1="15" x2="13" y2="15" stroke="#4a90d9" stroke-width="1.6"/></svg>';
 
-    // Renders a small round language badge (icon when known, else a text bubble).
+    // Renders a round language badge (icon when known, else a text bubble),
+    // matching the original report's 36px DataImageUtils.getLangDataImageDiv36 style.
     function langIcon(lang) {
         if (!lang) {
             return '';
         }
         const key = lang.toLowerCase();
-        const size = 24;
+        const size = 36;
         if (langIcons[key]) {
-            return '<img title="' + esc(lang) + '" style="vertical-align: middle; background-color: #f1f1f1; '
+            return '<img title="' + esc(lang) + '" style="margin-right: 3px; vertical-align: top; background-color: #f1f1f1; '
                 + 'border-radius: 50%; border: 1px solid lightgrey; width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
                 + langIcons[key] + '">';
         }
-        const fontSize = lang.length <= 3 ? 9 : 8;
-        return '<div title="' + esc(lang) + '" style="display: inline-block; vertical-align: middle; '
+        const fontSize = lang.length <= 3 ? 14 : 12;
+        const padding = lang.length <= 3 ? 9 : 11;
+        return '<div title="' + esc(lang) + '" style="margin-right: 3px; display: inline-block; vertical-align: top; '
             + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; overflow: hidden; color: darkblue; '
-            + 'width: ' + size + 'px; height: ' + size + 'px; line-height: ' + size + 'px; '
-            + 'font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">' + esc(lang) + '</div>';
+            + 'width: ' + size + 'px; height: ' + size + 'px; '
+            + 'font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">'
+            + '<div style="height: ' + padding + 'px"></div>' + esc(lang) + '</div>';
+    }
+
+    function repoReportLink2(url) {
+        return '<a href="' + esc(url) + '" target="_blank"><div style="height: 40px; display: flex; align-items: center; justify-content: center;">' + REPORT_ICON + '</div></a>';
     }
 
     function repoReportLink(item) {
-        const url = (item.reportFolderUrl || '') + 'index.html';
-        return '<a href="' + esc(url) + '" target="_blank">' + REPORT_ICON + '</a>';
+        return repoReportLink2((item.reportFolderUrl || '') + 'index.html');
     }
 
     // Repository display name: parent path greyed, last segment emphasised.
@@ -314,22 +327,22 @@
     function locColumn(key, label, accessor, color) {
         return {
             key: key, label: label, type: 'number', dir: -1,
-            headerStyle: 'text-align: right;',
+            headerStyle: 'text-align: center;',
             value: accessor,
-            cell: item => '<td style="text-align: right;"><span class="loc-pill"' + (color ? ' style="color:' + color + '"' : '') + '>'
-                + num(accessor(item)) + '</span></td>'
+            cell: item => '<td style="text-align: center; font-size: 90%;' + (color ? ' color:' + color + ';' : '') + '">'
+                + num(accessor(item)) + '</td>'
         };
     }
 
     const langCol = {
-        key: 'lang', label: 'lang', type: 'string', dir: 1, headerStyle: 'text-align: center;',
+        key: 'lang', label: '', type: 'string', dir: 1, headerStyle: 'text-align: left; max-width: 38px;',
         value: item => (item.mainLang || '').toLowerCase(),
-        cell: item => '<td style="text-align: center; vertical-align: middle;">' + langIcon(item.mainLang) + '</td>'
+        cell: item => '<td style="text-align: left; max-width: 38px;"><div style="white-space: nowrap; overflow: hidden">' + langIcon(item.mainLang) + '</div></td>'
     };
     const nameCol = {
         key: 'name', label: 'Repository', type: 'string', dir: 1, headerStyle: 'text-align: left;',
         value: item => (item.metadata && item.metadata.name ? item.metadata.name : '').toLowerCase(),
-        cell: item => '<td style="vertical-align: middle; max-width: 420px; overflow: hidden;">' + repoNameHtml(item) + '</td>'
+        cell: item => '<td style="overflow: hidden; white-space: nowrap; vertical-align: middle; min-width: 400px; max-width: 400px">' + repoNameHtml(item) + '</td>'
     };
     const reportCol = {
         key: 'report', label: 'Report', type: 'string', dir: 1, headerStyle: 'text-align: center;',
@@ -435,9 +448,9 @@
             langCol,
             {key: 'name', label: 'Repository', type: 'string', dir: 1, headerStyle: 'text-align: left;',
                 value: i => (i.metadata && i.metadata.name ? i.metadata.name : '').toLowerCase(),
-                cell: i => '<td style="vertical-align: middle; max-width: 420px; overflow: hidden;">' + repoNameHtml(i)
-                    + '<div style="font-size: 80%; color: #555">' + num(i.mainLinesOfCode) + ' LOC (main)'
-                    + (i.commitsCount90Days > 0 ? ', ' + num(i.commitsCount90Days) + ' commits (90d)' : '') + '</div></td>'},
+                cell: i => '<td style="overflow: hidden; white-space: nowrap; vertical-align: middle; max-width: 400px;">' + repoNameHtml(i)
+                    + '<div style="color: black; font-size: 80%"><b>' + num(i.mainLinesOfCode) + '</b> LOC (main)'
+                    + (i.commitsCount90Days > 0 ? ', <b>' + num(i.commitsCount90Days) + '</b> commits (90d)' : '') + '</div></td>'},
             {key: 'duplication', label: 'Duplication', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.repositoryMetrics ? i.repositoryMetrics.duplicationPercentage : 0,
                 cell: i => '<td style="text-align: center;">' + duplicationBar(i.repositoryMetrics) + '</td>'},
@@ -476,10 +489,10 @@
                     return;
                 }
             }
-            html += '<button class="tab-button' + (tab.id === activeTab ? ' active' : '') + '" onclick="selectTab(\'' + tab.id + '\')">' + tab.label + '</button>';
+            html += '<button class="' + (tab.id === activeTab ? 'active' : '') + '" onclick="selectTab(\'' + tab.id + '\')">' + tab.label + '</button>';
         });
         if (HAS_FEATURES) {
-            html += '<button class="tab-button' + ('features' === activeTab ? ' active' : '') + '" onclick="selectTab(\'features\')">Features of Interest</button>';
+            html += '<button class="' + ('features' === activeTab ? 'active' : '') + '" onclick="selectTab(\'features\')">Features of Interest</button>';
         }
         html += '<a class="tab-link" href="repositories-explorer.html" target="_blank">Explorer...</a>';
         html += '<a class="tab-link" href="files-explorer.html" target="_blank">Files...</a>';
@@ -527,23 +540,30 @@
         document.getElementById('search-summary').innerHTML = '= ' + rows.length + ' '
             + (rows.length === 1 ? 'repository' : 'repositories');
 
-        let html = '<table><thead><tr>';
+        let html = '<table style="width: 100%"><thead><tr>';
         tab.columns.forEach(col => {
             if (col.sortable === false) {
-                html += '<th style="' + (col.headerStyle || '') + ' color: #777;">' + col.label + '</th>';
+                html += '<th style="' + (col.headerStyle || '') + '">' + col.label + '</th>';
             } else {
                 html += sortHeader(tab, col);
             }
         });
         html += '</tr></thead><tbody>';
         rows.forEach(item => {
-            const dim = item.commitsCount30Days === 0 ? ' style="opacity: 0.55"' : '';
-            html += '<tr class="repo-row"' + dim + '>';
+            html += '<tr style="white-space: nowrap;' + recencyColor(item) + '">';
             tab.columns.forEach(col => html += col.cell(item));
             html += '</tr>';
         });
         html += '</tbody></table>';
         document.getElementById('content').innerHTML = html;
+    }
+
+    // Row text fades with commit recency, matching the original report.
+    function recencyColor(item) {
+        if (item.commitsCount90Days > 0) {
+            return '';
+        }
+        return item.commitsCount180Days > 0 ? 'color:#b0b0b0' : 'color:#c3c3c3';
     }
 
     function renderFeatures(filters) {
@@ -553,21 +573,21 @@
         document.getElementById('search-summary').innerHTML = '= ' + repos.length + ' '
             + (repos.length === 1 ? 'repository' : 'repositories');
 
-        let html = '<table><thead>';
-        html += '<tr><th></th><th style="text-align: left">Repositories (' + features.repositories.length + ')</th>';
+        let html = '<table style="width: 100%"><thead>';
+        html += '<tr><th style="border: none"></th><th style="border: none"></th>';
         concerns.forEach(c => {
             html += '<th colspan="2" style="text-align: center">' + esc(c.name) + ' (' + c.count + ')</th>';
         });
-        html += '<th>Details</th></tr>';
-        html += '<tr><th></th><th></th>';
+        html += '<th style="border: none"></th></tr>';
+        html += '<tr><th style="border-left: none; border-top: none"></th><th style="text-align: left">Repositories (' + features.repositories.length + ')</th>';
         concerns.forEach(() => {
             html += '<th style="font-size: 70%; text-align: center">matches</th><th style="font-size: 70%; text-align: center">files</th>';
         });
-        html += '<th></th></tr></thead><tbody>';
+        html += '<th style="font-size: 70%">Details</th></tr></thead><tbody>';
 
         repos.forEach(r => {
-            html += '<tr class="repo-row">';
-            html += '<td style="text-align: center; vertical-align: middle;">' + langIcon(r.mainLang) + '</td>';
+            html += '<tr style="white-space: nowrap">';
+            html += '<td style="text-align: left; max-width: 38px;"><div style="white-space: nowrap; overflow: hidden">' + langIcon(r.mainLang) + '</div></td>';
             const featuresUrl = (r.reportFolderUrl || '') + 'FeaturesOfInterest.html';
             html += '<td><a href="' + esc(featuresUrl) + '" target="_blank" style="color:#333">' + esc(r.name) + '</a></td>';
             concerns.forEach(c => {
@@ -575,7 +595,7 @@
                 html += '<td style="text-align: center">' + (cell && cell.matches > 0 ? num(cell.matches) : '-') + '</td>';
                 html += '<td style="text-align: center">' + (cell && cell.files > 0 ? num(cell.files) : '-') + '</td>';
             });
-            html += '<td style="text-align: center"><a href="' + esc(featuresUrl) + '" target="_blank">' + REPORT_ICON + '</a></td>';
+            html += '<td style="text-align: center">' + repoReportLink2(featuresUrl) + '</td>';
             html += '</tr>';
         });
         html += '</tbody></table>';
