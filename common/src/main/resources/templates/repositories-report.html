@@ -393,7 +393,17 @@
                 value: i => (i.contributors || []).length, cell: i => contributorsCell(i.contributors, true)},
             reportCol
         ];
-        TABS.push({id: 'repositories', label: 'Size & Details', columns: cols, sortKey: 'mainLoc', sortDir: -1});
+        TABS.push({
+            id: 'repositories', label: 'Size & Details', columns: cols, sortKey: 'mainLoc', sortDir: -1,
+            // Grouped top header row (LOC / Activity / Contributors), mirroring the explorer.
+            groupHeader: [
+                {span: 2},                              // lang + repository
+                {label: 'LOC', span: 3},                // main / test / other
+                {label: 'Activity', span: 4},           // last commit + commits 30d/90d/all
+                {label: 'Contributors', span: 3},       // 30d / 90d / all
+                {span: 1}                               // report
+            ]
+        });
     })();
 
     // Commits Trend
@@ -552,7 +562,18 @@
             + ' (' + num(filteredMainLoc) + ' LOC main, ' + num(filteredCommits) + ' commits)';
 
         let html = proportionBars(rows.length, filteredMainLoc, filteredCommits);
-        html += '<table style="width: 100%"><thead><tr>';
+        html += '<table style="width: 100%"><thead>';
+        if (tab.groupHeader) {
+            html += '<tr>';
+            tab.groupHeader.forEach(g => {
+                const style = g.label
+                    ? 'text-align: center; border: none; border-bottom: 2px solid lightgrey;'
+                    : 'border: none;';
+                html += '<th colspan="' + g.span + '" style="' + style + '">' + (g.label || '') + '</th>';
+            });
+            html += '</tr>';
+        }
+        html += '<tr>';
         tab.columns.forEach(col => {
             if (col.sortable === false) {
                 html += '<th style="' + (col.headerStyle || '') + '">' + col.label + '</th>';
