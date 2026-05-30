@@ -488,7 +488,6 @@
         ];
     }
     TABS.push({id: 'history', label: 'History', columns: historyColumns(), sortKey: 'age', sortDir: -1});
-    TABS.push({id: 'newest', label: 'Creation', columns: historyColumns(), sortKey: 'age', sortDir: 1});
 
     // Metrics
     (function () {
@@ -532,7 +531,7 @@
     function buildTabs() {
         let html = '';
         TABS.forEach(tab => {
-            if (tab.id === 'commitsTrend' || tab.id === 'contributorsTrend' || tab.id === 'history' || tab.id === 'newest') {
+            if (tab.id === 'commitsTrend' || tab.id === 'contributorsTrend' || tab.id === 'history') {
                 if (!options.showCommits) {
                     return;
                 }
