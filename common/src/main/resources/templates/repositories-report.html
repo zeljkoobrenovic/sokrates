@@ -529,7 +529,8 @@
             {label: 'bubble chart', href: 'visuals/bubble_chart_repositories_age.html'},
             {label: 'tree map', href: 'visuals/tree_map_repositories_age.html'},
             DATA_LINK
-        ]
+        ],
+        summaryChart: reposCreatedPerYearChart
     });
 
     // Metrics
@@ -604,6 +605,45 @@
         return '<div style="margin: 4px 0 10px 0; font-size: 90%;">' + items + '</div>';
     }
 
+    // Summary bar chart of repositories created per year (by first commit date),
+    // mirroring the old Creation tab's "repository creation per year" graph.
+    function reposCreatedPerYearChart(rows) {
+        const counts = {};
+        const names = {};
+        rows.forEach(r => {
+            const y = (r.firstDate || '').substring(0, 4);
+            if (y) {
+                counts[y] = (counts[y] || 0) + 1;
+                (names[y] = names[y] || []).push(r.metadata && r.metadata.name ? r.metadata.name : '');
+            }
+        });
+        const years = Object.keys(counts).sort();
+        if (!years.length) {
+            return '';
+        }
+        const first = parseInt(years[0], 10);
+        const last = parseInt(years[years.length - 1], 10);
+        let max = 1;
+        years.forEach(y => max = Math.max(max, counts[y]));
+        const maxHeight = 64;
+
+        let html = '<div style="white-space: nowrap; overflow-x: auto; width: 100%; margin-bottom: 14px;">';
+        html += '<div style="font-size: 80%; color: grey; margin-bottom: 5px;">repository creation per year:</div>';
+        for (let year = first; year <= last; year++) {
+            const c = counts[year] || 0;
+            const height = Math.round(1 + maxHeight * c / max);
+            const tip = year + ': ' + c + ' ' + (c === 1 ? 'repository' : 'repositories')
+                + (c > 0 ? '\n\n' + esc((names[year] || []).join('\n')) : '');
+            html += '<div style="display: inline-block; text-align: center; vertical-align: bottom; margin-right: 1px;" title="' + tip + '">'
+                + '<div style="font-size: 80%; height: 14px;">' + (c > 0 ? '+' + c : '') + '</div>'
+                + '<div style="opacity: 0.5; background-color: skyblue; width: 44px; height: ' + height + 'px;"></div>'
+                + '<div style="font-size: 70%; color: grey;">' + year + '</div>'
+                + '</div>';
+        }
+        html += '</div>';
+        return html;
+    }
+
     function getFilters() {
         return document.getElementById('filter').value.toLowerCase().trim()
             .split(',').map(s => s.trim()).filter(s => s.length);
@@ -652,6 +692,9 @@
             + ' (' + num(filteredMainLoc) + ' LOC main, ' + num(filteredCommits) + ' commits)';
 
         let html = tabLinksHtml(tab.links);
+        if (tab.summaryChart) {
+            html += tab.summaryChart(rows);
+        }
         html += proportionBars(rows.length, filteredMainLoc, filteredCommits);
         html += '<table style="width: 100%"><thead>';
         if (tab.groupHeader) {
