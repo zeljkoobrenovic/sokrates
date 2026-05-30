@@ -86,7 +86,8 @@
         }
     </style>
 
-    <script src="https://cdn.jsdelivr.net/npm/force-graph"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <script src="https://cdn.jsdelivr.net/npm/force-graph@1.51.4"></script>
 </head>
 
 <body>
@@ -94,7 +95,7 @@
     <div id="panel">
         <div id="panel-header">
             <input id="filter" type="text" placeholder="search nodes..." onkeyup="renderList()">
-            <div id="panel-actions">
+            <div id="panel-actions" style="margin-left: 6px">
                 <a onclick="setAllVisible(true)">show all</a> &middot;
                 <a onclick="setAllVisible(false)">hide all</a> &middot;
                 <a onclick="showOnlyFiltered()">only matching</a>
@@ -127,14 +128,15 @@
     allNodes.forEach(n => visible[n.id] = true);
 
     const elem = document.getElementById('graph');
+    // The 2D force-graph library has no linkOpacity(); opacity is baked into linkColor (rgba).
     const Graph = ForceGraph()(elem)
         .nodeRelSize(4)
         .nodeVal(n => Math.max(20 * n.size / maxNodeSize, 0.001))
         .nodeLabel(n => n.id + " (" + n.size + ")")
         .nodeColor(n => colorOf(n))
+        .linkColor(() => "rgba(100, 100, 100, 0.2)")
         .linkDirectionalParticles(1)
         .linkDirectionalParticleSpeed(d => d.count / maxCount * 0.01)
-        .linkOpacity(0.1)
         .linkWidth(d => 3 * d.count / maxCount + 0.1);
 
     function linkEnd(e) {

@@ -88,7 +88,8 @@
         }
     </style>
 
-    <script src="https://cdn.jsdelivr.net/npm/3d-force-graph"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <script src="https://cdn.jsdelivr.net/npm/3d-force-graph@1.80.0"></script>
 </head>
 
 <body>
@@ -96,7 +97,7 @@
     <div id="panel">
         <div id="panel-header">
             <input id="filter" type="text" placeholder="search nodes..." onkeyup="renderList()">
-            <div id="panel-actions">
+            <div id="panel-actions" style="margin-left: 6px">
                 <a onclick="setAllVisible(true)">show all</a> &middot;
                 <a onclick="setAllVisible(false)">hide all</a> &middot;
                 <a onclick="showOnlyFiltered()">only matching</a>
