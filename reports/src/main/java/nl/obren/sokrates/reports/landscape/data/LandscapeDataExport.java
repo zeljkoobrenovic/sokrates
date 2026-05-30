@@ -6,11 +6,14 @@ import nl.obren.sokrates.common.utils.SystemUtils;
 import nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.TagMap;
 import nl.obren.sokrates.reports.landscape.utils.ContributorPerExtensionHelper;
+import nl.obren.sokrates.reports.landscape.utils.FeaturesOfInterestAggregator;
+import nl.obren.sokrates.reports.landscape.utils.RepositoryConcernData;
 import nl.obren.sokrates.reports.landscape.utils.TagStats;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
+import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.TeamsConfig;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
 import nl.obren.sokrates.sourcecode.landscape.analysis.FileExport;
@@ -23,7 +26,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -45,7 +51,7 @@ public class LandscapeDataExport {
     }
 
     public void exportRepositories(TagMap tagMap) {
-        exportJson();
+        exportJson(tagMap);
 
         exportRepositories(analysisResults.getFilteredRepositoryAnalysisResults(), REPOSITORIES_DATA_FILE_NAME);
         tagMap.keySet().forEach(key -> {
@@ -55,13 +61,15 @@ public class LandscapeDataExport {
         exportRepositories(analysisResults.getIgnoredRepositoryAnalysisResults(), "ignoredRepositories.txt");
     }
 
-    private void exportJson() {
+    private void exportJson(TagMap tagMap) {
         try {
+            LandscapeConfiguration configuration = analysisResults.getConfiguration();
+            String latestCommitDate = analysisResults.getLatestCommitDate();
             List<RepositoryExport> repositoryExports = new ArrayList<>();
             List<FileExport> files = new ArrayList<>();
 
             analysisResults.getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
-                RepositoryExport repositoryExport = new RepositoryExport(repositoryAnalysisResults);
+                RepositoryExport repositoryExport = new RepositoryExport(repositoryAnalysisResults, tagMap, configuration, latestCommitDate);
                 repositoryExports.add(repositoryExport);
                 repositoryAnalysisResults.getFiles().forEach(file -> {
                     if (!files.contains(file) && !file.getPath().startsWith("- -")) {
@@ -85,9 +93,83 @@ public class LandscapeDataExport {
             String fileLangIcons = DataImageUtils.getLangDataImageMapJson(fileLangs);
             String filesExplorer = explorerTemplate.render("files-explorer.html", files, fileLangIcons);
             FileUtils.write(new File(reportsFolder, "files-explorer.html"), filesExplorer, UTF_8);
+
+            // The full, client-rendered repositories report (replaces the old static repositories.html).
+            JsonGenerator jsonGenerator = new JsonGenerator();
+            Map<String, String> placeholders = new HashMap<>();
+            placeholders.put("langIcons", repositoryLangIcons);
+            placeholders.put("features", jsonGenerator.generateCompressed(buildFeaturesData(configuration)));
+            placeholders.put("options", jsonGenerator.generateCompressed(buildOptions(configuration, repositoryExports)));
+            String repositoriesReport = explorerTemplate.render("repositories-report.html", repositoryExports, placeholders);
+            FileUtils.write(new File(reportsFolder, "repositories.html"), repositoriesReport, UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private Map<String, Object> buildOptions(LandscapeConfiguration configuration, List<RepositoryExport> repositoryExports) {
+        Map<String, Object> options = new LinkedHashMap<>();
+        options.put("showCommits", analysisResults.getCommitsCount() > 0);
+        options.put("showTags", repositoryExports.stream().anyMatch(r -> r.getTags() != null && !r.getTags().isEmpty()));
+        options.put("showControls", configuration.isShowRepositoryControls());
+        options.put("historyYears", configuration.getRepositoriesHistoryLimit());
+        return options;
+    }
+
+    /**
+     * Aggregates features of interest across repositories into a compact matrix
+     * (concerns + per-repository match/file counts) for the report's Features tab.
+     */
+    private Map<String, Object> buildFeaturesData(LandscapeConfiguration configuration) {
+        FeaturesOfInterestAggregator aggregator = new FeaturesOfInterestAggregator(analysisResults.getRepositoryAnalysisResults());
+        aggregator.aggregateFeaturesOfInterest(configuration.getRepositoriesListLimit());
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        List<Map<String, Object>> concernsOut = new ArrayList<>();
+        List<List<RepositoryConcernData>> concerns = aggregator.getConcerns().stream()
+                .filter(c -> c.size() > 0).collect(Collectors.toList());
+        concerns.forEach(concern -> {
+            Map<String, Object> c = new LinkedHashMap<>();
+            c.put("name", concern.get(0).getConcern().getName());
+            c.put("count", concern.size());
+            concernsOut.add(c);
+        });
+        result.put("concerns", concernsOut);
+
+        List<Map<String, Object>> reposOut = new ArrayList<>();
+        aggregator.getRepositories().forEach(repository -> {
+            RepositoryConcernData first = repository.get(0);
+            RepositoryAnalysisResults repo = first.getRepository();
+            Map<String, Object> r = new LinkedHashMap<>();
+            r.put("name", first.getRepositoryName());
+            r.put("mainLang", mainLangOf(repo));
+            r.put("reportFolderUrl", configuration.getRepositoryReportsUrlPrefix()
+                    + repo.getSokratesRepositoryLink().getHtmlReportsRoot() + "/");
+            Map<String, Object> perConcern = new LinkedHashMap<>();
+            concerns.forEach(concern -> {
+                String concernName = concern.get(0).getConcern().getName();
+                String key = first.getRepositoryName() + "::" + concernName;
+                RepositoryConcernData data = aggregator.getRepositoriesConcernMap().get(key);
+                if (data != null) {
+                    Map<String, Object> cell = new LinkedHashMap<>();
+                    cell.put("matches", data.getConcern().getNumberOfRegexLineMatches());
+                    cell.put("files", data.getConcern().getFilesCount());
+                    perConcern.put(concernName, cell);
+                }
+            });
+            r.put("perConcern", perConcern);
+            reposOut.add(r);
+        });
+        result.put("repositories", reposOut);
+        return result;
+    }
+
+    private static String mainLangOf(RepositoryAnalysisResults repo) {
+        List<NumericMetric> perExtension = repo.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension();
+        if (perExtension != null && !perExtension.isEmpty()) {
+            return perExtension.get(0).getName().replace("*.", "").trim().toLowerCase();
+        }
+        return "";
     }
 
     public static String getTagRepositoriesFileName(String key) {
