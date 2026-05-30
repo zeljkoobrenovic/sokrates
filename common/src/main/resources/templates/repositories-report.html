@@ -214,23 +214,25 @@
     const YEAR_SLOTS = options.historyYears || 20;
     const BAR_WIDTH = 10;
 
-    // Mini bar chart from a history block (commits or contributors), most-recent-first.
-    // Reverses to render oldest-left / newest-right. The strip is a fixed-width container
+    // Mini bar chart from a history block (commits or contributors). Bars are ordered
+    // chronologically by slot label so the oldest is on the left and the newest on the
+    // right, regardless of how the slots are stored. The strip is a fixed-width container
     // (slotCount * BAR_WIDTH) so every row's chart occupies exactly the column width.
     function miniBars(history, field, color, slotCount) {
         const stripWidth = slotCount * BAR_WIDTH;
         let html = '<div style="white-space: nowrap; width: ' + stripWidth + 'px; overflow: hidden;">';
         if (history && history.slots && history.slots.length) {
             const values = history[field] || [];
+            const bars = history.slots.map((slot, i) => ({slot: slot, v: values[i] || 0}));
+            bars.sort((a, b) => String(a.slot).localeCompare(String(b.slot)));
             let max = 1;
-            values.forEach(v => max = Math.max(max, v));
-            for (let i = history.slots.length - 1; i >= 0; i--) {
-                const v = values[i] || 0;
-                const h = Math.round(2 + 24 * v / max);
-                html += '<div title="' + v + ' in ' + esc(history.slots[i]) + '" style="margin: 0; padding: 0; '
+            bars.forEach(b => max = Math.max(max, b.v));
+            bars.forEach(b => {
+                const h = Math.round(2 + 24 * b.v / max);
+                html += '<div title="' + b.v + ' in ' + esc(b.slot) + '" style="margin: 0; padding: 0; '
                     + 'display: inline-block; vertical-align: bottom; width: ' + BAR_WIDTH + 'px; opacity: 0.5; '
-                    + 'background-color: ' + (v === 0 ? '#cccccc' : color) + '; height: ' + h + 'px;"></div>';
-            }
+                    + 'background-color: ' + (b.v === 0 ? '#cccccc' : color) + '; height: ' + h + 'px;"></div>';
+            });
         }
         html += '</div>';
         return html;
