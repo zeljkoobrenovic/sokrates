@@ -184,13 +184,14 @@
     function repoNameHtml(item) {
         const name = item.metadata && item.metadata.name ? item.metadata.name : '';
         const url = (item.reportFolderUrl || '') + 'index.html';
+        const clip = 'overflow: hidden; white-space: nowrap; text-overflow: ellipsis;';
         let inner;
         if (name.indexOf('/') >= 0) {
             const i = name.indexOf('/');
-            inner = '<div style="font-size: 90%; color: grey">' + esc(name.substring(0, i)) + '</div>'
-                + '<div>' + esc(name.substring(i + 1)) + '</div>';
+            inner = '<div style="font-size: 90%; color: grey; ' + clip + '">' + esc(name.substring(0, i)) + '</div>'
+                + '<div style="' + clip + '">' + esc(name.substring(i + 1)) + '</div>';
         } else {
-            inner = '<div>' + esc(name) + '</div>';
+            inner = '<div style="' + clip + '">' + esc(name) + '</div>';
         }
         return '<a href="' + esc(url) + '" target="_blank" style="color: #333">' + inner + '</a>';
     }
@@ -342,10 +343,12 @@
         value: item => (item.mainLang || '').toLowerCase(),
         cell: item => '<td style="' + LANG_COL_STYLE + '"><div style="white-space: nowrap; overflow: hidden">' + langIcon(item.mainLang) + '</div></td>'
     };
+    // Fixed-width repository column: never wraps, overflow hidden.
+    const NAME_COL_STYLE = 'width: 400px; min-width: 400px; max-width: 400px; overflow: hidden; white-space: nowrap;';
     const nameCol = {
-        key: 'name', label: 'Repository', type: 'string', dir: 1, headerStyle: 'text-align: left;',
+        key: 'name', label: 'Repository', type: 'string', dir: 1, headerStyle: 'text-align: left; ' + NAME_COL_STYLE,
         value: item => (item.metadata && item.metadata.name ? item.metadata.name : '').toLowerCase(),
-        cell: item => '<td style="overflow: hidden; white-space: nowrap; vertical-align: middle; min-width: 400px; max-width: 400px">' + repoNameHtml(item) + '</td>'
+        cell: item => '<td style="vertical-align: middle; ' + NAME_COL_STYLE + '">' + repoNameHtml(item) + '</td>'
     };
     const reportCol = {
         key: 'report', label: 'Report', type: 'string', dir: 1, headerStyle: 'text-align: center;',
@@ -465,9 +468,9 @@
     (function () {
         const cols = [
             langCol,
-            {key: 'name', label: 'Repository', type: 'string', dir: 1, headerStyle: 'text-align: left;',
+            {key: 'name', label: 'Repository', type: 'string', dir: 1, headerStyle: 'text-align: left; ' + NAME_COL_STYLE,
                 value: i => (i.metadata && i.metadata.name ? i.metadata.name : '').toLowerCase(),
-                cell: i => '<td style="overflow: hidden; white-space: nowrap; vertical-align: middle; max-width: 400px;">' + repoNameHtml(i)
+                cell: i => '<td style="vertical-align: middle; ' + NAME_COL_STYLE + '">' + repoNameHtml(i)
                     + '<div style="color: black; font-size: 80%"><b>' + num(i.mainLinesOfCode) + '</b> LOC (main)'
                     + (i.commitsCount90Days > 0 ? ', <b>' + num(i.commitsCount90Days) + '</b> commits (90d)' : '') + '</div></td>'},
             {key: 'duplication', label: 'Duplication', type: 'number', dir: -1, headerStyle: 'text-align: left;',
