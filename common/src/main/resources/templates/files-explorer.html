@@ -52,6 +52,24 @@
             white-space: nowrap;
             overflow: hidden;
         }
+
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sortable:hover {
+            color: #333333;
+        }
+
+        .sort-active {
+            color: #303030;
+            font-weight: bold;
+        }
+
+        .sort-arrow {
+            font-size: 80%;
+        }
     </style>
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Lato">
@@ -127,7 +145,40 @@
     }
 
 
-    files = files.sort((a, b) => b.linesOfCode - a.linesOfCode);
+    // Sortable column definitions: each maps a key to a value accessor.
+    // 'dir' is the default direction applied the first time a column is selected.
+    const sortColumns = {
+        repo: {value: item => (item.repository || '').toLowerCase(), type: 'string', dir: 1},
+        name: {value: item => (item.repository + '/' + item.path).toLowerCase(), type: 'string', dir: 1},
+        loc: {value: item => item.linesOfCode, type: 'number', dir: -1},
+        scope: {value: item => item.scope || '', type: 'string', dir: 1}
+    };
+
+    let sortKey = 'loc';
+    let sortDir = -1;
+
+    function comparator(a, b) {
+        const column = sortColumns[sortKey];
+        const va = column.value(a);
+        const vb = column.value(b);
+        let cmp;
+        if (column.type === 'string') {
+            cmp = String(va).localeCompare(String(vb));
+        } else {
+            cmp = va < vb ? -1 : (va > vb ? 1 : 0);
+        }
+        return cmp * sortDir;
+    }
+
+    function sortHeader(key, label, extraStyle) {
+        const active = sortKey === key;
+        const arrow = active ? (sortDir === 1 ? ' ▲' : ' ▼') : '';
+        const cls = 'sortable' + (active ? ' sort-active' : '');
+        return '<td class="' + cls + '" style="' + (extraStyle || '') + '" onclick="update(\'' + key + '\')">'
+            + label + '<span class="sort-arrow">' + arrow + '</span></td>';
+    }
+
+    files = files.sort(comparator);
 
     function getReposCount(files) {
         const allReposMap = {};
@@ -147,18 +198,16 @@
         return files.map(item => item.linesOfCode).reduce((a, b) => a + b, 0);
     }
 
-    let lastSort = 'loc';
-
-    function update(sortBy) {
-        if (!sortBy) sortBy = lastSort || 'loc';
-        lastSort = sortBy;
-        files = files.sort((a, b) => {
-            if (sortBy === 'name') {
-                return (a.repository + '/' + a.path).localeCompare(b.repository + '/' + b.path);
+    function update(clickedKey) {
+        if (clickedKey && sortColumns[clickedKey]) {
+            if (sortKey === clickedKey) {
+                sortDir = -sortDir;
             } else {
-                return b.linesOfCode - a.linesOfCode;
+                sortKey = clickedKey;
+                sortDir = sortColumns[clickedKey].dir;
             }
-        });
+        }
+        files = files.sort(comparator);
         const filter = document.getElementById('filter').value.toLowerCase().trim();
         let html = '';
 
@@ -220,11 +269,11 @@
 
         html += '<tr style="color: #777777; background-color: #f8f8f8">';
         if (filteredReposCount) {
-            html += '<td style="text-align: left">repo</td>';
+            html += sortHeader('repo', 'repo', 'text-align: left');
         }
-        html += '<td style="text-align: left"><a href="#" onclick="update(\'name\');">file</a></td>';
-        html += '<td style="text-align: left"><a href="#" onclick="update(\'loc\');">&nbsp;LOC</a></td>';
-        html += '<td style="text-align: center">scope</td>';
+        html += sortHeader('name', 'file', 'text-align: left');
+        html += sortHeader('loc', '&nbsp;LOC', 'text-align: left');
+        html += sortHeader('scope', 'scope', 'text-align: center');
         html += '</tr>';
 
         let displayCounter = 0;
