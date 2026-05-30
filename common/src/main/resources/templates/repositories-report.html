@@ -218,7 +218,7 @@
     // chronologically by slot label, then reversed for display only. The strip is a
     // fixed-width container (slotCount * BAR_WIDTH) so every row's chart occupies exactly
     // the column width.
-    function miniBars(history, field, color, slotCount) {
+    function miniBars(history, field, color, slotCount, slotNote) {
         const stripWidth = slotCount * BAR_WIDTH;
         let html = '<div style="white-space: nowrap; width: ' + stripWidth + 'px; overflow: hidden;">';
         if (history && history.slots && history.slots.length) {
@@ -230,7 +230,8 @@
             bars.reverse();
             bars.forEach(b => {
                 const h = Math.round(2 + 24 * b.v / max);
-                html += '<div title="' + b.v + ' in ' + esc(b.slot) + '" style="margin: 0; padding: 0; '
+                const note = slotNote ? slotNote(b.slot) : '';
+                html += '<div title="' + b.v + ' in ' + esc(b.slot) + esc(note) + '" style="margin: 0; padding: 0; '
                     + 'display: inline-block; vertical-align: bottom; width: ' + BAR_WIDTH + 'px; opacity: 0.5; '
                     + 'background-color: ' + (b.v === 0 ? '#cccccc' : color) + '; height: ' + h + 'px;"></div>';
             });
@@ -240,14 +241,25 @@
     }
 
     // Fixed-width column for a mini bar chart, sized to the bar strip.
-    function barColumn(key, label, historyField, valueField, color, slotCount) {
+    // slotNote(slot) optionally adds extra text to each bar's tooltip.
+    function barColumn(key, label, historyField, valueField, color, slotCount, slotNote) {
         const w = slotCount * BAR_WIDTH;
         const style = 'text-align: left; width: ' + w + 'px; min-width: ' + w + 'px; max-width: ' + w + 'px;';
         return {
             key: key, label: label, type: 'number', dir: -1, sortable: false, headerStyle: style,
             value: i => 0,
-            cell: i => '<td style="' + style + '">' + miniBars(i[historyField], valueField, color, slotCount) + '</td>'
+            cell: i => '<td style="' + style + '">' + miniBars(i[historyField], valueField, color, slotCount, slotNote) + '</td>'
         };
+    }
+
+    // Repositories created (by firstDate year) per year, recomputed each render from the
+    // currently visible rows; used as a tooltip note on the History per-year bars.
+    let REPOS_PER_YEAR = {};
+
+    function yearSlotNote(slot) {
+        const year = String(slot).substring(0, 4);
+        const count = REPOS_PER_YEAR[year] || 0;
+        return count > 0 ? '\n' + count + ' ' + (count === 1 ? 'repository' : 'repositories') + ' created in ' + year : '';
     }
 
     // % of files in the high + very-high risk bands (used to sort risk columns).
@@ -391,6 +403,9 @@
 
     const TABS = [];
 
+    // Link to the raw tab-separated repositories data export.
+    const DATA_LINK = {label: 'data', href: 'data/repositories.txt'};
+
     // Contributor count cell with the list of emails as a tooltip (as in the explorer).
     function contributorsCell(list, dim) {
         const people = list || [];
@@ -423,6 +438,11 @@
         ];
         TABS.push({
             id: 'repositories', label: 'Overview', columns: cols, sortKey: 'commits30', sortDir: -1,
+            links: [
+                {label: 'bubble chart', href: 'visuals/bubble_chart_repositories_loc.html'},
+                {label: 'tree map', href: 'visuals/tree_map_repositories_loc.html'},
+                DATA_LINK
+            ],
             // Grouped top header row (LOC / Activity / Contributors), mirroring the explorer.
             groupHeader: [
                 {span: 2},                              // lang + repository
@@ -437,6 +457,13 @@
     // Commits Trend
     TABS.push({
         id: 'commitsTrend', label: 'Commits Trend', sortKey: 'commits30', sortDir: -1,
+        links: [
+            {label: 'bubble chart', href: 'visuals/bubble_chart_repositories_commits.html'},
+            {label: 'tree map', href: 'visuals/tree_map_repositories_commits.html'},
+            {label: 'animated history (all time)', href: 'visuals/racing_charts_commits_repositories.html?tickDuration=600'},
+            {label: 'animated history (12 months window)', href: 'visuals/racing_charts_commits_window_repositories.html?tickDuration=600'},
+            DATA_LINK
+        ],
         columns: [
             langCol, nameCol,
             {key: 'commits30', label: 'Commits<br>(30d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
@@ -453,6 +480,11 @@
     // Contributors Trend
     TABS.push({
         id: 'contributorsTrend', label: 'Contributors Trend', sortKey: 'contrib30', sortDir: -1,
+        links: [
+            {label: 'bubble chart', href: 'visuals/bubble_chart_repositories_contributors.html'},
+            {label: 'tree map', href: 'visuals/tree_map_repositories_contributors.html'},
+            DATA_LINK
+        ],
         columns: [
             langCol, nameCol,
             {key: 'commits30', label: 'Commits<br>(30d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
@@ -482,7 +514,7 @@
                 value: i => i.commitsCount90Days, cell: i => '<td style="text-align: center; font-size: 90%; color: #b0b0b0;">' + num(i.commitsCount90Days) + '</td>'},
             {key: 'commits', label: 'Commits<br>(all time)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.commitsCount, cell: i => '<td style="text-align: center; font-size: 90%; color: #b0b0b0;">' + num(i.commitsCount) + '</td>'},
-            barColumn('perYear', 'Commits per Year', 'years', 'commits', '#4a90d9', YEAR_SLOTS),
+            barColumn('perYear', 'Commits per Year', 'years', 'commits', '#4a90d9', YEAR_SLOTS, yearSlotNote),
             {key: 'contrib', label: 'Contributors', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => (i.contributors || []).length, cell: i => '<td style="text-align: center; font-size: 90%;">' + num((i.contributors || []).length) + '</td>'},
             {key: 'freshness', label: 'Freshness', type: 'number', dir: -1, headerStyle: 'text-align: center;',
@@ -491,7 +523,14 @@
             reportCol
         ];
     }
-    TABS.push({id: 'history', label: 'History', columns: historyColumns(), sortKey: 'age', sortDir: -1});
+    TABS.push({
+        id: 'history', label: 'History', columns: historyColumns(), sortKey: 'age', sortDir: -1,
+        links: [
+            {label: 'bubble chart', href: 'visuals/bubble_chart_repositories_age.html'},
+            {label: 'tree map', href: 'visuals/tree_map_repositories_age.html'},
+            DATA_LINK
+        ]
+    });
 
     // Metrics
     (function () {
@@ -555,6 +594,16 @@
         render();
     }
 
+    // A small row of external links (bubble chart | tree map | animated history | data),
+    // pointing to the separately-generated visual artifacts, as in the original report.
+    function tabLinksHtml(links) {
+        if (!links || !links.length) {
+            return '';
+        }
+        const items = links.map(l => '<a href="' + esc(l.href) + '" target="_blank" style="color: #4a90d9;">' + esc(l.label) + '</a>').join('<span style="color: #ccc;"> | </span>');
+        return '<div style="margin: 4px 0 10px 0; font-size: 90%;">' + items + '</div>';
+    }
+
     function getFilters() {
         return document.getElementById('filter').value.toLowerCase().trim()
             .split(',').map(s => s.trim()).filter(s => s.length);
@@ -587,13 +636,23 @@
         const column = tab.columns.find(c => c.key === tab.sortKey) || tab.columns[0];
         rows = rows.slice().sort(makeComparator(column, tab.sortDir));
 
+        // Repositories created per year (by first commit date), for the History year-bar tooltips.
+        REPOS_PER_YEAR = {};
+        rows.forEach(r => {
+            const y = (r.firstDate || '').substring(0, 4);
+            if (y) {
+                REPOS_PER_YEAR[y] = (REPOS_PER_YEAR[y] || 0) + 1;
+            }
+        });
+
         const filteredMainLoc = rows.reduce((a, b) => a + (b.mainLinesOfCode || 0), 0);
         const filteredCommits = rows.reduce((a, b) => a + (b.commitsCount || 0), 0);
         document.getElementById('search-summary').innerHTML = '= ' + rows.length + ' '
             + (rows.length === 1 ? 'repository' : 'repositories')
             + ' (' + num(filteredMainLoc) + ' LOC main, ' + num(filteredCommits) + ' commits)';
 
-        let html = proportionBars(rows.length, filteredMainLoc, filteredCommits);
+        let html = tabLinksHtml(tab.links);
+        html += proportionBars(rows.length, filteredMainLoc, filteredCommits);
         html += '<table style="width: 100%"><thead>';
         if (tab.groupHeader) {
             html += '<tr>';
