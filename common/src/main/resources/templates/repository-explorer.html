@@ -47,6 +47,24 @@
         ::-ms-input-placeholder {
             color: lightgrey;
         }
+
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sortable:hover {
+            color: #333333;
+        }
+
+        .sort-active {
+            color: #303030;
+            font-weight: bold;
+        }
+
+        .sort-arrow {
+            font-size: 80%;
+        }
     </style>
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Lato">
@@ -89,6 +107,99 @@
 <div id="content"></div>
 
 <script>
+    // Map of language/extension -> base64 image data URI, injected at report-generation time.
+    const langIcons = ${langIcons};
+
+    // Renders a small round language badge: an icon when one is known, otherwise a text bubble
+    // with the language name (mirrors DataImageUtils.getLangDataImageDiv on the Java side).
+    function langIcon(lang) {
+        if (!lang) {
+            return '';
+        }
+        const key = lang.toLowerCase();
+        const size = 24;
+        if (langIcons[key]) {
+            return '<img title="' + lang + '" style="margin-right: 5px; vertical-align: middle; background-color: #f1f1f1; '
+                + 'border-radius: 50%; border: 1px solid lightgrey; width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
+                + langIcons[key] + '">';
+        }
+        const fontSize = lang.length <= 3 ? 9 : 8;
+        return '<div title="' + lang + '" style="margin-right: 5px; display: inline-block; vertical-align: middle; '
+            + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; overflow: hidden; color: darkblue; '
+            + 'width: ' + size + 'px; height: ' + size + 'px; line-height: ' + size + 'px; '
+            + 'font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">' + lang + '</div>';
+    }
+
+    // Sortable column definitions: each maps a key to a value accessor.
+    // 'dir' is the default direction applied the first time a column is selected.
+    const otherLoc = item => item.buildAndDeployLinesOfCode + item.generatedLinesOfCode + item.otherLinesOfCode;
+    const sortColumns = {
+        lang: {value: item => (item.mainLang || '').toLowerCase(), type: 'string', dir: 1},
+        name: {value: item => (item.metadata.name || '').toLowerCase(), type: 'string', dir: 1},
+        mainLoc: {value: item => item.mainLinesOfCode, type: 'number', dir: -1},
+        testLoc: {value: item => item.testLinesOfCode, type: 'number', dir: -1},
+        otherLoc: {value: otherLoc, type: 'number', dir: -1},
+        lastCommit: {value: item => item.latestCommitDate || '', type: 'string', dir: -1},
+        commits30: {value: item => item.commitsCount30Days, type: 'number', dir: -1},
+        commits90: {value: item => item.commitsCount90Days, type: 'number', dir: -1},
+        commitsAll: {value: item => item.commitsCount, type: 'number', dir: -1},
+        contributors30: {value: item => item.contributors30Days.length, type: 'number', dir: -1},
+        contributors90: {value: item => item.contributors90Days.length, type: 'number', dir: -1},
+        contributorsAll: {value: item => item.contributors.length, type: 'number', dir: -1}
+    };
+
+    // Default sort preserves the original multi-key ordering (most recent activity first).
+    let sortKey = 'lastCommit';
+    let sortDir = -1;
+
+    function sortBy(key) {
+        if (!sortColumns[key]) {
+            return;
+        }
+        if (sortKey === key) {
+            sortDir = -sortDir;
+        } else {
+            sortKey = key;
+            sortDir = sortColumns[key].dir;
+        }
+        update();
+    }
+
+    function compareByColumn(key, a, b) {
+        const column = sortColumns[key];
+        const va = column.value(a);
+        const vb = column.value(b);
+        if (column.type === 'string') {
+            return String(va).localeCompare(String(vb));
+        }
+        return va < vb ? -1 : (va > vb ? 1 : 0);
+    }
+
+    function comparator(a, b) {
+        let cmp = compareByColumn(sortKey, a, b) * sortDir;
+        if (cmp === 0) {
+            // Stable tie-breakers so equal primary values keep a deterministic order.
+            for (let tie of ['lastCommit', 'commits30', 'commits90', 'commitsAll']) {
+                if (tie === sortKey) {
+                    continue;
+                }
+                cmp = compareByColumn(tie, a, b) * -1;
+                if (cmp !== 0) {
+                    break;
+                }
+            }
+        }
+        return cmp;
+    }
+
+    function sortHeader(key, label, extraStyle) {
+        const active = sortKey === key;
+        const arrow = active ? (sortDir === 1 ? ' ▲' : ' ▼') : '';
+        const cls = 'sortable' + (active ? ' sort-active' : '');
+        return '<td class="' + cls + '" style="' + (extraStyle || '') + '" onclick="sortBy(\'' + key + '\')">'
+            + label + '<span class="sort-arrow">' + arrow + '</span></td>';
+    }
+
     function update() {
         const filters = document.getElementById('filter').value.toLowerCase().trim()
             .split(',').map(item => item.trim()).filter(item => item.length);
@@ -115,10 +226,7 @@
 
         const filteredData = repositories
             .filter(item => isFiltered(item.metadata.name))
-            .sort((a, b) => b.commitsCount - a.commitsCount)
-            .sort((a, b) => b.commitsCount90Days - a.commitsCount90Days)
-            .sort((a, b) => b.commitsCount30Days - a.commitsCount30Days)
-            .sort((a, b) => b.latestCommitDate.localeCompare(a.latestCommitDate));
+            .sort(comparator);
 
         let totalCount = filteredData.length;
         let totalMainLoc = filteredData.map(item => item.mainLinesOfCode).reduce((a, b) => a + b, 0);
@@ -152,7 +260,7 @@
 
         html += '<table>';
         html += '<tr>';
-        html += '<td></td>';
+        html += '<td colspan="2"></td>';
         html += '<td style="text-align: center; border-bottom: 2px solid lightgrey" colspan="3">LOC</td>';
         html += '<td></td>';
         html += '<td style="text-align: center; border-bottom: 2px solid lightgrey" colspan="4">Activity</td>';
@@ -161,20 +269,20 @@
         html += '</tr>';
 
         html += '<tr style="color: #777777">';
-        html += '<td>';
-        html += '</td>';
-        html += '<td style="text-align: right; padding-right: 5px; padding-left: 5px;">main</td>';
-        html += '<td style="text-align: right; padding-right: 5px; padding-left: 5px;">test</td>';
-        html += '<td style="text-align: right; padding-right: 5px; padding-left: 5px;">other</td>';
+        html += sortHeader('lang', 'lang', 'text-align: center; padding-right: 5px; padding-left: 5px;');
+        html += sortHeader('name', 'repository', 'text-align: left; padding-right: 5px; padding-left: 5px;');
+        html += sortHeader('mainLoc', 'main', 'text-align: right; padding-right: 5px; padding-left: 5px;');
+        html += sortHeader('testLoc', 'test', 'text-align: right; padding-right: 5px; padding-left: 5px;');
+        html += sortHeader('otherLoc', 'other', 'text-align: right; padding-right: 5px; padding-left: 5px;');
         html += '<td style="text-align: right; padding-right: 5px; padding-left: 5px;"></td>';
-        html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; border-left: 1px solid lightgrey; ">last<br>commit</td>';
-        html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">commits<br>(30d)</td>';
-        html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">commits<br>(90d)</td>';
-        html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">commits<br>(all time)</td>';
+        html += sortHeader('lastCommit', 'last<br>commit', 'text-align: center; padding-right: 5px; padding-left: 5px; border-left: 1px solid lightgrey;');
+        html += sortHeader('commits30', 'commits<br>(30d)', 'text-align: center; padding-right: 5px; padding-left: 5px;');
+        html += sortHeader('commits90', 'commits<br>(90d)', 'text-align: center; padding-right: 5px; padding-left: 5px;');
+        html += sortHeader('commitsAll', 'commits<br>(all time)', 'text-align: center; padding-right: 5px; padding-left: 5px;');
         html += '<td style="text-align: right; padding-right: 5px; padding-left: 5px;"></td>';
-        html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; border-left: 1px solid lightgrey; ">contributors<br>(30d)</td>';
-        html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">contributors<br>(90d)</td>';
-        html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">contributors<br>(all time)</td>';
+        html += sortHeader('contributors30', 'contributors<br>(30d)', 'text-align: center; padding-right: 5px; padding-left: 5px; border-left: 1px solid lightgrey;');
+        html += sortHeader('contributors90', 'contributors<br>(90d)', 'text-align: center; padding-right: 5px; padding-left: 5px;');
+        html += sortHeader('contributorsAll', 'contributors<br>(all time)', 'text-align: center; padding-right: 5px; padding-left: 5px;');
         html += '</tr>';
 
         filteredData.forEach(item => {
@@ -184,6 +292,9 @@
             } else {
                 html += '<tr>';
             }
+            html += '<td style="text-align: center; vertical-align: middle;">';
+            html += langIcon(item.mainLang);
+            html += '</td>';
             html += '<td>';
             const elements = item.metadata.name.split('/');
             const parent = elements.length == 2 ? elements[0] : null;

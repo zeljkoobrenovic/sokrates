@@ -1,5 +1,7 @@
 package nl.obren.sokrates.sourcecode.landscape.analysis;
 
+import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
+
 public class FileExport {
     private String repository;
     private String path;
@@ -48,5 +50,13 @@ public class FileExport {
 
     public void setLinesOfCode(int linesOfCode) {
         this.linesOfCode = linesOfCode;
+    }
+
+    /**
+     * The file's language, derived from its path extension. Serialized into the explorer JSON
+     * so the files explorer can render a matching language icon.
+     */
+    public String getMainLang() {
+        return path != null ? ExtensionGroupExtractor.getExtension(path).toLowerCase().trim() : "";
     }
 }
