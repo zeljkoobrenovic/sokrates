@@ -609,7 +609,7 @@
 
     // Generic per-year summary bar chart. `counts` maps "YYYY" -> number; `tooltips`
     // (optional) maps "YYYY" -> extra tooltip text. Years between the first and last
-    // present are all drawn (gaps render as empty slots).
+    // present are all drawn (gaps render as empty slots); displayed newest-first (left).
     function perYearBarChart(title, color, counts, unit, tooltips) {
         const years = Object.keys(counts).filter(y => /^\d{4}$/.test(y)).sort();
         if (!years.length) {
@@ -623,7 +623,7 @@
 
         let html = '<div style="white-space: nowrap; overflow-x: auto; width: 100%; margin-bottom: 14px;">';
         html += '<div style="font-size: 80%; color: grey; margin-bottom: 5px;">' + esc(title) + ':</div>';
-        for (let year = first; year <= last; year++) {
+        for (let year = last; year >= first; year--) {
             const c = counts[year] || 0;
             const height = Math.round(1 + maxHeight * c / max);
             let tip = year + ': ' + num(c) + ' ' + unit;
