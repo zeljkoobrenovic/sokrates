@@ -95,7 +95,7 @@
     <div id="panel">
         <div id="panel-header">
             <input id="filter" type="text" placeholder="search nodes..." onkeyup="renderList()">
-            <div id="panel-actions" style="margin-left: 6px">
+            <div id="panel-actions" style="margin-left: 3px">
                 <a onclick="setAllVisible(true)">show all</a> &middot;
                 <a onclick="setAllVisible(false)">hide all</a> &middot;
                 <a onclick="showOnlyFiltered()">only matching</a>
@@ -117,6 +117,16 @@
     // mutates link endpoints into node objects, so we keep our own clean copy to filter from).
     const allLinks = gData.links.map(l => ({source: l.target, target: l.source, count: l.count}));
     const allNodes = gData.nodes.slice();
+
+    // Degree = number of dependency links touching a node. Used to sort the node list
+    // (most-connected first) and shown next to each node.
+    const degree = {};
+    allNodes.forEach(n => degree[n.id] = 0);
+    allLinks.forEach(l => {
+        degree[l.source] = (degree[l.source] || 0) + 1;
+        degree[l.target] = (degree[l.target] || 0) + 1;
+    });
+    allNodes.sort((a, b) => (degree[b.id] - degree[a.id]) || a.id.localeCompare(b.id));
 
     const colorOf = (node) => {
         if (!node.id || !node.id.startsWith("[")) return "rgba(135, 206, 235, 0.6)";
@@ -160,14 +170,15 @@
         const matching = allNodes.filter(n => !filter || n.id.toLowerCase().includes(filter));
         const visibleCount = allNodes.filter(n => visible[n.id]).length;
         document.getElementById('panel-summary').textContent =
-            visibleCount + ' / ' + allNodes.length + ' shown';
+            visibleCount + ' / ' + allNodes.length;
 
         let html = '';
         matching.forEach(n => {
-            html += '<div class="node-item" title="' + escapeAttr(n.id) + '">'
+            const deps = degree[n.id] || 0;
+            html += '<div class="node-item" title="' + escapeAttr(n.id) + ' — ' + deps + ' dependencies, size ' + n.size + '">'
                 + '<label>'
                 + '<input type="checkbox" data-id="' + escapeAttr(n.id) + '"' + (visible[n.id] ? ' checked' : '') + ' onchange="toggleNode(this)">'
-                + escapeHtml(n.id) + ' <span class="node-size">(' + n.size + ')</span>'
+                + escapeHtml(n.id) + ' <span class="node-size">(' + deps + ' deps)</span>'
                 + '</label></div>';
         });
         document.getElementById('node-list').innerHTML = html || '<div style="padding: 8px; color: grey;">no matching nodes</div>';
