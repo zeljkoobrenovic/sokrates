@@ -110,7 +110,7 @@
             border-radius: 10px;
         }
     </style>
-    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Roboto">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
 </head>
 <body>
 
@@ -208,25 +208,43 @@
             + esc(t.tag) + '</span>').join('');
     }
 
+    // Number of bars (slots) drawn per chart, fixed per chart type so the column
+    // can be sized to the bar strip width.
+    const WEEK_SLOTS = 52;
+    const YEAR_SLOTS = options.historyYears || 20;
+    const BAR_WIDTH = 6;
+
     // Mini bar chart from a history block (commits or contributors), most-recent-first.
-    // Reverses to render oldest-left / newest-right.
-    function miniBars(history, field, color, barWidth) {
-        if (!history || !history.slots || !history.slots.length) {
-            return '';
-        }
-        const values = history[field] || [];
-        let max = 1;
-        values.forEach(v => max = Math.max(max, v));
-        let html = '<div style="white-space: nowrap;">';
-        for (let i = history.slots.length - 1; i >= 0; i--) {
-            const v = values[i] || 0;
-            const h = Math.round(2 + 24 * v / max);
-            html += '<div title="' + v + ' in ' + esc(history.slots[i]) + '" style="margin: 0; margin-right: -1px; padding: 0; '
-                + 'display: inline-block; vertical-align: bottom; width: ' + barWidth + 'px; opacity: 0.6; '
-                + 'background-color: ' + (v === 0 ? '#cccccc' : color) + '; height: ' + h + 'px;"></div>';
+    // Reverses to render oldest-left / newest-right. The strip is a fixed-width container
+    // (slotCount * BAR_WIDTH) so every row's chart occupies exactly the column width.
+    function miniBars(history, field, color, slotCount) {
+        const stripWidth = slotCount * BAR_WIDTH;
+        let html = '<div style="white-space: nowrap; width: ' + stripWidth + 'px; overflow: hidden;">';
+        if (history && history.slots && history.slots.length) {
+            const values = history[field] || [];
+            let max = 1;
+            values.forEach(v => max = Math.max(max, v));
+            for (let i = history.slots.length - 1; i >= 0; i--) {
+                const v = values[i] || 0;
+                const h = Math.round(2 + 24 * v / max);
+                html += '<div title="' + v + ' in ' + esc(history.slots[i]) + '" style="margin: 0; padding: 0; '
+                    + 'display: inline-block; vertical-align: bottom; width: ' + BAR_WIDTH + 'px; opacity: 0.6; '
+                    + 'background-color: ' + (v === 0 ? '#cccccc' : color) + '; height: ' + h + 'px;"></div>';
+            }
         }
         html += '</div>';
         return html;
+    }
+
+    // Fixed-width column for a mini bar chart, sized to the bar strip.
+    function barColumn(key, label, historyField, valueField, color, slotCount) {
+        const w = slotCount * BAR_WIDTH;
+        const style = 'text-align: left; width: ' + w + 'px; min-width: ' + w + 'px; max-width: ' + w + 'px;';
+        return {
+            key: key, label: label, type: 'number', dir: -1, sortable: false, headerStyle: style,
+            value: i => 0,
+            cell: i => '<td style="' + style + '">' + miniBars(i[historyField], valueField, color, slotCount) + '</td>'
+        };
     }
 
     // % of files in the high + very-high risk bands (used to sort risk columns).
@@ -377,22 +395,22 @@
     (function () {
         const cols = [
             langCol, nameCol,
-            locColumn('mainLoc', 'LOC<br>(main)', i => i.mainLinesOfCode),
-            locColumn('testLoc', 'LOC<br>(test)', i => i.testLinesOfCode, '#b0b0b0'),
-            locColumn('otherLoc', 'LOC<br>(other)', i => i.generatedLinesOfCode + i.buildAndDeployLinesOfCode + i.otherLinesOfCode, '#b0b0b0'),
-            {key: 'latest', label: 'Last<br>Commit', type: 'string', dir: -1, headerStyle: 'text-align: center;',
+            locColumn('mainLoc', 'main', i => i.mainLinesOfCode),
+            locColumn('testLoc', 'test', i => i.testLinesOfCode, '#b0b0b0'),
+            locColumn('otherLoc', 'other', i => i.generatedLinesOfCode + i.buildAndDeployLinesOfCode + i.otherLinesOfCode, '#b0b0b0'),
+            {key: 'latest', label: 'last<br>commit', type: 'string', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.latestCommitDate || '', cell: i => '<td style="text-align: center; font-size: 90%; white-space: nowrap;">' + esc(i.latestCommitDate) + '</td>'},
-            {key: 'commits30', label: 'Commits<br>(30d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+            {key: 'commits30', label: 'commits<br>(30d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.commitsCount30Days, cell: i => '<td style="text-align: center; font-size: 90%;">' + num(i.commitsCount30Days) + '</td>'},
-            {key: 'commits90', label: 'Commits<br>(90d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+            {key: 'commits90', label: 'commits<br>(90d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.commitsCount90Days, cell: i => '<td style="text-align: center; font-size: 90%; color: #b0b0b0;">' + num(i.commitsCount90Days) + '</td>'},
-            {key: 'commitsAll', label: 'Commits<br>(all time)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+            {key: 'commitsAll', label: 'commits<br>(all time)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.commitsCount, cell: i => '<td style="text-align: center; font-size: 90%; color: #b0b0b0;">' + num(i.commitsCount) + '</td>'},
-            {key: 'contributors30', label: 'Contributors<br>(30d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+            {key: 'contributors30', label: 'contributors<br>(30d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => (i.contributors30Days || []).length, cell: i => contributorsCell(i.contributors30Days, false)},
-            {key: 'contributors90', label: 'Contributors<br>(90d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+            {key: 'contributors90', label: 'contributors<br>(90d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => (i.contributors90Days || []).length, cell: i => contributorsCell(i.contributors90Days, true)},
-            {key: 'contributorsAll', label: 'Contributors<br>(all time)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+            {key: 'contributorsAll', label: 'contributors<br>(all time)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => (i.contributors || []).length, cell: i => contributorsCell(i.contributors, true)},
             reportCol
         ];
@@ -414,14 +432,13 @@
         id: 'commitsTrend', label: 'Commits Trend', sortKey: 'commits30', sortDir: -1,
         columns: [
             langCol, nameCol,
-            {key: 'commits30', label: 'Commits<br>(30d)*', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+            {key: 'commits30', label: 'Commits<br>(30d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.commitsCount30Days, cell: i => '<td style="text-align: center;">' + num(i.commitsCount30Days) + '</td>'},
             {key: 'contrib30', label: 'Contributors<br>(30d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.recentContributorsCount, cell: i => '<td style="text-align: center;">' + num(i.recentContributorsCount) + '</td>'},
             {key: 'rookies30', label: 'Rookies<br>(30d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.rookiesCount, cell: i => '<td style="text-align: center;">' + num(i.rookiesCount) + '</td>'},
-            {key: 'perWeek', label: 'Commits per Week (past year)', type: 'number', dir: -1, headerStyle: 'text-align: left;', sortable: false,
-                value: i => i.commitsCount30Days, cell: i => '<td>' + miniBars(i.weeks, 'commits', '#4a90d9', 4) + '</td>'},
+            barColumn('perWeek', 'Commits per Week (past year)', 'weeks', 'commits', '#4a90d9', WEEK_SLOTS),
             reportCol
         ]
     });
@@ -437,8 +454,7 @@
                 value: i => i.recentContributorsCount, cell: i => '<td style="text-align: center;">' + num(i.recentContributorsCount) + '</td>'},
             {key: 'rookies30', label: 'Rookies<br>(30d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.rookiesCount, cell: i => '<td style="text-align: center;">' + num(i.rookiesCount) + '</td>'},
-            {key: 'perWeek', label: 'Contributors per Week (past year)', type: 'number', dir: -1, headerStyle: 'text-align: left;', sortable: false,
-                value: i => i.recentContributorsCount, cell: i => '<td>' + miniBars(i.weeks, 'contributors', 'darkred', 4) + '</td>'},
+            barColumn('perWeek', 'Contributors per Week (past year)', 'weeks', 'contributors', 'darkred', WEEK_SLOTS),
             reportCol
         ]
     });
@@ -449,8 +465,7 @@
             langCol, nameCol,
             {key: 'age', label: 'Age', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.ageInDays, cell: i => '<td style="text-align: center; font-size: 90%;">' + ageText(i) + '</td>'},
-            {key: 'perYear', label: 'Commits per Year', type: 'number', dir: -1, headerStyle: 'text-align: left;', sortable: false,
-                value: i => i.commitsCount, cell: i => '<td>' + miniBars(i.years, 'commits', '#4a90d9', 14) + '</td>'},
+            barColumn('perYear', 'Commits per Year', 'years', 'commits', '#4a90d9', YEAR_SLOTS),
             {key: 'contrib', label: 'Contributors', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => (i.contributors || []).length, cell: i => '<td style="text-align: center; font-size: 90%;">' + num((i.contributors || []).length) + '</td>'},
             {key: 'commits', label: 'Commits', type: 'number', dir: -1, headerStyle: 'text-align: center;',
