@@ -567,8 +567,8 @@
             html += '<tr>';
             tab.groupHeader.forEach(g => {
                 const style = g.label
-                    ? 'text-align: center; border: none; border-bottom: 2px solid lightgrey;'
-                    : 'border: none;';
+                    ? 'text-align: center; border-bottom: 2px solid lightgrey;'
+                    : '';
                 html += '<th colspan="' + g.span + '" style="' + style + '">' + (g.label || '') + '</th>';
             });
             html += '</tr>';
