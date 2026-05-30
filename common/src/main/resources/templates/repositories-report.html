@@ -335,10 +335,12 @@
         };
     }
 
+    // Fixed-width first column sized to the 36px language icon (+ padding).
+    const LANG_COL_STYLE = 'width: 44px; min-width: 44px; max-width: 44px; padding-left: 4px; padding-right: 4px; text-align: center;';
     const langCol = {
-        key: 'lang', label: '', type: 'string', dir: 1, headerStyle: 'text-align: left; max-width: 38px;',
+        key: 'lang', label: '', type: 'string', dir: 1, headerStyle: LANG_COL_STYLE,
         value: item => (item.mainLang || '').toLowerCase(),
-        cell: item => '<td style="text-align: left; max-width: 38px;"><div style="white-space: nowrap; overflow: hidden">' + langIcon(item.mainLang) + '</div></td>'
+        cell: item => '<td style="' + LANG_COL_STYLE + '"><div style="white-space: nowrap; overflow: hidden">' + langIcon(item.mainLang) + '</div></td>'
     };
     const nameCol = {
         key: 'name', label: 'Repository', type: 'string', dir: 1, headerStyle: 'text-align: left;',
@@ -575,12 +577,12 @@
             + (repos.length === 1 ? 'repository' : 'repositories');
 
         let html = '<table style="width: 100%"><thead>';
-        html += '<tr><th style="border: none"></th><th style="border: none"></th>';
+        html += '<tr><th style="border: none; ' + LANG_COL_STYLE + '"></th><th style="border: none"></th>';
         concerns.forEach(c => {
             html += '<th colspan="2" style="text-align: center">' + esc(c.name) + ' (' + c.count + ')</th>';
         });
         html += '<th style="border: none"></th></tr>';
-        html += '<tr><th style="border-left: none; border-top: none"></th><th style="text-align: left">Repositories (' + features.repositories.length + ')</th>';
+        html += '<tr><th style="border-left: none; border-top: none; ' + LANG_COL_STYLE + '"></th><th style="text-align: left">Repositories (' + features.repositories.length + ')</th>';
         concerns.forEach(() => {
             html += '<th style="font-size: 70%; text-align: center">matches</th><th style="font-size: 70%; text-align: center">files</th>';
         });
@@ -588,7 +590,7 @@
 
         repos.forEach(r => {
             html += '<tr style="white-space: nowrap">';
-            html += '<td style="text-align: left; max-width: 38px;"><div style="white-space: nowrap; overflow: hidden">' + langIcon(r.mainLang) + '</div></td>';
+            html += '<td style="' + LANG_COL_STYLE + '"><div style="white-space: nowrap; overflow: hidden">' + langIcon(r.mainLang) + '</div></td>';
             const featuresUrl = (r.reportFolderUrl || '') + 'FeaturesOfInterest.html';
             html += '<td><a href="' + esc(featuresUrl) + '" target="_blank" style="color:#333">' + esc(r.name) + '</a></td>';
             concerns.forEach(c => {
