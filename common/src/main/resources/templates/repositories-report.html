@@ -212,7 +212,7 @@
     // can be sized to the bar strip width.
     const WEEK_SLOTS = 52;
     const YEAR_SLOTS = options.historyYears || 20;
-    const BAR_WIDTH = 6;
+    const BAR_WIDTH = 10;
 
     // Mini bar chart from a history block (commits or contributors), most-recent-first.
     // Reverses to render oldest-left / newest-right. The strip is a fixed-width container
@@ -228,7 +228,7 @@
                 const v = values[i] || 0;
                 const h = Math.round(2 + 24 * v / max);
                 html += '<div title="' + v + ' in ' + esc(history.slots[i]) + '" style="margin: 0; padding: 0; '
-                    + 'display: inline-block; vertical-align: bottom; width: ' + BAR_WIDTH + 'px; opacity: 0.6; '
+                    + 'display: inline-block; vertical-align: bottom; width: ' + BAR_WIDTH + 'px; opacity: 0.5; '
                     + 'background-color: ' + (v === 0 ? '#cccccc' : color) + '; height: ' + h + 'px;"></div>';
             }
         }
@@ -438,7 +438,7 @@
                 value: i => i.recentContributorsCount, cell: i => '<td style="text-align: center;">' + num(i.recentContributorsCount) + '</td>'},
             {key: 'rookies30', label: 'Rookies<br>(30d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.rookiesCount, cell: i => '<td style="text-align: center;">' + num(i.rookiesCount) + '</td>'},
-            barColumn('perWeek', 'Commits per Week (past year)', 'weeks', 'commits', '#4a90d9', WEEK_SLOTS),
+            barColumn('perWeek', 'Commits per Week (past year)', 'weeks', 'commits', 'blue', WEEK_SLOTS),
             reportCol
         ]
     });
@@ -465,6 +465,12 @@
             langCol, nameCol,
             {key: 'age', label: 'Age', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.ageInDays, cell: i => '<td style="text-align: center; font-size: 90%;">' + ageText(i) + '</td>'},
+            {key: 'latest', label: 'Last<br>Commit', type: 'string', dir: -1, headerStyle: 'text-align: center;',
+                value: i => i.latestCommitDate || '', cell: i => '<td style="text-align: center; font-size: 90%; white-space: nowrap;">' + esc(i.latestCommitDate) + '</td>'},
+            {key: 'commits30', label: 'Commits<br>(30d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+                value: i => i.commitsCount30Days, cell: i => '<td style="text-align: center; font-size: 90%;">' + num(i.commitsCount30Days) + '</td>'},
+            {key: 'commits90', label: 'Commits<br>(90d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+                value: i => i.commitsCount90Days, cell: i => '<td style="text-align: center; font-size: 90%; color: #b0b0b0;">' + num(i.commitsCount90Days) + '</td>'},
             barColumn('perYear', 'Commits per Year', 'years', 'commits', '#4a90d9', YEAR_SLOTS),
             {key: 'contrib', label: 'Contributors', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => (i.contributors || []).length, cell: i => '<td style="text-align: center; font-size: 90%;">' + num((i.contributors || []).length) + '</td>'},
