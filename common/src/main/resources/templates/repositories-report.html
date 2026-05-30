@@ -363,30 +363,36 @@
 
     const TABS = [];
 
-    // Size & Details
+    // Contributor count cell with the list of emails as a tooltip (as in the explorer).
+    function contributorsCell(list, dim) {
+        const people = list || [];
+        return '<td style="text-align: center; font-size: 90%; cursor: help;' + (dim ? ' color: #b0b0b0;' : '') + '" title="'
+            + esc(people.join('\n')) + '">' + num(people.length) + '</td>';
+    }
+
+    // Size & Details: same columns as the former repositories explorer, plus a Report link.
     (function () {
         const cols = [
             langCol, nameCol,
             locColumn('mainLoc', 'LOC<br>(main)', i => i.mainLinesOfCode),
             locColumn('testLoc', 'LOC<br>(test)', i => i.testLinesOfCode, '#b0b0b0'),
             locColumn('otherLoc', 'LOC<br>(other)', i => i.generatedLinesOfCode + i.buildAndDeployLinesOfCode + i.otherLinesOfCode, '#b0b0b0'),
-            {key: 'age', label: 'Age', type: 'number', dir: -1, headerStyle: 'text-align: center;',
-                value: i => i.ageInDays, cell: i => '<td style="text-align: center; font-size: 90%;">' + ageText(i) + '</td>'},
-            {key: 'latest', label: 'Latest<br>Commit', type: 'string', dir: -1, headerStyle: 'text-align: center;',
+            {key: 'latest', label: 'Last<br>Commit', type: 'string', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.latestCommitDate || '', cell: i => '<td style="text-align: center; font-size: 90%; white-space: nowrap;">' + esc(i.latestCommitDate) + '</td>'},
-            {key: 'contrib30', label: 'Contributors<br>(30d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
-                value: i => i.recentContributorsCount, cell: i => '<td style="text-align: center; font-size: 90%;">' + num(i.recentContributorsCount) + '</td>'},
-            {key: 'rookies30', label: 'Rookies<br>(30d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
-                value: i => i.rookiesCount, cell: i => '<td style="text-align: center; font-size: 90%;">' + num(i.rookiesCount) + '</td>'},
             {key: 'commits30', label: 'Commits<br>(30d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.commitsCount30Days, cell: i => '<td style="text-align: center; font-size: 90%;">' + num(i.commitsCount30Days) + '</td>'},
+            {key: 'commits90', label: 'Commits<br>(90d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+                value: i => i.commitsCount90Days, cell: i => '<td style="text-align: center; font-size: 90%; color: #b0b0b0;">' + num(i.commitsCount90Days) + '</td>'},
+            {key: 'commitsAll', label: 'Commits<br>(all time)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+                value: i => i.commitsCount, cell: i => '<td style="text-align: center; font-size: 90%; color: #b0b0b0;">' + num(i.commitsCount) + '</td>'},
+            {key: 'contributors30', label: 'Contributors<br>(30d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+                value: i => (i.contributors30Days || []).length, cell: i => contributorsCell(i.contributors30Days, false)},
+            {key: 'contributors90', label: 'Contributors<br>(90d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+                value: i => (i.contributors90Days || []).length, cell: i => contributorsCell(i.contributors90Days, true)},
+            {key: 'contributorsAll', label: 'Contributors<br>(all time)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+                value: i => (i.contributors || []).length, cell: i => contributorsCell(i.contributors, true)},
             reportCol
         ];
-        if (options.showTags) {
-            cols.push({key: 'tags', label: 'Tags', type: 'string', dir: 1, headerStyle: 'text-align: left;',
-                value: i => (i.tags || []).map(t => t.tag).join(','),
-                cell: i => '<td>' + tagsHtml(i) + '</td>'});
-        }
         TABS.push({id: 'repositories', label: 'Size & Details', columns: cols, sortKey: 'mainLoc', sortDir: -1});
     })();
 
