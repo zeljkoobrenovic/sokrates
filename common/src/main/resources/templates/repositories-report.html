@@ -215,9 +215,9 @@
     const BAR_WIDTH = 10;
 
     // Mini bar chart from a history block (commits or contributors). Bars are ordered
-    // chronologically by slot label so the oldest is on the left and the newest on the
-    // right, regardless of how the slots are stored. The strip is a fixed-width container
-    // (slotCount * BAR_WIDTH) so every row's chart occupies exactly the column width.
+    // chronologically by slot label, then reversed for display only. The strip is a
+    // fixed-width container (slotCount * BAR_WIDTH) so every row's chart occupies exactly
+    // the column width.
     function miniBars(history, field, color, slotCount) {
         const stripWidth = slotCount * BAR_WIDTH;
         let html = '<div style="white-space: nowrap; width: ' + stripWidth + 'px; overflow: hidden;">';
@@ -227,6 +227,7 @@
             bars.sort((a, b) => String(a.slot).localeCompare(String(b.slot)));
             let max = 1;
             bars.forEach(b => max = Math.max(max, b.v));
+            bars.reverse();
             bars.forEach(b => {
                 const h = Math.round(2 + 24 * b.v / max);
                 html += '<div title="' + b.v + ' in ' + esc(b.slot) + '" style="margin: 0; padding: 0; '
