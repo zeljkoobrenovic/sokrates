@@ -214,6 +214,22 @@
     const YEAR_SLOTS = options.historyYears || 20;
     const BAR_WIDTH = 10;
 
+    // The most recent year present anywhere in the data (latest commit dates / per-year
+    // slots). Per-year summary charts extend their right edge to this year so recent
+    // years still show even when nothing happened in them (e.g. no repos created lately).
+    const LATEST_YEAR = (function () {
+        let y = 0;
+        repositories.forEach(r => {
+            if (r.latestCommitDate && r.latestCommitDate.length >= 4) {
+                y = Math.max(y, parseInt(r.latestCommitDate.substring(0, 4), 10) || 0);
+            }
+            (r.years && r.years.slots ? r.years.slots : []).forEach(s => {
+                y = Math.max(y, parseInt(String(s).substring(0, 4), 10) || 0);
+            });
+        });
+        return y;
+    })();
+
     // Mini bar chart from a history block (commits or contributors). Bars are ordered
     // chronologically by slot label, then reversed for display only. The strip is a
     // fixed-width container (slotCount * BAR_WIDTH) so every row's chart occupies exactly
@@ -616,7 +632,9 @@
             return '';
         }
         const first = parseInt(years[0], 10);
-        const last = parseInt(years[years.length - 1], 10);
+        // Always extend through the latest year in the data, so recent years with a zero
+        // value still appear (consistent with the commit/contributor trend charts).
+        const last = Math.max(parseInt(years[years.length - 1], 10), LATEST_YEAR || 0);
         let max = 1;
         years.forEach(y => max = Math.max(max, counts[y]));
         const maxHeight = 64;
