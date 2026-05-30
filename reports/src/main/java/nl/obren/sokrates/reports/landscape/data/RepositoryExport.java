@@ -19,7 +19,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class RepositoryExport {
@@ -58,6 +60,9 @@ public class RepositoryExport {
     private RepositoryReportData.History weeks;
     private RepositoryReportData.History years;
     private RepositoryReportData.Metrics repositoryMetrics;
+    // year -> contributor emails active that year; lets the report count DISTINCT
+    // contributors per year across repositories (counts cannot simply be summed).
+    private Map<String, List<String>> contributorYears = new LinkedHashMap<>();
 
     public RepositoryExport(RepositoryAnalysisResults repository) {
         this(repository, null, null, null);
@@ -93,6 +98,10 @@ public class RepositoryExport {
                 contributors90Days.add(contributor.getEmail());
             }
             contributors.add(contributor.getEmail());
+            if (contributor.getActiveYears() != null) {
+                contributor.getActiveYears().forEach(year ->
+                        contributorYears.computeIfAbsent(year, k -> new ArrayList<>()).add(contributor.getEmail()));
+            }
         });
 
         // Recent / rookie contributor counts mirror LandscapeRepositoriesReport.addRepositoryRow:
@@ -331,6 +340,10 @@ public class RepositoryExport {
 
     public RepositoryReportData.Metrics getRepositoryMetrics() {
         return repositoryMetrics;
+    }
+
+    public Map<String, List<String>> getContributorYears() {
+        return contributorYears;
     }
 
 }

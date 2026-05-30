@@ -457,6 +457,7 @@
     // Commits Trend
     TABS.push({
         id: 'commitsTrend', label: 'Commits Trend', sortKey: 'commits30', sortDir: -1,
+        summaryChart: commitsPerYearChart,
         links: [
             {label: 'bubble chart', href: 'visuals/bubble_chart_repositories_commits.html'},
             {label: 'tree map', href: 'visuals/tree_map_repositories_commits.html'},
@@ -480,6 +481,7 @@
     // Contributors Trend
     TABS.push({
         id: 'contributorsTrend', label: 'Contributors Trend', sortKey: 'contrib30', sortDir: -1,
+        summaryChart: contributorsPerYearChart,
         links: [
             {label: 'bubble chart', href: 'visuals/bubble_chart_repositories_contributors.html'},
             {label: 'tree map', href: 'visuals/tree_map_repositories_contributors.html'},
@@ -605,19 +607,11 @@
         return '<div style="margin: 4px 0 10px 0; font-size: 90%;">' + items + '</div>';
     }
 
-    // Summary bar chart of repositories created per year (by first commit date),
-    // mirroring the old Creation tab's "repository creation per year" graph.
-    function reposCreatedPerYearChart(rows) {
-        const counts = {};
-        const names = {};
-        rows.forEach(r => {
-            const y = (r.firstDate || '').substring(0, 4);
-            if (y) {
-                counts[y] = (counts[y] || 0) + 1;
-                (names[y] = names[y] || []).push(r.metadata && r.metadata.name ? r.metadata.name : '');
-            }
-        });
-        const years = Object.keys(counts).sort();
+    // Generic per-year summary bar chart. `counts` maps "YYYY" -> number; `tooltips`
+    // (optional) maps "YYYY" -> extra tooltip text. Years between the first and last
+    // present are all drawn (gaps render as empty slots).
+    function perYearBarChart(title, color, counts, unit, tooltips) {
+        const years = Object.keys(counts).filter(y => /^\d{4}$/.test(y)).sort();
         if (!years.length) {
             return '';
         }
@@ -628,20 +622,69 @@
         const maxHeight = 64;
 
         let html = '<div style="white-space: nowrap; overflow-x: auto; width: 100%; margin-bottom: 14px;">';
-        html += '<div style="font-size: 80%; color: grey; margin-bottom: 5px;">repository creation per year:</div>';
+        html += '<div style="font-size: 80%; color: grey; margin-bottom: 5px;">' + esc(title) + ':</div>';
         for (let year = first; year <= last; year++) {
             const c = counts[year] || 0;
             const height = Math.round(1 + maxHeight * c / max);
-            const tip = year + ': ' + c + ' ' + (c === 1 ? 'repository' : 'repositories')
-                + (c > 0 ? '\n\n' + esc((names[year] || []).join('\n')) : '');
-            html += '<div style="display: inline-block; text-align: center; vertical-align: bottom; margin-right: 1px;" title="' + tip + '">'
-                + '<div style="font-size: 80%; height: 14px;">' + (c > 0 ? '+' + c : '') + '</div>'
-                + '<div style="opacity: 0.5; background-color: skyblue; width: 44px; height: ' + height + 'px;"></div>'
+            let tip = year + ': ' + num(c) + ' ' + unit;
+            if (c > 0 && tooltips && tooltips[year]) {
+                tip += '\n\n' + tooltips[year];
+            }
+            html += '<div style="display: inline-block; text-align: center; vertical-align: bottom; margin-right: 1px;" title="' + esc(tip) + '">'
+                + '<div style="font-size: 80%; height: 14px;">' + (c > 0 ? num(c) : '') + '</div>'
+                + '<div style="opacity: 0.5; background-color: ' + color + '; width: 44px; height: ' + height + 'px;"></div>'
                 + '<div style="font-size: 70%; color: grey;">' + year + '</div>'
                 + '</div>';
         }
         html += '</div>';
         return html;
+    }
+
+    // History: repositories created per year (by first commit date).
+    function reposCreatedPerYearChart(rows) {
+        const counts = {};
+        const names = {};
+        rows.forEach(r => {
+            const y = (r.firstDate || '').substring(0, 4);
+            if (y) {
+                counts[y] = (counts[y] || 0) + 1;
+                (names[y] = names[y] || []).push(r.metadata && r.metadata.name ? r.metadata.name : '');
+            }
+        });
+        const tooltips = {};
+        Object.keys(names).forEach(y => tooltips[y] = names[y].join('\n'));
+        return perYearBarChart('repository creation per year', 'skyblue', counts, 'repositories', tooltips);
+    }
+
+    // Commits Trend: total commits per year (commits are additive across repositories).
+    function commitsPerYearChart(rows) {
+        const counts = {};
+        rows.forEach(r => {
+            const h = r.years;
+            if (h && h.slots) {
+                h.slots.forEach((slot, i) => {
+                    const y = String(slot).substring(0, 4);
+                    counts[y] = (counts[y] || 0) + ((h.commits || [])[i] || 0);
+                });
+            }
+        });
+        return perYearBarChart('commits per year', 'blue', counts, 'commits');
+    }
+
+    // Contributors Trend: DISTINCT contributors per year. Counts cannot be summed across
+    // repositories (a person may contribute to several), so we union their emails per year.
+    function contributorsPerYearChart(rows) {
+        const sets = {};
+        rows.forEach(r => {
+            const byYear = r.contributorYears || {};
+            Object.keys(byYear).forEach(y => {
+                (sets[y] = sets[y] || new Set());
+                byYear[y].forEach(email => sets[y].add(email));
+            });
+        });
+        const counts = {};
+        Object.keys(sets).forEach(y => counts[y] = sets[y].size);
+        return perYearBarChart('contributors per year (distinct)', 'darkred', counts, 'contributors');
     }
 
     function getFilters() {
