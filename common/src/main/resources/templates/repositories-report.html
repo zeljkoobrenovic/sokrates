@@ -394,7 +394,7 @@
             reportCol
         ];
         TABS.push({
-            id: 'repositories', label: 'Size & Details', columns: cols, sortKey: 'mainLoc', sortDir: -1,
+            id: 'repositories', label: 'Size & Details', columns: cols, sortKey: 'commits30', sortDir: -1,
             // Grouped top header row (LOC / Activity / Contributors), mirroring the explorer.
             groupHeader: [
                 {span: 2},                              // lang + repository
@@ -496,7 +496,7 @@
     // Features of Interest is rendered specially (not the generic table machinery).
     const HAS_FEATURES = features && features.concerns && features.concerns.length > 0;
 
-    let activeTab = options.showCommits ? 'commitsTrend' : 'repositories';
+    let activeTab = 'repositories';
 
     // ---- rendering -----------------------------------------------------------
 
