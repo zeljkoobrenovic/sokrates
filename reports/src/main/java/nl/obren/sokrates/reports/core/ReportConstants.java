@@ -201,7 +201,6 @@ public class ReportConstants {
             "\n\n" + TAB_STYLE + "\n\n" +
             "    </style>\n" +
             "    <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Ubuntu\">\n" +
-            "    <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Lato\">\n" +
             "    <script type=\"text/javascript\">\n" +
             "        function showHide(id) {\n" +
             "            var e = document.getElementById(id);\n" +
