@@ -370,7 +370,7 @@
             + esc(people.join('\n')) + '">' + num(people.length) + '</td>';
     }
 
-    // Size & Details: same columns as the former repositories explorer, plus a Report link.
+    // Overview: same columns as the former repositories explorer, plus a Report link.
     (function () {
         const cols = [
             langCol, nameCol,
@@ -394,7 +394,7 @@
             reportCol
         ];
         TABS.push({
-            id: 'repositories', label: 'Size & Details', columns: cols, sortKey: 'commits30', sortDir: -1,
+            id: 'repositories', label: 'Overview', columns: cols, sortKey: 'commits30', sortDir: -1,
             // Grouped top header row (LOC / Activity / Contributors), mirroring the explorer.
             groupHeader: [
                 {span: 2},                              // lang + repository
