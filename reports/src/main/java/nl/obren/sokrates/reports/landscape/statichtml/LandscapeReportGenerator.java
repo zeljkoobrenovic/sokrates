@@ -118,7 +118,6 @@ public class LandscapeReportGenerator {
     private TagMap extensionsTagsMap;
     private List<TagGroup> extensionTagGroups;
     private RichTextReport landscapeReport = new RichTextReport("Landscape Report", "index.html");
-    private RichTextReport landscapeRepositoriesReportShort = new RichTextReport("", "repositories-short.html");
 
     private RichTextReport landscapeRepositoriesTags = new RichTextReport("", "repositories-tags.html");
     private RichTextReport landscapeRepositoriesTagsMatrix = new RichTextReport("", "repositories-tags-matrix.html");
@@ -126,7 +125,6 @@ public class LandscapeReportGenerator {
     private RichTextReport landscapeRepositoriesExtensionTags = new RichTextReport("", "repositories-extensions.html");
     private RichTextReport
             landscapeRepositoriesExtensionTagsMatrix = new RichTextReport("", "repositories-extensions-matrix.html");
-    private RichTextReport landscapeRepositoriesReportLong = new RichTextReport("", "repositories.html");
     private LandscapeAnalysisResults landscapeAnalysisResults;
     private List<TagGroup> tagGroups;
     private File folder;
@@ -159,9 +157,6 @@ public class LandscapeReportGenerator {
 
         contributorsTopologyTab = new LandscapeReportPeopleTopologyTab(analysisResults, analysisResults.getContributors(), landscapeReport, folder, reportsFolder, LandscapeReportContributorsTab.Type.CONTRIBUTORS, teamsConfig);
         teamsTopologyTab = new LandscapeReportPeopleTopologyTab(analysisResults, analysisResults.getTeams(), landscapeReport, folder, reportsFolder, LandscapeReportContributorsTab.Type.TEAMS, teamsConfig);
-
-        landscapeRepositoriesReportShort.setEmbedded(true);
-        landscapeRepositoriesReportLong.setEmbedded(true);
 
         LOG.info("Exporting repositories...");
         List<RepositoryAnalysisResults> repositories = getRepositories();
@@ -1011,13 +1006,11 @@ public class LandscapeReportGenerator {
         if (landscapeAnalysisResults.getRecentContributorsCount(landscapeAnalysisResults.getContributors()) > 0) {
             addContributorsPerExtension(true);
         }
-        landscapeReport.startShowMoreBlockDisappear("", "&nbsp;&nbsp;>&nbsp;Show test and other code...");
+        landscapeReport.startShowMoreBlock("", "Test and other code...");
         addMainExtensions("Test", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getTestLinesOfCodePerExtension()), false);
         addMainExtensions("Other", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getOtherLinesOfCodePerExtension()), false);
         landscapeReport.endShowMoreBlock();
-        landscapeReport.addLineBreak();
-        landscapeReport.addLineBreak();
-        landscapeReport.startShowMoreBlockDisappear("", "&nbsp;&nbsp;>&nbsp;Show commit history per extension...");
+        landscapeReport.startShowMoreBlock("", "Commit history per extension...");
 
         landscapeReport.startSubSection("Commit history per file extension", "");
         landscapeReport.startDiv("max-height: 600px; overflow-y: auto;");
@@ -1037,8 +1030,6 @@ public class LandscapeReportGenerator {
 
         landscapeReport.endShowMoreBlock();
 
-        landscapeReport.addLineBreak();
-        landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
 
         addIFrames(landscapeAnalysisResults.getConfiguration().getiFramesAtStart());
@@ -1075,7 +1066,7 @@ public class LandscapeReportGenerator {
             linesOfCodePerExtensionHide.forEach(extension -> {
                 addLangInfo(extension);
             });
-            landscapeReport.endShowMoreBlock();
+            landscapeReport.endShowMoreBlockDisappear();
         }
         landscapeReport.endDiv();
         String excludedExtensions = landscapeAnalysisResults.getConfiguration().getIgnoreExtensions().stream().collect(Collectors.joining(", "));
@@ -1112,7 +1103,7 @@ public class LandscapeReportGenerator {
             linesOfCodePerExtensionHide.stream().filter(e -> e.getCommitters30Days().size() > 0).forEach(extension -> {
                 addLangInfo(extension, (e) -> e.getCommitters30Days(), extension.getCommitsCount30Days(), DEVELOPER_SVG_ICON);
             });
-            landscapeReport.endShowMoreBlock();
+            landscapeReport.endShowMoreBlockDisappear();
         }
         landscapeReport.endDiv();
         addContributorDependencies(contributorsPerExtension);
@@ -1164,13 +1155,13 @@ public class LandscapeReportGenerator {
         renderer.setTypeGraph();
         String graphvizContent = renderer.getGraphvizContent(new ArrayList<>(extensionsNames), dependencies);
 
-        landscapeReport.startShowMoreBlock("show extension dependencies...");
+        landscapeReport.startShowMoreBlock("extension dependencies...");
         landscapeReport.addGraphvizFigure("extension_dependencies_30d", "Extension dependencies", graphvizContent);
         addDownloadLinks("extension_dependencies_30d");
-        landscapeReport.endShowMoreBlock();
         landscapeReport.addLineBreak();
         landscapeReport.addNewTabLink(" - show extension dependencies as 2D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/extension_dependencies_30d_force_2d.html");
         landscapeReport.addNewTabLink(" - show extension dependencies as 3D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/extension_dependencies_30d_force_3d.html");
+        landscapeReport.endShowMoreBlock();
         new Force3DGraphExporter().export2D3DForceGraph(dependencies, reportsFolder, "extension_dependencies_30d");
     }
 
@@ -1204,27 +1195,10 @@ public class LandscapeReportGenerator {
         LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
 
         if (repositoryAnalysisResults.size() > 0) {
-            int shortLimit = configuration.getRepositoriesShortListLimit();
-            ProcessingStopwatch.start("reporting/repositories/short report");
-            new LandscapeRepositoriesReport(landscapeAnalysisResults, shortLimit, "See the full list of repositories...", "repositories.html", customTagsMap)
-                    .saveRepositoriesReport(landscapeRepositoriesReportShort, reportsFolder, repositoryAnalysisResults, tagGroups);
-            ProcessingStopwatch.end("reporting/repositories/short report");
-
-            List<NumericMetric> repositorySizes = new ArrayList<>();
-            repositoryAnalysisResults.forEach(repository -> {
-                LOG.info("Adding " + repository.getSokratesRepositoryLink().getAnalysisResultsPath());
-                CodeAnalysisResults analysisResults = repository.getAnalysisResults();
-                repositorySizes.add(new NumericMetric(analysisResults.getMetadata().getName(), analysisResults.getMainAspectAnalysisResults().getLinesOfCode()));
-            });
-
-            landscapeReport.addHtmlContent("<iframe src='repositories-short.html' frameborder=0 style='height: calc(100vh - 300px); width: 100%; margin-left: 0; margin-bottom: 0px; padding: 0;'></iframe>");
-
-            if (repositoryAnalysisResults.size() > shortLimit) {
-                ProcessingStopwatch.start("reporting/repositories/long report");
-                new LandscapeRepositoriesReport(landscapeAnalysisResults, configuration.getRepositoriesListLimit(), customTagsMap)
-                        .saveRepositoriesReport(landscapeRepositoriesReportLong, reportsFolder, repositoryAnalysisResults, tagGroups);
-                ProcessingStopwatch.end("reporting/repositories/long report");
-            }
+            // The repositories list is now a single client-rendered page (repositories.html),
+            // generated by LandscapeDataExport with embedded JSON; it provides per-tab search and
+            // sorting in the browser instead of a large pre-rendered static HTML.
+            landscapeReport.addHtmlContent("<iframe src='repositories.html' frameborder=0 style='height: calc(100vh - 300px); width: 100%; margin-left: 0; margin-bottom: 0px; padding: 0;'></iframe>");
         }
 
         List<RepositoryAnalysisResults> ignoredRepositoriess = landscapeAnalysisResults.getIgnoredRepositoryAnalysisResults();
@@ -1656,14 +1630,10 @@ public class LandscapeReportGenerator {
         List<RichTextReport> reports = new ArrayList<>();
 
         reports.add(this.landscapeReport);
-        reports.add(this.landscapeRepositoriesReportShort);
         reports.add(this.landscapeRepositoriesTags);
         reports.add(this.landscapeRepositoriesExtensionTags);
         reports.add(this.landscapeRepositoriesTagsMatrix);
         reports.add(this.landscapeRepositoriesExtensionTagsMatrix);
-        if (landscapeAnalysisResults.getRepositoryAnalysisResults().size() > landscapeAnalysisResults.getConfiguration().getRepositoriesShortListLimit()) {
-            reports.add(this.landscapeRepositoriesReportLong);
-        }
         reports.add(landscapeReportContributorsTab.getLandscapeContributorsReport());
         reports.add(landscapeReportContributorsTab.getLandscapeBotsReport());
         reports.add(landscapeReportContributorsTab.getLandscapeRecentContributorsReport());

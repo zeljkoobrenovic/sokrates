@@ -4,9 +4,12 @@
 
 package nl.obren.sokrates.reports.landscape.statichtml;
 
+import nl.obren.sokrates.common.io.JsonGenerator;
+import nl.obren.sokrates.common.renderingutils.ExplorerTemplate;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.ReportConstants;
+import nl.obren.sokrates.reports.landscape.data.ContributorReportExport;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.utils.*;
@@ -20,12 +23,15 @@ import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.landscape.*;
 import nl.obren.sokrates.sourcecode.landscape.analysis.*;
 import nl.obren.sokrates.sourcecode.threshold.Thresholds;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -307,7 +313,7 @@ public class LandscapeReportContributorsTab {
             linesOfCodePerExtensionHide.stream().filter(e -> e.getCommitters30Days().size() > 0).forEach(extension -> {
                 addLangInfo(extension, valueFunction, extension.getCommitsCount30Days(), getSvgIcon());
             });
-            landscapeReport.endShowMoreBlock();
+            landscapeReport.endShowMoreBlockDisappear();
         }
         landscapeReport.endDiv();
 
@@ -366,14 +372,17 @@ public class LandscapeReportContributorsTab {
         String graphvizContent = renderer.getGraphvizContent(new ArrayList<>(extensionsNames), dependencies);
 
         if (isContributorReport()) {
-            landscapeReport.startShowMoreBlock("show extension dependencies...");
-            landscapeReport.addGraphvizFigure("extension_dependencies_30d", "Extension dependencies", graphvizContent);
             addDownloadLinks("extension_dependencies_30d");
-            landscapeReport.endShowMoreBlock();
+            new Force3DGraphExporter().export2D3DForceGraph(dependencies, reportsFolder, "extension_dependencies_30d");
+
+            landscapeReport.startShowMoreBlock("extension dependencies...");
+
+            landscapeReport.addGraphvizFigure("extension_dependencies_30d", "Extension dependencies", graphvizContent);
             landscapeReport.addLineBreak();
             landscapeReport.addNewTabLink(" - show extension dependencies as 2D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/extension_dependencies_30d_force_2d.html");
             landscapeReport.addNewTabLink(" - show extension dependencies as 3D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/extension_dependencies_30d_force_3d.html");
-            new Force3DGraphExporter().export2D3DForceGraph(dependencies, reportsFolder, "extension_dependencies_30d");
+
+            landscapeReport.endShowMoreBlock();
         }
     }
 
@@ -427,32 +436,6 @@ public class LandscapeReportContributorsTab {
             landscapeReport.addNewTabLink("animated contributors history (12 months window)", "visuals/racing_charts_commits_window_contributors.html?tickDuration=600");
             landscapeReport.endDiv();
 
-            landscapeReport.startSubSection("<a href='" + type.plural() + ".html' target='_blank' style='text-decoration: none'>" +
-                            "All " + StringUtils.capitalize(type.plural()) + " (" + contributorsCount + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
-                    "latest commit " + latestCommit[0]);
-
-            landscapeReport.startShowMoreBlock("show more details...");
-            addContributorLinks();
-
-            landscapeReport.addHtmlContent("<iframe src='" + type.plural() + ".html' frameborder=0 style='height: 450px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
-
-            landscapeReport.endShowMoreBlock();
-            landscapeReport.endSection();
-
-            if (type.showBots) {
-                landscapeReport.startSubSection("<a href='bots.html' target='_blank' style='text-decoration: none'>" +
-                                "Bots (" + bots.size() + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
-                        "commits of bots");
-
-                landscapeReport.startShowMoreBlock("show more details...");
-
-                landscapeReport.addHtmlContent("<iframe src='bots.html' frameborder=0 style='height: 450px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
-
-                landscapeReport.endShowMoreBlock();
-                landscapeReport.endSection();
-            }
-
-
             ProcessingStopwatch.end("reporting/contributors/table");
 
             ProcessingStopwatch.start("reporting/contributors/saving tables");
@@ -463,6 +446,9 @@ public class LandscapeReportContributorsTab {
                     .saveContributorsTable(contributors, totalCommits, false);
             new LandscapeContributorsReport(landscapeAnalysisResults, landscapeBotsReport, contributorsLinkedFromTables)
                     .saveContributorsTable(bots, botCommits, false);
+
+            // Client-rendered, searchable/sortable contributors report (recent / all / bots tabs).
+            saveContributorsReportPage(recentContributors, contributors, bots);
 
             ProcessingStopwatch.end("reporting/contributors/saving tables");
 
@@ -482,9 +468,68 @@ public class LandscapeReportContributorsTab {
         ProcessingStopwatch.end("reporting/contributors");
     }
 
+    /**
+     * Renders the client-rendered, searchable/sortable contributors report ({@code &lt;type&gt;-report.html})
+     * with Recent / All time / Bots tabs, replacing the separate static contributor tables.
+     */
+    private void saveContributorsReportPage(List<ContributorRepositories> recentContributors,
+                                            List<ContributorRepositories> contributors,
+                                            List<ContributorRepositories> bots) {
+        try {
+            LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
+            PeopleConfig peopleConfig = landscapeAnalysisResults.getPeopleConfig();
+            List<ContributorTag> tagRules = configuration.getTagContributors();
+
+            Map<String, List<ContributorReportExport>> groups = new LinkedHashMap<>();
+            groups.put("recent", toExports(recentContributors, configuration, peopleConfig, tagRules));
+            groups.put("all", toExports(contributors, configuration, peopleConfig, tagRules));
+            groups.put("bots", toExports(bots, configuration, peopleConfig, tagRules));
+
+            // Language icons for every distinct main language across the three lists.
+            List<String> langs = new ArrayList<>();
+            groups.values().forEach(list -> list.forEach(e -> langs.add(e.getMainLang())));
+            String langIcons = DataImageUtils.getLangDataImageMapJson(langs);
+
+            JsonGenerator jsonGenerator = new JsonGenerator();
+            Map<String, Object> optionsData = new LinkedHashMap<>();
+            optionsData.put("showBots", type.showBots && !bots.isEmpty());
+            optionsData.put("avatarTeam", DataImageUtils.TEAM);
+            optionsData.put("avatarDeveloper", DataImageUtils.DEVELOPER);
+
+            Map<String, String> placeholders = new HashMap<>();
+            placeholders.put("langIcons", langIcons);
+            placeholders.put("options", jsonGenerator.generateCompressed(optionsData));
+
+            String html = new ExplorerTemplate().render("contributors-report.html", groups, placeholders);
+            FileUtils.write(new File(reportsFolder, type.plural() + "-report.html"), html, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            LOG.error(e);
+        }
+    }
+
+    private List<ContributorReportExport> toExports(List<ContributorRepositories> list, LandscapeConfiguration configuration,
+                                              PeopleConfig peopleConfig, List<ContributorTag> tagRules) {
+        // Export every contributor (no list-limit cap): the client-rendered report pages the
+        // display itself (show-more), and search needs the full set. Sorted by commit recency.
+        return list.stream()
+                .sorted((a, b) -> b.getContributor().getCommitsCount() - a.getContributor().getCommitsCount())
+                .sorted((a, b) -> b.getContributor().getCommitsCount365Days() - a.getContributor().getCommitsCount365Days())
+                .sorted((a, b) -> b.getContributor().getCommitsCount90Days() - a.getContributor().getCommitsCount90Days())
+                .sorted((a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days())
+                .map(cr -> new ContributorReportExport(cr, configuration, peopleConfig, teamsConfig, tagRules))
+                .collect(Collectors.toList());
+    }
+
     private void addRecentContributorsSection(int recentContributorsCount, String[] latestCommit, List<ContributorRepositories> recentContributors) {
+        landscapeReport.startSubSection("<a href='" + type.plural() + "-report.html' target='_blank' style='text-decoration: none'>" +
+                        "" + StringUtils.capitalize(type.plural()) + "</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
+                "latest commit " + latestCommit[0]);
+
+        landscapeReport.addHtmlContent("<iframe src='" + type.plural() + "-report.html?tab=recent' frameborder=0 style='height: 450px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
+        landscapeReport.endSection();
+
         landscapeReport.startSubSection("<a href='" + type.plural() + "-recent.html' target='_blank' style='text-decoration: none'>" +
-                        "Recently Active " + StringUtils.capitalize(type.plural()) + " (" + recentContributorsCount + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
+                        "Recently Active " + StringUtils.capitalize(type.plural()) + " Stats (" + recentContributorsCount + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
                 "latest commit " + latestCommit[0]);
 
         addRecentContributorLinks();
@@ -568,8 +613,6 @@ public class LandscapeReportContributorsTab {
         landscapeReport.endDiv();
 
 
-        landscapeReport.addHtmlContent("<iframe src='" + type.plural() + "-recent.html' frameborder=0 style='height: 450px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
-
         landscapeReport.endSection();
     }
 
@@ -586,7 +629,7 @@ public class LandscapeReportContributorsTab {
                 }
                 landscapeReport.startSubSection("Commits & File Extensions (" + count + ")", "");
 
-                landscapeReport.startShowMoreBlock("show details...");
+                landscapeReport.startShowMoreBlock("...");
 
                 landscapeReport.startTable("");
                 landscapeReport.addTableHeader("", "Extension",

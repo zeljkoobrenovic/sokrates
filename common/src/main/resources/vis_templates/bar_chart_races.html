@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <head>
     <meta charset="utf-8">
-    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <!-- Pinned d3 v5 (jsdelivr) so the API/availability can't shift under the template. -->
+    <script src="https://cdn.jsdelivr.net/npm/d3@5.16.0/dist/d3.min.js"></script>
     <style>
         text {
             font-size: 16px;
@@ -63,6 +64,24 @@
 
 <body>
 <script>
+    const data = ${data};
+
+    // The d3 library is loaded from a CDN; if it failed to load (offline / blocked),
+    // show a clear message instead of throwing a cryptic ReferenceError.
+    if (typeof d3 === 'undefined') {
+        document.body.innerHTML =
+            '<p style="font-family: sans-serif; color: #777; padding: 20px;">'
+            + 'Could not load the charting library (d3). Check your network connection and reload.</p>';
+        throw new Error('d3 not loaded');
+    }
+
+    // Nothing to animate when there is no history data — render a message and stop.
+    if (!Array.isArray(data) || data.length === 0) {
+        document.body.innerHTML =
+            '<p style="font-family: sans-serif; color: #777; padding: 20px;">No data to display.</p>';
+        throw new Error('no data');
+    }
+
     var height = 3000;
     var width = 1200;
 
@@ -126,9 +145,6 @@
         .style('text-anchor', 'end');
 
     let year = start > 0 ? start : ${startYear};
-
-
-    const data = ${data};
 
     let prevItem = null;
 

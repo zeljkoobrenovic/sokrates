@@ -13,7 +13,9 @@ import org.apache.commons.logging.LogFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ExplorerTemplate {
     private static final Log LOG = LogFactory.getLog(ExplorerTemplate.class);
@@ -28,13 +30,30 @@ public class ExplorerTemplate {
      * pre-built JSON object literal mapping languages/extensions to base64 image data URIs.
      */
     public String render(String templateFileName, Object data, String langIconsJson) {
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("langIcons", langIconsJson != null ? langIconsJson : "{}");
+        return render(templateFileName, data, placeholders);
+    }
+
+    /**
+     * Renders an explorer template, substituting the <code>${data}</code> placeholder with the JSON
+     * serialization of <code>data</code> plus each entry of <code>extraPlaceholders</code> as a
+     * <code>${key}</code> -&gt; value substitution (e.g. <code>langIcons</code>, <code>features</code>,
+     * <code>options</code>). Values are inserted verbatim, so they should already be valid JSON/HTML.
+     */
+    public String render(String templateFileName, Object data, Map<String, String> extraPlaceholders) {
         ClassLoader clazz = this.getClass().getClassLoader();
         InputStream inputStream = clazz.getResourceAsStream("templates/" + templateFileName);
 
         try {
             String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             content = content.replace("${data}", new JsonGenerator().generateCompressed(data));
-            content = content.replace("${langIcons}", langIconsJson != null ? langIconsJson : "{}");
+            if (extraPlaceholders != null) {
+                for (Map.Entry<String, String> entry : extraPlaceholders.entrySet()) {
+                    content = content.replace("${" + entry.getKey() + "}",
+                            entry.getValue() != null ? entry.getValue() : "");
+                }
+            }
 
             return content;
         } catch (IOException e) {

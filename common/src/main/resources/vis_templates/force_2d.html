@@ -1,39 +1,217 @@
 <head>
-    <style> body {
-        margin: 0;
-    } </style>
+    <style>
+        body {
+            margin: 0;
+            font-family: Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+        }
 
-    <script src="https://cdn.jsdelivr.net/npm/force-graph"></script>
+        #layout {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        #panel {
+            width: 280px;
+            min-width: 280px;
+            box-sizing: border-box;
+            border-right: 1px solid #ddd;
+            background: #fafafa;
+            display: flex;
+            flex-direction: column;
+            font-size: 13px;
+        }
+
+        #panel-header {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        #panel-header input {
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 13px;
+            height: 28px;
+            padding: 0 6px;
+            margin-bottom: 6px;
+        }
+
+        #panel-actions {
+            font-size: 12px;
+            color: #4a90d9;
+        }
+
+        #panel-actions a {
+            cursor: pointer;
+            text-decoration: none;
+            color: #4a90d9;
+        }
+
+        #panel-summary {
+            color: grey;
+            font-size: 11px;
+            margin-left: 6px;
+        }
+
+        #node-list {
+            overflow-y: auto;
+            flex: 1;
+            padding: 4px 0;
+        }
+
+        .node-item {
+            padding: 2px 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+        }
+
+        .node-item:hover {
+            background: #eef4fb;
+        }
+
+        .node-item input {
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+
+        .node-size {
+            color: grey;
+            font-size: 11px;
+        }
+
+        #graph {
+            flex: 1;
+        }
+    </style>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <script src="https://cdn.jsdelivr.net/npm/force-graph@1.51.4"></script>
 </head>
 
 <body>
-<div id="graph"></div>
+<div id="layout">
+    <div id="panel">
+        <div id="panel-header">
+            <input id="filter" type="text" placeholder="search nodes..." onkeyup="renderList()">
+            <div id="panel-actions" style="margin-left: 3px">
+                <a onclick="setAllVisible(true)">show all</a> &middot;
+                <a onclick="setAllVisible(false)">hide all</a> &middot;
+                <a onclick="showOnlyFiltered()">only matching</a>
+                <span id="panel-summary"></span>
+            </div>
+        </div>
+        <div id="node-list"></div>
+    </div>
+    <div id="graph"></div>
+</div>
 
 <script>
     const gData = ${data}
 
-    const maxNodeSize = gData.nodes.map(n => n.size).reduce((a, b) => Math.max(a, b));
-    const maxCount = gData.links.map(l => l.count).reduce((a, b) => Math.max(a, b));
+    const maxNodeSize = gData.nodes.map(n => n.size).reduce((a, b) => Math.max(a, b), 1);
+    const maxCount = gData.links.map(l => l.count).reduce((a, b) => Math.max(a, b), 1);
 
-    gData.links = gData.links.map(l => {
-        return {source: l.target, target: l.source, count: l.count}
-    });
+    // Normalise links to {source, target, count} with plain id strings (the graph library
+    // mutates link endpoints into node objects, so we keep our own clean copy to filter from).
+    const allLinks = gData.links.map(l => ({source: l.target, target: l.source, count: l.count}));
+    const allNodes = gData.nodes.slice();
+
+    // Sort the node list by size (largest first), ties broken alphabetically.
+    allNodes.sort((a, b) => ((b.size || 0) - (a.size || 0)) || a.id.localeCompare(b.id));
+
     const colorOf = (node) => {
-        if (!node.id.startsWith("[")) return "rgba(135, 206, 235, 0.6)";
+        if (!node.id || !node.id.startsWith("[")) return "rgba(135, 206, 235, 0.6)";
         return "rgba(100,100,100,0.6)";
     }
 
+    // Visibility state: every node visible by default.
+    const visible = {};
+    allNodes.forEach(n => visible[n.id] = true);
+
     const elem = document.getElementById('graph');
+    // The 2D force-graph library has no linkOpacity(); opacity is baked into linkColor (rgba).
     const Graph = ForceGraph()(elem)
-        .graphData(gData)
         .nodeRelSize(4)
         .nodeVal(n => Math.max(20 * n.size / maxNodeSize, 0.001))
         .nodeLabel(n => n.id + " (" + n.size + ")")
         .nodeColor(n => colorOf(n))
+        .linkColor(() => "rgba(100, 100, 100, 0.2)")
         .linkDirectionalParticles(1)
         .linkDirectionalParticleSpeed(d => d.count / maxCount * 0.01)
-        .linkOpacity(0.1)
         .linkWidth(d => 3 * d.count / maxCount + 0.1);
 
+    function linkEnd(e) {
+        // endpoint may be a plain id or (after layout) a node object
+        return (e && typeof e === 'object') ? e.id : e;
+    }
+
+    function applyGraph() {
+        const nodes = allNodes.filter(n => visible[n.id]);
+        const links = allLinks.filter(l => visible[linkEnd(l.source)] && visible[linkEnd(l.target)])
+            .map(l => ({source: linkEnd(l.source), target: linkEnd(l.target), count: l.count}));
+        Graph.graphData({nodes: nodes, links: links});
+    }
+
+    function getFilter() {
+        return document.getElementById('filter').value.toLowerCase().trim();
+    }
+
+    function renderList() {
+        const filter = getFilter();
+        const matching = allNodes.filter(n => !filter || n.id.toLowerCase().includes(filter));
+        const visibleCount = allNodes.filter(n => visible[n.id]).length;
+        document.getElementById('panel-summary').textContent =
+            visibleCount + ' / ' + allNodes.length;
+
+        let html = '';
+        matching.forEach(n => {
+            html += '<div class="node-item" title="' + escapeAttr(n.id) + ' — size ' + n.size + '">'
+                + '<label>'
+                + '<input type="checkbox" data-id="' + escapeAttr(n.id) + '"' + (visible[n.id] ? ' checked' : '') + ' onchange="toggleNode(this)">'
+                + escapeHtml(n.id) + ' <span class="node-size">(' + n.size + ')</span>'
+                + '</label></div>';
+        });
+        document.getElementById('node-list').innerHTML = html || '<div style="padding: 8px; color: grey;">no matching nodes</div>';
+    }
+
+    function toggleNode(checkbox) {
+        visible[checkbox.getAttribute('data-id')] = checkbox.checked;
+        applyGraph();
+        updateSummary();
+    }
+
+    function setAllVisible(value) {
+        allNodes.forEach(n => visible[n.id] = value);
+        renderList();
+        applyGraph();
+    }
+
+    // Show only the nodes matching the current search; hide the rest.
+    function showOnlyFiltered() {
+        const filter = getFilter();
+        allNodes.forEach(n => visible[n.id] = !filter || n.id.toLowerCase().includes(filter));
+        renderList();
+        applyGraph();
+    }
+
+    function updateSummary() {
+        const visibleCount = allNodes.filter(n => visible[n.id]).length;
+        document.getElementById('panel-summary').textContent =
+            visibleCount + ' / ' + allNodes.length + ' shown';
+    }
+
+    function escapeHtml(s) {
+        return ('' + s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function escapeAttr(s) {
+        return escapeHtml(s).replace(/"/g, '&quot;');
+    }
+
+    renderList();
+    applyGraph();
 </script>
 </body>
+</html>
