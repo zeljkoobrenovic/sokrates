@@ -1106,8 +1106,10 @@ public class LandscapeReportGenerator {
         if (landscapeAnalysisResults.getRecentContributorsCount(landscapeAnalysisResults.getContributors()) > 0) {
             addContributorsPerExtension(true);
         }
-        landscapeReport.startShowMoreBlock("", "Test and other code...");
+        landscapeReport.startShowMoreBlock("", "Test code...");
         addMainExtensions("Test", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getTestLinesOfCodePerExtension()), false);
+        landscapeReport.endShowMoreBlock();
+        landscapeReport.startShowMoreBlock("", "Other code...");
         addMainExtensions("Other", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getOtherLinesOfCodePerExtension()), false);
         landscapeReport.endShowMoreBlock();
         landscapeReport.startShowMoreBlock("", "Commit history per extension...");
