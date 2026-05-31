@@ -15,17 +15,30 @@ grouped by theme and tagged with rough effort (S/M/L) and impact. Status tags:
 - **`cli` module tests** added (was 0). (§4)
 - **`reports` golden-file tests** + `DataImageUtilsTest` + `RepositoryExportTest`
   added (was 1 test, no golden files). (§4)
-- **Landscape repositories report rewritten as a client-rendered page.** The old
-  ~900-line `LandscapeRepositoriesReport` server-side generator (which produced a
-  single static `repositories.html` that could reach ~77 MB of inlined SVG) was
-  deleted; `repositories.html` is now the `repositories-report.html` template with
-  repository data embedded as JSON (~3 MB for 800+ repos), rendered client-side with
-  per-tab search, click-to-sort, and lightweight CSS charts. This also removes the
-  separate `repositories-explorer.html`. See `common/.../templates/repositories-report.html`,
-  `reports/.../landscape/data/{RepositoryExport,RepositoryReportData,LandscapeDataExport}.java`,
-  and the "Two HTML rendering mechanisms" note in `CLAUDE.md`. Partially relieves the
-  `LandscapeReportGenerator` god-class pressure in §5 (repositories rendering moved out
-  to a template + data exporter).
+- **Landscape reports rewritten as client-rendered, searchable pages.** A family of
+  large static landscape reports was replaced by small embedded-JSON templates rendered
+  in the browser, each with search + click-to-sort + show-more paging (see the
+  "Two HTML rendering mechanisms" note in `CLAUDE.md`):
+  - **Repositories** — the ~900-line `LandscapeRepositoriesReport` (a `repositories.html`
+    that could reach ~77 MB of inlined SVG) was deleted; `repositories.html` is now the
+    `repositories-report.html` template (~3 MB for 800+ repos), folding in the old
+    `repositories-explorer.html`. Data: `RepositoryExport` / `RepositoryReportData`.
+  - **Contributors / teams** — `contributors.html`/`teams.html`/`bots.html` (~5.4 MB)
+    are now `contributors-report.html` (Recent / All time / Bots tabs, ~330 KB), embedded
+    via iframes with `?tab=`. Data: `ContributorReportExport`. The old 1000-row list cap
+    was removed (paging handles scale; a 3,986-contributor landscape now shows all).
+  - **Individual contributor / team reports** — the 700+ `contributors/<email>.html`
+    pages are now `contributor-report.html` (header + per-extension chart + Per Year/
+    Month/Week activity grids re-gridded client-side from commit dates + Members table),
+    ~3–4× smaller; repositories and members are searchable, and members are only linked
+    when their individual report was actually generated. Data: `ContributorIndividualReportExport`.
+  - **Visualisation templates hardened** — `force_2d.html`/`force_3d.html` gained a
+    searchable/toggleable node list (sorted by size) and `bar_chart_races.html` now
+    handles empty data / failed library load; all three pin their CDN library versions.
+  - Partially relieves the `LandscapeReportGenerator`/`LandscapeReportContributorsTab`
+    god-class pressure in §5 (rendering moved to templates + data exporters). Adds
+    `DataImageUtilsTest`, `RepositoryExportTest`, `ContributorReportExportTest`,
+    `ContributorIndividualReportExportTest`.
 
 ---
 
