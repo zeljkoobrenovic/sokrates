@@ -1,7 +1,7 @@
 # Sokrates Configuration Manual
 
 Sokrates is driven almost entirely by two JSON configuration files. Most behaviour is
-controlled by editing these files rather than by code changes.
+controlled by editing these files.
 
 | File | Purpose | Created by |
 | --- | --- | --- |
