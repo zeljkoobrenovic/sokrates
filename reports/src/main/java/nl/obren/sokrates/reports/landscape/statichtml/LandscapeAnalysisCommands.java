@@ -13,6 +13,7 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.utils.LandscapeVisualsGenerator;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.landscape.DefaultTags;
+import nl.obren.sokrates.sourcecode.landscape.SubLandscapeLink;
 import nl.obren.sokrates.sourcecode.landscape.TagGroup;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalyzer;
@@ -67,34 +68,47 @@ public class LandscapeAnalysisCommands {
         List<TagGroup> tagGroups = getTagGroups(analysisRoot, landscapeConfigFile);
         ProcessingStopwatch.end("analyzing");
 
+        // Virtual landscapes: generate a full report per virtual landscape (and a Remainder), then
+        // register them as sub-landscapes so the parent's Sub-landscapes tab lists them.
+        generateVirtualLandscapes(landscapeAnalysisResults, tagGroups, reportsFolder);
+
         ProcessingStopwatch.start("reporting");
         LandscapeReportGenerator reportGenerator = new LandscapeReportGenerator(landscapeAnalysisResults, tagGroups, landscapeConfigFile.getParentFile(), reportsFolder);
-        List<RichTextReport> reports = reportGenerator.report();
+        exportLandscape(reportGenerator, landscapeAnalysisResults, reportsFolder, individualReportsFolder);
+        ProcessingStopwatch.end("reporting");
+    }
 
+    /**
+     * Renders and writes a single landscape (main reports + individual contributor/team/bot reports
+     * + visuals) into {@code reportsFolder}. Individual contributor reports go into
+     * {@code individualReportsFolder} (the landscape's {@code contributors/} folder).
+     */
+    private static void exportLandscape(LandscapeReportGenerator reportGenerator,
+                                        LandscapeAnalysisResults landscapeAnalysisResults,
+                                        File reportsFolder, File individualReportsFolder) {
+        List<RichTextReport> reports = reportGenerator.report();
         try {
             ProcessingStopwatch.start("reporting/saving");
             ProcessingStopwatch.start("reporting/saving/reports");
-            File finalReportsFolder = reportsFolder;
             String customHtmlReportHeaderFragment = landscapeAnalysisResults.getConfiguration().getCustomHtmlReportHeaderFragment();
             reports.forEach(report -> {
                 LOG.info("Exporting " + report.getFileName() + ".");
-                ReportFileExporter.exportHtml(finalReportsFolder, "", report, customHtmlReportHeaderFragment);
+                ReportFileExporter.exportHtml(reportsFolder, "", report, customHtmlReportHeaderFragment);
             });
             ProcessingStopwatch.end("reporting/saving/reports");
 
             ProcessingStopwatch.start("reporting/saving/contributors");
-            File finalIndividualReportsFolder = individualReportsFolder;
             reportGenerator.getIndividualContributorReports().forEach(individualReport -> {
                 LOG.info("Exporting person " + individualReport.getFileName() + ".");
-                ReportFileExporter.exportHtml(finalIndividualReportsFolder, "", individualReport, customHtmlReportHeaderFragment);
+                ReportFileExporter.exportHtml(individualReportsFolder, "", individualReport, customHtmlReportHeaderFragment);
             });
             reportGenerator.getIndividualTeamReports().forEach(individualReport -> {
                 LOG.info("Exporting team " + individualReport.getFileName() + ".");
-                ReportFileExporter.exportHtml(finalIndividualReportsFolder, "", individualReport, customHtmlReportHeaderFragment);
+                ReportFileExporter.exportHtml(individualReportsFolder, "", individualReport, customHtmlReportHeaderFragment);
             });
             reportGenerator.getIndividualBotReports().forEach(individualReport -> {
                 LOG.info("Exporting bot " + individualReport.getFileName() + ".");
-                ReportFileExporter.exportHtml(finalIndividualReportsFolder, "", individualReport, customHtmlReportHeaderFragment);
+                ReportFileExporter.exportHtml(individualReportsFolder, "", individualReport, customHtmlReportHeaderFragment);
             });
             ProcessingStopwatch.end("reporting/saving/contributors");
 
@@ -103,12 +117,62 @@ public class LandscapeAnalysisCommands {
             visualsGenerator.exportVisuals(landscapeAnalysisResults);
             ProcessingStopwatch.end("reporting/saving/generating visuals");
 
-            LOG.info("Report file: " + finalReportsFolder.getPath() + "/index.html");
+            LOG.info("Report file: " + reportsFolder.getPath() + "/index.html");
             ProcessingStopwatch.end("reporting/saving");
         } catch (IOException e) {
             e.printStackTrace();
         }
-        ProcessingStopwatch.end("reporting");
+    }
+
+    /**
+     * For each configured virtual landscape (and the Remainder), build a child analysis from the
+     * parent's repositories, generate its full report under
+     * {@code reportsFolder/landscapes/<safe-name>/_sokrates_landscape/}, write its config.json, and
+     * register it as a (virtual) sub-landscape on the parent configuration.
+     */
+    private static void generateVirtualLandscapes(LandscapeAnalysisResults parentResults,
+                                                  List<TagGroup> tagGroups, File reportsFolder) {
+        VirtualLandscapeBuilder builder = new VirtualLandscapeBuilder(parentResults);
+        if (!builder.hasVirtualLandscapes()) {
+            return;
+        }
+        ProcessingStopwatch.start("reporting/virtual-landscapes");
+        // Start fresh so removed virtual landscapes do not linger.
+        File landscapesFolder = new File(reportsFolder, "landscapes");
+        try {
+            FileUtils.deleteDirectory(landscapesFolder);
+        } catch (IOException e) {
+            LOG.error(e);
+        }
+        landscapesFolder.mkdirs();
+
+        builder.build().forEach(virtualLandscape -> {
+            String safeName = nl.obren.sokrates.common.utils.SystemUtils.getSafeFileName(virtualLandscape.getName());
+            File childLandscapeFolder = new File(new File(landscapesFolder, safeName), "_sokrates_landscape");
+            File childContributorsFolder = new File(childLandscapeFolder, "contributors");
+            childContributorsFolder.mkdirs();
+
+            LandscapeAnalysisResults childResults = virtualLandscape.getResults();
+            childResults.setConfiguration(VirtualLandscapeBuilder.childConfiguration(parentResults.getConfiguration(), virtualLandscape.getMetadata()));
+            try {
+                FileUtils.write(new File(childLandscapeFolder, "config.json"),
+                        new JsonGenerator().generate(childResults.getConfiguration()), StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                LOG.error(e);
+            }
+
+            LandscapeReportGenerator childGenerator = new LandscapeReportGenerator(childResults, tagGroups, childLandscapeFolder, childLandscapeFolder);
+            exportLandscape(childGenerator, childResults, childLandscapeFolder, childContributorsFolder);
+
+            // Register as a virtual sub-landscape of the parent (resolved relative to the parent's
+            // _sokrates_landscape folder, without the repository-reports prefix).
+            SubLandscapeLink link = new SubLandscapeLink(virtualLandscape.getName(),
+                    "landscapes/" + safeName + "/_sokrates_landscape/index.html");
+            link.setVirtual(true);
+            link.setLabel(virtualLandscape.getName());
+            parentResults.getConfiguration().getSubLandscapes().add(link);
+        });
+        ProcessingStopwatch.end("reporting/virtual-landscapes");
     }
 
     private static List<TagGroup> getTagGroups(File analysisRoot, File landscapeConfigFile) {

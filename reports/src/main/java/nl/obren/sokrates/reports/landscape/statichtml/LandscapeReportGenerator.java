@@ -300,7 +300,7 @@ public class LandscapeReportGenerator {
         LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
         List<SubLandscapeLink> subLandscapes = configuration.getSubLandscapes();
 
-        List<SubLandscapeLink> level1SubLandscapes = configuration.getSubLandscapes().stream().filter(l -> getPathDepth(l.getIndexFilePath()) == 1).collect(Collectors.toList());
+        List<SubLandscapeLink> level1SubLandscapes = configuration.getSubLandscapes().stream().filter(l -> subLandscapeDepth(l) == 1).collect(Collectors.toList());
 
         landscapeReport.startTabGroup();
         landscapeReport.addTab(OVERVIEW_TAB_ID, "Overview", true);
@@ -597,10 +597,15 @@ public class LandscapeReportGenerator {
                 .split("/").length;
     }
 
+    // Virtual landscapes are flat (treated as level 1); folder sub-landscapes use their path depth.
+    private int subLandscapeDepth(SubLandscapeLink subLandscape) {
+        return subLandscape.isVirtual() ? 1 : getPathDepth(subLandscape.getIndexFilePath());
+    }
+
     private void addSubLandscapeSection(List<SubLandscapeLink> subLandscapes) {
         LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
         final int maxDepth = configuration.getMaxSublandscapeDepth();
-        List<SubLandscapeLink> links = subLandscapes.stream().filter(l -> maxDepth == 0 || getPathDepth(l.getIndexFilePath()) <= maxDepth).collect(Collectors.toList());
+        List<SubLandscapeLink> links = subLandscapes.stream().filter(l -> maxDepth == 0 || subLandscapeDepth(l) <= maxDepth).collect(Collectors.toList());
         if (links.size() > 0) {
             Collections.sort(links, Comparator.comparing(a -> getLabel(a).toLowerCase()));
             landscapeReport.startDiv("margin: 12px; margin-bottom: 22px");
@@ -642,14 +647,15 @@ public class LandscapeReportGenerator {
                     label = "<span style='color: lightgrey'>" + label.substring(0, lastIndex + 1) + "</span>" + label.substring(lastIndex + 1) + "";
                     style = "color: grey; font-size: 90%";
                 }
-                String href = configuration.getRepositoryReportsUrlPrefix() + subLandscape.getIndexFilePath();
+                String linkPrefix = subLandscapePrefix(subLandscape);
+                String href = linkPrefix + subLandscape.getIndexFilePath();
                 LandscapeAnalysisResultsReadData subLandscapeAnalysisResults = getSubLandscapeAnalysisResults(subLandscape);
                 landscapeReport.startTableRow(style);
                 LandscapeConfiguration subLandscapeConfig = getSubLandscapeConfig(subLandscape);
                 Metadata metadata = subLandscapeConfig.getMetadata();
                 landscapeReport.addTableCell(!labelText.contains("/") ? ("<a href='" + href + "' target='_blank'>" +
                         (StringUtils.isNotBlank(metadata.getLogoLink())
-                                ? "<img src='" + getLogoLink(configuration.getRepositoryReportsUrlPrefix() + subLandscape.getIndexFilePath().replace("/index.html", ""), metadata.getLogoLink()) + "' " +
+                                ? "<img src='" + getLogoLink(linkPrefix + subLandscape.getIndexFilePath().replace("/index.html", ""), metadata.getLogoLink()) + "' " +
                                 "style='vertical-align: middle; width: 24px' " +
                                 "onerror=\"this.onerror=null;this.src='https://zeljkoobrenovic.github.io/sokrates-media/icons/landscape.png'\">"
                                 : "<img src='https://zeljkoobrenovic.github.io/sokrates-media/icons/landscape.png' style='vertical-align: middle; width: 24px'>") +
@@ -803,9 +809,15 @@ public class LandscapeReportGenerator {
         return name;
     }
 
+    // Virtual landscapes live inside the landscape folder, so they resolve relative to it
+    // without the repository-reports prefix; folder sub-landscapes keep the prefix.
+    private String subLandscapePrefix(SubLandscapeLink subLandscape) {
+        return subLandscape.isVirtual() ? "" : landscapeAnalysisResults.getConfiguration().getRepositoryReportsUrlPrefix();
+    }
+
     private LandscapeAnalysisResultsReadData getSubLandscapeAnalysisResults(SubLandscapeLink subLandscape) {
         try {
-            String prefix = landscapeAnalysisResults.getConfiguration().getRepositoryReportsUrlPrefix();
+            String prefix = subLandscapePrefix(subLandscape);
             File resultsFile = new File(new File(folder, prefix + subLandscape.getIndexFilePath()).getParentFile(), "data/landscapeAnalysisResults.json");
             LOG.info(resultsFile.getPath());
             String json = FileUtils.readFileToString(resultsFile, StandardCharsets.UTF_8);
@@ -819,7 +831,7 @@ public class LandscapeReportGenerator {
 
     private LandscapeConfiguration getSubLandscapeConfig(SubLandscapeLink subLandscape) {
         try {
-            String prefix = landscapeAnalysisResults.getConfiguration().getRepositoryReportsUrlPrefix();
+            String prefix = subLandscapePrefix(subLandscape);
             File resultsFile = new File(new File(folder, prefix + subLandscape.getIndexFilePath()).getParentFile(), "config.json");
             LOG.info(resultsFile.getPath());
             String json = FileUtils.readFileToString(resultsFile, StandardCharsets.UTF_8);
@@ -832,6 +844,9 @@ public class LandscapeReportGenerator {
     }
 
     private String getLabel(SubLandscapeLink subLandscape) {
+        if (subLandscape.isVirtual() && StringUtils.isNotBlank(subLandscape.getLabel())) {
+            return subLandscape.getLabel();
+        }
         return subLandscape.getIndexFilePath()
                 .replaceAll("(/|\\\\)_sokrates_landscape(/|\\\\).*", "");
     }

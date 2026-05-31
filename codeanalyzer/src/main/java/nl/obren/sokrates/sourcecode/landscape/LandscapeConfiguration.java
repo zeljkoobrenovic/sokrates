@@ -17,6 +17,10 @@ public class LandscapeConfiguration {
     // Basic info about the landscape (name, description, logo, links)
     private Metadata metadata = new Metadata();
 
+    // Optional virtual landscapes: define sub-landscapes by repository-name patterns instead of
+    // by moving report folders. Empty by default, so existing landscapes are unaffected.
+    private VirtualLandscapesConfig virtualLandscapes = new VirtualLandscapesConfig();
+
     // The relative path of the analysis (contains sub-folders with repository analysis results)
     private String analysisRoot = ".";
 
@@ -138,6 +142,14 @@ public class LandscapeConfiguration {
 
     public void setMetadata(Metadata metadata) {
         this.metadata = metadata;
+    }
+
+    public VirtualLandscapesConfig getVirtualLandscapes() {
+        return virtualLandscapes;
+    }
+
+    public void setVirtualLandscapes(VirtualLandscapesConfig virtualLandscapes) {
+        this.virtualLandscapes = virtualLandscapes;
     }
 
     public String getAnalysisRoot() {
