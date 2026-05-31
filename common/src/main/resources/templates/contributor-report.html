@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Contributor</title>
+    <style type="text/css" media="all">
+        body {
+            font-family: Roboto, Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+            margin: 20px;
+            color: #333;
+        }
+
+        a {
+            text-decoration: none;
+            color: #4a90d9;
+        }
+
+        table {
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+
+        ::placeholder {
+            color: lightgrey;
+            opacity: 1;
+        }
+
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            margin-top: 10px;
+        }
+
+        .tab button {
+            font-family: inherit;
+            font-size: 100%;
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+        }
+
+        .tab button:hover {
+            background-color: #ddd;
+        }
+
+        .tab button.active {
+            background-color: #ccc;
+        }
+
+        .tabcontent {
+            padding: 10px 6px;
+            border: 1px solid #ccc;
+            border-top: none;
+        }
+
+        .grid {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .repo-name {
+            min-width: 240px;
+        }
+
+        .member-table td, .member-table th {
+            border: none;
+            padding: 2px 8px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
+</head>
+<body>
+
+<div id="header"></div>
+
+<div class="tab" id="tabs"></div>
+<div class="tabcontent">
+    <div style="color: grey; margin: 8px 0 10px 0;">
+        <input id="filter" type="text" placeholder="search..."
+               style="font-size: 16px; height: 30px; width: 320px;"
+               onkeyup="render()">
+        <span id="search-summary" style="display: inline-block; margin-left: 6px;"></span>
+    </div>
+    <div id="content"></div>
+</div>
+
+<script>
+    const data = ${data};            // ContributorIndividualReportExport
+    const langIcons = ${langIcons};
+    const options = ${options};      // { latestCommitDate, commitsMaxYears, breadcrumbsLabel, indexUrl, avatarTeam, avatarDeveloper, isTeam }
+
+    function num(n) {
+        return (n || 0).toLocaleString('en-US');
+    }
+
+    function esc(s) {
+        return ('' + (s == null ? '' : s)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function langIcon(lang, size) {
+        size = size || 28;
+        if (!lang) {
+            return '';
+        }
+        const key = lang.toLowerCase();
+        if (langIcons[key]) {
+            return '<img title="' + esc(lang) + '" style="vertical-align: middle; background-color: #f1f1f1; '
+                + 'border-radius: 50%; border: 1px solid lightgrey; width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
+                + langIcons[key] + '">';
+        }
+        const fontSize = lang.length <= 3 ? 10 : 8;
+        const padding = Math.round(size / 4);
+        return '<div title="' + esc(lang) + '" style="display: inline-block; vertical-align: middle; '
+            + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; overflow: hidden; color: darkblue; '
+            + 'width: ' + size + 'px; height: ' + size + 'px; font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">'
+            + '<div style="height: ' + padding + 'px"></div>' + esc(lang) + '</div>';
+    }
+
+    // ---- date helpers (mirror DateUtils) -------------------------------------
+
+    function pad2(n) {
+        return (n < 10 ? '0' : '') + n;
+    }
+
+    function ymd(d) {
+        return d.getUTCFullYear() + '-' + pad2(d.getUTCMonth() + 1) + '-' + pad2(d.getUTCDate());
+    }
+
+    function parseDate(s) {
+        // dates are "yyyy-MM-dd..."; build a UTC date from the first 10 chars
+        return new Date(s.substring(0, 10) + 'T00:00:00Z');
+    }
+
+    function weekMonday(dateStr) {
+        const d = parseDate(dateStr);
+        // JS getUTCDay(): 0=Sun..6=Sat; step back to Monday
+        let day = d.getUTCDay();
+        const back = (day === 0) ? 6 : (day - 1);
+        d.setUTCDate(d.getUTCDate() - back);
+        return ymd(d);
+    }
+
+    function monthOf(dateStr) {
+        return dateStr.substring(0, 7);
+    }
+
+    function yearOf(dateStr) {
+        return dateStr.length > 4 ? dateStr.substring(0, 4) : '';
+    }
+
+    function pastWeeks(n) {
+        const out = [];
+        if (!options.latestCommitDate) {
+            return out;
+        }
+        const base = parseDate(options.latestCommitDate);
+        for (let i = 0; i <= n; i++) {
+            const d = new Date(base.getTime());
+            d.setUTCDate(d.getUTCDate() - i * 7);
+            out.push(weekMonday(ymd(d)));
+        }
+        return out;
+    }
+
+    function pastMonths(n) {
+        const out = [];
+        if (!options.latestCommitDate) {
+            return out;
+        }
+        const base = parseDate(options.latestCommitDate);
+        for (let i = 0; i <= n; i++) {
+            const d = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() - i, 1));
+            out.push(d.getUTCFullYear() + '-' + pad2(d.getUTCMonth() + 1));
+        }
+        return out;
+    }
+
+    function pastYears(n) {
+        const out = [];
+        if (!options.latestCommitDate) {
+            return out;
+        }
+        const baseYear = parseInt(options.latestCommitDate.substring(0, 4), 10);
+        for (let i = 0; i <= n; i++) {
+            out.push('' + (baseYear - i));
+        }
+        return out;
+    }
+
+    // ---- header --------------------------------------------------------------
+
+    function renderHeader() {
+        const fallback = options.isTeam ? options.avatarTeam : options.avatarDeveloper;
+        const avatar = '<img style="border-radius: 50%; height: 80px; width: 80px; vertical-align: middle; margin-right: 12px;" '
+            + 'src="' + esc(data.avatarUrl || fallback) + '" onerror="this.onerror=null;this.src=\'' + esc(fallback) + '\';">';
+        let html = '<div style="opacity: 0.7; font-size: 13px; margin-bottom: 12px;"><a href="' + esc(options.indexUrl || '../index.html') + '">'
+            + esc(options.breadcrumbsLabel || 'Contributors') + '</a></div>';
+        html += '<div style="font-size: 28px; margin-bottom: 10px;">' + avatar + esc(data.email) + '</div>';
+
+        if (data.detailsLink) {
+            html += '<div style="margin-bottom: 8px;"><a href="' + esc(data.detailsLink) + '" target="_blank">More details...</a></div>';
+        }
+        if (data.links && data.links.length) {
+            html += '<div style="margin-bottom: 12px; font-size: 90%;">'
+                + data.links.map(l => '<a href="' + esc(l.href) + '" target="_blank">' + esc(l.label) + '</a>').join(' &nbsp;|&nbsp; ')
+                + '</div>';
+        }
+        html += '<div>First commit date: <b>' + esc(data.firstCommitDate) + '</b></div>';
+        html += '<div>Latest commit date: <b>' + esc(data.latestCommitDate) + '</b></div>';
+        html += '<div>Repositories count: '
+            + window30(data.repositoriesCount30Days, '30d') + window30(data.repositoriesCount90Days, '3m')
+            + window30(data.repositoriesCount180Days, '6m') + window30(data.repositoriesCount365Days, '1y')
+            + '<b>' + num(data.repositoriesCount) + '</b>' + greyLabel(' (all time)') + '</div>';
+        html += '<div>Commits count: '
+            + window30(data.commitsCount30Days, '30d') + window30(data.commitsCount90Days, '3m')
+            + window30(data.commitsCount180Days, '6m') + window30(data.commitsCount365Days, '1y')
+            + '<b>' + num(data.commitsCount) + '</b>' + greyLabel(' (all time)') + '</div>';
+
+        html += renderExtensions();
+
+        document.getElementById('header').innerHTML = html;
+    }
+
+    function greyLabel(t) {
+        return '<span style="color: lightgrey; font-size: 90%">' + t + '</span>';
+    }
+
+    function window30(value, label) {
+        return '<b>' + num(value) + '</b>' + greyLabel(' (' + label + ')') + '&nbsp;&nbsp;&nbsp;';
+    }
+
+    function renderExtensions() {
+        if (!data.extensions || !data.extensions.length) {
+            return '';
+        }
+        const max = Math.max(1, ...data.extensions.map(e => e.fileUpdates90Days));
+        let html = '<div style="margin-top: 18px;">File updates per extension (90 days):</div>';
+        html += '<table style="margin-top: 6px;"><tr>';
+        data.extensions.forEach(e => {
+            const h = Math.round(64 * e.fileUpdates90Days / max) + 1;
+            html += '<td style="border: 0; text-align: center; vertical-align: bottom;">'
+                + '<div style="text-align: center; font-size: 70%; color: lightgrey;">' + num(e.fileUpdates90Days) + '</div>'
+                + '<div style="background-color: skyblue; width: 35px; height: ' + h + 'px;"></div></td>';
+        });
+        html += '</tr><tr>';
+        data.extensions.forEach(e => html += '<td style="border: 0; text-align: center;">' + langIcon(e.lang, 30) + '</td>');
+        html += '</tr></table>';
+        return html;
+    }
+
+    // ---- tabs ----------------------------------------------------------------
+
+    const TABS = [
+        {id: 'year', label: 'Repository Activity Per Year'},
+        {id: 'month', label: 'Per Month'},
+        {id: 'week', label: 'Per Week'}
+    ];
+    if ((data.members || []).length) {
+        TABS.push({id: 'members', label: 'Members (' + num(data.members.length) + ')'});
+    }
+    let activeTab = 'year';
+
+    function buildTabs() {
+        let html = '';
+        TABS.forEach(t => {
+            html += '<button class="' + (t.id === activeTab ? 'active' : '') + '" onclick="selectTab(\'' + t.id + '\')">' + t.label + '</button>';
+        });
+        document.getElementById('tabs').innerHTML = html;
+    }
+
+    function selectTab(id) {
+        activeTab = id;
+        buildTabs();
+        render();
+    }
+
+    function getFilters() {
+        return document.getElementById('filter').value.toLowerCase().trim()
+            .split(',').map(s => s.trim()).filter(s => s.length);
+    }
+
+    function matches(text, filters) {
+        if (!filters.length) {
+            return true;
+        }
+        if (!text) {
+            return false;
+        }
+        const lower = text.toLowerCase();
+        return filters.some(f => lower.includes(f));
+    }
+
+    // Repository display name: parent path greyed, last segment emphasised.
+    function repoNameHtml(repo) {
+        const name = repo.name || '';
+        let inner;
+        const i = name.indexOf('/');
+        if (i >= 0 && name.indexOf('/', i + 1) < 0) {
+            inner = '<div style="font-size: 90%; color: lightgrey; padding-top: 2px">' + esc(name.substring(0, i)) + '</div>'
+                + '<div style="font-size: 110%;">' + esc(name.substring(i + 1)) + '</div>';
+        } else {
+            inner = '<div style="font-size: 110%;">' + esc(name) + '</div>';
+        }
+        return '<a href="' + esc(repo.repoUrl) + '" target="_blank">' + inner + '</a>';
+    }
+
+    // Count commit days per slot for a repository, using the given slot function.
+    function commitDaysPerSlot(repo, slotFn) {
+        const counts = {};
+        (repo.commitDates || []).forEach(d => {
+            const slot = slotFn(d);
+            counts[slot] = (counts[slot] || 0) + 1;
+        });
+        return counts;
+    }
+
+    function renderGrid(slotFn, slots, dotSizeFn, summaryUnit) {
+        const filters = getFilters();
+        let repos = (data.repositories || []).filter(r => matches(r.name, filters));
+        // sort by latest activity (most recent first), matching the original
+        repos = repos.slice().sort((a, b) => latestDate(b).localeCompare(latestDate(a)));
+
+        document.getElementById('search-summary').innerHTML = '= ' + num(repos.length) + ' '
+            + (repos.length === 1 ? 'repository' : 'repositories');
+
+        let html = '<div class="grid"><table>';
+        // header: per-slot repository counts
+        html += '<tr><td style="border:none"></td><td class="repo-name" style="border:none"></td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">Commits<br>(3m)</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">Commit<br>Days</td>';
+        slots.forEach(slot => {
+            let repoCount = 0;
+            repos.forEach(r => {
+                if ((r.commitDates || []).some(d => slotFn(d) === slot)) {
+                    repoCount++;
+                }
+            });
+            html += '<td style="border:none; font-size:70%; color: lightgrey; text-align:center; vertical-align: bottom;" title="' + esc(slot + ': ' + repoCount + ' repositories') + '">' + slot.substring(0, 7) + '<br>' + repoCount + '</td>';
+        });
+        html += '</tr>';
+
+        repos.forEach(repo => {
+            const counts = commitDaysPerSlot(repo, slotFn);
+            const weight = repo.commits90Days > 0 ? 'font-weight: bold;' : 'opacity: 0.4;';
+            html += '<tr>';
+            html += '<td style="border:none; text-align:center;">' + langIcon(repo.lang, 28) + '</td>';
+            html += '<td class="repo-name" style="border:none; ' + weight + '">' + repoNameHtml(repo) + '</td>';
+            html += '<td style="border:none; text-align:center; ' + weight + '">' + (repo.commits90Days > 0 ? num(repo.commits90Days) : '-') + '</td>';
+            html += '<td style="border:none; text-align:center; ' + weight + '">' + num((repo.commitDates || []).length) + '</td>';
+            slots.forEach((slot, idx) => {
+                const c = counts[slot] || 0;
+                html += '<td style="border:none; text-align:center; padding: 0; vertical-align: middle;">';
+                if (c > 0) {
+                    const size = dotSizeFn(c);
+                    const opacity = Math.max(0.9 - idx * 0.05, 0.2);
+                    html += '<div title="' + esc(slot + ': ' + c + (c === 1 ? ' commit day' : ' commit days')) + '" '
+                        + 'style="display: inline-block; background-color: #483D8B; border-radius: 50%; opacity: ' + opacity + '; '
+                        + 'width: ' + size + 'px; height: ' + size + 'px;"></div>';
+                } else {
+                    html += '<span style="color: lightgrey; font-size: 80%;">-</span>';
+                }
+                html += '</td>';
+            });
+            html += '</tr>';
+        });
+        html += '</table></div>';
+        return html;
+    }
+
+    function latestDate(repo) {
+        const dates = repo.commitDates || [];
+        return dates.length ? dates.reduce((a, b) => a > b ? a : b) : '';
+    }
+
+    function renderMembers() {
+        const filters = getFilters();
+        let members = (data.members || []).filter(m => matches(m.email, filters));
+        members = members.slice().sort((a, b) => (b.commitsCount30Days - a.commitsCount30Days)
+            || (b.commitsCount365Days - a.commitsCount365Days) || (b.commitsCount - a.commitsCount));
+
+        document.getElementById('search-summary').innerHTML = '= ' + num(members.length) + ' '
+            + (members.length === 1 ? 'member' : 'members');
+
+        let html = '<table class="member-table">';
+        html += '<tr><th></th><th></th><th></th><th colspan="5" style="text-align:center">commits</th><th colspan="2" style="text-align:center">period</th></tr>';
+        html += '<tr><th></th><th></th><th></th><th style="text-align:center">30d</th><th style="text-align:center">3m</th>'
+            + '<th style="text-align:center">6m</th><th style="text-align:center">1y</th><th style="text-align:center">all</th>'
+            + '<th style="text-align:center">first</th><th style="text-align:center">last</th></tr>';
+        let i = 0;
+        members.forEach(m => {
+            i++;
+            const weight = m.commitsCount30Days > 0 ? 'font-weight: bold;' : (m.commitsCount90Days > 0 ? '' : 'color: lightgrey;');
+            html += '<tr style="' + weight + '">';
+            html += '<td style="text-align:right">' + i + '.&nbsp;</td>';
+            html += '<td style="text-align:center">' + langIcon(m.lang, 28) + '</td>';
+            html += '<td><a href="' + esc(m.reportUrl) + '" target="_blank">' + esc(m.email) + '</a></td>';
+            html += '<td style="text-align:center">' + num(m.commitsCount30Days) + '</td>';
+            html += '<td style="text-align:center">' + num(m.commitsCount90Days) + '</td>';
+            html += '<td style="text-align:center">' + num(m.commitsCount180Days) + '</td>';
+            html += '<td style="text-align:center">' + num(m.commitsCount365Days) + '</td>';
+            html += '<td style="text-align:center">' + num(m.commitsCount) + '</td>';
+            html += '<td style="text-align:center; white-space: nowrap;">' + esc(m.firstCommitDate) + '</td>';
+            html += '<td style="text-align:center; white-space: nowrap;">' + esc(m.latestCommitDate) + '</td>';
+            html += '</tr>';
+        });
+        html += '</table>';
+        return html;
+    }
+
+    function render() {
+        let html;
+        if (activeTab === 'members') {
+            html = renderMembers();
+        } else if (activeTab === 'year') {
+            const slots = pastYears(options.commitsMaxYears || 20);
+            html = renderGrid(yearOf, slots, c => Math.round(10 + Math.min(1, c / 366.0) * 40));
+        } else if (activeTab === 'month') {
+            const slots = pastMonths(24);
+            html = renderGrid(monthOf, slots, c => 10 + Math.floor(c / 4) * 4);
+        } else {
+            const slots = pastWeeks(104);
+            html = renderGrid(weekMonday, slots, c => 10 + c * 4);
+        }
+        document.getElementById('content').innerHTML = html;
+    }
+
+    renderHeader();
+    buildTabs();
+    render();
+</script>
+</body>
+</html>
