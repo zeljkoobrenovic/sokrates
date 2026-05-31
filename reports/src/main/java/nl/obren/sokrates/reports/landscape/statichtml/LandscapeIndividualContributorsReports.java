@@ -61,7 +61,7 @@ public class LandscapeIndividualContributorsReports {
             PeopleConfig peopleConfig = landscapeAnalysisResults.getPeopleConfig();
 
             ContributorIndividualReportExport data =
-                    new ContributorIndividualReportExport(contributorRepositories, configuration, peopleConfig);
+                    new ContributorIndividualReportExport(contributorRepositories, configuration, peopleConfig, folder);
 
             // Language icons for the contributor's repositories, members and extensions.
             List<String> langs = new ArrayList<>();

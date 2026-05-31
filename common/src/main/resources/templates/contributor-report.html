@@ -437,7 +437,11 @@
             html += '<tr style="' + weight + '">';
             html += '<td style="text-align:right">' + i + '.&nbsp;</td>';
             html += '<td style="text-align:center">' + langIcon(m.lang, 28) + '</td>';
-            html += '<td><a href="' + esc(m.reportUrl) + '" target="_blank">' + esc(m.email) + '</a></td>';
+            // Only link members that actually have a generated individual report.
+            const nameHtml = m.reportUrl
+                ? '<a href="' + esc(m.reportUrl) + '" target="_blank">' + esc(m.email) + '</a>'
+                : esc(m.email);
+            html += '<td>' + nameHtml + '</td>';
             html += '<td style="text-align:center">' + num(m.commitsCount30Days) + '</td>';
             html += '<td style="text-align:center">' + num(m.commitsCount90Days) + '</td>';
             html += '<td style="text-align:center">' + num(m.commitsCount180Days) + '</td>';

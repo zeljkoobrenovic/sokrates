@@ -49,6 +49,15 @@ public class ContributorIndividualReportExport {
 
     public ContributorIndividualReportExport(ContributorRepositories cr, LandscapeConfiguration configuration,
                                              PeopleConfig peopleConfig) {
+        this(cr, configuration, peopleConfig, null);
+    }
+
+    /**
+     * @param contributorsFolder the {@code contributors/} folder; when non-null, a member is only
+     *                           linked to its individual report if that report file actually exists.
+     */
+    public ContributorIndividualReportExport(ContributorRepositories cr, LandscapeConfiguration configuration,
+                                             PeopleConfig peopleConfig, java.io.File contributorsFolder) {
         Contributor c = cr.getContributor();
         email = c.getEmail();
 
@@ -101,6 +110,11 @@ public class ContributorIndividualReportExport {
                 Member member = new Member(m);
                 String biggest = helper.getBiggestExtension(configuration, m, peopleConfig);
                 member.setLang(biggest != null ? biggest.replace("*.", "").trim().toLowerCase() : "");
+                // Only keep the link if the member's individual report was actually generated.
+                if (contributorsFolder != null && member.getReportUrl() != null
+                        && !new java.io.File(contributorsFolder, member.getReportUrl()).exists()) {
+                    member.setReportUrl(null);
+                }
                 members.add(member);
             });
         }
@@ -258,6 +272,10 @@ public class ContributorIndividualReportExport {
 
         public String getReportUrl() {
             return reportUrl;
+        }
+
+        public void setReportUrl(String reportUrl) {
+            this.reportUrl = reportUrl;
         }
 
         public int getCommitsCount() {
