@@ -13,10 +13,12 @@ import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.utils.LandscapeVisualsGenerator;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.landscape.DefaultTags;
+import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.SubLandscapeLink;
 import nl.obren.sokrates.sourcecode.landscape.TagGroup;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalyzer;
+import nl.obren.sokrates.sourcecode.landscape.analysis.RepositoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.init.LandscapeAnalysisUpdater;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
@@ -128,7 +130,9 @@ public class LandscapeAnalysisCommands {
      * For each configured virtual landscape (and the Remainder), build a child analysis from the
      * parent's repositories, generate its full report under
      * {@code reportsFolder/landscapes/<safe-name>/_sokrates_landscape/}, write its config.json, and
-     * register it as a (virtual) sub-landscape on the parent configuration.
+     * register it as a (virtual) sub-landscape on the parent configuration. Virtual landscapes may
+     * themselves define nested virtual landscapes (unlimited depth); these are generated recursively
+     * and surfaced in each child's own Sub-landscapes tab.
      */
     private static void generateVirtualLandscapes(LandscapeAnalysisResults parentResults,
                                                   List<TagGroup> tagGroups, File reportsFolder) {
@@ -137,8 +141,28 @@ public class LandscapeAnalysisCommands {
             return;
         }
         ProcessingStopwatch.start("reporting/virtual-landscapes");
+        generateVirtualLandscapes(builder, parentResults.getConfiguration().getVirtualLandscapes(),
+                parentResults.getRepositoryAnalysisResults(), parentResults.getConfiguration(),
+                parentResults.getConfiguration(), tagGroups, reportsFolder, 1);
+        ProcessingStopwatch.end("reporting/virtual-landscapes");
+    }
+
+    /**
+     * Recursive worker for the public {@code generateVirtualLandscapes(...)} entry point.
+     * Partitions {@code repositories} according to {@code virtualConfig}, generates a full report per
+     * partition into {@code parentFolder/landscapes/<safe-name>/_sokrates_landscape/}, then recurses
+     * into each partition's own nested virtual landscapes. {@code rootConfiguration} stays the
+     * top-level config so relative path climbs are computed consistently; {@code depth} is the
+     * current nesting level (1-based). Sub-landscape links are registered on {@code parentConfiguration}.
+     */
+    private static void generateVirtualLandscapes(VirtualLandscapeBuilder builder,
+                                                  nl.obren.sokrates.sourcecode.landscape.VirtualLandscapesConfig virtualConfig,
+                                                  List<RepositoryAnalysisResults> repositories,
+                                                  LandscapeConfiguration rootConfiguration,
+                                                  LandscapeConfiguration parentConfiguration,
+                                                  List<TagGroup> tagGroups, File parentFolder, int depth) {
         // Start fresh so removed virtual landscapes do not linger.
-        File landscapesFolder = new File(reportsFolder, "landscapes");
+        File landscapesFolder = new File(parentFolder, "landscapes");
         try {
             FileUtils.deleteDirectory(landscapesFolder);
         } catch (IOException e) {
@@ -146,14 +170,26 @@ public class LandscapeAnalysisCommands {
         }
         landscapesFolder.mkdirs();
 
-        builder.build().forEach(virtualLandscape -> {
+        builder.build(virtualConfig, repositories).forEach(virtualLandscape -> {
             String safeName = nl.obren.sokrates.common.utils.SystemUtils.getSafeFileName(virtualLandscape.getName());
             File childLandscapeFolder = new File(new File(landscapesFolder, safeName), "_sokrates_landscape");
             File childContributorsFolder = new File(childLandscapeFolder, "contributors");
             childContributorsFolder.mkdirs();
 
             LandscapeAnalysisResults childResults = virtualLandscape.getResults();
-            childResults.setConfiguration(VirtualLandscapeBuilder.childConfiguration(parentResults.getConfiguration(), virtualLandscape.getMetadata()));
+            nl.obren.sokrates.sourcecode.landscape.VirtualLandscapesConfig nested =
+                    virtualLandscape.getConfig() != null ? virtualLandscape.getConfig().getVirtualLandscapes() : null;
+            childResults.setConfiguration(VirtualLandscapeBuilder.childConfiguration(
+                    rootConfiguration, virtualLandscape.getMetadata(), nested, depth));
+
+            // Recurse into this virtual landscape's own nested virtual landscapes first, so their
+            // reports + config.json exist (and links are registered on the child) before it renders.
+            if (VirtualLandscapeBuilder.hasVirtualLandscapes(nested)) {
+                generateVirtualLandscapes(builder, nested,
+                        childResults.getRepositoryAnalysisResults(), rootConfiguration,
+                        childResults.getConfiguration(), tagGroups, childLandscapeFolder, depth + 1);
+            }
+
             try {
                 FileUtils.write(new File(childLandscapeFolder, "config.json"),
                         new JsonGenerator().generate(childResults.getConfiguration()), StandardCharsets.UTF_8);
@@ -170,9 +206,8 @@ public class LandscapeAnalysisCommands {
                     "landscapes/" + safeName + "/_sokrates_landscape/index.html");
             link.setVirtual(true);
             link.setLabel(virtualLandscape.getName());
-            parentResults.getConfiguration().getSubLandscapes().add(link);
+            parentConfiguration.getSubLandscapes().add(link);
         });
-        ProcessingStopwatch.end("reporting/virtual-landscapes");
     }
 
     private static List<TagGroup> getTagGroups(File analysisRoot, File landscapeConfigFile) {

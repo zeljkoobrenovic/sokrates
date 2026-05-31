@@ -7,6 +7,7 @@ import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.VirtualLandscapeConfig;
+import nl.obren.sokrates.sourcecode.landscape.VirtualLandscapesConfig;
 import nl.obren.sokrates.sourcecode.landscape.analysis.DependenciesCreator;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.landscape.analysis.RepositoryAnalysisResults;
@@ -23,16 +24,22 @@ import java.util.List;
  */
 public class VirtualLandscapeBuilder {
 
-    /** One virtual landscape: a name/metadata plus the subset of repositories that belong to it. */
+    /**
+     * One virtual landscape: a name/metadata plus the subset of repositories that belong to it.
+     * Carries the originating {@link VirtualLandscapeConfig} (null for the Remainder) so the caller
+     * can recurse into its own nested virtual landscapes.
+     */
     public static class VirtualLandscape {
         private final String name;
         private final Metadata metadata;
         private final LandscapeAnalysisResults results;
+        private final VirtualLandscapeConfig config;
 
-        public VirtualLandscape(String name, Metadata metadata, LandscapeAnalysisResults results) {
+        public VirtualLandscape(String name, Metadata metadata, LandscapeAnalysisResults results, VirtualLandscapeConfig config) {
             this.name = name;
             this.metadata = metadata;
             this.results = results;
+            this.config = config;
         }
 
         public String getName() {
@@ -46,6 +53,11 @@ public class VirtualLandscapeBuilder {
         public LandscapeAnalysisResults getResults() {
             return results;
         }
+
+        /** The config that defined this virtual landscape, or null for the Remainder landscape. */
+        public VirtualLandscapeConfig getConfig() {
+            return config;
+        }
     }
 
     private final LandscapeAnalysisResults parentResults;
@@ -55,10 +67,12 @@ public class VirtualLandscapeBuilder {
     }
 
     public boolean hasVirtualLandscapes() {
-        LandscapeConfiguration config = parentResults.getConfiguration();
-        return config.getVirtualLandscapes() != null
-                && config.getVirtualLandscapes().getLandscapes() != null
-                && !config.getVirtualLandscapes().getLandscapes().isEmpty();
+        return hasVirtualLandscapes(parentResults.getConfiguration().getVirtualLandscapes());
+    }
+
+    /** True when the given config defines at least one virtual landscape. */
+    public static boolean hasVirtualLandscapes(VirtualLandscapesConfig config) {
+        return config != null && config.getLandscapes() != null && !config.getLandscapes().isEmpty();
     }
 
     /**
@@ -66,39 +80,48 @@ public class VirtualLandscapeBuilder {
      * (repositories assigned to none). Returns an empty list when no virtual landscapes are configured.
      */
     public List<VirtualLandscape> build() {
+        return build(parentResults.getConfiguration().getVirtualLandscapes(),
+                parentResults.getRepositoryAnalysisResults());
+    }
+
+    /**
+     * Partitions the given repositories according to {@code config}: one virtual landscape per
+     * configured entry (in order), then a Remainder landscape of repositories matched by none.
+     * Used both for the top-level partition (parent repositories) and for nested partitions (a
+     * virtual landscape's own repositories), which is what makes nesting unlimited in depth.
+     * Returns an empty list when {@code config} defines no virtual landscapes.
+     */
+    public List<VirtualLandscape> build(VirtualLandscapesConfig config, List<RepositoryAnalysisResults> repositories) {
         List<VirtualLandscape> result = new ArrayList<>();
-        if (!hasVirtualLandscapes()) {
+        if (!hasVirtualLandscapes(config)) {
             return result;
         }
 
-        LandscapeConfiguration config = parentResults.getConfiguration();
-        List<VirtualLandscapeConfig> configs = config.getVirtualLandscapes().getLandscapes();
-        List<RepositoryAnalysisResults> allRepositories = parentResults.getRepositoryAnalysisResults();
-
-        boolean[] assigned = new boolean[allRepositories.size()];
+        List<VirtualLandscapeConfig> configs = config.getLandscapes();
+        boolean[] assigned = new boolean[repositories.size()];
 
         for (VirtualLandscapeConfig vlConfig : configs) {
             List<RepositoryAnalysisResults> members = new ArrayList<>();
-            for (int i = 0; i < allRepositories.size(); i++) {
-                String name = repositoryName(allRepositories.get(i));
+            for (int i = 0; i < repositories.size(); i++) {
+                String name = repositoryName(repositories.get(i));
                 if (matches(name, vlConfig.getIncludeRepoNamePatterns(), vlConfig.getExcludeRepoNamePatterns())) {
-                    members.add(allRepositories.get(i));
+                    members.add(repositories.get(i));
                     assigned[i] = true; // a repository may belong to several virtual landscapes
                 }
             }
             result.add(new VirtualLandscape(vlConfig.getMetadata().getName(), vlConfig.getMetadata(),
-                    buildChildResults(members)));
+                    buildChildResults(members), vlConfig));
         }
 
         // Remainder: repositories matched by no virtual landscape.
         List<RepositoryAnalysisResults> remainder = new ArrayList<>();
-        for (int i = 0; i < allRepositories.size(); i++) {
+        for (int i = 0; i < repositories.size(); i++) {
             if (!assigned[i]) {
-                remainder.add(allRepositories.get(i));
+                remainder.add(repositories.get(i));
             }
         }
-        Metadata remainderMetadata = config.getVirtualLandscapes().getRemainderLandscapeMetadata();
-        result.add(new VirtualLandscape(remainderMetadata.getName(), remainderMetadata, buildChildResults(remainder)));
+        Metadata remainderMetadata = config.getRemainderLandscapeMetadata();
+        result.add(new VirtualLandscape(remainderMetadata.getName(), remainderMetadata, buildChildResults(remainder), null));
 
         return result;
     }
@@ -156,28 +179,42 @@ public class VirtualLandscapeBuilder {
         return child;
     }
 
+    /** The number of folder levels a virtual landscape sits below its parent landscape folder. */
+    public static final int FOLDER_LEVELS_PER_NESTING = 3;
+
     /**
-     * A copy of the parent configuration with the given metadata, an extra path level added to the
-     * relative {@code analysisRoot} / {@code repositoryReportsUrlPrefix} (the virtual landscape sits
-     * two folders deeper: landscapes/&lt;name&gt;/_sokrates_landscape/), and virtual landscapes cleared
-     * (no nesting yet). The repository link list is left as-is so the child report links resolve to the
-     * same shared repository report folders.
+     * A copy of the {@code root} configuration with the given metadata, the relative
+     * {@code analysisRoot} / {@code repositoryReportsUrlPrefix} climbed enough levels to reach the
+     * shared repository report folders, and {@code virtualLandscapes} set to {@code nested} so the
+     * child renders (and persists) its own nested virtual landscapes.
+     *
+     * <p>{@code depth} is the nesting level (1 for a top-level virtual landscape, 2 for one nested
+     * inside it, …). Each level lives at {@code landscapes/<name>/_sokrates_landscape/}, i.e.
+     * {@link #FOLDER_LEVELS_PER_NESTING} folders deeper, so the relative paths must climb
+     * {@code depth * FOLDER_LEVELS_PER_NESTING} extra levels relative to the top-level landscape.
+     * The repository link list is left as-is so the child report links resolve to the same shared
+     * repository report folders.
+     *
+     * @param root   the top-level landscape configuration (the absolute source of the relative paths)
+     * @param metadata the virtual landscape's metadata
+     * @param nested this virtual landscape's own nested virtual landscapes (empty for the Remainder)
+     * @param depth  the nesting level (1-based)
      */
-    public static LandscapeConfiguration childConfiguration(LandscapeConfiguration parent, Metadata metadata) {
+    public static LandscapeConfiguration childConfiguration(LandscapeConfiguration root, Metadata metadata,
+                                                            VirtualLandscapesConfig nested, int depth) {
         LandscapeConfiguration copy;
         try {
             copy = (LandscapeConfiguration) new JsonMapper()
-                    .getObject(new JsonGenerator().generate(parent), LandscapeConfiguration.class);
+                    .getObject(new JsonGenerator().generate(root), LandscapeConfiguration.class);
         } catch (Exception e) {
             throw new RuntimeException("Failed to clone landscape configuration for virtual landscape", e);
         }
         copy.setMetadata(metadata);
-        copy.setVirtualLandscapes(new nl.obren.sokrates.sourcecode.landscape.VirtualLandscapesConfig());
-        // The child report sits at landscapes/<name>/_sokrates_landscape/, i.e. three folder levels
-        // deeper than the parent's _sokrates_landscape folder, so its relative analysisRoot /
-        // report URL prefix must climb three extra levels to reach the shared repository folders.
-        copy.setAnalysisRoot(prependParentDirs(parent.getAnalysisRoot(), 3));
-        copy.setRepositoryReportsUrlPrefix(prependParentDirs(parent.getRepositoryReportsUrlPrefix(), 3));
+        copy.setVirtualLandscapes(nested != null ? nested : new VirtualLandscapesConfig());
+        copy.getSubLandscapes().clear(); // nested virtual landscapes are re-registered during generation
+        int levels = depth * FOLDER_LEVELS_PER_NESTING;
+        copy.setAnalysisRoot(prependParentDirs(root.getAnalysisRoot(), levels));
+        copy.setRepositoryReportsUrlPrefix(prependParentDirs(root.getRepositoryReportsUrlPrefix(), levels));
         return copy;
     }
 

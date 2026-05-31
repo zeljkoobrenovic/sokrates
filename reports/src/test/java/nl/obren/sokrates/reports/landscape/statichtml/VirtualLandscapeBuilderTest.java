@@ -101,4 +101,65 @@ class VirtualLandscapeBuilderTest {
         assertEquals(2, built.get(0).getResults().getRepositoryAnalysisResults().size());
         assertTrue(built.get(1).getResults().getRepositoryAnalysisResults().isEmpty());
     }
+
+    @Test
+    void carriesOriginatingConfigForNestingAndNullForRemainder() {
+        VirtualLandscapesConfig cfg = new VirtualLandscapesConfig();
+        VirtualLandscapeConfig datadog = vl("Datadog", Arrays.asList(".*datadog.*"), new ArrayList<>());
+        cfg.getLandscapes().add(datadog);
+        LandscapeAnalysisResults parent = parentWith(cfg, "team/datadog-agent", "team/other");
+
+        List<VirtualLandscapeBuilder.VirtualLandscape> built = new VirtualLandscapeBuilder(parent).build();
+
+        // The virtual landscape carries its config (so the caller can recurse into nested landscapes);
+        // the Remainder has none.
+        assertSame(datadog, built.get(0).getConfig());
+        assertNull(built.get(1).getConfig());
+    }
+
+    @Test
+    void nestedVirtualLandscapesPartitionTheirParentsRepositories() {
+        // Top level: one "Datadog" virtual landscape selecting all datadog repos.
+        VirtualLandscapeConfig datadog = vl("Datadog", Arrays.asList(".*datadog.*"), new ArrayList<>());
+        // Nested level: split Datadog into "Agents" and a Remainder.
+        VirtualLandscapesConfig nested = new VirtualLandscapesConfig();
+        nested.getLandscapes().add(vl("Agents", Arrays.asList(".*agent.*"), new ArrayList<>()));
+        datadog.setVirtualLandscapes(nested);
+
+        VirtualLandscapesConfig cfg = new VirtualLandscapesConfig();
+        cfg.getLandscapes().add(datadog);
+        LandscapeAnalysisResults parent = parentWith(cfg,
+                "team/datadog-agent", "team/datadog-ui", "team/other");
+
+        VirtualLandscapeBuilder builder = new VirtualLandscapeBuilder(parent);
+        VirtualLandscapeBuilder.VirtualLandscape datadogVl = builder.build().get(0);
+        assertEquals(Arrays.asList("team/datadog-agent", "team/datadog-ui"), names(datadogVl));
+
+        // Build the nested partition from Datadog's own repositories + nested config.
+        List<VirtualLandscapeBuilder.VirtualLandscape> nestedBuilt = builder.build(
+                datadogVl.getConfig().getVirtualLandscapes(),
+                datadogVl.getResults().getRepositoryAnalysisResults());
+
+        assertEquals(2, nestedBuilt.size());
+        assertEquals("Agents", nestedBuilt.get(0).getName());
+        assertEquals(Arrays.asList("team/datadog-agent"), names(nestedBuilt.get(0)));
+        assertEquals("Remainder", nestedBuilt.get(1).getName());
+        assertEquals(Arrays.asList("team/datadog-ui"), names(nestedBuilt.get(1)));
+    }
+
+    @Test
+    void childConfigurationClimbsMoreLevelsWithDepth() {
+        LandscapeConfiguration root = new LandscapeConfiguration();
+        root.setAnalysisRoot("..");
+        root.setRepositoryReportsUrlPrefix("../");
+        nl.obren.sokrates.sourcecode.Metadata md = new nl.obren.sokrates.sourcecode.Metadata();
+        md.setName("Child");
+
+        LandscapeConfiguration depth1 = VirtualLandscapeBuilder.childConfiguration(root, md, new VirtualLandscapesConfig(), 1);
+        LandscapeConfiguration depth2 = VirtualLandscapeBuilder.childConfiguration(root, md, new VirtualLandscapesConfig(), 2);
+
+        // Each nesting level descends 3 folders, so it climbs 3 extra "../" per level.
+        assertEquals("../../../../", depth1.getRepositoryReportsUrlPrefix());
+        assertEquals("../../../../../../../", depth2.getRepositoryReportsUrlPrefix());
+    }
 }

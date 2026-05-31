@@ -277,6 +277,28 @@ empty, and coexists with folder-based sub-landscapes.
 A repository is a member when its name matches **any** include pattern and **no** exclude
 pattern.
 
+**Nesting (unlimited depth).** A virtual landscape may itself define `virtualLandscapes`, which
+partition *its own* repositories into nested virtual landscapes (each again with its own
+Remainder). Nested landscapes are generated under
+`…/landscapes/<parent>/_sokrates_landscape/landscapes/<child>/_sokrates_landscape/` and appear in
+their parent virtual landscape's own "Sub-landscapes" tab. There is no depth limit.
+
+```json
+"virtualLandscapes": {
+  "landscapes": [
+    {
+      "metadata": { "name": "Datadog" },
+      "includeRepoNamePatterns": [".*datadog.*"],
+      "virtualLandscapes": {
+        "landscapes": [
+          { "metadata": { "name": "Agents" }, "includeRepoNamePatterns": [".*agent.*"] }
+        ]
+      }
+    }
+  ]
+}
+```
+
 ## Companion files in `_sokrates_landscape/`
 
 These optional files sit beside `config.json` and are created (empty) on first run. Edit them
