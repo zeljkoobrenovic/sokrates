@@ -279,14 +279,117 @@ pattern.
 
 ## Companion files in `_sokrates_landscape/`
 
-These optional files sit beside `config.json` and are created (empty) on first run:
+These optional files sit beside `config.json` and are created (empty) on first run. Edit them
+to enrich the landscape report; they are re-read on every `updateLandscape`.
 
 | File | Holds |
 | --- | --- |
-| `config-tags.json` | Repository tag groups (`TagGroup` → `RepositoryTag`): tag repositories by name/extension/path patterns, with colours and icons. |
-| `config-teams.json` | Team definitions (`TeamConfig`): map contributors to teams by email patterns. |
-| `config-people.json` | Per-person profiles (`PersonConfig`): name, links, avatar `image`, and `emailPatterns`. |
+| `config-tags.json` | Repository tags — classify/group repositories (by name, extension, or path). |
+| `config-teams.json` | Teams — map contributors to teams by email patterns. |
+| `config-people.json` | People — per-contributor profiles (display name, avatar, links). |
 | `info.json` | **Auto-generated** index of discovered repositories and sub-landscapes — do not edit. |
+
+### `config-tags.json` — repository tags
+
+A JSON **array of tag groups**. Each group has a `name`, optional `description`/`color`, and a
+list of `repositoryTags`. A repository gets a tag if it matches the tag's rules; tags drive the
+"Tags" tab and the per-repository tag badges.
+
+A **tag group** (`TagGroup`): `name`, `description`, `color`, `repositoryTags[]`.
+
+A **repository tag** (`RepositoryTag`) matches a repository when any rule below matches (and no
+exclude rule does):
+
+| Key | Type | Meaning |
+| --- | --- | --- |
+| `tag` | string | The tag label shown in the report. |
+| `patterns` | string[] | Regex on the repository **name** to include. |
+| `excludePatterns` | string[] | Regex on the name to exclude. |
+| `mainExtensions` | string[] | Match when one of these is the repository's dominant extension. |
+| `anyExtensions` | string[] | Match when the repository contains any of these extensions. |
+| `excludeExtensions` | string[] | Exclude when any of these extensions is present. |
+| `pathPatterns` | string[] | Regex on file paths within the repository to include. |
+| `excludePathPatterns` | string[] | Regex on file paths to exclude. |
+| `imageLink` | string | Optional icon URL shown next to the tag. |
+
+```json
+[
+  {
+    "name": "Technology",
+    "description": "Primary technology",
+    "color": "#dddddd",
+    "repositoryTags": [
+      {
+        "tag": "Java",
+        "patterns": [],
+        "excludePatterns": [],
+        "mainExtensions": ["java"],
+        "anyExtensions": [],
+        "excludeExtensions": [],
+        "pathPatterns": [],
+        "excludePathPatterns": [],
+        "imageLink": "https://.../java.png"
+      },
+      {
+        "tag": "Terraform",
+        "anyExtensions": ["tf"]
+      }
+    ]
+  }
+]
+```
+
+### `config-teams.json` — teams
+
+A JSON **object** with a `teams` array. Each `TeamConfig` maps contributors to a team by
+matching their email against regex `emailPatterns`. Teams get their own report (a `teams.html`
+landscape alongside `contributors.html`).
+
+| Key | Type | Meaning |
+| --- | --- | --- |
+| `name` | string | Team name. |
+| `description` | string | Optional description. |
+| `emailPatterns` | string[] | Regex patterns matched against contributor emails. |
+
+```json
+{
+  "teams": [
+    { "name": "Payments", "description": "", "emailPatterns": [".*@payments\\.example\\.com"] },
+    { "name": "Platform",  "description": "", "emailPatterns": ["alice@example\\.com", "bob@example\\.com"] }
+  ]
+}
+```
+
+### `config-people.json` — people
+
+A JSON **object** with a `people` array. Each `PersonConfig` enriches a contributor (identified
+by `emailPatterns`) with a display name, an avatar image, and profile links shown on their
+individual contributor report.
+
+| Key | Type | Meaning |
+| --- | --- | --- |
+| `name` | string | Display name. |
+| `image` | string | Avatar image URL (overrides `contributorAvatarLinkTemplate`). |
+| `links` | link[] | Profile links (`{ "label", "href" }`) shown on the contributor page. |
+| `link` | string | Legacy single link (prefer `links`). |
+| `emailPatterns` | string[] | Regex patterns matched against the contributor's email. |
+
+```json
+{
+  "people": [
+    {
+      "name": "Alice Example",
+      "image": "https://.../alice.png",
+      "links": [ { "label": "GitHub", "href": "https://github.com/alice" } ],
+      "emailPatterns": ["alice@example\\.com", ".*alice.*@example\\.com"]
+    }
+  ]
+}
+```
+
+> The same `bots`, `ignoreContributors`, `anonymizeContributors`, and `transformContributorEmails`
+> options on the landscape `config.json` (Part 2) also shape how contributors are detected and
+> normalised before teams/people matching is applied.
 
 ## Folder layout
 
