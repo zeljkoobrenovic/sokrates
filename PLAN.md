@@ -39,6 +39,17 @@ grouped by theme and tagged with rough effort (S/M/L) and impact. Status tags:
     god-class pressure in §5 (rendering moved to templates + data exporters). Adds
     `DataImageUtilsTest`, `RepositoryExportTest`, `ContributorReportExportTest`,
     `ContributorIndividualReportExportTest`.
+- **Virtual Landscapes** — a new feature: define landscapes/sub-landscapes by
+  repository-name regex patterns in the parent `config.json` (`virtualLandscapes`),
+  without moving report folders. Each virtual landscape gets a full report under
+  `_sokrates_landscape/landscapes/<name>/_sokrates_landscape/`, an unmatched-repo
+  **Remainder** landscape is generated, and they surface in the parent's existing
+  Sub-landscapes tab; folder-based and virtual landscapes coexist and existing
+  configs are unaffected. New `VirtualLandscapesConfig`/`VirtualLandscapeConfig`,
+  `VirtualLandscapeBuilder`, virtual `SubLandscapeLink` handling, and exclusion of
+  the generated `landscapes/` tree from folder discovery
+  (`LandscapeAnalysisUtils.isInGeneratedVirtualLandscape`). Adds
+  `VirtualLandscapesConfigTest`, `VirtualLandscapeBuilderTest`.
 
 ---
 

@@ -70,6 +70,14 @@ The Maven module dependency chain is `common → codeanalyzer → reports → cl
 
 5. **Reporting** — generators in `reports/.../generators/statichtml/` each take `CodeAnalysisResults` and emit an HTML report; `dataexporters/` emit JSON. `landscape/` aggregates multiple project results into a portfolio-level report.
 
+## Landscapes & sub-landscapes
+
+A **landscape** aggregates many repository reports into a portfolio view. `updateLandscape` (CLI) runs `LandscapeAnalysisCommands.generateReport(analysisRoot, configFile)`: `LandscapeAnalyzer.analyze(configFile)` reads each repository's `analysisResults.json` (located via `analysisRoot` + each `SokratesRepositoryLink.analysisResultsPath`) into a `LandscapeAnalysisResults` (`List<RepositoryAnalysisResults>`); then `LandscapeReportGenerator(results, tagGroups, folder, reportsFolder).report()` writes `index.html` + tabs + `contributors/` + `visuals/` + `data/` into the `_sokrates_landscape/` folder. A repository's identity is its `metadata.name`.
+
+Two ways to create **sub-landscapes** (shown in the parent's "Sub-landscapes" tab, which reads each child's pre-generated `data/landscapeAnalysisResults.json` + `config.json` and links via `repositoryReportsUrlPrefix + indexFilePath`):
+- **Folder-based** — move repository report folders into sub-directories that each have their own `_sokrates_landscape/`. Discovered by scanning for `_sokrates_landscape/index.html` (`LandscapeAnalysisInitiator`, `LandscapeAnalysisUtils.findAllSokratesLandscapeConfigFiles`).
+- **Virtual landscapes** — defined by repository-name regex patterns in the parent `config.json` (`virtualLandscapes`: `landscapes[]` with `metadata`/`includeRepoNamePatterns`/`excludeRepoNamePatterns`, plus `remainderLandscapeMetadata`); no folder moves. `VirtualLandscapeBuilder` partitions the parent's already-loaded repositories (multi-membership allowed; the **Remainder** landscape collects unmatched repos) into child `LandscapeAnalysisResults`, and `LandscapeAnalysisCommands.generateVirtualLandscapes` renders a full report per virtual landscape into `_sokrates_landscape/landscapes/<name>/_sokrates_landscape/`, registering each as a **virtual** `SubLandscapeLink` (resolved relative to the landscape folder, no URL prefix). The generated `landscapes/` tree is excluded from folder discovery via `LandscapeAnalysisUtils.isInGeneratedVirtualLandscape` so virtual landscapes aren't picked up twice. The feature is inert when `virtualLandscapes.landscapes` is empty (backward compatible). Both kinds coexist.
+
 ## Two HTML rendering mechanisms
 
 Reports are produced in two distinct ways — know which one you're touching:
