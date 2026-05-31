@@ -55,7 +55,7 @@ The Maven module dependency chain is `common → codeanalyzer → reports → cl
 
 ## How analysis works (the big picture)
 
-1. **Configuration** — `CodeConfiguration` (`codeanalyzer/.../sourcecode/core/`) is the central serialized model, read from/written to `config.json` (`CodeConfigurationUtils.DEFAULT_CONFIGURATION_FILE_NAME`). It declares: file `extensions`, `ignore` filters, scope aspects (`main`, `test`, `generated`, `buildAndDeployment`, `other`), `logicalDecompositions`, `concernGroups`, `goalsAndControls`, and `tagRules`. Most analysis behavior is driven by this JSON, not by code changes.
+1. **Configuration** — `CodeConfiguration` (`codeanalyzer/.../sourcecode/core/`) is the central serialized model, read from/written to `config.json` (`CodeConfigurationUtils.DEFAULT_CONFIGURATION_FILE_NAME`). It declares: file `extensions`, `ignore` filters, scope aspects (`main`, `test`, `generated`, `buildAndDeployment`, `other`), `logicalDecompositions`, `concernGroups`, `goalsAndControls`, and `tagRules`. Most analysis behavior is driven by this JSON, not by code changes. The user-facing reference for both `_sokrates/config.json` and `_sokrates_landscape/config.json` (every key, defaults, examples, and the companion `config-tags`/`config-teams`/`config-people.json` files) is **[docs/configuration.md](docs/configuration.md)** — update it when changing these config models.
 
 2. **Scoping** — `scoping/ScopeCreator` plus `Convention`/`ConventionUtils` apply standard + custom conventions to classify files into aspects. An *aspect* (`sourcecode/aspects/`) is a named set of source files defined by path/content filters; aspects are the unit that decompositions and concerns are built from.
 
