@@ -721,11 +721,29 @@
         return filters.some(f => lower.includes(f));
     }
 
-    function render() {
+    // Rows shown at once; "show more" expands by this step. Stats/charts always reflect
+    // the full filtered set — only the rendered rows are limited.
+    const PAGE_SIZE = 250;
+    let displayLimit = PAGE_SIZE;
+
+    // Called by render() to reset paging whenever the result set changes (tab switch / search).
+    function resetPaging() {
+        displayLimit = PAGE_SIZE;
+    }
+
+    function showMore() {
+        displayLimit += PAGE_SIZE;
+        render(true);
+    }
+
+    function render(keepPaging) {
+        if (!keepPaging) {
+            resetPaging();
+        }
         const filters = getFilters();
 
         if (activeTab === 'features') {
-            renderFeatures(filters);
+            renderFeatures(filters, keepPaging);
             return;
         }
 
@@ -777,13 +795,26 @@
             }
         });
         html += '</tr></thead><tbody>';
-        rows.forEach(item => {
+        const shown = rows.slice(0, displayLimit);
+        shown.forEach(item => {
             html += '<tr style="white-space: nowrap;' + recencyColor(item) + '">';
             tab.columns.forEach(col => html += col.cell(item));
             html += '</tr>';
         });
         html += '</tbody></table>';
+        html += showMoreFooter(shown.length, rows.length);
         document.getElementById('content').innerHTML = html;
+    }
+
+    // "Showing N of M — show more" footer; the button reveals another PAGE_SIZE rows.
+    function showMoreFooter(shownCount, totalCount) {
+        if (totalCount <= shownCount) {
+            return '';
+        }
+        return '<div style="margin: 12px 0; font-size: 13px; color: #555;">'
+            + 'Showing ' + num(shownCount) + ' of ' + num(totalCount) + '. '
+            + '<a onclick="showMore()" style="cursor: pointer; color: #4a90d9;">show ' + num(Math.min(PAGE_SIZE, totalCount - shownCount)) + ' more</a>'
+            + '</div>';
     }
 
     // Row text fades with commit recency, matching the original report.
@@ -823,6 +854,7 @@
     }
 
     function renderFeatures(filters) {
+        // Paging (displayLimit) is reset by render() before this is called.
         const concerns = features.concerns;
         let repos = features.repositories.filter(r => matchesFilters(r.name, filters));
 
@@ -841,7 +873,8 @@
         });
         html += '<th style="font-size: 70%">Details</th></tr></thead><tbody>';
 
-        repos.forEach(r => {
+        const shown = repos.slice(0, displayLimit);
+        shown.forEach(r => {
             html += '<tr style="white-space: nowrap">';
             html += '<td style="' + LANG_COL_STYLE + '"><div style="white-space: nowrap; overflow: hidden">' + langIcon(r.mainLang) + '</div></td>';
             const featuresUrl = (r.reportFolderUrl || '') + 'FeaturesOfInterest.html';
@@ -855,6 +888,7 @@
             html += '</tr>';
         });
         html += '</tbody></table>';
+        html += showMoreFooter(shown.length, repos.length);
         document.getElementById('content').innerHTML = html;
     }
 
