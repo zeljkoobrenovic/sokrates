@@ -121,6 +121,8 @@
     <span id="search-summary" style="display: inline-block; margin-left: 6px;"></span>
 </div>
 
+<div id="proportion-bars" style="margin-bottom: 10px;"></div>
+
 <div class="tab" id="tabs"></div>
 
 <div class="tabcontent">
@@ -769,12 +771,12 @@
         document.getElementById('search-summary').innerHTML = '= ' + rows.length + ' '
             + (rows.length === 1 ? 'repository' : 'repositories')
             + ' (' + num(filteredMainLoc) + ' LOC main, ' + num(filteredCommits) + ' commits)';
+        updateProportionBars(filters);
 
         let html = tabLinksHtml(tab.links);
         if (tab.summaryChart) {
             html += tab.summaryChart(rows);
         }
-        html += proportionBars(rows.length, filteredMainLoc, filteredCommits);
         html += '<table style="width: 100%"><thead>';
         if (tab.groupHeader) {
             html += '<tr>';
@@ -811,7 +813,7 @@
         if (totalCount <= shownCount) {
             return '';
         }
-        return '<div style="margin: 12px 0; font-size: 13px; color: #555;">'
+        return '<div style="margin: 15px 2px; font-size: 16px; color: #555;">'
             + 'Showing ' + num(shownCount) + ' of ' + num(totalCount) + '. '
             + '<a onclick="showMore()" style="cursor: pointer; color: #4a90d9;">show ' + num(Math.min(PAGE_SIZE, totalCount - shownCount)) + ' more</a>'
             + '</div>';
@@ -830,8 +832,9 @@
     const TOTAL_MAIN_LOC = repositories.reduce((a, b) => a + (b.mainLinesOfCode || 0), 0);
     const TOTAL_COMMITS = repositories.reduce((a, b) => a + (b.commitsCount || 0), 0);
 
-    // Three proportion bars (% of repositories / LOC / commits) shown above the table
-    // when the current view is a strict subset, mirroring the old repositories explorer.
+    // Three proportion bars (% of repositories / LOC / commits) shown once under the
+    // search bar (above the tabs). Reflects the current search filter and is independent
+    // of the active tab; hidden when nothing is filtered out.
     function proportionBars(count, mainLoc, commits) {
         if (mainLoc >= TOTAL_MAIN_LOC) {
             return '';
@@ -846,11 +849,19 @@
                 + '<div style="margin: 0; display: inline-block; font-size: 80%; width: 140px; color: grey; vertical-align: top">&nbsp;' + shown + '% ' + label + '</div>'
                 + '</div>';
         }
-        return '<div style="margin-bottom: 10px;">'
-            + bar(count, TOTAL_COUNT, '#303030', 'of repositories')
+        return bar(count, TOTAL_COUNT, '#303030', 'of repositories')
             + bar(mainLoc, TOTAL_MAIN_LOC, 'skyblue', 'of LOC')
-            + bar(commits, TOTAL_COMMITS, 'green', 'of commits')
-            + '</div>';
+            + bar(commits, TOTAL_COMMITS, 'green', 'of commits');
+    }
+
+    // Renders the proportion bars into the dedicated container under the search bar,
+    // based on the search-filtered set (same across all tabs).
+    function updateProportionBars(filters) {
+        const matched = repositories.filter(item => matchesFilters(item.metadata && item.metadata.name, filters));
+        const count = matched.length;
+        const mainLoc = matched.reduce((a, b) => a + (b.mainLinesOfCode || 0), 0);
+        const commits = matched.reduce((a, b) => a + (b.commitsCount || 0), 0);
+        document.getElementById('proportion-bars').innerHTML = proportionBars(count, mainLoc, commits);
     }
 
     function renderFeatures(filters) {
@@ -860,6 +871,7 @@
 
         document.getElementById('search-summary').innerHTML = '= ' + repos.length + ' '
             + (repos.length === 1 ? 'repository' : 'repositories');
+        updateProportionBars(filters);
 
         let html = '<table style="width: 100%"><thead>';
         html += '<tr><th style="border: none; ' + LANG_COL_STYLE + '"></th><th style="border: none"></th>';
