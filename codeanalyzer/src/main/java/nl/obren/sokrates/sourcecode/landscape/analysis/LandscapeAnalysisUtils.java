@@ -20,7 +20,7 @@ public class LandscapeAnalysisUtils {
         LOG.info("Scanning files...");
         List<File> files = new ArrayList<>();
         try (Stream<Path> paths = Files.walk(Paths.get(root.getPath()))) {
-            paths.filter(path -> isSokratesLandscapeConfigFile(path)).forEach(path -> {
+            paths.filter(path -> isSokratesLandscapeConfigFile(path) && !isInGeneratedVirtualLandscape(path)).forEach(path -> {
                 files.add(path.toFile());
             });
         } catch (IOException e) {
@@ -36,6 +36,15 @@ public class LandscapeAnalysisUtils {
 
     public static boolean isSokratesLandscapeConfigFile(Path file) {
         return file.endsWith("_sokrates_landscape/config.json");
+    }
+
+    /**
+     * True for paths inside a generated virtual-landscape tree (under
+     * {@code _sokrates_landscape/landscapes/}). Such landscapes are produced by the parent and
+     * must not be re-discovered as folder-based landscapes / sub-landscapes.
+     */
+    public static boolean isInGeneratedVirtualLandscape(Path file) {
+        return file.toString().replace("\\", "/").contains("/_sokrates_landscape/landscapes/");
     }
 
     public static void main(String args[]) {

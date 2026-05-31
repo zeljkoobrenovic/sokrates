@@ -10,6 +10,7 @@ import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
+import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.ReportConstants;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
@@ -300,7 +301,7 @@ public class LandscapeReportGenerator {
         LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
         List<SubLandscapeLink> subLandscapes = configuration.getSubLandscapes();
 
-        List<SubLandscapeLink> level1SubLandscapes = configuration.getSubLandscapes().stream().filter(l -> getPathDepth(l.getIndexFilePath()) == 1).collect(Collectors.toList());
+        List<SubLandscapeLink> level1SubLandscapes = configuration.getSubLandscapes().stream().filter(l -> subLandscapeDepth(l) == 1).collect(Collectors.toList());
 
         landscapeReport.startTabGroup();
         landscapeReport.addTab(OVERVIEW_TAB_ID, "Overview", true);
@@ -597,10 +598,15 @@ public class LandscapeReportGenerator {
                 .split("/").length;
     }
 
+    // Virtual landscapes are flat (treated as level 1); folder sub-landscapes use their path depth.
+    private int subLandscapeDepth(SubLandscapeLink subLandscape) {
+        return subLandscape.isVirtual() ? 1 : getPathDepth(subLandscape.getIndexFilePath());
+    }
+
     private void addSubLandscapeSection(List<SubLandscapeLink> subLandscapes) {
         LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
         final int maxDepth = configuration.getMaxSublandscapeDepth();
-        List<SubLandscapeLink> links = subLandscapes.stream().filter(l -> maxDepth == 0 || getPathDepth(l.getIndexFilePath()) <= maxDepth).collect(Collectors.toList());
+        List<SubLandscapeLink> links = subLandscapes.stream().filter(l -> maxDepth == 0 || subLandscapeDepth(l) <= maxDepth).collect(Collectors.toList());
         if (links.size() > 0) {
             Collections.sort(links, Comparator.comparing(a -> getLabel(a).toLowerCase()));
             landscapeReport.startDiv("margin: 12px; margin-bottom: 22px");
@@ -642,14 +648,15 @@ public class LandscapeReportGenerator {
                     label = "<span style='color: lightgrey'>" + label.substring(0, lastIndex + 1) + "</span>" + label.substring(lastIndex + 1) + "";
                     style = "color: grey; font-size: 90%";
                 }
-                String href = configuration.getRepositoryReportsUrlPrefix() + subLandscape.getIndexFilePath();
+                String linkPrefix = subLandscapePrefix(subLandscape);
+                String href = linkPrefix + subLandscape.getIndexFilePath();
                 LandscapeAnalysisResultsReadData subLandscapeAnalysisResults = getSubLandscapeAnalysisResults(subLandscape);
                 landscapeReport.startTableRow(style);
                 LandscapeConfiguration subLandscapeConfig = getSubLandscapeConfig(subLandscape);
                 Metadata metadata = subLandscapeConfig.getMetadata();
                 landscapeReport.addTableCell(!labelText.contains("/") ? ("<a href='" + href + "' target='_blank'>" +
                         (StringUtils.isNotBlank(metadata.getLogoLink())
-                                ? "<img src='" + getLogoLink(configuration.getRepositoryReportsUrlPrefix() + subLandscape.getIndexFilePath().replace("/index.html", ""), metadata.getLogoLink()) + "' " +
+                                ? "<img src='" + getLogoLink(linkPrefix + subLandscape.getIndexFilePath().replace("/index.html", ""), metadata.getLogoLink()) + "' " +
                                 "style='vertical-align: middle; width: 24px' " +
                                 "onerror=\"this.onerror=null;this.src='https://zeljkoobrenovic.github.io/sokrates-media/icons/landscape.png'\">"
                                 : "<img src='https://zeljkoobrenovic.github.io/sokrates-media/icons/landscape.png' style='vertical-align: middle; width: 24px'>") +
@@ -770,6 +777,27 @@ public class LandscapeReportGenerator {
     }
 
     private void exportZoomableCircles(String type, List<RepositoryAnalysisResults> repositoryAnalysisResults, ZommableCircleCountExtractors zommableCircleCountExtractors) {
+        VirtualLandscapesConfig virtualLandscapes = landscapeAnalysisResults.getConfiguration().getVirtualLandscapes();
+        List<VisualizationItem> rootChildren;
+        if (VirtualLandscapeBuilder.hasVirtualLandscapes(virtualLandscapes)) {
+            // When virtual landscapes are configured, group repositories into a circle per virtual
+            // landscape (and a Remainder) instead of by folder path, recursing for nested virtual
+            // landscapes. This gives a meaningful hierarchy even when repositories sit flat.
+            rootChildren = buildVirtualLandscapeCircles(virtualLandscapes, repositoryAnalysisResults, zommableCircleCountExtractors);
+        } else {
+            rootChildren = buildFolderPathCircles(repositoryAnalysisResults, zommableCircleCountExtractors);
+        }
+        try {
+            File folder = new File(reportsFolder, "visuals");
+            folder.mkdirs();
+            FileUtils.write(new File(folder, "sub_landscapes_zoomable_circles_" + type + ".html"), new VisualizationTemplate().renderZoomableCircles(rootChildren), UTF_8);
+            FileUtils.write(new File(folder, "sub_landscapes_zoomable_sunburst_" + type + ".html"), new VisualizationTemplate().renderZoomableSunburst(rootChildren), UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private List<VisualizationItem> buildFolderPathCircles(List<RepositoryAnalysisResults> repositoryAnalysisResults, ZommableCircleCountExtractors zommableCircleCountExtractors) {
         Map<String, VisualizationItem> parents = new HashMap<>();
         VisualizationItem root = new VisualizationItem("", 0);
         parents.put("", root);
@@ -787,14 +815,77 @@ public class LandscapeReportGenerator {
                 getParent(parents, Arrays.asList(elements)).getChildren().add(item);
             }
         });
-        try {
-            File folder = new File(reportsFolder, "visuals");
-            folder.mkdirs();
-            FileUtils.write(new File(folder, "sub_landscapes_zoomable_circles_" + type + ".html"), new VisualizationTemplate().renderZoomableCircles(root.getChildren()), UTF_8);
-            FileUtils.write(new File(folder, "sub_landscapes_zoomable_sunburst_" + type + ".html"), new VisualizationTemplate().renderZoomableSunburst(root.getChildren()), UTF_8);
-        } catch (IOException e) {
-            e.printStackTrace();
+        return root.getChildren();
+    }
+
+    /**
+     * Builds zoomable-circle groups for a landscape that has virtual landscapes: one grouping circle
+     * per virtual landscape (containing its matching repositories, recursing into nested virtual
+     * landscapes) plus a Remainder circle for repositories matched by no virtual landscape. Mirrors
+     * {@link VirtualLandscapeBuilder}'s include/exclude membership (multi-membership allowed).
+     */
+    private List<VisualizationItem> buildVirtualLandscapeCircles(VirtualLandscapesConfig virtualLandscapes,
+                                                                 List<RepositoryAnalysisResults> repositories,
+                                                                 ZommableCircleCountExtractors extractor) {
+        List<VisualizationItem> groups = new ArrayList<>();
+        boolean[] assigned = new boolean[repositories.size()];
+
+        for (VirtualLandscapeConfig vlConfig : virtualLandscapes.getLandscapes()) {
+            List<RepositoryAnalysisResults> members = new ArrayList<>();
+            for (int i = 0; i < repositories.size(); i++) {
+                if (matchesVirtualLandscape(repositories.get(i), vlConfig)) {
+                    members.add(repositories.get(i));
+                    assigned[i] = true;
+                }
+            }
+            VisualizationItem group = new VisualizationItem(vlConfig.getMetadata().getName(), 0);
+            if (VirtualLandscapeBuilder.hasVirtualLandscapes(vlConfig.getVirtualLandscapes())) {
+                group.getChildren().addAll(buildVirtualLandscapeCircles(vlConfig.getVirtualLandscapes(), members, extractor));
+            } else {
+                group.getChildren().addAll(repositoryLeaves(members, extractor));
+            }
+            if (!group.getChildren().isEmpty()) {
+                groups.add(group);
+            }
         }
+
+        List<RepositoryAnalysisResults> remainder = new ArrayList<>();
+        for (int i = 0; i < repositories.size(); i++) {
+            if (!assigned[i]) {
+                remainder.add(repositories.get(i));
+            }
+        }
+        VisualizationItem remainderGroup = new VisualizationItem(
+                virtualLandscapes.getRemainderLandscapeMetadata().getName(), 0);
+        remainderGroup.getChildren().addAll(repositoryLeaves(remainder, extractor));
+        if (!remainderGroup.getChildren().isEmpty()) {
+            groups.add(remainderGroup);
+        }
+
+        return groups;
+    }
+
+    private boolean matchesVirtualLandscape(RepositoryAnalysisResults repository, VirtualLandscapeConfig vlConfig) {
+        String name = repository.getAnalysisResults().getMetadata().getName();
+        List<String> include = vlConfig.getIncludeRepoNamePatterns();
+        List<String> exclude = vlConfig.getExcludeRepoNamePatterns();
+        boolean included = include != null && !include.isEmpty() && RegexUtils.matchesAnyPattern(name, include);
+        if (!included) {
+            return false;
+        }
+        return exclude == null || exclude.isEmpty() || !RegexUtils.matchesAnyPattern(name, exclude);
+    }
+
+    private List<VisualizationItem> repositoryLeaves(List<RepositoryAnalysisResults> repositories, ZommableCircleCountExtractors extractor) {
+        List<VisualizationItem> leaves = new ArrayList<>();
+        repositories.forEach(analysisResults -> {
+            int count = extractor.getCount(analysisResults);
+            if (count > 0) {
+                String name = analysisResults.getAnalysisResults().getMetadata().getName();
+                leaves.add(new VisualizationItem(name + " (" + FormattingUtils.getPlainTextForNumber(count) + ")", count));
+            }
+        });
+        return leaves;
     }
 
     private String getRepositoryCircleName(RepositoryAnalysisResults analysisResults) {
@@ -803,9 +894,15 @@ public class LandscapeReportGenerator {
         return name;
     }
 
+    // Virtual landscapes live inside the landscape folder, so they resolve relative to it
+    // without the repository-reports prefix; folder sub-landscapes keep the prefix.
+    private String subLandscapePrefix(SubLandscapeLink subLandscape) {
+        return subLandscape.isVirtual() ? "" : landscapeAnalysisResults.getConfiguration().getRepositoryReportsUrlPrefix();
+    }
+
     private LandscapeAnalysisResultsReadData getSubLandscapeAnalysisResults(SubLandscapeLink subLandscape) {
         try {
-            String prefix = landscapeAnalysisResults.getConfiguration().getRepositoryReportsUrlPrefix();
+            String prefix = subLandscapePrefix(subLandscape);
             File resultsFile = new File(new File(folder, prefix + subLandscape.getIndexFilePath()).getParentFile(), "data/landscapeAnalysisResults.json");
             LOG.info(resultsFile.getPath());
             String json = FileUtils.readFileToString(resultsFile, StandardCharsets.UTF_8);
@@ -819,7 +916,7 @@ public class LandscapeReportGenerator {
 
     private LandscapeConfiguration getSubLandscapeConfig(SubLandscapeLink subLandscape) {
         try {
-            String prefix = landscapeAnalysisResults.getConfiguration().getRepositoryReportsUrlPrefix();
+            String prefix = subLandscapePrefix(subLandscape);
             File resultsFile = new File(new File(folder, prefix + subLandscape.getIndexFilePath()).getParentFile(), "config.json");
             LOG.info(resultsFile.getPath());
             String json = FileUtils.readFileToString(resultsFile, StandardCharsets.UTF_8);
@@ -832,6 +929,9 @@ public class LandscapeReportGenerator {
     }
 
     private String getLabel(SubLandscapeLink subLandscape) {
+        if (subLandscape.isVirtual() && StringUtils.isNotBlank(subLandscape.getLabel())) {
+            return subLandscape.getLabel();
+        }
         return subLandscape.getIndexFilePath()
                 .replaceAll("(/|\\\\)_sokrates_landscape(/|\\\\).*", "");
     }
@@ -1006,8 +1106,10 @@ public class LandscapeReportGenerator {
         if (landscapeAnalysisResults.getRecentContributorsCount(landscapeAnalysisResults.getContributors()) > 0) {
             addContributorsPerExtension(true);
         }
-        landscapeReport.startShowMoreBlock("", "Test and other code...");
+        landscapeReport.startShowMoreBlock("", "Test code...");
         addMainExtensions("Test", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getTestLinesOfCodePerExtension()), false);
+        landscapeReport.endShowMoreBlock();
+        landscapeReport.startShowMoreBlock("", "Other code...");
         addMainExtensions("Other", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getOtherLinesOfCodePerExtension()), false);
         landscapeReport.endShowMoreBlock();
         landscapeReport.startShowMoreBlock("", "Commit history per extension...");

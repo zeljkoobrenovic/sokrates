@@ -11,6 +11,7 @@ import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.SokratesRepositoryLink;
 import nl.obren.sokrates.sourcecode.landscape.SubLandscapeLink;
+import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -35,7 +36,7 @@ public class LandscapeAnalysisInitiator {
         landscapeConfiguration.setAnalysisRoot(analysisRoot.getPath());
 
         try (Stream<Path> paths = Files.walk(Paths.get(analysisRoot.getPath()))) {
-            paths.filter(file -> isSokratesLandscapeFile(file)).forEach(file -> {
+            paths.filter(file -> isSokratesLandscapeFile(file) && !LandscapeAnalysisUtils.isInGeneratedVirtualLandscape(file)).forEach(file -> {
                 addSubLandscape(analysisRoot, landscapeConfiguration, file);
             });
         } catch (IOException e) {
@@ -43,7 +44,7 @@ public class LandscapeAnalysisInitiator {
         }
 
         try (Stream<Path> paths = Files.walk(Paths.get(analysisRoot.getPath()))) {
-            paths.filter(file -> isSokratesAnalysisFile(file)).forEach(file -> {
+            paths.filter(file -> isSokratesAnalysisFile(file) && !LandscapeAnalysisUtils.isInGeneratedVirtualLandscape(file)).forEach(file -> {
                 processAnalysisResultFile(analysisRoot, landscapeConfiguration, file);
             });
         } catch (IOException e) {
