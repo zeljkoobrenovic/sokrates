@@ -122,15 +122,8 @@
     const allLinks = gData.links.map(l => ({source: l.target, target: l.source, count: l.count}));
     const allNodes = gData.nodes.slice();
 
-    // Degree = number of dependency links touching a node. Used to sort the node list
-    // (most-connected first) and shown next to each node.
-    const degree = {};
-    allNodes.forEach(n => degree[n.id] = 0);
-    allLinks.forEach(l => {
-        degree[l.source] = (degree[l.source] || 0) + 1;
-        degree[l.target] = (degree[l.target] || 0) + 1;
-    });
-    allNodes.sort((a, b) => (degree[b.id] - degree[a.id]) || a.id.localeCompare(b.id));
+    // Sort the node list by size (largest first), ties broken alphabetically.
+    allNodes.sort((a, b) => ((b.size || 0) - (a.size || 0)) || a.id.localeCompare(b.id));
 
     // Visibility state: every node visible by default.
     const visible = {};
@@ -176,11 +169,10 @@
 
         let html = '';
         matching.forEach(n => {
-            const deps = degree[n.id] || 0;
-            html += '<div class="node-item" title="' + escapeAttr(n.id) + ' — ' + deps + ' dependencies, size ' + n.size + '">'
+            html += '<div class="node-item" title="' + escapeAttr(n.id) + ' — size ' + n.size + '">'
                 + '<label>'
                 + '<input type="checkbox" data-id="' + escapeAttr(n.id) + '"' + (visible[n.id] ? ' checked' : '') + ' onchange="toggleNode(this)">'
-                + escapeHtml(n.id) + ' <span class="node-size">(' + deps + ' deps)</span>'
+                + escapeHtml(n.id) + ' <span class="node-size">(' + n.size + ')</span>'
                 + '</label></div>';
         });
         document.getElementById('node-list').innerHTML = html || '<div style="padding: 8px; color: grey;">no matching nodes</div>';
