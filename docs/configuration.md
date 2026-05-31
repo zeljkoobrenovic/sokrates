@@ -257,9 +257,11 @@ A `customTab` is `{ "name", "iFrames": [ … ] }`.
 Virtual landscapes let you define sub-landscapes **by repository-name regex patterns**, without
 moving report folders. Each defined landscape gets a full landscape report under
 `_sokrates_landscape/landscapes/<name>/_sokrates_landscape/`, and a **Remainder** landscape
-collects repositories matched by none. They appear in the parent's "Sub-landscapes" tab. A
-repository may belong to several virtual landscapes. The feature is inert when `landscapes` is
-empty, and coexists with folder-based sub-landscapes.
+collects repositories matched by none. They appear in the parent's "Sub-landscapes" tab, and the
+sub-landscape zoomable-circles/sunburst visuals group repositories into one circle per virtual
+landscape (plus Remainder) rather than by folder path. A repository may belong to several virtual
+landscapes. The feature is inert when `landscapes` is empty, and coexists with folder-based
+sub-landscapes.
 
 ```json
 "virtualLandscapes": {

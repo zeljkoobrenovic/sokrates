@@ -10,6 +10,7 @@ import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
+import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.ReportConstants;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
@@ -776,6 +777,27 @@ public class LandscapeReportGenerator {
     }
 
     private void exportZoomableCircles(String type, List<RepositoryAnalysisResults> repositoryAnalysisResults, ZommableCircleCountExtractors zommableCircleCountExtractors) {
+        VirtualLandscapesConfig virtualLandscapes = landscapeAnalysisResults.getConfiguration().getVirtualLandscapes();
+        List<VisualizationItem> rootChildren;
+        if (VirtualLandscapeBuilder.hasVirtualLandscapes(virtualLandscapes)) {
+            // When virtual landscapes are configured, group repositories into a circle per virtual
+            // landscape (and a Remainder) instead of by folder path, recursing for nested virtual
+            // landscapes. This gives a meaningful hierarchy even when repositories sit flat.
+            rootChildren = buildVirtualLandscapeCircles(virtualLandscapes, repositoryAnalysisResults, zommableCircleCountExtractors);
+        } else {
+            rootChildren = buildFolderPathCircles(repositoryAnalysisResults, zommableCircleCountExtractors);
+        }
+        try {
+            File folder = new File(reportsFolder, "visuals");
+            folder.mkdirs();
+            FileUtils.write(new File(folder, "sub_landscapes_zoomable_circles_" + type + ".html"), new VisualizationTemplate().renderZoomableCircles(rootChildren), UTF_8);
+            FileUtils.write(new File(folder, "sub_landscapes_zoomable_sunburst_" + type + ".html"), new VisualizationTemplate().renderZoomableSunburst(rootChildren), UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private List<VisualizationItem> buildFolderPathCircles(List<RepositoryAnalysisResults> repositoryAnalysisResults, ZommableCircleCountExtractors zommableCircleCountExtractors) {
         Map<String, VisualizationItem> parents = new HashMap<>();
         VisualizationItem root = new VisualizationItem("", 0);
         parents.put("", root);
@@ -793,14 +815,77 @@ public class LandscapeReportGenerator {
                 getParent(parents, Arrays.asList(elements)).getChildren().add(item);
             }
         });
-        try {
-            File folder = new File(reportsFolder, "visuals");
-            folder.mkdirs();
-            FileUtils.write(new File(folder, "sub_landscapes_zoomable_circles_" + type + ".html"), new VisualizationTemplate().renderZoomableCircles(root.getChildren()), UTF_8);
-            FileUtils.write(new File(folder, "sub_landscapes_zoomable_sunburst_" + type + ".html"), new VisualizationTemplate().renderZoomableSunburst(root.getChildren()), UTF_8);
-        } catch (IOException e) {
-            e.printStackTrace();
+        return root.getChildren();
+    }
+
+    /**
+     * Builds zoomable-circle groups for a landscape that has virtual landscapes: one grouping circle
+     * per virtual landscape (containing its matching repositories, recursing into nested virtual
+     * landscapes) plus a Remainder circle for repositories matched by no virtual landscape. Mirrors
+     * {@link VirtualLandscapeBuilder}'s include/exclude membership (multi-membership allowed).
+     */
+    private List<VisualizationItem> buildVirtualLandscapeCircles(VirtualLandscapesConfig virtualLandscapes,
+                                                                 List<RepositoryAnalysisResults> repositories,
+                                                                 ZommableCircleCountExtractors extractor) {
+        List<VisualizationItem> groups = new ArrayList<>();
+        boolean[] assigned = new boolean[repositories.size()];
+
+        for (VirtualLandscapeConfig vlConfig : virtualLandscapes.getLandscapes()) {
+            List<RepositoryAnalysisResults> members = new ArrayList<>();
+            for (int i = 0; i < repositories.size(); i++) {
+                if (matchesVirtualLandscape(repositories.get(i), vlConfig)) {
+                    members.add(repositories.get(i));
+                    assigned[i] = true;
+                }
+            }
+            VisualizationItem group = new VisualizationItem(vlConfig.getMetadata().getName(), 0);
+            if (VirtualLandscapeBuilder.hasVirtualLandscapes(vlConfig.getVirtualLandscapes())) {
+                group.getChildren().addAll(buildVirtualLandscapeCircles(vlConfig.getVirtualLandscapes(), members, extractor));
+            } else {
+                group.getChildren().addAll(repositoryLeaves(members, extractor));
+            }
+            if (!group.getChildren().isEmpty()) {
+                groups.add(group);
+            }
         }
+
+        List<RepositoryAnalysisResults> remainder = new ArrayList<>();
+        for (int i = 0; i < repositories.size(); i++) {
+            if (!assigned[i]) {
+                remainder.add(repositories.get(i));
+            }
+        }
+        VisualizationItem remainderGroup = new VisualizationItem(
+                virtualLandscapes.getRemainderLandscapeMetadata().getName(), 0);
+        remainderGroup.getChildren().addAll(repositoryLeaves(remainder, extractor));
+        if (!remainderGroup.getChildren().isEmpty()) {
+            groups.add(remainderGroup);
+        }
+
+        return groups;
+    }
+
+    private boolean matchesVirtualLandscape(RepositoryAnalysisResults repository, VirtualLandscapeConfig vlConfig) {
+        String name = repository.getAnalysisResults().getMetadata().getName();
+        List<String> include = vlConfig.getIncludeRepoNamePatterns();
+        List<String> exclude = vlConfig.getExcludeRepoNamePatterns();
+        boolean included = include != null && !include.isEmpty() && RegexUtils.matchesAnyPattern(name, include);
+        if (!included) {
+            return false;
+        }
+        return exclude == null || exclude.isEmpty() || !RegexUtils.matchesAnyPattern(name, exclude);
+    }
+
+    private List<VisualizationItem> repositoryLeaves(List<RepositoryAnalysisResults> repositories, ZommableCircleCountExtractors extractor) {
+        List<VisualizationItem> leaves = new ArrayList<>();
+        repositories.forEach(analysisResults -> {
+            int count = extractor.getCount(analysisResults);
+            if (count > 0) {
+                String name = analysisResults.getAnalysisResults().getMetadata().getName();
+                leaves.add(new VisualizationItem(name + " (" + FormattingUtils.getPlainTextForNumber(count) + ")", count));
+            }
+        });
+        return leaves;
     }
 
     private String getRepositoryCircleName(RepositoryAnalysisResults analysisResults) {
