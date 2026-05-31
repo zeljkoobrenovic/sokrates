@@ -385,7 +385,7 @@
         if (totalCount <= shownCount) {
             return '';
         }
-        return '<div style="margin: 12px 0; font-size: 13px; color: #555;">'
+        return '<div style="margin: 16px 2px; font-size: 15px; color: #555;">'
             + 'Showing ' + num(shownCount) + ' of ' + num(totalCount) + '. '
             + '<a onclick="showMore()" style="cursor: pointer; color: #4a90d9;">show ' + num(Math.min(PAGE_SIZE, totalCount - shownCount)) + ' more</a>'
             + '</div>';
