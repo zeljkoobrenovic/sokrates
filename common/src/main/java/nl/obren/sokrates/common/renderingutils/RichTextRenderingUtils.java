@@ -86,6 +86,9 @@ public class RichTextRenderingUtils {
     public static String getEndShowMoreParagraph() {
         return "</span>";
     }
+    public static String getEndShowMoreDisapearParagraph() {
+        return "</span>";
+    }
 
     public static String getLinkWikiStyle(String link) {
         link = link.trim();

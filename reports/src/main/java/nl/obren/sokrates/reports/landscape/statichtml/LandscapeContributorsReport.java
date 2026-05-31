@@ -197,26 +197,10 @@ public class LandscapeContributorsReport {
                     .filter(p -> p.getCommits30Days() > 0)
                     .collect(Collectors.toCollection(ArrayList::new));
             int repositoriesCount = recentRepositories.size();
-            report.startShowMoreBlock(repositoriesCount + (repositoriesCount == 1 ? "&nbsp;repo" : "&nbsp;repos"));
-            recentRepositories.forEach(contributorRepositoryInfo -> {
-                String repositoryName = contributorRepositoryInfo.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName();
-                int commits = contributorRepositoryInfo.getCommits30Days();
-                if (repositoryInfo.length() > 0) {
-                    repositoryInfo.append("<br/>");
-                }
-                repositoryInfo.append(repositoryName + " <span style='color: grey'>(" + commits + (commits == 1 ? " commit" : " commit") + ")</span>");
-            });
+            report.addHtmlContent(repositoriesCount + (repositoriesCount == 1 ? "&nbsp;repo" : "&nbsp;repos") + " (30d)");
         } else {
             int repositoriesCount = contributor.getRepositories().size();
-            report.startShowMoreBlock(repositoriesCount + (repositoriesCount == 1 ? " repository" : " repositories"));
-            contributor.getRepositories().forEach(contributorRepositoryInfo -> {
-                String repositoryName = contributorRepositoryInfo.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName();
-                int commits = contributorRepositoryInfo.getCommitsCount();
-                if (repositoryInfo.length() > 0) {
-                    repositoryInfo.append("<br/>");
-                }
-                repositoryInfo.append(repositoryName + " <span style='color: grey'>(" + commits + (commits == 1 ? " commit" : " commit") + ")</span>");
-            });
+            report.addHtmlContent(repositoriesCount + (repositoriesCount == 1 ? " repository" : " repositories"));
         }
         report.addHtmlContent(repositoryInfo.toString());
         report.endTableCell();

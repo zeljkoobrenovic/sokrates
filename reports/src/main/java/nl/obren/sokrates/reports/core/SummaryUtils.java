@@ -518,7 +518,7 @@ public class SummaryUtils {
                                 "<br><span style='font-size: 85%; color: grey'>" + value + " " + (value == 1 ? "file" : "files") + "",
                         "text-align: center; font-size: 80%; border: 1px solid grey; display: inline-block; border-radius: 4px; background-color: #f8f8f8; padding: 3px 9px 3px 9px; margin: 3px 2px 8px 2px");
             });
-            report.endShowMoreBlock();
+            report.endShowMoreBlockDisappear();
         }
         report.endTableCell();
         report.addTableCell(linkPrefix + getDetailsIcon() + "</a>", "border: none; border-top: 2px solid lightgrey; padding-top: 10px");

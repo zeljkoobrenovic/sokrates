@@ -1006,13 +1006,11 @@ public class LandscapeReportGenerator {
         if (landscapeAnalysisResults.getRecentContributorsCount(landscapeAnalysisResults.getContributors()) > 0) {
             addContributorsPerExtension(true);
         }
-        landscapeReport.startShowMoreBlockDisappear("", "&nbsp;&nbsp;>&nbsp;Show test and other code...");
+        landscapeReport.startShowMoreBlock("", "Test and other code...");
         addMainExtensions("Test", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getTestLinesOfCodePerExtension()), false);
         addMainExtensions("Other", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getOtherLinesOfCodePerExtension()), false);
         landscapeReport.endShowMoreBlock();
-        landscapeReport.addLineBreak();
-        landscapeReport.addLineBreak();
-        landscapeReport.startShowMoreBlockDisappear("", "&nbsp;&nbsp;>&nbsp;Show commit history per extension...");
+        landscapeReport.startShowMoreBlock("", "Commit history per extension...");
 
         landscapeReport.startSubSection("Commit history per file extension", "");
         landscapeReport.startDiv("max-height: 600px; overflow-y: auto;");
@@ -1032,8 +1030,6 @@ public class LandscapeReportGenerator {
 
         landscapeReport.endShowMoreBlock();
 
-        landscapeReport.addLineBreak();
-        landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
 
         addIFrames(landscapeAnalysisResults.getConfiguration().getiFramesAtStart());
@@ -1070,7 +1066,7 @@ public class LandscapeReportGenerator {
             linesOfCodePerExtensionHide.forEach(extension -> {
                 addLangInfo(extension);
             });
-            landscapeReport.endShowMoreBlock();
+            landscapeReport.endShowMoreBlockDisappear();
         }
         landscapeReport.endDiv();
         String excludedExtensions = landscapeAnalysisResults.getConfiguration().getIgnoreExtensions().stream().collect(Collectors.joining(", "));
@@ -1107,7 +1103,7 @@ public class LandscapeReportGenerator {
             linesOfCodePerExtensionHide.stream().filter(e -> e.getCommitters30Days().size() > 0).forEach(extension -> {
                 addLangInfo(extension, (e) -> e.getCommitters30Days(), extension.getCommitsCount30Days(), DEVELOPER_SVG_ICON);
             });
-            landscapeReport.endShowMoreBlock();
+            landscapeReport.endShowMoreBlockDisappear();
         }
         landscapeReport.endDiv();
         addContributorDependencies(contributorsPerExtension);
@@ -1159,13 +1155,13 @@ public class LandscapeReportGenerator {
         renderer.setTypeGraph();
         String graphvizContent = renderer.getGraphvizContent(new ArrayList<>(extensionsNames), dependencies);
 
-        landscapeReport.startShowMoreBlock("show extension dependencies...");
+        landscapeReport.startShowMoreBlock("extension dependencies...");
         landscapeReport.addGraphvizFigure("extension_dependencies_30d", "Extension dependencies", graphvizContent);
         addDownloadLinks("extension_dependencies_30d");
-        landscapeReport.endShowMoreBlock();
         landscapeReport.addLineBreak();
         landscapeReport.addNewTabLink(" - show extension dependencies as 2D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/extension_dependencies_30d_force_2d.html");
         landscapeReport.addNewTabLink(" - show extension dependencies as 3D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/extension_dependencies_30d_force_3d.html");
+        landscapeReport.endShowMoreBlock();
         new Force3DGraphExporter().export2D3DForceGraph(dependencies, reportsFolder, "extension_dependencies_30d");
     }
 

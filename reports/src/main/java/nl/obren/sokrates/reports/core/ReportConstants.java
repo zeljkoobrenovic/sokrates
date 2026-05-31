@@ -138,6 +138,21 @@ public class ReportConstants {
             "            text-decoration: none;\n" +
             "        }\n" +
             "\n" +
+            "       details {" +
+            "           padding: 8px;" +
+            "           margin: 8px;" +
+            "           border: 1px solid lightgrey;" +
+            "           border: 1px solid #B9D9EB;" +
+            "           background-color: #fcfcfc;" +
+            "           border-radius: 5px;" +
+            "       }"+
+            "       summary {" +
+            "           margin-top: 8px;" +
+            "           margin-bottom: 8px;" +
+            "           white-space: nowrap;" +
+            "           overflow: hidden;" +
+            "       }"+
+            "\n" +
             "        .reportSubtitle {\n" +
             "            color: grey;\n" +
             "        }\n" +

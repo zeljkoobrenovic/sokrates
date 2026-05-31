@@ -436,32 +436,6 @@ public class LandscapeReportContributorsTab {
             landscapeReport.addNewTabLink("animated contributors history (12 months window)", "visuals/racing_charts_commits_window_contributors.html?tickDuration=600");
             landscapeReport.endDiv();
 
-            landscapeReport.startSubSection("<a href='" + type.plural() + ".html' target='_blank' style='text-decoration: none'>" +
-                            "All " + StringUtils.capitalize(type.plural()) + " (" + contributorsCount + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
-                    "latest commit " + latestCommit[0]);
-
-            landscapeReport.startShowMoreBlock("...");
-            addContributorLinks();
-
-            landscapeReport.addHtmlContent("<iframe src='" + type.plural() + "-report.html?tab=all' frameborder=0 style='height: 450px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
-
-            landscapeReport.endShowMoreBlock();
-            landscapeReport.endSection();
-
-            if (type.showBots) {
-                landscapeReport.startSubSection("<a href='bots.html' target='_blank' style='text-decoration: none'>" +
-                                "Bots (" + bots.size() + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
-                        "commits of bots");
-
-                landscapeReport.startShowMoreBlock("...");
-
-                landscapeReport.addHtmlContent("<iframe src='" + type.plural() + "-report.html?tab=bots' frameborder=0 style='height: 450px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
-
-                landscapeReport.endShowMoreBlock();
-                landscapeReport.endSection();
-            }
-
-
             ProcessingStopwatch.end("reporting/contributors/table");
 
             ProcessingStopwatch.start("reporting/contributors/saving tables");
@@ -548,8 +522,15 @@ public class LandscapeReportContributorsTab {
     }
 
     private void addRecentContributorsSection(int recentContributorsCount, String[] latestCommit, List<ContributorRepositories> recentContributors) {
+        landscapeReport.startSubSection("<a href='" + type.plural() + "-report.html' target='_blank' style='text-decoration: none'>" +
+                        "" + StringUtils.capitalize(type.plural()) + "</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
+                "latest commit " + latestCommit[0]);
+
+        landscapeReport.addHtmlContent("<iframe src='" + type.plural() + "-report.html?tab=recent' frameborder=0 style='height: 450px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
+        landscapeReport.endSection();
+
         landscapeReport.startSubSection("<a href='" + type.plural() + "-recent.html' target='_blank' style='text-decoration: none'>" +
-                        "Recently Active " + StringUtils.capitalize(type.plural()) + " (" + recentContributorsCount + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
+                        "Recently Active " + StringUtils.capitalize(type.plural()) + " Stats (" + recentContributorsCount + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
                 "latest commit " + latestCommit[0]);
 
         addRecentContributorLinks();
@@ -632,8 +613,6 @@ public class LandscapeReportContributorsTab {
         landscapeReport.addHtmlContent(barsHtml.toString());
         landscapeReport.endDiv();
 
-
-        landscapeReport.addHtmlContent("<iframe src='" + type.plural() + "-report.html?tab=recent' frameborder=0 style='height: 450px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
 
         landscapeReport.endSection();
     }

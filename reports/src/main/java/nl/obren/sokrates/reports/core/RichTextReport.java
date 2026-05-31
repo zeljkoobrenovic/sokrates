@@ -394,24 +394,33 @@ public class RichTextReport {
 
     }
 
-    public void addShowMoreBlock(String visibleContent, String hiddenContent, String linkLabel) {
-        addHtmlContent(RichTextRenderingUtils.getShowMoreParagraph(visibleContent, hiddenContent, linkLabel));
-    }
-
-    public void startShowMoreBlock(String visibleContent, String linkLabel) {
-        addHtmlContent(RichTextRenderingUtils.getStartShowMoreParagraph(visibleContent, linkLabel));
-    }
 
     public void startShowMoreBlockDisappear(String visibleContent, String linkLabel) {
         addHtmlContent(RichTextRenderingUtils.getStartShowMoreParagraphDisappear(visibleContent, linkLabel));
     }
 
+    public void endShowMoreBlockDisappear() {
+        addHtmlContent(RichTextRenderingUtils.getEndShowMoreDisapearParagraph());
+    }
+
+    public void addShowMoreBlock(String visibleContent, String hiddenContent, String linkLabel) {
+        addHtmlContent("<details><summary>" + linkLabel + "</summary>" + visibleContent + hiddenContent + "</details>");
+    }
+
+    public void startShowMoreBlock(String visibleContent, String linkLabel) {
+        addHtmlContent("<details><summary>" + linkLabel + "</summary>" + visibleContent);
+    }
+
     public void startShowMoreBlock(String linkLabel) {
-        addHtmlContent(RichTextRenderingUtils.getStartShowMoreParagraph("", linkLabel));
+        addHtmlContent("<details><summary>" + linkLabel + "</summary>");
+    }
+
+    public void startShowMoreBlockMinimalistic(String linkLabel) {
+        addHtmlContent("<details style='margin: 0; padding: 4px'><summary style='margin: 2px;'>" + linkLabel + "</summary>");
     }
 
     public void endShowMoreBlock() {
-        addHtmlContent(RichTextRenderingUtils.getEndShowMoreParagraph());
+        addHtmlContent("</details>");
     }
 
     public void addNewTabLink(String label, String href) {

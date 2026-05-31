@@ -149,7 +149,7 @@ public class LandscapeRepositoriesTagsMatrixReport {
             int margin = renderLangIcons ? 7 : 2;
             report.startDiv("box-shadow: 0 1px 2px 0 rgb(0 0 0 / 20%), 0 2px 5px 0 rgb(0 0 0 / 19%); margin: " + margin + "px; display: inline-block; border-radius: 4px; padding: 4px; background-color: " +
                     bgColor);
-            report.startShowMoreBlock("<b>" + count + "</b>");
+            report.startShowMoreBlockMinimalistic("<b>" + count + "</b>");
             report.startDiv("background-color: " + bgColor + "; a margin-left: 5px; font-size: 80%; text-align: left");
             report.addContentInDiv("<b>" + FormattingUtils.formatCount(tagMainLoc) + "</b> LOC (main)<br>"
                             + "<b>" + FormattingUtils.formatCount(tagCommitsCount30Days) + "</b> commits (30d)<br>"
@@ -160,9 +160,9 @@ public class LandscapeRepositoriesTagsMatrixReport {
                 CodeAnalysisResults repositoryAnalysisResults = repository.getAnalysisResults();
                 String repositoryReportUrl = getrepositoryReportUrl(repository);
                 report.addContentInDiv(
-                        "<a href='" + repositoryReportUrl + "' target='_blank' style='margin-left: 6px'>" + repositoryAnalysisResults.getMetadata().getName() + "</a> "
+                        "<div style='white-space: nowrap; overflow: hidden'><a href='" + repositoryReportUrl + "' target='_blank' style='margin-left: 6px'>" + repositoryAnalysisResults.getMetadata().getName() + "</a> "
                                 + "<span color='lightgrey'>(<b>"
-                                + FormattingUtils.formatCount(repositoryAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode(), "-") + "</b> LOC)</span>");
+                                + FormattingUtils.formatCount(repositoryAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode(), "-") + "</b> LOC)</span></div>");
             });
             if (repositoriesAnalysisResults.size() > maxListSize) {
                 report.addContentInDiv("...", "margin-bottom: 10px; margin-left: 7px; font-size: 160%");

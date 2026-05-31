@@ -348,7 +348,7 @@ public class LandscapeRepositoriesTagsReport {
             int count = repositoriesAnalysisResults.size();
             report.startTableCell("text-align: left");
             String repositoryPercText = FormattingUtils.getFormattedPercentage(totalRepositoriesCount > 0 ? (100.0 * count / totalRepositoriesCount) : 0);
-            report.startShowMoreBlock("<b>" + count + "</b>" + (count == 1 ? " repository" : " repositories")
+            report.startShowMoreBlockMinimalistic("<b>" + count + "</b>" + (count == 1 ? " repository" : " repositories")
                     + (count == 0 ? "" : " <span style='color: grey; font-size: 90%'>(" + repositoryPercText + "%)</span>"));
             report.startDiv("border-left: 2px solid lightgrey; margin-left: 5px; font-size: 80%");
             int maxListSize = 100;
