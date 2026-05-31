@@ -479,12 +479,11 @@ public class LandscapeReportContributorsTab {
             LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
             PeopleConfig peopleConfig = landscapeAnalysisResults.getPeopleConfig();
             List<ContributorTag> tagRules = configuration.getTagContributors();
-            int limit = configuration.getContributorsListLimit();
 
             Map<String, List<ContributorReportExport>> groups = new LinkedHashMap<>();
-            groups.put("recent", toExports(recentContributors, configuration, peopleConfig, tagRules, limit));
-            groups.put("all", toExports(contributors, configuration, peopleConfig, tagRules, limit));
-            groups.put("bots", toExports(bots, configuration, peopleConfig, tagRules, limit));
+            groups.put("recent", toExports(recentContributors, configuration, peopleConfig, tagRules));
+            groups.put("all", toExports(contributors, configuration, peopleConfig, tagRules));
+            groups.put("bots", toExports(bots, configuration, peopleConfig, tagRules));
 
             // Language icons for every distinct main language across the three lists.
             List<String> langs = new ArrayList<>();
@@ -509,14 +508,14 @@ public class LandscapeReportContributorsTab {
     }
 
     private List<ContributorReportExport> toExports(List<ContributorRepositories> list, LandscapeConfiguration configuration,
-                                              PeopleConfig peopleConfig, List<ContributorTag> tagRules, int limit) {
-        // Mirror the table's commit-recency ordering, capped at the configured list limit.
+                                              PeopleConfig peopleConfig, List<ContributorTag> tagRules) {
+        // Export every contributor (no list-limit cap): the client-rendered report pages the
+        // display itself (show-more), and search needs the full set. Sorted by commit recency.
         return list.stream()
                 .sorted((a, b) -> b.getContributor().getCommitsCount() - a.getContributor().getCommitsCount())
                 .sorted((a, b) -> b.getContributor().getCommitsCount365Days() - a.getContributor().getCommitsCount365Days())
                 .sorted((a, b) -> b.getContributor().getCommitsCount90Days() - a.getContributor().getCommitsCount90Days())
                 .sorted((a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days())
-                .limit(limit)
                 .map(cr -> new ContributorReportExport(cr, configuration, peopleConfig, teamsConfig, tagRules))
                 .collect(Collectors.toList());
     }
