@@ -63,6 +63,12 @@ java -jar cli-1.0-jar-with-dependencies.jar generateReports -help
 
 Defaults: configuration is read from `<currentFolder>/_sokrates/config.json` and reports are written to `<currentFolder>/_sokrates/reports/`.
 
+## Configuration
+
+Sokrates is driven by two JSON config files — `_sokrates/config.json` (repository analysis) and
+`_sokrates_landscape/config.json` (landscapes). See the **[Configuration Manual](docs/configuration.md)**
+for a full reference of every key, with defaults and examples.
+
 ## Run the GUI explorer
 
 ```bash
