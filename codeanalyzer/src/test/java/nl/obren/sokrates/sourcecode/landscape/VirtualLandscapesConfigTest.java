@@ -2,11 +2,28 @@ package nl.obren.sokrates.sourcecode.landscape;
 
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
+import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisUtils;
 import org.junit.jupiter.api.Test;
+
+import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class VirtualLandscapesConfigTest {
+
+    @Test
+    void generatedVirtualLandscapeFilesAreExcludedFromFolderDiscovery() {
+        // A generated virtual landscape lives under _sokrates_landscape/landscapes/...
+        assertTrue(LandscapeAnalysisUtils.isInGeneratedVirtualLandscape(
+                Paths.get("root/_sokrates_landscape/landscapes/Datadog/_sokrates_landscape/index.html")));
+        assertTrue(LandscapeAnalysisUtils.isInGeneratedVirtualLandscape(
+                Paths.get("root/_sokrates_landscape/landscapes/Remainder/_sokrates_landscape/config.json")));
+        // Real folder sub-landscapes and repositories are not excluded.
+        assertFalse(LandscapeAnalysisUtils.isInGeneratedVirtualLandscape(
+                Paths.get("root/team-a/_sokrates_landscape/index.html")));
+        assertFalse(LandscapeAnalysisUtils.isInGeneratedVirtualLandscape(
+                Paths.get("root/repo-x/data/analysisResults.json")));
+    }
 
     @Test
     void parsesVirtualLandscapesFromConfigJson() throws Exception {
