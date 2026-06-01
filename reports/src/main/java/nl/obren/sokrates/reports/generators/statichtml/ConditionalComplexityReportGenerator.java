@@ -110,7 +110,7 @@ public class ConditionalComplexityReportGenerator {
         List<UnitInfo> mostComplexUnits = unitsAnalysisResults.getMostComplexUnits();
         report.startSection("Most Complex Units", "Top " + mostComplexUnits.size() + " most complex units");
         report.startScrollingDiv();
-        report.addHtmlContent(UtilsReportUtils.getUnitsTable(mostComplexUnits, "most_complex_unit", cacheFiles, saveCodeFragments).toString());
+        report.addHtmlContent(UtilsReportUtils.getUnitsTable(mostComplexUnits, "most_complex_units", cacheFiles, saveCodeFragments).toString());
         report.endDiv();
         report.endSection();
     }

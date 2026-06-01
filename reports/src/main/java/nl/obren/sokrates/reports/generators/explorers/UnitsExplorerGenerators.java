@@ -45,7 +45,7 @@ public class UnitsExplorerGenerators {
             Map<UnitInfo, String> fragmentLinks = new IdentityHashMap<>();
             if (codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveCodeFragments()) {
                 addFragmentLinks(fragmentLinks, codeAnalysisResults.getUnitsAnalysisResults().getLongestUnits(), "longest_unit");
-                addFragmentLinks(fragmentLinks, codeAnalysisResults.getUnitsAnalysisResults().getMostComplexUnits(), "most_complex_unit");
+                addFragmentLinks(fragmentLinks, codeAnalysisResults.getUnitsAnalysisResults().getMostComplexUnits(), "most_complex_units");
             }
 
             List<UnitExport> unitExports = units.stream().map(unit -> {

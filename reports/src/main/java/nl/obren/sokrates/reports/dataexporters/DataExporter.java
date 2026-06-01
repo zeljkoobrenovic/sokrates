@@ -558,7 +558,7 @@ public class DataExporter {
         if (codeConfiguration.getAnalysis().isSaveCodeFragments()) {
             UnitsAnalysisResults unitsAnalysisResults = analysisResults.getUnitsAnalysisResults();
             saveUnitFragmentFiles(unitsAnalysisResults.getLongestUnits(), "longest_unit");
-            saveUnitFragmentFiles(unitsAnalysisResults.getMostComplexUnits(), "most_complex_unit");
+            saveUnitFragmentFiles(unitsAnalysisResults.getMostComplexUnits(), "most_complex_units");
 
             DuplicationAnalysisResults duplicationAnalysisResults = analysisResults.getDuplicationAnalysisResults();
             saveDuplicateFragmentFiles(duplicationAnalysisResults.getLongestDuplicates(), "longest_duplicates");
