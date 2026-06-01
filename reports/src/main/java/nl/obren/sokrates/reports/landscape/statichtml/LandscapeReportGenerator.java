@@ -17,7 +17,10 @@ import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
-import nl.obren.sokrates.reports.landscape.statichtml.repositories.*;
+import nl.obren.sokrates.reports.landscape.statichtml.repositories.LandscapeRepositoriesTagsLine;
+import nl.obren.sokrates.reports.landscape.statichtml.repositories.LandscapeRepositoriesTagsMatrixReport;
+import nl.obren.sokrates.reports.landscape.statichtml.repositories.LandscapeRepositoriesTagsReport;
+import nl.obren.sokrates.reports.landscape.statichtml.repositories.TagMap;
 import nl.obren.sokrates.reports.landscape.utils.*;
 import nl.obren.sokrates.reports.utils.AnimalIcons;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
@@ -25,7 +28,6 @@ import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.reports.utils.PromptsUtils;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
-import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
@@ -1470,8 +1472,6 @@ public class LandscapeReportGenerator {
         AnimalIcons icons = new AnimalIcons(64);
         List<String> animals = icons.getAnimals();
         List<String> animalsLocInfo = icons.getAnimalsLOCInfo();
-        // Collections.reverse(animals);
-        // Collections.reverse(animalsLocInfo);
 
         int totalLoc = landscapeAnalysisResults.getMainLoc();
 
@@ -1501,24 +1501,16 @@ public class LandscapeReportGenerator {
                         : 0)
                 .collect(Collectors.toList());
         SimpleOneBarChart sizeBar = new SimpleOneBarChart();
-        sizeBar.setWidth(BAR_WIDTH + 20);
+        sizeBar.setWidth(BAR_WIDTH + 170);
         sizeBar.setBarHeight(BAR_HEIGHT);
-        sizeBar.setMaxBarWidth(BAR_WIDTH);
+        sizeBar.setMaxBarWidth(BAR_WIDTH + 150);
         sizeBar.setBarStartXOffset(0);
         landscapeReport.startDivWithLabel("lines of code per repository size category (" +
                 String.join(" | ", animalsLocInfo).replace("&lt;", "<").replace("&gt;", ">") + ")", "margin-bottom: 12px;");
-        landscapeReport.addHtmlContent(sizeBar.getStackedBarSvg(sizeLocValues, Palette.getSizePalette(), "small", "large"));
+        landscapeReport.addHtmlContent(sizeBar.getStackedBarSvg(sizeLocValues, Palette.getSizePalette(), "", ""));
         landscapeReport.endDiv();
 
         landscapeReport.startTable("font-size: 100%; margin-bottom: 6px;");
-
-        landscapeReport.startTableRow();
-        animalsLocInfo.forEach(animalInfo -> {
-            landscapeReport.startTableCell("text-align: center; border: none; color: black;");
-            landscapeReport.addContentInDiv(animalInfo);
-            landscapeReport.endTableCell();
-        });
-        landscapeReport.endTableRow();
 
         List<String> sizeColors = Palette.getSizePalette().getColors();
         landscapeReport.startTableRow();
@@ -1553,7 +1545,7 @@ public class LandscapeReportGenerator {
             int count = animalCounts.containsKey(animal) ? animalCounts.get(animal).size() : 0;
             landscapeReport.startTableCell("vertical-align: top; border: none;" + (count > 0 ? "" : "color: grey; opacity: 0.2"));
             int height = maxCount[0] > 0 ? (int) Math.round(64.0 * count / maxCount[0]) + 1 : 1;
-            landscapeReport.addContentInDiv("", "background-color: lightgrey; width: 100%; height: " + height + "px");
+            // landscapeReport.addContentInDiv("", "background-color: lightgrey; width: 100%; height: " + height + "px");
             String info = "";
             if (count > 0) {
                 info += animalCounts.get(animal).stream()
@@ -1572,10 +1564,23 @@ public class LandscapeReportGenerator {
                 }
             }
 
-            landscapeReport.addContentInDivWithTooltip(perc + count + (count == 0 ? " repo" : " repos"), info, "font-size: 80%; width: 100%; text-align: center");
+            landscapeReport.addContentInDivWithTooltip(perc + count + (count == 1 ? " repo" : " repos"), info, "font-size: 80%; width: 100%; text-align: center");
             landscapeReport.endTableCell();
         });
         landscapeReport.endTableRow();
+
+
+        landscapeReport.startTableRow();
+        int index[] = {0};
+        animalsLocInfo.forEach(animalInfo -> {
+            int count = animalCounts.containsKey(animals.get(index[0])) ? animalCounts.get(animals.get(index[0])).size() : 0;
+            landscapeReport.startTableCell("text-align: center; border: none; color: black;" + ((count > 0 ? "" : "color: grey; opacity: 0.5")));
+            landscapeReport.addContentInDiv(animalInfo);
+            landscapeReport.endTableCell();
+            index[0] += 1;
+        });
+        landscapeReport.endTableRow();
+
 
         landscapeReport.endTable();
 
