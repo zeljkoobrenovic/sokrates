@@ -4,7 +4,9 @@ import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.renderingutils.ExplorerTemplate;
 import nl.obren.sokrates.common.utils.SystemUtils;
 import nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator;
+import nl.obren.sokrates.reports.generators.explorers.FilesExportUtils;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.TagMap;
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 import nl.obren.sokrates.reports.landscape.utils.ContributorPerExtensionHelper;
 import nl.obren.sokrates.reports.landscape.utils.FeaturesOfInterestAggregator;
 import nl.obren.sokrates.reports.landscape.utils.RepositoryConcernData;
@@ -91,7 +93,13 @@ public class LandscapeDataExport {
 
             List<String> fileLangs = files.stream().map(FileExport::getMainLang).collect(Collectors.toList());
             String fileLangIcons = DataImageUtils.getLangDataImageMapJson(fileLangs);
-            String filesExplorer = explorerTemplate.render("files-explorer.html", files, fileLangIcons);
+            Map<String, String> filesPlaceholders = new HashMap<>();
+            filesPlaceholders.put("langIcons", fileLangIcons);
+            // The landscape aggregates many repositories with potentially different thresholds, so use
+            // the standard file-size thresholds for the LOC-bar risk colouring.
+            filesPlaceholders.put("fileSizeThresholds",
+                    FilesExportUtils.thresholdsJson(Thresholds.defaultFileSizeThresholds()));
+            String filesExplorer = explorerTemplate.render("files-explorer.html", files, filesPlaceholders);
             FileUtils.write(new File(reportsFolder, "files-explorer.html"), filesExplorer, UTF_8);
 
             // The full, client-rendered repositories report (replaces the old static repositories.html).

@@ -106,6 +106,27 @@
     // Map of language/extension -> base64 image data URI, injected at report-generation time.
     const langIcons = ${langIcons};
 
+    // File-size risk thresholds {low, medium, high, veryHigh} (in lines of code), injected at
+    // report-generation time, used to colour-code the LOC bar. Falls back to sensible defaults if
+    // the placeholder was not substituted.
+    let fileSizeThresholds = ${fileSizeThresholds};
+    if (!fileSizeThresholds || typeof fileSizeThresholds.veryHigh !== 'number') {
+        fileSizeThresholds = {low: 100, medium: 200, high: 500, veryHigh: 1000};
+    }
+
+    // Green (negligible) -> red (very high), matching the risk palette family.
+    const RISK_COLORS = ['#1a9641', '#a6d96a', '#fdae61', '#f03b20', '#bd0026'];
+
+    // Returns a risk color for a value against {low, medium, high, veryHigh} thresholds.
+    function riskColor(value, t) {
+        if (!t) return RISK_COLORS[0];
+        if (value > t.veryHigh) return RISK_COLORS[4];
+        if (value > t.high) return RISK_COLORS[3];
+        if (value > t.medium) return RISK_COLORS[2];
+        if (value > t.low) return RISK_COLORS[1];
+        return RISK_COLORS[0];
+    }
+
     // Renders a small round language badge: an icon when one is known, otherwise a text bubble
     // with the language name (mirrors DataImageUtils.getLangDataImageDiv on the Java side).
     function langIcon(lang) {
@@ -366,11 +387,11 @@
             html += '<td style="text-align: left; padding-right: 5px; padding-left: 5px">';
             html += '<div style=" border-radius: 4px; padding 2px;">';
             const w = maxLoc > 0 ? Math.round(50 * item.linesOfCode / maxLoc + 1) : 0;
-            if (scope === 'main') {
-                html += '<div style="vertical-align: top; display: inline-block; height: 16px; background-color: blue; width: ' + w + 'px"></div>';
-            } else {
-                html += '<div style="vertical-align: top; display: inline-block; height: 16px; background-color: lightgrey; width: ' + w + 'px"></div>';
-            }
+            // Bar colour reflects the file-size risk band; non-main files are muted (lower opacity)
+            // so the scope distinction is preserved.
+            const barColor = riskColor(item.linesOfCode, fileSizeThresholds);
+            const barOpacity = scope === 'main' ? '1' : '0.45';
+            html += '<div style="vertical-align: top; display: inline-block; height: 16px; background-color: ' + barColor + '; opacity: ' + barOpacity + '; width: ' + w + 'px"></div>';
             html += '<div style="margin-left: 2px; vertical-align: top; display: inline-block; font-size: 80%">' + item.linesOfCode.toLocaleString("en-US") + '</div>';
             html += '</div>';
             html += '</td>';

@@ -12,7 +12,9 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -65,7 +67,13 @@ public class FilesExplorerGenerators {
 
             List<String> fileLangs = files.stream().map(FileExport::getMainLang).collect(Collectors.toList());
             String fileLangIcons = DataImageUtils.getLangDataImageMapJson(fileLangs);
-            String filesExplorer = explorerTemplate.render("files-explorer.html", files, fileLangIcons);
+
+            Map<String, String> placeholders = new HashMap<>();
+            placeholders.put("langIcons", fileLangIcons);
+            placeholders.put("fileSizeThresholds", FilesExportUtils.thresholdsJson(
+                    codeAnalysisResults.getCodeConfiguration().getAnalysis().getFileSizeThresholds()));
+
+            String filesExplorer = explorerTemplate.render("files-explorer.html", files, placeholders);
             File folder = new File(reportsFolder, "explorers");
             folder.mkdirs();
             FileUtils.write(new File(folder, "files-explorer.html"), filesExplorer, UTF_8);
