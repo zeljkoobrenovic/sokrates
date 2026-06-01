@@ -653,6 +653,13 @@ public class LandscapeReportGenerator {
                 LandscapeAnalysisResultsReadData subLandscapeAnalysisResults = getSubLandscapeAnalysisResults(subLandscape);
                 landscapeReport.startTableRow(style);
                 LandscapeConfiguration subLandscapeConfig = getSubLandscapeConfig(subLandscape);
+                // getSubLandscapeConfig returns null when the sub-landscape's config.json is missing
+                // or unreadable (e.g. a stale folder link, or a child report that did not finish
+                // generating). Fall back to defaults so the row still renders instead of crashing the
+                // whole parent report — mirrors the null-tolerance below for subLandscapeAnalysisResults.
+                if (subLandscapeConfig == null) {
+                    subLandscapeConfig = new LandscapeConfiguration();
+                }
                 Metadata metadata = subLandscapeConfig.getMetadata();
                 landscapeReport.addTableCell(!labelText.contains("/") ? ("<a href='" + href + "' target='_blank'>" +
                         (StringUtils.isNotBlank(metadata.getLogoLink())
