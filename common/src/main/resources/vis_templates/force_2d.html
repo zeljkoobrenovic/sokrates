@@ -154,6 +154,13 @@
             lastW = w;
             lastH = h;
             Graph.width(w).height(h);
+            // In an iframe the canvas often has no real size when the simulation first runs, so the
+            // layout cools down with every node piled at the centre; resizing the canvas alone does
+            // not re-run it. Reheat the simulation once a real size is established (and on later
+            // resizes) so the graph actually expands to fill the new dimensions.
+            if (typeof Graph.d3ReheatSimulation === 'function') {
+                Graph.d3ReheatSimulation();
+            }
         }
     }
     window.addEventListener('resize', resizeGraph);
