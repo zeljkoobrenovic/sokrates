@@ -40,11 +40,12 @@ public class Palette {
         return new Palette(Arrays.asList("#9DC034", "#F2021B"));
     }
 
-    // Sequential blue ramp for the 11 repository-size categories (<1K .. >1M): light = small, dark = large.
+    // Heat ramp (RdYlGn family, like the risk palette) for the 11 repository-size categories
+    // (<1K .. >1M): green = small, through yellow/orange, to red = large.
     public static Palette getSizePalette() {
         return new Palette(Arrays.asList(
-                "#eff3ff", "#dbe6f6", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6",
-                "#2171b5", "#1361a9", "#08519c", "#08418a", "#08306b"));
+                "#1a9641", "#52b151", "#8acc62", "#b8e17b", "#dcf09e", "#ffffbf",
+                "#fee79a", "#fdc070", "#f59053", "#e34d33", "#d7191c"));
     }
 
     public static Palette getDefaultPalette() {
