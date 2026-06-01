@@ -23,8 +23,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class LandscapeAnalyzer {
@@ -291,7 +293,58 @@ public class LandscapeAnalyzer {
         files.addAll(getRepositoryFilesByScope(repositoryName, sokratesRepositoryLink, "excluded_files_ignored_extensions.txt"));
         files.addAll(getRepositoryFilesByScope(repositoryName, sokratesRepositoryLink, "excluded_files_ignored_rules.txt"));
 
+        enrichFilesWithCommitHistory(files, sokratesRepositoryLink);
+
         return files;
+    }
+
+    /**
+     * Merges per-file git history (total commits, commits in the last 30 days, latest commit date)
+     * into the file exports, read from the repository's {@code text/mainFilesWithHistory.txt} (written
+     * by the repository analysis). Only main files have a history file; files not present there keep
+     * their defaults (0 / ""). No-op when the repository has no history file.
+     */
+    private void enrichFilesWithCommitHistory(List<FileExport> files, SokratesRepositoryLink sokratesRepositoryLink) {
+        File txtDataFolder = new File(getRepositoryAnalysisFile(sokratesRepositoryLink).getParentFile(), "text");
+        File historyFile = new File(txtDataFolder, "mainFilesWithHistory.txt");
+        if (!historyFile.exists()) {
+            return;
+        }
+        try {
+            List<String> lines = FileUtils.readLines(historyFile, StandardCharsets.UTF_8);
+            if (lines.isEmpty()) {
+                return;
+            }
+            // Resolve columns by header name so this tolerates both the older layout (no
+            // "# commits (30d)" column) and the newer one.
+            String[] header = lines.get(0).split("\t");
+            int pathCol = indexOfColumn(header, "path");
+            int commitsCol = indexOfColumn(header, "# commits");
+            int commits30Col = indexOfColumn(header, "# commits (30d)");
+            int lastUpdatedCol = indexOfColumn(header, "last updated");
+            if (pathCol < 0) {
+                return;
+            }
+            Map<String, FileExport> filesByPath = new HashMap<>();
+            files.forEach(file -> filesByPath.put(file.getPath(), file));
+            lines.stream().skip(1).forEach(line -> {
+                String data[] = line.split("\t");
+                FileExport file = pathCol < data.length ? filesByPath.get(data[pathCol]) : null;
+                if (file != null) {
+                    if (commitsCol >= 0 && commitsCol < data.length && NumberUtils.isDigits(data[commitsCol])) {
+                        file.setCommitsCount(Integer.parseInt(data[commitsCol]));
+                    }
+                    if (commits30Col >= 0 && commits30Col < data.length && NumberUtils.isDigits(data[commits30Col])) {
+                        file.setRecentCommitsCount30Days(Integer.parseInt(data[commits30Col]));
+                    }
+                    if (lastUpdatedCol >= 0 && lastUpdatedCol < data.length) {
+                        file.setLatestCommitDate(data[lastUpdatedCol]);
+                    }
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private List<FileExport> getRepositoryFilesByScope(String repositoryName, SokratesRepositoryLink sokratesRepositoryLink, String scopeFile) {
@@ -317,6 +370,16 @@ public class LandscapeAnalyzer {
         }
 
         return new ArrayList<>();
+    }
+
+    /** Index of the column whose header exactly equals {@code name} (trimmed), or -1 if absent. */
+    private int indexOfColumn(String[] header, String name) {
+        for (int i = 0; i < header.length; i++) {
+            if (header[i].trim().equals(name)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
 }
