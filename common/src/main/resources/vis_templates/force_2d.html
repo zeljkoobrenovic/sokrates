@@ -142,6 +142,34 @@
         .linkDirectionalParticleSpeed(d => d.count / maxCount * 0.01)
         .linkWidth(d => 3 * d.count / maxCount + 0.1);
 
+    // Explicitly size the canvas to the container. When embedded in an iframe the flex layout
+    // may not have computed #graph's size by the time ForceGraph() initialises, leaving a 0-size
+    // canvas (nodes/edges invisible while the side panel still shows). Set it from the measured
+    // container and keep it in sync on resize.
+    let lastW = 0, lastH = 0;
+    function resizeGraph() {
+        const w = elem.clientWidth || elem.offsetWidth;
+        const h = elem.clientHeight || elem.offsetHeight;
+        if (w > 0 && h > 0 && (w !== lastW || h !== lastH)) {
+            lastW = w;
+            lastH = h;
+            Graph.width(w).height(h);
+            // In an iframe the canvas often has no real size when the simulation first runs, so the
+            // layout cools down with every node piled at the centre; resizing the canvas alone does
+            // not re-run it. Reheat the simulation once a real size is established (and on later
+            // resizes) so the graph actually expands to fill the new dimensions.
+            if (typeof Graph.d3ReheatSimulation === 'function') {
+                Graph.d3ReheatSimulation();
+            }
+        }
+    }
+    window.addEventListener('resize', resizeGraph);
+    // A ResizeObserver fires as soon as the container gets a real size, which is the reliable
+    // signal inside an iframe where the flex layout settles after the script first runs.
+    if (typeof ResizeObserver !== 'undefined') {
+        new ResizeObserver(resizeGraph).observe(elem);
+    }
+
     function linkEnd(e) {
         // endpoint may be a plain id or (after layout) a node object
         return (e && typeof e === 'object') ? e.id : e;
@@ -212,6 +240,11 @@
 
     renderList();
     applyGraph();
+    // Size after the initial layout, then again on the next frame and after full load — inside an
+    // iframe the container can still be 0-size on the first pass.
+    resizeGraph();
+    requestAnimationFrame(resizeGraph);
+    window.addEventListener('load', resizeGraph);
 </script>
 </body>
 </html>

@@ -9,10 +9,13 @@ import nl.obren.sokrates.common.renderingutils.ExplorerTemplate;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.ReportConstants;
-import nl.obren.sokrates.reports.landscape.data.ContributorReportExport;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
-import nl.obren.sokrates.reports.landscape.utils.*;
+import nl.obren.sokrates.reports.landscape.data.ContributorReportExport;
+import nl.obren.sokrates.reports.landscape.utils.ContributorsExtractor;
+import nl.obren.sokrates.reports.landscape.utils.ExtractStringListValue;
+import nl.obren.sokrates.reports.landscape.utils.Force3DGraphExporter;
+import nl.obren.sokrates.reports.landscape.utils.RacingRepositoriesBarChartsExporter;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
@@ -21,7 +24,8 @@ import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.landscape.*;
-import nl.obren.sokrates.sourcecode.landscape.analysis.*;
+import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
+import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -425,9 +429,7 @@ public class LandscapeReportContributorsTab {
 
             int recentContributorsCount = recentContributors.size();
 
-            if (recentContributorsCount > 0) {
-                addRecentContributorsSection(recentContributorsCount, latestCommit, recentContributors);
-            }
+            addContributorsListsSection(recentContributorsCount, latestCommit, recentContributors);
 
             landscapeReport.startDiv("margin-bottom: 16px; margin-top: -6px; vertical-align: middle;");
             landscapeReport.addContentInDiv(ReportConstants.ANIMATION_SVG_ICON, "display: inline-block; vertical-align: middle; margin: 4px;");
@@ -508,7 +510,7 @@ public class LandscapeReportContributorsTab {
     }
 
     private List<ContributorReportExport> toExports(List<ContributorRepositories> list, LandscapeConfiguration configuration,
-                                              PeopleConfig peopleConfig, List<ContributorTag> tagRules) {
+                                                    PeopleConfig peopleConfig, List<ContributorTag> tagRules) {
         // Export every contributor (no list-limit cap): the client-rendered report pages the
         // display itself (show-more), and search needs the full set. Sorted by commit recency.
         return list.stream()
@@ -520,12 +522,12 @@ public class LandscapeReportContributorsTab {
                 .collect(Collectors.toList());
     }
 
-    private void addRecentContributorsSection(int recentContributorsCount, String[] latestCommit, List<ContributorRepositories> recentContributors) {
+    private void addContributorsListsSection(int recentContributorsCount, String[] latestCommit, List<ContributorRepositories> recentContributors) {
         landscapeReport.startSubSection("<a href='" + type.plural() + "-report.html' target='_blank' style='text-decoration: none'>" +
                         "" + StringUtils.capitalize(type.plural()) + "</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
                 "latest commit " + latestCommit[0]);
 
-        landscapeReport.addHtmlContent("<iframe src='" + type.plural() + "-report.html?tab=recent' frameborder=0 style='height: 450px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
+        landscapeReport.addHtmlContent("<iframe src='" + type.plural() + "-report.html?tab=recent' frameborder=0 style='height: 650px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
         landscapeReport.endSection();
 
         landscapeReport.startSubSection("<a href='" + type.plural() + "-recent.html' target='_blank' style='text-decoration: none'>" +

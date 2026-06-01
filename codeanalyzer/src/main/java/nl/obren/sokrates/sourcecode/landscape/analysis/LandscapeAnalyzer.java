@@ -23,8 +23,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class LandscapeAnalyzer {
@@ -148,7 +150,13 @@ public class LandscapeAnalyzer {
     }
 
 
-    private void updatePeopleDependencies(LandscapeAnalysisResults landscapeAnalysisResults) {
+    /**
+     * Computes and stores the contributor/team topology data (people dependencies, connections via
+     * repositories, c/p indices, and history) from the landscape's contributors. Public + static so
+     * it can be reused for virtual landscapes, whose child results are assembled from a repository
+     * subset rather than analysed from disk.
+     */
+    public static void updatePeopleDependencies(LandscapeAnalysisResults landscapeAnalysisResults) {
         LOG.info("Updating people dependencies....");
         List<ContributorRepositories> contributors = landscapeAnalysisResults.getContributors();
         LOG.info("Updating people dependencies in past 30d....");
@@ -206,7 +214,7 @@ public class LandscapeAnalyzer {
         LOG.info("Done updating people dependencies.");
     }
 
-    private void addHistory(LandscapeAnalysisResults landscapeAnalysisResults) {
+    private static void addHistory(LandscapeAnalysisResults landscapeAnalysisResults) {
         List<ContributorRepositories> contributors = landscapeAnalysisResults.getContributors();
         for (int i = 0; i < 12; i++) {
             int daysAgo1 = i * 30;
@@ -285,7 +293,74 @@ public class LandscapeAnalyzer {
         files.addAll(getRepositoryFilesByScope(repositoryName, sokratesRepositoryLink, "excluded_files_ignored_extensions.txt"));
         files.addAll(getRepositoryFilesByScope(repositoryName, sokratesRepositoryLink, "excluded_files_ignored_rules.txt"));
 
+        enrichFilesWithCommitHistory(files, sokratesRepositoryLink);
+
         return files;
+    }
+
+    /**
+     * Merges per-file git history (total commits, commits in the last 30 days, latest commit date)
+     * into the file exports, read from the repository's {@code text/mainFilesWithHistory.txt} (written
+     * by the repository analysis). Only main files have a history file; files not present there keep
+     * their defaults (0 / ""). No-op when the repository has no history file.
+     */
+    private void enrichFilesWithCommitHistory(List<FileExport> files, SokratesRepositoryLink sokratesRepositoryLink) {
+        File txtDataFolder = new File(getRepositoryAnalysisFile(sokratesRepositoryLink).getParentFile(), "text");
+        File historyFile = new File(txtDataFolder, "mainFilesWithHistory.txt");
+        if (!historyFile.exists()) {
+            return;
+        }
+        try {
+            List<String> lines = FileUtils.readLines(historyFile, StandardCharsets.UTF_8);
+            if (lines.isEmpty()) {
+                return;
+            }
+            // Resolve columns by header name so this tolerates both the older layout (no
+            // "# commits (30d)" column) and the newer one.
+            String[] header = lines.get(0).split("\t");
+            int pathCol = indexOfColumn(header, "path");
+            int commitsCol = indexOfColumn(header, "# commits");
+            int commits30Col = indexOfColumn(header, "# commits (30d)");
+            int commits90Col = indexOfColumn(header, "# commits (90d)");
+            int contributorsCol = indexOfColumn(header, "# contributors");
+            int ageCol = indexOfColumn(header, "days since first update");
+            int freshnessCol = indexOfColumn(header, "days since last update");
+            int lastUpdatedCol = indexOfColumn(header, "last updated");
+            if (pathCol < 0) {
+                return;
+            }
+            Map<String, FileExport> filesByPath = new HashMap<>();
+            files.forEach(file -> filesByPath.put(file.getPath(), file));
+            lines.stream().skip(1).forEach(line -> {
+                String data[] = line.split("\t");
+                FileExport file = pathCol < data.length ? filesByPath.get(data[pathCol]) : null;
+                if (file != null) {
+                    if (commitsCol >= 0 && commitsCol < data.length && NumberUtils.isDigits(data[commitsCol])) {
+                        file.setCommitsCount(Integer.parseInt(data[commitsCol]));
+                    }
+                    if (commits30Col >= 0 && commits30Col < data.length && NumberUtils.isDigits(data[commits30Col])) {
+                        file.setRecentCommitsCount30Days(Integer.parseInt(data[commits30Col]));
+                    }
+                    if (commits90Col >= 0 && commits90Col < data.length && NumberUtils.isDigits(data[commits90Col])) {
+                        file.setRecentCommitsCount90Days(Integer.parseInt(data[commits90Col]));
+                    }
+                    if (contributorsCol >= 0 && contributorsCol < data.length && NumberUtils.isDigits(data[contributorsCol])) {
+                        file.setContributorsCount(Integer.parseInt(data[contributorsCol]));
+                    }
+                    if (ageCol >= 0 && ageCol < data.length && NumberUtils.isDigits(data[ageCol])) {
+                        file.setAgeDays(Integer.parseInt(data[ageCol]));
+                    }
+                    if (freshnessCol >= 0 && freshnessCol < data.length && NumberUtils.isDigits(data[freshnessCol])) {
+                        file.setFreshnessDays(Integer.parseInt(data[freshnessCol]));
+                    }
+                    if (lastUpdatedCol >= 0 && lastUpdatedCol < data.length) {
+                        file.setLatestCommitDate(data[lastUpdatedCol]);
+                    }
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private List<FileExport> getRepositoryFilesByScope(String repositoryName, SokratesRepositoryLink sokratesRepositoryLink, String scopeFile) {
@@ -311,6 +386,16 @@ public class LandscapeAnalyzer {
         }
 
         return new ArrayList<>();
+    }
+
+    /** Index of the column whose header exactly equals {@code name} (trimmed), or -1 if absent. */
+    private int indexOfColumn(String[] header, String name) {
+        for (int i = 0; i < header.length; i++) {
+            if (header[i].trim().equals(name)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
 }

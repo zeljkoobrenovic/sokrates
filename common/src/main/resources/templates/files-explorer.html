@@ -91,7 +91,7 @@
                     id="label_other">other</span></label>&nbsp;&nbsp;&nbsp;&nbsp;
             <span id="scope-summary" style="background-color: #f8f8f8"></span>
         </div>
-        <input id="filter" type="text" placeholder="search..."
+        <input id="filter" type="text" placeholder="search... (use ; for multiple terms)"
                style="font-size: 16px; height: 32px; width: 320px; margin-bottom: 10px"
                onkeyup="update()">
         <div id="search-summary" style="display: inline-block"></div>
@@ -106,6 +106,73 @@
     // Map of language/extension -> base64 image data URI, injected at report-generation time.
     const langIcons = ${langIcons};
 
+    // File-size risk thresholds {low, medium, high, veryHigh} (in lines of code), injected at
+    // report-generation time, used to colour-code the LOC bar. Falls back to sensible defaults if
+    // the placeholder was not substituted.
+    let fileSizeThresholds = ${fileSizeThresholds};
+    if (!fileSizeThresholds || typeof fileSizeThresholds.veryHigh !== 'number') {
+        fileSizeThresholds = {low: 100, medium: 200, high: 500, veryHigh: 1000};
+    }
+
+    // Green (negligible) -> red (very high), matching the risk palette family.
+    const RISK_COLORS = ['#1a9641', '#a6d96a', '#fdae61', '#f03b20', '#bd0026'];
+
+    // Returns a risk color for a value against {low, medium, high, veryHigh} thresholds.
+    function riskColor(value, t) {
+        if (!t) return RISK_COLORS[0];
+        if (value > t.veryHigh) return RISK_COLORS[4];
+        if (value > t.high) return RISK_COLORS[3];
+        if (value > t.medium) return RISK_COLORS[2];
+        if (value > t.low) return RISK_COLORS[1];
+        return RISK_COLORS[0];
+    }
+
+    // File age / freshness / change-frequency / contributors thresholds, injected at generation time
+    // (with defaults), used to colour the corresponding columns like the File Age and File Change
+    // Frequency reports do.
+    function withDefaults(t, def) {
+        return (t && typeof t.veryHigh === 'number') ? t : def;
+    }
+    const fileAgeThresholds = withDefaults(${fileAgeThresholds}, {low: 30, medium: 90, high: 180, veryHigh: 365});
+    const fileFreqThresholds = withDefaults(${fileUpdateFrequencyThresholds}, {low: 5, medium: 20, high: 50, veryHigh: 100});
+    const fileContribThresholds = withDefaults(${fileContributorsCountThresholds}, {low: 1, medium: 5, high: 10, veryHigh: 25});
+
+    // Report palettes (index 0 = very-high band ... index 4 = negligible band), mirroring
+    // Palette.getAgePalette / getFreshnessPalette / getHeatPalette on the Java side.
+    const AGE_PALETTE = ['#4a3c31', '#fac831', '#ffdf44', '#fff18e', '#fcf4cb'];
+    const FRESHNESS_PALETTE = ['#041E02', '#006d2c', '#31a354', '#74c476', '#bae4b3'];
+    const HEAT_PALETTE = ['#b21227', '#f7844e', '#e6f5df', '#b0d8e9', '#6192c3'];
+
+    // Maps a value to its risk band against {low, medium, high, veryHigh} (same boundaries as
+    // RiskDistributionStats.update) and returns the matching palette colour. Palettes are ordered
+    // very-high -> negligible, so band 0 = very-high.
+    function bandColor(value, t, palette) {
+        if (value < 0 || !t) return '';
+        if (value <= t.low) return palette[4];        // negligible
+        if (value <= t.medium) return palette[3];     // low
+        if (value <= t.high) return palette[2];       // medium
+        if (value <= t.veryHigh) return palette[1];   // high
+        return palette[0];                            // very high
+    }
+
+    // Some palette tones are very light; pick a readable text colour for the badge.
+    function textOn(bg) {
+        return (bg === '#fcf4cb' || bg === '#fff18e' || bg === '#ffdf44' || bg === '#e6f5df'
+            || bg === '#bae4b3' || bg === '#b0d8e9') ? '#333' : 'white';
+    }
+
+    // A table cell with a value rendered as a colour-coded badge; shows a muted dash when absent.
+    function colorCell(value, present, bg) {
+        let inner;
+        if (!present) {
+            inner = '<span style="color: lightgrey">-</span>';
+        } else {
+            inner = '<span style="display: inline-block; min-width: 26px; padding: 1px 5px; border-radius: 4px; background-color: '
+                + bg + '; color: ' + textOn(bg) + '">' + value.toLocaleString('en-US') + '</span>';
+        }
+        return '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">' + inner + '</td>';
+    }
+
     // Renders a small round language badge: an icon when one is known, otherwise a text bubble
     // with the language name (mirrors DataImageUtils.getLangDataImageDiv on the Java side).
     function langIcon(lang) {
@@ -113,7 +180,7 @@
             return '';
         }
         const key = lang.toLowerCase();
-        const size = 22;
+        const size = 30;
         if (langIcons[key]) {
             return '<img title="' + lang + '" style="margin-right: 5px; vertical-align: middle; background-color: #f1f1f1; '
                 + 'border-radius: 50%; border: 1px solid lightgrey; width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
@@ -168,13 +235,28 @@
     }
 
 
+    // True when a file carries git-history data; only main files do, so history-only columns
+    // (commits / contributors / age / freshness) have no value for test/build/generated/other files.
+    function hasHistoryData(item) {
+        return (item.commitsCount || 0) > 0 || (item.latestCommitDate || '').length > 0;
+    }
+
     // Sortable column definitions: each maps a key to a value accessor.
     // 'dir' is the default direction applied the first time a column is selected.
+    // 'historyOnly' marks columns whose data exists only for main files; files without history are
+    // always sorted to the bottom for these columns (regardless of direction).
     const sortColumns = {
         lang: {value: item => (item.mainLang || '').toLowerCase(), type: 'string', dir: 1},
         repo: {value: item => (item.repository || '').toLowerCase(), type: 'string', dir: 1},
         name: {value: item => (item.repository + '/' + item.path).toLowerCase(), type: 'string', dir: 1},
         loc: {value: item => item.linesOfCode, type: 'number', dir: -1},
+        recentCommits: {value: item => item.recentCommitsCount30Days || 0, type: 'number', dir: -1, historyOnly: true},
+        recentCommits90: {value: item => item.recentCommitsCount90Days || 0, type: 'number', dir: -1, historyOnly: true},
+        commits: {value: item => item.commitsCount || 0, type: 'number', dir: -1, historyOnly: true},
+        contributors: {value: item => item.contributorsCount || 0, type: 'number', dir: -1, historyOnly: true},
+        age: {value: item => (item.ageDays == null ? -1 : item.ageDays), type: 'number', dir: -1, historyOnly: true},
+        freshness: {value: item => (item.freshnessDays == null ? -1 : item.freshnessDays), type: 'number', dir: 1, historyOnly: true},
+        latestCommit: {value: item => item.latestCommitDate || '', type: 'string', dir: -1, historyOnly: true},
         scope: {value: item => item.scope || '', type: 'string', dir: 1}
     };
 
@@ -183,6 +265,15 @@
 
     function comparator(a, b) {
         const column = sortColumns[sortKey];
+        // For history-only columns, files without history always sink to the bottom — their values
+        // (0 / -1 / "") would otherwise interleave meaninglessly with main files.
+        if (column.historyOnly) {
+            const aHas = hasHistoryData(a);
+            const bHas = hasHistoryData(b);
+            if (aHas !== bHas) {
+                return aHas ? -1 : 1;
+            }
+        }
         const va = column.value(a);
         const vb = column.value(b);
         let cmp;
@@ -201,6 +292,17 @@
         return '<td class="' + cls + '" style="' + (extraStyle || '') + '" onclick="update(\'' + key + '\')">'
             + label + '<span class="sort-arrow">' + arrow + '</span></td>';
     }
+
+    // Base path (from the explorers/ folder) to the per-repository HTML reports / cached source
+    // files, so each file card can link to them. Empty (e.g. in the landscape, where these do not
+    // exist at a single location) suppresses the links.
+    let reportLinkBase = '${reportLinkBase}';
+    if (reportLinkBase.indexOf('${') === 0) {
+        reportLinkBase = '';
+    }
+    // Whether per-file cached source pages were saved (../src/main/<path>.html). Suppresses the
+    // file-name link when off.
+    let saveSourceFiles = '${saveSourceFiles}' === 'true';
 
     files = files.sort(comparator);
 
@@ -232,7 +334,10 @@
             }
         }
         files = files.sort(comparator);
-        const filter = document.getElementById('filter').value.toLowerCase().trim();
+        // A search can contain several terms separated by ";"; the result is the UNION of the
+        // individual term matches (search "a;b" returns matches of "a" plus matches of "b").
+        const filters = document.getElementById('filter').value.toLowerCase().trim()
+            .split(';').map(s => s.trim()).filter(s => s.length);
         let html = '';
 
         const scopedData = files
@@ -248,7 +353,16 @@
         document.getElementById('scope-summary').innerHTML = '[' + scopedCount.toLocaleString('en-US') + ' ' + (scopedCount === 1 ? 'file' : 'files') + '; ' + scopedLoc.toLocaleString('en-US') + ' LOC' + scopedRepoInfo + '] of ' + '[' + files.length.toLocaleString('en-US') + ' ' + (files.length === 1 ? 'file' : 'files') + '; ' + getLoc(files).toLocaleString('en-US') + ' LOC' + totalRepoInfo + ']';
 
         const filteredData = scopedData
-            .filter(item => item.path && (!filter || (item.repository + ' ' + item.path).toLowerCase().includes(filter)));
+            .filter(item => {
+                if (!item.path) {
+                    return false;
+                }
+                if (!filters.length) {
+                    return true;
+                }
+                const haystack = (item.repository + ' ' + item.path).toLowerCase();
+                return filters.some(f => haystack.includes(f));
+            });
 
         let maxLoc = 1;
         filteredData.forEach(item => maxLoc = Math.max(maxLoc, item.linesOfCode));
@@ -289,6 +403,9 @@
 
         }
 
+        // Only show the git-history columns when at least one file in the (scoped) data has history.
+        const hasHistory = scopedData.some(item => (item.commitsCount || 0) > 0 || (item.latestCommitDate || '').length);
+
         html += '<table style="width: 100%">';
 
         html += '<tr style="color: #777777; background-color: #f8f8f8">';
@@ -298,6 +415,15 @@
         }
         html += sortHeader('name', 'file', 'text-align: left');
         html += sortHeader('loc', '&nbsp;LOC', 'text-align: left');
+        if (hasHistory) {
+            html += sortHeader('recentCommits', 'commits<br>(30d)', 'text-align: center');
+            html += sortHeader('recentCommits90', 'commits<br>(90d)', 'text-align: center');
+            html += sortHeader('commits', 'commits<br>(all time)', 'text-align: center');
+            html += sortHeader('contributors', 'contri-<br>butors', 'text-align: center');
+            html += sortHeader('age', 'age<br>(days)', 'text-align: center');
+            html += sortHeader('freshness', 'freshness<br>(days)', 'text-align: center');
+            html += sortHeader('latestCommit', 'latest<br>commit', 'text-align: center');
+        }
         html += sortHeader('scope', 'scope', 'text-align: center');
         html += '</tr>';
 
@@ -314,29 +440,77 @@
             html += '</td>';
             if (filteredReposCount) {
                 html += '<td>';
-                html += item.repository;
+                const pathsRepo = item.repository.split('/');
+                const repoName = pathsRepo[pathsRepo.length - 1];
+                const repoPrefix = pathsRepo.slice(0, pathsRepo.length - 1).join(' / ');
+                html += '<div style="border-left: 1px solid lightgrey; padding-left: 6px">';
+                html += '<div style="font-size: 90%; color: #8f8f8f">' + (repoPrefix ? repoPrefix : '') + '</div>';
+                html += '<div style="margin-bottom: 6px; color: black; font-weight: bold">' + repoName + '</div>';
+                html += '</div>';
                 html += '</td>';
             }
             html += '<td>';
             const paths = item.path.split('/');
             const fileName = paths[paths.length - 1];
-            const folder = paths.slice(0, paths.length - 1).join('/');
-            html += '<span style="color: #afafaf">' + (folder + folder ? folder + '/' : '') + '</span>';
-            html += '<span style="color: black; font-weight: bold">' + fileName + '</span>';
+            let folder = paths.slice(0, paths.length - 1).join('/');
+            html += '<div style="border-left: 1px solid lightgrey; padding-left: 6px">';
+            let displayFolder = '';
+            if (folder && folder.length > 50) {
+                displayFolder = folder.substring(0, 50) + '...';
+            }
+            html += '<div title="' + folder + '" style="font-size: 90%; color: #7f7f7f">' + displayFolder + '</div>';
+            // File name: link to the cached source page when available, otherwise plain bold text.
+            if (saveSourceFiles && item.sourceFileLink) {
+                html += '<div style="margin-bottom: 2px"><a href="' + item.sourceFileLink + '" target="_blank" '
+                    + 'style="color: #0a58ca; font-weight: bold">' + fileName + ' <span style="font-size: 60%; color: #888">&#x2197;</span></a></div>';
+            } else {
+                html += '<div style="margin-bottom: 2px; color: black; font-weight: bold">' + fileName + '</div>';
+            }
+            // Small links to the source report views for this file's history (per-repository only).
+            if (reportLinkBase && (item.commitsCount || (item.latestCommitDate || '').length)) {
+                html += '<div style="margin-bottom: 4px; font-size: 75%">'
+                    + '<a href="' + reportLinkBase + 'FileAge.html" target="_blank" style="color: #6f6f6f">age &amp; freshness</a>'
+                    + ' &middot; '
+                    + '<a href="' + reportLinkBase + 'FileChangeFrequency.html" target="_blank" style="color: #6f6f6f">change frequency</a>'
+                    + '</div>';
+            }
+            html += '</div>';
             html += '</td>';
 
             let scope = item.scope;
             html += '<td style="text-align: left; padding-right: 5px; padding-left: 5px">';
             html += '<div style=" border-radius: 4px; padding 2px;">';
             const w = maxLoc > 0 ? Math.round(50 * item.linesOfCode / maxLoc + 1) : 0;
-            if (scope === 'main') {
-                html += '<div style="vertical-align: top; display: inline-block; height: 16px; background-color: blue; width: ' + w + 'px"></div>';
-            } else {
-                html += '<div style="vertical-align: top; display: inline-block; height: 16px; background-color: lightgrey; width: ' + w + 'px"></div>';
-            }
+            // Bar colour reflects the file-size risk band; non-main files are muted (lower opacity)
+            // so the scope distinction is preserved.
+            const barColor = riskColor(item.linesOfCode, fileSizeThresholds);
+            const barOpacity = scope === 'main' ? '1' : '0.45';
+            html += '<div style="vertical-align: top; display: inline-block; height: 16px; background-color: ' + barColor + '; opacity: ' + barOpacity + '; width: ' + w + 'px"></div>';
             html += '<div style="margin-left: 2px; vertical-align: top; display: inline-block; font-size: 80%">' + item.linesOfCode.toLocaleString("en-US") + '</div>';
             html += '</div>';
             html += '</td>';
+            if (hasHistory) {
+                const recent = item.recentCommitsCount30Days || 0;
+                const recent90 = item.recentCommitsCount90Days || 0;
+                const total = item.commitsCount || 0;
+                const contributors = item.contributorsCount || 0;
+                const ageDays = (item.ageDays == null) ? -1 : item.ageDays;
+                const freshnessDays = (item.freshnessDays == null) ? -1 : item.freshnessDays;
+                html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
+                    + (recent > 0 ? recent.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
+                html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
+                    + (recent90 > 0 ? recent90.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
+                // commits (all time) — coloured by the file change-frequency band (heat palette).
+                html += colorCell(total, total > 0, bandColor(total, fileFreqThresholds, HEAT_PALETTE));
+                // contributors — heat palette.
+                html += colorCell(contributors, contributors > 0, bandColor(contributors, fileContribThresholds, HEAT_PALETTE));
+                // age (days since first commit) — age palette.
+                html += colorCell(ageDays, ageDays >= 0, bandColor(ageDays, fileAgeThresholds, AGE_PALETTE));
+                // freshness (days since last commit) — freshness palette.
+                html += colorCell(freshnessDays, freshnessDays >= 0, bandColor(freshnessDays, fileAgeThresholds, FRESHNESS_PALETTE));
+                html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%; color: #5f5f5f;">'
+                    + (item.latestCommitDate ? item.latestCommitDate : '<span style="color: lightgrey">-</span>') + '</td>';
+            }
             html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">';
             if (scope === 'main') {
                 html += '<div style="border: 1px solid #d0d0d0; border-radius: 4px; padding 2px; color: blue">';
@@ -345,8 +519,6 @@
             }
             html += scope;
             html += '</div>';
-            html += '</td>';
-            html += '<td style="text-align: left; padding-right: 5px; padding-left: 5px;">';
             html += '</td>';
             html += '</tr>';
         });

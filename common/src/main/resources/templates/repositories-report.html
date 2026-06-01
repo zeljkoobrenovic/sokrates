@@ -115,7 +115,7 @@
 <body>
 
 <div style="color: grey; margin: 8px 0 10px 0;">
-    <input id="filter" type="text" placeholder="search..."
+    <input id="filter" type="text" placeholder="search... (use ; for multiple terms)"
            style="font-size: 16px; height: 30px; width: 320px;"
            onkeyup="render()">
     <span id="search-summary" style="display: inline-block; margin-left: 6px;"></span>
@@ -707,9 +707,11 @@
         return perYearBarChart('contributors per year (distinct)', 'darkred', counts, 'contributors');
     }
 
+    // A search can contain several terms separated by ";"; the result is the UNION of the
+    // individual term matches (search "a;b" returns matches of "a" plus matches of "b").
     function getFilters() {
         return document.getElementById('filter').value.toLowerCase().trim()
-            .split(',').map(s => s.trim()).filter(s => s.length);
+            .split(';').map(s => s.trim()).filter(s => s.length);
     }
 
     function matchesFilters(name, filters) {
@@ -766,11 +768,8 @@
             }
         });
 
-        const filteredMainLoc = rows.reduce((a, b) => a + (b.mainLinesOfCode || 0), 0);
-        const filteredCommits = rows.reduce((a, b) => a + (b.commitsCount || 0), 0);
         document.getElementById('search-summary').innerHTML = '= ' + rows.length + ' '
-            + (rows.length === 1 ? 'repository' : 'repositories')
-            + ' (' + num(filteredMainLoc) + ' LOC main, ' + num(filteredCommits) + ' commits)';
+            + (rows.length === 1 ? 'repository' : 'repositories');
         updateProportionBars(filters);
 
         let html = tabLinksHtml(tab.links);
@@ -831,11 +830,12 @@
     const TOTAL_COUNT = repositories.length;
     const TOTAL_MAIN_LOC = repositories.reduce((a, b) => a + (b.mainLinesOfCode || 0), 0);
     const TOTAL_COMMITS = repositories.reduce((a, b) => a + (b.commitsCount || 0), 0);
+    const TOTAL_RECENT_CONTRIBUTORS = repositories.reduce((a, b) => a + (b.recentContributorsCount || 0), 0);
 
-    // Three proportion bars (% of repositories / LOC / commits) shown once under the
-    // search bar (above the tabs). Reflects the current search filter and is independent
+    // Four proportion bars (% of repositories / LOC / commits / recent developers) shown once
+    // under the search bar (above the tabs). Reflects the current search filter and is independent
     // of the active tab; hidden when nothing is filtered out.
-    function proportionBars(count, mainLoc, commits) {
+    function proportionBars(count, mainLoc, commits, recentContributors) {
         if (mainLoc >= TOTAL_MAIN_LOC) {
             return '';
         }
@@ -846,12 +846,13 @@
             return '<div style="width: 400px; margin: 0; padding: 0; white-space: nowrap">'
                 + '<div style="margin: 0; display: inline-block; width: ' + w1 + '%; background-color: ' + color + '; height: 12px"></div>'
                 + '<div style="margin: 0; display: inline-block; width: ' + w2 + '%; background-color: #c0c0c0; height: 12px"></div>'
-                + '<div style="margin: 0; display: inline-block; font-size: 80%; width: 140px; color: grey; vertical-align: top">&nbsp;' + shown + '% ' + label + '</div>'
+                + '<div style="margin: 0; display: inline-block; font-size: 80%; width: 180px; color: grey; vertical-align: top">&nbsp;' + shown + '% ' + label + ' (' + num(part) + ')</div>'
                 + '</div>';
         }
         return bar(count, TOTAL_COUNT, '#303030', 'of repositories')
             + bar(mainLoc, TOTAL_MAIN_LOC, 'skyblue', 'of LOC')
-            + bar(commits, TOTAL_COMMITS, 'green', 'of commits');
+            + bar(commits, TOTAL_COMMITS, 'green', 'of commits')
+            + bar(recentContributors, TOTAL_RECENT_CONTRIBUTORS, '#b8860b', 'of recent developers');
     }
 
     // Renders the proportion bars into the dedicated container under the search bar,
@@ -861,7 +862,8 @@
         const count = matched.length;
         const mainLoc = matched.reduce((a, b) => a + (b.mainLinesOfCode || 0), 0);
         const commits = matched.reduce((a, b) => a + (b.commitsCount || 0), 0);
-        document.getElementById('proportion-bars').innerHTML = proportionBars(count, mainLoc, commits);
+        const recentContributors = matched.reduce((a, b) => a + (b.recentContributorsCount || 0), 0);
+        document.getElementById('proportion-bars').innerHTML = proportionBars(count, mainLoc, commits, recentContributors);
     }
 
     function renderFeatures(filters) {

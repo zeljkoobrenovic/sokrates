@@ -143,9 +143,27 @@
         .linkOpacity(0.1)
         .linkWidth(d => 3 * d.count / maxCount + 0.1);
 
-    window.addEventListener('resize', () => {
-        Graph.width(container.clientWidth).height(container.clientHeight);
-    });
+    // Keep the canvas sized to its container. Inside an iframe the container may be 0-size when
+    // the graph first initialises (the flex layout settles afterwards); a ResizeObserver re-applies
+    // the size as soon as the container gets real dimensions, otherwise nodes/edges stay invisible.
+    let last3dW = 0, last3dH = 0;
+    function resize3d() {
+        const w = container.clientWidth, h = container.clientHeight;
+        if (w > 0 && h > 0 && (w !== last3dW || h !== last3dH)) {
+            last3dW = w;
+            last3dH = h;
+            Graph.width(w).height(h);
+            // Reheat once a real size is established (e.g. inside an iframe where the container is
+            // 0-size when the simulation first runs) so the layout expands to fill the dimensions.
+            if (typeof Graph.d3ReheatSimulation === 'function') {
+                Graph.d3ReheatSimulation();
+            }
+        }
+    }
+    window.addEventListener('resize', resize3d);
+    if (typeof ResizeObserver !== 'undefined') {
+        new ResizeObserver(resize3d).observe(container);
+    }
 
     function linkEnd(e) {
         return (e && typeof e === 'object') ? e.id : e;

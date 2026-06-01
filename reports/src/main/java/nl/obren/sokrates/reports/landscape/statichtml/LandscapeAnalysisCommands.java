@@ -182,6 +182,11 @@ public class LandscapeAnalysisCommands {
             childResults.setConfiguration(VirtualLandscapeBuilder.childConfiguration(
                     rootConfiguration, virtualLandscape.getMetadata(), nested, depth));
 
+            // Compute the contributor/team topology data (people dependencies, connections, history)
+            // from the child's repositories, with its configuration now set so thresholds/anonymize
+            // match. Without this the topology graphs are empty for virtual landscapes.
+            LandscapeAnalyzer.updatePeopleDependencies(childResults);
+
             // Recurse into this virtual landscape's own nested virtual landscapes first, so their
             // reports + config.json exist (and links are registered on the child) before it renders.
             if (VirtualLandscapeBuilder.hasVirtualLandscapes(nested)) {

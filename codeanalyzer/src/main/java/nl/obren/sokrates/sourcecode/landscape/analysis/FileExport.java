@@ -10,6 +10,20 @@ public class FileExport {
 
     private int linesOfCode;
 
+    // Git-history fields; 0 / "" when no file history is available for the analysis.
+    private int commitsCount;
+    private int recentCommitsCount30Days;
+    private int recentCommitsCount90Days;
+    private String latestCommitDate = "";
+    // Age/freshness/churn fields (-1 = unknown, i.e. no history), mirroring the File Age and
+    // File Change Frequency reports.
+    private int ageDays = -1;          // days since first update
+    private int freshnessDays = -1;    // days since latest update
+    private int contributorsCount;
+    // Relative URL (from the explorers/ folder) of this file's cached source page, or "" when none
+    // was saved (only a referenced subset of files is cached).
+    private String sourceFileLink = "";
+
     public FileExport() {
     }
 
@@ -50,6 +64,70 @@ public class FileExport {
 
     public void setLinesOfCode(int linesOfCode) {
         this.linesOfCode = linesOfCode;
+    }
+
+    public int getCommitsCount() {
+        return commitsCount;
+    }
+
+    public void setCommitsCount(int commitsCount) {
+        this.commitsCount = commitsCount;
+    }
+
+    public int getRecentCommitsCount30Days() {
+        return recentCommitsCount30Days;
+    }
+
+    public void setRecentCommitsCount30Days(int recentCommitsCount30Days) {
+        this.recentCommitsCount30Days = recentCommitsCount30Days;
+    }
+
+    public int getRecentCommitsCount90Days() {
+        return recentCommitsCount90Days;
+    }
+
+    public void setRecentCommitsCount90Days(int recentCommitsCount90Days) {
+        this.recentCommitsCount90Days = recentCommitsCount90Days;
+    }
+
+    public String getLatestCommitDate() {
+        return latestCommitDate;
+    }
+
+    public void setLatestCommitDate(String latestCommitDate) {
+        this.latestCommitDate = latestCommitDate;
+    }
+
+    public int getAgeDays() {
+        return ageDays;
+    }
+
+    public void setAgeDays(int ageDays) {
+        this.ageDays = ageDays;
+    }
+
+    public int getFreshnessDays() {
+        return freshnessDays;
+    }
+
+    public void setFreshnessDays(int freshnessDays) {
+        this.freshnessDays = freshnessDays;
+    }
+
+    public int getContributorsCount() {
+        return contributorsCount;
+    }
+
+    public void setContributorsCount(int contributorsCount) {
+        this.contributorsCount = contributorsCount;
+    }
+
+    public String getSourceFileLink() {
+        return sourceFileLink;
+    }
+
+    public void setSourceFileLink(String sourceFileLink) {
+        this.sourceFileLink = sourceFileLink;
     }
 
     /**

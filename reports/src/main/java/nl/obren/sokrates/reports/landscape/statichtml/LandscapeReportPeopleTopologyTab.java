@@ -9,11 +9,14 @@ import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
-import nl.obren.sokrates.reports.landscape.utils.*;
+import nl.obren.sokrates.reports.landscape.utils.Force3DGraphExporter;
+import nl.obren.sokrates.reports.landscape.utils.LandscapeVisualsGenerator;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
-import nl.obren.sokrates.sourcecode.landscape.*;
+import nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils;
+import nl.obren.sokrates.sourcecode.landscape.TeamConfig;
+import nl.obren.sokrates.sourcecode.landscape.TeamsConfig;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorConnections;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
@@ -30,7 +33,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator.*;
+import static nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator.DEPENDENCIES_ICON;
+import static nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator.OPEN_IN_NEW_TAB_SVG_ICON;
 
 public class LandscapeReportPeopleTopologyTab {
 
@@ -80,7 +84,7 @@ public class LandscapeReportPeopleTopologyTab {
             landscapeReport.addNewTabLink("<div style='font-weight: bold; font-size: 110%; margin-bottom: 8px;'>2D force graph (including repositories)&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON + "</div>", "visuals/" + prefix + "_dependencies_including_repositories_30_2_force_2d.html");
             landscapeReport.addNewTabLink("<div style='font-weight: bold; font-size: 110%; margin-bottom: 8px;'>3D force graph (including repositories)&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON + "</div>", "visuals/" + prefix + "_dependencies_including_repositories_30_2_force_3d.html");
             landscapeReport.startDiv("font-size: 90%");
-            landscapeReport.addHtmlContent("direct links: ");
+            landscapeReport.addHtmlContent("more visuals: ");
             landscapeReport.addNewTabLink("graphviz", "visuals/" + prefix + "_dependencies_30_1.svg");
             landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("graphviz (including contributors)", "visuals/" + prefix + "_dependencies_including_repositories_30_2.svg");
@@ -93,7 +97,7 @@ public class LandscapeReportPeopleTopologyTab {
             landscapeReport.addHtmlContent("&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON);
             landscapeReport.endDiv();
             landscapeReport.addLineBreak();
-            landscapeReport.addHtmlContent("<iframe src=\"visuals/" + prefix + "_dependencies_30_1.svg\" " +
+            landscapeReport.addHtmlContent("<iframe src=\"visuals/" + prefix + "_dependencies_including_repositories_30_2_force_2d.html\" " +
                     "style=\"border: 1px solid lightgrey; width: 100%; height: 600px\"></iframe>");
         } else {
             landscapeReport.addParagraph("No commits in past 30 days.", "color: grey");
@@ -150,7 +154,7 @@ public class LandscapeReportPeopleTopologyTab {
             landscapeReport.addHtmlContent("&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON);
             landscapeReport.addLineBreak();
             landscapeReport.addLineBreak();
-            landscapeReport.addHtmlContent("<iframe src=\"visuals/repository_dependencies_30_3.svg\" " +
+            landscapeReport.addHtmlContent("<iframe src=\"visuals/repository_dependencies_30_3_force_2d.html\" " +
                     "style=\"border: 1px solid lightgrey; width: 100%; height: 600px\"></iframe>");
         } else {
             landscapeReport.addParagraph("No commits in past 30 days.", "color: grey");
@@ -168,8 +172,8 @@ public class LandscapeReportPeopleTopologyTab {
             landscapeReport.addHtmlContent("&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON);
             landscapeReport.addLineBreak();
             landscapeReport.addLineBreak();
-            landscapeReport.addHtmlContent("<iframe src=\"visuals/extension_dependencies_30d.svg\" " +
-                    "style=\"border: 1px solid lightgrey; width: 100%; height: 600px\"></iframe>");
+            landscapeReport.addHtmlContent("<iframe src=\"visuals/extension_dependencies_30d_force_2d.html\" " +
+                    "style=\"border: 1px solid lightgrey; width: 100%; height: 400px\"></iframe>");
         } else {
             landscapeReport.addParagraph("No commits in past 30 days.", "color: grey");
         }
@@ -344,7 +348,7 @@ public class LandscapeReportPeopleTopologyTab {
     }
 
     private void addRepositoriesGraph(int daysAgo, List<ComponentDependency> repositoryDependenciesViaPeople) {
-        landscapeReport.startShowMoreBlock("show repository dependencies graph...<br>");
+        landscapeReport.startShowMoreBlock("repository dependencies graph...<br>");
         StringBuilder builder = new StringBuilder();
         builder.append("Repository 1\tRepository 2\t# people\n");
         repositoryDependenciesViaPeople.subList(0, Math.min(10000, repositoryDependenciesViaPeople.size())).forEach(d -> builder
@@ -363,11 +367,11 @@ public class LandscapeReportPeopleTopologyTab {
 
         String graphId = addDependencyGraphVisuals(repositoryDependenciesViaPeople, new ArrayList<>(repositoryNames), "repository_dependencies_" + daysAgo + "_", "TB");
 
-        landscapeReport.endShowMoreBlock();
         landscapeReport.addNewTabLink(" - 2D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/" + graphId + "_force_2d.html");
         landscapeReport.addLineBreak();
         landscapeReport.addNewTabLink(" - 3D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/" + graphId + "_force_3d.html");
         landscapeReport.addLineBreak();
+        landscapeReport.endShowMoreBlock();
     }
 
     private void addDataSection(String type, double value, int daysAgo, List<Double> history, String info) {
@@ -404,7 +408,7 @@ public class LandscapeReportPeopleTopologyTab {
     }
 
     private void addRepositoryDependenciesViaPeople(List<ComponentDependency> repositoryDependenciesViaPeople) {
-        landscapeReport.startShowMoreBlock("show repository dependencies via people...<br>");
+        landscapeReport.startShowMoreBlock("repository dependencies via people...<br>");
         landscapeReport.startTable();
         int maxListSize = Math.min(100, repositoryDependenciesViaPeople.size());
         if (maxListSize < repositoryDependenciesViaPeople.size()) {
@@ -449,7 +453,7 @@ public class LandscapeReportPeopleTopologyTab {
             displayList = list.subList(0, 100);
         }
 
-        landscapeReport.startShowMoreBlock("show repositories with most " + (isContributorReport() ? "people" : "teams") + "...<br>");
+        landscapeReport.startShowMoreBlock("repositories with most " + (isContributorReport() ? "people" : "teams") + "...<br>");
         StringBuilder builder = new StringBuilder();
         builder.append("Contributor\t# people\n");
         list.forEach(repository -> builder.append(map.get(repository).getLeft()).append("\t")
@@ -494,7 +498,7 @@ public class LandscapeReportPeopleTopologyTab {
         String fileName = "repository_shared_repositories_" + suffix + daysAgo + "_days.txt";
         saveData(fileName, builder.toString());
 
-        landscapeReport.startShowMoreBlock("show contributor dependencies graph..." + extraLabel + "<br>");
+        landscapeReport.startShowMoreBlock("contributor dependencies graph..." + extraLabel + "<br>");
         landscapeReport.startDiv("border-left: 6px solid lightgrey; padding-left: 4px; margin-left: 4px; overflow-x: auto");
         landscapeReport.addHtmlContent("&nbsp;&nbsp;&nbsp;");
         landscapeReport.addNewTabLink("See data...", "data/" + fileName);
@@ -503,19 +507,17 @@ public class LandscapeReportPeopleTopologyTab {
         String graphId = addDependencyGraphVisuals(peopleDependencies, new ArrayList<>(),
                 (isContributorReport() ? "people" : "teams") + "_dependencies_" + suffix + daysAgo + "_", orientation);
         landscapeReport.endDiv();
-        landscapeReport.endShowMoreBlock();
 
         landscapeReport.addNewTabLink(" - 2D force graph" + extraLabel + "&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
                 "visuals/" + graphId + "_force_2d.html");
         landscapeReport.addLineBreak();
         landscapeReport.addNewTabLink(" - 3D force graph" + extraLabel + "&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
                 "visuals/" + graphId + "_force_3d.html");
-        landscapeReport.addLineBreak();
-        landscapeReport.addLineBreak();
+        landscapeReport.endShowMoreBlock();
     }
 
     private void addTopConnectionsSection(List<ComponentDependency> peopleDependencies, int daysAgo, List<ContributorRepositories> contributors) {
-        landscapeReport.startShowMoreBlock("show top connections...<br>");
+        landscapeReport.startShowMoreBlock("top connections...<br>");
         landscapeReport.startTable();
         List<ComponentDependency> displayListConnections = peopleDependencies.subList(0, Math.min(100, peopleDependencies.size()));
         if (displayListConnections.size() < peopleDependencies.size()) {
@@ -552,7 +554,7 @@ public class LandscapeReportPeopleTopologyTab {
     }
 
     private void addMostConnectedPeopleSection(List<ContributorConnections> contributorConnections, int daysAgo) {
-        landscapeReport.startShowMoreBlock("show most connected people...<br>");
+        landscapeReport.startShowMoreBlock("most connected people...<br>");
         StringBuilder builder = new StringBuilder();
         builder.append("Contributor\t# repositories\t# connections\n");
         contributorConnections.forEach(c -> builder.append(c.getEmail()).append("\t")
@@ -598,7 +600,7 @@ public class LandscapeReportPeopleTopologyTab {
     }
 
     private void addMostRepositoriesPeopleSection(List<ContributorConnections> contributorConnections, int daysAgo) {
-        landscapeReport.startShowMoreBlock("show people with most repositories...<br>");
+        landscapeReport.startShowMoreBlock("people with most repositories...<br>");
         List<ContributorConnections> sorted = new ArrayList<>(contributorConnections);
         sorted.sort((a, b) -> b.getRepositoriesCount() - a.getRepositoriesCount());
         List<ContributorConnections> displayListPeople = sorted.subList(0, Math.min(100, sorted.size()));

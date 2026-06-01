@@ -34,6 +34,7 @@ import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.duplication.DuplicatedFileBlock;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.filehistory.FileHistoryScopingUtils;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.filehistory.FilePairChangedTogether;
@@ -557,7 +558,7 @@ public class DataExporter {
         if (codeConfiguration.getAnalysis().isSaveCodeFragments()) {
             UnitsAnalysisResults unitsAnalysisResults = analysisResults.getUnitsAnalysisResults();
             saveUnitFragmentFiles(unitsAnalysisResults.getLongestUnits(), "longest_unit");
-            saveUnitFragmentFiles(unitsAnalysisResults.getMostComplexUnits(), "most_complex_unit");
+            saveUnitFragmentFiles(unitsAnalysisResults.getMostComplexUnits(), "most_complex_units");
 
             DuplicationAnalysisResults duplicationAnalysisResults = analysisResults.getDuplicationAnalysisResults();
             saveDuplicateFragmentFiles(duplicationAnalysisResults.getLongestDuplicates(), "longest_duplicates");
@@ -728,19 +729,25 @@ public class DataExporter {
 
         builder.append("path\t# lines of code\t")
                 .append("# active days\tdays since first update\tdays since last update\t")
-                .append("# commits\t# contributors\t")
+                .append("# commits\t# commits (30d)\t# commits (90d)\t# contributors\t")
                 .append("first updated\tlast updated\tfirst contributor\tlast contributor")
                 .append("\n");
 
         sourceFiles.forEach(sourceFile -> {
             FileModificationHistory history = sourceFile.getFileModificationHistory();
             if (history != null) {
+                long commits30Days = history.getDates().stream()
+                        .filter(date -> DateUtils.isCommittedLessThanDaysAgo(date, 30)).count();
+                long commits90Days = history.getDates().stream()
+                        .filter(date -> DateUtils.isCommittedLessThanDaysAgo(date, 90)).count();
                 builder.append(sourceFile.getRelativePath()).append("\t")
                         .append(sourceFile.getLinesOfCode()).append("\t")
                         .append(history.getDates().size()).append("\t")
                         .append(history.daysSinceFirstUpdate()).append("\t")
                         .append(history.daysSinceLatestUpdate()).append("\t")
                         .append(history.getCommits().size()).append("\t")
+                        .append(commits30Days).append("\t")
+                        .append(commits90Days).append("\t")
                         .append(history.countContributors()).append("\t")
                         .append(history.getOldestDate()).append("\t")
                         .append(history.getLatestDate()).append("\t")

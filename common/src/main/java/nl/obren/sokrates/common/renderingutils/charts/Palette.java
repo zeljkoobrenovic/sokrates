@@ -40,6 +40,14 @@ public class Palette {
         return new Palette(Arrays.asList("#9DC034", "#F2021B"));
     }
 
+    // Heat ramp (RdYlGn family, like the risk palette) for the 11 repository-size categories
+    // (<1K .. >1M): green = small, through yellow/orange, to red = large.
+    public static Palette getSizePalette() {
+        return new Palette(Arrays.asList(
+                "#1a9641", "#52b151", "#8acc62", "#b8e17b", "#dcf09e", "#ffffbf",
+                "#fee79a", "#fdc070", "#f59053", "#e34d33", "#d7191c"));
+    }
+
     public static Palette getDefaultPalette() {
         return new Palette(Arrays.asList("#75ADD2", "#584982", "#FFFD98", "#FCF7FF",
                 "#61A99B", "#567E99", "#41365F", "#BAB96F", "#B8B4BA",

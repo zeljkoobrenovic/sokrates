@@ -17,7 +17,10 @@ import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
-import nl.obren.sokrates.reports.landscape.statichtml.repositories.*;
+import nl.obren.sokrates.reports.landscape.statichtml.repositories.LandscapeRepositoriesTagsLine;
+import nl.obren.sokrates.reports.landscape.statichtml.repositories.LandscapeRepositoriesTagsMatrixReport;
+import nl.obren.sokrates.reports.landscape.statichtml.repositories.LandscapeRepositoriesTagsReport;
+import nl.obren.sokrates.reports.landscape.statichtml.repositories.TagMap;
 import nl.obren.sokrates.reports.landscape.utils.*;
 import nl.obren.sokrates.reports.utils.AnimalIcons;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
@@ -25,7 +28,6 @@ import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.reports.utils.PromptsUtils;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
-import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
@@ -653,6 +655,13 @@ public class LandscapeReportGenerator {
                 LandscapeAnalysisResultsReadData subLandscapeAnalysisResults = getSubLandscapeAnalysisResults(subLandscape);
                 landscapeReport.startTableRow(style);
                 LandscapeConfiguration subLandscapeConfig = getSubLandscapeConfig(subLandscape);
+                // getSubLandscapeConfig returns null when the sub-landscape's config.json is missing
+                // or unreadable (e.g. a stale folder link, or a child report that did not finish
+                // generating). Fall back to defaults so the row still renders instead of crashing the
+                // whole parent report — mirrors the null-tolerance below for subLandscapeAnalysisResults.
+                if (subLandscapeConfig == null) {
+                    subLandscapeConfig = new LandscapeConfiguration();
+                }
                 Metadata metadata = subLandscapeConfig.getMetadata();
                 landscapeReport.addTableCell(!labelText.contains("/") ? ("<a href='" + href + "' target='_blank'>" +
                         (StringUtils.isNotBlank(metadata.getLogoLink())
@@ -1463,8 +1472,6 @@ public class LandscapeReportGenerator {
         AnimalIcons icons = new AnimalIcons(64);
         List<String> animals = icons.getAnimals();
         List<String> animalsLocInfo = icons.getAnimalsLOCInfo();
-        // Collections.reverse(animals);
-        // Collections.reverse(animalsLocInfo);
 
         int totalLoc = landscapeAnalysisResults.getMainLoc();
 
@@ -1484,18 +1491,32 @@ public class LandscapeReportGenerator {
         });
 
         landscapeReport.startSubSection("Repositories Size Distribution", "Size of repositories (main lines of code)");
+
+        // A single colour-coded bar where each segment's width is the lines of code in a size
+        // category (<1K .. >1M), using the same size palette as the per-category bars below.
+        List<Integer> sizeLocValues = animals.stream()
+                .map(animal -> animalCounts.containsKey(animal)
+                        ? animalCounts.get(animal).stream()
+                        .mapToInt(a -> a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()).sum()
+                        : 0)
+                .collect(Collectors.toList());
+        SimpleOneBarChart sizeBar = new SimpleOneBarChart();
+        sizeBar.setWidth(BAR_WIDTH + 170);
+        sizeBar.setBarHeight(BAR_HEIGHT);
+        sizeBar.setMaxBarWidth(BAR_WIDTH + 150);
+        sizeBar.setBarStartXOffset(0);
+        landscapeReport.startDivWithLabel("lines of code per repository size category (" +
+                String.join(" | ", animalsLocInfo).replace("&lt;", "<").replace("&gt;", ">") + ")", "margin-bottom: 12px;");
+        landscapeReport.addHtmlContent(sizeBar.getStackedBarSvg(sizeLocValues, Palette.getSizePalette(), "", ""));
+        landscapeReport.endDiv();
+
         landscapeReport.startTable("font-size: 100%; margin-bottom: 6px;");
 
+        List<String> sizeColors = Palette.getSizePalette().getColors();
         landscapeReport.startTableRow();
-        animalsLocInfo.forEach(animalInfo -> {
-            landscapeReport.startTableCell("text-align: center; border: none; color: black;");
-            landscapeReport.addContentInDiv(animalInfo);
-            landscapeReport.endTableCell();
-        });
-        landscapeReport.endTableRow();
-
-        landscapeReport.startTableRow();
-        animals.forEach(animal -> {
+        for (int i = 0; i < animals.size(); i++) {
+            String animal = animals.get(i);
+            String barColor = sizeColors.get(i % sizeColors.size());
             int count = animalCounts.containsKey(animal) ? animalCounts.get(animal).size() : 0;
             landscapeReport.startTableCell("vertical-align: bottom; text-align: center; border: none;" + (count > 0 ? "" : "color: grey; opacity: 0.4"));
             int loc = 0;
@@ -1512,10 +1533,10 @@ public class LandscapeReportGenerator {
             landscapeReport.addContentInDiv(FormattingUtils.getFormattedPercentage(percentage) + "%", "font-size: 13px; ");
             landscapeReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(loc) + "LOC", "font-size: 11px;");
             landscapeReport.startDiv("border: 1px solid #d0d0d0; width: 64px; margin-bottom: 4px; ");
-            landscapeReport.addContentInDiv("", "background-color: blue; width: 100%; height: " + width + "px");
+            landscapeReport.addContentInDiv("", "background-color: " + barColor + "; width: 100%; height: " + width + "px");
             landscapeReport.endDiv();
             landscapeReport.endTableCell();
-        });
+        }
         landscapeReport.endTableRow();
 
 
@@ -1524,7 +1545,7 @@ public class LandscapeReportGenerator {
             int count = animalCounts.containsKey(animal) ? animalCounts.get(animal).size() : 0;
             landscapeReport.startTableCell("vertical-align: top; border: none;" + (count > 0 ? "" : "color: grey; opacity: 0.2"));
             int height = maxCount[0] > 0 ? (int) Math.round(64.0 * count / maxCount[0]) + 1 : 1;
-            landscapeReport.addContentInDiv("", "background-color: lightgrey; width: 100%; height: " + height + "px");
+            // landscapeReport.addContentInDiv("", "background-color: lightgrey; width: 100%; height: " + height + "px");
             String info = "";
             if (count > 0) {
                 info += animalCounts.get(animal).stream()
@@ -1543,10 +1564,23 @@ public class LandscapeReportGenerator {
                 }
             }
 
-            landscapeReport.addContentInDivWithTooltip(perc + count + (count == 0 ? " repo" : " repos"), info, "font-size: 80%; width: 100%; text-align: center");
+            landscapeReport.addContentInDivWithTooltip(perc + count + (count == 1 ? " repo" : " repos"), info, "font-size: 80%; width: 100%; text-align: center");
             landscapeReport.endTableCell();
         });
         landscapeReport.endTableRow();
+
+
+        landscapeReport.startTableRow();
+        int index[] = {0};
+        animalsLocInfo.forEach(animalInfo -> {
+            int count = animalCounts.containsKey(animals.get(index[0])) ? animalCounts.get(animals.get(index[0])).size() : 0;
+            landscapeReport.startTableCell("text-align: center; border: none; color: black;" + ((count > 0 ? "" : "color: grey; opacity: 0.5")));
+            landscapeReport.addContentInDiv(animalInfo);
+            landscapeReport.endTableCell();
+            index[0] += 1;
+        });
+        landscapeReport.endTableRow();
+
 
         landscapeReport.endTable();
 
