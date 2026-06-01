@@ -768,11 +768,8 @@
             }
         });
 
-        const filteredMainLoc = rows.reduce((a, b) => a + (b.mainLinesOfCode || 0), 0);
-        const filteredCommits = rows.reduce((a, b) => a + (b.commitsCount || 0), 0);
         document.getElementById('search-summary').innerHTML = '= ' + rows.length + ' '
-            + (rows.length === 1 ? 'repository' : 'repositories')
-            + ' (' + num(filteredMainLoc) + ' LOC main, ' + num(filteredCommits) + ' commits)';
+            + (rows.length === 1 ? 'repository' : 'repositories');
         updateProportionBars(filters);
 
         let html = tabLinksHtml(tab.links);
