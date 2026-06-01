@@ -91,7 +91,7 @@
                     id="label_other">other</span></label>&nbsp;&nbsp;&nbsp;&nbsp;
             <span id="scope-summary" style="background-color: #f8f8f8"></span>
         </div>
-        <input id="filter" type="text" placeholder="search..."
+        <input id="filter" type="text" placeholder="search... (use ; for multiple terms)"
                style="font-size: 16px; height: 32px; width: 320px; margin-bottom: 10px"
                onkeyup="update()">
         <div id="search-summary" style="display: inline-block"></div>
@@ -232,7 +232,10 @@
             }
         }
         files = files.sort(comparator);
-        const filter = document.getElementById('filter').value.toLowerCase().trim();
+        // A search can contain several terms separated by ";"; the result is the UNION of the
+        // individual term matches (search "a;b" returns matches of "a" plus matches of "b").
+        const filters = document.getElementById('filter').value.toLowerCase().trim()
+            .split(';').map(s => s.trim()).filter(s => s.length);
         let html = '';
 
         const scopedData = files
@@ -248,7 +251,16 @@
         document.getElementById('scope-summary').innerHTML = '[' + scopedCount.toLocaleString('en-US') + ' ' + (scopedCount === 1 ? 'file' : 'files') + '; ' + scopedLoc.toLocaleString('en-US') + ' LOC' + scopedRepoInfo + '] of ' + '[' + files.length.toLocaleString('en-US') + ' ' + (files.length === 1 ? 'file' : 'files') + '; ' + getLoc(files).toLocaleString('en-US') + ' LOC' + totalRepoInfo + ']';
 
         const filteredData = scopedData
-            .filter(item => item.path && (!filter || (item.repository + ' ' + item.path).toLowerCase().includes(filter)));
+            .filter(item => {
+                if (!item.path) {
+                    return false;
+                }
+                if (!filters.length) {
+                    return true;
+                }
+                const haystack = (item.repository + ' ' + item.path).toLowerCase();
+                return filters.some(f => haystack.includes(f));
+            });
 
         let maxLoc = 1;
         filteredData.forEach(item => maxLoc = Math.max(maxLoc, item.linesOfCode));

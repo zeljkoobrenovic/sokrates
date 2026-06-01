@@ -97,7 +97,7 @@
 <body>
 <div style="margin-left: 0px; margin-top: 20px; margin-bottom: 0px; color: grey">
     <div>
-        <input id="filter" type="text" placeholder="search..."
+        <input id="filter" type="text" placeholder="search... (use ; for multiple terms)"
                style="font-size: 16px; height: 32px; width: 320px; margin-bottom: 10px"
                onkeyup="update()">
         <div id="search-summary" style="display: inline-block"></div>
@@ -201,8 +201,10 @@
     }
 
     function update() {
+        // A search can contain several terms separated by ";"; the result is the UNION of the
+        // individual term matches (search "a;b" returns matches of "a" plus matches of "b").
         const filters = document.getElementById('filter').value.toLowerCase().trim()
-            .split(',').map(item => item.trim()).filter(item => item.length);
+            .split(';').map(item => item.trim()).filter(item => item.length);
 
         function isFiltered(name) {
             if (filters.length === 0) {
