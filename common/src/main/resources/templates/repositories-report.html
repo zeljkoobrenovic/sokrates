@@ -833,11 +833,12 @@
     const TOTAL_COUNT = repositories.length;
     const TOTAL_MAIN_LOC = repositories.reduce((a, b) => a + (b.mainLinesOfCode || 0), 0);
     const TOTAL_COMMITS = repositories.reduce((a, b) => a + (b.commitsCount || 0), 0);
+    const TOTAL_RECENT_CONTRIBUTORS = repositories.reduce((a, b) => a + (b.recentContributorsCount || 0), 0);
 
-    // Three proportion bars (% of repositories / LOC / commits) shown once under the
-    // search bar (above the tabs). Reflects the current search filter and is independent
+    // Four proportion bars (% of repositories / LOC / commits / recent developers) shown once
+    // under the search bar (above the tabs). Reflects the current search filter and is independent
     // of the active tab; hidden when nothing is filtered out.
-    function proportionBars(count, mainLoc, commits) {
+    function proportionBars(count, mainLoc, commits, recentContributors) {
         if (mainLoc >= TOTAL_MAIN_LOC) {
             return '';
         }
@@ -853,7 +854,8 @@
         }
         return bar(count, TOTAL_COUNT, '#303030', 'of repositories')
             + bar(mainLoc, TOTAL_MAIN_LOC, 'skyblue', 'of LOC')
-            + bar(commits, TOTAL_COMMITS, 'green', 'of commits');
+            + bar(commits, TOTAL_COMMITS, 'green', 'of commits')
+            + bar(recentContributors, TOTAL_RECENT_CONTRIBUTORS, '#b8860b', 'of recent developers');
     }
 
     // Renders the proportion bars into the dedicated container under the search bar,
@@ -863,7 +865,8 @@
         const count = matched.length;
         const mainLoc = matched.reduce((a, b) => a + (b.mainLinesOfCode || 0), 0);
         const commits = matched.reduce((a, b) => a + (b.commitsCount || 0), 0);
-        document.getElementById('proportion-bars').innerHTML = proportionBars(count, mainLoc, commits);
+        const recentContributors = matched.reduce((a, b) => a + (b.recentContributorsCount || 0), 0);
+        document.getElementById('proportion-bars').innerHTML = proportionBars(count, mainLoc, commits, recentContributors);
     }
 
     function renderFeatures(filters) {
