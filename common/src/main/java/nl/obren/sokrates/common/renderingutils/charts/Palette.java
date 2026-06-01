@@ -40,6 +40,13 @@ public class Palette {
         return new Palette(Arrays.asList("#9DC034", "#F2021B"));
     }
 
+    // Sequential blue ramp for the 11 repository-size categories (<1K .. >1M): light = small, dark = large.
+    public static Palette getSizePalette() {
+        return new Palette(Arrays.asList(
+                "#eff3ff", "#dbe6f6", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6",
+                "#2171b5", "#1361a9", "#08519c", "#08418a", "#08306b"));
+    }
+
     public static Palette getDefaultPalette() {
         return new Palette(Arrays.asList("#75ADD2", "#584982", "#FFFD98", "#FCF7FF",
                 "#61A99B", "#567E99", "#41365F", "#BAB96F", "#B8B4BA",

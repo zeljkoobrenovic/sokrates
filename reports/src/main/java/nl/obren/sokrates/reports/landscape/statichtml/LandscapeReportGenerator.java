@@ -1491,6 +1491,25 @@ public class LandscapeReportGenerator {
         });
 
         landscapeReport.startSubSection("Repositories Size Distribution", "Size of repositories (main lines of code)");
+
+        // A single colour-coded bar where each segment's width is the lines of code in a size
+        // category (<1K .. >1M), using the same size palette as the per-category bars below.
+        List<Integer> sizeLocValues = animals.stream()
+                .map(animal -> animalCounts.containsKey(animal)
+                        ? animalCounts.get(animal).stream()
+                        .mapToInt(a -> a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()).sum()
+                        : 0)
+                .collect(Collectors.toList());
+        SimpleOneBarChart sizeBar = new SimpleOneBarChart();
+        sizeBar.setWidth(BAR_WIDTH + 20);
+        sizeBar.setBarHeight(BAR_HEIGHT);
+        sizeBar.setMaxBarWidth(BAR_WIDTH);
+        sizeBar.setBarStartXOffset(0);
+        landscapeReport.startDivWithLabel("lines of code per repository size category (" +
+                String.join(" | ", animalsLocInfo).replace("&lt;", "<").replace("&gt;", ">") + ")", "margin-bottom: 12px;");
+        landscapeReport.addHtmlContent(sizeBar.getStackedBarSvg(sizeLocValues, Palette.getSizePalette(), "small", "large"));
+        landscapeReport.endDiv();
+
         landscapeReport.startTable("font-size: 100%; margin-bottom: 6px;");
 
         landscapeReport.startTableRow();
@@ -1501,8 +1520,11 @@ public class LandscapeReportGenerator {
         });
         landscapeReport.endTableRow();
 
+        List<String> sizeColors = Palette.getSizePalette().getColors();
         landscapeReport.startTableRow();
-        animals.forEach(animal -> {
+        for (int i = 0; i < animals.size(); i++) {
+            String animal = animals.get(i);
+            String barColor = sizeColors.get(i % sizeColors.size());
             int count = animalCounts.containsKey(animal) ? animalCounts.get(animal).size() : 0;
             landscapeReport.startTableCell("vertical-align: bottom; text-align: center; border: none;" + (count > 0 ? "" : "color: grey; opacity: 0.4"));
             int loc = 0;
@@ -1519,10 +1541,10 @@ public class LandscapeReportGenerator {
             landscapeReport.addContentInDiv(FormattingUtils.getFormattedPercentage(percentage) + "%", "font-size: 13px; ");
             landscapeReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(loc) + "LOC", "font-size: 11px;");
             landscapeReport.startDiv("border: 1px solid #d0d0d0; width: 64px; margin-bottom: 4px; ");
-            landscapeReport.addContentInDiv("", "background-color: blue; width: 100%; height: " + width + "px");
+            landscapeReport.addContentInDiv("", "background-color: " + barColor + "; width: 100%; height: " + width + "px");
             landscapeReport.endDiv();
             landscapeReport.endTableCell();
-        });
+        }
         landscapeReport.endTableRow();
 
 
