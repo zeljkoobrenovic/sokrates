@@ -235,20 +235,28 @@
     }
 
 
+    // True when a file carries git-history data; only main files do, so history-only columns
+    // (commits / contributors / age / freshness) have no value for test/build/generated/other files.
+    function hasHistoryData(item) {
+        return (item.commitsCount || 0) > 0 || (item.latestCommitDate || '').length > 0;
+    }
+
     // Sortable column definitions: each maps a key to a value accessor.
     // 'dir' is the default direction applied the first time a column is selected.
+    // 'historyOnly' marks columns whose data exists only for main files; files without history are
+    // always sorted to the bottom for these columns (regardless of direction).
     const sortColumns = {
         lang: {value: item => (item.mainLang || '').toLowerCase(), type: 'string', dir: 1},
         repo: {value: item => (item.repository || '').toLowerCase(), type: 'string', dir: 1},
         name: {value: item => (item.repository + '/' + item.path).toLowerCase(), type: 'string', dir: 1},
         loc: {value: item => item.linesOfCode, type: 'number', dir: -1},
-        recentCommits: {value: item => item.recentCommitsCount30Days || 0, type: 'number', dir: -1},
-        recentCommits90: {value: item => item.recentCommitsCount90Days || 0, type: 'number', dir: -1},
-        commits: {value: item => item.commitsCount || 0, type: 'number', dir: -1},
-        contributors: {value: item => item.contributorsCount || 0, type: 'number', dir: -1},
-        age: {value: item => (item.ageDays == null ? -1 : item.ageDays), type: 'number', dir: -1},
-        freshness: {value: item => (item.freshnessDays == null ? -1 : item.freshnessDays), type: 'number', dir: 1},
-        latestCommit: {value: item => item.latestCommitDate || '', type: 'string', dir: -1},
+        recentCommits: {value: item => item.recentCommitsCount30Days || 0, type: 'number', dir: -1, historyOnly: true},
+        recentCommits90: {value: item => item.recentCommitsCount90Days || 0, type: 'number', dir: -1, historyOnly: true},
+        commits: {value: item => item.commitsCount || 0, type: 'number', dir: -1, historyOnly: true},
+        contributors: {value: item => item.contributorsCount || 0, type: 'number', dir: -1, historyOnly: true},
+        age: {value: item => (item.ageDays == null ? -1 : item.ageDays), type: 'number', dir: -1, historyOnly: true},
+        freshness: {value: item => (item.freshnessDays == null ? -1 : item.freshnessDays), type: 'number', dir: 1, historyOnly: true},
+        latestCommit: {value: item => item.latestCommitDate || '', type: 'string', dir: -1, historyOnly: true},
         scope: {value: item => item.scope || '', type: 'string', dir: 1}
     };
 
@@ -257,6 +265,15 @@
 
     function comparator(a, b) {
         const column = sortColumns[sortKey];
+        // For history-only columns, files without history always sink to the bottom — their values
+        // (0 / -1 / "") would otherwise interleave meaninglessly with main files.
+        if (column.historyOnly) {
+            const aHas = hasHistoryData(a);
+            const bHas = hasHistoryData(b);
+            if (aHas !== bHas) {
+                return aHas ? -1 : 1;
+            }
+        }
         const va = column.value(a);
         const vb = column.value(b);
         let cmp;
