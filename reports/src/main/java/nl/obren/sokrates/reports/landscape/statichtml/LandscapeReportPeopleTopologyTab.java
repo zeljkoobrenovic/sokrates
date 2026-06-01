@@ -73,7 +73,8 @@ public class LandscapeReportPeopleTopologyTab {
     }
 
     void render30DaysTopology() {
-        landscapeReport.startSubSection(StringUtils.capitalize(type.singular()) + " Topology (past 30 days)", "");
+        String capitalizedType = StringUtils.capitalize(type.singular());
+        landscapeReport.startSubSection(capitalizedType + "-to-" + capitalizedType + " Topology (past 30 days)", "");
 
         boolean recentlyActive = landscapeAnalysisResults.getRecentContributorsCount(contributors) > 0;
         String prefix = isContributorReport() ? "people" : "teams";

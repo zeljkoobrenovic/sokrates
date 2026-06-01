@@ -123,9 +123,9 @@ public class ScopingConventions {
         otherFilesConventions.add(new Convention(".*[.]diff", "", "Configuration"));
         otherFilesConventions.add(new Convention(".*[.]patch", "", "Configuration"));
 
-        otherFilesConventions.add(new Convention(".*[.]editorconfig", "", "NPM Config"));
+        otherFilesConventions.add(new Convention(".*[.]editorconfig", "", "Editor configuration"));
 
-        otherFilesConventions.add(new Convention(".*[.]npmrc", "", "Editor configuration"));
+        otherFilesConventions.add(new Convention(".*[.]npmrc", "", "NPM Config"));
 
         otherFilesConventions.add(new Convention(".*[.]properties", "", "Properties"));
         otherFilesConventions.add(new Convention(".*[.]po", "", "Properties"));
@@ -169,8 +169,7 @@ public class ScopingConventions {
         otherFilesConventions.add(new Convention(".*/keep[.]me", "", "Text files"));
         otherFilesConventions.add(new Convention(".*/read[.]me", "", "Text files"));
         otherFilesConventions.add(new Convention(".*/test[.]me", "", "Text files"));
-        otherFilesConventions.add(new Convention(".*/go[.]mod", "", "Text files"));
-        otherFilesConventions.add(new Convention(".*/go[.]sum", "", "Text files"));
+        // go.mod / go.sum are classified as build-and-deployment (see addBuildAndDeploymentConventions).
         otherFilesConventions.add(new Convention(".*/package[.]mask", "", "Text files"));
         otherFilesConventions.add(new Convention(".*/package[.]use[.]mask", "", "Text files"));
         otherFilesConventions.add(new Convention(".*/package[.]use[.]stable[.]mask", "", "Text files"));
@@ -221,7 +220,7 @@ public class ScopingConventions {
         buildAndDeploymentFilesConventions.add(new Convention(".*/assembly[.]xml", "", "Maven assembly plugin configuration"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/assembly/src[.]xml", "", "Maven assembly plugin configuration"));
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]gradle", "", "Gradle configuration"));
-        buildAndDeploymentFilesConventions.add(new Convention(".*[.][-]gradle[.]js", "", "Gradle configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*[-]gradle[.]js", "", "Gradle configuration"));
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]sh", "", "Scripts"));
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]bat", "", "Scripts"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/AndroidManifest[.]xml", "", "Scripts"));
@@ -235,6 +234,8 @@ public class ScopingConventions {
         buildAndDeploymentFilesConventions.add(new Convention(".*/docker[-]compose[.]yaml", "", "Docker configuration"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/docker[-]compose[.]yml", "", "Docker configuration"));
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]dockerfile", "", "Docker configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/Dockerfile", "", "Docker configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/Dockerfile[.][a-zA-Z0-9._-]+", "", "Docker configuration"));
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]mk", "", "Mk files"));
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]cvsignore", "", "CVS configuration files"));
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]git[a-z]+", "", "Git configuration files"));
@@ -262,6 +263,76 @@ public class ScopingConventions {
         buildAndDeploymentFilesConventions.add(new Convention(".*/Makefile", "", "Makefile"));
 
         buildAndDeploymentFilesConventions.add(new Convention(".*/buildscripts/*", "", "Build scripts"));
+
+        // CI pipelines
+        buildAndDeploymentFilesConventions.add(new Convention(".*/[.]github/workflows/.*[.]ya?ml", "", "GitHub Actions workflow"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/[.]github/actions/.*[.]ya?ml", "", "GitHub Actions"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/action[.]ya?ml", "", "GitHub composite action"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/[.]gitlab[-]ci[.]yml", "", "GitLab CI configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/[.]circleci/.*[.]ya?ml", "", "CircleCI configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/[.]travis[.]yml", "", "Travis CI configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/azure[-]pipelines[.]ya?ml", "", "Azure Pipelines configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/bitbucket[-]pipelines[.]yml", "", "Bitbucket Pipelines configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/[.]drone[.]yml", "", "Drone CI configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/appveyor[.]yml", "", "AppVeyor configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/[.]teamcity/.*", "", "TeamCity configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/cloudbuild[.]ya?ml", "", "Google Cloud Build configuration"));
+
+        // Infrastructure as code
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]tf", "", "Terraform configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]tfvars", "", "Terraform variables"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]bicep", "", "Bicep configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/serverless[.]ya?ml", "", "Serverless Framework configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/Procfile", "", "Procfile"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/skaffold[.]ya?ml", "", "Skaffold configuration"));
+        // Helm charts
+        buildAndDeploymentFilesConventions.add(new Convention(".*/Chart[.]ya?ml", "", "Helm chart"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/templates/.*[.]tpl", "", "Helm template"));
+        // Ansible
+        buildAndDeploymentFilesConventions.add(new Convention(".*/playbook[.]ya?ml", "", "Ansible playbook"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/ansible[.]cfg", "", "Ansible configuration"));
+
+        // Build systems
+        buildAndDeploymentFilesConventions.add(new Convention(".*/CMakeLists[.]txt", "", "CMake configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]cmake", "", "CMake configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/BUILD", "", "Bazel build file"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/BUILD[.]bazel", "", "Bazel build file"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/WORKSPACE", "", "Bazel workspace"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/WORKSPACE[.]bazel", "", "Bazel workspace"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]bzl", "", "Bazel/Starlark file"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]bazel", "", "Bazel file"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]sbt", "", "sbt configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/Rakefile", "", "Rakefile"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]rake", "", "Rake task"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/Gemfile", "", "Bundler configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]gemspec", "", "RubyGems specification"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/Cargo[.]toml", "", "Cargo configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/go[.]mod", "", "Go modules configuration"));
+        // Python build / packaging
+        buildAndDeploymentFilesConventions.add(new Convention(".*/setup[.]py", "", "Python setup script"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/setup[.]cfg", "", "Python setup configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/pyproject[.]toml", "", "Python project configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/requirements[a-zA-Z0-9._-]*[.]txt", "", "Python requirements"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/Pipfile", "", "Pipenv configuration"));
+        // .NET
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]sln", "", ".NET solution file"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]fsproj", "", "F# project file"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]props", "", "MSBuild props file"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]targets", "", "MSBuild targets file"));
+
+        // Lock files (resolved dependency manifests)
+        buildAndDeploymentFilesConventions.add(new Convention(".*/yarn[.]lock", "", "Yarn lock file"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/Cargo[.]lock", "", "Cargo lock file"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/Gemfile[.]lock", "", "Bundler lock file"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/poetry[.]lock", "", "Poetry lock file"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/Pipfile[.]lock", "", "Pipenv lock file"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/composer[.]lock", "", "Composer lock file"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/composer[.]json", "", "Composer configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/Podfile", "", "CocoaPods configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/Podfile[.]lock", "", "CocoaPods lock file"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/go[.]sum", "", "Go modules checksum file"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/Cartfile", "", "Carthage configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/Cartfile[.]resolved", "", "Carthage resolved file"));
     }
 
     private void addGeneratedConventions() {
@@ -291,8 +362,8 @@ public class ScopingConventions {
         generatedFilesConventions.add(new Convention(".*/Carthage/Build/.*", "", "Carthage builds"));
         generatedFilesConventions.add(new Convention(".*/[.](css|js)[.]map", "", "JS/CSS map"));
 
-        generatedFilesConventions.add(new Convention(".*/[.]js", "[/][/] Generated by .*", 1, "JS generated"));
-        generatedFilesConventions.add(new Convention(".*/[.]xml", "[<]doc[>]", 2, "A generated documentation file for a .NET assembly"));
+        generatedFilesConventions.add(new Convention(".*[.]js", "[/][/] Generated by .*", 1, "JS generated"));
+        generatedFilesConventions.add(new Convention(".*[.]xml", "[<]doc[>]", 2, "A generated documentation file for a .NET assembly"));
         generatedFilesConventions.add(new Convention(".*[.]designer[.](cs|vb)", "", "A codegen file for a .NET repository"));
         generatedFilesConventions.add(new Convention(".*[.]feature[.]cs", "", "A codegen file for Specflow feature file"));
         generatedFilesConventions.add(new Convention(".*[.]feature[.]cs", ".*Generated by PEG[.]js.*", 5, "A parser generated by PEG.js"));
@@ -313,7 +384,6 @@ public class ScopingConventions {
         generatedFilesConventions.add(new Convention(".*[.]java", ".*This file is generated by jOOQ[.].*", 3, "A generated jOOQ file"));
         generatedFilesConventions.add(new Convention(".*[.]java", ".*// DO NOT EDIT[.] This is code generated.*", 3, "A generated file"));
         generatedFilesConventions.add(new Convention(".*[.]java", "[ ]*[*][ ]*[@]author[ ]+DAOGenerator.*", 3, "A generated Java DAO file"));
-        generatedFilesConventions.add(new Convention(".*[.]java", "[ ]*[*][ ]*[@]author[ ]+DAOGenerator.*", 3, "A generated Java DAO file"));
         generatedFilesConventions.add(new Convention(".*[.]java", "[/][/][ ]*This file is auto-generated.*", 3, "A generated Java file"));
 
         generatedFilesConventions.add(new Convention(".*[.]cs", "[/][/][ ]*<auto[-]?generated.*", 3, "A generated C# file"));
@@ -324,9 +394,9 @@ public class ScopingConventions {
         generatedFilesConventions.add(new Convention(".*[.]zep[.][a-z0-9_]+", "", ""));
         generatedFilesConventions.add(new Convention(".*[.]dart", ".*GENERATED CODE.*DO NOT MODIFY.*", 1, "A generated Dart file"));
         generatedFilesConventions.add(new Convention(".*[.]h", ".*Automatically created by Devel[:][:]PPPort.*", 9, "A generated Perl/Pollution/Portability header file"));
-        generatedFilesConventions.add(new Convention(".*[.](html|html|xhtml)", ".*Generated by pkgdown[:] do not edit by hand.*", 2, "A generated HTML source file"));
-        generatedFilesConventions.add(new Convention(".*[.](html|html|xhtml)", ".*Generated by Doxygen.*", 31, "A generated HTML source file"));
-        generatedFilesConventions.add(new Convention(".*[.](html|html|xhtml)", "[ ]*[<]meta name[=]\"generator\" .*", 31, "A generated HTML source file"));
+        generatedFilesConventions.add(new Convention(".*[.](html|htm|xhtml)", ".*Generated by pkgdown[:] do not edit by hand.*", 2, "A generated HTML source file"));
+        generatedFilesConventions.add(new Convention(".*[.](html|htm|xhtml)", ".*Generated by Doxygen.*", 31, "A generated HTML source file"));
+        generatedFilesConventions.add(new Convention(".*[.](html|htm|xhtml)", "[ ]*[<]meta name[=]\"generator\" .*", 31, "A generated HTML source file"));
         generatedFilesConventions.add(new Convention(".*[.](cxx|cpp|c|hxx|hpp|h)", ".*autogen include statement, do not remove.*", 31, "A generated C(PP) source file"));
         generatedFilesConventions.add(new Convention(".*[.](cxx|cpp|c|hxx|hpp|h)", "[ ]*[*][ ]*Generated automatically by[ ]*.*", 31, "A generated C(PP) source file"));
         generatedFilesConventions.add(new Convention(".*/src/gen/.*", "", defaultNote));
@@ -335,7 +405,6 @@ public class ScopingConventions {
 
     private void addTestConventions() {
         String defaultNote = "Test files";
-        testFilesConventions.add(new Convention(".*/[Tt]est/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*/[Tt]est/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*/[Tt]ests/.*", "", defaultNote));
         testFilesConventions.add(new Convention(".*[.][Tt]est/.*", "", defaultNote));
@@ -401,7 +470,15 @@ public class ScopingConventions {
     }
 
     private void addIgnoreConventions() {
-        ignoredFilesConventions.add(new Convention(".*/[.][a-zA-Z0-9_]+.*", "", "Hidden files and folders"));
+        // Hidden files (the file name itself starts with a dot, at any depth incl. the repository
+        // root), e.g. .gitignore, .env, .eslintrc.json. Dotted CI configs (.gitlab-ci.yml,
+        // .travis.yml, .drone.yml) are exempted via the negative lookahead so they fall through to
+        // the build-and-deployment scope instead of being ignored.
+        ignoredFilesConventions.add(new Convention("([^/]*/)*[.](?!(gitlab[-]ci[.]yml|travis[.]yml|drone[.]yml)$)[^/]*", "", "Hidden files"));
+        // Contents of well-known VCS / IDE / build-tool hidden directories. Deliberately a fixed
+        // list rather than "any dotted folder", so real source under an incidentally-dotted folder
+        // (e.g. src/.config/Foo.java) is not silently ignored.
+        ignoredFilesConventions.add(new Convention("(.*/)?[.](git|svn|hg|bzr|idea|vscode|vs|gradle|mvn|settings|metadata)/.*", "", "Hidden VCS/tool directories"));
         ignoredFilesConventions.add(new Convention(".*[.]resx", "", "The resx resource files"));
 
         ignoredFilesConventions.add(new Convention(".*/node_modules/.*", "", "Node dependencies"));
@@ -452,7 +529,6 @@ public class ScopingConventions {
         ignoredFilesConventions.add(new Convention(".*/fuelux[.]js", "", "Fuel UX"));
         ignoredFilesConventions.add(new Convention(".*/bootbox[.]js", "", "Bootbox"));
         ignoredFilesConventions.add(new Convention(".*/pdf[-]worker[.]js", "", "pdf-worker"));
-        ignoredFilesConventions.add(new Convention(".*/slick\\.\\w+.js", "", "Slick"));
         ignoredFilesConventions.add(new Convention(".*/slick\\.\\w+.js", "", "Slick"));
         ignoredFilesConventions.add(new Convention(".*/prototype(.*)\\.js", "", "Prototype"));
         ignoredFilesConventions.add(new Convention(".*/effects\\.js", "", "Prototype"));
@@ -511,13 +587,10 @@ public class ScopingConventions {
         ignoredFilesConventions.add(new Convention(".*/knockout-(\\d+\\.){3}(debug\\.)?js", "", "Knockout"));
 
         ignoredFilesConventions.add(new Convention(".*/docs?/_?(build|themes?|templates?|static)/.*", "", "Sphinx"));
-        ignoredFilesConventions.add(new Convention(".*/docs?/_?(build|themes?|templates?|static)/.*", "", "Sphinx"));
 
         ignoredFilesConventions.add(new Convention(".*/admin_media/.*", "", "django"));
 
         ignoredFilesConventions.add(new Convention(".*/fabfile\\.py", "", "Fabric"));
-
-        ignoredFilesConventions.add(new Convention(".*[.]osx", "", ".osx"));
 
         ignoredFilesConventions.add(new Convention(".*[.]osx", "", ".osx"));
 
