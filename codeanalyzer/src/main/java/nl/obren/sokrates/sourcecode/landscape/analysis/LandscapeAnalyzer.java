@@ -148,7 +148,13 @@ public class LandscapeAnalyzer {
     }
 
 
-    private void updatePeopleDependencies(LandscapeAnalysisResults landscapeAnalysisResults) {
+    /**
+     * Computes and stores the contributor/team topology data (people dependencies, connections via
+     * repositories, c/p indices, and history) from the landscape's contributors. Public + static so
+     * it can be reused for virtual landscapes, whose child results are assembled from a repository
+     * subset rather than analysed from disk.
+     */
+    public static void updatePeopleDependencies(LandscapeAnalysisResults landscapeAnalysisResults) {
         LOG.info("Updating people dependencies....");
         List<ContributorRepositories> contributors = landscapeAnalysisResults.getContributors();
         LOG.info("Updating people dependencies in past 30d....");
@@ -206,7 +212,7 @@ public class LandscapeAnalyzer {
         LOG.info("Done updating people dependencies.");
     }
 
-    private void addHistory(LandscapeAnalysisResults landscapeAnalysisResults) {
+    private static void addHistory(LandscapeAnalysisResults landscapeAnalysisResults) {
         List<ContributorRepositories> contributors = landscapeAnalysisResults.getContributors();
         for (int i = 0; i < 12; i++) {
             int daysAgo1 = i * 30;
