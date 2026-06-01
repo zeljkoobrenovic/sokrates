@@ -39,6 +39,16 @@ public class SimpleOneBarChart {
 
         int x = barStartXOffset;
 
+        // The last drawn segment stretches to the bar end so accumulated per-segment rounding does
+        // not leave a gap. That is the last NON-ZERO value (the final entries may be zero), not just
+        // index size-1.
+        int lastNonZeroIndex = -1;
+        for (int i = 0; i < values.size(); i++) {
+            if (values.get(i).doubleValue() > 0.0000000001) {
+                lastNonZeroIndex = i;
+            }
+        }
+
         for (int i = 0; i < values.size(); i++) {
             double value = values.get(i).doubleValue();
             String color = palette.nextColor();
@@ -48,7 +58,7 @@ public class SimpleOneBarChart {
                     barSize = 1;
                 }
                 if (x < maxBarWidth + barStartXOffset) {
-                    if (i < values.size() - 1 && x + barSize <= maxBarWidth + barStartXOffset) {
+                    if (i < lastNonZeroIndex && x + barSize <= maxBarWidth + barStartXOffset) {
                         svg.append(getBarSvg(x, barSize, color));
                     } else {
                         svg.append(getBarSvg(x, maxBarWidth + barStartXOffset - x, color));
