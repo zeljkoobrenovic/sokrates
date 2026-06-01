@@ -401,7 +401,13 @@ public class ScopingConventions {
     }
 
     private void addIgnoreConventions() {
-        ignoredFilesConventions.add(new Convention(".*/[.][a-zA-Z0-9_]+.*", "", "Hidden files and folders"));
+        // Hidden files (the file name itself starts with a dot, at any depth incl. the repository
+        // root), e.g. .gitignore, .env, .eslintrc.json.
+        ignoredFilesConventions.add(new Convention("([^/]*/)*[.][^/]*", "", "Hidden files"));
+        // Contents of well-known VCS / IDE / build-tool hidden directories. Deliberately a fixed
+        // list rather than "any dotted folder", so real source under an incidentally-dotted folder
+        // (e.g. src/.config/Foo.java) is not silently ignored.
+        ignoredFilesConventions.add(new Convention("(.*/)?[.](git|svn|hg|bzr|idea|vscode|vs|gradle|mvn|settings|metadata)/.*", "", "Hidden VCS/tool directories"));
         ignoredFilesConventions.add(new Convention(".*[.]resx", "", "The resx resource files"));
 
         ignoredFilesConventions.add(new Convention(".*/node_modules/.*", "", "Node dependencies"));
