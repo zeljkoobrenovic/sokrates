@@ -19,6 +19,9 @@ public class UnitExport {
     private int mcCabeIndex;
     private int numberOfParameters;
     private int startLine;
+    // Relative URL (from the explorers/ folder) of a saved source-code fragment for this unit, or
+    // "" when none was saved. Set by the explorer generator, not derived from UnitInfo.
+    private String fragmentLink = "";
 
     public UnitExport() {
     }
@@ -87,6 +90,14 @@ public class UnitExport {
 
     public void setStartLine(int startLine) {
         this.startLine = startLine;
+    }
+
+    public String getFragmentLink() {
+        return fragmentLink;
+    }
+
+    public void setFragmentLink(String fragmentLink) {
+        this.fragmentLink = fragmentLink;
     }
 
     /**

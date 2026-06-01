@@ -6,7 +6,7 @@
     <style>
         body {
             font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
-            margin: 12px;
+            margin: 4px 12px 12px;
         }
 
         a {
@@ -45,7 +45,7 @@
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Lato">
 </head>
 <body>
-
+<p style="margin-top: 0; color: grey">* unit analyses are experimental (using less reliable heuristic methods)</p>
 <div style="margin: 0; color: grey">
     <div>
         <input id="filter" type="text" placeholder="search... (use ; for multiple terms)"
@@ -216,11 +216,18 @@
             html += '</div>';
             html += '</td>';
 
-            // unit name (with start line as a hint).
+            // unit name (with start line as a hint). When a source-code fragment was saved for this
+            // unit, link the name to it (opens in a new tab).
             html += '<td>';
             html += '<div style="border-left: 1px solid lightgrey; padding-left: 6px">';
-            html += '<div title="' + escapeHtml(item.longName || item.name) + (item.startLine ? ' (line ' + item.startLine + ')' : '') + '" '
-                + 'style="color: black; font-weight: bold">' + escapeHtml(item.name) + '</div>';
+            const unitTitle = escapeHtml(item.longName || item.name) + (item.startLine ? ' (line ' + item.startLine + ')' : '');
+            if (item.fragmentLink) {
+                html += '<div title="' + unitTitle + ' — view code" style="font-weight: bold">'
+                    + '<a target="_blank" href="' + escapeHtml(item.fragmentLink) + '" style="color: #0a58ca">'
+                    + escapeHtml(item.name) + ' <span style="font-size: 80%; color: #888">&#x2197;</span></a></div>';
+            } else {
+                html += '<div title="' + unitTitle + '" style="color: black; font-weight: bold">' + escapeHtml(item.name) + '</div>';
+            }
             html += '</div>';
             html += '</td>';
 

@@ -139,7 +139,7 @@ public class ReportFileExporter {
         indexReport.addTab("quality", "Analyses", false);
         indexReport.addTab("commits", "Activity", false);
         indexReport.addTab("files", "Files", false);
-        indexReport.addTab("units", "Units", false);
+        indexReport.addTab("units", "Units*", false);
         indexReport.addTab("visuals", "Visuals", false);
         indexReport.addTab("data", "Data", false);
         indexReport.addTab("prompts", "AI Prompts", false);

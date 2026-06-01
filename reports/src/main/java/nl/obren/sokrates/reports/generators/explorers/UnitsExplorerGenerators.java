@@ -11,6 +11,7 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,7 +36,26 @@ public class UnitsExplorerGenerators {
     public void exportJson(CodeAnalysisResults codeAnalysisResults) {
         try {
             List<UnitInfo> units = codeAnalysisResults.getUnitsAnalysisResults().getAllUnits();
-            List<UnitExport> unitExports = units.stream().map(UnitExport::new).collect(Collectors.toList());
+
+            // Map units that have a saved source-code fragment to its relative URL. Fragments are
+            // saved (only when saveCodeFragments is on) for the longest-units and most-complex-units
+            // lists, named <type>/<type>_<1-based index>.<ext>.html — keyed by list position, so we
+            // mirror that indexing here. Identity (==) match, as the explorer reuses the same UnitInfo
+            // objects. Longest-unit fragments take precedence when a unit is in both lists.
+            Map<UnitInfo, String> fragmentLinks = new IdentityHashMap<>();
+            if (codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveCodeFragments()) {
+                addFragmentLinks(fragmentLinks, codeAnalysisResults.getUnitsAnalysisResults().getLongestUnits(), "longest_unit");
+                addFragmentLinks(fragmentLinks, codeAnalysisResults.getUnitsAnalysisResults().getMostComplexUnits(), "most_complex_unit");
+            }
+
+            List<UnitExport> unitExports = units.stream().map(unit -> {
+                UnitExport export = new UnitExport(unit);
+                String link = fragmentLinks.get(unit);
+                if (link != null) {
+                    export.setFragmentLink(link);
+                }
+                return export;
+            }).collect(Collectors.toList());
 
             ExplorerTemplate explorerTemplate = new ExplorerTemplate();
 
@@ -56,6 +76,26 @@ public class UnitsExplorerGenerators {
             FileUtils.write(new File(folder, "units-explorer.html"), unitsExplorer, UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Records, per unit, the relative fragment URL (from the explorers/ folder) for a saved-fragment
+     * list, mirroring DataExporter's naming: {@code <type>/<type>_<1-based index>.<ext>.html}.
+     * Does not overwrite an existing mapping, so the first list passed wins for shared units.
+     */
+    private void addFragmentLinks(Map<UnitInfo, String> links, List<UnitInfo> units, String fragmentType) {
+        if (units == null) {
+            return;
+        }
+        for (int i = 0; i < units.size(); i++) {
+            UnitInfo unit = units.get(i);
+            if (links.containsKey(unit) || unit.getSourceFile() == null) {
+                continue;
+            }
+            String url = "../src/fragments/" + fragmentType + "/" + fragmentType + "_" + (i + 1)
+                    + "." + unit.getSourceFile().getExtension() + ".html";
+            links.put(unit, url);
         }
     }
 
