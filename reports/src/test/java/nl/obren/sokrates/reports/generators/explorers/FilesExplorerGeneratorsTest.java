@@ -41,8 +41,9 @@ class FilesExplorerGeneratorsTest {
         FileExport export = files.get(0);
         assertEquals(3, export.getCommitsCount());
         assertEquals("2020-06-15", export.getLatestCommitDate());
-        // All three commits are years old, so none count as recent (last 30 days).
+        // All three commits are years old, so none count as recent (last 30 / 90 days).
         assertEquals(0, export.getRecentCommitsCount30Days());
+        assertEquals(0, export.getRecentCommitsCount90Days());
     }
 
     @Test
@@ -54,26 +55,30 @@ class FilesExplorerGeneratorsTest {
         FileExport export = files.get(0);
         assertEquals(0, export.getCommitsCount());
         assertEquals(0, export.getRecentCommitsCount30Days());
+        assertEquals(0, export.getRecentCommitsCount90Days());
         assertEquals("", export.getLatestCommitDate());
     }
 
     @Test
-    void countsRecentCommitsWithinThirtyDays() {
-        // Build dates relative to a recent reference so the "recent" count is deterministic:
-        // one commit ~5 days ago (recent) and one ~400 days ago (not recent).
+    void countsRecentCommitsWithinThirtyAndNinetyDays() {
+        // Build dates relative to a recent reference so the "recent" counts are deterministic:
+        // one commit ~5 days ago (within 30 and 90), one ~60 days ago (within 90 only), and one
+        // ~400 days ago (neither).
         java.time.LocalDate today = java.time.LocalDate.now();
-        String recent = today.minusDays(5).toString();
-        String old = today.minusDays(400).toString();
+        String days5 = today.minusDays(5).toString();
+        String days60 = today.minusDays(60).toString();
+        String days400 = today.minusDays(400).toString();
 
         FileModificationHistory history = new FileModificationHistory("src/Baz.java");
-        history.setDates(new java.util.ArrayList<>(Arrays.asList(old, recent)));
+        history.setDates(new java.util.ArrayList<>(Arrays.asList(days400, days60, days5)));
 
         FilesExplorerGenerators generators = new FilesExplorerGenerators(new File("."));
         List<FileExport> files = generators.getFiles(aspectOf(sourceFile("src/Baz.java", 10, history)), "main");
 
         FileExport export = files.get(0);
-        assertEquals(2, export.getCommitsCount());
+        assertEquals(3, export.getCommitsCount());
         assertEquals(1, export.getRecentCommitsCount30Days());
-        assertEquals(recent, export.getLatestCommitDate());
+        assertEquals(2, export.getRecentCommitsCount90Days());
+        assertEquals(days5, export.getLatestCommitDate());
     }
 }

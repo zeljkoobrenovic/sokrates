@@ -113,7 +113,7 @@
             return '';
         }
         const key = lang.toLowerCase();
-        const size = 32;
+        const size = 30;
         if (langIcons[key]) {
             return '<img title="' + lang + '" style="margin-right: 5px; vertical-align: middle; background-color: #f1f1f1; '
                 + 'border-radius: 50%; border: 1px solid lightgrey; width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
@@ -176,6 +176,7 @@
         name: {value: item => (item.repository + '/' + item.path).toLowerCase(), type: 'string', dir: 1},
         loc: {value: item => item.linesOfCode, type: 'number', dir: -1},
         recentCommits: {value: item => item.recentCommitsCount30Days || 0, type: 'number', dir: -1},
+        recentCommits90: {value: item => item.recentCommitsCount90Days || 0, type: 'number', dir: -1},
         commits: {value: item => item.commitsCount || 0, type: 'number', dir: -1},
         latestCommit: {value: item => item.latestCommitDate || '', type: 'string', dir: -1},
         scope: {value: item => item.scope || '', type: 'string', dir: 1}
@@ -318,6 +319,7 @@
         html += sortHeader('loc', '&nbsp;LOC', 'text-align: left');
         if (hasHistory) {
             html += sortHeader('recentCommits', 'commits<br>(30d)', 'text-align: center');
+            html += sortHeader('recentCommits90', 'commits<br>(90d)', 'text-align: center');
             html += sortHeader('commits', 'commits<br>(all time)', 'text-align: center');
             html += sortHeader('latestCommit', 'latest<br>commit', 'text-align: center');
         }
@@ -374,9 +376,12 @@
             html += '</td>';
             if (hasHistory) {
                 const recent = item.recentCommitsCount30Days || 0;
+                const recent90 = item.recentCommitsCount90Days || 0;
                 const total = item.commitsCount || 0;
                 html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
                     + (recent > 0 ? recent.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
+                html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
+                    + (recent90 > 0 ? recent90.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
                 html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
                     + (total > 0 ? total.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
                 html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%; color: #5f5f5f;">'

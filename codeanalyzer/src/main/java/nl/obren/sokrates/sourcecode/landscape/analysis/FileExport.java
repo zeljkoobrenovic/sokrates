@@ -13,6 +13,7 @@ public class FileExport {
     // Git-history fields; 0 / "" when no file history is available for the analysis.
     private int commitsCount;
     private int recentCommitsCount30Days;
+    private int recentCommitsCount90Days;
     private String latestCommitDate = "";
 
     public FileExport() {
@@ -71,6 +72,14 @@ public class FileExport {
 
     public void setRecentCommitsCount30Days(int recentCommitsCount30Days) {
         this.recentCommitsCount30Days = recentCommitsCount30Days;
+    }
+
+    public int getRecentCommitsCount90Days() {
+        return recentCommitsCount90Days;
+    }
+
+    public void setRecentCommitsCount90Days(int recentCommitsCount90Days) {
+        this.recentCommitsCount90Days = recentCommitsCount90Days;
     }
 
     public String getLatestCommitDate() {

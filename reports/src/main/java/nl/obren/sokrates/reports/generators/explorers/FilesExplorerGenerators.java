@@ -40,6 +40,8 @@ public class FilesExplorerGenerators {
                     fileExport.setCommitsCount(dates.size());
                     fileExport.setRecentCommitsCount30Days((int) dates.stream()
                             .filter(date -> DateUtils.isCommittedLessThanDaysAgo(date, 30)).count());
+                    fileExport.setRecentCommitsCount90Days((int) dates.stream()
+                            .filter(date -> DateUtils.isCommittedLessThanDaysAgo(date, 90)).count());
                     fileExport.setLatestCommitDate(history.getLatestDate());
                 }
                 files.add(fileExport);

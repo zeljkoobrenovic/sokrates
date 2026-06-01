@@ -321,6 +321,7 @@ public class LandscapeAnalyzer {
             int pathCol = indexOfColumn(header, "path");
             int commitsCol = indexOfColumn(header, "# commits");
             int commits30Col = indexOfColumn(header, "# commits (30d)");
+            int commits90Col = indexOfColumn(header, "# commits (90d)");
             int lastUpdatedCol = indexOfColumn(header, "last updated");
             if (pathCol < 0) {
                 return;
@@ -336,6 +337,9 @@ public class LandscapeAnalyzer {
                     }
                     if (commits30Col >= 0 && commits30Col < data.length && NumberUtils.isDigits(data[commits30Col])) {
                         file.setRecentCommitsCount30Days(Integer.parseInt(data[commits30Col]));
+                    }
+                    if (commits90Col >= 0 && commits90Col < data.length && NumberUtils.isDigits(data[commits90Col])) {
+                        file.setRecentCommitsCount90Days(Integer.parseInt(data[commits90Col]));
                     }
                     if (lastUpdatedCol >= 0 && lastUpdatedCol < data.length) {
                         file.setLatestCommitDate(data[lastUpdatedCol]);
