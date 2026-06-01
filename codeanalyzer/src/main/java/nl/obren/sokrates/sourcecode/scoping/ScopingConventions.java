@@ -471,8 +471,10 @@ public class ScopingConventions {
 
     private void addIgnoreConventions() {
         // Hidden files (the file name itself starts with a dot, at any depth incl. the repository
-        // root), e.g. .gitignore, .env, .eslintrc.json.
-        ignoredFilesConventions.add(new Convention("([^/]*/)*[.][^/]*", "", "Hidden files"));
+        // root), e.g. .gitignore, .env, .eslintrc.json. Dotted CI configs (.gitlab-ci.yml,
+        // .travis.yml, .drone.yml) are exempted via the negative lookahead so they fall through to
+        // the build-and-deployment scope instead of being ignored.
+        ignoredFilesConventions.add(new Convention("([^/]*/)*[.](?!(gitlab[-]ci[.]yml|travis[.]yml|drone[.]yml)$)[^/]*", "", "Hidden files"));
         // Contents of well-known VCS / IDE / build-tool hidden directories. Deliberately a fixed
         // list rather than "any dotted folder", so real source under an incidentally-dotted folder
         // (e.g. src/.config/Foo.java) is not silently ignored.
