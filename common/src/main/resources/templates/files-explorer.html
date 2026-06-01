@@ -276,23 +276,16 @@
             + label + '<span class="sort-arrow">' + arrow + '</span></td>';
     }
 
-    // Base path (from the explorers/ folder) to the per-repository HTML reports, so the age/churn
-    // columns can link their source report. Empty (e.g. in the landscape, where the reports don't
-    // exist at a single location) suppresses the link.
+    // Base path (from the explorers/ folder) to the per-repository HTML reports / cached source
+    // files, so each file card can link to them. Empty (e.g. in the landscape, where these do not
+    // exist at a single location) suppresses the links.
     let reportLinkBase = '${reportLinkBase}';
     if (reportLinkBase.indexOf('${') === 0) {
         reportLinkBase = '';
     }
-
-    // A sortable header whose label also links to a report (small ↗ that doesn't trigger the sort).
-    function sortHeaderLinked(key, label, reportFile, extraStyle) {
-        let suffix = '';
-        if (reportLinkBase && reportFile) {
-            suffix = ' <a href="' + reportLinkBase + reportFile + '" target="_blank" title="open the report" '
-                + 'onclick="event.stopPropagation()" style="color: #0a58ca; font-size: 80%">&#x2197;</a>';
-        }
-        return sortHeader(key, label + suffix, extraStyle);
-    }
+    // Whether per-file cached source pages were saved (../src/main/<path>.html). Suppresses the
+    // file-name link when off.
+    let saveSourceFiles = '${saveSourceFiles}' === 'true';
 
     files = files.sort(comparator);
 
@@ -408,10 +401,10 @@
         if (hasHistory) {
             html += sortHeader('recentCommits', 'commits<br>(30d)', 'text-align: center');
             html += sortHeader('recentCommits90', 'commits<br>(90d)', 'text-align: center');
-            html += sortHeaderLinked('commits', 'commits<br>(all time)', 'FileChangeFrequency.html', 'text-align: center');
-            html += sortHeaderLinked('contributors', 'contri-<br>butors', 'FileChangeFrequency.html', 'text-align: center');
-            html += sortHeaderLinked('age', 'age<br>(days)', 'FileAge.html', 'text-align: center');
-            html += sortHeaderLinked('freshness', 'freshness<br>(days)', 'FileAge.html', 'text-align: center');
+            html += sortHeader('commits', 'commits<br>(all time)', 'text-align: center');
+            html += sortHeader('contributors', 'contri-<br>butors', 'text-align: center');
+            html += sortHeader('age', 'age<br>(days)', 'text-align: center');
+            html += sortHeader('freshness', 'freshness<br>(days)', 'text-align: center');
             html += sortHeader('latestCommit', 'latest<br>commit', 'text-align: center');
         }
         html += sortHeader('scope', 'scope', 'text-align: center');
@@ -449,7 +442,21 @@
                 displayFolder = folder.substring(0, 50) + '...';
             }
             html += '<div title="' + folder + '" style="font-size: 90%; color: #7f7f7f">' + displayFolder + '</div>';
-            html += '<div style="margin-bottom: 6px; color: black; font-weight: bold">' + fileName + '</div>';
+            // File name: link to the cached source page when available, otherwise plain bold text.
+            if (saveSourceFiles && item.sourceFileLink) {
+                html += '<div style="margin-bottom: 2px"><a href="' + item.sourceFileLink + '" target="_blank" '
+                    + 'style="color: #0a58ca; font-weight: bold">' + fileName + ' <span style="font-size: 80%; color: #888">&#x2197;</span></a></div>';
+            } else {
+                html += '<div style="margin-bottom: 2px; color: black; font-weight: bold">' + fileName + '</div>';
+            }
+            // Small links to the source report views for this file's history (per-repository only).
+            if (reportLinkBase && (item.commitsCount || (item.latestCommitDate || '').length)) {
+                html += '<div style="margin-bottom: 4px; font-size: 75%">'
+                    + '<a href="' + reportLinkBase + 'FileAge.html" target="_blank" style="color: #6f6f6f">age &amp; freshness</a>'
+                    + ' &middot; '
+                    + '<a href="' + reportLinkBase + 'FileChangeFrequency.html" target="_blank" style="color: #6f6f6f">change frequency</a>'
+                    + '</div>';
+            }
             html += '</div>';
             html += '</td>';
 

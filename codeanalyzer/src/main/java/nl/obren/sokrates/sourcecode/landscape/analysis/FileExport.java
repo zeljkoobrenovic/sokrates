@@ -20,6 +20,9 @@ public class FileExport {
     private int ageDays = -1;          // days since first update
     private int freshnessDays = -1;    // days since latest update
     private int contributorsCount;
+    // Relative URL (from the explorers/ folder) of this file's cached source page, or "" when none
+    // was saved (only a referenced subset of files is cached).
+    private String sourceFileLink = "";
 
     public FileExport() {
     }
@@ -117,6 +120,14 @@ public class FileExport {
 
     public void setContributorsCount(int contributorsCount) {
         this.contributorsCount = contributorsCount;
+    }
+
+    public String getSourceFileLink() {
+        return sourceFileLink;
+    }
+
+    public void setSourceFileLink(String sourceFileLink) {
+        this.sourceFileLink = sourceFileLink;
     }
 
     /**

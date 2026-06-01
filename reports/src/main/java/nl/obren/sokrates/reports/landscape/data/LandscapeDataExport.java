@@ -105,8 +105,10 @@ public class LandscapeDataExport {
                     FilesExportUtils.thresholdsJson(Thresholds.defaultFileUpdateFrequencyThresholds()));
             filesPlaceholders.put("fileContributorsCountThresholds",
                     FilesExportUtils.thresholdsJson(Thresholds.defaultFileContributorsCountThresholds()));
-            // No per-repository age/churn reports at the landscape level, so suppress the report links.
+            // No per-repository reports or cached source pages at the landscape level, so suppress
+            // both the report links and the file-name source links.
             filesPlaceholders.put("reportLinkBase", "");
+            filesPlaceholders.put("saveSourceFiles", "false");
             String filesExplorer = explorerTemplate.render("files-explorer.html", files, filesPlaceholders);
             FileUtils.write(new File(reportsFolder, "files-explorer.html"), filesExplorer, UTF_8);
 
