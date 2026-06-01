@@ -45,6 +45,9 @@ public class FilesExplorerGenerators {
                     fileExport.setRecentCommitsCount90Days((int) dates.stream()
                             .filter(date -> DateUtils.isCommittedLessThanDaysAgo(date, 90)).count());
                     fileExport.setLatestCommitDate(history.getLatestDate());
+                    fileExport.setAgeDays(history.daysSinceFirstUpdate());
+                    fileExport.setFreshnessDays(history.daysSinceLatestUpdate());
+                    fileExport.setContributorsCount(history.countContributors());
                 }
                 files.add(fileExport);
             }
@@ -68,10 +71,16 @@ public class FilesExplorerGenerators {
             List<String> fileLangs = files.stream().map(FileExport::getMainLang).collect(Collectors.toList());
             String fileLangIcons = DataImageUtils.getLangDataImageMapJson(fileLangs);
 
+            nl.obren.sokrates.sourcecode.core.AnalysisConfig analysis =
+                    codeAnalysisResults.getCodeConfiguration().getAnalysis();
             Map<String, String> placeholders = new HashMap<>();
             placeholders.put("langIcons", fileLangIcons);
-            placeholders.put("fileSizeThresholds", FilesExportUtils.thresholdsJson(
-                    codeAnalysisResults.getCodeConfiguration().getAnalysis().getFileSizeThresholds()));
+            placeholders.put("fileSizeThresholds", FilesExportUtils.thresholdsJson(analysis.getFileSizeThresholds()));
+            placeholders.put("fileAgeThresholds", FilesExportUtils.thresholdsJson(analysis.getFileAgeThresholds()));
+            placeholders.put("fileUpdateFrequencyThresholds", FilesExportUtils.thresholdsJson(analysis.getFileUpdateFrequencyThresholds()));
+            placeholders.put("fileContributorsCountThresholds", FilesExportUtils.thresholdsJson(analysis.getFileContributorsCountThresholds()));
+            // From explorers/ the per-repository HTML reports live in ../html/.
+            placeholders.put("reportLinkBase", "../html/");
 
             String filesExplorer = explorerTemplate.render("files-explorer.html", files, placeholders);
             File folder = new File(reportsFolder, "explorers");

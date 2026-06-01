@@ -15,6 +15,11 @@ public class FileExport {
     private int recentCommitsCount30Days;
     private int recentCommitsCount90Days;
     private String latestCommitDate = "";
+    // Age/freshness/churn fields (-1 = unknown, i.e. no history), mirroring the File Age and
+    // File Change Frequency reports.
+    private int ageDays = -1;          // days since first update
+    private int freshnessDays = -1;    // days since latest update
+    private int contributorsCount;
 
     public FileExport() {
     }
@@ -88,6 +93,30 @@ public class FileExport {
 
     public void setLatestCommitDate(String latestCommitDate) {
         this.latestCommitDate = latestCommitDate;
+    }
+
+    public int getAgeDays() {
+        return ageDays;
+    }
+
+    public void setAgeDays(int ageDays) {
+        this.ageDays = ageDays;
+    }
+
+    public int getFreshnessDays() {
+        return freshnessDays;
+    }
+
+    public void setFreshnessDays(int freshnessDays) {
+        this.freshnessDays = freshnessDays;
+    }
+
+    public int getContributorsCount() {
+        return contributorsCount;
+    }
+
+    public void setContributorsCount(int contributorsCount) {
+        this.contributorsCount = contributorsCount;
     }
 
     /**

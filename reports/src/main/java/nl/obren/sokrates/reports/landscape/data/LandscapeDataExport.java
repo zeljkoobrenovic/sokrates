@@ -96,9 +96,17 @@ public class LandscapeDataExport {
             Map<String, String> filesPlaceholders = new HashMap<>();
             filesPlaceholders.put("langIcons", fileLangIcons);
             // The landscape aggregates many repositories with potentially different thresholds, so use
-            // the standard file-size thresholds for the LOC-bar risk colouring.
+            // the standard thresholds for the risk colouring.
             filesPlaceholders.put("fileSizeThresholds",
                     FilesExportUtils.thresholdsJson(Thresholds.defaultFileSizeThresholds()));
+            filesPlaceholders.put("fileAgeThresholds",
+                    FilesExportUtils.thresholdsJson(Thresholds.defaultFileAgeThresholds()));
+            filesPlaceholders.put("fileUpdateFrequencyThresholds",
+                    FilesExportUtils.thresholdsJson(Thresholds.defaultFileUpdateFrequencyThresholds()));
+            filesPlaceholders.put("fileContributorsCountThresholds",
+                    FilesExportUtils.thresholdsJson(Thresholds.defaultFileContributorsCountThresholds()));
+            // No per-repository age/churn reports at the landscape level, so suppress the report links.
+            filesPlaceholders.put("reportLinkBase", "");
             String filesExplorer = explorerTemplate.render("files-explorer.html", files, filesPlaceholders);
             FileUtils.write(new File(reportsFolder, "files-explorer.html"), filesExplorer, UTF_8);
 

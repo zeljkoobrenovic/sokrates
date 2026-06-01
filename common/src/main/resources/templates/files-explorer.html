@@ -127,6 +127,52 @@
         return RISK_COLORS[0];
     }
 
+    // File age / freshness / change-frequency / contributors thresholds, injected at generation time
+    // (with defaults), used to colour the corresponding columns like the File Age and File Change
+    // Frequency reports do.
+    function withDefaults(t, def) {
+        return (t && typeof t.veryHigh === 'number') ? t : def;
+    }
+    const fileAgeThresholds = withDefaults(${fileAgeThresholds}, {low: 30, medium: 90, high: 180, veryHigh: 365});
+    const fileFreqThresholds = withDefaults(${fileUpdateFrequencyThresholds}, {low: 5, medium: 20, high: 50, veryHigh: 100});
+    const fileContribThresholds = withDefaults(${fileContributorsCountThresholds}, {low: 1, medium: 5, high: 10, veryHigh: 25});
+
+    // Report palettes (index 0 = very-high band ... index 4 = negligible band), mirroring
+    // Palette.getAgePalette / getFreshnessPalette / getHeatPalette on the Java side.
+    const AGE_PALETTE = ['#4a3c31', '#fac831', '#ffdf44', '#fff18e', '#fcf4cb'];
+    const FRESHNESS_PALETTE = ['#041E02', '#006d2c', '#31a354', '#74c476', '#bae4b3'];
+    const HEAT_PALETTE = ['#b21227', '#f7844e', '#e6f5df', '#b0d8e9', '#6192c3'];
+
+    // Maps a value to its risk band against {low, medium, high, veryHigh} (same boundaries as
+    // RiskDistributionStats.update) and returns the matching palette colour. Palettes are ordered
+    // very-high -> negligible, so band 0 = very-high.
+    function bandColor(value, t, palette) {
+        if (value < 0 || !t) return '';
+        if (value <= t.low) return palette[4];        // negligible
+        if (value <= t.medium) return palette[3];     // low
+        if (value <= t.high) return palette[2];       // medium
+        if (value <= t.veryHigh) return palette[1];   // high
+        return palette[0];                            // very high
+    }
+
+    // Some palette tones are very light; pick a readable text colour for the badge.
+    function textOn(bg) {
+        return (bg === '#fcf4cb' || bg === '#fff18e' || bg === '#ffdf44' || bg === '#e6f5df'
+            || bg === '#bae4b3' || bg === '#b0d8e9') ? '#333' : 'white';
+    }
+
+    // A table cell with a value rendered as a colour-coded badge; shows a muted dash when absent.
+    function colorCell(value, present, bg) {
+        let inner;
+        if (!present) {
+            inner = '<span style="color: lightgrey">-</span>';
+        } else {
+            inner = '<span style="display: inline-block; min-width: 26px; padding: 1px 5px; border-radius: 4px; background-color: '
+                + bg + '; color: ' + textOn(bg) + '">' + value.toLocaleString('en-US') + '</span>';
+        }
+        return '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">' + inner + '</td>';
+    }
+
     // Renders a small round language badge: an icon when one is known, otherwise a text bubble
     // with the language name (mirrors DataImageUtils.getLangDataImageDiv on the Java side).
     function langIcon(lang) {
@@ -199,6 +245,9 @@
         recentCommits: {value: item => item.recentCommitsCount30Days || 0, type: 'number', dir: -1},
         recentCommits90: {value: item => item.recentCommitsCount90Days || 0, type: 'number', dir: -1},
         commits: {value: item => item.commitsCount || 0, type: 'number', dir: -1},
+        contributors: {value: item => item.contributorsCount || 0, type: 'number', dir: -1},
+        age: {value: item => (item.ageDays == null ? -1 : item.ageDays), type: 'number', dir: -1},
+        freshness: {value: item => (item.freshnessDays == null ? -1 : item.freshnessDays), type: 'number', dir: 1},
         latestCommit: {value: item => item.latestCommitDate || '', type: 'string', dir: -1},
         scope: {value: item => item.scope || '', type: 'string', dir: 1}
     };
@@ -225,6 +274,24 @@
         const cls = 'sortable' + (active ? ' sort-active' : '');
         return '<td class="' + cls + '" style="' + (extraStyle || '') + '" onclick="update(\'' + key + '\')">'
             + label + '<span class="sort-arrow">' + arrow + '</span></td>';
+    }
+
+    // Base path (from the explorers/ folder) to the per-repository HTML reports, so the age/churn
+    // columns can link their source report. Empty (e.g. in the landscape, where the reports don't
+    // exist at a single location) suppresses the link.
+    let reportLinkBase = '${reportLinkBase}';
+    if (reportLinkBase.indexOf('${') === 0) {
+        reportLinkBase = '';
+    }
+
+    // A sortable header whose label also links to a report (small ↗ that doesn't trigger the sort).
+    function sortHeaderLinked(key, label, reportFile, extraStyle) {
+        let suffix = '';
+        if (reportLinkBase && reportFile) {
+            suffix = ' <a href="' + reportLinkBase + reportFile + '" target="_blank" title="open the report" '
+                + 'onclick="event.stopPropagation()" style="color: #0a58ca; font-size: 80%">&#x2197;</a>';
+        }
+        return sortHeader(key, label + suffix, extraStyle);
     }
 
     files = files.sort(comparator);
@@ -341,7 +408,10 @@
         if (hasHistory) {
             html += sortHeader('recentCommits', 'commits<br>(30d)', 'text-align: center');
             html += sortHeader('recentCommits90', 'commits<br>(90d)', 'text-align: center');
-            html += sortHeader('commits', 'commits<br>(all time)', 'text-align: center');
+            html += sortHeaderLinked('commits', 'commits<br>(all time)', 'FileChangeFrequency.html', 'text-align: center');
+            html += sortHeaderLinked('contributors', 'contri-<br>butors', 'FileChangeFrequency.html', 'text-align: center');
+            html += sortHeaderLinked('age', 'age<br>(days)', 'FileAge.html', 'text-align: center');
+            html += sortHeaderLinked('freshness', 'freshness<br>(days)', 'FileAge.html', 'text-align: center');
             html += sortHeader('latestCommit', 'latest<br>commit', 'text-align: center');
         }
         html += sortHeader('scope', 'scope', 'text-align: center');
@@ -399,12 +469,21 @@
                 const recent = item.recentCommitsCount30Days || 0;
                 const recent90 = item.recentCommitsCount90Days || 0;
                 const total = item.commitsCount || 0;
+                const contributors = item.contributorsCount || 0;
+                const ageDays = (item.ageDays == null) ? -1 : item.ageDays;
+                const freshnessDays = (item.freshnessDays == null) ? -1 : item.freshnessDays;
                 html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
                     + (recent > 0 ? recent.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
                 html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
                     + (recent90 > 0 ? recent90.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
-                html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
-                    + (total > 0 ? total.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
+                // commits (all time) — coloured by the file change-frequency band (heat palette).
+                html += colorCell(total, total > 0, bandColor(total, fileFreqThresholds, HEAT_PALETTE));
+                // contributors — heat palette.
+                html += colorCell(contributors, contributors > 0, bandColor(contributors, fileContribThresholds, HEAT_PALETTE));
+                // age (days since first commit) — age palette.
+                html += colorCell(ageDays, ageDays >= 0, bandColor(ageDays, fileAgeThresholds, AGE_PALETTE));
+                // freshness (days since last commit) — freshness palette.
+                html += colorCell(freshnessDays, freshnessDays >= 0, bandColor(freshnessDays, fileAgeThresholds, FRESHNESS_PALETTE));
                 html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%; color: #5f5f5f;">'
                     + (item.latestCommitDate ? item.latestCommitDate : '<span style="color: lightgrey">-</span>') + '</td>';
             }
