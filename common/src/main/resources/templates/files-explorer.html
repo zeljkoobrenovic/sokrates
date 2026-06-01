@@ -113,7 +113,7 @@
             return '';
         }
         const key = lang.toLowerCase();
-        const size = 22;
+        const size = 32;
         if (langIcons[key]) {
             return '<img title="' + lang + '" style="margin-right: 5px; vertical-align: middle; background-color: #f1f1f1; '
                 + 'border-radius: 50%; border: 1px solid lightgrey; width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
@@ -175,6 +175,9 @@
         repo: {value: item => (item.repository || '').toLowerCase(), type: 'string', dir: 1},
         name: {value: item => (item.repository + '/' + item.path).toLowerCase(), type: 'string', dir: 1},
         loc: {value: item => item.linesOfCode, type: 'number', dir: -1},
+        recentCommits: {value: item => item.recentCommitsCount30Days || 0, type: 'number', dir: -1},
+        commits: {value: item => item.commitsCount || 0, type: 'number', dir: -1},
+        latestCommit: {value: item => item.latestCommitDate || '', type: 'string', dir: -1},
         scope: {value: item => item.scope || '', type: 'string', dir: 1}
     };
 
@@ -301,6 +304,9 @@
 
         }
 
+        // Only show the git-history columns when at least one file in the (scoped) data has history.
+        const hasHistory = scopedData.some(item => (item.commitsCount || 0) > 0 || (item.latestCommitDate || '').length);
+
         html += '<table style="width: 100%">';
 
         html += '<tr style="color: #777777; background-color: #f8f8f8">';
@@ -310,6 +316,11 @@
         }
         html += sortHeader('name', 'file', 'text-align: left');
         html += sortHeader('loc', '&nbsp;LOC', 'text-align: left');
+        if (hasHistory) {
+            html += sortHeader('recentCommits', 'commits<br>(30d)', 'text-align: center');
+            html += sortHeader('commits', 'commits<br>(all time)', 'text-align: center');
+            html += sortHeader('latestCommit', 'latest<br>commit', 'text-align: center');
+        }
         html += sortHeader('scope', 'scope', 'text-align: center');
         html += '</tr>';
 
@@ -326,15 +337,27 @@
             html += '</td>';
             if (filteredReposCount) {
                 html += '<td>';
-                html += item.repository;
+                const pathsRepo = item.repository.split('/');
+                const repoName = pathsRepo[pathsRepo.length - 1];
+                const repoPrefix = pathsRepo.slice(0, pathsRepo.length - 1).join(' / ');
+                html += '<div style="border-left: 1px solid lightgrey; padding-left: 6px">';
+                html += '<div style="font-size: 90%; color: #8f8f8f">' + (repoPrefix ? repoPrefix : '') + '</div>';
+                html += '<div style="margin-bottom: 6px; color: black; font-weight: bold">' + repoName + '</div>';
+                html += '</div>';
                 html += '</td>';
             }
             html += '<td>';
             const paths = item.path.split('/');
             const fileName = paths[paths.length - 1];
-            const folder = paths.slice(0, paths.length - 1).join('/');
-            html += '<span style="color: #afafaf">' + (folder + folder ? folder + '/' : '') + '</span>';
-            html += '<span style="color: black; font-weight: bold">' + fileName + '</span>';
+            let folder = paths.slice(0, paths.length - 1).join('/');
+            html += '<div style="border-left: 1px solid lightgrey; padding-left: 6px">';
+            let displayFolder = '';
+            if (folder && folder.length > 50) {
+                displayFolder = folder.substring(0, 50) + '...';
+            }
+            html += '<div title="' + folder + '" style="font-size: 90%; color: #7f7f7f">' + displayFolder + '</div>';
+            html += '<div style="margin-bottom: 6px; color: black; font-weight: bold">' + fileName + '</div>';
+            html += '</div>';
             html += '</td>';
 
             let scope = item.scope;
@@ -349,6 +372,16 @@
             html += '<div style="margin-left: 2px; vertical-align: top; display: inline-block; font-size: 80%">' + item.linesOfCode.toLocaleString("en-US") + '</div>';
             html += '</div>';
             html += '</td>';
+            if (hasHistory) {
+                const recent = item.recentCommitsCount30Days || 0;
+                const total = item.commitsCount || 0;
+                html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
+                    + (recent > 0 ? recent.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
+                html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
+                    + (total > 0 ? total.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
+                html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%; color: #5f5f5f;">'
+                    + (item.latestCommitDate ? item.latestCommitDate : '<span style="color: lightgrey">-</span>') + '</td>';
+            }
             html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">';
             if (scope === 'main') {
                 html += '<div style="border: 1px solid #d0d0d0; border-radius: 4px; padding 2px; color: blue">';
@@ -357,8 +390,6 @@
             }
             html += scope;
             html += '</div>';
-            html += '</td>';
-            html += '<td style="text-align: left; padding-right: 5px; padding-left: 5px;">';
             html += '</td>';
             html += '</tr>';
         });

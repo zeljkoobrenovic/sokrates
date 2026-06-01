@@ -10,6 +10,11 @@ public class FileExport {
 
     private int linesOfCode;
 
+    // Git-history fields; 0 / "" when no file history is available for the analysis.
+    private int commitsCount;
+    private int recentCommitsCount30Days;
+    private String latestCommitDate = "";
+
     public FileExport() {
     }
 
@@ -50,6 +55,30 @@ public class FileExport {
 
     public void setLinesOfCode(int linesOfCode) {
         this.linesOfCode = linesOfCode;
+    }
+
+    public int getCommitsCount() {
+        return commitsCount;
+    }
+
+    public void setCommitsCount(int commitsCount) {
+        this.commitsCount = commitsCount;
+    }
+
+    public int getRecentCommitsCount30Days() {
+        return recentCommitsCount30Days;
+    }
+
+    public void setRecentCommitsCount30Days(int recentCommitsCount30Days) {
+        this.recentCommitsCount30Days = recentCommitsCount30Days;
+    }
+
+    public String getLatestCommitDate() {
+        return latestCommitDate;
+    }
+
+    public void setLatestCommitDate(String latestCommitDate) {
+        this.latestCommitDate = latestCommitDate;
     }
 
     /**

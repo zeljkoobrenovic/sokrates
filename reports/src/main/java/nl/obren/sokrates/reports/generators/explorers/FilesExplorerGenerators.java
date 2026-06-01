@@ -4,6 +4,8 @@ import nl.obren.sokrates.common.renderingutils.ExplorerTemplate;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
+import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.landscape.analysis.FileExport;
 import org.apache.commons.io.FileUtils;
 
@@ -23,12 +25,23 @@ public class FilesExplorerGenerators {
         this.reportsFolder = reportsFolder;
     }
 
-    private List<FileExport> getFiles(NamedSourceCodeAspect aspect, String scope) {
+    // Package-private for testing the git-history field population.
+    List<FileExport> getFiles(NamedSourceCodeAspect aspect, String scope) {
         List<FileExport> files = new ArrayList<>();
 
         aspect.getSourceFiles().forEach(file -> {
             if (!files.contains(file) && !file.getRelativePath().startsWith("- -")) {
                 FileExport fileExport = new FileExport("", file.getRelativePath(), scope, file.getLinesOfCode());
+                // Populate git-history columns when file history was analysed; otherwise leave the
+                // defaults (0 commits, blank date).
+                FileModificationHistory history = file.getFileModificationHistory();
+                if (history != null && history.getDates() != null && !history.getDates().isEmpty()) {
+                    List<String> dates = history.getDates();
+                    fileExport.setCommitsCount(dates.size());
+                    fileExport.setRecentCommitsCount30Days((int) dates.stream()
+                            .filter(date -> DateUtils.isCommittedLessThanDaysAgo(date, 30)).count());
+                    fileExport.setLatestCommitDate(history.getLatestDate());
+                }
                 files.add(fileExport);
             }
         });
