@@ -113,6 +113,7 @@ public class UnitsSizeReportGenerator {
 
         report.startSection("Alternative Visuals", "");
         report.startUnorderedList();
+        report.addListItem("<a target='_blank' href='../explorers/units-explorer.html'><b>Explore all units...</b></a> (searchable, sortable list of every unit)");
         report.addListItem("<a target='_blank' href='visuals/units_3d_size.html'>3D view of all units</a>");
         report.endUnorderedList();
         report.endSection();

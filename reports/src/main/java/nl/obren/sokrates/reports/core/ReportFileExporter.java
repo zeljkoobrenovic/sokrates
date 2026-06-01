@@ -139,6 +139,7 @@ public class ReportFileExporter {
         indexReport.addTab("quality", "Analyses", false);
         indexReport.addTab("commits", "Activity", false);
         indexReport.addTab("files", "Files", false);
+        indexReport.addTab("units", "Units", false);
         indexReport.addTab("visuals", "Visuals", false);
         indexReport.addTab("data", "Data", false);
         indexReport.addTab("prompts", "AI Prompts", false);
@@ -204,6 +205,12 @@ public class ReportFileExporter {
         indexReport.startTabContentSection("files", false);
         indexReport.addLineBreak();
         indexReport.addHtmlContent("<iframe src='../explorers/files-explorer.html' style='width: 100%; border: none; height: calc(100vh - 220px); overflow: hidden; margin-top: -12px'></iframe>");
+
+        indexReport.endTabContentSection();
+
+        indexReport.startTabContentSection("units", false);
+        indexReport.addLineBreak();
+        indexReport.addHtmlContent("<iframe src='../explorers/units-explorer.html' style='width: 100%; border: none; height: calc(100vh - 220px); overflow: hidden; margin-top: -12px'></iframe>");
 
         indexReport.endTabContentSection();
 

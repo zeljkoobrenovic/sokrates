@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Units Explorer</title>
+    <style>
+        body {
+            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+            margin: 12px;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        ::placeholder {
+            color: lightgrey;
+            opacity: 1;
+        }
+
+        td {
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sortable:hover {
+            color: #333333;
+        }
+
+        .sort-active {
+            color: #303030;
+            font-weight: bold;
+        }
+
+        .sort-arrow {
+            font-size: 80%;
+        }
+    </style>
+    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Lato">
+</head>
+<body>
+
+<div style="margin: 0; color: grey">
+    <div>
+        <input id="filter" type="text" placeholder="search... (use ; for multiple terms)"
+               style="font-size: 16px; height: 32px; width: 320px; margin-bottom: 10px"
+               onkeyup="update()">
+        <div id="search-summary" style="display: inline-block"></div>
+    </div>
+</div>
+
+<div id="content"></div>
+
+<script>
+    const importedUnits = ${data};
+
+    // Map of language/extension -> base64 image data URI, injected at report-generation time.
+    const langIcons = ${langIcons};
+
+    // Unit-size and conditional-complexity risk thresholds {low, medium, high, veryHigh}, injected
+    // at report-generation time, used to colour-code the LOC and complexity columns.
+    const sizeThresholds = ${sizeThresholds};
+    const complexityThresholds = ${complexityThresholds};
+
+    // Green (negligible) -> red (very high), matching the risk palette family.
+    const RISK_COLORS = ['#1a9641', '#a6d96a', '#fdae61', '#f03b20', '#bd0026'];
+
+    // Returns a risk color for a value against {low, medium, high, veryHigh} thresholds.
+    function riskColor(value, t) {
+        if (!t) return RISK_COLORS[0];
+        if (value > t.veryHigh) return RISK_COLORS[4];
+        if (value > t.high) return RISK_COLORS[3];
+        if (value > t.medium) return RISK_COLORS[2];
+        if (value > t.low) return RISK_COLORS[1];
+        return RISK_COLORS[0];
+    }
+
+    // Renders a small round language badge (mirrors files-explorer.html / DataImageUtils).
+    function langIcon(lang) {
+        if (!lang) {
+            return '';
+        }
+        const key = lang.toLowerCase();
+        const size = 30;
+        if (langIcons[key]) {
+            return '<img title="' + lang + '" style="margin-right: 5px; vertical-align: middle; background-color: #f1f1f1; '
+                + 'border-radius: 50%; border: 1px solid lightgrey; width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
+                + langIcons[key] + '">';
+        }
+        const fontSize = lang.length <= 3 ? 9 : 8;
+        return '<div title="' + lang + '" style="margin-right: 5px; display: inline-block; vertical-align: middle; '
+            + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; overflow: hidden; color: darkblue; '
+            + 'width: ' + size + 'px; height: ' + size + 'px; line-height: ' + size + 'px; '
+            + 'font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">' + lang + '</div>';
+    }
+
+    let units = importedUnits.slice();
+
+    // Sortable column definitions: each maps a key to a value accessor.
+    // 'dir' is the default direction applied the first time a column is selected.
+    const sortColumns = {
+        lang: {value: item => (item.mainLang || '').toLowerCase(), type: 'string', dir: 1},
+        file: {value: item => (item.file || '').toLowerCase(), type: 'string', dir: 1},
+        name: {value: item => (item.name || '').toLowerCase(), type: 'string', dir: 1},
+        loc: {value: item => item.linesOfCode || 0, type: 'number', dir: -1},
+        complexity: {value: item => item.mcCabeIndex || 0, type: 'number', dir: -1},
+        params: {value: item => item.numberOfParameters || 0, type: 'number', dir: -1}
+    };
+
+    let sortKey = 'loc';
+    let sortDir = -1;
+
+    function comparator(a, b) {
+        const column = sortColumns[sortKey];
+        const va = column.value(a);
+        const vb = column.value(b);
+        let cmp;
+        if (column.type === 'string') {
+            cmp = String(va).localeCompare(String(vb));
+        } else {
+            cmp = va < vb ? -1 : (va > vb ? 1 : 0);
+        }
+        return cmp * sortDir;
+    }
+
+    function sortHeader(key, label, extraStyle) {
+        const active = sortKey === key;
+        const arrow = active ? (sortDir === 1 ? ' ▲' : ' ▼') : '';
+        const cls = 'sortable' + (active ? ' sort-active' : '');
+        return '<td class="' + cls + '" style="' + (extraStyle || '') + '" onclick="update(\'' + key + '\')">'
+            + label + '<span class="sort-arrow">' + arrow + '</span></td>';
+    }
+
+    function escapeHtml(s) {
+        return ('' + s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function update(clickedKey) {
+        if (clickedKey && sortColumns[clickedKey]) {
+            if (sortKey === clickedKey) {
+                sortDir = -sortDir;
+            } else {
+                sortKey = clickedKey;
+                sortDir = sortColumns[clickedKey].dir;
+            }
+        }
+        units = units.sort(comparator);
+        // A search can contain several terms separated by ";"; the result is the UNION of the
+        // individual term matches (search "a;b" returns matches of "a" plus matches of "b").
+        const filters = document.getElementById('filter').value.toLowerCase().trim()
+            .split(';').map(s => s.trim()).filter(s => s.length);
+
+        const filteredData = units.filter(item => {
+            if (!filters.length) {
+                return true;
+            }
+            const haystack = ((item.file || '') + ' ' + (item.name || '')).toLowerCase();
+            return filters.some(f => haystack.includes(f));
+        });
+
+        let maxLoc = 1;
+        filteredData.forEach(item => maxLoc = Math.max(maxLoc, item.linesOfCode || 0));
+
+        const totalLoc = units.reduce((a, b) => a + (b.linesOfCode || 0), 0);
+        const filteredCount = filteredData.length;
+        const filteredLoc = filteredData.reduce((a, b) => a + (b.linesOfCode || 0), 0);
+        document.getElementById('search-summary').innerHTML = ' = ' + filteredCount.toLocaleString('en-US')
+            + ' ' + (filteredCount === 1 ? 'unit' : 'units')
+            + ' (' + filteredLoc.toLocaleString('en-US') + ' LOC) of ' + units.length.toLocaleString('en-US')
+            + ' ' + (units.length === 1 ? 'unit' : 'units') + ' (' + totalLoc.toLocaleString('en-US') + ' LOC)';
+
+        let html = '<table style="width: 100%">';
+        html += '<tr style="color: #777777; background-color: #f8f8f8">';
+        html += sortHeader('lang', 'lang', 'text-align: center');
+        html += sortHeader('file', 'file', 'text-align: left');
+        html += sortHeader('name', 'unit', 'text-align: left');
+        html += sortHeader('loc', '&nbsp;LOC', 'text-align: left');
+        html += sortHeader('complexity', 'McCabe<br>complexity', 'text-align: center');
+        html += sortHeader('params', '#&nbsp;params', 'text-align: center');
+        html += '</tr>';
+
+        let displayCounter = 0;
+        filteredData.forEach(item => {
+            if (displayCounter > 1000) {
+                return;
+            }
+            displayCounter++;
+            const loc = item.linesOfCode || 0;
+            const complexity = item.mcCabeIndex || 0;
+            const params = item.numberOfParameters || 0;
+
+            html += '<tr>';
+
+            html += '<td style="text-align: center; vertical-align: middle;">';
+            html += langIcon(item.mainLang);
+            html += '</td>';
+
+            // file: folder greyed, file name bold.
+            html += '<td>';
+            const paths = (item.file || '').split('/');
+            const fileName = paths[paths.length - 1];
+            let folder = paths.slice(0, paths.length - 1).join('/');
+            let displayFolder = folder;
+            if (folder && folder.length > 50) {
+                displayFolder = folder.substring(0, 50) + '...';
+            }
+            html += '<div style="border-left: 1px solid lightgrey; padding-left: 6px">';
+            html += '<div title="' + escapeHtml(folder) + '" style="font-size: 90%; color: #7f7f7f">' + escapeHtml(displayFolder) + '</div>';
+            html += '<div style="margin-bottom: 6px; color: #3f3f3f">' + escapeHtml(fileName) + '</div>';
+            html += '</div>';
+            html += '</td>';
+
+            // unit name (with start line as a hint).
+            html += '<td>';
+            html += '<div style="border-left: 1px solid lightgrey; padding-left: 6px">';
+            html += '<div title="' + escapeHtml(item.longName || item.name) + (item.startLine ? ' (line ' + item.startLine + ')' : '') + '" '
+                + 'style="color: black; font-weight: bold">' + escapeHtml(item.name) + '</div>';
+            html += '</div>';
+            html += '</td>';
+
+            // LOC, coloured by unit-size risk band, with a proportional bar.
+            html += '<td style="text-align: left; padding-right: 5px; padding-left: 5px">';
+            html += '<div style="border-radius: 4px;">';
+            const w = maxLoc > 0 ? Math.round(50 * loc / maxLoc + 1) : 0;
+            html += '<div style="vertical-align: top; display: inline-block; height: 16px; background-color: ' + riskColor(loc, sizeThresholds) + '; width: ' + w + 'px"></div>';
+            html += '<div style="margin-left: 4px; vertical-align: top; display: inline-block; font-size: 80%">' + loc.toLocaleString('en-US') + '</div>';
+            html += '</div>';
+            html += '</td>';
+
+            // McCabe complexity, coloured by conditional-complexity risk band.
+            html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 85%;">';
+            html += '<span style="display: inline-block; min-width: 26px; padding: 1px 4px; border-radius: 4px; color: white; background-color: '
+                + riskColor(complexity, complexityThresholds) + '">' + complexity.toLocaleString('en-US') + '</span>';
+            html += '</td>';
+
+            // number of parameters.
+            html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 85%; color: #5f5f5f;">'
+                + params.toLocaleString('en-US') + '</td>';
+
+            html += '</tr>';
+        });
+
+        html += '</table>';
+        if (filteredData.length > 1000) {
+            html += '<div style="color: grey; font-size: 80%; margin-top: 6px">Showing the first 1,000 of '
+                + filteredData.length.toLocaleString('en-US') + ' units (sorted); refine the search to narrow the list.</div>';
+        }
+
+        document.getElementById('content').innerHTML = html;
+    }
+
+    update();
+</script>
+</body>
+</html>
