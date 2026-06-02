@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DateUtils {
     public static final String ENV_SOKRATES_ANALYSIS_DATE = "SOKRATES_ANALYSIS_DATE";
@@ -17,9 +18,9 @@ public class DateUtils {
     public static String dateParam = null;
     private static String latestCommitDate = "";
 
-    private static Map<String, Boolean> dateInRangeCache = new HashMap<>();
-    private static Map<String, Boolean> dateBetweenCache = new HashMap<>();
-    private static Map<String, String> mondays = new HashMap<>();
+    private static Map<String, Boolean> dateInRangeCache = new ConcurrentHashMap<>();
+    private static Map<String, Boolean> dateBetweenCache = new ConcurrentHashMap<>();
+    private static Map<String, String> mondays = new ConcurrentHashMap<>();
 
     public static boolean isDateWithinRange(String date, int rangeInDays) {
         if (StringUtils.isBlank(date)) {

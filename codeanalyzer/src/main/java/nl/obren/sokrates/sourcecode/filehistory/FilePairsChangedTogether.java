@@ -26,10 +26,21 @@ public class FilePairsChangedTogether {
     }
 
     public void populate(NamedSourceCodeAspect aspect, List<FileModificationHistory> fileHistories) {
+        // Resolve each modification history to its SourceFile (and lower-cased path) once, up front,
+        // instead of re-resolving on every generated pair. Histories not part of the aspect are dropped here.
+        Map<FileModificationHistory, ResolvedFile> resolved = new HashMap<>();
+        fileHistories.forEach(fileHistory -> {
+            SourceFile sourceFile = aspect.getSourceFileByPath(fileHistory.getPath());
+            if (sourceFile != null) {
+                resolved.put(fileHistory, new ResolvedFile(sourceFile,
+                        sourceFile.getRelativePath().toLowerCase(), fileHistory.getCommits().size()));
+            }
+        });
+
         Map<String, Set<FileModificationHistory>> commitsIdMap = new HashMap<>();
 
         fileHistories.forEach(fileHistory -> {
-            if (aspect.getSourceFileByPath(fileHistory.getPath()) != null) {
+            if (resolved.containsKey(fileHistory)) {
                 fileHistory.getCommits().forEach(commitInfo -> {
                     if (filePairs.size() < PAIR_LIST_LIMIT && (rangeInDays <= 0 || DateUtils.isDateWithinRange(commitInfo.getDate(), rangeInDays))) {
                         String commitId = commitInfo.getId();
@@ -40,8 +51,9 @@ public class FilePairsChangedTogether {
                             commitsIdMap.put(commitId, list);
                             list.add(fileHistory);
                         } else if (!list.contains(fileHistory)) {
-                            list.forEach(sourceFileInSameCommit -> addFilePair(aspect, fileHistory,
-                                    sourceFileInSameCommit, commitId, commitDate));
+                            ResolvedFile resolvedFile = resolved.get(fileHistory);
+                            list.forEach(sourceFileInSameCommit -> addFilePair(resolvedFile,
+                                    resolved.get(sourceFileInSameCommit), commitId, commitDate));
                             list.add(fileHistory);
                         }
                     }
@@ -53,16 +65,10 @@ public class FilePairsChangedTogether {
         Collections.sort(filePairsList, (a, b) -> b.getCommits().size() - a.getCommits().size());
     }
 
-    private void addFilePair(NamedSourceCodeAspect aspect, FileModificationHistory fileHistory1, FileModificationHistory fileHistory2, String commitId, String date) {
-        SourceFile sourceFile1 = aspect.getSourceFileByPath(fileHistory1.getPath());
-        SourceFile sourceFile2 = aspect.getSourceFileByPath(fileHistory2.getPath());
-
-        if (sourceFile1 != null && sourceFile2 != null) {
-            String path1 = sourceFile1.getRelativePath().toLowerCase();
-            String path2 = sourceFile2.getRelativePath().toLowerCase();
-
-            String key1 = path1 + "_" + path2;
-            String key2 = path2 + "_" + path1;
+    private void addFilePair(ResolvedFile file1, ResolvedFile file2, String commitId, String date) {
+        if (file1 != null && file2 != null) {
+            String key1 = file1.lowerCasePath + "_" + file2.lowerCasePath;
+            String key2 = file2.lowerCasePath + "_" + file1.lowerCasePath;
 
             FilePairChangedTogether filePairChangedTogether = filePairsMap.get(key1);
             if (filePairChangedTogether == null) {
@@ -70,10 +76,10 @@ public class FilePairsChangedTogether {
             }
 
             if (filePairChangedTogether == null) {
-                filePairChangedTogether = new FilePairChangedTogether(sourceFile1, sourceFile2);
+                filePairChangedTogether = new FilePairChangedTogether(file1.sourceFile, file2.sourceFile);
 
-                filePairChangedTogether.setCommitsCountFile1(fileHistory1.getCommits().size());
-                filePairChangedTogether.setCommitsCountFile2(fileHistory2.getCommits().size());
+                filePairChangedTogether.setCommitsCountFile1(file1.commitsCount);
+                filePairChangedTogether.setCommitsCountFile2(file2.commitsCount);
 
                 filePairsMap.put(key1, filePairChangedTogether);
                 filePairs.add(filePairChangedTogether);
@@ -84,6 +90,18 @@ public class FilePairsChangedTogether {
             if (shouldUpdateLatestDate(date, filePairChangedTogether)) {
                 filePairChangedTogether.setLatestCommit(date);
             }
+        }
+    }
+
+    private static class ResolvedFile {
+        final SourceFile sourceFile;
+        final String lowerCasePath;
+        final int commitsCount;
+
+        ResolvedFile(SourceFile sourceFile, String lowerCasePath, int commitsCount) {
+            this.sourceFile = sourceFile;
+            this.lowerCasePath = lowerCasePath;
+            this.commitsCount = commitsCount;
         }
     }
 

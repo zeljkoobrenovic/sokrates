@@ -18,7 +18,7 @@ public class TemporalDependenciesHelper {
     private static final Log LOG = LogFactory.getLog(TemporalDependenciesHelper.class);
     private List<ComponentDependency> componentDependencies = new ArrayList<>();
     private Map<String, ComponentDependency> componentDependenciesMap = new HashMap<>();
-    private Map<ComponentDependency, List<String>> datesMap = new HashMap<>();
+    private Map<ComponentDependency, Set<String>> datesMap = new HashMap<>();
 
     public TemporalDependenciesHelper() {
     }
@@ -118,19 +118,9 @@ public class TemporalDependenciesHelper {
 
         dependency.setCount(dependency.getCount() + 1);
 
-        List<String> commits = datesMap.get(dependency);
-        if (commits == null) {
-            commits = new ArrayList<>();
-            datesMap.put(dependency, commits);
-        }
-
-        List<String> finalCommits = commits;
-        filePairChangedTogether.getCommits().forEach(commit -> {
-            if (!finalCommits.contains(commit)) {
-                finalCommits.add(commit);
-            }
-        });
-        dependency.setCount(finalCommits.size());
+        Set<String> commits = datesMap.computeIfAbsent(dependency, k -> new HashSet<>());
+        commits.addAll(filePairChangedTogether.getCommits());
+        dependency.setCount(commits.size());
     }
 
     private ComponentDependency getDependency(String name1, String name2,
