@@ -214,6 +214,8 @@ public class ScopingConventions {
     }
 
     private void addBuildAndDeploymentConventions() {
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.](idea|vscode|vs|gradle|mvn|settings|metadata|circleci)/.*", "", "Hidden VCS/tool directories"));
+
         buildAndDeploymentFilesConventions.add(new Convention(".*/pom[.]xml", "", "Maven configuration"));
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]nuspec", "", "NuSpec configuration"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/build[.]xml", "", "Build configuration"));
@@ -470,25 +472,10 @@ public class ScopingConventions {
     }
 
     private void addIgnoreConventions() {
-        // Hidden files (the file name itself starts with a dot, at any depth incl. the repository
-        // root), e.g. .gitignore, .env, .eslintrc.json. Dotted CI configs (.gitlab-ci.yml,
-        // .travis.yml, .drone.yml) are exempted via the negative lookahead so they fall through to
-        // the build-and-deployment scope instead of being ignored.
-        //
-        // The pattern matches the LAST path segment only and must survive SourceFileFilter.pathMatches,
-        // which also tests a slash-stripped (backslash) variant of the path. A "[^/]"-based rule would
-        // collapse there: a relative srcRoot of ".." yields paths like "../src/Foo.java", and once the
-        // slashes are stripped the leading ".." exposes a dot that "[.][^/]*" greedily matches, silently
-        // ignoring the entire repository. So:
-        //   - ".*/[.]…"        a nested hidden file, anchored on a literal "/" (the backslash variant has
-        //                      no "/", so it can't spuriously match "..\src\Foo.java");
-        //   - "[.](?=[^./])…"  a repository-root hidden file whose name starts with a dot followed by a
-        //                      non-dot, non-slash char, so the relative-root ".." / "../" never matches.
-        ignoredFilesConventions.add(new Convention("(.*/[.]|[.](?=[^./]))(?!(gitlab[-]ci[.]yml|travis[.]yml|drone[.]yml)$)[^/]*", "", "Hidden files"));
         // Contents of well-known VCS / IDE / build-tool hidden directories. Deliberately a fixed
         // list rather than "any dotted folder", so real source under an incidentally-dotted folder
         // (e.g. src/.config/Foo.java) is not silently ignored.
-        ignoredFilesConventions.add(new Convention("(.*/)?[.](git|svn|hg|bzr|idea|vscode|vs|gradle|mvn|settings|metadata)/.*", "", "Hidden VCS/tool directories"));
+        ignoredFilesConventions.add(new Convention("(.*/)?[.](git|svn|hg|bzr)/.*", "", "Hidden VCS/tool directories"));
         ignoredFilesConventions.add(new Convention(".*[.]resx", "", "The resx resource files"));
 
         ignoredFilesConventions.add(new Convention(".*/node_modules/.*", "", "Node dependencies"));
@@ -503,7 +490,6 @@ public class ScopingConventions {
 
         ignoredFilesConventions.add(new Convention(".*/bin/.*", "", "Binaries for distribution"));
         ignoredFilesConventions.add(new Convention(".*/cache/.*", "", "Caches"));
-        ignoredFilesConventions.add(new Convention(".*/dependencies/.*", "", "Dependencies"));
         ignoredFilesConventions.add(new Convention(".*/Godeps/.*", "", "Golang dependencies"));
         ignoredFilesConventions.add(new Convention(".*/[Vv]endors?/.*", "", "Dependencies"));
         ignoredFilesConventions.add(new Convention(".*/extern(al)?/.*", "", "Dependencies"));

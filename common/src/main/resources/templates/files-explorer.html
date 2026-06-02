@@ -466,14 +466,6 @@
             } else {
                 html += '<div style="margin-bottom: 2px; color: black; font-weight: bold">' + fileName + '</div>';
             }
-            // Small links to the source report views for this file's history (per-repository only).
-            if (reportLinkBase && (item.commitsCount || (item.latestCommitDate || '').length)) {
-                html += '<div style="margin-bottom: 4px; font-size: 75%">'
-                    + '<a href="' + reportLinkBase + 'FileAge.html" target="_blank" style="color: #6f6f6f">age &amp; freshness</a>'
-                    + ' &middot; '
-                    + '<a href="' + reportLinkBase + 'FileChangeFrequency.html" target="_blank" style="color: #6f6f6f">change frequency</a>'
-                    + '</div>';
-            }
             html += '</div>';
             html += '</td>';
 
