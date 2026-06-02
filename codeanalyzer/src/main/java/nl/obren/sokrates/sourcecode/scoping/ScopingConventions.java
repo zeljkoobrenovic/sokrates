@@ -474,7 +474,17 @@ public class ScopingConventions {
         // root), e.g. .gitignore, .env, .eslintrc.json. Dotted CI configs (.gitlab-ci.yml,
         // .travis.yml, .drone.yml) are exempted via the negative lookahead so they fall through to
         // the build-and-deployment scope instead of being ignored.
-        ignoredFilesConventions.add(new Convention("([^/]*/)*[.](?!(gitlab[-]ci[.]yml|travis[.]yml|drone[.]yml)$)[^/]*", "", "Hidden files"));
+        //
+        // The pattern matches the LAST path segment only and must survive SourceFileFilter.pathMatches,
+        // which also tests a slash-stripped (backslash) variant of the path. A "[^/]"-based rule would
+        // collapse there: a relative srcRoot of ".." yields paths like "../src/Foo.java", and once the
+        // slashes are stripped the leading ".." exposes a dot that "[.][^/]*" greedily matches, silently
+        // ignoring the entire repository. So:
+        //   - ".*/[.]…"        a nested hidden file, anchored on a literal "/" (the backslash variant has
+        //                      no "/", so it can't spuriously match "..\src\Foo.java");
+        //   - "[.](?=[^./])…"  a repository-root hidden file whose name starts with a dot followed by a
+        //                      non-dot, non-slash char, so the relative-root ".." / "../" never matches.
+        ignoredFilesConventions.add(new Convention("(.*/[.]|[.](?=[^./]))(?!(gitlab[-]ci[.]yml|travis[.]yml|drone[.]yml)$)[^/]*", "", "Hidden files"));
         // Contents of well-known VCS / IDE / build-tool hidden directories. Deliberately a fixed
         // list rather than "any dotted folder", so real source under an incidentally-dotted folder
         // (e.g. src/.config/Foo.java) is not silently ignored.
