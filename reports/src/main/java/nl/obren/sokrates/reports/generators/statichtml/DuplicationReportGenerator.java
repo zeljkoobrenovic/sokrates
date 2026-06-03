@@ -233,24 +233,29 @@ public class DuplicationReportGenerator {
         report.endSection();
     }
 
-    private void renderDependenciesViaDuplication(RichTextReport report, List<DuplicationMetric> duplicationPerComponent,
+        private void renderDependenciesViaDuplication(RichTextReport report, List<DuplicationMetric> duplicationPerComponent,
                                                   LogicalDecomposition logicalDecomposition, String monitoringPrefix) {
         ProcessingStopwatch.start(monitoringPrefix + "/extracting dependencies");
         DuplicationDependenciesHelper duplicationDependenciesHelper = new DuplicationDependenciesHelper(logicalDecomposition.getName());
         List<ComponentDependency> allDuplicates = duplicationDependenciesHelper.extractDependencies(codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates());
         ProcessingStopwatch.end(monitoringPrefix + "/extracting dependencies");
         ProcessingStopwatch.start(monitoringPrefix + "/updating dependencies");
+        // Index components by lowercased key once, so each dependency's from/to lookup is O(1) instead of a
+        // full stream scan of duplicationPerComponent. putIfAbsent keeps the original findFirst() semantics
+        // (first matching component wins on a case-insensitive key collision).
+        Map<String, DuplicationMetric> componentByKey = new HashMap<>();
+        duplicationPerComponent.forEach(duplication -> componentByKey.putIfAbsent(duplication.getKey().toLowerCase(), duplication));
         allDuplicates.forEach(dependency -> {
-            duplicationPerComponent.stream().filter(duplication -> duplication.getKey().equalsIgnoreCase(dependency.getFromComponent())).findFirst()
-                    .ifPresent(c -> {
-                        int cleanedLinesOfCode = c.getCleanedLinesOfCode();
-                        dependency.setValueFrom(cleanedLinesOfCode > 0 ? 100.0 * (dependency.getCount() / 2.0) / cleanedLinesOfCode : 0);
-                    });
-            duplicationPerComponent.stream().filter(duplication -> duplication.getKey().equalsIgnoreCase(dependency.getToComponent())).findFirst()
-                    .ifPresent(c -> {
-                        int cleanedLinesOfCode = c.getCleanedLinesOfCode();
-                        dependency.setValueTo(cleanedLinesOfCode > 0 ? 100.0 * (dependency.getCount() / 2.0) / cleanedLinesOfCode : 0);
-                    });
+            DuplicationMetric fromComponent = componentByKey.get(dependency.getFromComponent().toLowerCase());
+            if (fromComponent != null) {
+                int cleanedLinesOfCode = fromComponent.getCleanedLinesOfCode();
+                dependency.setValueFrom(cleanedLinesOfCode > 0 ? 100.0 * (dependency.getCount() / 2.0) / cleanedLinesOfCode : 0);
+            }
+            DuplicationMetric toComponent = componentByKey.get(dependency.getToComponent().toLowerCase());
+            if (toComponent != null) {
+                int cleanedLinesOfCode = toComponent.getCleanedLinesOfCode();
+                dependency.setValueTo(cleanedLinesOfCode > 0 ? 100.0 * (dependency.getCount() / 2.0) / cleanedLinesOfCode : 0);
+            }
         });
         int threshold = logicalDecomposition.getDuplicationLinkThreshold();
         List<ComponentDependency> componentDependencies = allDuplicates.stream().filter(d -> d.getCount() >= threshold).collect(Collectors.toList());
