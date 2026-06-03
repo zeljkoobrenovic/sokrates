@@ -340,7 +340,6 @@ public class DuplicationReportGenerator {
         Map<String, ComponentDependency> dependenciesMap = new HashMap<>();
         List<ComponentDependency> dependencies = new ArrayList<>();
 
-        int index[] = {0};
         duplicates.forEach(duplicate -> {
             duplicate.getDuplicatedFileBlocks().forEach(block1 -> {
                 duplicate.getDuplicatedFileBlocks().stream().filter(block2 -> block1 != block2).forEach(block2 -> {
@@ -362,6 +361,11 @@ public class DuplicationReportGenerator {
                 });
             });
         });
+
+        // The nested blocks loop visits each unordered file pair twice ((b1,b2) seeds the edge with
+        // the block size, (b2,b1) increments it by the same), so every edge weight is double the real
+        // shared duplicated lines. Halve it (counts are always even).
+        dependencies.forEach(dependency -> dependency.setCount(dependency.getCount() / 2));
 
         return dependencies;
     }
