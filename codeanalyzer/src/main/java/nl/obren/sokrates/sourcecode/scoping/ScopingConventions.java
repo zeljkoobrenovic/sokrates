@@ -65,10 +65,6 @@ public class ScopingConventions {
     private void addOtherConventions() {
         // static code analysis configurations
         otherFilesConventions.add(new Convention(".*/vendor/.*", "", "Vendor files"));
-        otherFilesConventions.add(new Convention(".*/sonatype-settings[.]xml", "", "Sonatype configuration"));
-        otherFilesConventions.add(new Convention(".*/config/checkstyle/.*", "", "Checkstyle configuration"));
-        otherFilesConventions.add(new Convention(".*/checkstyle[.]xml", "", "Checkstyle configuration"));
-        otherFilesConventions.add(new Convention(".*/checkstyle.*", "", "Checkstyle configuration"));
 
         otherFilesConventions.add(new Convention(".*[.]md", "", "Markdown files"));
         otherFilesConventions.add(new Convention(".*[.]markdown", "", "Markdown files"));
@@ -88,32 +84,11 @@ public class ScopingConventions {
         otherFilesConventions.add(new Convention(".*[.]plist", "", "Property list files"));
 
         otherFilesConventions.add(new Convention(".*[.]json", "", "JSON files"));
-        // otherFilesConventions.add(new Convention(".*[.]yml", "", "YAML files"));
-        // otherFilesConventions.add(new Convention(".*[.]yaml", "", "YAML files"));
 
         otherFilesConventions.add(new Convention(".*[.]svg", "", "SVG files"));
 
-        // ignore lists
-        otherFilesConventions.add(new Convention(".*/[.]atomignore", "", "Ignore list"));
-        otherFilesConventions.add(new Convention(".*/[.]babelignore", "", "Ignore list"));
-        otherFilesConventions.add(new Convention(".*/[.]bzrignore", "", "Ignore list"));
-        otherFilesConventions.add(new Convention(".*/[.]coffeelintignore", "", "Ignore list"));
-        otherFilesConventions.add(new Convention(".*/[.]cvsignore", "", "Ignore list"));
-        otherFilesConventions.add(new Convention(".*/[.]dockerignore", "", "Ignore list"));
-        otherFilesConventions.add(new Convention(".*/[.]eslintignore", "", "Ignore list"));
-        otherFilesConventions.add(new Convention(".*/[.]gitignore", "", "Ignore list"));
-        otherFilesConventions.add(new Convention(".*/[.]nodemonignore", "", "Ignore list"));
-        otherFilesConventions.add(new Convention(".*/[.]npmignore", "", "Ignore list"));
-        otherFilesConventions.add(new Convention(".*/[.]prettierignore", "", "Ignore list"));
-        otherFilesConventions.add(new Convention(".*/[.]stylelintignore", "", "Ignore list"));
-        otherFilesConventions.add(new Convention(".*/[.]vscodeignore", "", "Ignore list"));
-
-        otherFilesConventions.add(new Convention(".*/[.]cpplint[.]py", "", "Linter"));
-
         otherFilesConventions.add(new Convention(".*[.]storyboard", "", "Storyboard"));
         otherFilesConventions.add(new Convention(".*[.]xib", "", "XIB files"));
-
-        otherFilesConventions.add(new Convention(".*[.]bash_[a-z]+", "", "Bash files"));
 
         // config
         otherFilesConventions.add(new Convention(".*[.]apacheconf", "", "Configuration"));
@@ -122,10 +97,6 @@ public class ScopingConventions {
         otherFilesConventions.add(new Convention(".*[.]csf", "", "Configuration"));
         otherFilesConventions.add(new Convention(".*[.]diff", "", "Configuration"));
         otherFilesConventions.add(new Convention(".*[.]patch", "", "Configuration"));
-
-        otherFilesConventions.add(new Convention(".*[.]editorconfig", "", "Editor configuration"));
-
-        otherFilesConventions.add(new Convention(".*[.]npmrc", "", "NPM Config"));
 
         otherFilesConventions.add(new Convention(".*[.]properties", "", "Properties"));
         otherFilesConventions.add(new Convention(".*[.]po", "", "Properties"));
@@ -216,6 +187,11 @@ public class ScopingConventions {
     private void addBuildAndDeploymentConventions() {
         buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.](idea|vscode|vs|gradle|mvn|settings|metadata|circleci)/.*", "", "Hidden VCS/tool directories"));
 
+        buildAndDeploymentFilesConventions.add(new Convention(".*/[.]cpplint[.]py", "", "Linter"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]bash_[a-z]+", "", "Bash files"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]editorconfig", "", "Editor configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]npmrc", "", "NPM Config"));
+
         buildAndDeploymentFilesConventions.add(new Convention(".*/pom[.]xml", "", "Maven configuration"));
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]nuspec", "", "NuSpec configuration"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/build[.]xml", "", "Build configuration"));
@@ -249,6 +225,72 @@ public class ScopingConventions {
         buildAndDeploymentFilesConventions.add(new Convention(".*/[.]gitconfig", "", "Git config"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/[.]gitmodules", "", "Git modules"));
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]manifest", "", "Manifest files"));
+
+        buildAndDeploymentFilesConventions.add(new Convention(".*/sonatype-settings[.]xml", "", "Sonatype configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/config/checkstyle/.*", "", "Checkstyle configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/checkstyle[.]xml", "", "Checkstyle configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/checkstyle.*", "", "Checkstyle configuration"));
+
+        // ignore lists
+        buildAndDeploymentFilesConventions.add(new Convention(".*/[.]atomignore", "", "Ignore list"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/[.]babelignore", "", "Ignore list"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/[.]bzrignore", "", "Ignore list"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/[.]coffeelintignore", "", "Ignore list"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/[.]cvsignore", "", "Ignore list"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/[.]dockerignore", "", "Ignore list"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/[.]eslintignore", "", "Ignore list"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/[.]gitignore", "", "Ignore list"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/[.]nodemonignore", "", "Ignore list"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/[.]npmignore", "", "Ignore list"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/[.]prettierignore", "", "Ignore list"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/[.]stylelintignore", "", "Ignore list"));
+        buildAndDeploymentFilesConventions.add(new Convention(".*/[.]vscodeignore", "", "Ignore list"));
+
+
+        // Root- and nested-level tool/config dotfiles. These are real build/tooling configuration
+        // (not source, but worth keeping visible), so they are scoped here rather than ignored.
+        // The "([.].*)?" suffix catches family variants in one rule, e.g. .eslintrc / .eslintrc.json
+        // / .eslintrc.js, or .babelrc / .babelrc.js. ".env" is the deliberate exception: it is
+        // ignored (see addIgnoreConventions) because it typically holds local secrets.
+        // Package-manager / registry / version config
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]npmrc", "", "npm configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]yarnrc([.].*)?", "", "Yarn configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]nvmrc", "", "Node version"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]node[-]version", "", "Node version"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]ruby[-]version", "", "Ruby version"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]python[-]version", "", "Python version"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]tool[-]versions", "", "asdf tool versions"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]gemrc", "", "RubyGems configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]pypirc", "", "PyPI configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]netrc", "", "netrc configuration"));
+        // Linters / formatters
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]eslintrc([.].*)?", "", "ESLint configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]eslintignore", "", "ESLint ignore"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]prettierrc([.].*)?", "", "Prettier configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]prettierignore", "", "Prettier ignore"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]stylelintrc([.].*)?", "", "Stylelint configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]editorconfig", "", "EditorConfig"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]flake8", "", "Flake8 configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]pylintrc", "", "Pylint configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]rubocop[.]yml", "", "RuboCop configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]scalafmt[.]conf", "", "Scalafmt configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]clang[-]format", "", "clang-format configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]jshintrc", "", "JSHint configuration"));
+        // Git metadata files
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]gitkeep", "", "Git keep"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]mailmap", "", "Git mailmap"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]git[-]blame[-]ignore[-]revs", "", "Git blame ignore revs"));
+        // Build / ignore tool config
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]babelrc([.].*)?", "", "Babel configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]browserslistrc", "", "Browserslist configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]nycrc([.].*)?", "", "nyc configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]mocharc([.].*)?", "", "Mocha configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]swcrc", "", "SWC configuration"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]npmignore", "", "npm ignore"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]dockerignore", "", "Docker ignore"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]gcloudignore", "", "gcloud ignore"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]terraformignore", "", "Terraform ignore"));
+        buildAndDeploymentFilesConventions.add(new Convention("(.*/)?[.]helmignore", "", "Helm ignore"));
 
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]mak", "", "Make files"));
         buildAndDeploymentFilesConventions.add(new Convention(".*[.]make", "", "Make files"));
@@ -476,6 +518,10 @@ public class ScopingConventions {
         // list rather than "any dotted folder", so real source under an incidentally-dotted folder
         // (e.g. src/.config/Foo.java) is not silently ignored.
         ignoredFilesConventions.add(new Convention("(.*/)?[.](git|svn|hg|bzr)/.*", "", "Hidden VCS/tool directories"));
+        // Environment files typically hold local secrets/credentials, so they are dropped entirely.
+        // Catches .env and its variants (.env.local, .env.production, …). Other tool dotfiles are
+        // scoped as build-and-deployment instead (see addBuildAndDeploymentConventions).
+        ignoredFilesConventions.add(new Convention("(.*/)?[.]env([.].*)?", "", "Environment files (secrets)"));
         ignoredFilesConventions.add(new Convention(".*[.]resx", "", "The resx resource files"));
 
         ignoredFilesConventions.add(new Convention(".*/node_modules/.*", "", "Node dependencies"));

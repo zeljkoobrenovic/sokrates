@@ -69,17 +69,55 @@ class ScopingConventionsHiddenFilesTest {
         assertNotIgnored("/Users/dev/project/README.md");
     }
 
-    // --- plain dotfiles are now kept (no blanket "Hidden files" ignore) ------------------------
+    // --- tool/config dotfiles are scoped as build-and-deployment, not ignored ------------------
 
     @Test
-    void plainDotfilesAreKept() {
-        assertNotIgnored(".gitignore");
-        assertNotIgnored("../.gitignore");
-        assertNotIgnored("../clients/.gitignore");
-        assertNotIgnored("a/b/c/.env");
+    void toolConfigDotfilesAreBuildAndDeployment() {
+        // package-manager / version config
+        assertBuildAndDeployment("../.npmrc");
+        assertBuildAndDeployment(".yarnrc");
+        assertBuildAndDeployment("../.yarnrc.yml");
+        assertBuildAndDeployment("../.nvmrc");
+        assertBuildAndDeployment("../sub/.tool-versions");
+        // linters / formatters, including family variants via the "([.].*)?" suffix
+        assertBuildAndDeployment("../.eslintrc");
+        assertBuildAndDeployment("../foo/.eslintrc.json");
+        assertBuildAndDeployment("../.eslintrc.js");
+        assertBuildAndDeployment("../.prettierrc");
+        assertBuildAndDeployment("../.editorconfig");
+        assertBuildAndDeployment("../.pylintrc");
+        // ignore-style tool config
+        assertBuildAndDeployment("../.dockerignore");
+        assertBuildAndDeployment("../.npmignore");
+        // git metadata files
+        assertBuildAndDeployment("../.gitignore");
+        assertBuildAndDeployment("../.gitattributes");
+        assertBuildAndDeployment("../.gitkeep");
+        // build tool config
+        assertBuildAndDeployment("../.babelrc");
+        assertBuildAndDeployment("../.babelrc.js");
+        assertBuildAndDeployment("../.browserslistrc");
+    }
+
+    @Test
+    void toolConfigDotfilesAreNotIgnored() {
+        assertNotIgnored("../.npmrc");
         assertNotIgnored("../foo/.eslintrc.json");
         assertNotIgnored("../.editorconfig");
-        assertNotIgnored("../.npmrc");
+        assertNotIgnored("../.gitignore");
+        assertNotIgnored("../.dockerignore");
+        assertNotIgnored("../.babelrc");
+    }
+
+    // --- .env is the deliberate exception: ignored as it typically holds secrets ----------------
+
+    @Test
+    void envFilesAreIgnored() {
+        assertIgnored(".env");
+        assertIgnored("../.env");
+        assertIgnored("a/b/c/.env");
+        assertIgnored("../.env.local");
+        assertIgnored("../.env.production");
     }
 
     @Test

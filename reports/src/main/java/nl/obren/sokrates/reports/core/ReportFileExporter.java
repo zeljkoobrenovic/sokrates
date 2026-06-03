@@ -1072,7 +1072,7 @@ public class ReportFileExporter {
         boolean showReport = reportFile.exists() && StringUtils.isNotBlank(reportFileName);
 
         if (showReport) {
-            indexReport.addHtmlContent("<a target='_blank' style='text-decoration: none' href=\"" + reportFileName + "\">");
+            indexReport.addHtmlContent("<a style='text-decoration: none' href=\"" + reportFileName + "\">");
             indexReport.addHtmlContent("<div class='group' style='border-radius: 8px; padding: 0px 20px 5px 20px; margin: 10px; width: 130px; height: 175px; text-align: center; display: inline-block; vertical-align: top'>");
         } else {
             indexReport.addHtmlContent("<div class='group' style='border-radius: 8px; padding: 0px 20px 5px 20px; margin: 10px; width: 130px; height: 175px; text-align: center; display: inline-block; vertical-align: top; opacity: 0.4'>");

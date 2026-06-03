@@ -39,7 +39,7 @@ java -jar cli-1.0-jar-with-dependencies.jar init -srcRoot .
 java -jar cli-1.0-jar-with-dependencies.jar generateReports
 ```
 
-Open `_sokrates/reports/html/index.html` in a browser to view the results.
+Open `_sokrates/reports/html/index.html` in a browser to view the results. The report home page embeds an interactive **Structure** view of zoomable circles (circle size = lines of code); its default **All Files** tab groups every file by folder and color-codes each file by scope (main, test, build & deployment, generated, other).
 
 Run a command with `-help` to see its options:
 
