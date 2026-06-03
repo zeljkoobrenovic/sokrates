@@ -318,7 +318,12 @@ public class ContributorConnectionUtils {
             });
         });
 
+        // The nested repositories loop visits each unordered repo pair twice (r1,r2) and (r2,r1):
+        // the first visit creates the dependency (count starts at 1), the reverse visit increments
+        // it, so every per-contributor co-occurrence is counted as 2. Halve to recover the real
+        // number of people connecting the pair (mirrors DependenciesCreator.getIndirectDependencies).
         List<ComponentDependency> repositoryDependencies = new ArrayList<>(map.values());
+        repositoryDependencies.forEach(dependency -> dependency.setCount(dependency.getCount() / 2));
         repositoryDependencies.sort((a, b) -> b.getCount() - a.getCount());
 
         return repositoryDependencies;
