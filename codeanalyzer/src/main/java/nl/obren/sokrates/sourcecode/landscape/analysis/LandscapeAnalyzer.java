@@ -56,8 +56,6 @@ public class LandscapeAnalyzer {
             }
             landscapeAnalysisResults.setConfiguration(landscapeConfiguration);
             landscapeConfiguration.getRepositories().forEach(link -> {
-            });
-            landscapeConfiguration.getRepositories().forEach(link -> {
                 LOG.info("Analysing " + link.getAnalysisResultsPath() + "...");
                 CodeAnalysisResults repositoryAnalysisResults = this.getRepositoryAnalysisResults(link);
                 if (repositoryAnalysisResults != null) {
@@ -68,10 +66,10 @@ public class LandscapeAnalyzer {
                         landscapeAnalysisResults.getRepositoryAnalysisResults().add(new RepositoryAnalysisResults(link, repositoryAnalysisResults, files));
                         repositoryAnalysisResults.getContributorsAnalysisResults().getContributors().forEach(contributor -> {
                             contributor.getCommitDates().forEach(commitDate -> {
-                                if (landscapeAnalysisResults.getFirstCommitDate() == "" || commitDate.compareTo(landscapeAnalysisResults.getFirstCommitDate()) < 0) {
+                                if (landscapeAnalysisResults.getFirstCommitDate().isEmpty() || commitDate.compareTo(landscapeAnalysisResults.getFirstCommitDate()) < 0) {
                                     landscapeAnalysisResults.setFirstCommitDate(commitDate);
                                 }
-                                if (landscapeAnalysisResults.getLatestCommitDate() == "" || commitDate.compareTo(landscapeAnalysisResults.getLatestCommitDate()) > 0) {
+                                if (landscapeAnalysisResults.getLatestCommitDate().isEmpty() || commitDate.compareTo(landscapeAnalysisResults.getLatestCommitDate()) > 0) {
                                     landscapeAnalysisResults.setLatestCommitDate(commitDate);
                                     DateUtils.setLatestCommitDate(commitDate);
                                 }
