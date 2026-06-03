@@ -42,9 +42,13 @@ public class FilesExplorerGenerators {
      */
     private List<FileExport> getFiles(NamedSourceCodeAspect aspect, String scope, String cacheFolder, Set<SourceFile> referencedFiles) {
         List<FileExport> files = new ArrayList<>();
+        // Dedup by source file. The previous `files.contains(file)` compared the FileExport list
+        // against a SourceFile, so it was always false (a no-op); use a SourceFile set so a repeated
+        // file in the aspect is exported once, and the check is O(1).
+        Set<SourceFile> seen = new HashSet<>();
 
         aspect.getSourceFiles().forEach(file -> {
-            if (!files.contains(file) && !file.getRelativePath().startsWith("- -")) {
+            if (!file.getRelativePath().startsWith("- -") && seen.add(file)) {
                 FileExport fileExport = new FileExport("", file.getRelativePath(), scope, file.getLinesOfCode());
                 // Populate git-history columns when file history was analysed; otherwise leave the
                 // defaults (0 commits, blank date).
