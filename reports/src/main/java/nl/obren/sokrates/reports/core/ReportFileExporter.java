@@ -1129,7 +1129,6 @@ public class ReportFileExporter {
         boolean showHistoryReport = mainExists && config.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesConfigFolder);
         boolean showDuplication = mainExists && !analysisResults.skipDuplicationAnalysis();
         boolean showDependencies = mainExists && !config.getAnalysis().isSkipDependencies();
-        boolean showTrends = mainExists && config.getTrendAnalysis().getReferenceAnalyses(sokratesConfigFolder).size() > 0;
         boolean showConcerns = mainExists && config.countAllConcernsDefinitions() > 1;
         boolean showControls = mainExists && config.getGoalsAndControls().size() > 0;
         boolean showUnits = mainExists && analysisResults.getUnitsAnalysisResults().getTotalNumberOfUnits() > 0;
@@ -1174,9 +1173,6 @@ public class ReportFileExporter {
             list.add(new String[]{"FeaturesOfInterest.html", "Features of Interest", "cross_cutting_concerns"});
         }
         list.add(new String[]{"Metrics.html", "All Metrics", "metrics"});
-        if (showTrends) {
-            list.add(new String[]{"Trend.html", "Trend", "trend"});
-        }
         if (showControls) {
             list.add(new String[]{"Controls.html", "Goals & Controls", "goal"});
         }
@@ -1209,9 +1205,6 @@ public class ReportFileExporter {
         }
         if (!showConcerns) {
             list.add(new String[]{"", "Features of Interest", "cross_cutting_concerns"});
-        }
-        if (!showTrends) {
-            list.add(new String[]{"", "Trend", "trend"});
         }
         if (!showControls) {
             list.add(new String[]{"", "Goals & Controls", "goal"});

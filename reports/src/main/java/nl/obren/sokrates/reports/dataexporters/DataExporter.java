@@ -15,7 +15,6 @@ import nl.obren.sokrates.reports.dataexporters.duplication.DuplicateFileBlockExp
 import nl.obren.sokrates.reports.dataexporters.duplication.DuplicationExportInfo;
 import nl.obren.sokrates.reports.dataexporters.duplication.DuplicationExporter;
 import nl.obren.sokrates.reports.dataexporters.files.FileListExporter;
-import nl.obren.sokrates.reports.dataexporters.trends.MetricsTrendExporter;
 import nl.obren.sokrates.reports.dataexporters.units.UnitListExporter;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.reports.utils.ZipUtils;
@@ -23,7 +22,6 @@ import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
 import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileWithSearchData;
-import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
@@ -38,9 +36,6 @@ import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.filehistory.FileHistoryScopingUtils;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.filehistory.FilePairChangedTogether;
-import nl.obren.sokrates.sourcecode.filehistory.GitHistoryUtil;
-import nl.obren.sokrates.sourcecode.githistory.FileUpdate;
-import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import nl.obren.sokrates.sourcecode.lang.DefaultLanguageAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
 import nl.obren.sokrates.sourcecode.search.FoundLine;
@@ -53,7 +48,6 @@ import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -106,8 +100,6 @@ public class DataExporter {
         exportFileLists();
         LOG.info("Saving metrics data");
         exportMetrics();
-        LOG.info("Saving trends data");
-        exportTrends();
         LOG.info("Saving controls data");
         exportControls();
         LOG.info("Saving contributors data");
@@ -125,22 +117,6 @@ public class DataExporter {
         exportDependencies(analysisResults);
         LOG.info("Saving temporal dependencies data");
         saveTemporalDependencies(analysisResults);
-    }
-
-    private void exportTrends() {
-        MetricsTrendExporter exporter = new MetricsTrendExporter(sokratesConfigFile, analysisResults);
-
-        try {
-            FileUtils.write(new File(textDataFolder, "metrics_trend.txt"), exporter.getText(), UTF_8);
-            FileUtils.write(new File(textDataFolder, "metrics_trend_loc_per_extension.txt"), exporter.getText("LINES_OF_CODE_MAIN_.*"), UTF_8);
-            FileUtils.write(new File(textDataFolder, "metrics_trend_loc_duplication.txt"), exporter.getText("(DUPLICATION_NUMBER_OF_CLEANED_LINES|DUPLICATION_NUMBER_OF_DUPLICATED_LINES)"), UTF_8);
-            FileUtils.write(new File(textDataFolder, "metrics_trend_unit_size_loc.txt"), exporter.getText("UNIT_SIZE_DISTRIBUTION_.*_LOC"), UTF_8);
-            FileUtils.write(new File(textDataFolder, "metrics_trend_conditional_complexity_loc.txt"), exporter.getText("CONDITIONAL_COMPLEXITY_.*_LOC"), UTF_8);
-            FileUtils.write(new File(textDataFolder, "metrics_trend_loc_logical_decompositions.txt"), exporter.getText("LINES_OF_CODE_DECOMPOSITION_.*", ".*_EXT_.*"), UTF_8);
-            FileUtils.write(new File(textDataFolder, "metrics_trend_loc_file_size.txt"), exporter.getText("FILE_SIZE_.*", ".*_EXT_.*"), UTF_8);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     private void exportMetrics() {
@@ -592,15 +568,6 @@ public class DataExporter {
         String configJson = FileUtils.readFileToString(sokratesConfigFile, UTF_8);
         FileUtils.write(new File(dataFolder, "config.json"), configJson, UTF_8);
 
-        if (codeConfiguration.getTrendAnalysis().isSaveHistory()) {
-            ZipUtils.stringToZipFile(new File(getTodayHistoryFolder(), "analysisResults.zip"),
-                    new String[][]{{"config.json", configJson},
-                            {"analysisResults.json", analysisResultsJson}});
-            ZipUtils.stringToZipFile(new File(getLatestHistoryFolder(), "analysisResults.zip"),
-                    new String[][]{{"config.json", configJson},
-                            {"analysisResults.json", analysisResultsJson}});
-        }
-
         List<SourceFile> mainSourceFiles = analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles();
         FileUtils.write(new File(dataFolder, "mainFiles.json"), new JsonGenerator().generate(mainSourceFiles), UTF_8);
 
@@ -935,16 +902,6 @@ public class DataExporter {
 
     public File getDataHistoryFolder() {
         File folder = new File(reportsFolder, HISTORY_FOLDER_NAME);
-        folder.mkdirs();
-        return folder;
-    }
-
-    public File getTodayHistoryFolder() {
-        return codeConfiguration.getTrendAnalysis().getSnapshotFolder(sokratesConfigFile.getParentFile());
-    }
-
-    public File getLatestHistoryFolder() {
-        File folder = new File(getDataHistoryFolder(), "LATEST");
         folder.mkdirs();
         return folder;
     }

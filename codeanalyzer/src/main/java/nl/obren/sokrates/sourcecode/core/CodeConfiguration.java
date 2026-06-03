@@ -61,9 +61,6 @@ public class CodeConfiguration {
     // A list of metrics with goals
     private List<MetricsWithGoal> goalsAndControls = new ArrayList<>();
 
-    // A configuration of trend analysis (comparing multiple analysis snapshots in time)
-    private TrendAnalysisConfig trendAnalysis = new TrendAnalysisConfig();
-
     // A configuration of commit history input file and analyses
     private FileHistoryAnalysisConfig fileHistoryAnalysis = new FileHistoryAnalysisConfig();
 
@@ -565,16 +562,6 @@ public class CodeConfiguration {
     public void setFileHistoryAnalysis(FileHistoryAnalysisConfig fileHistoryAnalysis) {
         if (fileHistoryAnalysis != null) {
             this.fileHistoryAnalysis = fileHistoryAnalysis;
-        }
-    }
-
-    public TrendAnalysisConfig getTrendAnalysis() {
-        return trendAnalysis;
-    }
-
-    public void setTrendAnalysis(TrendAnalysisConfig trendAnalysis) {
-        if (trendAnalysis != null) {
-            this.trendAnalysis = trendAnalysis;
         }
     }
 }
