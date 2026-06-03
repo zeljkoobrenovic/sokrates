@@ -68,10 +68,13 @@ public class DuplicationAnalyzer extends Analyzer {
         ProcessingStopwatch.end("analysis/duplication/consolidating duplicates");
 
         ProcessingStopwatch.start("analysis/duplication/counting duplicates");
+        // Aggregated once and reused below (both the file count and the per-component/per-extension
+        // aggregation need it); it used to be computed twice.
+        List<SourceFileDuplication> duplicationPerSourceFile = DuplicationAggregator.getDuplicationPerSourceFile(duplicates);
         int numberOfDuplicates = mergedConsolidated.size();
         int numberOfDuplicatedLines = DuplicationUtils.getNumberOfDuplicatedLines(duplicates);
         int totalNumberOfCleanedLines = DuplicationUtils.getTotalNumberOfCleanedLines(main.getSourceFiles());
-        int numberOfFilesWithDuplicates = DuplicationAggregator.getDuplicationPerSourceFile(duplicates).size();
+        int numberOfFilesWithDuplicates = duplicationPerSourceFile.size();
         ProcessingStopwatch.end("analysis/duplication/counting duplicates");
 
         duplcationAnalysisResults.getOverallDuplication().setNumberOfDuplicates(numberOfDuplicates);
@@ -81,7 +84,6 @@ public class DuplicationAnalyzer extends Analyzer {
 
         addSystemDuplicationMetrics(numberOfDuplicates, numberOfDuplicatedLines, totalNumberOfCleanedLines, numberOfFilesWithDuplicates);
 
-        List<SourceFileDuplication> duplicationPerSourceFile = DuplicationAggregator.getDuplicationPerSourceFile(duplicates);
         List<AspectDuplication> duplicationPerLogicalComponent = DuplicationAggregator.getDuplicationPerLogicalComponent(codeConfiguration.getLogicalDecompositions(), main.getSourceFiles(),
                 duplicationPerSourceFile);
 
