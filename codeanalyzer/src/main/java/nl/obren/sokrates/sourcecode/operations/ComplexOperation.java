@@ -8,8 +8,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ComplexOperation extends StringOperation {
+    // The factory is stateless (its op-class map is static), so a single shared instance suffices.
+    private static final StringOperationFactory factory = new StringOperationFactory();
+
     private List<OperationStatement> operations = new ArrayList<>();
-    private StringOperationFactory factory = new StringOperationFactory();
 
     public ComplexOperation() {
         super("sequence");

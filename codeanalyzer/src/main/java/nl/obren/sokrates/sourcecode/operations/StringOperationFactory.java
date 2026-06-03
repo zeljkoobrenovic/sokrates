@@ -10,9 +10,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class StringOperationFactory {
-    private Map<String, Class> classesMap = new HashMap<>();
+    // Op name -> operation class. The mapping is fixed, so build it once and share it across all
+    // factory instances rather than rebuilding the map in every constructor call (this runs on the
+    // contributor-email transform hot path).
+    private static final Map<String, Class> classesMap = new HashMap<>();
 
-    public StringOperationFactory() {
+    static {
         classesMap.put("extract", ExtractRegexOperation.class);
         classesMap.put("remove", RemoveRegexOperation.class);
         classesMap.put("replace", ReplaceOperation.class);
