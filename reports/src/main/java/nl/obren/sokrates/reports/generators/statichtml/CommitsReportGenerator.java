@@ -11,9 +11,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults
 import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
-import nl.obren.sokrates.sourcecode.githistory.ContributorPerExtensionStats;
 import nl.obren.sokrates.sourcecode.threshold.Thresholds;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -25,19 +23,9 @@ public class CommitsReportGenerator {
     private final CodeAnalysisResults codeAnalysisResults;
     private File reportsFolder;
     private RichTextReport report;
-    private Map<String, List<Pair<String, ContributorPerExtensionStats>>> emailStatsMap = new HashMap<>();
 
     public CommitsReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
-        codeAnalysisResults.getContributorsAnalysisResults().getCommitsPerExtensions().forEach(commitsPerExtension -> {
-            commitsPerExtension.getContributorPerExtensionStats().forEach(contributorPerExtensionStats -> {
-                String email = contributorPerExtensionStats.getContributor();
-                if (!emailStatsMap.containsKey(email)) {
-                    emailStatsMap.put(email, new ArrayList<>());
-                }
-                emailStatsMap.get(email).add(Pair.of(commitsPerExtension.getExtension(), contributorPerExtensionStats));
-            });
-        });
     }
 
     public void addContributorsAnalysisToReport(File reportsFolder, RichTextReport report) {
