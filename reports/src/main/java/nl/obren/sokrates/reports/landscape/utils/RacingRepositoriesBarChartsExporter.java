@@ -99,7 +99,7 @@ public class RacingRepositoriesBarChartsExporter {
                 double averageContributorsPerMonth = cumulativeContributorsList.stream().collect(Collectors.averagingDouble(Integer::intValue));
                 if (averageContributorsPerMonth > 0.1) {
                     RacingChartItem itemContributorsPerMonth = new RacingChartItem(name);
-                    itemContributorsPerMonth.setValue(averageContributorsPerMonth > 0.1 ? Math.round(100.0 * averageContributorsPerMonth) / 100 : 0.1);
+                    itemContributorsPerMonth.setValue(averageContributorsPerMonth > 0.1 ? Math.round(100.0 * averageContributorsPerMonth) / 100.0 : 0.1);
                     itemContributorsPerMonth.setYear(year + monthFrame / 10.0);
                     itemsContributorsPerMonth.add(itemContributorsPerMonth);
                 }

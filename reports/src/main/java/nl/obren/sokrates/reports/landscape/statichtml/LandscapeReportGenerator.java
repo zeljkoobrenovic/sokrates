@@ -1047,7 +1047,7 @@ public class LandscapeReportGenerator {
 
         correlationDiagramGenerator.addCorrelations("Age in Years vs. Repository Main LOC", "main LOC", "age (years)",
                 p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
-                p -> Math.round(10 * p.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays() / 365.0) / 10,
+                p -> Math.round(10 * p.getAnalysisResults().getFilesHistoryAnalysisResults().getAgeInDays() / 365.0) / 10.0,
                 p -> p.getAnalysisResults().getMetadata().getName());
 
         correlationDiagramGenerator.addCorrelations("Number of Files vs. Repository Main LOC", "main LOC", "# main files",
@@ -1057,7 +1057,7 @@ public class LandscapeReportGenerator {
 
         correlationDiagramGenerator.addCorrelations("Duplication vs. Repository Main LOC", "main LOC", "% duplication",
                 p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(),
-                p -> Math.round(10 * p.getAnalysisResults().getDuplicationAnalysisResults().getOverallDuplication().getDuplicationPercentage().doubleValue()) / 10,
+                p -> Math.round(10 * p.getAnalysisResults().getDuplicationAnalysisResults().getOverallDuplication().getDuplicationPercentage().doubleValue()) / 10.0,
                 p -> p.getAnalysisResults().getMetadata().getName());
     }
 
