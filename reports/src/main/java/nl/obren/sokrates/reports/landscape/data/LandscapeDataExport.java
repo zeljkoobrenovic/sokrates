@@ -29,9 +29,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -69,12 +71,16 @@ public class LandscapeDataExport {
             String latestCommitDate = analysisResults.getLatestCommitDate();
             List<RepositoryExport> repositoryExports = new ArrayList<>();
             List<FileExport> files = new ArrayList<>();
+            // Set-backed membership so the dedup is O(1) instead of List.contains O(n) per file
+            // (O(total files^2) overall). FileExport has no equals/hashCode, so the set uses object
+            // identity - exactly the semantics List.contains had here.
+            Set<FileExport> seenFiles = new HashSet<>();
 
             analysisResults.getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
                 RepositoryExport repositoryExport = new RepositoryExport(repositoryAnalysisResults, tagMap, configuration, latestCommitDate);
                 repositoryExports.add(repositoryExport);
                 repositoryAnalysisResults.getFiles().forEach(file -> {
-                    if (!files.contains(file) && !file.getPath().startsWith("- -")) {
+                    if (!file.getPath().startsWith("- -") && seenFiles.add(file)) {
                         files.add(file);
                     }
                 });
