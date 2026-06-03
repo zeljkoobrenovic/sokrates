@@ -122,6 +122,9 @@ public class DuplicationReportGenerator {
         ProcessingStopwatch.start("reporting/duplication/longest duplicates");
         addLongestDuplicatesList(report);
         ProcessingStopwatch.end("reporting/duplication/longest duplicates");
+        ProcessingStopwatch.start("reporting/duplication/most frequent duplicates");
+        addMostFrequentDuplicatesList(report);
+        ProcessingStopwatch.end("reporting/duplication/most frequent duplicates");
         ProcessingStopwatch.start("reporting/duplication/duplicated units");
         addDuplicatedUnitsList(report);
         ProcessingStopwatch.end("reporting/duplication/duplicated units");
@@ -233,24 +236,29 @@ public class DuplicationReportGenerator {
         report.endSection();
     }
 
-    private void renderDependenciesViaDuplication(RichTextReport report, List<DuplicationMetric> duplicationPerComponent,
+        private void renderDependenciesViaDuplication(RichTextReport report, List<DuplicationMetric> duplicationPerComponent,
                                                   LogicalDecomposition logicalDecomposition, String monitoringPrefix) {
         ProcessingStopwatch.start(monitoringPrefix + "/extracting dependencies");
         DuplicationDependenciesHelper duplicationDependenciesHelper = new DuplicationDependenciesHelper(logicalDecomposition.getName());
         List<ComponentDependency> allDuplicates = duplicationDependenciesHelper.extractDependencies(codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates());
         ProcessingStopwatch.end(monitoringPrefix + "/extracting dependencies");
         ProcessingStopwatch.start(monitoringPrefix + "/updating dependencies");
+        // Index components by lowercased key once, so each dependency's from/to lookup is O(1) instead of a
+        // full stream scan of duplicationPerComponent. putIfAbsent keeps the original findFirst() semantics
+        // (first matching component wins on a case-insensitive key collision).
+        Map<String, DuplicationMetric> componentByKey = new HashMap<>();
+        duplicationPerComponent.forEach(duplication -> componentByKey.putIfAbsent(duplication.getKey().toLowerCase(), duplication));
         allDuplicates.forEach(dependency -> {
-            duplicationPerComponent.stream().filter(duplication -> duplication.getKey().equalsIgnoreCase(dependency.getFromComponent())).findFirst()
-                    .ifPresent(c -> {
-                        int cleanedLinesOfCode = c.getCleanedLinesOfCode();
-                        dependency.setValueFrom(cleanedLinesOfCode > 0 ? 100.0 * (dependency.getCount() / 2.0) / cleanedLinesOfCode : 0);
-                    });
-            duplicationPerComponent.stream().filter(duplication -> duplication.getKey().equalsIgnoreCase(dependency.getToComponent())).findFirst()
-                    .ifPresent(c -> {
-                        int cleanedLinesOfCode = c.getCleanedLinesOfCode();
-                        dependency.setValueTo(cleanedLinesOfCode > 0 ? 100.0 * (dependency.getCount() / 2.0) / cleanedLinesOfCode : 0);
-                    });
+            DuplicationMetric fromComponent = componentByKey.get(dependency.getFromComponent().toLowerCase());
+            if (fromComponent != null) {
+                int cleanedLinesOfCode = fromComponent.getCleanedLinesOfCode();
+                dependency.setValueFrom(cleanedLinesOfCode > 0 ? 100.0 * (dependency.getCount() / 2.0) / cleanedLinesOfCode : 0);
+            }
+            DuplicationMetric toComponent = componentByKey.get(dependency.getToComponent().toLowerCase());
+            if (toComponent != null) {
+                int cleanedLinesOfCode = toComponent.getCleanedLinesOfCode();
+                dependency.setValueTo(cleanedLinesOfCode > 0 ? 100.0 * (dependency.getCount() / 2.0) / cleanedLinesOfCode : 0);
+            }
         });
         int threshold = logicalDecomposition.getDuplicationLinkThreshold();
         List<ComponentDependency> componentDependencies = allDuplicates.stream().filter(d -> d.getCount() >= threshold).collect(Collectors.toList());
@@ -332,7 +340,6 @@ public class DuplicationReportGenerator {
         Map<String, ComponentDependency> dependenciesMap = new HashMap<>();
         List<ComponentDependency> dependencies = new ArrayList<>();
 
-        int index[] = {0};
         duplicates.forEach(duplicate -> {
             duplicate.getDuplicatedFileBlocks().forEach(block1 -> {
                 duplicate.getDuplicatedFileBlocks().stream().filter(block2 -> block1 != block2).forEach(block2 -> {
@@ -354,6 +361,11 @@ public class DuplicationReportGenerator {
                 });
             });
         });
+
+        // The nested blocks loop visits each unordered file pair twice ((b1,b2) seeds the edge with
+        // the block size, (b2,b1) increments it by the same), so every edge weight is double the real
+        // shared duplicated lines. Halve it (counts are always even).
+        dependencies.forEach(dependency -> dependency.setCount(dependency.getCount() / 2));
 
         return dependencies;
     }
@@ -485,7 +497,8 @@ public class DuplicationReportGenerator {
     }
 
 
-    private void addMostFrequentDuplicatesList(RichTextReport report) {
+    // Package-private for testing.
+    void addMostFrequentDuplicatesList(RichTextReport report) {
         List<DuplicationInstance> duplicates = codeAnalysisResults.getDuplicationAnalysisResults().getMostFrequentDuplicates();
         if (duplicates.size() > 0) {
             report.startSection("Most Frequent Duplicates", "The list of " + duplicates.size() + " most frequently found duplicates.");

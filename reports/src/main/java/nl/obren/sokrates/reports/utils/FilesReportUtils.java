@@ -38,7 +38,7 @@ public class FilesReportUtils {
             header += "<th>latest<br>contributor</th>";
         }
         table.append(header + "\n");
-        table.append("<tr>");
+        table.append("</tr>\n");
 
         sourceFiles.stream().forEach(sourceFile -> {
             table.append("<tr>\n");
@@ -82,6 +82,11 @@ public class FilesReportUtils {
                     table.append("<td style='text-align: center; font-size: 80%; color: grey'>" + StringUtils.abbreviate(history.getOldestContributor(), 30) + "</td>\n");
                     table.append("<td style='text-align: center; font-size: 80%; color: grey'>" + StringUtils.abbreviate(history.getLatestContributor(), 30) + "</td>\n");
                 } else {
+                    // Six age columns in the header (created, last modified, # changes,
+                    // # contributors, first contributor, latest contributor): emit six empty cells so
+                    // history-less files stay aligned with the rest of the table.
+                    table.append("<td style='text-align: center'></td>\n");
+                    table.append("<td style='text-align: center'></td>\n");
                     table.append("<td style='text-align: center'></td>\n");
                     table.append("<td style='text-align: center'></td>\n");
                     table.append("<td style='text-align: center'></td>\n");

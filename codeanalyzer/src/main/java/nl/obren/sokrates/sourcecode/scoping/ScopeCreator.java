@@ -112,7 +112,6 @@ public class ScopeCreator {
             codeConfiguration.setTagRules(tagRules);
         }
         codeConfiguration.setFileHistoryAnalysis(customScopingConventions.getFileHistoryAnalysis());
-        codeConfiguration.setTrendAnalysis(customScopingConventions.getTrendAnalysis());
         codeConfiguration.getMetadata().setLogoLink(customScopingConventions.getLogoLink());
 
         LogicalDecomposition logicalDecomposition = codeConfiguration.getLogicalDecompositions().get(0);

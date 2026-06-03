@@ -14,7 +14,7 @@ import java.util.*;
 
 public class FilePairsChangedTogether {
     private static final Log LOG = LogFactory.getLog(FilePairsChangedTogether.class);
-    public static final int PAIR_LIST_LIMIT = 1000000;
+    public static final int PAIR_LIST_LIMIT = 10000000;
 
     private Map<String, FilePairChangedTogether> filePairsMap = new HashMap<>();
     private Set<FilePairChangedTogether> filePairs = new HashSet<>();

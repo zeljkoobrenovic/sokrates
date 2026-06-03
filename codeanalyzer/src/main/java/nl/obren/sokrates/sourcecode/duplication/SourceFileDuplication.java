@@ -7,12 +7,16 @@ package nl.obren.sokrates.sourcecode.duplication;
 import nl.obren.sokrates.sourcecode.SourceFile;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public class SourceFileDuplication {
     private SourceFile sourceFile;
     private int cleanedLinesOfCode;
-    private List<Integer> duplicatedLineIndexes = new ArrayList<>();
+    // A set (insertion-ordered) so de-duplicating a line index is O(1) instead of a List.contains scan;
+    // a hot duplication file can otherwise make addLines O(n^2) in its duplicated-line count.
+    private Set<Integer> duplicatedLineIndexes = new LinkedHashSet<>();
 
     public SourceFile getSourceFile() {
         return sourceFile;
@@ -20,22 +24,16 @@ public class SourceFileDuplication {
 
     public void addLines(int startLine, int endLine) {
         for (int i = startLine; i <= endLine; i++) {
-            addLineIndex(i);
-        }
-    }
-
-    private void addLineIndex(int lineIndex) {
-        if (!duplicatedLineIndexes.contains(lineIndex)) {
-            duplicatedLineIndexes.add(lineIndex);
+            duplicatedLineIndexes.add(i);
         }
     }
 
     public List<Integer> getDuplicatedLineIndexes() {
-        return duplicatedLineIndexes;
+        return new ArrayList<>(duplicatedLineIndexes);
     }
 
     public void setDuplicatedLineIndexes(List<Integer> duplicatedLineIndexes) {
-        this.duplicatedLineIndexes = duplicatedLineIndexes;
+        this.duplicatedLineIndexes = new LinkedHashSet<>(duplicatedLineIndexes);
     }
 
     public void setSourceFile(SourceFile sourceFile) {

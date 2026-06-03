@@ -14,10 +14,13 @@ public class PeopleConfig {
     public PeopleConfig() {
     }
 
+    // Per-instance memoization. These must NOT be static: each landscape builds its own PeopleConfig
+    // with its own `people` list, and a shared static cache would return one landscape's person for
+    // another's identical email/name (e.g. when several landscapes are processed in one JVM).
     @JsonIgnore
-    private static final Map<String, PersonConfig> cache = new HashMap<>();
+    private final Map<String, PersonConfig> cache = new HashMap<>();
     @JsonIgnore
-    private static final Map<String, PersonConfig> nameCache = new HashMap<>();
+    private final Map<String, PersonConfig> nameCache = new HashMap<>();
 
     public List<PersonConfig> getPeople() {
         return people;
@@ -52,14 +55,14 @@ public class PeopleConfig {
         }
         for (PersonConfig person : people) {
             if (person.getName().equals(name)) {
-                cache.put(name, person);
+                nameCache.put(name, person);
                 return person;
             }
         }
 
         PersonConfig newPersonConfig = new PersonConfig();
         newPersonConfig.setName(name);
-        cache.put(name, newPersonConfig);
+        nameCache.put(name, newPersonConfig);
 
         return newPersonConfig;
     }

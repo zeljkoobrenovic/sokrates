@@ -19,20 +19,25 @@ public abstract class HeuristicDependenciesExtractor {
         List<Dependency> dependencies = new ArrayList<>();
         dependenciesAnalysis.setDependencies(dependencies);
         List<DependencyAnchor> anchors = getDependencyAnchors(files);
+        // Shared index so addDependency merges duplicates in O(1) instead of scanning the list.
+        Map<String, Dependency> dependencyIndex = new HashMap<>();
 
-        // DependencyUtils.findErrors(anchors, dependenciesAnalysis.getErrors());
-
+        // For each source file, scan its content once to collect the anchor strings it actually
+        // mentions (substring match). Only those candidate target anchors are then resolved against
+        // the file, instead of testing every target anchor against every file (which was
+        // O(anchors^2 * files), each step re-scanning the whole file content).
         int i = 0;
         for (DependencyAnchor sourceAnchor : anchors) {
             if (progressFeedback.canceled()) {
                 break;
             }
             progressFeedback.setText(sourceAnchor.getAnchor());
-            for (DependencyAnchor targetAnchor : anchors) {
-                if (sourceAnchor != targetAnchor) {
-                    sourceAnchor.getSourceFiles().forEach(sourceFile -> {
-                        extractDependenciesToTargetAnchor(dependencies, sourceFile, sourceAnchor, targetAnchor);
-                    });
+            for (SourceFile sourceFile : sourceAnchor.getSourceFiles()) {
+                String content = sourceFile.getContent();
+                for (DependencyAnchor targetAnchor : anchors) {
+                    if (sourceAnchor != targetAnchor && content.contains(targetAnchor.getAnchor())) {
+                        extractDependenciesToTargetAnchor(dependencies, dependencyIndex, content, sourceFile, sourceAnchor, targetAnchor);
+                    }
                 }
             }
             progressFeedback.progress(i++, anchors.size());
@@ -44,15 +49,13 @@ public abstract class HeuristicDependenciesExtractor {
         return dependenciesAnalysis;
     }
 
-    private void extractDependenciesToTargetAnchor(List<Dependency> dependencies, SourceFile sourceFile, DependencyAnchor sourceAnchor, DependencyAnchor targetAnchor) {
-        String content = sourceFile.getContent();
-        if (content.contains(targetAnchor.getAnchor())) {
-            String dependencyCodeFragment = targetAnchor.getDependencyCodeFragment(content);
-            if (dependencyCodeFragment != null) {
-                SourceFileDependency sourceFileDependency = new SourceFileDependency(sourceFile);
-                sourceFileDependency.setCodeFragment(dependencyCodeFragment);
-                DependencyUtils.addDependency(dependencies, sourceFileDependency, sourceAnchor, targetAnchor);
-            }
+    private void extractDependenciesToTargetAnchor(List<Dependency> dependencies, Map<String, Dependency> dependencyIndex,
+                                                   String content, SourceFile sourceFile, DependencyAnchor sourceAnchor, DependencyAnchor targetAnchor) {
+        String dependencyCodeFragment = targetAnchor.getDependencyCodeFragment(content);
+        if (dependencyCodeFragment != null) {
+            SourceFileDependency sourceFileDependency = new SourceFileDependency(sourceFile);
+            sourceFileDependency.setCodeFragment(dependencyCodeFragment);
+            DependencyUtils.addDependency(dependencies, dependencyIndex, sourceFileDependency, sourceAnchor, targetAnchor);
         }
     }
 

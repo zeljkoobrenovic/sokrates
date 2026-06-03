@@ -17,12 +17,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Blocks {
     private Files files;
     private int minDuplicationBlockSize;
     private String progressText = "";
-    private int currentProgressValue = 0;
+    private AtomicInteger currentProgressValue = new AtomicInteger(0);
     private int endProgressValue = 0;
     private boolean optimize = true;
 
@@ -32,9 +34,12 @@ public class Blocks {
     private List<Block> duplicatedFilePairs = new ArrayList<>();
     private List<Block> duplicateBlocks = new ArrayList<>();
     private ProgressFeedback progressFeedback;
-    private Map<String, DuplicateRangePairs> fileRangePairs = new HashMap<>();
+    // The two find loops below run in parallel; these maps are shared across worker threads.
+    // ConcurrentHashMap gives safe publication, and the per-instance / per-key synchronisation in the
+    // loop bodies guards the read-modify-write sequences that a concurrent map alone does not cover.
+    private Map<String, DuplicateRangePairs> fileRangePairs = new ConcurrentHashMap<>();
 
-    private Map<String, DuplicationInstance> duplicationInstances = new HashMap<>();
+    private Map<Block, DuplicationInstance> duplicationInstances = new ConcurrentHashMap<>();
 
     public Blocks(Files files, int minDuplicationBlockSize) {
         this.files = files;
@@ -120,25 +125,33 @@ public class Blocks {
         resetProgressValues(filePairMap.size());
         reportProgress("Finding duplicates among files");
 
-        filePairMap.values().forEach(pair -> {
+        filePairMap.values().parallelStream().forEach(pair -> {
             if (progressFeedback != null && progressFeedback.canceled()) {
                 return;
             }
             reportProgressNextStep();
             SourceFile f1 = pair.getLeft();
-            FileInfoForDuplication fileInfoForDuplication1 = files.getFilesMap().get(f1);
-
             SourceFile f2 = pair.getRight();
 
+            // Both files must be thread-local copies: addDuplicationInstances calls extractBlocks() on
+            // file1, which mutates that FileInfoForDuplication's internal blocks list. The shared originals
+            // in files.getFilesMap() are read concurrently by every file-pair task, so mutating one in place
+            // would corrupt the others (ConcurrentModificationException / lost blocks).
+            FileInfoForDuplication fileInfoForDuplication1Copy = copyOf(files.getFilesMap().get(f1));
+            FileInfoForDuplication fileInfoForDuplication2Copy = copyOf(files.getFilesMap().get(f2));
 
-            FileInfoForDuplication fileInfoForDuplication2Copy = new FileInfoForDuplication();
-            fileInfoForDuplication2Copy.setSourceFile(files.getFilesMap().get(f2).getSourceFile());
-            fileInfoForDuplication2Copy.setBlocks(files.getFilesMap().get(f2).getBlocks());
-            fileInfoForDuplication2Copy.getLineIDs().addAll(files.getFilesMap().get(f2).getLineIDs());
-
-            addDuplicationInstances(fileInfoForDuplication1, fileInfoForDuplication2Copy, minDuplicationBlockSize);
+            addDuplicationInstances(fileInfoForDuplication1Copy, fileInfoForDuplication2Copy, minDuplicationBlockSize);
         });
         resetProgressValues(0);
+    }
+
+    // A thread-local copy with its own lineIDs and (crucially) its own blocks list, so per-task
+    // extractBlocks() mutations never touch the shared original held in files.getFilesMap().
+    private FileInfoForDuplication copyOf(FileInfoForDuplication original) {
+        FileInfoForDuplication copy = new FileInfoForDuplication();
+        copy.setSourceFile(original.getSourceFile());
+        copy.getLineIDs().addAll(original.getLineIDs());
+        return copy;
     }
 
     private void addDuplicationInstances(FileInfoForDuplication fileInfoForDuplication1,
@@ -148,30 +161,41 @@ public class Blocks {
         blocks.forEach(block1 -> {
             List<Block> allPossibleSubBlocks = block1.extractAllPossibleSubBlocks(blockSize);
             allPossibleSubBlocks.forEach(subBlock1 -> {
-                DuplicationInstance instance = duplicationInstances.get(subBlock1.getStringKey());
-                if (instance == null) {
-                    instance = new DuplicationInstance();
-                    instance.setBlockSize(blockSize);
+                List<Integer> foundBlockIDs = fileInfoForDuplication2.indexesOf(subBlock1);
+                if (foundBlockIDs.isEmpty()) {
+                    // No cross-file match: the original code discarded the instance it briefly built here,
+                    // so there is nothing to record (and nothing to publish to the map).
+                    return;
                 }
 
                 Integer cleanedStartLine1 = fileInfoForDuplication1.indexesOf(subBlock1).get(0);
-                addFileToDuplicationInstance(instance, fileInfoForDuplication1.getSourceFile(), cleanedStartLine1 + 1, blockSize);
+                Integer cleanedStartLine2 = foundBlockIDs.get(0);
 
-                final DuplicationInstance currentInstance = instance;
-                List<Integer> foundBlockIDs = fileInfoForDuplication2.indexesOf(subBlock1);
-                if (foundBlockIDs.size() > 0) {
-                    Integer cleanedStartLine2 = foundBlockIDs.get(0);
+                DuplicateRange range1 = new DuplicateRange(cleanedStartLine1, cleanedStartLine1 + blockSize - 1);
+                DuplicateRange range2 = new DuplicateRange(cleanedStartLine2, cleanedStartLine2 + blockSize - 1);
 
-                    DuplicateRange range1 = new DuplicateRange(cleanedStartLine1, cleanedStartLine1 + blockSize - 1);
-                    DuplicateRange range2 = new DuplicateRange(cleanedStartLine2, cleanedStartLine2 + blockSize - 1);
+                DuplicateRangePair pair1 = new DuplicateRangePair(range1, range2);
+                DuplicateRangePair pair2 = new DuplicateRangePair(range2, range1);
 
-                    DuplicateRangePair pair1 = new DuplicateRangePair(range1, range2);
-                    DuplicateRangePair pair2 = new DuplicateRangePair(range2, range1);
+                File file1 = fileInfoForDuplication1.getSourceFile().getFile();
+                File file2 = fileInfoForDuplication2.getSourceFile().getFile();
+                String key1 = getPairKey(file1.getPath(), file2.getPath());
+                String key2 = getPairKey(file2.getPath(), file1.getPath());
 
-                    File file1 = fileInfoForDuplication1.getSourceFile().getFile();
-                    File file2 = fileInfoForDuplication2.getSourceFile().getFile();
-                    String key1 = getPairKey(file1.getPath(), file2.getPath());
-                    String key2 = getPairKey(file2.getPath(), file1.getPath());
+                // Atomic get-or-create keyed by block: a block is only ever recorded once a real cross-file
+                // match exists, so creating the instance here (rather than earlier) preserves the original
+                // semantics of never publishing match-less instances. Two threads sharing a block resolve to
+                // the same instance and then serialise on it below.
+                DuplicationInstance instance = duplicationInstances.computeIfAbsent(subBlock1, k -> {
+                    DuplicationInstance created = new DuplicationInstance();
+                    created.setBlockSize(blockSize);
+                    return created;
+                });
+
+                // Serialise the read-modify-write on this block's instance and its range bookkeeping.
+                // Different blocks lock on different instances and proceed concurrently.
+                synchronized (instance) {
+                    addFileToDuplicationInstance(instance, fileInfoForDuplication1.getSourceFile(), cleanedStartLine1 + 1, blockSize);
 
                     boolean alreadyIncluded = false;
                     DuplicateRangePairs duplicateRangePairs1 = fileRangePairs.get(key1);
@@ -186,18 +210,15 @@ public class Blocks {
                     }
 
                     if (!alreadyIncluded) {
-                        duplicationInstances.put(subBlock1.getStringKey(), currentInstance);
-                        addFileToDuplicationInstance(currentInstance, fileInfoForDuplication2.getSourceFile(), cleanedStartLine2 + 1, blockSize);
+                        addFileToDuplicationInstance(instance, fileInfoForDuplication2.getSourceFile(), cleanedStartLine2 + 1, blockSize);
 
                         if (duplicateRangePairs1 == null) {
-                            duplicateRangePairs1 = new DuplicateRangePairs();
-                            fileRangePairs.put(key1, duplicateRangePairs1);
+                            duplicateRangePairs1 = fileRangePairs.computeIfAbsent(key1, k -> new DuplicateRangePairs());
                         }
                         duplicateRangePairs1.getRanges().add(pair1);
 
                         if (duplicateRangePairs2 == null) {
-                            duplicateRangePairs2 = new DuplicateRangePairs();
-                            fileRangePairs.put(key2, duplicateRangePairs2);
+                            duplicateRangePairs2 = fileRangePairs.computeIfAbsent(key2, k -> new DuplicateRangePairs());
                         }
                         duplicateRangePairs2.getRanges().add(pair2);
                     }
@@ -209,18 +230,17 @@ public class Blocks {
     private void findDuplicatesWithinFiles() {
         resetProgressValues(files.getFiles().size());
         reportProgress("Finding duplicates within files");
-        files.getFiles().forEach(fileLineIndexes -> {
+        files.getFiles().parallelStream().forEach(fileLineIndexes -> {
             if (progressFeedback != null && progressFeedback.canceled()) {
                 return;
             }
             reportProgressNextStep();
 
+            // ranges is per-file local state, so it stays confined to this worker thread.
             List<DuplicateRange> ranges = new ArrayList<>();
 
-            FileInfoForDuplication copy = new FileInfoForDuplication();
-            copy.setSourceFile(fileLineIndexes.getSourceFile());
-            copy.setBlocks(fileLineIndexes.getBlocks());
-            copy.getLineIDs().addAll(fileLineIndexes.getLineIDs());
+            // Own blocks list (via copyOf) so extractBlocks() below does not mutate the shared original.
+            FileInfoForDuplication copy = copyOf(fileLineIndexes);
 
             for (int blockSize = optimize ? minDuplicationBlockSize : copy.getBiggestBlockSize(); blockSize >= minDuplicationBlockSize; blockSize--) {
                 final int currentBlockSize = blockSize;
@@ -229,21 +249,30 @@ public class Blocks {
                     block.extractAllPossibleSubBlocks(currentBlockSize).forEach(subBlock -> {
                         List<Integer> indexesOf = copy.indexesOf(subBlock);
                         if (indexesOf.size() > 1) {
-                            DuplicationInstance instance = duplicationInstances.get(subBlock.getStringKey());
-                            if (instance == null) {
-                                instance = new DuplicationInstance();
+                            // Mirror the original "keep only if it ends up with >1 blocks" gate: build on a
+                            // local instance (or the one the cross-file pass already published for this block),
+                            // then publish only if it crosses that threshold.
+                            DuplicationInstance existing = duplicationInstances.get(subBlock);
+                            DuplicationInstance instance = existing != null ? existing : new DuplicationInstance();
+                            if (existing == null) {
                                 instance.setBlockSize(currentBlockSize);
                             }
-                            final DuplicationInstance currentInstance = instance;
-                            indexesOf.forEach(index -> {
-                                DuplicateRange range = new DuplicateRange(index, index + currentBlockSize - 1);
-                                if (!alreadyIncludedInRange(ranges, range)) {
-                                    addFileToDuplicationInstance(currentInstance, copy.getSourceFile(), index + 1, currentBlockSize);
-                                    ranges.add(range);
+                            synchronized (instance) {
+                                indexesOf.forEach(index -> {
+                                    DuplicateRange range = new DuplicateRange(index, index + currentBlockSize - 1);
+                                    if (!alreadyIncludedInRange(ranges, range)) {
+                                        addFileToDuplicationInstance(instance, copy.getSourceFile(), index + 1, currentBlockSize);
+                                        ranges.add(range);
+                                    }
+                                });
+                                if (instance.getDuplicatedFileBlocks().size() > 1) {
+                                    // putIfAbsent: if a concurrent thread published a rival instance for this
+                                    // block meanwhile, fold our blocks into theirs so nothing is lost.
+                                    DuplicationInstance published = duplicationInstances.putIfAbsent(subBlock, instance);
+                                    if (published != null && published != instance) {
+                                        mergeInto(published, instance);
+                                    }
                                 }
-                            });
-                            if (instance.getDuplicatedFileBlocks().size() > 1) {
-                                duplicationInstances.put(subBlock.getStringKey(), instance);
                             }
                         }
                         // copy.clearSubBlock(subBlock);
@@ -252,6 +281,19 @@ public class Blocks {
             }
         });
         resetProgressValues(0);
+    }
+
+    // Folds the file blocks of a rival (never-published) instance into the one that won publication,
+    // de-duplicating against what is already there. Locks the published instance to stay consistent with
+    // the per-instance synchronisation used everywhere else; the source instance is thread-confined.
+    private void mergeInto(DuplicationInstance published, DuplicationInstance source) {
+        synchronized (published) {
+            source.getDuplicatedFileBlocks().forEach(block -> {
+                if (!published.getDuplicatedFileBlocks().contains(block)) {
+                    published.getDuplicatedFileBlocks().add(block);
+                }
+            });
+        }
     }
 
     private boolean alreadyIncludedInRange(List<DuplicateRange> ranges, DuplicateRange range) {
@@ -284,21 +326,21 @@ public class Blocks {
     }
 
     private void reportProgressNextStep() {
-        currentProgressValue++;
-        reportProgress(currentProgressValue);
+        reportProgress(currentProgressValue.incrementAndGet());
     }
 
     private void reportProgress(int currentValue) {
-        currentProgressValue = currentValue;
+        currentProgressValue.set(currentValue);
         reportProgress(progressText);
     }
 
     private void reportProgress(String text) {
         this.progressText = text;
         if (progressFeedback != null) {
-            progressFeedback.progress(currentProgressValue, endProgressValue);
+            int current = currentProgressValue.get();
+            progressFeedback.progress(current, endProgressValue);
             if (endProgressValue > 0) {
-                progressFeedback.setText(progressText + " (" + currentProgressValue + " / " + endProgressValue + ")");
+                progressFeedback.setText(progressText + " (" + current + " / " + endProgressValue + ")");
             } else {
                 progressFeedback.setText(progressText);
             }
@@ -306,7 +348,7 @@ public class Blocks {
     }
 
     private void resetProgressValues(int endValue) {
-        currentProgressValue = 0;
+        currentProgressValue.set(0);
         endProgressValue = endValue;
         reportProgress("");
     }

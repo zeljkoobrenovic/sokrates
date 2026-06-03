@@ -48,6 +48,45 @@ class FileModificationHistoryTest {
     }
 
     @Test
+    void countContributorsIsMemoizedAndInvalidatedBySetCommits() {
+        FileModificationHistory history = new FileModificationHistory("a.java");
+        history.setCommits(new ArrayList<>(Arrays.asList(
+                commit("c1", "2020-01-01", "a@example.com"),
+                commit("c2", "2020-01-02", "b@example.com"))));
+
+        assertEquals(2, history.countContributors());
+        // Repeated calls return the cached value.
+        assertEquals(2, history.countContributors());
+
+        // Replacing the commits recomputes the count.
+        history.setCommits(new ArrayList<>(Arrays.asList(
+                commit("c3", "2020-02-01", "x@example.com"))));
+        assertEquals(1, history.countContributors());
+    }
+
+    @Test
+    void addDateIfAbsentKeepsDatesDistinct() {
+        FileModificationHistory history = new FileModificationHistory("a.java");
+
+        history.addDateIfAbsent("2020-01-01");
+        history.addDateIfAbsent("2020-01-01"); // duplicate
+        history.addDateIfAbsent("2020-01-02");
+
+        assertEquals(Arrays.asList("2020-01-01", "2020-01-02"), history.getDates());
+    }
+
+    @Test
+    void addDateIfAbsentStaysConsistentAfterSetDates() {
+        FileModificationHistory history = new FileModificationHistory("a.java");
+        history.setDates(new ArrayList<>(Arrays.asList("2020-01-01", "2020-01-02")));
+
+        history.addDateIfAbsent("2020-01-02"); // already present via setDates
+        history.addDateIfAbsent("2020-01-03");
+
+        assertEquals(Arrays.asList("2020-01-01", "2020-01-02", "2020-01-03"), history.getDates());
+    }
+
+    @Test
     void sortingHappensOnlyOnceButStaysCorrect() {
         FileModificationHistory history = new FileModificationHistory("a.java");
         history.setDates(new ArrayList<>(Arrays.asList("2020-03-01", "2020-01-01")));

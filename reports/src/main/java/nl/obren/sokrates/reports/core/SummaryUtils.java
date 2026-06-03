@@ -110,7 +110,7 @@ public class SummaryUtils {
                 int veryLongFilesLOC = distribution.getVeryHighRiskValue();
                 int shortFilesLOC = distribution.getLowRiskValue() + distribution.getNegligibleRiskValue();
 
-                String linkPrefix = "<a target='_blank' href='" + reportRoot + "FileSize.html'  title='file size details' style='vertical-align: top'>";
+                String linkPrefix = "<a href='" + reportRoot + "FileSize.html'  title='file size details' style='vertical-align: top'>";
                 report.startTableRow();
                 report.addTableCell(linkPrefix + getIconSvg("file_size") + "</a>", "border: none");
                 report.addTableCell(linkPrefix + getRiskProfileVisual(distribution) + "</a>", "border: none");
@@ -234,7 +234,7 @@ public class SummaryUtils {
     }
 
     private void summarizeMainVolume(CodeAnalysisResults analysisResults, RichTextReport report) {
-        String linkPrefix = "<a target='_blank' href='" + reportRoot + "SourceCodeOverview.html'  title='volume details' style='vertical-align: top'>";
+        String linkPrefix = "<a href='" + reportRoot + "SourceCodeOverview.html'  title='volume details' style='vertical-align: top'>";
         StringBuilder summary = new StringBuilder("");
         summarizeMainCode(analysisResults, summary, linkPrefix);
         report.addHtmlContent(summary.toString());
@@ -324,9 +324,9 @@ public class SummaryUtils {
         report.startTableRow();
         String linkPrefix;
         if (withStaticDependencies) {
-            linkPrefix = "<a target='_blank' href='" + reportRoot + "ComponentsAndDependencies.html'  title='compoennt dependencies'>";
+            linkPrefix = "<a href='" + reportRoot + "ComponentsAndDependencies.html'  title='compoennt dependencies'>";
         } else {
-            linkPrefix = "<a target='_blank' href='" + reportRoot + "Components.html'  title='logical decomposition details'>";
+            linkPrefix = "<a href='" + reportRoot + "Components.html'  title='logical decomposition details'>";
         }
         report.addTableCell(
                 linkPrefix + getIconSvg(withStaticDependencies ? "dependencies" : "code_organization") + "</a>",
@@ -373,7 +373,7 @@ public class SummaryUtils {
     }
 
     private void summarizeFileChangeHistory(CodeAnalysisResults analysisResults, RichTextReport report) {
-        String linkPrefix = "<a target='_blank' href='" + reportRoot + "FileAge.html'  title='file change history details' style='vertical-align: top'>";
+        String linkPrefix = "<a href='" + reportRoot + "FileAge.html'  title='file change history details' style='vertical-align: top'>";
         report.startTableRow();
         report.addTableCell(linkPrefix + getIconSvg("file_history") + "</a>", "border: none;  vertical-align: top");
 
@@ -407,7 +407,7 @@ public class SummaryUtils {
     }
 
     private void summarizeFileUpdateFrequency(CodeAnalysisResults analysisResults, RichTextReport report) {
-        String linkPrefix = "<a target='_blank' href='" + reportRoot + "FileChangeFrequency.html'  title='file change frequency details' style='vertical-align: top'>";
+        String linkPrefix = "<a href='" + reportRoot + "FileChangeFrequency.html'  title='file change frequency details' style='vertical-align: top'>";
 
         report.startTableRow();
         report.addTableCell(linkPrefix + getIconSvg("change") + "</a>", "border: none;  vertical-align: top");
@@ -426,7 +426,7 @@ public class SummaryUtils {
         Thresholds thresholds = analysisResults.getCodeConfiguration().getAnalysis().getFileUpdateFrequencyThresholds();
         report.addParagraph(FormattingUtils.getFormattedPercentage(fileChange.getVeryHighRiskPercentage() + fileChange.getHighRiskPercentage())
                 + "% of code updated more than " + thresholds.getHigh() + " times", "margin-bottom: 2px");
-        report.addParagraph("Also see <a target='_blank' href='FileTemporalDependencies.html'>temporal dependencies</a> for files frequently changed in same commits.", "font-size: 80%; color: grey;");
+        report.addParagraph("Also see <a href='FileTemporalDependencies.html'>temporal dependencies</a> for files frequently changed in same commits.", "font-size: 80%; color: grey;");
         report.endTableCell();
         report.addTableCell(linkPrefix + getDetailsIcon() + "</a>", "border: none;  vertical-align: top");
 
@@ -444,7 +444,7 @@ public class SummaryUtils {
 
 
     private void summarizeGoals(CodeAnalysisResults analysisResults, RichTextReport report) {
-        String linkPrefix = "<a target='_blank' href='" + reportRoot + "Controls.html'  title='metrics &amp; goals details' style='vertical-align: top'>";
+        String linkPrefix = "<a href='" + reportRoot + "Controls.html'  title='metrics &amp; goals details' style='vertical-align: top'>";
 
         report.startTableRow();
         report.addTableCell(linkPrefix + getIconSvg("goal") + "</a>", "border: none");
@@ -493,7 +493,7 @@ public class SummaryUtils {
             return;
         }
 
-        String linkPrefix = "<a target='_blank' href='" + reportRoot + "FeaturesOfInterest.html'  title='metrics &amp; goals details' style='vertical-align: top'>";
+        String linkPrefix = "<a href='" + reportRoot + "FeaturesOfInterest.html'  title='metrics &amp; goals details' style='vertical-align: top'>";
         report.startTableRow();
         report.addTableCell("", "border: none; height: 8px");
         report.endTableRow();
@@ -557,7 +557,7 @@ public class SummaryUtils {
 
         Thresholds thresholds = analysisResults.getCodeConfiguration().getAnalysis().getConditionalComplexityThresholds();
 
-        String linkPrefix = "<a target='_blank' href='" + reportRoot + "ConditionalComplexity.html'  title='conditional complexity details' style='vertical-align: top'>";
+        String linkPrefix = "<a href='" + reportRoot + "ConditionalComplexity.html'  title='conditional complexity details' style='vertical-align: top'>";
         report.startTableRow();
         report.addTableCell(linkPrefix + getIconSvg("conditional") + "</a>", "border: none");
         report.addTableCell(linkPrefix + getRiskProfileVisual(distribution) + "</a>", "border: none");
@@ -578,7 +578,7 @@ public class SummaryUtils {
         int lowUnitsLOC = distribution.getLowRiskValue() + distribution.getNegligibleRiskValue();
         Thresholds thresholds = analysisResults.getCodeConfiguration().getAnalysis().getUnitSizeThresholds();
 
-        String linkPrefix = "<a target='_blank' href='" + reportRoot + "UnitSize.html'  title='unit size details' style='vertical-align: top'>";
+        String linkPrefix = "<a href='" + reportRoot + "UnitSize.html'  title='unit size details' style='vertical-align: top'>";
         report.startTableRow();
         report.addTableCell(linkPrefix + getIconSvg("unit_size") + "</a>", "border: none");
         report.addTableCell(linkPrefix + getRiskProfileVisual(distribution) + "</a>", "border: none");
@@ -596,7 +596,7 @@ public class SummaryUtils {
         Number duplicationPercentage = overallDuplication.getDuplicationPercentage();
         double duplication = duplicationPercentage.doubleValue();
         if (!analysisResults.skipDuplicationAnalysis()) {
-            String linkPrefix = "<a target='_blank' href='" + reportRoot + "Duplication.html'  title='duplication details' style='vertical-align: top'>";
+            String linkPrefix = "<a href='" + reportRoot + "Duplication.html'  title='duplication details' style='vertical-align: top'>";
             report.startTableRow();
             report.addTableCell(linkPrefix + getIconSvg("duplication") + "</a>", "border: none");
             report.addTableCell(linkPrefix + getDuplicationVisual(duplicationPercentage) + "</a>", "border: none");

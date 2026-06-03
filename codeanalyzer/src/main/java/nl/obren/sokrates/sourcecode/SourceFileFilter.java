@@ -11,7 +11,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -42,15 +41,13 @@ public class SourceFileFilter {
     }
 
     public static boolean matchesAnyLine(List<String> lines, String patternString) {
+        Pattern pattern = compilePatternQuietly(patternString);
+        if (pattern == null) {
+            return false;
+        }
         for (String text : lines) {
-            try {
-                Pattern pattern = Pattern.compile(patternString);
-                Matcher matcher = pattern.matcher(text);
-                if (matcher.matches()) {
-                    return true;
-                }
-            } catch (PatternSyntaxException e) {
-                LOG.debug(e);
+            if (pattern.matcher(text).matches()) {
+                return true;
             }
         }
 
@@ -62,22 +59,30 @@ public class SourceFileFilter {
             return 1;
         }
 
-        int count = 0;
-        try {
-            Pattern pattern = Pattern.compile(patternString);
-
-            for (String text : lines) {
-                Matcher matcher = pattern.matcher(text);
-                if (matcher.matches()) {
-                    count++;
-                }
-            }
-        } catch (PatternSyntaxException e) {
-            LOG.debug(e);
+        Pattern pattern = compilePatternQuietly(patternString);
+        if (pattern == null) {
+            return 0;
         }
 
+        int count = 0;
+        for (String text : lines) {
+            if (pattern.matcher(text).matches()) {
+                count++;
+            }
+        }
 
         return count;
+    }
+
+    // Compiles the pattern once (cached across calls), returning null on a bad pattern - so callers
+    // compile at most once per invocation instead of once per line, and reuse the shared cache.
+    private static Pattern compilePatternQuietly(String patternString) {
+        try {
+            return RegexUtils.getCompiledPattern(patternString);
+        } catch (PatternSyntaxException e) {
+            LOG.debug(e);
+            return null;
+        }
     }
 
     public String getPathPattern() {

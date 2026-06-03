@@ -745,7 +745,7 @@ public class LandscapeAnalysisResults {
                 }
             });
 
-            if (!added[0] && !remainder.getMembers().contains(email)) {
+            if (!added[0] && !remainder.getMembers().contains(contributor)) {
                 remainder.getMembers().add(contributor);
                 contributor.getRepositories().forEach(repo -> {
                     addRepoToTeam(repo, remainder);
@@ -819,16 +819,8 @@ public class LandscapeAnalysisResults {
                     contributorInfo.setCommitsCount180Days(contributorInfo.getCommitsCount180Days() + repositoryCommits180Days);
                     contributorInfo.setCommitsCount365Days(contributorInfo.getCommitsCount365Days() + repositoryCommits365Days);
 
-                    contributor.getActiveYears().forEach(activeYear -> {
-                        if (!contributorInfo.getActiveYears().contains(activeYear)) {
-                            contributorInfo.getActiveYears().add(activeYear);
-                        }
-                    });
-                    contributor.getCommitDates().forEach(commitDate -> {
-                        if (!contributorInfo.getCommitDates().contains(commitDate)) {
-                            contributorInfo.getCommitDates().add(commitDate);
-                        }
-                    });
+                    contributorInfo.addActiveYears(contributor.getActiveYears());
+                    contributorInfo.addCommitDates(contributor.getCommitDates());
 
                     existingContributor.addRepository(repositoryAnalysisResults, firstCommitDate, latestCommitDate,
                             repositoryCommits, repositoryCommits30Days, repositoryCommits90Days,

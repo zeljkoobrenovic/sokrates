@@ -10,14 +10,19 @@ public class CommentsCleanerUtils {
     public static String cleanLineComments(String content, String lineCommentStart) {
         StringBuilder cleanedContent = new StringBuilder(SourceCodeCleanerUtils.normalizeLineEnds(content));
 
+        // Resume each search from the previous comment's position rather than restarting at 0: the
+        // newline that ended the removed comment stays in place, so no earlier comment marker can
+        // appear before it.
+        int searchFrom = 0;
         while (true) {
-            int commentStartIndex = cleanedContent.indexOf(lineCommentStart);
+            int commentStartIndex = cleanedContent.indexOf(lineCommentStart, searchFrom);
             if (commentStartIndex >= 0) {
                 int commentEndIndex = cleanedContent.indexOf("\n", commentStartIndex + 1);
                 if (commentEndIndex < 0) {
                     commentEndIndex = cleanedContent.length();
                 }
                 cleanedContent.replace(commentStartIndex, commentEndIndex, "");
+                searchFrom = commentStartIndex;
             } else {
                 break;
             }
@@ -27,8 +32,9 @@ public class CommentsCleanerUtils {
     }
 
     public static String cleanBlockComments(String content, String commentBlockStart, String commentBlockEnd) {
-        StringBuilder cleanedContent = new StringBuilder(
-                content.replace(getReplaceForRegex(commentBlockStart) + ".*?" + getReplaceForRegex(commentBlockEnd), ""));
+        // Note: the actual comment removal is done by the loop below. (A previous literal
+        // String.replace of a regex-shaped string here never matched and has been removed.)
+        StringBuilder cleanedContent = new StringBuilder(content);
 
         int commentStartIndex = 0;
         while (true) {
@@ -58,10 +64,5 @@ public class CommentsCleanerUtils {
 
         return cleanedContent.toString();
     }
-
-    private static String getReplaceForRegex(String commentBlockStart) {
-        return commentBlockStart.replace("*", "[*]").replace(".", "[.]").replace("%", "[%]").replace("-", "[-]");
-    }
-
 
 }

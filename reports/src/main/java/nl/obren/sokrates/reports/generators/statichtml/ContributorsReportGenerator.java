@@ -307,13 +307,15 @@ public class ContributorsReportGenerator {
 
             List<ContributorConnection> contributorConnections = ContributorConnectionUtils.getContributorConnections(peopleDependencies, contributors, contributionCounter);
             addContributors(contributorConnections);
-            String cMedian = getRoundedValueOf(ContributorConnectionUtils.getCMedian(contributorConnections(peopleDependencies)));
+            // Built once: contributorConnections(...) rebuilds and re-sorts the same map each call.
+            List<ContributorConnections> connections = contributorConnections(peopleDependencies);
+            String cMedian = getRoundedValueOf(ContributorConnectionUtils.getCMedian(connections));
             report.addParagraph("C-median: " + cMedian, "margin-bottom: 0; margin-top: 10px;");
             report.addParagraph("A half of the contributors has more than " + cMedian + " connections, and a half has less than this number.",
                     "color: grey; font-size: 80%; margin-bottom: 20px");
-            report.addParagraph("C-mean: " + getRoundedValueOf(ContributorConnectionUtils.getCMean(contributorConnections(peopleDependencies))), "margin-bottom: 0;");
+            report.addParagraph("C-mean: " + getRoundedValueOf(ContributorConnectionUtils.getCMean(connections)), "margin-bottom: 0;");
             report.addParagraph("An average number of connections a contributor has with other contributors.", "color: grey; font-size: 80%; margin-bottom: 20px");
-            String cIndex = getRoundedValueOf(ContributorConnectionUtils.getCIndex(contributorConnections(peopleDependencies)));
+            String cIndex = getRoundedValueOf(ContributorConnectionUtils.getCIndex(connections));
             report.addParagraph("C-index: " + cIndex, "margin-bottom: 0;");
             report.addParagraph("There are " + cIndex + " contributors with " + cIndex + " or more connections.", "color: grey; font-size: 80%; margin-bottom: 40px");
 
@@ -575,11 +577,16 @@ public class ContributorsReportGenerator {
             report.addTableCell(formattedCount + " (" + formattedPercentage + "%)");
 
             if (showPerExtension && perExtensionCounter != null) {
-                String perExtension = emailStatsMap.get(contributor.getEmail()).stream()
+                // A contributor present in the contributors list may have no per-extension stats
+                // (e.g. their commits only touched files excluded from the per-extension aggregation),
+                // so emailStatsMap.get(...) can be null - default to an empty list rather than NPE.
+                List<Pair<String, ContributorPerExtensionStats>> stats =
+                        emailStatsMap.getOrDefault(contributor.getEmail(), Collections.emptyList());
+                String perExtension = stats.stream()
                         .filter(e -> perExtensionCounter.count(e.getRight()) > 0)
                         .sorted((a, b) -> perExtensionCounter.count(b.getRight()) - perExtensionCounter.count(a.getRight()))
                         .limit(5)
-                        .map(stats -> stats.getLeft() + " (" + perExtensionCounter.count(stats.getRight()) + ")")
+                        .map(s -> s.getLeft() + " (" + perExtensionCounter.count(s.getRight()) + ")")
                         .collect(Collectors.joining(", "));
 
                 report.addTableCell(perExtension + "");

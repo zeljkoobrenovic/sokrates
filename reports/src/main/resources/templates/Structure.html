@@ -80,7 +80,10 @@
 <body>
 <div style="margin-left: -5px; margin-bottom: 10px">
     <div class="tab">
-        <button class="tablinks active" onclick="openTab(event, 'default')"
+        <button class="tablinks active" onclick="openTab(event, 'all_files')"
+                title="All files grouped by folder: size = lines of code, color = scope">All Files
+        </button>
+        <button class="tablinks" onclick="openTab(event, 'default')"
                 title="Main files: size = lines of code, no coloring">Main
         </button>
         <button class="tablinks" onclick="openTab(event, 'hotspots')"
@@ -126,7 +129,7 @@
         </a>
     </div>
 
-    <div id="default" class="tabcontent" style="display: block">
+    <div id="default" class="tabcontent" style="">
         <div class="legend-container">
             <table>
                 <tr>
@@ -135,12 +138,49 @@
                         <a href="visuals/zoomable_sunburst_main.html" target="_blank">sunburst...</a>
                     </td>
                     <td style="padding-left: 20px">
-                        <a href="SourceCodeOverview.html" target="_blank">see report...</a>
+                        <a href="SourceCodeOverview.html">see report...</a>
                     </td>
                 </tr>
             </table>
         </div>
         <iframe src="visuals/zoomable_circles_main.html"
+                style="border: none; width: calc(100%); height: calc(100vh - 80px)">
+        </iframe>
+    </div>
+
+    <div id="all_files" class="tabcontent" style="display: block">
+        <div class="legend-container">
+            <table>
+                <tr>
+                    <td>scope:</td>
+                    <td>
+                        <div class="category-color" style="background-color: #ffffff; border: 1px solid #c0c0c0"></div>
+                        main
+                    </td>
+                    <td>
+                        <div class="category-color" style="background-color: #b2df8a"></div>
+                        test
+                    </td>
+                    <td>
+                        <div class="category-color" style="background-color: #fdbf6f"></div>
+                        build &amp; deployment
+                    </td>
+                    <td>
+                        <div class="category-color" style="background-color: #cab2d6"></div>
+                        generated
+                    </td>
+                    <td>
+                        <div class="category-color" style="background-color: #d9d9d9"></div>
+                        other
+                    </td>
+                    <td style="padding-left: 22px">circle size = lines of code</td>
+                    <td style="padding-left: 20px">
+                        <a href="SourceCodeOverview.html">see report...</a>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <iframe src="visuals/zoomable_circles_all_files.html"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
@@ -160,7 +200,7 @@
                     <td>100+ changes</td>
                     <td style="padding-left: 22px">circle size = lines of code</td>
                     <td style="padding-left: 20px">
-                        <a href="FileChangeFrequency.html" target="_blank">see report...</a>
+                        <a href="FileChangeFrequency.html">see report...</a>
                     </td>
                 </tr>
             </table>
@@ -185,7 +225,7 @@
                     <td>&gt;25 contributors</td>
                     <td style="padding-left: 22px">circle size = lines of code</td>
                     <td style="padding-left: 20px">
-                        <a href="FileChangeFrequency.html" target="_blank">see report...</a>
+                        <a href="FileChangeFrequency.html">see report...</a>
                     </td>
                 </tr>
             </table>
@@ -210,7 +250,7 @@
                     <td>1000+ lines of code</td>
                     <td style="padding-left: 22px">circle size = lines of code</td>
                     <td style="padding-left: 20px">
-                        <a href="FileSize.html" target="_blank">see report...</a>
+                        <a href="FileSize.html">see report...</a>
                     </td>
                 </tr>
             </table>
@@ -235,7 +275,7 @@
                     <td>&gt;1y old</td>
                     <td style="padding-left: 22px">circle size = lines of code</td>
                     <td style="padding-left: 20px">
-                        <a href="FileAge.html" target="_blank">see report...</a>
+                        <a href="FileAge.html">see report...</a>
                     </td>
                 </tr>
             </table>
@@ -260,7 +300,7 @@
                     <td>&gt;1y ago</td>
                     <td style="padding-left: 22px">circle size = lines of code</td>
                     <td style="padding-left: 20px">
-                        <a href="FileAge.html" target="_blank">see report...</a>
+                        <a href="FileAge.html">see report...</a>
                     </td>
                 </tr>
             </table>
@@ -279,7 +319,7 @@
                         <a href="visuals/zoomable_sunburst_test.html" target="_blank">sunburst...</a>
                     </td>
                     <td style="padding-left: 20px">
-                        <a href="SourceCodeOverview.html" target="_blank">see report...</a>
+                        <a href="SourceCodeOverview.html">see report...</a>
                     </td>
                 </tr>
             </table>
@@ -298,7 +338,7 @@
                         <a href="visuals/zoomable_sunburst_build.html" target="_blank">sunburst...</a>
                     </td>
                     <td style="padding-left: 20px">
-                        <a href="SourceCodeOverview.html" target="_blank">see report...</a>
+                        <a href="SourceCodeOverview.html">see report...</a>
                     </td>
                 </tr>
             </table>
@@ -317,7 +357,7 @@
                         <a href="visuals/zoomable_sunburst_generated.html" target="_blank">sunburst...</a>
                     </td>
                     <td style="padding-left: 20px">
-                        <a href="SourceCodeOverview.html" target="_blank">see report...</a>
+                        <a href="SourceCodeOverview.html">see report...</a>
                     </td>
                 </tr>
             </table>
@@ -336,7 +376,7 @@
                         <a href="visuals/zoomable_sunburst_other.html" target="_blank">sunburst...</a>
                     </td>
                     <td style="padding-left: 20px">
-                        <a href="SourceCodeOverview.html" target="_blank">see report...</a>
+                        <a href="SourceCodeOverview.html">see report...</a>
                     </td>
                 </tr>
             </table>

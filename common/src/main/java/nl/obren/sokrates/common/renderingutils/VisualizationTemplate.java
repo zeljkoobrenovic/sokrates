@@ -46,6 +46,10 @@ public class VisualizationTemplate {
         return render("zoomable_circles.html", items).replace(",\"children\":[]", "");
     }
 
+    public String renderZoomableCirclesColored(List<VisualizationItem> items) {
+        return render("zoomable_circles_colored.html", items).replace(",\"children\":[]", "");
+    }
+
     public String renderZoomableSunburst(List<VisualizationItem> items) {
         return render("zoomable_sunburst.html", items).replace(",\"children\":[]", "");
     }

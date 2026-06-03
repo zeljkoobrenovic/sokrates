@@ -17,23 +17,25 @@ public class CommitTrendsExtractors {
 
     public Map<String, Map<String, Integer>> getCommitsPerYear(String logicalDecompositionKey) {
         Map<String, Map<String, Integer>> componentsMap = new HashMap<>();
+        // A single git commit touching several files in the same component appears in each of those
+        // files' per-file histories with the same commit id. Track seen ids per (component, year) so
+        // a commit is counted once, matching getTotalCommits' set-based dedup (otherwise the counts
+        // are inflated by file fan-out).
+        Map<String, Map<String, Set<String>>> seenCommitIds = new HashMap<>();
         List<SourceFile> allFiles = analysisResults.getFilesHistoryAnalysisResults().getAllFiles();
         allFiles.stream().filter(item -> item.getFileModificationHistory() != null).forEach(item -> {
             List<NamedSourceCodeAspect> logicalComponents = item.getLogicalComponents(logicalDecompositionKey);
             if (logicalComponents.size() > 0) {
                 String componentName = logicalComponents.get(0).getName();
 
-                Map<String, Integer> componentYears;
-                if (componentsMap.containsKey(componentName)) {
-                    componentYears = componentsMap.get(componentName);
-                } else {
-                    componentYears = new HashMap<>();
-                    componentsMap.put(componentName, componentYears);
-                }
+                Map<String, Integer> componentYears = componentsMap.computeIfAbsent(componentName, k -> new HashMap<>());
+                Map<String, Set<String>> componentSeenIds = seenCommitIds.computeIfAbsent(componentName, k -> new HashMap<>());
                 item.getFileModificationHistory().getCommits().forEach(commit -> {
                     String year = DateUtils.getYear(commit.getDate());
-                    int prevValue = componentYears.containsKey(year) ? componentYears.get(year) : 0;
-                    componentYears.put(year, prevValue + 1);
+                    Set<String> yearSeenIds = componentSeenIds.computeIfAbsent(year, k -> new HashSet<>());
+                    if (yearSeenIds.add(commit.getId())) {
+                        componentYears.merge(year, 1, Integer::sum);
+                    }
                 });
             }
         });

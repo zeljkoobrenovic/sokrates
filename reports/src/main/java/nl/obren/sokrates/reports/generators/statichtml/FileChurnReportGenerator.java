@@ -16,7 +16,6 @@ import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FileAgeDistributionPerLogicalDecomposition;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
-import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.sourcecode.stats.SourceFileChangeDistribution;
@@ -38,7 +37,6 @@ public class FileChurnReportGenerator {
     private CodeAnalysisResults codeAnalysisResults;
     private List<String> changeFrequencyLabels;
     private List<String> contributorsCountFrequencyLabels;
-    private int graphCounter = 1;
 
     public FileChurnReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
@@ -176,16 +174,6 @@ public class FileChurnReportGenerator {
         addChangesPerLogicalDecomposition(report);
 
         report.endSection();
-    }
-
-    private LogicalDecomposition getLogicalDecompositionByName(String name) {
-        for (LogicalDecomposition logicalDecomposition : this.codeAnalysisResults.getCodeConfiguration().getLogicalDecompositions()) {
-            if (logicalDecomposition.getName().equalsIgnoreCase(name)) {
-                return logicalDecomposition;
-            }
-        }
-
-        return null;
     }
 
     private void addChangesPerLogicalDecomposition(RichTextReport report) {

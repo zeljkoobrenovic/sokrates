@@ -232,9 +232,6 @@ public class BasicSourceCodeReportGenerator {
             ProcessingStopwatch.start("reporting/metrics");
             new MetricsListReportGenerator().generateReport(codeAnalysisResults, metricsReport);
             ProcessingStopwatch.end("reporting/metrics");
-            ProcessingStopwatch.start("reporting/trend");
-            new TrendReportGenerator(codeConfigurationFile).generateReport(codeAnalysisResults, comparisonReport);
-            ProcessingStopwatch.end("reporting/trend");
         }
 
         if (codeAnalyzerSettings.isAnalyzeControls()) {

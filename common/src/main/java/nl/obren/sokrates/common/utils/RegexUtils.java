@@ -20,16 +20,21 @@ public class RegexUtils {
     public static final int MAX_TEXT_LENGTH = 1000;
     private static final Log LOG = LogFactory.getLog(RegexUtils.class);
     private static Map<String, Pattern> compiledPatterns = new HashMap<>();
+
+    // Returns a Pattern for the given regex, compiling it at most once and caching it for reuse.
+    // Throws PatternSyntaxException for an invalid pattern (callers decide how to handle it).
+    public static Pattern getCompiledPattern(String regexPattern) {
+        Pattern pattern = compiledPatterns.get(regexPattern);
+        if (pattern == null) {
+            pattern = Pattern.compile(regexPattern);
+            compiledPatterns.put(regexPattern, pattern);
+        }
+        return pattern;
+    }
+
     public static boolean matchesEntirely(String regexPattern, String content) {
         try {
-            String key = regexPattern + " ::->:: " + content;
-            Pattern pattern = compiledPatterns.get(regexPattern);
-            if (pattern == null) {
-                pattern = Pattern.compile(regexPattern);
-                compiledPatterns.put(regexPattern, pattern);
-            }
-            boolean matches = pattern.matcher(content).matches();
-            return matches;
+            return getCompiledPattern(regexPattern).matcher(content).matches();
         } catch (PatternSyntaxException e) {
             LOG.debug(e);
             return false;
@@ -42,12 +47,11 @@ public class RegexUtils {
 
     public static boolean matchesAnyPattern(String line, List<String> patterns) {
         for (String patternString : patterns) {
-            try {
-                if (Pattern.compile(patternString).matcher(line).matches()) {
-                    return true;
-                }
-            } catch (PatternSyntaxException e) {
-                LOG.debug(e);
+            // Delegate to matchesEntirely so each pattern is compiled once and cached; this is a hot
+            // path (bot / team / ignore-contributor / scope matching). Same semantics as before:
+            // full-string match, an invalid pattern is treated as non-matching.
+            if (matchesEntirely(patternString, line)) {
+                return true;
             }
         }
         return false;

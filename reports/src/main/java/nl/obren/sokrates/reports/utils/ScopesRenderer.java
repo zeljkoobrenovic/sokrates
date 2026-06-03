@@ -231,7 +231,7 @@ public class ScopesRenderer {
         report.startDiv("min-width: 1000px");
         renderingList.forEach(rendererItem -> {
             int metricLinesOfCode = rendererItem.getLinesOfCode().getValue().intValue();
-            double percentage = 100.0 * metricLinesOfCode / maxLinesOfCode;
+            double percentage = maxLinesOfCode > 0 ? 100.0 * metricLinesOfCode / maxLinesOfCode : 0;
             String filesFragment = StringUtils.defaultIfBlank(rendererItem.getFilesFragment(), "");
 
             report.addContentInDiv(chart.getPercentageSvg(percentage, rendererItem.getLinesOfCode().getName(),
@@ -319,7 +319,7 @@ public class ScopesRenderer {
             }
             report.addListItem(filesFragment + " match" + (filesCount == 1 ? "es" : "") + " defined criteria (" +
                     "<b>" + RichTextRenderingUtils.renderNumber(linesCount) + "</b> " + metric + ", "
-                    + "<b>" + RichTextRenderingUtils.renderNumber(100.0 * linesCount / linesOfCodeInMain) + "%</b> vs. main code)"
+                    + "<b>" + RichTextRenderingUtils.renderNumber(linesOfCodeInMain > 0 ? 100.0 * linesCount / linesOfCodeInMain : 0) + "%</b> vs. main code)"
                     + (fileCountPerComponent.size() == 1 ? ". All matches are in " + fileCountPerComponent.get(0).getName() + " files." : ":"));
             report.startUnorderedList();
             if (fileCountPerComponent.size() > 1) {
@@ -340,7 +340,7 @@ public class ScopesRenderer {
         } else {
             report.addListItem("<b>" + RichTextRenderingUtils.renderNumber(filesCount) + "</b> files, " +
                     "<b>" + RichTextRenderingUtils.renderNumber(linesCount) + "</b> " + metric + " ("
-                    + "<b>" + RichTextRenderingUtils.renderNumber(100.0 * linesCount / maxLinesOfCode) + "%</b> vs. main code).");
+                    + "<b>" + RichTextRenderingUtils.renderNumber(maxLinesOfCode > 0 ? 100.0 * linesCount / maxLinesOfCode : 0) + "%</b> vs. main code).");
         }
 
         report.endUnorderedList();

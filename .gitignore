@@ -15,4 +15,6 @@ bin/
 _sokrates/reports
 git-history.txt
 _sokrates/reports/
+_sokrates/
+.claude/
 

@@ -68,10 +68,13 @@ public class DuplicationAnalyzer extends Analyzer {
         ProcessingStopwatch.end("analysis/duplication/consolidating duplicates");
 
         ProcessingStopwatch.start("analysis/duplication/counting duplicates");
+        // Aggregated once and reused below (both the file count and the per-component/per-extension
+        // aggregation need it); it used to be computed twice.
+        List<SourceFileDuplication> duplicationPerSourceFile = DuplicationAggregator.getDuplicationPerSourceFile(duplicates);
         int numberOfDuplicates = mergedConsolidated.size();
         int numberOfDuplicatedLines = DuplicationUtils.getNumberOfDuplicatedLines(duplicates);
         int totalNumberOfCleanedLines = DuplicationUtils.getTotalNumberOfCleanedLines(main.getSourceFiles());
-        int numberOfFilesWithDuplicates = DuplicationAggregator.getDuplicationPerSourceFile(duplicates).size();
+        int numberOfFilesWithDuplicates = duplicationPerSourceFile.size();
         ProcessingStopwatch.end("analysis/duplication/counting duplicates");
 
         duplcationAnalysisResults.getOverallDuplication().setNumberOfDuplicates(numberOfDuplicates);
@@ -81,7 +84,6 @@ public class DuplicationAnalyzer extends Analyzer {
 
         addSystemDuplicationMetrics(numberOfDuplicates, numberOfDuplicatedLines, totalNumberOfCleanedLines, numberOfFilesWithDuplicates);
 
-        List<SourceFileDuplication> duplicationPerSourceFile = DuplicationAggregator.getDuplicationPerSourceFile(duplicates);
         List<AspectDuplication> duplicationPerLogicalComponent = DuplicationAggregator.getDuplicationPerLogicalComponent(codeConfiguration.getLogicalDecompositions(), main.getSourceFiles(),
                 duplicationPerSourceFile);
 
@@ -101,10 +103,15 @@ public class DuplicationAnalyzer extends Analyzer {
         }
     }
 
-    private void addMostFrequentDuplicates(List<DuplicationInstance> duplicates) {
-        Collections.sort(new ArrayList<>(duplicates), (o1, o2) -> -Integer.valueOf(o1.getDuplicatedFileBlocks().size()).compareTo(o2.getDuplicatedFileBlocks().size()));
-        for (int i = 0; i < Math.min(codeConfiguration.getAnalysis().getMaxTopListSize(), duplicates.size()); i++) {
-            DuplicationInstance duplicate = duplicates.get(i);
+    // Package-private for testing (same as getPairKey).
+    void addMostFrequentDuplicates(List<DuplicationInstance> duplicates) {
+        // Sort a copy by descending number of duplicated file blocks, then read from that sorted copy.
+        // (Previously the sort was applied to a throwaway list and the unsorted original was iterated, so
+        // "most frequent" was not actually ordered by frequency.)
+        List<DuplicationInstance> sorted = new ArrayList<>(duplicates);
+        Collections.sort(sorted, (o1, o2) -> -Integer.valueOf(o1.getDuplicatedFileBlocks().size()).compareTo(o2.getDuplicatedFileBlocks().size()));
+        for (int i = 0; i < Math.min(codeConfiguration.getAnalysis().getMaxTopListSize(), sorted.size()); i++) {
+            DuplicationInstance duplicate = sorted.get(i);
             if (duplicate.getDuplicatedFileBlocks().size() > 2) {
                 duplcationAnalysisResults.getMostFrequentDuplicates().add(duplicate);
             }
@@ -288,12 +295,12 @@ public class DuplicationAnalyzer extends Analyzer {
         metricsList.addMetric()
                 .id(AnalysisUtils.getMetricId("DUPLICATION_NUMBER_OF_CLEANED_LINES") + suffix)
                 .description("Number of lines after cleaning for duplication calculations")
-                .value(componentDuplication.getDuplicatedLinesOfCode());
+                .value(componentDuplication.getCleanedLinesOfCode());
 
         metricsList.addMetric()
                 .id(AnalysisUtils.getMetricId("DUPLICATION_PERCENTAGE") + suffix)
                 .description("Duplication percentage")
-                .value(100.0 * componentDuplication.getDuplicatedLinesOfCode() / componentDuplication.getDuplicatedLinesOfCode());
+                .value(100.0 * componentDuplication.getDuplicatedLinesOfCode() / componentDuplication.getCleanedLinesOfCode());
     }
 
     private void addSystemDuplicationMetrics(int numberOfDuplicates, int numberOfDuplicatedLines, int totalNumberOfCleanedLines, int numberOfFilesWithDuplicates) {

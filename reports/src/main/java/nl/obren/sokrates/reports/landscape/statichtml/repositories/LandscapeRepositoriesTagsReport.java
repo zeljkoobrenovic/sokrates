@@ -373,7 +373,7 @@ public class LandscapeRepositoriesTagsReport {
             int tagMainLoc = repositoriesAnalysisResults.stream()
                     .mapToInt(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode())
                     .sum();
-            String mainLocPercText = FormattingUtils.getFormattedPercentage(totalRepositoriesCount > 0 ? (100.0 * tagMainLoc / mainLoc) : 0);
+            String mainLocPercText = FormattingUtils.getFormattedPercentage(mainLoc > 0 ? (100.0 * tagMainLoc / mainLoc) : 0);
             report.addTableCell(FormattingUtils.formatCount(tagMainLoc) + " <span style='color: grey; font-size: 90%'>(" + mainLocPercText + "%)</span>", "");
             report.addTableCell(FormattingUtils.formatCount(repositoriesAnalysisResults
                     .stream()

@@ -52,7 +52,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -689,11 +691,18 @@ public class CommandLineInterface {
             folder.mkdirs();
 
             List<SourceFile> mainSourceFiles = analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles();
+            List<SourceFile> testSourceFiles = analysisResults.getTestAspectAnalysisResults().getAspect().getSourceFiles();
+            List<SourceFile> generatedSourceFiles = analysisResults.getGeneratedAspectAnalysisResults().getAspect().getSourceFiles();
+            List<SourceFile> buildSourceFiles = analysisResults.getBuildAndDeployAspectAnalysisResults().getAspect().getSourceFiles();
+            List<SourceFile> otherSourceFiles = analysisResults.getOtherAspectAnalysisResults().getAspect().getSourceFiles();
+
             generateFileStructureExplorers("main", folder, mainSourceFiles);
-            generateFileStructureExplorers("test", folder, analysisResults.getTestAspectAnalysisResults().getAspect().getSourceFiles());
-            generateFileStructureExplorers("generated", folder, analysisResults.getGeneratedAspectAnalysisResults().getAspect().getSourceFiles());
-            generateFileStructureExplorers("build", folder, analysisResults.getBuildAndDeployAspectAnalysisResults().getAspect().getSourceFiles());
-            generateFileStructureExplorers("other", folder, analysisResults.getOtherAspectAnalysisResults().getAspect().getSourceFiles());
+            generateFileStructureExplorers("test", folder, testSourceFiles);
+            generateFileStructureExplorers("generated", folder, generatedSourceFiles);
+            generateFileStructureExplorers("build", folder, buildSourceFiles);
+            generateFileStructureExplorers("other", folder, otherSourceFiles);
+
+            generateAllScopesZoomableCircles(folder, mainSourceFiles, testSourceFiles, buildSourceFiles, generatedSourceFiles, otherSourceFiles);
 
             addCommitZoomableCircles("main", folder, mainSourceFiles, 30);
             addCommitZoomableCircles("main", folder, mainSourceFiles, 90);
@@ -730,6 +739,46 @@ public class CommandLineInterface {
         List<VisualizationItem> items = getZoomableCirclesItems(sourceFiles);
         FileUtils.write(new File(folder, "zoomable_circles_" + nameSuffix + ".html"), new VisualizationTemplate().renderZoomableCircles(items), UTF_8);
         FileUtils.write(new File(folder, "zoomable_sunburst_" + nameSuffix + ".html"), new VisualizationTemplate().renderZoomableSunburst(items), UTF_8);
+    }
+
+    // Colors used to distinguish scopes in the "all files" zoomable circles view.
+    // Keep these in sync with the legend in reports' Structure.html template.
+    private static final String SCOPE_COLOR_MAIN = "#ffffff";
+    private static final String SCOPE_COLOR_TEST = "#b2df8a";
+    private static final String SCOPE_COLOR_BUILD = "#fdbf6f";
+    private static final String SCOPE_COLOR_GENERATED = "#cab2d6";
+    private static final String SCOPE_COLOR_OTHER = "#d9d9d9";
+
+    private void generateAllScopesZoomableCircles(File folder, List<SourceFile> mainSourceFiles, List<SourceFile> testSourceFiles,
+                                                  List<SourceFile> buildSourceFiles, List<SourceFile> generatedSourceFiles,
+                                                  List<SourceFile> otherSourceFiles) throws IOException {
+        // Group by folder structure (one shared directory tree across all scopes),
+        // color-coding each file leaf by the scope it belongs to.
+        List<SourceFile> allSourceFiles = new ArrayList<>();
+        Map<SourceFile, String> colors = new LinkedHashMap<>();
+        collectScope(allSourceFiles, colors, mainSourceFiles, SCOPE_COLOR_MAIN);
+        collectScope(allSourceFiles, colors, testSourceFiles, SCOPE_COLOR_TEST);
+        collectScope(allSourceFiles, colors, buildSourceFiles, SCOPE_COLOR_BUILD);
+        collectScope(allSourceFiles, colors, generatedSourceFiles, SCOPE_COLOR_GENERATED);
+        collectScope(allSourceFiles, colors, otherSourceFiles, SCOPE_COLOR_OTHER);
+
+        List<VisualizationItem> items = new ArrayList<>();
+        DirectoryNode directoryTree = PathStringsToTreeStructure.createDirectoryTree(allSourceFiles);
+        if (directoryTree != null) {
+            items = directoryTree.toVisualizationItems(colors);
+        }
+
+        FileUtils.write(new File(folder, "zoomable_circles_all_files.html"), new VisualizationTemplate().renderZoomableCirclesColored(items), UTF_8);
+    }
+
+    private void collectScope(List<SourceFile> allSourceFiles, Map<SourceFile, String> colors, List<SourceFile> sourceFiles, String color) {
+        if (sourceFiles == null) {
+            return;
+        }
+        sourceFiles.forEach(sourceFile -> {
+            allSourceFiles.add(sourceFile);
+            colors.put(sourceFile, color);
+        });
     }
 
     private void addCommitZoomableCircles(String nameSuffix, File folder, List<SourceFile> sourceFiles, int daysAgo) throws IOException {

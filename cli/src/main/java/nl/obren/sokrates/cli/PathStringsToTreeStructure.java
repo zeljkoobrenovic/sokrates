@@ -151,6 +151,24 @@ class DirectoryNode {
         return items;
     }
 
+    // Same folder-based tree as toVisualizationItems(), but each file leaf is colored
+    // by looking up its source file in the supplied map (e.g. one color per scope).
+    public List<VisualizationItem> toVisualizationItems(Map<SourceFile, String> colors) {
+        List<VisualizationItem> items = new ArrayList<>();
+
+        children.forEach(child -> {
+            String name = child.value;
+            boolean isLeaf = child.getSourceFile() != null && child.getSourceFile().getRelativePath().endsWith(name);
+            int size = isLeaf ? child.getSourceFile().getLinesOfCode() : 0;
+            String color = isLeaf ? colors.getOrDefault(child.getSourceFile(), "") : "";
+            VisualizationItem item = new VisualizationItem(name, size, color);
+            items.add(item);
+            item.getChildren().addAll(child.toVisualizationItems(colors));
+        });
+
+        return items;
+    }
+
     public List<VisualizationItem> toVisualizationCommitItems(int daysAgo) {
         List<VisualizationItem> items = new ArrayList<>();
 

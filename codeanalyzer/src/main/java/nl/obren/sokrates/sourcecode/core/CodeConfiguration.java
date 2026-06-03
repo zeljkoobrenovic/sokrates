@@ -61,9 +61,6 @@ public class CodeConfiguration {
     // A list of metrics with goals
     private List<MetricsWithGoal> goalsAndControls = new ArrayList<>();
 
-    // A configuration of trend analysis (comparing multiple analysis snapshots in time)
-    private TrendAnalysisConfig trendAnalysis = new TrendAnalysisConfig();
-
     // A configuration of commit history input file and analyses
     private FileHistoryAnalysisConfig fileHistoryAnalysis = new FileHistoryAnalysisConfig();
 
@@ -350,7 +347,12 @@ public class CodeConfiguration {
     }
 
     private String getPercentageString(NamedSourceCodeAspect concern, int totalLinesOfCode) {
-        double value = 100.0 * totalLinesOfCode / concern.getLinesOfCode();
+        int concernLinesOfCode = concern.getLinesOfCode();
+        if (concernLinesOfCode <= 0) {
+            // Undefined ratio (concern has no counted lines); avoid NaN/Infinity in the concern name.
+            return "0%";
+        }
+        double value = 100.0 * totalLinesOfCode / concernLinesOfCode;
         if (value > 0 && value < 1) {
             return "<1%";
         } else {
@@ -565,16 +567,6 @@ public class CodeConfiguration {
     public void setFileHistoryAnalysis(FileHistoryAnalysisConfig fileHistoryAnalysis) {
         if (fileHistoryAnalysis != null) {
             this.fileHistoryAnalysis = fileHistoryAnalysis;
-        }
-    }
-
-    public TrendAnalysisConfig getTrendAnalysis() {
-        return trendAnalysis;
-    }
-
-    public void setTrendAnalysis(TrendAnalysisConfig trendAnalysis) {
-        if (trendAnalysis != null) {
-            this.trendAnalysis = trendAnalysis;
         }
     }
 }

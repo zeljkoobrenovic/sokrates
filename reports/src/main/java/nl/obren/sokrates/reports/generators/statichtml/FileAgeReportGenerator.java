@@ -33,8 +33,6 @@ public class FileAgeReportGenerator {
 
     private CodeAnalysisResults codeAnalysisResults;
     private List<String> ageLabels;
-    private int daysBetween;
-    private int estimatedWorkingDays;
 
     public FileAgeReportGenerator(CodeAnalysisResults codeAnalysisResults) {
         this.codeAnalysisResults = codeAnalysisResults;
@@ -70,10 +68,10 @@ public class FileAgeReportGenerator {
             Date firstDate = FileHistoryUtils.getDateFromString(firstDateString);
             Date latestDate = FileHistoryUtils.getDateFromString(latestDateString);
 
-            this.daysBetween = FileHistoryUtils.daysBetween(firstDate, latestDate);
+            int daysBetween = FileHistoryUtils.daysBetween(firstDate, latestDate);
 
             int weeks = daysBetween / 7;
-            estimatedWorkingDays = weeks * 5;
+            int estimatedWorkingDays = weeks * 5;
 
             report.startSection("Summary", "");
 
@@ -222,10 +220,7 @@ public class FileAgeReportGenerator {
     }
 
     private void addChangesPerLogicalDecomposition(RichTextReport report) {
-        int logicalDecompositionCounter[] = {0};
         codeAnalysisResults.getCodeConfiguration().getLogicalDecompositions().forEach(logicalDecomposition -> {
-            logicalDecompositionCounter[0]++;
-
             String name = logicalDecomposition.getName();
             codeAnalysisResults.getFilesHistoryAnalysisResults().getFirstModifiedDistributionPerLogicalDecomposition().stream()
                     .filter(d -> d.getName().equalsIgnoreCase(name)).forEach(distribution -> {

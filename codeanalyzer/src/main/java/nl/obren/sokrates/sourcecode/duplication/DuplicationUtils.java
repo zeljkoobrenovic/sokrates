@@ -95,4 +95,24 @@ public class DuplicationUtils {
 
         return count[0];
     }
+
+    /**
+     * Single-pass equivalent of calling {@link #getTotalNumberOfCleanedLinesForLogicalComponent} once per
+     * component: builds a map from lowercased component name to the total cleaned-lines-for-duplication count,
+     * summing a file's count once per matching component occurrence (matching the per-component method's
+     * case-insensitive, occurrence-counting behaviour). Avoids the O(components x files) re-scan.
+     */
+    public static Map<String, Integer> getTotalNumberOfCleanedLinesPerLogicalComponent(List<SourceFile> sourceFiles) {
+        Map<String, Integer> map = new HashMap<>();
+
+        sourceFiles.forEach(sourceFile -> {
+            int lineCount = sourceFile.getCleanedLinesForDuplication().size();
+            sourceFile.getLogicalComponents().forEach(component -> {
+                String key = component.getName().toLowerCase();
+                map.merge(key, lineCount, Integer::sum);
+            });
+        });
+
+        return map;
+    }
 }

@@ -161,7 +161,7 @@ public class FileSizeReportGenerator {
                 + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getMediumRiskCount())
                 + " medium size files (" + RichTextRenderingUtils.renderNumberStrong(distribution.getMediumRiskValue())
-                + " lines of codeclsfd_ftr_w_mp_ins)");
+                + " lines of code)");
         report.addListItem(RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskCount())
                 + " small files (" + RichTextRenderingUtils.renderNumberStrong(distribution.getLowRiskValue())
                 + " lines of code)");

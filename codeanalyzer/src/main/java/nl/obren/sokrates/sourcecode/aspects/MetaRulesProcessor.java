@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.io.File;
 import java.util.*;
 
 interface MetaRulesProcessorCallback {
@@ -23,7 +24,11 @@ interface MetaRulesProcessorCallback {
 public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
     private static final Log LOG = LogFactory.getLog(MetaRulesProcessor.class);
     private List<T> concerns = new ArrayList<>();
-    private List<SourceFile> alreadyAddedFiles = new ArrayList<>();
+    // Files already classified (for uniqueClassification). Keyed by File (which has a proper
+    // equals/hashCode) so membership is O(1) instead of an O(n) list scan per match.
+    private Set<File> alreadyAddedFiles = new HashSet<>();
+    // Per-aspect file membership, keyed by File, so the per-aspect dedup is O(1) too.
+    private Map<String, Set<File>> aspectFiles = new HashMap<>();
     private Map<String, T> map = new HashMap<>();
     private MetaRulesProcessorCallback sourceCodeAspectFactory;
     private boolean uniqueClassification;
@@ -73,7 +78,8 @@ public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
     public List<T> extractAspects(List<SourceFile> sourceFiles, List<MetaRule> metaRules) {
         concerns = new ArrayList<>();
         map = new HashMap<>();
-        alreadyAddedFiles = new ArrayList<>();
+        alreadyAddedFiles = new HashSet<>();
+        aspectFiles = new HashMap<>();
 
         sourceFiles.forEach(sourceFile -> {
             processSourceFile(metaRules, sourceFile);
@@ -129,7 +135,7 @@ public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
     }
 
     private boolean shouldProcessFile(SourceFile sourceFile) {
-        return !uniqueClassification || !alreadyAddedFiles.contains(sourceFile);
+        return !uniqueClassification || !alreadyAddedFiles.contains(sourceFile.getFile());
     }
 
     private void processMatchingString(SourceFile sourceFile, MetaRule metaRule, String matchingString) {
@@ -138,14 +144,14 @@ public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
         if (StringUtils.isNotBlank(name)) {
             if (map.containsKey(name)) {
                 T sourceCodeAspect = map.get(name);
-                List<SourceFile> sourceFiles = sourceCodeAspect.getSourceFiles();
-                if (!sourceFiles.contains(sourceFile)) {
-                    sourceFiles.add(sourceFile);
+                if (aspectFiles.computeIfAbsent(name, k -> new HashSet<>()).add(sourceFile.getFile())) {
+                    sourceCodeAspect.getSourceFiles().add(sourceFile);
                     sourceCodeAspectFactory.updateSourceFile(sourceFile, sourceCodeAspect);
                 }
             } else {
                 NamedSourceCodeAspect sourceCodeAspect = sourceCodeAspectFactory.getInstance(name);
                 sourceCodeAspect.getSourceFiles().add(sourceFile);
+                aspectFiles.computeIfAbsent(name, k -> new HashSet<>()).add(sourceFile.getFile());
 
                 sourceCodeAspectFactory.updateSourceFile(sourceFile, sourceCodeAspect);
 
@@ -156,8 +162,8 @@ public class MetaRulesProcessor<T extends NamedSourceCodeAspect> {
     }
 
     private void updateAlreadyProcessedFiles(SourceFile sourceFile) {
-        if (uniqueClassification && !alreadyAddedFiles.contains(sourceFile)) {
-            alreadyAddedFiles.add(sourceFile);
+        if (uniqueClassification) {
+            alreadyAddedFiles.add(sourceFile.getFile());
         }
     }
 
