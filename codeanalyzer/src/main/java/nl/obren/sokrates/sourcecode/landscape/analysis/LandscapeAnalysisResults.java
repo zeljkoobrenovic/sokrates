@@ -745,7 +745,7 @@ public class LandscapeAnalysisResults {
                 }
             });
 
-            if (!added[0] && !remainder.getMembers().contains(email)) {
+            if (!added[0] && !remainder.getMembers().contains(contributor)) {
                 remainder.getMembers().add(contributor);
                 contributor.getRepositories().forEach(repo -> {
                     addRepoToTeam(repo, remainder);
