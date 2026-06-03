@@ -141,6 +141,18 @@ public class CommentsCleanerUtilsTest {
     }
 
     @Test
+    public void cleanLineCommentsMultipleAcrossManyLines() throws Exception {
+        // Several line comments are all removed regardless of order; resuming the search from the
+        // previous position (instead of restarting at 0) must not skip or leave any comment.
+        assertEquals("a \nb \nc \nd",
+                CommentsCleanerUtils.cleanLineComments("a // c1\nb // c2\nc // c3\nd", "//"));
+        // A comment marker appearing earlier than a previously cleaned one is still handled because
+        // cleaning proceeds left to right.
+        assertEquals("x \ny \nz ",
+                CommentsCleanerUtils.cleanLineComments("x // first\ny // second\nz // third", "//"));
+    }
+
+    @Test
     public void cleanLineComments2() throws Exception {
         assertEquals(CommentsCleanerUtils.cleanLineComments("class A {}", "//"), "class A {}");
         assertEquals(CommentsCleanerUtils.cleanLineComments("class A {} // line comment", "//"), "class A {} ");

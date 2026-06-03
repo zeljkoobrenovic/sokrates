@@ -73,7 +73,7 @@ public class CodeBlockParser {
             String contentInMiddle = content.substring(startIndex, endIndex);
             String replacement = StringUtils.repeat("\n", StringUtils.countMatches(contentInMiddle, "\n"));
 
-            if (endMarker == "\n") replacement += "\n";
+            if ("\n".equals(endMarker)) replacement += "\n";
 
             String cleanedContent = contentBefore + replacement + contentAfter;
             return new CleaningResult(cleanedContent, (contentBefore + replacement).length());
