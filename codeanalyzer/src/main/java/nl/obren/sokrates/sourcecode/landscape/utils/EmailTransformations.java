@@ -17,8 +17,13 @@ public class EmailTransformations {
     private static final Map<String, String> cache = new HashMap<>();
 
     public static String transformEmail(final String email, List<OperationStatement> operationStatements, PeopleConfig peopleConfig) {
-        if (cache.containsKey(email)) {
-            return cache.get(email);
+        // The transformed id depends on the email AND on the transform statements and people config,
+        // so the cache key must include all three. Keying on email alone returned one landscape's
+        // mapping for another's identical email when several are processed in one JVM. Object identity
+        // is enough: callers reuse the same statements/config instances throughout a landscape.
+        String key = email + "::" + System.identityHashCode(operationStatements) + "::" + System.identityHashCode(peopleConfig);
+        if (cache.containsKey(key)) {
+            return cache.get(key);
         }
 
         String contributorId = email;
@@ -31,7 +36,7 @@ public class EmailTransformations {
             contributorId = peopleConfig.getPersonFromEmailPatterns(contributorId).getName();
         }
 
-        cache.put(email, contributorId);
+        cache.put(key, contributorId);
 
         return contributorId;
     }
