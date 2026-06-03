@@ -161,8 +161,11 @@ public class ContributorsReportUtils {
                 report.startTableRow();
                 report.addTableCell("", "border: none; ");
                 for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
+                    if (timeSlot == null) {
+                        continue;
+                    }
                     String slotString = timeSlot.getTimeSlot().replaceAll("\\-", "<br>");
-                    if (timeSlot != null && (timeSlot.getCommitsCount() > 0 || timeSlot.getContributorsCount() > 0)) {
+                    if (timeSlot.getCommitsCount() > 0 || timeSlot.getContributorsCount() > 0) {
                         report.addTableCell(slotString + "", "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: top; font-size: 80%");
                     } else {
                         report.addTableCell(slotString + "", "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: top; font-size: 80%; color: #c0c0c0");
@@ -229,8 +232,9 @@ public class ContributorsReportUtils {
 
     public static void addContributor(RichTextReport indexReport, int max, int total, Contributor contributor) {
         int commitsCount = contributor.getCommitsCount();
-        double opacity = 0.2 + 0.8 * commitsCount / max;
-        double percentage = 100.0 * commitsCount / total;
+        // max/total can be 0 when every contributor has 0 counted commits; avoid NaN/Infinity styles.
+        double opacity = max > 0 ? 0.2 + 0.8 * commitsCount / max : 1.0;
+        double percentage = total > 0 ? 100.0 * commitsCount / total : 0.0;
         String info = StringEscapeUtils.escapeHtml4(contributor.getEmail()
                 + " " + commitsCount
                 + " commits (" + FormattingUtils.getFormattedPercentage(percentage) + "%),"
@@ -242,7 +246,7 @@ public class ContributorsReportUtils {
             indexReport.addHtmlContent("<div style='margin: 4px; box-shadow: rgba(9, 30, 66, 0.25) 0px 4px 8px -2px, rgba(9, 30, 66, 0.08) 0px 0px 0px 1px; text-align: center; display: inline-block;opacity:" + opacity + "' title='" + info + "'>");
         }
         String icon = contributor.isBot() ? "bot" : "contributor";
-        indexReport.addHtmlContent(contributor.isActive() ? getIconSvg(icon, 64) : getIconSvg(icon, 64));
+        indexReport.addHtmlContent(getIconSvg(icon, 64));
         indexReport.addHtmlContent("<div style='padding: 4px; font-size: 10px; width: 64px; overflow: hidden; max-height: 22px; min-height: 22px;'>");
         indexReport.addHtmlContent(contributor.getEmail());
         indexReport.addHtmlContent("</div>");
