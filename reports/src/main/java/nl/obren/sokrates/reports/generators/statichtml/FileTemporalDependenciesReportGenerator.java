@@ -70,9 +70,9 @@ public class FileTemporalDependenciesReportGenerator {
 
     private void addTabContentSection(RichTextReport report, String id, List<FilePairChangedTogether> filePairs, boolean active) {
         report.startTabContentSection(id, active);
+        addDependenciesSection(report, filePairs, id);
         addFileChangedTogetherList(report, filePairs);
         addFileChangedTogetherInDifferentFoldersList(report, filePairs);
-        addDependenciesSection(report, filePairs, id);
         report.endTabContentSection();
 
     }
@@ -173,21 +173,49 @@ public class FileTemporalDependenciesReportGenerator {
         LOG.info("Extracted " + dependencies.size() + " dependencies");
         ProcessingStopwatch.end("reporting/temporal dependencies/extract dependencies");
 
-        renderComponentDependencies(report, dependencies, "files_" + suffix);
-
         ProcessingStopwatch.start("reporting/temporal dependencies/extract dependencies with commits");
         List<ComponentDependency> dependenciesWithCommits = dependenciesHelper.extractDependenciesWithCommits(filePairsChangedTogether);
         LOG.info("Extracted " + dependenciesWithCommits.size() + " dependencies with commits");
         ProcessingStopwatch.end("reporting/temporal dependencies/extract dependencies with commits");
-        if (dependenciesWithCommits.size() > 0) {
-            ProcessingStopwatch.start("reporting/temporal dependencies/export graph");
-            String graphId = "file_changed_together_dependencies_with_commits_components_" + suffix;
-            Pair<String,String> force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(dependenciesWithCommits, reportsFolder, graphId);
-            report.addNewTabLink("Open 2D force graph (file dependencies with commits)...", force3DGraphFilePath.getFirst());
-            report.addNewTabLink("Open 3D force graph (file dependencies with commits)...", force3DGraphFilePath.getSecond());
-            report.addLineBreak();
-            ProcessingStopwatch.end("reporting/temporal dependencies/export graph");
+
+        renderFileDependenciesForceGraph(report, dependencies, dependenciesWithCommits, suffix);
+    }
+
+    private void renderFileDependenciesForceGraph(RichTextReport report, List<ComponentDependency> dependencies,
+                                                  List<ComponentDependency> dependenciesWithCommits, String suffix) {
+        if (dependenciesWithCommits.size() == 0 && dependencies.size() == 0) {
+            report.addParagraph("No temporal dependencies found.");
+            return;
         }
+
+        ProcessingStopwatch.start("reporting/temporal dependencies/force graph");
+
+        // Embed the 2D force graph that includes the commit nodes inline (replaces the previous Graphviz figure),
+        // keeping the links below it.
+        Pair<String, String> withCommitsGraphFilePath = null;
+        if (dependenciesWithCommits.size() > 0) {
+            String graphId = "file_changed_together_dependencies_with_commits_components_" + suffix;
+            withCommitsGraphFilePath = ForceGraphExporter.export3DForceGraph(dependenciesWithCommits, reportsFolder, graphId);
+            report.addHtmlContent("<iframe src='" + withCommitsGraphFilePath.getFirst() + "' " +
+                    "style='width: 100%; border: none; height: 600px; overflow: hidden'></iframe>");
+            report.addLineBreak();
+        }
+
+        if (dependencies.size() > 0) {
+            String graphId = "file_changed_together_dependencies_files_" + suffix;
+            Pair<String, String> filesGraphFilePath = ForceGraphExporter.export3DForceGraph(dependencies, reportsFolder, graphId);
+            report.addNewTabLink("Open 2D force graph (file dependencies)...", filesGraphFilePath.getFirst());
+            report.addNewTabLink("Open 3D force graph (file dependencies)...", filesGraphFilePath.getSecond());
+            report.addLineBreak();
+        }
+
+        if (withCommitsGraphFilePath != null) {
+            report.addNewTabLink("Open 2D force graph (file dependencies with commits)...", withCommitsGraphFilePath.getFirst());
+            report.addNewTabLink("Open 3D force graph (file dependencies with commits)...", withCommitsGraphFilePath.getSecond());
+            report.addLineBreak();
+        }
+
+        ProcessingStopwatch.end("reporting/temporal dependencies/force graph");
     }
 
     private void renderComponentDependencies(RichTextReport report, List<ComponentDependency> dependencies, String suffix) {

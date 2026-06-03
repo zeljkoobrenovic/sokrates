@@ -13,7 +13,7 @@ public class CommitInfo {
     }
 
     public CommitInfo(String id, String date) {
-        this.id = id;
+        this.id = date + " " + id;
         this.date = date;
     }
 
