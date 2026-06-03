@@ -85,9 +85,12 @@ public class RacingRepositoriesBarChartsExporter {
                 } else {
                     valueCommits += firstTwoMonthsCommits / 10.0;
                 }
+                // Accumulate first, then emit: the previous order gated on cumulativeCommits before
+                // adding the current month, so the running total never left 0 and the cumulative
+                // ("all time") chart stayed empty ("No data to display").
+                cumulativeCommits += valueCommits;
                 if (Math.round(cumulativeCommits) > 0) {
                     RacingChartItem itemCommits = new RacingChartItem(name);
-                    cumulativeCommits += valueCommits;
                     itemCommits.setValue(Math.round(cumulativeCommits) > 0 ? Math.round(cumulativeCommits) : 0.1);
                     itemCommits.setYear(year + monthFrame / 10.0);
                     items.add(itemCommits);
