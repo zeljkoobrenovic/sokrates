@@ -555,8 +555,11 @@ public class LandscapeReportContributorsTab {
             int count = contributor.getCommitsCount30Days();
             int height = (int) (Math.round(64 * count / max)) + 1;
             cumulativeCount[0] += count;
-            double cumulativePercentage = Math.round(1000.0 * cumulativeCount[0] / sum) / 10;
-            double contributorPercentage = Math.round(10000.0 * index[0] / recentContributorsCount) / 100;
+            // Use floating-point divisors (10.0 / 100.0): Math.round returns a long, so dividing by an
+            // int here truncated the intended decimals (e.g. 53.7% rendered as 53%). Matches the
+            // correct pattern used for the distribution percentages below.
+            double cumulativePercentage = Math.round(1000.0 * cumulativeCount[0] / sum) / 10.0;
+            double contributorPercentage = Math.round(10000.0 * index[0] / recentContributorsCount) / 100.0;
             String tooltip = contributor.getEmail()
                     + "\n - commits (30d): " + count
                     + "\n - cumulative commits (top " + index[0] + "): " + cumulativeCount[0]
