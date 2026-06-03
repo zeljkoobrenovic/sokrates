@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ContributorRepositories {
     private Contributor contributor;
@@ -32,9 +34,11 @@ public class ContributorRepositories {
             repositoryByPath.setCommits180Days(repositoryByPath.getCommits180Days() + commits180Days);
             repositoryByPath.setCommits365Days(repositoryByPath.getCommits180Days() + commits365Days);
             repositoryByPath.setCommitsCount(repositoryByPath.getCommitsCount() + commitsCount);
+            List<String> existingDates = repositoryByPath.getCommitDates();
+            Set<String> existingDatesSet = new HashSet<>(existingDates);
             commitDates.forEach(date -> {
-                if (!repositoryByPath.getCommitDates().contains(date)) {
-                    repositoryByPath.getCommitDates().add(date);
+                if (existingDatesSet.add(date)) {
+                    existingDates.add(date);
                 }
             });
         } else {

@@ -81,19 +81,14 @@ public class GitContributorsUtil {
     public static List<ContributionTimeSlot> getContributorsPerTimeSlot(List<AuthorCommit> authorCommits, Function<AuthorCommit, String> idFunction) {
         List<ContributionTimeSlot> list = new ArrayList<>();
         Map<String, ContributionTimeSlot> map = new HashMap<>();
-        Map<String, List<String>> peopleIds = new HashMap<>();
+        // Distinct contributor ids per time slot, kept in a set so membership is O(1) per commit.
+        Map<String, Set<String>> peopleIds = new HashMap<>();
 
         authorCommits.forEach(authorCommit -> {
             String timeSlot = idFunction.apply(authorCommit);
             String id = authorCommit.getAuthorEmail();
-            List<String> ids = peopleIds.get(timeSlot);
-            if (ids == null) {
-                ids = new ArrayList<>();
-                peopleIds.put(timeSlot, ids);
-            }
-            if (!ids.contains(id)) {
-                ids.add(id);
-            }
+            Set<String> ids = peopleIds.computeIfAbsent(timeSlot, k -> new HashSet<>());
+            ids.add(id);
             ContributionTimeSlot contributionTimeSlot = map.get(timeSlot);
             if (contributionTimeSlot == null) {
                 contributionTimeSlot = new ContributionTimeSlot(timeSlot, Thresholds.defaultCommitFilesCountThresholds());

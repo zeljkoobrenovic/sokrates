@@ -819,16 +819,8 @@ public class LandscapeAnalysisResults {
                     contributorInfo.setCommitsCount180Days(contributorInfo.getCommitsCount180Days() + repositoryCommits180Days);
                     contributorInfo.setCommitsCount365Days(contributorInfo.getCommitsCount365Days() + repositoryCommits365Days);
 
-                    contributor.getActiveYears().forEach(activeYear -> {
-                        if (!contributorInfo.getActiveYears().contains(activeYear)) {
-                            contributorInfo.getActiveYears().add(activeYear);
-                        }
-                    });
-                    contributor.getCommitDates().forEach(commitDate -> {
-                        if (!contributorInfo.getCommitDates().contains(commitDate)) {
-                            contributorInfo.getCommitDates().add(commitDate);
-                        }
-                    });
+                    contributorInfo.addActiveYears(contributor.getActiveYears());
+                    contributorInfo.addCommitDates(contributor.getCommitDates());
 
                     existingContributor.addRepository(repositoryAnalysisResults, firstCommitDate, latestCommitDate,
                             repositoryCommits, repositoryCommits30Days, repositoryCommits90Days,

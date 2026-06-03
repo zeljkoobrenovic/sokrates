@@ -11,8 +11,10 @@ import org.apache.commons.lang3.StringUtils;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class Contributor {
     public static final int RECENTLY_ACTIVITY_THRESHOLD_DAYS = 30;
@@ -30,6 +32,12 @@ public class Contributor {
     private String latestCommitDate = "";
     private List<String> activeYears = new ArrayList<>();
     private List<String> commitDates = new ArrayList<>();
+    // O(1) companion sets for the (serialized) lists above, so addCommit stays O(1) per commit
+    // instead of scanning the growing lists. Kept in sync with commitDates/activeYears.
+    @JsonIgnore
+    private Set<String> commitDatesSet = new HashSet<>();
+    @JsonIgnore
+    private Set<String> activeYearsSet = new TreeSet<>();
 
     private boolean bot = false;
 
@@ -42,7 +50,7 @@ public class Contributor {
 
     @JsonIgnore
     public void addCommit(String date, int fileUpdatesCount) {
-        if (!commitDates.contains(date)) {
+        if (commitDatesSet.add(date)) {
             commitDates.add(date);
         }
         if (StringUtils.isBlank(firstCommitDate) || date.compareTo(firstCommitDate) < 0) {
@@ -53,10 +61,12 @@ public class Contributor {
         }
         if (date.length() > 4) {
             String year = date.substring(0, 4);
-            if (!activeYears.contains(year)) {
-                activeYears.add(year);
+            if (activeYearsSet.add(year)) {
+                // activeYearsSet is a TreeSet, so rebuild the sorted list only when a new year
+                // appears instead of re-sorting on every commit.
+                activeYears.clear();
+                activeYears.addAll(activeYearsSet);
             }
-            Collections.sort(activeYears);
 
             if (DateUtils.isCommittedLessThanDaysAgo(date, RECENTLY_ACTIVITY_THRESHOLD_DAYS)) {
                 commitsCount30Days += 1;
@@ -74,6 +84,26 @@ public class Contributor {
         }
 
         commitsCount += 1;
+    }
+
+    // Merges another contributor's distinct commit dates into this one in O(n) using the companion
+    // set, instead of an O(n) contains() scan per date.
+    @JsonIgnore
+    public void addCommitDates(List<String> dates) {
+        dates.forEach(date -> {
+            if (commitDatesSet.add(date)) {
+                commitDates.add(date);
+            }
+        });
+    }
+
+    // Merges another contributor's active years, keeping them distinct and sorted.
+    @JsonIgnore
+    public void addActiveYears(List<String> years) {
+        if (activeYearsSet.addAll(years)) {
+            activeYears.clear();
+            activeYears.addAll(activeYearsSet);
+        }
     }
 
     public boolean isActive() {
@@ -161,6 +191,7 @@ public class Contributor {
 
     public void setActiveYears(List<String> activeYears) {
         this.activeYears = activeYears;
+        this.activeYearsSet = new TreeSet<>(activeYears);
     }
 
     public int getCommitsCount30Days() {
@@ -209,6 +240,7 @@ public class Contributor {
 
     public void setCommitDates(List<String> commitDates) {
         this.commitDates = commitDates;
+        this.commitDatesSet = new HashSet<>(commitDates);
     }
 
     @Override
