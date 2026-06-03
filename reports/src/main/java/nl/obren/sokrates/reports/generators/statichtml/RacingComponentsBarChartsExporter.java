@@ -16,7 +16,9 @@ import java.util.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class RacingComponentsBarChartsExporter {
-    private int windowSize = 12;
+    // Each year of commits is spread over this many animation steps (sub-year increments). The
+    // 12-month trailing window therefore spans exactly STEPS_PER_YEAR steps (one year of steps).
+    private static final int STEPS_PER_YEAR = 10;
 
     private CodeAnalysisResults analysisResults;
     private String logicalDecompositionKey;
@@ -49,21 +51,23 @@ public class RacingComponentsBarChartsExporter {
             List<Double> monthValues = new ArrayList<>();
             years.keySet().stream().filter(year -> StringUtils.isNumeric(year)).sorted().forEach(year -> {
                 int count = years.get(year).intValue();
-                double monthlyIncrement = count / 10.0;
-                for (int i = 0; i < 10; i++) {
+                double stepIncrement = count / (double) STEPS_PER_YEAR;
+                for (int i = 0; i < STEPS_PER_YEAR; i++) {
                     double yearNumber = Double.parseDouble(year);
                     startYear = startYear == 0 ? (int) yearNumber : Math.min(startYear, (int) yearNumber);
-                    double yearFragment = yearNumber + i / 10.0;
+                    double yearFragment = yearNumber + (double) i / STEPS_PER_YEAR;
 
-                    monthValue[0] += monthlyIncrement;
+                    monthValue[0] += stepIncrement;
 
                     RacingChartItem item = new RacingChartItem(componentName);
                     item.setYear(yearFragment);
                     item.setValue(monthValue[0]);
                     items.add(item);
 
-                    monthValues.add(monthlyIncrement);
-                    if (monthValues.size() > 12) {
+                    // Keep the trailing 12 months: one year is STEPS_PER_YEAR steps, so the window
+                    // holds the last STEPS_PER_YEAR increments.
+                    monthValues.add(stepIncrement);
+                    if (monthValues.size() > STEPS_PER_YEAR) {
                         monthValues.remove(0);
                     }
                     RacingChartItem item12Months = new RacingChartItem(componentName);
