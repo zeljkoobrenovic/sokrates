@@ -22,6 +22,33 @@ class GitHistoryUtilsTest {
     }
 
     @Test
+    void parseLineDetectsBotFromEmail() {
+        FileHistoryAnalysisConfig config = new FileHistoryAnalysisConfig();
+        config.setBots(Arrays.asList(".*bot.*"));
+
+        String botLine = "2019-11-09 ci-bot@github.com 0bc5d0318b3814ebd5b52605668756a8d5598e24 a/B.java";
+        assertTrue(GitHistoryUtils.parseLine(botLine, config).isBot());
+
+        String humanLine = "2019-11-09 alice@github.com 0bc5d0318b3814ebd5b52605668756a8d5598e24 a/B.java";
+        assertFalse(GitHistoryUtils.parseLine(humanLine, config).isBot());
+    }
+
+    @Test
+    void parseLineBotDetectionUsesTransformedEmail() {
+        FileHistoryAnalysisConfig config = new FileHistoryAnalysisConfig();
+        config.setBots(Arrays.asList(".*bot.*"));
+        // Rewrite any address to a bot address; the bot flag must reflect the transformed email.
+        config.setTransformContributorEmails(Arrays.asList(
+                new nl.obren.sokrates.sourcecode.operations.OperationStatement("replace", Arrays.asList(".*", "service-bot@org.com"))));
+
+        String line = "2019-11-09 alice@github.com 0bc5d0318b3814ebd5b52605668756a8d5598e24 a/B.java";
+        FileUpdate fileUpdate = GitHistoryUtils.parseLine(line, config);
+
+        assertEquals("service-bot@org.com", fileUpdate.getAuthorEmail());
+        assertTrue(fileUpdate.isBot());
+    }
+
+    @Test
     void shouldIgnore() {
         List<String> ignore = Arrays.asList(new String[]{".*GITHUBBOT.*", "None", "none", "DL[-].*", "[a-zA-Z]+Releaser.*", "bot", "committed[-]by[-]bot.*"});
 

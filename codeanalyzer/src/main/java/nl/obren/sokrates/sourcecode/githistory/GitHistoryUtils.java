@@ -33,7 +33,6 @@ public class GitHistoryUtils {
 
     public static List<AuthorCommit> getAuthorCommits(File file, FileHistoryAnalysisConfig config) {
         List<AuthorCommit> commits = new ArrayList<>();
-        Set<String> commitIds = new HashSet<>();
         Map<String, AuthorCommit> commitsMap = new HashMap<>();
 
         int index[] = {0};
@@ -45,13 +44,13 @@ public class GitHistoryUtils {
                 LOG.info("Importing " + fileUpdate.getAuthorEmail() + " " + fileUpdate.getDate() + " (" + index[0] + " / " + historyFromFile.size() + ")");
             }
             String commitId = fileUpdate.getCommitId();
-            if (!commitIds.contains(commitId)) {
-                commitIds.add(commitId);
+            AuthorCommit existing = commitsMap.get(commitId);
+            if (existing == null) {
                 AuthorCommit authorCommit = new AuthorCommit(fileUpdate.getDate(), fileUpdate.getAuthorEmail(), fileUpdate.getUserName(), fileUpdate.isBot());
                 commits.add(authorCommit);
                 commitsMap.put(commitId, authorCommit);
             } else {
-                commitsMap.get(commitId).incrementFileUpdatesCount();
+                existing.incrementFileUpdatesCount();
             }
         });
 
@@ -91,7 +90,8 @@ public class GitHistoryUtils {
             }
             FileUpdate fileUpdate = GitHistoryUtils.parseLine(line, config);
             if (fileUpdate != null) {
-                fileUpdate.setBot(isBot(fileUpdate.getAuthorEmail(), config.getBots()));
+                // parseLine already set the bot flag (testing the original and any transformed
+                // email); no need to recompute it here.
                 updates.add(fileUpdate);
             }
         });
@@ -117,7 +117,6 @@ public class GitHistoryUtils {
                     if (shouldIgnore(authorEmail, ignoreContributors)) {
                         return null;
                     }
-                    boolean bot = isBot(authorEmail, config.getBots());
                     if (anonymize) {
                         String anonymizedAuthor = anonymizeEmails.get(authorEmail);
                         if (anonymizedAuthor == null) {
@@ -127,12 +126,15 @@ public class GitHistoryUtils {
                         authorEmail = anonymizedAuthor;
                     } else if (config.getTransformContributorEmails().size() > 0) {
                         ComplexOperation operation = new ComplexOperation(config.getTransformContributorEmails());
-                        String original = authorEmail;
                         authorEmail = operation.exec(authorEmail);
                         if (shouldIgnore(authorEmail, ignoreContributors)) {
                             return null;
                         }
                     }
+
+                    // Bot detection on the final (possibly transformed/anonymized) email - computed
+                    // once here. getHistoryFromFile previously recomputed this; that is now redundant.
+                    boolean bot = isBot(authorEmail, config.getBots());
 
                     String commitId = line.substring(index2 + 1, index3).trim();
                     String path = line.substring(index3 + 1).replaceAll(" .*", "").replaceAll("[&]nbsp[;]", " ").trim();
@@ -143,9 +145,6 @@ public class GitHistoryUtils {
                     if (index4 > index3) {
                         userName = line.substring(index4 + 1).replaceAll(" .*", "").replaceAll("[&]nbsp[;]", " ").trim();
                     }
-
-
-                    bot = bot || isBot(authorEmail, config.getBots());
 
                     FileUpdate fileUpdate = new FileUpdate(date, authorEmail, userName, commitId, path, bot);
                     return fileUpdate;
