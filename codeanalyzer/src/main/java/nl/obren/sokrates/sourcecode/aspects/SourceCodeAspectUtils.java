@@ -96,15 +96,11 @@ public class SourceCodeAspectUtils {
     }
 
     public static List<String> getUniquePaths(List<SourceFile> sourceFiles, int depth) {
-        List<String> paths = new ArrayList<>();
-        sourceFiles.forEach(sourceFile -> {
-            String componentName = getFolderBasedComponentName(sourceFile, depth);
-
-            if (!paths.contains(componentName)) {
-                paths.add(componentName);
-            }
-        });
-        return paths;
+        // LinkedHashSet preserves first-seen order (as the previous list did) with O(1) dedup
+        // instead of an O(n) contains() scan per file.
+        Set<String> paths = new LinkedHashSet<>();
+        sourceFiles.forEach(sourceFile -> paths.add(getFolderBasedComponentName(sourceFile, depth)));
+        return new ArrayList<>(paths);
     }
 
     public static String getFolderBasedComponentName(SourceFile sourceFile, int depth) {
