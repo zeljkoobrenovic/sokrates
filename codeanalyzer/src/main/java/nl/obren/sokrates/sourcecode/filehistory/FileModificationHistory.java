@@ -17,6 +17,12 @@ public class FileModificationHistory {
     // instead of an O(n) contains() scan. Kept in sync with dates.
     @JsonIgnore
     private Set<String> datesSet = new HashSet<>();
+    // Memoized distinct-contributor count. countContributors() is called repeatedly (e.g. once per
+    // comparison while sorting files by contributor count), so cache the result and invalidate it
+    // when commits are replaced. Like the `sorted` flag, this assumes commits are not mutated
+    // through getCommits() after the count is first read (true in the analysis flow).
+    @JsonIgnore
+    private int contributorCount = -1;
 
     public FileModificationHistory() {
     }
@@ -92,11 +98,15 @@ public class FileModificationHistory {
 
     public void setCommits(List<CommitInfo> commits) {
         this.commits = commits;
+        this.contributorCount = -1;
     }
 
     public int countContributors() {
-        Set<String> contributorIds = new HashSet<>();
-        commits.forEach(commit -> contributorIds.add(commit.getEmail()));
-        return contributorIds.size();
+        if (contributorCount < 0) {
+            Set<String> contributorIds = new HashSet<>();
+            commits.forEach(commit -> contributorIds.add(commit.getEmail()));
+            contributorCount = contributorIds.size();
+        }
+        return contributorCount;
     }
 }

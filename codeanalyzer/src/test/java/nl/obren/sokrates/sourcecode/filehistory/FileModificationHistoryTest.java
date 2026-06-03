@@ -48,6 +48,23 @@ class FileModificationHistoryTest {
     }
 
     @Test
+    void countContributorsIsMemoizedAndInvalidatedBySetCommits() {
+        FileModificationHistory history = new FileModificationHistory("a.java");
+        history.setCommits(new ArrayList<>(Arrays.asList(
+                commit("c1", "2020-01-01", "a@example.com"),
+                commit("c2", "2020-01-02", "b@example.com"))));
+
+        assertEquals(2, history.countContributors());
+        // Repeated calls return the cached value.
+        assertEquals(2, history.countContributors());
+
+        // Replacing the commits recomputes the count.
+        history.setCommits(new ArrayList<>(Arrays.asList(
+                commit("c3", "2020-02-01", "x@example.com"))));
+        assertEquals(1, history.countContributors());
+    }
+
+    @Test
     void addDateIfAbsentKeepsDatesDistinct() {
         FileModificationHistory history = new FileModificationHistory("a.java");
 
