@@ -47,6 +47,8 @@ public class SourceFile {
 
     private int linesOfCodeInUnits;
     private List<String> cleanedLines = null;
+    @JsonIgnore
+    private List<String> cleanedLinesForDuplication = null;
 
     public SourceFile() {
     }
@@ -210,7 +212,12 @@ public class SourceFile {
 
     @JsonIgnore
     public List<String> getCleanedLinesForDuplication() {
-        return SourceCodeCleanerUtils.splitInLines(LanguageAnalyzerFactory.getInstance().getLanguageAnalyzer(this).cleanForDuplicationCalculations(this).getCleanedContent());
+        // Cached like cleanedLines: cleaning re-runs the language analyzer over the whole file, and the
+        // duplication aggregator asks for this repeatedly (once per file, per extension, and per component).
+        if (cleanedLinesForDuplication == null) {
+            cleanedLinesForDuplication = SourceCodeCleanerUtils.splitInLines(LanguageAnalyzerFactory.getInstance().getLanguageAnalyzer(this).cleanForDuplicationCalculations(this).getCleanedContent());
+        }
+        return cleanedLinesForDuplication;
     }
 
     @JsonIgnore
