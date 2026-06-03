@@ -35,17 +35,16 @@ public class LandscapeAnalysisInitiator {
         LandscapeConfiguration landscapeConfiguration = new LandscapeConfiguration();
         landscapeConfiguration.setAnalysisRoot(analysisRoot.getPath());
 
+        // Single tree walk: sub-landscape and analysis-result files are mutually exclusive (distinct
+        // path endings) and feed separate lists, so dispatching on type in one pass is equivalent to
+        // two walks but halves the traversal of (potentially large) landscape roots.
         try (Stream<Path> paths = Files.walk(Paths.get(analysisRoot.getPath()))) {
-            paths.filter(file -> isSokratesLandscapeFile(file) && !LandscapeAnalysisUtils.isInGeneratedVirtualLandscape(file)).forEach(file -> {
-                addSubLandscape(analysisRoot, landscapeConfiguration, file);
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        try (Stream<Path> paths = Files.walk(Paths.get(analysisRoot.getPath()))) {
-            paths.filter(file -> isSokratesAnalysisFile(file) && !LandscapeAnalysisUtils.isInGeneratedVirtualLandscape(file)).forEach(file -> {
-                processAnalysisResultFile(analysisRoot, landscapeConfiguration, file);
+            paths.filter(file -> !LandscapeAnalysisUtils.isInGeneratedVirtualLandscape(file)).forEach(file -> {
+                if (isSokratesLandscapeFile(file)) {
+                    addSubLandscape(analysisRoot, landscapeConfiguration, file);
+                } else if (isSokratesAnalysisFile(file)) {
+                    processAnalysisResultFile(analysisRoot, landscapeConfiguration, file);
+                }
             });
         } catch (IOException e) {
             e.printStackTrace();

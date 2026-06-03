@@ -11,7 +11,6 @@ import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeInfo;
 import nl.obren.sokrates.sourcecode.landscape.SokratesRepositoryLink;
-import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -25,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LandscapeAnalysisUpdater {
-    private static final Log LOG = LogFactory.getLog(LandscapeAnalysisUtils.class);
+    private static final Log LOG = LogFactory.getLog(LandscapeAnalysisUpdater.class);
 
     public LandscapeConfiguration updateConfiguration(File analysisRoot, File landscapeConfigFile, Metadata metadata) {
         landscapeConfigFile = getLandscapeConfigFile(analysisRoot, landscapeConfigFile);
