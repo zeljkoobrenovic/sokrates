@@ -347,7 +347,12 @@ public class CodeConfiguration {
     }
 
     private String getPercentageString(NamedSourceCodeAspect concern, int totalLinesOfCode) {
-        double value = 100.0 * totalLinesOfCode / concern.getLinesOfCode();
+        int concernLinesOfCode = concern.getLinesOfCode();
+        if (concernLinesOfCode <= 0) {
+            // Undefined ratio (concern has no counted lines); avoid NaN/Infinity in the concern name.
+            return "0%";
+        }
+        double value = 100.0 * totalLinesOfCode / concernLinesOfCode;
         if (value > 0 && value < 1) {
             return "<1%";
         } else {
