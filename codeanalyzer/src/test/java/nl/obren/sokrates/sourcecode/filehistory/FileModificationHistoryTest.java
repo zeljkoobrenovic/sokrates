@@ -48,6 +48,28 @@ class FileModificationHistoryTest {
     }
 
     @Test
+    void addDateIfAbsentKeepsDatesDistinct() {
+        FileModificationHistory history = new FileModificationHistory("a.java");
+
+        history.addDateIfAbsent("2020-01-01");
+        history.addDateIfAbsent("2020-01-01"); // duplicate
+        history.addDateIfAbsent("2020-01-02");
+
+        assertEquals(Arrays.asList("2020-01-01", "2020-01-02"), history.getDates());
+    }
+
+    @Test
+    void addDateIfAbsentStaysConsistentAfterSetDates() {
+        FileModificationHistory history = new FileModificationHistory("a.java");
+        history.setDates(new ArrayList<>(Arrays.asList("2020-01-01", "2020-01-02")));
+
+        history.addDateIfAbsent("2020-01-02"); // already present via setDates
+        history.addDateIfAbsent("2020-01-03");
+
+        assertEquals(Arrays.asList("2020-01-01", "2020-01-02", "2020-01-03"), history.getDates());
+    }
+
+    @Test
     void sortingHappensOnlyOnceButStaysCorrect() {
         FileModificationHistory history = new FileModificationHistory("a.java");
         history.setDates(new ArrayList<>(Arrays.asList("2020-03-01", "2020-01-01")));

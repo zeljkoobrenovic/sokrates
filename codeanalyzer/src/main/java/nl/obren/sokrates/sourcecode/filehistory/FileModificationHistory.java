@@ -4,14 +4,19 @@
 
 package nl.obren.sokrates.sourcecode.filehistory;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.*;
-import java.util.stream.Stream;
 
 public class FileModificationHistory {
     private List<String> dates = new ArrayList<>();
     private List<CommitInfo> commits = new ArrayList<>();
     private String path = "";
     private boolean sorted = false;
+    // O(1) companion set for the (serialized) dates list, so addDateIfAbsent stays O(1) per commit
+    // instead of an O(n) contains() scan. Kept in sync with dates.
+    @JsonIgnore
+    private Set<String> datesSet = new HashSet<>();
 
     public FileModificationHistory() {
     }
@@ -34,6 +39,15 @@ public class FileModificationHistory {
 
     public void setDates(List<String> dates) {
         this.dates = dates;
+        this.datesSet = new HashSet<>(dates);
+    }
+
+    // Adds a date only if not already present, keeping the dates list distinct in O(1).
+    @JsonIgnore
+    public void addDateIfAbsent(String date) {
+        if (datesSet.add(date)) {
+            dates.add(date);
+        }
     }
 
     public String getOldestDate() {
