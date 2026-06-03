@@ -21,9 +21,12 @@ import nl.obren.sokrates.sourcecode.units.UnitInfo;
 import nl.obren.sokrates.sourcecode.units.UnitUtils;
 import nl.obren.sokrates.sourcecode.units.UnitsExtractor;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static nl.obren.sokrates.sourcecode.analysis.AnalysisUtils.getMetricId;
@@ -147,18 +150,25 @@ public class UnitsAnalyzer extends Analyzer {
     }
 
     private void updateFilesWithUnitInfo() {
+        // Aggregate units by their source File in a single pass (keyed by File identity, matching the
+        // previous '==' comparison) instead of streaming all units once per file - which was
+        // O(files * units).
+        Map<File, int[]> unitInfoByFile = new IdentityHashMap<>();
+        allUnits.forEach(unitInfo -> {
+            int[] acc = unitInfoByFile.computeIfAbsent(unitInfo.getSourceFile().getFile(), k -> new int[3]);
+            acc[0] += 1;                              // units count
+            acc[1] += unitInfo.getMcCabeIndex();      // McCabe index sum
+            acc[2] += unitInfo.getLinesOfCode();      // lines of code in units
+        });
+
         filesAnalysisResults.getAllFiles().forEach(sourceFile -> {
-            final int[] unitsLoc = {0};
-            final int[] unitsCount = {0};
-            final int[] mcCabeIndexSum = {0};
-            allUnits.stream().filter(u -> u.getSourceFile().getFile() == sourceFile.getFile()).forEach(unitInfo -> {
-                unitsCount[0] += 1;
-                mcCabeIndexSum[0] += unitInfo.getMcCabeIndex();
-                unitsLoc[0] += unitInfo.getLinesOfCode();
-            });
-            sourceFile.setUnitsCount(unitsCount[0]);
-            sourceFile.setUnitsMcCabeIndexSum(mcCabeIndexSum[0]);
-            sourceFile.setLinesOfCodeInUnits(unitsLoc[0]);
+            int[] acc = unitInfoByFile.get(sourceFile.getFile());
+            if (acc == null) {
+                acc = new int[3];
+            }
+            sourceFile.setUnitsCount(acc[0]);
+            sourceFile.setUnitsMcCabeIndexSum(acc[1]);
+            sourceFile.setLinesOfCodeInUnits(acc[2]);
         });
     }
 
