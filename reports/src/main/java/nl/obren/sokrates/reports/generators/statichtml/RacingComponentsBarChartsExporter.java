@@ -21,7 +21,9 @@ public class RacingComponentsBarChartsExporter {
     private CodeAnalysisResults analysisResults;
     private String logicalDecompositionKey;
     private int logicalDecompositionIndex = 1;
-    private int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+    // Use the analysis year (honours the configurable analysis date) rather than the wall-clock year,
+    // to stay consistent with the other history reports.
+    private int currentYear = DateUtils.getAnalysisYear();
     private int startYear = currentYear;
     private Map<String, Integer> commitsMap = new HashMap<>();
     private List<RacingChartItem> items = new ArrayList<>();
