@@ -3,6 +3,7 @@ package nl.obren.sokrates.reports.landscape.utils;
 import nl.obren.sokrates.common.renderingutils.RacingChartItem;
 import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -20,8 +21,10 @@ public class RacingRepositoriesBarChartsExporter {
 
     private LandscapeAnalysisResults landscapeAnalysisResults;
     private List<Pair<String, List<ContributionTimeSlot>>> contributions;
-    private int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-    private int currentMonth = Calendar.getInstance().get(Calendar.MONTH);
+    // Analysis year (honours the configurable analysis date), consistent with the other reports.
+    private int currentYear = DateUtils.getAnalysisYear();
+    // 1-based month, matching the yyyy-MM time-slot keys parsed in findStartYearAndMonth.
+    private int currentMonth = Calendar.getInstance().get(Calendar.MONTH) + 1;
     private int startYear = currentYear;
     private int startMonth = currentMonth;
     private Map<String, Integer> commitsMap = new HashMap<>();
@@ -55,7 +58,10 @@ public class RacingRepositoriesBarChartsExporter {
         List<Integer> cumulativeContributorsList = new ArrayList<>();
         for (int year = startYear; year <= currentYear; year++) {
             int firstTwoMonthsCommits = 0;
-            for (int month = (year == startYear ? startMonth - 1 : 0); month < 12; month++) {
+            // Time slots are keyed by 1-based calendar month (yyyy-MM, 01..12); iterate accordingly.
+            // startMonth is the 1-based month parsed in findStartYearAndMonth.
+            int firstMonth = (year == startYear ? startMonth : 1);
+            for (int month = firstMonth; month <= 12; month++) {
                 String name = contribution.getLeft();
                 String key = name + "::" + year + "-" + (month < 10 ? "0" : "") + month;
                 int monthCommitsValue = commitsMap.containsKey(key) ? commitsMap.get(key) : 0;
@@ -68,8 +74,12 @@ public class RacingRepositoriesBarChartsExporter {
                 if (cumulativeContributorsList.size() > windowSize) {
                     cumulativeContributorsList.remove(0);
                 }
+                // The racing-chart x-axis fits 10 frames per year (year + 0.0 .. year + 0.9). Fold the
+                // first two months of the year into the third frame so the remaining 10 months map to
+                // those 10 slots. monthFrame is the 0-based position of the rendered frame within the year.
+                int monthFrame = month - 3;
                 int valueCommits = monthCommitsValue;
-                if (month < 2) {
+                if (month < 3) {
                     firstTwoMonthsCommits += valueCommits;
                     continue;
                 } else {
@@ -79,7 +89,7 @@ public class RacingRepositoriesBarChartsExporter {
                     RacingChartItem itemCommits = new RacingChartItem(name);
                     cumulativeCommits += valueCommits;
                     itemCommits.setValue(Math.round(cumulativeCommits) > 0 ? Math.round(cumulativeCommits) : 0.1);
-                    itemCommits.setYear(year + (month - 2) / 10.0);
+                    itemCommits.setYear(year + monthFrame / 10.0);
                     items.add(itemCommits);
                 }
 
@@ -87,7 +97,7 @@ public class RacingRepositoriesBarChartsExporter {
                 if (averageContributorsPerMonth > 0.1) {
                     RacingChartItem itemContributorsPerMonth = new RacingChartItem(name);
                     itemContributorsPerMonth.setValue(averageContributorsPerMonth > 0.1 ? Math.round(100.0 * averageContributorsPerMonth) / 100 : 0.1);
-                    itemContributorsPerMonth.setYear(year + (month - 2) / 10.0);
+                    itemContributorsPerMonth.setYear(year + monthFrame / 10.0);
                     itemsContributorsPerMonth.add(itemContributorsPerMonth);
                 }
 
@@ -95,7 +105,7 @@ public class RacingRepositoriesBarChartsExporter {
                 if (Math.round(sumCommits) > 0) {
                     RacingChartItem itemCommitsSum12Months = new RacingChartItem(name);
                     itemCommitsSum12Months.setValue(Math.round(sumCommits) > 0 ? Math.round(sumCommits) : 0.1);
-                    itemCommitsSum12Months.setYear(year + (month - 2) / 10.0);
+                    itemCommitsSum12Months.setYear(year + monthFrame / 10.0);
                     items12Month.add(itemCommitsSum12Months);
                 }
             }
