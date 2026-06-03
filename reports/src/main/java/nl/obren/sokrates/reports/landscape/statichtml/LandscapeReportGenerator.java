@@ -1008,7 +1008,7 @@ public class LandscapeReportGenerator {
                 FormattingUtils.getSmallTextForNumber(loc180Days) + " LOC (" + FormattingUtils.getFormattedPercentage(100.0 * loc180Days / Math.max(1, locAll)) + "%)",
                 "all repositories updated in the past 180 days with at least " + contributorConstraint, REPOSITORIES_COLOR, "repository");
         addInfoBlock(FormattingUtils.getSmallTextForNumber(size90Days), "past 90d",
-                FormattingUtils.getSmallTextForNumber(loc180Days) + " LOC (" + FormattingUtils.getFormattedPercentage(100.0 * loc90Days / Math.max(1, locAll)) + "%)",
+                FormattingUtils.getSmallTextForNumber(loc90Days) + " LOC (" + FormattingUtils.getFormattedPercentage(100.0 * loc90Days / Math.max(1, locAll)) + "%)",
                 "all repositories updated in the past 90 days with at least " + contributorConstraint, REPOSITORIES_COLOR, "repository");
         addFreshInfoBlock(FormattingUtils.getSmallTextForNumber(recentSize), "past 30d",
                 FormattingUtils.getSmallTextForNumber(recentLoc) + " LOC (" + FormattingUtils.getFormattedPercentage(100.0 * recentLoc / Math.max(1, locAll)) + "%)",
