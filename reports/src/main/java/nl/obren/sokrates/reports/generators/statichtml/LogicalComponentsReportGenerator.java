@@ -366,7 +366,7 @@ public class LogicalComponentsReportGenerator {
             if (groupDependenciesMap.containsKey(key1)) {
                 groupDependenciesMap.get(key1).setCount(groupDependenciesMap.get(key1).getCount() + dependency.getCount());
             } else if (groupDependenciesMap.containsKey(key2)) {
-                groupDependenciesMap.get(key2).setCount(groupDependenciesMap.get(key1).getCount() + dependency.getCount());
+                groupDependenciesMap.get(key2).setCount(groupDependenciesMap.get(key2).getCount() + dependency.getCount());
             } else {
                 ComponentDependency newDependency = new ComponentDependency(from, to);
                 newDependency.setCount(dependency.getCount());
@@ -651,7 +651,8 @@ public class LogicalComponentsReportGenerator {
         chart.setBarStartXOffset(2);
         chart.setSmallerFontSize();
 
-        double percentage = 100.0 * locFromDuplications / fromComponentByName.getLinesOfCode();
+        int componentLinesOfCode = fromComponentByName.getLinesOfCode();
+        double percentage = componentLinesOfCode > 0 ? 100.0 * locFromDuplications / componentLinesOfCode : 0;
         String percentageText = FormattingUtils.getFormattedPercentage(percentage) + "%";
 
         String textRight = dependencyCount + " "
