@@ -47,12 +47,11 @@ public class RegexUtils {
 
     public static boolean matchesAnyPattern(String line, List<String> patterns) {
         for (String patternString : patterns) {
-            try {
-                if (Pattern.compile(patternString).matcher(line).matches()) {
-                    return true;
-                }
-            } catch (PatternSyntaxException e) {
-                LOG.debug(e);
+            // Delegate to matchesEntirely so each pattern is compiled once and cached; this is a hot
+            // path (bot / team / ignore-contributor / scope matching). Same semantics as before:
+            // full-string match, an invalid pattern is treated as non-matching.
+            if (matchesEntirely(patternString, line)) {
+                return true;
             }
         }
         return false;
