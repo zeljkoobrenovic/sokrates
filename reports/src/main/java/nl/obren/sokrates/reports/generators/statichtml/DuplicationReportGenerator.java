@@ -122,6 +122,9 @@ public class DuplicationReportGenerator {
         ProcessingStopwatch.start("reporting/duplication/longest duplicates");
         addLongestDuplicatesList(report);
         ProcessingStopwatch.end("reporting/duplication/longest duplicates");
+        ProcessingStopwatch.start("reporting/duplication/most frequent duplicates");
+        addMostFrequentDuplicatesList(report);
+        ProcessingStopwatch.end("reporting/duplication/most frequent duplicates");
         ProcessingStopwatch.start("reporting/duplication/duplicated units");
         addDuplicatedUnitsList(report);
         ProcessingStopwatch.end("reporting/duplication/duplicated units");
@@ -490,7 +493,8 @@ public class DuplicationReportGenerator {
     }
 
 
-    private void addMostFrequentDuplicatesList(RichTextReport report) {
+    // Package-private for testing.
+    void addMostFrequentDuplicatesList(RichTextReport report) {
         List<DuplicationInstance> duplicates = codeAnalysisResults.getDuplicationAnalysisResults().getMostFrequentDuplicates();
         if (duplicates.size() > 0) {
             report.startSection("Most Frequent Duplicates", "The list of " + duplicates.size() + " most frequently found duplicates.");
