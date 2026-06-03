@@ -201,6 +201,32 @@ public class UnitUtilsTest {
         assertEquals(instance.get(1).getVeryHighRiskValue(), 0);
     }
 
+    // A unit can be in scope of a decomposition yet have no named logical component in it.
+    // The conditional-complexity aggregation used to call .get(0) unconditionally and crash;
+    // it must now mirror the unit-size aggregation and bucket such units under the "" key.
+    @Test
+    public void getConditionalComplexityDistributionPerComponentWithoutLogicalComponent() throws Exception {
+        List<UnitInfo> units = new ArrayList<>();
+        UnitInfo unit = new UnitInfo();
+        unit.setLinesOfCode(20);
+        unit.setMcCabeIndex(2);
+        unit.setSourceFile(new SourceFile(new File("A.java"), " ")); // no logical components added
+        units.add(unit);
+
+        LogicalDecomposition logicalDecomposition = new LogicalDecomposition("") {
+            @Override
+            public boolean isInScope(SourceFile sourceFile) {
+                return true;
+            }
+        };
+
+        List<RiskDistributionStats> instance = UnitUtils.getConditionalComplexityDistributionPerComponent(
+                Arrays.asList(logicalDecomposition), units, Thresholds.defaultConditionalComplexityThresholds()).get(0);
+        assertEquals(instance.size(), 1);
+        assertEquals(instance.get(0).getKey(), "");
+        assertEquals(instance.get(0).getNegligibleRiskValue(), 20);
+    }
+
     @Test
     public void getAggregateUnitSizeRiskDistribution() throws Exception {
         List<UnitInfo> units = new ArrayList<>();

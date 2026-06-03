@@ -77,7 +77,16 @@ public class UnitUtils {
         List<List<RiskDistributionStats>> componentStats = new ArrayList<>();
         logicalDecompositions.forEach(logicalDecomposition -> {
             List<UnitInfo> unitsInScope = units.stream().filter(unit -> logicalDecomposition.isInScope(unit.getSourceFile())).collect(Collectors.toList());
-            componentStats.add(getAggregateConditionalComplexityRiskDistribution(unitsInScope, thresholds, unit -> unit.getSourceFile().getLogicalComponents(logicalDecomposition.getName()).get(0).getName()));
+            componentStats.add(getAggregateConditionalComplexityRiskDistribution(unitsInScope, thresholds,
+                    unit -> {
+                        List<NamedSourceCodeAspect> logicalComponents = unit.getSourceFile().getLogicalComponents(logicalDecomposition.getName());
+                        if (logicalComponents.size() > 0)
+                            return logicalComponents.get(0).getName();
+                        else {
+                            return "";
+                        }
+                    }
+            ));
         });
         return componentStats;
     }

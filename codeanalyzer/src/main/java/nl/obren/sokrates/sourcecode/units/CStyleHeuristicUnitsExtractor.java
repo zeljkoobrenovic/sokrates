@@ -33,7 +33,7 @@ public class CStyleHeuristicUnitsExtractor {
             " while ",
             " for ",
             " foreach ",
-            "case ",
+            " case ",
             "&&",
             "||",
             " ? ",
@@ -56,10 +56,6 @@ public class CStyleHeuristicUnitsExtractor {
 
         removeOverlaps(units);
         return units;
-    }
-    public int getMcCabeIndex(SourceFile sourceFile) {
-        String cleanedBody = getCleanedBody(cleanedLines, 0, cleanedLines.size());
-        return getMcCabeIndex(cleanedBody);
     }
 
     private int extractUnit(int lineIndex, String line) {
@@ -242,12 +238,10 @@ public class CStyleHeuristicUnitsExtractor {
     }
 
     protected int getEndOfUnitBodyIndex(List<String> lines, int startIndex) {
-        StringBuilder unitBody = new StringBuilder();
         int startCount = 0;
         int endCount = 0;
         for (int i = startIndex; i < lines.size(); i++) {
             String line = lines.get(i).trim();
-            unitBody.append(line + "\n");
             startCount += StringUtils.countMatches(line, "{");
             endCount += StringUtils.countMatches(line, "}");
 

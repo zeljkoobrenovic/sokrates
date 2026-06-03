@@ -236,6 +236,22 @@ public class CStyleHeuristicUnitsExtractorTest {
     }
 
     @Test
+    public void mcCabeIgnoresCaseInsideIdentifiers() throws Exception {
+        CStyleHeuristicUnitsExtractor unitParser = new CStyleHeuristicUnitsExtractor();
+
+        // "lowercase"/"uppercase" contain the substring "case " but are not switch labels;
+        // the McCabe count must stay 1 (no decision points).
+        List<UnitInfo> units = unitParser.extractUnits(new SourceFile(new File("test"), "class A {\n" +
+                "    public String normalize(String lowercase, String uppercase) {\n" +
+                "        return lowercase + uppercase;\n" +
+                "    }\n" +
+                "}"));
+
+        Assert.assertEquals(units.size(), 1);
+        Assert.assertEquals(units.get(0).getMcCabeIndex(), 1);
+    }
+
+    @Test
     public void parseComplexExample() throws Exception {
         CStyleHeuristicUnitsExtractor unitParser = new CStyleHeuristicUnitsExtractor();
 

@@ -9,12 +9,10 @@ import java.util.regex.Pattern;
 public class CppUnitsExtractor extends CStyleHeuristicUnitsExtractor {
     @Override
     protected int getEndOfUnitBodyIndex(List<String> lines, int startIndex) {
-        StringBuilder unitBody = new StringBuilder();
         int startCount = 0;
         int endCount = 0;
         for (int i = startIndex; i < lines.size(); i++) {
             String line = lines.get(i).trim();
-            unitBody.append(line + "\n");
             startCount += StringUtils.countMatches(line, "{");
             endCount += StringUtils.countMatches(line, "}");
 
