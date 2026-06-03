@@ -18,6 +18,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CStyleHeuristicUnitsExtractor {
+    // Constant unit-signature pattern: one or more space-separated identifiers followed by "(".
+    // Compiled once (static) rather than per candidate line — isUnitSignature runs for every line
+    // of every file across all C-style languages, so recompiling here was a measurable hot spot.
+    private static final String IDENTIFIER_PATTERN = "[a-zA-Z0-9_$?:~]+";
+    private static final Pattern START_UNIT_PATTERN =
+            Pattern.compile("(" + IDENTIFIER_PATTERN + "[ ]+)+" + IDENTIFIER_PATTERN + "[ ]*[(]");
+
     private boolean extractRecursively = false;
 
     private SourceFile sourceFile;
@@ -260,10 +267,7 @@ public class CStyleHeuristicUnitsExtractor {
         if (line.contains("(") && !line.contains(";") && !line.contains("new ") && !line.trim().startsWith("else ")
                 && !line.contains("return ") && !line.trim().startsWith("?") && !line.trim().startsWith(":")) {
             line = line.substring(0, line.indexOf("(") + 1);
-            String identifierPattern = "[a-zA-Z0-9_$?:~]+";
-            String startUnitRegex = "(" + identifierPattern + "[ ]+)+" + identifierPattern + "[ ]*[(]";
-            Pattern pattern = Pattern.compile(startUnitRegex);
-            Matcher matcher = pattern.matcher(line);
+            Matcher matcher = START_UNIT_PATTERN.matcher(line);
             if (matcher.matches()) {
                 return true;
             }
