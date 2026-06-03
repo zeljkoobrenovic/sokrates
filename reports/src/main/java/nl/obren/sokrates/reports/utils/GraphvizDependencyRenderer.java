@@ -10,7 +10,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class GraphvizDependencyRenderer {
 
@@ -58,17 +60,6 @@ public class GraphvizDependencyRenderer {
         return componentDependency.getText() == null
                 ? componentDependency.getCount() + ""
                 : componentDependency.getText();
-    }
-
-    private static boolean isCyclic(List<ComponentDependency> componentDependencies, ComponentDependency dependency) {
-        ComponentDependency reverseDependency = new ComponentDependency(dependency.getToComponent(), dependency.getFromComponent());
-        for (ComponentDependency componentDependency : componentDependencies) {
-            if (componentDependency.getFromComponent().equals(reverseDependency.getFromComponent())
-                    && componentDependency.getToComponent().equals(reverseDependency.getToComponent())) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private static int getMaxDependencyCount(List<ComponentDependency> values) {
@@ -139,12 +130,19 @@ public class GraphvizDependencyRenderer {
         });
         graphviz.append("\n");
 
-        List<ComponentDependency> renderDependencies = componentDependencies;
+        // Copy before sorting: callers pass their canonical dependency list, and sorting in place
+        // would reorder it as a side effect.
+        List<ComponentDependency> renderDependencies = new ArrayList<>(componentDependencies);
         Collections.sort(renderDependencies, (a, b) -> b.getCount() - a.getCount());
 
         if (maxNumberOfDependencies > 0 && renderDependencies.size() > maxNumberOfDependencies) {
             renderDependencies = renderDependencies.subList(0, maxNumberOfDependencies);
         }
+
+        // Pre-index directed edges so the cyclic check is O(1) instead of scanning all dependencies
+        // per rendered edge (the render loop was O(rendered x total)).
+        Set<String> edgeKeys = new HashSet<>();
+        componentDependencies.forEach(d -> edgeKeys.add(d.getFromComponent() + "::" + d.getToComponent()));
 
         renderDependencies.stream()
                 .filter(d -> StringUtils.isNotBlank(d.getFromComponent()) && StringUtils.isNotBlank(d.getToComponent()))
@@ -152,7 +150,8 @@ public class GraphvizDependencyRenderer {
                     int thickness = getThickness(componentDependency, maxCount);
                     String color = componentDependency.getColor();
                     if (StringUtils.isBlank(color)) {
-                        color = isCyclic(componentDependencies, componentDependency) ? this.cyclicArrowColor : this.arrowColor;
+                        color = edgeKeys.contains(componentDependency.getToComponent() + "::" + componentDependency.getFromComponent())
+                                ? this.cyclicArrowColor : this.arrowColor;
                     }
                     int transparency = (int) (255.0 * (0.3 + 0.7 * thickness / 10.0));
                     color += String.format("%02X", transparency);
