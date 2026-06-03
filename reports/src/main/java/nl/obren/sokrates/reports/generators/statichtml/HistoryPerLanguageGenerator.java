@@ -51,32 +51,7 @@ public class HistoryPerLanguageGenerator {
 
     public void addHistoryPerLanguage(RichTextReport report) {
         this.report = report;
-        List<HistoryPerExtension> mergedHistory = new ArrayList<>();
-        Map<String, HistoryPerExtension> mergedHistoryMap = new HashMap<>();
-
-        this.history.forEach(languageHistory -> {
-            String extension = languageHistory.getExtension();
-            String mergedExtension = this.getMergedExtension(extension);
-            String year = languageHistory.getYear();
-
-            String key = mergedExtension + "::" + year;
-
-            if (mergedHistoryMap.containsKey(key)) {
-                HistoryPerExtension existing = mergedHistoryMap.get(key);
-                existing.setCommitsCount(existing.getCommitsCount() + languageHistory.getCommitsCount());
-                existing.getContributors().addAll(languageHistory.getContributors());
-            } else {
-                HistoryPerExtension newItem = new HistoryPerExtension(languageHistory.getExtension(),
-                        languageHistory.getYear(),
-                        languageHistory.getCommitsCount());
-                newItem.getContributors().addAll(languageHistory.getContributors());
-                mergedHistoryMap.put(key, newItem);
-                mergedHistory.add(newItem);
-            }
-        });
-
-        this.max = mergedHistory.stream().mapToInt(value -> getValue(value)).max().orElse(0);
-        this.firstYear = mergedHistory.stream().mapToInt(value -> getYearInteger(value)).min().orElse(0);
+        computeMaxAndFirstYear();
 
         report.startTable();
         addHeader();
@@ -88,15 +63,26 @@ public class HistoryPerLanguageGenerator {
 
     public void addHistoryPerComponent(RichTextReport report) {
         this.report = report;
+        computeMaxAndFirstYear();
+
+        report.startTable();
+        addHeader();
+        getExtensions().stream().limit(MAX_NUMBER_OF_EXTENSIONS).forEach(extension -> {
+            addComponentRow(extension);
+        });
+        report.endTable();
+    }
+
+    // Merge the per-extension history by (mergedExtension, year) and derive the value scale (max) and
+    // earliest year used by the rendering. Cell values are re-derived from the raw history in
+    // getCommitsCount, so the merged list is used only for these two aggregate bounds.
+    private void computeMaxAndFirstYear() {
         List<HistoryPerExtension> mergedHistory = new ArrayList<>();
         Map<String, HistoryPerExtension> mergedHistoryMap = new HashMap<>();
 
         this.history.forEach(languageHistory -> {
-            String extension = languageHistory.getExtension();
-            String mergedExtension = this.getMergedExtension(extension);
-            String year = languageHistory.getYear();
-
-            String key = mergedExtension + "::" + year;
+            String mergedExtension = this.getMergedExtension(languageHistory.getExtension());
+            String key = mergedExtension + "::" + languageHistory.getYear();
 
             if (mergedHistoryMap.containsKey(key)) {
                 HistoryPerExtension existing = mergedHistoryMap.get(key);
@@ -112,15 +98,8 @@ public class HistoryPerLanguageGenerator {
             }
         });
 
-        this.max = mergedHistory.stream().mapToInt(value -> getValue(value)).max().orElse(0);
+        this.max = Math.max(1, mergedHistory.stream().mapToInt(value -> getValue(value)).max().orElse(0));
         this.firstYear = mergedHistory.stream().mapToInt(value -> getYearInteger(value)).min().orElse(0);
-
-        report.startTable();
-        addHeader();
-        getExtensions().stream().limit(MAX_NUMBER_OF_EXTENSIONS).forEach(extension -> {
-            addComponentRow(extension);
-        });
-        report.endTable();
     }
 
     public int getYearInteger(HistoryPerExtension value) {
