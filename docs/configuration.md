@@ -7,6 +7,7 @@ controlled by editing these files.
 | --- | --- | --- |
 | `_sokrates/config.json` | **Repository analysis** — how a single code base is scoped, analysed, decomposed, tagged, and what goals/controls apply. | `sokrates init` |
 | `_sokrates_landscape/config.json` | **Landscape** — how many repository analyses are aggregated into a portfolio report. | `sokrates updateLandscape` |
+| `analysis_conventions.json` | **Custom scoping conventions** (optional) — reusable rules fed into `init` to control how files are classified, which extensions are scanned, and the defaults baked into the generated `_sokrates/config.json`. | `sokrates createConventionsFile` / `exportStandardConventions` |
 
 Both files are read with a tolerant JSON parser: **unknown keys are ignored**, and any key
 you omit falls back to its default. You can therefore keep your config minimal and add only
@@ -434,3 +435,168 @@ analysis-root/
 ├── repo-b/data/analysisResults.json
 └── team-x/_sokrates_landscape/         # a folder-based sub-landscape (optional)
 ```
+
+---
+
+# Part 3 — Custom scoping conventions: `analysis_conventions.json`
+
+`_sokrates/config.json` (Part 1) is produced by `sokrates init`, which scans your source tree
+and applies a large set of **standard conventions** — rules that decide which file extensions
+are source code, and which files are tests, generated, build-and-deployment, "other", or
+ignored. Those standard conventions are baked into Sokrates (`ScopingConventions.java`) and
+are based on GitHub's [linguist](https://github.com/github/linguist) heuristics.
+
+A **conventions file** lets you override or extend that classification step *before* the
+`config.json` is written, and to set the defaults baked into the generated config. It is
+optional: omit it and `init` uses only the standard conventions. Pass it with `-conventionsFile`:
+
+```bash
+sokrates init -srcRoot <path> -conventionsFile analysis_conventions.json
+```
+
+Backed by `CustomScopingConventions` (`codeanalyzer/.../sourcecode/scoping/custom/`).
+
+## When to use it vs. editing `config.json`
+
+| | `analysis_conventions.json` | `_sokrates/config.json` |
+| --- | --- | --- |
+| Applied | at `init` time, before the config is generated | at `generateReports` time |
+| Scope | **reusable** across many repositories (a portfolio standard) | a single repository |
+| Granularity | matched against the files actually present, then materialised into the config | the literal, already-resolved rules |
+
+Use a conventions file when you have a house style you want every repository's `init` to
+follow (e.g. always treat `*.gen.go` as generated, always ignore a vendored folder, always
+flag a set of concerns). For a one-off tweak to a single repository, edit its `config.json`
+directly. The two compose: custom conventions are *added on top of* the standard ones unless
+you opt out (see `ignoreStandardScopingConventions` below).
+
+## Creating one
+
+```bash
+sokrates createConventionsFile      # writes an empty analysis_conventions.json (all defaults)
+sokrates exportStandardConventions  # writes standard_analysis_conventions.json (the full
+                                    #   built-in standard rules, as a starting point to edit)
+```
+
+`createConventionsFile` is the usual starting point — you add only the keys you want. Use
+`exportStandardConventions` when you want to see (and selectively change) the complete set of
+built-in rules.
+
+## How conventions are applied at `init`
+
+`ScopeCreator.createScopeFromConventions(...)` builds the config in this order:
+
+1. **Extensions** — the source tree is scanned and each extension is kept or dropped by
+   `extensions.onlyInclude` / `extensions.alwaysExclude` (below), falling back to Sokrates's
+   list of known source-code extensions.
+2. **Standard scoping** — unless `ignoreStandardScopingConventions` is `true`, every standard
+   ignore/test/generated/build/other rule that matches a file actually present is added to the
+   corresponding aspect.
+3. **Custom scoping** — your custom `*FilesConventions` are matched against the present files
+   and appended to the same aspects (a rule already added by the standard pass is not
+   duplicated). Concerns, contributor/bot filters, tag rules, goals/controls, analysis and
+   file-history settings, logo, and component-folder depth are applied as described below.
+
+A convention only lands in the generated `config.json` if it **matches at least one file** in
+the scanned source tree — the output stays specific to that repository.
+
+## Keys
+
+| Key | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `extensions` | object | `{}` | Extension allow/deny list applied before scoping (see below). |
+| `ignoreStandardScopingConventions` | bool | `false` | If `true`, skip the built-in scoping rules entirely and use **only** the custom `*FilesConventions`. |
+| `removeStandardConcerns` | bool | `false` | If `true`, drop the default concern groups before adding custom `concerns`. |
+| `logoLink` | string | `""` | Logo URL written into the generated config's `metadata.logoLink`. |
+| `ignoredFilesConventions` | filter[] | `[]` | Custom rules that classify files as **ignored** (excluded entirely). |
+| `testFilesConventions` | filter[] | `[]` | Custom rules that classify files into the **test** scope. |
+| `generatedFilesConventions` | filter[] | `[]` | Custom rules that classify files into the **generated** scope. |
+| `buildAndDeploymentFilesConventions` | filter[] | `[]` | Custom rules that classify files into the **buildAndDeployment** scope. |
+| `otherFilesConventions` | filter[] | `[]` | Custom rules that classify files into the **other** scope. |
+| `concerns` | concern[] | `[]` | Concerns appended to the first concern group (a `general` group is created if none exists). Same shape as a single concern in Part 1's `concernGroups`. |
+| `ignoreContributors` | string[] | `[]` | Regexes added to `fileHistoryAnalysis.ignoreContributors`. |
+| `bots` | string[] | `[]` | Regexes added to `fileHistoryAnalysis.bots`. |
+| `componentsFolderDepth` | int | `1` | Folder depth used to derive components in the primary logical decomposition. |
+| `minComponentsCount` | int | `0` | If `> 0`, overrides `componentsFolderDepth` by searching for a depth that yields at least this many components. |
+| `ignoreStandardControls` | bool | `false` | If `true`, clear the default goals/controls before adding custom `goalsAndControls`. |
+| `goalsAndControls` | object[] | `[]` | Custom goals/controls (same shape as Part 1's `goalsAndControls`), added to the config. |
+| `fileHistoryAnalysis` | object | defaults | Replaces the generated config's `fileHistoryAnalysis` block (same shape as Part 1). |
+| `analysis` | object | defaults | Replaces the generated config's `analysis` block (same shape as Part 1). |
+| `tagRules` | object[] | `[]` | If non-empty, **replaces** the default `tagRules` in the generated config. |
+
+Any file aspect rule with no files matching it is silently skipped, so unused conventions
+never bloat the generated config.
+
+### `extensions`
+
+Controls which file extensions are even considered, *before* any scoping happens:
+
+```json
+"extensions": {
+  "onlyInclude": ["java", "kt"],
+  "alwaysExclude": ["min.js", "map"]
+}
+```
+
+- `onlyInclude` — if non-empty, **only** these extensions are analysed; everything else is
+  dropped (and `alwaysExclude` is ignored). A whitelist.
+- `alwaysExclude` — extensions to drop. A blacklist, applied only when `onlyInclude` is empty.
+
+Comparison is case-insensitive. With both empty, Sokrates falls back to its built-in list of
+known source-code extensions.
+
+### Scoping convention lists (`*FilesConventions`)
+
+Each entry is a **`SourceFileFilter`** — the same shape used everywhere else in the config
+(`pathPattern`, `contentPattern`, optional `exception`, optional `note`). For conventions, a
+`contentPattern` may additionally be bounded by `maxLinesForContentSearch` (how many leading
+lines of the file to scan when matching content — useful for "generated" banner comments).
+
+```json
+"generatedFilesConventions": [
+  { "pathPattern": ".*[.]gen[.]go", "contentPattern": "", "note": "Codegen output" },
+  { "pathPattern": ".*[.]go", "contentPattern": "// Code generated .* DO NOT EDIT[.]", "note": "Go codegen banner" }
+],
+"ignoredFilesConventions": [
+  { "pathPattern": ".*/thirdparty/.*", "contentPattern": "", "note": "Vendored code" }
+],
+"testFilesConventions": [
+  { "pathPattern": ".*/it/.*", "contentPattern": "", "note": "Integration tests" }
+]
+```
+
+A file matches a convention when its path matches `pathPattern` **and** (if set) some line
+matches `contentPattern`. Leave `pathPattern` empty to match purely on content.
+
+### Full example
+
+```json
+{
+  "extensions": { "alwaysExclude": ["min.js"] },
+  "ignoreStandardScopingConventions": false,
+  "removeStandardConcerns": false,
+  "logoLink": "https://example.com/logo.png",
+  "testFilesConventions": [
+    { "pathPattern": ".*/it/.*", "contentPattern": "", "note": "Integration tests" }
+  ],
+  "generatedFilesConventions": [
+    { "pathPattern": ".*[.]gen[.]go", "contentPattern": "", "note": "Codegen output" }
+  ],
+  "ignoredFilesConventions": [
+    { "pathPattern": ".*/thirdparty/.*", "contentPattern": "", "note": "Vendored code" }
+  ],
+  "concerns": [
+    { "name": "TODOs", "sourceFileFilters": [ { "contentPattern": ".*(TODO|FIXME)( |:|\\t).*" } ] }
+  ],
+  "bots": [ ".*\\[bot\\].*" ],
+  "ignoreContributors": [ ".*-ci@example.com" ],
+  "componentsFolderDepth": 2,
+  "tagRules": [
+    { "tag": "backend", "pathPatterns": [".*/server/.*"] }
+  ]
+}
+```
+
+This file is reusable: point every repository's `sokrates init` at it
+(`-conventionsFile analysis_conventions.json`) to get a consistent classification across a
+whole portfolio.

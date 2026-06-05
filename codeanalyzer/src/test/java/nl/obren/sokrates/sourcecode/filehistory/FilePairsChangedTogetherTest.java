@@ -60,7 +60,8 @@ class FilePairsChangedTogetherTest {
         assertEquals(1, result.size());
         FilePairChangedTogether pair = result.get(0);
         assertEquals(1, pair.getCommits().size());
-        assertTrue(pair.getCommits().contains("c1"));
+        // CommitInfo stores the id as "<date> <id>", so the recorded shared commit reflects that format.
+        assertTrue(pair.getCommits().contains("2020-01-01 c1"));
     }
 
     @Test
