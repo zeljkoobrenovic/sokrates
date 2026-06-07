@@ -12,6 +12,21 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class PromptsUtils {
+    // Renders a prompt's "file to upload" link. Data files now live inside data/data.zip, so a link
+    // into the data folder becomes a client-side extract+download (downloadDataFile); other links
+    // render as normal anchors.
+    private static String renderUploadLink(Link uploadFile) {
+        String href = uploadFile.getHref();
+        // Only the per-repository data folder ("../data/...") is packaged into data.zip and served
+        // via the client-side downloader. Landscape-level data links ("data/...") are loose files
+        // in the landscape folder and stay normal anchors.
+        if (href != null && href.startsWith("../data/")) {
+            String dataEntry = href.substring("../data/".length());
+            return "<a href='#' onclick=\"return downloadDataFile('" + dataEntry + "')\">" + uploadFile.getLabel() + "</a>";
+        }
+        return "<a target='_blank' href='" + href + "'>" + uploadFile.getLabel() + "</a>";
+    }
+
     public static void addRepositoryPromptSection(String promptFile, RichTextReport report, CodeAnalysisResults analysisResults, String title, String subTitle, List<Link> filesToUpload) {
         String promptContent = HtmlTemplateUtils.getResource("/prompts/" + promptFile + ".txt");
 
@@ -28,7 +43,7 @@ public class PromptsUtils {
             if (StringUtils.isNotBlank(links)) {
                 links += " | ";
             }
-            links += "<a target='_blank' href='" + uploadFile.getHref() + "'>" + uploadFile.getLabel() + "</a>";
+            links += renderUploadLink(uploadFile);
         }
 
         report.addParagraph("Files to upload: " + links, "");
@@ -55,7 +70,7 @@ public class PromptsUtils {
             if (StringUtils.isNotBlank(links)) {
                 links += " | ";
             }
-            links += "<a target='_blank' href='" + uploadFile.getHref() + "'>" + uploadFile.getLabel() + "</a>";
+            links += renderUploadLink(uploadFile);
         }
 
         report.addParagraph("Files to upload: " + links, "");

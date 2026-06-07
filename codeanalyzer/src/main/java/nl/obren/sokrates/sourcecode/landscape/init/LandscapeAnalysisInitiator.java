@@ -99,7 +99,10 @@ public class LandscapeAnalysisInitiator {
     }
 
     private boolean isSokratesAnalysisFile(Path file) {
-        return file.endsWith("data/analysisResults.json");
+        // A repository's data folder is now packaged as data/data.zip (analysisResults.json lives
+        // inside it). Discover repositories by that zip; the repository link still records the
+        // conceptual data/analysisResults.json path (the analyzer resolves the data folder from it).
+        return file.endsWith("data/data.zip");
     }
 
     private boolean isSokratesLandscapeFile(Path file) {
@@ -107,7 +110,10 @@ public class LandscapeAnalysisInitiator {
     }
 
     private void processAnalysisResultFile(File root, LandscapeConfiguration configuration, Path file) {
-        String relativePath = root.toPath().relativize(file).toString();
+        // file points at the discovered data/data.zip; the repository link keeps the conceptual
+        // data/analysisResults.json path (its parent folder is what the analyzer reads the zip from).
+        String relativePath = root.toPath().relativize(file).toString()
+                .replaceAll("data\\.zip$", "analysisResults.json");
         configuration.getRepositories().add(new SokratesRepositoryLink(relativePath));
 
         LOG.info("Adding repositories: " + relativePath);

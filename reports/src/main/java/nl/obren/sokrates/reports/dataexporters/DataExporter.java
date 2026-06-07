@@ -115,6 +115,39 @@ public class DataExporter {
         saveTemporalDependencies(analysisResults);
     }
 
+    public static final String DATA_ZIP_FILE_NAME = "data.zip";
+
+    // Collapses the per-repository data/ folder (all JSON + text/*.txt + nested zips) into a single
+    // data/data.zip and removes the loose files. Drastically cuts the per-repo file count. The HTML
+    // reports fetch+extract individual entries on demand (downloadDataFile in ReportConstants), and
+    // the landscape analyzer reads each repo's data from this zip (LandscapeAnalyzer). Entry names
+    // are paths relative to data/ (e.g. "analysisResults.json", "text/aspect_main.txt"). Called by
+    // the CLI as the final data step, AFTER textual-summary + execution-stats are written, so those
+    // land inside the zip too.
+    public void zipDataFolder() {
+        try {
+            File zipFile = new File(dataFolder, DATA_ZIP_FILE_NAME);
+            ZipUtils.zipFolder(dataFolder, zipFile);
+
+            // Remove the now-redundant loose files/subfolders, keeping only data.zip.
+            File[] children = dataFolder.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    if (child.equals(zipFile)) {
+                        continue;
+                    }
+                    if (child.isDirectory()) {
+                        FileUtils.deleteDirectory(child);
+                    } else {
+                        FileUtils.deleteQuietly(child);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOG.warn(e);
+        }
+    }
+
     private void exportMetrics() {
         StringBuilder content = new StringBuilder();
 

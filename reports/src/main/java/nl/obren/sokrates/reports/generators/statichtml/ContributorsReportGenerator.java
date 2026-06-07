@@ -181,7 +181,7 @@ public class ContributorsReportGenerator {
         report.startTabContentSection("data", false);
         report.startUnorderedList();
         report.startListItem();
-        report.addNewTabLink("Contributors' details...", "../data/text/contributors.txt");
+        report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('text/contributors.txt')\">" + "Contributors' details..." + "</a>");
         report.endListItem();
         report.endUnorderedList();
         report.endTabContentSection();

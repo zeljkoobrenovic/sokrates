@@ -87,12 +87,12 @@ public class FileAgeReportGenerator {
             if (ignoredFiles > 0) {
                 report.addListItem("Files without commit history (ignored): <b>" + FormattingUtils.formatCount(ignoredFiles) + " (" + FormattingUtils.formatCount(codeAnalysisResults.getFilesHistoryAnalysisResults().getFilesWithoutCommitHistoryLinesOfCode()) + " lines of code)</b>");
                 report.startUnorderedList();
-                report.addListItem("<a href='../data/text/mainFilesWithoutHistory.txt' target='_blank'>Files without history</a>");
+                report.addListItem("<a href='#' onclick=\"return downloadDataFile('text/mainFilesWithoutHistory.txt')\" target='_blank'>Files without history</a>");
                 report.endUnorderedList();
             }
             report.addListItem("Data:");
             report.startUnorderedList();
-            report.addListItem("<a href='../data/text/mainFilesWithHistory.txt' target='_blank'>Organized per file</a>");
+            report.addListItem("<a href='#' onclick=\"return downloadDataFile('text/mainFilesWithHistory.txt')\" target='_blank'>Organized per file</a>");
             report.endUnorderedList();
             report.endUnorderedList();
             report.endSection();

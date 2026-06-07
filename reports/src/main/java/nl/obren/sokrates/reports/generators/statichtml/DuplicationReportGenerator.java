@@ -139,7 +139,7 @@ public class DuplicationReportGenerator {
                 unitDuplicates = unitDuplicates.subList(0, maxTopListSize);
             }
             report.startSection("Duplicated Units", "The list of top " + unitDuplicates.size() + " duplicated units.");
-            report.addContentInDiv("<a href='../data/text/unit_duplicates.txt'>See data for all <b>" + FormattingUtils.formatCount(originalSize) + "</b> unit " + (originalSize == 1 ? "duplicate" : "duplicates...") + "</b></a>", "margin-bottom: 16px");
+            report.addContentInDiv("<a href='#' onclick=\"return downloadDataFile('text/unit_duplicates.txt')\">See data for all <b>" + FormattingUtils.formatCount(originalSize) + "</b> unit " + (originalSize == 1 ? "duplicate" : "duplicates...") + "</b></a>", "margin-bottom: 16px");
             getDuplicatesTable(report, unitDuplicates, "unit_duplicates");
             report.endSection();
         }
@@ -186,7 +186,7 @@ public class DuplicationReportGenerator {
         report.addListItem("<b>" + FormattingUtils.formatCount(duplicationAnalysisResults.getOverallDuplication().getCleanedLinesOfCode()) + "</b> cleaned lines of cleaned code (without empty lines, comments, and frequently duplicated constructs such as imports)");
         report.addListItem("<b>" + FormattingUtils.formatCount(duplicationAnalysisResults.getOverallDuplication().getDuplicatedLinesOfCode()) + "</b> duplicated lines");
         report.endUnorderedList();
-        report.addListItem("<a href='../data/text/duplicates.txt'><b>" + FormattingUtils.formatCount(duplicationAnalysisResults.getAllDuplicates().size()) + " duplicates</b></a>");
+        report.addListItem("<a href='#' onclick=\"return downloadDataFile('text/duplicates.txt')\"><b>" + FormattingUtils.formatCount(duplicationAnalysisResults.getAllDuplicates().size()) + " duplicates</b></a>");
         report.endUnorderedList();
         DuplicationReportUtils.addOverallDuplication(report, duplicationAnalysisResults.getOverallDuplication());
         export3DFileDependencies();
@@ -397,11 +397,11 @@ public class DuplicationReportGenerator {
             String filePairsText = pairsCount + (pairsCount == 1 ? " file pair" : " file pairs");
 
             report.startTableCell("text-align: center");
-            report.addNewTabLink(filePairsText, saveFilePairs(componentDependency));
+            report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + saveFilePairs(componentDependency) + "')\">" + filePairsText + "</a>");
             report.endTableCell();
 
             report.startTableCell();
-            report.addNewTabLink("details...", saveDuplicates(componentDependency, logicalDecompositionName, instances));
+            report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + saveDuplicates(componentDependency, logicalDecompositionName, instances) + "')\">details...</a>");
             report.endTableCell();
 
             report.endTableRow();
@@ -423,7 +423,7 @@ public class DuplicationReportGenerator {
             e.printStackTrace();
         }
 
-        return "../data/text/" + file.getName();
+        return "text/" + file.getName();
     }
 
     private String saveDuplicates(ComponentDependency componentDependency, String logicalDecompositionName, List<DuplicationInstance> allInstances) {
@@ -480,7 +480,7 @@ public class DuplicationReportGenerator {
             e.printStackTrace();
         }
 
-        return "../data/text/" + file.getName();
+        return "text/" + file.getName();
     }
 
     private LogicalDecomposition getLogicalDecomposition(int index) {
@@ -492,7 +492,7 @@ public class DuplicationReportGenerator {
         List<DuplicationInstance> longestDuplicates = duplicationAnalysisResults.getLongestDuplicates();
         report.startSection("Longest Duplicates", "The list of " + longestDuplicates.size() + " longest duplicates.");
         int size = duplicationAnalysisResults.getAllDuplicates().size();
-        report.addContentInDiv("<a href='../data/text/duplicates.txt'>See data for all <b>" + FormattingUtils.formatCount(size)
+        report.addContentInDiv("<a href='#' onclick=\"return downloadDataFile('text/duplicates.txt')\">See data for all <b>" + FormattingUtils.formatCount(size)
                 + "</b> " + (size == 1 ? "duplicate" : "duplicates...") + "</a>", "margin-bottom: 16px");
         getDuplicatesTable(report, longestDuplicates, "longest_duplicates");
         report.endSection();

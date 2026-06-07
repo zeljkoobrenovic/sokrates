@@ -204,8 +204,8 @@ public class ScopesRenderer {
                 filesFragment = FormattingUtils.formatCountPlural(count, "file", "files");
                 if (aspectsFileListPaths != null && aspectsFileListPaths.size() > i) {
                     if (count > 0) {
-                        filesFragment = "<u><a target='_blank' href='../data/text/aspect_" + aspectsFileListPaths.get(i)
-                                + ".txt'>" + filesFragment + "</a></u>";
+                        filesFragment = "<u><a href='#' onclick=\"return downloadDataFile('text/aspect_" + aspectsFileListPaths.get(i)
+                                + ".txt')\">" + filesFragment + "</a></u>";
                     }
                 }
                 item.setFilesFragment(filesFragment);
@@ -313,7 +313,7 @@ public class ScopesRenderer {
             String filesFragment;
             String filesPhrase = filesCount == 1 ? "file" : "files";
             if (StringUtils.isNotBlank(filesListPath)) {
-                filesFragment = "<a href='../data/text/" + filesListPath + "'><b>" + filesCount + "</b> " + filesPhrase + "</a>";
+                filesFragment = "<a href='#' onclick=\"return downloadDataFile('text/" + filesListPath + "')\"><b>" + filesCount + "</b> " + filesPhrase + "</a>";
             } else {
                 filesFragment = "<b>" + filesCount + "</b> " + filesPhrase;
             }

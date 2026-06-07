@@ -147,7 +147,7 @@ public class FileSizeReportGenerator {
         report.startSection("File Size Overall", "");
         report.startUnorderedList();
         report.addListItem("There are "
-                + "<a href='../data/text/mainFiles.txt' target='_blank'>"
+                + "<a href='#' onclick=\"return downloadDataFile('text/mainFiles.txt')\" target='_blank'>"
                 + RichTextRenderingUtils.renderNumberStrong(distribution.getTotalCount())
                 + " files</a> with " + RichTextRenderingUtils.renderNumberStrong(distribution.getTotalValue())
                 + " lines of code" +

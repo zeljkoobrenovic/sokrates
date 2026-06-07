@@ -236,13 +236,13 @@ public class ConcernsReportGenerator {
     private String getOverviewCodePercentageSvg(AspectAnalysisResults concern, double percentage, int numberOfFiles, int linesOfCode, int maxSize, int barHeight, String fileListPath, boolean derivedConcern) {
         String filesFragment = numberOfFiles + (numberOfFiles == 1 ? " file " : " files");
         if (StringUtils.isNotBlank(fileListPath)) {
-            filesFragment = "<u><a href='../data/text/aspect_" + fileListPath + ".txt'>" + filesFragment + "</a></u>";
+            filesFragment = "<u><a href='#' onclick=\"return downloadDataFile('text/aspect_" + fileListPath + ".txt')\">" + filesFragment + "</a></u>";
             if (!derivedConcern) {
                 if (concern.getFoundFiles().size() > 0) {
-                    filesFragment += " | <u><a href='../data/text/aspect_" + fileListPath + "_found_text_per_file.txt'>found text per file</a></u>";
+                    filesFragment += " | <u><a href='#' onclick=\"return downloadDataFile('text/aspect_" + fileListPath + "_found_text_per_file.txt')\">found text per file</a></u>";
                 }
                 if (concern.getFoundTextList().size() > 0) {
-                    filesFragment += " | <u><a href='../data/text/aspect_" + fileListPath + "_found_text_per_file.txt'>found text per file</a></u>";
+                    filesFragment += " | <u><a href='#' onclick=\"return downloadDataFile('text/aspect_" + fileListPath + "_found_text_per_file.txt')\">found text per file</a></u>";
                 }
             }
         }

@@ -88,7 +88,7 @@ public class FileTemporalDependenciesReportGenerator {
         }
         report.addLineBreak();
         report.startSubSection("Files Most Frequently Changed Together (Top " + filePairs.size() + ")", "");
-        report.addParagraph("<a href='../data/text/temporal_dependencies.txt' target='_blank'>data...</a>");
+        report.addParagraph("<a href='#' onclick=\"return downloadDataFile('text/temporal_dependencies.txt')\" target='_blank'>data...</a>");
         addTable(report, filePairs);
         report.endSection();
     }
@@ -105,7 +105,7 @@ public class FileTemporalDependenciesReportGenerator {
         // Subsection (not top-level section) to match addFileChangedTogetherList, since this renders
         // alongside it inside a tab content section.
         report.startSubSection("Files from Different Folders Most Frequently Changed Together (Top " + filePairs.size() + ")", "");
-        report.addParagraph("<a href='../data/text/temporal_dependencies_different_folders.txt' target='_blank'>data...</a>");
+        report.addParagraph("<a href='#' onclick=\"return downloadDataFile('text/temporal_dependencies_different_folders.txt')\" target='_blank'>data...</a>");
         addTable(report, filePairs);
         report.endSection();
     }

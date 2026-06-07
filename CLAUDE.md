@@ -72,7 +72,7 @@ The Maven module dependency chain is `common → codeanalyzer → reports → cl
 
 ## Landscapes & sub-landscapes
 
-A **landscape** aggregates many repository reports into a portfolio view. `updateLandscape` (CLI) runs `LandscapeAnalysisCommands.generateReport(analysisRoot, configFile)`: `LandscapeAnalyzer.analyze(configFile)` reads each repository's `analysisResults.json` (located via `analysisRoot` + each `SokratesRepositoryLink.analysisResultsPath`) into a `LandscapeAnalysisResults` (`List<RepositoryAnalysisResults>`); then `LandscapeReportGenerator(results, tagGroups, folder, reportsFolder).report()` writes `index.html` + tabs + `contributors/` + `visuals/` + `data/` into the `_sokrates_landscape/` folder. A repository's identity is its `metadata.name`.
+A **landscape** aggregates many repository reports into a portfolio view. `updateLandscape` (CLI) runs `LandscapeAnalysisCommands.generateReport(analysisRoot, configFile)`: `LandscapeAnalyzer.analyze(configFile)` reads each repository's data — `analysisResults.json`, `config.json`, and `text/aspect_*.txt`/`text/mainFilesWithHistory.txt` — into a `LandscapeAnalysisResults` (`List<RepositoryAnalysisResults>`); then `LandscapeReportGenerator(results, tagGroups, folder, reportsFolder).report()` writes `index.html` + tabs + `contributors/` + `visuals/` + `data/` into the `_sokrates_landscape/` folder. A repository's identity is its `metadata.name`.
 
 Two ways to create **sub-landscapes** (shown in the parent's "Sub-landscapes" tab, which reads each child's pre-generated `data/landscapeAnalysisResults.json` + `config.json` and links via `repositoryReportsUrlPrefix + indexFilePath`):
 - **Folder-based** — move repository report folders into sub-directories that each have their own `_sokrates_landscape/`. Discovered by scanning for `_sokrates_landscape/index.html` (`LandscapeAnalysisInitiator`, `LandscapeAnalysisUtils.findAllSokratesLandscapeConfigFiles`).
@@ -101,6 +101,29 @@ The per-repository report's `<reports>/src/` folder holds the source code refere
 - **`src/viewer.html`** — one shared client-rendered viewer (highlight.js v11 + `highlightjs-line-numbers.js` + fflate, all CDN-pinned). `?aspect=<a>&file=<path>[&from=&to=]` extracts one entry from `<a>.zip` and highlights it; `?bundle=fragments/<type>.json&i=<1-based>` renders that bundle item (units via `renderUnit`, duplicates via multi-block `renderDuplicate`). Line numbers start at the fragment's real `from` line.
 
 **The viewer's render JS and these DTOs are a contract — the JSON field names must match.** When adding a field, change the DTO and `viewer.html` together (mirrors the landscape template/DTO rule above). Five report link sites point at the viewer: `UtilsReportUtils` (unit file link + unit fragment link), `FilesReportUtils` (file-table link), `DuplicationReportGenerator` (duplicate "view"), and `FilesExplorerGenerators`/`UnitsExplorerGenerators` (explorer links). A link's index must stay aligned with its bundle's array order; the duplication table caps displayed rows at `MAX_TABLE_ROWS_COUNT` but the bundle holds all (indices within the cap still align). **Reports must be served over HTTP** (local server or hosted) — the viewer uses `fetch()` for the zip/bundle, which `file://` blocks. Validate `viewer.html` JS the same way as other template JS (extract `<script>`, stub, run under node).
+
+## The `data/` folder is one `data.zip` (read by reports AND landscape)
+
+The per-repository `<reports>/data/` folder (all JSON exports + `data/text/*.txt` + execution
+stats + textual summary) is packaged into a single **`data/data.zip`** — the loose files are
+removed. `DataExporter.zipDataFolder()` does this; the CLI calls it as the **final** data step
+(after `saveExecutionStats`/`saveTextualSummary`, so those are inside the zip too). Entry names
+are paths relative to `data/` (e.g. `analysisResults.json`, `text/aspect_main.txt`).
+
+Two consumers, both updated to read from the zip — **this is a cross-run contract**:
+- **HTML reports**: data download links call `downloadDataFile('<entry>')` (in
+  `ReportConstants.REPORTS_HTML_HEADER`, using the fflate UMD global) which fetches `data.zip`,
+  extracts the one entry, and saves it. Requires HTTP serving (`fetch`).
+- **Landscape**: `LandscapeAnalyzer` reads `analysisResults.json` + `config.json` +
+  `text/aspect_*.txt` + `text/mainFilesWithHistory.txt` from each repo's `data.zip`
+  (`readDataZipEntry`, plain `java.util.zip` — codeanalyzer has no `reports` dep). Repository
+  discovery (`LandscapeAnalysisInitiator`) finds repos by `data/data.zip` but the
+  `SokratesRepositoryLink` still records the conceptual `data/analysisResults.json` path (its
+  parent folder is where the analyzer opens the zip). **Zip-only, no loose fallback**: a repo not
+  regenerated with the current Sokrates has no `data.zip` and is skipped (logged) rather than
+  crashing the landscape. The landscape's OWN `_sokrates_landscape/data/` is separate and stays
+  loose. When changing the data entry names or the landscape read sites, keep producer
+  (`DataExporter`) and consumer (`LandscapeAnalyzer` + `LandscapeAnalysisInitiator`) in sync.
 
 ## Dependency graphs (Mermaid, client-side — no Graphviz)
 

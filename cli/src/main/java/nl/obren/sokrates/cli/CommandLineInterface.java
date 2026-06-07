@@ -564,6 +564,9 @@ public class CommandLineInterface {
 
             generateAndSaveReports(sokratesConfigFile, reportsFolder, sokratesConfigFile.getParentFile(), codeAnalyzer, analysisResults);
             saveExecutionStats(dataExporter.getDataFolder());
+            // Final data step: package the whole data/ folder (incl. textual summary + execution
+            // stats just written) into a single data/data.zip; the reports + landscape read from it.
+            dataExporter.zipDataFolder();
         } catch (Exception e) {
             e.printStackTrace();
         }
