@@ -279,11 +279,15 @@ public class CommandLineInterface {
                 LOG.info(" -  " + landscapeConfigFile.getPath());
             });
             if (landscapeConfigFiles.size() > 0) {
-                saveExecutionStats(new File(landscapeConfigFiles.get(landscapeConfigFiles.size() - 1).getParentFile(), "data"));
+                File landscapeRoot = landscapeConfigFiles.get(landscapeConfigFiles.size() - 1).getParentFile();
+                saveExecutionStats(new File(landscapeRoot, "data"));
+                // Fold the just-written executionTimes files into the landscape's data.zip.
+                LandscapeAnalysisCommands.zipLandscapeDataFolder(landscapeRoot);
             }
         } else {
             File reportsFolder = LandscapeAnalysisCommands.update(root, confFilePath != null ? new File(confFilePath) : null, metadata);
             saveExecutionStats(new File(reportsFolder, "data"));
+            LandscapeAnalysisCommands.zipLandscapeDataFolder(reportsFolder);
         }
     }
 

@@ -41,6 +41,8 @@ import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResultsR
 import nl.obren.sokrates.sourcecode.landscape.analysis.RepositoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
+import nl.obren.sokrates.reports.utils.ZipEntryContent;
+import nl.obren.sokrates.reports.utils.ZipUtils;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 import org.apache.commons.io.FileUtils;
@@ -912,14 +914,38 @@ public class LandscapeReportGenerator {
     private LandscapeAnalysisResultsReadData getSubLandscapeAnalysisResults(SubLandscapeLink subLandscape) {
         try {
             String prefix = subLandscapePrefix(subLandscape);
-            File resultsFile = new File(new File(folder, prefix + subLandscape.getIndexFilePath()).getParentFile(), "data/landscapeAnalysisResults.json");
-            LOG.info(resultsFile.getPath());
-            String json = FileUtils.readFileToString(resultsFile, StandardCharsets.UTF_8);
+            File childDataFolder = new File(new File(folder, prefix + subLandscape.getIndexFilePath()).getParentFile(), "data");
+            String json = readLandscapeDataEntry(childDataFolder, "landscapeAnalysisResults.json");
+            if (json == null) {
+                LOG.info("No landscapeAnalysisResults.json in " + childDataFolder.getPath());
+                return null;
+            }
             return (LandscapeAnalysisResultsReadData) new JsonMapper().getObject(json, LandscapeAnalysisResultsReadData.class);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+        return null;
+    }
+
+    // Reads a landscape data entry from a (sub-)landscape's data folder: the data/data.zip entry
+    // first, then the loose data/<entryName> file (older landscapes before data.zip packaging).
+    private static String readLandscapeDataEntry(File dataFolder, String entryName) {
+        File zipFile = new File(dataFolder, "data.zip");
+        if (zipFile.exists()) {
+            ZipEntryContent entry = ZipUtils.unzipAllEntriesAsStrings(zipFile).get(entryName);
+            if (entry != null) {
+                return entry.getContent();
+            }
+        }
+        File looseFile = new File(dataFolder, entryName);
+        if (looseFile.exists()) {
+            try {
+                return FileUtils.readFileToString(looseFile, StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                LOG.warn("Could not read " + looseFile.getPath(), e);
+            }
+        }
         return null;
     }
 
@@ -1318,7 +1344,7 @@ public class LandscapeReportGenerator {
             int thresholdContributors = configuration.getRepositoryThresholdContributors();
             int thresholdLocMain = configuration.getRepositoryThresholdLocMain();
             int ignoredLocMain = ignoredRepositoriess.stream().mapToInt(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
-            landscapeReport.addContentInDiv("<a href='data/ignoredRepositories.txt' target='_blank'>" + ignoredRepositoriess.size() +
+            landscapeReport.addContentInDiv("<a href='#' onclick=\"return downloadDataFile('ignoredRepositories.txt')\">" + ignoredRepositoriess.size() +
                             " repositories (" + FormattingUtils.getSmallTextForNumber(ignoredLocMain) + " lines of main code) are ignored</a> based on any of the following criteria: " +
                             (StringUtils.isNoneBlank(lastUpdatedBefore) ? "not updated after " + lastUpdatedBefore + "; " : "") +
                             ((thresholdContributors > 0) ? "have < " + FormattingUtils.formatCountPlural(thresholdContributors, "contributor", "contributors") + "; " : "") +

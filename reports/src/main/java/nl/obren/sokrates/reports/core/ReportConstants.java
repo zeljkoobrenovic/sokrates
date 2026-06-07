@@ -259,10 +259,19 @@ public class ReportConstants {
             "        // download link fetches that zip, extracts the requested entry (e.g. units.json or\n" +
             "        // text/metrics.txt) and saves it under its own name. Requires HTTP serving (fetch).\n" +
             "        var __dataZipPromise = null;\n" +
+            "        // data.zip is at ../data/ for per-repository reports (which live in html/) and at\n" +
+            "        // data/ for landscape reports (which live at the landscape root); try both.\n" +
+            "        function __fetchDataZip() {\n" +
+            "          return fetch('data/data.zip').then(function (r) {\n" +
+            "            if (r.ok) { return r.arrayBuffer(); }\n" +
+            "            return fetch('../data/data.zip').then(function (r2) {\n" +
+            "              if (!r2.ok) throw new Error('Could not load data.zip'); return r2.arrayBuffer();\n" +
+            "            });\n" +
+            "          });\n" +
+            "        }\n" +
             "        function downloadDataFile(entryName) {\n" +
             "          if (!__dataZipPromise) {\n" +
-            "            __dataZipPromise = fetch('../data/data.zip')\n" +
-            "              .then(function (r) { if (!r.ok) throw new Error('Could not load data.zip'); return r.arrayBuffer(); })\n" +
+            "            __dataZipPromise = __fetchDataZip()\n" +
             "              .then(function (buf) { return fflate.unzipSync(new Uint8Array(buf)); });\n" +
             "          }\n" +
             "          __dataZipPromise.then(function (entries) {\n" +

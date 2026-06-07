@@ -665,9 +665,9 @@ public class LandscapeReportContributorsTab {
         landscapeReport.addHtmlContent(" | ");
         landscapeReport.addNewTabLink("tree map", "visuals/tree_map_" + type.plural() + ".html");
         landscapeReport.addHtmlContent(" | ");
-        landscapeReport.addNewTabLink("txt", "data/" + type.plural() + ".txt");
+        landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + type.plural() + ".txt')\">txt</a>");
         landscapeReport.addHtmlContent(" | ");
-        landscapeReport.addNewTabLink("json", "data/" + type.plural() + ".json");
+        landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + type.plural() + ".json')\">json</a>");
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
     }

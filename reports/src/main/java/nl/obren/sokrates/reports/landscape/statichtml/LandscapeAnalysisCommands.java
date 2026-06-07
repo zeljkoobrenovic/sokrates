@@ -11,6 +11,7 @@ import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.utils.LandscapeVisualsGenerator;
+import nl.obren.sokrates.reports.utils.ZipUtils;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.landscape.DefaultTags;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
@@ -29,7 +30,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class LandscapeAnalysisCommands {
     private static final Log LOG = LogFactory.getLog(LandscapeAnalysisCommands.class);
@@ -119,10 +122,79 @@ public class LandscapeAnalysisCommands {
             visualsGenerator.exportVisuals(landscapeAnalysisResults);
             ProcessingStopwatch.end("reporting/saving/generating visuals");
 
+            // Final step: package this landscape's data/ folder into data/data.zip and drop the
+            // loose files. Done LAST so that any sub-landscape reads earlier in this run (which read
+            // children's loose data) and the just-written report links still resolved; the parent
+            // landscape and the data downloader read this zip (with a loose-file fallback).
+            zipLandscapeDataFolder(reportsFolder);
+
             LOG.info("Report file: " + reportsFolder.getPath() + "/index.html");
             ProcessingStopwatch.end("reporting/saving");
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    // Collapses the landscape's data/ folder into data/data.zip and removes the loose files
+    // (mirrors DataExporter.zipDataFolder for repositories). Only landscapeAnalysisResults.json is
+    // machine-read (by a parent landscape's Sub-landscapes tab, zip-or-loose); the rest are
+    // download-only and served via the in-browser downloader. ZipUtils.zipFolder includes any
+    // existing data.zip's entries are NOT preserved, so this also merges: if data.zip already
+    // exists, its entries are kept and any newly-written loose files (e.g. executionTimes written
+    // by the CLI after the first packaging) are folded in. Safe to call more than once.
+    public static void zipLandscapeDataFolder(File reportsFolder) {
+        File dataFolder = new File(reportsFolder, "data");
+        if (!dataFolder.exists()) {
+            return;
+        }
+        try {
+            File zipFile = new File(dataFolder, "data.zip");
+
+            // Start from the existing zip's entries (if any), then add/overwrite with the loose files.
+            Map<String, String> entries = new LinkedHashMap<>();
+            if (zipFile.exists()) {
+                ZipUtils.unzipAllEntriesAsStrings(zipFile).forEach((name, e) -> entries.put(name, e.getContent()));
+            }
+            collectLooseEntries(dataFolder, dataFolder, zipFile, entries);
+
+            String[][] zipEntries = entries.entrySet().stream()
+                    .map(e -> new String[]{e.getKey(), e.getValue()})
+                    .toArray(String[][]::new);
+            ZipUtils.stringToZipFile(zipFile, zipEntries);
+
+            File[] children = dataFolder.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    if (child.equals(zipFile)) {
+                        continue;
+                    }
+                    if (child.isDirectory()) {
+                        FileUtils.deleteDirectory(child);
+                    } else {
+                        FileUtils.deleteQuietly(child);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOG.warn("Could not package landscape data folder: " + e.getMessage());
+        }
+    }
+
+    private static void collectLooseEntries(File baseDir, File dir, File zipFile, Map<String, String> entries) throws IOException {
+        File[] children = dir.listFiles();
+        if (children == null) {
+            return;
+        }
+        for (File child : children) {
+            if (child.equals(zipFile)) {
+                continue;
+            }
+            if (child.isDirectory()) {
+                collectLooseEntries(baseDir, child, zipFile, entries);
+            } else {
+                String name = baseDir.toPath().relativize(child.toPath()).toString().replace(File.separatorChar, '/');
+                entries.put(name, FileUtils.readFileToString(child, StandardCharsets.UTF_8));
+            }
         }
     }
 

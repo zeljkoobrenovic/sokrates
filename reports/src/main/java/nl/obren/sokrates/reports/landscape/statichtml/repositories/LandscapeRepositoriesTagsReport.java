@@ -366,7 +366,7 @@ public class LandscapeRepositoriesTagsReport {
                 report.addContentInDiv("...", "margin-bottom: 10px; margin-left: 7px; font-size: 160%");
             }
             report.startDiv("margin-top: 12px; margin-left: 5px; margin-bottom: 8px");
-            report.addNewTabLink("see details...", "data/" + LandscapeDataExport.getTagRepositoriesFileName(tag.getKey()));
+            report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + LandscapeDataExport.getTagRepositoriesFileName(tag.getKey()) + "')\">see details...</a>");
             report.endDiv();
             report.endDiv();
             report.endShowMoreBlock();

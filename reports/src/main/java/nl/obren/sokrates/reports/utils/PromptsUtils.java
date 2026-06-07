@@ -17,11 +17,16 @@ public class PromptsUtils {
     // render as normal anchors.
     private static String renderUploadLink(Link uploadFile) {
         String href = uploadFile.getHref();
-        // Only the per-repository data folder ("../data/...") is packaged into data.zip and served
-        // via the client-side downloader. Landscape-level data links ("data/...") are loose files
-        // in the landscape folder and stay normal anchors.
+        // Data folders (per-repository "../data/..." and landscape "data/...") are packaged into a
+        // data.zip and served via the client-side downloader, which extracts the entry by its path
+        // relative to data/. Other links render as normal anchors.
+        String dataEntry = null;
         if (href != null && href.startsWith("../data/")) {
-            String dataEntry = href.substring("../data/".length());
+            dataEntry = href.substring("../data/".length());
+        } else if (href != null && href.startsWith("data/")) {
+            dataEntry = href.substring("data/".length());
+        }
+        if (dataEntry != null) {
             return "<a href='#' onclick=\"return downloadDataFile('" + dataEntry + "')\">" + uploadFile.getLabel() + "</a>";
         }
         return "<a target='_blank' href='" + href + "'>" + uploadFile.getLabel() + "</a>";
