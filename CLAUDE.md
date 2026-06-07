@@ -116,12 +116,14 @@ Two consumers, both updated to read from the zip — **this is a cross-run contr
   extracts the one entry, and saves it. Requires HTTP serving (`fetch`).
 - **Landscape**: `LandscapeAnalyzer` reads `analysisResults.json` + `config.json` +
   `text/aspect_*.txt` + `text/mainFilesWithHistory.txt` from each repo's `data.zip`
-  (`readDataZipEntry`, plain `java.util.zip` — codeanalyzer has no `reports` dep). Repository
-  discovery (`LandscapeAnalysisInitiator`) finds repos by `data/data.zip` but the
-  `SokratesRepositoryLink` still records the conceptual `data/analysisResults.json` path (its
-  parent folder is where the analyzer opens the zip). **Zip-only, no loose fallback**: a repo not
-  regenerated with the current Sokrates has no `data.zip` and is skipped (logged) rather than
-  crashing the landscape. The landscape's OWN `_sokrates_landscape/data/` is separate and stays
+  (`readDataEntry` → `readDataZipEntry`, plain `java.util.zip` — codeanalyzer has no `reports`
+  dep). **Backward-compatible: zip first, then a loose-file fallback** — `readDataEntry` reads
+  `data/<entry>` directly when there's no `data.zip` (older reports), so a landscape can mix
+  current (zipped) and older (loose) repositories. Discovery (`LandscapeAnalysisInitiator`)
+  likewise finds repos by `data/data.zip` OR a loose `data/analysisResults.json` (the latter only
+  when there is no sibling `data.zip`, so a repo is never registered twice); the
+  `SokratesRepositoryLink` always records the conceptual `data/analysisResults.json` path (its
+  parent folder is where the analyzer reads from). A repo with neither is skipped (logged). The landscape's OWN `_sokrates_landscape/data/` is separate and stays
   loose. When changing the data entry names or the landscape read sites, keep producer
   (`DataExporter`) and consumer (`LandscapeAnalyzer` + `LandscapeAnalysisInitiator`) in sync.
 
