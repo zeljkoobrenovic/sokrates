@@ -455,10 +455,10 @@ public class ReportFileExporter {
         report.addNewTabLink("3D view of file size", "visuals/files_3d.html");
         report.endListItem();
         report.startListItem();
-        report.addNewTabLink("files grouped by size category", "visuals/zoomable_circles_main_loc_coloring_categories.html");
+        report.addNewTabLink("files grouped by size category", "visuals/zoomable_circles.html?key=main_loc_coloring_categories");
         report.endListItem();
         report.startListItem();
-        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles_main_loc_coloring.html");
+        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles.html?key=main_loc_coloring");
         report.endListItem();
         report.endUnorderedList();
         report.endTable();
@@ -498,10 +498,10 @@ public class ReportFileExporter {
         report.startTableCell("border: none");
         report.startUnorderedList();
         report.startListItem();
-        report.addNewTabLink("files grouped by age category", "visuals/zoomable_circles_main_age_coloring_categories.html");
+        report.addNewTabLink("files grouped by age category", "visuals/zoomable_circles.html?key=main_age_coloring_categories");
         report.endListItem();
         report.startListItem();
-        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles_main_age_coloring.html");
+        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles.html?key=main_age_coloring");
         report.endListItem();
         report.endUnorderedList();
         report.endTableCell();
@@ -513,10 +513,10 @@ public class ReportFileExporter {
         report.startTableCell("border: none");
         report.startUnorderedList();
         report.startListItem();
-        report.addNewTabLink("files grouped by freshness category", "visuals/zoomable_circles_main_freshness_coloring_categories.html");
+        report.addNewTabLink("files grouped by freshness category", "visuals/zoomable_circles.html?key=main_freshness_coloring_categories");
         report.endListItem();
         report.startListItem();
-        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles_main_freshness_coloring.html");
+        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles.html?key=main_freshness_coloring");
         report.endListItem();
         report.endUnorderedList();
         report.endTableCell();
@@ -532,10 +532,10 @@ public class ReportFileExporter {
         report.startTableCell("border: none");
         report.startUnorderedList();
         report.startListItem();
-        report.addNewTabLink("files grouped by change frequency category", "visuals/zoomable_circles_main_update_frequency_coloring_categories.html");
+        report.addNewTabLink("files grouped by change frequency category", "visuals/zoomable_circles.html?key=main_update_frequency_coloring_categories");
         report.endListItem();
         report.startListItem();
-        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles_main_update_frequency_coloring.html");
+        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles.html?key=main_update_frequency_coloring");
         report.endListItem();
         report.endUnorderedList();
         report.endTableCell();
@@ -551,10 +551,10 @@ public class ReportFileExporter {
         report.startTableCell("border: none");
         report.startUnorderedList();
         report.startListItem();
-        report.addNewTabLink("files grouped by number of contributors category", "visuals/zoomable_circles_main_contributors_count_coloring_categories.html");
+        report.addNewTabLink("files grouped by number of contributors category", "visuals/zoomable_circles.html?key=main_contributors_count_coloring_categories");
         report.endListItem();
         report.startListItem();
-        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles_main_contributors_count_coloring.html");
+        report.addNewTabLink("files grouped by folder", "visuals/zoomable_circles.html?key=main_contributors_count_coloring");
         report.endListItem();
         report.endUnorderedList();
         report.endTableCell();
@@ -704,14 +704,6 @@ public class ReportFileExporter {
                 report.addNewTabLink("3D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_180_days_force_3d.html");
             } else {
                 report.addContentInDiv("3D", "color: #c0c0c0");
-            }
-            report.endTableCell();
-            report.startTableCell("text-align: center");
-            String duplicationGraphPath = "visuals/duplication_dependencies_" + index[0] + ".svg";
-            if (new File(htmlExportFolder, duplicationGraphPath).exists()) {
-                report.addNewTabLink("Duplication Graph", duplicationGraphPath);
-            } else {
-                report.addContentInDiv("Duplication Graph", "color: #c0c0c0");
             }
             report.endTableCell();
             report.startTableCell("text-align: center");
@@ -940,14 +932,14 @@ public class ReportFileExporter {
         report.addTableCell(scopeName.toUpperCase() + " (" + filesCount + ")", "");
         report.startTableCell();
         if (exists) {
-            report.addNewTabLink("Circles", "visuals/zoomable_circles_" + technicalName.replace("_and_deployment", "") + ".html");
+            report.addNewTabLink("Circles", "visuals/zoomable_circles.html?key=" + technicalName.replace("_and_deployment", ""));
         } else {
             report.addContentInDiv("Circles", "color: #c0c0c0");
         }
         report.endTableCell();
         report.startTableCell();
         if (exists) {
-            report.addNewTabLink("Sunburst", "visuals/zoomable_sunburst_" + technicalName.replace("_and_deployment", "") + ".html");
+            report.addNewTabLink("Sunburst", "visuals/zoomable_sunburst.html?key=" + technicalName.replace("_and_deployment", ""));
         } else {
             report.addContentInDiv("Sunburst", "color: #c0c0c0");
         }

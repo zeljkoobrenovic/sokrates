@@ -190,15 +190,15 @@ public class ContributorsReportGenerator {
     private void addZoomableCircleLinks(RichTextReport report) {
         report.startDiv("margin-top: 10px");
         report.addHtmlContent("Zoomable circles (number of contributors per file): ");
-        report.addNewTabLink("30 days", "visuals/zoomable_circles_contributors_30_main.html");
+        report.addNewTabLink("30 days", "visuals/zoomable_circles.html?key=contributors_30_main");
         report.addHtmlContent(" | ");
-        report.addNewTabLink("90 days", "visuals/zoomable_circles_contributors_90_main.html");
+        report.addNewTabLink("90 days", "visuals/zoomable_circles.html?key=contributors_90_main");
         report.addHtmlContent(" | ");
-        report.addNewTabLink("6 months", "visuals/zoomable_circles_contributors_180_main.html");
+        report.addNewTabLink("6 months", "visuals/zoomable_circles.html?key=contributors_180_main");
         report.addHtmlContent(" | ");
-        report.addNewTabLink("past year", "visuals/zoomable_circles_contributors_365_main.html");
+        report.addNewTabLink("past year", "visuals/zoomable_circles.html?key=contributors_365_main");
         report.addHtmlContent(" | ");
-        report.addNewTabLink("all time", "visuals/zoomable_circles_contributors_main.html");
+        report.addNewTabLink("all time", "visuals/zoomable_circles.html?key=contributors_main");
         report.addContentInDiv("Files with only one contributor are shown as grey.", "color: grey; font-size: 80%");
         report.endDiv();
     }

@@ -10,6 +10,7 @@ import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.renderingutils.Thresholds;
 import nl.obren.sokrates.common.renderingutils.VisualizationItem;
 import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
+import nl.obren.sokrates.reports.utils.ZipUtils;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.renderingutils.force3d.Force3DLink;
 import nl.obren.sokrates.common.renderingutils.force3d.Force3DNode;
@@ -696,37 +697,48 @@ public class CommandLineInterface {
             List<SourceFile> buildSourceFiles = analysisResults.getBuildAndDeployAspectAnalysisResults().getAspect().getSourceFiles();
             List<SourceFile> otherSourceFiles = analysisResults.getOtherAspectAnalysisResults().getAspect().getSourceFiles();
 
-            generateFileStructureExplorers("main", folder, mainSourceFiles);
-            generateFileStructureExplorers("test", folder, testSourceFiles);
-            generateFileStructureExplorers("generated", folder, generatedSourceFiles);
-            generateFileStructureExplorers("build", folder, buildSourceFiles);
-            generateFileStructureExplorers("other", folder, otherSourceFiles);
+            // Plain zoomable circles/sunburst views are no longer written as one HTML file per
+            // view. Instead each view's data is collected here (key = the old filename suffix) and
+            // written once into zoomable_circles.zip / zoomable_sunburst.zip; a single shared
+            // template HTML per family fetches the zip and renders the view selected via ?key=.
+            // (zoomable_circles_all_files uses a different (colored) template and stays separate.)
+            Map<String, String> circlesEntries = new LinkedHashMap<>();
+            Map<String, String> sunburstEntries = new LinkedHashMap<>();
+
+            generateFileStructureExplorers("main", circlesEntries, sunburstEntries, mainSourceFiles);
+            generateFileStructureExplorers("test", circlesEntries, sunburstEntries, testSourceFiles);
+            generateFileStructureExplorers("generated", circlesEntries, sunburstEntries, generatedSourceFiles);
+            generateFileStructureExplorers("build", circlesEntries, sunburstEntries, buildSourceFiles);
+            generateFileStructureExplorers("other", circlesEntries, sunburstEntries, otherSourceFiles);
 
             generateAllScopesZoomableCircles(folder, mainSourceFiles, testSourceFiles, buildSourceFiles, generatedSourceFiles, otherSourceFiles);
 
-            addCommitZoomableCircles("main", folder, mainSourceFiles, 30);
-            addCommitZoomableCircles("main", folder, mainSourceFiles, 90);
-            addCommitZoomableCircles("main", folder, mainSourceFiles, 180);
-            addCommitZoomableCircles("main", folder, mainSourceFiles, 365);
-            addCommitZoomableCircles("main", folder, mainSourceFiles, 0);
+            addCommitZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, 30);
+            addCommitZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, 90);
+            addCommitZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, 180);
+            addCommitZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, 365);
+            addCommitZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, 0);
 
-            addContributorsZoomableCircles("main", folder, mainSourceFiles, 30);
-            addContributorsZoomableCircles("main", folder, mainSourceFiles, 90);
-            addContributorsZoomableCircles("main", folder, mainSourceFiles, 180);
-            addContributorsZoomableCircles("main", folder, mainSourceFiles, 365);
-            addContributorsZoomableCircles("main", folder, mainSourceFiles, 0);
+            addContributorsZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, 30);
+            addContributorsZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, 90);
+            addContributorsZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, 180);
+            addContributorsZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, 365);
+            addContributorsZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, 0);
 
-            addRiskColoredZoomableCircles(folder, mainSourceFiles, "loc", codeConfiguration.getAnalysis().getFileSizeThresholds(), Palette.getRiskPalette(), (sourceFile) -> sourceFile.getLinesOfCode(), (sourceFile) -> sourceFile.getLinesOfCode());
+            addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "loc", codeConfiguration.getAnalysis().getFileSizeThresholds(), Palette.getRiskPalette(), (sourceFile) -> sourceFile.getLinesOfCode(), (sourceFile) -> sourceFile.getLinesOfCode());
 
-            addRiskColoredZoomableCircles(folder, mainSourceFiles, "age", codeConfiguration.getAnalysis().getFileAgeThresholds(), Palette.getAgePalette(), (sourceFile) -> sourceFile.getFileModificationHistory() != null ? sourceFile.getFileModificationHistory().daysSinceFirstUpdate() : 0, (sourceFile) -> sourceFile.getLinesOfCode());
-            addRiskColoredZoomableCircles(folder, mainSourceFiles, "freshness", codeConfiguration.getAnalysis().getFileAgeThresholds(), Palette.getFreshnessPalette(),
+            addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "age", codeConfiguration.getAnalysis().getFileAgeThresholds(), Palette.getAgePalette(), (sourceFile) -> sourceFile.getFileModificationHistory() != null ? sourceFile.getFileModificationHistory().daysSinceFirstUpdate() : 0, (sourceFile) -> sourceFile.getLinesOfCode());
+            addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "freshness", codeConfiguration.getAnalysis().getFileAgeThresholds(), Palette.getFreshnessPalette(),
                     (sourceFile) -> sourceFile.getFileModificationHistory() != null ? sourceFile.getFileModificationHistory().daysSinceLatestUpdate() : 0, (sourceFile) -> sourceFile.getLinesOfCode());
 
-            addRiskColoredZoomableCircles(folder, mainSourceFiles, "update_frequency", codeConfiguration.getAnalysis().getFileUpdateFrequencyThresholds(), Palette.getHeatPalette(),
+            addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "update_frequency", codeConfiguration.getAnalysis().getFileUpdateFrequencyThresholds(), Palette.getHeatPalette(),
                     (sourceFile) -> sourceFile.getFileModificationHistory() != null ? sourceFile.getFileModificationHistory().getDates().size() : 0, (sourceFile) -> sourceFile.getLinesOfCode());
 
-            addRiskColoredZoomableCircles(folder, mainSourceFiles, "contributors_count", codeConfiguration.getAnalysis().getFileContributorsCountThresholds(), Palette.getHeatPalette(),
+            addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "contributors_count", codeConfiguration.getAnalysis().getFileContributorsCountThresholds(), Palette.getHeatPalette(),
                     (sourceFile) -> sourceFile.getFileModificationHistory() != null ? sourceFile.getFileModificationHistory().countContributors() : 0, (sourceFile) -> sourceFile.getLinesOfCode());
+
+            writeZoomableFamily(folder, "zoomable_circles", circlesEntries);
+            writeZoomableFamily(folder, "zoomable_sunburst", sunburstEntries);
 
             generate3DUnitsView(folder, analysisResults);
         } catch (IOException e) {
@@ -735,10 +747,22 @@ public class CommandLineInterface {
 
     }
 
-    private void generateFileStructureExplorers(String nameSuffix, File folder, List<SourceFile> sourceFiles) throws IOException {
+    // Writes one <family>.zip (entry per view: <key>.json) plus the shared <family>.html template
+    // that fetches the zip and renders the view selected via ?key=.
+    private void writeZoomableFamily(File folder, String family, Map<String, String> entries) throws IOException {
+        String[][] zipEntries = entries.entrySet().stream()
+                .map(e -> new String[]{e.getKey() + ".json", e.getValue()})
+                .toArray(String[][]::new);
+        ZipUtils.stringToZipFile(new File(folder, family + ".zip"), zipEntries);
+        String template = new VisualizationTemplate().rawTemplate(family + ".html");
+        FileUtils.write(new File(folder, family + ".html"), template, UTF_8);
+    }
+
+    private void generateFileStructureExplorers(String nameSuffix, Map<String, String> circlesEntries, Map<String, String> sunburstEntries, List<SourceFile> sourceFiles) throws IOException {
         List<VisualizationItem> items = getZoomableCirclesItems(sourceFiles);
-        FileUtils.write(new File(folder, "zoomable_circles_" + nameSuffix + ".html"), new VisualizationTemplate().renderZoomableCircles(items), UTF_8);
-        FileUtils.write(new File(folder, "zoomable_sunburst_" + nameSuffix + ".html"), new VisualizationTemplate().renderZoomableSunburst(items), UTF_8);
+        String json = VisualizationTemplate.zoomableItemsJson(items);
+        circlesEntries.put(nameSuffix, json);
+        sunburstEntries.put(nameSuffix, json);
     }
 
     // Colors used to distinguish scopes in the "all files" zoomable circles view.
@@ -781,27 +805,29 @@ public class CommandLineInterface {
         });
     }
 
-    private void addCommitZoomableCircles(String nameSuffix, File folder, List<SourceFile> sourceFiles, int daysAgo) throws IOException {
+    private void addCommitZoomableCircles(String nameSuffix, Map<String, String> circlesEntries, Map<String, String> sunburstEntries, List<SourceFile> sourceFiles, int daysAgo) throws IOException {
         List<VisualizationItem> commitItems = getZoomableCirclesCommitItems(sourceFiles, daysAgo > 0 ? daysAgo : THOUSAND_YEARS);
         String suffix = daysAgo > 0 ? "_" + daysAgo + "_" + nameSuffix : "";
-        FileUtils.write(new File(folder, "zoomable_circles_commits" + suffix + ".html"), new VisualizationTemplate().renderZoomableCircles(commitItems), UTF_8);
-        FileUtils.write(new File(folder, "zoomable_sunburst_commits" + suffix + ".html"), new VisualizationTemplate().renderZoomableSunburst(commitItems), UTF_8);
+        String json = VisualizationTemplate.zoomableItemsJson(commitItems);
+        circlesEntries.put("commits" + suffix, json);
+        sunburstEntries.put("commits" + suffix, json);
     }
 
-    private void addContributorsZoomableCircles(String nameSuffix, File folder, List<SourceFile> sourceFiles, int daysAgo) throws IOException {
+    private void addContributorsZoomableCircles(String nameSuffix, Map<String, String> circlesEntries, Map<String, String> sunburstEntries, List<SourceFile> sourceFiles, int daysAgo) throws IOException {
         List<VisualizationItem> commitItems = getZoomableCirclesContributorItems(sourceFiles, daysAgo > 0 ? daysAgo : THOUSAND_YEARS);
         String suffix = (daysAgo > 0 ? ("_" + daysAgo) : "") + ("_" + nameSuffix);
-        FileUtils.write(new File(folder, "zoomable_circles_contributors" + suffix + ".html"), new VisualizationTemplate().renderZoomableCircles(commitItems), UTF_8);
-        FileUtils.write(new File(folder, "zoomable_sunburst_contributors" + suffix + ".html"), new VisualizationTemplate().renderZoomableSunburst(commitItems), UTF_8);
+        String json = VisualizationTemplate.zoomableItemsJson(commitItems);
+        circlesEntries.put("contributors" + suffix, json);
+        sunburstEntries.put("contributors" + suffix, json);
     }
 
-    private void addRiskColoredZoomableCircles(File folder, List<SourceFile> sourceFiles, String type,
+    private void addRiskColoredZoomableCircles(Map<String, String> circlesEntries, List<SourceFile> sourceFiles, String type,
                                                nl.obren.sokrates.sourcecode.threshold.Thresholds thresholds, Palette palette, DirectoryNode.SourceFileValueExtractor colorValueExtractor, DirectoryNode.SourceFileValueExtractor sizeValueExtractor) throws IOException {
         List<VisualizationItem> items = getZoomableCirclesRiskProfileItems(sourceFiles, thresholds, palette, colorValueExtractor, sizeValueExtractor);
-        FileUtils.write(new File(folder, "zoomable_circles_main_" + type + "_coloring.html"), new VisualizationTemplate().renderZoomableCircles(items), UTF_8);
+        circlesEntries.put("main_" + type + "_coloring", VisualizationTemplate.zoomableItemsJson(items));
 
         List<VisualizationItem> itemsByCategory = getZoomableCirclesRiskProfileItemsCategories(sourceFiles, thresholds, palette, colorValueExtractor);
-        FileUtils.write(new File(folder, "zoomable_circles_main_" + type + "_coloring_categories.html"), new VisualizationTemplate().renderZoomableCircles(itemsByCategory), UTF_8);
+        circlesEntries.put("main_" + type + "_coloring_categories", VisualizationTemplate.zoomableItemsJson(itemsByCategory));
     }
 
     private List<VisualizationItem> getZoomableCirclesItems(List<SourceFile> sourceFiles) {

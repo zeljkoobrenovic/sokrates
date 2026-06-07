@@ -18,6 +18,19 @@ import java.util.List;
 public class VisualizationTemplate {
     private static final Log LOG = LogFactory.getLog(VisualizationTemplate.class);
 
+    // Returns a visualization template verbatim (no ${...} substitution). Used for the static,
+    // data-fetching templates (e.g. zoomable_circles.html / zoomable_sunburst.html) that load
+    // their per-view data from a sibling .zip at runtime instead of embedding it at generation.
+    public String rawTemplate(String templateFileName) {
+        InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream("vis_templates/" + templateFileName);
+        try {
+            return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            LOG.error(e);
+        }
+        return null;
+    }
+
     public String render(String templateFileName, List<VisualizationItem> data) {
         ClassLoader clazz = this.getClass().getClassLoader();
         InputStream inputStream = clazz.getResourceAsStream("vis_templates/" + templateFileName);
@@ -44,6 +57,18 @@ public class VisualizationTemplate {
 
     public String renderZoomableCircles(List<VisualizationItem> items) {
         return render("zoomable_circles.html", items).replace(",\"children\":[]", "");
+    }
+
+    // The JSON payload that the zoomable circles/sunburst templates embed as the tree's
+    // "children". Circles and sunburst share the same item JSON; this is the value stored as a
+    // zip entry when the per-view HTML files are collapsed into one template + one family zip.
+    public static String zoomableItemsJson(List<VisualizationItem> items) {
+        try {
+            return new JsonGenerator().generate(items).replace(",\"children\":[]", "");
+        } catch (IOException e) {
+            LOG.error(e);
+            return "[]";
+        }
     }
 
     public String renderZoomableCirclesColored(List<VisualizationItem> items) {

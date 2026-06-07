@@ -86,15 +86,15 @@ public class CommitsReportGenerator {
     private void addZoomableCircleLinks(RichTextReport report) {
         report.startDiv("");
         report.addHtmlContent("Zoomable circles (commit counts per file): ");
-        report.addNewTabLink("30 days", "visuals/zoomable_circles_commits_30_main.html");
+        report.addNewTabLink("30 days", "visuals/zoomable_circles.html?key=commits_30_main");
         report.addHtmlContent(" | ");
-        report.addNewTabLink("90 days", "visuals/zoomable_circles_commits_90_main.html");
+        report.addNewTabLink("90 days", "visuals/zoomable_circles.html?key=commits_90_main");
         report.addHtmlContent(" | ");
-        report.addNewTabLink("6 months", "visuals/zoomable_circles_commits_180_main.html");
+        report.addNewTabLink("6 months", "visuals/zoomable_circles.html?key=commits_180_main");
         report.addHtmlContent(" | ");
-        report.addNewTabLink("past year", "visuals/zoomable_circles_commits_365_main.html");
+        report.addNewTabLink("past year", "visuals/zoomable_circles.html?key=commits_365_main");
 //        report.addHtmlContent(" | ");
-//        report.addNewTabLink("all time", "visuals/zoomable_circles_commits_main.html");
+//        report.addNewTabLink("all time", "visuals/zoomable_circles.html?key=commits_main");
         report.addContentInDiv("Files with only one commit are shown as grey.", "color: grey; font-size: 80%");
         report.endDiv();
     }

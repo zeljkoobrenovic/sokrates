@@ -191,7 +191,9 @@ public class DuplicationReportGenerator {
         DuplicationReportUtils.addOverallDuplication(report, duplicationAnalysisResults.getOverallDuplication());
         export3DFileDependencies();
         report.addHtmlContent("dependency graphs: ");
-        report.addNewTabLink("2D graph", "visuals/duplication_among_files.html" );
+        report.addNewTabLink("2D graph", "visuals/duplication_among_files_force_2d.html" );
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("2D graph (with duplicates)...", "visuals/duplication_among_files_with_duplicates_force_2d.html" );
         report.addHtmlContent(" | ");
         report.addNewTabLink("3D graph", "visuals/duplication_among_files_force_3d.html" );
         report.addHtmlContent(" | ");
@@ -284,8 +286,9 @@ public class DuplicationReportGenerator {
             VisualizationTools.addDownloadLinks(report, graphId);
             report.addLineBreak();
             Pair<String,String> force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(componentDependencies, reportsFolder, graphId);
-            report.addNewTabLink("Open 2D force graph...", force3DGraphFilePath.getFirst());
-            report.addNewTabLink("Open 3D force graph...", force3DGraphFilePath.getSecond());
+            report.addNewTabLink("2D force graph", force3DGraphFilePath.getFirst());
+            report.addHtmlContent(" | ");
+            report.addNewTabLink("3D force graph", force3DGraphFilePath.getSecond());
 
             report.addLineBreak();
             report.addLineBreak();

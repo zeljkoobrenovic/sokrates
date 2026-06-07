@@ -27,117 +27,147 @@
         pointer-events: none;
     }
 
+    .error { font: 14px sans-serif; fill: #b00; }
+
 </style>
 <svg width="960" height="960"></svg>
 <script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js"></script>
 <script>
 
-    var svg = d3.select("svg"),
-        margin = 20,
-        diameter = +svg.attr("width"),
-        g = svg.append("g").attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
-
-    var color = d3.scaleLinear()
-        .domain([-1, 5])
-        .range(["hsl(152,80%,100%)", "hsl(228,30%,40%)"])
-        .interpolate(d3.interpolateHcl);
-
-    var pack = d3.pack()
-        .size([diameter - margin, diameter - margin])
-        .padding(2);
-
-
-    var root = {
-        "name": "cluster",
-        "children": ${data}
+    // The per-view data lives in zoomable_circles.zip (one JSON entry per view, keyed by the
+    // view name). The page selects its view via ?key=... and extracts only that entry. This
+    // replaces the previous one-HTML-file-per-view scheme. Requires HTTP serving (fetch()).
+    function param(name) {
+        var m = new RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+        return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
     }
 
-    root = d3.hierarchy(root)
-        .sum(function (d) {
-            return d.size;
-        })
-        .sort(function (a, b) {
-            return b.value - a.value;
-        });
+    function showError(msg) {
+        d3.select("svg").append("text").attr("class", "error").attr("x", 20).attr("y", 40).text(msg);
+    }
 
-    var focus = root,
-        nodes = pack(root).descendants(),
-        view;
+    function render(children) {
+        var svg = d3.select("svg"),
+            margin = 20,
+            diameter = +svg.attr("width"),
+            g = svg.append("g").attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
 
-    var circle = g.selectAll("circle")
-        .data(nodes)
-        .enter().append("circle")
-        .attr("class", function (d) {
-            return d.parent ? d.children ? "node" : "node node--leaf" : "node node--root";
-        })
-        .style("fill", function (d) {
-            return d.children ? color(d.depth) : (d.data.color ? d.data.color : null);
-        })
-        .on("click", function (d) {
-            if (focus !== d) zoom(d), d3.event.stopPropagation();
-        });
+        var color = d3.scaleLinear()
+            .domain([-1, 5])
+            .range(["hsl(152,80%,100%)", "hsl(228,30%,40%)"])
+            .interpolate(d3.interpolateHcl);
 
-    var text = g.selectAll("text")
-        .data(nodes)
-        .enter().append("text")
-        .attr("class", "label")
-        .style("fill-opacity", function (d) {
-            return d.parent === root ? 1 : 0;
-        })
-        .style("display", function (d) {
-            return d.parent === root ? "inline" : "none";
-        })
-        .text(function (d) {
-            return d.data.name.length > 33 ? (d.data.name.substr(0, 14) + "..." + d.data.name.substr(d.data.name.length - 14))  : d.data.name;
-        });
+        var pack = d3.pack()
+            .size([diameter - margin, diameter - margin])
+            .padding(2);
 
-    var node = g.selectAll("circle,text");
 
-    svg
-        .style("background", color(-1))
-        .on("click", function () {
-            zoom(root);
-        });
+        var root = {
+            "name": "cluster",
+            "children": children
+        }
 
-    zoomTo([root.x, root.y, root.r * 2 + margin]);
-
-    function zoom(d) {
-        var focus0 = focus;
-        focus = d;
-
-        var transition = d3.transition()
-            .duration(d3.event.altKey ? 7500 : 750)
-            .tween("zoom", function (d) {
-                var i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2 + margin]);
-                return function (t) {
-                    zoomTo(i(t));
-                };
+        root = d3.hierarchy(root)
+            .sum(function (d) {
+                return d.size;
+            })
+            .sort(function (a, b) {
+                return b.value - a.value;
             });
 
-        transition.selectAll("text")
-            .filter(function (d) {
-                return d.parent === focus || this.style.display === "inline";
+        var focus = root,
+            nodes = pack(root).descendants(),
+            view;
+
+        var circle = g.selectAll("circle")
+            .data(nodes)
+            .enter().append("circle")
+            .attr("class", function (d) {
+                return d.parent ? d.children ? "node" : "node node--leaf" : "node node--root";
             })
+            .style("fill", function (d) {
+                return d.children ? color(d.depth) : (d.data.color ? d.data.color : null);
+            })
+            .on("click", function (d) {
+                if (focus !== d) zoom(d), d3.event.stopPropagation();
+            });
+
+        var text = g.selectAll("text")
+            .data(nodes)
+            .enter().append("text")
+            .attr("class", "label")
             .style("fill-opacity", function (d) {
-                return d.parent === focus ? 1 : 0;
+                return d.parent === root ? 1 : 0;
             })
-            .on("start", function (d) {
-                if (d.parent === focus) this.style.display = "inline";
+            .style("display", function (d) {
+                return d.parent === root ? "inline" : "none";
             })
-            .on("end", function (d) {
-                if (d.parent !== focus) this.style.display = "none";
+            .text(function (d) {
+                return d.data.name.length > 33 ? (d.data.name.substr(0, 14) + "..." + d.data.name.substr(d.data.name.length - 14))  : d.data.name;
             });
+
+        var node = g.selectAll("circle,text");
+
+        svg
+            .style("background", color(-1))
+            .on("click", function () {
+                zoom(root);
+            });
+
+        zoomTo([root.x, root.y, root.r * 2 + margin]);
+
+        function zoom(d) {
+            var focus0 = focus;
+            focus = d;
+
+            var transition = d3.transition()
+                .duration(d3.event.altKey ? 7500 : 750)
+                .tween("zoom", function (d) {
+                    var i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2 + margin]);
+                    return function (t) {
+                        zoomTo(i(t));
+                    };
+                });
+
+            transition.selectAll("text")
+                .filter(function (d) {
+                    return d.parent === focus || this.style.display === "inline";
+                })
+                .style("fill-opacity", function (d) {
+                    return d.parent === focus ? 1 : 0;
+                })
+                .on("start", function (d) {
+                    if (d.parent === focus) this.style.display = "inline";
+                })
+                .on("end", function (d) {
+                    if (d.parent !== focus) this.style.display = "none";
+                });
+        }
+
+        function zoomTo(v) {
+            var k = diameter / v[2];
+            view = v;
+            node.attr("transform", function (d) {
+                return "translate(" + (d.x - v[0]) * k + "," + (d.y - v[1]) * k + ")";
+            });
+            circle.attr("r", function (d) {
+                return d.r * k;
+            });
+        }
     }
 
-    function zoomTo(v) {
-        var k = diameter / v[2];
-        view = v;
-        node.attr("transform", function (d) {
-            return "translate(" + (d.x - v[0]) * k + "," + (d.y - v[1]) * k + ")";
-        });
-        circle.attr("r", function (d) {
-            return d.r * k;
-        });
-    }
+    (function load() {
+        var key = param('key') || 'main';
+        fetch('zoomable_circles.zip')
+            .then(function (r) { if (!r.ok) throw new Error('Could not load zoomable_circles.zip'); return r.arrayBuffer(); })
+            .then(function (buf) {
+                var entries = fflate.unzipSync(new Uint8Array(buf));
+                var bytes = entries[key + '.json'];
+                if (!bytes) throw new Error('View not found: ' + key);
+                render(JSON.parse(fflate.strFromU8(bytes)));
+            })
+            .catch(function (e) { showError(e.message); });
+    })();
 
 </script>

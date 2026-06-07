@@ -262,7 +262,7 @@ public class SummaryUtils {
         }
         summary.append("</td>");
         summary.append("<td style='max-width: 800px; overflow: hidden; border: none; vertical-align: top; padding-top: 11px;'>");
-        summary.append("<a target='_blank' href='visuals/zoomable_circles_main.html'>Main Code</a>");
+        summary.append("<a target='_blank' href='visuals/zoomable_circles.html?key=main'>Main Code</a>");
         summary.append(": " + RichTextRenderingUtils.renderNumberStrong(totalLoc) + " LOC (" + analysisResults.getMainAspectAnalysisResults().getFilesCount() + " files)");
         summarizeListOfLocAspects(summary, totalLoc, linesOfCodePerExtension);
         summary.append("<div style='font-size: 80%; color: grey; margin-top: 5px;'>");
@@ -278,7 +278,7 @@ public class SummaryUtils {
     private void addSecondaryCodeInfo(StringBuilder summary, AspectAnalysisResults aspectAnalysisResults, String label, String fileSuffix) {
         int loc = aspectAnalysisResults.getLinesOfCode();
         if (loc > 0) {
-            summary.append("<a target='_blank' href='visuals/zoomable_circles_" + fileSuffix + ".html'>" + label + "</a>");
+            summary.append("<a target='_blank' href='visuals/zoomable_circles.html?key=" + fileSuffix + "'>" + label + "</a>");
         } else {
             summary.append(label);
         }
