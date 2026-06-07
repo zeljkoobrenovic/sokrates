@@ -32,6 +32,14 @@
 </head>
 <body>
 <script>
+    // Decodes the deflate+base64 JSON used for compressed inline data. fflate is loaded above.
+    function sokratesInflate(b64) {
+        var bin = atob(b64);
+        var bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) { bytes[i] = bin.charCodeAt(i); }
+        return JSON.parse(fflate.strFromU8(fflate.unzlibSync(bytes)));
+    }
+
     // Optional inline data for self-contained pages (no zip fetch); see zoomable_circles.html.
     ${sokrates-inline-data}
 </script>

@@ -34,9 +34,18 @@
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js"></script>
 <script>
+    // Decodes the deflate+base64 JSON used for compressed inline data (and shared with the rest
+    // of the report suite). fflate is already loaded above.
+    function sokratesInflate(b64) {
+        var bin = atob(b64);
+        var bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) { bytes[i] = bin.charCodeAt(i); }
+        return JSON.parse(fflate.strFromU8(fflate.unzlibSync(bytes)));
+    }
+
     // Optional inline data for self-contained pages (no zip fetch). The generator fills the
-    // placeholder below with `var SOKRATES_INLINE_DATA = <children>;` for inline pages, or with
-    // nothing (leaving the variable undefined) for the fetch-by-key zip pages.
+    // placeholder below with `var SOKRATES_INLINE_DATA = sokratesInflate("<b64>");` for inline
+    // pages, or with nothing (leaving the variable undefined) for the fetch-by-key zip pages.
     ${sokrates-inline-data}
 </script>
 <script>

@@ -124,9 +124,11 @@ public class VisualizationTemplate {
     // render a single view (e.g. landscape sub-landscape circles), as opposed to the per-repository
     // family pages which are static fetch-by-key templates backed by zoomable_circles.zip.
     private String renderZoomableInline(String templateFileName, List<VisualizationItem> items) {
-        String json = zoomableItemsJson(items);
-        String content = rawTemplate(templateFileName);
-        return content.replace("${sokrates-inline-data}", "var SOKRATES_INLINE_DATA = " + json + ";");
+        // Embed the data compressed (deflate+base64), decoded in-browser by sokratesInflate — same
+        // scheme as the rest of the report suite. The template defines sokratesInflate (fflate is
+        // already loaded there).
+        String inline = "var SOKRATES_INLINE_DATA = sokratesInflate(\"" + deflateBase64(zoomableItemsJson(items)) + "\");";
+        return rawTemplate(templateFileName).replace("${sokrates-inline-data}", inline);
     }
 
     public String renderZoomableCircles(List<VisualizationItem> items) {
