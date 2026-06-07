@@ -74,7 +74,7 @@ public class DuplicationReportGenerator {
                     + "</div></div></td>");
             report.addHtmlContent("<td>" + formatDisplayString(instance.getLinesDisplayString()) + "</td>");
             if (saveCodeFragments) {
-                String url = "../src/fragments/" + fragmentType + "/" + fragmentType + "_" + count[0] + "." + extension;
+                String url = "../src/viewer.html?bundle=fragments/" + fragmentType + ".json&i=" + count[0];
                 report.addHtmlContent("<td><a target='_blank' href='" + url + "'>view</a></td>");
             }
             report.addHtmlContent("</tr>\n");

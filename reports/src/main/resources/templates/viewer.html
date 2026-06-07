@@ -1,0 +1,183 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Source viewer</title>
+    <link rel="stylesheet" charset="UTF-8"
+          href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
+    <script charset="UTF-8" type="application/javascript"
+            src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlightjs-line-numbers.js@2.8.0/dist/highlightjs-line-numbers.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js"></script>
+    <style>
+        body { font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif; margin: 16px; }
+        h3 { margin-bottom: 0; }
+        .meta { color: #555; margin-top: 4px; }
+        .block-label { color: #777; font-size: 12px; margin: 16px 0 2px 0; }
+        .error { color: #b00; }
+        pre { margin-top: 6px; }
+        /* highlightjs-line-numbers.js gutter */
+        .hljs-ln td.hljs-ln-numbers {
+            text-align: right;
+            color: #999;
+            border-right: 1px solid #ddd;
+            padding-right: 8px;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .hljs-ln td.hljs-ln-code { padding-left: 10px; }
+    </style>
+</head>
+<body>
+<div id="content">Loading...</div>
+
+<script>
+    // Caches so repeated views in one session don't re-fetch.
+    var zipCache = {};   // zipUrl -> Promise<{ [entryName]: Uint8Array }>
+    var jsonCache = {};  // url -> Promise<any>
+
+    function param(name) {
+        var m = new RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+        return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
+    }
+
+    function escapeHtml(s) {
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function langClass(ext) {
+        return ext ? (' class="' + escapeHtml(ext) + '"') : '';
+    }
+
+    // startFrom: the real source line number of the first rendered line (default 1).
+    function renderCode(code, ext, startFrom) {
+        var attr = (startFrom && startFrom > 1) ? (' data-start="' + startFrom + '"') : '';
+        return '<pre><code' + langClass(ext) + attr + '>' + escapeHtml(code) + '</code></pre>';
+    }
+
+    function highlight() {
+        document.querySelectorAll('pre code').forEach(function (el) {
+            hljs.highlightElement(el);
+            if (typeof hljs.lineNumbersBlock === 'function') {
+                var start = parseInt(el.getAttribute('data-start'), 10);
+                hljs.lineNumbersBlock(el, { startFrom: (start > 0 ? start : 1) });
+            }
+        });
+    }
+
+    function setHtml(html) {
+        document.getElementById('content').innerHTML = html;
+        highlight();
+    }
+
+    function showError(msg) {
+        document.getElementById('content').innerHTML = '<p class="error">' + escapeHtml(msg) + '</p>';
+    }
+
+    function fetchZip(zipUrl) {
+        if (!zipCache[zipUrl]) {
+            zipCache[zipUrl] = fetch(zipUrl).then(function (r) {
+                if (!r.ok) throw new Error('Could not load ' + zipUrl + ' (' + r.status + ')');
+                return r.arrayBuffer();
+            }).then(function (buf) {
+                return fflate.unzipSync(new Uint8Array(buf));
+            });
+        }
+        return zipCache[zipUrl];
+    }
+
+    function fetchJson(url) {
+        if (!jsonCache[url]) {
+            jsonCache[url] = fetch(url).then(function (r) {
+                if (!r.ok) throw new Error('Could not load ' + url + ' (' + r.status + ')');
+                return r.json();
+            });
+        }
+        return jsonCache[url];
+    }
+
+    function extFromPath(path) {
+        var i = path.lastIndexOf('.');
+        return i >= 0 ? path.substring(i + 1) : '';
+    }
+
+    // ?aspect=main&file=com/x/Foo.java[&from=&to=]  -> extract one entry from src/<aspect>.zip
+    function viewFile() {
+        var aspect = param('aspect');
+        var file = param('file');
+        var from = parseInt(param('from'), 10);
+        var to = parseInt(param('to'), 10);
+        fetchZip(aspect + '.zip').then(function (entries) {
+            var bytes = entries[file];
+            if (!bytes) throw new Error('File not found in archive: ' + file);
+            var text = fflate.strFromU8(bytes);
+            var ext = extFromPath(file);
+            var html = '<h3>' + escapeHtml(file) + '</h3>';
+            if (!isNaN(from) && !isNaN(to)) {
+                html += '<div class="meta">lines ' + from + ':' + to + '</div>';
+            }
+            html += renderCode(text, ext);
+            setHtml(html);
+            if (!isNaN(from)) scrollToLine(from);
+        }).catch(function (e) { showError(e.message); });
+    }
+
+    // ?bundle=fragments/longest_unit.json&i=3 -> render item 3 (1-based) of the bundle
+    function viewBundle() {
+        var bundle = param('bundle');
+        var i = parseInt(param('i'), 10) - 1;
+        fetchJson(bundle).then(function (items) {
+            if (!items || i < 0 || i >= items.length) throw new Error('Fragment ' + (i + 1) + ' not found in ' + bundle);
+            var item = items[i];
+            if (item.blocks) {
+                renderDuplicate(item);
+            } else {
+                renderUnit(item);
+            }
+        }).catch(function (e) { showError(e.message); });
+    }
+
+    function renderUnit(u) {
+        var html = '<h3>' + escapeHtml(u.name || '') + '</h3>';
+        html += '<div class="meta">in <i>' + escapeHtml(u.file || '') +
+                ' [' + u.from + ':' + u.to + ']</i></div>';
+        html += '<ul>';
+        if (u.loc != null) html += '<li><b>' + u.loc + '</b> lines of code</li>';
+        if (u.mccabe != null) html += '<li><b>' + u.mccabe + '</b> McCabe index (conditional complexity)</li>';
+        html += '</ul>';
+        html += renderCode(u.code || '', u.ext, u.from);
+        setHtml(html);
+    }
+
+    function renderDuplicate(d) {
+        var html = '<h3>Duplicated fragment</h3>';
+        (d.blocks || []).forEach(function (b) {
+            html += '<div class="block-label">' + escapeHtml(b.file || '') +
+                    ' [' + b.from + ':' + b.to + ']</div>';
+            html += renderCode(b.code || '', d.ext, b.from);
+        });
+        setHtml(html);
+    }
+
+    function scrollToLine(line) {
+        // Best-effort: scroll proportionally within the rendered code block.
+        var code = document.querySelector('pre code');
+        if (!code) return;
+        var lines = code.textContent.split('\n').length;
+        if (lines > 0) {
+            var y = code.getBoundingClientRect().height * (line / lines);
+            window.scrollTo(0, Math.max(0, y - window.innerHeight / 3));
+        }
+    }
+
+    (function main() {
+        if (param('bundle')) {
+            viewBundle();
+        } else if (param('aspect') && param('file')) {
+            viewFile();
+        } else {
+            showError('Nothing to show: expected ?aspect=&file= or ?bundle=&i=');
+        }
+    })();
+</script>
+</body>
+</html>

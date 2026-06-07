@@ -47,6 +47,27 @@ class FilesExplorerGeneratorsTest {
     }
 
     @Test
+    void setsViewerLinkForReferencedFiles() {
+        FilesExplorerGenerators generators = new FilesExplorerGenerators(new File("."));
+        SourceFile referenced = sourceFile("com/x/Foo.java", 100, null);
+        List<FileExport> files = generators.getFiles(
+                aspectOf(referenced), "main", new java.util.HashSet<>(Arrays.asList(referenced)));
+
+        assertEquals(1, files.size());
+        assertEquals("../src/viewer.html?aspect=main&file=com/x/Foo.java", files.get(0).getSourceFileLink());
+    }
+
+    @Test
+    void leavesViewerLinkEmptyForUnreferencedFiles() {
+        FilesExplorerGenerators generators = new FilesExplorerGenerators(new File("."));
+        List<FileExport> files = generators.getFiles(
+                aspectOf(sourceFile("com/x/Foo.java", 100, null)), "main", new java.util.HashSet<>());
+
+        assertEquals(1, files.size());
+        assertEquals("", files.get(0).getSourceFileLink());
+    }
+
+    @Test
     void leavesDefaultsWhenNoHistory() {
         FilesExplorerGenerators generators = new FilesExplorerGenerators(new File("."));
         List<FileExport> files = generators.getFiles(aspectOf(sourceFile("src/Bar.java", 50, null)), "test");

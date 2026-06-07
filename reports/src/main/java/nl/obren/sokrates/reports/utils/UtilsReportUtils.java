@@ -24,16 +24,15 @@ public class UtilsReportUtils {
             index[0]++;
             String divId = "unitCode_" + index[0];
             String fileLink = cacheFiles
-                    ? "<a style='color: grey' target='_blank' href='../src/main/"
-                    + unit.getSourceFile().getRelativePath() + ".html'>"
+                    ? "<a style='color: grey' target='_blank' href='../src/viewer.html?aspect=main&file="
+                    + unit.getSourceFile().getRelativePath() + "'>"
                     + unit.getSourceFile().getRelativePath()
                     + "</a>"
                     : unit.getSourceFile().getRelativePath();
-            String unitNameFragment = saveCodeFragments ? ("<a target='_blank'" +
-                    "href='../src/fragments/" + fragmentType + "/" + fragmentType + "_"
-                    + index[0] + "."
-                    + unit.getSourceFile().getExtension()
-                    + ".html'>"
+            String unitNameFragment = saveCodeFragments ? ("<a target='_blank' " +
+                    "href='../src/viewer.html?bundle=fragments/" + fragmentType + ".json&i="
+                    + index[0]
+                    + "'>"
                     + unit.getShortName() + "</a>")
                     : (unit.getShortName());
             table.append("<td style='white-space: nowrap; overflow: hidden'>" +

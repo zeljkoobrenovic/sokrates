@@ -35,6 +35,11 @@ public class FilesExplorerGenerators {
         return getFiles(aspect, scope, scope, new HashSet<>());
     }
 
+    // Package-private for testing the source-file viewer link.
+    List<FileExport> getFiles(NamedSourceCodeAspect aspect, String scope, Set<SourceFile> referencedFiles) {
+        return getFiles(aspect, scope, scope, referencedFiles);
+    }
+
     /**
      * Builds file exports for an aspect. {@code cacheFolder} is the source-cache subfolder under
      * {@code src/} for this scope (e.g. "main", "buildAndDeployment"); {@code referencedFiles} are the
@@ -67,7 +72,7 @@ public class FilesExplorerGenerators {
                 }
                 // Link to the cached source page only for files that actually have one.
                 if (referencedFiles.contains(file)) {
-                    fileExport.setSourceFileLink("../src/" + cacheFolder + "/" + file.getRelativePath() + ".html");
+                    fileExport.setSourceFileLink("../src/viewer.html?aspect=" + cacheFolder + "&file=" + file.getRelativePath());
                 }
                 files.add(fileExport);
             }
@@ -77,7 +82,7 @@ public class FilesExplorerGenerators {
     }
 
     /**
-     * The files whose source page is cached to {@code src/<aspect>/...}, mirroring
+     * The files whose source is cached into {@code src/<aspect>.zip}, mirroring
      * {@code DataExporter.getReferencedFiles} (only a subset of files is cached).
      */
     private Set<SourceFile> getReferencedFiles(CodeAnalysisResults results) {
