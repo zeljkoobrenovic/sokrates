@@ -16,15 +16,21 @@
         .error { color: #b00; }
         pre { margin-top: 6px; }
         /* highlightjs-line-numbers.js gutter */
+        .hljs-ln td { padding: 0; }
         .hljs-ln td.hljs-ln-numbers {
             text-align: right;
             color: #999;
             border-right: 1px solid #ddd;
             padding-right: 8px;
+            vertical-align: top;
             -webkit-user-select: none;
             user-select: none;
         }
-        .hljs-ln td.hljs-ln-code { padding-left: 10px; }
+        /* table cells collapse leading whitespace by default; keep source indentation */
+        .hljs-ln td.hljs-ln-code {
+            padding-left: 10px;
+            white-space: pre;
+        }
     </style>
 </head>
 <body>
