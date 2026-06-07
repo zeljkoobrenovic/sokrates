@@ -69,11 +69,8 @@ public class DataExporter {
     private File reportsFolder;
     private CodeAnalysisResults analysisResults;
     private File dataFolder;
-    private File historyFolder;
     private File codeCacheFolder;
     private File textDataFolder;
-    private File extraAnalysisDataFolder;
-
     public DataExporter(ProgressFeedback progressFeedback) {
         this.progressFeedback = progressFeedback;
     }
@@ -93,8 +90,6 @@ public class DataExporter {
         this.analysisResults = analysisResults;
         this.dataFolder = getDataFolder();
         this.textDataFolder = getTextDataFolder();
-        this.extraAnalysisDataFolder = getExtraAnalysisDataFolder();
-        this.historyFolder = getDataHistoryFolder();
 
         LOG.info("Saving file lists");
         exportFileLists();
@@ -572,10 +567,6 @@ public class DataExporter {
         List<SourceFile> mainSourceFiles = analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles();
         FileUtils.write(new File(dataFolder, "mainFiles.json"), new JsonGenerator().generate(mainSourceFiles), UTF_8);
 
-        if (codeConfiguration.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesConfigFile.getParentFile())) {
-            saveExtraAnalysesConfig();
-        }
-
         FileUtils.write(new File(textDataFolder, "mainFiles.txt"), getFilesAsTxt(mainSourceFiles), UTF_8);
         FileUtils.write(new File(textDataFolder, "mainFilesWithHistory.txt"), getFilesWithHistoryAsTxt(mainSourceFiles), UTF_8);
         FileUtils.write(new File(textDataFolder, "mainFilesWithoutHistory.txt"), getFilesWithoutHistoryAsTxt(mainSourceFiles), UTF_8);
@@ -628,53 +619,6 @@ public class DataExporter {
         File textDataFolder = new File(dataFolder, "text");
         textDataFolder.mkdirs();
         return textDataFolder;
-    }
-
-    public File getExtraAnalysisDataFolder() {
-        File extraAnalysisDataFolder = new File(dataFolder, "extra_analysis");
-        extraAnalysisDataFolder.mkdirs();
-        return extraAnalysisDataFolder;
-    }
-
-    private void saveExtraAnalysesConfig() {
-        try {
-            String jsonContent = FileUtils.readFileToString(sokratesConfigFile, UTF_8);
-
-            FileUtils.write(new File(extraAnalysisDataFolder, "config_original.json"), new JsonGenerator().generate(codeConfiguration), UTF_8);
-
-            saveConfigByFileChangeFrequency(jsonContent);
-            saveConfigByFileAge(jsonContent);
-            saveConfigByFileFreshness(jsonContent);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void saveConfigByFileChangeFrequency(String jsonContent) throws IOException {
-        CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
-        codeConfiguration.setLogicalDecompositions(FileHistoryScopingUtils.getLogicalDecompositionsFileUpdateFrequency(analysisResults));
-
-        codeConfiguration.getFileHistoryAnalysis().setImportPath("");
-
-        FileUtils.write(new File(extraAnalysisDataFolder, "config_by_file_change_frequency.json"), new JsonGenerator().generate(codeConfiguration), UTF_8);
-    }
-
-    private void saveConfigByFileAge(String jsonContent) throws IOException {
-        CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
-        codeConfiguration.setLogicalDecompositions(FileHistoryScopingUtils.getLogicalDecompositionsByAge(analysisResults));
-
-        codeConfiguration.getFileHistoryAnalysis().setImportPath("");
-
-        FileUtils.write(new File(extraAnalysisDataFolder, "config_by_file_age.json"), new JsonGenerator().generate(codeConfiguration), UTF_8);
-    }
-
-    private void saveConfigByFileFreshness(String jsonContent) throws IOException {
-        CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
-        codeConfiguration.setLogicalDecompositions(FileHistoryScopingUtils.getLogicalDecompositionsByFreshness(analysisResults));
-
-        codeConfiguration.getFileHistoryAnalysis().setImportPath("");
-
-        FileUtils.write(new File(extraAnalysisDataFolder, "config_by_file_freshness.json"), new JsonGenerator().generate(codeConfiguration), UTF_8);
     }
 
     private String getFilesAsTxt(List<SourceFile> sourceFiles) {
@@ -899,12 +843,6 @@ public class DataExporter {
         File dataFolder = new File(reportsFolder, DATA_FOLDER_NAME);
         dataFolder.mkdirs();
         return dataFolder;
-    }
-
-    public File getDataHistoryFolder() {
-        File folder = new File(reportsFolder, HISTORY_FOLDER_NAME);
-        folder.mkdirs();
-        return folder;
     }
 
     private void info(String text) {
