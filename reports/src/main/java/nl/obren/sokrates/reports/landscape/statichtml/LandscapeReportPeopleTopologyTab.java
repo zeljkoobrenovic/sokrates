@@ -86,10 +86,6 @@ public class LandscapeReportPeopleTopologyTab {
             landscapeReport.addNewTabLink("<div style='font-weight: bold; font-size: 110%; margin-bottom: 8px;'>3D force graph (including repositories)&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON + "</div>", "visuals/" + prefix + "_dependencies_including_repositories_30_2_force_3d.html");
             landscapeReport.startDiv("font-size: 90%");
             landscapeReport.addHtmlContent("more visuals: ");
-            landscapeReport.addNewTabLink("graphviz", "visuals/" + prefix + "_dependencies_30_1.svg");
-            landscapeReport.addHtmlContent(" | ");
-            landscapeReport.addNewTabLink("graphviz (including contributors)", "visuals/" + prefix + "_dependencies_including_repositories_30_2.svg");
-            landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("2D force graph", "visuals/" + prefix + "_dependencies_30_1_force_2d.html");
             landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("3D force graph", "visuals/" + prefix + "_dependencies_30_1_force_3d.html");
@@ -139,10 +135,6 @@ public class LandscapeReportPeopleTopologyTab {
             landscapeReport.addParagraph("The diagram shows repository dependencies defined as having the same " +
                     "contributors working on the same repositories in the past 30 days. " +
                     "The lines between repositories display the number of contributors working on both repositories.", "color: grey");
-            landscapeReport.addNewTabLink("graphviz", "visuals/repository_dependencies_30_3.svg");
-            landscapeReport.addHtmlContent(" | ");
-            landscapeReport.addNewTabLink("graphviz (including contributors)", "visuals/" + prefix + "_dependencies_including_repositories_30_2.svg");
-            landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("2D force graph", "visuals/repository_dependencies_30_3_force_2d.html");
             landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("2D force graph (including contributors)", "visuals/" + prefix + "_dependencies_including_repositories_30_2_force_2d.html");
@@ -165,8 +157,6 @@ public class LandscapeReportPeopleTopologyTab {
         if (recentlyActive) {
             landscapeReport.addParagraph("The diagram shows dependencies between programming languages (file extensions) defined as having the same contributors committing to files with these extensions in the past 30 days. " +
                     "The lines between repositories display the number of contributors committing to files with both extensions in ht past 30 days.", "color: grey");
-            landscapeReport.addNewTabLink("graphviz", "visuals/extension_dependencies_30d.svg");
-            landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("2D force graph", "visuals/extension_dependencies_30d_force_2d.html");
             landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("3D force graph", "visuals/extension_dependencies_30d_force_3d.html");

@@ -474,9 +474,6 @@ public class ReportFileExporter {
             report.startTableCell("border: none");
             report.startUnorderedList();
             report.startListItem();
-            report.addNewTabLink("graphviz graph of duplication among files", "visuals/duplication_among_files.svg");
-            report.endListItem();
-            report.startListItem();
             report.addNewTabLink("2D force graph of duplication among files", "visuals/duplication_among_files_force_2d.html");
             report.endListItem();
             report.startListItem();
@@ -576,8 +573,6 @@ public class ReportFileExporter {
         report.startUnorderedList();
         report.startListItem();
         report.addHtmlContent("past 30 days: ");
-        report.addNewTabLink("graphviz", "visuals/people_dependencies_30_1.svg");
-        report.addHtmlContent(" | ");
         report.addNewTabLink("2D graph", "visuals/people_dependencies_30_1_force_2d.html");
         report.addHtmlContent(" | ");
         report.addNewTabLink("2D graph (with files)", "visuals/people_dependencies_via_files_30_2_force_2d.html");
@@ -592,8 +587,6 @@ public class ReportFileExporter {
         report.endListItem();
         report.startListItem();
         report.addHtmlContent("past 3 months: ");
-        report.addNewTabLink("graphviz", "visuals/people_dependencies_90_3.svg");
-        report.addHtmlContent(" | ");
         report.addNewTabLink("2D graph", "visuals/people_dependencies_90_3_force_2d.html");
         report.addHtmlContent(" | ");
         report.addNewTabLink("2D graph (with files)", "visuals/people_dependencies_via_files_90_4_force_2d.html");
@@ -608,8 +601,6 @@ public class ReportFileExporter {
         report.endListItem();
         report.startListItem();
         report.addHtmlContent("past 6 months: ");
-        report.addNewTabLink("graphviz", "visuals/people_dependencies_180_5.svg");
-        report.addHtmlContent(" | ");
         report.addNewTabLink("2D graph", "visuals/people_dependencies_180_5_force_2d.html");
         report.addHtmlContent(" | ");
         report.addNewTabLink("2D graph (with files)", "visuals/people_dependencies_via_files_180_6_force_2d.html");
@@ -624,8 +615,6 @@ public class ReportFileExporter {
         report.endListItem();
         report.startListItem();
         report.addHtmlContent("past year: ");
-        report.addNewTabLink("graphviz", "visuals/people_dependencies_365_7.svg");
-        report.addHtmlContent(" | ");
         report.addNewTabLink("2D graph", "visuals/people_dependencies_365_7_force_2d.html");
         report.addHtmlContent(" | ");
         report.addNewTabLink("2D graph (with files)", "visuals/people_dependencies_via_files_365_8_force_2d.html");
@@ -677,13 +666,6 @@ public class ReportFileExporter {
             report.endTableCell();
             report.startTableCell("text-align: center");
             if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days().size() > 0) {
-                report.addNewTabLink("graphviz", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_30_days.svg");
-            } else {
-                report.addContentInDiv("graphviz", "color: #c0c0c0");
-            }
-            report.endTableCell();
-            report.startTableCell("text-align: center");
-            if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days().size() > 0) {
                 report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_30_days_force_2d.html");
             } else {
                 report.addContentInDiv("2D", "color: #c0c0c0");
@@ -698,13 +680,6 @@ public class ReportFileExporter {
             report.endTableCell();
             report.startTableCell("text-align: center");
             if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether90Days().size() > 0) {
-                report.addNewTabLink("graphviz", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_90_days.svg");
-            } else {
-                report.addContentInDiv("graphviz", "color: #c0c0c0");
-            }
-            report.endTableCell();
-            report.startTableCell("text-align: center");
-            if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether90Days().size() > 0) {
                 report.addNewTabLink("2D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_90_days_force_2d.html");
             } else {
                 report.addContentInDiv("2D", "color: #c0c0c0");
@@ -715,13 +690,6 @@ public class ReportFileExporter {
                 report.addNewTabLink("3D", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_90_days_force_3d.html");
             } else {
                 report.addContentInDiv("3D", "color: #c0c0c0");
-            }
-            report.endTableCell();
-            report.startTableCell("text-align: center");
-            if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether180Days().size() > 0) {
-                report.addNewTabLink("graphviz", "visuals/file_changed_together_dependencies_logical_decomposition_" + index[0] + "_180_days.svg");
-            } else {
-                report.addContentInDiv("graphviz", "color: #c0c0c0");
             }
             report.endTableCell();
             report.startTableCell("text-align: center");
@@ -772,8 +740,6 @@ public class ReportFileExporter {
         report.startListItem();
         report.addHtmlContent("past 30 days: ");
         if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days().size() > 0) {
-            report.addNewTabLink("graphviz", "visuals/file_changed_together_dependencies_files_30_days.svg");
-            report.addHtmlContent(" | ");
             report.addNewTabLink("2D graph", "visuals/file_changed_together_dependencies_files_30_days_force_2d.html");
             report.addHtmlContent(" | ");
             report.addNewTabLink("2D graph (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_30_days_force_2d.html");
@@ -788,8 +754,6 @@ public class ReportFileExporter {
         report.startListItem();
         report.addHtmlContent("past 3 months: ");
         if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether90Days().size() > 0) {
-            report.addNewTabLink("graphviz", "visuals/file_changed_together_dependencies_files_90_days.svg");
-            report.addHtmlContent(" | ");
             report.addNewTabLink("2D graph", "visuals/file_changed_together_dependencies_files_90_days_force_2d.html");
             report.addHtmlContent(" | ");
             report.addNewTabLink("2D graph (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_90_days_force_2d.html");
@@ -804,8 +768,6 @@ public class ReportFileExporter {
         report.startListItem();
         report.addHtmlContent("past 6 months: ");
         if (analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether180Days().size() > 0) {
-            report.addNewTabLink("graphviz", "visuals/file_changed_together_dependencies_files_180_days.svg");
-            report.addHtmlContent(" | ");
             report.addNewTabLink("2D graph", "visuals/file_changed_together_dependencies_files_180_days_force_2d.html");
             report.addHtmlContent(" | ");
             report.addNewTabLink("2D graph (with commits)", "visuals/file_changed_together_dependencies_with_commits_components_180_days_force_2d.html");
