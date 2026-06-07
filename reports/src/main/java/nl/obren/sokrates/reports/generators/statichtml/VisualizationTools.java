@@ -6,7 +6,8 @@ public class VisualizationTools {
     public static void addDownloadLinks(RichTextReport report, String graphId) {
         report.startDiv("");
         report.addHtmlContent("Download: ");
-        report.addNewTabLink("Mermaid (.mmd)", "visuals/" + graphId + ".mmd");
+        // The .mmd is built in the browser from the embedded diagram source (no file on disk).
+        report.addHtmlContent("<a href=\"#\" onclick=\"return downloadMermaid('" + graphId + "');\">Mermaid (.mmd)</a>");
         report.addHtmlContent(" ");
         report.addNewTabLink("(open online Mermaid editor)", "https://obren.io/tools/mermaid/");
         report.endDiv();

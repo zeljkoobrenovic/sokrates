@@ -241,6 +241,20 @@ public class ReportConstants {
             "          evt.currentTarget.className += \" active\";\n" +
             "          renderMermaidIn(document.getElementById(tabName));\n" +
             "        }\n" +
+            "        // Build a .mmd download in the browser from the source already embedded in the\n" +
+            "        // page (a hidden <script id=mermaid-source-ID>), so no .mmd files are written to disk.\n" +
+            "        function downloadMermaid(id) {\n" +
+            "          var el = document.getElementById('mermaid-source-' + id);\n" +
+            "          if (!el) { return false; }\n" +
+            "          var text = el.textContent.replace(/^\\n/, '').replace(/\\n$/, '');\n" +
+            "          var blob = new Blob([text], { type: 'text/plain' });\n" +
+            "          var url = URL.createObjectURL(blob);\n" +
+            "          var a = document.createElement('a');\n" +
+            "          a.href = url; a.download = id + '.mmd';\n" +
+            "          document.body.appendChild(a); a.click(); document.body.removeChild(a);\n" +
+            "          setTimeout(function () { URL.revokeObjectURL(url); }, 0);\n" +
+            "          return false;\n" +
+            "        }\n" +
             "    </script>\n" +
             "    <!-- Mermaid: client-side diagram rendering (replaces server-side Graphviz). -->\n" +
             "    <script type=\"module\">\n" +

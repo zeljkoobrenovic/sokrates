@@ -687,7 +687,7 @@ public class LandscapeReportPeopleTopologyTab {
     private void addDownloadLinks(String graphId) {
         landscapeReport.startDiv("");
         landscapeReport.addHtmlContent("Download: ");
-        landscapeReport.addNewTabLink("Mermaid (.mmd)", "visuals/" + graphId + ".mmd");
+        landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadMermaid('" + graphId + "');\">Mermaid (.mmd)</a>");
         landscapeReport.addHtmlContent(" ");
         landscapeReport.addNewTabLink("(open online Mermaid editor)", "https://obren.io/tools/mermaid/");
         landscapeReport.endDiv();
