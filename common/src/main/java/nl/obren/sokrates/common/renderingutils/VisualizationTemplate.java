@@ -36,9 +36,15 @@ public class VisualizationTemplate {
             "  }\n" +
             "</script>";
 
+    // The head block (fflate + sokratesInflate helper) needed by any page that embeds compressed
+    // inline JSON. Exposed for non-template producers (e.g. X3DomExporter) that build HTML directly.
+    public static String inflateLib() {
+        return INFLATE_LIB;
+    }
+
     // Deflate (zlib) + base64 a JSON string for inline embedding; the page decodes it with the
     // sokratesInflate helper above.
-    static String deflateBase64(String json) {
+    public static String deflateBase64(String json) {
         byte[] input = json.getBytes(StandardCharsets.UTF_8);
         Deflater deflater = new Deflater(Deflater.BEST_COMPRESSION);
         deflater.setInput(input);
