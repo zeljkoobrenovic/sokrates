@@ -119,8 +119,18 @@ public class VisualizationTemplate {
         return renderCompressed("treemap.html", items);
     }
 
+    // Renders a self-contained (inline-data) zoomable circles/sunburst page: the data is embedded
+    // directly via SOKRATES_INLINE_DATA so the page does NOT fetch a zip. Used by callers that
+    // render a single view (e.g. landscape sub-landscape circles), as opposed to the per-repository
+    // family pages which are static fetch-by-key templates backed by zoomable_circles.zip.
+    private String renderZoomableInline(String templateFileName, List<VisualizationItem> items) {
+        String json = zoomableItemsJson(items);
+        String content = rawTemplate(templateFileName);
+        return content.replace("${sokrates-inline-data}", "var SOKRATES_INLINE_DATA = " + json + ";");
+    }
+
     public String renderZoomableCircles(List<VisualizationItem> items) {
-        return render("zoomable_circles.html", items).replace(",\"children\":[]", "");
+        return renderZoomableInline("zoomable_circles.html", items);
     }
 
     // The JSON payload that the zoomable circles/sunburst templates embed as the tree's
@@ -140,7 +150,7 @@ public class VisualizationTemplate {
     }
 
     public String renderZoomableSunburst(List<VisualizationItem> items) {
-        return render("zoomable_sunburst.html", items).replace(",\"children\":[]", "");
+        return renderZoomableInline("zoomable_sunburst.html", items);
     }
 
     public String render2DForceGraph(Force3DObject data) {

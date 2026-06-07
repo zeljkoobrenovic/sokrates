@@ -761,7 +761,10 @@ public class CommandLineInterface {
                 .map(e -> new String[]{e.getKey() + ".json", e.getValue()})
                 .toArray(String[][]::new);
         ZipUtils.stringToZipFile(new File(folder, family + ".zip"), zipEntries);
-        String template = new VisualizationTemplate().rawTemplate(family + ".html");
+        // Fetch-by-key page: leave the inline-data placeholder empty so SOKRATES_INLINE_DATA stays
+        // undefined and the page loads its view from the family zip.
+        String template = new VisualizationTemplate().rawTemplate(family + ".html")
+                .replace("${sokrates-inline-data}", "");
         FileUtils.write(new File(folder, family + ".html"), template, UTF_8);
     }
 

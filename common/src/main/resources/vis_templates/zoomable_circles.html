@@ -34,6 +34,12 @@
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js"></script>
 <script>
+    // Optional inline data for self-contained pages (no zip fetch). The generator fills the
+    // placeholder below with `var SOKRATES_INLINE_DATA = <children>;` for inline pages, or with
+    // nothing (leaving the variable undefined) for the fetch-by-key zip pages.
+    ${sokrates-inline-data}
+</script>
+<script>
 
     // The per-view data lives in zoomable_circles.zip (one JSON entry per view, keyed by the
     // view name). The page selects its view via ?key=... and extracts only that entry. This
@@ -158,6 +164,12 @@
     }
 
     (function load() {
+        // Inline mode (self-contained page, e.g. landscape sub-landscape circles): the data is
+        // embedded directly, no zip fetch. Otherwise fetch the view from the family zip by ?key=.
+        if (typeof SOKRATES_INLINE_DATA !== 'undefined' && SOKRATES_INLINE_DATA !== null) {
+            render(SOKRATES_INLINE_DATA);
+            return;
+        }
         var key = param('key') || 'main';
         fetch('zoomable_circles.zip')
             .then(function (r) { if (!r.ok) throw new Error('Could not load zoomable_circles.zip'); return r.arrayBuffer(); })

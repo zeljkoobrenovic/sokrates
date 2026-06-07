@@ -32,6 +32,10 @@
 </head>
 <body>
 <script>
+    // Optional inline data for self-contained pages (no zip fetch); see zoomable_circles.html.
+    ${sokrates-inline-data}
+</script>
+<script>
 
     // The per-view data lives in zoomable_sunburst.zip (one JSON entry per view, keyed by the
     // view name). The page selects its view via ?key=... and extracts only that entry. Requires
@@ -194,6 +198,11 @@
     }
 
     (function load() {
+        // Inline mode (self-contained page) renders the embedded data directly, no zip fetch.
+        if (typeof SOKRATES_INLINE_DATA !== 'undefined' && SOKRATES_INLINE_DATA !== null) {
+            render(SOKRATES_INLINE_DATA);
+            return;
+        }
         var key = param('key') || 'main';
         fetch('zoomable_sunburst.zip')
             .then(function (r) { if (!r.ok) throw new Error('Could not load zoomable_sunburst.zip'); return r.arrayBuffer(); })
