@@ -689,7 +689,7 @@ public class LandscapeReportPeopleTopologyTab {
         landscapeReport.addHtmlContent("Download: ");
         landscapeReport.addNewTabLink("Mermaid (.mmd)", "visuals/" + graphId + ".mmd");
         landscapeReport.addHtmlContent(" ");
-        landscapeReport.addNewTabLink("(open online Mermaid editor)", "https://mermaid.live/");
+        landscapeReport.addNewTabLink("(open online Mermaid editor)", "https://obren.io/tools/mermaid/");
         landscapeReport.endDiv();
     }
 

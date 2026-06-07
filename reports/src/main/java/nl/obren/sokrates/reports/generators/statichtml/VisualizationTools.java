@@ -8,7 +8,7 @@ public class VisualizationTools {
         report.addHtmlContent("Download: ");
         report.addNewTabLink("Mermaid (.mmd)", "visuals/" + graphId + ".mmd");
         report.addHtmlContent(" ");
-        report.addNewTabLink("(open online Mermaid editor)", "https://mermaid.live/");
+        report.addNewTabLink("(open online Mermaid editor)", "https://obren.io/tools/mermaid/");
         report.endDiv();
     }
 
