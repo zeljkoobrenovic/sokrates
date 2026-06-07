@@ -463,6 +463,9 @@ public class LandscapeReportContributorsTab {
                     .filter(c -> contributorsLinkedFromTables.contains(c.getContributor().getEmail()))
                     .collect(Collectors.toList());
             LOG.info("Saving bot reports for " + linkedBots.size() + " contributor(s) linked from tables (out of " + linkedBots.size() + ")");
+            // Contributors, teams (the TEAMS tab passes teams as its "contributors" list) and bots
+            // all merge into one contributors/people.zip, keyed by safe email; pages open as
+            // contributor-report.html?key=<safe-email>.
             individualReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults, reportsFolder).getIndividualReports(linkedContributors);
             botReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults, reportsFolder).getIndividualReports(linkedBots);
             ProcessingStopwatch.end("reporting/contributors/individual reports");

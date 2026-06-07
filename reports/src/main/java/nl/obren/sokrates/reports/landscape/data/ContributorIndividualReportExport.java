@@ -110,11 +110,9 @@ public class ContributorIndividualReportExport {
                 Member member = new Member(m);
                 String biggest = helper.getBiggestExtension(configuration, m, peopleConfig);
                 member.setLang(biggest != null ? biggest.replace("*.", "").trim().toLowerCase() : "");
-                // Only keep the link if the member's individual report was actually generated.
-                if (contributorsFolder != null && member.getReportUrl() != null
-                        && !new java.io.File(contributorsFolder, member.getReportUrl()).exists()) {
-                    member.setReportUrl(null);
-                }
+                // The member link points at the shared people page (contributor-report.html?key=...);
+                // if that member isn't in people.zip the page shows a graceful "not found" message,
+                // so no file-existence gate is needed (and there are no per-person files to check).
                 members.add(member);
             });
         }
