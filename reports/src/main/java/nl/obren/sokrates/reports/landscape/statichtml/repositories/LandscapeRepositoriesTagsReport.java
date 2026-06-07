@@ -1,8 +1,8 @@
 package nl.obren.sokrates.reports.landscape.statichtml.repositories;
 
-import nl.obren.sokrates.common.renderingutils.GraphvizUtil;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.generators.statichtml.VisualizationTools;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
 import nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator;
 import nl.obren.sokrates.reports.landscape.utils.Force3DGraphExporter;
@@ -141,10 +141,10 @@ public class LandscapeRepositoriesTagsReport {
         report.addHtmlContent(" | ");
         report.addNewTabLink("3D graph (excluding repositories)", "visuals/" + type + "_tags_graph_" + index[0] + "_direct_force_3d.html");
         report.addHtmlContent(" | ");
-        report.addNewTabLink("2D graph (via repositories)", "visuals/" + type + "_tags_graph_" + index[0] + ".svg");
+        report.addNewTabLink("2D graph (via repositories)", "visuals/" + type + "_tags_graph_" + index[0] + ".html");
         report.addHtmlContent(" | ");
-        report.addNewTabLink("2D graph (excluding repositories)", "visuals/" + type + "_tags_graph_" + index[0] + "_direct.svg");
-        report.addNewTabLink("2D graph (excluding repositories)", "visuals/" + type + "_tags_graph_" + index[0] + "_direct.svg");
+        report.addNewTabLink("2D graph (excluding repositories)", "visuals/" + type + "_tags_graph_" + index[0] + "_direct.html");
+        report.addNewTabLink("2D graph (excluding repositories)", "visuals/" + type + "_tags_graph_" + index[0] + "_direct.html");
         report.endDiv();
     }
 
@@ -241,11 +241,13 @@ public class LandscapeRepositoriesTagsReport {
         graphvizDependencyRenderer.setTypeGraph();
         graphvizDependencyRenderer.setOrientation("RL");
         List<String> keys = tagsMap.keySet().stream().filter(t -> tagsMap.getTagStats(t) != null).collect(Collectors.toList());
-        String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(keys), dependencies);
-        String graphvizContentDirect = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), directDependencies);
+        String graphvizContent = graphvizDependencyRenderer.getMermaidContent(new ArrayList<>(keys), dependencies);
+        String graphvizContentDirect = graphvizDependencyRenderer.getMermaidContent(new ArrayList<>(), directDependencies);
         try {
-            FileUtils.write(new File(reportsFolder, "visuals/" + prefix + ".svg"), GraphvizUtil.getSvgFromDot(graphvizContent), StandardCharsets.UTF_8);
-            FileUtils.write(new File(reportsFolder, "visuals/" + prefix + "_direct.svg"), GraphvizUtil.getSvgFromDot(graphvizContentDirect), StandardCharsets.UTF_8);
+            FileUtils.write(new File(reportsFolder, "visuals/" + prefix + ".html"),
+                    VisualizationTools.standaloneMermaidPage("Tag dependencies", graphvizContent), StandardCharsets.UTF_8);
+            FileUtils.write(new File(reportsFolder, "visuals/" + prefix + "_direct.html"),
+                    VisualizationTools.standaloneMermaidPage("Tag dependencies", graphvizContentDirect), StandardCharsets.UTF_8);
         } catch (IOException e) {
             LOG.info(e);
         }

@@ -239,7 +239,20 @@ public class ReportConstants {
             "          }\n" +
             "          document.getElementById(tabName).style.display = \"block\";\n" +
             "          evt.currentTarget.className += \" active\";\n" +
+            "          renderMermaidIn(document.getElementById(tabName));\n" +
             "        }\n" +
+            "    </script>\n" +
+            "    <!-- Mermaid: client-side diagram rendering (replaces server-side Graphviz). -->\n" +
+            "    <script type=\"module\">\n" +
+            "        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';\n" +
+            "        mermaid.initialize({ startOnLoad: true, securityLevel: 'loose', maxEdges: 1000, flowchart: { useMaxWidth: true } });\n" +
+            "        // Diagrams inside hidden tabs are not laid out at load; render a tab's diagrams\n" +
+            "        // the first time it is opened. Exposed globally so openTab() can call it.\n" +
+            "        window.renderMermaidIn = function (container) {\n" +
+            "            if (!container) return;\n" +
+            "            var pending = container.querySelectorAll('pre.mermaid:not([data-processed])');\n" +
+            "            if (pending.length > 0) { mermaid.run({ nodes: pending }); }\n" +
+            "        };\n" +
             "    </script>\n" +
             "    <!-- CUSTOM HEADER FRAGMENT -->\n" +
             "</head>\n";

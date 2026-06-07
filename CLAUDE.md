@@ -25,7 +25,7 @@ Build artifacts (fat jars via maven-assembly + jar-with-dependencies):
 
 Tests use JUnit Jupiter + Vintage (mixed JUnit 4/5). The parent pom forces `-Duser.country=US -Duser.language=us` via `argLine` — locale-sensitive formatting tests depend on this.
 
-External runtime dependency: **Graphviz** (`dot`) is required to render dependency/visualization graphs. The Docker image installs it and sets `GRAPHVIZ_DOT=/usr/bin/dot`.
+No external runtime dependencies: dependency/visualization graphs are rendered **client-side with Mermaid.js** (loaded from CDN), so report generation no longer shells out to an external process. (Graphviz/`dot` was previously required; it has been removed — see "Dependency graphs" below.)
 
 ## Running the CLI
 
@@ -35,7 +35,7 @@ java -jar cli/target/cli-1.0-jar-with-dependencies.jar <command> [args]
 
 Key commands (defined in `cli/.../Commands.java`, dispatched in `CommandLineInterface.java`):
 - `init` — create `config.json` analysis configuration for a codebase (`-srcRoot`, `-confFile`, `-conventionsFile`)
-- `generateReports` — run analysis and emit HTML reports (`-confFile`, `-outputFolder`; `-skipDuplication`, `-skipComplexAnalyses`, `-internalGraphviz`, etc.)
+- `generateReports` — run analysis and emit HTML reports (`-confFile`, `-outputFolder`; `-skipDuplication`, `-skipComplexAnalyses`, etc.)
 - `updateConfig` — fill in missing fields of an existing config
 - `updateLandscape` — aggregate multiple analyses into a landscape report
 - `extractGitHistory` / `extractGitSubHistory` — produce `git-history.txt` consumed by history analyses
@@ -101,6 +101,14 @@ The per-repository report's `<reports>/src/` folder holds the source code refere
 - **`src/viewer.html`** — one shared client-rendered viewer (highlight.js v11 + `highlightjs-line-numbers.js` + fflate, all CDN-pinned). `?aspect=<a>&file=<path>[&from=&to=]` extracts one entry from `<a>.zip` and highlights it; `?bundle=fragments/<type>.json&i=<1-based>` renders that bundle item (units via `renderUnit`, duplicates via multi-block `renderDuplicate`). Line numbers start at the fragment's real `from` line.
 
 **The viewer's render JS and these DTOs are a contract — the JSON field names must match.** When adding a field, change the DTO and `viewer.html` together (mirrors the landscape template/DTO rule above). Five report link sites point at the viewer: `UtilsReportUtils` (unit file link + unit fragment link), `FilesReportUtils` (file-table link), `DuplicationReportGenerator` (duplicate "view"), and `FilesExplorerGenerators`/`UnitsExplorerGenerators` (explorer links). A link's index must stay aligned with its bundle's array order; the duplication table caps displayed rows at `MAX_TABLE_ROWS_COUNT` but the bundle holds all (indices within the cap still align). **Reports must be served over HTTP** (local server or hosted) — the viewer uses `fetch()` for the zip/bundle, which `file://` blocks. Validate `viewer.html` JS the same way as other template JS (extract `<script>`, stub, run under node).
+
+## Dependency graphs (Mermaid, client-side — no Graphviz)
+
+Dependency/visualization graphs (component, file-temporal, duplication-between-components, contributor-shared-files, and all landscape graphs) are rendered **client-side with Mermaid.js**, not server-side Graphviz. There is no external `dot` process and no per-graph `.svg`/`.dot.txt` files.
+
+- **Producer**: `GraphvizDependencyRenderer.getMermaidContent(allComponents, deps, groups)` (`reports/.../utils/`) emits a Mermaid `flowchart` (the legacy `getGraphvizContent` DOT producer is unused by reports). Configured by the same setters (`setTypeGraph`/`setTypeDigraph` → undirected `---` vs directed `-->`, `setOrientation` → `flowchart TB/LR/…`, `setArrowColor`/`setCyclicArrowColor`, `setDefaultNodeFillColor`, `setMaxNumberOfDependencies`, `setReverseDirection`). Nodes get **synthetic ids** (`n0`,`n1`,…) with the real name in the `["label"]` (Mermaid ids can't hold arbitrary chars; quotes escaped to `&quot;`). Edges are emitted in count-desc order and each gets a `linkStyle <index> stroke:…,stroke-width:…px` line — **`linkStyle` targets edges by definition-order index, so edge ordering is load-bearing** (covered by `GraphvizDependencyRendererMermaidTest`). Graphviz X11 colour names are mapped to CSS via `toCssColor` (e.g. `deepskyblue2`→`#00b2ee`).
+- **Embedding**: callers still call `RichTextReport.addGraphvizFigure(id, desc, content)`; the content is now Mermaid. `ReportRenderer.renderFragment` emits the fragment as `<pre class="mermaid">…</pre>` (verbatim — **not** through `minimize()`, which would corrupt the layout-sensitive text) and writes a downloadable `<id>.mmd`. Mermaid.js is loaded once via `ReportConstants.REPORTS_HTML_HEADER`, which also re-runs `mermaid.run()` when a tab opens (diagrams in hidden tabs aren't laid out at load). Standalone graph pages (previously `.svg`) are written as self-contained Mermaid HTML via `VisualizationTools.standaloneMermaidPage`.
+- **Reports must be served over/opened in a browser with CDN access** for mermaid.js (same constraint as the source viewer). Force-graph/d3 visuals are a separate mechanism and were untouched. The Swing/JavaFX explorer's inline graph preview was dropped (it required Graphviz); the explorer shows the dependency text + matrix instead.
 
 ## Conventions when modifying analysis behavior
 

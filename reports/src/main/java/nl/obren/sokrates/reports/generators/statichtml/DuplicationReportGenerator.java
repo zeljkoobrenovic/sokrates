@@ -5,7 +5,6 @@
 package nl.obren.sokrates.reports.generators.statichtml;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import nl.obren.sokrates.common.renderingutils.GraphvizUtil;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.RichTextReport;
@@ -192,7 +191,7 @@ public class DuplicationReportGenerator {
         DuplicationReportUtils.addOverallDuplication(report, duplicationAnalysisResults.getOverallDuplication());
         export3DFileDependencies();
         report.addHtmlContent("dependency graphs: ");
-        report.addNewTabLink("2D graph", "visuals/duplication_among_files.svg" );
+        report.addNewTabLink("2D graph", "visuals/duplication_among_files.html" );
         report.addHtmlContent(" | ");
         report.addNewTabLink("3D graph", "visuals/duplication_among_files_force_3d.html" );
         report.addHtmlContent(" | ");
@@ -274,7 +273,7 @@ public class DuplicationReportGenerator {
             graphvizDependencyRenderer.setArrow("--");
             graphvizDependencyRenderer.setArrowColor("#DC143C");
             graphvizDependencyRenderer.setMaxNumberOfDependencies(50);
-            String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), componentDependencies);
+            String graphvizContent = graphvizDependencyRenderer.getMermaidContent(new ArrayList<>(), componentDependencies);
             report.addLevel3Header("Duplication Between Components (" + threshold + "+ lines)", "margin-top: 30px");
 
             String graphId = "duplication_dependencies_" + graphCounter++;
@@ -309,10 +308,10 @@ public class DuplicationReportGenerator {
         graphvizDependencyRenderer.setArrow("--");
         graphvizDependencyRenderer.setArrowColor("#DC143C");
         graphvizDependencyRenderer.setMaxNumberOfDependencies(200);
-        String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), duplicatesAsFileDependencies);
-        String svgContent = GraphvizUtil.getSvgFromDot(graphvizContent);
+        String mermaidContent = graphvizDependencyRenderer.getMermaidContent(new ArrayList<>(), duplicatesAsFileDependencies);
         try {
-            FileUtils.write(new File(reportsFolder, "html/visuals/duplication_among_files.svg"), svgContent);
+            FileUtils.write(new File(reportsFolder, "html/visuals/duplication_among_files.html"),
+                    VisualizationTools.standaloneMermaidPage("Duplication among files", mermaidContent));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

@@ -197,7 +197,7 @@ public class LogicalComponentsReportGenerator {
             graphvizDependencyRenderer.setArrowColor("#00688b");
             graphvizDependencyRenderer.setCyclicArrowColor("#a0a0a0");
             graphvizDependencyRenderer.setMaxNumberOfDependencies(50);
-            String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), dependencies);
+            String graphvizContent = graphvizDependencyRenderer.getMermaidContent(new ArrayList<>(), dependencies);
 
             String graphId = "logical_decomposition_file_changed_together_dependencies_" + graphCounter++;
             report.addGraphvizFigure(graphId, "File changed together in different components", graphvizContent);
@@ -556,7 +556,7 @@ public class LogicalComponentsReportGenerator {
     }
 
     private String addDependencyGraphVisuals(List<ComponentDependency> componentDependencies, List<String> componentNames, List<ComponentGroup> componentGroups, GraphvizDependencyRenderer graphvizDependencyRenderer) {
-        String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(componentNames, componentDependencies, componentGroups);
+        String graphvizContent = graphvizDependencyRenderer.getMermaidContent(componentNames, componentDependencies, componentGroups);
         String graphId = "dependencies_" + dependencyVisualCounter++;
         report.startDiv("max-height: 600px; overflow-y: scroll; overflow-x: scroll;");
         report.addGraphvizFigure(graphId, "", graphvizContent);

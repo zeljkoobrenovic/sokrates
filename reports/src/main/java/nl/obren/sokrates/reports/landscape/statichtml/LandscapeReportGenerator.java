@@ -455,7 +455,7 @@ public class LandscapeReportGenerator {
         renderer.setOrientation("LR");
         renderer.setTypeGraph();
         List<ComponentDependency> dependencies = landscapeAnalysisResults.getSubLandscapeDependenciesViaRepositoriesWithSameContributors();
-        String graphvizContent = renderer.getGraphvizContent(landscapeAnalysisResults.getLevel1SubLandscapes().stream().map(s -> "[" + s + "]").collect(Collectors.toCollection(ArrayList::new)), landscapeAnalysisResults.getSubLandscapeIndirectDependenciesViaRepositoriesWithSameContributors());
+        String graphvizContent = renderer.getMermaidContent(landscapeAnalysisResults.getLevel1SubLandscapes().stream().collect(Collectors.toCollection(ArrayList::new)), landscapeAnalysisResults.getSubLandscapeIndirectDependenciesViaRepositoriesWithSameContributors());
 
         landscapeReport.startShowMoreBlock("show sub-landscape/repository dependencies...");
         landscapeReport.addGraphvizFigure("sub_landscape_dependencies_same_contributors", "Extension dependencies", graphvizContent);
@@ -475,7 +475,7 @@ public class LandscapeReportGenerator {
         renderer.setOrientation("LR");
         renderer.setTypeGraph();
         List<ComponentDependency> dependencies = landscapeAnalysisResults.getSubLandscapeDependenciesViaRepositoriesWithSameName();
-        String graphvizContent = renderer.getGraphvizContent(landscapeAnalysisResults.getLevel1SubLandscapes().stream().map(s -> "[" + s + "]").collect(Collectors.toCollection(ArrayList::new)), landscapeAnalysisResults.getSubLandscapeIndirectDependenciesViaRepositoriesWithSameName());
+        String graphvizContent = renderer.getMermaidContent(landscapeAnalysisResults.getLevel1SubLandscapes().stream().collect(Collectors.toCollection(ArrayList::new)), landscapeAnalysisResults.getSubLandscapeIndirectDependenciesViaRepositoriesWithSameName());
 
         landscapeReport.startShowMoreBlock("show sub-landscape/repository dependencies...");
         landscapeReport.addGraphvizFigure("sub_landscape_dependencies_same_name_repos", "Extension dependencies", graphvizContent);
@@ -1264,7 +1264,7 @@ public class LandscapeReportGenerator {
         renderer.setMaxNumberOfDependencies(100);
         renderer.setDefaultNodeFillColor("deepskyblue2");
         renderer.setTypeGraph();
-        String graphvizContent = renderer.getGraphvizContent(new ArrayList<>(extensionsNames), dependencies);
+        String graphvizContent = renderer.getMermaidContent(new ArrayList<>(extensionsNames), dependencies);
 
         landscapeReport.startShowMoreBlock("extension dependencies...");
         landscapeReport.addGraphvizFigure("extension_dependencies_30d", "Extension dependencies", graphvizContent);
@@ -1917,11 +1917,9 @@ public class LandscapeReportGenerator {
     private void addDownloadLinks(String graphId) {
         landscapeReport.startDiv("");
         landscapeReport.addHtmlContent("Download: ");
-        landscapeReport.addNewTabLink("SVG", "visuals/" + graphId + ".svg");
+        landscapeReport.addNewTabLink("Mermaid (.mmd)", "visuals/" + graphId + ".mmd");
         landscapeReport.addHtmlContent(" ");
-        landscapeReport.addNewTabLink("DOT", "visuals/" + graphId + ".dot.txt");
-        landscapeReport.addHtmlContent(" ");
-        landscapeReport.addNewTabLink("(open online Graphviz editor)", "https://obren.io/tools/graphviz/");
+        landscapeReport.addNewTabLink("(open online Mermaid editor)", "https://mermaid.live/");
         landscapeReport.endDiv();
     }
 

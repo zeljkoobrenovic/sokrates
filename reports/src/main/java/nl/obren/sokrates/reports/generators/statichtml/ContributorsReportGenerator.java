@@ -444,7 +444,7 @@ public class ContributorsReportGenerator {
     }
 
     private String addDependencyGraphVisuals(List<ComponentDependency> componentDependencies, List<String> componentNames, GraphvizDependencyRenderer graphvizDependencyRenderer, String prefix) {
-        String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(
+        String graphvizContent = graphvizDependencyRenderer.getMermaidContent(
                 componentNames,
                 componentDependencies);
         String graphId = prefix + dependencyVisualCounter++;

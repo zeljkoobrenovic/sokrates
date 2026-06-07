@@ -51,7 +51,6 @@ public class Commands {
     public static final String ARG_CONF_FILE = "confFile";
     public static final String ARG_DATE = "date";
     public static final String ARG_OUTPUT_FOLDER = "outputFolder";
-    public static final String ARG_USE_INTERNAL_GRAPHVIZ = "internalGraphviz";
     public static final String ARG_HTML_REPORTS_FOLDER_NAME = "html";
     public static final String ARG_ANALYSIS_ROOT = "analysisRoot";
     public static final String ARG_TIMEOUT = "timeout";
@@ -89,7 +88,6 @@ public class Commands {
     private Option pattern = new Option(ARG_PATTERN, true, "the file path regex pattern");
     private Option destRoot = new Option(ARG_DEST_FOLDER, true, "the destination folder");
     private Option destParent = new Option(ARG_DEST_PARENT, true, "[OPTIONAL] the destination parent folder");
-    private Option internalGraphviz = new Option(ARG_USE_INTERNAL_GRAPHVIZ, false, "[OPTIONAL] use internal Graphviz library (by default external dot program is used, you may specify the external dot path via the system variable GRAPHVIZ_DOT)");
 
     private Option outputFolder = new Option(ARG_OUTPUT_FOLDER, true, "[OPTIONAL] the folder where reports will be stored (default value is <currentFolder/_sokrates/reports>)");
 
@@ -178,7 +176,6 @@ public class Commands {
         Options options = new Options();
         options.addOption(confFile);
         options.addOption(outputFolder);
-        options.addOption(internalGraphviz);
         options.addOption(timeout);
         options.addOption(date);
         options.addOption(help);
@@ -340,9 +337,6 @@ public class Commands {
         return destParent;
     }
 
-    public Option getInternalGraphviz() {
-        return internalGraphviz;
-    }
 
     public Option getOutputFolder() {
         return outputFolder;

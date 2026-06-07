@@ -672,7 +672,7 @@ public class LandscapeReportPeopleTopologyTab {
         } else {
             landscapeReport.addParagraph("Showing all " + componentDependencies.size() + (componentDependencies.size() == 1 ? " item" : " items") + ".");
         }
-        String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(componentNames, componentDependencies);
+        String graphvizContent = graphvizDependencyRenderer.getMermaidContent(componentNames, componentDependencies);
         String graphId = prefix + dependencyVisualCounter++;
         landscapeReport.addGraphvizFigure(graphId, "", graphvizContent);
         landscapeReport.addLineBreak();
@@ -687,11 +687,9 @@ public class LandscapeReportPeopleTopologyTab {
     private void addDownloadLinks(String graphId) {
         landscapeReport.startDiv("");
         landscapeReport.addHtmlContent("Download: ");
-        landscapeReport.addNewTabLink("SVG", "visuals/" + graphId + ".svg");
+        landscapeReport.addNewTabLink("Mermaid (.mmd)", "visuals/" + graphId + ".mmd");
         landscapeReport.addHtmlContent(" ");
-        landscapeReport.addNewTabLink("DOT", "visuals/" + graphId + ".dot.txt");
-        landscapeReport.addHtmlContent(" ");
-        landscapeReport.addNewTabLink("(open online Graphviz editor)", "https://obren.io/tools/graphviz/");
+        landscapeReport.addNewTabLink("(open online Mermaid editor)", "https://mermaid.live/");
         landscapeReport.endDiv();
     }
 

@@ -4,7 +4,6 @@
 
 package nl.obren.sokrates.reports.core;
 
-import nl.obren.sokrates.common.renderingutils.GraphvizUtil;
 import nl.obren.sokrates.sourcecode.Link;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -105,13 +104,13 @@ public class ReportRenderer {
 
     private void renderFragment(ReportRenderingClient reportRenderingClient, RichTextFragment fragment) {
         if (fragment.getType() == RichTextFragment.Type.GRAPHVIZ) {
+            // Fragment content is now a Mermaid flowchart definition (rendered client-side by
+            // mermaid.js, loaded once via ReportConstants.REPORTS_HTML_HEADER). When a visuals
+            // folder + id are available, also write the definition as a downloadable .mmd file.
             if (shouldExportVisualToFile(reportRenderingClient, fragment)) {
                 renderAndSaveVisuals(reportRenderingClient, fragment);
-            } else {
-                if (fragment.isShow()) {
-                    LOG.info("Rendering graphviz content: " + fragment.getId());
-                    reportRenderingClient.append(minimize(GraphvizUtil.getSvgFromDot(fragment.getFragment())));
-                }
+            } else if (fragment.isShow()) {
+                reportRenderingClient.append(mermaidBlock(fragment.getFragment()));
             }
         } else if (fragment.getType() == RichTextFragment.Type.SVG) {
             if (fragment.isShow()) {
@@ -129,22 +128,22 @@ public class ReportRenderer {
             File folder = reportRenderingClient.getVisualsExportFolder();
             String id = fragment.getId();
 
-            File dotFile = new File(folder, id + ".dot.txt");
-            FileUtils.write(dotFile, fragment.getFragment(), StandardCharsets.UTF_8);
-
-            LOG.info("Rendering graphviz file " + fragment.getId());
-            String svgContent = minimize(GraphvizUtil.getSvgFromDot(fragment.getFragment()));
+            // Save the Mermaid definition so it can be downloaded / opened in the Mermaid editor.
+            File mmdFile = new File(folder, id + ".mmd");
+            FileUtils.write(mmdFile, fragment.getFragment(), StandardCharsets.UTF_8);
 
             if (fragment.isShow()) {
-                reportRenderingClient.append(svgContent + "\n");
+                reportRenderingClient.append(mermaidBlock(fragment.getFragment()) + "\n");
             }
-
-            File svgFile = new File(folder, id + ".svg");
-            FileUtils.write(svgFile, svgContent, StandardCharsets.UTF_8);
-
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    // Wraps a Mermaid definition for client-side rendering. The definition is emitted verbatim
+    // (NOT through minimize(), which would collapse newlines/spaces and break flowchart syntax).
+    private static String mermaidBlock(String mermaidDefinition) {
+        return "<pre class=\"mermaid\">\n" + mermaidDefinition + "\n</pre>\n";
     }
 
     private boolean shouldExportVisualToFile(ReportRenderingClient reportRenderingClient, RichTextFragment fragment) {

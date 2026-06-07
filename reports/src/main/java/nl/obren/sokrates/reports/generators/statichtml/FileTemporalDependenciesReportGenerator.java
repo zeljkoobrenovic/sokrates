@@ -228,7 +228,7 @@ public class FileTemporalDependenciesReportGenerator {
             graphvizDependencyRenderer.setArrowColor("#00688b");
             graphvizDependencyRenderer.setCyclicArrowColor("#a0a0a0");
             graphvizDependencyRenderer.setMaxNumberOfDependencies(50);
-            String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), dependencies);
+            String graphvizContent = graphvizDependencyRenderer.getMermaidContent(new ArrayList<>(), dependencies);
 
             String graphId = "file_changed_together_dependencies_" + suffix;
             report.addGraphvizFigure(graphId, "File changed together in different components", graphvizContent);

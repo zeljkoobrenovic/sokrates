@@ -373,7 +373,7 @@ public class LandscapeReportContributorsTab {
         renderer.setMaxNumberOfDependencies(100);
         renderer.setDefaultNodeFillColor("deepskyblue2");
         renderer.setTypeGraph();
-        String graphvizContent = renderer.getGraphvizContent(new ArrayList<>(extensionsNames), dependencies);
+        String graphvizContent = renderer.getMermaidContent(new ArrayList<>(extensionsNames), dependencies);
 
         if (isContributorReport()) {
             addDownloadLinks("extension_dependencies_30d");
@@ -1303,11 +1303,9 @@ public class LandscapeReportContributorsTab {
     private void addDownloadLinks(String graphId) {
         landscapeReport.startDiv("");
         landscapeReport.addHtmlContent("Download: ");
-        landscapeReport.addNewTabLink("SVG", "visuals/" + graphId + ".svg");
+        landscapeReport.addNewTabLink("Mermaid (.mmd)", "visuals/" + graphId + ".mmd");
         landscapeReport.addHtmlContent(" ");
-        landscapeReport.addNewTabLink("DOT", "visuals/" + graphId + ".dot.txt");
-        landscapeReport.addHtmlContent(" ");
-        landscapeReport.addNewTabLink("(open online Graphviz editor)", "https://obren.io/tools/graphviz/");
+        landscapeReport.addNewTabLink("(open online Mermaid editor)", "https://mermaid.live/");
         landscapeReport.endDiv();
     }
 
