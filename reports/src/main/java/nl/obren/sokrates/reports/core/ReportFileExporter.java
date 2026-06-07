@@ -329,6 +329,33 @@ public class ReportFileExporter {
                         " on " + dateOfUpdate + (!referenceDate.equals(dateOfUpdate) ? "; reference date: " + referenceDate : ""),
                 "color: grey; font-size: 80%; margin-left: 10px; margin-bottom: 30px");
         export(htmlExportFolder, indexReport, "index.html", analysisResults.getCodeConfiguration().getAnalysis().getCustomHtmlReportHeaderFragment());
+
+        exportRootRedirect(reportsFolder);
+    }
+
+    // Writes a minimal index.html at the reports root that redirects to html/index.html,
+    // so opening the reports folder lands on the main report.
+    private static void exportRootRedirect(File reportsFolder) {
+        String target = htmlReportsSubFolder + "/index.html";
+        File redirectFile = new File(reportsFolder, "index.html");
+        try {
+            PrintWriter out = new PrintWriter(redirectFile);
+            out.println("<!DOCTYPE html>");
+            out.println("<html lang=\"en\">");
+            out.println("<head>");
+            out.println("<meta charset=\"UTF-8\">");
+            out.println("<meta http-equiv=\"refresh\" content=\"0; url=" + target + "\">");
+            out.println("<title>Sokrates report</title>");
+            out.println("</head>");
+            out.println("<body>");
+            out.println("Redirecting to <a href=\"" + target + "\">" + target + "</a>...");
+            out.println("</body>");
+            out.println("</html>");
+            out.flush();
+            out.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     private static void addPrompts(RichTextReport report, CodeAnalysisResults analysisResults) {
