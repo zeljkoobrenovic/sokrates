@@ -376,12 +376,12 @@ public class LandscapeReportContributorsTab {
         String graphvizContent = renderer.getMermaidContent(new ArrayList<>(extensionsNames), dependencies);
 
         if (isContributorReport()) {
-            addDownloadLinks("extension_dependencies_30d");
             new Force3DGraphExporter().export2D3DForceGraph(dependencies, reportsFolder, "extension_dependencies_30d");
 
             landscapeReport.startShowMoreBlock("extension dependencies...");
 
             landscapeReport.addGraphvizFigure("extension_dependencies_30d", "Extension dependencies", graphvizContent);
+            addDownloadLinks("extension_dependencies_30d");
             landscapeReport.addLineBreak();
             landscapeReport.addNewTabLink(" - show extension dependencies as 2D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/extension_dependencies_30d_force_2d.html");
             landscapeReport.addNewTabLink(" - show extension dependencies as 3D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/extension_dependencies_30d_force_3d.html");

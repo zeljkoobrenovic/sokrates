@@ -259,14 +259,27 @@ public class ReportConstants {
             "    <!-- Mermaid: client-side diagram rendering (replaces server-side Graphviz). -->\n" +
             "    <script type=\"module\">\n" +
             "        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';\n" +
-            "        mermaid.initialize({ startOnLoad: true, securityLevel: 'loose', maxEdges: 1000, flowchart: { useMaxWidth: true } });\n" +
-            "        // Diagrams inside hidden tabs are not laid out at load; render a tab's diagrams\n" +
-            "        // the first time it is opened. Exposed globally so openTab() can call it.\n" +
+            "        // startOnLoad is OFF: a diagram laid out inside a hidden container (collapsed\n" +
+            "        // <details> show-more block or an inactive tab) has zero size and Mermaid 10 errors\n" +
+            "        // with 'Syntax error in text'. We render each diagram only once its container is\n" +
+            "        // actually visible: on load for visible ones, and on <details> toggle / tab open.\n" +
+            "        mermaid.initialize({ startOnLoad: false, securityLevel: 'loose', maxEdges: 1000, flowchart: { useMaxWidth: true } });\n" +
+            "        function isVisible(el) { return !!(el.offsetParent || el.getClientRects().length); }\n" +
             "        window.renderMermaidIn = function (container) {\n" +
-            "            if (!container) return;\n" +
-            "            var pending = container.querySelectorAll('pre.mermaid:not([data-processed])');\n" +
+            "            var root = container || document;\n" +
+            "            var pending = [];\n" +
+            "            root.querySelectorAll('pre.mermaid:not([data-processed])').forEach(function (el) {\n" +
+            "                if (isVisible(el)) { pending.push(el); }\n" +
+            "            });\n" +
             "            if (pending.length > 0) { mermaid.run({ nodes: pending }); }\n" +
             "        };\n" +
+            "        document.addEventListener('DOMContentLoaded', function () {\n" +
+            "            window.renderMermaidIn(document);\n" +
+            "            // Render a show-more block's diagrams the first time it is expanded.\n" +
+            "            document.querySelectorAll('details').forEach(function (d) {\n" +
+            "                d.addEventListener('toggle', function () { if (d.open) { window.renderMermaidIn(d); } });\n" +
+            "            });\n" +
+            "        });\n" +
             "    </script>\n" +
             "    <!-- CUSTOM HEADER FRAGMENT -->\n" +
             "</head>\n";
