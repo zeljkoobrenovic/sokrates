@@ -10,13 +10,55 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
+import java.util.zip.Deflater;
 
 public class VisualizationTemplate {
     private static final Log LOG = LogFactory.getLog(VisualizationTemplate.class);
+
+    // Injected into a template's <head> (via the ${sokrates-inflate-lib} placeholder) so the
+    // page can decode the inline, deflate+base64-compressed JSON that replaces ${data}. The
+    // diagram data stays embedded in the single HTML file (works from file://), just compressed.
+    // fflate.unzlibSync handles the zlib stream produced by java.util.zip.Deflater (default).
+    private static final String INFLATE_LIB =
+            "<script src=\"https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js\"></script>\n" +
+            "<script>\n" +
+            "  function sokratesInflate(b64) {\n" +
+            "    var bin = atob(b64);\n" +
+            "    var bytes = new Uint8Array(bin.length);\n" +
+            "    for (var i = 0; i < bin.length; i++) { bytes[i] = bin.charCodeAt(i); }\n" +
+            "    return JSON.parse(fflate.strFromU8(fflate.unzlibSync(bytes)));\n" +
+            "  }\n" +
+            "</script>";
+
+    // Deflate (zlib) + base64 a JSON string for inline embedding; the page decodes it with the
+    // sokratesInflate helper above.
+    static String deflateBase64(String json) {
+        byte[] input = json.getBytes(StandardCharsets.UTF_8);
+        Deflater deflater = new Deflater(Deflater.BEST_COMPRESSION);
+        deflater.setInput(input);
+        deflater.finish();
+        ByteArrayOutputStream out = new ByteArrayOutputStream(Math.max(64, input.length / 4));
+        byte[] buffer = new byte[8192];
+        while (!deflater.finished()) {
+            int n = deflater.deflate(buffer);
+            out.write(buffer, 0, n);
+        }
+        deflater.end();
+        return Base64.getEncoder().encodeToString(out.toByteArray());
+    }
+
+    // Substitutes the data + inflate-lib placeholders: ${data} becomes a sokratesInflate("...")
+    // call returning the (decompressed) data, and ${sokrates-inflate-lib} becomes the head lib.
+    private static String embedCompressed(String content, String json) {
+        String dataExpr = "sokratesInflate(\"" + deflateBase64(json) + "\")";
+        return content.replace("${data}", dataExpr).replace("${sokrates-inflate-lib}", INFLATE_LIB);
+    }
 
     // Returns a visualization template verbatim (no ${...} substitution). Used for the static,
     // data-fetching templates (e.g. zoomable_circles.html / zoomable_sunburst.html) that load
@@ -47,12 +89,28 @@ public class VisualizationTemplate {
         return null;
     }
 
+    // Renders a ${data}-template with the item JSON embedded compressed (deflate+base64) rather
+    // than raw. The empty-children strip is applied to the JSON before compressing so the decoded
+    // payload matches the previous raw output exactly.
+    private String renderCompressed(String templateFileName, List<VisualizationItem> items) {
+        try {
+            String json = new JsonGenerator().generate(items).replace(",\"children\":[]", "");
+            String content = IOUtils.toString(
+                    this.getClass().getClassLoader().getResourceAsStream("vis_templates/" + templateFileName),
+                    StandardCharsets.UTF_8);
+            return embedCompressed(content, json);
+        } catch (IOException e) {
+            LOG.error(e);
+        }
+        return null;
+    }
+
     public String renderBubbleChart(List<VisualizationItem> items) {
-        return render("bubble_chart.html", items).replace(",\"children\":[]", "");
+        return renderCompressed("bubble_chart.html", items);
     }
 
     public String renderTreeMap(List<VisualizationItem> items) {
-        return render("treemap.html", items).replace(",\"children\":[]", "");
+        return renderCompressed("treemap.html", items);
     }
 
     public String renderZoomableCircles(List<VisualizationItem> items) {
@@ -72,7 +130,7 @@ public class VisualizationTemplate {
     }
 
     public String renderZoomableCirclesColored(List<VisualizationItem> items) {
-        return render("zoomable_circles_colored.html", items).replace(",\"children\":[]", "");
+        return renderCompressed("zoomable_circles_colored.html", items);
     }
 
     public String renderZoomableSunburst(List<VisualizationItem> items) {
@@ -80,51 +138,40 @@ public class VisualizationTemplate {
     }
 
     public String render2DForceGraph(Force3DObject data) {
-        ClassLoader clazz = this.getClass().getClassLoader();
-        InputStream inputStream = clazz.getResourceAsStream("vis_templates/force_2d.html");
-
         try {
-            String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            content = content.replace("${data}", new JsonGenerator().generate(data));
-
-            return content;
+            String content = IOUtils.toString(
+                    this.getClass().getClassLoader().getResourceAsStream("vis_templates/force_2d.html"),
+                    StandardCharsets.UTF_8);
+            return embedCompressed(content, new JsonGenerator().generate(data));
         } catch (IOException e) {
             LOG.error(e);
         }
-
         return null;
     }
 
     public String render3DForceGraph(Force3DObject data) {
-        ClassLoader clazz = this.getClass().getClassLoader();
-        InputStream inputStream = clazz.getResourceAsStream("vis_templates/force_3d.html");
-
         try {
-            String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            content = content.replace("${data}", new JsonGenerator().generate(data));
-
-            return content;
+            String content = IOUtils.toString(
+                    this.getClass().getClassLoader().getResourceAsStream("vis_templates/force_3d.html"),
+                    StandardCharsets.UTF_8);
+            return embedCompressed(content, new JsonGenerator().generate(data));
         } catch (IOException e) {
             LOG.error(e);
         }
-
         return null;
     }
-    public String renderRacingCharts(List<RacingChartItem> items, String startYear, String title) {
-        ClassLoader clazz = this.getClass().getClassLoader();
-        InputStream inputStream = clazz.getResourceAsStream("vis_templates/bar_chart_races.html");
 
+    public String renderRacingCharts(List<RacingChartItem> items, String startYear, String title) {
         try {
-            String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+            String content = IOUtils.toString(
+                    this.getClass().getClassLoader().getResourceAsStream("vis_templates/bar_chart_races.html"),
+                    StandardCharsets.UTF_8);
             content = content.replace("${title}", title);
             content = content.replace("${startYear}", startYear + "");
-            content = content.replace("${data}", new JsonGenerator().generateCompressed(items));
-
-            return content;
+            return embedCompressed(content, new JsonGenerator().generateCompressed(items));
         } catch (IOException e) {
             LOG.error(e);
         }
-
         return null;
     }
 }
