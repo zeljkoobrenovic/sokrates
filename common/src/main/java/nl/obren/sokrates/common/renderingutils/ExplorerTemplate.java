@@ -47,7 +47,13 @@ public class ExplorerTemplate {
 
         try {
             String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            content = content.replace("${data}", new JsonGenerator().generateCompressed(data));
+            // Embed the data compressed (deflate+base64) and inflate it in-browser, instead of
+            // inlining raw JSON — the same self-contained, file://-friendly scheme used by the
+            // visualization templates. The ${data} site becomes a sokratesInflate("...") call;
+            // ${sokrates-inflate-lib} injects the fflate + helper head block.
+            String dataExpr = "sokratesInflate(\"" + VisualizationTemplate.deflateBase64(new JsonGenerator().generateCompressed(data)) + "\")";
+            content = content.replace("${data}", dataExpr);
+            content = content.replace("${sokrates-inflate-lib}", VisualizationTemplate.inflateLib());
             if (extraPlaceholders != null) {
                 for (Map.Entry<String, String> entry : extraPlaceholders.entrySet()) {
                     content = content.replace("${" + entry.getKey() + "}",
