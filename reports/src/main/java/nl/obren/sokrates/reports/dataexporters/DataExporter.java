@@ -593,14 +593,14 @@ public class DataExporter {
     }
 
     private void exportJson() throws IOException {
-        String analysisResultsJson = new JsonGenerator().generate(analysisResults);
-        FileUtils.write(new File(dataFolder, "analysisResults.json"), analysisResultsJson, UTF_8);
+        // Stream the (potentially multi-GB) analysisResults JSON straight to disk — building it as
+        // a single String could exceed Java's ~2 GB array limit on very large repositories.
+        new JsonGenerator().generateToFile(analysisResults, new File(dataFolder, "analysisResults.json"));
 
-        String configJson = FileUtils.readFileToString(sokratesConfigFile, UTF_8);
-        FileUtils.write(new File(dataFolder, "config.json"), configJson, UTF_8);
+        FileUtils.copyFile(sokratesConfigFile, new File(dataFolder, "config.json"));
 
         List<SourceFile> mainSourceFiles = analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles();
-        FileUtils.write(new File(dataFolder, "mainFiles.json"), new JsonGenerator().generate(mainSourceFiles), UTF_8);
+        new JsonGenerator().generateToFile(mainSourceFiles, new File(dataFolder, "mainFiles.json"));
 
         FileUtils.write(new File(textDataFolder, "mainFiles.txt"), getFilesAsTxt(mainSourceFiles), UTF_8);
         FileUtils.write(new File(textDataFolder, "mainFilesWithHistory.txt"), getFilesWithHistoryAsTxt(mainSourceFiles), UTF_8);
@@ -611,24 +611,24 @@ public class DataExporter {
             List<SourceFile> buildAndDeploymentSourceFiles = analysisResults.getBuildAndDeployAspectAnalysisResults().getAspect().getSourceFiles();
             List<SourceFile> otherSourceFiles = analysisResults.getOtherAspectAnalysisResults().getAspect().getSourceFiles();
 
-            FileUtils.write(new File(dataFolder, "testFiles.json"), new JsonGenerator().generate(testSourceFile), UTF_8);
-            FileUtils.write(new File(dataFolder, "generatedFiles.json"), new JsonGenerator().generate(generatedSourceFiles), UTF_8);
-            FileUtils.write(new File(dataFolder, "buildAndDeploymentFiles.json"), new JsonGenerator().generate(buildAndDeploymentSourceFiles), UTF_8);
-            FileUtils.write(new File(dataFolder, "otherFiles.json"), new JsonGenerator().generate(otherSourceFiles), UTF_8);
+            new JsonGenerator().generateToFile(testSourceFile, new File(dataFolder, "testFiles.json"));
+            new JsonGenerator().generateToFile(generatedSourceFiles, new File(dataFolder, "generatedFiles.json"));
+            new JsonGenerator().generateToFile(buildAndDeploymentSourceFiles, new File(dataFolder, "buildAndDeploymentFiles.json"));
+            new JsonGenerator().generateToFile(otherSourceFiles, new File(dataFolder, "otherFiles.json"));
 
-            FileUtils.write(new File(dataFolder, "units.json"), new JsonGenerator().generate(new UnitListExporter(analysisResults.getUnitsAnalysisResults().getAllUnits()).getAllUnitsData()), UTF_8);
-            FileUtils.write(new File(dataFolder, "files.json"), new FileListExporter(analysisResults.getFilesAnalysisResults().getAllFiles()).getJson(), UTF_8);
+            new JsonGenerator().generateToFile(new UnitListExporter(analysisResults.getUnitsAnalysisResults().getAllUnits()).getAllUnitsData(), new File(dataFolder, "units.json"));
+            new JsonGenerator().generateToFile(new FileListExporter(analysisResults.getFilesAnalysisResults().getAllFiles()).getAllFilesData(), new File(dataFolder, "files.json"));
             List<DuplicationInstance> allDuplicates = analysisResults.getDuplicationAnalysisResults().getAllDuplicates();
             Collections.sort(allDuplicates, (a, b) -> b.getBlockSize() - a.getBlockSize());
             allDuplicates = allDuplicates.stream().limit(10000).collect(Collectors.toList());
-            FileUtils.write(new File(dataFolder, "duplicates.json"), new JsonGenerator().generate(new DuplicationExporter(
-                    allDuplicates).getDuplicationExportInfo()), UTF_8);
-            FileUtils.write(new File(dataFolder, "logical_decompositions.json"), new JsonGenerator().generate(
-                    analysisResults.getLogicalDecompositionsAnalysisResults()), UTF_8);
-            FileUtils.write(new File(dataFolder, "dependencies.json"), new JsonGenerator().generate(
-                    new DependenciesExporter(analysisResults.getAllDependencies()).getDependenciesExportInfo()), UTF_8);
-            FileUtils.write(new File(dataFolder, "contributors.json"), new JsonGenerator().generate(analysisResults.getContributorsAnalysisResults().getContributors()), UTF_8);
-            FileUtils.write(new File(dataFolder, "concerns.json"), new JsonGenerator().generate(analysisResults.getConcernsAnalysisResults()), UTF_8);
+            new JsonGenerator().generateToFile(new DuplicationExporter(allDuplicates).getDuplicationExportInfo(),
+                    new File(dataFolder, "duplicates.json"));
+            new JsonGenerator().generateToFile(analysisResults.getLogicalDecompositionsAnalysisResults(),
+                    new File(dataFolder, "logical_decompositions.json"));
+            new JsonGenerator().generateToFile(new DependenciesExporter(analysisResults.getAllDependencies()).getDependenciesExportInfo(),
+                    new File(dataFolder, "dependencies.json"));
+            new JsonGenerator().generateToFile(analysisResults.getContributorsAnalysisResults().getContributors(), new File(dataFolder, "contributors.json"));
+            new JsonGenerator().generateToFile(analysisResults.getConcernsAnalysisResults(), new File(dataFolder, "concerns.json"));
 
             File zipFolder = new File(dataFolder, "zips");
             zipFolder.mkdirs();
