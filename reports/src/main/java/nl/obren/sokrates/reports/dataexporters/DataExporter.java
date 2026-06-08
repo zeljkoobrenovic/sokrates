@@ -642,8 +642,9 @@ public class DataExporter {
             });
             File gitHistoryFile = new File(reportsFolder, "../../git-history.txt");
             if (gitHistoryFile.exists()) {
-                String gitHistoryContent = FileUtils.readFileToString(gitHistoryFile, UTF_8);
-                ZipUtils.stringToZipFile(new File(zipFolder, "git-history.zip"), "git-history.txt", gitHistoryContent);
+                // Stream the file into the zip; on huge repositories git-history.txt can exceed the
+                // ~2 GB String/array limit, so it must never be read into a single String.
+                ZipUtils.fileToZipFile(new File(zipFolder, "git-history.zip"), "git-history.txt", gitHistoryFile);
             }
         } catch (Throwable t) {
             t.printStackTrace();

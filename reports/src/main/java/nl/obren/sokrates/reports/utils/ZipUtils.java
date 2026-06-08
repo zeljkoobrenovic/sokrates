@@ -19,6 +19,28 @@ public class ZipUtils {
     }
 
     /**
+     * Zips a single source file into {@code zipFile} under {@code entryName}, streaming its bytes
+     * (never loading the whole file into memory). Use this instead of reading a file into a String
+     * and calling {@link #stringToZipFile} when the file may be large — a String/byte[] cannot
+     * exceed ~2 GB (Integer.MAX_VALUE), which is reachable e.g. by git-history.txt on huge repos.
+     */
+    public static void fileToZipFile(File zipFile, String entryName, File sourceFile) {
+        try (FileOutputStream fos = new FileOutputStream(zipFile);
+             ZipOutputStream zipOut = new ZipOutputStream(fos);
+             FileInputStream fis = new FileInputStream(sourceFile)) {
+            zipOut.putNextEntry(new ZipEntry(entryName));
+            byte[] buffer = new byte[8192];
+            int len;
+            while ((len = fis.read(buffer)) > 0) {
+                zipOut.write(buffer, 0, len);
+            }
+            zipOut.closeEntry();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * Zips every file under {@code sourceDir} (recursively) into {@code zipFile}, storing each with
      * its path relative to {@code sourceDir} (forward slashes) as the entry name and its raw bytes
      * (so binary files such as nested zips survive). The output {@code zipFile} is itself excluded
