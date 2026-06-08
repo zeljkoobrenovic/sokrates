@@ -447,6 +447,9 @@ public class ScopingConventions {
         generatedFilesConventions.add(new Convention(".*[.](cxx|cpp|c|hxx|hpp|h)", "[ ]*[*][ ]*Generated automatically by[ ]*.*", 31, "A generated C(PP) source file"));
         generatedFilesConventions.add(new Convention(".*/src/gen/.*", "", defaultNote));
         generatedFilesConventions.add(new Convention(".*_generated[.][a-z]+", "", defaultNote));
+
+        generatedFilesConventions.add(new Convention(".*/zz_generated[.].*[.]go", "", defaultNote));
+        generatedFilesConventions.add(new Convention(".*/generated[.].*[.]go", "", defaultNote));
     }
 
     private void addTestConventions() {
