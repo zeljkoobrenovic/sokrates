@@ -8,6 +8,7 @@ import nl.obren.sokrates.sourcecode.units.UnitInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class UnitListExporter {
     private List<UnitInfo> units = new ArrayList<>();
@@ -16,7 +17,28 @@ public class UnitListExporter {
         this.units = units;
     }
 
+    /**
+     * Builds export objects for at most {@code limit} units (the largest by lines of code; a
+     * non-positive limit means no cap). On very large repositories the full unit list (millions of
+     * units, each expanding into a UnitInfoExport with component strings) can exhaust the heap, so
+     * the data/text unit exports cap the INPUT before materialising any export objects.
+     */
+    public List<UnitInfoExport> getAllUnitsData(int limit) {
+        List<UnitInfo> source = units;
+        if (limit > 0 && units.size() > limit) {
+            source = units.stream()
+                    .sorted((a, b) -> b.getLinesOfCode() - a.getLinesOfCode())
+                    .limit(limit)
+                    .collect(Collectors.toList());
+        }
+        return toExports(source);
+    }
+
     public List<UnitInfoExport> getAllUnitsData() {
+        return toExports(units);
+    }
+
+    private List<UnitInfoExport> toExports(List<UnitInfo> units) {
         List<UnitInfoExport> unitInfoExports = new ArrayList<>();
 
         units.forEach(unit -> {

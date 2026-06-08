@@ -219,14 +219,21 @@ public class DataExporter {
     }
 
     private void exportDuplicates(List<DuplicationInstance> instances, final String fileName) {
+        // Cap the INPUT before building the export objects. On very large repositories there can be
+        // far more than MAX_EXPORT_LIST_SIZE duplicates, each expanding into many FileExportInfo
+        // objects; capping only the output (as before) still materialised the full list first and
+        // exhausted the heap. Keep the largest duplicates (by block size), matching duplicates.json.
+        if (instances.size() > MAX_EXPORT_LIST_SIZE) {
+            instances = instances.stream()
+                    .sorted((a, b) -> b.getBlockSize() - a.getBlockSize())
+                    .limit(MAX_EXPORT_LIST_SIZE)
+                    .collect(Collectors.toList());
+        }
         DuplicationExportInfo duplicationExportInfo = new DuplicationExporter(instances).getDuplicationExportInfo();
         List<DuplicateExportInfo> duplicates = duplicationExportInfo.getDuplicates();
         StringBuilder content = new StringBuilder();
 
         int id[] = {1};
-        if ((duplicates.size() > MAX_EXPORT_LIST_SIZE)) {
-            duplicates = duplicates.subList(0, MAX_EXPORT_LIST_SIZE);
-        }
         duplicates.forEach(duplicate -> {
             List<DuplicateFileBlockExportInfo> duplicatedFileBlocks = duplicate.getDuplicatedFileBlocks();
             content.append("duplicated block id: " + id[0] + "\n");
@@ -252,7 +259,7 @@ public class DataExporter {
         UnitListExporter units = new UnitListExporter(analysisResults.getUnitsAnalysisResults().getAllUnits());
         int id[] = {1};
         StringBuilder content = new StringBuilder();
-        units.getAllUnitsData().forEach(unit -> {
+        units.getAllUnitsData(MAX_EXPORT_LIST_SIZE).forEach(unit -> {
             content.append("id: " + id[0] + "\n");
             content.append("unit: " + unit.getShortName() + "\n");
             content.append("file: " + unit.getRelativeFileName() + "\n");
@@ -616,7 +623,7 @@ public class DataExporter {
             new JsonGenerator().generateToFile(buildAndDeploymentSourceFiles, new File(dataFolder, "buildAndDeploymentFiles.json"));
             new JsonGenerator().generateToFile(otherSourceFiles, new File(dataFolder, "otherFiles.json"));
 
-            new JsonGenerator().generateToFile(new UnitListExporter(analysisResults.getUnitsAnalysisResults().getAllUnits()).getAllUnitsData(), new File(dataFolder, "units.json"));
+            new JsonGenerator().generateToFile(new UnitListExporter(analysisResults.getUnitsAnalysisResults().getAllUnits()).getAllUnitsData(MAX_EXPORT_LIST_SIZE), new File(dataFolder, "units.json"));
             new JsonGenerator().generateToFile(new FileListExporter(analysisResults.getFilesAnalysisResults().getAllFiles()).getAllFilesData(), new File(dataFolder, "files.json"));
             List<DuplicationInstance> allDuplicates = analysisResults.getDuplicationAnalysisResults().getAllDuplicates();
             Collections.sort(allDuplicates, (a, b) -> b.getBlockSize() - a.getBlockSize());
