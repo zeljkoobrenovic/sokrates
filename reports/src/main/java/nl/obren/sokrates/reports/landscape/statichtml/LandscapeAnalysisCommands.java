@@ -138,10 +138,10 @@ public class LandscapeAnalysisCommands {
     // Collapses the landscape's data/ folder into data/data.zip and removes the loose files
     // (mirrors DataExporter.zipDataFolder for repositories). Only landscapeAnalysisResults.json is
     // machine-read (by a parent landscape's Sub-landscapes tab, zip-or-loose); the rest are
-    // download-only and served via the in-browser downloader. ZipUtils.zipFolder includes any
-    // existing data.zip's entries are NOT preserved, so this also merges: if data.zip already
-    // exists, its entries are kept and any newly-written loose files (e.g. executionTimes written
-    // by the CLI after the first packaging) are folded in. Safe to call more than once.
+    // download-only and served via the in-browser downloader. It MERGES: if data.zip already exists,
+    // its entries are kept and any newly-written loose files (e.g. executionTimes written by the CLI
+    // after the first packaging) are folded in. Safe to call more than once. Streamed byte-by-byte
+    // (no entry held as a String), so it is safe even when a data file approaches the ~2 GB limit.
     public static void zipLandscapeDataFolder(File reportsFolder) {
         File dataFolder = new File(reportsFolder, "data");
         if (!dataFolder.exists()) {
@@ -149,18 +149,7 @@ public class LandscapeAnalysisCommands {
         }
         try {
             File zipFile = new File(dataFolder, "data.zip");
-
-            // Start from the existing zip's entries (if any), then add/overwrite with the loose files.
-            Map<String, String> entries = new LinkedHashMap<>();
-            if (zipFile.exists()) {
-                ZipUtils.unzipAllEntriesAsStrings(zipFile).forEach((name, e) -> entries.put(name, e.getContent()));
-            }
-            collectLooseEntries(dataFolder, dataFolder, zipFile, entries);
-
-            String[][] zipEntries = entries.entrySet().stream()
-                    .map(e -> new String[]{e.getKey(), e.getValue()})
-                    .toArray(String[][]::new);
-            ZipUtils.stringToZipFile(zipFile, zipEntries);
+            ZipUtils.zipFolderMergingExistingZip(dataFolder, zipFile);
 
             File[] children = dataFolder.listFiles();
             if (children != null) {
@@ -177,24 +166,6 @@ public class LandscapeAnalysisCommands {
             }
         } catch (Exception e) {
             LOG.warn("Could not package landscape data folder: " + e.getMessage());
-        }
-    }
-
-    private static void collectLooseEntries(File baseDir, File dir, File zipFile, Map<String, String> entries) throws IOException {
-        File[] children = dir.listFiles();
-        if (children == null) {
-            return;
-        }
-        for (File child : children) {
-            if (child.equals(zipFile)) {
-                continue;
-            }
-            if (child.isDirectory()) {
-                collectLooseEntries(baseDir, child, zipFile, entries);
-            } else {
-                String name = baseDir.toPath().relativize(child.toPath()).toString().replace(File.separatorChar, '/');
-                entries.put(name, FileUtils.readFileToString(child, StandardCharsets.UTF_8));
-            }
         }
     }
 
