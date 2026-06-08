@@ -12,7 +12,8 @@ For details and examples, visit [sokrates.dev](https://sokrates.dev).
 
 * Java 17+
 * Maven
-* [Graphviz](https://graphviz.org/) (the `dot` program) — required to render dependency and visualization graphs. By default Sokrates calls the external `dot`; point to it with the `GRAPHVIZ_DOT` environment variable, or pass `-internalGraphviz` to use the bundled library instead.
+
+No external tools are needed to generate reports — dependency and visualization graphs are rendered in the browser (Mermaid.js and d3, loaded from a CDN), so there is no Graphviz/`dot` dependency.
 
 ## Build
 
@@ -39,7 +40,9 @@ java -jar cli-1.0-jar-with-dependencies.jar init -srcRoot .
 java -jar cli-1.0-jar-with-dependencies.jar generateReports
 ```
 
-Open `_sokrates/reports/html/index.html` in a browser to view the results. The report home page embeds an interactive **Structure** view of zoomable circles (circle size = lines of code); its default **All Files** tab groups every file by folder and color-codes each file by scope (main, test, build & deployment, generated, other).
+View the results by opening `_sokrates/reports/index.html` (it redirects to `html/index.html`). The report home page embeds an interactive **Structure** view of zoomable circles (circle size = lines of code); its default **All Files** tab groups every file by folder and color-codes each file by scope (main, test, build & deployment, generated, other).
+
+> **Serve the reports over HTTP.** To keep the report compact, source snippets, data exports and several visualizations are packaged into zip/bundle files that the pages fetch and unpack in the browser, so the reports must be served over HTTP rather than opened straight from disk (`file://`) — e.g. `cd _sokrates/reports && python3 -m http.server`, then open <http://localhost:8000/>. They also need internet access for the CDN-hosted rendering libraries.
 
 Run a command with `-help` to see its options:
 
@@ -85,7 +88,7 @@ docker build -t sokrates .
 docker run -v "$(pwd):/code" -w /code sokrates init
 ```
 
-The image bundles Graphviz and sets `GRAPHVIZ_DOT=/usr/bin/dot`.
+The image is a plain JRE — no Graphviz or other native tooling is needed (graphs render in the browser).
 
 ## Project structure
 
