@@ -145,6 +145,8 @@ Switches and risk thresholds for the analysis itself. Common keys:
 | `maxFileSizeBytes` / `maxLines` / `maxLineLength` | `1000000` / `10000` / `1000` | Skip files exceeding these. |
 | `locDuplicationThreshold` | `10000000` | Skip duplication when main LOC exceeds this. |
 | `minDuplicationBlockLoc` | `6` | Minimum duplicated block size (lines). |
+| `maxTemporalDependenciesDepthDays` | `365` | Days of git history used to compute temporal (changed-together) file dependencies. |
+| `maxTopListSize` | `50` | Size of the "top N" sample lists (longest/most-changed files, longest/most-complex units, etc.). |
 | `fileSizeThresholds` | `{low:100, medium:200, high:500, veryHigh:1000}` | Risk bands for file size (LOC). |
 | `unitSizeThresholds` | `{low:10, medium:20, high:50, veryHigh:100}` | Risk bands for unit size. |
 | `conditionalComplexityThresholds` | `{low:5, medium:10, high:25, veryHigh:50}` | Risk bands for unit complexity. |

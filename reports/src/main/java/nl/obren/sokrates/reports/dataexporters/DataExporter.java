@@ -13,8 +13,10 @@ import nl.obren.sokrates.reports.dataexporters.dependencies.DependenciesExporter
 import nl.obren.sokrates.reports.dataexporters.duplication.DuplicateExportInfo;
 import nl.obren.sokrates.reports.dataexporters.duplication.DuplicateFileBlockExportInfo;
 import nl.obren.sokrates.reports.dataexporters.duplication.DuplicationExportInfo;
+import nl.obren.sokrates.reports.dataexporters.duplication.DuplicateFragmentExport;
 import nl.obren.sokrates.reports.dataexporters.duplication.DuplicationExporter;
 import nl.obren.sokrates.reports.dataexporters.files.FileListExporter;
+import nl.obren.sokrates.reports.dataexporters.units.FragmentExport;
 import nl.obren.sokrates.reports.dataexporters.units.UnitListExporter;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.reports.utils.ZipUtils;
@@ -44,7 +46,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,11 +70,8 @@ public class DataExporter {
     private File reportsFolder;
     private CodeAnalysisResults analysisResults;
     private File dataFolder;
-    private File historyFolder;
     private File codeCacheFolder;
     private File textDataFolder;
-    private File extraAnalysisDataFolder;
-
     public DataExporter(ProgressFeedback progressFeedback) {
         this.progressFeedback = progressFeedback;
     }
@@ -93,8 +91,6 @@ public class DataExporter {
         this.analysisResults = analysisResults;
         this.dataFolder = getDataFolder();
         this.textDataFolder = getTextDataFolder();
-        this.extraAnalysisDataFolder = getExtraAnalysisDataFolder();
-        this.historyFolder = getDataHistoryFolder();
 
         LOG.info("Saving file lists");
         exportFileLists();
@@ -117,6 +113,39 @@ public class DataExporter {
         exportDependencies(analysisResults);
         LOG.info("Saving temporal dependencies data");
         saveTemporalDependencies(analysisResults);
+    }
+
+    public static final String DATA_ZIP_FILE_NAME = "data.zip";
+
+    // Collapses the per-repository data/ folder (all JSON + text/*.txt + nested zips) into a single
+    // data/data.zip and removes the loose files. Drastically cuts the per-repo file count. The HTML
+    // reports fetch+extract individual entries on demand (downloadDataFile in ReportConstants), and
+    // the landscape analyzer reads each repo's data from this zip (LandscapeAnalyzer). Entry names
+    // are paths relative to data/ (e.g. "analysisResults.json", "text/aspect_main.txt"). Called by
+    // the CLI as the final data step, AFTER textual-summary + execution-stats are written, so those
+    // land inside the zip too.
+    public void zipDataFolder() {
+        try {
+            File zipFile = new File(dataFolder, DATA_ZIP_FILE_NAME);
+            ZipUtils.zipFolder(dataFolder, zipFile);
+
+            // Remove the now-redundant loose files/subfolders, keeping only data.zip.
+            File[] children = dataFolder.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    if (child.equals(zipFile)) {
+                        continue;
+                    }
+                    if (child.isDirectory()) {
+                        FileUtils.deleteDirectory(child);
+                    } else {
+                        FileUtils.deleteQuietly(child);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOG.warn(e);
+        }
     }
 
     private void exportMetrics() {
@@ -190,14 +219,21 @@ public class DataExporter {
     }
 
     private void exportDuplicates(List<DuplicationInstance> instances, final String fileName) {
+        // Cap the INPUT before building the export objects. On very large repositories there can be
+        // far more than MAX_EXPORT_LIST_SIZE duplicates, each expanding into many FileExportInfo
+        // objects; capping only the output (as before) still materialised the full list first and
+        // exhausted the heap. Keep the largest duplicates (by block size), matching duplicates.json.
+        if (instances.size() > MAX_EXPORT_LIST_SIZE) {
+            instances = instances.stream()
+                    .sorted((a, b) -> b.getBlockSize() - a.getBlockSize())
+                    .limit(MAX_EXPORT_LIST_SIZE)
+                    .collect(Collectors.toList());
+        }
         DuplicationExportInfo duplicationExportInfo = new DuplicationExporter(instances).getDuplicationExportInfo();
         List<DuplicateExportInfo> duplicates = duplicationExportInfo.getDuplicates();
         StringBuilder content = new StringBuilder();
 
         int id[] = {1};
-        if ((duplicates.size() > MAX_EXPORT_LIST_SIZE)) {
-            duplicates = duplicates.subList(0, MAX_EXPORT_LIST_SIZE);
-        }
         duplicates.forEach(duplicate -> {
             List<DuplicateFileBlockExportInfo> duplicatedFileBlocks = duplicate.getDuplicatedFileBlocks();
             content.append("duplicated block id: " + id[0] + "\n");
@@ -223,7 +259,7 @@ public class DataExporter {
         UnitListExporter units = new UnitListExporter(analysisResults.getUnitsAnalysisResults().getAllUnits());
         int id[] = {1};
         StringBuilder content = new StringBuilder();
-        units.getAllUnitsData().forEach(unit -> {
+        units.getAllUnitsData(MAX_EXPORT_LIST_SIZE).forEach(unit -> {
             content.append("id: " + id[0] + "\n");
             content.append("unit: " + unit.getShortName() + "\n");
             content.append("file: " + unit.getRelativeFileName() + "\n");
@@ -520,6 +556,7 @@ public class DataExporter {
         detailedInfo("Saving details and source code cache:");
 
         saveStructureFile();
+        saveViewerFile();
 
         if (codeConfiguration.getAnalysis().isSaveSourceFiles()) {
             Set<SourceFile> referencedFiles = getReferencedFiles();
@@ -563,18 +600,14 @@ public class DataExporter {
     }
 
     private void exportJson() throws IOException {
-        String analysisResultsJson = new JsonGenerator().generate(analysisResults);
-        FileUtils.write(new File(dataFolder, "analysisResults.json"), analysisResultsJson, UTF_8);
+        // Stream the (potentially multi-GB) analysisResults JSON straight to disk — building it as
+        // a single String could exceed Java's ~2 GB array limit on very large repositories.
+        new JsonGenerator().generateToFile(analysisResults, new File(dataFolder, "analysisResults.json"));
 
-        String configJson = FileUtils.readFileToString(sokratesConfigFile, UTF_8);
-        FileUtils.write(new File(dataFolder, "config.json"), configJson, UTF_8);
+        FileUtils.copyFile(sokratesConfigFile, new File(dataFolder, "config.json"));
 
         List<SourceFile> mainSourceFiles = analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles();
-        FileUtils.write(new File(dataFolder, "mainFiles.json"), new JsonGenerator().generate(mainSourceFiles), UTF_8);
-
-        if (codeConfiguration.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesConfigFile.getParentFile())) {
-            saveExtraAnalysesConfig();
-        }
+        new JsonGenerator().generateToFile(mainSourceFiles, new File(dataFolder, "mainFiles.json"));
 
         FileUtils.write(new File(textDataFolder, "mainFiles.txt"), getFilesAsTxt(mainSourceFiles), UTF_8);
         FileUtils.write(new File(textDataFolder, "mainFilesWithHistory.txt"), getFilesWithHistoryAsTxt(mainSourceFiles), UTF_8);
@@ -585,24 +618,24 @@ public class DataExporter {
             List<SourceFile> buildAndDeploymentSourceFiles = analysisResults.getBuildAndDeployAspectAnalysisResults().getAspect().getSourceFiles();
             List<SourceFile> otherSourceFiles = analysisResults.getOtherAspectAnalysisResults().getAspect().getSourceFiles();
 
-            FileUtils.write(new File(dataFolder, "testFiles.json"), new JsonGenerator().generate(testSourceFile), UTF_8);
-            FileUtils.write(new File(dataFolder, "generatedFiles.json"), new JsonGenerator().generate(generatedSourceFiles), UTF_8);
-            FileUtils.write(new File(dataFolder, "buildAndDeploymentFiles.json"), new JsonGenerator().generate(buildAndDeploymentSourceFiles), UTF_8);
-            FileUtils.write(new File(dataFolder, "otherFiles.json"), new JsonGenerator().generate(otherSourceFiles), UTF_8);
+            new JsonGenerator().generateToFile(testSourceFile, new File(dataFolder, "testFiles.json"));
+            new JsonGenerator().generateToFile(generatedSourceFiles, new File(dataFolder, "generatedFiles.json"));
+            new JsonGenerator().generateToFile(buildAndDeploymentSourceFiles, new File(dataFolder, "buildAndDeploymentFiles.json"));
+            new JsonGenerator().generateToFile(otherSourceFiles, new File(dataFolder, "otherFiles.json"));
 
-            FileUtils.write(new File(dataFolder, "units.json"), new JsonGenerator().generate(new UnitListExporter(analysisResults.getUnitsAnalysisResults().getAllUnits()).getAllUnitsData()), UTF_8);
-            FileUtils.write(new File(dataFolder, "files.json"), new FileListExporter(analysisResults.getFilesAnalysisResults().getAllFiles()).getJson(), UTF_8);
+            new JsonGenerator().generateToFile(new UnitListExporter(analysisResults.getUnitsAnalysisResults().getAllUnits()).getAllUnitsData(MAX_EXPORT_LIST_SIZE), new File(dataFolder, "units.json"));
+            new JsonGenerator().generateToFile(new FileListExporter(analysisResults.getFilesAnalysisResults().getAllFiles()).getAllFilesData(), new File(dataFolder, "files.json"));
             List<DuplicationInstance> allDuplicates = analysisResults.getDuplicationAnalysisResults().getAllDuplicates();
             Collections.sort(allDuplicates, (a, b) -> b.getBlockSize() - a.getBlockSize());
             allDuplicates = allDuplicates.stream().limit(10000).collect(Collectors.toList());
-            FileUtils.write(new File(dataFolder, "duplicates.json"), new JsonGenerator().generate(new DuplicationExporter(
-                    allDuplicates).getDuplicationExportInfo()), UTF_8);
-            FileUtils.write(new File(dataFolder, "logical_decompositions.json"), new JsonGenerator().generate(
-                    analysisResults.getLogicalDecompositionsAnalysisResults()), UTF_8);
-            FileUtils.write(new File(dataFolder, "dependencies.json"), new JsonGenerator().generate(
-                    new DependenciesExporter(analysisResults.getAllDependencies()).getDependenciesExportInfo()), UTF_8);
-            FileUtils.write(new File(dataFolder, "contributors.json"), new JsonGenerator().generate(analysisResults.getContributorsAnalysisResults().getContributors()), UTF_8);
-            FileUtils.write(new File(dataFolder, "concerns.json"), new JsonGenerator().generate(analysisResults.getConcernsAnalysisResults()), UTF_8);
+            new JsonGenerator().generateToFile(new DuplicationExporter(allDuplicates).getDuplicationExportInfo(),
+                    new File(dataFolder, "duplicates.json"));
+            new JsonGenerator().generateToFile(analysisResults.getLogicalDecompositionsAnalysisResults(),
+                    new File(dataFolder, "logical_decompositions.json"));
+            new JsonGenerator().generateToFile(new DependenciesExporter(analysisResults.getAllDependencies()).getDependenciesExportInfo(),
+                    new File(dataFolder, "dependencies.json"));
+            new JsonGenerator().generateToFile(analysisResults.getContributorsAnalysisResults().getContributors(), new File(dataFolder, "contributors.json"));
+            new JsonGenerator().generateToFile(analysisResults.getConcernsAnalysisResults(), new File(dataFolder, "concerns.json"));
 
             File zipFolder = new File(dataFolder, "zips");
             zipFolder.mkdirs();
@@ -616,8 +649,9 @@ public class DataExporter {
             });
             File gitHistoryFile = new File(reportsFolder, "../../git-history.txt");
             if (gitHistoryFile.exists()) {
-                String gitHistoryContent = FileUtils.readFileToString(gitHistoryFile, UTF_8);
-                ZipUtils.stringToZipFile(new File(zipFolder, "git-history.zip"), "git-history.txt", gitHistoryContent);
+                // Stream the file into the zip; on huge repositories git-history.txt can exceed the
+                // ~2 GB String/array limit, so it must never be read into a single String.
+                ZipUtils.fileToZipFile(new File(zipFolder, "git-history.zip"), "git-history.txt", gitHistoryFile);
             }
         } catch (Throwable t) {
             t.printStackTrace();
@@ -628,53 +662,6 @@ public class DataExporter {
         File textDataFolder = new File(dataFolder, "text");
         textDataFolder.mkdirs();
         return textDataFolder;
-    }
-
-    public File getExtraAnalysisDataFolder() {
-        File extraAnalysisDataFolder = new File(dataFolder, "extra_analysis");
-        extraAnalysisDataFolder.mkdirs();
-        return extraAnalysisDataFolder;
-    }
-
-    private void saveExtraAnalysesConfig() {
-        try {
-            String jsonContent = FileUtils.readFileToString(sokratesConfigFile, UTF_8);
-
-            FileUtils.write(new File(extraAnalysisDataFolder, "config_original.json"), new JsonGenerator().generate(codeConfiguration), UTF_8);
-
-            saveConfigByFileChangeFrequency(jsonContent);
-            saveConfigByFileAge(jsonContent);
-            saveConfigByFileFreshness(jsonContent);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void saveConfigByFileChangeFrequency(String jsonContent) throws IOException {
-        CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
-        codeConfiguration.setLogicalDecompositions(FileHistoryScopingUtils.getLogicalDecompositionsFileUpdateFrequency(analysisResults));
-
-        codeConfiguration.getFileHistoryAnalysis().setImportPath("");
-
-        FileUtils.write(new File(extraAnalysisDataFolder, "config_by_file_change_frequency.json"), new JsonGenerator().generate(codeConfiguration), UTF_8);
-    }
-
-    private void saveConfigByFileAge(String jsonContent) throws IOException {
-        CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
-        codeConfiguration.setLogicalDecompositions(FileHistoryScopingUtils.getLogicalDecompositionsByAge(analysisResults));
-
-        codeConfiguration.getFileHistoryAnalysis().setImportPath("");
-
-        FileUtils.write(new File(extraAnalysisDataFolder, "config_by_file_age.json"), new JsonGenerator().generate(codeConfiguration), UTF_8);
-    }
-
-    private void saveConfigByFileFreshness(String jsonContent) throws IOException {
-        CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
-        codeConfiguration.setLogicalDecompositions(FileHistoryScopingUtils.getLogicalDecompositionsByFreshness(analysisResults));
-
-        codeConfiguration.getFileHistoryAnalysis().setImportPath("");
-
-        FileUtils.write(new File(extraAnalysisDataFolder, "config_by_file_freshness.json"), new JsonGenerator().generate(codeConfiguration), UTF_8);
     }
 
     private String getFilesAsTxt(List<SourceFile> sourceFiles) {
@@ -745,37 +732,25 @@ public class DataExporter {
     }
 
     private void saveUnitFragmentFiles(List<UnitInfo> units, String fragmentType) throws IOException {
+        File fragmentsFolder = new File(codeCacheFolder, "fragments");
+        fragmentsFolder.mkdirs();
 
-        File fragmentsFolder = recreateFolder("fragments/" + fragmentType);
-
-        detailedInfo(" - saving source code cache for the " + fragmentType + "fragments");
-        int count[] = {0};
+        detailedInfo(" - saving source code cache for the " + fragmentType + " fragments");
+        List<FragmentExport> fragments = new ArrayList<>();
         units.forEach(unit -> {
-            count[0]++;
-            saveUnitAsHtml(fragmentType, fragmentsFolder, count, unit);
+            fragments.add(new FragmentExport(
+                    unit.getShortName(),
+                    unit.getSourceFile().getRelativePath(),
+                    unit.getStartLine(),
+                    unit.getEndLine(),
+                    unit.getLinesOfCode(),
+                    unit.getMcCabeIndex(),
+                    unit.getSourceFile().getExtension(),
+                    unit.getBody()));
         });
-    }
 
-    private void saveUnitAsHtml(String fragmentType, File fragmentsFolder, int[] count, UnitInfo unit) {
-        try {
-            String fileName = fragmentType + "_" + count[0] + "." + unit.getSourceFile().getExtension();
-            String fileAndLines = unit.getSourceFile().getRelativePath() + " [" + unit.getStartLine() + ":" + unit.getEndLine() + "]";
-
-            String htmlTemplate = HtmlTemplateUtils.getResource("/templates/CodeFragmentUnit.html");
-            String html = htmlTemplate.replace("${title}", unit.getShortName());
-            html = html.replace("${unit-name}", unit.getShortName());
-            html = html.replace("${file-and-lines}", fileAndLines);
-            html = html.replace("${language}", unit.getSourceFile().getExtension());
-            html = html.replace("${code}", StringEscapeUtils.escapeHtml4(unit.getBody()));
-            html = html.replace("${lines-of-code}", FormattingUtils.formatCount(unit.getLinesOfCode()));
-            html = html.replace("${mccabe-index}", FormattingUtils.formatCount(unit.getMcCabeIndex()));
-
-            File htmlFile = new File(fragmentsFolder, fileName + ".html");
-            FileUtils.write(htmlFile, html, UTF_8);
-
-        } catch (IOException e) {
-            LOG.warn(e);
-        }
+        File bundleFile = new File(fragmentsFolder, fragmentType + ".json");
+        FileUtils.write(bundleFile, new JsonGenerator().generate(fragments), UTF_8);
     }
 
     private void saveStructureFile() {
@@ -791,72 +766,40 @@ public class DataExporter {
         }
     }
 
-    private void saveFileAsHtml(File htmlFile, SourceFile sourceFile) {
+    private void saveViewerFile() {
         try {
-
-            String htmlTemplate = HtmlTemplateUtils.getResource("/templates/CodeFragmentFile.html");
-            String html = htmlTemplate.replace("${title}", sourceFile.getRelativePath());
-            html = html.replace("${file-path}", sourceFile.getRelativePath());
-            html = html.replace("${file-name}", sourceFile.getFile().getName());
-            String langName = LanguageAnalyzerFactory.getInstance().getLanguageAnalyzer(sourceFile).getClass().getSimpleName().replace("Analyzer", "").toLowerCase();
-            String defaultLangName = DefaultLanguageAnalyzer.class.getSimpleName().replace("Analyzer", "");
-            html = html.replace("${language}", langName.equalsIgnoreCase(defaultLangName) ? sourceFile.getExtension() : langName);
-            html = html.replace("${code}", StringEscapeUtils.escapeHtml4(sourceFile.getContent()));
-            html = html.replace("${lines-of-code}", FormattingUtils.formatCount(sourceFile.getLinesOfCode()));
-
-            FileUtils.write(htmlFile, html, UTF_8);
-
+            String html = HtmlTemplateUtils.getResource("/templates/viewer.html");
+            FileUtils.write(new File(codeCacheFolder, "viewer.html"), html, UTF_8);
         } catch (IOException e) {
             LOG.warn(e);
         }
     }
 
     private void saveDuplicateFragmentFiles(List<DuplicationInstance> duplicates, String fragmentType) throws IOException {
-        File fragmentsFolder = recreateFolder("fragments/" + fragmentType);
-
-        detailedInfo(" - saving source code cache for the " + fragmentType + "fragments");
-        int count[] = {0};
-        duplicates.forEach(duplicate -> {
-            count[0]++;
-            try {
-                DuplicatedFileBlock firstFileBlock = duplicate.getDuplicatedFileBlocks().get(0);
-                String extension = firstFileBlock.getSourceFile().getExtension();
-                String fileName = fragmentType + "_" + count[0] + "." + extension;
-                File file = new File(fragmentsFolder, fileName);
-
-                StringBuilder body = new StringBuilder();
-
-                duplicate.getDuplicatedFileBlocks().forEach(block -> {
-                    List<String> lines = block.getSourceFile().getLines();
-                    int fromIndex = block.getStartLine() - 1;
-                    int endLine = block.getEndLine();
-                    if (fromIndex >= 0 && endLine > fromIndex && endLine < lines.size()) {
-                        body.append(block.getSourceFile().getRelativePath() + " [" + block.getStartLine() + ":" + endLine + "]:\n");
-                        body.append(SEPARATOR);
-                        body.append(lines.subList(fromIndex, endLine).stream().collect(Collectors.joining("\n")) + "\n" + SEPARATOR + "\n\n\n");
-                    }
-                });
-
-                FileUtils.write(file, body.toString(), UTF_8);
-            } catch (IllegalArgumentException e) {
-                duplicate.getDuplicatedFileBlocks().forEach(block -> {
-                    LOG.info(block.getSourceFile().getRelativePath() + " [" + block.getStartLine() + ":" + block.getEndLine() + "]:\n");
-                });
-                LOG.warn(e);
-                System.exit(0);
-            } catch (IOException e) {
-                LOG.warn(e);
-            }
-        });
-    }
-
-    private File recreateFolder(String folderName) throws IOException {
-        File fragmentsFolder = new File(codeCacheFolder, folderName);
-        if (fragmentsFolder.exists()) {
-            FileUtils.deleteDirectory(fragmentsFolder);
-        }
+        File fragmentsFolder = new File(codeCacheFolder, "fragments");
         fragmentsFolder.mkdirs();
-        return fragmentsFolder;
+
+        detailedInfo(" - saving source code cache for the " + fragmentType + " fragments");
+        // One entry per duplicate, in order, so the 1-based index in the report's "view" link
+        // (DuplicationReportGenerator) maps to the same array position here.
+        List<DuplicateFragmentExport> fragments = new ArrayList<>();
+        duplicates.forEach(duplicate -> {
+            DuplicatedFileBlock firstFileBlock = duplicate.getDuplicatedFileBlocks().get(0);
+            DuplicateFragmentExport fragment = new DuplicateFragmentExport(firstFileBlock.getSourceFile().getExtension());
+            duplicate.getDuplicatedFileBlocks().forEach(block -> {
+                List<String> lines = block.getSourceFile().getLines();
+                int fromIndex = block.getStartLine() - 1;
+                int endLine = block.getEndLine();
+                if (fromIndex >= 0 && endLine > fromIndex && endLine < lines.size()) {
+                    String code = String.join("\n", lines.subList(fromIndex, endLine));
+                    fragment.addBlock(block.getSourceFile().getRelativePath(), block.getStartLine(), endLine, code);
+                }
+            });
+            fragments.add(fragment);
+        });
+
+        File bundleFile = new File(fragmentsFolder, fragmentType + ".json");
+        FileUtils.write(bundleFile, new JsonGenerator().generate(fragments), UTF_8);
     }
 
     private void saveAspectJsonFiles(NamedSourceCodeAspect aspect, String aspectName, Set<SourceFile> referencedFiles) throws IOException {
@@ -868,19 +811,13 @@ public class DataExporter {
         });
         FileUtils.write(filesListFile, new JsonGenerator().generate(files), UTF_8);
 
-        File aspectCodeCacheFolder = recreateFolder(aspectName);
-
-        Map<String, List<String>> contents = new HashMap<>();
-        detailedInfo(" - saving source code cache for the <b>" + aspectName + "</b> aspect in <a href='" + aspectCodeCacheFolder.getPath() + "'>" + aspectCodeCacheFolder.getPath() + "</a>");
-        aspect.getSourceFiles().stream().filter(f -> referencedFiles.contains(f)).forEach(sourceFile -> {
-            contents.put(sourceFile.getRelativePath(), sourceFile.getLines());
-            try {
-                FileUtils.write(new File(aspectCodeCacheFolder, sourceFile.getRelativePath()), sourceFile.getContent(), UTF_8);
-                saveFileAsHtml(new File(aspectCodeCacheFolder, sourceFile.getRelativePath() + ".html"), sourceFile);
-            } catch (IOException e) {
-                LOG.warn(e);
-            }
+        File aspectZipFile = new File(codeCacheFolder, aspectName + ".zip");
+        detailedInfo(" - saving source code cache for the <b>" + aspectName + "</b> aspect in <a href='" + aspectZipFile.getPath() + "'>" + aspectZipFile.getPath() + "</a>");
+        List<String[]> entries = new ArrayList<>();
+        aspect.getSourceFiles().stream().filter(referencedFiles::contains).forEach(sourceFile -> {
+            entries.add(new String[]{sourceFile.getRelativePath(), sourceFile.getContent()});
         });
+        ZipUtils.stringToZipFile(aspectZipFile, entries.toArray(new String[0][]));
     }
 
     public File getCodeCacheFolder() {
@@ -899,12 +836,6 @@ public class DataExporter {
         File dataFolder = new File(reportsFolder, DATA_FOLDER_NAME);
         dataFolder.mkdirs();
         return dataFolder;
-    }
-
-    public File getDataHistoryFolder() {
-        File folder = new File(reportsFolder, HISTORY_FOLDER_NAME);
-        folder.mkdirs();
-        return folder;
     }
 
     private void info(String text) {

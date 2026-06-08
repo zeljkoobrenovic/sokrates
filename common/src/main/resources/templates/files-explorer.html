@@ -73,6 +73,7 @@
     </style>
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Lato">
+    ${sokrates-inflate-lib}
 </head>
 <body style="margin: 12px">
 
@@ -300,8 +301,8 @@
     if (reportLinkBase.indexOf('${') === 0) {
         reportLinkBase = '';
     }
-    // Whether per-file cached source pages were saved (../src/main/<path>.html). Suppresses the
-    // file-name link when off.
+    // Whether source was cached (into ../src/<aspect>.zip, viewed via ../src/viewer.html).
+    // Suppresses the file-name link when off.
     let saveSourceFiles = '${saveSourceFiles}' === 'true';
 
     files = files.sort(comparator);

@@ -37,11 +37,12 @@ public class UnitsExplorerGenerators {
         try {
             List<UnitInfo> units = codeAnalysisResults.getUnitsAnalysisResults().getAllUnits();
 
-            // Map units that have a saved source-code fragment to its relative URL. Fragments are
-            // saved (only when saveCodeFragments is on) for the longest-units and most-complex-units
-            // lists, named <type>/<type>_<1-based index>.<ext>.html — keyed by list position, so we
-            // mirror that indexing here. Identity (==) match, as the explorer reuses the same UnitInfo
-            // objects. Longest-unit fragments take precedence when a unit is in both lists.
+            // Map units that have a saved source-code fragment to its viewer URL. Fragments are
+            // bundled (only when saveCodeFragments is on) into src/fragments/<type>.json for the
+            // longest-units and most-complex-units lists; the viewer link carries the 1-based list
+            // position as &i=, so we mirror that indexing here. Identity (==) match, as the explorer
+            // reuses the same UnitInfo objects. Longest-unit fragments take precedence when a unit is
+            // in both lists.
             Map<UnitInfo, String> fragmentLinks = new IdentityHashMap<>();
             if (codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveCodeFragments()) {
                 addFragmentLinks(fragmentLinks, codeAnalysisResults.getUnitsAnalysisResults().getLongestUnits(), "longest_unit");
@@ -93,8 +94,7 @@ public class UnitsExplorerGenerators {
             if (links.containsKey(unit) || unit.getSourceFile() == null) {
                 continue;
             }
-            String url = "../src/fragments/" + fragmentType + "/" + fragmentType + "_" + (i + 1)
-                    + "." + unit.getSourceFile().getExtension() + ".html";
+            String url = "../src/viewer.html?bundle=fragments/" + fragmentType + ".json&i=" + (i + 1);
             links.put(unit, url);
         }
     }

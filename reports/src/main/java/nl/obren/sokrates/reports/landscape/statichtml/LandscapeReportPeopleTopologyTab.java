@@ -86,15 +86,11 @@ public class LandscapeReportPeopleTopologyTab {
             landscapeReport.addNewTabLink("<div style='font-weight: bold; font-size: 110%; margin-bottom: 8px;'>3D force graph (including repositories)&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON + "</div>", "visuals/" + prefix + "_dependencies_including_repositories_30_2_force_3d.html");
             landscapeReport.startDiv("font-size: 90%");
             landscapeReport.addHtmlContent("more visuals: ");
-            landscapeReport.addNewTabLink("graphviz", "visuals/" + prefix + "_dependencies_30_1.svg");
-            landscapeReport.addHtmlContent(" | ");
-            landscapeReport.addNewTabLink("graphviz (including contributors)", "visuals/" + prefix + "_dependencies_including_repositories_30_2.svg");
-            landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("2D force graph", "visuals/" + prefix + "_dependencies_30_1_force_2d.html");
             landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("3D force graph", "visuals/" + prefix + "_dependencies_30_1_force_3d.html");
             landscapeReport.addHtmlContent(" | ");
-            landscapeReport.addNewTabLink("data", "data/repository_shared_repositories_30_days.txt");
+            landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('repository_shared_repositories_30_days.txt')\">" + "data" + "</a>");
             landscapeReport.addHtmlContent("&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON);
             landscapeReport.endDiv();
             landscapeReport.addLineBreak();
@@ -139,10 +135,6 @@ public class LandscapeReportPeopleTopologyTab {
             landscapeReport.addParagraph("The diagram shows repository dependencies defined as having the same " +
                     "contributors working on the same repositories in the past 30 days. " +
                     "The lines between repositories display the number of contributors working on both repositories.", "color: grey");
-            landscapeReport.addNewTabLink("graphviz", "visuals/repository_dependencies_30_3.svg");
-            landscapeReport.addHtmlContent(" | ");
-            landscapeReport.addNewTabLink("graphviz (including contributors)", "visuals/" + prefix + "_dependencies_including_repositories_30_2.svg");
-            landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("2D force graph", "visuals/repository_dependencies_30_3_force_2d.html");
             landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("2D force graph (including contributors)", "visuals/" + prefix + "_dependencies_including_repositories_30_2_force_2d.html");
@@ -151,7 +143,7 @@ public class LandscapeReportPeopleTopologyTab {
             landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("3D force graph (including contributors)", "visuals/" + prefix + "_dependencies_including_repositories_30_2_force_3d.html");
             landscapeReport.addHtmlContent(" | ");
-            landscapeReport.addNewTabLink("data", "data/repository_shared_repositories_30_days.txt");
+            landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('repository_shared_repositories_30_days.txt')\">" + "data" + "</a>");
             landscapeReport.addHtmlContent("&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON);
             landscapeReport.addLineBreak();
             landscapeReport.addLineBreak();
@@ -165,8 +157,6 @@ public class LandscapeReportPeopleTopologyTab {
         if (recentlyActive) {
             landscapeReport.addParagraph("The diagram shows dependencies between programming languages (file extensions) defined as having the same contributors committing to files with these extensions in the past 30 days. " +
                     "The lines between repositories display the number of contributors committing to files with both extensions in ht past 30 days.", "color: grey");
-            landscapeReport.addNewTabLink("graphviz", "visuals/extension_dependencies_30d.svg");
-            landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("2D force graph", "visuals/extension_dependencies_30d_force_2d.html");
             landscapeReport.addHtmlContent(" | ");
             landscapeReport.addNewTabLink("3D force graph", "visuals/extension_dependencies_30d_force_3d.html");
@@ -321,7 +311,7 @@ public class LandscapeReportPeopleTopologyTab {
         landscapeReport.startTableCell("border: none; vertical-align: top");
         landscapeReport.addHtmlContent(DEPENDENCIES_ICON);
         landscapeReport.endTableCell();
-        landscapeReport.startTableCell("border: none");
+        landscapeReport.startTableCell("border: none; width: 100%");
         addPeopleGraph(peopleDependencies, daysAgo, "", "");
         if (peopleRepositoryDependencies != null) {
             addPeopleGraph(peopleRepositoryDependencies, daysAgo, "including_repositories_", " (including repositories)");
@@ -359,7 +349,7 @@ public class LandscapeReportPeopleTopologyTab {
         String fileName = "repository_dependencies_via_" + (isContributorReport() ? "people" : "teams") + "_" + daysAgo + "_days.txt";
         saveData(fileName, builder.toString());
 
-        landscapeReport.addNewTabLink("See data...", "data/" + fileName);
+        landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + fileName + "')\">" + "See data..." + "</a>");
 
         List<String> repositoryNames = landscapeAnalysisResults.getRepositoryAnalysisResults().stream()
                 .filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days() > 0)
@@ -472,7 +462,7 @@ public class LandscapeReportPeopleTopologyTab {
         landscapeReport.addHtmlContent(" | ");
         landscapeReport.addNewTabLink("tree map", "visuals/tree_map_" + prefix + ".html");
         landscapeReport.addHtmlContent(" | ");
-        landscapeReport.addNewTabLink("data", "data/" + fileName);
+        landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + fileName + "')\">" + "data" + "</a>");
         landscapeReport.addHtmlContent("</p>");
         List<VisualizationItem> visualizationItems = new ArrayList<>();
         list.forEach(repository -> visualizationItems.add(new VisualizationItem(repository, map.get(repository).getRight())));
@@ -502,7 +492,7 @@ public class LandscapeReportPeopleTopologyTab {
         landscapeReport.startShowMoreBlock("contributor dependencies graph..." + extraLabel + "<br>");
         landscapeReport.startDiv("border-left: 6px solid lightgrey; padding-left: 4px; margin-left: 4px; overflow-x: auto");
         landscapeReport.addHtmlContent("&nbsp;&nbsp;&nbsp;");
-        landscapeReport.addNewTabLink("See data...", "data/" + fileName);
+        landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + fileName + "')\">" + "See data..." + "</a>");
 
         String orientation = suffix.length() > 0 ? "LR" : "TB";
         String graphId = addDependencyGraphVisuals(peopleDependencies, new ArrayList<>(),
@@ -578,7 +568,7 @@ public class LandscapeReportPeopleTopologyTab {
         landscapeReport.addHtmlContent(" | ");
         landscapeReport.addNewTabLink("tree map", "visuals/tree_map_" + prefix + ".html");
         landscapeReport.addHtmlContent(" | ");
-        landscapeReport.addNewTabLink("data", "data/" + fileName);
+        landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + fileName + "')\">" + "data" + "</a>");
         landscapeReport.addHtmlContent("</p>");
         List<VisualizationItem> visualizationItems = new ArrayList<>();
         contributorConnections.forEach(c -> visualizationItems.add(new VisualizationItem(c.getEmail(), c.getConnectionsCount())));
@@ -625,7 +615,7 @@ public class LandscapeReportPeopleTopologyTab {
         landscapeReport.addHtmlContent(" | ");
         landscapeReport.addNewTabLink("tree map", "visuals/tree_map_" + prefix + ".html");
         landscapeReport.addHtmlContent(" | ");
-        landscapeReport.addNewTabLink("data", "data/" + fileName);
+        landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + fileName + "')\">" + "data" + "</a>");
         landscapeReport.addHtmlContent("</p>");
         List<VisualizationItem> visualizationItems = new ArrayList<>();
         contributorConnections.forEach(c -> visualizationItems.add(new VisualizationItem(c.getEmail(), c.getRepositoriesCount())));
@@ -672,7 +662,7 @@ public class LandscapeReportPeopleTopologyTab {
         } else {
             landscapeReport.addParagraph("Showing all " + componentDependencies.size() + (componentDependencies.size() == 1 ? " item" : " items") + ".");
         }
-        String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(componentNames, componentDependencies);
+        String graphvizContent = graphvizDependencyRenderer.getMermaidContent(componentNames, componentDependencies);
         String graphId = prefix + dependencyVisualCounter++;
         landscapeReport.addGraphvizFigure(graphId, "", graphvizContent);
         landscapeReport.addLineBreak();
@@ -687,11 +677,9 @@ public class LandscapeReportPeopleTopologyTab {
     private void addDownloadLinks(String graphId) {
         landscapeReport.startDiv("");
         landscapeReport.addHtmlContent("Download: ");
-        landscapeReport.addNewTabLink("SVG", "visuals/" + graphId + ".svg");
+        landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadMermaid('" + graphId + "');\">Mermaid (.mmd)</a>");
         landscapeReport.addHtmlContent(" ");
-        landscapeReport.addNewTabLink("DOT", "visuals/" + graphId + ".dot.txt");
-        landscapeReport.addHtmlContent(" ");
-        landscapeReport.addNewTabLink("(open online Graphviz editor)", "https://obren.io/tools/graphviz/");
+        landscapeReport.addNewTabLink("(open online Mermaid editor)", "https://obren.io/tools/mermaid/");
         landscapeReport.endDiv();
     }
 

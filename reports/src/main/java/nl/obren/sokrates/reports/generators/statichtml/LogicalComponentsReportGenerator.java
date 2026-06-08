@@ -197,7 +197,7 @@ public class LogicalComponentsReportGenerator {
             graphvizDependencyRenderer.setArrowColor("#00688b");
             graphvizDependencyRenderer.setCyclicArrowColor("#a0a0a0");
             graphvizDependencyRenderer.setMaxNumberOfDependencies(50);
-            String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(new ArrayList<>(), dependencies);
+            String graphvizContent = graphvizDependencyRenderer.getMermaidContent(new ArrayList<>(), dependencies);
 
             String graphId = "logical_decomposition_file_changed_together_dependencies_" + graphCounter++;
             report.addGraphvizFigure(graphId, "File changed together in different components", graphvizContent);
@@ -263,7 +263,7 @@ public class LogicalComponentsReportGenerator {
         report.startUnorderedList();
         report.addListItem("Analyzed system has <b>" + componentDependencies.size() + "</b> links (arrows) between components.");
         report.addListItem("The number on the arrow represents the number of files from referring component that depend on files in referred component.");
-        report.addListItem("These " + componentDependencies.size() + " links contain <a href='../data/text/" + DataExporter.dependenciesFileNamePrefix("", "", logicalDecomposition.getKey()) + ".txt'><b>" + DependencyUtils.getDependenciesCount(componentDependencies) + "</b> dependencies</a>.");
+        report.addListItem("These " + componentDependencies.size() + " links contain <a href='#' onclick=\"return downloadDataFile('text/" + DataExporter.dependenciesFileNamePrefix("", "", logicalDecomposition.getKey()) + ".txt')\"><b>" + DependencyUtils.getDependenciesCount(componentDependencies) + "</b> dependencies</a>.");
         int cyclicDependencyPlacesCount = DependencyUtils.getCyclicDependencyPlacesCount(componentDependencies);
         int cyclicDependencyCount = DependencyUtils.getCyclicDependencyCount(componentDependencies);
         if (cyclicDependencyPlacesCount > 0) {
@@ -556,7 +556,7 @@ public class LogicalComponentsReportGenerator {
     }
 
     private String addDependencyGraphVisuals(List<ComponentDependency> componentDependencies, List<String> componentNames, List<ComponentGroup> componentGroups, GraphvizDependencyRenderer graphvizDependencyRenderer) {
-        String graphvizContent = graphvizDependencyRenderer.getGraphvizContent(componentNames, componentDependencies, componentGroups);
+        String graphvizContent = graphvizDependencyRenderer.getMermaidContent(componentNames, componentDependencies, componentGroups);
         String graphId = "dependencies_" + dependencyVisualCounter++;
         report.startDiv("max-height: 600px; overflow-y: scroll; overflow-x: scroll;");
         report.addGraphvizFigure(graphId, "", graphvizContent);
@@ -639,7 +639,7 @@ public class LogicalComponentsReportGenerator {
                 (percentageHtmlFragment != null ? "" + percentageHtmlFragment : dependencyCount + " files (" + locFromDuplications + " LOC)<br/>")
         );
         report.addHtmlContent("</td>");
-        report.addTableCell("<a href='../data/text/" + DataExporter.dependenciesFileNamePrefix(componentDependency.getFromComponent(), componentDependency.getToComponent(), logicalDecomposition.getKey()) + ".txt'><b>" + dependencyCount + "</b> source " + (dependencyCount == 1 ? "file" : "files") + "</a>");
+        report.addTableCell("<a href='#' onclick=\"return downloadDataFile('text/" + DataExporter.dependenciesFileNamePrefix(componentDependency.getFromComponent(), componentDependency.getToComponent(), logicalDecomposition.getKey()) + ".txt')\"><b>" + dependencyCount + "</b> source " + (dependencyCount == 1 ? "file" : "files") + "</a>");
         report.endTableRow();
     }
 

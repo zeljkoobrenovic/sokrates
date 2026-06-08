@@ -79,22 +79,22 @@ public class FileChurnReportGenerator {
         addGraphOverallChange(report, codeAnalysisResults.getFilesHistoryAnalysisResults().getOverallFileChangeDistribution());
         report.addLineBreak();
         report.addHtmlContent("explore: ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_update_frequency_coloring.html'>grouped by folders</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html?key=main_update_frequency_coloring'>grouped by folders</a>");
         report.addHtmlContent(" | ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_update_frequency_coloring_categories.html'>grouped by update frequency</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html?key=main_update_frequency_coloring_categories'>grouped by update frequency</a>");
         report.addHtmlContent(" | ");
-        report.addHtmlContent("<a target='_blank' href='../data/text/mainFilesWithHistory.txt'>data</a>");
+        report.addHtmlContent("<a target='_blank' href='#' onclick=\"return downloadDataFile('text/mainFilesWithHistory.txt')\">data</a>");
         report.endSection();
 
         report.startSubSection("Contributors Count Frequency Overall", "");
         addGraphOverallContributorCount(report, codeAnalysisResults.getFilesHistoryAnalysisResults().getOverallContributorsCountDistribution());
         report.addLineBreak();
         report.addHtmlContent("explore: ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_contributors_count_coloring.html'>grouped by folders</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html?key=main_contributors_count_coloring'>grouped by folders</a>");
         report.addHtmlContent(" | ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_contributors_count_coloring_categories.html'>grouped by contributors count</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html?key=main_contributors_count_coloring_categories'>grouped by contributors count</a>");
         report.addHtmlContent(" | ");
-        report.addHtmlContent("<a target='_blank' href='../data/text/mainFilesWithHistory.txt'>data</a>");
+        report.addHtmlContent("<a target='_blank' href='#' onclick=\"return downloadDataFile('text/mainFilesWithHistory.txt')\">data</a>");
         report.endSection();
         report.endSection();
     }
@@ -203,7 +203,7 @@ public class FileChurnReportGenerator {
         List<SourceFile> youngestFiles = codeAnalysisResults.getFilesHistoryAnalysisResults().getMostChangedFiles();
         report.startSection("Most Frequently Changed Files (Top " + youngestFiles.size() + ")", "");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
-        report.addParagraph("<a href='../data/text/mainFilesWithHistory.txt' target='_blank'>See data for all files...</a>");
+        report.addParagraph("<a href='#' onclick=\"return downloadDataFile('text/mainFilesWithHistory.txt')\" target='_blank'>See data for all files...</a>");
         report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true, false, 500).toString());
         report.endSection();
     }
@@ -212,7 +212,7 @@ public class FileChurnReportGenerator {
         List<SourceFile> files = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilesWithMostContributors();
         report.startSection("Files With Most Contributors (Top " + files.size() + ")", "Based on the number of unique email addresses found in commits.");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
-        report.addParagraph("<a href='../data/text/mainFilesWithHistory.txt' target='_blank'>See data for all files...</a>");
+        report.addParagraph("<a href='#' onclick=\"return downloadDataFile('text/mainFilesWithHistory.txt')\" target='_blank'>See data for all files...</a>");
         report.addHtmlContent(FilesReportUtils.getFilesTable(files, cacheSourceFiles, true, false, 500).toString());
         report.endSection();
     }
@@ -221,7 +221,7 @@ public class FileChurnReportGenerator {
         List<SourceFile> files = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilesWithLeastContributors();
         report.startSection("Files With Least Contributors (Top " + files.size() + ")", "Based on the number of unique email addresses found in commits.");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
-        report.addParagraph("<a href='../data/text/mainFilesWithHistory.txt' target='_blank'>See data for all files...</a>");
+        report.addParagraph("<a href='#' onclick=\"return downloadDataFile('text/mainFilesWithHistory.txt')\" target='_blank'>See data for all files...</a>");
         report.addHtmlContent(FilesReportUtils.getFilesTable(files, cacheSourceFiles, true, false, 500).toString());
         report.endSection();
     }

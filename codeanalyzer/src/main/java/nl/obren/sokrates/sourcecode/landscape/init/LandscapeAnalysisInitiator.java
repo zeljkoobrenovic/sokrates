@@ -99,7 +99,17 @@ public class LandscapeAnalysisInitiator {
     }
 
     private boolean isSokratesAnalysisFile(Path file) {
-        return file.endsWith("data/analysisResults.json");
+        // A repository's data folder is now packaged as data/data.zip (analysisResults.json lives
+        // inside it), so discover by that zip. Older reports (before data.zip packaging) still have
+        // a loose data/analysisResults.json — discover those too, but only when there is no sibling
+        // data.zip (a current repository), so a repository is never registered twice.
+        if (file.endsWith("data/data.zip")) {
+            return true;
+        }
+        if (file.endsWith("data/analysisResults.json")) {
+            return !new File(file.getParent().toFile(), "data.zip").exists();
+        }
+        return false;
     }
 
     private boolean isSokratesLandscapeFile(Path file) {
@@ -107,7 +117,11 @@ public class LandscapeAnalysisInitiator {
     }
 
     private void processAnalysisResultFile(File root, LandscapeConfiguration configuration, Path file) {
-        String relativePath = root.toPath().relativize(file).toString();
+        // file is the discovered data/data.zip (current) or data/analysisResults.json (older). The
+        // repository link always records the conceptual data/analysisResults.json path; its parent
+        // folder is the data/ folder the analyzer reads from (zip first, loose file as fallback).
+        String relativePath = root.toPath().relativize(file).toString()
+                .replaceAll("data\\.zip$", "analysisResults.json");
         configuration.getRepositories().add(new SokratesRepositoryLink(relativePath));
 
         LOG.info("Adding repositories: " + relativePath);

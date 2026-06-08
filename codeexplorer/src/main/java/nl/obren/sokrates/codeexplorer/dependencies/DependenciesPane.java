@@ -21,7 +21,6 @@ import nl.obren.sokrates.codeexplorer.codebrowser.TableViewUtils;
 import nl.obren.sokrates.codeexplorer.common.NumericBarCellFactory;
 import nl.obren.sokrates.codeexplorer.common.ProgressFeedbackPane;
 import nl.obren.sokrates.codeexplorer.common.UXUtils;
-import nl.obren.sokrates.common.renderingutils.GraphvizUtil;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.SourceFile;
@@ -39,6 +38,13 @@ import java.util.List;
 import java.util.concurrent.Executors;
 
 public class DependenciesPane extends BorderPane {
+    // The inline dependency-graph SVG preview required the external Graphviz process, which has been
+    // removed (the HTML reports now render dependency graphs client-side via Mermaid). The GUI shows
+    // the dependency text + matrix instead of an embedded rendered graph.
+    private static final String GRAPH_PREVIEW_UNAVAILABLE =
+            "<p>Inline graph preview is no longer available in the explorer. "
+                    + "Use the generated HTML reports to view dependency graphs, "
+                    + "or copy the diagram definition below into the Mermaid live editor (mermaid.live).</p>";
     private static final Log LOG = LogFactory.getLog(DependenciesPane.class);
     private static DependenciesPane instance;
     private static Stage stage;
@@ -114,7 +120,7 @@ public class DependenciesPane extends BorderPane {
         if (renderGraphviz) {
             GraphvizDependencyRenderer renderer = new GraphvizDependencyRenderer();
             renderer.setOrientation(logicalDecomposition.getRenderingOptions().getOrientation());
-            renderer.append(GraphvizUtil.getSvgFromDot(graphvizContent));
+            renderer.append(GRAPH_PREVIEW_UNAVAILABLE);
             renderer.setMaxNumberOfDependencies(100);
             dependenciesView.load(renderer.getHtmlContent(), graphvizContent);
         } else {
@@ -272,20 +278,14 @@ public class DependenciesPane extends BorderPane {
         dependenciesView.load("Please wait...", "");
         componentDependencies = DependencyUtils.getComponentDependencies(dependencies, group);
         componentDependencies.addAll(finderDependencies);
-        String graphvizContent = new GraphvizDependencyRenderer().getGraphvizContent(componentNames, componentDependencies);
+        String graphvizContent = new GraphvizDependencyRenderer().getMermaidContent(componentNames, componentDependencies);
 
         String htmlContent = "";
         if (this.renderGraphviz) {
-            try {
-                GraphvizDependencyRenderer renderer = new GraphvizDependencyRenderer();
-                renderer.setOrientation(logicalDecomposition.getRenderingOptions().getOrientation());
-                String svg = GraphvizUtil.getSvgFromDot(graphvizContent);
-                renderer.append(svg != null ? svg : "Could not render dependencies. Try to increase memory limits.");
-                htmlContent = renderer.getHtmlContent();
-            } catch (Exception e) {
-                htmlContent = "";
-            }
-
+            GraphvizDependencyRenderer renderer = new GraphvizDependencyRenderer();
+            renderer.setOrientation(logicalDecomposition.getRenderingOptions().getOrientation());
+            renderer.append(GRAPH_PREVIEW_UNAVAILABLE);
+            htmlContent = renderer.getHtmlContent();
         }
         dependenciesMatrix.load(componentDependencies);
         dependenciesView.load(htmlContent, graphvizContent);
@@ -293,13 +293,12 @@ public class DependenciesPane extends BorderPane {
 
     public void showDependencies(List<Dependency> dependencies, List<ComponentDependency> componentDependencies, List<String> componentNames, String orientation) {
         dependenciesView.load("Please wait...", "");
-        String graphvizContent = new GraphvizDependencyRenderer().orientation(orientation).getGraphvizContent(componentNames, componentDependencies);
+        String graphvizContent = new GraphvizDependencyRenderer().orientation(orientation).getMermaidContent(componentNames, componentDependencies);
         String htmlContent = "";
         if (this.renderGraphviz) {
             GraphvizDependencyRenderer renderer = new GraphvizDependencyRenderer();
             renderer.setOrientation(logicalDecomposition.getRenderingOptions().getOrientation());
-            String svg = GraphvizUtil.getSvgFromDot(graphvizContent);
-            renderer.append(svg != null ? svg : "Could not render dependencies. Try to increase memory limits.");
+            renderer.append(GRAPH_PREVIEW_UNAVAILABLE);
             htmlContent = renderer.getHtmlContent();
         }
         dependenciesView.load(htmlContent, graphvizContent);

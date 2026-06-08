@@ -135,7 +135,7 @@ public class DuplicationInstance {
                 String name = StringUtils.abbreviate(fileName, 40);
                 if (linkToFiles) {
                     stringBuilder.append("<a href='");
-                    stringBuilder.append("../src/main/" + block.getSourceFile().getRelativePath() + ".html");
+                    stringBuilder.append("../src/viewer.html?aspect=main&file=" + block.getSourceFile().getRelativePath());
                     stringBuilder.append("' target='_blank'>");
                     stringBuilder.append(name);
                     stringBuilder.append("</a>");

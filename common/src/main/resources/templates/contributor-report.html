@@ -102,6 +102,7 @@
         }
     </style>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    ${sokrates-inflate-lib}
 </head>
 <body style="margin: 20px;">
 
@@ -119,9 +120,11 @@
 </div>
 
 <script>
-    const data = ${data};            // ContributorIndividualReportExport
-    const langIcons = ${langIcons};
-    const options = ${options};      // { latestCommitDate, commitsMaxYears, breadcrumbsLabel, indexUrl, avatarTeam, avatarDeveloper, isTeam }
+    // This is now ONE shared page for all individuals. The per-person payload (data + langIcons +
+    // options) lives in a zip (contributors.zip / teams.zip / bots.zip), one JSON entry per person
+    // keyed by the safe email. The page selects its person via ?key=<safe-email>&type=<group> and
+    // extracts only that entry (see the loader at the bottom). Requires HTTP serving (fetch).
+    var data, langIcons, options;
 
     function num(n) {
         return (n || 0).toLocaleString('en-US');
@@ -294,17 +297,20 @@
 
     // ---- tabs ----------------------------------------------------------------
 
-    const TABS = [
-        {id: 'year', label: 'Repository Activity Per Year'},
-        {id: 'month', label: 'Per Month'},
-        {id: 'week', label: 'Per Week'}
-    ];
-    if ((data.members || []).length) {
-        TABS.push({id: 'members', label: 'Members (' + num(data.members.length) + ')'});
-    }
+    // Tabs depend on the loaded person (members tab only for teams); built in buildTabs() AFTER the
+    // data is fetched, so nothing here touches `data` at script-eval time.
+    let TABS = [];
     let activeTab = 'year';
 
     function buildTabs() {
+        TABS = [
+            {id: 'year', label: 'Repository Activity Per Year'},
+            {id: 'month', label: 'Per Month'},
+            {id: 'week', label: 'Per Week'}
+        ];
+        if ((data.members || []).length) {
+            TABS.push({id: 'members', label: 'Members (' + num(data.members.length) + ')'});
+        }
         let html = '';
         TABS.forEach(t => {
             html += '<button class="' + (t.id === activeTab ? 'active' : '') + '" onclick="selectTab(\'' + t.id + '\')">' + t.label + '</button>';
@@ -474,9 +480,33 @@
         document.getElementById('content').innerHTML = html;
     }
 
-    renderHeader();
-    buildTabs();
-    render();
+    function param(name) {
+        var m = new RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+        return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
+    }
+
+    (function load() {
+        var key = param('key');
+        var content = document.getElementById('content');
+        if (!key) { content.innerHTML = '<p style="color:#b00">Missing ?key=</p>'; return; }
+        // All people (contributors, teams, bots) live in one people.zip, keyed by safe email.
+        fetch('people.zip')
+            .then(function (r) { if (!r.ok) throw new Error('Could not load people.zip'); return r.arrayBuffer(); })
+            .then(function (buf) {
+                var entries = fflate.unzipSync(new Uint8Array(buf));
+                var bytes = entries[key + '.json'];
+                if (!bytes) throw new Error('Person not found: ' + key);
+                var payload = JSON.parse(fflate.strFromU8(bytes));
+                // The entry bundles everything the page needs for this person.
+                data = payload.data;
+                langIcons = payload.langIcons || {};
+                options = payload.options || {};
+                renderHeader();
+                buildTabs();
+                render();
+            })
+            .catch(function (e) { content.innerHTML = '<p style="color:#b00">' + esc(e.message) + '</p>'; });
+    })();
 </script>
 </body>
 </html>

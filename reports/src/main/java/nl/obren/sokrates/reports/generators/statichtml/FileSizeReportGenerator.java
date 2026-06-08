@@ -147,7 +147,7 @@ public class FileSizeReportGenerator {
         report.startSection("File Size Overall", "");
         report.startUnorderedList();
         report.addListItem("There are "
-                + "<a href='../data/text/mainFiles.txt' target='_blank'>"
+                + "<a href='#' onclick=\"return downloadDataFile('text/mainFiles.txt')\" target='_blank'>"
                 + RichTextRenderingUtils.renderNumberStrong(distribution.getTotalCount())
                 + " files</a> with " + RichTextRenderingUtils.renderNumberStrong(distribution.getTotalValue())
                 + " lines of code" +
@@ -174,11 +174,11 @@ public class FileSizeReportGenerator {
         report.addLineBreak();
         report.addLineBreak();
         report.addHtmlContent("explore: ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_loc_coloring.html'>grouped by folders</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html?key=main_loc_coloring'>grouped by folders</a>");
         report.addHtmlContent(" | ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_loc_coloring_categories.html'>grouped by size</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html?key=main_loc_coloring_categories'>grouped by size</a>");
         report.addHtmlContent(" | ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_sunburst_main.html'>sunburst</a> | ");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_sunburst.html?key=main'>sunburst</a> | ");
         report.addHtmlContent("<a target='_blank' href='visuals/files_3d.html'>3D view</a>");
         report.endSection();
     }

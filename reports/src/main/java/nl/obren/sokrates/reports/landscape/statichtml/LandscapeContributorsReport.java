@@ -214,7 +214,8 @@ public class LandscapeContributorsReport {
 
 
     public static String getContributorUrl(String email) {
-        return "contributors/" + LandscapeIndividualContributorsReports.getContributorIndividualReportFileName(email);
+        // One shared template page selects the person by safe-email key from contributors/people.zip.
+        return "contributors/contributor-report.html?key=" + LandscapeIndividualContributorsReports.getContributorReportKey(email);
     }
 
     public static String getAvatarUrl(String contributorId, String linkTemplate) {

@@ -373,15 +373,15 @@ public class LandscapeReportContributorsTab {
         renderer.setMaxNumberOfDependencies(100);
         renderer.setDefaultNodeFillColor("deepskyblue2");
         renderer.setTypeGraph();
-        String graphvizContent = renderer.getGraphvizContent(new ArrayList<>(extensionsNames), dependencies);
+        String graphvizContent = renderer.getMermaidContent(new ArrayList<>(extensionsNames), dependencies);
 
         if (isContributorReport()) {
-            addDownloadLinks("extension_dependencies_30d");
             new Force3DGraphExporter().export2D3DForceGraph(dependencies, reportsFolder, "extension_dependencies_30d");
 
             landscapeReport.startShowMoreBlock("extension dependencies...");
 
             landscapeReport.addGraphvizFigure("extension_dependencies_30d", "Extension dependencies", graphvizContent);
+            addDownloadLinks("extension_dependencies_30d");
             landscapeReport.addLineBreak();
             landscapeReport.addNewTabLink(" - show extension dependencies as 2D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/extension_dependencies_30d_force_2d.html");
             landscapeReport.addNewTabLink(" - show extension dependencies as 3D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/extension_dependencies_30d_force_3d.html");
@@ -463,6 +463,9 @@ public class LandscapeReportContributorsTab {
                     .filter(c -> contributorsLinkedFromTables.contains(c.getContributor().getEmail()))
                     .collect(Collectors.toList());
             LOG.info("Saving bot reports for " + linkedBots.size() + " contributor(s) linked from tables (out of " + linkedBots.size() + ")");
+            // Contributors, teams (the TEAMS tab passes teams as its "contributors" list) and bots
+            // all merge into one contributors/people.zip, keyed by safe email; pages open as
+            // contributor-report.html?key=<safe-email>.
             individualReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults, reportsFolder).getIndividualReports(linkedContributors);
             botReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults, reportsFolder).getIndividualReports(linkedBots);
             ProcessingStopwatch.end("reporting/contributors/individual reports");
@@ -662,9 +665,9 @@ public class LandscapeReportContributorsTab {
         landscapeReport.addHtmlContent(" | ");
         landscapeReport.addNewTabLink("tree map", "visuals/tree_map_" + type.plural() + ".html");
         landscapeReport.addHtmlContent(" | ");
-        landscapeReport.addNewTabLink("txt", "data/" + type.plural() + ".txt");
+        landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + type.plural() + ".txt')\">txt</a>");
         landscapeReport.addHtmlContent(" | ");
-        landscapeReport.addNewTabLink("json", "data/" + type.plural() + ".json");
+        landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + type.plural() + ".json')\">json</a>");
         landscapeReport.addLineBreak();
         landscapeReport.addLineBreak();
     }
@@ -1303,11 +1306,9 @@ public class LandscapeReportContributorsTab {
     private void addDownloadLinks(String graphId) {
         landscapeReport.startDiv("");
         landscapeReport.addHtmlContent("Download: ");
-        landscapeReport.addNewTabLink("SVG", "visuals/" + graphId + ".svg");
+        landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadMermaid('" + graphId + "');\">Mermaid (.mmd)</a>");
         landscapeReport.addHtmlContent(" ");
-        landscapeReport.addNewTabLink("DOT", "visuals/" + graphId + ".dot.txt");
-        landscapeReport.addHtmlContent(" ");
-        landscapeReport.addNewTabLink("(open online Graphviz editor)", "https://obren.io/tools/graphviz/");
+        landscapeReport.addNewTabLink("(open online Mermaid editor)", "https://obren.io/tools/mermaid/");
         landscapeReport.endDiv();
     }
 

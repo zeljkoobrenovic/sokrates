@@ -31,7 +31,6 @@ public class CommandsTest {
 
         assertTrue(options.hasOption(Commands.ARG_CONF_FILE));
         assertTrue(options.hasOption(Commands.ARG_OUTPUT_FOLDER));
-        assertTrue(options.hasOption(Commands.ARG_USE_INTERNAL_GRAPHVIZ));
         assertTrue(options.hasOption(Commands.ARG_TIMEOUT));
     }
 

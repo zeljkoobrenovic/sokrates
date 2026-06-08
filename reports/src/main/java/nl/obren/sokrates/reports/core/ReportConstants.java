@@ -239,7 +239,80 @@ public class ReportConstants {
             "          }\n" +
             "          document.getElementById(tabName).style.display = \"block\";\n" +
             "          evt.currentTarget.className += \" active\";\n" +
+            "          renderMermaidIn(document.getElementById(tabName));\n" +
             "        }\n" +
+            "        // Build a .mmd download in the browser from the source already embedded in the\n" +
+            "        // page (a hidden <script id=mermaid-source-ID>), so no .mmd files are written to disk.\n" +
+            "        function downloadMermaid(id) {\n" +
+            "          var el = document.getElementById('mermaid-source-' + id);\n" +
+            "          if (!el) { return false; }\n" +
+            "          var text = el.textContent.replace(/^\\n/, '').replace(/\\n$/, '');\n" +
+            "          var blob = new Blob([text], { type: 'text/plain' });\n" +
+            "          var url = URL.createObjectURL(blob);\n" +
+            "          var a = document.createElement('a');\n" +
+            "          a.href = url; a.download = id + '.mmd';\n" +
+            "          document.body.appendChild(a); a.click(); document.body.removeChild(a);\n" +
+            "          setTimeout(function () { URL.revokeObjectURL(url); }, 0);\n" +
+            "          return false;\n" +
+            "        }\n" +
+            "        // The per-repository data/ folder is packaged as a single data/data.zip. A data\n" +
+            "        // download link fetches that zip, extracts the requested entry (e.g. units.json or\n" +
+            "        // text/metrics.txt) and saves it under its own name. Requires HTTP serving (fetch).\n" +
+            "        var __dataZipPromise = null;\n" +
+            "        // data.zip is at ../data/ for per-repository reports (which live in html/) and at\n" +
+            "        // data/ for landscape reports (which live at the landscape root); try both.\n" +
+            "        function __fetchDataZip() {\n" +
+            "          return fetch('data/data.zip').then(function (r) {\n" +
+            "            if (r.ok) { return r.arrayBuffer(); }\n" +
+            "            return fetch('../data/data.zip').then(function (r2) {\n" +
+            "              if (!r2.ok) throw new Error('Could not load data.zip'); return r2.arrayBuffer();\n" +
+            "            });\n" +
+            "          });\n" +
+            "        }\n" +
+            "        function downloadDataFile(entryName) {\n" +
+            "          if (!__dataZipPromise) {\n" +
+            "            __dataZipPromise = __fetchDataZip()\n" +
+            "              .then(function (buf) { return fflate.unzipSync(new Uint8Array(buf)); });\n" +
+            "          }\n" +
+            "          __dataZipPromise.then(function (entries) {\n" +
+            "            var bytes = entries[entryName];\n" +
+            "            if (!bytes) { alert('Not found in data.zip: ' + entryName); return; }\n" +
+            "            var blob = new Blob([bytes], { type: 'application/octet-stream' });\n" +
+            "            var url = URL.createObjectURL(blob);\n" +
+            "            var a = document.createElement('a');\n" +
+            "            a.href = url; a.download = entryName.replace(/^.*\\//, '');\n" +
+            "            document.body.appendChild(a); a.click(); document.body.removeChild(a);\n" +
+            "            setTimeout(function () { URL.revokeObjectURL(url); }, 0);\n" +
+            "          }).catch(function (e) { alert(e.message); });\n" +
+            "          return false;\n" +
+            "        }\n" +
+            "    </script>\n" +
+            "    <!-- fflate (UMD global) for client-side zip extraction (data downloads). -->\n" +
+            "    <script src=\"https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js\"></script>\n" +
+            "    <!-- Mermaid: client-side diagram rendering (replaces server-side Graphviz). -->\n" +
+            "    <script type=\"module\">\n" +
+            "        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';\n" +
+            "        // startOnLoad is OFF: a diagram laid out inside a hidden container (collapsed\n" +
+            "        // <details> show-more block or an inactive tab) has zero size and Mermaid 10 errors\n" +
+            "        // with 'Syntax error in text'. We render each diagram only once its container is\n" +
+            "        // actually visible: on load for visible ones, and on <details> toggle / tab open.\n" +
+            "        mermaid.initialize({ startOnLoad: false, securityLevel: 'loose', maxEdges: 1000, flowchart: { useMaxWidth: true } });\n" +
+            "        function isVisible(el) { return !!(el.offsetParent || el.getClientRects().length); }\n" +
+            "        window.renderMermaidIn = function (container) {\n" +
+            "            var root = container || document;\n" +
+            "            var pending = [];\n" +
+            "            root.querySelectorAll('pre.mermaid:not([data-processed])').forEach(function (el) {\n" +
+            "                if (isVisible(el)) { pending.push(el); }\n" +
+            "            });\n" +
+            "            if (pending.length > 0) { mermaid.run({ nodes: pending }); }\n" +
+            "        };\n" +
+            "        document.addEventListener('DOMContentLoaded', function () {\n" +
+            "            window.renderMermaidIn(document);\n" +
+            "            // Render a show-more block's diagrams the first time it is expanded.\n" +
+            "            document.querySelectorAll('details').forEach(function (d) {\n" +
+            "                d.addEventListener('toggle', function () { if (d.open) { window.renderMermaidIn(d); } });\n" +
+            "            });\n" +
+            "        });\n" +
             "    </script>\n" +
             "    <!-- CUSTOM HEADER FRAGMENT -->\n" +
             "</head>\n";

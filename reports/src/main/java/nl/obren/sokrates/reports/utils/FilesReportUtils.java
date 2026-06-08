@@ -48,8 +48,8 @@ public class FilesReportUtils {
             String fileNameFragment;
 
             if (linkToFiles) {
-                String href = "../src/main/" + sourceFile.getRelativePath();
-                fileNameFragment = "<a target='blank' href='" + href + ".html'>" + file.getName() + "</a>";
+                String href = "../src/viewer.html?aspect=main&file=" + sourceFile.getRelativePath();
+                fileNameFragment = "<a target='blank' href='" + href + "'>" + file.getName() + "</a>";
             } else {
                 fileNameFragment = file.getName();
             }

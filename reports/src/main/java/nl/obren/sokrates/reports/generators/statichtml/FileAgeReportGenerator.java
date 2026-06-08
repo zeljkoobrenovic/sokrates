@@ -87,12 +87,12 @@ public class FileAgeReportGenerator {
             if (ignoredFiles > 0) {
                 report.addListItem("Files without commit history (ignored): <b>" + FormattingUtils.formatCount(ignoredFiles) + " (" + FormattingUtils.formatCount(codeAnalysisResults.getFilesHistoryAnalysisResults().getFilesWithoutCommitHistoryLinesOfCode()) + " lines of code)</b>");
                 report.startUnorderedList();
-                report.addListItem("<a href='../data/text/mainFilesWithoutHistory.txt' target='_blank'>Files without history</a>");
+                report.addListItem("<a href='#' onclick=\"return downloadDataFile('text/mainFilesWithoutHistory.txt')\" target='_blank'>Files without history</a>");
                 report.endUnorderedList();
             }
             report.addListItem("Data:");
             report.startUnorderedList();
-            report.addListItem("<a href='../data/text/mainFilesWithHistory.txt' target='_blank'>Organized per file</a>");
+            report.addListItem("<a href='#' onclick=\"return downloadDataFile('text/mainFilesWithHistory.txt')\" target='_blank'>Organized per file</a>");
             report.endUnorderedList();
             report.endUnorderedList();
             report.endSection();
@@ -163,9 +163,9 @@ public class FileAgeReportGenerator {
         report.addHtmlContent(PieChartUtils.getRiskDistributionChart(distribution, ageLabels, palette));
         report.addLineBreak();
         report.addHtmlContent("explore: ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_age_coloring.html'>grouped by folders</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html?key=main_age_coloring'>grouped by folders</a>");
         report.addHtmlContent(" | ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_age_coloring_categories.html'>grouped by age</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html?key=main_age_coloring_categories'>grouped by age</a>");
         report.endSection();
     }
 
@@ -197,9 +197,9 @@ public class FileAgeReportGenerator {
         report.addHtmlContent(PieChartUtils.getRiskDistributionChart(distribution, ageLabels, palette));
         report.addLineBreak();
         report.addHtmlContent("explore: ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_freshness_coloring.html'>grouped by folders</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html?key=main_freshness_coloring'>grouped by folders</a>");
         report.addHtmlContent(" | ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles_main_freshness_coloring_categories.html'>grouped by freshness</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html?key=main_freshness_coloring_categories'>grouped by freshness</a>");
         report.endSection();
     }
 
