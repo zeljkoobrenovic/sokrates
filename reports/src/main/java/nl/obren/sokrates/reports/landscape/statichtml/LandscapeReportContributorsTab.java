@@ -378,7 +378,7 @@ public class LandscapeReportContributorsTab {
         if (isContributorReport()) {
             new Force3DGraphExporter().export2D3DForceGraph(dependencies, reportsFolder, "extension_dependencies_30d");
 
-            landscapeReport.startShowMoreBlock("extension dependencies...");
+            landscapeReport.startDetailsBlock("extension dependencies...");
 
             landscapeReport.addGraphvizFigure("extension_dependencies_30d", "Extension dependencies", graphvizContent);
             addDownloadLinks("extension_dependencies_30d");
@@ -386,7 +386,7 @@ public class LandscapeReportContributorsTab {
             landscapeReport.addNewTabLink(" - show extension dependencies as 2D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/extension_dependencies_30d_force_2d.html");
             landscapeReport.addNewTabLink(" - show extension dependencies as 3D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/extension_dependencies_30d_force_3d.html");
 
-            landscapeReport.endShowMoreBlock();
+            landscapeReport.endDetailsBlock();
         }
     }
 
@@ -637,7 +637,7 @@ public class LandscapeReportContributorsTab {
                 }
                 landscapeReport.startSubSection("Commits & File Extensions (" + count + ")", "");
 
-                landscapeReport.startShowMoreBlock("...");
+                landscapeReport.startDetailsBlock("extension stats...");
 
                 landscapeReport.startTable("");
                 landscapeReport.addTableHeader("", "Extension",
@@ -653,7 +653,7 @@ public class LandscapeReportContributorsTab {
                     landscapeReport.addParagraph("Showing top " + limit + " items (out of " + count + ").");
                 }
 
-                landscapeReport.endShowMoreBlock();
+                landscapeReport.endDetailsBlock();
 
                 landscapeReport.endSection();
             }

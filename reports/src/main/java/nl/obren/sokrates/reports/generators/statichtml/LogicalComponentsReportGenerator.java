@@ -408,13 +408,13 @@ public class LogicalComponentsReportGenerator {
             graphvizDependencyRenderer.setArrow("--");
 
             report.addLevel3Header("Indirect Dependencies (" + type + ")");
-            report.startShowMoreBlock("show details...");
+            report.startDetailsBlock("show details...");
             report.addParagraph("Dependencies via " + type.toLowerCase() + "  components.", "color: grey");
             addDependencyGraphVisuals(indirectDependencies, componentNames.stream()
                     .filter(c -> renderWithoutDependencies || isComponentInDependency(indirectDependencies, c))
                     .collect(Collectors.toCollection(ArrayList::new)), new ArrayList<>(), graphvizDependencyRenderer);
 
-            report.endShowMoreBlock();
+            report.endDetailsBlock();
             report.addLineBreak();
             report.addLineBreak();
             report.addLineBreak();
@@ -426,12 +426,12 @@ public class LogicalComponentsReportGenerator {
             graphvizDependencyRenderer.setType("digraph");
             graphvizDependencyRenderer.setArrow("->");
             report.addLevel3Header("Indirect Dependencies With Shared " + type + " Visible");
-            report.startShowMoreBlock("show details...");
+            report.startDetailsBlock("show details...");
             report.addParagraph("Shared target components made visible.", "color: grey");
             addDependencyGraphVisuals(sharedTargetDependencies, componentNames.stream()
                     .filter(c -> renderWithoutDependencies || isComponentInDependency(sharedTargetDependencies, c))
                     .collect(Collectors.toCollection(ArrayList::new)), new ArrayList<>(), graphvizDependencyRenderer);
-            report.endShowMoreBlock();
+            report.endDetailsBlock();
             report.addLineBreak();
             report.addLineBreak();
             report.addLineBreak();
@@ -569,7 +569,7 @@ public class LogicalComponentsReportGenerator {
     }
 
     private void addMoreDetailsSection(LogicalDecompositionAnalysisResults logicalDecomposition, List<ComponentDependency> componentDependencies) {
-        report.startShowMoreBlock("Show more details about dependencies...");
+        report.startDetailsBlock("Show more details about dependencies...");
         report.startDiv("width: 100%; overflow-x: auto; max-height: 600px");
         report.startTable();
         report.addTableHeader("From Component<br/>&nbsp;--> To Component", "From Component<br/>(files with dependencies)", "Details");
@@ -579,7 +579,7 @@ public class LogicalComponentsReportGenerator {
         });
         report.endTable();
         report.endDiv();
-        report.endShowMoreBlock();
+        report.endDetailsBlock();
     }
 
     private void describeDependencyFinder(LogicalDecompositionAnalysisResults logicalDecomposition) {
@@ -632,7 +632,7 @@ public class LogicalComponentsReportGenerator {
             percentageHtmlFragment = getFromDependencyCoverageSvg(locFromDuplications, fromComponentByName, dependencyCount);
         }
 
-        report.addShowMoreBlock("",
+        report.addDetailsBlock("",
                 "<textarea style='width:90%; height: 20em;'>"
                         + componentDependency.getEvidence().stream().map(DependencyEvidence::getPathFrom).collect(Collectors.joining("\n")) +
                         "</textarea>",
@@ -683,7 +683,7 @@ public class LogicalComponentsReportGenerator {
         report.addHtmlContent(getLongIntro());
 
         if (!forceSkipStaticDependencies) {
-            report.startShowMoreBlock("Learn more...");
+            report.startDetailsBlock("Learn more...");
             report.startUnorderedList();
             report.addListItem("To learn more about good practices on componentization and dependencies, Sokrates recommends the following resources:");
             report.startUnorderedList();
@@ -693,7 +693,7 @@ public class LogicalComponentsReportGenerator {
             report.endUnorderedList();
         }
 
-        report.endShowMoreBlock();
+        report.endDetailsBlock();
     }
 
     private String getShortIntro() {

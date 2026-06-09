@@ -51,7 +51,7 @@ public class FileSizeReportGenerator {
         report.endUnorderedList();
         report.endUnorderedList();
 
-        report.startShowMoreBlock("Learn more...");
+        report.startDetailsBlock("Learn more...");
         report.startUnorderedList();
         report.addListItem("To learn more about bloaters and how to deal with long code structures, Sokrates recommends the following resources:");
         report.startUnorderedList();
@@ -60,7 +60,7 @@ public class FileSizeReportGenerator {
 
         report.endUnorderedList();
         report.endUnorderedList();
-        report.endShowMoreBlock();
+        report.endDetailsBlock();
         report.endSection();
 
         ProcessingStopwatch.start("reporting/file size/overall");

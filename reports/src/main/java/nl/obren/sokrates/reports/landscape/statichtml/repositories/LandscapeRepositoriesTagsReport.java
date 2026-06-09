@@ -255,7 +255,7 @@ public class LandscapeRepositoriesTagsReport {
 
     private void visualizeTagRepositories(RichTextReport report) {
         report.startDiv("margin: 2px; margin-top: 18px; margin-bottom: 42px;");
-        report.startShowMoreBlock("show visuals...");
+        report.startDetailsBlock("show visuals...");
         int maxLoc = this.landscapeAnalysisResults.getRepositoryAnalysisResults().stream()
                 .map(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode())
                 .reduce((a, b) -> Math.max(a, b)).get();
@@ -270,7 +270,7 @@ public class LandscapeRepositoriesTagsReport {
         if (tagsMap.containsKey("")) {
             visualizeTag(report, maxLoc, maxCommits, new RepositoryTag());
         }
-        report.endShowMoreBlock();
+        report.endDetailsBlock();
         report.endDiv();
     }
 
@@ -350,7 +350,7 @@ public class LandscapeRepositoriesTagsReport {
             int count = repositoriesAnalysisResults.size();
             report.startTableCell("text-align: left");
             String repositoryPercText = FormattingUtils.getFormattedPercentage(totalRepositoriesCount > 0 ? (100.0 * count / totalRepositoriesCount) : 0);
-            report.startShowMoreBlockMinimalistic("<b>" + count + "</b>" + (count == 1 ? " repository" : " repositories")
+            report.startDetailsBlockMinimalistic("<b>" + count + "</b>" + (count == 1 ? " repository" : " repositories")
                     + (count == 0 ? "" : " <span style='color: grey; font-size: 90%'>(" + repositoryPercText + "%)</span>"));
             report.startDiv("border-left: 2px solid lightgrey; margin-left: 5px; font-size: 80%");
             int maxListSize = 100;
@@ -369,7 +369,7 @@ public class LandscapeRepositoriesTagsReport {
             report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + LandscapeDataExport.getTagRepositoriesFileName(tag.getKey()) + "')\">see details...</a>");
             report.endDiv();
             report.endDiv();
-            report.endShowMoreBlock();
+            report.endDetailsBlock();
             report.endTableCell();
             int mainLoc = landscapeAnalysisResults.getMainLoc();
             int tagMainLoc = repositoriesAnalysisResults.stream()

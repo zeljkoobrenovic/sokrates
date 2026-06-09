@@ -41,7 +41,7 @@ public class ConditionalComplexityReportGenerator {
         report.addListItem("Units are classified in four categories based on the measured McCabe index: " +
                 "1-5 (simple units), 6-10 (medium complex units), 11-25 (complex units), 26+ (very complex units).");
         report.endUnorderedList();
-        report.startShowMoreBlock("Learn more...");
+        report.startDetailsBlock("Learn more...");
         report.startUnorderedList();
         report.addListItem("To learn more about conditional complexity and techniques for reducing this type of complexity, Sokrates recommends the following resources:");
         report.startUnorderedList();
@@ -51,7 +51,7 @@ public class ConditionalComplexityReportGenerator {
         report.endUnorderedList();
         report.endUnorderedList();
 
-        report.endShowMoreBlock();
+        report.endDetailsBlock();
 
         report.endSection();
 

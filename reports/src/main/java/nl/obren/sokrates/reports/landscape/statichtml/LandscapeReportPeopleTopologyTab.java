@@ -339,7 +339,7 @@ public class LandscapeReportPeopleTopologyTab {
     }
 
     private void addRepositoriesGraph(int daysAgo, List<ComponentDependency> repositoryDependenciesViaPeople) {
-        landscapeReport.startShowMoreBlock("repository dependencies graph...<br>");
+        landscapeReport.startDetailsBlock("repository dependencies graph...<br>");
         StringBuilder builder = new StringBuilder();
         builder.append("Repository 1\tRepository 2\t# people\n");
         repositoryDependenciesViaPeople.subList(0, Math.min(10000, repositoryDependenciesViaPeople.size())).forEach(d -> builder
@@ -349,7 +349,7 @@ public class LandscapeReportPeopleTopologyTab {
         String fileName = "repository_dependencies_via_" + (isContributorReport() ? "people" : "teams") + "_" + daysAgo + "_days.txt";
         saveData(fileName, builder.toString());
 
-        landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + fileName + "')\">" + "See data..." + "</a>");
+        landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + fileName + "')\">" + "Download data..." + "</a>");
 
         List<String> repositoryNames = landscapeAnalysisResults.getRepositoryAnalysisResults().stream()
                 .filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days() > 0)
@@ -362,7 +362,7 @@ public class LandscapeReportPeopleTopologyTab {
         landscapeReport.addLineBreak();
         landscapeReport.addNewTabLink(" - 3D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/" + graphId + "_force_3d.html");
         landscapeReport.addLineBreak();
-        landscapeReport.endShowMoreBlock();
+        landscapeReport.endDetailsBlock();
     }
 
     private void addDataSection(String type, double value, int daysAgo, List<Double> history, String info) {
@@ -399,7 +399,7 @@ public class LandscapeReportPeopleTopologyTab {
     }
 
     private void addRepositoryDependenciesViaPeople(List<ComponentDependency> repositoryDependenciesViaPeople) {
-        landscapeReport.startShowMoreBlock("repository dependencies via people...<br>");
+        landscapeReport.startDetailsBlock("repository dependencies via people...<br>");
         landscapeReport.startTable();
         int maxListSize = Math.min(100, repositoryDependenciesViaPeople.size());
         if (maxListSize < repositoryDependenciesViaPeople.size()) {
@@ -416,7 +416,7 @@ public class LandscapeReportPeopleTopologyTab {
             landscapeReport.endTableRow();
         });
         landscapeReport.endTable();
-        landscapeReport.endShowMoreBlock();
+        landscapeReport.endDetailsBlock();
     }
 
     private void addRepositoryContributors(List<ContributorRepositories> contributors, int daysAgo) {
@@ -444,7 +444,7 @@ public class LandscapeReportPeopleTopologyTab {
             displayList = list.subList(0, 100);
         }
 
-        landscapeReport.startShowMoreBlock("repositories with most " + (isContributorReport() ? "people" : "teams") + "...<br>");
+        landscapeReport.startDetailsBlock("repositories with most " + (isContributorReport() ? "people" : "teams") + "...<br>");
         StringBuilder builder = new StringBuilder();
         builder.append("Contributor\t# people\n");
         list.forEach(repository -> builder.append(map.get(repository).getLeft()).append("\t")
@@ -476,7 +476,7 @@ public class LandscapeReportPeopleTopologyTab {
             landscapeReport.endTableRow();
         });
         landscapeReport.endTable();
-        landscapeReport.endShowMoreBlock();
+        landscapeReport.endDetailsBlock();
     }
 
     private void addPeopleGraph(List<ComponentDependency> peopleDependencies, int daysAgo, String suffix, String extraLabel) {
@@ -489,10 +489,10 @@ public class LandscapeReportPeopleTopologyTab {
         String fileName = "repository_shared_repositories_" + suffix + daysAgo + "_days.txt";
         saveData(fileName, builder.toString());
 
-        landscapeReport.startShowMoreBlock("contributor dependencies graph..." + extraLabel + "<br>");
+        landscapeReport.startDetailsBlock("contributor dependencies graph..." + extraLabel + "<br>");
         landscapeReport.startDiv("border-left: 6px solid lightgrey; padding-left: 4px; margin-left: 4px; overflow-x: auto");
         landscapeReport.addHtmlContent("&nbsp;&nbsp;&nbsp;");
-        landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + fileName + "')\">" + "See data..." + "</a>");
+        landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + fileName + "')\">" + "Download data..." + "</a>");
 
         String orientation = suffix.length() > 0 ? "LR" : "TB";
         String graphId = addDependencyGraphVisuals(peopleDependencies, new ArrayList<>(),
@@ -504,11 +504,11 @@ public class LandscapeReportPeopleTopologyTab {
         landscapeReport.addLineBreak();
         landscapeReport.addNewTabLink(" - 3D force graph" + extraLabel + "&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
                 "visuals/" + graphId + "_force_3d.html");
-        landscapeReport.endShowMoreBlock();
+        landscapeReport.endDetailsBlock();
     }
 
     private void addTopConnectionsSection(List<ComponentDependency> peopleDependencies, int daysAgo, List<ContributorRepositories> contributors) {
-        landscapeReport.startShowMoreBlock("top connections...<br>");
+        landscapeReport.startDetailsBlock("top connections...<br>");
         landscapeReport.startTable();
         List<ComponentDependency> displayListConnections = peopleDependencies.subList(0, Math.min(100, peopleDependencies.size()));
         if (displayListConnections.size() < peopleDependencies.size()) {
@@ -541,11 +541,11 @@ public class LandscapeReportPeopleTopologyTab {
             landscapeReport.endTableRow();
         });
         landscapeReport.endTable();
-        landscapeReport.endShowMoreBlock();
+        landscapeReport.endDetailsBlock();
     }
 
     private void addMostConnectedPeopleSection(List<ContributorConnections> contributorConnections, int daysAgo) {
-        landscapeReport.startShowMoreBlock("most connected people...<br>");
+        landscapeReport.startDetailsBlock("most connected people...<br>");
         StringBuilder builder = new StringBuilder();
         builder.append("Contributor\t# repositories\t# connections\n");
         contributorConnections.forEach(c -> builder.append(c.getEmail()).append("\t")
@@ -586,12 +586,12 @@ public class LandscapeReportPeopleTopologyTab {
             landscapeReport.endTableRow();
         });
         landscapeReport.endTable();
-        landscapeReport.endShowMoreBlock();
+        landscapeReport.endDetailsBlock();
 
     }
 
     private void addMostRepositoriesPeopleSection(List<ContributorConnections> contributorConnections, int daysAgo) {
-        landscapeReport.startShowMoreBlock("people with most repositories...<br>");
+        landscapeReport.startDetailsBlock("people with most repositories...<br>");
         List<ContributorConnections> sorted = new ArrayList<>(contributorConnections);
         sorted.sort((a, b) -> b.getRepositoriesCount() - a.getRepositoriesCount());
         List<ContributorConnections> displayListPeople = sorted.subList(0, Math.min(100, sorted.size()));
@@ -633,7 +633,7 @@ public class LandscapeReportPeopleTopologyTab {
 
         exportVisuals(prefix, visualizationItems);
         landscapeReport.endTable();
-        landscapeReport.endShowMoreBlock();
+        landscapeReport.endDetailsBlock();
     }
 
     private void exportVisuals(String prefix, List<VisualizationItem> visualizationItems) {

@@ -403,23 +403,23 @@ public class RichTextReport {
         addHtmlContent(RichTextRenderingUtils.getEndShowMoreDisapearParagraph());
     }
 
-    public void addShowMoreBlock(String visibleContent, String hiddenContent, String linkLabel) {
-        addHtmlContent("<details><summary>" + linkLabel + "</summary>" + visibleContent + hiddenContent + "</details>");
+    public void addDetailsBlock(String visibleContent, String hiddenContent, String linkLabel) {
+        addHtmlContent("<details><summary>" + linkLabel + "</summary><div style='height: 6px'></div>" + visibleContent + hiddenContent + "</details>");
     }
 
-    public void startShowMoreBlock(String visibleContent, String linkLabel) {
-        addHtmlContent("<details><summary>" + linkLabel + "</summary>" + visibleContent);
+    public void startDetailsBlock(String visibleContent, String linkLabel) {
+        addHtmlContent("<details><summary>" + linkLabel + "</summary><div style='height: 6px'></div>" + visibleContent);
     }
 
-    public void startShowMoreBlock(String linkLabel) {
-        addHtmlContent("<details><summary>" + linkLabel + "</summary>");
+    public void startDetailsBlock(String linkLabel) {
+        addHtmlContent("<details><summary>" + linkLabel + "</summary><div style='height: 6px'></div>");
     }
 
-    public void startShowMoreBlockMinimalistic(String linkLabel) {
-        addHtmlContent("<details style='margin: 0; padding: 4px'><summary style='margin: 2px;'>" + linkLabel + "</summary>");
+    public void startDetailsBlockMinimalistic(String linkLabel) {
+        addHtmlContent("<details style='margin: 0; padding: 4px'><summary style='margin: 2px;'>" + linkLabel + "</summary><div style='height: 6px'></div>");
     }
 
-    public void endShowMoreBlock() {
+    public void endDetailsBlock() {
         addHtmlContent("</details>");
     }
 
