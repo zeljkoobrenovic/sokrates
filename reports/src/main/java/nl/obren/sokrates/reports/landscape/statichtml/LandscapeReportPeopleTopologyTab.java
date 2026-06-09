@@ -349,7 +349,7 @@ public class LandscapeReportPeopleTopologyTab {
         String fileName = "repository_dependencies_via_" + (isContributorReport() ? "people" : "teams") + "_" + daysAgo + "_days.txt";
         saveData(fileName, builder.toString());
 
-        landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + fileName + "')\">" + "See data..." + "</a>");
+        landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + fileName + "')\">" + "Download data..." + "</a>");
 
         List<String> repositoryNames = landscapeAnalysisResults.getRepositoryAnalysisResults().stream()
                 .filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days() > 0)
@@ -492,7 +492,7 @@ public class LandscapeReportPeopleTopologyTab {
         landscapeReport.startShowMoreBlock("contributor dependencies graph..." + extraLabel + "<br>");
         landscapeReport.startDiv("border-left: 6px solid lightgrey; padding-left: 4px; margin-left: 4px; overflow-x: auto");
         landscapeReport.addHtmlContent("&nbsp;&nbsp;&nbsp;");
-        landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + fileName + "')\">" + "See data..." + "</a>");
+        landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + fileName + "')\">" + "Download data..." + "</a>");
 
         String orientation = suffix.length() > 0 ? "LR" : "TB";
         String graphId = addDependencyGraphVisuals(peopleDependencies, new ArrayList<>(),
