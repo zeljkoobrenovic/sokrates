@@ -4,7 +4,6 @@
 
 package nl.obren.sokrates.reports.generators.statichtml;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.RichTextReport;
@@ -17,7 +16,6 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
-import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationDependenciesHelper;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
@@ -211,7 +209,7 @@ public class DuplicationReportGenerator {
         report.addListItem("Before duplication is calculated, the code is cleaned to remove empty lines, comments, and frequently duplicated constructs such as imports.");
         report.addListItem("You should aim at having as little as possible (<5%) of duplicated code as high-level of duplication can lead to maintenance difficulties, poor factoring, and logical contradictions.");
         report.endUnorderedList();
-        report.startShowMoreBlock("Learn more...");
+        report.startDetailsBlock("Learn more...");
         report.startUnorderedList();
         report.addListItem("To learn more about duplications and techniques for eliminating duplication, Sokrates recommends the following resources:");
         report.startUnorderedList();
@@ -232,7 +230,7 @@ public class DuplicationReportGenerator {
 
         report.endUnorderedList();
         report.endUnorderedList();
-        report.endShowMoreBlock();
+        report.endDetailsBlock();
 
         report.endSection();
     }
@@ -376,7 +374,7 @@ public class DuplicationReportGenerator {
     private void addMoreDetailsSection(RichTextReport report, List<ComponentDependency> componentDependencies, String logicalDecompositionName, List<DuplicationInstance> instances) {
         Collections.sort(componentDependencies, (o1, o2) -> o2.getCount() - o1.getCount());
 
-        report.startShowMoreBlock("Show more details on duplication between components...");
+        report.startDetailsBlock("Show more details on duplication between components...");
         report.startDiv("width: 100%; overflow-x: auto");
         report.startTable();
         report.addTableHeader("From Component<br/>&nbsp;--> To Component", "Duplicated<br/>Lines", "File Pairs", "Details");
@@ -408,7 +406,7 @@ public class DuplicationReportGenerator {
         });
         report.endTable();
         report.endDiv();
-        report.endShowMoreBlock();
+        report.endDetailsBlock();
     }
 
     private String saveFilePairs(ComponentDependency componentDependency) {

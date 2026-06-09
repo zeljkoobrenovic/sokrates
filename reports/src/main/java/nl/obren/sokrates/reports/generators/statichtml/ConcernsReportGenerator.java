@@ -178,12 +178,12 @@ public class ConcernsReportGenerator {
             renderer.renderDetails(report, false);
         }
 
-        report.startShowMoreBlock("details...");
+        report.startDetailsBlock("details...");
         codeAnalysisResults.getLogicalDecompositionsAnalysisResults()
                 .forEach(logicalDecompositionAnalysisResults -> {
                     renderConcernPerComponent(aspectAnalysisResults, mainLoc, logicalDecompositionAnalysisResults);
                 });
-        report.endShowMoreBlock();
+        report.endDetailsBlock();
 
         report.endSection();
     }

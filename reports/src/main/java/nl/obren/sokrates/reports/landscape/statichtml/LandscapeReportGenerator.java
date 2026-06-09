@@ -459,10 +459,10 @@ public class LandscapeReportGenerator {
         List<ComponentDependency> dependencies = landscapeAnalysisResults.getSubLandscapeDependenciesViaRepositoriesWithSameContributors();
         String graphvizContent = renderer.getMermaidContent(landscapeAnalysisResults.getLevel1SubLandscapes().stream().collect(Collectors.toCollection(ArrayList::new)), landscapeAnalysisResults.getSubLandscapeIndirectDependenciesViaRepositoriesWithSameContributors());
 
-        landscapeReport.startShowMoreBlock("show sub-landscape/repository dependencies...");
+        landscapeReport.startDetailsBlock("show sub-landscape/repository dependencies...");
         landscapeReport.addGraphvizFigure("sub_landscape_dependencies_same_contributors", "Extension dependencies", graphvizContent);
         addDownloadLinks("sub_landscape_dependencies_same_contributors");
-        landscapeReport.endShowMoreBlock();
+        landscapeReport.endDetailsBlock();
         landscapeReport.addLineBreak();
         landscapeReport.addNewTabLink(" - show dependencies as 2D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/sub_landscape_dependencies_same_contributors_force_2d.html");
         landscapeReport.addNewTabLink(" - show dependencies as 3D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/sub_landscape_dependencies_same_contributors_force_3d.html");
@@ -479,10 +479,10 @@ public class LandscapeReportGenerator {
         List<ComponentDependency> dependencies = landscapeAnalysisResults.getSubLandscapeDependenciesViaRepositoriesWithSameName();
         String graphvizContent = renderer.getMermaidContent(landscapeAnalysisResults.getLevel1SubLandscapes().stream().collect(Collectors.toCollection(ArrayList::new)), landscapeAnalysisResults.getSubLandscapeIndirectDependenciesViaRepositoriesWithSameName());
 
-        landscapeReport.startShowMoreBlock("show sub-landscape/repository dependencies...");
+        landscapeReport.startDetailsBlock("show sub-landscape/repository dependencies...");
         landscapeReport.addGraphvizFigure("sub_landscape_dependencies_same_name_repos", "Extension dependencies", graphvizContent);
         addDownloadLinks("sub_landscape_dependencies_same_name_repos");
-        landscapeReport.endShowMoreBlock();
+        landscapeReport.endDetailsBlock();
         landscapeReport.addLineBreak();
         landscapeReport.addNewTabLink(" - show dependencies as 2D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/sub_landscape_dependencies_same_name_repos_force_2d.html");
         landscapeReport.addNewTabLink(" - show dependencies as 3D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/sub_landscape_dependencies_same_name_repos_force_3d.html");
@@ -1141,13 +1141,13 @@ public class LandscapeReportGenerator {
         if (landscapeAnalysisResults.getRecentContributorsCount(landscapeAnalysisResults.getContributors()) > 0) {
             addContributorsPerExtension(true);
         }
-        landscapeReport.startShowMoreBlock("", "Test code...");
+        landscapeReport.startDetailsBlock("", "Test code...");
         addMainExtensions("Test", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getTestLinesOfCodePerExtension()), false);
-        landscapeReport.endShowMoreBlock();
-        landscapeReport.startShowMoreBlock("", "Other code...");
+        landscapeReport.endDetailsBlock();
+        landscapeReport.startDetailsBlock("", "Other code...");
         addMainExtensions("Other", LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getOtherLinesOfCodePerExtension()), false);
-        landscapeReport.endShowMoreBlock();
-        landscapeReport.startShowMoreBlock("", "Commit history per extension...");
+        landscapeReport.endDetailsBlock();
+        landscapeReport.startDetailsBlock("", "Commit history per extension...");
 
         landscapeReport.startSubSection("Commit history per file extension", "");
         landscapeReport.startDiv("max-height: 600px; overflow-y: auto;");
@@ -1165,7 +1165,7 @@ public class LandscapeReportGenerator {
         landscapeReport.endDiv();
         landscapeReport.endSection();
 
-        landscapeReport.endShowMoreBlock();
+        landscapeReport.endDetailsBlock();
 
         landscapeReport.addLineBreak();
 
@@ -1292,13 +1292,13 @@ public class LandscapeReportGenerator {
         renderer.setTypeGraph();
         String graphvizContent = renderer.getMermaidContent(new ArrayList<>(extensionsNames), dependencies);
 
-        landscapeReport.startShowMoreBlock("extension dependencies...");
+        landscapeReport.startDetailsBlock("extension dependencies...");
         landscapeReport.addGraphvizFigure("extension_dependencies_30d", "Extension dependencies", graphvizContent);
         addDownloadLinks("extension_dependencies_30d");
         landscapeReport.addLineBreak();
         landscapeReport.addNewTabLink(" - show extension dependencies as 2D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/extension_dependencies_30d_force_2d.html");
         landscapeReport.addNewTabLink(" - show extension dependencies as 3D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/extension_dependencies_30d_force_3d.html");
-        landscapeReport.endShowMoreBlock();
+        landscapeReport.endDetailsBlock();
         new Force3DGraphExporter().export2D3DForceGraph(dependencies, reportsFolder, "extension_dependencies_30d");
     }
 

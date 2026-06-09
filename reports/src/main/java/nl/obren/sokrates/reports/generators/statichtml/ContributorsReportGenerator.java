@@ -324,7 +324,7 @@ public class ContributorsReportGenerator {
 
     private void addDependenciesViaSharedFiles(List<ComponentDependency> peopleDependencies, List<ComponentDependency> peopleFileDependencies, int daysAgo) {
         report.addLevel3Header("Contributor Dependencies via Shared Files", "margin-top: 20px");
-        report.startShowMoreBlock("contributor dependencies 2D graph");
+        report.startDetailsBlock("contributor dependencies 2D graph");
         report.addParagraph("The number on lines shows the number of same files that both persons changed in past <b>" + daysAgo + "</b> days.", "color: grey");
         GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
         graphvizDependencyRenderer.setMaxNumberOfDependencies(100);
@@ -338,7 +338,7 @@ public class ContributorsReportGenerator {
 
         String prefix = "people_dependencies_" + daysAgo + "_";
         String graphId = addDependencyGraphVisuals(peopleDependencies, new ArrayList<>(), graphvizDependencyRenderer, prefix);
-        report.endShowMoreBlock();
+        report.endDetailsBlock();
         report.addLineBreak();
         report.addNewTabLink("- open 2D force graph", "visuals/" + graphId + "_force_2d.html");
         report.addLineBreak();
@@ -417,9 +417,9 @@ public class ContributorsReportGenerator {
 
 
             report.startTableCell();
-            report.startShowMoreBlock(count + " shared " + (count == 1 ? "file" : "files"));
+            report.startDetailsBlock(count + " shared " + (count == 1 ? "file" : "files"));
             addSharedFiles(dependency);
-            report.endShowMoreBlock();
+            report.endDetailsBlock();
             report.endTableCell();
             report.endTableRow();
         });
