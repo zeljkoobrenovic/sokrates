@@ -29,8 +29,32 @@
 
     .error { font: 14px sans-serif; fill: #b00; }
 
+    /* Loading indicator shown while the view is fetched + extracted from the zip. */
+    #loading {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: grey;
+        font: 15px sans-serif;
+        padding: 40px 4px;
+    }
+
+    #loading .spinner {
+        width: 22px;
+        height: 22px;
+        border: 3px solid #e0e0e0;
+        border-top-color: #4a90d9;
+        border-radius: 50%;
+        animation: sokrates-spin 0.8s linear infinite;
+    }
+
+    @keyframes sokrates-spin {
+        to { transform: rotate(360deg); }
+    }
+
 </style>
-<svg width="960" height="960"></svg>
+<div id="loading"><div class="spinner"></div><span>Loading…</span></div>
+<svg width="960" height="960" style="display: none;"></svg>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js"></script>
 <script>
@@ -58,11 +82,21 @@
         return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
     }
 
+    // Hides the loading spinner and reveals the SVG; called once the data is ready (or on error).
+    function hideSpinner() {
+        var loading = document.getElementById("loading");
+        if (loading) { loading.style.display = "none"; }
+        var svg = document.querySelector("svg");
+        if (svg) { svg.style.display = ""; }
+    }
+
     function showError(msg) {
+        hideSpinner();
         d3.select("svg").append("text").attr("class", "error").attr("x", 20).attr("y", 40).text(msg);
     }
 
     function render(children) {
+        hideSpinner();
         var svg = d3.select("svg"),
             margin = 20,
             diameter = +svg.attr("width"),

@@ -40,23 +40,56 @@
         .sort-arrow {
             font-size: 80%;
         }
+
+        /* Loading indicator shown while the embedded data is inflated + the first render runs. */
+        #loading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: grey;
+            font-size: 15px;
+            padding: 40px 4px;
+        }
+
+        #loading .spinner {
+            width: 22px;
+            height: 22px;
+            border: 3px solid #e0e0e0;
+            border-top-color: #4a90d9;
+            border-radius: 50%;
+            animation: sokrates-spin 0.8s linear infinite;
+        }
+
+        @keyframes sokrates-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
     </style>
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Lato">
     ${sokrates-inflate-lib}
 </head>
 <body>
-<p style="margin-top: 0; color: grey">* unit analyses are experimental (using less reliable heuristic methods)</p>
-<div style="margin: 0; color: grey">
-    <div>
-        <input id="filter" type="text" placeholder="search... (use ; for multiple terms)"
-               style="font-size: 16px; height: 32px; width: 320px; margin-bottom: 10px"
-               onkeyup="update()">
-        <div id="search-summary" style="display: inline-block"></div>
-    </div>
+
+<div id="loading">
+    <div class="spinner"></div>
+    <span>Loading units data…</span>
 </div>
 
-<div id="content"></div>
+<div id="report" style="display: none;">
+    <p style="margin-top: 0; color: grey">* unit analyses are experimental (using less reliable heuristic methods)</p>
+    <div style="margin: 0; color: grey">
+        <div>
+            <input id="filter" type="text" placeholder="search... (use ; for multiple terms)"
+                   style="font-size: 16px; height: 32px; width: 320px; margin-bottom: 10px"
+                   onkeyup="update()">
+            <div id="search-summary" style="display: inline-block"></div>
+        </div>
+    </div>
+
+    <div id="content"></div>
+</div>
 
 <script>
     const importedUnits = ${data};
@@ -263,7 +296,15 @@
         document.getElementById('content').innerHTML = html;
     }
 
-    update();
+    // Defer the (synchronous, potentially heavy) first render one frame so the loading
+    // spinner actually paints before the main thread is blocked, then swap it for the report.
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+            update();
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('report').style.display = 'block';
+        });
+    });
 </script>
 </body>
 </html>

@@ -48,6 +48,31 @@
             opacity: 1;
         }
 
+        /* Loading indicator shown while people.zip is fetched + inflated. */
+        #loading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: grey;
+            font-size: 15px;
+            padding: 40px 4px;
+        }
+
+        #loading .spinner {
+            width: 22px;
+            height: 22px;
+            border: 3px solid #e0e0e0;
+            border-top-color: #483D8B;
+            border-radius: 50%;
+            animation: sokrates-spin 0.8s linear infinite;
+        }
+
+        @keyframes sokrates-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         /* Classic Sokrates tab bar (matches ReportConstants.TAB_STYLE). */
         .tab {
             overflow: hidden;
@@ -106,17 +131,24 @@
 </head>
 <body style="margin: 20px;">
 
-<div id="header"></div>
+<div id="loading">
+    <div class="spinner"></div>
+    <span>Loading contributor data…</span>
+</div>
 
-<div class="tab" id="tabs"></div>
-<div class="tabcontent">
-    <div style="color: grey; margin: 8px 0 10px 0;">
-        <input id="filter" type="text" placeholder="search... (use ; for multiple terms)"
-               style="font-size: 16px; height: 30px; width: 320px;"
-               onkeyup="render()">
-        <span id="search-summary" style="display: inline-block; margin-left: 6px;"></span>
+<div id="report" style="display: none;">
+    <div id="header"></div>
+
+    <div class="tab" id="tabs"></div>
+    <div class="tabcontent">
+        <div style="color: grey; margin: 8px 0 10px 0;">
+            <input id="filter" type="text" placeholder="search... (use ; for multiple terms)"
+                   style="font-size: 16px; height: 30px; width: 320px;"
+                   onkeyup="render()">
+            <span id="search-summary" style="display: inline-block; margin-left: 6px;"></span>
+        </div>
+        <div id="content"></div>
     </div>
-    <div id="content"></div>
 </div>
 
 <script>
@@ -485,10 +517,18 @@
         return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
     }
 
+    function showError(message) {
+        document.getElementById('loading').innerHTML = '<p style="color:#b00">' + esc(message) + '</p>';
+    }
+
+    function showReport() {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('report').style.display = 'block';
+    }
+
     (function load() {
         var key = param('key');
-        var content = document.getElementById('content');
-        if (!key) { content.innerHTML = '<p style="color:#b00">Missing ?key=</p>'; return; }
+        if (!key) { showError('Missing ?key='); return; }
         // All people (contributors, teams, bots) live in one people.zip, keyed by safe email.
         fetch('people.zip')
             .then(function (r) { if (!r.ok) throw new Error('Could not load people.zip'); return r.arrayBuffer(); })
@@ -504,8 +544,9 @@
                 renderHeader();
                 buildTabs();
                 render();
+                showReport();
             })
-            .catch(function (e) { content.innerHTML = '<p style="color:#b00">' + esc(e.message) + '</p>'; });
+            .catch(function (e) { showError(e.message); });
     })();
 </script>
 </body>

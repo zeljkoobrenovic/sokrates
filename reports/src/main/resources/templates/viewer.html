@@ -31,10 +31,30 @@
             padding-left: 10px;
             white-space: pre;
         }
+        /* Loading indicator shown while the source/fragment is fetched. */
+        #loading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: grey;
+            font-size: 15px;
+            padding: 40px 4px;
+        }
+        #loading .spinner {
+            width: 22px;
+            height: 22px;
+            border: 3px solid #e0e0e0;
+            border-top-color: #4a90d9;
+            border-radius: 50%;
+            animation: sokrates-spin 0.8s linear infinite;
+        }
+        @keyframes sokrates-spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
-<div id="content">Loading...</div>
+<div id="content"><div id="loading"><div class="spinner"></div><span>Loading source…</span></div></div>
 
 <script>
     // Caches so repeated views in one session don't re-fetch.

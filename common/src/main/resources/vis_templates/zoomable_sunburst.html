@@ -25,12 +25,36 @@
         }
 
         .error { color: #b00; }
+
+        /* Loading indicator shown while the view is fetched + extracted from the zip. */
+        #loading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: grey;
+            font-size: 15px;
+            padding: 40px 4px;
+        }
+
+        #loading .spinner {
+            width: 22px;
+            height: 22px;
+            border: 3px solid #e0e0e0;
+            border-top-color: #4a90d9;
+            border-radius: 50%;
+            animation: sokrates-spin 0.8s linear infinite;
+        }
+
+        @keyframes sokrates-spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 
     <script src='https://d3js.org/d3.v4.min.js'></script>
     <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js"></script>
 </head>
 <body>
+<div id="loading"><div class="spinner"></div><span>Loading…</span></div>
 <script>
     // Decodes the deflate+base64 JSON used for compressed inline data. fflate is loaded above.
     function sokratesInflate(b64) {
@@ -53,7 +77,14 @@
         return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
     }
 
+    // Hides the loading spinner; called once the data is ready (or on error).
+    function hideSpinner() {
+        var loading = document.getElementById('loading');
+        if (loading) { loading.style.display = 'none'; }
+    }
+
     function showError(msg) {
+        hideSpinner();
         var p = document.createElement('p');
         p.className = 'error';
         p.textContent = msg;
@@ -61,6 +92,7 @@
     }
 
     function render(children) {
+        hideSpinner();
         const width = window.innerWidth,
             height = window.innerHeight,
             maxRadius = (Math.min(width, height) / 2) - 5;
