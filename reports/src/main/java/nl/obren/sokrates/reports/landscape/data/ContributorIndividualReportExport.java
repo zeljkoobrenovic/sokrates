@@ -161,14 +161,14 @@ public class ContributorIndividualReportExport {
     }
 
     public static class Repository {
+        // Only the fields the contributor-report.html template actually reads are exported: name,
+        // lang, repoUrl, commits90Days (the "Commits (3m)" column + bold/dim weight) and commitDates
+        // (the activity grid). The 30/180/365-day and all-time per-repo counts were never rendered,
+        // so they're not serialized (they bloated the per-repo JSON for every repo of every person).
         private String name;
         private String lang;
         private String repoUrl;
-        private int commits30Days;
         private int commits90Days;
-        private int commits180Days;
-        private int commits365Days;
-        private int commitsCount;
         private List<String> commitDates = new ArrayList<>();
 
         public Repository() {
@@ -181,11 +181,7 @@ public class ContributorIndividualReportExport {
             lang = (locPerExtension != null && !locPerExtension.isEmpty())
                     ? locPerExtension.get(0).getName().replace("*.", "").trim().toLowerCase() : "";
             repoUrl = "../../" + info.getRepositoryAnalysisResults().getSokratesRepositoryLink().getHtmlReportsRoot() + "/index.html";
-            commits30Days = info.getCommits30Days();
             commits90Days = info.getCommits90Days();
-            commits180Days = info.getCommits180Days();
-            commits365Days = info.getCommits365Days();
-            commitsCount = info.getCommitsCount();
             if (info.getCommitDates() != null) {
                 commitDates = info.getCommitDates();
             }
@@ -203,24 +199,8 @@ public class ContributorIndividualReportExport {
             return repoUrl;
         }
 
-        public int getCommits30Days() {
-            return commits30Days;
-        }
-
         public int getCommits90Days() {
             return commits90Days;
-        }
-
-        public int getCommits180Days() {
-            return commits180Days;
-        }
-
-        public int getCommits365Days() {
-            return commits365Days;
-        }
-
-        public int getCommitsCount() {
-            return commitsCount;
         }
 
         public List<String> getCommitDates() {
