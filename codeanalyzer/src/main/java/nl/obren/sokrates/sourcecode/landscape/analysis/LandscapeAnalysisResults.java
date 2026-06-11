@@ -745,7 +745,12 @@ public class LandscapeAnalysisResults {
                 }
             });
 
-            if (!added[0] && !remainder.getMembers().contains(contributor)) {
+            // The "Undefined Team" (remainder) collects contributors not matched by any configured
+            // team, but only ACTIVE ones (last commit within Contributor.ACTIVITY_THRESHOLD_DAYS,
+            // 180 days) — long-dormant unmatched contributors are left out. Configured teams above
+            // keep all their members regardless of activity.
+            if (!added[0] && contributor.getContributor().isActive()
+                    && !remainder.getMembers().contains(contributor)) {
                 remainder.getMembers().add(contributor);
                 contributor.getRepositories().forEach(repo -> {
                     addRepoToTeam(repo, remainder);
