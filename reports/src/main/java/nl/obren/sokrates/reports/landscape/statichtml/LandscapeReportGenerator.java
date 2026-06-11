@@ -25,6 +25,7 @@ import nl.obren.sokrates.reports.landscape.utils.*;
 import nl.obren.sokrates.reports.utils.AnimalIcons;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
+import nl.obren.sokrates.reports.utils.LanguageColors;
 import nl.obren.sokrates.reports.utils.PromptsUtils;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
@@ -452,9 +453,40 @@ public class LandscapeReportGenerator {
             addExtensions();
         }
         addIFrames(landscapeAnalysisResults.getConfiguration().getiFrames());
+        addRepositoriesBubbleChart();
         ProcessingStopwatch.end("reporting/overview");
         landscapeReport.endTabContentSection();
         ProcessingStopwatch.end("reporting/big summary");
+    }
+
+    // Bottom of the Overview tab: a circle-packing chart of all repositories (size = main lines of
+    // code, color = main language; zoomable groups when sub-landscapes are present), plus a color
+    // legend listing every language present. The chart is iframed from a self-contained visual file.
+    private void addRepositoriesBubbleChart() {
+        List<RepositoryAnalysisResults> repositories = getRepositories();
+        if (repositories.isEmpty()) {
+            return;
+        }
+        exportRepositoriesBubbleChart(repositories);
+
+        WebFrameLink iframe = new WebFrameLink();
+        iframe.setSrc("visuals/" + REPOSITORIES_BUBBLE_CHART_FILE_NAME);
+        iframe.setMoreInfoLink("visuals/" + REPOSITORIES_BUBBLE_CHART_FILE_NAME);
+        iframe.setTitle("Repositories (size = main lines of code, color = main language)");
+        iframe.setStyle("width: 100%; height: 970px;");
+        iframe.setScrolling(false);
+        addIFrame(iframe);
+
+        List<String> languages = repositoryLanguagesByLoc(repositories);
+        if (!languages.isEmpty()) {
+            landscapeReport.startDiv("margin: 4px 0 16px 0; line-height: 26px;");
+            languages.forEach(lang -> landscapeReport.addHtmlContent(
+                    "<span style='display: inline-block; margin-right: 18px; white-space: nowrap;'>"
+                            + "<span style='display: inline-block; width: 14px; height: 14px; border-radius: 3px; "
+                            + "border: 1px solid #ccc; vertical-align: middle; background-color: " + LanguageColors.getColor(lang) + ";'></span>"
+                            + "&nbsp;" + lang + "</span>"));
+            landscapeReport.endDiv();
+        }
     }
 
     private void renderSubLandscapeDependenciesViaContributors() {
@@ -815,7 +847,69 @@ public class LandscapeReportGenerator {
         }
     }
 
+    // File name of the Overview tab's repositories circle-packing chart (size = main LOC, color =
+    // main language), written into <reports>/visuals/ and iframed at the bottom of the Overview tab.
+    private static final String REPOSITORIES_BUBBLE_CHART_FILE_NAME = "repositories_bubble_chart.html";
+
+    // Builds + writes the language-colored repositories circle-packing chart. Each repository is a
+    // leaf sized by main LOC and colored by its main language; grouping (zoomable) mirrors the
+    // sub-landscape circles — by virtual landscape when configured, else by folder path when there
+    // are sub-landscapes, else a flat single level. Uses renderZoomableCirclesColored so the data is
+    // embedded inline (self-contained, opens from file://) and leaf colors are honored.
+    private void exportRepositoriesBubbleChart(List<RepositoryAnalysisResults> repositories) {
+        ZommableCircleCountExtractors mainLocExtractor = new ZommableCircleCountExtractors() {
+            @Override
+            public int getCount(RepositoryAnalysisResults repositoryAnalysisResults) {
+                return repositoryAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
+            }
+        };
+
+        VirtualLandscapesConfig virtualLandscapes = landscapeAnalysisResults.getConfiguration().getVirtualLandscapes();
+        boolean hasSubLandscapes = !landscapeAnalysisResults.getConfiguration().getSubLandscapes().isEmpty();
+        List<VisualizationItem> rootChildren;
+        if (VirtualLandscapeBuilder.hasVirtualLandscapes(virtualLandscapes)) {
+            rootChildren = buildVirtualLandscapeCircles(virtualLandscapes, repositories, mainLocExtractor, true);
+        } else if (hasSubLandscapes) {
+            rootChildren = buildFolderPathCircles(repositories, mainLocExtractor, true);
+        } else {
+            // No sub-landscapes: a flat single level of repository circles (no grouping/zoom).
+            rootChildren = repositoryLeaves(repositories, mainLocExtractor, true);
+        }
+
+        try {
+            File folder = new File(reportsFolder, "visuals");
+            folder.mkdirs();
+            FileUtils.write(new File(folder, REPOSITORIES_BUBBLE_CHART_FILE_NAME),
+                    new VisualizationTemplate().renderZoomableCirclesColored(rootChildren), UTF_8);
+        } catch (IOException e) {
+            LOG.warn(e);
+        }
+    }
+
+    // The distinct main languages present across the repositories, ordered by total main LOC desc
+    // (then name) — used for the Overview chart's color legend.
+    private List<String> repositoryLanguagesByLoc(List<RepositoryAnalysisResults> repositories) {
+        Map<String, Long> locByLang = new HashMap<>();
+        repositories.forEach(r -> {
+            String lang = getMainLanguage(r);
+            if (lang != null && !lang.isEmpty()) {
+                locByLang.merge(lang, (long) r.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode(), Long::sum);
+            }
+        });
+        return locByLang.entrySet().stream()
+                .sorted((a, b) -> {
+                    int byLoc = Long.compare(b.getValue(), a.getValue());
+                    return byLoc != 0 ? byLoc : a.getKey().compareTo(b.getKey());
+                })
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+    }
+
     private List<VisualizationItem> buildFolderPathCircles(List<RepositoryAnalysisResults> repositoryAnalysisResults, ZommableCircleCountExtractors zommableCircleCountExtractors) {
+        return buildFolderPathCircles(repositoryAnalysisResults, zommableCircleCountExtractors, false);
+    }
+
+    private List<VisualizationItem> buildFolderPathCircles(List<RepositoryAnalysisResults> repositoryAnalysisResults, ZommableCircleCountExtractors zommableCircleCountExtractors, boolean colorByLanguage) {
         Map<String, VisualizationItem> parents = new HashMap<>();
         VisualizationItem root = new VisualizationItem("", 0);
         parents.put("", root);
@@ -830,6 +924,9 @@ public class LandscapeReportGenerator {
             int count = zommableCircleCountExtractors.getCount(analysisResults);
             if (count > 0) {
                 VisualizationItem item = new VisualizationItem(name + " (" + FormattingUtils.getPlainTextForNumber(count) + ")", count);
+                if (colorByLanguage) {
+                    item.setColor(LanguageColors.getColor(getMainLanguage(analysisResults)));
+                }
                 getParent(parents, Arrays.asList(elements)).getChildren().add(item);
             }
         });
@@ -845,6 +942,13 @@ public class LandscapeReportGenerator {
     private List<VisualizationItem> buildVirtualLandscapeCircles(VirtualLandscapesConfig virtualLandscapes,
                                                                  List<RepositoryAnalysisResults> repositories,
                                                                  ZommableCircleCountExtractors extractor) {
+        return buildVirtualLandscapeCircles(virtualLandscapes, repositories, extractor, false);
+    }
+
+    private List<VisualizationItem> buildVirtualLandscapeCircles(VirtualLandscapesConfig virtualLandscapes,
+                                                                 List<RepositoryAnalysisResults> repositories,
+                                                                 ZommableCircleCountExtractors extractor,
+                                                                 boolean colorByLanguage) {
         List<VisualizationItem> groups = new ArrayList<>();
         boolean[] assigned = new boolean[repositories.size()];
 
@@ -858,9 +962,9 @@ public class LandscapeReportGenerator {
             }
             VisualizationItem group = new VisualizationItem(vlConfig.getMetadata().getName(), 0);
             if (VirtualLandscapeBuilder.hasVirtualLandscapes(vlConfig.getVirtualLandscapes())) {
-                group.getChildren().addAll(buildVirtualLandscapeCircles(vlConfig.getVirtualLandscapes(), members, extractor));
+                group.getChildren().addAll(buildVirtualLandscapeCircles(vlConfig.getVirtualLandscapes(), members, extractor, colorByLanguage));
             } else {
-                group.getChildren().addAll(repositoryLeaves(members, extractor));
+                group.getChildren().addAll(repositoryLeaves(members, extractor, colorByLanguage));
             }
             if (!group.getChildren().isEmpty()) {
                 groups.add(group);
@@ -875,7 +979,7 @@ public class LandscapeReportGenerator {
         }
         VisualizationItem remainderGroup = new VisualizationItem(
                 virtualLandscapes.getRemainderLandscapeMetadata().getName(), 0);
-        remainderGroup.getChildren().addAll(repositoryLeaves(remainder, extractor));
+        remainderGroup.getChildren().addAll(repositoryLeaves(remainder, extractor, colorByLanguage));
         if (!remainderGroup.getChildren().isEmpty()) {
             groups.add(remainderGroup);
         }
@@ -895,15 +999,36 @@ public class LandscapeReportGenerator {
     }
 
     private List<VisualizationItem> repositoryLeaves(List<RepositoryAnalysisResults> repositories, ZommableCircleCountExtractors extractor) {
+        return repositoryLeaves(repositories, extractor, false);
+    }
+
+    // When colorByLanguage is true, each repository leaf is colored by the repository's main
+    // language (deterministic hue) — used by the Overview tab's repositories circle-packing chart.
+    private List<VisualizationItem> repositoryLeaves(List<RepositoryAnalysisResults> repositories, ZommableCircleCountExtractors extractor, boolean colorByLanguage) {
         List<VisualizationItem> leaves = new ArrayList<>();
         repositories.forEach(analysisResults -> {
             int count = extractor.getCount(analysisResults);
             if (count > 0) {
                 String name = analysisResults.getAnalysisResults().getMetadata().getName();
-                leaves.add(new VisualizationItem(name + " (" + FormattingUtils.getPlainTextForNumber(count) + ")", count));
+                VisualizationItem item = new VisualizationItem(name + " (" + FormattingUtils.getPlainTextForNumber(count) + ")", count);
+                if (colorByLanguage) {
+                    item.setColor(LanguageColors.getColor(getMainLanguage(analysisResults)));
+                }
+                leaves.add(item);
             }
         });
         return leaves;
+    }
+
+    // The repository's main language = the dominant main-aspect extension (LOC-sorted), e.g. "java".
+    // Mirrors RepositoryExport.mainLang. Returns "" when unknown.
+    static String getMainLanguage(RepositoryAnalysisResults analysisResults) {
+        List<NumericMetric> mainPerExtension = analysisResults.getAnalysisResults()
+                .getMainAspectAnalysisResults().getLinesOfCodePerExtension();
+        if (mainPerExtension != null && !mainPerExtension.isEmpty()) {
+            return mainPerExtension.get(0).getName().replace("*.", "").trim().toLowerCase();
+        }
+        return "";
     }
 
     private String getRepositoryCircleName(RepositoryAnalysisResults analysisResults) {
