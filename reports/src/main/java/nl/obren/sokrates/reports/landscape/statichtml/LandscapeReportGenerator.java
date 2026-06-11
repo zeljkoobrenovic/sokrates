@@ -857,25 +857,7 @@ public class LandscapeReportGenerator {
     // are sub-landscapes, else a flat single level. Uses renderZoomableCirclesColored so the data is
     // embedded inline (self-contained, opens from file://) and leaf colors are honored.
     private void exportRepositoriesBubbleChart(List<RepositoryAnalysisResults> repositories) {
-        ZommableCircleCountExtractors mainLocExtractor = new ZommableCircleCountExtractors() {
-            @Override
-            public int getCount(RepositoryAnalysisResults repositoryAnalysisResults) {
-                return repositoryAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
-            }
-        };
-
-        VirtualLandscapesConfig virtualLandscapes = landscapeAnalysisResults.getConfiguration().getVirtualLandscapes();
-        boolean hasSubLandscapes = !landscapeAnalysisResults.getConfiguration().getSubLandscapes().isEmpty();
-        List<VisualizationItem> rootChildren;
-        if (VirtualLandscapeBuilder.hasVirtualLandscapes(virtualLandscapes)) {
-            rootChildren = buildVirtualLandscapeCircles(virtualLandscapes, repositories, mainLocExtractor, true);
-        } else if (hasSubLandscapes) {
-            rootChildren = buildFolderPathCircles(repositories, mainLocExtractor, true);
-        } else {
-            // No sub-landscapes: a flat single level of repository circles (no grouping/zoom).
-            rootChildren = repositoryLeaves(repositories, mainLocExtractor, true);
-        }
-
+        List<VisualizationItem> rootChildren = buildLanguageCircles(repositories);
         try {
             File folder = new File(reportsFolder, "visuals");
             folder.mkdirs();
@@ -884,6 +866,74 @@ public class LandscapeReportGenerator {
         } catch (IOException e) {
             LOG.warn(e);
         }
+    }
+
+    // Groups the repository circles by MAIN LANGUAGE: one (zoomable) group circle per language —
+    // colored with that language's hue, so the whole group shares the color — containing the repos
+    // written in it (each leaf sized by main LOC). Groups are ordered by total main LOC desc. Repos
+    // with no detectable main language / zero main LOC are skipped.
+    private List<VisualizationItem> buildLanguageCircles(List<RepositoryAnalysisResults> repositories) {
+        List<RepositoryBubble> bubbles = new ArrayList<>();
+        repositories.forEach(r -> {
+            int mainLoc = r.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode();
+            bubbles.add(new RepositoryBubble(r.getAnalysisResults().getMetadata().getName(), getMainLanguage(r), mainLoc));
+        });
+        return groupByLanguage(bubbles);
+    }
+
+    // A flattened repository for the language-grouped bubble chart: just what the chart needs.
+    static class RepositoryBubble {
+        final String name;
+        final String lang;
+        final int mainLoc;
+
+        RepositoryBubble(String name, String lang, int mainLoc) {
+            this.name = name;
+            this.lang = lang;
+            this.mainLoc = mainLoc;
+        }
+    }
+
+    // Pure grouping: one group circle per language (ordered by total main LOC desc, then name),
+    // colored by the language hue, with a repo leaf (sized by main LOC, colored, tooltip) per repo.
+    // Repos with a blank language or zero main LOC are skipped. Package-private + static for testing.
+    static List<VisualizationItem> groupByLanguage(List<RepositoryBubble> bubbles) {
+        Map<String, List<RepositoryBubble>> byLang = new HashMap<>();
+        Map<String, Long> locByLang = new HashMap<>();
+        bubbles.forEach(b -> {
+            if (b.lang != null && !b.lang.isEmpty() && b.mainLoc > 0) {
+                byLang.computeIfAbsent(b.lang, k -> new ArrayList<>()).add(b);
+                locByLang.merge(b.lang, (long) b.mainLoc, Long::sum);
+            }
+        });
+
+        List<String> ordered = locByLang.entrySet().stream()
+                .sorted((a, b) -> {
+                    int byLoc = Long.compare(b.getValue(), a.getValue());
+                    return byLoc != 0 ? byLoc : a.getKey().compareTo(b.getKey());
+                })
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        List<VisualizationItem> groups = new ArrayList<>();
+        ordered.forEach(lang -> {
+            List<VisualizationItem> leaves = new ArrayList<>();
+            byLang.get(lang).forEach(b -> {
+                // Leaf label = repo name (group already shows "[lang]"); tooltip carries the detail.
+                VisualizationItem leaf = new VisualizationItem(b.name, b.mainLoc);
+                leaf.setColor(LanguageColors.getColor(lang));
+                leaf.setTooltip(b.name + " · " + FormattingUtils.getPlainTextForNumber(b.mainLoc) + " LOC · " + lang);
+                leaves.add(leaf);
+            });
+            int n = leaves.size();
+            VisualizationItem group = new VisualizationItem("[" + lang + "] (" + n
+                    + (n == 1 ? " repository)" : " repositories)"), 0);
+            group.setColor(LanguageColors.getColor(lang));
+            group.setTooltip(lang + " · " + n + (n == 1 ? " repository" : " repositories"));
+            group.setChildren(leaves);
+            groups.add(group);
+        });
+        return groups;
     }
 
     // The distinct main languages present across the repositories, ordered by total main LOC desc
@@ -906,10 +956,6 @@ public class LandscapeReportGenerator {
     }
 
     private List<VisualizationItem> buildFolderPathCircles(List<RepositoryAnalysisResults> repositoryAnalysisResults, ZommableCircleCountExtractors zommableCircleCountExtractors) {
-        return buildFolderPathCircles(repositoryAnalysisResults, zommableCircleCountExtractors, false);
-    }
-
-    private List<VisualizationItem> buildFolderPathCircles(List<RepositoryAnalysisResults> repositoryAnalysisResults, ZommableCircleCountExtractors zommableCircleCountExtractors, boolean colorByLanguage) {
         Map<String, VisualizationItem> parents = new HashMap<>();
         VisualizationItem root = new VisualizationItem("", 0);
         parents.put("", root);
@@ -923,14 +969,7 @@ public class LandscapeReportGenerator {
             }
             int count = zommableCircleCountExtractors.getCount(analysisResults);
             if (count > 0) {
-                VisualizationItem item;
-                if (colorByLanguage) {
-                    // count is main LOC here. Line-1 = folder-relative name, line-2 = main language;
-                    // tooltip uses the full repository name.
-                    item = coloredRepositoryLeaf(name, analysisResults.getAnalysisResults().getMetadata().getName(), count, analysisResults);
-                } else {
-                    item = new VisualizationItem(name + " (" + FormattingUtils.getPlainTextForNumber(count) + ")", count);
-                }
+                VisualizationItem item = new VisualizationItem(name + " (" + FormattingUtils.getPlainTextForNumber(count) + ")", count);
                 getParent(parents, Arrays.asList(elements)).getChildren().add(item);
             }
         });
@@ -946,13 +985,6 @@ public class LandscapeReportGenerator {
     private List<VisualizationItem> buildVirtualLandscapeCircles(VirtualLandscapesConfig virtualLandscapes,
                                                                  List<RepositoryAnalysisResults> repositories,
                                                                  ZommableCircleCountExtractors extractor) {
-        return buildVirtualLandscapeCircles(virtualLandscapes, repositories, extractor, false);
-    }
-
-    private List<VisualizationItem> buildVirtualLandscapeCircles(VirtualLandscapesConfig virtualLandscapes,
-                                                                 List<RepositoryAnalysisResults> repositories,
-                                                                 ZommableCircleCountExtractors extractor,
-                                                                 boolean colorByLanguage) {
         List<VisualizationItem> groups = new ArrayList<>();
         boolean[] assigned = new boolean[repositories.size()];
 
@@ -966,9 +998,9 @@ public class LandscapeReportGenerator {
             }
             VisualizationItem group = new VisualizationItem(vlConfig.getMetadata().getName(), 0);
             if (VirtualLandscapeBuilder.hasVirtualLandscapes(vlConfig.getVirtualLandscapes())) {
-                group.getChildren().addAll(buildVirtualLandscapeCircles(vlConfig.getVirtualLandscapes(), members, extractor, colorByLanguage));
+                group.getChildren().addAll(buildVirtualLandscapeCircles(vlConfig.getVirtualLandscapes(), members, extractor));
             } else {
-                group.getChildren().addAll(repositoryLeaves(members, extractor, colorByLanguage));
+                group.getChildren().addAll(repositoryLeaves(members, extractor));
             }
             if (!group.getChildren().isEmpty()) {
                 groups.add(group);
@@ -983,7 +1015,7 @@ public class LandscapeReportGenerator {
         }
         VisualizationItem remainderGroup = new VisualizationItem(
                 virtualLandscapes.getRemainderLandscapeMetadata().getName(), 0);
-        remainderGroup.getChildren().addAll(repositoryLeaves(remainder, extractor, colorByLanguage));
+        remainderGroup.getChildren().addAll(repositoryLeaves(remainder, extractor));
         if (!remainderGroup.getChildren().isEmpty()) {
             groups.add(remainderGroup);
         }
@@ -1003,44 +1035,15 @@ public class LandscapeReportGenerator {
     }
 
     private List<VisualizationItem> repositoryLeaves(List<RepositoryAnalysisResults> repositories, ZommableCircleCountExtractors extractor) {
-        return repositoryLeaves(repositories, extractor, false);
-    }
-
-    // When colorByLanguage is true, each repository leaf is colored by the repository's main
-    // language (deterministic hue) — used by the Overview tab's repositories circle-packing chart.
-    private List<VisualizationItem> repositoryLeaves(List<RepositoryAnalysisResults> repositories, ZommableCircleCountExtractors extractor, boolean colorByLanguage) {
         List<VisualizationItem> leaves = new ArrayList<>();
         repositories.forEach(analysisResults -> {
             int count = extractor.getCount(analysisResults);
             if (count > 0) {
-                String repoName = analysisResults.getAnalysisResults().getMetadata().getName();
-                VisualizationItem item;
-                if (colorByLanguage) {
-                    // Bubble label: repo name (line 1) + main language (line 2); both clipped to the
-                    // bubble by the chart. Hover tooltip carries the full name + main LOC + language.
-                    // count is the main LOC here.
-                    item = coloredRepositoryLeaf(repoName, repoName, count, analysisResults);
-                } else {
-                    item = new VisualizationItem(repoName + " (" + FormattingUtils.getPlainTextForNumber(count) + ")", count);
-                }
-                leaves.add(item);
+                String name = analysisResults.getAnalysisResults().getMetadata().getName();
+                leaves.add(new VisualizationItem(name + " (" + FormattingUtils.getPlainTextForNumber(count) + ")", count));
             }
         });
         return leaves;
-    }
-
-    // A language-colored repository circle: label = "[lang] displayName" (main language in square
-    // brackets up front), size + color from main LOC / language; hover tooltip =
-    // "<fullName> · <LOC> LOC · <lang>".
-    private VisualizationItem coloredRepositoryLeaf(String displayName, String fullName, int mainLoc,
-                                                    RepositoryAnalysisResults analysisResults) {
-        String lang = getMainLanguage(analysisResults);
-        String label = (lang.isEmpty() ? "" : "[" + lang + "] ") + displayName;
-        VisualizationItem item = new VisualizationItem(label, mainLoc);
-        item.setColor(LanguageColors.getColor(lang));
-        item.setTooltip(fullName + " · " + FormattingUtils.getPlainTextForNumber(mainLoc) + " LOC"
-                + (lang.isEmpty() ? "" : " · " + lang));
-        return item;
     }
 
     // The repository's main language = the dominant main-aspect extension (LOC-sorted), e.g. "java".
