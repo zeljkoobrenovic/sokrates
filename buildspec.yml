@@ -25,6 +25,7 @@ phases:
       - aws s3 cp sokrates-explorer.jar        s3://sokrates-artifacts/builds/sokrates-explorer.jar        --only-show-errors
       - aws s3 cp sokrates-LATEST.jar          s3://sokrates-artifacts/builds/sokrates-LATEST.jar          --only-show-errors
       - aws s3 cp sokrates-explorer-LATEST.jar s3://sokrates-artifacts/builds/sokrates-explorer-LATEST.jar --only-show-errors
+      - aws cloudfront create-invalidation --distribution-id E31A2TZX8192JW --paths "/*"
       # Invalidate the public CloudFront distribution that exposes the build artifacts.
       - aws cloudfront create-invalidation --distribution-id E31A2TZX8192JW --paths "/*"
 artifacts:

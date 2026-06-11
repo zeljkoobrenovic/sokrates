@@ -13,7 +13,6 @@ import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.SokratesRepositoryLink;
 import nl.obren.sokrates.sourcecode.landscape.analysis.RepositoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.MetricRangeControl;
-import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.lang3.StringUtils;
 
@@ -34,17 +33,15 @@ public class RepositoryExport {
     private List<String> contributors30Days;
     private List<String> contributors90Days;
     private List<String> contributors;
+    // Internal only (used to compute reportFolderUrl) — not exported (no getter), the template
+    // reads reportFolderUrl directly.
     private SokratesRepositoryLink sokratesRepositoryLink;
-    private MetricsList metrics;
-    private int mainFilesCount;
+    // Only lines-of-code per scope is rendered by repositories-report.html; the per-scope FILE
+    // counts were never read, so they aren't kept as fields (they bloated every repo row's JSON).
     private int mainLinesOfCode;
-    private int testFilesCount;
     private int testLinesOfCode;
-    private int generatedFilesCount;
     private int generatedLinesOfCode;
-    private int buildAndDeployFilesCount;
     private int buildAndDeployLinesOfCode;
-    private int otherFilesCount;
     private int otherLinesOfCode;
     private String mainLang;
 
@@ -123,19 +120,10 @@ public class RepositoryExport {
         AspectAnalysisResults generated = analysis.getGeneratedAspectAnalysisResults();
         AspectAnalysisResults other = analysis.getOtherAspectAnalysisResults();
 
-        mainFilesCount = main.getFilesCount();
         mainLinesOfCode = main.getLinesOfCode();
-
-        testFilesCount = test.getFilesCount();
         testLinesOfCode = test.getLinesOfCode();
-
-        generatedFilesCount = generated.getFilesCount();
         generatedLinesOfCode = generated.getLinesOfCode();
-
-        buildAndDeployFilesCount = build.getFilesCount();
         buildAndDeployLinesOfCode = build.getLinesOfCode();
-
-        otherFilesCount = other.getFilesCount();
         otherLinesOfCode = other.getLinesOfCode();
 
         // The dominant main-aspect extension is the repository's main language.
@@ -214,48 +202,20 @@ public class RepositoryExport {
         return m;
     }
 
-    public SokratesRepositoryLink getSokratesRepositoryLink() {
-        return sokratesRepositoryLink;
-    }
-
-    public MetricsList getMetrics() {
-        return metrics;
-    }
-
-    public int getMainFilesCount() {
-        return mainFilesCount;
-    }
-
     public int getMainLinesOfCode() {
         return mainLinesOfCode;
-    }
-
-    public int getTestFilesCount() {
-        return testFilesCount;
     }
 
     public int getTestLinesOfCode() {
         return testLinesOfCode;
     }
 
-    public int getGeneratedFilesCount() {
-        return generatedFilesCount;
-    }
-
     public int getGeneratedLinesOfCode() {
         return generatedLinesOfCode;
     }
 
-    public int getBuildAndDeployFilesCount() {
-        return buildAndDeployFilesCount;
-    }
-
     public int getBuildAndDeployLinesOfCode() {
         return buildAndDeployLinesOfCode;
-    }
-
-    public int getOtherFilesCount() {
-        return otherFilesCount;
     }
 
     public int getOtherLinesOfCode() {
