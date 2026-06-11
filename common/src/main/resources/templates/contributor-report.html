@@ -48,7 +48,7 @@
             opacity: 1;
         }
 
-        /* Loading indicator shown while people.zip is fetched + inflated. */
+        /* Loading indicator shown while the embedded people archive is decoded. */
         #loading {
             display: flex;
             align-items: center;
@@ -532,9 +532,7 @@
     // fetch) so this opens from file://.
     ${embedded-archive}
 
-    (function load() {
-        var key = param('key');
-        if (!key) { showError('Missing ?key='); return; }
+    function loadEmbedded(key) {
         try {
             var entries = sokratesUnzip(SOKRATES_ARCHIVE);
             var bytes = entries[key + '.json'];
@@ -551,6 +549,14 @@
         } catch (e) {
             showError(e.message);
         }
+    }
+
+    (function load() {
+        var key = param('key');
+        if (!key) { showError('Missing ?key='); return; }
+        // Decoding a large embedded archive blocks the main thread; yield one frame first so the
+        // loading spinner actually paints, then do the synchronous extract + render.
+        requestAnimationFrame(function () { setTimeout(function () { loadEmbedded(key); }, 0); });
     })();
 </script>
 </body>
