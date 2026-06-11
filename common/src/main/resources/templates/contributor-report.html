@@ -527,10 +527,13 @@
         document.getElementById('report').style.display = 'block';
     }
 
-    // All people (contributors, teams, bots) live in one archive embedded inline as base64 by the
-    // generator (var SOKRATES_ARCHIVE = "..."), keyed by safe email. Extracted in-browser (no
-    // fetch) so this opens from file://.
+    // All people live in one archive embedded inline as base64 by the generator
+    // (var SOKRATES_ARCHIVE = "..."), keyed by safe email — each person's entry is just
+    // {data, options}. The language icons (large base64 data URIs, identical across people) are NOT
+    // repeated per person; they're injected ONCE as a shared map (var SOKRATES_LANG_ICONS = {...}).
+    // Both are read in-browser (no fetch) so this opens from file://.
     ${embedded-archive}
+    ${lang-icons}
 
     function loadEmbedded(key) {
         try {
@@ -538,9 +541,9 @@
             var bytes = entries[key + '.json'];
             if (!bytes) throw new Error('Person not found: ' + key);
             var payload = JSON.parse(fflate.strFromU8(bytes));
-            // The entry bundles everything the page needs for this person.
+            // The per-person entry holds data + options; langIcons is the shared page-level map.
             data = payload.data;
-            langIcons = payload.langIcons || {};
+            langIcons = (typeof SOKRATES_LANG_ICONS !== 'undefined' && SOKRATES_LANG_ICONS) || {};
             options = payload.options || {};
             renderHeader();
             buildTabs();

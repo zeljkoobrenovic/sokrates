@@ -19,8 +19,10 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -166,6 +168,11 @@ public class LandscapeIndividualContributorsReports {
     // (the on-disk merge accumulator, so same-file groups like contributors + bots accumulate across
     // calls), then writes {@code reportFileName} from the shared template with that merged archive
     // embedded inline as base64 (the page extracts its ?key= person in-browser — no fetch, file://).
+    // Reserved zip entry (not a person) that persists the union of language keys used by everyone in
+    // this file across the merge-accumulator calls, so the shared langIcons map can be rebuilt to
+    // cover all merged people. Stripped from the page's embedded archive.
+    private static final String LANGS_ENTRY_NAME = "__langs.json";
+
     private void writeReport(File folder, List<ContributorRepositories> people, String zipName, String reportFileName) {
         File accumulatorZip = new File(folder, zipName);
 
@@ -173,31 +180,73 @@ public class LandscapeIndividualContributorsReports {
         if (accumulatorZip.exists()) {
             ZipUtils.unzipAllEntriesAsStrings(accumulatorZip).forEach((name, entry) -> entriesByName.put(name, entry.getContent()));
         }
+
+        // Accumulated language keys (seeded from a prior call's reserved entry, if any).
+        Set<String> langKeys = new LinkedHashSet<>(readLangKeys(entriesByName.remove(LANGS_ENTRY_NAME)));
+
         people.forEach(contributor -> {
-            String[] entry = buildEntry(contributor, folder);
+            String[] entry = buildEntry(contributor, folder, langKeys);
             if (entry != null) {
                 entriesByName.put(entry[0], entry[1]);
             }
         });
-        String[][] entries = entriesByName.entrySet().stream()
-                .map(e -> new String[]{e.getKey(), e.getValue()})
-                .toArray(String[][]::new);
-        ZipUtils.stringToZipFile(accumulatorZip, entries);
+
+        // Persist the merged person entries + the reserved lang-keys entry to the accumulator zip
+        // (so a later same-file call sees them); but the page's embedded archive holds only the
+        // person entries — the icons are injected separately as one shared map.
+        Map<String, String> personEntries = new LinkedHashMap<>(entriesByName);
+        Map<String, String> zipEntries = new LinkedHashMap<>(entriesByName);
+        zipEntries.put(LANGS_ENTRY_NAME, writeLangKeys(langKeys));
+        ZipUtils.stringToZipFile(accumulatorZip, toArray(zipEntries));
 
         try {
-            String archiveB64 = VisualizationTemplate.base64(ZipUtils.stringEntriesToZipBytes(entries));
+            String archiveB64 = VisualizationTemplate.base64(ZipUtils.stringEntriesToZipBytes(toArray(personEntries)));
+            String langIconsJson = DataImageUtils.getLangDataImageMapJson(langKeys);
+            if (langIconsJson == null || langIconsJson.isEmpty()) {
+                langIconsJson = "{}";
+            }
             java.io.InputStream in = this.getClass().getClassLoader().getResourceAsStream("templates/contributor-report.html");
             String template = org.apache.commons.io.IOUtils.toString(in, StandardCharsets.UTF_8)
                     .replace("${sokrates-unzip-lib}", VisualizationTemplate.embedZipLib())
-                    .replace("${embedded-archive}", "var SOKRATES_ARCHIVE = \"" + archiveB64 + "\";");
+                    .replace("${embedded-archive}", "var SOKRATES_ARCHIVE = \"" + archiveB64 + "\";")
+                    .replace("${lang-icons}", "var SOKRATES_LANG_ICONS = " + langIconsJson + ";");
             FileUtils.write(new File(folder, reportFileName), template, StandardCharsets.UTF_8);
         } catch (Exception e) {
             LOG.error(e);
         }
     }
 
-    // Builds the {key, json} zip entry for one person; the JSON bundles data + langIcons + options.
-    private String[] buildEntry(ContributorRepositories contributorRepositories, File folder) {
+    private static String[][] toArray(Map<String, String> entries) {
+        return entries.entrySet().stream()
+                .map(e -> new String[]{e.getKey(), e.getValue()})
+                .toArray(String[][]::new);
+    }
+
+    private static List<String> readLangKeys(String json) {
+        if (json == null || json.isEmpty()) {
+            return new ArrayList<>();
+        }
+        try {
+            return new com.fasterxml.jackson.databind.ObjectMapper()
+                    .readValue(json, new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
+    private static String writeLangKeys(Set<String> keys) {
+        try {
+            return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(keys);
+        } catch (Exception e) {
+            return "[]";
+        }
+    }
+
+    // Builds one person's zip entry. The per-person JSON bundles only {data, options} — the language
+    // icons (large, identical base64 data URIs shared by everyone) are NOT repeated per person; the
+    // lang keys this person uses are added to {@code langSink} so the page can carry ONE shared
+    // langIcons map (see writeReport). Returns {entryName, json} or null on failure.
+    private String[] buildEntry(ContributorRepositories contributorRepositories, File folder, Set<String> langSink) {
         try {
             LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
             PeopleConfig peopleConfig = landscapeAnalysisResults.getPeopleConfig();
@@ -205,12 +254,11 @@ public class LandscapeIndividualContributorsReports {
             ContributorIndividualReportExport data =
                     new ContributorIndividualReportExport(contributorRepositories, configuration, peopleConfig, folder);
 
-            // Language icons for the contributor's repositories, members and extensions.
-            List<String> langs = new ArrayList<>();
-            data.getRepositories().forEach(r -> langs.add(r.getLang()));
-            data.getMembers().forEach(m -> langs.add(m.getLang()));
-            data.getExtensions().forEach(e -> langs.add(e.getLang()));
-            String langIconsJson = DataImageUtils.getLangDataImageMapJson(langs);
+            // Collect the languages this person references (repositories, members, extensions) into
+            // the shared sink; the icons themselves are resolved once, file-wide, in writeReport.
+            data.getRepositories().forEach(r -> addLang(langSink, r.getLang()));
+            data.getMembers().forEach(m -> addLang(langSink, m.getLang()));
+            data.getExtensions().forEach(e -> addLang(langSink, e.getLang()));
 
             Map<String, Object> options = new LinkedHashMap<>();
             options.put("latestCommitDate", landscapeAnalysisResults.getLatestCommitDate());
@@ -221,10 +269,8 @@ public class LandscapeIndividualContributorsReports {
             options.put("avatarDeveloper", DataImageUtils.DEVELOPER);
             options.put("isTeam", !data.getMembers().isEmpty());
 
-            // One self-sufficient payload per person: data + langIcons + options. langIcons is a
-            // pre-built JSON object literal; embed it as raw JSON (not re-stringified).
+            // Per-person payload: data + options only (langIcons is shared at the page level).
             String payload = "{\"data\":" + new JsonGenerator().generateCompressed(data)
-                    + ",\"langIcons\":" + (langIconsJson == null || langIconsJson.isEmpty() ? "{}" : langIconsJson)
                     + ",\"options\":" + new JsonGenerator().generateCompressed(options) + "}";
 
             String key = getContributorReportKey(contributorRepositories.getContributor().getEmail());
@@ -232,6 +278,15 @@ public class LandscapeIndividualContributorsReports {
         } catch (Exception e) {
             LOG.error(e);
             return null;
+        }
+    }
+
+    private static void addLang(Set<String> sink, String lang) {
+        if (lang != null) {
+            String key = lang.toLowerCase().trim();
+            if (!key.isEmpty()) {
+                sink.add(key);
+            }
         }
     }
 }
