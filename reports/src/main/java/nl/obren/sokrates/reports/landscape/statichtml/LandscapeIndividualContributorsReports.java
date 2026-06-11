@@ -81,19 +81,26 @@ public class LandscapeIndividualContributorsReports {
         String[][] entries = entriesByName.entrySet().stream()
                 .map(e -> new String[]{e.getKey(), e.getValue()})
                 .toArray(String[][]::new);
+        // people.zip persists across the three separate per-group instances (contributors/teams/bots)
+        // as the merge accumulator read back above — kept on disk for that purpose only; the page no
+        // longer fetches it.
         ZipUtils.stringToZipFile(peopleZip, entries);
 
-        // Write the shared static template once (idempotent across the contributor/team/bot groups).
+        // Write the shared template with the merged people archive embedded inline as base64 (last
+        // group call wins and holds all entries), so the page extracts its ?key= person in-browser
+        // (no fetch) and opens from file://.
         try {
+            String archiveB64 = VisualizationTemplate.base64(ZipUtils.stringEntriesToZipBytes(entries));
             java.io.InputStream in = this.getClass().getClassLoader().getResourceAsStream("templates/contributor-report.html");
             String template = org.apache.commons.io.IOUtils.toString(in, StandardCharsets.UTF_8)
-                    .replace("${sokrates-inflate-lib}", VisualizationTemplate.inflateLib());
+                    .replace("${sokrates-unzip-lib}", VisualizationTemplate.embedZipLib())
+                    .replace("${embedded-archive}", "var SOKRATES_ARCHIVE = \"" + archiveB64 + "\";");
             FileUtils.write(new File(individualReportsFolder, "contributor-report.html"), template, StandardCharsets.UTF_8);
         } catch (Exception e) {
             LOG.error(e);
         }
 
-        // The pages are zipped above; nothing is returned for the export pipeline.
+        // The pages are embedded in the template above; nothing is returned for the export pipeline.
         return new ArrayList<>();
     }
 

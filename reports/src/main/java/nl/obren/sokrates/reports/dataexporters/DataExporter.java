@@ -18,6 +18,7 @@ import nl.obren.sokrates.reports.dataexporters.duplication.DuplicationExporter;
 import nl.obren.sokrates.reports.dataexporters.files.FileListExporter;
 import nl.obren.sokrates.reports.dataexporters.units.FragmentExport;
 import nl.obren.sokrates.reports.dataexporters.units.UnitListExporter;
+import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.reports.utils.ZipUtils;
 import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
@@ -72,6 +73,11 @@ public class DataExporter {
     private File dataFolder;
     private File codeCacheFolder;
     private File textDataFolder;
+    // Accumulates the source viewer's data (source files keyed "<aspect>/<relativePath>", fragment
+    // bundles keyed "fragments/<type>.json") so it can be embedded base64 into the single shared
+    // viewer.html instead of written as sibling zips/JSON the viewer would fetch(). Lets the source
+    // viewer open from file:// with no web server.
+    private final Map<String, String> viewerArchiveEntries = new LinkedHashMap<>();
     public DataExporter(ProgressFeedback progressFeedback) {
         this.progressFeedback = progressFeedback;
     }
@@ -143,6 +149,29 @@ public class DataExporter {
                     }
                 }
             }
+
+            writeDataPreview(dataFolder, zipFile);
+        } catch (Exception e) {
+            LOG.warn(e);
+        }
+    }
+
+    // The data-preview.html file name (sits next to data.zip; report data links open it with ?entry=).
+    public static final String DATA_PREVIEW_FILE_NAME = "data-preview.html";
+
+    // Writes data/data-preview.html next to data.zip with the whole archive embedded inline as
+    // base64. data.zip stays as the raw-data contract (whole-archive download / landscape reads);
+    // the preview lets a data link show one entry (pretty JSON / raw text / binary) with a per-entry
+    // Download button, working from file:// (no fetch). Shared by the repository and landscape
+    // data-folder packaging so both produce a preview. Called after data.zip is built and the loose
+    // files removed (the preview must survive that cleanup).
+    public static void writeDataPreview(File dataFolder, File dataZip) {
+        try {
+            String archiveB64 = VisualizationTemplate.base64(FileUtils.readFileToByteArray(dataZip));
+            String html = HtmlTemplateUtils.getResource("/templates/data-preview.html")
+                    .replace("${sokrates-unzip-lib}", VisualizationTemplate.embedZipLib())
+                    .replace("${embedded-archive}", "var SOKRATES_ARCHIVE = \"" + archiveB64 + "\";");
+            FileUtils.write(new File(dataFolder, DATA_PREVIEW_FILE_NAME), html, UTF_8);
         } catch (Exception e) {
             LOG.warn(e);
         }
@@ -556,28 +585,32 @@ public class DataExporter {
         detailedInfo("Saving details and source code cache:");
 
         saveStructureFile();
-        saveViewerFile();
 
+        // Collect the viewer's data into viewerArchiveEntries first, then write viewer.html last
+        // with that whole archive embedded base64 inside it (saveViewerFile), so the page extracts
+        // its ?aspect=&file= / ?bundle=&i= view from inline bytes — no fetch, opens from file://.
         if (codeConfiguration.getAnalysis().isSaveSourceFiles()) {
             Set<SourceFile> referencedFiles = getReferencedFiles();
 
-            saveAspectJsonFiles(codeConfiguration.getMain(), "main", referencedFiles);
-            saveAspectJsonFiles(codeConfiguration.getTest(), "test", referencedFiles);
-            saveAspectJsonFiles(codeConfiguration.getGenerated(), "generated", referencedFiles);
-            saveAspectJsonFiles(codeConfiguration.getBuildAndDeployment(), "buildAndDeployment", referencedFiles);
-            saveAspectJsonFiles(codeConfiguration.getOther(), "other", referencedFiles);
+            collectAspectSourceFiles(codeConfiguration.getMain(), "main", referencedFiles);
+            collectAspectSourceFiles(codeConfiguration.getTest(), "test", referencedFiles);
+            collectAspectSourceFiles(codeConfiguration.getGenerated(), "generated", referencedFiles);
+            collectAspectSourceFiles(codeConfiguration.getBuildAndDeployment(), "buildAndDeployment", referencedFiles);
+            collectAspectSourceFiles(codeConfiguration.getOther(), "other", referencedFiles);
         }
 
         if (codeConfiguration.getAnalysis().isSaveCodeFragments()) {
             UnitsAnalysisResults unitsAnalysisResults = analysisResults.getUnitsAnalysisResults();
-            saveUnitFragmentFiles(unitsAnalysisResults.getLongestUnits(), "longest_unit");
-            saveUnitFragmentFiles(unitsAnalysisResults.getMostComplexUnits(), "most_complex_units");
+            collectUnitFragments(unitsAnalysisResults.getLongestUnits(), "longest_unit");
+            collectUnitFragments(unitsAnalysisResults.getMostComplexUnits(), "most_complex_units");
 
             DuplicationAnalysisResults duplicationAnalysisResults = analysisResults.getDuplicationAnalysisResults();
-            saveDuplicateFragmentFiles(duplicationAnalysisResults.getLongestDuplicates(), "longest_duplicates");
-            saveDuplicateFragmentFiles(duplicationAnalysisResults.getMostFrequentDuplicates(), "most_frequent_duplicates");
-            saveDuplicateFragmentFiles(duplicationAnalysisResults.getUnitDuplicates(), "unit_duplicates");
+            collectDuplicateFragments(duplicationAnalysisResults.getLongestDuplicates(), "longest_duplicates");
+            collectDuplicateFragments(duplicationAnalysisResults.getMostFrequentDuplicates(), "most_frequent_duplicates");
+            collectDuplicateFragments(duplicationAnalysisResults.getUnitDuplicates(), "unit_duplicates");
         }
+
+        saveViewerFile();
     }
 
     private Set<SourceFile> getReferencedFiles() {
@@ -731,10 +764,9 @@ public class DataExporter {
         return builder.toString();
     }
 
-    private void saveUnitFragmentFiles(List<UnitInfo> units, String fragmentType) throws IOException {
-        File fragmentsFolder = new File(codeCacheFolder, "fragments");
-        fragmentsFolder.mkdirs();
-
+    // Collects the unit fragment bundle into the viewer archive under "fragments/<type>.json"
+    // (array order preserved so the report's 1-based ?i= index maps to the same array position).
+    private void collectUnitFragments(List<UnitInfo> units, String fragmentType) throws IOException {
         detailedInfo(" - saving source code cache for the " + fragmentType + " fragments");
         List<FragmentExport> fragments = new ArrayList<>();
         units.forEach(unit -> {
@@ -749,8 +781,7 @@ public class DataExporter {
                     unit.getBody()));
         });
 
-        File bundleFile = new File(fragmentsFolder, fragmentType + ".json");
-        FileUtils.write(bundleFile, new JsonGenerator().generate(fragments), UTF_8);
+        viewerArchiveEntries.put("fragments/" + fragmentType + ".json", new JsonGenerator().generate(fragments));
     }
 
     private void saveStructureFile() {
@@ -766,22 +797,30 @@ public class DataExporter {
         }
     }
 
+    // Writes the single shared source viewer with its whole data archive (source files +
+    // fragment bundles, accumulated in viewerArchiveEntries) embedded inline as base64. The page
+    // extracts its ?aspect=&file= / ?bundle=&i= view from those inline bytes (sokratesUnzip) — no
+    // sibling zips/JSON and no fetch(), so it opens from file://.
     private void saveViewerFile() {
         try {
-            String html = HtmlTemplateUtils.getResource("/templates/viewer.html");
+            String[][] entries = viewerArchiveEntries.entrySet().stream()
+                    .map(e -> new String[]{e.getKey(), e.getValue()})
+                    .toArray(String[][]::new);
+            String archiveB64 = VisualizationTemplate.base64(ZipUtils.stringEntriesToZipBytes(entries));
+            String html = HtmlTemplateUtils.getResource("/templates/viewer.html")
+                    .replace("${sokrates-unzip-lib}", VisualizationTemplate.embedZipLib())
+                    .replace("${embedded-archive}", "var SOKRATES_ARCHIVE = \"" + archiveB64 + "\";");
             FileUtils.write(new File(codeCacheFolder, "viewer.html"), html, UTF_8);
         } catch (IOException e) {
             LOG.warn(e);
         }
     }
 
-    private void saveDuplicateFragmentFiles(List<DuplicationInstance> duplicates, String fragmentType) throws IOException {
-        File fragmentsFolder = new File(codeCacheFolder, "fragments");
-        fragmentsFolder.mkdirs();
-
+    // Collects the duplicate fragment bundle into the viewer archive under "fragments/<type>.json"
+    // (one entry per duplicate, in order, so the 1-based ?i= index in the report's "view" link
+    // (DuplicationReportGenerator) maps to the same array position here).
+    private void collectDuplicateFragments(List<DuplicationInstance> duplicates, String fragmentType) throws IOException {
         detailedInfo(" - saving source code cache for the " + fragmentType + " fragments");
-        // One entry per duplicate, in order, so the 1-based index in the report's "view" link
-        // (DuplicationReportGenerator) maps to the same array position here.
         List<DuplicateFragmentExport> fragments = new ArrayList<>();
         duplicates.forEach(duplicate -> {
             DuplicatedFileBlock firstFileBlock = duplicate.getDuplicatedFileBlocks().get(0);
@@ -798,11 +837,13 @@ public class DataExporter {
             fragments.add(fragment);
         });
 
-        File bundleFile = new File(fragmentsFolder, fragmentType + ".json");
-        FileUtils.write(bundleFile, new JsonGenerator().generate(fragments), UTF_8);
+        viewerArchiveEntries.put("fragments/" + fragmentType + ".json", new JsonGenerator().generate(fragments));
     }
 
-    private void saveAspectJsonFiles(NamedSourceCodeAspect aspect, String aspectName, Set<SourceFile> referencedFiles) throws IOException {
+    // Collects an aspect's referenced source files into the viewer archive, keyed
+    // "<aspect>/<relativePath>" (the viewer computes this key from ?aspect=&file=). Also writes the
+    // aspect's file-list JSON to data/ (a separate external-tooling contract, kept as a loose file).
+    private void collectAspectSourceFiles(NamedSourceCodeAspect aspect, String aspectName, Set<SourceFile> referencedFiles) throws IOException {
         File filesListFile = new File(dataFolder, aspectName + "FilesPaths.json");
         detailedInfo(" - storing the file list for the <b>" + aspectName + "</b> aspect in <a href='" + filesListFile.getPath() + "'>" + filesListFile.getPath() + "</a>");
         List<String> files = new ArrayList<>();
@@ -811,13 +852,10 @@ public class DataExporter {
         });
         FileUtils.write(filesListFile, new JsonGenerator().generate(files), UTF_8);
 
-        File aspectZipFile = new File(codeCacheFolder, aspectName + ".zip");
-        detailedInfo(" - saving source code cache for the <b>" + aspectName + "</b> aspect in <a href='" + aspectZipFile.getPath() + "'>" + aspectZipFile.getPath() + "</a>");
-        List<String[]> entries = new ArrayList<>();
+        detailedInfo(" - saving source code cache for the <b>" + aspectName + "</b> aspect (embedded in the viewer)");
         aspect.getSourceFiles().stream().filter(referencedFiles::contains).forEach(sourceFile -> {
-            entries.add(new String[]{sourceFile.getRelativePath(), sourceFile.getContent()});
+            viewerArchiveEntries.put(aspectName + "/" + sourceFile.getRelativePath(), sourceFile.getContent());
         });
-        ZipUtils.stringToZipFile(aspectZipFile, entries.toArray(new String[0][]));
     }
 
     public File getCodeCacheFolder() {

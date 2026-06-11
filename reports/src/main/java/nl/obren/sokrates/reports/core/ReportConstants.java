@@ -255,39 +255,19 @@ public class ReportConstants {
             "          setTimeout(function () { URL.revokeObjectURL(url); }, 0);\n" +
             "          return false;\n" +
             "        }\n" +
-            "        // The per-repository data/ folder is packaged as a single data/data.zip. A data\n" +
-            "        // download link fetches that zip, extracts the requested entry (e.g. units.json or\n" +
-            "        // text/metrics.txt) and saves it under its own name. Requires HTTP serving (fetch).\n" +
-            "        var __dataZipPromise = null;\n" +
-            "        // data.zip is at ../data/ for per-repository reports (which live in html/) and at\n" +
-            "        // data/ for landscape reports (which live at the landscape root); try both.\n" +
-            "        function __fetchDataZip() {\n" +
-            "          return fetch('data/data.zip').then(function (r) {\n" +
-            "            if (r.ok) { return r.arrayBuffer(); }\n" +
-            "            return fetch('../data/data.zip').then(function (r2) {\n" +
-            "              if (!r2.ok) throw new Error('Could not load data.zip'); return r2.arrayBuffer();\n" +
-            "            });\n" +
-            "          });\n" +
-            "        }\n" +
+            "        // The per-repository data/ folder is packaged as a single data/data.zip (the raw-data\n" +
+            "        // contract). A data link opens data/data-preview.html?entry=<name>, which embeds that\n" +
+            "        // whole archive inline and shows the one entry (pretty JSON / raw text / binary) with a\n" +
+            "        // Download button — so it works from file:// (no fetch / no web server).\n" +
+            "        // data-preview.html is at ../data/ for per-repository reports (which live in html/) and\n" +
+            "        // at data/ for landscape reports (which live at the landscape root).\n" +
             "        function downloadDataFile(entryName) {\n" +
-            "          if (!__dataZipPromise) {\n" +
-            "            __dataZipPromise = __fetchDataZip()\n" +
-            "              .then(function (buf) { return fflate.unzipSync(new Uint8Array(buf)); });\n" +
-            "          }\n" +
-            "          __dataZipPromise.then(function (entries) {\n" +
-            "            var bytes = entries[entryName];\n" +
-            "            if (!bytes) { alert('Not found in data.zip: ' + entryName); return; }\n" +
-            "            var blob = new Blob([bytes], { type: 'application/octet-stream' });\n" +
-            "            var url = URL.createObjectURL(blob);\n" +
-            "            var a = document.createElement('a');\n" +
-            "            a.href = url; a.download = entryName.replace(/^.*\\//, '');\n" +
-            "            document.body.appendChild(a); a.click(); document.body.removeChild(a);\n" +
-            "            setTimeout(function () { URL.revokeObjectURL(url); }, 0);\n" +
-            "          }).catch(function (e) { alert(e.message); });\n" +
+            "          var base = /\\/html\\//.test(window.location.pathname) ? '../data/' : 'data/';\n" +
+            "          window.open(base + 'data-preview.html?entry=' + encodeURIComponent(entryName), '_blank');\n" +
             "          return false;\n" +
             "        }\n" +
             "    </script>\n" +
-            "    <!-- fflate (UMD global) for client-side zip extraction (data downloads). -->\n" +
+            "    <!-- fflate (UMD global) for client-side zip extraction in embedded-data report pages. -->\n" +
             "    <script src=\"https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js\"></script>\n" +
             "    <!-- Mermaid: client-side diagram rendering (replaces server-side Graphviz). -->\n" +
             "    <script type=\"module\">\n" +

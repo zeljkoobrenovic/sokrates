@@ -67,16 +67,30 @@
         return JSON.parse(fflate.strFromU8(fflate.unzlibSync(bytes)));
     }
 
-    // Optional inline data for self-contained pages (no zip fetch). The generator fills the
+    // Decodes a whole zip archive embedded inline as base64 into the { entryName: Uint8Array } map
+    // (the per-view archive embedded by the generator, so the page opens from file:// with no
+    // server). fflate is already loaded above.
+    function sokratesUnzip(b64) {
+        var bin = atob(b64);
+        var bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) { bytes[i] = bin.charCodeAt(i); }
+        return fflate.unzipSync(bytes);
+    }
+
+    // Optional inline data for self-contained pages (no archive). The generator fills the
     // placeholder below with `var SOKRATES_INLINE_DATA = sokratesInflate("<b64>");` for inline
-    // pages, or with nothing (leaving the variable undefined) for the fetch-by-key zip pages.
+    // pages, or with nothing (leaving the variable undefined) for the embedded-archive pages.
     ${sokrates-inline-data}
+
+    // The per-view archive (one JSON entry per view) embedded as base64; the generator fills this
+    // with `var SOKRATES_ARCHIVE = "<b64-zip>";`. The page extracts only its ?key= view from it.
+    ${embedded-archive}
 </script>
 <script>
 
-    // The per-view data lives in zoomable_circles.zip (one JSON entry per view, keyed by the
-    // view name). The page selects its view via ?key=... and extracts only that entry. This
-    // replaces the previous one-HTML-file-per-view scheme. Requires HTTP serving (fetch()).
+    // The per-view data is embedded inline as a base64 archive (one JSON entry per view, keyed by
+    // the view name). The page selects its view via ?key=... and extracts only that entry from the
+    // embedded bytes — no fetch, so it opens from file://.
     function param(name) {
         var m = new RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
         return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
@@ -208,21 +222,21 @@
 
     (function load() {
         // Inline mode (self-contained page, e.g. landscape sub-landscape circles): the data is
-        // embedded directly, no zip fetch. Otherwise fetch the view from the family zip by ?key=.
+        // embedded directly. Otherwise the per-view archive is embedded inline (SOKRATES_ARCHIVE)
+        // and we extract the ?key= view from it — no fetch, so the page works from file://.
         if (typeof SOKRATES_INLINE_DATA !== 'undefined' && SOKRATES_INLINE_DATA !== null) {
             render(SOKRATES_INLINE_DATA);
             return;
         }
-        var key = param('key') || 'main';
-        fetch('zoomable_circles.zip')
-            .then(function (r) { if (!r.ok) throw new Error('Could not load zoomable_circles.zip'); return r.arrayBuffer(); })
-            .then(function (buf) {
-                var entries = fflate.unzipSync(new Uint8Array(buf));
-                var bytes = entries[key + '.json'];
-                if (!bytes) throw new Error('View not found: ' + key);
-                render(JSON.parse(fflate.strFromU8(bytes)));
-            })
-            .catch(function (e) { showError(e.message); });
+        try {
+            var key = param('key') || 'main';
+            var entries = sokratesUnzip(SOKRATES_ARCHIVE);
+            var bytes = entries[key + '.json'];
+            if (!bytes) throw new Error('View not found: ' + key);
+            render(JSON.parse(fflate.strFromU8(bytes)));
+        } catch (e) {
+            showError(e.message);
+        }
     })();
 
 </script>

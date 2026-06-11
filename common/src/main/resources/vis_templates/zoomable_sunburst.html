@@ -64,14 +64,25 @@
         return JSON.parse(fflate.strFromU8(fflate.unzlibSync(bytes)));
     }
 
-    // Optional inline data for self-contained pages (no zip fetch); see zoomable_circles.html.
+    // Decodes a whole zip archive embedded inline as base64 (the per-view archive). fflate above.
+    function sokratesUnzip(b64) {
+        var bin = atob(b64);
+        var bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) { bytes[i] = bin.charCodeAt(i); }
+        return fflate.unzipSync(bytes);
+    }
+
+    // Optional inline data for self-contained pages (no archive); see zoomable_circles.html.
     ${sokrates-inline-data}
+
+    // The per-view archive embedded as base64; generator fills `var SOKRATES_ARCHIVE = "<b64>";`.
+    ${embedded-archive}
 </script>
 <script>
 
-    // The per-view data lives in zoomable_sunburst.zip (one JSON entry per view, keyed by the
-    // view name). The page selects its view via ?key=... and extracts only that entry. Requires
-    // HTTP serving (fetch()).
+    // The per-view data is embedded inline as a base64 archive (one JSON entry per view, keyed by
+    // the view name). The page selects its view via ?key=... and extracts only that entry from the
+    // embedded bytes — no fetch, so it opens from file://.
     function param(name) {
         var m = new RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
         return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
@@ -238,21 +249,22 @@
     }
 
     (function load() {
-        // Inline mode (self-contained page) renders the embedded data directly, no zip fetch.
+        // Inline mode (self-contained page) renders the embedded data directly. Otherwise the
+        // per-view archive is embedded inline (SOKRATES_ARCHIVE); extract the ?key= view — no
+        // fetch, so the page works from file://.
         if (typeof SOKRATES_INLINE_DATA !== 'undefined' && SOKRATES_INLINE_DATA !== null) {
             render(SOKRATES_INLINE_DATA);
             return;
         }
-        var key = param('key') || 'main';
-        fetch('zoomable_sunburst.zip')
-            .then(function (r) { if (!r.ok) throw new Error('Could not load zoomable_sunburst.zip'); return r.arrayBuffer(); })
-            .then(function (buf) {
-                var entries = fflate.unzipSync(new Uint8Array(buf));
-                var bytes = entries[key + '.json'];
-                if (!bytes) throw new Error('View not found: ' + key);
-                render(JSON.parse(fflate.strFromU8(bytes)));
-            })
-            .catch(function (e) { showError(e.message); });
+        try {
+            var key = param('key') || 'main';
+            var entries = sokratesUnzip(SOKRATES_ARCHIVE);
+            var bytes = entries[key + '.json'];
+            if (!bytes) throw new Error('View not found: ' + key);
+            render(JSON.parse(fflate.strFromU8(bytes)));
+        } catch (e) {
+            showError(e.message);
+        }
     })();
 </script>
 </body>

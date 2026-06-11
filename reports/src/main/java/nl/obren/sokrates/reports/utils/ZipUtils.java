@@ -176,6 +176,27 @@ public class ZipUtils {
         }
     }
 
+    /**
+     * In-memory equivalent of {@link #stringToZipFile(File, String[][])}: zips the {@code entries}
+     * (each {@code {name, content}}) and returns the raw zip bytes, for embedding base64-inline in a
+     * template (decoded client-side by {@code sokratesUnzip}) instead of writing a sibling .zip.
+     */
+    public static byte[] stringEntriesToZipBytes(String[][] entries) {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try (ZipOutputStream zipOut = new ZipOutputStream(bos)) {
+            for (String[] entry : entries) {
+                if (entry.length == 2) {
+                    zipOut.putNextEntry(new ZipEntry(entry[0]));
+                    zipOut.write(entry[1].getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    zipOut.closeEntry();
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return bos.toByteArray();
+    }
+
     public static String unzipFirstEntryAsString(File zipFile) {
         try {
             ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile));
