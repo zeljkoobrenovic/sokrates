@@ -925,12 +925,9 @@ public class LandscapeReportGenerator {
             if (count > 0) {
                 VisualizationItem item;
                 if (colorByLanguage) {
-                    // count is main LOC here; label/tooltip = name + LOC + main language.
-                    String lang = getMainLanguage(analysisResults);
-                    String label = name + " (" + FormattingUtils.getPlainTextForNumber(count) + " LOC"
-                            + (lang.isEmpty() ? "" : ", " + lang) + ")";
-                    item = new VisualizationItem(label, count);
-                    item.setColor(LanguageColors.getColor(lang));
+                    // count is main LOC here. Line-1 = folder-relative name, line-2 = main language;
+                    // tooltip uses the full repository name.
+                    item = coloredRepositoryLeaf(name, analysisResults.getAnalysisResults().getMetadata().getName(), count, analysisResults);
                 } else {
                     item = new VisualizationItem(name + " (" + FormattingUtils.getPlainTextForNumber(count) + ")", count);
                 }
@@ -1017,16 +1014,12 @@ public class LandscapeReportGenerator {
             int count = extractor.getCount(analysisResults);
             if (count > 0) {
                 String repoName = analysisResults.getAnalysisResults().getMetadata().getName();
-                String label;
                 VisualizationItem item;
                 if (colorByLanguage) {
-                    // Label/tooltip = name + main LOC + main language (the chart clips the label to
-                    // the bubble; the full string shows on hover). count is the main LOC here.
-                    String lang = getMainLanguage(analysisResults);
-                    label = repoName + " (" + FormattingUtils.getPlainTextForNumber(count) + " LOC"
-                            + (lang.isEmpty() ? "" : ", " + lang) + ")";
-                    item = new VisualizationItem(label, count);
-                    item.setColor(LanguageColors.getColor(lang));
+                    // Bubble label: repo name (line 1) + main language (line 2); both clipped to the
+                    // bubble by the chart. Hover tooltip carries the full name + main LOC + language.
+                    // count is the main LOC here.
+                    item = coloredRepositoryLeaf(repoName, repoName, count, analysisResults);
                 } else {
                     item = new VisualizationItem(repoName + " (" + FormattingUtils.getPlainTextForNumber(count) + ")", count);
                 }
@@ -1034,6 +1027,19 @@ public class LandscapeReportGenerator {
             }
         });
         return leaves;
+    }
+
+    // A language-colored repository circle: line-1 label = displayName, line-2 = main language;
+    // size + color from main LOC / language; hover tooltip = "<fullName> · <LOC> LOC · <lang>".
+    private VisualizationItem coloredRepositoryLeaf(String displayName, String fullName, int mainLoc,
+                                                    RepositoryAnalysisResults analysisResults) {
+        String lang = getMainLanguage(analysisResults);
+        VisualizationItem item = new VisualizationItem(displayName, mainLoc);
+        item.setColor(LanguageColors.getColor(lang));
+        item.setSecondaryLabel(lang);
+        item.setTooltip(fullName + " · " + FormattingUtils.getPlainTextForNumber(mainLoc) + " LOC"
+                + (lang.isEmpty() ? "" : " · " + lang));
+        return item;
     }
 
     // The repository's main language = the dominant main-aspect extension (LOC-sorted), e.g. "java".

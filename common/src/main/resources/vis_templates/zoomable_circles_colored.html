@@ -108,9 +108,10 @@ ${sokrates-inflate-lib}
             if (focus !== d) zoom(d), d3.event.stopPropagation();
         });
 
-    // Native hover tooltip on every circle (full name + any size/lang the producer put in the name).
+    // Native hover tooltip on every circle: the producer's explicit tooltip (full name + size +
+    // language) when present, else the name.
     circle.append("title").text(function (d) {
-        return d.data.name;
+        return (d.data && d.data.tooltip) ? d.data.tooltip : d.data.name;
     });
 
     // Approx chars that fit inside a circle of (scaled) radius r at the label font size, so labels
@@ -138,10 +139,12 @@ ${sokrates-inflate-lib}
         })
         .style("display", function (d) {
             return d.parent === root ? "inline" : "none";
-        })
-        .text(function (d) {
-            return d.data.name;
         });
+    // First line = name; optional second line (e.g. main language) under it. Both clipped per zoom
+    // (see zoomTo). The name <tspan> sits a touch above centre when there is a second line.
+    text.append("tspan").attr("class", "label-name").attr("x", 0);
+    text.append("tspan").attr("class", "label-secondary").attr("x", 0)
+        .style("fill", "#555").style("font-size", "9px");
 
     var node = g.selectAll("circle,text");
 
@@ -190,9 +193,19 @@ ${sokrates-inflate-lib}
         circle.attr("r", function (d) {
             return d.r * k;
         });
-        // Clip each label to fit inside its bubble at the current zoom (full name stays on hover).
-        text.text(function (d) {
-            return labelForRadius(d.data.name, d.r * k);
+        // Clip the name (and optional second line) to fit the bubble at the current zoom; the full
+        // detail stays on hover via the <title> tooltip.
+        text.each(function (d) {
+            var r = d.r * k;
+            var hasSecond = !!(d.data && d.data.secondaryLabel);
+            var t = d3.select(this);
+            // Two lines: nudge the name up and place the second line below; one line: centred.
+            t.select(".label-name")
+                .attr("dy", hasSecond ? "-0.1em" : "0.35em")
+                .text(labelForRadius(d.data.name, r));
+            t.select(".label-secondary")
+                .attr("dy", "1.1em")
+                .text(hasSecond ? labelForRadius(d.data.secondaryLabel, r) : "");
         });
     }
 
