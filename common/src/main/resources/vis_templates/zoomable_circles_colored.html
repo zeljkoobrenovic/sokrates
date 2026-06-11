@@ -21,10 +21,14 @@
         text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff, 0 -1px 0 #fff;
     }
 
-    .label,
-    .node--root,
-    .node--leaf {
+    /* Labels never intercept the mouse, so hovering anywhere over a circle reaches the circle's
+       <title> tooltip. Leaf circles keep pointer-events so the tooltip works on them too. */
+    .label {
         pointer-events: none;
+    }
+
+    .node--leaf {
+        pointer-events: all;
     }
 
 </style>
@@ -134,17 +138,13 @@ ${sokrates-inflate-lib}
         .data(nodes)
         .enter().append("text")
         .attr("class", "label")
+        .attr("dy", "0.35em")
         .style("fill-opacity", function (d) {
             return d.parent === root ? 1 : 0;
         })
         .style("display", function (d) {
             return d.parent === root ? "inline" : "none";
         });
-    // First line = name; optional second line (e.g. main language) under it. Both clipped per zoom
-    // (see zoomTo). The name <tspan> sits a touch above centre when there is a second line.
-    text.append("tspan").attr("class", "label-name").attr("x", 0);
-    text.append("tspan").attr("class", "label-secondary").attr("x", 0)
-        .style("fill", "#555").style("font-size", "9px");
 
     var node = g.selectAll("circle,text");
 
@@ -193,19 +193,10 @@ ${sokrates-inflate-lib}
         circle.attr("r", function (d) {
             return d.r * k;
         });
-        // Clip the name (and optional second line) to fit the bubble at the current zoom; the full
-        // detail stays on hover via the <title> tooltip.
-        text.each(function (d) {
-            var r = d.r * k;
-            var hasSecond = !!(d.data && d.data.secondaryLabel);
-            var t = d3.select(this);
-            // Two lines: nudge the name up and place the second line below; one line: centred.
-            t.select(".label-name")
-                .attr("dy", hasSecond ? "-0.1em" : "0.35em")
-                .text(labelForRadius(d.data.name, r));
-            t.select(".label-secondary")
-                .attr("dy", "1.1em")
-                .text(hasSecond ? labelForRadius(d.data.secondaryLabel, r) : "");
+        // Clip each label to fit its bubble at the current zoom; the full detail stays on hover
+        // via the <title> tooltip.
+        text.text(function (d) {
+            return labelForRadius(d.data.name, d.r * k);
         });
     }
 

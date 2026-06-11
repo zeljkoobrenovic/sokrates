@@ -1029,14 +1029,15 @@ public class LandscapeReportGenerator {
         return leaves;
     }
 
-    // A language-colored repository circle: line-1 label = displayName, line-2 = main language;
-    // size + color from main LOC / language; hover tooltip = "<fullName> · <LOC> LOC · <lang>".
+    // A language-colored repository circle: label = "[lang] displayName" (main language in square
+    // brackets up front), size + color from main LOC / language; hover tooltip =
+    // "<fullName> · <LOC> LOC · <lang>".
     private VisualizationItem coloredRepositoryLeaf(String displayName, String fullName, int mainLoc,
                                                     RepositoryAnalysisResults analysisResults) {
         String lang = getMainLanguage(analysisResults);
-        VisualizationItem item = new VisualizationItem(displayName, mainLoc);
+        String label = (lang.isEmpty() ? "" : "[" + lang + "] ") + displayName;
+        VisualizationItem item = new VisualizationItem(label, mainLoc);
         item.setColor(LanguageColors.getColor(lang));
-        item.setSecondaryLabel(lang);
         item.setTooltip(fullName + " · " + FormattingUtils.getPlainTextForNumber(mainLoc) + " LOC"
                 + (lang.isEmpty() ? "" : " · " + lang));
         return item;
