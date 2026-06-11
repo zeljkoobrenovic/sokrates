@@ -37,8 +37,10 @@ class LanguageCirclesTest {
         assertEquals("[java] (2 repositories)", groups.get(0).getName());
         assertEquals("[python] (1 repository)", groups.get(1).getName());
 
-        // group is colored by the language; leaves are the repos.
-        assertEquals(LanguageColors.getColor("java"), groups.get(0).getColor());
+        // The group circle stays UNCOLORED (depth gradient); only the leaves carry the language color.
+        assertEquals("", groups.get(0).getColor());
+        groups.get(0).getChildren().forEach(leaf ->
+                assertEquals(LanguageColors.getColor("java"), leaf.getColor()));
         List<String> javaRepos = groups.get(0).getChildren().stream()
                 .map(VisualizationItem::getName).collect(Collectors.toList());
         assertEquals(List.of("svc-a", "svc-b"), javaRepos);

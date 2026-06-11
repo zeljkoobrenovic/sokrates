@@ -895,8 +895,9 @@ public class LandscapeReportGenerator {
     }
 
     // Pure grouping: one group circle per language (ordered by total main LOC desc, then name),
-    // colored by the language hue, with a repo leaf (sized by main LOC, colored, tooltip) per repo.
-    // Repos with a blank language or zero main LOC are skipped. Package-private + static for testing.
+    // containing a repo leaf (sized by main LOC) per repo. Only the LEAVES are colored by the
+    // language hue; the group circle stays uncolored (depth gradient). Repos with a blank language
+    // or zero main LOC are skipped. Package-private + static for testing.
     static List<VisualizationItem> groupByLanguage(List<RepositoryBubble> bubbles) {
         Map<String, List<RepositoryBubble>> byLang = new HashMap<>();
         Map<String, Long> locByLang = new HashMap<>();
@@ -928,7 +929,9 @@ public class LandscapeReportGenerator {
             int n = leaves.size();
             VisualizationItem group = new VisualizationItem("[" + lang + "] (" + n
                     + (n == 1 ? " repository)" : " repositories)"), 0);
-            group.setColor(LanguageColors.getColor(lang));
+            // The group circle is left uncolored (depth gradient) — only the leaves carry the
+            // language color. inheritedColor() in the template checks the leaf before its ancestors,
+            // so leaves keep their explicit color and the grouping circle stays neutral.
             group.setTooltip(lang + " · " + n + (n == 1 ? " repository" : " repositories"));
             group.setChildren(leaves);
             groups.add(group);
