@@ -14,11 +14,19 @@ phases:
   post_build:
     commands:
       - echo Build completed on `date`
-      - mkdir builds
       - cp cli/target/cli-1.0-jar-with-dependencies.jar sokrates.jar
       - cp codeexplorer/target/codeexplorer-1.0-jar-with-dependencies.jar sokrates-explorer.jar
       - cp sokrates.jar sokrates-LATEST.jar
       - cp sokrates-explorer.jar sokrates-explorer-LATEST.jar
+      # Upload the artifacts to S3 explicitly here, so the CloudFront invalidation below always
+      # runs AFTER a completed upload (CodeBuild's own artifacts:: upload happens only once this
+      # phase finishes, which would otherwise race the invalidation and re-cache stale jars).
+      - aws s3 cp sokrates.jar                 s3://sokrates-artifacts/builds/sokrates.jar                 --only-show-errors
+      - aws s3 cp sokrates-explorer.jar        s3://sokrates-artifacts/builds/sokrates-explorer.jar        --only-show-errors
+      - aws s3 cp sokrates-LATEST.jar          s3://sokrates-artifacts/builds/sokrates-LATEST.jar          --only-show-errors
+      - aws s3 cp sokrates-explorer-LATEST.jar s3://sokrates-artifacts/builds/sokrates-explorer-LATEST.jar --only-show-errors
+      # Invalidate the public CloudFront distribution that exposes the build artifacts.
+      - aws cloudfront create-invalidation --distribution-id E31A2TZX8192JW --paths "/*"
 artifacts:
   files:
     - sokrates.jar
