@@ -127,7 +127,8 @@
         }
     </style>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
-    ${sokrates-inflate-lib}
+    <!-- fflate + sokratesUnzip: decodes the people archive embedded inline below (no fetch). -->
+    ${sokrates-unzip-lib}
 </head>
 <body style="margin: 20px;">
 
@@ -526,27 +527,30 @@
         document.getElementById('report').style.display = 'block';
     }
 
+    // All people (contributors, teams, bots) live in one archive embedded inline as base64 by the
+    // generator (var SOKRATES_ARCHIVE = "..."), keyed by safe email. Extracted in-browser (no
+    // fetch) so this opens from file://.
+    ${embedded-archive}
+
     (function load() {
         var key = param('key');
         if (!key) { showError('Missing ?key='); return; }
-        // All people (contributors, teams, bots) live in one people.zip, keyed by safe email.
-        fetch('people.zip')
-            .then(function (r) { if (!r.ok) throw new Error('Could not load people.zip'); return r.arrayBuffer(); })
-            .then(function (buf) {
-                var entries = fflate.unzipSync(new Uint8Array(buf));
-                var bytes = entries[key + '.json'];
-                if (!bytes) throw new Error('Person not found: ' + key);
-                var payload = JSON.parse(fflate.strFromU8(bytes));
-                // The entry bundles everything the page needs for this person.
-                data = payload.data;
-                langIcons = payload.langIcons || {};
-                options = payload.options || {};
-                renderHeader();
-                buildTabs();
-                render();
-                showReport();
-            })
-            .catch(function (e) { showError(e.message); });
+        try {
+            var entries = sokratesUnzip(SOKRATES_ARCHIVE);
+            var bytes = entries[key + '.json'];
+            if (!bytes) throw new Error('Person not found: ' + key);
+            var payload = JSON.parse(fflate.strFromU8(bytes));
+            // The entry bundles everything the page needs for this person.
+            data = payload.data;
+            langIcons = payload.langIcons || {};
+            options = payload.options || {};
+            renderHeader();
+            buildTabs();
+            render();
+            showReport();
+        } catch (e) {
+            showError(e.message);
+        }
     })();
 </script>
 </body>

@@ -706,8 +706,8 @@ public class CommandLineInterface {
 
             // Plain zoomable circles/sunburst views are no longer written as one HTML file per
             // view. Instead each view's data is collected here (key = the old filename suffix) and
-            // written once into zoomable_circles.zip / zoomable_sunburst.zip; a single shared
-            // template HTML per family fetches the zip and renders the view selected via ?key=.
+            // embedded once (as a base64 archive) into a single shared template HTML per family,
+            // which extracts the view selected via ?key= in-browser (no fetch, opens from file://).
             // (zoomable_circles_all_files uses a different (colored) template and stays separate.)
             Map<String, String> circlesEntries = new LinkedHashMap<>();
             Map<String, String> sunburstEntries = new LinkedHashMap<>();
@@ -754,17 +754,19 @@ public class CommandLineInterface {
 
     }
 
-    // Writes one <family>.zip (entry per view: <key>.json) plus the shared <family>.html template
-    // that fetches the zip and renders the view selected via ?key=.
+    // Writes the shared <family>.html template with the per-view archive (one <key>.json entry per
+    // view) embedded inline as base64. The page extracts the ?key= view from that embedded archive
+    // in-browser (sokratesUnzip) — no sibling .zip and no fetch(), so the report opens from file://.
     private void writeZoomableFamily(File folder, String family, Map<String, String> entries) throws IOException {
         String[][] zipEntries = entries.entrySet().stream()
                 .map(e -> new String[]{e.getKey() + ".json", e.getValue()})
                 .toArray(String[][]::new);
-        ZipUtils.stringToZipFile(new File(folder, family + ".zip"), zipEntries);
-        // Fetch-by-key page: leave the inline-data placeholder empty so SOKRATES_INLINE_DATA stays
-        // undefined and the page loads its view from the family zip.
+        String archiveB64 = VisualizationTemplate.base64(ZipUtils.stringEntriesToZipBytes(zipEntries));
+        // Embedded-archive page: leave the inline-data placeholder empty (SOKRATES_INLINE_DATA stays
+        // undefined) and fill the embedded archive so the page extracts its view from inline bytes.
         String template = new VisualizationTemplate().rawTemplate(family + ".html")
-                .replace("${sokrates-inline-data}", "");
+                .replace("${sokrates-inline-data}", "")
+                .replace("${embedded-archive}", "var SOKRATES_ARCHIVE = \"" + archiveB64 + "\";");
         FileUtils.write(new File(folder, family + ".html"), template, UTF_8);
     }
 

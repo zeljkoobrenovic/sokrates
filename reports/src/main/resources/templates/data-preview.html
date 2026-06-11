@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Data preview</title>
+    <!-- fflate + sokratesUnzip: decodes the data archive (the same content as data.zip) embedded
+         inline below as base64, so this preview opens from file:// with no web server. -->
+    ${sokrates-unzip-lib}
+    <style>
+        body { font-family: 'DejaVu Sans', Arial, Helvetica, sans-serif; margin: 16px; color: #222; }
+        h3 { margin-bottom: 2px; }
+        .meta { color: #555; margin: 2px 0 12px 0; font-size: 13px; }
+        .error { color: #b00; }
+        .toolbar { margin: 8px 0 12px 0; }
+        button {
+            font-size: 14px; padding: 6px 14px; cursor: pointer;
+            border: 1px solid #bbb; border-radius: 4px; background: #f6f6f6;
+        }
+        button:hover { background: #eee; }
+        pre {
+            margin-top: 6px; padding: 12px; background: #fafafa; border: 1px solid #e0e0e0;
+            border-radius: 4px; overflow: auto; white-space: pre; font-size: 13px; line-height: 1.4;
+        }
+        /* Loading indicator shown briefly while the archive is decoded. */
+        #loading { display: flex; align-items: center; gap: 12px; color: grey; font-size: 15px; padding: 40px 4px; }
+        #loading .spinner {
+            width: 22px; height: 22px; border: 3px solid #e0e0e0; border-top-color: #4a90d9;
+            border-radius: 50%; animation: sokrates-spin 0.8s linear infinite;
+        }
+        @keyframes sokrates-spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+<div id="content"><div id="loading"><div class="spinner"></div><span>Loading data…</span></div></div>
+
+<script>
+    // The whole data archive (same entries as data.zip), embedded inline as base64 by the generator
+    // (var SOKRATES_ARCHIVE = "..."). Decoded once on load — no fetch, so this opens from file://.
+    ${embedded-archive}
+
+    function param(name) {
+        var m = new RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+        return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
+    }
+
+    function escapeHtml(s) {
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function showError(msg) {
+        document.getElementById('content').innerHTML = '<p class="error">' + escapeHtml(msg) + '</p>';
+    }
+
+    // Triggers a browser download of the raw bytes for the entry, under its own (basename) name.
+    function downloadBytes(bytes, name) {
+        var blob = new Blob([bytes], { type: 'application/octet-stream' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = name.replace(/^.*\//, '');
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 0);
+    }
+
+    function isBinary(name) {
+        return /\.(zip|gz|png|jpg|jpeg|gif|pdf|bin)$/i.test(name);
+    }
+
+    (function main() {
+        var entry = param('entry');
+        if (!entry) { showError('Nothing to show: expected ?entry=<name>'); return; }
+        try {
+            var entries = sokratesUnzip(SOKRATES_ARCHIVE);
+            var bytes = entries[entry];
+            if (!bytes) throw new Error('Not found in data archive: ' + entry);
+
+            var html = '<h3>' + escapeHtml(entry) + '</h3>';
+            html += '<div class="meta">' + bytes.length + ' bytes</div>';
+            html += '<div class="toolbar"><button id="download">Download</button></div>';
+
+            if (isBinary(entry)) {
+                html += '<p>Binary file — use the Download button.</p>';
+            } else {
+                var text = fflate.strFromU8(bytes);
+                if (/\.json$/i.test(entry)) {
+                    // Pretty-print JSON (2-space indent); fall back to raw text if it doesn't parse.
+                    try { text = JSON.stringify(JSON.parse(text), null, 2); } catch (e) { /* keep raw */ }
+                }
+                html += '<pre>' + escapeHtml(text) + '</pre>';
+            }
+            document.getElementById('content').innerHTML = html;
+            document.getElementById('download').addEventListener('click', function () {
+                downloadBytes(bytes, entry);
+            });
+        } catch (e) {
+            showError(e.message);
+        }
+    })();
+</script>
+</body>
+</html>

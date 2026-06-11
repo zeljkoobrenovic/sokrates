@@ -42,6 +42,34 @@ public class VisualizationTemplate {
         return INFLATE_LIB;
     }
 
+    // Injected into a template's <head> (via ${sokrates-unzip-lib}) so a page can decode a whole
+    // ZIP archive embedded inline as base64 — the same multi-entry archives the viewers used to
+    // fetch() at runtime, now embedded so the report opens from file:// with no web server.
+    // sokratesUnzip returns the { entryName: Uint8Array } map fflate.unzipSync produces, which the
+    // viewers already consume (they key into it by ?file=/?key=). The page base64-decodes to bytes
+    // and unzips; reuses the same fflate CDN script as INFLATE_LIB (load only one of the two libs).
+    private static final String UNZIP_LIB =
+            "<script src=\"https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js\"></script>\n" +
+            "<script>\n" +
+            "  function sokratesUnzip(b64) {\n" +
+            "    var bin = atob(b64);\n" +
+            "    var bytes = new Uint8Array(bin.length);\n" +
+            "    for (var i = 0; i < bin.length; i++) { bytes[i] = bin.charCodeAt(i); }\n" +
+            "    return fflate.unzipSync(bytes);\n" +
+            "  }\n" +
+            "</script>";
+
+    // The head block (fflate + sokratesUnzip helper) for pages embedding a whole zip archive inline.
+    public static String embedZipLib() {
+        return UNZIP_LIB;
+    }
+
+    // Base64-encode raw bytes (e.g. a built zip archive) for inline embedding in a template; the
+    // page decodes them with the sokratesUnzip helper above.
+    public static String base64(byte[] bytes) {
+        return Base64.getEncoder().encodeToString(bytes);
+    }
+
     // Deflate (zlib) + base64 a JSON string for inline embedding; the page decodes it with the
     // sokratesInflate helper above.
     public static String deflateBase64(String json) {
@@ -122,13 +150,16 @@ public class VisualizationTemplate {
     // Renders a self-contained (inline-data) zoomable circles/sunburst page: the data is embedded
     // directly via SOKRATES_INLINE_DATA so the page does NOT fetch a zip. Used by callers that
     // render a single view (e.g. landscape sub-landscape circles), as opposed to the per-repository
-    // family pages which are static fetch-by-key templates backed by zoomable_circles.zip.
+    // family pages which embed a per-view archive (one JSON per view) and extract by ?key=.
     private String renderZoomableInline(String templateFileName, List<VisualizationItem> items) {
         // Embed the data compressed (deflate+base64), decoded in-browser by sokratesInflate — same
         // scheme as the rest of the report suite. The template defines sokratesInflate (fflate is
-        // already loaded there).
+        // already loaded there). The embedded-archive placeholder is cleared (inline mode never
+        // touches SOKRATES_ARCHIVE), so the literal placeholder never leaks into the page.
         String inline = "var SOKRATES_INLINE_DATA = sokratesInflate(\"" + deflateBase64(zoomableItemsJson(items)) + "\");";
-        return rawTemplate(templateFileName).replace("${sokrates-inline-data}", inline);
+        return rawTemplate(templateFileName)
+                .replace("${sokrates-inline-data}", inline)
+                .replace("${embedded-archive}", "");
     }
 
     public String renderZoomableCircles(List<VisualizationItem> items) {

@@ -9,6 +9,7 @@ import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
+import nl.obren.sokrates.reports.dataexporters.DataExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.utils.LandscapeVisualsGenerator;
 import nl.obren.sokrates.reports.utils.ZipUtils;
@@ -149,6 +150,9 @@ public class LandscapeAnalysisCommands {
         }
         try {
             File zipFile = new File(dataFolder, "data.zip");
+            // Drop any preview from a prior call before merging so it is never folded into data.zip
+            // (this method may run more than once); it is rewritten from the fresh zip below.
+            FileUtils.deleteQuietly(new File(dataFolder, DataExporter.DATA_PREVIEW_FILE_NAME));
             ZipUtils.zipFolderMergingExistingZip(dataFolder, zipFile);
 
             File[] children = dataFolder.listFiles();
@@ -164,6 +168,8 @@ public class LandscapeAnalysisCommands {
                     }
                 }
             }
+
+            DataExporter.writeDataPreview(dataFolder, zipFile);
         } catch (Exception e) {
             LOG.warn("Could not package landscape data folder: " + e.getMessage());
         }
