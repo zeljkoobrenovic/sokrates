@@ -463,11 +463,13 @@ public class LandscapeReportContributorsTab {
                     .filter(c -> contributorsLinkedFromTables.contains(c.getContributor().getEmail()))
                     .collect(Collectors.toList());
             LOG.info("Saving bot reports for " + linkedBots.size() + " contributor(s) linked from tables (out of " + linkedBots.size() + ")");
-            // Contributors, teams (the TEAMS tab passes teams as its "contributors" list) and bots
-            // all merge into one contributors/people.zip, keyed by safe email; pages open as
-            // contributor-report.html?key=<safe-email>.
-            individualReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults, reportsFolder).getIndividualReports(linkedContributors);
-            botReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults, reportsFolder).getIndividualReports(linkedBots);
+            // Teams go to team-report.html (their own embedded archive); contributors and bots go
+            // to contributor-report.html (shared archive). The TEAMS tab passes teams as its
+            // "contributors" list, so isTeam is driven by this tab's type. Bots only exist for the
+            // contributors tab.
+            boolean isTeam = type == Type.TEAMS;
+            individualReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults, reportsFolder).getIndividualReports(linkedContributors, isTeam);
+            botReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults, reportsFolder).getIndividualReports(linkedBots, false);
             ProcessingStopwatch.end("reporting/contributors/individual reports");
         }
         ProcessingStopwatch.end("reporting/contributors");

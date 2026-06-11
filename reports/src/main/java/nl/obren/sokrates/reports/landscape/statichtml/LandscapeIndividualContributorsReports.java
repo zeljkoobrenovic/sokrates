@@ -49,28 +49,68 @@ public class LandscapeIndividualContributorsReports {
     }
 
     public static final String PEOPLE_ZIP_FILE_NAME = "people.zip";
+    public static final String TEAMS_ZIP_FILE_NAME = "teams.zip";
+    public static final String CONTRIBUTOR_REPORT_FILE_NAME = "contributor-report.html";
+    public static final String TEAM_REPORT_FILE_NAME = "team-report.html";
+
+    // Routing set: the safe-email keys that belong to teams. Teams are rendered in a separate
+    // team-report.html (with its own embedded archive) so neither file bundles everyone — a single
+    // shared file grew very large on big landscapes. getContributorReportUrl consults this to send a
+    // team's link to team-report.html and everyone else's to contributor-report.html. Seeded eagerly
+    // from analysisResults.getTeams() (registerTeams) before any link is rendered, so routing never
+    // depends on report-generation order.
+    private static final java.util.Set<String> teamReportKeys = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    // Records which safe-email keys are teams (call early, e.g. when the report generator is built).
+    // Replaces the prior set so a team in one landscape doesn't leak into another (virtual/sub-
+    // landscapes share the JVM); a stale team key would otherwise route to a team-report.html whose
+    // teams.zip lacks that entry.
+    public static void registerTeams(List<ContributorRepositories> teams) {
+        teamReportKeys.clear();
+        if (teams == null) {
+            return;
+        }
+        teams.forEach(t -> teamReportKeys.add(getContributorReportKey(t.getContributor().getEmail())));
+    }
+
+    public static boolean isTeamKey(String key) {
+        return teamReportKeys.contains(key);
+    }
+
+    // The relative URL to a person's page: team-report.html for teams, contributor-report.html for
+    // contributors/bots. Both select the person by safe-email key from their own embedded archive.
+    public static String getContributorReportUrl(String email) {
+        String key = getContributorReportKey(email);
+        String file = isTeamKey(key) ? TEAM_REPORT_FILE_NAME : CONTRIBUTOR_REPORT_FILE_NAME;
+        return "contributors/" + file + "?key=" + key;
+    }
 
     /**
      * Individual people pages used to be one self-contained HTML file each (thousands per large
-     * landscape). They are now a single shared {@code contributors/contributor-report.html}
-     * template plus one {@code contributors/people.zip} holding one JSON entry per person, keyed by
-     * the safe email (contributors, teams and bots all live in this one zip — teams are identified
-     * by {@code isTeam} in the data). Each entry bundles everything the page needs ({@code data},
-     * {@code langIcons}, {@code options}) so the template is fully static; a person's page opens as
-     * {@code contributor-report.html?key=<safe-email>}.
+     * landscape). They are now shared client-rendered pages whose data archive is embedded inline:
+     * <b>contributors and bots</b> live in {@code contributors/contributor-report.html} (archive of
+     * one JSON entry per person, keyed by safe email), and <b>teams</b> live in a separate
+     * {@code contributors/team-report.html} — splitting them keeps neither file huge on big
+     * landscapes. Each entry bundles everything the page needs ({@code data}, {@code langIcons},
+     * {@code options}); teams are still flagged by {@code isTeam} in the data. A page opens as
+     * {@code <contributor|team>-report.html?key=<safe-email>} (see {@link #getContributorReportUrl}).
      *
-     * <p>This method is called once per group (contributors, then bots; teams from the teams tab);
-     * each call merges its people into the shared {@code people.zip}.
+     * <p>This method is called once per group (contributors, then bots — both {@code isTeam=false};
+     * teams from the teams tab — {@code isTeam=true}). Same-file groups (contributors + bots) merge
+     * into a shared on-disk zip accumulator so the file holds all of them.
      */
-    public List<RichTextReport> getIndividualReports(List<ContributorRepositories> contributors) {
+    public List<RichTextReport> getIndividualReports(List<ContributorRepositories> contributors, boolean isTeam) {
         File individualReportsFolder = new File(reportsFolder, "contributors");
         individualReportsFolder.mkdirs();
-        File peopleZip = new File(individualReportsFolder, PEOPLE_ZIP_FILE_NAME);
+        String zipName = isTeam ? TEAMS_ZIP_FILE_NAME : PEOPLE_ZIP_FILE_NAME;
+        String reportFileName = isTeam ? TEAM_REPORT_FILE_NAME : CONTRIBUTOR_REPORT_FILE_NAME;
+        File accumulatorZip = new File(individualReportsFolder, zipName);
 
-        // Merge into the existing zip (this method runs once per group; keep entries from prior groups).
+        // Merge into the existing zip (contributors and bots run as two calls into the same
+        // people.zip; keep entries from the prior call).
         Map<String, String> entriesByName = new LinkedHashMap<>();
-        if (peopleZip.exists()) {
-            ZipUtils.unzipAllEntriesAsStrings(peopleZip).forEach((name, entry) -> entriesByName.put(name, entry.getContent()));
+        if (accumulatorZip.exists()) {
+            ZipUtils.unzipAllEntriesAsStrings(accumulatorZip).forEach((name, entry) -> entriesByName.put(name, entry.getContent()));
         }
         contributors.forEach(contributor -> {
             String[] entry = buildEntry(contributor, individualReportsFolder);
@@ -81,21 +121,20 @@ public class LandscapeIndividualContributorsReports {
         String[][] entries = entriesByName.entrySet().stream()
                 .map(e -> new String[]{e.getKey(), e.getValue()})
                 .toArray(String[][]::new);
-        // people.zip persists across the three separate per-group instances (contributors/teams/bots)
-        // as the merge accumulator read back above — kept on disk for that purpose only; the page no
-        // longer fetches it.
-        ZipUtils.stringToZipFile(peopleZip, entries);
+        // The zip persists across same-file per-group calls as the merge accumulator read back above
+        // — kept on disk for that purpose only; the page no longer fetches it.
+        ZipUtils.stringToZipFile(accumulatorZip, entries);
 
-        // Write the shared template with the merged people archive embedded inline as base64 (last
-        // group call wins and holds all entries), so the page extracts its ?key= person in-browser
-        // (no fetch) and opens from file://.
+        // Write the shared template (same source for both files) with this group's archive embedded
+        // inline as base64 (last same-file call wins and holds all its entries), so the page extracts
+        // its ?key= person in-browser (no fetch) and opens from file://.
         try {
             String archiveB64 = VisualizationTemplate.base64(ZipUtils.stringEntriesToZipBytes(entries));
             java.io.InputStream in = this.getClass().getClassLoader().getResourceAsStream("templates/contributor-report.html");
             String template = org.apache.commons.io.IOUtils.toString(in, StandardCharsets.UTF_8)
                     .replace("${sokrates-unzip-lib}", VisualizationTemplate.embedZipLib())
                     .replace("${embedded-archive}", "var SOKRATES_ARCHIVE = \"" + archiveB64 + "\";");
-            FileUtils.write(new File(individualReportsFolder, "contributor-report.html"), template, StandardCharsets.UTF_8);
+            FileUtils.write(new File(individualReportsFolder, reportFileName), template, StandardCharsets.UTF_8);
         } catch (Exception e) {
             LOG.error(e);
         }

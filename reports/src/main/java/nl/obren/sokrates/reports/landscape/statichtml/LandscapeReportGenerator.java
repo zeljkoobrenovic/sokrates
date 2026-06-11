@@ -157,6 +157,11 @@ public class LandscapeReportGenerator {
         overallFileLastModifiedDistribution = analysisResults.getOverallFileLastModifiedDistribution();
         populateTimeSlotMaps();
 
+        // Seed the team-email routing set before any people link is rendered, so getContributorUrl
+        // sends teams to team-report.html and contributors/bots to contributor-report.html regardless
+        // of report-generation order.
+        LandscapeIndividualContributorsReports.registerTeams(analysisResults.getTeams());
+
         landscapeReportContributorsTab = new LandscapeReportContributorsTab(analysisResults, analysisResults.getContributors(), landscapeReport, folder, reportsFolder, LandscapeReportContributorsTab.Type.CONTRIBUTORS, teamsConfig);
         landscapeReportTeamsTab = new LandscapeReportContributorsTab(analysisResults, analysisResults.getTeams(), landscapeReport, folder, reportsFolder, LandscapeReportContributorsTab.Type.TEAMS, teamsConfig);
 
