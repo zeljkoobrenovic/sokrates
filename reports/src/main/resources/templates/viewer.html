@@ -32,7 +32,7 @@
             padding-left: 10px;
             white-space: pre;
         }
-        /* Loading indicator shown while the source/fragment is fetched. */
+        /* Loading indicator shown while the embedded archive is decoded + highlighted. */
         #loading {
             display: flex;
             align-items: center;
@@ -190,7 +190,7 @@
         }
     }
 
-    (function main() {
+    function dispatch() {
         if (param('bundle')) {
             viewBundle();
         } else if (param('aspect') && param('file')) {
@@ -198,6 +198,12 @@
         } else {
             showError('Nothing to show: expected ?aspect=&file= or ?bundle=&i=');
         }
+    }
+
+    (function main() {
+        // Decoding the embedded archive + highlighting blocks the main thread; yield one frame
+        // first so the loading spinner actually paints, then do the synchronous extract + render.
+        requestAnimationFrame(function () { setTimeout(dispatch, 0); });
     })();
 </script>
 </body>

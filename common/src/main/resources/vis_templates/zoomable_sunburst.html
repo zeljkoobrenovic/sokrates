@@ -26,7 +26,7 @@
 
         .error { color: #b00; }
 
-        /* Loading indicator shown while the view is fetched + extracted from the zip. */
+        /* Loading indicator shown while the view is extracted from the embedded archive. */
         #loading {
             display: flex;
             align-items: center;
@@ -248,14 +248,7 @@
         }
     }
 
-    (function load() {
-        // Inline mode (self-contained page) renders the embedded data directly. Otherwise the
-        // per-view archive is embedded inline (SOKRATES_ARCHIVE); extract the ?key= view — no
-        // fetch, so the page works from file://.
-        if (typeof SOKRATES_INLINE_DATA !== 'undefined' && SOKRATES_INLINE_DATA !== null) {
-            render(SOKRATES_INLINE_DATA);
-            return;
-        }
+    function loadEmbedded() {
         try {
             var key = param('key') || 'main';
             var entries = sokratesUnzip(SOKRATES_ARCHIVE);
@@ -265,6 +258,19 @@
         } catch (e) {
             showError(e.message);
         }
+    }
+
+    (function load() {
+        // Inline mode (self-contained page) renders the embedded data directly. Otherwise the
+        // per-view archive is embedded inline (SOKRATES_ARCHIVE); extract the ?key= view — no
+        // fetch, so the page works from file://.
+        if (typeof SOKRATES_INLINE_DATA !== 'undefined' && SOKRATES_INLINE_DATA !== null) {
+            render(SOKRATES_INLINE_DATA);
+            return;
+        }
+        // Decoding a large embedded archive blocks the main thread; yield one frame first so the
+        // loading spinner actually paints, then do the synchronous extract + render.
+        requestAnimationFrame(function () { setTimeout(loadEmbedded, 0); });
     })();
 </script>
 </body>

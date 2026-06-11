@@ -65,9 +65,7 @@
         return /\.(zip|gz|png|jpg|jpeg|gif|pdf|bin)$/i.test(name);
     }
 
-    (function main() {
-        var entry = param('entry');
-        if (!entry) { showError('Nothing to show: expected ?entry=<name>'); return; }
+    function renderEntry(entry) {
         try {
             var entries = sokratesUnzip(SOKRATES_ARCHIVE);
             var bytes = entries[entry];
@@ -94,6 +92,14 @@
         } catch (e) {
             showError(e.message);
         }
+    }
+
+    (function main() {
+        var entry = param('entry');
+        if (!entry) { showError('Nothing to show: expected ?entry=<name>'); return; }
+        // Decoding a large embedded archive blocks the main thread; yield one frame first so the
+        // loading spinner actually paints, then do the synchronous extract + render.
+        requestAnimationFrame(function () { setTimeout(function () { renderEntry(entry); }, 0); });
     })();
 </script>
 </body>

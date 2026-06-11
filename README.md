@@ -105,3 +105,4 @@ Sokrates is a Maven multi-module project. The dependency chain is `common → co
 ## License
 
 See [LICENSE](LICENSE). Sokrates is built by Željko Obrenović.
+
