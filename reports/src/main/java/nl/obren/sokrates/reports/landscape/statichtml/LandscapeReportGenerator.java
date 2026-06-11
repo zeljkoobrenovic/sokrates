@@ -923,9 +923,16 @@ public class LandscapeReportGenerator {
             }
             int count = zommableCircleCountExtractors.getCount(analysisResults);
             if (count > 0) {
-                VisualizationItem item = new VisualizationItem(name + " (" + FormattingUtils.getPlainTextForNumber(count) + ")", count);
+                VisualizationItem item;
                 if (colorByLanguage) {
-                    item.setColor(LanguageColors.getColor(getMainLanguage(analysisResults)));
+                    // count is main LOC here; label/tooltip = name + LOC + main language.
+                    String lang = getMainLanguage(analysisResults);
+                    String label = name + " (" + FormattingUtils.getPlainTextForNumber(count) + " LOC"
+                            + (lang.isEmpty() ? "" : ", " + lang) + ")";
+                    item = new VisualizationItem(label, count);
+                    item.setColor(LanguageColors.getColor(lang));
+                } else {
+                    item = new VisualizationItem(name + " (" + FormattingUtils.getPlainTextForNumber(count) + ")", count);
                 }
                 getParent(parents, Arrays.asList(elements)).getChildren().add(item);
             }
@@ -1009,10 +1016,19 @@ public class LandscapeReportGenerator {
         repositories.forEach(analysisResults -> {
             int count = extractor.getCount(analysisResults);
             if (count > 0) {
-                String name = analysisResults.getAnalysisResults().getMetadata().getName();
-                VisualizationItem item = new VisualizationItem(name + " (" + FormattingUtils.getPlainTextForNumber(count) + ")", count);
+                String repoName = analysisResults.getAnalysisResults().getMetadata().getName();
+                String label;
+                VisualizationItem item;
                 if (colorByLanguage) {
-                    item.setColor(LanguageColors.getColor(getMainLanguage(analysisResults)));
+                    // Label/tooltip = name + main LOC + main language (the chart clips the label to
+                    // the bubble; the full string shows on hover). count is the main LOC here.
+                    String lang = getMainLanguage(analysisResults);
+                    label = repoName + " (" + FormattingUtils.getPlainTextForNumber(count) + " LOC"
+                            + (lang.isEmpty() ? "" : ", " + lang) + ")";
+                    item = new VisualizationItem(label, count);
+                    item.setColor(LanguageColors.getColor(lang));
+                } else {
+                    item = new VisualizationItem(repoName + " (" + FormattingUtils.getPlainTextForNumber(count) + ")", count);
                 }
                 leaves.add(item);
             }

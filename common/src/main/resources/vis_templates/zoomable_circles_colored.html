@@ -108,6 +108,27 @@ ${sokrates-inflate-lib}
             if (focus !== d) zoom(d), d3.event.stopPropagation();
         });
 
+    // Native hover tooltip on every circle (full name + any size/lang the producer put in the name).
+    circle.append("title").text(function (d) {
+        return d.data.name;
+    });
+
+    // Approx chars that fit inside a circle of (scaled) radius r at the label font size, so labels
+    // are clipped to their bubble instead of overflowing into neighbours. ~6px per char at 11px font.
+    function labelForRadius(name, r) {
+        var maxChars = Math.floor((2 * r - 4) / 6);
+        if (maxChars < 1) {
+            return "";
+        }
+        if (name.length <= maxChars) {
+            return name;
+        }
+        if (maxChars <= 1) {
+            return name.substr(0, 1);
+        }
+        return name.substr(0, maxChars - 1) + "…";
+    }
+
     var text = g.selectAll("text")
         .data(nodes)
         .enter().append("text")
@@ -119,7 +140,7 @@ ${sokrates-inflate-lib}
             return d.parent === root ? "inline" : "none";
         })
         .text(function (d) {
-            return d.data.name.length > 33 ? (d.data.name.substr(0, 14) + "..." + d.data.name.substr(d.data.name.length - 14))  : d.data.name;
+            return d.data.name;
         });
 
     var node = g.selectAll("circle,text");
@@ -168,6 +189,10 @@ ${sokrates-inflate-lib}
         });
         circle.attr("r", function (d) {
             return d.r * k;
+        });
+        // Clip each label to fit inside its bubble at the current zoom (full name stays on hover).
+        text.text(function (d) {
+            return labelForRadius(d.data.name, d.r * k);
         });
     }
 
