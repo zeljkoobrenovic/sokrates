@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Generates the per-contributor (and per-team) individual reports as client-rendered HTML
@@ -49,17 +50,22 @@ public class LandscapeIndividualContributorsReports {
     }
 
     public static final String PEOPLE_ZIP_FILE_NAME = "people.zip";
+    public static final String PEOPLE_ALL_ZIP_FILE_NAME = "people-all.zip";
     public static final String TEAMS_ZIP_FILE_NAME = "teams.zip";
     public static final String CONTRIBUTOR_REPORT_FILE_NAME = "contributor-report.html";
+    public static final String CONTRIBUTOR_REPORT_ALL_FILE_NAME = "contributor-report-all.html";
     public static final String TEAM_REPORT_FILE_NAME = "team-report.html";
 
-    // Routing set: the safe-email keys that belong to teams. Teams are rendered in a separate
-    // team-report.html (with its own embedded archive) so neither file bundles everyone — a single
-    // shared file grew very large on big landscapes. getContributorReportUrl consults this to send a
-    // team's link to team-report.html and everyone else's to contributor-report.html. Seeded eagerly
-    // from analysisResults.getTeams() (registerTeams) before any link is rendered, so routing never
+    // Routing sets: the safe-email keys that belong to teams, and the keys of RECENT (last-30-days)
+    // contributors. Each kind of page embeds its own archive inline so no single file bundles
+    // everyone — on big landscapes one shared file grew huge (e.g. ~60 MB for 5000 developers).
+    // getContributorReportUrl sends a team's link to team-report.html; a recent contributor's link
+    // to contributor-report.html (small, the common case); everyone else (non-recent contributors +
+    // bots) to contributor-report-all.html (the big, rarely-opened file). Seeded eagerly
+    // (registerTeams / registerRecentContributors) before any link is rendered, so routing never
     // depends on report-generation order.
     private static final java.util.Set<String> teamReportKeys = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    private static final java.util.Set<String> recentContributorKeys = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     // Records which safe-email keys are teams (call early, e.g. when the report generator is built).
     // Replaces the prior set so a team in one landscape doesn't leak into another (virtual/sub-
@@ -73,15 +79,47 @@ public class LandscapeIndividualContributorsReports {
         teams.forEach(t -> teamReportKeys.add(getContributorReportKey(t.getContributor().getEmail())));
     }
 
+    // Records which safe-email keys are RECENT contributors (a commit in the last 30 days — the same
+    // rule the landscape page uses, getCommitsCount30Days() > 0). Replaces the prior set per
+    // landscape (see registerTeams) so a stale recent key never routes to a contributor-report.html
+    // whose people.zip lacks that entry.
+    public static void registerRecentContributors(List<ContributorRepositories> contributors) {
+        recentContributorKeys.clear();
+        if (contributors == null) {
+            return;
+        }
+        contributors.stream()
+                .filter(LandscapeIndividualContributorsReports::isRecent)
+                .forEach(c -> recentContributorKeys.add(getContributorReportKey(c.getContributor().getEmail())));
+    }
+
+    // Recent = a commit in the last 30 days (matches the landscape's getRecentContributors).
+    static boolean isRecent(ContributorRepositories contributor) {
+        return contributor.getContributor().getCommitsCount30Days() > 0;
+    }
+
     public static boolean isTeamKey(String key) {
         return teamReportKeys.contains(key);
     }
 
-    // The relative URL to a person's page: team-report.html for teams, contributor-report.html for
-    // contributors/bots. Both select the person by safe-email key from their own embedded archive.
+    public static boolean isRecentKey(String key) {
+        return recentContributorKeys.contains(key);
+    }
+
+    // The relative URL to a person's page: team-report.html for teams; contributor-report.html for
+    // recent contributors (small inline archive, the common case); contributor-report-all.html for
+    // everyone else (non-recent contributors + bots). Each page selects the person by safe-email key
+    // from its own embedded archive.
     public static String getContributorReportUrl(String email) {
         String key = getContributorReportKey(email);
-        String file = isTeamKey(key) ? TEAM_REPORT_FILE_NAME : CONTRIBUTOR_REPORT_FILE_NAME;
+        String file;
+        if (isTeamKey(key)) {
+            file = TEAM_REPORT_FILE_NAME;
+        } else if (isRecentKey(key)) {
+            file = CONTRIBUTOR_REPORT_FILE_NAME;
+        } else {
+            file = CONTRIBUTOR_REPORT_ALL_FILE_NAME;
+        }
         return "contributors/" + file + "?key=" + key;
     }
 
@@ -100,20 +138,43 @@ public class LandscapeIndividualContributorsReports {
      * into a shared on-disk zip accumulator so the file holds all of them.
      */
     public List<RichTextReport> getIndividualReports(List<ContributorRepositories> contributors, boolean isTeam) {
-        File individualReportsFolder = new File(reportsFolder, "contributors");
-        individualReportsFolder.mkdirs();
-        String zipName = isTeam ? TEAMS_ZIP_FILE_NAME : PEOPLE_ZIP_FILE_NAME;
-        String reportFileName = isTeam ? TEAM_REPORT_FILE_NAME : CONTRIBUTOR_REPORT_FILE_NAME;
-        File accumulatorZip = new File(individualReportsFolder, zipName);
+        File folder = new File(reportsFolder, "contributors");
+        folder.mkdirs();
 
-        // Merge into the existing zip (contributors and bots run as two calls into the same
-        // people.zip; keep entries from the prior call).
+        if (isTeam) {
+            // Teams: one team-report.html (own archive); no recent/all split.
+            writeReport(folder, contributors, TEAMS_ZIP_FILE_NAME, TEAM_REPORT_FILE_NAME);
+            return new ArrayList<>();
+        }
+
+        // Contributors (and bots) split into two self-contained files so the default page stays
+        // small on big landscapes: recent (last-30-days) contributors → contributor-report.html;
+        // EVERYONE (recent + non-recent + bots) → contributor-report-all.html (the big, rarely
+        // opened file). Bots are never recent, so they only ever land in the all-time file. Both the
+        // contributors call and the bots call run with isTeam=false and merge into these same files.
+        List<ContributorRepositories> recent = contributors.stream()
+                .filter(LandscapeIndividualContributorsReports::isRecent)
+                .collect(Collectors.toList());
+        writeReport(folder, recent, PEOPLE_ZIP_FILE_NAME, CONTRIBUTOR_REPORT_FILE_NAME);
+        writeReport(folder, contributors, PEOPLE_ALL_ZIP_FILE_NAME, CONTRIBUTOR_REPORT_ALL_FILE_NAME);
+
+        // The pages are embedded in the templates above; nothing is returned for the export pipeline.
+        return new ArrayList<>();
+    }
+
+    // Builds one self-contained report file: merges {@code people}'s entries into {@code zipName}
+    // (the on-disk merge accumulator, so same-file groups like contributors + bots accumulate across
+    // calls), then writes {@code reportFileName} from the shared template with that merged archive
+    // embedded inline as base64 (the page extracts its ?key= person in-browser — no fetch, file://).
+    private void writeReport(File folder, List<ContributorRepositories> people, String zipName, String reportFileName) {
+        File accumulatorZip = new File(folder, zipName);
+
         Map<String, String> entriesByName = new LinkedHashMap<>();
         if (accumulatorZip.exists()) {
             ZipUtils.unzipAllEntriesAsStrings(accumulatorZip).forEach((name, entry) -> entriesByName.put(name, entry.getContent()));
         }
-        contributors.forEach(contributor -> {
-            String[] entry = buildEntry(contributor, individualReportsFolder);
+        people.forEach(contributor -> {
+            String[] entry = buildEntry(contributor, folder);
             if (entry != null) {
                 entriesByName.put(entry[0], entry[1]);
             }
@@ -121,26 +182,18 @@ public class LandscapeIndividualContributorsReports {
         String[][] entries = entriesByName.entrySet().stream()
                 .map(e -> new String[]{e.getKey(), e.getValue()})
                 .toArray(String[][]::new);
-        // The zip persists across same-file per-group calls as the merge accumulator read back above
-        // — kept on disk for that purpose only; the page no longer fetches it.
         ZipUtils.stringToZipFile(accumulatorZip, entries);
 
-        // Write the shared template (same source for both files) with this group's archive embedded
-        // inline as base64 (last same-file call wins and holds all its entries), so the page extracts
-        // its ?key= person in-browser (no fetch) and opens from file://.
         try {
             String archiveB64 = VisualizationTemplate.base64(ZipUtils.stringEntriesToZipBytes(entries));
             java.io.InputStream in = this.getClass().getClassLoader().getResourceAsStream("templates/contributor-report.html");
             String template = org.apache.commons.io.IOUtils.toString(in, StandardCharsets.UTF_8)
                     .replace("${sokrates-unzip-lib}", VisualizationTemplate.embedZipLib())
                     .replace("${embedded-archive}", "var SOKRATES_ARCHIVE = \"" + archiveB64 + "\";");
-            FileUtils.write(new File(individualReportsFolder, reportFileName), template, StandardCharsets.UTF_8);
+            FileUtils.write(new File(folder, reportFileName), template, StandardCharsets.UTF_8);
         } catch (Exception e) {
             LOG.error(e);
         }
-
-        // The pages are embedded in the template above; nothing is returned for the export pipeline.
-        return new ArrayList<>();
     }
 
     // Builds the {key, json} zip entry for one person; the JSON bundles data + langIcons + options.
