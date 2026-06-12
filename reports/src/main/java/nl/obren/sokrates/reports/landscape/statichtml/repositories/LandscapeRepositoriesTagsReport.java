@@ -77,8 +77,7 @@ public class LandscapeRepositoriesTagsReport {
 
         });
         int index[] = {0};
-        report.addParagraph(formatCountPlural(tagGroupsCount[0], "group", "groups") + " (" + formatCountPlural(tagCount[0], "tag", "tags") + "):");
-        report.startUnorderedList();
+        report.startUnorderedList("margin-top: 0; padding-top: 0");
         tagGroups.stream().filter(tagGroup -> tagGroup.getRepositoryTags().size() > 0).forEach(tagGroup -> {
             int count[] = {0};
             tagGroup.getRepositoryTags().stream().forEach(repositoryTag -> {

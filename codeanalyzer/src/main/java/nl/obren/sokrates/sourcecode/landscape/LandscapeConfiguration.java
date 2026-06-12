@@ -97,9 +97,6 @@ public class LandscapeConfiguration {
     // An optional list of string transformation used to transform contributor IDs (e.g. to remove domain from email)
     private List<OperationStatement> transformContributorEmails = new ArrayList<>();
 
-    // If true, the list with extensions will be displayed in the first "Overview" tab. If false, the list with extensions will be displayed in the first "Repositories" tab.
-    private boolean showExtensionsOnFirstTab = true;
-
     // If true, the contributors and commits trend will be displayed in the first "Overview" tab in addition to it being shown in the "Contributors" tab.
     private boolean showContributorsTrendsOnFirstTab = true;
 
@@ -226,14 +223,6 @@ public class LandscapeConfiguration {
 
     public void setRepositoryThresholdContributors(int repositoryThresholdContributors) {
         this.repositoryThresholdContributors = repositoryThresholdContributors;
-    }
-
-    public boolean isShowExtensionsOnFirstTab() {
-        return showExtensionsOnFirstTab;
-    }
-
-    public void setShowExtensionsOnFirstTab(boolean showExtensionsOnFirstTab) {
-        this.showExtensionsOnFirstTab = showExtensionsOnFirstTab;
     }
 
     public boolean isShowContributorsTrendsOnFirstTab() {

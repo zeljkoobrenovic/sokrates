@@ -17,10 +17,18 @@ public class CorrelationDiagramGenerator<T> {
     private int r = 9;
     private int margin = 5;
     private int maxNumberOfPointsOnDiagram = 2000;
+    // When true, each correlation diagram is wrapped in a collapsible <details> block whose
+    // <summary> is the title (e.g. "Recent Contributors vs. Commits (30 days): 6 points") instead
+    // of an always-visible header (used by the landscape Repositories tab's Correlations section).
+    private boolean collapsible = false;
 
     public CorrelationDiagramGenerator(RichTextReport report, List<T> items) {
         this.report = report;
         this.items = items;
+    }
+
+    public void setCollapsible(boolean collapsible) {
+        this.collapsible = collapsible;
     }
 
     public void addCorrelations(String title, String xLabel, String yLabel, ToDoubleFunction<T> xValueFunction, ToDoubleFunction<T> yValueFunction, ToStringFunction<T> nameFunction) {
@@ -34,11 +42,16 @@ public class CorrelationDiagramGenerator<T> {
                 yStats.addValue(yValue);
             }
         });
-        report.startDiv("display: inline-block; vertical-align: top; margin-right: 40px;");
-        report.addLevel2Header(title + ": <span style='color: grey;'>" + xStats.getN() + " points</span>");
+        String titleWithCount = title + ": <span style='color: grey;'>" + xStats.getN() + " points</span>";
+        if (collapsible) {
+            report.startDetailsBlock(titleWithCount);
+        } else {
+            report.startDiv("display: inline-block; vertical-align: top; margin-right: 40px;");
+            report.addLevel2Header(titleWithCount);
+        }
         if (xStats.getN() == 0) {
             report.addParagraph("No data for \"" + xLabel + "\" vs. \"" + yLabel + "\".");
-            report.endDiv();
+            endCorrelationBlock();
             return;
         }
         report.startTable("");
@@ -110,7 +123,15 @@ public class CorrelationDiagramGenerator<T> {
         report.endTableRow();
 
         report.endTable();
-        report.endDiv();
+        endCorrelationBlock();
+    }
+
+    private void endCorrelationBlock() {
+        if (collapsible) {
+            report.endDetailsBlock();
+        } else {
+            report.endDiv();
+        }
     }
 
     private void renderDistributionLines(DescriptiveStatistics xStats, DescriptiveStatistics yStats) {

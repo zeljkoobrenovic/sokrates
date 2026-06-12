@@ -11,13 +11,12 @@ import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.ReportConstants;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
 import nl.obren.sokrates.reports.landscape.data.ContributorReportExport;
-import nl.obren.sokrates.reports.landscape.utils.ContributorsExtractor;
-import nl.obren.sokrates.reports.landscape.utils.ExtractStringListValue;
-import nl.obren.sokrates.reports.landscape.utils.Force3DGraphExporter;
-import nl.obren.sokrates.reports.landscape.utils.RacingRepositoriesBarChartsExporter;
+import nl.obren.sokrates.reports.landscape.utils.*;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
+import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
@@ -26,6 +25,7 @@ import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.landscape.*;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
+import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -119,6 +119,10 @@ public class LandscapeReportContributorsTab {
         ProcessingStopwatch.start("reporting/summary");
         LOG.info("Adding big contributors summary...");
         addBigContributorsSummary();
+
+        List<ContributorRepositories> recentContributors = landscapeAnalysisResults.getRecentContributors(contributors);
+        addContributorsListsSection(recentContributorsCount, landscapeAnalysisResults.getLatestCommitDate(), recentContributors);
+
         if (recentContributorsCount > 0) {
             addContributorsPerExtension(true);
         }
@@ -129,13 +133,20 @@ public class LandscapeReportContributorsTab {
             addContributorsPerExtension();
         }
 
-        LOG.info("Adding trends...");
-        if (isContributorReport()) {
-            landscapeReport.addLevel2Header("Contribution Trends");
-            addContributionTrends();
-        }
         addIFrames(landscapeAnalysisResults.getConfiguration().getiFramesContributors());
         ProcessingStopwatch.end("reporting/summary");
+        landscapeReport.endTabContentSection();
+    }
+
+    // The contribution trends (per year / month / week / day) live in their own top-level
+    // "Activity" tab (they used to close the Contributors tab under a "Contribution Trends"
+    // header). Called on the contributors instance only (teams have no trends).
+    void addActivityTab(String tabId) {
+        landscapeReport.startTabContentSection(tabId, false);
+        LOG.info("Adding trends...");
+        ProcessingStopwatch.start("reporting/activity trends");
+        addContributionTrends();
+        ProcessingStopwatch.end("reporting/activity trends");
         landscapeReport.endTabContentSection();
     }
 
@@ -221,20 +232,43 @@ public class LandscapeReportContributorsTab {
         int commitsMaxYears = configuration.getCommitsMaxYears();
         int significantContributorMinCommitDaysPerYear = configuration.getSignificantContributorMinCommitDaysPerYear();
 
-        landscapeReport.startSubSection("Per Year", "Past " + commitsMaxYears + " years");
+        landscapeReport.startDiv("margin: 12px");
+        landscapeReport.addParagraph("latest commit date: <b>" + landscapeAnalysisResults.getLatestCommitDate() + "</b>", "color: grey");
+
+        landscapeReport.startSubSection("Overall Activity Per Year", "Past " + commitsMaxYears + " years");
         addContributorsPerYear(true);
+        landscapeReport.startDetailsBlock("significant contributions per year (" + significantContributorMinCommitDaysPerYear + "+ commit days per year)...");
+        addContributorsPerYear();
+        landscapeReport.endDetailsBlock();
         landscapeReport.endSection();
+
+        landscapeReport.startSubSection("Activity Per Year &amp; File Extension", "commits");
+        landscapeReport.startDiv("max-height: 600px; overflow-y: auto;");
+        landscapeReport.startDiv("margin-bottom: 16px; vertical-align: middle;");
+        landscapeReport.addContentInDiv(ReportConstants.ANIMATION_SVG_ICON, "display: inline-block; vertical-align: middle; margin: 4px;");
+        landscapeReport.addHtmlContent("animated commit history: ");
+        landscapeReport.addNewTabLink("all time cumulative", "visuals/racing_charts_extensions_commits.html?tickDuration=600");
+        landscapeReport.addHtmlContent(" | ");
+        landscapeReport.addNewTabLink("12 months window", "visuals/racing_charts_extensions_commits_window.html?tickDuration=600");
+        landscapeReport.endDiv();
+        List<NumericMetric> linesOfCodePerExtensionMain = LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getMainLinesOfCodePerExtension());
+        List<String> extensions = linesOfCodePerExtensionMain.stream().map(loc -> loc.getName().replaceAll(".*[.]", "").trim()).collect(Collectors.toList());
+        List<HistoryPerExtension> yearlyCommitHistoryPerExtension = landscapeAnalysisResults.getYearlyCommitHistoryPerExtension();
+        HistoryPerLanguageGenerator.getInstanceCommits(yearlyCommitHistoryPerExtension, extensions).addHistoryPerLanguage(landscapeReport);
+        new RacingLanguagesBarChartsExporter(landscapeAnalysisResults, yearlyCommitHistoryPerExtension, extensions).exportRacingChart(reportsFolder);
+        landscapeReport.endDiv();
+        landscapeReport.endSection();
+
+
+
         LOG.info("Adding contributors per extension...");
 
-        landscapeReport.startSubSection("Significant Contributions Per Year (" + significantContributorMinCommitDaysPerYear + "+ commit days per year)", "Past " + commitsMaxYears + " years");
-        addContributorsPerYear();
-        landscapeReport.endSection();
 
-        landscapeReport.startSubSection("Per Month", "Past two years");
+        landscapeReport.startSubSection("Activity Per Month", "Past two years");
         addContributorsPerMonth();
         landscapeReport.endSection();
 
-        landscapeReport.startSubSection("Per Week", "Past two years");
+        landscapeReport.startSubSection("Activity Per Week", "Past two years");
         addContributorsPerWeek();
         landscapeReport.endSection();
 
@@ -242,7 +276,7 @@ public class LandscapeReportContributorsTab {
         addContributorsPerDay();
         landscapeReport.endSection();
 
-        landscapeReport.addParagraph("latest commit date: <b>" + landscapeAnalysisResults.getLatestCommitDate() + "</b>", "color: grey");
+        landscapeReport.endDiv();
     }
 
     private void addIFrames(List<WebFrameLink> iframes) {
@@ -427,17 +461,6 @@ public class LandscapeReportContributorsTab {
                 }
             });
 
-            int recentContributorsCount = recentContributors.size();
-
-            addContributorsListsSection(recentContributorsCount, latestCommit, recentContributors);
-
-            landscapeReport.startDiv("margin-bottom: 16px; margin-top: -6px; vertical-align: middle;");
-            landscapeReport.addContentInDiv(ReportConstants.ANIMATION_SVG_ICON, "display: inline-block; vertical-align: middle; margin: 4px;");
-            landscapeReport.addNewTabLink("animated contributors history (all time)", "visuals/racing_charts_commits_contributors.html?tickDuration=600");
-            landscapeReport.addHtmlContent(" | ");
-            landscapeReport.addNewTabLink("animated contributors history (12 months window)", "visuals/racing_charts_commits_window_contributors.html?tickDuration=600");
-            landscapeReport.endDiv();
-
             ProcessingStopwatch.end("reporting/contributors/table");
 
             ProcessingStopwatch.start("reporting/contributors/saving tables");
@@ -527,17 +550,14 @@ public class LandscapeReportContributorsTab {
                 .collect(Collectors.toList());
     }
 
-    private void addContributorsListsSection(int recentContributorsCount, String[] latestCommit, List<ContributorRepositories> recentContributors) {
+    private void addContributorsListsSection(int recentContributorsCount, String latestCommit, List<ContributorRepositories> recentContributors) {
         landscapeReport.startSubSection("<a href='" + type.plural() + "-report.html' target='_blank' style='text-decoration: none'>" +
                         "" + StringUtils.capitalize(type.plural()) + "</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
-                "latest commit " + latestCommit[0]);
+                "latest commit " + latestCommit);
 
         landscapeReport.addHtmlContent("<iframe src='" + type.plural() + "-report.html?tab=recent' frameborder=0 style='height: 650px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
-        landscapeReport.endSection();
 
-        landscapeReport.startSubSection("<a href='" + type.plural() + "-recent.html' target='_blank' style='text-decoration: none'>" +
-                        "Recently Active " + StringUtils.capitalize(type.plural()) + " Stats (" + recentContributorsCount + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
-                "latest commit " + latestCommit[0]);
+        landscapeReport.startDetailsBlock("recently active " + StringUtils.lowerCase(type.plural()) + " stats...");
 
         addRecentContributorLinks();
 
@@ -622,6 +642,7 @@ public class LandscapeReportContributorsTab {
         landscapeReport.addHtmlContent(barsHtml.toString());
         landscapeReport.endDiv();
 
+        landscapeReport.endDetailsBlock();
 
         landscapeReport.endSection();
     }
