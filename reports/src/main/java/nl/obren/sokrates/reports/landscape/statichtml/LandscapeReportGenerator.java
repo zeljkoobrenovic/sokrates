@@ -323,7 +323,9 @@ public class LandscapeReportGenerator {
         if (teamsConfig.getTeams().size() > 0) {
             landscapeReport.addTab(TEAMS_TAB_ID, "Teams" + (recentContributorsCount > 0 ? " (" + recentTeamsCount + ")" + "" : ""), false);
         }
-        landscapeReport.addTab(TOPOLOGIES_TAB_ID, "Team Topology", false);
+        // "Topology", not "Team Topology" — the tab shows contributor topology too, even when no
+        // teams are configured.
+        landscapeReport.addTab(TOPOLOGIES_TAB_ID, "Topology", false);
         configuration.getCustomTabs().forEach(tab -> {
             int index = configuration.getCustomTabs().indexOf(tab);
             landscapeReport.addTab(CUSTOM_TAB_ID_PREFIX + index, tab.getName(), false);
