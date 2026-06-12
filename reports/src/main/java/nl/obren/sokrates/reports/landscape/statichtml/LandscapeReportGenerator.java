@@ -452,16 +452,18 @@ public class LandscapeReportGenerator {
         if (landscapeAnalysisResults.getConfiguration().isShowExtensionsOnFirstTab()) {
             addExtensions();
         }
-        addIFrames(landscapeAnalysisResults.getConfiguration().getiFrames());
+        // Repositories circle-packing chart goes right after the extensions section
+        // ("Contributors per File Extensions (past 30 days)"), before any custom iframes.
         addRepositoriesBubbleChart();
+        addIFrames(landscapeAnalysisResults.getConfiguration().getiFrames());
         ProcessingStopwatch.end("reporting/overview");
         landscapeReport.endTabContentSection();
         ProcessingStopwatch.end("reporting/big summary");
     }
 
-    // Bottom of the Overview tab: a circle-packing chart of all repositories (size = main lines of
-    // code, color = main language; zoomable groups when sub-landscapes are present), plus a color
-    // legend listing every language present. The chart is iframed from a self-contained visual file.
+    // Overview tab (right after the extensions section): a circle-packing chart of all repositories
+    // (size = main lines of code, color = main language; grouped into one circle per language), plus
+    // a color legend listing every language present. Iframed from a self-contained visual file.
     private void addRepositoriesBubbleChart() {
         List<RepositoryAnalysisResults> repositories = getRepositories();
         if (repositories.isEmpty()) {
