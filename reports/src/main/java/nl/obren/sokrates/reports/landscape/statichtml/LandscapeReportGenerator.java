@@ -431,15 +431,14 @@ public class LandscapeReportGenerator {
         // The extensions block has ONE fixed home: this tab (it used to move to the former
         // Statistics tab when showExtensionsOnFirstTab was false; that flag is gone).
         addExtensions();
-        // Repositories circle-packing chart goes right after the extensions section
-        // ("Contributors per File Extensions (past 30 days)"), before any custom iframes.
-        addRepositoriesBubbleChart();
-        // File age/freshness and the repository size distribution close the Overview tab
+        // File age/freshness and the repository size distribution
         // (moved here from the Repositories tab's statistics section).
         ProcessingStopwatch.start("reporting/overview/file age & freshness");
         addFileAgeAndFreshnessSection();
         addZooSection();
         ProcessingStopwatch.end("reporting/overview/file age & freshness");
+        // Repositories circle-packing chart closes the Overview tab, before any custom iframes.
+        addRepositoriesBubbleChart();
         addIFrames(landscapeAnalysisResults.getConfiguration().getiFrames());
         ProcessingStopwatch.end("reporting/overview");
         landscapeReport.endTabContentSection();
@@ -1193,6 +1192,8 @@ public class LandscapeReportGenerator {
     private void addCorrelations() {
         List<RepositoryAnalysisResults> repositories = landscapeAnalysisResults.getRepositoryAnalysisResults();
         CorrelationDiagramGenerator<RepositoryAnalysisResults> correlationDiagramGenerator = new CorrelationDiagramGenerator<>(landscapeReport, repositories);
+        // Each diagram in its own collapsible details block (summary = "title: N points").
+        correlationDiagramGenerator.setCollapsible(true);
 
         correlationDiagramGenerator.addCorrelations("Recent Contributors vs. Commits (30 days)", "commits (30d)", "recent contributors (30d)",
                 p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days(),
