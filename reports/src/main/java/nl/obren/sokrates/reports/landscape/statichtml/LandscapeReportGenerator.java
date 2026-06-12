@@ -67,7 +67,6 @@ public class LandscapeReportGenerator {
     public static final String OVERVIEW_TAB_ID = "overview";
     public static final String SUB_LANDSCAPES_TAB_ID = "sub-landscapes";
     public static final String REPOSITORIES_TAB_ID = "repositories";
-    public static final String STATS_TAB_ID = "stats";
 
     public static final String TAGS_TAB_ID = "tags";
     public static final String CONTRIBUTORS_TAB_ID = "contributors";
@@ -189,8 +188,6 @@ public class LandscapeReportGenerator {
         addOverviewTab();
         addSublandscapesTab();
         addRepositoriesTab(repositories);
-        addStatsTab();
-        addRepositoryTab(repositories);
         addTagsTab(repositories);
         addPromptsTab();
 
@@ -320,7 +317,6 @@ public class LandscapeReportGenerator {
             landscapeReport.addTab(SUB_LANDSCAPES_TAB_ID, "Sub-Landscapes (" + (level1SubLandscapes.size() == 0 ? subLandscapes.size() : level1SubLandscapes.size()) + ")", false);
         }
         landscapeReport.addTab(REPOSITORIES_TAB_ID, "Repositories (" + landscapeAnalysisResults.getFilteredRepositoryAnalysisResults().size() + ")", false);
-        landscapeReport.addTab(STATS_TAB_ID, "Statistics", false);
 
         landscapeReport.addTab(TAGS_TAB_ID, "Tags & Extensions", false);
         landscapeReport.addTab(CONTRIBUTORS_TAB_ID, "Contributors" + (recentContributorsCount > 0 ? " (" + recentContributorsCount + ")" + "" : ""), false);
@@ -385,31 +381,18 @@ public class LandscapeReportGenerator {
         landscapeReport.endTabContentSection();
     }
 
-    private void addRepositoryTab(List<RepositoryAnalysisResults> repositories) {
-        LOG.info("Adding repository section...");
-        ProcessingStopwatch.start("reporting/repositories");
-        addRepositoriesStatisticsSection(repositories);
-        addIFrames(landscapeAnalysisResults.getConfiguration().getiFramesRepositories());
-        ProcessingStopwatch.end("reporting/repositories");
-        landscapeReport.endTabContentSection();
-    }
-
-    private void addStatsTab() {
-        landscapeReport.startTabContentSection(STATS_TAB_ID, false);
-        LOG.info("Adding stats...");
-        addBigRepositoriesSummary(landscapeAnalysisResults);
-        addIFrames(landscapeAnalysisResults.getConfiguration().getiFramesRepositoriesAtStart());
-        if (!landscapeAnalysisResults.getConfiguration().isShowExtensionsOnFirstTab()) {
-            LOG.info("Adding extensions...");
-            addExtensions();
-        }
-    }
-
+    // The former "Statistics" tab is dissolved into this tab: summary blocks (repository counts by
+    // recency window + LOC) on top, then the searchable repositories list, then the deeper
+    // statistics visuals and the configured iframes.
     private void addRepositoriesTab(List<RepositoryAnalysisResults> repositories) {
         landscapeReport.startTabContentSection(REPOSITORIES_TAB_ID, false);
         LOG.info("Adding repository section...");
         ProcessingStopwatch.start("reporting/repositories");
+        addBigRepositoriesSummary(landscapeAnalysisResults);
+        addIFrames(landscapeAnalysisResults.getConfiguration().getiFramesRepositoriesAtStart());
         addRepositoriesSection(repositories);
+        addRepositoriesStatisticsSection(repositories);
+        addIFrames(landscapeAnalysisResults.getConfiguration().getiFramesRepositories());
         ProcessingStopwatch.end("reporting/repositories");
         landscapeReport.endTabContentSection();
     }
@@ -448,9 +431,9 @@ public class LandscapeReportGenerator {
         landscapeReport.startTabContentSection(OVERVIEW_TAB_ID, true);
         ProcessingStopwatch.start("reporting/overview");
         addBigSummary(landscapeAnalysisResults);
-        if (landscapeAnalysisResults.getConfiguration().isShowExtensionsOnFirstTab()) {
-            addExtensions();
-        }
+        // The extensions block has ONE fixed home: this tab (it used to move to the former
+        // Statistics tab when showExtensionsOnFirstTab was false; that flag is gone).
+        addExtensions();
         // Repositories circle-packing chart goes right after the extensions section
         // ("Contributors per File Extensions (past 30 days)"), before any custom iframes.
         addRepositoriesBubbleChart();

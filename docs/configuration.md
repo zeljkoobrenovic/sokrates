@@ -230,7 +230,6 @@ discovered index in a companion **`info.json`**; the discovered lists are *not* 
 | `includeOnlyOneRepositoryWithSameName` | boolean | `true` | Deduplicate repositories sharing a name. |
 | `mergeExtensions` | object[] | `[]` | Merge a secondary extension into a primary one. |
 | `transformContributorEmails` | object[] | `[]` | Normalise contributor identities (same op format as repo config). |
-| `showExtensionsOnFirstTab` | boolean | `true` | Show the extensions block on the Overview tab. |
 | `showContributorsTrendsOnFirstTab` | boolean | `true` | Show contributor/commit trends on the Overview tab. |
 | `maxSublandscapeDepth` | int | `0` | Max sub-landscape nesting depth shown (`0` = all). |
 | `iFramesAtStart` / `iFrames` | object[] | `[]` | Embedded web frames at the start/end of the Overview tab. |
