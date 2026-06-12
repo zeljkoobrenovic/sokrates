@@ -68,7 +68,6 @@ public class LandscapeReportGenerator {
     public static final String SUB_LANDSCAPES_TAB_ID = "sub-landscapes";
     public static final String REPOSITORIES_TAB_ID = "repositories";
 
-    public static final String TAGS_TAB_ID = "tags";
     public static final String CONTRIBUTORS_TAB_ID = "contributors";
     public static final String TOPOLOGIES_TAB_ID = "topologies";
     public static final String PROMPTS_TAB_ID = "prompts";
@@ -188,7 +187,6 @@ public class LandscapeReportGenerator {
         addOverviewTab();
         addSublandscapesTab();
         addRepositoriesTab(repositories);
-        addTagsTab(repositories);
         addPromptsTab();
 
         landscapeReportContributorsTab.addContributorsTabs(CONTRIBUTORS_TAB_ID);
@@ -317,8 +315,6 @@ public class LandscapeReportGenerator {
             landscapeReport.addTab(SUB_LANDSCAPES_TAB_ID, "Sub-Landscapes (" + (level1SubLandscapes.size() == 0 ? subLandscapes.size() : level1SubLandscapes.size()) + ")", false);
         }
         landscapeReport.addTab(REPOSITORIES_TAB_ID, "Repositories (" + landscapeAnalysisResults.getFilteredRepositoryAnalysisResults().size() + ")", false);
-
-        landscapeReport.addTab(TAGS_TAB_ID, "Tags & Extensions", false);
         landscapeReport.addTab(CONTRIBUTORS_TAB_ID, "Contributors" + (recentContributorsCount > 0 ? " (" + recentContributorsCount + ")" + "" : ""), false);
         if (teamsConfig.getTeams().size() > 0) {
             landscapeReport.addTab(TEAMS_TAB_ID, "Teams" + (recentContributorsCount > 0 ? " (" + recentTeamsCount + ")" + "" : ""), false);
@@ -345,9 +341,9 @@ public class LandscapeReportGenerator {
         });
     }
 
-    private void addTagsTab(List<RepositoryAnalysisResults> repositories) {
-        landscapeReport.startTabContentSection(TAGS_TAB_ID, false);
-
+    // Repositories grouped by file extension and by tags — formerly the "Tags & Extensions" tab,
+    // now sections of the Repositories tab (both are groupings of repositories).
+    private void addExtensionsAndTagsSections(List<RepositoryAnalysisResults> repositories) {
         landscapeReport.addLineBreak();
         landscapeReport.startSubSection("<a href='repositories-extensions.html' target='_blank' style='text-decoration: none'>" +
                 "File Extension Stats</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "");
@@ -360,10 +356,7 @@ public class LandscapeReportGenerator {
         ProcessingStopwatch.start("reporting/tags");
         landscapeReport.addLineBreak();
         addTagsSection(repositories);
-
-
         ProcessingStopwatch.end("reporting/tags");
-        landscapeReport.endTabContentSection();
     }
 
     private void addPromptsTab() {
@@ -383,9 +376,10 @@ public class LandscapeReportGenerator {
         landscapeReport.endTabContentSection();
     }
 
-    // The former "Statistics" tab is dissolved into this tab: summary blocks (repository counts by
-    // recency window + LOC) on top, then the searchable repositories list, then the deeper
-    // statistics visuals and the configured iframes.
+    // The former "Statistics" and "Tags & Extensions" tabs are dissolved into this tab: summary
+    // blocks (repository counts by recency window) on top, then the searchable repositories list,
+    // then repositories grouped by extension and tags, then the deeper statistics visuals and the
+    // configured iframes.
     private void addRepositoriesTab(List<RepositoryAnalysisResults> repositories) {
         landscapeReport.startTabContentSection(REPOSITORIES_TAB_ID, false);
         LOG.info("Adding repository section...");
@@ -393,6 +387,7 @@ public class LandscapeReportGenerator {
         addBigRepositoriesSummary(landscapeAnalysisResults);
         addIFrames(landscapeAnalysisResults.getConfiguration().getiFramesRepositoriesAtStart());
         addRepositoriesSection(repositories);
+        addExtensionsAndTagsSections(repositories);
         addRepositoriesStatisticsSection(repositories);
         addIFrames(landscapeAnalysisResults.getConfiguration().getiFramesRepositories());
         ProcessingStopwatch.end("reporting/repositories");
@@ -1308,7 +1303,7 @@ public class LandscapeReportGenerator {
 
         addIFrames(landscapeAnalysisResults.getConfiguration().getiFramesAtStart());
 
-        // No Tags section here — tags live in the dedicated "Tags & Extensions" tab (addTagsSection).
+        // No Tags section here — tags live in the Repositories tab (addExtensionsAndTagsSections).
         landscapeReport.addLineBreak();
     }
 
@@ -1473,7 +1468,7 @@ public class LandscapeReportGenerator {
             landscapeReport.startSubSection("<a href='repositories.html' target='_blank' style='text-decoration: none'>" +
                             "Repositories (" + repositoryAnalysisResults.size() + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
                     "");
-            landscapeReport.addHtmlContent("<iframe src='repositories.html' frameborder=0 style='height: calc(100vh - 300px); width: 100%; margin-left: 0; margin-bottom: 0px; padding: 0;'></iframe>");
+            landscapeReport.addHtmlContent("<iframe src='repositories.html' frameborder=0 style='height: 650px; width: 100%; margin-left: 0; margin-bottom: 0px; padding: 0;'></iframe>");
             landscapeReport.endSection();
         }
 
@@ -1568,7 +1563,7 @@ public class LandscapeReportGenerator {
         }
 
         landscapeReport.addLineBreak();
-        landscapeReport.addHtmlContent("<iframe src='repositories-tags.html' frameborder=0 style='height: calc(100vh - 290px); width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
+        landscapeReport.addHtmlContent("<iframe src='repositories-tags.html' frameborder=0 style='height: 600px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
 
         landscapeReport.endSection();
     }
