@@ -17,7 +17,6 @@ import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
-import nl.obren.sokrates.reports.landscape.statichtml.repositories.LandscapeRepositoriesTagsLine;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.LandscapeRepositoriesTagsMatrixReport;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.LandscapeRepositoriesTagsReport;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.TagMap;
@@ -1334,10 +1333,7 @@ public class LandscapeReportGenerator {
 
         addIFrames(landscapeAnalysisResults.getConfiguration().getiFramesAtStart());
 
-        landscapeReport.startSubSection("Tags (" + customTagsMap.tagsCount() + ")", "");
-        new LandscapeRepositoriesTagsLine(tagGroups, customTagsMap).addTagsLine(landscapeReport);
-        landscapeReport.endSection();
-
+        // No Tags section here — tags live in the dedicated "Tags & Extensions" tab (addTagsSection).
         landscapeReport.addLineBreak();
     }
 
