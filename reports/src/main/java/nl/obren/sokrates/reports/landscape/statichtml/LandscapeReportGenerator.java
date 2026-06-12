@@ -324,7 +324,7 @@ public class LandscapeReportGenerator {
             int index = configuration.getCustomTabs().indexOf(tab);
             landscapeReport.addTab(CUSTOM_TAB_ID_PREFIX + index, tab.getName(), false);
         });
-        landscapeReport.addTab(PROMPTS_TAB_ID, "AI Prompts", false);
+        landscapeReport.addTab(PROMPTS_TAB_ID, "Data & AI", false);
         landscapeReport.endTabGroup();
     }
 
@@ -354,12 +354,32 @@ public class LandscapeReportGenerator {
         ProcessingStopwatch.end("reporting/tags");
     }
 
+    // The "Data & AI" tab: direct links to the exported data and configuration files (for anyone
+    // who wants the raw data) plus curated AI prompts to analyze that data with LLM tools.
     private void addPromptsTab() {
         ProcessingStopwatch.start("reporting/prompts");
 
         landscapeReport.startTabContentSection(PROMPTS_TAB_ID, false);
         landscapeReport.startDiv("margin: 20px;");
-        landscapeReport.addParagraph("Generative AI tools, like ChatGPT or Gemini, can help you explore and discuss various aspects of source code repositories using simple prompts and file uploads. Sokrates provides you with curated data that you can use to analyze your source code further.", "");
+        landscapeReport.addParagraph("Sokrates exports the analysis data as JSON and text files that you can use directly " +
+                "or feed to generative AI tools (like ChatGPT, Claude or Gemini) using the curated prompts below.", "");
+
+        landscapeReport.startSubSection("Data & Configuration", "");
+        landscapeReport.addParagraph("<b>All data</b>: <a href='data/data.zip'>data.zip</a> (everything below in one archive)", "");
+        landscapeReport.addParagraph("<b>Data files</b> (preview &amp; download): "
+                + dataPreviewLink("landscapeAnalysisResults.json")
+                + " | " + dataPreviewLink("repositories.json")
+                + " | " + dataPreviewLink("repositories.txt")
+                + " | " + dataPreviewLink("contributors.json")
+                + " | " + dataPreviewLink("contributors.txt")
+                + " | " + dataPreviewLink("teams.json")
+                + " | " + dataPreviewLink("teams.txt")
+                + " | " + dataPreviewLink("files.json"), "");
+        landscapeReport.addParagraph("<b>Configuration</b>: "
+                + "<a href='config.json' target='_blank'>config.json</a>"
+                + " | <a href='config-tags.json' target='_blank'>config-tags.json</a>"
+                + " | <a href='config-teams.json' target='_blank'>config-teams.json</a>", "");
+        landscapeReport.endSection();
 
         PromptsUtils.addLandscapePromptSection("landscape-repository-insights", landscapeReport, landscapeAnalysisResults, "Prompt 1: Simple Repository Insights (based on repository names and basic stats)", "", Arrays.asList(new Link("repositories.txt", "data/repositories.txt"), new Link("repositories.json", "data/repositories.json")));
 
@@ -369,6 +389,11 @@ public class LandscapeReportGenerator {
 
         landscapeReport.endDiv();
         landscapeReport.endTabContentSection();
+    }
+
+    // A link that opens a data.zip entry in the data preview page (with its Download button).
+    private static String dataPreviewLink(String entryName) {
+        return "<a href='#' onclick=\"return downloadDataFile('" + entryName + "')\">" + entryName + "</a>";
     }
 
     // The former "Statistics" and "Tags & Extensions" tabs are dissolved into this tab: summary

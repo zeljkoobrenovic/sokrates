@@ -8,7 +8,6 @@ import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.renderingutils.ExplorerTemplate;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
-import nl.obren.sokrates.reports.core.ReportConstants;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.data.ContributorReportExport;
@@ -232,14 +231,17 @@ public class LandscapeReportContributorsTab {
         int commitsMaxYears = configuration.getCommitsMaxYears();
         int significantContributorMinCommitDaysPerYear = configuration.getSignificantContributorMinCommitDaysPerYear();
 
+        landscapeReport.startDiv("margin: 12px");
+        landscapeReport.addParagraph("latest commit date: <b>" + landscapeAnalysisResults.getLatestCommitDate() + "</b>", "color: grey");
+
         landscapeReport.startSubSection("Per Year", "Past " + commitsMaxYears + " years");
         addContributorsPerYear(true);
+        landscapeReport.startDetailsBlock("significant contributions per year (" + significantContributorMinCommitDaysPerYear + "+ commit days per year)...");
+        addContributorsPerYear();
+        landscapeReport.endDetailsBlock();
         landscapeReport.endSection();
         LOG.info("Adding contributors per extension...");
 
-        landscapeReport.startSubSection("Significant Contributions Per Year (" + significantContributorMinCommitDaysPerYear + "+ commit days per year)", "Past " + commitsMaxYears + " years");
-        addContributorsPerYear();
-        landscapeReport.endSection();
 
         landscapeReport.startSubSection("Per Month", "Past two years");
         addContributorsPerMonth();
@@ -253,7 +255,7 @@ public class LandscapeReportContributorsTab {
         addContributorsPerDay();
         landscapeReport.endSection();
 
-        landscapeReport.addParagraph("latest commit date: <b>" + landscapeAnalysisResults.getLatestCommitDate() + "</b>", "color: grey");
+        landscapeReport.endDiv();
     }
 
     private void addIFrames(List<WebFrameLink> iframes) {
