@@ -21,11 +21,7 @@ import nl.obren.sokrates.reports.landscape.statichtml.repositories.LandscapeRepo
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.LandscapeRepositoriesTagsReport;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.TagMap;
 import nl.obren.sokrates.reports.landscape.utils.*;
-import nl.obren.sokrates.reports.utils.AnimalIcons;
-import nl.obren.sokrates.reports.utils.DataImageUtils;
-import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
-import nl.obren.sokrates.reports.utils.LanguageColors;
-import nl.obren.sokrates.reports.utils.PromptsUtils;
+import nl.obren.sokrates.reports.utils.*;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
@@ -41,8 +37,6 @@ import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResultsR
 import nl.obren.sokrates.sourcecode.landscape.analysis.RepositoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
-import nl.obren.sokrates.reports.utils.ZipEntryContent;
-import nl.obren.sokrates.reports.utils.ZipUtils;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
 import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 import org.apache.commons.io.FileUtils;
@@ -69,6 +63,7 @@ public class LandscapeReportGenerator {
     public static final String REPOSITORIES_TAB_ID = "repositories";
 
     public static final String CONTRIBUTORS_TAB_ID = "contributors";
+    public static final String ACTIVITY_TAB_ID = "activity";
     public static final String TOPOLOGIES_TAB_ID = "topologies";
     public static final String PROMPTS_TAB_ID = "prompts";
     public static final String TEAMS_TAB_ID = "teams";
@@ -193,6 +188,7 @@ public class LandscapeReportGenerator {
         if (teamsConfig.getTeams().size() > 0) {
             landscapeReportTeamsTab.addContributorsTabs(TEAMS_TAB_ID);
         }
+        landscapeReportContributorsTab.addActivityTab(ACTIVITY_TAB_ID);
 
         addTopologyTag(TOPOLOGIES_TAB_ID);
 
@@ -319,6 +315,8 @@ public class LandscapeReportGenerator {
         if (teamsConfig.getTeams().size() > 0) {
             landscapeReport.addTab(TEAMS_TAB_ID, "Teams" + (recentContributorsCount > 0 ? " (" + recentTeamsCount + ")" + "" : ""), false);
         }
+        // Contribution trends (per year/month/week/day), moved out of the Contributors tab.
+        landscapeReport.addTab(ACTIVITY_TAB_ID, "Activity", false);
         // "Topology", not "Team Topology" — the tab shows contributor topology too, even when no
         // teams are configured.
         landscapeReport.addTab(TOPOLOGIES_TAB_ID, "Topology", false);
@@ -347,9 +345,6 @@ public class LandscapeReportGenerator {
         landscapeReport.addLineBreak();
         landscapeReport.startSubSection("<a href='repositories-extensions.html' target='_blank' style='text-decoration: none'>" +
                 "File Extension Stats</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "");
-        landscapeReport.startDiv("margin-bottom: 18px;");
-        landscapeReport.addNewTabLink("<b>Open expanded view</b> (stats per sub-folder)&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "repositories-extensions-matrix.html");
-        landscapeReport.endDiv();
         landscapeReport.addHtmlContent("<iframe src='repositories-extensions.html' frameborder=0 style='height: 600px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
         landscapeReport.endSection();
 
@@ -1531,15 +1526,10 @@ public class LandscapeReportGenerator {
     }
 
     private void addTagsSection(List<RepositoryAnalysisResults> repositoryAnalysisResults) {
-        landscapeReport.startSubSection("Custom Tags (" + customTagsMap.tagsCount() + ")", "");
+        landscapeReport.startSubSection("<a href='repositories-tags.html' target='_blank' style='text-decoration: none'>" +
+                "Custom Tags (" + customTagsMap.tagsCount() + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "As defined in <a href='config-tags.json' target='_blank' style='text-decoration: none'>config-tags.json</a>");
 
         if (repositoryAnalysisResults.size() > 0) {
-            landscapeReport.startDiv("margin-top: 14px; max-height: 400px");
-            landscapeReport.addNewTabLink("<b>Open in a new tab</b>&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "repositories-tags.html");
-            landscapeReport.addHtmlContent("&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;");
-            landscapeReport.addNewTabLink("<b>Open expanded view</b> (stats per sub-folder)&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "repositories-tags-matrix.html");
-            landscapeReport.endDiv();
-
             ProcessingStopwatch.start("reporting/repositories/tags");
 
             ProcessingStopwatch.start("reporting/tags/custom");

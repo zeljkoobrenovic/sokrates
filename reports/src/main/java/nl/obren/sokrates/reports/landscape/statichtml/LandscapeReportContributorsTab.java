@@ -119,6 +119,10 @@ public class LandscapeReportContributorsTab {
         ProcessingStopwatch.start("reporting/summary");
         LOG.info("Adding big contributors summary...");
         addBigContributorsSummary();
+
+        List<ContributorRepositories> recentContributors = landscapeAnalysisResults.getRecentContributors(contributors);
+        addContributorsListsSection(recentContributorsCount, landscapeAnalysisResults.getLatestCommitDate(), recentContributors);
+
         if (recentContributorsCount > 0) {
             addContributorsPerExtension(true);
         }
@@ -129,13 +133,20 @@ public class LandscapeReportContributorsTab {
             addContributorsPerExtension();
         }
 
-        LOG.info("Adding trends...");
-        if (isContributorReport()) {
-            landscapeReport.addLevel2Header("Contribution Trends");
-            addContributionTrends();
-        }
         addIFrames(landscapeAnalysisResults.getConfiguration().getiFramesContributors());
         ProcessingStopwatch.end("reporting/summary");
+        landscapeReport.endTabContentSection();
+    }
+
+    // The contribution trends (per year / month / week / day) live in their own top-level
+    // "Activity" tab (they used to close the Contributors tab under a "Contribution Trends"
+    // header). Called on the contributors instance only (teams have no trends).
+    void addActivityTab(String tabId) {
+        landscapeReport.startTabContentSection(tabId, false);
+        LOG.info("Adding trends...");
+        ProcessingStopwatch.start("reporting/activity trends");
+        addContributionTrends();
+        ProcessingStopwatch.end("reporting/activity trends");
         landscapeReport.endTabContentSection();
     }
 
@@ -427,17 +438,6 @@ public class LandscapeReportContributorsTab {
                 }
             });
 
-            int recentContributorsCount = recentContributors.size();
-
-            addContributorsListsSection(recentContributorsCount, latestCommit, recentContributors);
-
-            landscapeReport.startDiv("margin-bottom: 16px; margin-top: -6px; vertical-align: middle;");
-            landscapeReport.addContentInDiv(ReportConstants.ANIMATION_SVG_ICON, "display: inline-block; vertical-align: middle; margin: 4px;");
-            landscapeReport.addNewTabLink("animated contributors history (all time)", "visuals/racing_charts_commits_contributors.html?tickDuration=600");
-            landscapeReport.addHtmlContent(" | ");
-            landscapeReport.addNewTabLink("animated contributors history (12 months window)", "visuals/racing_charts_commits_window_contributors.html?tickDuration=600");
-            landscapeReport.endDiv();
-
             ProcessingStopwatch.end("reporting/contributors/table");
 
             ProcessingStopwatch.start("reporting/contributors/saving tables");
@@ -527,17 +527,14 @@ public class LandscapeReportContributorsTab {
                 .collect(Collectors.toList());
     }
 
-    private void addContributorsListsSection(int recentContributorsCount, String[] latestCommit, List<ContributorRepositories> recentContributors) {
+    private void addContributorsListsSection(int recentContributorsCount, String latestCommit, List<ContributorRepositories> recentContributors) {
         landscapeReport.startSubSection("<a href='" + type.plural() + "-report.html' target='_blank' style='text-decoration: none'>" +
                         "" + StringUtils.capitalize(type.plural()) + "</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
-                "latest commit " + latestCommit[0]);
+                "latest commit " + latestCommit);
 
         landscapeReport.addHtmlContent("<iframe src='" + type.plural() + "-report.html?tab=recent' frameborder=0 style='height: 650px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
-        landscapeReport.endSection();
 
-        landscapeReport.startSubSection("<a href='" + type.plural() + "-recent.html' target='_blank' style='text-decoration: none'>" +
-                        "Recently Active " + StringUtils.capitalize(type.plural()) + " Stats (" + recentContributorsCount + ")</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
-                "latest commit " + latestCommit[0]);
+        landscapeReport.startDetailsBlock("recently active " + StringUtils.lowerCase(type.plural()) + " stats...");
 
         addRecentContributorLinks();
 
@@ -622,6 +619,7 @@ public class LandscapeReportContributorsTab {
         landscapeReport.addHtmlContent(barsHtml.toString());
         landscapeReport.endDiv();
 
+        landscapeReport.endDetailsBlock();
 
         landscapeReport.endSection();
     }
