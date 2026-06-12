@@ -434,6 +434,12 @@ public class LandscapeReportGenerator {
         // Repositories circle-packing chart goes right after the extensions section
         // ("Contributors per File Extensions (past 30 days)"), before any custom iframes.
         addRepositoriesBubbleChart();
+        // File age/freshness and the repository size distribution close the Overview tab
+        // (moved here from the Repositories tab's statistics section).
+        ProcessingStopwatch.start("reporting/overview/file age & freshness");
+        addFileAgeAndFreshnessSection();
+        addZooSection();
+        ProcessingStopwatch.end("reporting/overview/file age & freshness");
         addIFrames(landscapeAnalysisResults.getConfiguration().getiFrames());
         ProcessingStopwatch.end("reporting/overview");
         landscapeReport.endTabContentSection();
@@ -1516,11 +1522,6 @@ public class LandscapeReportGenerator {
             }
         });
         ProcessingStopwatch.end("reporting/repositories/export visuals");
-
-        ProcessingStopwatch.start("reporting/repositories/file age & freshness");
-        addFileAgeAndFreshnessSection();
-        addZooSection();
-        ProcessingStopwatch.end("reporting/repositories/file age & freshness");
 
         landscapeReport.startSubSection("Correlations", "");
         addCorrelations();
