@@ -8,15 +8,15 @@ import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.renderingutils.ExplorerTemplate;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
+import nl.obren.sokrates.reports.core.ReportConstants;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
 import nl.obren.sokrates.reports.landscape.data.ContributorReportExport;
-import nl.obren.sokrates.reports.landscape.utils.ContributorsExtractor;
-import nl.obren.sokrates.reports.landscape.utils.ExtractStringListValue;
-import nl.obren.sokrates.reports.landscape.utils.Force3DGraphExporter;
-import nl.obren.sokrates.reports.landscape.utils.RacingRepositoriesBarChartsExporter;
+import nl.obren.sokrates.reports.landscape.utils.*;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
+import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
@@ -25,6 +25,7 @@ import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.landscape.*;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
+import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -234,20 +235,40 @@ public class LandscapeReportContributorsTab {
         landscapeReport.startDiv("margin: 12px");
         landscapeReport.addParagraph("latest commit date: <b>" + landscapeAnalysisResults.getLatestCommitDate() + "</b>", "color: grey");
 
-        landscapeReport.startSubSection("Per Year", "Past " + commitsMaxYears + " years");
+        landscapeReport.startSubSection("Overall Activity Per Year", "Past " + commitsMaxYears + " years");
         addContributorsPerYear(true);
         landscapeReport.startDetailsBlock("significant contributions per year (" + significantContributorMinCommitDaysPerYear + "+ commit days per year)...");
         addContributorsPerYear();
         landscapeReport.endDetailsBlock();
         landscapeReport.endSection();
+
+        landscapeReport.startSubSection("Activity Per Year &amp; File Extension", "commits");
+        landscapeReport.startDiv("max-height: 600px; overflow-y: auto;");
+        landscapeReport.startDiv("margin-bottom: 16px; vertical-align: middle;");
+        landscapeReport.addContentInDiv(ReportConstants.ANIMATION_SVG_ICON, "display: inline-block; vertical-align: middle; margin: 4px;");
+        landscapeReport.addHtmlContent("animated commit history: ");
+        landscapeReport.addNewTabLink("all time cumulative", "visuals/racing_charts_extensions_commits.html?tickDuration=600");
+        landscapeReport.addHtmlContent(" | ");
+        landscapeReport.addNewTabLink("12 months window", "visuals/racing_charts_extensions_commits_window.html?tickDuration=600");
+        landscapeReport.endDiv();
+        List<NumericMetric> linesOfCodePerExtensionMain = LandscapeGeneratorUtils.getLinesOfCodePerExtension(landscapeAnalysisResults, landscapeAnalysisResults.getMainLinesOfCodePerExtension());
+        List<String> extensions = linesOfCodePerExtensionMain.stream().map(loc -> loc.getName().replaceAll(".*[.]", "").trim()).collect(Collectors.toList());
+        List<HistoryPerExtension> yearlyCommitHistoryPerExtension = landscapeAnalysisResults.getYearlyCommitHistoryPerExtension();
+        HistoryPerLanguageGenerator.getInstanceCommits(yearlyCommitHistoryPerExtension, extensions).addHistoryPerLanguage(landscapeReport);
+        new RacingLanguagesBarChartsExporter(landscapeAnalysisResults, yearlyCommitHistoryPerExtension, extensions).exportRacingChart(reportsFolder);
+        landscapeReport.endDiv();
+        landscapeReport.endSection();
+
+
+
         LOG.info("Adding contributors per extension...");
 
 
-        landscapeReport.startSubSection("Per Month", "Past two years");
+        landscapeReport.startSubSection("Activity Per Month", "Past two years");
         addContributorsPerMonth();
         landscapeReport.endSection();
 
-        landscapeReport.startSubSection("Per Week", "Past two years");
+        landscapeReport.startSubSection("Activity Per Week", "Past two years");
         addContributorsPerWeek();
         landscapeReport.endSection();
 
