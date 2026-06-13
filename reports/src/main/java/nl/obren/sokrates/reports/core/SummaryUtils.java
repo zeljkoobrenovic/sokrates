@@ -295,10 +295,10 @@ public class SummaryUtils {
             if (image == null || !alreadyAddedImage.contains(image)) {
                 int loc = ext.getValue().intValue();
                 int fontSize = loc >= 1000 ? 18 : 13;
-                summary.append("<div style='width: 42px; text-align: center; display: inline-block; border-radius: 5px; background-color: #f0f0f0; padding: 8px; margin-right: 4px;'>"
+                summary.append("<div class='infoBlock' style='width: 42px; text-align: center; display: inline-block; padding: 8px; margin-right: 4px;'>"
                         + DataImageUtils.getLangDataImageDiv30(lang)
                         + "<div style='margin-top: 3px; font-size: " + fontSize + "px'>" + FormattingUtils.getSmallTextForNumber(loc) + "</div>"
-                        + "<div style='font-size: 10px; white-space: no-wrap; overflow: hidden; color: grey;'>" + lang.toLowerCase() + "</div>"
+                        + "<div class='infoBlockLabel' style='font-size: 10px; white-space: nowrap; overflow: hidden;'>" + lang.toLowerCase() + "</div>"
                         + "</div>");
                 if (image != null) {
                     alreadyAddedImage.add(image);

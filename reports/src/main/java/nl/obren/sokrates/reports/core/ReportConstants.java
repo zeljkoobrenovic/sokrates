@@ -159,59 +159,84 @@ public class ReportConstants {
             "\n" +
             "        .group {\n" +
             "            margin-bottom: 10px;\n" +
-            "            border: solid lightgrey 1px;\n" +
-            "            box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);\n" +
-            "            border-radius: 2px;\n" +
+            "            border: solid #ececec 1px;\n" +
+            "            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);\n" +
+            "            border-radius: 8px;\n" +
             "        }\n" +
             "\n" +
             "        .section {\n" +
             "            margin-bottom: 30px;\n" +
-            "            border: solid lightgrey 1px;\n" +
-            "            box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);\n" +
-            "            border-radius: 2px;\n" +
+            "            border: solid #ececec 1px;\n" +
+            "            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);\n" +
+            "            border-radius: 8px;\n" +
             "            padding: 0;\n" +
             "        }\n" +
             "\n" +
             "        .sectionHeader {\n" +
             "            margin-bottom: 30px;\n" +
-            "            padding: 20px;\n" +
-            "            box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);\n" +
-            "            background-color: lightskyblue;\n" +
+            "            padding: 16px 20px;\n" +
+            "            border-radius: 8px 8px 0 0;\n" +
+            "            border-bottom: 1px solid #e3eaf2;\n" +
+            "            border-left: 3px solid #5b9bd5;\n" +
+            "            background-color: #f0f6fc;\n" +
             "        }\n" +
             "\n" +
             "        .sectionTitle {\n" +
-            "            font-size: 140%;\n" +
+            "            font-size: 125%; font-weight: 600; color: #1f2937;\n" +
             "        }\n" +
             "\n" +
             "        .sectionSubtitle {\n" +
-            "            font-size: 90%; color: grey;\n" +
+            "            font-size: 90%; color: #6b7280;\n" +
             "        }\n" +
             "\n" +
             "        .subSectionTitle {\n" +
-            "            font-size: 140%;\n" +
+            "            font-size: 115%; font-weight: 600; color: #1f2937;\n" +
             "        }\n" +
             "\n" +
             "        .subSectionSubtitle {\n" +
-            "            font-size: 90%; color: grey;\n" +
+            "            font-size: 90%; color: #6b7280;\n" +
             "        }\n" +
             "\n" +
             "        .subSection {\n" +
             "            margin-bottom: 30px;\n" +
-            "            border: solid lightgrey 1px;\n" +
+            "            border: solid #dedede 1px;\n" +
+            "            border-radius: 8px;\n" +
             "            padding-top: 0;\n" +
             "            padding-bottom: 0;\n" +
-            "            box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.2), 0 1px 9px 0 rgba(0, 0, 0, 0.19);\n" +
+            "            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);\n" +
             "        }\n" +
             "\n" +
             "        .subSectionHeader {\n" +
-            "            border: solid lightgrey 1px;\n" +
-            "            padding: 6px;\n" +
-            "            background-color: lightgrey;\n" +
-            "            box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.2), 0 2px 9px 0 rgba(0, 0, 0, 0.19);\n" +
+            "            border-bottom: 1px solid #dedede;\n" +
+            "            border-radius: 8px 8px 0 0;\n" +
+            "            padding: 8px 12px;\n" +
+            "            background-color: #dedede;\n" +
             "        }\n" +
             "\n" +
             "        .sectionBody {\n" +
             "            margin: 20px;\n" +
+            "        }" +
+            "\n" +
+            "        .sectionBodyNoMargins {\n" +
+            "            margin: 0;\n" +
+            "        }" +
+            "\n" +
+            "        .infoBlock {\n" +
+            "            border-radius: 8px;\n" +
+            "            border: 1px solid #ececec;\n" +
+            "            background-color: #fafafa;\n" +
+            "            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);\n" +
+            "            transition: box-shadow 0.15s ease, transform 0.15s ease;\n" +
+            "        }\n" +
+            "        a .infoBlock:hover, .infoBlock.linked:hover {\n" +
+            "            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);\n" +
+            "            transform: translateY(-1px);\n" +
+            "        }\n" +
+            "        .infoBlockLabel {\n" +
+            "            color: #6b7280;\n" +
+            "            font-size: 12px;\n" +
+            "            letter-spacing: 0.03em;\n" +
+            "            text-transform: uppercase;\n" +
             "        }" +
             "\n\n" + TAB_STYLE + "\n\n" +
             "    </style>\n" +

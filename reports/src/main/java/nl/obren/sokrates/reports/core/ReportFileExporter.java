@@ -113,7 +113,7 @@ public class ReportFileExporter {
         String title = metadata.getName();
         RichTextReport indexReport = new RichTextReport(title, "", metadata.getLogoLink());
         if (StringUtils.isNotBlank(metadata.getDescription())) {
-            indexReport.addContentInDiv(metadata.getDescription(), "white-space: nowrap; overflow: hidden; margin-left: 2px; margin-top: 0px; margin-bottom: 14px; color: grey; font-size: 90%");
+            indexReport.setDescription(metadata.getDescription());
         }
 
         appendLinks(indexReport, analysisResults);
