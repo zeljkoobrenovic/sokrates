@@ -226,7 +226,10 @@ public class ContributorIndividualReportExport {
         public Member(ContributorRepositories cr) {
             Contributor c = cr.getContributor();
             email = c.getEmail();
-            reportUrl = LandscapeContributorsReport.getContributorUrl(email).replace("contributors/", "");
+            // A member is normally a contributor; route on whether it itself has members (a sub-team)
+            // rather than the shared team-email set (which can mis-route — see getContributorUrl).
+            boolean isTeam = cr.getMembers() != null && cr.getMembers().size() > 0;
+            reportUrl = LandscapeContributorsReport.getContributorUrl(email, isTeam).replace("contributors/", "");
             commitsCount = c.getCommitsCount();
             commitsCount30Days = c.getCommitsCount30Days();
             commitsCount90Days = c.getCommitsCount90Days();

@@ -152,7 +152,7 @@ public class LandscapeContributorsReport {
                     "<img style='border-radius: 50%; height: 38px; width: 38px; margin-right: 10px;' src='" + defaultAvatar + "'>" +
                     "</div>";
         }
-        String link = this.getContributorUrl(contributorId);
+        String link = getContributorUrl(contributorId, contributor.getMembers().size() > 0);
         StringBuilder contributorBody = new StringBuilder(avatarHtml + StringEscapeUtils.escapeHtml4(contributorId));
 
         if (contributor.getMembers().size() > 0) {
@@ -213,10 +213,17 @@ public class LandscapeContributorsReport {
     }
 
 
+    // Prefer getContributorUrl(email, isTeam) — callers know whether the row is a team (it has
+    // members). This set-based overload is a fallback for sites without that context.
     public static String getContributorUrl(String email) {
-        // Teams open team-report.html, contributors/bots open contributor-report.html (each selects
-        // the person by safe-email key from its own embedded archive). Routed by the team-email set.
         return LandscapeIndividualContributorsReports.getContributorReportUrl(email);
+    }
+
+    public static String getContributorUrl(String email, boolean isTeam) {
+        // Teams open team-report.html; contributors/bots open contributor-report.html. Route on the
+        // caller's known type, not the shared team-email set (which is mutable static state reused
+        // across landscapes in one JVM run and can mis-route — e.g. all contributors to team-report).
+        return LandscapeIndividualContributorsReports.getContributorReportUrl(email, isTeam);
     }
 
     public static String getAvatarUrl(String contributorId, String linkTemplate) {

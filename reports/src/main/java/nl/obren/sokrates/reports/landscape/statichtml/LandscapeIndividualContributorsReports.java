@@ -108,14 +108,23 @@ public class LandscapeIndividualContributorsReports {
         return recentContributorKeys.contains(key);
     }
 
+    // The relative URL to a person's page when the caller does NOT know whether the email is a team
+    // (e.g. a member link). Falls back to the team-email set to decide. Prefer
+    // getContributorReportUrl(email, isTeam) at sites that know the type — team and contributor keys
+    // share one namespace, so the set-based guess can mis-route a contributor whose safe-email key
+    // collides with a team name.
+    public static String getContributorReportUrl(String email) {
+        return getContributorReportUrl(email, isTeamKey(getContributorReportKey(email)));
+    }
+
     // The relative URL to a person's page: team-report.html for teams; contributor-report.html for
     // recent contributors (small inline archive, the common case); contributor-report-all.html for
     // everyone else (non-recent contributors + bots). Each page selects the person by safe-email key
     // from its own embedded archive.
-    public static String getContributorReportUrl(String email) {
+    public static String getContributorReportUrl(String email, boolean isTeam) {
         String key = getContributorReportKey(email);
         String file;
-        if (isTeamKey(key)) {
+        if (isTeam) {
             file = TEAM_REPORT_FILE_NAME;
         } else if (isRecentKey(key)) {
             file = CONTRIBUTOR_REPORT_FILE_NAME;
