@@ -110,7 +110,7 @@ public class ContributorIndividualReportExport {
                 Member member = new Member(m);
                 String biggest = helper.getBiggestExtension(configuration, m, peopleConfig);
                 member.setLang(biggest != null ? biggest.replace("*.", "").trim().toLowerCase() : "");
-                // The member link points at the shared people page (contributor-report.html?key=...);
+                // The member link points at the shared people page (contributor-report.html#<key>);
                 // if that member isn't in people.zip the page shows a graceful "not found" message,
                 // so no file-existence gate is needed (and there are no per-person files to check).
                 members.add(member);
