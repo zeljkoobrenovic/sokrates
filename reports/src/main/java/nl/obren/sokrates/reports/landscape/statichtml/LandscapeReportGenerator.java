@@ -1171,9 +1171,8 @@ public class LandscapeReportGenerator {
         int recentSize = (int) repositories.stream().filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days() > 0).count();
         int recentLoc = repositories.stream().filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days() > 0).map(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
 
-        String style = "border-top: 2px solid lightgrey; border-right: 2px solid lightgrey; display: inline-block; margin-right: 8px";
+        String style = "margin-right: 8px";
         landscapeReport.startDiv(style);
-        landscapeReport.addContentInDiv("active repositories", "text-align: center; margin-bottom: -7px; margin-top: 2px; margin-left: 4px; color: grey; font-size: 70%;");
 
         int size = repositories.size();
         int locAll = landscapeAnalysisResults.getMainLoc();
