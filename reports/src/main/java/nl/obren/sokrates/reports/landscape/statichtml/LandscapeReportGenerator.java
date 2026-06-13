@@ -1676,14 +1676,14 @@ public class LandscapeReportGenerator {
                         .sum();
             }
             double percentage = totalLoc > 0 ? 100.0 * loc / totalLoc : 0;
-            int width = totalLoc > 0 ? (200 * loc / totalLoc) : 0;
-            if (count > 0 && width == 0) {
-                width = 1;
+            int height = totalLoc > 0 ? (int) (1 * percentage) : 0;
+            if (count > 0 && height == 0) {
+                height = 1;
             }
             landscapeReport.addContentInDiv(FormattingUtils.getFormattedPercentage(percentage) + "%", "font-size: 13px; ");
             landscapeReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(loc) + "LOC", "font-size: 11px;");
             landscapeReport.startDiv("border: 1px solid #d0d0d0; width: 64px; margin-bottom: 4px; ");
-            landscapeReport.addContentInDiv("", "background-color: " + barColor + "; width: 100%; height: " + width + "px");
+            landscapeReport.addContentInDiv("", "background-color: " + barColor + "; width: 100%; height: " + height + "px");
             landscapeReport.endDiv();
             landscapeReport.endTableCell();
         }
