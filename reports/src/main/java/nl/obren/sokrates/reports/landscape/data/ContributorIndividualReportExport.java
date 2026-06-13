@@ -110,7 +110,7 @@ public class ContributorIndividualReportExport {
                 Member member = new Member(m);
                 String biggest = helper.getBiggestExtension(configuration, m, peopleConfig);
                 member.setLang(biggest != null ? biggest.replace("*.", "").trim().toLowerCase() : "");
-                // The member link points at the shared people page (contributor-report.html?key=...);
+                // The member link points at the shared people page (contributor-report.html#<key>);
                 // if that member isn't in people.zip the page shows a graceful "not found" message,
                 // so no file-existence gate is needed (and there are no per-person files to check).
                 members.add(member);
@@ -226,7 +226,10 @@ public class ContributorIndividualReportExport {
         public Member(ContributorRepositories cr) {
             Contributor c = cr.getContributor();
             email = c.getEmail();
-            reportUrl = LandscapeContributorsReport.getContributorUrl(email).replace("contributors/", "");
+            // A member is normally a contributor; route on whether it itself has members (a sub-team)
+            // rather than the shared team-email set (which can mis-route — see getContributorUrl).
+            boolean isTeam = cr.getMembers() != null && cr.getMembers().size() > 0;
+            reportUrl = LandscapeContributorsReport.getContributorUrl(email, isTeam).replace("contributors/", "");
             commitsCount = c.getCommitsCount();
             commitsCount30Days = c.getCommitsCount30Days();
             commitsCount90Days = c.getCommitsCount90Days();

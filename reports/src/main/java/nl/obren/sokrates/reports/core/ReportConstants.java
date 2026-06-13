@@ -256,14 +256,16 @@ public class ReportConstants {
             "          return false;\n" +
             "        }\n" +
             "        // The per-repository data/ folder is packaged as a single data/data.zip (the raw-data\n" +
-            "        // contract). A data link opens data/data-preview.html?entry=<name>, which embeds that\n" +
-            "        // whole archive inline and shows the one entry (pretty JSON / raw text / binary) with a\n" +
-            "        // Download button — so it works from file:// (no fetch / no web server).\n" +
+            "        // contract). A data link opens data/data-preview.html#<name>, which embeds that whole\n" +
+            "        // archive inline and shows the one entry (pretty JSON / raw text / binary) with a\n" +
+            "        // Download button — so it works from file:// (no fetch / no web server). The entry is\n" +
+            "        // in the URL fragment (not ?entry=) so the browser caches the one preview HTML once and\n" +
+            "        // reuses it for every entry.\n" +
             "        // data-preview.html is at ../data/ for per-repository reports (which live in html/) and\n" +
             "        // at data/ for landscape reports (which live at the landscape root).\n" +
             "        function downloadDataFile(entryName) {\n" +
             "          var base = /\\/html\\//.test(window.location.pathname) ? '../data/' : 'data/';\n" +
-            "          window.open(base + 'data-preview.html?entry=' + encodeURIComponent(entryName), '_blank');\n" +
+            "          window.open(base + 'data-preview.html#' + encodeURIComponent(entryName), '_blank');\n" +
             "          return false;\n" +
             "        }\n" +
             "    </script>\n" +

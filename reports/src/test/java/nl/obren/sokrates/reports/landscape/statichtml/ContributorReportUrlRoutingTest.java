@@ -31,7 +31,7 @@ class ContributorReportUrlRoutingTest {
         LandscapeIndividualContributorsReports.registerTeams(List.of());
         LandscapeIndividualContributorsReports.registerRecentContributors(List.of(person("recent@x.com", 5)));
 
-        assertEquals("contributors/contributor-report.html?key=recent_x.com",
+        assertEquals("contributors/contributor-report.html#recent_x.com",
                 LandscapeIndividualContributorsReports.getContributorReportUrl("recent@x.com"));
     }
 
@@ -41,7 +41,7 @@ class ContributorReportUrlRoutingTest {
         // old@x.com has no commits in the last 30 days, so it is not registered as recent.
         LandscapeIndividualContributorsReports.registerRecentContributors(List.of(person("old@x.com", 0)));
 
-        assertEquals("contributors/contributor-report-all.html?key=old_x.com",
+        assertEquals("contributors/contributor-report-all.html#old_x.com",
                 LandscapeIndividualContributorsReports.getContributorReportUrl("old@x.com"));
     }
 
@@ -51,7 +51,7 @@ class ContributorReportUrlRoutingTest {
         LandscapeIndividualContributorsReports.registerRecentContributors(List.of(person("recent@x.com", 5)));
 
         // A bot (or anyone not registered as recent) falls through to the all-time file.
-        assertEquals("contributors/contributor-report-all.html?key=bot_x.com",
+        assertEquals("contributors/contributor-report-all.html#bot_x.com",
                 LandscapeIndividualContributorsReports.getContributorReportUrl("bot@x.com"));
     }
 
@@ -61,8 +61,34 @@ class ContributorReportUrlRoutingTest {
         LandscapeIndividualContributorsReports.registerTeams(List.of(person("Team Alpha", 5)));
         LandscapeIndividualContributorsReports.registerRecentContributors(List.of(person("Team Alpha", 5)));
 
-        assertEquals("contributors/team-report.html?key=team_alpha",
+        assertEquals("contributors/team-report.html#team_alpha",
                 LandscapeIndividualContributorsReports.getContributorReportUrl("Team Alpha"));
+    }
+
+    // The typed overload routes on the caller's known type, not the shared team-email set.
+
+    @Test
+    void typedTeamRoutesToTeamReport() {
+        assertEquals("contributors/team-report.html#team_alpha",
+                LandscapeIndividualContributorsReports.getContributorReportUrl("Team Alpha", true));
+    }
+
+    @Test
+    void typedRecentContributorRoutesToContributorReport() {
+        LandscapeIndividualContributorsReports.registerRecentContributors(List.of(person("recent@x.com", 5)));
+        assertEquals("contributors/contributor-report.html#recent_x.com",
+                LandscapeIndividualContributorsReports.getContributorReportUrl("recent@x.com", false));
+    }
+
+    @Test
+    void typedContributorIsNeverTeamEvenIfKeyCollidesWithATeam() {
+        // Regression: a contributor whose safe-email key collides with a registered team key must
+        // still route to a contributor page when the caller says isTeam=false (the bug routed every
+        // contributor to team-report.html via stale/colliding set state, even with no teams).
+        LandscapeIndividualContributorsReports.registerTeams(List.of(person("recent@x.com", 5)));
+        LandscapeIndividualContributorsReports.registerRecentContributors(List.of(person("recent@x.com", 5)));
+        assertEquals("contributors/contributor-report.html#recent_x.com",
+                LandscapeIndividualContributorsReports.getContributorReportUrl("recent@x.com", false));
     }
 
     @Test
@@ -70,11 +96,11 @@ class ContributorReportUrlRoutingTest {
         // A recent contributor in one landscape must not stay recent in the next (sets are per-run).
         LandscapeIndividualContributorsReports.registerTeams(List.of());
         LandscapeIndividualContributorsReports.registerRecentContributors(List.of(person("recent@x.com", 5)));
-        assertEquals("contributors/contributor-report.html?key=recent_x.com",
+        assertEquals("contributors/contributor-report.html#recent_x.com",
                 LandscapeIndividualContributorsReports.getContributorReportUrl("recent@x.com"));
 
         LandscapeIndividualContributorsReports.registerRecentContributors(List.of(person("someone-else@x.com", 5)));
-        assertEquals("contributors/contributor-report-all.html?key=recent_x.com",
+        assertEquals("contributors/contributor-report-all.html#recent_x.com",
                 LandscapeIndividualContributorsReports.getContributorReportUrl("recent@x.com"));
     }
 }

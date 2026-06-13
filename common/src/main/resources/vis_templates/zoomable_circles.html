@@ -96,6 +96,17 @@
         return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
     }
 
+    // The view key is in the URL fragment (#<key>), not the query string, so the browser caches
+    // this one HTML file (which embeds all views) once and reuses it for every view — the fragment
+    // is not part of the HTTP cache key. Falls back to a legacy ?key= query param.
+    function viewKey() {
+        var hash = window.location.hash;
+        if (hash && hash.length > 1) {
+            return decodeURIComponent(hash.substring(1));
+        }
+        return param('key');
+    }
+
     // Hides the loading spinner and reveals the SVG; called once the data is ready (or on error).
     function hideSpinner() {
         var loading = document.getElementById("loading");
@@ -220,11 +231,12 @@
         }
     }
 
+    var __circlesEntriesCache = null;
     function loadEmbedded() {
         try {
-            var key = param('key') || 'main';
-            var entries = sokratesUnzip(SOKRATES_ARCHIVE);
-            var bytes = entries[key + '.json'];
+            var key = viewKey() || 'main';
+            if (!__circlesEntriesCache) { __circlesEntriesCache = sokratesUnzip(SOKRATES_ARCHIVE); }
+            var bytes = __circlesEntriesCache[key + '.json'];
             if (!bytes) throw new Error('View not found: ' + key);
             render(JSON.parse(fflate.strFromU8(bytes)));
         } catch (e) {
@@ -235,7 +247,7 @@
     (function load() {
         // Inline mode (self-contained page, e.g. landscape sub-landscape circles): the data is
         // embedded directly. Otherwise the per-view archive is embedded inline (SOKRATES_ARCHIVE)
-        // and we extract the ?key= view from it — no fetch, so the page works from file://.
+        // and we extract the #<key> view from it — no fetch, so the page works from file://.
         if (typeof SOKRATES_INLINE_DATA !== 'undefined' && SOKRATES_INLINE_DATA !== null) {
             render(SOKRATES_INLINE_DATA);
             return;

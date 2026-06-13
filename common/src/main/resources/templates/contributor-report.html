@@ -153,10 +153,11 @@
 </div>
 
 <script>
-    // This is now ONE shared page for all individuals. The per-person payload (data + langIcons +
-    // options) lives in a zip (contributors.zip / teams.zip / bots.zip), one JSON entry per person
-    // keyed by the safe email. The page selects its person via ?key=<safe-email>&type=<group> and
-    // extracts only that entry (see the loader at the bottom). Requires HTTP serving (fetch).
+    // This is ONE shared page for all individuals. The per-person payloads (data + options) are
+    // embedded inline as a base64 archive (SOKRATES_ARCHIVE), one JSON entry per person keyed by the
+    // safe email. The page selects its person via the URL FRAGMENT (#<safe-email>) — using the
+    // fragment (not ?key=) lets the browser cache this one HTML file once and reuse it for every
+    // person. The chosen entry is extracted in-browser (see the loader at the bottom).
     var data, langIcons, options;
 
     function num(n) {
@@ -518,6 +519,17 @@
         return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
     }
 
+    // The person key is in the URL fragment (#<safe-email>), not the query string, so the browser
+    // caches this one HTML file once and reuses it for every person (the fragment is not part of the
+    // cache key). Falls back to a legacy ?key= query param if present.
+    function personKey() {
+        var hash = window.location.hash;
+        if (hash && hash.length > 1) {
+            return decodeURIComponent(hash.substring(1));
+        }
+        return param('key');
+    }
+
     function showError(message) {
         document.getElementById('loading').innerHTML = '<p style="color:#b00">' + esc(message) + '</p>';
     }
@@ -535,9 +547,13 @@
     ${embedded-archive}
     ${lang-icons}
 
+    // Memoize the unzipped archive so navigating to another person on this same cached page
+    // (hashchange) doesn't re-inflate the whole archive.
+    var __entriesCache = null;
     function loadEmbedded(key) {
         try {
-            var entries = sokratesUnzip(SOKRATES_ARCHIVE);
+            if (!__entriesCache) { __entriesCache = sokratesUnzip(SOKRATES_ARCHIVE); }
+            var entries = __entriesCache;
             var bytes = entries[key + '.json'];
             if (!bytes) throw new Error('Person not found: ' + key);
             var payload = JSON.parse(fflate.strFromU8(bytes));
@@ -554,13 +570,20 @@
         }
     }
 
-    (function load() {
-        var key = param('key');
-        if (!key) { showError('Missing ?key='); return; }
+    function load() {
+        var key = personKey();
+        if (!key) { showError('Missing person key (use #<safe-email> in the URL)'); return; }
+        document.getElementById('loading').style.display = '';
+        document.getElementById('report').style.display = 'none';
         // Decoding a large embedded archive blocks the main thread; yield one frame first so the
         // loading spinner actually paints, then do the synchronous extract + render.
         requestAnimationFrame(function () { setTimeout(function () { loadEmbedded(key); }, 0); });
-    })();
+    }
+
+    // Re-render when the fragment changes (e.g. clicking a member link to another person on this
+    // same cached page) — no reload needed since only the fragment changed.
+    window.addEventListener('hashchange', load);
+    load();
 </script>
 </body>
 </html>

@@ -46,7 +46,7 @@ public class LandscapeIndividualContributorsReports {
         this.reportsFolder = reportsFolder;
     }
 
-    // The safe-email key used both as the zip entry name (<key>.json) and the ?key= URL param.
+    // The safe-email key used both as the zip entry name (<key>.json) and the URL fragment (#key).
     public static String getContributorReportKey(String email) {
         return SystemUtils.getSafeFileName(email).toLowerCase();
     }
@@ -108,21 +108,33 @@ public class LandscapeIndividualContributorsReports {
         return recentContributorKeys.contains(key);
     }
 
+    // The relative URL to a person's page when the caller does NOT know whether the email is a team
+    // (e.g. a member link). Falls back to the team-email set to decide. Prefer
+    // getContributorReportUrl(email, isTeam) at sites that know the type — team and contributor keys
+    // share one namespace, so the set-based guess can mis-route a contributor whose safe-email key
+    // collides with a team name.
+    public static String getContributorReportUrl(String email) {
+        return getContributorReportUrl(email, isTeamKey(getContributorReportKey(email)));
+    }
+
     // The relative URL to a person's page: team-report.html for teams; contributor-report.html for
     // recent contributors (small inline archive, the common case); contributor-report-all.html for
     // everyone else (non-recent contributors + bots). Each page selects the person by safe-email key
     // from its own embedded archive.
-    public static String getContributorReportUrl(String email) {
+    public static String getContributorReportUrl(String email, boolean isTeam) {
         String key = getContributorReportKey(email);
         String file;
-        if (isTeamKey(key)) {
+        if (isTeam) {
             file = TEAM_REPORT_FILE_NAME;
         } else if (isRecentKey(key)) {
             file = CONTRIBUTOR_REPORT_FILE_NAME;
         } else {
             file = CONTRIBUTOR_REPORT_ALL_FILE_NAME;
         }
-        return "contributors/" + file + "?key=" + key;
+        // The key goes in the URL fragment (#), not the query string (?): the fragment is not part
+        // of the browser's HTTP cache key, so the shared report HTML is fetched ONCE and reused for
+        // every person — with "?key=" each person was a distinct URL and re-fetched the whole page.
+        return "contributors/" + file + "#" + key;
     }
 
     /**
@@ -133,7 +145,7 @@ public class LandscapeIndividualContributorsReports {
      * {@code contributors/team-report.html} — splitting them keeps neither file huge on big
      * landscapes. Each entry bundles everything the page needs ({@code data}, {@code langIcons},
      * {@code options}); teams are still flagged by {@code isTeam} in the data. A page opens as
-     * {@code <contributor|team>-report.html?key=<safe-email>} (see {@link #getContributorReportUrl}).
+     * {@code <contributor|team>-report.html#<safe-email>} (see {@link #getContributorReportUrl}).
      *
      * <p>This method is called once per group (contributors, then bots — both {@code isTeam=false};
      * teams from the teams tab — {@code isTeam=true}). Same-file groups (contributors + bots) merge
@@ -167,7 +179,7 @@ public class LandscapeIndividualContributorsReports {
     // Builds one self-contained report file: merges {@code people}'s entries into {@code zipName}
     // (the on-disk merge accumulator, so same-file groups like contributors + bots accumulate across
     // calls), then writes {@code reportFileName} from the shared template with that merged archive
-    // embedded inline as base64 (the page extracts its ?key= person in-browser — no fetch, file://).
+    // embedded inline as base64 (the page extracts its #key person in-browser — no fetch, file://).
     // Reserved zip entry (not a person) that persists the union of language keys used by everyone in
     // this file across the merge-accumulator calls, so the shared langIcons map can be rebuilt to
     // cover all merged people. Stripped from the page's embedded archive.

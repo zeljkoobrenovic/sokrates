@@ -2,6 +2,7 @@ package nl.obren.sokrates.reports.landscape.data;
 
 import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.reports.landscape.statichtml.LandscapeContributorsReport;
+import nl.obren.sokrates.reports.landscape.statichtml.LandscapeIndividualContributorsReports;
 import nl.obren.sokrates.reports.landscape.utils.ContributorPerExtensionHelper;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.landscape.ContributorTag;
@@ -77,6 +78,10 @@ public class ContributorReportExport {
         }
 
         membersCount = cr.getMembers() != null ? cr.getMembers().size() : 0;
+        // A team has members; a contributor does not. Route on this directly instead of the
+        // team-email set, which shares one key namespace with contributors and could mis-route a
+        // contributor whose safe-email key collides with a team name.
+        boolean isTeam = membersCount > 0;
 
         commitsCount = c.getCommitsCount();
         commitsCount30Days = c.getCommitsCount30Days();
@@ -90,7 +95,7 @@ public class ContributorReportExport {
         repositoriesCount30Days = repositories == null ? 0
                 : (int) repositories.stream().filter(p -> p.getCommits30Days() > 0).count();
 
-        reportUrl = LandscapeContributorsReport.getContributorUrl(email);
+        reportUrl = LandscapeIndividualContributorsReports.getContributorReportUrl(email, isTeam);
     }
 
     public String getEmail() {

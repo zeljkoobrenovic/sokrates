@@ -280,9 +280,9 @@ public class ScopesRenderer {
         if (StringUtils.isNotBlank(explorers)) {
             report.startDiv("");
             report.addHtmlContent("Explore:&nbsp;&nbsp;");
-            report.addNewTabLink("circles", "visuals/zoomable_circles.html?key=" + explorers);
+            report.addNewTabLink("circles", "visuals/zoomable_circles.html#" + explorers);
             report.addHtmlContent("&nbsp;|&nbsp;");
-            report.addNewTabLink("sunburst", "visuals/zoomable_sunburst.html?key=" + explorers);
+            report.addNewTabLink("sunburst", "visuals/zoomable_sunburst.html#" + explorers);
             report.endDiv();
         }
 

@@ -1171,9 +1171,8 @@ public class LandscapeReportGenerator {
         int recentSize = (int) repositories.stream().filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days() > 0).count();
         int recentLoc = repositories.stream().filter(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days() > 0).map(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()).reduce(0, (a, b) -> a + b);
 
-        String style = "border-top: 2px solid lightgrey; border-right: 2px solid lightgrey; display: inline-block; margin-right: 8px";
+        String style = "margin-right: 8px";
         landscapeReport.startDiv(style);
-        landscapeReport.addContentInDiv("active repositories", "text-align: center; margin-bottom: -7px; margin-top: 2px; margin-left: 4px; color: grey; font-size: 70%;");
 
         int size = repositories.size();
         int locAll = landscapeAnalysisResults.getMainLoc();
@@ -1677,14 +1676,14 @@ public class LandscapeReportGenerator {
                         .sum();
             }
             double percentage = totalLoc > 0 ? 100.0 * loc / totalLoc : 0;
-            int width = totalLoc > 0 ? (200 * loc / totalLoc) : 0;
-            if (count > 0 && width == 0) {
-                width = 1;
+            int height = totalLoc > 0 ? (int) (1 * percentage) : 0;
+            if (count > 0 && height == 0) {
+                height = 1;
             }
             landscapeReport.addContentInDiv(FormattingUtils.getFormattedPercentage(percentage) + "%", "font-size: 13px; ");
             landscapeReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(loc) + "LOC", "font-size: 11px;");
             landscapeReport.startDiv("border: 1px solid #d0d0d0; width: 64px; margin-bottom: 4px; ");
-            landscapeReport.addContentInDiv("", "background-color: " + barColor + "; width: 100%; height: " + width + "px");
+            landscapeReport.addContentInDiv("", "background-color: " + barColor + "; width: 100%; height: " + height + "px");
             landscapeReport.endDiv();
             landscapeReport.endTableCell();
         }

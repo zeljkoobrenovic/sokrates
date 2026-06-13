@@ -43,6 +43,17 @@
         return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
     }
 
+    // The entry name is in the URL fragment (#<entry>), not the query string, so the browser caches
+    // this one HTML file (which embeds the whole data archive) once and reuses it for every entry —
+    // the fragment is not part of the HTTP cache key. Falls back to a legacy ?entry= query param.
+    function entryName() {
+        var hash = window.location.hash;
+        if (hash && hash.length > 1) {
+            return decodeURIComponent(hash.substring(1));
+        }
+        return param('entry');
+    }
+
     function escapeHtml(s) {
         return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
@@ -65,9 +76,13 @@
         return /\.(zip|gz|png|jpg|jpeg|gif|pdf|bin)$/i.test(name);
     }
 
+    // Memoize the unzipped archive so viewing another entry on this cached page (hashchange) doesn't
+    // re-inflate the whole archive.
+    var __entriesCache = null;
     function renderEntry(entry) {
         try {
-            var entries = sokratesUnzip(SOKRATES_ARCHIVE);
+            if (!__entriesCache) { __entriesCache = sokratesUnzip(SOKRATES_ARCHIVE); }
+            var entries = __entriesCache;
             var bytes = entries[entry];
             if (!bytes) throw new Error('Not found in data archive: ' + entry);
 
@@ -94,13 +109,18 @@
         }
     }
 
-    (function main() {
-        var entry = param('entry');
-        if (!entry) { showError('Nothing to show: expected ?entry=<name>'); return; }
+    function main() {
+        var entry = entryName();
+        if (!entry) { showError('Nothing to show: expected #<entry> in the URL'); return; }
+        document.getElementById('content').innerHTML = '<div id="loading"><div class="spinner"></div><span>Loading data…</span></div>';
         // Decoding a large embedded archive blocks the main thread; yield one frame first so the
         // loading spinner actually paints, then do the synchronous extract + render.
         requestAnimationFrame(function () { setTimeout(function () { renderEntry(entry); }, 0); });
-    })();
+    }
+
+    // Re-render when the fragment changes (a different entry on this same cached page) — no reload.
+    window.addEventListener('hashchange', main);
+    main();
 </script>
 </body>
 </html>
