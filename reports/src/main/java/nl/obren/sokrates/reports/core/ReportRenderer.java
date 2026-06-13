@@ -43,9 +43,6 @@ public class ReportRenderer {
         if (StringUtils.isNotBlank(richTextReport.getDisplayName())) {
             renderHeader(richTextReport, content);
         }
-        if (StringUtils.isNotBlank(richTextReport.getDescription())) {
-            content.append("<p style=\"color: #787878; font-size: 94%; margin-top: 9px; white-space: nowrap; overflow: hidden;\">" + richTextReport.getDescription() + "</p>\n");
-        }
         reportRenderingClient.append(content.toString());
         richTextReport.getRichTextFragments().forEach(fragment -> {
             renderFragment(reportRenderingClient, fragment);
@@ -53,24 +50,44 @@ public class ReportRenderer {
     }
 
     private void renderHeader(RichTextReport richTextReport, StringBuilder content) {
-        content.append(renderBreadcrumbsInDiv(richTextReport.getBreadcrumbs()));
-        content.append("<div style='font-size: 36px; margin-top: 15px; padding-bottom: 15px; white-space: nowrap; overflow: hidden;'>");
-
         String parentUrl = richTextReport.getParentUrl();
-        if (StringUtils.isNotBlank(parentUrl)) {
-            content.append("<a href='" + parentUrl + "' style=\"font-size: 100%;text-decoration:none\">\n");
-        }
+        String parentUrlHtml = "<a href='" + parentUrl + "' style=\"font-size: 100%;text-decoration:none\">";
 
+        content.append(renderBreadcrumbsInDiv(richTextReport.getBreadcrumbs()));
+        content.append("<table>");
+        content.append("<tr>");
+
+        content.append("<td style='border: none'>");
+        content.append("<div style='margin-top: 15px; padding-bottom: 15px; white-space: nowrap; overflow: hidden;'>");
+
+        if (StringUtils.isNotBlank(parentUrl)) {
+            content.append(parentUrlHtml);
+        }
         content.append(renderLogo(richTextReport));
-
-        content.append("<div style='margin-left: 4px; display: inline-block; vertical-align: middle; font-size: 120%'>" +
-                richTextReport.getDisplayName() + "</div></div>\n");
-
         if (StringUtils.isNotBlank(parentUrl)) {
-            content.append("</a>\n");
+            content.append("</a>");
         }
+        content.append("</div>");
 
-        content.append("</div>\n");
+        content.append("</td>");
+
+        content.append("<td style='border: none'>");
+        if (StringUtils.isNotBlank(parentUrl)) {
+            content.append(parentUrlHtml);
+        }
+        content.append("<div style='font-size: 48px; display: inline-block; vertical-align: middle;'>" +
+                richTextReport.getDisplayName() + "</div>");
+        if (StringUtils.isNotBlank(richTextReport.getDescription())) {
+            content.append("<div style='color: #787878; font-size: 94%; margin-top: 2px; white-space: nowrap; overflow: hidden;'>" + richTextReport.getDescription() + "</div>");
+        }
+        if (StringUtils.isNotBlank(parentUrl)) {
+            content.append("</a>");
+        }
+        content.append("</div>");
+        content.append("</td>");
+
+        content.append("</tr>");
+        content.append("</table>");
     }
 
     private String renderLogo(RichTextReport richTextReport) {

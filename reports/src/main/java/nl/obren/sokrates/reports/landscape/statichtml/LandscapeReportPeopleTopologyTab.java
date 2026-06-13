@@ -74,7 +74,7 @@ public class LandscapeReportPeopleTopologyTab {
 
     void render30DaysTopology() {
         String capitalizedType = StringUtils.capitalize(type.singular());
-        landscapeReport.startSubSection(capitalizedType + "-to-" + capitalizedType + " Topology (past 30 days)", "");
+        landscapeReport.startSubSection(capitalizedType + "-to-" + capitalizedType + " Topology", "past 30 days");
 
         boolean recentlyActive = landscapeAnalysisResults.getRecentContributorsCount(contributors) > 0;
         String prefix = isContributorReport() ? "people" : "teams";
@@ -130,7 +130,7 @@ public class LandscapeReportPeopleTopologyTab {
     void renderRepoAndKnowlegeTopologies() {
         boolean recentlyActive = landscapeAnalysisResults.getRecentContributorsCount(contributors) > 0;
         String prefix = isContributorReport() ? "people" : "teams";
-        landscapeReport.startSubSection("Repository Topology (past 30 days)", "");
+        landscapeReport.startSubSection("Repository-to-Repository Topology", "past 30 days");
         if (recentlyActive) {
             landscapeReport.addParagraph("The diagram shows repository dependencies defined as having the same " +
                     "contributors working on the same repositories in the past 30 days. " +
@@ -153,7 +153,7 @@ public class LandscapeReportPeopleTopologyTab {
             landscapeReport.addParagraph("No commits in past 30 days.", "color: grey");
         }
         landscapeReport.endSection();
-        landscapeReport.startSubSection("Knowledge Topology (past 30 days)", "");
+        landscapeReport.startSubSection("Knowledge Topology", "past 30 days");
         if (recentlyActive) {
             landscapeReport.addParagraph("The diagram shows dependencies between programming languages (file extensions) defined as having the same contributors committing to files with these extensions in the past 30 days. " +
                     "The lines between repositories display the number of contributors committing to files with both extensions in ht past 30 days.", "color: grey");

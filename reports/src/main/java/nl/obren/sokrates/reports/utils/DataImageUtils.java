@@ -333,14 +333,14 @@ public class DataImageUtils {
     public static String getLangDataImageDiv(String lang, int size, int fontSize1, int fontSize2, int padding1, int padding2) {
         String image = DataImageUtils.getLangDataImage(lang);
         if (image != null) {
-            return "<img title='" + lang + "' style=\"margin-right: 3px; vertical-align: top; background-color: #f1f1f1; border-radius: 50%; border: 1px solid lightgrey; width: " + size + "px; height: " + size + "px; object-fit: contain;\" src=\"" +
+            return "<img title='" + lang + "' style=\"margin-right: 3px; vertical-align: top; background-color: #f1f1f1; border-radius: 50%; border: 1px solid #e5e7eb; width: " + size + "px; height: " + size + "px; object-fit: contain;\" src=\"" +
                     image + "\">";
         } else {
             int nameLength = lang.length();
             return "<div title='" + lang + "' style=\"" +
                     "margin-right: 3px; display: inline-block; vertical-align: top; " +
-                    "padding: auto; background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; " +
-                    "object-fit: contain; overflow: hidden; color: darkblue; " +
+                    "padding: auto; background-color: #f1f1f1; border-radius: 50%; border: 1px solid #e5e7eb; " +
+                    "object-fit: contain; overflow: hidden; color: #374151; " +
                     "width: " + size + "px; " +
                     "height: " + size + "px; " +
                     "font-size: " + (nameLength <= 3 ? fontSize1 : fontSize2) + "px; font-weight: bold; text-align: center;\">" +

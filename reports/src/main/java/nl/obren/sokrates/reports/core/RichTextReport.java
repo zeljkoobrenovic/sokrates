@@ -356,6 +356,18 @@ public class RichTextReport {
         this.addHtmlContent(html);
     }
 
+    public void startSubSectionNoMargins(String title, String subtitle) {
+        String html = "<div class='subSection'>";
+        if (StringUtils.isNotBlank(title) || StringUtils.isNotBlank(subtitle)) {
+            html += "<div class='subSectionHeader'>" +
+                    "    <span class='subSectionTitle'>" + title + "</span>" +
+                    (StringUtils.isNotBlank(subtitle) ? "    <div class='subSectionSubtitle'>" + subtitle + "</div>" : "") +
+                    "</div>";
+        }
+        html += "<div class='sectionBodyNoMargins'>";
+        this.addHtmlContent(html);
+    }
+
     public void startTocSection() {
         String title = "Table of Content";
         this.addHtmlContent("<div class='subSection' style='width: 400px;'>" +

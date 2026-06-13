@@ -61,10 +61,10 @@ public class BasicSourceCodeReportGenerator {
 
     private void decorateReport(RichTextReport report, String prefix, String logoLink) {
         if (StringUtils.isNotBlank(prefix)) {
-            report.setDisplayName("<div style='color: #bbbbbb; font-size: 60%;'>"
+            report.setDisplayName("<div style='color: #bbbbbb; font-size: 20px;'>"
                     + prefix
                     + "</div>"
-                    + "<div style='height: 34px; font-size: 100%'>" + report.getDisplayName() + "</div>");
+                    + "<div style='height: 34px; font-size: 42px'>" + report.getDisplayName() + "</div>");
         }
 
         report.setReportsFolder(reportsFolder);

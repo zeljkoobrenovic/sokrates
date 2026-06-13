@@ -124,7 +124,9 @@ public class LandscapeReportContributorsTab {
         addContributorsListsSection(recentContributorsCount, landscapeAnalysisResults.getLatestCommitDate(), recentContributors);
 
         if (recentContributorsCount > 0) {
+            landscapeReport.startSubSection(StringUtils.capitalize(type.plural()) + " Per File Extension (past 30 days)", "");
             addContributorsPerExtension(true);
+            landscapeReport.endSection();
         }
         addIFrames(landscapeAnalysisResults.getConfiguration().getiFramesContributorsAtStart());
         LOG.info("Adding contributors...");
@@ -296,7 +298,7 @@ public class LandscapeReportContributorsTab {
             } else {
                 title = iframe.getTitle();
             }
-            landscapeReport.startSubSection(title, "");
+            landscapeReport.startSubSectionNoMargins(title, "");
         }
         String style = StringUtils.defaultIfBlank(iframe.getStyle(), "width: 100%; height: 200px; border: 1px solid lightgrey;");
         landscapeReport.addHtmlContent("<iframe src='" + iframe.getSrc()
@@ -309,8 +311,6 @@ public class LandscapeReportContributorsTab {
     }
 
     private void addContributorsPerExtension(boolean linkCharts) {
-        landscapeReport.startSubSection(StringUtils.capitalize(type.plural()) + " Per File Extension (past 30 days)", "");
-
         if (linkCharts) {
             landscapeReport.startDiv("");
             landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_extensions_" + type.plural() + "_30d.html");
@@ -357,7 +357,6 @@ public class LandscapeReportContributorsTab {
 
         addContributorDependencies(contributorsPerExtension);
 
-        landscapeReport.endSection();
     }
 
     private String getSvgIcon() {
@@ -551,7 +550,7 @@ public class LandscapeReportContributorsTab {
     }
 
     private void addContributorsListsSection(int recentContributorsCount, String latestCommit, List<ContributorRepositories> recentContributors) {
-        landscapeReport.startSubSection("<a href='" + type.plural() + "-report.html' target='_blank' style='text-decoration: none'>" +
+        landscapeReport.startSubSectionNoMargins("<a href='" + type.plural() + "-report.html' target='_blank' style='text-decoration: none'>" +
                         "" + StringUtils.capitalize(type.plural()) + "</a>&nbsp;&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON,
                 "latest commit " + latestCommit);
 
@@ -762,55 +761,19 @@ public class LandscapeReportContributorsTab {
     }
 
     private void addInfoBlockWithColor(String mainValue, String subtitle, String color, String tooltip, String icon) {
-        String style = "border-radius: 12px;";
-
-        style += "margin: 12px 12px 12px 0px;";
-        style += "display: inline-block; width: 160px; height: 120px;";
-        style += "background-color: " + color + "; text-align: center; vertical-align: middle; margin-bottom: 36px;";
-        style += "box-shadow: rgb(0 0 0 / 12%) 0px 1px 3px, rgb(0 0 0 / 24%) 0px 1px 2px;";
-
-        landscapeReport.startDiv("display: inline-block; text-align: center", tooltip);
-        landscapeReport.addContentInDiv(ReportFileExporter.getIconSvg(icon, 48), "margin-top: 18px; margin-bottom: -12px");
-        landscapeReport.startDiv(style, tooltip);
-        String specialColor = mainValue.equals("<b>0</b>") ? " color: grey;" : "";
-        landscapeReport.addHtmlContent("<div style='font-size: 50px; margin-top: 20px;" + specialColor + "'>" + mainValue + "</div>");
-        landscapeReport.addHtmlContent("<div style='color: #434343; font-size: 15px;" + specialColor + "'>" + subtitle + "</div>");
-        landscapeReport.endDiv();
-        landscapeReport.endDiv();
+        InfoBlocks.addInfoBlockWithColor(landscapeReport, mainValue, subtitle, color, tooltip, icon);
     }
 
     private void addLangInfoBlockExtra(String value, String lang, String description, String extra) {
-        String style = "border-radius: 8px; margin: 4px 4px 4px 0px; display: inline-block; " +
-                "width: 80px; height: 114px;background-color: #dedede; " +
-                "text-align: center; vertical-align: middle; margin-bottom: 16px;";
-
-        landscapeReport.startDivWithLabel(description, style);
-
-        landscapeReport.addContentInDiv("", "margin-top: 8px");
-        landscapeReport.addHtmlContent(DataImageUtils.getLangDataImageDiv42(lang));
-        landscapeReport.addHtmlContent("<div style='font-size: 24px; margin-top: 8px;'>" + value + "</div>");
-        landscapeReport.addHtmlContent("<div style='color: #434343; font-size: 13px'>" + lang + "</div>");
-        landscapeReport.addHtmlContent("<div style='color: #767676; font-size: 9px; margin-top: 1px;'>" + extra + "</div>");
-        landscapeReport.endDiv();
+        InfoBlocks.addLangInfoBlockExtra(landscapeReport, value, lang, description, extra);
     }
 
     private void addSmallInfoBlock(String value, String subtitle, String color, String link) {
-        String style = "border-radius: 8px;";
+        InfoBlocks.addSmallInfoBlock(landscapeReport, value, subtitle, color, link);
+    }
 
-        style += "margin: 4px 4px 4px 0px;";
-        style += "display: inline-block; width: 80px; height: 76px;";
-        style += "background-color: " + color + "; text-align: center; vertical-align: middle; margin-bottom: 16px;";
-
-        landscapeReport.startDiv(style);
-        if (StringUtils.isNotBlank(link)) {
-            landscapeReport.startNewTabLink(link, "text-decoration: none");
-        }
-        landscapeReport.addHtmlContent("<div style='font-size: 24px; margin-top: 8px;'>" + value + "</div>");
-        landscapeReport.addHtmlContent("<div style='color: #434343; font-size: 13px'>" + subtitle + "</div>");
-        if (StringUtils.isNotBlank(link)) {
-            landscapeReport.endNewTabLink();
-        }
-        landscapeReport.endDiv();
+    private void addActivityTrendCard(String value, String subtitle, String icon) {
+        InfoBlocks.addActivityTrendCard(landscapeReport, value, subtitle, icon);
     }
 
     private void addContributorsPerYear(boolean showContributorsCount) {
@@ -827,12 +790,10 @@ public class LandscapeReportContributorsTab {
             landscapeReport.startTable();
 
             landscapeReport.startTableRow();
-            landscapeReport.startTableCell("border: none; height: 100px");
+            landscapeReport.startTableCell("border: none; height: 130px; vertical-align: bottom;");
             int commitsCount = landscapeAnalysisResults.getCommitsCount();
             if (commitsCount > 0) {
-                landscapeReport.startDiv("max-height: 105px");
-                addSmallInfoBlock(FormattingUtils.getSmallTextForNumber(commitsCount), "commits", "white", "");
-                landscapeReport.endDiv();
+                addActivityTrendCard(FormattingUtils.getSmallTextForNumber(commitsCount), "commits", "commits");
             }
             landscapeReport.endTableCell();
             String style = "border: none; text-align: center; vertical-align: bottom; font-size: 80%; height: 100px";
@@ -856,12 +817,10 @@ public class LandscapeReportContributorsTab {
                     maxContributors[0] = Math.max(maxContributors[0], count);
                 });
                 landscapeReport.startTableRow();
-                landscapeReport.startTableCell("border: none; height: 100px");
+                landscapeReport.startTableCell("border: none; height: 130px; vertical-align: bottom;");
                 int contributorsCount = contributors.size();
                 if (contributorsCount > 0) {
-                    landscapeReport.startDiv("max-height: 105px");
-                    addSmallInfoBlock(FormattingUtils.getSmallTextForNumber(contributorsCount), "contributors", "white", "");
-                    landscapeReport.endDiv();
+                    addActivityTrendCard(FormattingUtils.getSmallTextForNumber(contributorsCount), "contributors", "contributors");
                 }
                 landscapeReport.endTableCell();
                 contributorsPerYear.forEach(year -> {
