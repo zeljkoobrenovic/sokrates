@@ -142,7 +142,6 @@ public class ReportFileExporter {
         indexReport.addTab("units", "Units*", false);
         indexReport.addTab("visuals", "Visuals", false);
         indexReport.addTab("data", "Data", false);
-        indexReport.addTab("prompts", "AI Prompts", false);
         indexReport.endDiv();
 
         indexReport.startTabContentSection("overview", true);
@@ -314,12 +313,7 @@ public class ReportFileExporter {
         indexReport.startDiv("margin: 24px");
         addData(indexReport, analysisResults);
         indexReport.endDiv();
-        indexReport.endTabContentSection();
-
-        indexReport.startTabContentSection("prompts", false);
-        indexReport.startDiv("margin: 24px");
         addPrompts(indexReport, analysisResults);
-        indexReport.endDiv();
         indexReport.endTabContentSection();
 
         String dateOfUpdate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
@@ -359,13 +353,21 @@ public class ReportFileExporter {
     }
 
     private static void addPrompts(RichTextReport report, CodeAnalysisResults analysisResults) {
-        report.addParagraph("Generative AI tools, like ChatGPT or Gemini, can help you explore and discuss various aspects of source code repositories using simple prompts and file uploads. Sokrates provides you with curated data that you can use to analyze your source code further.", "");
+        report.addLineBreak();
+        report.startDiv("margin: 20px");
+        report.addLevel2Header("AI Prompts", "");
+        report.addParagraph("Generative AI tools, like ChatGPT or Gemini, can help you explore and discuss various aspects of source code repositories using simple prompts and file uploads. Sokrates provides you with curated data that you can use to analyze your source code further.", "color: grey; font-size: 90%; margin-top: 0");
 
+        report.startDiv("margin: 6px");
         PromptsUtils.addRepositoryPromptSection("git-history-analyzer", report, analysisResults, "Example Prompt 1: Repository Evolution Analyzer (based on git history)", "", Arrays.asList(new Link[]{new Link("git-history.zip", "../data/zips/git-history.zip")}));
 
         PromptsUtils.addRepositoryPromptSection("path-name-conventions-analyzer", report, analysisResults, "Example Prompt 2: File name conventions", "", Arrays.asList(new Link("files.json", "../data/files.json")));
 
         PromptsUtils.addRepositoryPromptSection("technology-analyzer", report, analysisResults, "Example Prompt 3: Technology analyzer (based of file paths)", "", Arrays.asList(new Link("files.json", "../data/files.json")));
+
+        report.endDiv();
+
+        report.endDiv();
     }
 
     private static void addSummaryActivityTable(ContributorsAnalysisResults contributorsAnalysisResults, RichTextReport indexReport) {
