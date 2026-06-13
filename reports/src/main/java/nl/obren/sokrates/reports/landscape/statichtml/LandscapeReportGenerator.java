@@ -12,10 +12,8 @@ import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
-import nl.obren.sokrates.reports.core.ReportConstants;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
-import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.LandscapeRepositoriesTagsMatrixReport;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.LandscapeRepositoriesTagsReport;
@@ -24,7 +22,6 @@ import nl.obren.sokrates.reports.landscape.utils.*;
 import nl.obren.sokrates.reports.utils.*;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
-import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
@@ -65,7 +62,7 @@ public class LandscapeReportGenerator {
     public static final String CONTRIBUTORS_TAB_ID = "contributors";
     public static final String ACTIVITY_TAB_ID = "activity";
     public static final String TOPOLOGIES_TAB_ID = "topologies";
-    public static final String PROMPTS_TAB_ID = "prompts";
+    public static final String DATA_TAB_ID = "data";
     public static final String TEAMS_TAB_ID = "teams";
     public static final String CUSTOM_TAB_ID_PREFIX = "custom_tab_";
     public static final String CONTRIBUTORS_30_D = "contributors_30d_";
@@ -182,7 +179,7 @@ public class LandscapeReportGenerator {
         addOverviewTab();
         addSublandscapesTab();
         addRepositoriesTab(repositories);
-        addPromptsTab();
+        addDataTab();
 
         landscapeReportContributorsTab.addContributorsTabs(CONTRIBUTORS_TAB_ID);
         if (teamsConfig.getTeams().size() > 0) {
@@ -315,7 +312,7 @@ public class LandscapeReportGenerator {
             int index = configuration.getCustomTabs().indexOf(tab);
             landscapeReport.addTab(CUSTOM_TAB_ID_PREFIX + index, tab.getName(), false);
         });
-        landscapeReport.addTab(PROMPTS_TAB_ID, "Data", false);
+        landscapeReport.addTab(DATA_TAB_ID, "Data", false);
         landscapeReport.endTabGroup();
     }
 
@@ -347,11 +344,12 @@ public class LandscapeReportGenerator {
 
     // The "Data & AI" tab: direct links to the exported data and configuration files (for anyone
     // who wants the raw data) plus curated AI prompts to analyze that data with LLM tools.
-    private void addPromptsTab() {
+    private void addDataTab() {
         ProcessingStopwatch.start("reporting/prompts");
 
-        landscapeReport.startTabContentSection(PROMPTS_TAB_ID, false);
+        landscapeReport.startTabContentSection(DATA_TAB_ID, false);
         landscapeReport.startDiv("margin: 20px;");
+        landscapeReport.addLevel2Header("DATA");
         landscapeReport.addParagraph("Sokrates exports the analysis data as JSON and text files that you can use directly " +
                 "or feed to generative AI tools (like ChatGPT, Claude or Gemini) using the curated prompts below.", "");
 
@@ -372,6 +370,9 @@ public class LandscapeReportGenerator {
                 + " | <a href='config-people.json' target='_blank'>config-people.json</a>"
                 + " | <a href='config-teams.json' target='_blank'>config-teams.json</a>", "");
         landscapeReport.endSection();
+
+        landscapeReport.addLineBreak();
+        landscapeReport.addLevel2Header("AI PROMPTS");
 
         PromptsUtils.addLandscapePromptSection("landscape-repository-insights", landscapeReport, landscapeAnalysisResults, "Prompt 1: Simple Repository Insights (based on repository names and basic stats)", "", Arrays.asList(new Link("repositories.txt", "data/repositories.txt"), new Link("repositories.json", "data/repositories.json")));
 
