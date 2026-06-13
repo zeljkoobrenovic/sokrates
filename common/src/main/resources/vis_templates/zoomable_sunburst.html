@@ -88,6 +88,16 @@
         return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
     }
 
+    // The view key is in the URL fragment (#<key>) so the browser caches this one HTML file once and
+    // reuses it for every view (the fragment is not part of the cache key). Legacy ?key= fallback.
+    function viewKey() {
+        var hash = window.location.hash;
+        if (hash && hash.length > 1) {
+            return decodeURIComponent(hash.substring(1));
+        }
+        return param('key');
+    }
+
     // Hides the loading spinner; called once the data is ready (or on error).
     function hideSpinner() {
         var loading = document.getElementById('loading');
@@ -248,11 +258,12 @@
         }
     }
 
+    var __sunburstEntriesCache = null;
     function loadEmbedded() {
         try {
-            var key = param('key') || 'main';
-            var entries = sokratesUnzip(SOKRATES_ARCHIVE);
-            var bytes = entries[key + '.json'];
+            var key = viewKey() || 'main';
+            if (!__sunburstEntriesCache) { __sunburstEntriesCache = sokratesUnzip(SOKRATES_ARCHIVE); }
+            var bytes = __sunburstEntriesCache[key + '.json'];
             if (!bytes) throw new Error('View not found: ' + key);
             render(JSON.parse(fflate.strFromU8(bytes)));
         } catch (e) {

@@ -94,7 +94,7 @@ public class UnitsExplorerGenerators {
             if (links.containsKey(unit) || unit.getSourceFile() == null) {
                 continue;
             }
-            String url = "../src/viewer.html?bundle=fragments/" + fragmentType + ".json&i=" + (i + 1);
+            String url = "../src/viewer.html#bundle=fragments/" + fragmentType + ".json&i=" + (i + 1);
             links.put(unit, url);
         }
     }

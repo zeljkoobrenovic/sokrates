@@ -72,7 +72,7 @@ public class FilesExplorerGenerators {
                 }
                 // Link to the cached source page only for files that actually have one.
                 if (referencedFiles.contains(file)) {
-                    fileExport.setSourceFileLink("../src/viewer.html?aspect=" + cacheFolder + "&file=" + file.getRelativePath());
+                    fileExport.setSourceFileLink("../src/viewer.html#aspect=" + cacheFolder + "&file=" + file.getRelativePath());
                 }
                 files.add(fileExport);
             }

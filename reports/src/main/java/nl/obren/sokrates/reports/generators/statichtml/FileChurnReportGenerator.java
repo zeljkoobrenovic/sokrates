@@ -79,9 +79,9 @@ public class FileChurnReportGenerator {
         addGraphOverallChange(report, codeAnalysisResults.getFilesHistoryAnalysisResults().getOverallFileChangeDistribution());
         report.addLineBreak();
         report.addHtmlContent("explore: ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html?key=main_update_frequency_coloring'>grouped by folders</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html#main_update_frequency_coloring'>grouped by folders</a>");
         report.addHtmlContent(" | ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html?key=main_update_frequency_coloring_categories'>grouped by update frequency</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html#main_update_frequency_coloring_categories'>grouped by update frequency</a>");
         report.addHtmlContent(" | ");
         report.addHtmlContent("<a target='_blank' href='#' onclick=\"return downloadDataFile('text/mainFilesWithHistory.txt')\">data</a>");
         report.endSection();
@@ -90,9 +90,9 @@ public class FileChurnReportGenerator {
         addGraphOverallContributorCount(report, codeAnalysisResults.getFilesHistoryAnalysisResults().getOverallContributorsCountDistribution());
         report.addLineBreak();
         report.addHtmlContent("explore: ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html?key=main_contributors_count_coloring'>grouped by folders</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html#main_contributors_count_coloring'>grouped by folders</a>");
         report.addHtmlContent(" | ");
-        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html?key=main_contributors_count_coloring_categories'>grouped by contributors count</a>");
+        report.addHtmlContent("<a target='_blank' href='visuals/zoomable_circles.html#main_contributors_count_coloring_categories'>grouped by contributors count</a>");
         report.addHtmlContent(" | ");
         report.addHtmlContent("<a target='_blank' href='#' onclick=\"return downloadDataFile('text/mainFilesWithHistory.txt')\">data</a>");
         report.endSection();

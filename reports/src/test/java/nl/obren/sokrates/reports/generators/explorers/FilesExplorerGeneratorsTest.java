@@ -54,7 +54,7 @@ class FilesExplorerGeneratorsTest {
                 aspectOf(referenced), "main", new java.util.HashSet<>(Arrays.asList(referenced)));
 
         assertEquals(1, files.size());
-        assertEquals("../src/viewer.html?aspect=main&file=com/x/Foo.java", files.get(0).getSourceFileLink());
+        assertEquals("../src/viewer.html#aspect=main&file=com/x/Foo.java", files.get(0).getSourceFileLink());
     }
 
     @Test

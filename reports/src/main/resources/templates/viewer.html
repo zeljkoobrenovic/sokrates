@@ -69,8 +69,15 @@
         return __archiveEntries;
     }
 
+    // Params are read from the URL FRAGMENT (e.g. #aspect=main&file=x&from=1&to=9 or
+    // #bundle=fragments/longest_unit.json&i=3), not the query string: the fragment is not part of
+    // the browser's HTTP cache key, so this one HTML file (which embeds the whole source archive) is
+    // fetched once and reused for every file/fragment. Falls back to a legacy ?param= query string.
     function param(name) {
-        var m = new RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+        var source = (window.location.hash && window.location.hash.length > 1)
+            ? '&' + window.location.hash.substring(1)
+            : window.location.search;
+        var m = new RegExp('[?&]' + name + '=([^&]*)').exec(source);
         return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
     }
 
