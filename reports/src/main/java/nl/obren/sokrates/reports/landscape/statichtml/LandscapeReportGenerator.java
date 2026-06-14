@@ -12,13 +12,15 @@ import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
-import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.LandscapeRepositoriesTagsMatrixReport;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.LandscapeRepositoriesTagsReport;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.TagMap;
-import nl.obren.sokrates.reports.landscape.utils.*;
+import nl.obren.sokrates.reports.landscape.utils.CorrelationDiagramGenerator;
+import nl.obren.sokrates.reports.landscape.utils.ExtractStringListValue;
+import nl.obren.sokrates.reports.landscape.utils.Force3DGraphExporter;
+import nl.obren.sokrates.reports.landscape.utils.LandscapeGeneratorUtils;
 import nl.obren.sokrates.reports.utils.*;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
@@ -1346,6 +1348,7 @@ public class LandscapeReportGenerator {
     }
 
     private void addContributorsPerExtension(boolean linkCharts) {
+        landscapeReport.startSubSection("Contributors Per File Extension", "past 30 days");
         if (linkCharts) {
             landscapeReport.startDiv("");
             landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_extensions_contributors_30d.html");
@@ -1375,6 +1378,7 @@ public class LandscapeReportGenerator {
         }
         landscapeReport.endDiv();
         addContributorDependencies(contributorsPerExtension);
+        landscapeReport.endSection();
     }
 
     private void addContributorDependencies(List<CommitsPerExtension> contributorsPerExtension) {
