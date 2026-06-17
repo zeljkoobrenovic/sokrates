@@ -50,37 +50,80 @@ public class ReportConstants {
             "</svg>";
 
     public final static String TAB_STYLE = ".tab {\n" +
-            "  overflow: hidden;\n" +
-            "  border: 1px solid #ccc;\n" +
-            "  background-color: #f1f1f1;\n" +
+            "  display: flex;\n" +
+            "  flex-wrap: wrap;\n" +
+            "  gap: 4px;\n" +
+            "  border-bottom: 1px solid #e5e7eb;\n" +
+            "  margin-bottom: 4px;\n" +
             "}\n" +
             "\n" +
             ".tab button {\n" +
-            "  font-family: Roboto, Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;\n" +
-            "  font-size: 100%;\n" +
-            "  background-color: inherit;\n" +
-            "  float: left;\n" +
+            "  position: relative;\n" +
+            "  background-color: transparent;\n" +
             "  border: none;\n" +
             "  outline: none;\n" +
             "  cursor: pointer;\n" +
-            "  padding: 14px 16px;\n" +
-            "  transition: 0.3s;\n" +
+            "  padding: 11px 16px;\n" +
+            "  margin-bottom: -1px;\n" +
+            "  font-family: inherit;\n" +
+            "  font-size: 14px;\n" +
+            "  font-weight: 500;\n" +
+            "  color: #6b7280;\n" +
+            "  border-bottom: 2px solid transparent;\n" +
+            "  border-radius: 8px 8px 0 0;\n" +
+            "  transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;\n" +
             "}\n" +
             "\n" +
             ".tab button:hover {\n" +
-            "  background-color: #ddd;\n" +
+            "  color: #1f2937;\n" +
+            "  background-color: #f3f4f6;\n" +
+            "}\n" +
+            "\n" +
+            ".tab button:focus-visible {\n" +
+            "  outline: 2px solid #1d4ed8;\n" +
+            "  outline-offset: -2px;\n" +
             "}\n" +
             "\n" +
             ".tab button.active {\n" +
-            "  background-color: #ccc;\n" +
+            "  color: #1d4ed8;\n" +
+            "  border-bottom-color: #1d4ed8;\n" +
             "}\n" +
             "\n" +
             ".tabcontent {\n" +
             "  display: none;\n" +
-            "  padding: 6px 12px;\n" +
-            "  border: 1px solid #ccc;\n" +
+            "  padding: 2px 2px;\n" +
             "  overflow-y: auto;\n" +
-            "  border-top: none;\n" +
+            "  animation: tabContentFade 0.2s ease;\n" +
+            "}\n" +
+            "\n" +
+            "@keyframes tabContentFade {\n" +
+            "  from {\n" +
+            "    opacity: 0;\n" +
+            "    transform: translateY(3px);\n" +
+            "  }\n" +
+            "  to {\n" +
+            "    opacity: 1;\n" +
+            "    transform: translateY(0);\n" +
+            "  }\n" +
+            "}\n" +
+            "\n" +
+            "@media (max-width: 720px) {\n" +
+            "  .tab {\n" +
+            "    flex-direction: column;\n" +
+            "    gap: 0;\n" +
+            "  }\n" +
+            "\n" +
+            "  .tab button {\n" +
+            "    width: 100%;\n" +
+            "    text-align: left;\n" +
+            "    margin-bottom: 0;\n" +
+            "    border-bottom: 1px solid #e5e7eb;\n" +
+            "    border-radius: 0;\n" +
+            "  }\n" +
+            "\n" +
+            "  .tab button.active {\n" +
+            "    border-bottom-color: #1d4ed8;\n" +
+            "  }\n" +
             "}";
 
     public final static String REPORTS_HTML_HEADER = "<!DOCTYPE html>\n" +
@@ -173,12 +216,12 @@ public class ReportConstants {
             "        }\n" +
             "\n" +
             "        .sectionHeader {\n" +
-            "            margin-bottom: 30px;\n" +
-            "            padding: 16px 20px;\n" +
-            "            border-radius: 8px 8px 0 0;\n" +
-            "            border-bottom: 1px solid #e3eaf2;\n" +
-            "            border-left: 3px solid #5b9bd5;\n" +
-            "            background-color: #f0f6fc;\n" +
+            "            border-left: 3px solid #989898;\n" +
+
+            "            border-bottom: 1px solid #dedede;\n" +
+            "            border-radius: 4px;\n" +
+            "            padding: 8px 12px;\n" +
+            "            background-color: #f6f6f6;\n" +
             "        }\n" +
             "\n" +
             "        .sectionTitle {\n" +
@@ -210,7 +253,7 @@ public class ReportConstants {
             "            border-bottom: 1px solid #dedede;\n" +
             "            border-radius: 8px 8px 0 0;\n" +
             "            padding: 8px 12px;\n" +
-            "            background-color: #dedede;\n" +
+            "            background-color: #f4f4f4;\n" +
             "        }\n" +
             "\n" +
             "        .sectionBody {\n" +

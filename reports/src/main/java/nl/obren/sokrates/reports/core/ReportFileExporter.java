@@ -1019,12 +1019,14 @@ public class ReportFileExporter {
     private static void appendLinks(RichTextReport report, CodeAnalysisResults analysisResults) {
         List<Link> links = analysisResults.getCodeConfiguration().getMetadata().getLinks();
         if (links.size() > 0) {
-            report.startDiv("font-size: 80%; margin-top: 0px; margin-bottom: 12px; margin-left: 2px;");
+            report.startDiv("font-size: 70%; margin-top: 0px; margin-bottom: 14px; margin-top: -2px; margin-left: 0;");
             links.forEach(link -> {
                 if (links.indexOf(link) > 0) {
                     report.addHtmlContent(" | ");
                 }
-                report.addNewTabLink(link.getLabel() + "&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON_SMALL, link.getHref());
+                report.startDiv("display: inline-block; padding: 4px 6px; border-radius: 999px; background-color: #f4f4f4;");
+                report.addNewTabLink(link.getLabel() + "&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON_EXTRA_SMALL, link.getHref());
+                report.endDiv();
             });
             report.endDiv();
         }
