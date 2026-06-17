@@ -176,8 +176,8 @@
 
     <div class="tabcontent">
         <div style="color: grey; margin: 8px 0 10px 0;">
-            <input id="filter" type="text" placeholder="search by name... (use team: to search by team, ; for multiple terms)"
-                   style="font-size: 16px; height: 30px; width: 420px;"
+            <input id="filter" type="text" placeholder="search by name; team: by team, mainLang:cs,java by main language (; for multiple terms)"
+                   style="font-size: 16px; height: 30px; width: 540px;"
                    onkeyup="render()">
             <span id="search-summary" style="display: inline-block; margin-left: 6px;"></span>
         </div>
@@ -454,17 +454,26 @@
         render();
     }
 
-    // A search can contain several terms separated by ";"; the result is the UNION of the
-    // individual term matches (search "a;b" returns matches of "a" plus matches of "b").
-    // Plain terms search only the contributor name; a term prefixed with "team:" searches
-    // only the team name (matching the text after the prefix).
+    // A search is split by ";" into terms. A term of the form "mainLang:<l1>,<l2>,..." sets a
+    // main-language filter: a contributor must have one of those exact main languages, and the
+    // remaining terms then filter WITHIN that language set. A term prefixed with "team:" matches
+    // the team name; any other plain term matches the contributor name (email). Plain name and
+    // team terms are a UNION among themselves, AND-ed with the language constraint. Examples:
+    //   "alice;team:platform"               -> name contains "alice" OR team contains "platform"
+    //   "mainLang:cs,java"                  -> all contributors whose main language is cs or java
+    //   "mainLang:cs,java;alice;bob"        -> cs/java contributors whose name contains "alice" or "bob"
     function getFilters() {
         const terms = document.getElementById('filter').value.toLowerCase().trim()
             .split(';').map(s => s.trim()).filter(s => s.length);
         const nameFilters = [];
         const teamFilters = [];
+        const langs = [];
         terms.forEach(t => {
-            if (t.startsWith('team:')) {
+            if (t.startsWith('mainlang:')) {
+                t.substring('mainlang:'.length).split(',')
+                    .map(s => s.trim()).filter(s => s.length)
+                    .forEach(l => langs.push(l));
+            } else if (t.startsWith('team:')) {
                 const teamTerm = t.substring('team:'.length).trim();
                 if (teamTerm.length) {
                     teamFilters.push(teamTerm);
@@ -473,7 +482,7 @@
                 nameFilters.push(t);
             }
         });
-        return { nameFilters, teamFilters };
+        return { nameFilters, teamFilters, langs };
     }
 
     function matchesFilters(text, filters) {
@@ -500,13 +509,20 @@
         if (!keepPaging) {
             displayLimit = PAGE_SIZE;
         }
-        const { nameFilters, teamFilters } = getFilters();
-        const noFilters = !nameFilters.length && !teamFilters.length;
+        const { nameFilters, teamFilters, langs } = getFilters();
+        const noTextFilters = !nameFilters.length && !teamFilters.length;
         const tab = TABS_BY_ID[activeTab];
 
-        let rows = (tab.list || []).filter(c => noFilters
-            || matchesFilters(c.email, nameFilters)
-            || matchesFilters(c.team, teamFilters));
+        let rows = (tab.list || []).filter(c => {
+            // The language set (if any) is an AND constraint on the contributor's main language.
+            if (langs.length && !langs.includes((c.mainLang || '').toLowerCase())) {
+                return false;
+            }
+            // Within that set, name/team terms are a UNION (no text terms => everything passes).
+            return noTextFilters
+                || matchesFilters(c.email, nameFilters)
+                || matchesFilters(c.team, teamFilters);
+        });
         const column = tab.columns.find(c => c.key === tab.sortKey) || tab.columns[0];
         rows = rows.slice().sort(makeComparator(column, tab.sortDir));
 
@@ -537,9 +553,42 @@
         document.getElementById('content').innerHTML = html;
     }
 
+    // The main language can be passed in the URL fragment (e.g. ...#mainLang=java or
+    // ...#mainLang=cs,java for several) to land on a language-filtered view. The value is read
+    // from the fragment (not a ?query) so the browser caches the single embedded-data HTML once
+    // and reuses it for every language (and so it does not collide with the ?tab= query used when
+    // this report is embedded as an iframe). A bare fragment (...#java) is also accepted as the
+    // language list. Re-applied on hashchange; seeds the box with a "mainLang:<langs>" term.
+    function readMainLangFromHash() {
+        const hash = (window.location.hash || '').replace(/^#/, '');
+        if (!hash) {
+            return '';
+        }
+        const m = hash.match(/(?:^|[&])mainLang=([^&]*)/i);
+        const value = m ? m[1] : hash;
+        try {
+            return decodeURIComponent(value).trim();
+        } catch (e) {
+            return value.trim();
+        }
+    }
+
+    function applyMainLangFromHash() {
+        const langs = readMainLangFromHash();
+        if (langs) {
+            document.getElementById('filter').value = 'mainLang:' + langs;
+        }
+    }
+
+    window.addEventListener('hashchange', function () {
+        applyMainLangFromHash();
+        render();
+    });
+
     // Defer the (synchronous, potentially heavy) first render one frame so the loading
     // spinner actually paints before the main thread is blocked, then swap it for the report.
     function start() {
+        applyMainLangFromHash();
         buildTabs();
         render();
         document.getElementById('loading').style.display = 'none';

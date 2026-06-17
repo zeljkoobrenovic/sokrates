@@ -161,8 +161,8 @@
 
 <div id="report" style="display: none;">
     <div style="color: grey; margin: 8px 0 10px 0;">
-        <input id="filter" type="text" placeholder="search... (use ; for multiple terms)"
-               style="font-size: 16px; height: 30px; width: 420px;"
+        <input id="filter" type="text" placeholder="search by name; mainLang:cs,java to filter by main language (; for multiple terms)"
+               style="font-size: 16px; height: 30px; width: 540px;"
                onkeyup="render()">
         <span id="search-summary" style="display: inline-block; margin-left: 6px;"></span>
     </div>
@@ -754,22 +754,51 @@
         return perYearBarChart('contributors per year (distinct)', 'darkred', counts, 'contributors');
     }
 
-    // A search can contain several terms separated by ";"; the result is the UNION of the
-    // individual term matches (search "a;b" returns matches of "a" plus matches of "b").
+    // A search is split by ";" into terms. A term of the form "mainLang:<l1>,<l2>,..." sets a
+    // main-language filter (a repository must have one of those exact main languages); the
+    // remaining plain terms are name filters applied WITHIN that language set. The plain terms
+    // are still a UNION among themselves (name contains a OR b), but they are AND-ed with the
+    // language constraint. Examples:
+    //   "datadog-;customer"                  -> name contains "datadog-" OR "customer"
+    //   "mainLang:cs,java"                   -> all repositories whose main language is cs or java
+    //   "mainLang:cs,java;datadog-;customer" -> cs/java repos whose name contains "datadog-" or "customer"
     function getFilters() {
-        return document.getElementById('filter').value.toLowerCase().trim()
+        const terms = document.getElementById('filter').value.toLowerCase().trim()
             .split(';').map(s => s.trim()).filter(s => s.length);
+        const langs = [];
+        const nameFilters = [];
+        terms.forEach(t => {
+            if (t.startsWith('mainlang:')) {
+                t.substring('mainlang:'.length).split(',')
+                    .map(s => s.trim()).filter(s => s.length)
+                    .forEach(l => langs.push(l));
+            } else {
+                nameFilters.push(t);
+            }
+        });
+        return { langs, nameFilters };
     }
 
-    function matchesFilters(name, filters) {
-        if (!filters.length) {
+    // A row matches when its main language is in the (optional) language set AND its name matches
+    // the (optional) name filters. An empty language set means "any language"; empty name filters
+    // mean "any name". Name filters are a UNION (matches any one term).
+    function matchesFilters(name, lang, filters) {
+        const langs = filters.langs || [];
+        const nameFilters = filters.nameFilters || [];
+        if (langs.length) {
+            const l = (lang || '').toLowerCase();
+            if (!langs.includes(l)) {
+                return false;
+            }
+        }
+        if (!nameFilters.length) {
             return true;
         }
-        if (!name) {
+        const lower = (name || '').toLowerCase();
+        if (!lower) {
             return false;
         }
-        const lower = name.toLowerCase();
-        return filters.some(f => lower.includes(f));
+        return nameFilters.some(f => lower.includes(f));
     }
 
     // Rows shown at once; "show more" expands by this step. Stats/charts always reflect
@@ -799,7 +828,7 @@
         }
 
         const tab = TABS_BY_ID[activeTab];
-        let rows = repositories.filter(item => matchesFilters(item.metadata && item.metadata.name, filters));
+        let rows = repositories.filter(item => matchesFilters(item.metadata && item.metadata.name, item.mainLang, filters));
         if (tab.filter) {
             rows = rows.filter(tab.filter);
         }
@@ -905,7 +934,7 @@
     // Renders the proportion bars into the dedicated container under the search bar,
     // based on the search-filtered set (same across all tabs).
     function updateProportionBars(filters) {
-        const matched = repositories.filter(item => matchesFilters(item.metadata && item.metadata.name, filters));
+        const matched = repositories.filter(item => matchesFilters(item.metadata && item.metadata.name, item.mainLang, filters));
         const count = matched.length;
         const mainLoc = matched.reduce((a, b) => a + (b.mainLinesOfCode || 0), 0);
         const commits = matched.reduce((a, b) => a + (b.commitsCount || 0), 0);
@@ -916,7 +945,7 @@
     function renderFeatures(filters) {
         // Paging (displayLimit) is reset by render() before this is called.
         const concerns = features.concerns;
-        let repos = features.repositories.filter(r => matchesFilters(r.name, filters));
+        let repos = features.repositories.filter(r => matchesFilters(r.name, r.mainLang, filters));
 
         document.getElementById('search-summary').innerHTML = '= ' + repos.length + ' '
             + (repos.length === 1 ? 'repository' : 'repositories');
@@ -953,9 +982,41 @@
         document.getElementById('content').innerHTML = html;
     }
 
+    // The main language can be passed in the URL fragment (e.g. ...#mainLang=java or
+    // ...#mainLang=cs,java for several) to land on a language-filtered view. The value is read
+    // from the fragment (not a ?query) so the browser caches the single embedded-data HTML once
+    // and reuses it for every language. A bare fragment (...#java) is also accepted as the
+    // language list. Re-applied on hashchange; seeds the search box with a "mainLang:<langs>" term.
+    function readMainLangFromHash() {
+        const hash = (window.location.hash || '').replace(/^#/, '');
+        if (!hash) {
+            return '';
+        }
+        const m = hash.match(/(?:^|[&])mainLang=([^&]*)/i);
+        const value = m ? m[1] : hash;
+        try {
+            return decodeURIComponent(value).trim();
+        } catch (e) {
+            return value.trim();
+        }
+    }
+
+    function applyMainLangFromHash() {
+        const langs = readMainLangFromHash();
+        if (langs) {
+            document.getElementById('filter').value = 'mainLang:' + langs;
+        }
+    }
+
+    window.addEventListener('hashchange', function () {
+        applyMainLangFromHash();
+        render();
+    });
+
     // Defer the (synchronous, potentially heavy) first render one frame so the loading
     // spinner actually paints before the main thread is blocked, then swap it for the report.
     function start() {
+        applyMainLangFromHash();
         buildTabs();
         render();
         document.getElementById('loading').style.display = 'none';
