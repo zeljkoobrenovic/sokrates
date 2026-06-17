@@ -167,7 +167,13 @@
         <span id="search-summary" style="display: inline-block; margin-left: 6px;"></span>
     </div>
 
-    <div id="proportion-bars" style="margin-bottom: 10px;"></div>
+    <!-- The proportion bars (count / LOC / commits / contributors breakdown) are a collapsible
+         detail; the matched-count summary stays inline next to the filter above. Hidden entirely
+         when the query is empty; collapsed by default otherwise (see updateProportionBars). -->
+    <details id="search-stats" style="margin-bottom: 10px; display: none;">
+        <summary style="color: grey; cursor: pointer;">search stats...</summary>
+        <div id="proportion-bars" style="margin-top: 8px;"></div>
+    </details>
 
     <div class="tab" id="tabs"></div>
 
@@ -976,6 +982,14 @@
     // Renders the proportion bars into the dedicated container under the search bar,
     // based on the search-filtered set (same across all tabs).
     function updateProportionBars(filters) {
+        // Only meaningful when the user has typed a query (proportions vs. the unfiltered totals);
+        // hide the whole collapsible section when the search box is empty.
+        const details = document.getElementById('search-stats');
+        const hasQuery = document.getElementById('filter').value.trim().length > 0;
+        details.style.display = hasQuery ? '' : 'none';
+        if (!hasQuery) {
+            return;
+        }
         const matched = repositories.filter(item => matchesFilters(item.metadata && item.metadata.name, item.mainLang, item.langs, item.langsByScope, filters));
         const count = matched.length;
         const mainLoc = matched.reduce((a, b) => a + (b.mainLinesOfCode || 0), 0);
