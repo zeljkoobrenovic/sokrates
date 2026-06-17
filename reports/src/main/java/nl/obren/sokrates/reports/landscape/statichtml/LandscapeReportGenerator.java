@@ -1910,13 +1910,11 @@ public class LandscapeReportGenerator {
         reports.add(this.landscapeRepositoriesExtensionTags);
         reports.add(this.landscapeRepositoriesTagsMatrix);
         reports.add(this.landscapeRepositoriesExtensionTagsMatrix);
-        reports.add(landscapeReportContributorsTab.getLandscapeContributorsReport());
-        reports.add(landscapeReportContributorsTab.getLandscapeBotsReport());
-        reports.add(landscapeReportContributorsTab.getLandscapeRecentContributorsReport());
-        if (teamsConfig.getTeams().size() > 0) {
-            reports.add(landscapeReportTeamsTab.getLandscapeContributorsReport());
-            reports.add(landscapeReportTeamsTab.getLandscapeRecentContributorsReport());
-        }
+        // The old per-tab server-rendered contributor/bot/team HTML tables (contributors.html,
+        // contributors-recent.html, bots.html, teams.html, teams-recent.html) are no longer
+        // written — the searchable client-rendered contributors-report.html / teams-report.html
+        // (produced by LandscapeReportContributorsTab.saveContributorsReportPage) replace them and
+        // are what the Overview iframes.
 
         return reports;
     }

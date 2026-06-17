@@ -42,7 +42,7 @@ java -jar cli-1.0-jar-with-dependencies.jar generateReports
 
 View the results by opening `_sokrates/reports/index.html` (it redirects to `html/index.html`). The report home page embeds an interactive **Structure** view of zoomable circles (circle size = lines of code); its default **All Files** tab groups every file by folder and color-codes each file by scope (main, test, build & deployment, generated, other).
 
-> **Serve the reports over HTTP.** To keep the report compact, source snippets, data exports and several visualizations are packaged into zip/bundle files that the pages fetch and unpack in the browser, so the reports must be served over HTTP rather than opened straight from disk (`file://`) — e.g. `cd _sokrates/reports && python3 -m http.server`, then open <http://localhost:8000/>. They also need internet access for the CDN-hosted rendering libraries.
+> **Opening the reports.** To keep them compact, source snippets, data exports and several visualizations are packaged into zip/bundle archives — but these are **embedded inline** in the HTML and unpacked in the browser, so the reports open straight from disk (`file://`); just double-click `index.html`. They do need internet access for the CDN-hosted rendering libraries (Mermaid.js, d3, highlight.js). If your browser restricts something over `file://`, serve them over HTTP instead — e.g. `cd _sokrates/reports && python3 -m http.server`, then open <http://localhost:8000/>.
 
 Run a command with `-help` to see its options:
 
@@ -71,6 +71,22 @@ Defaults: configuration is read from `<currentFolder>/_sokrates/config.json` and
 Sokrates is driven by two JSON config files — `_sokrates/config.json` (repository analysis) and
 `_sokrates_landscape/config.json` (landscapes). See the **[Configuration Manual](docs/configuration.md)**
 for a full reference of every key, with defaults and examples.
+
+### Searching the landscape repositories & contributors lists
+
+The landscape's repositories and contributors reports have a search box that takes `;`-separated
+terms. Besides plain name/email terms, you can filter by language:
+
+| Term | Matches |
+| --- | --- |
+| `mainLang:cs,java` | items whose **main** language is C# or Java |
+| `includesLang:go` | repositories/contributors that use Go **anywhere**, even if it is not the main language |
+| `includesLang:main:tf` | repositories with Terraform in the **main** scope only (repos only; scope ∈ `main`/`test`/`build`/`generated`/`other`) |
+| `team:platform` | contributors whose team name contains "platform" (contributors only) |
+
+Language terms combine (AND) with name terms; commas mean OR. Clicking a language icon in a row, or a
+language badge on the Overview tab, opens the matching filtered list. The whole query can also be put in
+the URL fragment, e.g. `repositories.html#mainLang:cs,java;customer`.
 
 ## Run the GUI explorer
 

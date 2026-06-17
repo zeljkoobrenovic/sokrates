@@ -70,9 +70,6 @@ public class LandscapeReportContributorsTab {
     private static final Log LOG = LogFactory.getLog(LandscapeReportContributorsTab.class);
     public static final String PEOPLE_COLOR = "#ADD8E6";
     private final List<ContributorRepositories> contributors;
-    private RichTextReport landscapeRecentContributorsReport = new RichTextReport("", "${type}-recent.html");
-    private RichTextReport landscapeContributorsReport = new RichTextReport("", "${type}.html");
-    private RichTextReport landscapeBotsReport = new RichTextReport("", "bots.html");
     private LandscapeAnalysisResults landscapeAnalysisResults;
     private File folder;
     private File reportsFolder;
@@ -96,20 +93,9 @@ public class LandscapeReportContributorsTab {
         this.type = type;
         this.teamsConfig = teamsConfig;
 
-        landscapeRecentContributorsReport.setFileName(type.plural() + "-recent.html");
-        landscapeContributorsReport.setFileName(type.plural() + ".html");
-
         this.landscapeAnalysisResults = landscapeAnalysisResults;
 
-        landscapeRecentContributorsReport.setEmbedded(true);
-        landscapeContributorsReport.setEmbedded(true);
-        landscapeBotsReport.setEmbedded(true);
-
         populateTimeSlotMaps();
-
-        landscapeContributorsReport.setEmbedded(true);
-        landscapeBotsReport.setEmbedded(true);
-        landscapeRecentContributorsReport.setEmbedded(true);
     }
 
     void addContributorsTabs(String tabId) {
@@ -447,9 +433,6 @@ public class LandscapeReportContributorsTab {
             Collections.sort(bots, (a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days());
             List<ContributorRepositories> recentContributors = landscapeAnalysisResults.getRecentContributors(contributors);
             Collections.sort(recentContributors, (a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days());
-            int totalCommits = contributors.stream().mapToInt(c -> c.getContributor().getCommitsCount()).sum();
-            int botCommits = bots.stream().mapToInt(c -> c.getContributor().getCommitsCount()).sum();
-            int totalRecentCommits = recentContributors.stream().mapToInt(c -> c.getContributor().getCommitsCount30Days()).sum();
             final String[] latestCommit = {""};
             contributors.forEach(c -> {
                 if (c.getContributor().getLatestCommitDate().compareTo(latestCommit[0]) > 0) {
@@ -460,13 +443,15 @@ public class LandscapeReportContributorsTab {
             ProcessingStopwatch.end("reporting/contributors/table");
 
             ProcessingStopwatch.start("reporting/contributors/saving tables");
+            // The old per-tab server-rendered HTML tables (contributors.html / contributors-recent.html
+            // / bots.html / teams.html) are no longer written — the searchable client-rendered
+            // contributors-report.html below replaces them. We still compute which contributors are
+            // referenced (capped at getContributorsListLimit), since that set gates which individual
+            // per-person reports get generated.
             Set<String> contributorsLinkedFromTables = new HashSet<>();
-            new LandscapeContributorsReport(landscapeAnalysisResults, landscapeRecentContributorsReport, contributorsLinkedFromTables)
-                    .saveContributorsTable(recentContributors, totalRecentCommits, true);
-            new LandscapeContributorsReport(landscapeAnalysisResults, landscapeContributorsReport, contributorsLinkedFromTables)
-                    .saveContributorsTable(contributors, totalCommits, false);
-            new LandscapeContributorsReport(landscapeAnalysisResults, landscapeBotsReport, contributorsLinkedFromTables)
-                    .saveContributorsTable(bots, botCommits, false);
+            collectLinkedContributors(recentContributors, contributorsLinkedFromTables);
+            collectLinkedContributors(contributors, contributorsLinkedFromTables);
+            collectLinkedContributors(bots, contributorsLinkedFromTables);
 
             // Client-rendered, searchable/sortable contributors report (recent / all / bots tabs).
             saveContributorsReportPage(recentContributors, contributors, bots);
@@ -551,6 +536,22 @@ public class LandscapeReportContributorsTab {
                 .map(cr -> new ContributorReportExport(cr, configuration, peopleConfig, teamsConfig, tagRules,
                         recentLangsByContributor.get(cr.getContributor().getEmail().toLowerCase())))
                 .collect(Collectors.toList());
+    }
+
+    // Records the top-N contributors (capped at getContributorsListLimit, sorted by recency like
+    // the former table) into the linked set, so the matching individual per-person reports are
+    // generated. This preserves the selection that the removed server-rendered contributor tables
+    // used to make, without rendering any HTML.
+    private void collectLinkedContributors(List<ContributorRepositories> contributors, Set<String> linked) {
+        int limit = landscapeAnalysisResults.getConfiguration().getContributorsListLimit();
+        contributors.stream()
+                .sorted((a, b) -> b.getContributor().getCommitsCount() - a.getContributor().getCommitsCount())
+                .sorted((a, b) -> b.getContributor().getCommitsCount365Days() - a.getContributor().getCommitsCount365Days())
+                .sorted((a, b) -> b.getContributor().getCommitsCount180Days() - a.getContributor().getCommitsCount180Days())
+                .sorted((a, b) -> b.getContributor().getCommitsCount90Days() - a.getContributor().getCommitsCount90Days())
+                .sorted((a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days())
+                .limit(limit)
+                .forEach(contributor -> linked.add(contributor.getContributor().getEmail()));
     }
 
     // For each contributor id (lowercased, matching the report rows' email key), the set of
@@ -1322,18 +1323,6 @@ public class LandscapeReportContributorsTab {
         landscapeReport.addHtmlContent(" ");
         landscapeReport.addNewTabLink("(open online Mermaid editor)", "https://obren.io/tools/mermaid/");
         landscapeReport.endDiv();
-    }
-
-    public RichTextReport getLandscapeContributorsReport() {
-        return landscapeContributorsReport;
-    }
-
-    public RichTextReport getLandscapeRecentContributorsReport() {
-        return landscapeRecentContributorsReport;
-    }
-
-    public RichTextReport getLandscapeBotsReport() {
-        return landscapeBotsReport;
     }
 
     public List<RichTextReport> getIndividualReports() {
