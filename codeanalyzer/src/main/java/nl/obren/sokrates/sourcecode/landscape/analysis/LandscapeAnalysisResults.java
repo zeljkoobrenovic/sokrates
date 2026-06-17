@@ -780,7 +780,7 @@ public class LandscapeAnalysisResults {
         }
         team.addRepository(repo.getRepositoryAnalysisResults(), repo.getFirstCommitDate(), repo.getLatestCommitDate(),
                 repo.getCommitsCount(), repo.getCommits30Days(), repo.getCommits90Days(),
-                repo.getCommits180Days(), repo.getCommits365Days(), repo.getCommitDates());
+                repo.getCommits180Days(), repo.getCommits365Days(), repo.getCommitDates(), repo.getCommitsPerDate());
     }
 
     @JsonIgnore
@@ -806,6 +806,7 @@ public class LandscapeAnalysisResults {
 
                 int repositoryCommits = contributor.getCommitsCount();
                 List<String> commitDates = contributor.getCommitDates();
+                Map<String, Integer> commitsPerDate = contributor.getCommitsPerDate();
                 int repositoryCommits30Days = contributor.getCommitsCount30Days();
                 int repositoryCommits90Days = contributor.getCommitsCount90Days();
                 int repositoryCommits180Days = contributor.getCommitsCount180Days();
@@ -826,11 +827,12 @@ public class LandscapeAnalysisResults {
 
                     contributorInfo.addActiveYears(contributor.getActiveYears());
                     contributorInfo.addCommitDates(contributor.getCommitDates());
+                    contributorInfo.addCommitsPerDate(commitsPerDate);
 
                     existingContributor.addRepository(repositoryAnalysisResults, firstCommitDate, latestCommitDate,
                             repositoryCommits, repositoryCommits30Days, repositoryCommits90Days,
                             repositoryCommits180Days, repositoryCommits365Days,
-                            new ArrayList<>(commitDates));
+                            new ArrayList<>(commitDates), new LinkedHashMap<>(commitsPerDate));
 
                     if (firstCommitDate.compareTo(contributorInfo.getFirstCommitDate()) < 0) {
                         contributorInfo.setFirstCommitDate(firstCommitDate);
@@ -852,6 +854,7 @@ public class LandscapeAnalysisResults {
                     newContributor.setLatestCommitDate(latestCommitDate);
                     newContributor.setActiveYears(new ArrayList<>(contributor.getActiveYears()));
                     newContributor.setCommitDates(new ArrayList<>(contributor.getCommitDates()));
+                    newContributor.setCommitsPerDate(new LinkedHashMap<>(commitsPerDate));
 
                     ContributorRepositories newContributorWithRepositories = new ContributorRepositories(newContributor);
 
@@ -859,7 +862,7 @@ public class LandscapeAnalysisResults {
                             newContributor.getLatestCommitDate(),
                             repositoryCommits, repositoryCommits30Days, repositoryCommits90Days,
                             repositoryCommits180Days, repositoryCommits365Days,
-                            new ArrayList<>(commitDates));
+                            new ArrayList<>(commitDates), new LinkedHashMap<>(commitsPerDate));
 
                     map.put(contributorId, newContributorWithRepositories);
                     list.add(newContributorWithRepositories);

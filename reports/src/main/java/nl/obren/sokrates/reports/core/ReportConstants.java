@@ -145,14 +145,14 @@ public class ReportConstants {
             "        }\n" +
             "\n" +
             "        td, th {\n" +
-            "            border: 1px solid #CCC;\n" +
+            "            border: 1px solid white;\n" +
             "            height: 30px;\n" +
             "            padding-left: 10px;\n" +
             "            padding-right: 10px;\n" +
             "        }\n" +
             "\n" +
             "        th {\n" +
-            "            background: #F3F3F3;\n" +
+            "            background: #f4f4f4;\n" +
             "            font-weight: bold;\n" +
             "        }\n" +
             "\n" +
@@ -184,7 +184,6 @@ public class ReportConstants {
             "       details {" +
             "           padding: 8px;" +
             "           margin: 8px;" +
-            "           border: 1px solid lightgrey;" +
             "           border: 1px solid #B9D9EB;" +
             "           background-color: #fcfcfc;" +
             "           border-radius: 5px;" +

@@ -402,14 +402,32 @@
         return '<a href="' + esc(repo.repoUrl) + '" target="_blank">' + inner + '</a>';
     }
 
-    // Count commit days per slot for a repository, using the given slot function.
-    function commitDaysPerSlot(repo, slotFn) {
+    // Sum commits per slot for a repository, using the given slot function. Uses the per-day commit
+    // counts (commitsPerDate) so the activity circles reflect commit VOLUME; falls back to counting
+    // distinct commit days (commitDates) for older data that lacks the per-day counts.
+    function commitsPerSlot(repo, slotFn) {
         const counts = {};
-        (repo.commitDates || []).forEach(d => {
-            const slot = slotFn(d);
-            counts[slot] = (counts[slot] || 0) + 1;
-        });
+        const perDate = repo.commitsPerDate;
+        if (perDate && Object.keys(perDate).length) {
+            Object.keys(perDate).forEach(d => {
+                const slot = slotFn(d);
+                counts[slot] = (counts[slot] || 0) + perDate[d];
+            });
+        } else {
+            (repo.commitDates || []).forEach(d => {
+                const slot = slotFn(d);
+                counts[slot] = (counts[slot] || 0) + 1;
+            });
+        }
         return counts;
+    }
+
+    // Circle diameter for a commit count, sqrt-scaled so the AREA grows ~linearly with commits and a
+    // single very busy slot doesn't dwarf everything. `full` is the count that reaches the max size.
+    function dotSize(c, full) {
+        const minD = 10, maxD = 50;
+        const t = Math.min(1, Math.sqrt(c / full));
+        return Math.round(minD + t * (maxD - minD));
     }
 
     function renderGrid(slotFn, slots, dotSizeFn, summaryUnit) {
@@ -424,8 +442,10 @@
         let html = '<div class="grid"><table>';
         // header: per-slot repository counts
         html += '<tr><td style="border:none"></td><td class="repo-name" style="border:none"></td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">Commits<br>(30d)</td>'
             + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">Commits<br>(3m)</td>'
-            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">Commit<br>Days</td>';
+            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">Commits<br>(1y)</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">Commits<br>(all time)</td>';
         slots.forEach(slot => {
             let repoCount = 0;
             repos.forEach(r => {
@@ -437,21 +457,57 @@
         });
         html += '</tr>';
 
+        // Totals row: sums of each commit column across all (filtered) repositories, plus per-slot
+        // commit totals.
+        const sum = key => repos.reduce((acc, r) => acc + (r[key] || 0), 0);
+        const total30 = sum('commits30Days');
+        const total90 = sum('commits90Days');
+        const total365 = sum('commits365Days');
+        const totalAll = sum('commitsCount');
+        // A bottom border on every cell of this row visually separates the summary from the
+        // per-repository rows below.
+        const totalBorder = 'border:none; border-bottom: 2px solid #ccc;';
+        html += '<tr style="font-weight: bold; background-color: #f7f7f7;">';
+        html += '<td style="' + totalBorder + '"></td>';
+        html += '<td class="repo-name" style="' + totalBorder + '">Total</td>';
+        html += '<td style="' + totalBorder + ' text-align:center;">' + (total30 > 0 ? num(total30) : '-') + '</td>';
+        html += '<td style="' + totalBorder + ' text-align:center;">' + (total90 > 0 ? num(total90) : '-') + '</td>';
+        html += '<td style="' + totalBorder + ' text-align:center;">' + (total365 > 0 ? num(total365) : '-') + '</td>';
+        html += '<td style="' + totalBorder + ' text-align:center;">' + (totalAll > 0 ? num(totalAll) : '-') + '</td>';
+        // Per-slot commit totals (summed across all filtered repos), then a small bar per slot scaled
+        // to the busiest slot — a sparkline-style trend of commit volume across the visible window.
+        const perRepoCounts = repos.map(r => commitsPerSlot(r, slotFn));
+        const slotTotals = slots.map(slot => perRepoCounts.reduce((acc, c) => acc + (c[slot] || 0), 0));
+        const maxSlotTotal = Math.max(1, ...slotTotals);
+        slotTotals.forEach((slotTotal, idx) => {
+            const barHeight = slotTotal > 0 ? Math.round(28 * slotTotal / maxSlotTotal) + 1 : 0;
+            html += '<td style="' + totalBorder + ' text-align:center; vertical-align: bottom; padding: 0 2px;" '
+                + 'title="' + esc(slots[idx] + ': ' + slotTotal + (slotTotal === 1 ? ' commit' : ' commits')) + '">'
+                + '<div style="font-size: 70%; color: grey;">' + (slotTotal > 0 ? num(slotTotal) : '-') + '</div>'
+                + (slotTotal > 0
+                    ? '<div style="margin: 1px auto 0; background-color: #483D8B; width: 60%; height: ' + barHeight + 'px;"></div>'
+                    : '')
+                + '</td>';
+        });
+        html += '</tr>';
+
         repos.forEach(repo => {
-            const counts = commitDaysPerSlot(repo, slotFn);
+            const counts = commitsPerSlot(repo, slotFn);
             const weight = repo.commits90Days > 0 ? 'font-weight: bold;' : 'opacity: 0.4;';
             html += '<tr>';
             html += '<td style="border:none; text-align:center;">' + langIcon(repo.lang, 28) + '</td>';
             html += '<td class="repo-name" style="border:none; ' + weight + '">' + repoNameHtml(repo) + '</td>';
+            html += '<td style="border:none; text-align:center; ' + weight + '">' + (repo.commits30Days > 0 ? num(repo.commits30Days) : '-') + '</td>';
             html += '<td style="border:none; text-align:center; ' + weight + '">' + (repo.commits90Days > 0 ? num(repo.commits90Days) : '-') + '</td>';
-            html += '<td style="border:none; text-align:center; ' + weight + '">' + num((repo.commitDates || []).length) + '</td>';
+            html += '<td style="border:none; text-align:center; ' + weight + '">' + (repo.commits365Days > 0 ? num(repo.commits365Days) : '-') + '</td>';
+            html += '<td style="border:none; text-align:center; ' + weight + '">' + (repo.commitsCount > 0 ? num(repo.commitsCount) : '-') + '</td>';
             slots.forEach((slot, idx) => {
                 const c = counts[slot] || 0;
                 html += '<td style="border:none; text-align:center; padding: 0; vertical-align: middle;">';
                 if (c > 0) {
                     const size = dotSizeFn(c);
                     const opacity = Math.max(0.9 - idx * 0.05, 0.2);
-                    html += '<div title="' + esc(slot + ': ' + c + (c === 1 ? ' commit day' : ' commit days')) + '" '
+                    html += '<div title="' + esc(slot + ': ' + c + (c === 1 ? ' commit' : ' commits')) + '" '
                         + 'style="display: inline-block; background-color: #483D8B; border-radius: 50%; opacity: ' + opacity + '; '
                         + 'width: ' + size + 'px; height: ' + size + 'px;"></div>';
                 } else {
@@ -515,13 +571,15 @@
             html = renderMembers();
         } else if (activeTab === 'year') {
             const slots = pastYears(options.commitsMaxYears || 20);
-            html = renderGrid(yearOf, slots, c => Math.round(10 + Math.min(1, c / 366.0) * 40));
+            // Circles are sized by commit VOLUME per slot; a sqrt scale (capped) keeps small counts
+            // visible without a busy year/month/week blowing out the cell.
+            html = renderGrid(yearOf, slots, c => dotSize(c, 500));
         } else if (activeTab === 'month') {
             const slots = pastMonths(24);
-            html = renderGrid(monthOf, slots, c => 10 + Math.floor(c / 4) * 4);
+            html = renderGrid(monthOf, slots, c => dotSize(c, 100));
         } else {
             const slots = pastWeeks(104);
-            html = renderGrid(weekMonday, slots, c => 10 + c * 4);
+            html = renderGrid(weekMonday, slots, c => dotSize(c, 40));
         }
         document.getElementById('content').innerHTML = html;
     }

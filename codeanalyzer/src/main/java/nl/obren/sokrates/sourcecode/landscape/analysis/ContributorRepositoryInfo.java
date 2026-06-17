@@ -1,7 +1,9 @@
 package nl.obren.sokrates.sourcecode.landscape.analysis;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ContributorRepositoryInfo {
     private RepositoryAnalysisResults repositoryAnalysisResults = new RepositoryAnalysisResults();
@@ -13,12 +15,23 @@ public class ContributorRepositoryInfo {
     private int commits180Days;
     private int commits365Days;
     private List<String> commitDates = new ArrayList<>();
+    // Per-day commit counts (date -> commits) for THIS repository; commitDates above is the distinct
+    // dates. Lets the activity visuals be sized by commits rather than commit days. May be empty for
+    // older analysisResults.json (consumers fall back to commitDates).
+    private Map<String, Integer> commitsPerDate = new LinkedHashMap<>();
 
     public ContributorRepositoryInfo() {
     }
 
     public ContributorRepositoryInfo(RepositoryAnalysisResults repositoryAnalysisResults, String firstCommitDate, String latestCommitDate,
                                      int commitsCount, int commits30Days, int commits90Days, int commits180Days, int commits365Days, List<String> commitDates) {
+        this(repositoryAnalysisResults, firstCommitDate, latestCommitDate, commitsCount, commits30Days, commits90Days,
+                commits180Days, commits365Days, commitDates, new LinkedHashMap<>());
+    }
+
+    public ContributorRepositoryInfo(RepositoryAnalysisResults repositoryAnalysisResults, String firstCommitDate, String latestCommitDate,
+                                     int commitsCount, int commits30Days, int commits90Days, int commits180Days, int commits365Days,
+                                     List<String> commitDates, Map<String, Integer> commitsPerDate) {
         this.repositoryAnalysisResults = repositoryAnalysisResults;
         this.firstCommitDate = firstCommitDate;
         this.latestCommitDate = latestCommitDate;
@@ -28,6 +41,7 @@ public class ContributorRepositoryInfo {
         this.commits180Days = commits180Days;
         this.commits365Days = commits365Days;
         this.commitDates = commitDates;
+        this.commitsPerDate = commitsPerDate != null ? commitsPerDate : new LinkedHashMap<>();
     }
 
     public RepositoryAnalysisResults getRepositoryAnalysisResults() {
@@ -68,6 +82,14 @@ public class ContributorRepositoryInfo {
 
     public void setCommitDates(List<String> commitDates) {
         this.commitDates = commitDates;
+    }
+
+    public Map<String, Integer> getCommitsPerDate() {
+        return commitsPerDate;
+    }
+
+    public void setCommitsPerDate(Map<String, Integer> commitsPerDate) {
+        this.commitsPerDate = commitsPerDate != null ? commitsPerDate : new LinkedHashMap<>();
     }
 
     public int getCommits30Days() {

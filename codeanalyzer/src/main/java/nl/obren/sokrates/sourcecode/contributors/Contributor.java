@@ -12,7 +12,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -32,6 +34,11 @@ public class Contributor {
     private String latestCommitDate = "";
     private List<String> activeYears = new ArrayList<>();
     private List<String> commitDates = new ArrayList<>();
+    // Number of commits per date (date -> commit count). commitDates above keeps only the DISTINCT
+    // dates (one entry per active day); this retains the per-day commit volume so the activity
+    // visuals can be sized by commits rather than by commit days. Serialized so it survives into the
+    // landscape; absent in older analysisResults.json (callers fall back to commitDates).
+    private Map<String, Integer> commitsPerDate = new LinkedHashMap<>();
     // O(1) companion sets for the (serialized) lists above, so addCommit stays O(1) per commit
     // instead of scanning the growing lists. Kept in sync with commitDates/activeYears.
     @JsonIgnore
@@ -53,6 +60,7 @@ public class Contributor {
         if (commitDatesSet.add(date)) {
             commitDates.add(date);
         }
+        commitsPerDate.merge(date, 1, Integer::sum);
         if (StringUtils.isBlank(firstCommitDate) || date.compareTo(firstCommitDate) < 0) {
             firstCommitDate = date;
         }
@@ -95,6 +103,16 @@ public class Contributor {
                 commitDates.add(date);
             }
         });
+    }
+
+    // Merges another contributor's per-date commit counts into this one, summing counts for shared
+    // dates. Keeps commitsPerDate consistent across the landscape merges that combine a contributor's
+    // activity from several repositories.
+    @JsonIgnore
+    public void addCommitsPerDate(Map<String, Integer> other) {
+        if (other != null) {
+            other.forEach((date, count) -> commitsPerDate.merge(date, count, Integer::sum));
+        }
     }
 
     // Merges another contributor's active years, keeping them distinct and sorted.
@@ -241,6 +259,14 @@ public class Contributor {
     public void setCommitDates(List<String> commitDates) {
         this.commitDates = commitDates;
         this.commitDatesSet = new HashSet<>(commitDates);
+    }
+
+    public Map<String, Integer> getCommitsPerDate() {
+        return commitsPerDate;
+    }
+
+    public void setCommitsPerDate(Map<String, Integer> commitsPerDate) {
+        this.commitsPerDate = commitsPerDate != null ? commitsPerDate : new LinkedHashMap<>();
     }
 
     @Override

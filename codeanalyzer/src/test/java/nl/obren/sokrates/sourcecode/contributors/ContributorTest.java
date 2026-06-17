@@ -38,6 +38,24 @@ class ContributorTest {
         assertEquals(3, c.getCommitsCount());
         assertEquals("2020-01-01", c.getFirstCommitDate());
         assertEquals("2020-01-02", c.getLatestCommitDate());
+        // commitsPerDate retains the per-day commit volume (2 commits on Jan 1, 1 on Jan 2)
+        assertEquals(Integer.valueOf(2), c.getCommitsPerDate().get("2020-01-01"));
+        assertEquals(Integer.valueOf(1), c.getCommitsPerDate().get("2020-01-02"));
+    }
+
+    @Test
+    void addCommitsPerDateSumsCountsForSharedDates() {
+        Contributor c = new Contributor("a@example.com");
+        c.addCommit("2020-01-01", 1);
+        c.addCommit("2020-01-01", 1);
+
+        c.addCommitsPerDate(new java.util.HashMap<>() {{
+            put("2020-01-01", 3); // same day -> summed
+            put("2020-01-05", 4); // new day -> added
+        }});
+
+        assertEquals(Integer.valueOf(5), c.getCommitsPerDate().get("2020-01-01"));
+        assertEquals(Integer.valueOf(4), c.getCommitsPerDate().get("2020-01-05"));
     }
 
     @Test

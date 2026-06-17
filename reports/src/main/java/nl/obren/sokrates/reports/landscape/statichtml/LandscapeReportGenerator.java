@@ -286,7 +286,7 @@ public class LandscapeReportGenerator {
                     landscapeReport.addHtmlContent(" | ");
                 }
                 landscapeReport.startDiv("display: inline-block; padding: 4px 6px; border-radius: 999px; background-color: #f4f4f4;");
-                landscapeReport.addNewTabLink(link.getLabel() + "&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON_SMALL, link.getHref());
+                landscapeReport.addNewTabLink(link.getLabel() + "&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON_EXTRA_SMALL, link.getHref());
                 landscapeReport.endDiv();
                 first[0] = false;
             });

@@ -16,14 +16,14 @@
         }
 
         td, th {
-            border: 1px solid #f0f0f0;
+            border: 1px solid white;
             height: 30px;
             padding-left: 10px;
             padding-right: 10px;
         }
 
         th {
-            background: #F3F3F3;
+            background: #f4f4f4;
             font-weight: bold;
         }
 
@@ -899,7 +899,7 @@
             html += '<tr>';
             tab.groupHeader.forEach(g => {
                 const style = g.label
-                    ? 'text-align: center; border-bottom: 2px solid lightgrey;'
+                    ? 'text-align: center; border-bottom: 2px solid white;'
                     : '';
                 html += '<th colspan="' + g.span + '" style="' + style + '">' + (g.label || '') + '</th>';
             });
