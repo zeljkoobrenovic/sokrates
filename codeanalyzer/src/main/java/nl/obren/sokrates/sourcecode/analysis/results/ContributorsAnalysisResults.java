@@ -99,6 +99,16 @@ public class ContributorsAnalysisResults {
     }
 
     @JsonIgnore
+    public int getLinesAdded30Days() {
+        return contributors.stream().mapToInt(c -> c.getLinesAdded30Days()).sum();
+    }
+
+    @JsonIgnore
+    public int getLinesDeleted30Days() {
+        return contributors.stream().mapToInt(c -> c.getLinesDeleted30Days()).sum();
+    }
+
+    @JsonIgnore
     public int getCommitsCount90Days() {
         return contributors.stream().mapToInt(c -> c.getCommitsCount90Days()).sum();
     }

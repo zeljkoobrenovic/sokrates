@@ -311,6 +311,24 @@
             cell: c => '<td style="vertical-align: middle; text-align: center; font-size: 90%;">' + num(accessor(c)) + '</td>'
         };
     }
+    // Churn column: sorts by net lines touched (added + deleted), shows "+added / -deleted".
+    // Renders a dim placeholder when the history had no churn data (both zero).
+    function churnCol(key, label, addedAccessor, deletedAccessor) {
+        return {
+            key: key, label: label, type: 'number', dir: -1, headerStyle: 'text-align: center;',
+            value: c => (addedAccessor(c) || 0) + (deletedAccessor(c) || 0),
+            cell: c => {
+                const added = addedAccessor(c) || 0;
+                const deleted = deletedAccessor(c) || 0;
+                if (added === 0 && deleted === 0) {
+                    return '<td style="vertical-align: middle; text-align: center; font-size: 90%; color: lightgrey;">-</td>';
+                }
+                return '<td style="vertical-align: middle; text-align: center; font-size: 90%; white-space: nowrap;">'
+                    + '<span style="color: #2e7d32;">+' + num(added) + '</span> / '
+                    + '<span style="color: #c62828;">-' + num(deleted) + '</span></td>';
+            }
+        };
+    }
 
     // Tab definitions. "recent" leads with 30d commits; "all" leads with all-time.
     const TABS = [];
@@ -328,6 +346,7 @@
             commitsCol('commits90', '# commits<br>90 days', c => c.commitsCount90Days, false, false),
             commitsCol('commits365', '# commits<br>past year', c => c.commitsCount365Days, false, false),
             commitsCol('commitsAll', '# commits<br>all time', c => c.commitsCount, false, false),
+            churnCol('churn30', 'lines<br>30 days', c => c.linesAdded30Days, c => c.linesDeleted30Days),
             firstCol, latestCol,
             reposCol('repositories<br>(30d)', c => c.repositoriesCount30Days),
             detailsCol
@@ -351,6 +370,7 @@
             commitsCol('commits365', '# commits<br>past year', c => c.commitsCount365Days, false, false),
             commitsCol('commits90', '# commits<br>90 days', c => c.commitsCount90Days, false, false),
             commitsCol('commits30', '# commits<br>30 days', c => c.commitsCount30Days, false, false),
+            churnCol('churnAll', 'lines<br>all time', c => c.linesAdded, c => c.linesDeleted),
             firstCol, latestCol,
             reposCol('repositories', c => c.repositoriesCount),
             detailsCol
@@ -368,6 +388,7 @@
                 commitsCol('commits365', '# commits<br>past year', c => c.commitsCount365Days, false, false),
                 commitsCol('commits90', '# commits<br>90 days', c => c.commitsCount90Days, false, false),
                 commitsCol('commits30', '# commits<br>30 days', c => c.commitsCount30Days, false, false),
+                churnCol('churnAll', 'lines<br>all time', c => c.linesAdded, c => c.linesDeleted),
                 firstCol, latestCol,
                 reposCol('repositories', c => c.repositoriesCount),
                 detailsCol

@@ -7,6 +7,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
+import org.eclipse.jgit.diff.Edit;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.PersonIdent;
@@ -17,9 +18,9 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 
+import org.eclipse.jgit.util.io.DisabledOutputStream;
+
 import java.io.File;
-import java.io.FileDescriptor;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
@@ -47,27 +48,34 @@ public class GitHistoryExtractor {
                     continue;
                 }
                 RevCommit prev = rev.getParent(0);
-                List<String> paths = new ArrayList<>();
-                FileOutputStream stdout = new FileOutputStream(FileDescriptor.out);
-                try (DiffFormatter diffFormatter = new DiffFormatter(stdout)) {
+                List<FileChange> changes = new ArrayList<>();
+                try (DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE)) {
                     diffFormatter.setRepository(repo);
+                    diffFormatter.setDetectRenames(true);
                     for (DiffEntry entry : diffFormatter.scan(prev, rev)) {
                         String newPath = entry.getNewPath();
                         if (!newPath.equals("/dev/null")) {
-                            paths.add(newPath);
+                            int added = 0;
+                            int deleted = 0;
+                            for (Edit edit : diffFormatter.toFileHeader(entry).toEditList()) {
+                                added += edit.getEndB() - edit.getBeginB();
+                                deleted += edit.getEndA() - edit.getBeginA();
+                            }
+                            changes.add(new FileChange(newPath, added, deleted));
                         }
                     }
                 }
 
-                paths.forEach(path -> {
+                changes.forEach(change -> {
                     SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
                     PersonIdent authorIdent = rev.getAuthorIdent();
-                    String safePath = path.replace(" ", "&nbsp;");
+                    String safePath = change.path.replace(" ", "&nbsp;");
                     String safeName = authorIdent.getName().replace(" ", "&nbsp;");
                     String email = authorIdent.getEmailAddress();
                     String line = format.format(authorIdent.getWhen()) + " "
                             + email + " "
-                            + rev.getId().getName() + " " + safePath + " " + safeName;
+                            + rev.getId().getName() + " " + safePath + " " + safeName
+                            + " " + change.added + " " + change.deleted;
                     try {
                         FileUtils.writeStringToFile(gitHistoryFile, line + "\n", StandardCharsets.UTF_8, true);
                     } catch (IOException e) {
@@ -79,6 +87,18 @@ public class GitHistoryExtractor {
             LOG.info("Extracted " + count.get() + " commits");
         } catch (IOException | GitAPIException e) {
             e.printStackTrace();
+        }
+    }
+
+    private static class FileChange {
+        final String path;
+        final int added;
+        final int deleted;
+
+        FileChange(String path, int added, int deleted) {
+            this.path = path;
+            this.added = added;
+            this.deleted = deleted;
         }
     }
 

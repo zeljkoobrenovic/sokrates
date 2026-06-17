@@ -26,6 +26,31 @@ class ContributorTest {
     }
 
     @Test
+    void addCommitAccumulatesChurnAcrossCommits() {
+        Contributor c = new Contributor("a@example.com");
+
+        c.addCommit("2020-01-01", 1, 10, 4);
+        c.addCommit("2020-01-02", 2, 5, 3);
+        c.addCommit("2020-01-02", 1); // no-churn overload contributes 0
+
+        assertEquals(15, c.getLinesAdded());
+        assertEquals(7, c.getLinesDeleted());
+    }
+
+    @Test
+    void addChurnMergesTotals() {
+        Contributor c = new Contributor("a@example.com");
+        c.addCommit("2020-01-01", 1, 10, 4);
+
+        c.addChurn(100, 50, 7, 2);
+
+        assertEquals(110, c.getLinesAdded());
+        assertEquals(54, c.getLinesDeleted());
+        assertEquals(7, c.getLinesAdded30Days());
+        assertEquals(2, c.getLinesDeleted30Days());
+    }
+
+    @Test
     void addCommitDeduplicatesDatesAndTracksTotalCount() {
         Contributor c = new Contributor("a@example.com");
 

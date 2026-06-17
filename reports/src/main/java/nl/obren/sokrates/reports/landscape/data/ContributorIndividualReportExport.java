@@ -35,6 +35,12 @@ public class ContributorIndividualReportExport {
     private int commitsCount90Days;
     private int commitsCount180Days;
     private int commitsCount365Days;
+    // Lines added/deleted across all of this contributor's commits (and the 30-day window). 0 when the
+    // underlying git-history.txt had no churn columns (older exports).
+    private int linesAdded;
+    private int linesDeleted;
+    private int linesAdded30Days;
+    private int linesDeleted30Days;
     private int repositoriesCount;
     private int repositoriesCount30Days;
     private int repositoriesCount90Days;
@@ -87,6 +93,10 @@ public class ContributorIndividualReportExport {
         commitsCount90Days = c.getCommitsCount90Days();
         commitsCount180Days = c.getCommitsCount180Days();
         commitsCount365Days = c.getCommitsCount365Days();
+        linesAdded = c.getLinesAdded();
+        linesDeleted = c.getLinesDeleted();
+        linesAdded30Days = c.getLinesAdded30Days();
+        linesDeleted30Days = c.getLinesDeleted30Days();
 
         List<ContributorRepositoryInfo> repos = cr.getRepositories();
         repositoriesCount = repos.size();
@@ -358,6 +368,22 @@ public class ContributorIndividualReportExport {
 
     public int getCommitsCount365Days() {
         return commitsCount365Days;
+    }
+
+    public int getLinesAdded() {
+        return linesAdded;
+    }
+
+    public int getLinesDeleted() {
+        return linesDeleted;
+    }
+
+    public int getLinesAdded30Days() {
+        return linesAdded30Days;
+    }
+
+    public int getLinesDeleted30Days() {
+        return linesDeleted30Days;
     }
 
     public int getRepositoriesCount() {

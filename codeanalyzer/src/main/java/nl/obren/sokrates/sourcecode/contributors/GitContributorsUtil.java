@@ -65,12 +65,14 @@ public class GitContributorsUtil {
             contributor.setBot(authorCommit.isBot());
             String id = contributor.getEmail();
             int fileUpdatesCount = authorCommit.getFileUpdatesCount();
+            int linesAdded = authorCommit.getLinesAdded();
+            int linesDeleted = authorCommit.getLinesDeleted();
             if (map.containsKey(id)) {
-                map.get(id).addCommit(date, fileUpdatesCount);
+                map.get(id).addCommit(date, fileUpdatesCount, linesAdded, linesDeleted);
             } else {
                 map.put(id, contributor);
                 list.add(contributor);
-                contributor.addCommit(date, fileUpdatesCount);
+                contributor.addCommit(date, fileUpdatesCount, linesAdded, linesDeleted);
             }
         });
         Collections.sort(list, (a, b) -> b.getCommitsCount() - a.getCommitsCount());
@@ -98,6 +100,7 @@ public class GitContributorsUtil {
             contributionTimeSlot.incrementCommitsCount();
             contributionTimeSlot.setContributorsCount(ids.size());
             contributionTimeSlot.incrementFileUpdatesCount(authorCommit.getFileUpdatesCount());
+            contributionTimeSlot.addChurn(authorCommit.getLinesAdded(), authorCommit.getLinesDeleted());
         });
 
         Collections.sort(list, Comparator.comparing(ContributionTimeSlot::getTimeSlot));

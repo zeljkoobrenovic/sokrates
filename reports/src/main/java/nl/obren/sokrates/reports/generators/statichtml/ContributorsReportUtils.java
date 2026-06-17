@@ -56,9 +56,17 @@ public class ContributorsReportUtils {
             int maxContributors = contributorsPerTimeSlot.stream().mapToInt(c -> c.getContributorsCount()).max().orElse(1);
             int maxCommits = contributorsPerTimeSlot.stream().mapToInt(c -> c.getCommitsCount()).max().orElse(1);
             int maxFileUpdatesCount = contributorsPerTimeSlot.stream().mapToInt(c -> c.getFileUpdatesCount()).max().orElse(1);
+            // Churn bars scale to the largest single-slot total (added + deleted). The row is only
+            // emitted when there is churn data at all (older history files have none).
+            int maxChurn = contributorsPerTimeSlot.stream().mapToInt(c -> c.getLinesAdded() + c.getLinesDeleted()).max().orElse(0);
+            boolean hasChurn = maxChurn > 0;
 
             report.startDiv("overflow-y: auto; font-size: 90%");
             report.startTable();
+
+            if (hasChurn) {
+                addChurnRow(report, contributorsPerTimeSlot, maxChurn, showTimeSlot, padding, fade);
+            }
 
             report.startTableRow();
             report.addTableCell(getIconSvg("change", 64), "border: none; vertical-align: bottom;" + (fade ? "opacity: 0.4" : ""));
@@ -179,6 +187,45 @@ public class ContributorsReportUtils {
         }
     }
 
+    // Renders the lines-changed (churn) graph row: one column per time slot, each showing the lines
+    // added (green) stacked above the lines deleted (red), scaled to the busiest slot. Mirrors the
+    // file-updates row layout so it sits directly above it. Only called when there is churn data.
+    private static void addChurnRow(RichTextReport report, List<ContributionTimeSlot> contributorsPerTimeSlot,
+                                    int maxChurn, boolean showTimeSlot, int padding, boolean fade) {
+        report.startTableRow();
+        report.addTableCell(getIconSvg("file_size", 64), "border: none; vertical-align: bottom;" + (fade ? "opacity: 0.4" : ""));
+        String style;
+        if (showTimeSlot) {
+            style = "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: bottom; font-size: 80%";
+        } else {
+            style = "border: none; padding: " + padding + "px; vertical-align: bottom; font-size: 80%";
+        }
+        for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
+            report.startTableCell(style);
+            if (timeSlot != null) {
+                int added = timeSlot.getLinesAdded();
+                int deleted = timeSlot.getLinesDeleted();
+                int total = added + deleted;
+                if (showTimeSlot) {
+                    report.addParagraph(total + "", "margin: 0px" + (total == 0 ? "; color: #d0d0d0" : ""));
+                } else {
+                    report.addParagraph("&nbsp;", "margin: 0px");
+                }
+                String title = timeSlot.getTimeSlot() + ": +" + added + " / -" + deleted + " lines";
+                // Heights share the same scale (max single-slot total) so added/deleted are comparable
+                // across slots; a present-but-thin bar still shows at 1px.
+                int heightAdded = added > 0 ? 1 + (int) (64.0 * added / maxChurn) : 0;
+                int heightDeleted = deleted > 0 ? 1 + (int) (64.0 * deleted / maxChurn) : 0;
+                report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: #2e7d32; height:" + heightAdded + "px'></div>");
+                report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: #c62828; height:" + heightDeleted + "px'></div>");
+            } else {
+                report.addHtmlContent("<div style='width: 100%; background-color: #d0d0d0; height:1px'></div>");
+            }
+            report.endTableCell();
+        }
+        report.endTableRow();
+    }
+
     public static void addContributors(RichTextReport indexReport, List<Contributor> contributors, String type) {
         indexReport.addLineBreak();
         indexReport.startSubSection(type, "");
@@ -235,9 +282,13 @@ public class ContributorsReportUtils {
         // max/total can be 0 when every contributor has 0 counted commits; avoid NaN/Infinity styles.
         double opacity = max > 0 ? 0.2 + 0.8 * commitsCount / max : 1.0;
         double percentage = total > 0 ? 100.0 * commitsCount / total : 0.0;
+        String churnInfo = "";
+        if (contributor.getLinesAdded() > 0 || contributor.getLinesDeleted() > 0) {
+            churnInfo = ", +" + contributor.getLinesAdded() + "/-" + contributor.getLinesDeleted() + " lines";
+        }
         String info = StringEscapeUtils.escapeHtml4(contributor.getEmail()
                 + " " + commitsCount
-                + " commits (" + FormattingUtils.getFormattedPercentage(percentage) + "%),"
+                + " commits (" + FormattingUtils.getFormattedPercentage(percentage) + "%)" + churnInfo + ","
                 + " between " + contributor.getFirstCommitDate() + " and " + contributor.getLatestCommitDate());
 
         if (contributor.isRookie()) {

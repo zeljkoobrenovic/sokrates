@@ -828,6 +828,8 @@ public class LandscapeAnalysisResults {
                     contributorInfo.addActiveYears(contributor.getActiveYears());
                     contributorInfo.addCommitDates(contributor.getCommitDates());
                     contributorInfo.addCommitsPerDate(commitsPerDate);
+                    contributorInfo.addChurn(contributor.getLinesAdded(), contributor.getLinesDeleted(),
+                            contributor.getLinesAdded30Days(), contributor.getLinesDeleted30Days());
 
                     existingContributor.addRepository(repositoryAnalysisResults, firstCommitDate, latestCommitDate,
                             repositoryCommits, repositoryCommits30Days, repositoryCommits90Days,
@@ -855,6 +857,10 @@ public class LandscapeAnalysisResults {
                     newContributor.setActiveYears(new ArrayList<>(contributor.getActiveYears()));
                     newContributor.setCommitDates(new ArrayList<>(contributor.getCommitDates()));
                     newContributor.setCommitsPerDate(new LinkedHashMap<>(commitsPerDate));
+                    newContributor.setLinesAdded(contributor.getLinesAdded());
+                    newContributor.setLinesDeleted(contributor.getLinesDeleted());
+                    newContributor.setLinesAdded30Days(contributor.getLinesAdded30Days());
+                    newContributor.setLinesDeleted30Days(contributor.getLinesDeleted30Days());
 
                     ContributorRepositories newContributorWithRepositories = new ContributorRepositories(newContributor);
 

@@ -27,6 +27,13 @@ public class Contributor {
     private int commitsCount = 0;
     private int commitsCount30Days = 0;
     private int fileUpdatesCount30Days = 0;
+    // Lines added/deleted across all of this contributor's commits, summed from the per-file churn
+    // columns of git-history.txt. 0 for history files without churn data (older exports). The 30-day
+    // counters mirror the commitsCount30Days window. Serialized so they survive into the landscape.
+    private int linesAdded = 0;
+    private int linesDeleted = 0;
+    private int linesAdded30Days = 0;
+    private int linesDeleted30Days = 0;
     private int commitsCount90Days = 0;
     private int commitsCount180Days = 0;
     private int commitsCount365Days = 0;
@@ -57,6 +64,11 @@ public class Contributor {
 
     @JsonIgnore
     public void addCommit(String date, int fileUpdatesCount) {
+        addCommit(date, fileUpdatesCount, 0, 0);
+    }
+
+    @JsonIgnore
+    public void addCommit(String date, int fileUpdatesCount, int commitLinesAdded, int commitLinesDeleted) {
         if (commitDatesSet.add(date)) {
             commitDates.add(date);
         }
@@ -67,6 +79,8 @@ public class Contributor {
         if (StringUtils.isBlank(latestCommitDate) || date.compareTo(latestCommitDate) > 0) {
             latestCommitDate = date;
         }
+        linesAdded += commitLinesAdded;
+        linesDeleted += commitLinesDeleted;
         if (date.length() > 4) {
             String year = date.substring(0, 4);
             if (activeYearsSet.add(year)) {
@@ -79,6 +93,8 @@ public class Contributor {
             if (DateUtils.isCommittedLessThanDaysAgo(date, RECENTLY_ACTIVITY_THRESHOLD_DAYS)) {
                 commitsCount30Days += 1;
                 fileUpdatesCount30Days += fileUpdatesCount;
+                linesAdded30Days += commitLinesAdded;
+                linesDeleted30Days += commitLinesDeleted;
             }
             if (DateUtils.isCommittedLessThanDaysAgo(date, 90)) {
                 commitsCount90Days += 1;
@@ -226,6 +242,48 @@ public class Contributor {
 
     public void setFileUpdatesCount30Days(int fileUpdatesCount30Days) {
         this.fileUpdatesCount30Days = fileUpdatesCount30Days;
+    }
+
+    public int getLinesAdded() {
+        return linesAdded;
+    }
+
+    public void setLinesAdded(int linesAdded) {
+        this.linesAdded = linesAdded;
+    }
+
+    public int getLinesDeleted() {
+        return linesDeleted;
+    }
+
+    public void setLinesDeleted(int linesDeleted) {
+        this.linesDeleted = linesDeleted;
+    }
+
+    public int getLinesAdded30Days() {
+        return linesAdded30Days;
+    }
+
+    public void setLinesAdded30Days(int linesAdded30Days) {
+        this.linesAdded30Days = linesAdded30Days;
+    }
+
+    public int getLinesDeleted30Days() {
+        return linesDeleted30Days;
+    }
+
+    public void setLinesDeleted30Days(int linesDeleted30Days) {
+        this.linesDeleted30Days = linesDeleted30Days;
+    }
+
+    // Merges another contributor's churn totals into this one, used when the landscape combines a
+    // contributor's activity across repositories (mirrors addCommitDates/addCommitsPerDate).
+    @JsonIgnore
+    public void addChurn(int added, int deleted, int added30Days, int deleted30Days) {
+        this.linesAdded += added;
+        this.linesDeleted += deleted;
+        this.linesAdded30Days += added30Days;
+        this.linesDeleted30Days += deleted30Days;
     }
 
     public int getCommitsCount90Days() {

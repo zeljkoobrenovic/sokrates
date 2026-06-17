@@ -1,7 +1,12 @@
 package nl.obren.sokrates.sourcecode.githistory;
 
 /*
- * Assumes that you have generated the text file being read using the following git command:
+ * Reads the git-history.txt produced by GitHistoryExtractor. Each line is:
+ *   <date> <email> <commitId> <path> <name> [<linesAdded> <linesDeleted>]
+ * The two churn columns are optional - older history files omit them, in which case
+ * linesAdded/linesDeleted default to 0.
+ *
+ * Equivalent git command (without churn columns):
  * git ls-files -z | xargs -0 -n1 -I{} -- git log --date=short --format="%ad %ae %H {}" {} > git-history.txt
  * git log --merges --first-parent --date=short --format="%ad %ae" > git-merges.txt
  */
@@ -47,10 +52,12 @@ public class GitHistoryUtils {
             AuthorCommit existing = commitsMap.get(commitId);
             if (existing == null) {
                 AuthorCommit authorCommit = new AuthorCommit(fileUpdate.getDate(), fileUpdate.getAuthorEmail(), fileUpdate.getUserName(), fileUpdate.isBot());
+                authorCommit.addChurn(fileUpdate.getLinesAdded(), fileUpdate.getLinesDeleted());
                 commits.add(authorCommit);
                 commitsMap.put(commitId, authorCommit);
             } else {
                 existing.incrementFileUpdatesCount();
+                existing.addChurn(fileUpdate.getLinesAdded(), fileUpdate.getLinesDeleted());
             }
         });
 
@@ -147,6 +154,17 @@ public class GitHistoryUtils {
                     }
 
                     FileUpdate fileUpdate = new FileUpdate(date, authorEmail, userName, commitId, path, bot);
+
+                    // Optional trailing churn columns: "... <name> <linesAdded> <linesDeleted>".
+                    // Older git-history.txt files don't have them, so absence is fine (defaults stay 0).
+                    if (index4 > index3) {
+                        String[] tokens = line.substring(index4 + 1).trim().split(" ");
+                        if (tokens.length >= 3) {
+                            fileUpdate.setLinesAdded(parseChurn(tokens[tokens.length - 2]));
+                            fileUpdate.setLinesDeleted(parseChurn(tokens[tokens.length - 1]));
+                        }
+                    }
+
                     return fileUpdate;
                 }
             }
@@ -165,6 +183,14 @@ public class GitHistoryUtils {
             return true;
         }
         return false;
+    }
+
+    private static int parseChurn(String token) {
+        try {
+            return Integer.parseInt(token.trim());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     public static boolean isBot(String email, List<String> bots) {

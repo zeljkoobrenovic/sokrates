@@ -307,6 +307,13 @@
             + window30(data.commitsCount30Days, '30d') + window30(data.commitsCount90Days, '3m')
             + window30(data.commitsCount180Days, '6m') + window30(data.commitsCount365Days, '1y')
             + '<b>' + num(data.commitsCount) + '</b>' + greyLabel(' (all time)') + '</div>';
+        // Churn line: only shown when the underlying git-history.txt carried added/deleted columns.
+        const totalChurn = (data.linesAdded || 0) + (data.linesDeleted || 0);
+        if (totalChurn > 0) {
+            html += '<div>Lines changed: '
+                + churnSpan(data.linesAdded30Days, data.linesDeleted30Days) + greyLabel(' (30d)') + '&nbsp;&nbsp;&nbsp;'
+                + churnSpan(data.linesAdded, data.linesDeleted) + greyLabel(' (all time)') + '</div>';
+        }
         html += '</div>';
 
         html += '<div style="margin-bottom: 6px;">' + renderExtensions() + '</div>';
@@ -320,6 +327,11 @@
 
     function window30(value, label) {
         return '<b>' + num(value) + '</b>' + greyLabel(' (' + label + ')') + '&nbsp;&nbsp;&nbsp;';
+    }
+
+    function churnSpan(added, deleted) {
+        return '<b style="color: #2e7d32;">+' + num(added || 0) + '</b> / '
+            + '<b style="color: #c62828;">-' + num(deleted || 0) + '</b>';
     }
 
     function renderExtensions() {

@@ -227,11 +227,29 @@ public class ReportFileExporter {
             long contributorsCount = contributorsAnalysisResults.getContributors().stream().filter(c -> !c.isBot() && c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count();
             int commitsCount30Days = contributorsAnalysisResults.getCommitsCount30Days();
             int fileUpdatesCount30Days = contributorsAnalysisResults.getFileUpdatesCount30Days();
+            int linesAdded30Days = contributorsAnalysisResults.getLinesAdded30Days();
+            int linesDeleted30Days = contributorsAnalysisResults.getLinesDeleted30Days();
 
             indexReport.startTable();
             indexReport.startTableRow();
 
             indexReport.startTableCell("border: none; vertical-align: top;");
+
+
+            // Lines changed (churn) in the past 30 days. Only shown when the git history carried
+            // churn columns (older exports have none, so this stays 0 and the card is hidden).
+            if (linesAdded30Days > 0 || linesDeleted30Days > 0) {
+                indexReport.startDiv("margin-top: 8px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
+                indexReport.startNewTabLink("Commits.html", "");
+                indexReport.addContentInDiv(
+                        "<span style='color: #2e7d32;'>+" + FormattingUtils.getSmallTextForNumber(linesAdded30Days) + "</span>"
+                                + "<br><span style='color: #c62828;'>-" + FormattingUtils.getSmallTextForNumber(linesDeleted30Days) + "</span>",
+                        "padding-top: 14px; font-size: 22px;");
+                indexReport.addContentInDiv("lines changed<br>(30 days)", "color: black; font-size: 80%");
+                indexReport.endNewTabLink();
+                indexReport.endDiv();
+            }
+
 
             indexReport.startDiv("margin-top: 8px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
             indexReport.startNewTabLink("Commits.html", "");
@@ -388,10 +406,26 @@ public class ReportFileExporter {
         long contributorsCount = contributorsAnalysisResults.getContributors().stream().filter(c -> !c.isBot() && c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count();
         int commitsCount30Days = contributorsAnalysisResults.getCommitsCount30Days();
         int fileUpdatesCount30Days = contributorsAnalysisResults.getFileUpdatesCount30Days();
+        int linesAdded30Days = contributorsAnalysisResults.getLinesAdded30Days();
+        int linesDeleted30Days = contributorsAnalysisResults.getLinesDeleted30Days();
         indexReport.startTable("margin-bottom: -20px; border-top: 1px dashed grey; border-bottom: 1px dashed grey; padding-top: 10px; margin-top: 10px; margin-bottom: 10px;");
         indexReport.startTableRow();
 
         indexReport.startTableCell("border: none; vertical-align: top;");
+
+        // Lines changed (churn) in the past 30 days. Only shown when the git history carried churn
+        // columns (older exports have none, so this stays 0 and the card is hidden).
+        if (linesAdded30Days > 0 || linesDeleted30Days > 0) {
+            indexReport.startDiv("margin-bottom: 14px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
+            indexReport.startNewTabLink("Commits.html", "");
+            indexReport.addContentInDiv(
+                    "<span style='color: #2e7d32;'>+" + FormattingUtils.getSmallTextForNumber(linesAdded30Days) + "</span>"
+                            + "<br><span style='color: #c62828;'>-" + FormattingUtils.getSmallTextForNumber(linesDeleted30Days) + "</span>",
+                    "padding-top: 14px; font-size: 22px;");
+            indexReport.addContentInDiv("lines changed<br>(30 days)", "color: black; font-size: 80%");
+            indexReport.endNewTabLink();
+            indexReport.endDiv();
+        }
 
         indexReport.startDiv("margin-top: 8px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
         indexReport.startNewTabLink("Commits.html", fileUpdatesCount30Days == 0 ? "opacity: 0.4" : "");
