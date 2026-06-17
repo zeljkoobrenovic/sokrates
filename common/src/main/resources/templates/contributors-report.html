@@ -553,42 +553,39 @@
         document.getElementById('content').innerHTML = html;
     }
 
-    // The main language can be passed in the URL fragment (e.g. ...#mainLang=java or
-    // ...#mainLang=cs,java for several) to land on a language-filtered view. The value is read
-    // from the fragment (not a ?query) so the browser caches the single embedded-data HTML once
-    // and reuses it for every language (and so it does not collide with the ?tab= query used when
-    // this report is embedded as an iframe). A bare fragment (...#java) is also accepted as the
-    // language list. Re-applied on hashchange; seeds the box with a "mainLang:<langs>" term.
-    function readMainLangFromHash() {
+    // The whole search query can be passed in the URL fragment and is seeded verbatim into the
+    // search box (e.g. ...#mainLang:cs,java;customer). It is read from the fragment (not a ?query)
+    // so the browser caches the single embedded-data HTML once and reuses it for every query (and
+    // so it does not collide with the ?tab= query used when this report is embedded as an iframe).
+    // Re-applied on hashchange.
+    function readQueryFromHash() {
         const hash = (window.location.hash || '').replace(/^#/, '');
         if (!hash) {
             return '';
         }
-        const m = hash.match(/(?:^|[&])mainLang=([^&]*)/i);
-        const value = m ? m[1] : hash;
         try {
-            return decodeURIComponent(value).trim();
+            return decodeURIComponent(hash);
         } catch (e) {
-            return value.trim();
+            return hash;
         }
     }
 
-    function applyMainLangFromHash() {
-        const langs = readMainLangFromHash();
-        if (langs) {
-            document.getElementById('filter').value = 'mainLang:' + langs;
+    function applyQueryFromHash() {
+        const query = readQueryFromHash();
+        if (query) {
+            document.getElementById('filter').value = query;
         }
     }
 
     window.addEventListener('hashchange', function () {
-        applyMainLangFromHash();
+        applyQueryFromHash();
         render();
     });
 
     // Defer the (synchronous, potentially heavy) first render one frame so the loading
     // spinner actually paints before the main thread is blocked, then swap it for the report.
     function start() {
-        applyMainLangFromHash();
+        applyQueryFromHash();
         buildTabs();
         render();
         document.getElementById('loading').style.display = 'none';
