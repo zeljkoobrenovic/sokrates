@@ -16,7 +16,7 @@
         }
 
         td, th {
-            border: 1px solid #CCC;
+            border: 1px solid #f0f0f0;
             height: 30px;
             padding-left: 10px;
             padding-right: 10px;
@@ -161,8 +161,8 @@
 
 <div id="report" style="display: none;">
     <div style="color: grey; margin: 8px 0 10px 0;">
-        <input id="filter" type="text" placeholder="search by name; mainLang:cs,java by main language; includesLang:go by any language used (; for multiple terms)"
-               style="font-size: 16px; height: 30px; width: 640px;"
+        <input id="filter" type="text" placeholder="search by name; mainLang:cs,java by main language; includesLang:go (any scope) or includesLang:main:go (one scope)"
+               style="font-size: 16px; height: 30px; width: 700px;"
                onkeyup="render()">
         <span id="search-summary" style="display: inline-block; margin-left: 6px;"></span>
     </div>
@@ -765,23 +765,27 @@
         return perYearBarChart('contributors per year (distinct)', 'darkred', counts, 'contributors');
     }
 
+    const SCOPES = ['main', 'test', 'build', 'generated', 'other'];
+
     // A search is split by ";" into terms. Two special terms set language constraints:
-    //   "mainLang:<l1>,<l2>,..."    -> the repository's MAIN language must be one of these
-    //   "includesLang:<l1>,<l2>,..."-> the repository must contain ANY code in one of these
-    //                                  languages (even if it is not the main one)
-    // The remaining plain terms are name filters applied WITHIN those language constraints. Plain
-    // terms are a UNION among themselves (name contains a OR b) but are AND-ed with the language
-    // constraints (which are also AND-ed with each other). Examples:
+    //   "mainLang:<l1>,<l2>,..."         -> the repository's MAIN language must be one of these
+    //   "includesLang:<l1>,<l2>,..."     -> the repository must contain ANY code in one of these
+    //                                       languages, across ALL scopes (even if not the main one)
+    //   "includesLang:<scope>:<l1>,..."  -> the same, but only counting code in <scope>
+    //                                       (scope is one of main/test/build/generated/other)
+    // Each includesLang term is its own constraint (all must hold). The remaining plain terms are
+    // name filters applied WITHIN those language constraints — a UNION among themselves, AND-ed with
+    // the language constraints. Examples:
     //   "datadog-;customer"                     -> name contains "datadog-" OR "customer"
     //   "mainLang:cs,java"                      -> repos whose main language is cs or java
-    //   "includesLang:go"                       -> repos that contain any Go code
+    //   "includesLang:go"                       -> repos that contain any Go code (any scope)
+    //   "includesLang:main:tf"                  -> repos with Terraform code in the MAIN scope
     //   "mainLang:cs,java;datadog-;customer"    -> cs/java repos whose name has "datadog-" or "customer"
-    //   "includesLang:sql;mainLang:java"        -> java repos that also contain any SQL code
     function getFilters() {
         const terms = document.getElementById('filter').value.toLowerCase().trim()
             .split(';').map(s => s.trim()).filter(s => s.length);
         const langs = [];
-        const includesLangs = [];
+        const includesLangs = [];   // [{scope: <scope>|null, langs: [...]}]
         const nameFilters = [];
         terms.forEach(t => {
             if (t.startsWith('mainlang:')) {
@@ -789,9 +793,18 @@
                     .map(s => s.trim()).filter(s => s.length)
                     .forEach(l => langs.push(l));
             } else if (t.startsWith('includeslang:')) {
-                t.substring('includeslang:'.length).split(',')
-                    .map(s => s.trim()).filter(s => s.length)
-                    .forEach(l => includesLangs.push(l));
+                let rest = t.substring('includeslang:'.length).trim();
+                let scope = null;
+                // Optional "<scope>:" prefix on the value selects a single scope.
+                const colon = rest.indexOf(':');
+                if (colon >= 0 && SCOPES.includes(rest.substring(0, colon).trim())) {
+                    scope = rest.substring(0, colon).trim();
+                    rest = rest.substring(colon + 1);
+                }
+                const list = rest.split(',').map(s => s.trim()).filter(s => s.length);
+                if (list.length) {
+                    includesLangs.push({ scope, langs: list });
+                }
             } else {
                 nameFilters.push(t);
             }
@@ -799,10 +812,11 @@
         return { langs, includesLangs, nameFilters };
     }
 
-    // A row matches when its main language is in the (optional) mainLang set AND the repository
-    // contains at least one of the (optional) includesLang languages AND its name matches the
-    // (optional) name filters. Empty constraints mean "any". Name filters are a UNION.
-    function matchesFilters(name, lang, repoLangs, filters) {
+    // A row matches when its main language is in the (optional) mainLang set AND every includesLang
+    // constraint holds AND its name matches the (optional) name filters. A scoped includesLang
+    // constraint checks only that scope's languages; an unscoped one checks all scopes. Empty
+    // constraints mean "any". Name filters are a UNION.
+    function matchesFilters(name, lang, repoLangs, langsByScope, filters) {
         const langs = filters.langs || [];
         const includesLangs = filters.includesLangs || [];
         const nameFilters = filters.nameFilters || [];
@@ -812,9 +826,10 @@
                 return false;
             }
         }
-        if (includesLangs.length) {
-            const present = (repoLangs || []).map(x => (x || '').toLowerCase());
-            if (!includesLangs.some(l => present.includes(l))) {
+        for (const c of includesLangs) {
+            const present = (c.scope ? ((langsByScope || {})[c.scope] || []) : (repoLangs || []))
+                .map(x => (x || '').toLowerCase());
+            if (!c.langs.some(l => present.includes(l))) {
                 return false;
             }
         }
@@ -855,7 +870,7 @@
         }
 
         const tab = TABS_BY_ID[activeTab];
-        let rows = repositories.filter(item => matchesFilters(item.metadata && item.metadata.name, item.mainLang, item.langs, filters));
+        let rows = repositories.filter(item => matchesFilters(item.metadata && item.metadata.name, item.mainLang, item.langs, item.langsByScope, filters));
         if (tab.filter) {
             rows = rows.filter(tab.filter);
         }
@@ -961,7 +976,7 @@
     // Renders the proportion bars into the dedicated container under the search bar,
     // based on the search-filtered set (same across all tabs).
     function updateProportionBars(filters) {
-        const matched = repositories.filter(item => matchesFilters(item.metadata && item.metadata.name, item.mainLang, item.langs, filters));
+        const matched = repositories.filter(item => matchesFilters(item.metadata && item.metadata.name, item.mainLang, item.langs, item.langsByScope, filters));
         const count = matched.length;
         const mainLoc = matched.reduce((a, b) => a + (b.mainLinesOfCode || 0), 0);
         const commits = matched.reduce((a, b) => a + (b.commitsCount || 0), 0);
@@ -972,7 +987,7 @@
     function renderFeatures(filters) {
         // Paging (displayLimit) is reset by render() before this is called.
         const concerns = features.concerns;
-        let repos = features.repositories.filter(r => matchesFilters(r.name, r.mainLang, r.langs, filters));
+        let repos = features.repositories.filter(r => matchesFilters(r.name, r.mainLang, r.langs, r.langsByScope, filters));
 
         document.getElementById('search-summary').innerHTML = '= ' + repos.length + ' '
             + (repos.length === 1 ? 'repository' : 'repositories');

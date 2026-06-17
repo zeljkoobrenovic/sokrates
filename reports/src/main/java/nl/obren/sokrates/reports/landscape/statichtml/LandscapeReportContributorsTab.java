@@ -506,10 +506,15 @@ public class LandscapeReportContributorsTab {
             PeopleConfig peopleConfig = landscapeAnalysisResults.getPeopleConfig();
             List<ContributorTag> tagRules = configuration.getTagContributors();
 
+            // Map contributorId -> languages they committed to in the last 30 days, built from the
+            // SAME per-extension commit history the Overview "Contributors Per File Extension"
+            // badges count, so includesLang:<lang> in the report matches those badge counts exactly.
+            Map<String, List<String>> recentLangsByContributor = buildRecentLangsByContributor();
+
             Map<String, List<ContributorReportExport>> groups = new LinkedHashMap<>();
-            groups.put("recent", toExports(recentContributors, configuration, peopleConfig, tagRules));
-            groups.put("all", toExports(contributors, configuration, peopleConfig, tagRules));
-            groups.put("bots", toExports(bots, configuration, peopleConfig, tagRules));
+            groups.put("recent", toExports(recentContributors, configuration, peopleConfig, tagRules, recentLangsByContributor));
+            groups.put("all", toExports(contributors, configuration, peopleConfig, tagRules, recentLangsByContributor));
+            groups.put("bots", toExports(bots, configuration, peopleConfig, tagRules, recentLangsByContributor));
 
             // Language icons for every distinct main language across the three lists.
             List<String> langs = new ArrayList<>();
@@ -534,7 +539,8 @@ public class LandscapeReportContributorsTab {
     }
 
     private List<ContributorReportExport> toExports(List<ContributorRepositories> list, LandscapeConfiguration configuration,
-                                                    PeopleConfig peopleConfig, List<ContributorTag> tagRules) {
+                                                    PeopleConfig peopleConfig, List<ContributorTag> tagRules,
+                                                    Map<String, List<String>> recentLangsByContributor) {
         // Export every contributor (no list-limit cap): the client-rendered report pages the
         // display itself (show-more), and search needs the full set. Sorted by commit recency.
         return list.stream()
@@ -542,8 +548,30 @@ public class LandscapeReportContributorsTab {
                 .sorted((a, b) -> b.getContributor().getCommitsCount365Days() - a.getContributor().getCommitsCount365Days())
                 .sorted((a, b) -> b.getContributor().getCommitsCount90Days() - a.getContributor().getCommitsCount90Days())
                 .sorted((a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days())
-                .map(cr -> new ContributorReportExport(cr, configuration, peopleConfig, teamsConfig, tagRules))
+                .map(cr -> new ContributorReportExport(cr, configuration, peopleConfig, teamsConfig, tagRules,
+                        recentLangsByContributor.get(cr.getContributor().getEmail().toLowerCase())))
                 .collect(Collectors.toList());
+    }
+
+    // For each contributor id (lowercased, matching the report rows' email key), the set of
+    // languages (lowercased extensions) they committed to in the last 30 days — inverted from the
+    // landscape's per-extension committers30Days, the exact data the Overview badges count.
+    private Map<String, List<String>> buildRecentLangsByContributor() {
+        Map<String, List<String>> map = new HashMap<>();
+        landscapeAnalysisResults.getContributorsPerExtension().forEach(commitsPerExtension -> {
+            String lang = commitsPerExtension.getExtension().replace("*.", "").trim().toLowerCase();
+            if (lang.isEmpty()) {
+                return;
+            }
+            commitsPerExtension.getCommitters30Days().forEach(committerId -> {
+                String key = committerId.toLowerCase();
+                List<String> langs = map.computeIfAbsent(key, k -> new ArrayList<>());
+                if (!langs.contains(lang)) {
+                    langs.add(lang);
+                }
+            });
+        });
+        return map;
     }
 
     private void addContributorsListsSection(int recentContributorsCount, String latestCommit, List<ContributorRepositories> recentContributors) {
@@ -762,7 +790,11 @@ public class LandscapeReportContributorsTab {
     }
 
     private void addLangInfoBlockExtra(String value, String lang, String description, String extra) {
-        String link = StringUtils.isNotBlank(lang) ? "repositories.html#includesLang:" + lang.trim().toLowerCase() : null;
+        // Open this report (contributors/teams) pre-filtered to people who have committed to the
+        // clicked language; the query is in the URL fragment so the embedded-data page stays cached.
+        String link = StringUtils.isNotBlank(lang)
+                ? type.plural() + "-report.html?tab=recent#includesLang:" + lang.trim().toLowerCase()
+                : null;
         InfoBlocks.addLangInfoBlockExtra(landscapeReport, value, lang, description, extra, link);
     }
 

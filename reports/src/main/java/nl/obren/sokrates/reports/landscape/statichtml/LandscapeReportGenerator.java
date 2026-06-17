@@ -1331,17 +1331,20 @@ public class LandscapeReportGenerator {
             landscapeReport.addLineBreak();
             landscapeReport.endDiv();
         }
+        // The section shows a single scope; scope the includesLang link to it so the opened
+        // repositories list matches the languages shown here ("Main"->main, "Test"->test, ...).
+        String scope = type.trim().toLowerCase();
         landscapeReport.startDiv("");
         boolean tooLong = linesOfCodePerExtension.size() > 25;
         List<NumericMetric> linesOfCodePerExtensionDisplay = tooLong ? linesOfCodePerExtension.subList(0, 25) : linesOfCodePerExtension;
         List<NumericMetric> linesOfCodePerExtensionHide = tooLong ? linesOfCodePerExtension.subList(25, linesOfCodePerExtension.size()) : new ArrayList<>();
         linesOfCodePerExtensionDisplay.forEach(extension -> {
-            addLangInfo(extension);
+            addLangInfo(extension, scope);
         });
         if (linesOfCodePerExtensionHide.size() > 0) {
             landscapeReport.startShowMoreBlockDisappear("", "show all...");
             linesOfCodePerExtensionHide.forEach(extension -> {
-                addLangInfo(extension);
+                addLangInfo(extension, scope);
             });
             landscapeReport.endShowMoreBlockDisappear();
         }
@@ -1456,7 +1459,7 @@ public class LandscapeReportGenerator {
                                 .collect(Collectors.joining(", ")), FormattingUtils.getSmallTextForNumber(commitsCount) + " commits");
     }
 
-    private void addLangInfo(NumericMetric extension) {
+    private void addLangInfo(NumericMetric extension, String scope) {
         String smallTextForNumber = FormattingUtils.getSmallTextForNumber(extension.getValue().intValue());
         int size = extension.getDescription().size();
         Collections.sort(extension.getDescription(), (a, b) -> b.getValue().intValue() - a.getValue().intValue());
@@ -1464,7 +1467,7 @@ public class LandscapeReportGenerator {
                 size + " " + (size == 1 ? "repository" : "repositories") + ":\n  " +
                         extension.getDescription().stream()
                                 .map(a -> a.getName() + " (" + FormattingUtils.formatCount(a.getValue().intValue()) + " LOC)")
-                                .collect(Collectors.joining("\n  ")));
+                                .collect(Collectors.joining("\n  ")), scope);
     }
 
     private void addRepositoriesSection(List<RepositoryAnalysisResults> repositoryAnalysisResults) {
@@ -1861,21 +1864,34 @@ public class LandscapeReportGenerator {
     }
 
 
-    private void addLangInfoBlock(String value, String lang, String description) {
-        InfoBlocks.addLangInfoBlock(landscapeReport, value, lang, description, repositoriesByLangLink(lang));
+    private void addLangInfoBlock(String value, String lang, String description, String scope) {
+        InfoBlocks.addLangInfoBlock(landscapeReport, value, lang, description, repositoriesByLangLink(lang, scope));
     }
 
     private void addLangInfoBlockExtra(String value, String lang, String description, String extra) {
-        InfoBlocks.addLangInfoBlockExtra(landscapeReport, value, lang, description, extra, repositoriesByLangLink(lang));
+        InfoBlocks.addLangInfoBlockExtra(landscapeReport, value, lang, description, extra, contributorsByLangLink(lang));
     }
 
-    // Opens the repositories report pre-filtered to repositories that contain any code in the given
+    // Opens the repositories report pre-filtered to repositories that contain code in the given
     // language (includesLang:), carried in the URL fragment so the embedded-data page stays cached.
-    private static String repositoriesByLangLink(String lang) {
+    // When scope is given (main/test/build/generated/other), the filter only counts that scope, so
+    // the opened list matches a section that displays a single scope.
+    private static String repositoriesByLangLink(String lang, String scope) {
         if (StringUtils.isBlank(lang)) {
             return null;
         }
-        return "repositories.html#includesLang:" + lang.trim().toLowerCase();
+        String value = StringUtils.isNotBlank(scope) ? scope.trim().toLowerCase() + ":" + lang.trim().toLowerCase()
+                : lang.trim().toLowerCase();
+        return "repositories.html#includesLang:" + value;
+    }
+
+    // Opens the contributors report (recent tab) pre-filtered to contributors who have committed to
+    // the given language (includesLang:), carried in the URL fragment so the page stays cached.
+    private static String contributorsByLangLink(String lang) {
+        if (StringUtils.isBlank(lang)) {
+            return null;
+        }
+        return "contributors-report.html?tab=recent#includesLang:" + lang.trim().toLowerCase();
     }
 
     private void addSmallInfoBlock(String value, String subtitle, String color, String link) {

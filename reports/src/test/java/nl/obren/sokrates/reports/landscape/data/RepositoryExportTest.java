@@ -75,6 +75,12 @@ class RepositoryExportTest {
 
         // Main scope first (java, xml), then the build-scope shell; java deduped, yaml (0 LOC) skipped.
         assertEquals(Arrays.asList("java", "xml", "sh"), export.getLangs());
+
+        // Per-scope split: main has java+xml, build has sh+java (yaml 0 LOC skipped), others empty.
+        assertEquals(Arrays.asList("java", "xml"), export.getLangsByScope().get("main"));
+        assertEquals(Arrays.asList("sh", "java"), export.getLangsByScope().get("build"));
+        assertTrue(export.getLangsByScope().get("test").isEmpty());
+        assertTrue(export.getLangsByScope().get("other").isEmpty());
     }
 
     @Test
@@ -126,6 +132,8 @@ class RepositoryExportTest {
         assertEquals("java", node.get("mainLang").asText());
         assertTrue(node.get("langs").isArray());
         assertEquals("java", node.get("langs").get(0).asText());
+        assertTrue(node.get("langsByScope").has("main"));
+        assertEquals("java", node.get("langsByScope").get("main").get(0).asText());
         assertTrue(node.has("ageYears"));
         assertTrue(node.has("repositoryMetrics"));
         assertTrue(node.get("repositoryMetrics").has("fileSize"));

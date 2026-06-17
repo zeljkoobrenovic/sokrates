@@ -49,6 +49,9 @@ public class RepositoryExport {
     // Every language (file extension, lowercased) the repository contains any code in, across all
     // scopes — lets the report filter with includesLang:<lang> even when it is not the main language.
     private List<String> langs = new ArrayList<>();
+    // The same, split per scope (main/test/build/generated/other) — lets the report scope an
+    // includesLang: filter to specific scopes (e.g. includesLang:main:tf).
+    private Map<String, List<String>> langsByScope = new LinkedHashMap<>();
 
     // Richer fields consumed by the client-rendered landscape repositories report (repositories.html).
     private int commitsCount180Days;
@@ -138,23 +141,19 @@ public class RepositoryExport {
             mainLang = mainPerExtension.get(0).getName().replace("*.", "").trim().toLowerCase();
         }
 
-        // Every language the repository contains any code in, across all scopes (deduplicated,
-        // preserving first-seen order, main scope first so the dominant languages come first).
+        // Languages the repository contains any code in, per scope (deduplicated, ordered by LOC
+        // desc as getLinesOfCodePerExtension() already is). This lets the report scope an
+        // includesLang: filter to specific scopes (e.g. main only), so the repositories list can
+        // match what an Overview section that shows a single scope displays.
+        langsByScope.put("main", scopeLangs(main));
+        langsByScope.put("test", scopeLangs(test));
+        langsByScope.put("build", scopeLangs(build));
+        langsByScope.put("generated", scopeLangs(generated));
+        langsByScope.put("other", scopeLangs(other));
+
+        // Every language across all scopes (main first), for an unscoped includesLang: filter.
         Set<String> seenLangs = new LinkedHashSet<>();
-        for (AspectAnalysisResults aspect : List.of(main, test, build, generated, other)) {
-            List<NumericMetric> perExtension = aspect.getLinesOfCodePerExtension();
-            if (perExtension == null) {
-                continue;
-            }
-            perExtension.forEach(metric -> {
-                if (metric.getValue() != null && metric.getValue().intValue() > 0) {
-                    String lang = metric.getName().replace("*.", "").trim().toLowerCase();
-                    if (!lang.isEmpty()) {
-                        seenLangs.add(lang);
-                    }
-                }
-            });
-        }
+        langsByScope.values().forEach(seenLangs::addAll);
         langs = new ArrayList<>(seenLangs);
 
         FilesHistoryAnalysisResults filesHistory = analysis.getFilesHistoryAnalysisResults();
@@ -180,6 +179,24 @@ public class RepositoryExport {
         years = buildHistory(contributorsAnalysisResults.getContributorsPerYear(), historyYears, latestCommitDate, false);
 
         repositoryMetrics = buildMetrics(analysis, configuration);
+    }
+
+    // The languages (lowercased extensions, deduplicated, LOC-desc order) with any code in one
+    // aspect/scope. getLinesOfCodePerExtension() is already sorted by LOC descending.
+    private static List<String> scopeLangs(AspectAnalysisResults aspect) {
+        List<String> langs = new ArrayList<>();
+        if (aspect == null || aspect.getLinesOfCodePerExtension() == null) {
+            return langs;
+        }
+        aspect.getLinesOfCodePerExtension().forEach(metric -> {
+            if (metric.getValue() != null && metric.getValue().intValue() > 0) {
+                String lang = metric.getName().replace("*.", "").trim().toLowerCase();
+                if (!lang.isEmpty() && !langs.contains(lang)) {
+                    langs.add(lang);
+                }
+            }
+        });
+        return langs;
     }
 
     private static RepositoryReportData.History buildHistory(List<ContributionTimeSlot> slots, int limit, String latestCommitDate, boolean weekly) {
@@ -284,6 +301,10 @@ public class RepositoryExport {
 
     public List<String> getLangs() {
         return langs;
+    }
+
+    public Map<String, List<String>> getLangsByScope() {
+        return langsByScope;
     }
 
     public int getCommitsCount180Days() {
