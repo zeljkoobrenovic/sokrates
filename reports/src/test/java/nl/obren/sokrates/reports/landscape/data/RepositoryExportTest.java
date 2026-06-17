@@ -62,6 +62,22 @@ class RepositoryExportTest {
     }
 
     @Test
+    void exportsAllLanguagesPresentAcrossScopes() {
+        RepositoryAnalysisResults repo = sampleRepository();
+        // Add a non-main-scope language to prove includesLang sees languages beyond the main one.
+        AspectAnalysisResults build = repo.getAnalysisResults().getBuildAndDeployAspectAnalysisResults();
+        build.setLinesOfCodePerExtension(new ArrayList<>(Arrays.asList(
+                new NumericMetric("*.sh", 40),
+                new NumericMetric("*.java", 10),   // duplicate language, must be deduplicated
+                new NumericMetric("*.yaml", 0))));  // zero LOC, must be skipped
+
+        RepositoryExport export = new RepositoryExport(repo);
+
+        // Main scope first (java, xml), then the build-scope shell; java deduped, yaml (0 LOC) skipped.
+        assertEquals(Arrays.asList("java", "xml", "sh"), export.getLangs());
+    }
+
+    @Test
     void otherLinesOfCodeIsNotOverwrittenByTheOtherAspect() {
         // Regression: the constructor used to assign other-aspect LOC to generatedLinesOfCode,
         // leaving otherLinesOfCode at 0 and clobbering generatedLinesOfCode.
@@ -108,6 +124,8 @@ class RepositoryExportTest {
         assertEquals(100, node.get("generatedLinesOfCode").asInt());
         assertEquals(20, node.get("otherLinesOfCode").asInt());
         assertEquals("java", node.get("mainLang").asText());
+        assertTrue(node.get("langs").isArray());
+        assertEquals("java", node.get("langs").get(0).asText());
         assertTrue(node.has("ageYears"));
         assertTrue(node.has("repositoryMetrics"));
         assertTrue(node.get("repositoryMetrics").has("fileSize"));

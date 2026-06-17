@@ -1862,11 +1862,20 @@ public class LandscapeReportGenerator {
 
 
     private void addLangInfoBlock(String value, String lang, String description) {
-        InfoBlocks.addLangInfoBlock(landscapeReport, value, lang, description);
+        InfoBlocks.addLangInfoBlock(landscapeReport, value, lang, description, repositoriesByLangLink(lang));
     }
 
     private void addLangInfoBlockExtra(String value, String lang, String description, String extra) {
-        InfoBlocks.addLangInfoBlockExtra(landscapeReport, value, lang, description, extra);
+        InfoBlocks.addLangInfoBlockExtra(landscapeReport, value, lang, description, extra, repositoriesByLangLink(lang));
+    }
+
+    // Opens the repositories report pre-filtered to repositories that contain any code in the given
+    // language (includesLang:), carried in the URL fragment so the embedded-data page stays cached.
+    private static String repositoriesByLangLink(String lang) {
+        if (StringUtils.isBlank(lang)) {
+            return null;
+        }
+        return "repositories.html#includesLang:" + lang.trim().toLowerCase();
     }
 
     private void addSmallInfoBlock(String value, String subtitle, String color, String link) {

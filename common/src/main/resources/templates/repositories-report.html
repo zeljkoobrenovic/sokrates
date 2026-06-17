@@ -161,8 +161,8 @@
 
 <div id="report" style="display: none;">
     <div style="color: grey; margin: 8px 0 10px 0;">
-        <input id="filter" type="text" placeholder="search by name; mainLang:cs,java to filter by main language (; for multiple terms)"
-               style="font-size: 16px; height: 30px; width: 540px;"
+        <input id="filter" type="text" placeholder="search by name; mainLang:cs,java by main language; includesLang:go by any language used (; for multiple terms)"
+               style="font-size: 16px; height: 30px; width: 640px;"
                onkeyup="render()">
         <span id="search-summary" style="display: inline-block; margin-left: 6px;"></span>
     </div>
@@ -201,24 +201,35 @@
 
     // Renders a round language badge (icon when known, else a text bubble),
     // matching the original report's 36px DataImageUtils.getLangDataImageDiv36 style.
+    // The badge is clickable: clicking it replaces the whole search with mainLang:<lang>.
     function langIcon(lang) {
         if (!lang) {
             return '';
         }
         const key = lang.toLowerCase();
+        const title = esc(lang) + ' — click to filter by this main language';
         const size = 36;
+        let badge;
         if (langIcons[key]) {
-            return '<img title="' + esc(lang) + '" style="margin-right: 3px; vertical-align: top; background-color: #f1f1f1; '
+            badge = '<img title="' + title + '" style="margin-right: 3px; vertical-align: top; background-color: #f1f1f1; '
                 + 'border-radius: 50%; border: 1px solid lightgrey; width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
                 + langIcons[key] + '">';
+        } else {
+            const fontSize = lang.length <= 3 ? 14 : 12;
+            const padding = lang.length <= 3 ? 9 : 11;
+            badge = '<div title="' + title + '" style="margin-right: 3px; display: inline-block; vertical-align: top; '
+                + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; overflow: hidden; color: darkblue; '
+                + 'width: ' + size + 'px; height: ' + size + 'px; '
+                + 'font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">'
+                + '<div style="height: ' + padding + 'px"></div>' + esc(lang) + '</div>';
         }
-        const fontSize = lang.length <= 3 ? 14 : 12;
-        const padding = lang.length <= 3 ? 9 : 11;
-        return '<div title="' + esc(lang) + '" style="margin-right: 3px; display: inline-block; vertical-align: top; '
-            + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; overflow: hidden; color: darkblue; '
-            + 'width: ' + size + 'px; height: ' + size + 'px; '
-            + 'font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">'
-            + '<div style="height: ' + padding + 'px"></div>' + esc(lang) + '</div>';
+        return '<span style="cursor: pointer;" onclick="filterByLang(\'' + esc(key) + '\')">' + badge + '</span>';
+    }
+
+    // Replace the entire search query with a main-language filter for the clicked icon's language.
+    function filterByLang(lang) {
+        document.getElementById('filter').value = 'mainLang:' + lang;
+        render();
     }
 
     function repoReportLink2(url) {
@@ -754,40 +765,56 @@
         return perYearBarChart('contributors per year (distinct)', 'darkred', counts, 'contributors');
     }
 
-    // A search is split by ";" into terms. A term of the form "mainLang:<l1>,<l2>,..." sets a
-    // main-language filter (a repository must have one of those exact main languages); the
-    // remaining plain terms are name filters applied WITHIN that language set. The plain terms
-    // are still a UNION among themselves (name contains a OR b), but they are AND-ed with the
-    // language constraint. Examples:
-    //   "datadog-;customer"                  -> name contains "datadog-" OR "customer"
-    //   "mainLang:cs,java"                   -> all repositories whose main language is cs or java
-    //   "mainLang:cs,java;datadog-;customer" -> cs/java repos whose name contains "datadog-" or "customer"
+    // A search is split by ";" into terms. Two special terms set language constraints:
+    //   "mainLang:<l1>,<l2>,..."    -> the repository's MAIN language must be one of these
+    //   "includesLang:<l1>,<l2>,..."-> the repository must contain ANY code in one of these
+    //                                  languages (even if it is not the main one)
+    // The remaining plain terms are name filters applied WITHIN those language constraints. Plain
+    // terms are a UNION among themselves (name contains a OR b) but are AND-ed with the language
+    // constraints (which are also AND-ed with each other). Examples:
+    //   "datadog-;customer"                     -> name contains "datadog-" OR "customer"
+    //   "mainLang:cs,java"                      -> repos whose main language is cs or java
+    //   "includesLang:go"                       -> repos that contain any Go code
+    //   "mainLang:cs,java;datadog-;customer"    -> cs/java repos whose name has "datadog-" or "customer"
+    //   "includesLang:sql;mainLang:java"        -> java repos that also contain any SQL code
     function getFilters() {
         const terms = document.getElementById('filter').value.toLowerCase().trim()
             .split(';').map(s => s.trim()).filter(s => s.length);
         const langs = [];
+        const includesLangs = [];
         const nameFilters = [];
         terms.forEach(t => {
             if (t.startsWith('mainlang:')) {
                 t.substring('mainlang:'.length).split(',')
                     .map(s => s.trim()).filter(s => s.length)
                     .forEach(l => langs.push(l));
+            } else if (t.startsWith('includeslang:')) {
+                t.substring('includeslang:'.length).split(',')
+                    .map(s => s.trim()).filter(s => s.length)
+                    .forEach(l => includesLangs.push(l));
             } else {
                 nameFilters.push(t);
             }
         });
-        return { langs, nameFilters };
+        return { langs, includesLangs, nameFilters };
     }
 
-    // A row matches when its main language is in the (optional) language set AND its name matches
-    // the (optional) name filters. An empty language set means "any language"; empty name filters
-    // mean "any name". Name filters are a UNION (matches any one term).
-    function matchesFilters(name, lang, filters) {
+    // A row matches when its main language is in the (optional) mainLang set AND the repository
+    // contains at least one of the (optional) includesLang languages AND its name matches the
+    // (optional) name filters. Empty constraints mean "any". Name filters are a UNION.
+    function matchesFilters(name, lang, repoLangs, filters) {
         const langs = filters.langs || [];
+        const includesLangs = filters.includesLangs || [];
         const nameFilters = filters.nameFilters || [];
         if (langs.length) {
             const l = (lang || '').toLowerCase();
             if (!langs.includes(l)) {
+                return false;
+            }
+        }
+        if (includesLangs.length) {
+            const present = (repoLangs || []).map(x => (x || '').toLowerCase());
+            if (!includesLangs.some(l => present.includes(l))) {
                 return false;
             }
         }
@@ -828,7 +855,7 @@
         }
 
         const tab = TABS_BY_ID[activeTab];
-        let rows = repositories.filter(item => matchesFilters(item.metadata && item.metadata.name, item.mainLang, filters));
+        let rows = repositories.filter(item => matchesFilters(item.metadata && item.metadata.name, item.mainLang, item.langs, filters));
         if (tab.filter) {
             rows = rows.filter(tab.filter);
         }
@@ -934,7 +961,7 @@
     // Renders the proportion bars into the dedicated container under the search bar,
     // based on the search-filtered set (same across all tabs).
     function updateProportionBars(filters) {
-        const matched = repositories.filter(item => matchesFilters(item.metadata && item.metadata.name, item.mainLang, filters));
+        const matched = repositories.filter(item => matchesFilters(item.metadata && item.metadata.name, item.mainLang, item.langs, filters));
         const count = matched.length;
         const mainLoc = matched.reduce((a, b) => a + (b.mainLinesOfCode || 0), 0);
         const commits = matched.reduce((a, b) => a + (b.commitsCount || 0), 0);
@@ -945,7 +972,7 @@
     function renderFeatures(filters) {
         // Paging (displayLimit) is reset by render() before this is called.
         const concerns = features.concerns;
-        let repos = features.repositories.filter(r => matchesFilters(r.name, r.mainLang, filters));
+        let repos = features.repositories.filter(r => matchesFilters(r.name, r.mainLang, r.langs, filters));
 
         document.getElementById('search-summary').innerHTML = '= ' + repos.length + ' '
             + (repos.length === 1 ? 'repository' : 'repositories');

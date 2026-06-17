@@ -762,7 +762,8 @@ public class LandscapeReportContributorsTab {
     }
 
     private void addLangInfoBlockExtra(String value, String lang, String description, String extra) {
-        InfoBlocks.addLangInfoBlockExtra(landscapeReport, value, lang, description, extra);
+        String link = StringUtils.isNotBlank(lang) ? "repositories.html#includesLang:" + lang.trim().toLowerCase() : null;
+        InfoBlocks.addLangInfoBlockExtra(landscapeReport, value, lang, description, extra, link);
     }
 
     private void addSmallInfoBlock(String value, String subtitle, String color, String link) {

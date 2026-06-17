@@ -19,8 +19,10 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class RepositoryExport {
@@ -44,6 +46,9 @@ public class RepositoryExport {
     private int buildAndDeployLinesOfCode;
     private int otherLinesOfCode;
     private String mainLang;
+    // Every language (file extension, lowercased) the repository contains any code in, across all
+    // scopes — lets the report filter with includesLang:<lang> even when it is not the main language.
+    private List<String> langs = new ArrayList<>();
 
     // Richer fields consumed by the client-rendered landscape repositories report (repositories.html).
     private int commitsCount180Days;
@@ -132,6 +137,25 @@ public class RepositoryExport {
         if (mainPerExtension != null && !mainPerExtension.isEmpty()) {
             mainLang = mainPerExtension.get(0).getName().replace("*.", "").trim().toLowerCase();
         }
+
+        // Every language the repository contains any code in, across all scopes (deduplicated,
+        // preserving first-seen order, main scope first so the dominant languages come first).
+        Set<String> seenLangs = new LinkedHashSet<>();
+        for (AspectAnalysisResults aspect : List.of(main, test, build, generated, other)) {
+            List<NumericMetric> perExtension = aspect.getLinesOfCodePerExtension();
+            if (perExtension == null) {
+                continue;
+            }
+            perExtension.forEach(metric -> {
+                if (metric.getValue() != null && metric.getValue().intValue() > 0) {
+                    String lang = metric.getName().replace("*.", "").trim().toLowerCase();
+                    if (!lang.isEmpty()) {
+                        seenLangs.add(lang);
+                    }
+                }
+            });
+        }
+        langs = new ArrayList<>(seenLangs);
 
         FilesHistoryAnalysisResults filesHistory = analysis.getFilesHistoryAnalysisResults();
         ageInDays = filesHistory.getAgeInDays();
@@ -256,6 +280,10 @@ public class RepositoryExport {
 
     public String getMainLang() {
         return mainLang;
+    }
+
+    public List<String> getLangs() {
+        return langs;
     }
 
     public int getCommitsCount180Days() {

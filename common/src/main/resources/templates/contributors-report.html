@@ -209,24 +209,35 @@
         + '<circle cx="12" cy="8" r="1.2" fill="#4a90d9"/></svg>';
 
     // Round language badge (icon when known, else a text bubble) — 30px to match the original.
+    // The badge is clickable: clicking it replaces the whole search with mainLang:<lang>.
     function langIcon(lang) {
         if (!lang) {
             return '';
         }
         const key = lang.toLowerCase();
+        const title = esc(lang) + ' — click to filter by this main language';
         const size = 30;
+        let badge;
         if (langIcons[key]) {
-            return '<img title="' + esc(lang) + '" style="vertical-align: middle; background-color: #f1f1f1; '
+            badge = '<img title="' + title + '" style="vertical-align: middle; background-color: #f1f1f1; '
                 + 'border-radius: 50%; border: 1px solid lightgrey; width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
                 + langIcons[key] + '">';
+        } else {
+            const fontSize = lang.length <= 3 ? 11 : 9;
+            const padding = lang.length <= 3 ? 7 : 9;
+            badge = '<div title="' + title + '" style="display: inline-block; vertical-align: middle; '
+                + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; overflow: hidden; color: darkblue; '
+                + 'width: ' + size + 'px; height: ' + size + 'px; '
+                + 'font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">'
+                + '<div style="height: ' + padding + 'px"></div>' + esc(lang) + '</div>';
         }
-        const fontSize = lang.length <= 3 ? 11 : 9;
-        const padding = lang.length <= 3 ? 7 : 9;
-        return '<div title="' + esc(lang) + '" style="display: inline-block; vertical-align: middle; '
-            + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; overflow: hidden; color: darkblue; '
-            + 'width: ' + size + 'px; height: ' + size + 'px; '
-            + 'font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">'
-            + '<div style="height: ' + padding + 'px"></div>' + esc(lang) + '</div>';
+        return '<span style="cursor: pointer;" onclick="filterByLang(\'' + esc(key) + '\')">' + badge + '</span>';
+    }
+
+    // Replace the entire search query with a main-language filter for the clicked icon's language.
+    function filterByLang(lang) {
+        document.getElementById('filter').value = 'mainLang:' + lang;
+        render();
     }
 
     function avatarHtml(c) {

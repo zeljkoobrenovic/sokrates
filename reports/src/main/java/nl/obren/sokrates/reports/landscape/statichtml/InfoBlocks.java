@@ -75,31 +75,55 @@ public class InfoBlocks {
     }
 
     public static void addLangInfoBlock(RichTextReport report, String value, String lang, String description) {
+        addLangInfoBlock(report, value, lang, description, null);
+    }
+
+    public static void addLangInfoBlock(RichTextReport report, String value, String lang, String description, String link) {
+        String cursor = StringUtils.isNotBlank(link) ? "pointer" : "help";
         String style = "margin: 4px 4px 4px 0px; display: inline-block; " +
-                "width: 80px; height: 114px; cursor: help; " +
+                "width: 80px; height: 114px; cursor: " + cursor + "; " +
                 "text-align: center; vertical-align: middle; margin-bottom: 16px;";
 
-        report.addHtmlContent("<div class=\"infoBlock\" style=\"" + style + "\" title=\"" + description + "\">");
+        boolean linked = StringUtils.isNotBlank(link);
+        report.addHtmlContent("<div class=\"infoBlock" + (linked ? " linked" : "") + "\" style=\"" + style + "\" title=\"" + description + "\">");
+        if (linked) {
+            report.startNewTabLink(link, "text-decoration: none; color: inherit;");
+        }
 
         report.addContentInDiv("", "margin-top: 8px");
         report.addHtmlContent(DataImageUtils.getLangDataImageDiv42(lang));
         report.addHtmlContent("<div style='font-size: 24px; margin-top: 8px;'>" + value + "</div>");
         report.addHtmlContent("<div class='infoBlockLabel'>" + lang + "</div>");
+        if (linked) {
+            report.endNewTabLink();
+        }
         report.endDiv();
     }
 
     public static void addLangInfoBlockExtra(RichTextReport report, String value, String lang, String description, String extra) {
+        addLangInfoBlockExtra(report, value, lang, description, extra, null);
+    }
+
+    public static void addLangInfoBlockExtra(RichTextReport report, String value, String lang, String description, String extra, String link) {
+        String cursor = StringUtils.isNotBlank(link) ? "pointer" : "help";
         String style = "margin: 4px 4px 4px 0px; display: inline-block; " +
-                "width: 80px; height: 114px; cursor: help; " +
+                "width: 80px; height: 114px; cursor: " + cursor + "; " +
                 "text-align: center; vertical-align: middle; margin-bottom: 16px;";
 
-        report.addHtmlContent("<div class=\"infoBlock\" style=\"" + style + "\" title=\"" + description + "\">");
+        boolean linked = StringUtils.isNotBlank(link);
+        report.addHtmlContent("<div class=\"infoBlock" + (linked ? " linked" : "") + "\" style=\"" + style + "\" title=\"" + description + "\">");
+        if (linked) {
+            report.startNewTabLink(link, "text-decoration: none; color: inherit;");
+        }
 
         report.addContentInDiv("", "margin-top: 8px");
         report.addHtmlContent(DataImageUtils.getLangDataImageDiv42(lang));
         report.addHtmlContent("<div style='font-size: 24px; margin-top: 8px;'>" + value + "</div>");
         report.addHtmlContent("<div class='infoBlockLabel'>" + lang + "</div>");
         report.addHtmlContent("<div style='color: #9ca3af; font-size: 9px; margin-top: 1px;'>" + extra + "</div>");
+        if (linked) {
+            report.endNewTabLink();
+        }
         report.endDiv();
     }
 

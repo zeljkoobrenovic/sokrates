@@ -167,6 +167,7 @@ public class LandscapeDataExport {
             Map<String, Object> r = new LinkedHashMap<>();
             r.put("name", first.getRepositoryName());
             r.put("mainLang", mainLangOf(repo));
+            r.put("langs", langsOf(repo));
             r.put("reportFolderUrl", configuration.getRepositoryReportsUrlPrefix()
                     + repo.getSokratesRepositoryLink().getHtmlReportsRoot() + "/");
             Map<String, Object> perConcern = new LinkedHashMap<>();
@@ -194,6 +195,33 @@ public class LandscapeDataExport {
             return perExtension.get(0).getName().replace("*.", "").trim().toLowerCase();
         }
         return "";
+    }
+
+    // Every language (lowercased extension) the repository contains any code in, across all scopes;
+    // mirrors RepositoryExport.langs so includesLang:<lang> works on the Features tab too.
+    private static List<String> langsOf(RepositoryAnalysisResults repo) {
+        CodeAnalysisResults analysis = repo.getAnalysisResults();
+        List<AspectAnalysisResults> aspects = List.of(
+                analysis.getMainAspectAnalysisResults(),
+                analysis.getTestAspectAnalysisResults(),
+                analysis.getBuildAndDeployAspectAnalysisResults(),
+                analysis.getGeneratedAspectAnalysisResults(),
+                analysis.getOtherAspectAnalysisResults());
+        Set<String> langs = new java.util.LinkedHashSet<>();
+        aspects.forEach(aspect -> {
+            List<NumericMetric> perExtension = aspect.getLinesOfCodePerExtension();
+            if (perExtension != null) {
+                perExtension.forEach(metric -> {
+                    if (metric.getValue() != null && metric.getValue().intValue() > 0) {
+                        String lang = metric.getName().replace("*.", "").trim().toLowerCase();
+                        if (!lang.isEmpty()) {
+                            langs.add(lang);
+                        }
+                    }
+                });
+            }
+        });
+        return new ArrayList<>(langs);
     }
 
     public static String getTagRepositoriesFileName(String key) {
