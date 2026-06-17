@@ -127,7 +127,7 @@ public class FileAgeReportGenerator {
 
     private void describe(RichTextReport report) {
         report.addParagraph("File age measurements show the distribution of file ages (days since the first commit)" +
-                " and the file freshness (days since the latest commit).", "margin-top: 12px; color: grey");
+                " and the file freshness (days since the latest commit).", "margin-top: 12px; color: grey; font-size: 94%");
     }
 
     private void addAgeGraphOverall(RichTextReport report, SourceFileAgeDistribution distribution, String title, String subtitle, Palette palette) {

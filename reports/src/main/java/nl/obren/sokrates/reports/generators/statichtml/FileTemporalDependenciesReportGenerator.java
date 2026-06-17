@@ -34,7 +34,7 @@ public class FileTemporalDependenciesReportGenerator {
     public void addTemporalDependenciesToReport(File reportsFolder, RichTextReport report) {
         this.reportsFolder = reportsFolder;
         report.addParagraph("A temporal dependency occurs when developers change two or more files " +
-                "at the same time (i.e. they are a part of the same commit).", "margin-top: 12px; color: grey");
+                "at the same time (i.e. they are a part of the same commit).", "margin-top: 12px; color: grey; font-size: 94%");
 
         int maxTemporalDependenciesDepthDays = codeAnalysisResults.getCodeConfiguration().getAnalysis().getMaxTemporalDependenciesDepthDays();
 

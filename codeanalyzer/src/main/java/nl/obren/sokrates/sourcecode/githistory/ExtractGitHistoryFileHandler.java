@@ -5,8 +5,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -33,7 +35,7 @@ public class ExtractGitHistoryFileHandler {
         LOG.info("Extracted git history to " + new File(splitFolder, gitHistoryFile.getName()).getPath());
     }
 
-    public  List<String> extractSubHistory(List<String> originalLines, String prefix) {
+    public List<String> extractSubHistory(List<String> originalLines, String prefix) {
         List<String> lines = new ArrayList<>();
 
         originalLines.forEach(line -> {

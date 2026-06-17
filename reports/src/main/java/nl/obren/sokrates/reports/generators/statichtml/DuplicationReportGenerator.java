@@ -202,7 +202,7 @@ public class DuplicationReportGenerator {
     private void addIntro(RichTextReport report) {
         int locDuplicationThreshold = codeAnalysisResults.getCodeConfiguration().getAnalysis().getMinDuplicationBlockLoc();
         report.addParagraph("Places in code with " + locDuplicationThreshold + " or more lines that " +
-                "are exactly the same.", "margin-top: 12px; color: grey");
+                "are exactly the same.", "margin-top: 12px; color: grey; font-size: 94%");
         report.startSection("Intro", "");
         report.startUnorderedList();
         report.addListItem("For duplication, we look at places in code where there are " + locDuplicationThreshold + " or more lines of code that are exactly the same.");
