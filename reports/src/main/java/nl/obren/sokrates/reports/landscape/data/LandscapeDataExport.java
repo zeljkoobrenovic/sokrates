@@ -167,6 +167,8 @@ public class LandscapeDataExport {
             Map<String, Object> r = new LinkedHashMap<>();
             r.put("name", first.getRepositoryName());
             r.put("mainLang", mainLangOf(repo));
+            r.put("langs", langsOf(repo));
+            r.put("langsByScope", langsByScopeOf(repo));
             r.put("reportFolderUrl", configuration.getRepositoryReportsUrlPrefix()
                     + repo.getSokratesRepositoryLink().getHtmlReportsRoot() + "/");
             Map<String, Object> perConcern = new LinkedHashMap<>();
@@ -194,6 +196,43 @@ public class LandscapeDataExport {
             return perExtension.get(0).getName().replace("*.", "").trim().toLowerCase();
         }
         return "";
+    }
+
+    // Every language (lowercased extension) the repository contains any code in, across all scopes;
+    // mirrors RepositoryExport.langs so includesLang:<lang> works on the Features tab too.
+    private static List<String> langsOf(RepositoryAnalysisResults repo) {
+        Set<String> langs = new java.util.LinkedHashSet<>();
+        langsByScopeOf(repo).values().forEach(langs::addAll);
+        return new ArrayList<>(langs);
+    }
+
+    // The same languages split per scope (main/test/build/generated/other); mirrors
+    // RepositoryExport.langsByScope so a scoped includesLang:main:<lang> works on the Features tab.
+    private static Map<String, List<String>> langsByScopeOf(RepositoryAnalysisResults repo) {
+        CodeAnalysisResults analysis = repo.getAnalysisResults();
+        Map<String, List<String>> byScope = new LinkedHashMap<>();
+        byScope.put("main", scopeLangs(analysis.getMainAspectAnalysisResults()));
+        byScope.put("test", scopeLangs(analysis.getTestAspectAnalysisResults()));
+        byScope.put("build", scopeLangs(analysis.getBuildAndDeployAspectAnalysisResults()));
+        byScope.put("generated", scopeLangs(analysis.getGeneratedAspectAnalysisResults()));
+        byScope.put("other", scopeLangs(analysis.getOtherAspectAnalysisResults()));
+        return byScope;
+    }
+
+    private static List<String> scopeLangs(AspectAnalysisResults aspect) {
+        List<String> langs = new ArrayList<>();
+        if (aspect == null || aspect.getLinesOfCodePerExtension() == null) {
+            return langs;
+        }
+        aspect.getLinesOfCodePerExtension().forEach(metric -> {
+            if (metric.getValue() != null && metric.getValue().intValue() > 0) {
+                String lang = metric.getName().replace("*.", "").trim().toLowerCase();
+                if (!lang.isEmpty() && !langs.contains(lang)) {
+                    langs.add(lang);
+                }
+            }
+        });
+        return langs;
     }
 
     public static String getTagRepositoriesFileName(String key) {

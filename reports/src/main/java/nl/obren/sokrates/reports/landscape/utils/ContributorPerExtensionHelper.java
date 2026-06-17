@@ -72,4 +72,23 @@ public class ContributorPerExtensionHelper {
 
         return null;
     }
+
+    // The contributor's main language (lowercased extension), or "" if none.
+    public String getBiggestExtensionLanguage(LandscapeConfiguration configuration, ContributorRepositories contributorRepositories, PeopleConfig peopleConfig) {
+        String biggest = getBiggestExtension(configuration, contributorRepositories, peopleConfig);
+        return biggest != null ? biggest.replace("*.", "").trim().toLowerCase() : "";
+    }
+
+    // Every language (lowercased extension) the contributor has committed to, ordered by recent
+    // activity desc — lets the report filter with includesLang:<lang> even when it is not the main one.
+    public List<String> getLanguages(LandscapeConfiguration configuration, ContributorRepositories contributorRepositories, PeopleConfig peopleConfig) {
+        List<String> langs = new ArrayList<>();
+        getContributorStatsPerExtension(configuration, contributorRepositories, peopleConfig).forEach(pair -> {
+            String lang = pair.getLeft().replace("*.", "").trim().toLowerCase();
+            if (!lang.isEmpty() && !langs.contains(lang)) {
+                langs.add(lang);
+            }
+        });
+        return langs;
+    }
 }

@@ -16,14 +16,14 @@
         }
 
         td, th {
-            border: 1px solid #CCC;
+            border: 1px solid white;
             height: 30px;
             padding-left: 10px;
             padding-right: 10px;
         }
 
         th {
-            background: #F3F3F3;
+            background: #f4f4f4;
             font-weight: bold;
         }
 
@@ -41,43 +41,58 @@
             opacity: 1;
         }
 
-        /* Classic Sokrates tab bar. */
+        /* Underline tab bar. */
         .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 4px;
         }
 
         .tab button {
-            font-family: Roboto, Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
-            font-size: 100%;
-            background-color: inherit;
-            float: left;
+            position: relative;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            background-color: transparent;
+            color: #6b7280;
             border: none;
+            border-bottom: 2px solid transparent;
+            border-radius: 8px 8px 0 0;
             outline: none;
             cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
+            padding: 11px 16px;
+            margin-bottom: -1px;
+            transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
         }
 
         .tab button:hover {
-            background-color: #ddd;
+            color: #1f2937;
+            background-color: #f3f4f6;
+        }
+
+        .tab button:focus-visible {
+            outline: 2px solid #1d4ed8;
+            outline-offset: -2px;
         }
 
         .tab button.active {
-            background-color: #ccc;
+            color: #1d4ed8;
+            border-bottom-color: #1d4ed8;
         }
 
         .tab a.tab-link {
-            float: left;
-            padding: 14px 16px;
-            color: #4a90d9;
+            display: inline-flex;
+            align-items: center;
+            padding: 11px 16px;
+            color: #1d4ed8;
+            font-size: 14px;
+            font-weight: 500;
         }
 
         .tabcontent {
-            padding: 6px 12px;
-            border: 1px solid #ccc;
-            border-top: none;
+            padding: 2px 2px;
             overflow-y: auto;
         }
 
@@ -146,13 +161,19 @@
 
 <div id="report" style="display: none;">
     <div style="color: grey; margin: 8px 0 10px 0;">
-        <input id="filter" type="text" placeholder="search... (use ; for multiple terms)"
-               style="font-size: 16px; height: 30px; width: 420px;"
+        <input id="filter" type="text" placeholder="search by name; mainLang:cs,java by main language; includesLang:go (any scope) or includesLang:main:go (one scope)"
+               style="font-size: 16px; height: 30px; width: 700px;"
                onkeyup="render()">
         <span id="search-summary" style="display: inline-block; margin-left: 6px;"></span>
     </div>
 
-    <div id="proportion-bars" style="margin-bottom: 10px;"></div>
+    <!-- The proportion bars (count / LOC / commits / contributors breakdown) are a collapsible
+         detail; the matched-count summary stays inline next to the filter above. Hidden entirely
+         when the query is empty; collapsed by default otherwise (see updateProportionBars). -->
+    <details id="search-stats" style="margin-bottom: 10px; display: none;">
+        <summary style="color: grey; cursor: pointer;">search stats...</summary>
+        <div id="proportion-bars" style="margin-top: 8px;"></div>
+    </details>
 
     <div class="tab" id="tabs"></div>
 
@@ -186,24 +207,35 @@
 
     // Renders a round language badge (icon when known, else a text bubble),
     // matching the original report's 36px DataImageUtils.getLangDataImageDiv36 style.
+    // The badge is clickable: clicking it replaces the whole search with mainLang:<lang>.
     function langIcon(lang) {
         if (!lang) {
             return '';
         }
         const key = lang.toLowerCase();
+        const title = esc(lang) + ' — click to filter by this main language';
         const size = 36;
+        let badge;
         if (langIcons[key]) {
-            return '<img title="' + esc(lang) + '" style="margin-right: 3px; vertical-align: top; background-color: #f1f1f1; '
+            badge = '<img title="' + title + '" style="margin-right: 3px; vertical-align: top; background-color: #f1f1f1; '
                 + 'border-radius: 50%; border: 1px solid lightgrey; width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
                 + langIcons[key] + '">';
+        } else {
+            const fontSize = lang.length <= 3 ? 14 : 12;
+            const padding = lang.length <= 3 ? 9 : 11;
+            badge = '<div title="' + title + '" style="margin-right: 3px; display: inline-block; vertical-align: top; '
+                + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; overflow: hidden; color: darkblue; '
+                + 'width: ' + size + 'px; height: ' + size + 'px; '
+                + 'font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">'
+                + '<div style="height: ' + padding + 'px"></div>' + esc(lang) + '</div>';
         }
-        const fontSize = lang.length <= 3 ? 14 : 12;
-        const padding = lang.length <= 3 ? 9 : 11;
-        return '<div title="' + esc(lang) + '" style="margin-right: 3px; display: inline-block; vertical-align: top; '
-            + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; overflow: hidden; color: darkblue; '
-            + 'width: ' + size + 'px; height: ' + size + 'px; '
-            + 'font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">'
-            + '<div style="height: ' + padding + 'px"></div>' + esc(lang) + '</div>';
+        return '<span style="cursor: pointer;" onclick="filterByLang(\'' + esc(key) + '\')">' + badge + '</span>';
+    }
+
+    // Replace the entire search query with a main-language filter for the clicked icon's language.
+    function filterByLang(lang) {
+        document.getElementById('filter').value = 'mainLang:' + lang;
+        render();
     }
 
     function repoReportLink2(url) {
@@ -739,22 +771,82 @@
         return perYearBarChart('contributors per year (distinct)', 'darkred', counts, 'contributors');
     }
 
-    // A search can contain several terms separated by ";"; the result is the UNION of the
-    // individual term matches (search "a;b" returns matches of "a" plus matches of "b").
+    const SCOPES = ['main', 'test', 'build', 'generated', 'other'];
+
+    // A search is split by ";" into terms. Two special terms set language constraints:
+    //   "mainLang:<l1>,<l2>,..."         -> the repository's MAIN language must be one of these
+    //   "includesLang:<l1>,<l2>,..."     -> the repository must contain ANY code in one of these
+    //                                       languages, across ALL scopes (even if not the main one)
+    //   "includesLang:<scope>:<l1>,..."  -> the same, but only counting code in <scope>
+    //                                       (scope is one of main/test/build/generated/other)
+    // Each includesLang term is its own constraint (all must hold). The remaining plain terms are
+    // name filters applied WITHIN those language constraints — a UNION among themselves, AND-ed with
+    // the language constraints. Examples:
+    //   "datadog-;customer"                     -> name contains "datadog-" OR "customer"
+    //   "mainLang:cs,java"                      -> repos whose main language is cs or java
+    //   "includesLang:go"                       -> repos that contain any Go code (any scope)
+    //   "includesLang:main:tf"                  -> repos with Terraform code in the MAIN scope
+    //   "mainLang:cs,java;datadog-;customer"    -> cs/java repos whose name has "datadog-" or "customer"
     function getFilters() {
-        return document.getElementById('filter').value.toLowerCase().trim()
+        const terms = document.getElementById('filter').value.toLowerCase().trim()
             .split(';').map(s => s.trim()).filter(s => s.length);
+        const langs = [];
+        const includesLangs = [];   // [{scope: <scope>|null, langs: [...]}]
+        const nameFilters = [];
+        terms.forEach(t => {
+            if (t.startsWith('mainlang:')) {
+                t.substring('mainlang:'.length).split(',')
+                    .map(s => s.trim()).filter(s => s.length)
+                    .forEach(l => langs.push(l));
+            } else if (t.startsWith('includeslang:')) {
+                let rest = t.substring('includeslang:'.length).trim();
+                let scope = null;
+                // Optional "<scope>:" prefix on the value selects a single scope.
+                const colon = rest.indexOf(':');
+                if (colon >= 0 && SCOPES.includes(rest.substring(0, colon).trim())) {
+                    scope = rest.substring(0, colon).trim();
+                    rest = rest.substring(colon + 1);
+                }
+                const list = rest.split(',').map(s => s.trim()).filter(s => s.length);
+                if (list.length) {
+                    includesLangs.push({ scope, langs: list });
+                }
+            } else {
+                nameFilters.push(t);
+            }
+        });
+        return { langs, includesLangs, nameFilters };
     }
 
-    function matchesFilters(name, filters) {
-        if (!filters.length) {
+    // A row matches when its main language is in the (optional) mainLang set AND every includesLang
+    // constraint holds AND its name matches the (optional) name filters. A scoped includesLang
+    // constraint checks only that scope's languages; an unscoped one checks all scopes. Empty
+    // constraints mean "any". Name filters are a UNION.
+    function matchesFilters(name, lang, repoLangs, langsByScope, filters) {
+        const langs = filters.langs || [];
+        const includesLangs = filters.includesLangs || [];
+        const nameFilters = filters.nameFilters || [];
+        if (langs.length) {
+            const l = (lang || '').toLowerCase();
+            if (!langs.includes(l)) {
+                return false;
+            }
+        }
+        for (const c of includesLangs) {
+            const present = (c.scope ? ((langsByScope || {})[c.scope] || []) : (repoLangs || []))
+                .map(x => (x || '').toLowerCase());
+            if (!c.langs.some(l => present.includes(l))) {
+                return false;
+            }
+        }
+        if (!nameFilters.length) {
             return true;
         }
-        if (!name) {
+        const lower = (name || '').toLowerCase();
+        if (!lower) {
             return false;
         }
-        const lower = name.toLowerCase();
-        return filters.some(f => lower.includes(f));
+        return nameFilters.some(f => lower.includes(f));
     }
 
     // Rows shown at once; "show more" expands by this step. Stats/charts always reflect
@@ -784,7 +876,7 @@
         }
 
         const tab = TABS_BY_ID[activeTab];
-        let rows = repositories.filter(item => matchesFilters(item.metadata && item.metadata.name, filters));
+        let rows = repositories.filter(item => matchesFilters(item.metadata && item.metadata.name, item.mainLang, item.langs, item.langsByScope, filters));
         if (tab.filter) {
             rows = rows.filter(tab.filter);
         }
@@ -813,7 +905,7 @@
             html += '<tr>';
             tab.groupHeader.forEach(g => {
                 const style = g.label
-                    ? 'text-align: center; border-bottom: 2px solid lightgrey;'
+                    ? 'text-align: center; border-bottom: 2px solid white;'
                     : '';
                 html += '<th colspan="' + g.span + '" style="' + style + '">' + (g.label || '') + '</th>';
             });
@@ -890,7 +982,15 @@
     // Renders the proportion bars into the dedicated container under the search bar,
     // based on the search-filtered set (same across all tabs).
     function updateProportionBars(filters) {
-        const matched = repositories.filter(item => matchesFilters(item.metadata && item.metadata.name, filters));
+        // Only meaningful when the user has typed a query (proportions vs. the unfiltered totals);
+        // hide the whole collapsible section when the search box is empty.
+        const details = document.getElementById('search-stats');
+        const hasQuery = document.getElementById('filter').value.trim().length > 0;
+        details.style.display = hasQuery ? '' : 'none';
+        if (!hasQuery) {
+            return;
+        }
+        const matched = repositories.filter(item => matchesFilters(item.metadata && item.metadata.name, item.mainLang, item.langs, item.langsByScope, filters));
         const count = matched.length;
         const mainLoc = matched.reduce((a, b) => a + (b.mainLinesOfCode || 0), 0);
         const commits = matched.reduce((a, b) => a + (b.commitsCount || 0), 0);
@@ -901,7 +1001,7 @@
     function renderFeatures(filters) {
         // Paging (displayLimit) is reset by render() before this is called.
         const concerns = features.concerns;
-        let repos = features.repositories.filter(r => matchesFilters(r.name, filters));
+        let repos = features.repositories.filter(r => matchesFilters(r.name, r.mainLang, r.langs, r.langsByScope, filters));
 
         document.getElementById('search-summary').innerHTML = '= ' + repos.length + ' '
             + (repos.length === 1 ? 'repository' : 'repositories');
@@ -938,9 +1038,38 @@
         document.getElementById('content').innerHTML = html;
     }
 
+    // The whole search query can be passed in the URL fragment and is seeded verbatim into the
+    // search box (e.g. ...#mainLang:cs,java;customer). It is read from the fragment (not a ?query)
+    // so the browser caches the single embedded-data HTML once and reuses it for every query.
+    // Re-applied on hashchange.
+    function readQueryFromHash() {
+        const hash = (window.location.hash || '').replace(/^#/, '');
+        if (!hash) {
+            return '';
+        }
+        try {
+            return decodeURIComponent(hash);
+        } catch (e) {
+            return hash;
+        }
+    }
+
+    function applyQueryFromHash() {
+        const query = readQueryFromHash();
+        if (query) {
+            document.getElementById('filter').value = query;
+        }
+    }
+
+    window.addEventListener('hashchange', function () {
+        applyQueryFromHash();
+        render();
+    });
+
     // Defer the (synchronous, potentially heavy) first render one frame so the loading
     // spinner actually paints before the main thread is blocked, then swap it for the report.
     function start() {
+        applyQueryFromHash();
         buildTabs();
         render();
         document.getElementById('loading').style.display = 'none';

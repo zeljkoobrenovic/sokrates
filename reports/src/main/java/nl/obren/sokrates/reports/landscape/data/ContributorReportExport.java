@@ -27,6 +27,9 @@ import java.util.List;
 public class ContributorReportExport {
     private String email;
     private String mainLang;
+    // Every language (lowercased extension) the contributor has committed to, ordered by recent
+    // activity desc — backs the includesLang:<lang> filter in the report.
+    private List<String> langs = new ArrayList<>();
     private String avatarUrl;
     private List<String> tags = new ArrayList<>();
     private String team;
@@ -46,11 +49,28 @@ public class ContributorReportExport {
 
     public ContributorReportExport(ContributorRepositories cr, LandscapeConfiguration configuration,
                                    PeopleConfig peopleConfig, TeamsConfig teamsConfig, List<ContributorTag> tagRules) {
+        this(cr, configuration, peopleConfig, teamsConfig, tagRules, null);
+    }
+
+    /**
+     * @param recentLangs the languages this contributor committed to in the last 30 days, computed
+     *                    from the SAME per-extension commit history the Overview "Contributors Per
+     *                    File Extension" badges count (so includesLang:&lt;lang&gt; matches that
+     *                    population exactly). When null, falls back to the per-extension helper.
+     */
+    public ContributorReportExport(ContributorRepositories cr, LandscapeConfiguration configuration,
+                                   PeopleConfig peopleConfig, TeamsConfig teamsConfig, List<ContributorTag> tagRules,
+                                   List<String> recentLangs) {
         Contributor c = cr.getContributor();
         email = c.getEmail();
 
-        String biggestExtension = new ContributorPerExtensionHelper().getBiggestExtension(configuration, cr, peopleConfig);
-        mainLang = biggestExtension != null ? biggestExtension.replace("*.", "").trim().toLowerCase() : "";
+        ContributorPerExtensionHelper extensionHelper = new ContributorPerExtensionHelper();
+        // The contributor's main language is the most active extension (per-extension helper).
+        mainLang = extensionHelper.getBiggestExtensionLanguage(configuration, cr, peopleConfig);
+        // includesLang: filters on the recent (30-day) commit-based language set so the report
+        // matches the Overview badge counts; fall back to the helper's languages if not provided.
+        langs = recentLangs != null ? recentLangs
+                : extensionHelper.getLanguages(configuration, cr, peopleConfig);
 
         // Avatar: explicit per-person image, else the configured avatar URL template (may be null).
         PersonConfig personConfig = peopleConfig != null ? peopleConfig.getPersonByName(email) : null;
@@ -104,6 +124,10 @@ public class ContributorReportExport {
 
     public String getMainLang() {
         return mainLang;
+    }
+
+    public List<String> getLangs() {
+        return langs;
     }
 
     public String getAvatarUrl() {

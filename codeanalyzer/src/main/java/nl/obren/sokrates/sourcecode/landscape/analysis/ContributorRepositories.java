@@ -6,6 +6,7 @@ import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,6 +27,13 @@ public class ContributorRepositories {
 
     public void addRepository(RepositoryAnalysisResults repositoryAnalysisResults, String firstCommitDate, String latestCommitDate,
                               int commitsCount, int commits30Days, int commits90Days, int commits180Days, int commits365Days, List<String> commitDates) {
+        addRepository(repositoryAnalysisResults, firstCommitDate, latestCommitDate, commitsCount, commits30Days,
+                commits90Days, commits180Days, commits365Days, commitDates, new LinkedHashMap<>());
+    }
+
+    public void addRepository(RepositoryAnalysisResults repositoryAnalysisResults, String firstCommitDate, String latestCommitDate,
+                              int commitsCount, int commits30Days, int commits90Days, int commits180Days, int commits365Days,
+                              List<String> commitDates, Map<String, Integer> commitsPerDate) {
         String path = repositoryAnalysisResults.getAnalysisResults().getMetadata().getName();
         ContributorRepositoryInfo repositoryByPath = getRepositoryByPath(path);
         if (repositoryByPath != null) {
@@ -47,9 +55,13 @@ public class ContributorRepositories {
                     existingDates.add(date);
                 }
             });
+            if (commitsPerDate != null) {
+                Map<String, Integer> existingCounts = repositoryByPath.getCommitsPerDate();
+                commitsPerDate.forEach((date, count) -> existingCounts.merge(date, count, Integer::sum));
+            }
         } else {
             addRepository(new ContributorRepositoryInfo(repositoryAnalysisResults, firstCommitDate, latestCommitDate,
-                    commitsCount, commits30Days, commits90Days, commits180Days, commits365Days, commitDates));
+                    commitsCount, commits30Days, commits90Days, commits180Days, commits365Days, commitDates, commitsPerDate));
         }
     }
 

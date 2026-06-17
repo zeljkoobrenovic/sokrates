@@ -16,14 +16,14 @@
         }
 
         td, th {
-            border: 1px solid #CCC;
+            border: 1px solid white;
             height: 30px;
             padding-left: 10px;
             padding-right: 10px;
         }
 
         th {
-            background: #F3F3F3;
+            background: #f4f4f4;
             font-weight: bold;
         }
 
@@ -41,43 +41,58 @@
             opacity: 1;
         }
 
-        /* Classic Sokrates tab bar. */
+        /* Underline tab bar. */
         .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 4px;
         }
 
         .tab button {
-            font-family: Roboto, Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
-            font-size: 100%;
-            background-color: inherit;
-            float: left;
+            position: relative;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            background-color: transparent;
+            color: #6b7280;
             border: none;
+            border-bottom: 2px solid transparent;
+            border-radius: 8px 8px 0 0;
             outline: none;
             cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
+            padding: 11px 16px;
+            margin-bottom: -1px;
+            transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
         }
 
         .tab button:hover {
-            background-color: #ddd;
+            color: #1f2937;
+            background-color: #f3f4f6;
+        }
+
+        .tab button:focus-visible {
+            outline: 2px solid #1d4ed8;
+            outline-offset: -2px;
         }
 
         .tab button.active {
-            background-color: #ccc;
+            color: #1d4ed8;
+            border-bottom-color: #1d4ed8;
         }
 
         .tab a.tab-link {
-            float: left;
-            padding: 14px 16px;
-            color: #4a90d9;
+            display: inline-flex;
+            align-items: center;
+            padding: 11px 16px;
+            color: #1d4ed8;
+            font-size: 14px;
+            font-weight: 500;
         }
 
         .tabcontent {
-            padding: 6px 12px;
-            border: 1px solid #ccc;
-            border-top: none;
+            padding: 2px 2px;
             overflow-y: auto;
         }
 
@@ -161,8 +176,8 @@
 
     <div class="tabcontent">
         <div style="color: grey; margin: 8px 0 10px 0;">
-            <input id="filter" type="text" placeholder="search by name... (use team: to search by team, ; for multiple terms)"
-                   style="font-size: 16px; height: 30px; width: 420px;"
+            <input id="filter" type="text" placeholder="search by name; team: by team; mainLang:cs by main language; includesLang:go by any language used (; for multiple)"
+                   style="font-size: 16px; height: 30px; width: 680px;"
                    onkeyup="render()">
             <span id="search-summary" style="display: inline-block; margin-left: 6px;"></span>
         </div>
@@ -194,24 +209,35 @@
         + '<circle cx="12" cy="8" r="1.2" fill="#4a90d9"/></svg>';
 
     // Round language badge (icon when known, else a text bubble) — 30px to match the original.
+    // The badge is clickable: clicking it replaces the whole search with mainLang:<lang>.
     function langIcon(lang) {
         if (!lang) {
             return '';
         }
         const key = lang.toLowerCase();
+        const title = esc(lang) + ' — click to filter by this main language';
         const size = 30;
+        let badge;
         if (langIcons[key]) {
-            return '<img title="' + esc(lang) + '" style="vertical-align: middle; background-color: #f1f1f1; '
+            badge = '<img title="' + title + '" style="vertical-align: middle; background-color: #f1f1f1; '
                 + 'border-radius: 50%; border: 1px solid lightgrey; width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
                 + langIcons[key] + '">';
+        } else {
+            const fontSize = lang.length <= 3 ? 11 : 9;
+            const padding = lang.length <= 3 ? 7 : 9;
+            badge = '<div title="' + title + '" style="display: inline-block; vertical-align: middle; '
+                + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; overflow: hidden; color: darkblue; '
+                + 'width: ' + size + 'px; height: ' + size + 'px; '
+                + 'font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">'
+                + '<div style="height: ' + padding + 'px"></div>' + esc(lang) + '</div>';
         }
-        const fontSize = lang.length <= 3 ? 11 : 9;
-        const padding = lang.length <= 3 ? 7 : 9;
-        return '<div title="' + esc(lang) + '" style="display: inline-block; vertical-align: middle; '
-            + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; overflow: hidden; color: darkblue; '
-            + 'width: ' + size + 'px; height: ' + size + 'px; '
-            + 'font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">'
-            + '<div style="height: ' + padding + 'px"></div>' + esc(lang) + '</div>';
+        return '<span style="cursor: pointer;" onclick="filterByLang(\'' + esc(key) + '\')">' + badge + '</span>';
+    }
+
+    // Replace the entire search query with a main-language filter for the clicked icon's language.
+    function filterByLang(lang) {
+        document.getElementById('filter').value = 'mainLang:' + lang;
+        render();
     }
 
     function avatarHtml(c) {
@@ -439,17 +465,34 @@
         render();
     }
 
-    // A search can contain several terms separated by ";"; the result is the UNION of the
-    // individual term matches (search "a;b" returns matches of "a" plus matches of "b").
-    // Plain terms search only the contributor name; a term prefixed with "team:" searches
-    // only the team name (matching the text after the prefix).
+    // A search is split by ";" into terms. Two special terms set language constraints:
+    //   "mainLang:<l1>,<l2>,..."     -> the contributor's MAIN language must be one of these
+    //   "includesLang:<l1>,<l2>,..." -> the contributor must have committed to one of these
+    //                                   languages (even if it is not their main one)
+    // A term prefixed with "team:" matches the team name; any other plain term matches the
+    // contributor name (email). Plain name and team terms are a UNION among themselves, AND-ed with
+    // the language constraints (which are also AND-ed with each other). Examples:
+    //   "alice;team:platform"               -> name contains "alice" OR team contains "platform"
+    //   "mainLang:cs,java"                  -> contributors whose main language is cs or java
+    //   "includesLang:go"                   -> contributors who have committed to Go
+    //   "mainLang:cs,java;alice;bob"        -> cs/java contributors whose name contains "alice" or "bob"
     function getFilters() {
         const terms = document.getElementById('filter').value.toLowerCase().trim()
             .split(';').map(s => s.trim()).filter(s => s.length);
         const nameFilters = [];
         const teamFilters = [];
+        const langs = [];
+        const includesLangs = [];
         terms.forEach(t => {
-            if (t.startsWith('team:')) {
+            if (t.startsWith('mainlang:')) {
+                t.substring('mainlang:'.length).split(',')
+                    .map(s => s.trim()).filter(s => s.length)
+                    .forEach(l => langs.push(l));
+            } else if (t.startsWith('includeslang:')) {
+                t.substring('includeslang:'.length).split(',')
+                    .map(s => s.trim()).filter(s => s.length)
+                    .forEach(l => includesLangs.push(l));
+            } else if (t.startsWith('team:')) {
                 const teamTerm = t.substring('team:'.length).trim();
                 if (teamTerm.length) {
                     teamFilters.push(teamTerm);
@@ -458,7 +501,7 @@
                 nameFilters.push(t);
             }
         });
-        return { nameFilters, teamFilters };
+        return { nameFilters, teamFilters, langs, includesLangs };
     }
 
     function matchesFilters(text, filters) {
@@ -485,13 +528,27 @@
         if (!keepPaging) {
             displayLimit = PAGE_SIZE;
         }
-        const { nameFilters, teamFilters } = getFilters();
-        const noFilters = !nameFilters.length && !teamFilters.length;
+        const { nameFilters, teamFilters, langs, includesLangs } = getFilters();
+        const noTextFilters = !nameFilters.length && !teamFilters.length;
         const tab = TABS_BY_ID[activeTab];
 
-        let rows = (tab.list || []).filter(c => noFilters
-            || matchesFilters(c.email, nameFilters)
-            || matchesFilters(c.team, teamFilters));
+        let rows = (tab.list || []).filter(c => {
+            // mainLang (if any) is an AND constraint on the contributor's main language.
+            if (langs.length && !langs.includes((c.mainLang || '').toLowerCase())) {
+                return false;
+            }
+            // includesLang (if any) is an AND constraint on every language the contributor uses.
+            if (includesLangs.length) {
+                const present = (c.langs || []).map(x => (x || '').toLowerCase());
+                if (!includesLangs.some(l => present.includes(l))) {
+                    return false;
+                }
+            }
+            // Within those sets, name/team terms are a UNION (no text terms => everything passes).
+            return noTextFilters
+                || matchesFilters(c.email, nameFilters)
+                || matchesFilters(c.team, teamFilters);
+        });
         const column = tab.columns.find(c => c.key === tab.sortKey) || tab.columns[0];
         rows = rows.slice().sort(makeComparator(column, tab.sortDir));
 
@@ -522,9 +579,39 @@
         document.getElementById('content').innerHTML = html;
     }
 
+    // The whole search query can be passed in the URL fragment and is seeded verbatim into the
+    // search box (e.g. ...#mainLang:cs,java;customer). It is read from the fragment (not a ?query)
+    // so the browser caches the single embedded-data HTML once and reuses it for every query (and
+    // so it does not collide with the ?tab= query used when this report is embedded as an iframe).
+    // Re-applied on hashchange.
+    function readQueryFromHash() {
+        const hash = (window.location.hash || '').replace(/^#/, '');
+        if (!hash) {
+            return '';
+        }
+        try {
+            return decodeURIComponent(hash);
+        } catch (e) {
+            return hash;
+        }
+    }
+
+    function applyQueryFromHash() {
+        const query = readQueryFromHash();
+        if (query) {
+            document.getElementById('filter').value = query;
+        }
+    }
+
+    window.addEventListener('hashchange', function () {
+        applyQueryFromHash();
+        render();
+    });
+
     // Defer the (synchronous, potentially heavy) first render one frame so the loading
     // spinner actually paints before the main thread is blocked, then swap it for the report.
     function start() {
+        applyQueryFromHash();
         buildTabs();
         render();
         document.getElementById('loading').style.display = 'none';

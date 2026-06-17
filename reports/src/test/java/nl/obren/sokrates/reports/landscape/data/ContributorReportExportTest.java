@@ -57,6 +57,17 @@ class ContributorReportExportTest {
     }
 
     @Test
+    void usesProvidedRecentLanguagesForIncludesLangFilter() {
+        // The 30-day commit-based language set is passed in (so it matches the Overview badges);
+        // mainLang comes from the per-extension helper and is independent of that list.
+        ContributorReportExport export = new ContributorReportExport(
+                sampleContributor(), new LandscapeConfiguration(), null, null, Collections.emptyList(),
+                List.of("go", "tf"));
+
+        assertEquals(List.of("go", "tf"), export.getLangs());
+    }
+
+    @Test
     void serializesToValidJsonWithExpectedFields() throws Exception {
         ContributorReportExport export = new ContributorReportExport(
                 sampleContributor(), new LandscapeConfiguration(), null, null, Collections.emptyList());
@@ -67,6 +78,7 @@ class ContributorReportExportTest {
         assertEquals(500, node.get("commitsCount").asInt());
         assertEquals(5, node.get("commitsCount30Days").asInt());
         assertTrue(node.has("mainLang"));
+        assertTrue(node.get("langs").isArray());
         assertTrue(node.has("repositoriesCount30Days"));
         assertTrue(node.has("reportUrl"));
     }

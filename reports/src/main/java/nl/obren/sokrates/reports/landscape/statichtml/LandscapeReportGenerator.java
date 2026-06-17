@@ -12,13 +12,15 @@ import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
-import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.LandscapeRepositoriesTagsMatrixReport;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.LandscapeRepositoriesTagsReport;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.TagMap;
-import nl.obren.sokrates.reports.landscape.utils.*;
+import nl.obren.sokrates.reports.landscape.utils.CorrelationDiagramGenerator;
+import nl.obren.sokrates.reports.landscape.utils.ExtractStringListValue;
+import nl.obren.sokrates.reports.landscape.utils.Force3DGraphExporter;
+import nl.obren.sokrates.reports.landscape.utils.LandscapeGeneratorUtils;
 import nl.obren.sokrates.reports.utils.*;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
@@ -95,6 +97,9 @@ public class LandscapeReportGenerator {
             " <path d=\"m87.5 16.918-35.289 35.289c-1.2266 1.1836-3.1719 1.168-4.3789-0.039062s-1.2227-3.1523-0.039062-4.3789l35.289-35.289h-23.707c-1.7266 0-3.125-1.3984-3.125-3.125s1.3984-3.125 3.125-3.125h31.25c0.82812 0 1.625 0.32812 2.2109 0.91406 0.58594 0.58594 0.91406 1.3828 0.91406 2.2109v31.25c0 1.7266-1.3984 3.125-3.125 3.125s-3.125-1.3984-3.125-3.125zm-56.25 1.832h-15.633c-5.1719 0-9.3672 4.1797-9.3672 9.3516v56.305c0 5.1562 4.2422 9.3516 9.3867 9.3516h56.219c2.4922 0 4.8828-0.98437 6.6406-2.7461 1.7617-1.7617 2.75-4.1523 2.7461-6.6445v-15.613 0.003906c0-1.7266-1.3984-3.125-3.125-3.125-1.7227 0-3.125 1.3984-3.125 3.125v15.613-0.003906c0.003906 0.83594-0.32422 1.6328-0.91406 2.2227s-1.3906 0.91797-2.2227 0.91797h-56.219c-1.7148-0.007812-3.1094-1.3867-3.1367-3.1016v-56.305c0-1.7148 1.3945-3.1016 3.1172-3.1016h15.633c1.7266 0 3.125-1.3984 3.125-3.125s-1.3984-3.125-3.125-3.125z\"/>\n" +
             "</svg>";
     public static final String OPEN_IN_NEW_TAB_SVG_ICON_SMALL = "<svg width=\"14pt\" height=\"10pt\" version=\"1.1\" viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\">\n" +
+            " <path d=\"m87.5 16.918-35.289 35.289c-1.2266 1.1836-3.1719 1.168-4.3789-0.039062s-1.2227-3.1523-0.039062-4.3789l35.289-35.289h-23.707c-1.7266 0-3.125-1.3984-3.125-3.125s1.3984-3.125 3.125-3.125h31.25c0.82812 0 1.625 0.32812 2.2109 0.91406 0.58594 0.58594 0.91406 1.3828 0.91406 2.2109v31.25c0 1.7266-1.3984 3.125-3.125 3.125s-3.125-1.3984-3.125-3.125zm-56.25 1.832h-15.633c-5.1719 0-9.3672 4.1797-9.3672 9.3516v56.305c0 5.1562 4.2422 9.3516 9.3867 9.3516h56.219c2.4922 0 4.8828-0.98437 6.6406-2.7461 1.7617-1.7617 2.75-4.1523 2.7461-6.6445v-15.613 0.003906c0-1.7266-1.3984-3.125-3.125-3.125-1.7227 0-3.125 1.3984-3.125 3.125v15.613-0.003906c0.003906 0.83594-0.32422 1.6328-0.91406 2.2227s-1.3906 0.91797-2.2227 0.91797h-56.219c-1.7148-0.007812-3.1094-1.3867-3.1367-3.1016v-56.305c0-1.7148 1.3945-3.1016 3.1172-3.1016h15.633c1.7266 0 3.125-1.3984 3.125-3.125s-1.3984-3.125-3.125-3.125z\"/>\n" +
+            "</svg>";
+    public static final String OPEN_IN_NEW_TAB_SVG_ICON_EXTRA_SMALL = "<svg width=\"10pt\" height=\"7pt\" version=\"1.1\" viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\">\n" +
             " <path d=\"m87.5 16.918-35.289 35.289c-1.2266 1.1836-3.1719 1.168-4.3789-0.039062s-1.2227-3.1523-0.039062-4.3789l35.289-35.289h-23.707c-1.7266 0-3.125-1.3984-3.125-3.125s1.3984-3.125 3.125-3.125h31.25c0.82812 0 1.625 0.32812 2.2109 0.91406 0.58594 0.58594 0.91406 1.3828 0.91406 2.2109v31.25c0 1.7266-1.3984 3.125-3.125 3.125s-3.125-1.3984-3.125-3.125zm-56.25 1.832h-15.633c-5.1719 0-9.3672 4.1797-9.3672 9.3516v56.305c0 5.1562 4.2422 9.3516 9.3867 9.3516h56.219c2.4922 0 4.8828-0.98437 6.6406-2.7461 1.7617-1.7617 2.75-4.1523 2.7461-6.6445v-15.613 0.003906c0-1.7266-1.3984-3.125-3.125-3.125-1.7227 0-3.125 1.3984-3.125 3.125v15.613-0.003906c0.003906 0.83594-0.32422 1.6328-0.91406 2.2227s-1.3906 0.91797-2.2227 0.91797h-56.219c-1.7148-0.007812-3.1094-1.3867-3.1367-3.1016v-56.305c0-1.7148 1.3945-3.1016 3.1172-3.1016h15.633c1.7266 0 3.125-1.3984 3.125-3.125s-1.3984-3.125-3.125-3.125z\"/>\n" +
             "</svg>";
     private static final int BAR_WIDTH = 800;
@@ -273,13 +278,16 @@ public class LandscapeReportGenerator {
         LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
         Metadata metadata = configuration.getMetadata();
         if (metadata.getLinks().size() > 0) {
-            landscapeReport.startDiv("margin-left: 2px; font-size: 80%; margin-top: 6px; margin-bottom: 0; margin-left: 2px;");
+            landscapeReport.startDiv("font-size: 70%; margin-top: 0px; margin-bottom: 0; margin-top: -2px; margin-left: 0;");
+            //landscapeReport.startDiv("margin-left: 2px; font-size: 80%; margin-top: 6px; margin-bottom: 0; margin-left: 2px;");
             boolean first[] = {true};
             metadata.getLinks().forEach(link -> {
                 if (!first[0]) {
                     landscapeReport.addHtmlContent(" | ");
                 }
-                landscapeReport.addNewTabLink(link.getLabel() + "&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON_SMALL, link.getHref());
+                landscapeReport.startDiv("display: inline-block; padding: 4px 6px; border-radius: 999px; background-color: #f4f4f4;");
+                landscapeReport.addNewTabLink(link.getLabel() + "&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON_EXTRA_SMALL, link.getHref());
+                landscapeReport.endDiv();
                 first[0] = false;
             });
             landscapeReport.endDiv();
@@ -1323,17 +1331,20 @@ public class LandscapeReportGenerator {
             landscapeReport.addLineBreak();
             landscapeReport.endDiv();
         }
+        // The section shows a single scope; scope the includesLang link to it so the opened
+        // repositories list matches the languages shown here ("Main"->main, "Test"->test, ...).
+        String scope = type.trim().toLowerCase();
         landscapeReport.startDiv("");
         boolean tooLong = linesOfCodePerExtension.size() > 25;
         List<NumericMetric> linesOfCodePerExtensionDisplay = tooLong ? linesOfCodePerExtension.subList(0, 25) : linesOfCodePerExtension;
         List<NumericMetric> linesOfCodePerExtensionHide = tooLong ? linesOfCodePerExtension.subList(25, linesOfCodePerExtension.size()) : new ArrayList<>();
         linesOfCodePerExtensionDisplay.forEach(extension -> {
-            addLangInfo(extension);
+            addLangInfo(extension, scope);
         });
         if (linesOfCodePerExtensionHide.size() > 0) {
             landscapeReport.startShowMoreBlockDisappear("", "show all...");
             linesOfCodePerExtensionHide.forEach(extension -> {
-                addLangInfo(extension);
+                addLangInfo(extension, scope);
             });
             landscapeReport.endShowMoreBlockDisappear();
         }
@@ -1346,6 +1357,7 @@ public class LandscapeReportGenerator {
     }
 
     private void addContributorsPerExtension(boolean linkCharts) {
+        landscapeReport.startSubSection("Contributors Per File Extension", "past 30 days");
         if (linkCharts) {
             landscapeReport.startDiv("");
             landscapeReport.addNewTabLink("bubble chart", "visuals/bubble_chart_extensions_contributors_30d.html");
@@ -1375,6 +1387,7 @@ public class LandscapeReportGenerator {
         }
         landscapeReport.endDiv();
         addContributorDependencies(contributorsPerExtension);
+        landscapeReport.endSection();
     }
 
     private void addContributorDependencies(List<CommitsPerExtension> contributorsPerExtension) {
@@ -1446,7 +1459,7 @@ public class LandscapeReportGenerator {
                                 .collect(Collectors.joining(", ")), FormattingUtils.getSmallTextForNumber(commitsCount) + " commits");
     }
 
-    private void addLangInfo(NumericMetric extension) {
+    private void addLangInfo(NumericMetric extension, String scope) {
         String smallTextForNumber = FormattingUtils.getSmallTextForNumber(extension.getValue().intValue());
         int size = extension.getDescription().size();
         Collections.sort(extension.getDescription(), (a, b) -> b.getValue().intValue() - a.getValue().intValue());
@@ -1454,7 +1467,7 @@ public class LandscapeReportGenerator {
                 size + " " + (size == 1 ? "repository" : "repositories") + ":\n  " +
                         extension.getDescription().stream()
                                 .map(a -> a.getName() + " (" + FormattingUtils.formatCount(a.getValue().intValue()) + " LOC)")
-                                .collect(Collectors.joining("\n  ")));
+                                .collect(Collectors.joining("\n  ")), scope);
     }
 
     private void addRepositoriesSection(List<RepositoryAnalysisResults> repositoryAnalysisResults) {
@@ -1851,12 +1864,34 @@ public class LandscapeReportGenerator {
     }
 
 
-    private void addLangInfoBlock(String value, String lang, String description) {
-        InfoBlocks.addLangInfoBlock(landscapeReport, value, lang, description);
+    private void addLangInfoBlock(String value, String lang, String description, String scope) {
+        InfoBlocks.addLangInfoBlock(landscapeReport, value, lang, description, repositoriesByLangLink(lang, scope));
     }
 
     private void addLangInfoBlockExtra(String value, String lang, String description, String extra) {
-        InfoBlocks.addLangInfoBlockExtra(landscapeReport, value, lang, description, extra);
+        InfoBlocks.addLangInfoBlockExtra(landscapeReport, value, lang, description, extra, contributorsByLangLink(lang));
+    }
+
+    // Opens the repositories report pre-filtered to repositories that contain code in the given
+    // language (includesLang:), carried in the URL fragment so the embedded-data page stays cached.
+    // When scope is given (main/test/build/generated/other), the filter only counts that scope, so
+    // the opened list matches a section that displays a single scope.
+    private static String repositoriesByLangLink(String lang, String scope) {
+        if (StringUtils.isBlank(lang)) {
+            return null;
+        }
+        String value = StringUtils.isNotBlank(scope) ? scope.trim().toLowerCase() + ":" + lang.trim().toLowerCase()
+                : lang.trim().toLowerCase();
+        return "repositories.html#includesLang:" + value;
+    }
+
+    // Opens the contributors report (recent tab) pre-filtered to contributors who have committed to
+    // the given language (includesLang:), carried in the URL fragment so the page stays cached.
+    private static String contributorsByLangLink(String lang) {
+        if (StringUtils.isBlank(lang)) {
+            return null;
+        }
+        return "contributors-report.html?tab=recent#includesLang:" + lang.trim().toLowerCase();
     }
 
     private void addSmallInfoBlock(String value, String subtitle, String color, String link) {
@@ -1875,13 +1910,11 @@ public class LandscapeReportGenerator {
         reports.add(this.landscapeRepositoriesExtensionTags);
         reports.add(this.landscapeRepositoriesTagsMatrix);
         reports.add(this.landscapeRepositoriesExtensionTagsMatrix);
-        reports.add(landscapeReportContributorsTab.getLandscapeContributorsReport());
-        reports.add(landscapeReportContributorsTab.getLandscapeBotsReport());
-        reports.add(landscapeReportContributorsTab.getLandscapeRecentContributorsReport());
-        if (teamsConfig.getTeams().size() > 0) {
-            reports.add(landscapeReportTeamsTab.getLandscapeContributorsReport());
-            reports.add(landscapeReportTeamsTab.getLandscapeRecentContributorsReport());
-        }
+        // The old per-tab server-rendered contributor/bot/team HTML tables (contributors.html,
+        // contributors-recent.html, bots.html, teams.html, teams-recent.html) are no longer
+        // written — the searchable client-rendered contributors-report.html / teams-report.html
+        // (produced by LandscapeReportContributorsTab.saveContributorsReportPage) replace them and
+        // are what the Overview iframes.
 
         return reports;
     }

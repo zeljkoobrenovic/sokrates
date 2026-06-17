@@ -75,31 +75,59 @@ public class InfoBlocks {
     }
 
     public static void addLangInfoBlock(RichTextReport report, String value, String lang, String description) {
+        addLangInfoBlock(report, value, lang, description, null);
+    }
+
+    public static void addLangInfoBlock(RichTextReport report, String value, String lang, String description, String link) {
+        String cursor = StringUtils.isNotBlank(link) ? "pointer" : "help";
         String style = "margin: 4px 4px 4px 0px; display: inline-block; " +
-                "width: 80px; height: 114px; cursor: help; " +
+                "width: 80px; height: 114px; cursor: " + cursor + "; " +
                 "text-align: center; vertical-align: middle; margin-bottom: 16px;";
 
-        report.addHtmlContent("<div class=\"infoBlock\" style=\"" + style + "\" title=\"" + description + "\">");
+        boolean linked = StringUtils.isNotBlank(link);
+        report.addHtmlContent("<div class=\"infoBlock" + (linked ? " linked" : "") + "\" style=\"" + style + "\" title=\"" + description + "\">");
+        if (linked) {
+            // display:block so the anchor establishes a full-size box covering the whole card; an
+            // inline <a> wrapping these block-level divs collapses to a fragmented click area, so
+            // clicks on the icon/empty space land outside the link (the reported flaky clicking).
+            report.startNewTabLink(link, "display: block; height: 100%; text-decoration: none; color: inherit;");
+        }
 
         report.addContentInDiv("", "margin-top: 8px");
         report.addHtmlContent(DataImageUtils.getLangDataImageDiv42(lang));
         report.addHtmlContent("<div style='font-size: 24px; margin-top: 8px;'>" + value + "</div>");
         report.addHtmlContent("<div class='infoBlockLabel'>" + lang + "</div>");
+        if (linked) {
+            report.endNewTabLink();
+        }
         report.endDiv();
     }
 
     public static void addLangInfoBlockExtra(RichTextReport report, String value, String lang, String description, String extra) {
+        addLangInfoBlockExtra(report, value, lang, description, extra, null);
+    }
+
+    public static void addLangInfoBlockExtra(RichTextReport report, String value, String lang, String description, String extra, String link) {
+        String cursor = StringUtils.isNotBlank(link) ? "pointer" : "help";
         String style = "margin: 4px 4px 4px 0px; display: inline-block; " +
-                "width: 80px; height: 114px; cursor: help; " +
+                "width: 80px; height: 114px; cursor: " + cursor + "; " +
                 "text-align: center; vertical-align: middle; margin-bottom: 16px;";
 
-        report.addHtmlContent("<div class=\"infoBlock\" style=\"" + style + "\" title=\"" + description + "\">");
+        boolean linked = StringUtils.isNotBlank(link);
+        report.addHtmlContent("<div class=\"infoBlock" + (linked ? " linked" : "") + "\" style=\"" + style + "\" title=\"" + description + "\">");
+        if (linked) {
+            // display:block so the anchor covers the whole card — see addLangInfoBlock above.
+            report.startNewTabLink(link, "display: block; height: 100%; text-decoration: none; color: inherit;");
+        }
 
         report.addContentInDiv("", "margin-top: 8px");
         report.addHtmlContent(DataImageUtils.getLangDataImageDiv42(lang));
         report.addHtmlContent("<div style='font-size: 24px; margin-top: 8px;'>" + value + "</div>");
         report.addHtmlContent("<div class='infoBlockLabel'>" + lang + "</div>");
         report.addHtmlContent("<div style='color: #9ca3af; font-size: 9px; margin-top: 1px;'>" + extra + "</div>");
+        if (linked) {
+            report.endNewTabLink();
+        }
         report.endDiv();
     }
 
@@ -111,7 +139,9 @@ public class InfoBlocks {
         boolean linked = StringUtils.isNotBlank(link);
         report.addHtmlContent("<div class=\"infoBlock" + (linked ? " linked" : "") + "\" style=\"" + style + "\">");
         if (linked) {
-            report.startNewTabLink(link, "text-decoration: none; color: inherit;");
+            // display:block so the anchor covers the whole card — an inline <a> wrapping these
+            // block divs collapses to a fragmented click area (clicks land outside the link).
+            report.startNewTabLink(link, "display: block; height: 100%; text-decoration: none; color: inherit;");
         }
         report.addHtmlContent("<div style='font-size: 24px; margin-top: 8px;'>" + value + "</div>");
         report.addHtmlContent("<div class='infoBlockLabel'>" + subtitle + "</div>");

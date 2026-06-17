@@ -161,15 +161,21 @@ public class ContributorIndividualReportExport {
     }
 
     public static class Repository {
-        // Only the fields the contributor-report.html template actually reads are exported: name,
-        // lang, repoUrl, commits90Days (the "Commits (3m)" column + bold/dim weight) and commitDates
-        // (the activity grid). The 30/180/365-day and all-time per-repo counts were never rendered,
-        // so they're not serialized (they bloated the per-repo JSON for every repo of every person).
+        // The fields the contributor-report.html template reads: name, lang, repoUrl, the per-repo
+        // commit counts shown as the leading columns (30d / 3m / 1y / all time; commits90Days also
+        // drives the bold/dim row weight) and commitDates (the activity grid).
         private String name;
         private String lang;
         private String repoUrl;
+        private int commits30Days;
         private int commits90Days;
+        private int commits365Days;
+        private int commitsCount;
         private List<String> commitDates = new ArrayList<>();
+        // Per-day commit counts (date -> commits). The activity grid sizes its circles/bars by
+        // commits per slot using this; commitDates (distinct days) is the fallback when this is
+        // empty (older analyses).
+        private java.util.Map<String, Integer> commitsPerDate = new java.util.LinkedHashMap<>();
 
         public Repository() {
         }
@@ -181,9 +187,15 @@ public class ContributorIndividualReportExport {
             lang = (locPerExtension != null && !locPerExtension.isEmpty())
                     ? locPerExtension.get(0).getName().replace("*.", "").trim().toLowerCase() : "";
             repoUrl = "../../" + info.getRepositoryAnalysisResults().getSokratesRepositoryLink().getHtmlReportsRoot() + "/index.html";
+            commits30Days = info.getCommits30Days();
             commits90Days = info.getCommits90Days();
+            commits365Days = info.getCommits365Days();
+            commitsCount = info.getCommitsCount();
             if (info.getCommitDates() != null) {
                 commitDates = info.getCommitDates();
+            }
+            if (info.getCommitsPerDate() != null) {
+                commitsPerDate = info.getCommitsPerDate();
             }
         }
 
@@ -199,12 +211,28 @@ public class ContributorIndividualReportExport {
             return repoUrl;
         }
 
+        public int getCommits30Days() {
+            return commits30Days;
+        }
+
         public int getCommits90Days() {
             return commits90Days;
         }
 
+        public int getCommits365Days() {
+            return commits365Days;
+        }
+
+        public int getCommitsCount() {
+            return commitsCount;
+        }
+
         public List<String> getCommitDates() {
             return commitDates;
+        }
+
+        public java.util.Map<String, Integer> getCommitsPerDate() {
+            return commitsPerDate;
         }
     }
 
