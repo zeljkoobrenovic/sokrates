@@ -9,7 +9,9 @@ import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ContributorsAnalysisResults {
     List<ComponentDependency> peopleDependencies30Days = new ArrayList<>();
@@ -22,6 +24,13 @@ public class ContributorsAnalysisResults {
     private List<ContributionTimeSlot> contributorsPerMonth = new ArrayList<>();
     private List<ContributionTimeSlot> contributorsPerDay = new ArrayList<>();
     private List<ContributionTimeSlot> contributorsPerWeek = new ArrayList<>();
+    // Parallel time-slot lists per scope (main, test, build, generated, other), keyed by scope name,
+    // backing the scope tabs in the activity diagrams. Empty for older analyses (callers fall back to
+    // showing only "All").
+    private Map<String, List<ContributionTimeSlot>> contributorsPerYearByScope = new LinkedHashMap<>();
+    private Map<String, List<ContributionTimeSlot>> contributorsPerMonthByScope = new LinkedHashMap<>();
+    private Map<String, List<ContributionTimeSlot>> contributorsPerDayByScope = new LinkedHashMap<>();
+    private Map<String, List<ContributionTimeSlot>> contributorsPerWeekByScope = new LinkedHashMap<>();
     private List<CommitsPerExtension> commitsPerExtensions = new ArrayList<>();
     private List<ComponentDependency> peopleFileDependencies30Days;
     private List<ComponentDependency> peopleFileDependencies90Days;
@@ -81,6 +90,38 @@ public class ContributorsAnalysisResults {
 
     public void setContributorsPerWeek(List<ContributionTimeSlot> contributorsPerWeek) {
         this.contributorsPerWeek = contributorsPerWeek;
+    }
+
+    public Map<String, List<ContributionTimeSlot>> getContributorsPerYearByScope() {
+        return contributorsPerYearByScope;
+    }
+
+    public void setContributorsPerYearByScope(Map<String, List<ContributionTimeSlot>> contributorsPerYearByScope) {
+        this.contributorsPerYearByScope = contributorsPerYearByScope;
+    }
+
+    public Map<String, List<ContributionTimeSlot>> getContributorsPerMonthByScope() {
+        return contributorsPerMonthByScope;
+    }
+
+    public void setContributorsPerMonthByScope(Map<String, List<ContributionTimeSlot>> contributorsPerMonthByScope) {
+        this.contributorsPerMonthByScope = contributorsPerMonthByScope;
+    }
+
+    public Map<String, List<ContributionTimeSlot>> getContributorsPerDayByScope() {
+        return contributorsPerDayByScope;
+    }
+
+    public void setContributorsPerDayByScope(Map<String, List<ContributionTimeSlot>> contributorsPerDayByScope) {
+        this.contributorsPerDayByScope = contributorsPerDayByScope;
+    }
+
+    public Map<String, List<ContributionTimeSlot>> getContributorsPerWeekByScope() {
+        return contributorsPerWeekByScope;
+    }
+
+    public void setContributorsPerWeekByScope(Map<String, List<ContributionTimeSlot>> contributorsPerWeekByScope) {
+        this.contributorsPerWeekByScope = contributorsPerWeekByScope;
     }
 
     @JsonIgnore

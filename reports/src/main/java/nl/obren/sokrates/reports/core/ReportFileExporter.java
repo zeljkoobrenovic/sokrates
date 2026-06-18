@@ -4,7 +4,6 @@
 
 package nl.obren.sokrates.reports.core;
 
-import nl.obren.sokrates.common.renderingutils.Threshold;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.generators.statichtml.ContributorsReportUtils;
 import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
@@ -223,63 +222,34 @@ public class ReportFileExporter {
                     "color: grey; font-size: 80%; margin-bottom: 2px;");
             indexReport.addParagraph("Reference analysis date: " + DateUtils.getAnalysisDate() + "",
                     "color: grey; font-size: 80%;");
+            indexReport.startDiv("font-size: 80%; margin-bottom: 14px");
+            indexReport.addHtmlContent("More details: ");
+            indexReport.addNewTabLink("Commits Report", "Commits.html");
+            indexReport.addHtmlContent("&nbsp;|&nbsp;");
+            indexReport.addNewTabLink("Contributors Report", "Contributors.html");
+            indexReport.endDiv();
 
-            long contributorsCount = contributorsAnalysisResults.getContributors().stream().filter(c -> !c.isBot() && c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count();
             int commitsCount30Days = contributorsAnalysisResults.getCommitsCount30Days();
-            int fileUpdatesCount30Days = contributorsAnalysisResults.getFileUpdatesCount30Days();
-            int linesAdded30Days = contributorsAnalysisResults.getLinesAdded30Days();
-            int linesDeleted30Days = contributorsAnalysisResults.getLinesDeleted30Days();
 
             indexReport.startTable();
             indexReport.startTableRow();
 
-            indexReport.startTableCell("border: none; vertical-align: top;");
-
-
-            // Lines changed (churn) in the past 30 days. Only shown when the git history carried
-            // churn columns (older exports have none, so this stays 0 and the card is hidden).
-            if (linesAdded30Days > 0 || linesDeleted30Days > 0) {
-                indexReport.startDiv("margin-top: 8px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
-                indexReport.startNewTabLink("Commits.html", "");
-                indexReport.addContentInDiv(
-                        "<span style='color: #2e7d32;'>+" + FormattingUtils.getSmallTextForNumber(linesAdded30Days) + "</span>"
-                                + "<br><span style='color: #c62828;'>-" + FormattingUtils.getSmallTextForNumber(linesDeleted30Days) + "</span>",
-                        "padding-top: 14px; font-size: 22px;");
-                indexReport.addContentInDiv("lines changed<br>(30 days)", "color: black; font-size: 80%");
-                indexReport.endNewTabLink();
-                indexReport.endDiv();
-            }
-
-
-            indexReport.startDiv("margin-top: 8px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
-            indexReport.startNewTabLink("Commits.html", "");
-            indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(fileUpdatesCount30Days),
-                    "padding-top: 12px; font-size: 36px;");
-            indexReport.addContentInDiv((fileUpdatesCount30Days == 1 ? "file update" : "file updates") + "<br>(30 days)", "color: black; font-size: 80%");
-            indexReport.endNewTabLink();
-            indexReport.endDiv();
-
-            indexReport.startDiv("margin-top: 8px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
-            indexReport.startNewTabLink("Commits.html", "");
-            indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(commitsCount30Days),
-                    "padding-top: 12px; font-size: 36px;");
-            indexReport.addContentInDiv((commitsCount30Days == 1 ? "commit" : "commits") + "<br>(30 days)", "color: black; font-size: 80%");
-            indexReport.endNewTabLink();
-            indexReport.endDiv();
-
-            indexReport.startDiv("margin-top: 32px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
-            indexReport.startNewTabLink("Contributors.html", "");
-            indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber((int) contributorsCount),
-                    "padding-top: 12px; font-size: 36px;");
-            indexReport.addContentInDiv((contributorsCount == 1 ? "contributor" : "contributors") + "<br>(30 days)", "color: black; font-size: 80%");
-            indexReport.endNewTabLink();
-            indexReport.endDiv();
-
-            indexReport.endTableCell();
-
             indexReport.startTableCell("border: none");
-            List<ContributionTimeSlot> contributorsPerYear = contributorsAnalysisResults.getContributorsPerYear();
-            ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsPerYear, 20, true, true, 8, commitsCount30Days == 0);
+            // Scope selector ("All" + one tab per present scope) above the per-year activity graph.
+            // Scope tabs appear only when the analysis carried that scope's time slots (older
+            // analyses have none).
+            boolean fade = commitsCount30Days == 0;
+            java.util.LinkedHashMap<String, Runnable> scopePanels = new java.util.LinkedHashMap<>();
+            scopePanels.put("All", () -> ContributorsReportUtils.addContributorsPerTimeSlot(
+                    indexReport, contributorsAnalysisResults.getContributorsPerYear(), 20, true, true, 8, fade));
+            ContributorsReportUtils.SCOPE_LABELS.forEach((scope, label) -> {
+                List<ContributionTimeSlot> perYear = contributorsAnalysisResults.getContributorsPerYearByScope().get(scope);
+                if (perYear != null && !perYear.isEmpty()) {
+                    scopePanels.put(label, () -> ContributorsReportUtils.addContributorsPerTimeSlot(
+                            indexReport, perYear, 20, true, true, 8, fade));
+                }
+            });
+            ContributorsReportUtils.addScopeToggle(indexReport, "overview_activity_scope", scopePanels);
             indexReport.endTableCell();
             indexReport.endTableRow();
             indexReport.endTable();
@@ -416,7 +386,7 @@ public class ReportFileExporter {
         // Lines changed (churn) in the past 30 days. Only shown when the git history carried churn
         // columns (older exports have none, so this stays 0 and the card is hidden).
         if (linesAdded30Days > 0 || linesDeleted30Days > 0) {
-            indexReport.startDiv("margin-bottom: 14px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
+            indexReport.startDiv("margin-top: 60px; margin-bottom: 14px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
             indexReport.startNewTabLink("Commits.html", "");
             indexReport.addContentInDiv(
                     "<span style='color: #2e7d32;'>+" + FormattingUtils.getSmallTextForNumber(linesAdded30Days) + "</span>"
@@ -452,10 +422,37 @@ public class ReportFileExporter {
         indexReport.endDiv();
         indexReport.endTableCell();
         indexReport.startTableCell("border: none");
-        ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsPerYear, 20, true, true, 8, contributorsCount == 0);
+        // Scope selector ("All" + one tab per present scope) above the per-year activity graph. Scope
+        // tabs appear only when the analysis carried that scope's time slots (older analyses have none).
+        boolean fade = contributorsCount == 0;
+        java.util.LinkedHashMap<String, Runnable> scopePanels = new java.util.LinkedHashMap<>();
+        scopePanels.put("All", () -> ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsPerYear, 20, true, true, 8, fade));
+        ContributorsReportUtils.SCOPE_LABELS.forEach((scope, label) -> {
+            List<ContributionTimeSlot> perYearScope = contributorsAnalysisResults.getContributorsPerYearByScope().get(scope);
+            if (perYearScope != null && !perYearScope.isEmpty()) {
+                // Pad with empty trailing years so this scope's x-axis matches the all-scope graph.
+                padTrailingYears(perYearScope);
+                scopePanels.put(label, () -> ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, perYearScope, 20, true, true, 8, fade));
+            }
+        });
+        ContributorsReportUtils.addScopeToggle(indexReport, "summary_activity_scope", scopePanels);
         indexReport.endTableCell();
         indexReport.endTableRow();
         indexReport.endTable();
+    }
+
+    // Pads a per-year time-slot list with empty entries up to the current year (in place), matching
+    // the padding addSummaryActivityTable applies to the all-scope list so both graphs share an x-axis.
+    private static void padTrailingYears(List<ContributionTimeSlot> contributorsPerYear) {
+        Map<String, ContributionTimeSlot> map = new HashMap<>();
+        contributorsPerYear.forEach(c -> map.put(c.getTimeSlot(), c));
+        int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+        String year = currentYear + "";
+        while (!map.containsKey(year)) {
+            contributorsPerYear.add(new ContributionTimeSlot(year, Thresholds.defaultCommitFilesCountThresholds()));
+            currentYear -= 1;
+            year = currentYear + "";
+        }
     }
 
     private static void addVisuals(RichTextReport report, CodeAnalysisResults analysisResults, File htmlExportFolder) {

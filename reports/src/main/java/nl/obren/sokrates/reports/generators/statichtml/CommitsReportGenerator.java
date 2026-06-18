@@ -62,25 +62,46 @@ public class CommitsReportGenerator {
 
         addZoomableCircleLinks(report);
 
+        // Scope selector ("All" + one tab per present scope) above the per Year/Month/Week/Day
+        // diagrams. A scope tab appears only when the analysis carried that scope's time slots (older
+        // analyses have none, so only "All" shows).
+        java.util.LinkedHashMap<String, Runnable> scopePanels = new java.util.LinkedHashMap<>();
+        scopePanels.put("All", () -> addActivityDiagrams(report, analysis,
+                analysis.getContributorsPerYear(), analysis.getContributorsPerMonth(),
+                analysis.getContributorsPerWeek(), analysis.getContributorsPerDay()));
+        ContributorsReportUtils.SCOPE_LABELS.forEach((scope, label) -> {
+            List<ContributionTimeSlot> perYear = analysis.getContributorsPerYearByScope().get(scope);
+            if (perYear != null && !perYear.isEmpty()) {
+                scopePanels.put(label, () -> addActivityDiagrams(report, analysis,
+                        perYear,
+                        analysis.getContributorsPerMonthByScope().getOrDefault(scope, new java.util.ArrayList<>()),
+                        analysis.getContributorsPerWeekByScope().getOrDefault(scope, new java.util.ArrayList<>()),
+                        analysis.getContributorsPerDayByScope().getOrDefault(scope, new java.util.ArrayList<>())));
+            }
+        });
+        ContributorsReportUtils.addScopeToggle(report, "commits_activity_scope", scopePanels);
+
+        report.endTabContentSection();
+    }
+
+    // Renders the Per Year / Month / Week / Day activity diagrams for one scope's time-slot lists.
+    private void addActivityDiagrams(RichTextReport report, ContributorsAnalysisResults analysis,
+                                     List<ContributionTimeSlot> perYear, List<ContributionTimeSlot> perMonth,
+                                     List<ContributionTimeSlot> perWeek, List<ContributionTimeSlot> perDay) {
         report.addLevel2Header("Per Year", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
-        Thresholds fileUpdateFrequencyThresholds = this.codeAnalysisResults.getCodeConfiguration().getAnalysis().getFileUpdateFrequencyThresholds();
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, analysis.getContributorsPerYear(), 20, true, true, 4, false);
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, perYear, 20, true, true, 4, false);
         report.addLevel2Header("Per Month", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
-        List<ContributionTimeSlot> contributorsPerMonth = getContributionMonths(analysis, 60);
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerMonth, 60, true, true, 2, false);
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, getContributionMonths(analysis, perMonth, 60), 60, true, true, 2, false);
         report.addLevel2Header("Per Week", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
         int pastWeeks = 104;
-        List<ContributionTimeSlot> contributorsPerWeek = getContributionWeeks(analysis, pastWeeks);
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerWeek, pastWeeks, true, true, 1, false);
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, getContributionWeeks(analysis, perWeek, pastWeeks), pastWeeks, true, true, 1, false);
         report.addLevel2Header("Per Day", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
         int pastDays = 365;
-        List<ContributionTimeSlot> contributorsPerDay = getContributionDays(analysis, pastDays);
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, contributorsPerDay, pastDays, true, true, 1, false);
-        report.endTabContentSection();
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, getContributionDays(analysis, perDay, pastDays), pastDays, true, true, 1, false);
     }
 
     private void addZoomableCircleLinks(RichTextReport report) {
@@ -170,7 +191,10 @@ public class CommitsReportGenerator {
     }
 
     private List<ContributionTimeSlot> getContributionWeeks(ContributorsAnalysisResults analysis, int pastWeeks) {
-        List<ContributionTimeSlot> activeWeeks = analysis.getContributorsPerWeek();
+        return getContributionWeeks(analysis, analysis.getContributorsPerWeek(), pastWeeks);
+    }
+
+    private List<ContributionTimeSlot> getContributionWeeks(ContributorsAnalysisResults analysis, List<ContributionTimeSlot> activeWeeks, int pastWeeks) {
         Map<String, ContributionTimeSlot> map = new HashMap<>();
         activeWeeks.forEach(week -> map.put(week.getTimeSlot(), week));
 
@@ -188,7 +212,10 @@ public class CommitsReportGenerator {
     }
 
     private List<ContributionTimeSlot> getContributionMonths(ContributorsAnalysisResults analysis, int pastMonths) {
-        List<ContributionTimeSlot> activeMonth = analysis.getContributorsPerMonth();
+        return getContributionMonths(analysis, analysis.getContributorsPerMonth(), pastMonths);
+    }
+
+    private List<ContributionTimeSlot> getContributionMonths(ContributorsAnalysisResults analysis, List<ContributionTimeSlot> activeMonth, int pastMonths) {
         Map<String, ContributionTimeSlot> map = new HashMap<>();
         activeMonth.forEach(month -> map.put(month.getTimeSlot(), month));
 
@@ -206,7 +233,10 @@ public class CommitsReportGenerator {
     }
 
     private List<ContributionTimeSlot> getContributionDays(ContributorsAnalysisResults analysis, int pastDays) {
-        List<ContributionTimeSlot> activeDays = analysis.getContributorsPerDay();
+        return getContributionDays(analysis, analysis.getContributorsPerDay(), pastDays);
+    }
+
+    private List<ContributionTimeSlot> getContributionDays(ContributorsAnalysisResults analysis, List<ContributionTimeSlot> activeDays, int pastDays) {
         Map<String, ContributionTimeSlot> map = new HashMap<>();
         activeDays.forEach(activeDay -> map.put(activeDay.getTimeSlot(), activeDay));
 

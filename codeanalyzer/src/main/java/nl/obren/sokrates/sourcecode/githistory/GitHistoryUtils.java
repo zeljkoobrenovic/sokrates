@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Predicate;
 
 public class GitHistoryUtils {
     public static final String GIT_HISTORY_FILE_NAME = "git-history.txt";
@@ -37,6 +38,16 @@ public class GitHistoryUtils {
     }
 
     public static List<AuthorCommit> getAuthorCommits(File file, FileHistoryAnalysisConfig config) {
+        return getAuthorCommits(file, config, null);
+    }
+
+    /**
+     * Builds the per-commit list, optionally restricted to file updates matching {@code pathFilter}
+     * (e.g. only files in the main scope). A commit whose files are all filtered out produces no
+     * AuthorCommit, so commit/contributor counts reflect only the selected scope. When the filter is
+     * null every file update is included (the all-scope behaviour).
+     */
+    public static List<AuthorCommit> getAuthorCommits(File file, FileHistoryAnalysisConfig config, Predicate<FileUpdate> pathFilter) {
         List<AuthorCommit> commits = new ArrayList<>();
         Map<String, AuthorCommit> commitsMap = new HashMap<>();
 
@@ -47,6 +58,9 @@ public class GitHistoryUtils {
             index[0] += 1;
             if (index[0] % 1000 == 1 || index[0] == historyFromFile.size()) {
                 LOG.info("Importing " + fileUpdate.getAuthorEmail() + " " + fileUpdate.getDate() + " (" + index[0] + " / " + historyFromFile.size() + ")");
+            }
+            if (pathFilter != null && !pathFilter.test(fileUpdate)) {
+                return;
             }
             String commitId = fileUpdate.getCommitId();
             AuthorCommit existing = commitsMap.get(commitId);

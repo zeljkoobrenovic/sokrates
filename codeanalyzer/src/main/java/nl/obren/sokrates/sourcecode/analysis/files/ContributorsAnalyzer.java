@@ -39,13 +39,21 @@ public class ContributorsAnalyzer extends Analyzer {
         FileHistoryAnalysisConfig fileHistoryAnalysisConfig = codeConfiguration.getFileHistoryAnalysis();
         if (fileHistoryAnalysisConfig.filesHistoryImportPathExists(sokratesFolder)) {
             ProcessingStopwatch.start("analysis/contributors/loading");
-            ContributorsImport contributorsImport = fileHistoryAnalysisConfig.getContributors(sokratesFolder, fileHistoryAnalysisConfig);
+            // Relative paths per scope (main/test/build/generated/other), so the activity diagrams can
+            // offer a scope tab per scope alongside "All". Built from the already-scoped aspects; a
+            // scope with no files is omitted (so only present scopes get a tab).
+            java.util.Map<String, java.util.Set<String>> pathsByScope = getPathsByScope();
+            ContributorsImport contributorsImport = fileHistoryAnalysisConfig.getContributors(sokratesFolder, fileHistoryAnalysisConfig, pathsByScope);
             analysisResults.setLatestCommitDate(contributorsImport.getLatestCommitDate());
             analysisResults.setContributors(contributorsImport.getContributors());
             analysisResults.setContributorsPerYear(contributorsImport.getContributorsPerYear());
             analysisResults.setContributorsPerMonth(contributorsImport.getContributorsPerMonth());
             analysisResults.setContributorsPerWeek(contributorsImport.getContributorsPerWeek());
             analysisResults.setContributorsPerDay(contributorsImport.getContributorsPerDay());
+            analysisResults.setContributorsPerYearByScope(contributorsImport.getContributorsPerYearByScope());
+            analysisResults.setContributorsPerMonthByScope(contributorsImport.getContributorsPerMonthByScope());
+            analysisResults.setContributorsPerWeekByScope(contributorsImport.getContributorsPerWeekByScope());
+            analysisResults.setContributorsPerDayByScope(contributorsImport.getContributorsPerDayByScope());
             ProcessingStopwatch.end("analysis/contributors/loading");
             ProcessingStopwatch.start("analysis/contributors/per extension");
             analysisResults.setCommitsPerExtensions(fileHistoryAnalysisConfig.getCommitsPerExtension(sokratesFolder, fileHistoryAnalysisConfig));
@@ -66,6 +74,47 @@ public class ContributorsAnalyzer extends Analyzer {
             ProcessingStopwatch.end("analysis/contributors/get people dependencies");
 
             addMetrics();
+        }
+    }
+
+    // Lowercased relative paths of each scope's source files, keyed by scope name (main, test, build,
+    // generated, other). A scope with no files is omitted, so only present scopes get an activity-
+    // diagram tab. Returns null when there is no configuration to read (then only "All" is produced).
+    private java.util.Map<String, java.util.Set<String>> getPathsByScope() {
+        java.util.Map<String, java.util.Set<String>> pathsByScope = new java.util.LinkedHashMap<>();
+        addScopePaths(pathsByScope, "main", codeConfiguration.getMain());
+        addScopePaths(pathsByScope, "test", codeConfiguration.getTest());
+        addScopePaths(pathsByScope, "build", codeConfiguration.getBuildAndDeployment());
+        addScopePaths(pathsByScope, "generated", codeConfiguration.getGenerated());
+        addScopePaths(pathsByScope, "other", codeConfiguration.getOther());
+        return pathsByScope.isEmpty() ? null : pathsByScope;
+    }
+
+    // Adds one scope's source-file paths to the map, lowercased so matching against git-history paths
+    // is case-insensitive (mirrors FileHistoryAnalyzer.enrichFilesWithAge). A source file's
+    // relativePath is taken from the analysis srcRoot, which may sit one directory above the git root
+    // (e.g. srcRoot ".." makes paths "<repo>/main/..." while git-history stores "main/..."). To match
+    // in either case we add BOTH the full path and the path with its leading segment stripped;
+    // GitContributorsUtil tests a git path against this set directly. Empty/missing aspects are
+    // skipped so they don't produce an empty tab.
+    private void addScopePaths(java.util.Map<String, java.util.Set<String>> pathsByScope, String scope,
+                               nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect aspect) {
+        if (aspect == null || aspect.getSourceFiles() == null || aspect.getSourceFiles().isEmpty()) {
+            return;
+        }
+        java.util.Set<String> paths = new java.util.HashSet<>();
+        aspect.getSourceFiles().forEach(sourceFile -> {
+            if (sourceFile.getRelativePath() != null) {
+                String path = sourceFile.getRelativePath().toLowerCase();
+                paths.add(path);
+                int slash = path.indexOf('/');
+                if (slash > 0 && slash < path.length() - 1) {
+                    paths.add(path.substring(slash + 1));
+                }
+            }
+        });
+        if (!paths.isEmpty()) {
+            pathsByScope.put(scope, paths);
         }
     }
 

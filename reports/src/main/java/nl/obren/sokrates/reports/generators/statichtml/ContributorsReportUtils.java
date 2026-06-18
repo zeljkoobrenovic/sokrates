@@ -17,11 +17,89 @@ import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ContributorsReportUtils {
 
     public static final int MAX_CONTRIBUTOR_LIST_SIZE = 500;
+
+    // Scope keys (as used in the per-scope time-slot maps) paired with their display labels, in the
+    // order the scope tabs appear. Keeps the two report sites that render the tabs in sync.
+    public static final java.util.LinkedHashMap<String, String> SCOPE_LABELS = new java.util.LinkedHashMap<>();
+    static {
+        SCOPE_LABELS.put("main", "Main");
+        SCOPE_LABELS.put("test", "Test");
+        SCOPE_LABELS.put("build", "Build");
+        SCOPE_LABELS.put("generated", "Generated");
+        SCOPE_LABELS.put("other", "Other");
+    }
+
+    /**
+     * Renders a small tab-like scope selector (e.g. "All" / "Main") above a set of activity diagrams,
+     * with one show/hide panel per scope. Each entry's {@link Runnable} renders that scope's body into
+     * the report. Self-contained: it emits its own buttons + panels + a scoped inline switch script, so
+     * it does NOT use the global tab machinery (openTab toggles every .tabcontent on the page, which
+     * would break when nested inside an existing tab). The first scope is shown by default.
+     *
+     * @param groupId a page-unique id so multiple selectors don't collide
+     * @param scopePanels ordered map of scope label -> body renderer
+     */
+    public static void addScopeToggle(RichTextReport report, String groupId, Map<String, Runnable> scopePanels) {
+        if (scopePanels.isEmpty()) {
+            return;
+        }
+        // If only one scope is available (e.g. no main classification), skip the selector chrome and
+        // just render that scope's body inline.
+        if (scopePanels.size() == 1) {
+            scopePanels.values().iterator().next().run();
+            return;
+        }
+
+        report.addHtmlContent("<div style='margin: 18px 0; margin-left: 18px'>");
+        int[] i = {0};
+        scopePanels.keySet().forEach(label -> {
+            String safeLabel = label.replaceAll("[^A-Za-z0-9]", "_");
+            boolean active = i[0] == 0;
+            String bg = active ? "black" : "#eeeeee";
+            String color = active ? "white" : "#333333";
+            report.addHtmlContent("<button id='" + groupId + "_btn_" + safeLabel + "'"
+                    + " onclick=\"showActivityScope('" + groupId + "', '" + safeLabel + "')\""
+                    + " style='background-color: " + bg + "; color: " + color
+                    + "; padding: 3px 12px; margin-right: 4px; cursor: pointer; border-radius: 999px; font-size: 80%; border: none'>"
+                    + label + "</button>");
+            i[0]++;
+        });
+        report.addHtmlContent("</div>");
+
+        i[0] = 0;
+        scopePanels.forEach((label, renderer) -> {
+            String safeLabel = label.replaceAll("[^A-Za-z0-9]", "_");
+            boolean active = i[0] == 0;
+            report.addHtmlContent("<div id='" + groupId + "_panel_" + safeLabel + "' class='" + groupId + "_panel'"
+                    + " style='display: " + (active ? "block" : "none") + ";'>");
+            renderer.run();
+            report.addHtmlContent("</div>");
+            i[0]++;
+        });
+
+        // Scoped switch: only touches this group's own panels/buttons (by id prefix), so it composes
+        // with the global tab machinery and with other scope selectors on the same page.
+        report.addHtmlContent("<script>\n"
+                + "function showActivityScope(groupId, scope) {\n"
+                + "  var panels = document.getElementsByClassName(groupId + '_panel');\n"
+                + "  for (var i = 0; i < panels.length; i++) { panels[i].style.display = 'none'; }\n"
+                + "  var panel = document.getElementById(groupId + '_panel_' + scope);\n"
+                + "  if (panel) { panel.style.display = 'block'; }\n"
+                + "  var btns = document.querySelectorAll('[id^=\"' + groupId + '_btn_\"]');\n"
+                + "  for (var j = 0; j < btns.length; j++) {\n"
+                + "    btns[j].style.backgroundColor = '#eeeeee'; btns[j].style.color = '#333333';\n"
+                + "  }\n"
+                + "  var btn = document.getElementById(groupId + '_btn_' + scope);\n"
+                + "  if (btn) { btn.style.backgroundColor = 'black'; btn.style.color = 'white'; }\n"
+                + "}\n"
+                + "</script>");
+    }
 
     public static void addContributorsSection(CodeAnalysisResults analysisResults, RichTextReport report) {
         ContributorsAnalysisResults contributorsAnalysisResults = analysisResults.getContributorsAnalysisResults();
@@ -193,7 +271,7 @@ public class ContributorsReportUtils {
     private static void addChurnRow(RichTextReport report, List<ContributionTimeSlot> contributorsPerTimeSlot,
                                     int maxChurn, boolean showTimeSlot, int padding, boolean fade) {
         report.startTableRow();
-        report.addTableCell(getIconSvg("file_size", 64), "border: none; vertical-align: bottom;" + (fade ? "opacity: 0.4" : ""));
+        report.addTableCell(getIconSvg("lines_churn", 64), "border: none; vertical-align: bottom;" + (fade ? "opacity: 0.4" : ""));
         String style;
         if (showTimeSlot) {
             style = "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: bottom; font-size: 80%";
