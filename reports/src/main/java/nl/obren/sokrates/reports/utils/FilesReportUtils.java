@@ -20,6 +20,12 @@ public class FilesReportUtils {
     }
 
     public static String getFilesTable(List<SourceFile> sourceFiles, boolean linkToFiles, boolean showAge, boolean showLineLength, int maxHeight) {
+        return getFilesTable(sourceFiles, linkToFiles, showAge, showLineLength, maxHeight, false);
+    }
+
+    // showChurn adds a "line churn" column (+added / -deleted from the file's modification history),
+    // shown alongside the age columns. Only the file-churn report passes true.
+    public static String getFilesTable(List<SourceFile> sourceFiles, boolean linkToFiles, boolean showAge, boolean showLineLength, int maxHeight, boolean showChurn) {
         StringBuilder table = new StringBuilder();
 
         table.append("<div style='width: 100%; overflow-x: scroll; overflow-y: scroll; max-height: " + maxHeight + "px;'>\n");
@@ -34,6 +40,9 @@ public class FilesReportUtils {
             header += "<th>last modified</th>";
             header += "<th># changes<br>(days)</th>";
             header += "<th># contributors</th>";
+            if (showChurn) {
+                header += "<th>line<br>churn</th>";
+            }
             header += "<th>first<br>contributor</th>";
             header += "<th>latest<br>contributor</th>";
         }
@@ -79,18 +88,26 @@ public class FilesReportUtils {
                     table.append("<td style='text-align: center; white-space: nowrap; font-size: 80%;'>" + history.getLatestDate() + "</td>\n");
                     table.append("<td style='text-align: center'>" + history.getDates().size() + "</td>\n");
                     table.append("<td style='text-align: center'>" + history.countContributors() + "</td>\n");
+
+                    if (showChurn) {
+                        if (history != null && (history.getLinesAdded() > 0 || history.getLinesDeleted() > 0)) {
+                            table.append("<td style='text-align: center; white-space: nowrap;'>"
+                                    + "<span style='color: #2e7d32;'>+" + history.getLinesAdded() + "</span> / "
+                                    + "<span style='color: #c62828;'>-" + history.getLinesDeleted() + "</span></td>\n");
+                        } else {
+                            table.append("<td style='text-align: center; color: lightgrey'>-</td>\n");
+                        }
+                    }
                     table.append("<td style='text-align: center; font-size: 80%; color: grey'>" + StringUtils.abbreviate(history.getOldestContributor(), 30) + "</td>\n");
                     table.append("<td style='text-align: center; font-size: 80%; color: grey'>" + StringUtils.abbreviate(history.getLatestContributor(), 30) + "</td>\n");
                 } else {
-                    // Six age columns in the header (created, last modified, # changes,
-                    // # contributors, first contributor, latest contributor): emit six empty cells so
-                    // history-less files stay aligned with the rest of the table.
-                    table.append("<td style='text-align: center'></td>\n");
-                    table.append("<td style='text-align: center'></td>\n");
-                    table.append("<td style='text-align: center'></td>\n");
-                    table.append("<td style='text-align: center'></td>\n");
-                    table.append("<td style='text-align: center'></td>\n");
-                    table.append("<td style='text-align: center'></td>\n");
+                    // Age columns in the header (created, last modified, # changes, # contributors,
+                    // first contributor, latest contributor) plus the optional churn column: emit one
+                    // empty cell per header column so history-less files stay aligned.
+                    int emptyCells = showChurn ? 7 : 6;
+                    for (int i = 0; i < emptyCells; i++) {
+                        table.append("<td style='text-align: center'></td>\n");
+                    }
                 }
             }
 

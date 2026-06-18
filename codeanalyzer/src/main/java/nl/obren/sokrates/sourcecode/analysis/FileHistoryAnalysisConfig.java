@@ -75,8 +75,13 @@ public class FileHistoryAnalysisConfig {
 
     @JsonIgnore
     public ContributorsImport getContributors(File sokratesConfigFolder, FileHistoryAnalysisConfig config) {
+        return getContributors(sokratesConfigFolder, config, null);
+    }
+
+    @JsonIgnore
+    public ContributorsImport getContributors(File sokratesConfigFolder, FileHistoryAnalysisConfig config, java.util.Map<String, java.util.Set<String>> pathsByScope) {
         ProcessingStopwatch.start("analysis/contributors/loading/import");
-        ContributorsImport contributorsImport = GitContributorsUtil.importGitContributorsExport(getContributorsFile(sokratesConfigFolder), config);
+        ContributorsImport contributorsImport = GitContributorsUtil.importGitContributorsExport(getContributorsFile(sokratesConfigFolder), config, pathsByScope);
         ProcessingStopwatch.end("analysis/contributors/loading/import");
         ProcessingStopwatch.start("analysis/contributors/loading/ignore filtering");
         List<Contributor> contributors = contributorsImport.getContributors()

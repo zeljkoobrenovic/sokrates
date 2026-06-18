@@ -37,7 +37,7 @@ public class FileSizeReportGenerator {
     }
 
     public void addFileSizeToReport(RichTextReport report) {
-        report.addParagraph("The distribution of size of files (measured in lines of code).", "margin-top: 12px; color: grey");
+        report.addParagraph("The distribution of size of files (measured in lines of code).", "margin-top: 12px; color: grey; font-size: 94%");
         report.startSection("Intro", "");
         report.startUnorderedList();
         report.addListItem("File size measurements show the distribution of size of files.");

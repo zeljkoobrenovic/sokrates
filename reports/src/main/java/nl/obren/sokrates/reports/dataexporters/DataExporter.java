@@ -656,6 +656,14 @@ public class DataExporter {
             new JsonGenerator().generateToFile(buildAndDeploymentSourceFiles, new File(dataFolder, "buildAndDeploymentFiles.json"));
             new JsonGenerator().generateToFile(otherSourceFiles, new File(dataFolder, "otherFiles.json"));
 
+            // Per-scope history exports (same columns as mainFilesWithHistory.txt), so the landscape
+            // file explorer can show commits/age/contributors/churn for non-main files too. Files in
+            // every scope are now enriched with history (FileHistoryAnalyzer.enrichFilesWithAge).
+            FileUtils.write(new File(textDataFolder, "testFilesWithHistory.txt"), getFilesWithHistoryAsTxt(testSourceFile), UTF_8);
+            FileUtils.write(new File(textDataFolder, "generatedFilesWithHistory.txt"), getFilesWithHistoryAsTxt(generatedSourceFiles), UTF_8);
+            FileUtils.write(new File(textDataFolder, "buildAndDeploymentFilesWithHistory.txt"), getFilesWithHistoryAsTxt(buildAndDeploymentSourceFiles), UTF_8);
+            FileUtils.write(new File(textDataFolder, "otherFilesWithHistory.txt"), getFilesWithHistoryAsTxt(otherSourceFiles), UTF_8);
+
             new JsonGenerator().generateToFile(new UnitListExporter(analysisResults.getUnitsAnalysisResults().getAllUnits()).getAllUnitsData(MAX_EXPORT_LIST_SIZE), new File(dataFolder, "units.json"));
             new JsonGenerator().generateToFile(new FileListExporter(analysisResults.getFilesAnalysisResults().getAllFiles()).getAllFilesData(), new File(dataFolder, "files.json"));
             List<DuplicationInstance> allDuplicates = analysisResults.getDuplicationAnalysisResults().getAllDuplicates();
@@ -718,6 +726,7 @@ public class DataExporter {
         builder.append("path\t# lines of code\t")
                 .append("# active days\tdays since first update\tdays since last update\t")
                 .append("# commits\t# commits (30d)\t# commits (90d)\t# contributors\t")
+                .append("line churn\tline churn (30d)\tline churn (90d)\t")
                 .append("first updated\tlast updated\tfirst contributor\tlast contributor")
                 .append("\n");
 
@@ -737,6 +746,9 @@ public class DataExporter {
                         .append(commits30Days).append("\t")
                         .append(commits90Days).append("\t")
                         .append(history.countContributors()).append("\t")
+                        .append(history.getChurn()).append("\t")
+                        .append(history.getChurn30Days()).append("\t")
+                        .append(history.getChurn90Days()).append("\t")
                         .append(history.getOldestDate()).append("\t")
                         .append(history.getLatestDate()).append("\t")
                         .append(history.getOldestContributor()).append("\t")

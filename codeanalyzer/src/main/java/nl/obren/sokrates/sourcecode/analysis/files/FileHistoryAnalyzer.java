@@ -189,6 +189,7 @@ public class FileHistoryAnalyzer extends Analyzer {
         addMostRecentlyChangedFiles(allFiles, analysisResults, maxTopListSize);
         addMostPreviouslyChangedFiles(allFiles, analysisResults, maxTopListSize);
         addMostChangedFiles(allFiles, analysisResults, maxTopListSize);
+        addFilesWithMostChurn(allFiles, analysisResults, maxTopListSize);
         addFilesWithMostContributors(allFiles, analysisResults, maxTopListSize);
         addFilesWithLeastContributors(allFiles, analysisResults, maxTopListSize);
 
@@ -222,10 +223,35 @@ public class FileHistoryAnalyzer extends Analyzer {
     }
 
     private void enrichFilesWithAge(List<FileModificationHistory> ages) {
-        codeConfiguration.getMain().getSourceFiles().forEach(sourceFile -> {
-            Optional<FileModificationHistory> any = ages.stream().filter(f -> f.getPath().equalsIgnoreCase(sourceFile.getRelativePath())).findAny();
-            if (any.isPresent()) {
-                sourceFile.setFileModificationHistory(any.get());
+        // Index the history by path once (lowercased, case-insensitive match) so enrichment is O(1)
+        // per file instead of scanning the whole history per file - important now that every scope
+        // (not just main) is enriched. On a path collision keep the first (matches the old findAny()).
+        Map<String, FileModificationHistory> historyByPath = new HashMap<>();
+        ages.forEach(h -> historyByPath.putIfAbsent(h.getPath().toLowerCase(), h));
+
+        // Attach history to files in EVERY scope (main, test, generated, build & deployment, other),
+        // so the files explorer shows commits/age/freshness/contributors for all files - the git
+        // history covers them all, not just main.
+        enrichAspectFilesWithAge(codeConfiguration.getMain(), historyByPath);
+        enrichAspectFilesWithAge(codeConfiguration.getTest(), historyByPath);
+        enrichAspectFilesWithAge(codeConfiguration.getGenerated(), historyByPath);
+        enrichAspectFilesWithAge(codeConfiguration.getBuildAndDeployment(), historyByPath);
+        enrichAspectFilesWithAge(codeConfiguration.getOther(), historyByPath);
+    }
+
+    private void enrichAspectFilesWithAge(nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect aspect,
+                                          Map<String, FileModificationHistory> historyByPath) {
+        if (aspect == null || aspect.getSourceFiles() == null) {
+            return;
+        }
+        aspect.getSourceFiles().forEach(sourceFile -> {
+            // Don't overwrite history already attached (main files are enriched first); a file can
+            // appear in more than one aspect's source list.
+            if (sourceFile.getFileModificationHistory() == null) {
+                FileModificationHistory history = historyByPath.get(sourceFile.getRelativePath().toLowerCase());
+                if (history != null) {
+                    sourceFile.setFileModificationHistory(history);
+                }
             }
         });
     }
@@ -265,6 +291,10 @@ public class FileHistoryAnalyzer extends Analyzer {
 
     private static int changeCount(SourceFile o) {
         return o.getFileModificationHistory() == null ? 0 : o.getFileModificationHistory().getDates().size();
+    }
+
+    private static int churn(SourceFile o) {
+        return o.getFileModificationHistory() == null ? 0 : o.getFileModificationHistory().getChurn();
     }
 
     /**
@@ -324,6 +354,14 @@ public class FileHistoryAnalyzer extends Analyzer {
         files.sort(Comparator.comparingInt(FileHistoryAnalyzer::changeCount));
         Collections.reverse(files);
         addTop(files, sampleSize, filesHistoryAnalysisResults.getMostChangedFiles());
+    }
+
+    private void addFilesWithMostChurn(List<SourceFile> sourceFiles, FilesHistoryAnalysisResults filesHistoryAnalysisResults, int sampleSize) {
+        List<SourceFile> files = new ArrayList<>(sourceFiles);
+        files.sort(Comparator.comparingInt(SourceFile::getLinesOfCode).reversed());
+        files.sort(Comparator.comparingInt(FileHistoryAnalyzer::churn));
+        Collections.reverse(files);
+        addTop(files, sampleSize, filesHistoryAnalysisResults.getFilesWithMostChurn());
     }
 
     private void addFilesWithMostContributors(List<SourceFile> sourceFiles, FilesHistoryAnalysisResults filesHistoryAnalysisResults, int sampleSize) {

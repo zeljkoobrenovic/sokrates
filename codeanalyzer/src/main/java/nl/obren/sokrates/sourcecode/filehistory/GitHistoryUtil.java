@@ -43,5 +43,6 @@ public class GitHistoryUtil {
         fileInfo.getCommits().add(commitInfo);
 
         fileInfo.addDateIfAbsent(fileUpdate.getDate());
+        fileInfo.addChurn(fileUpdate.getDate(), fileUpdate.getLinesAdded(), fileUpdate.getLinesDeleted());
     }
 }

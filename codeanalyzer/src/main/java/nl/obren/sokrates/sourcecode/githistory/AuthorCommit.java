@@ -16,6 +16,11 @@ public class AuthorCommit {
 
     private int fileUpdatesCount = 1;
 
+    // Lines added/deleted across all files touched by this commit. Summed from the per-file
+    // FileUpdate churn columns; 0 for history files without churn data.
+    private int linesAdded = 0;
+    private int linesDeleted = 0;
+
     private boolean bot = false;
 
     public AuthorCommit() {
@@ -113,5 +118,27 @@ public class AuthorCommit {
     @JsonIgnore
     public void incrementFileUpdatesCount() {
         this.fileUpdatesCount += 1;
+    }
+
+    public int getLinesAdded() {
+        return linesAdded;
+    }
+
+    public void setLinesAdded(int linesAdded) {
+        this.linesAdded = linesAdded;
+    }
+
+    public int getLinesDeleted() {
+        return linesDeleted;
+    }
+
+    public void setLinesDeleted(int linesDeleted) {
+        this.linesDeleted = linesDeleted;
+    }
+
+    @JsonIgnore
+    public void addChurn(int added, int deleted) {
+        this.linesAdded += added;
+        this.linesDeleted += deleted;
     }
 }

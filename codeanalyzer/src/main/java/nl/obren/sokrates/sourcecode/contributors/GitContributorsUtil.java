@@ -23,9 +23,18 @@ public class GitContributorsUtil {
     private static final Log LOG = LogFactory.getLog(GitContributorsUtil.class);
 
     public static ContributorsImport importGitContributorsExport(File file, FileHistoryAnalysisConfig config) {
+        return importGitContributorsExport(file, config, null);
+    }
+
+    /**
+     * @param pathsByScope for each scope (main, test, build, generated, other), the lowercased
+     *                     relative paths of its files; when non-null the import also computes the
+     *                     per-scope time-slot lists (contributorsPer*ByScope) that back the scope tabs
+     *                     in the activity diagrams. When null those maps stay empty.
+     */
+    public static ContributorsImport importGitContributorsExport(File file, FileHistoryAnalysisConfig config, Map<String, Set<String>> pathsByScope) {
         ContributorsImport contributorsImport = new ContributorsImport();
         List<AuthorCommit> authorCommits = GitHistoryUtils.getAuthorCommits(file, config);
-        int index[] = {0};
         authorCommits.forEach(commit -> {
             String date = commit.getDate();
             if (StringUtils.isBlank(contributorsImport.getFirstCommitDate()) || date.compareTo(contributorsImport.getFirstCommitDate()) <= 0) {
@@ -37,17 +46,39 @@ public class GitContributorsUtil {
         });
         contributorsImport.setContributors(getContributors(authorCommits));
 
-        List<ContributionTimeSlot> contributorsPerYear = getContributorsPerTimeSlot(authorCommits, (commit) -> commit.getYear());
-        List<ContributionTimeSlot> contributorsPerMonth = getContributorsPerTimeSlot(authorCommits, (commit) -> commit.getMonth());
-        List<ContributionTimeSlot> contributorsPerWeek = getContributorsPerTimeSlot(authorCommits, (commit) -> commit.getWeekOfYear());
-        List<ContributionTimeSlot> contributorsPerDay = getContributorsPerTimeSlot(authorCommits, (commit) -> commit.getDate());
+        populateTimeSlots(contributorsImport, authorCommits, null);
 
-        contributorsImport.setContributorsPerYear(contributorsPerYear);
-        contributorsImport.setContributorsPerMonth(contributorsPerMonth);
-        contributorsImport.setContributorsPerWeek(contributorsPerWeek);
-        contributorsImport.setContributorsPerDay(contributorsPerDay);
+        if (pathsByScope != null) {
+            pathsByScope.forEach((scope, paths) -> {
+                List<AuthorCommit> scopeCommits = GitHistoryUtils.getAuthorCommits(file, config,
+                        fileUpdate -> fileUpdate.getPath() != null && paths.contains(fileUpdate.getPath().toLowerCase()));
+                populateTimeSlots(contributorsImport, scopeCommits, scope);
+            });
+        }
 
         return contributorsImport;
+    }
+
+    // Builds the per-year/month/week/day time-slot lists from the given commits. When scope is null
+    // they become the all-scope lists; otherwise they are stored under that scope key in the
+    // per-scope maps.
+    private static void populateTimeSlots(ContributorsImport contributorsImport, List<AuthorCommit> authorCommits, String scope) {
+        List<ContributionTimeSlot> perYear = getContributorsPerTimeSlot(authorCommits, (commit) -> commit.getYear());
+        List<ContributionTimeSlot> perMonth = getContributorsPerTimeSlot(authorCommits, (commit) -> commit.getMonth());
+        List<ContributionTimeSlot> perWeek = getContributorsPerTimeSlot(authorCommits, (commit) -> commit.getWeekOfYear());
+        List<ContributionTimeSlot> perDay = getContributorsPerTimeSlot(authorCommits, (commit) -> commit.getDate());
+
+        if (scope == null) {
+            contributorsImport.setContributorsPerYear(perYear);
+            contributorsImport.setContributorsPerMonth(perMonth);
+            contributorsImport.setContributorsPerWeek(perWeek);
+            contributorsImport.setContributorsPerDay(perDay);
+        } else {
+            contributorsImport.getContributorsPerYearByScope().put(scope, perYear);
+            contributorsImport.getContributorsPerMonthByScope().put(scope, perMonth);
+            contributorsImport.getContributorsPerWeekByScope().put(scope, perWeek);
+            contributorsImport.getContributorsPerDayByScope().put(scope, perDay);
+        }
     }
 
     public static List<CommitsPerExtension> getCommitsPerExtension(File file, FileHistoryAnalysisConfig config) {
@@ -65,12 +96,14 @@ public class GitContributorsUtil {
             contributor.setBot(authorCommit.isBot());
             String id = contributor.getEmail();
             int fileUpdatesCount = authorCommit.getFileUpdatesCount();
+            int linesAdded = authorCommit.getLinesAdded();
+            int linesDeleted = authorCommit.getLinesDeleted();
             if (map.containsKey(id)) {
-                map.get(id).addCommit(date, fileUpdatesCount);
+                map.get(id).addCommit(date, fileUpdatesCount, linesAdded, linesDeleted);
             } else {
                 map.put(id, contributor);
                 list.add(contributor);
-                contributor.addCommit(date, fileUpdatesCount);
+                contributor.addCommit(date, fileUpdatesCount, linesAdded, linesDeleted);
             }
         });
         Collections.sort(list, (a, b) -> b.getCommitsCount() - a.getCommitsCount());
@@ -98,6 +131,7 @@ public class GitContributorsUtil {
             contributionTimeSlot.incrementCommitsCount();
             contributionTimeSlot.setContributorsCount(ids.size());
             contributionTimeSlot.incrementFileUpdatesCount(authorCommit.getFileUpdatesCount());
+            contributionTimeSlot.addChurn(authorCommit.getLinesAdded(), authorCommit.getLinesDeleted());
         });
 
         Collections.sort(list, Comparator.comparing(ContributionTimeSlot::getTimeSlot));

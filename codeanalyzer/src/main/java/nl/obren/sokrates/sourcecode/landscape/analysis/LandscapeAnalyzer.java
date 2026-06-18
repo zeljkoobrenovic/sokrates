@@ -360,14 +360,26 @@ public class LandscapeAnalyzer {
     }
 
     /**
-     * Merges per-file git history (total commits, commits in the last 30 days, latest commit date)
-     * into the file exports, read from the repository's {@code text/mainFilesWithHistory.txt} (written
-     * by the repository analysis). Only main files have a history file; files not present there keep
-     * their defaults (0 / ""). No-op when the repository has no history file.
+     * Merges per-file git history (commits, commits in the last 30/90 days, contributors, age,
+     * freshness, line churn, latest commit date) into the file exports, read from the repository's
+     * per-scope {@code text/<scope>FilesWithHistory.txt} files (written by the repository analysis).
+     * Files not present in any history file keep their defaults (0 / ""). No-op for scopes whose
+     * history file is absent (e.g. older repositories only have the main one).
      */
     private void enrichFilesWithCommitHistory(List<FileExport> files, SokratesRepositoryLink sokratesRepositoryLink) {
         File dataFolder = getRepositoryAnalysisFile(sokratesRepositoryLink).getParentFile();
-        String historyContent = readDataEntry(dataFolder, "text/mainFilesWithHistory.txt");
+        // History (commits/age/contributors/churn) per scope. main is the original file; the others
+        // are written by the current analysis - absent for older repositories (then those scopes keep
+        // their defaults, as before).
+        enrichFromHistoryFile(files, dataFolder, "text/mainFilesWithHistory.txt");
+        enrichFromHistoryFile(files, dataFolder, "text/testFilesWithHistory.txt");
+        enrichFromHistoryFile(files, dataFolder, "text/generatedFilesWithHistory.txt");
+        enrichFromHistoryFile(files, dataFolder, "text/buildAndDeploymentFilesWithHistory.txt");
+        enrichFromHistoryFile(files, dataFolder, "text/otherFilesWithHistory.txt");
+    }
+
+    private void enrichFromHistoryFile(List<FileExport> files, File dataFolder, String entryName) {
+        String historyContent = readDataEntry(dataFolder, entryName);
         if (historyContent == null) {
             return;
         }
@@ -384,6 +396,9 @@ public class LandscapeAnalyzer {
             int commits30Col = indexOfColumn(header, "# commits (30d)");
             int commits90Col = indexOfColumn(header, "# commits (90d)");
             int contributorsCol = indexOfColumn(header, "# contributors");
+            int churnCol = indexOfColumn(header, "line churn");
+            int churn30Col = indexOfColumn(header, "line churn (30d)");
+            int churn90Col = indexOfColumn(header, "line churn (90d)");
             int ageCol = indexOfColumn(header, "days since first update");
             int freshnessCol = indexOfColumn(header, "days since last update");
             int lastUpdatedCol = indexOfColumn(header, "last updated");
@@ -407,6 +422,15 @@ public class LandscapeAnalyzer {
                     }
                     if (contributorsCol >= 0 && contributorsCol < data.length && NumberUtils.isDigits(data[contributorsCol])) {
                         file.setContributorsCount(Integer.parseInt(data[contributorsCol]));
+                    }
+                    if (churnCol >= 0 && churnCol < data.length && NumberUtils.isDigits(data[churnCol])) {
+                        file.setChurnTotal(Integer.parseInt(data[churnCol]));
+                    }
+                    if (churn30Col >= 0 && churn30Col < data.length && NumberUtils.isDigits(data[churn30Col])) {
+                        file.setChurn30Days(Integer.parseInt(data[churn30Col]));
+                    }
+                    if (churn90Col >= 0 && churn90Col < data.length && NumberUtils.isDigits(data[churn90Col])) {
+                        file.setChurn90Days(Integer.parseInt(data[churn90Col]));
                     }
                     if (ageCol >= 0 && ageCol < data.length && NumberUtils.isDigits(data[ageCol])) {
                         file.setAgeDays(Integer.parseInt(data[ageCol]));

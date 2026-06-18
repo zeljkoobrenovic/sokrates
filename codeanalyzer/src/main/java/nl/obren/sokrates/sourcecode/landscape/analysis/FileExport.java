@@ -20,6 +20,11 @@ public class FileExport {
     private int ageDays = -1;          // days since first update
     private int freshnessDays = -1;    // days since latest update
     private int contributorsCount;
+    // Total lines touched (added + deleted) by commits to this file, in the last 30 / 90 days and all
+    // time. 0 when no churn data is available.
+    private int churn30Days;
+    private int churn90Days;
+    private int churnTotal;
     // Relative URL (from the explorers/ folder) of this file's cached source page, or "" when none
     // was saved (only a referenced subset of files is cached).
     private String sourceFileLink = "";
@@ -120,6 +125,30 @@ public class FileExport {
 
     public void setContributorsCount(int contributorsCount) {
         this.contributorsCount = contributorsCount;
+    }
+
+    public int getChurn30Days() {
+        return churn30Days;
+    }
+
+    public void setChurn30Days(int churn30Days) {
+        this.churn30Days = churn30Days;
+    }
+
+    public int getChurn90Days() {
+        return churn90Days;
+    }
+
+    public void setChurn90Days(int churn90Days) {
+        this.churn90Days = churn90Days;
+    }
+
+    public int getChurnTotal() {
+        return churnTotal;
+    }
+
+    public void setChurnTotal(int churnTotal) {
+        this.churnTotal = churnTotal;
     }
 
     public String getSourceFileLink() {

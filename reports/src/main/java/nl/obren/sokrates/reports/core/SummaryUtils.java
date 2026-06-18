@@ -407,7 +407,7 @@ public class SummaryUtils {
     }
 
     private void summarizeFileUpdateFrequency(CodeAnalysisResults analysisResults, RichTextReport report) {
-        String linkPrefix = "<a href='" + reportRoot + "FileChangeFrequency.html'  title='file change frequency details' style='vertical-align: top'>";
+        String linkPrefix = "<a href='" + reportRoot + "FileChurn.html'  title='file change frequency details' style='vertical-align: top'>";
 
         report.startTableRow();
         report.addTableCell(linkPrefix + getIconSvg("change") + "</a>", "border: none;  vertical-align: top");

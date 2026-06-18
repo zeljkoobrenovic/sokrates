@@ -1161,10 +1161,6 @@ public class LandscapeReportGenerator {
             }
             addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(recentContributorsCount), "recent contributors",
                     "(past 30 days)", getExtraPeopleInfo(contributors, contributorsCount) + "\n" + FormattingUtils.formatCount(locPerRecentContributor) + " active lines of code per recent contributor");
-            int rookiesContributorsCount = landscapeAnalysisResults.getRookiesContributorsCount(contributors);
-            addPeopleInfoBlock(FormattingUtils.getSmallTextForNumber(rookiesContributorsCount),
-                    rookiesContributorsCount == 1 ? "active rookie" : "active rookies",
-                    "(started in past year)", "active contributors with the first commit in past year");
         }
 
         addContributorsPerYear(configuration.isShowContributorsTrendsOnFirstTab());
@@ -1902,6 +1898,48 @@ public class LandscapeReportGenerator {
         InfoBlocks.addActivityTrendCard(landscapeReport, value, subtitle, icon);
     }
 
+    // Per-year line-churn row for the activity chart: each year is a stacked bar (lines added in
+    // green on top of lines deleted in red), with a "+added / -deleted" label (abbreviated). Only
+    // rendered when there is churn data (older analyses have none).
+    private static final String CHURN_ADDED_COLOR = "#2e7d32";
+    private static final String CHURN_DELETED_COLOR = "#c62828";
+
+    private void addChurnPerYearRow(List<ContributionTimeSlot> contributorsPerYear, String style, int thisYear) {
+        int maxChurn = contributorsPerYear.stream().mapToInt(y -> y.getLinesAdded() + y.getLinesDeleted()).max().orElse(0);
+        if (maxChurn <= 0) {
+            return;
+        }
+        landscapeReport.startTableRow();
+        landscapeReport.startTableCell("border: none; height: 130px; vertical-align: bottom;");
+        int totalAdded = contributorsPerYear.stream().mapToInt(ContributionTimeSlot::getLinesAdded).sum();
+        int totalDeleted = contributorsPerYear.stream().mapToInt(ContributionTimeSlot::getLinesDeleted).sum();
+        addActivityTrendCard("<span style='font-size: 22px;'>"
+                        + "<div style='margin-top: 5px; color: " + CHURN_ADDED_COLOR + ";'>+" + FormattingUtils.getSmallTextForNumber(totalAdded) + "</div>"
+                        + "<div style='margin-bottom: 5px; color: " + CHURN_DELETED_COLOR + ";'>-" + FormattingUtils.getSmallTextForNumber(totalDeleted) + "</div></span>",
+                "line churn", "lines_churn");
+        landscapeReport.endTableCell();
+        contributorsPerYear.forEach(year -> {
+            landscapeReport.startTableCell(style);
+            int added = year.getLinesAdded();
+            int deleted = year.getLinesDeleted();
+            String color = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "#989898";
+            if (added > 0 || deleted > 0) {
+                landscapeReport.addHtmlContent("<div style='margin: 2px; font-size: 70%; white-space: nowrap; color: " + color + ";'>"
+                        + "<div style='color: " + CHURN_ADDED_COLOR + ";'>+" + FormattingUtils.getSmallTextForNumber(added) + "</div>"
+                        + "<div style='color: " + CHURN_DELETED_COLOR + ";'>-" + FormattingUtils.getSmallTextForNumber(deleted) + "</div></div>");
+            } else {
+                landscapeReport.addParagraph("&nbsp;", "margin: 2px");
+            }
+            int heightAdded = added > 0 ? 1 + (int) (56.0 * added / maxChurn) : 0;
+            int heightDeleted = deleted > 0 ? 1 + (int) (56.0 * deleted / maxChurn) : 0;
+            String title = year.getTimeSlot() + ": +" + added + " / -" + deleted + " lines";
+            landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + CHURN_ADDED_COLOR + "; opacity: 0.7; height:" + heightAdded + "px'></div>");
+            landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + CHURN_DELETED_COLOR + "; opacity: 0.7; height:" + heightDeleted + "px'></div>");
+            landscapeReport.endTableCell();
+        });
+        landscapeReport.endTableRow();
+    }
+
     public List<RichTextReport> report() {
         List<RichTextReport> reports = new ArrayList<>();
 
@@ -1932,6 +1970,12 @@ public class LandscapeReportGenerator {
             landscapeReport.startDiv("overflow-y: none;");
             landscapeReport.startTable();
 
+            String style = "border: none; text-align: center; vertical-align: bottom; font-size: 80%; height: 100px";
+            int thisYear = Calendar.getInstance().get(Calendar.YEAR);
+
+            // Churn row first, above commits.
+            addChurnPerYearRow(contributorsPerYear, style, thisYear);
+
             landscapeReport.startTableRow();
             landscapeReport.startTableCell("border: none; height: 130px; vertical-align: bottom;");
             int commitsCount = landscapeAnalysisResults.getCommitsCount();
@@ -1939,8 +1983,6 @@ public class LandscapeReportGenerator {
                 addActivityTrendCard(FormattingUtils.getSmallTextForNumber(commitsCount), "commits", "commits");
             }
             landscapeReport.endTableCell();
-            String style = "border: none; text-align: center; vertical-align: bottom; font-size: 80%; height: 100px";
-            int thisYear = Calendar.getInstance().get(Calendar.YEAR);
             contributorsPerYear.forEach(year -> {
                 landscapeReport.startTableCell(style);
                 int count = year.getCommitsCount();

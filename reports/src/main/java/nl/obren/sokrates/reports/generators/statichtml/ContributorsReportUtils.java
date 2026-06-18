@@ -17,11 +17,89 @@ import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ContributorsReportUtils {
 
     public static final int MAX_CONTRIBUTOR_LIST_SIZE = 500;
+
+    // Scope keys (as used in the per-scope time-slot maps) paired with their display labels, in the
+    // order the scope tabs appear. Keeps the two report sites that render the tabs in sync.
+    public static final java.util.LinkedHashMap<String, String> SCOPE_LABELS = new java.util.LinkedHashMap<>();
+    static {
+        SCOPE_LABELS.put("main", "Main");
+        SCOPE_LABELS.put("test", "Test");
+        SCOPE_LABELS.put("build", "Build");
+        SCOPE_LABELS.put("generated", "Generated");
+        SCOPE_LABELS.put("other", "Other");
+    }
+
+    /**
+     * Renders a small tab-like scope selector (e.g. "All" / "Main") above a set of activity diagrams,
+     * with one show/hide panel per scope. Each entry's {@link Runnable} renders that scope's body into
+     * the report. Self-contained: it emits its own buttons + panels + a scoped inline switch script, so
+     * it does NOT use the global tab machinery (openTab toggles every .tabcontent on the page, which
+     * would break when nested inside an existing tab). The first scope is shown by default.
+     *
+     * @param groupId a page-unique id so multiple selectors don't collide
+     * @param scopePanels ordered map of scope label -> body renderer
+     */
+    public static void addScopeToggle(RichTextReport report, String groupId, Map<String, Runnable> scopePanels) {
+        if (scopePanels.isEmpty()) {
+            return;
+        }
+        // If only one scope is available (e.g. no main classification), skip the selector chrome and
+        // just render that scope's body inline.
+        if (scopePanels.size() == 1) {
+            scopePanels.values().iterator().next().run();
+            return;
+        }
+
+        report.addHtmlContent("<div style='margin: 18px 0; margin-left: 18px'>");
+        int[] i = {0};
+        scopePanels.keySet().forEach(label -> {
+            String safeLabel = label.replaceAll("[^A-Za-z0-9]", "_");
+            boolean active = i[0] == 0;
+            String bg = active ? "black" : "#eeeeee";
+            String color = active ? "white" : "#333333";
+            report.addHtmlContent("<button id='" + groupId + "_btn_" + safeLabel + "'"
+                    + " onclick=\"showActivityScope('" + groupId + "', '" + safeLabel + "')\""
+                    + " style='background-color: " + bg + "; color: " + color
+                    + "; padding: 3px 12px; margin-right: 4px; cursor: pointer; border-radius: 999px; font-size: 80%; border: none'>"
+                    + label + "</button>");
+            i[0]++;
+        });
+        report.addHtmlContent("</div>");
+
+        i[0] = 0;
+        scopePanels.forEach((label, renderer) -> {
+            String safeLabel = label.replaceAll("[^A-Za-z0-9]", "_");
+            boolean active = i[0] == 0;
+            report.addHtmlContent("<div id='" + groupId + "_panel_" + safeLabel + "' class='" + groupId + "_panel'"
+                    + " style='display: " + (active ? "block" : "none") + ";'>");
+            renderer.run();
+            report.addHtmlContent("</div>");
+            i[0]++;
+        });
+
+        // Scoped switch: only touches this group's own panels/buttons (by id prefix), so it composes
+        // with the global tab machinery and with other scope selectors on the same page.
+        report.addHtmlContent("<script>\n"
+                + "function showActivityScope(groupId, scope) {\n"
+                + "  var panels = document.getElementsByClassName(groupId + '_panel');\n"
+                + "  for (var i = 0; i < panels.length; i++) { panels[i].style.display = 'none'; }\n"
+                + "  var panel = document.getElementById(groupId + '_panel_' + scope);\n"
+                + "  if (panel) { panel.style.display = 'block'; }\n"
+                + "  var btns = document.querySelectorAll('[id^=\"' + groupId + '_btn_\"]');\n"
+                + "  for (var j = 0; j < btns.length; j++) {\n"
+                + "    btns[j].style.backgroundColor = '#eeeeee'; btns[j].style.color = '#333333';\n"
+                + "  }\n"
+                + "  var btn = document.getElementById(groupId + '_btn_' + scope);\n"
+                + "  if (btn) { btn.style.backgroundColor = 'black'; btn.style.color = 'white'; }\n"
+                + "}\n"
+                + "</script>");
+    }
 
     public static void addContributorsSection(CodeAnalysisResults analysisResults, RichTextReport report) {
         ContributorsAnalysisResults contributorsAnalysisResults = analysisResults.getContributorsAnalysisResults();
@@ -56,9 +134,17 @@ public class ContributorsReportUtils {
             int maxContributors = contributorsPerTimeSlot.stream().mapToInt(c -> c.getContributorsCount()).max().orElse(1);
             int maxCommits = contributorsPerTimeSlot.stream().mapToInt(c -> c.getCommitsCount()).max().orElse(1);
             int maxFileUpdatesCount = contributorsPerTimeSlot.stream().mapToInt(c -> c.getFileUpdatesCount()).max().orElse(1);
+            // Churn bars scale to the largest single-slot total (added + deleted). The row is only
+            // emitted when there is churn data at all (older history files have none).
+            int maxChurn = contributorsPerTimeSlot.stream().mapToInt(c -> c.getLinesAdded() + c.getLinesDeleted()).max().orElse(0);
+            boolean hasChurn = maxChurn > 0;
 
             report.startDiv("overflow-y: auto; font-size: 90%");
             report.startTable();
+
+            if (hasChurn) {
+                addChurnRow(report, contributorsPerTimeSlot, maxChurn, showTimeSlot, padding, fade);
+            }
 
             report.startTableRow();
             report.addTableCell(getIconSvg("change", 64), "border: none; vertical-align: bottom;" + (fade ? "opacity: 0.4" : ""));
@@ -73,9 +159,9 @@ public class ContributorsReportUtils {
                 if (timeSlot != null) {
                     int count = timeSlot.getFileUpdatesCount();
                     if (showTimeSlot) {
-                        report.addParagraph(count + "", "margin: 0px" + (count == 0 ? "; color: #d0d0d0" : ""));
+                        report.addParagraph(FormattingUtils.getSmallTextForNumber(count) + "", "margin: 0px; font-size: 90%" + (count == 0 ? "; color: #d0d0d0" : ""));
                     } else {
-                        report.addParagraph("&nbsp;", "margin: 0px");
+                        report.addParagraph("&nbsp;", "margin: 0px; font-size: 90%");
                     }
                     String title = timeSlot.getTimeSlot() + ": " + count + "\n\n";
                     RiskDistributionStats stats = timeSlot.getFileUpdatesCountStats();
@@ -97,9 +183,6 @@ public class ContributorsReportUtils {
 
                     int heightNegligible = 1 + (int) (64.0 * stats.getNegligibleRiskValue() / maxFileUpdatesCount);
                     report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + palette.nextColor() + "; height:" + heightNegligible + "px'></div>");
-
-
-
                 } else {
                     report.addHtmlContent("<div style='width: 100%; background-color: #d0d0d0; height:1px'></div>");
                 }
@@ -120,9 +203,9 @@ public class ContributorsReportUtils {
                 if (timeSlot != null) {
                     int count = timeSlot.getCommitsCount();
                     if (showTimeSlot) {
-                        report.addParagraph(count + "", "margin: 0px" + (count == 0 ? "; color: #d0d0d0" : ""));
+                        report.addParagraph(FormattingUtils.getSmallTextForNumber(count) + "", "margin: 0px; font-size: 90%" + (count == 0 ? "; color: #d0d0d0" : ""));
                     } else {
-                        report.addParagraph("&nbsp;", "margin: 0px");
+                        report.addParagraph("&nbsp;", "margin: 0px; font-size: 90%");
                     }
                     int height = 1 + (int) (64.0 * count / maxCommits);
                     String title = timeSlot.getTimeSlot() + ": " + count;
@@ -142,9 +225,9 @@ public class ContributorsReportUtils {
                     if (timeSlot != null) {
                         int count = timeSlot.getContributorsCount();
                         if (showTimeSlot) {
-                            report.addParagraph(count + "", "margin: 0px" + (count == 0 ? "; color: #d0d0d0" : ""));
+                            report.addParagraph(FormattingUtils.getSmallTextForNumber(count) + "", "margin: 0px; font-size: 90%" + (count == 0 ? "; color: #d0d0d0" : ""));
                         } else {
-                            report.addParagraph("&nbsp;", "margin: 0px");
+                            report.addParagraph("&nbsp;", "margin: 0px; font-size: 90%");
                         }
                         int height = 1 + (int) (64.0 * count / maxContributors);
                         String title = timeSlot.getTimeSlot() + ": " + count;
@@ -177,6 +260,45 @@ public class ContributorsReportUtils {
             report.endTable();
             report.endDiv();
         }
+    }
+
+    // Renders the lines-changed (churn) graph row: one column per time slot, each showing the lines
+    // added (green) stacked above the lines deleted (red), scaled to the busiest slot. Mirrors the
+    // file-updates row layout so it sits directly above it. Only called when there is churn data.
+    private static void addChurnRow(RichTextReport report, List<ContributionTimeSlot> contributorsPerTimeSlot,
+                                    int maxChurn, boolean showTimeSlot, int padding, boolean fade) {
+        report.startTableRow();
+        report.addTableCell(getIconSvg("lines_churn", 64), "border: none; vertical-align: bottom;" + (fade ? "opacity: 0.4" : ""));
+        String style;
+        if (showTimeSlot) {
+            style = "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: bottom; font-size: 80%";
+        } else {
+            style = "border: none; padding: " + padding + "px; vertical-align: bottom; font-size: 80%";
+        }
+        for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
+            report.startTableCell(style);
+            if (timeSlot != null) {
+                int added = timeSlot.getLinesAdded();
+                int deleted = timeSlot.getLinesDeleted();
+                int total = added + deleted;
+                if (showTimeSlot) {
+                    report.addParagraph(FormattingUtils.getSmallTextForNumber(total) + "", "margin: 0px; font-size: 90%" + (total == 0 ? "; color: #d0d0d0" : ""));
+                } else {
+                    report.addParagraph("&nbsp;", "margin: 0px; font-size: 90%");
+                }
+                String title = timeSlot.getTimeSlot() + ": +" + added + " / -" + deleted + " lines";
+                // Heights share the same scale (max single-slot total) so added/deleted are comparable
+                // across slots; a present-but-thin bar still shows at 1px.
+                int heightAdded = added > 0 ? 1 + (int) (64.0 * added / maxChurn) : 0;
+                int heightDeleted = deleted > 0 ? 1 + (int) (64.0 * deleted / maxChurn) : 0;
+                report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: #2e7d32; height:" + heightAdded + "px'></div>");
+                report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: #c62828; height:" + heightDeleted + "px'></div>");
+            } else {
+                report.addHtmlContent("<div style='width: 100%; background-color: #d0d0d0; height:1px'></div>");
+            }
+            report.endTableCell();
+        }
+        report.endTableRow();
     }
 
     public static void addContributors(RichTextReport indexReport, List<Contributor> contributors, String type) {
@@ -235,9 +357,13 @@ public class ContributorsReportUtils {
         // max/total can be 0 when every contributor has 0 counted commits; avoid NaN/Infinity styles.
         double opacity = max > 0 ? 0.2 + 0.8 * commitsCount / max : 1.0;
         double percentage = total > 0 ? 100.0 * commitsCount / total : 0.0;
+        String churnInfo = "";
+        if (contributor.getLinesAdded() > 0 || contributor.getLinesDeleted() > 0) {
+            churnInfo = ", +" + contributor.getLinesAdded() + "/-" + contributor.getLinesDeleted() + " lines";
+        }
         String info = StringEscapeUtils.escapeHtml4(contributor.getEmail()
                 + " " + commitsCount
-                + " commits (" + FormattingUtils.getFormattedPercentage(percentage) + "%),"
+                + " commits (" + FormattingUtils.getFormattedPercentage(percentage) + "%)" + churnInfo + ","
                 + " between " + contributor.getFirstCommitDate() + " and " + contributor.getLatestCommitDate());
 
         if (contributor.isRookie()) {

@@ -19,6 +19,31 @@ class GitHistoryUtilsTest {
         assertEquals(fileUpdate.getAuthorEmail(), "author@github.com");
         assertEquals(fileUpdate.getCommitId(), "0bc5d0318b3814ebd5b52605668756a8d5598e24");
         assertEquals(fileUpdate.getPath(), "common/src/main/resources/components/ace/src/snippets/maze.js");
+        // Lines without churn columns default to 0.
+        assertEquals(0, fileUpdate.getLinesAdded());
+        assertEquals(0, fileUpdate.getLinesDeleted());
+    }
+
+    @Test
+    void parseLineWithChurnColumns() {
+        String line = "2019-11-09 author@github.com 0bc5d0318b3814ebd5b52605668756a8d5598e24 a/B.java Jane&nbsp;Doe 12 5";
+        FileUpdate fileUpdate = GitHistoryUtils.parseLine(line, new FileHistoryAnalysisConfig());
+
+        assertEquals("a/B.java", fileUpdate.getPath());
+        assertEquals("Jane Doe", fileUpdate.getUserName());
+        assertEquals(12, fileUpdate.getLinesAdded());
+        assertEquals(5, fileUpdate.getLinesDeleted());
+    }
+
+    @Test
+    void parseLineWithoutChurnColumnsKeepsZero() {
+        // Name present but no churn columns (older history format).
+        String line = "2019-11-09 author@github.com 0bc5d0318b3814ebd5b52605668756a8d5598e24 a/B.java Jane&nbsp;Doe";
+        FileUpdate fileUpdate = GitHistoryUtils.parseLine(line, new FileHistoryAnalysisConfig());
+
+        assertEquals("Jane Doe", fileUpdate.getUserName());
+        assertEquals(0, fileUpdate.getLinesAdded());
+        assertEquals(0, fileUpdate.getLinesDeleted());
     }
 
     @Test

@@ -11,6 +11,9 @@ public class FileUpdate {
 
     private boolean bot = false;
 
+    private int linesAdded = 0;
+    private int linesDeleted = 0;
+
     public FileUpdate(String date, String authorEmail, String userName, String commitId, String path, boolean bot) {
         this.date = date;
         this.authorEmail = authorEmail;
@@ -70,5 +73,21 @@ public class FileUpdate {
 
     public void setBot(boolean bot) {
         this.bot = bot;
+    }
+
+    public int getLinesAdded() {
+        return linesAdded;
+    }
+
+    public void setLinesAdded(int linesAdded) {
+        this.linesAdded = linesAdded;
+    }
+
+    public int getLinesDeleted() {
+        return linesDeleted;
+    }
+
+    public void setLinesDeleted(int linesDeleted) {
+        this.linesDeleted = linesDeleted;
     }
 }

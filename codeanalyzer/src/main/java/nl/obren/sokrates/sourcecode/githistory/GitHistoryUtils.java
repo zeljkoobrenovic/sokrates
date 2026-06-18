@@ -1,7 +1,12 @@
 package nl.obren.sokrates.sourcecode.githistory;
 
 /*
- * Assumes that you have generated the text file being read using the following git command:
+ * Reads the git-history.txt produced by GitHistoryExtractor. Each line is:
+ *   <date> <email> <commitId> <path> <name> [<linesAdded> <linesDeleted>]
+ * The two churn columns are optional - older history files omit them, in which case
+ * linesAdded/linesDeleted default to 0.
+ *
+ * Equivalent git command (without churn columns):
  * git ls-files -z | xargs -0 -n1 -I{} -- git log --date=short --format="%ad %ae %H {}" {} > git-history.txt
  * git log --merges --first-parent --date=short --format="%ad %ae" > git-merges.txt
  */
@@ -19,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Predicate;
 
 public class GitHistoryUtils {
     public static final String GIT_HISTORY_FILE_NAME = "git-history.txt";
@@ -32,6 +38,16 @@ public class GitHistoryUtils {
     }
 
     public static List<AuthorCommit> getAuthorCommits(File file, FileHistoryAnalysisConfig config) {
+        return getAuthorCommits(file, config, null);
+    }
+
+    /**
+     * Builds the per-commit list, optionally restricted to file updates matching {@code pathFilter}
+     * (e.g. only files in the main scope). A commit whose files are all filtered out produces no
+     * AuthorCommit, so commit/contributor counts reflect only the selected scope. When the filter is
+     * null every file update is included (the all-scope behaviour).
+     */
+    public static List<AuthorCommit> getAuthorCommits(File file, FileHistoryAnalysisConfig config, Predicate<FileUpdate> pathFilter) {
         List<AuthorCommit> commits = new ArrayList<>();
         Map<String, AuthorCommit> commitsMap = new HashMap<>();
 
@@ -43,14 +59,19 @@ public class GitHistoryUtils {
             if (index[0] % 1000 == 1 || index[0] == historyFromFile.size()) {
                 LOG.info("Importing " + fileUpdate.getAuthorEmail() + " " + fileUpdate.getDate() + " (" + index[0] + " / " + historyFromFile.size() + ")");
             }
+            if (pathFilter != null && !pathFilter.test(fileUpdate)) {
+                return;
+            }
             String commitId = fileUpdate.getCommitId();
             AuthorCommit existing = commitsMap.get(commitId);
             if (existing == null) {
                 AuthorCommit authorCommit = new AuthorCommit(fileUpdate.getDate(), fileUpdate.getAuthorEmail(), fileUpdate.getUserName(), fileUpdate.isBot());
+                authorCommit.addChurn(fileUpdate.getLinesAdded(), fileUpdate.getLinesDeleted());
                 commits.add(authorCommit);
                 commitsMap.put(commitId, authorCommit);
             } else {
                 existing.incrementFileUpdatesCount();
+                existing.addChurn(fileUpdate.getLinesAdded(), fileUpdate.getLinesDeleted());
             }
         });
 
@@ -147,6 +168,17 @@ public class GitHistoryUtils {
                     }
 
                     FileUpdate fileUpdate = new FileUpdate(date, authorEmail, userName, commitId, path, bot);
+
+                    // Optional trailing churn columns: "... <name> <linesAdded> <linesDeleted>".
+                    // Older git-history.txt files don't have them, so absence is fine (defaults stay 0).
+                    if (index4 > index3) {
+                        String[] tokens = line.substring(index4 + 1).trim().split(" ");
+                        if (tokens.length >= 3) {
+                            fileUpdate.setLinesAdded(parseChurn(tokens[tokens.length - 2]));
+                            fileUpdate.setLinesDeleted(parseChurn(tokens[tokens.length - 1]));
+                        }
+                    }
+
                     return fileUpdate;
                 }
             }
@@ -165,6 +197,14 @@ public class GitHistoryUtils {
             return true;
         }
         return false;
+    }
+
+    private static int parseChurn(String token) {
+        try {
+            return Integer.parseInt(token.trim());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     public static boolean isBot(String email, List<String> bots) {

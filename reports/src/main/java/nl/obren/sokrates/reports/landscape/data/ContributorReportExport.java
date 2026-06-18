@@ -38,6 +38,12 @@ public class ContributorReportExport {
     private int commitsCount30Days;
     private int commitsCount90Days;
     private int commitsCount365Days;
+    // Lines added/deleted across all of this contributor's commits (and the 30-day window); 0 for
+    // history files without churn columns.
+    private int linesAdded;
+    private int linesDeleted;
+    private int linesAdded30Days;
+    private int linesDeleted30Days;
     private String firstCommitDate = "";
     private String latestCommitDate = "";
     private int repositoriesCount;
@@ -107,6 +113,10 @@ public class ContributorReportExport {
         commitsCount30Days = c.getCommitsCount30Days();
         commitsCount90Days = c.getCommitsCount90Days();
         commitsCount365Days = c.getCommitsCount365Days();
+        linesAdded = c.getLinesAdded();
+        linesDeleted = c.getLinesDeleted();
+        linesAdded30Days = c.getLinesAdded30Days();
+        linesDeleted30Days = c.getLinesDeleted30Days();
         firstCommitDate = c.getFirstCommitDate() != null ? c.getFirstCommitDate() : "";
         latestCommitDate = c.getLatestCommitDate() != null ? c.getLatestCommitDate() : "";
 
@@ -160,6 +170,22 @@ public class ContributorReportExport {
 
     public int getCommitsCount365Days() {
         return commitsCount365Days;
+    }
+
+    public int getLinesAdded() {
+        return linesAdded;
+    }
+
+    public int getLinesDeleted() {
+        return linesDeleted;
+    }
+
+    public int getLinesAdded30Days() {
+        return linesAdded30Days;
+    }
+
+    public int getLinesDeleted30Days() {
+        return linesDeleted30Days;
     }
 
     public String getFirstCommitDate() {

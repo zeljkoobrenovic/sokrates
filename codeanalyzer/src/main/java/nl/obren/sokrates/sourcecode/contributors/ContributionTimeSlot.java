@@ -13,6 +13,10 @@ public class ContributionTimeSlot {
     private int contributorsCount;
     private int commitsCount;
     private int fileUpdatesCount;
+    // Lines added/deleted in this time slot, summed from the per-commit churn columns of
+    // git-history.txt. 0 for history files without churn data (older exports).
+    private int linesAdded;
+    private int linesDeleted;
 
     private RiskDistributionStats fileUpdatesCountStats;
 
@@ -81,5 +85,27 @@ public class ContributionTimeSlot {
     public void incrementFileUpdatesCount(int increment) {
         this.fileUpdatesCount += increment;
         this.fileUpdatesCountStats.update(increment, increment);
+    }
+
+    public int getLinesAdded() {
+        return linesAdded;
+    }
+
+    public void setLinesAdded(int linesAdded) {
+        this.linesAdded = linesAdded;
+    }
+
+    public int getLinesDeleted() {
+        return linesDeleted;
+    }
+
+    public void setLinesDeleted(int linesDeleted) {
+        this.linesDeleted = linesDeleted;
+    }
+
+    @JsonIgnore
+    public void addChurn(int added, int deleted) {
+        this.linesAdded += added;
+        this.linesDeleted += deleted;
     }
 }
