@@ -47,6 +47,25 @@ class FilesExplorerGeneratorsTest {
     }
 
     @Test
+    void populatesChurnWindowsFromFileHistory() {
+        // One commit ~5 days ago (+10/-2), one ~60 days ago (+5/-1), one ~400 days ago (+100/-50).
+        java.time.LocalDate today = java.time.LocalDate.now();
+        FileModificationHistory history = new FileModificationHistory("src/Foo.java");
+        history.setDates(new java.util.ArrayList<>(Arrays.asList(
+                today.minusDays(5).toString(), today.minusDays(60).toString(), today.minusDays(400).toString())));
+        history.addChurn(today.minusDays(5).toString(), 10, 2);
+        history.addChurn(today.minusDays(60).toString(), 5, 1);
+        history.addChurn(today.minusDays(400).toString(), 100, 50);
+
+        FilesExplorerGenerators generators = new FilesExplorerGenerators(new File("."));
+        FileExport export = generators.getFiles(aspectOf(sourceFile("src/Foo.java", 100, history)), "main").get(0);
+
+        assertEquals(12, export.getChurn30Days());   // 10 + 2 (only the 5-day-old commit)
+        assertEquals(18, export.getChurn90Days());    // (10+2) + (5+1)
+        assertEquals(168, export.getChurnTotal());     // + (100+50)
+    }
+
+    @Test
     void setsViewerLinkForReferencedFiles() {
         FilesExplorerGenerators generators = new FilesExplorerGenerators(new File("."));
         SourceFile referenced = sourceFile("com/x/Foo.java", 100, null);

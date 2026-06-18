@@ -69,6 +69,9 @@ public class FilesExplorerGenerators {
                     fileExport.setAgeDays(history.daysSinceFirstUpdate());
                     fileExport.setFreshnessDays(history.daysSinceLatestUpdate());
                     fileExport.setContributorsCount(history.countContributors());
+                    fileExport.setChurn30Days(history.getChurn30Days());
+                    fileExport.setChurn90Days(history.getChurn90Days());
+                    fileExport.setChurnTotal(history.getChurn());
                 }
                 // Link to the cached source page only for files that actually have one.
                 if (referencedFiles.contains(file)) {

@@ -55,6 +55,7 @@ public class FilesHistoryAnalysisResults {
     private List<SourceFile> mostRecentlyChangedFiles = new ArrayList<>();
     private List<SourceFile> mostPreviouslyChangedFiles = new ArrayList<>();
     private List<SourceFile> mostChangedFiles = new ArrayList<>();
+    private List<SourceFile> filesWithMostChurn = new ArrayList<>();
     private List<SourceFile> filesWithMostContributors = new ArrayList<>();
     private List<SourceFile> filesWithLeastContributors = new ArrayList<>();
     private String firstDate = "";
@@ -164,6 +165,14 @@ public class FilesHistoryAnalysisResults {
 
     public void setMostChangedFiles(List<SourceFile> mostChangedFiles) {
         this.mostChangedFiles = mostChangedFiles;
+    }
+
+    public List<SourceFile> getFilesWithMostChurn() {
+        return filesWithMostChurn;
+    }
+
+    public void setFilesWithMostChurn(List<SourceFile> filesWithMostChurn) {
+        this.filesWithMostChurn = filesWithMostChurn;
     }
 
     public SourceFileChangeDistribution getOverallFileChangeDistribution() {

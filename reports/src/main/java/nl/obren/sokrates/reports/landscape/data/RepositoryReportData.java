@@ -199,6 +199,12 @@ public class RepositoryReportData {
         private List<String> slots = new ArrayList<>();
         private List<Integer> commits = new ArrayList<>();
         private List<Integer> contributors = new ArrayList<>();
+        // Total line churn (added + deleted) per slot, plus the added/deleted split, matching the
+        // commits/contributors arrays. churn is kept for the combined per-week sparkline; the split
+        // backs the per-year +added/-deleted stacked chart.
+        private List<Integer> churn = new ArrayList<>();
+        private List<Integer> churnAdded = new ArrayList<>();
+        private List<Integer> churnDeleted = new ArrayList<>();
 
         public List<String> getSlots() {
             return slots;
@@ -212,10 +218,25 @@ public class RepositoryReportData {
             return contributors;
         }
 
-        public void add(String slot, int commitsCount, int contributorsCount) {
+        public List<Integer> getChurn() {
+            return churn;
+        }
+
+        public List<Integer> getChurnAdded() {
+            return churnAdded;
+        }
+
+        public List<Integer> getChurnDeleted() {
+            return churnDeleted;
+        }
+
+        public void add(String slot, int commitsCount, int contributorsCount, int linesAdded, int linesDeleted) {
             slots.add(slot);
             commits.add(commitsCount);
             contributors.add(contributorsCount);
+            churn.add(linesAdded + linesDeleted);
+            churnAdded.add(linesAdded);
+            churnDeleted.add(linesDeleted);
         }
     }
 }

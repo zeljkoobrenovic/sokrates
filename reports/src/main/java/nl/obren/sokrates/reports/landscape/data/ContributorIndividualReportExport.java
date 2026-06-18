@@ -181,11 +181,25 @@ public class ContributorIndividualReportExport {
         private int commits90Days;
         private int commits365Days;
         private int commitsCount;
+        // Per-window line churn by this contributor in this repository, split into lines added and
+        // deleted (mirroring the commit columns). 0 when the history carried no churn data.
+        private int churnAdded30Days;
+        private int churnDeleted30Days;
+        private int churnAdded90Days;
+        private int churnDeleted90Days;
+        private int churnAdded365Days;
+        private int churnDeleted365Days;
+        private int churnAdded;
+        private int churnDeleted;
         private List<String> commitDates = new ArrayList<>();
         // Per-day commit counts (date -> commits). The activity grid sizes its circles/bars by
         // commits per slot using this; commitDates (distinct days) is the fallback when this is
         // empty (older analyses).
         private java.util.Map<String, Integer> commitsPerDate = new java.util.LinkedHashMap<>();
+        // Per-day line churn (date -> lines), split added/deleted, used to draw the stacked per-slot
+        // churn bar in the total row. Empty for older analyses.
+        private java.util.Map<String, Integer> churnAddedPerDate = new java.util.LinkedHashMap<>();
+        private java.util.Map<String, Integer> churnDeletedPerDate = new java.util.LinkedHashMap<>();
 
         public Repository() {
         }
@@ -201,11 +215,25 @@ public class ContributorIndividualReportExport {
             commits90Days = info.getCommits90Days();
             commits365Days = info.getCommits365Days();
             commitsCount = info.getCommitsCount();
+            churnAdded30Days = info.getChurnAdded30Days();
+            churnDeleted30Days = info.getChurnDeleted30Days();
+            churnAdded90Days = info.getChurnAdded90Days();
+            churnDeleted90Days = info.getChurnDeleted90Days();
+            churnAdded365Days = info.getChurnAdded365Days();
+            churnDeleted365Days = info.getChurnDeleted365Days();
+            churnAdded = info.getChurnAdded();
+            churnDeleted = info.getChurnDeleted();
             if (info.getCommitDates() != null) {
                 commitDates = info.getCommitDates();
             }
             if (info.getCommitsPerDate() != null) {
                 commitsPerDate = info.getCommitsPerDate();
+            }
+            if (info.getChurnAddedPerDate() != null) {
+                churnAddedPerDate = info.getChurnAddedPerDate();
+            }
+            if (info.getChurnDeletedPerDate() != null) {
+                churnDeletedPerDate = info.getChurnDeletedPerDate();
             }
         }
 
@@ -237,12 +265,52 @@ public class ContributorIndividualReportExport {
             return commitsCount;
         }
 
+        public int getChurnAdded30Days() {
+            return churnAdded30Days;
+        }
+
+        public int getChurnDeleted30Days() {
+            return churnDeleted30Days;
+        }
+
+        public int getChurnAdded90Days() {
+            return churnAdded90Days;
+        }
+
+        public int getChurnDeleted90Days() {
+            return churnDeleted90Days;
+        }
+
+        public int getChurnAdded365Days() {
+            return churnAdded365Days;
+        }
+
+        public int getChurnDeleted365Days() {
+            return churnDeleted365Days;
+        }
+
+        public int getChurnAdded() {
+            return churnAdded;
+        }
+
+        public int getChurnDeleted() {
+            return churnDeleted;
+        }
+
         public List<String> getCommitDates() {
             return commitDates;
         }
 
         public java.util.Map<String, Integer> getCommitsPerDate() {
             return commitsPerDate;
+        }
+
+        public java.util.Map<String, Integer> getChurnAddedPerDate() {
+            return churnAddedPerDate;
+        }
+
+        public java.util.Map<String, Integer> getChurnDeletedPerDate() {
+            return churnDeletedPerDate;
         }
     }
 

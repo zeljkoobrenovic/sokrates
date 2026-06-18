@@ -55,6 +55,7 @@ public class FileChurnReportGenerator {
         addGraphsPerExtension(report);
         addGraphsPerLogicalComponents(report);
         addMostChangedFilesList(report);
+        addFilesWithMostChurnList(report);
         addFilesWithMostContributors(report);
         addFilesWithLeastContributors(report);
         addCorrelations(report);
@@ -204,7 +205,23 @@ public class FileChurnReportGenerator {
         report.startSection("Most Frequently Changed Files (Top " + youngestFiles.size() + ")", "");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
         report.addParagraph("<a href='#' onclick=\"return downloadDataFile('text/mainFilesWithHistory.txt')\" target='_blank'>See data for all files...</a>");
-        report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true, false, 500).toString());
+        report.addHtmlContent(FilesReportUtils.getFilesTable(youngestFiles, cacheSourceFiles, true, false, 500, true).toString());
+        report.endSection();
+    }
+
+    private void addFilesWithMostChurnList(RichTextReport report) {
+        List<SourceFile> files = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilesWithMostChurn();
+        // Only meaningful when the git history carried line-churn data; otherwise every file has 0
+        // churn and the ranking is arbitrary, so skip the section.
+        boolean hasChurn = files.stream().anyMatch(f -> f.getFileModificationHistory() != null
+                && f.getFileModificationHistory().getChurn() > 0);
+        if (!hasChurn) {
+            return;
+        }
+        report.startSection("Files With Most Churn (Top " + files.size() + ")", "Based on the number of lines added and deleted across all commits.");
+        boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
+        report.addParagraph("<a href='#' onclick=\"return downloadDataFile('text/mainFilesWithHistory.txt')\" target='_blank'>See data for all files...</a>");
+        report.addHtmlContent(FilesReportUtils.getFilesTable(files, cacheSourceFiles, true, false, 500, true).toString());
         report.endSection();
     }
 
@@ -213,7 +230,7 @@ public class FileChurnReportGenerator {
         report.startSection("Files With Most Contributors (Top " + files.size() + ")", "Based on the number of unique email addresses found in commits.");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
         report.addParagraph("<a href='#' onclick=\"return downloadDataFile('text/mainFilesWithHistory.txt')\" target='_blank'>See data for all files...</a>");
-        report.addHtmlContent(FilesReportUtils.getFilesTable(files, cacheSourceFiles, true, false, 500).toString());
+        report.addHtmlContent(FilesReportUtils.getFilesTable(files, cacheSourceFiles, true, false, 500, true).toString());
         report.endSection();
     }
 
@@ -222,7 +239,7 @@ public class FileChurnReportGenerator {
         report.startSection("Files With Least Contributors (Top " + files.size() + ")", "Based on the number of unique email addresses found in commits.");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
         report.addParagraph("<a href='#' onclick=\"return downloadDataFile('text/mainFilesWithHistory.txt')\" target='_blank'>See data for all files...</a>");
-        report.addHtmlContent(FilesReportUtils.getFilesTable(files, cacheSourceFiles, true, false, 500).toString());
+        report.addHtmlContent(FilesReportUtils.getFilesTable(files, cacheSourceFiles, true, false, 500, true).toString());
         report.endSection();
     }
 
@@ -256,6 +273,26 @@ public class FileChurnReportGenerator {
                     p -> countributorsCountMap.getOrDefault(p.getPath(), 0),
                     p -> linesOfCodeMap.getOrDefault(p.getPath(), 0),
                     p -> p.getPath());
+
+            // Churn correlations - only meaningful when the git history carried line-churn data.
+            boolean hasChurn = codeAnalysisResults.getFilesHistoryAnalysisResults().getHistory(Integer.MAX_VALUE)
+                    .stream().anyMatch(p -> p.getChurn() > 0);
+            if (hasChurn) {
+                correlationDiagramGenerator.addCorrelations("Number of Changes vs. Line Churn", "# changes", "line churn",
+                        p -> p.getDates().size(),
+                        p -> p.getChurn(),
+                        p -> p.getPath());
+
+                correlationDiagramGenerator.addCorrelations("Number of Contributors vs. Line Churn", "# contributors", "line churn",
+                        p -> countributorsCountMap.getOrDefault(p.getPath(), 0),
+                        p -> p.getChurn(),
+                        p -> p.getPath());
+
+                correlationDiagramGenerator.addCorrelations("File Size vs. Line Churn", "lines of code", "line churn",
+                        p -> linesOfCodeMap.getOrDefault(p.getPath(), 0),
+                        p -> p.getChurn(),
+                        p -> p.getPath());
+            }
 
             ProcessingStopwatch.end("reporting/file update frequency/correlations");
             report.endSection();

@@ -194,6 +194,23 @@
         return (n || 0).toLocaleString('en-US');
     }
 
+    // Compact magnitude label, mirroring FormattingUtils.getSmallTextForNumber (K/M suffixes),
+    // without the <b> wrapper. Used for the per-year churn chart labels.
+    function smallNum(n) {
+        n = n || 0;
+        const strip = s => s.replace(/\.0$/, '');
+        if (n < 1000) {
+            return '' + n;
+        } else if (n < 10000) {
+            return strip((n / 1000).toFixed(1)) + 'K';
+        } else if (n < 1000000) {
+            return Math.round(n / 1000) + 'K';
+        } else if (n < 10000000) {
+            return strip((n / 1000000).toFixed(1)) + 'M';
+        }
+        return Math.round(n / 1000000) + 'M';
+    }
+
     function esc(s) {
         return ('' + (s == null ? '' : s)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
@@ -331,6 +348,51 @@
             key: key, label: label, type: 'number', dir: -1, sortable: false, headerStyle: style,
             value: i => 0,
             cell: i => '<td style="' + style + '">' + miniBars(i[historyField], valueField, color, slotCount, slotNote) + '</td>'
+        };
+    }
+
+    // Like miniBars, but each slot is a stacked bar: lines added (green) on top of lines deleted
+    // (red). Both segments share one scale (the busiest slot's added + deleted total).
+    function miniChurnBars(history, slotCount) {
+        const ADDED = '#2e7d32', DELETED = '#c62828';
+        const stripWidth = slotCount * BAR_WIDTH;
+        let html = '<div style="white-space: nowrap; width: ' + stripWidth + 'px; overflow: hidden;">';
+        if (history && history.slots && history.slots.length) {
+            const added = history.churnAdded || [];
+            const deleted = history.churnDeleted || [];
+            const bars = history.slots.map((slot, i) => ({slot: slot, a: added[i] || 0, d: deleted[i] || 0}));
+            bars.sort((a, b) => String(a.slot).localeCompare(String(b.slot)));
+            let max = 1;
+            bars.forEach(b => max = Math.max(max, b.a + b.d));
+            bars.reverse();
+            bars.forEach(b => {
+                const total = b.a + b.d;
+                const hAdded = b.a > 0 ? Math.round(1 + 23 * b.a / max) : 0;
+                const hDeleted = b.d > 0 ? Math.round(1 + 23 * b.d / max) : 0;
+                const title = '+' + b.a + ' / -' + b.d + ' in ' + esc(b.slot);
+                html += '<div title="' + title + '" style="margin: 0; padding: 0; display: inline-block; '
+                    + 'vertical-align: bottom; width: ' + BAR_WIDTH + 'px;">';
+                if (total === 0) {
+                    html += '<div style="width: 100%; height: 2px; background-color: #cccccc;"></div>';
+                } else {
+                    html += '<div style="width: 100%; opacity: 0.6; background-color: ' + ADDED + '; height: ' + hAdded + 'px;"></div>'
+                        + '<div style="width: 100%; opacity: 0.6; background-color: ' + DELETED + '; height: ' + hDeleted + 'px;"></div>';
+                }
+                html += '</div>';
+            });
+        }
+        html += '</div>';
+        return html;
+    }
+
+    // Fixed-width column rendering the stacked added/deleted churn sparkline for a history block.
+    function churnBarColumn(key, label, historyField, slotCount) {
+        const w = slotCount * BAR_WIDTH;
+        const style = 'text-align: left; width: ' + w + 'px; min-width: ' + w + 'px; max-width: ' + w + 'px;';
+        return {
+            key: key, label: label, type: 'number', dir: -1, sortable: false, headerStyle: style,
+            value: i => 0,
+            cell: i => '<td style="' + style + '">' + miniChurnBars(i[historyField], slotCount) + '</td>'
         };
     }
 
@@ -502,19 +564,25 @@
             locColumn('mainLoc', 'main', i => i.mainLinesOfCode),
             locColumn('testLoc', 'test', i => i.testLinesOfCode, '#b0b0b0'),
             locColumn('otherLoc', 'other', i => i.generatedLinesOfCode + i.buildAndDeployLinesOfCode + i.otherLinesOfCode, '#b0b0b0'),
-            {key: 'latest', label: 'last<br>commit', type: 'string', dir: -1, headerStyle: 'text-align: center;',
+            {key: 'latest', label: 'latest', type: 'string', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.latestCommitDate || '', cell: i => '<td style="text-align: center; font-size: 90%; white-space: nowrap;">' + esc(i.latestCommitDate) + '</td>'},
-            {key: 'commits30', label: 'commits<br>(30d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+            {key: 'commits30', label: '30d', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.commitsCount30Days, cell: i => '<td style="text-align: center; font-size: 90%;">' + num(i.commitsCount30Days) + '</td>'},
-            {key: 'commits90', label: 'commits<br>(90d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+            {key: 'commits90', label: '90d', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.commitsCount90Days, cell: i => '<td style="text-align: center; font-size: 90%; color: #b0b0b0;">' + num(i.commitsCount90Days) + '</td>'},
-            {key: 'commitsAll', label: 'commits<br>(all time)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+            {key: 'commitsAll', label: 'all time', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.commitsCount, cell: i => '<td style="text-align: center; font-size: 90%; color: #b0b0b0;">' + num(i.commitsCount) + '</td>'},
-            {key: 'contributors30', label: 'contributors<br>(30d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+            {key: 'churn30', label: '30d', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+                value: i => i.churn30Days || 0, cell: i => '<td style="text-align: center; font-size: 90%;">' + num(i.churn30Days || 0) + '</td>'},
+            {key: 'churn90', label: '90d', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+                value: i => i.churn90Days || 0, cell: i => '<td style="text-align: center; font-size: 90%; color: #b0b0b0;">' + num(i.churn90Days || 0) + '</td>'},
+            {key: 'churnAll', label: 'all time', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+                value: i => i.churn || 0, cell: i => '<td style="text-align: center; font-size: 90%; color: #b0b0b0;">' + num(i.churn || 0) + '</td>'},
+            {key: 'contributors30', label: '30d', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => (i.contributors30Days || []).length, cell: i => contributorsCell(i.contributors30Days, false)},
-            {key: 'contributors90', label: 'contributors<br>(90d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+            {key: 'contributors90', label: '90d', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => (i.contributors90Days || []).length, cell: i => contributorsCell(i.contributors90Days, true)},
-            {key: 'contributorsAll', label: 'contributors<br>(all time)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+            {key: 'contributorsAll', label: 'all time', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => (i.contributors || []).length, cell: i => contributorsCell(i.contributors, true)},
             reportCol
         ];
@@ -529,12 +597,33 @@
             groupHeader: [
                 {span: 2},                              // lang + repository
                 {label: 'LOC', span: 3},                // main / test / other
-                {label: 'Activity', span: 4},           // last commit + commits 30d/90d/all
+                {label: 'Commits', span: 4},           // last commit + commits 30d/90d/all
+                {label: 'Line churn', span: 3},         // churn 30d/90d/all
                 {label: 'Contributors', span: 3},       // 30d / 90d / all
                 {span: 1}                               // report
             ]
         });
     })();
+
+    // Churn Trend — mirrors Commits Trend, showing line churn instead of commits.
+    TABS.push({
+        id: 'churnTrend', label: 'Churn', sortKey: 'churn30', sortDir: -1,
+        summaryChart: churnPerYearChart,
+        links: [
+            DATA_LINK
+        ],
+        columns: [
+            langCol, nameCol,
+            {key: 'churn30', label: 'Line churn<br>(30d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+                value: i => i.churn30Days || 0, cell: i => '<td style="text-align: center;">' + num(i.churn30Days || 0) + '</td>'},
+            {key: 'churn90', label: 'Line churn<br>(90d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+                value: i => i.churn90Days || 0, cell: i => '<td style="text-align: center; color: #b0b0b0;">' + num(i.churn90Days || 0) + '</td>'},
+            {key: 'churnAll', label: 'Line churn<br>(all time)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
+                value: i => i.churn || 0, cell: i => '<td style="text-align: center; color: #b0b0b0;">' + num(i.churn || 0) + '</td>'},
+            churnBarColumn('perWeek', 'Line churn per Week (past year)', 'weeks', WEEK_SLOTS),
+            reportCol
+        ]
+    });
 
     // Commits Trend
     TABS.push({
@@ -659,7 +748,7 @@
     function buildTabs() {
         let html = '';
         TABS.forEach(tab => {
-            if (tab.id === 'commitsTrend' || tab.id === 'contributorsTrend' || tab.id === 'history') {
+            if (tab.id === 'churnTrend' || tab.id === 'commitsTrend' || tab.id === 'contributorsTrend' || tab.id === 'history') {
                 if (!options.showCommits) {
                     return;
                 }
@@ -753,6 +842,60 @@
             }
         });
         return perYearBarChart('commits per year', 'blue', counts, 'commits');
+    }
+
+    // Churn Trend: total line churn per year (churn is additive across repositories).
+    // Per-year line churn, split into lines added (green) and deleted (red), rendered as stacked
+    // bars (added on top of deleted). Labels use the compact K/M format; both +added and -deleted
+    // are shown, each in its colour.
+    function churnPerYearChart(rows) {
+        const added = {};
+        const deleted = {};
+        rows.forEach(r => {
+            const h = r.years;
+            if (h && h.slots) {
+                h.slots.forEach((slot, i) => {
+                    const y = String(slot).substring(0, 4);
+                    added[y] = (added[y] || 0) + ((h.churnAdded || [])[i] || 0);
+                    deleted[y] = (deleted[y] || 0) + ((h.churnDeleted || [])[i] || 0);
+                });
+            }
+        });
+        const years = Object.keys(added).concat(Object.keys(deleted))
+            .filter(y => /^\d{4}$/.test(y));
+        if (!years.length) {
+            return '';
+        }
+        const ADDED = '#2e7d32', DELETED = '#c62828';
+        const first = parseInt(years.sort()[0], 10);
+        const last = Math.max(parseInt(years[years.length - 1], 10), LATEST_YEAR || 0);
+        let max = 1;
+        for (let y = first; y <= last; y++) {
+            max = Math.max(max, (added[y] || 0) + (deleted[y] || 0));
+        }
+        const maxHeight = 64;
+
+        let html = '<div style="white-space: nowrap; overflow-x: auto; width: 100%; margin-bottom: 14px;">';
+        html += '<div style="font-size: 80%; color: grey; margin-bottom: 5px;">line churn per year '
+            + '(<span style="color: ' + ADDED + ';">added</span> / <span style="color: ' + DELETED + ';">deleted</span>):</div>';
+        for (let year = last; year >= first; year--) {
+            const a = added[year] || 0;
+            const d = deleted[year] || 0;
+            const hAdded = Math.round(maxHeight * a / max);
+            const hDeleted = Math.round(maxHeight * d / max);
+            const tip = year + ': +' + num(a) + ' / -' + num(d) + ' lines';
+            const label = (a > 0 || d > 0)
+                ? '<span style="color: ' + ADDED + ';">+' + smallNum(a) + '</span><br><span style="color: ' + DELETED + ';">-' + smallNum(d) + '</span>'
+                : '';
+            html += '<div style="display: inline-block; text-align: center; vertical-align: bottom; margin-right: 1px;" title="' + esc(tip) + '">'
+                + '<div style="font-size: 70%; height: 26px;">' + label + '</div>'
+                + '<div style="opacity: 0.6; background-color: ' + ADDED + '; width: 44px; height: ' + hAdded + 'px;"></div>'
+                + '<div style="opacity: 0.6; background-color: ' + DELETED + '; width: 44px; height: ' + hDeleted + 'px;"></div>'
+                + '<div style="font-size: 70%; color: grey;">' + year + '</div>'
+                + '</div>';
+        }
+        html += '</div>';
+        return html;
     }
 
     // Contributors Trend: DISTINCT contributors per year. Counts cannot be summed across

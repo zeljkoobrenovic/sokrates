@@ -149,6 +149,22 @@ public class ContributorsAnalysisResults {
         return contributors.stream().mapToInt(c -> c.getLinesDeleted30Days()).sum();
     }
 
+    // Total line churn (added + deleted) across all contributors, in the recent windows and all time.
+    @JsonIgnore
+    public int getChurn30Days() {
+        return contributors.stream().mapToInt(c -> c.getLinesAdded30Days() + c.getLinesDeleted30Days()).sum();
+    }
+
+    @JsonIgnore
+    public int getChurn90Days() {
+        return contributors.stream().mapToInt(c -> c.getLinesAdded90Days() + c.getLinesDeleted90Days()).sum();
+    }
+
+    @JsonIgnore
+    public int getChurn() {
+        return contributors.stream().mapToInt(c -> c.getLinesAdded() + c.getLinesDeleted()).sum();
+    }
+
     @JsonIgnore
     public int getCommitsCount90Days() {
         return contributors.stream().mapToInt(c -> c.getCommitsCount90Days()).sum();

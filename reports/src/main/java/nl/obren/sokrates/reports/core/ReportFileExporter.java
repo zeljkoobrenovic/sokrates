@@ -556,7 +556,7 @@ public class ReportFileExporter {
         report.endTableRow();
         report.endTable();
 
-        report.addParagraph("<a target='_blank' href='FileChangeFrequency.html'>File change frequency</a> views:", "margin-bottom: 0;");
+        report.addParagraph("<a target='_blank' href='FileChurn.html'>File change frequency</a> views:", "margin-bottom: 0;");
         report.startTable("");
         report.startTableRow();
         report.startTableCell("border: none");
@@ -575,7 +575,7 @@ public class ReportFileExporter {
         report.endTableRow();
         report.endTable();
 
-        report.addParagraph("<a target='_blank' href='FileChangeFrequency.html'>Contributors per file</a> views:", "margin-bottom: 0;");
+        report.addParagraph("<a target='_blank' href='FileChurn.html'>Contributors per file</a> views:", "margin-bottom: 0;");
         report.startTable("");
         report.startTableRow();
         report.startTableCell("border: none");
@@ -1177,7 +1177,7 @@ public class ReportFileExporter {
         }
         if (showHistoryReport) {
             list.add(new String[]{"FileAge.html", "File Age & Freshness", "file_history"});
-            list.add(new String[]{"FileChangeFrequency.html", "File Change Frequency", "change"});
+            list.add(new String[]{"FileChurn.html", "File Churn", "change"});
             list.add(new String[]{"Commits.html", "Commits", "commits"});
             list.add(new String[]{"Contributors.html", "Contributors", "contributors"});
         }
@@ -1208,7 +1208,7 @@ public class ReportFileExporter {
         }
         if (!showHistoryReport) {
             list.add(new String[]{"", "File Age & Freshness", "file_history"});
-            list.add(new String[]{"", "File Change Frequency", "change"});
+            list.add(new String[]{"", "File Churn", "change"});
             list.add(new String[]{"", "Temporal Dependencies", "temporal_dependency"});
             list.add(new String[]{"", "Contributors", "contributors"});
         }

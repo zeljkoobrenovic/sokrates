@@ -28,7 +28,7 @@ public class BasicSourceCodeReportGenerator {
     private RichTextReport duplicationReport = new RichTextReport("Duplication", "Duplication.html");
     private RichTextReport fileSizeReport = new RichTextReport("File Size", "FileSize.html");
     private RichTextReport fileHistoryReport = new RichTextReport("File Age & Freshness", "FileAge.html");
-    private RichTextReport fileChangeFrequencyReport = new RichTextReport("File Change Frequency", "FileChangeFrequency.html");
+    private RichTextReport FileChurnReport = new RichTextReport("File Churn", "FileChurn.html");
     private RichTextReport fileTemporalDependenciesReport = new RichTextReport("Temporal Dependencies", "FileTemporalDependencies.html");
     private RichTextReport unitSizeReport = new RichTextReport("Unit Size", "UnitSize.html");
     private RichTextReport conditionalComplexityReport = new RichTextReport("Conditional Complexity", "ConditionalComplexity.html");
@@ -97,7 +97,7 @@ public class BasicSourceCodeReportGenerator {
             if (codeAnalyzerSettings.isAnalyzeFileHistory()) {
                 if (codeAnalysisResults.getCodeConfiguration().getFileHistoryAnalysis().filesHistoryImportPathExists(codeConfigurationFile.getParentFile())) {
                     reports.add(fileHistoryReport);
-                    reports.add(fileChangeFrequencyReport);
+                    reports.add(FileChurnReport);
                     reports.add(fileTemporalDependenciesReport);
                     reports.add(commitsReport);
                     reports.add(contributorsReport);
@@ -141,7 +141,7 @@ public class BasicSourceCodeReportGenerator {
         decorateReport(conditionalComplexityReport, name, logoLink);
         decorateReport(fileSizeReport, name, logoLink);
         decorateReport(fileHistoryReport, name, logoLink);
-        decorateReport(fileChangeFrequencyReport, name, logoLink);
+        decorateReport(FileChurnReport, name, logoLink);
         decorateReport(fileTemporalDependenciesReport, name, logoLink);
         decorateReport(commitsReport, name, logoLink);
         decorateReport(contributorsReport, name, logoLink);
@@ -198,7 +198,7 @@ public class BasicSourceCodeReportGenerator {
                 new FileAgeReportGenerator(codeAnalysisResults).addFileAgeToReport(fileHistoryReport);
                 ProcessingStopwatch.end("reporting/file age");
                 ProcessingStopwatch.start("reporting/file change frequency");
-                new FileChurnReportGenerator(codeAnalysisResults).addFileHistoryToReport(fileChangeFrequencyReport);
+                new FileChurnReportGenerator(codeAnalysisResults).addFileHistoryToReport(FileChurnReport);
                 ProcessingStopwatch.end("reporting/file change frequency");
                 ProcessingStopwatch.start("reporting/temporal dependencies");
                 new FileTemporalDependenciesReportGenerator(codeAnalysisResults).addTemporalDependenciesToReport(reportsFolder, fileTemporalDependenciesReport);

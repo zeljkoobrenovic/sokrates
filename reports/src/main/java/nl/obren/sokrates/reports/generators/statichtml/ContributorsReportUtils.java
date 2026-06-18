@@ -159,9 +159,9 @@ public class ContributorsReportUtils {
                 if (timeSlot != null) {
                     int count = timeSlot.getFileUpdatesCount();
                     if (showTimeSlot) {
-                        report.addParagraph(count + "", "margin: 0px" + (count == 0 ? "; color: #d0d0d0" : ""));
+                        report.addParagraph(FormattingUtils.getSmallTextForNumber(count) + "", "margin: 0px; font-size: 90%" + (count == 0 ? "; color: #d0d0d0" : ""));
                     } else {
-                        report.addParagraph("&nbsp;", "margin: 0px");
+                        report.addParagraph("&nbsp;", "margin: 0px; font-size: 90%");
                     }
                     String title = timeSlot.getTimeSlot() + ": " + count + "\n\n";
                     RiskDistributionStats stats = timeSlot.getFileUpdatesCountStats();
@@ -183,9 +183,6 @@ public class ContributorsReportUtils {
 
                     int heightNegligible = 1 + (int) (64.0 * stats.getNegligibleRiskValue() / maxFileUpdatesCount);
                     report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + palette.nextColor() + "; height:" + heightNegligible + "px'></div>");
-
-
-
                 } else {
                     report.addHtmlContent("<div style='width: 100%; background-color: #d0d0d0; height:1px'></div>");
                 }
@@ -206,9 +203,9 @@ public class ContributorsReportUtils {
                 if (timeSlot != null) {
                     int count = timeSlot.getCommitsCount();
                     if (showTimeSlot) {
-                        report.addParagraph(count + "", "margin: 0px" + (count == 0 ? "; color: #d0d0d0" : ""));
+                        report.addParagraph(FormattingUtils.getSmallTextForNumber(count) + "", "margin: 0px; font-size: 90%" + (count == 0 ? "; color: #d0d0d0" : ""));
                     } else {
-                        report.addParagraph("&nbsp;", "margin: 0px");
+                        report.addParagraph("&nbsp;", "margin: 0px; font-size: 90%");
                     }
                     int height = 1 + (int) (64.0 * count / maxCommits);
                     String title = timeSlot.getTimeSlot() + ": " + count;
@@ -228,9 +225,9 @@ public class ContributorsReportUtils {
                     if (timeSlot != null) {
                         int count = timeSlot.getContributorsCount();
                         if (showTimeSlot) {
-                            report.addParagraph(count + "", "margin: 0px" + (count == 0 ? "; color: #d0d0d0" : ""));
+                            report.addParagraph(FormattingUtils.getSmallTextForNumber(count) + "", "margin: 0px; font-size: 90%" + (count == 0 ? "; color: #d0d0d0" : ""));
                         } else {
-                            report.addParagraph("&nbsp;", "margin: 0px");
+                            report.addParagraph("&nbsp;", "margin: 0px; font-size: 90%");
                         }
                         int height = 1 + (int) (64.0 * count / maxContributors);
                         String title = timeSlot.getTimeSlot() + ": " + count;
@@ -285,9 +282,9 @@ public class ContributorsReportUtils {
                 int deleted = timeSlot.getLinesDeleted();
                 int total = added + deleted;
                 if (showTimeSlot) {
-                    report.addParagraph(total + "", "margin: 0px" + (total == 0 ? "; color: #d0d0d0" : ""));
+                    report.addParagraph(FormattingUtils.getSmallTextForNumber(total) + "", "margin: 0px; font-size: 90%" + (total == 0 ? "; color: #d0d0d0" : ""));
                 } else {
-                    report.addParagraph("&nbsp;", "margin: 0px");
+                    report.addParagraph("&nbsp;", "margin: 0px; font-size: 90%");
                 }
                 String title = timeSlot.getTimeSlot() + ": +" + added + " / -" + deleted + " lines";
                 // Heights share the same scale (max single-slot total) so added/deleted are comparable

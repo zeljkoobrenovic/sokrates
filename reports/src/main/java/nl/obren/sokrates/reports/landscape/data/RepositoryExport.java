@@ -31,6 +31,10 @@ public class RepositoryExport {
     private final int commitsCount30Days;
     private final int commitsCount90Days;
     private final int commitsCount;
+    // Total line churn (added + deleted) across the repository, in the recent windows and all time.
+    private final int churn30Days;
+    private final int churn90Days;
+    private final int churn;
 
     private List<String> contributors30Days;
     private List<String> contributors90Days;
@@ -89,6 +93,9 @@ public class RepositoryExport {
         commitsCount = contributorsAnalysisResults.getCommitsCount();
         commitsCount30Days = contributorsAnalysisResults.getCommitsCount30Days();
         commitsCount90Days = contributorsAnalysisResults.getCommitsCount90Days();
+        churn = contributorsAnalysisResults.getChurn();
+        churn30Days = contributorsAnalysisResults.getChurn30Days();
+        churn90Days = contributorsAnalysisResults.getChurn90Days();
         commitsCount180Days = contributorsAnalysisResults.getCommitsCount180Days();
 
         contributors30Days = new ArrayList<>();
@@ -211,7 +218,8 @@ public class RepositoryExport {
         if (windowed.size() > limit) {
             windowed = windowed.subList(0, limit);
         }
-        windowed.forEach(slot -> history.add(slot.getTimeSlot(), slot.getCommitsCount(), slot.getContributorsCount()));
+        windowed.forEach(slot -> history.add(slot.getTimeSlot(), slot.getCommitsCount(), slot.getContributorsCount(),
+                slot.getLinesAdded(), slot.getLinesDeleted()));
         return history;
     }
 
@@ -277,6 +285,18 @@ public class RepositoryExport {
 
     public int getCommitsCount90Days() {
         return commitsCount90Days;
+    }
+
+    public int getChurn30Days() {
+        return churn30Days;
+    }
+
+    public int getChurn90Days() {
+        return churn90Days;
+    }
+
+    public int getChurn() {
+        return churn;
     }
 
     public List<String> getContributors30Days() {

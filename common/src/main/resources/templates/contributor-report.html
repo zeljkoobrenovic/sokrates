@@ -152,7 +152,7 @@
 <div id="report" style="display: none;">
     <div id="header"></div>
 
-    <div class="tab" id="tabs"></div>
+    <div class="tab" id="tabs" style="margin-top: 24px"></div>
     <div class="tabcontent">
         <div style="color: grey; margin: 8px 0 10px 0;">
             <input id="filter" type="text" placeholder="search... (use ; for multiple terms)"
@@ -174,6 +174,23 @@
 
     function num(n) {
         return (n || 0).toLocaleString('en-US');
+    }
+
+    // Compact magnitude label, mirroring FormattingUtils.getSmallTextForNumber (K/M suffixes),
+    // without the <b> wrapper. Used for commit and churn counts.
+    function smallNum(n) {
+        n = n || 0;
+        const strip = s => s.replace(/\.0$/, '');
+        if (n < 1000) {
+            return '' + n;
+        } else if (n < 10000) {
+            return strip((n / 1000).toFixed(1)) + 'K';
+        } else if (n < 1000000) {
+            return Math.round(n / 1000) + 'K';
+        } else if (n < 10000000) {
+            return strip((n / 1000000).toFixed(1)) + 'M';
+        }
+        return Math.round(n / 1000000) + 'M';
     }
 
     function esc(s) {
@@ -306,7 +323,7 @@
         html += '<div>Commits count: '
             + window30(data.commitsCount30Days, '30d') + window30(data.commitsCount90Days, '3m')
             + window30(data.commitsCount180Days, '6m') + window30(data.commitsCount365Days, '1y')
-            + '<b>' + num(data.commitsCount) + '</b>' + greyLabel(' (all time)') + '</div>';
+            + '<b>' + smallNum(data.commitsCount) + '</b>' + greyLabel(' (all time)') + '</div>';
         // Churn line: only shown when the underlying git-history.txt carried added/deleted columns.
         const totalChurn = (data.linesAdded || 0) + (data.linesDeleted || 0);
         if (totalChurn > 0) {
@@ -326,12 +343,13 @@
     }
 
     function window30(value, label) {
-        return '<b>' + num(value) + '</b>' + greyLabel(' (' + label + ')') + '&nbsp;&nbsp;&nbsp;';
+        return '<b>' + smallNum(value) + '</b>' + greyLabel(' (' + label + ')') + '&nbsp;&nbsp;&nbsp;';
     }
 
     function churnSpan(added, deleted) {
-        return '<b style="color: #2e7d32;">+' + num(added || 0) + '</b> / '
-            + '<b style="color: #c62828;">-' + num(deleted || 0) + '</b>';
+        return '<span style="display: inline-block; vertical-align: middle; text-align: center; line-height: 1.1;">'
+            + '<b style="color: #2e7d32;">+' + smallNum(added || 0) + '</b>'
+            + '<br><b style="color: #c62828;">-' + smallNum(deleted || 0) + '</b></span>';
     }
 
     function renderExtensions() {
@@ -434,6 +452,34 @@
         return counts;
     }
 
+    // Lines added (or deleted) per time slot for a repository, from a per-day churn map.
+    function churnPerSlotFrom(perDate, slotFn) {
+        const counts = {};
+        if (perDate) {
+            Object.keys(perDate).forEach(d => {
+                const slot = slotFn(d);
+                counts[slot] = (counts[slot] || 0) + perDate[d];
+            });
+        }
+        return counts;
+    }
+
+    // Churn colours and a "+added / -deleted" cell renderer (added green, deleted red). Renders a
+    // muted dash when both are zero.
+    const CHURN_ADDED_COLOR = '#2e7d32';
+    const CHURN_DELETED_COLOR = '#c62828';
+
+    function churnCell(added, deleted, cellStyle) {
+        added = added || 0;
+        deleted = deleted || 0;
+        if (added === 0 && deleted === 0) {
+            return '<td style="' + cellStyle + ' text-align:center;"><span style="color: lightgrey">-</span></td>';
+        }
+        return '<td style="' + cellStyle + ' text-align:center; white-space: nowrap; line-height: 1.2; font-size: 80%">'
+            + '<div style="color: ' + CHURN_ADDED_COLOR + ';">+' + smallNum(added) + '</div>'
+            + '<div style="color: ' + CHURN_DELETED_COLOR + ';">-' + smallNum(deleted) + '</div></td>';
+    }
+
     // Circle diameter for a commit count, sqrt-scaled so the AREA grows ~linearly with commits and a
     // single very busy slot doesn't dwarf everything. `full` is the count that reaches the max size.
     function dotSize(c, full) {
@@ -453,11 +499,21 @@
 
         let html = '<div class="grid"><table>';
         // header: per-slot repository counts
+        html += '<tr>'
+            + '<td style="border:none"></td>'
+            + '<td style="border:none"></td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: grey; border-bottom: 1px solid #ccc" colspan="4">Commits</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: grey; border-bottom: 1px solid #555;" colspan="4">Line Churn</td>'
+            + '</tr>';
         html += '<tr><td style="border:none"></td><td class="repo-name" style="border:none"></td>'
-            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">Commits<br>(30d)</td>'
-            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">Commits<br>(3m)</td>'
-            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">Commits<br>(1y)</td>'
-            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">Commits<br>(all time)</td>';
+            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">30d</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">3m</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">1y</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">all time</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">30d</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">3m</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">1y</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">all time</td>';
         slots.forEach(slot => {
             let repoCount = 0;
             repos.forEach(r => {
@@ -476,31 +532,97 @@
         const total90 = sum('commits90Days');
         const total365 = sum('commits365Days');
         const totalAll = sum('commitsCount');
-        // A bottom border on every cell of this row visually separates the summary from the
-        // per-repository rows below.
+        const totalChurnAdded30 = sum('churnAdded30Days');
+        const totalChurnDeleted30 = sum('churnDeleted30Days');
+        const totalChurnAdded90 = sum('churnAdded90Days');
+        const totalChurnDeleted90 = sum('churnDeleted90Days');
+        const totalChurnAdded365 = sum('churnAdded365Days');
+        const totalChurnDeleted365 = sum('churnDeleted365Days');
+        const totalChurnAddedAll = sum('churnAdded');
+        const totalChurnDeletedAll = sum('churnDeleted');
+        // Two summary rows: line churn first, then commits. Each fills only its own metric's four
+        // columns (the other metric's four cells are left blank) and carries its own per-slot bar
+        // chart across the visible window. A bottom border on the commits row separates the summary
+        // from the per-repository rows below.
+        const emptyCell = 'border:none;';
+        const churnBorder = 'border:none;';
         const totalBorder = 'border:none; border-bottom: 2px solid #ccc;';
+        const COMMIT_BAR_COLOR = '#483D8B';
+
+        // Per-slot totals across all filtered repos, for both metrics.
+        const perRepoCommitCounts = repos.map(r => commitsPerSlot(r, slotFn));
+        const commitSlotTotals = slots.map(slot => perRepoCommitCounts.reduce((acc, c) => acc + (c[slot] || 0), 0));
+        const maxCommitSlot = Math.max(1, ...commitSlotTotals);
+        // Per-slot churn split into added / deleted, summed across all filtered repos.
+        const perRepoChurnAdded = repos.map(r => churnPerSlotFrom(r.churnAddedPerDate, slotFn));
+        const perRepoChurnDeleted = repos.map(r => churnPerSlotFrom(r.churnDeletedPerDate, slotFn));
+        const churnAddedSlotTotals = slots.map(slot => perRepoChurnAdded.reduce((acc, c) => acc + (c[slot] || 0), 0));
+        const churnDeletedSlotTotals = slots.map(slot => perRepoChurnDeleted.reduce((acc, c) => acc + (c[slot] || 0), 0));
+        const maxChurnSlot = Math.max(1, ...slots.map((_, i) => churnAddedSlotTotals[i] + churnDeletedSlotTotals[i]));
+
+        // Renders a per-slot summary bar row segment (the bars after the fixed columns).
+        function slotBars(slotTotals, maxSlot, color, unitSingular, unitPlural, border) {
+            let s = '';
+            slotTotals.forEach((slotTotal, idx) => {
+                const barHeight = slotTotal > 0 ? Math.round(28 * slotTotal / maxSlot) + 1 : 0;
+                s += '<td style="' + border + ' text-align:center; vertical-align: bottom; padding: 0 2px;" '
+                    + 'title="' + esc(slots[idx] + ': ' + slotTotal + ' ' + (slotTotal === 1 ? unitSingular : unitPlural)) + '">'
+                    + '<div style="font-size: 70%; color: grey;">' + (slotTotal > 0 ? smallNum(slotTotal) : '-') + '</div>'
+                    + (slotTotal > 0
+                        ? '<div style="margin: 1px auto 0; background-color: ' + color + '; width: 60%; height: ' + barHeight + 'px;"></div>'
+                        : '')
+                    + '</td>';
+            });
+            return s;
+        }
+
+        // Per-slot stacked churn bars: added (green) on top of deleted (red), both scaled to the
+        // busiest slot's added+deleted total. Label shows the slot's total lines changed.
+        function churnSlotBars(addedTotals, deletedTotals, maxSlot, border) {
+            let s = '';
+            addedTotals.forEach((added, idx) => {
+                const deleted = deletedTotals[idx];
+                const total = added + deleted;
+                const hAdded = added > 0 ? Math.round(28 * added / maxSlot) + 1 : 0;
+                const hDeleted = deleted > 0 ? Math.round(28 * deleted / maxSlot) + 1 : 0;
+                s += '<td style="' + border + ' text-align:center; vertical-align: bottom; padding: 0 2px;" '
+                    + 'title="' + esc(slots[idx] + ': +' + added + ' / -' + deleted + ' lines') + '">'
+                    + '<div style="font-size: 70%; color: grey;">' + (total > 0 ? smallNum(total) : '-') + '</div>'
+                    + (added > 0 ? '<div style="margin: 1px auto 0; background-color: ' + CHURN_ADDED_COLOR + '; width: 60%; height: ' + hAdded + 'px;"></div>' : '')
+                    + (deleted > 0 ? '<div style="margin: 0 auto; background-color: ' + CHURN_DELETED_COLOR + '; width: 60%; height: ' + hDeleted + 'px;"></div>' : '')
+                    + '</td>';
+            });
+            return s;
+        }
+
+        // Line-churn total row: churn columns filled, commit columns blank.
+        html += '<tr style="font-weight: bold; background-color: #f7f7f7;">';
+        html += '<td style="' + churnBorder + '"></td>';
+        html += '<td class="repo-name" style="' + churnBorder + '"></td>';
+        html += '<td style="' + emptyCell + '"></td>';
+        html += '<td style="' + emptyCell + '"></td>';
+        html += '<td style="' + emptyCell + '"></td>';
+        html += '<td style="' + emptyCell + '"></td>';
+        html += churnCell(totalChurnAdded30, totalChurnDeleted30, churnBorder);
+        html += churnCell(totalChurnAdded90, totalChurnDeleted90, churnBorder);
+        html += churnCell(totalChurnAdded365, totalChurnDeleted365, churnBorder);
+        html += churnCell(totalChurnAddedAll, totalChurnDeletedAll, churnBorder);
+        html += churnSlotBars(churnAddedSlotTotals, churnDeletedSlotTotals, maxChurnSlot, churnBorder);
+        html += '</tr>';
+
+        // Commits total row: commit columns filled, churn columns blank.
         html += '<tr style="font-weight: bold; background-color: #f7f7f7;">';
         html += '<td style="' + totalBorder + '"></td>';
-        html += '<td class="repo-name" style="' + totalBorder + '">Total</td>';
-        html += '<td style="' + totalBorder + ' text-align:center;">' + (total30 > 0 ? num(total30) : '-') + '</td>';
-        html += '<td style="' + totalBorder + ' text-align:center;">' + (total90 > 0 ? num(total90) : '-') + '</td>';
-        html += '<td style="' + totalBorder + ' text-align:center;">' + (total365 > 0 ? num(total365) : '-') + '</td>';
-        html += '<td style="' + totalBorder + ' text-align:center;">' + (totalAll > 0 ? num(totalAll) : '-') + '</td>';
-        // Per-slot commit totals (summed across all filtered repos), then a small bar per slot scaled
-        // to the busiest slot — a sparkline-style trend of commit volume across the visible window.
-        const perRepoCounts = repos.map(r => commitsPerSlot(r, slotFn));
-        const slotTotals = slots.map(slot => perRepoCounts.reduce((acc, c) => acc + (c[slot] || 0), 0));
-        const maxSlotTotal = Math.max(1, ...slotTotals);
-        slotTotals.forEach((slotTotal, idx) => {
-            const barHeight = slotTotal > 0 ? Math.round(28 * slotTotal / maxSlotTotal) + 1 : 0;
-            html += '<td style="' + totalBorder + ' text-align:center; vertical-align: bottom; padding: 0 2px;" '
-                + 'title="' + esc(slots[idx] + ': ' + slotTotal + (slotTotal === 1 ? ' commit' : ' commits')) + '">'
-                + '<div style="font-size: 70%; color: grey;">' + (slotTotal > 0 ? num(slotTotal) : '-') + '</div>'
-                + (slotTotal > 0
-                    ? '<div style="margin: 1px auto 0; background-color: #483D8B; width: 60%; height: ' + barHeight + 'px;"></div>'
-                    : '')
-                + '</td>';
-        });
+        html += '<td class="repo-name" style="' + totalBorder + '"></td>';
+        html += '<td style="' + totalBorder + ' text-align:center;">' + (total30 > 0 ? smallNum(total30) : '-') + '</td>';
+        html += '<td style="' + totalBorder + ' text-align:center;">' + (total90 > 0 ? smallNum(total90) : '-') + '</td>';
+        html += '<td style="' + totalBorder + ' text-align:center;">' + (total365 > 0 ? smallNum(total365) : '-') + '</td>';
+        html += '<td style="' + totalBorder + ' text-align:center;">' + (totalAll > 0 ? smallNum(totalAll) : '-') + '</td>';
+        html += '<td style="' + totalBorder + '"></td>';
+        html += '<td style="' + totalBorder + '"></td>';
+        html += '<td style="' + totalBorder + '"></td>';
+        html += '<td style="' + totalBorder + '"></td>';
+        html += slotBars(commitSlotTotals, maxCommitSlot, COMMIT_BAR_COLOR, 'commit', 'commits', totalBorder);
         html += '</tr>';
 
         repos.forEach(repo => {
@@ -509,10 +631,14 @@
             html += '<tr>';
             html += '<td style="border:none; text-align:center;">' + langIcon(repo.lang, 28) + '</td>';
             html += '<td class="repo-name" style="border:none; ' + weight + '">' + repoNameHtml(repo) + '</td>';
-            html += '<td style="border:none; text-align:center; ' + weight + '">' + (repo.commits30Days > 0 ? num(repo.commits30Days) : '-') + '</td>';
-            html += '<td style="border:none; text-align:center; ' + weight + '">' + (repo.commits90Days > 0 ? num(repo.commits90Days) : '-') + '</td>';
-            html += '<td style="border:none; text-align:center; ' + weight + '">' + (repo.commits365Days > 0 ? num(repo.commits365Days) : '-') + '</td>';
-            html += '<td style="border:none; text-align:center; ' + weight + '">' + (repo.commitsCount > 0 ? num(repo.commitsCount) : '-') + '</td>';
+            html += '<td style="border:none; text-align:center; ' + weight + '">' + (repo.commits30Days > 0 ? smallNum(repo.commits30Days) : '-') + '</td>';
+            html += '<td style="border:none; text-align:center; ' + weight + '">' + (repo.commits90Days > 0 ? smallNum(repo.commits90Days) : '-') + '</td>';
+            html += '<td style="border:none; text-align:center; ' + weight + '">' + (repo.commits365Days > 0 ? smallNum(repo.commits365Days) : '-') + '</td>';
+            html += '<td style="border:none; text-align:center; ' + weight + '">' + (repo.commitsCount > 0 ? smallNum(repo.commitsCount) : '-') + '</td>';
+            html += churnCell(repo.churnAdded30Days, repo.churnDeleted30Days, 'border:none; ' + weight);
+            html += churnCell(repo.churnAdded90Days, repo.churnDeleted90Days, 'border:none; ' + weight);
+            html += churnCell(repo.churnAdded365Days, repo.churnDeleted365Days, 'border:none; ' + weight);
+            html += churnCell(repo.churnAdded, repo.churnDeleted, 'border:none; ' + weight);
             slots.forEach((slot, idx) => {
                 const c = counts[slot] || 0;
                 html += '<td style="border:none; text-align:center; padding: 0; vertical-align: middle;">';
@@ -564,11 +690,11 @@
                 ? '<a href="' + esc(m.reportUrl) + '" target="_blank">' + esc(m.email) + '</a>'
                 : esc(m.email);
             html += '<td>' + nameHtml + '</td>';
-            html += '<td style="text-align:center">' + num(m.commitsCount30Days) + '</td>';
-            html += '<td style="text-align:center">' + num(m.commitsCount90Days) + '</td>';
-            html += '<td style="text-align:center">' + num(m.commitsCount180Days) + '</td>';
-            html += '<td style="text-align:center">' + num(m.commitsCount365Days) + '</td>';
-            html += '<td style="text-align:center">' + num(m.commitsCount) + '</td>';
+            html += '<td style="text-align:center">' + smallNum(m.commitsCount30Days) + '</td>';
+            html += '<td style="text-align:center">' + smallNum(m.commitsCount90Days) + '</td>';
+            html += '<td style="text-align:center">' + smallNum(m.commitsCount180Days) + '</td>';
+            html += '<td style="text-align:center">' + smallNum(m.commitsCount365Days) + '</td>';
+            html += '<td style="text-align:center">' + smallNum(m.commitsCount) + '</td>';
             html += '<td style="text-align:center; white-space: nowrap;">' + esc(m.firstCommitDate) + '</td>';
             html += '<td style="text-align:center; white-space: nowrap;">' + esc(m.latestCommitDate) + '</td>';
             html += '</tr>';

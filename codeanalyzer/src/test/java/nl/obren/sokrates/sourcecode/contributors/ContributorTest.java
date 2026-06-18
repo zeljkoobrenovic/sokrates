@@ -42,12 +42,18 @@ class ContributorTest {
         Contributor c = new Contributor("a@example.com");
         c.addCommit("2020-01-01", 1, 10, 4);
 
-        c.addChurn(100, 50, 7, 2);
+        c.addChurn(100, 50, 7, 2, 30, 12, 55, 22, 80, 40);
 
         assertEquals(110, c.getLinesAdded());
         assertEquals(54, c.getLinesDeleted());
         assertEquals(7, c.getLinesAdded30Days());
         assertEquals(2, c.getLinesDeleted30Days());
+        assertEquals(30, c.getLinesAdded90Days());
+        assertEquals(12, c.getLinesDeleted90Days());
+        assertEquals(55, c.getLinesAdded180Days());
+        assertEquals(22, c.getLinesDeleted180Days());
+        assertEquals(80, c.getLinesAdded365Days());
+        assertEquals(40, c.getLinesDeleted365Days());
     }
 
     @Test

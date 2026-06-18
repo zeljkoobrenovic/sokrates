@@ -778,9 +778,14 @@ public class LandscapeAnalysisResults {
         if (StringUtils.isBlank(teamData.getLatestCommitDate()) || repo.getLatestCommitDate().compareTo(teamData.getLatestCommitDate()) > 0) {
             teamData.setLatestCommitDate(repo.getLatestCommitDate());
         }
-        team.addRepository(repo.getRepositoryAnalysisResults(), repo.getFirstCommitDate(), repo.getLatestCommitDate(),
+        ContributorRepositoryInfo teamRepoInfo = team.addRepository(repo.getRepositoryAnalysisResults(), repo.getFirstCommitDate(), repo.getLatestCommitDate(),
                 repo.getCommitsCount(), repo.getCommits30Days(), repo.getCommits90Days(),
                 repo.getCommits180Days(), repo.getCommits365Days(), repo.getCommitDates(), repo.getCommitsPerDate());
+        teamRepoInfo.addChurn(repo.getChurnAdded(), repo.getChurnDeleted(),
+                repo.getChurnAdded30Days(), repo.getChurnDeleted30Days(),
+                repo.getChurnAdded90Days(), repo.getChurnDeleted90Days(),
+                repo.getChurnAdded365Days(), repo.getChurnDeleted365Days());
+        teamRepoInfo.addChurnPerDate(repo.getChurnAddedPerDate(), repo.getChurnDeletedPerDate());
     }
 
     @JsonIgnore
@@ -828,13 +833,22 @@ public class LandscapeAnalysisResults {
                     contributorInfo.addActiveYears(contributor.getActiveYears());
                     contributorInfo.addCommitDates(contributor.getCommitDates());
                     contributorInfo.addCommitsPerDate(commitsPerDate);
+                    contributorInfo.addLinesPerDate(contributor.getLinesAddedPerDate(), contributor.getLinesDeletedPerDate());
                     contributorInfo.addChurn(contributor.getLinesAdded(), contributor.getLinesDeleted(),
-                            contributor.getLinesAdded30Days(), contributor.getLinesDeleted30Days());
+                            contributor.getLinesAdded30Days(), contributor.getLinesDeleted30Days(),
+                            contributor.getLinesAdded90Days(), contributor.getLinesDeleted90Days(),
+                            contributor.getLinesAdded180Days(), contributor.getLinesDeleted180Days(),
+                            contributor.getLinesAdded365Days(), contributor.getLinesDeleted365Days());
 
-                    existingContributor.addRepository(repositoryAnalysisResults, firstCommitDate, latestCommitDate,
+                    ContributorRepositoryInfo repoInfo = existingContributor.addRepository(repositoryAnalysisResults, firstCommitDate, latestCommitDate,
                             repositoryCommits, repositoryCommits30Days, repositoryCommits90Days,
                             repositoryCommits180Days, repositoryCommits365Days,
                             new ArrayList<>(commitDates), new LinkedHashMap<>(commitsPerDate));
+                    repoInfo.addChurn(contributor.getLinesAdded(), contributor.getLinesDeleted(),
+                            contributor.getLinesAdded30Days(), contributor.getLinesDeleted30Days(),
+                            contributor.getLinesAdded90Days(), contributor.getLinesDeleted90Days(),
+                            contributor.getLinesAdded365Days(), contributor.getLinesDeleted365Days());
+                    repoInfo.addChurnPerDate(contributor.getLinesAddedPerDate(), contributor.getLinesDeletedPerDate());
 
                     if (firstCommitDate.compareTo(contributorInfo.getFirstCommitDate()) < 0) {
                         contributorInfo.setFirstCommitDate(firstCommitDate);
@@ -857,18 +871,31 @@ public class LandscapeAnalysisResults {
                     newContributor.setActiveYears(new ArrayList<>(contributor.getActiveYears()));
                     newContributor.setCommitDates(new ArrayList<>(contributor.getCommitDates()));
                     newContributor.setCommitsPerDate(new LinkedHashMap<>(commitsPerDate));
+                    newContributor.setLinesAddedPerDate(new LinkedHashMap<>(contributor.getLinesAddedPerDate()));
+                    newContributor.setLinesDeletedPerDate(new LinkedHashMap<>(contributor.getLinesDeletedPerDate()));
                     newContributor.setLinesAdded(contributor.getLinesAdded());
                     newContributor.setLinesDeleted(contributor.getLinesDeleted());
                     newContributor.setLinesAdded30Days(contributor.getLinesAdded30Days());
                     newContributor.setLinesDeleted30Days(contributor.getLinesDeleted30Days());
+                    newContributor.setLinesAdded90Days(contributor.getLinesAdded90Days());
+                    newContributor.setLinesDeleted90Days(contributor.getLinesDeleted90Days());
+                    newContributor.setLinesAdded180Days(contributor.getLinesAdded180Days());
+                    newContributor.setLinesDeleted180Days(contributor.getLinesDeleted180Days());
+                    newContributor.setLinesAdded365Days(contributor.getLinesAdded365Days());
+                    newContributor.setLinesDeleted365Days(contributor.getLinesDeleted365Days());
 
                     ContributorRepositories newContributorWithRepositories = new ContributorRepositories(newContributor);
 
-                    newContributorWithRepositories.addRepository(repositoryAnalysisResults, newContributor.getFirstCommitDate(),
+                    ContributorRepositoryInfo newRepoInfo = newContributorWithRepositories.addRepository(repositoryAnalysisResults, newContributor.getFirstCommitDate(),
                             newContributor.getLatestCommitDate(),
                             repositoryCommits, repositoryCommits30Days, repositoryCommits90Days,
                             repositoryCommits180Days, repositoryCommits365Days,
                             new ArrayList<>(commitDates), new LinkedHashMap<>(commitsPerDate));
+                    newRepoInfo.addChurn(contributor.getLinesAdded(), contributor.getLinesDeleted(),
+                            contributor.getLinesAdded30Days(), contributor.getLinesDeleted30Days(),
+                            contributor.getLinesAdded90Days(), contributor.getLinesDeleted90Days(),
+                            contributor.getLinesAdded365Days(), contributor.getLinesDeleted365Days());
+                    newRepoInfo.addChurnPerDate(contributor.getLinesAddedPerDate(), contributor.getLinesDeletedPerDate());
 
                     map.put(contributorId, newContributorWithRepositories);
                     list.add(newContributorWithRepositories);
@@ -1013,11 +1040,13 @@ public class LandscapeAnalysisResults {
                 contributionTimeSlot.setTimeSlot(timeSlot.getTimeSlot());
                 contributionTimeSlot.setContributorsCount(timeSlot.getContributorsCount());
                 contributionTimeSlot.setCommitsCount(timeSlot.getCommitsCount());
+                contributionTimeSlot.addChurn(timeSlot.getLinesAdded(), timeSlot.getLinesDeleted());
                 list.add(contributionTimeSlot);
                 map.put(timeSlot.getTimeSlot(), contributionTimeSlot);
             } else {
                 contributionTimeSlot.setContributorsCount(contributionTimeSlot.getContributorsCount() + timeSlot.getContributorsCount());
                 contributionTimeSlot.setCommitsCount(contributionTimeSlot.getCommitsCount() + timeSlot.getCommitsCount());
+                contributionTimeSlot.addChurn(timeSlot.getLinesAdded(), timeSlot.getLinesDeleted());
             }
         });
     }

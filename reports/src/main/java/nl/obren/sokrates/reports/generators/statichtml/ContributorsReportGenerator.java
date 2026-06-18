@@ -131,8 +131,8 @@ public class ContributorsReportGenerator {
             List<Contributor> peopleCommits30Days = people.stream().filter(c -> c.getCommitsCount30Days() > 0).collect(Collectors.toList());
             List<Contributor> botCommits30Days = bots.stream().filter(c -> c.getCommitsCount30Days() > 0).collect(Collectors.toList());
             commits30Days.sort((a, b) -> b.getCommitsCount30Days() - a.getCommitsCount30Days());
-            addContributorsPanel(report, peopleCommits30Days, c -> c.getCommitsCount30Days(), true, e -> e.getFileUpdates30Days(), "Contributor");
-            addContributorsPanel(report, botCommits30Days, c -> c.getCommitsCount30Days(), true, e -> e.getFileUpdates30Days(), "Bot");
+            addContributorsPanel(report, peopleCommits30Days, c -> c.getCommitsCount30Days(), true, e -> e.getFileUpdates30Days(), "Contributor", Contributor::getLinesAdded30Days, Contributor::getLinesDeleted30Days);
+            addContributorsPanel(report, botCommits30Days, c -> c.getCommitsCount30Days(), true, e -> e.getFileUpdates30Days(), "Bot", Contributor::getLinesAdded30Days, Contributor::getLinesDeleted30Days);
             renderPeopleDependencies(analysis.getPeopleDependencies30Days(), analysis.getPeopleFileDependencies30Days(), 30, c -> c.getCommitsCount30Days(), commits30Days);
         } else {
             report.addParagraph("No commits in past 30 days.", "margin-top: 16px");
@@ -145,8 +145,8 @@ public class ContributorsReportGenerator {
             List<Contributor> peopleCommits90Days = people.stream().filter(c -> c.getCommitsCount90Days() > 0).collect(Collectors.toList());
             List<Contributor> botCommits90Days = bots.stream().filter(c -> c.getCommitsCount90Days() > 0).collect(Collectors.toList());
             commits90Days.sort((a, b) -> b.getCommitsCount90Days() - a.getCommitsCount90Days());
-            addContributorsPanel(report, peopleCommits90Days, c -> c.getCommitsCount90Days(), true, e -> e.getFileUpdates90Days(), "Contributor");
-            addContributorsPanel(report, botCommits90Days, c -> c.getCommitsCount90Days(), true, e -> e.getFileUpdates90Days(), "Bot");
+            addContributorsPanel(report, peopleCommits90Days, c -> c.getCommitsCount90Days(), true, e -> e.getFileUpdates90Days(), "Contributor", Contributor::getLinesAdded90Days, Contributor::getLinesDeleted90Days);
+            addContributorsPanel(report, botCommits90Days, c -> c.getCommitsCount90Days(), true, e -> e.getFileUpdates90Days(), "Bot", Contributor::getLinesAdded90Days, Contributor::getLinesDeleted90Days);
             renderPeopleDependencies(analysis.getPeopleDependencies90Days(), analysis.getPeopleFileDependencies90Days(), 90, c -> c.getCommitsCount90Days(), commits90Days);
         } else {
             report.addParagraph("No commits in past 90 days.", "margin-top: 16px");
@@ -159,8 +159,8 @@ public class ContributorsReportGenerator {
             List<Contributor> peopleCommits180Days = people.stream().filter(c -> c.getCommitsCount180Days() > 0).collect(Collectors.toList());
             List<Contributor> botCommits180Days = bots.stream().filter(c -> c.getCommitsCount180Days() > 0).collect(Collectors.toList());
             commits180Days.sort((a, b) -> b.getCommitsCount180Days() - a.getCommitsCount180Days());
-            addContributorsPanel(report, peopleCommits180Days, c -> c.getCommitsCount180Days(), true, null, "Contributor");
-            addContributorsPanel(report, botCommits180Days, c -> c.getCommitsCount180Days(), true, null, "Bot");
+            addContributorsPanel(report, peopleCommits180Days, c -> c.getCommitsCount180Days(), true, null, "Contributor", Contributor::getLinesAdded180Days, Contributor::getLinesDeleted180Days);
+            addContributorsPanel(report, botCommits180Days, c -> c.getCommitsCount180Days(), true, null, "Bot", Contributor::getLinesAdded180Days, Contributor::getLinesDeleted180Days);
             renderPeopleDependencies(analysis.getPeopleDependencies180Days(), analysis.getPeopleFileDependencies180Days(), 180, c -> c.getCommitsCount180Days(), commits180Days);
         } else {
             report.addParagraph("No commits in past 180 days.", "margin-top: 16px");
@@ -173,8 +173,8 @@ public class ContributorsReportGenerator {
         List<Contributor> peopleCommits365Days = people.stream().filter(c -> c.getCommitsCount365Days() > 0).collect(Collectors.toList());
         List<Contributor> botCommits365Days = bots.stream().filter(c -> c.getCommitsCount365Days() > 0).collect(Collectors.toList());
         commits365Days.sort((a, b) -> b.getCommitsCount365Days() - a.getCommitsCount365Days());
-        addContributorsPanel(report, peopleCommits365Days, c -> c.getCommitsCount365Days(), true, null, "Contributor");
-        addContributorsPanel(report, botCommits365Days, c -> c.getCommitsCount365Days(), true, null, "Bot");
+        addContributorsPanel(report, peopleCommits365Days, c -> c.getCommitsCount365Days(), true, null, "Contributor", Contributor::getLinesAdded365Days, Contributor::getLinesDeleted365Days);
+        addContributorsPanel(report, botCommits365Days, c -> c.getCommitsCount365Days(), true, null, "Bot", Contributor::getLinesAdded365Days, Contributor::getLinesDeleted365Days);
         renderPeopleDependencies(analysis.getPeopleDependencies365Days(), analysis.getPeopleFileDependencies365Days(), 365, c -> c.getCommitsCount365Days(), commits365Days);
         report.endTabContentSection();
 
@@ -204,6 +204,81 @@ public class ContributorsReportGenerator {
     }
 
 
+    // A matrix commits-count cell: the count ("-" when zero), with that window's line churn shown
+    // underneath (+added / -deleted) when the history carried churn data.
+    private String commitsCountWithChurnCell(int commitsCount, int linesAdded, int linesDeleted) {
+        String cell = commitsCount > 0 ? commitsCount + "" : "-";
+        if (linesAdded > 0 || linesDeleted > 0) {
+            cell += "<div style='font-size: 80%; white-space: nowrap;'>"
+                    + "<span style='color: #2e7d32;'>+" + FormattingUtils.getSmallTextForNumber(linesAdded) + "</span> / "
+                    + "<span style='color: #c62828;'>-" + FormattingUtils.getSmallTextForNumber(linesDeleted) + "</span></div>";
+        }
+        return cell;
+    }
+
+    // Two summary rows under the matrix header: total commits per month and total line churn per
+    // month, across the given contributors. Aligned with the four commits columns (left blank) and
+    // the 24 month columns. The churn row is only emitted when there is churn data.
+    private void addMatrixPerMonthTotals(List<Contributor> contributors, List<String> pastMonths) {
+        Map<String, Integer> commitsPerMonth = new HashMap<>();
+        Map<String, Integer> addedPerMonth = new HashMap<>();
+        Map<String, Integer> deletedPerMonth = new HashMap<>();
+        boolean hasChurn[] = {false};
+        contributors.forEach(contributor -> {
+            contributor.getCommitsPerDate().forEach((date, count) ->
+                    commitsPerMonth.merge(DateUtils.getMonth(date), count, Integer::sum));
+            contributor.getLinesAddedPerDate().forEach((date, count) -> {
+                addedPerMonth.merge(DateUtils.getMonth(date), count, Integer::sum);
+                if (count != 0) hasChurn[0] = true;
+            });
+            contributor.getLinesDeletedPerDate().forEach((date, count) -> {
+                deletedPerMonth.merge(DateUtils.getMonth(date), count, Integer::sum);
+                if (count != 0) hasChurn[0] = true;
+            });
+        });
+
+        // Commits-per-month row.
+        report.startTableRow();
+        report.addTableCell("commits", "min-width: 200px; border: none; text-align: right; font-size: 80%; color: grey");
+        for (int i = 0; i < 4; i++) {
+            report.addTableCell("", "border: none");
+        }
+        pastMonths.forEach(pastMonth -> {
+            int c = commitsPerMonth.getOrDefault(pastMonth, 0);
+            report.startTableCell("font-size: 70%; border: none; text-align: center; color: grey");
+            report.addContentInDivWithTooltip(c == 0 ? "-" : (c + ""), "Month " + pastMonth + ": " + c + (c == 1 ? " commit" : " commits"), "text-align: center");
+            report.endTableCell();
+        });
+        report.endTableRow();
+
+        if (!hasChurn[0]) {
+            return;
+        }
+
+        // Line-churn-per-month row (+added / -deleted).
+        report.startTableRow();
+        report.addTableCell("line churn", "min-width: 200px; border: none; text-align: right; font-size: 80%; color: grey");
+        for (int i = 0; i < 4; i++) {
+            report.addTableCell("", "border: none");
+        }
+        pastMonths.forEach(pastMonth -> {
+            int added = addedPerMonth.getOrDefault(pastMonth, 0);
+            int deleted = deletedPerMonth.getOrDefault(pastMonth, 0);
+            report.startTableCell("font-size: 65%; border: none; text-align: center; white-space: nowrap");
+            if (added == 0 && deleted == 0) {
+                report.addContentInDiv("-", "color: lightgrey; text-align: center");
+            } else {
+                String tooltip = "Month " + pastMonth + ": +" + added + " / -" + deleted + " lines";
+                report.addContentInDivWithTooltip(
+                        "<span style='color: #2e7d32;'>+" + FormattingUtils.getSmallTextForNumber(added) + "</span>"
+                                + "<br><span style='color: #c62828;'>-" + FormattingUtils.getSmallTextForNumber(deleted) + "</span>",
+                        tooltip, "text-align: center");
+            }
+            report.endTableCell();
+        });
+        report.endTableRow();
+    }
+
     private void addMatrix(List<Contributor> contributors, String type) {
         report.addContentInDiv("&nbsp;", "height: 20px");
         report.startSubSection(type + " Matrix (Per Month)", "");
@@ -211,10 +286,12 @@ public class ContributorsReportGenerator {
         report.startTable();
 
         final List<String> pastMonths = DateUtils.getPastMonths(24, DateUtils.getAnalysisDate());
-        report.startTableRow();
+        report.startTableRow("font-size: 80%");
         report.addTableCell("", "min-width: 200px; border: none; border: none");
-        report.addTableCell("Commits<br>(3m)", "max-width: 100px; text-align: center; border: none");
-        report.addTableCell("Commit<br>Days", "max-width: 100px; text-align: center; border: none");
+        report.addTableCell("", "border: none; border: none");
+        report.addTableCell("", "border: none; border: none");
+        report.addTableCell("", "border: none; border: none");
+        report.addTableCell("", "border: none; border: none");
         pastMonths.forEach(pastMonth -> {
             report.startTableCell("font-size: 70%; border: none; color: lightgrey; text-align: center");
             int count[] = {0};
@@ -235,6 +312,17 @@ public class ContributorsReportGenerator {
             report.addContentInDivWithTooltip(count[0] == 0 ? "-" : (count[0] + ""), tooltip, "text-align: center");
             report.endTableCell();
         });
+        report.endTableRow();
+
+        addMatrixPerMonthTotals(contributors, pastMonths);
+
+
+        report.startTableRow("font-size: 80%");
+        report.addTableCell("", "min-width: 200px; border: none; border: none");
+        report.addTableCell("30d", "max-width: 100px; text-align: center; border: none");
+        report.addTableCell("3m", "max-width: 100px; text-align: center; border: none");
+        report.addTableCell("1y", "max-width: 100px; text-align: center; border: none");
+        report.addTableCell("all time", "max-width: 100px; text-align: center; border: none");
         report.endTableRow();
 
         Collections.sort(contributors, (a, b) -> {
@@ -260,8 +348,17 @@ public class ContributorsReportGenerator {
                 report.addHtmlContent((contributor.getUserName() + contributor.getEmail()).trim());
             }
             report.endTableCell();
-            report.addTableCell(contributor.getCommitsCount90Days() > 0 ? contributor.getCommitsCount90Days() + "" : "-", "text-align: center; border: none; " + textOpacity);
-            report.addTableCell(contributor.getCommitDates().size() + "", "text-align: center; border: none; " + textOpacity);
+            // Each commits-count window shows the count with that window's line churn underneath in
+            // the same cell (+added / -deleted; omitted when the history carried no churn data).
+            String cellStyle = "text-align: center; border: none; " + textOpacity;
+            report.addTableCell(commitsCountWithChurnCell(contributor.getCommitsCount30Days(),
+                    contributor.getLinesAdded30Days(), contributor.getLinesDeleted30Days()), cellStyle);
+            report.addTableCell(commitsCountWithChurnCell(contributor.getCommitsCount90Days(),
+                    contributor.getLinesAdded90Days(), contributor.getLinesDeleted90Days()), cellStyle);
+            report.addTableCell(commitsCountWithChurnCell(contributor.getCommitsCount365Days(),
+                    contributor.getLinesAdded365Days(), contributor.getLinesDeleted365Days()), cellStyle);
+            report.addTableCell(commitsCountWithChurnCell(contributor.getCommitsCount(),
+                    contributor.getLinesAdded(), contributor.getLinesDeleted()), cellStyle);
             int index[] = {0};
             pastMonths.forEach(pastMonth -> {
                 int count[] = {0};
@@ -511,6 +608,16 @@ public class ContributorsReportGenerator {
 
     public void addContributorsPanel(RichTextReport report, List<Contributor> contributors
             , ContributionCounter contributionCounter, boolean showPerExtension, PerExtensionCounter perExtensionCounter, String type) {
+        // Default churn accessors: all-time (used by callers that don't scope to a period).
+        addContributorsPanel(report, contributors, contributionCounter, showPerExtension, perExtensionCounter, type,
+                Contributor::getLinesAdded, Contributor::getLinesDeleted);
+    }
+
+    // churnAdded/churnDeleted return the line churn for the SAME period the contributionCounter
+    // counts, so the Line Churn column matches the tab (30d / 3m / 6m / 1y) instead of all-time.
+    public void addContributorsPanel(RichTextReport report, List<Contributor> contributors
+            , ContributionCounter contributionCounter, boolean showPerExtension, PerExtensionCounter perExtensionCounter, String type
+            , ContributionCounter churnAdded, ContributionCounter churnDeleted) {
         int count = contributors.size();
         if (count == 0) {
             return;
@@ -548,9 +655,9 @@ public class ContributorsReportGenerator {
         report.startScrollingDiv();
         report.startTable();
         if (showPerExtension && perExtensionCounter != null) {
-            report.addTableHeader("#", type + "<br>", "First<br>Commit", "Latest<br>Commit", "Commits<br>Count", "File Updates<br>(per extension)");
+            report.addTableHeader("#", type + "<br>", "First<br>Commit", "Latest<br>Commit", "Commits<br>Count", "Line<br>Churn", "File Updates<br>(per extension)");
         } else {
-            report.addTableHeader("#", type + "<br>", "First<br>Commit", "Latest<br>Commit", "Commits<br>Count");
+            report.addTableHeader("#", type + "<br>", "First<br>Commit", "Latest<br>Commit", "Commits<br>Count", "Line<br>Churn");
         }
         int index[] = {0};
         contributors.forEach(contributor -> {
@@ -575,6 +682,18 @@ public class ContributorsReportGenerator {
             String formattedCount = FormattingUtils.formatCount(contributorCommitsCount);
             String formattedPercentage = FormattingUtils.getFormattedPercentage(100.0 * contributorCommitsCount / total[0]);
             report.addTableCell(formattedCount + " (" + formattedPercentage + "%)");
+
+            // Line churn for this tab's period (added/deleted lines). 0 for histories without churn
+            // columns, shown as a dim placeholder.
+            int linesAdded = churnAdded.count(contributor);
+            int linesDeleted = churnDeleted.count(contributor);
+            if (linesAdded > 0 || linesDeleted > 0) {
+                report.addTableCell("<span style='color: #2e7d32;'>+" + FormattingUtils.getSmallTextForNumber(linesAdded) + "</span> / "
+                                + "<span style='color: #c62828;'>-" + FormattingUtils.getSmallTextForNumber(linesDeleted) + "</span>",
+                        "white-space: nowrap;");
+            } else {
+                report.addTableCell("<span style='color: lightgrey;'>-</span>");
+            }
 
             if (showPerExtension && perExtensionCounter != null) {
                 // A contributor present in the contributors list may have no per-extension stats

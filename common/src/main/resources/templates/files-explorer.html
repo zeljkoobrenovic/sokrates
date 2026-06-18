@@ -286,6 +286,9 @@
         recentCommits: {value: item => item.recentCommitsCount30Days || 0, type: 'number', dir: -1, historyOnly: true},
         recentCommits90: {value: item => item.recentCommitsCount90Days || 0, type: 'number', dir: -1, historyOnly: true},
         commits: {value: item => item.commitsCount || 0, type: 'number', dir: -1, historyOnly: true},
+        churn30: {value: item => item.churn30Days || 0, type: 'number', dir: -1, historyOnly: true},
+        churn90: {value: item => item.churn90Days || 0, type: 'number', dir: -1, historyOnly: true},
+        churnTotal: {value: item => item.churnTotal || 0, type: 'number', dir: -1, historyOnly: true},
         contributors: {value: item => item.contributorsCount || 0, type: 'number', dir: -1, historyOnly: true},
         age: {value: item => (item.ageDays == null ? -1 : item.ageDays), type: 'number', dir: -1, historyOnly: true},
         freshness: {value: item => (item.freshnessDays == null ? -1 : item.freshnessDays), type: 'number', dir: 1, historyOnly: true},
@@ -318,12 +321,18 @@
         return cmp * sortDir;
     }
 
-    function sortHeader(key, label, extraStyle) {
+    function sortHeader(key, label, extraStyle, rowspan) {
         const active = sortKey === key;
         const arrow = active ? (sortDir === 1 ? ' ▲' : ' ▼') : '';
         const cls = 'sortable' + (active ? ' sort-active' : '');
-        return '<td class="' + cls + '" style="' + (extraStyle || '') + '" onclick="update(\'' + key + '\')">'
+        const span = rowspan ? ' rowspan="' + rowspan + '"' : '';
+        return '<td class="' + cls + '"' + span + ' style="vertical-align: bottom; ' + (extraStyle || '') + '" onclick="update(\'' + key + '\')">'
             + label + '<span class="sort-arrow">' + arrow + '</span></td>';
+    }
+
+    // A non-sortable header cell spanning several sub-columns (the first row of the two-row header).
+    function groupHeader(label, colspan) {
+        return '<td colspan="' + colspan + '" style="text-align: center; border-bottom: 1px solid #e0e0e0;">' + label + '</td>';
     }
 
     // Base path (from the explorers/ folder) to the per-repository HTML reports / cached source
@@ -441,24 +450,45 @@
 
         html += '<table style="width: 100%">';
 
-        html += '<tr style="color: #777777; background-color: #f8f8f8">';
-        html += sortHeader('lang', 'lang', 'text-align: center');
-        if (filteredReposCount) {
-            html += sortHeader('repo', 'repo', 'text-align: left');
-        }
-        html += sortHeader('name', 'file', 'text-align: left');
-        html += sortHeader('loc', '&nbsp;LOC', 'text-align: left');
         if (hasHistory) {
-            html += sortHeader('recentCommits', 'commits<br>(30d)', 'text-align: center');
-            html += sortHeader('recentCommits90', 'commits<br>(90d)', 'text-align: center');
-            html += sortHeader('commits', 'commits<br>(all time)', 'text-align: center');
-            html += sortHeader('contributors', 'contri-<br>butors', 'text-align: center');
-            html += sortHeader('age', 'age<br>(days)', 'text-align: center');
-            html += sortHeader('freshness', 'freshness<br>(days)', 'text-align: center');
-            html += sortHeader('latestCommit', 'latest<br>commit', 'text-align: center');
+            // Two-row header: row 1 groups the commits and line-churn sub-columns (each 30d / 90d /
+            // all time); the non-grouped columns span both rows. Row 2 holds the sortable sub-columns.
+            const rs = 2;
+            html += '<tr style="color: #777777; background-color: #f8f8f8">';
+            html += sortHeader('lang', 'lang', 'text-align: center', rs);
+            if (filteredReposCount) {
+                html += sortHeader('repo', 'repo', 'text-align: left', rs);
+            }
+            html += sortHeader('name', 'file', 'text-align: left', rs);
+            html += sortHeader('loc', '&nbsp;LOC', 'text-align: left', rs);
+            html += groupHeader('commits', 3);
+            html += groupHeader('line churn', 3);
+            html += sortHeader('contributors', 'contri-<br>butors', 'text-align: center', rs);
+            html += sortHeader('age', 'age<br>(days)', 'text-align: center', rs);
+            html += sortHeader('freshness', 'freshness<br>(days)', 'text-align: center', rs);
+            html += sortHeader('latestCommit', 'latest<br>commit', 'text-align: center', rs);
+            html += sortHeader('scope', 'scope', 'text-align: center', rs);
+            html += '</tr>';
+
+            html += '<tr style="color: #777777; background-color: #f8f8f8">';
+            html += sortHeader('recentCommits', '30d', 'text-align: center');
+            html += sortHeader('recentCommits90', '90d', 'text-align: center');
+            html += sortHeader('commits', 'all<br>time', 'text-align: center');
+            html += sortHeader('churn30', '30d', 'text-align: center');
+            html += sortHeader('churn90', '90d', 'text-align: center');
+            html += sortHeader('churnTotal', 'all<br>time', 'text-align: center');
+            html += '</tr>';
+        } else {
+            html += '<tr style="color: #777777; background-color: #f8f8f8">';
+            html += sortHeader('lang', 'lang', 'text-align: center');
+            if (filteredReposCount) {
+                html += sortHeader('repo', 'repo', 'text-align: left');
+            }
+            html += sortHeader('name', 'file', 'text-align: left');
+            html += sortHeader('loc', '&nbsp;LOC', 'text-align: left');
+            html += sortHeader('scope', 'scope', 'text-align: center');
+            html += '</tr>';
         }
-        html += sortHeader('scope', 'scope', 'text-align: center');
-        html += '</tr>';
 
         let displayCounter = 0;
 
@@ -518,6 +548,9 @@
                 const recent = item.recentCommitsCount30Days || 0;
                 const recent90 = item.recentCommitsCount90Days || 0;
                 const total = item.commitsCount || 0;
+                const churn30 = item.churn30Days || 0;
+                const churn90 = item.churn90Days || 0;
+                const churnTotal = item.churnTotal || 0;
                 const contributors = item.contributorsCount || 0;
                 const ageDays = (item.ageDays == null) ? -1 : item.ageDays;
                 const freshnessDays = (item.freshnessDays == null) ? -1 : item.freshnessDays;
@@ -527,6 +560,14 @@
                     + (recent90 > 0 ? recent90.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
                 // commits (all time) — coloured by the file change-frequency band (heat palette).
                 html += colorCell(total, total > 0, bandColor(total, fileFreqThresholds, HEAT_PALETTE));
+                // line churn (total lines added+deleted) per window — plain numbers, recent windows
+                // are a muted dash when zero so the eye lands on files with recent churn.
+                html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
+                    + (churn30 > 0 ? churn30.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
+                html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
+                    + (churn90 > 0 ? churn90.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
+                html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
+                    + (churnTotal > 0 ? churnTotal.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
                 // contributors — heat palette.
                 html += colorCell(contributors, contributors > 0, bandColor(contributors, fileContribThresholds, HEAT_PALETTE));
                 // age (days since first commit) — age palette.

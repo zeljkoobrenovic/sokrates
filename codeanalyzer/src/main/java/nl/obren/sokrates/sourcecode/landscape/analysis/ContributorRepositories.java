@@ -25,13 +25,15 @@ public class ContributorRepositories {
         this.contributor = contributor;
     }
 
-    public void addRepository(RepositoryAnalysisResults repositoryAnalysisResults, String firstCommitDate, String latestCommitDate,
+    public ContributorRepositoryInfo addRepository(RepositoryAnalysisResults repositoryAnalysisResults, String firstCommitDate, String latestCommitDate,
                               int commitsCount, int commits30Days, int commits90Days, int commits180Days, int commits365Days, List<String> commitDates) {
-        addRepository(repositoryAnalysisResults, firstCommitDate, latestCommitDate, commitsCount, commits30Days,
+        return addRepository(repositoryAnalysisResults, firstCommitDate, latestCommitDate, commitsCount, commits30Days,
                 commits90Days, commits180Days, commits365Days, commitDates, new LinkedHashMap<>());
     }
 
-    public void addRepository(RepositoryAnalysisResults repositoryAnalysisResults, String firstCommitDate, String latestCommitDate,
+    // Returns the (new or existing-merged) ContributorRepositoryInfo for this repository, so callers
+    // can accumulate extra per-window data (e.g. churn) onto it.
+    public ContributorRepositoryInfo addRepository(RepositoryAnalysisResults repositoryAnalysisResults, String firstCommitDate, String latestCommitDate,
                               int commitsCount, int commits30Days, int commits90Days, int commits180Days, int commits365Days,
                               List<String> commitDates, Map<String, Integer> commitsPerDate) {
         String path = repositoryAnalysisResults.getAnalysisResults().getMetadata().getName();
@@ -59,9 +61,12 @@ public class ContributorRepositories {
                 Map<String, Integer> existingCounts = repositoryByPath.getCommitsPerDate();
                 commitsPerDate.forEach((date, count) -> existingCounts.merge(date, count, Integer::sum));
             }
+            return repositoryByPath;
         } else {
-            addRepository(new ContributorRepositoryInfo(repositoryAnalysisResults, firstCommitDate, latestCommitDate,
-                    commitsCount, commits30Days, commits90Days, commits180Days, commits365Days, commitDates, commitsPerDate));
+            ContributorRepositoryInfo info = new ContributorRepositoryInfo(repositoryAnalysisResults, firstCommitDate, latestCommitDate,
+                    commitsCount, commits30Days, commits90Days, commits180Days, commits365Days, commitDates, commitsPerDate);
+            addRepository(info);
+            return info;
         }
     }
 
