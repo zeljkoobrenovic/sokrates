@@ -33,6 +33,9 @@ public class ContributorsReportUtils {
         SCOPE_LABELS.put("build", "Build");
         SCOPE_LABELS.put("generated", "Generated");
         SCOPE_LABELS.put("other", "Other");
+        // Residual tab (last): commits to files in no scope — deleted/renamed-away or excluded from
+        // every aspect. Makes the scope tabs sum to "All" (key from GitContributorsUtil.UNSCOPED).
+        SCOPE_LABELS.put("unscoped", "(removed/ignored)");
     }
 
     /**
@@ -134,9 +137,12 @@ public class ContributorsReportUtils {
             int maxContributors = contributorsPerTimeSlot.stream().mapToInt(c -> c.getContributorsCount()).max().orElse(1);
             int maxCommits = contributorsPerTimeSlot.stream().mapToInt(c -> c.getCommitsCount()).max().orElse(1);
             int maxFileUpdatesCount = contributorsPerTimeSlot.stream().mapToInt(c -> c.getFileUpdatesCount()).max().orElse(1);
-            // Churn bars scale to the largest single-slot total (added + deleted). The row is only
-            // emitted when there is churn data at all (older history files have none).
-            int maxChurn = contributorsPerTimeSlot.stream().mapToInt(c -> c.getLinesAdded() + c.getLinesDeleted()).max().orElse(0);
+            // Churn is drawn as a diverging chart: additions above a zero baseline, deletions below it.
+            // Both sides share one scale (the largest single-side value across slots) so an addition and
+            // a deletion of equal size draw equal bar lengths. The row is only emitted when there is
+            // churn data at all (older history files have none).
+            int maxChurn = contributorsPerTimeSlot.stream()
+                    .mapToInt(c -> Math.max(c.getLinesAdded(), c.getLinesDeleted())).max().orElse(0);
             boolean hasChurn = maxChurn > 0;
 
             report.startDiv("overflow-y: auto; font-size: 90%");
@@ -262,39 +268,67 @@ public class ContributorsReportUtils {
         }
     }
 
-    // Renders the lines-changed (churn) graph row: one column per time slot, each showing the lines
-    // added (green) stacked above the lines deleted (red), scaled to the busiest slot. Mirrors the
-    // file-updates row layout so it sits directly above it. Only called when there is churn data.
+    // Max bar length (px) for each side of the diverging churn chart. The two halves (additions above,
+    // deletions below the zero baseline) plus their labels together roughly match the height of the
+    // other activity rows.
+    private static final int CHURN_HALF_HEIGHT = 32;
+
+    // Renders the lines-changed (churn) graph row as a diverging chart: one column per time slot with
+    // additions drawn as a green bar growing UP from a centred zero baseline and deletions as a red bar
+    // growing DOWN below it. The +added count sits directly ABOVE its bar and the -deleted count directly
+    // UNDER its bar (both labels hug the baseline next to their bar, not the cell edge). Additions and
+    // deletions share one scale so equal magnitudes draw equal lengths. Only called when there is churn
+    // data. Sits directly above the file-updates row.
     private static void addChurnRow(RichTextReport report, List<ContributionTimeSlot> contributorsPerTimeSlot,
                                     int maxChurn, boolean showTimeSlot, int padding, boolean fade) {
         report.startTableRow();
-        report.addTableCell(getIconSvg("lines_churn", 64), "border: none; vertical-align: bottom;" + (fade ? "opacity: 0.4" : ""));
+        report.addTableCell(getIconSvg("lines_churn", 64), "border: none; vertical-align: middle;" + (fade ? "opacity: 0.4" : ""));
         String style;
         if (showTimeSlot) {
-            style = "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: bottom; font-size: 80%";
+            style = "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: middle; font-size: 80%";
         } else {
-            style = "border: none; padding: " + padding + "px; vertical-align: bottom; font-size: 80%";
+            style = "border: none; padding: " + padding + "px; vertical-align: middle; font-size: 80%";
         }
         for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
             report.startTableCell(style);
             if (timeSlot != null) {
                 int added = timeSlot.getLinesAdded();
                 int deleted = timeSlot.getLinesDeleted();
-                int total = added + deleted;
-                if (showTimeSlot) {
-                    report.addParagraph(FormattingUtils.getSmallTextForNumber(total) + "", "margin: 0px; font-size: 90%" + (total == 0 ? "; color: #d0d0d0" : ""));
-                } else {
-                    report.addParagraph("&nbsp;", "margin: 0px; font-size: 90%");
-                }
                 String title = timeSlot.getTimeSlot() + ": +" + added + " / -" + deleted + " lines";
-                // Heights share the same scale (max single-slot total) so added/deleted are comparable
-                // across slots; a present-but-thin bar still shows at 1px.
-                int heightAdded = added > 0 ? 1 + (int) (64.0 * added / maxChurn) : 0;
-                int heightDeleted = deleted > 0 ? 1 + (int) (64.0 * deleted / maxChurn) : 0;
-                report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: #2e7d32; height:" + heightAdded + "px'></div>");
-                report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: #c62828; height:" + heightDeleted + "px'></div>");
+
+                // Bars share one scale (max single-side value); a present-but-tiny bar still shows 1px.
+                int heightAdded = added > 0 ? 1 + (int) ((CHURN_HALF_HEIGHT - 1) * added / (double) maxChurn) : 0;
+                int heightDeleted = deleted > 0 ? 1 + (int) ((CHURN_HALF_HEIGHT - 1) * deleted / (double) maxChurn) : 0;
+
+                String addedLabel = showTimeSlot && added > 0 ? "+" + FormattingUtils.getSmallTextForNumber(added) : "&nbsp;";
+                String deletedLabel = showTimeSlot && deleted > 0 ? "-" + FormattingUtils.getSmallTextForNumber(deleted) : "&nbsp;";
+                // Label strip height is reserved even when empty so the zero baseline stays put across
+                // slots (otherwise short/empty bars let the two halves collapse together and the line
+                // appears to vanish).
+                int labelHeight = showTimeSlot ? 12 : 0;
+
+                // Top half: a fixed-height, bottom-anchored column holding [label][bar] so the +added
+                // count sits just above its bar and the bar's foot always rests on the baseline below.
+                report.addHtmlContent("<div title='" + title + "' style='height: " + (CHURN_HALF_HEIGHT + labelHeight)
+                        + "px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center'>");
+                if (showTimeSlot) {
+                    report.addHtmlContent("<div style='height: " + labelHeight + "px; font-size: 70%; line-height: " + labelHeight + "px; color: #2e7d32'>" + addedLabel + "</div>");
+                }
+                report.addHtmlContent("<div style='width: 100%; background-color: #2e7d32; height:" + heightAdded + "px'></div>");
+                report.addHtmlContent("</div>");
+                // Zero baseline — a single shared horizontal line at the centre of the cell.
+                report.addHtmlContent("<div style='width: 100%; height: 1px; background-color: #999999'></div>");
+                // Bottom half: a fixed-height, top-anchored column holding [bar][label] so the bar's head
+                // always touches the baseline above and the -deleted count sits just under it.
+                report.addHtmlContent("<div title='" + title + "' style='height: " + (CHURN_HALF_HEIGHT + labelHeight)
+                        + "px; display: flex; flex-direction: column; justify-content: flex-start; align-items: center'>");
+                report.addHtmlContent("<div style='width: 100%; background-color: #c62828; height:" + heightDeleted + "px'></div>");
+                if (showTimeSlot) {
+                    report.addHtmlContent("<div style='height: " + labelHeight + "px; font-size: 70%; line-height: " + labelHeight + "px; color: #c62828'>" + deletedLabel + "</div>");
+                }
+                report.addHtmlContent("</div>");
             } else {
-                report.addHtmlContent("<div style='width: 100%; background-color: #d0d0d0; height:1px'></div>");
+                report.addHtmlContent("<div style='width: 100%; height: 1px; background-color: #999999'></div>");
             }
             report.endTableCell();
         }

@@ -1898,19 +1898,28 @@ public class LandscapeReportGenerator {
         InfoBlocks.addActivityTrendCard(landscapeReport, value, subtitle, icon);
     }
 
-    // Per-year line-churn row for the activity chart: each year is a stacked bar (lines added in
-    // green on top of lines deleted in red), with a "+added / -deleted" label (abbreviated). Only
-    // rendered when there is churn data (older analyses have none).
+    // Per-year line-churn row for the activity chart, drawn as a diverging chart: additions grow UP
+    // (green) from a centred zero baseline with the +added count just above the bar, deletions grow
+    // DOWN (red) below the baseline with the -deleted count just under it. Additions and deletions
+    // share one scale (the largest single-side value) so equal magnitudes draw equal lengths. Mirrors
+    // the per-repository churn chart (ContributorsReportUtils.addChurnRow). Only rendered when there is
+    // churn data (older analyses have none).
     private static final String CHURN_ADDED_COLOR = "#2e7d32";
     private static final String CHURN_DELETED_COLOR = "#c62828";
+    private static final int CHURN_HALF_HEIGHT = 48;
+    private static final int CHURN_LABEL_HEIGHT = 14;
 
     private void addChurnPerYearRow(List<ContributionTimeSlot> contributorsPerYear, String style, int thisYear) {
-        int maxChurn = contributorsPerYear.stream().mapToInt(y -> y.getLinesAdded() + y.getLinesDeleted()).max().orElse(0);
+        int maxChurn = contributorsPerYear.stream()
+                .mapToInt(y -> Math.max(y.getLinesAdded(), y.getLinesDeleted())).max().orElse(0);
         if (maxChurn <= 0) {
             return;
         }
+        // Diverging layout needs the bars centred on the baseline, so this row is middle-aligned
+        // (the commits/contributors rows below stay bottom-aligned via their own style).
+        String churnStyle = style.replace("vertical-align: bottom", "vertical-align: middle");
         landscapeReport.startTableRow();
-        landscapeReport.startTableCell("border: none; height: 130px; vertical-align: bottom;");
+        landscapeReport.startTableCell("border: none; height: 130px; vertical-align: middle;");
         int totalAdded = contributorsPerYear.stream().mapToInt(ContributionTimeSlot::getLinesAdded).sum();
         int totalDeleted = contributorsPerYear.stream().mapToInt(ContributionTimeSlot::getLinesDeleted).sum();
         addActivityTrendCard("<span style='font-size: 22px;'>"
@@ -1919,22 +1928,31 @@ public class LandscapeReportGenerator {
                 "line churn", "lines_churn");
         landscapeReport.endTableCell();
         contributorsPerYear.forEach(year -> {
-            landscapeReport.startTableCell(style);
+            landscapeReport.startTableCell(churnStyle);
             int added = year.getLinesAdded();
             int deleted = year.getLinesDeleted();
-            String color = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "#989898";
-            if (added > 0 || deleted > 0) {
-                landscapeReport.addHtmlContent("<div style='margin: 2px; font-size: 70%; white-space: nowrap; color: " + color + ";'>"
-                        + "<div style='color: " + CHURN_ADDED_COLOR + ";'>+" + FormattingUtils.getSmallTextForNumber(added) + "</div>"
-                        + "<div style='color: " + CHURN_DELETED_COLOR + ";'>-" + FormattingUtils.getSmallTextForNumber(deleted) + "</div></div>");
-            } else {
-                landscapeReport.addParagraph("&nbsp;", "margin: 2px");
-            }
-            int heightAdded = added > 0 ? 1 + (int) (56.0 * added / maxChurn) : 0;
-            int heightDeleted = deleted > 0 ? 1 + (int) (56.0 * deleted / maxChurn) : 0;
+            int heightAdded = added > 0 ? 1 + (int) ((CHURN_HALF_HEIGHT - 1) * added / (double) maxChurn) : 0;
+            int heightDeleted = deleted > 0 ? 1 + (int) ((CHURN_HALF_HEIGHT - 1) * deleted / (double) maxChurn) : 0;
+            String addedLabel = added > 0 ? "+" + FormattingUtils.getSmallTextForNumber(added) : "&nbsp;";
+            String deletedLabel = deleted > 0 ? "-" + FormattingUtils.getSmallTextForNumber(deleted) : "&nbsp;";
             String title = year.getTimeSlot() + ": +" + added + " / -" + deleted + " lines";
-            landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + CHURN_ADDED_COLOR + "; opacity: 0.7; height:" + heightAdded + "px'></div>");
-            landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + CHURN_DELETED_COLOR + "; opacity: 0.7; height:" + heightDeleted + "px'></div>");
+
+            // Top half: fixed-height, bottom-anchored [label][bar] so +added sits just above its bar
+            // and the bar's foot rests on the baseline.
+            landscapeReport.addHtmlContent("<div title='" + title + "' style='height: " + (CHURN_HALF_HEIGHT + CHURN_LABEL_HEIGHT)
+                    + "px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center'>");
+            landscapeReport.addHtmlContent("<div style='height: " + CHURN_LABEL_HEIGHT + "px; font-size: 70%; line-height: " + CHURN_LABEL_HEIGHT + "px; white-space: nowrap; color: " + CHURN_ADDED_COLOR + "'>" + addedLabel + "</div>");
+            landscapeReport.addHtmlContent("<div style='width: 100%; background-color: " + CHURN_ADDED_COLOR + "; opacity: 0.7; height:" + heightAdded + "px'></div>");
+            landscapeReport.addHtmlContent("</div>");
+            // Zero baseline.
+            landscapeReport.addHtmlContent("<div style='width: 100%; height: 1px; background-color: #999999'></div>");
+            // Bottom half: fixed-height, top-anchored [bar][label] so the bar's head touches the
+            // baseline and -deleted sits just under it.
+            landscapeReport.addHtmlContent("<div title='" + title + "' style='height: " + (CHURN_HALF_HEIGHT + CHURN_LABEL_HEIGHT)
+                    + "px; display: flex; flex-direction: column; justify-content: flex-start; align-items: center'>");
+            landscapeReport.addHtmlContent("<div style='width: 100%; background-color: " + CHURN_DELETED_COLOR + "; opacity: 0.7; height:" + heightDeleted + "px'></div>");
+            landscapeReport.addHtmlContent("<div style='height: " + CHURN_LABEL_HEIGHT + "px; font-size: 70%; line-height: " + CHURN_LABEL_HEIGHT + "px; white-space: nowrap; color: " + CHURN_DELETED_COLOR + "'>" + deletedLabel + "</div>");
+            landscapeReport.addHtmlContent("</div>");
             landscapeReport.endTableCell();
         });
         landscapeReport.endTableRow();

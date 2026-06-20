@@ -1174,12 +1174,16 @@ public class LandscapeReportContributorsTab {
 
     private static final String CHURN_ADDED_COLOR = "#2e7d32";
     private static final String CHURN_DELETED_COLOR = "#c62828";
+    private static final int CHURN_HALF_HEIGHT = 48;
+    private static final int CHURN_LABEL_HEIGHT = 14;
 
-    // A row of stacked line-churn bars (lines added in green on top of lines deleted in red) per
-    // time slot, scaled to the busiest slot's added+deleted total. Labels use the compact K/M format.
-    // No-op when there is no churn data (older analyses).
+    // A row of diverging line-churn bars per time slot: additions grow UP (green) from a centred zero
+    // baseline with the +added count just above the bar, deletions grow DOWN (red) below it with the
+    // -deleted count just under. Both sides share one scale (the largest single-side value) so equal
+    // magnitudes draw equal lengths. Mirrors the per-repository churn chart. Labels use the compact
+    // K/M format. No-op when there is no churn data (older analyses).
     private void addChurnPerTimeUnitRow(List<ContributionTimeSlot> slots, int barWidth) {
-        int maxChurn = slots.stream().mapToInt(c -> c.getLinesAdded() + c.getLinesDeleted()).max().orElse(0);
+        int maxChurn = slots.stream().mapToInt(c -> Math.max(c.getLinesAdded(), c.getLinesDeleted())).max().orElse(0);
         if (maxChurn <= 0) {
             return;
         }
@@ -1187,34 +1191,50 @@ public class LandscapeReportContributorsTab {
         landscapeReport.addTableCell("<b>Line churn</b>" +
                 "<div style='font-size: 80%; margin-left: 8px'><div style='color: " + CHURN_ADDED_COLOR + "'>added</div><div style='color: " + CHURN_DELETED_COLOR + "'>deleted</div></div>", "border: none");
         slots.forEach(slot -> {
-            landscapeReport.startTableCell("width: " + barWidth + "px; min-width: " + barWidth + "px; padding: 0; margin: 1px; border: none; text-align: center; vertical-align: bottom; font-size: 80%; height: 100px");
+            landscapeReport.startTableCell("width: " + barWidth + "px; min-width: " + barWidth + "px; padding: 0; margin: 1px; border: none; text-align: center; vertical-align: middle; font-size: 80%");
             int added = slot.getLinesAdded();
             int deleted = slot.getLinesDeleted();
-            int heightAdded = added > 0 ? 1 + (int) (56.0 * added / maxChurn) : 0;
-            int heightDeleted = deleted > 0 ? 1 + (int) (56.0 * deleted / maxChurn) : 0;
+            int heightAdded = added > 0 ? 1 + (int) ((CHURN_HALF_HEIGHT - 1) * added / (double) maxChurn) : 0;
+            int heightDeleted = deleted > 0 ? 1 + (int) ((CHURN_HALF_HEIGHT - 1) * deleted / (double) maxChurn) : 0;
             String title = slot.getTimeSlot() + ": +" + added + " / -" + deleted + " lines";
-            if (added > 0 || deleted > 0) {
-                landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; font-size: 65%; margin: 0px; white-space: nowrap;'>"
-                        + "<span style='color: " + CHURN_ADDED_COLOR + "'>+" + FormattingUtils.getSmallTextForNumber(added) + "</span>"
-                        + "<br><span style='color: " + CHURN_DELETED_COLOR + "'>-" + FormattingUtils.getSmallTextForNumber(deleted) + "</span></div>");
-            }
-            landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + CHURN_ADDED_COLOR + "; opacity: 0.7; height:" + heightAdded + "px; margin: 1px'></div>");
-            landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + CHURN_DELETED_COLOR + "; opacity: 0.7; height:" + heightDeleted + "px; margin: 1px'></div>");
+            addDivergingChurnCell(added, deleted, heightAdded, heightDeleted, title);
             landscapeReport.endTableCell();
         });
         landscapeReport.endTableRow();
     }
 
+    // Emits one diverging churn cell body (top half = +added label over an up-bar resting on the
+    // baseline; a 1px baseline; bottom half = a down-bar hanging from the baseline over the -deleted
+    // label). Fixed half/label heights keep the baseline at a constant position across slots so it
+    // never collapses or disappears. Shared by both landscape churn charts.
+    private void addDivergingChurnCell(int added, int deleted, int heightAdded, int heightDeleted, String title) {
+        String addedLabel = added > 0 ? "+" + FormattingUtils.getSmallTextForNumber(added) : "&nbsp;";
+        String deletedLabel = deleted > 0 ? "-" + FormattingUtils.getSmallTextForNumber(deleted) : "&nbsp;";
+        landscapeReport.addHtmlContent("<div title='" + title + "' style='height: " + (CHURN_HALF_HEIGHT + CHURN_LABEL_HEIGHT)
+                + "px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center'>");
+        landscapeReport.addHtmlContent("<div style='height: " + CHURN_LABEL_HEIGHT + "px; font-size: 70%; line-height: " + CHURN_LABEL_HEIGHT + "px; white-space: nowrap; color: " + CHURN_ADDED_COLOR + "'>" + addedLabel + "</div>");
+        landscapeReport.addHtmlContent("<div style='width: 100%; background-color: " + CHURN_ADDED_COLOR + "; opacity: 0.7; height:" + heightAdded + "px'></div>");
+        landscapeReport.addHtmlContent("</div>");
+        landscapeReport.addHtmlContent("<div style='width: 100%; height: 1px; background-color: #999999'></div>");
+        landscapeReport.addHtmlContent("<div title='" + title + "' style='height: " + (CHURN_HALF_HEIGHT + CHURN_LABEL_HEIGHT)
+                + "px; display: flex; flex-direction: column; justify-content: flex-start; align-items: center'>");
+        landscapeReport.addHtmlContent("<div style='width: 100%; background-color: " + CHURN_DELETED_COLOR + "; opacity: 0.7; height:" + heightDeleted + "px'></div>");
+        landscapeReport.addHtmlContent("<div style='height: " + CHURN_LABEL_HEIGHT + "px; font-size: 70%; line-height: " + CHURN_LABEL_HEIGHT + "px; white-space: nowrap; color: " + CHURN_DELETED_COLOR + "'>" + deletedLabel + "</div>");
+        landscapeReport.addHtmlContent("</div>");
+    }
+
     // Per-year churn row for the "Overall Activity Per Year" chart: a "line churn" trend card + a
-    // stacked +added(green)/-deleted(red) bar per year, abbreviated labels. No-op without churn data.
+    // diverging +added(green, up)/-deleted(red, down) bar per year around a shared zero baseline,
+    // abbreviated labels. Mirrors the per-repository churn chart. No-op without churn data.
     private void addChurnPerYearRow(List<ContributionTimeSlot> contributorsPerYear, String style) {
-        int maxChurn = contributorsPerYear.stream().mapToInt(y -> y.getLinesAdded() + y.getLinesDeleted()).max().orElse(0);
+        int maxChurn = contributorsPerYear.stream().mapToInt(y -> Math.max(y.getLinesAdded(), y.getLinesDeleted())).max().orElse(0);
         if (maxChurn <= 0) {
             return;
         }
-        int thisYear = Calendar.getInstance().get(Calendar.YEAR);
+        // Diverging bars are centred on the baseline, so this row is middle-aligned.
+        String churnStyle = style.replace("vertical-align: bottom", "vertical-align: middle");
         landscapeReport.startTableRow();
-        landscapeReport.startTableCell("border: none; height: 130px; vertical-align: bottom;");
+        landscapeReport.startTableCell("border: none; height: 130px; vertical-align: middle;");
         int totalAdded = contributorsPerYear.stream().mapToInt(ContributionTimeSlot::getLinesAdded).sum();
         int totalDeleted = contributorsPerYear.stream().mapToInt(ContributionTimeSlot::getLinesDeleted).sum();
         addActivityTrendCard("<span style='font-size: 15px;'>"
@@ -1223,22 +1243,13 @@ public class LandscapeReportContributorsTab {
                 "line churn", "lines_churn");
         landscapeReport.endTableCell();
         contributorsPerYear.forEach(year -> {
-            landscapeReport.startTableCell(style);
+            landscapeReport.startTableCell(churnStyle);
             int added = year.getLinesAdded();
             int deleted = year.getLinesDeleted();
-            String color = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "#989898";
-            if (added > 0 || deleted > 0) {
-                landscapeReport.addHtmlContent("<div style='margin: 2px; font-size: 70%; white-space: nowrap; color: " + color + ";'>"
-                        + "<span style='color: " + CHURN_ADDED_COLOR + ";'>+" + FormattingUtils.getSmallTextForNumber(added) + "</span>"
-                        + "<br><span style='color: " + CHURN_DELETED_COLOR + ";'>-" + FormattingUtils.getSmallTextForNumber(deleted) + "</span></div>");
-            } else {
-                landscapeReport.addParagraph("&nbsp;", "margin: 2px");
-            }
-            int heightAdded = added > 0 ? 1 + (int) (56.0 * added / maxChurn) : 0;
-            int heightDeleted = deleted > 0 ? 1 + (int) (56.0 * deleted / maxChurn) : 0;
+            int heightAdded = added > 0 ? 1 + (int) ((CHURN_HALF_HEIGHT - 1) * added / (double) maxChurn) : 0;
+            int heightDeleted = deleted > 0 ? 1 + (int) ((CHURN_HALF_HEIGHT - 1) * deleted / (double) maxChurn) : 0;
             String title = year.getTimeSlot() + ": +" + added + " / -" + deleted + " lines";
-            landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + CHURN_ADDED_COLOR + "; opacity: 0.7; height:" + heightAdded + "px'></div>");
-            landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + CHURN_DELETED_COLOR + "; opacity: 0.7; height:" + heightDeleted + "px'></div>");
+            addDivergingChurnCell(added, deleted, heightAdded, heightDeleted, title);
             landscapeReport.endTableCell();
         });
         landscapeReport.endTableRow();
