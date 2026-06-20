@@ -22,6 +22,11 @@ import java.util.function.Function;
 public class GitContributorsUtil {
     private static final Log LOG = LogFactory.getLog(GitContributorsUtil.class);
 
+    // Reserved scope key for the residual activity-diagram tab: commits touching files that are in no
+    // scope (deleted/renamed-away or excluded from every aspect). Kept here so the producer and the
+    // report render sites (ContributorsReportUtils.SCOPE_LABELS) agree on the key.
+    public static final String UNSCOPED = "unscoped";
+
     public static ContributorsImport importGitContributorsExport(File file, FileHistoryAnalysisConfig config) {
         return importGitContributorsExport(file, config, null);
     }
@@ -54,6 +59,17 @@ public class GitContributorsUtil {
                         fileUpdate -> fileUpdate.getPath() != null && paths.contains(fileUpdate.getPath().toLowerCase()));
                 populateTimeSlots(contributorsImport, scopeCommits, scope);
             });
+
+            // "Unscoped" residual: file-updates whose path is in NO scope's set. These are commits to
+            // files that no longer exist (deleted/renamed away) or that are excluded from every aspect
+            // (ignored paths, non-source extensions). They are counted in "All" but in none of the scope
+            // tabs, so without this the per-scope tabs never sum to "All" (the gap is exactly this set).
+            // Built from the union of all scope paths so the partition All = scopes + unscoped is exact.
+            Set<String> allScopePaths = new HashSet<>();
+            pathsByScope.values().forEach(allScopePaths::addAll);
+            List<AuthorCommit> unscopedCommits = GitHistoryUtils.getAuthorCommits(file, config,
+                    fileUpdate -> fileUpdate.getPath() == null || !allScopePaths.contains(fileUpdate.getPath().toLowerCase()));
+            populateTimeSlots(contributorsImport, unscopedCommits, UNSCOPED);
         }
 
         return contributorsImport;
