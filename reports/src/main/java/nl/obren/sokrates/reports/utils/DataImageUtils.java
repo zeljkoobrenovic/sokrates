@@ -113,6 +113,7 @@ public class DataImageUtils {
         map.put("tf", "terraform.png");
         map.put("tfstate", "terraform.png");
         map.put("tfvars", "terraform.png");
+        map.put("hcl", "hcl.png");
         map.put("ts", "ts.png");
         map.put("yaml", "yaml.png");
         map.put("yml", "yaml.png");
@@ -164,6 +165,32 @@ public class DataImageUtils {
         map.put("pug", "pug.png");
         map.put("cls", "cls.png");
         map.put("phtml", "phtml.png");
+        map.put("zip", "zip.png");
+
+        map.put("txt", "txt.png");
+        map.put("csv", "csv.png");
+        map.put("pdf", "pdf.png");
+        map.put("doc", "doc.png");
+        map.put("ppt", "ppt.png");
+        map.put("pptx", "pptx.png");
+        map.put("ptx", "ptx.png");
+        map.put("las", "las.png");
+        map.put("png", "png.png");
+        map.put("jar", "jar.png");
+        map.put("jpeg", "jpg.png");
+        map.put("jpg", "jpg.png");
+        map.put("wav", "wav.png");
+        map.put("xlsm", "xlsm.png");
+        map.put("eps", "eps.png");
+        map.put("mkv", "mkv.png");
+        map.put("wma", "wma.png");
+        map.put("avi", "avi.png");
+        map.put("mp3", "mp3.png");
+        map.put("mp4", "mp4.png");
+        map.put("ods", "ods.png");
+        map.put("xlsx", "xlsx.png");
+        map.put("gif", "gif.png");
+        map.put("csproj", "csproj.png");
 
         map.put(".github", "github.png");
         map.put(".gh-pages", "github.png");

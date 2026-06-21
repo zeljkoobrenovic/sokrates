@@ -329,6 +329,8 @@ public class ScopingConventions {
         buildAndDeploymentFilesConventions.add(new Convention(".*/serverless[.]ya?ml", "", "Serverless Framework configuration"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/Procfile", "", "Procfile"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/skaffold[.]ya?ml", "", "Skaffold configuration"));
+
+        buildAndDeploymentFilesConventions.add(new Convention(".*[.]hcl", "", "HashiCorp Configuration Language file"));
         // Helm charts
         buildAndDeploymentFilesConventions.add(new Convention(".*/Chart[.]ya?ml", "", "Helm chart"));
         buildAndDeploymentFilesConventions.add(new Convention(".*/templates/.*[.]tpl", "", "Helm template"));
