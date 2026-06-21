@@ -35,11 +35,78 @@ public class ContributorsReportUtils {
         SCOPE_LABELS.put("other", "Other");
         // Residual tab (last): commits to files in no scope — deleted/renamed-away or excluded from
         // every aspect. Makes the scope tabs sum to "All" (key from GitContributorsUtil.UNSCOPED).
-        SCOPE_LABELS.put("unscoped", "(removed/ignored)");
+        SCOPE_LABELS.put("unscoped", "Unscoped");
+    }
+
+    // The summary windows shown as leading columns of the activity table (label + day span; <=0 = all
+    // time). Order is the column order, left to right.
+    static final int[] SUMMARY_WINDOW_DAYS = {30, 90, 0};
+    static final String[] SUMMARY_WINDOW_LABELS = {"30 days", "90 days", "all time"};
+
+    // Per-metric totals for one window (one cell each in a metric row's leading summary columns).
+    public static class WindowTotals {
+        public int added, deleted, fileUpdates, commits, contributors;
+    }
+
+    // The leading-summary data for one scope: one WindowTotals per SUMMARY_WINDOW_DAYS entry. Rendered as
+    // the leading columns of the activity table by addContributorsPerTimeSlot when passed in.
+    public static class ActivitySummary {
+        public final WindowTotals[] windows;
+        public ActivitySummary(WindowTotals[] windows) {
+            this.windows = windows;
+        }
     }
 
     /**
-     * Renders a small tab-like scope selector (e.g. "All" / "Main") above a set of activity diagrams,
+     * Builds the leading-summary totals for a scope (commits/file-updates/churn from the scope's
+     * day-level time slots, distinct contributors from per-scope commit dates), one column per
+     * SUMMARY_WINDOW_DAYS window. {@code scope == null} means all scopes (uses the all-scope day slots
+     * and each contributor's flat commit dates). A window of <=0 days means all time.
+     */
+    public static ActivitySummary buildActivitySummary(ContributorsAnalysisResults contributorsAnalysisResults, String scope) {
+        List<ContributionTimeSlot> perDay = scope == null
+                ? contributorsAnalysisResults.getContributorsPerDay()
+                : contributorsAnalysisResults.getContributorsPerDayByScope().get(scope);
+
+        WindowTotals[] windows = new WindowTotals[SUMMARY_WINDOW_DAYS.length];
+        for (int w = 0; w < SUMMARY_WINDOW_DAYS.length; w++) {
+            int days = SUMMARY_WINDOW_DAYS[w];
+            WindowTotals t = new WindowTotals();
+            if (perDay != null) {
+                for (ContributionTimeSlot slot : perDay) {
+                    if (days <= 0 || nl.obren.sokrates.sourcecode.filehistory.DateUtils.isCommittedLessThanDaysAgo(slot.getTimeSlot(), days)) {
+                        t.commits += slot.getCommitsCount();
+                        t.fileUpdates += slot.getFileUpdatesCount();
+                        t.added += slot.getLinesAdded();
+                        t.deleted += slot.getLinesDeleted();
+                    }
+                }
+            }
+            // Distinct non-bot contributors active in this scope+window.
+            java.util.Set<String> people = new java.util.HashSet<>();
+            for (Contributor c : contributorsAnalysisResults.getContributors()) {
+                if (c.isBot()) {
+                    continue;
+                }
+                List<String> dates = scope == null ? c.getCommitDates() : c.getCommitDatesByScope().get(scope);
+                if (dates == null) {
+                    continue;
+                }
+                boolean active = days <= 0
+                        ? !dates.isEmpty()
+                        : dates.stream().anyMatch(d -> nl.obren.sokrates.sourcecode.filehistory.DateUtils.isCommittedLessThanDaysAgo(d, days));
+                if (active) {
+                    people.add(c.getEmail());
+                }
+            }
+            t.contributors = people.size();
+            windows[w] = t;
+        }
+        return new ActivitySummary(windows);
+    }
+
+    /**
+     * Renders a small tab-like scope selector (e.g. "Main" / ... / "All") above a set of activity diagrams,
      * with one show/hide panel per scope. Each entry's {@link Runnable} renders that scope's body into
      * the report. Self-contained: it emits its own buttons + panels + a scoped inline switch script, so
      * it does NOT use the global tab machinery (openTab toggles every .tabcontent on the page, which
@@ -59,7 +126,7 @@ public class ContributorsReportUtils {
             return;
         }
 
-        report.addHtmlContent("<div style='margin: 18px 0; margin-left: 18px'>");
+        report.addHtmlContent("<div style='margin: 18px 10px'>");
         int[] i = {0};
         scopePanels.keySet().forEach(label -> {
             String safeLabel = label.replaceAll("[^A-Za-z0-9]", "_");
@@ -127,6 +194,15 @@ public class ContributorsReportUtils {
     }
 
     public static void addContributorsPerTimeSlot(RichTextReport report, List<ContributionTimeSlot> contributorsPerTimeSlot, int limit, boolean showTimeSlot, boolean showContributors, int padding, boolean fade) {
+        addContributorsPerTimeSlot(report, contributorsPerTimeSlot, limit, showTimeSlot, showContributors, padding, fade, null);
+    }
+
+    /**
+     * @param summary when non-null, the metric rows (churn/file-updates/commits/contributors) get
+     *                leading summary columns (30 days / 90 days / all time) as real table cells aligned to
+     *                each row — replacing pixel-margin-aligned cards. Null keeps the plain chart.
+     */
+    public static void addContributorsPerTimeSlot(RichTextReport report, List<ContributionTimeSlot> contributorsPerTimeSlot, int limit, boolean showTimeSlot, boolean showContributors, int padding, boolean fade, ActivitySummary summary) {
         Collections.sort(contributorsPerTimeSlot, (a, b) -> b.getTimeSlot().compareTo(a.getTimeSlot()));
 
         if (contributorsPerTimeSlot.size() > 0) {
@@ -148,12 +224,31 @@ public class ContributorsReportUtils {
             report.startDiv("overflow-y: auto; font-size: 90%");
             report.startTable();
 
-            if (hasChurn) {
-                addChurnRow(report, contributorsPerTimeSlot, maxChurn, showTimeSlot, padding, fade);
+            // Leading summary columns header (30 days / 90 days / all time), spanning the summary cells
+            // that each metric row prepends. Only when a summary is supplied.
+            if (summary != null) {
+                report.startTableRow();
+                report.addTableCell("", "border: none;"); // above the metric icon column
+                for (String label : SUMMARY_WINDOW_LABELS) {
+                    report.addTableCell(label, "border: none; text-align: center; vertical-align: bottom; font-size: 70%; color: grey; padding: 2px 6px;");
+                }
+                // A spacer cell above the time-series area (kept narrow; charts start after the summary).
+                report.addTableCell("", "border: none;");
+                report.endTableRow();
             }
 
+            if (hasChurn) {
+                addChurnRow(report, contributorsPerTimeSlot, maxChurn, showTimeSlot, padding, fade, summary);
+            }
+
+            // With leading summary columns the metric icons centre vertically to line up with the
+            // centred summary cells; without them (e.g. the Commits report charts) keep the icons at the
+            // bottom so they sit on the baseline the bars grow from.
+            String iconVAlign = summary != null ? "middle" : "bottom";
+
             report.startTableRow();
-            report.addTableCell(getIconSvg("change", 64), "border: none; vertical-align: bottom;" + (fade ? "opacity: 0.4" : ""));
+            report.addTableCell(getIconSvg("change", 64), "border: none; vertical-align: " + iconVAlign + ";" + (fade ? "opacity: 0.4" : ""));
+            addSummaryCells(report, summary, SummaryMetric.FILE_UPDATES, fade);
             String styleFileUpdatesCount;
             if (showTimeSlot) {
                 styleFileUpdatesCount = "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: bottom; font-size: 80%";
@@ -197,7 +292,8 @@ public class ContributorsReportUtils {
             report.endTableRow();
 
             report.startTableRow();
-            report.addTableCell(getIconSvg("commits", 64), "border: none; vertical-align: bottom;" + (fade ? "opacity: 0.4" : ""));
+            report.addTableCell(getIconSvg("commits", 64), "border: none; vertical-align: " + iconVAlign + ";" + (fade ? "opacity: 0.4" : ""));
+            addSummaryCells(report, summary, SummaryMetric.COMMITS, fade);
             String style;
             if (showTimeSlot) {
                 style = "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: bottom; font-size: 80%";
@@ -225,7 +321,8 @@ public class ContributorsReportUtils {
 
             if (showContributors) {
                 report.startTableRow();
-                report.addTableCell(getIconSvg("contributors", 64), "border: none; vertical-align: bottom;" + (fade ? "opacity: 0.4" : ""));
+                report.addTableCell(getIconSvg("contributors", 64), "border: none; vertical-align: " + iconVAlign + ";" + (fade ? "opacity: 0.4" : ""));
+                addSummaryCells(report, summary, SummaryMetric.CONTRIBUTORS, fade);
                 for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
                     report.startTableCell(style);
                     if (timeSlot != null) {
@@ -249,6 +346,12 @@ public class ContributorsReportUtils {
             if (showTimeSlot) {
                 report.startTableRow();
                 report.addTableCell("", "border: none; ");
+                // Blank cells under the leading summary columns so the time-axis labels stay aligned.
+                if (summary != null) {
+                    for (int s = 0; s < SUMMARY_WINDOW_DAYS.length; s++) {
+                        report.addTableCell("", "border: none;");
+                    }
+                }
                 for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
                     if (timeSlot == null) {
                         continue;
@@ -280,9 +383,10 @@ public class ContributorsReportUtils {
     // deletions share one scale so equal magnitudes draw equal lengths. Only called when there is churn
     // data. Sits directly above the file-updates row.
     private static void addChurnRow(RichTextReport report, List<ContributionTimeSlot> contributorsPerTimeSlot,
-                                    int maxChurn, boolean showTimeSlot, int padding, boolean fade) {
+                                    int maxChurn, boolean showTimeSlot, int padding, boolean fade, ActivitySummary summary) {
         report.startTableRow();
         report.addTableCell(getIconSvg("lines_churn", 64), "border: none; vertical-align: middle;" + (fade ? "opacity: 0.4" : ""));
+        addSummaryCells(report, summary, SummaryMetric.CHURN, fade);
         String style;
         if (showTimeSlot) {
             style = "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: middle; font-size: 80%";
@@ -333,6 +437,55 @@ public class ContributorsReportUtils {
             report.endTableCell();
         }
         report.endTableRow();
+    }
+
+    // Which metric a leading summary cell shows.
+    private enum SummaryMetric { CHURN, FILE_UPDATES, COMMITS, CONTRIBUTORS }
+
+    // Emits the leading summary cells (one per SUMMARY_WINDOW_DAYS window) for a metric row, right after
+    // that row's icon cell. No-op when summary is null (plain chart). The cell shows the window total for
+    // the metric, styled to sit beside the row's chart at the same vertical rhythm.
+    // Opacity per summary window, parallel to SUMMARY_WINDOW_DAYS: the 30-day window is the primary
+    // signal (full opacity); 90-day and all-time are progressively dimmed so the recent window stands out.
+    private static final double[] SUMMARY_WINDOW_OPACITY = {1.0, 0.3, 0.2};
+
+    private static void addSummaryCells(RichTextReport report, ActivitySummary summary, SummaryMetric metric, boolean fade) {
+        if (summary == null) {
+            return;
+        }
+        for (int w = 0; w < summary.windows.length; w++) {
+            WindowTotals t = summary.windows[w];
+            // Per-window dimming; when there is no recent activity at all (fade) dim a touch further.
+            double opacity = w < SUMMARY_WINDOW_OPACITY.length ? SUMMARY_WINDOW_OPACITY[w] : 0.2;
+            if (fade) {
+                opacity *= 0.5;
+            }
+            // Data is centred both horizontally and vertically in the cell.
+            String cellStyle = "border: none; text-align: center; vertical-align: middle;"
+                    + " padding: 2px 6px; min-width: 48px; opacity: " + opacity + ";";
+            String value;
+            switch (metric) {
+                case CHURN:
+                    value = "<span style='color: #2e7d32;'>+" + FormattingUtils.getSmallTextForNumber(t.added) + "</span>"
+                            + "<br><span style='color: #c62828;'>-" + FormattingUtils.getSmallTextForNumber(t.deleted) + "</span>";
+                    break;
+                case FILE_UPDATES:
+                    value = numberCell(t.fileUpdates);
+                    break;
+                case COMMITS:
+                    value = numberCell(t.commits);
+                    break;
+                default:
+                    value = numberCell(t.contributors);
+                    break;
+            }
+            report.addTableCell(value, cellStyle);
+        }
+    }
+
+    private static String numberCell(int count) {
+        String color = count == 0 ? "#c0c0c0" : "#333333";
+        return "<span style='font-size: 150%; color: " + color + ";'>" + FormattingUtils.getSmallTextForNumber(count) + "</span>";
     }
 
     public static void addContributors(RichTextReport indexReport, List<Contributor> contributors, String type) {

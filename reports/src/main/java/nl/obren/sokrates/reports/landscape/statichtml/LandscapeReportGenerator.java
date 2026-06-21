@@ -137,6 +137,12 @@ public class LandscapeReportGenerator {
     private Map<String, List<String>> rookiesPerMonthMap = new HashMap<>();
     private Map<String, List<String>> contributorsPerYearMap = new HashMap<>();
     private Map<String, List<String>> rookiesPerYearMap = new HashMap<>();
+    // Per-scope (main/test/build/generated/other/unscoped) year -> distinct contributor emails, backing
+    // the scope toggle on the Overview summary's per-year chart. Empty for analyses without per-scope
+    // contributor data (only the all-scope chart shows then). currentSummaryScope selects which one the
+    // chart reads; the panels render sequentially so a single mutable field is safe.
+    private final Map<String, Map<String, List<String>>> contributorsPerYearMapByScope = new LinkedHashMap<>();
+    private String currentSummaryScope = LandscapeReportContributorsTab.ALL_SCOPE;
     private SourceFileAgeDistribution overallFileLastModifiedDistribution;
     private SourceFileAgeDistribution overallFileFirstModifiedDistribution;
 
@@ -1163,7 +1169,25 @@ public class LandscapeReportGenerator {
                     "(past 30 days)", getExtraPeopleInfo(contributors, contributorsCount) + "\n" + FormattingUtils.formatCount(locPerRecentContributor) + " active lines of code per recent contributor");
         }
 
-        addContributorsPerYear(configuration.isShowContributorsTrendsOnFirstTab());
+        // Scope toggle over the Overview summary's per-year activity chart. The per-year bars (churn,
+        // commits, contributors) filter by scope; the headline trend cards stay all-scope (summary
+        // figures). Only "All" shows when there is no per-scope contributor data (older analyses).
+        boolean showTrends = configuration.isShowContributorsTrendsOnFirstTab();
+        java.util.LinkedHashMap<String, Runnable> summaryScopePanels = new java.util.LinkedHashMap<>();
+        getAvailableSummaryScopes().forEach(scope -> {
+            String label = nl.obren.sokrates.reports.generators.statichtml.ContributorsReportUtils.SCOPE_LABELS.get(scope);
+            summaryScopePanels.put(label, () -> {
+                String prev = currentSummaryScope;
+                currentSummaryScope = scope;
+                try { addContributorsPerYear(showTrends); } finally { currentSummaryScope = prev; }
+            });
+        });
+        summaryScopePanels.put("All", () -> {
+            String prev = currentSummaryScope;
+            currentSummaryScope = LandscapeReportContributorsTab.ALL_SCOPE;
+            try { addContributorsPerYear(showTrends); } finally { currentSummaryScope = prev; }
+        });
+        nl.obren.sokrates.reports.generators.statichtml.ContributorsReportUtils.addScopeToggle(landscapeReport, "landscape_summary_activity_scope", summaryScopePanels);
 
         landscapeReport.endDiv();
         landscapeReport.addLineBreak();
@@ -1976,7 +2000,7 @@ public class LandscapeReportGenerator {
     }
 
     private void addContributorsPerYear(boolean showContributorsCount) {
-        List<ContributionTimeSlot> contributorsPerYear = landscapeAnalysisResults.getContributorsPerYear();
+        List<ContributionTimeSlot> contributorsPerYear = scopedSummaryYear();
         if (contributorsPerYear.size() > 0) {
             int limit = landscapeAnalysisResults.getConfiguration().getCommitsMaxYears();
             if (contributorsPerYear.size() > limit) {
@@ -1995,8 +2019,8 @@ public class LandscapeReportGenerator {
             addChurnPerYearRow(contributorsPerYear, style, thisYear);
 
             landscapeReport.startTableRow();
-            landscapeReport.startTableCell("border: none; height: 130px; vertical-align: bottom;");
-            int commitsCount = landscapeAnalysisResults.getCommitsCount();
+            landscapeReport.startTableCell("border: none; height: 100px; vertical-align: bottom;");
+            int commitsCount = scopedSummaryTotalCommits();
             if (commitsCount > 0) {
                 addActivityTrendCard(FormattingUtils.getSmallTextForNumber(commitsCount), "commits", "commits");
             }
@@ -2020,8 +2044,8 @@ public class LandscapeReportGenerator {
                     maxContributors[0] = Math.max(maxContributors[0], count);
                 });
                 landscapeReport.startTableRow();
-                landscapeReport.startTableCell("border: none; height: 130px; vertical-align: bottom;");
-                int contributorsCount = landscapeAnalysisResults.getContributors().size();
+                landscapeReport.startTableCell("border: none; height: 110px; vertical-align: bottom;");
+                int contributorsCount = scopedSummaryTotalContributors();
                 if (contributorsCount > 0) {
                     addActivityTrendCard(FormattingUtils.getSmallTextForNumber(contributorsCount), "contributors", "contributors");
                 }
@@ -2065,7 +2089,30 @@ public class LandscapeReportGenerator {
     }
 
     private int getContributorsCountPerYear(String year) {
-        return this.contributorsPerYearMap.containsKey(year) ? contributorsPerYearMap.get(year).size() : 0;
+        Map<String, List<String>> map = LandscapeReportContributorsTab.ALL_SCOPE.equals(currentSummaryScope)
+                ? contributorsPerYearMap
+                : contributorsPerYearMapByScope.getOrDefault(currentSummaryScope, Collections.emptyMap());
+        return map.containsKey(year) ? map.get(year).size() : 0;
+    }
+
+    // Total commits/contributors for the current summary scope, driving the per-year chart's trend
+    // cards so they track the selected scope (all-scope totals for ALL_SCOPE; otherwise summed from the
+    // scope's per-year commit counts / the union of emails in the scope's year map).
+    private int scopedSummaryTotalCommits() {
+        if (LandscapeReportContributorsTab.ALL_SCOPE.equals(currentSummaryScope)) {
+            return landscapeAnalysisResults.getCommitsCount();
+        }
+        return scopedSummaryYear().stream().mapToInt(ContributionTimeSlot::getCommitsCount).sum();
+    }
+
+    private int scopedSummaryTotalContributors() {
+        if (LandscapeReportContributorsTab.ALL_SCOPE.equals(currentSummaryScope)) {
+            return landscapeAnalysisResults.getContributors().size();
+        }
+        Set<String> emails = new HashSet<>();
+        contributorsPerYearMapByScope.getOrDefault(currentSummaryScope, Collections.emptyMap())
+                .values().forEach(emails::addAll);
+        return emails.size();
     }
 
     private void populateTimeSlotMaps() {
@@ -2081,8 +2128,45 @@ public class LandscapeReportGenerator {
                 updateTimeSlotMap(contributorRepositories, contributorsPerMonthMap, rookiesPerMonthMap, month, month + "-01");
                 updateTimeSlotMap(contributorRepositories, contributorsPerYearMap, rookiesPerYearMap, year, year + "-01-01");
             });
+
+            // Per-scope year map for the Overview summary scope toggle (year only — the summary shows a
+            // single per-year chart). Built from each contributor's per-scope commit dates.
+            Map<String, List<String>> byScope = contributorRepositories.getContributor().getCommitDatesByScope();
+            if (byScope != null) {
+                byScope.forEach((scope, dates) -> {
+                    Map<String, List<String>> scopeYearMap = contributorsPerYearMapByScope.computeIfAbsent(scope, k -> new HashMap<>());
+                    String email = contributorRepositories.getContributor().getEmail();
+                    dates.forEach(day -> {
+                        String year = DateUtils.getYear(day);
+                        List<String> emails = scopeYearMap.computeIfAbsent(year, k -> new ArrayList<>());
+                        if (!emails.contains(email)) {
+                            emails.add(email);
+                        }
+                    });
+                });
+            }
         });
 
+    }
+
+    // Scope keys (besides all-scope) that any contributor carries year data for, in SCOPE_LABELS order.
+    private java.util.List<String> getAvailableSummaryScopes() {
+        java.util.List<String> ordered = new ArrayList<>();
+        nl.obren.sokrates.reports.generators.statichtml.ContributorsReportUtils.SCOPE_LABELS.keySet().forEach(scope -> {
+            if (contributorsPerYearMapByScope.containsKey(scope)) {
+                ordered.add(scope);
+            }
+        });
+        return ordered;
+    }
+
+    // The per-year ContributionTimeSlot list for the current summary scope (all-scope aggregate or the
+    // per-scope landscape aggregate).
+    private List<ContributionTimeSlot> scopedSummaryYear() {
+        if (LandscapeReportContributorsTab.ALL_SCOPE.equals(currentSummaryScope)) {
+            return landscapeAnalysisResults.getContributorsPerYear();
+        }
+        return landscapeAnalysisResults.getContributorsPerYearByScope().getOrDefault(currentSummaryScope, new ArrayList<>());
     }
 
     private void updateTimeSlotMap(ContributorRepositories contributorRepositories,

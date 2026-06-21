@@ -58,12 +58,21 @@ public class Contributor {
     // matrix can total line churn per month. Serialized; absent/empty for histories without churn.
     private Map<String, Integer> linesAddedPerDate = new LinkedHashMap<>();
     private Map<String, Integer> linesDeletedPerDate = new LinkedHashMap<>();
+    // Distinct commit dates per scope (scope name -> list of active day strings), where scope is one of
+    // main/test/build/generated/other/unscoped. Mirrors commitDates above but split by the scope of the
+    // files touched, so the landscape activity diagrams can size contributor counts per scope. A commit
+    // day appears under every scope it touched (so the per-scope sets overlap and need not sum to the
+    // all-scope commitDates). Serialized; empty for analyses generated before per-scope contributor data
+    // existed (callers fall back to showing only "All").
+    private Map<String, List<String>> commitDatesByScope = new LinkedHashMap<>();
     // O(1) companion sets for the (serialized) lists above, so addCommit stays O(1) per commit
-    // instead of scanning the growing lists. Kept in sync with commitDates/activeYears.
+    // instead of scanning the growing lists. Kept in sync with commitDates/activeYears/commitDatesByScope.
     @JsonIgnore
     private Set<String> commitDatesSet = new HashSet<>();
     @JsonIgnore
     private Set<String> activeYearsSet = new TreeSet<>();
+    @JsonIgnore
+    private Map<String, Set<String>> commitDatesByScopeSets = new LinkedHashMap<>();
 
     private boolean bot = false;
 
@@ -132,6 +141,35 @@ public class Contributor {
         }
 
         commitsCount += 1;
+    }
+
+    // Records a commit day under a given scope (main/test/build/generated/other/unscoped), keeping the
+    // per-scope dates distinct via the companion set. Called once per (scope, commit-day) the contributor
+    // touched; a day can be recorded under several scopes.
+    @JsonIgnore
+    public void addCommitForScope(String scope, String date) {
+        Set<String> set = commitDatesByScopeSets.computeIfAbsent(scope, k -> new HashSet<>());
+        if (set.add(date)) {
+            commitDatesByScope.computeIfAbsent(scope, k -> new ArrayList<>()).add(date);
+        }
+    }
+
+    // Merges another contributor's per-scope commit dates into this one (distinct per scope), used when
+    // the landscape combines a contributor's activity across repositories (mirrors addCommitDates).
+    @JsonIgnore
+    public void addCommitDatesByScope(Map<String, List<String>> other) {
+        if (other == null) {
+            return;
+        }
+        other.forEach((scope, dates) -> {
+            Set<String> set = commitDatesByScopeSets.computeIfAbsent(scope, k -> new HashSet<>());
+            List<String> list = commitDatesByScope.computeIfAbsent(scope, k -> new ArrayList<>());
+            dates.forEach(date -> {
+                if (set.add(date)) {
+                    list.add(date);
+                }
+            });
+        });
     }
 
     // Merges another contributor's distinct commit dates into this one in O(n) using the companion
@@ -409,6 +447,16 @@ public class Contributor {
     public void setCommitDates(List<String> commitDates) {
         this.commitDates = commitDates;
         this.commitDatesSet = new HashSet<>(commitDates);
+    }
+
+    public Map<String, List<String>> getCommitDatesByScope() {
+        return commitDatesByScope;
+    }
+
+    public void setCommitDatesByScope(Map<String, List<String>> commitDatesByScope) {
+        this.commitDatesByScope = commitDatesByScope != null ? commitDatesByScope : new LinkedHashMap<>();
+        this.commitDatesByScopeSets = new LinkedHashMap<>();
+        this.commitDatesByScope.forEach((scope, dates) -> commitDatesByScopeSets.put(scope, new HashSet<>(dates)));
     }
 
     public Map<String, Integer> getCommitsPerDate() {

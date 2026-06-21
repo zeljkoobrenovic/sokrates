@@ -140,6 +140,45 @@ class GitContributorsUtilTest {
     }
 
     @Test
+    void perScopeCommitDatesAreRecordedOnContributors() throws Exception {
+        resetHistoryCache();
+
+        // alice: 01-10 touches main+test, 01-12 touches only test; bob: 01-20 touches only a deleted
+        // (unscoped) file. So alice's main dates = {01-10}, test dates = {01-10, 01-12}; bob's unscoped
+        // dates = {01-20} and he has no main/test dates.
+        String history =
+                "2020-01-10 alice@org.com c1 src/Main.java alice 10 2\n" +
+                "2020-01-10 alice@org.com c1 test/MainTest.java alice 5 1\n" +
+                "2020-01-12 alice@org.com c2 test/Other.java alice 4 0\n" +
+                "2020-01-20 bob@org.com c3 deleted/Gone.java bob 7 3\n";
+
+        File file = writeHistory(history);
+
+        Map<String, Set<String>> pathsByScope = new LinkedHashMap<>();
+        pathsByScope.put("main", new HashSet<>(List.of("src/main.java")));
+        pathsByScope.put("test", new HashSet<>(List.of("test/maintest.java", "test/other.java")));
+
+        ContributorsImport result = GitContributorsUtil.importGitContributorsExport(
+                file, new FileHistoryAnalysisConfig(), pathsByScope);
+
+        Contributor alice = result.getContributors().stream()
+                .filter(c -> c.getEmail().equals("alice@org.com")).findFirst().orElseThrow();
+        Contributor bob = result.getContributors().stream()
+                .filter(c -> c.getEmail().equals("bob@org.com")).findFirst().orElseThrow();
+
+        // alice: main on 01-10 only; test on 01-10 and 01-12; nothing unscoped.
+        assertEquals(List.of("2020-01-10"), alice.getCommitDatesByScope().get("main"));
+        assertEquals(new HashSet<>(List.of("2020-01-10", "2020-01-12")),
+                new HashSet<>(alice.getCommitDatesByScope().get("test")));
+        assertTrue(alice.getCommitDatesByScope().getOrDefault(GitContributorsUtil.UNSCOPED, List.of()).isEmpty());
+
+        // bob: only the unscoped (deleted) file; no main/test dates.
+        assertEquals(List.of("2020-01-20"), bob.getCommitDatesByScope().get(GitContributorsUtil.UNSCOPED));
+        assertTrue(bob.getCommitDatesByScope().getOrDefault("main", List.of()).isEmpty());
+        assertTrue(bob.getCommitDatesByScope().getOrDefault("test", List.of()).isEmpty());
+    }
+
+    @Test
     void nullScopeMapLeavesPerScopeTimeSlotsEmpty() throws Exception {
         resetHistoryCache();
 

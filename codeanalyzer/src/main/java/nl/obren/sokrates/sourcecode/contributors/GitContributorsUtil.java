@@ -49,15 +49,22 @@ public class GitContributorsUtil {
                 contributorsImport.setLatestCommitDate(date);
             }
         });
-        contributorsImport.setContributors(getContributors(authorCommits));
+        List<Contributor> contributors = getContributors(authorCommits);
+        contributorsImport.setContributors(contributors);
 
         populateTimeSlots(contributorsImport, authorCommits, null);
 
         if (pathsByScope != null) {
+            // Map each contributor by email once so the per-scope passes can attribute scoped commit
+            // dates back to the right Contributor in O(1).
+            Map<String, Contributor> contributorByEmail = new HashMap<>();
+            contributors.forEach(c -> contributorByEmail.put(c.getEmail(), c));
+
             pathsByScope.forEach((scope, paths) -> {
                 List<AuthorCommit> scopeCommits = GitHistoryUtils.getAuthorCommits(file, config,
                         fileUpdate -> fileUpdate.getPath() != null && paths.contains(fileUpdate.getPath().toLowerCase()));
                 populateTimeSlots(contributorsImport, scopeCommits, scope);
+                recordScopeCommitDates(contributorByEmail, scopeCommits, scope);
             });
 
             // "Unscoped" residual: file-updates whose path is in NO scope's set. These are commits to
@@ -70,9 +77,23 @@ public class GitContributorsUtil {
             List<AuthorCommit> unscopedCommits = GitHistoryUtils.getAuthorCommits(file, config,
                     fileUpdate -> fileUpdate.getPath() == null || !allScopePaths.contains(fileUpdate.getPath().toLowerCase()));
             populateTimeSlots(contributorsImport, unscopedCommits, UNSCOPED);
+            recordScopeCommitDates(contributorByEmail, unscopedCommits, UNSCOPED);
         }
 
         return contributorsImport;
+    }
+
+    // Attributes each scoped commit's date to its contributor's per-scope commit-date map, so the
+    // landscape can later size contributor counts per scope. scopeCommits are the AuthorCommits whose
+    // files fall in the given scope (one entry per (commit, scope) since getAuthorCommits already groups
+    // by commitId under the path filter); addCommitForScope dedups dates per scope.
+    private static void recordScopeCommitDates(Map<String, Contributor> contributorByEmail, List<AuthorCommit> scopeCommits, String scope) {
+        scopeCommits.forEach(commit -> {
+            Contributor contributor = contributorByEmail.get(commit.getAuthorEmail());
+            if (contributor != null) {
+                contributor.addCommitForScope(scope, commit.getDate());
+            }
+        });
     }
 
     // Builds the per-year/month/week/day time-slot lists from the given commits. When scope is null

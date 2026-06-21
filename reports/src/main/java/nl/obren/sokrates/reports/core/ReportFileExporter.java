@@ -5,6 +5,7 @@
 package nl.obren.sokrates.reports.core;
 
 import nl.obren.sokrates.common.utils.FormattingUtils;
+import nl.obren.sokrates.reports.generators.statichtml.CommitsReportGenerator;
 import nl.obren.sokrates.reports.generators.statichtml.ContributorsReportUtils;
 import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
@@ -165,18 +166,17 @@ public class ReportFileExporter {
             addInfoBlockWithColor(indexReport, FormattingUtils.getFormattedPercentage(100 - oldPerc) + "%", "new main code", "1 year (" + FormattingUtils.getSmallTextForNumber(mainLoc - old) + " LOC)", MAIN_LOC_FRESH_COLOR, "", "new", "FileAge.html");
         }
         indexReport.endDiv();
-        StringBuilder icons = new StringBuilder("");
-        addIconsMainCode(analysisResults, icons);
-        indexReport.startDiv("margin-left: 0px; margin-top: -65px; padding-top: 32px; margin-bottom: 0px; padding-left: 0px; padding-bottom: 10px");
-        indexReport.startTable("margin-bottom: -20px");
-        indexReport.startTableRow();
-        indexReport.addTableCell(icons.toString(), "border: none;");
-        indexReport.endTableRow();
-        indexReport.endTable();
+        // The per-language icons used to sit here (always "main", above the scope toggle); they now live
+        // inside each scope panel of the activity table, showing that scope's languages.
+        indexReport.startDiv("margin-left: 0px; margin-top: -33px; margin-bottom: 0px; padding-left: 0px; padding-bottom: 10px");
         indexReport.startDiv("");
 
         if (contributorsAnalysisResults.getCommitsCount() > 0) {
-            addSummaryActivityTable(contributorsAnalysisResults, indexReport);
+            addSummaryActivityTable(analysisResults, indexReport);
+        } else {
+            // No git history: no activity table (and thus no per-scope panels) — still show the main
+            // language icons so the Overview isn't missing them.
+            addScopeLanguageIcons(indexReport, analysisResults, "main");
         }
 
         indexReport.endDiv();
@@ -235,19 +235,29 @@ public class ReportFileExporter {
             indexReport.startTableRow();
 
             indexReport.startTableCell("border: none");
-            // Scope selector ("All" + one tab per present scope) above the per-year activity graph.
-            // Scope tabs appear only when the analysis carried that scope's time slots (older
-            // analyses have none).
+            // Scope selector (one tab per present scope, then "All" last) above the per-year activity
+            // graph. Scope tabs appear only when the analysis carried that scope's time slots (older
+            // analyses have none). Main is the default-visible tab (first entry); "All" goes last.
             boolean fade = commitsCount30Days == 0;
             java.util.LinkedHashMap<String, Runnable> scopePanels = new java.util.LinkedHashMap<>();
-            scopePanels.put("All", () -> ContributorsReportUtils.addContributorsPerTimeSlot(
-                    indexReport, contributorsAnalysisResults.getContributorsPerYear(), 20, true, true, 8, fade));
             ContributorsReportUtils.SCOPE_LABELS.forEach((scope, label) -> {
                 List<ContributionTimeSlot> perYear = contributorsAnalysisResults.getContributorsPerYearByScope().get(scope);
                 if (perYear != null && !perYear.isEmpty()) {
-                    scopePanels.put(label, () -> ContributorsReportUtils.addContributorsPerTimeSlot(
-                            indexReport, perYear, 20, true, true, 8, fade));
+                    scopePanels.put(label, () -> {
+                        ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, perYear, 20, true, true, 8, fade);
+                        addPerMonthWeekDayDetails(indexReport, contributorsAnalysisResults,
+                                contributorsAnalysisResults.getContributorsPerMonthByScope().getOrDefault(scope, new java.util.ArrayList<>()),
+                                contributorsAnalysisResults.getContributorsPerWeekByScope().getOrDefault(scope, new java.util.ArrayList<>()),
+                                contributorsAnalysisResults.getContributorsPerDayByScope().getOrDefault(scope, new java.util.ArrayList<>()));
+                    });
                 }
+            });
+            scopePanels.put("All", () -> {
+                ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsAnalysisResults.getContributorsPerYear(), 20, true, true, 8, fade);
+                addPerMonthWeekDayDetails(indexReport, contributorsAnalysisResults,
+                        contributorsAnalysisResults.getContributorsPerMonth(),
+                        contributorsAnalysisResults.getContributorsPerWeek(),
+                        contributorsAnalysisResults.getContributorsPerDay());
             });
             ContributorsReportUtils.addScopeToggle(indexReport, "overview_activity_scope", scopePanels);
             indexReport.endTableCell();
@@ -358,7 +368,8 @@ public class ReportFileExporter {
         report.endDiv();
     }
 
-    private static void addSummaryActivityTable(ContributorsAnalysisResults contributorsAnalysisResults, RichTextReport indexReport) {
+    private static void addSummaryActivityTable(CodeAnalysisResults analysisResults, RichTextReport indexReport) {
+        ContributorsAnalysisResults contributorsAnalysisResults = analysisResults.getContributorsAnalysisResults();
         List<ContributionTimeSlot> contributorsPerYear = contributorsAnalysisResults.getContributorsPerYear();
         Map<String, ContributionTimeSlot> map = new HashMap<>();
         contributorsPerYear.forEach(c -> map.put(c.getTimeSlot(), c));
@@ -373,72 +384,74 @@ public class ReportFileExporter {
             year = currentYear + "";
         }
 
-        long contributorsCount = contributorsAnalysisResults.getContributors().stream().filter(c -> !c.isBot() && c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).count();
-        int commitsCount30Days = contributorsAnalysisResults.getCommitsCount30Days();
-        int fileUpdatesCount30Days = contributorsAnalysisResults.getFileUpdatesCount30Days();
-        int linesAdded30Days = contributorsAnalysisResults.getLinesAdded30Days();
-        int linesDeleted30Days = contributorsAnalysisResults.getLinesDeleted30Days();
-        indexReport.startTable("margin-bottom: -20px; border-top: 1px dashed grey; border-bottom: 1px dashed grey; padding-top: 10px; margin-top: 10px; margin-bottom: 10px;");
-        indexReport.startTableRow();
+        boolean fade = contributorsAnalysisResults.getContributors().stream().noneMatch(c -> !c.isBot() && c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS));
 
-        indexReport.startTableCell("border: none; vertical-align: top;");
-
-        // Lines changed (churn) in the past 30 days. Only shown when the git history carried churn
-        // columns (older exports have none, so this stays 0 and the card is hidden).
-        if (linesAdded30Days > 0 || linesDeleted30Days > 0) {
-            indexReport.startDiv("margin-top: 60px; margin-bottom: 14px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
-            indexReport.startNewTabLink("Commits.html", "");
-            indexReport.addContentInDiv(
-                    "<span style='color: #2e7d32;'>+" + FormattingUtils.getSmallTextForNumber(linesAdded30Days) + "</span>"
-                            + "<br><span style='color: #c62828;'>-" + FormattingUtils.getSmallTextForNumber(linesDeleted30Days) + "</span>",
-                    "padding-top: 14px; font-size: 22px;");
-            indexReport.addContentInDiv("lines changed<br>(30 days)", "color: black; font-size: 80%");
-            indexReport.endNewTabLink();
-            indexReport.endDiv();
-        }
-
-        indexReport.startDiv("margin-top: 8px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
-        indexReport.startNewTabLink("Commits.html", fileUpdatesCount30Days == 0 ? "opacity: 0.4" : "");
-        indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(fileUpdatesCount30Days),
-                "padding-top: 12px; font-size: 36px;");
-        indexReport.addContentInDiv((fileUpdatesCount30Days == 1 ? "file updates" : "file updates") + "<br>(30 days)", "color: black; font-size: 80%");
-        indexReport.endNewTabLink();
-        indexReport.endDiv();
-
-        indexReport.startDiv("margin-top: 8px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
-        indexReport.startNewTabLink("Commits.html", commitsCount30Days == 0 ? "opacity: 0.4" : "");
-        indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber(commitsCount30Days),
-                "padding-top: 12px; font-size: 36px;");
-        indexReport.addContentInDiv((commitsCount30Days == 1 ? "commit" : "commits") + "<br>(30 days)", "color: black; font-size: 80%");
-        indexReport.endNewTabLink();
-        indexReport.endDiv();
-
-        indexReport.startDiv("margin-top: 32px; width: 80px; height: 81px; background-color: white; border-radius: 5px; vertical-align: middle; text-align: center");
-        indexReport.startNewTabLink("Contributors.html", contributorsCount == 0 ? "opacity: 0.4" : "");
-        indexReport.addContentInDiv(FormattingUtils.getSmallTextForNumber((int) contributorsCount),
-                "padding-top: 12px; font-size: 36px;");
-        indexReport.addContentInDiv((contributorsCount == 1 ? "contributor" : "contributors") + "<br>(30 days)", "color: black; font-size: 80%");
-        indexReport.endNewTabLink();
-        indexReport.endDiv();
-        indexReport.endTableCell();
-        indexReport.startTableCell("border: none");
-        // Scope selector ("All" + one tab per present scope) above the per-year activity graph. Scope
-        // tabs appear only when the analysis carried that scope's time slots (older analyses have none).
-        boolean fade = contributorsCount == 0;
+        // The per-year chart now carries its own leading summary columns (30 days / 90 days / all time)
+        // as real table cells aligned to each metric row — no more pixel-margin-aligned cards. The scope
+        // toggle swaps the whole panel (per-scope language icons + chart-with-summary) per scope. Build
+        // chart panels (scopes present, then "All" last); each gets an ActivitySummary for its scope and
+        // its own language icons (that scope's aspect extensions) rendered inside the panel.
         java.util.LinkedHashMap<String, Runnable> scopePanels = new java.util.LinkedHashMap<>();
-        scopePanels.put("All", () -> ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsPerYear, 20, true, true, 8, fade));
         ContributorsReportUtils.SCOPE_LABELS.forEach((scope, label) -> {
             List<ContributionTimeSlot> perYearScope = contributorsAnalysisResults.getContributorsPerYearByScope().get(scope);
             if (perYearScope != null && !perYearScope.isEmpty()) {
                 // Pad with empty trailing years so this scope's x-axis matches the all-scope graph.
                 padTrailingYears(perYearScope);
-                scopePanels.put(label, () -> ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, perYearScope, 20, true, true, 8, fade));
+                ContributorsReportUtils.ActivitySummary summary = ContributorsReportUtils.buildActivitySummary(contributorsAnalysisResults, scope);
+                scopePanels.put(label, () -> {
+                    addScopeLanguageIcons(indexReport, analysisResults, scope);
+                    ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, perYearScope, 20, true, true, 8, fade, summary);
+                });
             }
         });
+        ContributorsReportUtils.ActivitySummary allSummary = ContributorsReportUtils.buildActivitySummary(contributorsAnalysisResults, null);
+        scopePanels.put("All", () -> {
+            addScopeLanguageIcons(indexReport, analysisResults, "All");
+            ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsPerYear, 20, true, true, 8, fade, allSummary);
+        });
+
+        indexReport.startTable("margin-bottom: -20px; border-top: 1px dashed grey; border-bottom: 1px dashed grey; padding-top: 10px; margin-top: 10px; margin-bottom: 10px;");
+        indexReport.startTableRow();
+        indexReport.startTableCell("border: none");
+        // Scope selector (one tab per present scope, then "All" last) above the per-year activity
+        // graph. Scope tabs appear only when the analysis carried that scope's time slots (older
+        // analyses have none). Main is the default-visible tab (first entry); "All" goes last.
         ContributorsReportUtils.addScopeToggle(indexReport, "summary_activity_scope", scopePanels);
         indexReport.endTableCell();
         indexReport.endTableRow();
         indexReport.endTable();
+    }
+
+    // Wraps the Per Month / Per Week / Per Day activity diagrams (for the selected scope) in a collapsed
+    // details block on the Overview Activity tab, mirroring the Landscape Activity tab. The diagrams
+    // themselves are the same ones the Commits report renders (shared static helper). No-op when there is
+    // no month/week/day data.
+    private static void addPerMonthWeekDayDetails(RichTextReport indexReport, ContributorsAnalysisResults analysis,
+                                                  List<ContributionTimeSlot> perMonth, List<ContributionTimeSlot> perWeek,
+                                                  List<ContributionTimeSlot> perDay) {
+        if ((perMonth == null || perMonth.isEmpty()) && (perWeek == null || perWeek.isEmpty()) && (perDay == null || perDay.isEmpty())) {
+            return;
+        }
+        indexReport.startDetailsBlock("activity per month, week and day...");
+        CommitsReportGenerator.addPerMonthWeekDayDiagrams(indexReport, analysis,
+                perMonth != null ? perMonth : new java.util.ArrayList<>(),
+                perWeek != null ? perWeek : new java.util.ArrayList<>(),
+                perDay != null ? perDay : new java.util.ArrayList<>());
+        indexReport.endDetailsBlock();
+    }
+
+    // Renders the language icons for a scope inside its activity panel (replacing the old single
+    // always-main icon strip above the toggle). No-op when the scope has no extensions. The unscoped tab
+    // shows "-" for the number (its files aren't analyzed, so there is no lines-of-code).
+    private static void addScopeLanguageIcons(RichTextReport indexReport, CodeAnalysisResults analysisResults, String scope) {
+        List<NumericMetric> extensions = extensionsForScope(analysisResults, scope);
+        if (extensions == null || extensions.isEmpty()) {
+            return;
+        }
+        boolean showDash = "unscoped".equals(scope);
+        StringBuilder icons = new StringBuilder("");
+        addIconsForExtensions(extensions, icons, showDash);
+        indexReport.addHtmlContent(icons.toString());
     }
 
     // Pads a per-year time-slot list with empty entries up to the current year (in place), matching
@@ -1019,23 +1032,67 @@ public class ReportFileExporter {
         report.endDiv();
     }
 
-    private static void addIconsMainCode(CodeAnalysisResults analysisResults, StringBuilder summary) {
-        List<NumericMetric> extensions = analysisResults.getMainAspectAnalysisResults().getLinesOfCodePerExtension();
+    // Renders the per-extension language icons for a given extension list. The number line shows the
+    // extension's lines of code, unless showDash is true (the unscoped tab, whose files aren't analyzed
+    // and have no LOC) — then it shows "-". First/biggest gets a larger icon. No-op (empty div) when
+    // there are no extensions.
+    private static void addIconsForExtensions(List<NumericMetric> extensions, StringBuilder summary, boolean showDash) {
         summary.append("<div style='margin-bottom: 20px; white-space: nowrap; overflow: hidden;'>");
         boolean first[] = {true};
         extensions.stream().limit(16).forEach(ext -> {
             String lang = ext.getName().toUpperCase().replace("*.", "").trim();
-            int loc = ext.getValue().intValue();
-            int fontSize = loc >= 1000 ? 20 : 20;
-            int width = (first[0] ? loc >= 1000 ? 64 : 65 : loc >= 1000 ? 42 : 43);
+            int value = ext.getValue().intValue();
+            int fontSize = 20;
+            int width = (first[0] ? value >= 1000 ? 64 : 65 : value >= 1000 ? 42 : 43);
+            String numberLine = showDash ? "-" : FormattingUtils.getSmallTextForNumberMinK(value);
             summary.append("<div style='width: " + width + "px; text-align: center; display: inline-block; border-radius: 5px; background-color: white; padding: 8px; margin-right: 4px;'>"
                     + (first[0] ? DataImageUtils.getLangDataImageDiv64(lang) : DataImageUtils.getLangDataImageDiv42(lang))
-                    + "<div style='margin-top: 3px; font-size: " + fontSize + "px'>" + FormattingUtils.getSmallTextForNumberMinK(loc) + "</div>"
+                    + "<div style='margin-top: 3px; font-size: " + fontSize + "px'>" + numberLine + "</div>"
                     + "<div style='font-size: 10px; white-space: no-wrap; overflow: hidden; color: grey;'>" + lang.toLowerCase() + "</div>"
                     + "</div>");
             first[0] = false;
         });
         summary.append("</div>");
+    }
+
+    // The per-extension list backing a scope's language icons:
+    //  - main/test/build/generated/other: that aspect's lines-of-code per extension.
+    //  - "All": the union of ALL analyzed scopes' LOC per extension (unscoped excluded — those files
+    //    aren't analyzed, so they carry no LOC and would distort the union).
+    //  - "unscoped": the residual git-history extensions with distinct file counts (rendered with "-"
+    //    for the number, since these files are never analyzed).
+    private static List<NumericMetric> extensionsForScope(CodeAnalysisResults analysisResults, String scope) {
+        switch (scope) {
+            case "main":
+                return analysisResults.getMainAspectAnalysisResults().getLinesOfCodePerExtension();
+            case "test":
+                return analysisResults.getTestAspectAnalysisResults().getLinesOfCodePerExtension();
+            case "build":
+                return analysisResults.getBuildAndDeployAspectAnalysisResults().getLinesOfCodePerExtension();
+            case "generated":
+                return analysisResults.getGeneratedAspectAnalysisResults().getLinesOfCodePerExtension();
+            case "other":
+                return analysisResults.getOtherAspectAnalysisResults().getLinesOfCodePerExtension();
+            case "unscoped":
+                return analysisResults.getContributorsAnalysisResults().getUnscopedExtensionFileCounts();
+            default: // "All": union of analyzed scopes, by LOC desc
+                return unionAnalyzedExtensions(analysisResults);
+        }
+    }
+
+    // Merges the per-extension LOC across all analyzed scopes (main/test/build/generated/other) into a
+    // single extension->total-LOC list, ordered by LOC descending. Backs the "All" tab's language icons.
+    private static List<NumericMetric> unionAnalyzedExtensions(CodeAnalysisResults analysisResults) {
+        Map<String, Integer> locByExtension = new LinkedHashMap<>();
+        for (String scope : new String[]{"main", "test", "build", "generated", "other"}) {
+            for (NumericMetric ext : extensionsForScope(analysisResults, scope)) {
+                locByExtension.merge(ext.getName(), ext.getValue().intValue(), Integer::sum);
+            }
+        }
+        List<NumericMetric> result = new ArrayList<>();
+        locByExtension.forEach((name, loc) -> result.add(new NumericMetric(name, loc)));
+        result.sort((a, b) -> b.getValue().intValue() - a.getValue().intValue());
+        return result;
     }
 
     public static String getDetailsIcon() {
