@@ -832,6 +832,7 @@ public class LandscapeAnalysisResults {
 
                     contributorInfo.addActiveYears(contributor.getActiveYears());
                     contributorInfo.addCommitDates(contributor.getCommitDates());
+                    contributorInfo.addCommitDatesByScope(contributor.getCommitDatesByScope());
                     contributorInfo.addCommitsPerDate(commitsPerDate);
                     contributorInfo.addLinesPerDate(contributor.getLinesAddedPerDate(), contributor.getLinesDeletedPerDate());
                     contributorInfo.addChurn(contributor.getLinesAdded(), contributor.getLinesDeleted(),
@@ -870,6 +871,7 @@ public class LandscapeAnalysisResults {
                     newContributor.setLatestCommitDate(latestCommitDate);
                     newContributor.setActiveYears(new ArrayList<>(contributor.getActiveYears()));
                     newContributor.setCommitDates(new ArrayList<>(contributor.getCommitDates()));
+                    newContributor.addCommitDatesByScope(contributor.getCommitDatesByScope());
                     newContributor.setCommitsPerDate(new LinkedHashMap<>(commitsPerDate));
                     newContributor.setLinesAddedPerDate(new LinkedHashMap<>(contributor.getLinesAddedPerDate()));
                     newContributor.setLinesDeletedPerDate(new LinkedHashMap<>(contributor.getLinesDeletedPerDate()));
@@ -969,6 +971,63 @@ public class LandscapeAnalysisResults {
         Collections.sort(list, Comparator.comparing(ContributionTimeSlot::getTimeSlot).reversed());
 
         return list;
+    }
+
+    // Per-scope aggregations: sum each repository's per-scope time-slot maps (main/test/build/
+    // generated/other/unscoped) into landscape-level totals, mirroring the all-scope getters above.
+    // The per-scope maps already live on each repository's serialized ContributorsAnalysisResults
+    // (read from analysisResults.json), so no re-analysis is needed. Repositories analyzed before
+    // per-scope churn existed simply have empty maps and contribute nothing to a scope, so the
+    // per-scope totals can be smaller than the all-scope total until every repository is re-analyzed.
+    @JsonIgnore
+    public Map<String, List<ContributionTimeSlot>> getContributorsPerYearByScope() {
+        return aggregatePerScope(ContributorsAnalysisResults::getContributorsPerYearByScope, true);
+    }
+
+    @JsonIgnore
+    public Map<String, List<ContributionTimeSlot>> getContributorsPerMonthByScope() {
+        return aggregatePerScope(ContributorsAnalysisResults::getContributorsPerMonthByScope, true);
+    }
+
+    @JsonIgnore
+    public Map<String, List<ContributionTimeSlot>> getContributorsPerWeekByScope() {
+        return aggregatePerScope(ContributorsAnalysisResults::getContributorsPerWeekByScope, false);
+    }
+
+    @JsonIgnore
+    public Map<String, List<ContributionTimeSlot>> getContributorsPerDayByScope() {
+        return aggregatePerScope(ContributorsAnalysisResults::getContributorsPerDayByScope, false);
+    }
+
+    private Map<String, List<ContributionTimeSlot>> aggregatePerScope(
+            java.util.function.Function<ContributorsAnalysisResults, Map<String, List<ContributionTimeSlot>>> perScopeMapGetter,
+            boolean reversed) {
+        // scope -> (timeSlot -> aggregated slot); LinkedHashMap preserves first-seen scope order.
+        Map<String, List<ContributionTimeSlot>> resultLists = new LinkedHashMap<>();
+        Map<String, Map<String, ContributionTimeSlot>> indexByScope = new LinkedHashMap<>();
+
+        getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
+            ContributorsAnalysisResults contributorsAnalysisResults = repositoryAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
+            Map<String, List<ContributionTimeSlot>> perScope = perScopeMapGetter.apply(contributorsAnalysisResults);
+            if (perScope == null) {
+                return;
+            }
+            perScope.forEach((scope, slots) -> {
+                List<ContributionTimeSlot> list = resultLists.computeIfAbsent(scope, k -> new ArrayList<>());
+                Map<String, ContributionTimeSlot> map = indexByScope.computeIfAbsent(scope, k -> new HashMap<>());
+                updateContributors(list, map, slots);
+            });
+        });
+
+        Comparator<ContributionTimeSlot> comparator = Comparator.comparing(ContributionTimeSlot::getTimeSlot);
+        if (reversed) {
+            comparator = comparator.reversed();
+        }
+        for (List<ContributionTimeSlot> list : resultLists.values()) {
+            Collections.sort(list, comparator);
+        }
+
+        return resultLists;
     }
 
     @JsonIgnore

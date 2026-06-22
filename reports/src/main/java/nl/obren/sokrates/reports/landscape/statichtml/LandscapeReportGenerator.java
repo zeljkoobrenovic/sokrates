@@ -137,6 +137,12 @@ public class LandscapeReportGenerator {
     private Map<String, List<String>> rookiesPerMonthMap = new HashMap<>();
     private Map<String, List<String>> contributorsPerYearMap = new HashMap<>();
     private Map<String, List<String>> rookiesPerYearMap = new HashMap<>();
+    // Per-scope (main/test/build/generated/other/unscoped) year -> distinct contributor emails, backing
+    // the scope toggle on the Overview summary's per-year chart. Empty for analyses without per-scope
+    // contributor data (only the all-scope chart shows then). currentSummaryScope selects which one the
+    // chart reads; the panels render sequentially so a single mutable field is safe.
+    private final Map<String, Map<String, List<String>>> contributorsPerYearMapByScope = new LinkedHashMap<>();
+    private String currentSummaryScope = LandscapeReportContributorsTab.ALL_SCOPE;
     private SourceFileAgeDistribution overallFileLastModifiedDistribution;
     private SourceFileAgeDistribution overallFileFirstModifiedDistribution;
 
@@ -1163,7 +1169,25 @@ public class LandscapeReportGenerator {
                     "(past 30 days)", getExtraPeopleInfo(contributors, contributorsCount) + "\n" + FormattingUtils.formatCount(locPerRecentContributor) + " active lines of code per recent contributor");
         }
 
-        addContributorsPerYear(configuration.isShowContributorsTrendsOnFirstTab());
+        // Scope toggle over the Overview summary's per-year activity chart. The per-year bars (churn,
+        // commits, contributors) filter by scope; the headline trend cards stay all-scope (summary
+        // figures). Only "All" shows when there is no per-scope contributor data (older analyses).
+        boolean showTrends = configuration.isShowContributorsTrendsOnFirstTab();
+        java.util.LinkedHashMap<String, Runnable> summaryScopePanels = new java.util.LinkedHashMap<>();
+        getAvailableSummaryScopes().forEach(scope -> {
+            String label = nl.obren.sokrates.reports.generators.statichtml.ContributorsReportUtils.SCOPE_LABELS.get(scope);
+            summaryScopePanels.put(label, () -> {
+                String prev = currentSummaryScope;
+                currentSummaryScope = scope;
+                try { addContributorsPerYear(showTrends); } finally { currentSummaryScope = prev; }
+            });
+        });
+        summaryScopePanels.put("All", () -> {
+            String prev = currentSummaryScope;
+            currentSummaryScope = LandscapeReportContributorsTab.ALL_SCOPE;
+            try { addContributorsPerYear(showTrends); } finally { currentSummaryScope = prev; }
+        });
+        nl.obren.sokrates.reports.generators.statichtml.ContributorsReportUtils.addScopeToggle(landscapeReport, "landscape_summary_activity_scope", summaryScopePanels);
 
         landscapeReport.endDiv();
         landscapeReport.addLineBreak();
@@ -1898,19 +1922,28 @@ public class LandscapeReportGenerator {
         InfoBlocks.addActivityTrendCard(landscapeReport, value, subtitle, icon);
     }
 
-    // Per-year line-churn row for the activity chart: each year is a stacked bar (lines added in
-    // green on top of lines deleted in red), with a "+added / -deleted" label (abbreviated). Only
-    // rendered when there is churn data (older analyses have none).
+    // Per-year line-churn row for the activity chart, drawn as a diverging chart: additions grow UP
+    // (green) from a centred zero baseline with the +added count just above the bar, deletions grow
+    // DOWN (red) below the baseline with the -deleted count just under it. Additions and deletions
+    // share one scale (the largest single-side value) so equal magnitudes draw equal lengths. Mirrors
+    // the per-repository churn chart (ContributorsReportUtils.addChurnRow). Only rendered when there is
+    // churn data (older analyses have none).
     private static final String CHURN_ADDED_COLOR = "#2e7d32";
     private static final String CHURN_DELETED_COLOR = "#c62828";
+    private static final int CHURN_HALF_HEIGHT = 48;
+    private static final int CHURN_LABEL_HEIGHT = 14;
 
     private void addChurnPerYearRow(List<ContributionTimeSlot> contributorsPerYear, String style, int thisYear) {
-        int maxChurn = contributorsPerYear.stream().mapToInt(y -> y.getLinesAdded() + y.getLinesDeleted()).max().orElse(0);
+        int maxChurn = contributorsPerYear.stream()
+                .mapToInt(y -> Math.max(y.getLinesAdded(), y.getLinesDeleted())).max().orElse(0);
         if (maxChurn <= 0) {
             return;
         }
+        // Diverging layout needs the bars centred on the baseline, so this row is middle-aligned
+        // (the commits/contributors rows below stay bottom-aligned via their own style).
+        String churnStyle = style.replace("vertical-align: bottom", "vertical-align: middle");
         landscapeReport.startTableRow();
-        landscapeReport.startTableCell("border: none; height: 130px; vertical-align: bottom;");
+        landscapeReport.startTableCell("border: none; height: 130px; vertical-align: middle;");
         int totalAdded = contributorsPerYear.stream().mapToInt(ContributionTimeSlot::getLinesAdded).sum();
         int totalDeleted = contributorsPerYear.stream().mapToInt(ContributionTimeSlot::getLinesDeleted).sum();
         addActivityTrendCard("<span style='font-size: 22px;'>"
@@ -1919,22 +1952,31 @@ public class LandscapeReportGenerator {
                 "line churn", "lines_churn");
         landscapeReport.endTableCell();
         contributorsPerYear.forEach(year -> {
-            landscapeReport.startTableCell(style);
+            landscapeReport.startTableCell(churnStyle);
             int added = year.getLinesAdded();
             int deleted = year.getLinesDeleted();
-            String color = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "#989898";
-            if (added > 0 || deleted > 0) {
-                landscapeReport.addHtmlContent("<div style='margin: 2px; font-size: 70%; white-space: nowrap; color: " + color + ";'>"
-                        + "<div style='color: " + CHURN_ADDED_COLOR + ";'>+" + FormattingUtils.getSmallTextForNumber(added) + "</div>"
-                        + "<div style='color: " + CHURN_DELETED_COLOR + ";'>-" + FormattingUtils.getSmallTextForNumber(deleted) + "</div></div>");
-            } else {
-                landscapeReport.addParagraph("&nbsp;", "margin: 2px");
-            }
-            int heightAdded = added > 0 ? 1 + (int) (56.0 * added / maxChurn) : 0;
-            int heightDeleted = deleted > 0 ? 1 + (int) (56.0 * deleted / maxChurn) : 0;
+            int heightAdded = added > 0 ? 1 + (int) ((CHURN_HALF_HEIGHT - 1) * added / (double) maxChurn) : 0;
+            int heightDeleted = deleted > 0 ? 1 + (int) ((CHURN_HALF_HEIGHT - 1) * deleted / (double) maxChurn) : 0;
+            String addedLabel = added > 0 ? "+" + FormattingUtils.getSmallTextForNumber(added) : "&nbsp;";
+            String deletedLabel = deleted > 0 ? "-" + FormattingUtils.getSmallTextForNumber(deleted) : "&nbsp;";
             String title = year.getTimeSlot() + ": +" + added + " / -" + deleted + " lines";
-            landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + CHURN_ADDED_COLOR + "; opacity: 0.7; height:" + heightAdded + "px'></div>");
-            landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + CHURN_DELETED_COLOR + "; opacity: 0.7; height:" + heightDeleted + "px'></div>");
+
+            // Top half: fixed-height, bottom-anchored [label][bar] so +added sits just above its bar
+            // and the bar's foot rests on the baseline.
+            landscapeReport.addHtmlContent("<div title='" + title + "' style='height: " + (CHURN_HALF_HEIGHT + CHURN_LABEL_HEIGHT)
+                    + "px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center'>");
+            landscapeReport.addHtmlContent("<div style='height: " + CHURN_LABEL_HEIGHT + "px; font-size: 70%; line-height: " + CHURN_LABEL_HEIGHT + "px; white-space: nowrap; color: " + CHURN_ADDED_COLOR + "'>" + addedLabel + "</div>");
+            landscapeReport.addHtmlContent("<div style='width: 100%; background-color: " + CHURN_ADDED_COLOR + "; opacity: 0.7; height:" + heightAdded + "px'></div>");
+            landscapeReport.addHtmlContent("</div>");
+            // Zero baseline.
+            landscapeReport.addHtmlContent("<div style='width: 100%; height: 1px; background-color: #999999'></div>");
+            // Bottom half: fixed-height, top-anchored [bar][label] so the bar's head touches the
+            // baseline and -deleted sits just under it.
+            landscapeReport.addHtmlContent("<div title='" + title + "' style='height: " + (CHURN_HALF_HEIGHT + CHURN_LABEL_HEIGHT)
+                    + "px; display: flex; flex-direction: column; justify-content: flex-start; align-items: center'>");
+            landscapeReport.addHtmlContent("<div style='width: 100%; background-color: " + CHURN_DELETED_COLOR + "; opacity: 0.7; height:" + heightDeleted + "px'></div>");
+            landscapeReport.addHtmlContent("<div style='height: " + CHURN_LABEL_HEIGHT + "px; font-size: 70%; line-height: " + CHURN_LABEL_HEIGHT + "px; white-space: nowrap; color: " + CHURN_DELETED_COLOR + "'>" + deletedLabel + "</div>");
+            landscapeReport.addHtmlContent("</div>");
             landscapeReport.endTableCell();
         });
         landscapeReport.endTableRow();
@@ -1958,7 +2000,7 @@ public class LandscapeReportGenerator {
     }
 
     private void addContributorsPerYear(boolean showContributorsCount) {
-        List<ContributionTimeSlot> contributorsPerYear = landscapeAnalysisResults.getContributorsPerYear();
+        List<ContributionTimeSlot> contributorsPerYear = scopedSummaryYear();
         if (contributorsPerYear.size() > 0) {
             int limit = landscapeAnalysisResults.getConfiguration().getCommitsMaxYears();
             if (contributorsPerYear.size() > limit) {
@@ -1977,8 +2019,8 @@ public class LandscapeReportGenerator {
             addChurnPerYearRow(contributorsPerYear, style, thisYear);
 
             landscapeReport.startTableRow();
-            landscapeReport.startTableCell("border: none; height: 130px; vertical-align: bottom;");
-            int commitsCount = landscapeAnalysisResults.getCommitsCount();
+            landscapeReport.startTableCell("border: none; height: 100px; vertical-align: bottom;");
+            int commitsCount = scopedSummaryTotalCommits();
             if (commitsCount > 0) {
                 addActivityTrendCard(FormattingUtils.getSmallTextForNumber(commitsCount), "commits", "commits");
             }
@@ -2002,8 +2044,8 @@ public class LandscapeReportGenerator {
                     maxContributors[0] = Math.max(maxContributors[0], count);
                 });
                 landscapeReport.startTableRow();
-                landscapeReport.startTableCell("border: none; height: 130px; vertical-align: bottom;");
-                int contributorsCount = landscapeAnalysisResults.getContributors().size();
+                landscapeReport.startTableCell("border: none; height: 110px; vertical-align: bottom;");
+                int contributorsCount = scopedSummaryTotalContributors();
                 if (contributorsCount > 0) {
                     addActivityTrendCard(FormattingUtils.getSmallTextForNumber(contributorsCount), "contributors", "contributors");
                 }
@@ -2047,7 +2089,30 @@ public class LandscapeReportGenerator {
     }
 
     private int getContributorsCountPerYear(String year) {
-        return this.contributorsPerYearMap.containsKey(year) ? contributorsPerYearMap.get(year).size() : 0;
+        Map<String, List<String>> map = LandscapeReportContributorsTab.ALL_SCOPE.equals(currentSummaryScope)
+                ? contributorsPerYearMap
+                : contributorsPerYearMapByScope.getOrDefault(currentSummaryScope, Collections.emptyMap());
+        return map.containsKey(year) ? map.get(year).size() : 0;
+    }
+
+    // Total commits/contributors for the current summary scope, driving the per-year chart's trend
+    // cards so they track the selected scope (all-scope totals for ALL_SCOPE; otherwise summed from the
+    // scope's per-year commit counts / the union of emails in the scope's year map).
+    private int scopedSummaryTotalCommits() {
+        if (LandscapeReportContributorsTab.ALL_SCOPE.equals(currentSummaryScope)) {
+            return landscapeAnalysisResults.getCommitsCount();
+        }
+        return scopedSummaryYear().stream().mapToInt(ContributionTimeSlot::getCommitsCount).sum();
+    }
+
+    private int scopedSummaryTotalContributors() {
+        if (LandscapeReportContributorsTab.ALL_SCOPE.equals(currentSummaryScope)) {
+            return landscapeAnalysisResults.getContributors().size();
+        }
+        Set<String> emails = new HashSet<>();
+        contributorsPerYearMapByScope.getOrDefault(currentSummaryScope, Collections.emptyMap())
+                .values().forEach(emails::addAll);
+        return emails.size();
     }
 
     private void populateTimeSlotMaps() {
@@ -2063,8 +2128,45 @@ public class LandscapeReportGenerator {
                 updateTimeSlotMap(contributorRepositories, contributorsPerMonthMap, rookiesPerMonthMap, month, month + "-01");
                 updateTimeSlotMap(contributorRepositories, contributorsPerYearMap, rookiesPerYearMap, year, year + "-01-01");
             });
+
+            // Per-scope year map for the Overview summary scope toggle (year only — the summary shows a
+            // single per-year chart). Built from each contributor's per-scope commit dates.
+            Map<String, List<String>> byScope = contributorRepositories.getContributor().getCommitDatesByScope();
+            if (byScope != null) {
+                byScope.forEach((scope, dates) -> {
+                    Map<String, List<String>> scopeYearMap = contributorsPerYearMapByScope.computeIfAbsent(scope, k -> new HashMap<>());
+                    String email = contributorRepositories.getContributor().getEmail();
+                    dates.forEach(day -> {
+                        String year = DateUtils.getYear(day);
+                        List<String> emails = scopeYearMap.computeIfAbsent(year, k -> new ArrayList<>());
+                        if (!emails.contains(email)) {
+                            emails.add(email);
+                        }
+                    });
+                });
+            }
         });
 
+    }
+
+    // Scope keys (besides all-scope) that any contributor carries year data for, in SCOPE_LABELS order.
+    private java.util.List<String> getAvailableSummaryScopes() {
+        java.util.List<String> ordered = new ArrayList<>();
+        nl.obren.sokrates.reports.generators.statichtml.ContributorsReportUtils.SCOPE_LABELS.keySet().forEach(scope -> {
+            if (contributorsPerYearMapByScope.containsKey(scope)) {
+                ordered.add(scope);
+            }
+        });
+        return ordered;
+    }
+
+    // The per-year ContributionTimeSlot list for the current summary scope (all-scope aggregate or the
+    // per-scope landscape aggregate).
+    private List<ContributionTimeSlot> scopedSummaryYear() {
+        if (LandscapeReportContributorsTab.ALL_SCOPE.equals(currentSummaryScope)) {
+            return landscapeAnalysisResults.getContributorsPerYear();
+        }
+        return landscapeAnalysisResults.getContributorsPerYearByScope().getOrDefault(currentSummaryScope, new ArrayList<>());
     }
 
     private void updateTimeSlotMap(ContributorRepositories contributorRepositories,

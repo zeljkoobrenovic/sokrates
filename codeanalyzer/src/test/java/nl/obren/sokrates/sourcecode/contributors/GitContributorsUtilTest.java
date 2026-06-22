@@ -80,6 +80,102 @@ class GitContributorsUtilTest {
         assertEquals(2, testYear.getFileUpdatesCount());
         assertEquals(12, testYear.getLinesAdded());   // 5 + 7
         assertEquals(4, testYear.getLinesDeleted());   // 1 + 3
+
+        // Every file here is in some scope, so the residual "unscoped" tab has no activity.
+        List<ContributionTimeSlot> unscoped = result.getContributorsPerYearByScope()
+                .get(GitContributorsUtil.UNSCOPED);
+        assertTrue(unscoped == null || unscoped.isEmpty());
+    }
+
+    @Test
+    void unscopedResidualCapturesChurnOfFilesInNoScope() throws Exception {
+        resetHistoryCache();
+
+        // c1 touches a main file (+10/-2) and a now-deleted file (+99/-1) not in any scope;
+        // c2 touches only a deleted/ignored file (+7/-3). The deleted-file churn is in "All" but in
+        // no scope tab -> it must show up in the "unscoped" residual so the scopes sum to All.
+        String history =
+                "2020-01-10 alice@org.com c1 src/Main.java alice 10 2\n" +
+                "2020-01-10 alice@org.com c1 deleted/Gone.java alice 99 1\n" +
+                "2020-01-20 bob@org.com c2 vendor/Ignored.java bob 7 3\n";
+
+        File file = writeHistory(history);
+
+        Map<String, Set<String>> pathsByScope = new LinkedHashMap<>();
+        pathsByScope.put("main", new HashSet<>(List.of("src/main.java")));
+
+        ContributorsImport result = GitContributorsUtil.importGitContributorsExport(
+                file, new FileHistoryAnalysisConfig(), pathsByScope);
+
+        // All: both commits, 3 file updates, all churn.
+        ContributionTimeSlot allYear = slot(result.getContributorsPerYear(), "2020");
+        assertEquals(2, allYear.getCommitsCount());
+        assertEquals(3, allYear.getFileUpdatesCount());
+        assertEquals(116, allYear.getLinesAdded());   // 10 + 99 + 7
+        assertEquals(6, allYear.getLinesDeleted());    // 2 + 1 + 3
+
+        // Main: only the in-scope file of c1.
+        ContributionTimeSlot mainYear = slot(result.getContributorsPerYearByScope().get("main"), "2020");
+        assertEquals(1, mainYear.getCommitsCount());
+        assertEquals(1, mainYear.getFileUpdatesCount());
+        assertEquals(10, mainYear.getLinesAdded());
+        assertEquals(2, mainYear.getLinesDeleted());
+
+        // Unscoped: the deleted file from c1 (+99/-1) and the ignored file from c2 (+7/-3). Both
+        // commits touch an unscoped file, so 2 commits, 2 file updates.
+        ContributionTimeSlot unscopedYear = slot(
+                result.getContributorsPerYearByScope().get(GitContributorsUtil.UNSCOPED), "2020");
+        assertEquals(2, unscopedYear.getCommitsCount());
+        assertEquals(2, unscopedYear.getFileUpdatesCount());
+        assertEquals(106, unscopedYear.getLinesAdded());   // 99 + 7
+        assertEquals(4, unscopedYear.getLinesDeleted());    // 1 + 3
+
+        // Partition is exact: main + unscoped churn == all churn (the whole point of the residual tab).
+        assertEquals(allYear.getLinesAdded(),
+                mainYear.getLinesAdded() + unscopedYear.getLinesAdded());
+        assertEquals(allYear.getLinesDeleted(),
+                mainYear.getLinesDeleted() + unscopedYear.getLinesDeleted());
+        assertEquals(allYear.getFileUpdatesCount(),
+                mainYear.getFileUpdatesCount() + unscopedYear.getFileUpdatesCount());
+    }
+
+    @Test
+    void perScopeCommitDatesAreRecordedOnContributors() throws Exception {
+        resetHistoryCache();
+
+        // alice: 01-10 touches main+test, 01-12 touches only test; bob: 01-20 touches only a deleted
+        // (unscoped) file. So alice's main dates = {01-10}, test dates = {01-10, 01-12}; bob's unscoped
+        // dates = {01-20} and he has no main/test dates.
+        String history =
+                "2020-01-10 alice@org.com c1 src/Main.java alice 10 2\n" +
+                "2020-01-10 alice@org.com c1 test/MainTest.java alice 5 1\n" +
+                "2020-01-12 alice@org.com c2 test/Other.java alice 4 0\n" +
+                "2020-01-20 bob@org.com c3 deleted/Gone.java bob 7 3\n";
+
+        File file = writeHistory(history);
+
+        Map<String, Set<String>> pathsByScope = new LinkedHashMap<>();
+        pathsByScope.put("main", new HashSet<>(List.of("src/main.java")));
+        pathsByScope.put("test", new HashSet<>(List.of("test/maintest.java", "test/other.java")));
+
+        ContributorsImport result = GitContributorsUtil.importGitContributorsExport(
+                file, new FileHistoryAnalysisConfig(), pathsByScope);
+
+        Contributor alice = result.getContributors().stream()
+                .filter(c -> c.getEmail().equals("alice@org.com")).findFirst().orElseThrow();
+        Contributor bob = result.getContributors().stream()
+                .filter(c -> c.getEmail().equals("bob@org.com")).findFirst().orElseThrow();
+
+        // alice: main on 01-10 only; test on 01-10 and 01-12; nothing unscoped.
+        assertEquals(List.of("2020-01-10"), alice.getCommitDatesByScope().get("main"));
+        assertEquals(new HashSet<>(List.of("2020-01-10", "2020-01-12")),
+                new HashSet<>(alice.getCommitDatesByScope().get("test")));
+        assertTrue(alice.getCommitDatesByScope().getOrDefault(GitContributorsUtil.UNSCOPED, List.of()).isEmpty());
+
+        // bob: only the unscoped (deleted) file; no main/test dates.
+        assertEquals(List.of("2020-01-20"), bob.getCommitDatesByScope().get(GitContributorsUtil.UNSCOPED));
+        assertTrue(bob.getCommitDatesByScope().getOrDefault("main", List.of()).isEmpty());
+        assertTrue(bob.getCommitDatesByScope().getOrDefault("test", List.of()).isEmpty());
     }
 
     @Test

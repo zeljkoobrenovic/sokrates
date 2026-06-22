@@ -6,6 +6,7 @@ import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
+import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -32,6 +33,11 @@ public class ContributorsAnalysisResults {
     private Map<String, List<ContributionTimeSlot>> contributorsPerDayByScope = new LinkedHashMap<>();
     private Map<String, List<ContributionTimeSlot>> contributorsPerWeekByScope = new LinkedHashMap<>();
     private List<CommitsPerExtension> commitsPerExtensions = new ArrayList<>();
+    // Extensions of git-history files that fall in NO scope (the "unscoped"/residual tab) with their
+    // DISTINCT file counts as the value. These files are never analyzed, so there is no lines-of-code —
+    // the report shows "-" for the number and uses the count only for ordering. Empty for older analyses
+    // and for repos with no unscoped activity.
+    private List<NumericMetric> unscopedExtensionFileCounts = new ArrayList<>();
     private List<ComponentDependency> peopleFileDependencies30Days;
     private List<ComponentDependency> peopleFileDependencies90Days;
     private List<ComponentDependency> peopleFileDependencies180Days;
@@ -66,6 +72,14 @@ public class ContributorsAnalysisResults {
 
     public void setCommitsPerExtensions(List<CommitsPerExtension> commitsPerExtensions) {
         this.commitsPerExtensions = commitsPerExtensions;
+    }
+
+    public List<NumericMetric> getUnscopedExtensionFileCounts() {
+        return unscopedExtensionFileCounts;
+    }
+
+    public void setUnscopedExtensionFileCounts(List<NumericMetric> unscopedExtensionFileCounts) {
+        this.unscopedExtensionFileCounts = unscopedExtensionFileCounts;
     }
 
     public List<ContributionTimeSlot> getContributorsPerMonth() {

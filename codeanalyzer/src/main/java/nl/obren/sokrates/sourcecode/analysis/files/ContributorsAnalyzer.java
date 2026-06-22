@@ -57,6 +57,7 @@ public class ContributorsAnalyzer extends Analyzer {
             ProcessingStopwatch.end("analysis/contributors/loading");
             ProcessingStopwatch.start("analysis/contributors/per extension");
             analysisResults.setCommitsPerExtensions(fileHistoryAnalysisConfig.getCommitsPerExtension(sokratesFolder, fileHistoryAnalysisConfig));
+            analysisResults.setUnscopedExtensionFileCounts(computeUnscopedExtensionFileCounts(fileHistoryAnalysisConfig, pathsByScope));
             ProcessingStopwatch.end("analysis/contributors/per extension");
 
             ProcessingStopwatch.start("analysis/contributors/get people file dependencies");
@@ -88,6 +89,44 @@ public class ContributorsAnalyzer extends Analyzer {
         addScopePaths(pathsByScope, "generated", codeConfiguration.getGenerated());
         addScopePaths(pathsByScope, "other", codeConfiguration.getOther());
         return pathsByScope.isEmpty() ? null : pathsByScope;
+    }
+
+    // Distinct file count per extension for git-history files that fall in NO scope (the union of all
+    // scope path sets is the "in scope" set; everything else is unscoped — deleted/renamed-away or
+    // excluded from every aspect). These files are not analyzed, so there is no lines-of-code; the value
+    // is the distinct-file count, used by the report only to order the icons (it shows "-" for the
+    // number). Returns an empty list when there is no scope info (pathsByScope null) — then there is no
+    // unscoped tab at all — or no unscoped activity. Mirrors the unscoped time-slot residual in
+    // GitContributorsUtil so the icon set matches that tab's data.
+    private java.util.List<nl.obren.sokrates.sourcecode.metrics.NumericMetric> computeUnscopedExtensionFileCounts(
+            FileHistoryAnalysisConfig config, java.util.Map<String, java.util.Set<String>> pathsByScope) {
+        java.util.List<nl.obren.sokrates.sourcecode.metrics.NumericMetric> result = new java.util.ArrayList<>();
+        if (pathsByScope == null || pathsByScope.isEmpty()) {
+            return result;
+        }
+        java.util.Set<String> allScopePaths = new java.util.HashSet<>();
+        pathsByScope.values().forEach(allScopePaths::addAll);
+
+        // extension -> distinct unscoped file paths
+        java.util.Map<String, java.util.Set<String>> filesByExtension = new java.util.LinkedHashMap<>();
+        java.io.File historyFile = config.getContributorsFile(sokratesFolder);
+        nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils.getHistoryFromFile(historyFile, config).forEach(fileUpdate -> {
+            String path = fileUpdate.getPath();
+            if (path == null || allScopePaths.contains(path.toLowerCase())) {
+                return; // in a scope (or no path) — not unscoped
+            }
+            String extension = fileUpdate.getExtension();
+            if (extension == null || extension.trim().isEmpty()) {
+                return;
+            }
+            filesByExtension.computeIfAbsent(extension, k -> new java.util.HashSet<>()).add(path);
+        });
+
+        filesByExtension.forEach((extension, files) ->
+                result.add(new nl.obren.sokrates.sourcecode.metrics.NumericMetric(extension, files.size())));
+        // Order by distinct file count, descending (the report renders them in this order).
+        result.sort((a, b) -> b.getValue().intValue() - a.getValue().intValue());
+        return result;
     }
 
     // Adds one scope's source-file paths to the map, lowercased so matching against git-history paths
