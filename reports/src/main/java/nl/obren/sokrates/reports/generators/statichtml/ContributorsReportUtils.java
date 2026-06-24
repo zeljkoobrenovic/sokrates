@@ -232,8 +232,18 @@ public class ContributorsReportUtils {
                 for (String label : SUMMARY_WINDOW_LABELS) {
                     report.addTableCell(label, "border: none; text-align: center; vertical-align: bottom; font-size: 70%; color: grey; padding: 2px 6px;");
                 }
-                // A spacer cell above the time-series area (kept narrow; charts start after the summary).
-                report.addTableCell("", "border: none;");
+
+                for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
+                    if (timeSlot == null) {
+                        continue;
+                    }
+                    String slotString = timeSlot.getTimeSlot().replaceAll("\\-", "<br>");
+                    if (timeSlot.getCommitsCount() > 0 || timeSlot.getContributorsCount() > 0) {
+                        report.addTableCell(slotString + "", "border: none; padding: " + padding + "px; padding-bottom: 0; width: 10px; text-align: center; vertical-align: bottom; font-size: 80%");
+                    } else {
+                        report.addTableCell(slotString + "", "border: none; padding: " + padding + "px; padding-bottom: 0; width: 10px; text-align: center; vertical-align: bottom; font-size: 80%; color: #c0c0c0");
+                    }
+                }
                 report.endTableRow();
             }
 
@@ -247,7 +257,7 @@ public class ContributorsReportUtils {
             String iconVAlign = summary != null ? "middle" : "bottom";
 
             report.startTableRow();
-            report.addTableCell(getIconSvg("change", 64), "border: none; vertical-align: " + iconVAlign + ";" + (fade ? "opacity: 0.4" : ""));
+            report.addTableCellWithTitle(getIconSvg("change", 64), "border: none; vertical-align: " + iconVAlign + ";" + (fade ? "opacity: 0.4" : ""), "number of files changed per commit");
             addSummaryCells(report, summary, SummaryMetric.FILE_UPDATES, fade);
             String styleFileUpdatesCount;
             if (showTimeSlot) {
@@ -292,7 +302,7 @@ public class ContributorsReportUtils {
             report.endTableRow();
 
             report.startTableRow();
-            report.addTableCell(getIconSvg("commits", 64), "border: none; vertical-align: " + iconVAlign + ";" + (fade ? "opacity: 0.4" : ""));
+            report.addTableCellWithTitle(getIconSvg("commits", 64), "border: none; vertical-align: " + iconVAlign + ";" + (fade ? "opacity: 0.4" : ""), "number of commits");
             addSummaryCells(report, summary, SummaryMetric.COMMITS, fade);
             String style;
             if (showTimeSlot) {
@@ -321,7 +331,7 @@ public class ContributorsReportUtils {
 
             if (showContributors) {
                 report.startTableRow();
-                report.addTableCell(getIconSvg("contributors", 64), "border: none; vertical-align: " + iconVAlign + ";" + (fade ? "opacity: 0.4" : ""));
+                report.addTableCellWithTitle(getIconSvg("contributors", 64), "border: none; vertical-align: " + iconVAlign + ";" + (fade ? "opacity: 0.4" : ""), "number of contributors");
                 addSummaryCells(report, summary, SummaryMetric.CONTRIBUTORS, fade);
                 for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
                     report.startTableCell(style);
@@ -385,7 +395,7 @@ public class ContributorsReportUtils {
     private static void addChurnRow(RichTextReport report, List<ContributionTimeSlot> contributorsPerTimeSlot,
                                     int maxChurn, boolean showTimeSlot, int padding, boolean fade, ActivitySummary summary) {
         report.startTableRow();
-        report.addTableCell(getIconSvg("lines_churn", 64), "border: none; vertical-align: middle;" + (fade ? "opacity: 0.4" : ""));
+        report.addTableCellWithTitle(getIconSvg("lines_churn", 64), "border: none; vertical-align: middle;" + (fade ? "opacity: 0.4" : ""), "line churn");
         addSummaryCells(report, summary, SummaryMetric.CHURN, fade);
         String style;
         if (showTimeSlot) {
@@ -461,7 +471,7 @@ public class ContributorsReportUtils {
                 opacity *= 0.5;
             }
             // Data is centred both horizontally and vertically in the cell.
-            String cellStyle = "border: none; text-align: center; vertical-align: middle;"
+            String cellStyle = "border: none; border-left: 1px solid #ccc; border-right: 1px solid #ccc; text-align: center; vertical-align: middle;"
                     + " padding: 2px 6px; min-width: 48px; opacity: " + opacity + ";";
             String value;
             switch (metric) {
