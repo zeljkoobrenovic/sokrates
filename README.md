@@ -32,7 +32,7 @@ The typical workflow is **init → generateReports**. Run both from the root of 
 
 ```bash
 # 1. Create the analysis configuration (writes _sokrates/config.json)
-java -jar cli-1.0-jar-with-dependencies.jar init -srcRoot .
+java -jar cli-1.0-jar-with-dependencies.jar init
 
 # 2. (optional) Edit _sokrates/config.json to refine scope, logical decompositions, concerns, goals
 
