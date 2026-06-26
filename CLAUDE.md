@@ -38,6 +38,7 @@ Key commands (defined in `cli/.../Commands.java`, dispatched in `CommandLineInte
 - `generateReports` — run analysis and emit HTML reports (`-confFile`, `-outputFolder`; `-skipDuplication`, `-skipComplexAnalyses`, etc.)
 - `updateConfig` — fill in missing fields of an existing config
 - `updateLandscape` — aggregate multiple analyses into a landscape report
+- `updateLandscapePeopleConfigByUserName` — build/update `config-people.json` by grouping contributor emails that share a display name (userName) under one entry (additive: appends new emails only)
 - `extractGitHistory` / `extractGitSubHistory` — produce `git-history.txt` consumed by history analyses
 - `createConventionsFile` / `exportStandardConventions` — work with analysis conventions
 

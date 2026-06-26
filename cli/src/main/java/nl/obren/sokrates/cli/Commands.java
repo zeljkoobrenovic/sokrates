@@ -27,6 +27,9 @@ public class Commands {
     public static final String UPDATE_LANDSCAPE = "updateLandscape";
     public static final String UPDATE_LANDSCAPE_DESCRIPTION = "Updates or creates a Sokrates landscape report, aggregating results of multiple analyses";
 
+    public static final String UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME = "updateLandscapePeopleConfigByUserName";
+    public static final String UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME_DESCRIPTION = "Updates (or creates) the landscape config-people.json by grouping all contributor emails sharing the same display name (userName) under one entry, joining the emails in the email field with ';'. Purely additive: appends only new emails to existing entries, never removes emails or entries.";
+
     public static final String INIT_CONVENTIONS = "createConventionsFile";
     public static final String INIT_CONVENTIONS_DESCRIPTION = "Create a new analysis conventions file and saves it in <current-folder>/analysis_conventions.json ";
 
@@ -111,6 +114,7 @@ public class Commands {
         commands.add(new CommandUsage(INIT, INIT_DESCRIPTION, getInitOptions()));
         commands.add(new CommandUsage(GENERATE_REPORTS, GENERATE_REPORTS_DESCRIPTION, getReportingOptions()));
         commands.add(new CommandUsage(UPDATE_LANDSCAPE, UPDATE_LANDSCAPE_DESCRIPTION, getUpdateLandscapeOptions()));
+        commands.add(new CommandUsage(UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME, UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME_DESCRIPTION, getUpdateLandscapePeopleConfigByUserNameOptions()));
         commands.add(new CommandUsage(UPDATE_CONFIG, UPDATE_CONFIG_DESCRIPTION, getUpdateConfigOptions()));
         commands.add(new CommandUsage(EXTRACT_GIT_HISTORY, EXTRACT_GIT_HISTORY_DESCRIPTION, getExtractGitHistoryOption()));
 
@@ -280,6 +284,20 @@ public class Commands {
         addLink.setRequired(false);
 
         addLink.setArgs(2);
+        help.setArgs(0);
+
+        return options;
+    }
+
+    public Options getUpdateLandscapePeopleConfigByUserNameOptions() {
+        Options options = new Options();
+        options.addOption(analysisRoot);
+        options.addOption(confFile);
+        options.addOption(timeout);
+        options.addOption(help);
+
+        analysisRoot.setRequired(false);
+        confFile.setRequired(false);
         help.setArgs(0);
 
         return options;

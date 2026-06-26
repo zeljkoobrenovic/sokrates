@@ -112,6 +112,9 @@ public class CommandLineInterface {
             } else if (args[0].equalsIgnoreCase(Commands.UPDATE_LANDSCAPE)) {
                 updateLandscape(args);
                 return;
+            } else if (args[0].equalsIgnoreCase(Commands.UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME)) {
+                updateLandscapePeopleConfigByUserName(args);
+                return;
             } else if (args[0].equalsIgnoreCase(Commands.INIT_CONVENTIONS)) {
                 createNewConventionsFile(args);
                 return;
@@ -289,6 +292,37 @@ public class CommandLineInterface {
             saveExecutionStats(new File(reportsFolder, "data"));
             LandscapeAnalysisCommands.zipLandscapeDataFolder(reportsFolder);
         }
+    }
+
+    private void updateLandscapePeopleConfigByUserName(String[] args) throws ParseException {
+        Options options = commands.getUpdateLandscapePeopleConfigByUserNameOptions();
+        CommandLineParser parser = new DefaultParser();
+        CommandLine cmd = parser.parse(options, args);
+
+        if (cmd.hasOption(commands.getHelp().getOpt())) {
+            helpMode = true;
+            commands.usage(Commands.UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME,
+                    commands.getUpdateLandscapePeopleConfigByUserNameOptions(),
+                    Commands.UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME_DESCRIPTION);
+            return;
+        }
+
+        startTimeoutIfDefined(cmd);
+
+        String strRootPath = cmd.getOptionValue(commands.getAnalysisRoot().getOpt());
+        if (!cmd.hasOption(commands.getAnalysisRoot().getOpt())) {
+            strRootPath = ".";
+        }
+
+        File root = new File(strRootPath);
+        if (!root.exists()) {
+            LOG.error("The analysis root \"" + root.getPath() + "\" does not exist.");
+            return;
+        }
+
+        String confFilePath = cmd.getOptionValue(commands.getConfFile().getOpt());
+        LandscapeAnalysisCommands.updatePeopleConfigByUserName(root,
+                confFilePath != null ? new File(confFilePath) : null);
     }
 
     private void generateReports(String[] args) throws ParseException, IOException {

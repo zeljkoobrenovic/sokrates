@@ -58,6 +58,7 @@ java -jar cli-1.0-jar-with-dependencies.jar generateReports -help
 | `generateReports` | Run the analysis and generate the HTML/JSON reports |
 | `updateConfig` | Fill in missing fields of an existing configuration |
 | `updateLandscape` | Create/update a landscape report that aggregates multiple analyses |
+| `updateLandscapePeopleConfigByUserName` | Build/update `config-people.json` by grouping contributor emails sharing a display name (userName) under one entry (additive — appends new emails only) |
 | `createConventionsFile` | Create an analysis conventions file (`analysis_conventions.json`) |
 | `exportStandardConventions` | Export the standard conventions to `standard_analysis_conventions.json` |
 | `extractGitHistory` | Extract git history into `git-history.txt` (consumed by history/contributor analyses) |

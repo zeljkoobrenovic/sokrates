@@ -415,6 +415,13 @@ an avatar image, and profile links shown on their individual contributor report.
 }
 ```
 
+> **Bootstrapping by display name.** `sokrates updateLandscapePeopleConfigByUserName` scans every
+> repository's contributors and groups all emails that committed under the same `userName` into one
+> entry, joining them in the `email` field with `;` (e.g. `"victor.stinner@gmail.com;vstinner@python.org"`).
+> It is **purely additive**: an entry with an existing `userName` gets only its new emails appended
+> (existing emails and entries are never removed or reordered), so it is safe to re-run and to mix
+> with hand-edited entries.
+
 > The same `bots`, `ignoreContributors`, `anonymizeContributors`, and `transformContributorEmails`
 > options on the landscape `config.json` (Part 2) also shape how contributors are detected and
 > normalised before teams/people matching is applied.
