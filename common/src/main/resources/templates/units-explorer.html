@@ -241,8 +241,8 @@
             const fileName = paths[paths.length - 1];
             let folder = paths.slice(0, paths.length - 1).join('/');
             let displayFolder = folder;
-            if (folder && folder.length > 50) {
-                displayFolder = folder.substring(0, 50) + '...';
+            if (folder && folder.length > 40) {
+                displayFolder = folder.substring(0, 40) + '...';
             }
             html += '<div style="border-left: 1px solid lightgrey; padding-left: 6px">';
             html += '<div title="' + escapeHtml(folder) + '" style="font-size: 90%; color: #7f7f7f">' + escapeHtml(displayFolder) + '</div>';
@@ -255,12 +255,16 @@
             html += '<td>';
             html += '<div style="border-left: 1px solid lightgrey; padding-left: 6px">';
             const unitTitle = escapeHtml(item.longName || item.name) + (item.startLine ? ' (line ' + item.startLine + ')' : '');
+            let displayName = item.name;
+            if (displayName && displayName.length > 50) {
+                displayName = displayName.substring(0, 50) + '...';
+            }
             if (item.fragmentLink) {
                 html += '<div title="' + unitTitle + ' — view code" style="font-weight: bold">'
                     + '<a target="_blank" href="' + escapeHtml(item.fragmentLink) + '" style="color: #0a58ca">'
-                    + escapeHtml(item.name) + ' <span style="font-size: 60%; color: #888">&#x2197;</span></a></div>';
+                    + escapeHtml(displayName) + ' <span style="font-size: 60%; color: #888">&#x2197;</span></a></div>';
             } else {
-                html += '<div title="' + unitTitle + '" style="color: black; font-weight: bold">' + escapeHtml(item.name) + '</div>';
+                html += '<div title="' + unitTitle + '" style="color: black; font-weight: bold">' + escapeHtml(displayName) + '</div>';
             }
             html += '</div>';
             html += '</td>';

@@ -293,8 +293,8 @@
         // Header layout mirrors the original ReportRenderer.renderHeader: breadcrumbs, then a
         // 36px title block with the avatar and a 120% display name.
         const fallback = options.isTeam ? options.avatarTeam : options.avatarDeveloper;
-        const avatar = '<div style="vertical-align: middle; display: inline-block; width: 88px; margin-top: 2px;">'
-            + '<img style="border-radius: 50%; height: 80px; width: 80px; margin-right: 10px;" '
+        const avatar = '<div style="vertical-align: bottom; display: inline-block; width: 88px; margin-top: 2px;">'
+            + '<img style="vertical-align: bottom; height: 80px; width: 80px; margin-right: 10px;" '
             + 'src="' + esc(data.avatarUrl || fallback) + '" onerror="this.onerror=null;this.src=\'' + esc(fallback) + '\';"></div>';
 
         let html = '<div style="font-size: 36px; margin-top: 15px; padding-bottom: 15px; white-space: nowrap; overflow: hidden;">';
