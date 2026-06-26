@@ -27,6 +27,7 @@ public class DataImageUtils {
         map.put("py", "Python.png");
         map.put("py3", "Python.png");
         map.put("pyx", "Python.png");
+        map.put("pyl", "Python.png");
         map.put("sql", "SQL.png");
         map.put("php", "PHP.png");
         map.put("php3", "PHP.png");

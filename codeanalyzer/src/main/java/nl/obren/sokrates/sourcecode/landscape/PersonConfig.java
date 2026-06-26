@@ -6,7 +6,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PersonConfig {
-    private String name = "";
+    // Identity of the person — replaces the matched contributor email/id (this is what the old
+    // "name" field did). Used as the contributor key after email-pattern matching.
+    private String email = "";
+    // Optional display name. When set, it replaces the contributor's userName (from commits) in
+    // the reports. Default "" (keep the commit-derived userName).
+    private String userName = "";
     private String link = "";
     private List<Link> links = new ArrayList<>();
     private String image = "";
@@ -15,12 +20,20 @@ public class PersonConfig {
     public PersonConfig() {
     }
 
-    public String getName() {
-        return name;
+    public String getEmail() {
+        return email;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     public List<Link> getLinks() {

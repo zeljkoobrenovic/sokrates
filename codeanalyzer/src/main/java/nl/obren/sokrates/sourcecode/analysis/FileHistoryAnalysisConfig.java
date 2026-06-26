@@ -40,6 +40,13 @@ public class FileHistoryAnalysisConfig {
     // An optional list of string transformation used to transform contributor IDs (e.g. to remove domain from email)
     private List<OperationStatement> transformContributorEmails = new ArrayList<>();
 
+    // Optional people config (config-people.json, same model as landscapes), loaded at analysis time
+    // and NOT part of config.json. When set, a contributor whose (transformed) email matches a person's
+    // emailPatterns is remapped to that person's canonical email and its userName is overridden — so
+    // the per-repository reports group a person's emails and show their display name. Transient.
+    @JsonIgnore
+    private nl.obren.sokrates.sourcecode.landscape.PeopleConfig peopleConfig = null;
+
     public String getImportPath() {
         return importPath;
     }
@@ -120,6 +127,16 @@ public class FileHistoryAnalysisConfig {
 
     public void setTransformContributorEmails(List<OperationStatement> transformContributorEmails) {
         this.transformContributorEmails = transformContributorEmails;
+    }
+
+    @JsonIgnore
+    public nl.obren.sokrates.sourcecode.landscape.PeopleConfig getPeopleConfig() {
+        return peopleConfig;
+    }
+
+    @JsonIgnore
+    public void setPeopleConfig(nl.obren.sokrates.sourcecode.landscape.PeopleConfig peopleConfig) {
+        this.peopleConfig = peopleConfig;
     }
 
     public boolean isAnonymizeContributors() {

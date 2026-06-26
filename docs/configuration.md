@@ -389,12 +389,13 @@ landscape alongside `contributors.html`).
 ### `config-people.json` — people
 
 A JSON **object** with a `people` array. Each `PersonConfig` enriches a contributor (identified
-by `emailPatterns`) with a display name, an avatar image, and profile links shown on their
-individual contributor report.
+by `emailPatterns`) with a canonical identity (`email`), an optional display name (`userName`),
+an avatar image, and profile links shown on their individual contributor report.
 
 | Key | Type | Meaning |
 | --- | --- | --- |
-| `name` | string | Display name. |
+| `email` | string | Canonical identity — replaces the matched contributor email/id (used as the contributor key after `emailPatterns` matching). |
+| `userName` | string | Display name; when set, overrides the contributor's commit-derived userName in the reports. Default `""`. |
 | `image` | string | Avatar image URL (overrides `contributorAvatarLinkTemplate`). |
 | `links` | link[] | Profile links (`{ "label", "href" }`) shown on the contributor page. |
 | `link` | string | Legacy single link (prefer `links`). |
@@ -404,14 +405,29 @@ individual contributor report.
 {
   "people": [
     {
-      "name": "Alice Example",
-      "image": "https://.../alice.png",
-      "links": [ { "label": "GitHub", "href": "https://github.com/alice" } ],
-      "emailPatterns": ["alice@example\\.com", ".*alice.*@example\\.com"]
+      "userName": "Guido van Rossum",
+      "email": "guido@*",
+      "image": "https://.../guido.png",
+      "links": [ { "label": "GitHub", "href": "https://github.com/gvanrossum" } ],
+      "emailPatterns": ["guido[@]python.org", "guido[@]dropbox.com", "guido[@]google.com"]
     }
   ]
 }
 ```
+
+> **Bootstrapping by display name.** `sokrates updateLandscapePeopleConfigByUserName` scans every
+> repository's contributors and groups all emails that committed under the same `userName` into one
+> entry: every email becomes an `emailPatterns` regex (so the person matches all their addresses),
+> while the `email` field holds a single address — the **latest-used** email — and is filled only when
+> it is currently blank. It is **purely additive**: an entry with an existing `userName` gets only its
+> new patterns appended, and an `email` that is already set is **never overwritten**; nothing is
+> removed — so it is safe to re-run and to mix with hand-edited entries.
+>
+> `sokrates updatePeopleConfigByUserName` is the **single-repository** version: it reads only the repo's
+> `git-history.txt` (so run it after `extractGitHistory`, without needing `generateReports`) and writes
+> `_sokrates/config-people.json` using the same format and the same additive grouping. The
+> contributor-detection rules (`ignoreContributors`, `bots`, `transformContributorEmails`,
+> `anonymizeContributors`) are taken from the repo's own `_sokrates/config.json`.
 
 > The same `bots`, `ignoreContributors`, `anonymizeContributors`, and `transformContributorEmails`
 > options on the landscape `config.json` (Part 2) also shape how contributors are detected and

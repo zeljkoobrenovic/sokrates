@@ -58,6 +58,8 @@ public class CommandsTest {
         assertEquals("generateReports", Commands.GENERATE_REPORTS);
         assertEquals("updateConfig", Commands.UPDATE_CONFIG);
         assertEquals("updateLandscape", Commands.UPDATE_LANDSCAPE);
+        assertEquals("updateLandscapePeopleConfigByUserName", Commands.UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME);
+        assertEquals("updatePeopleConfigByUserName", Commands.UPDATE_PEOPLE_CONFIG_BY_USER_NAME);
         assertEquals("extractGitHistory", Commands.EXTRACT_GIT_HISTORY);
     }
 }

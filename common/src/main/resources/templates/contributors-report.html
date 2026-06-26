@@ -176,7 +176,8 @@
 
     <div class="tabcontent">
         <div style="color: grey; margin: 8px 0 10px 0;">
-            <input id="filter" type="text" placeholder="search by name; team: by team; mainLang:cs by main language; includesLang:go by any language used (; for multiple)"
+            <input id="filter" type="text"
+                   placeholder="search by name or email; team: by team; mainLang:cs by main language; includesLang:go by any language used (; for multiple)"
                    style="font-size: 16px; height: 30px; width: 680px;"
                    onkeyup="render()">
             <span id="search-summary" style="display: inline-block; margin-left: 6px;"></span>
@@ -250,7 +251,17 @@
 
     function nameCell(c) {
         const color = c.commitsCount90Days > 0 ? '#333' : 'lightgrey';
-        let body = avatarHtml(c) + esc(c.email);
+        // Show the display name (git author name) with the email beneath it in grey, like the
+        // per-repository Contributors report. Falls back to email alone when no name is available.
+        let nameHtml;
+        if (c.userName && c.email && c.userName !== c.email) {
+            nameHtml = esc(c.userName)
+                + '<div title="' + c.email + '" style="color: grey; font-size: 80%; max-width: 350px; overflow: hidden; white-space; no-wrap; ">&lt;' + esc(c.email) + '&gt;</div>';
+        } else {
+            nameHtml = esc(c.userName || c.email);
+        }
+        let body = '<span style="display: inline-block; vertical-align: middle;">' + nameHtml + '</span>';
+        body = avatarHtml(c) + body;
         if (c.membersCount > 0) {
             body += ' (' + num(c.membersCount) + ')';
         }
@@ -259,7 +270,7 @@
             body = '<div><div class="team-badge">' + esc(c.team) + '</div>'
                 + '<div style="margin-top: -15px; margin-bottom: -9px;">' + body + '</div></div>';
         }
-        return '<td style="vertical-align: middle; white-space: nowrap; overflow: hidden;">'
+        return '<td style="vertical-align: middle; white-space: nowrap; overflow: hidden; max-width: 350px;">'
             + '<a target="_blank" style="color: ' + color + ';" href="' + esc(c.reportUrl) + '">' + body + '</a></td>';
     }
 
@@ -272,13 +283,17 @@
     }
 
     const langCol = {
-        key: 'lang', label: '', type: 'string', dir: 1, headerStyle: 'text-align: center; width: 32px; max-width: 32px;',
+        key: 'lang',
+        label: '',
+        type: 'string',
+        dir: 1,
+        headerStyle: 'text-align: center; width: 32px; max-width: 32px;',
         value: c => (c.mainLang || '').toLowerCase(),
         cell: c => '<td style="text-align: center; width: 32px; max-width: 32px;">' + langIcon(c.mainLang) + '</td>'
     };
     const nameCol = {
         key: 'name', label: 'contributor', type: 'string', dir: 1, headerStyle: 'text-align: left;',
-        value: c => (c.email || '').toLowerCase(),
+        value: c => (c.userName || c.email || '').toLowerCase(),
         cell: c => nameCell(c)
     };
     const firstCol = {
@@ -304,6 +319,7 @@
             cell: (c, total) => commitsCell(accessor(c), total, withPct, dim)
         };
     }
+
     function reposCol(label, accessor) {
         return {
             key: 'repos', label: label, type: 'number', dir: -1, headerStyle: 'text-align: center;',
@@ -311,6 +327,7 @@
             cell: c => '<td style="vertical-align: middle; text-align: center; font-size: 90%;">' + num(accessor(c)) + '</td>'
         };
     }
+
     // Churn column: sorts by net lines touched (added + deleted), shows "+added / -deleted".
     // Renders a dim placeholder when the history had no churn data (both zero).
     function churnCol(key, label, addedAccessor, deletedAccessor) {
@@ -361,8 +378,14 @@
             {label: 'tree map', href: 'visuals/tree_map_contributors.html'},
             {label: 'txt', href: 'data/contributors.txt'},
             {label: 'json', href: 'data/contributors.json'},
-            {label: 'animated history (all time)', href: 'visuals/racing_charts_commits_contributors.html?tickDuration=600'},
-            {label: 'animated history (12 months window)', href: 'visuals/racing_charts_commits_window_contributors.html?tickDuration=600'}
+            {
+                label: 'animated history (all time)',
+                href: 'visuals/racing_charts_commits_contributors.html?tickDuration=600'
+            },
+            {
+                label: 'animated history (12 months window)',
+                href: 'visuals/racing_charts_commits_window_contributors.html?tickDuration=600'
+            }
         ],
         columns: [
             langCol, nameCol,
@@ -491,7 +514,7 @@
     //   "includesLang:<l1>,<l2>,..." -> the contributor must have committed to one of these
     //                                   languages (even if it is not their main one)
     // A term prefixed with "team:" matches the team name; any other plain term matches the
-    // contributor name (email). Plain name and team terms are a UNION among themselves, AND-ed with
+    // contributor's display name (userName) or email. Plain name and team terms are a UNION among themselves, AND-ed with
     // the language constraints (which are also AND-ed with each other). Examples:
     //   "alice;team:platform"               -> name contains "alice" OR team contains "platform"
     //   "mainLang:cs,java"                  -> contributors whose main language is cs or java
@@ -522,7 +545,7 @@
                 nameFilters.push(t);
             }
         });
-        return { nameFilters, teamFilters, langs, includesLangs };
+        return {nameFilters, teamFilters, langs, includesLangs};
     }
 
     function matchesFilters(text, filters) {
@@ -549,7 +572,7 @@
         if (!keepPaging) {
             displayLimit = PAGE_SIZE;
         }
-        const { nameFilters, teamFilters, langs, includesLangs } = getFilters();
+        const {nameFilters, teamFilters, langs, includesLangs} = getFilters();
         const noTextFilters = !nameFilters.length && !teamFilters.length;
         const tab = TABS_BY_ID[activeTab];
 
@@ -567,7 +590,7 @@
             }
             // Within those sets, name/team terms are a UNION (no text terms => everything passes).
             return noTextFilters
-                || matchesFilters(c.email, nameFilters)
+                || matchesFilters((c.userName || '') + ' ' + (c.email || ''), nameFilters)
                 || matchesFilters(c.team, teamFilters);
         });
         const column = tab.columns.find(c => c.key === tab.sortKey) || tab.columns[0];

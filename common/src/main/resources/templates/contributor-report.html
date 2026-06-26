@@ -293,8 +293,8 @@
         // Header layout mirrors the original ReportRenderer.renderHeader: breadcrumbs, then a
         // 36px title block with the avatar and a 120% display name.
         const fallback = options.isTeam ? options.avatarTeam : options.avatarDeveloper;
-        const avatar = '<div style="vertical-align: middle; display: inline-block; width: 88px; margin-top: 2px;">'
-            + '<img style="border-radius: 50%; height: 80px; width: 80px; margin-right: 10px;" '
+        const avatar = '<div style="vertical-align: bottom; display: inline-block; width: 88px; margin-top: 2px;">'
+            + '<img style="vertical-align: bottom; height: 80px; width: 80px; margin-right: 10px;" '
             + 'src="' + esc(data.avatarUrl || fallback) + '" onerror="this.onerror=null;this.src=\'' + esc(fallback) + '\';"></div>';
 
         let html = '<div style="font-size: 36px; margin-top: 15px; padding-bottom: 15px; white-space: nowrap; overflow: hidden;">';
@@ -302,7 +302,14 @@
         html += '<div style="margin-left: 4px; display: inline-block; vertical-align: middle; font-size: 120%">';
         html += '<div style="opacity: 0.7; font-size: 13px; margin-bottom: 12px;"><a href="' + esc(options.indexUrl || '../index.html') + '">'
             + esc(options.breadcrumbsLabel || 'Contributors') + '</a></div>';
-        html += esc(data.email);
+        // Title: display name (userName) with the email beneath it in a more discrete style, like the
+        // contributors table. Falls back to the email alone when there is no name (or it equals the email).
+        if (data.userName && data.email && data.userName !== data.email) {
+            html += esc(data.userName)
+                + '<div style="color: grey; font-size: 60%; font-weight: normal;">&lt;' + esc(data.email) + '&gt;</div>';
+        } else {
+            html += esc(data.userName || data.email);
+        }
         html += '</div></div>';
 
         html += '<div style="margin-top: 10px; margin-bottom: 22px;">';
@@ -320,17 +327,8 @@
             + window30(data.repositoriesCount30Days, '30d') + window30(data.repositoriesCount90Days, '3m')
             + window30(data.repositoriesCount180Days, '6m') + window30(data.repositoriesCount365Days, '1y')
             + '<b>' + num(data.repositoriesCount) + '</b>' + greyLabel(' (all time)') + '</div>';
-        html += '<div>Commits count: '
-            + window30(data.commitsCount30Days, '30d') + window30(data.commitsCount90Days, '3m')
-            + window30(data.commitsCount180Days, '6m') + window30(data.commitsCount365Days, '1y')
-            + '<b>' + smallNum(data.commitsCount) + '</b>' + greyLabel(' (all time)') + '</div>';
-        // Churn line: only shown when the underlying git-history.txt carried added/deleted columns.
-        const totalChurn = (data.linesAdded || 0) + (data.linesDeleted || 0);
-        if (totalChurn > 0) {
-            html += '<div>Lines changed: '
-                + churnSpan(data.linesAdded30Days, data.linesDeleted30Days) + greyLabel(' (30d)') + '&nbsp;&nbsp;&nbsp;'
-                + churnSpan(data.linesAdded, data.linesDeleted) + greyLabel(' (all time)') + '</div>';
-        }
+        // Commits count and lines changed are intentionally omitted here — they are shown per-window
+        // in the table below.
         html += '</div>';
 
         html += '<div style="margin-bottom: 6px;">' + renderExtensions() + '</div>';
@@ -344,12 +342,6 @@
 
     function window30(value, label) {
         return '<b>' + smallNum(value) + '</b>' + greyLabel(' (' + label + ')') + '&nbsp;&nbsp;&nbsp;';
-    }
-
-    function churnSpan(added, deleted) {
-        return '<span style="display: inline-block; vertical-align: middle; text-align: center; line-height: 1.1;">'
-            + '<b style="color: #2e7d32;">+' + smallNum(added || 0) + '</b>'
-            + '<br><b style="color: #c62828;">-' + smallNum(deleted || 0) + '</b></span>';
     }
 
     function renderExtensions() {

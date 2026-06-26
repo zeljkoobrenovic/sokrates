@@ -22,8 +22,8 @@ public class Contributor {
     public static final int RECENTLY_ACTIVITY_THRESHOLD_DAYS = 30;
     public static final int ACTIVITY_THRESHOLD_DAYS = 180;
     public static final int ROOKIE_THRESHOLD_DAYS = 365;
-    private String email = "";
     private String userName = "";
+    private String email = "";
     private int commitsCount = 0;
     private int commitsCount30Days = 0;
     private int fileUpdatesCount30Days = 0;

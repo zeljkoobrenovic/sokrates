@@ -14,6 +14,7 @@ package nl.obren.sokrates.sourcecode.githistory;
 import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
+import nl.obren.sokrates.sourcecode.landscape.PersonConfig;
 import nl.obren.sokrates.sourcecode.operations.ComplexOperation;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -165,6 +166,20 @@ public class GitHistoryUtils {
                     String userName = "";
                     if (index4 > index3) {
                         userName = line.substring(index4 + 1).replaceAll(" .*", "").replaceAll("[&]nbsp[;]", " ").trim();
+                    }
+
+                    // Apply the optional people config (config-people.json): if the email matches a
+                    // person's emailPatterns, remap it to that person's canonical email (so a person's
+                    // multiple emails collapse into one identity in the reports) and override the
+                    // userName with the configured display name when one is set.
+                    if (config.getPeopleConfig() != null) {
+                        PersonConfig personConfig = config.getPeopleConfig().getPersonFromEmailPatterns(authorEmail);
+                        if (StringUtils.isNotBlank(personConfig.getEmail())) {
+                            authorEmail = personConfig.getEmail();
+                        }
+                        if (StringUtils.isNotBlank(personConfig.getUserName())) {
+                            userName = personConfig.getUserName();
+                        }
                     }
 
                     FileUpdate fileUpdate = new FileUpdate(date, authorEmail, userName, commitId, path, bot);

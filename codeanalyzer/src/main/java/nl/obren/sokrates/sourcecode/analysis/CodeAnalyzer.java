@@ -50,6 +50,14 @@ public class CodeAnalyzer {
         results.setAnalysisStartTimeMs(start);
         results.setCodeConfiguration(codeConfiguration);
 
+        // Apply an optional _sokrates/config-people.json (same model as landscapes) before any analyzer
+        // parses git history: it groups a person's emails under one identity and overrides their
+        // userName in the per-repository reports. Set here (not in ContributorsAnalyzer) because
+        // FileHistoryAnalyzer parses history first and the parsed history is cached for the whole run.
+        // Missing/unparseable file -> null -> ignored.
+        codeConfiguration.getFileHistoryAnalysis().setPeopleConfig(
+                ContributorsAnalyzer.loadPeopleConfig(codeConfigurationFile.getParentFile()));
+
         AnalysisUtils.detailedInfo(results.getTextSummary(), progressFeedback, "Start of analysis", start);
 
         ProcessingStopwatch.start("analysis/basic");

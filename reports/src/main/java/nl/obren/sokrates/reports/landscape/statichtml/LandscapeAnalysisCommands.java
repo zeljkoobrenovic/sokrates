@@ -16,6 +16,7 @@ import nl.obren.sokrates.reports.utils.ZipUtils;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.landscape.DefaultTags;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
+import nl.obren.sokrates.sourcecode.landscape.PeopleConfig;
 import nl.obren.sokrates.sourcecode.landscape.SubLandscapeLink;
 import nl.obren.sokrates.sourcecode.landscape.TagGroup;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
@@ -54,6 +55,67 @@ public class LandscapeAnalysisCommands {
             landscapeConfigFile = new File(landscapeAnalysisRoot, "config.json");
         }
         return landscapeConfigFile;
+    }
+
+    /**
+     * Updates (or creates) the landscape's {@code config-people.json}, grouping all contributor emails
+     * that share the same display name (userName) under one person entry. Each email becomes an
+     * {@code emailPatterns} entry (so the person matches all their addresses); the {@code email} field
+     * holds a single address — the latest-used email — and is only filled when currently blank.
+     * Purely additive: nothing is removed, and an existing {@code email} is never overwritten.
+     *
+     * <p>The (email, userName) pairs are read from each repository's raw contributors (the names/emails
+     * as they appear in git history), so distinct emails belonging to the same person are grouped.
+     *
+     * @return the {@code config-people.json} file that was written.
+     */
+    public static File updatePeopleConfigByUserName(File analysisRoot, File landscapeConfigFile) {
+        landscapeConfigFile = getConfigFile(analysisRoot, landscapeConfigFile);
+        LandscapeAnalysisUpdater updater = new LandscapeAnalysisUpdater();
+        updater.updateConfiguration(analysisRoot, landscapeConfigFile, new Metadata());
+
+        LandscapeAnalyzer analyzer = new LandscapeAnalyzer();
+        LandscapeAnalysisResults landscapeAnalysisResults = analyzer.analyze(landscapeConfigFile);
+
+        // Collect (email, userName, latestCommitDate) from every repository's contributors. The date
+        // drives which email is treated as the latest-used one.
+        List<PeopleConfigByUserNameUpdater.ContributorIdentity> identities = new ArrayList<>();
+        landscapeAnalysisResults.getFilteredRepositoryAnalysisResults().forEach(repository ->
+                repository.getAnalysisResults().getContributorsAnalysisResults().getContributors().forEach(contributor ->
+                        identities.add(new PeopleConfigByUserNameUpdater.ContributorIdentity(
+                                contributor.getEmail(), contributor.getUserName(), contributor.getLatestCommitDate()))));
+
+        File peopleConfigFile = new File(landscapeConfigFile.getParentFile(), "config-people.json");
+        PeopleConfig peopleConfig = readPeopleConfig(peopleConfigFile);
+
+        int addedCount = new PeopleConfigByUserNameUpdater().update(peopleConfig, identities);
+
+        try {
+            FileUtils.write(peopleConfigFile, new JsonGenerator().generate(peopleConfig), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            LOG.error("Could not write " + peopleConfigFile.getPath(), e);
+        }
+
+        LOG.info("Updated " + peopleConfigFile.getPath() + ": "
+                + peopleConfig.getPeople().size() + " people, " + addedCount + " email pattern(s) added.");
+
+        return peopleConfigFile;
+    }
+
+    private static PeopleConfig readPeopleConfig(File peopleConfigFile) {
+        if (!peopleConfigFile.exists()) {
+            return new PeopleConfig();
+        }
+        try {
+            PeopleConfig peopleConfig = new JsonMapper().getObject(
+                    FileUtils.readFileToString(peopleConfigFile, StandardCharsets.UTF_8),
+                    new TypeReference<PeopleConfig>() {
+                    });
+            return peopleConfig != null ? peopleConfig : new PeopleConfig();
+        } catch (IOException e) {
+            LOG.error("Could not read " + peopleConfigFile.getPath(), e);
+            return new PeopleConfig();
+        }
     }
 
     public static void generateReport(File analysisRoot, File landscapeConfigFile) {

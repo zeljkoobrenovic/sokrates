@@ -43,26 +43,26 @@ public class PeopleConfig {
         }
 
         PersonConfig newPersonConfig = new PersonConfig();
-        newPersonConfig.setName(contributorId);
+        newPersonConfig.setEmail(contributorId);
         cache.put(contributorId, newPersonConfig);
 
         return newPersonConfig;
     }
     @JsonIgnore
-    public PersonConfig getPersonByName(String name) {
-        if (nameCache.containsKey(name)) {
-            return nameCache.get(name);
+    public PersonConfig getPersonByName(String email) {
+        if (nameCache.containsKey(email)) {
+            return nameCache.get(email);
         }
         for (PersonConfig person : people) {
-            if (person.getName().equals(name)) {
-                nameCache.put(name, person);
+            if (person.getEmail().equals(email)) {
+                nameCache.put(email, person);
                 return person;
             }
         }
 
         PersonConfig newPersonConfig = new PersonConfig();
-        newPersonConfig.setName(name);
-        nameCache.put(name, newPersonConfig);
+        newPersonConfig.setEmail(email);
+        nameCache.put(email, newPersonConfig);
 
         return newPersonConfig;
     }

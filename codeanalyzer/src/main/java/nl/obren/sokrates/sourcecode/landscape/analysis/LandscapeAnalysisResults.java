@@ -861,7 +861,12 @@ public class LandscapeAnalysisResults {
                     Contributor newContributor = new Contributor();
 
                     newContributor.setEmail(contributorId);
-                    newContributor.setUserName(contributor.getUserName());
+                    // If a configured person (matched by email patterns) defines a userName, it
+                    // overrides the commit-derived userName; otherwise keep the one from commits.
+                    String configuredUserName = peopleConfig != null
+                            ? peopleConfig.getPersonFromEmailPatterns(contributorId).getUserName() : "";
+                    newContributor.setUserName(StringUtils.isNotBlank(configuredUserName)
+                            ? configuredUserName : contributor.getUserName());
                     newContributor.setCommitsCount(repositoryCommits);
                     newContributor.setCommitsCount30Days(repositoryCommits30Days);
                     newContributor.setCommitsCount90Days(repositoryCommits90Days);

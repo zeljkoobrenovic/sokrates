@@ -2009,7 +2009,7 @@ public class LandscapeReportGenerator {
 
             int maxCommits = contributorsPerYear.stream().mapToInt(c -> c.getCommitsCount()).max().orElse(1);
 
-            landscapeReport.startDiv("overflow-y: none;");
+            landscapeReport.startDiv("overflow-y: auto;");
             landscapeReport.startTable();
 
             String style = "border: none; text-align: center; vertical-align: bottom; font-size: 80%; height: 100px";

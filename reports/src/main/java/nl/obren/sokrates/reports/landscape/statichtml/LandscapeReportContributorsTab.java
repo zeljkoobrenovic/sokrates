@@ -887,7 +887,7 @@ public class LandscapeReportContributorsTab {
 
             int maxCommits = contributorsPerYear.stream().mapToInt(c -> c.getCommitsCount()).max().orElse(1);
 
-            landscapeReport.startDiv("overflow-y: none;");
+            landscapeReport.startDiv("overflow-y: auto;");
             landscapeReport.startTable();
 
             String style = "border: none; text-align: center; vertical-align: bottom; font-size: 80%; height: 100px";
@@ -978,7 +978,7 @@ public class LandscapeReportContributorsTab {
                 contributorsPerWeek = contributorsPerWeek.subList(0, limit);
             }
 
-            landscapeReport.startDiv("overflow: hidden");
+            landscapeReport.startDiv("overflow: auto");
             landscapeReport.startTable();
 
             int minMaxWindow = contributorsPerWeek.size() >= 4 ? 4 : contributorsPerWeek.size();
@@ -1007,7 +1007,7 @@ public class LandscapeReportContributorsTab {
                 contributorsPerDay = contributorsPerDay.subList(0, limit);
             }
 
-            landscapeReport.startDiv("overflow: hidden");
+            landscapeReport.startDiv("overflow: auto");
             landscapeReport.startTable();
 
             int minMaxWindow = contributorsPerDay.size() >= 4 ? 4 : contributorsPerDay.size();
@@ -1044,7 +1044,7 @@ public class LandscapeReportContributorsTab {
                 contributorsPerMonth = contributorsPerMonth.subList(0, limit);
             }
 
-            landscapeReport.startDiv("overflow: hidden");
+            landscapeReport.startDiv("overflow: auto");
             landscapeReport.startTable();
 
             int minMaxWindow = contributorsPerMonth.size() >= 3 ? 3 : contributorsPerMonth.size();
@@ -1068,7 +1068,7 @@ public class LandscapeReportContributorsTab {
         contributorsPerYear.sort(Comparator.comparing(ContributionTimeSlot::getTimeSlot).reversed());
 
         if (contributorsPerYear.size() > 0) {
-            landscapeReport.startDiv("overflow: hidden");
+            landscapeReport.startDiv("overflow: auto");
             landscapeReport.startTable();
 
             int minMaxWindow = contributorsPerYear.size() >= 3 ? 3 : contributorsPerYear.size();
