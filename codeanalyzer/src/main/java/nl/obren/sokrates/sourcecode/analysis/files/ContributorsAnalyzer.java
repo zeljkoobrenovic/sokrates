@@ -4,6 +4,8 @@
 
 package nl.obren.sokrates.sourcecode.analysis.files;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.sourcecode.analysis.Analyzer;
 import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
@@ -11,15 +13,23 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
 import nl.obren.sokrates.sourcecode.contributors.ContributorsImport;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
+import nl.obren.sokrates.sourcecode.landscape.PeopleConfig;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils.getPeopleDependencies;
 import static nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils.getPeopleFileDependencies;
 
 public class ContributorsAnalyzer extends Analyzer {
+    private static final Log LOG = LogFactory.getLog(ContributorsAnalyzer.class);
+    public static final String PEOPLE_CONFIG_FILE_NAME = "config-people.json";
+
     private CodeConfiguration codeConfiguration;
     private MetricsList metricsList;
     private CodeAnalysisResults codeAnalysisResults;
@@ -76,6 +86,31 @@ public class ContributorsAnalyzer extends Analyzer {
 
             addMetrics();
         }
+    }
+
+    // Reads an optional _sokrates/config-people.json (same model as landscapes). Returns null when the
+    // file does not exist or cannot be parsed — analysis then proceeds without it (the file is ignored).
+    public static PeopleConfig loadPeopleConfig(File sokratesFolder) {
+        if (sokratesFolder == null) {
+            return null;
+        }
+        File peopleConfigFile = new File(sokratesFolder, PEOPLE_CONFIG_FILE_NAME);
+        if (!peopleConfigFile.exists()) {
+            return null;
+        }
+        try {
+            PeopleConfig peopleConfig = new JsonMapper().getObject(
+                    FileUtils.readFileToString(peopleConfigFile, StandardCharsets.UTF_8),
+                    new TypeReference<PeopleConfig>() {
+                    });
+            if (peopleConfig != null && peopleConfig.getPeople() != null && !peopleConfig.getPeople().isEmpty()) {
+                LOG.info("Applying " + peopleConfigFile.getPath() + " (" + peopleConfig.getPeople().size() + " people).");
+                return peopleConfig;
+            }
+        } catch (Exception e) {
+            LOG.warn("Could not read " + peopleConfigFile.getPath() + "; ignoring it. " + e.getMessage());
+        }
+        return null;
     }
 
     // Lowercased relative paths of each scope's source files, keyed by scope name (main, test, build,

@@ -74,6 +74,50 @@ class GitHistoryUtilsTest {
     }
 
     @Test
+    void parseLineAppliesPeopleConfigRemapAndUserNameOverride() {
+        nl.obren.sokrates.sourcecode.landscape.PeopleConfig peopleConfig =
+                new nl.obren.sokrates.sourcecode.landscape.PeopleConfig();
+        nl.obren.sokrates.sourcecode.landscape.PersonConfig person =
+                new nl.obren.sokrates.sourcecode.landscape.PersonConfig();
+        person.setUserName("Guido van Rossum");
+        person.setEmail("guido@python.org");
+        person.setEmailPatterns(Arrays.asList("\\Qguido@python.org\\E", "\\Qguido@dropbox.com\\E"));
+        peopleConfig.setPeople(Arrays.asList(person));
+
+        FileHistoryAnalysisConfig config = new FileHistoryAnalysisConfig();
+        config.setPeopleConfig(peopleConfig);
+
+        // A commit under the dropbox email is remapped to the canonical email and the configured name.
+        String line = "2024-01-01 guido@dropbox.com c1 a/B.java Some&nbsp;Other&nbsp;Name";
+        FileUpdate fileUpdate = GitHistoryUtils.parseLine(line, config);
+
+        assertEquals("guido@python.org", fileUpdate.getAuthorEmail());
+        assertEquals("Guido van Rossum", fileUpdate.getUserName());
+    }
+
+    @Test
+    void parseLineLeavesUnmatchedContributorUntouchedWithPeopleConfig() {
+        nl.obren.sokrates.sourcecode.landscape.PeopleConfig peopleConfig =
+                new nl.obren.sokrates.sourcecode.landscape.PeopleConfig();
+        nl.obren.sokrates.sourcecode.landscape.PersonConfig person =
+                new nl.obren.sokrates.sourcecode.landscape.PersonConfig();
+        person.setUserName("Guido van Rossum");
+        person.setEmail("guido@python.org");
+        person.setEmailPatterns(Arrays.asList("\\Qguido@python.org\\E"));
+        peopleConfig.setPeople(Arrays.asList(person));
+
+        FileHistoryAnalysisConfig config = new FileHistoryAnalysisConfig();
+        config.setPeopleConfig(peopleConfig);
+
+        // An unrelated contributor keeps their own email and userName.
+        String line = "2024-01-01 alice@example.com c1 a/B.java Alice&nbsp;Example";
+        FileUpdate fileUpdate = GitHistoryUtils.parseLine(line, config);
+
+        assertEquals("alice@example.com", fileUpdate.getAuthorEmail());
+        assertEquals("Alice Example", fileUpdate.getUserName());
+    }
+
+    @Test
     void shouldIgnore() {
         List<String> ignore = Arrays.asList(new String[]{".*GITHUBBOT.*", "None", "none", "DL[-].*", "[a-zA-Z]+Releaser.*", "bot", "committed[-]by[-]bot.*"});
 
