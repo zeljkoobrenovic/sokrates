@@ -26,6 +26,9 @@ import java.util.List;
  */
 public class ContributorReportExport {
     private String email;
+    // Optional display name (git author name) — shown next to the email like the per-repository
+    // Contributors report does. May be blank.
+    private String userName = "";
     private String mainLang;
     // Every language (lowercased extension) the contributor has committed to, ordered by recent
     // activity desc — backs the includesLang:<lang> filter in the report.
@@ -69,6 +72,7 @@ public class ContributorReportExport {
                                    List<String> recentLangs) {
         Contributor c = cr.getContributor();
         email = c.getEmail();
+        userName = StringUtils.defaultString(c.getUserName());
 
         ContributorPerExtensionHelper extensionHelper = new ContributorPerExtensionHelper();
         // The contributor's main language is the most active extension (per-extension helper).
@@ -130,6 +134,14 @@ public class ContributorReportExport {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     public String getMainLang() {
