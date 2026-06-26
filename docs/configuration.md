@@ -389,12 +389,13 @@ landscape alongside `contributors.html`).
 ### `config-people.json` — people
 
 A JSON **object** with a `people` array. Each `PersonConfig` enriches a contributor (identified
-by `emailPatterns`) with a display name, an avatar image, and profile links shown on their
-individual contributor report.
+by `emailPatterns`) with a canonical identity (`email`), an optional display name (`userName`),
+an avatar image, and profile links shown on their individual contributor report.
 
 | Key | Type | Meaning |
 | --- | --- | --- |
-| `name` | string | Display name. |
+| `email` | string | Canonical identity — replaces the matched contributor email/id (used as the contributor key after `emailPatterns` matching). |
+| `userName` | string | Display name; when set, overrides the contributor's commit-derived userName in the reports. Default `""`. |
 | `image` | string | Avatar image URL (overrides `contributorAvatarLinkTemplate`). |
 | `links` | link[] | Profile links (`{ "label", "href" }`) shown on the contributor page. |
 | `link` | string | Legacy single link (prefer `links`). |
@@ -404,10 +405,11 @@ individual contributor report.
 {
   "people": [
     {
-      "name": "Alice Example",
-      "image": "https://.../alice.png",
-      "links": [ { "label": "GitHub", "href": "https://github.com/alice" } ],
-      "emailPatterns": ["alice@example\\.com", ".*alice.*@example\\.com"]
+      "userName": "Guido van Rossum",
+      "email": "guido@*",
+      "image": "https://.../guido.png",
+      "links": [ { "label": "GitHub", "href": "https://github.com/gvanrossum" } ],
+      "emailPatterns": ["guido[@]python.org", "guido[@]dropbox.com", "guido[@]google.com"]
     }
   ]
 }

@@ -33,7 +33,7 @@ public class EmailTransformations {
         }
 
         if (peopleConfig != null) {
-            contributorId = peopleConfig.getPersonFromEmailPatterns(contributorId).getName();
+            contributorId = peopleConfig.getPersonFromEmailPatterns(contributorId).getEmail();
         }
 
         cache.put(key, contributorId);
