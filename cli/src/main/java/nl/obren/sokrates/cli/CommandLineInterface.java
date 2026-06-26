@@ -25,6 +25,7 @@ import nl.obren.sokrates.reports.generators.explorers.FilesExplorerGenerators;
 import nl.obren.sokrates.reports.generators.explorers.UnitsExplorerGenerators;
 import nl.obren.sokrates.reports.generators.statichtml.BasicSourceCodeReportGenerator;
 import nl.obren.sokrates.reports.landscape.statichtml.LandscapeAnalysisCommands;
+import nl.obren.sokrates.reports.landscape.statichtml.RepositoryPeopleConfigCommands;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.SourceFile;
@@ -114,6 +115,9 @@ public class CommandLineInterface {
                 return;
             } else if (args[0].equalsIgnoreCase(Commands.UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME)) {
                 updateLandscapePeopleConfigByUserName(args);
+                return;
+            } else if (args[0].equalsIgnoreCase(Commands.UPDATE_PEOPLE_CONFIG_BY_USER_NAME)) {
+                updatePeopleConfigByUserName(args);
                 return;
             } else if (args[0].equalsIgnoreCase(Commands.INIT_CONVENTIONS)) {
                 createNewConventionsFile(args);
@@ -323,6 +327,32 @@ public class CommandLineInterface {
         String confFilePath = cmd.getOptionValue(commands.getConfFile().getOpt());
         LandscapeAnalysisCommands.updatePeopleConfigByUserName(root,
                 confFilePath != null ? new File(confFilePath) : null);
+    }
+
+    private void updatePeopleConfigByUserName(String[] args) throws ParseException {
+        Options options = commands.getUpdatePeopleConfigByUserNameOptions();
+        CommandLineParser parser = new DefaultParser();
+        CommandLine cmd = parser.parse(options, args);
+
+        if (cmd.hasOption(commands.getHelp().getOpt())) {
+            helpMode = true;
+            commands.usage(Commands.UPDATE_PEOPLE_CONFIG_BY_USER_NAME,
+                    commands.getUpdatePeopleConfigByUserNameOptions(),
+                    Commands.UPDATE_PEOPLE_CONFIG_BY_USER_NAME_DESCRIPTION);
+            return;
+        }
+
+        startTimeoutIfDefined(cmd);
+
+        // Same default as generateReports: ./_sokrates/config.json when -confFile is not given.
+        File sokratesConfigFile;
+        if (cmd.hasOption(commands.getConfFile().getOpt())) {
+            sokratesConfigFile = new File(cmd.getOptionValue(commands.getConfFile().getOpt()));
+        } else {
+            sokratesConfigFile = new File("./_sokrates/config.json");
+        }
+
+        RepositoryPeopleConfigCommands.updatePeopleConfigByUserName(sokratesConfigFile);
     }
 
     private void generateReports(String[] args) throws ParseException, IOException {

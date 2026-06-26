@@ -59,9 +59,10 @@ public class LandscapeAnalysisCommands {
 
     /**
      * Updates (or creates) the landscape's {@code config-people.json}, grouping all contributor emails
-     * that share the same display name (userName) under one person entry. The {@code email} field of
-     * each entry is a ";"-joined list of those emails. Purely additive: for an existing entry with the
-     * same userName only NEW emails are appended; nothing is removed or reordered.
+     * that share the same display name (userName) under one person entry. Each email becomes an
+     * {@code emailPatterns} entry (so the person matches all their addresses); the {@code email} field
+     * holds a single address — the latest-used email — and is only filled when currently blank.
+     * Purely additive: nothing is removed, and an existing {@code email} is never overwritten.
      *
      * <p>The (email, userName) pairs are read from each repository's raw contributors (the names/emails
      * as they appear in git history), so distinct emails belonging to the same person are grouped.
@@ -76,12 +77,13 @@ public class LandscapeAnalysisCommands {
         LandscapeAnalyzer analyzer = new LandscapeAnalyzer();
         LandscapeAnalysisResults landscapeAnalysisResults = analyzer.analyze(landscapeConfigFile);
 
-        // Collect raw (email, userName) pairs from every repository's contributors.
+        // Collect (email, userName, latestCommitDate) from every repository's contributors. The date
+        // drives which email is treated as the latest-used one.
         List<PeopleConfigByUserNameUpdater.ContributorIdentity> identities = new ArrayList<>();
         landscapeAnalysisResults.getFilteredRepositoryAnalysisResults().forEach(repository ->
                 repository.getAnalysisResults().getContributorsAnalysisResults().getContributors().forEach(contributor ->
                         identities.add(new PeopleConfigByUserNameUpdater.ContributorIdentity(
-                                contributor.getEmail(), contributor.getUserName()))));
+                                contributor.getEmail(), contributor.getUserName(), contributor.getLatestCommitDate()))));
 
         File peopleConfigFile = new File(landscapeConfigFile.getParentFile(), "config-people.json");
         PeopleConfig peopleConfig = readPeopleConfig(peopleConfigFile);
@@ -95,7 +97,7 @@ public class LandscapeAnalysisCommands {
         }
 
         LOG.info("Updated " + peopleConfigFile.getPath() + ": "
-                + peopleConfig.getPeople().size() + " people, " + addedCount + " email(s) added.");
+                + peopleConfig.getPeople().size() + " people, " + addedCount + " email pattern(s) added.");
 
         return peopleConfigFile;
     }

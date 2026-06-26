@@ -417,10 +417,17 @@ an avatar image, and profile links shown on their individual contributor report.
 
 > **Bootstrapping by display name.** `sokrates updateLandscapePeopleConfigByUserName` scans every
 > repository's contributors and groups all emails that committed under the same `userName` into one
-> entry, joining them in the `email` field with `;` (e.g. `"victor.stinner@gmail.com;vstinner@python.org"`).
-> It is **purely additive**: an entry with an existing `userName` gets only its new emails appended
-> (existing emails and entries are never removed or reordered), so it is safe to re-run and to mix
-> with hand-edited entries.
+> entry: every email becomes an `emailPatterns` regex (so the person matches all their addresses),
+> while the `email` field holds a single address — the **latest-used** email — and is filled only when
+> it is currently blank. It is **purely additive**: an entry with an existing `userName` gets only its
+> new patterns appended, and an `email` that is already set is **never overwritten**; nothing is
+> removed — so it is safe to re-run and to mix with hand-edited entries.
+>
+> `sokrates updatePeopleConfigByUserName` is the **single-repository** version: it reads only the repo's
+> `git-history.txt` (so run it after `extractGitHistory`, without needing `generateReports`) and writes
+> `_sokrates/config-people.json` using the same format and the same additive grouping. The
+> contributor-detection rules (`ignoreContributors`, `bots`, `transformContributorEmails`,
+> `anonymizeContributors`) are taken from the repo's own `_sokrates/config.json`.
 
 > The same `bots`, `ignoreContributors`, `anonymizeContributors`, and `transformContributorEmails`
 > options on the landscape `config.json` (Part 2) also shape how contributors are detected and
