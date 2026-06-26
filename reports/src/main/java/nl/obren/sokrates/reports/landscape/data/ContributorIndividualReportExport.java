@@ -25,6 +25,9 @@ import java.util.List;
  */
 public class ContributorIndividualReportExport {
     private String email;
+    // Optional display name (git author name / configured userName) — shown as the title with the
+    // email beneath it, like the contributors table. May be blank.
+    private String userName = "";
     private String avatarUrl;
     private String detailsLink;
     private List<NamedLink> links = new ArrayList<>();
@@ -66,6 +69,7 @@ public class ContributorIndividualReportExport {
                                              PeopleConfig peopleConfig, java.io.File contributorsFolder) {
         Contributor c = cr.getContributor();
         email = c.getEmail();
+        userName = StringUtils.defaultString(c.getUserName());
 
         PersonConfig personConfig = peopleConfig != null ? peopleConfig.getPersonByName(email) : null;
         if (personConfig != null && StringUtils.isNotBlank(personConfig.getImage())) {
@@ -396,6 +400,14 @@ public class ContributorIndividualReportExport {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     public String getAvatarUrl() {

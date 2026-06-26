@@ -176,7 +176,8 @@
 
     <div class="tabcontent">
         <div style="color: grey; margin: 8px 0 10px 0;">
-            <input id="filter" type="text" placeholder="search by name or email; team: by team; mainLang:cs by main language; includesLang:go by any language used (; for multiple)"
+            <input id="filter" type="text"
+                   placeholder="search by name or email; team: by team; mainLang:cs by main language; includesLang:go by any language used (; for multiple)"
                    style="font-size: 16px; height: 30px; width: 680px;"
                    onkeyup="render()">
             <span id="search-summary" style="display: inline-block; margin-left: 6px;"></span>
@@ -255,7 +256,7 @@
         let nameHtml;
         if (c.userName && c.email && c.userName !== c.email) {
             nameHtml = esc(c.userName)
-                + '<div style="color: grey; font-size: 80%;">&lt;' + esc(c.email) + '&gt;</div>';
+                + '<div title="' + c.email + '" style="color: grey; font-size: 80%; max-width: 350px; overflow: hidden; white-space; no-wrap; ">&lt;' + esc(c.email) + '&gt;</div>';
         } else {
             nameHtml = esc(c.userName || c.email);
         }
@@ -269,7 +270,7 @@
             body = '<div><div class="team-badge">' + esc(c.team) + '</div>'
                 + '<div style="margin-top: -15px; margin-bottom: -9px;">' + body + '</div></div>';
         }
-        return '<td style="vertical-align: middle; white-space: nowrap; overflow: hidden;">'
+        return '<td style="vertical-align: middle; white-space: nowrap; overflow: hidden; max-width: 350px;">'
             + '<a target="_blank" style="color: ' + color + ';" href="' + esc(c.reportUrl) + '">' + body + '</a></td>';
     }
 
@@ -282,7 +283,11 @@
     }
 
     const langCol = {
-        key: 'lang', label: '', type: 'string', dir: 1, headerStyle: 'text-align: center; width: 32px; max-width: 32px;',
+        key: 'lang',
+        label: '',
+        type: 'string',
+        dir: 1,
+        headerStyle: 'text-align: center; width: 32px; max-width: 32px;',
         value: c => (c.mainLang || '').toLowerCase(),
         cell: c => '<td style="text-align: center; width: 32px; max-width: 32px;">' + langIcon(c.mainLang) + '</td>'
     };
@@ -314,6 +319,7 @@
             cell: (c, total) => commitsCell(accessor(c), total, withPct, dim)
         };
     }
+
     function reposCol(label, accessor) {
         return {
             key: 'repos', label: label, type: 'number', dir: -1, headerStyle: 'text-align: center;',
@@ -321,6 +327,7 @@
             cell: c => '<td style="vertical-align: middle; text-align: center; font-size: 90%;">' + num(accessor(c)) + '</td>'
         };
     }
+
     // Churn column: sorts by net lines touched (added + deleted), shows "+added / -deleted".
     // Renders a dim placeholder when the history had no churn data (both zero).
     function churnCol(key, label, addedAccessor, deletedAccessor) {
@@ -371,8 +378,14 @@
             {label: 'tree map', href: 'visuals/tree_map_contributors.html'},
             {label: 'txt', href: 'data/contributors.txt'},
             {label: 'json', href: 'data/contributors.json'},
-            {label: 'animated history (all time)', href: 'visuals/racing_charts_commits_contributors.html?tickDuration=600'},
-            {label: 'animated history (12 months window)', href: 'visuals/racing_charts_commits_window_contributors.html?tickDuration=600'}
+            {
+                label: 'animated history (all time)',
+                href: 'visuals/racing_charts_commits_contributors.html?tickDuration=600'
+            },
+            {
+                label: 'animated history (12 months window)',
+                href: 'visuals/racing_charts_commits_window_contributors.html?tickDuration=600'
+            }
         ],
         columns: [
             langCol, nameCol,
@@ -532,7 +545,7 @@
                 nameFilters.push(t);
             }
         });
-        return { nameFilters, teamFilters, langs, includesLangs };
+        return {nameFilters, teamFilters, langs, includesLangs};
     }
 
     function matchesFilters(text, filters) {
@@ -559,7 +572,7 @@
         if (!keepPaging) {
             displayLimit = PAGE_SIZE;
         }
-        const { nameFilters, teamFilters, langs, includesLangs } = getFilters();
+        const {nameFilters, teamFilters, langs, includesLangs} = getFilters();
         const noTextFilters = !nameFilters.length && !teamFilters.length;
         const tab = TABS_BY_ID[activeTab];
 
