@@ -72,6 +72,10 @@ public class ContributorIndividualReportExport {
         userName = StringUtils.defaultString(c.getUserName());
 
         PersonConfig personConfig = peopleConfig != null ? peopleConfig.getPersonByName(email) : null;
+        // Display name: config-people.json userName overrides the commit-derived userName when set.
+        if (personConfig != null && StringUtils.isNotBlank(personConfig.getUserName())) {
+            userName = personConfig.getUserName();
+        }
         if (personConfig != null && StringUtils.isNotBlank(personConfig.getImage())) {
             avatarUrl = personConfig.getImage();
         } else {
@@ -320,6 +324,7 @@ public class ContributorIndividualReportExport {
 
     public static class Member {
         private String email;
+        private String userName;
         private String lang;
         private String reportUrl;
         private int commitsCount;
@@ -336,6 +341,7 @@ public class ContributorIndividualReportExport {
         public Member(ContributorRepositories cr) {
             Contributor c = cr.getContributor();
             email = c.getEmail();
+            userName = StringUtils.defaultString(c.getUserName());
             // A member is normally a contributor; route on whether it itself has members (a sub-team)
             // rather than the shared team-email set (which can mis-route — see getContributorUrl).
             boolean isTeam = cr.getMembers() != null && cr.getMembers().size() > 0;
@@ -351,6 +357,14 @@ public class ContributorIndividualReportExport {
 
         public String getEmail() {
             return email;
+        }
+
+        public String getUserName() {
+            return userName;
+        }
+
+        public void setUserName(String userName) {
+            this.userName = userName;
         }
 
         public String getLang() {

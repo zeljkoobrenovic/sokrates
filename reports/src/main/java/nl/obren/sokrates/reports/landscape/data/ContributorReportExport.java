@@ -82,8 +82,12 @@ public class ContributorReportExport {
         langs = recentLangs != null ? recentLangs
                 : extensionHelper.getLanguages(configuration, cr, peopleConfig);
 
-        // Avatar: explicit per-person image, else the configured avatar URL template (may be null).
         PersonConfig personConfig = peopleConfig != null ? peopleConfig.getPersonByName(email) : null;
+        // Display name: config-people.json userName overrides the commit-derived userName when set.
+        if (personConfig != null && StringUtils.isNotBlank(personConfig.getUserName())) {
+            userName = personConfig.getUserName();
+        }
+        // Avatar: explicit per-person image, else the configured avatar URL template (may be null).
         if (personConfig != null && StringUtils.isNotBlank(personConfig.getImage())) {
             avatarUrl = personConfig.getImage();
         } else {
@@ -92,15 +96,17 @@ public class ContributorReportExport {
 
         if (tagRules != null) {
             tagRules.forEach(tagRule -> {
-                if (RegexUtils.matchesAnyPattern(email, tagRule.getPatterns())) {
+                // Case-insensitive: tag rules match the contributor's email regardless of case.
+                if (RegexUtils.matchesAnyPatternIgnoreCase(email, tagRule.getPatterns())) {
                     tags.add(tagRule.getName());
                 }
             });
         }
 
         if (teamsConfig != null) {
+            // Match on the (people-config-canonical) email OR userName.
             for (TeamConfig teamConfig : teamsConfig.getTeams()) {
-                if (RegexUtils.matchesAnyPattern(email, teamConfig.getEmailPatterns())) {
+                if (teamConfig.matches(email, userName)) {
                     team = teamConfig.getName();
                     break;
                 }

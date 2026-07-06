@@ -6,6 +6,8 @@ import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.landscape.ContributorTag;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
+import nl.obren.sokrates.sourcecode.landscape.PeopleConfig;
+import nl.obren.sokrates.sourcecode.landscape.PersonConfig;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
 import org.junit.jupiter.api.Test;
 
@@ -65,6 +67,42 @@ class ContributorReportExportTest {
                 List.of("go", "tf"));
 
         assertEquals(List.of("go", "tf"), export.getLangs());
+    }
+
+    @Test
+    void configPeopleUserNameOverridesCommitUserName() {
+        Contributor c = new Contributor("alice@example.com");
+        c.setUserName("alice (commit name)");
+
+        PersonConfig person = new PersonConfig();
+        person.setEmail("alice@example.com");
+        person.setEmailPatterns(List.of("alice@example[.]com"));
+        person.setUserName("Alice Configured");
+        PeopleConfig peopleConfig = new PeopleConfig();
+        peopleConfig.setPeople(List.of(person));
+
+        ContributorReportExport export = new ContributorReportExport(
+                new ContributorRepositories(c), new LandscapeConfiguration(), peopleConfig, null, Collections.emptyList());
+
+        assertEquals("Alice Configured", export.getUserName());
+    }
+
+    @Test
+    void keepsCommitUserNameWhenConfigUserNameIsBlank() {
+        Contributor c = new Contributor("alice@example.com");
+        c.setUserName("alice (commit name)");
+
+        PersonConfig person = new PersonConfig();
+        person.setEmail("alice@example.com");
+        person.setEmailPatterns(List.of("alice@example[.]com"));
+        // userName left blank -> commit-derived name is kept
+        PeopleConfig peopleConfig = new PeopleConfig();
+        peopleConfig.setPeople(List.of(person));
+
+        ContributorReportExport export = new ContributorReportExport(
+                new ContributorRepositories(c), new LandscapeConfiguration(), peopleConfig, null, Collections.emptyList());
+
+        assertEquals("alice (commit name)", export.getUserName());
     }
 
     @Test

@@ -57,6 +57,37 @@ public class RegexUtils {
         return false;
     }
 
+    // Case-insensitive full-string match. Used for identity matching (emails, userNames, teams) where
+    // "Alice@Corp.com" and "alice@corp.com" must be treated as the same person. The pattern is compiled
+    // with CASE_INSENSITIVE (+ UNICODE_CASE) and cached under a distinct key so it never collides with
+    // the case-sensitive compilation of the same string.
+    public static boolean matchesEntirelyIgnoreCase(String regexPattern, String content) {
+        try {
+            String cacheKey = "(?iu)" + regexPattern;
+            Pattern pattern = compiledPatterns.get(cacheKey);
+            if (pattern == null) {
+                pattern = Pattern.compile(regexPattern, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+                compiledPatterns.put(cacheKey, pattern);
+            }
+            return pattern.matcher(content).matches();
+        } catch (PatternSyntaxException e) {
+            LOG.debug(e);
+            return false;
+        }
+    }
+
+    public static boolean matchesAnyPatternIgnoreCase(String line, List<String> patterns) {
+        if (patterns == null) {
+            return false;
+        }
+        for (String patternString : patterns) {
+            if (matchesEntirelyIgnoreCase(patternString, line)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static String getMatchedRegex(String text, String regex) {
         try {
             Pattern soe = Pattern.compile(regex);

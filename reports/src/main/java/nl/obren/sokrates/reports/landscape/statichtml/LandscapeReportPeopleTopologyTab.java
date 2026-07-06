@@ -6,7 +6,6 @@ package nl.obren.sokrates.reports.landscape.statichtml;
 
 import nl.obren.sokrates.common.renderingutils.VisualizationItem;
 import nl.obren.sokrates.common.utils.FormattingUtils;
-import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.utils.Force3DGraphExporter;
@@ -175,8 +174,11 @@ public class LandscapeReportPeopleTopologyTab {
     private String getTeamOf(String email) {
         if (email.startsWith("[")) return email;
 
+        // The dependency-graph node is a single contributor identity string (the canonical id, which
+        // may be the email or the display name after config-people.json transformation). Match it
+        // against both emailPatterns and userNamePatterns by passing it as email and userName.
         for (TeamConfig team : teamsConfig.getTeams()) {
-            if (RegexUtils.matchesAnyPattern(email, team.getEmailPatterns())) {
+            if (team.matches(email, email)) {
                 return team.getName();
             }
         }

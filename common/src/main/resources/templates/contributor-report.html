@@ -137,6 +137,23 @@
             border: none;
             padding: 2px 8px;
         }
+
+        .member-table th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .member-table th.sortable:hover {
+            color: #4a90d9;
+        }
+
+        .member-table th.sort-active {
+            color: #4a90d9;
+        }
+
+        .sort-arrow {
+            font-size: 80%;
+        }
     </style>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <!-- fflate + sokratesUnzip: decodes the people archive embedded inline below (no fetch). -->
@@ -656,20 +673,105 @@
         return dates.length ? dates.reduce((a, b) => a > b ? a : b) : '';
     }
 
+    // Members table columns (mirrors the contributors report: click a header to sort, click again to
+    // flip direction). `value` extracts the sort key; `type` picks string vs numeric comparison; `dir`
+    // is the default direction when a column is first selected (1 asc, -1 desc).
+    const MEMBER_COLUMNS = [
+        {key: 'lang', label: '', type: 'string', dir: 1, sortable: false, style: 'text-align:center',
+            value: m => (m.lang || '').toLowerCase()},
+        {key: 'name', label: 'member', type: 'string', dir: 1, style: 'text-align:left',
+            value: m => (m.userName || m.email || '').toLowerCase()},
+        {key: 'commits30', label: '30d', type: 'number', dir: -1, style: 'text-align:center',
+            value: m => m.commitsCount30Days},
+        {key: 'commits90', label: '3m', type: 'number', dir: -1, style: 'text-align:center',
+            value: m => m.commitsCount90Days},
+        {key: 'commits180', label: '6m', type: 'number', dir: -1, style: 'text-align:center',
+            value: m => m.commitsCount180Days},
+        {key: 'commits365', label: '1y', type: 'number', dir: -1, style: 'text-align:center',
+            value: m => m.commitsCount365Days},
+        {key: 'commitsAll', label: 'all', type: 'number', dir: -1, style: 'text-align:center',
+            value: m => m.commitsCount},
+        {key: 'first', label: 'first', type: 'string', dir: 1, style: 'text-align:center',
+            value: m => m.firstCommitDate || ''},
+        {key: 'latest', label: 'last', type: 'string', dir: -1, style: 'text-align:center',
+            value: m => m.latestCommitDate || ''}
+    ];
+    const MEMBER_COLUMNS_BY_KEY = {};
+    MEMBER_COLUMNS.forEach(c => MEMBER_COLUMNS_BY_KEY[c.key] = c);
+
+    // Default sort: most recently active first (30d desc), matching the previous behavior.
+    let memberSort = {key: 'commits30', dir: -1};
+
+    function sortMembersBy(key) {
+        const col = MEMBER_COLUMNS_BY_KEY[key];
+        if (!col || col.sortable === false) {
+            return;
+        }
+        if (memberSort.key === key) {
+            memberSort.dir = -memberSort.dir;
+        } else {
+            memberSort.key = key;
+            memberSort.dir = col.dir;
+        }
+        render();
+    }
+
+    function memberComparator(col, dir) {
+        return (a, b) => {
+            const va = col.value(a), vb = col.value(b);
+            let cmp;
+            if (col.type === 'string') {
+                cmp = String(va == null ? '' : va).localeCompare(String(vb == null ? '' : vb));
+            } else {
+                cmp = (va < vb) ? -1 : (va > vb ? 1 : 0);
+            }
+            return cmp * dir;
+        };
+    }
+
+    function memberHeaderCell(col) {
+        if (col.sortable === false) {
+            return '<th style="' + (col.style || '') + '">' + col.label + '</th>';
+        }
+        const active = memberSort.key === col.key;
+        const arrow = active ? (memberSort.dir === 1 ? ' ▲' : ' ▼') : '';
+        const cls = 'sortable' + (active ? ' sort-active' : '');
+        return '<th class="' + cls + '" style="' + (col.style || '') + '" onclick="sortMembersBy(\'' + col.key + '\')">'
+            + col.label + '<span class="sort-arrow">' + arrow + '</span></th>';
+    }
+
+    // Name cell: display name (userName) with the email beneath it in grey, like the contributors
+    // report; falls back to email alone when no userName (or it equals the email).
+    function memberNameCell(m) {
+        let nameHtml;
+        if (m.userName && m.email && m.userName !== m.email) {
+            nameHtml = esc(m.userName)
+                + '<div title="' + esc(m.email) + '" style="color: grey; font-size: 80%; max-width: 350px; overflow: hidden; white-space: nowrap;">&lt;' + esc(m.email) + '&gt;</div>';
+        } else {
+            nameHtml = esc(m.userName || m.email);
+        }
+        // Only link members that actually have a generated individual report.
+        return m.reportUrl
+            ? '<a href="' + esc(m.reportUrl) + '" target="_blank">' + nameHtml + '</a>'
+            : nameHtml;
+    }
+
     function renderMembers() {
         const filters = getFilters();
-        let members = (data.members || []).filter(m => matches(m.email, filters));
-        members = members.slice().sort((a, b) => (b.commitsCount30Days - a.commitsCount30Days)
-            || (b.commitsCount365Days - a.commitsCount365Days) || (b.commitsCount - a.commitsCount));
+        // Search matches on both userName and email, like the contributors report.
+        let members = (data.members || []).filter(m => matches((m.userName || '') + ' ' + (m.email || ''), filters));
+        const col = MEMBER_COLUMNS_BY_KEY[memberSort.key] || MEMBER_COLUMNS_BY_KEY.commits30;
+        members = members.slice().sort(memberComparator(col, memberSort.dir));
 
         document.getElementById('search-summary').innerHTML = '= ' + num(members.length) + ' '
             + (members.length === 1 ? 'member' : 'members');
 
         let html = '<table class="member-table">';
+        // Top header row spans the 11 body columns: index, lang, member, 5×commits, 2×period.
         html += '<tr><th></th><th></th><th></th><th colspan="5" style="text-align:center">commits</th><th colspan="2" style="text-align:center">period</th></tr>';
-        html += '<tr><th></th><th></th><th></th><th style="text-align:center">30d</th><th style="text-align:center">3m</th>'
-            + '<th style="text-align:center">6m</th><th style="text-align:center">1y</th><th style="text-align:center">all</th>'
-            + '<th style="text-align:center">first</th><th style="text-align:center">last</th></tr>';
+        // Second header row: an empty cell for the row-number column, then ALL MEMBER_COLUMNS
+        // (including the lang column's empty header) so headers line up 1:1 with the body cells.
+        html += '<tr><th></th>' + MEMBER_COLUMNS.map(memberHeaderCell).join('') + '</tr>';
         let i = 0;
         members.forEach(m => {
             i++;
@@ -677,11 +779,7 @@
             html += '<tr style="' + weight + '">';
             html += '<td style="text-align:right">' + i + '.&nbsp;</td>';
             html += '<td style="text-align:center">' + langIcon(m.lang, 28) + '</td>';
-            // Only link members that actually have a generated individual report.
-            const nameHtml = m.reportUrl
-                ? '<a href="' + esc(m.reportUrl) + '" target="_blank">' + esc(m.email) + '</a>'
-                : esc(m.email);
-            html += '<td>' + nameHtml + '</td>';
+            html += '<td>' + memberNameCell(m) + '</td>';
             html += '<td style="text-align:center">' + smallNum(m.commitsCount30Days) + '</td>';
             html += '<td style="text-align:center">' + smallNum(m.commitsCount90Days) + '</td>';
             html += '<td style="text-align:center">' + smallNum(m.commitsCount180Days) + '</td>';
