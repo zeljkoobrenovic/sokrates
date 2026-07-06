@@ -605,7 +605,8 @@ public class LandscapeAnalysisResults {
     }
 
     private boolean isBot(String email) {
-        return RegexUtils.matchesAnyPattern(email, configuration.getBots());
+        // Case-insensitive bot identity matching.
+        return RegexUtils.matchesAnyPatternIgnoreCase(email, configuration.getBots());
     }
 
     @JsonIgnore
@@ -716,6 +717,10 @@ public class LandscapeAnalysisResults {
         while (contributors.size() > 0) {
             ContributorRepositories contributor = contributors.remove(0);
             String email = contributor.getContributor().getEmail();
+            // email and userName are already the config-people.json-canonical values (getAllContributors
+            // applied the transformation). Team matching therefore runs against the post-people-config
+            // email/userName, falling back to the original commit values where no person config applied.
+            String userName = contributor.getContributor().getUserName();
 
             if (isBot(email)) continue;
 
@@ -725,7 +730,7 @@ public class LandscapeAnalysisResults {
                 if (added[0]) return;
 
                 String name = teamConfig.getName();
-                if (RegexUtils.matchesAnyPattern(email, teamConfig.getEmailPatterns())) {
+                if (teamConfig.matches(email, userName)) {
                     ContributorRepositories teamTemp = map.get(name);
 
                     if (teamTemp == null) {
@@ -796,11 +801,13 @@ public class LandscapeAnalysisResults {
         getFilteredRepositoryAnalysisResults().forEach(repositoryAnalysisResults -> {
             ContributorsAnalysisResults contributorsAnalysisResults = repositoryAnalysisResults.getAnalysisResults().getContributorsAnalysisResults();
             contributorsAnalysisResults.getContributors().forEach(contributor -> {
-                String contributorId = contributor.getEmail().toLowerCase();
+                String originalEmail = contributor.getEmail().toLowerCase();
+                String originalUserName = contributor.getUserName();
+                String contributorId = originalEmail;
                 if (GitHistoryUtils.shouldIgnore(contributorId, configuration.getIgnoreContributors())) {
                     return;
                 }
-                contributorId = EmailTransformations.transformEmail(contributorId, configuration.getTransformContributorEmails(), peopleConfig);
+                contributorId = EmailTransformations.transformEmail(contributorId, originalUserName, configuration.getTransformContributorEmails(), peopleConfig);
                 if (GitHistoryUtils.shouldIgnore(contributorId, configuration.getIgnoreContributors())) {
                     return;
                 }
@@ -861,10 +868,14 @@ public class LandscapeAnalysisResults {
                     Contributor newContributor = new Contributor();
 
                     newContributor.setEmail(contributorId);
-                    // If a configured person (matched by email patterns) defines a userName, it
-                    // overrides the commit-derived userName; otherwise keep the one from commits.
+                    // If a configured person (matched by email patterns OR userName patterns) defines
+                    // a userName, it overrides the commit-derived userName; otherwise keep the one
+                    // from commits. Match on the ORIGINAL email + userName — contributorId may have
+                    // been collapsed by transformEmail to the person's canonical email or (for entries
+                    // with a blank email) to the display name, neither of which is an emailPattern, so
+                    // matching on it would miss the entry and wrongly keep the commit userName.
                     String configuredUserName = peopleConfig != null
-                            ? peopleConfig.getPersonFromEmailPatterns(contributorId).getUserName() : "";
+                            ? peopleConfig.getPerson(originalEmail, originalUserName).getUserName() : "";
                     newContributor.setUserName(StringUtils.isNotBlank(configuredUserName)
                             ? configuredUserName : contributor.getUserName());
                     newContributor.setCommitsCount(repositoryCommits);

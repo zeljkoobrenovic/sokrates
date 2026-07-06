@@ -368,20 +368,26 @@ exclude rule does):
 ### `config-teams.json` — teams
 
 A JSON **object** with a `teams` array. Each `TeamConfig` maps contributors to a team by
-matching their email against regex `emailPatterns`. Teams get their own report (a `teams.html`
-landscape alongside `contributors.html`).
+matching their email against regex `emailPatterns` **or** their userName against `userNamePatterns`.
+Teams get their own report (a `teams.html` landscape alongside `contributors.html`).
+
+Team matching runs **after** `config-people.json` transformations, so the email and userName tested
+are the people-config-canonical values (the person's canonical `email` / display `userName`), falling
+back to the original commit email/userName when no person config applied.
 
 | Key | Type | Meaning |
 | --- | --- | --- |
 | `name` | string | Team name. |
 | `description` | string | Optional description. |
 | `emailPatterns` | string[] | Regex patterns matched against contributor emails. |
+| `userNamePatterns` | string[] | Regex patterns matched against contributor userNames. A contributor joins the team when their email matches any `emailPattern` **OR** their userName matches any `userNamePattern`. |
 
 ```json
 {
   "teams": [
     { "name": "Payments", "description": "", "emailPatterns": [".*@payments\\.example\\.com"] },
-    { "name": "Platform",  "description": "", "emailPatterns": ["alice@example\\.com", "bob@example\\.com"] }
+    { "name": "Platform",  "description": "", "emailPatterns": ["alice@example\\.com", "bob@example\\.com"] },
+    { "name": "Data",      "description": "", "emailPatterns": [], "userNamePatterns": ["Ahmed Hached", "data-team-.*"] }
   ]
 }
 ```
@@ -396,10 +402,12 @@ an avatar image, and profile links shown on their individual contributor report.
 | --- | --- | --- |
 | `email` | string | Canonical identity — replaces the matched contributor email/id (used as the contributor key after `emailPatterns` matching). |
 | `userName` | string | Display name; when set, overrides the contributor's commit-derived userName in the reports. Default `""`. |
+| `name` | string | Legacy alias for `userName` (older configs used `name` as the display name); still read into `userName` when `userName` is absent. Prefer `userName`. |
 | `image` | string | Avatar image URL (overrides `contributorAvatarLinkTemplate`). |
 | `links` | link[] | Profile links (`{ "label", "href" }`) shown on the contributor page. |
 | `link` | string | Legacy single link (prefer `links`). |
 | `emailPatterns` | string[] | Regex patterns matched against the contributor's email. |
+| `userNamePatterns` | string[] | Regex patterns matched against the contributor's commit userName. A contributor is assigned to this person when their email matches any `emailPattern` **OR** their commit userName matches any `userNamePattern`. Useful when the same person commits under emails that share no common pattern but a consistent display name (or vice versa). |
 
 ```json
 {
@@ -409,7 +417,8 @@ an avatar image, and profile links shown on their individual contributor report.
       "email": "guido@*",
       "image": "https://.../guido.png",
       "links": [ { "label": "GitHub", "href": "https://github.com/gvanrossum" } ],
-      "emailPatterns": ["guido[@]python.org", "guido[@]dropbox.com", "guido[@]google.com"]
+      "emailPatterns": ["guido[@]python.org", "guido[@]dropbox.com", "guido[@]google.com"],
+      "userNamePatterns": ["Guido van Rossum", "gvanrossum"]
     }
   ]
 }

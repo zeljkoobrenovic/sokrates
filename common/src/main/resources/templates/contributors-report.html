@@ -268,7 +268,7 @@
         (c.tags || []).forEach(t => body += '<span class="tag-badge">' + esc(t) + '</span>');
         if (c.team) {
             body = '<div><div class="team-badge">' + esc(c.team) + '</div>'
-                + '<div style="margin-top: -15px; margin-bottom: -9px;">' + body + '</div></div>';
+                + '<div style="margin-top: -15px; margin-bottom: 0;">' + body + '</div></div>';
         }
         return '<td style="vertical-align: middle; white-space: nowrap; overflow: hidden; max-width: 350px;">'
             + '<a target="_blank" style="color: ' + color + ';" href="' + esc(c.reportUrl) + '">' + body + '</a></td>';

@@ -521,6 +521,7 @@ public class LandscapeReportContributorsTab {
             individualReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults, reportsFolder).getIndividualReports(linkedContributors, isTeam);
             botReports = new LandscapeIndividualContributorsReports(landscapeAnalysisResults, reportsFolder).getIndividualReports(linkedBots, false);
             ProcessingStopwatch.end("reporting/contributors/individual reports");
+            ProcessingStopwatch.end("reporting/contributors/preparing");
         }
         ProcessingStopwatch.end("reporting/contributors");
     }
@@ -642,7 +643,6 @@ public class LandscapeReportContributorsTab {
         int index[] = {0};
 
         StringBuilder barsHtml = new StringBuilder();
-        ProcessingStopwatch.end("reporting/contributors/preparing");
 
         ProcessingStopwatch.start("reporting/contributors/table");
         recentContributors.stream().limit(landscapeAnalysisResults.getConfiguration().getContributorsListLimit()).forEach(c -> {

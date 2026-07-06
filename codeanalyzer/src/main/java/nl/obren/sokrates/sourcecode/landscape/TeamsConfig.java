@@ -1,7 +1,6 @@
 package nl.obren.sokrates.sourcecode.landscape;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import nl.obren.sokrates.common.utils.RegexUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +21,16 @@ public class TeamsConfig {
 
     @JsonIgnore
     public String getTeam(String email) {
+        return getTeam(email, null);
+    }
+
+    // Match a contributor to a team by email patterns OR userName patterns. Pass the userName that is
+    // available (post config-people.json transformation where applicable); null when only the email
+    // is known.
+    @JsonIgnore
+    public String getTeam(String email, String userName) {
         for (TeamConfig team : teams) {
-            if (RegexUtils.matchesAnyPattern(email, team.getEmailPatterns())) {
+            if (team.matches(email, userName)) {
                 return team.getName();
             }
         }

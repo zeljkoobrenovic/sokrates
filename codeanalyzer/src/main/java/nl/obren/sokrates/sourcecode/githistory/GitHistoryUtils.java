@@ -169,11 +169,12 @@ public class GitHistoryUtils {
                     }
 
                     // Apply the optional people config (config-people.json): if the email matches a
-                    // person's emailPatterns, remap it to that person's canonical email (so a person's
-                    // multiple emails collapse into one identity in the reports) and override the
-                    // userName with the configured display name when one is set.
+                    // person's emailPatterns OR the commit userName matches a userNamePattern, remap
+                    // the email to that person's canonical email (so a person's multiple identities
+                    // collapse into one in the reports) and override the userName with the configured
+                    // display name when one is set. Match on the raw commit userName before overriding it.
                     if (config.getPeopleConfig() != null) {
-                        PersonConfig personConfig = config.getPeopleConfig().getPersonFromEmailPatterns(authorEmail);
+                        PersonConfig personConfig = config.getPeopleConfig().getPerson(authorEmail, userName);
                         if (StringUtils.isNotBlank(personConfig.getEmail())) {
                             authorEmail = personConfig.getEmail();
                         }
@@ -223,6 +224,7 @@ public class GitHistoryUtils {
     }
 
     public static boolean isBot(String email, List<String> bots) {
-        return RegexUtils.matchesAnyPattern(email, bots);
+        // Case-insensitive: bot identity is matched against the email regardless of case.
+        return RegexUtils.matchesAnyPatternIgnoreCase(email, bots);
     }
 }

@@ -96,6 +96,29 @@ class GitHistoryUtilsTest {
     }
 
     @Test
+    void parseLineMatchesPersonByUserNamePattern() {
+        nl.obren.sokrates.sourcecode.landscape.PeopleConfig peopleConfig =
+                new nl.obren.sokrates.sourcecode.landscape.PeopleConfig();
+        nl.obren.sokrates.sourcecode.landscape.PersonConfig person =
+                new nl.obren.sokrates.sourcecode.landscape.PersonConfig();
+        person.setUserName("Ahmed Hached");
+        person.setEmail("ahmed@corp.com");
+        person.setEmailPatterns(Arrays.asList("\\Qahmed@corp.com\\E"));
+        person.setUserNamePatterns(Arrays.asList("ahached"));
+        peopleConfig.setPeople(Arrays.asList(person));
+
+        FileHistoryAnalysisConfig config = new FileHistoryAnalysisConfig();
+        config.setPeopleConfig(peopleConfig);
+
+        // The email does NOT match any emailPattern, but the commit userName "ahached" does.
+        String line = "2024-01-01 noreply-1@github.com c1 a/B.java ahached";
+        FileUpdate fileUpdate = GitHistoryUtils.parseLine(line, config);
+
+        assertEquals("ahmed@corp.com", fileUpdate.getAuthorEmail());
+        assertEquals("Ahmed Hached", fileUpdate.getUserName());
+    }
+
+    @Test
     void parseLineLeavesUnmatchedContributorUntouchedWithPeopleConfig() {
         nl.obren.sokrates.sourcecode.landscape.PeopleConfig peopleConfig =
                 new nl.obren.sokrates.sourcecode.landscape.PeopleConfig();
