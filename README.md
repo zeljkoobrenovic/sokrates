@@ -8,6 +8,8 @@ It implements Željko Obrenović's "examined code" vision: a pragmatic, efficien
 
 For details and examples, visit [sokrates.dev](https://sokrates.dev).
 
+You can [sponsor the work on Sokrates](https://github.com/sponsors/zeljkoobrenovic) via GitHub [sponsors program]((https://github.com/sponsors/zeljkoobrenovic). 
+
 ## Prerequisites
 
 * Java 17+
