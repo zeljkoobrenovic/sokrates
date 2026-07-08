@@ -39,9 +39,33 @@ class PeopleConfigTest {
     }
 
     @Test
-    void getPersonByNameIsCaseInsensitive() {
+    void getPersonFromEmailPatternsMatchesPlainEmailFieldWithoutPatterns() {
+        // A person defined with just an email (no emailPatterns) still absorbs that contributor.
+        PeopleConfig config = config(person("alice@corp.com", "Alice", List.of(), List.of()));
+
+        assertEquals("Alice", config.getPersonFromEmailPatterns("ALICE@corp.com").getUserName());
+    }
+
+    @Test
+    void getPersonMatchesPlainEmailFieldWithoutPatterns() {
+        PeopleConfig config = config(person("alice@corp.com", "Alice", List.of(), List.of()));
+
+        assertEquals("Alice", config.getPerson("Alice@Corp.COM", "whatever").getUserName());
+    }
+
+    @Test
+    void getPersonMatchesPlainUserNameFieldWithoutPatterns() {
+        // A person defined with just a userName (no userNamePatterns) still absorbs the contributor
+        // whose commit userName matches — instead of a second, unmatched person with the same name.
+        PeopleConfig config = config(person("alice@corp.com", "Alice", List.of(), List.of()));
+
+        assertEquals("alice@corp.com", config.getPerson("noreply@github.com", "ALICE").getEmail());
+    }
+
+    @Test
+    void getPersonByEmailIsCaseInsensitive() {
         PeopleConfig config = config(person("alice@corp.com", "Alice", List.of("alice@corp[.]com"), List.of()));
 
-        assertEquals("Alice", config.getPersonByName("Alice@Corp.COM").getUserName());
+        assertEquals("Alice", config.getPersonByEmail("Alice@Corp.COM").getUserName());
     }
 }
