@@ -82,7 +82,7 @@ public class ContributorReportExport {
         langs = recentLangs != null ? recentLangs
                 : extensionHelper.getLanguages(configuration, cr, peopleConfig);
 
-        PersonConfig personConfig = peopleConfig != null ? peopleConfig.getPersonByName(email) : null;
+        PersonConfig personConfig = peopleConfig != null ? peopleConfig.getPersonByEmail(email) : null;
         // Display name: config-people.json userName overrides the commit-derived userName when set.
         if (personConfig != null && StringUtils.isNotBlank(personConfig.getUserName())) {
             userName = personConfig.getUserName();
