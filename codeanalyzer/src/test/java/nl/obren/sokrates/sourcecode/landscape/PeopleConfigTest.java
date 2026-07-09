@@ -63,6 +63,25 @@ class PeopleConfigTest {
     }
 
     @Test
+    void getPersonMatchesPlainUserNameIgnoringWhitespaceAndCase() {
+        // A person configured with a spaced display name absorbs the contributor even when the commit
+        // userName drops the spaces or changes case ("James Lesslar" vs "JamesLesslar"/"JAMES LESSLAR").
+        PeopleConfig config = config(person("james@corp.com", "James Lesslar", List.of(), List.of()));
+
+        assertEquals("james@corp.com", config.getPerson("jl@other.com", "JamesLesslar").getEmail());
+        assertEquals("james@corp.com", config.getPerson("jl2@other.com", "JAMES  LESSLAR").getEmail());
+    }
+
+    @Test
+    void getPersonDoesNotMatchDifferentNamesThatShareStrippedCharacters() {
+        // Whitespace-insensitivity must not merge genuinely different names; only an exact stripped match.
+        PeopleConfig config = config(person("al@corp.com", "Al Green", List.of(), List.of()));
+
+        // "Alan Green" strips to "alangreen" != "algreen" -> no match, synthetic person returned.
+        assertEquals("who@x.com", config.getPerson("who@x.com", "Alan Green").getEmail());
+    }
+
+    @Test
     void getPersonByEmailIsCaseInsensitive() {
         PeopleConfig config = config(person("alice@corp.com", "Alice", List.of("alice@corp[.]com"), List.of()));
 

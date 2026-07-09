@@ -18,7 +18,9 @@ import java.util.Set;
  *
  * <p>For each distinct userName, all emails that committed under that name are collected. The
  * {@code emailPatterns} list accumulates a literal regex per email (so the entry matches every one of
- * the person's addresses during analysis). The {@code email} field, however, holds a SINGLE address —
+ * the person's addresses during analysis), including the person's own {@code email} field so it is
+ * always reachable via a pattern — the entry then collapses its identities by email and never has to
+ * rely on the display name matching exactly. The {@code email} field, however, holds a SINGLE address —
  * the latest-used email — and is only set when it is currently blank; an existing non-blank
  * {@code email} is left untouched. This is purely additive: it never removes emails, patterns, or
  * entries.
@@ -120,8 +122,17 @@ public class PeopleConfigByUserNameUpdater {
 
             // emailPatterns accumulates a literal regex per email (so the entry matches every one of
             // the person's addresses). matchesAnyPattern is a full, case-sensitive match against the
-            // lowercased contributor email; add a pattern for any email not already covered.
-            addedCount += addEmailPatterns(peopleConfig, person, observedEmails);
+            // lowercased contributor email; add a pattern for any email not already covered. The
+            // person's own `email` field is included so it is always reachable via emailPatterns —
+            // otherwise a person that collapses only via a userName match (e.g. an entry whose
+            // canonical `email` never appears among the observed emails, or a legacy config where the
+            // email was set before pattern-adding existed) has no email-based collapse path and its
+            // identities can split when the display name does not match exactly.
+            Set<String> emailsToCover = new LinkedHashSet<>(observedEmails);
+            if (StringUtils.isNotBlank(person.getEmail())) {
+                emailsToCover.add(person.getEmail());
+            }
+            addedCount += addEmailPatterns(peopleConfig, person, emailsToCover);
         }
 
         return addedCount;
@@ -166,7 +177,12 @@ public class PeopleConfigByUserNameUpdater {
         return java.util.regex.Pattern.quote(email.toLowerCase());
     }
 
-    private String userNameKey(String userName) {
-        return userName != null ? userName.trim().toLowerCase() : "";
+    // Normalizes a display name to a grouping/matching key so case and ALL whitespace variants of the
+    // same name collapse into one entry: e.g. "James Lesslar", "JAMES LESSLAR", "James  Lesslar" and the
+    // no-space commit form "JamesLesslar" all key to "jameslesslar". Kept in sync with
+    // PeopleConfig.userNameKey (runtime matching) — both must strip the same way or the updater would
+    // group two identities the analyzer then treats as distinct.
+    static String userNameKey(String userName) {
+        return userName != null ? userName.replaceAll("\\s+", "").toLowerCase() : "";
     }
 }
