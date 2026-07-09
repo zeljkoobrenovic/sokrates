@@ -199,6 +199,97 @@ class PeopleConfigByUserNameUpdaterTest {
     }
 
     @Test
+    void coversTheExistingEmailFieldWithAPatternEvenIfNotAmongObservedEmails() {
+        PeopleConfig config = new PeopleConfig();
+        PersonConfig existing = new PersonConfig();
+        existing.setUserName("Guido van Rossum");
+        existing.setEmail("guido@python.org"); // canonical email, no pattern covering it yet
+        config.getPeople().add(existing);
+
+        // The observed identity uses a DIFFERENT email under the same userName.
+        int added = new PeopleConfigByUserNameUpdater().update(config,
+                Arrays.asList(id("guido@dropbox.com", "Guido van Rossum")));
+
+        PersonConfig guido = person(config, "Guido van Rossum");
+        // Both the observed email AND the canonical email field are now covered by patterns, so the
+        // person collapses by email regardless of the display name.
+        assertEquals(2, added);
+        assertTrue(RegexUtils.matchesAnyPattern("guido@dropbox.com", guido.getEmailPatterns()));
+        assertTrue(RegexUtils.matchesAnyPattern("guido@python.org", guido.getEmailPatterns()));
+    }
+
+    @Test
+    void addsPatternForEachEmailUnderASharedDisplayNameSoTheyCollapseByEmail() {
+        // Regression for the "james lesslar" / "James Lesslar" split: an entry whose only pattern
+        // (a legacy substring) does not cover a second address the person also commits from. Once the
+        // second address is observed under the same display name, it must get its own pattern so the
+        // identity collapses by email — not only via the fragile userName match.
+        PeopleConfig config = new PeopleConfig();
+        PersonConfig existing = new PersonConfig();
+        existing.setUserName("james lesslar");
+        existing.setEmail("");
+        existing.getEmailPatterns().add("jameslesslar"); // legacy substring; matches only "jameslesslar"
+        config.getPeople().add(existing);
+
+        new PeopleConfigByUserNameUpdater().update(config, Arrays.asList(
+                id("jameslesslar", "James Lesslar", "2024-01-01"),
+                id("jlesslar", "James Lesslar", "2024-02-01")));
+
+        PersonConfig james = person(config, "james lesslar");
+        // jameslesslar was already covered by the legacy pattern; jlesslar gets a new literal pattern.
+        assertTrue(RegexUtils.matchesAnyPattern("jameslesslar", james.getEmailPatterns()));
+        assertTrue(RegexUtils.matchesAnyPattern("jlesslar", james.getEmailPatterns()),
+                "jlesslar must be covered by a pattern so it collapses by email");
+    }
+
+    @Test
+    void groupsWhitespaceAndCaseVariantsOfADisplayNameIntoOneEntry() {
+        PeopleConfig config = new PeopleConfig();
+        // Same person committing under case/spacing variants of the display name, incl. the no-space form.
+        int added = new PeopleConfigByUserNameUpdater().update(config, Arrays.asList(
+                id("a@x.com", "James Lesslar", "2024-01-01"),
+                id("b@x.com", "JAMES LESSLAR", "2024-02-01"),
+                id("c@x.com", "James  Lesslar", "2024-03-01"),
+                id("d@x.com", "JamesLesslar", "2024-04-01")));
+
+        // One merged entry; the display name is the first-seen readable form; all four emails covered.
+        assertEquals(1, config.getPeople().size());
+        assertEquals(4, added);
+        PersonConfig james = config.getPeople().get(0);
+        assertEquals("James Lesslar", james.getUserName());
+        assertEquals("d@x.com", james.getEmail()); // latest-used
+        for (String email : new String[]{"a@x.com", "b@x.com", "c@x.com", "d@x.com"}) {
+            assertTrue(RegexUtils.matchesAnyPattern(email, james.getEmailPatterns()));
+        }
+    }
+
+    @Test
+    void mergesIntoAnExistingEntryWhoseDisplayNameIsAWhitespaceVariant() {
+        PeopleConfig config = new PeopleConfig();
+        PersonConfig existing = new PersonConfig();
+        existing.setUserName("James Lesslar"); // with space
+        config.getPeople().add(existing);
+
+        // Commit uses the no-space form; must land on the existing entry, not create a new one.
+        new PeopleConfigByUserNameUpdater().update(config,
+                Arrays.asList(id("jl@x.com", "JamesLesslar", "2024-01-01")));
+
+        assertEquals(1, config.getPeople().size());
+        assertEquals("jl@x.com", person(config, "James Lesslar").getEmail());
+    }
+
+    @Test
+    void doesNotMergeDistinctNamesThatOnlyShareStrippedCharacters() {
+        PeopleConfig config = new PeopleConfig();
+        new PeopleConfigByUserNameUpdater().update(config, Arrays.asList(
+                id("al@x.com", "Al Green"),
+                id("alan@x.com", "Alan Green")));
+
+        // "Al Green" -> "algreen", "Alan Green" -> "alangreen": different keys, two entries.
+        assertEquals(2, config.getPeople().size());
+    }
+
+    @Test
     void ignoresIdentitiesWithBlankEmailOrUserName() {
         PeopleConfig config = new PeopleConfig();
         List<ContributorIdentity> identities = new ArrayList<>();
