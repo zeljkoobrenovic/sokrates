@@ -10,14 +10,12 @@ import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -175,7 +173,7 @@ public class SourceFile {
     public String getContent() {
         try {
             File file = getFile();
-            return StringUtils.isNotBlank(content) ? content : file != null ? FileUtils.readFileToString(file, StandardCharsets.UTF_8) : "";
+            return StringUtils.isNotBlank(content) ? content : file != null ? SourceCodeEncoding.read(file) : "";
         } catch (IOException e) {
             LOG.debug(e);
         }
@@ -193,7 +191,7 @@ public class SourceFile {
         try {
             List<String> lines = StringUtils.isNotBlank(content)
                     ? SourceCodeCleanerUtils.splitInLines(content) : getFile() != null
-                    ? FileUtils.readLines(getFile(), StandardCharsets.UTF_8) : new ArrayList<>();
+                    ? SourceCodeEncoding.readLines(getFile()) : new ArrayList<>();
             return lines;
         } catch (IOException e) {
             LOG.debug(e);
