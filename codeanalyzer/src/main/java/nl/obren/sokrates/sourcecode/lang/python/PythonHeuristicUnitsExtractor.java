@@ -51,6 +51,10 @@ public class PythonHeuristicUnitsExtractor {
                     }
                     UnitInfo unit = new UnitInfo();
                     unit.setSourceFile(sourceFile);
+                    // Mapped back to file lines: lineIndex counts cleaned lines, which is not the same
+                    // thing once comments have been stripped.
+                    unit.setStartLine(cleanedContent.getFileLineIndexes().get(lineIndex) + 1);
+                    unit.setEndLine(cleanedContent.getFileLineIndexes().get(endOfUnitBodyIndex) + 1);
                     unit.setLinesOfCode(endOfUnitBodyIndex - lineIndex + 1);
                     unit.setCleanedBody(body.toString());
                     unit.setBody(body.toString());
