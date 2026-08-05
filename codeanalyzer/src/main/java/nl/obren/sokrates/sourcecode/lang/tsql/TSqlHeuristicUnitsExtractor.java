@@ -54,8 +54,13 @@ public class TSqlHeuristicUnitsExtractor {
     // [Case] and "End" realistic rather than exotic. Both forms escape their own closing delimiter by
     // doubling it - [Value]]Begin] names Value]Begin - and the escape has to be understood here, since
     // stopping at the first ] leaves the remainder of the name exposed to keyword matching.
+    // Written as an unrolled loop - a plain character class, then a group repeated once per doubled
+    // delimiter - rather than the natural (?:[^]]|]])* form. The natural form makes the JDK engine
+    // recurse once per character, so a long delimited identifier overflowed the stack with an Error
+    // rather than an Exception, which nothing upstream catches. Here the group iterates once per
+    // escape, of which real identifiers have none or one.
     private static final Pattern DELIMITED_IDENTIFIER = Pattern.compile(
-            "\\[(?:[^\\]]|\\]\\])*\\]|\"(?:[^\"]|\"\")*\"");
+            "\\[[^\\]]*(?:\\]\\][^\\]]*)*\\]|\"[^\"]*(?:\"\"[^\"]*)*\"");
 
     // CASE opens a nested scope that must be closed by END before the outer BEGIN/END can close.
     private static final Pattern CASE_OPEN = Pattern.compile("\\bCASE\\b", KEYWORD_FLAGS);

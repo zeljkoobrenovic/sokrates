@@ -304,6 +304,8 @@ public class TSqlAnalyzerTest {
         assertEquals("dbo.p1", units.get(0).getShortName());
         assertEquals(5, units.get(0).getEndLine());
         assertEquals("dbo.p2", units.get(1).getShortName());
+        assertEquals(7, units.get(1).getStartLine());
+        assertEquals(11, units.get(1).getEndLine());
     }
 
     @Test
@@ -315,6 +317,8 @@ public class TSqlAnalyzerTest {
         assertEquals("dbo.p1", units.get(0).getShortName());
         assertEquals(5, units.get(0).getEndLine());
         assertEquals("dbo.p2", units.get(1).getShortName());
+        assertEquals(7, units.get(1).getStartLine());
+        assertEquals(11, units.get(1).getEndLine());
     }
 
     @Test
@@ -337,6 +341,22 @@ public class TSqlAnalyzerTest {
         assertEquals(7, units.get(0).getEndLine());
         assertEquals(1, units.get(0).getNumberOfParameters());
         assertEquals("dbo.p2", units.get(1).getShortName());
+    }
+
+    @Test
+    public void extractUnits_longDelimitedIdentifierDoesNotExhaustTheStack() {
+        // Matching a delimited identifier with a group repeated per character makes the regex engine
+        // recurse per character, which overflowed the stack on a long one - an Error, not an Exception,
+        // so nothing upstream would have caught it. Both a closed and an unclosed delimiter are checked,
+        // since a truncated export produces the second.
+        String filler = new String(new char[40000]).replace('\0', 'x');
+
+        analyzer.extractUnits(srcFile("CREATE PROCEDURE dbo.p\nAS\nBEGIN\n  SELECT [ok" + filler
+                + "] FROM t\nEND\n"));
+        analyzer.extractUnits(srcFile("CREATE PROCEDURE dbo.p\nAS\nBEGIN\n  SELECT [unterminated"
+                + filler + "\nEND\n"));
+        analyzer.extractUnits(srcFile("CREATE PROCEDURE dbo.p\nAS\nBEGIN\n  SELECT \"unterminated"
+                + filler + "\nEND\n"));
     }
 
     private UnitInfo only(List<UnitInfo> units) {
