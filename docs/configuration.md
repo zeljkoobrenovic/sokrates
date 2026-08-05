@@ -191,6 +191,22 @@ In the example above, `.sql` files under `db/packages/` are analysed as PL/SQL w
 specific files that carry a generic extension: it lives in configuration, survives re-exports,
 and does not require renaming source files.
 
+The same applies to `"tsql"`, for Microsoft T-SQL. It is picked automatically only for the `.tsql`
+extension, because `.sql` is shared with every other dialect and guessing from the extension would
+be wrong as often as right. Server-side code exported from SQL Server arrives as `.sql`, so an
+override is how it is routed:
+
+```json
+"analyzerOverrides": [
+  {
+    "analyzer": "tsql",
+    "filters": [
+      { "pathPattern": ".*/db/procedures/.*[.]sql", "note": "MS T-SQL, not generic SQL" }
+    ]
+  }
+]
+```
+
 ### `fileHistoryAnalysis`
 
 Drives contributor/commit analysis from an exported git history:

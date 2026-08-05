@@ -64,6 +64,11 @@ public class UnitLineNumbersTest {
         assertFirstUnit("a.jl", "# comment\nfunction alpha(x)\n    return x\nend\n", 2, 4);
     }
 
+    @Test
+    public void tSqlUnitsAreOnOneBasedFileLines() {
+        assertFirstUnit("a.tsql", "-- comment\nCREATE PROCEDURE dbo.p\nAS\nBEGIN\n  SELECT 1\nEND\n", 2, 6);
+    }
+
     /**
      * The property every extractor must satisfy, stated without naming a specific line: whatever the
      * language, a unit that follows a comment cannot begin on line 1, and cannot end before it starts.
@@ -79,6 +84,7 @@ public class UnitLineNumbersTest {
                 {"a.vb", "' comment\nModule M\n    Sub Alpha()\n        Dim x = 1\n    End Sub\nEnd Module\n"},
                 {"a.lua", "-- comment\nfunction alpha(x)\n  return x\nend\n"},
                 {"a.jl", "# comment\nfunction alpha(x)\n    return x\nend\n"},
+                {"a.tsql", "-- comment\nCREATE PROCEDURE dbo.p\nAS\nBEGIN\n  SELECT 1\nEND\n"},
         };
 
         for (String[] fixture : fixtures) {
