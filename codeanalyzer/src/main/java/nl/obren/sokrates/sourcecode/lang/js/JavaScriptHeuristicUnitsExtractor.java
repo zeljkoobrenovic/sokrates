@@ -18,7 +18,7 @@ public class JavaScriptHeuristicUnitsExtractor extends CStyleHeuristicUnitsExtra
     }
 
     private boolean isFunction(String line) {
-        String idRegex = "[a-zA-Z_$][a-zA-Z_$0-9]*";
+        String idRegex = "[\\p{L}_$][\\p{L}\\p{M}\\p{N}_$]*";
         return !line.contains(";")
                 && doesNotStartWithKeyword(line)
                 && (RegexUtils.matchesEntirely("[ ]*function[ ]*[(].*", line)

@@ -54,7 +54,7 @@ public class ObjectPascalHeuristicUnitsExtractor {
 
     private boolean isFunctionStartLine(String line) {
         String trimmedLine = line.trim().replace("\t", " ");
-        return RegexUtils.matchesEntirely("(class[ ]+)?(procedure|function|method)[ ]+([a-zA-Z0-9_]+[.])+[a-zA-Z0-9_]+[ ]*(\\(|;).*", trimmedLine);
+        return RegexUtils.matchesEntirely("(class[ ]+)?(procedure|function|method)[ ]+([\\p{L}\\p{N}_][\\p{L}\\p{M}\\p{N}_]*[.])+[\\p{L}\\p{N}_][\\p{L}\\p{M}\\p{N}_]*[ ]*(\\(|;).*", trimmedLine);
     }
 
     private void updateUnit(String line) {
