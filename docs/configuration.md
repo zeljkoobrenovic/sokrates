@@ -152,8 +152,44 @@ Switches and risk thresholds for the analysis itself. Common keys:
 | `conditionalComplexityThresholds` | `{low:5, medium:10, high:25, veryHigh:50}` | Risk bands for unit complexity. |
 | `fileAgeThresholds` / `fileUpdateFrequencyThresholds` | (see source) | Risk bands for history metrics. |
 
-Each `*Thresholds` is an object `{ "low", "medium", "high", "veryHigh" }`. `analyzerOverrides`
-can force a specific language analyzer for files matching given filters.
+Each `*Thresholds` is an object `{ "low", "medium", "high", "veryHigh" }`.
+
+#### `analyzerOverrides`
+
+By default the language analyzer is chosen by file extension. `analyzerOverrides` forces a
+different analyzer for files matching given filters — useful when one extension covers several
+dialects, so the extension alone does not identify the language.
+
+```json
+"analyzerOverrides": [
+  {
+    "analyzer": "plsql",
+    "filters": [
+      { "pathPattern": ".*/db/packages/.*[.]sql", "note": "Oracle PL/SQL, not generic SQL" }
+    ]
+  }
+]
+```
+
+- **`analyzer`** is the *extension key* the analyzer is registered under in
+  `LanguageAnalyzerFactory` — `"plsql"`, `"cs"`, `"java"`, … — not a class name. A key that is
+  not registered is not reported as an error, and the matched files fall through to the generic
+  `DefaultLanguageAnalyzer` rather than to the analyzer their extension would have chosen. A typo
+  here therefore leaves the files analysed *less* well than no override at all, so check the key
+  against `LanguageAnalyzerFactory` when a language's metrics look unexpectedly flat.
+- **`filters`** are ordinary source-file filters (`pathPattern`, `contentPattern`, `exception`,
+  `note`). A file is overridden when at least one filter matches it and no `exception` filter
+  matches it, whatever their order in the list.
+- **`pathPattern` must match the *whole* path**, so prefix it with `.*` — `.*[.]sql` matches,
+  `[.]sql` does not. Both `/` and `\` separators are tried, so one pattern works on either
+  platform.
+- **`contentPattern` must likewise match a whole *line***, not appear somewhere in one. To route
+  by a keyword anywhere in the file, wrap it: `".*\\bPACKAGE BODY\\b.*"`.
+
+In the example above, `.sql` files under `db/packages/` are analysed as PL/SQL while every other
+`.sql` file still uses the generic SQL analyzer. This is the preferred way to handle dialect
+specific files that carry a generic extension: it lives in configuration, survives re-exports,
+and does not require renaming source files.
 
 ### `fileHistoryAnalysis`
 
