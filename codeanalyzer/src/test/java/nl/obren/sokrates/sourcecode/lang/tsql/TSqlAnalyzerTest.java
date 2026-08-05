@@ -295,6 +295,50 @@ public class TSqlAnalyzerTest {
         assertEquals(1, unit.getMcCabeIndex());
     }
 
+    @Test
+    public void extractUnits_doubleQuotedReservedWordAlias() {
+        // Masking only [...] left the other delimiter form exposed: the word inside "BEGIN" was read as
+        // an opening block, depth never returned to zero, and dbo.p2 disappeared from the file.
+        List<UnitInfo> units = analyzer.extractUnits(srcFile(TSqlExamples.QUOTED_RESERVED_WORD_ALIAS));
+        assertEquals(2, units.size());
+        assertEquals("dbo.p1", units.get(0).getShortName());
+        assertEquals(5, units.get(0).getEndLine());
+        assertEquals("dbo.p2", units.get(1).getShortName());
+    }
+
+    @Test
+    public void extractUnits_escapedClosingBracketInIdentifier() {
+        // [Value]]Begin] is one identifier naming Value]Begin. Stopping the mask at the first ] left
+        // "Begin" exposed, with the same disappearing-procedure result.
+        List<UnitInfo> units = analyzer.extractUnits(srcFile(TSqlExamples.ESCAPED_BRACKET_IN_IDENTIFIER));
+        assertEquals(2, units.size());
+        assertEquals("dbo.p1", units.get(0).getShortName());
+        assertEquals(5, units.get(0).getEndLine());
+        assertEquals("dbo.p2", units.get(1).getShortName());
+    }
+
+    @Test
+    public void extractUnits_keywordInsideTheObjectName() {
+        // The AS in [dbo].[AS] is part of the name, not the end of the signature. Reading it as the end
+        // cut the parameter list off before it was counted.
+        UnitInfo unit = only(analyzer.extractUnits(srcFile(TSqlExamples.KEYWORD_INSIDE_DELIMITED_NAME)));
+        assertEquals("[dbo].[AS]", unit.getShortName());
+        assertEquals(2, unit.getNumberOfParameters());
+    }
+
+    @Test
+    public void extractUnits_multiLineInlineTableValuedFunction() {
+        // The single-line fixture never exercises the cross-line RETURN/paren tracking, which is how
+        // inline table-valued functions are normally written.
+        List<UnitInfo> units = analyzer.extractUnits(srcFile(TSqlExamples.MULTILINE_INLINE_TVF));
+        assertEquals(2, units.size());
+        assertEquals("dbo.f1", units.get(0).getShortName());
+        assertEquals(1, units.get(0).getStartLine());
+        assertEquals(7, units.get(0).getEndLine());
+        assertEquals(1, units.get(0).getNumberOfParameters());
+        assertEquals("dbo.p2", units.get(1).getShortName());
+    }
+
     private UnitInfo only(List<UnitInfo> units) {
         assertEquals(1, units.size());
         return units.get(0);

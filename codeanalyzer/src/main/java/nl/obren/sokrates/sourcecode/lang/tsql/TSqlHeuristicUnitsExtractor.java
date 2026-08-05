@@ -49,10 +49,13 @@ public class TSqlHeuristicUnitsExtractor {
             "\\bBEGIN\\b(?!\\s+(?:TRAN|TRANSACTION|DISTRIBUTED|TRY|CATCH|DIALOG|CONVERSATION))",
             KEYWORD_FLAGS);
 
-    // A delimited identifier. CASE, END, WHEN, IF and the rest are reserved words, so bracketing is the
-    // only way to use them as column names - which makes [Case], [End] and [When] the realistic form
-    // rather than an exotic one. They are masked out before any keyword is counted.
-    private static final Pattern BRACKETED_IDENTIFIER = Pattern.compile("\\[[^\\]]*\\]");
+    // A delimited identifier, in either of the two forms T-SQL accepts. CASE, END, WHEN, IF and the rest
+    // are reserved words, so delimiting is the only way to use them as column names, which makes
+    // [Case] and "End" realistic rather than exotic. Both forms escape their own closing delimiter by
+    // doubling it - [Value]]Begin] names Value]Begin - and the escape has to be understood here, since
+    // stopping at the first ] leaves the remainder of the name exposed to keyword matching.
+    private static final Pattern DELIMITED_IDENTIFIER = Pattern.compile(
+            "\\[(?:[^\\]]|\\]\\])*\\]|\"(?:[^\"]|\"\")*\"");
 
     // CASE opens a nested scope that must be closed by END before the outer BEGIN/END can close.
     private static final Pattern CASE_OPEN = Pattern.compile("\\bCASE\\b", KEYWORD_FLAGS);
@@ -207,7 +210,9 @@ public class TSqlHeuristicUnitsExtractor {
     private int findSignatureEnd(List<String> lines, int startIndex) {
         int parenDepth = 0;
         for (int k = startIndex; k < lines.size(); k++) {
-            String line = lines.get(k);
+            // Masked, so that an AS or BEGIN inside the object's own delimited name does not read as
+            // the end of the signature - which would cut the parameter list off before it is counted.
+            String line = maskDelimitedIdentifiers(lines.get(k));
             for (int c = 0; c < line.length(); c++) {
                 char ch = line.charAt(c);
                 if (ch == '(') parenDepth++;
@@ -459,7 +464,7 @@ public class TSqlHeuristicUnitsExtractor {
      * statement sequence, which only the batch separator or the end of the file terminates.
      */
     private boolean bodyOpensWithBegin(List<String> lines, int signatureEndIndex) {
-        String signatureLine = maskBracketedIdentifiers(lines.get(signatureEndIndex));
+        String signatureLine = maskDelimitedIdentifiers(lines.get(signatureEndIndex));
         Matcher as = AS_KEYWORD.matcher(signatureLine);
         if (as.find()) {
             String afterAs = signatureLine.substring(as.end());
@@ -475,7 +480,7 @@ public class TSqlHeuristicUnitsExtractor {
         }
 
         for (int k = signatureEndIndex + 1; k < lines.size(); k++) {
-            String line = maskBracketedIdentifiers(lines.get(k)).trim();
+            String line = maskDelimitedIdentifiers(lines.get(k)).trim();
             if (line.isEmpty()) {
                 continue;
             }
@@ -500,8 +505,8 @@ public class TSqlHeuristicUnitsExtractor {
     /**
      * Blanks out delimited identifiers, keeping the line the same length so token positions still line up.
      */
-    private String maskBracketedIdentifiers(String line) {
-        Matcher m = BRACKETED_IDENTIFIER.matcher(line);
+    private String maskDelimitedIdentifiers(String line) {
+        Matcher m = DELIMITED_IDENTIFIER.matcher(line);
         if (!m.find()) {
             return line;
         }
@@ -516,7 +521,7 @@ public class TSqlHeuristicUnitsExtractor {
     }
 
     private List<Token> scanBeginCaseEnd(String rawLine) {
-        String line = maskBracketedIdentifiers(rawLine);
+        String line = maskDelimitedIdentifiers(rawLine);
         List<Token> tokens = new ArrayList<>();
         Matcher beginMatcher = BEGIN_OPEN.matcher(line);
         while (beginMatcher.find()) {
@@ -551,7 +556,7 @@ public class TSqlHeuristicUnitsExtractor {
     }
 
     int computeMcCabeIndex(String cleanedBody) {
-        String body = maskBracketedIdentifiers(cleanedBody);
+        String body = maskDelimitedIdentifiers(cleanedBody);
         int mc = 1;
         for (Pattern p : MC_PATTERNS) {
             Matcher m = p.matcher(body);

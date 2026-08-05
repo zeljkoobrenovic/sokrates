@@ -274,6 +274,64 @@ public class TSqlExamples {
             + "  SET @ORø = 2\n"
             + "END\n";
 
+    // A column aliased with a double-quoted reserved word. T-SQL accepts both delimiter forms, so this
+    // is the same case as [Begin] and has to be masked the same way.
+    public static final String QUOTED_RESERVED_WORD_ALIAS = ""
+            + "CREATE PROCEDURE dbo.p1\n"
+            + "AS\n"
+            + "BEGIN\n"
+            + "  SELECT col AS \"BEGIN\"\n"
+            + "END\n"
+            + "GO\n"
+            + "CREATE PROCEDURE dbo.p2\n"
+            + "AS\n"
+            + "BEGIN\n"
+            + "  SELECT 2\n"
+            + "END\n"
+            + "GO\n";
+
+    // A delimited identifier containing an escaped closing bracket: [Value]]Begin] names Value]Begin.
+    public static final String ESCAPED_BRACKET_IN_IDENTIFIER = ""
+            + "CREATE PROCEDURE dbo.p1\n"
+            + "AS\n"
+            + "BEGIN\n"
+            + "  SELECT [Value]]Begin] FROM dbo.t\n"
+            + "END\n"
+            + "GO\n"
+            + "CREATE PROCEDURE dbo.p2\n"
+            + "AS\n"
+            + "BEGIN\n"
+            + "  SELECT 2\n"
+            + "END\n"
+            + "GO\n";
+
+    // The object's own name contains a bare AS, which must not be read as the end of the signature.
+    public static final String KEYWORD_INSIDE_DELIMITED_NAME = ""
+            + "CREATE PROCEDURE [dbo].[AS]\n"
+            + "@a INT,\n"
+            + "@b INT\n"
+            + "AS\n"
+            + "BEGIN\n"
+            + "  SELECT 1\n"
+            + "END\n";
+
+    // An inline table-valued function written the way they normally are - across several lines.
+    public static final String MULTILINE_INLINE_TVF = ""
+            + "CREATE FUNCTION dbo.f1 (@a INT)\n"
+            + "RETURNS TABLE\n"
+            + "AS\n"
+            + "RETURN\n"
+            + "(\n"
+            + "  SELECT @a AS x\n"
+            + ")\n"
+            + "GO\n"
+            + "CREATE PROCEDURE dbo.p2\n"
+            + "AS\n"
+            + "BEGIN\n"
+            + "  SELECT 2\n"
+            + "END\n"
+            + "GO\n";
+
     // A commented-out definition must not be mistaken for a real one.
     public static final String COMMENTED_OUT_DEFINITION = ""
             + "-- CREATE PROCEDURE dbo.notreal\n"
