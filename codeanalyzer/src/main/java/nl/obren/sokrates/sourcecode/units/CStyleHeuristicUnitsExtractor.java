@@ -21,7 +21,7 @@ public class CStyleHeuristicUnitsExtractor {
     // Constant unit-signature pattern: one or more space-separated identifiers followed by "(".
     // Compiled once (static) rather than per candidate line — isUnitSignature runs for every line
     // of every file across all C-style languages, so recompiling here was a measurable hot spot.
-    private static final String IDENTIFIER_PATTERN = "[a-zA-Z0-9_$?:~]+";
+    private static final String IDENTIFIER_PATTERN = "[\\p{L}\\p{N}_$?:~][\\p{L}\\p{M}\\p{N}_$?:~]*";
     private static final Pattern START_UNIT_PATTERN =
             Pattern.compile("(" + IDENTIFIER_PATTERN + "[ ]+)+" + IDENTIFIER_PATTERN + "[ ]*[(]");
 
