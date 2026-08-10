@@ -163,6 +163,12 @@ dialects, so the extension alone does not identify the language.
 ```json
 "analyzerOverrides": [
   {
+    "analyzer": "tsql",
+    "filters": [
+      { "pathPattern": ".*/db/procedures/.*[.]sql", "note": "MS T-SQL, not generic SQL" }
+    ]
+  },
+  {
     "analyzer": "plsql",
     "filters": [
       { "pathPattern": ".*/db/packages/.*[.]sql", "note": "Oracle PL/SQL, not generic SQL" }
@@ -171,8 +177,11 @@ dialects, so the extension alone does not identify the language.
 ]
 ```
 
+`.sql` is the case this option exists for: T-SQL, PL/SQL and generic SQL share it, and the
+extension alone cannot say which dialect a file is.
+
 - **`analyzer`** is the *extension key* the analyzer is registered under in
-  `LanguageAnalyzerFactory` — `"plsql"`, `"cs"`, `"java"`, … — not a class name. A key that is
+  `LanguageAnalyzerFactory` — `"tsql"`, `"plsql"`, `"cs"`, `"java"`, … — not a class name. A key that is
   not registered is not reported as an error, and the matched files fall through to the generic
   `DefaultLanguageAnalyzer` rather than to the analyzer their extension would have chosen. A typo
   here therefore leaves the files analysed *less* well than no override at all, so check the key

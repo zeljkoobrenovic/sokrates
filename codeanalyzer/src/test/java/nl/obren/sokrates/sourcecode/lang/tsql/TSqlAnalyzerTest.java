@@ -5,6 +5,8 @@
 package nl.obren.sokrates.sourcecode.lang.tsql;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
+import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
+import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
 import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 import org.junit.Before;
@@ -378,5 +380,22 @@ public class TSqlAnalyzerTest {
         assertEquals(1, extractor.computeMcCabeIndex("SET @ANDY = 1; SET @IFACE = 2; SET @ORDER = 3;"));
         // Each genuine keyword contributes +1. Base 1 + IF + AND + OR = 4.
         assertEquals(4, extractor.computeMcCabeIndex("IF @x = 1 AND @y = 2 OR @z = 3 SELECT 1"));
+    }
+
+    /**
+     * The wiring, which nothing else checks: registering an extension in {@link LanguageAnalyzerFactory}
+     * is a line in a different file from the analyzer it points at, and getting it wrong costs nothing
+     * at compile time. A {@code .tsql} file would simply be read as generic SQL — units still extracted,
+     * no error anywhere, and the numbers quietly those of the wrong dialect.
+     *
+     * <p>Asked through {@code getLanguageAnalyzer(SourceFile)} rather than by extension, because that is
+     * the call the analysis itself makes, and it honours {@code analyzerOverrides} as well.
+     */
+    @Test
+    public void aTSqlFileIsRoutedToThisAnalyzer() {
+        LanguageAnalyzer forTSql = LanguageAnalyzerFactory.getInstance()
+                .getLanguageAnalyzer(new SourceFile(new File("db/procedures/Example.tsql")));
+
+        assertEquals(TSqlAnalyzer.class, forTSql.getClass());
     }
 }
