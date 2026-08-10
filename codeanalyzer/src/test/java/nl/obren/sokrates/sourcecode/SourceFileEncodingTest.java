@@ -87,6 +87,26 @@ public class SourceFileEncodingTest {
         }
     }
 
+    @Test
+    public void aWindowsExportIsAnalysedWithoutBeingReEncodedFirst() throws IOException {
+        // UTF-16 LE with a BOM *and* CRLF: the shape Windows tooling actually emits, and the one
+        // combination not covered above, where the encoding varies but the line endings stay LF.
+        byte[] export = concat(BOM_UTF_16_LE, CSHARP_SOURCE.replace("\n", "\r\n").getBytes(UTF_16LE));
+        File file = sourceFileWith(export);
+
+        assertEquals(Arrays.asList(CSHARP_SOURCE.split("\n")), new SourceFile(file).getLines());
+
+        SourceFile sourceFile = new SourceFile(file);
+        sourceFile.setLinesOfCodeFromContent();
+        assertEquals(13, sourceFile.getLinesOfCode());
+
+        // Units are asserted beside the lines of code in one method for the reason the class javadoc
+        // gives: a wrong decode still counts lines normally and only empties the unit list.
+        List<UnitInfo> units = unitsOf(file);
+        assertEquals(Arrays.asList("public int Compute()", "public int Other()"), namesOf(units));
+        assertEquals(Arrays.asList(3, 2), complexitiesOf(units));
+    }
+
     private List<byte[]> theSameSourceInEveryEncoding() {
         return Arrays.asList(
                 CSHARP_SOURCE.getBytes(UTF_8),

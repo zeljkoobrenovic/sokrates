@@ -18,7 +18,7 @@ public class SwiftHeuristicUnitsExtractor extends CStyleHeuristicUnitsExtractor 
     }
 
     private boolean isFunction(String line) {
-        String idRegex = "[a-zA-Z_$][a-zA-Z_$0-9]*";
+        String idRegex = "[\\p{L}_$][\\p{L}\\p{M}\\p{N}_$]*";
         String prefixes = "mutating ";
         return !line.contains(";") && !line.contains("=") && (RegexUtils.matchesEntirely("[ ]*(" + prefixes + ")*[ ]*func[ ]*" + idRegex + "[(].*", line));
     }
