@@ -105,4 +105,56 @@ public class PlSqlAnalyzerTest {
         assertEquals(0, unitInfos.get(0).getNumberOfParameters());
     }
 
+    /**
+     * A backslash carries no special meaning in a PL/SQL string literal, so a path ending in one must
+     * not be read as an escaped quote. When it was, every literal after that point paired with the
+     * wrong partner and the tail of the file was dropped from the cleaned content - here the last two
+     * lines, so the file measured 10 lines of code instead of 12.
+     */
+    @Test
+    public void cleanForLinesOfCodeCalculations_keepsTheTailAfterALiteralEndingInABackslash() {
+        SourceFile sourceFile = new SourceFile(new File("test_backslash.pls"),
+                PlSqlExamples.CONTENT_BACKSLASH_PATH);
+
+        CleanedContent cleanedContent = analyzer.cleanForLinesOfCodeCalculations(sourceFile);
+
+        assertTrue(cleanedContent.getCleanedContent().contains("END export_pkg;"),
+                () -> "the end of the package must survive cleaning, got:\n" + cleanedContent.getCleanedContent());
+        assertEquals(12, cleanedContent.getCleanedLinesCount());
+    }
+
+    /**
+     * The same defect measured on the other consumer of the cleaner. Asserting only the line count
+     * would leave unit boundaries untested, and they move too: the last procedure lost its END line.
+     */
+    @Test
+    public void extractUnits_aLiteralEndingInABackslashDoesNotShortenTheUnitsAfterIt() {
+        SourceFile sourceFile = new SourceFile(new File("test_backslash_units.pls"),
+                PlSqlExamples.CONTENT_BACKSLASH_PATH);
+
+        List<UnitInfo> unitInfos = analyzer.extractUnits(sourceFile);
+
+        assertEquals(2, unitInfos.size());
+        assertEquals("write_report", unitInfos.get(0).getShortName());
+        assertEquals("archive", unitInfos.get(1).getShortName());
+        // Runs to its own END on line 11, not to the line before it.
+        assertEquals(4, unitInfos.get(1).getLinesOfCode());
+    }
+
+    /**
+     * PL/SQL's actual escape, which the fix relies on: a quote is doubled inside a literal. Passes
+     * against either escape marker, so this pins the semantics rather than guarding the defect.
+     */
+    @Test
+    public void cleanForLinesOfCodeCalculations_handlesADoubledQuote() {
+        SourceFile sourceFile = new SourceFile(new File("test_doubled.pls"),
+                "BEGIN\n  introduction := ' Hello! I''m John Smith.';\n  choice := 'y';\nEND;\n");
+
+        CleanedContent cleanedContent = analyzer.cleanForLinesOfCodeCalculations(sourceFile);
+
+        assertTrue(cleanedContent.getCleanedContent().contains("choice := 'y'"),
+                () -> "the statement after the doubled quote must survive, got:\n"
+                        + cleanedContent.getCleanedContent());
+    }
+
 }

@@ -286,4 +286,19 @@ public static final String CONTENT_10 = "package gf_BI is\n" +
             "\n" +
             "end gf_BI;\n" +
             "/\n";
+
+    // A literal ending in a backslash - a Windows path, routine in UTL_FILE work. A backslash carries
+    // no special meaning in a PL/SQL literal, so the string ends at the quote right after it.
+    public static final String CONTENT_BACKSLASH_PATH = "CREATE OR REPLACE PACKAGE BODY export_pkg AS\n" +
+            "  PROCEDURE write_report(p_name IN VARCHAR2) IS\n" +
+            "    v_dir VARCHAR2(200);\n" +
+            "  BEGIN\n" +
+            "    v_dir := 'C:\\exports\\';\n" +
+            "    dbms_output.put_line(v_dir || p_name);\n" +
+            "  END write_report;\n" +
+            "  PROCEDURE archive(p_id IN NUMBER) IS\n" +
+            "  BEGIN\n" +
+            "    dbms_output.put_line('archiving');\n" +
+            "  END archive;\n" +
+            "END export_pkg;\n";
 }
