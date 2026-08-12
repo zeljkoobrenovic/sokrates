@@ -461,4 +461,28 @@ public class TSqlAnalyzerTest {
         assertEquals("dbo.p1", units.get(0).getShortName());
         assertEquals("dbo.p2", units.get(1).getShortName());
     }
+
+    /**
+     * Pins what treating GO as an unconditional terminator costs, rather than leaving it undiscovered.
+     *
+     * <p>GO is client-side, so a bare GO inside a multi-line literal is valid input, and the unit
+     * holding it is cut short there. This asserts the truncation <b>as accepted behaviour</b>: the
+     * first unit is understated, and - the part that makes the trade worth it - the procedure after it
+     * is still found with correct boundaries. Restoring a guard to protect this case would bring back
+     * the failure it replaced, where any depth miscount swallowed every later procedure in the file.
+     */
+    @Test
+    public void extractUnits_goInsideAMultilineLiteralTruncatesThatUnitButNotTheFile() {
+        List<UnitInfo> units = analyzer.extractUnits(srcFile(TSqlExamples.GO_INSIDE_A_MULTILINE_LITERAL));
+
+        assertEquals(2, units.size());
+        assertEquals("dbo.p1", units.get(0).getShortName());
+        // Understated: the body really runs to its END on line 8.
+        assertEquals(1, units.get(0).getStartLine());
+        assertEquals(4, units.get(0).getEndLine());
+        // The cost stops there - the next procedure is untouched.
+        assertEquals("dbo.p2", units.get(1).getShortName());
+        assertEquals(10, units.get(1).getStartLine());
+        assertEquals(14, units.get(1).getEndLine());
+    }
 }

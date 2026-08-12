@@ -392,6 +392,25 @@ public class TSqlExamples {
             + "END\n"
             + "GO\n";
 
+    // A bare GO inside a multi-line literal. GO is client-side, so this is valid input - and it is the
+    // accepted cost of treating GO as an unconditional terminator.
+    public static final String GO_INSIDE_A_MULTILINE_LITERAL = ""
+            + "CREATE PROCEDURE dbo.p1\n"
+            + "AS\n"
+            + "BEGIN\n"
+            + "  DECLARE @sql NVARCHAR(MAX) = 'PRINT 1\n"
+            + "GO\n"
+            + "PRINT 2'\n"
+            + "  EXEC sp_executesql @sql\n"
+            + "END\n"
+            + "GO\n"
+            + "CREATE PROCEDURE dbo.p2\n"
+            + "AS\n"
+            + "BEGIN\n"
+            + "  SELECT 2\n"
+            + "END\n"
+            + "GO\n";
+
     // Malformed: the first procedure never closes its BEGIN. The batch separator is all there is to
     // stop it consuming what follows.
     public static final String MISSING_END_BEFORE_GO = ""

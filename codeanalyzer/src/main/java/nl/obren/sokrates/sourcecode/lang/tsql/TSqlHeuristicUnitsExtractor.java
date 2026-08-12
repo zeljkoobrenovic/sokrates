@@ -458,8 +458,16 @@ public class TSqlHeuristicUnitsExtractor {
             // depth, and the END handler above returns the moment depth reaches 0 with a BEGIN seen, so
             // that state can never survive to be tested here. The guard therefore did nothing when the
             // depth count was right, and suppressed the terminator precisely when it was wrong -
-            // turning any miscount into the unit swallowing every later procedure in the file. A
-            // CREATE PROCEDURE cannot legally span a GO, so ending here is never wrong for valid input.
+            // turning any miscount into the unit swallowing every later procedure in the file.
+            //
+            // It is not free. GO is client-side, so a bare GO *inside a multi-line string literal* is
+            // valid input, and the unit is cut short there - measured, a deployment helper holding
+            // 'PRINT 1\nGO\nPRINT 2' reports 4 lines instead of 8. The cost is bounded and visible: the
+            // unit's own size and complexity are understated, the truncation shows in its end line, and
+            // the following procedure is still extracted correctly. That is the trade against a
+            // miscount silently swallowing whole files, and multi-line literals are already a stated
+            // blind spot of this method - see the dynamic-SQL note above, which emptyStrings cannot
+            // reach either.
             if (k + 1 < lines.size() && GO_BATCH.matcher(lines.get(k + 1)).matches()) {
                 return k;
             }
