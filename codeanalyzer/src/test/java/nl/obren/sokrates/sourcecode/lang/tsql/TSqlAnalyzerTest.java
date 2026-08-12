@@ -16,6 +16,7 @@ import java.io.File;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class TSqlAnalyzerTest {
 
@@ -397,5 +398,67 @@ public class TSqlAnalyzerTest {
                 .getLanguageAnalyzer(new SourceFile(new File("db/procedures/Example.tsql")));
 
         assertEquals(TSqlAnalyzer.class, forTSql.getClass());
+    }
+
+    /**
+     * A backslash is an ordinary character in a T-SQL literal, so a path ending in one must not read as
+     * an escaped quote. When it did, the cleaner ran to the next quote in the file - or off the end of
+     * it - and everything past that point vanished from both unit extraction and the line count, with
+     * nothing in the report to say so.
+     */
+    @Test
+    public void extractUnits_literalEndingInABackslashDoesNotSwallowTheRestOfTheFile() {
+        List<UnitInfo> units = analyzer.extractUnits(srcFile(TSqlExamples.BACKSLASH_TERMINATED_STRING));
+
+        assertEquals(2, units.size());
+        assertEquals("dbo.p1", units.get(0).getShortName());
+        assertEquals("dbo.p2", units.get(1).getShortName());
+    }
+
+    @Test
+    public void cleanForLinesOfCode_keepsTheCodeAfterALiteralEndingInABackslash() {
+        // The same defect measured on the other consumer of the cleaner: the line count. Asserting the
+        // unit count alone would leave this half untested, and it is the half that moves a headline
+        // figure.
+        CleanedContent cleaned = analyzer.cleanForLinesOfCodeCalculations(
+                srcFile(TSqlExamples.BACKSLASH_TERMINATED_STRING));
+
+        assertTrue("code after the backslash literal must survive cleaning, got:\n" + cleaned.getCleanedContent(),
+                cleaned.getCleanedContent().contains("SELECT 2"));
+    }
+
+    @Test
+    public void extractUnits_doubledQuoteIsTheEscapeAndHidesACommentMarker() {
+        // T-SQL's real escape. The '--' inside the literal must not start a comment.
+        List<UnitInfo> units = analyzer.extractUnits(srcFile(TSqlExamples.DOUBLED_QUOTE_STRING));
+
+        assertEquals(2, units.size());
+        assertEquals("dbo.p1", units.get(0).getShortName());
+        assertEquals("dbo.p2", units.get(1).getShortName());
+    }
+
+    /**
+     * The batch separator is the backstop for a depth count that has gone wrong, so it has to fire
+     * whatever the count believes. These two cases are why: one is legal T-SQL the line-by-line scan
+     * cannot read, the other is malformed input. Both used to end with the first procedure swallowing
+     * the second.
+     */
+    @Test
+    public void extractUnits_goEndsTheUnitWhenBeginTransactionIsSplitAcrossLines() {
+        List<UnitInfo> units = analyzer.extractUnits(
+                srcFile(TSqlExamples.BEGIN_TRANSACTION_SPLIT_ACROSS_LINES));
+
+        assertEquals(2, units.size());
+        assertEquals("dbo.p1", units.get(0).getShortName());
+        assertEquals("dbo.p2", units.get(1).getShortName());
+    }
+
+    @Test
+    public void extractUnits_goEndsTheUnitWhenAnEndIsMissing() {
+        List<UnitInfo> units = analyzer.extractUnits(srcFile(TSqlExamples.MISSING_END_BEFORE_GO));
+
+        assertEquals(2, units.size());
+        assertEquals("dbo.p1", units.get(0).getShortName());
+        assertEquals("dbo.p2", units.get(1).getShortName());
     }
 }

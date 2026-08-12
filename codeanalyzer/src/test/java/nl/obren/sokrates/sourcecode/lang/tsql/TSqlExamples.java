@@ -340,4 +340,70 @@ public class TSqlExamples {
             + "BEGIN\n"
             + "  SELECT 1\n"
             + "END\n";
+
+    // A literal ending in a backslash - a Windows path, which is routine in maintenance scripts. A
+    // backslash is an ordinary character in T-SQL, so the string ends at the quote that follows it.
+    public static final String BACKSLASH_TERMINATED_STRING = ""
+            + "CREATE PROCEDURE dbo.p1\n"
+            + "AS\n"
+            + "BEGIN\n"
+            + "  DECLARE @path NVARCHAR(200)\n"
+            + "  SET @path = 'D:\\Backups\\'\n"
+            + "END\n"
+            + "GO\n"
+            + "CREATE PROCEDURE dbo.p2\n"
+            + "AS\n"
+            + "BEGIN\n"
+            + "  SELECT 2\n"
+            + "END\n"
+            + "GO\n";
+
+    // T-SQL's actual escape: a quote is doubled inside a literal.
+    public static final String DOUBLED_QUOTE_STRING = ""
+            + "CREATE PROCEDURE dbo.p1\n"
+            + "AS\n"
+            + "BEGIN\n"
+            + "  SELECT 'it''s -- not a comment'\n"
+            + "END\n"
+            + "GO\n"
+            + "CREATE PROCEDURE dbo.p2\n"
+            + "AS\n"
+            + "BEGIN\n"
+            + "  SELECT 2\n"
+            + "END\n"
+            + "GO\n";
+
+    // BEGIN TRANSACTION with the keywords split across lines - legal, and invisible to a line-by-line
+    // scan, so the depth count treats the BEGIN as a block that COMMIT never closes.
+    public static final String BEGIN_TRANSACTION_SPLIT_ACROSS_LINES = ""
+            + "CREATE PROCEDURE dbo.p1\n"
+            + "AS\n"
+            + "BEGIN\n"
+            + "  BEGIN\n"
+            + "  TRANSACTION\n"
+            + "  UPDATE t SET c = 1\n"
+            + "  COMMIT\n"
+            + "END\n"
+            + "GO\n"
+            + "CREATE PROCEDURE dbo.p2\n"
+            + "AS\n"
+            + "BEGIN\n"
+            + "  SELECT 2\n"
+            + "END\n"
+            + "GO\n";
+
+    // Malformed: the first procedure never closes its BEGIN. The batch separator is all there is to
+    // stop it consuming what follows.
+    public static final String MISSING_END_BEFORE_GO = ""
+            + "CREATE PROCEDURE dbo.p1\n"
+            + "AS\n"
+            + "BEGIN\n"
+            + "  SELECT 1\n"
+            + "GO\n"
+            + "CREATE PROCEDURE dbo.p2\n"
+            + "AS\n"
+            + "BEGIN\n"
+            + "  SELECT 2\n"
+            + "END\n"
+            + "GO\n";
 }

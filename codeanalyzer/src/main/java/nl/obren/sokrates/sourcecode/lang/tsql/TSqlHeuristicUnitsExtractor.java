@@ -415,8 +415,9 @@ public class TSqlHeuristicUnitsExtractor {
     /**
      * Walks BEGIN / CASE / END tokens in order of occurrence and tracks depth. BEGIN and CASE both open a
      * scope (+1); END closes either. The unit ends when depth returns to 0 at an END after at least one
-     * BEGIN has been seen. A GO batch separator on the following line is also treated as a terminator to
-     * guard against malformed input.
+     * BEGIN has been seen. A GO batch separator on the following line always terminates the unit as well,
+     * whatever the depth count believes - it is the backstop for the cases where the count is wrong, and
+     * for balanced input it costs nothing because the END check returns first.
      */
     private int findEndByBeginEndDepth(List<String> lines, int signatureEndIndex) {
         // Wrapping a body in BEGIN/END is optional in T-SQL, and depth tracking only identifies the end of
@@ -452,10 +453,15 @@ public class TSqlHeuristicUnitsExtractor {
             // dynamic SQL sits inside a multi-line string literal, which emptyStrings cannot clean, so
             // that rule cut real procedures short and invented a unit named after the literal. T-SQL
             // requires a GO between CREATE PROCEDURE batches, so there is nothing to fall back to.
+            // Unconditional, because GO ends the batch whatever the depth count believes. Guarding it
+            // with (seenProcBegin && depth == 0) made it dead: END is the only thing that decrements
+            // depth, and the END handler above returns the moment depth reaches 0 with a BEGIN seen, so
+            // that state can never survive to be tested here. The guard therefore did nothing when the
+            // depth count was right, and suppressed the terminator precisely when it was wrong -
+            // turning any miscount into the unit swallowing every later procedure in the file. A
+            // CREATE PROCEDURE cannot legally span a GO, so ending here is never wrong for valid input.
             if (k + 1 < lines.size() && GO_BATCH.matcher(lines.get(k + 1)).matches()) {
-                if (!bodyOpensWithBegin || (seenProcBegin && depth == 0)) {
-                    return k;
-                }
+                return k;
             }
         }
         return lines.size() - 1;

@@ -30,7 +30,14 @@ public class TSqlAnalyzer extends LanguageAnalyzer {
 
         cleaner.addCommentBlockHelper("/*", "*/");
         cleaner.addCommentBlockHelper("--", "\n");
-        cleaner.addStringBlockHelper("'", "\\");
+        // T-SQL escapes a quote by doubling it ('it''s'), and a backslash is an ordinary character with
+        // no special meaning in a string. Naming backslash as the escape marker therefore misreads any
+        // literal ending in one - 'D:\Backups\', a routine path in a maintenance script - as an escaped
+        // quote, and the cleaner then runs on to the next quote in the file, or to the end of it. That
+        // silently drops every later procedure from unit extraction and undercounts lines of code for
+        // the whole remainder. Passing the quote as its own escape marker is what CodeBlockParser reads
+        // as the doubling rule.
+        cleaner.addStringBlockHelper("'", "'");
 
         return cleaner;
     }
