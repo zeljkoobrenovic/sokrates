@@ -48,7 +48,15 @@ public class PlSqlAnalyzer extends LanguageAnalyzer {
 
         cleaner.addCommentBlockHelper("/*", "*/");
         cleaner.addCommentBlockHelper("--", "\n");
-        cleaner.addStringBlockHelper("'", "\\");
+        // PL/SQL escapes a quote by doubling it ('I''m'), and a backslash is an ordinary character with
+        // no special meaning in a string literal. Naming backslash as the escape marker misreads any
+        // literal ending in one - 'C:\exports\', a routine path for UTL_FILE work - as an escaped
+        // quote, so the parser runs on to the next quote in the file. Every literal after that point is
+        // paired with the wrong partner, and the tail of the file is dropped from the cleaned content
+        // entirely: lines of code are undercounted and unit boundaries understated, with nothing in the
+        // report to say so. Passing the quote as its own escape marker is what CodeBlockParser reads as
+        // the doubling rule.
+        cleaner.addStringBlockHelper("'", "'");
 
         return cleaner;
     }
