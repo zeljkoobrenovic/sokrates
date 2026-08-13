@@ -436,6 +436,15 @@ public class CodeConfiguration {
         this.tagRules = tagRules;
     }
 
+    /**
+     * The scope aspect a configured name refers to.
+     *
+     * <p>Labels are lower case because the subject is: a mixed-case label such as
+     * {@code "buildAndDeployment"} can never match {@code scope.toLowerCase()}, which is what left
+     * that scope - and {@code generated}, which had no case at all - falling through to {@code main}.
+     * Both then looked like real aspects, so a decomposition scoped to either one silently decomposed
+     * main instead.
+     */
     @JsonIgnore
     public NamedSourceCodeAspect getScope(String scope) {
         switch (scope.toLowerCase()) {
@@ -443,7 +452,9 @@ public class CodeConfiguration {
                 return main;
             case "test":
                 return test;
-            case "buildAndDeployment":
+            case "generated":
+                return generated;
+            case "buildanddeployment":
                 return buildAndDeployment;
             case "other":
                 return other;
