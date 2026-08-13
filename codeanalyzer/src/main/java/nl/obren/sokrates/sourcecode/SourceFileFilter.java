@@ -123,17 +123,33 @@ public class SourceFileFilter {
     }
 
     public boolean pathMatches(String path) {
-        boolean pathMatches;
-        if (StringUtils.isNotBlank(pathPattern)) {
-            pathMatches = RegexUtils.matchesEntirely(pathPattern, path)
-                    || RegexUtils.matchesEntirely(pathPattern, path.replace("\\", "/"))
-                    || RegexUtils.matchesEntirely(pathPattern, path.replace("/", "\\"))
-                    || RegexUtils.matchesEntirely(pathPattern.replace("\\", "/"), path.replace("\\", "/"))
-                    || RegexUtils.matchesEntirely(pathPattern.replace("\\", "/"), path.replace("/", "\\"));
-        } else {
-            pathMatches = true;
+        if (StringUtils.isBlank(pathPattern)) {
+            return true;
         }
-        return pathMatches;
+
+        // A filter written with one slash style must also match paths written with the other, so five
+        // (pattern, path) combinations are tried: the path as given, with "\" replaced by "/", and
+        // with "/" replaced by "\", each against the pattern as given and with "\" replaced by "/".
+        // A combination repeats another whenever the string it rewrites holds no such separator - for
+        // a path and a pattern that contain no backslash (the common case: every git path, and every
+        // path on Linux and macOS) the five collapse to at most two distinct pairs. Testing for the
+        // separator before rewriting evaluates each distinct pair once; which pairs are matched is
+        // unchanged.
+        if (RegexUtils.matchesEntirely(pathPattern, path)) {
+            return true;
+        }
+        if (path.contains("\\") && RegexUtils.matchesEntirely(pathPattern, path.replace("\\", "/"))) {
+            return true;
+        }
+        if (path.contains("/") && RegexUtils.matchesEntirely(pathPattern, path.replace("/", "\\"))) {
+            return true;
+        }
+        if (pathPattern.contains("\\")) {
+            String pathPatternWithForwardSlashes = pathPattern.replace("\\", "/");
+            return RegexUtils.matchesEntirely(pathPatternWithForwardSlashes, path.replace("\\", "/"))
+                    || RegexUtils.matchesEntirely(pathPatternWithForwardSlashes, path.replace("/", "\\"));
+        }
+        return false;
     }
 
     boolean contentMatches(List<String> lines) {
