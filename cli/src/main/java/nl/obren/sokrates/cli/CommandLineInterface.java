@@ -21,6 +21,7 @@ import nl.obren.sokrates.common.utils.*;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.dataexporters.DataExporter;
+import nl.obren.sokrates.reports.generators.explorers.CommitsExplorerGenerators;
 import nl.obren.sokrates.reports.generators.explorers.FilesExplorerGenerators;
 import nl.obren.sokrates.reports.generators.explorers.UnitsExplorerGenerators;
 import nl.obren.sokrates.reports.generators.statichtml.BasicSourceCodeReportGenerator;
@@ -724,6 +725,8 @@ public class CommandLineInterface {
         filesExplorerGenerators.exportJson(analysisResults);
         UnitsExplorerGenerators unitsExplorerGenerators = new UnitsExplorerGenerators(reportsFolder);
         unitsExplorerGenerators.exportJson(analysisResults);
+        CommitsExplorerGenerators commitsExplorerGenerators = new CommitsExplorerGenerators(reportsFolder);
+        commitsExplorerGenerators.exportJson(analysisResults, sokratesConfigFolder);
         ProcessingStopwatch.end("saving report/explorer");
         ProcessingStopwatch.end("saving report");
     }

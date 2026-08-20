@@ -32,6 +32,13 @@ public class ExtractGitHistoryFileHandler {
 
         FileUtils.writeLines(new File(splitFolder, gitHistoryFile.getName()), splitContent);
 
+        // Copy the optional commit-messages sidecar along: it is keyed by sha, so the (superset)
+        // map stays valid for the split history; older extractions simply have no sidecar.
+        File commitsFile = new File(folder, GitHistoryUtils.GIT_COMMITS_FILE_NAME);
+        if (commitsFile.exists()) {
+            FileUtils.copyFile(commitsFile, new File(splitFolder, GitHistoryUtils.GIT_COMMITS_FILE_NAME));
+        }
+
         LOG.info("Extracted git history to " + new File(splitFolder, gitHistoryFile.getName()).getPath());
     }
 

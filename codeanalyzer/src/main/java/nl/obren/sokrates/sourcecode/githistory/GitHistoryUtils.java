@@ -29,10 +29,37 @@ import java.util.function.Predicate;
 
 public class GitHistoryUtils {
     public static final String GIT_HISTORY_FILE_NAME = "git-history.txt";
+    // Optional sidecar written by GitHistoryExtractor next to git-history.txt: one line per
+    // commit, "<sha> <first line of the commit message>". A sidecar (rather than extra columns
+    // on git-history.txt lines) keeps older parsers of the main file working unchanged.
+    public static final String GIT_COMMITS_FILE_NAME = "git-commits.txt";
     public static final String EARLIEST_DATE = "1980-01-01";
     private static final Log LOG = LogFactory.getLog(GitHistoryUtils.class);
     private static List<FileUpdate> updates = null;
     private static Map<String, String> anonymizeEmails = new HashMap<>();
+
+    /**
+     * Reads the optional git-commits.txt sidecar into a sha -> first-message-line map. Returns an
+     * empty map when the file is absent (older extractions) or unreadable, so consumers degrade
+     * gracefully to message-less behavior.
+     */
+    public static Map<String, String> getCommitMessagesFromFile(File file) {
+        Map<String, String> messages = new HashMap<>();
+        if (file == null || !file.exists()) {
+            return messages;
+        }
+        try {
+            FileUtils.readLines(file, StandardCharsets.UTF_8).forEach(line -> {
+                int index = line.indexOf(' ');
+                if (index > 0 && index < line.length() - 1) {
+                    messages.putIfAbsent(line.substring(0, index), line.substring(index + 1).trim());
+                }
+            });
+        } catch (IOException e) {
+            LOG.error("Could not read " + file.getPath(), e);
+        }
+        return messages;
+    }
 
     public static String printContributorsCommand() {
         return "git ls-files -z | xargs -0 -n1 -I{} -- git log --date=short --format=\"%ad %ae %H {}\" {} > " + GIT_HISTORY_FILE_NAME;

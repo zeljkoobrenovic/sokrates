@@ -140,6 +140,8 @@ public class ReportFileExporter {
         indexReport.addTab("commits", "Activity", false);
         indexReport.addTab("files", "Files", false);
         indexReport.addTab("units", "Units*", false);
+        // The plain "commits" id is taken by the Activity tab above.
+        indexReport.addTab("commits-explorer", "Commits", false);
         indexReport.addTab("visuals", "Visuals", false);
         indexReport.addTab("data", "Data", false);
         indexReport.endDiv();
@@ -209,6 +211,12 @@ public class ReportFileExporter {
         indexReport.startTabContentSection("units", false);
         indexReport.addLineBreak();
         indexReport.addHtmlContent("<iframe src='../explorers/units-explorer.html' style='width: 100%; border: none; height: calc(100vh - 220px); overflow: hidden; margin-top: -12px'></iframe>");
+
+        indexReport.endTabContentSection();
+
+        indexReport.startTabContentSection("commits-explorer", false);
+        indexReport.addLineBreak();
+        indexReport.addHtmlContent("<iframe src='../explorers/commits-explorer.html' style='width: 100%; border: none; height: calc(100vh - 220px); overflow: hidden; margin-top: -12px'></iframe>");
 
         indexReport.endTabContentSection();
 
