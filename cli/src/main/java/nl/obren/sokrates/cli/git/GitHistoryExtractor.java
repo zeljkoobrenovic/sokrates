@@ -1,5 +1,6 @@
 package nl.obren.sokrates.cli.git;
 
+import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.eclipse.jgit.api.Git;
@@ -30,7 +31,8 @@ public class GitHistoryExtractor {
 
     public void extractGitHistory(File root) {
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
-        File gitHistoryFile = new File(root, "git-history.txt");
+        File gitHistoryFile = new File(root, GitHistoryUtils.GIT_HISTORY_FILE_NAME);
+        File gitCommitsFile = new File(root, GitHistoryUtils.GIT_COMMITS_FILE_NAME);
         // SimpleDateFormat is not thread-safe, but this loop is single-threaded; hoisting it out
         // of the per-line loop avoids allocating one instance per file change (millions on big repos).
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
@@ -46,6 +48,8 @@ public class GitHistoryExtractor {
             // single file-change line, which is O(commits * files) syscalls and dominated runtime.
             try (Writer writer = new BufferedWriter(new OutputStreamWriter(
                     Files.newOutputStream(gitHistoryFile.toPath()), StandardCharsets.UTF_8), 1 << 16);
+                 Writer commitsWriter = new BufferedWriter(new OutputStreamWriter(
+                         Files.newOutputStream(gitCommitsFile.toPath()), StandardCharsets.UTF_8), 1 << 16);
                  DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE)) {
 
                 // One DiffFormatter reused across all commits (it is repository-scoped). Use the
@@ -68,6 +72,7 @@ public class GitHistoryExtractor {
                     String email = authorIdent.getEmailAddress();
                     String safeName = authorIdent.getName().replace(" ", "&nbsp;");
                     String commitId = rev.getId().getName();
+                    long countBeforeCommit = count;
 
                     for (DiffEntry entry : diffFormatter.scan(prev, rev)) {
                         // For a deletion the new path is /dev/null; attribute the removed lines to
@@ -89,6 +94,13 @@ public class GitHistoryExtractor {
                         writer.write(date + " " + email + " " + commitId + " "
                                 + safePath + " " + safeName + " " + added + " " + deleted + "\n");
                         count++;
+                    }
+                    // Sidecar with the commit message's first line, only for commits that
+                    // produced at least one file-change line (the ones consumers can join on).
+                    // See GitHistoryUtils.GIT_COMMITS_FILE_NAME for the format contract.
+                    if (count > countBeforeCommit) {
+                        String message = rev.getShortMessage().replaceAll("[\\r\\n]+", " ").trim();
+                        commitsWriter.write(commitId + " " + message + "\n");
                     }
                 }
             }

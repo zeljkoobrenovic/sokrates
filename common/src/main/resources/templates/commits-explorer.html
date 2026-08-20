@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Commits Explorer</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+            box-sizing: border-box;
+            padding: 12px;
+        }
+
+        ::placeholder {
+            color: lightgrey;
+            opacity: 1;
+        }
+
+        td {
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sortable:hover {
+            color: #333333;
+        }
+
+        .sort-active {
+            color: #303030;
+            font-weight: bold;
+        }
+
+        .sort-arrow {
+            font-size: 80%;
+        }
+
+        /* Two-pane layout: commit list left, circle-packing visualization right. */
+        #report {
+            height: 100%;
+        }
+
+        #layout {
+            display: flex;
+            height: 100%;
+            gap: 14px;
+        }
+
+        /* The list pane never grows past half the page; on narrow windows the table scrolls
+           horizontally inside it instead of squeezing the visualization. */
+        #left {
+            width: 46%;
+            max-width: 50%;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        #list {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: auto;
+            min-height: 0;
+            border-top: 1px solid #eeeeee;
+        }
+
+        #right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        #viz {
+            flex: 1;
+            min-height: 0;
+            position: relative;
+        }
+
+        #vizsvg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .commit-row {
+            cursor: pointer;
+        }
+
+        .commit-row:hover {
+            background-color: #f4f8fb;
+        }
+
+        .commit-row.selected {
+            background-color: #fff0d4;
+        }
+
+        .commit-row td {
+            padding: 3px 6px;
+            border-bottom: 1px solid #f4f4f4;
+            font-size: 90%;
+        }
+
+        /* Selection marker tying the list to the red highlight in the visualization. */
+        .commit-row td:first-child {
+            border-left: 3px solid transparent;
+        }
+
+        .commit-row.selected td:first-child {
+            border-left: 3px solid #e31a1c;
+        }
+
+        .mono {
+            font-family: Menlo, Consolas, monospace;
+            font-size: 85%;
+        }
+
+        .badge-bot {
+            display: inline-block;
+            font-size: 70%;
+            color: #666666;
+            background-color: #eeeeee;
+            border: 1px solid #dddddd;
+            border-radius: 4px;
+            padding: 0 4px;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
+
+        .action-button {
+            font-size: 80%;
+            color: #0a58ca;
+            background: none;
+            border: 1px solid #c9d8ef;
+            border-radius: 4px;
+            padding: 2px 8px;
+            cursor: pointer;
+            margin-right: 6px;
+        }
+
+        .action-button:hover {
+            background-color: #f0f5ff;
+        }
+
+        .action-button:disabled {
+            color: #aaaaaa;
+            border-color: #e0e0e0;
+            cursor: default;
+            background: none;
+        }
+
+        .swatch {
+            display: inline-block;
+            width: 11px;
+            height: 11px;
+            border: 1px solid #999999;
+            border-radius: 50%;
+            vertical-align: middle;
+            margin-right: 3px;
+        }
+
+        .legend-item {
+            font-size: 75%;
+            color: grey;
+            margin-right: 10px;
+            white-space: nowrap;
+        }
+
+        /* Circle-packing styles (mirrors vis_templates/zoomable_circles_colored.html). */
+        .node {
+            cursor: pointer;
+        }
+
+        .node:hover {
+            stroke: #000;
+            stroke-width: 1.5px;
+        }
+
+        .label {
+            font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+            text-anchor: middle;
+            text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff, 0 -1px 0 #fff;
+            pointer-events: none;
+        }
+
+        .node--leaf {
+            pointer-events: all;
+        }
+
+        /* Loading indicator shown while the embedded data is inflated + the first render runs. */
+        #loading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: grey;
+            font-size: 15px;
+            padding: 40px 4px;
+        }
+
+        #loading .spinner {
+            width: 22px;
+            height: 22px;
+            border: 3px solid #e0e0e0;
+            border-top-color: #4a90d9;
+            border-radius: 50%;
+            animation: sokrates-spin 0.8s linear infinite;
+        }
+
+        @keyframes sokrates-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
+    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Lato">
+    ${sokrates-inflate-lib}
+</head>
+<body>
+
+<div id="loading">
+    <div class="spinner"></div>
+    <span>Loading commits data…</span>
+</div>
+
+<div id="report" style="display: none;">
+    <div id="layout">
+        <div id="left">
+            <div style="margin-bottom: 6px">
+                <input id="filter" type="text"
+                       placeholder="search... (use ; for multiple terms, file:<text> to match changed files)"
+                       style="font-size: 15px; height: 30px; width: 96%; margin-bottom: 6px"
+                       onkeyup="updateList()">
+                <div style="white-space: nowrap">
+                    <span id="search-summary" style="color: grey; font-size: 80%"></span>
+                </div>
+                <div style="margin-top: 6px; white-space: nowrap">
+                    <button id="select-matching" class="action-button" onclick="selectMatching()">select all matching</button>
+                    <button id="clear-selection" class="action-button" onclick="clearSelection()" disabled>clear selection</button>
+                    <span id="selection-summary" style="color: grey; font-size: 80%"></span>
+                    <label style="color: grey; font-size: 80%; margin-left: 10px"><input type="checkbox" id="hide-bots"
+                            onchange="updateList()">hide bots</label>
+                </div>
+                <div style="color: #aaaaaa; font-size: 72%; margin-top: 4px; white-space: nowrap">
+                    click select&nbsp;·&nbsp;⌘/ctrl+click add&nbsp;·&nbsp;shift+click range&nbsp;·&nbsp;↑ ↓ navigate&nbsp;·&nbsp;esc clear
+                </div>
+                <div id="truncation-note" style="color: grey; font-size: 75%; margin-top: 4px; display: none"></div>
+            </div>
+            <div id="list"></div>
+        </div>
+        <div id="right">
+            <div style="margin-bottom: 4px; white-space: nowrap; color: grey; font-size: 90%">
+                Scope: &nbsp;
+                <label><input type="checkbox" id="scope_main" checked onchange="updateViz()">main</label>&nbsp;
+                <label><input type="checkbox" id="scope_test" checked onchange="updateViz()">test</label>&nbsp;
+                <label><input type="checkbox" id="scope_generated" checked onchange="updateViz()">generated</label>&nbsp;
+                <label><input type="checkbox" id="scope_build" checked onchange="updateViz()">build</label>&nbsp;
+                <label><input type="checkbox" id="scope_other" checked onchange="updateViz()">other</label>
+            </div>
+            <div style="margin-bottom: 4px; white-space: nowrap; overflow: hidden">
+                <!-- All files stay white so the red/purple selection highlight is the only color
+                     carrying meaning (scopes are a filter, not a color dimension here). -->
+                <span class="legend-item"><span class="swatch" style="background-color: #ffffff"></span>file</span>
+                <span class="legend-item"><span class="swatch" style="background-color: #e31a1c"></span>changed in selected commits</span>
+                <span class="legend-item"><span class="swatch" style="background-color: #6a3d9a"></span>changed, no longer in codebase</span>
+            </div>
+            <div id="viz-summary" style="color: grey; font-size: 80%; margin-bottom: 4px"></div>
+            <div id="viz">
+                <svg id="vizsvg" viewBox="0 0 960 960" preserveAspectRatio="xMidYMid meet"></svg>
+                <div id="viz-empty" style="display: none; position: absolute; top: 40%; width: 100%; text-align: center; color: grey"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+    const imported = ${data};
+
+    const files = imported.files || [];
+    const commits = imported.commits || [];
+    const totalCommitsCount = imported.totalCommitsCount || commits.length;
+
+    files.forEach((file, index) => {
+        file.id = index;
+        file.lower = (file.path || '').toLowerCase();
+    });
+
+    commits.forEach((commit, index) => {
+        commit.idx = index;
+        commit.files = commit.fileIds || [];
+        commit.search = (commit.sha + ' ' + (commit.email || '') + ' ' + (commit.userName || '') + ' '
+            + commit.date + ' ' + (commit.message || '') + (commit.bot ? ' bot' : '')).toLowerCase();
+    });
+
+    // Commit messages come from the optional git-commits.txt sidecar (newer extractions only);
+    // for older histories no commit has one and the message column is hidden entirely.
+    const hasMessages = commits.some(c => c.message);
+
+    // Positional snapshot taken BEFORE any sorting: updateList re-sorts `commits` in place, but
+    // selection state and row ids are keyed by the original idx — always resolve a selected idx
+    // through this snapshot, never via commits[i].
+    const commitsByIdx = commits.slice();
+
+    function escapeHtml(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // ------------------------------------------------------------------ commit list (left pane)
+
+    const sortColumns = {
+        date: {value: c => c.date || '', type: 'string', dir: -1},
+        sha: {value: c => c.sha || '', type: 'string', dir: 1},
+        message: {value: c => (c.message || '').toLowerCase(), type: 'string', dir: 1},
+        author: {value: c => (c.userName || c.email || '').toLowerCase(), type: 'string', dir: 1},
+        filesCount: {value: c => c.files.length, type: 'number', dir: -1},
+        added: {value: c => c.linesAdded || 0, type: 'number', dir: -1},
+        deleted: {value: c => c.linesDeleted || 0, type: 'number', dir: -1}
+    };
+
+    let sortKey = 'date';
+    let sortDir = -1;
+
+    function comparator(a, b) {
+        const column = sortColumns[sortKey];
+        const va = column.value(a);
+        const vb = column.value(b);
+        let cmp;
+        if (column.type === 'string') {
+            cmp = String(va).localeCompare(String(vb));
+        } else {
+            cmp = va < vb ? -1 : (va > vb ? 1 : 0);
+        }
+        if (cmp === 0) {
+            // Deterministic tiebreak on original position; git-history.txt is in git-log order
+            // (newest first), the best intra-day ordering available (dates carry no time).
+            return a.idx - b.idx;
+        }
+        return cmp * sortDir;
+    }
+
+    function sortHeader(key, label, extraStyle) {
+        const active = sortKey === key;
+        const arrow = active ? (sortDir === 1 ? ' ▲' : ' ▼') : '';
+        const cls = 'sortable' + (active ? ' sort-active' : '');
+        return '<td class="' + cls + '" style="' + (extraStyle || '') + '" onclick="updateList(\'' + key + '\')">'
+            + label + '<span class="sort-arrow">' + arrow + '</span></td>';
+    }
+
+    // A search can contain several terms separated by ";". Plain terms match sha/author/date and
+    // are a UNION; each "file:<text>" term is its own AND constraint requiring the commit to have
+    // changed a file whose path contains the text (mirrors the landscape filter syntax).
+    function parseFilters() {
+        const result = {plain: [], file: []};
+        document.getElementById('filter').value.toLowerCase().trim()
+            .split(';').map(s => s.trim()).filter(s => s.length)
+            .forEach(term => {
+                if (term.indexOf('file:') === 0) {
+                    const text = term.substring('file:'.length).trim();
+                    if (text.length) {
+                        result.file.push(text);
+                    }
+                } else {
+                    result.plain.push(term);
+                }
+            });
+        return result;
+    }
+
+    function matchesFilters(commit, filters, hideBots) {
+        if (hideBots && commit.bot) {
+            return false;
+        }
+        for (let i = 0; i < filters.file.length; i++) {
+            const text = filters.file[i];
+            if (!commit.files.some(id => files[id].lower.includes(text))) {
+                return false;
+            }
+        }
+        if (filters.plain.length && !filters.plain.some(t => commit.search.includes(t))) {
+            return false;
+        }
+        return true;
+    }
+
+    const selected = new Set();
+    let lastFiltered = [];
+    // The commit idx of each rendered row, in display order — the basis for mouse/keyboard
+    // selection (click / ⌘-or-ctrl+click / shift+click range, ↑↓ navigation).
+    let displayed = [];
+    let anchorPos = null;
+    let cursorPos = null;
+
+    // Tooltip on the files-count cell: the first few changed paths.
+    function filesTooltip(commit) {
+        const max = 12;
+        const names = commit.files.slice(0, max).map(id => files[id].path);
+        if (commit.files.length > max) {
+            names.push('… and ' + (commit.files.length - max) + ' more');
+        }
+        return escapeHtml(names.join('\n'));
+    }
+
+    function updateList(clickedKey) {
+        if (clickedKey && sortColumns[clickedKey]) {
+            if (sortKey === clickedKey) {
+                sortDir = -sortDir;
+            } else {
+                sortKey = clickedKey;
+                sortDir = sortColumns[clickedKey].dir;
+            }
+        }
+
+        if (!commits.length) {
+            document.getElementById('list').innerHTML =
+                '<div style="color: grey; padding: 20px 4px">No commit history found.</div>';
+            document.getElementById('select-matching').disabled = true;
+            return;
+        }
+
+        const filters = parseFilters();
+        const hideBots = document.getElementById('hide-bots').checked;
+
+        commits.sort(comparator);
+        lastFiltered = commits.filter(c => matchesFilters(c, filters, hideBots));
+
+        document.getElementById('search-summary').innerHTML =
+            lastFiltered.length.toLocaleString('en-US') + ' of ' + commits.length.toLocaleString('en-US')
+            + (commits.length === 1 ? ' commit' : ' commits');
+
+        let html = '<table style="width: 100%; border-collapse: collapse">';
+        html += '<tr style="color: #777777; background-color: #f8f8f8; font-size: 80%">';
+        html += sortHeader('date', 'date', 'text-align: left');
+        html += sortHeader('sha', 'commit', 'text-align: left');
+        if (hasMessages) {
+            html += sortHeader('message', 'message', 'text-align: left');
+        }
+        html += sortHeader('author', 'author', 'text-align: left');
+        html += sortHeader('filesCount', 'files', 'text-align: right');
+        html += sortHeader('added', '+lines', 'text-align: right');
+        html += sortHeader('deleted', '−lines', 'text-align: right');
+        html += '</tr>';
+
+        displayed = [];
+        lastFiltered.forEach(commit => {
+            if (displayed.length >= 1000) {
+                return;
+            }
+            const pos = displayed.length;
+            displayed.push(commit.idx);
+            const isSelected = selected.has(commit.idx);
+            html += '<tr id="commit-row-' + commit.idx + '" class="commit-row' + (isSelected ? ' selected' : '')
+                + '" onclick="rowClick(event, ' + pos + ')">';
+            html += '<td style="color: #5f5f5f">' + commit.date + '</td>';
+            html += '<td class="mono" style="color: #888888">' + escapeHtml((commit.sha || '').substring(0, 7)) + '</td>';
+            if (hasMessages) {
+                html += '<td style="max-width: 300px; text-overflow: ellipsis" title="' + escapeHtml(commit.message || '') + '">'
+                    + (commit.message ? escapeHtml(commit.message) : '<span style="color: lightgrey">-</span>') + '</td>';
+            }
+            html += '<td style="max-width: 220px; text-overflow: ellipsis" title="' + escapeHtml(commit.email || '') + '">'
+                + escapeHtml(commit.userName || commit.email || '')
+                + (commit.bot ? '<span class="badge-bot">bot</span>' : '') + '</td>';
+            html += '<td style="text-align: right" title="' + filesTooltip(commit) + '">'
+                + commit.files.length.toLocaleString('en-US') + '</td>';
+            html += '<td style="text-align: right; color: #1a9641">'
+                + (commit.linesAdded ? '+' + commit.linesAdded.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
+            html += '<td style="text-align: right; color: #bd0026">'
+                + (commit.linesDeleted ? '−' + commit.linesDeleted.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
+            html += '</tr>';
+        });
+        html += '</table>';
+
+        if (lastFiltered.length > 1000) {
+            html += '<div style="color: grey; font-size: 80%; margin-top: 6px">Showing the first 1,000 of '
+                + lastFiltered.length.toLocaleString('en-US') + ' commits (sorted); refine the search to narrow the list.</div>';
+        }
+
+        document.getElementById('list').innerHTML = html;
+        updateSelectionControls();
+    }
+
+    function updateSelectionControls() {
+        document.getElementById('selection-summary').innerHTML =
+            selected.size ? selected.size.toLocaleString('en-US') + ' selected' : '';
+        document.getElementById('clear-selection').disabled = !selected.size;
+    }
+
+    // Re-applies the selected class on the rendered rows in place; a full list re-render would
+    // reset hover/scroll context on every selection change.
+    function refreshRows() {
+        displayed.forEach(idx => {
+            const row = document.getElementById('commit-row-' + idx);
+            if (row) {
+                row.className = 'commit-row' + (selected.has(idx) ? ' selected' : '');
+            }
+        });
+        updateSelectionControls();
+    }
+
+    function selectRange(fromPos, toPos) {
+        selected.clear();
+        const from = Math.min(fromPos, toPos);
+        const to = Math.max(fromPos, toPos);
+        for (let i = from; i <= to; i++) {
+            selected.add(displayed[i]);
+        }
+    }
+
+    // Standard list-selection semantics: click selects only that row (clicking the sole selected
+    // row deselects it), ⌘/ctrl+click toggles it into the selection, shift+click selects the
+    // range from the last anchor.
+    function rowClick(event, pos) {
+        const idx = displayed[pos];
+        if (event.shiftKey && anchorPos !== null) {
+            selectRange(anchorPos, pos);
+        } else if (event.metaKey || event.ctrlKey) {
+            if (selected.has(idx)) {
+                selected.delete(idx);
+            } else {
+                selected.add(idx);
+            }
+            anchorPos = pos;
+        } else {
+            const wasOnlySelection = selected.size === 1 && selected.has(idx);
+            selected.clear();
+            if (!wasOnlySelection) {
+                selected.add(idx);
+            }
+            anchorPos = pos;
+        }
+        cursorPos = pos;
+        refreshRows();
+        updateViz();
+    }
+
+    // ↑/↓ move the selection through the list (shift extends the range from the anchor).
+    function moveCursor(delta, extend) {
+        if (!displayed.length) {
+            return;
+        }
+        let pos = cursorPos === null ? (delta > 0 ? 0 : displayed.length - 1) : cursorPos + delta;
+        pos = Math.max(0, Math.min(displayed.length - 1, pos));
+        cursorPos = pos;
+        if (extend && anchorPos !== null) {
+            selectRange(anchorPos, pos);
+        } else {
+            selected.clear();
+            selected.add(displayed[pos]);
+            anchorPos = pos;
+        }
+        const row = document.getElementById('commit-row-' + displayed[pos]);
+        if (row && row.scrollIntoView) {
+            row.scrollIntoView({block: 'nearest'});
+        }
+        refreshRows();
+        updateViz();
+    }
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            clearSelection();
+            return;
+        }
+        if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') {
+            return;
+        }
+        const activeElement = document.activeElement;
+        if (activeElement && activeElement.id === 'filter') {
+            // ↓ in the search box jumps into the list; ↑ keeps its text-cursor behavior.
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                activeElement.blur();
+                cursorPos = null;
+                moveCursor(1, false);
+            }
+            return;
+        }
+        event.preventDefault();
+        moveCursor(event.key === 'ArrowDown' ? 1 : -1, event.shiftKey);
+    });
+
+    function selectMatching() {
+        lastFiltered.forEach(commit => selected.add(commit.idx));
+        refreshRows();
+        updateViz();
+    }
+
+    function clearSelection() {
+        selected.clear();
+        anchorPos = null;
+        cursorPos = null;
+        refreshRows();
+        updateViz();
+    }
+
+    // ------------------------------------------------- circle-packing visualization (right pane)
+
+    // All files render white so the selection highlight is the only color carrying meaning
+    // (scope colors made the changed files hard to spot); keep in sync with the legend above.
+    const HIGHLIGHT_COLOR = '#e31a1c';
+    const HIGHLIGHT_DELETED_COLOR = '#6a3d9a';
+
+    const SCOPES = ['main', 'test', 'generated', 'build', 'other'];
+
+    function scopeChecked(scope) {
+        const checkbox = document.getElementById('scope_' + scope);
+        return checkbox ? checkbox.checked : false;
+    }
+
+    // Builds the folder tree of the files to show: current files of the checked scopes, plus the
+    // "deleted" (history-only) files in deletedIncluded — those exist in the tree only while a
+    // selected commit references them.
+    let lastTreeFileCount = 0;
+
+    function buildTree(deletedIncluded) {
+        const root = {name: '', childMap: {}, children: []};
+        lastTreeFileCount = 0;
+        files.forEach(file => {
+            if (file.scope === 'deleted') {
+                if (!deletedIncluded.has(file.id)) {
+                    return;
+                }
+            } else if (!scopeChecked(file.scope)) {
+                return;
+            }
+            lastTreeFileCount++;
+            const parts = file.path.split('/');
+            let node = root;
+            for (let i = 0; i < parts.length - 1; i++) {
+                const part = parts[i];
+                let child = node.childMap[part];
+                if (!child) {
+                    child = {name: part, childMap: {}, children: []};
+                    node.childMap[part] = child;
+                    node.children.push(child);
+                }
+                node = child;
+            }
+            // Deleted files have no known size; a nominal 1 keeps them visible (files-with-0-LOC too).
+            node.children.push({
+                name: parts[parts.length - 1],
+                size: Math.max(1, file.linesOfCode || 0),
+                fid: file.id
+            });
+        });
+        return root.children;
+    }
+
+    // d3-v4 zoomable circle packing, adapted from vis_templates/zoomable_circles_colored.html:
+    // rebuilt on scope-filter / deleted-set changes, restyled in place on selection changes.
+    const diameter = 960;
+    const margin = 20;
+    // Folder-depth gradient. Clamped and kept light on purpose: the stock circles scale
+    // (domain [-1,5], unclamped) extrapolates past depth 5 and the HCL hue rotates into dark
+    // maroon/purple for deeply nested folders — which drowns out the red/purple selection
+    // highlight. Clamping keeps every folder in the light green→slate ramp so highlighted
+    // files are always the strongest color on screen.
+    const depthColor = d3.scaleLinear()
+        .domain([-1, 8])
+        .range(['hsl(152,80%,100%)', 'hsl(228,30%,70%)'])
+        .interpolate(d3.interpolateHcl)
+        .clamp(true);
+    const pack = d3.pack()
+        .size([diameter - margin, diameter - margin])
+        .padding(2);
+
+    let g = null, circle = null, circleTitles = null, text = null, node = null;
+    let packRoot = null, focus = null, view = null;
+
+    function renderViz(children) {
+        const svg = d3.select('#vizsvg');
+        svg.selectAll('*').remove();
+        const emptyDiv = document.getElementById('viz-empty');
+
+        if (!children.length) {
+            circle = null;
+            emptyDiv.innerHTML = 'No files in the selected scopes.';
+            emptyDiv.style.display = 'block';
+            svg.style('background', null);
+            return;
+        }
+        emptyDiv.style.display = 'none';
+
+        g = svg.append('g').attr('transform', 'translate(' + diameter / 2 + ',' + diameter / 2 + ')');
+
+        packRoot = d3.hierarchy({name: '', children: children})
+            .sum(function (d) {
+                return d.size;
+            })
+            .sort(function (a, b) {
+                return b.value - a.value;
+            });
+
+        focus = packRoot;
+        const nodes = pack(packRoot).descendants();
+
+        circle = g.selectAll('circle')
+            .data(nodes)
+            .enter().append('circle')
+            .attr('class', function (d) {
+                return d.parent ? d.children ? 'node' : 'node node--leaf' : 'node node--root';
+            })
+            .on('click', function (d) {
+                if (focus !== d) {
+                    zoom(d);
+                    d3.event.stopPropagation();
+                }
+            });
+
+        circleTitles = circle.append('title');
+
+        text = g.selectAll('text')
+            .data(nodes)
+            .enter().append('text')
+            .attr('class', 'label')
+            .attr('dy', '0.35em')
+            .style('fill-opacity', function (d) {
+                return d.parent === packRoot ? 1 : 0;
+            })
+            .style('display', function (d) {
+                return d.parent === packRoot ? 'inline' : 'none';
+            });
+
+        node = g.selectAll('circle,text');
+
+        svg
+            .style('background', depthColor(-1))
+            .on('click', function () {
+                zoom(packRoot);
+            });
+
+        zoomTo([packRoot.x, packRoot.y, packRoot.r * 2 + margin]);
+    }
+
+    // Approx chars that fit inside a circle of (scaled) radius r at the label font size, so labels
+    // are clipped to their bubble instead of overflowing into neighbours. ~6px per char at 11px font.
+    function labelForRadius(name, r) {
+        const maxChars = Math.floor((2 * r - 4) / 6);
+        if (maxChars < 1) {
+            return '';
+        }
+        if (name.length <= maxChars) {
+            return name;
+        }
+        if (maxChars <= 1) {
+            return name.substr(0, 1);
+        }
+        return name.substr(0, maxChars - 1) + '…';
+    }
+
+    function zoom(d) {
+        focus = d;
+
+        const transition = d3.transition()
+            // Guard: d3.event is null when zoom is triggered programmatically (not from a d3 handler).
+            .duration(d3.event && d3.event.altKey ? 7500 : 750)
+            .tween('zoom', function () {
+                const i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2 + margin]);
+                return function (t) {
+                    zoomTo(i(t));
+                };
+            });
+
+        transition.selectAll('text')
+            .filter(function (d) {
+                return d.parent === focus || this.style.display === 'inline';
+            })
+            .style('fill-opacity', function (d) {
+                return d.parent === focus ? 1 : 0;
+            })
+            .on('start', function (d) {
+                if (d.parent === focus) this.style.display = 'inline';
+            })
+            .on('end', function (d) {
+                if (d.parent !== focus) this.style.display = 'none';
+            });
+    }
+
+    function zoomTo(v) {
+        const k = diameter / v[2];
+        view = v;
+        node.attr('transform', function (d) {
+            return 'translate(' + (d.x - v[0]) * k + ',' + (d.y - v[1]) * k + ')';
+        });
+        circle.attr('r', function (d) {
+            return d.r * k;
+        });
+        // Clip each label to fit its bubble at the current zoom; the full detail stays on hover
+        // via the <title> tooltip.
+        text.text(function (d) {
+            return labelForRadius(d.data.name, d.r * k);
+        });
+    }
+
+    // Re-applies leaf fills/strokes and tooltips for the current selection without relayouting:
+    // when commits are selected, their files light up and everything else fades.
+    function applyHighlight(highlightIds, active) {
+        if (!circle) {
+            return;
+        }
+        circle
+            .style('fill', function (d) {
+                if (d.children) {
+                    return depthColor(d.depth);
+                }
+                if (active && highlightIds.has(d.data.fid)) {
+                    return files[d.data.fid].scope === 'deleted' ? HIGHLIGHT_DELETED_COLOR : HIGHLIGHT_COLOR;
+                }
+                return '#ffffff';
+            })
+            .style('fill-opacity', function (d) {
+                // Slightly fade parent containers so nested circles stay readable; file leaves
+                // are always fully opaque — the red/purple fill alone marks the selection.
+                return d.children ? 0.85 : 1;
+            })
+            .style('stroke', function (d) {
+                if (d.children) {
+                    return null;
+                }
+                return active && highlightIds.has(d.data.fid) ? '#000000' : '#888888';
+            })
+            .style('stroke-width', function (d) {
+                if (d.children) {
+                    return null;
+                }
+                return active && highlightIds.has(d.data.fid) ? 1.5 : 0.5;
+            });
+
+        circleTitles.text(function (d) {
+            if (d.children) {
+                return d.data.name;
+            }
+            const file = files[d.data.fid];
+            let tooltip = file.path;
+            if (file.scope === 'deleted') {
+                tooltip += ' · no longer in the codebase';
+            } else {
+                tooltip += ' · ' + (file.linesOfCode || 0).toLocaleString('en-US') + ' LOC · ' + file.scope;
+            }
+            if (active && highlightIds.has(d.data.fid)) {
+                tooltip += ' · changed in selected commits';
+            }
+            return tooltip;
+        });
+    }
+
+    let currentTreeKey = null;
+
+    function updateViz() {
+        // Union of the files changed by the selected commits.
+        const highlightIds = new Set();
+        selected.forEach(idx => commitsByIdx[idx].files.forEach(id => highlightIds.add(id)));
+
+        // Deleted (history-only) files enter the tree only while referenced by the selection.
+        const deletedIds = [];
+        highlightIds.forEach(id => {
+            if (files[id].scope === 'deleted') {
+                deletedIds.push(id);
+            }
+        });
+        deletedIds.sort((a, b) => a - b);
+
+        const treeKey = SCOPES.map(s => scopeChecked(s) ? '1' : '0').join('') + '|' + deletedIds.join(',');
+        if (treeKey !== currentTreeKey) {
+            currentTreeKey = treeKey;
+            renderViz(buildTree(new Set(deletedIds)));
+        }
+
+        const active = selected.size > 0;
+        applyHighlight(highlightIds, active);
+
+        let summary = lastTreeFileCount.toLocaleString('en-US') + ' files';
+        if (active) {
+            summary += ' · ' + highlightIds.size.toLocaleString('en-US') + ' changed in '
+                + selected.size.toLocaleString('en-US') + (selected.size === 1 ? ' selected commit' : ' selected commits');
+            if (deletedIds.length) {
+                summary += ' (' + deletedIds.length.toLocaleString('en-US') + ' no longer in the codebase)';
+            }
+        }
+        document.getElementById('viz-summary').innerHTML = summary;
+    }
+
+    // ------------------------------------------------------------------------------- first paint
+
+    (function init() {
+        // The message column needs more horizontal room; widen the list pane when present,
+        // but never past the 50% cap (see the #left CSS).
+        if (hasMessages) {
+            document.getElementById('left').style.width = '50%';
+        }
+        if (totalCommitsCount > commits.length) {
+            const note = document.getElementById('truncation-note');
+            note.innerHTML = 'Showing the newest ' + commits.length.toLocaleString('en-US') + ' of '
+                + totalCommitsCount.toLocaleString('en-US') + ' commits in the git history.';
+            note.style.display = 'block';
+        }
+    })();
+
+    // Defer the (synchronous, potentially heavy) first render one frame so the loading
+    // spinner actually paints before the main thread is blocked, then swap it for the report.
+    requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+            updateList();
+            updateViz();
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('report').style.display = 'block';
+        });
+    });
+</script>
+</body>
+</html>
