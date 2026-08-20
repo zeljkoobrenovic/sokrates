@@ -681,13 +681,7 @@ public class DataExporter {
             File zipFolder = new File(dataFolder, "zips");
             zipFolder.mkdirs();
 
-            ZipUtils.stringToZipFile(new File(zipFolder, "all_files.zip"), new String[][]{
-                    {"aspect_main.txt", FileUtils.readFileToString(new File(textDataFolder, "aspect_main.txt"), UTF_8)},
-                    {"aspect_test.txt", FileUtils.readFileToString(new File(textDataFolder, "aspect_test.txt"), UTF_8)},
-                    {"aspect_generated.txt", FileUtils.readFileToString(new File(textDataFolder, "aspect_generated.txt"), UTF_8)},
-                    {"aspect_build_and_deployment.txt", FileUtils.readFileToString(new File(textDataFolder, "aspect_build_and_deployment.txt"), UTF_8)},
-                    {"aspect_other.txt", FileUtils.readFileToString(new File(textDataFolder, "aspect_other.txt"), UTF_8)}
-            });
+            ZipUtils.stringToZipFile(new File(zipFolder, "all_files.zip"), aspectFileLists(codeConfiguration, textDataFolder));
             File gitHistoryFile = new File(reportsFolder, "../../git-history.txt");
             if (gitHistoryFile.exists()) {
                 // Stream the file into the zip; on huge repositories git-history.txt can exceed the
@@ -697,6 +691,30 @@ public class DataExporter {
         } catch (Throwable t) {
             t.printStackTrace();
         }
+    }
+
+    /**
+     * The five scope file lists, named the way they were written.
+     *
+     * <p>These were five literals - "aspect_main.txt" and so on - which is what the default aspect
+     * names produce. The writer derives each name from the aspect's configured name, so renaming a
+     * scope aspect in config.json left this opening a file nothing had written; the exception went
+     * into the enclosing catch in the caller, taking the rest of that block with it.
+     *
+     * <p>Derived through the writer's own function rather than by repeating its rule, so the two
+     * cannot drift apart again.
+     */
+    static String[][] aspectFileLists(CodeConfiguration configuration, File textDataFolder) throws IOException {
+        List<NamedSourceCodeAspect> aspects = Arrays.asList(
+                configuration.getMain(), configuration.getTest(), configuration.getGenerated(),
+                configuration.getBuildAndDeployment(), configuration.getOther());
+
+        String[][] entries = new String[aspects.size()][2];
+        for (int i = 0; i < aspects.size(); i++) {
+            String fileName = DataExportUtils.getAspectFileListFileName(aspects.get(i), "");
+            entries[i] = new String[]{fileName, FileUtils.readFileToString(new File(textDataFolder, fileName), UTF_8)};
+        }
+        return entries;
     }
 
     public File getTextDataFolder() {
