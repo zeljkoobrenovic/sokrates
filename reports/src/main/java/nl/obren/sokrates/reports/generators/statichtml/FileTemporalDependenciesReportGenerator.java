@@ -9,6 +9,8 @@ import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.TemporalDependenciesWindow;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.FilePairChangedTogether;
 import nl.obren.sokrates.sourcecode.filehistory.TemporalDependenciesHelper;
@@ -37,47 +39,58 @@ public class FileTemporalDependenciesReportGenerator {
                 "at the same time (i.e. they are a part of the same commit).", "margin-top: 12px; color: grey; font-size: 94%");
 
         int maxTemporalDependenciesDepthDays = codeAnalysisResults.getCodeConfiguration().getAnalysis().getMaxTemporalDependenciesDepthDays();
+        FilesHistoryAnalysisResults historyResults = codeAnalysisResults.getFilesHistoryAnalysisResults();
+
+        // Only the windows the analyzer actually computed get a tab; showing a tab for a window that
+        // was never analyzed would present "no dependencies" as a finding about the code.
+        List<TemporalDependenciesWindow> windows =
+                TemporalDependenciesWindow.analyzedWindows(historyResults, maxTemporalDependenciesDepthDays);
+
+        if (windows.isEmpty()) {
+            report.addParagraph(historyResults.hasHistory()
+                    ? "No temporal dependencies were analyzed: the configured analysis depth ("
+                    + maxTemporalDependenciesDepthDays + " days) is shorter than the shortest window ("
+                    + TemporalDependenciesWindow.PAST_30_DAYS.getDepthDays() + " days)."
+                    : "No temporal dependencies were analyzed: no commit history is available.");
+            return;
+        }
 
         report.startTabGroup();
-        report.addTab("30_days", "Past 30 Days", true);
-        if (maxTemporalDependenciesDepthDays >= 90) {
-            report.addTab("90_days", "Past 3 Months", false);
-        }
-        if (maxTemporalDependenciesDepthDays >= 180) {
-            report.addTab("180_days", "Past 6 Months", false);
-        }
-        if (maxTemporalDependenciesDepthDays > 180) {
-            report.addTab("all_time", "Past " + maxTemporalDependenciesDepthDays + " Days", false);
+        for (int i = 0; i < windows.size(); i++) {
+            TemporalDependenciesWindow window = windows.get(i);
+            report.addTab(window.getId(), tabLabel(window, maxTemporalDependenciesDepthDays), i == 0);
         }
         report.endTabGroup();
 
-        List<FilePairChangedTogether> filePairsChangedTogether = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether();
-        List<FilePairChangedTogether> filePairsChangedTogether30Days = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days();
-        List<FilePairChangedTogether> filePairsChangedTogether90Days = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether90Days();
-        List<FilePairChangedTogether> filePairsChangedTogether180Days = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether180Days();
-
-        addTabContentSection(report, "30_days", filePairsChangedTogether30Days, true);
-        if (maxTemporalDependenciesDepthDays >= 90) {
-            addTabContentSection(report, "90_days", filePairsChangedTogether90Days, false);
-        }
-        if (maxTemporalDependenciesDepthDays >= 180) {
-            addTabContentSection(report, "180_days", filePairsChangedTogether180Days, false);
-        }
-        if (maxTemporalDependenciesDepthDays > 180) {
-            addTabContentSection(report, "all_time", filePairsChangedTogether, false);
+        for (int i = 0; i < windows.size(); i++) {
+            TemporalDependenciesWindow window = windows.get(i);
+            addTabContentSection(report, window, window.getFilePairs(historyResults), i == 0);
         }
     }
 
-    private void addTabContentSection(RichTextReport report, String id, List<FilePairChangedTogether> filePairs, boolean active) {
-        report.startTabContentSection(id, active);
-        addDependenciesSection(report, filePairs, id);
-        addFileChangedTogetherList(report, filePairs);
-        addFileChangedTogetherInDifferentFoldersList(report, filePairs);
+    private String tabLabel(TemporalDependenciesWindow window, int maxTemporalDependenciesDepthDays) {
+        switch (window) {
+            case PAST_30_DAYS:
+                return "Past 30 Days";
+            case PAST_90_DAYS:
+                return "Past 3 Months";
+            case PAST_180_DAYS:
+                return "Past 6 Months";
+            default:
+                return "Past " + maxTemporalDependenciesDepthDays + " Days";
+        }
+    }
+
+    private void addTabContentSection(RichTextReport report, TemporalDependenciesWindow window, List<FilePairChangedTogether> filePairs, boolean active) {
+        report.startTabContentSection(window.getId(), active);
+        addDependenciesSection(report, filePairs, window.getId());
+        addFileChangedTogetherList(report, window, filePairs);
+        addFileChangedTogetherInDifferentFoldersList(report, window, filePairs);
         report.endTabContentSection();
 
     }
 
-    private void addFileChangedTogetherList(RichTextReport report, List<FilePairChangedTogether> filePairs) {
+    private void addFileChangedTogetherList(RichTextReport report, TemporalDependenciesWindow window, List<FilePairChangedTogether> filePairs) {
         if (filePairs.size() == 0) {
             report.addParagraph("No file pairs changed together.");
             return;
@@ -88,12 +101,13 @@ public class FileTemporalDependenciesReportGenerator {
         }
         report.addLineBreak();
         report.startSubSection("Files Most Frequently Changed Together (Top " + filePairs.size() + ")", "");
-        report.addParagraph("<a href='#' onclick=\"return downloadDataFile('text/temporal_dependencies.txt')\" target='_blank'>data...</a>");
+        // The data file must be this tab's window, not the all-time one.
+        report.addParagraph(dataFileLink("text/" + window.getDataFileName()));
         addTable(report, filePairs);
         report.endSection();
     }
 
-    private void addFileChangedTogetherInDifferentFoldersList(RichTextReport report, List<FilePairChangedTogether> filePairsChangedTogether) {
+    private void addFileChangedTogetherInDifferentFoldersList(RichTextReport report, TemporalDependenciesWindow window, List<FilePairChangedTogether> filePairsChangedTogether) {
         List<FilePairChangedTogether> filePairs = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogetherInDifferentFolders(filePairsChangedTogether);
         if (filePairs.size() == 0) {
             return;
@@ -105,9 +119,13 @@ public class FileTemporalDependenciesReportGenerator {
         // Subsection (not top-level section) to match addFileChangedTogetherList, since this renders
         // alongside it inside a tab content section.
         report.startSubSection("Files from Different Folders Most Frequently Changed Together (Top " + filePairs.size() + ")", "");
-        report.addParagraph("<a href='#' onclick=\"return downloadDataFile('text/temporal_dependencies_different_folders.txt')\" target='_blank'>data...</a>");
+        report.addParagraph(dataFileLink("text/" + window.getDifferentFoldersDataFileName()));
         addTable(report, filePairs);
         report.endSection();
+    }
+
+    private String dataFileLink(String entry) {
+        return "<a href='#' onclick=\"return downloadDataFile('" + entry + "')\" target='_blank'>data...</a>";
     }
 
     private void addTable(RichTextReport report, List<FilePairChangedTogether> filePairs) {
