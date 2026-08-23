@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
@@ -117,7 +118,7 @@ public class LandscapeAnalyzer {
                     String repositoryName = repositoryAnalysisResults.getMetadata().getName();
                     if (!landscapeConfiguration.isIncludeOnlyOneRepositoryWithSameName() || !repositoryNames.contains(repositoryName)) {
                         repositoryNames.add(repositoryName);
-                        List<FileExport> files = this.getRepositoryFiles(repositoryName, link);
+                        List<FileExport> files = this.getRepositoryFiles(repositoryName, link, repositoryAnalysisResults.getCodeConfiguration());
                         landscapeAnalysisResults.getRepositoryAnalysisResults().add(new RepositoryAnalysisResults(link, repositoryAnalysisResults, files));
                         repositoryAnalysisResults.getContributorsAnalysisResults().getContributors().forEach(contributor -> {
                             contributor.getCommitDates().forEach(commitDate -> {
@@ -343,20 +344,62 @@ public class LandscapeAnalyzer {
         return null;
     }
 
-    private List<FileExport> getRepositoryFiles(String repositoryName, SokratesRepositoryLink sokratesRepositoryLink) {
+    /**
+     * The files of a repository, read from the five scope file lists it was exported with.
+     *
+     * <p>The names of those lists were five literals here - "aspect_main.txt" and so on - which is
+     * what the <em>default</em> aspect names produce. The writer derives each name from the aspect's
+     * configured name, so a repository that renamed a scope aspect in its config.json had this
+     * reading an entry nothing had written; a missing entry reads as null, so that scope contributed
+     * no files at all - no exception, nothing in the log, just a smaller repository in the landscape.
+     * The names now come from the repository's own configuration.
+     *
+     * <p>The scope a file belongs to is passed separately rather than recovered from the file name,
+     * so it stays "main" even when the aspect is called something else. These are the same scope
+     * keys the per-repository files explorer exports.
+     */
+    private List<FileExport> getRepositoryFiles(String repositoryName, SokratesRepositoryLink sokratesRepositoryLink,
+                                                CodeConfiguration configuration) {
+        // The default names are the fallback, per scope. The whole configuration is null for a
+        // repository exported without a readable config.json, and a single aspect is null when a
+        // config.json sets that scope to null - of the five setters only setMain rejects one. The
+        // default name is then the best remaining guess, and is what such a repository was read
+        // under before the names followed the configuration.
+        CodeConfiguration defaults = new CodeConfiguration();
+        CodeConfiguration scopes = configuration != null ? configuration : defaults;
+
         List<FileExport> files = new ArrayList<>();
 
-        files.addAll(getRepositoryFilesByScope(repositoryName, sokratesRepositoryLink, "aspect_main.txt"));
-        files.addAll(getRepositoryFilesByScope(repositoryName, sokratesRepositoryLink, "aspect_test.txt"));
-        files.addAll(getRepositoryFilesByScope(repositoryName, sokratesRepositoryLink, "aspect_generated.txt"));
-        files.addAll(getRepositoryFilesByScope(repositoryName, sokratesRepositoryLink, "aspect_build_and_deployment.txt"));
-        files.addAll(getRepositoryFilesByScope(repositoryName, sokratesRepositoryLink, "aspect_other.txt"));
-        files.addAll(getRepositoryFilesByScope(repositoryName, sokratesRepositoryLink, "excluded_files_ignored_extensions.txt"));
-        files.addAll(getRepositoryFilesByScope(repositoryName, sokratesRepositoryLink, "excluded_files_ignored_rules.txt"));
+        addScopeFiles(files, repositoryName, sokratesRepositoryLink, orDefault(scopes.getMain(), defaults.getMain()), "main");
+        addScopeFiles(files, repositoryName, sokratesRepositoryLink, orDefault(scopes.getTest(), defaults.getTest()), "test");
+        addScopeFiles(files, repositoryName, sokratesRepositoryLink, orDefault(scopes.getGenerated(), defaults.getGenerated()), "generated");
+        addScopeFiles(files, repositoryName, sokratesRepositoryLink, orDefault(scopes.getBuildAndDeployment(), defaults.getBuildAndDeployment()), "build");
+        addScopeFiles(files, repositoryName, sokratesRepositoryLink, orDefault(scopes.getOther(), defaults.getOther()), "other");
+
+        files.addAll(getRepositoryFilesByScope(repositoryName, sokratesRepositoryLink, "excluded_files_ignored_extensions.txt", "other"));
+        files.addAll(getRepositoryFilesByScope(repositoryName, sokratesRepositoryLink, "excluded_files_ignored_rules.txt", "other"));
 
         enrichFilesWithCommitHistory(files, sokratesRepositoryLink);
 
         return files;
+    }
+
+    private static NamedSourceCodeAspect orDefault(NamedSourceCodeAspect aspect, NamedSourceCodeAspect defaultAspect) {
+        return aspect != null ? aspect : defaultAspect;
+    }
+
+    private void addScopeFiles(List<FileExport> files, String repositoryName, SokratesRepositoryLink sokratesRepositoryLink,
+                               NamedSourceCodeAspect aspect, String scope) {
+        files.addAll(getRepositoryFilesByScope(repositoryName, sokratesRepositoryLink, scopeFileListName(aspect), scope));
+    }
+
+    /**
+     * The file list a scope aspect was exported to: "aspect_" + the aspect's file-system-friendly
+     * name + ".txt". This is the derivation the writer uses - DataExportUtils.getAspectFileListFileName,
+     * in the reports module, which this module does not depend on.
+     */
+    static String scopeFileListName(NamedSourceCodeAspect aspect) {
+        return "aspect_" + aspect.getFileSystemFriendlyName("") + ".txt";
     }
 
     /**
@@ -448,7 +491,7 @@ public class LandscapeAnalyzer {
         }
     }
 
-    private List<FileExport> getRepositoryFilesByScope(String repositoryName, SokratesRepositoryLink sokratesRepositoryLink, String scopeFile) {
+    private List<FileExport> getRepositoryFilesByScope(String repositoryName, SokratesRepositoryLink sokratesRepositoryLink, String scopeFile, String scope) {
         try {
             File dataFolder = getRepositoryAnalysisFile(sokratesRepositoryLink).getParentFile();
             String content = readDataEntry(dataFolder, "text/" + scopeFile);
@@ -459,7 +502,7 @@ public class LandscapeAnalyzer {
                         .forEach(file -> {
                             String data[] = file.split("\t");
                             if (data.length > 1 && NumberUtils.isDigits(data[1])) {
-                                fileExports.add(new FileExport(repositoryName, data[0], scopeFile, Integer.parseInt(data[1])));
+                                fileExports.add(new FileExport(repositoryName, data[0], scope, Integer.parseInt(data[1])));
                             }
                         });
 
