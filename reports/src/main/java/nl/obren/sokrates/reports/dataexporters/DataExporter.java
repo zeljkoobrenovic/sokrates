@@ -28,6 +28,8 @@ import nl.obren.sokrates.sourcecode.SourceFileWithSearchData;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.TemporalDependenciesWindow;
 import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
@@ -317,20 +319,37 @@ public class DataExporter {
         });
     }
 
+    // Exports every co-change window the analyzer computed, and only those: a window that was not
+    // analyzed (because the configured depth does not reach it, or because there is no commit
+    // history at all) gets no file, so its absence cannot be misread as "analyzed, nothing found" -
+    // which a header-only file is indistinguishable from.
     private void saveTemporalDependencies(CodeAnalysisResults analysisResults) {
-        List<FilePairChangedTogether> filePairsChangedTogether = analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether();
-        exportFilesChangedTogether(filePairsChangedTogether,
-                "temporal_dependencies.txt");
-        exportFilesChangedTogether(analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogetherInDifferentFolders(filePairsChangedTogether),
-                "temporal_dependencies_different_folders.txt");
-        List<FilePairChangedTogether> filePairsChangedTogether30Days = analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether30Days();
-        exportFilesChangedTogether(filePairsChangedTogether30Days,
-                "temporal_dependencies_30_days.txt");
-        exportFilesChangedTogether(analysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogetherInDifferentFolders(filePairsChangedTogether30Days),
-                "temporal_dependencies_different_folders_30_days.txt");
+        saveTemporalDependencies(analysisResults, textDataFolder);
     }
 
-    private void exportFilesChangedTogether(List<FilePairChangedTogether> filePairsChangedTogether, String fileName) {
+    // Package-private so the set of exported windows can be asserted without a full analysis run.
+    void saveTemporalDependencies(CodeAnalysisResults analysisResults, File targetFolder) {
+        FilesHistoryAnalysisResults historyResults = analysisResults.getFilesHistoryAnalysisResults();
+        int maxDays = analysisResults.getCodeConfiguration().getAnalysis().getMaxTemporalDependenciesDepthDays();
+        List<TemporalDependenciesWindow> analyzed = TemporalDependenciesWindow.analyzedWindows(historyResults, maxDays);
+
+        Arrays.stream(TemporalDependenciesWindow.values())
+                .filter(window -> !analyzed.contains(window))
+                .forEach(window -> LOG.info("Not exporting " + window.getDataFileName()
+                        + ": co-change window not analyzed ("
+                        + (historyResults.hasHistory()
+                        ? "maxTemporalDependenciesDepthDays=" + maxDays
+                        : "no commit history") + ")"));
+
+        analyzed.forEach(window -> {
+            List<FilePairChangedTogether> filePairs = window.getFilePairs(historyResults);
+            exportFilesChangedTogether(filePairs, window.getDataFileName(), targetFolder);
+            exportFilesChangedTogether(historyResults.getFilePairsChangedTogetherInDifferentFolders(filePairs),
+                    window.getDifferentFoldersDataFileName(), targetFolder);
+        });
+    }
+
+    private void exportFilesChangedTogether(List<FilePairChangedTogether> filePairsChangedTogether, String fileName, File targetFolder) {
         StringBuilder content = new StringBuilder();
         content.append("file 1\tfile 2\t# same commits\t# commits file 1\t# commits file 2\n");
         if (filePairsChangedTogether.size() > 0) {
@@ -348,7 +367,7 @@ public class DataExporter {
             });
         }
         try {
-            FileUtils.write(new File(textDataFolder, fileName), content.toString(), UTF_8);
+            FileUtils.write(new File(targetFolder, fileName), content.toString(), UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }

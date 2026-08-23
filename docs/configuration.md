@@ -145,7 +145,7 @@ Switches and risk thresholds for the analysis itself. Common keys:
 | `maxFileSizeBytes` / `maxLines` / `maxLineLength` | `1000000` / `10000` / `1000` | Skip files exceeding these. |
 | `locDuplicationThreshold` | `10000000` | Skip duplication when main LOC exceeds this. |
 | `minDuplicationBlockLoc` | `6` | Minimum duplicated block size (lines). |
-| `maxTemporalDependenciesDepthDays` | `365` | Days of git history used to compute temporal (changed-together) file dependencies. |
+| `maxTemporalDependenciesDepthDays` | `365` | Days of git history used to compute temporal (changed-together) file dependencies. Four windows are computed - 30, 90 and 180 days, plus one covering the configured depth - but only those the depth reaches: 90 needs `>= 90`, 180 needs `>= 180`, and the configured-depth window needs `> 180` (below that it would only repeat the 180-day one). Each computed window gets a tab in the temporal dependencies report and a pair of `data/text/temporal_dependencies*.txt` exports; a window that was not computed - including when there is no git history at all - gets neither, so a missing export means "not analysed" while a header-only one means "analysed, nothing found". |
 | `maxTopListSize` | `50` | Size of the "top N" sample lists (longest/most-changed files, longest/most-complex units, etc.). |
 | `fileSizeThresholds` | `{low:100, medium:200, high:500, veryHigh:1000}` | Risk bands for file size (LOC). |
 | `unitSizeThresholds` | `{low:10, medium:20, high:50, veryHigh:100}` | Risk bands for unit size. |

@@ -260,6 +260,15 @@ public class FilesHistoryAnalysisResults {
         }).collect(Collectors.toCollection(ArrayList::new));
     }
 
+    /**
+     * True if any commit history was imported. When false, none of the co-change windows were
+     * analyzed, so their (empty) results say nothing about the code.
+     */
+    @JsonIgnore
+    public boolean hasHistory() {
+        return history.size() > 0;
+    }
+
     @JsonIgnore
     public List<FileModificationHistory> getHistory(int maxHistoryLength) {
         return history.stream().limit(maxHistoryLength).collect(Collectors.toList());

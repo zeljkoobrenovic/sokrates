@@ -9,6 +9,7 @@ import nl.obren.sokrates.sourcecode.analysis.Analyzer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FileAgeDistributionPerLogicalDecomposition;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.TemporalDependenciesWindow;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.filehistory.*;
@@ -55,19 +56,24 @@ public class FileHistoryAnalyzer extends Analyzer {
                 LOG.info("Analyzing file age...");
                 analyzeFilesAge();
                 int maxDays = codeConfiguration.getAnalysis().getMaxTemporalDependenciesDepthDays();
-                if (maxDays > 180) {
+                // Named up front: a window that is not listed here produces an empty result for that
+                // reason alone, and only the absence of its "Analyzing..." line would otherwise say so.
+                LOG.info("Co-change windows at maxTemporalDependenciesDepthDays=" + maxDays + ": "
+                        + TemporalDependenciesWindow.analyzedWindows(analysisResults, maxDays)
+                        + " (the others are not analyzed)");
+                if (TemporalDependenciesWindow.ALL_TIME.isAnalyzed(maxDays)) {
                     LOG.info("Analyzing files changed together (all time=" + maxDays + " days)...");
                     analyzeFilesChangedTogether(history);
                 }
-                if (maxDays >= 30) {
+                if (TemporalDependenciesWindow.PAST_30_DAYS.isAnalyzed(maxDays)) {
                     LOG.info("Analyzing files changed together in past 30 days...");
                     analyzeFilesChangedTogether30Days(history);
                 }
-                if (maxDays >= 90) {
+                if (TemporalDependenciesWindow.PAST_90_DAYS.isAnalyzed(maxDays)) {
                     LOG.info("Analyzing files changed together in past 90 days...");
                     analyzeFilesChangedTogether90Days(history);
                 }
-                if (maxDays >= 180) {
+                if (TemporalDependenciesWindow.PAST_180_DAYS.isAnalyzed(maxDays)) {
                     LOG.info("Analyzing files changed together in past 180 days...");
                     analyzeFilesChangedTogether180Days(history);
                 }
