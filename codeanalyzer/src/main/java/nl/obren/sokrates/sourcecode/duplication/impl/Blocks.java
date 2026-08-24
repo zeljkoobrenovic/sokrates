@@ -9,14 +9,13 @@ import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
 import nl.obren.sokrates.sourcecode.duplication.DuplicatedFileBlock;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -28,10 +27,12 @@ public class Blocks {
     private int endProgressValue = 0;
     private boolean optimize = true;
 
-    private Map<String, Pair<SourceFile, SourceFile>> filePairMap = new HashMap<>();
+    // The pairs of files sharing at least one duplicated block - what findDuplicatesAmongFiles below
+    // compares. A pair is unordered, and a block shared among k files contributes k*(k-1)/2 of them, so
+    // this is the structure that grows fastest on a clone-dense repository.
+    private Set<FilePair> filePairs = new HashSet<>();
 
     private List<Block> blocksDuplicatedAmongFiles = new ArrayList<>();
-    private List<Block> duplicatedFilePairs = new ArrayList<>();
     private List<Block> duplicateBlocks = new ArrayList<>();
     private ProgressFeedback progressFeedback;
     // The two find loops below run in parallel; these maps are shared across worker threads.
@@ -82,37 +83,26 @@ public class Blocks {
         blocksDuplicatedAmongFiles.forEach(db -> {
             reportProgressNextStep();
             if (db.getFiles().size() == 2) {
-                duplicatedFilePairs.add(db);
                 SourceFile sourceFile1 = db.getFiles().get(0);
                 SourceFile sourceFile2 = db.getFiles().get(1);
-                String pairKey1 = getPairKey(sourceFile1.getFile().getPath(), sourceFile2.getFile().getPath());
-                String pairKey2 = getPairKey(sourceFile2.getFile().getPath(), sourceFile1.getFile().getPath());
-
-                if (!(filePairMap.containsKey(pairKey1) || filePairMap.containsKey(pairKey2))) {
-                    filePairMap.put(pairKey1, new ImmutablePair<>(sourceFile1, sourceFile2));
-                }
+                filePairs.add(new FilePair(sourceFile1, sourceFile2));
             } else if (db.getFiles().size() > 2) {
-                db.getFiles().forEach(f1 -> {
-                    db.getFiles().stream().filter(f2 -> f1 != f2).forEach(f2 -> {
-                        Block newBlock = new Block();
-                        duplicatedFilePairs.add(newBlock);
-                        newBlock.setLineIndexes(db.getLineIndexes());
-                        newBlock.getFiles().add(f1);
-                        newBlock.getFiles().add(f2);
+                List<SourceFile> filesSharingBlock = db.getFiles();
+                for (int i = 0; i < filesSharingBlock.size(); i++) {
+                    for (int j = i + 1; j < filesSharingBlock.size(); j++) {
+                        SourceFile f1 = filesSharingBlock.get(i);
+                        SourceFile f2 = filesSharingBlock.get(j);
 
-                        String pairKey1 = getPairKey(f1.getFile().getPath(), f2.getFile().getPath());
-                        String pairKey2 = getPairKey(f2.getFile().getPath(), f1.getFile().getPath());
-
-                        if (!(filePairMap.containsKey(pairKey1) || filePairMap.containsKey(pairKey2))) {
-                            filePairMap.put(pairKey1, new ImmutablePair(f1, f2));
-                        }
-                    });
-                });
+                        filePairs.add(new FilePair(f1, f2));
+                    }
+                }
             }
         });
         resetProgressValues(0);
     }
 
+    // Still used by the fileRangePairs map below, which is keyed per matched block pair rather than
+    // per file pair.
     private String getPairKey(String path1, String path2) {
         return new StringBuilder()
                 .append(path1)
@@ -121,17 +111,58 @@ public class Blocks {
                 .toString();
     }
 
+    /**
+     * An unordered pair of files, identified by the two paths. SourceFile overrides equals but not
+     * hashCode, so identity is derived from the paths directly; the strings are the ones the files
+     * already hold, so a pair costs its own object and nothing more.
+     */
+    private static final class FilePair {
+        private final SourceFile file1;
+        private final SourceFile file2;
+        private final String path1;
+        private final String path2;
+        private final int hash;
+
+        private FilePair(SourceFile fileA, SourceFile fileB) {
+            String pathA = fileA.getFile().getPath();
+            String pathB = fileB.getFile().getPath();
+            boolean inOrder = pathA.compareTo(pathB) <= 0;
+            this.file1 = inOrder ? fileA : fileB;
+            this.file2 = inOrder ? fileB : fileA;
+            this.path1 = inOrder ? pathA : pathB;
+            this.path2 = inOrder ? pathB : pathA;
+            this.hash = 31 * path1.hashCode() + path2.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
+            if (!(other instanceof FilePair)) {
+                return false;
+            }
+            FilePair otherPair = (FilePair) other;
+            return path1.equals(otherPair.path1) && path2.equals(otherPair.path2);
+        }
+
+        @Override
+        public int hashCode() {
+            return hash;
+        }
+    }
+
     private void findDuplicatesAmongFiles() {
-        resetProgressValues(filePairMap.size());
+        resetProgressValues(filePairs.size());
         reportProgress("Finding duplicates among files");
 
-        filePairMap.values().parallelStream().forEach(pair -> {
+        filePairs.parallelStream().forEach(pair -> {
             if (progressFeedback != null && progressFeedback.canceled()) {
                 return;
             }
             reportProgressNextStep();
-            SourceFile f1 = pair.getLeft();
-            SourceFile f2 = pair.getRight();
+            SourceFile f1 = pair.file1;
+            SourceFile f2 = pair.file2;
 
             // Both files must be thread-local copies: addDuplicationInstances calls extractBlocks() on
             // file1, which mutates that FileInfoForDuplication's internal blocks list. The shared originals
