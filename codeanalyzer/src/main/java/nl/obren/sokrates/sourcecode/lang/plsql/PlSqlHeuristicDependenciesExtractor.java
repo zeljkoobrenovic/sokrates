@@ -70,7 +70,7 @@ public class PlSqlHeuristicDependenciesExtractor extends HeuristicDependenciesEx
         String fileNameNoExtension = FilenameUtils.removeExtension(sourceFile.getFile().getName());
         CleanedContent cleanedContent = getCleanContent(sourceFile);
         List<String> lines = SourceCodeCleanerUtils.splitInLines(cleanedContent.getCleanedContent());
-        Pattern pattern = Pattern.compile("\\w+[.][a-zA-Z]+");
+        Pattern pattern = Pattern.compile("[\\p{L}\\p{N}_][\\p{L}\\p{M}\\p{N}_]*[.]\\p{L}[\\p{L}\\p{M}]*");
         Matcher matcher = null;
         List<String> packages = new ArrayList<>();
         for (String line : lines) {
