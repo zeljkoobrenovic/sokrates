@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 
 public class PlSqlHeuristicDependenciesExtractor extends HeuristicDependenciesExtractor {
     public static final String PACKAGE_PREFIX = "PACKAGE ";
+    public static final String BODY_KEYWORD = "BODY";
 
     @Override
     public List<DependencyAnchor> extractDependencyAnchors(SourceFile sourceFile) {
@@ -42,11 +43,13 @@ public class PlSqlHeuristicDependenciesExtractor extends HeuristicDependenciesEx
             startIndexOfPackageName = content.indexOf(PACKAGE_PREFIX.toLowerCase());
         }
         if (startIndexOfPackageName >= 0) {
-            int endIndexOfPackageName = content.indexOf(" ",
-                    startIndexOfPackageName + PACKAGE_PREFIX.length());
+            int startOfName = skipWhitespace(content, startIndexOfPackageName + PACKAGE_PREFIX.length());
+            if (isBodyKeywordAt(content, startOfName)) {
+                startOfName = skipWhitespace(content, startOfName + BODY_KEYWORD.length());
+            }
+            int endIndexOfPackageName = indexOfWhitespace(content, startOfName);
             if (endIndexOfPackageName >= 0) {
-                String packageName = content.substring(startIndexOfPackageName + PACKAGE_PREFIX.length(),
-                        endIndexOfPackageName).trim();
+                String packageName = content.substring(startOfName, endIndexOfPackageName).trim();
                 String codeFragment = content.substring(startIndexOfPackageName,
                         endIndexOfPackageName + 1).trim();
                 anchors.add((createAnchor(packageName, codeFragment, sourceFile)));
@@ -54,6 +57,30 @@ public class PlSqlHeuristicDependenciesExtractor extends HeuristicDependenciesEx
         }
 
         return anchors;
+    }
+
+    private boolean isBodyKeywordAt(String content, int index) {
+        int afterKeyword = index + BODY_KEYWORD.length();
+        return content.regionMatches(true, index, BODY_KEYWORD, 0, BODY_KEYWORD.length())
+                && afterKeyword < content.length()
+                && Character.isWhitespace(content.charAt(afterKeyword));
+    }
+
+    private int skipWhitespace(String content, int fromIndex) {
+        int index = fromIndex;
+        while (index < content.length() && Character.isWhitespace(content.charAt(index))) {
+            index++;
+        }
+        return index;
+    }
+
+    private int indexOfWhitespace(String content, int fromIndex) {
+        for (int i = fromIndex; i < content.length(); i++) {
+            if (Character.isWhitespace(content.charAt(i))) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private DependencyAnchor createAnchor(String packageName, String code, SourceFile sourceFile) {
