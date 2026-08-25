@@ -8,6 +8,8 @@ import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * grouped by file pair and runs of adjacent pairs are collapsed into a single instance spanning the run.
  */
 class DuplicationPerFilePairConsolidationTest {
+
 
     private static final int BLOCK = 6;
 
@@ -205,10 +208,9 @@ class DuplicationPerFilePairConsolidationTest {
         assertEquals(BLOCK, result.get(0).getBlockSize());
     }
 
-    @Test
-    void producesTheSameSetAsTheMapBasedImplementation() {
-        // Deterministic pseudo-random corpus: overlapping runs, shared blocks, intra-file pairs and repeats,
-        // so agreement here is agreement over the shapes the engine actually emits.
+    // Deterministic pseudo-random corpus: overlapping runs, shared blocks, intra-file pairs and repeats,
+    // so agreement over it is agreement over the shapes the engine actually emits.
+    List<DuplicationInstance> pseudoRandomCorpus() {
         List<DuplicationInstance> duplicates = new ArrayList<>();
         int state = 12345;
         for (int i = 0; i < 400; i++) {
@@ -225,12 +227,26 @@ class DuplicationPerFilePairConsolidationTest {
             }
             duplicates.add(instance(BLOCK, blocks.toArray(new DuplicatedFileBlock[0])));
         }
+        return duplicates;
+    }
 
-        DuplicationAnalyzer analyzer = analyzer();
-        List<String> legacy = signatures(new ArrayList<>(analyzer.consolidate(analyzer.merge(duplicates)).values()));
-        List<String> bucketed = signatures(analyzer.mergeAndConsolidatePerFilePair(duplicates));
+    @Test
+    void reproducesTheOutputOfTheMapBasedImplementation() throws Exception {
+        // Golden values recorded from the previous merge()+consolidate() implementation over this corpus,
+        // before it was removed. They are what makes this a behaviour-preserving change rather than a
+        // plausible rewrite, so they must not be re-recorded from the current code to make a failure pass.
+        List<String> signatures = signatures(analyzer().mergeAndConsolidatePerFilePair(pseudoRandomCorpus()));
 
-        assertFalse(legacy.isEmpty());
-        assertEquals(legacy, bucketed);
+        assertEquals(577, signatures.size());
+        assertEquals("6#f0.java|10-20|5-10~f5.java|44-54|22-27", signatures.get(0));
+        assertEquals("8#f2.java|46-60|23-30~f5.java|48-62|24-31", signatures.get(signatures.size() - 1));
+
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        digest.update(String.join("\n", signatures).getBytes(StandardCharsets.UTF_8));
+        StringBuilder hex = new StringBuilder();
+        for (byte b : digest.digest()) {
+            hex.append(String.format("%02x", b));
+        }
+        assertEquals("5b46454b86b9b26fd0ab68a32d307a0996091e1531c3c041afd9b85f8555642f", hex.toString());
     }
 }
