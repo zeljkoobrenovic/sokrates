@@ -163,7 +163,8 @@ public class DuplicationAnalyzer extends Analyzer {
      * the global map is not needed. This groups the pairs by file pair, keeping each one as a packed long
      * rather than an object graph, and walks the chains inside each bucket.
      */
-    private List<DuplicationInstance> mergeAndConsolidatePerFilePair(List<DuplicationInstance> duplicates) {
+    // Package-private for testing (same as getPairKey).
+    List<DuplicationInstance> mergeAndConsolidatePerFilePair(List<DuplicationInstance> duplicates) {
         Map<String, Integer> fileIds = new HashMap<>();
         Map<Long, DuplicatedFileBlock> blockByFileAndStart = new HashMap<>();
         Map<Long, LongArray> buckets = new HashMap<>();
@@ -290,7 +291,8 @@ public class DuplicationAnalyzer extends Analyzer {
         }
     }
 
-    private Map<String, DuplicationInstance> consolidate(Map<String, DuplicationInstance> merged) {
+    // Package-private for testing (same as getPairKey).
+    Map<String, DuplicationInstance> consolidate(Map<String, DuplicationInstance> merged) {
         Map<String, DuplicationInstance> mergedConsolidated = new HashMap<>(merged);
         merged.keySet().forEach(key -> {
             if (!mergedConsolidated.containsKey(key)) {
@@ -329,7 +331,8 @@ public class DuplicationAnalyzer extends Analyzer {
         return mergedConsolidated;
     }
 
-    private Map<String, DuplicationInstance> merge(List<DuplicationInstance> duplicates) {
+    // Package-private for testing (same as getPairKey).
+    Map<String, DuplicationInstance> merge(List<DuplicationInstance> duplicates) {
         Map<String, DuplicationInstance> merged = new HashMap<>();
         duplicates.forEach(d -> {
             d.getDuplicatedFileBlocks().forEach(file1 -> {
