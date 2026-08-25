@@ -180,13 +180,16 @@ public class DuplicationAnalyzer extends Analyzer {
                     fileIds.put(path, id);
                 }
                 ids[i] = id;
-                // Blocks sharing a file and a cleaned start line are interchangeable: every other field is
-                // a function of those two plus the block size, which addFileToDuplicationInstance derives
-                // from the same values. Keeping the first mirrors merge()'s first-writer-wins.
+                // Two blocks sharing a file and a cleaned start line are interchangeable, so the first one
+                // seen can stand for all of them: addFileToDuplicationInstance derives every other field
+                // from the file, the cleaned start line and the block size, and the block size is the same
+                // for every block in a run (Blocks.optimize is fixed true, which pins the engine to
+                // minDuplicationBlockLoc). Should variable block sizes ever be reintroduced, this key would
+                // have to carry the size as well.
                 blockByFileAndStart.putIfAbsent(pack(id, block.getCleanedStartLine()), block);
             }
-            // merge() emits both orderings of every pair and lets the normalised key discard one of them;
-            // emitting only i<j and normalising here reaches the same set at half the writes.
+            // A pair is unordered, so each unordered pair is emitted once (j > i) and put in canonical
+            // order here, rather than emitting both orderings and discarding one of them later.
             for (int i = 0; i < count; i++) {
                 for (int j = i + 1; j < count; j++) {
                     DuplicatedFileBlock block1 = blocks.get(i);
@@ -262,9 +265,12 @@ public class DuplicationAnalyzer extends Analyzer {
         return Arrays.binarySearch(sorted, value) >= 0;
     }
 
-    // A growable long array. The whole point of the bucketing is that a pair costs 8 bytes here instead
-    // of the ~313-byte object graph merge() builds for it, so boxing them into a List<Long> would give
-    // most of the memory straight back.
+    // A growable long array: a pair is two ints, so it needs no object of its own. Boxing pairs into a
+    // List<Long> would give most of the saving straight back, and the saving is the point - the previous
+    // implementation spent roughly 300 bytes per pair on an instance, two copied blocks, a composite
+    // string key and a map node. Here a pair costs one array slot wherever a bucket holds more than a
+    // handful; a bucket with a single pair still carries its own map entry and array header, so the win
+    // is largest exactly where the old cost was worst.
     private static final class LongArray {
         private long[] values = new long[8];
         private int size = 0;

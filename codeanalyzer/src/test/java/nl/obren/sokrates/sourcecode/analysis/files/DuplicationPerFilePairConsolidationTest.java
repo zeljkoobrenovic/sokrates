@@ -65,7 +65,6 @@ class DuplicationPerFilePairConsolidationTest {
             instance.getDuplicatedFileBlocks().forEach(block -> blocks.add(
                     block.getSourceFile().getRelativePath() + "|" + block.getStartLine() + "-" + block.getEndLine()
                             + "|" + block.getCleanedStartLine() + "-" + block.getCleanedEndLine()));
-            Collections.sort(blocks);
             signatures.add(instance.getBlockSize() + "#" + String.join("~", blocks));
         });
         Collections.sort(signatures);
@@ -93,6 +92,9 @@ class DuplicationPerFilePairConsolidationTest {
         assertEquals(30, first.getEndLine());
         assertEquals(20, second.getCleanedStartLine());
         assertEquals(25, second.getCleanedEndLine());
+        // Carried through the copy: duplication exports report a block's share of its file.
+        assertEquals(1000, first.getSourceFileCleanedLinesOfCode());
+        assertEquals(1000, second.getSourceFileCleanedLinesOfCode());
     }
 
     @Test
@@ -208,6 +210,33 @@ class DuplicationPerFilePairConsolidationTest {
         assertEquals(BLOCK, result.get(0).getBlockSize());
     }
 
+    @Test
+    void reproducesTheOutputOfTheMapBasedImplementation() throws Exception {
+        // Golden values recorded from the previous merge()+consolidate() implementation over this corpus,
+        // before it was removed. They are what makes this a behaviour-preserving change rather than a
+        // plausible rewrite, so they must not be re-recorded from the current code to make a failure pass.
+        // signatures() keeps each instance's blocks in their own order, so these pin the order too.
+        List<String> signatures = signatures(analyzer().mergeAndConsolidatePerFilePair(pseudoRandomCorpus()));
+
+        assertEquals(577, signatures.size());
+        assertEquals("6#f0.java|10-20|5-10~f5.java|44-54|22-27", signatures.get(0));
+        assertEquals("8#f2.java|46-60|23-30~f5.java|48-62|24-31", signatures.get(signatures.size() - 1));
+        assertEquals("eb336aef38c2c16b0d1ccc6f7967fbb4f5a23f921e372f5ac0e872a4d0db8db2", sha256(signatures));
+    }
+
+    @Test
+    void reproducesTheOutputOfTheMapBasedImplementationForPairsInsideOneFile() throws Exception {
+        // Pairs inside one file are the shape where the two implementations could order an instance's two
+        // blocks differently, and the corpus above holds only 70 of them. These golden values come from the
+        // same recording of the previous implementation over a corpus that is 381 of them.
+        List<String> signatures = signatures(analyzer().mergeAndConsolidatePerFilePair(sameFileCorpus()));
+
+        assertEquals(466, signatures.size());
+        assertEquals("6#other0.java|14-24|7-12~s0.java|14-24|7-12", signatures.get(0));
+        assertEquals("9#s1.java|12-28|6-14~s1.java|26-42|13-21", signatures.get(signatures.size() - 1));
+        assertEquals("21fb055570926e8b44f5c3bf31324cde698f369729916ecc2436e6d27422de91", sha256(signatures));
+    }
+
     // Deterministic pseudo-random corpus: overlapping runs, shared blocks, intra-file pairs and repeats,
     // so agreement over it is agreement over the shapes the engine actually emits.
     List<DuplicationInstance> pseudoRandomCorpus() {
@@ -225,28 +254,55 @@ class DuplicationPerFilePairConsolidationTest {
             if (state % 3 == 0) {
                 blocks.add(block("f" + ((fileA + 3) % 7) + ".java", startA + 1, BLOCK));
             }
+            sortAsTheEngineWould(blocks);
             duplicates.add(instance(BLOCK, blocks.toArray(new DuplicatedFileBlock[0])));
         }
         return duplicates;
     }
 
-    @Test
-    void reproducesTheOutputOfTheMapBasedImplementation() throws Exception {
-        // Golden values recorded from the previous merge()+consolidate() implementation over this corpus,
-        // before it was removed. They are what makes this a behaviour-preserving change rather than a
-        // plausible rewrite, so they must not be re-recorded from the current code to make a failure pass.
-        List<String> signatures = signatures(analyzer().mergeAndConsolidatePerFilePair(pseudoRandomCorpus()));
 
-        assertEquals(577, signatures.size());
-        assertEquals("6#f0.java|10-20|5-10~f5.java|44-54|22-27", signatures.get(0));
-        assertEquals("8#f2.java|46-60|23-30~f5.java|48-62|24-31", signatures.get(signatures.size() - 1));
-
+    private String sha256(List<String> signatures) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         digest.update(String.join("\n", signatures).getBytes(StandardCharsets.UTF_8));
         StringBuilder hex = new StringBuilder();
         for (byte b : digest.digest()) {
             hex.append(String.format("%02x", b));
         }
-        assertEquals("5b46454b86b9b26fd0ab68a32d307a0996091e1531c3c041afd9b85f8555642f", hex.toString());
+        return hex.toString();
+    }
+    // A corpus dominated by pairs inside ONE file, which the other corpus does not contain at all.
+    // Blocks are added in ascending cleaned-start order because that is the only order the engine can
+    // produce: FileInfoForDuplication.indexesOf is a forward scan, so occurrences come out ascending.
+    List<DuplicationInstance> sameFileCorpus() {
+        List<DuplicationInstance> duplicates = new ArrayList<>();
+        int state = 987654321;
+        for (int i = 0; i < 300; i++) {
+            state = (state * 1103515245 + 12345) & 0x7fffffff;
+            String file = "s" + (state % 5) + ".java";
+            int first = 1 + (state / 5) % 30;
+            int second = first + 1 + (state / 150) % 25;
+            List<DuplicatedFileBlock> blocks = new ArrayList<>();
+            blocks.add(block(file, first, BLOCK));
+            blocks.add(block(file, second, BLOCK));
+            if (state % 4 == 0) {
+                blocks.add(block(file, second + 1 + (state / 3750) % 10, BLOCK));
+            }
+            if (state % 5 == 0) {
+                blocks.add(block("other" + (state % 3) + ".java", first, BLOCK));
+            }
+            sortAsTheEngineWould(blocks);
+            duplicates.add(instance(BLOCK, blocks.toArray(new DuplicatedFileBlock[0])));
+        }
+        return duplicates;
+    }
+
+
+    // The engine never emits two blocks of one file out of ascending start-line order: indexesOf is a
+    // forward scan, so occurrences arrive ascending. Fixtures respect that, or they describe inputs that
+    // cannot occur.
+    private void sortAsTheEngineWould(List<DuplicatedFileBlock> blocks) {
+        blocks.sort((a, b) -> a.getSourceFile().getRelativePath().equals(b.getSourceFile().getRelativePath())
+                ? Integer.compare(a.getCleanedStartLine(), b.getCleanedStartLine())
+                : a.getSourceFile().getRelativePath().compareTo(b.getSourceFile().getRelativePath()));
     }
 }
