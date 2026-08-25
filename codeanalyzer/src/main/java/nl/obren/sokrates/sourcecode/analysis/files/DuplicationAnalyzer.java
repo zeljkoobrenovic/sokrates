@@ -61,8 +61,8 @@ public class DuplicationAnalyzer extends Analyzer {
 
 
         ProcessingStopwatch.start("analysis/duplication/consolidating duplicates");
-        Map<String, DuplicationInstance> mergedConsolidated = consolidate(merge(duplicates));
-        ArrayList<DuplicationInstance> consolidatedDuplicationInstances = new ArrayList<>(mergedConsolidated.values());
+        ArrayList<DuplicationInstance> consolidatedDuplicationInstances =
+                new ArrayList<>(mergeAndConsolidatePerFilePair(duplicates));
         consolidatedDuplicationInstances.sort((a, b) -> b.getBlockSize() - a.getBlockSize());
         duplcationAnalysisResults.setAllDuplicates(consolidatedDuplicationInstances);
         ProcessingStopwatch.end("analysis/duplication/consolidating duplicates");
@@ -71,7 +71,7 @@ public class DuplicationAnalyzer extends Analyzer {
         // Aggregated once and reused below (both the file count and the per-component/per-extension
         // aggregation need it); it used to be computed twice.
         List<SourceFileDuplication> duplicationPerSourceFile = DuplicationAggregator.getDuplicationPerSourceFile(duplicates);
-        int numberOfDuplicates = mergedConsolidated.size();
+        int numberOfDuplicates = consolidatedDuplicationInstances.size();
         int numberOfDuplicatedLines = DuplicationUtils.getNumberOfDuplicatedLines(duplicates);
         int totalNumberOfCleanedLines = DuplicationUtils.getTotalNumberOfCleanedLines(main.getSourceFiles());
         int numberOfFilesWithDuplicates = duplicationPerSourceFile.size();
@@ -92,18 +92,18 @@ public class DuplicationAnalyzer extends Analyzer {
         addMetricsAndSummary(progressFeedback, duplicationPerSourceFile);
 
         addMostFrequentDuplicates(duplicates);
-        addLongestDuplicates(mergedConsolidated);
+        addLongestDuplicates(consolidatedDuplicationInstances);
     }
 
-    private void addLongestDuplicates(Map<String, DuplicationInstance> mergedConsolidated) {
-        List<DuplicationInstance> filePairs = new ArrayList<>(mergedConsolidated.values());
+    private void addLongestDuplicates(List<DuplicationInstance> mergedConsolidated) {
+        List<DuplicationInstance> filePairs = new ArrayList<>(mergedConsolidated);
         Collections.sort(filePairs, (o1, o2) -> -Integer.valueOf(o1.getBlockSize()).compareTo(o2.getBlockSize()));
         for (int i = 0; i < Math.min(codeConfiguration.getAnalysis().getMaxTopListSize(), filePairs.size()); i++) {
             duplcationAnalysisResults.getLongestDuplicates().add(filePairs.get(i));
         }
     }
 
-    // Package-private for testing (same as getPairKey).
+    // Package-private for testing.
     void addMostFrequentDuplicates(List<DuplicationInstance> duplicates) {
         // Sort a copy by descending number of duplicated file blocks, then read from that sorted copy.
         // (Previously the sort was applied to a throwaway list and the unsorted original was iterated, so
@@ -147,71 +147,152 @@ public class DuplicationAnalyzer extends Analyzer {
         });
     }
 
-    private Map<String, DuplicationInstance> consolidate(Map<String, DuplicationInstance> merged) {
-        Map<String, DuplicationInstance> mergedConsolidated = new HashMap<>(merged);
-        merged.keySet().forEach(key -> {
-            if (!mergedConsolidated.containsKey(key)) {
-                return;
+    /**
+     * Collapses the duplicated block pairs the engine found into one instance per run of adjacent pairs.
+     *
+     * A pair is two blocks of the same duplicated code in two places. Runs matter because the engine emits
+     * one instance per sliding window of minDuplicationBlockLoc lines, so a long clone arrives as a chain
+     * of windows starting one line apart and has to be put back together.
+     *
+     * Every such chain is local to one unordered file pair: the two paths are fixed and only the start
+     * lines advance. So the pairs are grouped by file pair and each is held as a packed long - the two
+     * cleaned start lines - rather than as an object graph, and the chains are walked inside each bucket.
+     * The previous implementation instead built one instance, two copied blocks and a composite string key
+     * for every pair in a single global map, which on a clone-dense repository reached millions of entries
+     * and several GB before collapsing back to a fraction of that.
+     */
+    // Package-private for testing.
+    List<DuplicationInstance> mergeAndConsolidatePerFilePair(List<DuplicationInstance> duplicates) {
+        Map<String, Integer> fileIds = new HashMap<>();
+        Map<Long, DuplicatedFileBlock> blockByFileAndStart = new HashMap<>();
+        Map<Long, LongArray> buckets = new HashMap<>();
+
+        for (DuplicationInstance instance : duplicates) {
+            List<DuplicatedFileBlock> blocks = instance.getDuplicatedFileBlocks();
+            int count = blocks.size();
+            int[] ids = new int[count];
+            for (int i = 0; i < count; i++) {
+                DuplicatedFileBlock block = blocks.get(i);
+                String path = block.getSourceFile().getRelativePath();
+                Integer id = fileIds.get(path);
+                if (id == null) {
+                    id = fileIds.size();
+                    fileIds.put(path, id);
+                }
+                ids[i] = id;
+                // Two blocks sharing a file and a cleaned start line are interchangeable, so the first one
+                // seen can stand for all of them: addFileToDuplicationInstance derives every other field
+                // from the file, the cleaned start line and the block size, and the block size is the same
+                // for every block in a run (Blocks.optimize is fixed true, which pins the engine to
+                // minDuplicationBlockLoc). Should variable block sizes ever be reintroduced, this key would
+                // have to carry the size as well.
+                blockByFileAndStart.putIfAbsent(pack(id, block.getCleanedStartLine()), block);
             }
-            DuplicationInstance currentInstance = mergedConsolidated.get(key);
-            DuplicatedFileBlock file1 = currentInstance.getDuplicatedFileBlocks().get(0);
-            DuplicatedFileBlock file2 = currentInstance.getDuplicatedFileBlocks().get(1);
-            int offset = 1;
-            while (true) {
-                String nextKey = getPairKey(file1, file2, offset);
-                DuplicationInstance nextInstance = mergedConsolidated.get(nextKey);
-                if (nextInstance != null) {
-                    DuplicatedFileBlock nextBlock1 = nextInstance.getDuplicatedFileBlocks().get(0);
-                    DuplicatedFileBlock nextBlock2 = nextInstance.getDuplicatedFileBlocks().get(1);
-                    if (!nextBlock1.getSourceFile().getRelativePath().equals(file1.getSourceFile().getRelativePath())) {
-                        DuplicatedFileBlock temp = nextBlock1;
-                        nextBlock1 = nextBlock2;
-                        nextBlock2 = temp;
+            // A pair is unordered, so each unordered pair is emitted once (j > i) and put in canonical
+            // order here, rather than emitting both orderings and discarding one of them later.
+            for (int i = 0; i < count; i++) {
+                for (int j = i + 1; j < count; j++) {
+                    DuplicatedFileBlock block1 = blocks.get(i);
+                    DuplicatedFileBlock block2 = blocks.get(j);
+                    boolean inOrder = inPairKeyOrder(block1, block2);
+                    DuplicatedFileBlock first = inOrder ? block1 : block2;
+                    DuplicatedFileBlock second = inOrder ? block2 : block1;
+                    long bucketKey = pack(inOrder ? ids[i] : ids[j], inOrder ? ids[j] : ids[i]);
+                    long entry = pack(first.getCleanedStartLine(), second.getCleanedStartLine());
+                    LongArray bucket = buckets.get(bucketKey);
+                    if (bucket == null) {
+                        bucket = new LongArray();
+                        buckets.put(bucketKey, bucket);
                     }
-
-                    file1.setEndLine(nextBlock1.getEndLine());
-                    file1.setCleanedEndLine(nextBlock1.getCleanedEndLine());
-
-                    file2.setEndLine(nextBlock2.getEndLine());
-                    file2.setCleanedEndLine(nextBlock2.getCleanedEndLine());
-
-                    mergedConsolidated.remove(nextKey);
-                    currentInstance.setBlockSize(file1.getCleanedEndLine() - file1.getCleanedStartLine() + 1);
-                    offset += 1;
-                } else {
-                    break;
+                    bucket.add(entry);
                 }
             }
-        });
-        return mergedConsolidated;
+        }
+
+        List<DuplicationInstance> result = new ArrayList<>();
+        for (Map.Entry<Long, LongArray> bucketEntry : buckets.entrySet()) {
+            int fileA = (int) (bucketEntry.getKey() >>> 32);
+            int fileB = (int) (long) bucketEntry.getKey();
+            long[] entries = bucketEntry.getValue().sortedDistinct();
+            for (long entry : entries) {
+                int startA = (int) (entry >>> 32);
+                int startB = (int) entry;
+                // consolidate() absorbs forward from every surviving key, so a key starts a chain exactly
+                // when its predecessor (both start lines one lower) is absent.
+                if (contains(entries, pack(startA - 1, startB - 1))) {
+                    continue;
+                }
+                int length = 1;
+                while (contains(entries, pack(startA + length, startB + length))) {
+                    length++;
+                }
+                result.add(chainInstance(blockByFileAndStart, fileA, fileB, startA, startB, length));
+            }
+        }
+        return result;
     }
 
-    private Map<String, DuplicationInstance> merge(List<DuplicationInstance> duplicates) {
-        Map<String, DuplicationInstance> merged = new HashMap<>();
-        duplicates.forEach(d -> {
-            d.getDuplicatedFileBlocks().forEach(file1 -> {
-                d.getDuplicatedFileBlocks().stream()
-                        .filter(file2 -> !(file1 == file2 && file1.getStartLine() == file2.getStartLine()))
-                        .forEach(file2 -> {
-                            String key = getPairKey(file1, file2, 0);
-                            if (!merged.containsKey(key)) {
-                                DuplicationInstance duplicationInstance = new DuplicationInstance();
-                                String path1 = file1.getSourceFile().getRelativePath();
-                                String path2 = file2.getSourceFile().getRelativePath();
-                                if (path1.compareTo(path2) <= 0) {
-                                    duplicationInstance.getDuplicatedFileBlocks().add(copyOf(file1));
-                                    duplicationInstance.getDuplicatedFileBlocks().add(copyOf(file2));
-                                } else {
-                                    duplicationInstance.getDuplicatedFileBlocks().add(copyOf(file2));
-                                    duplicationInstance.getDuplicatedFileBlocks().add(copyOf(file1));
-                                }
-                                duplicationInstance.setBlockSize(d.getBlockSize());
-                                merged.put(key, duplicationInstance);
-                            }
-                        });
-            });
-        });
-        return merged;
+    private DuplicationInstance chainInstance(Map<Long, DuplicatedFileBlock> blockByFileAndStart,
+                                              int fileA, int fileB, int startA, int startB, int length) {
+        DuplicatedFileBlock blockA = copyOf(blockByFileAndStart.get(pack(fileA, startA)));
+        DuplicatedFileBlock blockB = copyOf(blockByFileAndStart.get(pack(fileB, startB)));
+        DuplicatedFileBlock lastA = blockByFileAndStart.get(pack(fileA, startA + length - 1));
+        DuplicatedFileBlock lastB = blockByFileAndStart.get(pack(fileB, startB + length - 1));
+        blockA.setEndLine(lastA.getEndLine());
+        blockA.setCleanedEndLine(lastA.getCleanedEndLine());
+        blockB.setEndLine(lastB.getEndLine());
+        blockB.setCleanedEndLine(lastB.getCleanedEndLine());
+
+        DuplicationInstance instance = new DuplicationInstance();
+        instance.getDuplicatedFileBlocks().add(blockA);
+        instance.getDuplicatedFileBlocks().add(blockB);
+        instance.setBlockSize(blockA.getCleanedEndLine() - blockA.getCleanedStartLine() + 1);
+        return instance;
+    }
+
+    // A pair is unordered, so it needs one canonical order: by relative path, and for two blocks in the
+    // same file by cleaned start line.
+    private boolean inPairKeyOrder(DuplicatedFileBlock block1, DuplicatedFileBlock block2) {
+        int comparison = block1.getSourceFile().getRelativePath().compareTo(block2.getSourceFile().getRelativePath());
+        return comparison < 0 || (comparison == 0 && block1.getCleanedStartLine() < block2.getCleanedStartLine());
+    }
+
+    private static long pack(int high, int low) {
+        return (((long) high) << 32) | (low & 0xffffffffL);
+    }
+
+    private static boolean contains(long[] sorted, long value) {
+        return Arrays.binarySearch(sorted, value) >= 0;
+    }
+
+    // A growable long array: a pair is two ints, so it needs no object of its own. Boxing pairs into a
+    // List<Long> would give most of the saving straight back, and the saving is the point - the previous
+    // implementation spent roughly 300 bytes per pair on an instance, two copied blocks, a composite
+    // string key and a map node. Here a pair costs one array slot wherever a bucket holds more than a
+    // handful; a bucket with a single pair still carries its own map entry and array header, so the win
+    // is largest exactly where the old cost was worst.
+    private static final class LongArray {
+        private long[] values = new long[8];
+        private int size = 0;
+
+        void add(long value) {
+            if (size == values.length) {
+                values = Arrays.copyOf(values, values.length * 2);
+            }
+            values[size++] = value;
+        }
+
+        long[] sortedDistinct() {
+            long[] sorted = Arrays.copyOf(values, size);
+            Arrays.sort(sorted);
+            int distinct = 0;
+            for (int i = 0; i < sorted.length; i++) {
+                if (i == 0 || sorted[i] != sorted[i - 1]) {
+                    sorted[distinct++] = sorted[i];
+                }
+            }
+            return distinct == sorted.length ? sorted : Arrays.copyOf(sorted, distinct);
+        }
     }
 
     private DuplicatedFileBlock copyOf(DuplicatedFileBlock block) {
@@ -223,34 +304,6 @@ public class DuplicationAnalyzer extends Analyzer {
         newBlock.setSourceFile(block.getSourceFile());
         newBlock.setSourceFileCleanedLinesOfCode(block.getSourceFileCleanedLinesOfCode());
         return newBlock;
-    }
-
-    public String getPairKey(DuplicatedFileBlock block1, DuplicatedFileBlock block2, int offset) {
-        String relPath1 = block1.getSourceFile().getRelativePath();
-        String relPath2 = block2.getSourceFile().getRelativePath();
-        DuplicatedFileBlock file1;
-        DuplicatedFileBlock file2;
-        String path1;
-        String path2;
-
-        if (relPath1.compareTo(relPath2) < 0) {
-            file1 = block1;
-            file2 = block2;
-            path1 = relPath1;
-            path2 = relPath2;
-        } else if (relPath1.compareTo(relPath2) == 0 && block1.getCleanedStartLine() < block2.getCleanedStartLine()) {
-            file1 = block1;
-            file2 = block2;
-            path1 = relPath1;
-            path2 = relPath2;
-        } else {
-            file1 = block2;
-            file2 = block1;
-            path1 = relPath2;
-            path2 = relPath1;
-        }
-
-        return path1 + ":" + (file1.getCleanedStartLine() + offset) + "::" + path2 + ":" + (file2.getCleanedStartLine() + offset) + "";
     }
 
     private boolean skipDuplicationAnalysis() {
