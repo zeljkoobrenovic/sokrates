@@ -510,8 +510,13 @@ public class ScopingConventions {
         testFilesConventions.add(new Convention(".*/test[-]helpers/.*", "", "Test helpers"));
         testFilesConventions.add(new Convention(".*/TestData/.*", "", "Test data"));
         testFilesConventions.add(new Convention(".*/mockapi/.*", "", "Mock resources"));
-        testFilesConventions.add(new Convention(".*/__mock[a-zA-Z0-9_\\- ]+/.*", "", "Mock resources"));
-        testFilesConventions.add(new Convention(".*/mock[a-zA-Z0-9_\\- ]+/.*", "", "Mock resources"));
+        // Any folder whose name starts with "mock" holds mock resources, so the rest of the name is
+        // matched with [^/]* rather than a list of allowed characters. The earlier [a-zA-Z0-9_\- ]+
+        // missed a folder named plainly "mock" (the + demanded at least one further character), one
+        // with a dot such as "mock.data", and one carrying any non-ASCII character. [^/] cannot cross
+        // a separator, so the match stays within the single folder name.
+        testFilesConventions.add(new Convention(".*/__mock[^/]*/.*", "", "Mock resources"));
+        testFilesConventions.add(new Convention(".*/mock[^/]*/.*", "", "Mock resources"));
         testFilesConventions.add(new Convention(".*_mock[.][a-zA-Z0-9_\\-]+", "", "Mock resources"));
 
         testFilesConventions.add(new Convention(".*[.]snap", "", "Jest snapshots"));
