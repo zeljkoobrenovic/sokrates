@@ -233,6 +233,11 @@ Drives contributor/commit analysis from an exported git history:
 `transformContributorEmails` applies string operations (`replace`, `extract`, `remove`,
 `trim`, `lowercase`, …) to normalise contributor identities.
 
+The same operations power `nameOperations` in meta rules (`metaConcerns`, `metaComponents`,
+`metaRules`). `extract` keeps the first match of each regex; **if the regex has a capturing group,
+only group 1 is kept** (e.g. `".*target_os = \"([a-z]+)\".*"` on `#[cfg(target_os = "linux")]` yields
+`linux`, not the whole line), otherwise the whole match. A non-matching regex yields an empty string.
+
 ### `trendAnalysis`
 
 ```json

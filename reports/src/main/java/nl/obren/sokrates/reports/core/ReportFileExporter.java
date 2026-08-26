@@ -394,8 +394,8 @@ public class ReportFileExporter {
 
         boolean fade = contributorsAnalysisResults.getContributors().stream().noneMatch(c -> !c.isBot() && c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS));
 
-        // The per-year chart now carries its own leading summary columns (30 days / 90 days / all time)
-        // as real table cells aligned to each metric row — no more pixel-margin-aligned cards. The scope
+        // The per-year chart shows the summary windows (30 days / 90 days / all time) in each metric icon's
+        // hover tooltip, and each icon links to its detailed report (no leading summary columns). The scope
         // toggle swaps the whole panel (per-scope language icons + chart-with-summary) per scope. Build
         // chart panels (scopes present, then "All" last); each gets an ActivitySummary for its scope and
         // its own language icons (that scope's aspect extensions) rendered inside the panel.

@@ -165,26 +165,24 @@ public class LogicalComponentsReportGenerator {
     private void addTemporalDependenciesSection(LogicalDecompositionAnalysisResults logicalDecomposition) {
         List<FilePairChangedTogether> filePairsChangedTogether180Days = codeAnalysisResults.getFilesHistoryAnalysisResults().getFilePairsChangedTogether180Days();
 
-        addDependenciesSection(filePairsChangedTogether180Days);
+        addDependenciesSection(logicalDecomposition.getKey(), filePairsChangedTogether180Days);
     }
 
-    private void addDependenciesSection(List<FilePairChangedTogether> filePairsChangedTogether) {
+    // Renders the temporal dependencies for ONE decomposition (the one whose tab this is). It used to
+    // loop over every decomposition, so each tab showed the graphs of all decompositions.
+    private void addDependenciesSection(String logicalDecompositionKey, List<FilePairChangedTogether> filePairsChangedTogether) {
         report.startDiv("margin: 10px;");
-        codeAnalysisResults.getLogicalDecompositionsAnalysisResults().forEach(logicalDecompositionAnalysisResults -> {
-            String logicalDecompositionKey = logicalDecompositionAnalysisResults.getKey();
+        report.startSubSection("Dependencies between components in same commits (past 180 days)",
+                "The number on the lines shows the number of shared commits.");
 
-            report.startSubSection("Dependencies between components in same commits (past 180 days)",
-                    "The number on the lines shows the number of shared commits.");
+        report.addNewTabLink("See detailed temporal dependencies report...", "FileTemporalDependencies.html");
+        report.addLineBreak();
+        report.addLineBreak();
+        TemporalDependenciesHelper helper = new TemporalDependenciesHelper();
+        List<ComponentDependency> componentDependencies = helper.extractComponentDependencies(logicalDecompositionKey, filePairsChangedTogether);
+        renderComponentDependencies(report, componentDependencies);
 
-            report.addNewTabLink("See detailed temporal dependencies report...", "FileTemporalDependencies.html");
-            report.addLineBreak();
-            report.addLineBreak();
-            TemporalDependenciesHelper helper = new TemporalDependenciesHelper();
-            List<ComponentDependency> componentDependencies = helper.extractComponentDependencies(logicalDecompositionKey, filePairsChangedTogether);
-            renderComponentDependencies(report, componentDependencies);
-
-            report.endSection();
-        });
+        report.endSection();
         report.endDiv();
     }
 
