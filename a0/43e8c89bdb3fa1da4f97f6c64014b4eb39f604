@@ -1,0 +1,48 @@
+codeanalyzer/src/test/java/nl/obren/sokrates/sourcecode/operations/impl/ExtractRegexOperationTest.java
+  s_77fa159c4e7c31::t_deb8155bff545d 32-49
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportFileExporter.java
+  s_77fa159c4e7c31::t_d5280989c6b690 397-398
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/ConcernsReportGenerator.java
+  s_77fa159c4e7c31::t_a33003b366773d 245
+reports/src/test/java/nl/obren/sokrates/reports/core/SummaryUtilsFeatureCardTest.java
+  s_77fa159c4e7c31::t_bbb72bd12bccee 12
+  s_77fa159c4e7c31::t_29a077ecac8b06 1-11,13-21
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/operations/impl/ExtractRegexOperation.java
+  s_77fa159c4e7c31::t_deb8155bff545d 8-9,12-21,23-24,38,42-56
+  s_77fa159c4e7c31::t_90f6917b409c70 57
+reports/src/test/java/nl/obren/sokrates/reports/generators/statichtml/ContributorsReportUtilsSummaryTooltipTest.java
+  s_77fa159c4e7c31::t_2fe2d95622ee75 5,7,10,20-37
+  s_77fa159c4e7c31::t_d5280989c6b690 1-2,4,6,8-9,11-19,38-64,68-76
+  s_77fa159c4e7c31::t_94daa69a6f00bb 3,65-67
+reports/src/main/java/nl/obren/sokrates/reports/core/SummaryUtils.java
+  s_77fa159c4e7c31::t_bbb72bd12bccee 523
+  s_77fa159c4e7c31::t_c6c22444d21617 527
+  s_77fa159c4e7c31::t_828b3edcd38439 521,525
+  s_77fa159c4e7c31::t_d083b93fb37b35 11,508,511,522,524,526,528-539
+  s_77fa159c4e7c31::t_3d8429483f9adc 540
+docs/configuration.md
+  s_77fa159c4e7c31::t_deb8155bff545d 236-240
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/LogicalComponentsReportGenerator.java
+  s_77fa159c4e7c31::t_986b96fc9864b2 168,171-173,175-176,178-183,185
+reports/src/test/java/nl/obren/sokrates/reports/generators/statichtml/LogicalComponentsReportGeneratorTemporalTabsTest.java
+  s_77fa159c4e7c31::t_b683c68fe9231f 1-59
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/ContributorsReportUtils.java
+  s_77fa159c4e7c31::t_d5280989c6b690 201-203
+  s_77fa159c4e7c31::t_7745a7715cd920 257,301,329,386,440-455,457,460-469,474,477,480,483,486,488
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "a043e8c89bdb3fa1da4f97f6c64014b4eb39f604",
+  "prompts": {},
+  "sessions": {
+    "s_77fa159c4e7c31": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a280f425-2c4d-424d-8ea9-ef7281925885",
+        "model": "claude-fable-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
