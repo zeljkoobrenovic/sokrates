@@ -1,0 +1,19 @@
+CLAUDE.md
+  s_77fa159c4e7c31::t_07a3ba1a2b52cc 170-177
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "2f8156b91d5d8110579748556073f7cf3db89590",
+  "prompts": {},
+  "sessions": {
+    "s_77fa159c4e7c31": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a280f425-2c4d-424d-8ea9-ef7281925885",
+        "model": "claude-fable-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
