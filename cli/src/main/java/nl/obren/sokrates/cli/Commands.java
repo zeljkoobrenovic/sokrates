@@ -24,6 +24,9 @@ public class Commands {
     public static final String UPDATE_CONFIG = "updateConfig";
     public static final String UPDATE_CONFIG_DESCRIPTION = "Updates an analysis configuration file and completes missing fields";
 
+    public static final String ADD_CUSTOM_TAB = "addCustomTab";
+    public static final String ADD_CUSTOM_TAB_DESCRIPTION = "Adds a custom iframe tab to the repository report configuration (config.json customTabs). If a custom tab with the same label already exists, it is overwritten instead of added.";
+
     public static final String UPDATE_LANDSCAPE = "updateLandscape";
     public static final String UPDATE_LANDSCAPE_DESCRIPTION = "Updates or creates a Sokrates landscape report, aggregating results of multiple analyses";
 
@@ -78,6 +81,8 @@ public class Commands {
     public static final String ARG_SET_LOGO_LINK = "setLogoLink";
     public static final String ARG_SET_DESCRIPTION = "setDescription";
     public static final String ARG_ADD_LINK = "addLink";
+    public static final String ARG_LABEL = "label";
+    public static final String ARG_IFRAME_LINK = "iframeLink";
 
     // options
     private Option srcRoot = new Option(ARG_SRC_ROOT, true, "[OPTIONAL] the folder where reports will be stored (default is \"<currentFolder>/_sokrates/reports/)");
@@ -109,6 +114,8 @@ public class Commands {
     private Option setLogoLink = new Option(ARG_SET_LOGO_LINK, true, "[OPTIONAL] sets a repository logo link");
     private Option setCacheFiles = new Option(ARG_SET_CACHE_FILES, true, "[OPTIONAL] sets a cache file flag ('true' or 'false')");
     private Option addLink = new Option(ARG_ADD_LINK, true, "[OPTIONAL] adds a new link");
+    private Option label = new Option(ARG_LABEL, true, "the custom tab label (unique; an existing tab with the same label is overwritten)");
+    private Option iframeLink = new Option(ARG_IFRAME_LINK, true, "the URL shown in the tab's iframe (absolute, or relative to the report's html/ folder)");
     private Option help = new Option(ARG_HELP, true, "[OPTIONAL] gives extra details about a command usage");
 
     private List<CommandUsage> usageInfo() {
@@ -120,6 +127,7 @@ public class Commands {
         commands.add(new CommandUsage(UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME, UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME_DESCRIPTION, getUpdateLandscapePeopleConfigByUserNameOptions()));
         commands.add(new CommandUsage(UPDATE_PEOPLE_CONFIG_BY_USER_NAME, UPDATE_PEOPLE_CONFIG_BY_USER_NAME_DESCRIPTION, getUpdatePeopleConfigByUserNameOptions()));
         commands.add(new CommandUsage(UPDATE_CONFIG, UPDATE_CONFIG_DESCRIPTION, getUpdateConfigOptions()));
+        commands.add(new CommandUsage(ADD_CUSTOM_TAB, ADD_CUSTOM_TAB_DESCRIPTION, getAddCustomTabOptions()));
         commands.add(new CommandUsage(EXTRACT_GIT_HISTORY, EXTRACT_GIT_HISTORY_DESCRIPTION, getExtractGitHistoryOption()));
 
         commands.add(new CommandUsage(INIT_CONVENTIONS, INIT_CONVENTIONS_DESCRIPTION, null));
@@ -208,6 +216,15 @@ public class Commands {
         addLink.setArgs(2);
         help.setArgs(0);
 
+        return options;
+    }
+
+    public Options getAddCustomTabOptions() {
+        Options options = new Options();
+        options.addOption(confFile);
+        options.addOption(label);
+        options.addOption(iframeLink);
+        options.addOption(help);
         return options;
     }
 
@@ -337,6 +354,14 @@ public class Commands {
 
     public Option getLogoLink() {
         return logoLink;
+    }
+
+    public Option getLabel() {
+        return label;
+    }
+
+    public Option getIframeLink() {
+        return iframeLink;
     }
 
     public Option getConfFile() {

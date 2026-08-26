@@ -20,6 +20,8 @@ import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
+import nl.obren.sokrates.sourcecode.core.CustomTab;
+import org.apache.commons.text.StringEscapeUtils;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
@@ -144,6 +146,10 @@ public class ReportFileExporter {
         indexReport.addTab("commits-explorer", "Commits", false);
         indexReport.addTab("visuals", "Visuals", false);
         indexReport.addTab("data", "Data", false);
+        List<CustomTab> customTabs = getCustomTabs(analysisResults);
+        for (int i = 0; i < customTabs.size(); i++) {
+            indexReport.addTab(customTabId(i), StringEscapeUtils.escapeHtml4(customTabs.get(i).getLabel()), false);
+        }
         indexReport.endDiv();
 
         indexReport.startTabContentSection("overview", true);
@@ -219,6 +225,13 @@ public class ReportFileExporter {
         indexReport.addHtmlContent("<iframe src='../explorers/commits-explorer.html' style='width: 100%; border: none; height: calc(100vh - 220px); overflow: hidden; margin-top: -12px'></iframe>");
 
         indexReport.endTabContentSection();
+
+        for (int i = 0; i < customTabs.size(); i++) {
+            indexReport.startTabContentSection(customTabId(i), false);
+            indexReport.addLineBreak();
+            indexReport.addHtmlContent(customTabIframe(customTabs.get(i)));
+            indexReport.endTabContentSection();
+        }
 
         indexReport.startTabContentSection("commits", false);
 
@@ -1177,6 +1190,24 @@ public class ReportFileExporter {
             indexReport.endDiv();
         }
         indexReport.endDiv();
+    }
+
+    static List<CustomTab> getCustomTabs(CodeAnalysisResults analysisResults) {
+        List<CustomTab> tabs = new ArrayList<>();
+        CodeConfiguration configuration = analysisResults.getCodeConfiguration();
+        if (configuration != null && configuration.getCustomTabs() != null) {
+            configuration.getCustomTabs().stream().filter(tab -> tab != null && tab.isValid()).forEach(tabs::add);
+        }
+        return tabs;
+    }
+
+    static String customTabId(int index) {
+        // Ids must not clash with the built-in tab ids (overview, quality, commits, files, ...)
+        return "custom-tab-" + (index + 1);
+    }
+
+    static String customTabIframe(CustomTab tab) {
+        return "<iframe src='" + StringEscapeUtils.escapeHtml4(tab.getIframeLink().trim()) + "' style='width: 100%; border: none; height: calc(100vh - 220px); overflow: hidden; margin-top: -12px'></iframe>";
     }
 
     private static void addExplorerFragment(RichTextReport indexReport, String explorer[]) {

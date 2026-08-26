@@ -48,6 +48,7 @@ Backed by `CodeConfiguration` (`codeanalyzer/.../sourcecode/core/CodeConfigurati
 | `fileHistoryAnalysis` | object | see below | Git-history (contributors) analysis options. |
 | `analysis` | object | see below | Thresholds and switches controlling the analysis itself. |
 | `tagRules` | object[] | default tags | Tag the repository by file-path patterns. |
+| `customTabs` | object[] | `[]` | Optional extra tabs on the report index, each showing an iframe. |
 
 ### `metadata`
 
@@ -251,6 +252,24 @@ Tag the repository by file-path patterns (used to recognise technologies):
 ```json
 "tagRules": [ { "tag": "Docker", "color": "", "pathPatterns": [".*Dockerfile.*"], "excludePathPatterns": [] } ]
 ```
+
+### `customTabs`
+
+Optional extra tabs added to the end of the repository report's tab strip (after **Data**). Each
+tab's whole content is an iframe. Both fields are required — entries with a blank `label` or
+`iframeLink` are skipped.
+
+```json
+"customTabs": [
+  { "label": "Architecture Docs", "iframeLink": "https://wiki.example.com/repo/architecture" },
+  { "label": "Dashboards", "iframeLink": "../custom/dashboards.html" }
+]
+```
+
+`iframeLink` can be absolute or relative; relative links resolve from the report's `html/` folder
+(where `index.html` lives). Labels are unique: the CLI command
+`sokrates addCustomTab -label "Architecture Docs" -iframeLink <url> [-confFile <path>]` adds a tab,
+or overwrites the existing tab with the same label (compared trimmed, case-insensitively). The page must allow embedding in an iframe (no `X-Frame-Options: DENY`).
 
 ---
 

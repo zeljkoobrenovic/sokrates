@@ -35,6 +35,7 @@ import nl.obren.sokrates.sourcecode.analysis.CodeAnalyzerSettings;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
+import nl.obren.sokrates.sourcecode.core.CustomTab;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.ExtractGitHistoryFileHandler;
@@ -107,6 +108,9 @@ public class CommandLineInterface {
                 return;
             } else if (args[0].equalsIgnoreCase(Commands.UPDATE_CONFIG)) {
                 updateConfig(args);
+                return;
+            } else if (args[0].equalsIgnoreCase(Commands.ADD_CUSTOM_TAB)) {
+                addCustomTab(args);
                 return;
             } else if (args[0].equalsIgnoreCase(Commands.EXPORT_STANDARD_CONVENTIONS)) {
                 exportConventions(args);
@@ -511,6 +515,42 @@ public class CommandLineInterface {
                 codeConfiguration.getAnalysis().setSaveSourceFiles(cacheFileValue.equalsIgnoreCase("true"));
             }
         }
+
+        FileUtils.write(confFile, new JsonGenerator().generate(codeConfiguration), UTF_8);
+    }
+
+    private void addCustomTab(String[] args) throws ParseException, IOException {
+        Options options = commands.getAddCustomTabOptions();
+
+        CommandLineParser parser = new DefaultParser();
+        CommandLine cmd = parser.parse(options, args);
+
+        if (cmd.hasOption(commands.getHelp().getOpt())) {
+            helpMode = true;
+            commands.usage(Commands.ADD_CUSTOM_TAB, options, Commands.ADD_CUSTOM_TAB_DESCRIPTION);
+            return;
+        }
+
+        String label = cmd.getOptionValue(commands.getLabel().getOpt());
+        String iframeLink = cmd.getOptionValue(commands.getIframeLink().getOpt());
+        if (StringUtils.isBlank(label) || StringUtils.isBlank(iframeLink)) {
+            LOG.error("Both -" + Commands.ARG_LABEL + " and -" + Commands.ARG_IFRAME_LINK + " are required.");
+            commands.usage(Commands.ADD_CUSTOM_TAB, options, Commands.ADD_CUSTOM_TAB_DESCRIPTION);
+            return;
+        }
+
+        File confFile = getConfigFile(cmd, new File("."));
+        if (!confFile.exists()) {
+            LOG.error("The configuration file \"" + confFile.getPath() + "\" does not exist.");
+            return;
+        }
+        LOG.info("Configuration file '" + confFile.getPath() + "'.");
+
+        String jsonContent = FileUtils.readFileToString(confFile, UTF_8);
+        CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
+
+        boolean replaced = codeConfiguration.addOrReplaceCustomTab(new CustomTab(label.trim(), iframeLink.trim()));
+        LOG.info((replaced ? "Replaced" : "Added") + " custom tab '" + label.trim() + "' -> " + iframeLink.trim());
 
         FileUtils.write(confFile, new JsonGenerator().generate(codeConfiguration), UTF_8);
     }

@@ -70,6 +70,9 @@ public class CodeConfiguration {
     // Simple rules to tag a repository based on path regex expressions
     private List<TagRule> tagRules = new ArrayList<>();
 
+    // Optional custom tabs added to the report (each tab shows an iframe with the given link)
+    private List<CustomTab> customTabs = new ArrayList<>();
+
     public CodeConfiguration() {
         createDefaultScope();
     }
@@ -579,5 +582,40 @@ public class CodeConfiguration {
         if (fileHistoryAnalysis != null) {
             this.fileHistoryAnalysis = fileHistoryAnalysis;
         }
+    }
+
+    public List<CustomTab> getCustomTabs() {
+        return customTabs;
+    }
+
+    public void setCustomTabs(List<CustomTab> customTabs) {
+        this.customTabs = customTabs != null ? customTabs : new ArrayList<>();
+    }
+
+    /**
+     * Adds a custom tab, or replaces the existing one with the same label (labels are matched
+     * trimmed and case-insensitively, so there are never two custom tabs with the same label).
+     *
+     * @return true if an existing tab was replaced, false if a new one was added
+     */
+    @JsonIgnore
+    public boolean addOrReplaceCustomTab(CustomTab tab) {
+        if (customTabs == null) {
+            customTabs = new ArrayList<>();
+        }
+        String key = customTabKey(tab.getLabel());
+        for (int i = 0; i < customTabs.size(); i++) {
+            CustomTab existing = customTabs.get(i);
+            if (existing != null && customTabKey(existing.getLabel()).equals(key)) {
+                customTabs.set(i, tab);
+                return true;
+            }
+        }
+        customTabs.add(tab);
+        return false;
+    }
+
+    private static String customTabKey(String label) {
+        return label == null ? "" : label.trim().toLowerCase();
     }
 }
