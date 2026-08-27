@@ -1,0 +1,114 @@
+reports/src/main/java/nl/obren/sokrates/reports/generators/explorers/CommitsExplorerGenerators.java
+  s_430ce8d9b0b9eb::t_a622ba9b2d112e 180-182
+  s_430ce8d9b0b9eb::t_0af10f52310795 8
+  s_430ce8d9b0b9eb::t_6e755ff4d22d9f 56,58,131-147,154-155,178-179,183
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/ContributorsReportUtils.java
+  s_430ce8d9b0b9eb::t_eb390032d023f1 49-50,81,218-220,336-338,340-361,481,488,562-564
+  s_d5a465551da905::t_1ba1da9434bad1 233-234,238,265,310,339,365,389-392,427,492-494,508-543
+  s_d5a465551da905::t_8e60df5cc1e2d6 544,565
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/githistory/ExtractGitHistoryFileHandler.java
+  s_430ce8d9b0b9eb::t_b23f55bb44bd2b 37-38,43-47
+  s_430ce8d9b0b9eb::t_494ceea43608ea 48-49
+reports/src/main/java/nl/obren/sokrates/reports/generators/explorers/CommitExport.java
+  s_430ce8d9b0b9eb::t_6e755ff4d22d9f 3-4,15-16,30-39
+common/src/main/resources/templates/commits-explorer.html
+  s_430ce8d9b0b9eb::t_0af10f52310795 127-138,252,313-315,317,320-323,344,379-383,385,394-403,421-436,443-451,505-507,532-535,961
+reports/src/main/java/nl/obren/sokrates/reports/generators/explorers/CoAuthorExport.java
+  s_430ce8d9b0b9eb::t_6e755ff4d22d9f 1-49
+codeanalyzer/src/test/java/nl/obren/sokrates/sourcecode/contributors/GitContributorsUtilTest.java
+  s_430ce8d9b0b9eb::t_275ff407efd1d5 4,12-13,198-233
+  s_430ce8d9b0b9eb::t_065f52cb4290f5 234
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/analysis/FileHistoryAnalysisConfig.java
+  s_430ce8d9b0b9eb::t_395deedf50f8ce 37-40,128-134
+  s_430ce8d9b0b9eb::t_5e40c99afb64b9 135
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/githistory/CommitTrailer.java
+  s_430ce8d9b0b9eb::t_5d934a4a4a61f4 1-82
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/githistory/GitHistoryUtils.java
+  s_430ce8d9b0b9eb::t_fe795edbe10640 327,331
+  s_430ce8d9b0b9eb::t_69169230ea9331 15,148,237,272-278,280-326,328-330,332-366,371-386,398-400,418-420
+  s_430ce8d9b0b9eb::t_5d934a4a4a61f4 37-43,85-147
+  s_430ce8d9b0b9eb::t_b1d77f7c700a3b 56-59,192,206-209,230-236
+  s_430ce8d9b0b9eb::t_5b5455af9e0fa0 44-50,52,150-152,154-170,367-370
+  s_430ce8d9b0b9eb::t_8fbc6c0da13c5d 51,153
+  s_430ce8d9b0b9eb::t_52eedd2ffef7bf 149,238
+codeanalyzer/src/test/java/nl/obren/sokrates/sourcecode/githistory/GitHistoryUtilsTest.java
+  s_430ce8d9b0b9eb::t_fe795edbe10640 281-291
+  s_430ce8d9b0b9eb::t_298f006f43ce98 12-14,191-261
+  s_430ce8d9b0b9eb::t_42fdc6fce6d6f5 263-280
+  s_430ce8d9b0b9eb::t_a9fe9755d98d6b 6-8,11,165-190,262,292
+codeanalyzer/src/test/java/nl/obren/sokrates/sourcecode/githistory/CommitTrailerTest.java
+  s_430ce8d9b0b9eb::t_a9fe9755d98d6b 1-70,86
+  s_430ce8d9b0b9eb::t_42fdc6fce6d6f5 71-85
+reports/src/test/java/nl/obren/sokrates/reports/generators/statichtml/ContributorsReportUtilsSummaryTooltipTest.java
+  s_d5a465551da905::t_84df4670cb5bcc 61,70-72
+  s_430ce8d9b0b9eb::t_eb390032d023f1 47,80-103,106-111
+  s_d5a465551da905::t_5df15df2f1d8a1 74
+  s_430ce8d9b0b9eb::t_b00a089117a0c2 104-105
+reports/src/test/java/nl/obren/sokrates/reports/generators/explorers/CommitsExplorerGeneratorsTest.java
+  s_430ce8d9b0b9eb::t_b48a0d4ab14613 3-4,158-183
+  s_430ce8d9b0b9eb::t_5d0b99b144c463 184
+codeanalyzer/src/test/java/nl/obren/sokrates/sourcecode/githistory/ExtractGitHistoryFileHandlerTest.java
+  s_430ce8d9b0b9eb::t_a9fe9755d98d6b 5,7-8,13-14,54-73
+CLAUDE.md
+  s_d5a465551da905::t_0f0dcba3a16f34 174
+  s_430ce8d9b0b9eb::t_7eb03a9e3c1b96 104
+  s_430ce8d9b0b9eb::t_fe795edbe10640 44
+codeanalyzer/src/test/java/nl/obren/sokrates/sourcecode/analysis/CoAuthorsConfigTest.java
+  s_430ce8d9b0b9eb::t_298f006f43ce98 1-32,35-53,55-65,69-70
+  s_430ce8d9b0b9eb::t_fe795edbe10640 54,66-68
+  s_430ce8d9b0b9eb::t_42fdc6fce6d6f5 33-34
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/githistory/AuthorCommit.java
+  s_430ce8d9b0b9eb::t_b1d77f7c700a3b 8,11-12,29-32,109-128
+  s_430ce8d9b0b9eb::t_07f7f5b9bed8d3 129
+cli/src/main/java/nl/obren/sokrates/cli/git/GitHistoryExtractor.java
+  s_430ce8d9b0b9eb::t_b23f55bb44bd2b 3,33,37-42,46-53,58,76-77,129
+  s_430ce8d9b0b9eb::t_5b5455af9e0fa0 34-36,43-45
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/analysis/AiAgentPattern.java
+  s_430ce8d9b0b9eb::t_395deedf50f8ce 1-48
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/contributors/ContributionTimeSlot.java
+  s_430ce8d9b0b9eb::t_b1d77f7c700a3b 20-22,71-82
+  s_430ce8d9b0b9eb::t_c2a1af0bf98b2e 83
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/githistory/CoAuthor.java
+  s_430ce8d9b0b9eb::t_395deedf50f8ce 1-66
+docs/configuration.md
+  s_430ce8d9b0b9eb::t_42fdc6fce6d6f5 233,235,260-264,271
+  s_430ce8d9b0b9eb::t_fe795edbe10640 232,270
+  s_430ce8d9b0b9eb::t_a6fc5ff15f8f66 230-231,234,236-244,256-259,265-269,272-279
+  s_430ce8d9b0b9eb::t_9367b04eb034eb 280
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/contributors/GitContributorsUtil.java
+  s_430ce8d9b0b9eb::t_b1d77f7c700a3b 169-171
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/analysis/CoAuthorsConfig.java
+  s_430ce8d9b0b9eb::t_fe795edbe10640 15-18,40-47
+  s_430ce8d9b0b9eb::t_395deedf50f8ce 1-14,19-25,27-30,32-39,48-90
+  s_430ce8d9b0b9eb::t_5b5455af9e0fa0 26,31
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/landscape/analysis/LandscapeAnalysisResults.java
+  s_430ce8d9b0b9eb::t_b1d77f7c700a3b 1118,1125
+.gitignore
+  s_d5a465551da905::t_2fa7f445f77cf9 22
+reports/src/main/resources/icons/bot.svg
+  s_430ce8d9b0b9eb::t_5fd0c941fa453f 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "48197c797defe2b99e0f6221490e670560a36327",
+  "prompts": {},
+  "sessions": {
+    "s_430ce8d9b0b9eb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6df76b6a-8b53-4364-a253-3de6b60038c5",
+        "model": "claude-fable-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    },
+    "s_d5a465551da905": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "23405401-2d2c-4a8f-b866-f8b197fe1b31",
+        "model": "claude-fable-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
