@@ -1,0 +1,29 @@
+CLAUDE.md
+  s_d5a465551da905::t_bde248e10ff54b 174
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportFileExporter.java
+  s_d5a465551da905::t_21e34e3379a475 267-271,281-282
+  s_d5a465551da905::t_03b6a48b6efc90 273,284
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/CommitsReportGenerator.java
+  s_d5a465551da905::t_03b6a48b6efc90 75,84,96,99,104-105,108
+  s_d5a465551da905::t_bde248e10ff54b 114
+  s_d5a465551da905::t_21e34e3379a475 73-74,82-83
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/ContributorsReportUtils.java
+  s_d5a465551da905::t_9c52c992dd5b12 41-42,44-53,66-69,71-73,75-79,90-97,102-104,137,262-263,267-269,420,422-424,541-543,545,548-555,557,589
+  s_d5a465551da905::t_21e34e3379a475 610
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "aefc91738810cc27948e4f8f95bd810bb1d94d1a",
+  "prompts": {},
+  "sessions": {
+    "s_d5a465551da905": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "23405401-2d2c-4a8f-b866-f8b197fe1b31",
+        "model": "claude-fable-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
