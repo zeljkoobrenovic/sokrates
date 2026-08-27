@@ -264,8 +264,13 @@ public class ReportFileExporter {
             ContributorsReportUtils.SCOPE_LABELS.forEach((scope, label) -> {
                 List<ContributionTimeSlot> perYear = contributorsAnalysisResults.getContributorsPerYearByScope().get(scope);
                 if (perYear != null && !perYear.isEmpty()) {
+                    // Like the Overview tab but with the wider window set (30 days … all time), every window
+                    // as a leading total column, all in the icon tooltips, and each metric icon linking to its
+                    // detailed report.
+                    ContributorsReportUtils.ActivitySummary summary = ContributorsReportUtils.buildActivitySummary(contributorsAnalysisResults, scope,
+                            ContributorsReportUtils.ACTIVITY_WINDOW_DAYS, ContributorsReportUtils.ACTIVITY_WINDOW_DAYS.length);
                     scopePanels.put(label, () -> {
-                        ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, perYear, 20, true, true, 8, fade);
+                        ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, perYear, 20, true, true, 8, fade, summary);
                         addPerMonthWeekDayDetails(indexReport, contributorsAnalysisResults,
                                 contributorsAnalysisResults.getContributorsPerMonthByScope().getOrDefault(scope, new java.util.ArrayList<>()),
                                 contributorsAnalysisResults.getContributorsPerWeekByScope().getOrDefault(scope, new java.util.ArrayList<>()),
@@ -273,8 +278,10 @@ public class ReportFileExporter {
                     });
                 }
             });
+            ContributorsReportUtils.ActivitySummary allSummary = ContributorsReportUtils.buildActivitySummary(contributorsAnalysisResults, null,
+                    ContributorsReportUtils.ACTIVITY_WINDOW_DAYS, ContributorsReportUtils.ACTIVITY_WINDOW_DAYS.length);
             scopePanels.put("All", () -> {
-                ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsAnalysisResults.getContributorsPerYear(), 20, true, true, 8, fade);
+                ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsAnalysisResults.getContributorsPerYear(), 20, true, true, 8, fade, allSummary);
                 addPerMonthWeekDayDetails(indexReport, contributorsAnalysisResults,
                         contributorsAnalysisResults.getContributorsPerMonth(),
                         contributorsAnalysisResults.getContributorsPerWeek(),

@@ -38,10 +38,19 @@ public class ContributorsReportUtils {
         SCOPE_LABELS.put("unscoped", "Unscoped");
     }
 
-    // The summary windows shown as leading columns of the activity table (label + day span; <=0 = all
-    // time). Order is the column order, left to right.
+    // The default summary windows (day span; <=0 = all time) used by the Overview tab. Order is the
+    // column/tooltip order, left to right.
     static final int[] SUMMARY_WINDOW_DAYS = {30, 90, 0};
-    static final String[] SUMMARY_WINDOW_LABELS = {"30 days", "90 days", "all time"};
+    // The wider window set used by the Activity tab and the Commits report (all shown as columns).
+    public static final int[] ACTIVITY_WINDOW_DAYS = {30, 90, 180, 365, 0};
+
+    // Human label for a window span (<=0 = all time).
+    static String windowLabel(int days) {
+        if (days <= 0) return "all time";
+        if (days == 180) return "6 months";
+        if (days == 365) return "1 year";
+        return days + " days";
+    }
 
     // Per-metric totals for one window (one cell each in a metric row's leading summary columns).
     public static class WindowTotals {
@@ -54,8 +63,20 @@ public class ContributorsReportUtils {
     // the leading columns of the activity table by addContributorsPerTimeSlot when passed in.
     public static class ActivitySummary {
         public final WindowTotals[] windows;
+        // Window spans parallel to windows (<=0 = all time); labels come from windowLabel.
+        public final int[] days;
+        // How many leading windows are rendered as real columns (the rest are tooltip-only).
+        public final int columns;
         public ActivitySummary(WindowTotals[] windows) {
+            this(windows, SUMMARY_WINDOW_DAYS, 1);
+        }
+        public ActivitySummary(WindowTotals[] windows, int[] days, int columns) {
             this.windows = windows;
+            this.days = days;
+            this.columns = Math.min(columns, windows.length);
+        }
+        String label(int w) {
+            return windowLabel(w < days.length ? days[w] : 0);
         }
     }
 
@@ -66,13 +87,21 @@ public class ContributorsReportUtils {
      * and each contributor's flat commit dates). A window of <=0 days means all time.
      */
     public static ActivitySummary buildActivitySummary(ContributorsAnalysisResults contributorsAnalysisResults, String scope) {
+        return buildActivitySummary(contributorsAnalysisResults, scope, SUMMARY_WINDOW_DAYS, 1);
+    }
+
+    /**
+     * Same as above with explicit windows; the first {@code columns} windows are rendered as leading
+     * columns of the activity table, all of them go into the icon tooltips.
+     */
+    public static ActivitySummary buildActivitySummary(ContributorsAnalysisResults contributorsAnalysisResults, String scope, int[] windowDays, int columns) {
         List<ContributionTimeSlot> perDay = scope == null
                 ? contributorsAnalysisResults.getContributorsPerDay()
                 : contributorsAnalysisResults.getContributorsPerDayByScope().get(scope);
 
-        WindowTotals[] windows = new WindowTotals[SUMMARY_WINDOW_DAYS.length];
-        for (int w = 0; w < SUMMARY_WINDOW_DAYS.length; w++) {
-            int days = SUMMARY_WINDOW_DAYS[w];
+        WindowTotals[] windows = new WindowTotals[windowDays.length];
+        for (int w = 0; w < windowDays.length; w++) {
+            int days = windowDays[w];
             WindowTotals t = new WindowTotals();
             if (perDay != null) {
                 for (ContributionTimeSlot slot : perDay) {
@@ -105,7 +134,7 @@ public class ContributorsReportUtils {
             t.contributors = people.size();
             windows[w] = t;
         }
-        return new ActivitySummary(windows);
+        return new ActivitySummary(windows, windowDays, columns);
     }
 
     /**
@@ -230,12 +259,14 @@ public class ContributorsReportUtils {
             report.startDiv("overflow-y: auto; font-size: 90%");
             report.startTable();
 
-            // Leading summary column header ("30 days") above the 30-day total each metric row prepends.
-            // Only when a summary is supplied.
+            // Leading summary column headers ("30 days", …) above the window totals each metric row
+            // prepends (summary.columns of them). Only when a summary is supplied.
             if (summary != null) {
                 report.startTableRow();
                 report.addTableCell("", "border: none;"); // above the metric icon column
-                report.addTableCell(SUMMARY_WINDOW_LABELS[0], "border: none; text-align: center; vertical-align: bottom; font-size: 70%; color: grey; padding: 2px 6px;");
+                for (int w = 0; w < summary.columns; w++) {
+                    report.addTableCell(summary.label(w), "border: none; text-align: center; vertical-align: bottom; font-size: 70%; color: grey; padding: 2px 6px;");
+                }
 
                 for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
                     if (timeSlot == null) {
@@ -386,9 +417,11 @@ public class ContributorsReportUtils {
             if (showTimeSlot) {
                 report.startTableRow();
                 report.addTableCell("", "border: none; ");
-                // Blank cell under the leading 30-day column so the time-axis labels stay aligned.
+                // Blank cells under the leading summary columns so the time-axis labels stay aligned.
                 if (summary != null) {
-                    report.addTableCell("", "border: none;");
+                    for (int w = 0; w < summary.columns; w++) {
+                        report.addTableCell("", "border: none;");
+                    }
                 }
                 for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
                     if (timeSlot == null) {
@@ -505,16 +538,23 @@ public class ContributorsReportUtils {
         report.addTableCellWithTitle("<a href='" + link + "' target='_blank' style='text-decoration: none'>" + iconSvg + "</a>", style, title);
     }
 
-    // Emits the single leading summary cell (the 30-day total, SUMMARY_WINDOW_DAYS[0]) for a metric
-    // row, right after that row's icon cell. No-op when summary is null (plain chart). The 90-day and
-    // all-time totals are only in the icon tooltip.
+    // Emits the leading summary cells (the first summary.columns windows — just the 30-day total on the
+    // Overview, all windows on the Activity tab) for a metric row, right after that row's icon cell.
+    // No-op when summary is null (plain chart). Every window is also in the icon tooltip.
     private static void addSummaryCell(RichTextReport report, ActivitySummary summary, SummaryMetric metric, boolean fade) {
-        if (summary == null || summary.windows.length == 0) {
+        if (summary == null) {
             return;
         }
-        WindowTotals t = summary.windows[0];
+        for (int w = 0; w < summary.columns; w++) {
+            addSummaryWindowCell(report, summary.windows[w], metric, fade, w == 0);
+        }
+    }
+
+    private static void addSummaryWindowCell(RichTextReport report, WindowTotals t, SummaryMetric metric, boolean fade, boolean primary) {
+        // The first (30-day) window is the primary signal; later windows are dimmed a little.
+        double opacity = (primary ? 1.0 : 0.6) * (fade ? 0.5 : 1.0);
         String cellStyle = "border: none; border-left: 1px solid #ccc; border-right: 1px solid #ccc; text-align: center; vertical-align: middle;"
-                + " padding: 2px 6px; min-width: 48px;" + (fade ? " opacity: 0.5;" : "");
+                + " padding: 2px 6px; min-width: 48px; opacity: " + opacity + ";";
         String value;
         switch (metric) {
             case CHURN:
@@ -546,7 +586,7 @@ public class ContributorsReportUtils {
     // (churn shows "+added / -deleted"). Package-visible for tests.
     static String summaryTooltip(String description, ActivitySummary summary, SummaryMetric metric) {
         StringBuilder title = new StringBuilder(description).append("\n");
-        for (int w = 0; w < summary.windows.length && w < SUMMARY_WINDOW_LABELS.length; w++) {
+        for (int w = 0; w < summary.windows.length; w++) {
             WindowTotals t = summary.windows[w];
             String value;
             switch (metric) {
@@ -567,7 +607,7 @@ public class ContributorsReportUtils {
                     value = FormattingUtils.formatCount(t.contributors);
                     break;
             }
-            title.append("\n").append(SUMMARY_WINDOW_LABELS[w]).append(": ").append(value);
+            title.append("\n").append(summary.label(w)).append(": ").append(value);
         }
         return title.toString();
     }

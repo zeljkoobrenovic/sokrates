@@ -70,14 +70,18 @@ public class CommitsReportGenerator {
         ContributorsReportUtils.SCOPE_LABELS.forEach((scope, label) -> {
             List<ContributionTimeSlot> perYear = analysis.getContributorsPerYearByScope().get(scope);
             if (perYear != null && !perYear.isEmpty()) {
-                scopePanels.put(label, () -> addActivityDiagrams(report, analysis,
+                ContributorsReportUtils.ActivitySummary summary = ContributorsReportUtils.buildActivitySummary(analysis, scope,
+                        ContributorsReportUtils.ACTIVITY_WINDOW_DAYS, ContributorsReportUtils.ACTIVITY_WINDOW_DAYS.length);
+                scopePanels.put(label, () -> addActivityDiagrams(report, analysis, summary,
                         perYear,
                         analysis.getContributorsPerMonthByScope().getOrDefault(scope, new java.util.ArrayList<>()),
                         analysis.getContributorsPerWeekByScope().getOrDefault(scope, new java.util.ArrayList<>()),
                         analysis.getContributorsPerDayByScope().getOrDefault(scope, new java.util.ArrayList<>())));
             }
         });
-        scopePanels.put("All", () -> addActivityDiagrams(report, analysis,
+        ContributorsReportUtils.ActivitySummary allSummary = ContributorsReportUtils.buildActivitySummary(analysis, null,
+                ContributorsReportUtils.ACTIVITY_WINDOW_DAYS, ContributorsReportUtils.ACTIVITY_WINDOW_DAYS.length);
+        scopePanels.put("All", () -> addActivityDiagrams(report, analysis, allSummary,
                 analysis.getContributorsPerYear(), analysis.getContributorsPerMonth(),
                 analysis.getContributorsPerWeek(), analysis.getContributorsPerDay()));
         ContributorsReportUtils.addScopeToggle(report, "commits_activity_scope", scopePanels);
@@ -89,22 +93,25 @@ public class CommitsReportGenerator {
     // flat, as on the Commits report). The per-repository Overview Activity tab reuses the static pieces
     // below to show Per Year inline and Per Month/Week/Day inside a details block.
     private void addActivityDiagrams(RichTextReport report, ContributorsAnalysisResults analysis,
+                                     ContributorsReportUtils.ActivitySummary summary,
                                      List<ContributionTimeSlot> perYear, List<ContributionTimeSlot> perMonth,
                                      List<ContributionTimeSlot> perWeek, List<ContributionTimeSlot> perDay) {
-        addPerYearDiagram(report, analysis, perYear);
+        addPerYearDiagram(report, analysis, perYear, summary);
         addPerMonthWeekDayDiagrams(report, analysis, perMonth, perWeek, perDay);
     }
 
     public static void addPerYearDiagram(RichTextReport report, ContributorsAnalysisResults analysis,
-                                         List<ContributionTimeSlot> perYear) {
+                                         List<ContributionTimeSlot> perYear,
+                                         ContributorsReportUtils.ActivitySummary summary) {
         report.addLevel2Header("Per Year", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, perYear, 20, true, true, 4, false);
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, perYear, 20, true, true, 4, false, summary);
     }
 
     public static void addPerMonthWeekDayDiagrams(RichTextReport report, ContributorsAnalysisResults analysis,
                                                   List<ContributionTimeSlot> perMonth, List<ContributionTimeSlot> perWeek,
                                                   List<ContributionTimeSlot> perDay) {
+        // No summary here: the window totals/columns are only shown on the Per Year chart.
         report.addLevel2Header("Per Month", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
         ContributorsReportUtils.addContributorsPerTimeSlot(report, getContributionMonths(analysis, perMonth, 60), 60, true, true, 2, false);
