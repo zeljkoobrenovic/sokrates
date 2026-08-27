@@ -5,8 +5,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class AuthorCommit {
     public static final String ISO_DATE_FORMAT = "yyyy-MM-dd";
@@ -22,6 +25,10 @@ public class AuthorCommit {
     private int linesDeleted = 0;
 
     private boolean bot = false;
+
+    // Co-authors from the commit's trailers (see CoAuthorsConfig); empty for histories without
+    // the git-commit-trailers.txt sidecar.
+    private List<CoAuthor> coAuthors = new ArrayList<>();
 
     public AuthorCommit() {
     }
@@ -97,6 +104,27 @@ public class AuthorCommit {
         }
 
         return "";
+    }
+
+    public List<CoAuthor> getCoAuthors() {
+        return coAuthors;
+    }
+
+    public void setCoAuthors(List<CoAuthor> coAuthors) {
+        this.coAuthors = coAuthors == null ? new ArrayList<>() : coAuthors;
+    }
+
+    @JsonIgnore
+    public boolean hasAiCoAuthor() {
+        return coAuthors.stream().anyMatch(CoAuthor::isAi);
+    }
+
+    /**
+     * Distinct AI agent names among the co-authors (e.g. "Claude Code"), in trailer order.
+     */
+    @JsonIgnore
+    public List<String> getAiAgents() {
+        return coAuthors.stream().filter(CoAuthor::isAi).map(CoAuthor::getAgent).distinct().collect(Collectors.toList());
     }
 
     public boolean isBot() {

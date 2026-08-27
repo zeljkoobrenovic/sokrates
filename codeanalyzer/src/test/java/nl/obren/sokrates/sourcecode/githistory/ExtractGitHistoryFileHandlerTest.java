@@ -2,11 +2,16 @@ package nl.obren.sokrates.sourcecode.githistory;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.lang.reflect.Array;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ExtractGitHistoryFileHandlerTest {
     private final static String SAMPLE = "2019-11-09 zeljko@sokrates.dev 0bc5d0318b3814ebd5b52605668756a8d5598e24 codeexplorer/src/test/java/nl/obren/sokrates/codeexplorer/io/RegexUtilsTest.java\n" +
@@ -45,5 +50,24 @@ class ExtractGitHistoryFileHandlerTest {
 
         assertEquals(handler.extractSubHistory(Arrays.asList(SAMPLE.split("\n")), "common").stream().collect(Collectors.joining("\n")), RESULT_1);
         assertEquals(handler.extractSubHistory(Arrays.asList(SAMPLE.split("\n")), "codeexplorer").stream().collect(Collectors.joining("\n")), RESULT_2);
+    }
+
+    @Test
+    void splitCopiesOptionalSidecars() throws Exception {
+        File folder = Files.createTempDirectory("git-history-split").toFile();
+        File historyFile = new File(folder, GitHistoryUtils.GIT_HISTORY_FILE_NAME);
+        Files.write(historyFile.toPath(), Arrays.asList(SAMPLE.split("\n")), StandardCharsets.UTF_8);
+        Files.write(new File(folder, GitHistoryUtils.GIT_COMMIT_TRAILERS_FILE_NAME).toPath(),
+                Arrays.asList("abc Co-authored-by: Claude <noreply@anthropic.com>"), StandardCharsets.UTF_8);
+
+        new ExtractGitHistoryFileHandler().extractSubHistory(historyFile, "common");
+
+        File splitFolder = new File(folder, "common");
+        assertTrue(new File(splitFolder, GitHistoryUtils.GIT_HISTORY_FILE_NAME).exists());
+        assertTrue(new File(splitFolder, GitHistoryUtils.GIT_COMMIT_TRAILERS_FILE_NAME).exists());
+        // git-commits.txt was absent in the source folder, so it is not created either
+        assertFalse(new File(splitFolder, GitHistoryUtils.GIT_COMMITS_FILE_NAME).exists());
+        assertEquals("abc Co-authored-by: Claude <noreply@anthropic.com>",
+                Files.readAllLines(new File(splitFolder, GitHistoryUtils.GIT_COMMIT_TRAILERS_FILE_NAME).toPath()).get(0));
     }
 }

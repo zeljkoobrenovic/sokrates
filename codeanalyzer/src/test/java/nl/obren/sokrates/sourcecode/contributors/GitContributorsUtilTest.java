@@ -1,6 +1,7 @@
 package nl.obren.sokrates.sourcecode.contributors;
 
 import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
+import nl.obren.sokrates.sourcecode.githistory.AuthorCommit;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
@@ -8,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -191,5 +194,42 @@ class GitContributorsUtilTest {
 
         assertFalse(result.getContributorsPerYear().isEmpty());
         assertTrue(result.getContributorsPerYearByScope().isEmpty());
+    }
+
+    @Test
+    void aiCoAuthoredCommitsAreCountedPerTimeSlotFromTheTrailersSidecar() throws Exception {
+        resetHistoryCache();
+
+        // Own folder so the sidecar sits next to the history file.
+        File folder = Files.createTempDirectory("git-history-coauthors").toFile();
+        File file = new File(folder, GitHistoryUtils.GIT_HISTORY_FILE_NAME);
+        FileUtils.writeStringToFile(file,
+                "2020-01-10 alice@org.com c1 src/Main.java alice 10 2\n" +
+                "2020-01-10 alice@org.com c1 test/MainTest.java alice 5 1\n" +
+                "2020-01-20 bob@org.com c2 src/Other.java bob 7 3\n" +
+                "2021-03-01 bob@org.com c3 src/Third.java bob 1 1\n", StandardCharsets.UTF_8);
+        Files.write(new File(folder, GitHistoryUtils.GIT_COMMIT_TRAILERS_FILE_NAME).toPath(), Arrays.asList(
+                "c1 Co-Authored-By: Claude <noreply@anthropic.com>",
+                "c1 Co-authored-by: Carol <carol@org.com>",
+                "c2 Co-authored-by: Carol <carol@org.com>",
+                "c3 Signed-off-by: Bob <bob@org.com>"), StandardCharsets.UTF_8);
+
+        List<AuthorCommit> commits = GitHistoryUtils.getAuthorCommits(file, new FileHistoryAnalysisConfig());
+
+        assertEquals(3, commits.size());
+        AuthorCommit c1 = commits.get(0);
+        assertEquals(2, c1.getCoAuthors().size());
+        assertTrue(c1.hasAiCoAuthor());
+        assertEquals(List.of("Claude Code"), c1.getAiAgents());
+        assertFalse(commits.get(1).hasAiCoAuthor());
+        assertEquals("carol@org.com", commits.get(1).getCoAuthors().get(0).getEmail());
+        assertTrue(commits.get(2).getCoAuthors().isEmpty());
+
+        List<ContributionTimeSlot> perYear = GitContributorsUtil.getContributorsPerTimeSlot(commits, AuthorCommit::getYear);
+        assertEquals(2, slot(perYear, "2020").getCommitsCount());
+        assertEquals(1, slot(perYear, "2020").getAiCoAuthoredCommitsCount());
+        assertEquals(0, slot(perYear, "2021").getAiCoAuthoredCommitsCount());
+        // Contributors count stays author-based (co-authors are not counted as slot contributors).
+        assertEquals(2, slot(perYear, "2020").getContributorsCount());
     }
 }

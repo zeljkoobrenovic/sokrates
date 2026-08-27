@@ -227,7 +227,21 @@ Drives contributor/commit analysis from an exported git history:
   "bots": [".*\\[bot\\].*", ".*[-]bot[@].*"],
   "ignoreContributors": [],
   "anonymizeContributors": false,
-  "transformContributorEmails": [ { "op": "replace", "params": ["[@].*", ""] } ]
+  "transformContributorEmails": [ { "op": "replace", "params": ["[@].*", ""] } ],
+  "coAuthors": {
+    "enabled": true,
+    "trailerKeys": ["Co-authored-by", "Assisted-by", "Generated-by", "Message-Signature"],
+    "aiAgents": [
+      { "name": "Claude Code", "patterns": [".*noreply@anthropic\\.com.*", ".*generated with \\[claude code\\].*", ".*claude.*"] },
+      { "name": "GitHub Copilot", "patterns": [".*copilot.*"] },
+      { "name": "Cursor", "patterns": [".*cursoragent.*", ".*@cursor\\.com.*"] },
+      { "name": "OpenAI Codex", "patterns": [".*codex.*"] },
+      { "name": "Aider", "patterns": [".*aider.*"] },
+      { "name": "Gemini", "patterns": [".*gemini.*"] },
+      { "name": "Devin", "patterns": [".*devin-ai.*"] },
+      { "name": "Jules", "patterns": [".*google-labs-jules.*"] }
+    ]
+  }
 }
 ```
 
@@ -238,6 +252,31 @@ The same operations power `nameOperations` in meta rules (`metaConcerns`, `metaC
 `metaRules`). `extract` keeps the first match of each regex; **if the regex has a capturing group,
 only group 1 is kept** (e.g. `".*target_os = \"([a-z]+)\".*"` on `#[cfg(target_os = "linux")]` yields
 `linux`, not the whole line), otherwise the whole match. A non-matching regex yields an empty string.
+
+#### `coAuthors` — co-authorship from commit trailers
+
+`extractGitHistory` writes an optional sidecar, `git-commit-trailers.txt`, next to `git-history.txt`
+with every commit message **trailer** (`<sha> <Key>: <value>`, e.g.
+`Co-Authored-By: Claude <noreply@anthropic.com>`) plus two pseudo-trailers: `Committer: Name <email>`
+when the committer differs from the author, and `Message-Signature: <line>` for tool signature lines in
+the message body that are not trailers — e.g. `🤖 Generated with [Claude Code](https://claude.ai/code)`,
+which older Claude Code versions wrote without a `Co-authored-by` (captured by a generic
+"generated/made/created/… with/by/using …" line-start heuristic). AI coding agents (Claude Code, GitHub Copilot, Cursor,
+Codex, Aider, …) sign their commits this way. `coAuthors` decides, at analysis time, how those
+trailers become co-author information:
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `enabled` | bool | `true` | Set to `false` to switch co-author / AI agent analysis off entirely: the sidecar is not read, commits carry no co-authors, and the commits explorer column and the Overview "AI co-authored commits" row are not shown. |
+| `trailerKeys` | string[] | `["Co-authored-by", "Assisted-by", "Generated-by", "Message-Signature"]` | Trailer keys (case-insensitive) whose value names a co-author. Other trailers (`Signed-off-by`, `Committer`, …) are ignored. A `Message-Signature` value only ever resolves to an AI agent — when no `aiAgents` pattern matches it is dropped, never turned into a person. |
+| `aiAgents` | object[] | the list above | Named AI agents. Each `{ "name", "patterns" }` entry's regexes are matched entirely and case-insensitively against the whole trailer value (`Name <email>`) **and** against the email alone; the first matching agent's `name` is attributed. A co-author matching none of them but matching `bots` is attributed to the pseudo-agent `bot`. |
+
+A co-author that is not an agent is a **person**: its email is normalised exactly like commit
+authors — dropped when it matches `ignoreContributors`, anonymised when `anonymizeContributors` is
+on, run through `transformContributorEmails`, and remapped by `config-people.json` — so a person's
+co-authored and authored commits collapse to one identity. Co-authors are deduplicated per commit.
+Setting `trailerKeys`/`aiAgents` **replaces** the defaults (they are not merged). The feature is inert
+for histories extracted by older versions (no sidecar) — re-run `extractGitHistory` to get the data.
 
 ### `trendAnalysis`
 

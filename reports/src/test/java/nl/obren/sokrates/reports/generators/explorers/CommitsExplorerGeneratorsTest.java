@@ -1,5 +1,7 @@
 package nl.obren.sokrates.reports.generators.explorers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import nl.obren.sokrates.sourcecode.githistory.CoAuthor;
 import nl.obren.sokrates.sourcecode.githistory.FileUpdate;
 import org.junit.jupiter.api.Test;
 
@@ -152,5 +154,32 @@ class CommitsExplorerGeneratorsTest {
 
         assertEquals("fix: collapse whitespace variants", data.getCommits().get(0).getMessage());
         assertEquals("", data.getCommits().get(1).getMessage());
+    }
+
+    @Test
+    void carriesCoAuthorsOntoTheirCommitOnly() throws Exception {
+        List<CommitFileExport> currentFiles = new ArrayList<>(Arrays.asList(new CommitFileExport("src/Foo.java", "main", 100)));
+        List<FileUpdate> updates = Arrays.asList(
+                update("2024-05-01", "a@x.com", SHA_A, "src/Foo.java", 10, 2),
+                update("2024-01-15", "b@x.com", SHA_B, "src/Foo.java", 7, 0));
+        Map<String, List<CoAuthor>> coAuthorsBySha = new HashMap<>();
+        coAuthorsBySha.put(SHA_A, Arrays.asList(
+                new CoAuthor("Claude", "noreply@anthropic.com", "Claude Code"),
+                new CoAuthor("Carol", "carol@x.com", null)));
+
+        CommitsExplorerData data = CommitsExplorerGenerators.buildData(currentFiles, updates, Collections.emptyMap(), coAuthorsBySha, 10000);
+
+        CommitExport a = data.getCommits().get(0);
+        assertEquals("aaaaaaaaaa", a.getSha());
+        assertEquals(2, a.getCoAuthors().size());
+        assertEquals("Claude Code", a.getCoAuthors().get(0).getAgent());
+        assertEquals("carol@x.com", a.getCoAuthors().get(1).getEmail());
+        assertNull(a.getCoAuthors().get(1).getAgent());
+        assertTrue(data.getCommits().get(1).getCoAuthors().isEmpty());
+
+        // Empty co-author lists and null agents are omitted from the embedded JSON.
+        String json = new ObjectMapper().writeValueAsString(data.getCommits());
+        assertEquals(1, json.split("\"coAuthors\"").length - 1);
+        assertEquals(1, json.split("\"agent\"").length - 1);
     }
 }
