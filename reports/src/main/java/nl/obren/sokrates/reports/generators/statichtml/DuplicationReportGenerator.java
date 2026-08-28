@@ -18,15 +18,18 @@ import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationDependenciesHelper;
+import nl.obren.sokrates.sourcecode.duplication.DuplicatedFileBlock;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
 import nl.obren.sokrates.sourcecode.metrics.DuplicationMetric;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -37,6 +40,9 @@ public class DuplicationReportGenerator {
     private RichTextReport report;
     private int graphCounter = 1;
     private int componentDuplicatesCount = 1;
+    // Caps for the per-component-pair duplicate text exports (see saveDuplicates).
+    static final int MAX_INTERCOMPONENT_DUPLICATES_PER_PAIR = 1000;
+    static final int MAX_BLOCKS_PER_INTERCOMPONENT_DUPLICATE = 100;
     private int filePairsCount = 1;
 
     public DuplicationReportGenerator(CodeAnalysisResults codeAnalysisResults, File reportsFolder) {
@@ -426,7 +432,6 @@ public class DuplicationReportGenerator {
 
     private String saveDuplicates(ComponentDependency componentDependency, String logicalDecompositionName, List<DuplicationInstance> allInstances) {
         File file = new File(this.report.getReportsFolder(), "data/text/intercomponent_duplicates_" + componentDuplicatesCount++ + ".txt");
-        List<DuplicationInstance> duplicates = this.codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates();
 
         String from = componentDependency.getFromComponent();
         String to = componentDependency.getToComponent();
@@ -452,28 +457,42 @@ public class DuplicationReportGenerator {
             }
         });
 
-        StringBuilder stringBuilder = new StringBuilder();
-
         Collections.sort(instances, (o1, o2) -> o2.getBlockSize() - o1.getBlockSize());
 
-        instances.forEach(instance -> {
-            stringBuilder.append(instance.getBlockSize() + " duplicated lines in:\n");
-            instance.getDuplicatedFileBlocks().forEach(block -> {
-                stringBuilder.append("  - ");
-                stringBuilder.append(block.getSourceFile().getRelativePath());
-                stringBuilder.append(" (");
-                stringBuilder.append(block.getStartLine());
-                stringBuilder.append(":");
-                stringBuilder.append(block.getEndLine());
-                stringBuilder.append(", ");
-                stringBuilder.append(FormattingUtils.getFormattedPercentage(block.getPercentage()) + "%");
-                stringBuilder.append(")\n");
-            });
-            stringBuilder.append("\n");
-        });
-
-        try {
-            FileUtils.write(file, stringBuilder.toString(), StandardCharsets.UTF_8);
+        // Stream to disk with hard caps instead of building one String: a boilerplate duplicate shared
+        // by thousands of files (typical for generated code) appears in many component pairs, and
+        // listing every block of every such instance per pair grew the in-memory text past the 2GB
+        // String limit (OutOfMemoryError in StringBuilder.append). Largest instances are kept first,
+        // matching DataExporter.exportDuplicates.
+        int instancesTotal = instances.size();
+        int instancesShown = Math.min(instancesTotal, MAX_INTERCOMPONENT_DUPLICATES_PER_PAIR);
+        try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
+            for (int i = 0; i < instancesShown; i++) {
+                DuplicationInstance instance = instances.get(i);
+                List<DuplicatedFileBlock> blocks = instance.getDuplicatedFileBlocks();
+                int blocksShown = Math.min(blocks.size(), MAX_BLOCKS_PER_INTERCOMPONENT_DUPLICATE);
+                writer.write(instance.getBlockSize() + " duplicated lines in " + blocks.size() + " files:\n");
+                for (int b = 0; b < blocksShown; b++) {
+                    DuplicatedFileBlock block = blocks.get(b);
+                    writer.write("  - ");
+                    writer.write(block.getSourceFile().getRelativePath());
+                    writer.write(" (");
+                    writer.write(String.valueOf(block.getStartLine()));
+                    writer.write(":");
+                    writer.write(String.valueOf(block.getEndLine()));
+                    writer.write(", ");
+                    writer.write(FormattingUtils.getFormattedPercentage(block.getPercentage()) + "%");
+                    writer.write(")\n");
+                }
+                if (blocksShown < blocks.size()) {
+                    writer.write("  ... and " + (blocks.size() - blocksShown) + " more files (list truncated)\n");
+                }
+                writer.write("\n");
+            }
+            if (instancesShown < instancesTotal) {
+                writer.write("... and " + (instancesTotal - instancesShown) + " more duplicates (list truncated, showing the "
+                        + instancesShown + " largest of " + instancesTotal + ")\n");
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
