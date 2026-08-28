@@ -69,7 +69,7 @@ public class ReportConstants {
             "  font-size: 14px;\n" +
             "  font-weight: 500;\n" +
             "  color: #6b7280;\n" +
-            "  border-bottom: 2px solid transparent;\n" +
+            "  border-bottom: 3px solid transparent;\n" +
             "  border-radius: 8px 8px 0 0;\n" +
             "  transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;\n" +
             "}\n" +

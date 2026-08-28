@@ -15,6 +15,7 @@ bin/
 _sokrates/reports
 git-history.txt
 git-commits.txt
+git-commit-trailers.txt
 _sokrates/reports/
 _sokrates/
 .claude/
