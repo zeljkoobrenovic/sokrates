@@ -1,0 +1,20 @@
+.gitignore
+  h_f6c4aeafc1bdc6 18
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/scoping/ScopingConventions.java
+  h_f6c4aeafc1bdc6 541
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportConstants.java
+  h_f6c4aeafc1bdc6 72
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportRenderer.java
+  h_f6c4aeafc1bdc6 61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "b4662fd0e8d8b2b9cb688e3047bd85c9b7536dfa",
+  "prompts": {},
+  "humans": {
+    "h_f6c4aeafc1bdc6": {
+      "author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
