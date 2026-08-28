@@ -1,0 +1,20 @@
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/DuplicationReportGenerator.java
+  s_8810158ce2776a::t_9ebdeb7667679e 28,32,462-495
+  s_8810158ce2776a::t_0839309e4044b4 21,43-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "cb3f945e7db896c6c57b7fef8bd413ecdba52dee",
+  "prompts": {},
+  "sessions": {
+    "s_8810158ce2776a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e073b5e6-0aea-467a-b257-5398a5f6e177",
+        "model": "claude-fable-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
