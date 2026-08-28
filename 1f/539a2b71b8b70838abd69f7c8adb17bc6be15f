@@ -1,0 +1,25 @@
+reports/src/test/resources/golden/controls-report-populated.html
+  s_d5a465551da905::t_ee1536094b2e62 1
+reports/src/test/resources/golden/controls-report-empty.html
+  s_d5a465551da905::t_ee1536094b2e62 1
+reports/src/test/resources/golden/metrics-list-report.html
+  s_d5a465551da905::t_ee1536094b2e62 1
+reports/src/test/resources/golden/findings-report-empty.html
+  s_d5a465551da905::t_ee1536094b2e62 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "1f539a2b71b8b70838abd69f7c8adb17bc6be15f",
+  "prompts": {},
+  "sessions": {
+    "s_d5a465551da905": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "23405401-2d2c-4a8f-b866-f8b197fe1b31",
+        "model": "claude-fable-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
