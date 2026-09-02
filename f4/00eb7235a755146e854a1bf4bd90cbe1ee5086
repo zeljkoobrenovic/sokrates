@@ -1,0 +1,14 @@
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/ExtensionGroupExtractor.java
+  h_f6c4aeafc1bdc6 167-176,194
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "f400eb7235a755146e854a1bf4bd90cbe1ee5086",
+  "prompts": {},
+  "humans": {
+    "h_f6c4aeafc1bdc6": {
+      "author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
