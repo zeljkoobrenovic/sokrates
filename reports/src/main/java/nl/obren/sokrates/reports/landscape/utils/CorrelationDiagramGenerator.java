@@ -64,6 +64,11 @@ public class CorrelationDiagramGenerator<T> {
         report.addHtmlContent(" <rect width=\"" + width + "\" height=\"" + height + "\" style=\"fill:rgb(200,200,200);stroke-width:1;stroke:rgb(100,100,100)\" />");
         Map<String, String> sameLocationMap = new HashMap<>();
         int count[] = {1};
+        // Hoisted out of the loop: DescriptiveStatistics#getMax() copies its entire backing array
+        // and recomputes the statistic on every call, so calling it once per item turned this into
+        // an O(n^2) operation (huge CPU + garbage-collector pressure) on large histories.
+        double xMax = xStats.getMax();
+        double yMax = yStats.getMax();
         items.forEach(item -> {
             if (count[0] > maxNumberOfPointsOnDiagram) {
                 return;
@@ -71,8 +76,8 @@ public class CorrelationDiagramGenerator<T> {
             double xValue = xValueFunction.applyAsDouble(item);
             double yValue = yValueFunction.applyAsDouble(item);
             if (xValue > 0 && yValue > 0) {
-                double x = getX(xStats.getMax(), xValue);
-                double y = getY(yStats.getMax(), yValue);
+                double x = getX(xMax, xValue);
+                double y = getY(yMax, yValue);
                 String key = (int) x + "::" + (int) y;
                 if (sameLocationMap.containsKey(key)) {
                     return;

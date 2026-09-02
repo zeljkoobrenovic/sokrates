@@ -120,7 +120,7 @@ public class LandscapeAnalyzerScopeFileListsTest {
         writeFileList(dataFolder, configuration.getOther(), "docs/notes.md\t1\n");
 
         File landscapeConfigFile = new File(root, "_sokrates_landscape/config.json");
-        write(landscapeConfigFile, "{\"analysisRoot\": \"" + root.getAbsolutePath() + "\"}");
+        write(landscapeConfigFile, "{\"analysisRoot\": " + jsonString(root.getAbsolutePath()) + "}");
         // The repositories of a landscape live in info.json, next to its config.json.
         write(new File(landscapeConfigFile.getParentFile(), "info.json"),
                 "{\"repositories\": [{\"analysisResultsPath\":"
@@ -153,5 +153,9 @@ public class LandscapeAnalyzerScopeFileListsTest {
 
     private void write(File file, String content) throws IOException {
         FileUtils.write(file, content, StandardCharsets.UTF_8);
+    }
+
+    private String jsonString(String value) {
+        return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
     }
 }
