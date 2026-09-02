@@ -59,6 +59,7 @@ java -jar cli-1.0-jar-with-dependencies.jar generateReports -help
 | `init` | Create a new analysis configuration (`config.json`) from standard + optional custom conventions |
 | `generateReports` | Run the analysis and generate the HTML/JSON reports |
 | `updateConfig` | Fill in missing fields of an existing configuration |
+| `addCustomTab` | Add a custom iframe tab (`-label`, `-iframeLink`) to the report config; a tab with the same label is overwritten |
 | `updateLandscape` | Create/update a landscape report that aggregates multiple analyses |
 | `updateLandscapePeopleConfigByUserName` | Build/update `config-people.json` by grouping contributor emails sharing a display name (userName) under one entry (additive — appends new emails only) |
 | `updatePeopleConfigByUserName` | Single-repository version: build/update `_sokrates/config-people.json` from the repo's `git-history.txt` (run after `extractGitHistory`; no `generateReports` needed) |

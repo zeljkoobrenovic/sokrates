@@ -34,6 +34,10 @@ public class FileHistoryAnalysisConfig {
     // An optional list of regex expression used to detect bots
     private List<String> bots = new ArrayList<>(Arrays.asList(".*\\[bot\\].*", ".*[-]bot[@].*"));
 
+    // Optional: how commit-message trailers (git-commit-trailers.txt) become co-author info and
+    // which co-authors are AI coding agents
+    private CoAuthorsConfig coAuthors = new CoAuthorsConfig();
+
     // If true, contributors IDs (e.g. emails) will be replaced with anonymous IDs (e.g. Contributor 1, Contributor 2)
     private boolean anonymizeContributors = false;
 
@@ -119,6 +123,14 @@ public class FileHistoryAnalysisConfig {
 
     public void setBots(List<String> bots) {
         this.bots = bots;
+    }
+
+    public CoAuthorsConfig getCoAuthors() {
+        return coAuthors;
+    }
+
+    public void setCoAuthors(CoAuthorsConfig coAuthors) {
+        this.coAuthors = coAuthors == null ? new CoAuthorsConfig() : coAuthors;
     }
 
     public List<OperationStatement> getTransformContributorEmails() {

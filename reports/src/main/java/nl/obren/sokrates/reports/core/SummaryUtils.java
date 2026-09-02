@@ -8,6 +8,7 @@ import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
+import org.apache.commons.text.StringEscapeUtils;
 import nl.obren.sokrates.reports.utils.AnimalIcons;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
@@ -504,20 +505,10 @@ public class SummaryUtils {
         report.addContentInDiv("Features of interest:", "font-size: 80%");
         Collections.sort(fileCount, (a, b) -> b.getValue().intValue() - a.getValue().intValue());
         int limit = 10;
-        fileCount.subList(0, fileCount.size() > limit ? limit : fileCount.size()).forEach(concern -> {
-            int value = concern.getValue().intValue();
-            report.addContentInDiv("<b>" + concern.getName() + "</b> " +
-                            "<br><span style='font-size: 85%; color: grey'>" + value + " " + (value == 1 ? "file" : "files") + "",
-                    "text-align: center; font-size: 80%; border: 1px solid grey; display: inline-block; border-radius: 4px; background-color: #f8f8f8; padding: 3px 9px 3px 9px; margin: 3px 2px 8px 2px");
-        });
+        fileCount.subList(0, Math.min(limit, fileCount.size())).forEach(concern -> addFeatureOfInterestCard(report, concern));
         if (fileCount.size() > limit) {
             report.startShowMoreBlockDisappear("", "<div style='vertical-align: middle; font-size: 80%; display: inline-block;'>show all...</div>");
-            fileCount.subList(limit, fileCount.size()).forEach(concern -> {
-                int value = concern.getValue().intValue();
-                report.addContentInDiv("<b>" + concern.getName() + "</b> " +
-                                "<br><span style='font-size: 85%; color: grey'>" + value + " " + (value == 1 ? "file" : "files") + "",
-                        "text-align: center; font-size: 80%; border: 1px solid grey; display: inline-block; border-radius: 4px; background-color: #f8f8f8; padding: 3px 9px 3px 9px; margin: 3px 2px 8px 2px");
-            });
+            fileCount.subList(limit, fileCount.size()).forEach(concern -> addFeatureOfInterestCard(report, concern));
             report.endShowMoreBlockDisappear();
         }
         report.endTableCell();
@@ -526,6 +517,26 @@ public class SummaryUtils {
         report.endTableRow();
     }
 
+
+    // Card style: fixed width and name height so every card is the same size; the name is clamped to two lines with an
+    // ellipsis (the full name is in the title tooltip), so a long concern name can't stretch the row.
+    private static final int FEATURE_CARD_WIDTH = 120;
+    private static final String FEATURE_CARD_STYLE = "text-align: center; font-size: 80%; border: 1px solid grey; display: inline-block; vertical-align: top; "
+            + "box-sizing: border-box; width: " + FEATURE_CARD_WIDTH + "px; border-radius: 4px; background-color: #f8f8f8; padding: 3px 9px 3px 9px; margin: 3px 2px 8px 2px";
+    private static final String FEATURE_CARD_NAME_STYLE = "font-weight: bold; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; "
+            + "-webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; line-height: 1.3em; height: 2.6em";
+
+    static String getFeatureOfInterestCard(String name, int fileCount) {
+        String escapedName = StringEscapeUtils.escapeHtml4(name);
+        return "<div style='" + FEATURE_CARD_STYLE + "' title='" + escapedName + "'>"
+                + "<div style='" + FEATURE_CARD_NAME_STYLE + "'>" + escapedName + "</div>"
+                + "<span style='font-size: 85%; color: grey'>" + fileCount + " " + (fileCount == 1 ? "file" : "files") + "</span>"
+                + "</div>";
+    }
+
+    private void addFeatureOfInterestCard(RichTextReport report, NumericMetric concern) {
+        report.addHtmlContent(getFeatureOfInterestCard(concern.getName(), concern.getValue().intValue()));
+    }
 
     private void summarizeTags(CodeAnalysisResults analysisResults, RichTextReport report) {
         List<FoundTag> tags = analysisResults.getFoundTags();

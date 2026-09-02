@@ -1,5 +1,6 @@
 package nl.obren.sokrates.cli.git;
 
+import nl.obren.sokrates.sourcecode.githistory.CommitTrailer;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,10 +30,32 @@ import java.text.SimpleDateFormat;
 public class GitHistoryExtractor {
     private static final Log LOG = LogFactory.getLog(GitHistoryExtractor.class);
 
+    /**
+     * Writes the commit's message trailers (Co-authored-by etc.), any "Message-Signature:" tool
+     * signature lines from the body, plus a "Committer:" pseudo-trailer (only when the committer
+     * differs from the author) to the trailers sidecar. See
+     * GitHistoryUtils.GIT_COMMIT_TRAILERS_FILE_NAME for the format contract.
+     */
+    private void writeTrailers(Writer trailersWriter, RevCommit rev, String commitId, String authorEmail) throws IOException {
+        for (CommitTrailer trailer : GitHistoryUtils.extractTrailers(rev.getFullMessage())) {
+            String value = trailer.getValue().replaceAll("[\\r\\n]+", " ").trim();
+            trailersWriter.write(commitId + " " + trailer.getKey() + ": " + value + "\n");
+        }
+        for (String signature : GitHistoryUtils.extractMessageSignatures(rev.getFullMessage())) {
+            trailersWriter.write(commitId + " " + GitHistoryUtils.MESSAGE_SIGNATURE_TRAILER_KEY + ": " + signature + "\n");
+        }
+        PersonIdent committer = rev.getCommitterIdent();
+        if (committer != null && !committer.getEmailAddress().equalsIgnoreCase(authorEmail)) {
+            trailersWriter.write(commitId + " " + GitHistoryUtils.COMMITTER_TRAILER_KEY + ": "
+                    + committer.getName() + " <" + committer.getEmailAddress() + ">\n");
+        }
+    }
+
     public void extractGitHistory(File root) {
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
         File gitHistoryFile = new File(root, GitHistoryUtils.GIT_HISTORY_FILE_NAME);
         File gitCommitsFile = new File(root, GitHistoryUtils.GIT_COMMITS_FILE_NAME);
+        File gitTrailersFile = new File(root, GitHistoryUtils.GIT_COMMIT_TRAILERS_FILE_NAME);
         // SimpleDateFormat is not thread-safe, but this loop is single-threaded; hoisting it out
         // of the per-line loop avoids allocating one instance per file change (millions on big repos).
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
@@ -50,6 +73,8 @@ public class GitHistoryExtractor {
                     Files.newOutputStream(gitHistoryFile.toPath()), StandardCharsets.UTF_8), 1 << 16);
                  Writer commitsWriter = new BufferedWriter(new OutputStreamWriter(
                          Files.newOutputStream(gitCommitsFile.toPath()), StandardCharsets.UTF_8), 1 << 16);
+                 Writer trailersWriter = new BufferedWriter(new OutputStreamWriter(
+                         Files.newOutputStream(gitTrailersFile.toPath()), StandardCharsets.UTF_8), 1 << 16);
                  DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE)) {
 
                 // One DiffFormatter reused across all commits (it is repository-scoped). Use the
@@ -101,6 +126,7 @@ public class GitHistoryExtractor {
                     if (count > countBeforeCommit) {
                         String message = rev.getShortMessage().replaceAll("[\\r\\n]+", " ").trim();
                         commitsWriter.write(commitId + " " + message + "\n");
+                        writeTrailers(trailersWriter, rev, commitId, email);
                     }
                 }
             }

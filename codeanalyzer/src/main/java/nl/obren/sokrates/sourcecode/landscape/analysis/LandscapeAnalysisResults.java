@@ -1115,12 +1115,14 @@ public class LandscapeAnalysisResults {
                 contributionTimeSlot.setTimeSlot(timeSlot.getTimeSlot());
                 contributionTimeSlot.setContributorsCount(timeSlot.getContributorsCount());
                 contributionTimeSlot.setCommitsCount(timeSlot.getCommitsCount());
+                contributionTimeSlot.setAiCoAuthoredCommitsCount(timeSlot.getAiCoAuthoredCommitsCount());
                 contributionTimeSlot.addChurn(timeSlot.getLinesAdded(), timeSlot.getLinesDeleted());
                 list.add(contributionTimeSlot);
                 map.put(timeSlot.getTimeSlot(), contributionTimeSlot);
             } else {
                 contributionTimeSlot.setContributorsCount(contributionTimeSlot.getContributorsCount() + timeSlot.getContributorsCount());
                 contributionTimeSlot.setCommitsCount(contributionTimeSlot.getCommitsCount() + timeSlot.getCommitsCount());
+                contributionTimeSlot.setAiCoAuthoredCommitsCount(contributionTimeSlot.getAiCoAuthoredCommitsCount() + timeSlot.getAiCoAuthoredCommitsCount());
                 contributionTimeSlot.addChurn(timeSlot.getLinesAdded(), timeSlot.getLinesDeleted());
             }
         });

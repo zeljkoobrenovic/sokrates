@@ -124,6 +124,18 @@
             font-size: 85%;
         }
 
+        .badge-ai {
+            display: inline-block;
+            font-size: 70%;
+            color: #5b3d99;
+            background-color: #efe8fb;
+            border: 1px solid #d3c3f0;
+            border-radius: 3px;
+            padding: 0 4px;
+            margin-right: 3px;
+            white-space: nowrap;
+        }
+
         .badge-bot {
             display: inline-block;
             font-size: 70%;
@@ -237,7 +249,7 @@
         <div id="left">
             <div style="margin-bottom: 6px">
                 <input id="filter" type="text"
-                       placeholder="search... (use ; for multiple terms, file:<text> to match changed files)"
+                       placeholder="search... (use ; for multiple terms, file:<text> to match changed files, coauthor:<text>, ai:yes|no|<agent>)"
                        style="font-size: 15px; height: 30px; width: 96%; margin-bottom: 6px"
                        onkeyup="updateList()">
                 <div style="white-space: nowrap">
@@ -298,9 +310,16 @@
     commits.forEach((commit, index) => {
         commit.idx = index;
         commit.files = commit.fileIds || [];
+        commit.coAuthors = commit.coAuthors || [];
+        commit.aiAgents = commit.coAuthors.filter(a => a.agent).map(a => a.agent);
+        commit.coAuthorSearch = commit.coAuthors.map(a => (a.name || '') + ' ' + (a.email || '') + ' ' + (a.agent || '')).join(' ').toLowerCase();
         commit.search = (commit.sha + ' ' + (commit.email || '') + ' ' + (commit.userName || '') + ' '
-            + commit.date + ' ' + (commit.message || '') + (commit.bot ? ' bot' : '')).toLowerCase();
+            + commit.date + ' ' + (commit.message || '') + (commit.bot ? ' bot' : '') + ' ' + commit.coAuthorSearch).toLowerCase();
     });
+
+    // Co-authors come from the optional git-commit-trailers.txt sidecar (newer extractions only);
+    // the column is shown only when at least one commit has one.
+    const hasCoAuthors = commits.some(c => c.coAuthors.length);
 
     // Commit messages come from the optional git-commits.txt sidecar (newer extractions only);
     // for older histories no commit has one and the message column is hidden entirely.
@@ -322,6 +341,7 @@
         sha: {value: c => c.sha || '', type: 'string', dir: 1},
         message: {value: c => (c.message || '').toLowerCase(), type: 'string', dir: 1},
         author: {value: c => (c.userName || c.email || '').toLowerCase(), type: 'string', dir: 1},
+        coAuthors: {value: c => c.coAuthors.map(a => a.agent || a.name || a.email).join(', ').toLowerCase(), type: 'string', dir: 1},
         filesCount: {value: c => c.files.length, type: 'number', dir: -1},
         added: {value: c => c.linesAdded || 0, type: 'number', dir: -1},
         deleted: {value: c => c.linesDeleted || 0, type: 'number', dir: -1}
@@ -356,11 +376,13 @@
             + label + '<span class="sort-arrow">' + arrow + '</span></td>';
     }
 
-    // A search can contain several terms separated by ";". Plain terms match sha/author/date and
-    // are a UNION; each "file:<text>" term is its own AND constraint requiring the commit to have
-    // changed a file whose path contains the text (mirrors the landscape filter syntax).
+    // A search can contain several terms separated by ";". Plain terms match sha/author/date/
+    // message/co-authors and are a UNION; each special term is its own AND constraint (mirrors the
+    // landscape filter syntax): "file:<text>" requires a changed file whose path contains the
+    // text; "coauthor:<text>" requires a co-author whose name/email/agent contains the text;
+    // "ai:yes" / "ai:no" requires (no) AI-agent co-author, "ai:<agent>" that specific agent.
     function parseFilters() {
-        const result = {plain: [], file: []};
+        const result = {plain: [], file: [], coauthor: [], ai: []};
         document.getElementById('filter').value.toLowerCase().trim()
             .split(';').map(s => s.trim()).filter(s => s.length)
             .forEach(term => {
@@ -368,6 +390,16 @@
                     const text = term.substring('file:'.length).trim();
                     if (text.length) {
                         result.file.push(text);
+                    }
+                } else if (term.indexOf('coauthor:') === 0) {
+                    const text = term.substring('coauthor:'.length).trim();
+                    if (text.length) {
+                        result.coauthor.push(text);
+                    }
+                } else if (term.indexOf('ai:') === 0) {
+                    const text = term.substring('ai:'.length).trim();
+                    if (text.length) {
+                        result.ai.push(text);
                     }
                 } else {
                     result.plain.push(term);
@@ -386,10 +418,35 @@
                 return false;
             }
         }
+        for (let i = 0; i < filters.coauthor.length; i++) {
+            if (!commit.coAuthorSearch.includes(filters.coauthor[i])) {
+                return false;
+            }
+        }
+        for (let i = 0; i < filters.ai.length; i++) {
+            const text = filters.ai[i];
+            const hasAi = commit.aiAgents.length > 0;
+            if (text === 'yes' || text === 'true') {
+                if (!hasAi) return false;
+            } else if (text === 'no' || text === 'false') {
+                if (hasAi) return false;
+            } else if (!commit.aiAgents.some(a => a.toLowerCase().includes(text))) {
+                return false;
+            }
+        }
         if (filters.plain.length && !filters.plain.some(t => commit.search.includes(t))) {
             return false;
         }
         return true;
+    }
+
+    function coAuthorsHtml(commit) {
+        return commit.coAuthors.map(a => {
+            if (a.agent) {
+                return '<span class="badge-ai" title="' + escapeHtml((a.name || '') + (a.email ? ' <' + a.email + '>' : '')) + '">🤖 ' + escapeHtml(a.agent) + '</span>';
+            }
+            return '<span title="' + escapeHtml(a.email || '') + '">' + escapeHtml(a.name || a.email || '') + '</span>';
+        }).join(', ');
     }
 
     const selected = new Set();
@@ -445,6 +502,9 @@
             html += sortHeader('message', 'message', 'text-align: left');
         }
         html += sortHeader('author', 'author', 'text-align: left');
+        if (hasCoAuthors) {
+            html += sortHeader('coAuthors', 'co-authors', 'text-align: left');
+        }
         html += sortHeader('filesCount', 'files', 'text-align: right');
         html += sortHeader('added', '+lines', 'text-align: right');
         html += sortHeader('deleted', '−lines', 'text-align: right');
@@ -469,6 +529,10 @@
             html += '<td style="max-width: 220px; text-overflow: ellipsis" title="' + escapeHtml(commit.email || '') + '">'
                 + escapeHtml(commit.userName || commit.email || '')
                 + (commit.bot ? '<span class="badge-bot">bot</span>' : '') + '</td>';
+            if (hasCoAuthors) {
+                html += '<td style="max-width: 200px; text-overflow: ellipsis">'
+                    + (commit.coAuthors.length ? coAuthorsHtml(commit) : '<span style="color: lightgrey">-</span>') + '</td>';
+            }
             html += '<td style="text-align: right" title="' + filesTooltip(commit) + '">'
                 + commit.files.length.toLocaleString('en-US') + '</td>';
             html += '<td style="text-align: right; color: #1a9641">'
@@ -894,7 +958,7 @@
     (function init() {
         // The message column needs more horizontal room; widen the list pane when present,
         // but never past the 50% cap (see the #left CSS).
-        if (hasMessages) {
+        if (hasMessages || hasCoAuthors) {
             document.getElementById('left').style.width = '50%';
         }
         if (totalCommitsCount > commits.length) {

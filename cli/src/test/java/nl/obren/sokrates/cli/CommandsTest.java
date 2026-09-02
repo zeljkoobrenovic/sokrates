@@ -62,4 +62,14 @@ public class CommandsTest {
         assertEquals("updatePeopleConfigByUserName", Commands.UPDATE_PEOPLE_CONFIG_BY_USER_NAME);
         assertEquals("extractGitHistory", Commands.EXTRACT_GIT_HISTORY);
     }
+
+    @Test
+    public void addCustomTabOptionsExposeExpectedFlags() {
+        Options options = commands.getAddCustomTabOptions();
+
+        assertTrue(options.hasOption(Commands.ARG_CONF_FILE));
+        assertTrue(options.hasOption(Commands.ARG_LABEL));
+        assertTrue(options.hasOption(Commands.ARG_IFRAME_LINK));
+        assertTrue(options.hasOption(Commands.ARG_HELP));
+    }
 }

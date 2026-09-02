@@ -5,6 +5,7 @@ import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
+import nl.obren.sokrates.sourcecode.githistory.CoAuthor;
 import nl.obren.sokrates.sourcecode.githistory.FileUpdate;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import org.apache.commons.io.FileUtils;
@@ -52,8 +53,9 @@ public class CommitsExplorerGenerators {
             List<CommitFileExport> currentFiles = collectCurrentFiles(codeAnalysisResults);
             List<FileUpdate> fileUpdates = readFileUpdates(codeAnalysisResults, sokratesConfigFolder);
             Map<String, String> messagesBySha = readCommitMessages(codeAnalysisResults, sokratesConfigFolder);
+            Map<String, List<CoAuthor>> coAuthorsBySha = readCoAuthors(codeAnalysisResults, sokratesConfigFolder);
 
-            CommitsExplorerData data = buildData(currentFiles, fileUpdates, messagesBySha, MAX_COMMITS);
+            CommitsExplorerData data = buildData(currentFiles, fileUpdates, messagesBySha, coAuthorsBySha, MAX_COMMITS);
 
             String commitsExplorer = new ExplorerTemplate().render("commits-explorer.html", data);
             File folder = new File(reportsFolder, "explorers");
@@ -127,12 +129,30 @@ public class CommitsExplorerGenerators {
     }
 
     /**
+     * The co-authors per sha resolved from the optional git-commit-trailers.txt sidecar next to
+     * git-history.txt through fileHistoryAnalysis.coAuthors; empty for older extractions.
+     */
+    private Map<String, List<CoAuthor>> readCoAuthors(CodeAnalysisResults results, File sokratesConfigFolder) {
+        if (sokratesConfigFolder == null) {
+            return new HashMap<>();
+        }
+        FileHistoryAnalysisConfig historyConfig = results.getCodeConfiguration().getFileHistoryAnalysis();
+        return GitHistoryUtils.getCoAuthorsBySha(historyConfig.getFilesHistoryFile(sokratesConfigFolder), historyConfig);
+    }
+
+    static CommitsExplorerData buildData(List<CommitFileExport> currentFiles, List<FileUpdate> fileUpdates,
+                                         Map<String, String> messagesBySha, int maxCommits) {
+        return buildData(currentFiles, fileUpdates, messagesBySha, new HashMap<>(), maxCommits);
+    }
+
+    /**
      * Groups file updates by commit sha, sorts commits newest first, caps them, and resolves each
      * commit's paths against the current files (unmatched paths become "deleted" file entries,
      * added only when a kept commit references them). Package-private for testing.
      */
     static CommitsExplorerData buildData(List<CommitFileExport> currentFiles, List<FileUpdate> fileUpdates,
-                                         Map<String, String> messagesBySha, int maxCommits) {
+                                         Map<String, String> messagesBySha, Map<String, List<CoAuthor>> coAuthorsBySha,
+                                         int maxCommits) {
         // Size proxy for files no longer in the codebase (their LOC is unknowable): the largest
         // single-commit lines-added/deleted seen for the path — the deletion commit removes the
         // whole file, so its linesDeleted is roughly the file's final size. Keeps the deleted
@@ -155,6 +175,12 @@ public class CommitsExplorerGenerators {
                 commit.setUserName(update.getUserName());
                 commit.setBot(update.isBot());
                 commit.setMessage(messagesBySha.getOrDefault(sha, ""));
+                List<CoAuthor> coAuthors = coAuthorsBySha.get(sha);
+                if (coAuthors != null) {
+                    for (CoAuthor coAuthor : coAuthors) {
+                        commit.getCoAuthors().add(new CoAuthorExport(coAuthor));
+                    }
+                }
                 commitsBySha.put(sha, commit);
                 pathsBySha.put(sha, new LinkedHashSet<>());
             }

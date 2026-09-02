@@ -538,6 +538,7 @@ public class ScopingConventions {
 
         ignoredFilesConventions.add(new Convention(".*/node_modules/.*", "", "Node dependencies"));
         ignoredFilesConventions.add(new Convention(".*/git[-]history[.]txt", "", "Git history"));
+        ignoredFilesConventions.add(new Convention(".*/git]-]commit[-]trailers[.]txt", "", "Git history trailers"));
         ignoredFilesConventions.add(new Convention(".*/git[-]merges[.]txt", "", "Git merges"));
         ignoredFilesConventions.add(new Convention(".*/bower_components/.*", "", "Bower components"));
 

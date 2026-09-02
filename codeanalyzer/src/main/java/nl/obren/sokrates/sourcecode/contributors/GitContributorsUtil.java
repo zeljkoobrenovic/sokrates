@@ -166,6 +166,9 @@ public class GitContributorsUtil {
                 list.add(contributionTimeSlot);
             }
             contributionTimeSlot.incrementCommitsCount();
+            if (authorCommit.hasAiCoAuthor()) {
+                contributionTimeSlot.incrementAiCoAuthoredCommitsCount();
+            }
             contributionTimeSlot.setContributorsCount(ids.size());
             contributionTimeSlot.incrementFileUpdatesCount(authorCommit.getFileUpdatesCount());
             contributionTimeSlot.addChurn(authorCommit.getLinesAdded(), authorCommit.getLinesDeleted());

@@ -20,6 +20,8 @@ import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
+import nl.obren.sokrates.sourcecode.core.CustomTab;
+import org.apache.commons.text.StringEscapeUtils;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
@@ -144,6 +146,10 @@ public class ReportFileExporter {
         indexReport.addTab("commits-explorer", "Commits", false);
         indexReport.addTab("visuals", "Visuals", false);
         indexReport.addTab("data", "Data", false);
+        List<CustomTab> customTabs = getCustomTabs(analysisResults);
+        for (int i = 0; i < customTabs.size(); i++) {
+            indexReport.addTab(customTabId(i), StringEscapeUtils.escapeHtml4(customTabs.get(i).getLabel()), false);
+        }
         indexReport.endDiv();
 
         indexReport.startTabContentSection("overview", true);
@@ -220,6 +226,13 @@ public class ReportFileExporter {
 
         indexReport.endTabContentSection();
 
+        for (int i = 0; i < customTabs.size(); i++) {
+            indexReport.startTabContentSection(customTabId(i), false);
+            indexReport.addLineBreak();
+            indexReport.addHtmlContent(customTabIframe(customTabs.get(i)));
+            indexReport.endTabContentSection();
+        }
+
         indexReport.startTabContentSection("commits", false);
 
         if (contributorsAnalysisResults.getCommitsCount() > 0) {
@@ -251,8 +264,13 @@ public class ReportFileExporter {
             ContributorsReportUtils.SCOPE_LABELS.forEach((scope, label) -> {
                 List<ContributionTimeSlot> perYear = contributorsAnalysisResults.getContributorsPerYearByScope().get(scope);
                 if (perYear != null && !perYear.isEmpty()) {
+                    // Like the Overview tab but with the wider window set (30 days … all time), every window
+                    // as a leading total column, all in the icon tooltips, and each metric icon linking to its
+                    // detailed report.
+                    ContributorsReportUtils.ActivitySummary summary = ContributorsReportUtils.buildActivitySummary(contributorsAnalysisResults, scope,
+                            ContributorsReportUtils.ACTIVITY_WINDOW_DAYS, ContributorsReportUtils.ACTIVITY_WINDOW_DAYS.length);
                     scopePanels.put(label, () -> {
-                        ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, perYear, 20, true, true, 8, fade);
+                        ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, perYear, 20, true, true, 8, fade, summary);
                         addPerMonthWeekDayDetails(indexReport, contributorsAnalysisResults,
                                 contributorsAnalysisResults.getContributorsPerMonthByScope().getOrDefault(scope, new java.util.ArrayList<>()),
                                 contributorsAnalysisResults.getContributorsPerWeekByScope().getOrDefault(scope, new java.util.ArrayList<>()),
@@ -260,8 +278,10 @@ public class ReportFileExporter {
                     });
                 }
             });
+            ContributorsReportUtils.ActivitySummary allSummary = ContributorsReportUtils.buildActivitySummary(contributorsAnalysisResults, null,
+                    ContributorsReportUtils.ACTIVITY_WINDOW_DAYS, ContributorsReportUtils.ACTIVITY_WINDOW_DAYS.length);
             scopePanels.put("All", () -> {
-                ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsAnalysisResults.getContributorsPerYear(), 20, true, true, 8, fade);
+                ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsAnalysisResults.getContributorsPerYear(), 20, true, true, 8, fade, allSummary);
                 addPerMonthWeekDayDetails(indexReport, contributorsAnalysisResults,
                         contributorsAnalysisResults.getContributorsPerMonth(),
                         contributorsAnalysisResults.getContributorsPerWeek(),
@@ -394,8 +414,8 @@ public class ReportFileExporter {
 
         boolean fade = contributorsAnalysisResults.getContributors().stream().noneMatch(c -> !c.isBot() && c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS));
 
-        // The per-year chart now carries its own leading summary columns (30 days / 90 days / all time)
-        // as real table cells aligned to each metric row — no more pixel-margin-aligned cards. The scope
+        // The per-year chart shows the summary windows (30 days / 90 days / all time) in each metric icon's
+        // hover tooltip, and each icon links to its detailed report (no leading summary columns). The scope
         // toggle swaps the whole panel (per-scope language icons + chart-with-summary) per scope. Build
         // chart panels (scopes present, then "All" last); each gets an ActivitySummary for its scope and
         // its own language icons (that scope's aspect extensions) rendered inside the panel.
@@ -1177,6 +1197,24 @@ public class ReportFileExporter {
             indexReport.endDiv();
         }
         indexReport.endDiv();
+    }
+
+    static List<CustomTab> getCustomTabs(CodeAnalysisResults analysisResults) {
+        List<CustomTab> tabs = new ArrayList<>();
+        CodeConfiguration configuration = analysisResults.getCodeConfiguration();
+        if (configuration != null && configuration.getCustomTabs() != null) {
+            configuration.getCustomTabs().stream().filter(tab -> tab != null && tab.isValid()).forEach(tabs::add);
+        }
+        return tabs;
+    }
+
+    static String customTabId(int index) {
+        // Ids must not clash with the built-in tab ids (overview, quality, commits, files, ...)
+        return "custom-tab-" + (index + 1);
+    }
+
+    static String customTabIframe(CustomTab tab) {
+        return "<iframe src='" + StringEscapeUtils.escapeHtml4(tab.getIframeLink().trim()) + "' style='width: 100%; border: none; height: calc(100vh - 220px); overflow: hidden; margin-top: -12px'></iframe>";
     }
 
     private static void addExplorerFragment(RichTextReport indexReport, String explorer[]) {

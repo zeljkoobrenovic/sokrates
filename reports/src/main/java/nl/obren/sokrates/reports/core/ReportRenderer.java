@@ -58,7 +58,7 @@ public class ReportRenderer {
         content.append("<tr>");
 
         content.append("<td style='border: none'>");
-        content.append("<div style='margin-top: 15px; padding-bottom: 15px; white-space: nowrap; overflow: hidden;'>");
+        content.append("<div style='margin-top: 15px; padding-bottom: 28px; white-space: nowrap; overflow: hidden;'>");
 
         if (StringUtils.isNotBlank(parentUrl)) {
             content.append(parentUrlHtml);

@@ -242,7 +242,7 @@ public class ConcernsReportGenerator {
                     filesFragment += " | <u><a href='#' onclick=\"return downloadDataFile('text/aspect_" + fileListPath + "_found_text_per_file.txt')\">found text per file</a></u>";
                 }
                 if (concern.getFoundTextList().size() > 0) {
-                    filesFragment += " | <u><a href='#' onclick=\"return downloadDataFile('text/aspect_" + fileListPath + "_found_text_per_file.txt')\">found text per file</a></u>";
+                    filesFragment += " | <u><a href='#' onclick=\"return downloadDataFile('text/aspect_" + fileListPath + "_found_text.txt')\">found text</a></u>";
                 }
             }
         }

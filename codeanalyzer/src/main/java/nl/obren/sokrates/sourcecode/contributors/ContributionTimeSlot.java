@@ -17,6 +17,9 @@ public class ContributionTimeSlot {
     // git-history.txt. 0 for history files without churn data (older exports).
     private int linesAdded;
     private int linesDeleted;
+    // Commits in this time slot with at least one AI-agent co-author (from commit trailers, see
+    // CoAuthorsConfig). 0 for histories without the trailers sidecar.
+    private int aiCoAuthoredCommitsCount;
 
     private RiskDistributionStats fileUpdatesCountStats;
 
@@ -63,6 +66,19 @@ public class ContributionTimeSlot {
     @JsonIgnore
     public void incrementCommitsCount() {
         this.commitsCount += 1;
+    }
+
+    public int getAiCoAuthoredCommitsCount() {
+        return aiCoAuthoredCommitsCount;
+    }
+
+    public void setAiCoAuthoredCommitsCount(int aiCoAuthoredCommitsCount) {
+        this.aiCoAuthoredCommitsCount = aiCoAuthoredCommitsCount;
+    }
+
+    @JsonIgnore
+    public void incrementAiCoAuthoredCommitsCount() {
+        this.aiCoAuthoredCommitsCount += 1;
     }
 
     public int getFileUpdatesCount() {
