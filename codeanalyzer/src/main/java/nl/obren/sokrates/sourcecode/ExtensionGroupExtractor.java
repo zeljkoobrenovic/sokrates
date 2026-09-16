@@ -11,10 +11,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.util.*;
 
 public class ExtensionGroupExtractor {
     private static final Log LOG = LogFactory.getLog(ExtensionGroupExtractor.class);
+
+    private int skippedSymbolicLinksCount = 0;
 
     // based on https://raw.githubusercontent.com/github/linguist/master/lib/linguist/languages.yml
     private static final List<String> knownSourceExtensions = Arrays.asList(
@@ -155,13 +159,44 @@ public class ExtensionGroupExtractor {
     }
 
     public void extractExtensionsInfo(File root) {
-        if (root.isDirectory()) {
-            for (File file : root.listFiles()) {
-                extractExtensionsInfo(file);
+        skippedSymbolicLinksCount = 0;
+        extractExtensionsInfo(root, true);
+        if (skippedSymbolicLinksCount > 0) {
+            LOG.info("Did not follow " + skippedSymbolicLinksCount + " symbolic link(s) under "
+                    + root.getAbsolutePath() + " while collecting file extensions.");
+        }
+    }
+
+    private void extractExtensionsInfo(File file, boolean isAnalysisRoot) {
+        if (!isAnalysisRoot && isSymbolicLink(file)) {
+            skippedSymbolicLinksCount += 1;
+            return;
+        }
+        if (file.isDirectory()) {
+            for (File child : file.listFiles()) {
+                extractExtensionsInfo(child, false);
             }
         } else {
-            updateExtensionInfo(root);
+            updateExtensionInfo(file);
         }
+    }
+
+    /**
+     * Not every path {@link File} accepts can be turned into a {@link java.nio.file.Path}:
+     * {@code SourceFile.relativize} catches {@link InvalidPathException} on files this walk had
+     * already collected. Such a path cannot be tested for a link, so it is walked as before rather
+     * than dropped.
+     */
+    static boolean isSymbolicLink(File file) {
+        try {
+            return Files.isSymbolicLink(file.toPath());
+        } catch (InvalidPathException e) {
+            return false;
+        }
+    }
+
+    int getSkippedSymbolicLinksCount() {
+        return skippedSymbolicLinksCount;
     }
 
     public static String getPureExtension(String path) {

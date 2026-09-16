@@ -10,11 +10,17 @@ import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.util.*;
 
 public class SourceCodeFiles {
+    private static final Log LOG = LogFactory.getLog(SourceCodeFiles.class);
+
     private List<SourceFile> allFiles = new ArrayList<>();
     private List<SourceFile> filesInBroadScope = new ArrayList<>();
     private File root;
@@ -23,6 +29,8 @@ public class SourceCodeFiles {
     private Map<String, IgnoredFilesGroup> ignoredFilesGroups = new HashMap<>();
     @JsonIgnore
     private List<SourceFile> filesExcludedByExtension = new ArrayList<>();
+    @JsonIgnore
+    private int skippedSymbolicLinksCount = 0;
 
     public SourceCodeFiles() {
     }
@@ -46,9 +54,14 @@ public class SourceCodeFiles {
     private void loadAllFiles(File root, ProgressFeedback progressFeedback) {
         this.progressFeedback = progressFeedback;
         allFiles.clear();
+        skippedSymbolicLinksCount = 0;
         progressFeedback.start();
-        addFile(root);
+        addFile(root, true);
         progressFeedback.end();
+        if (skippedSymbolicLinksCount > 0) {
+            LOG.info("Did not follow " + skippedSymbolicLinksCount + " symbolic link(s) under "
+                    + root.getAbsolutePath() + "; found " + allFiles.size() + " file(s).");
+        }
     }
 
     public List<SourceFile> getSourceFiles(NamedSourceCodeAspect aspect) {
@@ -218,11 +231,15 @@ public class SourceCodeFiles {
         this.filesInBroadScope = filesInBroadScope;
     }
 
-    private void addFile(File file) {
+    private void addFile(File file, boolean isAnalysisRoot) {
+        if (!isAnalysisRoot && isSymbolicLink(file)) {
+            skippedSymbolicLinksCount += 1;
+            return;
+        }
         if (file.isDirectory()) {
             if (isNotVCSFolder(file)) {
                 for (File child : file.listFiles()) {
-                    addFile(child);
+                    addFile(child, false);
                 }
             }
         } else {
@@ -241,6 +258,24 @@ public class SourceCodeFiles {
         });
 
         return map;
+    }
+
+    /**
+     * Not every path {@link File} accepts can be turned into a {@link java.nio.file.Path}:
+     * {@code SourceFile.relativize} catches {@link InvalidPathException} on files this walk had
+     * already collected. Such a path cannot be tested for a link, so it is walked as before rather
+     * than dropped.
+     */
+    static boolean isSymbolicLink(File file) {
+        try {
+            return Files.isSymbolicLink(file.toPath());
+        } catch (InvalidPathException e) {
+            return false;
+        }
+    }
+
+    int getSkippedSymbolicLinksCount() {
+        return skippedSymbolicLinksCount;
     }
 
     boolean isNotVCSFolder(File folder) {
