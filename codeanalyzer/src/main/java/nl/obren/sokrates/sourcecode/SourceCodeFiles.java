@@ -10,12 +10,16 @@ import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class SourceCodeFiles {
@@ -30,7 +34,12 @@ public class SourceCodeFiles {
     @JsonIgnore
     private List<SourceFile> filesExcludedByExtension = new ArrayList<>();
     @JsonIgnore
-    private int skippedSymbolicLinksCount = 0;
+    private List<SymbolicLink> skippedSymbolicLinks = new ArrayList<>();
+    // Resolved once per run rather than per link: a tree can hold tens of thousands of links, and
+    // canonicalising the root is a syscall each time. Null when the root cannot be canonicalised,
+    // which makes every link classify as outside.
+    @JsonIgnore
+    private Path canonicalRoot;
 
     public SourceCodeFiles() {
     }
@@ -54,12 +63,13 @@ public class SourceCodeFiles {
     private void loadAllFiles(File root, ProgressFeedback progressFeedback) {
         this.progressFeedback = progressFeedback;
         allFiles.clear();
-        skippedSymbolicLinksCount = 0;
+        skippedSymbolicLinks.clear();
+        canonicalRoot = canonicalPathOf(root);
         progressFeedback.start();
         addFile(root, true);
         progressFeedback.end();
-        if (skippedSymbolicLinksCount > 0) {
-            LOG.info("Did not follow " + skippedSymbolicLinksCount + " symbolic link(s) under "
+        if (skippedSymbolicLinks.size() > 0) {
+            LOG.info("Did not follow " + skippedSymbolicLinks.size() + " symbolic link(s) under "
                     + root.getAbsolutePath() + "; found " + allFiles.size() + " file(s).");
         }
     }
@@ -233,7 +243,7 @@ public class SourceCodeFiles {
 
     private void addFile(File file, boolean isAnalysisRoot) {
         if (!isAnalysisRoot && isSymbolicLink(file)) {
-            skippedSymbolicLinksCount += 1;
+            skippedSymbolicLinks.add(describeSymbolicLink(file));
             return;
         }
         if (file.isDirectory()) {
@@ -274,8 +284,96 @@ public class SourceCodeFiles {
         }
     }
 
+    /**
+     * Describes a link the walk is about to skip. Nothing here may throw: this runs inside the walk,
+     * so an escaping exception would abort the whole analysis - strictly worse than the plain
+     * counter it replaced, which could not fail. A link whose details cannot be worked out is still
+     * worth naming, so the fallback keeps the path and gives up only on the rest.
+     */
+    private SymbolicLink describeSymbolicLink(File file) {
+        try {
+            String target = linkTarget(file);
+            return new SymbolicLink(relativePath(file), target, pointsInsideRoot(file, target));
+        } catch (RuntimeException e) {
+            return new SymbolicLink(file.getPath(), "", false);
+        }
+    }
+
+    private String relativePath(File file) {
+        try {
+            return Paths.get(root.getPath()).relativize(Paths.get(file.getPath())).toString();
+        } catch (IllegalArgumentException e) {
+            // Covers InvalidPathException, and relativize's own refusal when the two paths cannot
+            // be expressed relative to one another.
+            return file.getPath();
+        }
+    }
+
+    /**
+     * The target as written on disk, so a relative link stays relative. Resolving it here would
+     * hide the form the reader recognises from their own repository.
+     */
+    private String linkTarget(File file) {
+        try {
+            return Files.readSymbolicLink(file.toPath()).toString();
+        } catch (IOException | InvalidPathException e) {
+            return "";
+        }
+    }
+
+    /**
+     * Answers where the link <em>points</em>, which is not the same as whether anything is measured
+     * there: a link pointing inside the root at a target that does not exist still counts as
+     * pointing inside. The report says so in those words rather than promising the code was
+     * measured under its real path.
+     *
+     * <p>Canonicalises the link's <em>target</em>, not the link itself. Canonicalising the link
+     * resolves it only while the target exists; for a dangling link it yields the link's own path,
+     * so every broken link anywhere would look like it pointed inside.
+     *
+     * <p>{@code getCanonicalFile} rather than {@code Path.toRealPath}: it resolves the part of the
+     * path that exists and leaves the rest, so a target that was never created still classifies
+     * instead of throwing. A relative target is resolved against the link's own directory - not
+     * against the root, which would misplace any link below the top level.
+     *
+     * <p>A link whose target cannot be read at all is reported as outside: with no target there is
+     * nothing to place inside the tree.
+     */
+    // Package-private: the blank-target branch cannot be reached from a real file system (it needs
+    // readSymbolicLink to fail), and a branch the test environment cannot reach is an untested one.
+    boolean pointsInsideRoot(File file, String target) {
+        if (StringUtils.isBlank(target) || canonicalRoot == null) {
+            return false;
+        }
+        File targetFile = new File(target);
+        if (!targetFile.isAbsolute()) {
+            targetFile = new File(file.getParentFile(), target);
+        }
+        Path canonicalTarget = canonicalPathOf(targetFile);
+        // startsWith on Path compares whole name elements, so a sibling "repo-backup" is not
+        // mistaken for something inside "repo".
+        return canonicalTarget != null && canonicalTarget.startsWith(canonicalRoot);
+    }
+
+    private Path canonicalPathOf(File file) {
+        try {
+            return file.getCanonicalFile().toPath();
+        } catch (IOException | RuntimeException e) {
+            return null;
+        }
+    }
+
     int getSkippedSymbolicLinksCount() {
-        return skippedSymbolicLinksCount;
+        return skippedSymbolicLinks.size();
+    }
+
+    /**
+     * A copy: {@code load} clears the internal list, so handing out the live one would let a
+     * reload silently empty a results object that already holds it.
+     */
+    @JsonIgnore
+    public List<SymbolicLink> getSkippedSymbolicLinks() {
+        return new ArrayList<>(skippedSymbolicLinks);
     }
 
     boolean isNotVCSFolder(File folder) {

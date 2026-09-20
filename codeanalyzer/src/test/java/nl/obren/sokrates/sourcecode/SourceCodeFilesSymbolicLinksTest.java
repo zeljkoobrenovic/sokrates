@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
@@ -122,6 +123,148 @@ public class SourceCodeFilesSymbolicLinksTest {
         sourceCodeFiles.load(root, new ProgressFeedback());
 
         assertEquals(1, sourceCodeFiles.getSkippedSymbolicLinksCount());
+    }
+
+    @Test
+    public void aLinkInsideTheAnalysisRootIsRecordedAsInside() throws IOException {
+        // The alias case: the files behind this link are still measured, under their real path.
+        // A reader who sees it in the report should not go looking for missing code.
+        File root = directory("repo");
+        write(new File(root, "src/a.js"), "function f() { return 1; }");
+        link(new File(root, "vendor"), new File(root, "src").toPath());
+
+        SymbolicLink link = onlySkippedLinkUnder(root);
+
+        assertEquals("vendor", link.getPath().replace(File.separator, "/"));
+        assertTrue(link.getTarget().replace(File.separator, "/").endsWith("repo/src"), link.getTarget());
+        assertTrue(link.isInsideAnalysisRoot());
+    }
+
+    @Test
+    public void aLinkOutsideTheAnalysisRootIsRecordedAsOutside() throws IOException {
+        // The population this reporting serves: nothing behind this link is measured anywhere, so
+        // the report's file count is smaller than the checkout with no other trace of why.
+        File outside = directory("outside");
+        write(new File(outside, "b.js"), "function g() { return 2; }");
+        File root = directory("repo");
+        link(new File(root, "external"), outside.toPath());
+
+        SymbolicLink link = onlySkippedLinkUnder(root);
+
+        assertEquals("external", link.getPath().replace(File.separator, "/"));
+        assertFalse(link.isInsideAnalysisRoot());
+    }
+
+    @Test
+    public void aRelativeTargetIsRecordedAsWrittenOnDisk() throws IOException {
+        // The CLAUDE.md -> AGENTS.md shape, and the reason the target is not resolved before it is
+        // recorded: an absolute path here would not match what the reader finds in their own tree.
+        File root = directory("repo");
+        write(new File(root, "AGENTS.md"), "# agents");
+        link(new File(root, "CLAUDE.md"), Path.of("AGENTS.md"));
+
+        SymbolicLink link = onlySkippedLinkUnder(root);
+
+        assertEquals("CLAUDE.md", link.getPath().replace(File.separator, "/"));
+        assertEquals("AGENTS.md", link.getTarget());
+        assertTrue(link.isInsideAnalysisRoot());
+    }
+
+    @Test
+    public void aDanglingLinkIsStillRecorded() throws IOException {
+        // Resolving with Path.toRealPath would throw on a link whose target was never created, and
+        // a link dropped here is one the report cannot explain. This one points out of the tree, so
+        // it is reported as pointing outside.
+        File root = directory("repo");
+        link(new File(root, "gone"), new File(tmp.toFile(), "never-created").toPath());
+
+        SymbolicLink link = onlySkippedLinkUnder(root);
+
+        assertEquals("gone", link.getPath().replace(File.separator, "/"));
+        assertFalse(link.isInsideAnalysisRoot());
+    }
+
+    @Test
+    public void aDanglingLinkPointingIntoTheTreeIsReportedAsPointingInside() throws IOException {
+        // The flag says where the path LEADS, not that anything is measured there - the reason the
+        // report words it that way. docs/latest -> ../build/site with build/ never generated is the
+        // real shape. Pinned in both directions so the answer is a decision, not an accident.
+        File root = directory("repo");
+        write(new File(root, "docs/index.md"), "# docs");
+        link(new File(root, "docs/latest"), Path.of("../build/site"));
+
+        SymbolicLink link = onlySkippedLinkUnder(root);
+
+        assertEquals("docs/latest", link.getPath().replace(File.separator, "/"));
+        assertTrue(link.isInsideAnalysisRoot());
+    }
+
+    @Test
+    public void aRelativeTargetIsResolvedAgainstTheLinksOwnDirectory() throws IOException {
+        // Resolving against the ROOT instead is indistinguishable for a link at the top level,
+        // where the two are the same directory. This link sits two levels down and its target has
+        // to climb exactly that far back: correct resolution lands on repo/src, root-relative
+        // resolution climbs out of the tree entirely and would report it as pointing outside.
+        File root = directory("repo");
+        write(new File(root, "src/a.js"), "function a() { return 1; }");
+        write(new File(root, "tools/bin/keep.js"), "function k() { return 2; }");
+        link(new File(root, "tools/bin/vendored"), Path.of("../../src"));
+
+        SymbolicLink link = onlySkippedLinkUnder(root);
+
+        assertEquals("tools/bin/vendored", link.getPath().replace(File.separator, "/"));
+        assertEquals("../../src", link.getTarget());
+        assertTrue(link.isInsideAnalysisRoot(), "../../src from tools/bin is repo/src");
+    }
+
+    @Test
+    public void aSiblingWhoseNameStartsWithTheRootsNameIsNotInside() throws IOException {
+        // Why the comparison is Path.startsWith and not a string prefix: "repo-backup" begins with
+        // "repo" as text, but shares no whole path element with it.
+        File sibling = directory("repo-backup");
+        write(new File(sibling, "b.js"), "function b() { return 2; }");
+        File root = directory("repo");
+        link(new File(root, "backup"), sibling.toPath());
+
+        assertFalse(onlySkippedLinkUnder(root).isInsideAnalysisRoot());
+    }
+
+    @Test
+    public void aLinkWhoseTargetCannotBeReadDoesNotPointInside() throws IOException {
+        // Reached only when readSymbolicLink itself fails, which a real file system will not do on
+        // demand - so the classifier is called directly rather than left as an unexercised branch.
+        // Without the guard the empty target resolves to the link's own directory, which is inside.
+        File root = directory("repo");
+        write(new File(root, "a.js"), "function a() { return 1; }");
+
+        SourceCodeFiles sourceCodeFiles = new SourceCodeFiles();
+        sourceCodeFiles.load(root, new ProgressFeedback());
+
+        assertFalse(sourceCodeFiles.pointsInsideRoot(new File(root, "unreadable"), ""));
+    }
+
+    @Test
+    public void theListIsPerRunSoAReusedInstanceDoesNotAccumulate() throws IOException {
+        // Same reason as the count above: a list that carried over would name links in the report
+        // that this run never encountered.
+        File outside = directory("outside");
+        File root = directory("repo");
+        link(new File(root, "one"), outside.toPath());
+
+        SourceCodeFiles sourceCodeFiles = new SourceCodeFiles();
+        sourceCodeFiles.load(root, new ProgressFeedback());
+        sourceCodeFiles.load(root, new ProgressFeedback());
+
+        assertEquals(1, sourceCodeFiles.getSkippedSymbolicLinks().size());
+    }
+
+    private SymbolicLink onlySkippedLinkUnder(File root) {
+        SourceCodeFiles sourceCodeFiles = new SourceCodeFiles();
+        sourceCodeFiles.load(root, new ProgressFeedback());
+
+        List<SymbolicLink> links = sourceCodeFiles.getSkippedSymbolicLinks();
+        assertEquals(1, links.size(), "expected exactly one skipped link");
+        return links.get(0);
     }
 
     private String relativePathsUnder(File root) {
