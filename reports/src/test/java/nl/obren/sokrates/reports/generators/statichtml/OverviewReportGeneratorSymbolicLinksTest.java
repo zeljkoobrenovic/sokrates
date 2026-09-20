@@ -38,6 +38,24 @@ class OverviewReportGeneratorSymbolicLinksTest {
     }
 
     @Test
+    void theLineSitsOutsideTheExcludedFilesBreakdown() {
+        // The property the whole design rests on, and the one a contains() assertion is blind to:
+        // "based on extension" + "based on ignore rules" sum to the excluded total, so the link
+        // line must sit AFTER the </ul> that closes them. Nesting it inside would break that sum
+        // while every other assertion here still passed.
+        String html = scopeSectionOf(resultsWithLinks(
+                new SymbolicLink("CLAUDE.md", "AGENTS.md", true)));
+
+        int lastBreakdownLine = html.indexOf("based on ignore rules");
+        int closesBreakdown = html.indexOf("</ul>", lastBreakdownLine);
+        int linkLine = html.indexOf("symbolic_links.txt");
+
+        assertTrue(lastBreakdownLine >= 0 && closesBreakdown >= 0 && linkLine >= 0, html);
+        assertTrue(linkLine > closesBreakdown,
+                "the symbolic-links line must follow the </ul> closing the excluded-files breakdown");
+    }
+
+    @Test
     void aSingleLinkIsNamedInTheSingular() {
         CodeAnalysisResults results = resultsWithLinks(new SymbolicLink("CLAUDE.md", "AGENTS.md", true));
 

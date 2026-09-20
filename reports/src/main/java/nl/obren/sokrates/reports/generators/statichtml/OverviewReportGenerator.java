@@ -244,9 +244,13 @@ public class OverviewReportGenerator {
             return;
         }
         int count = symbolicLinks.size();
-        report.addListItem("<a target='_blank' href='#' onclick=\"return downloadDataFile('text/symbolic_links.txt')\">"
+        // "In addition" because the links are NOT part of the file count this list hangs under:
+        // they were never walked, so nothing behind them is among those files. Without it a reader
+        // can take the number as a share of the total - a fresh discrepancy, in the one line whose
+        // job is to resolve one.
+        report.addListItem("In addition, <a target='_blank' href='#' onclick=\"return downloadDataFile('text/symbolic_links.txt')\">"
                 + RichTextRenderingUtils.renderNumberStrong(count) + " symbolic link" + (count != 1 ? "s were" : " was")
-                + " not followed</a>.");
+                + " not followed</a> (nothing behind them is included above).");
     }
 
     private String getScopeSvg(int totalNumberOfFilesInScope, int numberOfExcludedFiles, int totalNumberOfIncludedFiles) {

@@ -10,7 +10,6 @@ import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -243,7 +242,12 @@ public class SourceCodeFiles {
 
     private void addFile(File file, boolean isAnalysisRoot) {
         if (!isAnalysisRoot && isSymbolicLink(file)) {
-            skippedSymbolicLinks.add(describeSymbolicLink(file));
+            // A symlinked .git or _sokrates is not evidence of missing code: the walk skips those
+            // folders whether they are links or not, so naming them would send the reader looking
+            // for source that was never in scope.
+            if (isNotVCSFolder(file)) {
+                skippedSymbolicLinks.add(describeSymbolicLink(file));
+            }
             return;
         }
         if (file.isDirectory()) {
@@ -337,12 +341,13 @@ public class SourceCodeFiles {
      * against the root, which would misplace any link below the top level.
      *
      * <p>A link whose target cannot be read at all is reported as outside: with no target there is
-     * nothing to place inside the tree.
+     * nothing to place inside the tree. The test is emptiness, not blankness - " " is a legal file
+     * name, and a link pointing at it was read perfectly well.
      */
     // Package-private: the blank-target branch cannot be reached from a real file system (it needs
     // readSymbolicLink to fail), and a branch the test environment cannot reach is an untested one.
     boolean pointsInsideRoot(File file, String target) {
-        if (StringUtils.isBlank(target) || canonicalRoot == null) {
+        if (target.isEmpty() || canonicalRoot == null) {
             return false;
         }
         File targetFile = new File(target);

@@ -258,6 +258,63 @@ public class SourceCodeFilesSymbolicLinksTest {
         assertEquals(1, sourceCodeFiles.getSkippedSymbolicLinks().size());
     }
 
+    @Test
+    public void aListHandedOutSurvivesAReload() throws IOException {
+        // The scenario the defensive copy exists for: take the list, reload, and what was already
+        // handed over must still hold what it held. Aliasing the internal list would empty it here
+        // - and empty the results object the analyzer had already given it to, losing the report
+        // line and the file with no error.
+        //
+        // The reload has to be of a DIFFERENT tree. Reloading the same one clears the list and
+        // immediately walks the same link back into it, so an alias and a copy both end up holding
+        // one entry and the test would pass against either.
+        File outside = directory("outside");
+        File withLink = directory("repo");
+        link(new File(withLink, "one"), outside.toPath());
+        File withoutLink = directory("plain-repo");
+        write(new File(withoutLink, "a.js"), "function a() { return 1; }");
+
+        SourceCodeFiles sourceCodeFiles = new SourceCodeFiles();
+        sourceCodeFiles.load(withLink, new ProgressFeedback());
+        List<SymbolicLink> handedOver = sourceCodeFiles.getSkippedSymbolicLinks();
+
+        sourceCodeFiles.load(withoutLink, new ProgressFeedback());
+
+        assertEquals(1, handedOver.size(), "the list handed over was emptied by a reload");
+        assertEquals("one", handedOver.get(0).getPath().replace(File.separator, "/"));
+    }
+
+    @Test
+    public void aTargetThatIsAllWhitespaceWasStillReadSuccessfully() throws IOException {
+        // Why the guard tests emptiness rather than blankness: " " is a legal POSIX file name, so a
+        // link pointing at it was read perfectly well and points where it points. Treating it as
+        // unreadable would file a link into the tree under "pointing outside" and print it as "?".
+        File root = directory("repo");
+        write(new File(root, " "), "a file whose whole name is a space");
+        link(new File(root, "odd"), Path.of(" "));
+
+        SymbolicLink link = onlySkippedLinkUnder(root);
+
+        assertEquals(" ", link.getTarget());
+        assertTrue(link.isInsideAnalysisRoot(), "a readable target inside the root points inside");
+    }
+
+    @Test
+    public void aSymbolicLinkStandingInForAVcsFolderIsNotReported() throws IOException {
+        // .git as a symlink is a real layout (git-annex, some bare-repo setups). The walk skips
+        // those folders whether or not they are links, so naming one under "pointing outside the
+        // analysis root" would tell the reader code is missing when none ever was in scope.
+        File elsewhere = directory("gitstore");
+        File root = directory("repo");
+        write(new File(root, "src/a.js"), "function a() { return 1; }");
+        link(new File(root, ".git"), elsewhere.toPath());
+        link(new File(root, "real"), elsewhere.toPath());
+
+        SymbolicLink link = onlySkippedLinkUnder(root);
+
+        assertEquals("real", link.getPath().replace(File.separator, "/"));
+    }
+
     private SymbolicLink onlySkippedLinkUnder(File root) {
         SourceCodeFiles sourceCodeFiles = new SourceCodeFiles();
         sourceCodeFiles.load(root, new ProgressFeedback());
