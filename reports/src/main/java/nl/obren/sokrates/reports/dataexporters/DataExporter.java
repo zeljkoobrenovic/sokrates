@@ -25,6 +25,7 @@ import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
 import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.SourceFileWithSearchData;
+import nl.obren.sokrates.sourcecode.SymbolicLink;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
@@ -376,6 +377,7 @@ public class DataExporter {
     private void exportFileLists() {
         saveExcludedByExtensionFiles();
         saveExplicitlyIgnoredFiles();
+        saveSymbolicLinks();
         saveSourceCodeAspect(analysisResults.getMainAspectAnalysisResults().getAspect(), "");
         saveSourceCodeAspect(analysisResults.getTestAspectAnalysisResults().getAspect(), "");
         saveSourceCodeAspect(analysisResults.getGeneratedAspectAnalysisResults().getAspect(), "");
@@ -433,6 +435,94 @@ public class DataExporter {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Names the symbolic links the source code walk did not follow, so a file count smaller than
+     * the checkout can be explained from the report rather than from the run's log output.
+     *
+     * <p>Unlike its two siblings above, this writes nothing when there is no link to name: a
+     * repository without symbolic links should produce exactly the output it produced before this
+     * file existed, and the report only links here under the same condition.
+     */
+    private void saveSymbolicLinks() {
+        writeSymbolicLinks(textDataFolder, analysisResults.getSkippedSymbolicLinks());
+    }
+
+    /**
+     * Writes the list, or writes nothing at all when there is none. The "nothing at all" is the
+     * point: an empty file here would add an entry to every repository's data.zip, including the
+     * ones that have no symbolic links and whose output must not change.
+     */
+    static void writeSymbolicLinks(File textDataFolder, List<SymbolicLink> symbolicLinks) {
+        String content = symbolicLinksContent(symbolicLinks);
+        if (content.isEmpty()) {
+            return;
+        }
+
+        try {
+            FileUtils.write(new File(textDataFolder, "symbolic_links.txt"), content, UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Renders the skipped links in the grouped, counted shape the other excluded-file lists use.
+     * Empty for an empty or absent list, which is what keeps the file from being written at all.
+     */
+    static String symbolicLinksContent(List<SymbolicLink> symbolicLinks) {
+        if (symbolicLinks == null || symbolicLinks.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder content = new StringBuilder();
+
+        // Links pointing out of the analysis root first: those are the ones whose files are missing
+        // from the measurement altogether, rather than sitting under their real path in the tree.
+        // "Pointing inside" says where the path leads, not that anything exists there.
+        appendSymbolicLinksGroup(content, "pointing OUTSIDE", symbolicLinks.stream()
+                .filter(link -> !link.isInsideAnalysisRoot()).collect(Collectors.toList()));
+        appendSymbolicLinksGroup(content, "pointing INSIDE", symbolicLinks.stream()
+                .filter(SymbolicLink::isInsideAnalysisRoot).collect(Collectors.toList()));
+
+        return content.toString();
+    }
+
+    /**
+     * POSIX allows a newline in a file name and in a link target. Left raw, one would split into
+     * lines that read as further entries and leave the group's own count disagreeing with what the
+     * reader can see under it.
+     */
+    private static String oneLine(String text) {
+        return text.replaceAll("[\\r\\n]+", " ");
+    }
+
+    private static void appendSymbolicLinksGroup(StringBuilder content, String where, List<SymbolicLink> symbolicLinks) {
+        if (symbolicLinks.isEmpty()) {
+            return;
+        }
+        int total = symbolicLinks.size();
+        List<SymbolicLink> shown = total > MAX_EXPORT_LIST_SIZE
+                ? symbolicLinks.subList(0, MAX_EXPORT_LIST_SIZE) : symbolicLinks;
+
+        content.append(SEPARATOR);
+        content.append("Symbolic links " + where + " the analysis root (" + total + ")");
+        // A vendored dependency tree can hold tens of thousands of links (a pnpm store is almost
+        // entirely links), none of them actionable. The heading keeps the true count; the list is
+        // capped so one such repository cannot put megabytes into data.zip.
+        if (shown.size() < total) {
+            content.append(" - showing the first " + shown.size());
+        }
+        content.append(":\n\n");
+        shown.forEach(link -> {
+            content.append(oneLine(link.getPath()));
+            // An unreadable link still belongs in the list; only its target is unknown.
+            content.append(StringUtils.isNotBlank(link.getTarget()) ? " -> " + oneLine(link.getTarget()) : " -> ?");
+            content.append("\n");
+        });
+        content.append(SEPARATOR);
+        content.append("\n\n\n");
     }
 
     private void exportDependencies(String filterLogicalDecomposition, String filterFrom, String filterTo) {

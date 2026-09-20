@@ -13,6 +13,7 @@ import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import nl.obren.sokrates.reports.utils.ScopesRenderer;
 import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.SourceFileFilter;
+import nl.obren.sokrates.sourcecode.SymbolicLink;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
@@ -216,6 +217,7 @@ public class OverviewReportGenerator {
         report.addListItem("<a target='_blank' href='#' onclick=\"return downloadDataFile('text/excluded_files_ignored_extensions.txt')\">" + RichTextRenderingUtils.renderNumberStrong(filesExcludedByExtensionCount) + " based on extension</a>.");
         report.addListItem("<a target='_blank' href='#' onclick=\"return downloadDataFile('text/excluded_files_ignored_rules.txt')\">" +RichTextRenderingUtils.renderNumberStrong(numberOfExcludedFiles - filesExcludedByExtensionCount) + " based on ignore rules</a>.");
         report.endUnorderedList();
+        addSymbolicLinksListItem(report);
         report.endUnorderedList();
         report.endUnorderedList();
 
@@ -225,6 +227,30 @@ public class OverviewReportGenerator {
 
 
         report.endSection();
+    }
+
+    /**
+     * Sits beside "N files are excluded from analyses", one level up from the two lines that break
+     * that number down by cause. Those two sum to exactly that number, and a skipped link was never
+     * walked in the first place - it is not an excluded file, so joining their list would make the
+     * breakdown stop adding up.
+     *
+     * <p>Rendered only when the walk skipped something, so a repository without symbolic links
+     * produces the same report it produced before this line existed.
+     */
+    private void addSymbolicLinksListItem(RichTextReport report) {
+        List<SymbolicLink> symbolicLinks = codeAnalysisResults.getSkippedSymbolicLinks();
+        if (symbolicLinks == null || symbolicLinks.isEmpty()) {
+            return;
+        }
+        int count = symbolicLinks.size();
+        // "In addition" because the links are NOT part of the file count this list hangs under:
+        // they were never walked, so nothing behind them is among those files. Without it a reader
+        // can take the number as a share of the total - a fresh discrepancy, in the one line whose
+        // job is to resolve one.
+        report.addListItem("In addition, <a target='_blank' href='#' onclick=\"return downloadDataFile('text/symbolic_links.txt')\">"
+                + RichTextRenderingUtils.renderNumberStrong(count) + " symbolic link" + (count != 1 ? "s were" : " was")
+                + " not followed</a> (nothing behind them is included above).");
     }
 
     private String getScopeSvg(int totalNumberOfFilesInScope, int numberOfExcludedFiles, int totalNumberOfIncludedFiles) {
