@@ -1,0 +1,35 @@
+cli/src/test/java/nl/obren/sokrates/cli/CommandsTest.java
+  s_bd91f8b7d8eeb9::t_a1bb39d2ba8f76 63
+cli/src/main/java/nl/obren/sokrates/cli/git/GitRepoCloner.java
+  s_bd91f8b7d8eeb9::t_fc1342df078887 1-69,71-116
+  s_bd91f8b7d8eeb9::t_b7c6c6d85ac2ec 70
+cli/src/main/java/nl/obren/sokrates/cli/Commands.java
+  s_bd91f8b7d8eeb9::t_a1bb39d2ba8f76 21-23,87-89,113,128-130,142,244-265,493-503
+  s_bd91f8b7d8eeb9::t_c39b550bfb7a87 504
+README.md
+  s_bd91f8b7d8eeb9::t_9c1baad226dacf 55-61,91
+cli/src/main/java/nl/obren/sokrates/cli/CommandLineInterface.java
+  s_bd91f8b7d8eeb9::t_b048efe32b9e38 502
+  s_bd91f8b7d8eeb9::t_a1bb39d2ba8f76 8,110-112,442-498
+cli/src/test/java/nl/obren/sokrates/cli/AnalyzeGitRepoCommandTest.java
+  s_bd91f8b7d8eeb9::t_a1bb39d2ba8f76 1-41,47-98
+  s_bd91f8b7d8eeb9::t_366bfe93f5f3ed 42-46
+CLAUDE.md
+  s_bd91f8b7d8eeb9::t_9c1baad226dacf 38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "0e828bcb272eea11488613e9c92f7cfc03eced22",
+  "prompts": {},
+  "sessions": {
+    "s_bd91f8b7d8eeb9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b4f325de-8987-4e83-8891-b5647d72e7bf",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
