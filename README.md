@@ -52,13 +52,13 @@ It runs three steps, each of which is also available as a separate command:
 2. `init` — creates the analysis configuration `_sokrates/config.json` (only if it does not exist yet, so your edits survive re-runs)
 3. `generateReports` — runs the analysis and generates the HTML reports into `_sokrates/reports/`
 
-The report is titled after the repository, not the folder: when the folder has a git `origin` remote, `analyze` fills the configuration's name, logo (GitHub owner avatar), description (from the GitHub API, best effort; set `SOKRATES_OFFLINE=1` to skip the lookup) and a link to the repository, unless you set them yourself (`-name`, `-description`, `-logoLink`, `-addLink`, or edits in `config.json`). This matters in Docker, where every code base is mounted at `/code`.
+The report is titled after the repository, not the folder: when the folder has a git `origin` remote, `analyze` fills the configuration's name (`owner/repo`, e.g. `junit-team/junit4`, so same-named repositories of different owners stay apart in a landscape), logo (GitHub owner avatar), description (from the GitHub API, best effort; set `SOKRATES_OFFLINE=1` to skip the lookup) and a link to the repository, unless you set them yourself (`-name`, `-description`, `-logoLink`, `-addLink`, or edits in `config.json`). This matters in Docker, where every code base is mounted at `/code`.
 
 To analyze a repository you have not cloned yet, `analyzeGitRepo` clones it first and then runs the same three steps:
 
 ```bash
 java -jar cli-1.0-jar-with-dependencies.jar analyzeGitRepo -url https://github.com/junit-team/junit4
-# → ./junit4/ (the clone) with the reports in ./junit4/_sokrates/reports/
+# → ./junit-team/junit4/config.json + ./junit-team/junit4/reports/ (the clone itself is not kept)
 ```
 
 The typical iterative workflow is therefore **analyze → edit `_sokrates/config.json` (scope, logical decompositions, concerns, goals) → analyze again**. The individual commands are:
@@ -90,7 +90,7 @@ java -jar cli-1.0-jar-with-dependencies.jar generateReports -help
 
 | Command | Description |
 | --- | --- |
-| `analyzeGitRepo` | Clone a repository from its URL (`-url`; JGit, no git binary) into `-destFolder` (default: a folder named after the URL) and run `analyze` on it. `-branch`, `-depth` (shallow clone), and the `analyze` options. An existing clone is fetched and reset to the remote branch. Private HTTPS repos: set `SOKRATES_GIT_TOKEN` (and optionally `SOKRATES_GIT_USER`) |
+| `analyzeGitRepo` | Clone a repository from its URL (`-url`; JGit, no git binary) into a temporary folder, run `analyze` on it, and keep only the analysis (`config.json` + `reports/`) in `-destFolder` (default `<owner>/<repo>`, e.g. `junit-team/junit4`); the clone is deleted. Re-runs clone again and reuse the kept config. `-branch`, `-depth` (shallow clone), and the `analyze` options. Private HTTPS repos: set `SOKRATES_GIT_TOKEN` (and optionally `SOKRATES_GIT_USER`). The output layout is what `analyzeLandscape` expects |
 | `analyze` | One-shot analysis: `extractGitHistory` (if the root is a git repository) + `init` (if no config exists yet) + `generateReports`. Options: `-srcRoot`, `-confFile`, `-outputFolder`, `-conventionsFile`, `-name`, `-description`, `-skipGitHistory`, `-date`, `-timeout` |
 | `init` | Create a new analysis configuration (`config.json`) from standard + optional custom conventions |
 | `generateReports` | Run the analysis and generate the HTML/JSON reports |

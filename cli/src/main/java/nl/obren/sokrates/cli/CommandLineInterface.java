@@ -59,6 +59,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -441,12 +442,24 @@ public class CommandLineInterface {
             return;
         }
 
-        analyze(cmd, root, cmd.hasOption(commands.getSkipGitHistory().getOpt()));
+        File reportsFolder = analyze(cmd, root, cmd.hasOption(commands.getSkipGitHistory().getOpt()));
+        logReportLocation(reportsFolder);
+    }
+
+    private void logReportLocation(File reportsFolder) {
+        File index = reportsFolder == null ? null : new File(reportsFolder, "index.html");
+        if (index != null && index.exists()) {
+            LOG.info("");
+            LOG.info("Done. Open the report: " + index.toPath().toAbsolutePath().normalize().toUri());
+        }
     }
 
     /**
-     * analyzeGitRepo = clone (or update) the repository at -url into -destFolder (default: a folder
-     * named after the URL in the current folder), then the analyze pipeline on that clone.
+     * analyzeGitRepo = clone the repository at -url into a temporary folder, run the analyze
+     * pipeline there, and keep only the analysis (config.json + reports/) in -destFolder (default:
+     * <cwd>/<owner>/<repository>); the clone is deleted. A kept config.json is reused on re-runs,
+     * so edits survive even though the clone is fresh every time. The output layout (config.json
+     * next to reports/) is the one analyzeLandscape expects.
      */
     private void analyzeGitRepo(String[] args) throws ParseException, IOException {
         Options options = commands.getAnalyzeGitRepoOptions();
@@ -465,9 +478,10 @@ public class CommandLineInterface {
         startTimeoutIfDefined(cmd);
 
         String url = cmd.getOptionValue(commands.getUrl().getOpt()).trim();
-        File destination = cmd.hasOption(commands.getDestRoot().getOpt())
+        GitRepoMetadata urlMetadata = GitRepoMetadata.fromUrl(url);
+        File output = cmd.hasOption(commands.getDestRoot().getOpt())
                 ? new File(cmd.getOptionValue(commands.getDestRoot().getOpt()))
-                : new File(GitRepoCloner.folderNameFromUrl(url));
+                : new File(urlMetadata != null ? urlMetadata.outputFolderName() : GitRepoCloner.folderNameFromUrl(url));
         String branch = cmd.getOptionValue(commands.getBranch().getOpt());
         int depth = 0;
         String depthValue = cmd.getOptionValue(commands.getDepth().getOpt());
@@ -479,17 +493,45 @@ public class CommandLineInterface {
             depth = Integer.parseInt(depthValue.trim());
         }
 
-        ProcessingStopwatch.start("cloning");
+        File clone = Files.createTempDirectory("sokrates-clone-").toFile();
         try {
-            new GitRepoCloner().cloneOrUpdate(url, destination, branch, depth);
-        } catch (Exception e) {
-            LOG.error("Could not clone " + url + ": " + e.getMessage());
-            return;
-        } finally {
-            ProcessingStopwatch.end("cloning");
-        }
+            ProcessingStopwatch.start("cloning");
+            try {
+                new GitRepoCloner().cloneOrUpdate(url, clone, branch, depth);
+            } catch (Exception e) {
+                LOG.error("Could not clone " + url + ": " + e.getMessage());
+                return;
+            } finally {
+                ProcessingStopwatch.end("cloning");
+            }
 
-        analyze(cmd, destination, false);
+            File analysisFolder = CodeConfigurationUtils.getDefaultSokratesFolder(clone);
+            File keptConfig = new File(output, CodeConfigurationUtils.getDefaultSokratesConfigFile(clone).getName());
+            if (keptConfig.exists()) {
+                LOG.info("Reusing the configuration kept in " + keptConfig.getPath());
+                FileUtils.copyFile(keptConfig, CodeConfigurationUtils.getDefaultSokratesConfigFile(clone));
+            }
+
+            analyze(cmd, clone, false);
+
+            // Keep only the analysis: everything in the clone's _sokrates folder (config.json, reports/,
+            // any config-*.json) replaces its namesake in the output folder; the clone goes.
+            output.mkdirs();
+            File[] produced = analysisFolder.listFiles();
+            for (File file : produced == null ? new File[0] : produced) {
+                File target = new File(output, file.getName());
+                FileUtils.deleteQuietly(target);
+                if (file.isDirectory()) {
+                    FileUtils.moveDirectory(file, target);
+                } else {
+                    FileUtils.moveFile(file, target);
+                }
+            }
+            LOG.info("Analysis kept in " + output.toPath().toAbsolutePath().normalize() + " (config.json + reports/); the source clone is deleted.");
+            logReportLocation(new File(output, "reports"));
+        } finally {
+            FileUtils.deleteQuietly(clone);
+        }
     }
 
     /**
@@ -497,7 +539,7 @@ public class CommandLineInterface {
      * repository), init when the configuration does not exist yet, report generation. Paths default
      * relative to the root; -confFile / -outputFolder on {@code cmd} override them.
      */
-    private void analyze(CommandLine cmd, File root, boolean skipGitHistory) throws IOException {
+    private File analyze(CommandLine cmd, File root, boolean skipGitHistory) throws IOException {
         updateDateParam(cmd);
 
         ProcessingStopwatch.start("extracting git history");
@@ -526,12 +568,7 @@ public class CommandLineInterface {
         }
 
         generateReports(cmd, conf, reportsFolder);
-
-        File index = new File(reportsFolder, "index.html");
-        if (index.exists()) {
-            LOG.info("");
-            LOG.info("Done. Open the report: " + index.toPath().toAbsolutePath().normalize().toUri());
-        }
+        return reportsFolder;
     }
 
     /**

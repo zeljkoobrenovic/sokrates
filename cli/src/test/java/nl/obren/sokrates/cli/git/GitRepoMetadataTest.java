@@ -52,7 +52,9 @@ class GitRepoMetadataTest {
         Metadata metadata = new Metadata();
         metadata.setName("Code");
         assertTrue(git.applyTo(metadata, "Code"));
-        assertEquals("junit4", metadata.getName());
+        assertEquals("junit-team/junit4", metadata.getName(), "hosted repositories are named owner/repo");
+        assertEquals("junit-team/junit4", git.reportName());
+        assertEquals("remote", GitRepoMetadata.fromUrl("file:///tmp/repos/remote.git").reportName(), "local remotes have no owner");
         assertEquals("https://github.com/junit-team.png?size=200", metadata.getLogoLink());
         assertEquals(1, metadata.getLinks().size());
         assertEquals("https://github.com/junit-team/junit4", metadata.getLinks().get(0).getHref());

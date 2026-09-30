@@ -19,7 +19,7 @@ public class Commands {
     public static final String ANALYZE_DESCRIPTION = "One-shot analysis: extracts the git history (when the source root is a git repository), creates the analysis configuration if none exists (init), and generates the reports. The recommended way to get a first report: run it from the root of the code base without any options.";
 
     public static final String ANALYZE_GIT_REPO = "analyzeGitRepo";
-    public static final String ANALYZE_GIT_REPO_DESCRIPTION = "Clones a git repository from its URL (JGit, no git binary needed; an existing clone is fetched and reset to the remote branch instead) and then runs analyze on it. Reports end up in <destFolder>/_sokrates/reports. For private HTTPS repositories set the " + "SOKRATES_GIT_TOKEN" + " (and optionally SOKRATES_GIT_USER) environment variable.";
+    public static final String ANALYZE_GIT_REPO_DESCRIPTION = "Clones a git repository from its URL into a temporary folder (JGit, no git binary needed), runs analyze on it, and keeps only the analysis — config.json and reports/ — in <destFolder> (default: <currentFolder>/<owner>/<repository>, e.g. junit-team/junit4); the clone is deleted. Re-runs clone again and reuse the kept config.json, so edits survive. The output layout is what analyzeLandscape expects, so several analyzeGitRepo runs in one folder plus analyzeLandscape make a landscape. For private HTTPS repositories set the SOKRATES_GIT_TOKEN (and optionally SOKRATES_GIT_USER) environment variable.";
 
     public static final String INIT = "init";
     public static final String INIT_DESCRIPTION = "Creates a new Sokrates analysis configuration file based on standard and optional custom conventions";
@@ -110,7 +110,7 @@ public class Commands {
     private Option timeout = new Option(ARG_TIMEOUT, true, "[OPTIONAL] timeout in seconds");
     private Option prefix = new Option(ARG_PREFIX, true, "the path prefix");
     private Option pattern = new Option(ARG_PATTERN, true, "the file path regex pattern");
-    private Option destRoot = new Option(ARG_DEST_FOLDER, true, "the destination folder (for analyzeGitRepo: [OPTIONAL] where to clone, default is <currentFolder>/<repository name from the URL>)");
+    private Option destRoot = new Option(ARG_DEST_FOLDER, true, "the destination folder (for analyzeGitRepo: [OPTIONAL] where the analysis (config.json + reports/) is kept, default is <currentFolder>/<owner>/<repository name from the URL>)");
     private Option destParent = new Option(ARG_DEST_PARENT, true, "[OPTIONAL] the destination parent folder");
 
     private Option outputFolder = new Option(ARG_OUTPUT_FOLDER, true, "[OPTIONAL] the folder where reports will be stored (default value is <currentFolder/_sokrates/reports>)");
@@ -247,8 +247,6 @@ public class Commands {
         options.addOption(destRoot);
         options.addOption(branch);
         options.addOption(depth);
-        options.addOption(confFile);
-        options.addOption(outputFolder);
         options.addOption(conventionsFile);
         options.addOption(name);
         options.addOption(description);

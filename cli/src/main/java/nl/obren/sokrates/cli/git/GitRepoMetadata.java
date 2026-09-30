@@ -23,7 +23,8 @@ import java.time.Duration;
  * a meaningless name (the Docker image mounts the code base at {@code /code}, which used to give
  * every report the title "Code") is still titled after the repository, and linked to it.
  * <p>
- * From the {@code origin} URL alone: the repository name (last path segment), the browsable web URL
+ * From the {@code origin} URL alone: the report name ({@code owner/repository} for hosted repositories, see
+ * {@link #reportName()}), the browsable web URL
  * (https form, {@code .git} stripped; scp-style {@code git@host:org/repo.git} handled) and, on
  * github.com, the owner's avatar as the logo. From the GitHub REST API, best effort (5 s timeout,
  * skipped when {@link #ENV_OFFLINE} is set): the repository description and the owner's avatar
@@ -113,6 +114,21 @@ public class GitRepoMetadata {
         return metadata;
     }
 
+    /**
+     * The report name and the folder analyzeGitRepo keeps the reports in: {@code <owner>/<name>} for a
+     * hosted repository (e.g. {@code junit-team/junit4}), just {@code <name>} for a local one. The owner
+     * keeps repositories with the same name from different owners apart — the landscape identifies a
+     * repository by its report name — and its list renders {@code owner/name} with the owner greyed.
+     */
+    public String reportName() {
+        return StringUtils.isNotBlank(webUrl) && StringUtils.isNotBlank(owner) ? owner + "/" + name : name;
+    }
+
+    /** Same as {@link #reportName()}: the output folder mirrors the report name. */
+    public String outputFolderName() {
+        return reportName();
+    }
+
     public boolean isGitHub() {
         return "github.com".equals(host);
     }
@@ -163,9 +179,10 @@ public class GitRepoMetadata {
      */
     public boolean applyTo(Metadata metadata, String folderDefaultName) {
         boolean changed = false;
+        String reportName = reportName();
         if (StringUtils.isBlank(metadata.getName()) || metadata.getName().equals(folderDefaultName)) {
-            if (!name.equals(metadata.getName())) {
-                metadata.setName(name);
+            if (!reportName.equals(metadata.getName())) {
+                metadata.setName(reportName);
                 changed = true;
             }
         }
