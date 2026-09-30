@@ -1,0 +1,28 @@
+cli/src/main/java/nl/obren/sokrates/cli/Commands.java
+  s_bd91f8b7d8eeb9::t_54298392e5b47c 33-35,135
+cli/src/test/java/nl/obren/sokrates/cli/CommandsTest.java
+  s_bd91f8b7d8eeb9::t_54298392e5b47c 61-62
+README.md
+  s_bd91f8b7d8eeb9::t_6990301eeb69c9 139
+  s_bd91f8b7d8eeb9::t_54298392e5b47c 89-90
+CLAUDE.md
+  s_bd91f8b7d8eeb9::t_54298392e5b47c 42
+cli/src/main/java/nl/obren/sokrates/cli/CommandLineInterface.java
+  s_bd91f8b7d8eeb9::t_54298392e5b47c 121-124,126,252,259
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "5d61daabe126d3a50f46c02eb297a61c7dd20b4e",
+  "prompts": {},
+  "sessions": {
+    "s_bd91f8b7d8eeb9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b4f325de-8987-4e83-8891-b5647d72e7bf",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
