@@ -86,7 +86,8 @@ java -jar cli-1.0-jar-with-dependencies.jar generateReports -help
 | `generateReports` | Run the analysis and generate the HTML/JSON reports |
 | `updateConfig` | Fill in missing fields of an existing configuration |
 | `addCustomTab` | Add a custom iframe tab (`-label`, `-iframeLink`) to the report config; a tab with the same label is overwritten |
-| `updateLandscape` | Create/update a landscape report that aggregates multiple analyses |
+| `analyzeLandscape` | Create/update a landscape report that aggregates multiple analyses (the landscape counterpart of `analyze`) |
+| `updateLandscape` | Older name of `analyzeLandscape`, kept for existing scripts; identical behavior and options |
 | `updateLandscapePeopleConfigByUserName` | Build/update `config-people.json` by grouping contributor emails sharing a display name (userName) under one entry (additive — appends new emails only) |
 | `updatePeopleConfigByUserName` | Single-repository version: build/update `_sokrates/config-people.json` from the repo's `git-history.txt` (run after `extractGitHistory`; no `generateReports` needed) |
 | `createConventionsFile` | Create an analysis conventions file (`analysis_conventions.json`) |
@@ -135,7 +136,7 @@ docker run --rm -v "$(pwd):/code" ghcr.io/zeljkoobrenovic/sokrates analyze
 
 # Any other command works the same way
 docker run --rm -v "$(pwd):/code" ghcr.io/zeljkoobrenovic/sokrates generateReports -help
-docker run --rm -v "$(pwd):/code" ghcr.io/zeljkoobrenovic/sokrates updateLandscape -analysisRoot .
+docker run --rm -v "$(pwd):/code" ghcr.io/zeljkoobrenovic/sokrates analyzeLandscape -analysisRoot .
 
 # Pin a version instead of latest
 docker run --rm -v "$(pwd):/code" ghcr.io/zeljkoobrenovic/sokrates:1.0.0 analyze

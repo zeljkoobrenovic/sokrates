@@ -118,8 +118,12 @@ public class CommandLineInterface {
             } else if (args[0].equalsIgnoreCase(Commands.EXPORT_STANDARD_CONVENTIONS)) {
                 exportConventions(args);
                 return;
+            } else if (args[0].equalsIgnoreCase(Commands.ANALYZE_LANDSCAPE)) {
+                // Same implementation as updateLandscape; analyzeLandscape is the name that mirrors analyze.
+                updateLandscape(args, Commands.ANALYZE_LANDSCAPE, Commands.ANALYZE_LANDSCAPE_DESCRIPTION);
+                return;
             } else if (args[0].equalsIgnoreCase(Commands.UPDATE_LANDSCAPE)) {
-                updateLandscape(args);
+                updateLandscape(args, Commands.UPDATE_LANDSCAPE, Commands.UPDATE_LANDSCAPE_DESCRIPTION);
                 return;
             } else if (args[0].equalsIgnoreCase(Commands.UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME)) {
                 updateLandscapePeopleConfigByUserName(args);
@@ -245,14 +249,14 @@ public class CommandLineInterface {
         }
     }
 
-    private void updateLandscape(String[] args) throws ParseException {
+    private void updateLandscape(String[] args, String commandName, String commandDescription) throws ParseException {
         Options options = commands.getUpdateLandscapeOptions();
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
         if (cmd.hasOption(commands.getHelp().getOpt())) {
             helpMode = true;
-            commands.usage(Commands.UPDATE_LANDSCAPE, commands.getUpdateLandscapeOptions(), Commands.UPDATE_LANDSCAPE_DESCRIPTION);
+            commands.usage(commandName, commands.getUpdateLandscapeOptions(), commandDescription);
             return;
         }
 
