@@ -1,0 +1,35 @@
+cli/src/main/java/nl/obren/sokrates/cli/CommandLineInterface.java
+  s_a5febc420125fe::t_4d14f689e9da1b 509
+  s_a5febc420125fe::t_3f82ab5352285a 62,445-454,458-462,481-482,484,496,498-508,510-531,533,542,571
+cli/src/main/java/nl/obren/sokrates/cli/Commands.java
+  s_a5febc420125fe::t_3f82ab5352285a 22,113
+cli/src/main/java/nl/obren/sokrates/cli/git/GitRepoMetadata.java
+  s_a5febc420125fe::t_c5bbb57bbe1a46 26-27,118-121,123,125-129,182,184-185
+  s_a5febc420125fe::t_3f82ab5352285a 117,122,124,130-131
+cli/src/test/java/nl/obren/sokrates/cli/git/GitRepoMetadataTest.java
+  s_a5febc420125fe::t_c5bbb57bbe1a46 55-57
+README.md
+  s_a5febc420125fe::t_8bac996a043947 61,93
+  s_a5febc420125fe::t_c5bbb57bbe1a46 55
+CLAUDE.md
+  s_a5febc420125fe::t_c5bbb57bbe1a46 38
+  s_a5febc420125fe::t_8bac996a043947 39
+cli/src/test/java/nl/obren/sokrates/cli/AnalyzeGitRepoCommandTest.java
+  s_a5febc420125fe::t_3f82ab5352285a 4,34,52,54,56-59,61-64,66-71,80,82-85,100-107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "f9fd704e8f745994de1f1b79d55a9b12bd7b5380",
+  "prompts": {},
+  "sessions": {
+    "s_a5febc420125fe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "50ef2165-6f28-45c6-bfb6-581484828dc5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
