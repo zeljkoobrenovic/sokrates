@@ -1,0 +1,32 @@
+cli/src/main/java/nl/obren/sokrates/cli/CommandLineInterface.java
+  s_a5febc420125fe::t_ada5ea54132a00 9,415,519,537-568
+  s_a5febc420125fe::t_1c7cd0527fa3ee 569-570
+common/src/main/resources/templates/repositories-report.html
+  s_a5febc420125fe::t_ada5ea54132a00 267-269,271-272,283-291
+cli/src/main/java/nl/obren/sokrates/cli/git/GitRepoMetadata.java
+  s_a5febc420125fe::t_bb5223e37f11c7 1-223
+README.md
+  s_a5febc420125fe::t_1e7f6cbd81dfb0 55-56
+cli/src/test/java/nl/obren/sokrates/cli/AnalyzeGitRepoCommandTest.java
+  s_a5febc420125fe::t_ada5ea54132a00 70-74
+cli/src/test/java/nl/obren/sokrates/cli/git/GitRepoMetadataTest.java
+  s_a5febc420125fe::t_dcff19267a258a 1-71
+CLAUDE.md
+  s_a5febc420125fe::t_1e7f6cbd81dfb0 38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "49c49cc3ab01988c6c8d75c164cd86e4c979e278",
+  "prompts": {},
+  "sessions": {
+    "s_a5febc420125fe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "50ef2165-6f28-45c6-bfb6-581484828dc5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
