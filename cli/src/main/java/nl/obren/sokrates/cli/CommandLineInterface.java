@@ -6,6 +6,7 @@ package nl.obren.sokrates.cli;
 
 import nl.obren.sokrates.cli.git.GitHistoryExtractor;
 import nl.obren.sokrates.cli.git.GitRepoCloner;
+import nl.obren.sokrates.cli.git.GitRepoMetadata;
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.renderingutils.Thresholds;
@@ -411,6 +412,7 @@ public class CommandLineInterface {
         updateDateParam(cmd);
 
         createConfiguration(cmd, root, conf);
+        applyGitRepoMetadata(root, conf);
     }
 
     /**
@@ -514,6 +516,7 @@ public class CommandLineInterface {
         } else {
             createConfiguration(cmd, root, conf);
         }
+        applyGitRepoMetadata(root, conf);
 
         File reportsFolder;
         if (cmd.hasOption(commands.getOutputFolder().getOpt())) {
@@ -528,6 +531,40 @@ public class CommandLineInterface {
         if (index.exists()) {
             LOG.info("");
             LOG.info("Done. Open the report: " + index.toPath().toAbsolutePath().normalize().toUri());
+        }
+    }
+
+    /**
+     * Titles and links the report after the repository rather than the folder: fills the metadata
+     * of the configuration from the git origin remote (name when it is blank or still the
+     * folder-derived init default — under Docker every code base sits in /code and used to be
+     * called "Code" — description, logo and a link to the repository when blank). User-set values
+     * are never overwritten; a configuration without a git origin is left untouched.
+     */
+    private void applyGitRepoMetadata(File root, File conf) {
+        if (!conf.exists()) {
+            return;
+        }
+        GitRepoMetadata gitMetadata = GitRepoMetadata.fromLocalRepository(root);
+        if (gitMetadata == null) {
+            return;
+        }
+        try {
+            String folderDefaultName = StringUtils.capitalize(root.getCanonicalFile().getName().toLowerCase());
+            String json = FileUtils.readFileToString(conf, UTF_8);
+            CodeConfiguration configuration = (CodeConfiguration) new JsonMapper().getObject(json, CodeConfiguration.class);
+            if (configuration == null) {
+                return;
+            }
+            if (gitMetadata.fetchDetails().applyTo(configuration.getMetadata(), folderDefaultName)) {
+                FileUtils.writeStringToFile(conf, new JsonGenerator().generate(configuration), UTF_8);
+                LOG.info("Report metadata taken from the git remote " + gitMetadata.getRemoteUrl() + ": name '" + configuration.getMetadata().getName() + "'"
+                        + (StringUtils.isNotBlank(configuration.getMetadata().getLogoLink()) ? ", logo" : "")
+                        + (StringUtils.isNotBlank(configuration.getMetadata().getDescription()) ? ", description" : "")
+                        + (configuration.getMetadata().getLinks().isEmpty() ? "" : ", link"));
+            }
+        } catch (IOException e) {
+            LOG.info("Could not update the report metadata from the git remote: " + e.getMessage());
         }
     }
 

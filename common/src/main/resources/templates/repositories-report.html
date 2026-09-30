@@ -264,9 +264,12 @@
         return repoReportLink2((item.reportFolderUrl || '') + 'index.html');
     }
 
-    // Repository display name: parent path greyed, last segment emphasised.
+    // Repository display name: parent path greyed, last segment emphasised. The repository's own
+    // metadata (from its config.json, e.g. derived from the git remote by `analyze`) adds a small
+    // logo before the name, the description as hover text and a link to the repository after it.
     function repoNameHtml(item) {
-        const name = item.metadata && item.metadata.name ? item.metadata.name : '';
+        const md = item.metadata || {};
+        const name = md.name || '';
         const url = (item.reportFolderUrl || '') + 'index.html';
         const clip = 'overflow: hidden; white-space: nowrap; text-overflow: ellipsis;';
         let inner;
@@ -277,7 +280,15 @@
         } else {
             inner = '<div style="' + clip + '">' + esc(name) + '</div>';
         }
-        return '<a href="' + esc(url) + '" target="_blank" style="color: #333">' + inner + '</a>';
+        const logo = md.logoLink
+            ? '<img src="' + esc(md.logoLink) + '" alt="" style="height: 18px; width: 18px; border-radius: 3px; object-fit: contain; margin-right: 6px; flex: none" onerror="this.style.display=\'none\'">'
+            : '';
+        const title = md.description ? ' title="' + esc(md.description) + '"' : '';
+        const repoLink = md.links && md.links.length && md.links[0].href
+            ? '<a href="' + esc(md.links[0].href) + '" target="_blank" title="' + esc(md.links[0].label || md.links[0].href) + '" style="color: #999; text-decoration: none; margin-left: 6px; font-size: 85%; flex: none">&#8599;</a>'
+            : '';
+        return '<span style="display: flex; align-items: center; min-width: 0">' + logo
+            + '<a href="' + esc(url) + '" target="_blank" style="color: #333; min-width: 0"' + title + '>' + inner + '</a>' + repoLink + '</span>';
     }
 
     function ageText(item) {

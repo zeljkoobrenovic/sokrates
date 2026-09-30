@@ -67,7 +67,11 @@ class AnalyzeGitRepoCommandTest {
             git.commit().setMessage("second").setAuthor("Bob", "bob@example.com").setCommitter("Bob", "bob@example.com").call();
             git.push().setRemote("origin").setPushAll().call();
         }
-        FileUtils.write(config, FileUtils.readFileToString(config, UTF_8).replace("\"name\" : \"Analyzed\"", "\"name\" : \"kept-name\""), UTF_8);
+        // The report is named after the git remote (remote.git), not the clone folder (analyzed).
+        String configText = FileUtils.readFileToString(config, UTF_8);
+        assertTrue(configText.contains("\"name\" : \"remote\""), "the name should come from the origin URL, got: " + configText.substring(0, Math.min(400, configText.length())));
+        assertFalse(configText.contains("\"href\" : \"https://"), "a file:// remote has no browsable link");
+        FileUtils.write(config, configText.replace("\"name\" : \"remote\"", "\"name\" : \"kept-name\""), UTF_8);
 
         new CommandLineInterface().run(new String[]{"analyzeGitRepo", "-url", url, "-destFolder", clone.getPath()});
 

@@ -52,6 +52,8 @@ It runs three steps, each of which is also available as a separate command:
 2. `init` — creates the analysis configuration `_sokrates/config.json` (only if it does not exist yet, so your edits survive re-runs)
 3. `generateReports` — runs the analysis and generates the HTML reports into `_sokrates/reports/`
 
+The report is titled after the repository, not the folder: when the folder has a git `origin` remote, `analyze` fills the configuration's name, logo (GitHub owner avatar), description (from the GitHub API, best effort; set `SOKRATES_OFFLINE=1` to skip the lookup) and a link to the repository, unless you set them yourself (`-name`, `-description`, `-logoLink`, `-addLink`, or edits in `config.json`). This matters in Docker, where every code base is mounted at `/code`.
+
 To analyze a repository you have not cloned yet, `analyzeGitRepo` clones it first and then runs the same three steps:
 
 ```bash
