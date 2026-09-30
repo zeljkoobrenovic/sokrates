@@ -10,12 +10,22 @@ For details and examples, visit [sokrates.dev](https://sokrates.dev).
 
 Sokrates is free open-source project, with a commercial friendly [MIT license](LICENSE). You can **[sponsor the work on Sokrates](https://github.com/sponsors/zeljkoobrenovic)** via GitHub [sponsors program](https://github.com/sponsors/zeljkoobrenovic). 
 
-## Prerequisites
+## Quick start (no install: Docker)
+
+The easiest way to try Sokrates is the prebuilt image — no Java or Maven needed. Run it from the root of the code base you want to analyze:
+
+```bash
+docker run --rm -v "$(pwd):/code" ghcr.io/zeljkoobrenovic/sokrates analyze
+```
+
+That single command extracts the git history, creates the analysis configuration (`_sokrates/config.json`) and generates the reports into `_sokrates/reports/`. Then open `_sokrates/reports/index.html`. See [Docker](#docker) for details (file ownership, other commands).
+
+## Prerequisites (building from source)
 
 * Java 17+
 * Maven
 
-No external tools are needed to generate reports — dependency and visualization graphs are rendered in the browser (Mermaid.js and d3, loaded from a CDN), so there is no Graphviz/`dot` dependency.
+No external tools are needed to generate reports — the git history is read with JGit, and dependency and visualization graphs are rendered in the browser (Mermaid.js and d3, loaded from a CDN), so there is no git, Graphviz or `dot` dependency.
 
 ## Build
 
@@ -30,15 +40,30 @@ This produces two runnable fat jars:
 
 ## Quick start (CLI)
 
-The typical workflow is **init → generateReports**. Run both from the root of the code base you want to analyze:
+The one-shot `analyze` command does everything needed for a first report. Run it from the root of the code base you want to analyze:
 
 ```bash
-# 1. Create the analysis configuration (writes _sokrates/config.json)
+java -jar cli-1.0-jar-with-dependencies.jar analyze
+```
+
+It runs three steps, each of which is also available as a separate command:
+
+1. `extractGitHistory` — extracts the git history into `git-history.txt` (skipped when the folder is not a git repository, or with `-skipGitHistory`; without it the commit, contributor and trend reports are empty)
+2. `init` — creates the analysis configuration `_sokrates/config.json` (only if it does not exist yet, so your edits survive re-runs)
+3. `generateReports` — runs the analysis and generates the HTML reports into `_sokrates/reports/`
+
+The typical iterative workflow is therefore **analyze → edit `_sokrates/config.json` (scope, logical decompositions, concerns, goals) → analyze again**. The individual commands are:
+
+```bash
+# 1. Extract the git history (writes git-history.txt)
+java -jar cli-1.0-jar-with-dependencies.jar extractGitHistory
+
+# 2. Create the analysis configuration (writes _sokrates/config.json)
 java -jar cli-1.0-jar-with-dependencies.jar init
 
-# 2. (optional) Edit _sokrates/config.json to refine scope, logical decompositions, concerns, goals
+# 3. (optional) Edit _sokrates/config.json to refine scope, logical decompositions, concerns, goals
 
-# 3. Generate the HTML reports (into _sokrates/reports/)
+# 4. Generate the HTML reports (into _sokrates/reports/)
 java -jar cli-1.0-jar-with-dependencies.jar generateReports
 ```
 
@@ -56,6 +81,7 @@ java -jar cli-1.0-jar-with-dependencies.jar generateReports -help
 
 | Command | Description |
 | --- | --- |
+| `analyze` | One-shot analysis: `extractGitHistory` (if the root is a git repository) + `init` (if no config exists yet) + `generateReports`. Options: `-srcRoot`, `-confFile`, `-outputFolder`, `-conventionsFile`, `-name`, `-description`, `-skipGitHistory`, `-date`, `-timeout` |
 | `init` | Create a new analysis configuration (`config.json`) from standard + optional custom conventions |
 | `generateReports` | Run the analysis and generate the HTML/JSON reports |
 | `updateConfig` | Fill in missing fields of an existing configuration |
@@ -101,15 +127,30 @@ java -jar codeexplorer-1.0-jar-with-dependencies.jar
 
 ## Docker
 
-```bash
-# Build the image
-docker build -t sokrates .
+A prebuilt image is published to the GitHub Container Registry on every push to `master` (`latest`) and on version tags (`vX.Y.Z` → `X.Y.Z`), for `linux/amd64` and `linux/arm64`. Mount the code base at `/code` (the image's working directory) and pass any CLI command; with no command it runs `analyze`:
 
-# Run a command (e.g. init) against the current directory
-docker run -v "$(pwd):/code" -w /code sokrates init
+```bash
+# One-shot analysis of the current directory (history + config + reports)
+docker run --rm -v "$(pwd):/code" ghcr.io/zeljkoobrenovic/sokrates analyze
+
+# Any other command works the same way
+docker run --rm -v "$(pwd):/code" ghcr.io/zeljkoobrenovic/sokrates generateReports -help
+docker run --rm -v "$(pwd):/code" ghcr.io/zeljkoobrenovic/sokrates updateLandscape -analysisRoot .
+
+# Pin a version instead of latest
+docker run --rm -v "$(pwd):/code" ghcr.io/zeljkoobrenovic/sokrates:1.0.0 analyze
 ```
 
-The image is a plain JRE — no Graphviz or other native tooling is needed (graphs render in the browser).
+On Linux the container writes as root, so the generated `_sokrates/` folder would be owned by root; add `--user "$(id -u):$(id -g)"` to keep your own ownership (Docker Desktop on macOS/Windows maps ownership automatically).
+
+To build the image yourself:
+
+```bash
+docker build -t sokrates -f dockerfile .
+docker run --rm -v "$(pwd):/code" sokrates analyze
+```
+
+The image is a plain JRE — the git history is read with JGit and graphs render in the browser, so no git, Graphviz or other native tooling is needed. The build is defined in [`dockerfile`](dockerfile) and published by [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml).
 
 ## Project structure
 

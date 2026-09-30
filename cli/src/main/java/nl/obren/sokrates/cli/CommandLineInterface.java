@@ -103,7 +103,10 @@ public class CommandLineInterface {
         }
 
         try {
-            if (args[0].equalsIgnoreCase(Commands.INIT)) {
+            if (args[0].equalsIgnoreCase(Commands.ANALYZE)) {
+                analyze(args);
+                return;
+            } else if (args[0].equalsIgnoreCase(Commands.INIT)) {
                 init(args);
                 return;
             } else if (args[0].equalsIgnoreCase(Commands.UPDATE_CONFIG)) {
@@ -389,11 +392,89 @@ public class CommandLineInterface {
 
         startTimeoutIfDefined(cmd);
 
+        File root = getSrcRoot(cmd);
+        if (!root.exists()) {
+            LOG.error("The src root \"" + root.getPath() + "\" does not exist.");
+            return;
+        }
+
+        File conf = getConfigFile(cmd, root);
+
+        updateDateParam(cmd);
+
+        createConfiguration(cmd, root, conf);
+    }
+
+    /**
+     * One-shot analysis (the recommended first contact with Sokrates): extract the git history
+     * (JGit, so no git binary is needed) when the root is a git repository, create the
+     * configuration when there is none yet (an existing config.json is kept, so edits survive
+     * re-runs), then generate the reports. All paths default relative to -srcRoot, not the
+     * current folder, so `analyze -srcRoot ../x` behaves like running `analyze` inside x.
+     */
+    private void analyze(String[] args) throws ParseException, IOException {
+        Options options = commands.getAnalyzeOptions();
+        CommandLineParser parser = new DefaultParser();
+        CommandLine cmd = parser.parse(options, args);
+
+        if (cmd.hasOption(commands.getHelp().getOpt())) {
+            helpMode = true;
+            commands.usage(Commands.ANALYZE, options, Commands.ANALYZE_DESCRIPTION);
+            return;
+        }
+
+        startTimeoutIfDefined(cmd);
+
+        File root = getSrcRoot(cmd);
+        if (!root.exists()) {
+            LOG.error("The src root \"" + root.getPath() + "\" does not exist.");
+            return;
+        }
+
+        updateDateParam(cmd);
+
+        ProcessingStopwatch.start("extracting git history");
+        if (cmd.hasOption(commands.getSkipGitHistory().getOpt())) {
+            LOG.info("Skipping git history extraction (-" + Commands.ARG_SKIP_GIT_HISTORY + ").");
+        } else if (new File(root, ".git").exists()) {
+            new GitHistoryExtractor().extractGitHistory(root);
+        } else {
+            LOG.info("No .git folder in " + root.getPath() + ": skipping git history extraction (commit, contributor and trend reports will be empty).");
+        }
+        ProcessingStopwatch.end("extracting git history");
+
+        File conf = getConfigFile(cmd, root);
+        if (conf.exists()) {
+            LOG.info("Using the existing configuration " + conf.getPath());
+        } else {
+            createConfiguration(cmd, root, conf);
+        }
+
+        File reportsFolder;
+        if (cmd.hasOption(commands.getOutputFolder().getOpt())) {
+            reportsFolder = prepareReportsFolder(cmd.getOptionValue(commands.getOutputFolder().getOpt()));
+        } else {
+            reportsFolder = prepareReportsFolder(new File(conf.getParentFile(), "reports").getPath());
+        }
+
+        generateReports(cmd, conf, reportsFolder);
+
+        File index = new File(reportsFolder, "index.html");
+        if (index.exists()) {
+            LOG.info("");
+            LOG.info("Done. Open the report: " + index.toPath().toAbsolutePath().normalize().toUri());
+        }
+    }
+
+    private File getSrcRoot(CommandLine cmd) {
         String strRootPath = cmd.getOptionValue(commands.getSrcRoot().getOpt());
         if (!cmd.hasOption(commands.getSrcRoot().getOpt())) {
             strRootPath = ".";
         }
+        return new File(strRootPath);
+    }
 
+    private void createConfiguration(CommandLine cmd, File root, File conf) throws IOException {
         CustomScopingConventions customScopingConventions = null;
         if (cmd.hasOption(commands.getConventionsFile().getOpt())) {
             File scopingConventionsFile = new File(cmd.getOptionValue(commands.getConventionsFile().getOpt()));
@@ -422,17 +503,6 @@ public class CommandLineInterface {
                 link = new Link(label, href);
             }
         }
-
-
-        File root = new File(strRootPath);
-        if (!root.exists()) {
-            LOG.error("The src root \"" + root.getPath() + "\" does not exist.");
-            return;
-        }
-
-        File conf = getConfigFile(cmd, root);
-
-        updateDateParam(cmd);
 
         new ScopeCreator(root, conf, customScopingConventions).createScopeFromConventions(nameValue, descriptionValue, logoLinkValue, link);
 
@@ -614,8 +684,6 @@ public class CommandLineInterface {
     }
 
     private void generateReports(CommandLine cmd) throws IOException {
-        updateDateParam(cmd);
-
         File sokratesConfigFile;
         if (!cmd.hasOption(commands.getConfFile().getOpt())) {
             String confFilePath = "./_sokrates/config.json";
@@ -623,6 +691,19 @@ public class CommandLineInterface {
         } else {
             sokratesConfigFile = new File(cmd.getOptionValue(commands.getConfFile().getOpt()));
         }
+
+        File reportsFolder;
+        if (!cmd.hasOption(commands.getOutputFolder().getOpt())) {
+            reportsFolder = prepareReportsFolder("./_sokrates/reports");
+        } else {
+            reportsFolder = prepareReportsFolder(cmd.getOptionValue(commands.getOutputFolder().getOpt()));
+        }
+
+        generateReports(cmd, sokratesConfigFile, reportsFolder);
+    }
+
+    private void generateReports(CommandLine cmd, File sokratesConfigFile, File reportsFolder) throws IOException {
+        updateDateParam(cmd);
 
         LOG.info("Configuration file: " + sokratesConfigFile.getPath());
         if (noFileError(sokratesConfigFile)) return;
@@ -633,14 +714,6 @@ public class CommandLineInterface {
         LanguageAnalyzerFactory.getInstance().setOverrides(codeConfiguration.getAnalysis().getAnalyzerOverrides());
 
         detailedInfo("Starting analysis based on the configuration file " + sokratesConfigFile.getPath());
-
-        File reportsFolder;
-
-        if (!cmd.hasOption(commands.getOutputFolder().getOpt())) {
-            reportsFolder = prepareReportsFolder("./_sokrates/reports");
-        } else {
-            reportsFolder = prepareReportsFolder(cmd.getOptionValue(commands.getOutputFolder().getOpt()));
-        }
 
         LOG.info("Reports folder: " + reportsFolder.getPath());
         ProcessingStopwatch.end("configuring");

@@ -1,0 +1,20 @@
+# Keep the Docker build context to the sources: build outputs, IDE files and local analysis data
+# are not needed inside the image and only slow the context upload down.
+.git
+.github
+**/target
+**/target-eclipse
+**/bin
+.idea
+*.iml
+.settings
+.classpath
+.project
+node_modules
+_sokrates
+_sokrates_landscape
+git-history.txt
+git-commits.txt
+git-commit-trailers.txt
+git-commands.txt
+.DS_Store

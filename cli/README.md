@@ -15,7 +15,7 @@ Main class: `nl.obren.sokrates.cli.CommandLineInterface`.
 
 ## Commands
 
-See the [root README](../README.md#commands) for the command table and the **init → generateReports** workflow. To see options for any command:
+See the [root README](../README.md#commands) for the command table and the one-shot **analyze** command (= extractGitHistory + init + generateReports) and the individual commands. To see options for any command:
 
 ```bash
 java -jar cli-1.0-jar-with-dependencies.jar <command> -help

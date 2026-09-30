@@ -52,9 +52,13 @@ public class GitHistoryUtils {
             java.util.regex.Pattern.CASE_INSENSITIVE);
     public static final String EARLIEST_DATE = "1980-01-01";
     private static final Log LOG = LogFactory.getLog(GitHistoryUtils.class);
+    // The parsed history of the file last read (getHistoryFromFile is called once per scope). Keyed
+    // by path so that a second analysis in the same JVM (the explorer GUI, tests) never reuses the
+    // previous repository's history.
+    private static String updatesFile = null;
     private static List<FileUpdate> updates = null;
     // Co-authors per sha for the history file last resolved (getAuthorCommits is called once per
-    // scope; the sidecar is read once per file). Keyed by path, unlike the JVM-wide updates cache.
+    // scope; the sidecar is read once per file). Keyed by path like the updates cache.
     private static String coAuthorsCacheFile = null;
     private static Map<String, List<CoAuthor>> coAuthorsCache = null;
     private static Map<String, String> anonymizeEmails = new HashMap<>();
@@ -237,9 +241,11 @@ public class GitHistoryUtils {
     }
 
     public static List<FileUpdate> getHistoryFromFile(File file, FileHistoryAnalysisConfig config) {
-        if (updates != null) {
+        String key = file == null ? "" : file.getAbsolutePath();
+        if (updates != null && key.equals(updatesFile)) {
             return updates;
         }
+        updatesFile = key;
         updates = new ArrayList<>();
         LOG.info("Reading history from file");
         List<String> lines;

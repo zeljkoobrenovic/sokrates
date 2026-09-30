@@ -15,6 +15,9 @@ public class Commands {
     private static final Log LOG = LogFactory.getLog(Commands.class);
 
     // commands
+    public static final String ANALYZE = "analyze";
+    public static final String ANALYZE_DESCRIPTION = "One-shot analysis: extracts the git history (when the source root is a git repository), creates the analysis configuration if none exists (init), and generates the reports. The recommended way to get a first report: run it from the root of the code base without any options.";
+
     public static final String INIT = "init";
     public static final String INIT_DESCRIPTION = "Creates a new Sokrates analysis configuration file based on standard and optional custom conventions";
 
@@ -74,6 +77,7 @@ public class Commands {
     public static final String ARG_ENABLE_DUPLICATION_ANALYSES = "enableDuplication";
     public static final String ARG_SKIP_COMPLEX_ANALYSES = "skipComplexAnalyses";
     public static final String ARG_SET_CACHE_FILES = "setCacheFiles";
+    public static final String ARG_SKIP_GIT_HISTORY = "skipGitHistory";
 
     public static final String RECURSIVE = "recursive";
 
@@ -85,7 +89,7 @@ public class Commands {
     public static final String ARG_IFRAME_LINK = "iframeLink";
 
     // options
-    private Option srcRoot = new Option(ARG_SRC_ROOT, true, "[OPTIONAL] the folder where reports will be stored (default is \"<currentFolder>/_sokrates/reports/)");
+    private Option srcRoot = new Option(ARG_SRC_ROOT, true, "[OPTIONAL] the root folder of the code base to analyze (default is the current folder)");
     private Option conventionsFile = new Option(ARG_CONVENTIONS_FILE, true, "[OPTIONAL] the custom conventions JSON file path");
     private Option name = new Option(ARG_NAME, true, "[OPTIONAL] the repository name");
     private Option description = new Option(ARG_DESCRIPTION, true, "[OPTIONAL] the repository description");
@@ -112,6 +116,7 @@ public class Commands {
     private Option setName = new Option(ARG_SET_NAME, true, "[OPTIONAL] sets a repository name");
     private Option setDescription = new Option(ARG_SET_DESCRIPTION, true, "[OPTIONAL] sets a repository description");
     private Option setLogoLink = new Option(ARG_SET_LOGO_LINK, true, "[OPTIONAL] sets a repository logo link");
+    private Option skipGitHistory = new Option(ARG_SKIP_GIT_HISTORY, false, "[OPTIONAL] does not (re)extract the git history; an existing git-history.txt is still used");
     private Option setCacheFiles = new Option(ARG_SET_CACHE_FILES, true, "[OPTIONAL] sets a cache file flag ('true' or 'false')");
     private Option addLink = new Option(ARG_ADD_LINK, true, "[OPTIONAL] adds a new link");
     private Option label = new Option(ARG_LABEL, true, "the custom tab label (unique; an existing tab with the same label is overwritten)");
@@ -121,6 +126,7 @@ public class Commands {
     private List<CommandUsage> usageInfo() {
         List<CommandUsage> commands = new ArrayList<>();
 
+        commands.add(new CommandUsage(ANALYZE, ANALYZE_DESCRIPTION, getAnalyzeOptions()));
         commands.add(new CommandUsage(INIT, INIT_DESCRIPTION, getInitOptions()));
         commands.add(new CommandUsage(GENERATE_REPORTS, GENERATE_REPORTS_DESCRIPTION, getReportingOptions()));
         commands.add(new CommandUsage(UPDATE_LANDSCAPE, UPDATE_LANDSCAPE_DESCRIPTION, getUpdateLandscapeOptions()));
@@ -194,6 +200,26 @@ public class Commands {
         options.addOption(outputFolder);
         options.addOption(timeout);
         options.addOption(date);
+        options.addOption(help);
+
+        help.setArgs(0);
+
+        return options;
+    }
+
+    public Options getAnalyzeOptions() {
+        Options options = new Options();
+        options.addOption(srcRoot);
+        options.addOption(confFile);
+        options.addOption(outputFolder);
+        options.addOption(conventionsFile);
+        options.addOption(name);
+        options.addOption(description);
+        options.addOption(logoLink);
+        options.addOption(addLink);
+        options.addOption(skipGitHistory);
+        options.addOption(date);
+        options.addOption(timeout);
         options.addOption(help);
 
         help.setArgs(0);
@@ -426,6 +452,10 @@ public class Commands {
 
     public Option getSetLogoLink() {
         return setLogoLink;
+    }
+
+    public Option getSkipGitHistory() {
+        return skipGitHistory;
     }
 
     public Option getSetCacheFiles() {
