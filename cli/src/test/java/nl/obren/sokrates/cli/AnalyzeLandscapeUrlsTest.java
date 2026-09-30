@@ -1,0 +1,73 @@
+package nl.obren.sokrates.cli;
+
+import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.transport.URIish;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.io.File;
+import java.nio.file.Path;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * analyzeLandscape with -urls / -url: each repository is analyzed with the analyzeGitRepo step into
+ * <analysisRoot>/<name>, a bad URL is skipped, and the landscape is built over the results. Offline:
+ * the "remote" repositories are local bare repositories.
+ */
+class AnalyzeLandscapeUrlsTest {
+
+    @Test
+    void analyzesEveryUrlThenBuildsTheLandscape(@TempDir Path tmp) throws Exception {
+        File alphaRemote = bareRepoWithHistory(tmp, "alpha", "ada@example.com");
+        File betaRemote = bareRepoWithHistory(tmp, "beta", "bob@example.com");
+        File root = tmp.resolve("landscape").toFile();
+        File urlsFile = tmp.resolve("repos.txt").toFile();
+        FileUtils.write(urlsFile, String.join("\n",
+                "# repositories of the landscape",
+                alphaRemote.toURI().toString(),
+                "",
+                "file:///" + tmp.resolve("does-not-exist.git").toString().replace('\\', '/'),
+                ""), UTF_8);
+
+        new CommandLineInterface().run(new String[]{"analyzeLandscape", "-analysisRoot", root.getPath(),
+                "-urls", urlsFile.getPath(), "-url", betaRemote.toURI().toString()});
+
+        assertTrue(new File(root, "alpha/config.json").exists(), "alpha should be analyzed into <root>/alpha");
+        assertTrue(new File(root, "alpha/reports/index.html").exists());
+        assertTrue(new File(root, "beta/config.json").exists(), "the -url repository should be analyzed too");
+        assertTrue(new File(root, "beta/reports/index.html").exists());
+        assertFalse(new File(root, "does-not-exist").exists(), "a repository whose clone fails is skipped");
+        assertFalse(new File(root, "alpha/src").exists(), "no source is kept");
+
+        File landscapeIndex = new File(root, "_sokrates_landscape/index.html");
+        assertTrue(landscapeIndex.exists(), "the landscape should be built after the repositories");
+        String landscape = FileUtils.readFileToString(landscapeIndex, UTF_8);
+        assertTrue(landscape.contains("alpha"), "landscape should list alpha");
+        assertTrue(landscape.contains("beta"), "landscape should list beta");
+
+        // Each repository's viewer holds only its own files (one exporter instance serves the whole run).
+        String betaViewer = FileUtils.readFileToString(new File(root, "beta/reports/src/viewer.html"), UTF_8);
+        assertFalse(betaViewer.contains("alpha.ts"), "beta's viewer must not carry alpha's sources");
+    }
+
+    private static File bareRepoWithHistory(Path tmp, String name, String email) throws Exception {
+        File work = tmp.resolve("work-" + name).toFile();
+        File bare = tmp.resolve(name + ".git").toFile();
+        Git.init().setBare(true).setDirectory(bare).call().close();
+        File source = new File(work, "src/" + name + ".ts");
+        FileUtils.write(source, "export function " + name + "(x: number): number { return x + 1; }\n", UTF_8);
+        try (Git git = Git.init().setDirectory(work).call()) {
+            git.add().addFilepattern(".").call();
+            git.commit().setMessage("initial").setAuthor(name, email).setCommitter(name, email).call();
+            FileUtils.write(source, "export function " + name + "(x: number): number { return x + 2; }\n", UTF_8);
+            git.add().addFilepattern(".").call();
+            git.commit().setMessage("tweak").setAuthor(name, email).setCommitter(name, email).call();
+            git.remoteAdd().setName("origin").setUri(new URIish(bare.toURI().toString())).call();
+            git.push().setRemote("origin").setPushAll().call();
+        }
+        return bare;
+    }
+}

@@ -54,6 +54,8 @@ It runs three steps, each of which is also available as a separate command:
 
 The report is titled after the repository, not the folder: when the folder has a git `origin` remote, `analyze` fills the configuration's name (`owner/repo`, e.g. `junit-team/junit4`, so same-named repositories of different owners stay apart in a landscape), logo (GitHub owner avatar), description (from the GitHub API, best effort; set `SOKRATES_OFFLINE=1` to skip the lookup) and a link to the repository, unless you set them yourself (`-name`, `-description`, `-logoLink`, `-addLink`, or edits in `config.json`). This matters in Docker, where every code base is mounted at `/code`.
 
+A whole landscape from a list of repositories is one command as well: `analyzeLandscape -urls repos.txt` analyzes every URL in the file into `<owner>/<repo>/` under the current folder (or `-analysisRoot`) and then builds `_sokrates_landscape/`. Re-run it to refresh; kept configurations are reused.
+
 To analyze a repository you have not cloned yet, `analyzeGitRepo` clones it first and then runs the same three steps:
 
 ```bash
@@ -96,7 +98,7 @@ java -jar cli-1.0-jar-with-dependencies.jar generateReports -help
 | `generateReports` | Run the analysis and generate the HTML/JSON reports |
 | `updateConfig` | Fill in missing fields of an existing configuration |
 | `addCustomTab` | Add a custom iframe tab (`-label`, `-iframeLink`) to the report config; a tab with the same label is overwritten |
-| `analyzeLandscape` | Create/update a landscape report that aggregates multiple analyses (the landscape counterpart of `analyze`) |
+| `analyzeLandscape` | Create/update a landscape report that aggregates multiple analyses (the landscape counterpart of `analyze`). With `-url <git url>` (repeatable) and/or `-urls <file>` (one URL per line, `#` comments) it first runs the `analyzeGitRepo` step for each repository into `<analysisRoot>/<owner>/<repo>` (a failing clone is logged and skipped), then builds the landscape. `-depth` and `-conventionsFile` apply to those analyses |
 | `updateLandscape` | Older name of `analyzeLandscape`, kept for existing scripts; identical behavior and options |
 | `updateLandscapePeopleConfigByUserName` | Build/update `config-people.json` by grouping contributor emails sharing a display name (userName) under one entry (additive — appends new emails only) |
 | `updatePeopleConfigByUserName` | Single-repository version: build/update `_sokrates/config-people.json` from the repo's `git-history.txt` (run after `extractGitHistory`; no `generateReports` needed) |

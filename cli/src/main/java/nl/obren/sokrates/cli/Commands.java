@@ -34,7 +34,7 @@ public class Commands {
     public static final String ADD_CUSTOM_TAB_DESCRIPTION = "Adds a custom iframe tab to the repository report configuration (config.json customTabs). If a custom tab with the same label already exists, it is overwritten instead of added.";
 
     public static final String ANALYZE_LANDSCAPE = "analyzeLandscape";
-    public static final String ANALYZE_LANDSCAPE_DESCRIPTION = "Creates or updates a Sokrates landscape report aggregating the repository analyses found under the analysis root (the landscape counterpart of analyze). Same behavior and options as updateLandscape, which is kept as the older name.";
+    public static final String ANALYZE_LANDSCAPE_DESCRIPTION = "Creates or updates a Sokrates landscape report aggregating the repository analyses found under the analysis root (the landscape counterpart of analyze). With -url (repeatable) and/or -urls <file> (one git URL per line, # comments), it first runs analyzeGitRepo for each URL into <analysisRoot>/<owner>/<repository> (a failing repository is logged and skipped), then builds the landscape; without URLs it aggregates what is already there. Same options as updateLandscape, which is kept as the older name.";
 
     public static final String UPDATE_LANDSCAPE = "updateLandscape";
     public static final String UPDATE_LANDSCAPE_DESCRIPTION = "Updates or creates a Sokrates landscape report, aggregating results of multiple analyses";
@@ -85,6 +85,7 @@ public class Commands {
     public static final String ARG_SET_CACHE_FILES = "setCacheFiles";
     public static final String ARG_SKIP_GIT_HISTORY = "skipGitHistory";
     public static final String ARG_URL = "url";
+    public static final String ARG_URLS = "urls";
     public static final String ARG_BRANCH = "branch";
     public static final String ARG_DEPTH = "depth";
 
@@ -126,6 +127,7 @@ public class Commands {
     private Option setDescription = new Option(ARG_SET_DESCRIPTION, true, "[OPTIONAL] sets a repository description");
     private Option setLogoLink = new Option(ARG_SET_LOGO_LINK, true, "[OPTIONAL] sets a repository logo link");
     private Option url = new Option(ARG_URL, true, "the git repository URL to clone (https://..., git@host:org/repo.git, file:///...)");
+    private Option urls = new Option(ARG_URLS, true, "[OPTIONAL] a text file with one git repository URL per line (blank lines and # comments ignored); each is analyzed with analyzeGitRepo into <analysisRoot>/<owner>/<repository> before the landscape is built");
     private Option branch = new Option(ARG_BRANCH, true, "[OPTIONAL] the branch to analyze (default is the remote's default branch)");
     private Option depth = new Option(ARG_DEPTH, true, "[OPTIONAL] shallow clone depth (default is the full history; a shallow history makes the contributor and trend reports incomplete)");
     private Option skipGitHistory = new Option(ARG_SKIP_GIT_HISTORY, false, "[OPTIONAL] does not (re)extract the git history; an existing git-history.txt is still used");
@@ -349,6 +351,10 @@ public class Commands {
     public Options getUpdateLandscapeOptions() {
         Options options = new Options();
         options.addOption(analysisRoot);
+        options.addOption(url);
+        options.addOption(urls);
+        options.addOption(depth);
+        options.addOption(conventionsFile);
         options.addOption(confFile);
         options.addOption(recursive);
         options.addOption(setName);
@@ -490,6 +496,10 @@ public class Commands {
 
     public Option getUrl() {
         return url;
+    }
+
+    public Option getUrls() {
+        return urls;
     }
 
     public Option getBranch() {

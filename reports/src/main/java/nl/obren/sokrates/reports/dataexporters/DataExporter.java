@@ -100,6 +100,9 @@ public class DataExporter {
         this.analysisResults = analysisResults;
         this.dataFolder = getDataFolder();
         this.textDataFolder = getTextDataFolder();
+        // One exporter instance serves every analysis of a CLI run (analyzeLandscape -urls analyzes
+        // many repositories in one JVM): the viewer archive must hold only this repository's entries.
+        viewerArchiveEntries.clear();
 
         LOG.info("Saving file lists");
         exportFileLists();

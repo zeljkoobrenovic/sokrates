@@ -39,6 +39,7 @@ import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.CustomTab;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
+import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.ExtractGitHistoryFileHandler;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
@@ -255,7 +256,7 @@ public class CommandLineInterface {
         }
     }
 
-    private void updateLandscape(String[] args, String commandName, String commandDescription) throws ParseException {
+    private void updateLandscape(String[] args, String commandName, String commandDescription) throws ParseException, IOException {
         Options options = commands.getUpdateLandscapeOptions();
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
@@ -273,10 +274,19 @@ public class CommandLineInterface {
             strRootPath = ".";
         }
 
+        List<String> urls = collectRepositoryUrls(cmd);
+        if (urls == null) {
+            return;
+        }
+
         File root = new File(strRootPath);
         if (!root.exists()) {
-            LOG.error("The analysis root \"" + root.getPath() + "\" does not exist.");
-            return;
+            if (urls.isEmpty()) {
+                LOG.error("The analysis root \"" + root.getPath() + "\" does not exist.");
+                return;
+            }
+            // With repository URLs the root is where the analyses will be created.
+            root.mkdirs();
         }
 
         Metadata metadata = new Metadata();
@@ -285,6 +295,12 @@ public class CommandLineInterface {
 
         String confFilePath = cmd.getOptionValue(commands.getConfFile().getOpt());
         updateDateParam(cmd);
+
+        if (!urls.isEmpty()) {
+            if (!analyzeRepositoriesIntoLandscape(cmd, root, urls)) {
+                return;
+            }
+        }
 
         if (cmd.hasOption(commands.getRecursive().getOpt())) {
             List<File> landscapeConfigFiles = LandscapeAnalysisUtils.findAllSokratesLandscapeConfigFiles(root);
@@ -314,6 +330,90 @@ public class CommandLineInterface {
             saveExecutionStats(new File(reportsFolder, "data"));
             LandscapeAnalysisCommands.zipLandscapeDataFolder(reportsFolder);
         }
+    }
+
+    /**
+     * The git URLs given to analyzeLandscape: every -url value plus the lines of the -urls file
+     * (trimmed; blank lines and # comments ignored), in order, without duplicates. Empty when none
+     * were given; null (after logging) when the -urls file cannot be read.
+     */
+    private List<String> collectRepositoryUrls(CommandLine cmd) {
+        List<String> urls = new ArrayList<>();
+        String[] single = cmd.getOptionValues(commands.getUrl().getOpt());
+        if (single != null) {
+            for (String url : single) {
+                if (StringUtils.isNotBlank(url) && !urls.contains(url.trim())) {
+                    urls.add(url.trim());
+                }
+            }
+        }
+        if (cmd.hasOption(commands.getUrls().getOpt())) {
+            File file = new File(cmd.getOptionValue(commands.getUrls().getOpt()));
+            if (!file.exists()) {
+                LOG.error("The -" + Commands.ARG_URLS + " file \"" + file.getPath() + "\" does not exist.");
+                return null;
+            }
+            try {
+                for (String line : FileUtils.readLines(file, UTF_8)) {
+                    String url = line.trim();
+                    if (url.isEmpty() || url.startsWith("#") || urls.contains(url)) {
+                        continue;
+                    }
+                    urls.add(url);
+                }
+            } catch (IOException e) {
+                LOG.error("Could not read the -" + Commands.ARG_URLS + " file \"" + file.getPath() + "\": " + e.getMessage());
+                return null;
+            }
+        }
+        return urls;
+    }
+
+    /**
+     * analyzeLandscape's repository step: analyzeGitRepo for every URL into <root>/<owner>/<repository>.
+     * A repository whose clone fails is logged and skipped so one bad URL does not lose the batch;
+     * returns false only when nothing could be analyzed (then there is nothing to aggregate).
+     */
+    private boolean analyzeRepositoriesIntoLandscape(CommandLine cmd, File root, List<String> urls) throws IOException {
+        int depth = 0;
+        String depthValue = cmd.getOptionValue(commands.getDepth().getOpt());
+        if (StringUtils.isNotBlank(depthValue)) {
+            if (!StringUtils.isNumeric(depthValue.trim())) {
+                LOG.error("-" + Commands.ARG_DEPTH + " must be a positive number, got '" + depthValue + "'.");
+                return false;
+            }
+            depth = Integer.parseInt(depthValue.trim());
+        }
+        List<String> failed = new ArrayList<>();
+        int index = 0;
+        for (String url : urls) {
+            index++;
+            LOG.info("");
+            LOG.info("=== Repository " + index + " of " + urls.size() + ": " + url + " ===");
+            GitRepoMetadata urlMetadata = GitRepoMetadata.fromUrl(url);
+            File output = new File(root, urlMetadata != null ? urlMetadata.outputFolderName() : GitRepoCloner.folderNameFromUrl(url));
+            boolean ok;
+            try {
+                ok = analyzeGitRepoInto(cmd, url, output, null, depth);
+            } catch (Exception e) {
+                LOG.error("Analysis of " + url + " failed: " + e.getMessage());
+                ok = false;
+            }
+            if (!ok) {
+                failed.add(url);
+            }
+            // Per-analysis static caches (the recursive landscape update resets them the same way).
+            DateUtils.reset();
+            RegexUtils.reset();
+        }
+        LOG.info("");
+        LOG.info("Analyzed " + (urls.size() - failed.size()) + " of " + urls.size() + " repositories into " + root.getPath());
+        failed.forEach(url -> LOG.error(" - failed: " + url));
+        if (failed.size() == urls.size()) {
+            LOG.error("No repository could be analyzed; the landscape is not updated.");
+            return false;
+        }
+        return true;
     }
 
     private void updateLandscapePeopleConfigByUserName(String[] args) throws ParseException {
@@ -493,6 +593,15 @@ public class CommandLineInterface {
             depth = Integer.parseInt(depthValue.trim());
         }
 
+        analyzeGitRepoInto(cmd, url, output, branch, depth);
+    }
+
+    /**
+     * The analyzeGitRepo step for one repository: clone into a temporary folder, analyze there, keep
+     * only the analysis in {@code output} (reusing a config.json already kept there). Returns false
+     * when the clone fails; the analysis itself reports its own errors.
+     */
+    private boolean analyzeGitRepoInto(CommandLine cmd, String url, File output, String branch, int depth) throws IOException {
         File clone = Files.createTempDirectory("sokrates-clone-").toFile();
         try {
             ProcessingStopwatch.start("cloning");
@@ -500,7 +609,7 @@ public class CommandLineInterface {
                 new GitRepoCloner().cloneOrUpdate(url, clone, branch, depth);
             } catch (Exception e) {
                 LOG.error("Could not clone " + url + ": " + e.getMessage());
-                return;
+                return false;
             } finally {
                 ProcessingStopwatch.end("cloning");
             }
@@ -529,6 +638,7 @@ public class CommandLineInterface {
             }
             LOG.info("Analysis kept in " + output.toPath().toAbsolutePath().normalize() + " (config.json + reports/); the source clone is deleted.");
             logReportLocation(new File(output, "reports"));
+            return true;
         } finally {
             FileUtils.deleteQuietly(clone);
         }
