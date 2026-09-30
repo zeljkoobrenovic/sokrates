@@ -18,6 +18,9 @@ public class Commands {
     public static final String ANALYZE = "analyze";
     public static final String ANALYZE_DESCRIPTION = "One-shot analysis: extracts the git history (when the source root is a git repository), creates the analysis configuration if none exists (init), and generates the reports. The recommended way to get a first report: run it from the root of the code base without any options.";
 
+    public static final String ANALYZE_GIT_REPO = "analyzeGitRepo";
+    public static final String ANALYZE_GIT_REPO_DESCRIPTION = "Clones a git repository from its URL (JGit, no git binary needed; an existing clone is fetched and reset to the remote branch instead) and then runs analyze on it. Reports end up in <destFolder>/_sokrates/reports. For private HTTPS repositories set the " + "SOKRATES_GIT_TOKEN" + " (and optionally SOKRATES_GIT_USER) environment variable.";
+
     public static final String INIT = "init";
     public static final String INIT_DESCRIPTION = "Creates a new Sokrates analysis configuration file based on standard and optional custom conventions";
 
@@ -81,6 +84,9 @@ public class Commands {
     public static final String ARG_SKIP_COMPLEX_ANALYSES = "skipComplexAnalyses";
     public static final String ARG_SET_CACHE_FILES = "setCacheFiles";
     public static final String ARG_SKIP_GIT_HISTORY = "skipGitHistory";
+    public static final String ARG_URL = "url";
+    public static final String ARG_BRANCH = "branch";
+    public static final String ARG_DEPTH = "depth";
 
     public static final String RECURSIVE = "recursive";
 
@@ -104,7 +110,7 @@ public class Commands {
     private Option timeout = new Option(ARG_TIMEOUT, true, "[OPTIONAL] timeout in seconds");
     private Option prefix = new Option(ARG_PREFIX, true, "the path prefix");
     private Option pattern = new Option(ARG_PATTERN, true, "the file path regex pattern");
-    private Option destRoot = new Option(ARG_DEST_FOLDER, true, "the destination folder");
+    private Option destRoot = new Option(ARG_DEST_FOLDER, true, "the destination folder (for analyzeGitRepo: [OPTIONAL] where to clone, default is <currentFolder>/<repository name from the URL>)");
     private Option destParent = new Option(ARG_DEST_PARENT, true, "[OPTIONAL] the destination parent folder");
 
     private Option outputFolder = new Option(ARG_OUTPUT_FOLDER, true, "[OPTIONAL] the folder where reports will be stored (default value is <currentFolder/_sokrates/reports>)");
@@ -119,6 +125,9 @@ public class Commands {
     private Option setName = new Option(ARG_SET_NAME, true, "[OPTIONAL] sets a repository name");
     private Option setDescription = new Option(ARG_SET_DESCRIPTION, true, "[OPTIONAL] sets a repository description");
     private Option setLogoLink = new Option(ARG_SET_LOGO_LINK, true, "[OPTIONAL] sets a repository logo link");
+    private Option url = new Option(ARG_URL, true, "the git repository URL to clone (https://..., git@host:org/repo.git, file:///...)");
+    private Option branch = new Option(ARG_BRANCH, true, "[OPTIONAL] the branch to analyze (default is the remote's default branch)");
+    private Option depth = new Option(ARG_DEPTH, true, "[OPTIONAL] shallow clone depth (default is the full history; a shallow history makes the contributor and trend reports incomplete)");
     private Option skipGitHistory = new Option(ARG_SKIP_GIT_HISTORY, false, "[OPTIONAL] does not (re)extract the git history; an existing git-history.txt is still used");
     private Option setCacheFiles = new Option(ARG_SET_CACHE_FILES, true, "[OPTIONAL] sets a cache file flag ('true' or 'false')");
     private Option addLink = new Option(ARG_ADD_LINK, true, "[OPTIONAL] adds a new link");
@@ -130,6 +139,7 @@ public class Commands {
         List<CommandUsage> commands = new ArrayList<>();
 
         commands.add(new CommandUsage(ANALYZE, ANALYZE_DESCRIPTION, getAnalyzeOptions()));
+        commands.add(new CommandUsage(ANALYZE_GIT_REPO, ANALYZE_GIT_REPO_DESCRIPTION, getAnalyzeGitRepoOptions()));
         commands.add(new CommandUsage(INIT, INIT_DESCRIPTION, getInitOptions()));
         commands.add(new CommandUsage(GENERATE_REPORTS, GENERATE_REPORTS_DESCRIPTION, getReportingOptions()));
         commands.add(new CommandUsage(ANALYZE_LANDSCAPE, ANALYZE_LANDSCAPE_DESCRIPTION, getUpdateLandscapeOptions()));
@@ -222,6 +232,28 @@ public class Commands {
         options.addOption(logoLink);
         options.addOption(addLink);
         options.addOption(skipGitHistory);
+        options.addOption(date);
+        options.addOption(timeout);
+        options.addOption(help);
+
+        help.setArgs(0);
+
+        return options;
+    }
+
+    public Options getAnalyzeGitRepoOptions() {
+        Options options = new Options();
+        options.addOption(url);
+        options.addOption(destRoot);
+        options.addOption(branch);
+        options.addOption(depth);
+        options.addOption(confFile);
+        options.addOption(outputFolder);
+        options.addOption(conventionsFile);
+        options.addOption(name);
+        options.addOption(description);
+        options.addOption(logoLink);
+        options.addOption(addLink);
         options.addOption(date);
         options.addOption(timeout);
         options.addOption(help);
@@ -456,6 +488,18 @@ public class Commands {
 
     public Option getSetLogoLink() {
         return setLogoLink;
+    }
+
+    public Option getUrl() {
+        return url;
+    }
+
+    public Option getBranch() {
+        return branch;
+    }
+
+    public Option getDepth() {
+        return depth;
     }
 
     public Option getSkipGitHistory() {

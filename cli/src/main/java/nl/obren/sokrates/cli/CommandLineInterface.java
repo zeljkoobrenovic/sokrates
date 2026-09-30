@@ -5,6 +5,7 @@
 package nl.obren.sokrates.cli;
 
 import nl.obren.sokrates.cli.git.GitHistoryExtractor;
+import nl.obren.sokrates.cli.git.GitRepoCloner;
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.renderingutils.Thresholds;
@@ -105,6 +106,9 @@ public class CommandLineInterface {
         try {
             if (args[0].equalsIgnoreCase(Commands.ANALYZE)) {
                 analyze(args);
+                return;
+            } else if (args[0].equalsIgnoreCase(Commands.ANALYZE_GIT_REPO)) {
+                analyzeGitRepo(args);
                 return;
             } else if (args[0].equalsIgnoreCase(Commands.INIT)) {
                 init(args);
@@ -435,10 +439,67 @@ public class CommandLineInterface {
             return;
         }
 
+        analyze(cmd, root, cmd.hasOption(commands.getSkipGitHistory().getOpt()));
+    }
+
+    /**
+     * analyzeGitRepo = clone (or update) the repository at -url into -destFolder (default: a folder
+     * named after the URL in the current folder), then the analyze pipeline on that clone.
+     */
+    private void analyzeGitRepo(String[] args) throws ParseException, IOException {
+        Options options = commands.getAnalyzeGitRepoOptions();
+        CommandLineParser parser = new DefaultParser();
+        CommandLine cmd = parser.parse(options, args);
+
+        if (cmd.hasOption(commands.getHelp().getOpt()) || !cmd.hasOption(commands.getUrl().getOpt())) {
+            helpMode = true;
+            if (!cmd.hasOption(commands.getUrl().getOpt())) {
+                LOG.error("-" + Commands.ARG_URL + " is required.");
+            }
+            commands.usage(Commands.ANALYZE_GIT_REPO, options, Commands.ANALYZE_GIT_REPO_DESCRIPTION);
+            return;
+        }
+
+        startTimeoutIfDefined(cmd);
+
+        String url = cmd.getOptionValue(commands.getUrl().getOpt()).trim();
+        File destination = cmd.hasOption(commands.getDestRoot().getOpt())
+                ? new File(cmd.getOptionValue(commands.getDestRoot().getOpt()))
+                : new File(GitRepoCloner.folderNameFromUrl(url));
+        String branch = cmd.getOptionValue(commands.getBranch().getOpt());
+        int depth = 0;
+        String depthValue = cmd.getOptionValue(commands.getDepth().getOpt());
+        if (StringUtils.isNotBlank(depthValue)) {
+            if (!StringUtils.isNumeric(depthValue.trim())) {
+                LOG.error("-" + Commands.ARG_DEPTH + " must be a positive number, got '" + depthValue + "'.");
+                return;
+            }
+            depth = Integer.parseInt(depthValue.trim());
+        }
+
+        ProcessingStopwatch.start("cloning");
+        try {
+            new GitRepoCloner().cloneOrUpdate(url, destination, branch, depth);
+        } catch (Exception e) {
+            LOG.error("Could not clone " + url + ": " + e.getMessage());
+            return;
+        } finally {
+            ProcessingStopwatch.end("cloning");
+        }
+
+        analyze(cmd, destination, false);
+    }
+
+    /**
+     * The analyze pipeline on a root folder: git history extraction (unless skipped or not a git
+     * repository), init when the configuration does not exist yet, report generation. Paths default
+     * relative to the root; -confFile / -outputFolder on {@code cmd} override them.
+     */
+    private void analyze(CommandLine cmd, File root, boolean skipGitHistory) throws IOException {
         updateDateParam(cmd);
 
         ProcessingStopwatch.start("extracting git history");
-        if (cmd.hasOption(commands.getSkipGitHistory().getOpt())) {
+        if (skipGitHistory) {
             LOG.info("Skipping git history extraction (-" + Commands.ARG_SKIP_GIT_HISTORY + ").");
         } else if (new File(root, ".git").exists()) {
             new GitHistoryExtractor().extractGitHistory(root);

@@ -60,6 +60,7 @@ public class CommandsTest {
         assertEquals("updateLandscape", Commands.UPDATE_LANDSCAPE);
         assertEquals("analyzeLandscape", Commands.ANALYZE_LANDSCAPE);
         assertEquals("analyze", Commands.ANALYZE);
+        assertEquals("analyzeGitRepo", Commands.ANALYZE_GIT_REPO);
         assertEquals("updateLandscapePeopleConfigByUserName", Commands.UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME);
         assertEquals("updatePeopleConfigByUserName", Commands.UPDATE_PEOPLE_CONFIG_BY_USER_NAME);
         assertEquals("extractGitHistory", Commands.EXTRACT_GIT_HISTORY);

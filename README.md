@@ -52,6 +52,13 @@ It runs three steps, each of which is also available as a separate command:
 2. `init` — creates the analysis configuration `_sokrates/config.json` (only if it does not exist yet, so your edits survive re-runs)
 3. `generateReports` — runs the analysis and generates the HTML reports into `_sokrates/reports/`
 
+To analyze a repository you have not cloned yet, `analyzeGitRepo` clones it first and then runs the same three steps:
+
+```bash
+java -jar cli-1.0-jar-with-dependencies.jar analyzeGitRepo -url https://github.com/junit-team/junit4
+# → ./junit4/ (the clone) with the reports in ./junit4/_sokrates/reports/
+```
+
 The typical iterative workflow is therefore **analyze → edit `_sokrates/config.json` (scope, logical decompositions, concerns, goals) → analyze again**. The individual commands are:
 
 ```bash
@@ -81,6 +88,7 @@ java -jar cli-1.0-jar-with-dependencies.jar generateReports -help
 
 | Command | Description |
 | --- | --- |
+| `analyzeGitRepo` | Clone a repository from its URL (`-url`; JGit, no git binary) into `-destFolder` (default: a folder named after the URL) and run `analyze` on it. `-branch`, `-depth` (shallow clone), and the `analyze` options. An existing clone is fetched and reset to the remote branch. Private HTTPS repos: set `SOKRATES_GIT_TOKEN` (and optionally `SOKRATES_GIT_USER`) |
 | `analyze` | One-shot analysis: `extractGitHistory` (if the root is a git repository) + `init` (if no config exists yet) + `generateReports`. Options: `-srcRoot`, `-confFile`, `-outputFolder`, `-conventionsFile`, `-name`, `-description`, `-skipGitHistory`, `-date`, `-timeout` |
 | `init` | Create a new analysis configuration (`config.json`) from standard + optional custom conventions |
 | `generateReports` | Run the analysis and generate the HTML/JSON reports |
