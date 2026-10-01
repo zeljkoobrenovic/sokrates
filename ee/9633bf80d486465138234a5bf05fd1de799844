@@ -1,0 +1,60 @@
+cli/src/main/java/nl/obren/sokrates/cli/git/CodeHostRepoFilter.java
+  s_40c0e74316fcc6::t_6bed6a8c19d0c4 19,29,32-33,41,49,73
+  s_40c0e74316fcc6::t_46d62d4fe5849a 15
+  s_40c0e74316fcc6::t_80dc707cc6ef83 1-14,16-18,20-28,30-31,34-40,42-48,50-72,74-161
+cli/src/main/java/nl/obren/sokrates/cli/git/GitLabGroupClient.java
+  s_40c0e74316fcc6::t_46d62d4fe5849a 1-153
+cli/src/main/java/nl/obren/sokrates/cli/git/HttpFetcher.java
+  s_40c0e74316fcc6::t_46d62d4fe5849a 1-50
+cli/src/main/java/nl/obren/sokrates/cli/git/CodeHostOrg.java
+  s_40c0e74316fcc6::t_46d62d4fe5849a 8-11,19,21,59,112-129
+  s_40c0e74316fcc6::t_6bed6a8c19d0c4 13,23,26
+  s_40c0e74316fcc6::t_80dc707cc6ef83 1-7,12,14-18,20,22,24-25,27-58,60-111,130-131
+cli/src/test/java/nl/obren/sokrates/cli/AnalyzeGitLabGroupCommandTest.java
+  s_40c0e74316fcc6::t_f88e738dd43ea1 1-129
+CLAUDE.md
+  s_40c0e74316fcc6::t_6807ea34edcc5c 55,61
+cli/src/test/java/nl/obren/sokrates/cli/git/CodeHostRepoFilterTest.java
+  s_40c0e74316fcc6::t_6bed6a8c19d0c4 11,14-15,23-24,27,37,45,54,63,69,76,84
+  s_40c0e74316fcc6::t_80dc707cc6ef83 1-10,12-13,16-22,25-26,28-36,38-44,46-53,55-62,64-68,70-75,77-83,85-89
+cli/src/test/java/nl/obren/sokrates/cli/git/GitHubOrgClientTest.java
+  s_40c0e74316fcc6::t_6bed6a8c19d0c4 39,44,63,77
+  s_40c0e74316fcc6::t_46d62d4fe5849a 34-36,60-61,74-75,86
+cli/src/test/java/nl/obren/sokrates/cli/git/GitLabGroupClientTest.java
+  s_40c0e74316fcc6::t_f88e738dd43ea1 1-95
+cli/src/main/java/nl/obren/sokrates/cli/git/CodeHostRepo.java
+  s_40c0e74316fcc6::t_6bed6a8c19d0c4 10,25,28
+  s_40c0e74316fcc6::t_80dc707cc6ef83 1-2,4-5,9,11,13-24,26-27,29-34,47-146
+  s_40c0e74316fcc6::t_46d62d4fe5849a 3,6-8,12,35-46
+cli/src/main/java/nl/obren/sokrates/cli/git/GitHubOrgClient.java
+  s_40c0e74316fcc6::t_6bed6a8c19d0c4 53,78-79
+  s_40c0e74316fcc6::t_46d62d4fe5849a 13,20,22,32-34,46-50,52,54,61-67,69-72,77,82,92,101-119
+README.md
+  s_40c0e74316fcc6::t_6807ea34edcc5c 111-112,160
+cli/src/main/java/nl/obren/sokrates/cli/CommandLineInterface.java
+  s_40c0e74316fcc6::t_6bed6a8c19d0c4 8,12-13,679,698-699,708,726,803-804,823,881
+  s_40c0e74316fcc6::t_f3d28c73323016 9,11,88-91,154-156,609-611,615-617,621-654,658,660-661,663-664,666-675,701-702,714,719,728,769-782,845,849,855-860,862,866-871,877-879,1784,1788-1790
+  s_40c0e74316fcc6::t_7d8947e1870f41 783,1791
+cli/src/main/java/nl/obren/sokrates/cli/git/CodeHostOrgClient.java
+  s_40c0e74316fcc6::t_46d62d4fe5849a 1-20
+cli/src/main/java/nl/obren/sokrates/cli/Commands.java
+  s_40c0e74316fcc6::t_f3d28c73323016 42-44,98-100,160-162,175-177,203,410-418,423-428,450,452-461
+cli/src/test/java/nl/obren/sokrates/cli/AnalyzeGitHubOrgCommandTest.java
+  s_40c0e74316fcc6::t_6bed6a8c19d0c4 4,6,38-39,42,48,53-54,78,113,140,169
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "ee9633bf80d486465138234a5bf05fd1de799844",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
