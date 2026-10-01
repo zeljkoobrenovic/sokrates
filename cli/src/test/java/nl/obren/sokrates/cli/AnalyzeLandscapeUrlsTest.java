@@ -64,7 +64,7 @@ class AnalyzeLandscapeUrlsTest {
 
         // Each repository: config.json + reports/data/data.zip, nothing else.
         for (String repo : new String[]{"alpha", "beta"}) {
-            assertEquals("[config.json, reports]", sortedNames(new File(root, repo)), repo);
+            assertEquals("[config.json, reports, source.json]", sortedNames(new File(root, repo)), repo + ": config, data-only reports and the source marker");
             assertEquals("[data]", sortedNames(new File(root, repo + "/reports")), repo + ": the reports folder must hold only data/");
             assertEquals("[data.zip]", sortedNames(new File(root, repo + "/reports/data")), repo);
         }
@@ -94,6 +94,45 @@ class AnalyzeLandscapeUrlsTest {
         String[] names = folder.list();
         java.util.Arrays.sort(names == null ? new String[0] : names);
         return java.util.Arrays.toString(names);
+    }
+
+    @Test
+    void pruneDeletesAnalysesNoLongerListedOrWhoseRepositoryIsGone(@TempDir Path tmp) throws Exception {
+        File alphaRemote = bareRepoWithHistory(tmp, "alpha", "ada@example.com");
+        File betaRemote = bareRepoWithHistory(tmp, "beta", "bob@example.com");
+        File gammaRemote = bareRepoWithHistory(tmp, "gamma", "cy@example.com");
+        File root = tmp.resolve("landscape").toFile();
+        String alpha = alphaRemote.toURI().toString(), beta = betaRemote.toURI().toString(), gamma = gammaRemote.toURI().toString();
+
+        new CommandLineInterface().run(new String[]{"analyzeLandscape", "-analysisRoot", root.getPath(), "-url", alpha, "-url", beta, "-url", gamma});
+        for (String name : new String[]{"alpha", "beta", "gamma"}) {
+            assertTrue(new File(root, name + "/config.json").exists(), name);
+            assertTrue(new File(root, name + "/" + nl.obren.sokrates.cli.git.AnalysisSource.FILE_NAME).exists(), name + " carries the source marker");
+        }
+        nl.obren.sokrates.cli.git.AnalysisSource source = nl.obren.sokrates.cli.git.AnalysisSource.read(new File(root, "alpha"));
+        assertEquals(alpha, source.getUrl());
+        assertEquals("analyzeLandscape", source.getCommand());
+        // An analysis placed by hand: no marker.
+        FileUtils.copyDirectory(new File(root, "beta"), new File(root, "manual/beta-copy"));
+        assertTrue(new File(root, "manual/beta-copy/" + nl.obren.sokrates.cli.git.AnalysisSource.FILE_NAME).delete());
+
+        // beta leaves the list and gamma's repository disappears; without -prune nothing is deleted.
+        FileUtils.deleteDirectory(gammaRemote);
+        new CommandLineInterface().run(new String[]{"analyzeLandscape", "-analysisRoot", root.getPath(), "-url", alpha, "-url", gamma});
+        assertTrue(new File(root, "beta/config.json").exists(), "without -prune a de-listed analysis stays");
+        assertTrue(new File(root, "gamma/config.json").exists(), "without -prune the analysis of a gone repository stays");
+
+        new CommandLineInterface().run(new String[]{"analyzeLandscape", "-analysisRoot", root.getPath(), "-url", alpha, "-url", gamma, "-prune"});
+        assertTrue(new File(root, "alpha/config.json").exists(), "a listed, cloneable repository is kept");
+        assertFalse(new File(root, "beta").exists(), "-prune deletes the analysis of a repository no longer listed");
+        assertFalse(new File(root, "gamma").exists(), "-prune deletes the analysis of a listed repository that does not exist any more");
+        assertTrue(new File(root, "manual/beta-copy/config.json").exists(), "an analysis without the marker is never touched");
+        assertTrue(new File(root, "_sokrates_landscape/index.html").exists());
+        try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(new File(root, "_sokrates_landscape/data/data.zip"))) {
+            String repositories = new String(zip.getInputStream(zip.getEntry("repositories.json")).readAllBytes(), UTF_8);
+            assertTrue(repositories.contains("\"name\" : \"alpha\""), repositories);
+            assertFalse(repositories.contains("\"name\" : \"gamma\""), "the landscape no longer counts the pruned analysis");
+        }
     }
 
     private static File bareRepoWithHistory(Path tmp, String name, String email) throws Exception {

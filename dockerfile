@@ -28,6 +28,8 @@ COPY --from=build /build/cli/target/cli-1.0-jar-with-dependencies.jar /app/sokra
 # The code base to analyze is mounted here: docker run -v "$(pwd):/code" ghcr.io/zeljkoobrenovic/sokrates analyze
 WORKDIR /code
 
-# Define the entry point for the container
-ENTRYPOINT ["java", "-jar", "/app/sokrates-cli.jar"]
+# Let the JVM use most of the container's memory: its default is 25%, which on a typical Docker
+# Desktop VM is a few hundred MB and runs out on big repositories (OutOfMemoryError in the
+# analysis). An explicit -Xmx passed via -e JAVA_TOOL_OPTIONS=-Xmx8g still overrides this.
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "/app/sokrates-cli.jar"]
 CMD ["analyze"]

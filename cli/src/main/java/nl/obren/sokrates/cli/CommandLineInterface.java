@@ -5,10 +5,12 @@
 package nl.obren.sokrates.cli;
 
 import nl.obren.sokrates.cli.git.GitHistoryExtractor;
+import nl.obren.sokrates.cli.git.AnalysisSource;
 import nl.obren.sokrates.cli.git.CodeHostOrg;
 import nl.obren.sokrates.cli.git.CodeHostOrgClient;
 import nl.obren.sokrates.cli.git.GitHubOrgClient;
 import nl.obren.sokrates.cli.git.GitLabGroupClient;
+import nl.obren.sokrates.cli.git.HttpFetcher;
 import nl.obren.sokrates.cli.git.CodeHostRepo;
 import nl.obren.sokrates.cli.git.CodeHostRepoFilter;
 import nl.obren.sokrates.cli.git.GitRepoCloner;
@@ -67,6 +69,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.nio.file.Files;
@@ -325,10 +328,16 @@ public class CommandLineInterface {
             LOG.info("-" + Commands.ARG_DATA_ONLY + ": storing only the landscape's data/data.zip (no index page, contributor pages, explorers or visuals).");
         }
 
+        boolean prune = cmd.hasOption(commands.getPrune().getOpt());
+        if (prune && urls.isEmpty()) {
+            LOG.warn("-" + Commands.ARG_PRUNE + " only applies together with -" + Commands.ARG_URL + " / -" + Commands.ARG_URLS + " (the list says which analyses are current); ignored.");
+        }
         if (!urls.isEmpty()) {
-            if (!analyzeRepositoriesIntoLandscape(cmd, root, urls)) {
+            RepositoryBatch batch = analyzeRepositoriesIntoLandscape(cmd, root, urls, commandName);
+            if (batch.nothingAnalyzed()) {
                 return;
             }
+            pruneManagedAnalyses(root, urls, batch.notFound, prune);
         }
 
         if (cmd.hasOption(commands.getRecursive().getOpt())) {
@@ -412,53 +421,51 @@ public class CommandLineInterface {
      * A repository whose clone fails is logged and skipped so one bad URL does not lose the batch;
      * returns false only when nothing could be analyzed (then there is nothing to aggregate).
      */
-    private boolean analyzeRepositoriesIntoLandscape(CommandLine cmd, File root, List<String> urls) throws IOException {
+    private RepositoryBatch analyzeRepositoriesIntoLandscape(CommandLine cmd, File root, List<String> urls, String producer) throws IOException {
         return analyzeRepositoriesIntoLandscape(cmd, root, urls, url -> {
             GitRepoMetadata urlMetadata = GitRepoMetadata.fromUrl(url);
             return new File(root, urlMetadata != null ? urlMetadata.outputFolderName() : GitRepoCloner.folderNameFromUrl(url));
-        });
+        }, producer);
     }
 
     /** Same, with the output folder of each URL chosen by {@code outputFolderFor} (analyzeGitHubOrg uses <org>/<repository>). */
-    private boolean analyzeRepositoriesIntoLandscape(CommandLine cmd, File root, List<String> urls, Function<String, File> outputFolderFor) throws IOException {
+    private RepositoryBatch analyzeRepositoriesIntoLandscape(CommandLine cmd, File root, List<String> urls, Function<String, File> outputFolderFor, String producer) throws IOException {
+        RepositoryBatch batch = new RepositoryBatch();
         int depth = 0;
         String depthValue = cmd.getOptionValue(commands.getDepth().getOpt());
         if (StringUtils.isNotBlank(depthValue)) {
             if (!StringUtils.isNumeric(depthValue.trim())) {
                 LOG.error("-" + Commands.ARG_DEPTH + " must be a positive number, got '" + depthValue + "'.");
-                return false;
+                return batch;
             }
             depth = Integer.parseInt(depthValue.trim());
         }
-        List<String> failed = new ArrayList<>();
         int index = 0;
         for (String url : urls) {
             index++;
             LOG.info("");
             LOG.info("=== Repository " + index + " of " + urls.size() + ": " + url + " ===");
             File output = outputFolderFor.apply(url);
-            boolean ok;
+            CloneOutcome outcome;
             try {
-                ok = analyzeGitRepoInto(cmd, url, output, null, depth);
+                outcome = analyzeGitRepoInto(cmd, url, output, null, depth, producer);
             } catch (Exception e) {
                 LOG.error("Analysis of " + url + " failed: " + e.getMessage());
-                ok = false;
+                outcome = CloneOutcome.FAILED;
             }
-            if (!ok) {
-                failed.add(url);
-            }
+            (outcome == CloneOutcome.ANALYZED ? batch.analyzed : outcome == CloneOutcome.NOT_FOUND ? batch.notFound : batch.failed).add(url);
             // Per-analysis static caches (the recursive landscape update resets them the same way).
             DateUtils.reset();
             RegexUtils.reset();
         }
         LOG.info("");
-        LOG.info("Analyzed " + (urls.size() - failed.size()) + " of " + urls.size() + " repositories into " + root.getPath());
-        failed.forEach(url -> LOG.error(" - failed: " + url));
-        if (failed.size() == urls.size()) {
+        LOG.info("Analyzed " + batch.analyzed.size() + " of " + urls.size() + " repositories into " + root.getPath());
+        batch.failed.forEach(url -> LOG.error(" - failed: " + url));
+        batch.notFound.forEach(url -> LOG.error(" - does not exist: " + url));
+        if (batch.nothingAnalyzed()) {
             LOG.error("No repository could be analyzed; the landscape is not updated.");
-            return false;
         }
-        return true;
+        return batch;
     }
 
     private void updateLandscapePeopleConfigByUserName(String[] args) throws ParseException {
@@ -618,7 +625,7 @@ public class CommandLineInterface {
         if (logins == null) {
             return;
         }
-        analyzeOrganizations(cmd, gitHubOrgClient, logins);
+        analyzeOrganizations(cmd, gitHubOrgClient, logins, Commands.ANALYZE_GITHUB_ORG);
     }
 
     /**
@@ -641,7 +648,7 @@ public class CommandLineInterface {
         }
         CodeHostOrgClient client = gitLabGroupClient != null ? gitLabGroupClient : new GitLabGroupClient(baseUrl);
         LOG.info("GitLab instance: " + baseUrl);
-        analyzeOrganizations(cmd, client, groups);
+        analyzeOrganizations(cmd, client, groups, Commands.ANALYZE_GITLAB_GROUP);
     }
 
     /** The normalized, de-duplicated organization identifiers of a command; null (after help/usage) when there are none. */
@@ -672,7 +679,7 @@ public class CommandLineInterface {
      * configuration already there) the parent landscape in <root>/_sokrates_landscape is updated
      * last, so its Sub-landscapes tab reads fresh data. An organization whose listing fails is skipped.
      */
-    private void analyzeOrganizations(CommandLine cmd, CodeHostOrgClient client, List<String> logins) throws IOException {
+    private void analyzeOrganizations(CommandLine cmd, CodeHostOrgClient client, List<String> logins, String commandName) throws IOException {
         startTimeoutIfDefined(cmd);
         updateDateParam(cmd);
 
@@ -715,9 +722,6 @@ public class CommandLineInterface {
             if (listOnly) {
                 continue;
             }
-            if (prune) {
-                pruneRepositories(orgRoot, orgRoot, repos.stream().map(repo -> new File(orgRoot, repo.getFolderPath())).collect(Collectors.toSet()));
-            }
             if (repos.isEmpty()) {
                 LOG.warn("No repository of " + login + " is selected; its landscape is not updated.");
                 continue;
@@ -726,10 +730,12 @@ public class CommandLineInterface {
             List<String> urls = repos.stream().map(CodeHostRepo::getCloneUrl).collect(Collectors.toList());
             Map<String, File> outputFolders = new LinkedHashMap<>();
             repos.forEach(repo -> outputFolders.put(repo.getCloneUrl(), new File(orgRoot, repo.getFolderPath())));
-            if (!analyzeRepositoriesIntoLandscape(cmd, orgRoot, urls, outputFolders::get)) {
+            RepositoryBatch batch = analyzeRepositoriesIntoLandscape(cmd, orgRoot, urls, outputFolders::get, commandName);
+            if (batch.nothingAnalyzed()) {
                 failed.add(login);
                 continue;
             }
+            pruneManagedAnalyses(orgRoot, urls, batch.notFound, prune);
 
             Metadata metadata = orgLandscapeMetadata(orgRoot, org);
             File reportsFolder = LandscapeAnalysisCommands.update(orgRoot, null, metadata, dataOnly);
@@ -853,27 +859,6 @@ public class CommandLineInterface {
     }
 
     /**
-     * Deletes the kept analyses (folders holding a config.json, at any depth below the organization
-     * folder — GitLab subgroups nest them) of repositories that are not selected any more.
-     */
-    private void pruneRepositories(File orgRoot, File folder, Set<File> selectedFolders) throws IOException {
-        File[] children = folder.listFiles(File::isDirectory);
-        for (File child : children == null ? new File[0] : children) {
-            if (child.getName().equals("_sokrates_landscape")) {
-                continue;
-            }
-            if (new File(child, "config.json").exists()) {
-                if (!selectedFolders.contains(child)) {
-                    LOG.info("-" + Commands.ARG_PRUNE + ": deleting the analysis of " + orgRoot.toPath().relativize(child.toPath()) + " (no longer selected).");
-                    FileUtils.deleteDirectory(child);
-                }
-            } else {
-                pruneRepositories(orgRoot, child, selectedFolders);
-            }
-        }
-    }
-
-    /**
      * The organization's landscape metadata: the host profile fills only what the existing
      * landscape configuration leaves blank (name, description, logo, and a link when there are no
      * links), so a user's edits survive re-runs.
@@ -945,7 +930,7 @@ public class CommandLineInterface {
             depth = Integer.parseInt(depthValue.trim());
         }
 
-        analyzeGitRepoInto(cmd, url, output, branch, depth);
+        analyzeGitRepoInto(cmd, url, output, branch, depth, Commands.ANALYZE_GIT_REPO);
     }
 
     /**
@@ -953,15 +938,25 @@ public class CommandLineInterface {
      * only the analysis in {@code output} (reusing a config.json already kept there). Returns false
      * when the clone fails; the analysis itself reports its own errors.
      */
-    private boolean analyzeGitRepoInto(CommandLine cmd, String url, File output, String branch, int depth) throws IOException {
+    /** What the clone-and-analyze step did with one URL. */
+    enum CloneOutcome {
+        ANALYZED,
+        /** The clone failed for a reason that may pass (network, credentials, a bad branch): keep any earlier analysis. */
+        FAILED,
+        /** The remote repository does not exist (any more, or for these credentials): -prune may delete its analysis. */
+        NOT_FOUND
+    }
+
+    private CloneOutcome analyzeGitRepoInto(CommandLine cmd, String url, File output, String branch, int depth, String producer) throws IOException {
         File clone = Files.createTempDirectory("sokrates-clone-").toFile();
         try {
             ProcessingStopwatch.start("cloning");
             try {
                 new GitRepoCloner().cloneOrUpdate(url, clone, branch, depth);
             } catch (Exception e) {
-                LOG.error("Could not clone " + url + ": " + e.getMessage());
-                return false;
+                boolean gone = repositoryGone(url, e);
+                LOG.error("Could not clone " + url + ": " + e.getMessage() + (gone ? " (the repository does not exist)" : ""));
+                return gone ? CloneOutcome.NOT_FOUND : CloneOutcome.FAILED;
             } finally {
                 ProcessingStopwatch.end("cloning");
             }
@@ -988,12 +983,113 @@ public class CommandLineInterface {
                     FileUtils.moveFile(file, target);
                 }
             }
+            new AnalysisSource(url, producer, DateUtils.getAnalysisDate()).save(output);
             LOG.info("Analysis kept in " + output.toPath().toAbsolutePath().normalize() + " (config.json + reports/); the source clone is deleted.");
             logReportLocation(new File(output, "reports"));
-            return true;
+            return CloneOutcome.ANALYZED;
         } finally {
             FileUtils.deleteQuietly(clone);
         }
+    }
+
+    /**
+     * Whether a clone failure means the repository is gone rather than temporarily unreachable.
+     * JGit reports a missing repository as a NoRemoteRepositoryException ("not found"); GitHub
+     * answers an anonymous clone of a missing (or private) repository with "authentication is
+     * required", so for github.com the REST API is asked as well (404 = gone, anything else = keep).
+     * Network errors (unknown host, cannot open git-upload-pack, timeouts) never count as gone.
+     */
+    static boolean repositoryGone(String url, Throwable failure) {
+        for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
+            if (cause instanceof org.eclipse.jgit.errors.NoRemoteRepositoryException) {
+                return true;
+            }
+            if (cause instanceof java.net.UnknownHostException || cause instanceof java.net.ConnectException
+                    || cause instanceof java.net.SocketTimeoutException) {
+                return false;
+            }
+        }
+        GitRepoMetadata metadata = GitRepoMetadata.fromUrl(url);
+        if (metadata != null && metadata.isGitHub() && StringUtils.isNotBlank(metadata.getOwner())
+                && StringUtils.isBlank(System.getenv(GitRepoMetadata.ENV_OFFLINE))) {
+            try {
+                HttpFetcher.Response response = HttpFetcher.create(Map.of(
+                        "Accept", "application/vnd.github+json",
+                        "Authorization", StringUtils.isNotBlank(System.getenv(GitRepoCloner.ENV_TOKEN)) ? "Bearer " + System.getenv(GitRepoCloner.ENV_TOKEN) : ""))
+                        .get(GitHubOrgClient.DEFAULT_API_BASE + "/repos/" + metadata.getOwner() + "/" + metadata.getName());
+                return response.status == 404;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        String message = StringUtils.defaultString(failure.getMessage()).toLowerCase();
+        return message.contains("not found") || message.contains("does not exist");
+    }
+
+    /** The outcome of a batch of clone-and-analyze steps. */
+    static class RepositoryBatch {
+        final List<String> analyzed = new ArrayList<>();
+        final List<String> failed = new ArrayList<>();
+        final List<String> notFound = new ArrayList<>();
+
+        boolean nothingAnalyzed() {
+            return analyzed.isEmpty();
+        }
+    }
+
+    /**
+     * -prune: deletes the kept analyses this tool produced (folders carrying a source.json, at any
+     * depth below root, _sokrates_landscape excluded) whose repository is no longer selected or no
+     * longer exists; a folder emptied by that goes too. Analyses without the marker — placed by hand
+     * — are never touched. Without -prune the stale analyses are only listed, with the hint.
+     */
+    private void pruneManagedAnalyses(File root, Collection<String> selectedUrls, Collection<String> goneUrls, boolean prune) throws IOException {
+        Set<String> selected = selectedUrls.stream().map(AnalysisSource::normalizeUrl).collect(Collectors.toSet());
+        Set<String> gone = goneUrls.stream().map(AnalysisSource::normalizeUrl).collect(Collectors.toSet());
+        List<File> stale = new ArrayList<>();
+        collectStaleManagedAnalyses(root, selected, gone, stale);
+        if (stale.isEmpty()) {
+            return;
+        }
+        if (!prune) {
+            LOG.warn(stale.size() + " kept analysis folder(s) under " + root.getPath() + " belong to repositories that are no longer listed or no longer exist"
+                    + " (they still count in the landscape); add -" + Commands.ARG_PRUNE + " to delete them:");
+            stale.forEach(folder -> LOG.warn(" - " + root.toPath().relativize(folder.toPath())));
+            return;
+        }
+        for (File folder : stale) {
+            AnalysisSource source = AnalysisSource.read(folder);
+            String reason = source != null && gone.contains(source.getNormalizedUrl()) ? "the repository does not exist any more" : "no longer listed";
+            LOG.info("-" + Commands.ARG_PRUNE + ": deleting " + root.toPath().relativize(folder.toPath()) + " (" + reason + ").");
+            FileUtils.deleteDirectory(folder);
+            for (File parent = folder.getParentFile(); parent != null && !parent.equals(root) && isEmptyFolder(parent); parent = parent.getParentFile()) {
+                FileUtils.deleteDirectory(parent);
+            }
+        }
+    }
+
+    private static void collectStaleManagedAnalyses(File folder, Set<String> selected, Set<String> gone, List<File> stale) {
+        File[] children = folder.listFiles(File::isDirectory);
+        for (File child : children == null ? new File[0] : children) {
+            String name = child.getName();
+            if (name.equals("_sokrates_landscape") || name.equals(".git") || name.equals("_sokrates")) {
+                continue;
+            }
+            AnalysisSource source = AnalysisSource.read(child);
+            if (source != null) {
+                String url = source.getNormalizedUrl();
+                if (gone.contains(url) || !selected.contains(url)) {
+                    stale.add(child);
+                }
+            } else if (!new File(child, "config.json").exists()) {
+                collectStaleManagedAnalyses(child, selected, gone, stale);
+            }
+        }
+    }
+
+    private static boolean isEmptyFolder(File folder) {
+        String[] names = folder.list();
+        return names != null && names.length == 0;
     }
 
     /**

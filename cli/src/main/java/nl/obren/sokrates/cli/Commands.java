@@ -34,7 +34,7 @@ public class Commands {
     public static final String ADD_CUSTOM_TAB_DESCRIPTION = "Adds a custom iframe tab to the repository report configuration (config.json customTabs). If a custom tab with the same label already exists, it is overwritten instead of added.";
 
     public static final String ANALYZE_LANDSCAPE = "analyzeLandscape";
-    public static final String ANALYZE_LANDSCAPE_DESCRIPTION = "Creates or updates a Sokrates landscape report aggregating the repository analyses found under the analysis root (the landscape counterpart of analyze). With -url (repeatable) and/or -urls <file> (one git URL per line, # comments), it first runs analyzeGitRepo for each URL into <analysisRoot>/<owner>/<repository> (a failing repository is logged and skipped), then builds the landscape; without URLs it aggregates what is already there. Same options as updateLandscape, which is kept as the older name.";
+    public static final String ANALYZE_LANDSCAPE_DESCRIPTION = "Creates or updates a Sokrates landscape report aggregating the repository analyses found under the analysis root (the landscape counterpart of analyze). With -url (repeatable) and/or -urls <file> (one git URL per line, # comments), it first runs analyzeGitRepo for each URL into <analysisRoot>/<owner>/<repository> (a failing repository is logged and skipped; -prune deletes the kept analyses of repositories no longer listed or no longer existing), then builds the landscape; without URLs it aggregates what is already there. Same options as updateLandscape, which is kept as the older name.";
 
     public static final String ANALYZE_GITHUB_ORG = "analyzeGitHubOrg";
     public static final String ANALYZE_GITHUB_ORG_DESCRIPTION = "Analyzes whole GitHub organizations (or user accounts): for every -org (repeatable) and/or login in -orgs <file>, lists its repositories with the GitHub REST API, filters them (forks and archived repositories are excluded unless -includeForks / -includeArchived; -pushedWithinDays, -includeRepoNamePattern / -excludeRepoNamePattern and -maxRepos narrow further), writes the selection to <analysisRoot>/<org>/repos.txt, analyzes each repository into <analysisRoot>/<org>/<repository> (the analyzeGitRepo step) and builds a landscape per organization in <analysisRoot>/<org>/_sokrates_landscape, named, described, linked and branded from the organization's GitHub profile (only fields you have not set). With several organizations a parent landscape in <analysisRoot>/_sokrates_landscape lists them as sub-landscapes. -listOnly just writes repos.txt; -prune deletes analyses of repositories no longer selected. Set SOKRATES_GIT_TOKEN for private repositories and the higher API rate limit.";
@@ -167,7 +167,7 @@ public class Commands {
     private Option excludeRepoNamePattern = new Option(ARG_EXCLUDE_REPO_NAME_PATTERN, true, "[OPTIONAL] skips repositories whose name (or owner/name) matches this regex entirely, case-insensitive; repeatable");
     private Option maxRepos = new Option(ARG_MAX_REPOS, true, "[OPTIONAL] keeps at most N repositories per organization, the most recently pushed ones");
     private Option listOnly = new Option(ARG_LIST_ONLY, false, "[OPTIONAL] only lists and filters the repositories into <analysisRoot>/<org>/repos.txt, without cloning or analyzing anything (a dry run to review the selection and its size)");
-    private Option prune = new Option(ARG_PRUNE, false, "[OPTIONAL] deletes the kept analyses (<analysisRoot>/<org>/<repository>) of repositories that are no longer selected, so the landscape stops showing them");
+    private Option prune = new Option(ARG_PRUNE, false, "[OPTIONAL] deletes the kept analyses that this tool produced (they carry a source.json) whose repository is no longer in the list / selection, or whose remote repository does not exist any more, so the landscape stops counting them; analyses placed by hand are never touched. Without it, such stale analyses are only listed.");
 
     {
         org.setArgName("login");
@@ -508,6 +508,7 @@ public class Commands {
         options.addOption(urls);
         options.addOption(depth);
         options.addOption(dataOnly);
+        options.addOption(prune);
         options.addOption(conventionsFile);
         options.addOption(confFile);
         options.addOption(recursive);
