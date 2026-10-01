@@ -54,7 +54,37 @@ It runs three steps, each of which is also available as a separate command:
 
 The report is titled after the repository, not the folder: when the folder has a git `origin` remote, `analyze` fills the configuration's name (`owner/repo`, e.g. `junit-team/junit4`, so same-named repositories of different owners stay apart in a landscape), logo (GitHub owner avatar), description (from the GitHub API, best effort; set `SOKRATES_OFFLINE=1` to skip the lookup) and a link to the repository, unless you set them yourself (`-name`, `-description`, `-logoLink`, `-addLink`, or edits in `config.json`). This matters in Docker, where every code base is mounted at `/code`.
 
-A whole landscape from a list of repositories is one command as well: `analyzeLandscape -urls repos.txt` analyzes every URL in the file into `<owner>/<repo>/` under the current folder (or `-analysisRoot`) and then builds `_sokrates_landscape/`. Re-run it to refresh; kept configurations are reused.
+### A landscape of many repositories in one command
+
+List the repositories in a text file, one git URL per line (blank lines and `#` comments are ignored), and run `analyzeLandscape -urls` in the folder that should hold the landscape:
+
+```bash
+cat > repos.txt <<'EOF'
+# repositories of the landscape
+https://github.com/junit-team/junit4
+https://github.com/junit-team/junit-framework
+https://github.com/hamcrest/JavaHamcrest
+EOF
+
+java -jar cli-1.0-jar-with-dependencies.jar analyzeLandscape -urls repos.txt
+# or, without Java:
+docker run --rm -v "$(pwd):/code" ghcr.io/zeljkoobrenovic/sokrates analyzeLandscape -urls repos.txt
+
+open _sokrates_landscape/index.html
+```
+
+Every URL is cloned and analyzed (the `analyzeGitRepo` step: only the analysis is kept, under `<owner>/<repo>/`; a repository that cannot be cloned is logged and skipped), then the landscape report is built over all of them:
+
+```
+./
+  _sokrates_landscape/index.html        # the landscape report
+  junit-team/junit4/config.json
+  junit-team/junit4/reports/...
+  junit-team/junit-framework/...
+  hamcrest/JavaHamcrest/...
+```
+
+A few URLs can also be passed inline with `-url` (repeatable); `-depth <n>` makes the clones shallow, `-analysisRoot` puts the landscape elsewhere, and `SOKRATES_GIT_TOKEN` authenticates private repositories. Re-run the same command to refresh: the kept `config.json` of each repository and the landscape configuration are reused, so your tuning survives. Without URLs, `analyzeLandscape` just aggregates the analyses already under the root.
 
 To analyze a repository you have not cloned yet, `analyzeGitRepo` clones it first and then runs the same three steps:
 
