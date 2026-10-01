@@ -231,7 +231,7 @@ docker run --rm -v "$(pwd):/code" ghcr.io/zeljkoobrenovic/sokrates:1.0.0 analyze
 
 `docker run` reuses the image already on your machine and never checks for a newer one, so after a Sokrates update (a command reported as unknown is the usual symptom) run `docker pull ghcr.io/zeljkoobrenovic/sokrates` once, or add `--pull always` to the run command.
 
-The JVM in the image may use 75% of the memory Docker gives the container. A big repository that still ends in `OutOfMemoryError: Java heap space` needs more: raise the memory of the Docker VM (Docker Desktop → Settings → Resources; Colima `colima start --memory 8`) or pass an explicit heap size, `-e JAVA_TOOL_OPTIONS=-Xmx8g`, which overrides the percentage.
+**Memory:** Docker Desktop and Colima give their VM 2 GB by default, which is typically not enough for bigger repositories. The JVM in the image gets 75% of the VM's memory, and a repository of a few hundred thousand lines can need 4 GB of heap (the duplication analysis of generated code is the usual peak); beyond that the run ends in `OutOfMemoryError: Java heap space` or simply stops in the middle without a message. Give the VM 8 GB before analyzing anything big or a whole organization (Docker Desktop → Settings → Resources; Colima: `colima start --memory 8`). An explicit heap size, `-e JAVA_TOOL_OPTIONS=-Xmx6g`, overrides the percentage but cannot exceed what the VM has.
 
 On Linux the container writes as root, so the generated `_sokrates/` folder would be owned by root; add `--user "$(id -u):$(id -g)"` to keep your own ownership (Docker Desktop on macOS/Windows maps ownership automatically).
 
