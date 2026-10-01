@@ -968,7 +968,7 @@ public class CommandLineInterface {
                 FileUtils.copyFile(keptConfig, CodeConfigurationUtils.getDefaultSokratesConfigFile(clone));
             }
 
-            analyze(cmd, clone, false);
+            analyze(cmd, clone, false, url, output);
 
             // Keep only the analysis: everything in the clone's _sokrates folder (config.json, reports/,
             // any config-*.json) replaces its namesake in the output folder; the clone goes.
@@ -1098,6 +1098,15 @@ public class CommandLineInterface {
      * relative to the root; -confFile / -outputFolder on {@code cmd} override them.
      */
     private File analyze(CommandLine cmd, File root, boolean skipGitHistory) throws IOException {
+        GitRepoMetadata origin = GitRepoMetadata.fromLocalRepository(root);
+        return analyze(cmd, root, skipGitHistory, origin != null ? origin.getRemoteUrl() : "", null);
+    }
+
+    /**
+     * @param repoUrl    the repository URL for the post-analysis hook's environment ("" for a plain folder)
+     * @param keptFolder where the analysis will be kept when it is moved out of a clone; null = it stays in place
+     */
+    private File analyze(CommandLine cmd, File root, boolean skipGitHistory, String repoUrl, File keptFolder) throws IOException {
         updateDateParam(cmd);
 
         ProcessingStopwatch.start("extracting git history");
@@ -1126,7 +1135,37 @@ public class CommandLineInterface {
         }
 
         generateReports(cmd, conf, reportsFolder);
+        runPostAnalysisHook(cmd, root, conf, reportsFolder, repoUrl, keptFolder);
         return reportsFolder;
+    }
+
+    /** The -postAnalysis / -ai command, if any: an explicit command wins over the agent preset. Null when neither is given. */
+    String postAnalysisCommand(CommandLine cmd) {
+        String explicit = cmd.getOptionValue(commands.getPostAnalysis().getOpt());
+        if (StringUtils.isNotBlank(explicit)) {
+            return explicit.trim();
+        }
+        String agent = cmd.getOptionValue(commands.getAi().getOpt());
+        if (StringUtils.isBlank(agent)) {
+            return null;
+        }
+        String preset = PostAnalysisHook.aiPresetCommand(agent, cmd.getOptionValue(commands.getAiPrompt().getOpt()));
+        if (preset == null) {
+            LOG.error("-" + Commands.ARG_AI + " must be one of " + PostAnalysisHook.AGENTS + ", got '" + agent + "'; no post-analysis command is run.");
+        }
+        return preset;
+    }
+
+    private void runPostAnalysisHook(CommandLine cmd, File root, File conf, File reportsFolder, String repoUrl, File keptFolder) {
+        String command = postAnalysisCommand(cmd);
+        if (command == null) {
+            return;
+        }
+        GitRepoMetadata metadata = StringUtils.isNotBlank(repoUrl) ? GitRepoMetadata.fromUrl(repoUrl) : null;
+        String repoName = metadata != null ? metadata.reportName() : root.toPath().toAbsolutePath().normalize().getFileName().toString();
+        ProcessingStopwatch.start("post-analysis command");
+        PostAnalysisHook.run(command, root, PostAnalysisHook.environment(repoUrl, repoName, root, conf.getParentFile(), reportsFolder, keptFolder));
+        ProcessingStopwatch.end("post-analysis command");
     }
 
     /**

@@ -112,6 +112,18 @@ open _sokrates_landscape/index.html              # ... and a parent landscape ov
 
 Forks and archived repositories are skipped unless you pass `-includeForks` / `-includeArchived`; `-pushedWithinDays <n>`, `-includeRepoNamePattern` / `-excludeRepoNamePattern <regex>` and `-maxRepos <n>` narrow the selection further. Cloning a large organization takes a while, so `-listOnly` first writes just `<org>/repos.txt` to review the selection, and `-dataOnly` keeps only the data. Re-runs reuse every kept `config.json` and your edits of the landscape metadata; `-prune` removes the analyses of repositories that are no longer selected. For private repositories (and the higher API rate limit) set `SOKRATES_GIT_TOKEN`.
 
+### Run an AI agent (or any script) after each analysis
+
+`-postAnalysis "<command>"` runs a shell command in the analyzed source tree right after the analysis — for `analyzeGitRepo`, `analyzeLandscape -urls` and the organization commands inside the clone, before it is deleted — so an AI coding agent can read the source and the fresh `_sokrates/` analysis; whatever it writes under `_sokrates/` is kept with the analysis. `-ai claude|codex|gemini` is a preset for that agent's headless command running `-aiPrompt` (default `run a full scan`, the [sokrates-skills](https://github.com/zeljkoobrenovic/sokrates-skills) full scan); the agent CLI and the skills must be installed on the machine. The command sees `SOKRATES_REPO_URL`, `SOKRATES_REPO_NAME`, `SOKRATES_SRC_ROOT`, `SOKRATES_ANALYSIS_FOLDER`, `SOKRATES_REPORTS_FOLDER` and `SOKRATES_OUTPUT_FOLDER`; a failing command is logged and the analysis is kept.
+
+```bash
+java -jar cli-1.0-jar-with-dependencies.jar analyzeGitHubOrg -org junit-team -ai claude
+java -jar cli-1.0-jar-with-dependencies.jar analyzeLandscape -urls repos.txt -ai codex -aiPrompt "run a tech stack scan"
+java -jar cli-1.0-jar-with-dependencies.jar analyze -postAnalysis 'gemini -p "check the Sokrates configuration of this repository" --yolo'
+```
+
+The Docker image holds no agent CLI; use the JAR, or build an image on top of it with your agent installed.
+
 To analyze a repository you have not cloned yet, `analyzeGitRepo` clones it first and then runs the same three steps:
 
 ```bash
@@ -151,6 +163,7 @@ java -jar cli-1.0-jar-with-dependencies.jar generateReports -help
 | `analyzeGitRepo` | Clone a repository from its URL (`-url`; JGit, no git binary) into a temporary folder, run `analyze` on it, and keep only the analysis (`config.json` + `reports/`) in `-destFolder` (default `<owner>/<repo>`, e.g. `junit-team/junit4`); the clone is deleted. Re-runs clone again and reuse the kept config. `-branch`, `-depth` (shallow clone), and the `analyze` options. Private HTTPS repos: set `SOKRATES_GIT_TOKEN` (and optionally `SOKRATES_GIT_USER`). The output layout is what `analyzeLandscape` expects |
 | `analyze` | One-shot analysis: `extractGitHistory` (if the root is a git repository) + `init` (if no config exists yet) + `generateReports`. Options: `-srcRoot`, `-confFile`, `-outputFolder`, `-conventionsFile`, `-name`, `-description`, `-skipGitHistory`, `-date`, `-timeout` |
 | `init` | Create a new analysis configuration (`config.json`) from standard + optional custom conventions |
+| _`-postAnalysis`, `-ai`, `-aiPrompt`_ | On `analyze`, `analyzeGitRepo`, `analyzeLandscape` and the organization commands: run a shell command (or the `claude`/`codex`/`gemini` headless preset with a prompt) in the source tree after each analysis, while a clone still exists; its output under `_sokrates/` is kept |
 | `generateReports` | Run the analysis and generate the HTML/JSON reports. `-dataOnly` (also on `analyze`, `analyzeGitRepo` and `analyzeLandscape`) stores only `reports/data/data.zip` — the file landscapes read — and no HTML, explorers, visuals, source viewer or index page; on `analyzeLandscape`/`updateLandscape` it also keeps only the landscape's `_sokrates_landscape/data/data.zip` next to its config files |
 | `updateConfig` | Fill in missing fields of an existing configuration |
 | `addCustomTab` | Add a custom iframe tab (`-label`, `-iframeLink`) to the report config; a tab with the same label is overwritten |
