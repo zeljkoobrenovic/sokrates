@@ -1,0 +1,19 @@
+README.md
+  s_a5febc420125fe::t_c8df038fd12b92 57-87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "9bca4bfc911dc2470d81f53a70d932f5dc077318",
+  "prompts": {},
+  "sessions": {
+    "s_a5febc420125fe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "50ef2165-6f28-45c6-bfb6-581484828dc5",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
