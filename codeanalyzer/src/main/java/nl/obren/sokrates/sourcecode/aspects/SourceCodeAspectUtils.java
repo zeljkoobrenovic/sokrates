@@ -150,6 +150,13 @@ public class SourceCodeAspectUtils {
         return commonPrefix;
     }
 
+    // Strips the legacy "  *." decoration older analyses wrote into per-extension metric names
+    // (e.g. "  *.java" -> "java"), so data produced before and after that change compares equal.
+    public static String extensionName(String perExtensionName) {
+        return perExtensionName == null ? "" : perExtensionName.replace("*.", "").trim().toLowerCase();
+    }
+
+    // One aspect per (lower-cased) file extension, named by the bare extension ("java", "ts"), sorted by LOC desc.
     @JsonIgnore
     public static List<NamedSourceCodeAspect> getAspectsPerExtensions(NamedSourceCodeAspect aspect) {
         Map<String, NamedSourceCodeAspect> map = new HashMap<>();
@@ -158,7 +165,7 @@ public class SourceCodeAspectUtils {
             String extension = ExtensionGroupExtractor.getExtension(sourceFile.getFile().getPath()).toLowerCase();
             NamedSourceCodeAspect extensionAspect = map.get(extension);
             if (extensionAspect == null) {
-                extensionAspect = new NamedSourceCodeAspect("  *." + extension);
+                extensionAspect = new NamedSourceCodeAspect(extension);
                 map.put(extension, extensionAspect);
             }
             extensionAspect.getSourceFiles().add(sourceFile);

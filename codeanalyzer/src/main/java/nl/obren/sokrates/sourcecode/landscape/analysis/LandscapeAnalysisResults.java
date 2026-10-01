@@ -10,6 +10,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
+import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspectUtils;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
@@ -516,7 +517,8 @@ public class LandscapeAnalysisResults {
                 repositoryLinesOfCodePerExtension = repositoryAnalysisResults.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCodePerExtension();
             }
             repositoryLinesOfCodePerExtension.forEach(metric -> {
-                String id = metric.getName().toLowerCase();
+                // older reports name these "  *.java"; current ones "java" — merge both under the bare extension
+                String id = SourceCodeAspectUtils.extensionName(metric.getName());
                 Optional<NumericMetric> existingMetric = linesOfCodePerExtension.stream().filter(c -> c.getName().equalsIgnoreCase(id)).findAny();
                 if (existingMetric.isPresent()) {
                     NumericMetric metricObject = existingMetric.get();
@@ -540,10 +542,11 @@ public class LandscapeAnalysisResults {
 
         metricLists.forEach(list -> {
             list.forEach(metric -> {
-                if (mergedMap.containsKey(metric.getName())) {
-                    mergedMap.get(metric.getName()).setValue(mergedMap.get(metric.getName()).getValue().doubleValue() + metric.getValue().doubleValue());
+                String name = SourceCodeAspectUtils.extensionName(metric.getName());
+                if (mergedMap.containsKey(name)) {
+                    mergedMap.get(name).setValue(mergedMap.get(name).getValue().doubleValue() + metric.getValue().doubleValue());
                 } else {
-                    NumericMetric newMetric = new NumericMetric(metric.getName(), metric.getValue());
+                    NumericMetric newMetric = new NumericMetric(name, metric.getValue());
                     merged.add(newMetric);
                     mergedMap.put(newMetric.getName(), newMetric);
                 }

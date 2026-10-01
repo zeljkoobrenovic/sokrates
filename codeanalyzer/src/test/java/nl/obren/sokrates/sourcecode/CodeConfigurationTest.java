@@ -41,9 +41,9 @@ public class CodeConfigurationTest {
 
         assertEquals(scopesWithExtensions.size(), 8);
         assertEquals(scopesWithExtensions.get(0).getName(), "main");
-        assertEquals(scopesWithExtensions.get(1).getName(), "  *.java");
-        assertEquals(scopesWithExtensions.get(2).getName(), "  *.js");
-        assertEquals(scopesWithExtensions.get(3).getName(), "  *.html");
+        assertEquals(scopesWithExtensions.get(1).getName(), "java");
+        assertEquals(scopesWithExtensions.get(2).getName(), "js");
+        assertEquals(scopesWithExtensions.get(3).getName(), "html");
         assertEquals(scopesWithExtensions.get(4).getName(), "test");
         assertEquals(scopesWithExtensions.get(5).getName(), "generated");
         assertEquals(scopesWithExtensions.get(6).getName(), "build and deployment");

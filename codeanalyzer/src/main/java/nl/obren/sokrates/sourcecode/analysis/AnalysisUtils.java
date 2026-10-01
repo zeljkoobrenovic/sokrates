@@ -71,7 +71,7 @@ public class AnalysisUtils {
         }
 
         SourceCodeAspectUtils.getAspectsPerExtensions(aspect).forEach(aspectPerExtension -> {
-            String extensionMetricName = name + "_EXT_" + aspectPerExtension.getName().replace("*.", "");
+            String extensionMetricName = name + "_EXT_" + aspectPerExtension.getName();
             metricsList.addMetric()
                     .id(getMetricId("NUMBER_OF_FILES_" + extensionMetricName))
                     .value(aspectPerExtension.getSourceFiles().size());
@@ -80,7 +80,7 @@ public class AnalysisUtils {
                     .id(getMetricId("LINES_OF_CODE_" + extensionMetricName))
                     .value(aspectPerExtension.getLinesOfCode());
 
-            detailedInfo(textSummary, progressFeedback, aspectPerExtension.getName() + ": " + aspectPerExtension.getSourceFiles().size() + " files, (" + aspectPerExtension.getLinesOfCode() + " lines of code)", start);
+            detailedInfo(textSummary, progressFeedback, "  *." + aspectPerExtension.getName() + ": " + aspectPerExtension.getSourceFiles().size() + " files, (" + aspectPerExtension.getLinesOfCode() + " lines of code)", start);
             aspectAnalysisResults.getFileCountPerExtension().add(new NumericMetric(aspectPerExtension.getName(), aspectPerExtension.getSourceFiles().size()));
             aspectAnalysisResults.getLinesOfCodePerExtension().add(new NumericMetric(aspectPerExtension.getName(), aspectPerExtension.getLinesOfCode()));
         });
