@@ -124,6 +124,8 @@ java -jar cli-1.0-jar-with-dependencies.jar analyze -postAnalysis 'gemini -p "ch
 
 The hook is incremental: each run is recorded in `_sokrates/post-analysis.json` (command, head commit, date, exit code) and a repository whose head commit and command are unchanged since a successful run is skipped, so a nightly landscape only rescans what moved; `-aiForce` runs it anyway and `-aiMaxRepos <n>` bounds the runs per invocation (the next invocation continues with the repositories not yet done).
 
+**At the landscape level**, the findings of all repositories are aggregated automatically: when any repository under the root has `reports/ai-insights/<scanner>.json` files (the sokrates-skills format, written by the hook or by hand), the landscape report gets an **AI Insights** tab — every finding with its severity, confidence, scanner, group and a deep link to its evidence in the repository's own explorer, searchable (`severity:high,critical`, `min:medium`, `scanner:security-scan`, `repo:…`, plain text) and sortable, plus a per-repository view of what was scanned when — and `data/ai-insights.json` in the landscape's `data.zip` for tooling. Repositories without findings are simply absent; a landscape without any has no tab.
+
 The Docker image holds no agent CLI; use the JAR, or build an image on top of it with your agent installed.
 
 To analyze a repository you have not cloned yet, `analyzeGitRepo` clones it first and then runs the same three steps:

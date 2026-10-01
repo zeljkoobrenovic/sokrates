@@ -14,6 +14,11 @@ import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.common.io.JsonGenerator;
+import nl.obren.sokrates.common.renderingutils.ExplorerTemplate;
+import java.util.HashMap;
+import nl.obren.sokrates.reports.landscape.ai.AiInsightsAggregator;
+import nl.obren.sokrates.reports.landscape.ai.AiInsightsLandscapeExport;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.LandscapeRepositoriesTagsMatrixReport;
 import nl.obren.sokrates.reports.landscape.statichtml.repositories.LandscapeRepositoriesTagsReport;
@@ -66,6 +71,8 @@ public class LandscapeReportGenerator {
     public static final String ACTIVITY_TAB_ID = "activity";
     public static final String TOPOLOGIES_TAB_ID = "topologies";
     public static final String DATA_TAB_ID = "data";
+    private static final String AI_INSIGHTS_TAB_ID = "ai-insights";
+    public static final String AI_INSIGHTS_FILE_NAME = "ai-insights.html";
     public static final String TEAMS_TAB_ID = "teams";
     public static final String CUSTOM_TAB_ID_PREFIX = "custom_tab_";
     public static final String CONTRIBUTORS_30_D = "contributors_30d_";
@@ -129,6 +136,8 @@ public class LandscapeReportGenerator {
     private LandscapeAnalysisResults landscapeAnalysisResults;
     private List<TagGroup> tagGroups;
     private final boolean dataOnly;
+    // The AI scanner findings of the repositories (sokrates-skills, via -postAnalysis or by hand); empty when no repository has any.
+    private AiInsightsLandscapeExport aiInsights = new AiInsightsLandscapeExport();
     private File folder;
     private File reportsFolder;
     private Map<String, List<String>> contributorsPerWeekMap = new HashMap<>();
@@ -189,6 +198,7 @@ public class LandscapeReportGenerator {
         customTagsMap = updateTagsData(analysisResults, tagGroups, repositories);
 
         exportData(analysisResults, folder);
+        exportAiInsightsData(repositories);
 
         if (dataOnly) {
             LOG.info("Data only: landscape data exported, skipping the report generation.");
@@ -206,6 +216,7 @@ public class LandscapeReportGenerator {
         addOverviewTab();
         addSublandscapesTab();
         addRepositoriesTab(repositories);
+        addAiInsightsTab();
         addDataTab();
 
         landscapeReportContributorsTab.addContributorsTabs(CONTRIBUTORS_TAB_ID);
@@ -341,12 +352,53 @@ public class LandscapeReportGenerator {
         // "Topology", not "Team Topology" — the tab shows contributor topology too, even when no
         // teams are configured.
         landscapeReport.addTab(TOPOLOGIES_TAB_ID, "Topology", false);
+        if (!aiInsights.isEmpty()) {
+            landscapeReport.addTab(AI_INSIGHTS_TAB_ID, "AI Insights (" + aiInsights.getFindings().size() + ")", false);
+        }
         configuration.getCustomTabs().forEach(tab -> {
             int index = configuration.getCustomTabs().indexOf(tab);
             landscapeReport.addTabText(CUSTOM_TAB_ID_PREFIX + index, tab.getName(), false);
         });
         landscapeReport.addTab(DATA_TAB_ID, "Data", false);
         landscapeReport.endTabGroup();
+    }
+
+    /**
+     * Collects the repositories' AI scanner findings (<repo>/reports/ai-insights/*.json, the
+     * sokrates-skills format) into data/ai-insights.json; the tab and page follow when there are any.
+     */
+    private void exportAiInsightsData(List<RepositoryAnalysisResults> repositories) {
+        String prefix = landscapeAnalysisResults.getConfiguration().getRepositoryReportsUrlPrefix();
+        aiInsights = AiInsightsAggregator.aggregate(repositories, folder, prefix);
+        if (aiInsights.isEmpty()) {
+            return;
+        }
+        LOG.info("AI insights: " + aiInsights.getFindings().size() + " findings in " + aiInsights.getRepositories().size() + " repositories.");
+        try {
+            FileUtils.write(new File(new File(folder, "data"), "ai-insights.json"), new JsonGenerator().generate(aiInsights), UTF_8);
+        } catch (IOException e) {
+            LOG.error(e);
+        }
+    }
+
+    /** The AI Insights tab: the client-rendered ai-insights.html (all findings, searchable; a Repositories view) in an iframe. */
+    private void addAiInsightsTab() {
+        if (aiInsights.isEmpty()) {
+            return;
+        }
+        try {
+            FileUtils.write(new File(reportsFolder, AI_INSIGHTS_FILE_NAME), new ExplorerTemplate().render("landscape-ai-insights.html", aiInsights, new HashMap<>()), UTF_8);
+        } catch (IOException e) {
+            LOG.error(e);
+        }
+        landscapeReport.startTabContentSection(AI_INSIGHTS_TAB_ID, false);
+        landscapeReport.addLineBreak();
+        landscapeReport.addParagraph("Findings written by AI scanners (the <a href='https://github.com/zeljkoobrenovic/sokrates-skills' target='_blank'>sokrates-skills</a>) "
+                + "on " + aiInsights.getRepositories().size() + " repositor" + (aiInsights.getRepositories().size() == 1 ? "y" : "ies")
+                + "; each finding links to its evidence in the repository's own AI Insights explorer. "
+                + "<a href='" + AI_INSIGHTS_FILE_NAME + "' target='_blank'>Open in a new tab " + OPEN_IN_NEW_TAB_SVG_ICON_SMALL + "</a>", "font-size: 90%; color: #606060");
+        landscapeReport.addHtmlContent("<iframe src='" + AI_INSIGHTS_FILE_NAME + "' frameborder=0 style='height: 1400px; width: 100%; margin-bottom: 0px; padding: 0;'></iframe>");
+        landscapeReport.endTabContentSection();
     }
 
     private void addCustomTabs() {
