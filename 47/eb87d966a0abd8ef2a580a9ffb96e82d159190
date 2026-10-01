@@ -1,0 +1,34 @@
+CLAUDE.md
+  s_40c0e74316fcc6::t_472011751a020f 107-108
+cli/src/main/java/nl/obren/sokrates/cli/CommandLineInterface.java
+  s_40c0e74316fcc6::t_dca488df46ab0d 619,713-719
+  s_40c0e74316fcc6::t_4b6670ec9a2bde 720-721
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/landscape/init/LandscapeAnalysisInitiator.java
+  s_40c0e74316fcc6::t_dca488df46ab0d 36,101-122,124-128
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/landscape/analysis/LandscapeAnalysisUtils.java
+  s_40c0e74316fcc6::t_dca488df46ab0d 50-55
+cli/src/test/java/nl/obren/sokrates/cli/AnalyzeGitHubOrgCommandTest.java
+  s_40c0e74316fcc6::t_dca488df46ab0d 148,161-180,182-187
+  s_40c0e74316fcc6::t_dd758d874c3bd0 181
+  s_40c0e74316fcc6::t_515c2d064e9134 188-189
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/landscape/init/LandscapeAnalysisUpdater.java
+  s_40c0e74316fcc6::t_dca488df46ab0d 41-45
+codeanalyzer/src/test/java/nl/obren/sokrates/sourcecode/landscape/init/LandscapeAnalysisInitiatorTest.java
+  s_40c0e74316fcc6::t_dca488df46ab0d 1-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "47eb87d966a0abd8ef2a580a9ffb96e82d159190",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
