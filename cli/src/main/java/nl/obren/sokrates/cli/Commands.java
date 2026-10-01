@@ -131,7 +131,7 @@ public class Commands {
     private Option urls = new Option(ARG_URLS, true, "[OPTIONAL] a text file with one git repository URL per line (blank lines and # comments ignored); each is analyzed with analyzeGitRepo into <analysisRoot>/<owner>/<repository> before the landscape is built");
     private Option branch = new Option(ARG_BRANCH, true, "[OPTIONAL] the branch to analyze (default is the remote's default branch)");
     private Option depth = new Option(ARG_DEPTH, true, "[OPTIONAL] shallow clone depth (default is the full history; a shallow history makes the contributor and trend reports incomplete)");
-    private Option dataOnly = new Option(ARG_DATA_ONLY, false, "[OPTIONAL] stores only the analysis data (reports/data/data.zip, which landscapes read) — no HTML reports, explorers, visuals, source viewer or index page");
+    private Option dataOnly = new Option(ARG_DATA_ONLY, false, "[OPTIONAL] stores only the analysis data — for a repository reports/data/data.zip (which landscapes read), for a landscape _sokrates_landscape/data/data.zip (which a parent landscape reads) — no HTML reports, contributor pages, explorers, visuals, source viewer or index page");
     private Option skipGitHistory = new Option(ARG_SKIP_GIT_HISTORY, false, "[OPTIONAL] does not (re)extract the git history; an existing git-history.txt is still used");
     private Option setCacheFiles = new Option(ARG_SET_CACHE_FILES, true, "[OPTIONAL] sets a cache file flag ('true' or 'false')");
     private Option addLink = new Option(ARG_ADD_LINK, true, "[OPTIONAL] adds a new link");

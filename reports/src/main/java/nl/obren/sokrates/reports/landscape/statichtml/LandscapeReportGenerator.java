@@ -128,6 +128,7 @@ public class LandscapeReportGenerator {
             landscapeRepositoriesExtensionTagsMatrix = new RichTextReport("", "repositories-extensions-matrix.html");
     private LandscapeAnalysisResults landscapeAnalysisResults;
     private List<TagGroup> tagGroups;
+    private final boolean dataOnly;
     private File folder;
     private File reportsFolder;
     private Map<String, List<String>> contributorsPerWeekMap = new HashMap<>();
@@ -148,7 +149,17 @@ public class LandscapeReportGenerator {
     private SourceFileAgeDistribution overallFileFirstModifiedDistribution;
 
     public LandscapeReportGenerator(LandscapeAnalysisResults analysisResults, List<TagGroup> tagGroups, File folder, File reportsFolder) {
+        this(analysisResults, tagGroups, folder, reportsFolder, false);
+    }
+
+    /**
+     * @param dataOnly when true, only the landscape's data/ folder is exported (repositories, files,
+     *                 contributors, teams, landscapeAnalysisResults.json — what a parent landscape
+     *                 reads); no report is built, so {@link #report()} and the individual reports are empty.
+     */
+    public LandscapeReportGenerator(LandscapeAnalysisResults analysisResults, List<TagGroup> tagGroups, File folder, File reportsFolder, boolean dataOnly) {
         this.tagGroups = tagGroups;
+        this.dataOnly = dataOnly;
         this.teamsConfig = analysisResults.getTeamsConfig();
         this.folder = folder;
         this.reportsFolder = reportsFolder;
@@ -178,6 +189,11 @@ public class LandscapeReportGenerator {
         customTagsMap = updateTagsData(analysisResults, tagGroups, repositories);
 
         exportData(analysisResults, folder);
+
+        if (dataOnly) {
+            LOG.info("Data only: landscape data exported, skipping the report generation.");
+            return;
+        }
 
         addReportHead();
         addLinks();
@@ -256,6 +272,7 @@ public class LandscapeReportGenerator {
 
     private void exportData(LandscapeAnalysisResults landscapeAnalysisResults, File folder) {
         LandscapeDataExport dataExport = new LandscapeDataExport(landscapeAnalysisResults, folder);
+        dataExport.setDataOnly(dataOnly);
         dataExport.exportRepositories(customTagsMap);
         LOG.info("Exporting contributors...");
         dataExport.exportContributors();

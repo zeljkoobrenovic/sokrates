@@ -296,6 +296,13 @@ public class CommandLineInterface {
         String confFilePath = cmd.getOptionValue(commands.getConfFile().getOpt());
         updateDateParam(cmd);
 
+        // Applies to the per-URL repository analyses (analyzeGitRepoInto reads it from cmd) AND to the
+        // landscape itself: its folder then holds only the config files and data/data.zip.
+        boolean dataOnly = cmd.hasOption(commands.getDataOnly().getOpt());
+        if (dataOnly) {
+            LOG.info("-" + Commands.ARG_DATA_ONLY + ": storing only the landscape's data/data.zip (no index page, contributor pages, explorers or visuals).");
+        }
+
         if (!urls.isEmpty()) {
             if (!analyzeRepositoriesIntoLandscape(cmd, root, urls)) {
                 return;
@@ -310,7 +317,7 @@ public class CommandLineInterface {
                 LOG.info(System.getProperty("user.dir"));
                 System.setProperty("user.dir", absolutePath);
                 LOG.info(System.getProperty("user.dir"));
-                LandscapeAnalysisCommands.update(new File(landscapeFolder.getAbsolutePath()), null, metadata);
+                LandscapeAnalysisCommands.update(new File(landscapeFolder.getAbsolutePath()), null, metadata, dataOnly);
                 DateUtils.reset();
                 RegexUtils.reset();
                 System.gc();
@@ -323,12 +330,12 @@ public class CommandLineInterface {
                 File landscapeRoot = landscapeConfigFiles.get(landscapeConfigFiles.size() - 1).getParentFile();
                 saveExecutionStats(new File(landscapeRoot, "data"));
                 // Fold the just-written executionTimes files into the landscape's data.zip.
-                LandscapeAnalysisCommands.zipLandscapeDataFolder(landscapeRoot);
+                LandscapeAnalysisCommands.zipLandscapeDataFolder(landscapeRoot, !dataOnly);
             }
         } else {
-            File reportsFolder = LandscapeAnalysisCommands.update(root, confFilePath != null ? new File(confFilePath) : null, metadata);
+            File reportsFolder = LandscapeAnalysisCommands.update(root, confFilePath != null ? new File(confFilePath) : null, metadata, dataOnly);
             saveExecutionStats(new File(reportsFolder, "data"));
-            LandscapeAnalysisCommands.zipLandscapeDataFolder(reportsFolder);
+            LandscapeAnalysisCommands.zipLandscapeDataFolder(reportsFolder, !dataOnly);
         }
     }
 

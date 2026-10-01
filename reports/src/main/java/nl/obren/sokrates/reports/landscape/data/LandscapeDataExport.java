@@ -44,6 +44,9 @@ public class LandscapeDataExport {
     private LandscapeAnalysisResults analysisResults;
     private File dataFolder;
     private File reportsFolder;
+    // When set, only data/ is written: the client-rendered pages this export also renders
+    // (files-explorer.html, repositories.html) are skipped.
+    private boolean dataOnly = false;
 
     public LandscapeDataExport(LandscapeAnalysisResults analysisResults, File folder) {
         this.analysisResults = analysisResults;
@@ -52,6 +55,10 @@ public class LandscapeDataExport {
         dataFolder.mkdirs();
 
         this.reportsFolder = folder;
+    }
+
+    public void setDataOnly(boolean dataOnly) {
+        this.dataOnly = dataOnly;
     }
 
     public void exportRepositories(TagMap tagMap) {
@@ -91,6 +98,10 @@ public class LandscapeDataExport {
             ExplorerTemplate explorerTemplate = new ExplorerTemplate();
 
             FileUtils.write(new File(dataFolder, "files.json"), new JsonGenerator().generate(files), UTF_8);
+
+            if (dataOnly) {
+                return;
+            }
 
             // The repositories explorer has been folded into the Size & Details tab of
             // repositories.html; we only keep the shared language-icon map here.

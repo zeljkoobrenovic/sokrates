@@ -53,6 +53,49 @@ class AnalyzeLandscapeUrlsTest {
         assertFalse(betaViewer.contains("alpha.ts"), "beta's viewer must not carry alpha's sources");
     }
 
+    @Test
+    void dataOnlyKeepsJustTheDataZips(@TempDir Path tmp) throws Exception {
+        File alphaRemote = bareRepoWithHistory(tmp, "alpha", "ada@example.com");
+        File betaRemote = bareRepoWithHistory(tmp, "beta", "bob@example.com");
+        File root = tmp.resolve("landscape").toFile();
+
+        new CommandLineInterface().run(new String[]{"analyzeLandscape", "-analysisRoot", root.getPath(),
+                "-url", alphaRemote.toURI().toString(), "-url", betaRemote.toURI().toString(), "-dataOnly"});
+
+        // Each repository: config.json + reports/data/data.zip, nothing else.
+        for (String repo : new String[]{"alpha", "beta"}) {
+            assertEquals("[config.json, reports]", sortedNames(new File(root, repo)), repo);
+            assertEquals("[data]", sortedNames(new File(root, repo + "/reports")), repo + ": the reports folder must hold only data/");
+            assertEquals("[data.zip]", sortedNames(new File(root, repo + "/reports/data")), repo);
+        }
+
+        // The landscape: its config files + data/data.zip, no index page, contributor pages, explorers or visuals.
+        File landscape = new File(root, "_sokrates_landscape");
+        assertEquals("[config-people.json, config-tags.json, config-teams.json, config.json, data, info.json]", sortedNames(landscape));
+        assertEquals("[data.zip]", sortedNames(new File(landscape, "data")), "data/ must hold only data.zip (no data-preview.html)");
+        try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(new File(landscape, "data/data.zip"))) {
+            assertNotNull(zip.getEntry("landscapeAnalysisResults.json"), "what a parent landscape reads");
+            assertNotNull(zip.getEntry("repositories.json"));
+            assertNotNull(zip.getEntry("contributors.json"));
+            String repositories = new String(zip.getInputStream(zip.getEntry("repositories.json")).readAllBytes(), UTF_8);
+            assertTrue(repositories.contains("alpha") && repositories.contains("beta"), "both repositories are aggregated");
+        }
+
+        // A later full run over the same (data-only) repositories restores the landscape report.
+        new CommandLineInterface().run(new String[]{"analyzeLandscape", "-analysisRoot", root.getPath()});
+        assertTrue(new File(landscape, "index.html").exists());
+        assertTrue(new File(landscape, "repositories.html").exists());
+        assertTrue(new File(landscape, "data/data-preview.html").exists());
+        String index = FileUtils.readFileToString(new File(landscape, "index.html"), UTF_8);
+        assertTrue(index.contains("alpha") && index.contains("beta"));
+    }
+
+    private static String sortedNames(File folder) {
+        String[] names = folder.list();
+        java.util.Arrays.sort(names == null ? new String[0] : names);
+        return java.util.Arrays.toString(names);
+    }
+
     private static File bareRepoWithHistory(Path tmp, String name, String email) throws Exception {
         File work = tmp.resolve("work-" + name).toFile();
         File bare = tmp.resolve(name + ".git").toFile();

@@ -40,11 +40,20 @@ public class LandscapeAnalysisCommands {
     private static final Log LOG = LogFactory.getLog(LandscapeAnalysisCommands.class);
 
     public static File update(File analysisRoot, File landscapeConfigFile, Metadata metadata) {
+        return update(analysisRoot, landscapeConfigFile, metadata, false);
+    }
+
+    /**
+     * @param dataOnly when true the landscape folder gets only its configuration files and
+     *                 data/data.zip (no index page, tabs, contributor pages, explorers or visuals);
+     *                 virtual sub-landscapes are generated data-only too.
+     */
+    public static File update(File analysisRoot, File landscapeConfigFile, Metadata metadata, boolean dataOnly) {
         landscapeConfigFile = getConfigFile(analysisRoot, landscapeConfigFile);
         LandscapeAnalysisUpdater updater = new LandscapeAnalysisUpdater();
         updater.updateConfiguration(analysisRoot, landscapeConfigFile, metadata);
         LOG.info("Configuration file: " + landscapeConfigFile.getPath());
-        generateReport(analysisRoot, landscapeConfigFile);
+        generateReport(analysisRoot, landscapeConfigFile, dataOnly);
 
         return landscapeConfigFile.getParentFile();
     }
@@ -119,6 +128,10 @@ public class LandscapeAnalysisCommands {
     }
 
     public static void generateReport(File analysisRoot, File landscapeConfigFile) {
+        generateReport(analysisRoot, landscapeConfigFile, false);
+    }
+
+    public static void generateReport(File analysisRoot, File landscapeConfigFile, boolean dataOnly) {
         File reportsFolder = Paths.get(landscapeConfigFile.getParent(), "").toFile();
         reportsFolder.mkdirs();
         File individualReportsFolder = new File(reportsFolder, "contributors");
@@ -127,7 +140,9 @@ public class LandscapeAnalysisCommands {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        individualReportsFolder.mkdirs();
+        if (!dataOnly) {
+            individualReportsFolder.mkdirs();
+        }
 
         LandscapeAnalyzer analyzer = new LandscapeAnalyzer();
 
@@ -138,11 +153,11 @@ public class LandscapeAnalysisCommands {
 
         // Virtual landscapes: generate a full report per virtual landscape (and a Remainder), then
         // register them as sub-landscapes so the parent's Sub-landscapes tab lists them.
-        generateVirtualLandscapes(landscapeAnalysisResults, tagGroups, reportsFolder);
+        generateVirtualLandscapes(landscapeAnalysisResults, tagGroups, reportsFolder, dataOnly);
 
         ProcessingStopwatch.start("reporting");
-        LandscapeReportGenerator reportGenerator = new LandscapeReportGenerator(landscapeAnalysisResults, tagGroups, landscapeConfigFile.getParentFile(), reportsFolder);
-        exportLandscape(reportGenerator, landscapeAnalysisResults, reportsFolder, individualReportsFolder);
+        LandscapeReportGenerator reportGenerator = new LandscapeReportGenerator(landscapeAnalysisResults, tagGroups, landscapeConfigFile.getParentFile(), reportsFolder, dataOnly);
+        exportLandscape(reportGenerator, landscapeAnalysisResults, reportsFolder, individualReportsFolder, dataOnly);
         ProcessingStopwatch.end("reporting");
     }
 
@@ -153,7 +168,13 @@ public class LandscapeAnalysisCommands {
      */
     private static void exportLandscape(LandscapeReportGenerator reportGenerator,
                                         LandscapeAnalysisResults landscapeAnalysisResults,
-                                        File reportsFolder, File individualReportsFolder) {
+                                        File reportsFolder, File individualReportsFolder, boolean dataOnly) {
+        if (dataOnly) {
+            // The generator has already exported data/; package it (no in-browser preview page) and stop.
+            zipLandscapeDataFolder(reportsFolder, false);
+            LOG.info("Data file: " + new File(reportsFolder, "data/data.zip").getPath());
+            return;
+        }
         List<RichTextReport> reports = reportGenerator.report();
         try {
             ProcessingStopwatch.start("reporting/saving");
@@ -206,6 +227,14 @@ public class LandscapeAnalysisCommands {
     // after the first packaging) are folded in. Safe to call more than once. Streamed byte-by-byte
     // (no entry held as a String), so it is safe even when a data file approaches the ~2 GB limit.
     public static void zipLandscapeDataFolder(File reportsFolder) {
+        zipLandscapeDataFolder(reportsFolder, true);
+    }
+
+    /**
+     * @param writePreview whether to (re)write data/data-preview.html next to the zip; false for
+     *                     data-only landscapes, whose data/ folder holds exactly data.zip.
+     */
+    public static void zipLandscapeDataFolder(File reportsFolder, boolean writePreview) {
         File dataFolder = new File(reportsFolder, "data");
         if (!dataFolder.exists()) {
             return;
@@ -231,7 +260,9 @@ public class LandscapeAnalysisCommands {
                 }
             }
 
-            DataExporter.writeDataPreview(dataFolder, zipFile);
+            if (writePreview) {
+                DataExporter.writeDataPreview(dataFolder, zipFile);
+            }
         } catch (Exception e) {
             LOG.warn("Could not package landscape data folder: " + e.getMessage());
         }
@@ -246,7 +277,7 @@ public class LandscapeAnalysisCommands {
      * and surfaced in each child's own Sub-landscapes tab.
      */
     private static void generateVirtualLandscapes(LandscapeAnalysisResults parentResults,
-                                                  List<TagGroup> tagGroups, File reportsFolder) {
+                                                  List<TagGroup> tagGroups, File reportsFolder, boolean dataOnly) {
         VirtualLandscapeBuilder builder = new VirtualLandscapeBuilder(parentResults);
         if (!builder.hasVirtualLandscapes()) {
             return;
@@ -254,7 +285,7 @@ public class LandscapeAnalysisCommands {
         ProcessingStopwatch.start("reporting/virtual-landscapes");
         generateVirtualLandscapes(builder, parentResults.getConfiguration().getVirtualLandscapes(),
                 parentResults.getRepositoryAnalysisResults(), parentResults.getConfiguration(),
-                parentResults.getConfiguration(), tagGroups, reportsFolder, 1);
+                parentResults.getConfiguration(), tagGroups, reportsFolder, 1, dataOnly);
         ProcessingStopwatch.end("reporting/virtual-landscapes");
     }
 
@@ -271,7 +302,7 @@ public class LandscapeAnalysisCommands {
                                                   List<RepositoryAnalysisResults> repositories,
                                                   LandscapeConfiguration rootConfiguration,
                                                   LandscapeConfiguration parentConfiguration,
-                                                  List<TagGroup> tagGroups, File parentFolder, int depth) {
+                                                  List<TagGroup> tagGroups, File parentFolder, int depth, boolean dataOnly) {
         // Start fresh so removed virtual landscapes do not linger.
         File landscapesFolder = new File(parentFolder, "landscapes");
         try {
@@ -285,7 +316,11 @@ public class LandscapeAnalysisCommands {
             String safeName = nl.obren.sokrates.common.utils.SystemUtils.getSafeFileName(virtualLandscape.getName());
             File childLandscapeFolder = new File(new File(landscapesFolder, safeName), "_sokrates_landscape");
             File childContributorsFolder = new File(childLandscapeFolder, "contributors");
-            childContributorsFolder.mkdirs();
+            if (dataOnly) {
+                childLandscapeFolder.mkdirs();
+            } else {
+                childContributorsFolder.mkdirs();
+            }
 
             LandscapeAnalysisResults childResults = virtualLandscape.getResults();
             nl.obren.sokrates.sourcecode.landscape.VirtualLandscapesConfig nested =
@@ -303,7 +338,7 @@ public class LandscapeAnalysisCommands {
             if (VirtualLandscapeBuilder.hasVirtualLandscapes(nested)) {
                 generateVirtualLandscapes(builder, nested,
                         childResults.getRepositoryAnalysisResults(), rootConfiguration,
-                        childResults.getConfiguration(), tagGroups, childLandscapeFolder, depth + 1);
+                        childResults.getConfiguration(), tagGroups, childLandscapeFolder, depth + 1, dataOnly);
             }
 
             try {
@@ -313,8 +348,8 @@ public class LandscapeAnalysisCommands {
                 LOG.error(e);
             }
 
-            LandscapeReportGenerator childGenerator = new LandscapeReportGenerator(childResults, tagGroups, childLandscapeFolder, childLandscapeFolder);
-            exportLandscape(childGenerator, childResults, childLandscapeFolder, childContributorsFolder);
+            LandscapeReportGenerator childGenerator = new LandscapeReportGenerator(childResults, tagGroups, childLandscapeFolder, childLandscapeFolder, dataOnly);
+            exportLandscape(childGenerator, childResults, childLandscapeFolder, childContributorsFolder, dataOnly);
 
             // Register as a virtual sub-landscape of the parent (resolved relative to the parent's
             // _sokrates_landscape folder, without the repository-reports prefix).
