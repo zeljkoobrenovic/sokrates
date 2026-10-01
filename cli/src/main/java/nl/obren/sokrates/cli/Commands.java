@@ -36,6 +36,9 @@ public class Commands {
     public static final String ANALYZE_LANDSCAPE = "analyzeLandscape";
     public static final String ANALYZE_LANDSCAPE_DESCRIPTION = "Creates or updates a Sokrates landscape report aggregating the repository analyses found under the analysis root (the landscape counterpart of analyze). With -url (repeatable) and/or -urls <file> (one git URL per line, # comments), it first runs analyzeGitRepo for each URL into <analysisRoot>/<owner>/<repository> (a failing repository is logged and skipped), then builds the landscape; without URLs it aggregates what is already there. Same options as updateLandscape, which is kept as the older name.";
 
+    public static final String ANALYZE_GITHUB_ORG = "analyzeGitHubOrg";
+    public static final String ANALYZE_GITHUB_ORG_DESCRIPTION = "Analyzes whole GitHub organizations (or user accounts): for every -org (repeatable) and/or login in -orgs <file>, lists its repositories with the GitHub REST API, filters them (forks and archived repositories are excluded unless -includeForks / -includeArchived; -pushedWithinDays, -includeRepoNamePattern / -excludeRepoNamePattern and -maxRepos narrow further), writes the selection to <analysisRoot>/<org>/repos.txt, analyzes each repository into <analysisRoot>/<org>/<repository> (the analyzeGitRepo step) and builds a landscape per organization in <analysisRoot>/<org>/_sokrates_landscape, named, described, linked and branded from the organization's GitHub profile (only fields you have not set). With several organizations a parent landscape in <analysisRoot>/_sokrates_landscape lists them as sub-landscapes. -listOnly just writes repos.txt; -prune deletes analyses of repositories no longer selected. Set SOKRATES_GIT_TOKEN for private repositories and the higher API rate limit.";
+
     public static final String UPDATE_LANDSCAPE = "updateLandscape";
     public static final String UPDATE_LANDSCAPE_DESCRIPTION = "Updates or creates a Sokrates landscape report, aggregating results of multiple analyses; with -url / -urls it first clones and analyzes those git repositories (the older name of analyzeLandscape, same options)";
 
@@ -87,6 +90,16 @@ public class Commands {
     public static final String ARG_DATA_ONLY = "dataOnly";
     public static final String ARG_URL = "url";
     public static final String ARG_URLS = "urls";
+    public static final String ARG_ORG = "org";
+    public static final String ARG_ORGS = "orgs";
+    public static final String ARG_INCLUDE_FORKS = "includeForks";
+    public static final String ARG_INCLUDE_ARCHIVED = "includeArchived";
+    public static final String ARG_PUSHED_WITHIN_DAYS = "pushedWithinDays";
+    public static final String ARG_INCLUDE_REPO_NAME_PATTERN = "includeRepoNamePattern";
+    public static final String ARG_EXCLUDE_REPO_NAME_PATTERN = "excludeRepoNamePattern";
+    public static final String ARG_MAX_REPOS = "maxRepos";
+    public static final String ARG_LIST_ONLY = "listOnly";
+    public static final String ARG_PRUNE = "prune";
     public static final String ARG_BRANCH = "branch";
     public static final String ARG_DEPTH = "depth";
 
@@ -136,6 +149,25 @@ public class Commands {
         url.setArgName("gitUrl");
         urls.setArgName("file");
     }
+    private Option org = new Option(ARG_ORG, true, "a GitHub organization (or user) login, e.g. junit-team; repeatable");
+    private Option orgs = new Option(ARG_ORGS, true, "[OPTIONAL] a text file with one GitHub organization (or user) login per line (blank lines and # comments ignored)");
+    private Option includeForks = new Option(ARG_INCLUDE_FORKS, false, "[OPTIONAL] also analyzes forks (excluded by default)");
+    private Option includeArchived = new Option(ARG_INCLUDE_ARCHIVED, false, "[OPTIONAL] also analyzes archived repositories (excluded by default)");
+    private Option pushedWithinDays = new Option(ARG_PUSHED_WITHIN_DAYS, true, "[OPTIONAL] only repositories pushed to in the last N days (relative to -date, default today)");
+    private Option includeRepoNamePattern = new Option(ARG_INCLUDE_REPO_NAME_PATTERN, true, "[OPTIONAL] only repositories whose name (or owner/name) matches this regex entirely, case-insensitive; repeatable, any match keeps the repository");
+    private Option excludeRepoNamePattern = new Option(ARG_EXCLUDE_REPO_NAME_PATTERN, true, "[OPTIONAL] skips repositories whose name (or owner/name) matches this regex entirely, case-insensitive; repeatable");
+    private Option maxRepos = new Option(ARG_MAX_REPOS, true, "[OPTIONAL] keeps at most N repositories per organization, the most recently pushed ones");
+    private Option listOnly = new Option(ARG_LIST_ONLY, false, "[OPTIONAL] only lists and filters the repositories into <analysisRoot>/<org>/repos.txt, without cloning or analyzing anything (a dry run to review the selection and its size)");
+    private Option prune = new Option(ARG_PRUNE, false, "[OPTIONAL] deletes the kept analyses (<analysisRoot>/<org>/<repository>) of repositories that are no longer selected, so the landscape stops showing them");
+
+    {
+        org.setArgName("login");
+        orgs.setArgName("file");
+        pushedWithinDays.setArgName("days");
+        includeRepoNamePattern.setArgName("regex");
+        excludeRepoNamePattern.setArgName("regex");
+        maxRepos.setArgName("count");
+    }
     private Option branch = new Option(ARG_BRANCH, true, "[OPTIONAL] the branch to analyze (default is the remote's default branch)");
     private Option depth = new Option(ARG_DEPTH, true, "[OPTIONAL] shallow clone depth (default is the full history; a shallow history makes the contributor and trend reports incomplete)");
     private Option dataOnly = new Option(ARG_DATA_ONLY, false, "[OPTIONAL] stores only the analysis data — for a repository reports/data/data.zip (which landscapes read), for a landscape _sokrates_landscape/data/data.zip (which a parent landscape reads) — no HTML reports, contributor pages, explorers, visuals, source viewer or index page");
@@ -155,6 +187,7 @@ public class Commands {
         commands.add(new CommandUsage(GENERATE_REPORTS, GENERATE_REPORTS_DESCRIPTION, getReportingOptions()));
         commands.add(new CommandUsage(ANALYZE_LANDSCAPE, ANALYZE_LANDSCAPE_DESCRIPTION, getUpdateLandscapeOptions()));
         commands.add(new CommandUsage(UPDATE_LANDSCAPE, UPDATE_LANDSCAPE_DESCRIPTION, getUpdateLandscapeOptions()));
+        commands.add(new CommandUsage(ANALYZE_GITHUB_ORG, ANALYZE_GITHUB_ORG_DESCRIPTION, getAnalyzeGitHubOrgOptions()));
         commands.add(new CommandUsage(UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME, UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME_DESCRIPTION, getUpdateLandscapePeopleConfigByUserNameOptions()));
         commands.add(new CommandUsage(UPDATE_PEOPLE_CONFIG_BY_USER_NAME, UPDATE_PEOPLE_CONFIG_BY_USER_NAME_DESCRIPTION, getUpdatePeopleConfigByUserNameOptions()));
         commands.add(new CommandUsage(UPDATE_CONFIG, UPDATE_CONFIG_DESCRIPTION, getUpdateConfigOptions()));
@@ -359,6 +392,75 @@ public class Commands {
         help.setArgs(0);
 
         return options;
+    }
+
+    public Options getAnalyzeGitHubOrgOptions() {
+        Options options = new Options();
+        options.addOption(org);
+        options.addOption(orgs);
+        options.addOption(analysisRoot);
+        options.addOption(includeForks);
+        options.addOption(includeArchived);
+        options.addOption(pushedWithinDays);
+        options.addOption(includeRepoNamePattern);
+        options.addOption(excludeRepoNamePattern);
+        options.addOption(maxRepos);
+        options.addOption(listOnly);
+        options.addOption(prune);
+        options.addOption(depth);
+        options.addOption(dataOnly);
+        options.addOption(conventionsFile);
+        options.addOption(setName);
+        options.addOption(setDescription);
+        options.addOption(setLogoLink);
+        options.addOption(addLink);
+        options.addOption(timeout);
+        options.addOption(date);
+        options.addOption(help);
+
+        help.setArgs(0);
+
+        return options;
+    }
+
+    public Option getOrg() {
+        return org;
+    }
+
+    public Option getOrgs() {
+        return orgs;
+    }
+
+    public Option getIncludeForks() {
+        return includeForks;
+    }
+
+    public Option getIncludeArchived() {
+        return includeArchived;
+    }
+
+    public Option getPushedWithinDays() {
+        return pushedWithinDays;
+    }
+
+    public Option getIncludeRepoNamePattern() {
+        return includeRepoNamePattern;
+    }
+
+    public Option getExcludeRepoNamePattern() {
+        return excludeRepoNamePattern;
+    }
+
+    public Option getMaxRepos() {
+        return maxRepos;
+    }
+
+    public Option getListOnly() {
+        return listOnly;
+    }
+
+    public Option getPrune() {
+        return prune;
     }
 
     public Options getUpdateLandscapeOptions() {

@@ -86,6 +86,30 @@ Every URL is cloned and analyzed (the `analyzeGitRepo` step: only the analysis i
 
 A few URLs can also be passed inline with `-url` (repeatable); `-dataOnly` keeps just each repository's `data.zip` (all a landscape needs) and the landscape's own `data.zip` (all a parent landscape needs) — much smaller when you only want the data, `-depth <n>` makes the clones shallow, `-analysisRoot` puts the landscape elsewhere, and `SOKRATES_GIT_TOKEN` authenticates private repositories. Re-run the same command to refresh: the kept `config.json` of each repository and the landscape configuration are reused, so your tuning survives. Without URLs, `analyzeLandscape` just aggregates the analyses already under the root.
 
+### Whole GitHub organizations
+
+`analyzeGitHubOrg` does the listing for you: give it organization (or user) logins and it asks the GitHub API for their repositories, filters them, analyzes each one and builds a landscape per organization, named, described, linked and branded from the organization's GitHub profile:
+
+```bash
+java -jar cli-1.0-jar-with-dependencies.jar analyzeGitHubOrg -org junit-team -org hamcrest -pushedWithinDays 365
+# or: docker run --rm -v "$(pwd):/code" ghcr.io/zeljkoobrenovic/sokrates analyzeGitHubOrg -org junit-team -org hamcrest -pushedWithinDays 365
+
+open junit-team/_sokrates_landscape/index.html   # one landscape per organization ...
+open _sokrates_landscape/index.html              # ... and a parent landscape over them
+```
+
+```
+./
+  _sokrates_landscape/index.html              # parent landscape (when there are several organizations)
+  junit-team/_sokrates_landscape/index.html   # the organization's landscape
+  junit-team/repos.txt                        # the selected repositories (re-usable with analyzeLandscape -urls)
+  junit-team/junit4/config.json + reports/
+  junit-team/junit-framework/...
+  hamcrest/...
+```
+
+Forks and archived repositories are skipped unless you pass `-includeForks` / `-includeArchived`; `-pushedWithinDays <n>`, `-includeRepoNamePattern` / `-excludeRepoNamePattern <regex>` and `-maxRepos <n>` narrow the selection further. Cloning a large organization takes a while, so `-listOnly` first writes just `<org>/repos.txt` to review the selection, and `-dataOnly` keeps only the data. Re-runs reuse every kept `config.json` and your edits of the landscape metadata; `-prune` removes the analyses of repositories that are no longer selected. For private repositories (and the higher API rate limit) set `SOKRATES_GIT_TOKEN`.
+
 To analyze a repository you have not cloned yet, `analyzeGitRepo` clones it first and then runs the same three steps:
 
 ```bash
@@ -130,6 +154,7 @@ java -jar cli-1.0-jar-with-dependencies.jar generateReports -help
 | `addCustomTab` | Add a custom iframe tab (`-label`, `-iframeLink`) to the report config; a tab with the same label is overwritten |
 | `analyzeLandscape` | Create/update a landscape report that aggregates multiple analyses (the landscape counterpart of `analyze`). With `-url <git url>` (repeatable) and/or `-urls <file>` (one URL per line, `#` comments) it first runs the `analyzeGitRepo` step for each repository into `<analysisRoot>/<owner>/<repo>` (a failing clone is logged and skipped), then builds the landscape. `-depth` and `-conventionsFile` apply to those analyses |
 | `updateLandscape` | Older name of `analyzeLandscape`, kept for existing scripts; identical behavior and options |
+| `analyzeGitHubOrg` | Analyze whole GitHub organizations (or users): `-org <login>` (repeatable) / `-orgs <file>`. Lists each organization's repositories with the GitHub API, filters them (forks and archived repos are excluded unless `-includeForks` / `-includeArchived`; `-pushedWithinDays <n>`, `-includeRepoNamePattern` / `-excludeRepoNamePattern <regex>`, `-maxRepos <n>`), writes the selection to `<org>/repos.txt`, analyzes each repository into `<org>/<repo>` and builds a landscape per organization in `<org>/_sokrates_landscape`, titled, described, linked and branded from the GitHub profile (blank fields only). Several organizations get a parent landscape on top. `-listOnly` is a dry run (just `repos.txt`), `-prune` deletes analyses of repositories no longer selected; `-depth`, `-dataOnly`, `-conventionsFile` apply as in `analyzeLandscape`. `SOKRATES_GIT_TOKEN` for private repositories and the higher API rate limit |
 | `updateLandscapePeopleConfigByUserName` | Build/update `config-people.json` by grouping contributor emails sharing a display name (userName) under one entry (additive — appends new emails only) |
 | `updatePeopleConfigByUserName` | Single-repository version: build/update `_sokrates/config-people.json` from the repo's `git-history.txt` (run after `extractGitHistory`; no `generateReports` needed) |
 | `createConventionsFile` | Create an analysis conventions file (`analysis_conventions.json`) |
