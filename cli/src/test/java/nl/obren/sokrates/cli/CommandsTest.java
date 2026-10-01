@@ -52,6 +52,15 @@ public class CommandsTest {
     }
 
     @Test
+    public void dataOnlyFlagIsOnEveryAnalysisCommand() {
+        assertTrue(commands.getReportingOptions().hasOption(Commands.ARG_DATA_ONLY));
+        assertTrue(commands.getAnalyzeOptions().hasOption(Commands.ARG_DATA_ONLY));
+        assertTrue(commands.getAnalyzeGitRepoOptions().hasOption(Commands.ARG_DATA_ONLY));
+        assertTrue(commands.getUpdateLandscapeOptions().hasOption(Commands.ARG_DATA_ONLY));
+        assertFalse(commands.getDataOnly().hasArg());
+    }
+
+    @Test
     public void commandNamesAreStable() {
         // these strings are the CLI's public contract; changing them breaks user scripts
         assertEquals("init", Commands.INIT);

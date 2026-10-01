@@ -84,6 +84,7 @@ public class Commands {
     public static final String ARG_SKIP_COMPLEX_ANALYSES = "skipComplexAnalyses";
     public static final String ARG_SET_CACHE_FILES = "setCacheFiles";
     public static final String ARG_SKIP_GIT_HISTORY = "skipGitHistory";
+    public static final String ARG_DATA_ONLY = "dataOnly";
     public static final String ARG_URL = "url";
     public static final String ARG_URLS = "urls";
     public static final String ARG_BRANCH = "branch";
@@ -130,6 +131,7 @@ public class Commands {
     private Option urls = new Option(ARG_URLS, true, "[OPTIONAL] a text file with one git repository URL per line (blank lines and # comments ignored); each is analyzed with analyzeGitRepo into <analysisRoot>/<owner>/<repository> before the landscape is built");
     private Option branch = new Option(ARG_BRANCH, true, "[OPTIONAL] the branch to analyze (default is the remote's default branch)");
     private Option depth = new Option(ARG_DEPTH, true, "[OPTIONAL] shallow clone depth (default is the full history; a shallow history makes the contributor and trend reports incomplete)");
+    private Option dataOnly = new Option(ARG_DATA_ONLY, false, "[OPTIONAL] stores only the analysis data (reports/data/data.zip, which landscapes read) — no HTML reports, explorers, visuals, source viewer or index page");
     private Option skipGitHistory = new Option(ARG_SKIP_GIT_HISTORY, false, "[OPTIONAL] does not (re)extract the git history; an existing git-history.txt is still used");
     private Option setCacheFiles = new Option(ARG_SET_CACHE_FILES, true, "[OPTIONAL] sets a cache file flag ('true' or 'false')");
     private Option addLink = new Option(ARG_ADD_LINK, true, "[OPTIONAL] adds a new link");
@@ -214,6 +216,7 @@ public class Commands {
         Options options = new Options();
         options.addOption(confFile);
         options.addOption(outputFolder);
+        options.addOption(dataOnly);
         options.addOption(timeout);
         options.addOption(date);
         options.addOption(help);
@@ -228,6 +231,7 @@ public class Commands {
         options.addOption(srcRoot);
         options.addOption(confFile);
         options.addOption(outputFolder);
+        options.addOption(dataOnly);
         options.addOption(conventionsFile);
         options.addOption(name);
         options.addOption(description);
@@ -249,6 +253,7 @@ public class Commands {
         options.addOption(destRoot);
         options.addOption(branch);
         options.addOption(depth);
+        options.addOption(dataOnly);
         options.addOption(conventionsFile);
         options.addOption(name);
         options.addOption(description);
@@ -354,6 +359,7 @@ public class Commands {
         options.addOption(url);
         options.addOption(urls);
         options.addOption(depth);
+        options.addOption(dataOnly);
         options.addOption(conventionsFile);
         options.addOption(confFile);
         options.addOption(recursive);
@@ -508,6 +514,10 @@ public class Commands {
 
     public Option getDepth() {
         return depth;
+    }
+
+    public Option getDataOnly() {
+        return dataOnly;
     }
 
     public Option getSkipGitHistory() {

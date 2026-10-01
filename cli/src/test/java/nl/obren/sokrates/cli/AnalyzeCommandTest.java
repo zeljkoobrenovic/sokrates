@@ -62,6 +62,51 @@ class AnalyzeCommandTest {
     }
 
     @Test
+    void dataOnlyStoresJustTheDataZip(@TempDir Path tmp) throws Exception {
+        File repo = tmp.resolve("repo").toFile();
+        FileUtils.write(new File(repo, "src/a.ts"), "export function a(x: number): number { return x + 1; }\n", UTF_8);
+        try (Git git = Git.init().setDirectory(repo).call()) {
+            git.add().addFilepattern(".").call();
+            git.commit().setMessage("initial").setAuthor("Ada", "ada@example.com").setCommitter("Ada", "ada@example.com").call();
+            FileUtils.write(new File(repo, "src/a.ts"), "export function a(x: number): number { return x + 2; }\n", UTF_8);
+            git.add().addFilepattern(".").call();
+            git.commit().setMessage("tweak").setAuthor("Ada", "ada@example.com").setCommitter("Ada", "ada@example.com").call();
+        }
+
+        new CommandLineInterface().run(new String[]{"analyze", "-srcRoot", repo.getPath(), "-dataOnly"});
+
+        File reports = new File(repo, "_sokrates/reports");
+        assertEquals("[data]", java.util.Arrays.toString(sortedNames(reports)), "the reports folder must hold only data/");
+        assertEquals("[data.zip]", java.util.Arrays.toString(sortedNames(new File(reports, "data"))), "data/ must hold only data.zip (no data-preview.html)");
+        try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(new File(reports, "data/data.zip"))) {
+            assertNotNull(zip.getEntry("analysisResults.json"), "the zip must hold what landscapes read");
+            assertNotNull(zip.getEntry("config.json"));
+            assertNotNull(zip.getEntry("text/aspect_main.txt"));
+        }
+
+        // generateReports honours the same flag on an existing configuration.
+        FileUtils.deleteDirectory(reports);
+        new CommandLineInterface().run(new String[]{"generateReports", "-confFile", new File(repo, "_sokrates/config.json").getPath(),
+                "-outputFolder", reports.getPath(), "-dataOnly"});
+        assertEquals("[data]", java.util.Arrays.toString(sortedNames(reports)));
+        assertTrue(new File(reports, "data/data.zip").exists());
+
+        // ... and without it the full report set is back.
+        new CommandLineInterface().run(new String[]{"generateReports", "-confFile", new File(repo, "_sokrates/config.json").getPath(),
+                "-outputFolder", reports.getPath()});
+        assertTrue(new File(reports, "index.html").exists());
+        assertTrue(new File(reports, "html/index.html").exists());
+        assertTrue(new File(reports, "src/viewer.html").exists());
+        assertTrue(new File(reports, "data/data-preview.html").exists());
+    }
+
+    private static String[] sortedNames(File folder) {
+        String[] names = folder.list();
+        java.util.Arrays.sort(names == null ? new String[0] : names);
+        return names == null ? new String[0] : names;
+    }
+
+    @Test
     void analyzeWithoutGitStillProducesReports(@TempDir Path tmp) throws Exception {
         File root = tmp.resolve("plain").toFile();
         FileUtils.write(new File(root, "src/main.py"), "def main():\n    return 1\n", UTF_8);

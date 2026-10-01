@@ -84,7 +84,7 @@ Every URL is cloned and analyzed (the `analyzeGitRepo` step: only the analysis i
   hamcrest/JavaHamcrest/...
 ```
 
-A few URLs can also be passed inline with `-url` (repeatable); `-depth <n>` makes the clones shallow, `-analysisRoot` puts the landscape elsewhere, and `SOKRATES_GIT_TOKEN` authenticates private repositories. Re-run the same command to refresh: the kept `config.json` of each repository and the landscape configuration are reused, so your tuning survives. Without URLs, `analyzeLandscape` just aggregates the analyses already under the root.
+A few URLs can also be passed inline with `-url` (repeatable); `-dataOnly` keeps just each repository's `data.zip` (all a landscape needs — much smaller when you only want the landscape), `-depth <n>` makes the clones shallow, `-analysisRoot` puts the landscape elsewhere, and `SOKRATES_GIT_TOKEN` authenticates private repositories. Re-run the same command to refresh: the kept `config.json` of each repository and the landscape configuration are reused, so your tuning survives. Without URLs, `analyzeLandscape` just aggregates the analyses already under the root.
 
 To analyze a repository you have not cloned yet, `analyzeGitRepo` clones it first and then runs the same three steps:
 
@@ -125,7 +125,7 @@ java -jar cli-1.0-jar-with-dependencies.jar generateReports -help
 | `analyzeGitRepo` | Clone a repository from its URL (`-url`; JGit, no git binary) into a temporary folder, run `analyze` on it, and keep only the analysis (`config.json` + `reports/`) in `-destFolder` (default `<owner>/<repo>`, e.g. `junit-team/junit4`); the clone is deleted. Re-runs clone again and reuse the kept config. `-branch`, `-depth` (shallow clone), and the `analyze` options. Private HTTPS repos: set `SOKRATES_GIT_TOKEN` (and optionally `SOKRATES_GIT_USER`). The output layout is what `analyzeLandscape` expects |
 | `analyze` | One-shot analysis: `extractGitHistory` (if the root is a git repository) + `init` (if no config exists yet) + `generateReports`. Options: `-srcRoot`, `-confFile`, `-outputFolder`, `-conventionsFile`, `-name`, `-description`, `-skipGitHistory`, `-date`, `-timeout` |
 | `init` | Create a new analysis configuration (`config.json`) from standard + optional custom conventions |
-| `generateReports` | Run the analysis and generate the HTML/JSON reports |
+| `generateReports` | Run the analysis and generate the HTML/JSON reports. `-dataOnly` (also on `analyze`, `analyzeGitRepo` and `analyzeLandscape`) stores only `reports/data/data.zip` — the file landscapes read — and no HTML, explorers, visuals, source viewer or index page |
 | `updateConfig` | Fill in missing fields of an existing configuration |
 | `addCustomTab` | Add a custom iframe tab (`-label`, `-iframeLink`) to the report config; a tab with the same label is overwritten |
 | `analyzeLandscape` | Create/update a landscape report that aggregates multiple analyses (the landscape counterpart of `analyze`). With `-url <git url>` (repeatable) and/or `-urls <file>` (one URL per line, `#` comments) it first runs the `analyzeGitRepo` step for each repository into `<analysisRoot>/<owner>/<repo>` (a failing clone is logged and skipped), then builds the landscape. `-depth` and `-conventionsFile` apply to those analyses |

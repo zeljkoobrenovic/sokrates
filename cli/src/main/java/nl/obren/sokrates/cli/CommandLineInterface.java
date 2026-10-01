@@ -547,10 +547,16 @@ public class CommandLineInterface {
     }
 
     private void logReportLocation(File reportsFolder) {
-        File index = reportsFolder == null ? null : new File(reportsFolder, "index.html");
-        if (index != null && index.exists()) {
-            LOG.info("");
+        if (reportsFolder == null) {
+            return;
+        }
+        File index = new File(reportsFolder, "index.html");
+        File dataZip = new File(new File(reportsFolder, "data"), "data.zip");
+        LOG.info("");
+        if (index.exists()) {
             LOG.info("Done. Open the report: " + index.toPath().toAbsolutePath().normalize().toUri());
+        } else if (dataZip.exists()) {
+            LOG.info("Done. Analysis data stored in " + dataZip.toPath().toAbsolutePath().normalize());
         }
     }
 
@@ -980,6 +986,12 @@ public class CommandLineInterface {
             };
         }
 
+        boolean dataOnly = cmd.hasOption(commands.getDataOnly().getOpt());
+        dataExporter.setDataOnly(dataOnly);
+        if (dataOnly) {
+            LOG.info("-" + Commands.ARG_DATA_ONLY + ": storing only data/data.zip (no HTML reports, explorers, visuals or source viewer).");
+        }
+
         try {
             CodeAnalyzer codeAnalyzer = new CodeAnalyzer(getCodeAnalyzerSettings(cmd), codeConfiguration, sokratesConfigFile);
             CodeAnalysisResults analysisResults = codeAnalyzer.analyze(progressFeedback);
@@ -989,11 +1001,13 @@ public class CommandLineInterface {
             saveTextualSummary(reportsFolder, analysisResults);
             ProcessingStopwatch.end("saving data");
 
-            ProcessingStopwatch.start("generating visuals");
-            generateVisuals(reportsFolder, analysisResults);
-            ProcessingStopwatch.end("generating visuals");
+            if (!dataOnly) {
+                ProcessingStopwatch.start("generating visuals");
+                generateVisuals(reportsFolder, analysisResults);
+                ProcessingStopwatch.end("generating visuals");
 
-            generateAndSaveReports(sokratesConfigFile, reportsFolder, sokratesConfigFile.getParentFile(), codeAnalyzer, analysisResults);
+                generateAndSaveReports(sokratesConfigFile, reportsFolder, sokratesConfigFile.getParentFile(), codeAnalyzer, analysisResults);
+            }
             saveExecutionStats(dataExporter.getDataFolder());
             // Final data step: package the whole data/ folder (incl. textual summary + execution
             // stats just written) into a single data/data.zip; the reports + landscape read from it.
@@ -1407,6 +1421,7 @@ public class CommandLineInterface {
 
     private CodeAnalyzerSettings getCodeAnalyzerSettings(CommandLine cmd) {
         CodeAnalyzerSettings settings = new CodeAnalyzerSettings();
+        settings.setDataOnly(cmd.hasOption(commands.getDataOnly().getOpt()));
 
         if (codeConfiguration.getAnalysis().isSkipDependencies()) {
             settings.setAnalyzeStaticDependencies(false);

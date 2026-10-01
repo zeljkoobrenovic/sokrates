@@ -81,6 +81,8 @@ public class DataExporter {
     // viewer.html instead of written as sibling zips/JSON the viewer would fetch(). Lets the source
     // viewer open from file:// with no web server.
     private final Map<String, String> viewerArchiveEntries = new LinkedHashMap<>();
+    // -dataOnly: write nothing outside data/ (no html/Structure.html, src/viewer.html or data-preview.html).
+    private boolean dataOnly = false;
     public DataExporter(ProgressFeedback progressFeedback) {
         this.progressFeedback = progressFeedback;
     }
@@ -156,10 +158,20 @@ public class DataExporter {
                 }
             }
 
-            writeDataPreview(dataFolder, zipFile);
+            if (!dataOnly) {
+                writeDataPreview(dataFolder, zipFile);
+            }
         } catch (Exception e) {
             LOG.warn(e);
         }
+    }
+
+    public void setDataOnly(boolean dataOnly) {
+        this.dataOnly = dataOnly;
+    }
+
+    public boolean isDataOnly() {
+        return dataOnly;
     }
 
     // The data-preview.html file name (sits next to data.zip; report data links open it with ?entry=).
@@ -692,6 +704,9 @@ public class DataExporter {
     }
 
     private void exportSourceFile() throws IOException {
+        if (dataOnly) {
+            return;
+        }
         this.codeCacheFolder = getCodeCacheFolder();
 
         detailedInfo("Saving details and source code cache:");
