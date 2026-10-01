@@ -1,0 +1,45 @@
+cli/src/test/java/nl/obren/sokrates/cli/git/GitHubRepoFilterTest.java
+  s_40c0e74316fcc6::t_1cdba232b2a934 1-89
+cli/src/main/java/nl/obren/sokrates/cli/git/GitHubRepo.java
+  s_40c0e74316fcc6::t_7b06689f52c348 1-150
+cli/src/main/java/nl/obren/sokrates/cli/git/GitHubOrgClient.java
+  s_40c0e74316fcc6::t_7b06689f52c348 1-144
+cli/src/main/java/nl/obren/sokrates/cli/Commands.java
+  s_40c0e74316fcc6::t_4286ba2d8ba916 39-41,93-102,152-170,190,397-464
+  s_40c0e74316fcc6::t_f42634c1430cbd 465
+cli/src/main/java/nl/obren/sokrates/cli/CommandLineInterface.java
+  s_40c0e74316fcc6::t_1532e9cc99e3ab 8-11,50,65,68,73-75,147-149,363-377,381-382,384,389-390,393,396,400,409-416,432,601-702,709-789,791-828,1707
+  s_40c0e74316fcc6::t_a1a319bc43f328 86-87,790,1705-1706
+  s_40c0e74316fcc6::t_1ca8fcb2cde133 703-708
+  s_40c0e74316fcc6::t_3f2c32c3fd35f1 829,1708
+README.md
+  s_40c0e74316fcc6::t_119c7277d7dfd2 89-112,157
+cli/src/test/java/nl/obren/sokrates/cli/AnalyzeGitHubOrgCommandTest.java
+  s_40c0e74316fcc6::t_2e75529f4178b1 152-154
+  s_40c0e74316fcc6::t_1cdba232b2a934 1-129,133-151,155-178
+  s_40c0e74316fcc6::t_79b3ee3d10d529 130-132
+cli/src/main/java/nl/obren/sokrates/cli/git/GitHubRepoFilter.java
+  s_40c0e74316fcc6::t_7b06689f52c348 1-161
+CLAUDE.md
+  s_40c0e74316fcc6::t_119c7277d7dfd2 55,61
+cli/src/test/java/nl/obren/sokrates/cli/git/GitHubOrgClientTest.java
+  s_40c0e74316fcc6::t_1cdba232b2a934 1-90
+cli/src/main/java/nl/obren/sokrates/cli/git/GitHubOrg.java
+  s_40c0e74316fcc6::t_7b06689f52c348 1-125
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "8d087e5fa4157002ec3eeeb91d791a8117adfc21",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
