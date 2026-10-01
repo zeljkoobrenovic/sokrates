@@ -215,7 +215,7 @@ java -jar codeexplorer-1.0-jar-with-dependencies.jar
 
 ## Docker
 
-A prebuilt image is published to the GitHub Container Registry on every push to `master` (`latest`) and on version tags (`vX.Y.Z` → `X.Y.Z`), for `linux/amd64` and `linux/arm64`. Mount the code base at `/code` (the image's working directory) and pass any CLI command; with no command it runs `analyze`:
+A prebuilt image is published to the GitHub Container Registry on every push to `master` (`latest`) and on version tags (`vX.Y.Z` → `X.Y.Z`), for `linux/amd64` and `linux/arm64`. You need [Docker Desktop](https://docs.docker.com/get-docker/), [Colima](https://colima.run/) or [Podman](https://podman.io/), nothing else: no Java, no git binary. Mount the code base at `/code` (the image's working directory) and pass any CLI command; with no command it runs `analyze`:
 
 ```bash
 # One-shot analysis of the current directory (history + config + reports)
@@ -231,7 +231,7 @@ docker run --rm -v "$(pwd):/code" ghcr.io/zeljkoobrenovic/sokrates:1.0.0 analyze
 
 `docker run` reuses the image already on your machine and never checks for a newer one, so after a Sokrates update (a command reported as unknown is the usual symptom) run `docker pull ghcr.io/zeljkoobrenovic/sokrates` once, or add `--pull always` to the run command.
 
-**Memory:** Docker Desktop and Colima give their VM 2 GB by default, which is typically not enough for bigger repositories. The JVM in the image gets 75% of the VM's memory, and a repository of a few hundred thousand lines can need 4 GB of heap (the duplication analysis of generated code is the usual peak); beyond that the run ends in `OutOfMemoryError: Java heap space` or simply stops in the middle without a message. Give the VM 8 GB before analyzing anything big or a whole organization (Docker Desktop → Settings → Resources; Colima: `colima start --memory 8`). An explicit heap size, `-e JAVA_TOOL_OPTIONS=-Xmx6g`, overrides the percentage but cannot exceed what the VM has.
+**Memory:** [Docker Desktop](https://docs.docker.com/get-docker/) and [Colima](https://colima.run/) give their VM 2 GB by default, which is typically not enough for bigger repositories. The JVM in the image gets 75% of the VM's memory, and a repository of a few hundred thousand lines can need 4 GB of heap (the duplication analysis of generated code is the usual peak); beyond that the run ends in `OutOfMemoryError: Java heap space` or simply stops in the middle without a message. Give the VM 8 GB before analyzing anything big or a whole organization (Docker Desktop → Settings → Resources; Colima: `colima start --memory 8`). An explicit heap size, `-e JAVA_TOOL_OPTIONS=-Xmx6g`, overrides the percentage but cannot exceed what the VM has.
 
 On Linux the container writes as root, so the generated `_sokrates/` folder would be owned by root; add `--user "$(id -u):$(id -g)"` to keep your own ownership (Docker Desktop on macOS/Windows maps ownership automatically).
 
