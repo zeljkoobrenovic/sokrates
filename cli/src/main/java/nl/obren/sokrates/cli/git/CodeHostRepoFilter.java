@@ -12,11 +12,11 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 /**
- * Which of an organization's repositories analyzeGitHubOrg analyzes. Pure and order-defining: the
+ * Which of an organization's repositories analyzeGitHubOrg / analyzeGitLabGroup analyze. Pure and order-defining: the
  * result is sorted by last push (newest first), so {@code maxRepos} keeps the most active ones.
  * Defaults: forks and archived repositories are excluded, everything else is kept.
  */
-public class GitHubRepoFilter {
+public class CodeHostRepoFilter {
     private boolean includeForks = false;
     private boolean includeArchived = false;
     private int pushedWithinDays = 0;
@@ -26,11 +26,11 @@ public class GitHubRepoFilter {
     private final List<String> exclusions = new ArrayList<>();
 
     /** The kept repositories, newest push first; {@link #getExclusions()} says why the others were dropped. */
-    public List<GitHubRepo> apply(List<GitHubRepo> repos, LocalDate referenceDate) {
+    public List<CodeHostRepo> apply(List<CodeHostRepo> repos, LocalDate referenceDate) {
         exclusions.clear();
         Instant cutoff = pushedWithinDays > 0 ? referenceDate.minusDays(pushedWithinDays).atStartOfDay().toInstant(ZoneOffset.UTC) : null;
-        List<GitHubRepo> kept = new ArrayList<>();
-        for (GitHubRepo repo : repos) {
+        List<CodeHostRepo> kept = new ArrayList<>();
+        for (CodeHostRepo repo : repos) {
             String reason = exclusionReason(repo, cutoff);
             if (reason == null) {
                 kept.add(repo);
@@ -38,7 +38,7 @@ public class GitHubRepoFilter {
                 exclusions.add(repo + ": " + reason);
             }
         }
-        kept.sort(Comparator.comparing(GitHubRepo::getPushedAt, Comparator.reverseOrder()).thenComparing(GitHubRepo::getName));
+        kept.sort(Comparator.comparing(CodeHostRepo::getPushedAt, Comparator.reverseOrder()).thenComparing(CodeHostRepo::getName));
         if (maxRepos > 0 && kept.size() > maxRepos) {
             kept.subList(maxRepos, kept.size()).forEach(repo -> exclusions.add(repo + ": beyond the " + maxRepos + " most recently pushed repositories"));
             kept = new ArrayList<>(kept.subList(0, maxRepos));
@@ -46,7 +46,7 @@ public class GitHubRepoFilter {
         return kept;
     }
 
-    private String exclusionReason(GitHubRepo repo, Instant cutoff) {
+    private String exclusionReason(CodeHostRepo repo, Instant cutoff) {
         if (!includeForks && repo.isFork()) {
             return "fork";
         }
@@ -70,7 +70,7 @@ public class GitHubRepoFilter {
     }
 
     // A pattern matches when it matches the whole repository name or the whole owner/name.
-    private static boolean matchesAny(GitHubRepo repo, List<String> patterns) {
+    private static boolean matchesAny(CodeHostRepo repo, List<String> patterns) {
         for (String pattern : patterns) {
             try {
                 Pattern compiled = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);

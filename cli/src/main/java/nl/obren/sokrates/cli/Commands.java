@@ -39,6 +39,9 @@ public class Commands {
     public static final String ANALYZE_GITHUB_ORG = "analyzeGitHubOrg";
     public static final String ANALYZE_GITHUB_ORG_DESCRIPTION = "Analyzes whole GitHub organizations (or user accounts): for every -org (repeatable) and/or login in -orgs <file>, lists its repositories with the GitHub REST API, filters them (forks and archived repositories are excluded unless -includeForks / -includeArchived; -pushedWithinDays, -includeRepoNamePattern / -excludeRepoNamePattern and -maxRepos narrow further), writes the selection to <analysisRoot>/<org>/repos.txt, analyzes each repository into <analysisRoot>/<org>/<repository> (the analyzeGitRepo step) and builds a landscape per organization in <analysisRoot>/<org>/_sokrates_landscape, named, described, linked and branded from the organization's GitHub profile (only fields you have not set). With several organizations a parent landscape in <analysisRoot>/_sokrates_landscape lists them as sub-landscapes. -listOnly just writes repos.txt; -prune deletes analyses of repositories no longer selected. Set SOKRATES_GIT_TOKEN for private repositories and the higher API rate limit.";
 
+    public static final String ANALYZE_GITLAB_GROUP = "analyzeGitLabGroup";
+    public static final String ANALYZE_GITLAB_GROUP_DESCRIPTION = "The GitLab counterpart of analyzeGitHubOrg: for every -group (repeatable; a full path like gitlab-org/ci-cd or a URL, a username also works) and/or path in -groups <file>, lists the projects of the group and all its subgroups with the GitLab REST API (gitlab.com, or the instance given with -gitlabUrl or by a -group URL), filters them with the same options (forks and archived excluded unless -includeForks / -includeArchived; -pushedWithinDays, -includeRepoNamePattern / -excludeRepoNamePattern, -maxRepos), writes the selection to <analysisRoot>/<group path>/repos.txt, analyzes each project into <analysisRoot>/<group path>/<project path> (subgroups kept as folders) and builds a landscape per group in <analysisRoot>/<group path>/_sokrates_landscape, named, described, linked and branded from the group's profile (only fields you have not set); several groups get a parent landscape. -listOnly and -prune as for analyzeGitHubOrg. Set SOKRATES_GIT_TOKEN (sent as PRIVATE-TOKEN) for private groups.";
+
     public static final String UPDATE_LANDSCAPE = "updateLandscape";
     public static final String UPDATE_LANDSCAPE_DESCRIPTION = "Updates or creates a Sokrates landscape report, aggregating results of multiple analyses; with -url / -urls it first clones and analyzes those git repositories (the older name of analyzeLandscape, same options)";
 
@@ -92,6 +95,9 @@ public class Commands {
     public static final String ARG_URLS = "urls";
     public static final String ARG_ORG = "org";
     public static final String ARG_ORGS = "orgs";
+    public static final String ARG_GROUP = "group";
+    public static final String ARG_GROUPS = "groups";
+    public static final String ARG_GITLAB_URL = "gitlabUrl";
     public static final String ARG_INCLUDE_FORKS = "includeForks";
     public static final String ARG_INCLUDE_ARCHIVED = "includeArchived";
     public static final String ARG_PUSHED_WITHIN_DAYS = "pushedWithinDays";
@@ -151,6 +157,9 @@ public class Commands {
     }
     private Option org = new Option(ARG_ORG, true, "a GitHub organization (or user) login, e.g. junit-team; repeatable");
     private Option orgs = new Option(ARG_ORGS, true, "[OPTIONAL] a text file with one GitHub organization (or user) login per line (blank lines and # comments ignored)");
+    private Option group = new Option(ARG_GROUP, true, "a GitLab group path (e.g. gitlab-org/ci-cd, subgroups included) or URL, or a username; repeatable");
+    private Option groups = new Option(ARG_GROUPS, true, "[OPTIONAL] a text file with one GitLab group path (or URL, or username) per line (blank lines and # comments ignored)");
+    private Option gitlabUrl = new Option(ARG_GITLAB_URL, true, "[OPTIONAL] the GitLab instance (default https://gitlab.com, or the host of a -group given as a URL)");
     private Option includeForks = new Option(ARG_INCLUDE_FORKS, false, "[OPTIONAL] also analyzes forks (excluded by default)");
     private Option includeArchived = new Option(ARG_INCLUDE_ARCHIVED, false, "[OPTIONAL] also analyzes archived repositories (excluded by default)");
     private Option pushedWithinDays = new Option(ARG_PUSHED_WITHIN_DAYS, true, "[OPTIONAL] only repositories pushed to in the last N days (relative to -date, default today)");
@@ -163,6 +172,9 @@ public class Commands {
     {
         org.setArgName("login");
         orgs.setArgName("file");
+        group.setArgName("path");
+        groups.setArgName("file");
+        gitlabUrl.setArgName("url");
         pushedWithinDays.setArgName("days");
         includeRepoNamePattern.setArgName("regex");
         excludeRepoNamePattern.setArgName("regex");
@@ -188,6 +200,7 @@ public class Commands {
         commands.add(new CommandUsage(ANALYZE_LANDSCAPE, ANALYZE_LANDSCAPE_DESCRIPTION, getUpdateLandscapeOptions()));
         commands.add(new CommandUsage(UPDATE_LANDSCAPE, UPDATE_LANDSCAPE_DESCRIPTION, getUpdateLandscapeOptions()));
         commands.add(new CommandUsage(ANALYZE_GITHUB_ORG, ANALYZE_GITHUB_ORG_DESCRIPTION, getAnalyzeGitHubOrgOptions()));
+        commands.add(new CommandUsage(ANALYZE_GITLAB_GROUP, ANALYZE_GITLAB_GROUP_DESCRIPTION, getAnalyzeGitLabGroupOptions()));
         commands.add(new CommandUsage(UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME, UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME_DESCRIPTION, getUpdateLandscapePeopleConfigByUserNameOptions()));
         commands.add(new CommandUsage(UPDATE_PEOPLE_CONFIG_BY_USER_NAME, UPDATE_PEOPLE_CONFIG_BY_USER_NAME_DESCRIPTION, getUpdatePeopleConfigByUserNameOptions()));
         commands.add(new CommandUsage(UPDATE_CONFIG, UPDATE_CONFIG_DESCRIPTION, getUpdateConfigOptions()));
@@ -394,10 +407,25 @@ public class Commands {
         return options;
     }
 
+    public Options getAnalyzeGitLabGroupOptions() {
+        Options options = new Options();
+        options.addOption(group);
+        options.addOption(groups);
+        options.addOption(gitlabUrl);
+        addOrganizationAnalysisOptions(options);
+        return options;
+    }
+
     public Options getAnalyzeGitHubOrgOptions() {
         Options options = new Options();
         options.addOption(org);
         options.addOption(orgs);
+        addOrganizationAnalysisOptions(options);
+        return options;
+    }
+
+    // The options analyzeGitHubOrg and analyzeGitLabGroup share: selection, dry run, pruning, and the pass-through analysis options.
+    private void addOrganizationAnalysisOptions(Options options) {
         options.addOption(analysisRoot);
         options.addOption(includeForks);
         options.addOption(includeArchived);
@@ -419,8 +447,18 @@ public class Commands {
         options.addOption(help);
 
         help.setArgs(0);
+    }
 
-        return options;
+    public Option getGroup() {
+        return group;
+    }
+
+    public Option getGroups() {
+        return groups;
+    }
+
+    public Option getGitlabUrl() {
+        return gitlabUrl;
     }
 
     public Option getOrg() {

@@ -1,46 +1,34 @@
 package nl.obren.sokrates.cli.git;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * A GitHub organization (or user account) as returned by {@code GET /orgs/{login}} (or
- * {@code /users/{login}}): what analyzeGitHubOrg needs to title, describe, link and brand the
- * organization's landscape.
+ * An organization on a code host — a GitHub organization or user, a GitLab group or user — as the
+ * organization-level analysis commands see it: what they need to title, describe, link and brand
+ * the organization's landscape. {@code login} is the host's identifier (GitHub login, GitLab full
+ * path) and names the output folder.
  */
-public class GitHubOrg {
+public class CodeHostOrg {
     private String login = "";
     private String name = "";
     private String description = "";
     private String htmlUrl = "";
     private String avatarUrl = "";
+    private String linkLabel = "Repository host";
     private boolean user = false;
+    private String userId = "";
 
-    public GitHubOrg() {
+    public CodeHostOrg() {
     }
 
-    public GitHubOrg(String login, String name, String description, String htmlUrl, String avatarUrl) {
+    public CodeHostOrg(String login, String name, String description, String htmlUrl, String avatarUrl) {
         this.login = login;
         this.name = name;
         this.description = description;
         this.htmlUrl = htmlUrl;
         this.avatarUrl = avatarUrl;
-    }
-
-    public static GitHubOrg fromJson(JsonNode json, boolean user) {
-        GitHubOrg org = new GitHubOrg();
-        org.login = json.path("login").asText("");
-        org.name = json.path("name").asText("");
-        org.description = json.path("description").asText("");
-        if (user && StringUtils.isBlank(org.description)) {
-            org.description = json.path("bio").asText("");
-        }
-        org.htmlUrl = json.path("html_url").asText("");
-        org.avatarUrl = json.path("avatar_url").asText("");
-        org.user = user;
-        return org;
     }
 
     /** The display name: the organization's name, or its login when it has none. */
@@ -68,7 +56,7 @@ public class GitHubOrg {
             changed = true;
         }
         if (metadata.getLinks().isEmpty() && StringUtils.isNotBlank(htmlUrl)) {
-            metadata.getLinks().add(new Link("GitHub", htmlUrl));
+            metadata.getLinks().add(new Link(linkLabel, htmlUrl));
             changed = true;
         }
         return changed;
@@ -121,5 +109,23 @@ public class GitHubOrg {
 
     public void setUser(boolean user) {
         this.user = user;
+    }
+
+    /** The host's numeric user id when {@link #isUser()} (GitLab lists a user's projects by id). */
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    /** The label of the link to the organization page ("GitHub", "GitLab"). */
+    public String getLinkLabel() {
+        return linkLabel;
+    }
+
+    public void setLinkLabel(String linkLabel) {
+        this.linkLabel = linkLabel;
     }
 }

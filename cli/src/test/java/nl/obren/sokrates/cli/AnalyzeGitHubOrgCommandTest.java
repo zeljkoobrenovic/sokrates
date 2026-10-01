@@ -1,9 +1,9 @@
 package nl.obren.sokrates.cli;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import nl.obren.sokrates.cli.git.GitHubOrg;
+import nl.obren.sokrates.cli.git.CodeHostOrg;
 import nl.obren.sokrates.cli.git.GitHubOrgClient;
-import nl.obren.sokrates.cli.git.GitHubRepo;
+import nl.obren.sokrates.cli.git.CodeHostRepo;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import org.apache.commons.io.FileUtils;
@@ -35,23 +35,23 @@ class AnalyzeGitHubOrgCommandTest {
 
     /** A canned GitHub: login -> profile, login -> repositories. */
     private static class FakeGitHub extends GitHubOrgClient {
-        final Map<String, GitHubOrg> orgs = new LinkedHashMap<>();
-        final Map<String, List<GitHubRepo>> repos = new LinkedHashMap<>();
+        final Map<String, CodeHostOrg> orgs = new LinkedHashMap<>();
+        final Map<String, List<CodeHostRepo>> repos = new LinkedHashMap<>();
 
         @Override
-        public GitHubOrg fetchOrg(String login) throws IOException {
+        public CodeHostOrg fetchOrg(String login) throws IOException {
             if (!orgs.containsKey(login)) throw new IOException("GitHub API returned 404 for " + login);
             return orgs.get(login);
         }
 
         @Override
-        public List<GitHubRepo> listRepos(String login) {
+        public List<CodeHostRepo> listRepos(String login) {
             return new ArrayList<>(repos.getOrDefault(login, List.of()));
         }
     }
 
-    private static GitHubRepo repo(String org, String name, File bare, int daysAgo, boolean fork, boolean archived) {
-        GitHubRepo repo = new GitHubRepo(name, bare.toURI().toString());
+    private static CodeHostRepo repo(String org, String name, File bare, int daysAgo, boolean fork, boolean archived) {
+        CodeHostRepo repo = new CodeHostRepo(name, bare.toURI().toString());
         repo.setFullName(org + "/" + name);
         repo.setHtmlUrl("https://github.com/" + org + "/" + name);
         repo.setPushedAt(Instant.now().minus(daysAgo, ChronoUnit.DAYS).toString());
@@ -75,7 +75,7 @@ class AnalyzeGitHubOrgCommandTest {
         File root = tmp.resolve("landscapes").toFile();
 
         FakeGitHub gitHub = new FakeGitHub();
-        gitHub.orgs.put("acme", new GitHubOrg("acme", "Acme Corp", "We make things", "https://github.com/acme", "https://avatars.example.com/acme.png"));
+        gitHub.orgs.put("acme", new CodeHostOrg("acme", "Acme Corp", "We make things", "https://github.com/acme", "https://avatars.example.com/acme.png"));
         gitHub.repos.put("acme", List.of(
                 repo("acme", "alpha", alpha, 1, false, false),
                 repo("acme", "beta", beta, 2, true, false),      // fork -> skipped
@@ -110,7 +110,7 @@ class AnalyzeGitHubOrgCommandTest {
         config.getMetadata().setName("My Acme");
         FileUtils.write(new File(acme, "_sokrates_landscape/config.json"), new nl.obren.sokrates.common.io.JsonGenerator().generate(config), UTF_8);
         gitHub.repos.put("acme", List.of(repo("acme", "delta", delta, 1, false, false)));
-        gitHub.orgs.put("globex", new GitHubOrg("globex", "", "", "https://github.com/globex", ""));
+        gitHub.orgs.put("globex", new CodeHostOrg("globex", "", "", "https://github.com/globex", ""));
         gitHub.repos.put("globex", List.of(repo("globex", "beta", beta, 1, false, false)));
 
         cli.run(new String[]{"analyzeGitHubOrg", "-org", "acme", "-org", "globex", "-org", "missing", "-analysisRoot", root.getPath(), "-prune",
@@ -137,7 +137,7 @@ class AnalyzeGitHubOrgCommandTest {
     void listOnlyWritesTheSelectionWithoutAnalyzing(@TempDir Path tmp) throws Exception {
         File root = tmp.resolve("landscapes").toFile();
         FakeGitHub gitHub = new FakeGitHub();
-        gitHub.orgs.put("acme", new GitHubOrg("acme", "Acme", "", "https://github.com/acme", ""));
+        gitHub.orgs.put("acme", new CodeHostOrg("acme", "Acme", "", "https://github.com/acme", ""));
         gitHub.repos.put("acme", List.of(
                 repo("acme", "fresh", new File(tmp.toFile(), "fresh.git"), 2, false, false),
                 repo("acme", "fresher", new File(tmp.toFile(), "fresher.git"), 1, false, false),
@@ -166,7 +166,7 @@ class AnalyzeGitHubOrgCommandTest {
         File root = new File("target/analyze-github-org-relative-" + System.nanoTime());
         try {
             FakeGitHub gitHub = new FakeGitHub();
-            gitHub.orgs.put("acme", new GitHubOrg("acme", "Acme", "", "https://github.com/acme", ""));
+            gitHub.orgs.put("acme", new CodeHostOrg("acme", "Acme", "", "https://github.com/acme", ""));
             gitHub.repos.put("acme", List.of(repo("acme", "alpha", alpha, 1, false, false)));
             CommandLineInterface cli = new CommandLineInterface();
             cli.setGitHubOrgClient(gitHub);

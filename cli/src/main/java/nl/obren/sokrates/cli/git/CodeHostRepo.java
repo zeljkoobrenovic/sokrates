@@ -1,13 +1,15 @@
 package nl.obren.sokrates.cli.git;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.lang3.StringUtils;
 
 /**
- * One repository of a GitHub organization (or user), as listed by the GitHub REST API — the subset
- * of fields analyzeGitHubOrg filters on and clones from.
+ * One repository of a code-host organization (GitHub repository, GitLab project) as listed by the
+ * host's API — the subset of fields the organization-level analysis commands filter on and clone
+ * from. {@code pushedAt} is the last push/activity instant (ISO-8601).
  */
-public class GitHubRepo {
+public class CodeHostRepo {
     private String name = "";
+    private String folderPath = "";
     private String fullName = "";
     private String cloneUrl = "";
     private String htmlUrl = "";
@@ -20,34 +22,28 @@ public class GitHubRepo {
     private boolean archived = false;
     private boolean privateRepo = false;
 
-    public GitHubRepo() {
+    public CodeHostRepo() {
     }
 
-    public GitHubRepo(String name, String cloneUrl) {
+    public CodeHostRepo(String name, String cloneUrl) {
         this.name = name;
         this.cloneUrl = cloneUrl;
     }
 
-    /** From one element of the {@code /orgs/{org}/repos} (or {@code /users/{user}/repos}) response. */
-    public static GitHubRepo fromJson(JsonNode json) {
-        GitHubRepo repo = new GitHubRepo();
-        repo.name = json.path("name").asText("");
-        repo.fullName = json.path("full_name").asText("");
-        repo.cloneUrl = json.path("clone_url").asText("");
-        repo.htmlUrl = json.path("html_url").asText("");
-        repo.description = json.path("description").asText("");
-        repo.language = json.path("language").asText("");
-        repo.defaultBranch = json.path("default_branch").asText("");
-        repo.pushedAt = json.path("pushed_at").asText("");
-        repo.sizeKb = json.path("size").asInt(0);
-        repo.fork = json.path("fork").asBoolean(false);
-        repo.archived = json.path("archived").asBoolean(false);
-        repo.privateRepo = json.path("private").asBoolean(false);
-        return repo;
-    }
-
     public String getName() {
         return name;
+    }
+
+    /**
+     * Where the analysis is kept, relative to the organization folder: the name, unless the host
+     * nests repositories (GitLab subgroups: {@code subgroup/project}).
+     */
+    public String getFolderPath() {
+        return StringUtils.isNotBlank(folderPath) ? folderPath : name;
+    }
+
+    public void setFolderPath(String folderPath) {
+        this.folderPath = folderPath;
     }
 
     public void setName(String name) {

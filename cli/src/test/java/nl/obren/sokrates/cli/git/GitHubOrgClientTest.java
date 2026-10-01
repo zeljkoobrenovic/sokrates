@@ -31,17 +31,17 @@ class GitHubOrgClientTest {
         List<String> requested = new ArrayList<>();
         GitHubOrgClient client = new GitHubOrgClient(url -> {
             requested.add(url);
-            if (url.endsWith("page=1")) return new GitHubOrgClient.Response(200, page(1, 100));
-            if (url.endsWith("page=2")) return new GitHubOrgClient.Response(200, page(101, 3));
-            return new GitHubOrgClient.Response(500, "unexpected");
+            if (url.endsWith("page=1")) return new HttpFetcher.Response(200, page(1, 100));
+            if (url.endsWith("page=2")) return new HttpFetcher.Response(200, page(101, 3));
+            return new HttpFetcher.Response(500, "unexpected");
         });
 
-        List<GitHubRepo> repos = client.listRepos("acme");
+        List<CodeHostRepo> repos = client.listRepos("acme");
 
         assertEquals(103, repos.size());
         assertEquals(List.of("https://api.github.com/orgs/acme/repos?type=all&per_page=100&page=1",
                 "https://api.github.com/orgs/acme/repos?type=all&per_page=100&page=2"), requested);
-        GitHubRepo first = repos.get(0);
+        CodeHostRepo first = repos.get(0);
         assertEquals("repo1", first.getName());
         assertEquals("acme/repo1", first.getFullName());
         assertEquals("https://github.com/acme/repo1.git", first.getCloneUrl());
@@ -57,10 +57,10 @@ class GitHubOrgClientTest {
                 "https://api.github.com/users/jane", "{\"login\":\"jane\",\"name\":\"Jane Doe\",\"bio\":\"Builds things\",\"html_url\":\"https://github.com/jane\",\"avatar_url\":\"https://avatars.githubusercontent.com/u/1\"}",
                 "https://api.github.com/users/jane/repos?type=owner&per_page=100&page=1", page(1, 2));
         GitHubOrgClient client = new GitHubOrgClient(url -> responses.containsKey(url)
-                ? new GitHubOrgClient.Response(200, responses.get(url))
-                : new GitHubOrgClient.Response(404, "{\"message\":\"Not Found\"}"));
+                ? new HttpFetcher.Response(200, responses.get(url))
+                : new HttpFetcher.Response(404, "{\"message\":\"Not Found\"}"));
 
-        GitHubOrg org = client.fetchOrg("jane");
+        CodeHostOrg org = client.fetchOrg("jane");
         assertTrue(org.isUser());
         assertEquals("Jane Doe", org.displayName());
         assertEquals("Builds things", org.getDescription(), "a user's bio stands in for the description");
@@ -71,10 +71,10 @@ class GitHubOrgClientTest {
     @Test
     void organizationProfileAndErrorsAreReported() throws IOException {
         GitHubOrgClient client = new GitHubOrgClient(url -> url.endsWith("/orgs/acme")
-                ? new GitHubOrgClient.Response(200, "{\"login\":\"acme\",\"name\":\"Acme Corp\",\"description\":\"We make things\",\"html_url\":\"https://github.com/acme\",\"avatar_url\":\"https://avatars.githubusercontent.com/u/2\"}")
-                : new GitHubOrgClient.Response(403, "{\"message\":\"API rate limit exceeded\"}"));
+                ? new HttpFetcher.Response(200, "{\"login\":\"acme\",\"name\":\"Acme Corp\",\"description\":\"We make things\",\"html_url\":\"https://github.com/acme\",\"avatar_url\":\"https://avatars.githubusercontent.com/u/2\"}")
+                : new HttpFetcher.Response(403, "{\"message\":\"API rate limit exceeded\"}"));
 
-        GitHubOrg org = client.fetchOrg("acme");
+        CodeHostOrg org = client.fetchOrg("acme");
         assertFalse(org.isUser());
         assertEquals("Acme Corp", org.displayName());
         assertEquals("We make things", org.getDescription());
@@ -83,7 +83,7 @@ class GitHubOrgClientTest {
         assertTrue(e.getMessage().contains("403"), e.getMessage());
         assertTrue(e.getMessage().contains(GitRepoCloner.ENV_TOKEN), e.getMessage());
 
-        GitHubOrgClient missing = new GitHubOrgClient(url -> new GitHubOrgClient.Response(404, "{}"));
+        GitHubOrgClient missing = new GitHubOrgClient(url -> new HttpFetcher.Response(404, "{}"));
         IOException notFound = assertThrows(IOException.class, () -> missing.fetchOrg("nobody"));
         assertTrue(notFound.getMessage().contains("404"), notFound.getMessage());
     }
