@@ -1,0 +1,42 @@
+reports/src/main/java/nl/obren/sokrates/reports/landscape/ai/AiInsightsAggregator.java
+  s_40c0e74316fcc6::t_fef5c984c1796c 1-49,52-141
+  s_40c0e74316fcc6::t_3179a8d85935c1 50-51
+cli/src/test/java/nl/obren/sokrates/cli/LandscapeAiInsightsTest.java
+  s_40c0e74316fcc6::t_f7e62a6ba69bc1 1-73
+reports/src/main/java/nl/obren/sokrates/reports/landscape/ai/AiScannerExport.java
+  s_40c0e74316fcc6::t_fef5c984c1796c 1-63
+reports/src/test/java/nl/obren/sokrates/reports/landscape/ai/AiInsightsAggregatorTest.java
+  s_40c0e74316fcc6::t_f7e62a6ba69bc1 1-82
+reports/src/main/java/nl/obren/sokrates/reports/landscape/ai/AiInsightsLandscapeExport.java
+  s_40c0e74316fcc6::t_fef5c984c1796c 1-30
+reports/src/main/java/nl/obren/sokrates/reports/landscape/ai/AiFindingExport.java
+  s_40c0e74316fcc6::t_fef5c984c1796c 1-113
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/LandscapeReportGenerator.java
+  s_40c0e74316fcc6::t_acbaf2a9418ff7 20-21,74-75,139-140,201,219,355-357,366-402
+  s_40c0e74316fcc6::t_f7e62a6ba69bc1 17-19
+  s_40c0e74316fcc6::t_dd4be245e85145 403
+CLAUDE.md
+  s_40c0e74316fcc6::t_d4e72aba6f77e4 110-111
+README.md
+  s_40c0e74316fcc6::t_d4e72aba6f77e4 127-128
+common/src/main/resources/templates/landscape-ai-insights.html
+  s_40c0e74316fcc6::t_acbaf2a9418ff7 1-393
+reports/src/main/java/nl/obren/sokrates/reports/landscape/ai/AiRepositoryExport.java
+  s_40c0e74316fcc6::t_fef5c984c1796c 1-85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "e593ba3d7d90a5539df30659a9e7f93d78b97b79",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
