@@ -1,0 +1,29 @@
+CLAUDE.md
+  s_40c0e74316fcc6::t_7727228e30824b 50
+cli/src/main/java/nl/obren/sokrates/cli/CommandLineInterface.java
+  s_40c0e74316fcc6::t_9b0b9fc699fce0 118,1160-1169,1175-1188,1192,1194-1198
+README.md
+  s_40c0e74316fcc6::t_7727228e30824b 125-126,168
+cli/src/main/java/nl/obren/sokrates/cli/PostAnalysisState.java
+  s_40c0e74316fcc6::t_9b0b9fc699fce0 1-107
+cli/src/test/java/nl/obren/sokrates/cli/PostAnalysisHookTest.java
+  s_40c0e74316fcc6::t_9b0b9fc699fce0 84-151
+cli/src/main/java/nl/obren/sokrates/cli/Commands.java
+  s_40c0e74316fcc6::t_9b0b9fc699fce0 112-113,177-178,195,312-313,333-334,467-468,537-544,564-565
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "017e1a45e41ed09c69c147a4a17a0a2f2f3adb27",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
