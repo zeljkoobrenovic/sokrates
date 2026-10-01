@@ -122,6 +122,8 @@ java -jar cli-1.0-jar-with-dependencies.jar analyzeLandscape -urls repos.txt -ai
 java -jar cli-1.0-jar-with-dependencies.jar analyze -postAnalysis 'gemini -p "check the Sokrates configuration of this repository" --yolo'
 ```
 
+The hook is incremental: each run is recorded in `_sokrates/post-analysis.json` (command, head commit, date, exit code) and a repository whose head commit and command are unchanged since a successful run is skipped, so a nightly landscape only rescans what moved; `-aiForce` runs it anyway and `-aiMaxRepos <n>` bounds the runs per invocation (the next invocation continues with the repositories not yet done).
+
 The Docker image holds no agent CLI; use the JAR, or build an image on top of it with your agent installed.
 
 To analyze a repository you have not cloned yet, `analyzeGitRepo` clones it first and then runs the same three steps:
@@ -163,7 +165,7 @@ java -jar cli-1.0-jar-with-dependencies.jar generateReports -help
 | `analyzeGitRepo` | Clone a repository from its URL (`-url`; JGit, no git binary) into a temporary folder, run `analyze` on it, and keep only the analysis (`config.json` + `reports/`) in `-destFolder` (default `<owner>/<repo>`, e.g. `junit-team/junit4`); the clone is deleted. Re-runs clone again and reuse the kept config. `-branch`, `-depth` (shallow clone), and the `analyze` options. Private HTTPS repos: set `SOKRATES_GIT_TOKEN` (and optionally `SOKRATES_GIT_USER`). The output layout is what `analyzeLandscape` expects |
 | `analyze` | One-shot analysis: `extractGitHistory` (if the root is a git repository) + `init` (if no config exists yet) + `generateReports`. Options: `-srcRoot`, `-confFile`, `-outputFolder`, `-conventionsFile`, `-name`, `-description`, `-skipGitHistory`, `-date`, `-timeout` |
 | `init` | Create a new analysis configuration (`config.json`) from standard + optional custom conventions |
-| _`-postAnalysis`, `-ai`, `-aiPrompt`_ | On `analyze`, `analyzeGitRepo`, `analyzeLandscape` and the organization commands: run a shell command (or the `claude`/`codex`/`gemini` headless preset with a prompt) in the source tree after each analysis, while a clone still exists; its output under `_sokrates/` is kept |
+| _`-postAnalysis`, `-ai`, `-aiPrompt`, `-aiMaxRepos`, `-aiForce`_ | On `analyze`, `analyzeGitRepo`, `analyzeLandscape` and the organization commands: run a shell command (or the `claude`/`codex`/`gemini` headless preset with a prompt) in the source tree after each analysis, while a clone still exists; its output under `_sokrates/` is kept. Incremental: skipped when the head commit and command are unchanged since a successful run (`-aiForce` overrides), at most `-aiMaxRepos` runs per invocation |
 | `generateReports` | Run the analysis and generate the HTML/JSON reports. `-dataOnly` (also on `analyze`, `analyzeGitRepo` and `analyzeLandscape`) stores only `reports/data/data.zip` — the file landscapes read — and no HTML, explorers, visuals, source viewer or index page; on `analyzeLandscape`/`updateLandscape` it also keeps only the landscape's `_sokrates_landscape/data/data.zip` next to its config files |
 | `updateConfig` | Fill in missing fields of an existing configuration |
 | `addCustomTab` | Add a custom iframe tab (`-label`, `-iframeLink`) to the report config; a tab with the same label is overwritten |

@@ -109,6 +109,8 @@ public class Commands {
     public static final String ARG_POST_ANALYSIS = "postAnalysis";
     public static final String ARG_AI = "ai";
     public static final String ARG_AI_PROMPT = "aiPrompt";
+    public static final String ARG_AI_MAX_REPOS = "aiMaxRepos";
+    public static final String ARG_AI_FORCE = "aiForce";
     public static final String ARG_BRANCH = "branch";
     public static final String ARG_DEPTH = "depth";
 
@@ -172,6 +174,8 @@ public class Commands {
     private Option postAnalysis = new Option(ARG_POST_ANALYSIS, true, "[OPTIONAL] a shell command to run in the analyzed source tree right after the analysis (for a cloned repository: while the clone still exists), e.g. an AI coding agent in headless mode running the sokrates-skills; whatever it writes under _sokrates/ is kept with the analysis. Environment: SOKRATES_REPO_URL, SOKRATES_REPO_NAME, SOKRATES_SRC_ROOT, SOKRATES_ANALYSIS_FOLDER, SOKRATES_REPORTS_FOLDER, SOKRATES_OUTPUT_FOLDER. A failing command is logged, the analysis is kept.");
     private Option ai = new Option(ARG_AI, true, "[OPTIONAL] a preset for -postAnalysis: claude, codex or gemini — that agent's headless command running -aiPrompt (the agent CLI and the sokrates-skills must be installed; an explicit -postAnalysis wins)");
     private Option aiPrompt = new Option(ARG_AI_PROMPT, true, "[OPTIONAL] the prompt the -ai preset gives the agent (default: \"" + PostAnalysisHook.DEFAULT_PROMPT + "\")");
+    private Option aiMaxRepos = new Option(ARG_AI_MAX_REPOS, true, "[OPTIONAL] runs the post-analysis command for at most N repositories per run (the rest are analyzed without it; default: no limit)");
+    private Option aiForce = new Option(ARG_AI_FORCE, false, "[OPTIONAL] runs the post-analysis command even when the repository's head commit and the command are unchanged since its last successful run (recorded in _sokrates/post-analysis.json), which is otherwise skipped");
     private Option listOnly = new Option(ARG_LIST_ONLY, false, "[OPTIONAL] only lists and filters the repositories into <analysisRoot>/<org>/repos.txt, without cloning or analyzing anything (a dry run to review the selection and its size)");
     private Option prune = new Option(ARG_PRUNE, false, "[OPTIONAL] deletes the kept analyses that this tool produced (they carry a source.json) whose repository is no longer in the list / selection, or whose remote repository does not exist any more, so the landscape stops counting them; analyses placed by hand are never touched. Without it, such stale analyses are only listed.");
 
@@ -188,6 +192,7 @@ public class Commands {
         postAnalysis.setArgName("command");
         ai.setArgName("claude|codex|gemini");
         aiPrompt.setArgName("text");
+        aiMaxRepos.setArgName("count");
     }
     private Option branch = new Option(ARG_BRANCH, true, "[OPTIONAL] the branch to analyze (default is the remote's default branch)");
     private Option depth = new Option(ARG_DEPTH, true, "[OPTIONAL] shallow clone depth (default is the full history; a shallow history makes the contributor and trend reports incomplete)");
@@ -304,6 +309,8 @@ public class Commands {
         options.addOption(postAnalysis);
         options.addOption(ai);
         options.addOption(aiPrompt);
+        options.addOption(aiMaxRepos);
+        options.addOption(aiForce);
         options.addOption(date);
         options.addOption(timeout);
         options.addOption(help);
@@ -323,6 +330,8 @@ public class Commands {
         options.addOption(postAnalysis);
         options.addOption(ai);
         options.addOption(aiPrompt);
+        options.addOption(aiMaxRepos);
+        options.addOption(aiForce);
         options.addOption(conventionsFile);
         options.addOption(name);
         options.addOption(description);
@@ -455,6 +464,8 @@ public class Commands {
         options.addOption(postAnalysis);
         options.addOption(ai);
         options.addOption(aiPrompt);
+        options.addOption(aiMaxRepos);
+        options.addOption(aiForce);
         options.addOption(conventionsFile);
         options.addOption(setName);
         options.addOption(setDescription);
@@ -523,6 +534,14 @@ public class Commands {
         return aiPrompt;
     }
 
+    public Option getAiMaxRepos() {
+        return aiMaxRepos;
+    }
+
+    public Option getAiForce() {
+        return aiForce;
+    }
+
     public Option getListOnly() {
         return listOnly;
     }
@@ -542,6 +561,8 @@ public class Commands {
         options.addOption(postAnalysis);
         options.addOption(ai);
         options.addOption(aiPrompt);
+        options.addOption(aiMaxRepos);
+        options.addOption(aiForce);
         options.addOption(conventionsFile);
         options.addOption(confFile);
         options.addOption(recursive);

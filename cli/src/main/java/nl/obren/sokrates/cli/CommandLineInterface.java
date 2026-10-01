@@ -115,6 +115,7 @@ public class CommandLineInterface {
     }
 
     public void run(String[] args) throws IOException {
+        postAnalysisRuns = 0;
         if (args.length == 0) {
             helpMode = true;
             commands.usage();
@@ -1156,16 +1157,45 @@ public class CommandLineInterface {
         return preset;
     }
 
+    // How many times this run has executed the post-analysis command (bounded by -aiMaxRepos).
+    private int postAnalysisRuns = 0;
+
+    /**
+     * Runs the -postAnalysis / -ai command unless it would redo work: the kept analysis'
+     * post-analysis.json says which command last ran on which head commit, and an unchanged
+     * repository is skipped (-aiForce runs it anyway); -aiMaxRepos bounds the runs per invocation.
+     * The state is written into the analysis folder, so for a clone it moves to the kept folder
+     * with the rest; a skipped repository keeps its earlier state file.
+     */
     private void runPostAnalysisHook(CommandLine cmd, File root, File conf, File reportsFolder, String repoUrl, File keptFolder) {
         String command = postAnalysisCommand(cmd);
         if (command == null) {
             return;
         }
+        File analysisFolder = conf.getParentFile();
+        String head = PostAnalysisState.headCommit(root);
+        PostAnalysisState previous = PostAnalysisState.read(keptFolder != null ? keptFolder : analysisFolder);
+        if (previous != null && previous.covers(command, head) && !cmd.hasOption(commands.getAiForce().getOpt())) {
+            LOG.info("Post-analysis command skipped: unchanged since it ran on " + previous.getRanOn() + " (head " + head.substring(0, Math.min(10, head.length()))
+                    + "); -" + Commands.ARG_AI_FORCE + " runs it anyway.");
+            return;
+        }
+        Integer max = nonNegativeIntOption(cmd, commands.getAiMaxRepos());
+        if (max != null && max > 0 && postAnalysisRuns >= max) {
+            LOG.info("Post-analysis command skipped: the -" + Commands.ARG_AI_MAX_REPOS + " budget of " + max + " repositories is used up for this run.");
+            return;
+        }
+        postAnalysisRuns++;
         GitRepoMetadata metadata = StringUtils.isNotBlank(repoUrl) ? GitRepoMetadata.fromUrl(repoUrl) : null;
         String repoName = metadata != null ? metadata.reportName() : root.toPath().toAbsolutePath().normalize().getFileName().toString();
         ProcessingStopwatch.start("post-analysis command");
-        PostAnalysisHook.run(command, root, PostAnalysisHook.environment(repoUrl, repoName, root, conf.getParentFile(), reportsFolder, keptFolder));
+        int exit = PostAnalysisHook.run(command, root, PostAnalysisHook.environment(repoUrl, repoName, root, analysisFolder, reportsFolder, keptFolder));
         ProcessingStopwatch.end("post-analysis command");
+        try {
+            new PostAnalysisState(command, head, DateUtils.getAnalysisDate(), exit).save(analysisFolder);
+        } catch (IOException e) {
+            LOG.warn("Could not record the post-analysis run in " + analysisFolder.getPath() + ": " + e.getMessage());
+        }
     }
 
     /**

@@ -81,6 +81,74 @@ class PostAnalysisHookTest {
         assertTrue(out.contains("out=" + new File(project, "_sokrates").toPath().toAbsolutePath().normalize()), "the output folder is the analysis folder itself: " + out);
     }
 
+    @Test
+    void skipsAnUnchangedRepositoryUntilItsHeadMovesOrForced(@TempDir Path tmp) throws Exception {
+        File remote = bareRepoWithHistory(tmp, "alpha", "ada@example.com");
+        File dest = tmp.resolve("kept").toFile();
+        File runs = tmp.resolve("runs.txt").toFile();
+        String countingHook = "echo run >> \"" + runs.getPath() + "\"";
+        String[] base = {"analyzeGitRepo", "-url", remote.toURI().toString(), "-destFolder", dest.getPath(), "-postAnalysis", countingHook};
+
+        new CommandLineInterface().run(base);
+        assertEquals(1, FileUtils.readLines(runs, UTF_8).size());
+        PostAnalysisState state = PostAnalysisState.read(dest);
+        assertNotNull(state, "the run is recorded with the kept analysis");
+        assertEquals(countingHook, state.getCommand());
+        assertEquals(40, state.getHead().length(), "the head commit it ran on");
+        assertEquals(0, state.getExitCode());
+
+        new CommandLineInterface().run(base);
+        assertEquals(1, FileUtils.readLines(runs, UTF_8).size(), "same head, same command: skipped");
+        assertNotNull(PostAnalysisState.read(dest), "the skipped repository keeps its state file");
+
+        new CommandLineInterface().run(new String[]{"analyzeGitRepo", "-url", remote.toURI().toString(), "-destFolder", dest.getPath(), "-postAnalysis", countingHook, "-aiForce"});
+        assertEquals(2, FileUtils.readLines(runs, UTF_8).size(), "-aiForce runs it anyway");
+
+        new CommandLineInterface().run(new String[]{"analyzeGitRepo", "-url", remote.toURI().toString(), "-destFolder", dest.getPath(), "-postAnalysis", countingHook + " && true"});
+        assertEquals(3, FileUtils.readLines(runs, UTF_8).size(), "a different command runs again");
+
+        addCommit(tmp, "alpha", "ada@example.com");
+        new CommandLineInterface().run(new String[]{"analyzeGitRepo", "-url", remote.toURI().toString(), "-destFolder", dest.getPath(), "-postAnalysis", countingHook + " && true"});
+        assertEquals(4, FileUtils.readLines(runs, UTF_8).size(), "a new commit runs it again");
+        assertNotEquals(state.getHead(), PostAnalysisState.read(dest).getHead());
+
+        // A failed run is not a reason to skip next time.
+        new CommandLineInterface().run(new String[]{"analyzeGitRepo", "-url", remote.toURI().toString(), "-destFolder", dest.getPath(), "-postAnalysis", countingHook + " && false"});
+        assertEquals(5, FileUtils.readLines(runs, UTF_8).size());
+        assertEquals(1, PostAnalysisState.read(dest).getExitCode());
+        new CommandLineInterface().run(new String[]{"analyzeGitRepo", "-url", remote.toURI().toString(), "-destFolder", dest.getPath(), "-postAnalysis", countingHook + " && false"});
+        assertEquals(6, FileUtils.readLines(runs, UTF_8).size(), "retried after a failure");
+    }
+
+    @Test
+    void aiMaxReposBoundsTheRunsPerInvocation(@TempDir Path tmp) throws Exception {
+        File alpha = bareRepoWithHistory(tmp, "alpha", "ada@example.com");
+        File beta = bareRepoWithHistory(tmp, "beta", "bob@example.com");
+        File gamma = bareRepoWithHistory(tmp, "gamma", "cy@example.com");
+        File root = tmp.resolve("landscape").toFile();
+        File runs = tmp.resolve("runs.txt").toFile();
+        String countingHook = "echo \"$SOKRATES_REPO_NAME\" >> \"" + runs.getPath() + "\"";
+        String[] args = {"analyzeLandscape", "-analysisRoot", root.getPath(), "-url", alpha.toURI().toString(), "-url", beta.toURI().toString(),
+                "-url", gamma.toURI().toString(), "-postAnalysis", countingHook, "-aiMaxRepos", "2"};
+
+        new CommandLineInterface().run(args);
+        assertEquals(java.util.List.of("alpha", "beta"), FileUtils.readLines(runs, UTF_8), "the first two repositories get the command");
+        assertNull(PostAnalysisState.read(new File(root, "gamma")), "the third is analyzed without it and keeps no state");
+
+        new CommandLineInterface().run(args);
+        assertEquals(java.util.List.of("alpha", "beta", "gamma"), FileUtils.readLines(runs, UTF_8), "the next run skips the two done ones and reaches the third");
+    }
+
+    private static void addCommit(Path tmp, String name, String email) throws Exception {
+        File work = tmp.resolve("work-" + name).toFile();
+        FileUtils.write(new File(work, "src/" + name + "-more.ts"), "export const more = 1;\n", UTF_8);
+        try (Git git = Git.open(work)) {
+            git.add().addFilepattern(".").call();
+            git.commit().setMessage("more").setAuthor(name, email).setCommitter(name, email).call();
+            git.push().setRemote("origin").setPushAll().call();
+        }
+    }
+
     private static File bareRepoWithHistory(Path tmp, String name, String email) throws Exception {
         File work = tmp.resolve("work-" + name).toFile();
         File bare = tmp.resolve(name + ".git").toFile();
