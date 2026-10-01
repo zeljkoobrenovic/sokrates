@@ -1,0 +1,36 @@
+cli/src/main/java/nl/obren/sokrates/cli/Commands.java
+  s_40c0e74316fcc6::t_20a0d5e8650f21 37,170,511
+README.md
+  s_40c0e74316fcc6::t_c9096d00c7db15 87,157,159
+  s_40c0e74316fcc6::t_1511f3b3996e63 217-218
+cli/src/main/java/nl/obren/sokrates/cli/git/AnalysisSource.java
+  s_40c0e74316fcc6::t_20a0d5e8650f21 1-93
+cli/src/main/java/nl/obren/sokrates/cli/CommandLineInterface.java
+  s_40c0e74316fcc6::t_20a0d5e8650f21 8,13,72,331-334,336-337,340,424,428,432-433,439,449,451,454,456,462-465,468,628,651,682,733-734,738,933,941-950,957-959,986,989,995-1093
+  s_40c0e74316fcc6::t_a044e24980f98d 1094
+dockerfile
+  s_40c0e74316fcc6::t_1511f3b3996e63 31-34
+cli/src/test/java/nl/obren/sokrates/cli/AnalyzeLandscapeUrlsTest.java
+  s_40c0e74316fcc6::t_e1e41f978e00f7 99-137
+  s_40c0e74316fcc6::t_c9096d00c7db15 67
+CLAUDE.md
+  s_40c0e74316fcc6::t_c9096d00c7db15 54-55
+cli/src/test/java/nl/obren/sokrates/cli/RepositoryGoneTest.java
+  s_40c0e74316fcc6::t_e1e41f978e00f7 1-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "9312563fbac6aa505988387afdf2bd3299c74b5f",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
