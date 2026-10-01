@@ -1,0 +1,31 @@
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/aspects/SourceCodeAspectUtils.java
+  s_40c0e74316fcc6::t_e40b51b0751f06 153-159,168
+codeanalyzer/src/test/java/nl/obren/sokrates/sourcecode/landscape/analysis/LandscapeLinesOfCodePerExtensionTest.java
+  s_40c0e74316fcc6::t_27ad8525299c89 1-2,4-55
+  s_40c0e74316fcc6::t_c3bd527dc52b3a 3
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/analysis/AnalysisUtils.java
+  s_40c0e74316fcc6::t_e40b51b0751f06 74,83
+codeanalyzer/src/test/java/nl/obren/sokrates/sourcecode/aspects/NamedSourceCodeAspectTest.java
+  s_40c0e74316fcc6::t_e40b51b0751f06 73,80,83,91,95,118
+codeanalyzer/src/test/java/nl/obren/sokrates/sourcecode/CodeConfigurationTest.java
+  s_40c0e74316fcc6::t_e40b51b0751f06 44-46
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/landscape/analysis/LandscapeAnalysisResults.java
+  s_40c0e74316fcc6::t_e40b51b0751f06 520-521,545-547,549
+  s_40c0e74316fcc6::t_4e7491b4b5a30e 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "ac3d6b75ecd9f40122037f3f58306a80d1d7ed57",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
