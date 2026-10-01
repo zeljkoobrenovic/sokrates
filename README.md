@@ -212,6 +212,8 @@ docker run --rm -v "$(pwd):/code" ghcr.io/zeljkoobrenovic/sokrates analyzeLandsc
 docker run --rm -v "$(pwd):/code" ghcr.io/zeljkoobrenovic/sokrates:1.0.0 analyze
 ```
 
+`docker run` reuses the image already on your machine and never checks for a newer one, so after a Sokrates update (a command reported as unknown is the usual symptom) run `docker pull ghcr.io/zeljkoobrenovic/sokrates` once, or add `--pull always` to the run command.
+
 On Linux the container writes as root, so the generated `_sokrates/` folder would be owned by root; add `--user "$(id -u):$(id -g)"` to keep your own ownership (Docker Desktop on macOS/Windows maps ownership automatically).
 
 To build the image yourself:
