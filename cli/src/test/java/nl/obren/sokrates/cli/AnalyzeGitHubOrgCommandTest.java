@@ -145,7 +145,7 @@ class AnalyzeGitHubOrgCommandTest {
 
         CommandLineInterface cli = new CommandLineInterface();
         cli.setGitHubOrgClient(gitHub);
-        cli.run(new String[]{"analyzeGitHubOrg", "-org", "acme", "-analysisRoot", root.getPath(), "-listOnly",
+        cli.run(new String[]{"analyzeGitHubOrg", "-org", "https://github.com/acme/", "-analysisRoot", root.getPath(), "-listOnly",
                 "-pushedWithinDays", "30", "-maxRepos", "1"});
 
         File acme = new File(root, "acme");
@@ -156,6 +156,35 @@ class AnalyzeGitHubOrgCommandTest {
         assertTrue(lines.get(1).contains("pushed within 30 days") && lines.get(1).contains("at most 1 repositories"), lines.get(1));
         assertEquals(List.of(new File(tmp.toFile(), "fresher.git").toURI().toString()), lines.stream().filter(l -> !l.startsWith("#")).toList(),
                 "the most recently pushed repository within the window");
+    }
+
+    @Test
+    void relativeAnalysisRootFindsTheRepositories(@TempDir Path tmp) throws Exception {
+        // The default -analysisRoot is "." so the organization root is a relative "./<org>"; the
+        // landscape must still find its repositories (its stored analysisRoot is normalized to ".").
+        File alpha = bareRepoWithHistory(tmp, "alpha", "ada@example.com");
+        File root = new File("target/analyze-github-org-relative-" + System.nanoTime());
+        try {
+            FakeGitHub gitHub = new FakeGitHub();
+            gitHub.orgs.put("acme", new GitHubOrg("acme", "Acme", "", "https://github.com/acme", ""));
+            gitHub.repos.put("acme", List.of(repo("acme", "alpha", alpha, 1, false, false)));
+            CommandLineInterface cli = new CommandLineInterface();
+            cli.setGitHubOrgClient(gitHub);
+
+            cli.run(new String[]{"analyzeGitHubOrg", "-org", "acme", "-analysisRoot", root.getPath(), "-dataOnly"});
+            cli.run(new String[]{"analyzeGitHubOrg", "-org", "acme", "-analysisRoot", root.getPath(), "-dataOnly"}); // re-run: the landscape's own data.zip exists now
+
+            File acme = new File(root, "acme");
+            assertEquals(".", landscapeConfig(acme).getAnalysisRoot());
+            try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(new File(acme, "_sokrates_landscape/data/data.zip"))) {
+                String repositories = new String(zip.getInputStream(zip.getEntry("repositories.json")).readAllBytes(), UTF_8);
+                assertTrue(repositories.contains("\"name\" : \"alpha\""), "the landscape lists the repository (local origin -> plain name): " + repositories);
+            }
+            String info = FileUtils.readFileToString(new File(acme, "_sokrates_landscape/info.json"), UTF_8);
+            assertFalse(info.contains("_sokrates_landscape/data"), "the landscape's own data.zip is not registered as a repository");
+        } finally {
+            FileUtils.deleteDirectory(root);
+        }
     }
 
     private static File bareRepoWithHistory(Path tmp, String name, String email) throws Exception {

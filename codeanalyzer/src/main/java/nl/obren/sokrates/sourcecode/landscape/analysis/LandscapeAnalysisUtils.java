@@ -47,6 +47,12 @@ public class LandscapeAnalysisUtils {
         return file.toString().replace("\\", "/").contains("/_sokrates_landscape/landscapes/");
     }
 
+    /** Whether the path lies inside a {@code _sokrates_landscape} folder (a landscape's own files, never a repository's). */
+    public static boolean isInLandscapeFolder(Path file) {
+        String path = "/" + file.toString().replace("\\", "/") + "/";
+        return path.contains("/_sokrates_landscape/");
+    }
+
     public static void main(String args[]) {
         findAllSokratesLandscapeConfigFiles(new File("/Users/zobrenovic/Documents/landscapes/landscapes")).forEach(file -> LOG.info(file.getPath()));
     }

@@ -33,7 +33,7 @@ public class LandscapeAnalysisInitiator {
     public LandscapeConfiguration initConfiguration(File analysisRoot, File landscapeConfigFile, boolean saveFile) {
         this.saveFile = saveFile;
         LandscapeConfiguration landscapeConfiguration = new LandscapeConfiguration();
-        landscapeConfiguration.setAnalysisRoot(analysisRoot.getPath());
+        landscapeConfiguration.setAnalysisRoot(analysisRootPath(analysisRoot, landscapeConfigFile));
 
         // Single tree walk: sub-landscape and analysis-result files are mutually exclusive (distinct
         // path endings) and feed separate lists, so dispatching on type in one pass is equivalent to
@@ -98,7 +98,34 @@ public class LandscapeAnalysisInitiator {
         }
     }
 
+    /**
+     * The analysisRoot stored in the configuration. "." whenever the configuration lives in the
+     * default place, {@code <analysisRoot>/_sokrates_landscape/config.json} (the analyzer resolves a
+     * root starting with "." against that folder's parent, so only "." is right there; a relative
+     * path like "./acme" — analyzeGitHubOrg's per-organization root when run from the parent — would
+     * be resolved to "./acme/./acme" and find no repository). Any other layout keeps the path as given.
+     */
+    public static String analysisRootPath(File analysisRoot, File landscapeConfigFile) {
+        if (landscapeConfigFile == null) {
+            return ".";
+        }
+        try {
+            File configRoot = landscapeConfigFile.getAbsoluteFile().getParentFile().getParentFile();
+            if (configRoot != null && configRoot.getCanonicalFile().equals(analysisRoot.getCanonicalFile())) {
+                return ".";
+            }
+        } catch (IOException e) {
+            LOG.warn("Could not resolve " + analysisRoot.getPath() + ": " + e.getMessage());
+        }
+        return analysisRoot.getPath();
+    }
+
     private boolean isSokratesAnalysisFile(Path file) {
+        // A landscape's own data/data.zip (landscapeAnalysisResults.json etc.) is not a repository;
+        // without this a re-run registers the landscape itself and then skips it with a warning.
+        if (LandscapeAnalysisUtils.isInLandscapeFolder(file)) {
+            return false;
+        }
         // A repository's data folder is now packaged as data/data.zip (analysisResults.json lives
         // inside it), so discover by that zip. Older reports (before data.zip packaging) still have
         // a loose data/analysisResults.json — discover those too, but only when there is no sibling

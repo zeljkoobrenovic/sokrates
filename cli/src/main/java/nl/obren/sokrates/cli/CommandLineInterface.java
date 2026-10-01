@@ -616,6 +616,7 @@ public class CommandLineInterface {
         if (logins == null) {
             return;
         }
+        logins = logins.stream().map(CommandLineInterface::gitHubLogin).distinct().collect(Collectors.toList());
         if (cmd.hasOption(commands.getHelp().getOpt()) || logins.isEmpty()) {
             helpMode = true;
             if (!cmd.hasOption(commands.getHelp().getOpt())) {
@@ -707,6 +708,15 @@ public class CommandLineInterface {
             landscapes.forEach(folder -> LOG.info(" - " + new File(folder, dataOnly ? "data/data.zip" : "index.html").toPath().toAbsolutePath().normalize().toUri()));
         }
         failed.forEach(login -> LOG.error(" - failed: " + login));
+    }
+
+    /** The login from a login or a GitHub URL: "junit-team", "https://github.com/junit-team/", "github.com/junit-team/junit4" all give junit-team. */
+    static String gitHubLogin(String value) {
+        String login = value.trim();
+        login = login.replaceFirst("^(https?://)?(www\\.)?github\\.com/", "");
+        login = login.replaceFirst("^@", "");
+        int slash = login.indexOf('/');
+        return slash >= 0 ? login.substring(0, slash) : login;
     }
 
     /** The parent landscape over the organization folders: only when there are at least two, or it already exists. */

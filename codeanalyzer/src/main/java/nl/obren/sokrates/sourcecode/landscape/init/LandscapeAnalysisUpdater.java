@@ -38,6 +38,11 @@ public class LandscapeAnalysisUpdater {
                 LandscapeConfiguration existingConfiguration = (LandscapeConfiguration) new JsonMapper().getObject(json, LandscapeConfiguration.class);
                 existingConfiguration.setSubLandscapes(newConfig.getSubLandscapes());
                 existingConfiguration.setRepositories(newConfig.getRepositories());
+                if (".".equals(newConfig.getAnalysisRoot()) && !".".equals(existingConfiguration.getAnalysisRoot())) {
+                    // Default layout: the only correct stored root is "." (see LandscapeAnalysisInitiator.analysisRootPath).
+                    LOG.info("Normalizing analysisRoot '" + existingConfiguration.getAnalysisRoot() + "' to '.'");
+                    existingConfiguration.setAnalysisRoot(".");
+                }
                 updateMetadata(existingConfiguration, metadata);
                 save(landscapeConfigFile, landscapeInfoFile, existingConfiguration);
                 return existingConfiguration;
