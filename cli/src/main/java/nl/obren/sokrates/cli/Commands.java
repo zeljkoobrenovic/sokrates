@@ -37,7 +37,7 @@ public class Commands {
     public static final String ANALYZE_LANDSCAPE_DESCRIPTION = "Creates or updates a Sokrates landscape report aggregating the repository analyses found under the analysis root (the landscape counterpart of analyze). With -url (repeatable) and/or -urls <file> (one git URL per line, # comments), it first runs analyzeGitRepo for each URL into <analysisRoot>/<owner>/<repository> (a failing repository is logged and skipped), then builds the landscape; without URLs it aggregates what is already there. Same options as updateLandscape, which is kept as the older name.";
 
     public static final String UPDATE_LANDSCAPE = "updateLandscape";
-    public static final String UPDATE_LANDSCAPE_DESCRIPTION = "Updates or creates a Sokrates landscape report, aggregating results of multiple analyses";
+    public static final String UPDATE_LANDSCAPE_DESCRIPTION = "Updates or creates a Sokrates landscape report, aggregating results of multiple analyses; with -url / -urls it first clones and analyzes those git repositories (the older name of analyzeLandscape, same options)";
 
     public static final String UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME = "updateLandscapePeopleConfigByUserName";
     public static final String UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME_DESCRIPTION = "Updates (or creates) the landscape config-people.json by grouping all contributor emails sharing the same display name (userName) under one entry, joining the emails in the email field with ';'. Purely additive: appends only new emails to existing entries, never removes emails or entries.";
@@ -129,6 +129,13 @@ public class Commands {
     private Option setLogoLink = new Option(ARG_SET_LOGO_LINK, true, "[OPTIONAL] sets a repository logo link");
     private Option url = new Option(ARG_URL, true, "the git repository URL to clone (https://..., git@host:org/repo.git, file:///...)");
     private Option urls = new Option(ARG_URLS, true, "[OPTIONAL] a text file with one git repository URL per line (blank lines and # comments ignored); each is analyzed with analyzeGitRepo into <analysisRoot>/<owner>/<repository> before the landscape is built");
+
+    {
+        // Shown in the usage overview as -url <gitUrl> / -urls <file>, so the git nature of the
+        // landscape's repository inputs is visible without opening the per-command help.
+        url.setArgName("gitUrl");
+        urls.setArgName("file");
+    }
     private Option branch = new Option(ARG_BRANCH, true, "[OPTIONAL] the branch to analyze (default is the remote's default branch)");
     private Option depth = new Option(ARG_DEPTH, true, "[OPTIONAL] shallow clone depth (default is the full history; a shallow history makes the contributor and trend reports incomplete)");
     private Option dataOnly = new Option(ARG_DATA_ONLY, false, "[OPTIONAL] stores only the analysis data — for a repository reports/data/data.zip (which landscapes read), for a landscape _sokrates_landscape/data/data.zip (which a parent landscape reads) — no HTML reports, contributor pages, explorers, visuals, source viewer or index page");
@@ -176,7 +183,8 @@ public class Commands {
                 String options = commandUsage.getOptions().getOptions().stream().map(o -> {
                     String text = "";
                     if (o.hasArg()) {
-                        text = "-" + o.getOpt() + " <arg>";
+                        // an option's argument name (when set, e.g. <gitUrl>, <file>) says what the value is
+                        text = "-" + o.getOpt() + " <" + (o.getArgName() != null ? o.getArgName() : "arg") + ">";
                     } else if (o.hasArgs()) {
                         text = "-" + o.getOpt() + " <args>";
                     } else {
