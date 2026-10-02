@@ -1,0 +1,55 @@
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/ContributorsReportGenerator.java
+  s_40c0e74316fcc6::t_ef1f622d609f89 243,258-265,269-282
+CLAUDE.md
+  s_40c0e74316fcc6::t_0b54ece95599fe 46
+cli/src/main/java/nl/obren/sokrates/cli/LandscapeCommands.java
+  s_40c0e74316fcc6::t_ef1f622d609f89 247,249,252,254
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/landscape/analysis/LandscapeAnalysisResults.java
+  s_40c0e74316fcc6::t_ef1f622d609f89 642-645,655,666-686
+  s_40c0e74316fcc6::t_5869e63261bc24 687
+cli/src/main/java/nl/obren/sokrates/cli/git/GitHistoryExtractor.java
+  s_40c0e74316fcc6::t_ef1f622d609f89 94,102-145
+  s_40c0e74316fcc6::t_dfbd0f59d91861 146
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/landscape/analysis/LandscapeAnalyzer.java
+  s_40c0e74316fcc6::t_60d87621b180ae 481
+  s_40c0e74316fcc6::t_ef1f622d609f89 470,474,480,482-501
+  s_40c0e74316fcc6::t_ecd70d97968d85 502
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/analysis/CodeAnalyzer.java
+  s_40c0e74316fcc6::t_ef1f622d609f89 63,65,68,71,74,77-78,81,84,94-98
+  s_40c0e74316fcc6::t_bc87de1f500257 99-100
+cli/src/test/java/nl/obren/sokrates/cli/RepositoryGoneTest.java
+  s_40c0e74316fcc6::t_ef1f622d609f89 20,27,30,36
+cli/src/main/java/nl/obren/sokrates/cli/CommandLineInterface.java
+  s_40c0e74316fcc6::t_ef1f622d609f89 98,129,441,469,748-763,774-778,784,789,792,832-834,836-838,840-842,854-861
+  s_40c0e74316fcc6::t_114acc464b00a2 862
+cli/src/main/java/nl/obren/sokrates/cli/GitRepoCommands.java
+  s_40c0e74316fcc6::t_ef1f622d609f89 1-251
+cli/src/main/java/nl/obren/sokrates/cli/ReportVisualsGenerator.java
+  s_40c0e74316fcc6::t_ef1f622d609f89 64,105,111-115,117,119-138,140-144,146-175,177,179-181,183-184,186-187,189-190
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/githistory/GitHistoryUtils.java
+  s_40c0e74316fcc6::t_ef1f622d609f89 126-127,148-163
+  s_40c0e74316fcc6::t_0626d06d8809a6 164
+reports/src/main/java/nl/obren/sokrates/reports/generators/explorers/CommitsExplorerGenerators.java
+  s_40c0e74316fcc6::t_ef1f622d609f89 171,203,211-240
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/ContributorsReportUtils.java
+  s_40c0e74316fcc6::t_ef1f622d609f89 256-257,261,266,284,307-316,376,391-400
+  s_40c0e74316fcc6::t_94e2036f357afd 401
+cli/src/main/java/nl/obren/sokrates/cli/git/GitRepoMetadata.java
+  s_40c0e74316fcc6::t_ef1f622d609f89 209,218-234,238,241
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "dc7b2129f9301cd303edfe47ac98f8cd9cff18f1",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
