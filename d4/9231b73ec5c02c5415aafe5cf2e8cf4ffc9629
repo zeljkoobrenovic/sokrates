@@ -1,0 +1,26 @@
+common/src/main/java/nl/obren/sokrates/common/renderingutils/x3d/X3DomExporter.java
+  s_40c0e74316fcc6::t_cf3e230ef6859c 30-31
+pom.xml
+  s_40c0e74316fcc6::t_cf3e230ef6859c 17-19,62,67,75-78,93-96,112-120
+cli/pom.xml
+  s_40c0e74316fcc6::t_cf3e230ef6859c 38-41
+  s_40c0e74316fcc6::t_4685d50a0bc241 37
+CLAUDE.md
+  s_40c0e74316fcc6::t_94d18f0a34bc9c 68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "d49231b73ec5c02c5415aafe5cf2e8cf4ffc9629",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
