@@ -1,0 +1,29 @@
+codeanalyzer/src/test/java/nl/obren/sokrates/sourcecode/scoping/ScopingConventionsSokratesOutputTest.java
+  s_40c0e74316fcc6::t_681d13952b96a7 1-48
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/scoping/ScopeCreator.java
+  s_40c0e74316fcc6::t_681d13952b96a7 68-69
+cli/src/main/java/nl/obren/sokrates/cli/CommandLineInterface.java
+  s_40c0e74316fcc6::t_681d13952b96a7 58,1502-1503
+cli/src/test/java/nl/obren/sokrates/cli/AnalyzeCommandTest.java
+  s_40c0e74316fcc6::t_681d13952b96a7 103-133
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/scoping/ScopingConventions.java
+  s_40c0e74316fcc6::t_681d13952b96a7 8,53-77,81,636
+CLAUDE.md
+  s_40c0e74316fcc6::t_6e2296f0b61943 78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "f81c0ab0aeb2ed4623e7e555e7d228614a11585e",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
