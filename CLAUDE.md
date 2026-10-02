@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Sokrates is a source-code analysis tool ("code spelunking, inspired by grep, adding structure on top of regex source code searches"). It scans a codebase, builds a JSON analysis configuration, and generates a suite of HTML reports (overview, duplication, file size, logical decomposition, dependencies, contributors/git history, concerns, findings, metrics, controls, trends). It ships as both a CLI and a Swing GUI explorer. See [sokrates.dev](https://sokrates.dev).
+Sokrates is a source-code analysis tool ("code spelunking, inspired by grep, adding structure on top of regex source code searches"). It scans a codebase, builds a JSON analysis configuration, and generates a suite of HTML reports (overview, duplication, file size, logical decomposition, dependencies, contributors/git history, concerns, findings, metrics, controls, trends). It ships as both a CLI and a JavaFX GUI explorer. See [sokrates.dev](https://sokrates.dev).
 
 ## Build & test
 
@@ -21,7 +21,7 @@ mvn -pl codeanalyzer test -Dtest=JavaAnalyzerTest#testExtractUnits    # single t
 
 Build artifacts (fat jars via maven-assembly + jar-with-dependencies):
 - `cli/target/cli-1.0-jar-with-dependencies.jar` — CLI (main class `nl.obren.sokrates.cli.CommandLineInterface`)
-- `codeexplorer/target/codeexplorer-1.0-jar-with-dependencies.jar` — Swing GUI (main class `nl.obren.sokrates.codeexplorer.CodeExplorerLauncher`)
+- `codeexplorer/target/codeexplorer-1.0-jar-with-dependencies.jar` — JavaFX GUI (main class `nl.obren.sokrates.codeexplorer.CodeExplorerLauncher`)
 
 Tests use JUnit Jupiter + Vintage (mixed JUnit 4/5). The parent pom forces `-Duser.country=US -Duser.language=us` via `argLine` — locale-sensitive formatting tests depend on this.
 
@@ -69,7 +69,7 @@ The Maven module dependency chain is `common → codeanalyzer → reports → cl
 - **codeanalyzer** — the analysis engine. Defines the configuration model, scopes the codebase, runs language-specific and cross-cutting analyses, produces a `CodeAnalysisResults` object.
 - **reports** — consumes `CodeAnalysisResults` and renders HTML reports + exports data (JSON). Also builds landscape reports aggregating many analyses.
 - **cli** — command-line entry point and git history extraction.
-- **codeexplorer** — Swing GUI front-end; depends on cli, codeanalyzer, common.
+- **codeexplorer** — JavaFX GUI front-end; depends on cli, codeanalyzer, common.
 
 ## How analysis works (the big picture)
 

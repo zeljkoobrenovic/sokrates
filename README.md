@@ -255,7 +255,7 @@ Sokrates is a Maven multi-module project. The dependency chain is `common → co
 | [`codeanalyzer`](codeanalyzer/README.md) | The analysis engine: configuration model, scoping, language analyzers, analyses |
 | [`reports`](reports/README.md) | Turns analysis results into HTML reports and JSON data exports |
 | [`cli`](cli/README.md) | Command line interface and git-history extraction |
-| [`codeexplorer`](codeexplorer/README.md) | Swing GUI for interactive exploration |
+| [`codeexplorer`](codeexplorer/README.md) | JavaFX GUI for interactive exploration |
 
 ## License
 
