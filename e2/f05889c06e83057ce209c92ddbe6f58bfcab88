@@ -1,0 +1,37 @@
+reports/src/main/java/nl/obren/sokrates/reports/landscape/data/RepositoryExport.java
+  s_40c0e74316fcc6::t_966b7d20da3eea 101-140,158,160-164,173,175-176,198,200
+reports/src/main/java/nl/obren/sokrates/reports/utils/ZipUtils.java
+  s_40c0e74316fcc6::t_966b7d20da3eea 103,106,121-166
+  s_40c0e74316fcc6::t_5197837c068194 167
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/BasicSourceCodeReportGenerator.java
+  s_40c0e74316fcc6::t_966b7d20da3eea 19,79-97,99-101,103,105-106,135,138-141,144,147,150,152-153,156,159,161,163,166,169-195
+cli/src/main/java/nl/obren/sokrates/cli/OrganizationCommands.java
+  s_40c0e74316fcc6::t_966b7d20da3eea 202-203,207,209,213,217-218,233-290,292
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/landscape/analysis/LandscapeContributorsAggregator.java
+  s_40c0e74316fcc6::t_bb606f840267e0 200
+  s_40c0e74316fcc6::t_966b7d20da3eea 74,76,88-199
+cli/src/main/java/nl/obren/sokrates/cli/CommandLineInterface.java
+  s_40c0e74316fcc6::t_966b7d20da3eea 98,132-133,505
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/contributors/Contributor.java
+  s_40c0e74316fcc6::t_966b7d20da3eea 103-114,121,123-128,130,132-154
+CLAUDE.md
+  s_40c0e74316fcc6::t_c26532d4a3413e 46,56
+cli/src/main/java/nl/obren/sokrates/cli/LandscapeCommands.java
+  s_40c0e74316fcc6::t_966b7d20da3eea 1-338
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "e2f05889c06e83057ce209c92ddbe6f58bfcab88",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
