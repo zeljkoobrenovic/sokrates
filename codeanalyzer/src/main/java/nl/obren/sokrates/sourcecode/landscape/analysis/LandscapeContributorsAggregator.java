@@ -26,6 +26,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import java.util.*;
 import java.util.stream.Collectors;
+import nl.obren.sokrates.sourcecode.landscape.TeamConfig;
 import java.util.function.Predicate;
 
 /**
@@ -212,50 +213,17 @@ class LandscapeContributorsAggregator {
 
         while (contributors.size() > 0) {
             ContributorRepositories contributor = contributors.remove(0);
-            String email = contributor.getContributor().getEmail();
-            // email and userName are already the config-people.json-canonical values (getAllContributors
-            // applied the transformation). Team matching therefore runs against the post-people-config
-            // email/userName, falling back to the original commit values where no person config applied.
-            String userName = contributor.getContributor().getUserName();
+            if (isBot.test(contributor.getContributor().getEmail())) continue;
 
-            if (isBot.test(email)) continue;
-
-            final boolean[] added = {false};
-
-            teamsConfig.getTeams().forEach(teamConfig -> {
-                if (added[0]) return;
-
-                String name = teamConfig.getName();
-                if (teamConfig.matches(email, userName)) {
-                    ContributorRepositories teamTemp = map.get(name);
-
-                    if (teamTemp == null) {
-                        teamTemp = new ContributorRepositories(new Contributor(name));
-                        map.put(name, teamTemp);
-                        teams.add(teamTemp);
-                    }
-
-                    final ContributorRepositories team = teamTemp;
-                    team.getMembers().add(contributor);
-
-                    contributor.getRepositories().forEach(repo -> {
-                        addRepoToTeam(repo, team);
-                    });
-
-                    added[0] = true;
-                }
-            });
+            boolean added = addToConfiguredTeam(contributor, teams, map);
 
             // The "Undefined Team" (remainder) collects contributors not matched by any configured
             // team, but only ACTIVE ones (last commit within Contributor.ACTIVITY_THRESHOLD_DAYS,
             // 180 days) — long-dormant unmatched contributors are left out. Configured teams above
             // keep all their members regardless of activity.
-            if (!added[0] && contributor.getContributor().isActive()
+            if (!added && contributor.getContributor().isActive()
                     && !remainder.getMembers().contains(contributor)) {
-                remainder.getMembers().add(contributor);
-                contributor.getRepositories().forEach(repo -> {
-                    addRepoToTeam(repo, remainder);
-                });
+                addMember(remainder, contributor);
             }
         }
 
@@ -264,6 +232,36 @@ class LandscapeContributorsAggregator {
         }
 
         return teams;
+    }
+
+    /** Adds the contributor to the first configured team matching their email or userName (created on first use); false when none matches. */
+    private boolean addToConfiguredTeam(ContributorRepositories contributor, List<ContributorRepositories> teams, Map<String, ContributorRepositories> map) {
+        String email = contributor.getContributor().getEmail();
+        // email and userName are already the config-people.json-canonical values (getAllContributors
+        // applied the transformation). Team matching therefore runs against the post-people-config
+        // email/userName, falling back to the original commit values where no person config applied.
+        String userName = contributor.getContributor().getUserName();
+        for (TeamConfig teamConfig : teamsConfig.getTeams()) {
+            String name = teamConfig.getName();
+            if (teamConfig.matches(email, userName)) {
+                ContributorRepositories team = map.get(name);
+                if (team == null) {
+                    team = new ContributorRepositories(new Contributor(name));
+                    map.put(name, team);
+                    teams.add(team);
+                }
+                addMember(team, contributor);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void addMember(ContributorRepositories team, ContributorRepositories contributor) {
+        team.getMembers().add(contributor);
+        contributor.getRepositories().forEach(repo -> {
+            addRepoToTeam(repo, team);
+        });
     }
 
     private void addRepoToTeam(ContributorRepositoryInfo repo, ContributorRepositories team) {

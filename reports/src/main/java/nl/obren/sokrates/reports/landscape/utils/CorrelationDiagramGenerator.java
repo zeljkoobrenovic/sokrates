@@ -59,7 +59,27 @@ public class CorrelationDiagramGenerator<T> {
 
         report.startTableRow();
         report.startTableCellColSpan(2, "border: none");
+        addScatterPlot(xLabel, yLabel, xValueFunction, yValueFunction, nameFunction, xStats, yStats);
+        report.endTableCell();
+        report.addTableCell(yStats.getMax() + "", "padding: 0; padding-top: 10px; font-size: 70%; border: none; vertical-align: top");
+        report.addTableCell("<div style='font-size: 130%; margin-bottom: 4px; font-weight: bold'>" + yLabel + "</div>"
+                + "&nbsp;&nbsp;min: " + yStats.getMin()
+                + "<br>&nbsp;&nbsp;average: " + Math.round(yStats.getMean() * 100) / 100.0
+                + "<br>&nbsp;&nbsp;25th percentile: " + yStats.getPercentile(25)
+                + "<br>&nbsp;&nbsp;median: " + yStats.getPercentile(50)
+                + "<br>&nbsp;&nbsp;75th percentile: " + yStats.getPercentile(75)
+                + "<br>&nbsp;&nbsp;max: " + yStats.getMax(), "font-size: 70%; border: none;");
+        report.endTableRow();
 
+        addXAxisRows(xLabel, xStats);
+
+        report.endTable();
+        endCorrelationBlock();
+    }
+
+    /** The SVG: the frame, one translucent point per item (at most maxNumberOfPointsOnDiagram, one per pixel location) and the distribution lines. */
+    private void addScatterPlot(String xLabel, String yLabel, ToDoubleFunction<T> xValueFunction, ToDoubleFunction<T> yValueFunction, ToStringFunction<T> nameFunction,
+                                DescriptiveStatistics xStats, DescriptiveStatistics yStats) {
         report.startDiv("width: 600px; text-align: center; ");
         report.addHtmlContent("<svg width=\"" + width + "\" height=\"" + height + "\">");
         report.addHtmlContent(" <rect width=\"" + width + "\" height=\"" + height + "\" style=\"fill:rgb(200,200,200);stroke-width:1;stroke:rgb(100,100,100)\" />");
@@ -99,18 +119,10 @@ public class CorrelationDiagramGenerator<T> {
         report.addHtmlContent("</svg>");
 
         report.endDiv();
-        report.endTableCell();
-        report.addTableCell(yStats.getMax() + "", "padding: 0; padding-top: 10px; font-size: 70%; border: none; vertical-align: top");
-        report.addTableCell("<div style='font-size: 130%; margin-bottom: 4px; font-weight: bold'>" + yLabel + "</div>"
-                + "&nbsp;&nbsp;min: " + yStats.getMin()
-                + "<br>&nbsp;&nbsp;average: " + Math.round(yStats.getMean() * 100) / 100.0
-                + "<br>&nbsp;&nbsp;25th percentile: " + yStats.getPercentile(25)
-                + "<br>&nbsp;&nbsp;median: " + yStats.getPercentile(50)
-                + "<br>&nbsp;&nbsp;75th percentile: " + yStats.getPercentile(75)
-                + "<br>&nbsp;&nbsp;max: " + yStats.getMax(), "font-size: 70%; border: none;");
+    }
 
-        report.endTableRow();
-
+    /** The x axis: the 0 and max ticks, then the label with the x statistics. */
+    private void addXAxisRows(String xLabel, DescriptiveStatistics xStats) {
         report.startTableRow();
         report.addTableCell("0", "padding-left: 21px; text-align: left; font-size: 70%; border: none; height: 6px;");
         report.addTableCell(xStats.getMax() + "", "padding-right: 22px; text-align: right; font-size: 70%; border: none; height: 6px;");
@@ -128,9 +140,6 @@ public class CorrelationDiagramGenerator<T> {
                 , "text-align: center; border: none; font-size: 70%; height: 6px; margin-bottom: 26px;");
         report.endTableCell();
         report.endTableRow();
-
-        report.endTable();
-        endCorrelationBlock();
     }
 
     private void endCorrelationBlock() {

@@ -28,44 +28,54 @@ public class PlSqlHeuristicUnitsExtractor {
         for (int lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
             String line = lines.get(lineIndex).trim();
             if (isUnitSignature(line) && (packageStartLine <= lineIndex ) && !line.toLowerCase().contains("body ")) {
-                String blockName = "";
-                if(line.trim().startsWith("CREATE ") || line.trim().startsWith("create ")
-                || line.trim().startsWith("PROCEDURE ") || line.trim().startsWith("procedure ")
-                || line.trim().startsWith("FUNCTION ") || line.trim().startsWith("function ")) {
-                    blockName = getName(line);
-                }
+                String blockName = blockNameOf(line);
 
                 int endOfUnitBodyIndex = getEndOfUnitBodyIndex(lines, lineIndex, blockName);
-               
+
                 if (endOfUnitBodyIndex >= lineIndex) {
-                    StringBuilder body = new StringBuilder();
-                    for (int bodyIndex = cleanedContent.getFileLineIndexes().get(lineIndex);
-                         bodyIndex <= cleanedContent.getFileLineIndexes().get(endOfUnitBodyIndex);
-                         bodyIndex++) {
-                        body.append(normalLines.get(bodyIndex)).append("\n");
-                    }
-                    UnitInfo unit = new UnitInfo();
-                    unit.setSourceFile(sourceFile);
-                    unit.setLinesOfCode((endOfUnitBodyIndex - lineIndex) + 1);
-                    unit.setCleanedBody(body.toString());
-                    unit.setBody(body.toString());
-                    unit.setStartLine(cleanedContent.getFileLineIndexes().get(lineIndex) + 1);
-                    unit.setEndLine(cleanedContent.getFileLineIndexes().get(endOfUnitBodyIndex) + 1);
-                    unit.setMcCabeIndex(getMcCabeIndex(body.toString()));
-                    if(!blockName.isEmpty()) {
-                        unit.setShortName(blockName);
-                    } else {
-                        unit.setShortName("AnonymousBlock");
-                    }
-                    unit.setNumberOfParameters(getNumberOfParameters(body.toString()));
+                    units.add(createUnit(sourceFile, cleanedContent, normalLines, lineIndex, endOfUnitBodyIndex, blockName));
                     lineIndex = endOfUnitBodyIndex;
-                    units.add(unit);
                 }
             }
 
         }
 
         return units;
+    }
+
+    /** The declared name of a CREATE / PROCEDURE / FUNCTION signature; empty for an anonymous block. */
+    private String blockNameOf(String line) {
+        if(line.trim().startsWith("CREATE ") || line.trim().startsWith("create ")
+        || line.trim().startsWith("PROCEDURE ") || line.trim().startsWith("procedure ")
+        || line.trim().startsWith("FUNCTION ") || line.trim().startsWith("function ")) {
+            return getName(line);
+        }
+        return "";
+    }
+
+    /** The unit spanning the cleaned lines lineIndex..endOfUnitBodyIndex, with its body taken from the original lines. */
+    private UnitInfo createUnit(SourceFile sourceFile, CleanedContent cleanedContent, List<String> normalLines, int lineIndex, int endOfUnitBodyIndex, String blockName) {
+        StringBuilder body = new StringBuilder();
+        for (int bodyIndex = cleanedContent.getFileLineIndexes().get(lineIndex);
+             bodyIndex <= cleanedContent.getFileLineIndexes().get(endOfUnitBodyIndex);
+             bodyIndex++) {
+            body.append(normalLines.get(bodyIndex)).append("\n");
+        }
+        UnitInfo unit = new UnitInfo();
+        unit.setSourceFile(sourceFile);
+        unit.setLinesOfCode((endOfUnitBodyIndex - lineIndex) + 1);
+        unit.setCleanedBody(body.toString());
+        unit.setBody(body.toString());
+        unit.setStartLine(cleanedContent.getFileLineIndexes().get(lineIndex) + 1);
+        unit.setEndLine(cleanedContent.getFileLineIndexes().get(endOfUnitBodyIndex) + 1);
+        unit.setMcCabeIndex(getMcCabeIndex(body.toString()));
+        if(!blockName.isEmpty()) {
+            unit.setShortName(blockName);
+        } else {
+            unit.setShortName("AnonymousBlock");
+        }
+        unit.setNumberOfParameters(getNumberOfParameters(body.toString()));
+        return unit;
     }
 
     private CleanedContent getCleanContent(SourceFile sourceFile) {
