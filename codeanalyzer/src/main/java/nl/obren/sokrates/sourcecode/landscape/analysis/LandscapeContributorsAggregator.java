@@ -70,105 +70,10 @@ class LandscapeContributorsAggregator {
                     return;
                 }
 
-                int repositoryCommits = contributor.getCommitsCount();
-                List<String> commitDates = contributor.getCommitDates();
-                Map<String, Integer> commitsPerDate = contributor.getCommitsPerDate();
-                int repositoryCommits30Days = contributor.getCommitsCount30Days();
-                int repositoryCommits90Days = contributor.getCommitsCount90Days();
-                int repositoryCommits180Days = contributor.getCommitsCount180Days();
-                int repositoryCommits365Days = contributor.getCommitsCount365Days();
-
-                String latestCommitDate = contributor.getLatestCommitDate();
-                String firstCommitDate = contributor.getFirstCommitDate();
-
                 if (map.containsKey(contributorId)) {
-                    ContributorRepositories existingContributor = map.get(contributorId);
-                    Contributor contributorInfo = existingContributor.getContributor();
-
-                    contributorInfo.setCommitsCount(contributorInfo.getCommitsCount() + repositoryCommits);
-                    contributorInfo.setCommitsCount30Days(contributorInfo.getCommitsCount30Days() + repositoryCommits30Days);
-                    contributorInfo.setCommitsCount90Days(contributorInfo.getCommitsCount90Days() + repositoryCommits90Days);
-                    contributorInfo.setCommitsCount180Days(contributorInfo.getCommitsCount180Days() + repositoryCommits180Days);
-                    contributorInfo.setCommitsCount365Days(contributorInfo.getCommitsCount365Days() + repositoryCommits365Days);
-
-                    contributorInfo.addActiveYears(contributor.getActiveYears());
-                    contributorInfo.addCommitDates(contributor.getCommitDates());
-                    contributorInfo.addCommitDatesByScope(contributor.getCommitDatesByScope());
-                    contributorInfo.addCommitsPerDate(commitsPerDate);
-                    contributorInfo.addLinesPerDate(contributor.getLinesAddedPerDate(), contributor.getLinesDeletedPerDate());
-                    contributorInfo.addChurn(contributor.getLinesAdded(), contributor.getLinesDeleted(),
-                            contributor.getLinesAdded30Days(), contributor.getLinesDeleted30Days(),
-                            contributor.getLinesAdded90Days(), contributor.getLinesDeleted90Days(),
-                            contributor.getLinesAdded180Days(), contributor.getLinesDeleted180Days(),
-                            contributor.getLinesAdded365Days(), contributor.getLinesDeleted365Days());
-
-                    ContributorRepositoryInfo repoInfo = existingContributor.addRepository(repositoryAnalysisResults, firstCommitDate, latestCommitDate,
-                            repositoryCommits, repositoryCommits30Days, repositoryCommits90Days,
-                            repositoryCommits180Days, repositoryCommits365Days,
-                            new ArrayList<>(commitDates), new LinkedHashMap<>(commitsPerDate));
-                    repoInfo.addChurn(contributor.getLinesAdded(), contributor.getLinesDeleted(),
-                            contributor.getLinesAdded30Days(), contributor.getLinesDeleted30Days(),
-                            contributor.getLinesAdded90Days(), contributor.getLinesDeleted90Days(),
-                            contributor.getLinesAdded365Days(), contributor.getLinesDeleted365Days());
-                    repoInfo.addChurnPerDate(contributor.getLinesAddedPerDate(), contributor.getLinesDeletedPerDate());
-
-                    if (firstCommitDate.compareTo(contributorInfo.getFirstCommitDate()) < 0) {
-                        contributorInfo.setFirstCommitDate(firstCommitDate);
-                    }
-                    if (latestCommitDate.compareTo(contributorInfo.getLatestCommitDate()) > 0) {
-                        contributorInfo.setLatestCommitDate(latestCommitDate);
-                    }
+                    mergeInto(map.get(contributorId), contributor, repositoryAnalysisResults);
                 } else {
-                    Contributor newContributor = new Contributor();
-
-                    newContributor.setEmail(contributorId);
-                    // If a configured person (matched by email patterns OR userName patterns) defines
-                    // a userName, it overrides the commit-derived userName; otherwise keep the one
-                    // from commits. Match on the ORIGINAL email + userName — contributorId may have
-                    // been collapsed by transformEmail to the person's canonical email or (for entries
-                    // with a blank email) to the display name, neither of which is an emailPattern, so
-                    // matching on it would miss the entry and wrongly keep the commit userName.
-                    String configuredUserName = peopleConfig != null
-                            ? peopleConfig.getPerson(originalEmail, originalUserName).getUserName() : "";
-                    newContributor.setUserName(StringUtils.isNotBlank(configuredUserName)
-                            ? configuredUserName : contributor.getUserName());
-                    newContributor.setCommitsCount(repositoryCommits);
-                    newContributor.setCommitsCount30Days(repositoryCommits30Days);
-                    newContributor.setCommitsCount90Days(repositoryCommits90Days);
-                    newContributor.setCommitsCount180Days(repositoryCommits180Days);
-                    newContributor.setCommitsCount365Days(repositoryCommits365Days);
-                    newContributor.setFirstCommitDate(firstCommitDate);
-                    newContributor.setLatestCommitDate(latestCommitDate);
-                    newContributor.setActiveYears(new ArrayList<>(contributor.getActiveYears()));
-                    newContributor.setCommitDates(new ArrayList<>(contributor.getCommitDates()));
-                    newContributor.addCommitDatesByScope(contributor.getCommitDatesByScope());
-                    newContributor.setCommitsPerDate(new LinkedHashMap<>(commitsPerDate));
-                    newContributor.setLinesAddedPerDate(new LinkedHashMap<>(contributor.getLinesAddedPerDate()));
-                    newContributor.setLinesDeletedPerDate(new LinkedHashMap<>(contributor.getLinesDeletedPerDate()));
-                    newContributor.setLinesAdded(contributor.getLinesAdded());
-                    newContributor.setLinesDeleted(contributor.getLinesDeleted());
-                    newContributor.setLinesAdded30Days(contributor.getLinesAdded30Days());
-                    newContributor.setLinesDeleted30Days(contributor.getLinesDeleted30Days());
-                    newContributor.setLinesAdded90Days(contributor.getLinesAdded90Days());
-                    newContributor.setLinesDeleted90Days(contributor.getLinesDeleted90Days());
-                    newContributor.setLinesAdded180Days(contributor.getLinesAdded180Days());
-                    newContributor.setLinesDeleted180Days(contributor.getLinesDeleted180Days());
-                    newContributor.setLinesAdded365Days(contributor.getLinesAdded365Days());
-                    newContributor.setLinesDeleted365Days(contributor.getLinesDeleted365Days());
-
-                    ContributorRepositories newContributorWithRepositories = new ContributorRepositories(newContributor);
-
-                    ContributorRepositoryInfo newRepoInfo = newContributorWithRepositories.addRepository(repositoryAnalysisResults, newContributor.getFirstCommitDate(),
-                            newContributor.getLatestCommitDate(),
-                            repositoryCommits, repositoryCommits30Days, repositoryCommits90Days,
-                            repositoryCommits180Days, repositoryCommits365Days,
-                            new ArrayList<>(commitDates), new LinkedHashMap<>(commitsPerDate));
-                    newRepoInfo.addChurn(contributor.getLinesAdded(), contributor.getLinesDeleted(),
-                            contributor.getLinesAdded30Days(), contributor.getLinesDeleted30Days(),
-                            contributor.getLinesAdded90Days(), contributor.getLinesDeleted90Days(),
-                            contributor.getLinesAdded365Days(), contributor.getLinesDeleted365Days());
-                    newRepoInfo.addChurnPerDate(contributor.getLinesAddedPerDate(), contributor.getLinesDeletedPerDate());
-
+                    ContributorRepositories newContributorWithRepositories = newContributorRepositories(contributor, contributorId, originalEmail, originalUserName, repositoryAnalysisResults);
                     map.put(contributorId, newContributorWithRepositories);
                     list.add(newContributorWithRepositories);
                 }
@@ -178,6 +83,119 @@ class LandscapeContributorsAggregator {
         Collections.sort(list, (a, b) -> b.getContributor().getCommitsCount() - a.getContributor().getCommitsCount());
 
         return list;
+    }
+
+    /** Adds one repository's contributor record to an already known contributor: counts, dates, churn and the repository entry. */
+    private static void mergeInto(ContributorRepositories existingContributor, Contributor contributor, RepositoryAnalysisResults repositoryAnalysisResults) {
+        int repositoryCommits = contributor.getCommitsCount();
+        List<String> commitDates = contributor.getCommitDates();
+        Map<String, Integer> commitsPerDate = contributor.getCommitsPerDate();
+        int repositoryCommits30Days = contributor.getCommitsCount30Days();
+        int repositoryCommits90Days = contributor.getCommitsCount90Days();
+        int repositoryCommits180Days = contributor.getCommitsCount180Days();
+        int repositoryCommits365Days = contributor.getCommitsCount365Days();
+
+        String latestCommitDate = contributor.getLatestCommitDate();
+        String firstCommitDate = contributor.getFirstCommitDate();
+
+        Contributor contributorInfo = existingContributor.getContributor();
+
+        contributorInfo.setCommitsCount(contributorInfo.getCommitsCount() + repositoryCommits);
+        contributorInfo.setCommitsCount30Days(contributorInfo.getCommitsCount30Days() + repositoryCommits30Days);
+        contributorInfo.setCommitsCount90Days(contributorInfo.getCommitsCount90Days() + repositoryCommits90Days);
+        contributorInfo.setCommitsCount180Days(contributorInfo.getCommitsCount180Days() + repositoryCommits180Days);
+        contributorInfo.setCommitsCount365Days(contributorInfo.getCommitsCount365Days() + repositoryCommits365Days);
+
+        contributorInfo.addActiveYears(contributor.getActiveYears());
+        contributorInfo.addCommitDates(contributor.getCommitDates());
+        contributorInfo.addCommitDatesByScope(contributor.getCommitDatesByScope());
+        contributorInfo.addCommitsPerDate(commitsPerDate);
+        contributorInfo.addLinesPerDate(contributor.getLinesAddedPerDate(), contributor.getLinesDeletedPerDate());
+        contributorInfo.addChurn(contributor.getLinesAdded(), contributor.getLinesDeleted(),
+                contributor.getLinesAdded30Days(), contributor.getLinesDeleted30Days(),
+                contributor.getLinesAdded90Days(), contributor.getLinesDeleted90Days(),
+                contributor.getLinesAdded180Days(), contributor.getLinesDeleted180Days(),
+                contributor.getLinesAdded365Days(), contributor.getLinesDeleted365Days());
+
+        ContributorRepositoryInfo repoInfo = existingContributor.addRepository(repositoryAnalysisResults, firstCommitDate, latestCommitDate,
+                repositoryCommits, repositoryCommits30Days, repositoryCommits90Days,
+                repositoryCommits180Days, repositoryCommits365Days,
+                new ArrayList<>(commitDates), new LinkedHashMap<>(commitsPerDate));
+        repoInfo.addChurn(contributor.getLinesAdded(), contributor.getLinesDeleted(),
+                contributor.getLinesAdded30Days(), contributor.getLinesDeleted30Days(),
+                contributor.getLinesAdded90Days(), contributor.getLinesDeleted90Days(),
+                contributor.getLinesAdded365Days(), contributor.getLinesDeleted365Days());
+        repoInfo.addChurnPerDate(contributor.getLinesAddedPerDate(), contributor.getLinesDeletedPerDate());
+
+        if (firstCommitDate.compareTo(contributorInfo.getFirstCommitDate()) < 0) {
+            contributorInfo.setFirstCommitDate(firstCommitDate);
+        }
+        if (latestCommitDate.compareTo(contributorInfo.getLatestCommitDate()) > 0) {
+            contributorInfo.setLatestCommitDate(latestCommitDate);
+        }
+    }
+
+    /** A new landscape contributor from one repository's contributor record, with that repository as its first entry. */
+    private ContributorRepositories newContributorRepositories(Contributor contributor, String contributorId, String originalEmail, String originalUserName,
+                                                               RepositoryAnalysisResults repositoryAnalysisResults) {
+        int repositoryCommits = contributor.getCommitsCount();
+        List<String> commitDates = contributor.getCommitDates();
+        Map<String, Integer> commitsPerDate = contributor.getCommitsPerDate();
+        int repositoryCommits30Days = contributor.getCommitsCount30Days();
+        int repositoryCommits90Days = contributor.getCommitsCount90Days();
+        int repositoryCommits180Days = contributor.getCommitsCount180Days();
+        int repositoryCommits365Days = contributor.getCommitsCount365Days();
+
+        Contributor newContributor = new Contributor();
+
+        newContributor.setEmail(contributorId);
+        // If a configured person (matched by email patterns OR userName patterns) defines
+        // a userName, it overrides the commit-derived userName; otherwise keep the one
+        // from commits. Match on the ORIGINAL email + userName — contributorId may have
+        // been collapsed by transformEmail to the person's canonical email or (for entries
+        // with a blank email) to the display name, neither of which is an emailPattern, so
+        // matching on it would miss the entry and wrongly keep the commit userName.
+        String configuredUserName = peopleConfig != null
+                ? peopleConfig.getPerson(originalEmail, originalUserName).getUserName() : "";
+        newContributor.setUserName(StringUtils.isNotBlank(configuredUserName)
+                ? configuredUserName : contributor.getUserName());
+        newContributor.setCommitsCount(repositoryCommits);
+        newContributor.setCommitsCount30Days(repositoryCommits30Days);
+        newContributor.setCommitsCount90Days(repositoryCommits90Days);
+        newContributor.setCommitsCount180Days(repositoryCommits180Days);
+        newContributor.setCommitsCount365Days(repositoryCommits365Days);
+        newContributor.setFirstCommitDate(contributor.getFirstCommitDate());
+        newContributor.setLatestCommitDate(contributor.getLatestCommitDate());
+        newContributor.setActiveYears(new ArrayList<>(contributor.getActiveYears()));
+        newContributor.setCommitDates(new ArrayList<>(contributor.getCommitDates()));
+        newContributor.addCommitDatesByScope(contributor.getCommitDatesByScope());
+        newContributor.setCommitsPerDate(new LinkedHashMap<>(commitsPerDate));
+        newContributor.setLinesAddedPerDate(new LinkedHashMap<>(contributor.getLinesAddedPerDate()));
+        newContributor.setLinesDeletedPerDate(new LinkedHashMap<>(contributor.getLinesDeletedPerDate()));
+        newContributor.setLinesAdded(contributor.getLinesAdded());
+        newContributor.setLinesDeleted(contributor.getLinesDeleted());
+        newContributor.setLinesAdded30Days(contributor.getLinesAdded30Days());
+        newContributor.setLinesDeleted30Days(contributor.getLinesDeleted30Days());
+        newContributor.setLinesAdded90Days(contributor.getLinesAdded90Days());
+        newContributor.setLinesDeleted90Days(contributor.getLinesDeleted90Days());
+        newContributor.setLinesAdded180Days(contributor.getLinesAdded180Days());
+        newContributor.setLinesDeleted180Days(contributor.getLinesDeleted180Days());
+        newContributor.setLinesAdded365Days(contributor.getLinesAdded365Days());
+        newContributor.setLinesDeleted365Days(contributor.getLinesDeleted365Days());
+
+        ContributorRepositories newContributorWithRepositories = new ContributorRepositories(newContributor);
+
+        ContributorRepositoryInfo newRepoInfo = newContributorWithRepositories.addRepository(repositoryAnalysisResults, newContributor.getFirstCommitDate(),
+                newContributor.getLatestCommitDate(),
+                repositoryCommits, repositoryCommits30Days, repositoryCommits90Days,
+                repositoryCommits180Days, repositoryCommits365Days,
+                new ArrayList<>(commitDates), new LinkedHashMap<>(commitsPerDate));
+        newRepoInfo.addChurn(contributor.getLinesAdded(), contributor.getLinesDeleted(),
+                contributor.getLinesAdded30Days(), contributor.getLinesDeleted30Days(),
+                contributor.getLinesAdded90Days(), contributor.getLinesDeleted90Days(),
+                contributor.getLinesAdded365Days(), contributor.getLinesDeleted365Days());
+        newRepoInfo.addChurnPerDate(contributor.getLinesAddedPerDate(), contributor.getLinesDeletedPerDate());
+        return newContributorWithRepositories;
     }
 
     /** The configured teams built from the contributors (each in the first matching team), plus the "Undefined Team" of active unmatched ones; the contributors themselves when no team is configured. */

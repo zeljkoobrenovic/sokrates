@@ -97,49 +97,13 @@ public class ZipUtils {
     public static void zipFolderMergingExistingZip(File sourceDir, File zipFile) {
         try {
             File tempZip = File.createTempFile("sokrates_data_", ".zip", sourceDir);
-            java.util.Set<String> added = new java.util.HashSet<>();
             try (FileOutputStream fos = new FileOutputStream(tempZip);
                  ZipOutputStream zipOut = new ZipOutputStream(fos)) {
                 // 1) loose files (recursive), excluding the existing zip and the temp zip.
-                List<File> files = new ArrayList<>();
-                collectFiles(sourceDir, files);
-                String basePath = sourceDir.getCanonicalPath();
-                String zipPath = zipFile.getCanonicalPath();
-                String tempPath = tempZip.getCanonicalPath();
-                byte[] buffer = new byte[8192];
-                for (File file : files) {
-                    String cp = file.getCanonicalPath();
-                    if (cp.equals(zipPath) || cp.equals(tempPath)) {
-                        continue;
-                    }
-                    String entryName = cp.substring(basePath.length() + 1).replace(File.separatorChar, '/');
-                    zipOut.putNextEntry(new ZipEntry(entryName));
-                    try (FileInputStream fis = new FileInputStream(file)) {
-                        int len;
-                        while ((len = fis.read(buffer)) > 0) {
-                            zipOut.write(buffer, 0, len);
-                        }
-                    }
-                    zipOut.closeEntry();
-                    added.add(entryName);
-                }
+                java.util.Set<String> added = addLooseFiles(zipOut, sourceDir, zipFile.getCanonicalPath(), tempZip.getCanonicalPath());
                 // 2) carry over previous zip entries not replaced by a loose file.
                 if (zipFile.exists()) {
-                    try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile))) {
-                        ZipEntry entry;
-                        while ((entry = zis.getNextEntry()) != null) {
-                            if (entry.isDirectory() || added.contains(entry.getName())) {
-                                continue;
-                            }
-                            zipOut.putNextEntry(new ZipEntry(entry.getName()));
-                            int len;
-                            while ((len = zis.read(buffer)) > 0) {
-                                zipOut.write(buffer, 0, len);
-                            }
-                            zipOut.closeEntry();
-                            added.add(entry.getName());
-                        }
-                    }
+                    carryOverEntries(zipOut, zipFile, added);
                 }
             }
             // Swap the temp zip over the target.
@@ -151,6 +115,53 @@ public class ZipUtils {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    /** Adds every file below sourceDir (except the two given paths) under its relative name; returns the entry names added. */
+    private static java.util.Set<String> addLooseFiles(ZipOutputStream zipOut, File sourceDir, String zipPath, String tempPath) throws IOException {
+        java.util.Set<String> added = new java.util.HashSet<>();
+        List<File> files = new ArrayList<>();
+        collectFiles(sourceDir, files);
+        String basePath = sourceDir.getCanonicalPath();
+        byte[] buffer = new byte[8192];
+        for (File file : files) {
+            String cp = file.getCanonicalPath();
+            if (cp.equals(zipPath) || cp.equals(tempPath)) {
+                continue;
+            }
+            String entryName = cp.substring(basePath.length() + 1).replace(File.separatorChar, '/');
+            zipOut.putNextEntry(new ZipEntry(entryName));
+            try (FileInputStream fis = new FileInputStream(file)) {
+                copy(fis, zipOut, buffer);
+            }
+            zipOut.closeEntry();
+            added.add(entryName);
+        }
+        return added;
+    }
+
+    /** Copies the existing zip's file entries whose names are not in {@code added} (and records them there). */
+    private static void carryOverEntries(ZipOutputStream zipOut, File zipFile, java.util.Set<String> added) throws IOException {
+        byte[] buffer = new byte[8192];
+        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile))) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if (entry.isDirectory() || added.contains(entry.getName())) {
+                    continue;
+                }
+                zipOut.putNextEntry(new ZipEntry(entry.getName()));
+                copy(zis, zipOut, buffer);
+                zipOut.closeEntry();
+                added.add(entry.getName());
+            }
+        }
+    }
+
+    private static void copy(java.io.InputStream in, ZipOutputStream zipOut, byte[] buffer) throws IOException {
+        int len;
+        while ((len = in.read(buffer)) > 0) {
+            zipOut.write(buffer, 0, len);
         }
     }
 

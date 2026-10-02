@@ -199,52 +199,26 @@ public class OrganizationCommands {
             index++;
             LOG.info("");
             LOG.info("=== Organization " + index + " of " + logins.size() + ": " + login + " ===");
-            CodeHostOrg org;
-            List<CodeHostRepo> allRepos;
-            try {
-                org = client.fetchOrg(login);
-                allRepos = client.listRepos(login);
-            } catch (Exception e) {
-                LOG.error("Could not list the repositories of " + login + ": " + e.getMessage());
+            OrganizationListing listing = listOrganization(client, login, filter);
+            if (listing == null) {
                 failed.add(login);
                 continue;
             }
-            List<CodeHostRepo> repos = filter.apply(allRepos, LocalDate.parse(DateUtils.getAnalysisDate()));
-            LOG.info(org.displayName() + (org.isUser() ? " (user account)" : "") + ": " + allRepos.size() + " repositories found, " + repos.size() + " selected.");
-            filter.getExclusions().forEach(exclusion -> LOG.info(" - skipped " + exclusion));
-
-            File orgRoot = new File(root, org.getLogin());
+            File orgRoot = new File(root, listing.org.getLogin());
             orgRoot.mkdirs();
-            writeRepositoriesList(new File(orgRoot, "repos.txt"), org, allRepos.size(), repos, filter, client.hostLabel());
+            writeRepositoriesList(new File(orgRoot, "repos.txt"), listing.org, listing.allRepos.size(), listing.repos, filter, client.hostLabel());
             if (listOnly) {
                 continue;
             }
-            if (repos.isEmpty()) {
+            if (listing.repos.isEmpty()) {
                 LOG.warn("No repository of " + login + " is selected; its landscape is not updated.");
                 continue;
             }
-
-            List<String> urls = repos.stream().map(CodeHostRepo::getCloneUrl).collect(Collectors.toList());
-            Map<String, File> outputFolders = new LinkedHashMap<>();
-            Map<String, CodeHostRepo> listing = new LinkedHashMap<>();
-            repos.forEach(repo -> {
-                outputFolders.put(repo.getCloneUrl(), new File(orgRoot, repo.getFolderPath()));
-                if (StringUtils.isBlank(repo.getAvatarUrl())) {
-                    repo.setAvatarUrl(org.getAvatarUrl());   // a GitLab project without its own avatar shows the group's
-                }
-                listing.put(repo.getCloneUrl(), repo);
-            });
-            CommandLineInterface.RepositoryBatch batch = cli.analyzeRepositoriesIntoLandscape(cmd, orgRoot, urls, outputFolders::get, commandName, listing);
-            if (batch.nothingAnalyzed()) {
+            File reportsFolder = analyzeOrganizationLandscape(cmd, orgRoot, listing, commandName, prune, dataOnly);
+            if (reportsFolder == null) {
                 failed.add(login);
                 continue;
             }
-            cli.pruneManagedAnalyses(orgRoot, urls, batch.notFound, prune);
-
-            Metadata metadata = orgLandscapeMetadata(orgRoot, org);
-            File reportsFolder = LandscapeAnalysisCommands.update(orgRoot, null, metadata, dataOnly);
-            cli.saveExecutionStats(new File(reportsFolder, "data"));
-            LandscapeAnalysisCommands.zipLandscapeDataFolder(reportsFolder, !dataOnly);
             landscapes.add(reportsFolder);
             DateUtils.reset();
             RegexUtils.reset();
@@ -256,7 +230,66 @@ public class OrganizationCommands {
         } else if (!landscapes.isEmpty()) {
             updateParentLandscapeIfNeeded(cmd, root, dataOnly);
         }
+        logOrganizationsSummary(root, logins, failed, landscapes, listOnly, dataOnly);
+    }
 
+    /** An organization's profile with all its repositories and the selected ones. */
+    private static class OrganizationListing {
+        final CodeHostOrg org;
+        final List<CodeHostRepo> allRepos;
+        final List<CodeHostRepo> repos;
+
+        OrganizationListing(CodeHostOrg org, List<CodeHostRepo> allRepos, List<CodeHostRepo> repos) {
+            this.org = org;
+            this.allRepos = allRepos;
+            this.repos = repos;
+        }
+    }
+
+    /** Fetches the organization and its repositories and applies the selection; null (after logging) when the listing fails. */
+    private OrganizationListing listOrganization(CodeHostOrgClient client, String login, CodeHostRepoFilter filter) {
+        CodeHostOrg org;
+        List<CodeHostRepo> allRepos;
+        try {
+            org = client.fetchOrg(login);
+            allRepos = client.listRepos(login);
+        } catch (Exception e) {
+            LOG.error("Could not list the repositories of " + login + ": " + e.getMessage());
+            return null;
+        }
+        List<CodeHostRepo> repos = filter.apply(allRepos, LocalDate.parse(DateUtils.getAnalysisDate()));
+        LOG.info(org.displayName() + (org.isUser() ? " (user account)" : "") + ": " + allRepos.size() + " repositories found, " + repos.size() + " selected.");
+        filter.getExclusions().forEach(exclusion -> LOG.info(" - skipped " + exclusion));
+        return new OrganizationListing(org, allRepos, repos);
+    }
+
+    /** Clones and analyzes the selected repositories into the organization folder and updates its landscape; null when nothing could be analyzed. */
+    private File analyzeOrganizationLandscape(CommandLine cmd, File orgRoot, OrganizationListing listing, String commandName, boolean prune, boolean dataOnly) throws IOException {
+        CodeHostOrg org = listing.org;
+        List<String> urls = listing.repos.stream().map(CodeHostRepo::getCloneUrl).collect(Collectors.toList());
+        Map<String, File> outputFolders = new LinkedHashMap<>();
+        Map<String, CodeHostRepo> repoByUrl = new LinkedHashMap<>();
+        listing.repos.forEach(repo -> {
+            outputFolders.put(repo.getCloneUrl(), new File(orgRoot, repo.getFolderPath()));
+            if (StringUtils.isBlank(repo.getAvatarUrl())) {
+                repo.setAvatarUrl(org.getAvatarUrl());   // a GitLab project without its own avatar shows the group's
+            }
+            repoByUrl.put(repo.getCloneUrl(), repo);
+        });
+        LandscapeCommands.RepositoryBatch batch = cli.landscapeCommands.analyzeRepositoriesIntoLandscape(cmd, orgRoot, urls, outputFolders::get, commandName, repoByUrl);
+        if (batch.nothingAnalyzed()) {
+            return null;
+        }
+        cli.landscapeCommands.pruneManagedAnalyses(orgRoot, urls, batch.notFound, prune);
+
+        Metadata metadata = orgLandscapeMetadata(orgRoot, org);
+        File reportsFolder = LandscapeAnalysisCommands.update(orgRoot, null, metadata, dataOnly);
+        cli.saveExecutionStats(new File(reportsFolder, "data"));
+        LandscapeAnalysisCommands.zipLandscapeDataFolder(reportsFolder, !dataOnly);
+        return reportsFolder;
+    }
+
+    private static void logOrganizationsSummary(File root, List<String> logins, List<String> failed, List<File> landscapes, boolean listOnly, boolean dataOnly) {
         LOG.info("");
         if (listOnly) {
             LOG.info("Done: " + (logins.size() - failed.size()) + " of " + logins.size() + " organization(s) listed under " + root.toPath().toAbsolutePath().normalize());

@@ -100,47 +100,58 @@ public class Contributor {
         if (commitLinesDeleted != 0) {
             linesDeletedPerDate.merge(date, commitLinesDeleted, Integer::sum);
         }
+        updateFirstAndLatestCommitDate(date);
+        linesAdded += commitLinesAdded;
+        linesDeleted += commitLinesDeleted;
+        if (date.length() > 4) {
+            addActiveYear(date.substring(0, 4));
+            addRecentActivity(date, fileUpdatesCount, commitLinesAdded, commitLinesDeleted);
+        }
+
+        commitsCount += 1;
+    }
+
+    private void updateFirstAndLatestCommitDate(String date) {
         if (StringUtils.isBlank(firstCommitDate) || date.compareTo(firstCommitDate) < 0) {
             firstCommitDate = date;
         }
         if (StringUtils.isBlank(latestCommitDate) || date.compareTo(latestCommitDate) > 0) {
             latestCommitDate = date;
         }
-        linesAdded += commitLinesAdded;
-        linesDeleted += commitLinesDeleted;
-        if (date.length() > 4) {
-            String year = date.substring(0, 4);
-            if (activeYearsSet.add(year)) {
-                // activeYearsSet is a TreeSet, so rebuild the sorted list only when a new year
-                // appears instead of re-sorting on every commit.
-                activeYears.clear();
-                activeYears.addAll(activeYearsSet);
-            }
+    }
 
-            if (DateUtils.isCommittedLessThanDaysAgo(date, RECENTLY_ACTIVITY_THRESHOLD_DAYS)) {
-                commitsCount30Days += 1;
-                fileUpdatesCount30Days += fileUpdatesCount;
-                linesAdded30Days += commitLinesAdded;
-                linesDeleted30Days += commitLinesDeleted;
-            }
-            if (DateUtils.isCommittedLessThanDaysAgo(date, 90)) {
-                commitsCount90Days += 1;
-                linesAdded90Days += commitLinesAdded;
-                linesDeleted90Days += commitLinesDeleted;
-            }
-            if (DateUtils.isCommittedLessThanDaysAgo(date, 180)) {
-                commitsCount180Days += 1;
-                linesAdded180Days += commitLinesAdded;
-                linesDeleted180Days += commitLinesDeleted;
-            }
-            if (DateUtils.isCommittedLessThanDaysAgo(date, 365)) {
-                commitsCount365Days += 1;
-                linesAdded365Days += commitLinesAdded;
-                linesDeleted365Days += commitLinesDeleted;
-            }
+    private void addActiveYear(String year) {
+        if (activeYearsSet.add(year)) {
+            // activeYearsSet is a TreeSet, so rebuild the sorted list only when a new year
+            // appears instead of re-sorting on every commit.
+            activeYears.clear();
+            activeYears.addAll(activeYearsSet);
         }
+    }
 
-        commitsCount += 1;
+    /** Counts the commit into the 30 / 90 / 180 / 365-day windows it falls in. */
+    private void addRecentActivity(String date, int fileUpdatesCount, int commitLinesAdded, int commitLinesDeleted) {
+        if (DateUtils.isCommittedLessThanDaysAgo(date, RECENTLY_ACTIVITY_THRESHOLD_DAYS)) {
+            commitsCount30Days += 1;
+            fileUpdatesCount30Days += fileUpdatesCount;
+            linesAdded30Days += commitLinesAdded;
+            linesDeleted30Days += commitLinesDeleted;
+        }
+        if (DateUtils.isCommittedLessThanDaysAgo(date, 90)) {
+            commitsCount90Days += 1;
+            linesAdded90Days += commitLinesAdded;
+            linesDeleted90Days += commitLinesDeleted;
+        }
+        if (DateUtils.isCommittedLessThanDaysAgo(date, 180)) {
+            commitsCount180Days += 1;
+            linesAdded180Days += commitLinesAdded;
+            linesDeleted180Days += commitLinesDeleted;
+        }
+        if (DateUtils.isCommittedLessThanDaysAgo(date, 365)) {
+            commitsCount365Days += 1;
+            linesAdded365Days += commitLinesAdded;
+            linesDeleted365Days += commitLinesDeleted;
+        }
     }
 
     // Records a commit day under a given scope (main/test/build/generated/other/unscoped), keeping the
