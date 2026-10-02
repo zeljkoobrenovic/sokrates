@@ -15,6 +15,7 @@ class GitHubOrgClientTest {
     private static String repoJson(int i, boolean fork) {
         return "{\"name\":\"repo" + i + "\",\"full_name\":\"acme/repo" + i + "\",\"clone_url\":\"https://github.com/acme/repo" + i + ".git\","
                 + "\"html_url\":\"https://github.com/acme/repo" + i + "\",\"fork\":" + fork + ",\"archived\":false,\"private\":false,"
+                + "\"description\":\"Repo " + i + "\",\"owner\":{\"login\":\"acme\",\"avatar_url\":\"https://avatars.githubusercontent.com/u/2\"},"
                 + "\"pushed_at\":\"2026-09-0" + (i % 9 + 1) + "T00:00:00Z\",\"size\":" + (i * 10) + ",\"language\":\"Java\",\"default_branch\":\"main\"}";
     }
 
@@ -47,6 +48,8 @@ class GitHubOrgClientTest {
         assertEquals("https://github.com/acme/repo1.git", first.getCloneUrl());
         assertTrue(first.isFork());
         assertEquals("2026-09-02T00:00:00Z", first.getPushedAt());
+        assertEquals("Repo 1", first.getDescription());
+        assertEquals("https://avatars.githubusercontent.com/u/2", first.getAvatarUrl(), "the owner's avatar");
         assertEquals("Java", first.getLanguage());
         assertFalse(repos.get(1).isFork());
     }

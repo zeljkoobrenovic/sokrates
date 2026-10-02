@@ -106,6 +106,7 @@ public class GitHubOrgClient implements CodeHostOrgClient {
         repo.setCloneUrl(json.path("clone_url").asText(""));
         repo.setHtmlUrl(json.path("html_url").asText(""));
         repo.setDescription(json.path("description").asText(""));
+        repo.setAvatarUrl(json.path("owner").path("avatar_url").asText(""));
         repo.setLanguage(json.path("language").asText(""));
         repo.setDefaultBranch(json.path("default_branch").asText(""));
         repo.setPushedAt(json.path("pushed_at").asText(""));

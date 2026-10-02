@@ -16,7 +16,7 @@ class GitLabGroupClientTest {
         String path = pathWithNamespace.substring(pathWithNamespace.lastIndexOf('/') + 1);
         return "{\"id\":1,\"name\":\"" + path.toUpperCase() + "\",\"path\":\"" + path + "\",\"path_with_namespace\":\"" + pathWithNamespace + "\","
                 + "\"http_url_to_repo\":\"https://gitlab.example.com/" + pathWithNamespace + ".git\",\"web_url\":\"https://gitlab.example.com/" + pathWithNamespace + "\","
-                + "\"description\":\"d\",\"default_branch\":\"main\",\"last_activity_at\":\"2026-09-30T10:00:00.000Z\",\"archived\":" + archived + ",\"visibility\":\"private\""
+                + "\"description\":\"d\",\"avatar_url\":" + (fork ? "\"https://gitlab.example.com/p.png\"" : "null") + ",\"default_branch\":\"main\",\"last_activity_at\":\"2026-09-30T10:00:00.000Z\",\"archived\":" + archived + ",\"visibility\":\"private\""
                 + (fork ? ",\"forked_from_project\":{\"id\":9}" : "") + "}";
     }
 
@@ -63,6 +63,9 @@ class GitLabGroupClientTest {
         CodeHostRepo beta = repos.get(1);
         assertEquals("sub/beta", beta.getFolderPath(), "a subgroup project keeps its subgroup folder");
         assertTrue(beta.isFork(), "forked_from_project marks a fork");
+        assertEquals("https://gitlab.example.com/p.png", beta.getAvatarUrl());
+        assertEquals("", alpha.getAvatarUrl(), "a null avatar_url is blank (the command falls back to the group's)");
+        assertEquals("d", alpha.getDescription());
         assertTrue(repos.get(2).isArchived());
     }
 

@@ -43,6 +43,7 @@ public class GitRepoMetadata {
     private final String name;
     private String description = "";
     private String logoLink = "";
+    private boolean detailsKnown = false;
 
     private GitRepoMetadata(String remoteUrl, String webUrl, String host, String owner, String name) {
         this.remoteUrl = remoteUrl;
@@ -139,7 +140,7 @@ public class GitRepoMetadata {
      * are. The optional {@link GitRepoCloner#ENV_TOKEN} raises the API rate limit (60/h anonymous).
      */
     public GitRepoMetadata fetchDetails() {
-        if (!isGitHub() || StringUtils.isBlank(owner) || StringUtils.isNotBlank(System.getenv(ENV_OFFLINE))) {
+        if (detailsKnown || !isGitHub() || StringUtils.isBlank(owner) || StringUtils.isNotBlank(System.getenv(ENV_OFFLINE))) {
             return this;
         }
         try {
@@ -169,6 +170,22 @@ public class GitRepoMetadata {
         } catch (Exception e) {
             LOG.info("Could not fetch GitHub details for " + owner + "/" + name + " (" + e.getMessage() + "); using the URL-derived metadata only.");
         }
+        return this;
+    }
+
+    /**
+     * The description and logo as a code-host listing already reported them (analyzeGitHubOrg /
+     * analyzeGitLabGroup list every repository with both), so {@link #fetchDetails()} has nothing
+     * to ask for and skips the API call. Blank values leave the URL-derived defaults in place.
+     */
+    public GitRepoMetadata withDetails(String listedDescription, String listedLogoLink) {
+        if (StringUtils.isNotBlank(listedDescription)) {
+            description = listedDescription.trim();
+        }
+        if (StringUtils.isNotBlank(listedLogoLink)) {
+            logoLink = listedLogoLink.trim();
+        }
+        detailsKnown = true;
         return this;
     }
 

@@ -57,7 +57,15 @@ class AnalyzeGitHubOrgCommandTest {
         repo.setPushedAt(Instant.now().minus(daysAgo, ChronoUnit.DAYS).toString());
         repo.setFork(fork);
         repo.setArchived(archived);
+        repo.setDescription("The " + name + " service");
+        repo.setAvatarUrl("https://avatars.example.com/" + org + ".png");
         return repo;
+    }
+
+    private static nl.obren.sokrates.sourcecode.core.CodeConfiguration repoConfig(File folder) throws IOException {
+        return new JsonMapper().getObject(FileUtils.readFileToString(new File(folder, "config.json"), UTF_8),
+                new TypeReference<nl.obren.sokrates.sourcecode.core.CodeConfiguration>() {
+                });
     }
 
     private static LandscapeConfiguration landscapeConfig(File orgRoot) throws IOException {
@@ -91,6 +99,9 @@ class AnalyzeGitHubOrgCommandTest {
         assertFalse(new File(acme, "beta").exists(), "forks are skipped");
         assertFalse(new File(acme, "gamma").exists(), "archived repositories are skipped");
         assertFalse(new File(acme, "alpha/src").exists(), "no source is kept");
+        nl.obren.sokrates.sourcecode.core.CodeConfiguration alphaConfig = repoConfig(new File(acme, "alpha"));
+        assertEquals("The alpha service", alphaConfig.getMetadata().getDescription(), "the listing's description, no API call");
+        assertEquals("https://avatars.example.com/acme.png", alphaConfig.getMetadata().getLogoLink(), "the listing's avatar as logo");
 
         List<String> reposTxt = FileUtils.readLines(new File(acme, "repos.txt"), UTF_8);
         assertTrue(reposTxt.get(0).startsWith("# Acme Corp (https://github.com/acme): 1 of 3 repositories selected on "), reposTxt.get(0));

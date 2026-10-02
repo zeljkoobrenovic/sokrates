@@ -14,6 +14,7 @@ public class CodeHostRepo {
     private String cloneUrl = "";
     private String htmlUrl = "";
     private String description = "";
+    private String avatarUrl = "";
     private String language = "";
     private String defaultBranch = "";
     private String pushedAt = "";
@@ -80,6 +81,15 @@ public class CodeHostRepo {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    /** The owner's (GitHub) or project's (GitLab) avatar; the repository report's logo. */
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 
     public String getLanguage() {

@@ -431,6 +431,12 @@ public class CommandLineInterface {
 
     /** Same, with the output folder of each URL chosen by {@code outputFolderFor} (analyzeGitHubOrg uses <org>/<repository>). */
     private RepositoryBatch analyzeRepositoriesIntoLandscape(CommandLine cmd, File root, List<String> urls, Function<String, File> outputFolderFor, String producer) throws IOException {
+        return analyzeRepositoriesIntoLandscape(cmd, root, urls, outputFolderFor, producer, Map.of());
+    }
+
+    /** Same, with what the code host's listing said about each URL ({@code listing}: url -> repository), so the report metadata needs no extra API call. */
+    private RepositoryBatch analyzeRepositoriesIntoLandscape(CommandLine cmd, File root, List<String> urls, Function<String, File> outputFolderFor, String producer,
+                                                           Map<String, CodeHostRepo> listing) throws IOException {
         RepositoryBatch batch = new RepositoryBatch();
         int depth = 0;
         String depthValue = cmd.getOptionValue(commands.getDepth().getOpt());
@@ -449,7 +455,7 @@ public class CommandLineInterface {
             File output = outputFolderFor.apply(url);
             CloneOutcome outcome;
             try {
-                outcome = analyzeGitRepoInto(cmd, url, output, null, depth, producer);
+                outcome = analyzeGitRepoInto(cmd, url, output, null, depth, producer, listing.get(url));
             } catch (Exception e) {
                 LOG.error("Analysis of " + url + " failed: " + e.getMessage());
                 outcome = CloneOutcome.FAILED;
@@ -730,8 +736,15 @@ public class CommandLineInterface {
 
             List<String> urls = repos.stream().map(CodeHostRepo::getCloneUrl).collect(Collectors.toList());
             Map<String, File> outputFolders = new LinkedHashMap<>();
-            repos.forEach(repo -> outputFolders.put(repo.getCloneUrl(), new File(orgRoot, repo.getFolderPath())));
-            RepositoryBatch batch = analyzeRepositoriesIntoLandscape(cmd, orgRoot, urls, outputFolders::get, commandName);
+            Map<String, CodeHostRepo> listing = new LinkedHashMap<>();
+            repos.forEach(repo -> {
+                outputFolders.put(repo.getCloneUrl(), new File(orgRoot, repo.getFolderPath()));
+                if (StringUtils.isBlank(repo.getAvatarUrl())) {
+                    repo.setAvatarUrl(org.getAvatarUrl());   // a GitLab project without its own avatar shows the group's
+                }
+                listing.put(repo.getCloneUrl(), repo);
+            });
+            RepositoryBatch batch = analyzeRepositoriesIntoLandscape(cmd, orgRoot, urls, outputFolders::get, commandName, listing);
             if (batch.nothingAnalyzed()) {
                 failed.add(login);
                 continue;
@@ -931,7 +944,7 @@ public class CommandLineInterface {
             depth = Integer.parseInt(depthValue.trim());
         }
 
-        analyzeGitRepoInto(cmd, url, output, branch, depth, Commands.ANALYZE_GIT_REPO);
+        analyzeGitRepoInto(cmd, url, output, branch, depth, Commands.ANALYZE_GIT_REPO, null);
     }
 
     /**
@@ -948,7 +961,7 @@ public class CommandLineInterface {
         NOT_FOUND
     }
 
-    private CloneOutcome analyzeGitRepoInto(CommandLine cmd, String url, File output, String branch, int depth, String producer) throws IOException {
+    private CloneOutcome analyzeGitRepoInto(CommandLine cmd, String url, File output, String branch, int depth, String producer, CodeHostRepo listed) throws IOException {
         File clone = Files.createTempDirectory("sokrates-clone-").toFile();
         try {
             ProcessingStopwatch.start("cloning");
@@ -969,7 +982,7 @@ public class CommandLineInterface {
                 FileUtils.copyFile(keptConfig, CodeConfigurationUtils.getDefaultSokratesConfigFile(clone));
             }
 
-            analyze(cmd, clone, false, url, output);
+            analyze(cmd, clone, false, url, output, listed);
 
             // Keep only the analysis: everything in the clone's _sokrates folder (config.json, reports/,
             // any config-*.json) replaces its namesake in the output folder; the clone goes.
@@ -1100,14 +1113,14 @@ public class CommandLineInterface {
      */
     private File analyze(CommandLine cmd, File root, boolean skipGitHistory) throws IOException {
         GitRepoMetadata origin = GitRepoMetadata.fromLocalRepository(root);
-        return analyze(cmd, root, skipGitHistory, origin != null ? origin.getRemoteUrl() : "", null);
+        return analyze(cmd, root, skipGitHistory, origin != null ? origin.getRemoteUrl() : "", null, null);
     }
 
     /**
      * @param repoUrl    the repository URL for the post-analysis hook's environment ("" for a plain folder)
      * @param keptFolder where the analysis will be kept when it is moved out of a clone; null = it stays in place
      */
-    private File analyze(CommandLine cmd, File root, boolean skipGitHistory, String repoUrl, File keptFolder) throws IOException {
+    private File analyze(CommandLine cmd, File root, boolean skipGitHistory, String repoUrl, File keptFolder, CodeHostRepo listed) throws IOException {
         updateDateParam(cmd);
 
         ProcessingStopwatch.start("extracting git history");
@@ -1126,7 +1139,7 @@ public class CommandLineInterface {
         } else {
             createConfiguration(cmd, root, conf);
         }
-        applyGitRepoMetadata(root, conf);
+        applyGitRepoMetadata(root, conf, listed);
 
         File reportsFolder;
         if (cmd.hasOption(commands.getOutputFolder().getOpt())) {
@@ -1206,12 +1219,20 @@ public class CommandLineInterface {
      * are never overwritten; a configuration without a git origin is left untouched.
      */
     private void applyGitRepoMetadata(File root, File conf) {
+        applyGitRepoMetadata(root, conf, null);
+    }
+
+    /** @param listed what the code host's listing said about this repository (description, avatar), or null to ask the GitHub API */
+    private void applyGitRepoMetadata(File root, File conf, CodeHostRepo listed) {
         if (!conf.exists()) {
             return;
         }
         GitRepoMetadata gitMetadata = GitRepoMetadata.fromLocalRepository(root);
         if (gitMetadata == null) {
             return;
+        }
+        if (listed != null) {
+            gitMetadata.withDetails(listed.getDescription(), listed.getAvatarUrl());
         }
         try {
             String folderDefaultName = StringUtils.capitalize(root.getCanonicalFile().getName().toLowerCase());

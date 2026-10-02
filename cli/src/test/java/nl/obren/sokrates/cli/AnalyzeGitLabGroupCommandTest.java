@@ -59,6 +59,10 @@ class AnalyzeGitLabGroupCommandTest {
         repo.setFullName("acme/tools/" + folderPath);
         repo.setFolderPath(folderPath);
         repo.setPushedAt(Instant.now().minus(1, ChronoUnit.DAYS).toString());
+        repo.setDescription("Project " + name);
+        if (name.equals("alpha")) {
+            repo.setAvatarUrl("https://gitlab.example.com/alpha.png");
+        }
         return repo;
     }
 
@@ -84,6 +88,15 @@ class AnalyzeGitLabGroupCommandTest {
         assertTrue(new File(group, "sub/beta/config.json").exists(), "a subgroup project keeps its subgroup folder");
         assertTrue(new File(group, "sub/beta/reports/index.html").exists());
         assertTrue(new File(group, "_sokrates_landscape/index.html").exists(), "one landscape per group");
+        nl.obren.sokrates.sourcecode.core.CodeConfiguration alphaConfig = new JsonMapper().getObject(FileUtils.readFileToString(new File(group, "alpha/config.json"), UTF_8),
+                new TypeReference<nl.obren.sokrates.sourcecode.core.CodeConfiguration>() {
+                });
+        assertEquals("Project alpha", alphaConfig.getMetadata().getDescription());
+        assertEquals("https://gitlab.example.com/alpha.png", alphaConfig.getMetadata().getLogoLink(), "the project's own avatar");
+        nl.obren.sokrates.sourcecode.core.CodeConfiguration betaConfig = new JsonMapper().getObject(FileUtils.readFileToString(new File(group, "sub/beta/config.json"), UTF_8),
+                new TypeReference<nl.obren.sokrates.sourcecode.core.CodeConfiguration>() {
+                });
+        assertEquals("https://gitlab.example.com/avatar.png", betaConfig.getMetadata().getLogoLink(), "a project without an avatar shows the group's");
 
         LandscapeConfiguration config = new JsonMapper().getObject(FileUtils.readFileToString(new File(group, "_sokrates_landscape/config.json"), UTF_8),
                 new TypeReference<LandscapeConfiguration>() {

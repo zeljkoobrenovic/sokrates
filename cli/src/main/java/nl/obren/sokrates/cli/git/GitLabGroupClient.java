@@ -120,6 +120,7 @@ public class GitLabGroupClient implements CodeHostOrgClient {
         repo.setCloneUrl(json.path("http_url_to_repo").asText(""));
         repo.setHtmlUrl(json.path("web_url").asText(""));
         repo.setDescription(json.path("description").asText(""));
+        repo.setAvatarUrl(json.path("avatar_url").asText(""));
         repo.setDefaultBranch(json.path("default_branch").asText(""));
         repo.setPushedAt(json.path("last_activity_at").asText(""));
         repo.setFork(json.has("forked_from_project") && !json.path("forked_from_project").isNull());
