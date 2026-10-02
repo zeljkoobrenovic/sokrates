@@ -18,6 +18,8 @@ import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.ObjIntConsumer;
+import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
 public class ContributorsReportUtils {
@@ -236,210 +238,142 @@ public class ContributorsReportUtils {
      */
     public static void addContributorsPerTimeSlot(RichTextReport report, List<ContributionTimeSlot> contributorsPerTimeSlot, int limit, boolean showTimeSlot, boolean showContributors, int padding, boolean fade, ActivitySummary summary) {
         Collections.sort(contributorsPerTimeSlot, (a, b) -> b.getTimeSlot().compareTo(a.getTimeSlot()));
-
-        if (contributorsPerTimeSlot.size() > 0) {
-            if (contributorsPerTimeSlot.size() > limit) {
-                contributorsPerTimeSlot = contributorsPerTimeSlot.subList(0, limit);
-            }
-
-            int maxContributors = contributorsPerTimeSlot.stream().mapToInt(c -> c.getContributorsCount()).max().orElse(1);
-            int maxCommits = contributorsPerTimeSlot.stream().mapToInt(c -> c.getCommitsCount()).max().orElse(1);
-            // The AI co-authored commits row (from Co-authored-by trailers) is only emitted when any
-            // slot has one — histories extracted without the trailers sidecar look exactly as before.
-            boolean hasAiCommits = contributorsPerTimeSlot.stream().anyMatch(c -> c != null && c.getAiCoAuthoredCommitsCount() > 0);
-            int maxFileUpdatesCount = contributorsPerTimeSlot.stream().mapToInt(c -> c.getFileUpdatesCount()).max().orElse(1);
-            // Churn is drawn as a diverging chart: additions above a zero baseline, deletions below it.
-            // Both sides share one scale (the largest single-side value across slots) so an addition and
-            // a deletion of equal size draw equal bar lengths. The row is only emitted when there is
-            // churn data at all (older history files have none).
-            int maxChurn = contributorsPerTimeSlot.stream()
-                    .mapToInt(c -> Math.max(c.getLinesAdded(), c.getLinesDeleted())).max().orElse(0);
-            boolean hasChurn = maxChurn > 0;
-
-            report.startDiv("overflow-y: auto; font-size: 90%");
-            report.startTable();
-
-            // Leading summary column headers ("30 days", …) above the window totals each metric row
-            // prepends (summary.columns of them). Only when a summary is supplied.
-            if (summary != null) {
-                report.startTableRow();
-                report.addTableCell("", "border: none;"); // above the metric icon column
-                for (int w = 0; w < summary.columns; w++) {
-                    report.addTableCell(summary.label(w), "border: none; text-align: center; vertical-align: bottom; font-size: 70%; color: grey; padding: 2px 6px;");
-                }
-
-                for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
-                    if (timeSlot == null) {
-                        continue;
-                    }
-                    String slotString = timeSlot.getTimeSlot().replaceAll("\\-", "<br>");
-                    if (timeSlot.getCommitsCount() > 0 || timeSlot.getContributorsCount() > 0) {
-                        report.addTableCell(slotString + "", "border: none; padding: " + padding + "px; padding-bottom: 0; width: 10px; text-align: center; vertical-align: bottom; font-size: 80%");
-                    } else {
-                        report.addTableCell(slotString + "", "border: none; padding: " + padding + "px; padding-bottom: 0; width: 10px; text-align: center; vertical-align: bottom; font-size: 80%; color: #c0c0c0");
-                    }
-                }
-                report.endTableRow();
-            }
-
-            if (hasChurn) {
-                addChurnRow(report, contributorsPerTimeSlot, maxChurn, showTimeSlot, padding, fade, summary);
-            }
-
-            // With leading summary columns the metric icons centre vertically to line up with the
-            // centred summary cells; without them (e.g. the Commits report charts) keep the icons at the
-            // bottom so they sit on the baseline the bars grow from.
-            String iconVAlign = summary != null ? "middle" : "bottom";
-
-            report.startTableRow();
-            addMetricIconCell(report, "change", iconVAlign, fade, "number of files changed per commit", summary, SummaryMetric.FILE_UPDATES);
-            addSummaryCell(report, summary, SummaryMetric.FILE_UPDATES, fade);
-            String styleFileUpdatesCount;
-            if (showTimeSlot) {
-                styleFileUpdatesCount = "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: bottom; font-size: 80%";
-            } else {
-                styleFileUpdatesCount = "border: none; padding: " + padding + "px; vertical-align: bottom; font-size: 80%";
-            }
-            for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
-                report.startTableCell(styleFileUpdatesCount);
-                if (timeSlot != null) {
-                    int count = timeSlot.getFileUpdatesCount();
-                    if (showTimeSlot) {
-                        report.addParagraph(FormattingUtils.getSmallTextForNumber(count) + "", "margin: 0px; font-size: 90%" + (count == 0 ? "; color: #d0d0d0" : ""));
-                    } else {
-                        report.addParagraph("&nbsp;", "margin: 0px; font-size: 90%");
-                    }
-                    String title = timeSlot.getTimeSlot() + ": " + count + "\n\n";
-                    RiskDistributionStats stats = timeSlot.getFileUpdatesCountStats();
-                    title += stats.getDescription();
-
-                    Palette palette = Palette.getRiskPalette();
-
-                    int heightVeryHigh = 1 + (int) (64.0 * stats.getVeryHighRiskValue() / maxFileUpdatesCount);
-                    report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + palette.nextColor() + "; height:" + heightVeryHigh + "px'></div>");
-
-                    int heightHigh = 1 + (int) (64.0 * stats.getHighRiskValue() / maxFileUpdatesCount);
-                    report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + palette.nextColor() + "; height:" + heightHigh + "px'></div>");
-
-                    int heightMedium = 1 + (int) (64.0 * stats.getMediumRiskValue() / maxFileUpdatesCount);
-                    report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + palette.nextColor() + "; height:" + heightMedium + "px'></div>");
-
-                    int heightLow = 1 + (int) (64.0 * stats.getLowRiskValue() / maxFileUpdatesCount);
-                    report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + palette.nextColor() + "; height:" + heightLow + "px'></div>");
-
-                    int heightNegligible = 1 + (int) (64.0 * stats.getNegligibleRiskValue() / maxFileUpdatesCount);
-                    report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + palette.nextColor() + "; height:" + heightNegligible + "px'></div>");
-                } else {
-                    report.addHtmlContent("<div style='width: 100%; background-color: #d0d0d0; height:1px'></div>");
-                }
-                report.endTableCell();
-            }
-            report.endTableRow();
-
-            report.startTableRow();
-            addMetricIconCell(report, "commits", iconVAlign, fade, "number of commits", summary, SummaryMetric.COMMITS);
-            addSummaryCell(report, summary, SummaryMetric.COMMITS, fade);
-            String style;
-            if (showTimeSlot) {
-                style = "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: bottom; font-size: 80%";
-            } else {
-                style = "border: none; padding: " + padding + "px; vertical-align: bottom; font-size: 80%";
-            }
-            for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
-                report.startTableCell(style);
-                if (timeSlot != null) {
-                    int count = timeSlot.getCommitsCount();
-                    if (showTimeSlot) {
-                        report.addParagraph(FormattingUtils.getSmallTextForNumber(count) + "", "margin: 0px; font-size: 90%" + (count == 0 ? "; color: #d0d0d0" : ""));
-                    } else {
-                        report.addParagraph("&nbsp;", "margin: 0px; font-size: 90%");
-                    }
-                    int height = 1 + (int) (64.0 * count / maxCommits);
-                    String title = timeSlot.getTimeSlot() + ": " + count;
-                    report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: darkgrey; height:" + height + "px'></div>");
-                } else {
-                    report.addHtmlContent("<div style='width: 100%; background-color: #d0d0d0; height:1px'></div>");
-                }
-                report.endTableCell();
-            }
-            report.endTableRow();
-
-            if (hasAiCommits) {
-                report.startTableRow();
-                addMetricIconCell(report, "bot", iconVAlign, fade, "number of commits with an AI coding agent co-author (from commit trailers such as Co-authored-by)", summary, SummaryMetric.AI_COMMITS);
-                addSummaryCell(report, summary, SummaryMetric.AI_COMMITS, fade);
-                for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
-                    report.startTableCell(style);
-                    if (timeSlot != null) {
-                        int count = timeSlot.getAiCoAuthoredCommitsCount();
-                        if (showTimeSlot) {
-                            report.addParagraph(FormattingUtils.getSmallTextForNumber(count) + "", "margin: 0px; font-size: 90%" + (count == 0 ? "; color: #d0d0d0" : ""));
-                        } else {
-                            report.addParagraph("&nbsp;", "margin: 0px; font-size: 90%");
-                        }
-                        // Same scale as the commits row above, so the bar reads as the AI share of commits.
-                        int height = 1 + (int) (64.0 * count / maxCommits);
-                        String title = timeSlot.getTimeSlot() + ": " + count + " of " + timeSlot.getCommitsCount() + " commits"
-                                + (timeSlot.getCommitsCount() > 0 ? " (" + (100 * count / timeSlot.getCommitsCount()) + "%)" : "");
-                        report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: #b39ddb; height:" + height + "px'></div>");
-                    } else {
-                        report.addHtmlContent("<div style='width: 100%; background-color: #d0d0d0; height:1px'></div>");
-                    }
-                    report.endTableCell();
-                }
-                report.endTableRow();
-            }
-
-            if (showContributors) {
-                report.startTableRow();
-                addMetricIconCell(report, "contributors", iconVAlign, fade, "number of contributors", summary, SummaryMetric.CONTRIBUTORS);
-                addSummaryCell(report, summary, SummaryMetric.CONTRIBUTORS, fade);
-                for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
-                    report.startTableCell(style);
-                    if (timeSlot != null) {
-                        int count = timeSlot.getContributorsCount();
-                        if (showTimeSlot) {
-                            report.addParagraph(FormattingUtils.getSmallTextForNumber(count) + "", "margin: 0px; font-size: 90%" + (count == 0 ? "; color: #d0d0d0" : ""));
-                        } else {
-                            report.addParagraph("&nbsp;", "margin: 0px; font-size: 90%");
-                        }
-                        int height = 1 + (int) (64.0 * count / maxContributors);
-                        String title = timeSlot.getTimeSlot() + ": " + count;
-                        report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: skyblue; height:" + height + "px'></div>");
-                    } else {
-                        report.addHtmlContent("<div style='width: 100%; background-color: #d0d0d0; height:1px'></div>");
-                    }
-                    report.endTableCell();
-                }
-                report.endTableRow();
-            }
-
-            if (showTimeSlot) {
-                report.startTableRow();
-                report.addTableCell("", "border: none; ");
-                // Blank cells under the leading summary columns so the time-axis labels stay aligned.
-                if (summary != null) {
-                    for (int w = 0; w < summary.columns; w++) {
-                        report.addTableCell("", "border: none;");
-                    }
-                }
-                for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
-                    if (timeSlot == null) {
-                        continue;
-                    }
-                    String slotString = timeSlot.getTimeSlot().replaceAll("\\-", "<br>");
-                    if (timeSlot.getCommitsCount() > 0 || timeSlot.getContributorsCount() > 0) {
-                        report.addTableCell(slotString + "", "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: top; font-size: 80%");
-                    } else {
-                        report.addTableCell(slotString + "", "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: top; font-size: 80%; color: #c0c0c0");
-                    }
-                }
-                report.endTableRow();
-            }
-
-            report.endTable();
-            report.endDiv();
+        if (contributorsPerTimeSlot.isEmpty()) {
+            return;
         }
+        List<ContributionTimeSlot> slots = contributorsPerTimeSlot.size() > limit ? contributorsPerTimeSlot.subList(0, limit) : contributorsPerTimeSlot;
+
+        int maxContributors = slots.stream().mapToInt(c -> c.getContributorsCount()).max().orElse(1);
+        int maxCommits = slots.stream().mapToInt(c -> c.getCommitsCount()).max().orElse(1);
+        // The AI co-authored commits row (from Co-authored-by trailers) is only emitted when any
+        // slot has one — histories extracted without the trailers sidecar look exactly as before.
+        boolean hasAiCommits = slots.stream().anyMatch(c -> c != null && c.getAiCoAuthoredCommitsCount() > 0);
+        int maxFileUpdatesCount = slots.stream().mapToInt(c -> c.getFileUpdatesCount()).max().orElse(1);
+        // Churn is drawn as a diverging chart: additions above a zero baseline, deletions below it.
+        // Both sides share one scale (the largest single-side value across slots) so an addition and
+        // a deletion of equal size draw equal bar lengths. The row is only emitted when there is
+        // churn data at all (older history files have none).
+        int maxChurn = slots.stream().mapToInt(c -> Math.max(c.getLinesAdded(), c.getLinesDeleted())).max().orElse(0);
+
+        report.startDiv("overflow-y: auto; font-size: 90%");
+        report.startTable();
+
+        // Leading summary column headers ("30 days", …) above the window totals each metric row
+        // prepends (summary.columns of them). Only when a summary is supplied.
+        if (summary != null) {
+            addTimeSlotLabelsRow(report, slots, padding, summary, true);
+        }
+        if (maxChurn > 0) {
+            addChurnRow(report, slots, maxChurn, showTimeSlot, padding, fade, summary);
+        }
+
+        // With leading summary columns the metric icons centre vertically to line up with the
+        // centred summary cells; without them (e.g. the Commits report charts) keep the icons at the
+        // bottom so they sit on the baseline the bars grow from.
+        String iconVAlign = summary != null ? "middle" : "bottom";
+        String cellStyle = showTimeSlot
+                ? "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: bottom; font-size: 80%"
+                : "border: none; padding: " + padding + "px; vertical-align: bottom; font-size: 80%";
+
+        addBarRow(report, slots, cellStyle, showTimeSlot, "change", "number of files changed per commit", SummaryMetric.FILE_UPDATES, iconVAlign, fade, summary,
+                ContributionTimeSlot::getFileUpdatesCount, (timeSlot, count) -> addFileUpdatesBars(report, timeSlot, count, maxFileUpdatesCount));
+        addBarRow(report, slots, cellStyle, showTimeSlot, "commits", "number of commits", SummaryMetric.COMMITS, iconVAlign, fade, summary,
+                ContributionTimeSlot::getCommitsCount, (timeSlot, count) -> addBar(report, timeSlot.getTimeSlot() + ": " + count, "darkgrey", count, maxCommits));
+        if (hasAiCommits) {
+            // Same scale as the commits row above, so the bar reads as the AI share of commits.
+            addBarRow(report, slots, cellStyle, showTimeSlot, "bot", "number of commits with an AI coding agent co-author (from commit trailers such as Co-authored-by)", SummaryMetric.AI_COMMITS, iconVAlign, fade, summary,
+                    ContributionTimeSlot::getAiCoAuthoredCommitsCount, (timeSlot, count) -> addBar(report, aiCommitsTitle(timeSlot, count), "#b39ddb", count, maxCommits));
+        }
+        if (showContributors) {
+            addBarRow(report, slots, cellStyle, showTimeSlot, "contributors", "number of contributors", SummaryMetric.CONTRIBUTORS, iconVAlign, fade, summary,
+                    ContributionTimeSlot::getContributorsCount, (timeSlot, count) -> addBar(report, timeSlot.getTimeSlot() + ": " + count, "skyblue", count, maxContributors));
+        }
+        if (showTimeSlot) {
+            addTimeSlotLabelsRow(report, slots, padding, summary, false);
+        }
+
+        report.endTable();
+        report.endDiv();
+    }
+
+    /**
+     * One metric row of the activity table: the metric icon, the summary cell, then one cell per
+     * time slot with the count (when the time axis is shown) and the bars {@code bars} draws for it;
+     * a null slot (a gap in the history) gets a thin grey line.
+     */
+    private static void addBarRow(RichTextReport report, List<ContributionTimeSlot> slots, String cellStyle, boolean showTimeSlot,
+                                  String icon, String description, SummaryMetric metric, String iconVAlign, boolean fade, ActivitySummary summary,
+                                  ToIntFunction<ContributionTimeSlot> value, ObjIntConsumer<ContributionTimeSlot> bars) {
+        report.startTableRow();
+        addMetricIconCell(report, icon, iconVAlign, fade, description, summary, metric);
+        addSummaryCell(report, summary, metric, fade);
+        for (ContributionTimeSlot timeSlot : slots) {
+            report.startTableCell(cellStyle);
+            if (timeSlot != null) {
+                int count = value.applyAsInt(timeSlot);
+                if (showTimeSlot) {
+                    report.addParagraph(FormattingUtils.getSmallTextForNumber(count) + "", "margin: 0px; font-size: 90%" + (count == 0 ? "; color: #d0d0d0" : ""));
+                } else {
+                    report.addParagraph("&nbsp;", "margin: 0px; font-size: 90%");
+                }
+                bars.accept(timeSlot, count);
+            } else {
+                report.addHtmlContent("<div style='width: 100%; background-color: #d0d0d0; height:1px'></div>");
+            }
+            report.endTableCell();
+        }
+        report.endTableRow();
+    }
+
+    /** A bar of {@code count} out of {@code max} (1 to 65 px high). */
+    private static void addBar(RichTextReport report, String title, String color, int count, int max) {
+        int height = 1 + (int) (64.0 * count / max);
+        report.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + color + "; height:" + height + "px'></div>");
+    }
+
+    /** The file-updates bar is stacked: one segment per risk band of the files-per-commit distribution, in the risk palette. */
+    private static void addFileUpdatesBars(RichTextReport report, ContributionTimeSlot timeSlot, int count, int maxFileUpdatesCount) {
+        RiskDistributionStats stats = timeSlot.getFileUpdatesCountStats();
+        String title = timeSlot.getTimeSlot() + ": " + count + "\n\n" + stats.getDescription();
+        Palette palette = Palette.getRiskPalette();
+        for (int bandValue : new int[]{stats.getVeryHighRiskValue(), stats.getHighRiskValue(), stats.getMediumRiskValue(), stats.getLowRiskValue(), stats.getNegligibleRiskValue()}) {
+            addBar(report, title, palette.nextColor(), bandValue, maxFileUpdatesCount);
+        }
+    }
+
+    private static String aiCommitsTitle(ContributionTimeSlot timeSlot, int count) {
+        return timeSlot.getTimeSlot() + ": " + count + " of " + timeSlot.getCommitsCount() + " commits"
+                + (timeSlot.getCommitsCount() > 0 ? " (" + (100 * count / timeSlot.getCommitsCount()) + "%)" : "");
+    }
+
+    /**
+     * The time-axis labels: as the header row above the summary column titles (labels sit at the
+     * bottom of their cells) or as the footer row under the bars (labels at the top, blank cells
+     * under the summary columns keep them aligned). Slots without activity are greyed.
+     */
+    private static void addTimeSlotLabelsRow(RichTextReport report, List<ContributionTimeSlot> slots, int padding, ActivitySummary summary, boolean header) {
+        report.startTableRow();
+        report.addTableCell("", header ? "border: none;" : "border: none; ");
+        if (summary != null) {
+            for (int w = 0; w < summary.columns; w++) {
+                if (header) {
+                    report.addTableCell(summary.label(w), "border: none; text-align: center; vertical-align: bottom; font-size: 70%; color: grey; padding: 2px 6px;");
+                } else {
+                    report.addTableCell("", "border: none;");
+                }
+            }
+        }
+        String style = "border: none; padding: " + padding + "px; " + (header ? "padding-bottom: 0; " : "")
+                + "width: 10px; text-align: center; vertical-align: " + (header ? "bottom" : "top") + "; font-size: 80%";
+        for (ContributionTimeSlot timeSlot : slots) {
+            if (timeSlot == null) {
+                continue;
+            }
+            String slotString = timeSlot.getTimeSlot().replaceAll("\\-", "<br>");
+            boolean active = timeSlot.getCommitsCount() > 0 || timeSlot.getContributorsCount() > 0;
+            report.addTableCell(slotString + "", style + (active ? "" : "; color: #c0c0c0"));
+        }
+        report.endTableRow();
     }
 
     // Max bar length (px) for each side of the diverging churn chart. The two halves (additions above,
