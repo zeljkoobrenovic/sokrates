@@ -73,8 +73,7 @@ public class HtmlEscapeUtils {
         StringBuilder sb = new StringBuilder(value.length() + 16);
         for (byte b : value.getBytes(StandardCharsets.UTF_8)) {
             int c = b & 0xff;
-            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
-                    || c == '-' || c == '.' || c == '_' || c == '~' || c == '/') {
+            if (isUnreservedFragmentByte(c)) {
                 sb.append((char) c);
             } else {
                 sb.append('%').append(Character.toUpperCase(Character.forDigit(c >> 4, 16)))
@@ -82,5 +81,11 @@ public class HtmlEscapeUtils {
             }
         }
         return sb.toString();
+    }
+
+    /** ASCII letters and digits, the RFC 3986 unreserved marks and the slash, which stay literal in a fragment. */
+    private static boolean isUnreservedFragmentByte(int c) {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+                || c == '-' || c == '.' || c == '_' || c == '~' || c == '/';
     }
 }

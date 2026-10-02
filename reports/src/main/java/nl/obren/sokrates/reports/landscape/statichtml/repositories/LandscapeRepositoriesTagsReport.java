@@ -64,31 +64,15 @@ public class LandscapeRepositoriesTagsReport {
 
         report.startTable();
         report.addTableHeader("Tag", "# repositories", "LOC<br>(main)", "LOC<br>(test)", "LOC<br>(active)", "LOC<br>(new)", "# commits<br>(30 days)", "# contributors<br>(30 days)");
-        int tagGroupsCount[] = {0};
-        int tagCount[] = {0};
-        tagGroups.stream().filter(tagGroup -> tagGroup.getRepositoryTags().size() > 0).forEach(tagGroup -> {
-            int count[] = {0};
-            tagGroup.getRepositoryTags().stream().forEach(repositoryTag -> {
-                if (tagsMap.getTagStats(repositoryTag.getKey()) != null) count[0] += 1;
-            });
-            if (count[0] > 0) {
-                tagGroupsCount[0] += 1;
-                tagCount[0] += count[0];
-            }
-
-        });
         int index[] = {0};
         report.startUnorderedList("margin-top: 0; padding-top: 0");
         tagGroups.stream().filter(tagGroup -> tagGroup.getRepositoryTags().size() > 0).forEach(tagGroup -> {
-            int count[] = {0};
-            tagGroup.getRepositoryTags().stream().forEach(repositoryTag -> {
-                if (tagsMap.getTagStats(repositoryTag.getKey()) != null) count[0] += 1;
-            });
-            if (count[0] == 0) {
+            int count = usedTagsCount(tagGroup);
+            if (count == 0) {
                 return;
             }
             index[0] += 1;
-            String item = "<a href='#" + TAG_GROUP_ANCHOR_PREFIX + index[0] + "'><b>" + HtmlEscapeUtils.escape(tagGroup.getName()) + "</b></a> (" + count[0] + ")";
+            String item = "<a href='#" + TAG_GROUP_ANCHOR_PREFIX + index[0] + "'><b>" + HtmlEscapeUtils.escape(tagGroup.getName()) + "</b></a> (" + count + ")";
             if (StringUtils.isNotBlank(tagGroup.getDescription())) {
                 item += "<span style='color: grey;'>: " + tagGroup.getDescription() + "</span>";
             }
@@ -98,31 +82,12 @@ public class LandscapeRepositoriesTagsReport {
         report.addLineBreak();
         index[0] = 0;
         tagGroups.stream().filter(tagGroup -> tagGroup.getRepositoryTags().size() > 0).forEach(tagGroup -> {
-            int count[] = {0};
-            tagGroup.getRepositoryTags().stream().forEach(repositoryTag -> {
-                if (tagsMap.getTagStats(repositoryTag.getKey()) != null) count[0] += 1;
-            });
-            if (count[0] == 0) {
+            int count = usedTagsCount(tagGroup);
+            if (count == 0) {
                 return;
             }
             index[0] += 1;
-            report.startTableRow();
-            report.startMultiColumnTableCell(8, "");
-            report.addAnchor(TAG_GROUP_ANCHOR_PREFIX + index[0]);
-            report.startDiv("border-radius: 9px; padding: 6px; margin-top: 16px; border: 1px solid lightgrey; background-color: " + tagGroup.getColor());
-            report.addText(tagGroup.getName() + " (" + count[0] + ")");
-            if (StringUtils.isNotBlank(tagGroup.getDescription())) {
-                report.addHtmlContent("<span style='color: grey;'>: " + tagGroup.getDescription() + "</span>");
-            }
-            addTagGroupSummary(tagGroup, report);
-            addDependencyLinks(report, index);
-
-            report.endTableCell();
-            report.endTableRow();
-            tagGroup.getRepositoryTags().stream()
-                    .filter(t -> (tagsMap.getTagStats(t.getKey()) != null))
-                    .sorted((a, b) -> tagsMap.getTagStats(b.getKey()).getRepositoryAnalysisResults().size() - tagsMap.getTagStats(a.getKey()).getRepositoryAnalysisResults().size())
-                    .forEach(repositoryTag -> addTagRow(report, repositoryTag.getTag(), repositoryTag, tagGroup.getColor()));
+            addTagGroupRows(report, tagGroup, count, index);
         });
         if (tagsMap.containsKey("")) {
             report.addMultiColumnTableCell("&nbsp;", 8);
@@ -132,6 +97,36 @@ public class LandscapeRepositoriesTagsReport {
 
 
         visualizeTagRepositories(report);
+    }
+
+    /** The group's tags that some repository carries. */
+    private int usedTagsCount(TagGroup tagGroup) {
+        int count[] = {0};
+        tagGroup.getRepositoryTags().stream().forEach(repositoryTag -> {
+            if (tagsMap.getTagStats(repositoryTag.getKey()) != null) count[0] += 1;
+        });
+        return count[0];
+    }
+
+    /** The group's header row (anchor, name, description, summary, dependency links) and one row per used tag, most repositories first. */
+    private void addTagGroupRows(RichTextReport report, TagGroup tagGroup, int count, int[] index) {
+        report.startTableRow();
+        report.startMultiColumnTableCell(8, "");
+        report.addAnchor(TAG_GROUP_ANCHOR_PREFIX + index[0]);
+        report.startDiv("border-radius: 9px; padding: 6px; margin-top: 16px; border: 1px solid lightgrey; background-color: " + tagGroup.getColor());
+        report.addText(tagGroup.getName() + " (" + count + ")");
+        if (StringUtils.isNotBlank(tagGroup.getDescription())) {
+            report.addHtmlContent("<span style='color: grey;'>: " + tagGroup.getDescription() + "</span>");
+        }
+        addTagGroupSummary(tagGroup, report);
+        addDependencyLinks(report, index);
+
+        report.endTableCell();
+        report.endTableRow();
+        tagGroup.getRepositoryTags().stream()
+                .filter(t -> (tagsMap.getTagStats(t.getKey()) != null))
+                .sorted((a, b) -> tagsMap.getTagStats(b.getKey()).getRepositoryAnalysisResults().size() - tagsMap.getTagStats(a.getKey()).getRepositoryAnalysisResults().size())
+                .forEach(repositoryTag -> addTagRow(report, repositoryTag.getTag(), repositoryTag, tagGroup.getColor()));
     }
 
     private void addDependencyLinks(RichTextReport report, int[] index) {

@@ -72,44 +72,37 @@ public class KotlinHeuristicUnitsExtractor extends CStyleHeuristicUnitsExtractor
         // Interface methods should have exactly 1 'fun', implemented methods should also have 1 'fun'
         // But if the unit has multiple 'fun' keywords, it means the original extractor 
         // incorrectly included multiple methods due to missing braces (interface case)
-        
+
         int startLine = unit.getStartLine() - 1; // Convert to 0-based index
         int endLine = Math.min(lines.size(), startLine + unit.getLinesOfCode());
-        
-        if (startLine >= 0 && startLine < lines.size()) {
-            int funCount = 0;
-            int firstFunLine = -1;
-            boolean hasOpeningBrace = false;
-            
-            // Count 'fun' keywords and check for opening braces
-            for (int i = startLine; i < endLine; i++) {
-                String line = lines.get(i).trim();
-                
-                if (line.contains("fun ")) {
-                    funCount++;
-                    if (firstFunLine == -1) {
-                        firstFunLine = i;
-                    }
-                }
-                
-                // Check for opening brace (but not in strings/comments)
-                if (line.contains("{") && !line.trim().startsWith("//") && !isInString(line, "{")) {
-                    hasOpeningBrace = true;
-                }
-            }
-            
-            // If we have exactly 1 'fun' and no opening brace, it's an interface method
-            if (funCount == 1 && !hasOpeningBrace) {
-                return true;
-            }
-            
-            // If we have multiple 'fun' keywords, the first one is likely an interface method
-            // that got merged with subsequent methods due to missing braces
-            if (funCount > 1) {
-                return true; // This unit represents multiple functions, first is interface method
+
+        if (startLine < 0 || startLine >= lines.size()) {
+            return false;
+        }
+        int funCount = countFunKeywords(lines, startLine, endLine);
+        // Exactly 1 'fun' and no opening brace: an interface method. Multiple 'fun' keywords: the first
+        // one is likely an interface method that got merged with subsequent methods due to missing braces.
+        return (funCount == 1 && !hasOpeningBrace(lines, startLine, endLine)) || funCount > 1;
+    }
+
+    private static int countFunKeywords(List<String> lines, int startLine, int endLine) {
+        int funCount = 0;
+        for (int i = startLine; i < endLine; i++) {
+            if (lines.get(i).trim().contains("fun ")) {
+                funCount++;
             }
         }
-        
+        return funCount;
+    }
+
+    /** An opening brace outside line comments and strings. */
+    private boolean hasOpeningBrace(List<String> lines, int startLine, int endLine) {
+        for (int i = startLine; i < endLine; i++) {
+            String line = lines.get(i).trim();
+            if (line.contains("{") && !line.trim().startsWith("//") && !isInString(line, "{")) {
+                return true;
+            }
+        }
         return false;
     }
     

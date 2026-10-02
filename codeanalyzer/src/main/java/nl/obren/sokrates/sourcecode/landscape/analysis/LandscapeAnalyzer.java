@@ -102,43 +102,13 @@ public class LandscapeAnalyzer {
         DependenciesCreator subLandscapesViaSameName = new DependenciesCreator();
 
         try {
-            String json = FileUtils.readFileToString(landscapeConfigurationFile, StandardCharsets.UTF_8);
-            File infoFile = new File(landscapeConfigFile.getParentFile(), "info.json");
-            String jsonInfo = infoFile.exists() ? FileUtils.readFileToString(infoFile, StandardCharsets.UTF_8) : null;
-            this.landscapeConfiguration = (LandscapeConfiguration) new JsonMapper().getObject(json, LandscapeConfiguration.class);
-            if (jsonInfo != null) {
-                LandscapeInfo info = (LandscapeInfo) new JsonMapper().getObject(jsonInfo, LandscapeInfo.class);
-                landscapeConfiguration.setSubLandscapes(info.getSubLandscapes());
-                landscapeConfiguration.setRepositories(info.getRepositories());
-            }
+            loadConfiguration(landscapeConfigFile);
             landscapeAnalysisResults.setConfiguration(landscapeConfiguration);
             landscapeConfiguration.getRepositories().forEach(link -> {
                 LOG.info("Analysing " + link.getAnalysisResultsPath() + "...");
                 CodeAnalysisResults repositoryAnalysisResults = this.getRepositoryAnalysisResults(link);
                 if (repositoryAnalysisResults != null) {
-                    String repositoryName = repositoryAnalysisResults.getMetadata().getName();
-                    if (!landscapeConfiguration.isIncludeOnlyOneRepositoryWithSameName() || !repositoryNames.contains(repositoryName)) {
-                        repositoryNames.add(repositoryName);
-                        List<FileExport> files = this.getRepositoryFiles(repositoryName, link, repositoryAnalysisResults.getCodeConfiguration());
-                        landscapeAnalysisResults.getRepositoryAnalysisResults().add(new RepositoryAnalysisResults(link, repositoryAnalysisResults, files));
-                        repositoryAnalysisResults.getContributorsAnalysisResults().getContributors().forEach(contributor -> {
-                            contributor.getCommitDates().forEach(commitDate -> {
-                                if (landscapeAnalysisResults.getFirstCommitDate().isEmpty() || commitDate.compareTo(landscapeAnalysisResults.getFirstCommitDate()) < 0) {
-                                    landscapeAnalysisResults.setFirstCommitDate(commitDate);
-                                }
-                                if (landscapeAnalysisResults.getLatestCommitDate().isEmpty() || commitDate.compareTo(landscapeAnalysisResults.getLatestCommitDate()) > 0) {
-                                    landscapeAnalysisResults.setLatestCommitDate(commitDate);
-                                    DateUtils.setLatestCommitDate(commitDate);
-                                }
-                            });
-                        });
-                    }
-                    String level1SubLandscape = link.getAnalysisResultsPath().replaceAll("/.*", "");
-                    landscapeAnalysisResults.getLevel1SubLandscapes().add(level1SubLandscape);
-                    repositoryAnalysisResults.getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).forEach(contributor -> {
-                        subLandscapesViaContributors.add("[" + level1SubLandscape + "]", contributor.getEmail());
-                    });
-                    subLandscapesViaSameName.add("[" + level1SubLandscape + "]", repositoryName);
+                    addRepository(landscapeAnalysisResults, link, repositoryAnalysisResults, repositoryNames, subLandscapesViaContributors, subLandscapesViaSameName);
                 }
             });
             landscapeAnalysisResults.setSubLandscapeDependenciesViaRepositoriesWithSameContributors(subLandscapesViaContributors.getDependencies());
@@ -152,6 +122,52 @@ public class LandscapeAnalyzer {
         updatePeopleDependencies(landscapeAnalysisResults);
 
         return landscapeAnalysisResults;
+    }
+
+    /** config.json, completed with the sub-landscapes and repository links of the sibling info.json when present. */
+    private void loadConfiguration(File landscapeConfigFile) throws IOException {
+        String json = FileUtils.readFileToString(landscapeConfigurationFile, StandardCharsets.UTF_8);
+        File infoFile = new File(landscapeConfigFile.getParentFile(), "info.json");
+        String jsonInfo = infoFile.exists() ? FileUtils.readFileToString(infoFile, StandardCharsets.UTF_8) : null;
+        this.landscapeConfiguration = (LandscapeConfiguration) new JsonMapper().getObject(json, LandscapeConfiguration.class);
+        if (jsonInfo != null) {
+            LandscapeInfo info = (LandscapeInfo) new JsonMapper().getObject(jsonInfo, LandscapeInfo.class);
+            landscapeConfiguration.setSubLandscapes(info.getSubLandscapes());
+            landscapeConfiguration.setRepositories(info.getRepositories());
+        }
+    }
+
+    /**
+     * Registers one repository: its results and files (unless a same-named one is already in and only one is allowed),
+     * the landscape's first/latest commit dates, and the level-1 sub-landscape links via active contributors and names.
+     */
+    private void addRepository(LandscapeAnalysisResults landscapeAnalysisResults, SokratesRepositoryLink link, CodeAnalysisResults repositoryAnalysisResults,
+                               Set<String> repositoryNames, DependenciesCreator subLandscapesViaContributors, DependenciesCreator subLandscapesViaSameName) {
+        String repositoryName = repositoryAnalysisResults.getMetadata().getName();
+        if (!landscapeConfiguration.isIncludeOnlyOneRepositoryWithSameName() || !repositoryNames.contains(repositoryName)) {
+            repositoryNames.add(repositoryName);
+            List<FileExport> files = this.getRepositoryFiles(repositoryName, link, repositoryAnalysisResults.getCodeConfiguration());
+            landscapeAnalysisResults.getRepositoryAnalysisResults().add(new RepositoryAnalysisResults(link, repositoryAnalysisResults, files));
+            repositoryAnalysisResults.getContributorsAnalysisResults().getContributors().forEach(contributor -> {
+                contributor.getCommitDates().forEach(commitDate -> updateCommitDateRange(landscapeAnalysisResults, commitDate));
+            });
+        }
+        String level1SubLandscape = link.getAnalysisResultsPath().replaceAll("/.*", "");
+        landscapeAnalysisResults.getLevel1SubLandscapes().add(level1SubLandscape);
+        repositoryAnalysisResults.getContributorsAnalysisResults().getContributors().stream().filter(c -> c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS)).forEach(contributor -> {
+            subLandscapesViaContributors.add("[" + level1SubLandscape + "]", contributor.getEmail());
+        });
+        subLandscapesViaSameName.add("[" + level1SubLandscape + "]", repositoryName);
+    }
+
+    private static void updateCommitDateRange(LandscapeAnalysisResults landscapeAnalysisResults, String commitDate) {
+        if (landscapeAnalysisResults.getFirstCommitDate().isEmpty() || commitDate.compareTo(landscapeAnalysisResults.getFirstCommitDate()) < 0) {
+            landscapeAnalysisResults.setFirstCommitDate(commitDate);
+        }
+        if (landscapeAnalysisResults.getLatestCommitDate().isEmpty() || commitDate.compareTo(landscapeAnalysisResults.getLatestCommitDate()) > 0) {
+            landscapeAnalysisResults.setLatestCommitDate(commitDate);
+            DateUtils.setLatestCommitDate(commitDate);
+        }
     }
 
     private TeamsConfig getTeams() {
