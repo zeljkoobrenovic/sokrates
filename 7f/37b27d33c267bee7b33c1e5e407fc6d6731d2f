@@ -1,0 +1,27 @@
+CHANGELOG.md
+  s_40c0e74316fcc6::t_bbd9bd53217696 30-37
+CLAUDE.md
+  s_40c0e74316fcc6::t_bbd9bd53217696 50
+cli/src/main/java/nl/obren/sokrates/cli/PostAnalysisHook.java
+  s_40c0e74316fcc6::t_bbd9bd53217696 18,28
+cli/src/test/java/nl/obren/sokrates/cli/PostAnalysisHookTest.java
+  s_40c0e74316fcc6::t_bbd9bd53217696 27-28
+README.md
+  s_40c0e74316fcc6::t_d15f7db96529dc 117
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "7f37b27d33c267bee7b33c1e5e407fc6d6731d2f",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
