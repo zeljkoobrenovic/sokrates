@@ -1,0 +1,23 @@
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportFileExporter.java
+  s_40c0e74316fcc6::t_8c6187360dce2d 33
+  s_40c0e74316fcc6::t_3dbab538d2270a 501-509,528-530,652-654,724-726,815-817,877-879,1267-1281,1283,1285-1288,1290-1294,1296,1298-1329,1331-1337
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/landscape/analysis/LandscapeAnalyzer.java
+  s_40c0e74316fcc6::t_3dbab538d2270a 33,425-438,454-458,464-471,479-482
+  s_40c0e74316fcc6::t_8b397efd14035f 483-485
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "ed2693d23519650297646f72d028bfa790e90895",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
