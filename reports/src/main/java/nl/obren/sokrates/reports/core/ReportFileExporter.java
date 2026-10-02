@@ -30,6 +30,7 @@ import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.function.Predicate;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -497,6 +498,15 @@ public class ReportFileExporter {
     }
 
     private static void addVisuals(RichTextReport report, CodeAnalysisResults analysisResults, File htmlExportFolder) {
+        addVisualCodeExplorers(report, analysisResults);
+        addFileVisualizations(report, analysisResults);
+        addContributorVisualizations(report, analysisResults);
+        addComponentVisualizations(report, analysisResults);
+        addFileDependencyVisualizations(report, analysisResults);
+        addUnitVisualizations(report, analysisResults);
+    }
+
+    private static void addVisualCodeExplorers(RichTextReport report, CodeAnalysisResults analysisResults) {
         AspectAnalysisResults main = analysisResults.getMainAspectAnalysisResults();
         AspectAnalysisResults test = analysisResults.getTestAspectAnalysisResults();
         AspectAnalysisResults build = analysisResults.getBuildAndDeployAspectAnalysisResults();
@@ -515,6 +525,9 @@ public class ReportFileExporter {
 
         report.addLineBreak();
         report.addLineBreak();
+    }
+
+    private static void addFileVisualizations(RichTextReport report, CodeAnalysisResults analysisResults) {
         report.addLevel2Header("File Visualizations");
 
         report.addParagraph("<a target='_blank' href='FileSize.html'>File size</a> views:", "margin-bottom: 0;");
@@ -636,6 +649,9 @@ public class ReportFileExporter {
         report.endTable();
 
         report.addLineBreak();
+    }
+
+    private static void addContributorVisualizations(RichTextReport report, CodeAnalysisResults analysisResults) {
         report.addLevel2Header("Contributor Visualizations");
         report.addParagraph("<a target='_blank' href='Contributors.html'>Contributor dependency</a> views:", "margin-bottom: 0;");
         report.startTable("");
@@ -705,6 +721,9 @@ public class ReportFileExporter {
         report.endTable();
 
         report.addLineBreak();
+    }
+
+    private static void addComponentVisualizations(RichTextReport report, CodeAnalysisResults analysisResults) {
         report.addLevel2Header("Components and Dependencies Visualizations");
 
         report.startTable("text-align: center");
@@ -793,6 +812,9 @@ public class ReportFileExporter {
 
         report.addLineBreak();
         report.addLineBreak();
+    }
+
+    private static void addFileDependencyVisualizations(RichTextReport report, CodeAnalysisResults analysisResults) {
         report.addLevel2Header("File Dependencies Visualizations");
 
         report.addParagraph("<a target='_blank' href='FileTemporalDependencies.html'>Temporal dependencies</a> among files:", "margin-bottom: 0;");
@@ -852,6 +874,9 @@ public class ReportFileExporter {
 
         report.addLineBreak();
         report.addLineBreak();
+    }
+
+    private static void addUnitVisualizations(RichTextReport report, CodeAnalysisResults analysisResults) {
         report.addLevel2Header("Units Visualizations");
 
         report.addParagraph("Unit <a target='_blank' href='UnitSize.html'>size</a> and <a target='_blank' href='ConditionalComplexity.html'>conditional complexity</a> views:", "margin-bottom: 0;");
@@ -874,7 +899,6 @@ public class ReportFileExporter {
         report.endTable();
 
         report.addLineBreak();
-
     }
 
     private static void addData(RichTextReport report, CodeAnalysisResults analysisResults) {
@@ -1240,99 +1264,78 @@ public class ReportFileExporter {
         indexReport.addHtmlContent("</div>");
     }
 
+    /** What the overview can link to: the flags the report list depends on. */
+    private static final class ReportAvailability {
+        final boolean mainExists, history, duplication, dependencies, concerns, controls, units, findings;
+
+        ReportAvailability(CodeAnalysisResults analysisResults, File sokratesConfigFolder) {
+            CodeConfiguration config = analysisResults.getCodeConfiguration();
+            mainExists = analysisResults.getMainAspectAnalysisResults().getFilesCount() > 0;
+            history = mainExists && config.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesConfigFolder);
+            duplication = mainExists && !analysisResults.skipDuplicationAnalysis();
+            dependencies = mainExists && !config.getAnalysis().isSkipDependencies();
+            concerns = mainExists && config.countAllConcernsDefinitions() > 1;
+            controls = mainExists && config.getGoalsAndControls().size() > 0;
+            units = mainExists && analysisResults.getUnitsAnalysisResults().getTotalNumberOfUnits() > 0;
+            File findingsFile = CodeConfigurationUtils.getDefaultSokratesFindingsFile(sokratesConfigFolder);
+            findings = findingsFile.exists() && FileUtils.sizeOf(findingsFile) > 10;
+        }
+    }
+
+    /** A report link: file (blank = not available, shown greyed), label, icon, and when it is listed. */
+    private static final class ReportEntry {
+        final String file, label, icon;
+        final Predicate<ReportAvailability> when;
+
+        ReportEntry(String file, String label, String icon, Predicate<ReportAvailability> when) {
+            this.file = file;
+            this.label = label;
+            this.icon = icon;
+            this.when = when;
+        }
+    }
+
+    // The available reports, in display order, followed by the greyed placeholders of what is not available.
+    private static final List<ReportEntry> REPORT_ENTRIES = Arrays.asList(
+            new ReportEntry("SourceCodeOverview.html", "Source Code Overview", "codebase", a -> true),
+            new ReportEntry("Components.html", "Components", "code_organization", a -> a.mainExists),
+            new ReportEntry("ComponentsAndDependencies.html", "Component Dependencies*", "dependencies", a -> a.mainExists && a.dependencies),
+            new ReportEntry("FileTemporalDependencies.html", "Temporal Dependencies", "temporal_dependency", a -> a.mainExists && a.history),
+            new ReportEntry("Duplication.html", "Duplication", "duplication", a -> a.duplication),
+            new ReportEntry("FileSize.html", "File Size", "file_size", a -> a.mainExists),
+            new ReportEntry("FileAge.html", "File Age & Freshness", "file_history", a -> a.history),
+            new ReportEntry("FileChurn.html", "File Churn", "change", a -> a.history),
+            new ReportEntry("Commits.html", "Commits", "commits", a -> a.history),
+            new ReportEntry("Contributors.html", "Contributors", "contributors", a -> a.history),
+            new ReportEntry("UnitSize.html", "Unit Size*", "unit_size", a -> a.units),
+            new ReportEntry("ConditionalComplexity.html", "Conditional Complexity*", "conditional", a -> a.units),
+            new ReportEntry("FeaturesOfInterest.html", "Features of Interest", "cross_cutting_concerns", a -> a.concerns),
+            new ReportEntry("Metrics.html", "All Metrics", "metrics", a -> true),
+            new ReportEntry("Controls.html", "Goals & Controls", "goal", a -> a.controls),
+            new ReportEntry("Notes.html", "Notes & Findings", "notes", a -> a.findings),
+            new ReportEntry("", "Components and Dependencies", "dependencies", a -> !a.mainExists && a.dependencies),
+            new ReportEntry("", "Components", "dependencies", a -> !a.mainExists && !a.dependencies),
+            new ReportEntry("", "Duplication", "duplication", a -> !a.duplication),
+            new ReportEntry("", "File Size", "file_size", a -> !a.mainExists),
+            new ReportEntry("", "File Age & Freshness", "file_history", a -> !a.history),
+            new ReportEntry("", "File Churn", "change", a -> !a.history),
+            new ReportEntry("", "Temporal Dependencies", "temporal_dependency", a -> !a.history),
+            new ReportEntry("", "Contributors", "contributors", a -> !a.history),
+            new ReportEntry("", "Unit Size", "unit_size", a -> !a.units),
+            new ReportEntry("", "Conditional Complexity", "conditional", a -> !a.units),
+            new ReportEntry("ComponentsAndDependencies.html", "Component Dependencies*", "dependencies", a -> !a.dependencies),
+            new ReportEntry("", "Features of Interest", "cross_cutting_concerns", a -> !a.concerns),
+            new ReportEntry("", "Goals & Controls", "goal", a -> !a.controls),
+            new ReportEntry("", "Notes & Findings", "notes", a -> !a.findings));
+
     private static List<String[]> getReportsList(CodeAnalysisResults analysisResults, File sokratesConfigFolder) {
+        ReportAvailability availability = new ReportAvailability(analysisResults, sokratesConfigFolder);
         List<String[]> list = new ArrayList<>();
-
-        CodeConfiguration config = analysisResults.getCodeConfiguration();
-        boolean mainExists = analysisResults.getMainAspectAnalysisResults().getFilesCount() > 0;
-        boolean showHistoryReport = mainExists && config.getFileHistoryAnalysis().filesHistoryImportPathExists(sokratesConfigFolder);
-        boolean showDuplication = mainExists && !analysisResults.skipDuplicationAnalysis();
-        boolean showDependencies = mainExists && !config.getAnalysis().isSkipDependencies();
-        boolean showConcerns = mainExists && config.countAllConcernsDefinitions() > 1;
-        boolean showControls = mainExists && config.getGoalsAndControls().size() > 0;
-        boolean showUnits = mainExists && analysisResults.getUnitsAnalysisResults().getTotalNumberOfUnits() > 0;
-
-        File findingsFile = CodeConfigurationUtils.getDefaultSokratesFindingsFile(sokratesConfigFolder);
-
-        boolean showFindings = false;
-
-        if (findingsFile.exists()) {
-            showFindings = FileUtils.sizeOf(findingsFile) > 10;
-        }
-
-        list.add(new String[]{"SourceCodeOverview.html", "Source Code Overview", "codebase"});
-        if (mainExists) {
-            list.add(new String[]{"Components.html", "Components", "code_organization"});
-            if (showDependencies) {
-                list.add(new String[]{"ComponentsAndDependencies.html", "Component Dependencies*", "dependencies"});
-            }
-            if (showHistoryReport) {
-                list.add(new String[]{"FileTemporalDependencies.html", "Temporal Dependencies", "temporal_dependency"});
+        for (ReportEntry entry : REPORT_ENTRIES) {
+            if (entry.when.test(availability)) {
+                list.add(new String[]{entry.file, entry.label, entry.icon});
             }
         }
-
-        if (showDuplication) {
-            list.add(new String[]{"Duplication.html", "Duplication", "duplication"});
-        }
-
-        if (mainExists) {
-            list.add(new String[]{"FileSize.html", "File Size", "file_size"});
-        }
-        if (showHistoryReport) {
-            list.add(new String[]{"FileAge.html", "File Age & Freshness", "file_history"});
-            list.add(new String[]{"FileChurn.html", "File Churn", "change"});
-            list.add(new String[]{"Commits.html", "Commits", "commits"});
-            list.add(new String[]{"Contributors.html", "Contributors", "contributors"});
-        }
-        if (showUnits) {
-            list.add(new String[]{"UnitSize.html", "Unit Size*", "unit_size"});
-            list.add(new String[]{"ConditionalComplexity.html", "Conditional Complexity*", "conditional"});
-        }
-        if (showConcerns) {
-            list.add(new String[]{"FeaturesOfInterest.html", "Features of Interest", "cross_cutting_concerns"});
-        }
-        list.add(new String[]{"Metrics.html", "All Metrics", "metrics"});
-        if (showControls) {
-            list.add(new String[]{"Controls.html", "Goals & Controls", "goal"});
-        }
-
-        if (showFindings) {
-            list.add(new String[]{"Notes.html", "Notes & Findings", "notes"});
-        }
-
-        if (!mainExists) {
-            list.add(new String[]{"", showDependencies ? "Components and Dependencies" : "Components", "dependencies"});
-        }
-        if (!showDuplication) {
-            list.add(new String[]{"", "Duplication", "duplication"});
-        }
-        if (!mainExists) {
-            list.add(new String[]{"", "File Size", "file_size"});
-        }
-        if (!showHistoryReport) {
-            list.add(new String[]{"", "File Age & Freshness", "file_history"});
-            list.add(new String[]{"", "File Churn", "change"});
-            list.add(new String[]{"", "Temporal Dependencies", "temporal_dependency"});
-            list.add(new String[]{"", "Contributors", "contributors"});
-        }
-        if (!showUnits) {
-            list.add(new String[]{"", "Unit Size", "unit_size"});
-            list.add(new String[]{"", "Conditional Complexity", "conditional"});
-        }
-        if (!showDependencies) {
-            list.add(new String[]{"ComponentsAndDependencies.html", "Component Dependencies*", "dependencies"});
-        }
-        if (!showConcerns) {
-            list.add(new String[]{"", "Features of Interest", "cross_cutting_concerns"});
-        }
-        if (!showControls) {
-            list.add(new String[]{"", "Goals & Controls", "goal"});
-        }
-
-        if (!showFindings) {
-            list.add(new String[]{"", "Notes & Findings", "notes"});
-        }
-
         return list;
     }
 

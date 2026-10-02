@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.ObjIntConsumer;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -421,6 +422,20 @@ public class LandscapeAnalyzer {
         enrichFromHistoryFile(files, dataFolder, "text/otherFilesWithHistory.txt");
     }
 
+    // The numeric columns of mainFilesWithHistory.txt and the FileExport field each one fills. Columns are
+    // resolved by header name, so the older layout (without the 30d/90d columns) still loads.
+    private static final Object[][] HISTORY_COLUMNS = {
+            {"# commits", (ObjIntConsumer<FileExport>) FileExport::setCommitsCount},
+            {"# commits (30d)", (ObjIntConsumer<FileExport>) FileExport::setRecentCommitsCount30Days},
+            {"# commits (90d)", (ObjIntConsumer<FileExport>) FileExport::setRecentCommitsCount90Days},
+            {"# contributors", (ObjIntConsumer<FileExport>) FileExport::setContributorsCount},
+            {"line churn", (ObjIntConsumer<FileExport>) FileExport::setChurnTotal},
+            {"line churn (30d)", (ObjIntConsumer<FileExport>) FileExport::setChurn30Days},
+            {"line churn (90d)", (ObjIntConsumer<FileExport>) FileExport::setChurn90Days},
+            {"days since first update", (ObjIntConsumer<FileExport>) FileExport::setAgeDays},
+            {"days since last update", (ObjIntConsumer<FileExport>) FileExport::setFreshnessDays},
+    };
+
     private void enrichFromHistoryFile(List<FileExport> files, File dataFolder, String entryName) {
         String historyContent = readDataEntry(dataFolder, entryName);
         if (historyContent == null) {
@@ -431,63 +446,40 @@ public class LandscapeAnalyzer {
             if (lines.isEmpty()) {
                 return;
             }
-            // Resolve columns by header name so this tolerates both the older layout (no
-            // "# commits (30d)" column) and the newer one.
             String[] header = lines.get(0).split("\t");
             int pathCol = indexOfColumn(header, "path");
-            int commitsCol = indexOfColumn(header, "# commits");
-            int commits30Col = indexOfColumn(header, "# commits (30d)");
-            int commits90Col = indexOfColumn(header, "# commits (90d)");
-            int contributorsCol = indexOfColumn(header, "# contributors");
-            int churnCol = indexOfColumn(header, "line churn");
-            int churn30Col = indexOfColumn(header, "line churn (30d)");
-            int churn90Col = indexOfColumn(header, "line churn (90d)");
-            int ageCol = indexOfColumn(header, "days since first update");
-            int freshnessCol = indexOfColumn(header, "days since last update");
-            int lastUpdatedCol = indexOfColumn(header, "last updated");
             if (pathCol < 0) {
                 return;
             }
+            int[] columns = new int[HISTORY_COLUMNS.length];
+            for (int i = 0; i < HISTORY_COLUMNS.length; i++) {
+                columns[i] = indexOfColumn(header, (String) HISTORY_COLUMNS[i][0]);
+            }
+            int lastUpdatedCol = indexOfColumn(header, "last updated");
             Map<String, FileExport> filesByPath = new HashMap<>();
             files.forEach(file -> filesByPath.put(file.getPath(), file));
             lines.stream().skip(1).forEach(line -> {
                 String data[] = line.split("\t");
                 FileExport file = pathCol < data.length ? filesByPath.get(data[pathCol]) : null;
-                if (file != null) {
-                    if (commitsCol >= 0 && commitsCol < data.length && NumberUtils.isDigits(data[commitsCol])) {
-                        file.setCommitsCount(Integer.parseInt(data[commitsCol]));
-                    }
-                    if (commits30Col >= 0 && commits30Col < data.length && NumberUtils.isDigits(data[commits30Col])) {
-                        file.setRecentCommitsCount30Days(Integer.parseInt(data[commits30Col]));
-                    }
-                    if (commits90Col >= 0 && commits90Col < data.length && NumberUtils.isDigits(data[commits90Col])) {
-                        file.setRecentCommitsCount90Days(Integer.parseInt(data[commits90Col]));
-                    }
-                    if (contributorsCol >= 0 && contributorsCol < data.length && NumberUtils.isDigits(data[contributorsCol])) {
-                        file.setContributorsCount(Integer.parseInt(data[contributorsCol]));
-                    }
-                    if (churnCol >= 0 && churnCol < data.length && NumberUtils.isDigits(data[churnCol])) {
-                        file.setChurnTotal(Integer.parseInt(data[churnCol]));
-                    }
-                    if (churn30Col >= 0 && churn30Col < data.length && NumberUtils.isDigits(data[churn30Col])) {
-                        file.setChurn30Days(Integer.parseInt(data[churn30Col]));
-                    }
-                    if (churn90Col >= 0 && churn90Col < data.length && NumberUtils.isDigits(data[churn90Col])) {
-                        file.setChurn90Days(Integer.parseInt(data[churn90Col]));
-                    }
-                    if (ageCol >= 0 && ageCol < data.length && NumberUtils.isDigits(data[ageCol])) {
-                        file.setAgeDays(Integer.parseInt(data[ageCol]));
-                    }
-                    if (freshnessCol >= 0 && freshnessCol < data.length && NumberUtils.isDigits(data[freshnessCol])) {
-                        file.setFreshnessDays(Integer.parseInt(data[freshnessCol]));
-                    }
-                    if (lastUpdatedCol >= 0 && lastUpdatedCol < data.length) {
-                        file.setLatestCommitDate(data[lastUpdatedCol]);
-                    }
+                if (file == null) {
+                    return;
+                }
+                for (int i = 0; i < HISTORY_COLUMNS.length; i++) {
+                    applyIntColumn(file, data, columns[i], (ObjIntConsumer<FileExport>) HISTORY_COLUMNS[i][1]);
+                }
+                if (lastUpdatedCol >= 0 && lastUpdatedCol < data.length) {
+                    file.setLatestCommitDate(data[lastUpdatedCol]);
                 }
             });
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    /** Sets the field from the column when the column exists in this file and holds digits. */
+    private static void applyIntColumn(FileExport file, String[] data, int column, ObjIntConsumer<FileExport> setter) {
+        if (column >= 0 && column < data.length && NumberUtils.isDigits(data[column])) {
+            setter.accept(file, Integer.parseInt(data[column]));
         }
     }
 
