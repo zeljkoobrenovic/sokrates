@@ -117,11 +117,15 @@ public class CodeConfiguration {
     @JsonIgnore
     public static String getAbsoluteSrcRoot(String srcRoot, File configurationFile) {
         if (configurationFile != null) {
+            // Resolve against the absolute config path: a relative one such as _sokrates/config.json has
+            // no grandparent, and ".." would then fall through to the working directory's parent —
+            // generateReports -confFile _sokrates/config.json used to analyze the whole parent folder.
+            File configuration = configurationFile.getAbsoluteFile();
             File fileRelative;
             if (srcRoot.startsWith("..")) {
-                fileRelative = new File(configurationFile.getParentFile().getParentFile(), srcRoot.substring(2));
+                fileRelative = new File(configuration.getParentFile().getParentFile(), srcRoot.substring(2));
             } else {
-                fileRelative = new File(configurationFile.getParent(), srcRoot);
+                fileRelative = new File(configuration.getParent(), srcRoot);
             }
             if (fileRelative.exists()) {
                 return fileRelative.getPath();
