@@ -122,6 +122,15 @@ java -jar cli-1.0-jar-with-dependencies.jar analyzeLandscape -urls repos.txt -ai
 java -jar cli-1.0-jar-with-dependencies.jar analyze -postAnalysis 'gemini -p "check the Sokrates configuration of this repository" --yolo'
 ```
 
+The agent needs the [sokrates-skills](https://github.com/zeljkoobrenovic/sokrates-skills) to know what to do with an analysis. Install them once (and re-run to update):
+
+```bash
+java -jar cli-1.0-jar-with-dependencies.jar installSkills             # → ~/.claude/skills (Claude Code) and ~/.agents/skills (Codex, Gemini CLI, Cursor, Copilot, …)
+java -jar cli-1.0-jar-with-dependencies.jar installSkills -project    # → ./.claude/skills and ./.agents/skills of the current project instead
+```
+
+It clones the skills repository into `~/.sokrates/skills/` (no git binary needed) and links every skill into the agents' skills folders; `-target <folder>` chooses other folders, `-copy` copies instead of linking, `-source`/`-ref` pick another repository, branch or tag. An `-ai` run whose agent lacks the skills says so in the log.
+
 The hook is incremental: each run is recorded in `_sokrates/post-analysis.json` (command, head commit, date, exit code) and a repository whose head commit and command are unchanged since a successful run is skipped, so a nightly landscape only rescans what moved; `-aiForce` runs it anyway and `-aiMaxRepos <n>` bounds the runs per invocation (the next invocation continues with the repositories not yet done).
 
 **At the landscape level**, the findings of all repositories are aggregated automatically: when any repository under the root has `reports/ai-insights/<scanner>.json` files (the sokrates-skills format, written by the hook or by hand), the landscape report gets an **AI Insights** tab — every finding with its severity, confidence, scanner, group and a deep link to its evidence in the repository's own explorer, searchable (`severity:high,critical`, `min:medium`, `scanner:security-scan`, `repo:…`, plain text) and sortable, plus a per-repository view of what was scanned when — and `data/ai-insights.json` in the landscape's `data.zip` for tooling. Repositories without findings are simply absent; a landscape without any has no tab.

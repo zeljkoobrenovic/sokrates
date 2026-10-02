@@ -27,6 +27,16 @@ What to check: a pattern that deliberately named a folder above the repository â
 now). The `sokrates-skills` configuration scripts (`preview_config.py` and the proposal scripts) follow
 the new rule from the same date.
 
+### `installSkills`: the AI skills installed by Sokrates itself
+
+`sokrates installSkills` clones the [sokrates-skills](https://github.com/zeljkoobrenovic/sokrates-skills)
+repository into `~/.sokrates/skills/` (JGit, no git binary) and links every skill into the agents' skills
+folders, `~/.claude/skills` for Claude Code and `~/.agents/skills` for Codex, Gemini CLI, Cursor and
+Copilot. `-project` installs into the current project's `.claude/skills` and `.agents/skills` instead,
+`-target <folder>` anywhere else, `-copy` copies instead of linking, `-source`/`-ref` pick another
+repository, branch or tag. Re-running updates. An `-ai claude|codex|gemini` run whose agent does not have
+the skills now says so in the log. Nothing changes for existing setups made with the skills' own `install.sh`.
+
 ### Dependencies declared for what the code uses
 
 Build and dependency hygiene, found by running the sokrates-skills tech-stack scanner on Sokrates itself.

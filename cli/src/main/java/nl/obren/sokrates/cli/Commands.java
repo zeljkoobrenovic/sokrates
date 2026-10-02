@@ -30,6 +30,14 @@ public class Commands {
     public static final String UPDATE_CONFIG = "updateConfig";
     public static final String UPDATE_CONFIG_DESCRIPTION = "Updates an analysis configuration file and completes missing fields";
 
+    public static final String INSTALL_SKILLS = "installSkills";
+    public static final String INSTALL_SKILLS_DESCRIPTION = "Installs the sokrates-skills (the AI agent skills that configure Sokrates, scan an analysis and act on it; https://github.com/zeljkoobrenovic/sokrates-skills) for the agent CLIs: clones or updates the skills repository into a cache folder and links every skill into ~/.claude/skills (Claude Code) and ~/.agents/skills (Codex, Gemini CLI, Cursor, Copilot, ...), or into the folders given with -target, or with -project into the current project's .claude/skills and .agents/skills. Re-run to update. -ai claude|codex|gemini works best with these installed.";
+    public static final String ARG_SOURCE = "source";
+    public static final String ARG_REF = "ref";
+    public static final String ARG_TARGET = "target";
+    public static final String ARG_PROJECT = "project";
+    public static final String ARG_COPY = "copy";
+    public static final String ARG_CACHE_FOLDER = "cacheFolder";
     public static final String ADD_CUSTOM_TAB = "addCustomTab";
     public static final String ADD_CUSTOM_TAB_DESCRIPTION = "Adds a custom iframe tab to the repository report configuration (config.json customTabs). If a custom tab with the same label already exists, it is overwritten instead of added.";
 
@@ -151,6 +159,12 @@ public class Commands {
     private Option setName = new Option(ARG_SET_NAME, true, "[OPTIONAL] sets a repository name");
     private Option setDescription = new Option(ARG_SET_DESCRIPTION, true, "[OPTIONAL] sets a repository description");
     private Option setLogoLink = new Option(ARG_SET_LOGO_LINK, true, "[OPTIONAL] sets a repository logo link");
+    private Option source = new Option(ARG_SOURCE, true, "the skills repository to install from: a git URL or a local checkout folder (default is https://github.com/zeljkoobrenovic/sokrates-skills.git)");
+    private Option ref = new Option(ARG_REF, true, "the branch or tag of the skills repository (default is main)");
+    private Option target = new Option(ARG_TARGET, true, "a skills folder to install into (repeatable; default is ~/.claude/skills and ~/.agents/skills)");
+    private Option project = new Option(ARG_PROJECT, false, "installs into the current folder's .claude/skills and .agents/skills (a project-level install, shareable via git) instead of the home folders");
+    private Option copy = new Option(ARG_COPY, false, "copies the skill folders instead of linking them (for a Docker volume, or where symbolic links are not available); a copy does not follow later updates until installSkills runs again");
+    private Option cacheFolder = new Option(ARG_CACHE_FOLDER, true, "where the skills repository is cloned and kept up to date (default is ~/.sokrates/skills/sokrates-skills)");
     private Option url = new Option(ARG_URL, true, "the git repository URL to clone (https://..., git@host:org/repo.git, file:///...)");
     private Option urls = new Option(ARG_URLS, true, "[OPTIONAL] a text file with one git repository URL per line (blank lines and # comments ignored); each is analyzed with analyzeGitRepo into <analysisRoot>/<owner>/<repository> before the landscape is built");
 
@@ -159,6 +173,10 @@ public class Commands {
         // landscape's repository inputs is visible without opening the per-command help.
         url.setArgName("gitUrl");
         urls.setArgName("file");
+        source.setArgName("gitUrl|folder");
+        ref.setArgName("branch|tag");
+        target.setArgName("folder");
+        cacheFolder.setArgName("folder");
     }
     private Option org = new Option(ARG_ORG, true, "a GitHub organization (or user) login, e.g. junit-team; repeatable");
     private Option orgs = new Option(ARG_ORGS, true, "[OPTIONAL] a text file with one GitHub organization (or user) login per line (blank lines and # comments ignored)");
@@ -219,6 +237,7 @@ public class Commands {
         commands.add(new CommandUsage(UPDATE_PEOPLE_CONFIG_BY_USER_NAME, UPDATE_PEOPLE_CONFIG_BY_USER_NAME_DESCRIPTION, getUpdatePeopleConfigByUserNameOptions()));
         commands.add(new CommandUsage(UPDATE_CONFIG, UPDATE_CONFIG_DESCRIPTION, getUpdateConfigOptions()));
         commands.add(new CommandUsage(ADD_CUSTOM_TAB, ADD_CUSTOM_TAB_DESCRIPTION, getAddCustomTabOptions()));
+        commands.add(new CommandUsage(INSTALL_SKILLS, INSTALL_SKILLS_DESCRIPTION, getInstallSkillsOptions()));
         commands.add(new CommandUsage(EXTRACT_GIT_HISTORY, EXTRACT_GIT_HISTORY_DESCRIPTION, getExtractGitHistoryOption()));
 
         commands.add(new CommandUsage(INIT_CONVENTIONS, INIT_CONVENTIONS_DESCRIPTION, null));
@@ -362,6 +381,43 @@ public class Commands {
         help.setArgs(0);
 
         return options;
+    }
+
+    public Options getInstallSkillsOptions() {
+        Options options = new Options();
+        options.addOption(source);
+        options.addOption(ref);
+        options.addOption(target);
+        options.addOption(project);
+        options.addOption(copy);
+        options.addOption(cacheFolder);
+        options.addOption(listOnly);
+        options.addOption(help);
+        return options;
+    }
+
+    public Option getSource() {
+        return source;
+    }
+
+    public Option getRef() {
+        return ref;
+    }
+
+    public Option getTarget() {
+        return target;
+    }
+
+    public Option getProject() {
+        return project;
+    }
+
+    public Option getCopy() {
+        return copy;
+    }
+
+    public Option getCacheFolder() {
+        return cacheFolder;
     }
 
     public Options getAddCustomTabOptions() {
