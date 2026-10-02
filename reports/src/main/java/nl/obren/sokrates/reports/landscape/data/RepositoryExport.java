@@ -98,6 +98,46 @@ public class RepositoryExport {
         churn90Days = contributorsAnalysisResults.getChurn90Days();
         commitsCount180Days = contributorsAnalysisResults.getCommitsCount180Days();
 
+        collectContributors(contributorsAnalysisResults);
+        countRecentContributors(contributorsAnalysisResults, configuration);
+
+        sokratesRepositoryLink = repository.getSokratesRepositoryLink();
+
+        AspectAnalysisResults main = analysis.getMainAspectAnalysisResults();
+        AspectAnalysisResults test = analysis.getTestAspectAnalysisResults();
+        AspectAnalysisResults build = analysis.getBuildAndDeployAspectAnalysisResults();
+        AspectAnalysisResults generated = analysis.getGeneratedAspectAnalysisResults();
+        AspectAnalysisResults other = analysis.getOtherAspectAnalysisResults();
+
+        mainLinesOfCode = main.getLinesOfCode();
+        testLinesOfCode = test.getLinesOfCode();
+        generatedLinesOfCode = generated.getLinesOfCode();
+        buildAndDeployLinesOfCode = build.getLinesOfCode();
+        otherLinesOfCode = other.getLinesOfCode();
+
+        collectLanguages(main, test, build, generated, other);
+
+        FilesHistoryAnalysisResults filesHistory = analysis.getFilesHistoryAnalysisResults();
+        ageInDays = filesHistory.getAgeInDays();
+        ageYears = (int) Math.round(ageInDays / 365.0);
+        firstDate = filesHistory.getFirstDate() != null ? filesHistory.getFirstDate() : "";
+
+        if (configuration != null) {
+            reportFolderUrl = configuration.getRepositoryReportsUrlPrefix()
+                    + sokratesRepositoryLink.getHtmlReportsRoot() + "/";
+        }
+
+        addTags(tagMap, repository);
+
+        weeks = buildHistory(contributorsAnalysisResults.getContributorsPerWeek(), 52, latestCommitDate, true);
+        int historyYears = configuration != null ? configuration.getRepositoriesHistoryLimit() : 20;
+        years = buildHistory(contributorsAnalysisResults.getContributorsPerYear(), historyYears, latestCommitDate, false);
+
+        repositoryMetrics = buildMetrics(analysis, configuration);
+    }
+
+    /** The contributor emails (all, 30 days, 90 days) and the emails active per year. */
+    private void collectContributors(ContributorsAnalysisResults contributorsAnalysisResults) {
         contributors30Days = new ArrayList<>();
         contributors90Days = new ArrayList<>();
         contributors = new ArrayList<>();
@@ -115,9 +155,13 @@ public class RepositoryExport {
                         contributorYears.computeIfAbsent(year, k -> new ArrayList<>()).add(contributor.getEmail()));
             }
         });
+    }
 
-        // Recent / rookie contributor counts mirror LandscapeRepositoriesReport.addRepositoryRow:
-        // filter to contributors above the commit threshold, then by activity in the recent window.
+    /**
+     * Recent / rookie contributor counts mirror LandscapeRepositoriesReport.addRepositoryRow:
+     * filter to contributors above the commit threshold, then by activity in the recent window.
+     */
+    private void countRecentContributors(ContributorsAnalysisResults contributorsAnalysisResults, LandscapeConfiguration configuration) {
         int thresholdCommits = configuration != null ? configuration.getContributorThresholdCommits() : 1;
         List<Contributor> thresholdContributors = contributorsAnalysisResults.getContributors().stream()
                 .filter(c -> c.getCommitsCount() >= thresholdCommits)
@@ -126,21 +170,10 @@ public class RepositoryExport {
                 .filter(c -> c.isActive(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count();
         rookiesCount = (int) thresholdContributors.stream()
                 .filter(c -> c.isRookie(LandscapeReportGenerator.RECENT_THRESHOLD_DAYS)).count();
+    }
 
-        sokratesRepositoryLink = repository.getSokratesRepositoryLink();
-
-        AspectAnalysisResults main = analysis.getMainAspectAnalysisResults();
-        AspectAnalysisResults test = analysis.getTestAspectAnalysisResults();
-        AspectAnalysisResults build = analysis.getBuildAndDeployAspectAnalysisResults();
-        AspectAnalysisResults generated = analysis.getGeneratedAspectAnalysisResults();
-        AspectAnalysisResults other = analysis.getOtherAspectAnalysisResults();
-
-        mainLinesOfCode = main.getLinesOfCode();
-        testLinesOfCode = test.getLinesOfCode();
-        generatedLinesOfCode = generated.getLinesOfCode();
-        buildAndDeployLinesOfCode = build.getLinesOfCode();
-        otherLinesOfCode = other.getLinesOfCode();
-
+    /** The main language (dominant main-aspect extension), the languages per scope and across all scopes. */
+    private void collectLanguages(AspectAnalysisResults main, AspectAnalysisResults test, AspectAnalysisResults build, AspectAnalysisResults generated, AspectAnalysisResults other) {
         // The dominant main-aspect extension is the repository's main language.
         // getLinesOfCodePerExtension() is sorted by LOC descending; names look like "  *.java".
         List<NumericMetric> mainPerExtension = main.getLinesOfCodePerExtension();
@@ -162,17 +195,9 @@ public class RepositoryExport {
         Set<String> seenLangs = new LinkedHashSet<>();
         langsByScope.values().forEach(seenLangs::addAll);
         langs = new ArrayList<>(seenLangs);
+    }
 
-        FilesHistoryAnalysisResults filesHistory = analysis.getFilesHistoryAnalysisResults();
-        ageInDays = filesHistory.getAgeInDays();
-        ageYears = (int) Math.round(ageInDays / 365.0);
-        firstDate = filesHistory.getFirstDate() != null ? filesHistory.getFirstDate() : "";
-
-        if (configuration != null) {
-            reportFolderUrl = configuration.getRepositoryReportsUrlPrefix()
-                    + sokratesRepositoryLink.getHtmlReportsRoot() + "/";
-        }
-
+    private void addTags(TagMap tagMap, RepositoryAnalysisResults repository) {
         if (tagMap != null) {
             tagMap.getRepositoryTags(repository).forEach(tag -> {
                 String color = tag.getGroup() != null && StringUtils.isNotBlank(tag.getGroup().getColor())
@@ -180,12 +205,6 @@ public class RepositoryExport {
                 tags.add(new RepositoryReportData.Tag(tag.getTag(), color));
             });
         }
-
-        weeks = buildHistory(contributorsAnalysisResults.getContributorsPerWeek(), 52, latestCommitDate, true);
-        int historyYears = configuration != null ? configuration.getRepositoriesHistoryLimit() : 20;
-        years = buildHistory(contributorsAnalysisResults.getContributorsPerYear(), historyYears, latestCommitDate, false);
-
-        repositoryMetrics = buildMetrics(analysis, configuration);
     }
 
     // The languages (lowercased extensions, deduplicated, LOC-desc order) with any code in one

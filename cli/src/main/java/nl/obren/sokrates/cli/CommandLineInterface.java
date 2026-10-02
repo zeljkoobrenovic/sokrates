@@ -95,6 +95,7 @@ public class CommandLineInterface {
     private final DataExporter dataExporter = new DataExporter(this.progressFeedback);
 
     private final Commands commands = new Commands();
+    final LandscapeCommands landscapeCommands = new LandscapeCommands(this, commands);
     private final OrganizationCommands organizationCommands = new OrganizationCommands(this, commands);
     private CodeConfiguration codeConfiguration;
 
@@ -128,8 +129,8 @@ public class CommandLineInterface {
         handlers.put(Commands.INIT, this::init);
         handlers.put(Commands.GENERATE_REPORTS, this::generateReports);
         // Same implementation as updateLandscape; analyzeLandscape is the name that mirrors analyze.
-        handlers.put(Commands.ANALYZE_LANDSCAPE, args -> updateLandscape(args, Commands.ANALYZE_LANDSCAPE, Commands.ANALYZE_LANDSCAPE_DESCRIPTION));
-        handlers.put(Commands.UPDATE_LANDSCAPE, args -> updateLandscape(args, Commands.UPDATE_LANDSCAPE, Commands.UPDATE_LANDSCAPE_DESCRIPTION));
+        handlers.put(Commands.ANALYZE_LANDSCAPE, args -> landscapeCommands.updateLandscape(args, Commands.ANALYZE_LANDSCAPE, Commands.ANALYZE_LANDSCAPE_DESCRIPTION));
+        handlers.put(Commands.UPDATE_LANDSCAPE, args -> landscapeCommands.updateLandscape(args, Commands.UPDATE_LANDSCAPE, Commands.UPDATE_LANDSCAPE_DESCRIPTION));
         handlers.put(Commands.ANALYZE_GITHUB_ORG, organizationCommands::analyzeGitHubOrg);
         handlers.put(Commands.ANALYZE_GITLAB_GROUP, organizationCommands::analyzeGitLabGroup);
         handlers.put(Commands.UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME, this::updateLandscapePeopleConfigByUserName);
@@ -264,104 +265,6 @@ public class CommandLineInterface {
         }
     }
 
-    private void updateLandscape(String[] args, String commandName, String commandDescription) throws ParseException, IOException {
-        Options options = commands.getUpdateLandscapeOptions();
-        CommandLineParser parser = new DefaultParser();
-        CommandLine cmd = parser.parse(options, args);
-
-        if (cmd.hasOption(commands.getHelp().getOpt())) {
-            helpMode = true;
-            commands.usage(commandName, commands.getUpdateLandscapeOptions(), commandDescription);
-            return;
-        }
-
-        startTimeoutIfDefined(cmd);
-
-        String strRootPath = cmd.getOptionValue(commands.getAnalysisRoot().getOpt());
-        if (!cmd.hasOption(commands.getAnalysisRoot().getOpt())) {
-            strRootPath = ".";
-        }
-
-        List<String> urls = collectRepositoryUrls(cmd);
-        if (urls == null) {
-            return;
-        }
-
-        File root = new File(strRootPath);
-        if (!root.exists()) {
-            if (urls.isEmpty()) {
-                LOG.error("The analysis root \"" + root.getPath() + "\" does not exist.");
-                return;
-            }
-            // With repository URLs the root is where the analyses will be created.
-            root.mkdirs();
-        }
-
-        Metadata metadata = new Metadata();
-
-        updateMetadataFromCommandLine(cmd, metadata);
-
-        String confFilePath = cmd.getOptionValue(commands.getConfFile().getOpt());
-        updateDateParam(cmd);
-
-        // Applies to the per-URL repository analyses (analyzeGitRepoInto reads it from cmd) AND to the
-        // landscape itself: its folder then holds only the config files and data/data.zip.
-        boolean dataOnly = cmd.hasOption(commands.getDataOnly().getOpt());
-        if (dataOnly) {
-            LOG.info("-" + Commands.ARG_DATA_ONLY + ": storing only the landscape's data/data.zip (no index page, contributor pages, explorers or visuals).");
-        }
-
-        boolean prune = cmd.hasOption(commands.getPrune().getOpt());
-        if (prune && urls.isEmpty()) {
-            LOG.warn("-" + Commands.ARG_PRUNE + " only applies together with -" + Commands.ARG_URL + " / -" + Commands.ARG_URLS + " (the list says which analyses are current); ignored.");
-        }
-        if (!urls.isEmpty()) {
-            RepositoryBatch batch = analyzeRepositoriesIntoLandscape(cmd, root, urls, commandName);
-            if (batch.nothingAnalyzed()) {
-                return;
-            }
-            pruneManagedAnalyses(root, urls, batch.notFound, prune);
-        }
-
-        if (cmd.hasOption(commands.getRecursive().getOpt())) {
-            List<File> landscapeConfigFiles = LandscapeAnalysisUtils.findAllSokratesLandscapeConfigFiles(root);
-            landscapeConfigFiles.forEach(landscapeConfigFile -> {
-                File landscapeFolder = landscapeConfigFile.getParentFile().getParentFile();
-                String absolutePath = landscapeFolder.getAbsolutePath().replace("/./", "/");
-                LOG.info(System.getProperty("user.dir"));
-                System.setProperty("user.dir", absolutePath);
-                LOG.info(System.getProperty("user.dir"));
-                LandscapeAnalysisCommands.update(new File(landscapeFolder.getAbsolutePath()), null, metadata, dataOnly);
-                DateUtils.reset();
-                RegexUtils.reset();
-                System.gc();
-            });
-            LOG.info("Analysed " + landscapeConfigFiles + " landscape(s):");
-            landscapeConfigFiles.forEach(landscapeConfigFile -> {
-                LOG.info(" -  " + landscapeConfigFile.getPath());
-            });
-            if (landscapeConfigFiles.size() > 0) {
-                File landscapeRoot = landscapeConfigFiles.get(landscapeConfigFiles.size() - 1).getParentFile();
-                saveExecutionStats(new File(landscapeRoot, "data"));
-                // Fold the just-written executionTimes files into the landscape's data.zip.
-                LandscapeAnalysisCommands.zipLandscapeDataFolder(landscapeRoot, !dataOnly);
-            }
-        } else {
-            File reportsFolder = LandscapeAnalysisCommands.update(root, confFilePath != null ? new File(confFilePath) : null, metadata, dataOnly);
-            saveExecutionStats(new File(reportsFolder, "data"));
-            LandscapeAnalysisCommands.zipLandscapeDataFolder(reportsFolder, !dataOnly);
-        }
-    }
-
-    /**
-     * The git URLs given to analyzeLandscape: every -url value plus the lines of the -urls file
-     * (trimmed; blank lines and # comments ignored), in order, without duplicates. Empty when none
-     * were given; null (after logging) when the -urls file cannot be read.
-     */
-    private List<String> collectRepositoryUrls(CommandLine cmd) {
-        return collectValues(cmd, commands.getUrl(), commands.getUrls());
-    }
-
     /**
      * The values of a repeatable option plus the lines of its list-file companion (trimmed; blank
      * lines and # comments ignored), in order, without duplicates. Empty when none were given; null
@@ -397,64 +300,6 @@ public class CommandLineInterface {
             }
         }
         return values;
-    }
-
-    /**
-     * analyzeLandscape's repository step: analyzeGitRepo for every URL into <root>/<owner>/<repository>.
-     * A repository whose clone fails is logged and skipped so one bad URL does not lose the batch;
-     * returns false only when nothing could be analyzed (then there is nothing to aggregate).
-     */
-    RepositoryBatch analyzeRepositoriesIntoLandscape(CommandLine cmd, File root, List<String> urls, String producer) throws IOException {
-        return analyzeRepositoriesIntoLandscape(cmd, root, urls, url -> {
-            GitRepoMetadata urlMetadata = GitRepoMetadata.fromUrl(url);
-            return new File(root, urlMetadata != null ? urlMetadata.outputFolderName() : GitRepoCloner.folderNameFromUrl(url));
-        }, producer);
-    }
-
-    /** Same, with the output folder of each URL chosen by {@code outputFolderFor} (analyzeGitHubOrg uses <org>/<repository>). */
-    RepositoryBatch analyzeRepositoriesIntoLandscape(CommandLine cmd, File root, List<String> urls, Function<String, File> outputFolderFor, String producer) throws IOException {
-        return analyzeRepositoriesIntoLandscape(cmd, root, urls, outputFolderFor, producer, Map.of());
-    }
-
-    /** Same, with what the code host's listing said about each URL ({@code listing}: url -> repository), so the report metadata needs no extra API call. */
-    RepositoryBatch analyzeRepositoriesIntoLandscape(CommandLine cmd, File root, List<String> urls, Function<String, File> outputFolderFor, String producer,
-                                                           Map<String, CodeHostRepo> listing) throws IOException {
-        RepositoryBatch batch = new RepositoryBatch();
-        int depth = 0;
-        String depthValue = cmd.getOptionValue(commands.getDepth().getOpt());
-        if (StringUtils.isNotBlank(depthValue)) {
-            if (!StringUtils.isNumeric(depthValue.trim())) {
-                LOG.error("-" + Commands.ARG_DEPTH + " must be a positive number, got '" + depthValue + "'.");
-                return batch;
-            }
-            depth = Integer.parseInt(depthValue.trim());
-        }
-        int index = 0;
-        for (String url : urls) {
-            index++;
-            LOG.info("");
-            LOG.info("=== Repository " + index + " of " + urls.size() + ": " + url + " ===");
-            File output = outputFolderFor.apply(url);
-            CloneOutcome outcome;
-            try {
-                outcome = analyzeGitRepoInto(cmd, url, output, null, depth, producer, listing.get(url));
-            } catch (Exception e) {
-                LOG.error("Analysis of " + url + " failed: " + e.getMessage());
-                outcome = CloneOutcome.FAILED;
-            }
-            (outcome == CloneOutcome.ANALYZED ? batch.analyzed : outcome == CloneOutcome.NOT_FOUND ? batch.notFound : batch.failed).add(url);
-            // Per-analysis static caches (the recursive landscape update resets them the same way).
-            DateUtils.reset();
-            RegexUtils.reset();
-        }
-        LOG.info("");
-        LOG.info("Analyzed " + batch.analyzed.size() + " of " + urls.size() + " repositories into " + root.getPath());
-        batch.failed.forEach(url -> LOG.error(" - failed: " + url));
-        batch.notFound.forEach(url -> LOG.error(" - does not exist: " + url));
-        if (batch.nothingAnalyzed()) {
-            LOG.error("No repository could be analyzed; the landscape is not updated.");
-        }
-        return batch;
     }
 
     private void updateLandscapePeopleConfigByUserName(String[] args) throws ParseException {
@@ -657,7 +502,7 @@ public class CommandLineInterface {
         NOT_FOUND
     }
 
-    private CloneOutcome analyzeGitRepoInto(CommandLine cmd, String url, File output, String branch, int depth, String producer, CodeHostRepo listed) throws IOException {
+    CloneOutcome analyzeGitRepoInto(CommandLine cmd, String url, File output, String branch, int depth, String producer, CodeHostRepo listed) throws IOException {
         File clone = Files.createTempDirectory("sokrates-clone-").toFile();
         try {
             ProcessingStopwatch.start("cloning");
@@ -734,72 +579,6 @@ public class CommandLineInterface {
         }
         String message = StringUtils.defaultString(failure.getMessage()).toLowerCase();
         return message.contains("not found") || message.contains("does not exist");
-    }
-
-    /** The outcome of a batch of clone-and-analyze steps. */
-    static class RepositoryBatch {
-        final List<String> analyzed = new ArrayList<>();
-        final List<String> failed = new ArrayList<>();
-        final List<String> notFound = new ArrayList<>();
-
-        boolean nothingAnalyzed() {
-            return analyzed.isEmpty();
-        }
-    }
-
-    /**
-     * -prune: deletes the kept analyses this tool produced (folders carrying a source.json, at any
-     * depth below root, _sokrates_landscape excluded) whose repository is no longer selected or no
-     * longer exists; a folder emptied by that goes too. Analyses without the marker — placed by hand
-     * — are never touched. Without -prune the stale analyses are only listed, with the hint.
-     */
-    void pruneManagedAnalyses(File root, Collection<String> selectedUrls, Collection<String> goneUrls, boolean prune) throws IOException {
-        Set<String> selected = selectedUrls.stream().map(AnalysisSource::normalizeUrl).collect(Collectors.toSet());
-        Set<String> gone = goneUrls.stream().map(AnalysisSource::normalizeUrl).collect(Collectors.toSet());
-        List<File> stale = new ArrayList<>();
-        collectStaleManagedAnalyses(root, selected, gone, stale);
-        if (stale.isEmpty()) {
-            return;
-        }
-        if (!prune) {
-            LOG.warn(stale.size() + " kept analysis folder(s) under " + root.getPath() + " belong to repositories that are no longer listed or no longer exist"
-                    + " (they still count in the landscape); add -" + Commands.ARG_PRUNE + " to delete them:");
-            stale.forEach(folder -> LOG.warn(" - " + root.toPath().relativize(folder.toPath())));
-            return;
-        }
-        for (File folder : stale) {
-            AnalysisSource source = AnalysisSource.read(folder);
-            String reason = source != null && gone.contains(source.getNormalizedUrl()) ? "the repository does not exist any more" : "no longer listed";
-            LOG.info("-" + Commands.ARG_PRUNE + ": deleting " + root.toPath().relativize(folder.toPath()) + " (" + reason + ").");
-            FileUtils.deleteDirectory(folder);
-            for (File parent = folder.getParentFile(); parent != null && !parent.equals(root) && isEmptyFolder(parent); parent = parent.getParentFile()) {
-                FileUtils.deleteDirectory(parent);
-            }
-        }
-    }
-
-    private static void collectStaleManagedAnalyses(File folder, Set<String> selected, Set<String> gone, List<File> stale) {
-        File[] children = folder.listFiles(File::isDirectory);
-        for (File child : children == null ? new File[0] : children) {
-            String name = child.getName();
-            if (name.equals("_sokrates_landscape") || name.equals(".git") || name.equals("_sokrates")) {
-                continue;
-            }
-            AnalysisSource source = AnalysisSource.read(child);
-            if (source != null) {
-                String url = source.getNormalizedUrl();
-                if (gone.contains(url) || !selected.contains(url)) {
-                    stale.add(child);
-                }
-            } else if (!new File(child, "config.json").exists()) {
-                collectStaleManagedAnalyses(child, selected, gone, stale);
-            }
-        }
-    }
-
-    private static boolean isEmptyFolder(File folder) {
-        String[] names = folder.list();
-        return names != null && names.length == 0;
     }
 
     /**
@@ -1388,7 +1167,6 @@ public class CommandLineInterface {
         ProcessingStopwatch.end("saving report");
     }
 
-
     private File getHtmlFolder(File reportsFolder) {
         File folder = new File(reportsFolder, Commands.ARG_HTML_REPORTS_FOLDER_NAME);
         folder.mkdirs();
@@ -1418,7 +1196,6 @@ public class CommandLineInterface {
         return settings;
     }
 
-
     public void setProgressFeedback(ProgressFeedback progressFeedback) {
         this.progressFeedback = progressFeedback;
     }
@@ -1430,6 +1207,5 @@ public class CommandLineInterface {
     public void setGitLabGroupClient(CodeHostOrgClient client) {
         organizationCommands.setGitLabGroupClient(client);
     }
-
 
 }
