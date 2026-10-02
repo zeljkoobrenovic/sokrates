@@ -5,6 +5,7 @@
 package nl.obren.sokrates.sourcecode.scoping;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
+import nl.obren.sokrates.sourcecode.SourceFileFilter;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -49,9 +50,35 @@ public class ScopingConventions {
         });
     }
 
+    /**
+     * What Sokrates itself writes next to the code: the analysis folder, a landscape folder, the git
+     * history exports and the conventions/configuration files. Never source code, so these are
+     * ignored unconditionally (see {@link #ensureSokratesOutputIgnored}) — the other conventions are
+     * only written into a configuration when a file matches them at init, and the analysis output
+     * does not exist yet on the first run, which used to put the first run's reports into the
+     * second run's main scope.
+     */
+    public static final List<Convention> SOKRATES_OUTPUT_CONVENTIONS = List.of(
+            new Convention(".*/_sokrates/.*", "", "Sokrates files"),
+            new Convention(".*/_sokrates_landscape/.*", "", "Sokrates landscape files"),
+            new Convention(".*/git[-][a-zA-Z0-9_]+[.]txt", "", "Git data exports for sokrates analyses"),
+            new Convention(".*/sokrates_.*?[.]json", "", "Sokrates conventions and configurations"));
+
+    /** Adds the {@link #SOKRATES_OUTPUT_CONVENTIONS} missing from {@code ignore} (matched by path and content pattern). */
+    public static void ensureSokratesOutputIgnored(List<SourceFileFilter> ignore) {
+        for (Convention convention : SOKRATES_OUTPUT_CONVENTIONS) {
+            boolean present = ignore.stream().anyMatch(filter -> convention.getPathPattern().equals(filter.getPathPattern())
+                    && convention.getContentPattern().equals(filter.getContentPattern()));
+            if (!present) {
+                ignore.add(convention);
+            }
+        }
+    }
+
     public void addConventions(CodeConfiguration codeConfiguration, List<SourceFile> sourceFiles) {
         LOG.info("Adding ignore conventions:");
         ConventionUtils.addConventions(ignoredFilesConventions, codeConfiguration.getIgnore(), sourceFiles);
+        ensureSokratesOutputIgnored(codeConfiguration.getIgnore());
         LOG.info("Adding test files conventions:");
         ConventionUtils.addConventions(testFilesConventions, codeConfiguration.getTest().getSourceFileFilters(), sourceFiles);
         LOG.info("Adding generated files conventions:");
@@ -606,10 +633,7 @@ public class ScopingConventions {
         ignoredFilesConventions.add(new Convention(".*/leaflet[.]spin[.]js", "", "Leaflet plugins"));
         ignoredFilesConventions.add(new Convention(".*/wicket[-]leaflet[.]js", "", "Leaflet plugins"));
 
-        ignoredFilesConventions.add(new Convention(".*/_sokrates/.*", "", "Sokrates files"));
-        ignoredFilesConventions.add(new Convention(".*/_sokrates_landscape/.*", "", "Sokrates landscape files"));
-        ignoredFilesConventions.add(new Convention(".*/git[-][a-zA-Z0-9_]+[.]txt", "", "Git data exports for sokrates analyses"));
-        ignoredFilesConventions.add(new Convention(".*/sokrates_.*?[.]json", "", "Sokrates conventions and configurations"));
+        ignoredFilesConventions.addAll(SOKRATES_OUTPUT_CONVENTIONS);
 
         ignoredFilesConventions.add(new Convention(".*/testdata/.*", "", "Test data"));
         ignoredFilesConventions.add(new Convention(".*/Godeps/_workspace/.*", "", "Go dependencies"));

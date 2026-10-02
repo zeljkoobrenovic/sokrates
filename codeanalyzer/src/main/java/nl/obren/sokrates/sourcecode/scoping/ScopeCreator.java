@@ -65,6 +65,8 @@ public class ScopeCreator {
             }
             codeConfiguration.getGoalsAndControls().addAll(customScopingConventions.getGoalsAndControls());
         }
+        // Also when custom conventions replace the standard ones: the analysis output is never source.
+        ScopingConventions.ensureSokratesOutputIgnored(codeConfiguration.getIgnore());
 
         if (StringUtils.isNotBlank(name)) {
             codeConfiguration.getMetadata().setName(name);

@@ -100,6 +100,37 @@ class AnalyzeCommandTest {
         assertTrue(new File(reports, "data/data-preview.html").exists());
     }
 
+    @Test
+    void theAnalysisOutputIsNeverAnalyzed(@TempDir Path tmp) throws Exception {
+        File repo = tmp.resolve("repo").toFile();
+        FileUtils.write(new File(repo, "src/a.ts"), "export function a(x: number): number { return x + 1; }\n", UTF_8);
+
+        new CommandLineInterface().run(new String[]{"analyze", "-srcRoot", repo.getPath()});
+        File config = new File(repo, "_sokrates/config.json");
+        assertTrue(FileUtils.readFileToString(config, UTF_8).contains(".*/_sokrates/.*"), "init ignores the analysis folder although it did not exist when the tree was scanned");
+
+        // A second run: the first run's reports are in the tree now but must not be in any scope.
+        new CommandLineInterface().run(new String[]{"analyze", "-srcRoot", repo.getPath()});
+        assertNoSokratesOutputInScopes(new File(repo, "_sokrates/reports/data/data.zip"));
+
+        // A configuration from before this rule existed (the rule removed by hand) is protected at analysis time too.
+        FileUtils.write(config, FileUtils.readFileToString(config, UTF_8).replace(".*/_sokrates/.*", ".*/nothing-like-this/.*"), UTF_8);
+        new CommandLineInterface().run(new String[]{"analyze", "-srcRoot", repo.getPath()});
+        assertNoSokratesOutputInScopes(new File(repo, "_sokrates/reports/data/data.zip"));
+        assertTrue(FileUtils.readFileToString(config, UTF_8).contains(".*/nothing-like-this/.*"), "the user's configuration file is left as it is");
+    }
+
+    private static void assertNoSokratesOutputInScopes(File dataZip) throws Exception {
+        try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(dataZip)) {
+            for (String entry : new String[]{"text/aspect_main.txt", "text/aspect_other.txt", "text/aspect_generated.txt", "text/aspect_build_and_deployment.txt", "text/aspect_test.txt"}) {
+                java.util.zip.ZipEntry e = zip.getEntry(entry);
+                if (e == null) continue;
+                String text = new String(zip.getInputStream(e).readAllBytes(), UTF_8);
+                assertFalse(text.contains("_sokrates/"), entry + " lists the analysis output:\n" + text);
+            }
+        }
+    }
+
     private static String[] sortedNames(File folder) {
         String[] names = folder.list();
         java.util.Arrays.sort(names == null ? new String[0] : names);

@@ -55,6 +55,7 @@ import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisUtils;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
 import nl.obren.sokrates.sourcecode.scoping.ScopeCreator;
+import nl.obren.sokrates.sourcecode.scoping.ScopingConventions;
 import nl.obren.sokrates.sourcecode.scoping.custom.CustomConventionsHelper;
 import nl.obren.sokrates.sourcecode.scoping.custom.CustomScopingConventions;
 import nl.obren.sokrates.sourcecode.stats.SourceFileSizeDistribution;
@@ -1498,6 +1499,8 @@ public class CommandLineInterface {
         ProcessingStopwatch.start("configuring");
         String jsonContent = FileUtils.readFileToString(sokratesConfigFile, UTF_8);
         this.codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
+        // Safety net for configurations written before init always ignored the analysis output (in memory only; the file is the user's).
+        ScopingConventions.ensureSokratesOutputIgnored(this.codeConfiguration.getIgnore());
         LanguageAnalyzerFactory.getInstance().setOverrides(codeConfiguration.getAnalysis().getAnalyzerOverrides());
 
         detailedInfo("Starting analysis based on the configuration file " + sokratesConfigFile.getPath());
