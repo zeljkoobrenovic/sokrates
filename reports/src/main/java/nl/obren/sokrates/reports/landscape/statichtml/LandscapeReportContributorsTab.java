@@ -74,28 +74,7 @@ public class LandscapeReportContributorsTab {
     private LandscapeAnalysisResults landscapeAnalysisResults;
     private File folder;
     private File reportsFolder;
-    // Contributor/rookie time-slot maps, indexed by scope (main/test/build/generated/other/unscoped),
-    // plus the all-scope key ALL_SCOPE. Each inner map is timeSlot -> distinct contributor emails. The
-    // scope tabs in the activity diagrams select among these via currentScope; ALL_SCOPE backs the
-    // "All" tab (and is the only one populated for analyses generated before per-scope contributor data
-    // existed). The leaf getters read the currentScope's inner map.
-    static final String ALL_SCOPE = "*";
-    private final Map<String, Map<String, List<String>>> contributorsPerWeekMapByScope = new LinkedHashMap<>();
-    private final Map<String, Map<String, List<String>>> rookiesPerWeekMapByScope = new LinkedHashMap<>();
-    private final Map<String, Map<String, List<String>>> contributorsPerDayMapByScope = new LinkedHashMap<>();
-    private final Map<String, Map<String, List<String>>> rookiesPerDayMapByScope = new LinkedHashMap<>();
-    private final Map<String, Map<String, List<String>>> contributorsPerMonthMapByScope = new LinkedHashMap<>();
-    private final Map<String, Map<String, List<String>>> rookiesPerMonthMapByScope = new LinkedHashMap<>();
-    private final Map<String, Map<String, List<String>>> contributorsPerYearMapByScope = new LinkedHashMap<>();
-    private final Map<String, Map<String, List<String>>> rookiesPerYearMapByScope = new LinkedHashMap<>();
-    // Per-scope first/last commit date per contributor email, derived from commitDatesByScope, so the
-    // "first/last contribution" rows stay consistent with the selected scope. email -> "yyyy-MM-dd".
-    private final Map<String, Map<String, String>> firstCommitDateByScope = new LinkedHashMap<>();
-    private final Map<String, Map<String, String>> lastCommitDateByScope = new LinkedHashMap<>();
-    // The scope whose maps the leaf getters currently read. Set before rendering each scope panel; the
-    // panels render sequentially (addScopeToggle invokes each Runnable in turn), so a single mutable
-    // field is safe. Defaults to ALL_SCOPE (the only scope when there is no scope toggle).
-    private String currentScope = ALL_SCOPE;
+    private ContributorTimeSlots timeSlots;
     private RichTextReport landscapeReport;
     private final Type type;
     private final TeamsConfig teamsConfig;
@@ -110,7 +89,8 @@ public class LandscapeReportContributorsTab {
 
         this.landscapeAnalysisResults = landscapeAnalysisResults;
 
-        populateTimeSlotMaps();
+        this.timeSlots = new ContributorTimeSlots(contributors, landscapeAnalysisResults);
+        timeSlots.populateTimeSlotMaps();
     }
 
     void addContributorsTabs(String tabId) {
@@ -240,7 +220,7 @@ public class LandscapeReportContributorsTab {
 
         // Scope selector wrapping the time-based activity diagrams (Year/Month/Week/Day). The churn and
         // commits rows filter by scope from the landscape per-scope aggregates; the contributor-count and
-        // first/last rows filter via the per-scope time-slot maps (currentScope). The per-extension
+        // first/last rows filter via the per-scope time-slot maps (timeSlots.getCurrentScope()). The per-extension
         // section below is extension-based (not scopeable), so it stays outside the toggle. When no
         // per-scope contributor data exists (older analyses) only the "All" panel is shown.
         java.util.LinkedHashMap<String, Runnable> scopePanels = new java.util.LinkedHashMap<>();
@@ -249,7 +229,7 @@ public class LandscapeReportContributorsTab {
             String label = nl.obren.sokrates.reports.generators.statichtml.ContributorsReportUtils.SCOPE_LABELS.get(scope);
             scopePanels.put(label, () -> renderActivityDiagramsForScope(scope, commitsMaxYears, significantContributorMinCommitDaysPerYear));
         });
-        scopePanels.put("All", () -> renderActivityDiagramsForScope(ALL_SCOPE, commitsMaxYears, significantContributorMinCommitDaysPerYear));
+        scopePanels.put("All", () -> renderActivityDiagramsForScope(ContributorTimeSlots.ALL_SCOPE, commitsMaxYears, significantContributorMinCommitDaysPerYear));
 
         landscapeReport.startDiv("padding: 5px; border: 1px dashed #ccc; margin-bottom: 20px");
         nl.obren.sokrates.reports.generators.statichtml.ContributorsReportUtils.addScopeToggle(landscapeReport, "landscape_activity_scope", scopePanels);
@@ -276,10 +256,10 @@ public class LandscapeReportContributorsTab {
     }
 
     // Renders the four time-based activity diagrams (Year/Month/Week/Day) for a single scope. Sets
-    // currentScope so the contributor-row getters read that scope's maps, then restores ALL_SCOPE.
+    // timeSlots.getCurrentScope() so the contributor-row getters read that scope's maps, then restores ContributorTimeSlots.ALL_SCOPE.
     private void renderActivityDiagramsForScope(String scope, int commitsMaxYears, int significantContributorMinCommitDaysPerYear) {
-        String previousScope = currentScope;
-        currentScope = scope;
+        String previousScope = timeSlots.getCurrentScope();
+        timeSlots.setCurrentScope(scope);
         try {
             landscapeReport.startSubSection("Overall Activity Per Year", "Past " + commitsMaxYears + " years");
             addContributorsPerYear(true);
@@ -306,7 +286,7 @@ public class LandscapeReportContributorsTab {
             landscapeReport.endSection();
             landscapeReport.endDetailsBlock();
         } finally {
-            currentScope = previousScope;
+            timeSlots.setCurrentScope(previousScope);
         }
     }
 
@@ -854,32 +834,8 @@ public class LandscapeReportContributorsTab {
         InfoBlocks.addActivityTrendCard(landscapeReport, value, subtitle, icon);
     }
 
-    // The churn/commits ContributionTimeSlot list for the current scope: the all-scope landscape
-    // aggregate for ALL_SCOPE, otherwise the per-scope landscape aggregate (empty list when that scope
-    // carries no data). Used by the activity charts; the contributor-count rows read the per-scope maps
-    // via currentScope independently.
-    private List<ContributionTimeSlot> scopedYear() {
-        if (ALL_SCOPE.equals(currentScope)) return landscapeAnalysisResults.getContributorsPerYear();
-        return landscapeAnalysisResults.getContributorsPerYearByScope().getOrDefault(currentScope, new ArrayList<>());
-    }
-
-    private List<ContributionTimeSlot> scopedMonth() {
-        if (ALL_SCOPE.equals(currentScope)) return landscapeAnalysisResults.getContributorsPerMonth();
-        return landscapeAnalysisResults.getContributorsPerMonthByScope().getOrDefault(currentScope, new ArrayList<>());
-    }
-
-    private List<ContributionTimeSlot> scopedWeek() {
-        if (ALL_SCOPE.equals(currentScope)) return landscapeAnalysisResults.getContributorsPerWeek();
-        return landscapeAnalysisResults.getContributorsPerWeekByScope().getOrDefault(currentScope, new ArrayList<>());
-    }
-
-    private List<ContributionTimeSlot> scopedDay() {
-        if (ALL_SCOPE.equals(currentScope)) return landscapeAnalysisResults.getContributorsPerDay();
-        return landscapeAnalysisResults.getContributorsPerDayByScope().getOrDefault(currentScope, new ArrayList<>());
-    }
-
     private void addContributorsPerYear(boolean showContributorsCount) {
-        List<ContributionTimeSlot> contributorsPerYear = scopedYear();
+        List<ContributionTimeSlot> contributorsPerYear = timeSlots.scopedYear();
         if (contributorsPerYear.size() > 0) {
             int limit = landscapeAnalysisResults.getConfiguration().getCommitsMaxYears();
             if (contributorsPerYear.size() > limit) {
@@ -899,7 +855,7 @@ public class LandscapeReportContributorsTab {
 
             landscapeReport.startTableRow();
             landscapeReport.startTableCell("border: none; height: 130px; vertical-align: bottom;");
-            int commitsCount = scopedTotalCommits();
+            int commitsCount = timeSlots.scopedTotalCommits();
             if (commitsCount > 0) {
                 addActivityTrendCard(FormattingUtils.getSmallTextForNumber(commitsCount), "commits", "commits");
             }
@@ -919,19 +875,19 @@ public class LandscapeReportContributorsTab {
             if (showContributorsCount) {
                 int maxContributors[] = {1};
                 contributorsPerYear.forEach(year -> {
-                    int count = getContributorsCountPerYear(year.getTimeSlot());
+                    int count = timeSlots.getContributorsCountPerYear(year.getTimeSlot());
                     maxContributors[0] = Math.max(maxContributors[0], count);
                 });
                 landscapeReport.startTableRow();
                 landscapeReport.startTableCell("border: none; height: 100px; vertical-align: bottom;");
-                int contributorsCount = scopedTotalContributors();
+                int contributorsCount = timeSlots.scopedTotalContributors();
                 if (contributorsCount > 0) {
                     addActivityTrendCard(FormattingUtils.getSmallTextForNumber(contributorsCount), "contributors", "contributors");
                 }
                 landscapeReport.endTableCell();
                 contributorsPerYear.forEach(year -> {
                     landscapeReport.startTableCell(style);
-                    int count = getContributorsCountPerYear(year.getTimeSlot());
+                    int count = timeSlots.getContributorsCountPerYear(year.getTimeSlot());
                     String color = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "#989898";
                     landscapeReport.addParagraph(count + "", "margin: 2px; color: " + color + ";");
                     int height = 1 + (int) (64.0 * count / maxContributors[0]);
@@ -969,7 +925,7 @@ public class LandscapeReportContributorsTab {
 
     private void addContributorsPerWeek() {
         int limit = 104;
-        List<ContributionTimeSlot> contributorsPerWeek = getContributionWeeks(scopedWeek(),
+        List<ContributionTimeSlot> contributorsPerWeek = getContributionWeeks(timeSlots.scopedWeek(),
                 limit, landscapeAnalysisResults.getLatestCommitDate());
 
         contributorsPerWeek.sort(Comparator.comparing(ContributionTimeSlot::getTimeSlot).reversed());
@@ -985,9 +941,9 @@ public class LandscapeReportContributorsTab {
             int minMaxWindow = contributorsPerWeek.size() >= 4 ? 4 : contributorsPerWeek.size();
 
             addChartRows(contributorsPerWeek, "weeks", minMaxWindow,
-                    (timeSlot, rookiesOnly) -> getContributorsPerWeek(timeSlot, rookiesOnly),
-                    (timeSlot, rookiesOnly) -> getLastContributorsPerWeek(timeSlot, true),
-                    (timeSlot, rookiesOnly) -> getLastContributorsPerWeek(timeSlot, false), 14);
+                    (timeSlot, rookiesOnly) -> timeSlots.getContributorsPerWeek(timeSlot, rookiesOnly),
+                    (timeSlot, rookiesOnly) -> timeSlots.getLastContributorsPerWeek(timeSlot, true),
+                    (timeSlot, rookiesOnly) -> timeSlots.getLastContributorsPerWeek(timeSlot, false), 14);
 
             landscapeReport.endTable();
             landscapeReport.endDiv();
@@ -998,7 +954,7 @@ public class LandscapeReportContributorsTab {
 
     private void addContributorsPerDay() {
         int limit = 180;
-        List<ContributionTimeSlot> contributorsPerDay = getContributionDays(scopedDay(),
+        List<ContributionTimeSlot> contributorsPerDay = getContributionDays(timeSlots.scopedDay(),
                 limit, landscapeAnalysisResults.getLatestCommitDate());
 
         contributorsPerDay.sort(Comparator.comparing(ContributionTimeSlot::getTimeSlot).reversed());
@@ -1014,9 +970,9 @@ public class LandscapeReportContributorsTab {
             int minMaxWindow = contributorsPerDay.size() >= 4 ? 4 : contributorsPerDay.size();
 
             addChartRows(contributorsPerDay, "days", minMaxWindow,
-                    (timeSlot, rookiesOnly) -> getContributorsPerDay(timeSlot, rookiesOnly),
-                    (timeSlot, rookiesOnly) -> getLastContributorsPerDay(timeSlot, true),
-                    (timeSlot, rookiesOnly) -> getLastContributorsPerDay(timeSlot, false), 14);
+                    (timeSlot, rookiesOnly) -> timeSlots.getContributorsPerDay(timeSlot, rookiesOnly),
+                    (timeSlot, rookiesOnly) -> timeSlots.getLastContributorsPerDay(timeSlot, true),
+                    (timeSlot, rookiesOnly) -> timeSlots.getLastContributorsPerDay(timeSlot, false), 14);
 
             landscapeReport.endTable();
             landscapeReport.endDiv();
@@ -1034,7 +990,7 @@ public class LandscapeReportContributorsTab {
 
     private void addContributorsPerMonth() {
         int limit = 24;
-        List<ContributionTimeSlot> monthlyContributions = scopedMonth();
+        List<ContributionTimeSlot> monthlyContributions = timeSlots.scopedMonth();
         List<ContributionTimeSlot> contributorsPerMonth = getContributionMonths(monthlyContributions,
                 limit, landscapeAnalysisResults.getLatestCommitDate());
 
@@ -1050,9 +1006,9 @@ public class LandscapeReportContributorsTab {
 
             int minMaxWindow = contributorsPerMonth.size() >= 3 ? 3 : contributorsPerMonth.size();
 
-            addChartRows(contributorsPerMonth, "months", minMaxWindow, (timeSlot, rookiesOnly) -> getContributorsPerMonth(timeSlot, rookiesOnly),
-                    (timeSlot, rookiesOnly) -> getLastContributorsPerMonth(timeSlot, true),
-                    (timeSlot, rookiesOnly) -> getLastContributorsPerMonth(timeSlot, false), 40);
+            addChartRows(contributorsPerMonth, "months", minMaxWindow, (timeSlot, rookiesOnly) -> timeSlots.getContributorsPerMonth(timeSlot, rookiesOnly),
+                    (timeSlot, rookiesOnly) -> timeSlots.getLastContributorsPerMonth(timeSlot, true),
+                    (timeSlot, rookiesOnly) -> timeSlots.getLastContributorsPerMonth(timeSlot, false), 40);
 
             landscapeReport.endTable();
             landscapeReport.endDiv();
@@ -1074,9 +1030,9 @@ public class LandscapeReportContributorsTab {
 
             int minMaxWindow = contributorsPerYear.size() >= 3 ? 3 : contributorsPerYear.size();
 
-            addChartRows(contributorsPerYear, "years", minMaxWindow, (timeSlot, rookiesOnly) -> getSignificantContributorsPerYear(contributors, timeSlot, rookiesOnly, landscapeAnalysisResults.getConfiguration().getSignificantContributorMinCommitDaysPerYear()),
-                    (timeSlot, rookiesOnly) -> getLastContributorsPerYear(timeSlot, true),
-                    (timeSlot, rookiesOnly) -> getLastContributorsPerYear(timeSlot, false), 64);
+            addChartRows(contributorsPerYear, "years", minMaxWindow, (timeSlot, rookiesOnly) -> timeSlots.getSignificantContributorsPerYear(contributors, timeSlot, rookiesOnly, landscapeAnalysisResults.getConfiguration().getSignificantContributorMinCommitDaysPerYear()),
+                    (timeSlot, rookiesOnly) -> timeSlots.getLastContributorsPerYear(timeSlot, true),
+                    (timeSlot, rookiesOnly) -> timeSlots.getLastContributorsPerYear(timeSlot, false), 64);
 
             landscapeReport.endTable();
             landscapeReport.endDiv();
@@ -1331,56 +1287,10 @@ public class LandscapeReportContributorsTab {
         landscapeReport.endTableRow();
     }
 
-    // Reads an inner (timeSlot -> emails) map for the current scope, falling back to an empty map when
-    // the current scope has no entries (e.g. a scope with no contributors).
-    private Map<String, List<String>> scoped(Map<String, Map<String, List<String>>> byScope) {
-        Map<String, List<String>> map = byScope.get(currentScope);
-        return map != null ? map : Collections.emptyMap();
-    }
-
-    // Total commits for the current scope: the landscape all-scope total for ALL_SCOPE, otherwise the
-    // sum of the scope's per-year commit counts. Drives the "commits" trend card so it tracks the tab.
-    private int scopedTotalCommits() {
-        if (ALL_SCOPE.equals(currentScope)) {
-            return landscapeAnalysisResults.getCommitsCount();
-        }
-        return scopedYear().stream().mapToInt(ContributionTimeSlot::getCommitsCount).sum();
-    }
-
-    // Distinct contributors for the current scope: the full contributor list for ALL_SCOPE, otherwise
-    // the union of emails across the scope's per-year map. Drives the "contributors" trend card.
-    private int scopedTotalContributors() {
-        if (ALL_SCOPE.equals(currentScope)) {
-            return contributors.size();
-        }
-        Set<String> emails = new HashSet<>();
-        scoped(contributorsPerYearMapByScope).values().forEach(emails::addAll);
-        return emails.size();
-    }
-
-    private int getContributorsCountPerYear(String year) {
-        Map<String, List<String>> map = scoped(contributorsPerYearMapByScope);
-        return map.containsKey(year) ? map.get(year).size() : 0;
-    }
-
-    private void populateTimeSlotMaps() {
-        // Always build the all-scope maps from each contributor's flat commit dates.
-        contributors.forEach(cr -> populateTimeSlotMapsForScope(cr, ALL_SCOPE, cr.getContributor().getCommitDates()));
-
-        // Build per-scope maps from each contributor's per-scope commit dates (empty for older
-        // analyses, so those scopes simply stay absent and the toggle falls back to "All" only).
-        contributors.forEach(cr -> {
-            Map<String, List<String>> byScope = cr.getContributor().getCommitDatesByScope();
-            if (byScope != null) {
-                byScope.forEach((scope, dates) -> populateTimeSlotMapsForScope(cr, scope, dates));
-            }
-        });
-    }
-
-    // Returns the scope keys (besides ALL_SCOPE) that any contributor carries data for, in the canonical
+    // Returns the scope keys (besides ContributorTimeSlots.ALL_SCOPE) that any contributor carries data for, in the canonical
     // SCOPE_LABELS order. Empty when no per-scope contributor data is present (older analyses).
     java.util.List<String> getAvailableContributorScopes() {
-        java.util.Set<String> present = contributorsPerYearMapByScope.keySet();
+        java.util.Set<String> present = timeSlots.scopesWithData();
         java.util.List<String> ordered = new ArrayList<>();
         nl.obren.sokrates.reports.generators.statichtml.ContributorsReportUtils.SCOPE_LABELS.keySet().forEach(scope -> {
             if (present.contains(scope)) {
@@ -1388,216 +1298,6 @@ public class LandscapeReportContributorsTab {
             }
         });
         return ordered;
-    }
-
-    private void populateTimeSlotMapsForScope(ContributorRepositories contributorRepositories, String scope, List<String> commitDates) {
-        if (commitDates == null || commitDates.isEmpty()) {
-            return;
-        }
-        Map<String, List<String>> perDay = contributorsPerDayMapByScope.computeIfAbsent(scope, k -> new HashMap<>());
-        Map<String, List<String>> rookiesDay = rookiesPerDayMapByScope.computeIfAbsent(scope, k -> new HashMap<>());
-        Map<String, List<String>> perWeek = contributorsPerWeekMapByScope.computeIfAbsent(scope, k -> new HashMap<>());
-        Map<String, List<String>> rookiesWeek = rookiesPerWeekMapByScope.computeIfAbsent(scope, k -> new HashMap<>());
-        Map<String, List<String>> perMonth = contributorsPerMonthMapByScope.computeIfAbsent(scope, k -> new HashMap<>());
-        Map<String, List<String>> rookiesMonth = rookiesPerMonthMapByScope.computeIfAbsent(scope, k -> new HashMap<>());
-        Map<String, List<String>> perYear = contributorsPerYearMapByScope.computeIfAbsent(scope, k -> new HashMap<>());
-        Map<String, List<String>> rookiesYear = rookiesPerYearMapByScope.computeIfAbsent(scope, k -> new HashMap<>());
-
-        commitDates.forEach(day -> {
-            String week = DateUtils.getWeekMonday(day);
-            String month = DateUtils.getMonth(day);
-            String year = DateUtils.getYear(day);
-
-            updateTimeSlotMap(contributorRepositories, perDay, rookiesDay, day, day);
-            updateTimeSlotMap(contributorRepositories, perWeek, rookiesWeek, week, week);
-            updateTimeSlotMap(contributorRepositories, perMonth, rookiesMonth, month, month + "-01");
-            updateTimeSlotMap(contributorRepositories, perYear, rookiesYear, year, year + "-01-01");
-        });
-
-        // Track this contributor's first/last commit day within the scope (min/max of its dates).
-        String email = contributorRepositories.getContributor().getEmail();
-        String min = commitDates.get(0);
-        String max = commitDates.get(0);
-        for (String d : commitDates) {
-            if (d.compareTo(min) < 0) min = d;
-            if (d.compareTo(max) > 0) max = d;
-        }
-        firstCommitDateByScope.computeIfAbsent(scope, k -> new HashMap<>()).merge(email, min, (a, b) -> a.compareTo(b) <= 0 ? a : b);
-        lastCommitDateByScope.computeIfAbsent(scope, k -> new HashMap<>()).merge(email, max, (a, b) -> a.compareTo(b) >= 0 ? a : b);
-    }
-
-    private List<String> getSignificantContributorsPerYear(List<ContributorRepositories> contributorRepositories, String year, boolean rookiesOnly, int thresholdCommitDays) {
-        if (rookiesOnly) {
-            return getLastContributorsPerYear(year, true);
-        }
-        // Count this year's commit DAYS within the current scope (per-scope dates when scoped, the flat
-        // commit dates for the all-scope tab) so "significant" contributors are scope-consistent.
-        return contributorRepositories.stream()
-                .filter(c -> scopedCommitDates(c.getContributor()).stream().filter(d -> d.startsWith(year)).count() >= thresholdCommitDays)
-                .map(c -> c.getContributor().getEmail())
-                .collect(Collectors.toList());
-    }
-
-    // This contributor's commit dates for the current scope: the flat list for ALL_SCOPE, otherwise the
-    // scope's entry from commitDatesByScope (empty if the contributor never touched that scope).
-    private List<String> scopedCommitDates(Contributor contributor) {
-        if (ALL_SCOPE.equals(currentScope)) {
-            return contributor.getCommitDates();
-        }
-        List<String> dates = contributor.getCommitDatesByScope().get(currentScope);
-        return dates != null ? dates : Collections.emptyList();
-    }
-
-    // First/last commit date for an email within the current scope (the all-scope contributor dates for
-    // ALL_SCOPE, otherwise the per-scope derived map). Empty string when the contributor has no activity
-    // in the scope, which the callers treat as "no match".
-    private String scopedFirstCommitDate(Contributor contributor) {
-        if (ALL_SCOPE.equals(currentScope)) {
-            return contributor.getFirstCommitDate();
-        }
-        Map<String, String> map = firstCommitDateByScope.get(currentScope);
-        return map != null ? map.getOrDefault(contributor.getEmail(), "") : "";
-    }
-
-    private String scopedLastCommitDate(Contributor contributor) {
-        if (ALL_SCOPE.equals(currentScope)) {
-            return contributor.getLatestCommitDate();
-        }
-        Map<String, String> map = lastCommitDateByScope.get(currentScope);
-        return map != null ? map.getOrDefault(contributor.getEmail(), "") : "";
-    }
-
-    private void updateTimeSlotMap(ContributorRepositories contributorRepositories,
-                                   Map<String, List<String>> map, Map<String, List<String>> rookiesMap, String key, String rookieDate) {
-        boolean rookie = contributorRepositories.getContributor().isRookieAtDate(rookieDate);
-
-        String email = contributorRepositories.getContributor().getEmail();
-        if (map.containsKey(key)) {
-            if (!map.get(key).contains(email)) {
-                map.get(key).add(email);
-            }
-        } else {
-            map.put(key, new ArrayList<>(Arrays.asList(email)));
-        }
-        if (rookie) {
-            if (rookiesMap.containsKey(key)) {
-                if (!rookiesMap.get(key).contains(email)) {
-                    rookiesMap.get(key).add(email);
-                }
-            } else {
-                rookiesMap.put(key, new ArrayList<>(Arrays.asList(email)));
-            }
-        }
-    }
-
-    private List<String> getContributorsPerWeek(String week, boolean rookiesOnly) {
-        Map<String, List<String>> map = scoped(rookiesOnly ? rookiesPerWeekMapByScope : contributorsPerWeekMapByScope);
-        return map.containsKey(week) ? map.get(week) : new ArrayList<>();
-    }
-
-    private List<String> getContributorsPerDay(String day, boolean rookiesOnly) {
-        Map<String, List<String>> map = scoped(rookiesOnly ? rookiesPerDayMapByScope : contributorsPerDayMapByScope);
-        return map.containsKey(day) ? map.get(day) : new ArrayList<>();
-    }
-
-    private List<String> getLastContributorsPerWeek(String week, boolean first) {
-        Map<String, String> emails = new HashMap<>();
-
-        contributors.stream()
-                .sorted((a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days())
-                .filter(c -> {
-                    String f = scopedFirstCommitDate(c.getContributor());
-                    String l = scopedLastCommitDate(c.getContributor());
-                    return !f.isEmpty() && !DateUtils.getWeekMonday(f).equals(DateUtils.getWeekMonday(l));
-                })
-                .forEach(contributorRepositories -> {
-                    Contributor contributor = contributorRepositories.getContributor();
-                    String date = first ? scopedFirstCommitDate(contributor) : scopedLastCommitDate(contributor);
-                    if (!date.isEmpty() && DateUtils.getWeekMonday(date).equals(week)) {
-                        String email = contributor.getEmail();
-                        emails.put(email, email);
-                        return;
-                    }
-                });
-
-        return new ArrayList<>(emails.values());
-    }
-
-    private List<String> getLastContributorsPerDay(String day, boolean first) {
-        Map<String, String> emails = new HashMap<>();
-
-        contributors.stream()
-                .sorted((a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days())
-                .filter(c -> {
-                    String f = scopedFirstCommitDate(c.getContributor());
-                    String l = scopedLastCommitDate(c.getContributor());
-                    return !f.isEmpty() && !f.equals(l);
-                })
-                .forEach(contributorRepositories -> {
-                    Contributor contributor = contributorRepositories.getContributor();
-                    String date = first ? scopedFirstCommitDate(contributor) : scopedLastCommitDate(contributor);
-                    if (!date.isEmpty() && date.equals(day)) {
-                        String email = contributor.getEmail();
-                        emails.put(email, email);
-                        return;
-                    }
-                });
-
-        return new ArrayList<>(emails.values());
-    }
-
-    private List<String> getContributorsPerMonth(String month, boolean rookiesOnly) {
-        Map<String, List<String>> map = scoped(rookiesOnly ? rookiesPerMonthMapByScope : contributorsPerMonthMapByScope);
-        return map.containsKey(month) ? map.get(month) : new ArrayList<>();
-    }
-
-    private List<String> getLastContributorsPerYear(String year, boolean first) {
-        Map<String, String> emails = new HashMap<>();
-
-        contributors.stream()
-                .sorted((a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days())
-                .filter(c -> {
-                    String f = scopedFirstCommitDate(c.getContributor());
-                    String l = scopedLastCommitDate(c.getContributor());
-                    return !f.isEmpty() && !DateUtils.getYear(l).equals(DateUtils.getYear(f));
-                })
-                .forEach(contributorRepositories -> {
-                    Contributor contributor = contributorRepositories.getContributor();
-                    String date = first ? scopedFirstCommitDate(contributor) : scopedLastCommitDate(contributor);
-                    if (!date.isEmpty() && DateUtils.getYear(date).equals(year)) {
-                        String email = contributor.getEmail();
-                        // only look at contributors with at least N commit days per year (within the scope)
-                        if (scopedCommitDates(contributor).size() >= landscapeAnalysisResults.getConfiguration().getSignificantContributorMinCommitDaysPerYear()) {
-                            emails.put(email, email);
-                        }
-                        return;
-                    }
-                });
-
-        return new ArrayList<>(emails.values());
-    }
-
-    private List<String> getLastContributorsPerMonth(String month, boolean first) {
-        Map<String, String> emails = new HashMap<>();
-
-        contributors.stream()
-                .sorted((a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days())
-                .filter(c -> {
-                    String f = scopedFirstCommitDate(c.getContributor());
-                    String l = scopedLastCommitDate(c.getContributor());
-                    return !f.isEmpty() && !DateUtils.getMonth(l).equals(DateUtils.getMonth(f));
-                })
-                .forEach(contributorRepositories -> {
-                    Contributor contributor = contributorRepositories.getContributor();
-                    String date = first ? scopedFirstCommitDate(contributor) : scopedLastCommitDate(contributor);
-                    if (!date.isEmpty() && DateUtils.getMonth(date).equals(month)) {
-                        String email = contributor.getEmail();
-                        emails.put(email, email);
-                        return;
-                    }
-                });
-
-        return new ArrayList<>(emails.values());
     }
 
     private boolean isContributorReport() {
