@@ -320,100 +320,98 @@ public class LandscapeRepositoriesTagsReport {
         report.startTableRow("text-align: center");
         report.startTableCell("vertical-align: top; white-space: nowrap;");
         if (StringUtils.isNotBlank(tagName)) {
-            String tooltip = getTagTooltip(tag);
-
-            String htmlFragment = "";
             String style = "vertical-align: top; cursor: help; padding: 4px; border-radius: 6px; border: 1px solid lightgrey; background-color: " + color;
-
-            if (renderLangIcons) {
-                String imageHtml = DataImageUtils.getLangDataImageDiv30(tagName);
-                htmlFragment = imageHtml + "<div style='margin: 6px; display: inline-block;'>" + tagName + "</div>";
-            } else if (StringUtils.isNoneBlank(tag.getImageLink())) {
-                int size = 36;
-                String imgStyle = "border: 1px solid grey; border-radius: 50%; padding: 1px; background-color: #fcfcfc; vertical-align: middle; margin-right: 5px; width: " + size + "px; height: " + size + "px; object-fit: contain;";
-                String imageHtml = "<img title='" + tag.getTag() + "' style=\"" + imgStyle + "\" src=\"" +
-                        tag.getImageLink() + "\">";
-                htmlFragment = imageHtml + "<div style='vertical-align: middle; display: inline-block;'>" + tagName + "</div>";
-            } else {
-                htmlFragment = tagName;
-            }
-
-            report.addContentInDivWithTooltip(htmlFragment, tooltip, style);
+            report.addContentInDivWithTooltip(tagLabelFragment(tagName, tag), getTagTooltip(tag), style);
         } else {
             report.addContentInDiv("Untagged");
         }
         report.endTableCell();
-        if (stats != null) {
-            int totalRepositoriesCount = landscapeAnalysisResults.getRepositoriesCount();
-            List<RepositoryAnalysisResults> repositoriesAnalysisResults = new ArrayList<>(stats.getRepositoryAnalysisResults());
-            repositoriesAnalysisResults.sort((a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode() - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
-            int count = repositoriesAnalysisResults.size();
-            report.startTableCell("text-align: left");
-            String repositoryPercText = FormattingUtils.getFormattedPercentage(totalRepositoriesCount > 0 ? (100.0 * count / totalRepositoriesCount) : 0);
-            report.startDetailsBlockMinimalistic("<b>" + count + "</b>" + (count == 1 ? " repository" : " repositories")
-                    + (count == 0 ? "" : " <span style='color: grey; font-size: 90%'>(" + repositoryPercText + "%)</span>"));
-            report.startDiv("border-left: 2px solid lightgrey; margin-left: 5px; font-size: 80%");
-            int maxListSize = 100;
-            repositoriesAnalysisResults.stream().limit(maxListSize).forEach(repository -> {
-                CodeAnalysisResults repositoryAnalysisResults = repository.getAnalysisResults();
-                String repositoryReportUrl = getRepositoryReportUrl(repository);
-                report.addContentInDiv(
-                        "<a href='" + repositoryReportUrl + "' target='_blank' style='margin-left: 6px'>" + HtmlEscapeUtils.escape(repositoryAnalysisResults.getMetadata().getName()) + "</a> "
-                                + "<span color='lightgrey'>(<b>"
-                                + FormattingUtils.formatCount(repositoryAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode(), "-") + "</b> LOC)</span>");
-            });
-            if (repositoriesAnalysisResults.size() > maxListSize) {
-                report.addContentInDiv("...", "margin-bottom: 10px; margin-left: 7px; font-size: 160%");
-            }
-            report.startDiv("margin-top: 12px; margin-left: 5px; margin-bottom: 8px");
-            report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + LandscapeDataExport.getTagRepositoriesFileName(tag.getKey()) + "')\">see details...</a>");
-            report.endDiv();
-            report.endDiv();
-            report.endDetailsBlock();
-            report.endTableCell();
-            int mainLoc = landscapeAnalysisResults.getMainLoc();
-            int tagMainLoc = repositoriesAnalysisResults.stream()
-                    .mapToInt(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode())
-                    .sum();
-            String mainLocPercText = FormattingUtils.getFormattedPercentage(mainLoc > 0 ? (100.0 * tagMainLoc / mainLoc) : 0);
-            report.addTableCell(FormattingUtils.formatCount(tagMainLoc) + " <span style='color: grey; font-size: 90%'>(" + mainLocPercText + "%)</span>", "");
-            report.addTableCell(FormattingUtils.formatCount(repositoriesAnalysisResults
-                    .stream()
-                    .mapToInt(p -> p.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCode())
-                    .sum(), "-"), "");
-            report.addTableCell(FormattingUtils.formatCount(LandscapeAnalysisResults.getLoc1YearActive(repositoriesAnalysisResults), "-"), "r");
-            report.addTableCell(FormattingUtils.formatCount(LandscapeAnalysisResults.getLocNew(repositoriesAnalysisResults), "-"), "");
-            int commitsCount30Days = landscapeAnalysisResults.getCommitsCount30Days();
-            int tagCommitsCount30Days = repositoriesAnalysisResults
-                    .stream()
-                    .mapToInt(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days())
-                    .sum();
-            String commits30DaysPercText = FormattingUtils.getFormattedPercentage(commitsCount30Days > 0 ? (100.0 * tagCommitsCount30Days / commitsCount30Days) : 0);
-            report.addTableCell(FormattingUtils.formatCount(tagCommitsCount30Days, "-") + (tagCommitsCount30Days == 0 ? "" : " <span style='color: grey; font-size: 90%'>(" + commits30DaysPercText + "%)</span>"), "");
-            int totalRecentContributorCount = landscapeAnalysisResults.getRecentContributorsCount(landscapeAnalysisResults.getContributors());
-            int recentContributorCount = getRecentContributorCount(repositoriesAnalysisResults);
-            String recentContributorsPercText = FormattingUtils.getFormattedPercentage(totalRecentContributorCount > 0 ? (100.0 * recentContributorCount / totalRecentContributorCount) : 0);
-            if (recentContributorCount > 0) {
-                report.addTableCell("<div style='vertical-align: middle; display: inline-block'>"
-                                + FormattingUtils.formatCount(recentContributorCount, "-")
-                                + "</div><div style='vertical-align: middle; display: inline-block'>"
-                                + LandscapeReportGenerator.DEVELOPER_SVG_ICON
-                                + "</div>"
-                                + (recentContributorCount == 0 ? "" : " <span style='color: grey; font-size: 90%'>(" + recentContributorsPercText + "%)</span>"),
-                        "vertical-align: middle");
-            } else {
-                report.addTableCell("-", "vertical-align: middle");
-            }
-        } else {
-            report.addTableCell("");
-            report.addTableCell("");
-            report.addTableCell("");
-            report.addTableCell("");
-            report.addTableCell("");
-            report.addTableCell("");
-        }
-
+        List<RepositoryAnalysisResults> repositoriesAnalysisResults = new ArrayList<>(stats.getRepositoryAnalysisResults());
+        repositoriesAnalysisResults.sort((a, b) -> b.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode() - a.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode());
+        addTagRepositoriesCell(report, tag, repositoriesAnalysisResults);
+        addTagMetricCells(report, repositoriesAnalysisResults);
         report.endTableRow();
+    }
+
+    /** The tag's label: language icon, the tag's own image, or plain text. */
+    private String tagLabelFragment(String tagName, RepositoryTag tag) {
+        if (renderLangIcons) {
+            String imageHtml = DataImageUtils.getLangDataImageDiv30(tagName);
+            return imageHtml + "<div style='margin: 6px; display: inline-block;'>" + tagName + "</div>";
+        } else if (StringUtils.isNoneBlank(tag.getImageLink())) {
+            int size = 36;
+            String imgStyle = "border: 1px solid grey; border-radius: 50%; padding: 1px; background-color: #fcfcfc; vertical-align: middle; margin-right: 5px; width: " + size + "px; height: " + size + "px; object-fit: contain;";
+            String imageHtml = "<img title='" + tag.getTag() + "' style=\"" + imgStyle + "\" src=\"" +
+                    tag.getImageLink() + "\">";
+            return imageHtml + "<div style='vertical-align: middle; display: inline-block;'>" + tagName + "</div>";
+        }
+        return tagName;
+    }
+
+    /** The collapsible list of the tag's repositories (largest first, at most 100 shown) with the details link. */
+    private void addTagRepositoriesCell(RichTextReport report, RepositoryTag tag, List<RepositoryAnalysisResults> repositoriesAnalysisResults) {
+        int totalRepositoriesCount = landscapeAnalysisResults.getRepositoriesCount();
+        int count = repositoriesAnalysisResults.size();
+        report.startTableCell("text-align: left");
+        String repositoryPercText = FormattingUtils.getFormattedPercentage(totalRepositoriesCount > 0 ? (100.0 * count / totalRepositoriesCount) : 0);
+        report.startDetailsBlockMinimalistic("<b>" + count + "</b>" + (count == 1 ? " repository" : " repositories")
+                + (count == 0 ? "" : " <span style='color: grey; font-size: 90%'>(" + repositoryPercText + "%)</span>"));
+        report.startDiv("border-left: 2px solid lightgrey; margin-left: 5px; font-size: 80%");
+        int maxListSize = 100;
+        repositoriesAnalysisResults.stream().limit(maxListSize).forEach(repository -> {
+            CodeAnalysisResults repositoryAnalysisResults = repository.getAnalysisResults();
+            String repositoryReportUrl = getRepositoryReportUrl(repository);
+            report.addContentInDiv(
+                    "<a href='" + repositoryReportUrl + "' target='_blank' style='margin-left: 6px'>" + HtmlEscapeUtils.escape(repositoryAnalysisResults.getMetadata().getName()) + "</a> "
+                            + "<span color='lightgrey'>(<b>"
+                            + FormattingUtils.formatCount(repositoryAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode(), "-") + "</b> LOC)</span>");
+        });
+        if (repositoriesAnalysisResults.size() > maxListSize) {
+            report.addContentInDiv("...", "margin-bottom: 10px; margin-left: 7px; font-size: 160%");
+        }
+        report.startDiv("margin-top: 12px; margin-left: 5px; margin-bottom: 8px");
+        report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + LandscapeDataExport.getTagRepositoriesFileName(tag.getKey()) + "')\">see details...</a>");
+        report.endDiv();
+        report.endDiv();
+        report.endDetailsBlock();
+        report.endTableCell();
+    }
+
+    /** Main LOC, test LOC, active and new LOC, commits in 30 days and recent contributors of the tag's repositories, with their landscape shares. */
+    private void addTagMetricCells(RichTextReport report, List<RepositoryAnalysisResults> repositoriesAnalysisResults) {
+        int mainLoc = landscapeAnalysisResults.getMainLoc();
+        int tagMainLoc = repositoriesAnalysisResults.stream()
+                .mapToInt(p -> p.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode())
+                .sum();
+        String mainLocPercText = FormattingUtils.getFormattedPercentage(mainLoc > 0 ? (100.0 * tagMainLoc / mainLoc) : 0);
+        report.addTableCell(FormattingUtils.formatCount(tagMainLoc) + " <span style='color: grey; font-size: 90%'>(" + mainLocPercText + "%)</span>", "");
+        report.addTableCell(FormattingUtils.formatCount(repositoriesAnalysisResults
+                .stream()
+                .mapToInt(p -> p.getAnalysisResults().getTestAspectAnalysisResults().getLinesOfCode())
+                .sum(), "-"), "");
+        report.addTableCell(FormattingUtils.formatCount(LandscapeAnalysisResults.getLoc1YearActive(repositoriesAnalysisResults), "-"), "r");
+        report.addTableCell(FormattingUtils.formatCount(LandscapeAnalysisResults.getLocNew(repositoriesAnalysisResults), "-"), "");
+        int commitsCount30Days = landscapeAnalysisResults.getCommitsCount30Days();
+        int tagCommitsCount30Days = repositoriesAnalysisResults
+                .stream()
+                .mapToInt(p -> p.getAnalysisResults().getContributorsAnalysisResults().getCommitsCount30Days())
+                .sum();
+        String commits30DaysPercText = FormattingUtils.getFormattedPercentage(commitsCount30Days > 0 ? (100.0 * tagCommitsCount30Days / commitsCount30Days) : 0);
+        report.addTableCell(FormattingUtils.formatCount(tagCommitsCount30Days, "-") + (tagCommitsCount30Days == 0 ? "" : " <span style='color: grey; font-size: 90%'>(" + commits30DaysPercText + "%)</span>"), "");
+        int totalRecentContributorCount = landscapeAnalysisResults.getRecentContributorsCount(landscapeAnalysisResults.getContributors());
+        int recentContributorCount = getRecentContributorCount(repositoriesAnalysisResults);
+        String recentContributorsPercText = FormattingUtils.getFormattedPercentage(totalRecentContributorCount > 0 ? (100.0 * recentContributorCount / totalRecentContributorCount) : 0);
+        if (recentContributorCount > 0) {
+            report.addTableCell("<div style='vertical-align: middle; display: inline-block'>"
+                            + FormattingUtils.formatCount(recentContributorCount, "-")
+                            + "</div><div style='vertical-align: middle; display: inline-block'>"
+                            + LandscapeReportGenerator.DEVELOPER_SVG_ICON
+                            + "</div>"
+                            + (recentContributorCount == 0 ? "" : " <span style='color: grey; font-size: 90%'>(" + recentContributorsPercText + "%)</span>"),
+                    "vertical-align: middle");
+        } else {
+            report.addTableCell("-", "vertical-align: middle");
+        }
     }
 
     private String getTagTooltip(RepositoryTag tag) {
