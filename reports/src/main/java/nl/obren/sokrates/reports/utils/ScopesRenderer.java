@@ -276,7 +276,34 @@ public class ScopesRenderer {
         if (renderTitle) {
             report.addHtmlContent("<h3>" + title + "</h3>");
         }
+        renderExplorerLinks(report);
+        boolean criteriaDefined = aspect != null && aspect.getSourceFileFilters().size() > 0;
+        if (criteriaDefined) {
+            renderCriteria(report);
+        }
+        if (filesCount == 0) {
+            report.startUnorderedList();
+            report.addListItem("There are no \"" + title.toLowerCase() + "\" files.");
+            report.endUnorderedList();
+            return;
+        }
+        if (StringUtils.isNotBlank(description)) {
+            report.startUnorderedList();
+            report.addListItem(description);
+            report.endUnorderedList();
+        }
+        report.startUnorderedList();
+        if (criteriaDefined) {
+            renderMatchesSummary(report);
+        } else {
+            report.addListItem("<b>" + RichTextRenderingUtils.renderNumber(filesCount) + "</b> files, " +
+                    "<b>" + RichTextRenderingUtils.renderNumber(linesCount) + "</b> " + metric + " ("
+                    + "<b>" + RichTextRenderingUtils.renderNumber(maxLinesOfCode > 0 ? 100.0 * linesCount / maxLinesOfCode : 0) + "%</b> vs. main code).");
+        }
+        report.endUnorderedList();
+    }
 
+    private void renderExplorerLinks(RichTextReport report) {
         if (StringUtils.isNotBlank(explorers)) {
             report.startDiv("");
             report.addHtmlContent("Explore:&nbsp;&nbsp;");
@@ -285,66 +312,43 @@ public class ScopesRenderer {
             report.addNewTabLink("sunburst", "visuals/zoomable_sunburst.html#" + explorers);
             report.endDiv();
         }
+    }
 
-        boolean criteriaDefined = aspect != null && aspect.getSourceFileFilters().size() > 0;
-        if (criteriaDefined) {
-            report.startUnorderedList();
-            report.addListItem("The following criteria are used to filter files:");
-            report.startUnorderedList();
-            aspect.getSourceFileFilters().forEach(filter -> report.addListItem(describeFilters(filter)));
-            report.endUnorderedList();
-            report.endUnorderedList();
-        }
-
-        if (filesCount == 0) {
-            report.startUnorderedList();
-            report.addListItem("There are no \"" + title.toLowerCase() + "\" files.");
-            report.endUnorderedList();
-            return;
-        }
-
-        if (StringUtils.isNotBlank(description)) {
-            report.startUnorderedList();
-            report.addListItem(description);
-            report.endUnorderedList();
-        }
+    private void renderCriteria(RichTextReport report) {
         report.startUnorderedList();
-        if (criteriaDefined) {
-            String filesFragment;
-            String filesPhrase = filesCount == 1 ? "file" : "files";
-            if (StringUtils.isNotBlank(filesListPath)) {
-                filesFragment = "<a href='#' onclick=\"return downloadDataFile('text/" + filesListPath + "')\"><b>" + filesCount + "</b> " + filesPhrase + "</a>";
-            } else {
-                filesFragment = "<b>" + filesCount + "</b> " + filesPhrase;
-            }
-            report.addListItem(filesFragment + " match" + (filesCount == 1 ? "es" : "") + " defined criteria (" +
-                    "<b>" + RichTextRenderingUtils.renderNumber(linesCount) + "</b> " + metric + ", "
-                    + "<b>" + RichTextRenderingUtils.renderNumber(linesOfCodeInMain > 0 ? 100.0 * linesCount / linesOfCodeInMain : 0) + "%</b> vs. main code)"
-                    + (fileCountPerComponent.size() == 1 ? ". All matches are in " + HtmlEscapeUtils.escape(fileCountPerComponent.get(0).getName()) + " files." : ":"));
-            report.startUnorderedList();
-            if (fileCountPerComponent.size() > 1) {
-                for (int i = 0; i < fileCountPerComponent.size(); i++) {
-                    NumericMetric fileCountMetric = fileCountPerComponent.get(i);
-                    NumericMetric linesOfCodeMetric = linesOfCode.get(i);
-                    report.addListItem("<b>" + RichTextRenderingUtils.renderNumber(fileCountMetric.getValue().intValue()) + "</b>"
-                            + " " + HtmlEscapeUtils.escape(fileCountMetric.getName()) + " files"
-                            + " (<b>" + RichTextRenderingUtils.renderNumber(linesOfCodeMetric.getValue().intValue()) + "</b> " + metric + ")");
-                }
-            }
-            report.endUnorderedList();
-            if (totalNumberOfRegexMatches > 0) {
-                report.addListItem(totalNumberOfRegexMatches == 1
-                        ? "<b>1</b> line matches the content pattern."
-                        : "<b>" + RichTextRenderingUtils.renderNumber(totalNumberOfRegexMatches) + "</b> lines match the content pattern.");
-            }
-        } else {
-            report.addListItem("<b>" + RichTextRenderingUtils.renderNumber(filesCount) + "</b> files, " +
-                    "<b>" + RichTextRenderingUtils.renderNumber(linesCount) + "</b> " + metric + " ("
-                    + "<b>" + RichTextRenderingUtils.renderNumber(maxLinesOfCode > 0 ? 100.0 * linesCount / maxLinesOfCode : 0) + "%</b> vs. main code).");
-        }
-
+        report.addListItem("The following criteria are used to filter files:");
+        report.startUnorderedList();
+        aspect.getSourceFileFilters().forEach(filter -> report.addListItem(describeFilters(filter)));
         report.endUnorderedList();
+        report.endUnorderedList();
+    }
 
+    /** How many files match the criteria, with their lines, per-component split and content-pattern matches. */
+    private void renderMatchesSummary(RichTextReport report) {
+        String filesPhrase = filesCount == 1 ? "file" : "files";
+        String filesFragment = StringUtils.isNotBlank(filesListPath)
+                ? "<a href='#' onclick=\"return downloadDataFile('text/" + filesListPath + "')\"><b>" + filesCount + "</b> " + filesPhrase + "</a>"
+                : "<b>" + filesCount + "</b> " + filesPhrase;
+        report.addListItem(filesFragment + " match" + (filesCount == 1 ? "es" : "") + " defined criteria (" +
+                "<b>" + RichTextRenderingUtils.renderNumber(linesCount) + "</b> " + metric + ", "
+                + "<b>" + RichTextRenderingUtils.renderNumber(linesOfCodeInMain > 0 ? 100.0 * linesCount / linesOfCodeInMain : 0) + "%</b> vs. main code)"
+                + (fileCountPerComponent.size() == 1 ? ". All matches are in " + HtmlEscapeUtils.escape(fileCountPerComponent.get(0).getName()) + " files." : ":"));
+        report.startUnorderedList();
+        if (fileCountPerComponent.size() > 1) {
+            for (int i = 0; i < fileCountPerComponent.size(); i++) {
+                NumericMetric fileCountMetric = fileCountPerComponent.get(i);
+                NumericMetric linesOfCodeMetric = linesOfCode.get(i);
+                report.addListItem("<b>" + RichTextRenderingUtils.renderNumber(fileCountMetric.getValue().intValue()) + "</b>"
+                        + " " + HtmlEscapeUtils.escape(fileCountMetric.getName()) + " files"
+                        + " (<b>" + RichTextRenderingUtils.renderNumber(linesOfCodeMetric.getValue().intValue()) + "</b> " + metric + ")");
+            }
+        }
+        report.endUnorderedList();
+        if (totalNumberOfRegexMatches > 0) {
+            report.addListItem(totalNumberOfRegexMatches == 1
+                    ? "<b>1</b> line matches the content pattern."
+                    : "<b>" + RichTextRenderingUtils.renderNumber(totalNumberOfRegexMatches) + "</b> lines match the content pattern.");
+        }
     }
 
     public NamedSourceCodeAspect getAspect() {

@@ -287,6 +287,47 @@ public class ContributorsReportGenerator {
         report.startTable();
 
         final List<String> pastMonths = DateUtils.getPastMonths(24, DateUtils.getAnalysisDate());
+        addMatrixMonthsHeaderRow(contributors, pastMonths);
+        addMatrixPerMonthTotals(contributors, pastMonths);
+        addMatrixWindowsHeaderRow();
+
+        contributors.sort(MATRIX_ORDER);
+        int listLimit = 500;
+        contributors.subList(0, contributors.size() > listLimit ? listLimit : contributors.size()).forEach(contributor -> addMatrixContributorRow(contributor, pastMonths));
+        report.endTable();
+        if (contributors.size() > 500) {
+            report.addParagraph("Top 500 (out of " + contributors.size() + ") items shows.");
+        }
+        report.endDiv();
+        report.endSection();
+    }
+
+    // Latest commit first; same day: more commits in the last 30 days first, then more commits overall.
+    private static final Comparator<Contributor> MATRIX_ORDER = (a, b) -> {
+        if (b.getLatestCommitDate().equals(a.getLatestCommitDate())) {
+            if (b.getCommitsCount30Days() == a.getCommitsCount30Days()) {
+                return b.getCommitsCount() - a.getCommitsCount();
+            } else {
+                return b.getCommitsCount30Days() - a.getCommitsCount30Days();
+            }
+        } else {
+            return b.getLatestCommitDate().compareTo(a.getLatestCommitDate());
+        }
+    };
+
+    /** The contributor's commit days in a month. */
+    private static int commitDaysInMonth(Contributor contributor, String month) {
+        int count[] = {0};
+        contributor.getCommitDates().forEach(date -> {
+            if (DateUtils.getMonth(date).equals(month)) {
+                count[0] += 1;
+            }
+        });
+        return count[0];
+    }
+
+    /** The header row: how many contributors were active in each of the past months. */
+    private void addMatrixMonthsHeaderRow(List<Contributor> contributors, List<String> pastMonths) {
         report.startTableRow("font-size: 80%");
         report.addTableCell("", "min-width: 200px; border: none; border: none");
         report.addTableCell("", "border: none; border: none");
@@ -297,15 +338,7 @@ public class ContributorsReportGenerator {
             report.startTableCell("font-size: 70%; border: none; color: lightgrey; text-align: center");
             int count[] = {0};
             contributors.forEach(contributor -> {
-                boolean active[] = {false};
-                contributor.getCommitDates().forEach(date -> {
-                    String month = DateUtils.getMonth(date);
-                    if (month.equals(pastMonth)) {
-                        active[0] = true;
-                        return;
-                    }
-                });
-                if (active[0]) {
+                if (commitDaysInMonth(contributor, pastMonth) > 0) {
                     count[0] += 1;
                 }
             });
@@ -314,10 +347,9 @@ public class ContributorsReportGenerator {
             report.endTableCell();
         });
         report.endTableRow();
+    }
 
-        addMatrixPerMonthTotals(contributors, pastMonths);
-
-
+    private void addMatrixWindowsHeaderRow() {
         report.startTableRow("font-size: 80%");
         report.addTableCell("", "min-width: 200px; border: none; border: none");
         report.addTableCell("30d", "max-width: 100px; text-align: center; border: none");
@@ -325,71 +357,47 @@ public class ContributorsReportGenerator {
         report.addTableCell("1y", "max-width: 100px; text-align: center; border: none");
         report.addTableCell("all time", "max-width: 100px; text-align: center; border: none");
         report.endTableRow();
+    }
 
-        Collections.sort(contributors, (a, b) -> {
-            if (b.getLatestCommitDate().equals(a.getLatestCommitDate())) {
-                if (b.getCommitsCount30Days() == a.getCommitsCount30Days()) {
-                    return b.getCommitsCount() - a.getCommitsCount();
-                } else {
-                    return b.getCommitsCount30Days() - a.getCommitsCount30Days();
-                }
+    /** One contributor: name, the four commit windows with their churn, then a dot per month sized by commit days. */
+    private void addMatrixContributorRow(Contributor contributor, List<String> pastMonths) {
+        report.startTableRow();
+        String textOpacity = contributor.getCommitsCount90Days() > 0 ? "font-weight: bold;" : "opacity: 0.4";
+        report.startTableCell("border: none; " + textOpacity);
+        if (StringUtils.isNotBlank(contributor.getEmail()) && StringUtils.isNotBlank(contributor.getUserName())) {
+            report.addHtmlContent(HtmlEscapeUtils.escape(contributor.getUserName()) + " <div style='color: grey; font-size: 80%; margin-bottom: 6px;'>&lt;" + HtmlEscapeUtils.escape(contributor.getEmail()) + "&gt;</div>");
+        } else {
+            report.addText((contributor.getUserName() + contributor.getEmail()).trim());
+        }
+        report.endTableCell();
+        // Each commits-count window shows the count with that window's line churn underneath in
+        // the same cell (+added / -deleted; omitted when the history carried no churn data).
+        String cellStyle = "text-align: center; border: none; " + textOpacity;
+        report.addTableCell(commitsCountWithChurnCell(contributor.getCommitsCount30Days(),
+                contributor.getLinesAdded30Days(), contributor.getLinesDeleted30Days()), cellStyle);
+        report.addTableCell(commitsCountWithChurnCell(contributor.getCommitsCount90Days(),
+                contributor.getLinesAdded90Days(), contributor.getLinesDeleted90Days()), cellStyle);
+        report.addTableCell(commitsCountWithChurnCell(contributor.getCommitsCount365Days(),
+                contributor.getLinesAdded365Days(), contributor.getLinesDeleted365Days()), cellStyle);
+        report.addTableCell(commitsCountWithChurnCell(contributor.getCommitsCount(),
+                contributor.getLinesAdded(), contributor.getLinesDeleted()), cellStyle);
+        int index[] = {0};
+        pastMonths.forEach(pastMonth -> {
+            int count = commitDaysInMonth(contributor, pastMonth);
+            index[0] += 1;
+            report.startTableCell("text-align: center; padding: 0; border: none; vertical-align: middle;");
+            if (count > 0) {
+                int size = 10 + (count / 4) * 4;
+                String tooltip = "Month " + pastMonth + ": " + count + (count == 1 ? " commit day" : " commit days");
+                String opacity = "" + Math.max(0.9 - (index[0] - 1) * 0.2, 0.2);
+                report.addContentInDivWithTooltip("", tooltip,
+                        "padding: 0; margin: 0; display: inline-block; background-color: #483D8B; opacity: " + opacity + "; border-radius: 50%; width: " + size + "px; height: " + size + "px;");
             } else {
-                return b.getLatestCommitDate().compareTo(a.getLatestCommitDate());
-            }
-        });
-
-        int listLimit = 500;
-        contributors.subList(0, contributors.size() > listLimit ? listLimit : contributors.size()).forEach(contributor -> {
-            report.startTableRow();
-            String textOpacity = contributor.getCommitsCount90Days() > 0 ? "font-weight: bold;" : "opacity: 0.4";
-            report.startTableCell("border: none; " + textOpacity);
-            if (StringUtils.isNotBlank(contributor.getEmail()) && StringUtils.isNotBlank(contributor.getUserName())) {
-                report.addHtmlContent(HtmlEscapeUtils.escape(contributor.getUserName()) + " <div style='color: grey; font-size: 80%; margin-bottom: 6px;'>&lt;" + HtmlEscapeUtils.escape(contributor.getEmail()) + "&gt;</div>");
-            } else {
-                report.addText((contributor.getUserName() + contributor.getEmail()).trim());
+                report.addContentInDiv("-", "color: lightgrey; font-size: 80%");
             }
             report.endTableCell();
-            // Each commits-count window shows the count with that window's line churn underneath in
-            // the same cell (+added / -deleted; omitted when the history carried no churn data).
-            String cellStyle = "text-align: center; border: none; " + textOpacity;
-            report.addTableCell(commitsCountWithChurnCell(contributor.getCommitsCount30Days(),
-                    contributor.getLinesAdded30Days(), contributor.getLinesDeleted30Days()), cellStyle);
-            report.addTableCell(commitsCountWithChurnCell(contributor.getCommitsCount90Days(),
-                    contributor.getLinesAdded90Days(), contributor.getLinesDeleted90Days()), cellStyle);
-            report.addTableCell(commitsCountWithChurnCell(contributor.getCommitsCount365Days(),
-                    contributor.getLinesAdded365Days(), contributor.getLinesDeleted365Days()), cellStyle);
-            report.addTableCell(commitsCountWithChurnCell(contributor.getCommitsCount(),
-                    contributor.getLinesAdded(), contributor.getLinesDeleted()), cellStyle);
-            int index[] = {0};
-            pastMonths.forEach(pastMonth -> {
-                int count[] = {0};
-                contributor.getCommitDates().forEach(date -> {
-                    String month = DateUtils.getMonth(date);
-                    if (month.equals(pastMonth)) {
-                        count[0] += 1;
-                    }
-                });
-                index[0] += 1;
-                report.startTableCell("text-align: center; padding: 0; border: none; vertical-align: middle;");
-                if (count[0] > 0) {
-                    int size = 10 + (count[0] / 4) * 4;
-                    String tooltip = "Month " + pastMonth + ": " + count[0] + (count[0] == 1 ? " commit day" : " commit days");
-                    String opacity = "" + Math.max(0.9 - (index[0] - 1) * 0.2, 0.2);
-                    report.addContentInDivWithTooltip("", tooltip,
-                            "padding: 0; margin: 0; display: inline-block; background-color: #483D8B; opacity: " + opacity + "; border-radius: 50%; width: " + size + "px; height: " + size + "px;");
-                } else {
-                    report.addContentInDiv("-", "color: lightgrey; font-size: 80%");
-                }
-                report.endTableCell();
-            });
-            report.endTableRow();
         });
-        report.endTable();
-        if (contributors.size() > 500) {
-            report.addParagraph("Top 500 (out of " + contributors.size() + ") items shows.");
-        }
-        report.endDiv();
-        report.endSection();
+        report.endTableRow();
     }
 
     private void renderPeopleDependencies(List<ComponentDependency> peopleDependencies,
@@ -627,35 +635,12 @@ public class ContributorsReportGenerator {
         int total[] = {0};
         contributors.forEach(contributor -> total[0] += contributionCounter.count(contributor));
         if (total[0] > 0) {
-            report.addParagraph("<b>" + FormattingUtils.formatCount(count) + "</b> " + (count == 1 ? type.toLowerCase() : type.toLowerCase() + "s") + " (" + "<b>" + FormattingUtils.formatCount(total[0]) + "</b> " + (count == 1 ? "commit" : "commits") + "):");
-            StringBuilder map = new StringBuilder("");
-            Palette palette = Palette.getDefaultPalette();
-            int index[] = {0};
-            int cumulative[] = {0};
-            contributors.forEach(contributor -> {
-                int contributorCommitsCount = contributionCounter.count(contributor);
-                cumulative[0] += contributorCommitsCount;
-                int w = (int) Math.round(600 * (double) contributorCommitsCount / total[0]);
-                int x = 620 - w;
-                index[0]++;
-                String cumulativeText = "";
-                if (index[0] > 1) {
-                    cumulativeText = "\n\ntop " + index[0]
-                            + type.toLowerCase() + "s together ("
-                            + FormattingUtils.getFormattedPercentage(100.0 * index[0] / contributors.size())
-                            + "% of " + type.toLowerCase() + "s) = "
-                            + FormattingUtils.getFormattedPercentage(100.0 * cumulative[0] / total[0])
-                            + "% of all commits";
-                }
-                map.append("<div style='background-color: " + palette.nextColor() + "; display: inline-block; height: 20px; width: " + w + "px' title='" + HtmlEscapeUtils.escape(contributor.getEmail()) + "\n" + contributorCommitsCount + " commits (" + (Math.round(100.0 * contributorCommitsCount / total[0])) + "%)" + cumulativeText + "'>&nbsp;</div>");
-            });
-            report.addHtmlContent(map.toString());
-            report.addLineBreak();
-            report.addLineBreak();
+            addContributionShareBar(report, contributors, contributionCounter, total[0], type);
         }
         report.startScrollingDiv();
         report.startTable();
-        if (showPerExtension && perExtensionCounter != null) {
+        boolean perExtension = showPerExtension && perExtensionCounter != null;
+        if (perExtension) {
             report.addTableHeader("#", type + "<br>", "First<br>Commit", "Latest<br>Commit", "Commits<br>Count", "Line<br>Churn", "File Updates<br>(per extension)");
         } else {
             report.addTableHeader("#", type + "<br>", "First<br>Commit", "Latest<br>Commit", "Commits<br>Count", "Line<br>Churn");
@@ -663,60 +648,95 @@ public class ContributorsReportGenerator {
         int index[] = {0};
         contributors.forEach(contributor -> {
             index[0]++;
-            String style = "";
-            if (contributor.getCommitsCount90Days() == 0) {
-                style = "color: lightgrey";
-            } else if (contributor.getCommitsCount30Days() == 0) {
-                style = "color: grey";
-            }
-            report.startTableRow(style);
-            report.addTableCell(index[0] + ".");
-            if (StringUtils.isNotBlank(contributor.getEmail()) && StringUtils.isNotBlank(contributor.getUserName())) {
-                report.addTableCell(HtmlEscapeUtils.escape(contributor.getUserName()) + " <div style='color: grey; font-size: 80%; margin-bottom: 6px;'>&lt;" + HtmlEscapeUtils.escape(contributor.getEmail()) + "&gt;</div>");
-            } else {
-                report.addTableCellText((contributor.getUserName() + contributor.getEmail()).trim());
-            }
-
-            report.addTableCell(contributor.getFirstCommitDate());
-            report.addTableCell(contributor.getLatestCommitDate());
-            int contributorCommitsCount = contributionCounter.count(contributor);
-            String formattedCount = FormattingUtils.formatCount(contributorCommitsCount);
-            String formattedPercentage = FormattingUtils.getFormattedPercentage(100.0 * contributorCommitsCount / total[0]);
-            report.addTableCell(formattedCount + " (" + formattedPercentage + "%)");
-
-            // Line churn for this tab's period (added/deleted lines). 0 for histories without churn
-            // columns, shown as a dim placeholder.
-            int linesAdded = churnAdded.count(contributor);
-            int linesDeleted = churnDeleted.count(contributor);
-            if (linesAdded > 0 || linesDeleted > 0) {
-                report.addTableCell("<span style='color: #2e7d32;'>+" + FormattingUtils.getSmallTextForNumber(linesAdded) + "</span> / "
-                                + "<span style='color: #c62828;'>-" + FormattingUtils.getSmallTextForNumber(linesDeleted) + "</span>",
-                        "white-space: nowrap;");
-            } else {
-                report.addTableCell("<span style='color: lightgrey;'>-</span>");
-            }
-
-            if (showPerExtension && perExtensionCounter != null) {
-                // A contributor present in the contributors list may have no per-extension stats
-                // (e.g. their commits only touched files excluded from the per-extension aggregation),
-                // so emailStatsMap.get(...) can be null - default to an empty list rather than NPE.
-                List<Pair<String, ContributorPerExtensionStats>> stats =
-                        emailStatsMap.getOrDefault(contributor.getEmail(), Collections.emptyList());
-                String perExtension = stats.stream()
-                        .filter(e -> perExtensionCounter.count(e.getRight()) > 0)
-                        .sorted((a, b) -> perExtensionCounter.count(b.getRight()) - perExtensionCounter.count(a.getRight()))
-                        .limit(5)
-                        .map(s -> s.getLeft() + " (" + perExtensionCounter.count(s.getRight()) + ")")
-                        .collect(Collectors.joining(", "));
-
-                report.addTableCell(perExtension + "");
-            }
-
-            report.endTableRow();
+            addContributorRow(report, contributor, index[0], total[0], contributionCounter, churnAdded, churnDeleted,
+                    perExtension ? perExtensionCounter : null);
         });
-
         report.endTable();
         report.endDiv();
+    }
+
+    /** The share bar: one segment per contributor, proportional to their count, with the cumulative share in the tooltip. */
+    private void addContributionShareBar(RichTextReport report, List<Contributor> contributors, ContributionCounter contributionCounter, int total, String type) {
+        int count = contributors.size();
+        report.addParagraph("<b>" + FormattingUtils.formatCount(count) + "</b> " + (count == 1 ? type.toLowerCase() : type.toLowerCase() + "s") + " (" + "<b>" + FormattingUtils.formatCount(total) + "</b> " + (count == 1 ? "commit" : "commits") + "):");
+        StringBuilder map = new StringBuilder("");
+        Palette palette = Palette.getDefaultPalette();
+        int index[] = {0};
+        int cumulative[] = {0};
+        contributors.forEach(contributor -> {
+            int contributorCommitsCount = contributionCounter.count(contributor);
+            cumulative[0] += contributorCommitsCount;
+            int w = (int) Math.round(600 * (double) contributorCommitsCount / total);
+            int x = 620 - w;
+            index[0]++;
+            String cumulativeText = "";
+            if (index[0] > 1) {
+                cumulativeText = "\n\ntop " + index[0]
+                        + type.toLowerCase() + "s together ("
+                        + FormattingUtils.getFormattedPercentage(100.0 * index[0] / contributors.size())
+                        + "% of " + type.toLowerCase() + "s) = "
+                        + FormattingUtils.getFormattedPercentage(100.0 * cumulative[0] / total)
+                        + "% of all commits";
+            }
+            map.append("<div style='background-color: " + palette.nextColor() + "; display: inline-block; height: 20px; width: " + w + "px' title='" + HtmlEscapeUtils.escape(contributor.getEmail()) + "\n" + contributorCommitsCount + " commits (" + (Math.round(100.0 * contributorCommitsCount / total)) + "%)" + cumulativeText + "'>&nbsp;</div>");
+        });
+        report.addHtmlContent(map.toString());
+        report.addLineBreak();
+        report.addLineBreak();
+    }
+
+    /** One contributor row; perExtensionCounter null = no per-extension column. */
+    private void addContributorRow(RichTextReport report, Contributor contributor, int index, int total, ContributionCounter contributionCounter,
+                                   ContributionCounter churnAdded, ContributionCounter churnDeleted, PerExtensionCounter perExtensionCounter) {
+        String style = "";
+        if (contributor.getCommitsCount90Days() == 0) {
+            style = "color: lightgrey";
+        } else if (contributor.getCommitsCount30Days() == 0) {
+            style = "color: grey";
+        }
+        report.startTableRow(style);
+        report.addTableCell(index + ".");
+        if (StringUtils.isNotBlank(contributor.getEmail()) && StringUtils.isNotBlank(contributor.getUserName())) {
+            report.addTableCell(HtmlEscapeUtils.escape(contributor.getUserName()) + " <div style='color: grey; font-size: 80%; margin-bottom: 6px;'>&lt;" + HtmlEscapeUtils.escape(contributor.getEmail()) + "&gt;</div>");
+        } else {
+            report.addTableCellText((contributor.getUserName() + contributor.getEmail()).trim());
+        }
+        report.addTableCell(contributor.getFirstCommitDate());
+        report.addTableCell(contributor.getLatestCommitDate());
+        int contributorCommitsCount = contributionCounter.count(contributor);
+        String formattedCount = FormattingUtils.formatCount(contributorCommitsCount);
+        String formattedPercentage = FormattingUtils.getFormattedPercentage(100.0 * contributorCommitsCount / total);
+        report.addTableCell(formattedCount + " (" + formattedPercentage + "%)");
+        // Line churn for this tab's period (added/deleted lines). 0 for histories without churn
+        // columns, shown as a dim placeholder.
+        int linesAdded = churnAdded.count(contributor);
+        int linesDeleted = churnDeleted.count(contributor);
+        if (linesAdded > 0 || linesDeleted > 0) {
+            report.addTableCell("<span style='color: #2e7d32;'>+" + FormattingUtils.getSmallTextForNumber(linesAdded) + "</span> / "
+                            + "<span style='color: #c62828;'>-" + FormattingUtils.getSmallTextForNumber(linesDeleted) + "</span>",
+                    "white-space: nowrap;");
+        } else {
+            report.addTableCell("<span style='color: lightgrey;'>-</span>");
+        }
+        if (perExtensionCounter != null) {
+            report.addTableCell(perExtensionSummary(contributor, perExtensionCounter) + "");
+        }
+        report.endTableRow();
+    }
+
+    /** The contributor's five most updated extensions with their counts. */
+    private String perExtensionSummary(Contributor contributor, PerExtensionCounter perExtensionCounter) {
+        // A contributor present in the contributors list may have no per-extension stats
+        // (e.g. their commits only touched files excluded from the per-extension aggregation),
+        // so emailStatsMap.get(...) can be null - default to an empty list rather than NPE.
+        List<Pair<String, ContributorPerExtensionStats>> stats =
+                emailStatsMap.getOrDefault(contributor.getEmail(), Collections.emptyList());
+        return stats.stream()
+                .filter(e -> perExtensionCounter.count(e.getRight()) > 0)
+                .sorted((a, b) -> perExtensionCounter.count(b.getRight()) - perExtensionCounter.count(a.getRight()))
+                .limit(5)
+                .map(s -> s.getLeft() + " (" + perExtensionCounter.count(s.getRight()) + ")")
+                .collect(Collectors.joining(", "));
     }
 
     static interface PerExtensionCounter {
