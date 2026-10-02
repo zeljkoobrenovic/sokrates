@@ -92,14 +92,13 @@ public class CommandLineInterface {
     private ProgressFeedback progressFeedback;
     // The code-host APIs behind analyzeGitHubOrg / analyzeGitLabGroup; replaceable so tests run offline
     // against local repositories (the GitLab one is created per run from -gitlabUrl unless injected).
-    private CodeHostOrgClient gitHubOrgClient = new GitHubOrgClient();
-    private CodeHostOrgClient gitLabGroupClient = null;
     private final DataExporter dataExporter = new DataExporter(this.progressFeedback);
 
     private final Commands commands = new Commands();
+    private final OrganizationCommands organizationCommands = new OrganizationCommands(this, commands);
     private CodeConfiguration codeConfiguration;
 
-    private static boolean helpMode = false;
+    static boolean helpMode = false;
 
     public static void main(String[] args) throws IOException {
         ProcessingStopwatch.startAsReference("everything");
@@ -116,6 +115,36 @@ public class CommandLineInterface {
         System.exit(0);
     }
 
+    /** A command handler: the command's arguments, including the command name itself. */
+    interface CommandHandler {
+        void run(String[] args) throws ParseException, IOException;
+    }
+
+    /** Every command by name (matched case-insensitively), in the order of the usage text. */
+    private Map<String, CommandHandler> commandHandlers() {
+        Map<String, CommandHandler> handlers = new LinkedHashMap<>();
+        handlers.put(Commands.ANALYZE, this::analyze);
+        handlers.put(Commands.ANALYZE_GIT_REPO, this::analyzeGitRepo);
+        handlers.put(Commands.INIT, this::init);
+        handlers.put(Commands.GENERATE_REPORTS, this::generateReports);
+        // Same implementation as updateLandscape; analyzeLandscape is the name that mirrors analyze.
+        handlers.put(Commands.ANALYZE_LANDSCAPE, args -> updateLandscape(args, Commands.ANALYZE_LANDSCAPE, Commands.ANALYZE_LANDSCAPE_DESCRIPTION));
+        handlers.put(Commands.UPDATE_LANDSCAPE, args -> updateLandscape(args, Commands.UPDATE_LANDSCAPE, Commands.UPDATE_LANDSCAPE_DESCRIPTION));
+        handlers.put(Commands.ANALYZE_GITHUB_ORG, organizationCommands::analyzeGitHubOrg);
+        handlers.put(Commands.ANALYZE_GITLAB_GROUP, organizationCommands::analyzeGitLabGroup);
+        handlers.put(Commands.UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME, this::updateLandscapePeopleConfigByUserName);
+        handlers.put(Commands.UPDATE_PEOPLE_CONFIG_BY_USER_NAME, this::updatePeopleConfigByUserName);
+        handlers.put(Commands.UPDATE_CONFIG, this::updateConfig);
+        handlers.put(Commands.ADD_CUSTOM_TAB, this::addCustomTab);
+        handlers.put(Commands.INSTALL_SKILLS, this::installSkills);
+        handlers.put(Commands.EXTRACT_GIT_HISTORY, this::extractGitHistory);
+        handlers.put(Commands.INIT_CONVENTIONS, this::createNewConventionsFile);
+        handlers.put(Commands.EXPORT_STANDARD_CONVENTIONS, this::exportConventions);
+        handlers.put(Commands.EXTRACT_GIT_SUB_HISTORY, this::extractGitSubHistory);
+        handlers.put(Commands.EXTRACT_FILES, this::extractFiles);
+        return handlers;
+    }
+
     public void run(String[] args) throws IOException {
         postAnalysisRuns = 0;
         if (args.length == 0) {
@@ -123,70 +152,19 @@ public class CommandLineInterface {
             commands.usage();
             return;
         }
-
         if (progressFeedback != null) {
             progressFeedback.clear();
         }
-
+        CommandHandler handler = commandHandlers().entrySet().stream()
+                .filter(entry -> entry.getKey().equalsIgnoreCase(args[0]))
+                .map(Map.Entry::getValue).findFirst().orElse(null);
+        if (handler == null) {
+            helpMode = true;
+            commands.usage();
+            return;
+        }
         try {
-            if (args[0].equalsIgnoreCase(Commands.ANALYZE)) {
-                analyze(args);
-                return;
-            } else if (args[0].equalsIgnoreCase(Commands.ANALYZE_GIT_REPO)) {
-                analyzeGitRepo(args);
-                return;
-            } else if (args[0].equalsIgnoreCase(Commands.INIT)) {
-                init(args);
-                return;
-            } else if (args[0].equalsIgnoreCase(Commands.UPDATE_CONFIG)) {
-                updateConfig(args);
-                return;
-            } else if (args[0].equalsIgnoreCase(Commands.ADD_CUSTOM_TAB)) {
-                addCustomTab(args);
-            } else if (args[0].equalsIgnoreCase(Commands.INSTALL_SKILLS)) {
-                installSkills(args);
-                return;
-            } else if (args[0].equalsIgnoreCase(Commands.EXPORT_STANDARD_CONVENTIONS)) {
-                exportConventions(args);
-                return;
-            } else if (args[0].equalsIgnoreCase(Commands.ANALYZE_LANDSCAPE)) {
-                // Same implementation as updateLandscape; analyzeLandscape is the name that mirrors analyze.
-                updateLandscape(args, Commands.ANALYZE_LANDSCAPE, Commands.ANALYZE_LANDSCAPE_DESCRIPTION);
-                return;
-            } else if (args[0].equalsIgnoreCase(Commands.UPDATE_LANDSCAPE)) {
-                updateLandscape(args, Commands.UPDATE_LANDSCAPE, Commands.UPDATE_LANDSCAPE_DESCRIPTION);
-                return;
-            } else if (args[0].equalsIgnoreCase(Commands.ANALYZE_GITHUB_ORG)) {
-                analyzeGitHubOrg(args);
-                return;
-            } else if (args[0].equalsIgnoreCase(Commands.ANALYZE_GITLAB_GROUP)) {
-                analyzeGitLabGroup(args);
-                return;
-            } else if (args[0].equalsIgnoreCase(Commands.UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME)) {
-                updateLandscapePeopleConfigByUserName(args);
-                return;
-            } else if (args[0].equalsIgnoreCase(Commands.UPDATE_PEOPLE_CONFIG_BY_USER_NAME)) {
-                updatePeopleConfigByUserName(args);
-                return;
-            } else if (args[0].equalsIgnoreCase(Commands.INIT_CONVENTIONS)) {
-                createNewConventionsFile(args);
-                return;
-            } else if (args[0].equalsIgnoreCase(Commands.EXTRACT_GIT_SUB_HISTORY)) {
-                extractGitSubHistory(args);
-                return;
-            } else if (args[0].equalsIgnoreCase(Commands.EXTRACT_FILES)) {
-                extractFiles(args);
-                return;
-            } else if (args[0].equalsIgnoreCase(Commands.EXTRACT_GIT_HISTORY)) {
-                extractGitHistory(args);
-                return;
-            } else if (!args[0].equalsIgnoreCase(Commands.GENERATE_REPORTS)) {
-                helpMode = true;
-                commands.usage();
-                return;
-            }
-
-            generateReports(args);
+            handler.run(args);
         } catch (ParseException e) {
             LOG.info("ERROR: " + e.getMessage() + "\n");
             e.printStackTrace();
@@ -278,7 +256,7 @@ public class CommandLineInterface {
         SokratesFileUtils.extractFiles(root, new File(root, dest), new File(root, destParentValue), patternValue);
     }
 
-    private void updateDateParam(CommandLine cmd) {
+    void updateDateParam(CommandLine cmd) {
         String dateString = cmd.getOptionValue(commands.getDate().getOpt());
         if (dateString != null) {
             LOG.info("Using '" + dateString + "' as latest source code update date for active contributors reports.");
@@ -389,7 +367,7 @@ public class CommandLineInterface {
      * lines and # comments ignored), in order, without duplicates. Empty when none were given; null
      * (after logging) when the file cannot be read.
      */
-    private List<String> collectValues(CommandLine cmd, Option single, Option listFile) {
+    List<String> collectValues(CommandLine cmd, Option single, Option listFile) {
         List<String> values = new ArrayList<>();
         String[] givenValues = cmd.getOptionValues(single.getOpt());
         if (givenValues != null) {
@@ -426,7 +404,7 @@ public class CommandLineInterface {
      * A repository whose clone fails is logged and skipped so one bad URL does not lose the batch;
      * returns false only when nothing could be analyzed (then there is nothing to aggregate).
      */
-    private RepositoryBatch analyzeRepositoriesIntoLandscape(CommandLine cmd, File root, List<String> urls, String producer) throws IOException {
+    RepositoryBatch analyzeRepositoriesIntoLandscape(CommandLine cmd, File root, List<String> urls, String producer) throws IOException {
         return analyzeRepositoriesIntoLandscape(cmd, root, urls, url -> {
             GitRepoMetadata urlMetadata = GitRepoMetadata.fromUrl(url);
             return new File(root, urlMetadata != null ? urlMetadata.outputFolderName() : GitRepoCloner.folderNameFromUrl(url));
@@ -434,12 +412,12 @@ public class CommandLineInterface {
     }
 
     /** Same, with the output folder of each URL chosen by {@code outputFolderFor} (analyzeGitHubOrg uses <org>/<repository>). */
-    private RepositoryBatch analyzeRepositoriesIntoLandscape(CommandLine cmd, File root, List<String> urls, Function<String, File> outputFolderFor, String producer) throws IOException {
+    RepositoryBatch analyzeRepositoriesIntoLandscape(CommandLine cmd, File root, List<String> urls, Function<String, File> outputFolderFor, String producer) throws IOException {
         return analyzeRepositoriesIntoLandscape(cmd, root, urls, outputFolderFor, producer, Map.of());
     }
 
     /** Same, with what the code host's listing said about each URL ({@code listing}: url -> repository), so the report metadata needs no extra API call. */
-    private RepositoryBatch analyzeRepositoriesIntoLandscape(CommandLine cmd, File root, List<String> urls, Function<String, File> outputFolderFor, String producer,
+    RepositoryBatch analyzeRepositoriesIntoLandscape(CommandLine cmd, File root, List<String> urls, Function<String, File> outputFolderFor, String producer,
                                                            Map<String, CodeHostRepo> listing) throws IOException {
         RepositoryBatch batch = new RepositoryBatch();
         int depth = 0;
@@ -624,292 +602,6 @@ public class CommandLineInterface {
     }
 
     /**
-     * analyzeGitHubOrg = for each GitHub organization (or user) login: list its repositories with
-     * the GitHub API, filter them, analyze each and build the organization's landscape — see
-     * {@link #analyzeOrganizations}.
-     */
-    private void analyzeGitHubOrg(String[] args) throws ParseException, IOException {
-        Options options = commands.getAnalyzeGitHubOrgOptions();
-        CommandLine cmd = new DefaultParser().parse(options, args);
-        List<String> logins = organizationLogins(cmd, options, commands.getOrg(), commands.getOrgs(), Commands.ANALYZE_GITHUB_ORG,
-                Commands.ANALYZE_GITHUB_ORG_DESCRIPTION, CommandLineInterface::gitHubLogin);
-        if (logins == null) {
-            return;
-        }
-        analyzeOrganizations(cmd, gitHubOrgClient, logins, Commands.ANALYZE_GITHUB_ORG);
-    }
-
-    /**
-     * analyzeGitLabGroup = the same for GitLab groups (with their subgroups) or users, on gitlab.com
-     * or a self-hosted instance (-gitlabUrl, or the host of a -group given as a URL).
-     */
-    private void analyzeGitLabGroup(String[] args) throws ParseException, IOException {
-        Options options = commands.getAnalyzeGitLabGroupOptions();
-        CommandLine cmd = new DefaultParser().parse(options, args);
-        List<String> rawValues = cmd.hasOption(commands.getHelp().getOpt()) ? new ArrayList<>() : collectValues(cmd, commands.getGroup(), commands.getGroups());
-        String baseUrl = cmd.getOptionValue(commands.getGitlabUrl().getOpt());
-        if (StringUtils.isBlank(baseUrl) && rawValues != null) {
-            // A group given as a URL names the instance too (https://gitlab.example.com/group/sub).
-            baseUrl = rawValues.stream().map(CommandLineInterface::gitLabBaseUrl).filter(StringUtils::isNotBlank).findFirst().orElse(GitLabGroupClient.DEFAULT_BASE_URL);
-        }
-        List<String> groups = organizationLogins(cmd, options, commands.getGroup(), commands.getGroups(), Commands.ANALYZE_GITLAB_GROUP,
-                Commands.ANALYZE_GITLAB_GROUP_DESCRIPTION, CommandLineInterface::gitLabGroupPath);
-        if (groups == null) {
-            return;
-        }
-        CodeHostOrgClient client = gitLabGroupClient != null ? gitLabGroupClient : new GitLabGroupClient(baseUrl);
-        LOG.info("GitLab instance: " + baseUrl);
-        analyzeOrganizations(cmd, client, groups, Commands.ANALYZE_GITLAB_GROUP);
-    }
-
-    /** The normalized, de-duplicated organization identifiers of a command; null (after help/usage) when there are none. */
-    private List<String> organizationLogins(CommandLine cmd, Options options, Option single, Option listFile, String commandName,
-                                            String commandDescription, Function<String, String> normalizer) {
-        List<String> logins = cmd.hasOption(commands.getHelp().getOpt()) ? new ArrayList<>() : collectValues(cmd, single, listFile);
-        if (logins == null) {
-            return null;
-        }
-        logins = logins.stream().map(normalizer).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-        if (cmd.hasOption(commands.getHelp().getOpt()) || logins.isEmpty()) {
-            helpMode = true;
-            if (!cmd.hasOption(commands.getHelp().getOpt())) {
-                LOG.error("At least one -" + single.getOpt() + " (or a -" + listFile.getOpt() + " file) is required.");
-            }
-            commands.usage(commandName, options, commandDescription);
-            return null;
-        }
-        return logins;
-    }
-
-    /**
-     * The shared organization-level analysis: for each organization, list its repositories with the
-     * host's API, filter them, write the selection to <root>/<org>/repos.txt, analyze each into
-     * <root>/<org>/<repository folder path> (the analyzeGitRepo step) and build the organization's
-     * landscape in <root>/<org>/_sokrates_landscape with metadata from the host profile (blank
-     * fields only). With more than one organization landscape under the root (or a parent
-     * configuration already there) the parent landscape in <root>/_sokrates_landscape is updated
-     * last, so its Sub-landscapes tab reads fresh data. An organization whose listing fails is skipped.
-     */
-    private void analyzeOrganizations(CommandLine cmd, CodeHostOrgClient client, List<String> logins, String commandName) throws IOException {
-        startTimeoutIfDefined(cmd);
-        updateDateParam(cmd);
-
-        CodeHostRepoFilter filter = repoFilterFromCommandLine(cmd);
-        if (filter == null) {
-            return;
-        }
-        boolean listOnly = cmd.hasOption(commands.getListOnly().getOpt());
-        boolean prune = cmd.hasOption(commands.getPrune().getOpt());
-        boolean dataOnly = cmd.hasOption(commands.getDataOnly().getOpt());
-
-        File root = new File(cmd.hasOption(commands.getAnalysisRoot().getOpt()) ? cmd.getOptionValue(commands.getAnalysisRoot().getOpt()) : ".");
-        root.mkdirs();
-
-        LOG.info("Repository selection: " + filter.describe());
-        List<String> failed = new ArrayList<>();
-        List<File> landscapes = new ArrayList<>();
-        int index = 0;
-        for (String login : logins) {
-            index++;
-            LOG.info("");
-            LOG.info("=== Organization " + index + " of " + logins.size() + ": " + login + " ===");
-            CodeHostOrg org;
-            List<CodeHostRepo> allRepos;
-            try {
-                org = client.fetchOrg(login);
-                allRepos = client.listRepos(login);
-            } catch (Exception e) {
-                LOG.error("Could not list the repositories of " + login + ": " + e.getMessage());
-                failed.add(login);
-                continue;
-            }
-            List<CodeHostRepo> repos = filter.apply(allRepos, LocalDate.parse(DateUtils.getAnalysisDate()));
-            LOG.info(org.displayName() + (org.isUser() ? " (user account)" : "") + ": " + allRepos.size() + " repositories found, " + repos.size() + " selected.");
-            filter.getExclusions().forEach(exclusion -> LOG.info(" - skipped " + exclusion));
-
-            File orgRoot = new File(root, org.getLogin());
-            orgRoot.mkdirs();
-            writeRepositoriesList(new File(orgRoot, "repos.txt"), org, allRepos.size(), repos, filter, client.hostLabel());
-            if (listOnly) {
-                continue;
-            }
-            if (repos.isEmpty()) {
-                LOG.warn("No repository of " + login + " is selected; its landscape is not updated.");
-                continue;
-            }
-
-            List<String> urls = repos.stream().map(CodeHostRepo::getCloneUrl).collect(Collectors.toList());
-            Map<String, File> outputFolders = new LinkedHashMap<>();
-            Map<String, CodeHostRepo> listing = new LinkedHashMap<>();
-            repos.forEach(repo -> {
-                outputFolders.put(repo.getCloneUrl(), new File(orgRoot, repo.getFolderPath()));
-                if (StringUtils.isBlank(repo.getAvatarUrl())) {
-                    repo.setAvatarUrl(org.getAvatarUrl());   // a GitLab project without its own avatar shows the group's
-                }
-                listing.put(repo.getCloneUrl(), repo);
-            });
-            RepositoryBatch batch = analyzeRepositoriesIntoLandscape(cmd, orgRoot, urls, outputFolders::get, commandName, listing);
-            if (batch.nothingAnalyzed()) {
-                failed.add(login);
-                continue;
-            }
-            pruneManagedAnalyses(orgRoot, urls, batch.notFound, prune);
-
-            Metadata metadata = orgLandscapeMetadata(orgRoot, org);
-            File reportsFolder = LandscapeAnalysisCommands.update(orgRoot, null, metadata, dataOnly);
-            saveExecutionStats(new File(reportsFolder, "data"));
-            LandscapeAnalysisCommands.zipLandscapeDataFolder(reportsFolder, !dataOnly);
-            landscapes.add(reportsFolder);
-            DateUtils.reset();
-            RegexUtils.reset();
-        }
-
-        if (listOnly) {
-            LOG.info("");
-            LOG.info("-" + Commands.ARG_LIST_ONLY + ": the selected repositories are listed in <org>/repos.txt under " + root.getPath() + "; nothing was cloned or analyzed.");
-        } else if (!landscapes.isEmpty()) {
-            updateParentLandscapeIfNeeded(cmd, root, dataOnly);
-        }
-
-        LOG.info("");
-        if (listOnly) {
-            LOG.info("Done: " + (logins.size() - failed.size()) + " of " + logins.size() + " organization(s) listed under " + root.toPath().toAbsolutePath().normalize());
-        } else {
-            LOG.info("Done: " + landscapes.size() + " of " + logins.size() + " organization landscape(s) updated under " + root.toPath().toAbsolutePath().normalize());
-            landscapes.forEach(folder -> LOG.info(" - " + new File(folder, dataOnly ? "data/data.zip" : "index.html").toPath().toAbsolutePath().normalize().toUri()));
-        }
-        failed.forEach(login -> LOG.error(" - failed: " + login));
-    }
-
-    /** The login from a login or a GitHub URL: "junit-team", "https://github.com/junit-team/", "github.com/junit-team/junit4" all give junit-team. */
-    static String gitHubLogin(String value) {
-        String login = value.trim();
-        login = login.replaceFirst("^(https?://)?(www\\.)?github\\.com/", "");
-        login = login.replaceFirst("^@", "");
-        int slash = login.indexOf('/');
-        return slash >= 0 ? login.substring(0, slash) : login;
-    }
-
-    /** The group path from a path or a GitLab URL: "gitlab-org/ci-cd" and "https://gitlab.com/gitlab-org/ci-cd/" both give gitlab-org/ci-cd. */
-    static String gitLabGroupPath(String value) {
-        String path = value.trim();
-        path = path.replaceFirst("^https?://[^/]+/", "");
-        path = StringUtils.strip(path, "/");
-        path = path.replaceFirst("^groups/", "");
-        return path.replaceFirst("/-/.*$", "");
-    }
-
-    /** The instance URL of a group given as a URL ("https://gitlab.example.com/a/b" -> "https://gitlab.example.com"); "" for a plain path. */
-    static String gitLabBaseUrl(String value) {
-        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("^(https?://[^/]+)/").matcher(value.trim());
-        return matcher.find() ? matcher.group(1) : "";
-    }
-
-    /** The parent landscape over the organization folders: only when there are at least two, or it already exists. */
-    private void updateParentLandscapeIfNeeded(CommandLine cmd, File root, boolean dataOnly) {
-        File parentConfig = new File(new File(root, "_sokrates_landscape"), "config.json");
-        long children = LandscapeAnalysisUtils.findAllSokratesLandscapeConfigFiles(root).stream()
-                .filter(file -> !file.getAbsoluteFile().equals(parentConfig.getAbsoluteFile()))
-                .count();
-        if (children < 2 && !parentConfig.exists()) {
-            return;
-        }
-        LOG.info("");
-        LOG.info("=== Parent landscape over " + children + " organization landscapes ===");
-        Metadata metadata = new Metadata();
-        updateMetadataFromCommandLine(cmd, metadata);
-        File reportsFolder = LandscapeAnalysisCommands.update(root, null, metadata, dataOnly);
-        saveExecutionStats(new File(reportsFolder, "data"));
-        LandscapeAnalysisCommands.zipLandscapeDataFolder(reportsFolder, !dataOnly);
-        LOG.info("Parent landscape: " + new File(reportsFolder, dataOnly ? "data/data.zip" : "index.html").toPath().toAbsolutePath().normalize().toUri());
-    }
-
-    private CodeHostRepoFilter repoFilterFromCommandLine(CommandLine cmd) {
-        CodeHostRepoFilter filter = new CodeHostRepoFilter();
-        filter.setIncludeForks(cmd.hasOption(commands.getIncludeForks().getOpt()));
-        filter.setIncludeArchived(cmd.hasOption(commands.getIncludeArchived().getOpt()));
-        Integer days = nonNegativeIntOption(cmd, commands.getPushedWithinDays());
-        Integer max = nonNegativeIntOption(cmd, commands.getMaxRepos());
-        if (days == null || max == null) {
-            return null;
-        }
-        filter.setPushedWithinDays(days);
-        filter.setMaxRepos(max);
-        String[] include = cmd.getOptionValues(commands.getIncludeRepoNamePattern().getOpt());
-        String[] exclude = cmd.getOptionValues(commands.getExcludeRepoNamePattern().getOpt());
-        if (include != null) {
-            Arrays.stream(include).filter(StringUtils::isNotBlank).map(String::trim).forEach(filter.getIncludeNamePatterns()::add);
-        }
-        if (exclude != null) {
-            Arrays.stream(exclude).filter(StringUtils::isNotBlank).map(String::trim).forEach(filter.getExcludeNamePatterns()::add);
-        }
-        try {
-            filter.apply(new ArrayList<>(List.of(new CodeHostRepo("pattern-check", ""))), LocalDate.now()); // validates the regexes early
-        } catch (IllegalArgumentException e) {
-            LOG.error(e.getMessage());
-            return null;
-        }
-        return filter;
-    }
-
-    /** The option's value as a non-negative int (0 when absent); null after logging when it is not a number. */
-    private Integer nonNegativeIntOption(CommandLine cmd, Option option) {
-        String value = cmd.getOptionValue(option.getOpt());
-        if (StringUtils.isBlank(value)) {
-            return 0;
-        }
-        if (!StringUtils.isNumeric(value.trim())) {
-            LOG.error("-" + option.getOpt() + " must be a non-negative number, got '" + value + "'.");
-            return null;
-        }
-        return Integer.parseInt(value.trim());
-    }
-
-    /** <org>/repos.txt: the selected clone URLs, one per line, usable as-is with analyzeLandscape -urls. */
-    private void writeRepositoriesList(File file, CodeHostOrg org, int found, List<CodeHostRepo> selected, CodeHostRepoFilter filter, String hostLabel) throws IOException {
-        List<String> lines = new ArrayList<>();
-        lines.add("# " + org.displayName() + " (" + org.getHtmlUrl() + "): " + selected.size() + " of " + found + " repositories selected on " + DateUtils.getAnalysisDate());
-        lines.add("# selection: " + filter.describe());
-        lines.add("# generated by sokrates analyze" + hostLabel + ("GitLab".equals(hostLabel) ? "Group" : "Org") + "; re-usable with analyzeLandscape -urls " + file.getName());
-        selected.forEach(repo -> lines.add(repo.getCloneUrl()));
-        FileUtils.writeLines(file, UTF_8.name(), lines);
-        LOG.info("Selected repositories listed in " + file.getPath());
-    }
-
-    /**
-     * The organization's landscape metadata: the host profile fills only what the existing
-     * landscape configuration leaves blank (name, description, logo, and a link when there are no
-     * links), so a user's edits survive re-runs.
-     */
-    private Metadata orgLandscapeMetadata(File orgRoot, CodeHostOrg org) {
-        Metadata existing = new Metadata();
-        File configFile = new File(new File(orgRoot, "_sokrates_landscape"), "config.json");
-        if (configFile.exists()) {
-            try {
-                LandscapeConfiguration configuration = (LandscapeConfiguration) new JsonMapper().getObject(FileUtils.readFileToString(configFile, UTF_8), LandscapeConfiguration.class);
-                if (configuration != null && configuration.getMetadata() != null) {
-                    existing = configuration.getMetadata();
-                }
-            } catch (IOException e) {
-                LOG.warn("Could not read " + configFile.getPath() + ": " + e.getMessage());
-            }
-        }
-        Metadata metadata = new Metadata();
-        Metadata filled = new Metadata();
-        filled.setName(existing.getName());
-        filled.setDescription(existing.getDescription());
-        filled.setLogoLink(existing.getLogoLink());
-        filled.getLinks().addAll(existing.getLinks());
-        org.applyTo(filled);
-        // Only what the profile added is passed on; the updater overwrites just the non-blank fields it gets.
-        if (StringUtils.isBlank(existing.getName())) metadata.setName(filled.getName());
-        if (StringUtils.isBlank(existing.getDescription())) metadata.setDescription(filled.getDescription());
-        if (StringUtils.isBlank(existing.getLogoLink())) metadata.setLogoLink(filled.getLogoLink());
-        if (existing.getLinks().isEmpty()) metadata.getLinks().addAll(filled.getLinks());
-        return metadata;
-    }
-
-    /**
      * analyzeGitRepo = clone the repository at -url into a temporary folder, run the analyze
      * pipeline there, and keep only the analysis (config.json + reports/) in -destFolder (default:
      * <cwd>/<owner>/<repository>); the clone is deleted. A kept config.json is reused on re-runs,
@@ -1061,7 +753,7 @@ public class CommandLineInterface {
      * longer exists; a folder emptied by that goes too. Analyses without the marker — placed by hand
      * — are never touched. Without -prune the stale analyses are only listed, with the hint.
      */
-    private void pruneManagedAnalyses(File root, Collection<String> selectedUrls, Collection<String> goneUrls, boolean prune) throws IOException {
+    void pruneManagedAnalyses(File root, Collection<String> selectedUrls, Collection<String> goneUrls, boolean prune) throws IOException {
         Set<String> selected = selectedUrls.stream().map(AnalysisSource::normalizeUrl).collect(Collectors.toSet());
         Set<String> gone = goneUrls.stream().map(AnalysisSource::normalizeUrl).collect(Collectors.toSet());
         List<File> stale = new ArrayList<>();
@@ -1202,7 +894,7 @@ public class CommandLineInterface {
                     + "); -" + Commands.ARG_AI_FORCE + " runs it anyway.");
             return;
         }
-        Integer max = nonNegativeIntOption(cmd, commands.getAiMaxRepos());
+        Integer max = OrganizationCommands.nonNegativeIntOption(cmd, commands.getAiMaxRepos());
         if (max != null && max > 0 && postAnalysisRuns >= max) {
             LOG.info("Post-analysis command skipped: the -" + Commands.ARG_AI_MAX_REPOS + " budget of " + max + " repositories is used up for this run.");
             return;
@@ -1305,7 +997,7 @@ public class CommandLineInterface {
         LOG.info("Configuration stored in " + conf.getPath());
     }
 
-    private void startTimeoutIfDefined(CommandLine cmd) {
+    void startTimeoutIfDefined(CommandLine cmd) {
         String timeoutSeconds = cmd.getOptionValue(commands.getTimeout().getOpt());
         if (StringUtils.isNumeric(timeoutSeconds)) {
             int seconds = Integer.parseInt(timeoutSeconds);
@@ -1467,7 +1159,7 @@ public class CommandLineInterface {
         FileUtils.write(confFile, new JsonGenerator().generate(codeConfiguration), UTF_8);
     }
 
-    private void updateMetadataFromCommandLine(CommandLine cmd, Metadata metadata) {
+    void updateMetadataFromCommandLine(CommandLine cmd, Metadata metadata) {
         if (cmd.hasOption(commands.getSetName().getOpt())) {
             String name = cmd.getOptionValue(commands.getSetName().getOpt());
             if (StringUtils.isNotBlank(name)) {
@@ -1606,7 +1298,7 @@ public class CommandLineInterface {
         }
     }
 
-    private void saveExecutionStats(File dataFolder) {
+    void saveExecutionStats(File dataFolder) {
         try {
             List<ProcessingTimes> monitors = ProcessingStopwatch.getMonitors();
 
@@ -1731,12 +1423,12 @@ public class CommandLineInterface {
         this.progressFeedback = progressFeedback;
     }
 
-    public void setGitHubOrgClient(CodeHostOrgClient gitHubOrgClient) {
-        this.gitHubOrgClient = gitHubOrgClient;
+    public void setGitHubOrgClient(CodeHostOrgClient client) {
+        organizationCommands.setGitHubOrgClient(client);
     }
 
-    public void setGitLabGroupClient(CodeHostOrgClient gitLabGroupClient) {
-        this.gitLabGroupClient = gitLabGroupClient;
+    public void setGitLabGroupClient(CodeHostOrgClient client) {
+        organizationCommands.setGitLabGroupClient(client);
     }
 
 
