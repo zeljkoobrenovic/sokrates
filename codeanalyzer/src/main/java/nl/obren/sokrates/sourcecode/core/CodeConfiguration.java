@@ -117,15 +117,20 @@ public class CodeConfiguration {
     @JsonIgnore
     public static String getAbsoluteSrcRoot(String srcRoot, File configurationFile) {
         if (configurationFile != null) {
-            // Resolve against the absolute config path: a relative one such as _sokrates/config.json has
-            // no grandparent, and ".." would then fall through to the working directory's parent —
-            // generateReports -confFile _sokrates/config.json used to analyze the whole parent folder.
-            File configuration = configurationFile.getAbsoluteFile();
+            // The returned path is the prefix of every analyzed file's path, and scope/ignore patterns match
+            // that whole path ("src" + relative): keep it as relative as the configuration path is, so the
+            // names of the folders above the repository (a "tests" or "docs" somewhere in an absolute path)
+            // never classify its files. A relative path such as _sokrates/config.json has no grandparent
+            // (null), which stands for the working directory — before, ".." then fell through to the working
+            // directory's parent and generateReports -confFile _sokrates/config.json analyzed that.
             File fileRelative;
             if (srcRoot.startsWith("..")) {
-                fileRelative = new File(configuration.getParentFile().getParentFile(), srcRoot.substring(2));
+                File parent = configurationFile.getParentFile();
+                File grandParent = parent != null ? parent.getParentFile() : null;
+                fileRelative = new File(grandParent != null ? grandParent : new File("."), srcRoot.substring(2));
             } else {
-                fileRelative = new File(configuration.getParent(), srcRoot);
+                File parent = configurationFile.getParentFile();
+                fileRelative = new File(parent != null ? parent : new File("."), srcRoot);
             }
             if (fileRelative.exists()) {
                 return fileRelative.getPath();
