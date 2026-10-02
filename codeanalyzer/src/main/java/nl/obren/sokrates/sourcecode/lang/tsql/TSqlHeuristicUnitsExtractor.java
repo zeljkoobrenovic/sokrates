@@ -370,9 +370,7 @@ public class TSqlHeuristicUnitsExtractor {
                     // start counting paren depth from the opening paren
                     int startPos = r.end() - 1; // position of '('
                     parenDepth = countParens(line, startPos, line.length());
-                    if (parenDepth == 0) {
-                        returnClosed = true;
-                    }
+                    returnClosed = parenDepth == 0;
                     if (returnClosed && endsStatementOrBatch(line, k, lines)) {
                         return k;
                     }
@@ -380,19 +378,21 @@ public class TSqlHeuristicUnitsExtractor {
                 }
             } else {
                 parenDepth += countParens(line, 0, line.length());
-                if (parenDepth == 0) {
-                    returnClosed = true;
-                }
+                returnClosed = returnClosed || parenDepth == 0;
                 if (returnClosed && endsStatementOrBatch(line, k, lines)) {
                     return k;
                 }
             }
 
-            if (k + 1 < lines.size() && GO_BATCH.matcher(lines.get(k + 1)).matches()) {
+            if (nextLineIsBatchSeparator(lines, k)) {
                 return k;
             }
         }
         return lines.size() - 1;
+    }
+
+    private static boolean nextLineIsBatchSeparator(List<String> lines, int k) {
+        return k + 1 < lines.size() && GO_BATCH.matcher(lines.get(k + 1)).matches();
     }
 
     private int countParens(String line, int from, int to) {
@@ -426,26 +426,10 @@ public class TSqlHeuristicUnitsExtractor {
         // inner block - dropping everything after it from the unit's size and complexity.
         boolean bodyOpensWithBegin = bodyOpensWithBegin(lines, signatureEndIndex);
 
-        int depth = 0;
-        boolean seenProcBegin = false;
+        BlockDepth depth = new BlockDepth();
         for (int k = signatureEndIndex; k < lines.size(); k++) {
-            if (bodyOpensWithBegin) {
-                for (Token t : scanBeginCaseEnd(lines.get(k))) {
-                    if (t.kind == TokenKind.BEGIN || t.kind == TokenKind.CASE) {
-                        depth++;
-                        if (t.kind == TokenKind.BEGIN) {
-                            seenProcBegin = true;
-                        }
-                    } else { // END
-                        depth--;
-                        if (seenProcBegin && depth == 0) {
-                            return k;
-                        }
-                        if (depth < 0) {
-                            return k;
-                        }
-                    }
-                }
+            if (bodyOpensWithBegin && depth.closesUnit(lines.get(k))) {
+                return k;
             }
 
             // Only the batch separator ends a body that did not open with its own BEGIN. Ending it at the
@@ -468,11 +452,38 @@ public class TSqlHeuristicUnitsExtractor {
             // miscount silently swallowing whole files, and multi-line literals are already a stated
             // blind spot of this method - see the dynamic-SQL note above, which emptyStrings cannot
             // reach either.
-            if (k + 1 < lines.size() && GO_BATCH.matcher(lines.get(k + 1)).matches()) {
+            if (nextLineIsBatchSeparator(lines, k)) {
                 return k;
             }
         }
         return lines.size() - 1;
+    }
+
+    /** The running BEGIN/CASE ... END nesting of a body that opened with its own BEGIN. */
+    private class BlockDepth {
+        private int depth = 0;
+        private boolean seenProcBegin = false;
+
+        /** Applies the line's tokens; true when its END closes the unit's own BEGIN (or an END goes below depth 0). */
+        boolean closesUnit(String line) {
+            for (Token t : scanBeginCaseEnd(line)) {
+                if (t.kind == TokenKind.BEGIN || t.kind == TokenKind.CASE) {
+                    depth++;
+                    if (t.kind == TokenKind.BEGIN) {
+                        seenProcBegin = true;
+                    }
+                } else { // END
+                    depth--;
+                    if (seenProcBegin && depth == 0) {
+                        return true;
+                    }
+                    if (depth < 0) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
     }
 
     /**

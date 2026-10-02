@@ -60,7 +60,6 @@ public class SummaryUtils {
         CodeConfiguration config = analysisResults.getCodeConfiguration();
 
         boolean mainExists = analysisResults.getMainAspectAnalysisResults().getFilesCount() > 0;
-        boolean showDuplication = mainExists && !analysisResults.skipDuplicationAnalysis();
         boolean showCommitReports = mainExists && analysisResults.getFilesHistoryAnalysisResults().getHistory(Integer.MAX_VALUE).size() > 0 && analysisResults.getContributorsAnalysisResults().getCommitsCount() > 0;
         boolean showControls = mainExists && config.getGoalsAndControls().size() > 0;
         boolean showUnits = mainExists && analysisResults.getUnitsAnalysisResults().getTotalNumberOfUnits() > 0;
@@ -68,16 +67,10 @@ public class SummaryUtils {
         report.startDiv("width: 100%; overflow-x: auto; margin-top: -10px");
         report.startTable("border: none; min-width: 800px; width: 100%");
         summarizeTags(analysisResults, report);
-        report.startTableRow();
-        report.addMultiColumnTableCell("Standard analyses:", 2, "border: none; padding-top: 0px");
-        report.endTableRow();
+        addSectionTitleRow(report, "Standard analyses:", 2, "border: none; padding-top: 0px");
         summarizeMainVolume(analysisResults, report);
         if (mainExists) {
-            if (showDuplication) {
-                summarizeDuplication(analysisResults, report);
-            }
-            summarizeFileSize(report, analysisResults);
-            summarizeComponents(analysisResults, report, false);
+            summarizeMainCode(analysisResults, report);
         }
         if (showCommitReports) {
             summarizeFileChangeHistory(analysisResults, report);
@@ -86,20 +79,31 @@ public class SummaryUtils {
         if (showControls) {
             summarizeGoals(analysisResults, report);
         }
-        if (mainExists) {
-            if (showUnits) {
-                report.startTableRow();
-                report.addMultiColumnTableCell("Experimental analyses (less reliable heuristic analyses):", 3, "border: none; padding-top: 12px");
-                report.endTableRow();
-                summarizeUnitSize(analysisResults, report);
-                summarizeUnitComplexity(analysisResults, report);
-                summarizeComponents(analysisResults, report, true);
-            }
+        if (showUnits) {
+            addSectionTitleRow(report, "Experimental analyses (less reliable heuristic analyses):", 3, "border: none; padding-top: 12px");
+            summarizeUnitSize(analysisResults, report);
+            summarizeUnitComplexity(analysisResults, report);
+            summarizeComponents(analysisResults, report, true);
         }
         summarizeFeaturesOfInterest(analysisResults, report);
         addSummaryFindings(analysisResults, report);
         report.endTable();
         report.endDiv();
+    }
+
+    private static void addSectionTitleRow(RichTextReport report, String title, int columns, String style) {
+        report.startTableRow();
+        report.addMultiColumnTableCell(title, columns, style);
+        report.endTableRow();
+    }
+
+    /** Duplication (unless skipped), file size and components of the main code. */
+    private void summarizeMainCode(CodeAnalysisResults analysisResults, RichTextReport report) {
+        if (!analysisResults.skipDuplicationAnalysis()) {
+            summarizeDuplication(analysisResults, report);
+        }
+        summarizeFileSize(report, analysisResults);
+        summarizeComponents(analysisResults, report, false);
     }
 
     private void summarizeFileSize(RichTextReport report, CodeAnalysisResults analysisResults) {

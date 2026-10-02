@@ -459,9 +459,34 @@ public class DuplicationReportGenerator {
     private String saveDuplicates(ComponentDependency componentDependency, String logicalDecompositionName, List<DuplicationInstance> allInstances) {
         File file = new File(this.report.getReportsFolder(), "data/text/intercomponent_duplicates_" + componentDuplicatesCount++ + ".txt");
 
-        String from = componentDependency.getFromComponent();
-        String to = componentDependency.getToComponent();
+        List<DuplicationInstance> instances = instancesBetween(allInstances, logicalDecompositionName, componentDependency.getFromComponent(), componentDependency.getToComponent());
 
+        Collections.sort(instances, (o1, o2) -> o2.getBlockSize() - o1.getBlockSize());
+
+        // Stream to disk with hard caps instead of building one String: a boilerplate duplicate shared
+        // by thousands of files (typical for generated code) appears in many component pairs, and
+        // listing every block of every such instance per pair grew the in-memory text past the 2GB
+        // String limit (OutOfMemoryError in StringBuilder.append). Largest instances are kept first,
+        // matching DataExporter.exportDuplicates.
+        int instancesTotal = instances.size();
+        int instancesShown = Math.min(instancesTotal, MAX_INTERCOMPONENT_DUPLICATES_PER_PAIR);
+        try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
+            for (int i = 0; i < instancesShown; i++) {
+                writeInstance(writer, instances.get(i));
+            }
+            if (instancesShown < instancesTotal) {
+                writer.write("... and " + (instancesTotal - instancesShown) + " more duplicates (list truncated, showing the "
+                        + instancesShown + " largest of " + instancesTotal + ")\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return "text/" + file.getName();
+    }
+
+    /** The instances with at least one block in each of the two components of the decomposition. */
+    private static List<DuplicationInstance> instancesBetween(List<DuplicationInstance> allInstances, String logicalDecompositionName, String from, String to) {
         List<DuplicationInstance> instances = new ArrayList<>();
 
         allInstances.forEach(duplicate -> {
@@ -482,48 +507,30 @@ public class DuplicationReportGenerator {
                 instances.add(duplicate);
             }
         });
+        return instances;
+    }
 
-        Collections.sort(instances, (o1, o2) -> o2.getBlockSize() - o1.getBlockSize());
-
-        // Stream to disk with hard caps instead of building one String: a boilerplate duplicate shared
-        // by thousands of files (typical for generated code) appears in many component pairs, and
-        // listing every block of every such instance per pair grew the in-memory text past the 2GB
-        // String limit (OutOfMemoryError in StringBuilder.append). Largest instances are kept first,
-        // matching DataExporter.exportDuplicates.
-        int instancesTotal = instances.size();
-        int instancesShown = Math.min(instancesTotal, MAX_INTERCOMPONENT_DUPLICATES_PER_PAIR);
-        try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
-            for (int i = 0; i < instancesShown; i++) {
-                DuplicationInstance instance = instances.get(i);
-                List<DuplicatedFileBlock> blocks = instance.getDuplicatedFileBlocks();
-                int blocksShown = Math.min(blocks.size(), MAX_BLOCKS_PER_INTERCOMPONENT_DUPLICATE);
-                writer.write(instance.getBlockSize() + " duplicated lines in " + blocks.size() + " files:\n");
-                for (int b = 0; b < blocksShown; b++) {
-                    DuplicatedFileBlock block = blocks.get(b);
-                    writer.write("  - ");
-                    writer.write(block.getSourceFile().getRelativePath());
-                    writer.write(" (");
-                    writer.write(String.valueOf(block.getStartLine()));
-                    writer.write(":");
-                    writer.write(String.valueOf(block.getEndLine()));
-                    writer.write(", ");
-                    writer.write(FormattingUtils.getFormattedPercentage(block.getPercentage()) + "%");
-                    writer.write(")\n");
-                }
-                if (blocksShown < blocks.size()) {
-                    writer.write("  ... and " + (blocks.size() - blocksShown) + " more files (list truncated)\n");
-                }
-                writer.write("\n");
-            }
-            if (instancesShown < instancesTotal) {
-                writer.write("... and " + (instancesTotal - instancesShown) + " more duplicates (list truncated, showing the "
-                        + instancesShown + " largest of " + instancesTotal + ")\n");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+    /** One instance: its size and at most MAX_BLOCKS_PER_INTERCOMPONENT_DUPLICATE of its blocks. */
+    private static void writeInstance(BufferedWriter writer, DuplicationInstance instance) throws IOException {
+        List<DuplicatedFileBlock> blocks = instance.getDuplicatedFileBlocks();
+        int blocksShown = Math.min(blocks.size(), MAX_BLOCKS_PER_INTERCOMPONENT_DUPLICATE);
+        writer.write(instance.getBlockSize() + " duplicated lines in " + blocks.size() + " files:\n");
+        for (int b = 0; b < blocksShown; b++) {
+            DuplicatedFileBlock block = blocks.get(b);
+            writer.write("  - ");
+            writer.write(block.getSourceFile().getRelativePath());
+            writer.write(" (");
+            writer.write(String.valueOf(block.getStartLine()));
+            writer.write(":");
+            writer.write(String.valueOf(block.getEndLine()));
+            writer.write(", ");
+            writer.write(FormattingUtils.getFormattedPercentage(block.getPercentage()) + "%");
+            writer.write(")\n");
         }
-
-        return "text/" + file.getName();
+        if (blocksShown < blocks.size()) {
+            writer.write("  ... and " + (blocks.size() - blocksShown) + " more files (list truncated)\n");
+        }
+        writer.write("\n");
     }
 
     private LogicalDecomposition getLogicalDecomposition(int index) {

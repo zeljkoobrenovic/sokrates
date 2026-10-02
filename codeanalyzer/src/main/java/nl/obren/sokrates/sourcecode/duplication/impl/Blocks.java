@@ -280,31 +280,7 @@ public class Blocks {
                     block.extractAllPossibleSubBlocks(currentBlockSize).forEach(subBlock -> {
                         List<Integer> indexesOf = copy.indexesOf(subBlock);
                         if (indexesOf.size() > 1) {
-                            // Mirror the original "keep only if it ends up with >1 blocks" gate: build on a
-                            // local instance (or the one the cross-file pass already published for this block),
-                            // then publish only if it crosses that threshold.
-                            DuplicationInstance existing = duplicationInstances.get(subBlock);
-                            DuplicationInstance instance = existing != null ? existing : new DuplicationInstance();
-                            if (existing == null) {
-                                instance.setBlockSize(currentBlockSize);
-                            }
-                            synchronized (instance) {
-                                indexesOf.forEach(index -> {
-                                    DuplicateRange range = new DuplicateRange(index, index + currentBlockSize - 1);
-                                    if (!alreadyIncludedInRange(ranges, range)) {
-                                        addFileToDuplicationInstance(instance, copy.getSourceFile(), index + 1, currentBlockSize);
-                                        ranges.add(range);
-                                    }
-                                });
-                                if (instance.getDuplicatedFileBlocks().size() > 1) {
-                                    // putIfAbsent: if a concurrent thread published a rival instance for this
-                                    // block meanwhile, fold our blocks into theirs so nothing is lost.
-                                    DuplicationInstance published = duplicationInstances.putIfAbsent(subBlock, instance);
-                                    if (published != null && published != instance) {
-                                        mergeInto(published, instance);
-                                    }
-                                }
-                            }
+                            recordDuplicateWithinFile(copy, subBlock, indexesOf, currentBlockSize, ranges);
                         }
                         // copy.clearSubBlock(subBlock);
                     });
@@ -312,6 +288,36 @@ public class Blocks {
             }
         });
         resetProgressValues(0);
+    }
+
+    /**
+     * Records the sub-block's occurrences within one file as a duplication instance. Mirrors the original
+     * "keep only if it ends up with >1 blocks" gate: build on a local instance (or the one the cross-file
+     * pass already published for this block), then publish only if it crosses that threshold.
+     */
+    private void recordDuplicateWithinFile(FileInfoForDuplication copy, Block subBlock, List<Integer> indexesOf, int currentBlockSize, List<DuplicateRange> ranges) {
+        DuplicationInstance existing = duplicationInstances.get(subBlock);
+        DuplicationInstance instance = existing != null ? existing : new DuplicationInstance();
+        if (existing == null) {
+            instance.setBlockSize(currentBlockSize);
+        }
+        synchronized (instance) {
+            indexesOf.forEach(index -> {
+                DuplicateRange range = new DuplicateRange(index, index + currentBlockSize - 1);
+                if (!alreadyIncludedInRange(ranges, range)) {
+                    addFileToDuplicationInstance(instance, copy.getSourceFile(), index + 1, currentBlockSize);
+                    ranges.add(range);
+                }
+            });
+            if (instance.getDuplicatedFileBlocks().size() > 1) {
+                // putIfAbsent: if a concurrent thread published a rival instance for this
+                // block meanwhile, fold our blocks into theirs so nothing is lost.
+                DuplicationInstance published = duplicationInstances.putIfAbsent(subBlock, instance);
+                if (published != null && published != instance) {
+                    mergeInto(published, instance);
+                }
+            }
+        }
     }
 
     // Folds the file blocks of a rival (never-published) instance into the one that won publication,

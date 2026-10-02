@@ -280,26 +280,31 @@ public class CommandLineInterface {
                 }
             }
         }
-        if (cmd.hasOption(listFile.getOpt())) {
-            File file = new File(cmd.getOptionValue(listFile.getOpt()));
-            if (!file.exists()) {
-                LOG.error("The -" + listFile.getOpt() + " file \"" + file.getPath() + "\" does not exist.");
-                return null;
-            }
-            try {
-                for (String line : FileUtils.readLines(file, UTF_8)) {
-                    String value = line.trim();
-                    if (value.isEmpty() || value.startsWith("#") || values.contains(value)) {
-                        continue;
-                    }
-                    values.add(value);
-                }
-            } catch (IOException e) {
-                LOG.error("Could not read the -" + listFile.getOpt() + " file \"" + file.getPath() + "\": " + e.getMessage());
-                return null;
-            }
+        if (cmd.hasOption(listFile.getOpt()) && !addValuesFromFile(new File(cmd.getOptionValue(listFile.getOpt())), listFile, values)) {
+            return null;
         }
         return values;
+    }
+
+    /** Appends the file's lines (trimmed; blank lines, # comments and duplicates skipped); false (after logging) when it cannot be read. */
+    private static boolean addValuesFromFile(File file, Option listFile, List<String> values) {
+        if (!file.exists()) {
+            LOG.error("The -" + listFile.getOpt() + " file \"" + file.getPath() + "\" does not exist.");
+            return false;
+        }
+        try {
+            for (String line : FileUtils.readLines(file, UTF_8)) {
+                String value = line.trim();
+                if (value.isEmpty() || value.startsWith("#") || values.contains(value)) {
+                    continue;
+                }
+                values.add(value);
+            }
+        } catch (IOException e) {
+            LOG.error("Could not read the -" + listFile.getOpt() + " file \"" + file.getPath() + "\": " + e.getMessage());
+            return false;
+        }
+        return true;
     }
 
     private void updateLandscapePeopleConfigByUserName(String[] args) throws ParseException {
@@ -681,15 +686,9 @@ public class CommandLineInterface {
         }
         File analysisFolder = conf.getParentFile();
         String head = PostAnalysisState.headCommit(root);
-        PostAnalysisState previous = PostAnalysisState.read(keptFolder != null ? keptFolder : analysisFolder);
-        if (previous != null && previous.covers(command, head) && !cmd.hasOption(commands.getAiForce().getOpt())) {
-            LOG.info("Post-analysis command skipped: unchanged since it ran on " + previous.getRanOn() + " (head " + head.substring(0, Math.min(10, head.length()))
-                    + "); -" + Commands.ARG_AI_FORCE + " runs it anyway.");
-            return;
-        }
-        Integer max = OrganizationCommands.nonNegativeIntOption(cmd, commands.getAiMaxRepos());
-        if (max != null && max > 0 && postAnalysisRuns >= max) {
-            LOG.info("Post-analysis command skipped: the -" + Commands.ARG_AI_MAX_REPOS + " budget of " + max + " repositories is used up for this run.");
+        String skipReason = postAnalysisSkipReason(cmd, command, head, PostAnalysisState.read(keptFolder != null ? keptFolder : analysisFolder));
+        if (skipReason != null) {
+            LOG.info("Post-analysis command skipped: " + skipReason);
             return;
         }
         postAnalysisRuns++;
@@ -703,6 +702,19 @@ public class CommandLineInterface {
         } catch (IOException e) {
             LOG.warn("Could not record the post-analysis run in " + analysisFolder.getPath() + ": " + e.getMessage());
         }
+    }
+
+    /** Why the hook is not run this time: an earlier successful run at the same head (unless -aiForce), or the -aiMaxRepos budget; null to run it. */
+    private String postAnalysisSkipReason(CommandLine cmd, String command, String head, PostAnalysisState previous) {
+        if (previous != null && previous.covers(command, head) && !cmd.hasOption(commands.getAiForce().getOpt())) {
+            return "unchanged since it ran on " + previous.getRanOn() + " (head " + head.substring(0, Math.min(10, head.length()))
+                    + "); -" + Commands.ARG_AI_FORCE + " runs it anyway.";
+        }
+        Integer max = OrganizationCommands.nonNegativeIntOption(cmd, commands.getAiMaxRepos());
+        if (max != null && max > 0 && postAnalysisRuns >= max) {
+            return "the -" + Commands.ARG_AI_MAX_REPOS + " budget of " + max + " repositories is used up for this run.";
+        }
+        return null;
     }
 
     /**

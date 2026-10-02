@@ -53,12 +53,9 @@ public class CodeHostRepoFilter {
         if (!includeArchived && repo.isArchived()) {
             return "archived";
         }
-        if (cutoff != null) {
-            Instant pushedAt = parseInstant(repo.getPushedAt());
-            if (pushedAt == null || pushedAt.isBefore(cutoff)) {
-                return "last push " + (StringUtils.isBlank(repo.getPushedAt()) ? "unknown" : repo.getPushedAt().substring(0, Math.min(10, repo.getPushedAt().length())))
-                        + " is older than " + pushedWithinDays + " days";
-            }
+        if (cutoff != null && pushedBefore(repo, cutoff)) {
+            return "last push " + (StringUtils.isBlank(repo.getPushedAt()) ? "unknown" : repo.getPushedAt().substring(0, Math.min(10, repo.getPushedAt().length())))
+                    + " is older than " + pushedWithinDays + " days";
         }
         if (!includeNamePatterns.isEmpty() && !matchesAny(repo, includeNamePatterns)) {
             return "name matches no include pattern";
@@ -67,6 +64,12 @@ public class CodeHostRepoFilter {
             return "name matches an exclude pattern";
         }
         return null;
+    }
+
+    /** True when the last push is unknown or before the cutoff. */
+    private static boolean pushedBefore(CodeHostRepo repo, Instant cutoff) {
+        Instant pushedAt = parseInstant(repo.getPushedAt());
+        return pushedAt == null || pushedAt.isBefore(cutoff);
     }
 
     // A pattern matches when it matches the whole repository name or the whole owner/name.
