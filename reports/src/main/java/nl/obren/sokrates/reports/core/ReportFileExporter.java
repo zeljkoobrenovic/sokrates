@@ -109,34 +109,30 @@ public class ReportFileExporter {
 
     public static void exportReportsIndexFile(File reportsFolder, CodeAnalysisResults analysisResults, File sokratesConfigFolder) {
         List<String[]> reportList = getReportsList(analysisResults, sokratesConfigFolder);
-
         File htmlExportFolder = getHtmlReportsFolder(reportsFolder);
-
         Metadata metadata = analysisResults.getCodeConfiguration().getMetadata();
-        String title = metadata.getName();
-        RichTextReport indexReport = new RichTextReport(title, "", metadata.getLogoLink());
+        RichTextReport indexReport = new RichTextReport(metadata.getName(), "", metadata.getLogoLink());
         if (StringUtils.isNotBlank(metadata.getDescription())) {
             indexReport.setDescription(metadata.getDescription());
         }
-
         appendLinks(indexReport, analysisResults);
-
         boolean hasLinks = metadata.getLinks().size() > 0;
         indexReport.addContentInDiv("", "height; 10px; margin-top: " + (hasLinks ? 6 : 0) + "px; margin-bottom: 6px;");
 
-        int linesOfCodeMain = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
-        int mainLoc = linesOfCodeMain;
-        int mainFilesCount = analysisResults.getMainAspectAnalysisResults().getFilesCount();
-        int testLoc = analysisResults.getTestAspectAnalysisResults().getLinesOfCode();
-        int secondaryLoc = analysisResults.getBuildAndDeployAspectAnalysisResults().getLinesOfCode()
-                + analysisResults.getGeneratedAspectAnalysisResults().getLinesOfCode()
-                + analysisResults.getOtherAspectAnalysisResults().getLinesOfCode();
-        int testFilesCount = analysisResults.getTestAspectAnalysisResults().getFilesCount();
-        int secondaryFilesCount = analysisResults.getBuildAndDeployAspectAnalysisResults().getFilesCount()
-                + analysisResults.getGeneratedAspectAnalysisResults().getFilesCount()
-                + analysisResults.getOtherAspectAnalysisResults().getFilesCount();
+        List<CustomTab> customTabs = getCustomTabs(analysisResults);
+        addTabStrip(indexReport, customTabs);
+        addOverviewTab(indexReport, analysisResults);
+        addAnalysesTab(indexReport, analysisResults, reportList, htmlExportFolder);
+        addExplorerTabs(indexReport, customTabs);
+        addActivityTab(indexReport, analysisResults);
+        addVisualsAndDataTabs(indexReport, analysisResults, htmlExportFolder);
+        addFooter(indexReport);
+        export(htmlExportFolder, indexReport, "index.html", analysisResults.getCodeConfiguration().getAnalysis().getCustomHtmlReportHeaderFragment());
 
+        exportRootRedirect(reportsFolder);
+    }
 
+    private static void addTabStrip(RichTextReport indexReport, List<CustomTab> customTabs) {
         indexReport.startTabGroup();
         indexReport.addTab("overview", "Overview", true);
         indexReport.addTab("quality", "Analyses", false);
@@ -147,11 +143,23 @@ public class ReportFileExporter {
         indexReport.addTab("commits-explorer", "Commits", false);
         indexReport.addTab("visuals", "Visuals", false);
         indexReport.addTab("data", "Data", false);
-        List<CustomTab> customTabs = getCustomTabs(analysisResults);
         for (int i = 0; i < customTabs.size(); i++) {
             indexReport.addTabText(customTabId(i), customTabs.get(i).getLabel(), false);
         }
         indexReport.endDiv();
+    }
+
+    private static void addOverviewTab(RichTextReport indexReport, CodeAnalysisResults analysisResults) {
+        int mainLoc = analysisResults.getMainAspectAnalysisResults().getLinesOfCode();
+        int mainFilesCount = analysisResults.getMainAspectAnalysisResults().getFilesCount();
+        int testLoc = analysisResults.getTestAspectAnalysisResults().getLinesOfCode();
+        int secondaryLoc = analysisResults.getBuildAndDeployAspectAnalysisResults().getLinesOfCode()
+                + analysisResults.getGeneratedAspectAnalysisResults().getLinesOfCode()
+                + analysisResults.getOtherAspectAnalysisResults().getLinesOfCode();
+        int testFilesCount = analysisResults.getTestAspectAnalysisResults().getFilesCount();
+        int secondaryFilesCount = analysisResults.getBuildAndDeployAspectAnalysisResults().getFilesCount()
+                + analysisResults.getGeneratedAspectAnalysisResults().getFilesCount()
+                + analysisResults.getOtherAspectAnalysisResults().getFilesCount();
 
         indexReport.startTabContentSection("overview", true);
 
@@ -193,7 +201,9 @@ public class ReportFileExporter {
 
         indexReport.addHtmlContent("<iframe src='Structure.html' style='border: none; width: 1000px; height: 1090px; overflow: hidden'></iframe>");
         indexReport.endTabContentSection();
+    }
 
+    private static void addAnalysesTab(RichTextReport indexReport, CodeAnalysisResults analysisResults, List<String[]> reportList, File htmlExportFolder) {
         indexReport.startTabContentSection("quality", false);
         indexReport.addLineBreak();
         indexReport.startDiv("margin: 10px");
@@ -208,7 +218,9 @@ public class ReportFileExporter {
         indexReport.endDiv();
 
         indexReport.endTabContentSection();
+    }
 
+    private static void addExplorerTabs(RichTextReport indexReport, List<CustomTab> customTabs) {
         indexReport.startTabContentSection("files", false);
         indexReport.addLineBreak();
         indexReport.addHtmlContent("<iframe src='../explorers/files-explorer.html' style='width: 100%; border: none; height: calc(100vh - 220px); overflow: hidden; margin-top: -12px'></iframe>");
@@ -233,7 +245,10 @@ public class ReportFileExporter {
             indexReport.addHtmlContent(customTabIframe(customTabs.get(i)));
             indexReport.endTabContentSection();
         }
+    }
 
+    private static void addActivityTab(RichTextReport indexReport, CodeAnalysisResults analysisResults) {
+        ContributorsAnalysisResults contributorsAnalysisResults = analysisResults.getContributorsAnalysisResults();
         indexReport.startTabContentSection("commits", false);
 
         if (contributorsAnalysisResults.getCommitsCount() > 0) {
@@ -329,7 +344,9 @@ public class ReportFileExporter {
             indexReport.addParagraph("No commit history found.", "color: grey; margin-left: 10px; margin: 15px");
         }
         indexReport.endTabContentSection();
+    }
 
+    private static void addVisualsAndDataTabs(RichTextReport indexReport, CodeAnalysisResults analysisResults, File htmlExportFolder) {
         indexReport.startTabContentSection("visuals", false);
         indexReport.startDiv("margin: 24px");
         addVisuals(indexReport, analysisResults, htmlExportFolder);
@@ -342,16 +359,15 @@ public class ReportFileExporter {
         indexReport.endDiv();
         addPrompts(indexReport, analysisResults);
         indexReport.endTabContentSection();
+    }
 
+    private static void addFooter(RichTextReport indexReport) {
         String dateOfUpdate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
         String referenceDate = new SimpleDateFormat("yyyy-MM-dd").format(DateUtils.getCalendar().getTime());
         indexReport.addParagraph("generated by <a target='_blank' href='https://sokrates.dev/'>sokrates.dev</a> " +
                         " (<a href='#' onclick=\"return downloadDataFile('config.json')\" target='_blank'>configuration</a>)" +
                         " on " + dateOfUpdate + (!referenceDate.equals(dateOfUpdate) ? "; reference date: " + referenceDate : ""),
                 "color: grey; font-size: 80%; margin-left: 10px; margin-bottom: 30px");
-        export(htmlExportFolder, indexReport, "index.html", analysisResults.getCodeConfiguration().getAnalysis().getCustomHtmlReportHeaderFragment());
-
-        exportRootRedirect(reportsFolder);
     }
 
     // Writes a minimal index.html at the reports root that redirects to html/index.html,
