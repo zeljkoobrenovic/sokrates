@@ -77,42 +77,53 @@ public class GitRepoMetadata {
         if (cleaned.endsWith(".git")) {
             cleaned = cleaned.substring(0, cleaned.length() - ".git".length());
         }
-        String host;
-        String path;
-        if (cleaned.matches("^[A-Za-z][A-Za-z0-9+.-]*://.*")) {
-            // https://host/org/repo, ssh://git@host/org/repo, file:///path/repo
-            String rest = cleaned.substring(cleaned.indexOf("://") + 3);
-            int slash = rest.indexOf('/');
-            String authority = slash >= 0 ? rest.substring(0, slash) : rest;
-            path = slash >= 0 ? rest.substring(slash + 1) : "";
-            host = authority.contains("@") ? authority.substring(authority.indexOf('@') + 1) : authority;
-            if (host.contains(":")) {
-                host = host.substring(0, host.indexOf(':'));
-            }
-        } else if (cleaned.matches("^[^/]+@[^:]+:.*") || cleaned.matches("^[^/:]+:[^/].*")) {
-            // git@host:org/repo (scp-style)
-            String authority = cleaned.substring(0, cleaned.indexOf(':'));
-            path = cleaned.substring(cleaned.indexOf(':') + 1);
-            host = authority.contains("@") ? authority.substring(authority.indexOf('@') + 1) : authority;
-        } else {
-            // a plain local path
-            host = "";
-            path = cleaned;
-        }
-        path = StringUtils.strip(path, "/");
+        String[] hostAndPath = hostAndPath(cleaned);
+        String host = hostAndPath[0];
+        String path = StringUtils.strip(hostAndPath[1], "/");
         if (path.isEmpty()) {
             return null;
         }
         String[] segments = path.split("/");
         String name = segments[segments.length - 1];
         String owner = segments.length >= 2 ? segments[segments.length - 2] : "";
-        boolean web = StringUtils.isNotBlank(host) && !"localhost".equals(host) && !host.startsWith("127.");
-        String webUrl = web ? "https://" + host + "/" + path : "";
-        GitRepoMetadata metadata = new GitRepoMetadata(url, webUrl, host.toLowerCase(), owner, name);
+        GitRepoMetadata metadata = new GitRepoMetadata(url, webUrlFor(host, path), host.toLowerCase(), owner, name);
         if (metadata.isGitHub() && StringUtils.isNotBlank(owner)) {
             metadata.logoLink = "https://github.com/" + owner + ".png?size=200";
         }
         return metadata;
+    }
+
+    /** The host (empty for a local path) and the path of a cleaned URL in scheme form, scp-style form or as a plain path. */
+    private static String[] hostAndPath(String cleaned) {
+        if (cleaned.matches("^[A-Za-z][A-Za-z0-9+.-]*://.*")) {
+            // https://host/org/repo, ssh://git@host/org/repo, file:///path/repo
+            String rest = cleaned.substring(cleaned.indexOf("://") + 3);
+            int slash = rest.indexOf('/');
+            String authority = slash >= 0 ? rest.substring(0, slash) : rest;
+            String path = slash >= 0 ? rest.substring(slash + 1) : "";
+            String host = hostOf(authority);
+            if (host.contains(":")) {
+                host = host.substring(0, host.indexOf(':'));
+            }
+            return new String[]{host, path};
+        }
+        if (cleaned.matches("^[^/]+@[^:]+:.*") || cleaned.matches("^[^/:]+:[^/].*")) {
+            // git@host:org/repo (scp-style)
+            String authority = cleaned.substring(0, cleaned.indexOf(':'));
+            return new String[]{hostOf(authority), cleaned.substring(cleaned.indexOf(':') + 1)};
+        }
+        // a plain local path
+        return new String[]{"", cleaned};
+    }
+
+    private static String hostOf(String authority) {
+        return authority.contains("@") ? authority.substring(authority.indexOf('@') + 1) : authority;
+    }
+
+    /** The browsable https URL, empty for a local path or a loopback host. */
+    private static String webUrlFor(String host, String path) {
+        boolean web = StringUtils.isNotBlank(host) && !"localhost".equals(host) && !host.startsWith("127.");
+        return web ? "https://" + host + "/" + path : "";
     }
 
     /**

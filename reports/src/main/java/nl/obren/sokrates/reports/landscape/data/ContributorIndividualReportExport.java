@@ -71,7 +71,22 @@ public class ContributorIndividualReportExport {
         email = c.getEmail();
         userName = StringUtils.defaultString(c.getUserName());
 
-        PersonConfig personConfig = peopleConfig != null ? peopleConfig.getPersonByEmail(email) : null;
+        applyPersonConfig(peopleConfig != null ? peopleConfig.getPersonByEmail(email) : null, configuration);
+        copyActivity(c);
+
+        List<ContributorRepositoryInfo> repos = cr.getRepositories();
+        countRepositories(repos);
+
+        ContributorPerExtensionHelper helper = new ContributorPerExtensionHelper();
+        addExtensions(cr, configuration, peopleConfig, helper);
+
+        repos.forEach(r -> repositories.add(new Repository(r)));
+
+        addMembers(cr, configuration, peopleConfig, helper);
+    }
+
+    /** Display name, avatar, details link and links: config-people.json values first, else the configured templates. */
+    private void applyPersonConfig(PersonConfig personConfig, LandscapeConfiguration configuration) {
         // Display name: config-people.json userName overrides the commit-derived userName when set.
         if (personConfig != null && StringUtils.isNotBlank(personConfig.getUserName())) {
             userName = personConfig.getUserName();
@@ -93,7 +108,9 @@ public class ContributorIndividualReportExport {
                 }
             }
         }
+    }
 
+    private void copyActivity(Contributor c) {
         firstCommitDate = c.getFirstCommitDate() != null ? c.getFirstCommitDate() : "";
         latestCommitDate = c.getLatestCommitDate() != null ? c.getLatestCommitDate() : "";
         commitsCount = c.getCommitsCount();
@@ -105,24 +122,28 @@ public class ContributorIndividualReportExport {
         linesDeleted = c.getLinesDeleted();
         linesAdded30Days = c.getLinesAdded30Days();
         linesDeleted30Days = c.getLinesDeleted30Days();
+    }
 
-        List<ContributorRepositoryInfo> repos = cr.getRepositories();
+    private void countRepositories(List<ContributorRepositoryInfo> repos) {
         repositoriesCount = repos.size();
         repositoriesCount30Days = (int) repos.stream().filter(p -> p.getCommits30Days() > 0).count();
         repositoriesCount90Days = (int) repos.stream().filter(p -> p.getCommits90Days() > 0).count();
         repositoriesCount180Days = (int) repos.stream().filter(p -> p.getCommits180Days() > 0).count();
         repositoriesCount365Days = (int) repos.stream().filter(p -> p.getCommits365Days() > 0).count();
+    }
 
-        ContributorPerExtensionHelper helper = new ContributorPerExtensionHelper();
+    /** The contributor's extensions with their 90-day file updates. */
+    private void addExtensions(ContributorRepositories cr, LandscapeConfiguration configuration, PeopleConfig peopleConfig, ContributorPerExtensionHelper helper) {
         List<Pair<String, ContributorPerExtensionStats>> extensionUpdates =
                 helper.getContributorStatsPerExtension(configuration, cr, peopleConfig);
         helper.getContributorsPerExtensionStream(extensionUpdates).forEach(e ->
                 extensions.add(new ExtensionActivity(
                         e.getLeft() != null ? e.getLeft().replace("*.", "").trim().toLowerCase() : "",
                         e.getRight().getFileUpdates90Days())));
+    }
 
-        repos.forEach(r -> repositories.add(new Repository(r)));
-
+    /** A team's members, each with their main language. */
+    private void addMembers(ContributorRepositories cr, LandscapeConfiguration configuration, PeopleConfig peopleConfig, ContributorPerExtensionHelper helper) {
         if (cr.getMembers() != null) {
             cr.getMembers().forEach(m -> {
                 Member member = new Member(m);

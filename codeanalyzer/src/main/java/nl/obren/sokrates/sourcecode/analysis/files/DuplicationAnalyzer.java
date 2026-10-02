@@ -169,67 +169,83 @@ public class DuplicationAnalyzer extends Analyzer {
 
         for (DuplicationInstance instance : duplicates) {
             List<DuplicatedFileBlock> blocks = instance.getDuplicatedFileBlocks();
-            int count = blocks.size();
-            int[] ids = new int[count];
-            for (int i = 0; i < count; i++) {
-                DuplicatedFileBlock block = blocks.get(i);
-                String path = block.getSourceFile().getRelativePath();
-                Integer id = fileIds.get(path);
-                if (id == null) {
-                    id = fileIds.size();
-                    fileIds.put(path, id);
-                }
-                ids[i] = id;
-                // Two blocks sharing a file and a cleaned start line are interchangeable, so the first one
-                // seen can stand for all of them: addFileToDuplicationInstance derives every other field
-                // from the file, the cleaned start line and the block size, and the block size is the same
-                // for every block in a run (Blocks.optimize is fixed true, which pins the engine to
-                // minDuplicationBlockLoc). Should variable block sizes ever be reintroduced, this key would
-                // have to carry the size as well.
-                blockByFileAndStart.putIfAbsent(pack(id, block.getCleanedStartLine()), block);
-            }
-            // A pair is unordered, so each unordered pair is emitted once (j > i) and put in canonical
-            // order here, rather than emitting both orderings and discarding one of them later.
-            for (int i = 0; i < count; i++) {
-                for (int j = i + 1; j < count; j++) {
-                    DuplicatedFileBlock block1 = blocks.get(i);
-                    DuplicatedFileBlock block2 = blocks.get(j);
-                    boolean inOrder = inPairKeyOrder(block1, block2);
-                    DuplicatedFileBlock first = inOrder ? block1 : block2;
-                    DuplicatedFileBlock second = inOrder ? block2 : block1;
-                    long bucketKey = pack(inOrder ? ids[i] : ids[j], inOrder ? ids[j] : ids[i]);
-                    long entry = pack(first.getCleanedStartLine(), second.getCleanedStartLine());
-                    LongArray bucket = buckets.get(bucketKey);
-                    if (bucket == null) {
-                        bucket = new LongArray();
-                        buckets.put(bucketKey, bucket);
-                    }
-                    bucket.add(entry);
-                }
-            }
+            int[] ids = registerBlocks(blocks, fileIds, blockByFileAndStart);
+            addBlockPairs(blocks, ids, buckets);
         }
 
         List<DuplicationInstance> result = new ArrayList<>();
         for (Map.Entry<Long, LongArray> bucketEntry : buckets.entrySet()) {
             int fileA = (int) (bucketEntry.getKey() >>> 32);
             int fileB = (int) (long) bucketEntry.getKey();
-            long[] entries = bucketEntry.getValue().sortedDistinct();
-            for (long entry : entries) {
-                int startA = (int) (entry >>> 32);
-                int startB = (int) entry;
-                // consolidate() absorbs forward from every surviving key, so a key starts a chain exactly
-                // when its predecessor (both start lines one lower) is absent.
-                if (contains(entries, pack(startA - 1, startB - 1))) {
-                    continue;
-                }
-                int length = 1;
-                while (contains(entries, pack(startA + length, startB + length))) {
-                    length++;
-                }
-                result.add(chainInstance(blockByFileAndStart, fileA, fileB, startA, startB, length));
-            }
+            addChains(result, blockByFileAndStart, fileA, fileB, bucketEntry.getValue().sortedDistinct());
         }
         return result;
+    }
+
+    /** Numbers each block's file (fileIds) and keeps the first block seen per (file, cleaned start line); returns the blocks' file ids. */
+    private static int[] registerBlocks(List<DuplicatedFileBlock> blocks, Map<String, Integer> fileIds, Map<Long, DuplicatedFileBlock> blockByFileAndStart) {
+        int count = blocks.size();
+        int[] ids = new int[count];
+        for (int i = 0; i < count; i++) {
+            DuplicatedFileBlock block = blocks.get(i);
+            String path = block.getSourceFile().getRelativePath();
+            Integer id = fileIds.get(path);
+            if (id == null) {
+                id = fileIds.size();
+                fileIds.put(path, id);
+            }
+            ids[i] = id;
+            // Two blocks sharing a file and a cleaned start line are interchangeable, so the first one
+            // seen can stand for all of them: addFileToDuplicationInstance derives every other field
+            // from the file, the cleaned start line and the block size, and the block size is the same
+            // for every block in a run (Blocks.optimize is fixed true, which pins the engine to
+            // minDuplicationBlockLoc). Should variable block sizes ever be reintroduced, this key would
+            // have to carry the size as well.
+            blockByFileAndStart.putIfAbsent(pack(id, block.getCleanedStartLine()), block);
+        }
+        return ids;
+    }
+
+    /** Adds every unordered pair of the instance's blocks to its file-pair bucket, in canonical order. */
+    private void addBlockPairs(List<DuplicatedFileBlock> blocks, int[] ids, Map<Long, LongArray> buckets) {
+        int count = blocks.size();
+        // A pair is unordered, so each unordered pair is emitted once (j > i) and put in canonical
+        // order here, rather than emitting both orderings and discarding one of them later.
+        for (int i = 0; i < count; i++) {
+            for (int j = i + 1; j < count; j++) {
+                DuplicatedFileBlock block1 = blocks.get(i);
+                DuplicatedFileBlock block2 = blocks.get(j);
+                boolean inOrder = inPairKeyOrder(block1, block2);
+                DuplicatedFileBlock first = inOrder ? block1 : block2;
+                DuplicatedFileBlock second = inOrder ? block2 : block1;
+                long bucketKey = pack(inOrder ? ids[i] : ids[j], inOrder ? ids[j] : ids[i]);
+                long entry = pack(first.getCleanedStartLine(), second.getCleanedStartLine());
+                LongArray bucket = buckets.get(bucketKey);
+                if (bucket == null) {
+                    bucket = new LongArray();
+                    buckets.put(bucketKey, bucket);
+                }
+                bucket.add(entry);
+            }
+        }
+    }
+
+    /** One consolidated instance per run of consecutive (startA, startB) entries of a file pair. */
+    private void addChains(List<DuplicationInstance> result, Map<Long, DuplicatedFileBlock> blockByFileAndStart, int fileA, int fileB, long[] entries) {
+        for (long entry : entries) {
+            int startA = (int) (entry >>> 32);
+            int startB = (int) entry;
+            // consolidate() absorbs forward from every surviving key, so a key starts a chain exactly
+            // when its predecessor (both start lines one lower) is absent.
+            if (contains(entries, pack(startA - 1, startB - 1))) {
+                continue;
+            }
+            int length = 1;
+            while (contains(entries, pack(startA + length, startB + length))) {
+                length++;
+            }
+            result.add(chainInstance(blockByFileAndStart, fileA, fileB, startA, startB, length));
+        }
     }
 
     private DuplicationInstance chainInstance(Map<Long, DuplicatedFileBlock> blockByFileAndStart,
