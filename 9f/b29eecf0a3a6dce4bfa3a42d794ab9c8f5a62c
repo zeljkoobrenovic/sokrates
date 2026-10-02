@@ -1,0 +1,27 @@
+reports/src/main/java/nl/obren/sokrates/reports/utils/FilesReportUtils.java
+  s_40c0e74316fcc6::t_8ec22691a2ce4c 34,39,50,60-136
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/repositories/LandscapeRepositoriesTagsReport.java
+  s_40c0e74316fcc6::t_56149160c168ee 324,329-346,348-349,351-414
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/ContributorsReportGenerator.java
+  s_40c0e74316fcc6::t_645c27a5c779a2 661,681
+  s_40c0e74316fcc6::t_56149160c168ee 638,642-643,651-656,658-660,662-666,668-679,683-686,688-739
+  s_40c0e74316fcc6::t_8ec22691a2ce4c 290-330,341,350,352,360,362-394,396,400
+reports/src/main/java/nl/obren/sokrates/reports/utils/ScopesRenderer.java
+  s_40c0e74316fcc6::t_8ec22691a2ce4c 279,282,297,303-304,306-321,323-324,326-351
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "9fb29eecf0a3a6dce4bfa3a42d794ab9c8f5a62c",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
