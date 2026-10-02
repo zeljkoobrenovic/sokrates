@@ -1,0 +1,21 @@
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/core/CodeConfiguration.java
+  s_40c0e74316fcc6::t_a7c2cb86942797 120-123,126,128
+codeanalyzer/src/test/java/nl/obren/sokrates/sourcecode/core/CodeConfigurationSrcRootTest.java
+  s_40c0e74316fcc6::t_a7c2cb86942797 1-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "bc7d0222b5dc88f79a75ae8eabb4df0013f83c84",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
