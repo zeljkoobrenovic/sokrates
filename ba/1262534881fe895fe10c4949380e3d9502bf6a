@@ -1,0 +1,27 @@
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/LandscapeReportContributorsTab.java
+  s_40c0e74316fcc6::t_5004254c47751c 77,92-93,223,232,259,261-262,289,838,858,878,883,890,928,944-946,957,973-975,993,1009-1011,1033-1035,1290
+  s_40c0e74316fcc6::t_1b4742f7fe9cde 1293
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/ContributorTimeSlots.java
+  s_40c0e74316fcc6::t_5004254c47751c 1-84,90-369
+  s_40c0e74316fcc6::t_1b4742f7fe9cde 85-89
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/LandscapeReportGenerator.java
+  s_40c0e74316fcc6::t_c4455090f575e2 156,1257,2162,2172,2179,2236
+CLAUDE.md
+  s_40c0e74316fcc6::t_ca8a510c7e78ca 124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "ba1262534881fe895fe10c4949380e3d9502bf6a",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
