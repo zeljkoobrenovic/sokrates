@@ -213,23 +213,8 @@ public class GraphvizDependencyRenderer {
         StringBuilder mermaid = new StringBuilder();
         mermaid.append("flowchart ").append(orientation).append("\n");
 
-        // name -> synthetic node id; LinkedHashMap keeps declaration order stable/deterministic.
-        Map<String, String> nodeIds = new LinkedHashMap<>();
-
-        List<ComponentDependency> renderDependencies = new ArrayList<>(componentDependencies);
-        Collections.sort(renderDependencies, (a, b) -> b.getCount() - a.getCount());
-        if (maxNumberOfDependencies > 0 && renderDependencies.size() > maxNumberOfDependencies) {
-            renderDependencies = renderDependencies.subList(0, maxNumberOfDependencies);
-        }
-
-        // Collect every node name up front (explicit components, group members, and the endpoints
-        // of the rendered edges) so each node gets a declared id + label before it is referenced.
-        allComponents.stream().filter(StringUtils::isNotBlank).forEach(c -> idFor(nodeIds, c));
-        groups.forEach(g -> g.getComponentNames().stream().filter(StringUtils::isNotBlank).forEach(c -> idFor(nodeIds, c)));
-        renderDependencies.forEach(d -> {
-            if (StringUtils.isNotBlank(d.getFromComponent())) idFor(nodeIds, d.getFromComponent());
-            if (StringUtils.isNotBlank(d.getToComponent())) idFor(nodeIds, d.getToComponent());
-        });
+        List<ComponentDependency> renderDependencies = renderedDependencies(componentDependencies);
+        Map<String, String> nodeIds = collectNodeIds(allComponents, groups, renderDependencies);
 
         // Components passed explicitly in allComponents are the highlighted ("deepskyblue2") nodes.
         Set<String> highlighted = new HashSet<>();
@@ -239,7 +224,41 @@ public class GraphvizDependencyRenderer {
         Set<String> edgeKeys = new HashSet<>();
         componentDependencies.forEach(d -> edgeKeys.add(d.getFromComponent() + "::" + d.getToComponent()));
 
-        // Subgraphs (clusters) for component groups.
+        appendSubgraphs(mermaid, groups, nodeIds);
+        appendUngroupedNodes(mermaid, groups, nodeIds);
+        List<String> linkStyles = appendEdges(mermaid, renderDependencies, nodeIds, edgeKeys, maxCount);
+        appendNodeClasses(mermaid, nodeIds, highlighted);
+        linkStyles.forEach(ls -> mermaid.append(ls).append("\n"));
+
+        return mermaid.toString();
+    }
+
+    /** The dependencies to draw: count-desc, capped at maxNumberOfDependencies when set. */
+    private List<ComponentDependency> renderedDependencies(List<ComponentDependency> componentDependencies) {
+        List<ComponentDependency> renderDependencies = new ArrayList<>(componentDependencies);
+        Collections.sort(renderDependencies, (a, b) -> b.getCount() - a.getCount());
+        if (maxNumberOfDependencies > 0 && renderDependencies.size() > maxNumberOfDependencies) {
+            renderDependencies = renderDependencies.subList(0, maxNumberOfDependencies);
+        }
+        return renderDependencies;
+    }
+
+    /** name -> synthetic node id for every explicit component, group member and rendered edge endpoint; LinkedHashMap keeps declaration order stable/deterministic. */
+    private Map<String, String> collectNodeIds(List<String> allComponents, List<ComponentGroup> groups, List<ComponentDependency> renderDependencies) {
+        Map<String, String> nodeIds = new LinkedHashMap<>();
+        // Collect every node name up front (explicit components, group members, and the endpoints
+        // of the rendered edges) so each node gets a declared id + label before it is referenced.
+        allComponents.stream().filter(StringUtils::isNotBlank).forEach(c -> idFor(nodeIds, c));
+        groups.forEach(g -> g.getComponentNames().stream().filter(StringUtils::isNotBlank).forEach(c -> idFor(nodeIds, c)));
+        renderDependencies.forEach(d -> {
+            if (StringUtils.isNotBlank(d.getFromComponent())) idFor(nodeIds, d.getFromComponent());
+            if (StringUtils.isNotBlank(d.getToComponent())) idFor(nodeIds, d.getToComponent());
+        });
+        return nodeIds;
+    }
+
+    /** Subgraphs (clusters) for component groups. */
+    private void appendSubgraphs(StringBuilder mermaid, List<ComponentGroup> groups, Map<String, String> nodeIds) {
         int[] clusterId = {0};
         groups.stream().filter(g -> StringUtils.isNotBlank(g.getName())).forEach(g -> {
             clusterId[0] += 1;
@@ -249,31 +268,30 @@ public class GraphvizDependencyRenderer {
                     mermaid.append("        ").append(nodeDeclaration(idFor(nodeIds, c), c)).append("\n"));
             mermaid.append("    end\n");
         });
+    }
 
-        // Declare any remaining nodes that are not inside a subgraph (explicit components + edge
-        // endpoints). Mermaid tolerates re-declaration, but we declare each id once for clarity.
+    /** Declares the nodes that are not inside a subgraph (explicit components + edge endpoints). Mermaid tolerates re-declaration, but each id is declared once for clarity. */
+    private void appendUngroupedNodes(StringBuilder mermaid, List<ComponentGroup> groups, Map<String, String> nodeIds) {
         Set<String> declaredInGroup = new HashSet<>();
         groups.forEach(g -> g.getComponentNames().forEach(declaredInGroup::add));
         nodeIds.keySet().stream().filter(name -> !declaredInGroup.contains(name)).forEach(name ->
                 mermaid.append("    ").append(nodeDeclaration(nodeIds.get(name), name)).append("\n"));
+    }
 
-        // Edges, in deterministic (count-desc) order. linkStyle targets edges by their definition
-        // index, so we track the running edge index to set per-edge thickness/colour.
+    /**
+     * Edges, in deterministic (count-desc) order. Returns the linkStyle lines: linkStyle targets edges by
+     * their definition index, so the running edge index sets per-edge thickness/colour.
+     */
+    private List<String> appendEdges(StringBuilder mermaid, List<ComponentDependency> renderDependencies, Map<String, String> nodeIds, Set<String> edgeKeys, int maxCount) {
         String connector = "graph".equals(type) ? "---" : "-->";
         List<String> linkStyles = new ArrayList<>();
-        int[] edgeIndex = {0};
+        int edgeIndex = 0;
         for (ComponentDependency componentDependency : renderDependencies) {
             if (StringUtils.isBlank(componentDependency.getFromComponent()) || StringUtils.isBlank(componentDependency.getToComponent())) {
                 continue;
             }
             int thickness = getThickness(componentDependency, maxCount);
-            String color = componentDependency.getColor();
-            if (StringUtils.isBlank(color)) {
-                color = edgeKeys.contains(componentDependency.getToComponent() + "::" + componentDependency.getFromComponent())
-                        ? this.cyclicArrowColor : this.arrowColor;
-            }
-            int transparency = (int) (255.0 * (0.3 + 0.7 * thickness / 10.0));
-            color += String.format("%02X", transparency);
+            String color = edgeColor(componentDependency, edgeKeys, thickness);
 
             String fromName = reverseDirection ? componentDependency.getToComponent() : componentDependency.getFromComponent();
             String toName = reverseDirection ? componentDependency.getFromComponent() : componentDependency.getToComponent();
@@ -284,12 +302,26 @@ public class GraphvizDependencyRenderer {
             mermaid.append("    ").append(fromId).append(" ").append(connector)
                     .append("|\"").append(label).append("\"| ").append(toId).append("\n");
 
-            linkStyles.add("    linkStyle " + edgeIndex[0] + " stroke:" + color
+            linkStyles.add("    linkStyle " + edgeIndex + " stroke:" + color
                     + ",stroke-width:" + Math.max(1, thickness) + "px");
-            edgeIndex[0]++;
+            edgeIndex++;
         }
+        return linkStyles;
+    }
 
-        // Node fill styling: highlighted components vs the default fill colour.
+    /** The edge's own colour, else the cyclic or the plain arrow colour, with an alpha that grows with the thickness. */
+    private String edgeColor(ComponentDependency componentDependency, Set<String> edgeKeys, int thickness) {
+        String color = componentDependency.getColor();
+        if (StringUtils.isBlank(color)) {
+            color = edgeKeys.contains(componentDependency.getToComponent() + "::" + componentDependency.getFromComponent())
+                    ? this.cyclicArrowColor : this.arrowColor;
+        }
+        int transparency = (int) (255.0 * (0.3 + 0.7 * thickness / 10.0));
+        return color + String.format("%02X", transparency);
+    }
+
+    /** Node fill styling: highlighted components vs the default fill colour. */
+    private void appendNodeClasses(StringBuilder mermaid, Map<String, String> nodeIds, Set<String> highlighted) {
         mermaid.append("    classDef default fill:").append(toCssColor(defaultNodeFillColor))
                 .append(",stroke:#ffffff,color:#000000;\n");
         mermaid.append("    classDef highlighted fill:").append(toCssColor("deepskyblue2"))
@@ -303,10 +335,6 @@ public class GraphvizDependencyRenderer {
         if (!highlightedIds.isEmpty()) {
             mermaid.append("    class ").append(String.join(",", highlightedIds)).append(" highlighted;\n");
         }
-
-        linkStyles.forEach(ls -> mermaid.append(ls).append("\n"));
-
-        return mermaid.toString();
     }
 
     private String nodeDeclaration(String id, String name) {

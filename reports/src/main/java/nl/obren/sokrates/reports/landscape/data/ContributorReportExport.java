@@ -82,7 +82,28 @@ public class ContributorReportExport {
         langs = recentLangs != null ? recentLangs
                 : extensionHelper.getLanguages(configuration, cr, peopleConfig);
 
-        PersonConfig personConfig = peopleConfig != null ? peopleConfig.getPersonByEmail(email) : null;
+        applyPersonConfig(peopleConfig != null ? peopleConfig.getPersonByEmail(email) : null, configuration);
+        addTags(tagRules);
+        applyTeam(teamsConfig);
+
+        membersCount = cr.getMembers() != null ? cr.getMembers().size() : 0;
+        // A team has members; a contributor does not. Route on this directly instead of the
+        // team-email set, which shares one key namespace with contributors and could mis-route a
+        // contributor whose safe-email key collides with a team name.
+        boolean isTeam = membersCount > 0;
+
+        copyActivity(c);
+
+        List<ContributorRepositoryInfo> repositories = cr.getRepositories();
+        repositoriesCount = repositories != null ? repositories.size() : 0;
+        repositoriesCount30Days = repositories == null ? 0
+                : (int) repositories.stream().filter(p -> p.getCommits30Days() > 0).count();
+
+        reportUrl = LandscapeIndividualContributorsReports.getContributorReportUrl(email, isTeam);
+    }
+
+    /** Display name and avatar: config-people.json values first, else the commit userName and the configured avatar template. */
+    private void applyPersonConfig(PersonConfig personConfig, LandscapeConfiguration configuration) {
         // Display name: config-people.json userName overrides the commit-derived userName when set.
         if (personConfig != null && StringUtils.isNotBlank(personConfig.getUserName())) {
             userName = personConfig.getUserName();
@@ -93,7 +114,9 @@ public class ContributorReportExport {
         } else {
             avatarUrl = LandscapeContributorsReport.getAvatarUrl(email, configuration.getContributorAvatarLinkTemplate());
         }
+    }
 
+    private void addTags(List<ContributorTag> tagRules) {
         if (tagRules != null) {
             tagRules.forEach(tagRule -> {
                 // Case-insensitive: tag rules match the contributor's email regardless of case.
@@ -102,7 +125,10 @@ public class ContributorReportExport {
                 }
             });
         }
+    }
 
+    /** The first configured team matching the (people-config-canonical) email or userName. */
+    private void applyTeam(TeamsConfig teamsConfig) {
         if (teamsConfig != null) {
             // Match on the (people-config-canonical) email OR userName.
             for (TeamConfig teamConfig : teamsConfig.getTeams()) {
@@ -112,13 +138,9 @@ public class ContributorReportExport {
                 }
             }
         }
+    }
 
-        membersCount = cr.getMembers() != null ? cr.getMembers().size() : 0;
-        // A team has members; a contributor does not. Route on this directly instead of the
-        // team-email set, which shares one key namespace with contributors and could mis-route a
-        // contributor whose safe-email key collides with a team name.
-        boolean isTeam = membersCount > 0;
-
+    private void copyActivity(Contributor c) {
         commitsCount = c.getCommitsCount();
         commitsCount30Days = c.getCommitsCount30Days();
         commitsCount90Days = c.getCommitsCount90Days();
@@ -129,13 +151,6 @@ public class ContributorReportExport {
         linesDeleted30Days = c.getLinesDeleted30Days();
         firstCommitDate = c.getFirstCommitDate() != null ? c.getFirstCommitDate() : "";
         latestCommitDate = c.getLatestCommitDate() != null ? c.getLatestCommitDate() : "";
-
-        List<ContributorRepositoryInfo> repositories = cr.getRepositories();
-        repositoriesCount = repositories != null ? repositories.size() : 0;
-        repositoriesCount30Days = repositories == null ? 0
-                : (int) repositories.stream().filter(p -> p.getCommits30Days() > 0).count();
-
-        reportUrl = LandscapeIndividualContributorsReports.getContributorReportUrl(email, isTeam);
     }
 
     public String getEmail() {
