@@ -1,0 +1,19 @@
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/ContributorsReportUtils.java
+  s_40c0e74316fcc6::t_fc161a96908972 21-22,241-268,270-293,295-297,299-317,319,321,323-326,328-332,334-342,344-347,349-360,362,365-370,372-374,376
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "b2bcdcc2847f3db1bf41d215dd8dfcc43d54e444",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
