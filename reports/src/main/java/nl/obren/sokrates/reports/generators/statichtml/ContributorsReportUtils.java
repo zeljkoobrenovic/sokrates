@@ -104,39 +104,49 @@ public class ContributorsReportUtils {
         WindowTotals[] windows = new WindowTotals[windowDays.length];
         for (int w = 0; w < windowDays.length; w++) {
             int days = windowDays[w];
-            WindowTotals t = new WindowTotals();
-            if (perDay != null) {
-                for (ContributionTimeSlot slot : perDay) {
-                    if (days <= 0 || nl.obren.sokrates.sourcecode.filehistory.DateUtils.isCommittedLessThanDaysAgo(slot.getTimeSlot(), days)) {
-                        t.commits += slot.getCommitsCount();
-                        t.aiCommits += slot.getAiCoAuthoredCommitsCount();
-                        t.fileUpdates += slot.getFileUpdatesCount();
-                        t.added += slot.getLinesAdded();
-                        t.deleted += slot.getLinesDeleted();
-                    }
-                }
-            }
-            // Distinct non-bot contributors active in this scope+window.
-            java.util.Set<String> people = new java.util.HashSet<>();
-            for (Contributor c : contributorsAnalysisResults.getContributors()) {
-                if (c.isBot()) {
-                    continue;
-                }
-                List<String> dates = scope == null ? c.getCommitDates() : c.getCommitDatesByScope().get(scope);
-                if (dates == null) {
-                    continue;
-                }
-                boolean active = days <= 0
-                        ? !dates.isEmpty()
-                        : dates.stream().anyMatch(d -> nl.obren.sokrates.sourcecode.filehistory.DateUtils.isCommittedLessThanDaysAgo(d, days));
-                if (active) {
-                    people.add(c.getEmail());
-                }
-            }
-            t.contributors = people.size();
+            WindowTotals t = windowTotals(perDay, days);
+            t.contributors = activeContributorsCount(contributorsAnalysisResults, scope, days);
             windows[w] = t;
         }
         return new ActivitySummary(windows, windowDays, columns);
+    }
+
+    /** Commits, AI co-authored commits, file updates and churn of the per-day slots within the window (days <= 0 = all time). */
+    private static WindowTotals windowTotals(List<ContributionTimeSlot> perDay, int days) {
+        WindowTotals t = new WindowTotals();
+        if (perDay != null) {
+            for (ContributionTimeSlot slot : perDay) {
+                if (days <= 0 || nl.obren.sokrates.sourcecode.filehistory.DateUtils.isCommittedLessThanDaysAgo(slot.getTimeSlot(), days)) {
+                    t.commits += slot.getCommitsCount();
+                    t.aiCommits += slot.getAiCoAuthoredCommitsCount();
+                    t.fileUpdates += slot.getFileUpdatesCount();
+                    t.added += slot.getLinesAdded();
+                    t.deleted += slot.getLinesDeleted();
+                }
+            }
+        }
+        return t;
+    }
+
+    /** Distinct non-bot contributors with a commit in the scope within the window (days <= 0 = all time). */
+    private static int activeContributorsCount(ContributorsAnalysisResults contributorsAnalysisResults, String scope, int days) {
+        java.util.Set<String> people = new java.util.HashSet<>();
+        for (Contributor c : contributorsAnalysisResults.getContributors()) {
+            if (c.isBot()) {
+                continue;
+            }
+            List<String> dates = scope == null ? c.getCommitDates() : c.getCommitDatesByScope().get(scope);
+            if (dates == null) {
+                continue;
+            }
+            boolean active = days <= 0
+                    ? !dates.isEmpty()
+                    : dates.stream().anyMatch(d -> nl.obren.sokrates.sourcecode.filehistory.DateUtils.isCommittedLessThanDaysAgo(d, days));
+            if (active) {
+                people.add(c.getEmail());
+            }
+        }
+        return people.size();
     }
 
     /**
@@ -401,47 +411,52 @@ public class ContributorsReportUtils {
         for (ContributionTimeSlot timeSlot : contributorsPerTimeSlot) {
             report.startTableCell(style);
             if (timeSlot != null) {
-                int added = timeSlot.getLinesAdded();
-                int deleted = timeSlot.getLinesDeleted();
-                String title = timeSlot.getTimeSlot() + ": +" + added + " / -" + deleted + " lines";
-
-                // Bars share one scale (max single-side value); a present-but-tiny bar still shows 1px.
-                int heightAdded = added > 0 ? 1 + (int) ((CHURN_HALF_HEIGHT - 1) * added / (double) maxChurn) : 0;
-                int heightDeleted = deleted > 0 ? 1 + (int) ((CHURN_HALF_HEIGHT - 1) * deleted / (double) maxChurn) : 0;
-
-                String addedLabel = showTimeSlot && added > 0 ? "+" + FormattingUtils.getSmallTextForNumber(added) : "&nbsp;";
-                String deletedLabel = showTimeSlot && deleted > 0 ? "-" + FormattingUtils.getSmallTextForNumber(deleted) : "&nbsp;";
-                // Label strip height is reserved even when empty so the zero baseline stays put across
-                // slots (otherwise short/empty bars let the two halves collapse together and the line
-                // appears to vanish).
-                int labelHeight = showTimeSlot ? 12 : 0;
-
-                // Top half: a fixed-height, bottom-anchored column holding [label][bar] so the +added
-                // count sits just above its bar and the bar's foot always rests on the baseline below.
-                report.addHtmlContent("<div title='" + title + "' style='height: " + (CHURN_HALF_HEIGHT + labelHeight)
-                        + "px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center'>");
-                if (showTimeSlot) {
-                    report.addHtmlContent("<div style='height: " + labelHeight + "px; font-size: 70%; line-height: " + labelHeight + "px; color: #2e7d32'>" + addedLabel + "</div>");
-                }
-                report.addHtmlContent("<div style='width: 100%; background-color: #2e7d32; height:" + heightAdded + "px'></div>");
-                report.addHtmlContent("</div>");
-                // Zero baseline — a single shared horizontal line at the centre of the cell.
-                report.addHtmlContent("<div style='width: 100%; height: 1px; background-color: #999999'></div>");
-                // Bottom half: a fixed-height, top-anchored column holding [bar][label] so the bar's head
-                // always touches the baseline above and the -deleted count sits just under it.
-                report.addHtmlContent("<div title='" + title + "' style='height: " + (CHURN_HALF_HEIGHT + labelHeight)
-                        + "px; display: flex; flex-direction: column; justify-content: flex-start; align-items: center'>");
-                report.addHtmlContent("<div style='width: 100%; background-color: #c62828; height:" + heightDeleted + "px'></div>");
-                if (showTimeSlot) {
-                    report.addHtmlContent("<div style='height: " + labelHeight + "px; font-size: 70%; line-height: " + labelHeight + "px; color: #c62828'>" + deletedLabel + "</div>");
-                }
-                report.addHtmlContent("</div>");
+                addChurnCell(report, timeSlot, maxChurn, showTimeSlot);
             } else {
                 report.addHtmlContent("<div style='width: 100%; height: 1px; background-color: #999999'></div>");
             }
             report.endTableCell();
         }
         report.endTableRow();
+    }
+
+    /** A diverging bar: added lines up from a shared zero baseline, deleted lines down, with optional count labels. */
+    private static void addChurnCell(RichTextReport report, ContributionTimeSlot timeSlot, int maxChurn, boolean showTimeSlot) {
+        int added = timeSlot.getLinesAdded();
+        int deleted = timeSlot.getLinesDeleted();
+        String title = timeSlot.getTimeSlot() + ": +" + added + " / -" + deleted + " lines";
+
+        // Bars share one scale (max single-side value); a present-but-tiny bar still shows 1px.
+        int heightAdded = added > 0 ? 1 + (int) ((CHURN_HALF_HEIGHT - 1) * added / (double) maxChurn) : 0;
+        int heightDeleted = deleted > 0 ? 1 + (int) ((CHURN_HALF_HEIGHT - 1) * deleted / (double) maxChurn) : 0;
+
+        String addedLabel = showTimeSlot && added > 0 ? "+" + FormattingUtils.getSmallTextForNumber(added) : "&nbsp;";
+        String deletedLabel = showTimeSlot && deleted > 0 ? "-" + FormattingUtils.getSmallTextForNumber(deleted) : "&nbsp;";
+        // Label strip height is reserved even when empty so the zero baseline stays put across
+        // slots (otherwise short/empty bars let the two halves collapse together and the line
+        // appears to vanish).
+        int labelHeight = showTimeSlot ? 12 : 0;
+
+        // Top half: a fixed-height, bottom-anchored column holding [label][bar] so the +added
+        // count sits just above its bar and the bar's foot always rests on the baseline below.
+        report.addHtmlContent("<div title='" + title + "' style='height: " + (CHURN_HALF_HEIGHT + labelHeight)
+                + "px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center'>");
+        if (showTimeSlot) {
+            report.addHtmlContent("<div style='height: " + labelHeight + "px; font-size: 70%; line-height: " + labelHeight + "px; color: #2e7d32'>" + addedLabel + "</div>");
+        }
+        report.addHtmlContent("<div style='width: 100%; background-color: #2e7d32; height:" + heightAdded + "px'></div>");
+        report.addHtmlContent("</div>");
+        // Zero baseline — a single shared horizontal line at the centre of the cell.
+        report.addHtmlContent("<div style='width: 100%; height: 1px; background-color: #999999'></div>");
+        // Bottom half: a fixed-height, top-anchored column holding [bar][label] so the bar's head
+        // always touches the baseline above and the -deleted count sits just under it.
+        report.addHtmlContent("<div title='" + title + "' style='height: " + (CHURN_HALF_HEIGHT + labelHeight)
+                + "px; display: flex; flex-direction: column; justify-content: flex-start; align-items: center'>");
+        report.addHtmlContent("<div style='width: 100%; background-color: #c62828; height:" + heightDeleted + "px'></div>");
+        if (showTimeSlot) {
+            report.addHtmlContent("<div style='height: " + labelHeight + "px; font-size: 70%; line-height: " + labelHeight + "px; color: #c62828'>" + deletedLabel + "</div>");
+        }
+        report.addHtmlContent("</div>");
     }
 
     // Which metric a leading summary cell shows.

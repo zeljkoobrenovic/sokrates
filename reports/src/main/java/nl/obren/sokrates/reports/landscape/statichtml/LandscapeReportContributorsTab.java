@@ -842,8 +842,6 @@ public class LandscapeReportContributorsTab {
                 contributorsPerYear = contributorsPerYear.subList(0, limit);
             }
 
-            int maxCommits = contributorsPerYear.stream().mapToInt(c -> c.getCommitsCount()).max().orElse(1);
-
             landscapeReport.startDiv("overflow-y: auto;");
             landscapeReport.startTable();
 
@@ -852,75 +850,88 @@ public class LandscapeReportContributorsTab {
 
             // Churn row first, above commits.
             addChurnPerYearRow(contributorsPerYear, style);
-
-            landscapeReport.startTableRow();
-            landscapeReport.startTableCell("border: none; height: 130px; vertical-align: bottom;");
-            int commitsCount = timeSlots.scopedTotalCommits();
-            if (commitsCount > 0) {
-                addActivityTrendCard(FormattingUtils.getSmallTextForNumber(commitsCount), "commits", "commits");
-            }
-            landscapeReport.endTableCell();
-            contributorsPerYear.forEach(year -> {
-                landscapeReport.startTableCell(style);
-                int count = year.getCommitsCount();
-                String color = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "#989898";
-                landscapeReport.addParagraph(count + "", "margin: 2px; color: " + color);
-                int height = 1 + (int) (64.0 * count / maxCommits);
-                String bgColor = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "lightgrey";
-                landscapeReport.addHtmlContent("<div style='width: 100%; background-color: " + bgColor + "; height:" + height + "px'></div>");
-                landscapeReport.endTableCell();
-            });
-            landscapeReport.endTableRow();
-
+            addCommitsPerYearRow(contributorsPerYear, style, thisYear);
             if (showContributorsCount) {
-                int maxContributors[] = {1};
-                contributorsPerYear.forEach(year -> {
-                    int count = timeSlots.getContributorsCountPerYear(year.getTimeSlot());
-                    maxContributors[0] = Math.max(maxContributors[0], count);
-                });
-                landscapeReport.startTableRow();
-                landscapeReport.startTableCell("border: none; height: 100px; vertical-align: bottom;");
-                int contributorsCount = timeSlots.scopedTotalContributors();
-                if (contributorsCount > 0) {
-                    addActivityTrendCard(FormattingUtils.getSmallTextForNumber(contributorsCount), "contributors", "contributors");
-                }
-                landscapeReport.endTableCell();
-                contributorsPerYear.forEach(year -> {
-                    landscapeReport.startTableCell(style);
-                    int count = timeSlots.getContributorsCountPerYear(year.getTimeSlot());
-                    String color = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "#989898";
-                    landscapeReport.addParagraph(count + "", "margin: 2px; color: " + color + ";");
-                    int height = 1 + (int) (64.0 * count / maxContributors[0]);
-                    landscapeReport.addHtmlContent("<div style='width: 100%; background-color: skyblue; height:" + height + "px'></div>");
-                    landscapeReport.endTableCell();
-                });
-                landscapeReport.endTableRow();
+                addContributorsCountPerYearRow(contributorsPerYear, style, thisYear);
             }
-
-            landscapeReport.startTableRow();
-            landscapeReport.addTableCell("", "border: none; ");
-            var ref = new Object() {
-                String latestCommitDate = landscapeAnalysisResults.getLatestCommitDate();
-            };
-            if (ref.latestCommitDate.length() > 5) {
-                ref.latestCommitDate = ref.latestCommitDate.substring(5);
-            }
-            contributorsPerYear.forEach(year -> {
-                String color = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "#989898";
-                landscapeReport.startTableCell("vertical-align: top; border: none; text-align: center; font-size: 90%; color: " + color);
-                landscapeReport.addHtmlContent(year.getTimeSlot());
-                if (landscapeAnalysisResults.getLatestCommitDate().startsWith(year.getTimeSlot() + "-")) {
-                    landscapeReport.addContentInDiv(ref.latestCommitDate, "text-align: center; color: grey; font-size: 9px");
-                }
-                landscapeReport.endTableCell();
-            });
-            landscapeReport.endTableRow();
+            addYearLabelsRow(contributorsPerYear, thisYear);
 
             landscapeReport.endTable();
             landscapeReport.endDiv();
 
             landscapeReport.addLineBreak();
         }
+    }
+
+    /** The commits per year as bars (the current year dark), led by the total commits trend card. */
+    private void addCommitsPerYearRow(List<ContributionTimeSlot> contributorsPerYear, String style, int thisYear) {
+        int maxCommits = contributorsPerYear.stream().mapToInt(c -> c.getCommitsCount()).max().orElse(1);
+        landscapeReport.startTableRow();
+        landscapeReport.startTableCell("border: none; height: 130px; vertical-align: bottom;");
+        int commitsCount = timeSlots.scopedTotalCommits();
+        if (commitsCount > 0) {
+            addActivityTrendCard(FormattingUtils.getSmallTextForNumber(commitsCount), "commits", "commits");
+        }
+        landscapeReport.endTableCell();
+        contributorsPerYear.forEach(year -> {
+            landscapeReport.startTableCell(style);
+            int count = year.getCommitsCount();
+            String color = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "#989898";
+            landscapeReport.addParagraph(count + "", "margin: 2px; color: " + color);
+            int height = 1 + (int) (64.0 * count / maxCommits);
+            String bgColor = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "lightgrey";
+            landscapeReport.addHtmlContent("<div style='width: 100%; background-color: " + bgColor + "; height:" + height + "px'></div>");
+            landscapeReport.endTableCell();
+        });
+        landscapeReport.endTableRow();
+    }
+
+    /** The distinct contributors per year as sky-blue bars, led by the total contributors trend card. */
+    private void addContributorsCountPerYearRow(List<ContributionTimeSlot> contributorsPerYear, String style, int thisYear) {
+        int maxContributors[] = {1};
+        contributorsPerYear.forEach(year -> {
+            int count = timeSlots.getContributorsCountPerYear(year.getTimeSlot());
+            maxContributors[0] = Math.max(maxContributors[0], count);
+        });
+        landscapeReport.startTableRow();
+        landscapeReport.startTableCell("border: none; height: 100px; vertical-align: bottom;");
+        int contributorsCount = timeSlots.scopedTotalContributors();
+        if (contributorsCount > 0) {
+            addActivityTrendCard(FormattingUtils.getSmallTextForNumber(contributorsCount), "contributors", "contributors");
+        }
+        landscapeReport.endTableCell();
+        contributorsPerYear.forEach(year -> {
+            landscapeReport.startTableCell(style);
+            int count = timeSlots.getContributorsCountPerYear(year.getTimeSlot());
+            String color = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "#989898";
+            landscapeReport.addParagraph(count + "", "margin: 2px; color: " + color + ";");
+            int height = 1 + (int) (64.0 * count / maxContributors[0]);
+            landscapeReport.addHtmlContent("<div style='width: 100%; background-color: skyblue; height:" + height + "px'></div>");
+            landscapeReport.endTableCell();
+        });
+        landscapeReport.endTableRow();
+    }
+
+    /** The year labels, with the latest commit's month and day under its year. */
+    private void addYearLabelsRow(List<ContributionTimeSlot> contributorsPerYear, int thisYear) {
+        landscapeReport.startTableRow();
+        landscapeReport.addTableCell("", "border: none; ");
+        var ref = new Object() {
+            String latestCommitDate = landscapeAnalysisResults.getLatestCommitDate();
+        };
+        if (ref.latestCommitDate.length() > 5) {
+            ref.latestCommitDate = ref.latestCommitDate.substring(5);
+        }
+        contributorsPerYear.forEach(year -> {
+            String color = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "#989898";
+            landscapeReport.startTableCell("vertical-align: top; border: none; text-align: center; font-size: 90%; color: " + color);
+            landscapeReport.addHtmlContent(year.getTimeSlot());
+            if (landscapeAnalysisResults.getLatestCommitDate().startsWith(year.getTimeSlot() + "-")) {
+                landscapeReport.addContentInDiv(ref.latestCommitDate, "text-align: center; color: grey; font-size: 9px");
+            }
+            landscapeReport.endTableCell();
+        });
+        landscapeReport.endTableRow();
     }
 
     private void addContributorsPerWeek() {
@@ -1096,42 +1107,49 @@ public class LandscapeReportContributorsTab {
                 + "</div>", "border: none; vertical-align: " + (first ? "bottom" : "top"));
         boolean firstItem[] = {true};
         contributorsPerWeek.forEach(timeUnit -> {
-            landscapeReport.startTableCell("max-width: 20px; padding: 0; margin: 1px; border: none; text-align: center; vertical-align: " + valign + "; font-size: 80%; height: 100px");
-            List<String> extractedContributors = contributorsExtractor.getContributors(timeUnit.getTimeSlot(), true);
-            int count = extractedContributors.size();
-            int height = 4 + (int) (64.0 * count / maxContributors);
-            String title = "timeUnit of " + timeUnit.getTimeSlot() + " = " + count + " extractedContributors:\n\n" +
-                    HtmlEscapeUtils.escape(extractedContributors.subList(0, extractedContributors.size() < 200 ? extractedContributors.size() : 200).stream().collect(Collectors.joining(", ")));
-            String yearString = timeUnit.getTimeSlot().split("[-]")[0];
-
-            String color = "lightgrey";
-
-            if (count > 0 && StringUtils.isNumeric(yearString)) {
-                int year = Integer.parseInt(yearString);
-                if (first) {
-                    color = year % 2 == 0 ? "limegreen" : "darkgreen";
-                } else {
-                    if (firstItem[0]) {
-                        color = "rgba(220,220,220,100)";
-                    } else {
-                        color = year % 2 == 0 ? "crimson" : "rgba(100,0,0,100)";
-                    }
-                }
-            } else {
-                height = 1;
-            }
-
-            if (first && count > 0) {
-                landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; color: grey; font-size: 80%; margin: 1px'>" + count + "</div>");
-            }
-            landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + color + "; height:" + height + "px; margin: 1px'></div>");
-            if (!first && count > 0) {
-                landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; color: grey; font-size: 80%; margin: 1px'>" + count + "</div>");
-            }
-            landscapeReport.endTableCell();
+            addTimeUnitCell(timeUnit, contributorsExtractor, maxContributors, first, valign, firstItem[0]);
             firstItem[0] = false;
         });
         landscapeReport.endTableRow();
+    }
+
+    /** One time unit's bar (height by contributor count, colour by year parity) with the count above (first) or below (last) it. */
+    private void addTimeUnitCell(ContributionTimeSlot timeUnit, ContributorsExtractor contributorsExtractor, int maxContributors, boolean first, String valign, boolean firstItem) {
+        landscapeReport.startTableCell("max-width: 20px; padding: 0; margin: 1px; border: none; text-align: center; vertical-align: " + valign + "; font-size: 80%; height: 100px");
+        List<String> extractedContributors = contributorsExtractor.getContributors(timeUnit.getTimeSlot(), true);
+        int count = extractedContributors.size();
+        int height = 4 + (int) (64.0 * count / maxContributors);
+        String title = "timeUnit of " + timeUnit.getTimeSlot() + " = " + count + " extractedContributors:\n\n" +
+                HtmlEscapeUtils.escape(extractedContributors.subList(0, extractedContributors.size() < 200 ? extractedContributors.size() : 200).stream().collect(Collectors.joining(", ")));
+        String yearString = timeUnit.getTimeSlot().split("[-]")[0];
+
+        String color = "lightgrey";
+        if (count > 0 && StringUtils.isNumeric(yearString)) {
+            color = timeUnitBarColor(Integer.parseInt(yearString), first, firstItem);
+        } else {
+            height = 1;
+        }
+
+        String countLabel = "<div title='" + title + "' style='width: 100%; color: grey; font-size: 80%; margin: 1px'>" + count + "</div>";
+        if (first && count > 0) {
+            landscapeReport.addHtmlContent(countLabel);
+        }
+        landscapeReport.addHtmlContent("<div title='" + title + "' style='width: 100%; background-color: " + color + "; height:" + height + "px; margin: 1px'></div>");
+        if (!first && count > 0) {
+            landscapeReport.addHtmlContent(countLabel);
+        }
+        landscapeReport.endTableCell();
+    }
+
+    /** Greens for first contributions, reds for last ones (the first slot of the last-contribution row greyed), alternating by year. */
+    private static String timeUnitBarColor(int year, boolean first, boolean firstItem) {
+        if (first) {
+            return year % 2 == 0 ? "limegreen" : "darkgreen";
+        }
+        if (firstItem) {
+            return "rgba(220,220,220,100)";
+        }
+        return year % 2 == 0 ? "crimson" : "rgba(100,0,0,100)";
     }
 
     private void addTickMarksPerWeekRow(List<ContributionTimeSlot> contributorsPerWeek, int barWidth) {

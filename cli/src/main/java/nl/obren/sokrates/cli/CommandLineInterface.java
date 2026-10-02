@@ -555,6 +555,21 @@ public class CommandLineInterface {
      * Network errors (unknown host, cannot open git-upload-pack, timeouts) never count as gone.
      */
     static boolean repositoryGone(String url, Throwable failure) {
+        Boolean byCause = goneByCause(failure);
+        if (byCause != null) {
+            return byCause;
+        }
+        GitRepoMetadata metadata = GitRepoMetadata.fromUrl(url);
+        if (metadata != null && metadata.isGitHub() && StringUtils.isNotBlank(metadata.getOwner())
+                && StringUtils.isBlank(System.getenv(GitRepoMetadata.ENV_OFFLINE))) {
+            return gitHubRepositoryMissing(metadata);
+        }
+        String message = StringUtils.defaultString(failure.getMessage()).toLowerCase();
+        return message.contains("not found") || message.contains("does not exist");
+    }
+
+    /** true for JGit's "no remote repository", false for a network failure, null when the cause chain does not decide. */
+    private static Boolean goneByCause(Throwable failure) {
         for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
             if (cause instanceof org.eclipse.jgit.errors.NoRemoteRepositoryException) {
                 return true;
@@ -564,21 +579,20 @@ public class CommandLineInterface {
                 return false;
             }
         }
-        GitRepoMetadata metadata = GitRepoMetadata.fromUrl(url);
-        if (metadata != null && metadata.isGitHub() && StringUtils.isNotBlank(metadata.getOwner())
-                && StringUtils.isBlank(System.getenv(GitRepoMetadata.ENV_OFFLINE))) {
-            try {
-                HttpFetcher.Response response = HttpFetcher.create(Map.of(
-                        "Accept", "application/vnd.github+json",
-                        "Authorization", StringUtils.isNotBlank(System.getenv(GitRepoCloner.ENV_TOKEN)) ? "Bearer " + System.getenv(GitRepoCloner.ENV_TOKEN) : ""))
-                        .get(GitHubOrgClient.DEFAULT_API_BASE + "/repos/" + metadata.getOwner() + "/" + metadata.getName());
-                return response.status == 404;
-            } catch (Exception e) {
-                return false;
-            }
+        return null;
+    }
+
+    /** Asks the GitHub REST API whether the repository exists; false on any failure (a network error never counts as gone). */
+    private static boolean gitHubRepositoryMissing(GitRepoMetadata metadata) {
+        try {
+            HttpFetcher.Response response = HttpFetcher.create(Map.of(
+                    "Accept", "application/vnd.github+json",
+                    "Authorization", StringUtils.isNotBlank(System.getenv(GitRepoCloner.ENV_TOKEN)) ? "Bearer " + System.getenv(GitRepoCloner.ENV_TOKEN) : ""))
+                    .get(GitHubOrgClient.DEFAULT_API_BASE + "/repos/" + metadata.getOwner() + "/" + metadata.getName());
+            return response.status == 404;
+        } catch (Exception e) {
+            return false;
         }
-        String message = StringUtils.defaultString(failure.getMessage()).toLowerCase();
-        return message.contains("not found") || message.contains("does not exist");
     }
 
     /**
