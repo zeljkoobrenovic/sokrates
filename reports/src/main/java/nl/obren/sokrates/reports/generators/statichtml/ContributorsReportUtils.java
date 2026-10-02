@@ -253,17 +253,17 @@ public class ContributorsReportUtils {
         }
         List<ContributionTimeSlot> slots = contributorsPerTimeSlot.size() > limit ? contributorsPerTimeSlot.subList(0, limit) : contributorsPerTimeSlot;
 
-        int maxContributors = slots.stream().mapToInt(c -> c.getContributorsCount()).max().orElse(1);
-        int maxCommits = slots.stream().mapToInt(c -> c.getCommitsCount()).max().orElse(1);
+        int maxContributors = maxOf(slots, ContributionTimeSlot::getContributorsCount, 1);
+        int maxCommits = maxOf(slots, ContributionTimeSlot::getCommitsCount, 1);
         // The AI co-authored commits row (from Co-authored-by trailers) is only emitted when any
         // slot has one — histories extracted without the trailers sidecar look exactly as before.
         boolean hasAiCommits = slots.stream().anyMatch(c -> c != null && c.getAiCoAuthoredCommitsCount() > 0);
-        int maxFileUpdatesCount = slots.stream().mapToInt(c -> c.getFileUpdatesCount()).max().orElse(1);
+        int maxFileUpdatesCount = maxOf(slots, ContributionTimeSlot::getFileUpdatesCount, 1);
         // Churn is drawn as a diverging chart: additions above a zero baseline, deletions below it.
         // Both sides share one scale (the largest single-side value across slots) so an addition and
         // a deletion of equal size draw equal bar lengths. The row is only emitted when there is
         // churn data at all (older history files have none).
-        int maxChurn = slots.stream().mapToInt(c -> Math.max(c.getLinesAdded(), c.getLinesDeleted())).max().orElse(0);
+        int maxChurn = maxOf(slots, c -> Math.max(c.getLinesAdded(), c.getLinesDeleted()), 0);
 
         report.startDiv("overflow-y: auto; font-size: 90%");
         report.startTable();
@@ -281,9 +281,7 @@ public class ContributorsReportUtils {
         // centred summary cells; without them (e.g. the Commits report charts) keep the icons at the
         // bottom so they sit on the baseline the bars grow from.
         String iconVAlign = summary != null ? "middle" : "bottom";
-        String cellStyle = showTimeSlot
-                ? "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: bottom; font-size: 80%"
-                : "border: none; padding: " + padding + "px; vertical-align: bottom; font-size: 80%";
+        String cellStyle = barCellStyle(showTimeSlot, padding);
 
         addBarRow(report, slots, cellStyle, showTimeSlot, "change", "number of files changed per commit", SummaryMetric.FILE_UPDATES, iconVAlign, fade, summary,
                 ContributionTimeSlot::getFileUpdatesCount, (timeSlot, count) -> addFileUpdatesBars(report, timeSlot, count, maxFileUpdatesCount));
@@ -304,6 +302,16 @@ public class ContributorsReportUtils {
 
         report.endTable();
         report.endDiv();
+    }
+
+    private static int maxOf(List<ContributionTimeSlot> slots, java.util.function.ToIntFunction<ContributionTimeSlot> value, int orElse) {
+        return slots.stream().mapToInt(value).max().orElse(orElse);
+    }
+
+    private static String barCellStyle(boolean showTimeSlot, int padding) {
+        return showTimeSlot
+                ? "border: none; padding: " + padding + "px; width: 10px; text-align: center; vertical-align: bottom; font-size: 80%"
+                : "border: none; padding: " + padding + "px; vertical-align: bottom; font-size: 80%";
     }
 
     /**
@@ -365,13 +373,7 @@ public class ContributorsReportUtils {
         report.startTableRow();
         report.addTableCell("", header ? "border: none;" : "border: none; ");
         if (summary != null) {
-            for (int w = 0; w < summary.columns; w++) {
-                if (header) {
-                    report.addTableCell(summary.label(w), "border: none; text-align: center; vertical-align: bottom; font-size: 70%; color: grey; padding: 2px 6px;");
-                } else {
-                    report.addTableCell("", "border: none;");
-                }
-            }
+            addSummaryColumnCells(report, summary, header);
         }
         String style = "border: none; padding: " + padding + "px; " + (header ? "padding-bottom: 0; " : "")
                 + "width: 10px; text-align: center; vertical-align: " + (header ? "bottom" : "top") + "; font-size: 80%";
@@ -384,6 +386,17 @@ public class ContributorsReportUtils {
             report.addTableCell(slotString + "", style + (active ? "" : "; color: #c0c0c0"));
         }
         report.endTableRow();
+    }
+
+    /** One cell per summary window: its label in the header row, empty in the footer row. */
+    private static void addSummaryColumnCells(RichTextReport report, ActivitySummary summary, boolean header) {
+        for (int w = 0; w < summary.columns; w++) {
+            if (header) {
+                report.addTableCell(summary.label(w), "border: none; text-align: center; vertical-align: bottom; font-size: 70%; color: grey; padding: 2px 6px;");
+            } else {
+                report.addTableCell("", "border: none;");
+            }
+        }
     }
 
     // Max bar length (px) for each side of the diverging churn chart. The two halves (additions above,

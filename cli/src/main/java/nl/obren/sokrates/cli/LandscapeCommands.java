@@ -244,14 +244,14 @@ class LandscapeCommands {
             LOG.info("");
             LOG.info("=== Repository " + index + " of " + urls.size() + ": " + url + " ===");
             File output = outputFolderFor.apply(url);
-            CommandLineInterface.CloneOutcome outcome;
+            GitRepoCommands.CloneOutcome outcome;
             try {
-                outcome = cli.analyzeGitRepoInto(cmd, url, output, null, depth, producer, listing.get(url));
+                outcome = cli.gitRepoCommands.analyzeGitRepoInto(cmd, url, output, null, depth, producer, listing.get(url));
             } catch (Exception e) {
                 LOG.error("Analysis of " + url + " failed: " + e.getMessage());
-                outcome = CommandLineInterface.CloneOutcome.FAILED;
+                outcome = GitRepoCommands.CloneOutcome.FAILED;
             }
-            (outcome == CommandLineInterface.CloneOutcome.ANALYZED ? batch.analyzed : outcome == CommandLineInterface.CloneOutcome.NOT_FOUND ? batch.notFound : batch.failed).add(url);
+            (outcome == GitRepoCommands.CloneOutcome.ANALYZED ? batch.analyzed : outcome == GitRepoCommands.CloneOutcome.NOT_FOUND ? batch.notFound : batch.failed).add(url);
             // Per-analysis static caches (the recursive landscape update resets them the same way).
             DateUtils.reset();
             RegexUtils.reset();

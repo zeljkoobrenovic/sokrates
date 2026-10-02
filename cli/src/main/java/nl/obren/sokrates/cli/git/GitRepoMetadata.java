@@ -206,14 +206,7 @@ public class GitRepoMetadata {
      * is no link yet (a link to the same URL counts as already there). Returns whether anything changed.
      */
     public boolean applyTo(Metadata metadata, String folderDefaultName) {
-        boolean changed = false;
-        String reportName = reportName();
-        if (StringUtils.isBlank(metadata.getName()) || metadata.getName().equals(folderDefaultName)) {
-            if (!reportName.equals(metadata.getName())) {
-                metadata.setName(reportName);
-                changed = true;
-            }
-        }
+        boolean changed = applyName(metadata, folderDefaultName);
         if (StringUtils.isBlank(metadata.getDescription()) && StringUtils.isNotBlank(description)) {
             metadata.setDescription(description);
             changed = true;
@@ -222,13 +215,30 @@ public class GitRepoMetadata {
             metadata.setLogoLink(logoLink);
             changed = true;
         }
+        return applyLink(metadata) || changed;
+    }
+
+    /** Sets the report name when the metadata has none or still carries the folder default; true when it changed. */
+    private boolean applyName(Metadata metadata, String folderDefaultName) {
+        String reportName = reportName();
+        if (StringUtils.isBlank(metadata.getName()) || metadata.getName().equals(folderDefaultName)) {
+            if (!reportName.equals(metadata.getName())) {
+                metadata.setName(reportName);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Adds the browsable URL as the only link when there are no links yet; true when it was added. */
+    private boolean applyLink(Metadata metadata) {
         if (StringUtils.isNotBlank(webUrl) && metadata.getLinks().stream().noneMatch(l -> webUrl.equals(l.getHref()))) {
             if (metadata.getLinks().isEmpty()) {
                 metadata.getLinks().add(new Link(linkLabel(), webUrl));
-                changed = true;
+                return true;
             }
         }
-        return changed;
+        return false;
     }
 
     public String linkLabel() {

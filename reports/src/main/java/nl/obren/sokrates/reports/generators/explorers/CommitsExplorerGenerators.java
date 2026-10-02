@@ -168,19 +168,7 @@ public class CommitsExplorerGenerators {
             String sha = update.getCommitId();
             CommitExport commit = commitsBySha.get(sha);
             if (commit == null) {
-                commit = new CommitExport();
-                commit.setSha(sha.length() > 10 ? sha.substring(0, 10) : sha);
-                commit.setDate(update.getDate());
-                commit.setEmail(update.getAuthorEmail());
-                commit.setUserName(update.getUserName());
-                commit.setBot(update.isBot());
-                commit.setMessage(messagesBySha.getOrDefault(sha, ""));
-                List<CoAuthor> coAuthors = coAuthorsBySha.get(sha);
-                if (coAuthors != null) {
-                    for (CoAuthor coAuthor : coAuthors) {
-                        commit.getCoAuthors().add(new CoAuthorExport(coAuthor));
-                    }
-                }
+                commit = newCommit(sha, update, messagesBySha, coAuthorsBySha);
                 commitsBySha.put(sha, commit);
                 pathsBySha.put(sha, new LinkedHashSet<>());
             }
@@ -212,19 +200,42 @@ public class CommitsExplorerGenerators {
         for (String sha : shas) {
             CommitExport commit = commitsBySha.get(sha);
             for (String path : pathsBySha.get(sha)) {
-                Integer fileId = fileIdsByPath.get(path.toLowerCase());
-                if (fileId == null) {
-                    fileId = files.size();
-                    int sizeProxy = sizeProxyByPath.getOrDefault(path.toLowerCase(), 0);
-                    files.add(new CommitFileExport(path, CommitFileExport.SCOPE_DELETED, sizeProxy));
-                    fileIdsByPath.put(path.toLowerCase(), fileId);
-                }
-                commit.getFileIds().add(fileId);
+                commit.getFileIds().add(fileIdFor(path, files, fileIdsByPath, sizeProxyByPath));
             }
             data.getCommits().add(commit);
         }
         data.setFiles(files);
 
         return data;
+    }
+
+    /** A commit's export from its first file update: short sha, date, author, bot flag, message and co-authors. */
+    private static CommitExport newCommit(String sha, FileUpdate update, Map<String, String> messagesBySha, Map<String, List<CoAuthor>> coAuthorsBySha) {
+        CommitExport commit = new CommitExport();
+        commit.setSha(sha.length() > 10 ? sha.substring(0, 10) : sha);
+        commit.setDate(update.getDate());
+        commit.setEmail(update.getAuthorEmail());
+        commit.setUserName(update.getUserName());
+        commit.setBot(update.isBot());
+        commit.setMessage(messagesBySha.getOrDefault(sha, ""));
+        List<CoAuthor> coAuthors = coAuthorsBySha.get(sha);
+        if (coAuthors != null) {
+            for (CoAuthor coAuthor : coAuthors) {
+                commit.getCoAuthors().add(new CoAuthorExport(coAuthor));
+            }
+        }
+        return commit;
+    }
+
+    /** The path's index in the file list; a history-only path is appended as a deleted file sized by its proxy. */
+    private static int fileIdFor(String path, List<CommitFileExport> files, Map<String, Integer> fileIdsByPath, Map<String, Integer> sizeProxyByPath) {
+        Integer fileId = fileIdsByPath.get(path.toLowerCase());
+        if (fileId == null) {
+            fileId = files.size();
+            int sizeProxy = sizeProxyByPath.getOrDefault(path.toLowerCase(), 0);
+            files.add(new CommitFileExport(path, CommitFileExport.SCOPE_DELETED, sizeProxy));
+            fileIdsByPath.put(path.toLowerCase(), fileId);
+        }
+        return fileId;
     }
 }

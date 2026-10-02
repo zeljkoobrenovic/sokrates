@@ -61,6 +61,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import nl.obren.sokrates.sourcecode.analysis.results.LogicalDecompositionAnalysisResults;
 import java.io.File;
 import java.io.IOException;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -101,89 +102,92 @@ public class ReportVisualsGenerator {
         AtomicInteger index = new AtomicInteger();
         analysisResults.getLogicalDecompositionsAnalysisResults().forEach(logicalDecomposition -> {
             index.getAndIncrement();
-            List<VisualizationItem> items = new ArrayList<>();
-            Force3DObject force3DObject = new Force3DObject();
-            logicalDecomposition.getComponents().forEach(component -> {
-                items.add(new VisualizationItem(component.getName(), component.getLinesOfCode()));
-                force3DObject.getNodes().add(new Force3DNode(component.getName(), component.getLinesOfCode()));
-            });
-            logicalDecomposition.getComponentDependencies().forEach(dependency -> {
-                force3DObject.getLinks().add(new Force3DLink(dependency.getFromComponent(), dependency.getToComponent(), dependency.getCount()));
-            });
-            try {
-                String nameSuffix = "components_" + index.toString() + ".html";
-                String nameSuffixDependencies = "dependencies_" + index.toString() + ".html";
-                File folder = new File(reportsFolder, "html/visuals");
-                folder.mkdirs();
-                FileUtils.write(new File(folder, "bubble_chart_" + nameSuffix), new VisualizationTemplate().renderBubbleChart(items), UTF_8);
-                FileUtils.write(new File(folder, "tree_map_" + nameSuffix), new VisualizationTemplate().renderTreeMap(items), UTF_8);
-                FileUtils.write(new File(folder, "force_2d_" + nameSuffixDependencies), new VisualizationTemplate().render2DForceGraph(force3DObject), UTF_8);
-                FileUtils.write(new File(folder, "force_3d_" + nameSuffixDependencies), new VisualizationTemplate().render3DForceGraph(force3DObject), UTF_8);
-
-                generate3DUnitsView(folder, analysisResults);
-            } catch (IOException e) {
-                LOG.warn(e);
-            }
+            generateComponentVisuals(reportsFolder, analysisResults, logicalDecomposition, index.toString());
         });
 
         try {
             File folder = new File(reportsFolder, "html/visuals");
             folder.mkdirs();
-
-            List<SourceFile> mainSourceFiles = analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles();
-            List<SourceFile> testSourceFiles = analysisResults.getTestAspectAnalysisResults().getAspect().getSourceFiles();
-            List<SourceFile> generatedSourceFiles = analysisResults.getGeneratedAspectAnalysisResults().getAspect().getSourceFiles();
-            List<SourceFile> buildSourceFiles = analysisResults.getBuildAndDeployAspectAnalysisResults().getAspect().getSourceFiles();
-            List<SourceFile> otherSourceFiles = analysisResults.getOtherAspectAnalysisResults().getAspect().getSourceFiles();
-
-            // Plain zoomable circles/sunburst views are no longer written as one HTML file per
-            // view. Instead each view's data is collected here (key = the old filename suffix) and
-            // embedded once (as a base64 archive) into a single shared template HTML per family,
-            // which extracts the view selected via ?key= in-browser (no fetch, opens from file://).
-            // (zoomable_circles_all_files uses a different (colored) template and stays separate.)
-            Map<String, String> circlesEntries = new LinkedHashMap<>();
-            Map<String, String> sunburstEntries = new LinkedHashMap<>();
-
-            generateFileStructureExplorers("main", circlesEntries, sunburstEntries, mainSourceFiles);
-            generateFileStructureExplorers("test", circlesEntries, sunburstEntries, testSourceFiles);
-            generateFileStructureExplorers("generated", circlesEntries, sunburstEntries, generatedSourceFiles);
-            generateFileStructureExplorers("build", circlesEntries, sunburstEntries, buildSourceFiles);
-            generateFileStructureExplorers("other", circlesEntries, sunburstEntries, otherSourceFiles);
-
-            generateAllScopesZoomableCircles(folder, mainSourceFiles, testSourceFiles, buildSourceFiles, generatedSourceFiles, otherSourceFiles);
-
-            addCommitZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, 30);
-            addCommitZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, 90);
-            addCommitZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, 180);
-            addCommitZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, 365);
-            addCommitZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, 0);
-
-            addContributorsZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, 30);
-            addContributorsZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, 90);
-            addContributorsZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, 180);
-            addContributorsZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, 365);
-            addContributorsZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, 0);
-
-            addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "loc", codeConfiguration.getAnalysis().getFileSizeThresholds(), Palette.getRiskPalette(), (sourceFile) -> sourceFile.getLinesOfCode(), (sourceFile) -> sourceFile.getLinesOfCode());
-
-            addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "age", codeConfiguration.getAnalysis().getFileAgeThresholds(), Palette.getAgePalette(), (sourceFile) -> sourceFile.getFileModificationHistory() != null ? sourceFile.getFileModificationHistory().daysSinceFirstUpdate() : 0, (sourceFile) -> sourceFile.getLinesOfCode());
-            addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "freshness", codeConfiguration.getAnalysis().getFileAgeThresholds(), Palette.getFreshnessPalette(),
-                    (sourceFile) -> sourceFile.getFileModificationHistory() != null ? sourceFile.getFileModificationHistory().daysSinceLatestUpdate() : 0, (sourceFile) -> sourceFile.getLinesOfCode());
-
-            addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "update_frequency", codeConfiguration.getAnalysis().getFileUpdateFrequencyThresholds(), Palette.getHeatPalette(),
-                    (sourceFile) -> sourceFile.getFileModificationHistory() != null ? sourceFile.getFileModificationHistory().getDates().size() : 0, (sourceFile) -> sourceFile.getLinesOfCode());
-
-            addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "contributors_count", codeConfiguration.getAnalysis().getFileContributorsCountThresholds(), Palette.getHeatPalette(),
-                    (sourceFile) -> sourceFile.getFileModificationHistory() != null ? sourceFile.getFileModificationHistory().countContributors() : 0, (sourceFile) -> sourceFile.getLinesOfCode());
-
-            writeZoomableFamily(folder, "zoomable_circles", circlesEntries);
-            writeZoomableFamily(folder, "zoomable_sunburst", sunburstEntries);
-
+            generateFileVisuals(folder, analysisResults);
             generate3DUnitsView(folder, analysisResults);
         } catch (IOException e) {
             LOG.warn(e);
         }
 
+    }
+
+    /** One decomposition's bubble chart, tree map and 2D/3D dependency graphs (plus the 3D units view, as before). */
+    private void generateComponentVisuals(File reportsFolder, CodeAnalysisResults analysisResults, LogicalDecompositionAnalysisResults logicalDecomposition, String index) {
+        List<VisualizationItem> items = new ArrayList<>();
+        Force3DObject force3DObject = new Force3DObject();
+        logicalDecomposition.getComponents().forEach(component -> {
+            items.add(new VisualizationItem(component.getName(), component.getLinesOfCode()));
+            force3DObject.getNodes().add(new Force3DNode(component.getName(), component.getLinesOfCode()));
+        });
+        logicalDecomposition.getComponentDependencies().forEach(dependency -> {
+            force3DObject.getLinks().add(new Force3DLink(dependency.getFromComponent(), dependency.getToComponent(), dependency.getCount()));
+        });
+        try {
+            String nameSuffix = "components_" + index + ".html";
+            String nameSuffixDependencies = "dependencies_" + index + ".html";
+            File folder = new File(reportsFolder, "html/visuals");
+            folder.mkdirs();
+            FileUtils.write(new File(folder, "bubble_chart_" + nameSuffix), new VisualizationTemplate().renderBubbleChart(items), UTF_8);
+            FileUtils.write(new File(folder, "tree_map_" + nameSuffix), new VisualizationTemplate().renderTreeMap(items), UTF_8);
+            FileUtils.write(new File(folder, "force_2d_" + nameSuffixDependencies), new VisualizationTemplate().render2DForceGraph(force3DObject), UTF_8);
+            FileUtils.write(new File(folder, "force_3d_" + nameSuffixDependencies), new VisualizationTemplate().render3DForceGraph(force3DObject), UTF_8);
+
+            generate3DUnitsView(folder, analysisResults);
+        } catch (IOException e) {
+            LOG.warn(e);
+        }
+    }
+
+    /** The per-scope, all-scopes, commit-, contributor- and risk-colored circle/sunburst views, packaged per family. */
+    private void generateFileVisuals(File folder, CodeAnalysisResults analysisResults) throws IOException {
+        List<SourceFile> mainSourceFiles = analysisResults.getMainAspectAnalysisResults().getAspect().getSourceFiles();
+        List<SourceFile> testSourceFiles = analysisResults.getTestAspectAnalysisResults().getAspect().getSourceFiles();
+        List<SourceFile> generatedSourceFiles = analysisResults.getGeneratedAspectAnalysisResults().getAspect().getSourceFiles();
+        List<SourceFile> buildSourceFiles = analysisResults.getBuildAndDeployAspectAnalysisResults().getAspect().getSourceFiles();
+        List<SourceFile> otherSourceFiles = analysisResults.getOtherAspectAnalysisResults().getAspect().getSourceFiles();
+
+        // Plain zoomable circles/sunburst views are no longer written as one HTML file per
+        // view. Instead each view's data is collected here (key = the old filename suffix) and
+        // embedded once (as a base64 archive) into a single shared template HTML per family,
+        // which extracts the view selected via ?key= in-browser (no fetch, opens from file://).
+        // (zoomable_circles_all_files uses a different (colored) template and stays separate.)
+        Map<String, String> circlesEntries = new LinkedHashMap<>();
+        Map<String, String> sunburstEntries = new LinkedHashMap<>();
+
+        generateFileStructureExplorers("main", circlesEntries, sunburstEntries, mainSourceFiles);
+        generateFileStructureExplorers("test", circlesEntries, sunburstEntries, testSourceFiles);
+        generateFileStructureExplorers("generated", circlesEntries, sunburstEntries, generatedSourceFiles);
+        generateFileStructureExplorers("build", circlesEntries, sunburstEntries, buildSourceFiles);
+        generateFileStructureExplorers("other", circlesEntries, sunburstEntries, otherSourceFiles);
+
+        generateAllScopesZoomableCircles(folder, mainSourceFiles, testSourceFiles, buildSourceFiles, generatedSourceFiles, otherSourceFiles);
+
+        for (int days : new int[]{30, 90, 180, 365, 0}) {
+            addCommitZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, days);
+        }
+        for (int days : new int[]{30, 90, 180, 365, 0}) {
+            addContributorsZoomableCircles("main", circlesEntries, sunburstEntries, mainSourceFiles, days);
+        }
+
+        addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "loc", codeConfiguration.getAnalysis().getFileSizeThresholds(), Palette.getRiskPalette(), (sourceFile) -> sourceFile.getLinesOfCode(), (sourceFile) -> sourceFile.getLinesOfCode());
+
+        addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "age", codeConfiguration.getAnalysis().getFileAgeThresholds(), Palette.getAgePalette(), (sourceFile) -> sourceFile.getFileModificationHistory() != null ? sourceFile.getFileModificationHistory().daysSinceFirstUpdate() : 0, (sourceFile) -> sourceFile.getLinesOfCode());
+        addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "freshness", codeConfiguration.getAnalysis().getFileAgeThresholds(), Palette.getFreshnessPalette(),
+                (sourceFile) -> sourceFile.getFileModificationHistory() != null ? sourceFile.getFileModificationHistory().daysSinceLatestUpdate() : 0, (sourceFile) -> sourceFile.getLinesOfCode());
+
+        addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "update_frequency", codeConfiguration.getAnalysis().getFileUpdateFrequencyThresholds(), Palette.getHeatPalette(),
+                (sourceFile) -> sourceFile.getFileModificationHistory() != null ? sourceFile.getFileModificationHistory().getDates().size() : 0, (sourceFile) -> sourceFile.getLinesOfCode());
+
+        addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "contributors_count", codeConfiguration.getAnalysis().getFileContributorsCountThresholds(), Palette.getHeatPalette(),
+                (sourceFile) -> sourceFile.getFileModificationHistory() != null ? sourceFile.getFileModificationHistory().countContributors() : 0, (sourceFile) -> sourceFile.getLinesOfCode());
+
+        writeZoomableFamily(folder, "zoomable_circles", circlesEntries);
+        writeZoomableFamily(folder, "zoomable_sunburst", sunburstEntries);
     }
 
     // Writes the shared <family>.html template with the per-view archive (one <key>.json entry per
