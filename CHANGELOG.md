@@ -27,6 +27,25 @@ What to check: a pattern that deliberately named a folder above the repository â
 now). The `sokrates-skills` configuration scripts (`preview_config.py` and the proposal scripts) follow
 the new rule from the same date.
 
+### Dependencies declared for what the code uses
+
+Build and dependency hygiene, found by running the sokrates-skills tech-stack scanner on Sokrates itself.
+No report, data format or command changes.
+
+- **Jackson is declared directly** (`jackson-databind` 2.19.1, the version that was resolved before). The
+  Jersey media module that carried it transitively is gone; nothing in Sokrates used Jersey or Jakarta
+  REST, so the fat jars no longer ship them. Anything that depended on Jersey classes being on the
+  classpath of the CLI jar (nothing in Sokrates did) must declare them itself.
+- **One Log4j version** for `log4j-api` and `log4j-core` (2.25.5). `slf4j-simple` is replaced by
+  `log4j-slf4j2-impl`, so JGit's SLF4J logging goes through the same Log4j backend and
+  `log4j2.properties` instead of a second, separately configured logger.
+- **Java 17 API enforced at compile time** with `maven.compiler.release`, so a build on a newer JDK (the
+  CodeBuild job uses 21) cannot link against APIs missing on a 17 runtime. The bytecode level is unchanged.
+- `commons-cli` is declared in the `cli` module, where it is used, instead of `reports`; the
+  `maven-assembly-plugin` version is pinned (3.7.1) so both fat jars are assembled the same way everywhere.
+- **The 3D views load a pinned x3dom** (1.8.3 from jsDelivr) instead of the unversioned
+  `examples.x3dom.org` demo URL. Reports generated earlier keep the old URL until regenerated.
+
 ### The analysis output is always ignored
 
 `init` writes the ignore rules for `_sokrates/`, `_sokrates_landscape/`, the git export text files and
