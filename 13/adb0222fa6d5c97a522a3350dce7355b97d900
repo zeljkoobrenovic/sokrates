@@ -1,0 +1,30 @@
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/SourceFileFilter.java
+  s_40c0e74316fcc6::t_a032c59d5aaacf 121,125-126,128-138
+  s_40c0e74316fcc6::t_631033eb57482b 127
+  s_40c0e74316fcc6::t_0144c6d6ad8d7e 139-140
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/aspects/SourceCodeAspectUtils.java
+  s_40c0e74316fcc6::t_c7e4c53d6da3a9 72,89,95-101
+  s_40c0e74316fcc6::t_7622e788ee6cbb 102-103
+CLAUDE.md
+  s_40c0e74316fcc6::t_a032c59d5aaacf 78
+codeanalyzer/src/test/java/nl/obren/sokrates/sourcecode/SourceFileFilterMatchingPathTest.java
+  s_40c0e74316fcc6::t_a032c59d5aaacf 1-49
+docs/configuration.md
+  s_40c0e74316fcc6::t_a032c59d5aaacf 80-83,195-197
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "13adb0222fa6d5c97a522a3350dce7355b97d900",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
