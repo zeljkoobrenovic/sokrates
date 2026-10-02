@@ -1,0 +1,34 @@
+cli/src/main/java/nl/obren/sokrates/cli/CommandLineInterface.java
+  s_40c0e74316fcc6::t_d610b4d88affd6 1174-1178
+  s_40c0e74316fcc6::t_b961c403ac8748 18,71,147-148,1389-1432
+  s_40c0e74316fcc6::t_dd940054d31c72 1433-1434
+README.md
+  s_40c0e74316fcc6::t_a9f4edcc2b490e 125-133
+CLAUDE.md
+  s_40c0e74316fcc6::t_a9f4edcc2b490e 51
+cli/src/main/java/nl/obren/sokrates/cli/Commands.java
+  s_40c0e74316fcc6::t_b961c403ac8748 33-40,162-167,176-179,240,386-421
+  s_40c0e74316fcc6::t_b63e3426419c70 422
+cli/src/main/java/nl/obren/sokrates/cli/skills/SkillsInstaller.java
+  s_40c0e74316fcc6::t_b961c403ac8748 1-145
+cli/src/test/java/nl/obren/sokrates/cli/InstallSkillsCommandTest.java
+  s_40c0e74316fcc6::t_d610b4d88affd6 1-123
+CHANGELOG.md
+  s_40c0e74316fcc6::t_a9f4edcc2b490e 30-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "483c638e423d0d1bd8ad2b0cbf56bc43e92d37bd",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
