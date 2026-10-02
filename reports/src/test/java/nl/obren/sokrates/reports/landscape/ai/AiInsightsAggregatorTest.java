@@ -70,7 +70,9 @@ class AiInsightsAggregatorTest {
         assertEquals(1, AiInsightsAggregator.totalsBySeverity(export).get("critical"));
         assertEquals(0, AiInsightsAggregator.totalsBySeverity(export).get("medium"));
         // The export round-trips as JSON (it is embedded in the page and written to data/).
-        assertTrue(new ObjectMapper().writeValueAsString(export).contains("\"url\":\"../acme/alpha/reports/ai-insights/index.html#security-scan%2Fsecrets%2Ftoken\""));
+        String json = new ObjectMapper().writeValueAsString(export);
+        assertTrue(json.contains("\"url\":\"../acme/alpha/reports/ai-insights/index.html#security-scan%2Fsecrets%2Ftoken\""));
+        assertFalse(json.contains("\"empty\""), "the isEmpty helper is not a data field");
     }
 
     @Test

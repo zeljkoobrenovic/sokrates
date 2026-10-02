@@ -1,5 +1,7 @@
 package nl.obren.sokrates.reports.landscape.ai;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +26,7 @@ public class AiInsightsLandscapeExport {
         this.findings = findings;
     }
 
+    @JsonIgnore
     public boolean isEmpty() {
         return findings.isEmpty();
     }
