@@ -118,8 +118,24 @@ public class SourceFileFilter {
     }
 
     public boolean matches(SourceFile sourceFile) {
-        return pathMatches(sourceFile.getFile().getPath()) &&
+        return pathMatches(matchingPath(sourceFile)) &&
                 (StringUtils.isBlank(contentPattern) || contentMatches(sourceFile.getLines()));
+    }
+
+    /**
+     * The path a filter's pathPattern is matched against: the file's path below the source root with a
+     * leading separator ("/src/app/service.py"), so that the conventional patterns (".&#42;/[Tt]ests/.&#42;") keep
+     * matching while the folders above the repository never take part — before, the whole path as loaded
+     * was matched, and a repository checked out under a "tests" or "docs" folder had every file classified
+     * by those names whenever the source root was absolute (Docker's /code, or any absolute -srcRoot).
+     * A file that was never relativized (a test, the explorer) still matches on its full path.
+     */
+    public static String matchingPath(SourceFile sourceFile) {
+        String relativePath = sourceFile.getRelativePath();
+        if (StringUtils.isNotBlank(relativePath)) {
+            return "/" + relativePath;
+        }
+        return sourceFile.getFile().getPath();
     }
 
     public boolean pathMatches(String path) {

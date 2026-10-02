@@ -77,8 +77,10 @@ by `sourceFileFilters` (regex on path and/or content) or an explicit `files` lis
 }
 ```
 
-A **`SourceFileFilter`** has: `pathPattern` (regex on the file path), `contentPattern` (regex on
-a line of code), `exception` (`true` flips it into an *exclude* rule), and an optional `note`.
+A **`SourceFileFilter`** has: `pathPattern` (regex on the file's path below the source root, with a
+leading `/` — `/src/app/service.py` — so the folders above the repository never take part),
+`contentPattern` (regex on a line of code), `exception` (`true` flips it into an *exclude* rule), and
+an optional `note`.
 The same filter shape is reused throughout the config (`ignore`, decomposition filters, concerns).
 
 ### `logicalDecompositions`
@@ -190,9 +192,9 @@ extension alone cannot say which dialect a file is.
 - **`filters`** are ordinary source-file filters (`pathPattern`, `contentPattern`, `exception`,
   `note`). A file is overridden when at least one filter matches it and no `exception` filter
   matches it, whatever their order in the list.
-- **`pathPattern` must match the *whole* path**, so prefix it with `.*` — `.*[.]sql` matches,
-  `[.]sql` does not. Both `/` and `\` separators are tried, so one pattern works on either
-  platform.
+- **`pathPattern` must match the *whole* path** (the path below the source root, with a leading
+  `/`), so prefix it with `.*` — `.*[.]sql` matches, `[.]sql` does not. Both `/` and `\`
+  separators are tried, so one pattern works on either platform.
 - **`contentPattern` must likewise match a whole *line***, not appear somewhere in one. To route
   by a keyword anywhere in the file, wrap it: `".*\\bPACKAGE BODY\\b.*"`.
 

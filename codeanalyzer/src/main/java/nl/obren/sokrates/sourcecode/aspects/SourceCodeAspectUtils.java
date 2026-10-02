@@ -69,9 +69,7 @@ public class SourceCodeAspectUtils {
             }
             aspectName = StringUtils.defaultIfBlank(aspectName, "ROOT");
             NamedSourceCodeAspect aspect = new NamedSourceCodeAspect(aspectName);
-            String pathPattern = srcRoot + "/" + path + "/" + ".*";
-            pathPattern = pathPattern.replace("//", "/");
-            aspect.getSourceFileFilters().add(new SourceFileFilter(pathPattern, ""));
+            aspect.getSourceFileFilters().add(new SourceFileFilter(folderPathPattern(path), ""));
 
             paths.forEach(otherPath -> {
                 if (!path.equals(otherPath)) {
@@ -88,11 +86,19 @@ public class SourceCodeAspectUtils {
     private static void addExclusiveFilterIfNeeded(String path, String otherPath, String srcRoot, NamedSourceCodeAspect
             aspect) {
         if (otherPath.startsWith(path)) {
-            String otherPathPattern = srcRoot + "/" + otherPath + "/" + ".*";
-            SourceFileFilter otherSourceFileFilter = new SourceFileFilter(otherPathPattern, "");
+            SourceFileFilter otherSourceFileFilter = new SourceFileFilter(folderPathPattern(otherPath), "");
             otherSourceFileFilter.setException(true);
             aspect.getSourceFileFilters().add(otherSourceFileFilter);
         }
+    }
+
+    /**
+     * The filter of a folder-based component: filters match the path below the source root with a leading
+     * separator ({@link SourceFileFilter#matchingPath}), so the pattern starts at the folder — the source
+     * root (an unescaped, possibly absolute path) is no longer part of it.
+     */
+    static String folderPathPattern(String folderPath) {
+        return ("/" + folderPath + "/.*").replace("//", "/");
     }
 
     public static List<String> getUniquePaths(List<SourceFile> sourceFiles, int depth) {
