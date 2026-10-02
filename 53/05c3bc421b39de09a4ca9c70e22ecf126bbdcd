@@ -1,0 +1,51 @@
+CLAUDE.md
+  s_40c0e74316fcc6::t_11883e2ef5c809 124
+reports/src/main/java/nl/obren/sokrates/reports/core/SummaryUtils.java
+  s_40c0e74316fcc6::t_0ac10bef3c4a37 70,73,82-86,94-107
+  s_40c0e74316fcc6::t_12050bc333edd3 108
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/landscape/analysis/LandscapeAnalyzer.java
+  s_40c0e74316fcc6::t_0ac10bef3c4a37 105,111,127-171
+  s_40c0e74316fcc6::t_893606ce3df0b2 172
+cli/src/main/java/nl/obren/sokrates/cli/git/CodeHostRepoFilter.java
+  s_40c0e74316fcc6::t_0ac10bef3c4a37 56-58,69-72
+  s_40c0e74316fcc6::t_dfe2060518174e 73-74
+reports/src/main/java/nl/obren/sokrates/reports/utils/HtmlEscapeUtils.java
+  s_40c0e74316fcc6::t_0ac10bef3c4a37 76,85-89
+  s_40c0e74316fcc6::t_a285315bf39e51 90
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/lang/kotlin/KotlinHeuristicUnitsExtractor.java
+  s_40c0e74316fcc6::t_0ac10bef3c4a37 75,78-92,94-102
+cli/src/main/java/nl/obren/sokrates/cli/CommandLineInterface.java
+  s_40c0e74316fcc6::t_0ac10bef3c4a37 283-299,301,303-305,307,689-691,707-718
+  s_40c0e74316fcc6::t_1197fe296661b4 719
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/lang/tsql/TSqlHeuristicUnitsExtractor.java
+  s_40c0e74316fcc6::t_0ac10bef3c4a37 373,381,387,394-397,429,431-432,455,462-486
+  s_40c0e74316fcc6::t_46305f6a3953e9 487-488
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/ContributorActivityCharts.java
+  s_40c0e74316fcc6::t_0ac10bef3c4a37 1-534
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/DuplicationReportGenerator.java
+  s_40c0e74316fcc6::t_0ac10bef3c4a37 462,464-489,510-511,513-528,530-533
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/LandscapeReportContributorsTab.java
+  s_40c0e74316fcc6::t_0ac10bef3c4a37 79,220,266,268,274,280,286,623-641,675-676,678-679,701-709,844-846,848
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/repositories/LandscapeRepositoriesTagsReport.java
+  s_40c0e74316fcc6::t_0ac10bef3c4a37 70-71,75,85-86,90,102-130
+  s_40c0e74316fcc6::t_0d9279b1482814 131
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/duplication/impl/Blocks.java
+  s_40c0e74316fcc6::t_0ac10bef3c4a37 283,293-320
+  s_40c0e74316fcc6::t_5617ebe8acd15e 321-322
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "5305c3bc421b39de09a4ca9c70e22ecf126bbdcd",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
