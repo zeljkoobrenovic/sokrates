@@ -189,7 +189,8 @@ Defaults: configuration is read from `<currentFolder>/_sokrates/config.json` and
 
 Sokrates is driven by two JSON config files — `_sokrates/config.json` (repository analysis) and
 `_sokrates_landscape/config.json` (landscapes). See the **[Configuration Manual](docs/configuration.md)**
-for a full reference of every key, with defaults and examples.
+for a full reference of every key, with defaults and examples. Behaviour changes that can affect an
+existing configuration are listed in **[CHANGELOG.md](CHANGELOG.md)**.
 
 ### Searching the landscape repositories & contributors lists
 
