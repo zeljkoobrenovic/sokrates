@@ -24,7 +24,8 @@ class PostAnalysisHookTest {
 
     @Test
     void presetsExpandToTheAgentsHeadlessCommands() {
-        assertEquals("claude -p \"run a full scan\" --permission-mode acceptEdits --allowedTools \"Bash,Read,Write,Edit,Glob,Grep\"", PostAnalysisHook.aiPresetCommand("claude", null));
+        assertEquals("claude -p \"" + PostAnalysisHook.DEFAULT_PROMPT + "\" --permission-mode acceptEdits --allowedTools \"Bash,Read,Write,Edit,Glob,Grep\"", PostAnalysisHook.aiPresetCommand("claude", null));
+        assertTrue(PostAnalysisHook.DEFAULT_PROMPT.startsWith("Use the sokrates skill: run a basic scan"), "the default asks the entry skill for a basic scan, not a full one");
         assertEquals("codex exec --full-auto \"run a tech stack scan\"", PostAnalysisHook.aiPresetCommand("Codex", "run a tech stack scan"));
         assertEquals("gemini -p \"say \\\"hi\\\"\" --yolo", PostAnalysisHook.aiPresetCommand("gemini", "say \"hi\""));
         assertNull(PostAnalysisHook.aiPresetCommand("copilot", "x"));

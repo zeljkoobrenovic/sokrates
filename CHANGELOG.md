@@ -27,6 +27,14 @@ What to check: a pattern that deliberately named a folder above the repository â
 now). The `sokrates-skills` configuration scripts (`preview_config.py` and the proposal scripts) follow
 the new rule from the same date.
 
+### `-ai` asks for a basic scan by default
+
+The default prompt of `-ai claude|codex|gemini` now asks the sokrates-skills entry skill for a *basic* scan
+(the six descriptive scanners that answer "what is this codebase"), validated and rendered, and tells the
+agent not to change source files. Before it asked for a full scan, all seventeen scanners, which takes
+hours per repository and is rarely what a landscape run needs. `-aiPrompt "run a full scan"` restores the
+old behaviour; `-aiPrompt` takes any request.
+
 ### `installSkills`: the AI skills installed by Sokrates itself
 
 `sokrates installSkills` clones the [sokrates-skills](https://github.com/zeljkoobrenovic/sokrates-skills)

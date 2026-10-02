@@ -15,7 +15,7 @@ import java.util.Map;
  * (or any script) can read the source and the fresh {@code _sokrates/} analysis and write its
  * results next to them; whatever lands under {@code _sokrates/} is kept with the analysis. Agent
  * agnostic: Sokrates only runs a command line. {@code -ai claude|codex|gemini} expands to that
- * agent's headless invocation of {@code -aiPrompt} (default "run a full scan", the sokrates-skills
+ * agent's headless invocation of {@code -aiPrompt} (default: a basic scan through the sokrates-skills entry skill, validated and rendered — {@link #DEFAULT_PROMPT}; the sokrates-skills
  * full scan), and an explicit {@code -postAnalysis} always wins.
  * <p>
  * Environment of the command: {@code SOKRATES_REPO_URL}, {@code SOKRATES_REPO_NAME},
@@ -25,7 +25,7 @@ import java.util.Map;
  * never fails the analysis.
  */
 public class PostAnalysisHook {
-    public static final String DEFAULT_PROMPT = "run a full scan";
+    public static final String DEFAULT_PROMPT = "Use the sokrates skill: run a basic scan of this repository with the full-scan skill, validate and render the findings, and do not change any source file.";
     public static final List<String> AGENTS = List.of("claude", "codex", "gemini");
 
     private static final Log LOG = LogFactory.getLog(PostAnalysisHook.class);
