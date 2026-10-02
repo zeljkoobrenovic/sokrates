@@ -27,8 +27,8 @@ public class X3DomExporter {
             "<html>\n" +
             "    <head>\n" +
             "        <meta http-equiv=\"X-UA-Compatible\" content=\"chrome=1\" />\n" +
-            "        <link rel=\"stylesheet\" type=\"text/css\" href=\"https://examples.x3dom.org/example/x3dom.css\" />\n" +
-            "        <script type=\"text/javascript\" src=\"https://examples.x3dom.org/example/x3dom.js\"></script>\n" +
+            "        <link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.jsdelivr.net/npm/x3dom@1.8.3/x3dom.css\" />\n" +
+            "        <script type=\"text/javascript\" src=\"https://cdn.jsdelivr.net/npm/x3dom@1.8.3/x3dom.js\"></script>\n" +
             "        ${sokrates-inflate-lib}\n" +
             "    </head>\n" +
             "    <style>body { font-family: Arial; margin: 20px;}</style>\n" +

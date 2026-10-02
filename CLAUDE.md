@@ -65,7 +65,7 @@ Typical flows: single repo `analyze` → edit `config.json` → `analyze` (or th
 
 The Maven module dependency chain is `common → codeanalyzer → reports → cli → codeexplorer`. All code lives under the `nl.obren.sokrates` package.
 
-- **common** — foundation: JSON (Jackson via Jersey), rendering utilities, chart/3D-force/x3d rendering helpers, IO. No Sokrates-specific domain logic.
+- **common** — foundation: JSON (Jackson, declared directly as `jackson-databind`), rendering utilities, chart/3D-force/x3d rendering helpers, IO. No Sokrates-specific domain logic.
 - **codeanalyzer** — the analysis engine. Defines the configuration model, scopes the codebase, runs language-specific and cross-cutting analyses, produces a `CodeAnalysisResults` object.
 - **reports** — consumes `CodeAnalysisResults` and renders HTML reports + exports data (JSON). Also builds landscape reports aggregating many analyses.
 - **cli** — command-line entry point and git history extraction.
