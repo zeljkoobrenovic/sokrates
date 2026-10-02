@@ -1,0 +1,24 @@
+cli/src/main/java/nl/obren/sokrates/cli/ReportVisualsGenerator.java
+  s_40c0e74316fcc6::t_4683c340f94d79 92
+  s_40c0e74316fcc6::t_81775a2fe24c9f 1-91,93-391
+cli/src/main/java/nl/obren/sokrates/cli/CommandLineInterface.java
+  s_40c0e74316fcc6::t_81775a2fe24c9f 1595
+CLAUDE.md
+  s_40c0e74316fcc6::t_76ba9545cd5b4a 125,127
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "811561421d8db1d58c6115329878c4a2c368b8ef",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
