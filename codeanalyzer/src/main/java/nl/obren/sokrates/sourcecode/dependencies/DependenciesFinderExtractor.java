@@ -134,18 +134,24 @@ public class DependenciesFinderExtractor {
         addFileDepedency(sourceFile, fromComponent, toComponent, line, firstAspect);
 
         if (!componentDependency.getFromComponent().equalsIgnoreCase(componentDependency.getToComponent())) {
-            String key = componentDependency.getDependencyString();
-            if (dependenciesMap.containsKey(key)) {
-                componentDependency = dependenciesMap.get(key);
-                componentDependency.setCount(componentDependency.getCount() + 1);
-            } else {
-                dependencies.add(componentDependency);
-                dependenciesMap.put(key, componentDependency);
-            }
-
-            componentDependency.setLocFrom(componentDependency.getLocFrom() + sourceFile.getLinesOfCode());
-            componentDependency.getEvidence().add(new DependencyEvidence(sourceFile.getRelativePath(), line));
+            countDependency(dependencies, dependenciesMap, componentDependency, sourceFile, line);
         }
+    }
+
+    /** Counts the dependency (merged into the listed one with the same from/to when present), adding the file's size and evidence. */
+    private static void countDependency(List<ComponentDependency> dependencies, Map<String, ComponentDependency> dependenciesMap,
+                                        ComponentDependency componentDependency, SourceFile sourceFile, String line) {
+        String key = componentDependency.getDependencyString();
+        if (dependenciesMap.containsKey(key)) {
+            componentDependency = dependenciesMap.get(key);
+            componentDependency.setCount(componentDependency.getCount() + 1);
+        } else {
+            dependencies.add(componentDependency);
+            dependenciesMap.put(key, componentDependency);
+        }
+
+        componentDependency.setLocFrom(componentDependency.getLocFrom() + sourceFile.getLinesOfCode());
+        componentDependency.getEvidence().add(new DependencyEvidence(sourceFile.getRelativePath(), line));
     }
 
     private void addFileDepedency(SourceFile sourceFile, String fromComponent, String toComponent, String line, NamedSourceCodeAspect firstAspect) {

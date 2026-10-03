@@ -259,31 +259,12 @@ public class LogicalComponentsReportGenerator {
     }
 
     private void addComponentDependenciesSection(LogicalDecompositionAnalysisResults logicalDecomposition, List<ComponentDependency> componentDependencies) {
-        report.startUnorderedList();
-        report.addListItem("Analyzed system has <b>" + componentDependencies.size() + "</b> links (arrows) between components.");
-        report.addListItem("The number on the arrow represents the number of files from referring component that depend on files in referred component.");
-        report.addListItem("These " + componentDependencies.size() + " links contain <a href='#' onclick=\"return downloadDataFile('text/" + DataExporter.dependenciesFileNamePrefix("", "", logicalDecomposition.getKey()) + ".txt')\"><b>" + DependencyUtils.getDependenciesCount(componentDependencies) + "</b> dependencies</a>.");
-        int cyclicDependencyPlacesCount = DependencyUtils.getCyclicDependencyPlacesCount(componentDependencies);
-        int cyclicDependencyCount = DependencyUtils.getCyclicDependencyCount(componentDependencies);
-        if (cyclicDependencyPlacesCount > 0) {
-            String numberOfPlacesText = cyclicDependencyPlacesCount == 1
-                    ? "is <b>1</b> place"
-                    : "are <b>" + cyclicDependencyPlacesCount + "</b> places";
-            report.addListItem("There " + numberOfPlacesText + " (" + (cyclicDependencyPlacesCount * 2) + " links) with <b>cyclic</b> dependencies (<b>" + cyclicDependencyCount + "</b> " +
-                    "file dependencies).");
-        }
-
-        describeDependencyFinder(logicalDecomposition);
-
-        report.endUnorderedList();
+        addDependenciesSummaryItems(logicalDecomposition, componentDependencies);
 
         List<String> componentNames = new ArrayList<>();
         logicalDecomposition.getComponents().forEach(c -> componentNames.add(c.getName()));
-        GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
         RenderingOptions renderingOptions = logicalDecomposition.getLogicalDecomposition().getRenderingOptions();
-        graphvizDependencyRenderer.setMaxNumberOfDependencies(renderingOptions.getMaxNumberOfDependencies());
-        graphvizDependencyRenderer.setOrientation(renderingOptions.getOrientation());
-        graphvizDependencyRenderer.setReverseDirection(renderingOptions.isReverseDirection());
+        GraphvizDependencyRenderer graphvizDependencyRenderer = graphRenderer(renderingOptions);
 
         boolean renderWithoutDependencies = renderingOptions.isRenderComponentsWithoutDependencies();
         int linkThreshold = logicalDecomposition.getLogicalDecomposition().getDependencyLinkThreshold();
@@ -317,6 +298,36 @@ public class LogicalComponentsReportGenerator {
         report.addLineBreak();
         report.addLineBreak();
         report.addLineBreak();
+    }
+
+    /** The link count, its meaning, the data file link, the cyclic dependencies and how the dependencies were found. */
+    private void addDependenciesSummaryItems(LogicalDecompositionAnalysisResults logicalDecomposition, List<ComponentDependency> componentDependencies) {
+        report.startUnorderedList();
+        report.addListItem("Analyzed system has <b>" + componentDependencies.size() + "</b> links (arrows) between components.");
+        report.addListItem("The number on the arrow represents the number of files from referring component that depend on files in referred component.");
+        report.addListItem("These " + componentDependencies.size() + " links contain <a href='#' onclick=\"return downloadDataFile('text/" + DataExporter.dependenciesFileNamePrefix("", "", logicalDecomposition.getKey()) + ".txt')\"><b>" + DependencyUtils.getDependenciesCount(componentDependencies) + "</b> dependencies</a>.");
+        int cyclicDependencyPlacesCount = DependencyUtils.getCyclicDependencyPlacesCount(componentDependencies);
+        int cyclicDependencyCount = DependencyUtils.getCyclicDependencyCount(componentDependencies);
+        if (cyclicDependencyPlacesCount > 0) {
+            String numberOfPlacesText = cyclicDependencyPlacesCount == 1
+                    ? "is <b>1</b> place"
+                    : "are <b>" + cyclicDependencyPlacesCount + "</b> places";
+            report.addListItem("There " + numberOfPlacesText + " (" + (cyclicDependencyPlacesCount * 2) + " links) with <b>cyclic</b> dependencies (<b>" + cyclicDependencyCount + "</b> " +
+                    "file dependencies).");
+        }
+
+        describeDependencyFinder(logicalDecomposition);
+
+        report.endUnorderedList();
+    }
+
+    /** A renderer with the decomposition's maximum of dependencies, orientation and direction. */
+    private static GraphvizDependencyRenderer graphRenderer(RenderingOptions renderingOptions) {
+        GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
+        graphvizDependencyRenderer.setMaxNumberOfDependencies(renderingOptions.getMaxNumberOfDependencies());
+        graphvizDependencyRenderer.setOrientation(renderingOptions.getOrientation());
+        graphvizDependencyRenderer.setReverseDirection(renderingOptions.isReverseDirection());
+        return graphvizDependencyRenderer;
     }
 
     private List<ComponentGroup> getComponentGroups(LogicalDecompositionAnalysisResults logicalDecomposition, List<ComponentDependency> dependencies, List<String> components) {

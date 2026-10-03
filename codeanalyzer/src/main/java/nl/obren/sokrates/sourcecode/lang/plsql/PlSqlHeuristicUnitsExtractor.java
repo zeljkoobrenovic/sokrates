@@ -202,16 +202,15 @@ public class PlSqlHeuristicUnitsExtractor {
         return lines.size() - 1;
     }
 
+    private static final String[] UNIT_KEYWORDS = {"CREATE ", "create ", "DECLARE ", "declare ", "BEGIN ", "begin ", "PROCEDURE ", "procedure ", "FUNCTION ", "function "};
+
     protected boolean isUnitSignature(String line) {
-        return line.trim().startsWith("CREATE ")
-                || line.trim().startsWith("create ")
-                || line.trim().startsWith("DECLARE ")
-                || line.trim().startsWith("declare ")
-                || line.trim().startsWith("BEGIN ")
-                || line.trim().startsWith("begin ")
-                || line.trim().startsWith("PROCEDURE ")
-                || line.trim().startsWith("procedure ")
-                || line.trim().startsWith("FUNCTION ")
-                || line.trim().startsWith("function ");
+        String trimmed = line.trim();
+        for (String keyword : UNIT_KEYWORDS) {
+            if (trimmed.startsWith(keyword)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

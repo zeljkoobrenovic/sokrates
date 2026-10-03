@@ -378,10 +378,7 @@ public class GitHistoryUtils {
     private static CoAuthor resolveCoAuthor(CommitTrailer trailer, FileHistoryAnalysisConfig config) {
         String name = trailer.getName();
         String email = trailer.getEmail();
-        String agent = config.getCoAuthors().classify(trailer.getValue(), email);
-        if (agent == null && StringUtils.isNotBlank(email) && isBot(email, config.getBots())) {
-            agent = CoAuthor.BOT_AGENT;
-        }
+        String agent = agentOf(trailer, email, config);
         // A message signature line names a tool or nothing — never a person.
         if (agent == null && trailer.hasKey(MESSAGE_SIGNATURE_TRAILER_KEY)) {
             return null;
@@ -400,60 +397,76 @@ public class GitHistoryUtils {
         return new CoAuthor(identity[1], identity[0], null);
     }
 
+    /** The configured AI agent the trailer names, else "bot" when its email matches the bots list, else null (a person). */
+    private static String agentOf(CommitTrailer trailer, String email, FileHistoryAnalysisConfig config) {
+        String agent = config.getCoAuthors().classify(trailer.getValue(), email);
+        if (agent == null && StringUtils.isNotBlank(email) && isBot(email, config.getBots())) {
+            return CoAuthor.BOT_AGENT;
+        }
+        return agent;
+    }
+
     public static FileUpdate parseLine(String line, FileHistoryAnalysisConfig config) {
 
         int index1 = line.indexOf(" ");
-        if (index1 >= 10) {
-            int index2 = line.indexOf(" ", index1 + 1);
-            if (index2 > 0) {
-                int index3 = line.indexOf(" ", index2 + 1);
-                if (index3 > 0) {
-                    String date = line.substring(0, 10).trim();
-                    if (ignoreCommitByDate(line, date)) {
-                        return null;
-                    }
-                    String rawEmail = line.substring(index1 + 1, index2).trim().toLowerCase();
-                    String authorEmail = normalizeEmail(rawEmail, config);
-                    if (authorEmail == null) {
-                        return null;
-                    }
-
-                    // Bot detection on the final (possibly transformed/anonymized) email - computed
-                    // once here. getHistoryFromFile previously recomputed this; that is now redundant.
-                    boolean bot = isBot(authorEmail, config.getBots());
-
-                    String commitId = line.substring(index2 + 1, index3).trim();
-                    String path = line.substring(index3 + 1).replaceAll(" .*", "").replaceAll("[&]nbsp[;]", " ").trim();
-
-                    int index4 = line.indexOf(" ", index3 + 1);
-
-                    String userName = "";
-                    if (index4 > index3) {
-                        userName = line.substring(index4 + 1).replaceAll(" .*", "").replaceAll("[&]nbsp[;]", " ").trim();
-                    }
-
-                    String[] identity = applyPeopleConfig(authorEmail, userName, config);
-                    authorEmail = identity[0];
-                    userName = identity[1];
-
-                    FileUpdate fileUpdate = new FileUpdate(date, authorEmail, userName, commitId, path, bot);
-
-                    // Optional trailing churn columns: "... <name> <linesAdded> <linesDeleted>".
-                    // Older git-history.txt files don't have them, so absence is fine (defaults stay 0).
-                    if (index4 > index3) {
-                        String[] tokens = line.substring(index4 + 1).trim().split(" ");
-                        if (tokens.length >= 3) {
-                            fileUpdate.setLinesAdded(parseChurn(tokens[tokens.length - 2]));
-                            fileUpdate.setLinesDeleted(parseChurn(tokens[tokens.length - 1]));
-                        }
-                    }
-
-                    return fileUpdate;
-                }
-            }
+        if (index1 < 10) {
+            return null;
+        }
+        int index2 = line.indexOf(" ", index1 + 1);
+        if (index2 <= 0) {
+            return null;
+        }
+        int index3 = line.indexOf(" ", index2 + 1);
+        if (index3 <= 0) {
+            return null;
+        }
+        String date = line.substring(0, 10).trim();
+        if (ignoreCommitByDate(line, date)) {
+            return null;
+        }
+        String rawEmail = line.substring(index1 + 1, index2).trim().toLowerCase();
+        String authorEmail = normalizeEmail(rawEmail, config);
+        if (authorEmail == null) {
+            return null;
         }
 
-        return null;
+        // Bot detection on the final (possibly transformed/anonymized) email - computed
+        // once here. getHistoryFromFile previously recomputed this; that is now redundant.
+        boolean bot = isBot(authorEmail, config.getBots());
+
+        String commitId = line.substring(index2 + 1, index3).trim();
+        String path = line.substring(index3 + 1).replaceAll(" .*", "").replaceAll("[&]nbsp[;]", " ").trim();
+
+        int index4 = line.indexOf(" ", index3 + 1);
+
+        String userName = "";
+        if (index4 > index3) {
+            userName = line.substring(index4 + 1).replaceAll(" .*", "").replaceAll("[&]nbsp[;]", " ").trim();
+        }
+
+        String[] identity = applyPeopleConfig(authorEmail, userName, config);
+        authorEmail = identity[0];
+        userName = identity[1];
+
+        FileUpdate fileUpdate = new FileUpdate(date, authorEmail, userName, commitId, path, bot);
+
+        if (index4 > index3) {
+            applyChurnColumns(fileUpdate, line.substring(index4 + 1));
+        }
+
+        return fileUpdate;
+    }
+
+    /**
+     * Optional trailing churn columns: "... <name> <linesAdded> <linesDeleted>".
+     * Older git-history.txt files don't have them, so absence is fine (defaults stay 0).
+     */
+    private static void applyChurnColumns(FileUpdate fileUpdate, String afterPath) {
+        String[] tokens = afterPath.trim().split(" ");
+        if (tokens.length >= 3) {
+            fileUpdate.setLinesAdded(parseChurn(tokens[tokens.length - 2]));
+            fileUpdate.setLinesDeleted(parseChurn(tokens[tokens.length - 1]));
+        }
     }
 
     private static boolean ignoreCommitByDate(String line, String date) {

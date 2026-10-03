@@ -91,17 +91,22 @@ public class ContributorIndividualReportExport {
         if (personConfig != null && StringUtils.isNotBlank(personConfig.getUserName())) {
             userName = personConfig.getUserName();
         }
-        if (personConfig != null && StringUtils.isNotBlank(personConfig.getImage())) {
-            avatarUrl = personConfig.getImage();
-        } else {
-            avatarUrl = LandscapeContributorsReport.getAvatarUrl(email, configuration.getContributorAvatarLinkTemplate());
-        }
+        avatarUrl = personConfig != null && StringUtils.isNotBlank(personConfig.getImage())
+                ? personConfig.getImage()
+                : LandscapeContributorsReport.getAvatarUrl(email, configuration.getContributorAvatarLinkTemplate());
 
         String template = configuration.getContributorLinkTemplate();
         if (StringUtils.isNotBlank(template)) {
             detailsLink = LandscapeContributorsReport.getContributorUrlFromTemplate(email, template);
         }
-        if (personConfig != null && personConfig.getLinks() != null) {
+        if (personConfig != null) {
+            addConfiguredLinks(personConfig);
+        }
+    }
+
+    /** The person's configured links that have an href. */
+    private void addConfiguredLinks(PersonConfig personConfig) {
+        if (personConfig.getLinks() != null) {
             for (Link link : personConfig.getLinks()) {
                 if (StringUtils.isNotBlank(link.getHref())) {
                     links.add(new NamedLink(link.getLabel(), link.getHref()));

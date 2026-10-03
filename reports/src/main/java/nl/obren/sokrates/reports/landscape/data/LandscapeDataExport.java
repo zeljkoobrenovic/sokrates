@@ -103,43 +103,50 @@ public class LandscapeDataExport {
                 return;
             }
 
-            // The repositories explorer has been folded into the Size & Details tab of
-            // repositories.html; we only keep the shared language-icon map here.
-            List<String> repositoryLangs = repositoryExports.stream().map(RepositoryExport::getMainLang).collect(Collectors.toList());
-            String repositoryLangIcons = DataImageUtils.getLangDataImageMapJson(repositoryLangs);
-
-            List<String> fileLangs = files.stream().map(FileExport::getMainLang).collect(Collectors.toList());
-            String fileLangIcons = DataImageUtils.getLangDataImageMapJson(fileLangs);
-            Map<String, String> filesPlaceholders = new HashMap<>();
-            filesPlaceholders.put("langIcons", fileLangIcons);
-            // The landscape aggregates many repositories with potentially different thresholds, so use
-            // the standard thresholds for the risk colouring.
-            filesPlaceholders.put("fileSizeThresholds",
-                    FilesExportUtils.thresholdsJson(Thresholds.defaultFileSizeThresholds()));
-            filesPlaceholders.put("fileAgeThresholds",
-                    FilesExportUtils.thresholdsJson(Thresholds.defaultFileAgeThresholds()));
-            filesPlaceholders.put("fileUpdateFrequencyThresholds",
-                    FilesExportUtils.thresholdsJson(Thresholds.defaultFileUpdateFrequencyThresholds()));
-            filesPlaceholders.put("fileContributorsCountThresholds",
-                    FilesExportUtils.thresholdsJson(Thresholds.defaultFileContributorsCountThresholds()));
-            // No per-repository reports or cached source pages at the landscape level, so suppress
-            // both the report links and the file-name source links.
-            filesPlaceholders.put("reportLinkBase", "");
-            filesPlaceholders.put("saveSourceFiles", "false");
-            String filesExplorer = explorerTemplate.render("files-explorer.html", files, filesPlaceholders);
-            FileUtils.write(new File(reportsFolder, "files-explorer.html"), filesExplorer, UTF_8);
-
-            // The full, client-rendered repositories report (replaces the old static repositories.html).
-            JsonGenerator jsonGenerator = new JsonGenerator();
-            Map<String, String> placeholders = new HashMap<>();
-            placeholders.put("langIcons", repositoryLangIcons);
-            placeholders.put("features", jsonGenerator.generateCompressed(buildFeaturesData(configuration)));
-            placeholders.put("options", jsonGenerator.generateCompressed(buildOptions(configuration, repositoryExports)));
-            String repositoriesReport = explorerTemplate.render("repositories-report.html", repositoryExports, placeholders);
-            FileUtils.write(new File(reportsFolder, "repositories.html"), repositoriesReport, UTF_8);
+            writeFilesExplorer(explorerTemplate, files);
+            writeRepositoriesReport(explorerTemplate, repositoryExports, configuration);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /** The landscape-level files explorer: standard risk thresholds, no report or source links. */
+    private void writeFilesExplorer(ExplorerTemplate explorerTemplate, List<FileExport> files) throws IOException {
+        List<String> fileLangs = files.stream().map(FileExport::getMainLang).collect(Collectors.toList());
+        String fileLangIcons = DataImageUtils.getLangDataImageMapJson(fileLangs);
+        Map<String, String> filesPlaceholders = new HashMap<>();
+        filesPlaceholders.put("langIcons", fileLangIcons);
+        // The landscape aggregates many repositories with potentially different thresholds, so use
+        // the standard thresholds for the risk colouring.
+        filesPlaceholders.put("fileSizeThresholds",
+                FilesExportUtils.thresholdsJson(Thresholds.defaultFileSizeThresholds()));
+        filesPlaceholders.put("fileAgeThresholds",
+                FilesExportUtils.thresholdsJson(Thresholds.defaultFileAgeThresholds()));
+        filesPlaceholders.put("fileUpdateFrequencyThresholds",
+                FilesExportUtils.thresholdsJson(Thresholds.defaultFileUpdateFrequencyThresholds()));
+        filesPlaceholders.put("fileContributorsCountThresholds",
+                FilesExportUtils.thresholdsJson(Thresholds.defaultFileContributorsCountThresholds()));
+        // No per-repository reports or cached source pages at the landscape level, so suppress
+        // both the report links and the file-name source links.
+        filesPlaceholders.put("reportLinkBase", "");
+        filesPlaceholders.put("saveSourceFiles", "false");
+        String filesExplorer = explorerTemplate.render("files-explorer.html", files, filesPlaceholders);
+        FileUtils.write(new File(reportsFolder, "files-explorer.html"), filesExplorer, UTF_8);
+    }
+
+    /** The full, client-rendered repositories report (replaces the old static repositories.html). */
+    private void writeRepositoriesReport(ExplorerTemplate explorerTemplate, List<RepositoryExport> repositoryExports, LandscapeConfiguration configuration) throws IOException {
+        // The repositories explorer has been folded into the Size & Details tab of
+        // repositories.html; we only keep the shared language-icon map here.
+        List<String> repositoryLangs = repositoryExports.stream().map(RepositoryExport::getMainLang).collect(Collectors.toList());
+        String repositoryLangIcons = DataImageUtils.getLangDataImageMapJson(repositoryLangs);
+        JsonGenerator jsonGenerator = new JsonGenerator();
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("langIcons", repositoryLangIcons);
+        placeholders.put("features", jsonGenerator.generateCompressed(buildFeaturesData(configuration)));
+        placeholders.put("options", jsonGenerator.generateCompressed(buildOptions(configuration, repositoryExports)));
+        String repositoriesReport = explorerTemplate.render("repositories-report.html", repositoryExports, placeholders);
+        FileUtils.write(new File(reportsFolder, "repositories.html"), repositoriesReport, UTF_8);
     }
 
     private Map<String, Object> buildOptions(LandscapeConfiguration configuration, List<RepositoryExport> repositoryExports) {

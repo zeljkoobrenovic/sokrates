@@ -601,14 +601,19 @@ public class CommandLineInterface {
             }
             if (gitMetadata.fetchDetails().applyTo(configuration.getMetadata(), folderDefaultName)) {
                 FileUtils.writeStringToFile(conf, new JsonGenerator().generate(configuration), UTF_8);
-                LOG.info("Report metadata taken from the git remote " + gitMetadata.getRemoteUrl() + ": name '" + configuration.getMetadata().getName() + "'"
-                        + (StringUtils.isNotBlank(configuration.getMetadata().getLogoLink()) ? ", logo" : "")
-                        + (StringUtils.isNotBlank(configuration.getMetadata().getDescription()) ? ", description" : "")
-                        + (configuration.getMetadata().getLinks().isEmpty() ? "" : ", link"));
+                LOG.info("Report metadata taken from the git remote " + gitMetadata.getRemoteUrl() + ": " + appliedMetadataSummary(configuration.getMetadata()));
             }
         } catch (IOException e) {
             LOG.info("Could not update the report metadata from the git remote: " + e.getMessage());
         }
+    }
+
+    /** "name '<name>'" plus which of logo, description and link the metadata now carries. */
+    private static String appliedMetadataSummary(Metadata metadata) {
+        return "name '" + metadata.getName() + "'"
+                + (StringUtils.isNotBlank(metadata.getLogoLink()) ? ", logo" : "")
+                + (StringUtils.isNotBlank(metadata.getDescription()) ? ", description" : "")
+                + (metadata.getLinks().isEmpty() ? "" : ", link");
     }
 
     private File getSrcRoot(CommandLine cmd) {
@@ -620,38 +625,44 @@ public class CommandLineInterface {
     }
 
     private void createConfiguration(CommandLine cmd, File root, File conf) throws IOException {
-        CustomScopingConventions customScopingConventions = null;
+        CustomScopingConventions customScopingConventions = customScopingConventions(cmd);
+        String nameValue = optionValueOrEmpty(cmd, commands.getName());
+        String descriptionValue = optionValueOrEmpty(cmd, commands.getDescription());
+        String logoLinkValue = optionValueOrEmpty(cmd, commands.getLogoLink());
+        Link link = linkFromCommandLine(cmd);
+
+        new ScopeCreator(root, conf, customScopingConventions).createScopeFromConventions(nameValue, descriptionValue, logoLinkValue, link);
+
+        LOG.info("Configuration stored in " + conf.getPath());
+    }
+
+    /** The -conventionsFile conventions when the option names an existing file, else null (the standard conventions). */
+    private CustomScopingConventions customScopingConventions(CommandLine cmd) throws IOException {
         if (cmd.hasOption(commands.getConventionsFile().getOpt())) {
             File scopingConventionsFile = new File(cmd.getOptionValue(commands.getConventionsFile().getOpt()));
             if (scopingConventionsFile.exists()) {
-                customScopingConventions = CustomConventionsHelper.readFromFile(scopingConventionsFile);
+                return CustomConventionsHelper.readFromFile(scopingConventionsFile);
             }
         }
-        String nameValue = "";
-        String descriptionValue = "";
-        String logoLinkValue = "";
-        if (cmd.hasOption(commands.getName().getOpt())) {
-            nameValue = cmd.getOptionValue(commands.getName().getOpt());
-        }
-        if (cmd.hasOption(commands.getDescription().getOpt())) {
-            descriptionValue = cmd.getOptionValue(commands.getDescription().getOpt());
-        }
-        if (cmd.hasOption(commands.getLogoLink().getOpt())) {
-            logoLinkValue = cmd.getOptionValue(commands.getLogoLink().getOpt());
-        }
-        Link link = null;
+        return null;
+    }
+
+    /** The option's value when given, else the empty string. */
+    private static String optionValueOrEmpty(CommandLine cmd, Option option) {
+        return cmd.hasOption(option.getOpt()) ? cmd.getOptionValue(option.getOpt()) : "";
+    }
+
+    /** The -addLink option as a link (href, optional label), null when absent or without an href. */
+    private Link linkFromCommandLine(CommandLine cmd) {
         if (cmd.hasOption(commands.getAddLink().getOpt())) {
             String[] linkData = cmd.getOptionValues(commands.getAddLink().getOpt());
             if (linkData.length >= 1 && StringUtils.isNotBlank(linkData[0])) {
                 String href = linkData[0];
                 String label = linkData.length > 1 ? linkData[1] : "";
-                link = new Link(label, href);
+                return new Link(label, href);
             }
         }
-
-        new ScopeCreator(root, conf, customScopingConventions).createScopeFromConventions(nameValue, descriptionValue, logoLinkValue, link);
-
-        LOG.info("Configuration stored in " + conf.getPath());
+        return null;
     }
 
     void startTimeoutIfDefined(CommandLine cmd) {
@@ -844,13 +855,9 @@ public class CommandLineInterface {
         if (logoLink != null) {
             metadata.setLogoLink(logoLink);
         }
-        if (cmd.hasOption(commands.getAddLink().getOpt())) {
-            String[] linkData = cmd.getOptionValues(commands.getAddLink().getOpt());
-            if (linkData.length >= 1 && StringUtils.isNotBlank(linkData[0])) {
-                String href = linkData[0];
-                String label = linkData.length > 1 ? linkData[1] : "";
-                metadata.getLinks().add(new Link(label, href));
-            }
+        Link link = linkFromCommandLine(cmd);
+        if (link != null) {
+            metadata.getLinks().add(link);
         }
     }
 
