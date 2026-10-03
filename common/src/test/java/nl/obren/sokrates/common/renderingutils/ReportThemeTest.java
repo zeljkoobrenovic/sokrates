@@ -40,4 +40,11 @@ class ReportThemeTest {
         assertTrue(css.contains("@media (prefers-color-scheme: dark) {:root:not([data-theme=\"light\"]) td {color: red;}}"));
         assertTrue(css.contains(":root[data-theme=\"dark\"] td {color: red;}"));
     }
+
+    @Test
+    void darkOnlyScopesEverySelectorOfAList() {
+        String css = ReportTheme.darkOnly("pre.mermaid, .sk-canvas", "color: red;");
+        assertTrue(css.contains(":root:not([data-theme=\"light\"]) pre.mermaid, :root:not([data-theme=\"light\"]) .sk-canvas {color: red;}"), css);
+        assertTrue(css.contains(":root[data-theme=\"dark\"] pre.mermaid, :root[data-theme=\"dark\"] .sk-canvas {color: red;}"), css);
+    }
 }

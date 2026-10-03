@@ -1,6 +1,7 @@
 package nl.obren.sokrates.reports.generators.explorers;
 
 import nl.obren.sokrates.common.renderingutils.ExplorerTemplate;
+import nl.obren.sokrates.reports.dataexporters.ReferencedFiles;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import nl.obren.sokrates.sourcecode.SourceFile;
@@ -85,30 +86,11 @@ public class FilesExplorerGenerators {
         return files;
     }
 
-    /**
-     * The files whose source is cached into {@code src/<aspect>.zip}, mirroring
-     * {@code DataExporter.getReferencedFiles} (only a subset of files is cached).
-     */
-    private Set<SourceFile> getReferencedFiles(CodeAnalysisResults results) {
-        Set<SourceFile> referenced = new HashSet<>();
-        referenced.addAll(results.getFilesAnalysisResults().getLongestFiles());
-        referenced.addAll(results.getFilesAnalysisResults().getFilesWithMostUnits());
-        referenced.addAll(results.getFilesHistoryAnalysisResults().getFilesWithLeastContributors());
-        referenced.addAll(results.getFilesHistoryAnalysisResults().getFilesWithMostContributors());
-        referenced.addAll(results.getFilesHistoryAnalysisResults().getMostChangedFiles());
-        referenced.addAll(results.getFilesHistoryAnalysisResults().getOldestFiles());
-        referenced.addAll(results.getFilesHistoryAnalysisResults().getMostPreviouslyChangedFiles());
-        referenced.addAll(results.getFilesHistoryAnalysisResults().getMostRecentlyChangedFiles());
-        referenced.addAll(results.getFilesHistoryAnalysisResults().getYoungestFiles());
-        results.getDuplicationAnalysisResults().getLongestDuplicates().forEach(d ->
-                d.getDuplicatedFileBlocks().forEach(b -> referenced.add(b.getSourceFile())));
-        return referenced;
-    }
 
     public void exportJson(CodeAnalysisResults codeAnalysisResults) {
         try {
             boolean saveSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
-            Set<SourceFile> referenced = saveSourceFiles ? getReferencedFiles(codeAnalysisResults) : new HashSet<>();
+            Set<SourceFile> referenced = saveSourceFiles ? ReferencedFiles.of(codeAnalysisResults) : new HashSet<>();
 
             List<FileExport> files = new ArrayList<>();
 

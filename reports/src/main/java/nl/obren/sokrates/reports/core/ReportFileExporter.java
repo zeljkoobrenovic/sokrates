@@ -94,6 +94,8 @@ public class ReportFileExporter {
 
         indexReport.startTabContentSection("overview", true);
 
+        ReportHealthSection.add(indexReport, analysisResults);
+
         indexReport.startDiv("white-space: nowrap; overflow: hidden");
 
         addInfoBlockWithColor(indexReport, FormattingUtils.getSmallTextForNumberMinK(mainLoc), "lines of main code", FormattingUtils.getSmallTextForNumber(mainFilesCount) + " files", MAIN_LOC_COLOR, "main lines of code", "main", "SourceCodeOverview.html");

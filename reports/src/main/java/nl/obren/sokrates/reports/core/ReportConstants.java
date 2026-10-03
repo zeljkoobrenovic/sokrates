@@ -344,7 +344,7 @@ public class ReportConstants {
             "            letter-spacing: 0.03em;\n" +
             "            text-transform: uppercase;\n" +
             "        }" +
-            "\n\n" + TAB_STYLE + "\n\n" + DARK_MODE_STYLE + ReportShell.CSS +
+            "\n\n" + TAB_STYLE + "\n\n" + DARK_MODE_STYLE + ReportShell.CSS + ReportHealthSection.CSS +
             "    </style>\n" +
             "    <script type=\"text/javascript\">\n" +
             ReportShell.SCRIPT +

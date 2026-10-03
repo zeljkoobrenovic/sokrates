@@ -122,22 +122,31 @@ public class ReportShell {
             "  }\n" +
             "  window.addEventListener('popstate', function () { openFromHash(false); });\n" +
             "  window.addEventListener('hashchange', function () { openFromHash(false); });\n" +
+            "  // The tab of this page a link points at (href '#tab' or '<this file>#tab'), or null.\n" +
+            "  function linkedTab(link) {\n" +
+            "    var href = link.getAttribute('href') || '';\n" +
+            "    var hash = href.indexOf('#');\n" +
+            "    var file = href.substring(0, hash);\n" +
+            "    var page = location.pathname.substring(location.pathname.lastIndexOf('/') + 1);\n" +
+            "    if (file && file !== page) { return null; }\n" +
+            "    var id = decodeURIComponent(href.substring(hash + 1));\n" +
+            "    return tabContent(id) ? id : null;\n" +
+            "  }\n" +
             "  window.sokratesToggleNav = function (open) {\n" +
             "    var on = typeof open === 'boolean' ? open : !document.body.classList.contains('sk-nav-open');\n" +
             "    document.body.classList.toggle('sk-nav-open', on);\n" +
             "  };\n" +
             "  document.addEventListener('click', function (e) {\n" +
-            "    var link = e.target.closest ? e.target.closest('a.sk-nav-item[data-sk-tab]') : null;\n" +
-            "    if (link) {\n" +
-            "      var id = link.getAttribute('data-sk-tab');\n" +
+            "    var link = e.target.closest ? e.target.closest('a[href*=\"#\"]') : null;\n" +
+            "    if (link && !link.target) {\n" +
+            "      var id = linkedTab(link);\n" +
             "      if (tabContent(id) && !e.metaKey && !e.ctrlKey && !e.shiftKey) {\n" +
             "        e.preventDefault();\n" +
             "        window.sokratesShowTab(id);\n" +
             "        window.sokratesRememberTab(id);\n" +
             "        window.scrollTo(0, 0);\n" +
             "      }\n" +
-            "      window.sokratesToggleNav(false);\n" +
-            "      return;\n" +
+            "      if (id || link.classList.contains('sk-nav-item')) { window.sokratesToggleNav(false); return; }\n" +
             "    }\n" +
             "    if (document.body.classList.contains('sk-nav-open') && !(e.target.closest && e.target.closest('.sk-sidebar, .sk-nav-toggle'))) {\n" +
             "      window.sokratesToggleNav(false);\n" +

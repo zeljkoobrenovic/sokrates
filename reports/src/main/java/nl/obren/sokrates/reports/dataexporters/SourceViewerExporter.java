@@ -22,7 +22,6 @@ import org.apache.commons.logging.LogFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import java.util.function.Consumer;
 
@@ -85,22 +84,7 @@ class SourceViewerExporter {
     }
 
     private Set<SourceFile> getReferencedFiles() {
-        Set<SourceFile> referencedFiles = new HashSet<>();
-
-        referencedFiles.addAll(analysisResults.getFilesAnalysisResults().getLongestFiles());
-        referencedFiles.addAll(analysisResults.getFilesAnalysisResults().getFilesWithMostUnits());
-        referencedFiles.addAll(analysisResults.getFilesHistoryAnalysisResults().getFilesWithLeastContributors());
-        referencedFiles.addAll(analysisResults.getFilesHistoryAnalysisResults().getFilesWithMostContributors());
-        referencedFiles.addAll(analysisResults.getFilesHistoryAnalysisResults().getMostChangedFiles());
-        referencedFiles.addAll(analysisResults.getFilesHistoryAnalysisResults().getOldestFiles());
-        referencedFiles.addAll(analysisResults.getFilesHistoryAnalysisResults().getMostPreviouslyChangedFiles());
-        referencedFiles.addAll(analysisResults.getFilesHistoryAnalysisResults().getMostRecentlyChangedFiles());
-        referencedFiles.addAll(analysisResults.getFilesHistoryAnalysisResults().getYoungestFiles());
-        analysisResults.getDuplicationAnalysisResults().getLongestDuplicates().forEach(duplicationInstance -> {
-            referencedFiles.addAll(duplicationInstance.getDuplicatedFileBlocks().stream().map(d -> d.getSourceFile()).collect(Collectors.toList()));
-        });
-
-        return referencedFiles;
+        return ReferencedFiles.of(analysisResults);
     }
 
     // Collects the unit fragment bundle into the viewer archive under "fragments/<type>.json"

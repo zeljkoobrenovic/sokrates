@@ -4,6 +4,9 @@
 
 package nl.obren.sokrates.common.renderingutils;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 /**
  * The shared look of every Sokrates HTML page: design tokens (CSS custom properties), their dark
  * variant, a few base element styles and the light/dark/auto theme switch.
@@ -78,8 +81,13 @@ public class ReportTheme {
      * setting without an explicit light choice, or an explicit dark choice.
      */
     public static String darkOnly(String selector, String declarations) {
-        return "@media (prefers-color-scheme: dark) {:root:not([data-theme=\"light\"]) " + selector + " {" + declarations + "}}\n" +
-                ":root[data-theme=\"dark\"] " + selector + " {" + declarations + "}\n";
+        return "@media (prefers-color-scheme: dark) {" + prefixEach(":root:not([data-theme=\"light\"]) ", selector) + " {" + declarations + "}}\n" +
+                prefixEach(":root[data-theme=\"dark\"] ", selector) + " {" + declarations + "}\n";
+    }
+
+    // Prefixes every selector of a comma-separated list (a prefix on the list would scope only its first selector).
+    private static String prefixEach(String prefix, String selectors) {
+        return Arrays.stream(selectors.split(",")).map(String::trim).map(s -> prefix + s).collect(Collectors.joining(", "));
     }
 
     public static final String BASE_CSS = "" +
