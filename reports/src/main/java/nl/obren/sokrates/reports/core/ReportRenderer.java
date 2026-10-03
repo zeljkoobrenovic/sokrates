@@ -54,6 +54,7 @@ public class ReportRenderer {
         String parentUrl = richTextReport.getParentUrl();
         String parentUrlHtml = "<a href='" + parentUrl + "' style=\"font-size: 100%;text-decoration:none\">";
 
+        content.append("<div class='sk-page-header'>");
         content.append(renderBreadcrumbsInDiv(richTextReport.getBreadcrumbs()));
         content.append("<table class='sk-report-header'>");
         content.append("<tr>");
@@ -89,6 +90,7 @@ public class ReportRenderer {
 
         content.append("</tr>");
         content.append("</table>");
+        content.append("</div>");
     }
 
     private String renderLogo(RichTextReport richTextReport) {

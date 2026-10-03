@@ -26,6 +26,9 @@ public class ReportShell {
             ".sk-sidebar {position: fixed; top: 0; left: 0; bottom: 0; width: 236px; box-sizing: border-box; overflow-y: auto; " +
             "padding: 18px 12px 24px 12px; background: var(--sk-surface-2); border-right: 1px solid var(--sk-border); z-index: 900;}\n" +
             ".sk-main {margin-left: 236px; padding: 4px 40px 40px 40px; min-width: 0;}\n" +
+            // The page header (logo, title) as a full-width band in the sidebar's color.
+            ".sk-has-shell .sk-page-header {margin: -4px -40px 24px -40px; padding: 4px 40px 0 40px; " +
+            "background: var(--sk-surface-2); border-bottom: 1px solid var(--sk-border);}\n" +
             ".sk-sidebar-brand {display: block; padding: 2px 8px 14px 8px; font-size: 17px; font-weight: 600; " +
             "color: var(--sk-text); text-decoration: none; overflow-wrap: anywhere;}\n" +
             ".sk-sidebar-brand:hover {text-decoration: none;}\n" +
@@ -53,6 +56,7 @@ public class ReportShell {
             "  .sk-sidebar {transform: translateX(-100%); transition: transform 0.2s ease; box-shadow: var(--sk-shadow-hover); padding-top: 58px;}\n" +
             "  .sk-nav-open .sk-sidebar {transform: none;}\n" +
             "  .sk-main {margin-left: 0; padding: 52px 16px 32px 16px;}\n" +
+            "  .sk-has-shell .sk-page-header {margin: -52px -16px 18px -16px; padding: 52px 16px 0 16px;}\n" +
             "  .sk-nav-toggle {display: flex; align-items: center; justify-content: center; position: fixed; top: 12px; left: 12px; " +
             "z-index: 950; width: 34px; height: 34px; padding: 0; cursor: pointer; color: var(--sk-text-muted); " +
             "background: var(--sk-surface); border: 1px solid var(--sk-border); border-radius: 8px; box-shadow: var(--sk-shadow);}\n" +
