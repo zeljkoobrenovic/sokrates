@@ -108,17 +108,17 @@ public class LandscapeReportPeopleTopologyTab {
         }
         landscapeReport.startSubSection(StringUtils.capitalize(type.singular()) + " Dependencies Details", "");
 
-        List<ComponentDependency> peopleDependencies30Days = landscapeAnalysisResults.getPeopleDependencies30Days();
-        List<ComponentDependency> peopleRepositoryDependencies30Days = landscapeAnalysisResults.getPeopleRepositoryDependencies30Days();
-        List<ContributorConnections> connectionsViaRepositories30Days = landscapeAnalysisResults.getConnectionsViaRepositories30Days();
+        List<ComponentDependency> peopleDependencies30Days = landscapeAnalysisResults.getPeopleConnections().getPeopleDependencies30Days();
+        List<ComponentDependency> peopleRepositoryDependencies30Days = landscapeAnalysisResults.getPeopleConnections().getPeopleRepositoryDependencies30Days();
+        List<ContributorConnections> connectionsViaRepositories30Days = landscapeAnalysisResults.getPeopleConnections().getConnectionsViaRepositories30Days();
         this.renderPeopleDependencies(peopleDependencies30Days, peopleRepositoryDependencies30Days, connectionsViaRepositories30Days, 30);
 
-        List<ComponentDependency> peopleDependencies90Days = landscapeAnalysisResults.getPeopleDependencies90Days();
-        List<ContributorConnections> connectionsViaRepositories90Days = landscapeAnalysisResults.getConnectionsViaRepositories90Days();
+        List<ComponentDependency> peopleDependencies90Days = landscapeAnalysisResults.getPeopleConnections().getPeopleDependencies90Days();
+        List<ContributorConnections> connectionsViaRepositories90Days = landscapeAnalysisResults.getPeopleConnections().getConnectionsViaRepositories90Days();
         this.renderPeopleDependencies(peopleDependencies90Days, null, connectionsViaRepositories90Days, 90);
 
-        List<ComponentDependency> peopleDependencies180Days = landscapeAnalysisResults.getPeopleDependencies180Days();
-        List<ContributorConnections> connectionsViaRepositories180Days = landscapeAnalysisResults.getConnectionsViaRepositories180Days();
+        List<ComponentDependency> peopleDependencies180Days = landscapeAnalysisResults.getPeopleConnections().getPeopleDependencies180Days();
+        List<ContributorConnections> connectionsViaRepositories180Days = landscapeAnalysisResults.getPeopleConnections().getConnectionsViaRepositories180Days();
         this.renderPeopleDependencies(peopleDependencies180Days, null, connectionsViaRepositories180Days, 180);
 
         landscapeReport.endSection();
@@ -301,7 +301,7 @@ public class LandscapeReportPeopleTopologyTab {
         List<ComponentDependency> repositoryDependenciesViaPeople = ContributorConnectionUtils.getRepositoryDependenciesViaPeople(contributors, 0, daysAgo);
 
         landscapeReport.addLevel2Header("Contributor Dependencies (past " + daysAgo + " days)", "margin-top: 40px");
-        List<Double> activeContributors30DaysHistory = landscapeAnalysisResults.getActiveContributors30DaysHistory();
+        List<Double> activeContributors30DaysHistory = landscapeAnalysisResults.getPeopleConnections().getActiveContributors30DaysHistory();
         if (activeContributors30DaysHistory.size() > 0 && daysAgo == 30) {
             landscapeReport.addLineBreak();
             landscapeReport.addLineBreak();

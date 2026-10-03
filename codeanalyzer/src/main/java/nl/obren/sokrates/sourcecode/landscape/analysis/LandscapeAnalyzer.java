@@ -232,53 +232,53 @@ public class LandscapeAnalyzer {
         List<ContributorRepositories> contributors = landscapeAnalysisResults.getContributors();
         LOG.info("Updating people dependencies in past 30d....");
         List<ComponentDependency> peopleDependencies30Days = ContributorConnectionUtils.getPeopleDependencies(contributors, 0, 30);
-        landscapeAnalysisResults.setPeopleDependencies30Days(peopleDependencies30Days);
+        landscapeAnalysisResults.getPeopleConnections().setPeopleDependencies30Days(peopleDependencies30Days);
         List<ComponentDependency> peopleRepositoryDependencies30Days = ContributorConnectionUtils.getPeopleRepositoryDependencies(contributors, 0, 30);
-        landscapeAnalysisResults.setPeopleRepositoryDependencies30Days(peopleRepositoryDependencies30Days);
+        landscapeAnalysisResults.getPeopleConnections().setPeopleRepositoryDependencies30Days(peopleRepositoryDependencies30Days);
         LOG.info("Updating people dependencies in past 90d....");
         List<ComponentDependency> peopleDependencies90Days = ContributorConnectionUtils.getPeopleDependencies(contributors, 0, 90);
-        landscapeAnalysisResults.setPeopleDependencies90Days(peopleDependencies90Days);
+        landscapeAnalysisResults.getPeopleConnections().setPeopleDependencies90Days(peopleDependencies90Days);
         LOG.info("Updating people dependencies in past 180d....");
         List<ComponentDependency> peopleDependencies180Days = ContributorConnectionUtils.getPeopleDependencies(contributors, 0, 180);
-        landscapeAnalysisResults.setPeopleDependencies180Days(peopleDependencies180Days);
+        landscapeAnalysisResults.getPeopleConnections().setPeopleDependencies180Days(peopleDependencies180Days);
 
         List<ContributorConnections> connectionsViaRepositories30Days = ContributorConnectionUtils.getConnectionsViaRepositories(contributors, peopleDependencies30Days, 0, 30);
         List<ContributorConnections> connectionsViaRepositories90Days = ContributorConnectionUtils.getConnectionsViaRepositories(contributors, peopleDependencies90Days, 0, 90);
         List<ContributorConnections> connectionsViaRepositories180Days = ContributorConnectionUtils.getConnectionsViaRepositories(contributors, peopleDependencies180Days, 0, 180);
 
-        landscapeAnalysisResults.setConnectionsViaRepositories30Days(connectionsViaRepositories30Days);
-        landscapeAnalysisResults.setConnectionsViaRepositories90Days(connectionsViaRepositories90Days);
-        landscapeAnalysisResults.setConnectionsViaRepositories180Days(connectionsViaRepositories180Days);
+        landscapeAnalysisResults.getPeopleConnections().setConnectionsViaRepositories30Days(connectionsViaRepositories30Days);
+        landscapeAnalysisResults.getPeopleConnections().setConnectionsViaRepositories90Days(connectionsViaRepositories90Days);
+        landscapeAnalysisResults.getPeopleConnections().setConnectionsViaRepositories180Days(connectionsViaRepositories180Days);
 
-        landscapeAnalysisResults.setcIndex30Days(ContributorConnectionUtils.getCIndex(connectionsViaRepositories30Days));
-        landscapeAnalysisResults.setpIndex30Days(ContributorConnectionUtils.getPIndex(connectionsViaRepositories30Days));
+        landscapeAnalysisResults.getPeopleConnections().setcIndex30Days(ContributorConnectionUtils.getCIndex(connectionsViaRepositories30Days));
+        landscapeAnalysisResults.getPeopleConnections().setpIndex30Days(ContributorConnectionUtils.getPIndex(connectionsViaRepositories30Days));
 
-        landscapeAnalysisResults.setcIndex90Days(ContributorConnectionUtils.getCIndex(connectionsViaRepositories90Days));
-        landscapeAnalysisResults.setpIndex90Days(ContributorConnectionUtils.getPIndex(connectionsViaRepositories90Days));
+        landscapeAnalysisResults.getPeopleConnections().setcIndex90Days(ContributorConnectionUtils.getCIndex(connectionsViaRepositories90Days));
+        landscapeAnalysisResults.getPeopleConnections().setpIndex90Days(ContributorConnectionUtils.getPIndex(connectionsViaRepositories90Days));
 
-        landscapeAnalysisResults.setcIndex180Days(ContributorConnectionUtils.getCIndex(connectionsViaRepositories180Days));
-        landscapeAnalysisResults.setpIndex180Days(ContributorConnectionUtils.getPIndex(connectionsViaRepositories180Days));
+        landscapeAnalysisResults.getPeopleConnections().setcIndex180Days(ContributorConnectionUtils.getCIndex(connectionsViaRepositories180Days));
+        landscapeAnalysisResults.getPeopleConnections().setpIndex180Days(ContributorConnectionUtils.getPIndex(connectionsViaRepositories180Days));
 
-        landscapeAnalysisResults.setcMean30Days(ContributorConnectionUtils.getCMean(connectionsViaRepositories30Days));
-        landscapeAnalysisResults.setpMean30Days(ContributorConnectionUtils.getPMean(connectionsViaRepositories30Days));
+        landscapeAnalysisResults.getPeopleConnections().setcMean30Days(ContributorConnectionUtils.getCMean(connectionsViaRepositories30Days));
+        landscapeAnalysisResults.getPeopleConnections().setpMean30Days(ContributorConnectionUtils.getPMean(connectionsViaRepositories30Days));
 
-        landscapeAnalysisResults.setcMean90Days(ContributorConnectionUtils.getCMean(connectionsViaRepositories90Days));
-        landscapeAnalysisResults.setpMean90Days(ContributorConnectionUtils.getPMean(connectionsViaRepositories90Days));
+        landscapeAnalysisResults.getPeopleConnections().setcMean90Days(ContributorConnectionUtils.getCMean(connectionsViaRepositories90Days));
+        landscapeAnalysisResults.getPeopleConnections().setpMean90Days(ContributorConnectionUtils.getPMean(connectionsViaRepositories90Days));
 
-        landscapeAnalysisResults.setcMean180Days(ContributorConnectionUtils.getCMean(connectionsViaRepositories180Days));
-        landscapeAnalysisResults.setpMean180Days(ContributorConnectionUtils.getPMean(connectionsViaRepositories180Days));
+        landscapeAnalysisResults.getPeopleConnections().setcMean180Days(ContributorConnectionUtils.getCMean(connectionsViaRepositories180Days));
+        landscapeAnalysisResults.getPeopleConnections().setpMean180Days(ContributorConnectionUtils.getPMean(connectionsViaRepositories180Days));
 
-        landscapeAnalysisResults.setcMedian30Days(ContributorConnectionUtils.getCMedian(connectionsViaRepositories30Days));
-        landscapeAnalysisResults.setpMedian30Days(ContributorConnectionUtils.getPMedian(connectionsViaRepositories30Days));
+        landscapeAnalysisResults.getPeopleConnections().setcMedian30Days(ContributorConnectionUtils.getCMedian(connectionsViaRepositories30Days));
+        landscapeAnalysisResults.getPeopleConnections().setpMedian30Days(ContributorConnectionUtils.getPMedian(connectionsViaRepositories30Days));
 
-        landscapeAnalysisResults.setcMedian90Days(ContributorConnectionUtils.getCMedian(connectionsViaRepositories90Days));
-        landscapeAnalysisResults.setpMedian90Days(ContributorConnectionUtils.getPMedian(connectionsViaRepositories90Days));
+        landscapeAnalysisResults.getPeopleConnections().setcMedian90Days(ContributorConnectionUtils.getCMedian(connectionsViaRepositories90Days));
+        landscapeAnalysisResults.getPeopleConnections().setpMedian90Days(ContributorConnectionUtils.getPMedian(connectionsViaRepositories90Days));
 
-        landscapeAnalysisResults.setcMedian180Days(ContributorConnectionUtils.getCMedian(connectionsViaRepositories180Days));
-        landscapeAnalysisResults.setpMedian180Days(ContributorConnectionUtils.getPMedian(connectionsViaRepositories180Days));
+        landscapeAnalysisResults.getPeopleConnections().setcMedian180Days(ContributorConnectionUtils.getCMedian(connectionsViaRepositories180Days));
+        landscapeAnalysisResults.getPeopleConnections().setpMedian180Days(ContributorConnectionUtils.getPMedian(connectionsViaRepositories180Days));
 
-        landscapeAnalysisResults.setC2cConnectionsCount30Days(peopleDependencies30Days.size());
-        landscapeAnalysisResults.setC2pConnectionsCount30Days(connectionsViaRepositories30Days.stream().mapToInt(c -> c.getConnectionsCount()).sum());
+        landscapeAnalysisResults.getPeopleConnections().setC2cConnectionsCount30Days(peopleDependencies30Days.size());
+        landscapeAnalysisResults.getPeopleConnections().setC2pConnectionsCount30Days(connectionsViaRepositories30Days.stream().mapToInt(c -> c.getConnectionsCount()).sum());
 
         LOG.info("Adding history....");
         addHistory(landscapeAnalysisResults);
@@ -292,16 +292,16 @@ public class LandscapeAnalyzer {
             int daysAgo2 = (i + 1) * 30;
             List<ComponentDependency> peopleDependencies30Days = ContributorConnectionUtils.getPeopleDependencies(contributors, daysAgo1, daysAgo2);
             List<ContributorConnections> connectionsViaRepositories30Days = ContributorConnectionUtils.getConnectionsViaRepositories(contributors, peopleDependencies30Days, daysAgo1, daysAgo2);
-            landscapeAnalysisResults.getcIndex30DaysHistory().add(ContributorConnectionUtils.getCIndex(connectionsViaRepositories30Days));
-            landscapeAnalysisResults.getpIndex30DaysHistory().add(ContributorConnectionUtils.getPIndex(connectionsViaRepositories30Days));
-            landscapeAnalysisResults.getcMean30DaysHistory().add(ContributorConnectionUtils.getCMean(connectionsViaRepositories30Days));
-            landscapeAnalysisResults.getpMean30DaysHistory().add(ContributorConnectionUtils.getPMean(connectionsViaRepositories30Days));
-            landscapeAnalysisResults.getcMedian30DaysHistory().add(ContributorConnectionUtils.getCMedian(connectionsViaRepositories30Days));
-            landscapeAnalysisResults.getpMedian30DaysHistory().add(ContributorConnectionUtils.getPMedian(connectionsViaRepositories30Days));
+            landscapeAnalysisResults.getPeopleConnections().getcIndex30DaysHistory().add(ContributorConnectionUtils.getCIndex(connectionsViaRepositories30Days));
+            landscapeAnalysisResults.getPeopleConnections().getpIndex30DaysHistory().add(ContributorConnectionUtils.getPIndex(connectionsViaRepositories30Days));
+            landscapeAnalysisResults.getPeopleConnections().getcMean30DaysHistory().add(ContributorConnectionUtils.getCMean(connectionsViaRepositories30Days));
+            landscapeAnalysisResults.getPeopleConnections().getpMean30DaysHistory().add(ContributorConnectionUtils.getPMean(connectionsViaRepositories30Days));
+            landscapeAnalysisResults.getPeopleConnections().getcMedian30DaysHistory().add(ContributorConnectionUtils.getCMedian(connectionsViaRepositories30Days));
+            landscapeAnalysisResults.getPeopleConnections().getpMedian30DaysHistory().add(ContributorConnectionUtils.getPMedian(connectionsViaRepositories30Days));
             int connectionSum = connectionsViaRepositories30Days.stream().mapToInt(c -> c.getConnectionsCount()).sum();
-            landscapeAnalysisResults.getConnectionsViaRepositories30DaysCountHistory().add((double) connectionSum);
-            landscapeAnalysisResults.getPeopleDependenciesCount30DaysHistory().add((double) peopleDependencies30Days.size());
-            landscapeAnalysisResults.getActiveContributors30DaysHistory().add((double) ContributorConnectionUtils.getContributorsActiveInPeriodCount(contributors, daysAgo1, daysAgo2));
+            landscapeAnalysisResults.getPeopleConnections().getConnectionsViaRepositories30DaysCountHistory().add((double) connectionSum);
+            landscapeAnalysisResults.getPeopleConnections().getPeopleDependenciesCount30DaysHistory().add((double) peopleDependencies30Days.size());
+            landscapeAnalysisResults.getPeopleConnections().getActiveContributors30DaysHistory().add((double) ContributorConnectionUtils.getContributorsActiveInPeriodCount(contributors, daysAgo1, daysAgo2));
         }
     }
 
