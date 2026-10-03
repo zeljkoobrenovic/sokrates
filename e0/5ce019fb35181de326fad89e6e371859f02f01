@@ -1,0 +1,57 @@
+cli/src/main/java/nl/obren/sokrates/cli/GitHistoryCommands.java
+  s_40c0e74316fcc6::t_729dea5c53c478 1-76
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportFileExporter.java
+  s_40c0e74316fcc6::t_bed2cd478d4702 192
+  s_40c0e74316fcc6::t_729dea5c53c478 127,259,320,331
+reports/src/main/java/nl/obren/sokrates/reports/dataexporters/DependenciesDataExporter.java
+  s_40c0e74316fcc6::t_729dea5c53c478 1-50,73-145
+  s_40c0e74316fcc6::t_bed2cd478d4702 51-72
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/ContributorsReportGenerator.java
+  s_40c0e74316fcc6::t_bed2cd478d4702 405
+  s_40c0e74316fcc6::t_729dea5c53c478 39,136,150,164,178,403-404,407
+CLAUDE.md
+  s_40c0e74316fcc6::t_aa8a04241e65bc 46,94,127,145-147,196
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/LandscapeReportPeopleTopologyTab.java
+  s_40c0e74316fcc6::t_729dea5c53c478 111-113,116-117,120-121,304
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/ContributorDependenciesRenderer.java
+  s_40c0e74316fcc6::t_729dea5c53c478 1-31,33-34,36-37,39-254
+  s_40c0e74316fcc6::t_bed2cd478d4702 32,35,38
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportActivityTab.java
+  s_40c0e74316fcc6::t_729dea5c53c478 1-123,125-214
+  s_40c0e74316fcc6::t_bed2cd478d4702 124
+cli/src/main/java/nl/obren/sokrates/cli/PeopleConfigCommands.java
+  s_40c0e74316fcc6::t_729dea5c53c478 1-79
+cli/src/main/java/nl/obren/sokrates/cli/CommandLineInterface.java
+  s_40c0e74316fcc6::t_729dea5c53c478 98-100,140-141,144-145,148,848
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/landscape/analysis/LandscapeAnalyzer.java
+  s_40c0e74316fcc6::t_729dea5c53c478 235,237,240,243,249-251,253-254,256-257,259-260,262-263,265-266,268-269,271-272,274-275,277-278,280-281,295-300,302-304
+cli/src/main/java/nl/obren/sokrates/cli/SkillsCommands.java
+  s_40c0e74316fcc6::t_729dea5c53c478 1-86
+reports/src/test/java/nl/obren/sokrates/reports/dataexporters/DataExporterTemporalDependenciesTest.java
+  s_40c0e74316fcc6::t_c3ca2e1f33e074 95
+  s_40c0e74316fcc6::t_cd257f82c01d7b 77,88
+reports/src/main/java/nl/obren/sokrates/reports/dataexporters/DataExporter.java
+  s_40c0e74316fcc6::t_729dea5c53c478 122,124,126
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/landscape/analysis/PeopleConnectionsMetrics.java
+  s_40c0e74316fcc6::t_729dea5c53c478 1-360
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportDataTab.java
+  s_40c0e74316fcc6::t_729dea5c53c478 1-129
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/landscape/analysis/LandscapeAnalysisResults.java
+  s_40c0e74316fcc6::t_729dea5c53c478 8,68,890-893
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "e05ce019fb35181de326fad89e6e371859f02f01",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
