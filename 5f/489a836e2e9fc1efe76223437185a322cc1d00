@@ -1,0 +1,140 @@
+common/src/main/resources/templates/contributors-report.html
+  s_223e7b216451e0::t_9ca4aaea6c8885 178,225,231,260,283,342,491,493,567
+  s_223e7b216451e0::t_b599907bff1b38 249-250,254,345-346
+  s_223e7b216451e0::t_bc1db737c88a1f 5,9,14,20,27,32,41,50,56,60,72-73,77,82-83,90,107,111,116,137,145,153-154
+reports/src/main/java/nl/obren/sokrates/reports/landscape/utils/CorrelationDiagramGenerator.java
+  s_223e7b216451e0::t_dd70d701e8bf34 107,181-184
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/LandscapeIndividualContributorsReports.java
+  s_223e7b216451e0::t_28602fcfdd76db 4
+  s_223e7b216451e0::t_aff1ecc32b44a4 222
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/HistoryPerLanguageGenerator.java
+  s_223e7b216451e0::t_108f9e7665acf9 189
+common/src/main/resources/templates/files-explorer.html
+  s_223e7b216451e0::t_bc1db737c88a1f 5,9,14,18,40,45,49,63,67,80,88-89
+  s_223e7b216451e0::t_33d600b98c9e87 431-432,439-440,448
+  s_223e7b216451e0::t_ab03fb929b50cb 590,592
+  s_223e7b216451e0::t_9ca4aaea6c8885 110,123,200,226,231,342,433,441,449,464,480,489,516-518,526,531,536,538,566,568,574,576,578,585-586
+reports/src/main/resources/templates/Structure.html
+  s_223e7b216451e0::t_1ceca0587eb9f5 139-140
+  s_223e7b216451e0::t_052f884a17f532 175
+  s_223e7b216451e0::t_5f8670951769ed 73,75-79
+  s_223e7b216451e0::t_bc1db737c88a1f 5,9,14,21,27,31,43-44,48,53-54
+  s_223e7b216451e0::t_9ca4aaea6c8885 122,125,128,131
+common/src/main/java/nl/obren/sokrates/common/renderingutils/ExplorerTemplate.java
+  s_223e7b216451e0::t_aff1ecc32b44a4 47
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/LandscapeReportPeopleTopologyTab.java
+  s_223e7b216451e0::t_a978049315fbc8 233,241
+reports/src/test/resources/golden/controls-report-empty.html
+  s_223e7b216451e0::t_b12a5cef726e80 1-2
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportConstants.java
+  s_223e7b216451e0::t_51191bfb95e2aa 7-8,58,73,80-81,85,90-91,122,127,136,142,147,149,161,167,174-175,183,187-190,207-233,262,267-270,275-278,280,284-286,290,294,298,302,307-309,312-313,317-319,331-334,338,342,347
+  s_223e7b216451e0::t_f186ed231f63b5 11,13
+  s_223e7b216451e0::t_33d600b98c9e87 137-141
+  s_223e7b216451e0::t_d171de5020f9d5 156-157
+  s_223e7b216451e0::t_52ef2936de6485 132-133
+  s_223e7b216451e0::t_3e18fe720949fa 131
+  s_223e7b216451e0::t_00b523b6ea059d 158-159,234-259
+  s_223e7b216451e0::t_052fb8cef18644 134-135
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportRenderer.java
+  s_223e7b216451e0::t_00b523b6ea059d 58,79,82
+common/src/main/java/nl/obren/sokrates/common/renderingutils/ReportTheme.java
+  s_223e7b216451e0::t_d171de5020f9d5 91,192-193,200-202,204-207
+  s_223e7b216451e0::t_51c1ac75e72ec5 1-75,85-90,92-93,98-103,106-143,158-188,210-217
+  s_223e7b216451e0::t_33d600b98c9e87 76-84,104-105
+  s_223e7b216451e0::t_f694242172e456 189-191,194-199,203,208-209
+  s_223e7b216451e0::t_fc18bfd5a91880 94-97
+  s_223e7b216451e0::t_ee0eb0a1cadef0 144-157
+reports/src/main/java/nl/obren/sokrates/reports/dataexporters/SourceViewerExporter.java
+  s_223e7b216451e0::t_28602fcfdd76db 4
+  s_223e7b216451e0::t_aff1ecc32b44a4 129,149
+common/src/main/resources/templates/contributor-report.html
+  s_223e7b216451e0::t_b599907bff1b38 479-480
+  s_223e7b216451e0::t_bc1db737c88a1f 5,9,13,19,26,31,48,57,65,82,88,92,104-105,109,114-115,148,152
+  s_223e7b216451e0::t_9ca4aaea6c8885 174,226,232,327,358,375,437,486,515-516,519-526,534,580,600,609,624,662,750
+  s_223e7b216451e0::t_33d600b98c9e87 315-316
+reports/src/test/resources/golden/metrics-list-report.html
+  s_223e7b216451e0::t_b12a5cef726e80 1-2
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/VisualizationTools.java
+  s_223e7b216451e0::t_c0573d2cbaeb75 3
+  s_223e7b216451e0::t_30dbdb6693f251 24-25
+common/src/main/resources/templates/units-explorer.html
+  s_223e7b216451e0::t_bc1db737c88a1f 5,9,18,33,37,50,58-59
+  s_223e7b216451e0::t_9ca4aaea6c8885 80-81,126,131,213,247-248,256,264-265,267,288,296
+reports/src/main/resources/templates/viewer.html
+  s_223e7b216451e0::t_bc1db737c88a1f 5,29-30,38-39,55,62-63
+  s_223e7b216451e0::t_6b2b5d7c00108f 27
+  s_223e7b216451e0::t_5f8670951769ed 1,7-20,33
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportFileExporter.java
+  s_223e7b216451e0::t_a978049315fbc8 266,269,275-276,287,292-293,310,376,422,463
+  s_223e7b216451e0::t_f694242172e456 7,395
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/ContributorsReportUtils.java
+  s_223e7b216451e0::t_98fc1e22732933 526-527
+  s_223e7b216451e0::t_ec8512ef6f0352 7,654
+  s_223e7b216451e0::t_231faa88c5cd15 466-467
+  s_223e7b216451e0::t_fc18bfd5a91880 180-181,208,211,546
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/ContributorActivityCharts.java
+  s_223e7b216451e0::t_108f9e7665acf9 84,111,131
+  s_223e7b216451e0::t_c369673265afff 87
+common/src/main/resources/templates/repositories-report.html
+  s_223e7b216451e0::t_b599907bff1b38 369,881,1131
+  s_223e7b216451e0::t_9ca4aaea6c8885 163,174,239,245,278,288,291,439,445,447,461,465,568,584,586,590,592,632,634,699,701,728,789,810,821,891,906,1094,1096,1128,1182
+  s_223e7b216451e0::t_33d600b98c9e87 1127
+  s_223e7b216451e0::t_bc1db737c88a1f 5,9,14,20,27,32,41,50,56,60,72-73,77,82-83,90,108,112,117,133,141-142
+common/src/main/resources/templates/landscape-ai-insights.html
+  s_223e7b216451e0::t_bc1db737c88a1f 5,10,12,17,32,37,42-43,53,61,63,68,80,83,90,96,114,116,120,124,138,142,146,154,157,159,164-165
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/LandscapeReportGenerator.java
+  s_223e7b216451e0::t_f186ed231f63b5 8,63-64,83,88-89,104-105
+  s_223e7b216451e0::t_108f9e7665acf9 324,772,1832,2102,2127,2145
+  s_223e7b216451e0::t_c369673265afff 2105
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/repositories/LandscapeRepositoriesTagsLine.java
+  s_223e7b216451e0::t_108f9e7665acf9 38,72,76
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/ContributorsReportGenerator.java
+  s_223e7b216451e0::t_98fc1e22732933 201-202,265-266,496-497
+reports/src/main/java/nl/obren/sokrates/reports/utils/GraphvizDependencyRenderer.java
+  s_223e7b216451e0::t_3f9447b99c13be 25
+  s_223e7b216451e0::t_30dbdb6693f251 7
+reports/src/main/java/nl/obren/sokrates/reports/dataexporters/DataExporter.java
+  s_223e7b216451e0::t_aff1ecc32b44a4 165
+  s_223e7b216451e0::t_28602fcfdd76db 8
+common/src/main/resources/templates/commits-explorer.html
+  s_223e7b216451e0::t_b599907bff1b38 540,542
+  s_223e7b216451e0::t_9ca4aaea6c8885 257,262-263,266,269,274,289,292,484,500,525-526,529,536,541,543,549
+  s_223e7b216451e0::t_bc1db737c88a1f 5,14,20,35,39,73,103,112,126,145-147,156,158,166,170-171,180,188,219,227-228
+  s_223e7b216451e0::t_d50c10254635c3 94-95
+reports/src/main/java/nl/obren/sokrates/reports/utils/FilesReportUtils.java
+  s_223e7b216451e0::t_98fc1e22732933 131-132
+reports/src/main/resources/templates/data-preview.html
+  s_223e7b216451e0::t_bc1db737c88a1f 5,13,18,20,22,26,28
+  s_223e7b216451e0::t_6b2b5d7c00108f 11
+reports/src/main/java/nl/obren/sokrates/reports/core/SummaryUtils.java
+  s_223e7b216451e0::t_f694242172e456 7,45
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/BasicSourceCodeReportGenerator.java
+  s_223e7b216451e0::t_ec8512ef6f0352 7,57
+reports/src/main/java/nl/obren/sokrates/reports/utils/AnimalIcons.java
+  s_223e7b216451e0::t_ec8512ef6f0352 3-4,66
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/InfoBlocks.java
+  s_223e7b216451e0::t_a978049315fbc8 22,25,31-32
+  s_223e7b216451e0::t_c369673265afff 157
+reports/src/test/resources/golden/controls-report-populated.html
+  s_223e7b216451e0::t_b12a5cef726e80 1-2
+CLAUDE.md
+  s_223e7b216451e0::t_47000c0b25fe1f 121-122
+reports/src/test/resources/golden/findings-report-empty.html
+  s_223e7b216451e0::t_b12a5cef726e80 1-2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "5f489a836e2e9fc1efe76223437185a322cc1d00",
+  "prompts": {},
+  "sessions": {
+    "s_223e7b216451e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "17c1a50e-ffe3-43fa-bbef-5ca8411e20a4",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
