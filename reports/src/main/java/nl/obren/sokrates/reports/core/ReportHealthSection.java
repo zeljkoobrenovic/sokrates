@@ -32,7 +32,8 @@ public class ReportHealthSection {
             ".sk-tile-label {font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--sk-text-muted);}\n" +
             ".sk-tile-value {font-size: 30px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.15; font-variant-numeric: tabular-nums;}\n" +
             ".sk-tile-caption {font-size: 12px; color: var(--sk-text-muted);}\n" +
-            ".sk-tile-spark {margin-top: auto; padding-top: 6px; color: var(--sk-accent);}\n" +
+            ".sk-tile-spark {margin-top: auto; padding-top: 6px; color: var(--sk-accent); min-width: 0;}\n" +
+            ".sk-tile-spark svg {display: block; max-width: 100%;}\n" +
             ".sk-status {font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; white-space: nowrap;}\n" +
             ".sk-status-good {color: #1b6e2a; background: #dff3e3;}\n" +
             ".sk-status-watch {color: #8a5300; background: #fdf0d5;}\n" +
@@ -103,8 +104,10 @@ public class ReportHealthSection {
         int max = Math.max(1, values.stream().mapToInt(Integer::intValue).max().orElse(1));
         double slot = (double) width / n;
         double barWidth = Math.max(2, slot - 3);
-        StringBuilder svg = new StringBuilder("<svg width='" + width + "' height='" + height + "' viewBox='0 0 " + width + " " + height
-                + "' role='img' aria-label='per month, past " + n + " months'>");
+        // Drawn in a fixed coordinate space and stretched to the tile's width (no fixed pixel width,
+        // which overflowed narrow tiles).
+        StringBuilder svg = new StringBuilder("<svg width='100%' height='" + height + "' viewBox='0 0 " + width + " " + height
+                + "' preserveAspectRatio='none' role='img' aria-label='per month, past " + n + " months'>");
         for (int i = 0; i < n; i++) {
             int value = values.get(i);
             double barHeight = value == 0 ? 1 : Math.max(2, (height - 1) * value / (double) max);
