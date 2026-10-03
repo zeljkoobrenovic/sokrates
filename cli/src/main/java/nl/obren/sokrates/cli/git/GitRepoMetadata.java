@@ -155,33 +155,42 @@ public class GitRepoMetadata {
             return this;
         }
         try {
-            HttpRequest.Builder request = HttpRequest.newBuilder(URI.create("https://api.github.com/repos/" + owner + "/" + name))
-                    .timeout(TIMEOUT)
-                    .header("Accept", "application/vnd.github+json")
-                    .header("User-Agent", "sokrates");
-            String token = System.getenv(GitRepoCloner.ENV_TOKEN);
-            if (StringUtils.isNotBlank(token)) {
-                request.header("Authorization", "Bearer " + token);
-            }
             HttpResponse<String> response = HttpClient.newBuilder().connectTimeout(TIMEOUT).followRedirects(HttpClient.Redirect.NORMAL).build()
-                    .send(request.build(), HttpResponse.BodyHandlers.ofString());
+                    .send(gitHubRepositoryRequest(), HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) {
                 LOG.info("GitHub API returned " + response.statusCode() + " for " + owner + "/" + name + "; using the URL-derived metadata only.");
                 return this;
             }
-            JsonNode json = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).readTree(response.body());
-            String apiDescription = json.path("description").asText("");
-            if (StringUtils.isNotBlank(apiDescription)) {
-                description = apiDescription.trim();
-            }
-            String avatar = json.path("owner").path("avatar_url").asText("");
-            if (StringUtils.isNotBlank(avatar)) {
-                logoLink = avatar;
-            }
+            applyGitHubDetails(new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).readTree(response.body()));
         } catch (Exception e) {
             LOG.info("Could not fetch GitHub details for " + owner + "/" + name + " (" + e.getMessage() + "); using the URL-derived metadata only.");
         }
         return this;
+    }
+
+    /** GET /repos/{owner}/{name}, with the SOKRATES_GIT_TOKEN as bearer when set. */
+    private HttpRequest gitHubRepositoryRequest() {
+        HttpRequest.Builder request = HttpRequest.newBuilder(URI.create("https://api.github.com/repos/" + owner + "/" + name))
+                .timeout(TIMEOUT)
+                .header("Accept", "application/vnd.github+json")
+                .header("User-Agent", "sokrates");
+        String token = System.getenv(GitRepoCloner.ENV_TOKEN);
+        if (StringUtils.isNotBlank(token)) {
+            request.header("Authorization", "Bearer " + token);
+        }
+        return request.build();
+    }
+
+    /** The description and the owner's avatar from the repository's API document, when present. */
+    private void applyGitHubDetails(JsonNode json) {
+        String apiDescription = json.path("description").asText("");
+        if (StringUtils.isNotBlank(apiDescription)) {
+            description = apiDescription.trim();
+        }
+        String avatar = json.path("owner").path("avatar_url").asText("");
+        if (StringUtils.isNotBlank(avatar)) {
+            logoLink = avatar;
+        }
     }
 
     /**

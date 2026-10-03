@@ -90,24 +90,7 @@ public class SourceCodeFiles {
             if (progressFeedback.canceled()) {
                 return;
             }
-            boolean included[] = {false};
-            boolean excluded[] = {false};
-            if (aspect.getFiles().contains(sourceFile.getRelativePath())) {
-                included[0] = true;
-            }
-            aspect.getSourceFileFilters().forEach(filter -> {
-                if (progressFeedback.canceled()) {
-                    return;
-                }
-                if (filter.matches(sourceFile)) {
-                    if (!filter.getException()) {
-                        included[0] = true;
-                    } else {
-                        excluded[0] = true;
-                    }
-                }
-            });
-            if (included[0] && !excluded[0]) {
+            if (aspectIncludes(aspect, sourceFile)) {
                 if (!sourceFiles.contains(sourceFile)) {
                     sourceFiles.add(sourceFile);
                 }
@@ -120,6 +103,28 @@ public class SourceCodeFiles {
         progressFeedback.end();
 
         return sourceFiles;
+    }
+
+    /** Listed by path or matched by an including filter, and matched by no excepting filter. */
+    private boolean aspectIncludes(NamedSourceCodeAspect aspect, SourceFile sourceFile) {
+        boolean included[] = {false};
+        boolean excluded[] = {false};
+        if (aspect.getFiles().contains(sourceFile.getRelativePath())) {
+            included[0] = true;
+        }
+        aspect.getSourceFileFilters().forEach(filter -> {
+            if (progressFeedback.canceled()) {
+                return;
+            }
+            if (filter.matches(sourceFile)) {
+                if (!filter.getException()) {
+                    included[0] = true;
+                } else {
+                    excluded[0] = true;
+                }
+            }
+        });
+        return included[0] && !excluded[0];
     }
 
     public void createBroadScope(List<String> extensions, List<SourceFileFilter> exclusions, AnalysisConfig analysisConfig) {
@@ -161,49 +166,33 @@ public class SourceCodeFiles {
 
     boolean shouldExcludeFile(SourceFile sourceFile, List<SourceFileFilter> exclusions, AnalysisConfig analysisConfig) {
         if (sourceFile.getFile().length() > analysisConfig.getMaxFileSizeBytes()) {
-            String key = "Too long file (" + analysisConfig.getMaxFileSizeBytes() + "+ bytes)";
-            IgnoredFilesGroup ignoredFilesGroup = ignoredFilesGroups.get(key);
-            if (ignoredFilesGroup == null) {
-                ignoredFilesGroup = new IgnoredFilesGroup(new SourceFileFilter());
-                ignoredFilesGroups.put(key, ignoredFilesGroup);
-            }
-            ignoredFilesGroup.getSourceFiles().add(sourceFile);
+            ignore(sourceFile, "Too long file (" + analysisConfig.getMaxFileSizeBytes() + "+ bytes)", new SourceFileFilter());
             return true;
         } else if (hasTooManyLines(sourceFile, analysisConfig.getMaxLines())) {
-            String key = "Too many lines (" + analysisConfig.getMaxLines() + ")";
-            IgnoredFilesGroup ignoredFilesGroup = ignoredFilesGroups.get(key);
-            if (ignoredFilesGroup == null) {
-                ignoredFilesGroup = new IgnoredFilesGroup(new SourceFileFilter());
-                ignoredFilesGroups.put(key, ignoredFilesGroup);
-            }
-            ignoredFilesGroup.getSourceFiles().add(sourceFile);
+            ignore(sourceFile, "Too many lines (" + analysisConfig.getMaxLines() + ")", new SourceFileFilter());
             return true;
         } else if (hasTooLongLines(sourceFile, analysisConfig.getMaxLineLength())) {
-            String key = "Too long lines (" + analysisConfig.getMaxLineLength() + "+ characters)";
-            IgnoredFilesGroup ignoredFilesGroup = ignoredFilesGroups.get(key);
-            if (ignoredFilesGroup == null) {
-                ignoredFilesGroup = new IgnoredFilesGroup(new SourceFileFilter());
-                ignoredFilesGroups.put(key, ignoredFilesGroup);
-            }
-            ignoredFilesGroup.getSourceFiles().add(sourceFile);
+            ignore(sourceFile, "Too long lines (" + analysisConfig.getMaxLineLength() + "+ characters)", new SourceFileFilter());
             return true;
         } else {
-            boolean exclude = false;
             for (SourceFileFilter filter : exclusions) {
                 if (filter.matches(sourceFile)) {
-                    exclude = true;
-                    String key = filter.toString();
-                    IgnoredFilesGroup ignoredFilesGroup = ignoredFilesGroups.get(key);
-                    if (ignoredFilesGroup == null) {
-                        ignoredFilesGroup = new IgnoredFilesGroup(filter);
-                        ignoredFilesGroups.put(key, ignoredFilesGroup);
-                    }
-                    ignoredFilesGroup.getSourceFiles().add(sourceFile);
-                    break;
+                    ignore(sourceFile, filter.toString(), filter);
+                    return true;
                 }
             }
-            return exclude;
+            return false;
         }
+    }
+
+    /** Files the source file under the ignored-files group of the given key (created with the filter on first use). */
+    private void ignore(SourceFile sourceFile, String key, SourceFileFilter filter) {
+        IgnoredFilesGroup ignoredFilesGroup = ignoredFilesGroups.get(key);
+        if (ignoredFilesGroup == null) {
+            ignoredFilesGroup = new IgnoredFilesGroup(filter);
+            ignoredFilesGroups.put(key, ignoredFilesGroup);
+        }
+        ignoredFilesGroup.getSourceFiles().add(sourceFile);
     }
 
     private boolean hasTooManyLines(SourceFile sourceFile, int maxLines) {

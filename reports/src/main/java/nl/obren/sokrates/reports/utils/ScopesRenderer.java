@@ -160,26 +160,7 @@ public class ScopesRenderer {
                 if (inSection) {
                     report.startSubSection(title, description);
                     if (describe) {
-                        if (StringUtils.isNotBlank(extraIntroHtmlFragment)) {
-                            report.addHtmlContent(extraIntroHtmlFragment);
-                        }
-                        renderDetails(report, false);
-                        if (renderingList.size() > 1) {
-                            report.startUnorderedList();
-                            NumericMetric firstMetric = renderingList.get(0).getLinesOfCode();
-                            double firstPercentage = 100.0 * firstMetric.getValue().doubleValue() / linesCount;
-                            DecimalFormat decimalFormat = new DecimalFormat("##.##");
-                            decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.ENGLISH));
-                            report.addListItem("\"" + HtmlEscapeUtils.escape(firstMetric.getName()) + "\" is biggest, containing <b>" + decimalFormat.format(firstPercentage) + "%</b> of " + metric + ".");
-                            if (renderingList.size() >= 2) {
-                                NumericMetric lastMetric = renderingList.get(renderingList.size() - 1).getLinesOfCode();
-                                double lastPercentage = 100.0 * lastMetric.getValue().doubleValue() / linesCount;
-                                report.addListItem("\"" + HtmlEscapeUtils.escape(lastMetric.getName()) + "\" is smallest, containing <b>" + decimalFormat.format(lastPercentage) + "%</b> of " + metric + ".");
-                            }
-                            report.endUnorderedList();
-                        }
-                        report.addLineBreak();
-                        report.addLineBreak();
+                        renderIntro(report, extraIntroHtmlFragment, renderingList);
                     }
                 }
 
@@ -190,6 +171,30 @@ public class ScopesRenderer {
                 if (inSection) report.endSection();
             }
         }
+    }
+
+    /** The optional intro fragment, the criteria/matches details and the biggest/smallest items. */
+    private void renderIntro(RichTextReport report, String extraIntroHtmlFragment, List<ScopeRendererItem> renderingList) {
+        if (StringUtils.isNotBlank(extraIntroHtmlFragment)) {
+            report.addHtmlContent(extraIntroHtmlFragment);
+        }
+        renderDetails(report, false);
+        if (renderingList.size() > 1) {
+            report.startUnorderedList();
+            NumericMetric firstMetric = renderingList.get(0).getLinesOfCode();
+            double firstPercentage = 100.0 * firstMetric.getValue().doubleValue() / linesCount;
+            DecimalFormat decimalFormat = new DecimalFormat("##.##");
+            decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.ENGLISH));
+            report.addListItem("\"" + HtmlEscapeUtils.escape(firstMetric.getName()) + "\" is biggest, containing <b>" + decimalFormat.format(firstPercentage) + "%</b> of " + metric + ".");
+            if (renderingList.size() >= 2) {
+                NumericMetric lastMetric = renderingList.get(renderingList.size() - 1).getLinesOfCode();
+                double lastPercentage = 100.0 * lastMetric.getValue().doubleValue() / linesCount;
+                report.addListItem("\"" + HtmlEscapeUtils.escape(lastMetric.getName()) + "\" is smallest, containing <b>" + decimalFormat.format(lastPercentage) + "%</b> of " + metric + ".");
+            }
+            report.endUnorderedList();
+        }
+        report.addLineBreak();
+        report.addLineBreak();
     }
 
     private List<ScopeRendererItem> getRenderingList() {

@@ -190,8 +190,33 @@ public class LandscapeRepositoriesTagsReport {
     }
 
     private void exportTagGraphs(String prefix, List<RepositoryTag> groupTags) {
-        List<ComponentDependency> dependencies = new ArrayList<>();
         Map<String, Set<String>> repositoryTagsMap = new HashMap<>();
+        List<ComponentDependency> dependencies = repositoryTagDependencies(groupTags, repositoryTagsMap);
+        new Force3DGraphExporter().export2D3DForceGraph(dependencies, reportsFolder, prefix);
+
+        List<ComponentDependency> directDependencies = directTagDependencies(repositoryTagsMap);
+        new Force3DGraphExporter().export2D3DForceGraph(directDependencies, reportsFolder, prefix + "_direct");
+
+        GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
+        graphvizDependencyRenderer.setMaxNumberOfDependencies(100);
+        graphvizDependencyRenderer.setTypeGraph();
+        graphvizDependencyRenderer.setOrientation("RL");
+        List<String> keys = tagsMap.keySet().stream().filter(t -> tagsMap.getTagStats(t) != null).collect(Collectors.toList());
+        String graphvizContent = graphvizDependencyRenderer.getMermaidContent(new ArrayList<>(keys), dependencies);
+        String graphvizContentDirect = graphvizDependencyRenderer.getMermaidContent(new ArrayList<>(), directDependencies);
+        try {
+            FileUtils.write(new File(reportsFolder, "visuals/" + prefix + ".html"),
+                    VisualizationTools.standaloneMermaidPage("Tag dependencies", graphvizContent), StandardCharsets.UTF_8);
+            FileUtils.write(new File(reportsFolder, "visuals/" + prefix + "_direct.html"),
+                    VisualizationTools.standaloneMermaidPage("Tag dependencies", graphvizContentDirect), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            LOG.info(e);
+        }
+    }
+
+    /** One repository -> tag edge per tagged repository; also fills repository name -> its tag keys. */
+    private List<ComponentDependency> repositoryTagDependencies(List<RepositoryTag> groupTags, Map<String, Set<String>> repositoryTagsMap) {
+        List<ComponentDependency> dependencies = new ArrayList<>();
         groupTags.stream().filter(tag -> tagsMap.getTagStats(tag.getKey()) != null)
                 .forEach(tag -> {
                     TagStats stats = tagsMap.getTagStats(tag.getKey());
@@ -204,8 +229,11 @@ public class LandscapeRepositoriesTagsReport {
                         repositoryTagsMap.get(name).add(tag.getKey());
                     });
                 });
-        new Force3DGraphExporter().export2D3DForceGraph(dependencies, reportsFolder, prefix);
+        return dependencies;
+    }
 
+    /** Tag -> tag edges counting the repositories that carry both (each unordered pair counted once). */
+    private List<ComponentDependency> directTagDependencies(Map<String, Set<String>> repositoryTagsMap) {
         List<ComponentDependency> directDependencies = new ArrayList<>();
         Map<String, ComponentDependency> directDependenciesMap = new HashMap<>();
         repositoryTagsMap.values().forEach(repositoryTags -> {
@@ -229,23 +257,7 @@ public class LandscapeRepositoriesTagsReport {
         });
 
         directDependencies.forEach(d -> d.setCount(d.getCount() / 2));
-        new Force3DGraphExporter().export2D3DForceGraph(directDependencies, reportsFolder, prefix + "_direct");
-
-        GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
-        graphvizDependencyRenderer.setMaxNumberOfDependencies(100);
-        graphvizDependencyRenderer.setTypeGraph();
-        graphvizDependencyRenderer.setOrientation("RL");
-        List<String> keys = tagsMap.keySet().stream().filter(t -> tagsMap.getTagStats(t) != null).collect(Collectors.toList());
-        String graphvizContent = graphvizDependencyRenderer.getMermaidContent(new ArrayList<>(keys), dependencies);
-        String graphvizContentDirect = graphvizDependencyRenderer.getMermaidContent(new ArrayList<>(), directDependencies);
-        try {
-            FileUtils.write(new File(reportsFolder, "visuals/" + prefix + ".html"),
-                    VisualizationTools.standaloneMermaidPage("Tag dependencies", graphvizContent), StandardCharsets.UTF_8);
-            FileUtils.write(new File(reportsFolder, "visuals/" + prefix + "_direct.html"),
-                    VisualizationTools.standaloneMermaidPage("Tag dependencies", graphvizContentDirect), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            LOG.info(e);
-        }
+        return directDependencies;
     }
 
     private void visualizeTagRepositories(RichTextReport report) {

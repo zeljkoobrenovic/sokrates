@@ -423,24 +423,9 @@ public class LandscapeReportPeopleTopologyTab {
     }
 
     private void addRepositoryContributors(List<ContributorRepositories> contributors, int daysAgo) {
-        Map<String, Pair<String, Integer>> map = new HashMap<>();
-        final List<String> list = new ArrayList<>();
-
-        contributors.forEach(contributorRepositories -> {
-            contributorRepositories.getRepositories().stream().filter(repository -> DateUtils.isAnyDateCommittedBetween(repository.getCommitDates(), 0, daysAgo)).forEach(repository -> {
-                String key = repository.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName();
-                if (map.containsKey(key)) {
-                    Integer currentValue = map.get(key).getRight();
-                    map.put(key, Pair.of(key, currentValue + 1));
-                } else {
-                    Pair<String, Integer> pair = Pair.of(key, 1);
-                    map.put(key, pair);
-                    list.add(key);
-                }
-            });
-        });
-
-        Collections.sort(list, (a, b) -> map.get(b).getRight() - map.get(a).getRight());
+        Map<String, Integer> peoplePerRepository = peoplePerRepository(contributors, daysAgo);
+        List<String> list = new ArrayList<>(peoplePerRepository.keySet());
+        Collections.sort(list, (a, b) -> peoplePerRepository.get(b) - peoplePerRepository.get(a));
 
         List<String> displayList = list;
         if (list.size() > 100) {
@@ -448,13 +433,9 @@ public class LandscapeReportPeopleTopologyTab {
         }
 
         landscapeReport.startDetailsBlock("repositories with most " + (isContributorReport() ? "people" : "teams") + "...<br>");
-        StringBuilder builder = new StringBuilder();
-        builder.append("Contributor\t# people\n");
-        list.forEach(repository -> builder.append(map.get(repository).getLeft()).append("\t")
-                .append(map.get(repository).getRight()).append("\n"));
         String prefix = "repository_with_most_" + (isContributorReport() ? "people" : "teams") + "_" + daysAgo + "_days";
         String fileName = prefix + ".txt";
-        saveData(fileName, builder.toString());
+        savePeoplePerRepositoryData(fileName, list, peoplePerRepository);
 
         if (displayList.size() < list.size()) {
             landscapeReport.addLineBreak();
@@ -468,18 +449,38 @@ public class LandscapeReportPeopleTopologyTab {
         landscapeReport.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('" + fileName + "')\">" + "data" + "</a>");
         landscapeReport.addHtmlContent("</p>");
         List<VisualizationItem> visualizationItems = new ArrayList<>();
-        list.forEach(repository -> visualizationItems.add(new VisualizationItem(repository, map.get(repository).getRight())));
+        list.forEach(repository -> visualizationItems.add(new VisualizationItem(repository, peoplePerRepository.get(repository))));
         exportVisuals(prefix, visualizationItems);
         landscapeReport.startTable();
         displayList.forEach(repository -> {
             landscapeReport.startTableRow();
-            landscapeReport.addTableCell(map.get(repository).getLeft());
-            Integer count = map.get(repository).getRight();
+            landscapeReport.addTableCell(repository);
+            Integer count = peoplePerRepository.get(repository);
             landscapeReport.addTableCell(count + (count == 1 ? " person" : " people"));
             landscapeReport.endTableRow();
         });
         landscapeReport.endTable();
         landscapeReport.endDetailsBlock();
+    }
+
+    /** Repository name -> contributors with a commit in it within the window, in first-seen order. */
+    private static Map<String, Integer> peoplePerRepository(List<ContributorRepositories> contributors, int daysAgo) {
+        Map<String, Integer> map = new LinkedHashMap<>();
+        contributors.forEach(contributorRepositories -> {
+            contributorRepositories.getRepositories().stream().filter(repository -> DateUtils.isAnyDateCommittedBetween(repository.getCommitDates(), 0, daysAgo)).forEach(repository -> {
+                String key = repository.getRepositoryAnalysisResults().getAnalysisResults().getMetadata().getName();
+                map.merge(key, 1, Integer::sum);
+            });
+        });
+        return map;
+    }
+
+    private void savePeoplePerRepositoryData(String fileName, List<String> list, Map<String, Integer> peoplePerRepository) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Contributor\t# people\n");
+        list.forEach(repository -> builder.append(repository).append("\t")
+                .append(peoplePerRepository.get(repository)).append("\n"));
+        saveData(fileName, builder.toString());
     }
 
     private void addPeopleGraph(List<ComponentDependency> peopleDependencies, int daysAgo, String suffix, String extraLabel) {

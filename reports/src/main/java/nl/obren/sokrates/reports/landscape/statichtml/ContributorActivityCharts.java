@@ -384,27 +384,11 @@ class ContributorActivityCharts {
 
         for (int i = 0; i < contributorsPerWeek.size(); i++) {
             ContributionTimeSlot week = contributorsPerWeek.get(i);
-
-            String yearString = week.getTimeSlot().split("[-]")[0];
-
-            String color = "darkgrey";
-
-            if (StringUtils.isNumeric(yearString)) {
-                int year = Integer.parseInt(yearString);
-                color = year % 2 == 0 ? "#c9c9c9" : "#656565";
-            }
-            String[] splitNow = week.getTimeSlot().split("-");
-            String textNow = splitNow.length < 2 ? splitNow[0] : splitNow[0] + "<br>" + splitNow[1];
+            String color = tickMarkColor(week.getTimeSlot());
+            String textNow = tickMarkLabel(week.getTimeSlot());
 
             int colspan = 1;
-
-            while (true) {
-                String nextTimeSlot = contributorsPerWeek.size() > i + 1 ? contributorsPerWeek.get(i + 1).getTimeSlot() : "";
-                String[] splitNext = nextTimeSlot.split("-");
-                String textNext = splitNext.length < 2 ? "" : splitNext[0] + "<br>" + splitNext[1];
-                if (contributorsPerWeek.size() <= i + 1 || !textNow.equalsIgnoreCase(textNext)) {
-                    break;
-                }
+            while (contributorsPerWeek.size() > i + 1 && textNow.equalsIgnoreCase(nextTickMarkLabel(contributorsPerWeek.get(i + 1).getTimeSlot()))) {
                 colspan++;
                 i++;
             }
@@ -416,6 +400,28 @@ class ContributorActivityCharts {
             landscapeReport.endTableCell();
         }
         landscapeReport.endTableRow();
+    }
+
+    /** Alternating greys by year parity, dark grey when the slot has no numeric year. */
+    private static String tickMarkColor(String timeSlot) {
+        String yearString = timeSlot.split("[-]")[0];
+        if (StringUtils.isNumeric(yearString)) {
+            int year = Integer.parseInt(yearString);
+            return year % 2 == 0 ? "#c9c9c9" : "#656565";
+        }
+        return "darkgrey";
+    }
+
+    /** "year<br>month" for a yyyy-MM-... slot, the slot itself when it has no second part. */
+    private static String tickMarkLabel(String timeSlot) {
+        String[] split = timeSlot.split("-");
+        return split.length < 2 ? split[0] : split[0] + "<br>" + split[1];
+    }
+
+    /** The label the next slot must equal to join the current tick mark: empty (never equal) when it has no second part. */
+    private static String nextTickMarkLabel(String timeSlot) {
+        String[] split = timeSlot.split("-");
+        return split.length < 2 ? "" : split[0] + "<br>" + split[1];
     }
 
     private void addCommitsPerWeekRow(List<ContributionTimeSlot> contributorsPerWeek, int minMaxWindow, int barWidth) {

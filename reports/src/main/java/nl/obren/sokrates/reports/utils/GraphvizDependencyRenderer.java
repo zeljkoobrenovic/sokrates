@@ -31,8 +31,6 @@ public class GraphvizDependencyRenderer {
     private StringBuilder body = new StringBuilder();
     private String type = "digraph";
     private String arrow = "->";
-    private boolean changingArrowColor = false;
-    private String arrowColorChanging = "#00688b";
     private String arrowColor = "#00688b";
     private String cyclicArrowColor = "#DC143C";
     private String defaultNodeFillColor = "grey";
@@ -40,12 +38,6 @@ public class GraphvizDependencyRenderer {
     private boolean reverseDirection = false;
 
     public GraphvizDependencyRenderer() {
-    }
-
-    public static String encodeLabel(String label) {
-        return label.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\t", " ");
     }
 
     private static int getThickness(ComponentDependency componentDependency, int maxCount) {
@@ -76,100 +68,6 @@ public class GraphvizDependencyRenderer {
 
     public void setOrientation(String orientation) {
         this.orientation = orientation;
-    }
-
-    private String getHeader() {
-        return type + " G {\n" +
-                "    compound=\"true\"\n" +
-                "    rankdir=\"" + orientation + "\"\n" +
-                "    bgcolor=\"white\"\n" +
-                "    fontname=\"Tahoma\"\n\n" +
-                "    node [\n" +
-                "        fixedsize=\"false\"\n" +
-                "        fontname=\"Tahoma\"\n" +
-                "        color=\"white\"\n" +
-                "        fillcolor=\"" + defaultNodeFillColor + "\"\n" +
-                "        fontcolor=\"black\"\n" +
-                "        shape=\"box\"\n" +
-                "        style=\"filled\"\n" +
-                "        penwidth=\"1.0\"\n" +
-                "    ]\n" +
-                "    edge [\n" +
-                "        fontname=\"Arial\"\n" +
-                "        color=\"" + getArrowColor() + "\"\n" +
-                "        fontcolor=\"black\"\n" +
-                "        fontsize=\"12\"\n" +
-                "        arrowsize=\"0.5\"\n" +
-                "        penwidth=\"1.0\"\n" +
-                "    ]\n";
-    }
-
-    public String getGraphvizContent(List<String> allComponents, List<ComponentDependency> componentDependencies) {
-        return this.getGraphvizContent(allComponents, componentDependencies, new ArrayList<>());
-    }
-
-    public String getGraphvizContent(List<String> allComponents, List<ComponentDependency> componentDependencies, List<ComponentGroup> groups) {
-        int maxCount = getMaxDependencyCount(componentDependencies);
-        StringBuilder graphviz = new StringBuilder();
-        graphviz.append(getHeader());
-
-        graphviz.append("\n");
-        allComponents.stream().filter(c -> StringUtils.isNotBlank(c)).forEach(c -> {
-            graphviz.append("    \"" + encodeLabel(c) + "\" [fillcolor=\"deepskyblue2\"];\n");
-        });
-        graphviz.append("\n");
-
-        int[] clusterId = {0};
-        graphviz.append("\n");
-        groups.stream().filter(g -> StringUtils.isNotBlank(g.getName())).forEach(g -> {
-            clusterId[0] += 1;
-            graphviz.append("    subgraph cluster_" + clusterId[0] + " {\n");
-            graphviz.append("        label = \"" + encodeLabel(g.getName() + " (" + g.getComponentNames().size() + ")") + "\";\n");
-            g.getComponentNames().stream().filter(c -> StringUtils.isNotBlank(c)).forEach(c -> {
-                graphviz.append("        \"" + encodeLabel(c) + "\";\n");
-            });
-            graphviz.append("    }\n");
-        });
-        graphviz.append("\n");
-
-        // Copy before sorting: callers pass their canonical dependency list, and sorting in place
-        // would reorder it as a side effect.
-        List<ComponentDependency> renderDependencies = new ArrayList<>(componentDependencies);
-        Collections.sort(renderDependencies, (a, b) -> b.getCount() - a.getCount());
-
-        if (maxNumberOfDependencies > 0 && renderDependencies.size() > maxNumberOfDependencies) {
-            renderDependencies = renderDependencies.subList(0, maxNumberOfDependencies);
-        }
-
-        // Pre-index directed edges so the cyclic check is O(1) instead of scanning all dependencies
-        // per rendered edge (the render loop was O(rendered x total)).
-        Set<String> edgeKeys = new HashSet<>();
-        componentDependencies.forEach(d -> edgeKeys.add(d.getFromComponent() + "::" + d.getToComponent()));
-
-        renderDependencies.stream()
-                .filter(d -> StringUtils.isNotBlank(d.getFromComponent()) && StringUtils.isNotBlank(d.getToComponent()))
-                .forEach(componentDependency -> {
-                    int thickness = getThickness(componentDependency, maxCount);
-                    String color = componentDependency.getColor();
-                    if (StringUtils.isBlank(color)) {
-                        color = edgeKeys.contains(componentDependency.getToComponent() + "::" + componentDependency.getFromComponent())
-                                ? this.cyclicArrowColor : this.arrowColor;
-                    }
-                    int transparency = (int) (255.0 * (0.3 + 0.7 * thickness / 10.0));
-                    color += String.format("%02X", transparency);
-                    String fromComponent = reverseDirection ? componentDependency.getToComponent() : componentDependency.getFromComponent();
-                    String toComponent = reverseDirection ? componentDependency.getFromComponent() : componentDependency.getToComponent();
-                    graphviz.append("    \"" + encodeLabel(fromComponent)
-                            + "\" " + arrow + " \""
-                            + encodeLabel(toComponent) + "\""
-                            + " [label=\" " + encodeLabel(getLabel(componentDependency))
-                            + " \", penwidth=\"" + Math.max(1, thickness) + "\""
-                            + ", color=\"" + color + "\""
-                            + "];\n");
-                });
-        graphviz.append("\n}");
-
-        return graphviz.toString();
     }
 
     // Mermaid node ids must be safe tokens (no quotes/spaces/special chars), unlike DOT's quoted
@@ -404,22 +302,6 @@ public class GraphvizDependencyRenderer {
 
     public void setMaxNumberOfDependencies(int maxNumberOfDependencies) {
         this.maxNumberOfDependencies = maxNumberOfDependencies;
-    }
-
-    public boolean isChangingArrowColor() {
-        return changingArrowColor;
-    }
-
-    public void setChangingArrowColor(boolean changingArrowColor) {
-        this.changingArrowColor = changingArrowColor;
-    }
-
-    public String getArrowColorChanging() {
-        return arrowColorChanging;
-    }
-
-    public void setArrowColorChanging(String arrowColorChanging) {
-        this.arrowColorChanging = arrowColorChanging;
     }
 
     public boolean isReverseDirection() {
