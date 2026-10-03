@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Collectors;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /** The installSkills command. Moved out of {@link CommandLineInterface}, which keeps the option plumbing and the analyze pipeline. */
 class SkillsCommands {

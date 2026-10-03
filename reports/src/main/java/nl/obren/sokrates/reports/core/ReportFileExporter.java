@@ -5,28 +5,20 @@
 package nl.obren.sokrates.reports.core;
 
 import nl.obren.sokrates.common.utils.FormattingUtils;
-import nl.obren.sokrates.reports.generators.statichtml.CommitsReportGenerator;
-import nl.obren.sokrates.reports.generators.statichtml.ContributorsReportUtils;
-import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.reports.utils.PromptsUtils;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
-import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
-import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
-import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
-import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.CustomTab;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
-import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 

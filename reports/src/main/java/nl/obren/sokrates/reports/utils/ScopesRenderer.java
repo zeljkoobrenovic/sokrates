@@ -21,8 +21,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-import static nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator.OPEN_IN_NEW_TAB_SVG_ICON;
-
 public class ScopesRenderer {
     private List<String> aspectsFileListPaths;
     private List<NumericMetric> fileCountPerComponent;

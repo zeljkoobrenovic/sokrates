@@ -25,7 +25,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Collectors;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * The analyzeLandscape / updateLandscape command and the landscape batch steps the organization commands

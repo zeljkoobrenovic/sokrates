@@ -18,7 +18,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Map;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * The analyzeGitRepo command and the clone-and-analyze step it shares with the landscape and organization

@@ -4,14 +4,9 @@
 
 package nl.obren.sokrates.reports.generators.statichtml;
 
-import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
-import nl.obren.sokrates.common.renderingutils.force3d.Force3DLink;
-import nl.obren.sokrates.common.renderingutils.force3d.Force3DNode;
-import nl.obren.sokrates.common.renderingutils.force3d.Force3DObject;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
-import nl.obren.sokrates.reports.utils.GraphvizDependencyRenderer;
 import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
@@ -20,19 +15,13 @@ import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.githistory.ContributorPerExtensionStats;
 import nl.obren.sokrates.sourcecode.landscape.ContributionCounter;
-import nl.obren.sokrates.sourcecode.landscape.ContributorConnection;
-import nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorConnections;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ContributorsReportGenerator {
     private final CodeAnalysisResults codeAnalysisResults;
