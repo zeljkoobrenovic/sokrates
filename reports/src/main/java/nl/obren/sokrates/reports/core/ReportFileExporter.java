@@ -51,6 +51,7 @@ public class ReportFileExporter {
         indexReport.setNavigation(repositoryNavigation(analysisResults, sokratesConfigFolder), "overview");
         addTabStrip(indexReport, customTabs);
         addOverviewTab(indexReport, analysisResults);
+        addHighlightsTab(indexReport, analysisResults);
         addAnalysesTab(indexReport, analysisResults, reportList, htmlExportFolder);
         addExplorerTabs(indexReport, customTabs);
         ReportActivityTab.addActivityTab(indexReport, analysisResults);
@@ -66,6 +67,7 @@ public class ReportFileExporter {
     private static void addTabStrip(RichTextReport indexReport, List<CustomTab> customTabs) {
         indexReport.addHtmlContent("<div class=\"tab sk-index-tabs\">");
         indexReport.addTab("overview", "Overview", true);
+        indexReport.addTab("highlights", "Highlights", false);
         indexReport.addTab("quality", "Analyses", false);
         indexReport.addTab("commits", "Activity", false);
         indexReport.addTab("structure", "Structure", false);
@@ -94,8 +96,6 @@ public class ReportFileExporter {
                 + analysisResults.getOtherAspectAnalysisResults().getFilesCount();
 
         indexReport.startTabContentSection("overview", true);
-
-        ReportHealthSection.add(indexReport, analysisResults);
 
         indexReport.startDiv("white-space: nowrap; overflow: hidden");
 
@@ -133,6 +133,13 @@ public class ReportFileExporter {
         indexReport.endDiv();
         indexReport.endDiv();
 
+        indexReport.endTabContentSection();
+    }
+
+    // The health tiles and the "Where to look first" hotspots (ReportHealthSection).
+    private static void addHighlightsTab(RichTextReport indexReport, CodeAnalysisResults analysisResults) {
+        indexReport.startTabContentSection("highlights", false);
+        ReportHealthSection.add(indexReport, analysisResults);
         indexReport.endTabContentSection();
     }
 
@@ -580,6 +587,7 @@ public class ReportFileExporter {
         ReportNavigation navigation = new ReportNavigation(metadata.getName(), "index.html#overview");
         ReportNavigation.Group report = navigation.addGroup("Report");
         report.addTabItem("overview", "Overview", "index.html#overview", "overview");
+        report.addTabItem("highlights", "Highlights", "index.html#highlights", "highlights");
         report.addTabItem("commits", "Activity", "index.html#commits", "activity");
         report.addTabItem("structure", "Structure Explorer", "index.html#structure", "structure");
         report.addTabItem("files", "File Explorer", "index.html#files", "files");

@@ -28,6 +28,7 @@ public class ReportNavigation {
 
     static {
         ICONS.put("overview", "<rect x='3' y='3' width='7' height='7' rx='1'/><rect x='14' y='3' width='7' height='7' rx='1'/><rect x='3' y='14' width='7' height='7' rx='1'/><rect x='14' y='14' width='7' height='7' rx='1'/>");
+        ICONS.put("highlights", "<path d='M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z'/>");
         ICONS.put("analyses", "<path d='M4 20V10M10 20V4M16 20v-7M22 20H2'/>");
         ICONS.put("activity", "<path d='M22 12h-4l-3 8L9 4l-3 8H2'/>");
         ICONS.put("files", "<path d='M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z'/><path d='M14 3v6h6'/>");
