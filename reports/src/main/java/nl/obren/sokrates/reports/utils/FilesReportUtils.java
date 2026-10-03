@@ -128,8 +128,8 @@ public class FilesReportUtils {
     private static String churnCell(FileModificationHistory history) {
         if (history.getLinesAdded() > 0 || history.getLinesDeleted() > 0) {
             return "<td style='text-align: center; white-space: nowrap;'>"
-                    + "<span style='color: #2e7d32;'>+" + history.getLinesAdded() + "</span> / "
-                    + "<span style='color: #c62828;'>-" + history.getLinesDeleted() + "</span></td>\n";
+                    + "<span class='sk-added'>+" + history.getLinesAdded() + "</span> / "
+                    + "<span class='sk-deleted'>-" + history.getLinesDeleted() + "</span></td>\n";
         }
         return "<td style='text-align: center; color: lightgrey'>-</td>\n";
     }

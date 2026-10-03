@@ -2,33 +2,34 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    ${sokrates-theme}
     <title>Contributors</title>
     <style type="text/css" media="all">
         body {
-            font-family: Roboto, Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+            font-family: var(--sk-font);
             margin: 14px;
         }
 
         table {
-            color: #333;
+            color: var(--sk-text);
             border-collapse: collapse;
             border-spacing: 0;
         }
 
         td, th {
-            border: 1px solid white;
+            border: 1px solid var(--sk-bg);
             height: 30px;
             padding-left: 10px;
             padding-right: 10px;
         }
 
         th {
-            background: #f4f4f4;
+            background: var(--sk-surface-3);
             font-weight: bold;
         }
 
         td {
-            background: #FFFFFF;
+            background: var(--sk-surface);
             text-align: left;
         }
 
@@ -37,7 +38,7 @@
         }
 
         ::placeholder {
-            color: lightgrey;
+            color: var(--sk-text-faint);
             opacity: 1;
         }
 
@@ -46,17 +47,17 @@
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid var(--sk-border);
             margin-bottom: 4px;
         }
 
         .tab button {
             position: relative;
-            font-family: inherit;
+            font-family: var(--sk-font);
             font-size: 14px;
             font-weight: 500;
             background-color: transparent;
-            color: #6b7280;
+            color: var(--sk-text-muted);
             border: none;
             border-bottom: 2px solid transparent;
             border-radius: 8px 8px 0 0;
@@ -68,25 +69,25 @@
         }
 
         .tab button:hover {
-            color: #1f2937;
-            background-color: #f3f4f6;
+            color: var(--sk-text);
+            background-color: var(--sk-hover);
         }
 
         .tab button:focus-visible {
-            outline: 2px solid #1d4ed8;
+            outline: 2px solid var(--sk-accent);
             outline-offset: -2px;
         }
 
         .tab button.active {
-            color: #1d4ed8;
-            border-bottom-color: #1d4ed8;
+            color: var(--sk-accent);
+            border-bottom-color: var(--sk-accent);
         }
 
         .tab a.tab-link {
             display: inline-flex;
             align-items: center;
             padding: 11px 16px;
-            color: #1d4ed8;
+            color: var(--sk-accent);
             font-size: 14px;
             font-weight: 500;
         }
@@ -103,16 +104,16 @@
         }
 
         .sortable:hover {
-            background: #e8e8e8;
+            background: var(--sk-surface-3);
         }
 
         .sort-active {
-            background: #e2e2e2;
+            background: var(--sk-hover);
         }
 
         .sort-arrow {
             font-size: 80%;
-            color: #555;
+            color: var(--sk-text-muted);
         }
 
         .tag-badge {
@@ -133,7 +134,7 @@
             display: inline-block;
             padding: 3px 6px;
             margin: 3px;
-            color: black;
+            color: var(--sk-text);
         }
 
         /* Loading indicator shown while the embedded data is inflated + the first render runs. */
@@ -141,7 +142,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            color: grey;
+            color: var(--sk-text-muted);
             font-size: 15px;
             padding: 40px 4px;
         }
@@ -149,8 +150,8 @@
         #loading .spinner {
             width: 22px;
             height: 22px;
-            border: 3px solid #e0e0e0;
-            border-top-color: #4a90d9;
+            border: 3px solid var(--sk-border);
+            border-top-color: var(--sk-accent);
             border-radius: 50%;
             animation: sokrates-spin 0.8s linear infinite;
         }
@@ -161,7 +162,6 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
     ${sokrates-inflate-lib}
 </head>
 <body>
@@ -175,7 +175,7 @@
     <div class="tab" id="tabs"></div>
 
     <div class="tabcontent">
-        <div style="color: grey; margin: 8px 0 10px 0;">
+        <div style="color: var(--sk-text-muted); margin: 8px 0 10px 0;">
             <input id="filter" type="text"
                    placeholder="search by name or email; team: by team; mainLang:cs by main language; includesLang:go by any language used (; for multiple)"
                    style="font-size: 16px; height: 30px; width: 680px;"
@@ -222,13 +222,13 @@
         let badge;
         if (langIcons[key]) {
             badge = '<img title="' + title + '" style="vertical-align: middle; background-color: #f1f1f1; '
-                + 'border-radius: 50%; border: 1px solid lightgrey; width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
+                + 'border-radius: 50%; border: 1px solid var(--sk-border); width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
                 + langIcons[key] + '">';
         } else {
             const fontSize = lang.length <= 3 ? 11 : 9;
             const padding = lang.length <= 3 ? 7 : 9;
             badge = '<div title="' + title + '" style="display: inline-block; vertical-align: middle; '
-                + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; overflow: hidden; color: darkblue; '
+                + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid var(--sk-border-strong); overflow: hidden; color: darkblue; '
                 + 'width: ' + size + 'px; height: ' + size + 'px; '
                 + 'font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">'
                 + '<div style="height: ' + padding + 'px"></div>' + esc(lang) + '</div>';
@@ -246,18 +246,18 @@
         const fallback = c.membersCount > 0 ? options.avatarTeam : options.avatarDeveloper;
         const src = c.avatarUrl || fallback;
         return '<div style="vertical-align: middle; display: inline-block; width: 48px; margin-top: 2px;">'
-            + '<img style="border-radius: 50%; height: 38px; width: 38px; margin-right: 10px;" src="' + esc(src) + '" '
-            + 'onerror="this.onerror=null;this.src=\'' + esc(fallback) + '\';"></div>';
+            + '<img' + (c.avatarUrl ? '' : ' class="sk-invert-dark"') + ' style="border-radius: 50%; height: 38px; width: 38px; margin-right: 10px;" src="' + esc(src) + '" '
+            + 'onerror="this.onerror=null;this.src=\'' + esc(fallback) + '\';this.classList.add(\'sk-invert-dark\');"></div>';
     }
 
     function nameCell(c) {
-        const color = c.commitsCount90Days > 0 ? '#333' : 'lightgrey';
+        const color = c.commitsCount90Days > 0 ? 'var(--sk-text)' : 'var(--sk-text-faint)';
         // Show the display name (git author name) with the email beneath it in grey, like the
         // per-repository Contributors report. Falls back to email alone when no name is available.
         let nameHtml;
         if (c.userName && c.email && c.userName !== c.email) {
             nameHtml = esc(c.userName)
-                + '<div title="' + esc(c.email) + '" style="color: grey; font-size: 80%; max-width: 350px; overflow: hidden; white-space; no-wrap; ">&lt;' + esc(c.email) + '&gt;</div>';
+                + '<div title="' + esc(c.email) + '" style="color: var(--sk-text-muted); font-size: 80%; max-width: 350px; overflow: hidden; white-space; no-wrap; ">&lt;' + esc(c.email) + '&gt;</div>';
         } else {
             nameHtml = esc(c.userName || c.email);
         }
@@ -280,7 +280,7 @@
         if (withPct) {
             text += ' (' + pct(value, total) + '%)';
         }
-        return '<td style="vertical-align: middle; text-align: center; font-size: 90%;' + (dim ? ' color: #b0b0b0;' : '') + '">' + text + '</td>';
+        return '<td style="vertical-align: middle; text-align: center; font-size: 90%;' + (dim ? ' color: var(--sk-text-faint);' : '') + '">' + text + '</td>';
     }
 
     const langCol = {
@@ -339,11 +339,11 @@
                 const added = addedAccessor(c) || 0;
                 const deleted = deletedAccessor(c) || 0;
                 if (added === 0 && deleted === 0) {
-                    return '<td style="vertical-align: middle; text-align: center; font-size: 90%; color: lightgrey;">-</td>';
+                    return '<td style="vertical-align: middle; text-align: center; font-size: 90%; color: var(--sk-text-faint);">-</td>';
                 }
                 return '<td style="vertical-align: middle; text-align: center; font-size: 90%; white-space: nowrap;">'
-                    + '<span style="color: #2e7d32;">+' + num(added) + '</span> / '
-                    + '<span style="color: #c62828;">-' + num(deleted) + '</span></td>';
+                    + '<span class="sk-added">+' + num(added) + '</span> / '
+                    + '<span class="sk-deleted">-' + num(deleted) + '</span></td>';
             }
         };
     }
@@ -488,9 +488,9 @@
         if (totalCount <= shownCount) {
             return '';
         }
-        return '<div style="margin: 16px 2px; font-size: 15px; color: #555;">'
+        return '<div style="margin: 16px 2px; font-size: 15px; color: var(--sk-text-muted);">'
             + 'Showing ' + num(shownCount) + ' of ' + num(totalCount) + '. '
-            + '<a onclick="showMore()" style="cursor: pointer; color: #4a90d9;">show ' + num(Math.min(PAGE_SIZE, totalCount - shownCount)) + ' more</a>'
+            + '<a onclick="showMore()" style="cursor: pointer; color: var(--sk-accent);">show ' + num(Math.min(PAGE_SIZE, totalCount - shownCount)) + ' more</a>'
             + '</div>';
     }
 
@@ -564,7 +564,7 @@
         if (!links || !links.length) {
             return '';
         }
-        const items = links.map(l => '<a href="' + esc(l.href) + '" target="_blank" style="color: #4a90d9;">' + esc(l.label) + '</a>')
+        const items = links.map(l => '<a href="' + esc(l.href) + '" target="_blank" style="color: var(--sk-accent);">' + esc(l.label) + '</a>')
             .join('<span style="color: #ccc;"> | </span>');
         return '<div style="margin: 4px 0 10px 0; font-size: 90%;">' + items + '</div>';
     }

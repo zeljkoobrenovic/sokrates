@@ -1,6 +1,7 @@
 package nl.obren.sokrates.reports.dataexporters;
 
 import nl.obren.sokrates.common.io.JsonGenerator;
+import nl.obren.sokrates.common.renderingutils.ReportTheme;
 import nl.obren.sokrates.reports.dataexporters.duplication.DuplicateFragmentExport;
 import nl.obren.sokrates.reports.dataexporters.units.FragmentExport;
 import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
@@ -125,7 +126,7 @@ class SourceViewerExporter {
     private void saveStructureFile() {
         try {
 
-            String html = HtmlTemplateUtils.getResource("/templates/Structure.html");
+            String html = ReportTheme.apply(HtmlTemplateUtils.getResource("/templates/Structure.html"));
 
             File htmlFile = new File(new File(reportsFolder, "html"), "Structure.html");
             FileUtils.write(htmlFile, html, UTF_8);
@@ -145,7 +146,7 @@ class SourceViewerExporter {
                     .map(e -> new String[]{e.getKey(), e.getValue()})
                     .toArray(String[][]::new);
             String archiveB64 = VisualizationTemplate.base64(ZipUtils.stringEntriesToZipBytes(entries));
-            String html = HtmlTemplateUtils.getResource("/templates/viewer.html")
+            String html = ReportTheme.apply(HtmlTemplateUtils.getResource("/templates/viewer.html"))
                     .replace("${sokrates-unzip-lib}", VisualizationTemplate.embedZipLib())
                     .replace("${embedded-archive}", "var SOKRATES_ARCHIVE = \"" + archiveB64 + "\";");
             FileUtils.write(new File(codeCacheFolder, "viewer.html"), html, UTF_8);

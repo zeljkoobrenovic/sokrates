@@ -5,6 +5,7 @@
 package nl.obren.sokrates.reports.landscape.statichtml;
 
 import nl.obren.sokrates.common.io.JsonMapper;
+import nl.obren.sokrates.common.renderingutils.ReportTheme;
 import nl.obren.sokrates.common.renderingutils.VisualizationItem;
 import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
@@ -59,8 +60,8 @@ import java.util.stream.Collectors;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class LandscapeReportGenerator {
-    public static final String DEPENDENCIES_ICON = "\n" +
-            "<svg height='100px' width='100px'  fill=\"#000000\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 48 48\" enable-background=\"new 0 0 48 48\" xml:space=\"preserve\"><path d=\"M12,19.666v6.254l1.357-1.357c0.391-0.391,1.023-0.391,1.414,0s0.391,1.023,0,1.414l-3.064,3.064  c-0.195,0.195-0.451,0.293-0.707,0.293s-0.512-0.098-0.707-0.293l-3.064-3.064c-0.391-0.391-0.391-1.023,0-1.414  s1.023-0.391,1.414,0L10,25.92v-6.254c0-0.552,0.448-1,1-1S12,19.114,12,19.666z M28.334,36H22.08l1.357-1.357  c0.391-0.391,0.391-1.023,0-1.414s-1.023-0.391-1.414,0l-3.064,3.064c-0.391,0.391-0.391,1.023,0,1.414l3.064,3.064  c0.195,0.195,0.451,0.293,0.707,0.293s0.512-0.098,0.707-0.293c0.391-0.391,0.391-1.023,0-1.414L22.08,38h6.254c0.553,0,1-0.447,1-1  S28.887,36,28.334,36z M37,18.666c-0.553,0-1,0.448-1,1v6.254l-1.357-1.357c-0.391-0.391-1.023-0.391-1.414,0s-0.391,1.023,0,1.414  l3.064,3.064c0.195,0.195,0.451,0.293,0.707,0.293s0.512-0.098,0.707-0.293l3.064-3.064c0.391-0.391,0.391-1.023,0-1.414  s-1.023-0.391-1.414,0L38,25.92v-6.254C38,19.114,37.553,18.666,37,18.666z M31.58,16.421c-0.391-0.391-1.023-0.391-1.414,0  L18.127,28.458v-1.92c0-0.553-0.448-1-1-1s-1,0.447-1,1v4.334c0,0.13,0.027,0.26,0.077,0.382c0.101,0.245,0.296,0.439,0.541,0.541  c0.122,0.051,0.251,0.077,0.382,0.077h4.333c0.552,0,1-0.447,1-1s-0.448-1-1-1h-1.919L31.58,17.835  C31.971,17.444,31.971,16.812,31.58,16.421z M16.334,37c0,2.941-2.393,5.334-5.334,5.334S5.666,39.941,5.666,37  S8.059,31.666,11,31.666S16.334,34.059,16.334,37z M14.334,37c0-1.838-1.496-3.334-3.334-3.334S7.666,35.162,7.666,37  S9.162,40.334,11,40.334S14.334,38.838,14.334,37z M42.334,37c0,2.941-2.393,5.334-5.334,5.334S31.666,39.941,31.666,37  s2.393-5.334,5.334-5.334S42.334,34.059,42.334,37z M40.334,37c0-1.838-1.496-3.334-3.334-3.334S33.666,35.162,33.666,37  s1.496,3.334,3.334,3.334S40.334,38.838,40.334,37z M5.666,11c0-2.941,2.393-5.334,5.334-5.334S16.334,8.059,16.334,11  S13.941,16.334,11,16.334S5.666,13.941,5.666,11z M7.666,11c0,1.838,1.496,3.334,3.334,3.334s3.334-1.496,3.334-3.334  S12.838,7.666,11,7.666S7.666,9.162,7.666,11z M31.666,11c0-2.941,2.393-5.334,5.334-5.334S42.334,8.059,42.334,11  S39.941,16.334,37,16.334S31.666,13.941,31.666,11z M33.666,11c0,1.838,1.496,3.334,3.334,3.334s3.334-1.496,3.334-3.334  S38.838,7.666,37,7.666S33.666,9.162,33.666,11z\"></path></svg>";
+    public static final String DEPENDENCIES_ICON = ReportTheme.adaptiveIcon("\n" +
+            "<svg height='100px' width='100px'  fill=\"#000000\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 48 48\" enable-background=\"new 0 0 48 48\" xml:space=\"preserve\"><path d=\"M12,19.666v6.254l1.357-1.357c0.391-0.391,1.023-0.391,1.414,0s0.391,1.023,0,1.414l-3.064,3.064  c-0.195,0.195-0.451,0.293-0.707,0.293s-0.512-0.098-0.707-0.293l-3.064-3.064c-0.391-0.391-0.391-1.023,0-1.414  s1.023-0.391,1.414,0L10,25.92v-6.254c0-0.552,0.448-1,1-1S12,19.114,12,19.666z M28.334,36H22.08l1.357-1.357  c0.391-0.391,0.391-1.023,0-1.414s-1.023-0.391-1.414,0l-3.064,3.064c-0.391,0.391-0.391,1.023,0,1.414l3.064,3.064  c0.195,0.195,0.451,0.293,0.707,0.293s0.512-0.098,0.707-0.293c0.391-0.391,0.391-1.023,0-1.414L22.08,38h6.254c0.553,0,1-0.447,1-1  S28.887,36,28.334,36z M37,18.666c-0.553,0-1,0.448-1,1v6.254l-1.357-1.357c-0.391-0.391-1.023-0.391-1.414,0s-0.391,1.023,0,1.414  l3.064,3.064c0.195,0.195,0.451,0.293,0.707,0.293s0.512-0.098,0.707-0.293l3.064-3.064c0.391-0.391,0.391-1.023,0-1.414  s-1.023-0.391-1.414,0L38,25.92v-6.254C38,19.114,37.553,18.666,37,18.666z M31.58,16.421c-0.391-0.391-1.023-0.391-1.414,0  L18.127,28.458v-1.92c0-0.553-0.448-1-1-1s-1,0.447-1,1v4.334c0,0.13,0.027,0.26,0.077,0.382c0.101,0.245,0.296,0.439,0.541,0.541  c0.122,0.051,0.251,0.077,0.382,0.077h4.333c0.552,0,1-0.447,1-1s-0.448-1-1-1h-1.919L31.58,17.835  C31.971,17.444,31.971,16.812,31.58,16.421z M16.334,37c0,2.941-2.393,5.334-5.334,5.334S5.666,39.941,5.666,37  S8.059,31.666,11,31.666S16.334,34.059,16.334,37z M14.334,37c0-1.838-1.496-3.334-3.334-3.334S7.666,35.162,7.666,37  S9.162,40.334,11,40.334S14.334,38.838,14.334,37z M42.334,37c0,2.941-2.393,5.334-5.334,5.334S31.666,39.941,31.666,37  s2.393-5.334,5.334-5.334S42.334,34.059,42.334,37z M40.334,37c0-1.838-1.496-3.334-3.334-3.334S33.666,35.162,33.666,37  s1.496,3.334,3.334,3.334S40.334,38.838,40.334,37z M5.666,11c0-2.941,2.393-5.334,5.334-5.334S16.334,8.059,16.334,11  S13.941,16.334,11,16.334S5.666,13.941,5.666,11z M7.666,11c0,1.838,1.496,3.334,3.334,3.334s3.334-1.496,3.334-3.334  S12.838,7.666,11,7.666S7.666,9.162,7.666,11z M31.666,11c0-2.941,2.393-5.334,5.334-5.334S42.334,8.059,42.334,11  S39.941,16.334,37,16.334S31.666,13.941,31.666,11z M33.666,11c0,1.838,1.496,3.334,3.334,3.334s3.334-1.496,3.334-3.334  S38.838,7.666,37,7.666S33.666,9.162,33.666,11z\"></path></svg>");
 
     public static final int RECENT_THRESHOLD_DAYS = 30;
     public static final String OVERVIEW_TAB_ID = "overview";
@@ -79,13 +80,13 @@ public class LandscapeReportGenerator {
     public static final String COMMITS_30_D = "commits_30d_";
     public static final String MAIN_LOC = "main_loc_";
     private static final Log LOG = LogFactory.getLog(LandscapeReportGenerator.class);
-    public static final String DEVELOPER_SVG_ICON = "<svg width=\"16pt\" height=\"16pt\" version=\"1.1\" viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\">\n" +
+    public static final String DEVELOPER_SVG_ICON = ReportTheme.adaptiveIcon("<svg width=\"16pt\" height=\"16pt\" version=\"1.1\" viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\">\n" +
             " <g>\n" +
             "  <path d=\"m82 61.801-14-14c-2.1016-2.1016-4.8008-3.1992-7.8008-3.1992h-20.398c-2.8984 0-5.6992 1.1016-7.8008 3.1992l-14 14c-1.3008 1.3008-2 3.1016-2 4.8984 0 1.8984 0.69922 3.6016 2 5l3.8984 3.8984c1.3008 1.3008 3.1016 2.1016 5 2.1016 1.8984 0 3.6016-0.69922 4.8984-2.1016l1.6016-1.6016v10c0 3.8984 3.1016 7 7 7h19.102c3.8984 0 7-3.1016 7-7v-9.9961l1.6016 1.6016c1.3008 1.3008 3.1016 2.1016 5 2.1016 1.8984 0 3.6016-0.69922 4.8984-2.1016l3.8984-3.8984c2.8008-2.8047 2.8008-7.2031 0.10156-9.9023zm-4.3008 5.5977-3.8984 3.8984c-0.39844 0.39844-1 0.39844-1.3984 0l-6.6992-6.6992c-0.89844-0.89844-2.1016-1.1016-3.3008-0.69922-1.1016 0.5-1.8984 1.6016-1.8984 2.8008l-0.003906 17.301c0 0.60156-0.39844 1-1 1h-19c-0.60156 0-1-0.39844-1-1v-17.301c0-1.1992-0.69922-2.3008-1.8984-2.8008-0.39844-0.19922-0.80078-0.19922-1.1016-0.19922-0.80078 0-1.6016 0.30078-2.1016 0.89844l-6.6992 6.6992c-0.39844 0.39844-1 0.39844-1.3984 0l-3.8984-3.8984c-0.39844-0.39844-0.39844-1 0-1.3984l14-14c0.89844-0.89844 2.1992-1.5 3.5-1.5h20.5c1.3008 0 2.6016 0.5 3.5 1.5l14 14c0.19922 0.19922 0.30078 0.39844 0.30078 0.69922-0.003906 0.30078-0.30469 0.5-0.50391 0.69922z\"></path>\n" +
             "  <path d=\"m50 42.102c9.1016 0 16.5-7.3984 16.5-16.5 0-9.2031-7.3984-16.602-16.5-16.602s-16.5 7.3984-16.5 16.5c0 9.1992 7.3984 16.602 16.5 16.602zm0-27.102c5.8008 0 10.5 4.6992 10.5 10.5s-4.6992 10.602-10.5 10.602-10.5-4.6992-10.5-10.5c0-5.8008 4.6992-10.602 10.5-10.602z\"></path>\n" +
             " </g>\n" +
-            "</svg>";
-    public static final String TEAM_SVG_ICON = "<svg width=\"14pt\" height=\"14pt\" version=\"1.1\" viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\">\n" +
+            "</svg>");
+    public static final String TEAM_SVG_ICON = ReportTheme.adaptiveIcon("<svg width=\"14pt\" height=\"14pt\" version=\"1.1\" viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\">\n" +
             " <path d=\"m27.75 13.996c-0.33203-10.332-15.305-10.332-15.637 0 0.33594 10.324 15.293 10.328 15.637 0z\"/>\n" +
             " <path d=\"m28.844 21.113-0.48438-0.15625c-2.0703 2.5234-5.1641 3.9883-8.4297 3.9883-3.2656 0-6.3594-1.4648-8.4297-3.9883l-0.48438 0.15625c-2.7812 0.93359-4.6602 3.5391-4.6602 6.4727v2.7227c0.003906 1.6914 1.375 3.0625 3.0664 3.0625h21.016c1.6914 0 3.0625-1.3711 3.0664-3.0625v-2.7227c0-2.9336-1.8789-5.5391-4.6602-6.4727z\"/>\n" +
             " <path d=\"m27.75 74.141c-0.33203-10.332-15.305-10.332-15.637 0l-0.003906-0.003906c0.027344 4.3008 3.5195 7.7734 7.8203 7.7734 4.3008 0 7.793-3.4727 7.8203-7.7695z\"/>\n" +
@@ -100,8 +101,8 @@ public class LandscapeReportGenerator {
             " <path d=\"m63.82 20.586c-8.8867-3.4648-18.754-3.4648-27.641 0-0.78516 0.33203-1.1602 1.2266-0.84766 2.0195s1.2031 1.1875 2 0.88672c8.3516-3.1797 17.59-3.1406 25.914 0.11328 0.74219-0.015625 1.3711-0.54688 1.5117-1.2773 0.14063-0.72656-0.25-1.457-0.9375-1.7422z\"/>\n" +
             " <path d=\"m57.82 47.32c-0.32031-10.332-15.316-10.332-15.637 0 0.32422 10.328 15.305 10.332 15.637 0z\"/>\n" +
             " <path d=\"m58.914 54.438-0.48437-0.15625c-2.0859 2.5-5.1719 3.9453-8.4297 3.9453s-6.3438-1.4453-8.4297-3.9492c-3.0234 0.78516-5.1367 3.5078-5.1445 6.6328v2.707-0.003907c0 0.81641 0.32422 1.5938 0.89844 2.1719 0.57422 0.57422 1.3555 0.89453 2.168 0.89453h21.016c0.8125 0 1.5938-0.32031 2.168-0.89453 0.57812-0.57812 0.89844-1.3555 0.89844-2.1719v-2.7031c0.003906-2.9375-1.875-5.5469-4.6602-6.4727z\"/>\n" +
-            "</svg>";
-    public static final String OPEN_IN_NEW_TAB_SVG_ICON = "<svg width=\"14pt\" height=\"14pt\" version=\"1.1\" viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\">\n" +
+            "</svg>");
+    public static final String OPEN_IN_NEW_TAB_SVG_ICON = "<svg fill=\"currentColor\" width=\"14pt\" height=\"14pt\" version=\"1.1\" viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\">\n" +
             " <path d=\"m87.5 16.918-35.289 35.289c-1.2266 1.1836-3.1719 1.168-4.3789-0.039062s-1.2227-3.1523-0.039062-4.3789l35.289-35.289h-23.707c-1.7266 0-3.125-1.3984-3.125-3.125s1.3984-3.125 3.125-3.125h31.25c0.82812 0 1.625 0.32812 2.2109 0.91406 0.58594 0.58594 0.91406 1.3828 0.91406 2.2109v31.25c0 1.7266-1.3984 3.125-3.125 3.125s-3.125-1.3984-3.125-3.125zm-56.25 1.832h-15.633c-5.1719 0-9.3672 4.1797-9.3672 9.3516v56.305c0 5.1562 4.2422 9.3516 9.3867 9.3516h56.219c2.4922 0 4.8828-0.98437 6.6406-2.7461 1.7617-1.7617 2.75-4.1523 2.7461-6.6445v-15.613 0.003906c0-1.7266-1.3984-3.125-3.125-3.125-1.7227 0-3.125 1.3984-3.125 3.125v15.613-0.003906c0.003906 0.83594-0.32422 1.6328-0.91406 2.2227s-1.3906 0.91797-2.2227 0.91797h-56.219c-1.7148-0.007812-3.1094-1.3867-3.1367-3.1016v-56.305c0-1.7148 1.3945-3.1016 3.1172-3.1016h15.633c1.7266 0 3.125-1.3984 3.125-3.125s-1.3984-3.125-3.125-3.125z\"/>\n" +
             "</svg>";
     public static final String OPEN_IN_NEW_TAB_SVG_ICON_SMALL = "<svg width=\"14pt\" height=\"10pt\" version=\"1.1\" viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\">\n" +
@@ -320,7 +321,7 @@ public class LandscapeReportGenerator {
                 if (!first[0]) {
                     landscapeReport.addHtmlContent(" | ");
                 }
-                landscapeReport.startDiv("display: inline-block; padding: 4px 6px; border-radius: 999px; background-color: #f4f4f4;");
+                landscapeReport.startDiv("display: inline-block; padding: 4px 6px; border-radius: 999px; background-color: var(--sk-surface-3, #f4f4f4);");
                 landscapeReport.addNewTabLink(link.getLabel() + "&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON_EXTRA_SMALL, link.getHref());
                 landscapeReport.endDiv();
                 first[0] = false;
@@ -768,7 +769,7 @@ public class LandscapeReportGenerator {
                 if (!prevRoot[0].equals(root)) {
                     isRoot = true;
                     label = "<b>" + label + "</b>";
-                    style = "color: black; font-weight: bold;";
+                    style = "color: var(--sk-text, black); font-weight: bold;";
                 } else {
                     isRoot = false;
                     int lastIndex = label.lastIndexOf("/");
@@ -1828,7 +1829,7 @@ public class LandscapeReportGenerator {
         int index[] = {0};
         animalsLocInfo.forEach(animalInfo -> {
             int count = animalCounts.containsKey(animals.get(index[0])) ? animalCounts.get(animals.get(index[0])).size() : 0;
-            landscapeReport.startTableCell("text-align: center; border: none; color: black;" + ((count > 0 ? "" : "color: grey; opacity: 0.5")));
+            landscapeReport.startTableCell("text-align: center; border: none; color: var(--sk-text, black);" + ((count > 0 ? "" : "color: grey; opacity: 0.5")));
             landscapeReport.addContentInDiv(animalInfo);
             landscapeReport.endTableCell();
             index[0] += 1;
@@ -2098,10 +2099,10 @@ public class LandscapeReportGenerator {
             contributorsPerYear.forEach(year -> {
                 landscapeReport.startTableCell(style);
                 int count = year.getCommitsCount();
-                String color = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "#989898";
+                String color = year.getTimeSlot().equals(thisYear + "") ? "var(--sk-text, #343434)" : "#989898";
                 landscapeReport.addParagraph(count + "", "margin: 2px; color: " + color);
                 int height = 1 + (int) (64.0 * count / maxCommits);
-                String bgColor = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "lightgrey";
+                String bgColor = year.getTimeSlot().equals(thisYear + "") ? "var(--sk-text, #343434)" : "var(--sk-border-strong, lightgrey)";
                 landscapeReport.addHtmlContent("<div style='width: 100%; background-color: " + bgColor + "; height:" + height + "px'></div>");
                 landscapeReport.endTableCell();
             });
@@ -2123,7 +2124,7 @@ public class LandscapeReportGenerator {
                 contributorsPerYear.forEach(year -> {
                     landscapeReport.startTableCell(style);
                     int count = getContributorsCountPerYear(year.getTimeSlot());
-                    String color = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "#989898";
+                    String color = year.getTimeSlot().equals(thisYear + "") ? "var(--sk-text, #343434)" : "#989898";
                     landscapeReport.addParagraph(count + "", "margin: 2px; color: " + color + ";");
                     int height = 1 + (int) (64.0 * count / maxContributors[0]);
                     landscapeReport.addHtmlContent("<div style='width: 100%; background-color: skyblue; height:" + height + "px'></div>");
@@ -2141,7 +2142,7 @@ public class LandscapeReportGenerator {
                 ref.latestCommitDate = ref.latestCommitDate.substring(5);
             }
             contributorsPerYear.forEach(year -> {
-                String color = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "#989898";
+                String color = year.getTimeSlot().equals(thisYear + "") ? "var(--sk-text, #343434)" : "#989898";
                 landscapeReport.startTableCell("vertical-align: top; border: none; text-align: center; font-size: 90%; color: " + color);
                 landscapeReport.addHtmlContent(year.getTimeSlot());
                 if (landscapeAnalysisResults.getLatestCommitDate().startsWith(year.getTimeSlot() + "-")) {

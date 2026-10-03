@@ -2,19 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    ${sokrates-theme}
     <title>Files Explorer</title>
     <style>
         body {
-            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+            font-family: var(--sk-font);
         }
 
         .group {
             display: inline-block;
-            border: 1px solid lightgrey;
+            border: 1px solid var(--sk-border);
             border-radius: 6px;
             margin: 8px 18px 8px 8px;
             padding: 5px;
-            background-color: #f8f8f8;
+            background-color: var(--sk-surface-2);
         }
 
         a {
@@ -36,16 +37,16 @@
         }
 
         ::placeholder {
-            color: lightgrey;
+            color: var(--sk-text-faint);
             opacity: 1;
         }
 
         :-ms-input-placeholder {
-            color: lightgrey;
+            color: var(--sk-text-faint);
         }
 
         ::-ms-input-placeholder {
-            color: lightgrey;
+            color: var(--sk-text-faint);
         }
 
         td {
@@ -59,11 +60,11 @@
         }
 
         .sortable:hover {
-            color: #333333;
+            color: var(--sk-text);
         }
 
         .sort-active {
-            color: #303030;
+            color: var(--sk-text);
             font-weight: bold;
         }
 
@@ -76,7 +77,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            color: grey;
+            color: var(--sk-text-muted);
             font-size: 15px;
             padding: 40px 4px;
         }
@@ -84,8 +85,8 @@
         #loading .spinner {
             width: 22px;
             height: 22px;
-            border: 3px solid #e0e0e0;
-            border-top-color: #4a90d9;
+            border: 3px solid var(--sk-border);
+            border-top-color: var(--sk-accent);
             border-radius: 50%;
             animation: sokrates-spin 0.8s linear infinite;
         }
@@ -96,8 +97,6 @@
             }
         }
     </style>
-    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
-    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Lato">
     ${sokrates-inflate-lib}
 </head>
 <body style="margin: 12px">
@@ -108,7 +107,7 @@
 </div>
 
 <div id="report" style="display: none;">
-    <div style="margin: 0; color: grey">
+    <div style="margin: 0; color: var(--sk-text-muted)">
         <div>
             <div style="padding: 0px; margin-bottom: 26px; white-space: nowrap">
                 Scope: &nbsp;
@@ -121,7 +120,7 @@
                         id="label_build">build</span></label>&nbsp;&nbsp;
                 <label><input type="checkbox" id="other" checked onchange="update()"><span
                         id="label_other">other</span></label>&nbsp;&nbsp;&nbsp;&nbsp;
-                <span id="scope-summary" style="background-color: #f8f8f8"></span>
+                <span id="scope-summary" style="background-color: var(--sk-surface-2)"></span>
             </div>
             <input id="filter" type="text" placeholder="search... (use ; for multiple terms)"
                    style="font-size: 16px; height: 32px; width: 420px; margin-bottom: 10px"
@@ -198,7 +197,7 @@
     function colorCell(value, present, bg) {
         let inner;
         if (!present) {
-            inner = '<span style="color: lightgrey">-</span>';
+            inner = '<span style="color: var(--sk-text-faint)">-</span>';
         } else {
             inner = '<span style="display: inline-block; min-width: 26px; padding: 1px 5px; border-radius: 4px; background-color: '
                 + bg + '; color: ' + textOn(bg) + '">' + value.toLocaleString('en-US') + '</span>';
@@ -224,12 +223,12 @@
         const size = 30;
         if (langIcons[key]) {
             return '<img title="' + esc(lang) + '" style="margin-right: 5px; vertical-align: middle; background-color: #f1f1f1; '
-                + 'border-radius: 50%; border: 1px solid lightgrey; width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
+                + 'border-radius: 50%; border: 1px solid var(--sk-border); width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
                 + langIcons[key] + '">';
         }
         const fontSize = lang.length <= 3 ? 9 : 8;
         return '<div title="' + esc(lang) + '" style="margin-right: 5px; display: inline-block; vertical-align: middle; '
-            + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; overflow: hidden; color: darkblue; '
+            + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid var(--sk-border-strong); overflow: hidden; color: darkblue; '
             + 'width: ' + size + 'px; height: ' + size + 'px; line-height: ' + size + 'px; '
             + 'font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">' + esc(lang) + '</div>';
     }
@@ -340,7 +339,7 @@
 
     // A non-sortable header cell spanning several sub-columns (the first row of the two-row header).
     function groupHeader(label, colspan) {
-        return '<td colspan="' + colspan + '" style="text-align: center; border-bottom: 1px solid #e0e0e0;">' + label + '</td>';
+        return '<td colspan="' + colspan + '" style="text-align: center; border-bottom: 1px solid var(--sk-border);">' + label + '</td>';
     }
 
     // Base path (from the explorers/ folder) to the per-repository HTML reports / cached source
@@ -429,25 +428,25 @@
             html += '<div style="width: 400px; margin: 0; padding: 0; white-space: nowrap">';
             const w1count = Math.round(100 * filteredCount / scopedCount);
             const w2count = 100 - w1count;
-            html += '<div style="margin: 0; display: inline-block; width: ' + w1count + '%; background-color: #303030; height: 12px"></div>';
-            html += '<div style="margin: 0; display: inline-block; width: ' + w2count + '%; background-color: #c0c0c0; height: 12px"></div>';
-            html += '<div style="margin: 0; display: inline-block; font-size: 80%; width: 100px; color: grey; vertical-align: top">&nbsp;' + (filteredLoc == 0 || w1count > 0 ? w1count : '<1') + '% of scoped files</div>';
+            html += '<div style="margin: 0; display: inline-block; width: ' + w1count + '%; background-color: var(--sk-text); height: 12px"></div>';
+            html += '<div style="margin: 0; display: inline-block; width: ' + w2count + '%; background-color: var(--sk-border-strong); height: 12px"></div>';
+            html += '<div style="margin: 0; display: inline-block; font-size: 80%; width: 100px; color: var(--sk-text-muted); vertical-align: top">&nbsp;' + (filteredLoc == 0 || w1count > 0 ? w1count : '<1') + '% of scoped files</div>';
             html += '</div>';
             if (filteredReposCount) {
                 html += '<div style="width: 400px; margin: 0; padding: 0; white-space: nowrap">';
                 const w1repo = Math.round(100 * filteredReposCount / scopedReposCount);
                 const w2repo = 100 - w1repo;
-                html += '<div style="margin: 0; display: inline-block; width: ' + w1repo + '%; background-color: #303030; height: 12px"></div>';
-                html += '<div style="margin: 0; display: inline-block; width: ' + w2repo + '%; background-color: #c0c0c0; height: 12px"></div>';
-                html += '<div style="margin: 0; display: inline-block; font-size: 80%; width: 100px; color: grey; vertical-align: top">&nbsp;' + (filteredLoc == 0 || w1repo > 0 ? w1repo : '<1') + '% of scoped repositories</div>';
+                html += '<div style="margin: 0; display: inline-block; width: ' + w1repo + '%; background-color: var(--sk-text); height: 12px"></div>';
+                html += '<div style="margin: 0; display: inline-block; width: ' + w2repo + '%; background-color: var(--sk-border-strong); height: 12px"></div>';
+                html += '<div style="margin: 0; display: inline-block; font-size: 80%; width: 100px; color: var(--sk-text-muted); vertical-align: top">&nbsp;' + (filteredLoc == 0 || w1repo > 0 ? w1repo : '<1') + '% of scoped repositories</div>';
                 html += '</div>';
             }
             html += '<div style="width: 400px; margin: 0; padding: 0; white-space: nowrap">';
             const w1loc = Math.round(100 * filteredLoc / scopedLoc);
             const w2loc = 100 - w1loc;
             html += '<div style="margin: 0; display: inline-block; width: ' + w1loc + '%; background-color: skyblue; height: 12px"></div>';
-            html += '<div style="margin: 0; display: inline-block; width: ' + w2loc + '%; background-color: #c0c0c0; height: 12px"></div>';
-            html += '<div style="margin: 0; display: inline-block; font-size: 80%; width: 100px; color: grey; vertical-align: top">&nbsp;' + (filteredLoc == 0 || w1loc > 0 ? w1loc : '<1') + '% of scoped LOC</div>';
+            html += '<div style="margin: 0; display: inline-block; width: ' + w2loc + '%; background-color: var(--sk-border-strong); height: 12px"></div>';
+            html += '<div style="margin: 0; display: inline-block; font-size: 80%; width: 100px; color: var(--sk-text-muted); vertical-align: top">&nbsp;' + (filteredLoc == 0 || w1loc > 0 ? w1loc : '<1') + '% of scoped LOC</div>';
             html += '</div>';
             html += '<div style="width: 400px; margin: 0; padding: 0; white-space: nowrap">';
 
@@ -462,7 +461,7 @@
             // Two-row header: row 1 groups the commits and line-churn sub-columns (each 30d / 90d /
             // all time); the non-grouped columns span both rows. Row 2 holds the sortable sub-columns.
             const rs = 2;
-            html += '<tr style="color: #777777; background-color: #f8f8f8">';
+            html += '<tr style="color: var(--sk-text-muted); background-color: var(--sk-surface-2)">';
             html += sortHeader('lang', 'lang', 'text-align: center', rs);
             if (filteredReposCount) {
                 html += sortHeader('repo', 'repo', 'text-align: left', rs);
@@ -478,7 +477,7 @@
             html += sortHeader('scope', 'scope', 'text-align: center', rs);
             html += '</tr>';
 
-            html += '<tr style="color: #777777; background-color: #f8f8f8">';
+            html += '<tr style="color: var(--sk-text-muted); background-color: var(--sk-surface-2)">';
             html += sortHeader('recentCommits', '30d', 'text-align: center');
             html += sortHeader('recentCommits90', '90d', 'text-align: center');
             html += sortHeader('commits', 'all<br>time', 'text-align: center');
@@ -487,7 +486,7 @@
             html += sortHeader('churnTotal', 'all<br>time', 'text-align: center');
             html += '</tr>';
         } else {
-            html += '<tr style="color: #777777; background-color: #f8f8f8">';
+            html += '<tr style="color: var(--sk-text-muted); background-color: var(--sk-surface-2)">';
             html += sortHeader('lang', 'lang', 'text-align: center');
             if (filteredReposCount) {
                 html += sortHeader('repo', 'repo', 'text-align: left');
@@ -514,9 +513,9 @@
                 const pathsRepo = item.repository.split('/');
                 const repoName = pathsRepo[pathsRepo.length - 1];
                 const repoPrefix = pathsRepo.slice(0, pathsRepo.length - 1).join(' / ');
-                html += '<div style="border-left: 1px solid lightgrey; padding-left: 6px">';
-                html += '<div style="font-size: 90%; color: #8f8f8f">' + esc(repoPrefix) + '</div>';
-                html += '<div style="margin-bottom: 6px; color: black; font-weight: bold">' + esc(repoName) + '</div>';
+                html += '<div style="border-left: 1px solid var(--sk-border); padding-left: 6px">';
+                html += '<div style="font-size: 90%; color: var(--sk-text-muted)">' + esc(repoPrefix) + '</div>';
+                html += '<div style="margin-bottom: 6px; color: var(--sk-text); font-weight: bold">' + esc(repoName) + '</div>';
                 html += '</div>';
                 html += '</td>';
             }
@@ -524,19 +523,19 @@
             const paths = item.path.split('/');
             const fileName = paths[paths.length - 1];
             let folder = paths.slice(0, paths.length - 1).join('/');
-            html += '<div style="border-left: 1px solid lightgrey; padding-left: 6px">';
+            html += '<div style="border-left: 1px solid var(--sk-border); padding-left: 6px">';
             let displayFolder = '';
             if (folder && folder.length > 50) {
                 displayFolder = folder.substring(0, 50) + '...';
             }
-            html += '<div title="' + esc(folder) + '" style="font-size: 90%; color: #7f7f7f">' + esc(displayFolder) + '</div>';
+            html += '<div title="' + esc(folder) + '" style="font-size: 90%; color: var(--sk-text-muted)">' + esc(displayFolder) + '</div>';
             // File name: link to the cached source page when available, otherwise plain bold text.
             // (sourceFileLink is percent-encoded by the generator; escaping it is defense in depth.)
             if (saveSourceFiles && item.sourceFileLink) {
                 html += '<div style="margin-bottom: 2px"><a href="' + esc(item.sourceFileLink) + '" target="_blank" '
-                    + 'style="color: #0a58ca; font-weight: bold">' + esc(fileName) + ' <span style="font-size: 60%; color: #888">&#x2197;</span></a></div>';
+                    + 'style="color: var(--sk-accent); font-weight: bold">' + esc(fileName) + ' <span style="font-size: 60%; color: var(--sk-text-muted)">&#x2197;</span></a></div>';
             } else {
-                html += '<div style="margin-bottom: 2px; color: black; font-weight: bold">' + esc(fileName) + '</div>';
+                html += '<div style="margin-bottom: 2px; color: var(--sk-text); font-weight: bold">' + esc(fileName) + '</div>';
             }
             html += '</div>';
             html += '</td>';
@@ -564,33 +563,33 @@
                 const ageDays = (item.ageDays == null) ? -1 : item.ageDays;
                 const freshnessDays = (item.freshnessDays == null) ? -1 : item.freshnessDays;
                 html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
-                    + (recent > 0 ? recent.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
+                    + (recent > 0 ? recent.toLocaleString('en-US') : '<span style="color: var(--sk-text-faint)">-</span>') + '</td>';
                 html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
-                    + (recent90 > 0 ? recent90.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
+                    + (recent90 > 0 ? recent90.toLocaleString('en-US') : '<span style="color: var(--sk-text-faint)">-</span>') + '</td>';
                 // commits (all time) — coloured by the file change-frequency band (heat palette).
                 html += colorCell(total, total > 0, bandColor(total, fileFreqThresholds, HEAT_PALETTE));
                 // line churn (total lines added+deleted) per window — plain numbers, recent windows
                 // are a muted dash when zero so the eye lands on files with recent churn.
                 html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
-                    + (churn30 > 0 ? churn30.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
+                    + (churn30 > 0 ? churn30.toLocaleString('en-US') : '<span style="color: var(--sk-text-faint)">-</span>') + '</td>';
                 html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
-                    + (churn90 > 0 ? churn90.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
+                    + (churn90 > 0 ? churn90.toLocaleString('en-US') : '<span style="color: var(--sk-text-faint)">-</span>') + '</td>';
                 html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
-                    + (churnTotal > 0 ? churnTotal.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
+                    + (churnTotal > 0 ? churnTotal.toLocaleString('en-US') : '<span style="color: var(--sk-text-faint)">-</span>') + '</td>';
                 // contributors — heat palette.
                 html += colorCell(contributors, contributors > 0, bandColor(contributors, fileContribThresholds, HEAT_PALETTE));
                 // age (days since first commit) — age palette.
                 html += colorCell(ageDays, ageDays >= 0, bandColor(ageDays, fileAgeThresholds, AGE_PALETTE));
                 // freshness (days since last commit) — freshness palette.
                 html += colorCell(freshnessDays, freshnessDays >= 0, bandColor(freshnessDays, fileAgeThresholds, FRESHNESS_PALETTE));
-                html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%; color: #5f5f5f;">'
-                    + (item.latestCommitDate ? esc(item.latestCommitDate) : '<span style="color: lightgrey">-</span>') + '</td>';
+                html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%; color: var(--sk-text-muted);">'
+                    + (item.latestCommitDate ? esc(item.latestCommitDate) : '<span style="color: var(--sk-text-faint)">-</span>') + '</td>';
             }
             html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">';
             if (scope === 'main') {
-                html += '<div style="border: 1px solid #d0d0d0; border-radius: 4px; padding 2px; color: blue">';
+                html += '<div style="border: 1px solid var(--sk-border-strong); border-radius: 4px; padding: 0 4px; color: var(--sk-accent)">';
             } else {
-                html += '<div style="border: 1px solid #d0d0d0; background-color: #f4f4f4; border-radius: 4px; padding 2px;">';
+                html += '<div style="border: 1px solid var(--sk-border-strong); background-color: var(--sk-surface-3); border-radius: 4px; padding: 0 4px;">';
             }
             html += esc(scope);
             html += '</div>';

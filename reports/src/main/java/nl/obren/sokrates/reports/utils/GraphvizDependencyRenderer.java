@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.reports.utils;
 
+import nl.obren.sokrates.common.renderingutils.ReportTheme;
 import nl.obren.sokrates.sourcecode.aspects.ComponentGroup;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import org.apache.commons.lang3.StringUtils;
@@ -21,11 +22,7 @@ public class GraphvizDependencyRenderer {
     public static String REPORTS_HTML_HEADER = "<!DOCTYPE html>\n" +
             "<html lang=\"en\">\n" +
             "<head>\n" +
-            "    <style type=\"text/css\" media=\"screen\">\n" +
-            "        body {\n" +
-            "            font-family: Roboto, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;\n" +
-            "        }\n" +
-            "    </style>\n" +
+            ReportTheme.headBlock() +
             "</head>\n";
     private String orientation = "TB";
     private StringBuilder body = new StringBuilder();

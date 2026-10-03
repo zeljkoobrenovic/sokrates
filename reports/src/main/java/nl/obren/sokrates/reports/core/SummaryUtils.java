@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.reports.core;
 
+import nl.obren.sokrates.common.renderingutils.ReportTheme;
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.utils.FormattingUtils;
@@ -41,7 +42,7 @@ public class SummaryUtils {
     private String reportRoot = "";
 
     public static String getIconSvg(String icon, int w, int h) {
-        String svg = HtmlTemplateUtils.getResource("/icons/" + icon + ".svg");
+        String svg = ReportTheme.adaptiveIcon(HtmlTemplateUtils.getResource("/icons/" + icon + ".svg"));
         svg = svg.replaceAll("height='.*?'", "height='" + w + "px'");
         svg = svg.replaceAll("width='.*?'", "width='" + h + "px'");
         return svg;

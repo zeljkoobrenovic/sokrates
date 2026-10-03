@@ -5,6 +5,7 @@
 package nl.obren.sokrates.reports.dataexporters;
 
 import nl.obren.sokrates.common.io.JsonGenerator;
+import nl.obren.sokrates.common.renderingutils.ReportTheme;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.common.utils.SystemUtils;
@@ -161,7 +162,7 @@ public class DataExporter {
     public static void writeDataPreview(File dataFolder, File dataZip) {
         try {
             String archiveB64 = VisualizationTemplate.base64(FileUtils.readFileToByteArray(dataZip));
-            String html = HtmlTemplateUtils.getResource("/templates/data-preview.html")
+            String html = ReportTheme.apply(HtmlTemplateUtils.getResource("/templates/data-preview.html"))
                     .replace("${sokrates-unzip-lib}", VisualizationTemplate.embedZipLib())
                     .replace("${embedded-archive}", "var SOKRATES_ARCHIVE = \"" + archiveB64 + "\";");
             FileUtils.write(new File(dataFolder, DATA_PREVIEW_FILE_NAME), html, UTF_8);

@@ -44,7 +44,7 @@ public class ExplorerTemplate {
         InputStream inputStream = clazz.getResourceAsStream("templates/" + templateFileName);
 
         try {
-            String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+            String content = ReportTheme.apply(IOUtils.toString(inputStream, StandardCharsets.UTF_8));
             // Embed the data compressed (deflate+base64) and inflate it in-browser, instead of
             // inlining raw JSON — the same self-contained, file://-friendly scheme used by the
             // visualization templates. The ${data} site becomes a sokratesInflate("...") call;

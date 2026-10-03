@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.reports.core;
 
+import nl.obren.sokrates.common.renderingutils.ReportTheme;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
@@ -262,17 +263,17 @@ public class ReportFileExporter {
 
         style += "margin: 12px 12px 12px 0px;";
         style += "display: inline-block; width: 130px; height: 102px; z-index: 2;";
-        style += "background-color: " + color + "; text-align: center; vertical-align: middle; margin-bottom: 36px;";
+        style += "--sk-tint: " + color + "; background-color: var(--sk-tint); text-align: center; vertical-align: middle; margin-bottom: 36px;";
         style += "box-shadow: rgba(0, 0, 0, 0.15) 2.4px 2.4px 3.2px;";
 
-        String specialColor = isZero ? " color: grey;" : "color: black;";
+        String specialColor = isZero ? " color: var(--sk-text-faint, grey);" : "color: var(--sk-text, black);";
         report.startNewTabLink(link, specialColor + "");
         report.startDiv("display: inline-block; text-align: center; margin-top: 12px; cursor: pointer;");
         report.addHtmlContent("<div style='vertical-alignment: bottom; margin: 0px; margin-bottom: -10px; z-index: 3;" + (isZero ? "opacity: 0.4;" : "") + "'>" + getIconSvg(icon, 40) + "</div>");
         report.startDiv(style, tooltip);
         report.addHtmlContent("<div style='font-size: 40px; margin-top: 12px;" + specialColor + "'>" + mainValue + "</div>");
-        report.addHtmlContent("<div style='color: #434343; font-size: 12px;" + specialColor + "'>" + subtitle + "</div>");
-        report.addHtmlContent("<div style='margin-top: 4px; color: #434343; font-size: 11px;'>" + extra + "</div>");
+        report.addHtmlContent("<div style='color: var(--sk-text-muted, #434343); font-size: 12px;" + specialColor + "'>" + subtitle + "</div>");
+        report.addHtmlContent("<div style='margin-top: 4px; color: var(--sk-text-muted, #434343); font-size: 11px;'>" + extra + "</div>");
         report.endDiv();
         report.endDiv();
         report.endNewTabLink();
@@ -283,13 +284,13 @@ public class ReportFileExporter {
 
         style += "margin: 12px 12px 12px 0px;";
         style += "display: inline-block; width: 130px; height: 93px;";
-        style += "background-color: " + color + "; text-align: center; vertical-align: middle; margin-bottom: 36px;";
+        style += "--sk-tint: " + color + "; background-color: var(--sk-tint); text-align: center; vertical-align: middle; margin-bottom: 36px;";
 
         report.startDiv(style, tooltip);
         String specialColor = mainValue.equals("<b>0</b>") ? " color: grey;" : "";
         report.addHtmlContent("<div style='font-size: 40px; margin-top: 10px;" + specialColor + "'>" + mainValue + "</div>");
-        report.addHtmlContent("<div style='color: #434343; font-size: 12px;" + specialColor + "'>" + subtitle + "</div>");
-        report.addHtmlContent("<div style='color: #434343; font-size: 11px;color: grey'>" + extra + "</div>");
+        report.addHtmlContent("<div style='color: var(--sk-text-muted, #434343); font-size: 12px;" + specialColor + "'>" + subtitle + "</div>");
+        report.addHtmlContent("<div style='color: var(--sk-text-muted, #434343); font-size: 11px;color: grey'>" + extra + "</div>");
         report.endDiv();
     }
 
@@ -306,7 +307,7 @@ public class ReportFileExporter {
             int fontSize = 20;
             int width = (first[0] ? value >= 1000 ? 64 : 65 : value >= 1000 ? 42 : 43);
             String numberLine = showDash ? "-" : FormattingUtils.getSmallTextForNumberMinK(value);
-            summary.append("<div style='width: " + width + "px; text-align: center; display: inline-block; border-radius: 5px; background-color: white; padding: 8px; margin-right: 4px;'>"
+            summary.append("<div style='width: " + width + "px; text-align: center; display: inline-block; border-radius: 5px; padding: 8px; margin-right: 4px;'>"
                     + (first[0] ? DataImageUtils.getLangDataImageDiv64(lang) : DataImageUtils.getLangDataImageDiv42(lang))
                     + "<div style='margin-top: 3px; font-size: " + fontSize + "px'>" + numberLine + "</div>"
                     + "<div style='font-size: 10px; white-space: no-wrap; overflow: hidden; color: grey;'>" + HtmlEscapeUtils.escape(lang.toLowerCase()) + "</div>"
@@ -372,7 +373,7 @@ public class ReportFileExporter {
                 if (links.indexOf(link) > 0) {
                     report.addHtmlContent(" | ");
                 }
-                report.startDiv("display: inline-block; padding: 4px 6px; border-radius: 999px; background-color: #f4f4f4;");
+                report.startDiv("display: inline-block; padding: 4px 6px; border-radius: 999px; background-color: var(--sk-surface-3, #f4f4f4);");
                 report.addNewTabLink(link.getLabel() + "&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON_EXTRA_SMALL, link.getHref());
                 report.endDiv();
             });
@@ -391,7 +392,7 @@ public class ReportFileExporter {
     }
 
     public static String getIconSvg(String icon, int size) {
-        String svg = HtmlTemplateUtils.getResource("/icons/" + icon + ".svg");
+        String svg = ReportTheme.adaptiveIcon(HtmlTemplateUtils.getResource("/icons/" + icon + ".svg"));
         svg = svg.replaceAll("height='.*?'", "height='" + size + "px'");
         svg = svg.replaceAll("width='.*?'", "width='" + size + "px'");
         return svg;
@@ -418,7 +419,7 @@ public class ReportFileExporter {
         }
         indexReport.endDiv();
         if (showReport) {
-            indexReport.startDiv("color:blue; ");
+            indexReport.startDiv("color: var(--sk-link, blue); ");
             indexReport.addHtmlContent("<b>" + reportTitle + "</b>");
             indexReport.endDiv();
             indexReport.addHtmlContent("</a>");
@@ -459,7 +460,7 @@ public class ReportFileExporter {
         indexReport.addHtmlContent(ReportConstants.REPORT_SVG_ICON);
         indexReport.endDiv();
 
-        indexReport.startDiv("font-size:100%; color:blue; ");
+        indexReport.startDiv("font-size:100%; color: var(--sk-link, blue); ");
         indexReport.addHtmlContent("<b><a style='text-decoration: none' href=\"../explorers/" + explorer[0] + "\">" + explorer[1] + "</a></b>");
         indexReport.endDiv();
 

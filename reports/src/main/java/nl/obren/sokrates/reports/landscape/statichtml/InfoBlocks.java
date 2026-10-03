@@ -19,17 +19,17 @@ public class InfoBlocks {
     public static void addInfoBlockWithColor(RichTextReport report, String mainValue, String subtitle, String color, String tooltip, String icon) {
         String style = "border-radius: 12px;";
 
-        style += "border: 1px dashed #f0f0f0;";
+        style += "border: 1px solid var(--sk-border, #f0f0f0);";
         style += "margin: 12px 12px 12px 0px;";
         style += "display: inline-block; width: 160px; height: 120px;";
-        style += "background-color: #ffffff; text-align: center; vertical-align: middle; margin-bottom: 16px;";
+        style += "background-color: var(--sk-surface, #ffffff); text-align: center; vertical-align: middle; margin-bottom: 16px;";
 
         String accentColor = mainValue.equals("<b>0</b>") ? "grey" : toAccentColor(color);
         report.startDiv("display: inline-block; text-align: center", tooltip);
         report.addContentInDiv(ReportFileExporter.getIconSvg(icon, 48), "width: 160px; text-align: center; margin-top: 18px; margin-bottom: -12px");
         report.startDiv(style, tooltip);
-        report.addHtmlContent("<div style='font-size: 50px; margin-top: 8px; color: " + accentColor + ";'>" + mainValue + "</div>");
-        report.addHtmlContent("<div style='color: #434343; font-size: 15px;'>" + subtitle + "</div>");
+        report.addHtmlContent("<div style='font-size: 50px; margin-top: 8px; --sk-accent-color: " + accentColor + "; color: var(--sk-accent-color);'>" + mainValue + "</div>");
+        report.addHtmlContent("<div style='color: var(--sk-text-muted, #434343); font-size: 15px;'>" + subtitle + "</div>");
         report.endDiv();
         report.endDiv();
     }
@@ -154,7 +154,7 @@ public class InfoBlocks {
     // Clean card matching the Activity tab look (icon on top, white rounded card, no border/shadow).
     public static void addActivityTrendCard(RichTextReport report, String value, String subtitle, String icon) {
         String style = "border-radius: 12px; margin: 0; display: inline-block; " +
-                "width: 96px; background-color: #ffffff; " +
+                "width: 96px; background-color: var(--sk-surface, #ffffff); " +
                 "text-align: center; vertical-align: middle;";
 
         report.startDiv("display: inline-block; text-align: center;");

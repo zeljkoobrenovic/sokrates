@@ -55,7 +55,7 @@ public class ReportRenderer {
         String parentUrlHtml = "<a href='" + parentUrl + "' style=\"font-size: 100%;text-decoration:none\">";
 
         content.append(renderBreadcrumbsInDiv(richTextReport.getBreadcrumbs()));
-        content.append("<table>");
+        content.append("<table class='sk-report-header'>");
         content.append("<tr>");
 
         content.append("<td style='border: none'>");
@@ -76,10 +76,10 @@ public class ReportRenderer {
         if (StringUtils.isNotBlank(parentUrl)) {
             content.append(parentUrlHtml);
         }
-        content.append("<div style='font-size: 48px; display: inline-block; vertical-align: middle;'>" +
+        content.append("<div class='sk-report-title'>" +
                 richTextReport.getDisplayName() + "</div>");
         if (StringUtils.isNotBlank(richTextReport.getDescription())) {
-            content.append("<div style='color: #787878; font-size: 94%; margin-top: 2px; white-space: nowrap; overflow: hidden;'>" + richTextReport.getDescription() + "</div>");
+            content.append("<div class='sk-report-description'>" + richTextReport.getDescription() + "</div>");
         }
         if (StringUtils.isNotBlank(parentUrl)) {
             content.append("</a>");

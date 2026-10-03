@@ -198,8 +198,8 @@ public class ContributorsReportGenerator {
         String cell = commitsCount > 0 ? commitsCount + "" : "-";
         if (linesAdded > 0 || linesDeleted > 0) {
             cell += "<div style='font-size: 80%; white-space: nowrap;'>"
-                    + "<span style='color: #2e7d32;'>+" + FormattingUtils.getSmallTextForNumber(linesAdded) + "</span> / "
-                    + "<span style='color: #c62828;'>-" + FormattingUtils.getSmallTextForNumber(linesDeleted) + "</span></div>";
+                    + "<span class='sk-added'>+" + FormattingUtils.getSmallTextForNumber(linesAdded) + "</span> / "
+                    + "<span class='sk-deleted'>-" + FormattingUtils.getSmallTextForNumber(linesDeleted) + "</span></div>";
         }
         return cell;
     }
@@ -262,8 +262,8 @@ public class ContributorsReportGenerator {
         } else {
             String tooltip = "Month " + pastMonth + ": +" + added + " / -" + deleted + " lines";
             report.addContentInDivWithTooltip(
-                    "<span style='color: #2e7d32;'>+" + FormattingUtils.getSmallTextForNumber(added) + "</span>"
-                            + "<br><span style='color: #c62828;'>-" + FormattingUtils.getSmallTextForNumber(deleted) + "</span>",
+                    "<span class='sk-added'>+" + FormattingUtils.getSmallTextForNumber(added) + "</span>"
+                            + "<br><span class='sk-deleted'>-" + FormattingUtils.getSmallTextForNumber(deleted) + "</span>",
                     tooltip, "text-align: center");
         }
         report.endTableCell();
@@ -493,8 +493,8 @@ public class ContributorsReportGenerator {
         int linesAdded = churnAdded.count(contributor);
         int linesDeleted = churnDeleted.count(contributor);
         if (linesAdded > 0 || linesDeleted > 0) {
-            report.addTableCell("<span style='color: #2e7d32;'>+" + FormattingUtils.getSmallTextForNumber(linesAdded) + "</span> / "
-                            + "<span style='color: #c62828;'>-" + FormattingUtils.getSmallTextForNumber(linesDeleted) + "</span>",
+            report.addTableCell("<span class='sk-added'>+" + FormattingUtils.getSmallTextForNumber(linesAdded) + "</span> / "
+                            + "<span class='sk-deleted'>-" + FormattingUtils.getSmallTextForNumber(linesDeleted) + "</span>",
                     "white-space: nowrap;");
         } else {
             report.addTableCell("<span style='color: lightgrey;'>-</span>");
