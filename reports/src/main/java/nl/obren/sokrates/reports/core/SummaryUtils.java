@@ -8,7 +8,6 @@ import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
-import nl.obren.sokrates.reports.utils.AnimalIcons;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
@@ -156,86 +155,6 @@ public class SummaryUtils {
         if (linesOfCodePerAspect.size() > 0) {
             summary.append("</span>");
         }
-    }
-
-    public void summarizeAndCompare(CodeAnalysisResults analysisResults, CodeAnalysisResults refData, RichTextReport report) {
-        StringBuilder summary = new StringBuilder("");
-        summarizeMainCode(analysisResults, summary, null);
-
-        summary.append(addDiffDiv(analysisResults.getMainAspectAnalysisResults().getLinesOfCode(),
-                refData.getMainAspectAnalysisResults().getLinesOfCode()));
-        summary.append("<div style='margin-top: 24px;font-size:80%;margin-bottom:46px;opacity: 0.5;'>");
-        summarizeMainCode(refData, summary, null);
-        summary.append("</div>");
-
-        report.addParagraph(summary.toString());
-
-        report.addHorizontalLine();
-        report.addLineBreak();
-
-        report.startDiv("color:black");
-        summarizeDuplication(analysisResults, report);
-        report.endDiv();
-
-        report.addParagraph(addDiffDiv(analysisResults.getDuplicationAnalysisResults().getOverallDuplication().getDuplicationPercentage().doubleValue(),
-                refData.getDuplicationAnalysisResults().getOverallDuplication().getDuplicationPercentage().doubleValue()));
-        report.startDiv("margin-top: 24px;font-size:80%;margin-bottom:46px;opacity: 0.5;");
-        summarizeDuplication(refData, report);
-        report.endDiv();
-        report.addHorizontalLine();
-        report.addLineBreak();
-
-        report.startDiv("color:black");
-        summarizeFileSize(report, analysisResults);
-        report.endDiv();
-
-        report.startDiv("margin-top: 24px;font-size:80%;margin-bottom:46px;opacity: 0.5;;");
-        summarizeFileSize(report, refData);
-        report.endDiv();
-        report.addHorizontalLine();
-        report.addLineBreak();
-
-        report.startDiv("color:black");
-        summarizeUnitSize(analysisResults, report);
-        report.endDiv();
-
-        report.startDiv("margin-top: 24px;font-size:80%;margin-bottom:46px;opacity: 0.5;");
-        summarizeUnitSize(refData, report);
-        report.endDiv();
-        report.addHorizontalLine();
-        report.addLineBreak();
-
-        report.startDiv("color:black");
-        summarizeUnitComplexity(analysisResults, report);
-        report.endDiv();
-
-        report.startDiv("margin-top: 24px;font-size:80%;margin-bottom:46px;opacity: 0.5;");
-        summarizeUnitComplexity(refData, report);
-        report.endDiv();
-        report.addHorizontalLine();
-        report.addLineBreak();
-
-        // components
-        report.startDiv("color:black");
-        summarizeComponents(analysisResults, report, false);
-        report.endDiv();
-
-        report.startDiv("margin-top: 24px;font-size:80%;margin-bottom:46px;opacity: 0.5;");
-        summarizeComponents(refData, report, false);
-        report.endDiv();
-        report.addHorizontalLine();
-        report.addLineBreak();
-
-        // goals
-        report.startDiv("color: black");
-        summarizeGoals(analysisResults, report);
-        report.endDiv();
-
-        report.startDiv("margin-top: 24px;font-size:80%;margin-bottom:46px;opacity: 0.5;");
-        summarizeGoals(refData, report);
-        report.endDiv();
-        report.addHorizontalLine();
-        report.addLineBreak();
     }
 
     private void summarizeMainVolume(CodeAnalysisResults analysisResults, RichTextReport report) {
@@ -447,7 +366,6 @@ public class SummaryUtils {
                 : (upperCaseStatus.startsWith("IGNORE") ? "grey" : "orange");
     }
 
-
     private void summarizeGoals(CodeAnalysisResults analysisResults, RichTextReport report) {
         String linkPrefix = "<a href='" + reportRoot + "Controls.html'  title='metrics &amp; goals details' style='vertical-align: top'>";
 
@@ -520,7 +438,6 @@ public class SummaryUtils {
 
         report.endTableRow();
     }
-
 
     // Card style: fixed width and name height so every card is the same size; the name is clamped to two lines with an
     // ellipsis (the full name is in the title tooltip), so a long concern name can't stretch the row.
@@ -668,36 +585,6 @@ public class SummaryUtils {
         chart.setBackgroundStyle("");
 
         return chart.getPercentageSvg(duplicationPercentage.doubleValue(), "", "");
-    }
-
-    private String addDiffDiv(double value, double refValue) {
-        double diff = value - refValue;
-        String diffText = getDiffText(diff, refValue);
-        StringBuilder html = new StringBuilder("<div style='margin-top: 24px; margin-top: 0; text-align: left; color: " +
-                (diff == 0 ? "lightgrey" : (diff < 0 ? "#b9936c" : "#6b5b95")) + "'>");
-        if (diff > 0) {
-            html.append("+" + diffText + " ⬆");
-        } else if (diff < 0) {
-            html.append("" + diffText + " ⬇ ");
-        } else {
-            html.append("" + diffText + "");
-        }
-
-        html.append("</div>");
-
-        return html.toString();
-    }
-
-    private String getDiffText(double diff, double refValue) {
-        String diffText;
-        if (Math.abs(refValue) < 0.0000000000000000000001) {
-            diffText = "";
-        } else {
-            double percentage = 100.0 * diff / refValue;
-            diffText = diff + " (" + (percentage > 0 ? "+" : (percentage < 0 ? "-" : ""))
-                    + FormattingUtils.getFormattedPercentage(Math.abs(percentage)) + "%)";
-        }
-        return diffText;
     }
 
 }
