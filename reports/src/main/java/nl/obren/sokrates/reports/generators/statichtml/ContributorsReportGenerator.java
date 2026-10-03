@@ -86,7 +86,7 @@ public class ContributorsReportGenerator {
         this.reportsFolder = reportsFolder;
         this.report = report;
 
-        report.addParagraph("An overview of contributor trends.", "margin-top: 12px; color: grey; font-size: 94%");
+        report.setDescription("An overview of contributor trends.");
 
         report.startTabGroup();
         report.addTab("matrix", "Contributors Matrix", true);

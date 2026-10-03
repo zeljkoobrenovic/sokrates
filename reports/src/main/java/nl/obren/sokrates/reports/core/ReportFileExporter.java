@@ -587,28 +587,39 @@ public class ReportFileExporter {
         Metadata metadata = analysisResults.getCodeConfiguration().getMetadata();
         ReportNavigation navigation = new ReportNavigation(metadata.getName(), "index.html#overview");
         ReportNavigation.Group report = navigation.addGroup("At a Glance");
-        report.addTabItem("overview", "Overview", "index.html#overview", "overview");
-        report.addTabItem("highlights", "Highlights", "index.html#highlights", "highlights");
-        report.addTabItem("structure", "Structure", "index.html#structure", "structure");
-        report.addTabItem("commits", "Activity", "index.html#commits", "activity");
+        String overviewSubtitle = StringUtils.isNotBlank(metadata.getDescription())
+                ? metadata.getDescription() : "Size, age and recent activity of the codebase.";
+        report.addTabItem("overview", "Overview", "index.html#overview", "overview", overviewSubtitle);
+        report.addTabItem("highlights", "Highlights", "index.html#highlights", "highlights",
+                "Headline numbers with a status, and the files most worth looking at first.");
+        report.addTabItem("structure", "Structure", "index.html#structure", "structure",
+                "The codebase as nested circles: folders and files sized by lines of code, colored by scope or risk.");
+        report.addTabItem("commits", "Activity", "index.html#commits", "activity",
+                "Commits, contributors and code churn over time, per year, month, week and day.");
         List<CustomTab> customTabs = getCustomTabs(analysisResults);
         for (int i = 0; i < customTabs.size(); i++) {
             report.addTabItem(customTabId(i), customTabs.get(i).getLabel(), "index.html#" + customTabId(i), "custom");
         }
         ReportNavigation.Group explorers = navigation.addGroup("Explorers");
-        explorers.addTabItem("files", "File Explorer", "index.html#files", "files");
-        explorers.addTabItem("units", "Unit Explorer*", "index.html#units", "units");
-        explorers.addTabItem("commits-explorer", "Commit Explorer", "index.html#commits-explorer", "commits");
+        explorers.addTabItem("files", "File Explorer", "index.html#files", "files",
+                "Search, filter and sort all files by size, history and contributors.");
+        explorers.addTabItem("units", "Unit Explorer*", "index.html#units", "units",
+                "Search, filter and sort the units (functions, methods) by size and complexity.");
+        explorers.addTabItem("commits-explorer", "Commit Explorer", "index.html#commits-explorer", "commits",
+                "Browse the commits and see which files each one changed.");
         ReportNavigation.Group analyses = navigation.addGroup("Analyses");
-        analyses.addTabItem("quality", "Summary", "index.html#quality", "analyses");
+        analyses.addTabItem("quality", "Summary", "index.html#quality", "analyses",
+                "A short summary of every analysis, with links to the full reports.");
         for (String[] entry : getReportsList(analysisResults, sokratesConfigFolder)) {
             if (StringUtils.isNotBlank(entry[0])) {
                 analyses.addItem(entry[0], entry[1], entry[0], NAVIGATION_ICONS.get(entry[0]));
             }
         }
         ReportNavigation.Group index = navigation.addGroup("Index");
-        index.addTabItem("visuals", "Visuals", "index.html#visuals", "visuals");
-        index.addTabItem("data", "Data", "index.html#data", "data");
+        index.addTabItem("visuals", "Visuals", "index.html#visuals", "visuals",
+                "Interactive visualizations of files, components, contributors and dependencies.");
+        index.addTabItem("data", "Data", "index.html#data", "data",
+                "The raw analysis data behind the reports, to download or reuse.");
         return navigation;
     }
 

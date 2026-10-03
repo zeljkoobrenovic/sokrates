@@ -257,10 +257,9 @@ public class ReportConstants {
             "\n" +
             "        .sk-report-description {\n" +
             "            color: var(--sk-text-muted);\n" +
-            "            font-size: 94%;\n" +
-            "            margin-top: 4px;\n" +
-            "            white-space: nowrap;\n" +
-            "            overflow: hidden;\n" +
+            "            font-size: 15px;\n" +
+            "            margin-top: 6px;\n" +
+            "            max-width: 900px;\n" +
             "        }\n" +
             "\n" +
             "        .reportSubtitle {\n" +

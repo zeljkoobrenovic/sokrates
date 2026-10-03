@@ -85,15 +85,20 @@ public class ReportRenderer {
             content.append(parentUrlHtml);
         }
         if (pageTitle != null) {
-            // Same header on every page with the sidebar: the page's sidebar label (the sidebar shows the
-            // repository; on the index, ReportShell swaps the title as tabs change).
+            // Same header on every page with the sidebar: the page's sidebar label and a one-line subtitle
+            // (an index tab's own subtitle, else the report's description); on the index, ReportShell swaps
+            // both as tabs change. The sidebar shows the repository.
             content.append("<div class='sk-report-title' data-sk-page-title>" + HtmlEscapeUtils.escape(pageTitle) + "</div>");
+            String tabSubtitle = richTextReport.getNavigation().subtitleOf(richTextReport.getNavigationActiveId());
+            String subtitleHtml = tabSubtitle != null ? HtmlEscapeUtils.escape(tabSubtitle)
+                    : StringUtils.defaultString(richTextReport.getDescription());
+            content.append("<div class='sk-report-description' data-sk-page-subtitle>" + subtitleHtml + "</div>");
         } else {
             content.append("<div class='sk-report-title'>" +
                     richTextReport.getDisplayName() + "</div>");
-        }
-        if (StringUtils.isNotBlank(richTextReport.getDescription())) {
-            content.append("<div class='sk-report-description'>" + richTextReport.getDescription() + "</div>");
+            if (StringUtils.isNotBlank(richTextReport.getDescription())) {
+                content.append("<div class='sk-report-description'>" + richTextReport.getDescription() + "</div>");
+            }
         }
         if (StringUtils.isNotBlank(parentUrl)) {
             content.append("</a>");

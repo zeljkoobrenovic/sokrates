@@ -17,7 +17,7 @@ public class ControlsReportGenerator {
 
     public RichTextReport generateReport(CodeAnalysisResults codeAnalysisResults, RichTextReport metricsReport) {
         this.report = metricsReport;
-        report.addParagraph("Traffic lights for selected metrics.", "margin-top: 12px; color: grey; font-size: 94%");
+        report.setDescription("Traffic lights for selected metrics.");
 
         report.startSection("Intro", "");
         report.startUnorderedList();

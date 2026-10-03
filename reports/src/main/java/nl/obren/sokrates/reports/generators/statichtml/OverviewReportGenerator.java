@@ -170,8 +170,7 @@ public class OverviewReportGenerator {
 
 
     private void appendHeader(RichTextReport report) {
-        report.addParagraph("Analysis scope, overview of main, test, generated, deployment, build, and other code.",
-                "margin-top: 12px; color: grey; font-size: 94%");
+        report.setDescription("Analysis scope, overview of main, test, generated, deployment, build, and other code.");
         report.startSection("Source Code Analysis Scope", "Files includes and excluded from analyses");
         List<String> extensions = codeAnalysisResults.getCodeConfiguration().getExtensions();
         addLanguageIcons(report, extensions);

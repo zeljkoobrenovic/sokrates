@@ -99,6 +99,8 @@ public class ReportShell {
             "    var brand = document.querySelector('.sk-sidebar-brand');\n" +
             "    if (!label || !title) { return; }\n" +
             "    title.textContent = label.textContent;\n" +
+            "    var subtitle = document.querySelector('[data-sk-page-subtitle]');\n" +
+            "    if (subtitle) { subtitle.textContent = item.getAttribute('data-sk-subtitle') || ''; }\n" +
             "    var icon = item.querySelector('.sk-nav-icon svg'), headerIcon = document.querySelector('[data-sk-page-icon]');\n" +
             "    if (headerIcon) {\n" +
             "      headerIcon.textContent = '';\n" +

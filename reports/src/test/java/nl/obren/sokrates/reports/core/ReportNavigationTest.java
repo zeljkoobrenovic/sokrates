@@ -23,7 +23,7 @@ class ReportNavigationTest {
 
         assertTrue(html.contains("<a class='sk-nav-item active' href='Duplication.html' data-sk-nav='Duplication.html' aria-current='page'>"), html);
         assertEquals(1, html.split("aria-current").length - 1);
-        assertTrue(html.contains("href='index.html#overview' data-sk-nav='overview' data-sk-tab='overview'>"));
+        assertTrue(html.contains("href='index.html#overview' data-sk-nav='overview' data-sk-tab='overview' data-sk-subtitle=''>"));
         assertFalse(html.contains("data-sk-nav='Duplication.html' data-sk-tab"), "a report page is not a tab");
     }
 
@@ -51,6 +51,17 @@ class ReportNavigationTest {
         report.setNavigation(navigation, "FileSize.html");
         report.setEmbedded(true);
         assertNull(ReportNavigation.pageTitle(report), "embedded pages have no shell");
+    }
+
+    @Test
+    void indexTabsCarryTheirSubtitleForTheHeader() {
+        ReportNavigation navigation = new ReportNavigation("repo", "index.html#overview");
+        navigation.addGroup("At a Glance").addTabItem("overview", "Overview", "index.html#overview", "overview", "Size & <age>");
+        navigation.addGroup("Analyses").addItem("Duplication.html", "Duplication", "Duplication.html", "duplication");
+
+        assertEquals("Size & <age>", navigation.subtitleOf("overview"));
+        assertNull(navigation.subtitleOf("Duplication.html"), "a report page uses its own description");
+        assertTrue(navigation.render("overview").contains("data-sk-subtitle='Size &amp; &lt;age&gt;'"));
     }
 
     @Test

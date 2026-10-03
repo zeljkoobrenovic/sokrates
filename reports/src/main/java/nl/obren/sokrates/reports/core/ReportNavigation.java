@@ -90,6 +90,18 @@ public class ReportNavigation {
         return null;
     }
 
+    /** The subtitle of the item with this id (index tabs), or null. */
+    public String subtitleOf(String id) {
+        for (Group group : groups) {
+            for (Item item : group.items) {
+                if (item.id.equals(id)) {
+                    return item.subtitle;
+                }
+            }
+        }
+        return null;
+    }
+
     /** The sidebar icon of the item with this id at the given size (empty when it has none). */
     public String iconOf(String id, int size) {
         for (Group group : groups) {
@@ -150,7 +162,14 @@ public class ReportNavigation {
         }
 
         public Group addTabItem(String tab, String label, String href, String icon) {
-            items.add(new Item(tab, label, href, icon, tab));
+            return addTabItem(tab, label, href, icon, null);
+        }
+
+        /** An index tab with the subtitle the page header shows while the tab is open. */
+        public Group addTabItem(String tab, String label, String href, String icon, String subtitle) {
+            Item item = new Item(tab, label, href, icon, tab);
+            item.subtitle = subtitle;
+            items.add(item);
             return this;
         }
 
@@ -169,6 +188,7 @@ public class ReportNavigation {
         private final String href;
         private final String icon;
         private final String tab;
+        private String subtitle;
 
         Item(String id, String label, String href, String icon, String tab) {
             this.id = id;
@@ -197,6 +217,7 @@ public class ReportNavigation {
             html.append(" data-sk-nav='").append(HtmlEscapeUtils.escape(id)).append("'");
             if (tab != null) {
                 html.append(" data-sk-tab='").append(HtmlEscapeUtils.escape(tab)).append("'");
+                html.append(" data-sk-subtitle='").append(HtmlEscapeUtils.escape(subtitle == null ? "" : subtitle)).append("'");
             }
             if (active) {
                 html.append(" aria-current='page'");

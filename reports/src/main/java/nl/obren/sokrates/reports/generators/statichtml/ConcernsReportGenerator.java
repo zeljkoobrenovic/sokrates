@@ -93,7 +93,7 @@ public class ConcernsReportGenerator {
     }
 
     private void addIntro(RichTextReport report) {
-        report.addParagraph("Aspects in the source code identified through RegEx patterns.", "margin-top: 12px; color: grey; font-size: 94%");
+        report.setDescription("Aspects in the source code identified through RegEx patterns.");
         report.startSection("Intro", "");
         report.startUnorderedList();
         report.addListItem("Features of interest are any aspects of a software system that can be identified through patterns in code.");

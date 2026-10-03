@@ -38,7 +38,7 @@ public class CommitsReportGenerator {
             index[0] += 1;
         });
 
-        report.addParagraph("An overview of commit trends.", "margin-top: 12px; color: grey; font-size: 94%");
+        report.setDescription("An overview of commit trends.");
 
         report.startTabGroup();
         report.addTab("visuals", "Overview", true);

@@ -61,9 +61,9 @@ public class LogicalComponentsReportGenerator {
 
     private void addSummary() {
         if (forceSkipStaticDependencies) {
-            report.addParagraph("An overview of source code logical components.", "margin-top: 12px; color: grey; font-size: 94%");
+            report.setDescription("An overview of source code logical components.");
         } else {
-            report.addParagraph("An overview of static code dependencies among source code logical components.", "margin-top: 12px; color: grey; font-size: 94%");
+            report.setDescription("An overview of static code dependencies among source code logical components.");
         }
         report.startSection("Intro", "");
         if (elaborate) {
