@@ -1,0 +1,49 @@
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportHtmlWriter.java
+  s_40c0e74316fcc6::t_6908f009b03719 11,16,22
+  s_40c0e74316fcc6::t_b5565b186ca035 1-10,12-15,17-21,23-79
+cli/src/main/java/nl/obren/sokrates/cli/LandscapeCommands.java
+  s_40c0e74316fcc6::t_b5565b186ca035 97,140
+cli/src/main/java/nl/obren/sokrates/cli/CommandLineInterface.java
+  s_40c0e74316fcc6::t_fd575e1af02960 319,321
+  s_40c0e74316fcc6::t_b5565b186ca035 49,83,324,565-566
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportFileExporter.java
+  s_40c0e74316fcc6::t_6908f009b03719 35,57
+  s_40c0e74316fcc6::t_b5565b186ca035 383
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/ContributorReportPages.java
+  s_40c0e74316fcc6::t_6908f009b03719 13-14,27,72
+  s_40c0e74316fcc6::t_b5565b186ca035 1-12,15-26,28-71,73-138
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/LandscapeReportContributorsTab.java
+  s_40c0e74316fcc6::t_6908f009b03719 57-60
+  s_40c0e74316fcc6::t_b5565b186ca035 76,349-351,354,553-557
+  s_40c0e74316fcc6::t_c71bb527456c96 558-559
+cli/src/main/java/nl/obren/sokrates/cli/ReportsCommands.java
+  s_40c0e74316fcc6::t_b5565b186ca035 1-6,8-103,106-112,114-202,204-232,234-250
+  s_40c0e74316fcc6::t_6908f009b03719 7,203
+  s_40c0e74316fcc6::t_968f4d3d790392 105,113
+  s_40c0e74316fcc6::t_fd575e1af02960 104,233
+cli/src/main/java/nl/obren/sokrates/cli/OrganizationCommands.java
+  s_40c0e74316fcc6::t_b5565b186ca035 238,292
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/LandscapeAnalysisCommands.java
+  s_40c0e74316fcc6::t_6908f009b03719 11
+  s_40c0e74316fcc6::t_b5565b186ca035 183,190,194,198
+reports/src/test/java/nl/obren/sokrates/reports/core/ReportFileExporterTest.java
+  s_40c0e74316fcc6::t_b5565b186ca035 16-19
+CLAUDE.md
+  s_40c0e74316fcc6::t_cead6691de7b29 46-47,121,124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "79233e3dbee2e0fa0da5b57b8a5880153042bbd7",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
