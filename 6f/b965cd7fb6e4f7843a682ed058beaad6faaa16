@@ -1,0 +1,31 @@
+reports/src/test/resources/golden/metrics-list-report.html
+  s_223e7b216451e0::t_8784a860822ffe 1-2
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportRenderer.java
+  s_223e7b216451e0::t_5119a776d52aca 57,93
+reports/src/test/resources/golden/controls-report-empty.html
+  s_223e7b216451e0::t_8784a860822ffe 1-2
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportShell.java
+  s_223e7b216451e0::t_5119a776d52aca 29-31,59
+reports/src/test/resources/golden/findings-report-empty.html
+  s_223e7b216451e0::t_8784a860822ffe 1-2
+reports/src/test/resources/golden/controls-report-populated.html
+  s_223e7b216451e0::t_8784a860822ffe 1-2
+CLAUDE.md
+  s_223e7b216451e0::t_c41b971452f776 123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "6fb965cd7fb6e4f7843a682ed058beaad6faaa16",
+  "prompts": {},
+  "sessions": {
+    "s_223e7b216451e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "17c1a50e-ffe3-43fa-bbef-5ca8411e20a4",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
