@@ -273,6 +273,7 @@ public class ReportConstants {
             "        .section {\n" +
             "            margin-bottom: 30px;\n" +
             "            border: solid var(--sk-border) 1px;\n" +
+            "            border-left: 4px solid var(--sk-text);\n" +
             "            background: var(--sk-surface);\n" +
             "            box-shadow: var(--sk-shadow);\n" +
             "            border-radius: 10px;\n" +
@@ -282,12 +283,12 @@ public class ReportConstants {
             "\n" +
             "        .sectionHeader {\n" +
             "            border-bottom: 1px solid var(--sk-border);\n" +
-            "            padding: 10px 16px;\n" +
+            "            padding: 14px 20px;\n" +
             "            background-color: var(--sk-surface-2);\n" +
             "        }\n" +
             "\n" +
             "        .sectionTitle {\n" +
-            "            font-size: 120%; font-weight: 600; color: var(--sk-text);\n" +
+            "            font-size: 21px; font-weight: 700; letter-spacing: -0.015em; color: var(--sk-text);\n" +
             "        }\n" +
             "\n" +
             "        .sectionSubtitle {\n" +
@@ -295,7 +296,7 @@ public class ReportConstants {
             "        }\n" +
             "\n" +
             "        .subSectionTitle {\n" +
-            "            font-size: 112%; font-weight: 600; color: var(--sk-text);\n" +
+            "            font-size: 16px; font-weight: 650; color: var(--sk-text);\n" +
             "        }\n" +
             "\n" +
             "        .subSectionSubtitle {\n" +
