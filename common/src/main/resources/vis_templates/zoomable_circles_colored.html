@@ -2,6 +2,15 @@
 <meta charset="utf-8">
 <style>
 
+    html, body {
+        margin: 0;
+    }
+
+    svg {
+        display: block;
+        margin: 0 auto;
+    }
+
     .node {
         cursor: pointer;
     }
@@ -37,6 +46,10 @@ ${sokrates-inflate-lib}
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
 
+    // Fit the circles to the frame (its smaller side) instead of a fixed 960px, so an embedded view
+    // (the report's Structure tab) has no scrollbar and no empty space below.
+    var fitSize = Math.max(320, Math.min(window.innerWidth, window.innerHeight) - 8);
+    d3.select("svg").attr("width", fitSize).attr("height", fitSize);
     var svg = d3.select("svg"),
         margin = 20,
         diameter = +svg.attr("width"),

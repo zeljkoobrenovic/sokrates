@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.reports.core;
 
+import nl.obren.sokrates.common.renderingutils.ReportTheme;
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.utils.FormattingUtils;
@@ -41,7 +42,7 @@ public class SummaryUtils {
     private String reportRoot = "";
 
     public static String getIconSvg(String icon, int w, int h) {
-        String svg = HtmlTemplateUtils.getResource("/icons/" + icon + ".svg");
+        String svg = ReportTheme.adaptiveIcon(HtmlTemplateUtils.getResource("/icons/" + icon + ".svg"));
         svg = svg.replaceAll("height='.*?'", "height='" + w + "px'");
         svg = svg.replaceAll("width='.*?'", "width='" + h + "px'");
         return svg;
@@ -554,7 +555,7 @@ public class SummaryUtils {
     }
 
     private String getRiskProfileVisual(RiskDistributionStats distributionStats) {
-        return getRiskProfileVisual(distributionStats, Palette.getRiskPalette());
+        return getRiskProfileVisual(distributionStats, Palette.getRiskPaletteCss());
     }
 
     private String getRiskProfileVisual(RiskDistributionStats distributionStats, Palette palette) {
@@ -580,8 +581,8 @@ public class SummaryUtils {
         chart.setBarHeight(BAR_HEIGHT);
         chart.setMaxBarWidth(BAR_WIDTH);
         chart.setBarStartXOffset(2);
-        chart.setActiveColor("crimson");
-        chart.setBackgroundColor("#9DC034");
+        chart.setActiveColor("var(--sk-duplicated, crimson)");
+        chart.setBackgroundColor("var(--sk-not-duplicated, #9DC034)");
         chart.setBackgroundStyle("");
 
         return chart.getPercentageSvg(duplicationPercentage.doubleValue(), "", "");

@@ -108,7 +108,7 @@ class ContributorDependenciesRenderer {
     private void addContributors(List<ContributorConnection> contributorConnections) {
         report.addLevel3Header("Most Connected Contributors", "margin-top: 20px");
         report.startScrollingDiv();
-        report.startTable();
+        report.startDataTable();
         report.addTableHeader("", "Contributor", "# connections", "# commits");
         int index[] = {0};
         contributorConnections.forEach(contributorConnection -> {
@@ -131,7 +131,7 @@ class ContributorDependenciesRenderer {
 
     private void addPeopleDependenciesTable(List<ComponentDependency> peopleDependencies) {
         report.startScrollingDiv();
-        report.startTable();
+        report.startDataTable();
         report.addTableHeader("", "Contributor 1", "Contributor 2", "# shared files");
         int index[] = {0};
         if (peopleDependencies.size() > 100) {

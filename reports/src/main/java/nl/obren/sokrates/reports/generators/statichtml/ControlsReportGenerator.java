@@ -17,7 +17,7 @@ public class ControlsReportGenerator {
 
     public RichTextReport generateReport(CodeAnalysisResults codeAnalysisResults, RichTextReport metricsReport) {
         this.report = metricsReport;
-        report.addParagraph("Traffic lights for selected metrics.", "margin-top: 12px; color: grey; font-size: 94%");
+        report.setDescription("Traffic lights for selected metrics.");
 
         report.startSection("Intro", "");
         report.startUnorderedList();
@@ -44,7 +44,7 @@ public class ControlsReportGenerator {
             report.startSection(goalsAnalysisResults.getMetricsWithGoal().getGoal(),
                     goalsAnalysisResults.getMetricsWithGoal().getDescription());
             report.startDiv("width: 100%; overflow-x: auto");
-            report.startTable();
+            report.startDataTable();
             report.addTableHeader("", "Status", "Metric", "Desired Range<br/>[from - to] ±tolerance", "Current Value", "Description");
             goalsAnalysisResults.getControlStatuses().forEach(controlResult -> {
                 addRow(controlResult);

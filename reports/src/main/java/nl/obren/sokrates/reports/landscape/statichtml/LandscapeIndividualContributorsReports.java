@@ -1,6 +1,7 @@
 package nl.obren.sokrates.reports.landscape.statichtml;
 
 import nl.obren.sokrates.common.io.JsonGenerator;
+import nl.obren.sokrates.common.renderingutils.ReportTheme;
 import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
 import nl.obren.sokrates.common.utils.SystemUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
@@ -218,7 +219,7 @@ public class LandscapeIndividualContributorsReports {
                 langIconsJson = "{}";
             }
             java.io.InputStream in = this.getClass().getClassLoader().getResourceAsStream("templates/contributor-report.html");
-            String template = org.apache.commons.io.IOUtils.toString(in, StandardCharsets.UTF_8)
+            String template = ReportTheme.apply(org.apache.commons.io.IOUtils.toString(in, StandardCharsets.UTF_8))
                     .replace("${sokrates-unzip-lib}", VisualizationTemplate.embedZipLib())
                     .replace("${embedded-archive}", "var SOKRATES_ARCHIVE = \"" + archiveB64 + "\";")
                     .replace("${lang-icons}", "var SOKRATES_LANG_ICONS = " + langIconsJson + ";");

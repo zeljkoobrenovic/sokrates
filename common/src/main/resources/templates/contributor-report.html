@@ -2,32 +2,33 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    ${sokrates-theme}
     <title>Contributor</title>
     <style type="text/css" media="all">
         body {
-            font-family: Roboto, Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+            font-family: var(--sk-font);
         }
 
         table {
-            color: #333;
+            color: var(--sk-text);
             border-collapse: collapse;
             border-spacing: 0;
         }
 
         td, th {
-            border: 1px solid #CCC;
+            border: 1px solid var(--sk-border);
             height: 30px;
             padding-left: 10px;
             padding-right: 10px;
         }
 
         th {
-            background: #F3F3F3;
+            background: var(--sk-surface-3);
             font-weight: bold;
         }
 
         td {
-            background: #FFFFFF;
+            background: var(--sk-surface);
             text-align: left;
         }
 
@@ -44,7 +45,7 @@
         }
 
         ::placeholder {
-            color: lightgrey;
+            color: var(--sk-text-faint);
             opacity: 1;
         }
 
@@ -53,7 +54,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            color: grey;
+            color: var(--sk-text-muted);
             font-size: 15px;
             padding: 40px 4px;
         }
@@ -61,7 +62,7 @@
         #loading .spinner {
             width: 22px;
             height: 22px;
-            border: 3px solid #e0e0e0;
+            border: 3px solid var(--sk-border);
             border-top-color: #483D8B;
             border-radius: 50%;
             animation: sokrates-spin 0.8s linear infinite;
@@ -78,17 +79,17 @@
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid var(--sk-border);
             margin-bottom: 4px;
         }
 
         .tab button {
             position: relative;
-            font-family: inherit;
+            font-family: var(--sk-font);
             font-size: 14px;
             font-weight: 500;
             background-color: transparent;
-            color: #6b7280;
+            color: var(--sk-text-muted);
             border: none;
             border-bottom: 2px solid transparent;
             border-radius: 8px 8px 0 0;
@@ -100,18 +101,18 @@
         }
 
         .tab button:hover {
-            color: #1f2937;
-            background-color: #f3f4f6;
+            color: var(--sk-text);
+            background-color: var(--sk-hover);
         }
 
         .tab button:focus-visible {
-            outline: 2px solid #1d4ed8;
+            outline: 2px solid var(--sk-accent);
             outline-offset: -2px;
         }
 
         .tab button.active {
-            color: #1d4ed8;
-            border-bottom-color: #1d4ed8;
+            color: var(--sk-accent);
+            border-bottom-color: var(--sk-accent);
         }
 
         .tabcontent {
@@ -144,18 +145,17 @@
         }
 
         .member-table th.sortable:hover {
-            color: #4a90d9;
+            color: var(--sk-accent);
         }
 
         .member-table th.sort-active {
-            color: #4a90d9;
+            color: var(--sk-accent);
         }
 
         .sort-arrow {
             font-size: 80%;
         }
     </style>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
     <!-- fflate + sokratesUnzip: decodes the people archive embedded inline below (no fetch). -->
     ${sokrates-unzip-lib}
 </head>
@@ -171,7 +171,7 @@
 
     <div class="tab" id="tabs" style="margin-top: 24px"></div>
     <div class="tabcontent">
-        <div style="color: grey; margin: 8px 0 10px 0;">
+        <div style="color: var(--sk-text-muted); margin: 8px 0 10px 0;">
             <input id="filter" type="text" placeholder="search... (use ; for multiple terms)"
                    style="font-size: 16px; height: 30px; width: 320px;"
                    onkeyup="render()">
@@ -223,13 +223,13 @@
         const key = lang.toLowerCase();
         if (langIcons[key]) {
             return '<img title="' + esc(lang) + '" style="vertical-align: middle; background-color: #f1f1f1; '
-                + 'border-radius: 50%; border: 1px solid lightgrey; width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
+                + 'border-radius: 50%; border: 1px solid var(--sk-border); width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
                 + langIcons[key] + '">';
         }
         const fontSize = lang.length <= 3 ? 10 : 8;
         const padding = Math.round(size / 4);
         return '<div title="' + esc(lang) + '" style="display: inline-block; vertical-align: middle; '
-            + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; overflow: hidden; color: darkblue; '
+            + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid var(--sk-border-strong); overflow: hidden; color: darkblue; '
             + 'width: ' + size + 'px; height: ' + size + 'px; font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">'
             + '<div style="height: ' + padding + 'px"></div>' + esc(lang) + '</div>';
     }
@@ -312,8 +312,8 @@
         // 36px title block with the avatar and a 120% display name.
         const fallback = options.isTeam ? options.avatarTeam : options.avatarDeveloper;
         const avatar = '<div style="vertical-align: bottom; display: inline-block; width: 88px; margin-top: 2px;">'
-            + '<img style="vertical-align: bottom; height: 80px; width: 80px; margin-right: 10px;" '
-            + 'src="' + esc(data.avatarUrl || fallback) + '" onerror="this.onerror=null;this.src=\'' + esc(fallback) + '\';"></div>';
+            + '<img' + (data.avatarUrl ? '' : ' class="sk-invert-dark"') + ' style="vertical-align: bottom; height: 80px; width: 80px; margin-right: 10px;" '
+            + 'src="' + esc(data.avatarUrl || fallback) + '" onerror="this.onerror=null;this.src=\'' + esc(fallback) + '\';this.classList.add(\'sk-invert-dark\');"></div>';
 
         let html = '<div style="font-size: 36px; margin-top: 15px; padding-bottom: 15px; white-space: nowrap; overflow: hidden;">';
         html += avatar;
@@ -324,7 +324,7 @@
         // contributors table. Falls back to the email alone when there is no name (or it equals the email).
         if (data.userName && data.email && data.userName !== data.email) {
             html += esc(data.userName)
-                + '<div style="color: grey; font-size: 60%; font-weight: normal;">&lt;' + esc(data.email) + '&gt;</div>';
+                + '<div style="color: var(--sk-text-muted); font-size: 60%; font-weight: normal;">&lt;' + esc(data.email) + '&gt;</div>';
         } else {
             html += esc(data.userName || data.email);
         }
@@ -355,7 +355,7 @@
     }
 
     function greyLabel(t) {
-        return '<span style="color: lightgrey; font-size: 90%">' + t + '</span>';
+        return '<span style="color: var(--sk-text-faint); font-size: 90%">' + t + '</span>';
     }
 
     function window30(value, label) {
@@ -372,7 +372,7 @@
         data.extensions.forEach(e => {
             const h = Math.round(64 * e.fileUpdates90Days / max) + 1;
             html += '<td style="border: 0; text-align: center; vertical-align: bottom;">'
-                + '<div style="text-align: center; font-size: 70%; color: lightgrey;">' + num(e.fileUpdates90Days) + '</div>'
+                + '<div style="text-align: center; font-size: 70%; color: var(--sk-text-faint);">' + num(e.fileUpdates90Days) + '</div>'
                 + '<div style="background-color: skyblue; width: 35px; height: ' + h + 'px;"></div></td>';
         });
         html += '</tr><tr>';
@@ -434,7 +434,7 @@
         let inner;
         const i = name.indexOf('/');
         if (i >= 0 && name.indexOf('/', i + 1) < 0) {
-            inner = '<div style="font-size: 90%; color: lightgrey; padding-top: 2px">' + esc(name.substring(0, i)) + '</div>'
+            inner = '<div style="font-size: 90%; color: var(--sk-text-faint); padding-top: 2px">' + esc(name.substring(0, i)) + '</div>'
                 + '<div style="font-size: 110%;">' + esc(name.substring(i + 1)) + '</div>';
         } else {
             inner = '<div style="font-size: 110%;">' + esc(name) + '</div>';
@@ -476,14 +476,14 @@
 
     // Churn colours and a "+added / -deleted" cell renderer (added green, deleted red). Renders a
     // muted dash when both are zero.
-    const CHURN_ADDED_COLOR = '#2e7d32';
-    const CHURN_DELETED_COLOR = '#c62828';
+    const CHURN_ADDED_COLOR = 'var(--sk-added, #2e7d32)';
+    const CHURN_DELETED_COLOR = 'var(--sk-deleted, #c62828)';
 
     function churnCell(added, deleted, cellStyle) {
         added = added || 0;
         deleted = deleted || 0;
         if (added === 0 && deleted === 0) {
-            return '<td style="' + cellStyle + ' text-align:center;"><span style="color: lightgrey">-</span></td>';
+            return '<td style="' + cellStyle + ' text-align:center;"><span style="color: var(--sk-text-faint)">-</span></td>';
         }
         return '<td style="' + cellStyle + ' text-align:center; white-space: nowrap; line-height: 1.2; font-size: 80%">'
             + '<div style="color: ' + CHURN_ADDED_COLOR + ';">+' + smallNum(added) + '</div>'
@@ -512,18 +512,18 @@
         html += '<tr>'
             + '<td style="border:none"></td>'
             + '<td style="border:none"></td>'
-            + '<td style="border:none; text-align:center; font-size: 80%; color: grey; border-bottom: 1px solid #ccc" colspan="4">Commits</td>'
-            + '<td style="border:none; text-align:center; font-size: 80%; color: grey; border-bottom: 1px solid #555;" colspan="4">Line Churn</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: var(--sk-text-muted); border-bottom: 1px solid var(--sk-border)" colspan="4">Commits</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: var(--sk-text-muted); border-bottom: 1px solid #555;" colspan="4">Line Churn</td>'
             + '</tr>';
         html += '<tr><td style="border:none"></td><td class="repo-name" style="border:none"></td>'
-            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">30d</td>'
-            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">3m</td>'
-            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">1y</td>'
-            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">all time</td>'
-            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">30d</td>'
-            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">3m</td>'
-            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">1y</td>'
-            + '<td style="border:none; text-align:center; font-size: 80%; color: grey;">all time</td>';
+            + '<td style="border:none; text-align:center; font-size: 80%; color: var(--sk-text-muted);">30d</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: var(--sk-text-muted);">3m</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: var(--sk-text-muted);">1y</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: var(--sk-text-muted);">all time</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: var(--sk-text-muted);">30d</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: var(--sk-text-muted);">3m</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: var(--sk-text-muted);">1y</td>'
+            + '<td style="border:none; text-align:center; font-size: 80%; color: var(--sk-text-muted);">all time</td>';
         slots.forEach(slot => {
             let repoCount = 0;
             repos.forEach(r => {
@@ -531,7 +531,7 @@
                     repoCount++;
                 }
             });
-            html += '<td style="border:none; font-size:70%; color: lightgrey; text-align:center; vertical-align: bottom;" title="' + esc(slot + ': ' + repoCount + ' repositories') + '">' + slot.substring(0, 7) + '<br>' + repoCount + '</td>';
+            html += '<td style="border:none; font-size:70%; color: var(--sk-text-faint); text-align:center; vertical-align: bottom;" title="' + esc(slot + ': ' + repoCount + ' repositories') + '">' + slot.substring(0, 7) + '<br>' + repoCount + '</td>';
         });
         html += '</tr>';
 
@@ -577,7 +577,7 @@
                 const barHeight = slotTotal > 0 ? Math.round(28 * slotTotal / maxSlot) + 1 : 0;
                 s += '<td style="' + border + ' text-align:center; vertical-align: bottom; padding: 0 2px;" '
                     + 'title="' + esc(slots[idx] + ': ' + slotTotal + ' ' + (slotTotal === 1 ? unitSingular : unitPlural)) + '">'
-                    + '<div style="font-size: 70%; color: grey;">' + (slotTotal > 0 ? smallNum(slotTotal) : '-') + '</div>'
+                    + '<div style="font-size: 70%; color: var(--sk-text-muted);">' + (slotTotal > 0 ? smallNum(slotTotal) : '-') + '</div>'
                     + (slotTotal > 0
                         ? '<div style="margin: 1px auto 0; background-color: ' + color + '; width: 60%; height: ' + barHeight + 'px;"></div>'
                         : '')
@@ -597,7 +597,7 @@
                 const hDeleted = deleted > 0 ? Math.round(28 * deleted / maxSlot) + 1 : 0;
                 s += '<td style="' + border + ' text-align:center; vertical-align: bottom; padding: 0 2px;" '
                     + 'title="' + esc(slots[idx] + ': +' + added + ' / -' + deleted + ' lines') + '">'
-                    + '<div style="font-size: 70%; color: grey;">' + (total > 0 ? smallNum(total) : '-') + '</div>'
+                    + '<div style="font-size: 70%; color: var(--sk-text-muted);">' + (total > 0 ? smallNum(total) : '-') + '</div>'
                     + (added > 0 ? '<div style="margin: 1px auto 0; background-color: ' + CHURN_ADDED_COLOR + '; width: 60%; height: ' + hAdded + 'px;"></div>' : '')
                     + (deleted > 0 ? '<div style="margin: 0 auto; background-color: ' + CHURN_DELETED_COLOR + '; width: 60%; height: ' + hDeleted + 'px;"></div>' : '')
                     + '</td>';
@@ -606,7 +606,7 @@
         }
 
         // Line-churn total row: churn columns filled, commit columns blank.
-        html += '<tr style="font-weight: bold; background-color: #f7f7f7;">';
+        html += '<tr style="font-weight: bold; background-color: var(--sk-surface-2);">';
         html += '<td style="' + churnBorder + '"></td>';
         html += '<td class="repo-name" style="' + churnBorder + '"></td>';
         html += '<td style="' + emptyCell + '"></td>';
@@ -621,7 +621,7 @@
         html += '</tr>';
 
         // Commits total row: commit columns filled, churn columns blank.
-        html += '<tr style="font-weight: bold; background-color: #f7f7f7;">';
+        html += '<tr style="font-weight: bold; background-color: var(--sk-surface-2);">';
         html += '<td style="' + totalBorder + '"></td>';
         html += '<td class="repo-name" style="' + totalBorder + '"></td>';
         html += '<td style="' + totalBorder + ' text-align:center;">' + (total30 > 0 ? smallNum(total30) : '-') + '</td>';
@@ -659,7 +659,7 @@
                         + 'style="display: inline-block; background-color: #483D8B; border-radius: 50%; opacity: ' + opacity + '; '
                         + 'width: ' + size + 'px; height: ' + size + 'px;"></div>';
                 } else {
-                    html += '<span style="color: lightgrey; font-size: 80%;">-</span>';
+                    html += '<span style="color: var(--sk-text-faint); font-size: 80%;">-</span>';
                 }
                 html += '</td>';
             });
@@ -747,7 +747,7 @@
         let nameHtml;
         if (m.userName && m.email && m.userName !== m.email) {
             nameHtml = esc(m.userName)
-                + '<div title="' + esc(m.email) + '" style="color: grey; font-size: 80%; max-width: 350px; overflow: hidden; white-space: nowrap;">&lt;' + esc(m.email) + '&gt;</div>';
+                + '<div title="' + esc(m.email) + '" style="color: var(--sk-text-muted); font-size: 80%; max-width: 350px; overflow: hidden; white-space: nowrap;">&lt;' + esc(m.email) + '&gt;</div>';
         } else {
             nameHtml = esc(m.userName || m.email);
         }

@@ -54,7 +54,7 @@ public class DuplicationReportGenerator {
     public void getDuplicatesTable(RichTextReport report, List<DuplicationInstance> duplicationInstances, String fragmentType) {
         report.startDiv("width: 100%; overflow-x: auto");
         report.startScrollingDiv();
-        report.addHtmlContent("<table style='width: 80%'>\n");
+        report.addHtmlContent("<table class='sk-data-table' style='width: 80%'>\n");
         boolean saveCodeFragments = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveCodeFragments();
         report.addHtmlContent("<th>Size</th><th>#</th><th>Folders</th><th>Files</th><th>Lines</th>" + (saveCodeFragments ? "<th>Code</th>" : ""));
         int count[] = {0};
@@ -233,8 +233,8 @@ public class DuplicationReportGenerator {
 
     private void addIntro(RichTextReport report) {
         int locDuplicationThreshold = codeAnalysisResults.getCodeConfiguration().getAnalysis().getMinDuplicationBlockLoc();
-        report.addParagraph("Places in code with " + locDuplicationThreshold + " or more lines that " +
-                "are exactly the same.", "margin-top: 12px; color: grey; font-size: 94%");
+        report.setDescription("Places in code with " + locDuplicationThreshold + " or more lines that " +
+                "are exactly the same.");
         report.startSection("Intro", "");
         report.startUnorderedList();
         report.addListItem("For duplication, we look at places in code where there are " + locDuplicationThreshold + " or more lines of code that are exactly the same.");
@@ -418,7 +418,7 @@ public class DuplicationReportGenerator {
 
         report.startDetailsBlock("Show more details on duplication between components...");
         report.startDiv("width: 100%; overflow-x: auto");
-        report.startTable();
+        report.startDataTable();
         report.addTableHeader("From Component<br/>&nbsp;--> To Component", "Duplicated<br/>Lines", "File Pairs", "Details");
 
         componentDependencies.forEach(componentDependency -> {

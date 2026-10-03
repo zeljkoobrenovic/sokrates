@@ -25,7 +25,7 @@ public class RiskDistributionStatsReportUtils {
     }
 
     public static String getRiskDistributionPerKeySvgBarChart(List<RiskDistributionStats> distributions, List<String> labels) {
-        return getRiskDistributionPerKeySvgBarChart(distributions, labels, Palette.getRiskPalette());
+        return getRiskDistributionPerKeySvgBarChart(distributions, labels, Palette.getRiskPaletteCss());
     }
 
     public static String getRiskDistributionPerKeySvgBarChart(List<RiskDistributionStats> distributions, List<String> labels, Palette palette) {

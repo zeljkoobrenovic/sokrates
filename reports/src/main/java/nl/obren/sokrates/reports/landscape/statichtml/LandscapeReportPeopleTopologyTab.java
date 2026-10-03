@@ -230,7 +230,7 @@ public class LandscapeReportPeopleTopologyTab {
 
         style += "margin: 12px 12px 12px 0px;";
         style += "display: inline-block; width: 160px; height: 120px;";
-        style += "background-color: " + color + "; text-align: center; vertical-align: middle; margin-bottom: 36px;";
+        style += "--sk-tint: " + color + "; background-color: var(--sk-tint); text-align: center; vertical-align: middle; margin-bottom: 36px;";
         style += "box-shadow: rgb(0 0 0 / 12%) 0px 1px 3px, rgb(0 0 0 / 24%) 0px 1px 2px;";
 
         landscapeReport.startDiv("display: inline-block; text-align: center", tooltip);
@@ -238,7 +238,7 @@ public class LandscapeReportPeopleTopologyTab {
         landscapeReport.startDiv(style, tooltip);
         String specialColor = mainValue.equals("<b>0</b>") ? " color: grey;" : "";
         landscapeReport.addHtmlContent("<div style='font-size: 50px; margin-top: 20px;" + specialColor + "'>" + mainValue + "</div>");
-        landscapeReport.addHtmlContent("<div style='color: #434343; font-size: 15px;" + specialColor + "'>" + subtitle + "</div>");
+        landscapeReport.addHtmlContent("<div style='color: var(--sk-text-muted, #434343); font-size: 15px;" + specialColor + "'>" + subtitle + "</div>");
         landscapeReport.endDiv();
         landscapeReport.endDiv();
     }

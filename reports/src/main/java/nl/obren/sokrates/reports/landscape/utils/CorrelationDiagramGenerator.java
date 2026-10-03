@@ -104,7 +104,7 @@ public class CorrelationDiagramGenerator<T> {
                     return;
                 }
                 sameLocationMap.put(key, key);
-                report.addHtmlContent(" <circle cx=\"" + (int) x + "\" cy=\"" + (int) y + "\" r=\"" + r + "\" fill=\"black\" fill-opacity=\"0.2\">");
+                report.addHtmlContent(" <circle cx=\"" + (int) x + "\" cy=\"" + (int) y + "\" r=\"" + r + "\" fill=\"currentColor\" fill-opacity=\"0.25\">");
                 // The point label is a file path or a contributor identity — repository-controlled.
                 report.addHtmlContent(" <title>" + HtmlEscapeUtils.escape(nameFunction.toString(item))
                         + "\n  x: " + (int) xValue + " " + xLabel
@@ -178,10 +178,10 @@ public class CorrelationDiagramGenerator<T> {
         report.addHtmlContent(" <line x1='" + (int) x1P75 + "' y1='0' x2='" + (int) x1P75 + "' y2='" + height + "' stroke='grey' stroke-opacity='0.5'/>");
         report.addHtmlContent(" <line x1='0' y1='" + (int) y1P75 + "' x2='" + width + "' y2='" + (int) y1P75 + "' stroke='grey' stroke-opacity='0.5'/>");
 
-        report.addHtmlContent(" <line x1='" + (int) x1MinZero + "' y1='0' x2='" + (int) x1MinZero + "' y2='" + height + "' stroke='black' stroke-opacity='0.5'/>");
-        report.addHtmlContent(" <line x1='0' y1='" + (int) y1Min + "' x2='" + width + "' y2='" + (int) y1Min + "' stroke='black' stroke-opacity='0.5'/>");
-        report.addHtmlContent(" <line x1='" + (int) x1Max + "' y1='0' x2='" + (int) x1Max + "' y2='" + height + "' stroke='black' stroke-opacity='0.5'/>");
-        report.addHtmlContent(" <line x1='0' y1='" + (int) y1Max + "' x2='" + width + "' y2='" + (int) y1Max + "' stroke='black' stroke-opacity='0.5'/>");
+        report.addHtmlContent(" <line x1='" + (int) x1MinZero + "' y1='0' x2='" + (int) x1MinZero + "' y2='" + height + "' stroke='currentColor' stroke-opacity='0.5'/>");
+        report.addHtmlContent(" <line x1='0' y1='" + (int) y1Min + "' x2='" + width + "' y2='" + (int) y1Min + "' stroke='currentColor' stroke-opacity='0.5'/>");
+        report.addHtmlContent(" <line x1='" + (int) x1Max + "' y1='0' x2='" + (int) x1Max + "' y2='" + height + "' stroke='currentColor' stroke-opacity='0.5'/>");
+        report.addHtmlContent(" <line x1='0' y1='" + (int) y1Max + "' x2='" + width + "' y2='" + (int) y1Max + "' stroke='currentColor' stroke-opacity='0.5'/>");
 
         report.addHtmlContent(" <line x1='" + (int) x1Outlier1 + "' y1='0' x2='" + (int) x1Outlier1 + "' y2='" + height + "' stroke='red' stroke-opacity='0.5'/>");
         report.addHtmlContent(" <line x1='" + (int) x1Outlier2 + "' y1='0' x2='" + (int) x1Outlier2 + "' y2='" + height + "' stroke='red' stroke-opacity='0.5'/>");

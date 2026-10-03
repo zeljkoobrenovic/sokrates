@@ -83,10 +83,10 @@ class RichTextReportSinkEscapingTest {
 
     /** RichTextReport methods whose String arguments are ids, styles, links or report metadata. */
     static final Set<String> STRUCTURAL = new HashSet<>(Arrays.asList(
-            "startTable", "startTableCell", "startTableCellColSpan", "startMultiColumnTableCell", "startTableRow",
+            "startTable", "startDataTable", "startTableCell", "startTableCellColSpan", "startMultiColumnTableCell", "startTableRow",
             "startUnorderedList", "startSpan", "startTabContentSection", "startNewTabLink", "addAnchor",
             "setId", "setFileName", "setDisplayName", "setGroup", "setDescription", "setLogoLink", "setParentUrl",
-            "setRichTextFragments", "setBreadcrumbs", "setReportsFolder", "setEmbedded", "setRenderLogo"));
+            "setRichTextFragments", "setBreadcrumbs", "setReportsFolder", "setEmbedded", "setRenderLogo", "setNavigation"));
 
     /** Getters whose result comes from the analyzed repository (paths, names, git identities). */
     static final Set<String> REPOSITORY_CONTROLLED_GETTERS = new HashSet<>(Arrays.asList(

@@ -26,7 +26,7 @@ public class MetricsListReportGenerator {
     private void addMetricsTable() {
         report.startSection("Metrics", "");
         report.startDiv("width: 100%; overflow-x: auto");
-        report.startTable();
+        report.startDataTable();
         report.addTableHeader("Metric", "Value");
 
         codeAnalysisResults.getMetricsList().getMetrics().forEach(metric -> {
@@ -39,7 +39,7 @@ public class MetricsListReportGenerator {
     }
 
     private void addIntro() {
-        report.addParagraph("All numeric values measured by Sokrates.", "margin-top: 12px; color: grey; font-size: 94%");
+        report.setDescription("All numeric values measured by Sokrates.");
         report.startSection("Intro", "");
         report.startUnorderedList();
         report.addListItem("Metrics are all numeric values measured by Sokrates.");

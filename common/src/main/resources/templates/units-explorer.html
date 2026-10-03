@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    ${sokrates-theme}
     <title>Units Explorer</title>
     <style>
         body {
-            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+            font-family: var(--sk-font);
             margin: 4px 12px 12px;
         }
 
@@ -14,7 +15,7 @@
         }
 
         ::placeholder {
-            color: lightgrey;
+            color: var(--sk-text-faint);
             opacity: 1;
         }
 
@@ -29,11 +30,11 @@
         }
 
         .sortable:hover {
-            color: #333333;
+            color: var(--sk-text);
         }
 
         .sort-active {
-            color: #303030;
+            color: var(--sk-text);
             font-weight: bold;
         }
 
@@ -46,7 +47,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            color: grey;
+            color: var(--sk-text-muted);
             font-size: 15px;
             padding: 40px 4px;
         }
@@ -54,8 +55,8 @@
         #loading .spinner {
             width: 22px;
             height: 22px;
-            border: 3px solid #e0e0e0;
-            border-top-color: #4a90d9;
+            border: 3px solid var(--sk-border);
+            border-top-color: var(--sk-accent);
             border-radius: 50%;
             animation: sokrates-spin 0.8s linear infinite;
         }
@@ -66,8 +67,6 @@
             }
         }
     </style>
-    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
-    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Lato">
     ${sokrates-inflate-lib}
 </head>
 <body>
@@ -78,8 +77,8 @@
 </div>
 
 <div id="report" style="display: none;">
-    <p style="margin-top: 0; color: grey">* unit analyses are experimental (using less reliable heuristic methods)</p>
-    <div style="margin: 0; color: grey">
+    <p style="margin-top: 0; color: var(--sk-text-muted)">* unit analyses are experimental (using less reliable heuristic methods)</p>
+    <div style="margin: 0; color: var(--sk-text-muted)">
         <div>
             <input id="filter" type="text" placeholder="search... (use ; for multiple terms)"
                    style="font-size: 16px; height: 32px; width: 320px; margin-bottom: 10px"
@@ -103,7 +102,7 @@
     const complexityThresholds = ${complexityThresholds};
 
     // Green (negligible) -> red (very high), matching the risk palette family.
-    const RISK_COLORS = ['#1a9641', '#a6d96a', '#fdae61', '#f03b20', '#bd0026'];
+    const RISK_COLORS = ['var(--sk-risk-negligible, #1a9641)', 'var(--sk-risk-low, #a6d96a)', '#fdae61', '#f03b20', '#bd0026'];
 
     // Returns a risk color for a value against {low, medium, high, veryHigh} thresholds.
     function riskColor(value, t) {
@@ -124,12 +123,12 @@
         const size = 30;
         if (langIcons[key]) {
             return '<img title="' + escapeHtml(lang) + '" style="margin-right: 5px; vertical-align: middle; background-color: #f1f1f1; '
-                + 'border-radius: 50%; border: 1px solid lightgrey; width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
+                + 'border-radius: 50%; border: 1px solid var(--sk-border); width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
                 + langIcons[key] + '">';
         }
         const fontSize = lang.length <= 3 ? 9 : 8;
         return '<div title="' + escapeHtml(lang) + '" style="margin-right: 5px; display: inline-block; vertical-align: middle; '
-            + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; overflow: hidden; color: darkblue; '
+            + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid var(--sk-border-strong); overflow: hidden; color: darkblue; '
             + 'width: ' + size + 'px; height: ' + size + 'px; line-height: ' + size + 'px; '
             + 'font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">' + escapeHtml(lang) + '</div>';
     }
@@ -211,7 +210,7 @@
             + ' ' + (units.length === 1 ? 'unit' : 'units') + ' (' + totalLoc.toLocaleString('en-US') + ' LOC)';
 
         let html = '<table style="width: 100%">';
-        html += '<tr style="color: #777777; background-color: #f8f8f8">';
+        html += '<tr style="color: var(--sk-text-muted); background-color: var(--sk-surface-2)">';
         html += sortHeader('lang', 'lang', 'text-align: center');
         html += sortHeader('file', 'file', 'text-align: left');
         html += sortHeader('name', 'unit', 'text-align: left');
@@ -245,8 +244,8 @@
             if (folder && folder.length > 40) {
                 displayFolder = folder.substring(0, 40) + '...';
             }
-            html += '<div style="border-left: 1px solid lightgrey; padding-left: 6px">';
-            html += '<div title="' + escapeHtml(folder) + '" style="font-size: 90%; color: #7f7f7f">' + escapeHtml(displayFolder) + '</div>';
+            html += '<div style="border-left: 1px solid var(--sk-border); padding-left: 6px">';
+            html += '<div title="' + escapeHtml(folder) + '" style="font-size: 90%; color: var(--sk-text-muted)">' + escapeHtml(displayFolder) + '</div>';
             html += '<div style="margin-bottom: 6px; color: #3f3f3f">' + escapeHtml(fileName) + '</div>';
             html += '</div>';
             html += '</td>';
@@ -254,7 +253,7 @@
             // unit name (with start line as a hint). When a source-code fragment was saved for this
             // unit, link the name to it (opens in a new tab).
             html += '<td>';
-            html += '<div style="border-left: 1px solid lightgrey; padding-left: 6px">';
+            html += '<div style="border-left: 1px solid var(--sk-border); padding-left: 6px">';
             const unitTitle = escapeHtml(item.longName || item.name) + (item.startLine ? ' (line ' + item.startLine + ')' : '');
             let displayName = item.name;
             if (displayName && displayName.length > 50) {
@@ -262,10 +261,10 @@
             }
             if (item.fragmentLink) {
                 html += '<div title="' + unitTitle + ' — view code" style="font-weight: bold">'
-                    + '<a target="_blank" href="' + escapeHtml(item.fragmentLink) + '" style="color: #0a58ca">'
-                    + escapeHtml(displayName) + ' <span style="font-size: 60%; color: #888">&#x2197;</span></a></div>';
+                    + '<a target="_blank" href="' + escapeHtml(item.fragmentLink) + '" style="color: var(--sk-accent)">'
+                    + escapeHtml(displayName) + ' <span style="font-size: 60%; color: var(--sk-text-muted)">&#x2197;</span></a></div>';
             } else {
-                html += '<div title="' + unitTitle + '" style="color: black; font-weight: bold">' + escapeHtml(displayName) + '</div>';
+                html += '<div title="' + unitTitle + '" style="color: var(--sk-text); font-weight: bold">' + escapeHtml(displayName) + '</div>';
             }
             html += '</div>';
             html += '</td>';
@@ -286,7 +285,7 @@
             html += '</td>';
 
             // number of parameters.
-            html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 85%; color: #5f5f5f;">'
+            html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 85%; color: var(--sk-text-muted);">'
                 + params.toLocaleString('en-US') + '</td>';
 
             html += '</tr>';
@@ -294,7 +293,7 @@
 
         html += '</table>';
         if (filteredData.length > 1000) {
-            html += '<div style="color: grey; font-size: 80%; margin-top: 6px">Showing the first 1,000 of '
+            html += '<div style="color: var(--sk-text-muted); font-size: 80%; margin-top: 6px">Showing the first 1,000 of '
                 + filteredData.length.toLocaleString('en-US') + ' units (sorted); refine the search to narrow the list.</div>';
         }
 

@@ -61,9 +61,9 @@ public class LogicalComponentsReportGenerator {
 
     private void addSummary() {
         if (forceSkipStaticDependencies) {
-            report.addParagraph("An overview of source code logical components.", "margin-top: 12px; color: grey; font-size: 94%");
+            report.setDescription("An overview of source code logical components.");
         } else {
-            report.addParagraph("An overview of static code dependencies among source code logical components.", "margin-top: 12px; color: grey; font-size: 94%");
+            report.setDescription("An overview of static code dependencies among source code logical components.");
         }
         report.startSection("Intro", "");
         if (elaborate) {
@@ -427,7 +427,7 @@ public class LogicalComponentsReportGenerator {
     private void addMoreDetailsSection(LogicalDecompositionAnalysisResults logicalDecomposition, List<ComponentDependency> componentDependencies) {
         report.startDetailsBlock("Show more details about dependencies...");
         report.startDiv("width: 100%; overflow-x: auto; max-height: 600px");
-        report.startTable();
+        report.startDataTable();
         report.addTableHeader("From Component<br/>&nbsp;--> To Component", "From Component<br/>(files with dependencies)", "Details");
         Collections.sort(componentDependencies, (o1, o2) -> o2.getCount() - o1.getCount());
         componentDependencies.forEach(componentDependency -> {

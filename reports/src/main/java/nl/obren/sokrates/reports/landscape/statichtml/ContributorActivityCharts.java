@@ -81,10 +81,10 @@ class ContributorActivityCharts {
         contributorsPerYear.forEach(year -> {
             landscapeReport.startTableCell(style);
             int count = year.getCommitsCount();
-            String color = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "#989898";
+            String color = year.getTimeSlot().equals(thisYear + "") ? "var(--sk-text, #343434)" : "#989898";
             landscapeReport.addParagraph(count + "", "margin: 2px; color: " + color);
             int height = 1 + (int) (64.0 * count / maxCommits);
-            String bgColor = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "lightgrey";
+            String bgColor = year.getTimeSlot().equals(thisYear + "") ? "var(--sk-text, #343434)" : "var(--sk-border-strong, lightgrey)";
             landscapeReport.addHtmlContent("<div style='width: 100%; background-color: " + bgColor + "; height:" + height + "px'></div>");
             landscapeReport.endTableCell();
         });
@@ -108,7 +108,7 @@ class ContributorActivityCharts {
         contributorsPerYear.forEach(year -> {
             landscapeReport.startTableCell(style);
             int count = timeSlots.getContributorsCountPerYear(year.getTimeSlot());
-            String color = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "#989898";
+            String color = year.getTimeSlot().equals(thisYear + "") ? "var(--sk-text, #343434)" : "#989898";
             landscapeReport.addParagraph(count + "", "margin: 2px; color: " + color + ";");
             int height = 1 + (int) (64.0 * count / maxContributors[0]);
             landscapeReport.addHtmlContent("<div style='width: 100%; background-color: skyblue; height:" + height + "px'></div>");
@@ -128,7 +128,7 @@ class ContributorActivityCharts {
             ref.latestCommitDate = ref.latestCommitDate.substring(5);
         }
         contributorsPerYear.forEach(year -> {
-            String color = year.getTimeSlot().equals(thisYear + "") ? "#343434" : "#989898";
+            String color = year.getTimeSlot().equals(thisYear + "") ? "var(--sk-text, #343434)" : "#989898";
             landscapeReport.startTableCell("vertical-align: top; border: none; text-align: center; font-size: 90%; color: " + color);
             landscapeReport.addHtmlContent(year.getTimeSlot());
             if (landscapeAnalysisResults.getLatestCommitDate().startsWith(year.getTimeSlot() + "-")) {

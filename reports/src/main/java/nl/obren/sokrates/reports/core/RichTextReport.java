@@ -37,6 +37,8 @@ public class RichTextReport {
     private String parentUrl = "";
     private List<Link> breadcrumbs = new ArrayList<>();
     private boolean embedded = false;
+    private ReportNavigation navigation;
+    private String navigationActiveId = "";
 
     public RichTextReport() {
     }
@@ -203,6 +205,18 @@ public class RichTextReport {
 
     public void startTable(String style) {
         addHtmlContent("<table style=\"" + style + "\">");
+    }
+
+    /**
+     * A table of data rows (first row = header cells): in the browser it gets sorting, a row filter, CSV
+     * download and its own horizontal scroll (ReportComponents).
+     */
+    public void startDataTable() {
+        addHtmlContent("<table class=\"sk-data-table\">");
+    }
+
+    public void startDataTable(String style) {
+        addHtmlContent("<table class=\"sk-data-table\" style=\"" + style + "\">");
     }
 
     public void endTable() {
@@ -488,7 +502,7 @@ public class RichTextReport {
         if (active) {
             styleClass += " active";
         }
-        addHtmlContent("    <button class='" + styleClass + "' onclick='openTab(event, \""
+        addHtmlContent("    <button class='" + styleClass + "' data-tab='" + id + "' onclick='openTab(event, \""
                 + id + "\")'>"
                 + label + "</button>");
     }
@@ -511,6 +525,20 @@ public class RichTextReport {
 
     public void endTabContentSection() {
         addHtmlContent("</div>");
+    }
+
+    public ReportNavigation getNavigation() {
+        return navigation;
+    }
+
+    public String getNavigationActiveId() {
+        return navigationActiveId;
+    }
+
+    /** The app-shell sidebar to render around this report, with the entry <code>activeId</code> marked as the current page. */
+    public void setNavigation(ReportNavigation navigation, String activeId) {
+        this.navigation = navigation;
+        this.navigationActiveId = activeId;
     }
 
     public boolean isEmbedded() {

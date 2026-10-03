@@ -1,5 +1,6 @@
 package nl.obren.sokrates.reports.core;
 
+import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -23,13 +24,17 @@ public class ReportHtmlWriter {
         File reportFile = new File(folder, reportFileName);
         try {
             PrintWriter out = new PrintWriter(reportFile);
-            String titleText = extractTitle(report.getDisplayName());
+            String pageTitle = ReportNavigation.pageTitle(report);
+            String titleText = pageTitle != null
+                    ? HtmlEscapeUtils.escape(pageTitle + " · " + report.getNavigation().getTitle())
+                    : extractTitle(report.getDisplayName());
             String reportsHtmlHeader = ReportConstants.REPORTS_HTML_HEADER.replace(
                     "<title></title>",
                     "<title>" + titleText + "</title>"
             );
             reportsHtmlHeader = reportsHtmlHeader.replace("<!-- CUSTOM HEADER FRAGMENT -->", customHeaderFragment);
-            if (report.isEmbedded()) {
+            boolean shell = report.getNavigation() != null && !report.isEmbedded();
+            if (report.isEmbedded() || shell) {
                 reportsHtmlHeader = reportsHtmlHeader.replace(" ${margin-left}", "0");
                 reportsHtmlHeader = reportsHtmlHeader.replace(" ${margin-right}", "0");
             } else {
@@ -37,9 +42,14 @@ public class ReportHtmlWriter {
                 reportsHtmlHeader = reportsHtmlHeader.replace(" ${margin-right}", "5%");
             }
             reportsHtmlHeader = minimize(reportsHtmlHeader);
-            out.println(reportsHtmlHeader + "\n<body><div id=\"report\">\n" + "\n");
+            if (shell) {
+                out.println(reportsHtmlHeader + "\n<body class=\"sk-has-shell\">\n" + report.getNavigation().render(report.getNavigationActiveId()));
+                out.println("<main class=\"sk-main\"><div id=\"report\">\n");
+            } else {
+                out.println(reportsHtmlHeader + "\n<body><div id=\"report\">\n" + "\n");
+            }
             new ReportRenderer().render(report, getReportRenderingClient(out, folder));
-            out.println("</div>\n</body>\n</html>");
+            out.println(shell ? "</div></main>\n</body>\n</html>" : "</div>\n</body>\n</html>");
             out.flush();
             out.close();
         } catch (FileNotFoundException e) {

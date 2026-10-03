@@ -66,7 +66,7 @@ class RichTextReportTest {
         assertEquals("<td>src/main/java/Foo.java</td>"
                 + "<li>primary (3 components)</li>"
                 + "Željko Obrenović zeljko@example.com"
-                + "    <button class='tablinks active' onclick='openTab(event, \"t\")'>java</button>", html(report));
+                + "    <button class='tablinks active' data-tab='t' onclick='openTab(event, \"t\")'>java</button>", html(report));
     }
 
     @Test

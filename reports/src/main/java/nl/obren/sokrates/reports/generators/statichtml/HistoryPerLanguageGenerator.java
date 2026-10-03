@@ -186,7 +186,7 @@ public class HistoryPerLanguageGenerator {
     }
 
     private String getBackgroundColor() {
-        return mode == Mode.COMMITS ? "#343434" : "skyblue";
+        return mode == Mode.COMMITS ? "var(--sk-text, #343434)" : "skyblue";
     }
 
     private Integer getCommitsCount(String name, int year) {

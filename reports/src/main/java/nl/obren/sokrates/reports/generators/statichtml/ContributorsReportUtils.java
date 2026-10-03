@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.reports.generators.statichtml;
 
+import nl.obren.sokrates.common.renderingutils.ReportTheme;
 import nl.obren.sokrates.common.renderingutils.charts.Palette;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.core.RichTextReport;
@@ -175,12 +176,9 @@ public class ContributorsReportUtils {
         scopePanels.keySet().forEach(label -> {
             String safeLabel = label.replaceAll("[^A-Za-z0-9]", "_");
             boolean active = i[0] == 0;
-            String bg = active ? "black" : "#eeeeee";
-            String color = active ? "white" : "#333333";
             report.addHtmlContent("<button id='" + groupId + "_btn_" + safeLabel + "'"
-                    + " onclick=\"showActivityScope('" + groupId + "', '" + safeLabel + "')\""
-                    + " style='background-color: " + bg + "; color: " + color
-                    + "; padding: 3px 12px; margin-right: 4px; cursor: pointer; border-radius: 999px; font-size: 80%; border: none'>"
+                    + " class='sk-pill" + (active ? " active" : "") + "'"
+                    + " onclick=\"showActivityScope('" + groupId + "', '" + safeLabel + "')\">"
                     + label + "</button>");
             i[0]++;
         });
@@ -207,10 +205,10 @@ public class ContributorsReportUtils {
                 + "  if (panel) { panel.style.display = 'block'; }\n"
                 + "  var btns = document.querySelectorAll('[id^=\"' + groupId + '_btn_\"]');\n"
                 + "  for (var j = 0; j < btns.length; j++) {\n"
-                + "    btns[j].style.backgroundColor = '#eeeeee'; btns[j].style.color = '#333333';\n"
+                + "    btns[j].classList.remove('active');\n"
                 + "  }\n"
                 + "  var btn = document.getElementById(groupId + '_btn_' + scope);\n"
-                + "  if (btn) { btn.style.backgroundColor = 'black'; btn.style.color = 'white'; }\n"
+                + "  if (btn) { btn.classList.add('active'); }\n"
                 + "}\n"
                 + "</script>");
     }
@@ -353,7 +351,7 @@ public class ContributorsReportUtils {
     private static void addFileUpdatesBars(RichTextReport report, ContributionTimeSlot timeSlot, int count, int maxFileUpdatesCount) {
         RiskDistributionStats stats = timeSlot.getFileUpdatesCountStats();
         String title = timeSlot.getTimeSlot() + ": " + count + "\n\n" + stats.getDescription();
-        Palette palette = Palette.getRiskPalette();
+        Palette palette = Palette.getRiskPaletteCss();
         for (int bandValue : new int[]{stats.getVeryHighRiskValue(), stats.getHighRiskValue(), stats.getMediumRiskValue(), stats.getLowRiskValue(), stats.getNegligibleRiskValue()}) {
             addBar(report, title, palette.nextColor(), bandValue, maxFileUpdatesCount);
         }
@@ -465,7 +463,8 @@ public class ContributorsReportUtils {
                                      String color, String label, int barHeight) {
         report.addHtmlContent("<div title='" + title + "' style='height: " + (CHURN_HALF_HEIGHT + labelHeight)
                 + "px; display: flex; flex-direction: column; justify-content: " + justify + "; align-items: center'>");
-        String labelHtml = "<div style='height: " + labelHeight + "px; font-size: 70%; line-height: " + labelHeight + "px; color: " + color + "'>" + label + "</div>";
+        String labelHtml = "<div class='" + (labelAboveBar ? "sk-added" : "sk-deleted") + "' style='height: " + labelHeight
+                + "px; font-size: 70%; line-height: " + labelHeight + "px'>" + label + "</div>";
         if (showLabel && labelAboveBar) {
             report.addHtmlContent(labelHtml);
         }
@@ -524,8 +523,8 @@ public class ContributorsReportUtils {
         String value;
         switch (metric) {
             case CHURN:
-                value = "<span style='color: #2e7d32;'>+" + FormattingUtils.getSmallTextForNumber(t.added) + "</span>"
-                        + "<br><span style='color: #c62828;'>-" + FormattingUtils.getSmallTextForNumber(t.deleted) + "</span>";
+                value = "<span class='sk-added'>+" + FormattingUtils.getSmallTextForNumber(t.added) + "</span>"
+                        + "<br><span class='sk-deleted'>-" + FormattingUtils.getSmallTextForNumber(t.deleted) + "</span>";
                 break;
             case FILE_UPDATES:
                 value = numberCell(t.fileUpdates);
@@ -544,7 +543,7 @@ public class ContributorsReportUtils {
     }
 
     private static String numberCell(int count) {
-        String color = count == 0 ? "#c0c0c0" : "#333333";
+        String color = count == 0 ? "var(--sk-text-faint, #c0c0c0)" : "var(--sk-text, #333333)";
         return "<span style='font-size: 150%; color: " + color + ";'>" + FormattingUtils.getSmallTextForNumber(count) + "</span>";
     }
 
@@ -652,7 +651,7 @@ public class ContributorsReportUtils {
     }
 
     public static String getIconSvg(String icon, int size) {
-        String svg = HtmlTemplateUtils.getResource("/icons/" + icon + ".svg");
+        String svg = ReportTheme.adaptiveIcon(HtmlTemplateUtils.getResource("/icons/" + icon + ".svg"));
         svg = svg.replaceAll("height='.*?'", "height='" + size + "px'");
         svg = svg.replaceAll("width='.*?'", "width='" + size + "px'");
         return svg;

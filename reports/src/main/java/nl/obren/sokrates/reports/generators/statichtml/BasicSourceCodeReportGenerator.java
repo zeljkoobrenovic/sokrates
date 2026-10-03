@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.reports.generators.statichtml;
 
+import nl.obren.sokrates.common.renderingutils.ReportTheme;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
@@ -53,7 +54,7 @@ public class BasicSourceCodeReportGenerator {
     }
 
     private static String getIconSvg(String icon) {
-        String svg = HtmlTemplateUtils.getResource("/icons/" + icon + ".svg");
+        String svg = ReportTheme.adaptiveIcon(HtmlTemplateUtils.getResource("/icons/" + icon + ".svg"));
         svg = svg.replaceAll("height='.*?'", "height='80px'");
         svg = svg.replaceAll("width='.*?'", "width='80px'");
         return svg;

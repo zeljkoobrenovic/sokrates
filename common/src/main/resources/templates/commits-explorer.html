@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    ${sokrates-theme}
     <title>Commits Explorer</title>
     <style>
         html, body {
@@ -10,13 +11,13 @@
         }
 
         body {
-            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+            font-family: var(--sk-font);
             box-sizing: border-box;
             padding: 12px;
         }
 
         ::placeholder {
-            color: lightgrey;
+            color: var(--sk-text-faint);
             opacity: 1;
         }
 
@@ -31,11 +32,11 @@
         }
 
         .sortable:hover {
-            color: #333333;
+            color: var(--sk-text);
         }
 
         .sort-active {
-            color: #303030;
+            color: var(--sk-text);
             font-weight: bold;
         }
 
@@ -69,7 +70,7 @@
             overflow-y: auto;
             overflow-x: auto;
             min-height: 0;
-            border-top: 1px solid #eeeeee;
+            border-top: 1px solid var(--sk-border);
         }
 
         #right {
@@ -90,6 +91,8 @@
             width: 100%;
             height: 100%;
             display: block;
+            background: var(--sk-canvas);
+            border-radius: 8px;
         }
 
         .commit-row {
@@ -97,7 +100,7 @@
         }
 
         .commit-row:hover {
-            background-color: #f4f8fb;
+            background-color: var(--sk-surface-2);
         }
 
         .commit-row.selected {
@@ -106,7 +109,7 @@
 
         .commit-row td {
             padding: 3px 6px;
-            border-bottom: 1px solid #f4f4f4;
+            border-bottom: 1px solid var(--sk-border);
             font-size: 90%;
         }
 
@@ -120,7 +123,7 @@
         }
 
         .mono {
-            font-family: Menlo, Consolas, monospace;
+            font-family: var(--sk-font-mono);
             font-size: 85%;
         }
 
@@ -139,9 +142,9 @@
         .badge-bot {
             display: inline-block;
             font-size: 70%;
-            color: #666666;
-            background-color: #eeeeee;
-            border: 1px solid #dddddd;
+            color: var(--sk-text-muted);
+            background-color: var(--sk-surface-3);
+            border: 1px solid var(--sk-border);
             border-radius: 4px;
             padding: 0 4px;
             margin-left: 4px;
@@ -150,9 +153,9 @@
 
         .action-button {
             font-size: 80%;
-            color: #0a58ca;
+            color: var(--sk-accent);
             background: none;
-            border: 1px solid #c9d8ef;
+            border: 1px solid var(--sk-border-strong);
             border-radius: 4px;
             padding: 2px 8px;
             cursor: pointer;
@@ -160,12 +163,12 @@
         }
 
         .action-button:hover {
-            background-color: #f0f5ff;
+            background-color: var(--sk-accent-soft);
         }
 
         .action-button:disabled {
-            color: #aaaaaa;
-            border-color: #e0e0e0;
+            color: var(--sk-text-faint);
+            border-color: var(--sk-border);
             cursor: default;
             background: none;
         }
@@ -174,7 +177,7 @@
             display: inline-block;
             width: 11px;
             height: 11px;
-            border: 1px solid #999999;
+            border: 1px solid var(--sk-border-strong);
             border-radius: 50%;
             vertical-align: middle;
             margin-right: 3px;
@@ -182,7 +185,7 @@
 
         .legend-item {
             font-size: 75%;
-            color: grey;
+            color: var(--sk-text-muted);
             margin-right: 10px;
             white-space: nowrap;
         }
@@ -213,7 +216,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            color: grey;
+            color: var(--sk-text-muted);
             font-size: 15px;
             padding: 40px 4px;
         }
@@ -221,8 +224,8 @@
         #loading .spinner {
             width: 22px;
             height: 22px;
-            border: 3px solid #e0e0e0;
-            border-top-color: #4a90d9;
+            border: 3px solid var(--sk-border);
+            border-top-color: var(--sk-accent);
             border-radius: 50%;
             animation: sokrates-spin 0.8s linear infinite;
         }
@@ -233,8 +236,6 @@
             }
         }
     </style>
-    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
-    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Lato">
     ${sokrates-inflate-lib}
 </head>
 <body>
@@ -253,24 +254,24 @@
                        style="font-size: 15px; height: 30px; width: 96%; margin-bottom: 6px"
                        onkeyup="updateList()">
                 <div style="white-space: nowrap">
-                    <span id="search-summary" style="color: grey; font-size: 80%"></span>
+                    <span id="search-summary" style="color: var(--sk-text-muted); font-size: 80%"></span>
                 </div>
                 <div style="margin-top: 6px; white-space: nowrap">
                     <button id="select-matching" class="action-button" onclick="selectMatching()">select all matching</button>
                     <button id="clear-selection" class="action-button" onclick="clearSelection()" disabled>clear selection</button>
-                    <span id="selection-summary" style="color: grey; font-size: 80%"></span>
-                    <label style="color: grey; font-size: 80%; margin-left: 10px"><input type="checkbox" id="hide-bots"
+                    <span id="selection-summary" style="color: var(--sk-text-muted); font-size: 80%"></span>
+                    <label style="color: var(--sk-text-muted); font-size: 80%; margin-left: 10px"><input type="checkbox" id="hide-bots"
                             onchange="updateList()">hide bots</label>
                 </div>
-                <div style="color: #aaaaaa; font-size: 72%; margin-top: 4px; white-space: nowrap">
+                <div style="color: var(--sk-text-faint); font-size: 72%; margin-top: 4px; white-space: nowrap">
                     click select&nbsp;·&nbsp;⌘/ctrl+click add&nbsp;·&nbsp;shift+click range&nbsp;·&nbsp;↑ ↓ navigate&nbsp;·&nbsp;esc clear
                 </div>
-                <div id="truncation-note" style="color: grey; font-size: 75%; margin-top: 4px; display: none"></div>
+                <div id="truncation-note" style="color: var(--sk-text-muted); font-size: 75%; margin-top: 4px; display: none"></div>
             </div>
             <div id="list"></div>
         </div>
         <div id="right">
-            <div style="margin-bottom: 4px; white-space: nowrap; color: grey; font-size: 90%">
+            <div style="margin-bottom: 4px; white-space: nowrap; color: var(--sk-text-muted); font-size: 90%">
                 Scope: &nbsp;
                 <label><input type="checkbox" id="scope_main" checked onchange="updateViz()">main</label>&nbsp;
                 <label><input type="checkbox" id="scope_test" checked onchange="updateViz()">test</label>&nbsp;
@@ -285,10 +286,10 @@
                 <span class="legend-item"><span class="swatch" style="background-color: #e31a1c"></span>changed in selected commits</span>
                 <span class="legend-item"><span class="swatch" style="background-color: #6a3d9a"></span>changed, no longer in codebase</span>
             </div>
-            <div id="viz-summary" style="color: grey; font-size: 80%; margin-bottom: 4px"></div>
+            <div id="viz-summary" style="color: var(--sk-text-muted); font-size: 80%; margin-bottom: 4px"></div>
             <div id="viz">
                 <svg id="vizsvg" viewBox="0 0 960 960" preserveAspectRatio="xMidYMid meet"></svg>
-                <div id="viz-empty" style="display: none; position: absolute; top: 40%; width: 100%; text-align: center; color: grey"></div>
+                <div id="viz-empty" style="display: none; position: absolute; top: 40%; width: 100%; text-align: center; color: var(--sk-text-muted)"></div>
             </div>
         </div>
     </div>
@@ -480,7 +481,7 @@
 
         if (!commits.length) {
             document.getElementById('list').innerHTML =
-                '<div style="color: grey; padding: 20px 4px">No commit history found.</div>';
+                '<div style="color: var(--sk-text-muted); padding: 20px 4px">No commit history found.</div>';
             document.getElementById('select-matching').disabled = true;
             return;
         }
@@ -496,7 +497,7 @@
             + (commits.length === 1 ? ' commit' : ' commits');
 
         let html = '<table style="width: 100%; border-collapse: collapse">';
-        html += '<tr style="color: #777777; background-color: #f8f8f8; font-size: 80%">';
+        html += '<tr style="color: var(--sk-text-muted); background-color: var(--sk-surface-2); font-size: 80%">';
         html += sortHeader('date', 'date', 'text-align: left');
         html += sortHeader('sha', 'commit', 'text-align: left');
         if (hasMessages) {
@@ -521,31 +522,31 @@
             const isSelected = selected.has(commit.idx);
             html += '<tr id="commit-row-' + commit.idx + '" class="commit-row' + (isSelected ? ' selected' : '')
                 + '" onclick="rowClick(event, ' + pos + ')">';
-            html += '<td style="color: #5f5f5f">' + commit.date + '</td>';
-            html += '<td class="mono" style="color: #888888">' + escapeHtml((commit.sha || '').substring(0, 7)) + '</td>';
+            html += '<td style="color: var(--sk-text-muted)">' + commit.date + '</td>';
+            html += '<td class="mono" style="color: var(--sk-text-muted)">' + escapeHtml((commit.sha || '').substring(0, 7)) + '</td>';
             if (hasMessages) {
                 html += '<td style="max-width: 300px; text-overflow: ellipsis" title="' + escapeHtml(commit.message || '') + '">'
-                    + (commit.message ? escapeHtml(commit.message) : '<span style="color: lightgrey">-</span>') + '</td>';
+                    + (commit.message ? escapeHtml(commit.message) : '<span style="color: var(--sk-text-faint)">-</span>') + '</td>';
             }
             html += '<td style="max-width: 220px; text-overflow: ellipsis" title="' + escapeHtml(commit.email || '') + '">'
                 + escapeHtml(commit.userName || commit.email || '')
                 + (commit.bot ? '<span class="badge-bot">bot</span>' : '') + '</td>';
             if (hasCoAuthors) {
                 html += '<td style="max-width: 200px; text-overflow: ellipsis">'
-                    + (commit.coAuthors.length ? coAuthorsHtml(commit) : '<span style="color: lightgrey">-</span>') + '</td>';
+                    + (commit.coAuthors.length ? coAuthorsHtml(commit) : '<span style="color: var(--sk-text-faint)">-</span>') + '</td>';
             }
             html += '<td style="text-align: right" title="' + filesTooltip(commit) + '">'
                 + commit.files.length.toLocaleString('en-US') + '</td>';
-            html += '<td style="text-align: right; color: #1a9641">'
-                + (commit.linesAdded ? '+' + commit.linesAdded.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
-            html += '<td style="text-align: right; color: #bd0026">'
-                + (commit.linesDeleted ? '−' + commit.linesDeleted.toLocaleString('en-US') : '<span style="color: lightgrey">-</span>') + '</td>';
+            html += '<td class="sk-added" style="text-align: right">'
+                + (commit.linesAdded ? '+' + commit.linesAdded.toLocaleString('en-US') : '<span style="color: var(--sk-text-faint)">-</span>') + '</td>';
+            html += '<td class="sk-deleted" style="text-align: right">'
+                + (commit.linesDeleted ? '−' + commit.linesDeleted.toLocaleString('en-US') : '<span style="color: var(--sk-text-faint)">-</span>') + '</td>';
             html += '</tr>';
         });
         html += '</table>';
 
         if (lastFiltered.length > 1000) {
-            html += '<div style="color: grey; font-size: 80%; margin-top: 6px">Showing the first 1,000 of '
+            html += '<div style="color: var(--sk-text-muted); font-size: 80%; margin-top: 6px">Showing the first 1,000 of '
                 + lastFiltered.length.toLocaleString('en-US') + ' commits (sorted); refine the search to narrow the list.</div>';
         }
 

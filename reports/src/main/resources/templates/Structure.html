@@ -2,32 +2,54 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    ${sokrates-theme}
     <title>Structure</title>
     <style type="text/css" media="all">
+        /* One screen, no page scroll: the tab strip and legend take what they need and the active
+           visual fills the rest of the frame (the visuals zoom and scroll themselves). */
+        html, body {
+            height: 100%;
+        }
+
         body {
-            font-family: Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+            font-family: var(--sk-font);
+            margin: 0 8px;
+            overflow: hidden;
+        }
+
+        .sk-structure {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .sk-structure-open {
+            position: absolute;
+            top: 4px;
+            right: 4px;
         }
 
         a {
             text-decoration: none;
-            color: #c0c0c0;
+            color: var(--sk-text-faint);
         }
 
         .tab {
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid var(--sk-border);
             margin-bottom: 4px;
         }
 
         .tab button {
             position: relative;
-            font-family: inherit;
+            font-family: var(--sk-font);
             font-size: 14px;
             font-weight: 500;
             background-color: transparent;
-            color: #6b7280;
+            color: var(--sk-text-muted);
             border: none;
             border-bottom: 2px solid transparent;
             border-radius: 8px 8px 0 0;
@@ -39,24 +61,33 @@
         }
 
         .tab button:hover {
-            color: #1f2937;
-            background-color: #f3f4f6;
+            color: var(--sk-text);
+            background-color: var(--sk-hover);
         }
 
         .tab button:focus-visible {
-            outline: 2px solid #1d4ed8;
+            outline: 2px solid var(--sk-accent);
             outline-offset: -2px;
         }
 
         .tab button.active {
-            color: #1d4ed8;
-            border-bottom-color: #1d4ed8;
+            color: var(--sk-accent);
+            border-bottom-color: var(--sk-accent);
         }
 
         .tabcontent {
             display: none;
+            flex-direction: column;
+            flex: 1 1 auto;
+            min-height: 0;
             padding: 0;
             border-top: none;
+        }
+
+        .tabcontent iframe {
+            flex: 1 1 auto;
+            min-height: 0;
+            height: auto !important;
         }
 
         .category-color {
@@ -69,13 +100,16 @@
 
         .legend-container {
             margin-left: 7px;
-            margin-bottom: -7px;
+            margin-bottom: 4px;
+            margin-top: 12px;
             font-size: 13px;
-            color: #a0a0a0;
+            color: var(--sk-text-muted);
+        }
+
+        .tabcontent iframe {
+            border-radius: 8px;
         }
     </style>
-    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Ubuntu">
-    <link rel="stylesheet" target="_blank" href="https://fonts.googleapis.com/css?family=Lato">
     <script>
         function openTab(evt, cityName) {
             var i, tabcontent, tablinks;
@@ -87,14 +121,14 @@
             for (i = 0; i < tablinks.length; i++) {
                 tablinks[i].className = tablinks[i].className.replace(" active", "");
             }
-            document.getElementById(cityName).style.display = "block";
+            document.getElementById(cityName).style.display = "flex";
             evt.currentTarget.className += " active";
         }
     </script>
 </head>
 <body>
-<div style="margin-left: -5px; margin-bottom: 10px">
-    <div class="tab">
+<div class="sk-structure">
+    <div class="tab" style="padding-right: 48px">
         <button class="tablinks active" onclick="openTab(event, 'all_files')"
                 title="All files grouped by folder: size = lines of code, color = scope">All Files
         </button>
@@ -116,25 +150,25 @@
         <button class="tablinks" onclick="openTab(event, 'contributors')"
                 title="Contributors: size = lines of code, color = contributors category">Contributors
         </button>
-        <button class="tablinks" onclick="openTab(event, 'test')" title="Test files: size = lines of code, no coloring" style="border: 1px dashed #c0c0c0">
+        <button class="tablinks" onclick="openTab(event, 'test')" title="Test files: size = lines of code, no coloring" style="border: 1px dashed var(--sk-border-strong)">
             Test Code
         </button>
-        <button class="tablinks" onclick="openTab(event, 'build')" style="border: 1px dashed #c0c0c0"
+        <button class="tablinks" onclick="openTab(event, 'build')" style="border: 1px dashed var(--sk-border-strong)"
                 title="Build and deployment code files: size = lines of code, no coloring">Build
         </button>
-        <button class="tablinks" onclick="openTab(event, 'generated')" style="border: 1px dashed #c0c0c0"
+        <button class="tablinks" onclick="openTab(event, 'generated')" style="border: 1px dashed var(--sk-border-strong)"
                 title="Generated files: size = lines of code, no coloring">Generated
         </button>
-        <button class="tablinks" onclick="openTab(event, 'other')" style="border: 1px dashed #c0c0c0"
+        <button class="tablinks" onclick="openTab(event, 'other')" style="border: 1px dashed var(--sk-border-strong)"
                 title="Other files: size = lines of code, no coloring">Other
         </button>
     </div>
 
-    <div style="margin-left: 950px; margin-top: -42px">
-        <a target="_blank" href="Structure.html">
+    <div class="sk-structure-open">
+        <a target="_blank" href="Structure.html" title="Open in a new tab">
             <div style="display:inline-block; vertical-align: middle;">
-                <svg width='38px' height='38px' version="1.1" viewBox="0 0 1200 1200"
-                     xmlns="http://www.w3.org/2000/svg">
+                <svg width='38px' height='38px' version="1.1" viewBox="0 0 1200 1200" fill="currentColor"
+                     style="color: var(--sk-text-muted)" xmlns="http://www.w3.org/2000/svg">
                     <g>
                         <path d="m345.6 985.2h432c73.199 0 132-58.801 132-132v-264c0-7.1992-4.8008-12-12-12-7.1992 0-12 4.8008-12 12v264c0 60-48 108-108 108h-432c-60 0-108-48-108-108v-432c0-60 48-108 108-108h264c7.1992 0 12-4.8008 12-12s-4.8008-12-12-12h-264c-73.199 0-132 58.801-132 132v432c0 73.199 58.797 132 132 132z"/>
                         <path d="m974.4 458.4c7.1992 0 12-4.8008 12-12v-219.6c0-7.1992-4.8008-12-12-12h-220.8c-7.1992 0-12 4.8008-12 12s4.8008 12 12 12h190.8l-372 370.8c-4.8008 4.8008-4.8008 12 0 16.801 4.8008 4.8008 12 4.8008 16.801 0l372-370.8v190.8c1.1953 5.9961 5.9961 11.996 13.195 11.996z"/>
@@ -163,13 +197,13 @@
         </iframe>
     </div>
 
-    <div id="all_files" class="tabcontent" style="display: block">
+    <div id="all_files" class="tabcontent" style="display: flex">
         <div class="legend-container">
             <table>
                 <tr>
                     <td>scope:</td>
                     <td>
-                        <div class="category-color" style="background-color: #ffffff; border: 1px solid #c0c0c0"></div>
+                        <div class="category-color" style="background-color: #ffffff; border: 1px solid var(--sk-border-strong)"></div>
                         main
                     </td>
                     <td>

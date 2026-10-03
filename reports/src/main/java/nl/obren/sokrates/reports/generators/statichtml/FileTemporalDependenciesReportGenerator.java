@@ -36,8 +36,8 @@ public class FileTemporalDependenciesReportGenerator {
 
     public void addTemporalDependenciesToReport(File reportsFolder, RichTextReport report) {
         this.reportsFolder = reportsFolder;
-        report.addParagraph("A temporal dependency occurs when developers change two or more files " +
-                "at the same time (i.e. they are a part of the same commit).", "margin-top: 12px; color: grey; font-size: 94%");
+        report.setDescription("A temporal dependency occurs when developers change two or more files " +
+                "at the same time (i.e. they are a part of the same commit).");
 
         int maxTemporalDependenciesDepthDays = codeAnalysisResults.getCodeConfiguration().getAnalysis().getMaxTemporalDependenciesDepthDays();
         FilesHistoryAnalysisResults historyResults = codeAnalysisResults.getFilesHistoryAnalysisResults();
@@ -131,7 +131,7 @@ public class FileTemporalDependenciesReportGenerator {
 
     private void addTable(RichTextReport report, List<FilePairChangedTogether> filePairs) {
         report.startDiv("max-height: 400px; overflow-y: auto");
-        report.startTable();
+        report.startDataTable();
         report.addTableHeader("Pairs", "# same commits", "# commits 1", "# commits 2", "latest commit");
         filePairs.forEach(filePair -> {
             report.startTableRow();

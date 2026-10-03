@@ -21,6 +21,17 @@ public class Palette {
         return new Palette(Arrays.asList("#d7191c", "#fdae61", "#ffffbf", "#a6d96a", "#1a9641"));
     }
 
+    /**
+     * The risk palette for HTML/CSS contexts (inline styles, SVG style="fill:"): the same colors as
+     * {@link #getRiskPalette()}, as theme variables (ReportTheme) with the literal as fallback, so the
+     * viewer's colour-blind safe palette can replace them. Not for JSON data or SVG attributes.
+     */
+    public static Palette getRiskPaletteCss() {
+        return new Palette(Arrays.asList(
+                "var(--sk-risk-very-high, #d7191c)", "var(--sk-risk-high, #fdae61)", "var(--sk-risk-medium, #ffffbf)",
+                "var(--sk-risk-low, #a6d96a)", "var(--sk-risk-negligible, #1a9641)"));
+    }
+
     public static Palette getHeatPalette() {
         //return new Palette(Arrays.asList("#bd0026", "#f03b20", "#fd8d3c", "#fed98e", "#ffffd4"));
         return new Palette(Arrays.asList("#b21227", "#f7844e", "#e6f5df", "#b0d8e9", "#6192c3"));

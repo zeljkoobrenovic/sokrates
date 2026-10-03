@@ -2,33 +2,34 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    ${sokrates-theme}
     <title>Repositories</title>
     <style type="text/css" media="all">
         body {
-            font-family: Roboto, Vollkorn, Ubuntu, Optima, Segoe, Segoe UI, Candara, Calibri, Arial, sans-serif;
+            font-family: var(--sk-font);
             margin: 14px;
         }
 
         table {
-            color: #333;
+            color: var(--sk-text);
             border-collapse: collapse;
             border-spacing: 0;
         }
 
         td, th {
-            border: 1px solid white;
+            border: 1px solid var(--sk-bg);
             height: 30px;
             padding-left: 10px;
             padding-right: 10px;
         }
 
         th {
-            background: #f4f4f4;
+            background: var(--sk-surface-3);
             font-weight: bold;
         }
 
         td {
-            background: #FFFFFF;
+            background: var(--sk-surface);
             text-align: left;
         }
 
@@ -37,7 +38,7 @@
         }
 
         ::placeholder {
-            color: lightgrey;
+            color: var(--sk-text-faint);
             opacity: 1;
         }
 
@@ -46,17 +47,17 @@
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid var(--sk-border);
             margin-bottom: 4px;
         }
 
         .tab button {
             position: relative;
-            font-family: inherit;
+            font-family: var(--sk-font);
             font-size: 14px;
             font-weight: 500;
             background-color: transparent;
-            color: #6b7280;
+            color: var(--sk-text-muted);
             border: none;
             border-bottom: 2px solid transparent;
             border-radius: 8px 8px 0 0;
@@ -68,25 +69,25 @@
         }
 
         .tab button:hover {
-            color: #1f2937;
-            background-color: #f3f4f6;
+            color: var(--sk-text);
+            background-color: var(--sk-hover);
         }
 
         .tab button:focus-visible {
-            outline: 2px solid #1d4ed8;
+            outline: 2px solid var(--sk-accent);
             outline-offset: -2px;
         }
 
         .tab button.active {
-            color: #1d4ed8;
-            border-bottom-color: #1d4ed8;
+            color: var(--sk-accent);
+            border-bottom-color: var(--sk-accent);
         }
 
         .tab a.tab-link {
             display: inline-flex;
             align-items: center;
             padding: 11px 16px;
-            color: #1d4ed8;
+            color: var(--sk-accent);
             font-size: 14px;
             font-weight: 500;
         }
@@ -104,16 +105,16 @@
         }
 
         .sortable:hover {
-            background: #e8e8e8;
+            background: var(--sk-surface-3);
         }
 
         .sort-active {
-            background: #e2e2e2;
+            background: var(--sk-hover);
         }
 
         .sort-arrow {
             font-size: 80%;
-            color: #555;
+            color: var(--sk-text-muted);
         }
 
         .tag-badge {
@@ -129,7 +130,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            color: grey;
+            color: var(--sk-text-muted);
             font-size: 15px;
             padding: 40px 4px;
         }
@@ -137,8 +138,8 @@
         #loading .spinner {
             width: 22px;
             height: 22px;
-            border: 3px solid #e0e0e0;
-            border-top-color: #4a90d9;
+            border: 3px solid var(--sk-border);
+            border-top-color: var(--sk-accent);
             border-radius: 50%;
             animation: sokrates-spin 0.8s linear infinite;
         }
@@ -149,7 +150,6 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu">
     ${sokrates-inflate-lib}
 </head>
 <body>
@@ -160,7 +160,7 @@
 </div>
 
 <div id="report" style="display: none;">
-    <div style="color: grey; margin: 8px 0 10px 0;">
+    <div style="color: var(--sk-text-muted); margin: 8px 0 10px 0;">
         <input id="filter" type="text" placeholder="search by name; mainLang:cs,java by main language; includesLang:go (any scope) or includesLang:main:go (one scope)"
                style="font-size: 16px; height: 30px; width: 700px;"
                onkeyup="render()">
@@ -171,7 +171,7 @@
          detail; the matched-count summary stays inline next to the filter above. Hidden entirely
          when the query is empty; collapsed by default otherwise (see updateProportionBars). -->
     <details id="search-stats" style="margin-bottom: 10px; display: none;">
-        <summary style="color: grey; cursor: pointer;">search stats...</summary>
+        <summary style="color: var(--sk-text-muted); cursor: pointer;">search stats...</summary>
         <div id="proportion-bars" style="margin-top: 8px;"></div>
     </details>
 
@@ -236,13 +236,13 @@
         let badge;
         if (langIcons[key]) {
             badge = '<img title="' + title + '" style="margin-right: 3px; vertical-align: top; background-color: #f1f1f1; '
-                + 'border-radius: 50%; border: 1px solid lightgrey; width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
+                + 'border-radius: 50%; border: 1px solid var(--sk-border); width: ' + size + 'px; height: ' + size + 'px; object-fit: contain;" src="'
                 + langIcons[key] + '">';
         } else {
             const fontSize = lang.length <= 3 ? 14 : 12;
             const padding = lang.length <= 3 ? 9 : 11;
             badge = '<div title="' + title + '" style="margin-right: 3px; display: inline-block; vertical-align: top; '
-                + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid grey; overflow: hidden; color: darkblue; '
+                + 'background-color: #D6E4E1; border-radius: 50%; border: 1px solid var(--sk-border-strong); overflow: hidden; color: darkblue; '
                 + 'width: ' + size + 'px; height: ' + size + 'px; '
                 + 'font-size: ' + fontSize + 'px; font-weight: bold; text-align: center;">'
                 + '<div style="height: ' + padding + 'px"></div>' + esc(lang) + '</div>';
@@ -275,7 +275,7 @@
         let inner;
         if (name.indexOf('/') >= 0) {
             const i = name.indexOf('/');
-            inner = '<div style="font-size: 90%; color: grey; ' + clip + '">' + esc(name.substring(0, i)) + '</div>'
+            inner = '<div style="font-size: 90%; color: var(--sk-text-muted); ' + clip + '">' + esc(name.substring(0, i)) + '</div>'
                 + '<div style="' + clip + '">' + esc(name.substring(i + 1)) + '</div>';
         } else {
             inner = '<div style="' + clip + '">' + esc(name) + '</div>';
@@ -285,10 +285,10 @@
             : '';
         const title = md.description ? ' title="' + esc(md.description) + '"' : '';
         const repoLink = md.links && md.links.length && md.links[0].href
-            ? '<a href="' + esc(md.links[0].href) + '" target="_blank" title="' + esc(md.links[0].label || md.links[0].href) + '" style="color: #999; text-decoration: none; margin-left: 6px; font-size: 85%; flex: none">&#8599;</a>'
+            ? '<a href="' + esc(md.links[0].href) + '" target="_blank" title="' + esc(md.links[0].label || md.links[0].href) + '" style="color: var(--sk-text-faint); text-decoration: none; margin-left: 6px; font-size: 85%; flex: none">&#8599;</a>'
             : '';
         return '<span style="display: flex; align-items: center; min-width: 0">' + logo
-            + '<a href="' + esc(url) + '" target="_blank" style="color: #333; min-width: 0"' + title + '>' + inner + '</a>' + repoLink + '</span>';
+            + '<a href="' + esc(url) + '" target="_blank" style="color: var(--sk-text); min-width: 0"' + title + '>' + inner + '</a>' + repoLink + '</span>';
     }
 
     function ageText(item) {
@@ -366,7 +366,7 @@
     // Like miniBars, but each slot is a stacked bar: lines added (green) on top of lines deleted
     // (red). Both segments share one scale (the busiest slot's added + deleted total).
     function miniChurnBars(history, slotCount) {
-        const ADDED = '#2e7d32', DELETED = '#c62828';
+        const ADDED = 'var(--sk-added, #2e7d32)', DELETED = 'var(--sk-deleted, #c62828)';
         const stripWidth = slotCount * BAR_WIDTH;
         let html = '<div style="white-space: nowrap; width: ' + stripWidth + 'px; overflow: hidden;">';
         if (history && history.slots && history.slots.length) {
@@ -429,22 +429,22 @@
 
     // Palettes match the original report (Palette.java). Colors are indexed in the
     // order the bands are drawn: veryHigh, high, medium, low, negligible (left -> right).
-    const RISK_PALETTE = ['#d7191c', '#fdae61', '#ffffbf', '#a6d96a', '#1a9641'];
+    const RISK_PALETTE = ['var(--sk-risk-very-high, #d7191c)', 'var(--sk-risk-high, #fdae61)', 'var(--sk-risk-medium, #ffffbf)', 'var(--sk-risk-low, #a6d96a)', 'var(--sk-risk-negligible, #1a9641)'];
     const AGE_PALETTE = ['#4a3c31', '#fac831', '#ffdf44', '#fff18e', '#fcf4cb'];   // newness
     const FRESH_PALETTE = ['#041E02', '#006d2c', '#31a354', '#74c476', '#bae4b3']; // freshness
     const HEAT_PALETTE = ['#b21227', '#f7844e', '#e6f5df', '#b0d8e9', '#6192c3'];  // update frequency
 
     function riskBar(bands, palette) {
         if (!bands) {
-            return '<span style="color: grey; font-size: 70%">-</span>';
+            return '<span style="color: var(--sk-text-muted); font-size: 70%">-</span>';
         }
         // Same band order as the original getRiskProfileVisual: veryHigh first.
         const order = ['veryHigh', 'high', 'medium', 'low', 'negligible'];
         const total = order.reduce((a, k) => a + (bands[k] || 0), 0);
         if (total === 0) {
-            return '<span style="color: grey; font-size: 70%">-</span>';
+            return '<span style="color: var(--sk-text-muted); font-size: 70%">-</span>';
         }
-        let html = '<div style="display: inline-block; width: 100px; height: 24px; white-space: nowrap; border: 1px solid #eee;" '
+        let html = '<div style="display: inline-block; width: 100px; height: 24px; white-space: nowrap; border: 1px solid var(--sk-border);" '
             + 'title="' + order.map(k => k + ': ' + num(bands[k])).join('\n') + '">';
         order.forEach((k, i) => {
             const w = 100 * (bands[k] || 0) / total;
@@ -458,11 +458,11 @@
 
     function duplicationBar(metrics) {
         if (!metrics || metrics.skipDuplication) {
-            return '<span style="color: grey; font-size: 70%">not measured</span>';
+            return '<span style="color: var(--sk-text-muted); font-size: 70%">not measured</span>';
         }
         const pct = metrics.duplicationPercentage || 0;
         const w = Math.min(100, Math.round(pct));
-        return '<div title="' + pct.toFixed(1) + '% duplication" style="position: relative; display: inline-block; width: 100px; height: 24px; background-color: #9DC034; border: 1px solid #eee; vertical-align: middle;">'
+        return '<div title="' + pct.toFixed(1) + '% duplication" style="position: relative; display: inline-block; width: 100px; height: 24px; background-color: #9DC034; border: 1px solid var(--sk-border); vertical-align: middle;">'
             + '<div style="position: absolute; left: 0; top: 0; height: 24px; width: ' + w + '%; background-color: crimson;"></div></div>'
             + '<span style="font-size: 70%; margin-left: 4px;">' + pct.toFixed(1) + '%</span>';
     }
@@ -565,7 +565,7 @@
     // Contributor count cell with the list of emails as a tooltip (as in the explorer).
     function contributorsCell(list, dim) {
         const people = list || [];
-        return '<td style="text-align: center; font-size: 90%; cursor: help;' + (dim ? ' color: #b0b0b0;' : '') + '" title="'
+        return '<td style="text-align: center; font-size: 90%; cursor: help;' + (dim ? ' color: var(--sk-text-faint);' : '') + '" title="'
             + esc(people.join('\n')) + '">' + num(people.length) + '</td>';
     }
 
@@ -581,15 +581,15 @@
             {key: 'commits30', label: '30d', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.commitsCount30Days, cell: i => '<td style="text-align: center; font-size: 90%;">' + num(i.commitsCount30Days) + '</td>'},
             {key: 'commits90', label: '90d', type: 'number', dir: -1, headerStyle: 'text-align: center;',
-                value: i => i.commitsCount90Days, cell: i => '<td style="text-align: center; font-size: 90%; color: #b0b0b0;">' + num(i.commitsCount90Days) + '</td>'},
+                value: i => i.commitsCount90Days, cell: i => '<td style="text-align: center; font-size: 90%; color: var(--sk-text-faint);">' + num(i.commitsCount90Days) + '</td>'},
             {key: 'commitsAll', label: 'all time', type: 'number', dir: -1, headerStyle: 'text-align: center;',
-                value: i => i.commitsCount, cell: i => '<td style="text-align: center; font-size: 90%; color: #b0b0b0;">' + num(i.commitsCount) + '</td>'},
+                value: i => i.commitsCount, cell: i => '<td style="text-align: center; font-size: 90%; color: var(--sk-text-faint);">' + num(i.commitsCount) + '</td>'},
             {key: 'churn30', label: '30d', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.churn30Days || 0, cell: i => '<td style="text-align: center; font-size: 90%;">' + num(i.churn30Days || 0) + '</td>'},
             {key: 'churn90', label: '90d', type: 'number', dir: -1, headerStyle: 'text-align: center;',
-                value: i => i.churn90Days || 0, cell: i => '<td style="text-align: center; font-size: 90%; color: #b0b0b0;">' + num(i.churn90Days || 0) + '</td>'},
+                value: i => i.churn90Days || 0, cell: i => '<td style="text-align: center; font-size: 90%; color: var(--sk-text-faint);">' + num(i.churn90Days || 0) + '</td>'},
             {key: 'churnAll', label: 'all time', type: 'number', dir: -1, headerStyle: 'text-align: center;',
-                value: i => i.churn || 0, cell: i => '<td style="text-align: center; font-size: 90%; color: #b0b0b0;">' + num(i.churn || 0) + '</td>'},
+                value: i => i.churn || 0, cell: i => '<td style="text-align: center; font-size: 90%; color: var(--sk-text-faint);">' + num(i.churn || 0) + '</td>'},
             {key: 'contributors30', label: '30d', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => (i.contributors30Days || []).length, cell: i => contributorsCell(i.contributors30Days, false)},
             {key: 'contributors90', label: '90d', type: 'number', dir: -1, headerStyle: 'text-align: center;',
@@ -629,9 +629,9 @@
             {key: 'churn30', label: 'Line churn<br>(30d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.churn30Days || 0, cell: i => '<td style="text-align: center;">' + num(i.churn30Days || 0) + '</td>'},
             {key: 'churn90', label: 'Line churn<br>(90d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
-                value: i => i.churn90Days || 0, cell: i => '<td style="text-align: center; color: #b0b0b0;">' + num(i.churn90Days || 0) + '</td>'},
+                value: i => i.churn90Days || 0, cell: i => '<td style="text-align: center; color: var(--sk-text-faint);">' + num(i.churn90Days || 0) + '</td>'},
             {key: 'churnAll', label: 'Line churn<br>(all time)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
-                value: i => i.churn || 0, cell: i => '<td style="text-align: center; color: #b0b0b0;">' + num(i.churn || 0) + '</td>'},
+                value: i => i.churn || 0, cell: i => '<td style="text-align: center; color: var(--sk-text-faint);">' + num(i.churn || 0) + '</td>'},
             churnBarColumn('perWeek', 'Line churn per Week (past year)', 'weeks', WEEK_SLOTS),
             reportCol
         ]
@@ -696,9 +696,9 @@
             {key: 'commits30', label: 'Commits<br>(30d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => i.commitsCount30Days, cell: i => '<td style="text-align: center; font-size: 90%;">' + num(i.commitsCount30Days) + '</td>'},
             {key: 'commits90', label: 'Commits<br>(90d)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
-                value: i => i.commitsCount90Days, cell: i => '<td style="text-align: center; font-size: 90%; color: #b0b0b0;">' + num(i.commitsCount90Days) + '</td>'},
+                value: i => i.commitsCount90Days, cell: i => '<td style="text-align: center; font-size: 90%; color: var(--sk-text-faint);">' + num(i.commitsCount90Days) + '</td>'},
             {key: 'commits', label: 'Commits<br>(all time)', type: 'number', dir: -1, headerStyle: 'text-align: center;',
-                value: i => i.commitsCount, cell: i => '<td style="text-align: center; font-size: 90%; color: #b0b0b0;">' + num(i.commitsCount) + '</td>'},
+                value: i => i.commitsCount, cell: i => '<td style="text-align: center; font-size: 90%; color: var(--sk-text-faint);">' + num(i.commitsCount) + '</td>'},
             barColumn('perYear', 'Commits per Year', 'years', 'commits', '#4a90d9', YEAR_SLOTS, yearSlotNote),
             {key: 'contrib', label: 'Contributors', type: 'number', dir: -1, headerStyle: 'text-align: center;',
                 value: i => (i.contributors || []).length, cell: i => '<td style="text-align: center; font-size: 90%;">' + num((i.contributors || []).length) + '</td>'},
@@ -725,7 +725,7 @@
             {key: 'name', label: 'Repository', type: 'string', dir: 1, headerStyle: 'text-align: left; ' + NAME_COL_STYLE,
                 value: i => (i.metadata && i.metadata.name ? i.metadata.name : '').toLowerCase(),
                 cell: i => '<td style="vertical-align: middle; ' + NAME_COL_STYLE + '">' + repoNameHtml(i)
-                    + '<div style="color: black; font-size: 80%"><b>' + num(i.mainLinesOfCode) + '</b> LOC (main)'
+                    + '<div style="color: var(--sk-text); font-size: 80%"><b>' + num(i.mainLinesOfCode) + '</b> LOC (main)'
                     + (i.commitsCount90Days > 0 ? ', <b>' + num(i.commitsCount90Days) + '</b> commits (90d)' : '') + '</div></td>'},
             {key: 'duplication', label: 'Duplication', type: 'number', dir: -1, headerStyle: 'text-align: left;',
                 value: i => i.repositoryMetrics ? i.repositoryMetrics.duplicationPercentage : 0,
@@ -786,7 +786,7 @@
         if (!links || !links.length) {
             return '';
         }
-        const items = links.map(l => '<a href="' + esc(l.href) + '" target="_blank" style="color: #4a90d9;">' + esc(l.label) + '</a>').join('<span style="color: #ccc;"> | </span>');
+        const items = links.map(l => '<a href="' + esc(l.href) + '" target="_blank" style="color: var(--sk-accent);">' + esc(l.label) + '</a>').join('<span style="color: #ccc;"> | </span>');
         return '<div style="margin: 4px 0 10px 0; font-size: 90%;">' + items + '</div>';
     }
 
@@ -807,7 +807,7 @@
         const maxHeight = 64;
 
         let html = '<div style="white-space: nowrap; overflow-x: auto; width: 100%; margin-bottom: 14px;">';
-        html += '<div style="font-size: 80%; color: grey; margin-bottom: 5px;">' + esc(title) + ':</div>';
+        html += '<div style="font-size: 80%; color: var(--sk-text-muted); margin-bottom: 5px;">' + esc(title) + ':</div>';
         for (let year = last; year >= first; year--) {
             const c = counts[year] || 0;
             const height = Math.round(1 + maxHeight * c / max);
@@ -818,7 +818,7 @@
             html += '<div style="display: inline-block; text-align: center; vertical-align: bottom; margin-right: 1px;" title="' + esc(tip) + '">'
                 + '<div style="font-size: 80%; height: 14px;">' + (c > 0 ? num(c) : '') + '</div>'
                 + '<div style="opacity: 0.5; background-color: ' + color + '; width: 44px; height: ' + height + 'px;"></div>'
-                + '<div style="font-size: 70%; color: grey;">' + year + '</div>'
+                + '<div style="font-size: 70%; color: var(--sk-text-muted);">' + year + '</div>'
                 + '</div>';
         }
         html += '</div>';
@@ -878,7 +878,7 @@
         if (!years.length) {
             return '';
         }
-        const ADDED = '#2e7d32', DELETED = '#c62828';
+        const ADDED = 'var(--sk-added, #2e7d32)', DELETED = 'var(--sk-deleted, #c62828)';
         const first = parseInt(years.sort()[0], 10);
         const last = Math.max(parseInt(years[years.length - 1], 10), LATEST_YEAR || 0);
         let max = 1;
@@ -888,7 +888,7 @@
         const maxHeight = 64;
 
         let html = '<div style="white-space: nowrap; overflow-x: auto; width: 100%; margin-bottom: 14px;">';
-        html += '<div style="font-size: 80%; color: grey; margin-bottom: 5px;">line churn per year '
+        html += '<div style="font-size: 80%; color: var(--sk-text-muted); margin-bottom: 5px;">line churn per year '
             + '(<span style="color: ' + ADDED + ';">added</span> / <span style="color: ' + DELETED + ';">deleted</span>):</div>';
         for (let year = last; year >= first; year--) {
             const a = added[year] || 0;
@@ -903,7 +903,7 @@
                 + '<div style="font-size: 70%; height: 26px;">' + label + '</div>'
                 + '<div style="opacity: 0.6; background-color: ' + ADDED + '; width: 44px; height: ' + hAdded + 'px;"></div>'
                 + '<div style="opacity: 0.6; background-color: ' + DELETED + '; width: 44px; height: ' + hDeleted + 'px;"></div>'
-                + '<div style="font-size: 70%; color: grey;">' + year + '</div>'
+                + '<div style="font-size: 70%; color: var(--sk-text-muted);">' + year + '</div>'
                 + '</div>';
         }
         html += '</div>';
@@ -1091,9 +1091,9 @@
         if (totalCount <= shownCount) {
             return '';
         }
-        return '<div style="margin: 15px 2px; font-size: 16px; color: #555;">'
+        return '<div style="margin: 15px 2px; font-size: 16px; color: var(--sk-text-muted);">'
             + 'Showing ' + num(shownCount) + ' of ' + num(totalCount) + '. '
-            + '<a onclick="showMore()" style="cursor: pointer; color: #4a90d9;">show ' + num(Math.min(PAGE_SIZE, totalCount - shownCount)) + ' more</a>'
+            + '<a onclick="showMore()" style="cursor: pointer; color: var(--sk-accent);">show ' + num(Math.min(PAGE_SIZE, totalCount - shownCount)) + ' more</a>'
             + '</div>';
     }
 
@@ -1124,11 +1124,11 @@
             const shown = (part === 0 || w1 > 0) ? w1 : '<1';
             return '<div style="width: 400px; margin: 0; padding: 0; white-space: nowrap">'
                 + '<div style="margin: 0; display: inline-block; width: ' + w1 + '%; background-color: ' + color + '; height: 12px"></div>'
-                + '<div style="margin: 0; display: inline-block; width: ' + w2 + '%; background-color: #c0c0c0; height: 12px"></div>'
-                + '<div style="margin: 0; display: inline-block; font-size: 80%; width: 180px; color: grey; vertical-align: top">&nbsp;' + shown + '% ' + label + ' (' + num(part) + ')</div>'
+                + '<div style="margin: 0; display: inline-block; width: ' + w2 + '%; background-color: var(--sk-border-strong); height: 12px"></div>'
+                + '<div style="margin: 0; display: inline-block; font-size: 80%; width: 180px; color: var(--sk-text-muted); vertical-align: top">&nbsp;' + shown + '% ' + label + ' (' + num(part) + ')</div>'
                 + '</div>';
         }
-        return bar(count, TOTAL_COUNT, '#303030', 'of repositories')
+        return bar(count, TOTAL_COUNT, 'var(--sk-text)', 'of repositories')
             + bar(mainLoc, TOTAL_MAIN_LOC, 'skyblue', 'of LOC')
             + bar(commits, TOTAL_COMMITS, 'green', 'of commits')
             + bar(recentContributors, TOTAL_RECENT_CONTRIBUTORS, '#b8860b', 'of recent developers');
@@ -1179,7 +1179,7 @@
             html += '<tr style="white-space: nowrap">';
             html += '<td style="' + LANG_COL_STYLE + '"><div style="white-space: nowrap; overflow: hidden">' + langIcon(r.mainLang) + '</div></td>';
             const featuresUrl = (r.reportFolderUrl || '') + 'FeaturesOfInterest.html';
-            html += '<td><a href="' + esc(featuresUrl) + '" target="_blank" style="color:#333">' + esc(r.name) + '</a></td>';
+            html += '<td><a href="' + esc(featuresUrl) + '" target="_blank" style="color:var(--sk-text)">' + esc(r.name) + '</a></td>';
             concerns.forEach(c => {
                 const cell = r.perConcern && r.perConcern[c.name] ? r.perConcern[c.name] : null;
                 html += '<td style="text-align: center">' + (cell && cell.matches > 0 ? num(cell.matches) : '-') + '</td>';

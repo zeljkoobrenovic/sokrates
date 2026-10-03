@@ -1,5 +1,7 @@
 package nl.obren.sokrates.reports.utils;
 
+import nl.obren.sokrates.common.renderingutils.ReportTheme;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -61,7 +63,7 @@ public class AnimalIcons {
     }
 
     public String getIconSvg(String icon) {
-        String svg = HtmlTemplateUtils.getResource("/icons/" + icon + ".svg");
+        String svg = ReportTheme.adaptiveIcon(HtmlTemplateUtils.getResource("/icons/" + icon + ".svg"));
         svg = svg.replaceAll("height='.*?'", "height='" + size + "px'");
         svg = svg.replaceAll("width='.*?'", "width='" + size + "px'");
         return svg;
