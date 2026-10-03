@@ -283,10 +283,20 @@ public class FilesHistoryAnalysisResults {
         if (historyPerExtensionPerYear != null) {
             return historyPerExtensionPerYear;
         }
+        return getHistoryPerExtensionPerYear(path -> true);
+    }
+
+    /**
+     * Commits and contributors per extension and year over the history of the files whose lowercased
+     * path passes the filter (e.g. one scope's paths, see ScopePaths). Needs the history of this run.
+     */
+    public List<HistoryPerExtension> getHistoryPerExtensionPerYear(java.util.function.Predicate<String> lowercasePathFilter) {
         Map<String, HistoryPerExtension> map = new HashMap<>();
         Map<String, Set<String>> contributorsPerExtensionAndYear = new HashMap<>();
         Map<String, Set<String>> commitsPerExtensionAndYear = new HashMap<>();
-        this.history.forEach(item -> {
+        this.history.stream()
+                .filter(item -> item.getPath() != null && lowercasePathFilter.test(item.getPath().toLowerCase()))
+                .forEach(item -> {
             String extension = ExtensionGroupExtractor.getExtension(item.getPath());
             item.getCommits().forEach(commit -> {
                 String date = commit.getDate();

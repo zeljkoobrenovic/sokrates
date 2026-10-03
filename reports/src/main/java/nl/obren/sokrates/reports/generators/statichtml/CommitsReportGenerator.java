@@ -114,15 +114,32 @@ public class CommitsReportGenerator {
         // No summary here: the window totals/columns are only shown on the Per Year chart.
         report.addLevel2Header("Per Month", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, getContributionMonths(analysis, perMonth, 60), 60, true, true, 2, false);
+        addPerMonthDiagram(report, analysis, perMonth);
         report.addLevel2Header("Per Week", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
-        int pastWeeks = 104;
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, getContributionWeeks(analysis, perWeek, pastWeeks), pastWeeks, true, true, 1, false);
+        addPerWeekDiagram(report, analysis, perWeek);
         report.addLevel2Header("Per Day", "margin-bottom: 0;");
         report.addParagraph("Latest commit date: " + analysis.getLatestCommitDate(), "color: grey; font-size: 80%; margin-top: 0;");
-        int pastDays = 365;
-        ContributorsReportUtils.addContributorsPerTimeSlot(report, getContributionDays(analysis, perDay, pastDays), pastDays, true, true, 1, false);
+        addPerDayDiagram(report, analysis, perDay);
+    }
+
+    public static final int PAST_MONTHS = 60;
+    public static final int PAST_WEEKS = 104;
+    public static final int PAST_DAYS = 365;
+
+    /** The per-month activity chart (past {@link #PAST_MONTHS} months), without a heading. */
+    public static void addPerMonthDiagram(RichTextReport report, ContributorsAnalysisResults analysis, List<ContributionTimeSlot> perMonth) {
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, getContributionMonths(analysis, perMonth, PAST_MONTHS), PAST_MONTHS, true, true, 2, false);
+    }
+
+    /** The per-week activity chart (past {@link #PAST_WEEKS} weeks), without a heading. */
+    public static void addPerWeekDiagram(RichTextReport report, ContributorsAnalysisResults analysis, List<ContributionTimeSlot> perWeek) {
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, getContributionWeeks(analysis, perWeek, PAST_WEEKS), PAST_WEEKS, true, true, 1, false);
+    }
+
+    /** The per-day activity chart (past {@link #PAST_DAYS} days), without a heading. */
+    public static void addPerDayDiagram(RichTextReport report, ContributorsAnalysisResults analysis, List<ContributionTimeSlot> perDay) {
+        ContributorsReportUtils.addContributorsPerTimeSlot(report, getContributionDays(analysis, perDay, PAST_DAYS), PAST_DAYS, true, true, 1, false);
     }
 
     private void addZoomableCircleLinks(RichTextReport report) {

@@ -76,7 +76,7 @@ class RichTextReportSinkEscapingTest {
             "addEmphasisedParagraph", "addQuoteParagraph",
             "addLevel1Header", "addLevel2Header", "addLevel3Header", "addLevel4Header",
             "addContentInDiv", "addContentInDivWithTooltip", "addContentInSpan", "addTextArea",
-            "startSection", "startSubSection", "startSubSectionNoMargins", "startDivWithLabel", "startDiv",
+            "startSection", "startCollapsibleSection", "startSubSection", "startSubSectionNoMargins", "startDivWithLabel", "startDiv",
             "addTab", "addLinkInTab", "addNewTabLink", "addDetailsBlock", "startDetailsBlock",
             "startDetailsBlockMinimalistic", "startShowMoreBlockDisappear",
             "addSvgFigure", "addGraphvizFigure", "addHiddenGraphvizFigure"));

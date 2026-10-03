@@ -112,17 +112,10 @@ public class ContributorsAnalyzer extends Analyzer {
         return null;
     }
 
-    // Lowercased relative paths of each scope's source files, keyed by scope name (main, test, build,
-    // generated, other). A scope with no files is omitted, so only present scopes get an activity-
-    // diagram tab. Returns null when there is no configuration to read (then only "All" is produced).
+    // Lowercased relative paths of each scope's source files (ScopePaths); null when no scope has files
+    // (then only "All" is produced).
     private java.util.Map<String, java.util.Set<String>> getPathsByScope() {
-        java.util.Map<String, java.util.Set<String>> pathsByScope = new java.util.LinkedHashMap<>();
-        addScopePaths(pathsByScope, "main", codeConfiguration.getMain());
-        addScopePaths(pathsByScope, "test", codeConfiguration.getTest());
-        addScopePaths(pathsByScope, "build", codeConfiguration.getBuildAndDeployment());
-        addScopePaths(pathsByScope, "generated", codeConfiguration.getGenerated());
-        addScopePaths(pathsByScope, "other", codeConfiguration.getOther());
-        return pathsByScope.isEmpty() ? null : pathsByScope;
+        return nl.obren.sokrates.sourcecode.contributors.ScopePaths.byScope(codeConfiguration);
     }
 
     // Distinct file count per extension for git-history files that fall in NO scope (the union of all
@@ -170,27 +163,6 @@ public class ContributorsAnalyzer extends Analyzer {
     // in either case we add BOTH the full path and the path with its leading segment stripped;
     // GitContributorsUtil tests a git path against this set directly. Empty/missing aspects are
     // skipped so they don't produce an empty tab.
-    private void addScopePaths(java.util.Map<String, java.util.Set<String>> pathsByScope, String scope,
-                               nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect aspect) {
-        if (aspect == null || aspect.getSourceFiles() == null || aspect.getSourceFiles().isEmpty()) {
-            return;
-        }
-        java.util.Set<String> paths = new java.util.HashSet<>();
-        aspect.getSourceFiles().forEach(sourceFile -> {
-            if (sourceFile.getRelativePath() != null) {
-                String path = sourceFile.getRelativePath().toLowerCase();
-                paths.add(path);
-                int slash = path.indexOf('/');
-                if (slash > 0 && slash < path.length() - 1) {
-                    paths.add(path.substring(slash + 1));
-                }
-            }
-        });
-        if (!paths.isEmpty()) {
-            pathsByScope.put(scope, paths);
-        }
-    }
-
     private void addMetrics() {
         metricsList.addSystemMetric().id("NUMBER_OF_CONTRIBUTORS")
                 .value(analysisResults.getContributors().size())

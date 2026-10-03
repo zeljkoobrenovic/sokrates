@@ -291,6 +291,40 @@ public class ReportConstants {
             "            background-color: var(--sk-surface-2);\n" +
             "        }\n" +
             "\n" +
+            "        details.sk-collapsible-section {\n" +
+            "            margin: 0 0 30px 0;\n" +
+            "            padding: 0;\n" +
+            "            background: var(--sk-surface);\n" +
+            "        }\n" +
+            "\n" +
+            "        details.sk-collapsible-section > summary.sectionHeader {\n" +
+            "            display: block;\n" +
+            "            cursor: pointer;\n" +
+            "            margin: 0;\n" +
+            "            white-space: normal;\n" +
+            "            list-style: none;\n" +
+            "        }\n" +
+            "\n" +
+            "        details.sk-collapsible-section > summary.sectionHeader::-webkit-details-marker {\n" +
+            "            display: none;\n" +
+            "        }\n" +
+            "\n" +
+            "        details.sk-collapsible-section > summary .sectionTitle::before {\n" +
+            "            content: '\\25B8';\n" +
+            "            display: inline-block;\n" +
+            "            width: 1em;\n" +
+            "            color: var(--sk-text-muted);\n" +
+            "            transition: transform 0.15s ease;\n" +
+            "        }\n" +
+            "\n" +
+            "        details.sk-collapsible-section[open] > summary .sectionTitle::before {\n" +
+            "            transform: rotate(90deg);\n" +
+            "        }\n" +
+            "\n" +
+            "        details.sk-collapsible-section:not([open]) > summary.sectionHeader {\n" +
+            "            border-bottom: none;\n" +
+            "        }\n" +
+            "\n" +
             "        .sectionTitle {\n" +
             "            font-size: 21px; font-weight: 600; color: var(--sk-text);\n" +
             "        }\n" +

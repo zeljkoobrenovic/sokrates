@@ -399,6 +399,23 @@ public class RichTextReport {
         addHtmlContent("</div></div>");
     }
 
+    /**
+     * A section card that starts collapsed: the header is the toggle (a details/summary pair, so it
+     * opens without JavaScript and renders its Mermaid diagrams when opened). Title and subtitle are HTML.
+     */
+    public void startCollapsibleSection(String title, String subtitle) {
+        this.addHtmlContent("<details class='section sk-collapsible-section'>" +
+                "<summary class='sectionHeader'>" +
+                "    <span class='sectionTitle'>" + title + "</span>" +
+                (StringUtils.isNotBlank(subtitle) ? "    <div class='sectionSubtitle'>" + subtitle + "</div>" : "") +
+                "</summary>" +
+                "<div class='sectionBody'>");
+    }
+
+    public void endCollapsibleSection() {
+        addHtmlContent("</div></details>");
+    }
+
     public void addParagraph(String text, String style) {
         if (StringUtils.isNotBlank(text)) {
             addHtmlContent("<p style=\"" + style + "\">" + text + "</p>");
