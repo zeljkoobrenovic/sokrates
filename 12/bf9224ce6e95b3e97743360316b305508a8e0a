@@ -1,0 +1,43 @@
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportFileExporter.java
+  s_223e7b216451e0::t_d99551d817009a 97-98
+reports/src/main/java/nl/obren/sokrates/reports/dataexporters/SourceViewerExporter.java
+  s_223e7b216451e0::t_bd7e21f9f99ebe 87
+common/src/test/java/nl/obren/sokrates/common/renderingutils/ReportThemeTest.java
+  s_223e7b216451e0::t_a17b6826e459c0 43-49
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportShell.java
+  s_223e7b216451e0::t_d99551d817009a 125-134,140-142,149
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportConstants.java
+  s_223e7b216451e0::t_d99551d817009a 347
+reports/src/main/java/nl/obren/sokrates/reports/dataexporters/ReferencedFiles.java
+  s_223e7b216451e0::t_bd7e21f9f99ebe 1-39
+reports/src/main/java/nl/obren/sokrates/reports/core/HealthSummary.java
+  s_223e7b216451e0::t_8495c4b1132782 1-283
+common/src/main/java/nl/obren/sokrates/common/renderingutils/ReportTheme.java
+  s_223e7b216451e0::t_a17b6826e459c0 7-9,84-90
+reports/src/main/java/nl/obren/sokrates/reports/generators/explorers/FilesExplorerGenerators.java
+  s_223e7b216451e0::t_bd7e21f9f99ebe 4,93
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportHealthSection.java
+  s_223e7b216451e0::t_c926bfc6f63fb2 1-6,8-25,27-57,62-181
+  s_223e7b216451e0::t_d99551d817009a 7,58-61
+  s_223e7b216451e0::t_a17b6826e459c0 26
+reports/src/test/java/nl/obren/sokrates/reports/core/HealthSummaryTest.java
+  s_223e7b216451e0::t_24cfeaed4f78af 1-142
+CLAUDE.md
+  s_223e7b216451e0::t_c7414a0a52dff0 121,203
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "12bf9224ce6e95b3e97743360316b305508a8e0a",
+  "prompts": {},
+  "sessions": {
+    "s_223e7b216451e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "17c1a50e-ffe3-43fa-bbef-5ca8411e20a4",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
