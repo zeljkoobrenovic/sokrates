@@ -1,31 +1,14 @@
 package nl.obren.sokrates.sourcecode.landscape.analysis;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import nl.obren.sokrates.common.utils.RegexUtils;
-import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
-import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
-import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
-import nl.obren.sokrates.sourcecode.aspects.SourceCodeAspectUtils;
-import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
-import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
-import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
-import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.PeopleConfig;
 import nl.obren.sokrates.sourcecode.landscape.TeamsConfig;
 import nl.obren.sokrates.sourcecode.landscape.utils.EmailTransformations;
-import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
-import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
-import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import java.util.*;
-import java.util.stream.Collectors;
 import nl.obren.sokrates.sourcecode.landscape.TeamConfig;
 import java.util.function.Predicate;
 

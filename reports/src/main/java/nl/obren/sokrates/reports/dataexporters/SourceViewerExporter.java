@@ -1,49 +1,21 @@
 package nl.obren.sokrates.reports.dataexporters;
 
 import nl.obren.sokrates.common.io.JsonGenerator;
-import nl.obren.sokrates.common.io.JsonMapper;
-import nl.obren.sokrates.common.utils.FormattingUtils;
-import nl.obren.sokrates.common.utils.ProgressFeedback;
-import nl.obren.sokrates.common.utils.SystemUtils;
-import nl.obren.sokrates.reports.dataexporters.dependencies.DependenciesExporter;
-import nl.obren.sokrates.reports.dataexporters.duplication.DuplicateExportInfo;
-import nl.obren.sokrates.reports.dataexporters.duplication.DuplicateFileBlockExportInfo;
-import nl.obren.sokrates.reports.dataexporters.duplication.DuplicationExportInfo;
 import nl.obren.sokrates.reports.dataexporters.duplication.DuplicateFragmentExport;
-import nl.obren.sokrates.reports.dataexporters.duplication.DuplicationExporter;
-import nl.obren.sokrates.reports.dataexporters.files.FileListExporter;
 import nl.obren.sokrates.reports.dataexporters.units.FragmentExport;
-import nl.obren.sokrates.reports.dataexporters.units.UnitListExporter;
 import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.reports.utils.ZipUtils;
-import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
-import nl.obren.sokrates.sourcecode.IgnoredFilesGroup;
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.SourceFileWithSearchData;
-import nl.obren.sokrates.sourcecode.SymbolicLink;
-import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.DuplicationAnalysisResults;
-import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
-import nl.obren.sokrates.sourcecode.analysis.results.TemporalDependenciesWindow;
 import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
-import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
-import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.duplication.DuplicatedFileBlock;
 import nl.obren.sokrates.sourcecode.duplication.DuplicationInstance;
-import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
-import nl.obren.sokrates.sourcecode.filehistory.FileHistoryScopingUtils;
-import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
-import nl.obren.sokrates.sourcecode.filehistory.FilePairChangedTogether;
-import nl.obren.sokrates.sourcecode.lang.DefaultLanguageAnalyzer;
-import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
-import nl.obren.sokrates.sourcecode.search.FoundLine;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import java.io.File;
@@ -111,7 +83,6 @@ class SourceViewerExporter {
         saveViewerFile();
     }
 
-
     private Set<SourceFile> getReferencedFiles() {
         Set<SourceFile> referencedFiles = new HashSet<>();
 
@@ -150,8 +121,6 @@ class SourceViewerExporter {
 
         viewerArchiveEntries.put("fragments/" + fragmentType + ".json", new JsonGenerator().generate(fragments));
     }
-
-
 
     private void saveStructureFile() {
         try {

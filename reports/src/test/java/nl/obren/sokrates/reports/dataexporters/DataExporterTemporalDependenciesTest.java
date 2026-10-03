@@ -74,7 +74,7 @@ class DataExporterTemporalDependenciesTest {
         CodeAnalysisResults results = resultsWithPairsInEveryWindow(365);
         results.getFilesHistoryAnalysisResults().setHistory(new ArrayList<>());
 
-        new DataExporter(null).saveTemporalDependencies(results, folder);
+        new DependenciesDataExporter(results, folder, text -> {}).saveTemporalDependencies(results, folder);
 
         assertEquals(Collections.emptyList(), fileNames(folder));
     }
@@ -85,14 +85,14 @@ class DataExporterTemporalDependenciesTest {
         CodeAnalysisResults results = resultsWithPairsInEveryWindow(365);
         results.getFilesHistoryAnalysisResults().setFilePairsChangedTogether90Days(new ArrayList<>());
 
-        new DataExporter(null).saveTemporalDependencies(results, folder);
+        new DependenciesDataExporter(results, folder, text -> {}).saveTemporalDependencies(results, folder);
 
         assertEquals(HEADER, read(folder, "temporal_dependencies_90_days.txt"));
         assertEquals(HEADER + "a/one.java\tb/two.java\t1\t1\t1\n", read(folder, "temporal_dependencies_30_days.txt"));
     }
 
     private void export(int maxTemporalDependenciesDepthDays, File folder) {
-        new DataExporter(null).saveTemporalDependencies(resultsWithPairsInEveryWindow(maxTemporalDependenciesDepthDays), folder);
+        new DependenciesDataExporter(resultsWithPairsInEveryWindow(maxTemporalDependenciesDepthDays), folder, text -> {}).saveTemporalDependencies(resultsWithPairsInEveryWindow(maxTemporalDependenciesDepthDays), folder);
     }
 
     private CodeAnalysisResults resultsWithPairsInEveryWindow(int maxTemporalDependenciesDepthDays) {

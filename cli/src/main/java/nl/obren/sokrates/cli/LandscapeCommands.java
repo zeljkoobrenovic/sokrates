@@ -1,61 +1,15 @@
 package nl.obren.sokrates.cli;
 
-import nl.obren.sokrates.cli.git.GitHistoryExtractor;
 import nl.obren.sokrates.cli.git.AnalysisSource;
-import nl.obren.sokrates.cli.git.CodeHostOrg;
-import nl.obren.sokrates.cli.git.CodeHostOrgClient;
-import nl.obren.sokrates.cli.git.GitHubOrgClient;
-import nl.obren.sokrates.cli.git.GitLabGroupClient;
-import nl.obren.sokrates.cli.git.HttpFetcher;
 import nl.obren.sokrates.cli.git.CodeHostRepo;
-import nl.obren.sokrates.cli.git.CodeHostRepoFilter;
 import nl.obren.sokrates.cli.git.GitRepoCloner;
 import nl.obren.sokrates.cli.git.GitRepoMetadata;
-import nl.obren.sokrates.cli.skills.SkillsInstaller;
-import nl.obren.sokrates.common.io.JsonGenerator;
-import nl.obren.sokrates.common.io.JsonMapper;
-import nl.obren.sokrates.common.renderingutils.Thresholds;
-import nl.obren.sokrates.common.renderingutils.VisualizationItem;
-import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
-import nl.obren.sokrates.reports.utils.ZipUtils;
-import nl.obren.sokrates.common.renderingutils.charts.Palette;
-import nl.obren.sokrates.common.renderingutils.force3d.Force3DLink;
-import nl.obren.sokrates.common.renderingutils.force3d.Force3DNode;
-import nl.obren.sokrates.common.renderingutils.force3d.Force3DObject;
-import nl.obren.sokrates.common.renderingutils.x3d.Unit3D;
-import nl.obren.sokrates.common.renderingutils.x3d.X3DomExporter;
 import nl.obren.sokrates.common.utils.*;
-import nl.obren.sokrates.reports.core.ReportFileExporter;
-import nl.obren.sokrates.reports.core.RichTextReport;
-import nl.obren.sokrates.reports.dataexporters.DataExporter;
-import nl.obren.sokrates.reports.generators.explorers.CommitsExplorerGenerators;
-import nl.obren.sokrates.reports.generators.explorers.FilesExplorerGenerators;
-import nl.obren.sokrates.reports.generators.explorers.UnitsExplorerGenerators;
-import nl.obren.sokrates.reports.generators.statichtml.BasicSourceCodeReportGenerator;
 import nl.obren.sokrates.reports.landscape.statichtml.LandscapeAnalysisCommands;
-import nl.obren.sokrates.reports.landscape.statichtml.RepositoryPeopleConfigCommands;
-import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
-import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.analysis.CodeAnalyzer;
-import nl.obren.sokrates.sourcecode.analysis.CodeAnalyzerSettings;
-import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
-import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
-import nl.obren.sokrates.sourcecode.core.CustomTab;
-import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
-import nl.obren.sokrates.sourcecode.githistory.ExtractGitHistoryFileHandler;
-import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
-import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisUtils;
-import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
-import nl.obren.sokrates.sourcecode.scoping.ScopeCreator;
-import nl.obren.sokrates.sourcecode.scoping.ScopingConventions;
-import nl.obren.sokrates.sourcecode.scoping.custom.CustomConventionsHelper;
-import nl.obren.sokrates.sourcecode.scoping.custom.CustomScopingConventions;
-import nl.obren.sokrates.sourcecode.stats.SourceFileSizeDistribution;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -63,21 +17,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import java.io.File;
 import java.io.IOException;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -96,7 +42,6 @@ class LandscapeCommands {
         this.cli = cli;
         this.commands = commands;
     }
-
 
     void updateLandscape(String[] args, String commandName, String commandDescription) throws ParseException, IOException {
         Options options = commands.getUpdateLandscapeOptions();
@@ -308,9 +253,6 @@ class LandscapeCommands {
         }
     }
 
-
-
-
     private static void collectStaleManagedAnalyses(File folder, Set<String> selected, Set<String> gone, List<File> stale) {
         File[] children = folder.listFiles(File::isDirectory);
         for (File child : children == null ? new File[0] : children) {
@@ -338,7 +280,6 @@ class LandscapeCommands {
         String url = source.getNormalizedUrl();
         return gone.contains(url) || !selected.contains(url);
     }
-
 
     private static boolean isEmptyFolder(File folder) {
         String[] names = folder.list();

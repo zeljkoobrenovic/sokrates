@@ -95,6 +95,9 @@ public class CommandLineInterface {
     private final DataExporter dataExporter = new DataExporter(this.progressFeedback);
 
     private final Commands commands = new Commands();
+    final GitHistoryCommands gitHistoryCommands = new GitHistoryCommands(this, commands);
+    final PeopleConfigCommands peopleConfigCommands = new PeopleConfigCommands(this, commands);
+    final SkillsCommands skillsCommands = new SkillsCommands(this, commands);
     final GitRepoCommands gitRepoCommands = new GitRepoCommands(this, commands);
     final LandscapeCommands landscapeCommands = new LandscapeCommands(this, commands);
     private final OrganizationCommands organizationCommands = new OrganizationCommands(this, commands);
@@ -134,15 +137,15 @@ public class CommandLineInterface {
         handlers.put(Commands.UPDATE_LANDSCAPE, args -> landscapeCommands.updateLandscape(args, Commands.UPDATE_LANDSCAPE, Commands.UPDATE_LANDSCAPE_DESCRIPTION));
         handlers.put(Commands.ANALYZE_GITHUB_ORG, organizationCommands::analyzeGitHubOrg);
         handlers.put(Commands.ANALYZE_GITLAB_GROUP, organizationCommands::analyzeGitLabGroup);
-        handlers.put(Commands.UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME, this::updateLandscapePeopleConfigByUserName);
-        handlers.put(Commands.UPDATE_PEOPLE_CONFIG_BY_USER_NAME, this::updatePeopleConfigByUserName);
+        handlers.put(Commands.UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME, peopleConfigCommands::updateLandscapePeopleConfigByUserName);
+        handlers.put(Commands.UPDATE_PEOPLE_CONFIG_BY_USER_NAME, peopleConfigCommands::updatePeopleConfigByUserName);
         handlers.put(Commands.UPDATE_CONFIG, this::updateConfig);
         handlers.put(Commands.ADD_CUSTOM_TAB, this::addCustomTab);
-        handlers.put(Commands.INSTALL_SKILLS, this::installSkills);
-        handlers.put(Commands.EXTRACT_GIT_HISTORY, this::extractGitHistory);
+        handlers.put(Commands.INSTALL_SKILLS, skillsCommands::installSkills);
+        handlers.put(Commands.EXTRACT_GIT_HISTORY, gitHistoryCommands::extractGitHistory);
         handlers.put(Commands.INIT_CONVENTIONS, this::createNewConventionsFile);
         handlers.put(Commands.EXPORT_STANDARD_CONVENTIONS, this::exportConventions);
-        handlers.put(Commands.EXTRACT_GIT_SUB_HISTORY, this::extractGitSubHistory);
+        handlers.put(Commands.EXTRACT_GIT_SUB_HISTORY, gitHistoryCommands::extractGitSubHistory);
         handlers.put(Commands.EXTRACT_FILES, this::extractFiles);
         return handlers;
     }
@@ -173,58 +176,6 @@ public class CommandLineInterface {
             helpMode = true;
             commands.usage();
         }
-    }
-
-    private void extractGitHistory(String[] args) throws ParseException {
-        Options options = commands.getExtractGitHistoryOption();
-        CommandLineParser parser = new DefaultParser();
-        CommandLine cmd = parser.parse(options, args);
-
-        if (cmd.hasOption(commands.getHelp().getOpt())) {
-            helpMode = true;
-            commands.usage(Commands.EXTRACT_GIT_HISTORY, commands.getExtractGitHistoryOption(), Commands.EXTRACT_GIT_HISTORY_DESCRIPTION);
-            return;
-        }
-
-        String strRootPath = cmd.getOptionValue(commands.getAnalysisRoot().getOpt());
-        if (!cmd.hasOption(commands.getAnalysisRoot().getOpt())) {
-            strRootPath = ".";
-        }
-
-        File root = new File(strRootPath);
-        if (!root.exists()) {
-            LOG.error("The analysis root \"" + root.getPath() + "\" does not exist.");
-            return;
-        }
-
-        new GitHistoryExtractor().extractGitHistory(root);
-    }
-
-    private void extractGitSubHistory(String[] args) throws ParseException, IOException {
-        Options options = commands.getExtractGitSubHistoryOption();
-        CommandLineParser parser = new DefaultParser();
-        CommandLine cmd = parser.parse(options, args);
-
-        if (cmd.hasOption(commands.getHelp().getOpt())) {
-            helpMode = true;
-            commands.usage(Commands.EXTRACT_GIT_SUB_HISTORY, commands.getExtractGitSubHistoryOption(), Commands.EXTRACT_GIT_SUB_HISTORY_DESCRIPTION);
-            return;
-        }
-
-        String strRootPath = cmd.getOptionValue(commands.getAnalysisRoot().getOpt());
-        if (!cmd.hasOption(commands.getAnalysisRoot().getOpt())) {
-            strRootPath = ".";
-        }
-
-        File root = new File(strRootPath);
-        if (!root.exists()) {
-            LOG.error("The analysis root \"" + root.getPath() + "\" does not exist.");
-            return;
-        }
-
-        String prefixValue = cmd.getOptionValue(commands.getPrefix().getOpt());
-
-        new ExtractGitHistoryFileHandler().extractSubHistory(new File(root, GitHistoryUtils.GIT_HISTORY_FILE_NAME), prefixValue);
     }
 
     private void extractFiles(String[] args) throws ParseException, IOException {
@@ -306,63 +257,6 @@ public class CommandLineInterface {
             return false;
         }
         return true;
-    }
-
-    private void updateLandscapePeopleConfigByUserName(String[] args) throws ParseException {
-        Options options = commands.getUpdateLandscapePeopleConfigByUserNameOptions();
-        CommandLineParser parser = new DefaultParser();
-        CommandLine cmd = parser.parse(options, args);
-
-        if (cmd.hasOption(commands.getHelp().getOpt())) {
-            helpMode = true;
-            commands.usage(Commands.UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME,
-                    commands.getUpdateLandscapePeopleConfigByUserNameOptions(),
-                    Commands.UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME_DESCRIPTION);
-            return;
-        }
-
-        startTimeoutIfDefined(cmd);
-
-        String strRootPath = cmd.getOptionValue(commands.getAnalysisRoot().getOpt());
-        if (!cmd.hasOption(commands.getAnalysisRoot().getOpt())) {
-            strRootPath = ".";
-        }
-
-        File root = new File(strRootPath);
-        if (!root.exists()) {
-            LOG.error("The analysis root \"" + root.getPath() + "\" does not exist.");
-            return;
-        }
-
-        String confFilePath = cmd.getOptionValue(commands.getConfFile().getOpt());
-        LandscapeAnalysisCommands.updatePeopleConfigByUserName(root,
-                confFilePath != null ? new File(confFilePath) : null);
-    }
-
-    private void updatePeopleConfigByUserName(String[] args) throws ParseException {
-        Options options = commands.getUpdatePeopleConfigByUserNameOptions();
-        CommandLineParser parser = new DefaultParser();
-        CommandLine cmd = parser.parse(options, args);
-
-        if (cmd.hasOption(commands.getHelp().getOpt())) {
-            helpMode = true;
-            commands.usage(Commands.UPDATE_PEOPLE_CONFIG_BY_USER_NAME,
-                    commands.getUpdatePeopleConfigByUserNameOptions(),
-                    Commands.UPDATE_PEOPLE_CONFIG_BY_USER_NAME_DESCRIPTION);
-            return;
-        }
-
-        startTimeoutIfDefined(cmd);
-
-        // Same default as generateReports: ./_sokrates/config.json when -confFile is not given.
-        File sokratesConfigFile;
-        if (cmd.hasOption(commands.getConfFile().getOpt())) {
-            sokratesConfigFile = new File(cmd.getOptionValue(commands.getConfFile().getOpt()));
-        } else {
-            sokratesConfigFile = new File("./_sokrates/config.json");
-        }
-
-        RepositoryPeopleConfigCommands.updatePeopleConfigByUserName(sokratesConfigFile);
     }
 
     private void generateReports(String[] args) throws ParseException, IOException {
@@ -748,64 +642,6 @@ public class CommandLineInterface {
         }
     }
 
-    private void installSkills(String[] args) throws ParseException, IOException {
-        Options options = commands.getInstallSkillsOptions();
-        CommandLine cmd = new DefaultParser().parse(options, args);
-        if (cmd.hasOption(commands.getHelp().getOpt())) {
-            helpMode = true;
-            commands.usage(Commands.INSTALL_SKILLS, options, Commands.INSTALL_SKILLS_DESCRIPTION);
-            return;
-        }
-        String source = StringUtils.defaultIfBlank(cmd.getOptionValue(commands.getSource().getOpt()), SkillsInstaller.DEFAULT_SOURCE);
-        String ref = StringUtils.defaultIfBlank(cmd.getOptionValue(commands.getRef().getOpt()), SkillsInstaller.DEFAULT_REF);
-        File cache = cmd.hasOption(commands.getCacheFolder().getOpt()) ? new File(cmd.getOptionValue(commands.getCacheFolder().getOpt())) : SkillsInstaller.defaultCacheFolder();
-        List<File> targets = skillTargets(cmd);
-        SkillsInstaller installer = new SkillsInstaller();
-        List<File> skills = fetchSkills(installer, source, ref, cache);
-        if (skills == null || cmd.hasOption(commands.getListOnly().getOpt())) {
-            return;
-        }
-        boolean copy = cmd.hasOption(commands.getCopy().getOpt());
-        for (File target : targets) {
-            List<File> installed = installer.installInto(skills, target, copy);
-            LOG.info((copy ? "Copied " : "Linked ") + installed.size() + " skills into " + target.getPath());
-        }
-        LOG.info("Done. Ask your agent to \"use the sokrates skill\" in a repository, or run an analysis with -ai claude|codex|gemini.");
-    }
-
-    /** The -target folders, else the project's skill folders with -project, else the agents' default folders. */
-    private List<File> skillTargets(CommandLine cmd) {
-        List<File> targets = new ArrayList<>();
-        if (cmd.hasOption(commands.getTarget().getOpt())) {
-            for (String folder : cmd.getOptionValues(commands.getTarget().getOpt())) {
-                targets.add(new File(folder));
-            }
-        } else if (cmd.hasOption(commands.getProject().getOpt())) {
-            targets.addAll(SkillsInstaller.projectTargets(new File(".")));
-        } else {
-            targets.addAll(SkillsInstaller.defaultTargets());
-        }
-        return targets;
-    }
-
-    /** The skills of the fetched source, logged; null (after logging) when the fetch fails or the source has none. */
-    private static List<File> fetchSkills(SkillsInstaller installer, String source, String ref, File cache) {
-        File root;
-        try {
-            root = installer.fetch(source, ref, cache);
-        } catch (GitAPIException | IOException e) {
-            LOG.error("Could not fetch the skills from " + source + ": " + e.getMessage());
-            return null;
-        }
-        List<File> skills = SkillsInstaller.findSkills(root);
-        if (skills.isEmpty()) {
-            LOG.error("No skills (folders with a SKILL.md under skills/) found in " + root.getPath());
-            return null;
-        }
-        LOG.info(skills.size() + " skills in " + root.getPath() + ": " + skills.stream().map(File::getName).collect(Collectors.joining(", ")));
-        return skills;
-    }
-
     private void addCustomTab(String[] args) throws ParseException, IOException {
         Options options = commands.getAddCustomTabOptions();
 
@@ -1009,7 +845,7 @@ public class CommandLineInterface {
         return true;
     }
 
-    private void info(String text) {
+    void info(String text) {
         if (progressFeedback != null) {
             progressFeedback.setText(text);
         } else {

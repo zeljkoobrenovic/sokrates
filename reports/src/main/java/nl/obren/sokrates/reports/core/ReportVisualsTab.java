@@ -1,35 +1,9 @@
 package nl.obren.sokrates.reports.core;
 
-import nl.obren.sokrates.common.utils.FormattingUtils;
-import nl.obren.sokrates.reports.generators.statichtml.CommitsReportGenerator;
-import nl.obren.sokrates.reports.generators.statichtml.ContributorsReportUtils;
-import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
-import nl.obren.sokrates.reports.utils.DataImageUtils;
-import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
-import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
-import nl.obren.sokrates.reports.utils.PromptsUtils;
-import nl.obren.sokrates.sourcecode.Link;
-import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
-import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
-import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
-import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
-import nl.obren.sokrates.sourcecode.core.CustomTab;
-import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
-import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
-import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
-import nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution;
-import nl.obren.sokrates.sourcecode.threshold.Thresholds;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import java.util.function.Predicate;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import static nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator.*;
 import nl.obren.sokrates.sourcecode.analysis.results.LogicalDecompositionAnalysisResults;
@@ -44,7 +18,6 @@ class ReportVisualsTab {
     private ReportVisualsTab() {
     }
 
-
     static void addVisuals(RichTextReport report, CodeAnalysisResults analysisResults, File htmlExportFolder) {
         addVisualCodeExplorers(report, analysisResults);
         addFileVisualizations(report, analysisResults);
@@ -53,7 +26,6 @@ class ReportVisualsTab {
         addFileDependencyVisualizations(report, analysisResults);
         addUnitVisualizations(report, analysisResults);
     }
-
 
     private static void addVisualCodeExplorers(RichTextReport report, CodeAnalysisResults analysisResults) {
         AspectAnalysisResults main = analysisResults.getMainAspectAnalysisResults();
@@ -75,7 +47,6 @@ class ReportVisualsTab {
         report.addLineBreak();
         report.addLineBreak();
     }
-
 
     private static void addFileVisualizations(RichTextReport report, CodeAnalysisResults analysisResults) {
         report.addLevel2Header("File Visualizations");
@@ -201,7 +172,6 @@ class ReportVisualsTab {
         report.addLineBreak();
     }
 
-
     private static void addContributorVisualizations(RichTextReport report, CodeAnalysisResults analysisResults) {
         report.addLevel2Header("Contributor Visualizations");
         report.addParagraph("<a target='_blank' href='Contributors.html'>Contributor dependency</a> views:", "margin-bottom: 0;");
@@ -274,7 +244,6 @@ class ReportVisualsTab {
         report.addLineBreak();
     }
 
-
     private static void addComponentVisualizations(RichTextReport report, CodeAnalysisResults analysisResults) {
         report.addLevel2Header("Components and Dependencies Visualizations");
 
@@ -286,7 +255,6 @@ class ReportVisualsTab {
             addComponentVisualizationsRow(report, analysisResults, logicalDecomposition, index[0]);
         });
         report.endTable();
-
 
         report.addLineBreak();
         report.addLineBreak();
@@ -350,10 +318,6 @@ class ReportVisualsTab {
         }
     }
 
-
-
-
-
     private static void addFileDependencyVisualizations(RichTextReport report, CodeAnalysisResults analysisResults) {
         report.addLevel2Header("File Dependencies Visualizations");
 
@@ -416,7 +380,6 @@ class ReportVisualsTab {
         report.addLineBreak();
     }
 
-
     private static void addUnitVisualizations(RichTextReport report, CodeAnalysisResults analysisResults) {
         report.addLevel2Header("Units Visualizations");
 
@@ -441,7 +404,6 @@ class ReportVisualsTab {
 
         report.addLineBreak();
     }
-
 
     private static void addScopeVisuals(RichTextReport report, String scopeName, int filesCount) {
         String technicalName = scopeName.toLowerCase().replace(" ", "_");

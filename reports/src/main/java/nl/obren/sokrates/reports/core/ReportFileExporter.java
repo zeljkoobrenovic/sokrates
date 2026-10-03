@@ -124,7 +124,7 @@ public class ReportFileExporter {
         addOverviewTab(indexReport, analysisResults);
         addAnalysesTab(indexReport, analysisResults, reportList, htmlExportFolder);
         addExplorerTabs(indexReport, customTabs);
-        addActivityTab(indexReport, analysisResults);
+        ReportActivityTab.addActivityTab(indexReport, analysisResults);
         addVisualsAndDataTabs(indexReport, analysisResults, htmlExportFolder);
         addFooter(indexReport);
         export(htmlExportFolder, indexReport, "index.html", analysisResults.getCodeConfiguration().getAnalysis().getCustomHtmlReportHeaderFragment());
@@ -189,7 +189,7 @@ public class ReportFileExporter {
         indexReport.startDiv("");
 
         if (contributorsAnalysisResults.getCommitsCount() > 0) {
-            addSummaryActivityTable(analysisResults, indexReport);
+            ReportActivityTab.addSummaryActivityTable(analysisResults, indexReport);
         } else {
             // No git history: no activity table (and thus no per-scope panels) — still show the main
             // language icons so the Overview isn't missing them.
@@ -247,105 +247,6 @@ public class ReportFileExporter {
         }
     }
 
-    private static void addActivityTab(RichTextReport indexReport, CodeAnalysisResults analysisResults) {
-        ContributorsAnalysisResults contributorsAnalysisResults = analysisResults.getContributorsAnalysisResults();
-        indexReport.startTabContentSection("commits", false);
-
-        if (contributorsAnalysisResults.getCommitsCount() > 0) {
-            indexReport.startDiv("margin: 32px; font-size: 110%");
-            indexReport.addLevel2Header("Overall Activity Per Year", "");
-
-            indexReport.addParagraph("Latest commit date: " + contributorsAnalysisResults.getLatestCommitDate() + "",
-                    "color: grey; font-size: 80%; margin-bottom: 2px;");
-            indexReport.addParagraph("Reference analysis date: " + DateUtils.getAnalysisDate() + "",
-                    "color: grey; font-size: 80%;");
-            indexReport.startDiv("font-size: 80%; margin-bottom: 14px");
-            indexReport.addHtmlContent("More details: ");
-            indexReport.addNewTabLink("Commits Report", "Commits.html");
-            indexReport.addHtmlContent("&nbsp;|&nbsp;");
-            indexReport.addNewTabLink("Contributors Report", "Contributors.html");
-            indexReport.endDiv();
-
-            int commitsCount30Days = contributorsAnalysisResults.getCommitsCount30Days();
-
-            indexReport.startTable();
-            indexReport.startTableRow();
-
-            indexReport.startTableCell("border: none");
-            // Scope selector (one tab per present scope, then "All" last) above the per-year activity
-            // graph. Scope tabs appear only when the analysis carried that scope's time slots (older
-            // analyses have none). Main is the default-visible tab (first entry); "All" goes last.
-            boolean fade = commitsCount30Days == 0;
-            java.util.LinkedHashMap<String, Runnable> scopePanels = new java.util.LinkedHashMap<>();
-            ContributorsReportUtils.SCOPE_LABELS.forEach((scope, label) -> {
-                List<ContributionTimeSlot> perYear = contributorsAnalysisResults.getContributorsPerYearByScope().get(scope);
-                if (perYear != null && !perYear.isEmpty()) {
-                    // Like the Overview tab but with the wider window set (30 days … all time), every window
-                    // as a leading total column, all in the icon tooltips, and each metric icon linking to its
-                    // detailed report.
-                    ContributorsReportUtils.ActivitySummary summary = ContributorsReportUtils.buildActivitySummary(contributorsAnalysisResults, scope,
-                            ContributorsReportUtils.ACTIVITY_WINDOW_DAYS, ContributorsReportUtils.ACTIVITY_WINDOW_DAYS.length);
-                    scopePanels.put(label, () -> {
-                        ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, perYear, 20, true, true, 8, fade, summary);
-                        addPerMonthWeekDayDetails(indexReport, contributorsAnalysisResults,
-                                contributorsAnalysisResults.getContributorsPerMonthByScope().getOrDefault(scope, new java.util.ArrayList<>()),
-                                contributorsAnalysisResults.getContributorsPerWeekByScope().getOrDefault(scope, new java.util.ArrayList<>()),
-                                contributorsAnalysisResults.getContributorsPerDayByScope().getOrDefault(scope, new java.util.ArrayList<>()));
-                    });
-                }
-            });
-            ContributorsReportUtils.ActivitySummary allSummary = ContributorsReportUtils.buildActivitySummary(contributorsAnalysisResults, null,
-                    ContributorsReportUtils.ACTIVITY_WINDOW_DAYS, ContributorsReportUtils.ACTIVITY_WINDOW_DAYS.length);
-            scopePanels.put("All", () -> {
-                ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsAnalysisResults.getContributorsPerYear(), 20, true, true, 8, fade, allSummary);
-                addPerMonthWeekDayDetails(indexReport, contributorsAnalysisResults,
-                        contributorsAnalysisResults.getContributorsPerMonth(),
-                        contributorsAnalysisResults.getContributorsPerWeek(),
-                        contributorsAnalysisResults.getContributorsPerDay());
-            });
-            ContributorsReportUtils.addScopeToggle(indexReport, "overview_activity_scope", scopePanels);
-            indexReport.endTableCell();
-            indexReport.endTableRow();
-            indexReport.endTable();
-
-            indexReport.startDiv("font-size: 110%");
-            indexReport.addLineBreak();
-            indexReport.addLevel3Header("Activity Per File Extension");
-
-            indexReport.startTable();
-
-            indexReport.startTableRow();
-            indexReport.addTableCell(getIconSvg("commits") + "<div style='font-size: 80%'>commits</div>", "border: none; text-align: center");
-            indexReport.startTableCell("border: none");
-            List<HistoryPerExtension> historyPerExtensionPerYear = analysisResults.getFilesHistoryAnalysisResults().getHistoryPerExtensionPerYear();
-            List<String> extensions = analysisResults.getMainAspectAnalysisResults().getExtensions();
-            HistoryPerLanguageGenerator.getInstanceCommits(historyPerExtensionPerYear, extensions).addHistoryPerLanguage(indexReport);
-            indexReport.endTableCell();
-            indexReport.endTableRow();
-
-            indexReport.startTableRow();
-            indexReport.addTableCell("&nbsp;", "border: none");
-            indexReport.addTableCell("&nbsp;", "border: none");
-            indexReport.endTableRow();
-
-            indexReport.startTableRow();
-            indexReport.addTableCell(getIconSvg("contributors") + "<div style='font-size: 80%'>contributors</div>", "border: none; text-align: center");
-            indexReport.startTableCell("border: none");
-            HistoryPerLanguageGenerator.getInstanceContributors(historyPerExtensionPerYear, extensions).addHistoryPerLanguage(indexReport);
-            indexReport.endTableCell();
-            indexReport.endTableRow();
-
-            indexReport.endTable();
-
-            indexReport.endTabContentSection();
-            indexReport.endDiv();
-            indexReport.endDiv();
-        } else {
-            indexReport.addParagraph("No commit history found.", "color: grey; margin-left: 10px; margin: 15px");
-        }
-        indexReport.endTabContentSection();
-    }
-
     private static void addVisualsAndDataTabs(RichTextReport indexReport, CodeAnalysisResults analysisResults, File htmlExportFolder) {
         indexReport.startTabContentSection("visuals", false);
         indexReport.startDiv("margin: 24px");
@@ -355,7 +256,7 @@ public class ReportFileExporter {
 
         indexReport.startTabContentSection("data", false);
         indexReport.startDiv("margin: 24px");
-        addData(indexReport, analysisResults);
+        ReportDataTab.addData(indexReport, analysisResults);
         indexReport.endDiv();
         addPrompts(indexReport, analysisResults);
         indexReport.endTabContentSection();
@@ -413,87 +314,10 @@ public class ReportFileExporter {
         report.endDiv();
     }
 
-    private static void addSummaryActivityTable(CodeAnalysisResults analysisResults, RichTextReport indexReport) {
-        ContributorsAnalysisResults contributorsAnalysisResults = analysisResults.getContributorsAnalysisResults();
-        List<ContributionTimeSlot> contributorsPerYear = contributorsAnalysisResults.getContributorsPerYear();
-        Map<String, ContributionTimeSlot> map = new HashMap<>();
-        contributorsPerYear.forEach(c -> map.put(c.getTimeSlot(), c));
-
-        int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-
-        String year = currentYear + "";
-
-        while (!map.containsKey(year)) {
-            contributorsPerYear.add(new ContributionTimeSlot(year, Thresholds.defaultCommitFilesCountThresholds()));
-            currentYear -= 1;
-            year = currentYear + "";
-        }
-
-        boolean fade = contributorsAnalysisResults.getContributors().stream().noneMatch(c -> !c.isBot() && c.isActive(Contributor.RECENTLY_ACTIVITY_THRESHOLD_DAYS));
-
-        // The per-year chart shows the summary windows (30 days / 90 days / all time) in each metric icon's
-        // hover tooltip, and each icon links to its detailed report (no leading summary columns). The scope
-        // toggle swaps the whole panel (per-scope language icons + chart-with-summary) per scope. Build
-        // chart panels (scopes present, then "All" last); each gets an ActivitySummary for its scope and
-        // its own language icons (that scope's aspect extensions) rendered inside the panel.
-        java.util.LinkedHashMap<String, Runnable> scopePanels = new java.util.LinkedHashMap<>();
-        ContributorsReportUtils.SCOPE_LABELS.forEach((scope, label) -> {
-            List<ContributionTimeSlot> perYearScope = contributorsAnalysisResults.getContributorsPerYearByScope().get(scope);
-            if (perYearScope != null && !perYearScope.isEmpty()) {
-                // Pad with empty trailing years so this scope's x-axis matches the all-scope graph.
-                padTrailingYears(perYearScope);
-                ContributorsReportUtils.ActivitySummary summary = ContributorsReportUtils.buildActivitySummary(contributorsAnalysisResults, scope);
-                scopePanels.put(label, () -> {
-                    addScopeLanguageIcons(indexReport, analysisResults, scope);
-                    ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, perYearScope, 20, true, true, 8, fade, summary);
-                });
-            }
-        });
-        ContributorsReportUtils.ActivitySummary allSummary = ContributorsReportUtils.buildActivitySummary(contributorsAnalysisResults, null);
-        scopePanels.put("All", () -> {
-            addScopeLanguageIcons(indexReport, analysisResults, "All");
-            ContributorsReportUtils.addContributorsPerTimeSlot(indexReport, contributorsPerYear, 20, true, true, 8, fade, allSummary);
-        });
-
-        indexReport.startTable("margin-bottom: -20px; border-top: 1px dashed grey; border-bottom: 1px dashed grey; padding-top: 10px; margin-top: 10px; margin-bottom: 10px;");
-        indexReport.startTableRow();
-        indexReport.startTableCell("border: none");
-        // Scope selector (one tab per present scope, then "All" last) above the per-year activity
-        // graph. Scope tabs appear only when the analysis carried that scope's time slots (older
-        // analyses have none). Main is the default-visible tab (first entry); "All" goes last.
-        ContributorsReportUtils.addScopeToggle(indexReport, "summary_activity_scope", scopePanels);
-        indexReport.endTableCell();
-        indexReport.endTableRow();
-        indexReport.endTable();
-    }
-
-    // Wraps the Per Month / Per Week / Per Day activity diagrams (for the selected scope) in a collapsed
-    // details block on the Overview Activity tab, mirroring the Landscape Activity tab. The diagrams
-    // themselves are the same ones the Commits report renders (shared static helper). No-op when there is
-    // no month/week/day data.
-    private static void addPerMonthWeekDayDetails(RichTextReport indexReport, ContributorsAnalysisResults analysis,
-                                                  List<ContributionTimeSlot> perMonth, List<ContributionTimeSlot> perWeek,
-                                                  List<ContributionTimeSlot> perDay) {
-        if (isEmpty(perMonth) && isEmpty(perWeek) && isEmpty(perDay)) {
-            return;
-        }
-        indexReport.startDetailsBlock("activity per month, week and day...");
-        CommitsReportGenerator.addPerMonthWeekDayDiagrams(indexReport, analysis, orEmpty(perMonth), orEmpty(perWeek), orEmpty(perDay));
-        indexReport.endDetailsBlock();
-    }
-
-    private static boolean isEmpty(List<ContributionTimeSlot> slots) {
-        return slots == null || slots.isEmpty();
-    }
-
-    private static List<ContributionTimeSlot> orEmpty(List<ContributionTimeSlot> slots) {
-        return slots != null ? slots : new java.util.ArrayList<>();
-    }
-
     // Renders the language icons for a scope inside its activity panel (replacing the old single
     // always-main icon strip above the toggle). No-op when the scope has no extensions. The unscoped tab
     // shows "-" for the number (its files aren't analyzed, so there is no lines-of-code).
-    private static void addScopeLanguageIcons(RichTextReport indexReport, CodeAnalysisResults analysisResults, String scope) {
+    static void addScopeLanguageIcons(RichTextReport indexReport, CodeAnalysisResults analysisResults, String scope) {
         List<NumericMetric> extensions = extensionsForScope(analysisResults, scope);
         if (extensions == null || extensions.isEmpty()) {
             return;
@@ -504,138 +328,7 @@ public class ReportFileExporter {
         indexReport.addHtmlContent(icons.toString());
     }
 
-    // Pads a per-year time-slot list with empty entries up to the current year (in place), matching
-    // the padding addSummaryActivityTable applies to the all-scope list so both graphs share an x-axis.
-    private static void padTrailingYears(List<ContributionTimeSlot> contributorsPerYear) {
-        Map<String, ContributionTimeSlot> map = new HashMap<>();
-        contributorsPerYear.forEach(c -> map.put(c.getTimeSlot(), c));
-        int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-        String year = currentYear + "";
-        while (!map.containsKey(year)) {
-            contributorsPerYear.add(new ContributionTimeSlot(year, Thresholds.defaultCommitFilesCountThresholds()));
-            currentYear -= 1;
-            year = currentYear + "";
-        }
-    }
-
-    private static void addData(RichTextReport report, CodeAnalysisResults analysisResults) {
-        AspectAnalysisResults main = analysisResults.getMainAspectAnalysisResults();
-        AspectAnalysisResults test = analysisResults.getTestAspectAnalysisResults();
-        AspectAnalysisResults build = analysisResults.getBuildAndDeployAspectAnalysisResults();
-        AspectAnalysisResults generated = analysisResults.getGeneratedAspectAnalysisResults();
-        AspectAnalysisResults other = analysisResults.getOtherAspectAnalysisResults();
-
-        report.addLevel2Header("Lists of Files Per Scope");
-
-        report.startUnorderedList();
-        addListsOfFilesInScope(report, "main", main.getFilesCount());
-        addListsOfFilesInScope(report, "test", test.getFilesCount());
-        addListsOfFilesInScope(report, "build and deployment", build.getFilesCount());
-        addListsOfFilesInScope(report, "generated", generated.getFilesCount());
-        addListsOfFilesInScope(report, "other", other.getFilesCount());
-        report.startListItem();
-        report.addHtmlContent("FILES: ");
-        report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('text/mainFilesWithHistory.txt')\">" + "History Data" + "</a>");
-        report.endListItem();
-        report.startListItem();
-        report.addHtmlContent("IGNORED FILES: ");
-        report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('text/excluded_files_ignored_extensions.txt')\">" + "By Extension" + "</a>");
-        report.addHtmlContent(" | ");
-        report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('text/excluded_files_ignored_rules.txt')\">" + "By Rule" + "</a>");
-        report.endListItem();
-        report.endUnorderedList();
-
-        report.addLineBreak();
-        report.addLevel2Header("Analysis Results");
-        report.startUnorderedList();
-
-        report.startListItem();
-        report.addHtmlContent("CONFIGURATION: ");
-        report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('config.json')\">" + "JSON" + "</a>");
-        report.endListItem();
-
-        report.startListItem();
-        report.addHtmlContent("ALL ANALYSIS RESULTS: ");
-        report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('analysisResults.json')\">" + "JSON" + "</a>");
-        report.endListItem();
-
-        report.startListItem();
-        report.addHtmlContent("DUPLICATES: ");
-        report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('text/duplicates.txt')\">" + "TXT" + "</a>");
-        report.addHtmlContent(" | ");
-        report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('duplicates.json')\">" + "JSON" + "</a>");
-        report.endListItem();
-
-        report.startListItem();
-        report.addHtmlContent("UNITS: ");
-        report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('text/units.txt')\">" + "TXT" + "</a>");
-        report.addHtmlContent(" | ");
-        report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('units.json')\">" + "JSON" + "</a>");
-        report.endListItem();
-
-        report.startListItem();
-        report.addHtmlContent("CONTRIBUTORS: ");
-        report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('text/contributors.txt')\">" + "TXT" + "</a>");
-        report.addHtmlContent(" | ");
-        report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('contributors.json')\">" + "JSON" + "</a>");
-        report.endListItem();
-
-        report.startListItem();
-        report.addHtmlContent("LOGICAL DECOMPOSITIONS: ");
-        report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('logical_decompositions.json')\">" + "JSON" + "</a>");
-        report.endListItem();
-
-        report.startListItem();
-        report.addHtmlContent("CONCERNS: ");
-        report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('concerns.json')\">" + "JSON" + "</a>");
-        report.endListItem();
-
-        report.startListItem();
-        report.addHtmlContent("CONTROLS: ");
-        report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('text/controls.txt')\">" + "TXT" + "</a>");
-        report.endListItem();
-
-        report.startListItem();
-        report.addHtmlContent("ALL METRICS: ");
-        report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('text/metrics.txt')\">" + "TXT" + "</a>");
-        report.endListItem();
-
-        report.endUnorderedList();
-
-        //
-
-        report.addLineBreak();
-        report.addLevel2Header("Zipped Files");
-        report.startUnorderedList();
-
-        report.startListItem();
-        report.addHtmlContent("GIT HISTORY: ");
-        report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('zips/git-history.zip')\">" + "ZIP" + "</a>");
-        report.endListItem();
-
-        report.startListItem();
-        report.addHtmlContent("ALL FILES IN ALL ANALYSIS SCOPES: ");
-        report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('zips/all_files.zip')\">" + "ZIP" + "</a>");
-        report.endListItem();
-
-        report.endUnorderedList();
-    }
-
-    private static void addListsOfFilesInScope(RichTextReport report, String scopeName, int filesCount) {
-        String technicalName = scopeName.toLowerCase().replace(" ", "_");
-        boolean exists = filesCount > 0;
-        String infoText = filesCount + (filesCount == 1 ? " file" : " files");
-        String displayName = scopeName.toUpperCase();
-        report.startListItem();
-        if (exists) {
-            report.addHtmlContent("<a href=\"#\" onclick=\"return downloadDataFile('text/aspect_" + technicalName + ".txt')\">" + displayName + " (" + infoText + ")</a>");
-        } else {
-            report.addContentInDiv(displayName, "color: #c0c0c0");
-        }
-        report.endListItem();
-    }
-
-    private static void addInfoBlockWithColor(RichTextReport report, String mainValue, String subtitle, String extra, String color, String tooltip, String icon, String link) {
+    static void addInfoBlockWithColor(RichTextReport report, String mainValue, String subtitle, String extra, String color, String tooltip, String icon, String link) {
         boolean isZero = mainValue.replaceAll("<.*?>", "").replaceAll("\\%", "").equals("0");
 
         String style = "border-radius: 12px;cursor: pointer;";
