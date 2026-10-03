@@ -93,19 +93,7 @@ public class AiInsightsAggregator {
         scannerExport.setAnalyzedAt(document.path("analyzed_at").asText(""));
         scannerExport.setSummary(shorten(document.path("summary").asText(""), SUMMARY_LIMIT));
         for (JsonNode node : findings) {
-            AiFindingExport finding = new AiFindingExport();
-            finding.setRepo(repoName);
-            finding.setScanner(scanner);
-            finding.setId(node.path("id").asText(""));
-            finding.setGroup(node.path("group").asText(""));
-            finding.setTitle(node.path("title").asText(""));
-            String severity = node.path("severity").asText("info").toLowerCase();
-            finding.setSeverity(SEVERITIES.contains(severity) ? severity : "info");
-            finding.setConfidence(node.path("confidence").asText(""));
-            finding.setDescription(shorten(node.path("description").asText(""), DESCRIPTION_LIMIT));
-            finding.setRecommendation(shorten(node.path("recommendation").asText(""), RECOMMENDATION_LIMIT));
-            node.path("tags").forEach(tag -> finding.getTags().add(tag.asText("")));
-            finding.setUrl(insightsUrl + (StringUtils.isNotBlank(finding.getId()) ? "#" + URLEncoder.encode(finding.getId(), StandardCharsets.UTF_8) : ""));
+            AiFindingExport finding = toFinding(node, repoName, scanner, insightsUrl);
             export.getFindings().add(finding);
             scannerExport.setFindings(scannerExport.getFindings() + 1);
             repository.setFindings(repository.getFindings() + 1);
@@ -119,6 +107,24 @@ public class AiInsightsAggregator {
         if (scannerExport.getAnalyzedAt().compareTo(repository.getScannedAt()) > 0) {
             repository.setScannedAt(scannerExport.getAnalyzedAt());
         }
+    }
+
+    /** One finding: severity normalized, texts shortened, the explorer deep link built from the id. */
+    private static AiFindingExport toFinding(JsonNode node, String repoName, String scanner, String insightsUrl) {
+        AiFindingExport finding = new AiFindingExport();
+        finding.setRepo(repoName);
+        finding.setScanner(scanner);
+        finding.setId(node.path("id").asText(""));
+        finding.setGroup(node.path("group").asText(""));
+        finding.setTitle(node.path("title").asText(""));
+        String severity = node.path("severity").asText("info").toLowerCase();
+        finding.setSeverity(SEVERITIES.contains(severity) ? severity : "info");
+        finding.setConfidence(node.path("confidence").asText(""));
+        finding.setDescription(shorten(node.path("description").asText(""), DESCRIPTION_LIMIT));
+        finding.setRecommendation(shorten(node.path("recommendation").asText(""), RECOMMENDATION_LIMIT));
+        node.path("tags").forEach(tag -> finding.getTags().add(tag.asText("")));
+        finding.setUrl(insightsUrl + (StringUtils.isNotBlank(finding.getId()) ? "#" + URLEncoder.encode(finding.getId(), StandardCharsets.UTF_8) : ""));
+        return finding;
     }
 
     static int severityRank(String severity) {

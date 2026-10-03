@@ -375,8 +375,34 @@ public class LandscapeReportContributorsTab {
     }
 
     private void addContributorDependencies(List<CommitsPerExtension> contributorsPerExtension) {
-        Map<String, List<String>> contrExtMap = new HashMap<>();
         Set<String> extensionsNames = new HashSet<>();
+        Map<String, List<String>> contrExtMap = extensionsPerContributor(contributorsPerExtension, extensionsNames);
+        List<ComponentDependency> dependencies = extensionDependencies(contrExtMap);
+
+        GraphvizDependencyRenderer renderer = new GraphvizDependencyRenderer();
+        renderer.setMaxNumberOfDependencies(100);
+        renderer.setDefaultNodeFillColor("deepskyblue2");
+        renderer.setTypeGraph();
+        String graphvizContent = renderer.getMermaidContent(new ArrayList<>(extensionsNames), dependencies);
+
+        if (isContributorReport()) {
+            new Force3DGraphExporter().export2D3DForceGraph(dependencies, reportsFolder, "extension_dependencies_30d");
+
+            landscapeReport.startDetailsBlock("extension dependencies...");
+
+            landscapeReport.addGraphvizFigure("extension_dependencies_30d", "Extension dependencies", graphvizContent);
+            addDownloadLinks("extension_dependencies_30d");
+            landscapeReport.addLineBreak();
+            landscapeReport.addNewTabLink(" - show extension dependencies as 2D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/extension_dependencies_30d_force_2d.html");
+            landscapeReport.addNewTabLink(" - show extension dependencies as 3D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/extension_dependencies_30d_force_3d.html");
+
+            landscapeReport.endDetailsBlock();
+        }
+    }
+
+    /** Contributor -> the "<ext> (n)" labels of the extensions they committed to in 30 days; also collects the labels. */
+    private static Map<String, List<String>> extensionsPerContributor(List<CommitsPerExtension> contributorsPerExtension, Set<String> extensionsNames) {
+        Map<String, List<String>> contrExtMap = new HashMap<>();
         contributorsPerExtension.stream().filter(e -> e.getCommitters30Days().size() > 0).forEach(commitsPerExtension -> {
             String extensionDisplayLabel = commitsPerExtension.getExtension() + " (" + commitsPerExtension.getCommitters30Days().size() + ")";
             extensionsNames.add(extensionDisplayLabel);
@@ -388,6 +414,11 @@ public class LandscapeReportContributorsTab {
                 }
             });
         });
+        return contrExtMap;
+    }
+
+    /** Edges between main extensions counting the contributors active in both (each unordered pair counted once). */
+    private List<ComponentDependency> extensionDependencies(Map<String, List<String>> contrExtMap) {
         List<ComponentDependency> dependencies = new ArrayList<>();
         Map<String, ComponentDependency> dependencyMap = new HashMap<>();
 
@@ -412,26 +443,7 @@ public class LandscapeReportContributorsTab {
         });
 
         dependencies.forEach(dependency -> dependency.setCount(dependency.getCount() / 2));
-
-        GraphvizDependencyRenderer renderer = new GraphvizDependencyRenderer();
-        renderer.setMaxNumberOfDependencies(100);
-        renderer.setDefaultNodeFillColor("deepskyblue2");
-        renderer.setTypeGraph();
-        String graphvizContent = renderer.getMermaidContent(new ArrayList<>(extensionsNames), dependencies);
-
-        if (isContributorReport()) {
-            new Force3DGraphExporter().export2D3DForceGraph(dependencies, reportsFolder, "extension_dependencies_30d");
-
-            landscapeReport.startDetailsBlock("extension dependencies...");
-
-            landscapeReport.addGraphvizFigure("extension_dependencies_30d", "Extension dependencies", graphvizContent);
-            addDownloadLinks("extension_dependencies_30d");
-            landscapeReport.addLineBreak();
-            landscapeReport.addNewTabLink(" - show extension dependencies as 2D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/extension_dependencies_30d_force_2d.html");
-            landscapeReport.addNewTabLink(" - show extension dependencies as 3D force graph&nbsp;" + OPEN_IN_NEW_TAB_SVG_ICON, "visuals/extension_dependencies_30d_force_3d.html");
-
-            landscapeReport.endDetailsBlock();
-        }
+        return dependencies;
     }
 
     private List<String> getMainExtensions() {

@@ -452,22 +452,26 @@ public class ContributorsReportUtils {
 
         // Top half: a fixed-height, bottom-anchored column holding [label][bar] so the +added
         // count sits just above its bar and the bar's foot always rests on the baseline below.
-        report.addHtmlContent("<div title='" + title + "' style='height: " + (CHURN_HALF_HEIGHT + labelHeight)
-                + "px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center'>");
-        if (showTimeSlot) {
-            report.addHtmlContent("<div style='height: " + labelHeight + "px; font-size: 70%; line-height: " + labelHeight + "px; color: #2e7d32'>" + addedLabel + "</div>");
-        }
-        report.addHtmlContent("<div style='width: 100%; background-color: #2e7d32; height:" + heightAdded + "px'></div>");
-        report.addHtmlContent("</div>");
+        addChurnHalf(report, title, labelHeight, "flex-end", true, showTimeSlot, "#2e7d32", addedLabel, heightAdded);
         // Zero baseline — a single shared horizontal line at the centre of the cell.
         report.addHtmlContent("<div style='width: 100%; height: 1px; background-color: #999999'></div>");
         // Bottom half: a fixed-height, top-anchored column holding [bar][label] so the bar's head
         // always touches the baseline above and the -deleted count sits just under it.
+        addChurnHalf(report, title, labelHeight, "flex-start", false, showTimeSlot, "#c62828", deletedLabel, heightDeleted);
+    }
+
+    /** One half of the diverging churn bar: a fixed-height flex column with the bar and, when labels are shown, its count label above or below it. */
+    private static void addChurnHalf(RichTextReport report, String title, int labelHeight, String justify, boolean labelAboveBar, boolean showLabel,
+                                     String color, String label, int barHeight) {
         report.addHtmlContent("<div title='" + title + "' style='height: " + (CHURN_HALF_HEIGHT + labelHeight)
-                + "px; display: flex; flex-direction: column; justify-content: flex-start; align-items: center'>");
-        report.addHtmlContent("<div style='width: 100%; background-color: #c62828; height:" + heightDeleted + "px'></div>");
-        if (showTimeSlot) {
-            report.addHtmlContent("<div style='height: " + labelHeight + "px; font-size: 70%; line-height: " + labelHeight + "px; color: #c62828'>" + deletedLabel + "</div>");
+                + "px; display: flex; flex-direction: column; justify-content: " + justify + "; align-items: center'>");
+        String labelHtml = "<div style='height: " + labelHeight + "px; font-size: 70%; line-height: " + labelHeight + "px; color: " + color + "'>" + label + "</div>";
+        if (showLabel && labelAboveBar) {
+            report.addHtmlContent(labelHtml);
+        }
+        report.addHtmlContent("<div style='width: 100%; background-color: " + color + "; height:" + barHeight + "px'></div>");
+        if (showLabel && !labelAboveBar) {
+            report.addHtmlContent(labelHtml);
         }
         report.addHtmlContent("</div>");
     }
@@ -590,32 +594,11 @@ public class ContributorsReportUtils {
         List<Contributor> contributor30Days = contributors.stream().filter(c -> c.isActive(30)).collect(Collectors.toList());
         List<Contributor> contributor90Days = contributors.stream().filter(c -> c.isActive(90) && !c.isActive(30)).collect(Collectors.toList());
         List<Contributor> contributor180Days = contributors.stream().filter(c -> c.isActive(180) && !c.isActive(90)).collect(Collectors.toList());
-        if (contributor30Days.size() > 0) {
-            indexReport.addParagraph("Past 30 days (" + contributor30Days.size() + "):", "font-size: 80%");
-            contributor30Days.forEach(contributor -> {
-                addContributor(indexReport, max, total, contributor);
-            });
-        } else {
-            indexReport.addParagraph("No " + type.toLowerCase() + " in past 30 days.", "font-size: 80%");
-        }
+        addActivityWindow(indexReport, type, "Past 30 days", "in past 30 days", contributor30Days, max, total);
         indexReport.addHorizontalLine();
-        if (contributor90Days.size() > 0) {
-            indexReport.addParagraph("Past 31 to 90 days (" + contributor90Days.size() + "):", "font-size: 80%");
-            contributor90Days.forEach(contributor -> {
-                addContributor(indexReport, max, total, contributor);
-            });
-        } else {
-            indexReport.addParagraph("No " + type.toLowerCase() + " in past 31 to 90 days.", "font-size: 80%");
-        }
+        addActivityWindow(indexReport, type, "Past 31 to 90 days", "in past 31 to 90 days", contributor90Days, max, total);
         indexReport.addHorizontalLine();
-        if (contributor180Days.size() > 0) {
-            indexReport.addParagraph("Past 91 to 180 days (" + contributor180Days.size() + "):", "font-size: 80%");
-            contributor180Days.forEach(contributor -> {
-                addContributor(indexReport, max, total, contributor);
-            });
-        } else {
-            indexReport.addParagraph("No " + type.toLowerCase() + " in past 91 to 180 days.", "font-size: 80%");
-        }
+        addActivityWindow(indexReport, type, "Past 91 to 180 days", "in past 91 to 180 days", contributor180Days, max, total);
         indexReport.addLevel2Header("Historical " + type + " (" + historicalCount + ")", "margin-top: 40px");
         indexReport.addParagraph("Last " + type.toLowerCase() + " more than 6 months ago", "color: grey");
         contributors.stream().limit(MAX_CONTRIBUTOR_LIST_SIZE).filter(c -> !c.isActive()).forEach(contributor -> {
@@ -623,6 +606,18 @@ public class ContributorsReportUtils {
         });
         indexReport.endDiv();
         indexReport.endSection();
+    }
+
+    /** The contributors of one activity window with its heading, or a "No <type> ..." line when empty. */
+    private static void addActivityWindow(RichTextReport indexReport, String type, String label, String emptyLabel, List<Contributor> window, int max, int total) {
+        if (window.size() > 0) {
+            indexReport.addParagraph(label + " (" + window.size() + "):", "font-size: 80%");
+            window.forEach(contributor -> {
+                addContributor(indexReport, max, total, contributor);
+            });
+        } else {
+            indexReport.addParagraph("No " + type.toLowerCase() + " " + emptyLabel + ".", "font-size: 80%");
+        }
     }
 
     public static void addContributor(RichTextReport indexReport, int max, int total, Contributor contributor) {

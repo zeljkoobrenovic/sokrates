@@ -314,20 +314,29 @@ class LandscapeCommands {
     private static void collectStaleManagedAnalyses(File folder, Set<String> selected, Set<String> gone, List<File> stale) {
         File[] children = folder.listFiles(File::isDirectory);
         for (File child : children == null ? new File[0] : children) {
-            String name = child.getName();
-            if (name.equals("_sokrates_landscape") || name.equals(".git") || name.equals("_sokrates")) {
+            if (isNeverPruned(child.getName())) {
                 continue;
             }
             AnalysisSource source = AnalysisSource.read(child);
             if (source != null) {
-                String url = source.getNormalizedUrl();
-                if (gone.contains(url) || !selected.contains(url)) {
+                if (isStale(source, selected, gone)) {
                     stale.add(child);
                 }
             } else if (!new File(child, "config.json").exists()) {
                 collectStaleManagedAnalyses(child, selected, gone, stale);
             }
         }
+    }
+
+    /** The landscape's own folder, git metadata and a repository's analysis folder are never pruned or descended into. */
+    private static boolean isNeverPruned(String name) {
+        return name.equals("_sokrates_landscape") || name.equals(".git") || name.equals("_sokrates");
+    }
+
+    /** A kept analysis whose repository is gone or no longer selected. */
+    private static boolean isStale(AnalysisSource source, Set<String> selected, Set<String> gone) {
+        String url = source.getNormalizedUrl();
+        return gone.contains(url) || !selected.contains(url);
     }
 
 

@@ -474,15 +474,20 @@ public class ReportFileExporter {
     private static void addPerMonthWeekDayDetails(RichTextReport indexReport, ContributorsAnalysisResults analysis,
                                                   List<ContributionTimeSlot> perMonth, List<ContributionTimeSlot> perWeek,
                                                   List<ContributionTimeSlot> perDay) {
-        if ((perMonth == null || perMonth.isEmpty()) && (perWeek == null || perWeek.isEmpty()) && (perDay == null || perDay.isEmpty())) {
+        if (isEmpty(perMonth) && isEmpty(perWeek) && isEmpty(perDay)) {
             return;
         }
         indexReport.startDetailsBlock("activity per month, week and day...");
-        CommitsReportGenerator.addPerMonthWeekDayDiagrams(indexReport, analysis,
-                perMonth != null ? perMonth : new java.util.ArrayList<>(),
-                perWeek != null ? perWeek : new java.util.ArrayList<>(),
-                perDay != null ? perDay : new java.util.ArrayList<>());
+        CommitsReportGenerator.addPerMonthWeekDayDiagrams(indexReport, analysis, orEmpty(perMonth), orEmpty(perWeek), orEmpty(perDay));
         indexReport.endDetailsBlock();
+    }
+
+    private static boolean isEmpty(List<ContributionTimeSlot> slots) {
+        return slots == null || slots.isEmpty();
+    }
+
+    private static List<ContributionTimeSlot> orEmpty(List<ContributionTimeSlot> slots) {
+        return slots != null ? slots : new java.util.ArrayList<>();
     }
 
     // Renders the language icons for a scope inside its activity panel (replacing the old single

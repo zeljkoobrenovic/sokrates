@@ -330,29 +330,37 @@ public class ScopesRenderer {
 
     /** How many files match the criteria, with their lines, per-component split and content-pattern matches. */
     private void renderMatchesSummary(RichTextReport report) {
-        String filesPhrase = filesCount == 1 ? "file" : "files";
-        String filesFragment = StringUtils.isNotBlank(filesListPath)
-                ? "<a href='#' onclick=\"return downloadDataFile('text/" + filesListPath + "')\"><b>" + filesCount + "</b> " + filesPhrase + "</a>"
-                : "<b>" + filesCount + "</b> " + filesPhrase;
-        report.addListItem(filesFragment + " match" + (filesCount == 1 ? "es" : "") + " defined criteria (" +
+        report.addListItem(filesFragment() + " match" + (filesCount == 1 ? "es" : "") + " defined criteria (" +
                 "<b>" + RichTextRenderingUtils.renderNumber(linesCount) + "</b> " + metric + ", "
                 + "<b>" + RichTextRenderingUtils.renderNumber(linesOfCodeInMain > 0 ? 100.0 * linesCount / linesOfCodeInMain : 0) + "%</b> vs. main code)"
                 + (fileCountPerComponent.size() == 1 ? ". All matches are in " + HtmlEscapeUtils.escape(fileCountPerComponent.get(0).getName()) + " files." : ":"));
         report.startUnorderedList();
         if (fileCountPerComponent.size() > 1) {
-            for (int i = 0; i < fileCountPerComponent.size(); i++) {
-                NumericMetric fileCountMetric = fileCountPerComponent.get(i);
-                NumericMetric linesOfCodeMetric = linesOfCode.get(i);
-                report.addListItem("<b>" + RichTextRenderingUtils.renderNumber(fileCountMetric.getValue().intValue()) + "</b>"
-                        + " " + HtmlEscapeUtils.escape(fileCountMetric.getName()) + " files"
-                        + " (<b>" + RichTextRenderingUtils.renderNumber(linesOfCodeMetric.getValue().intValue()) + "</b> " + metric + ")");
-            }
+            addPerComponentItems(report);
         }
         report.endUnorderedList();
         if (totalNumberOfRegexMatches > 0) {
             report.addListItem(totalNumberOfRegexMatches == 1
                     ? "<b>1</b> line matches the content pattern."
                     : "<b>" + RichTextRenderingUtils.renderNumber(totalNumberOfRegexMatches) + "</b> lines match the content pattern.");
+        }
+    }
+
+    /** "<n> file(s)", linked to the exported file list when there is one. */
+    private String filesFragment() {
+        String filesPhrase = filesCount == 1 ? "file" : "files";
+        return StringUtils.isNotBlank(filesListPath)
+                ? "<a href='#' onclick=\"return downloadDataFile('text/" + filesListPath + "')\"><b>" + filesCount + "</b> " + filesPhrase + "</a>"
+                : "<b>" + filesCount + "</b> " + filesPhrase;
+    }
+
+    private void addPerComponentItems(RichTextReport report) {
+        for (int i = 0; i < fileCountPerComponent.size(); i++) {
+            NumericMetric fileCountMetric = fileCountPerComponent.get(i);
+            NumericMetric linesOfCodeMetric = linesOfCode.get(i);
+            report.addListItem("<b>" + RichTextRenderingUtils.renderNumber(fileCountMetric.getValue().intValue()) + "</b>"
+                    + " " + HtmlEscapeUtils.escape(fileCountMetric.getName()) + " files"
+                    + " (<b>" + RichTextRenderingUtils.renderNumber(linesOfCodeMetric.getValue().intValue()) + "</b> " + metric + ")");
         }
     }
 
