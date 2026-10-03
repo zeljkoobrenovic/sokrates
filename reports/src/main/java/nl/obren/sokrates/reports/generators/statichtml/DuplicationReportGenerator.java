@@ -267,13 +267,30 @@ public class DuplicationReportGenerator {
         report.endSection();
     }
 
-        private void renderDependenciesViaDuplication(RichTextReport report, List<DuplicationMetric> duplicationPerComponent,
+    private void renderDependenciesViaDuplication(RichTextReport report, List<DuplicationMetric> duplicationPerComponent,
                                                   LogicalDecomposition logicalDecomposition, String monitoringPrefix) {
         ProcessingStopwatch.start(monitoringPrefix + "/extracting dependencies");
         DuplicationDependenciesHelper duplicationDependenciesHelper = new DuplicationDependenciesHelper(logicalDecomposition.getName());
         List<ComponentDependency> allDuplicates = duplicationDependenciesHelper.extractDependencies(codeAnalysisResults.getDuplicationAnalysisResults().getAllDuplicates());
         ProcessingStopwatch.end(monitoringPrefix + "/extracting dependencies");
         ProcessingStopwatch.start(monitoringPrefix + "/updating dependencies");
+        setRelativeDuplicationValues(allDuplicates, duplicationPerComponent);
+        int threshold = logicalDecomposition.getDuplicationLinkThreshold();
+        List<ComponentDependency> componentDependencies = allDuplicates.stream().filter(d -> d.getCount() >= threshold).collect(Collectors.toList());
+        ProcessingStopwatch.end(monitoringPrefix + "/updating dependencies");
+
+        List<DuplicationInstance> instances = duplicationDependenciesHelper.getInstances();
+
+        ProcessingStopwatch.start(monitoringPrefix + "/rendering");
+        if (componentDependencies.size() > 0) {
+            renderDuplicationGraph(report, componentDependencies, threshold, logicalDecomposition.getName(), instances);
+        }
+
+        ProcessingStopwatch.end(monitoringPrefix + "/rendering");
+    }
+
+    /** Each dependency's share of its two components' cleaned lines of code (half the duplicated count per side). */
+    private static void setRelativeDuplicationValues(List<ComponentDependency> allDuplicates, List<DuplicationMetric> duplicationPerComponent) {
         // Index components by lowercased key once, so each dependency's from/to lookup is O(1) instead of a
         // full stream scan of duplicationPerComponent. putIfAbsent keeps the original findFirst() semantics
         // (first matching component wins on a case-insensitive key collision).
@@ -291,44 +308,37 @@ public class DuplicationReportGenerator {
                 dependency.setValueTo(cleanedLinesOfCode > 0 ? 100.0 * (dependency.getCount() / 2.0) / cleanedLinesOfCode : 0);
             }
         });
-        int threshold = logicalDecomposition.getDuplicationLinkThreshold();
-        List<ComponentDependency> componentDependencies = allDuplicates.stream().filter(d -> d.getCount() >= threshold).collect(Collectors.toList());
-        ProcessingStopwatch.end(monitoringPrefix + "/updating dependencies");
+    }
 
-        List<DuplicationInstance> instances = duplicationDependenciesHelper.getInstances();
+    /** The Mermaid graph with its download links, the 2D/3D force graphs and the per-pair details. */
+    private void renderDuplicationGraph(RichTextReport report, List<ComponentDependency> componentDependencies, int threshold, String logicalDecompositionName, List<DuplicationInstance> instances) {
+        GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
+        graphvizDependencyRenderer.setDefaultNodeFillColor("deepskyblue2");
+        graphvizDependencyRenderer.setType("graph");
+        graphvizDependencyRenderer.setArrow("--");
+        graphvizDependencyRenderer.setArrowColor("#DC143C");
+        graphvizDependencyRenderer.setMaxNumberOfDependencies(50);
+        String graphvizContent = graphvizDependencyRenderer.getMermaidContent(new ArrayList<>(), componentDependencies);
+        report.addLevel3Header("Duplication Between Components (" + threshold + "+ lines)", "margin-top: 30px");
 
-        ProcessingStopwatch.start(monitoringPrefix + "/rendering");
-        if (componentDependencies.size() > 0) {
-            GraphvizDependencyRenderer graphvizDependencyRenderer = new GraphvizDependencyRenderer();
-            graphvizDependencyRenderer.setDefaultNodeFillColor("deepskyblue2");
-            graphvizDependencyRenderer.setType("graph");
-            graphvizDependencyRenderer.setArrow("--");
-            graphvizDependencyRenderer.setArrowColor("#DC143C");
-            graphvizDependencyRenderer.setMaxNumberOfDependencies(50);
-            String graphvizContent = graphvizDependencyRenderer.getMermaidContent(new ArrayList<>(), componentDependencies);
-            report.addLevel3Header("Duplication Between Components (" + threshold + "+ lines)", "margin-top: 30px");
+        String graphId = "duplication_dependencies_" + graphCounter++;
+        report.addGraphvizFigure(graphId, "Duplication between components", graphvizContent);
 
-            String graphId = "duplication_dependencies_" + graphCounter++;
-            report.addGraphvizFigure(graphId, "Duplication between components", graphvizContent);
+        report.addLineBreak();
 
-            report.addLineBreak();
+        VisualizationTools.addDownloadLinks(report, graphId);
+        report.addLineBreak();
+        Pair<String,String> force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(componentDependencies, reportsFolder, graphId);
+        report.addNewTabLink("2D force graph", force3DGraphFilePath.getFirst());
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("3D force graph", force3DGraphFilePath.getSecond());
 
-            VisualizationTools.addDownloadLinks(report, graphId);
-            report.addLineBreak();
-            Pair<String,String> force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(componentDependencies, reportsFolder, graphId);
-            report.addNewTabLink("2D force graph", force3DGraphFilePath.getFirst());
-            report.addHtmlContent(" | ");
-            report.addNewTabLink("3D force graph", force3DGraphFilePath.getSecond());
+        report.addLineBreak();
+        report.addLineBreak();
 
-            report.addLineBreak();
-            report.addLineBreak();
+        addMoreDetailsSection(report, componentDependencies, logicalDecompositionName, instances);
 
-            addMoreDetailsSection(report, componentDependencies, logicalDecomposition.getName(), instances);
-
-            report.addLineBreak();
-        }
-
-        ProcessingStopwatch.end(monitoringPrefix + "/rendering");
+        report.addLineBreak();
     }
 
     private void export3DFileDependencies() {

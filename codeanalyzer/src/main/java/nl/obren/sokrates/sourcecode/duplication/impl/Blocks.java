@@ -198,64 +198,52 @@ public class Blocks {
                     // so there is nothing to record (and nothing to publish to the map).
                     return;
                 }
-
-                Integer cleanedStartLine1 = fileInfoForDuplication1.indexesOf(subBlock1).get(0);
-                Integer cleanedStartLine2 = foundBlockIDs.get(0);
-
-                DuplicateRange range1 = new DuplicateRange(cleanedStartLine1, cleanedStartLine1 + blockSize - 1);
-                DuplicateRange range2 = new DuplicateRange(cleanedStartLine2, cleanedStartLine2 + blockSize - 1);
-
-                DuplicateRangePair pair1 = new DuplicateRangePair(range1, range2);
-                DuplicateRangePair pair2 = new DuplicateRangePair(range2, range1);
-
-                File file1 = fileInfoForDuplication1.getSourceFile().getFile();
-                File file2 = fileInfoForDuplication2.getSourceFile().getFile();
-                String key1 = getPairKey(file1.getPath(), file2.getPath());
-                String key2 = getPairKey(file2.getPath(), file1.getPath());
-
-                // Atomic get-or-create keyed by block: a block is only ever recorded once a real cross-file
-                // match exists, so creating the instance here (rather than earlier) preserves the original
-                // semantics of never publishing match-less instances. Two threads sharing a block resolve to
-                // the same instance and then serialise on it below.
-                DuplicationInstance instance = duplicationInstances.computeIfAbsent(subBlock1, k -> {
-                    DuplicationInstance created = new DuplicationInstance();
-                    created.setBlockSize(blockSize);
-                    return created;
-                });
-
-                // Serialise the read-modify-write on this block's instance and its range bookkeeping.
-                // Different blocks lock on different instances and proceed concurrently.
-                synchronized (instance) {
-                    addFileToDuplicationInstance(instance, fileInfoForDuplication1.getSourceFile(), cleanedStartLine1 + 1, blockSize);
-
-                    boolean alreadyIncluded = false;
-                    DuplicateRangePairs duplicateRangePairs1 = fileRangePairs.get(key1);
-                    DuplicateRangePairs duplicateRangePairs2 = fileRangePairs.get(key2);
-
-                    if (duplicateRangePairs1 != null && duplicateRangePairs1.includes(pair1)) {
-                        alreadyIncluded = true;
-                    }
-
-                    if (!alreadyIncluded && duplicateRangePairs2 != null && duplicateRangePairs2.includes(pair2)) {
-                        alreadyIncluded = true;
-                    }
-
-                    if (!alreadyIncluded) {
-                        addFileToDuplicationInstance(instance, fileInfoForDuplication2.getSourceFile(), cleanedStartLine2 + 1, blockSize);
-
-                        if (duplicateRangePairs1 == null) {
-                            duplicateRangePairs1 = fileRangePairs.computeIfAbsent(key1, k -> new DuplicateRangePairs());
-                        }
-                        duplicateRangePairs1.getRanges().add(pair1);
-
-                        if (duplicateRangePairs2 == null) {
-                            duplicateRangePairs2 = fileRangePairs.computeIfAbsent(key2, k -> new DuplicateRangePairs());
-                        }
-                        duplicateRangePairs2.getRanges().add(pair2);
-                    }
-                }
+                recordCrossFileDuplicate(fileInfoForDuplication1, fileInfoForDuplication2, subBlock1,
+                        fileInfoForDuplication1.indexesOf(subBlock1).get(0), foundBlockIDs.get(0), blockSize);
             });
         });
+    }
+
+    /** Records one sub-block found in both files under its instance, adding the second file's range only once per file pair. */
+    private void recordCrossFileDuplicate(FileInfoForDuplication fileInfoForDuplication1, FileInfoForDuplication fileInfoForDuplication2, Block subBlock1,
+                                          int cleanedStartLine1, int cleanedStartLine2, int blockSize) {
+        DuplicateRange range1 = new DuplicateRange(cleanedStartLine1, cleanedStartLine1 + blockSize - 1);
+        DuplicateRange range2 = new DuplicateRange(cleanedStartLine2, cleanedStartLine2 + blockSize - 1);
+
+        DuplicateRangePair pair1 = new DuplicateRangePair(range1, range2);
+        DuplicateRangePair pair2 = new DuplicateRangePair(range2, range1);
+
+        File file1 = fileInfoForDuplication1.getSourceFile().getFile();
+        File file2 = fileInfoForDuplication2.getSourceFile().getFile();
+        String key1 = getPairKey(file1.getPath(), file2.getPath());
+        String key2 = getPairKey(file2.getPath(), file1.getPath());
+
+        // Atomic get-or-create keyed by block: a block is only ever recorded once a real cross-file
+        // match exists, so creating the instance here (rather than earlier) preserves the original
+        // semantics of never publishing match-less instances. Two threads sharing a block resolve to
+        // the same instance and then serialise on it below.
+        DuplicationInstance instance = duplicationInstances.computeIfAbsent(subBlock1, k -> {
+            DuplicationInstance created = new DuplicationInstance();
+            created.setBlockSize(blockSize);
+            return created;
+        });
+
+        // Serialise the read-modify-write on this block's instance and its range bookkeeping.
+        // Different blocks lock on different instances and proceed concurrently.
+        synchronized (instance) {
+            addFileToDuplicationInstance(instance, fileInfoForDuplication1.getSourceFile(), cleanedStartLine1 + 1, blockSize);
+
+            if (!rangePairIncluded(key1, pair1) && !rangePairIncluded(key2, pair2)) {
+                addFileToDuplicationInstance(instance, fileInfoForDuplication2.getSourceFile(), cleanedStartLine2 + 1, blockSize);
+                fileRangePairs.computeIfAbsent(key1, k -> new DuplicateRangePairs()).getRanges().add(pair1);
+                fileRangePairs.computeIfAbsent(key2, k -> new DuplicateRangePairs()).getRanges().add(pair2);
+            }
+        }
+    }
+
+    private boolean rangePairIncluded(String key, DuplicateRangePair pair) {
+        DuplicateRangePairs pairs = fileRangePairs.get(key);
+        return pairs != null && pairs.includes(pair);
     }
 
     private void findDuplicatesWithinFiles() {

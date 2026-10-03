@@ -80,7 +80,6 @@ public class DataExporter {
     // bundles keyed "fragments/<type>.json") so it can be embedded base64 into the single shared
     // viewer.html instead of written as sibling zips/JSON the viewer would fetch(). Lets the source
     // viewer open from file:// with no web server.
-    private final Map<String, String> viewerArchiveEntries = new LinkedHashMap<>();
     // -dataOnly: write nothing outside data/ (no html/Structure.html, src/viewer.html or data-preview.html).
     private boolean dataOnly = false;
     public DataExporter(ProgressFeedback progressFeedback) {
@@ -102,9 +101,6 @@ public class DataExporter {
         this.analysisResults = analysisResults;
         this.dataFolder = getDataFolder();
         this.textDataFolder = getTextDataFolder();
-        // One exporter instance serves every analysis of a CLI run (analyzeLandscape -urls analyzes
-        // many repositories in one JVM): the viewer archive must hold only this repository's entries.
-        viewerArchiveEntries.clear();
 
         LOG.info("Saving file lists");
         exportFileLists();
@@ -708,55 +704,7 @@ public class DataExporter {
             return;
         }
         this.codeCacheFolder = getCodeCacheFolder();
-
-        detailedInfo("Saving details and source code cache:");
-
-        saveStructureFile();
-
-        // Collect the viewer's data into viewerArchiveEntries first, then write viewer.html last
-        // with that whole archive embedded base64 inside it (saveViewerFile), so the page extracts
-        // its ?aspect=&file= / ?bundle=&i= view from inline bytes — no fetch, opens from file://.
-        if (codeConfiguration.getAnalysis().isSaveSourceFiles()) {
-            Set<SourceFile> referencedFiles = getReferencedFiles();
-
-            collectAspectSourceFiles(codeConfiguration.getMain(), "main", referencedFiles);
-            collectAspectSourceFiles(codeConfiguration.getTest(), "test", referencedFiles);
-            collectAspectSourceFiles(codeConfiguration.getGenerated(), "generated", referencedFiles);
-            collectAspectSourceFiles(codeConfiguration.getBuildAndDeployment(), "buildAndDeployment", referencedFiles);
-            collectAspectSourceFiles(codeConfiguration.getOther(), "other", referencedFiles);
-        }
-
-        if (codeConfiguration.getAnalysis().isSaveCodeFragments()) {
-            UnitsAnalysisResults unitsAnalysisResults = analysisResults.getUnitsAnalysisResults();
-            collectUnitFragments(unitsAnalysisResults.getLongestUnits(), "longest_unit");
-            collectUnitFragments(unitsAnalysisResults.getMostComplexUnits(), "most_complex_units");
-
-            DuplicationAnalysisResults duplicationAnalysisResults = analysisResults.getDuplicationAnalysisResults();
-            collectDuplicateFragments(duplicationAnalysisResults.getLongestDuplicates(), "longest_duplicates");
-            collectDuplicateFragments(duplicationAnalysisResults.getMostFrequentDuplicates(), "most_frequent_duplicates");
-            collectDuplicateFragments(duplicationAnalysisResults.getUnitDuplicates(), "unit_duplicates");
-        }
-
-        saveViewerFile();
-    }
-
-    private Set<SourceFile> getReferencedFiles() {
-        Set<SourceFile> referencedFiles = new HashSet<>();
-
-        referencedFiles.addAll(analysisResults.getFilesAnalysisResults().getLongestFiles());
-        referencedFiles.addAll(analysisResults.getFilesAnalysisResults().getFilesWithMostUnits());
-        referencedFiles.addAll(analysisResults.getFilesHistoryAnalysisResults().getFilesWithLeastContributors());
-        referencedFiles.addAll(analysisResults.getFilesHistoryAnalysisResults().getFilesWithMostContributors());
-        referencedFiles.addAll(analysisResults.getFilesHistoryAnalysisResults().getMostChangedFiles());
-        referencedFiles.addAll(analysisResults.getFilesHistoryAnalysisResults().getOldestFiles());
-        referencedFiles.addAll(analysisResults.getFilesHistoryAnalysisResults().getMostPreviouslyChangedFiles());
-        referencedFiles.addAll(analysisResults.getFilesHistoryAnalysisResults().getMostRecentlyChangedFiles());
-        referencedFiles.addAll(analysisResults.getFilesHistoryAnalysisResults().getYoungestFiles());
-        analysisResults.getDuplicationAnalysisResults().getLongestDuplicates().forEach(duplicationInstance -> {
-            referencedFiles.addAll(duplicationInstance.getDuplicatedFileBlocks().stream().map(d -> d.getSourceFile()).collect(Collectors.toList()));
-        });
-
-        return referencedFiles;
+        new SourceViewerExporter(analysisResults, codeConfiguration, reportsFolder, dataFolder, codeCacheFolder, this::detailedInfo).export();
     }
 
     private void exportJson() throws IOException {
@@ -919,100 +867,6 @@ public class DataExporter {
         });
 
         return builder.toString();
-    }
-
-    // Collects the unit fragment bundle into the viewer archive under "fragments/<type>.json"
-    // (array order preserved so the report's 1-based ?i= index maps to the same array position).
-    private void collectUnitFragments(List<UnitInfo> units, String fragmentType) throws IOException {
-        detailedInfo(" - saving source code cache for the " + fragmentType + " fragments");
-        List<FragmentExport> fragments = new ArrayList<>();
-        units.forEach(unit -> {
-            fragments.add(new FragmentExport(
-                    unit.getShortName(),
-                    unit.getSourceFile().getRelativePath(),
-                    unit.getStartLine(),
-                    unit.getEndLine(),
-                    unit.getLinesOfCode(),
-                    unit.getMcCabeIndex(),
-                    unit.getSourceFile().getExtension(),
-                    unit.getBody()));
-        });
-
-        viewerArchiveEntries.put("fragments/" + fragmentType + ".json", new JsonGenerator().generate(fragments));
-    }
-
-    private void saveStructureFile() {
-        try {
-
-            String html = HtmlTemplateUtils.getResource("/templates/Structure.html");
-
-            File htmlFile = new File(new File(reportsFolder, "html"), "Structure.html");
-            FileUtils.write(htmlFile, html, UTF_8);
-
-        } catch (IOException e) {
-            LOG.warn(e);
-        }
-    }
-
-    // Writes the single shared source viewer with its whole data archive (source files +
-    // fragment bundles, accumulated in viewerArchiveEntries) embedded inline as base64. The page
-    // extracts its ?aspect=&file= / ?bundle=&i= view from those inline bytes (sokratesUnzip) — no
-    // sibling zips/JSON and no fetch(), so it opens from file://.
-    private void saveViewerFile() {
-        try {
-            String[][] entries = viewerArchiveEntries.entrySet().stream()
-                    .map(e -> new String[]{e.getKey(), e.getValue()})
-                    .toArray(String[][]::new);
-            String archiveB64 = VisualizationTemplate.base64(ZipUtils.stringEntriesToZipBytes(entries));
-            String html = HtmlTemplateUtils.getResource("/templates/viewer.html")
-                    .replace("${sokrates-unzip-lib}", VisualizationTemplate.embedZipLib())
-                    .replace("${embedded-archive}", "var SOKRATES_ARCHIVE = \"" + archiveB64 + "\";");
-            FileUtils.write(new File(codeCacheFolder, "viewer.html"), html, UTF_8);
-        } catch (IOException e) {
-            LOG.warn(e);
-        }
-    }
-
-    // Collects the duplicate fragment bundle into the viewer archive under "fragments/<type>.json"
-    // (one entry per duplicate, in order, so the 1-based ?i= index in the report's "view" link
-    // (DuplicationReportGenerator) maps to the same array position here).
-    private void collectDuplicateFragments(List<DuplicationInstance> duplicates, String fragmentType) throws IOException {
-        detailedInfo(" - saving source code cache for the " + fragmentType + " fragments");
-        List<DuplicateFragmentExport> fragments = new ArrayList<>();
-        duplicates.forEach(duplicate -> {
-            DuplicatedFileBlock firstFileBlock = duplicate.getDuplicatedFileBlocks().get(0);
-            DuplicateFragmentExport fragment = new DuplicateFragmentExport(firstFileBlock.getSourceFile().getExtension());
-            duplicate.getDuplicatedFileBlocks().forEach(block -> {
-                List<String> lines = block.getSourceFile().getLines();
-                int fromIndex = block.getStartLine() - 1;
-                int endLine = block.getEndLine();
-                if (fromIndex >= 0 && endLine > fromIndex && endLine < lines.size()) {
-                    String code = String.join("\n", lines.subList(fromIndex, endLine));
-                    fragment.addBlock(block.getSourceFile().getRelativePath(), block.getStartLine(), endLine, code);
-                }
-            });
-            fragments.add(fragment);
-        });
-
-        viewerArchiveEntries.put("fragments/" + fragmentType + ".json", new JsonGenerator().generate(fragments));
-    }
-
-    // Collects an aspect's referenced source files into the viewer archive, keyed
-    // "<aspect>/<relativePath>" (the viewer computes this key from ?aspect=&file=). Also writes the
-    // aspect's file-list JSON to data/ (a separate external-tooling contract, kept as a loose file).
-    private void collectAspectSourceFiles(NamedSourceCodeAspect aspect, String aspectName, Set<SourceFile> referencedFiles) throws IOException {
-        File filesListFile = new File(dataFolder, aspectName + "FilesPaths.json");
-        detailedInfo(" - storing the file list for the <b>" + aspectName + "</b> aspect in <a href='" + filesListFile.getPath() + "'>" + filesListFile.getPath() + "</a>");
-        List<String> files = new ArrayList<>();
-        aspect.getSourceFiles().forEach(sourceFile -> {
-            files.add(sourceFile.getRelativePath());
-        });
-        FileUtils.write(filesListFile, new JsonGenerator().generate(files), UTF_8);
-
-        detailedInfo(" - saving source code cache for the <b>" + aspectName + "</b> aspect (embedded in the viewer)");
-        aspect.getSourceFiles().stream().filter(referencedFiles::contains).forEach(sourceFile -> {
-            viewerArchiveEntries.put(aspectName + "/" + sourceFile.getRelativePath(), sourceFile.getContent());
-        });
     }
 
     public File getCodeCacheFolder() {

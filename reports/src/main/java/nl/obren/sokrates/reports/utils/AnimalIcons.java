@@ -18,32 +18,21 @@ public class AnimalIcons {
         return Arrays.asList(new String[]{"&lt;1K", "1-2K", "2-5K", "5-10K", "10-20K", "20-50K", "50-100K", "100-200K", "200-500K", "500K-1M", "&gt;1M"});
     }
 
+    private static final int[] LOC_THRESHOLDS = {1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000};
+    private static final String[] ANIMALS = {"mouse", "bird", "cat", "dog", "sheep", "donkey", "horse", "hippo", "rhino", "elephant", "whale"};
+
+    /** The animal whose size class the main lines of code fall in: a mouse up to 1,000 lines ... a whale above a million. */
     public String getAnimalForMainLoc(int linesOfCode) {
-        if (linesOfCode <= 1000) return "mouse";
-        else if (linesOfCode <= 2000) return "bird";
-        else if (linesOfCode <= 5000) return "cat";
-        else if (linesOfCode <= 10000) return "dog";
-        else if (linesOfCode <= 20000) return "sheep";
-        else if (linesOfCode <= 50000) return "donkey";
-        else if (linesOfCode <= 100000) return "horse";
-        else if (linesOfCode <= 200000) return "hippo";
-        else if (linesOfCode <= 500000) return "rhino";
-        else if (linesOfCode <= 1000000) return "elephant";
-        else return "whale";
+        for (int i = 0; i < LOC_THRESHOLDS.length; i++) {
+            if (linesOfCode <= LOC_THRESHOLDS[i]) {
+                return ANIMALS[i];
+            }
+        }
+        return ANIMALS[ANIMALS.length - 1];
     }
 
     public String getAnimalIconsForMainLoc(int linesOfCode) {
-        if (linesOfCode <= 1000) return getIconSvg("mouse");
-        else if (linesOfCode <= 2000) return getIconSvg("bird");
-        else if (linesOfCode <= 5000) return getIconSvg("cat");
-        else if (linesOfCode <= 10000) return getIconSvg("dog");
-        else if (linesOfCode <= 20000) return getIconSvg("sheep");
-        else if (linesOfCode <= 50000) return getIconSvg("donkey");
-        else if (linesOfCode <= 100000) return getIconSvg("horse");
-        else if (linesOfCode <= 200000) return getIconSvg("hippo");
-        else if (linesOfCode <= 500000) return getIconSvg("rhino");
-        else if (linesOfCode <= 1000000) return getIconSvg("elephant");
-        else return getIconSvg("whale");
+        return getIconSvg(getAnimalForMainLoc(linesOfCode));
     }
 
     public String getInfo(int linesOfCode) {

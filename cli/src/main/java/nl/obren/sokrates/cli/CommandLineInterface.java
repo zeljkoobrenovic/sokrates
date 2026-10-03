@@ -702,6 +702,21 @@ public class CommandLineInterface {
         String jsonContent = FileUtils.readFileToString(confFile, UTF_8);
         CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
 
+        applyAnalysisOptions(cmd, codeConfiguration);
+
+        Metadata metadata = codeConfiguration.getMetadata();
+        updateMetadataFromCommandLine(cmd, metadata);
+
+        String cacheFileValue = optionValueOrNull(cmd, commands.getSetCacheFiles());
+        if (cacheFileValue != null) {
+            codeConfiguration.getAnalysis().setSaveSourceFiles(cacheFileValue.equalsIgnoreCase("true"));
+        }
+
+        FileUtils.write(confFile, new JsonGenerator().generate(codeConfiguration), UTF_8);
+    }
+
+    /** The -skipComplexAnalyses / -skipDuplicationAnalyses / -skipCorrelationAnalyses / -enableDuplicationAnalyses switches. */
+    private void applyAnalysisOptions(CommandLine cmd, CodeConfiguration codeConfiguration) {
         if (cmd.hasOption(commands.getSkipComplexAnalyses().getOpt())) {
             codeConfiguration.getAnalysis().setSkipDependencies(true);
             codeConfiguration.getAnalysis().setSkipDuplication(true);
@@ -720,18 +735,6 @@ public class CommandLineInterface {
         if (cmd.hasOption(commands.getEnableDuplicationAnalyses().getOpt())) {
             codeConfiguration.getAnalysis().setSkipDuplication(false);
         }
-
-        Metadata metadata = codeConfiguration.getMetadata();
-        updateMetadataFromCommandLine(cmd, metadata);
-
-        if (cmd.hasOption(commands.getSetCacheFiles().getOpt())) {
-            String cacheFileValue = cmd.getOptionValue(commands.getSetCacheFiles().getOpt());
-            if (StringUtils.isNotBlank(cacheFileValue)) {
-                codeConfiguration.getAnalysis().setSaveSourceFiles(cacheFileValue.equalsIgnoreCase("true"));
-            }
-        }
-
-        FileUtils.write(confFile, new JsonGenerator().generate(codeConfiguration), UTF_8);
     }
 
     private void installSkills(String[] args) throws ParseException, IOException {

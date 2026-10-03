@@ -136,31 +136,8 @@ public class ConcernsReportGenerator {
             return;
         }
         concernCounter++;
-        List<NumericMetric> fileCountPerExtension = aspectAnalysisResults.getFileCountPerExtension();
-        List<NumericMetric> linesOfCodePerExtension = aspectAnalysisResults.getLinesOfCodePerExtension();
-
-        ScopesRenderer renderer = new ScopesRenderer();
-        renderer.setLinesOfCodeInMain(codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode());
-
-        String title = "<span style='color: grey; font-size: 90%'>" + key + "</span><br>";
-        // The name is repository-controlled for meta-concerns; the title also feeds the "no files" message.
-        title += groupCounter + "." + concernCounter + " " + HtmlEscapeUtils.escape(name.replace(" - ", " Multiple Classifications"));
-        renderer.setTitle(title);
-        renderer.setDescription("");
-        if (name.equalsIgnoreCase("Unclassified")) {
-            renderer.setDescription("This concern include all files that are not included in any of the previously described concerns in this group.");
-        }
-        if (name.equalsIgnoreCase("Multiple Classifications")) {
-            renderer.setDescription("This concern include all files that are included in two or more concerns in this group.");
-        }
-
-        renderer.setFileCountPerComponent(fileCountPerExtension);
-        renderer.setAspect(aspectAnalysisResults.getAspect());
-        renderer.setLinesOfCode(linesOfCodePerExtension);
-        renderer.setMaxFileCount(codeAnalysisResults.getMainAspectAnalysisResults().getFilesCount());
+        ScopesRenderer renderer = scopesRenderer(key, aspectAnalysisResults, name);
         int mainLoc = codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode();
-        renderer.setMaxLinesOfCode(mainLoc);
-        renderer.setTotalNumberOfRegexMatches(aspectAnalysisResults.getNumberOfRegexLineMatches());
 
         double relativeSizeInPerc = 100.0 * aspectAnalysisResults.getLinesOfCode() / mainLoc;
         int numberOfFiles = aspectAnalysisResults.getFilesCount();
@@ -189,6 +166,35 @@ public class ConcernsReportGenerator {
         report.endDetailsBlock();
 
         report.endSection();
+    }
+
+    /** The renderer of one concern's extension breakdown: numbered title, main-code maxima, regex match count. */
+    private ScopesRenderer scopesRenderer(String key, AspectAnalysisResults aspectAnalysisResults, String name) {
+        List<NumericMetric> fileCountPerExtension = aspectAnalysisResults.getFileCountPerExtension();
+        List<NumericMetric> linesOfCodePerExtension = aspectAnalysisResults.getLinesOfCodePerExtension();
+
+        ScopesRenderer renderer = new ScopesRenderer();
+        renderer.setLinesOfCodeInMain(codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode());
+
+        String title = "<span style='color: grey; font-size: 90%'>" + key + "</span><br>";
+        // The name is repository-controlled for meta-concerns; the title also feeds the "no files" message.
+        title += groupCounter + "." + concernCounter + " " + HtmlEscapeUtils.escape(name.replace(" - ", " Multiple Classifications"));
+        renderer.setTitle(title);
+        renderer.setDescription("");
+        if (name.equalsIgnoreCase("Unclassified")) {
+            renderer.setDescription("This concern include all files that are not included in any of the previously described concerns in this group.");
+        }
+        if (name.equalsIgnoreCase("Multiple Classifications")) {
+            renderer.setDescription("This concern include all files that are included in two or more concerns in this group.");
+        }
+
+        renderer.setFileCountPerComponent(fileCountPerExtension);
+        renderer.setAspect(aspectAnalysisResults.getAspect());
+        renderer.setLinesOfCode(linesOfCodePerExtension);
+        renderer.setMaxFileCount(codeAnalysisResults.getMainAspectAnalysisResults().getFilesCount());
+        renderer.setMaxLinesOfCode(codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode());
+        renderer.setTotalNumberOfRegexMatches(aspectAnalysisResults.getNumberOfRegexLineMatches());
+        return renderer;
     }
 
     private void renderConcernPerComponent(AspectAnalysisResults aspectAnalysisResults, int mainLoc, LogicalDecompositionAnalysisResults logicalDecompositionAnalysisResults) {

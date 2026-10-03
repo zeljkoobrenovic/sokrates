@@ -77,31 +77,11 @@ public class PeopleConfigByUserNameUpdater {
             }
         });
 
-        // Group observed emails by userName (preserving first-seen order), and track the latest-used
-        // email per userName by commit date (ties: the first one seen wins).
-        Map<String, String> displayNameByKey = new LinkedHashMap<>();
-        Map<String, Set<String>> emailsByUserName = new LinkedHashMap<>();
-        Map<String, String> latestEmailByKey = new LinkedHashMap<>();
-        Map<String, String> latestDateByKey = new LinkedHashMap<>();
-        identities.forEach(identity -> {
-            String userName = identity.getUserName();
-            String email = identity.getEmail();
-            if (StringUtils.isBlank(userName) || StringUtils.isBlank(email)) {
-                return;
-            }
-            String key = userNameKey(userName);
-            displayNameByKey.putIfAbsent(key, userName);
-            emailsByUserName.computeIfAbsent(key, k -> new LinkedHashSet<>()).add(email);
-
-            String date = identity.getDate();
-            if (!latestEmailByKey.containsKey(key) || date.compareTo(latestDateByKey.get(key)) > 0) {
-                latestEmailByKey.put(key, email);
-                latestDateByKey.put(key, date);
-            }
-        });
+        ObservedIdentities observed = new ObservedIdentities();
+        identities.forEach(observed::add);
 
         int addedCount = 0;
-        for (Map.Entry<String, Set<String>> entry : emailsByUserName.entrySet()) {
+        for (Map.Entry<String, Set<String>> entry : observed.emailsByUserName.entrySet()) {
             String key = entry.getKey();
             Set<String> observedEmails = entry.getValue();
 
@@ -109,7 +89,7 @@ public class PeopleConfigByUserNameUpdater {
             if (person == null) {
                 // New entry for this userName.
                 person = new PersonConfig();
-                person.setUserName(displayNameByKey.get(key));
+                person.setUserName(observed.displayNameByKey.get(key));
                 peopleConfig.getPeople().add(person);
                 byUserName.put(key, person);
             }
@@ -117,7 +97,7 @@ public class PeopleConfigByUserNameUpdater {
             // The email field holds a SINGLE address — the latest-used email — and is only filled when
             // currently blank; an existing non-blank email is never overwritten.
             if (StringUtils.isBlank(person.getEmail())) {
-                person.setEmail(latestEmailByKey.get(key));
+                person.setEmail(observed.latestEmailByKey.get(key));
             }
 
             // emailPatterns accumulates a literal regex per email (so the entry matches every one of
@@ -136,6 +116,34 @@ public class PeopleConfigByUserNameUpdater {
         }
 
         return addedCount;
+    }
+
+    /**
+     * The observed emails grouped by userName key (preserving first-seen order), the display name per key, and the
+     * latest-used email per key by commit date (ties: the first one seen wins).
+     */
+    private static class ObservedIdentities {
+        final Map<String, String> displayNameByKey = new LinkedHashMap<>();
+        final Map<String, Set<String>> emailsByUserName = new LinkedHashMap<>();
+        final Map<String, String> latestEmailByKey = new LinkedHashMap<>();
+        final Map<String, String> latestDateByKey = new LinkedHashMap<>();
+
+        void add(ContributorIdentity identity) {
+            String userName = identity.getUserName();
+            String email = identity.getEmail();
+            if (StringUtils.isBlank(userName) || StringUtils.isBlank(email)) {
+                return;
+            }
+            String key = userNameKey(userName);
+            displayNameByKey.putIfAbsent(key, userName);
+            emailsByUserName.computeIfAbsent(key, k -> new LinkedHashSet<>()).add(email);
+
+            String date = identity.getDate();
+            if (!latestEmailByKey.containsKey(key) || date.compareTo(latestDateByKey.get(key)) > 0) {
+                latestEmailByKey.put(key, email);
+                latestDateByKey.put(key, date);
+            }
+        }
     }
 
     // Ensures person.emailPatterns covers each of `emails` (full-match, case-insensitive). Adds a
