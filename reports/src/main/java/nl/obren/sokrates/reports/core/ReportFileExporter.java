@@ -32,72 +32,7 @@ import java.util.*;
 import static nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator.*;
 
 public class ReportFileExporter {
-    private static String htmlReportsSubFolder = "html";
-
-    public static void exportHtml(File folder, String subFolder, RichTextReport report, String customHeaderFragment) {
-        htmlReportsSubFolder = subFolder;
-        File htmlReportsFolder = getHtmlReportsFolder(folder);
-        String reportFileName = getReportFileName(report);
-        export(htmlReportsFolder, report, reportFileName, customHeaderFragment);
-    }
-
-    private static void export(File folder, RichTextReport report, String reportFileName, String customHeaderFragment) {
-        File reportFile = new File(folder, reportFileName);
-        try {
-            PrintWriter out = new PrintWriter(reportFile);
-            String titleText = extractTitle(report.getDisplayName());
-            String reportsHtmlHeader = ReportConstants.REPORTS_HTML_HEADER.replace(
-                    "<title></title>",
-                    "<title>" + titleText + "</title>"
-            );
-            reportsHtmlHeader = reportsHtmlHeader.replace("<!-- CUSTOM HEADER FRAGMENT -->", customHeaderFragment);
-            if (report.isEmbedded()) {
-                reportsHtmlHeader = reportsHtmlHeader.replace(" ${margin-left}", "0");
-                reportsHtmlHeader = reportsHtmlHeader.replace(" ${margin-right}", "0");
-            } else {
-                reportsHtmlHeader = reportsHtmlHeader.replace(" ${margin-left}", "5%");
-                reportsHtmlHeader = reportsHtmlHeader.replace(" ${margin-right}", "5%");
-            }
-            reportsHtmlHeader = minimize(reportsHtmlHeader);
-            out.println(reportsHtmlHeader + "\n<body><div id=\"report\">\n" + "\n");
-            new ReportRenderer().render(report, getReportRenderingClient(out, folder));
-            out.println("</div>\n</body>\n</html>");
-            out.flush();
-            out.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
-    protected static String extractTitle(String displayName) {
-        return displayName.replaceAll("<.*?>", " ").replaceAll("  ", " ").trim();
-    }
-
-    private static String minimize(String html) {
-        html = StringUtils.replace(html, "  ", " ");
-        html = StringUtils.replace(html, "\n\n", "\n");
-        return html;
-    }
-
-    private static ReportRenderingClient getReportRenderingClient(PrintWriter out, File reportsFolder) {
-        return new ReportRenderingClient() {
-            @Override
-            public void append(String text) {
-                out.println(text);
-            }
-
-            @Override
-            public File getVisualsExportFolder() {
-                File visualsFolder = new File(reportsFolder, "visuals");
-                visualsFolder.mkdirs();
-                return visualsFolder;
-            }
-        };
-    }
-
-    private static String getReportFileName(RichTextReport report) {
-        return report.getFileName();
-    }
+    static String htmlReportsSubFolder = "html";
 
     public static void exportReportsIndexFile(File reportsFolder, CodeAnalysisResults analysisResults, File sokratesConfigFolder) {
         List<String[]> reportList = getReportsList(analysisResults, sokratesConfigFolder);
@@ -119,7 +54,7 @@ public class ReportFileExporter {
         ReportActivityTab.addActivityTab(indexReport, analysisResults);
         addVisualsAndDataTabs(indexReport, analysisResults, htmlExportFolder);
         addFooter(indexReport);
-        export(htmlExportFolder, indexReport, "index.html", analysisResults.getCodeConfiguration().getAnalysis().getCustomHtmlReportHeaderFragment());
+        ReportHtmlWriter.export(htmlExportFolder, indexReport, "index.html", analysisResults.getCodeConfiguration().getAnalysis().getCustomHtmlReportHeaderFragment());
 
         exportRootRedirect(reportsFolder);
     }
@@ -445,7 +380,7 @@ public class ReportFileExporter {
         }
     }
 
-    private static File getHtmlReportsFolder(File reportsFolder) {
+    static File getHtmlReportsFolder(File reportsFolder) {
         File htmlExportFolder = new File(reportsFolder, htmlReportsSubFolder);
         htmlExportFolder.mkdirs();
         return htmlExportFolder;

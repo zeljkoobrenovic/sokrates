@@ -46,14 +46,6 @@ public class LandscapeReportPeopleTopologyTab {
     private int dependencyVisualCounter = 1;
     private File folder;
     private File reportsFolder;
-    private Map<String, List<String>> contributorsPerWeekMap = new HashMap<>();
-    private Map<String, List<String>> rookiesPerWeekMap = new HashMap<>();
-    private Map<String, List<String>> contributorsPerDayMap = new HashMap<>();
-    private Map<String, List<String>> rookiesPerDayMap = new HashMap<>();
-    private Map<String, List<String>> contributorsPerMonthMap = new HashMap<>();
-    private Map<String, List<String>> rookiesPerMonthMap = new HashMap<>();
-    private Map<String, List<String>> contributorsPerYearMap = new HashMap<>();
-    private Map<String, List<String>> rookiesPerYearMap = new HashMap<>();
     private RichTextReport landscapeReport;
     private final LandscapeReportContributorsTab.Type type;
     private final TeamsConfig teamsConfig;
@@ -67,8 +59,6 @@ public class LandscapeReportPeopleTopologyTab {
         this.teamsConfig = teamsConfig;
 
         this.landscapeAnalysisResults = landscapeAnalysisResults;
-
-        populateTimeSlotMaps();
     }
 
     void render30DaysTopology() {
@@ -251,46 +241,6 @@ public class LandscapeReportPeopleTopologyTab {
         landscapeReport.addHtmlContent("<div style='color: #434343; font-size: 15px;" + specialColor + "'>" + subtitle + "</div>");
         landscapeReport.endDiv();
         landscapeReport.endDiv();
-    }
-
-    private void populateTimeSlotMaps() {
-        contributors.forEach(contributorRepositories -> {
-            List<String> commitDates = contributorRepositories.getContributor().getCommitDates();
-            commitDates.forEach(day -> {
-                String week = DateUtils.getWeekMonday(day);
-                String month = DateUtils.getMonth(day);
-                String year = DateUtils.getYear(day);
-
-                updateTimeSlotMap(contributorRepositories, contributorsPerDayMap, rookiesPerDayMap, day, day);
-                updateTimeSlotMap(contributorRepositories, contributorsPerWeekMap, rookiesPerWeekMap, week, week);
-                updateTimeSlotMap(contributorRepositories, contributorsPerMonthMap, rookiesPerMonthMap, month, month + "-01");
-                updateTimeSlotMap(contributorRepositories, contributorsPerYearMap, rookiesPerYearMap, year, year + "-01-01");
-            });
-        });
-
-    }
-
-    private void updateTimeSlotMap(ContributorRepositories contributorRepositories,
-                                   Map<String, List<String>> map, Map<String, List<String>> rookiesMap, String key, String rookieDate) {
-        boolean rookie = contributorRepositories.getContributor().isRookieAtDate(rookieDate);
-
-        String email = contributorRepositories.getContributor().getEmail();
-        if (map.containsKey(key)) {
-            if (!map.get(key).contains(email)) {
-                map.get(key).add(email);
-            }
-        } else {
-            map.put(key, new ArrayList<>(Arrays.asList(email)));
-        }
-        if (rookie) {
-            if (rookiesMap.containsKey(key)) {
-                if (!rookiesMap.get(key).contains(email)) {
-                    rookiesMap.get(key).add(email);
-                }
-            } else {
-                rookiesMap.put(key, new ArrayList<>(Arrays.asList(email)));
-            }
-        }
     }
 
     private void renderPeopleDependencies(List<ComponentDependency> peopleDependencies,

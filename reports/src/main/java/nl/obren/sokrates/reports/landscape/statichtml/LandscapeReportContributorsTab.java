@@ -4,17 +4,13 @@
 
 package nl.obren.sokrates.reports.landscape.statichtml;
 
-import nl.obren.sokrates.common.io.JsonGenerator;
-import nl.obren.sokrates.common.renderingutils.ExplorerTemplate;
 import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import nl.obren.sokrates.reports.core.ReportConstants;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.generators.statichtml.HistoryPerLanguageGenerator;
-import nl.obren.sokrates.reports.landscape.data.ContributorReportExport;
 import nl.obren.sokrates.reports.landscape.utils.*;
-import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.HistoryPerExtension;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
@@ -25,15 +21,12 @@ import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
 import nl.obren.sokrates.sourcecode.landscape.analysis.LandscapeAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import nl.obren.sokrates.sourcecode.threshold.Thresholds;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -61,6 +54,10 @@ public class LandscapeReportContributorsTab {
             return singular;
         }
 
+        boolean showBots() {
+            return showBots;
+        }
+
         public String plural() {
             return plural;
         }
@@ -76,6 +73,7 @@ public class LandscapeReportContributorsTab {
     private RichTextReport landscapeReport;
     private ContributorActivityCharts charts;
     private ContributorsPerExtensionSection perExtensionSection;
+    private ContributorReportPages reportPages;
     private final Type type;
     private final TeamsConfig teamsConfig;
 
@@ -348,12 +346,12 @@ public class LandscapeReportContributorsTab {
             // referenced (capped at getContributorsListLimit), since that set gates which individual
             // per-person reports get generated.
             Set<String> contributorsLinkedFromTables = new HashSet<>();
-            collectLinkedContributors(recentContributors, contributorsLinkedFromTables);
-            collectLinkedContributors(contributors, contributorsLinkedFromTables);
-            collectLinkedContributors(bots, contributorsLinkedFromTables);
+            reportPages().collectLinkedContributors(recentContributors, contributorsLinkedFromTables);
+            reportPages().collectLinkedContributors(contributors, contributorsLinkedFromTables);
+            reportPages().collectLinkedContributors(bots, contributorsLinkedFromTables);
 
             // Client-rendered, searchable/sortable contributors report (recent / all / bots tabs).
-            saveContributorsReportPage(recentContributors, contributors, bots);
+            reportPages().saveContributorsReportPage(recentContributors, contributors, bots);
 
             ProcessingStopwatch.end("reporting/contributors/saving tables");
 
@@ -377,102 +375,6 @@ public class LandscapeReportContributorsTab {
             ProcessingStopwatch.end("reporting/contributors/preparing");
         }
         ProcessingStopwatch.end("reporting/contributors");
-    }
-
-    /**
-     * Renders the client-rendered, searchable/sortable contributors report ({@code &lt;type&gt;-report.html})
-     * with Recent / All time / Bots tabs, replacing the separate static contributor tables.
-     */
-    private void saveContributorsReportPage(List<ContributorRepositories> recentContributors,
-                                            List<ContributorRepositories> contributors,
-                                            List<ContributorRepositories> bots) {
-        try {
-            LandscapeConfiguration configuration = landscapeAnalysisResults.getConfiguration();
-            PeopleConfig peopleConfig = landscapeAnalysisResults.getPeopleConfig();
-            List<ContributorTag> tagRules = configuration.getTagContributors();
-
-            // Map contributorId -> languages they committed to in the last 30 days, built from the
-            // SAME per-extension commit history the Overview "Contributors Per File Extension"
-            // badges count, so includesLang:<lang> in the report matches those badge counts exactly.
-            Map<String, List<String>> recentLangsByContributor = buildRecentLangsByContributor();
-
-            Map<String, List<ContributorReportExport>> groups = new LinkedHashMap<>();
-            groups.put("recent", toExports(recentContributors, configuration, peopleConfig, tagRules, recentLangsByContributor));
-            groups.put("all", toExports(contributors, configuration, peopleConfig, tagRules, recentLangsByContributor));
-            groups.put("bots", toExports(bots, configuration, peopleConfig, tagRules, recentLangsByContributor));
-
-            // Language icons for every distinct main language across the three lists.
-            List<String> langs = new ArrayList<>();
-            groups.values().forEach(list -> list.forEach(e -> langs.add(e.getMainLang())));
-            String langIcons = DataImageUtils.getLangDataImageMapJson(langs);
-
-            JsonGenerator jsonGenerator = new JsonGenerator();
-            Map<String, Object> optionsData = new LinkedHashMap<>();
-            optionsData.put("showBots", type.showBots && !bots.isEmpty());
-            optionsData.put("avatarTeam", DataImageUtils.TEAM);
-            optionsData.put("avatarDeveloper", DataImageUtils.DEVELOPER);
-
-            Map<String, String> placeholders = new HashMap<>();
-            placeholders.put("langIcons", langIcons);
-            placeholders.put("options", jsonGenerator.generateCompressed(optionsData));
-
-            String html = new ExplorerTemplate().render("contributors-report.html", groups, placeholders);
-            FileUtils.write(new File(reportsFolder, type.plural() + "-report.html"), html, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            LOG.error(e);
-        }
-    }
-
-    private List<ContributorReportExport> toExports(List<ContributorRepositories> list, LandscapeConfiguration configuration,
-                                                    PeopleConfig peopleConfig, List<ContributorTag> tagRules,
-                                                    Map<String, List<String>> recentLangsByContributor) {
-        // Export every contributor (no list-limit cap): the client-rendered report pages the
-        // display itself (show-more), and search needs the full set. Sorted by commit recency.
-        return list.stream()
-                .sorted((a, b) -> b.getContributor().getCommitsCount() - a.getContributor().getCommitsCount())
-                .sorted((a, b) -> b.getContributor().getCommitsCount365Days() - a.getContributor().getCommitsCount365Days())
-                .sorted((a, b) -> b.getContributor().getCommitsCount90Days() - a.getContributor().getCommitsCount90Days())
-                .sorted((a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days())
-                .map(cr -> new ContributorReportExport(cr, configuration, peopleConfig, teamsConfig, tagRules,
-                        recentLangsByContributor.get(cr.getContributor().getEmail().toLowerCase())))
-                .collect(Collectors.toList());
-    }
-
-    // Records the top-N contributors (capped at getContributorsListLimit, sorted by recency like
-    // the former table) into the linked set, so the matching individual per-person reports are
-    // generated. This preserves the selection that the removed server-rendered contributor tables
-    // used to make, without rendering any HTML.
-    private void collectLinkedContributors(List<ContributorRepositories> contributors, Set<String> linked) {
-        int limit = landscapeAnalysisResults.getConfiguration().getContributorsListLimit();
-        contributors.stream()
-                .sorted((a, b) -> b.getContributor().getCommitsCount() - a.getContributor().getCommitsCount())
-                .sorted((a, b) -> b.getContributor().getCommitsCount365Days() - a.getContributor().getCommitsCount365Days())
-                .sorted((a, b) -> b.getContributor().getCommitsCount180Days() - a.getContributor().getCommitsCount180Days())
-                .sorted((a, b) -> b.getContributor().getCommitsCount90Days() - a.getContributor().getCommitsCount90Days())
-                .sorted((a, b) -> b.getContributor().getCommitsCount30Days() - a.getContributor().getCommitsCount30Days())
-                .limit(limit)
-                .forEach(contributor -> linked.add(contributor.getContributor().getEmail()));
-    }
-
-    // For each contributor id (lowercased, matching the report rows' email key), the set of
-    // languages (lowercased extensions) they committed to in the last 30 days — inverted from the
-    // landscape's per-extension committers30Days, the exact data the Overview badges count.
-    private Map<String, List<String>> buildRecentLangsByContributor() {
-        Map<String, List<String>> map = new HashMap<>();
-        landscapeAnalysisResults.getContributorsPerExtension().forEach(commitsPerExtension -> {
-            String lang = commitsPerExtension.getExtension().replace("*.", "").trim().toLowerCase();
-            if (lang.isEmpty()) {
-                return;
-            }
-            commitsPerExtension.getCommitters30Days().forEach(committerId -> {
-                String key = committerId.toLowerCase();
-                List<String> langs = map.computeIfAbsent(key, k -> new ArrayList<>());
-                if (!langs.contains(lang)) {
-                    langs.add(lang);
-                }
-            });
-        });
-        return map;
     }
 
     private void addContributorsListsSection(int recentContributorsCount, String latestCommit, List<ContributorRepositories> recentContributors) {
@@ -646,6 +548,13 @@ public class LandscapeReportContributorsTab {
 
     private void addSmallInfoBlock(String value, String subtitle, String color, String link) {
         InfoBlocks.addSmallInfoBlock(landscapeReport, value, subtitle, color, link);
+    }
+
+    private ContributorReportPages reportPages() {
+        if (reportPages == null) {
+            reportPages = new ContributorReportPages(landscapeAnalysisResults, contributors, reportsFolder, type, teamsConfig);
+        }
+        return reportPages;
     }
 
     private ContributorsPerExtensionSection perExtensionSection() {

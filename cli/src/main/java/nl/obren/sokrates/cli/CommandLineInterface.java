@@ -12,24 +12,12 @@ import nl.obren.sokrates.cli.skills.SkillsInstaller;
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.utils.*;
-import nl.obren.sokrates.reports.core.ReportFileExporter;
-import nl.obren.sokrates.reports.core.RichTextReport;
-import nl.obren.sokrates.reports.dataexporters.DataExporter;
-import nl.obren.sokrates.reports.generators.explorers.CommitsExplorerGenerators;
-import nl.obren.sokrates.reports.generators.explorers.FilesExplorerGenerators;
-import nl.obren.sokrates.reports.generators.explorers.UnitsExplorerGenerators;
-import nl.obren.sokrates.reports.generators.statichtml.BasicSourceCodeReportGenerator;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
-import nl.obren.sokrates.sourcecode.analysis.CodeAnalyzer;
-import nl.obren.sokrates.sourcecode.analysis.CodeAnalyzerSettings;
-import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
-import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzerFactory;
 import nl.obren.sokrates.sourcecode.scoping.ScopeCreator;
-import nl.obren.sokrates.sourcecode.scoping.ScopingConventions;
 import nl.obren.sokrates.sourcecode.scoping.custom.CustomConventionsHelper;
 import nl.obren.sokrates.sourcecode.scoping.custom.CustomScopingConventions;
 import org.apache.commons.cli.*;
@@ -44,9 +32,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -55,17 +41,16 @@ public class CommandLineInterface {
     private ProgressFeedback progressFeedback;
     // The code-host APIs behind analyzeGitHubOrg / analyzeGitLabGroup; replaceable so tests run offline
     // against local repositories (the GitLab one is created per run from -gitlabUrl unless injected).
-    private final DataExporter dataExporter = new DataExporter(this.progressFeedback);
 
     private final Commands commands = new Commands();
     final GitHistoryCommands gitHistoryCommands = new GitHistoryCommands(this, commands);
     final PeopleConfigCommands peopleConfigCommands = new PeopleConfigCommands(this, commands);
     final SkillsCommands skillsCommands = new SkillsCommands(this, commands);
+    final ReportsCommands reportsCommands = new ReportsCommands(this, commands);
     final ConfigCommands configCommands = new ConfigCommands(this, commands);
     final GitRepoCommands gitRepoCommands = new GitRepoCommands(this, commands);
     final LandscapeCommands landscapeCommands = new LandscapeCommands(this, commands);
     private final OrganizationCommands organizationCommands = new OrganizationCommands(this, commands);
-    private CodeConfiguration codeConfiguration;
 
     static boolean helpMode = false;
 
@@ -95,7 +80,7 @@ public class CommandLineInterface {
         handlers.put(Commands.ANALYZE, this::analyze);
         handlers.put(Commands.ANALYZE_GIT_REPO, gitRepoCommands::analyzeGitRepo);
         handlers.put(Commands.INIT, this::init);
-        handlers.put(Commands.GENERATE_REPORTS, this::generateReports);
+        handlers.put(Commands.GENERATE_REPORTS, reportsCommands::generateReports);
         // Same implementation as updateLandscape; analyzeLandscape is the name that mirrors analyze.
         handlers.put(Commands.ANALYZE_LANDSCAPE, args -> landscapeCommands.updateLandscape(args, Commands.ANALYZE_LANDSCAPE, Commands.ANALYZE_LANDSCAPE_DESCRIPTION));
         handlers.put(Commands.UPDATE_LANDSCAPE, args -> landscapeCommands.updateLandscape(args, Commands.UPDATE_LANDSCAPE, Commands.UPDATE_LANDSCAPE_DESCRIPTION));
@@ -223,22 +208,6 @@ public class CommandLineInterface {
         return true;
     }
 
-    private void generateReports(String[] args) throws ParseException, IOException {
-        Options options = commands.getReportingOptions();
-        CommandLineParser parser = new DefaultParser();
-        CommandLine cmd = parser.parse(options, args);
-
-        if (cmd.hasOption(commands.getHelp().getOpt())) {
-            helpMode = true;
-            commands.usage(Commands.GENERATE_REPORTS, commands.getReportingOptions(), Commands.GENERATE_REPORTS_DESCRIPTION);
-            return;
-        }
-
-        startTimeoutIfDefined(cmd);
-
-        generateReports(cmd);
-    }
-
     private void init(String[] args) throws ParseException, IOException {
         Options options = commands.getInitOptions();
         CommandLineParser parser = new DefaultParser();
@@ -347,12 +316,12 @@ public class CommandLineInterface {
 
         File reportsFolder;
         if (cmd.hasOption(commands.getOutputFolder().getOpt())) {
-            reportsFolder = prepareReportsFolder(cmd.getOptionValue(commands.getOutputFolder().getOpt()));
+            reportsFolder = reportsCommands.prepareReportsFolder(cmd.getOptionValue(commands.getOutputFolder().getOpt()));
         } else {
-            reportsFolder = prepareReportsFolder(new File(conf.getParentFile(), "reports").getPath());
+            reportsFolder = reportsCommands.prepareReportsFolder(new File(conf.getParentFile(), "reports").getPath());
         }
 
-        generateReports(cmd, conf, reportsFolder);
+        reportsCommands.generateReports(cmd, conf, reportsFolder);
         runPostAnalysisHook(cmd, root, conf, reportsFolder, repoUrl, keptFolder);
         return reportsFolder;
     }
@@ -578,119 +547,6 @@ public class CommandLineInterface {
         return conf;
     }
 
-    private void generateReports(CommandLine cmd) throws IOException {
-        File sokratesConfigFile;
-        if (!cmd.hasOption(commands.getConfFile().getOpt())) {
-            String confFilePath = "./_sokrates/config.json";
-            sokratesConfigFile = new File(confFilePath);
-        } else {
-            sokratesConfigFile = new File(cmd.getOptionValue(commands.getConfFile().getOpt()));
-        }
-
-        File reportsFolder;
-        if (!cmd.hasOption(commands.getOutputFolder().getOpt())) {
-            reportsFolder = prepareReportsFolder("./_sokrates/reports");
-        } else {
-            reportsFolder = prepareReportsFolder(cmd.getOptionValue(commands.getOutputFolder().getOpt()));
-        }
-
-        generateReports(cmd, sokratesConfigFile, reportsFolder);
-    }
-
-    private void generateReports(CommandLine cmd, File sokratesConfigFile, File reportsFolder) throws IOException {
-        updateDateParam(cmd);
-
-        LOG.info("Configuration file: " + sokratesConfigFile.getPath());
-        if (noFileError(sokratesConfigFile)) return;
-
-        ProcessingStopwatch.start("configuring");
-        String jsonContent = FileUtils.readFileToString(sokratesConfigFile, UTF_8);
-        this.codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
-        // Safety net for configurations written before init always ignored the analysis output (in memory only; the file is the user's).
-        ScopingConventions.ensureSokratesOutputIgnored(this.codeConfiguration.getIgnore());
-        LanguageAnalyzerFactory.getInstance().setOverrides(codeConfiguration.getAnalysis().getAnalyzerOverrides());
-
-        detailedInfo("Starting analysis based on the configuration file " + sokratesConfigFile.getPath());
-
-        LOG.info("Reports folder: " + reportsFolder.getPath());
-        ProcessingStopwatch.end("configuring");
-        if (noFileError(reportsFolder)) return;
-
-        if (this.progressFeedback == null) {
-            this.progressFeedback = new ProgressFeedback() {
-                public void setText(String text) {
-                    LOG.info(text.replaceAll("<.*?>", ""));
-                }
-
-                public void setDetailedText(String text) {
-                    LOG.info(text.replaceAll("<.*?>", ""));
-                }
-            };
-        }
-
-        boolean dataOnly = cmd.hasOption(commands.getDataOnly().getOpt());
-        dataExporter.setDataOnly(dataOnly);
-        if (dataOnly) {
-            LOG.info("-" + Commands.ARG_DATA_ONLY + ": storing only data/data.zip (no HTML reports, explorers, visuals or source viewer).");
-        }
-
-        try {
-            CodeAnalyzer codeAnalyzer = new CodeAnalyzer(getCodeAnalyzerSettings(cmd), codeConfiguration, sokratesConfigFile);
-            CodeAnalysisResults analysisResults = codeAnalyzer.analyze(progressFeedback);
-
-            ProcessingStopwatch.start("saving data");
-            dataExporter.saveData(sokratesConfigFile, codeConfiguration, reportsFolder, analysisResults);
-            saveTextualSummary(reportsFolder, analysisResults);
-            ProcessingStopwatch.end("saving data");
-
-            if (!dataOnly) {
-                ProcessingStopwatch.start("generating visuals");
-                new ReportVisualsGenerator(codeConfiguration).generateVisuals(reportsFolder, analysisResults);
-                ProcessingStopwatch.end("generating visuals");
-
-                generateAndSaveReports(sokratesConfigFile, reportsFolder, sokratesConfigFile.getParentFile(), codeAnalyzer, analysisResults);
-            }
-            saveExecutionStats(dataExporter.getDataFolder());
-            // Final data step: package the whole data/ folder (incl. textual summary + execution
-            // stats just written) into a single data/data.zip; the reports + landscape read from it.
-            dataExporter.zipDataFolder();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    void saveExecutionStats(File dataFolder) {
-        try {
-            List<ProcessingTimes> monitors = ProcessingStopwatch.getMonitors();
-
-            String json = new JsonGenerator().generate(monitors);
-            List<String> lines = monitors.stream().map(m -> m.getDurationMs() / 1000.0 + "s => " + m.getProcessing() + " " + ProcessingStopwatch.getPercentage(m.getDurationMs())).collect(Collectors.toList());
-            String text = lines.stream().map(l -> StringUtils.repeat("  ", StringUtils.countMatches(l, '/')) + l).collect(Collectors.joining("\n"));
-
-            FileUtils.write(new File(dataFolder, "executionTimes.json"), json, UTF_8);
-            FileUtils.write(new File(dataFolder, "executionTimes.txt"), text, UTF_8);
-        } catch (IOException e) {
-            LOG.error(e);
-        }
-    }
-
-    private boolean noFileError(File inputFile) {
-        if (!inputFile.exists()) {
-            LOG.info("ERROR: " + inputFile.getPath() + " does not exist.");
-            return true;
-        }
-        return false;
-    }
-
-    private boolean noReportingOptions(CommandLine cmd) {
-        for (Option arg : cmd.getOptions()) {
-            if (arg.getOpt().toLowerCase().startsWith("report")) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     void info(String text) {
         if (progressFeedback != null) {
             progressFeedback.setText(text);
@@ -706,76 +562,8 @@ public class CommandLineInterface {
         }
     }
 
-    private void generateAndSaveReports(File inputFile, File reportsFolder, File sokratesConfigFolder, CodeAnalyzer codeAnalyzer, CodeAnalysisResults analysisResults) {
-        File htmlReports = getHtmlFolder(reportsFolder);
-        File dataReports = dataExporter.getDataFolder();
-        File srcCache = dataExporter.getCodeCacheFolder();
-        CodeAnalyzerSettings codeAnalyzerSettings = codeAnalyzer.getCodeAnalyzerSettings();
-        if (new File(htmlReports, "index.html").exists() || codeAnalyzerSettings.isUpdateIndex()) {
-            info("HTML reports: <a href='" + htmlReports.getPath() + "/index.html'>" + htmlReports.getPath() + "</a>");
-        } else {
-            info("HTML reports: <a href='" + htmlReports.getPath() + "'>" + htmlReports.getPath() + "</a>");
-        }
-        info("Raw data: <a href='" + dataReports.getPath() + "'>" + dataReports.getPath() + "</a>");
-        if (analysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles()) {
-            info("Source code cache : <a href='" + srcCache.getPath() + "'>" + srcCache.getPath() + "</a>");
-        }
-        ProcessingStopwatch.start("reporting");
-        BasicSourceCodeReportGenerator generator = new BasicSourceCodeReportGenerator(codeAnalyzerSettings, analysisResults, inputFile, reportsFolder);
-        List<RichTextReport> reports = generator.report();
-        ProcessingStopwatch.end("reporting");
-
-        ProcessingStopwatch.start("saving report");
-        reports.forEach(report -> {
-            info("Generating the '" + report.getId().toUpperCase() + "' report...");
-            String processingName = "saving report/" + report.getId().toLowerCase() + "";
-            ProcessingStopwatch.start(processingName);
-            ReportFileExporter.exportHtml(reportsFolder, "html", report, analysisResults.getCodeConfiguration().getAnalysis().getCustomHtmlReportHeaderFragment());
-            ProcessingStopwatch.end(processingName);
-        });
-        ProcessingStopwatch.start("saving report/index");
-        if (!codeAnalyzerSettings.isDataOnly() && codeAnalyzerSettings.isUpdateIndex()) {
-            ReportFileExporter.exportReportsIndexFile(reportsFolder, analysisResults, sokratesConfigFolder);
-        }
-        ProcessingStopwatch.end("saving report/index");
-        ProcessingStopwatch.start("saving report/explorer");
-        FilesExplorerGenerators filesExplorerGenerators = new FilesExplorerGenerators(reportsFolder);
-        filesExplorerGenerators.exportJson(analysisResults);
-        UnitsExplorerGenerators unitsExplorerGenerators = new UnitsExplorerGenerators(reportsFolder);
-        unitsExplorerGenerators.exportJson(analysisResults);
-        CommitsExplorerGenerators commitsExplorerGenerators = new CommitsExplorerGenerators(reportsFolder);
-        commitsExplorerGenerators.exportJson(analysisResults, sokratesConfigFolder);
-        ProcessingStopwatch.end("saving report/explorer");
-        ProcessingStopwatch.end("saving report");
-    }
-
-    private File getHtmlFolder(File reportsFolder) {
-        File folder = new File(reportsFolder, Commands.ARG_HTML_REPORTS_FOLDER_NAME);
-        folder.mkdirs();
-        return folder;
-    }
-
-    private void saveTextualSummary(File reportsFolder, CodeAnalysisResults analysisResults) throws IOException {
-        File jsonFile = new File(dataExporter.getTextDataFolder(), "textualSummary.txt");
-        FileUtils.write(jsonFile, analysisResults.getTextSummary().toString(), UTF_8);
-    }
-
-    private File prepareReportsFolder(String path) throws IOException {
-        File reportsFolder = new File(path);
-        reportsFolder.mkdirs();
-
-        return reportsFolder;
-    }
-
-    private CodeAnalyzerSettings getCodeAnalyzerSettings(CommandLine cmd) {
-        CodeAnalyzerSettings settings = new CodeAnalyzerSettings();
-        settings.setDataOnly(cmd.hasOption(commands.getDataOnly().getOpt()));
-
-        if (codeConfiguration.getAnalysis().isSkipDependencies()) {
-            settings.setAnalyzeStaticDependencies(false);
-        }
-
-        return settings;
+    ProgressFeedback progressFeedback() {
+        return progressFeedback;
     }
 
     public void setProgressFeedback(ProgressFeedback progressFeedback) {

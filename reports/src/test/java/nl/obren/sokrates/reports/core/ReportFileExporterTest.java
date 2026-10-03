@@ -13,10 +13,10 @@ class ReportFileExporterTest {
 
     @Test
     void extractTitle() {
-        assertEquals(ReportFileExporter.extractTitle("ABC"), "ABC");
-        assertEquals(ReportFileExporter.extractTitle("<div>ABC</div>"), "ABC");
-        assertEquals(ReportFileExporter.extractTitle("<div>ABC</div> <div><img></div>"), "ABC");
-        assertEquals(ReportFileExporter.extractTitle(" <div>ABC </div> <div><img>  </div>"), "ABC");
+        assertEquals(ReportHtmlWriter.extractTitle("ABC"), "ABC");
+        assertEquals(ReportHtmlWriter.extractTitle("<div>ABC</div>"), "ABC");
+        assertEquals(ReportHtmlWriter.extractTitle("<div>ABC</div> <div><img></div>"), "ABC");
+        assertEquals(ReportHtmlWriter.extractTitle(" <div>ABC </div> <div><img>  </div>"), "ABC");
     }
 
     @Test

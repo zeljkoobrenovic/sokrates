@@ -8,7 +8,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
-import nl.obren.sokrates.reports.core.ReportFileExporter;
+import nl.obren.sokrates.reports.core.ReportHtmlWriter;
 import nl.obren.sokrates.reports.dataexporters.DataExporter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.utils.LandscapeVisualsGenerator;
@@ -180,22 +180,22 @@ public class LandscapeAnalysisCommands {
             String customHtmlReportHeaderFragment = landscapeAnalysisResults.getConfiguration().getCustomHtmlReportHeaderFragment();
             reports.forEach(report -> {
                 LOG.info("Exporting " + report.getFileName() + ".");
-                ReportFileExporter.exportHtml(reportsFolder, "", report, customHtmlReportHeaderFragment);
+                ReportHtmlWriter.exportHtml(reportsFolder, "", report, customHtmlReportHeaderFragment);
             });
             ProcessingStopwatch.end("reporting/saving/reports");
 
             ProcessingStopwatch.start("reporting/saving/contributors");
             reportGenerator.getIndividualContributorReports().forEach(individualReport -> {
                 LOG.info("Exporting person " + individualReport.getFileName() + ".");
-                ReportFileExporter.exportHtml(individualReportsFolder, "", individualReport, customHtmlReportHeaderFragment);
+                ReportHtmlWriter.exportHtml(individualReportsFolder, "", individualReport, customHtmlReportHeaderFragment);
             });
             reportGenerator.getIndividualTeamReports().forEach(individualReport -> {
                 LOG.info("Exporting team " + individualReport.getFileName() + ".");
-                ReportFileExporter.exportHtml(individualReportsFolder, "", individualReport, customHtmlReportHeaderFragment);
+                ReportHtmlWriter.exportHtml(individualReportsFolder, "", individualReport, customHtmlReportHeaderFragment);
             });
             reportGenerator.getIndividualBotReports().forEach(individualReport -> {
                 LOG.info("Exporting bot " + individualReport.getFileName() + ".");
-                ReportFileExporter.exportHtml(individualReportsFolder, "", individualReport, customHtmlReportHeaderFragment);
+                ReportHtmlWriter.exportHtml(individualReportsFolder, "", individualReport, customHtmlReportHeaderFragment);
             });
             ProcessingStopwatch.end("reporting/saving/contributors");
 
