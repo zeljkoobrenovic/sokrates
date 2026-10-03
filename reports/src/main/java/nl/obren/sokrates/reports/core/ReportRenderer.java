@@ -77,8 +77,16 @@ public class ReportRenderer {
         if (StringUtils.isNotBlank(parentUrl)) {
             content.append(parentUrlHtml);
         }
-        content.append("<div class='sk-report-title'>" +
-                richTextReport.getDisplayName() + "</div>");
+        String pageTitle = ReportNavigation.pageTitle(richTextReport);
+        if (pageTitle != null) {
+            // Same header on every page with the sidebar: the repository, then the page's sidebar label
+            // (on the index, ReportShell swaps the title as tabs change).
+            content.append("<div class='sk-report-context'>" + HtmlEscapeUtils.escape(richTextReport.getNavigation().getTitle()) + "</div>");
+            content.append("<div class='sk-report-title' data-sk-page-title>" + HtmlEscapeUtils.escape(pageTitle) + "</div>");
+        } else {
+            content.append("<div class='sk-report-title'>" +
+                    richTextReport.getDisplayName() + "</div>");
+        }
         if (StringUtils.isNotBlank(richTextReport.getDescription())) {
             content.append("<div class='sk-report-description'>" + richTextReport.getDescription() + "</div>");
         }

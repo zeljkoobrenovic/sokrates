@@ -74,6 +74,31 @@ public class ReportNavigation {
         return groups;
     }
 
+    public String getTitle() {
+        return title;
+    }
+
+    /** The label of the item with this id (a page's file name or an index tab), or null. */
+    public String labelOf(String id) {
+        for (Group group : groups) {
+            for (Item item : group.items) {
+                if (item.id.equals(id)) {
+                    return item.label;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The page's header title on a page with this sidebar: the label of its sidebar item, so the header
+     * and the menu always agree. Null when the page is not in the sidebar.
+     */
+    public static String pageTitle(RichTextReport report) {
+        ReportNavigation navigation = report.getNavigation();
+        return navigation == null || report.isEmbedded() ? null : navigation.labelOf(report.getNavigationActiveId());
+    }
+
     public String render(String activeId) {
         StringBuilder html = new StringBuilder();
         html.append("<button type='button' class='sk-nav-toggle' aria-label='Open navigation' onclick='sokratesToggleNav()'>")

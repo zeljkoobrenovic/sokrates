@@ -244,6 +244,15 @@ public class ReportConstants {
             "            vertical-align: middle;\n" +
             "        }\n" +
             "\n" +
+            "        .sk-report-context {\n" +
+            "            font-size: 20px;\n" +
+            "            color: var(--sk-text-faint);\n" +
+            "        }\n" +
+            "\n" +
+            "        .sk-report-context + .sk-report-title {\n" +
+            "            font-size: 42px;\n" +
+            "        }\n" +
+            "\n" +
             "        .sk-report-description {\n" +
             "            color: var(--sk-text-muted);\n" +
             "            font-size: 94%;\n" +

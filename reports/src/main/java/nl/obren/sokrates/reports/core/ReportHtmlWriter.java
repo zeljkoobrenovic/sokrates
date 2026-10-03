@@ -1,5 +1,6 @@
 package nl.obren.sokrates.reports.core;
 
+import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -23,7 +24,10 @@ public class ReportHtmlWriter {
         File reportFile = new File(folder, reportFileName);
         try {
             PrintWriter out = new PrintWriter(reportFile);
-            String titleText = extractTitle(report.getDisplayName());
+            String pageTitle = ReportNavigation.pageTitle(report);
+            String titleText = pageTitle != null
+                    ? HtmlEscapeUtils.escape(pageTitle + " · " + report.getNavigation().getTitle())
+                    : extractTitle(report.getDisplayName());
             String reportsHtmlHeader = ReportConstants.REPORTS_HTML_HEADER.replace(
                     "<title></title>",
                     "<title>" + titleText + "</title>"

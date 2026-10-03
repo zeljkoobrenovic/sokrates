@@ -92,6 +92,15 @@ public class ReportShell {
             "    for (var i = 0; i < buttons.length; i++) { if (buttons[i].getAttribute('data-tab') === id) { return buttons[i]; } }\n" +
             "    return null;\n" +
             "  }\n" +
+            "  // The header title (and the browser tab title) follow the active sidebar item, as on the report pages.\n" +
+            "  function setPageTitle(item) {\n" +
+            "    var label = item.querySelector('.sk-nav-label');\n" +
+            "    var title = document.querySelector('[data-sk-page-title]');\n" +
+            "    var brand = document.querySelector('.sk-sidebar-brand');\n" +
+            "    if (!label || !title) { return; }\n" +
+            "    title.textContent = label.textContent;\n" +
+            "    document.title = label.textContent + (brand ? ' \\u00b7 ' + brand.textContent : '');\n" +
+            "  }\n" +
             "  function markNav(id) {\n" +
             "    var items = document.querySelectorAll('.sk-nav-item[data-sk-tab]');\n" +
             "    var found = false;\n" +
@@ -101,6 +110,7 @@ public class ReportShell {
             "      var on = items[j].getAttribute('data-sk-tab') === id;\n" +
             "      items[j].classList.toggle('active', on);\n" +
             "      if (on) { items[j].setAttribute('aria-current', 'page'); } else { items[j].removeAttribute('aria-current'); }\n" +
+            "      if (on) { setPageTitle(items[j]); }\n" +
             "    }\n" +
             "  }\n" +
             "  // Shows one tab of the page (the tabs of a report page form one group, as in openTab).\n" +

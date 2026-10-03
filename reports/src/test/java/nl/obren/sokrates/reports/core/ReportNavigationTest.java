@@ -37,6 +37,23 @@ class ReportNavigationTest {
     }
 
     @Test
+    void thePageTitleIsTheLabelOfThePagesSidebarItem() {
+        RichTextReport report = new RichTextReport("Metrics", "Metrics.html");
+        assertNull(ReportNavigation.pageTitle(report), "no sidebar, no page title");
+
+        ReportNavigation navigation = navigation();
+        report.setNavigation(navigation, "FileSize.html");
+        assertEquals("File Size", ReportNavigation.pageTitle(report));
+        report.setNavigation(navigation, "custom_tab_0");
+        assertEquals("My <tab>", ReportNavigation.pageTitle(report));
+        report.setNavigation(navigation, "Trend.html");
+        assertNull(ReportNavigation.pageTitle(report), "a page that is not in the sidebar keeps its own title");
+        report.setNavigation(navigation, "FileSize.html");
+        report.setEmbedded(true);
+        assertNull(ReportNavigation.pageTitle(report), "embedded pages have no shell");
+    }
+
+    @Test
     void rendersKnownIconsAndNothingForUnknownOnes() {
         String html = navigation().render("");
 
