@@ -1,0 +1,58 @@
+cli/src/main/java/nl/obren/sokrates/cli/git/GitRepoMetadata.java
+  s_40c0e74316fcc6::t_a8a0ee12fdc121 159,164,171-194
+  s_40c0e74316fcc6::t_4089c78cb19988 195
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/duplication/impl/Blocks.java
+  s_40c0e74316fcc6::t_a8a0ee12fdc121 201-205,207-229,231-234,236-242,244-246
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/PeopleConfigByUserNameUpdater.java
+  s_40c0e74316fcc6::t_a8a0ee12fdc121 80-81,84,92,100,121-146
+  s_40c0e74316fcc6::t_6b089b79ec3a29 147-148
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/ContributorActivityCharts.java
+  s_40c0e74316fcc6::t_a8a0ee12fdc121 387-388,391,405-425
+  s_40c0e74316fcc6::t_7d61fa58ee65e8 426
+reports/src/main/java/nl/obren/sokrates/reports/dataexporters/SourceViewerExporter.java
+  s_40c0e74316fcc6::t_a8a0ee12fdc121 1-229
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/LandscapeReportPeopleTopologyTab.java
+  s_40c0e74316fcc6::t_a8a0ee12fdc121 426-428,438,452,457-458,466-484
+  s_40c0e74316fcc6::t_c9e823f1c21c38 485
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/repositories/LandscapeRepositoriesTagsReport.java
+  s_40c0e74316fcc6::t_a8a0ee12fdc121 194-219,232-233,235-236,260
+reports/src/main/java/nl/obren/sokrates/reports/utils/AnimalIcons.java
+  s_40c0e74316fcc6::t_a8a0ee12fdc121 21-24,26-31,35
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/OverviewReportGenerator.java
+  s_40c0e74316fcc6::t_a8a0ee12fdc121 177-195,208-211,223-228
+reports/src/main/java/nl/obren/sokrates/reports/utils/ScopesRenderer.java
+  s_40c0e74316fcc6::t_a8a0ee12fdc121 163,176-197
+  s_40c0e74316fcc6::t_fa123fda674880 198-199
+cli/src/main/java/nl/obren/sokrates/cli/CommandLineInterface.java
+  s_40c0e74316fcc6::t_a8a0ee12fdc121 705-719
+CLAUDE.md
+  s_40c0e74316fcc6::t_b4c92bb43a0d68 56,133,139,181
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/SourceCodeFiles.java
+  s_40c0e74316fcc6::t_a8a0ee12fdc121 93,108-129,169,172,175,180-181,184-193,195
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/DuplicationReportGenerator.java
+  s_40c0e74316fcc6::t_a8a0ee12fdc121 270,277-293,311,313-334,336-337,339,341
+reports/src/main/java/nl/obren/sokrates/reports/dataexporters/DataExporter.java
+  s_40c0e74316fcc6::t_a8a0ee12fdc121 707
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/ConcernsReportGenerator.java
+  s_40c0e74316fcc6::t_a8a0ee12fdc121 139,171-197
+  s_40c0e74316fcc6::t_ffebd95173b3e2 198-199
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/landscape/ContributorConnectionUtils.java
+  s_40c0e74316fcc6::t_a8a0ee12fdc121 55,71,86-113,161,180,182,196-202
+  s_40c0e74316fcc6::t_a78eec3c788075 203
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "17dc0b4b54e0937715552f4903ade770418a6636",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
