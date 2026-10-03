@@ -199,7 +199,7 @@ public class ReportShell {
             "        t.scrollIntoView({block: 'start'});\n" +
             "      }});\n" +
             "    });\n" +
-            "    result.push({kind: 'Command', label: 'Change theme (automatic / light / dark)', context: '', run: function () {\n" +
+            "    result.push({kind: 'Command', label: 'Change theme (light / dark / automatic)', context: '', run: function () {\n" +
             "      if (window.sokratesCycleTheme) { window.sokratesCycleTheme(); }\n" +
             "    }});\n" +
             "    result.push({kind: 'Command', label: 'Colour-blind safe colours: ' + (window.sokratesPalette === 'cvd' ? 'turn off' : 'turn on'), context: '', run: function () {\n" +

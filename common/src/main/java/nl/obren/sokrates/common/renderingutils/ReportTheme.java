@@ -18,8 +18,8 @@ import java.util.stream.Collectors;
  * chrome (text, surfaces, borders, accents) and keep literal colors only for data (risk categories,
  * severities, scopes), which read the same on light and dark backgrounds.
  * <p>
- * The theme follows the OS setting (<code>prefers-color-scheme</code>) unless the viewer picks light
- * or dark with the toggle in the top-right corner; the choice is kept in <code>localStorage</code>
+ * The theme is light unless the viewer picks dark or automatic (follow the OS setting,
+ * <code>prefers-color-scheme</code>) with the toggle in the top-right corner; the choice is kept in <code>localStorage</code>
  * and pushed into embedded iframes with <code>postMessage</code> (file:// pages are separate origins,
  * so an iframe can not always read the same storage). Data visualizations (d3, force graphs) and
  * Mermaid diagrams stay on a light canvas.
@@ -149,7 +149,8 @@ public class ReportTheme {
             "  var LABELS = {auto: 'Theme: automatic (follows the system)', light: 'Theme: light', dark: 'Theme: dark'};\n" +
             "  var embedded = window.parent !== window;\n" +
             "  function stored(key) { try { return localStorage.getItem(key || KEY); } catch (e) { return null; } }\n" +
-            "  function normalized(t) { return t === 'light' || t === 'dark' ? t : 'auto'; }\n" +
+            "  // Light unless the viewer chose dark or automatic (follow the system).\n" +
+            "  function normalized(t) { return t === 'dark' || t === 'auto' ? t : 'light'; }\n" +
             "  function updateButton() {\n" +
             "    var b = document.getElementById('sk-theme-toggle');\n" +
             "    if (!b) { return; }\n" +
@@ -210,7 +211,7 @@ public class ReportTheme {
             "    }\n" +
             "  });\n" +
             "  window.sokratesCycleTheme = function () {\n" +
-            "    var order = ['auto', 'light', 'dark'];\n" +
+            "    var order = ['light', 'dark', 'auto'];\n" +
             "    var next = order[(order.indexOf(window.sokratesTheme) + 1) % order.length];\n" +
             "    try { localStorage.setItem(KEY, next); } catch (e) {}\n" +
             "    apply(next);\n" +
