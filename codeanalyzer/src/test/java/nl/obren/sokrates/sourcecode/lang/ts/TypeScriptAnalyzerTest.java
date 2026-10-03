@@ -5,8 +5,6 @@
 package nl.obren.sokrates.sourcecode.lang.ts;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.lang.rust.RustAnalyzer;
-import nl.obren.sokrates.sourcecode.lang.rust.RustCodeSamples;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 import org.junit.Test;
 

@@ -6,7 +6,6 @@ package nl.obren.sokrates.reports.utils;
 
 import nl.obren.sokrates.sourcecode.ExtensionGroupExtractor;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
-import org.apache.commons.io.FilenameUtils;
 
 import java.util.List;
 

@@ -4,9 +4,6 @@
 
 package nl.obren.sokrates.common.renderingutils.force3d;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Force3DLink {
     private String source;
     private String target;

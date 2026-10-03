@@ -7,12 +7,10 @@ import nl.obren.sokrates.sourcecode.cleaners.CommentsAndEmptyLinesCleaner;
 import nl.obren.sokrates.sourcecode.cleaners.SourceCodeCleanerUtils;
 import nl.obren.sokrates.sourcecode.dependencies.DependenciesAnalysis;
 import nl.obren.sokrates.sourcecode.lang.LanguageAnalyzer;
-import nl.obren.sokrates.sourcecode.lang.java.JavaHeuristicDependenciesExtractor;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class PlSqlAnalyzer extends LanguageAnalyzer {
     public PlSqlAnalyzer() {

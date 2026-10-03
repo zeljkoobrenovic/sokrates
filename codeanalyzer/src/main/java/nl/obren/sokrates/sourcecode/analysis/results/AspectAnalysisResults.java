@@ -12,7 +12,6 @@ import nl.obren.sokrates.sourcecode.search.FoundText;
 
 import java.io.File;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class AspectAnalysisResults {
     private String name;
@@ -27,7 +26,6 @@ public class AspectAnalysisResults {
     private List<FoundText> foundTextList = new ArrayList<>();
     @JsonIgnore
     private Map<File, SourceFileWithSearchData> foundFiles = new HashMap<>();
-
 
     public AspectAnalysisResults() {
     }

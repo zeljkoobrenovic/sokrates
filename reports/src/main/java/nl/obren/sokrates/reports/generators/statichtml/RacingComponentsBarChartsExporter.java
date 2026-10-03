@@ -2,9 +2,7 @@ package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.common.renderingutils.RacingChartItem;
 import nl.obren.sokrates.common.renderingutils.VisualizationTemplate;
-import nl.obren.sokrates.reports.landscape.statichtml.LandscapeIndividualContributorsReports;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
-import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;

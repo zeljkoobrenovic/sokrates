@@ -4,7 +4,6 @@
 
 package nl.obren.sokrates.sourcecode.units;
 
-import nl.obren.sokrates.common.renderingutils.Threshold;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.SimpleCallback;

@@ -1,9 +1,5 @@
 package nl.obren.sokrates.sourcecode.landscape;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import java.util.List;
-
 public class ContributorConnection {
     private String userName;
     private String email;
@@ -51,6 +47,5 @@ public class ContributorConnection {
     public void setCommits(int commits) {
         this.commits = commits;
     }
-
 
 }

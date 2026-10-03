@@ -52,7 +52,6 @@ import nl.obren.sokrates.sourcecode.lang.tsql.TSqlAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.vb.VisualBasicAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.xml.XmlAnalyzer;
 import nl.obren.sokrates.sourcecode.lang.yaml.YamlAnalyzer;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 

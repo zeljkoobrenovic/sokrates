@@ -2,7 +2,6 @@ package nl.obren.sokrates.reports.landscape.data;
 
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositories;
-import nl.obren.sokrates.sourcecode.landscape.analysis.ContributorRepositoryInfo;
 
 import java.util.ArrayList;
 import java.util.List;

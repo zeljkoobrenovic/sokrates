@@ -21,7 +21,6 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 import static nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils.getPeopleDependencies;
 import static nl.obren.sokrates.sourcecode.landscape.ContributorConnectionUtils.getPeopleFileDependencies;

@@ -3,7 +3,6 @@ package nl.obren.sokrates.sourcecode.githistory;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;

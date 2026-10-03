@@ -4,11 +4,6 @@
 
 package nl.obren.sokrates.sourcecode.findings;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import java.util.ArrayList;
-import java.util.List;
-
 public class Findings {
     private String summary = "";
     private String content = "";

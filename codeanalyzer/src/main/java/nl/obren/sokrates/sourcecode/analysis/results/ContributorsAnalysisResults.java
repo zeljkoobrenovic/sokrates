@@ -1,7 +1,6 @@
 package nl.obren.sokrates.sourcecode.analysis.results;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
@@ -198,7 +197,6 @@ public class ContributorsAnalysisResults {
 
         return contributorsPerYear.stream().filter(c -> c.getTimeSlot().equals(year)).mapToInt(c -> c.getCommitsCount()).sum();
     }
-
 
     @JsonIgnore
     public List<ComponentDependency> getPeopleDependencies30Days() {

@@ -16,7 +16,6 @@ import nl.obren.sokrates.sourcecode.stats.SourceFileSizeDistribution;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class FileSizeAnalyzer extends Analyzer {
     public static final int SAMPLE_SIZE = 50;

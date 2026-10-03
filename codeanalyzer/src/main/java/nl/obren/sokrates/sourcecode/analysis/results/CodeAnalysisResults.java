@@ -12,7 +12,6 @@ import nl.obren.sokrates.sourcecode.SymbolicLink;
 import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.FoundTag;
-import nl.obren.sokrates.sourcecode.core.TagRule;
 import nl.obren.sokrates.sourcecode.dependencies.Dependency;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 
@@ -82,7 +81,6 @@ public class CodeAnalysisResults {
     public void setMetricsList(MetricsList metricsList) {
         this.metricsList = metricsList;
     }
-
 
     @JsonIgnore
     public StringBuffer getTextSummary() {

@@ -10,7 +10,6 @@ import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeInfo;
-import nl.obren.sokrates.sourcecode.landscape.SokratesRepositoryLink;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -19,9 +18,6 @@ import org.apache.commons.logging.LogFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
 public class LandscapeAnalysisUpdater {
     private static final Log LOG = LogFactory.getLog(LandscapeAnalysisUpdater.class);
@@ -54,7 +50,6 @@ public class LandscapeAnalysisUpdater {
         save(landscapeConfigFile, landscapeInfoFile, newConfig);
         return newConfig;
     }
-
 
     private void updateMetadata(LandscapeConfiguration configuration, Metadata metadata) {
         if (metadata != null) {

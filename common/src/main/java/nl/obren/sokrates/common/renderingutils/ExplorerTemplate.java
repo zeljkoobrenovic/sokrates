@@ -5,7 +5,6 @@
 package nl.obren.sokrates.common.renderingutils;
 
 import nl.obren.sokrates.common.io.JsonGenerator;
-import nl.obren.sokrates.common.renderingutils.force3d.Force3DObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -14,7 +13,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class ExplorerTemplate {
@@ -68,6 +66,5 @@ public class ExplorerTemplate {
 
         return null;
     }
-
 
 }
