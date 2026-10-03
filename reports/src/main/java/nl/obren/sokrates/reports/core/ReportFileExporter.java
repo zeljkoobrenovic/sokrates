@@ -579,7 +579,8 @@ public class ReportFileExporter {
 
     /**
      * The sidebar shared by the index and every analysis report of a repository: the index tabs (as
-     * <code>index.html#&lt;tab&gt;</code> links, routed in-page on the index) and the available analysis
+     * <code>index.html#&lt;tab&gt;</code> links, routed in-page on the index; the file, unit and commit
+     * explorers in their own "Explorers" group) and the available analysis
      * reports, in the order of the Analyses tab. A report page's active id is its file name.
      */
     public static ReportNavigation repositoryNavigation(CodeAnalysisResults analysisResults, File sokratesConfigFolder) {
@@ -590,15 +591,16 @@ public class ReportFileExporter {
         report.addTabItem("highlights", "Highlights", "index.html#highlights", "highlights");
         report.addTabItem("structure", "Structure", "index.html#structure", "structure");
         report.addTabItem("commits", "Activity", "index.html#commits", "activity");
-        report.addTabItem("files", "File Explorer", "index.html#files", "files");
-        report.addTabItem("units", "Unit Explorer*", "index.html#units", "units");
-        report.addTabItem("commits-explorer", "Commit Explorer", "index.html#commits-explorer", "commits");
         report.addTabItem("visuals", "Visuals", "index.html#visuals", "visuals");
         report.addTabItem("data", "Data", "index.html#data", "data");
         List<CustomTab> customTabs = getCustomTabs(analysisResults);
         for (int i = 0; i < customTabs.size(); i++) {
             report.addTabItem(customTabId(i), customTabs.get(i).getLabel(), "index.html#" + customTabId(i), "custom");
         }
+        ReportNavigation.Group explorers = navigation.addGroup("Explorers");
+        explorers.addTabItem("files", "File Explorer", "index.html#files", "files");
+        explorers.addTabItem("units", "Unit Explorer*", "index.html#units", "units");
+        explorers.addTabItem("commits-explorer", "Commit Explorer", "index.html#commits-explorer", "commits");
         ReportNavigation.Group analyses = navigation.addGroup("Analyses");
         analyses.addTabItem("quality", "Summary", "index.html#quality", "analyses");
         for (String[] entry : getReportsList(analysisResults, sokratesConfigFolder)) {
