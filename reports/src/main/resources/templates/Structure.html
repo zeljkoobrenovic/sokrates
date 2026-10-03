@@ -5,8 +5,29 @@
     ${sokrates-theme}
     <title>Structure</title>
     <style type="text/css" media="all">
+        /* One screen, no page scroll: the tab strip and legend take what they need and the active
+           visual fills the rest of the frame (the visuals zoom and scroll themselves). */
+        html, body {
+            height: 100%;
+        }
+
         body {
             font-family: var(--sk-font);
+            margin: 0 8px;
+            overflow: hidden;
+        }
+
+        .sk-structure {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .sk-structure-open {
+            position: absolute;
+            top: 4px;
+            right: 4px;
         }
 
         a {
@@ -56,8 +77,17 @@
 
         .tabcontent {
             display: none;
+            flex-direction: column;
+            flex: 1 1 auto;
+            min-height: 0;
             padding: 0;
             border-top: none;
+        }
+
+        .tabcontent iframe {
+            flex: 1 1 auto;
+            min-height: 0;
+            height: auto !important;
         }
 
         .category-color {
@@ -90,14 +120,14 @@
             for (i = 0; i < tablinks.length; i++) {
                 tablinks[i].className = tablinks[i].className.replace(" active", "");
             }
-            document.getElementById(cityName).style.display = "block";
+            document.getElementById(cityName).style.display = "flex";
             evt.currentTarget.className += " active";
         }
     </script>
 </head>
 <body>
-<div style="margin-left: -5px; margin-bottom: 10px">
-    <div class="tab">
+<div class="sk-structure">
+    <div class="tab" style="padding-right: 48px">
         <button class="tablinks active" onclick="openTab(event, 'all_files')"
                 title="All files grouped by folder: size = lines of code, color = scope">All Files
         </button>
@@ -133,8 +163,8 @@
         </button>
     </div>
 
-    <div style="margin-left: 950px; margin-top: -42px">
-        <a target="_blank" href="Structure.html">
+    <div class="sk-structure-open">
+        <a target="_blank" href="Structure.html" title="Open in a new tab">
             <div style="display:inline-block; vertical-align: middle;">
                 <svg width='38px' height='38px' version="1.1" viewBox="0 0 1200 1200" fill="currentColor"
                      style="color: var(--sk-text-muted)" xmlns="http://www.w3.org/2000/svg">
@@ -166,7 +196,7 @@
         </iframe>
     </div>
 
-    <div id="all_files" class="tabcontent" style="display: block">
+    <div id="all_files" class="tabcontent" style="display: flex">
         <div class="legend-container">
             <table>
                 <tr>

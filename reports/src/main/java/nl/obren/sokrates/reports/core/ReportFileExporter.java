@@ -69,8 +69,8 @@ public class ReportFileExporter {
         indexReport.addTab("overview", "Overview", true);
         indexReport.addTab("highlights", "Highlights", false);
         indexReport.addTab("quality", "Analyses", false);
-        indexReport.addTab("commits", "Activity", false);
         indexReport.addTab("structure", "Structure", false);
+        indexReport.addTab("commits", "Activity", false);
         indexReport.addTab("files", "Files", false);
         indexReport.addTab("units", "Units*", false);
         // The plain "commits" id is taken by the Activity tab above.
@@ -588,8 +588,8 @@ public class ReportFileExporter {
         ReportNavigation.Group report = navigation.addGroup("Report");
         report.addTabItem("overview", "Overview", "index.html#overview", "overview");
         report.addTabItem("highlights", "Highlights", "index.html#highlights", "highlights");
+        report.addTabItem("structure", "Structure", "index.html#structure", "structure");
         report.addTabItem("commits", "Activity", "index.html#commits", "activity");
-        report.addTabItem("structure", "Structure Explorer", "index.html#structure", "structure");
         report.addTabItem("files", "File Explorer", "index.html#files", "files");
         report.addTabItem("units", "Unit Explorer*", "index.html#units", "units");
         report.addTabItem("commits-explorer", "Commit Explorer", "index.html#commits-explorer", "commits");
