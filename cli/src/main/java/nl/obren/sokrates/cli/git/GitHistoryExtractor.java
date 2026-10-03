@@ -91,48 +91,57 @@ public class GitHistoryExtractor {
                     if (rev.getParentCount() == 0) {
                         continue;
                     }
-                    RevCommit prev = rev.getParent(0);
-                    PersonIdent authorIdent = rev.getAuthorIdent();
-                    String date = format.format(authorIdent.getWhen());
-                    String email = authorIdent.getEmailAddress();
-                    String safeName = authorIdent.getName().replace(" ", "&nbsp;");
-                    String commitId = rev.getId().getName();
-                    long countBeforeCommit = count;
-
-                    for (DiffEntry entry : diffFormatter.scan(prev, rev)) {
-                        // For a deletion the new path is /dev/null; attribute the removed lines to
-                        // the old path so deleting a file still counts as churn under that file.
-                        String path = entry.getNewPath();
-                        if (path.equals("/dev/null")) {
-                            path = entry.getOldPath();
-                        }
-                        if (path.equals("/dev/null")) {
-                            continue;
-                        }
-                        int added = 0;
-                        int deleted = 0;
-                        for (Edit edit : diffFormatter.toFileHeader(entry).toEditList()) {
-                            added += edit.getEndB() - edit.getBeginB();
-                            deleted += edit.getEndA() - edit.getBeginA();
-                        }
-                        String safePath = path.replace(" ", "&nbsp;");
-                        writer.write(date + " " + email + " " + commitId + " "
-                                + safePath + " " + safeName + " " + added + " " + deleted + "\n");
-                        count++;
-                    }
-                    // Sidecar with the commit message's first line, only for commits that
-                    // produced at least one file-change line (the ones consumers can join on).
-                    // See GitHistoryUtils.GIT_COMMITS_FILE_NAME for the format contract.
-                    if (count > countBeforeCommit) {
-                        String message = rev.getShortMessage().replaceAll("[\\r\\n]+", " ").trim();
-                        commitsWriter.write(commitId + " " + message + "\n");
-                        writeTrailers(trailersWriter, rev, commitId, email);
-                    }
+                    count += writeCommit(rev, diffFormatter, format, writer, commitsWriter, trailersWriter);
                 }
             }
             LOG.info("Extracted " + count + " file changes");
         } catch (IOException | GitAPIException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * One history line per file the commit changed, plus the commit's message and trailer sidecar lines when
+     * it produced at least one such line (the ones consumers can join on). Returns the number of history lines.
+     */
+    private long writeCommit(RevCommit rev, DiffFormatter diffFormatter, SimpleDateFormat format, Writer writer, Writer commitsWriter, Writer trailersWriter) throws IOException {
+        RevCommit prev = rev.getParent(0);
+        PersonIdent authorIdent = rev.getAuthorIdent();
+        String date = format.format(authorIdent.getWhen());
+        String email = authorIdent.getEmailAddress();
+        String safeName = authorIdent.getName().replace(" ", "&nbsp;");
+        String commitId = rev.getId().getName();
+        long count = 0;
+
+        for (DiffEntry entry : diffFormatter.scan(prev, rev)) {
+            // For a deletion the new path is /dev/null; attribute the removed lines to
+            // the old path so deleting a file still counts as churn under that file.
+            String path = entry.getNewPath();
+            if (path.equals("/dev/null")) {
+                path = entry.getOldPath();
+            }
+            if (path.equals("/dev/null")) {
+                continue;
+            }
+            int added = 0;
+            int deleted = 0;
+            for (Edit edit : diffFormatter.toFileHeader(entry).toEditList()) {
+                added += edit.getEndB() - edit.getBeginB();
+                deleted += edit.getEndA() - edit.getBeginA();
+            }
+            String safePath = path.replace(" ", "&nbsp;");
+            writer.write(date + " " + email + " " + commitId + " "
+                    + safePath + " " + safeName + " " + added + " " + deleted + "\n");
+            count++;
+        }
+        // Sidecar with the commit message's first line, only for commits that
+        // produced at least one file-change line (the ones consumers can join on).
+        // See GitHistoryUtils.GIT_COMMITS_FILE_NAME for the format contract.
+        if (count > 0) {
+            String message = rev.getShortMessage().replaceAll("[\\r\\n]+", " ").trim();
+            commitsWriter.write(commitId + " " + message + "\n");
+            writeTrailers(trailersWriter, rev, commitId, email);
+        }
+        return count;
     }
 }

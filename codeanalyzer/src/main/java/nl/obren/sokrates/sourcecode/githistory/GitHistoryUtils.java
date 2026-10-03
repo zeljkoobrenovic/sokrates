@@ -123,14 +123,8 @@ public class GitHistoryUtils {
             return trailers;
         }
         String[] lines = fullMessage.replace("\r\n", "\n").replace('\r', '\n').split("\n");
-        int end = lines.length;
-        while (end > 0 && StringUtils.isBlank(lines[end - 1])) {
-            end--;
-        }
-        int start = end;
-        while (start > 0 && !StringUtils.isBlank(lines[start - 1])) {
-            start--;
-        }
+        int end = lengthWithoutTrailingBlankLines(lines);
+        int start = lastParagraphStart(lines, end);
         // A one-paragraph message has no trailer block (the paragraph is the subject).
         if (start == 0) {
             return trailers;
@@ -149,6 +143,23 @@ public class GitHistoryUtils {
             last = trailer;
         }
         return trailers;
+    }
+
+    private static int lengthWithoutTrailingBlankLines(String[] lines) {
+        int end = lines.length;
+        while (end > 0 && StringUtils.isBlank(lines[end - 1])) {
+            end--;
+        }
+        return end;
+    }
+
+    /** The index of the first line of the paragraph ending at {@code end} (0 when the message has no earlier blank line). */
+    private static int lastParagraphStart(String[] lines, int end) {
+        int start = end;
+        while (start > 0 && !StringUtils.isBlank(lines[start - 1])) {
+            start--;
+        }
+        return start;
     }
 
     /**

@@ -240,10 +240,7 @@ public class ContributorsReportGenerator {
 
         // Commits-per-month row.
         report.startTableRow();
-        report.addTableCell("commits", "min-width: 200px; border: none; text-align: right; font-size: 80%; color: grey");
-        for (int i = 0; i < 4; i++) {
-            report.addTableCell("", "border: none");
-        }
+        addMonthTotalsLabelCells("commits");
         pastMonths.forEach(pastMonth -> {
             int c = commitsPerMonth.getOrDefault(pastMonth, 0);
             report.startTableCell("font-size: 70%; border: none; text-align: center; color: grey");
@@ -258,26 +255,31 @@ public class ContributorsReportGenerator {
 
         // Line-churn-per-month row (+added / -deleted).
         report.startTableRow();
-        report.addTableCell("line churn", "min-width: 200px; border: none; text-align: right; font-size: 80%; color: grey");
+        addMonthTotalsLabelCells("line churn");
+        pastMonths.forEach(pastMonth -> addMonthChurnCell(pastMonth, addedPerMonth.getOrDefault(pastMonth, 0), deletedPerMonth.getOrDefault(pastMonth, 0)));
+        report.endTableRow();
+    }
+
+    /** The row label plus the four empty cells under the matrix's leading columns. */
+    private void addMonthTotalsLabelCells(String label) {
+        report.addTableCell(label, "min-width: 200px; border: none; text-align: right; font-size: 80%; color: grey");
         for (int i = 0; i < 4; i++) {
             report.addTableCell("", "border: none");
         }
-        pastMonths.forEach(pastMonth -> {
-            int added = addedPerMonth.getOrDefault(pastMonth, 0);
-            int deleted = deletedPerMonth.getOrDefault(pastMonth, 0);
-            report.startTableCell("font-size: 65%; border: none; text-align: center; white-space: nowrap");
-            if (added == 0 && deleted == 0) {
-                report.addContentInDiv("-", "color: lightgrey; text-align: center");
-            } else {
-                String tooltip = "Month " + pastMonth + ": +" + added + " / -" + deleted + " lines";
-                report.addContentInDivWithTooltip(
-                        "<span style='color: #2e7d32;'>+" + FormattingUtils.getSmallTextForNumber(added) + "</span>"
-                                + "<br><span style='color: #c62828;'>-" + FormattingUtils.getSmallTextForNumber(deleted) + "</span>",
-                        tooltip, "text-align: center");
-            }
-            report.endTableCell();
-        });
-        report.endTableRow();
+    }
+
+    private void addMonthChurnCell(String pastMonth, int added, int deleted) {
+        report.startTableCell("font-size: 65%; border: none; text-align: center; white-space: nowrap");
+        if (added == 0 && deleted == 0) {
+            report.addContentInDiv("-", "color: lightgrey; text-align: center");
+        } else {
+            String tooltip = "Month " + pastMonth + ": +" + added + " / -" + deleted + " lines";
+            report.addContentInDivWithTooltip(
+                    "<span style='color: #2e7d32;'>+" + FormattingUtils.getSmallTextForNumber(added) + "</span>"
+                            + "<br><span style='color: #c62828;'>-" + FormattingUtils.getSmallTextForNumber(deleted) + "</span>",
+                    tooltip, "text-align: center");
+        }
+        report.endTableCell();
     }
 
     private void addMatrix(List<Contributor> contributors, String type) {

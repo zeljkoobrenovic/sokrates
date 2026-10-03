@@ -467,28 +467,36 @@ public class LandscapeAnalyzer {
             if (pathCol < 0) {
                 return;
             }
-            int[] columns = new int[HISTORY_COLUMNS.length];
-            for (int i = 0; i < HISTORY_COLUMNS.length; i++) {
-                columns[i] = indexOfColumn(header, (String) HISTORY_COLUMNS[i][0]);
-            }
+            int[] columns = historyColumnIndexes(header);
             int lastUpdatedCol = indexOfColumn(header, "last updated");
             Map<String, FileExport> filesByPath = new HashMap<>();
             files.forEach(file -> filesByPath.put(file.getPath(), file));
-            lines.stream().skip(1).forEach(line -> {
-                String data[] = line.split("\t");
-                FileExport file = pathCol < data.length ? filesByPath.get(data[pathCol]) : null;
-                if (file == null) {
-                    return;
-                }
-                for (int i = 0; i < HISTORY_COLUMNS.length; i++) {
-                    applyIntColumn(file, data, columns[i], (ObjIntConsumer<FileExport>) HISTORY_COLUMNS[i][1]);
-                }
-                if (lastUpdatedCol >= 0 && lastUpdatedCol < data.length) {
-                    file.setLatestCommitDate(data[lastUpdatedCol]);
-                }
-            });
+            lines.stream().skip(1).forEach(line -> applyHistoryLine(line.split("\t"), filesByPath, pathCol, columns, lastUpdatedCol));
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    /** The column index of each HISTORY_COLUMNS entry in this file's header (-1 when absent). */
+    private int[] historyColumnIndexes(String[] header) {
+        int[] columns = new int[HISTORY_COLUMNS.length];
+        for (int i = 0; i < HISTORY_COLUMNS.length; i++) {
+            columns[i] = indexOfColumn(header, (String) HISTORY_COLUMNS[i][0]);
+        }
+        return columns;
+    }
+
+    /** Copies one history line's counters and last-updated date onto the file it names, if the file is known. */
+    private static void applyHistoryLine(String[] data, Map<String, FileExport> filesByPath, int pathCol, int[] columns, int lastUpdatedCol) {
+        FileExport file = pathCol < data.length ? filesByPath.get(data[pathCol]) : null;
+        if (file == null) {
+            return;
+        }
+        for (int i = 0; i < HISTORY_COLUMNS.length; i++) {
+            applyIntColumn(file, data, columns[i], (ObjIntConsumer<FileExport>) HISTORY_COLUMNS[i][1]);
+        }
+        if (lastUpdatedCol >= 0 && lastUpdatedCol < data.length) {
+            file.setLatestCommitDate(data[lastUpdatedCol]);
         }
     }
 

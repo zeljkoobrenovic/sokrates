@@ -17,22 +17,22 @@ class RepositoryGoneTest {
     void aMissingRemoteIsGone() throws Exception {
         Throwable failure = new InvalidRemoteException("Invalid remote: origin",
                 new NoRemoteRepositoryException(new URIish("file:///tmp/nope.git"), "not found."));
-        assertTrue(CommandLineInterface.repositoryGone("file:///tmp/nope.git", failure));
+        assertTrue(GitRepoCommands.repositoryGone("file:///tmp/nope.git", failure));
     }
 
     @Test
     void networkAndAuthenticationFailuresAreNotGone() throws Exception {
         Throwable unknownHost = new TransportException("https://gitlab.example.com/a/b.git: cannot open git-upload-pack",
                 new UnknownHostException("gitlab.example.com"));
-        assertFalse(CommandLineInterface.repositoryGone("https://gitlab.example.com/a/b.git", unknownHost));
+        assertFalse(GitRepoCommands.repositoryGone("https://gitlab.example.com/a/b.git", unknownHost));
 
         Throwable auth = new TransportException("https://gitlab.example.com/a/b.git: not authorized");
-        assertFalse(CommandLineInterface.repositoryGone("https://gitlab.example.com/a/b.git", auth));
+        assertFalse(GitRepoCommands.repositoryGone("https://gitlab.example.com/a/b.git", auth));
     }
 
     @Test
     void aNotFoundMessageFromANonGitHubHostIsGone() {
         Throwable notFound = new TransportException("https://gitlab.example.com/a/b.git: Git repository not found");
-        assertTrue(CommandLineInterface.repositoryGone("https://gitlab.example.com/a/b.git", notFound));
+        assertTrue(GitRepoCommands.repositoryGone("https://gitlab.example.com/a/b.git", notFound));
     }
 }

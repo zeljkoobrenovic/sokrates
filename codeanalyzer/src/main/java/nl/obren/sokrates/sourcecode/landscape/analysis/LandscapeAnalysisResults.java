@@ -639,62 +639,20 @@ public class LandscapeAnalysisResults {
             List<CommitsPerExtension> repositoryData = repositoryAnalysisResults.getAnalysisResults().getContributorsAnalysisResults().getCommitsPerExtensions();
 
             repositoryData.forEach(repositoryExtData -> {
-                String extension = repositoryExtData.getExtension();
-                if (commitsPerExtensions.containsKey(extension)) {
-                    CommitsPerExtension commitsPerExtension = commitsPerExtensions.get(extension);
-                    commitsPerExtension.setCommitsCount(commitsPerExtension.getCommitsCount() + repositoryExtData.getCommitsCount());
-
-                    commitsPerExtension.setCommitsCount30Days(commitsPerExtension.getCommitsCount30Days() + repositoryExtData.getCommitsCount30Days());
-                    commitsPerExtension.setCommitsCount90Days(commitsPerExtension.getCommitsCount90Days() + repositoryExtData.getCommitsCount90Days());
-
-                    commitsPerExtension.setFilesCount(commitsPerExtension.getFilesCount() + repositoryExtData.getFilesCount());
-                    commitsPerExtension.setFilesCount30Days(commitsPerExtension.getFilesCount30Days() + repositoryExtData.getFilesCount30Days());
-                    commitsPerExtension.setFilesCount90Days(commitsPerExtension.getFilesCount90Days() + repositoryExtData.getFilesCount90Days());
-
-                    repositoryExtData.getCommitters().forEach(email -> {
-                        String contributorId = EmailTransformations.transformEmail(email, configuration.getTransformContributorEmails(), peopleConfig);
-                        if (!commitsPerExtension.getCommitters().contains(contributorId)) {
-                            commitsPerExtension.getCommitters().add(contributorId);
-                        }
-                    });
-                    repositoryExtData.getCommitters30Days().forEach(email -> {
-                        String contributorId = EmailTransformations.transformEmail(email, configuration.getTransformContributorEmails(), peopleConfig);
-                        if (!commitsPerExtension.getCommitters30Days().contains(contributorId)) {
-                            commitsPerExtension.getCommitters30Days().add(contributorId);
-                        }
-                    });
-                    repositoryExtData.getCommitters90Days().forEach(email -> {
-                        String contributorId = EmailTransformations.transformEmail(email, configuration.getTransformContributorEmails(), peopleConfig);
-                        if (!commitsPerExtension.getCommitters90Days().contains(contributorId)) {
-                            commitsPerExtension.getCommitters90Days().add(contributorId);
-                        }
-                    });
+                CommitsPerExtension commitsPerExtension = commitsPerExtensions.get(repositoryExtData.getExtension());
+                if (commitsPerExtension != null) {
+                    addCommitsPerExtension(commitsPerExtension, repositoryExtData,
+                            email -> EmailTransformations.transformEmail(email, configuration.getTransformContributorEmails(), peopleConfig));
                 }
             });
         });
-
 
         configuration.getMergeExtensions().forEach(merge -> {
             CommitsPerExtension primary = commitsPerExtensions.get(merge.getPrimary());
             CommitsPerExtension secondary = commitsPerExtensions.get(merge.getSecondary());
 
             if (primary != null && secondary != null) {
-                primary.setCommitsCount(primary.getCommitsCount() + secondary.getCommitsCount());
-                primary.setCommitsCount30Days(primary.getCommitsCount30Days() + secondary.getCommitsCount30Days());
-                primary.setCommitsCount90Days(primary.getCommitsCount90Days() + secondary.getCommitsCount90Days());
-                primary.setFilesCount(primary.getFilesCount() + secondary.getFilesCount());
-                primary.setFilesCount30Days(primary.getFilesCount30Days() + secondary.getFilesCount30Days());
-                primary.setFilesCount90Days(primary.getFilesCount90Days() + secondary.getFilesCount90Days());
-                secondary.getCommitters().stream()
-                        .filter(c -> !primary.getCommitters().contains(c))
-                        .forEach(commiter -> primary.getCommitters().add(commiter));
-                secondary.getCommitters30Days().stream()
-                        .filter(c -> !primary.getCommitters30Days().contains(c))
-                        .forEach(commiter -> primary.getCommitters30Days().add(commiter));
-                secondary.getCommitters90Days().stream()
-                        .filter(c -> !primary.getCommitters90Days().contains(c))
-                        .forEach(commiter -> primary.getCommitters90Days().add(commiter));
-
+                addCommitsPerExtension(primary, secondary, email -> email);
                 commitsPerExtensions.remove(merge.getSecondary());
             }
         });
@@ -703,6 +661,28 @@ public class LandscapeAnalysisResults {
         Collections.sort(list, (a, b) -> b.getCommitters30Days().size() - a.getCommitters30Days().size());
 
         return list;
+    }
+
+    /** Adds the source's commit and file counts to the target and its committers (mapped through {@code contributorId}) when not yet present. */
+    private static void addCommitsPerExtension(CommitsPerExtension target, CommitsPerExtension source, java.util.function.Function<String, String> contributorId) {
+        target.setCommitsCount(target.getCommitsCount() + source.getCommitsCount());
+        target.setCommitsCount30Days(target.getCommitsCount30Days() + source.getCommitsCount30Days());
+        target.setCommitsCount90Days(target.getCommitsCount90Days() + source.getCommitsCount90Days());
+        target.setFilesCount(target.getFilesCount() + source.getFilesCount());
+        target.setFilesCount30Days(target.getFilesCount30Days() + source.getFilesCount30Days());
+        target.setFilesCount90Days(target.getFilesCount90Days() + source.getFilesCount90Days());
+        addCommitters(target.getCommitters(), source.getCommitters(), contributorId);
+        addCommitters(target.getCommitters30Days(), source.getCommitters30Days(), contributorId);
+        addCommitters(target.getCommitters90Days(), source.getCommitters90Days(), contributorId);
+    }
+
+    private static void addCommitters(List<String> target, List<String> emails, java.util.function.Function<String, String> contributorId) {
+        emails.forEach(email -> {
+            String id = contributorId.apply(email);
+            if (!target.contains(id)) {
+                target.add(id);
+            }
+        });
     }
 
     private LandscapeContributorsAggregator contributorsAggregator() {
