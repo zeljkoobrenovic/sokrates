@@ -1,0 +1,62 @@
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/scoping/IgnoreConventions.java
+  s_40c0e74316fcc6::t_69db80add8b1f1 1-205
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/lang/plsql/PlSqlHeuristicUnitsExtractor.java
+  s_40c0e74316fcc6::t_69db80add8b1f1 205-206,208-214
+reports/src/main/java/nl/obren/sokrates/reports/landscape/ai/AiInsightsAggregator.java
+  s_40c0e74316fcc6::t_69db80add8b1f1 96,112-127
+  s_40c0e74316fcc6::t_0420387e70990f 128-129
+cli/src/main/java/nl/obren/sokrates/cli/LandscapeCommands.java
+  s_40c0e74316fcc6::t_69db80add8b1f1 317,322,331-340
+  s_40c0e74316fcc6::t_f7972687e43ada 341
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/scoping/ScopingConventions.java
+  s_40c0e74316fcc6::t_69db80add8b1f1 31,34
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/LogicalComponentsReportGenerator.java
+  s_40c0e74316fcc6::t_69db80add8b1f1 262,267,303-331
+  s_40c0e74316fcc6::t_98a390a1da11dc 332
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/scoping/BuildAndDeploymentConventions.java
+  s_40c0e74316fcc6::t_69db80add8b1f1 1-209
+cli/src/main/java/nl/obren/sokrates/cli/CommandLineInterface.java
+  s_40c0e74316fcc6::t_69db80add8b1f1 604,611-618,628-640,644,647-656,662,665,858-860
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/githistory/GitHistoryUtils.java
+  s_40c0e74316fcc6::t_6be78c828a5c9b 412-420
+  s_40c0e74316fcc6::t_69db80add8b1f1 381,400-407,421-431,433-435,437-438,440,442-445,447-449,451,453-454,457-469
+  s_40c0e74316fcc6::t_13a619e0bc5e2c 408
+reports/src/main/java/nl/obren/sokrates/reports/landscape/data/LandscapeDataExport.java
+  s_40c0e74316fcc6::t_69db80add8b1f1 106-107,113-150
+  s_40c0e74316fcc6::t_acffea351991e1 151
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/dependencies/DependenciesFinderExtractor.java
+  s_40c0e74316fcc6::t_69db80add8b1f1 137-139,141-150,152-154
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/repositories/LandscapeRepositoriesTagsMatrixReport.java
+  s_40c0e74316fcc6::t_69db80add8b1f1 134-148,158-178,180-182
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/ContributorsReportUtils.java
+  s_40c0e74316fcc6::t_69db80add8b1f1 455,460-465,467-474,597,599,601,611-621
+  s_40c0e74316fcc6::t_afbc0667faba43 622
+reports/src/main/java/nl/obren/sokrates/reports/landscape/data/ContributorIndividualReportExport.java
+  s_40c0e74316fcc6::t_69db80add8b1f1 94-96,102-109
+reports/src/main/java/nl/obren/sokrates/reports/utils/ScopesRenderer.java
+  s_40c0e74316fcc6::t_69db80add8b1f1 333,339,349-363,365
+  s_40c0e74316fcc6::t_e2d587422fab87 364,366
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/LandscapeReportContributorsTab.java
+  s_40c0e74316fcc6::t_69db80add8b1f1 379-405,417-421,446
+CLAUDE.md
+  s_40c0e74316fcc6::t_a9e42f3d4b3f9c 79
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportFileExporter.java
+  s_40c0e74316fcc6::t_69db80add8b1f1 477,481,485-491
+  s_40c0e74316fcc6::t_d1258f84c6ae34 492
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "dc9b75d63e26378e56c93f3dc94a1991e2ff5e92",
+  "prompts": {},
+  "sessions": {
+    "s_40c0e74316fcc6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8a859e40-f6c6-4dfa-8fdb-6c295588cf73",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
