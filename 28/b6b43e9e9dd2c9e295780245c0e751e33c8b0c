@@ -1,0 +1,21 @@
+CLAUDE.md
+  s_223e7b216451e0::t_7c273fe364349e 123
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportFileExporter.java
+  s_223e7b216451e0::t_7c273fe364349e 583,609-611
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "28b6b43e9e9dd2c9e295780245c0e751e33c8b0c",
+  "prompts": {},
+  "sessions": {
+    "s_223e7b216451e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "17c1a50e-ffe3-43fa-bbef-5ca8411e20a4",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
