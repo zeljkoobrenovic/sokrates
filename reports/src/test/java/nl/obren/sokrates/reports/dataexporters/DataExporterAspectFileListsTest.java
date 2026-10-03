@@ -34,7 +34,7 @@ public class DataExporterAspectFileListsTest {
         CodeConfiguration configuration = CodeConfiguration.getDefaultConfiguration();
         File folder = writeFileListsFor(configuration);
 
-        List<String> names = namesOf(DataExporter.aspectFileLists(configuration, folder));
+        List<String> names = namesOf(FileListsDataExporter.aspectFileLists(configuration, folder));
 
         assertEquals("[aspect_main.txt, aspect_test.txt, aspect_generated.txt, "
                 + "aspect_build_and_deployment.txt, aspect_other.txt]", names.toString());
@@ -49,7 +49,7 @@ public class DataExporterAspectFileListsTest {
         configuration.getBuildAndDeployment().setName("buildAndDeployment");
         File folder = writeFileListsFor(configuration);
 
-        List<String> names = namesOf(DataExporter.aspectFileLists(configuration, folder));
+        List<String> names = namesOf(FileListsDataExporter.aspectFileLists(configuration, folder));
 
         assertEquals("[aspect_main.txt, aspect_test.txt, aspect_generated.txt, "
                 + "aspect_buildAndDeployment.txt, aspect_other.txt]", names.toString());
@@ -61,7 +61,7 @@ public class DataExporterAspectFileListsTest {
         CodeConfiguration configuration = CodeConfiguration.getDefaultConfiguration();
         File folder = writeFileListsFor(configuration);
 
-        String[][] entries = DataExporter.aspectFileLists(configuration, folder);
+        String[][] entries = FileListsDataExporter.aspectFileLists(configuration, folder);
 
         assertEquals("contents of aspect_main.txt", entries[0][1]);
     }

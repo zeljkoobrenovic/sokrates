@@ -98,6 +98,7 @@ public class CommandLineInterface {
     final GitHistoryCommands gitHistoryCommands = new GitHistoryCommands(this, commands);
     final PeopleConfigCommands peopleConfigCommands = new PeopleConfigCommands(this, commands);
     final SkillsCommands skillsCommands = new SkillsCommands(this, commands);
+    final ConfigCommands configCommands = new ConfigCommands(this, commands);
     final GitRepoCommands gitRepoCommands = new GitRepoCommands(this, commands);
     final LandscapeCommands landscapeCommands = new LandscapeCommands(this, commands);
     private final OrganizationCommands organizationCommands = new OrganizationCommands(this, commands);
@@ -139,12 +140,12 @@ public class CommandLineInterface {
         handlers.put(Commands.ANALYZE_GITLAB_GROUP, organizationCommands::analyzeGitLabGroup);
         handlers.put(Commands.UPDATE_LANDSCAPE_PEOPLE_CONFIG_BY_USER_NAME, peopleConfigCommands::updateLandscapePeopleConfigByUserName);
         handlers.put(Commands.UPDATE_PEOPLE_CONFIG_BY_USER_NAME, peopleConfigCommands::updatePeopleConfigByUserName);
-        handlers.put(Commands.UPDATE_CONFIG, this::updateConfig);
-        handlers.put(Commands.ADD_CUSTOM_TAB, this::addCustomTab);
+        handlers.put(Commands.UPDATE_CONFIG, configCommands::updateConfig);
+        handlers.put(Commands.ADD_CUSTOM_TAB, configCommands::addCustomTab);
         handlers.put(Commands.INSTALL_SKILLS, skillsCommands::installSkills);
         handlers.put(Commands.EXTRACT_GIT_HISTORY, gitHistoryCommands::extractGitHistory);
-        handlers.put(Commands.INIT_CONVENTIONS, this::createNewConventionsFile);
-        handlers.put(Commands.EXPORT_STANDARD_CONVENTIONS, this::exportConventions);
+        handlers.put(Commands.INIT_CONVENTIONS, configCommands::createNewConventionsFile);
+        handlers.put(Commands.EXPORT_STANDARD_CONVENTIONS, configCommands::exportConventions);
         handlers.put(Commands.EXTRACT_GIT_SUB_HISTORY, gitHistoryCommands::extractGitSubHistory);
         handlers.put(Commands.EXTRACT_FILES, this::extractFiles);
         return handlers;
@@ -510,7 +511,7 @@ public class CommandLineInterface {
                 + (metadata.getLinks().isEmpty() ? "" : ", link");
     }
 
-    private File getSrcRoot(CommandLine cmd) {
+    File getSrcRoot(CommandLine cmd) {
         String strRootPath = cmd.getOptionValue(commands.getSrcRoot().getOpt());
         if (!cmd.hasOption(commands.getSrcRoot().getOpt())) {
             strRootPath = ".";
@@ -576,108 +577,6 @@ public class CommandLineInterface {
         }
     }
 
-    private void updateConfig(String[] args) throws ParseException, IOException {
-        Options options = commands.getUpdateConfigOptions();
-
-        CommandLineParser parser = new DefaultParser();
-        CommandLine cmd = parser.parse(options, args);
-
-        if (cmd.hasOption(commands.getHelp().getOpt())) {
-            helpMode = true;
-            commands.usage(Commands.UPDATE_CONFIG, commands.getUpdateConfigOptions(), Commands.UPDATE_CONFIG_DESCRIPTION);
-            return;
-        }
-
-        startTimeoutIfDefined(cmd);
-
-        String strRootPath = cmd.getOptionValue(commands.getSrcRoot().getOpt());
-        if (!cmd.hasOption(commands.getSrcRoot().getOpt())) {
-            strRootPath = ".";
-        }
-
-        File root = new File(strRootPath);
-        if (!root.exists()) {
-            LOG.error("The src root \"" + root.getPath() + "\" does not exist.");
-            return;
-        }
-
-        File confFile = getConfigFile(cmd, root);
-        LOG.info("Configuration file '" + confFile.getPath() + "'.");
-
-        String jsonContent = FileUtils.readFileToString(confFile, UTF_8);
-        CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
-
-        applyAnalysisOptions(cmd, codeConfiguration);
-
-        Metadata metadata = codeConfiguration.getMetadata();
-        updateMetadataFromCommandLine(cmd, metadata);
-
-        String cacheFileValue = optionValueOrNull(cmd, commands.getSetCacheFiles());
-        if (cacheFileValue != null) {
-            codeConfiguration.getAnalysis().setSaveSourceFiles(cacheFileValue.equalsIgnoreCase("true"));
-        }
-
-        FileUtils.write(confFile, new JsonGenerator().generate(codeConfiguration), UTF_8);
-    }
-
-    /** The -skipComplexAnalyses / -skipDuplicationAnalyses / -skipCorrelationAnalyses / -enableDuplicationAnalyses switches. */
-    private void applyAnalysisOptions(CommandLine cmd, CodeConfiguration codeConfiguration) {
-        if (cmd.hasOption(commands.getSkipComplexAnalyses().getOpt())) {
-            codeConfiguration.getAnalysis().setSkipDependencies(true);
-            codeConfiguration.getAnalysis().setSkipDuplication(true);
-            codeConfiguration.getAnalysis().setSkipCorrelations(true);
-            codeConfiguration.getAnalysis().setSaveSourceFiles(false);
-        }
-
-        if (cmd.hasOption(commands.getSkipDuplicationAnalyses().getOpt())) {
-            codeConfiguration.getAnalysis().setSkipDuplication(true);
-        }
-
-        if (cmd.hasOption(commands.getSkipCorrelationAnalyses().getOpt())) {
-            codeConfiguration.getAnalysis().setSkipCorrelations(true);
-        }
-
-        if (cmd.hasOption(commands.getEnableDuplicationAnalyses().getOpt())) {
-            codeConfiguration.getAnalysis().setSkipDuplication(false);
-        }
-    }
-
-    private void addCustomTab(String[] args) throws ParseException, IOException {
-        Options options = commands.getAddCustomTabOptions();
-
-        CommandLineParser parser = new DefaultParser();
-        CommandLine cmd = parser.parse(options, args);
-
-        if (cmd.hasOption(commands.getHelp().getOpt())) {
-            helpMode = true;
-            commands.usage(Commands.ADD_CUSTOM_TAB, options, Commands.ADD_CUSTOM_TAB_DESCRIPTION);
-            return;
-        }
-
-        String label = cmd.getOptionValue(commands.getLabel().getOpt());
-        String iframeLink = cmd.getOptionValue(commands.getIframeLink().getOpt());
-        if (StringUtils.isBlank(label) || StringUtils.isBlank(iframeLink)) {
-            LOG.error("Both -" + Commands.ARG_LABEL + " and -" + Commands.ARG_IFRAME_LINK + " are required.");
-            commands.usage(Commands.ADD_CUSTOM_TAB, options, Commands.ADD_CUSTOM_TAB_DESCRIPTION);
-            return;
-        }
-
-        File confFile = getConfigFile(cmd, new File("."));
-        if (!confFile.exists()) {
-            LOG.error("The configuration file \"" + confFile.getPath() + "\" does not exist.");
-            return;
-        }
-        LOG.info("Configuration file '" + confFile.getPath() + "'.");
-
-        String jsonContent = FileUtils.readFileToString(confFile, UTF_8);
-        CodeConfiguration codeConfiguration = (CodeConfiguration) new JsonMapper().getObject(jsonContent, CodeConfiguration.class);
-
-        boolean replaced = codeConfiguration.addOrReplaceCustomTab(new CustomTab(label.trim(), iframeLink.trim()));
-        LOG.info((replaced ? "Replaced" : "Added") + " custom tab '" + label.trim() + "' -> " + iframeLink.trim());
-
-        FileUtils.write(confFile, new JsonGenerator().generate(codeConfiguration), UTF_8);
-    }
-
     void updateMetadataFromCommandLine(CommandLine cmd, Metadata metadata) {
         String name = optionValueOrNull(cmd, commands.getSetName());
         if (name != null) {
@@ -698,7 +597,7 @@ public class CommandLineInterface {
     }
 
     /** The option's value when given and not blank, else null. */
-    private static String optionValueOrNull(CommandLine cmd, Option option) {
+    static String optionValueOrNull(CommandLine cmd, Option option) {
         if (!cmd.hasOption(option.getOpt())) {
             return null;
         }
@@ -706,23 +605,7 @@ public class CommandLineInterface {
         return StringUtils.isNotBlank(value) ? value : null;
     }
 
-    private void exportConventions(String[] args) throws ParseException, IOException {
-        File file = new File("standard_analysis_conventions.json");
-
-        CustomConventionsHelper.saveStandardConventionsToFile(file);
-
-        LOG.info("A standard conventions file saved to '" + file.getPath() + "'.");
-    }
-
-    private void createNewConventionsFile(String[] args) throws ParseException, IOException {
-        File file = new File("analysis_conventions.json");
-
-        CustomConventionsHelper.saveEmptyConventionsToFile(file);
-
-        LOG.info("A new conventions file saved to '" + file.getPath() + "'.");
-    }
-
-    private File getConfigFile(CommandLine cmd, File root) {
+    File getConfigFile(CommandLine cmd, File root) {
         File conf;
         if (cmd.hasOption(commands.getConfFile().getOpt())) {
             conf = new File(cmd.getOptionValue(commands.getConfFile().getOpt()));
