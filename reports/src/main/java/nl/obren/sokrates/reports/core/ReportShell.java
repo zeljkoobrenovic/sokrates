@@ -99,6 +99,11 @@ public class ReportShell {
             "    var brand = document.querySelector('.sk-sidebar-brand');\n" +
             "    if (!label || !title) { return; }\n" +
             "    title.textContent = label.textContent;\n" +
+            "    var icon = item.querySelector('.sk-nav-icon svg'), headerIcon = document.querySelector('[data-sk-page-icon]');\n" +
+            "    if (headerIcon) {\n" +
+            "      headerIcon.textContent = '';\n" +
+            "      if (icon) { var big = icon.cloneNode(true); big.setAttribute('width', '68'); big.setAttribute('height', '68'); headerIcon.appendChild(big); }\n" +
+            "    }\n" +
             "    document.title = label.textContent + (brand ? ' \\u00b7 ' + brand.textContent : '');\n" +
             "  }\n" +
             "  function markNav(id) {\n" +
@@ -138,7 +143,7 @@ public class ReportShell {
             "  };\n" +
             "  function openFromHash(scrollTop) {\n" +
             "    var id = decodeURIComponent(location.hash.slice(1));\n" +
-            "    if (window.sokratesShowTab(id) && scrollTop) { window.scrollTo(0, 0); }\n" +
+            "    if (window.sokratesShowTab(id) && scrollTop) { holdTop(); }\n" +
             "  }\n" +
             "  window.addEventListener('popstate', function () { openFromHash(false); });\n" +
             "  // A typed or linked #tab jumps to the tab's div first; start at the top of the tab instead.\n" +
@@ -173,20 +178,17 @@ public class ReportShell {
             "      window.sokratesToggleNav(false);\n" +
             "    }\n" +
             "  });\n" +
-            "  // The browser jumps to the element named by the fragment (the tab's div) and may repeat that\n" +
-            "  // after late layout changes such as a web font arriving; a tab opened from the URL starts at the top.\n" +
-            "  var userScrolled = false;\n" +
-            "  ['wheel', 'touchmove', 'keydown', 'mousedown'].forEach(function (type) {\n" +
-            "    window.addEventListener(type, function () { userScrolled = true; }, {passive: true, once: true});\n" +
+            "  // A tab opened from the URL starts at the top. The browser scrolls to the element named by the\n" +
+            "  // fragment (the tab's div) and repeats that on later layout changes (web font, frames loading),\n" +
+            "  // so for a few seconds after such an open any scroll is undone, until the viewer interacts.\n" +
+            "  var holdTopUntil = 0;\n" +
+            "  function holdTop() { holdTopUntil = Date.now() + 4000; window.scrollTo(0, 0); }\n" +
+            "  ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (type) {\n" +
+            "    window.addEventListener(type, function () { holdTopUntil = 0; }, {passive: true, capture: true});\n" +
             "  });\n" +
-            "  function topOfTab() {\n" +
-            "    if (!userScrolled && tabContent(decodeURIComponent(location.hash.slice(1)))) { window.scrollTo(0, 0); }\n" +
-            "  }\n" +
-            "  window.addEventListener('load', function () {\n" +
-            "    topOfTab();\n" +
-            "    if (document.fonts && document.fonts.ready) { document.fonts.ready.then(topOfTab); }\n" +
-            "    setTimeout(topOfTab, 400);\n" +
-            "  });\n" +
+            "  window.addEventListener('scroll', function () {\n" +
+            "    if (Date.now() < holdTopUntil && window.scrollY !== 0) { window.scrollTo(0, 0); }\n" +
+            "  }, {passive: true});\n" +
             "  document.addEventListener('DOMContentLoaded', function () {\n" +
             "    if (location.hash) { openFromHash(true); }\n" +
             "    if (!/Mac|iPhone|iPad/.test(navigator.platform || '')) {\n" +

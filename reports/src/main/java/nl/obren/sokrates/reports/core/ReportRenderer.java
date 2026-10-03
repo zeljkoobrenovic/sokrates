@@ -65,7 +65,14 @@ public class ReportRenderer {
         if (StringUtils.isNotBlank(parentUrl)) {
             content.append(parentUrlHtml);
         }
-        content.append(renderLogo(richTextReport));
+        String pageTitle = ReportNavigation.pageTitle(richTextReport);
+        if (pageTitle != null) {
+            // The page's sidebar icon instead of the logo (the sidebar shows the repository).
+            content.append("<span class='sk-page-icon' data-sk-page-icon>"
+                    + richTextReport.getNavigation().iconOf(richTextReport.getNavigationActiveId(), 68) + "</span>");
+        } else {
+            content.append(renderLogo(richTextReport));
+        }
         if (StringUtils.isNotBlank(parentUrl)) {
             content.append("</a>");
         }
@@ -77,11 +84,9 @@ public class ReportRenderer {
         if (StringUtils.isNotBlank(parentUrl)) {
             content.append(parentUrlHtml);
         }
-        String pageTitle = ReportNavigation.pageTitle(richTextReport);
         if (pageTitle != null) {
-            // Same header on every page with the sidebar: the repository, then the page's sidebar label
-            // (on the index, ReportShell swaps the title as tabs change).
-            content.append("<div class='sk-report-context'>" + HtmlEscapeUtils.escape(richTextReport.getNavigation().getTitle()) + "</div>");
+            // Same header on every page with the sidebar: the page's sidebar label (the sidebar shows the
+            // repository; on the index, ReportShell swaps the title as tabs change).
             content.append("<div class='sk-report-title' data-sk-page-title>" + HtmlEscapeUtils.escape(pageTitle) + "</div>");
         } else {
             content.append("<div class='sk-report-title'>" +

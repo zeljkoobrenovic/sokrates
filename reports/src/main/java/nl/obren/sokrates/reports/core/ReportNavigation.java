@@ -90,6 +90,18 @@ public class ReportNavigation {
         return null;
     }
 
+    /** The sidebar icon of the item with this id at the given size (empty when it has none). */
+    public String iconOf(String id, int size) {
+        for (Group group : groups) {
+            for (Item item : group.items) {
+                if (item.id.equals(id)) {
+                    return Item.icon(item.icon, size);
+                }
+            }
+        }
+        return "";
+    }
+
     /**
      * The page's header title on a page with this sidebar: the label of its sidebar item, so the header
      * and the menu always agree. Null when the page is not in the sidebar.
@@ -197,11 +209,15 @@ public class ReportNavigation {
         }
 
         private static String icon(String name) {
+            return icon(name, 16);
+        }
+
+        static String icon(String name, int size) {
             String paths = name == null ? null : ICONS.get(name);
             if (paths == null) {
                 return "";
             }
-            return "<svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' "
+            return "<svg width='" + size + "' height='" + size + "' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' "
                     + "stroke-linecap='round' stroke-linejoin='round'>" + paths + "</svg>";
         }
     }

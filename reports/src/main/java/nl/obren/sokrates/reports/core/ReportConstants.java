@@ -244,13 +244,15 @@ public class ReportConstants {
             "            vertical-align: middle;\n" +
             "        }\n" +
             "\n" +
-            "        .sk-report-context {\n" +
-            "            font-size: 20px;\n" +
-            "            color: var(--sk-text-faint);\n" +
-            "        }\n" +
-            "\n" +
-            "        .sk-report-context + .sk-report-title {\n" +
-            "            font-size: 42px;\n" +
+
+            "        .sk-page-icon {\n" +
+            "            display: inline-flex;\n" +
+            "            align-items: center;\n" +
+            "            justify-content: center;\n" +
+            "            width: 72px;\n" +
+            "            height: 72px;\n" +
+            "            color: var(--sk-text);\n" +
+            "            vertical-align: middle;\n" +
             "        }\n" +
             "\n" +
             "        .sk-report-description {\n" +
