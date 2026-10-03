@@ -586,7 +586,7 @@ public class ReportFileExporter {
     public static ReportNavigation repositoryNavigation(CodeAnalysisResults analysisResults, File sokratesConfigFolder) {
         Metadata metadata = analysisResults.getCodeConfiguration().getMetadata();
         ReportNavigation navigation = new ReportNavigation(metadata.getName(), "index.html#overview");
-        ReportNavigation.Group report = navigation.addGroup("Report");
+        ReportNavigation.Group report = navigation.addGroup("At a Glance");
         report.addTabItem("overview", "Overview", "index.html#overview", "overview");
         report.addTabItem("highlights", "Highlights", "index.html#highlights", "highlights");
         report.addTabItem("structure", "Structure", "index.html#structure", "structure");
