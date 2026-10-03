@@ -1,0 +1,19 @@
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportHealthSection.java
+  s_223e7b216451e0::t_3734f55180e8b2 35-36,107-110
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "34371f67c338974cbdc72a40936012cac8af62eb",
+  "prompts": {},
+  "sessions": {
+    "s_223e7b216451e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "17c1a50e-ffe3-43fa-bbef-5ca8411e20a4",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
