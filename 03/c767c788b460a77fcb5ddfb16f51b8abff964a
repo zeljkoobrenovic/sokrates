@@ -1,0 +1,69 @@
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportNavigation.java
+  s_223e7b216451e0::t_569528c709dbc6 93-104,165-172,191,220
+reports/src/test/resources/golden/controls-report-populated.html
+  s_223e7b216451e0::t_160d1a33163da2 2
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/FileTemporalDependenciesReportGenerator.java
+  s_223e7b216451e0::t_7dfd9d0421b242 39-40
+reports/src/test/resources/golden/findings-report-empty.html
+  s_223e7b216451e0::t_160d1a33163da2 2
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/ConditionalComplexityReportGenerator.java
+  s_223e7b216451e0::t_7dfd9d0421b242 33
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/FileSizeReportGenerator.java
+  s_223e7b216451e0::t_7dfd9d0421b242 40
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/FileAgeReportGenerator.java
+  s_223e7b216451e0::t_7dfd9d0421b242 129-130
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/UnitsSizeReportGenerator.java
+  s_223e7b216451e0::t_7dfd9d0421b242 32
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/DuplicationReportGenerator.java
+  s_223e7b216451e0::t_7dfd9d0421b242 236-237
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/ConcernsReportGenerator.java
+  s_223e7b216451e0::t_7dfd9d0421b242 96
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportFileExporter.java
+  s_223e7b216451e0::t_97ec26eaca7967 590-598,604-609,611-612,619-622
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportShell.java
+  s_223e7b216451e0::t_97ec26eaca7967 102-103
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/FileChurnReportGenerator.java
+  s_223e7b216451e0::t_7dfd9d0421b242 50-51
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/FindingsReportGenerator.java
+  s_223e7b216451e0::t_569528c709dbc6 29
+CLAUDE.md
+  s_223e7b216451e0::t_160d1a33163da2 123
+reports/src/test/resources/golden/controls-report-empty.html
+  s_223e7b216451e0::t_160d1a33163da2 2
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportRenderer.java
+  s_223e7b216451e0::t_569528c709dbc6 88-90,92-95,99-101
+reports/src/test/resources/golden/metrics-list-report.html
+  s_223e7b216451e0::t_160d1a33163da2 2
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportConstants.java
+  s_223e7b216451e0::t_97ec26eaca7967 260-262
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/MetricsListReportGenerator.java
+  s_223e7b216451e0::t_7dfd9d0421b242 42
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/ContributorsReportGenerator.java
+  s_223e7b216451e0::t_7dfd9d0421b242 89
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/OverviewReportGenerator.java
+  s_223e7b216451e0::t_7dfd9d0421b242 173
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/ControlsReportGenerator.java
+  s_223e7b216451e0::t_7dfd9d0421b242 20
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/LogicalComponentsReportGenerator.java
+  s_223e7b216451e0::t_7dfd9d0421b242 64,66
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/CommitsReportGenerator.java
+  s_223e7b216451e0::t_7dfd9d0421b242 41
+reports/src/test/java/nl/obren/sokrates/reports/core/ReportNavigationTest.java
+  s_223e7b216451e0::t_0b3526ef1c2b96 26,56-66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "03c767c788b460a77fcb5ddfb16f51b8abff964a",
+  "prompts": {},
+  "sessions": {
+    "s_223e7b216451e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "17c1a50e-ffe3-43fa-bbef-5ca8411e20a4",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
