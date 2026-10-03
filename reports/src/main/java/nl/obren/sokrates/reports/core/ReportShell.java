@@ -127,7 +127,8 @@ public class ReportShell {
             "    if (window.sokratesShowTab(id) && scrollTop) { window.scrollTo(0, 0); }\n" +
             "  }\n" +
             "  window.addEventListener('popstate', function () { openFromHash(false); });\n" +
-            "  window.addEventListener('hashchange', function () { openFromHash(false); });\n" +
+            "  // A typed or linked #tab jumps to the tab's div first; start at the top of the tab instead.\n" +
+            "  window.addEventListener('hashchange', function () { openFromHash(true); });\n" +
             "  // The tab of this page a link points at (href '#tab' or '<this file>#tab'), or null.\n" +
             "  function linkedTab(link) {\n" +
             "    var href = link.getAttribute('href') || '';\n" +
@@ -157,6 +158,20 @@ public class ReportShell {
             "    if (document.body.classList.contains('sk-nav-open') && !(e.target.closest && e.target.closest('.sk-sidebar, .sk-nav-toggle'))) {\n" +
             "      window.sokratesToggleNav(false);\n" +
             "    }\n" +
+            "  });\n" +
+            "  // The browser jumps to the element named by the fragment (the tab's div) and may repeat that\n" +
+            "  // after late layout changes such as a web font arriving; a tab opened from the URL starts at the top.\n" +
+            "  var userScrolled = false;\n" +
+            "  ['wheel', 'touchmove', 'keydown', 'mousedown'].forEach(function (type) {\n" +
+            "    window.addEventListener(type, function () { userScrolled = true; }, {passive: true, once: true});\n" +
+            "  });\n" +
+            "  function topOfTab() {\n" +
+            "    if (!userScrolled && tabContent(decodeURIComponent(location.hash.slice(1)))) { window.scrollTo(0, 0); }\n" +
+            "  }\n" +
+            "  window.addEventListener('load', function () {\n" +
+            "    topOfTab();\n" +
+            "    if (document.fonts && document.fonts.ready) { document.fonts.ready.then(topOfTab); }\n" +
+            "    setTimeout(topOfTab, 400);\n" +
             "  });\n" +
             "  document.addEventListener('DOMContentLoaded', function () {\n" +
             "    if (location.hash) { openFromHash(true); }\n" +

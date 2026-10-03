@@ -68,7 +68,9 @@ public class ReportTheme {
             "--sk-canvas: #f5f6f8;";
 
     private static final String FONT_TOKENS = "" +
-            "--sk-font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;" +
+            // The original Sokrates report font stack (Ubuntu, loaded from Google Fonts in headBlock, is what
+            // renders where Roboto and Vollkorn are not installed).
+            "--sk-font: Roboto, Vollkorn, Ubuntu, Optima, Segoe, 'Segoe UI', Candara, Calibri, Arial, sans-serif;" +
             "--sk-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;";
 
     // Data colors that have a colour-blind safe variant: the risk categories (ColorBrewer RdYlGn) and
@@ -257,8 +259,10 @@ public class ReportTheme {
         return adapted.substring(0, insertAt) + " class=\"sk-icon\"" + (rootHasFill ? "" : " fill=\"currentColor\"") + adapted.substring(insertAt);
     }
 
+    public static final String FONT_LINK = "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Ubuntu:400,500,700&display=swap\">\n";
+
     public static String headBlock() {
-        return "<style>\n" + TOKENS_CSS + BASE_CSS + "</style>\n<script>\n" + SCRIPT + "</script>\n";
+        return FONT_LINK + "<style>\n" + TOKENS_CSS + BASE_CSS + "</style>\n<script>\n" + SCRIPT + "</script>\n";
     }
 
     public static String apply(String html) {
