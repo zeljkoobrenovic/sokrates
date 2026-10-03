@@ -1,0 +1,48 @@
+package nl.obren.sokrates.reports.core;
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class ReportNavigationTest {
+
+    private ReportNavigation navigation() {
+        ReportNavigation navigation = new ReportNavigation("acme/<b>repo</b>", "index.html#overview");
+        navigation.addGroup("Report")
+                .addTabItem("overview", "Overview", "index.html#overview", "overview")
+                .addTabItem("custom_tab_0", "My <tab>", "index.html#custom_tab_0", "custom");
+        navigation.addGroup("Analyses")
+                .addItem("Duplication.html", "Duplication", "Duplication.html", "duplication")
+                .addItem("FileSize.html", "File Size", "FileSize.html", "no-such-icon");
+        return navigation;
+    }
+
+    @Test
+    void marksOnlyTheActivePageAndRoutesIndexTabs() {
+        String html = navigation().render("Duplication.html");
+
+        assertTrue(html.contains("<a class='sk-nav-item active' href='Duplication.html' data-sk-nav='Duplication.html' aria-current='page'>"), html);
+        assertEquals(1, html.split("aria-current").length - 1);
+        assertTrue(html.contains("href='index.html#overview' data-sk-nav='overview' data-sk-tab='overview'>"));
+        assertFalse(html.contains("data-sk-nav='Duplication.html' data-sk-tab"), "a report page is not a tab");
+    }
+
+    @Test
+    void escapesTheRepositoryNameAndConfiguredLabels() {
+        String html = navigation().render("overview");
+
+        assertTrue(html.contains(">acme/&lt;b&gt;repo&lt;/b&gt;</a>"), html);
+        assertTrue(html.contains("<span class='sk-nav-label'>My &lt;tab&gt;</span>"));
+        assertFalse(html.contains("<b>repo</b>") || html.contains("My <tab>"));
+    }
+
+    @Test
+    void rendersKnownIconsAndNothingForUnknownOnes() {
+        String html = navigation().render("");
+
+        assertTrue(html.contains("<span class='sk-nav-icon'><svg width='16' height='16'"));
+        assertTrue(html.contains("<span class='sk-nav-icon'></span><span class='sk-nav-label'>File Size</span>"));
+        assertTrue(html.contains("class='sk-search-button' onclick='sokratesOpenPalette()'"));
+        assertTrue(html.contains("class='sk-nav-toggle'"));
+    }
+}

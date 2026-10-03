@@ -48,6 +48,7 @@ public class ReportFileExporter {
         indexReport.addContentInDiv("", "height; 10px; margin-top: " + (hasLinks ? 6 : 0) + "px; margin-bottom: 6px;");
 
         List<CustomTab> customTabs = getCustomTabs(analysisResults);
+        indexReport.setNavigation(repositoryNavigation(analysisResults, sokratesConfigFolder), "overview");
         addTabStrip(indexReport, customTabs);
         addOverviewTab(indexReport, analysisResults);
         addAnalysesTab(indexReport, analysisResults, reportList, htmlExportFolder);
@@ -60,8 +61,10 @@ public class ReportFileExporter {
         exportRootRedirect(reportsFolder);
     }
 
+    // The index's tab strip; the sidebar (repositoryNavigation) replaces it on screen, so it is hidden
+    // (sk-index-tabs) but still marks the active tab for openTab and the command palette.
     private static void addTabStrip(RichTextReport indexReport, List<CustomTab> customTabs) {
-        indexReport.startTabGroup();
+        indexReport.addHtmlContent("<div class=\"tab sk-index-tabs\">");
         indexReport.addTab("overview", "Overview", true);
         indexReport.addTab("quality", "Analyses", false);
         indexReport.addTab("commits", "Activity", false);
@@ -535,6 +538,58 @@ public class ReportFileExporter {
             new ReportEntry("", "Features of Interest", "cross_cutting_concerns", a -> !a.concerns),
             new ReportEntry("", "Goals & Controls", "goal", a -> !a.controls),
             new ReportEntry("", "Notes & Findings", "notes", a -> !a.findings));
+
+    // Sidebar icon (ReportNavigation) per analysis report.
+    private static final Map<String, String> NAVIGATION_ICONS = new HashMap<>();
+
+    static {
+        NAVIGATION_ICONS.put("SourceCodeOverview.html", "code");
+        NAVIGATION_ICONS.put("Components.html", "components");
+        NAVIGATION_ICONS.put("ComponentsAndDependencies.html", "dependencies");
+        NAVIGATION_ICONS.put("FileTemporalDependencies.html", "temporal");
+        NAVIGATION_ICONS.put("Duplication.html", "duplication");
+        NAVIGATION_ICONS.put("FileSize.html", "size");
+        NAVIGATION_ICONS.put("FileAge.html", "age");
+        NAVIGATION_ICONS.put("FileChurn.html", "churn");
+        NAVIGATION_ICONS.put("Commits.html", "commits");
+        NAVIGATION_ICONS.put("Contributors.html", "contributors");
+        NAVIGATION_ICONS.put("UnitSize.html", "units");
+        NAVIGATION_ICONS.put("ConditionalComplexity.html", "complexity");
+        NAVIGATION_ICONS.put("FeaturesOfInterest.html", "features");
+        NAVIGATION_ICONS.put("Metrics.html", "metrics");
+        NAVIGATION_ICONS.put("Controls.html", "controls");
+        NAVIGATION_ICONS.put("Notes.html", "notes");
+    }
+
+    /**
+     * The sidebar shared by the index and every analysis report of a repository: the index tabs (as
+     * <code>index.html#&lt;tab&gt;</code> links, routed in-page on the index) and the available analysis
+     * reports, in the order of the Analyses tab. A report page's active id is its file name.
+     */
+    public static ReportNavigation repositoryNavigation(CodeAnalysisResults analysisResults, File sokratesConfigFolder) {
+        Metadata metadata = analysisResults.getCodeConfiguration().getMetadata();
+        ReportNavigation navigation = new ReportNavigation(metadata.getName(), "index.html#overview");
+        ReportNavigation.Group report = navigation.addGroup("Report");
+        report.addTabItem("overview", "Overview", "index.html#overview", "overview");
+        report.addTabItem("commits", "Activity", "index.html#commits", "activity");
+        report.addTabItem("files", "File Explorer", "index.html#files", "files");
+        report.addTabItem("units", "Unit Explorer*", "index.html#units", "units");
+        report.addTabItem("commits-explorer", "Commit Explorer", "index.html#commits-explorer", "commits");
+        report.addTabItem("visuals", "Visuals", "index.html#visuals", "visuals");
+        report.addTabItem("data", "Data", "index.html#data", "data");
+        List<CustomTab> customTabs = getCustomTabs(analysisResults);
+        for (int i = 0; i < customTabs.size(); i++) {
+            report.addTabItem(customTabId(i), customTabs.get(i).getLabel(), "index.html#" + customTabId(i), "custom");
+        }
+        ReportNavigation.Group analyses = navigation.addGroup("Analyses");
+        analyses.addTabItem("quality", "Summary", "index.html#quality", "analyses");
+        for (String[] entry : getReportsList(analysisResults, sokratesConfigFolder)) {
+            if (StringUtils.isNotBlank(entry[0])) {
+                analyses.addItem(entry[0], entry[1], entry[0], NAVIGATION_ICONS.get(entry[0]));
+            }
+        }
+        return navigation;
+    }
 
     private static List<String[]> getReportsList(CodeAnalysisResults analysisResults, File sokratesConfigFolder) {
         ReportAvailability availability = new ReportAvailability(analysisResults, sokratesConfigFolder);

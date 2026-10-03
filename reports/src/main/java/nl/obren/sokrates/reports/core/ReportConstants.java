@@ -344,9 +344,10 @@ public class ReportConstants {
             "            letter-spacing: 0.03em;\n" +
             "            text-transform: uppercase;\n" +
             "        }" +
-            "\n\n" + TAB_STYLE + "\n\n" + DARK_MODE_STYLE +
+            "\n\n" + TAB_STYLE + "\n\n" + DARK_MODE_STYLE + ReportShell.CSS +
             "    </style>\n" +
             "    <script type=\"text/javascript\">\n" +
+            ReportShell.SCRIPT +
             "        function showHide(id) {\n" +
             "            var e = document.getElementById(id);\n" +
             "            e.style.display = (e.style.display == 'block') ? 'none' : 'block';\n" +
@@ -357,19 +358,11 @@ public class ReportConstants {
             "            var eTrigger = document.getElementById(id + '_trigger');\n" +
             "            eTrigger.style.display = 'none';\n" +
             "        }\n\n" +
+            "        // A tab click shows the tab and keeps it in the URL fragment (ReportShell routes it back).\n" +
             "        function openTab(evt, tabName) {\n" +
-            "          var i, tabcontent, tablinks;\n" +
-            "          tabcontent = document.getElementsByClassName(\"tabcontent\");\n" +
-            "          for (i = 0; i < tabcontent.length; i++) {\n" +
-            "            tabcontent[i].style.display = \"none\";\n" +
+            "          if (window.sokratesShowTab(tabName, evt && evt.currentTarget)) {\n" +
+            "            window.sokratesRememberTab(tabName);\n" +
             "          }\n" +
-            "          tablinks = document.getElementsByClassName(\"tablinks\");\n" +
-            "          for (i = 0; i < tablinks.length; i++) {\n" +
-            "            tablinks[i].className = tablinks[i].className.replace(\" active\", \"\");\n" +
-            "          }\n" +
-            "          document.getElementById(tabName).style.display = \"block\";\n" +
-            "          evt.currentTarget.className += \" active\";\n" +
-            "          renderMermaidIn(document.getElementById(tabName));\n" +
             "        }\n" +
             "        // Build a .mmd download in the browser from the source already embedded in the\n" +
             "        // page (a hidden <script id=mermaid-source-ID>), so no .mmd files are written to disk.\n" +

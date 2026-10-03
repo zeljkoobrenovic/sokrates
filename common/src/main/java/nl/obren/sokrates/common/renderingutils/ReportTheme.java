@@ -196,7 +196,9 @@ public class ReportTheme {
         if (svg == null) {
             return null;
         }
-        String adapted = svg.replaceAll("fill=([\"'])(?i:#000000|#000|#1a1a1a|black)\\1", "fill=$1currentColor$1");
+        String adapted = svg.replaceAll("fill=([\"'])(?i:#000000|#000|#1a1a1a|black)\\1", "fill=$1currentColor$1")
+                // an inline black "color:" on a shape would pin its currentColor to black
+                .replaceAll("(?<![\\w-])color:\\s*(?i:#000000|#000|black)\\s*;?", "");
         int rootStart = adapted.indexOf("<svg");
         if (rootStart < 0) {
             return adapted;

@@ -4,6 +4,7 @@ import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.utils.*;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
+import nl.obren.sokrates.reports.core.ReportNavigation;
 import nl.obren.sokrates.reports.core.ReportHtmlWriter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.dataexporters.DataExporter;
@@ -196,7 +197,9 @@ class ReportsCommands {
         ProcessingStopwatch.end("reporting");
 
         ProcessingStopwatch.start("saving report");
+        ReportNavigation navigation = ReportFileExporter.repositoryNavigation(analysisResults, sokratesConfigFolder);
         reports.forEach(report -> {
+            report.setNavigation(navigation, report.getFileName());
             cli.info("Generating the '" + report.getId().toUpperCase() + "' report...");
             String processingName = "saving report/" + report.getId().toLowerCase() + "";
             ProcessingStopwatch.start(processingName);
