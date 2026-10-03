@@ -419,7 +419,7 @@ public class ContributorsReportGenerator {
             addContributionShareBar(report, contributors, contributionCounter, total[0], type);
         }
         report.startScrollingDiv();
-        report.startTable();
+        report.startDataTable();
         boolean perExtension = showPerExtension && perExtensionCounter != null;
         if (perExtension) {
             report.addTableHeader("#", type + "<br>", "First<br>Commit", "Latest<br>Commit", "Commits<br>Count", "Line<br>Churn", "File Updates<br>(per extension)");

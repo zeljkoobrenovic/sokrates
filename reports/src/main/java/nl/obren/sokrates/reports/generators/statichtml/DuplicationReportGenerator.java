@@ -54,7 +54,7 @@ public class DuplicationReportGenerator {
     public void getDuplicatesTable(RichTextReport report, List<DuplicationInstance> duplicationInstances, String fragmentType) {
         report.startDiv("width: 100%; overflow-x: auto");
         report.startScrollingDiv();
-        report.addHtmlContent("<table style='width: 80%'>\n");
+        report.addHtmlContent("<table class='sk-data-table' style='width: 80%'>\n");
         boolean saveCodeFragments = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveCodeFragments();
         report.addHtmlContent("<th>Size</th><th>#</th><th>Folders</th><th>Files</th><th>Lines</th>" + (saveCodeFragments ? "<th>Code</th>" : ""));
         int count[] = {0};
@@ -418,7 +418,7 @@ public class DuplicationReportGenerator {
 
         report.startDetailsBlock("Show more details on duplication between components...");
         report.startDiv("width: 100%; overflow-x: auto");
-        report.startTable();
+        report.startDataTable();
         report.addTableHeader("From Component<br/>&nbsp;--> To Component", "Duplicated<br/>Lines", "File Pairs", "Details");
 
         componentDependencies.forEach(componentDependency -> {

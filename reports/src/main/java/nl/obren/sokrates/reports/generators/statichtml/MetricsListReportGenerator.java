@@ -26,7 +26,7 @@ public class MetricsListReportGenerator {
     private void addMetricsTable() {
         report.startSection("Metrics", "");
         report.startDiv("width: 100%; overflow-x: auto");
-        report.startTable();
+        report.startDataTable();
         report.addTableHeader("Metric", "Value");
 
         codeAnalysisResults.getMetricsList().getMetrics().forEach(metric -> {

@@ -17,8 +17,8 @@ public class DuplicationReportUtils {
         chart.setWidth(800);
         chart.setBarHeight(20);
         chart.setAlignment(SimpleOneBarChart.Alignment.LEFT);
-        chart.setActiveColor("crimson");
-        chart.setBackgroundColor("green");
+        chart.setActiveColor("var(--sk-duplicated, crimson)");
+        chart.setBackgroundColor("var(--sk-not-duplicated-strong, green)");
 
         final int[] maxCleanedLinesOfCode = {1};
 
@@ -43,8 +43,8 @@ public class DuplicationReportUtils {
         chart.setWidth(800);
         chart.setBarHeight(40);
         chart.setAlignment(SimpleOneBarChart.Alignment.LEFT);
-        chart.setActiveColor("crimson");
-        chart.setBackgroundColor("green");
+        chart.setActiveColor("var(--sk-duplicated, crimson)");
+        chart.setBackgroundColor("var(--sk-not-duplicated-strong, green)");
 
         chart.setMaxBarWidth(200);
         // Use the guarded accessor so 0 cleaned lines yields 0%, not NaN.

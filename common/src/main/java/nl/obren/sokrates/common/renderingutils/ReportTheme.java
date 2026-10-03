@@ -71,10 +71,32 @@ public class ReportTheme {
             "--sk-font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;" +
             "--sk-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;";
 
+    // Data colors that have a colour-blind safe variant: the risk categories (ColorBrewer RdYlGn) and
+    // the duplication bars. Charts use them as var(--sk-risk-..., <literal>) (Palette.getRiskPaletteCss).
+    private static final String DATA_TOKENS = "" +
+            "--sk-risk-very-high: #d7191c;" +
+            "--sk-risk-high: #fdae61;" +
+            "--sk-risk-medium: #ffffbf;" +
+            "--sk-risk-low: #a6d96a;" +
+            "--sk-risk-negligible: #1a9641;" +
+            "--sk-duplicated: crimson;" +
+            "--sk-not-duplicated: #9DC034;" +
+            "--sk-not-duplicated-strong: green;";
+
+    // Viewer-selected colour-blind safe variant (data-palette="cvd"): green becomes blue (ColorBrewer
+    // RdYlBu), so red/green colour vision deficiencies still separate good from bad.
+    private static final String CVD_TOKENS = "" +
+            "--sk-risk-low: #abd9e9;" +
+            "--sk-risk-negligible: #2c7bb6;" +
+            "--sk-not-duplicated: #92c5de;" +
+            "--sk-not-duplicated-strong: #2c7bb6;" +
+            "--sk-added: #4393c3;";
+
     public static final String TOKENS_CSS = "" +
-            ":root {" + FONT_TOKENS + LIGHT_TOKENS + "color-scheme: light;}\n" +
+            ":root {" + FONT_TOKENS + LIGHT_TOKENS + DATA_TOKENS + "color-scheme: light;}\n" +
             "@media (prefers-color-scheme: dark) {:root:not([data-theme=\"light\"]) {" + DARK_TOKENS + "color-scheme: dark;}}\n" +
-            ":root[data-theme=\"dark\"] {" + DARK_TOKENS + "color-scheme: dark;}\n";
+            ":root[data-theme=\"dark\"] {" + DARK_TOKENS + "color-scheme: dark;}\n" +
+            ":root[data-palette=\"cvd\"] {" + CVD_TOKENS + "}\n";
 
     /**
      * A CSS rule that only applies in dark mode, written once per way dark mode can be on: the OS
@@ -122,11 +144,11 @@ public class ReportTheme {
     // Runs in <head> so data-theme is set before the first paint (no light flash in dark mode).
     public static final String SCRIPT = "" +
             "(function () {\n" +
-            "  var KEY = 'sokrates-theme';\n" +
+            "  var KEY = 'sokrates-theme', PALETTE_KEY = 'sokrates-palette';\n" +
             "  var ICONS = {auto: \"" + ICON_AUTO + "\", light: \"" + ICON_LIGHT + "\", dark: \"" + ICON_DARK + "\"};\n" +
             "  var LABELS = {auto: 'Theme: automatic (follows the system)', light: 'Theme: light', dark: 'Theme: dark'};\n" +
             "  var embedded = window.parent !== window;\n" +
-            "  function stored() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }\n" +
+            "  function stored(key) { try { return localStorage.getItem(key || KEY); } catch (e) { return null; } }\n" +
             "  function normalized(t) { return t === 'light' || t === 'dark' ? t : 'auto'; }\n" +
             "  function updateButton() {\n" +
             "    var b = document.getElementById('sk-theme-toggle');\n" +
@@ -136,19 +158,33 @@ public class ReportTheme {
             "    b.title = LABELS[t] + ' - click to change';\n" +
             "    b.setAttribute('aria-label', b.title);\n" +
             "  }\n" +
-            "  function forward(t) {\n" +
+            "  function forward(message) {\n" +
             "    var frames = document.getElementsByTagName('iframe');\n" +
             "    for (var i = 0; i < frames.length; i++) {\n" +
-            "      try { frames[i].contentWindow.postMessage({sokratesTheme: t}, '*'); } catch (e) {}\n" +
+            "      try { frames[i].contentWindow.postMessage(message, '*'); } catch (e) {}\n" +
             "    }\n" +
             "  }\n" +
+            "  // The colour-blind safe data colors ('cvd') or the default ones; kept like the theme.\n" +
+            "  function applyPalette(p) {\n" +
+            "    p = p === 'cvd' ? 'cvd' : 'default';\n" +
+            "    if (p === 'cvd') { document.documentElement.setAttribute('data-palette', 'cvd'); }\n" +
+            "    else { document.documentElement.removeAttribute('data-palette'); }\n" +
+            "    window.sokratesPalette = p;\n" +
+            "    var boxes = document.querySelectorAll('[data-sk-palette-toggle]');\n" +
+            "    for (var i = 0; i < boxes.length; i++) { boxes[i].checked = p === 'cvd'; }\n" +
+            "    forward({sokratesPalette: p});\n" +
+            "  }\n" +
+            "  window.sokratesSetPalette = function (p) {\n" +
+            "    try { localStorage.setItem(PALETTE_KEY, p); } catch (e) {}\n" +
+            "    applyPalette(p);\n" +
+            "  };\n" +
             "  function apply(t) {\n" +
             "    t = normalized(t);\n" +
             "    if (t === 'auto') { document.documentElement.removeAttribute('data-theme'); }\n" +
             "    else { document.documentElement.setAttribute('data-theme', t); }\n" +
             "    window.sokratesTheme = t;\n" +
             "    updateButton();\n" +
-            "    forward(t);\n" +
+            "    forward({sokratesTheme: t});\n" +
             "    notify();\n" +
             "  }\n" +
             "  // Pages with their own theme-dependent parts (e.g. the code colors of the source viewer)\n" +
@@ -168,8 +204,9 @@ public class ReportTheme {
             "    var d = e.data;\n" +
             "    if (!d || typeof d !== 'object') { return; }\n" +
             "    if (typeof d.sokratesTheme === 'string') { apply(d.sokratesTheme); }\n" +
-            "    else if (d.sokratesThemeRequest && e.source) {\n" +
-            "      try { e.source.postMessage({sokratesTheme: window.sokratesTheme}, '*'); } catch (x) {}\n" +
+            "    if (typeof d.sokratesPalette === 'string') { applyPalette(d.sokratesPalette); }\n" +
+            "    if (d.sokratesThemeRequest && e.source) {\n" +
+            "      try { e.source.postMessage({sokratesTheme: window.sokratesTheme, sokratesPalette: window.sokratesPalette}, '*'); } catch (x) {}\n" +
             "    }\n" +
             "  });\n" +
             "  window.sokratesCycleTheme = function () {\n" +
@@ -179,6 +216,7 @@ public class ReportTheme {
             "    apply(next);\n" +
             "  };\n" +
             "  apply(stored());\n" +
+            "  applyPalette(stored(PALETTE_KEY));\n" +
             "  // An embedded page asks its parent, which knows the viewer's choice even when storage is not shared.\n" +
             "  if (embedded) { try { window.parent.postMessage({sokratesThemeRequest: true}, '*'); } catch (e) {} }\n" +
             "  function addButton() {\n" +
@@ -190,8 +228,9 @@ public class ReportTheme {
             "    document.body.appendChild(b);\n" +
             "    updateButton();\n" +
             "  }\n" +
-            "  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', addButton); }\n" +
-            "  else { addButton(); }\n" +
+            "  function ready() { addButton(); applyPalette(window.sokratesPalette); }\n" +
+            "  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', ready); }\n" +
+            "  else { ready(); }\n" +
             "})();\n";
 
     /**

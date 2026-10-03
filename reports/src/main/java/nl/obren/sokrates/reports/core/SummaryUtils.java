@@ -555,7 +555,7 @@ public class SummaryUtils {
     }
 
     private String getRiskProfileVisual(RiskDistributionStats distributionStats) {
-        return getRiskProfileVisual(distributionStats, Palette.getRiskPalette());
+        return getRiskProfileVisual(distributionStats, Palette.getRiskPaletteCss());
     }
 
     private String getRiskProfileVisual(RiskDistributionStats distributionStats, Palette palette) {
@@ -581,8 +581,8 @@ public class SummaryUtils {
         chart.setBarHeight(BAR_HEIGHT);
         chart.setMaxBarWidth(BAR_WIDTH);
         chart.setBarStartXOffset(2);
-        chart.setActiveColor("crimson");
-        chart.setBackgroundColor("#9DC034");
+        chart.setActiveColor("var(--sk-duplicated, crimson)");
+        chart.setBackgroundColor("var(--sk-not-duplicated, #9DC034)");
         chart.setBackgroundStyle("");
 
         return chart.getPercentageSvg(duplicationPercentage.doubleValue(), "", "");

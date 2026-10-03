@@ -15,7 +15,7 @@ public class UtilsReportUtils {
         StringBuilder table = new StringBuilder();
 
         table.append("<div style='width: 100%; overflow-x: scroll'>\n");
-        table.append("<table style='width: 80%'>\n");
+        table.append("<table class='sk-data-table' style='width: 80%'>\n");
         table.append("<th>Unit</th><th># lines</th><th>McCabe index</th><th># params</th>\n");
         int index[] = {0};
         units.forEach(unit -> {

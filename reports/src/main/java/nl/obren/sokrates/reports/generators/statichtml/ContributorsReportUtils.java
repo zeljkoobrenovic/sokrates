@@ -351,7 +351,7 @@ public class ContributorsReportUtils {
     private static void addFileUpdatesBars(RichTextReport report, ContributionTimeSlot timeSlot, int count, int maxFileUpdatesCount) {
         RiskDistributionStats stats = timeSlot.getFileUpdatesCountStats();
         String title = timeSlot.getTimeSlot() + ": " + count + "\n\n" + stats.getDescription();
-        Palette palette = Palette.getRiskPalette();
+        Palette palette = Palette.getRiskPaletteCss();
         for (int bandValue : new int[]{stats.getVeryHighRiskValue(), stats.getHighRiskValue(), stats.getMediumRiskValue(), stats.getLowRiskValue(), stats.getNegligibleRiskValue()}) {
             addBar(report, title, palette.nextColor(), bandValue, maxFileUpdatesCount);
         }

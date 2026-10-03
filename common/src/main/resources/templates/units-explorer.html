@@ -102,7 +102,7 @@
     const complexityThresholds = ${complexityThresholds};
 
     // Green (negligible) -> red (very high), matching the risk palette family.
-    const RISK_COLORS = ['#1a9641', '#a6d96a', '#fdae61', '#f03b20', '#bd0026'];
+    const RISK_COLORS = ['var(--sk-risk-negligible, #1a9641)', 'var(--sk-risk-low, #a6d96a)', '#fdae61', '#f03b20', '#bd0026'];
 
     // Returns a risk color for a value against {low, medium, high, veryHigh} thresholds.
     function riskColor(value, t) {

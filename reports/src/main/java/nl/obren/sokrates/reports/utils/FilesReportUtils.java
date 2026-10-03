@@ -28,7 +28,7 @@ public class FilesReportUtils {
         StringBuilder table = new StringBuilder();
 
         table.append("<div style='width: 100%; overflow-x: scroll; overflow-y: scroll; max-height: " + maxHeight + "px;'>\n");
-        table.append("<table style='width: 80%'>\n");
+        table.append("<table class='sk-data-table' style='width: 80%'>\n");
         table.append("<tr>");
         table.append(filesTableHeader(showAge, showLineLength, showChurn) + "\n");
         table.append("</tr>\n");

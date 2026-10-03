@@ -35,6 +35,14 @@ class ReportThemeTest {
     }
 
     @Test
+    void theColourBlindSafePaletteRedefinesTheGreenRiskColors() {
+        String css = ReportTheme.TOKENS_CSS;
+        assertTrue(css.contains("--sk-risk-negligible: #1a9641;"));
+        assertTrue(css.contains(":root[data-palette=\"cvd\"] {--sk-risk-low: #abd9e9;--sk-risk-negligible: #2c7bb6;"), css);
+        assertTrue(ReportTheme.SCRIPT.contains("sokratesSetPalette"));
+    }
+
+    @Test
     void darkOnlyCoversTheSystemSettingAndTheExplicitChoice() {
         String css = ReportTheme.darkOnly("td", "color: red;");
         assertTrue(css.contains("@media (prefers-color-scheme: dark) {:root:not([data-theme=\"light\"]) td {color: red;}}"));

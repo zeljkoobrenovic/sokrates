@@ -131,7 +131,7 @@ public class FileTemporalDependenciesReportGenerator {
 
     private void addTable(RichTextReport report, List<FilePairChangedTogether> filePairs) {
         report.startDiv("max-height: 400px; overflow-y: auto");
-        report.startTable();
+        report.startDataTable();
         report.addTableHeader("Pairs", "# same commits", "# commits 1", "# commits 2", "latest commit");
         filePairs.forEach(filePair -> {
             report.startTableRow();

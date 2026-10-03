@@ -344,10 +344,11 @@ public class ReportConstants {
             "            letter-spacing: 0.03em;\n" +
             "            text-transform: uppercase;\n" +
             "        }" +
-            "\n\n" + TAB_STYLE + "\n\n" + DARK_MODE_STYLE + ReportShell.CSS + ReportHealthSection.CSS +
+            "\n\n" + TAB_STYLE + "\n\n" + DARK_MODE_STYLE + ReportShell.CSS + ReportHealthSection.CSS + ReportComponents.CSS +
             "    </style>\n" +
             "    <script type=\"text/javascript\">\n" +
             ReportShell.SCRIPT +
+            ReportComponents.SCRIPT +
             "        function showHide(id) {\n" +
             "            var e = document.getElementById(id);\n" +
             "            e.style.display = (e.style.display == 'block') ? 'none' : 'block';\n" +
@@ -397,6 +398,8 @@ public class ReportConstants {
             "    </script>\n" +
             "    <!-- fflate (UMD global) for client-side zip extraction in embedded-data report pages. -->\n" +
             "    <script src=\"https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js\"></script>\n" +
+            "    <!-- svg-pan-zoom: zoom/pan for the rendered Mermaid diagrams (ReportComponents). -->\n" +
+            "    <script src=\"https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js\"></script>\n" +
             "    <!-- Mermaid: client-side diagram rendering (replaces server-side Graphviz). -->\n" +
             "    <script type=\"module\">\n" +
             "        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';\n" +
@@ -412,7 +415,12 @@ public class ReportConstants {
             "            root.querySelectorAll('pre.mermaid:not([data-processed])').forEach(function (el) {\n" +
             "                if (isVisible(el)) { pending.push(el); }\n" +
             "            });\n" +
-            "            if (pending.length > 0) { mermaid.run({ nodes: pending }); }\n" +
+            "            if (pending.length > 0) {\n" +
+            "                // Zoom/pan/fullscreen controls once rendered (ReportComponents).\n" +
+            "                mermaid.run({ nodes: pending }).then(function () {\n" +
+            "                    if (window.sokratesEnhanceDiagram) { pending.forEach(window.sokratesEnhanceDiagram); }\n" +
+            "                });\n" +
+            "            }\n" +
             "        };\n" +
             "        document.addEventListener('DOMContentLoaded', function () {\n" +
             "            window.renderMermaidIn(document);\n" +

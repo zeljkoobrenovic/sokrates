@@ -207,6 +207,18 @@ public class RichTextReport {
         addHtmlContent("<table style=\"" + style + "\">");
     }
 
+    /**
+     * A table of data rows (first row = header cells): in the browser it gets sorting, a row filter, CSV
+     * download and its own horizontal scroll (ReportComponents).
+     */
+    public void startDataTable() {
+        addHtmlContent("<table class=\"sk-data-table\">");
+    }
+
+    public void startDataTable(String style) {
+        addHtmlContent("<table class=\"sk-data-table\" style=\"" + style + "\">");
+    }
+
     public void endTable() {
         addHtmlContent("</table>");
     }

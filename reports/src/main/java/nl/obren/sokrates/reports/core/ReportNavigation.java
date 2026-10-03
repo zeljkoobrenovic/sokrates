@@ -90,6 +90,9 @@ public class ReportNavigation {
             group.items.forEach(item -> html.append(item.render(activeId)));
             html.append("</div>\n");
         });
+        html.append("<div class='sk-nav-footer'><label class='sk-nav-option'>")
+                .append("<input type='checkbox' data-sk-palette-toggle onchange='sokratesSetPalette(this.checked ? \"cvd\" : \"default\")'>")
+                .append("<span>Colour-blind safe colours</span></label></div>\n");
         html.append("</nav>\n");
         return html.toString();
     }

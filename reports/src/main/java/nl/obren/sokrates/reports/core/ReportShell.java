@@ -46,6 +46,8 @@ public class ReportShell {
             ".sk-nav-icon {display: inline-flex; flex: none; width: 16px;}\n" +
             ".sk-nav-label {overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}\n" +
             ".sk-has-shell .sk-index-tabs {display: none;}\n" +
+            ".sk-nav-footer {margin-top: 8px; padding: 12px 8px 0 8px; border-top: 1px solid var(--sk-border);}\n" +
+            ".sk-nav-option {display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--sk-text-muted); cursor: pointer;}\n" +
             ".sk-nav-toggle {display: none;}\n" +
             "@media (max-width: 900px) {\n" +
             "  .sk-sidebar {transform: translateX(-100%); transition: transform 0.2s ease; box-shadow: var(--sk-shadow-hover); padding-top: 58px;}\n" +
@@ -195,6 +197,9 @@ public class ReportShell {
             "    });\n" +
             "    result.push({kind: 'Command', label: 'Change theme (automatic / light / dark)', context: '', run: function () {\n" +
             "      if (window.sokratesCycleTheme) { window.sokratesCycleTheme(); }\n" +
+            "    }});\n" +
+            "    result.push({kind: 'Command', label: 'Colour-blind safe colours: ' + (window.sokratesPalette === 'cvd' ? 'turn off' : 'turn on'), context: '', run: function () {\n" +
+            "      if (window.sokratesSetPalette) { window.sokratesSetPalette(window.sokratesPalette === 'cvd' ? 'default' : 'cvd'); }\n" +
             "    }});\n" +
             "    result.push({kind: 'Command', label: 'Print or save as PDF', context: '', run: function () { window.print(); }});\n" +
             "    return result;\n" +
