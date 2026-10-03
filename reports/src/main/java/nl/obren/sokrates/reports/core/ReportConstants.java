@@ -184,10 +184,6 @@ public class ReportConstants {
             "            text-align: left;\n" +
             "        }\n" +
             "\n" +
-            "        h1, h2, h3 {\n" +
-            "            letter-spacing: -0.01em;\n" +
-            "        }\n" +
-            "\n" +
             "        h3 {\n" +
             "            margin-top: 0\n" +
             "        }\n" +
@@ -241,9 +237,7 @@ public class ReportConstants {
             "        }\n" +
             "\n" +
             "        .sk-report-title {\n" +
-            "            font-size: 44px;\n" +
-            "            font-weight: 650;\n" +
-            "            letter-spacing: -0.02em;\n" +
+            "            font-size: 48px;\n" +
             "            line-height: 1.15;\n" +
             "            color: var(--sk-text);\n" +
             "            display: inline-block;\n" +
@@ -288,7 +282,7 @@ public class ReportConstants {
             "        }\n" +
             "\n" +
             "        .sectionTitle {\n" +
-            "            font-size: 21px; font-weight: 700; letter-spacing: -0.015em; color: var(--sk-text);\n" +
+            "            font-size: 21px; font-weight: 600; color: var(--sk-text);\n" +
             "        }\n" +
             "\n" +
             "        .sectionSubtitle {\n" +
@@ -296,7 +290,7 @@ public class ReportConstants {
             "        }\n" +
             "\n" +
             "        .subSectionTitle {\n" +
-            "            font-size: 16px; font-weight: 650; color: var(--sk-text);\n" +
+            "            font-size: 16px; font-weight: 600; color: var(--sk-text);\n" +
             "        }\n" +
             "\n" +
             "        .subSectionSubtitle {\n" +

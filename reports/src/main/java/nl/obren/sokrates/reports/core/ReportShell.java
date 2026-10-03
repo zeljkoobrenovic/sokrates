@@ -26,7 +26,7 @@ public class ReportShell {
             ".sk-sidebar {position: fixed; top: 0; left: 0; bottom: 0; width: 236px; box-sizing: border-box; overflow-y: auto; " +
             "padding: 18px 12px 24px 12px; background: var(--sk-surface-2); border-right: 1px solid var(--sk-border); z-index: 900;}\n" +
             ".sk-main {margin-left: 236px; padding: 4px 40px 40px 40px; min-width: 0;}\n" +
-            ".sk-sidebar-brand {display: block; padding: 2px 8px 14px 8px; font-size: 17px; font-weight: 650; letter-spacing: -0.01em; " +
+            ".sk-sidebar-brand {display: block; padding: 2px 8px 14px 8px; font-size: 17px; font-weight: 600; " +
             "color: var(--sk-text); text-decoration: none; overflow-wrap: anywhere;}\n" +
             ".sk-sidebar-brand:hover {text-decoration: none;}\n" +
             ".sk-search-button {display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; margin-bottom: 18px; " +

@@ -30,7 +30,7 @@ public class ReportHealthSection {
             "a.sk-tile:hover {box-shadow: var(--sk-shadow-hover); transform: translateY(-1px); text-decoration: none;}\n" +
             ".sk-tile-head {display: flex; align-items: center; justify-content: space-between; gap: 8px;}\n" +
             ".sk-tile-label {font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--sk-text-muted);}\n" +
-            ".sk-tile-value {font-size: 30px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.15; font-variant-numeric: tabular-nums;}\n" +
+            ".sk-tile-value {font-size: 30px; line-height: 1.15; font-variant-numeric: tabular-nums;}\n" +
             ".sk-tile-caption {font-size: 12px; color: var(--sk-text-muted);}\n" +
             ".sk-tile-spark {margin-top: auto; padding-top: 6px; color: var(--sk-accent); min-width: 0;}\n" +
             ".sk-tile-spark svg {display: block; max-width: 100%;}\n" +
@@ -40,7 +40,7 @@ public class ReportHealthSection {
             ".sk-status-high {color: #a3161c; background: #fbe1e1;}\n" +
             ".sk-hotspots-card {max-width: 1240px; margin: 0 0 26px 0; padding: 14px 16px 6px 16px; box-sizing: border-box; " +
             "background: var(--sk-surface); border: 1px solid var(--sk-border); border-radius: 10px; box-shadow: var(--sk-shadow);}\n" +
-            ".sk-hotspots-title {font-size: 16px; font-weight: 650; color: var(--sk-text);}\n" +
+            ".sk-hotspots-title {font-size: 16px; font-weight: 600; color: var(--sk-text);}\n" +
             ".sk-hotspots-intro {margin: 2px 0 8px 0; font-size: 13px; color: var(--sk-text-muted);}\n" +
             ".sk-hotspots {list-style: none; margin: 0; padding: 0;}\n" +
             ".sk-hotspot {display: grid; grid-template-columns: 28px minmax(180px, 2fr) minmax(200px, 3fr) 110px; align-items: center; " +

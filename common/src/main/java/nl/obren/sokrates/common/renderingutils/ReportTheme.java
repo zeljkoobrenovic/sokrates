@@ -116,8 +116,9 @@ public class ReportTheme {
 
     public static final String BASE_CSS = "" +
             "html {background: var(--sk-bg);}\n" +
-            "body {background: var(--sk-bg); color: var(--sk-text); font-family: var(--sk-font); " +
-            "-webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;}\n" +
+            // No -webkit-font-smoothing: like the original reports, so the text (Ubuntu, regular weight
+            // only) renders as before; antialiased smoothing made the synthesized bold look heavy.
+            "body {background: var(--sk-bg); color: var(--sk-text); font-family: var(--sk-font);}\n" +
             "a {color: var(--sk-link);}\n" +
             "td, th {font-variant-numeric: tabular-nums;}\n" +
             ".sk-icon {color: var(--sk-text);}\n" +
@@ -259,7 +260,7 @@ public class ReportTheme {
         return adapted.substring(0, insertAt) + " class=\"sk-icon\"" + (rootHasFill ? "" : " fill=\"currentColor\"") + adapted.substring(insertAt);
     }
 
-    public static final String FONT_LINK = "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Ubuntu:400,500,700&display=swap\">\n";
+    public static final String FONT_LINK = "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Ubuntu\">\n";
 
     public static String headBlock() {
         return FONT_LINK + "<style>\n" + TOKENS_CSS + BASE_CSS + "</style>\n<script>\n" + SCRIPT + "</script>\n";
