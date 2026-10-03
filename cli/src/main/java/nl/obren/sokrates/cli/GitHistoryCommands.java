@@ -9,7 +9,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import java.io.File;
 import java.io.IOException;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /** The extractGitHistory and extractGitSubHistory commands. Moved out of {@link CommandLineInterface}, which keeps the option plumbing and the analyze pipeline. */
 class GitHistoryCommands {

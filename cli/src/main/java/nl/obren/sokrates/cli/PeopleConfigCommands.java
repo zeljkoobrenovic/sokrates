@@ -7,7 +7,6 @@ import org.apache.commons.cli.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import java.io.File;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /** The updateLandscapePeopleConfigByUserName and updatePeopleConfigByUserName commands. Moved out of {@link CommandLineInterface}, which keeps the option plumbing and the analyze pipeline. */
 class PeopleConfigCommands {
