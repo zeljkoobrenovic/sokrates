@@ -43,10 +43,6 @@ public class ReportFileExporter {
         if (StringUtils.isNotBlank(metadata.getDescription())) {
             indexReport.setDescription(metadata.getDescription());
         }
-        appendLinks(indexReport, analysisResults);
-        boolean hasLinks = metadata.getLinks().size() > 0;
-        indexReport.addContentInDiv("", "height; 10px; margin-top: " + (hasLinks ? 6 : 0) + "px; margin-bottom: 6px;");
-
         List<CustomTab> customTabs = getCustomTabs(analysisResults);
         indexReport.setNavigation(repositoryNavigation(analysisResults, sokratesConfigFolder), "overview");
         addTabStrip(indexReport, customTabs);
@@ -95,6 +91,8 @@ public class ReportFileExporter {
                 + analysisResults.getOtherAspectAnalysisResults().getFilesCount();
 
         indexReport.startTabContentSection("overview", true);
+        // The repository's own links (metadata.links) belong to the Overview, not above every index tab.
+        appendLinks(indexReport, analysisResults);
 
         indexReport.startDiv("white-space: nowrap; overflow: hidden");
 
