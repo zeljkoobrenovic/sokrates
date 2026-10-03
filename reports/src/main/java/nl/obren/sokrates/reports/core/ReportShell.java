@@ -108,6 +108,10 @@ public class ReportShell {
             "    var links = document.getElementsByClassName('tablinks');\n" +
             "    for (var j = 0; j < links.length; j++) { links[j].classList.remove('active'); }\n" +
             "    el.style.display = 'block';\n" +
+            "    // An iframe that must lay out at its visible size loads on first show (data-sk-src).\n" +
+            "    el.querySelectorAll('iframe[data-sk-src]').forEach(function (f) {\n" +
+            "      if (!f.getAttribute('src')) { f.setAttribute('src', f.getAttribute('data-sk-src')); }\n" +
+            "    });\n" +
             "    var b = button || tabButton(id);\n" +
             "    if (b) { b.classList.add('active'); }\n" +
             "    markNav(id);\n" +

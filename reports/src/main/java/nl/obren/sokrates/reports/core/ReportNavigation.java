@@ -33,7 +33,8 @@ public class ReportNavigation {
         ICONS.put("files", "<path d='M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z'/><path d='M14 3v6h6'/>");
         ICONS.put("units", "<path d='M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5a2 2 0 0 0 2 2h1M16 3h1a2 2 0 0 1 2 2v5a2 2 0 0 0 2 2 2 2 0 0 0-2 2v5a2 2 0 0 1-2 2h-1'/>");
         ICONS.put("commits", "<circle cx='12' cy='12' r='3'/><path d='M3 12h6M15 12h6'/>");
-        ICONS.put("visuals", "<circle cx='12' cy='12' r='9'/><circle cx='9' cy='10' r='3'/><circle cx='15.5' cy='14.5' r='2.5'/>");
+        ICONS.put("structure", "<circle cx='12' cy='12' r='9'/><circle cx='9' cy='10' r='3'/><circle cx='15.5' cy='14.5' r='2.5'/>");
+        ICONS.put("visuals", "<rect x='3' y='3' width='18' height='18' rx='2'/><circle cx='9' cy='9' r='2'/><path d='M21 15l-5-5L5 21'/>");
         ICONS.put("data", "<ellipse cx='12' cy='5' rx='8' ry='3'/><path d='M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3'/>");
         ICONS.put("custom", "<rect x='3' y='4' width='18' height='16' rx='2'/><path d='M3 9h18'/>");
         ICONS.put("code", "<path d='M16 18l6-6-6-6M8 6l-6 6 6 6'/>");

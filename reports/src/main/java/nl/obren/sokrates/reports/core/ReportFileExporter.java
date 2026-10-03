@@ -68,6 +68,7 @@ public class ReportFileExporter {
         indexReport.addTab("overview", "Overview", true);
         indexReport.addTab("quality", "Analyses", false);
         indexReport.addTab("commits", "Activity", false);
+        indexReport.addTab("structure", "Structure", false);
         indexReport.addTab("files", "Files", false);
         indexReport.addTab("units", "Units*", false);
         // The plain "commits" id is taken by the Activity tab above.
@@ -132,7 +133,6 @@ public class ReportFileExporter {
         indexReport.endDiv();
         indexReport.endDiv();
 
-        indexReport.addHtmlContent("<iframe src='Structure.html' style='border: none; width: 1000px; height: 1090px; overflow: hidden'></iframe>");
         indexReport.endTabContentSection();
     }
 
@@ -154,6 +154,13 @@ public class ReportFileExporter {
     }
 
     private static void addExplorerTabs(RichTextReport indexReport, List<CustomTab> customTabs) {
+        // The circle-packing views lay out to the size of their frame, so Structure.html loads only when
+        // its tab is first shown (data-sk-src, see sokratesShowTab), never inside a hidden tab.
+        indexReport.startTabContentSection("structure", false);
+        indexReport.addLineBreak();
+        indexReport.addHtmlContent("<iframe data-sk-src='Structure.html' style='width: 100%; border: none; height: calc(100vh - 220px); overflow: hidden; margin-top: -12px'></iframe>");
+        indexReport.endTabContentSection();
+
         indexReport.startTabContentSection("files", false);
         indexReport.addLineBreak();
         indexReport.addHtmlContent("<iframe src='../explorers/files-explorer.html' style='width: 100%; border: none; height: calc(100vh - 220px); overflow: hidden; margin-top: -12px'></iframe>");
@@ -574,6 +581,7 @@ public class ReportFileExporter {
         ReportNavigation.Group report = navigation.addGroup("Report");
         report.addTabItem("overview", "Overview", "index.html#overview", "overview");
         report.addTabItem("commits", "Activity", "index.html#commits", "activity");
+        report.addTabItem("structure", "Structure Explorer", "index.html#structure", "structure");
         report.addTabItem("files", "File Explorer", "index.html#files", "files");
         report.addTabItem("units", "Unit Explorer*", "index.html#units", "units");
         report.addTabItem("commits-explorer", "Commit Explorer", "index.html#commits-explorer", "commits");
