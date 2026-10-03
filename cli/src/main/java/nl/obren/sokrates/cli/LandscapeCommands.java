@@ -94,7 +94,7 @@ class LandscapeCommands {
             updateLandscapesRecursively(root, metadata, dataOnly);
         } else {
             File reportsFolder = LandscapeAnalysisCommands.update(root, confFilePath != null ? new File(confFilePath) : null, metadata, dataOnly);
-            cli.saveExecutionStats(new File(reportsFolder, "data"));
+            cli.reportsCommands.saveExecutionStats(new File(reportsFolder, "data"));
             LandscapeAnalysisCommands.zipLandscapeDataFolder(reportsFolder, !dataOnly);
         }
     }
@@ -137,7 +137,7 @@ class LandscapeCommands {
         });
         if (landscapeConfigFiles.size() > 0) {
             File landscapeRoot = landscapeConfigFiles.get(landscapeConfigFiles.size() - 1).getParentFile();
-            cli.saveExecutionStats(new File(landscapeRoot, "data"));
+            cli.reportsCommands.saveExecutionStats(new File(landscapeRoot, "data"));
             // Fold the just-written executionTimes files into the landscape's data.zip.
             LandscapeAnalysisCommands.zipLandscapeDataFolder(landscapeRoot, !dataOnly);
         }

@@ -235,7 +235,7 @@ public class OrganizationCommands {
 
         Metadata metadata = orgLandscapeMetadata(orgRoot, org);
         File reportsFolder = LandscapeAnalysisCommands.update(orgRoot, null, metadata, dataOnly);
-        cli.saveExecutionStats(new File(reportsFolder, "data"));
+        cli.reportsCommands.saveExecutionStats(new File(reportsFolder, "data"));
         LandscapeAnalysisCommands.zipLandscapeDataFolder(reportsFolder, !dataOnly);
         return reportsFolder;
     }
@@ -289,7 +289,7 @@ public class OrganizationCommands {
         Metadata metadata = new Metadata();
         cli.updateMetadataFromCommandLine(cmd, metadata);
         File reportsFolder = LandscapeAnalysisCommands.update(root, null, metadata, dataOnly);
-        cli.saveExecutionStats(new File(reportsFolder, "data"));
+        cli.reportsCommands.saveExecutionStats(new File(reportsFolder, "data"));
         LandscapeAnalysisCommands.zipLandscapeDataFolder(reportsFolder, !dataOnly);
         LOG.info("Parent landscape: " + new File(reportsFolder, dataOnly ? "data/data.zip" : "index.html").toPath().toAbsolutePath().normalize().toUri());
     }
