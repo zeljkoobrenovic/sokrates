@@ -50,6 +50,8 @@ public class ReportShell {
             ".sk-nav-label {overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}\n" +
             ".sk-has-shell .sk-index-tabs {display: none;}\n" +
             ".sk-nav-footer {margin-top: 8px; padding: 12px 8px 0 8px; border-top: 1px solid var(--sk-border);}\n" +
+            ".sk-nav-meta {margin-top: 14px; font-size: 12px; line-height: 1.6; color: var(--sk-text-faint);}\n" +
+            ".sk-nav-meta a {color: var(--sk-text-muted);}\n" +
             ".sk-nav-option {display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--sk-text-muted); cursor: pointer;}\n" +
             ".sk-nav-toggle {display: none;}\n" +
             "@media (max-width: 900px) {\n" +
