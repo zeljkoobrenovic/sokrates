@@ -6,11 +6,7 @@ package nl.obren.sokrates.reports.dataexporters.files;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import nl.obren.sokrates.common.io.JsonGenerator;
-import nl.obren.sokrates.common.renderingutils.x3d.Unit3D;
-import nl.obren.sokrates.common.renderingutils.x3d.X3DomExporter;
-import nl.obren.sokrates.common.utils.BasicColorInfo;
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.stats.SourceFileSizeDistribution;
 
 import java.util.ArrayList;
 import java.util.List;

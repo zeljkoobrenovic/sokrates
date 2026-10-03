@@ -22,7 +22,6 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution.Types.FIRST_MODIFIED;
 import static nl.obren.sokrates.sourcecode.stats.SourceFileAgeDistribution.Types.LAST_MODIFIED;

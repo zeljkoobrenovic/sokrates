@@ -4,13 +4,8 @@
 
 package nl.obren.sokrates.sourcecode.lang.ruby;
 
-import junit.framework.TestCase;
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
-import nl.obren.sokrates.sourcecode.lang.java.JavaAnalyzer;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
-import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -67,7 +62,6 @@ public class RubyAnalyzerTest {
                 "puts \"#{name}\"\n" +
                 "puts \"goodbye\"");
     }
-
 
     @Test
     public void cleanForDuplicationCalculations() throws Exception {

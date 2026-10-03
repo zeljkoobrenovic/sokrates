@@ -5,7 +5,6 @@
 package nl.obren.sokrates.sourcecode.filehistory;
 
 import nl.obren.sokrates.sourcecode.analysis.FileHistoryAnalysisConfig;
-import nl.obren.sokrates.sourcecode.githistory.AuthorCommit;
 import nl.obren.sokrates.sourcecode.githistory.FileUpdate;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 

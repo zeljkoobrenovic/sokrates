@@ -6,7 +6,6 @@ package nl.obren.sokrates.sourcecode.landscape.init;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import nl.obren.sokrates.common.io.JsonGenerator;
-import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
 import nl.obren.sokrates.sourcecode.landscape.SokratesRepositoryLink;

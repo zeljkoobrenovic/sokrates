@@ -17,8 +17,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertTrue;
 
 public class JavaScriptAnalyzerTest {
     @Test
@@ -477,7 +475,6 @@ public class JavaScriptAnalyzerTest {
         assertEquals(cleanedContent.getFileLineIndexes().get(8).intValue(), 20);
         assertEquals(cleanedContent.getFileLineIndexes().get(9).intValue(), 26);
     }
-
 
     @Test
     public void extractUnits1() throws Exception {

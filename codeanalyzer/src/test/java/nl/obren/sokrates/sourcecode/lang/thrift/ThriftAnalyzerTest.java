@@ -2,7 +2,6 @@ package nl.obren.sokrates.sourcecode.lang.thrift;
 
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.cleaners.CleanedContent;
-import nl.obren.sokrates.sourcecode.lang.swift.SwiftExampleFragments;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;

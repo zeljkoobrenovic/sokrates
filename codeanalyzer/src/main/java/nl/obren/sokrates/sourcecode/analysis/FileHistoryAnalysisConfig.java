@@ -6,13 +6,11 @@ package nl.obren.sokrates.sourcecode.analysis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
-import nl.obren.sokrates.common.utils.RegexUtils;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.contributors.ContributorsImport;
 import nl.obren.sokrates.sourcecode.contributors.GitContributorsUtil;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
 import nl.obren.sokrates.sourcecode.filehistory.GitHistoryUtil;
-import nl.obren.sokrates.sourcecode.githistory.AuthorCommit;
 import nl.obren.sokrates.sourcecode.githistory.CommitsPerExtension;
 import nl.obren.sokrates.sourcecode.githistory.GitHistoryUtils;
 import nl.obren.sokrates.sourcecode.operations.OperationStatement;

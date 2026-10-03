@@ -9,8 +9,6 @@ import nl.obren.sokrates.reports.utils.ReportUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.metrics.Metric;
 
-import java.text.DecimalFormat;
-
 public class MetricsListReportGenerator {
     private CodeAnalysisResults codeAnalysisResults;
     private RichTextReport report;

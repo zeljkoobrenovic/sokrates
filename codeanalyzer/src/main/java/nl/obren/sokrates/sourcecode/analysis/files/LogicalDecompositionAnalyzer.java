@@ -11,10 +11,8 @@ import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.LogicalDecompositionAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
-import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.dependencies.*;
-import nl.obren.sokrates.sourcecode.metrics.Metric;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 
 import java.util.ArrayList;

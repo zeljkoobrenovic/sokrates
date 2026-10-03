@@ -5,7 +5,6 @@
 package nl.obren.sokrates.sourcecode.analysis.results;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import nl.obren.sokrates.sourcecode.aspects.DependenciesFinder;
 import nl.obren.sokrates.sourcecode.aspects.LogicalDecomposition;
 import nl.obren.sokrates.sourcecode.dependencies.ComponentDependency;
 import nl.obren.sokrates.sourcecode.dependencies.Dependency;
