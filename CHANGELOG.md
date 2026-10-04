@@ -3,6 +3,27 @@
 User-visible behaviour changes, newest first. `:latest` of the Docker image and the `master` branch carry
 everything listed under the most recent date.
 
+## 2026-10-04
+
+### New File Complexity report
+
+A **File Complexity** report (`FileComplexity.html`, in the sidebar under File Size) classifies main
+code files by the **sum of the McCabe indexes of their units**, weighted by lines of code, in five
+bands: 1-25, 26-50, 51-125, 126-250 and 251+ (five times the unit complexity bands, as a file is a
+group of units). It shows the overall profile, the profile per extension and per logical component,
+the 50 most complex files (with complexity per 100 lines and the most complex unit, to tell a large but
+plain file from a dense one), and two circle views coloured by file complexity. The profile is also in
+`analysisResults.json` (`filesAnalysisResults.overallFileComplexityDistribution`, per extension, per
+logical decomposition) and in the metrics list (`*_FILE_COMPLEXITY_COUNT` / `*_FILE_COMPLEXITY_LOC`).
+
+Only files with units are classified: files of languages without unit analysis, or without
+functions, have no complexity to measure and are left out instead of counted as simple.
+
+What to check: the bands come from the new `analysis.fileComplexityThresholds`. The older
+`analysis.fileConditionalComplexityThresholds` key, which `init` wrote with the unit bands but nothing
+ever read, is now ignored; you can delete it from your `config.json`. To change the bands, add
+`fileComplexityThresholds`.
+
 ## 2026-10-02
 
 ### Path patterns match the path below the source root (behaviour change)

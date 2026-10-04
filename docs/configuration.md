@@ -153,6 +153,7 @@ Switches and risk thresholds for the analysis itself. Common keys:
 | `fileSizeThresholds` | `{low:100, medium:200, high:500, veryHigh:1000}` | Risk bands for file size (LOC). |
 | `unitSizeThresholds` | `{low:10, medium:20, high:50, veryHigh:100}` | Risk bands for unit size. |
 | `conditionalComplexityThresholds` | `{low:5, medium:10, high:25, veryHigh:50}` | Risk bands for unit complexity. |
+| `fileComplexityThresholds` | `{low:25, medium:50, high:125, veryHigh:250}` | Risk bands for file complexity (the sum of the McCabe indexes of a file's units; five times the unit bands). Replaces the never-used `fileConditionalComplexityThresholds`, which is ignored. |
 | `fileAgeThresholds` / `fileUpdateFrequencyThresholds` | (see source) | Risk bands for history metrics. |
 
 Each `*Thresholds` is an object `{ "low", "medium", "high", "veryHigh" }`.

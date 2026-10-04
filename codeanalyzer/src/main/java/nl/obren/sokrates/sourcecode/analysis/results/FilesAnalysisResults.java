@@ -22,6 +22,12 @@ public class FilesAnalysisResults {
     private List<SourceFile> longestFiles = new ArrayList<>();
 
     private List<SourceFile> filesWithMostUnits = new ArrayList<>();
+    // File complexity (sum of the McCabe indexes of a file's units; files with units only), filled by the
+    // UnitsAnalyzer once the units are known.
+    private RiskDistributionStats overallFileComplexityDistribution;
+    private List<RiskDistributionStats> fileComplexityDistributionPerExtension = new ArrayList<>();
+    private List<FileComplexityDistributionPerLogicalDecomposition> fileComplexityDistributionPerLogicalDecomposition = new ArrayList<>();
+    private List<SourceFile> mostComplexFiles = new ArrayList<>();
 
     @JsonIgnore
     public List<SourceFile> getAllFiles() {
@@ -81,5 +87,37 @@ public class FilesAnalysisResults {
 
     public void setFileSizeDistributionPerLogicalDecomposition(List<FileDistributionPerLogicalDecomposition> fileSizeDistributionPerLogicalDecomposition) {
         this.fileSizeDistributionPerLogicalDecomposition = fileSizeDistributionPerLogicalDecomposition;
+    }
+
+    public RiskDistributionStats getOverallFileComplexityDistribution() {
+        return overallFileComplexityDistribution;
+    }
+
+    public void setOverallFileComplexityDistribution(RiskDistributionStats overallFileComplexityDistribution) {
+        this.overallFileComplexityDistribution = overallFileComplexityDistribution;
+    }
+
+    public List<RiskDistributionStats> getFileComplexityDistributionPerExtension() {
+        return fileComplexityDistributionPerExtension;
+    }
+
+    public void setFileComplexityDistributionPerExtension(List<RiskDistributionStats> fileComplexityDistributionPerExtension) {
+        this.fileComplexityDistributionPerExtension = fileComplexityDistributionPerExtension;
+    }
+
+    public List<FileComplexityDistributionPerLogicalDecomposition> getFileComplexityDistributionPerLogicalDecomposition() {
+        return fileComplexityDistributionPerLogicalDecomposition;
+    }
+
+    public void setFileComplexityDistributionPerLogicalDecomposition(List<FileComplexityDistributionPerLogicalDecomposition> fileComplexityDistributionPerLogicalDecomposition) {
+        this.fileComplexityDistributionPerLogicalDecomposition = fileComplexityDistributionPerLogicalDecomposition;
+    }
+
+    public List<SourceFile> getMostComplexFiles() {
+        return mostComplexFiles;
+    }
+
+    public void setMostComplexFiles(List<SourceFile> mostComplexFiles) {
+        this.mostComplexFiles = mostComplexFiles;
     }
 }

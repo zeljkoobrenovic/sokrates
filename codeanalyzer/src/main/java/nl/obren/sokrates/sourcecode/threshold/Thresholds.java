@@ -51,9 +51,12 @@ public class Thresholds {
     public static Thresholds defaultConditionalComplexityThresholds() {
         return new Thresholds(5, 10, 25, 50);
     }
+
+    // File complexity = the sum of the McCabe indexes of a file's units; the bands are five times the
+    // unit complexity bands (5 / 10 / 25 / 50), as a file is a group of units.
     @JsonIgnore
-    public static Thresholds defaultFileConditionalComplexityThresholds() {
-        return new Thresholds(50, 100, 250, 500);
+    public static Thresholds defaultFileComplexityThresholds() {
+        return new Thresholds(25, 50, 125, 250);
     }
 
     @JsonIgnore

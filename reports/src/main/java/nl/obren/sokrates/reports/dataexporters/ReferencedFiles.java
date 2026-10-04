@@ -24,6 +24,7 @@ public class ReferencedFiles {
         Set<SourceFile> referenced = new HashSet<>();
         referenced.addAll(results.getFilesAnalysisResults().getLongestFiles());
         referenced.addAll(results.getFilesAnalysisResults().getFilesWithMostUnits());
+        referenced.addAll(results.getFilesAnalysisResults().getMostComplexFiles());
         referenced.addAll(results.getFilesHistoryAnalysisResults().getFilesWithLeastContributors());
         referenced.addAll(results.getFilesHistoryAnalysisResults().getFilesWithMostContributors());
         referenced.addAll(results.getFilesHistoryAnalysisResults().getMostChangedFiles());

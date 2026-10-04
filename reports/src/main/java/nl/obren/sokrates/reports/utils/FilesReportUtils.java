@@ -77,7 +77,7 @@ public class FilesReportUtils {
     }
 
     /** The file cell: language icon, name (linked to the viewer when asked) and parent folder. */
-    private static String fileNameCell(SourceFile sourceFile, boolean linkToFiles) {
+    public static String fileNameCell(SourceFile sourceFile, boolean linkToFiles) {
         File file = new File(sourceFile.getRelativePath());
         // File and folder names are repository-controlled: escaped for element content, and the
         // viewer link's path is percent-encoded for the URL fragment (see HtmlEscapeUtils).

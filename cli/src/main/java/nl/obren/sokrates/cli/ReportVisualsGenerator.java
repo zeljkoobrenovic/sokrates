@@ -12,6 +12,7 @@ import nl.obren.sokrates.common.renderingutils.x3d.Unit3D;
 import nl.obren.sokrates.common.renderingutils.x3d.X3DomExporter;
 import nl.obren.sokrates.common.utils.*;
 import nl.obren.sokrates.sourcecode.SourceFile;
+import nl.obren.sokrates.sourcecode.stats.SourceFileComplexityDistribution;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
@@ -125,6 +126,8 @@ public class ReportVisualsGenerator {
         }
 
         addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "loc", codeConfiguration.getAnalysis().getFileSizeThresholds(), Palette.getRiskPalette(), (sourceFile) -> sourceFile.getLinesOfCode(), (sourceFile) -> sourceFile.getLinesOfCode());
+        // File complexity: only files with units have one (see SourceFileComplexityDistribution).
+        addRiskColoredZoomableCircles(circlesEntries, SourceFileComplexityDistribution.filesWithUnits(mainSourceFiles), "mccabe", codeConfiguration.getAnalysis().getFileComplexityThresholds(), Palette.getRiskPalette(), (sourceFile) -> sourceFile.getUnitsMcCabeIndexSum(), (sourceFile) -> sourceFile.getLinesOfCode());
 
         addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "age", codeConfiguration.getAnalysis().getFileAgeThresholds(), Palette.getAgePalette(), (sourceFile) -> sourceFile.getFileModificationHistory() != null ? sourceFile.getFileModificationHistory().daysSinceFirstUpdate() : 0, (sourceFile) -> sourceFile.getLinesOfCode());
         addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "freshness", codeConfiguration.getAnalysis().getFileAgeThresholds(), Palette.getFreshnessPalette(),

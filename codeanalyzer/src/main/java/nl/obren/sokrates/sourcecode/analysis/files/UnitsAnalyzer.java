@@ -10,12 +10,14 @@ import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.AnalysisUtils;
 import nl.obren.sokrates.sourcecode.analysis.Analyzer;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.FileComplexityDistributionPerLogicalDecomposition;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.UnitsAnalysisResults;
 import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
+import nl.obren.sokrates.sourcecode.stats.SourceFileComplexityDistribution;
 import nl.obren.sokrates.sourcecode.threshold.Thresholds;
 import nl.obren.sokrates.sourcecode.units.UnitInfo;
 import nl.obren.sokrates.sourcecode.units.UnitUtils;
@@ -24,6 +26,7 @@ import nl.obren.sokrates.sourcecode.units.UnitsExtractor;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -128,6 +131,60 @@ public class UnitsAnalyzer extends Analyzer {
         addLongestUnits(allUnits, unitsAnalysisResults, sampleSize);
         addMostComplexUnits(allUnits, unitsAnalysisResults, sampleSize);
         addFilesWithMostUnits(filesAnalysisResults.getAllFiles(), filesAnalysisResults, FileSizeAnalyzer.SAMPLE_SIZE);
+        addFileComplexity(sampleSize);
+    }
+
+    // File complexity: main files with units, classified by the sum of their units' McCabe indexes.
+    private void addFileComplexity(int sampleSize) {
+        Thresholds thresholds = codeConfiguration.getAnalysis().getFileComplexityThresholds();
+        List<SourceFile> files = SourceFileComplexityDistribution.filesWithUnits(filesAnalysisResults.getAllFiles());
+
+        RiskDistributionStats overall = SourceFileComplexityDistribution.overall(files, thresholds);
+        filesAnalysisResults.setOverallFileComplexityDistribution(overall);
+        filesAnalysisResults.setFileComplexityDistributionPerExtension(SourceFileComplexityDistribution.perExtension(files, thresholds));
+
+        // Components list their own SourceFile instances: the units are matched by relative path.
+        Map<String, SourceFile> filesByPath = new HashMap<>();
+        files.forEach(file -> filesByPath.put(file.getRelativePath(), file));
+        codeConfiguration.getLogicalDecompositions().forEach(logicalDecomposition -> {
+            FileComplexityDistributionPerLogicalDecomposition perDecomposition = new FileComplexityDistributionPerLogicalDecomposition();
+            perDecomposition.setName(logicalDecomposition.getName());
+            logicalDecomposition.getComponents().forEach(component -> {
+                RiskDistributionStats distribution = new RiskDistributionStats(thresholds);
+                distribution.setKey(component.getName());
+                component.getSourceFiles().forEach(componentFile -> {
+                    SourceFile file = filesByPath.get(componentFile.getRelativePath());
+                    if (file != null) {
+                        distribution.update(file.getUnitsMcCabeIndexSum(), file.getLinesOfCode());
+                    }
+                });
+                if (distribution.getTotalCount() > 0) {
+                    perDecomposition.getDistributionPerComponent().add(distribution);
+                }
+            });
+            filesAnalysisResults.getFileComplexityDistributionPerLogicalDecomposition().add(perDecomposition);
+        });
+
+        List<SourceFile> mostComplex = new ArrayList<>(files);
+        mostComplex.sort((o1, o2) -> Integer.compare(o2.getUnitsMcCabeIndexSum(), o1.getUnitsMcCabeIndexSum()));
+        filesAnalysisResults.setMostComplexFiles(new ArrayList<>(mostComplex.subList(0, Math.min(sampleSize, mostComplex.size()))));
+
+        addFileComplexityMetrics(overall);
+    }
+
+    private void addFileComplexityMetrics(RiskDistributionStats distribution) {
+        String[] prefixes = {"NEGLIGIBLE_RISK", "LOW_RISK", "MEDIUM_RISK", "HIGH_RISK", "VERY_HIGH_RISK"};
+        String[] labels = {distribution.getNegligibleRiskLabel(), distribution.getLowRiskLabel(), distribution.getMediumRiskLabel(),
+                distribution.getHighRiskLabel(), distribution.getVeryHighRiskLabel()};
+        int[] counts = {distribution.getNegligibleRiskCount(), distribution.getLowRiskCount(), distribution.getMediumRiskCount(),
+                distribution.getHighRiskCount(), distribution.getVeryHighRiskCount()};
+        int[] linesOfCode = {distribution.getNegligibleRiskValue(), distribution.getLowRiskValue(), distribution.getMediumRiskValue(),
+                distribution.getHighRiskValue(), distribution.getVeryHighRiskValue()};
+        for (int i = 0; i < prefixes.length; i++) {
+            String files = " files with a McCabe index sum of " + labels[i];
+            metricsList.addSystemMetric().id(prefixes[i] + "_FILE_COMPLEXITY_COUNT").value(counts[i]).description("Number of" + files);
+            metricsList.addSystemMetric().id(prefixes[i] + "_FILE_COMPLEXITY_LOC").value(linesOfCode[i]).description("Lines of code in" + files);
+        }
     }
 
     private void addBasicUnitMetrics(List<UnitInfo> allUnits, int linesOfCode) {

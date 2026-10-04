@@ -489,6 +489,7 @@ public class ReportFileExporter {
             new ReportEntry("SourceCodeOverview.html", "Code Volume", "codebase", a -> true),
             new ReportEntry("Duplication.html", "Duplication", "duplication", a -> a.duplication),
             new ReportEntry("FileSize.html", "File Size", "file_size", a -> a.mainExists),
+            new ReportEntry("FileComplexity.html", "File Complexity*", "conditional", a -> a.units),
             new ReportEntry("FileAge.html", "File Age & Freshness", "file_history", a -> a.history),
             new ReportEntry("FileChurn.html", "File Churn", "change", a -> a.history),
             new ReportEntry("Commits.html", "Commits", "commits", a -> a.history),
@@ -505,6 +506,7 @@ public class ReportFileExporter {
             new ReportEntry("", "Components", "dependencies", a -> !a.mainExists && !a.dependencies),
             new ReportEntry("", "Duplication", "duplication", a -> !a.duplication),
             new ReportEntry("", "File Size", "file_size", a -> !a.mainExists),
+            new ReportEntry("", "File Complexity", "conditional", a -> !a.units),
             new ReportEntry("", "File Age & Freshness", "file_history", a -> !a.history),
             new ReportEntry("", "File Churn", "change", a -> !a.history),
             new ReportEntry("", "Temporal Dependencies", "temporal_dependency", a -> !a.history),
@@ -525,6 +527,7 @@ public class ReportFileExporter {
         NAVIGATION_ICONS.put("FileTemporalDependencies.html", "temporal");
         NAVIGATION_ICONS.put("Duplication.html", "duplication");
         NAVIGATION_ICONS.put("FileSize.html", "size");
+        NAVIGATION_ICONS.put("FileComplexity.html", "file_complexity");
         NAVIGATION_ICONS.put("FileAge.html", "age");
         NAVIGATION_ICONS.put("FileChurn.html", "churn");
         NAVIGATION_ICONS.put("Commits.html", "commits");

@@ -65,8 +65,10 @@ public class AnalysisConfig {
 
     // Thresholds for risk profiles used in unit conditional complexity analyses
     private Thresholds conditionalComplexityThresholds = Thresholds.defaultConditionalComplexityThresholds();
-    // Thresholds for risk profiles used in unit conditional complexity analyses
-    private Thresholds fileConditionalComplexityThresholds = Thresholds.defaultConditionalComplexityThresholds();
+    // Thresholds for risk profiles used in the file complexity analysis (sum of the McCabe indexes of a
+    // file's units). Replaces "fileConditionalComplexityThresholds", which nothing read and which init
+    // wrote with the unit bands; that key is now ignored when a configuration is loaded.
+    private Thresholds fileComplexityThresholds = Thresholds.defaultFileComplexityThresholds();
 
     // Thresholds for risk profiles used in commit analysis
     private Thresholds commitFilesCountThresholds = Thresholds.defaultCommitFilesCountThresholds();
@@ -223,12 +225,12 @@ public class AnalysisConfig {
         this.conditionalComplexityThresholds = conditionalComplexityThresholds;
     }
 
-    public Thresholds getFileConditionalComplexityThresholds() {
-        return fileConditionalComplexityThresholds;
+    public Thresholds getFileComplexityThresholds() {
+        return fileComplexityThresholds;
     }
 
-    public void setFileConditionalComplexityThresholds(Thresholds fileConditionalComplexityThresholds) {
-        this.fileConditionalComplexityThresholds = fileConditionalComplexityThresholds;
+    public void setFileComplexityThresholds(Thresholds fileComplexityThresholds) {
+        this.fileComplexityThresholds = fileComplexityThresholds;
     }
 
     public Thresholds getCommitFilesCountThresholds() {

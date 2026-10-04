@@ -48,6 +48,7 @@ public class ReportNavigation {
         ICONS.put("churn", "<path d='M21 12a9 9 0 0 1-15.5 6.2M3 12a9 9 0 0 1 15.5-6.2'/><path d='M21 3v6h-6M3 21v-6h6'/>");
         ICONS.put("contributors", "<circle cx='9' cy='8' r='3.5'/><path d='M2 21v-1a6 6 0 0 1 12 0v1M16 4.5a3.5 3.5 0 0 1 0 7M22 21v-1a6 6 0 0 0-4-5.6'/>");
         ICONS.put("complexity", "<circle cx='6' cy='5' r='2'/><circle cx='6' cy='19' r='2'/><circle cx='18' cy='9' r='2'/><path d='M6 7v10M18 11c0 4-6 3-12 6'/>");
+        ICONS.put("file_complexity", "<path d='M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z'/><path d='M14 3v6h6'/><path d='M9 18v-6M9 14c0-2 3-2 3-4M9 14c0 2 3 2 3 4'/>");
         ICONS.put("features", "<path d='M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z'/><circle cx='8' cy='8' r='1.5'/>");
         ICONS.put("metrics", "<path d='M4 9h16M4 15h16M10 3L8 21M16 3l-2 18'/>");
         ICONS.put("controls", "<circle cx='12' cy='12' r='9'/><circle cx='12' cy='12' r='5'/><circle cx='12' cy='12' r='1'/>");
