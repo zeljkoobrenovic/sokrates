@@ -13,7 +13,7 @@ import java.util.Map;
 
 /**
  * The sticky left sidebar of the per-repository report (the "app shell"): the repository name, a
- * search button opening the command palette, and groups of links. {@link ReportHtmlWriter} renders it
+ * search field that filters the sidebar items in place, and groups of links. {@link ReportHtmlWriter} renders it
  * around the report body of every page that has one, with the page's own entry marked active.
  * <p>
  * An item with a <code>tab</code> points at a tab of the index page (<code>index.html#&lt;tab&gt;</code>);
@@ -167,10 +167,13 @@ public class ReportNavigation {
                 .append("<svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'>")
                 .append("<path d='M4 6h16M4 12h16M4 18h16'/></svg></button>\n");
         html.append("<nav class='sk-sidebar' aria-label='Report navigation'>\n");
-        html.append("<button type='button' class='sk-search-button' onclick='sokratesOpenPalette()'>")
+        // Filters the items below in place (ReportShell's sokratesFilterNav); no popup.
+        html.append("<div class='sk-nav-search'>")
                 .append("<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'>")
                 .append("<circle cx='11' cy='11' r='7'/><path d='M20 20l-3.5-3.5'/></svg>")
-                .append("<span>Search…</span><kbd class='sk-kbd'>⌘K</kbd></button>\n");
+                .append("<input type='search' class='sk-nav-search-input' placeholder='Search…' aria-label='Search the menu' autocomplete='off' ")
+                .append("oninput='sokratesFilterNav(this.value)'><kbd class='sk-kbd'>⌘K</kbd></div>\n");
+        html.append("<div class='sk-nav-empty' hidden>No matching pages</div>\n");
         groups.forEach(group -> {
             html.append("<div class='sk-nav-group'>\n");
             html.append("<div class='sk-nav-group-label'>").append(HtmlEscapeUtils.escape(group.label)).append("</div>\n");

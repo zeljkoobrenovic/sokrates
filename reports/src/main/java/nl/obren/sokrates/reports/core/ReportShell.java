@@ -11,10 +11,8 @@ package nl.obren.sokrates.reports.core;
  * used on pages whose body has the <code>sk-has-shell</code> class;</li>
  * <li>tab routing: a page's open tab is kept in the URL fragment (<code>index.html#files</code>), restored on
  * load and on back/forward, and sidebar links to index tabs are routed in-page;</li>
- * <li>the command palette (⌘K / Ctrl+K, or "/"): the sidebar links, the tabs and section titles of the
- * current page, and a few commands, filtered as you type. It works on every report page, with or
- * without a sidebar. Entries are read from the DOM and rendered with <code>textContent</code>, so
- * repository-controlled names stay text.</li>
+ * <li>the sidebar search (⌘K / Ctrl+K, or "/" to focus): filters the sidebar's own items in place as you
+ * type, no popup; Enter opens the first match, Esc clears. Only pages with a sidebar have it.</li>
  * </ul>
  */
 public class ReportShell {
@@ -31,11 +29,15 @@ public class ReportShell {
             "background: var(--sk-surface-2); border-bottom: 1px solid var(--sk-border);}\n" +
             ".sk-page-context {display: block; padding-top: 16px; font-size: 15px; font-weight: 600; color: var(--sk-text-muted); " +
             "text-decoration: none; overflow-wrap: anywhere;}\n" +
-            ".sk-page-context:hover {color: var(--sk-text); text-decoration: none;}\n" +            ".sk-search-button {display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; margin-bottom: 18px; " +
-            "padding: 7px 10px; font: inherit; font-size: 13px; color: var(--sk-text-muted); cursor: pointer; " +
+            ".sk-page-context:hover {color: var(--sk-text); text-decoration: none;}\n" +            ".sk-nav-search {display: flex; align-items: center; gap: 8px; margin-bottom: 18px; padding: 0 10px; color: var(--sk-text-muted); " +
             "background: var(--sk-surface); border: 1px solid var(--sk-border); border-radius: 8px;}\n" +
-            ".sk-search-button:hover {border-color: var(--sk-border-strong); color: var(--sk-text);}\n" +
-            ".sk-search-button span {flex: 1; text-align: left;}\n" +
+            ".sk-nav-search:focus-within {border-color: var(--sk-accent); color: var(--sk-text);}\n" +
+            ".sk-nav-search-input {flex: 1; min-width: 0; padding: 7px 0; font: inherit; font-size: 13px; color: var(--sk-text); " +
+            "background: transparent; border: none; outline: none;}\n" +
+            ".sk-nav-search-input::-webkit-search-cancel-button {cursor: pointer;}\n" +
+            ".sk-nav-search:focus-within .sk-kbd {display: none;}\n" +
+            ".sk-nav-empty {padding: 0 8px 12px 8px; font-size: 13px; color: var(--sk-text-faint);}\n" +
+            ".sk-nav-item.sk-nav-first {background: var(--sk-hover); color: var(--sk-text);}\n" +
             ".sk-kbd {font-family: var(--sk-font); font-size: 11px; padding: 0 5px; color: var(--sk-text-faint); " +
             "background: var(--sk-surface-2); border: 1px solid var(--sk-border); border-radius: 4px;}\n" +
             ".sk-nav-group {margin-bottom: 16px;}\n" +
@@ -62,25 +64,7 @@ public class ReportShell {
             "z-index: 950; width: 34px; height: 34px; padding: 0; cursor: pointer; color: var(--sk-text-muted); " +
             "background: var(--sk-surface); border: 1px solid var(--sk-border); border-radius: 8px; box-shadow: var(--sk-shadow);}\n" +
             "}\n" +
-            "@media print {.sk-sidebar, .sk-nav-toggle {display: none;} .sk-main {margin-left: 0;}}\n" +
-            // command palette
-            ".sk-palette {position: fixed; inset: 0; z-index: 2000; display: flex; justify-content: center; align-items: flex-start; " +
-            "padding-top: 12vh; background: rgba(15, 20, 25, 0.45);}\n" +
-            ".sk-palette[hidden] {display: none;}\n" +
-            ".sk-palette-dialog {width: min(640px, calc(100vw - 32px)); max-height: 70vh; display: flex; flex-direction: column; " +
-            "overflow: hidden; background: var(--sk-surface); color: var(--sk-text); border: 1px solid var(--sk-border); " +
-            "border-radius: 12px; box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);}\n" +
-            ".sk-palette-input {padding: 14px 16px; font: inherit; font-size: 16px; color: var(--sk-text); background: transparent; " +
-            "border: none; border-bottom: 1px solid var(--sk-border); outline: none;}\n" +
-            ".sk-palette-list {list-style: none; margin: 0; padding: 6px; overflow-y: auto;}\n" +
-            ".sk-palette-item {display: flex; align-items: baseline; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer;}\n" +
-            ".sk-palette-item.selected {background: var(--sk-accent-soft);}\n" +
-            ".sk-palette-kind {flex: none; width: 64px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--sk-text-faint);}\n" +
-            ".sk-palette-label {flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}\n" +
-            ".sk-palette-context {flex: none; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; " +
-            "font-size: 12px; color: var(--sk-text-muted);}\n" +
-            ".sk-palette-empty {padding: 16px; color: var(--sk-text-muted);}\n" +
-            ".sk-palette-hint {padding: 8px 14px; font-size: 12px; color: var(--sk-text-faint); border-top: 1px solid var(--sk-border);}\n";
+            "@media print {.sk-sidebar, .sk-nav-toggle {display: none;} .sk-main {margin-left: 0;}}\n";
 
     public static final String SCRIPT = "" +
             "(function () {\n" +
@@ -205,163 +189,53 @@ public class ReportShell {
             "  document.addEventListener('DOMContentLoaded', function () {\n" +
             "    if (location.hash) { openFromHash(true); }\n" +
             "    if (!/Mac|iPhone|iPad/.test(navigator.platform || '')) {\n" +
-            "      document.querySelectorAll('.sk-search-button .sk-kbd').forEach(function (k) { k.textContent = 'Ctrl K'; });\n" +
+            "      document.querySelectorAll('.sk-nav-search .sk-kbd').forEach(function (k) { k.textContent = 'Ctrl K'; });\n" +
             "    }\n" +
             "  });\n" +
             "\n" +
-            "  // Command palette.\n" +
-            "  var palette, input, list, entries = [], shown = [], selected = 0;\n" +
+            "  // Sidebar search: filters the sidebar's own items in place (no popup). ⌘K / Ctrl+K or \"/\" focus it;\n" +
+            "  // Enter opens the first match, Esc clears. Labels are matched as text (all terms, any order).\n" +
             "  function text(el) { return (el.textContent || '').replace(/\\s+/g, ' ').trim(); }\n" +
-            "  function tabLabel(id) { var b = tabButton(id); return b ? text(b) : ''; }\n" +
-            "  function collect() {\n" +
-            "    var result = [], seenTabs = {};\n" +
-            "    document.querySelectorAll('.sk-nav-group').forEach(function (group) {\n" +
-            "      var groupLabel = text(group.querySelector('.sk-nav-group-label') || group);\n" +
+            "  window.sokratesFilterNav = function (query) {\n" +
+            "    var terms = (query || '').toLowerCase().trim().split(/\\s+/).filter(function (t) { return t; });\n" +
+            "    var first = null;\n" +
+            "    document.querySelectorAll('.sk-sidebar .sk-nav-group').forEach(function (group) {\n" +
+            "      var groupLabel = text(group.querySelector('.sk-nav-group-label') || group).toLowerCase();\n" +
+            "      var visible = 0;\n" +
             "      group.querySelectorAll('a.sk-nav-item').forEach(function (a) {\n" +
-            "        var tab = a.getAttribute('data-sk-tab');\n" +
-            "        if (tab && tabContent(tab)) { seenTabs[tab] = true; }\n" +
-            "        result.push({kind: 'Page', label: text(a), context: groupLabel, run: function () {\n" +
-            "          if (tab && tabContent(tab)) { window.sokratesShowTab(tab); window.sokratesRememberTab(tab); window.scrollTo(0, 0); }\n" +
-            "          else { window.location.href = a.getAttribute('href'); }\n" +
-            "        }});\n" +
+            "        var hay = text(a).toLowerCase() + ' ' + groupLabel;\n" +
+            "        var hit = terms.every(function (t) { return hay.indexOf(t) >= 0; });\n" +
+            "        a.style.display = hit ? '' : 'none';\n" +
+            "        a.classList.remove('sk-nav-first');\n" +
+            "        if (hit) { visible++; if (!first && terms.length) { first = a; } }\n" +
             "      });\n" +
+            "      group.style.display = visible ? '' : 'none';\n" +
             "    });\n" +
-            "    document.querySelectorAll('.tablinks[data-tab]').forEach(function (b) {\n" +
-            "      var id = b.getAttribute('data-tab');\n" +
-            "      if (seenTabs[id] || !tabContent(id)) { return; }\n" +
-            "      seenTabs[id] = true;\n" +
-            "      result.push({kind: 'Tab', label: text(b), context: '', run: function () {\n" +
-            "        window.sokratesShowTab(id); window.sokratesRememberTab(id); window.scrollTo(0, 0);\n" +
-            "      }});\n" +
-            "    });\n" +
-            "    document.querySelectorAll('.sectionTitle, .subSectionTitle').forEach(function (t) {\n" +
-            "      var label = text(t);\n" +
-            "      if (!label) { return; }\n" +
-            "      var tab = t.closest('.tabcontent');\n" +
-            "      result.push({kind: 'Section', label: label, context: tab ? tabLabel(tab.id) : '', run: function () {\n" +
-            "        if (tab && tab.style.display === 'none') { window.sokratesShowTab(tab.id); window.sokratesRememberTab(tab.id); }\n" +
-            "        t.scrollIntoView({block: 'start'});\n" +
-            "      }});\n" +
-            "    });\n" +
-            "    result.push({kind: 'Command', label: 'Change theme (light / dark / automatic)', context: '', run: function () {\n" +
-            "      if (window.sokratesCycleTheme) { window.sokratesCycleTheme(); }\n" +
-            "    }});\n" +
-            "    result.push({kind: 'Command', label: 'Colour-blind safe colours: ' + (window.sokratesPalette === 'cvd' ? 'turn off' : 'turn on'), context: '', run: function () {\n" +
-            "      if (window.sokratesSetPalette) { window.sokratesSetPalette(window.sokratesPalette === 'cvd' ? 'default' : 'cvd'); }\n" +
-            "    }});\n" +
-            "    result.push({kind: 'Command', label: 'Print or save as PDF', context: '', run: function () { window.print(); }});\n" +
-            "    return result;\n" +
-            "  }\n" +
-            "  function matches(entry, terms) {\n" +
-            "    var hay = (entry.label + ' ' + entry.context + ' ' + entry.kind).toLowerCase();\n" +
-            "    for (var i = 0; i < terms.length; i++) { if (hay.indexOf(terms[i]) < 0) { return false; } }\n" +
-            "    return true;\n" +
-            "  }\n" +
-            "  function render() {\n" +
-            "    var q = input.value.toLowerCase().trim();\n" +
-            "    var terms = q ? q.split(/\\s+/) : [];\n" +
-            "    shown = entries.filter(function (e) { return matches(e, terms); });\n" +
-            "    if (q) {\n" +
-            "      shown.sort(function (a, b) {\n" +
-            "        var sa = a.label.toLowerCase().indexOf(q) === 0 ? 0 : 1, sb = b.label.toLowerCase().indexOf(q) === 0 ? 0 : 1;\n" +
-            "        return sa - sb;\n" +
-            "      });\n" +
-            "    }\n" +
-            "    shown = shown.slice(0, 60);\n" +
-            "    selected = Math.min(selected, Math.max(0, shown.length - 1));\n" +
-            "    list.textContent = '';\n" +
-            "    if (shown.length === 0) {\n" +
-            "      var empty = document.createElement('li');\n" +
-            "      empty.className = 'sk-palette-empty';\n" +
-            "      empty.textContent = 'No matches';\n" +
-            "      list.appendChild(empty);\n" +
+            "    if (first) { first.classList.add('sk-nav-first'); }\n" +
+            "    var empty = document.querySelector('.sk-sidebar .sk-nav-empty');\n" +
+            "    if (empty) { empty.hidden = !(terms.length && !first); }\n" +
+            "    return first;\n" +
+            "  };\n" +
+            "  function navSearch() { return document.querySelector('.sk-sidebar .sk-nav-search-input'); }\n" +
+            "  document.addEventListener('keydown', function (e) {\n" +
+            "    var input = navSearch();\n" +
+            "    if (!input) { return; }\n" +
+            "    if (e.target === input) {\n" +
+            "      if (e.key === 'Enter') {\n" +
+            "        e.preventDefault();\n" +
+            "        var first = window.sokratesFilterNav(input.value);\n" +
+            "        if (first) { input.value = ''; window.sokratesFilterNav(''); input.blur(); first.click(); }\n" +
+            "      } else if (e.key === 'Escape') {\n" +
+            "        e.preventDefault(); input.value = ''; window.sokratesFilterNav(''); input.blur();\n" +
+            "      }\n" +
             "      return;\n" +
             "    }\n" +
-            "    shown.forEach(function (entry, i) {\n" +
-            "      var li = document.createElement('li');\n" +
-            "      li.className = 'sk-palette-item' + (i === selected ? ' selected' : '');\n" +
-            "      li.setAttribute('role', 'option');\n" +
-            "      li.setAttribute('aria-selected', i === selected ? 'true' : 'false');\n" +
-            "      [['sk-palette-kind', entry.kind], ['sk-palette-label', entry.label], ['sk-palette-context', entry.context]].forEach(function (part) {\n" +
-            "        var span = document.createElement('span');\n" +
-            "        span.className = part[0];\n" +
-            "        span.textContent = part[1];\n" +
-            "        li.appendChild(span);\n" +
-            "      });\n" +
-            "      li.addEventListener('mousemove', function () { if (selected !== i) { selected = i; highlight(); } });\n" +
-            "      li.addEventListener('click', function () { choose(i); });\n" +
-            "      list.appendChild(li);\n" +
-            "    });\n" +
-            "  }\n" +
-            "  function highlight() {\n" +
-            "    var items = list.querySelectorAll('.sk-palette-item');\n" +
-            "    for (var i = 0; i < items.length; i++) {\n" +
-            "      items[i].classList.toggle('selected', i === selected);\n" +
-            "      items[i].setAttribute('aria-selected', i === selected ? 'true' : 'false');\n" +
-            "    }\n" +
-            "    if (items[selected]) { items[selected].scrollIntoView({block: 'nearest'}); }\n" +
-            "  }\n" +
-            "  function choose(i) {\n" +
-            "    var entry = shown[i];\n" +
-            "    window.sokratesClosePalette();\n" +
-            "    if (entry) { entry.run(); }\n" +
-            "  }\n" +
-            "  function build() {\n" +
-            "    palette = document.createElement('div');\n" +
-            "    palette.className = 'sk-palette';\n" +
-            "    palette.hidden = true;\n" +
-            "    var dialog = document.createElement('div');\n" +
-            "    dialog.className = 'sk-palette-dialog';\n" +
-            "    dialog.setAttribute('role', 'dialog');\n" +
-            "    dialog.setAttribute('aria-modal', 'true');\n" +
-            "    dialog.setAttribute('aria-label', 'Search the report');\n" +
-            "    input = document.createElement('input');\n" +
-            "    input.className = 'sk-palette-input';\n" +
-            "    input.type = 'text';\n" +
-            "    input.placeholder = 'Search pages, tabs, sections and commands…';\n" +
-            "    input.setAttribute('aria-label', 'Search');\n" +
-            "    list = document.createElement('ul');\n" +
-            "    list.className = 'sk-palette-list';\n" +
-            "    list.setAttribute('role', 'listbox');\n" +
-            "    var hint = document.createElement('div');\n" +
-            "    hint.className = 'sk-palette-hint';\n" +
-            "    hint.textContent = '↑ ↓ to move · Enter to open · Esc to close';\n" +
-            "    dialog.appendChild(input); dialog.appendChild(list); dialog.appendChild(hint);\n" +
-            "    palette.appendChild(dialog);\n" +
-            "    document.body.appendChild(palette);\n" +
-            "    palette.addEventListener('mousedown', function (e) { if (e.target === palette) { window.sokratesClosePalette(); } });\n" +
-            "    input.addEventListener('input', function () { selected = 0; render(); });\n" +
-            "    input.addEventListener('keydown', function (e) {\n" +
-            "      if (e.key === 'ArrowDown') { e.preventDefault(); selected = Math.min(selected + 1, shown.length - 1); highlight(); }\n" +
-            "      else if (e.key === 'ArrowUp') { e.preventDefault(); selected = Math.max(selected - 1, 0); highlight(); }\n" +
-            "      else if (e.key === 'Enter') { e.preventDefault(); choose(selected); }\n" +
-            "      else if (e.key === 'Escape') { e.preventDefault(); window.sokratesClosePalette(); }\n" +
-            "    });\n" +
-            "  }\n" +
-            "  var returnFocus = null;\n" +
-            "  window.sokratesOpenPalette = function () {\n" +
-            "    if (!palette) { build(); }\n" +
-            "    returnFocus = document.activeElement;\n" +
-            "    entries = collect();\n" +
-            "    input.value = '';\n" +
-            "    selected = 0;\n" +
-            "    render();\n" +
-            "    palette.hidden = false;\n" +
-            "    input.focus();\n" +
-            "  };\n" +
-            "  window.sokratesClosePalette = function () {\n" +
-            "    if (!palette || palette.hidden) { return; }\n" +
-            "    palette.hidden = true;\n" +
-            "    if (returnFocus && returnFocus.focus) { try { returnFocus.focus(); } catch (e) {} }\n" +
-            "  };\n" +
-            "  document.addEventListener('keydown', function (e) {\n" +
             "    var typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '') || (e.target && e.target.isContentEditable);\n" +
-            "    if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {\n" +
+            "    if (((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) || (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey && !e.altKey)) {\n" +
             "      e.preventDefault();\n" +
-            "      if (palette && !palette.hidden) { window.sokratesClosePalette(); } else { window.sokratesOpenPalette(); }\n" +
-            "    } else if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) {\n" +
-            "      e.preventDefault();\n" +
-            "      window.sokratesOpenPalette();\n" +
+            "      if (window.matchMedia && window.matchMedia('(max-width: 900px)').matches) { window.sokratesToggleNav(true); }\n" +
+            "      input.focus();\n" +
+            "      input.select();\n" +
             "    }\n" +
             "  });\n" +
             "})();\n";

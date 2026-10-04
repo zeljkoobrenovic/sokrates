@@ -5,6 +5,15 @@ everything listed under the most recent date.
 
 ## 2026-10-04
 
+### Search filters the sidebar, no popup
+
+The **Search** field at the top of the report sidebar now filters the sidebar's own items in place as
+you type: groups without a match are hidden, Enter opens the first match, and Esc clears. ⌘K / Ctrl+K
+or `/` still put the cursor in it. The popup command palette, which also searched the current page's
+tabs and section titles and offered theme, colour and print commands, is gone. Those commands remain
+on the theme button, the colour-blind checkbox and the browser's print. Landscape pages, which have no
+sidebar, no longer have a search.
+
 ### File Size report: large files that change often
 
 The **File Size** report has a new section, **Large Files That Change Often**, after the longest files.

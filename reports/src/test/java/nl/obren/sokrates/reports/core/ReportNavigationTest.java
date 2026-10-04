@@ -84,7 +84,9 @@ class ReportNavigationTest {
 
         assertTrue(html.contains("<span class='sk-nav-icon'><svg width='16' height='16'"));
         assertTrue(html.contains("<span class='sk-nav-icon'></span><span class='sk-nav-label'>File Size</span>"));
-        assertTrue(html.contains("class='sk-search-button' onclick='sokratesOpenPalette()'"));
+        assertTrue(html.contains("class='sk-nav-search-input'"));
+        assertTrue(html.contains("oninput='sokratesFilterNav(this.value)'"));
+        assertFalse(html.contains("sokratesOpenPalette"));
         assertTrue(html.contains("class='sk-nav-toggle'"));
     }
 }

@@ -56,7 +56,7 @@ public class ReportFileExporter {
     }
 
     // The index's tab strip; the sidebar (repositoryNavigation) replaces it on screen, so it is hidden
-    // (sk-index-tabs) but still marks the active tab for openTab and the command palette.
+    // (sk-index-tabs) but still marks the active tab for openTab.
     private static void addTabStrip(RichTextReport indexReport, List<CustomTab> customTabs) {
         indexReport.addHtmlContent("<div class=\"tab sk-index-tabs\">");
         indexReport.addTab("overview", "Overview", true);
