@@ -1,0 +1,59 @@
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportComponents.java
+  s_96ca349cadeb3e::t_a0af737539ec8d 60-61,63
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/AgentContextReportGenerator.java
+  s_96ca349cadeb3e::t_039c1379bca333 222-223
+  s_96ca349cadeb3e::t_6baef7f3f4dff9 219,240-241
+  s_96ca349cadeb3e::t_e67014d5339688 1-11,13,18-19,21-27,32-33,36-45,47-48,50-53,59-74,83,85-86,107-109,114,151,156,160-164,166-167,180-182,186-187,193-199,201-205,210,213,215-218,224-239,242-244,264-265,269-270,273-274,278-295,314-323,329-345,372-375,377,379-382,384,386-391
+  s_96ca349cadeb3e::t_94d355fbf8b1db 89
+  s_96ca349cadeb3e::t_b114618e1e47e0 206-209,211
+  s_96ca349cadeb3e::t_67b7a1226dcdac 14,383,385
+  s_96ca349cadeb3e::t_1e01a66ab263d9 212
+  s_96ca349cadeb3e::t_ff871e1074a9f7 106,179
+  s_96ca349cadeb3e::t_c812d783540b0f 12,15-17,20,28-31,34-35,46,49,54-58,75-82,84,87-88,90-105,110-113,115-150,152-155,157-159,165,168-178,183-185,188-192,200,214,220-221,245-263,266-268,271-272,275-277,296-313,324-328,346-371,376,378
+docs/dev/agent-context-cost-report-plan.md
+  s_96ca349cadeb3e::t_f616c989d36702 3
+  s_96ca349cadeb3e::t_4ac5ddb033026b 1-2,4,13-112
+  s_96ca349cadeb3e::t_b0f78a418d59cd 5-12
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportFileExporter.java
+  s_96ca349cadeb3e::t_f9d7815dbbb27f 501,514,530
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/BasicSourceCodeReportGenerator.java
+  s_96ca349cadeb3e::t_f9d7815dbbb27f 36,93,127,190,195
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportNavigation.java
+  s_96ca349cadeb3e::t_f9d7815dbbb27f 45
+CHANGELOG.md
+  s_96ca349cadeb3e::t_c89b838fb8e84a 16-28
+  s_96ca349cadeb3e::t_2c7ff2a575c444 8-15,29-37
+reports/src/main/java/nl/obren/sokrates/reports/utils/RiskDistributionStatsReportUtils.java
+  s_96ca349cadeb3e::t_ff871e1074a9f7 31-35,37-41,56,62-63
+reports/src/test/java/nl/obren/sokrates/reports/core/AgentContextSummaryTest.java
+  s_96ca349cadeb3e::t_9e74091676817c 55-57
+  s_96ca349cadeb3e::t_8c98d1000caad5 77-81,113-114
+  s_96ca349cadeb3e::t_52ca592e76cceb 1-54,58-76,82-112,115-154,157-161,163-192
+  s_96ca349cadeb3e::t_71dabfa2872fde 155-156,162
+reports/src/main/java/nl/obren/sokrates/reports/dataexporters/ReferencedFiles.java
+  s_96ca349cadeb3e::t_f9d7815dbbb27f 7,17-18,40
+reports/src/main/java/nl/obren/sokrates/reports/core/AgentContextSummary.java
+  s_96ca349cadeb3e::t_5ffbec28d418c4 1-29,31-39,41-182,184-185,190-192,197-211,213-311,317-379,397-472,483-526,528-532,535-543
+  s_96ca349cadeb3e::t_9e74091676817c 183,212,312-316
+  s_96ca349cadeb3e::t_8c98d1000caad5 30,40,186-189,193-196,380-396
+  s_96ca349cadeb3e::t_67b7a1226dcdac 473-482
+  s_96ca349cadeb3e::t_94d355fbf8b1db 527,533-534
+CLAUDE.md
+  s_96ca349cadeb3e::t_7e2e1359c0bb20 208
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "efdead00f104c28430e586f697346f11b497aeea",
+  "prompts": {},
+  "sessions": {
+    "s_96ca349cadeb3e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab257b52-3f95-493b-821e-4d238c9931c7",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
