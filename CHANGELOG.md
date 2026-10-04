@@ -5,6 +5,13 @@ everything listed under the most recent date.
 
 ## 2026-10-04
 
+### Files explorer: long file names are cut
+
+In the files explorer, a file or folder name longer than the column (420px) ends with "…", and the full
+name shows on hover, so a very long name no longer pushes the columns on the right out of view. The
+folder line now also shows for short folders: before, it was empty unless the folder was over 50
+characters.
+
 ### The Overview shows the configured logo
 
 The header of the repository's At a Glance and of the landscape's Overview now shows the configured

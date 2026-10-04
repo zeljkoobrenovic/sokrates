@@ -54,6 +54,13 @@
             overflow: hidden;
         }
 
+        /* Long file and folder names are cut with an ellipsis (full name on hover), so the columns on the right stay visible. */
+        .sk-file-line {
+            max-width: 420px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         .sortable {
             cursor: pointer;
             user-select: none;
@@ -640,18 +647,14 @@
             const fileName = paths[paths.length - 1];
             let folder = paths.slice(0, paths.length - 1).join('/');
             html += '<div style="border-left: 1px solid var(--sk-border); padding-left: 6px">';
-            let displayFolder = '';
-            if (folder && folder.length > 50) {
-                displayFolder = folder.substring(0, 50) + '...';
-            }
-            html += '<div title="' + esc(folder) + '" style="font-size: 90%; color: var(--sk-text-muted)">' + esc(displayFolder) + '</div>';
+            html += '<div class="sk-file-line" title="' + esc(folder) + '" style="font-size: 90%; color: var(--sk-text-muted)">' + esc(folder) + '</div>';
             // File name: link to the cached source page when available, otherwise plain bold text.
             // (sourceFileLink is percent-encoded by the generator; escaping it is defense in depth.)
             if (saveSourceFiles && item.sourceFileLink) {
-                html += '<div style="margin-bottom: 2px"><a href="' + esc(item.sourceFileLink) + '" target="_blank" '
+                html += '<div class="sk-file-line" title="' + esc(fileName) + '" style="margin-bottom: 2px"><a href="' + esc(item.sourceFileLink) + '" target="_blank" '
                     + 'style="color: var(--sk-accent); font-weight: bold">' + esc(fileName) + ' <span style="font-size: 60%; color: var(--sk-text-muted)">&#x2197;</span></a></div>';
             } else {
-                html += '<div style="margin-bottom: 2px; color: var(--sk-text); font-weight: bold">' + esc(fileName) + '</div>';
+                html += '<div class="sk-file-line" title="' + esc(fileName) + '" style="margin-bottom: 2px; color: var(--sk-text); font-weight: bold">' + esc(fileName) + '</div>';
             }
             html += '</div>';
             html += '</td>';
