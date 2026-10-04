@@ -130,6 +130,15 @@
     }
 
     function render(children) {
+        // Laid out in a hidden frame (0x0) the circles would get the minimum size: wait until the frame is shown.
+        if (!window.innerWidth || !window.innerHeight) {
+            window.addEventListener('resize', function whenShown() {
+                if (!window.innerWidth || !window.innerHeight) { return; }
+                window.removeEventListener('resize', whenShown);
+                render(children);
+            });
+            return;
+        }
         hideSpinner();
         // Fit the circles to the frame (its smaller side) instead of a fixed 960px, so an embedded view
         // (the report's Structure tab) has no scrollbar and no empty space below.

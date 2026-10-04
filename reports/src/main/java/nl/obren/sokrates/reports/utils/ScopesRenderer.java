@@ -14,12 +14,9 @@ import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.metrics.NumericMetric;
 import org.apache.commons.lang3.StringUtils;
 
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 public class ScopesRenderer {
     private List<String> aspectsFileListPaths;
@@ -166,32 +163,23 @@ public class ScopesRenderer {
                 getSvgBars(report, renderingList);
                 report.endDiv();
 
-                if (inSection) report.endSection();
+                if (inSection) {
+                    if (describe) {
+                        // The scope details close the sub-section, below the bars.
+                        renderScopeDetailsBlock(report);
+                    }
+                    report.endSection();
+                }
             }
         }
     }
 
-    /** The optional intro fragment, the criteria/matches details and the biggest/smallest items. */
+    /** The optional intro fragment and the explorer links (the scope details follow the bars). */
     private void renderIntro(RichTextReport report, String extraIntroHtmlFragment, List<ScopeRendererItem> renderingList) {
         if (StringUtils.isNotBlank(extraIntroHtmlFragment)) {
             report.addHtmlContent(extraIntroHtmlFragment);
         }
-        renderDetails(report, false);
-        if (renderingList.size() > 1) {
-            report.startUnorderedList();
-            NumericMetric firstMetric = renderingList.get(0).getLinesOfCode();
-            double firstPercentage = 100.0 * firstMetric.getValue().doubleValue() / linesCount;
-            DecimalFormat decimalFormat = new DecimalFormat("##.##");
-            decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.ENGLISH));
-            report.addListItem("\"" + HtmlEscapeUtils.escape(firstMetric.getName()) + "\" is biggest, containing <b>" + decimalFormat.format(firstPercentage) + "%</b> of " + metric + ".");
-            if (renderingList.size() >= 2) {
-                NumericMetric lastMetric = renderingList.get(renderingList.size() - 1).getLinesOfCode();
-                double lastPercentage = 100.0 * lastMetric.getValue().doubleValue() / linesCount;
-                report.addListItem("\"" + HtmlEscapeUtils.escape(lastMetric.getName()) + "\" is smallest, containing <b>" + decimalFormat.format(lastPercentage) + "%</b> of " + metric + ".");
-            }
-            report.endUnorderedList();
-        }
-        report.addLineBreak();
+        renderExplorerLinks(report);
         report.addLineBreak();
     }
 
@@ -280,6 +268,14 @@ public class ScopesRenderer {
             report.addHtmlContent("<h3>" + title + "</h3>");
         }
         renderExplorerLinks(report);
+        report.addLineBreak();
+        renderScopeDetailsBlock(report);
+    }
+
+    // The collapsed "scope details..." block: the selection criteria, the description and the matches.
+    private void renderScopeDetailsBlock(RichTextReport report) {
+        report.addLineBreak();
+        report.startDetailsBlock("scope details...");
         boolean criteriaDefined = aspect != null && aspect.getSourceFileFilters().size() > 0;
         if (criteriaDefined) {
             renderCriteria(report);
@@ -288,22 +284,23 @@ public class ScopesRenderer {
             report.startUnorderedList();
             report.addListItem("There are no \"" + title.toLowerCase() + "\" files.");
             report.endUnorderedList();
-            return;
-        }
-        if (StringUtils.isNotBlank(description)) {
+        } else {
+            if (StringUtils.isNotBlank(description)) {
+                report.startUnorderedList();
+                report.addListItem(description);
+                report.endUnorderedList();
+            }
             report.startUnorderedList();
-            report.addListItem(description);
+            if (criteriaDefined) {
+                renderMatchesSummary(report);
+            } else {
+                report.addListItem("<b>" + RichTextRenderingUtils.renderNumber(filesCount) + "</b> files, " +
+                        "<b>" + RichTextRenderingUtils.renderNumber(linesCount) + "</b> " + metric + " ("
+                        + "<b>" + RichTextRenderingUtils.renderNumber(maxLinesOfCode > 0 ? 100.0 * linesCount / maxLinesOfCode : 0) + "%</b> vs. main code).");
+            }
             report.endUnorderedList();
         }
-        report.startUnorderedList();
-        if (criteriaDefined) {
-            renderMatchesSummary(report);
-        } else {
-            report.addListItem("<b>" + RichTextRenderingUtils.renderNumber(filesCount) + "</b> files, " +
-                    "<b>" + RichTextRenderingUtils.renderNumber(linesCount) + "</b> " + metric + " ("
-                    + "<b>" + RichTextRenderingUtils.renderNumber(maxLinesOfCode > 0 ? 100.0 * linesCount / maxLinesOfCode : 0) + "%</b> vs. main code).");
-        }
-        report.endUnorderedList();
+        report.endDetailsBlock();
     }
 
     private void renderExplorerLinks(RichTextReport report) {
@@ -320,9 +317,11 @@ public class ScopesRenderer {
     private void renderCriteria(RichTextReport report) {
         report.startUnorderedList();
         report.addListItem("The following criteria are used to filter files:");
+
         report.startUnorderedList();
         aspect.getSourceFileFilters().forEach(filter -> report.addListItem(describeFilters(filter)));
         report.endUnorderedList();
+
         report.endUnorderedList();
     }
 

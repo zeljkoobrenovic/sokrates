@@ -32,29 +32,6 @@ public class ConditionalComplexityReportGenerator {
         RiskDistributionStats unitMcCabeDistribution = unitsAnalysisResults.getConditionalComplexityRiskDistribution();
         report.setDescription("The distribution of complexity of units (measured with McCabe index).");
 
-        report.startSection("Intro", "");
-        report.startUnorderedList();
-        // "\"Conditional complexity\" (also called cyclomatic complexity) is a term used to measure the complexity of software. The term refers to the number of possible paths through a program function; a higher value means higher maintenance and testing costs."
-        report.addListItem("Conditional complexity (also called cyclomatic complexity) is a term used to measure the complexity of software. The term refers to the number of possible paths through a program function. A higher value ofter means higher maintenance and testing costs (<a href='https://resources.infosecinstitute.com/conditional-complexity-of-risk-models/#gref'>infosecinstitute.com</a>).");
-        report.addListItem("Conditional complexity is calculated by counting all conditions in the program that can affect the execution path (e.g. if statement, loops, switches, and/or operators, try and catch blocks...).");
-        report.addListItem("Conditional complexity is measured at the unit level (methods, functions...).");
-        report.addListItem("Units are classified in four categories based on the measured McCabe index: " +
-                "1-5 (simple units), 6-10 (medium complex units), 11-25 (complex units), 26+ (very complex units).");
-        report.endUnorderedList();
-        report.startDetailsBlock("Learn more...");
-        report.startUnorderedList();
-        report.addListItem("To learn more about conditional complexity and techniques for reducing this type of complexity, Sokrates recommends the following resources:");
-        report.startUnorderedList();
-        report.addListItem("<a target='_blank' href='https://sourcemaking.com/refactoring/simplifying-conditional-expressions'>Simplifying Conditional Expressions</a>, sourcemaking.com");
-        report.addListItem("<a target='_blank' href='https://en.wikipedia.org/wiki/Cyclomatic_complexity'>Cyclomatic Complexity</a>, wikipedia.org");
-
-        report.endUnorderedList();
-        report.endUnorderedList();
-
-        report.endDetailsBlock();
-
-        report.endSection();
-
         // "https://www.wrightfully.com/thoughts-on-cyclomatic-complexity/"
 
         report.startSection("Conditional Complexity Overall", "");
@@ -112,6 +89,33 @@ public class ConditionalComplexityReportGenerator {
         report.startScrollingDiv();
         report.addHtmlContent(UtilsReportUtils.getUnitsTable(mostComplexUnits, "most_complex_units", cacheFiles, saveCodeFragments).toString());
         report.endDiv();
+        report.endSection();
+
+        addAboutSection(report);
+    }
+
+    private void addAboutSection(RichTextReport report) {
+        report.startSection("About This Analysis", "");
+        report.startUnorderedList();
+        // "\"Conditional complexity\" (also called cyclomatic complexity) is a term used to measure the complexity of software. The term refers to the number of possible paths through a program function; a higher value means higher maintenance and testing costs."
+        report.addListItem("Conditional complexity (also called cyclomatic complexity) is a term used to measure the complexity of software. The term refers to the number of possible paths through a program function. A higher value ofter means higher maintenance and testing costs (<a href='https://resources.infosecinstitute.com/conditional-complexity-of-risk-models/#gref'>infosecinstitute.com</a>).");
+        report.addListItem("Conditional complexity is calculated by counting all conditions in the program that can affect the execution path (e.g. if statement, loops, switches, and/or operators, try and catch blocks...).");
+        report.addListItem("Conditional complexity is measured at the unit level (methods, functions...).");
+        report.addListItem("Units are classified in four categories based on the measured McCabe index: " +
+                "1-5 (simple units), 6-10 (medium complex units), 11-25 (complex units), 26+ (very complex units).");
+        report.endUnorderedList();
+        report.startDetailsBlock("Learn more...");
+        report.startUnorderedList();
+        report.addListItem("To learn more about conditional complexity and techniques for reducing this type of complexity, Sokrates recommends the following resources:");
+        report.startUnorderedList();
+        report.addListItem("<a target='_blank' href='https://sourcemaking.com/refactoring/simplifying-conditional-expressions'>Simplifying Conditional Expressions</a>, sourcemaking.com");
+        report.addListItem("<a target='_blank' href='https://en.wikipedia.org/wiki/Cyclomatic_complexity'>Cyclomatic Complexity</a>, wikipedia.org");
+
+        report.endUnorderedList();
+        report.endUnorderedList();
+
+        report.endDetailsBlock();
+
         report.endSection();
     }
 

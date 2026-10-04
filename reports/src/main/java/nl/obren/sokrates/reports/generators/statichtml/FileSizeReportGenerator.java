@@ -38,30 +38,6 @@ public class FileSizeReportGenerator {
 
     public void addFileSizeToReport(RichTextReport report) {
         report.setDescription("The distribution of size of files (measured in lines of code).");
-        report.startSection("Intro", "");
-        report.startUnorderedList();
-        report.addListItem("File size measurements show the distribution of size of files.");
-        report.addListItem("Files are classified in four categories based on their size (lines of code): " +
-                fileSizeThresholds.getNegligibleRiskLabel() + " (very small files), " +
-                fileSizeThresholds.getLowRiskLabel() + " (small files), " +
-                fileSizeThresholds.getMediumRiskLabel() + " (medium size files), " +
-                fileSizeThresholds.getHighRiskLabel() + " (long files), " +
-                fileSizeThresholds.getVeryHighRiskLabel() + "(very long files).");
-        report.addListItem("It is a good practice to keep files small. Long files may become \"bloaters\", code that have increased to such gargantuan proportions that they are hard to work with.");
-        report.endUnorderedList();
-        report.endUnorderedList();
-
-        report.startDetailsBlock("Learn more...");
-        report.startUnorderedList();
-        report.addListItem("To learn more about bloaters and how to deal with long code structures, Sokrates recommends the following resources:");
-        report.startUnorderedList();
-        report.addListItem("<a target='_blank' href='https://sourcemaking.com/refactoring/smells/bloaters'>Refactoring bloaters</a>, sourcemaking.com");
-        report.addListItem("<a target='_blank' href='https://sourcemaking.com/antipatterns/the-blob'>The Blob Software Development Anti-Pattern</a>, sourcemaking.com");
-
-        report.endUnorderedList();
-        report.endUnorderedList();
-        report.endDetailsBlock();
-        report.endSection();
 
         ProcessingStopwatch.start("reporting/file size/overall");
         addGraphOverall(report, codeAnalysisResults.getFilesAnalysisResults().getOverallFileSizeDistribution());
@@ -134,6 +110,35 @@ public class FileSizeReportGenerator {
             ProcessingStopwatch.end("reporting/file size/correlations");
             report.endSection();
         }
+
+        addAboutSection(report);
+    }
+
+    private void addAboutSection(RichTextReport report) {
+        report.startSection("About This Analysis", "");
+        report.startUnorderedList();
+        report.addListItem("File size measurements show the distribution of size of files.");
+        report.addListItem("Files are classified in four categories based on their size (lines of code): " +
+                fileSizeThresholds.getNegligibleRiskLabel() + " (very small files), " +
+                fileSizeThresholds.getLowRiskLabel() + " (small files), " +
+                fileSizeThresholds.getMediumRiskLabel() + " (medium size files), " +
+                fileSizeThresholds.getHighRiskLabel() + " (long files), " +
+                fileSizeThresholds.getVeryHighRiskLabel() + "(very long files).");
+        report.addListItem("It is a good practice to keep files small. Long files may become \"bloaters\", code that have increased to such gargantuan proportions that they are hard to work with.");
+        report.endUnorderedList();
+        report.endUnorderedList();
+
+        report.startDetailsBlock("Learn more...");
+        report.startUnorderedList();
+        report.addListItem("To learn more about bloaters and how to deal with long code structures, Sokrates recommends the following resources:");
+        report.startUnorderedList();
+        report.addListItem("<a target='_blank' href='https://sourcemaking.com/refactoring/smells/bloaters'>Refactoring bloaters</a>, sourcemaking.com");
+        report.addListItem("<a target='_blank' href='https://sourcemaking.com/antipatterns/the-blob'>The Blob Software Development Anti-Pattern</a>, sourcemaking.com");
+
+        report.endUnorderedList();
+        report.endUnorderedList();
+        report.endDetailsBlock();
+        report.endSection();
     }
 
     private long countContributors(FileModificationHistory p, int rangeInDays) {

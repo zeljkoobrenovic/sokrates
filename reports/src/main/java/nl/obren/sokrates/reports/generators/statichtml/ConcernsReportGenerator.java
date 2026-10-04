@@ -40,11 +40,12 @@ public class ConcernsReportGenerator {
 
     public void addConcernsToReport(RichTextReport report) {
         this.report = report;
-        addIntro(report);
+        report.setDescription("Aspects in the source code identified through RegEx patterns.");
 
         addSummary(report);
 
         addConcernsGroup(report);
+        addAboutSection(report);
     }
 
     private void addSummary(RichTextReport report) {
@@ -92,9 +93,8 @@ public class ConcernsReportGenerator {
         });
     }
 
-    private void addIntro(RichTextReport report) {
-        report.setDescription("Aspects in the source code identified through RegEx patterns.");
-        report.startSection("Intro", "");
+    private void addAboutSection(RichTextReport report) {
+        report.startSection("About This Analysis", "");
         report.startUnorderedList();
         report.addListItem("Features of interest are any aspects of a software system that can be identified through patterns in code.");
         report.addListItem("Features of interest provide you with a way to focus your attention on relevant parts of the codebase.");

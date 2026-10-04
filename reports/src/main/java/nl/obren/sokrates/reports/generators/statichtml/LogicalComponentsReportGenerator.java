@@ -65,23 +65,8 @@ public class LogicalComponentsReportGenerator {
         } else {
             report.setDescription("An overview of static code dependencies among source code logical components.");
         }
-        report.startSection("Intro", "");
-        if (elaborate) {
-            appendIntroduction();
-        }
-        report.endSection();
 
-        report.startSection("Logical Decompositions Overview", "");
         List<LogicalDecompositionAnalysisResults> logicalDecompositionsAnalysisResults = codeAnalysisResults.getLogicalDecompositionsAnalysisResults();
-        int size = logicalDecompositionsAnalysisResults.size();
-        report.addParagraph("Analyzed system has <b>" + size + "</b> logical decomposition" + (size > 1 ? "s" : "") + ":");
-        report.startUnorderedList();
-        logicalDecompositionsAnalysisResults.forEach(logicalDecomposition -> {
-            int componentsCount = logicalDecomposition.getComponents().size();
-            report.addListItemText(logicalDecomposition.getLogicalDecomposition().getName() + " (" + componentsCount + " component" + (componentsCount > 1 ? "s" : "") + ")");
-        });
-        report.endUnorderedList();
-        report.endSection();
 
         report.startTabGroup();
         boolean active[] = {true};
@@ -102,6 +87,11 @@ public class LogicalComponentsReportGenerator {
             report.endTabContentSection();
         });
         report.endSection();
+        report.startSection("About This Analysis", "");
+        if (elaborate) {
+            appendIntroduction();
+        }
+        report.endSection();
     }
 
     private void analyzeLogicalDecomposition(int sectionIndex, LogicalDecompositionAnalysisResults logicalDecomposition) {
@@ -118,24 +108,27 @@ public class LogicalComponentsReportGenerator {
         ScopesRenderer renderer = new ScopesRenderer();
         renderer.setLinesOfCodeInMain(codeAnalysisResults.getMainAspectAnalysisResults().getLinesOfCode());
 
-        renderer.setTitle("Component Sizes (Lines of Code)");
-        renderer.setDescription("");
-        renderer.setFileCountPerComponent(fileCountPerComponent);
+        if (forceSkipStaticDependencies) {
 
-        renderer.setLinesOfCode(linesOfCodePerComponent);
-        renderer.setMaxFileCount(codeAnalysisResults.getMaxFileCount());
-        renderer.setMaxLinesOfCode(codeAnalysisResults.getMaxLinesOfCode());
-        List<AspectAnalysisResults> components = logicalDecomposition.getComponents();
-        String filePathPrefix = DataExportUtils.getComponentFilePrefix(logicalDecomposition.getKey());
-        renderer.setAspectsFileListPaths(components.stream().map(aspect -> aspect.getAspect().getFileSystemFriendlyName(filePathPrefix)).collect(Collectors.toList()));
-        renderer.renderReport(report, "The \"" + logicalDecomposition.getLogicalDecomposition().getName() + "\" logical decomposition has <b>" + logicalDecomposition.getLogicalDecomposition().getComponents().size() + "</b> components.");
+            renderer.setTitle("Component Sizes (Lines of Code)");
+            renderer.setDescription("");
+            renderer.setFileCountPerComponent(fileCountPerComponent);
 
-        List<MetaRule> metaComponents = logicalDecomposition.getLogicalDecomposition().getMetaComponents();
-        if (metaComponents.size() > 0) {
-            report.startSubSection("Meta-Rules for Componentization", "");
-            report.addListItem("The following explicit meta-rules for components are defined:");
-            describeMetaRules(metaComponents);
-            report.endSection();
+            renderer.setLinesOfCode(linesOfCodePerComponent);
+            renderer.setMaxFileCount(codeAnalysisResults.getMaxFileCount());
+            renderer.setMaxLinesOfCode(codeAnalysisResults.getMaxLinesOfCode());
+            List<AspectAnalysisResults> components = logicalDecomposition.getComponents();
+            String filePathPrefix = DataExportUtils.getComponentFilePrefix(logicalDecomposition.getKey());
+            renderer.setAspectsFileListPaths(components.stream().map(aspect -> aspect.getAspect().getFileSystemFriendlyName(filePathPrefix)).collect(Collectors.toList()));
+            renderer.renderReport(report, "The \"" + logicalDecomposition.getLogicalDecomposition().getName() + "\" logical decomposition has <b>" + logicalDecomposition.getLogicalDecomposition().getComponents().size() + "</b> components.");
+
+            List<MetaRule> metaComponents = logicalDecomposition.getLogicalDecomposition().getMetaComponents();
+            if (metaComponents.size() > 0) {
+                report.startSubSection("Meta-Rules for Componentization", "");
+                report.addListItem("The following explicit meta-rules for components are defined:");
+                describeMetaRules(metaComponents);
+                report.endSection();
+            }
         }
 
         if (!forceSkipStaticDependencies) {
@@ -275,9 +268,10 @@ public class LogicalComponentsReportGenerator {
         List<ComponentGroup> componentGroups = getComponentGroups(logicalDecomposition, dependenciesAboveThreshold, componentsAboveThreshold);
         String graphId = addDependencyGraphVisuals(dependenciesAboveThreshold, componentsAboveThreshold, componentGroups, graphvizDependencyRenderer);
         report.addLineBreak();
-        report.addNewTabLink("Open 2D force graph...", "visuals/force_2d_" + graphId + ".html");
-        report.addLineBreak();
-        report.addNewTabLink("Open 3D force graph...", "visuals/force_3d_" + graphId + ".html");
+        report.addHtmlContent("Explore: ");
+        report.addNewTabLink("2D force graph", "visuals/force_2d_" + graphId + ".html");
+        report.addHtmlContent(" | ");
+        report.addNewTabLink("3D force graph", "visuals/force_3d_" + graphId + ".html");
 
         if (componentGroups.size() > 0) {
             report.addLevel4Header("Group Dependencies");
@@ -291,13 +285,8 @@ public class LogicalComponentsReportGenerator {
         report.addLineBreak();
         report.addLineBreak();
         addMoreDetailsSection(logicalDecomposition, componentDependencies);
-        report.addLineBreak();
-        report.addLineBreak();
 
         new IndirectDependenciesRenderer(report, this::addDependencyGraphVisuals).renderIndirectDependencies(componentNames, graphvizDependencyRenderer, renderingOptions, renderWithoutDependencies, dependenciesAboveThreshold);
-        report.addLineBreak();
-        report.addLineBreak();
-        report.addLineBreak();
     }
 
     /** The link count, its meaning, the data file link, the cyclic dependencies and how the dependencies were found. */

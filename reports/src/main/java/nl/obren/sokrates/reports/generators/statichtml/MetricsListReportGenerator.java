@@ -17,8 +17,9 @@ public class MetricsListReportGenerator {
         this.codeAnalysisResults = codeAnalysisResults;
         this.report = report;
 
-        addIntro();
+        report.setDescription("All numeric values measured by Sokrates.");
         addMetricsTable();
+        addAboutSection();
 
         return report;
     }
@@ -38,9 +39,8 @@ public class MetricsListReportGenerator {
         report.endSection();
     }
 
-    private void addIntro() {
-        report.setDescription("All numeric values measured by Sokrates.");
-        report.startSection("Intro", "");
+    private void addAboutSection() {
+        report.startSection("About This Analysis", "");
         report.startUnorderedList();
         report.addListItem("Metrics are all numeric values measured by Sokrates.");
         report.addListItem("You can use these metrics to define <a href='Controls.html'>goals and controls</a>.");

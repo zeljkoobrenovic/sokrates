@@ -65,7 +65,6 @@ public class OverviewReportGenerator {
 
         report.startSection("Overview of Analyzed Files", "Basic stats on analyzed files");
         report.startSubSection("Intro", "For analysis purposes we separate files in scope into several categories: <b>main</b>, <b>test</b>, <b>generated</b>, <b>deployment and build</b>, and <b>other</b>.");
-        appendIntroduction(report);
         ScopesRenderer renderer = getScopesRenderer("", "", counts, code, "");
         renderer.setInSection(false);
         renderer.setTitle("All Files in Scope");
@@ -103,15 +102,17 @@ public class OverviewReportGenerator {
     }
 
     private void addFooter(RichTextReport report) {
-        report.addLineBreak();
-        report.addHorizontalLine();
-        report.addParagraph(RichTextRenderingUtils.italic(new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date())));
     }
 
 
     public void renderAnalyzersInfo(RichTextReport report, CodeAnalysisResults results) {
-        report.startSection("Analyzers", "Info about analyzers used for source code examinations.");
+        report.startSection("About This Analysis", "");
 
+        report.startDetailsBlock("learn more about scopes (main, test, generated, build, other)...");
+        appendIntroduction(report);
+        report.endDetailsBlock();
+
+        report.startDetailsBlock("learn more about used code analyzers...");
         report.startUnorderedList();
         results.getMainAspectAnalysisResults().getFileCountPerExtension().forEach(extension -> {
             String extensionString = extension.getName().replace("*.", "").trim().toLowerCase();
@@ -125,6 +126,8 @@ public class OverviewReportGenerator {
             report.endUnorderedList();
         });
         report.endUnorderedList();
+        report.endDetailsBlock();
+        report.endSection();
     }
 
     public void renderScopes(RichTextReport report, AspectAnalysisResults aspectAnalysisResults, String title, String description, String explorers) {
@@ -174,8 +177,14 @@ public class OverviewReportGenerator {
         report.startSection("Source Code Analysis Scope", "Files includes and excluded from analyses");
         List<String> extensions = codeAnalysisResults.getCodeConfiguration().getExtensions();
         addLanguageIcons(report, extensions);
+
+        report.addLineBreak();
+        report.startDetailsBlock("scoping details...");
+
         report.startUnorderedList();
         int extensionsCount = extensions.size();
+
+
         report.addListItem("<b>" + extensionsCount + "</b> extension" + (extensionsCount > 1 ? "s are" : " is") + " included in analyses: " + getExtensionsString(extensions));
         addExclusionsItem(report);
         report.endUnorderedList();
@@ -186,6 +195,7 @@ public class OverviewReportGenerator {
         report.addListItem("<a target='_blank' href='../explorers/files-explorer.html'><b>Explore all files...</b></a>.");
         report.endUnorderedList();
 
+        report.endDetailsBlock();
 
         report.endSection();
     }

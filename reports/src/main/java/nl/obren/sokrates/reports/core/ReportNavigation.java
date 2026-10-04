@@ -110,6 +110,23 @@ public class ReportNavigation {
         return null;
     }
 
+    /** The "Open in new tab" link of the item with this id, or null. */
+    public String subtitleLinkOf(String id) {
+        for (Group group : groups) {
+            for (Item item : group.items) {
+                if (item.id.equals(id)) {
+                    return item.subtitleLink;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** The header's link that opens a page in a new browser tab (escaped; the href must be safe). */
+    public static String openInNewTabHtml(String href) {
+        return "<a class='sk-open-new-tab' target='_blank' rel='noopener' href='" + HtmlEscapeUtils.escape(href) + "'>Open in new tab ↗</a>";
+    }
+
     /** The sidebar icon of the item with this id at the given size (empty when it has none). */
     public String iconOf(String id, int size) {
         for (Group group : groups) {
@@ -186,8 +203,17 @@ public class ReportNavigation {
 
         /** An index tab with the subtitle the page header shows while the tab is open. */
         public Group addTabItem(String tab, String label, String href, String icon, String subtitle) {
+            return addTabItem(tab, label, href, icon, subtitle, null);
+        }
+
+        /**
+         * An index tab whose header subtitle ends with an "Open in new tab" link to subtitleLink (e.g. the
+         * page a custom tab embeds); the caller passes only safe (http/https/relative) links.
+         */
+        public Group addTabItem(String tab, String label, String href, String icon, String subtitle, String subtitleLink) {
             Item item = new Item(tab, label, href, icon, tab);
             item.subtitle = subtitle;
+            item.subtitleLink = subtitleLink;
             items.add(item);
             return this;
         }
@@ -208,6 +234,7 @@ public class ReportNavigation {
         private final String icon;
         private final String tab;
         private String subtitle;
+        private String subtitleLink;
 
         Item(String id, String label, String href, String icon, String tab) {
             this.id = id;
@@ -237,6 +264,9 @@ public class ReportNavigation {
             if (tab != null) {
                 html.append(" data-sk-tab='").append(HtmlEscapeUtils.escape(tab)).append("'");
                 html.append(" data-sk-subtitle='").append(HtmlEscapeUtils.escape(subtitle == null ? "" : subtitle)).append("'");
+                if (subtitleLink != null) {
+                    html.append(" data-sk-subtitle-link='").append(HtmlEscapeUtils.escape(subtitleLink)).append("'");
+                }
             }
             if (active) {
                 html.append(" aria-current='page'");

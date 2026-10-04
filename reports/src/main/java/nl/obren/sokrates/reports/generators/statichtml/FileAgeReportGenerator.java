@@ -53,6 +53,8 @@ public class FileAgeReportGenerator {
         addMostPreviouslyChangedFilesList(report);
         addYoungestFilesList(report);
         addMostRecentlyChangedFilesList(report);
+
+        addSummary(report);
     }
 
     private void addSummary(RichTextReport report) {
@@ -114,8 +116,6 @@ public class FileAgeReportGenerator {
     }
 
     private void addOverallSections(RichTextReport report) {
-        addSummary(report);
-
         report.startSection("File Change History Overall", "");
         addAgeGraphOverall(report, codeAnalysisResults.getFilesHistoryAnalysisResults().getOverallFileFirstModifiedDistribution(),
                 FILE_AGE_DISTRIBUTION + " Overall", FILE_AGE_DESCRIPTION, Palette.getAgePalette());

@@ -132,7 +132,6 @@ public class DuplicationReportGenerator {
 
     public void addDuplicationToReport(RichTextReport report) {
         this.report = report;
-        addIntro(report);
 
         if (codeAnalysisResults.skipDuplicationAnalysis()) {
             report.addParagraph("Duplication analysis has been skipped.");
@@ -157,6 +156,7 @@ public class DuplicationReportGenerator {
         ProcessingStopwatch.start("reporting/duplication/duplicated units");
         addDuplicatedUnitsList(report);
         ProcessingStopwatch.end("reporting/duplication/duplicated units");
+        addIntro(report);
     }
 
     private void addDuplicatedUnitsList(RichTextReport report) {
@@ -207,6 +207,9 @@ public class DuplicationReportGenerator {
     }
 
     private void addOverallDuplicationSection(RichTextReport report) {
+        int locDuplicationThreshold = codeAnalysisResults.getCodeConfiguration().getAnalysis().getMinDuplicationBlockLoc();
+        report.setDescription("Places in code with " + locDuplicationThreshold + " or more lines that " +
+                "are exactly the same.");
         DuplicationAnalysisResults duplicationAnalysisResults = codeAnalysisResults.getDuplicationAnalysisResults();
 
         report.startSection("Duplication Overall", "");
@@ -233,9 +236,7 @@ public class DuplicationReportGenerator {
 
     private void addIntro(RichTextReport report) {
         int locDuplicationThreshold = codeAnalysisResults.getCodeConfiguration().getAnalysis().getMinDuplicationBlockLoc();
-        report.setDescription("Places in code with " + locDuplicationThreshold + " or more lines that " +
-                "are exactly the same.");
-        report.startSection("Intro", "");
+        report.startSection("About This Analysis", "");
         report.startUnorderedList();
         report.addListItem("For duplication, we look at places in code where there are " + locDuplicationThreshold + " or more lines of code that are exactly the same.");
         report.addListItem("Before duplication is calculated, the code is cleaned to remove empty lines, comments, and frequently duplicated constructs such as imports.");

@@ -160,13 +160,6 @@ public class FileTemporalDependenciesReportGenerator {
 
     private void addDependenciesSection(RichTextReport report, List<FilePairChangedTogether> filePairsChangedTogether, String id) {
         report.startDiv("margin: 10px;");
-
-        report.startSubSection("Dependencies between files in same commits", "The number on the lines shows the number of shared commits.");
-        renderFileDependencies(report, filePairsChangedTogether, id);
-        report.endSection();
-        report.endDiv();
-
-        report.startDiv("margin: 10px;");
         int index[] = {0};
         codeAnalysisResults.getLogicalDecompositionsAnalysisResults().forEach(logicalDecompositionAnalysisResults -> {
             index[0] += 1;
@@ -181,6 +174,13 @@ public class FileTemporalDependenciesReportGenerator {
 
             report.endSection();
         });
+        report.endDiv();
+
+        report.startDiv("margin: 10px;");
+
+        report.startSubSection("Dependencies between files in same commits", "The number on the lines shows the number of shared commits.");
+        renderFileDependencies(report, filePairsChangedTogether, id);
+        report.endSection();
         report.endDiv();
     }
 
@@ -254,7 +254,7 @@ public class FileTemporalDependenciesReportGenerator {
 
             VisualizationTools.addDownloadLinks(report, graphId);
             report.addLineBreak();
-            Pair<String,String> force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(dependencies, reportsFolder, graphId);
+            Pair<String, String> force3DGraphFilePath = ForceGraphExporter.export3DForceGraph(dependencies, reportsFolder, graphId);
             report.addNewTabLink("Open 2D force graph (file dependencies)...", force3DGraphFilePath.getFirst());
             report.addNewTabLink("Open 3D force graph (file dependencies)...", force3DGraphFilePath.getSecond());
             report.addLineBreak();

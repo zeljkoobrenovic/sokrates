@@ -38,6 +38,8 @@ import static nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils.UNCLASSIF
 
 public class SummaryUtils {
     private static final int BAR_WIDTH = 260;
+    // The found tags (tagRules) are still analyzed and exported, just not shown in the summary for now.
+    private static final boolean SHOW_TAGS = false;
     private static final int BAR_HEIGHT = 20;
     private String reportRoot = "";
 
@@ -66,7 +68,9 @@ public class SummaryUtils {
 
         report.startDiv("width: 100%; overflow-x: auto; margin-top: -10px");
         report.startTable("border: none; min-width: 800px; width: 100%");
-        summarizeTags(analysisResults, report);
+        if (SHOW_TAGS) {
+            summarizeTags(analysisResults, report);
+        }
         addSectionTitleRow(report, "Standard analyses:", 2, "border: none; padding-top: 0px");
         summarizeMainVolume(analysisResults, report);
         if (mainExists) {
@@ -79,14 +83,20 @@ public class SummaryUtils {
         if (showControls) {
             summarizeGoals(analysisResults, report);
         }
+
+        report.addHtmlContent("<tr><td>&nbsp;</td></tr>");
+
+        addSectionTitleRow(report, "Experimental analyses (less reliable heuristic analyses):", 3, "border: none; padding-top: 12px");
         if (showUnits) {
-            addSectionTitleRow(report, "Experimental analyses (less reliable heuristic analyses):", 3, "border: none; padding-top: 12px");
             summarizeUnitSize(analysisResults, report);
             summarizeUnitComplexity(analysisResults, report);
-            summarizeComponents(analysisResults, report, true);
         }
-        summarizeFeaturesOfInterest(analysisResults, report);
+        summarizeComponents(analysisResults, report, true);
+
+        // summarizeFeaturesOfInterest(analysisResults, report);
+
         addSummaryFindings(analysisResults, report);
+
         report.endTable();
         report.endDiv();
     }

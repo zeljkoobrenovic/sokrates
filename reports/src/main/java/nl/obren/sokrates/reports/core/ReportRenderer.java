@@ -92,6 +92,10 @@ public class ReportRenderer {
             String tabSubtitle = richTextReport.getNavigation().subtitleOf(richTextReport.getNavigationActiveId());
             String subtitleHtml = tabSubtitle != null ? HtmlEscapeUtils.escape(tabSubtitle)
                     : StringUtils.defaultString(richTextReport.getDescription());
+            String subtitleLink = richTextReport.getNavigation().subtitleLinkOf(richTextReport.getNavigationActiveId());
+            if (subtitleLink != null) {
+                subtitleHtml += " · " + ReportNavigation.openInNewTabHtml(subtitleLink);
+            }
             content.append("<div class='sk-report-description' data-sk-page-subtitle>" + subtitleHtml + "</div>");
         } else {
             content.append("<div class='sk-report-title'>" +

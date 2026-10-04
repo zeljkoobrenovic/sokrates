@@ -121,7 +121,13 @@
             for (i = 0; i < tablinks.length; i++) {
                 tablinks[i].className = tablinks[i].className.replace(" active", "");
             }
-            document.getElementById(cityName).style.display = "flex";
+            var tab = document.getElementById(cityName);
+            tab.style.display = "flex";
+            // A tab's circles load when the tab is first shown: laid out in a hidden frame they would
+            // measure 0x0 and fall back to the smallest size.
+            tab.querySelectorAll("iframe[data-src]").forEach(function (f) {
+                if (!f.getAttribute("src")) { f.setAttribute("src", f.getAttribute("data-src")); }
+            });
             evt.currentTarget.className += " active";
         }
     </script>
@@ -192,7 +198,7 @@
                 </tr>
             </table>
         </div>
-        <iframe src="visuals/zoomable_circles.html#main"
+        <iframe data-src="visuals/zoomable_circles.html#main"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
@@ -254,7 +260,7 @@
                 </tr>
             </table>
         </div>
-        <iframe src="visuals/zoomable_circles.html#main_update_frequency_coloring"
+        <iframe data-src="visuals/zoomable_circles.html#main_update_frequency_coloring"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
@@ -279,7 +285,7 @@
                 </tr>
             </table>
         </div>
-        <iframe src="visuals/zoomable_circles.html#main_contributors_count_coloring"
+        <iframe data-src="visuals/zoomable_circles.html#main_contributors_count_coloring"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
@@ -304,7 +310,7 @@
                 </tr>
             </table>
         </div>
-        <iframe src="visuals/zoomable_circles.html#main_loc_coloring"
+        <iframe data-src="visuals/zoomable_circles.html#main_loc_coloring"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
@@ -329,7 +335,7 @@
                 </tr>
             </table>
         </div>
-        <iframe src="visuals/zoomable_circles.html#main_age_coloring"
+        <iframe data-src="visuals/zoomable_circles.html#main_age_coloring"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
@@ -354,7 +360,7 @@
                 </tr>
             </table>
         </div>
-        <iframe src="visuals/zoomable_circles.html#main_freshness_coloring"
+        <iframe data-src="visuals/zoomable_circles.html#main_freshness_coloring"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
@@ -373,7 +379,7 @@
                 </tr>
             </table>
         </div>
-        <iframe src="visuals/zoomable_circles.html#test"
+        <iframe data-src="visuals/zoomable_circles.html#test"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
@@ -392,7 +398,7 @@
                 </tr>
             </table>
         </div>
-        <iframe src="visuals/zoomable_circles.html#build"
+        <iframe data-src="visuals/zoomable_circles.html#build"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
@@ -411,7 +417,7 @@
                 </tr>
             </table>
         </div>
-        <iframe src="visuals/zoomable_circles.html#generated"
+        <iframe data-src="visuals/zoomable_circles.html#generated"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
@@ -430,7 +436,7 @@
                 </tr>
             </table>
         </div>
-        <iframe src="visuals/zoomable_circles.html#other"
+        <iframe data-src="visuals/zoomable_circles.html#other"
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>

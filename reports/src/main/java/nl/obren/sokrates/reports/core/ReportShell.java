@@ -102,7 +102,17 @@ public class ReportShell {
             "    if (!label || !title) { return; }\n" +
             "    title.textContent = label.textContent;\n" +
             "    var subtitle = document.querySelector('[data-sk-page-subtitle]');\n" +
-            "    if (subtitle) { subtitle.textContent = item.getAttribute('data-sk-subtitle') || ''; }\n" +
+            "    if (subtitle) {\n" +
+            "      subtitle.textContent = item.getAttribute('data-sk-subtitle') || '';\n" +
+            "      var link = item.getAttribute('data-sk-subtitle-link');\n" +
+            "      if (link) {\n" +
+            "        var a = document.createElement('a');\n" +
+            "        a.className = 'sk-open-new-tab'; a.target = '_blank'; a.rel = 'noopener'; a.href = link;\n" +
+            "        a.textContent = 'Open in new tab \\u2197';\n" +
+            "        subtitle.appendChild(document.createTextNode(' \\u00b7 '));\n" +
+            "        subtitle.appendChild(a);\n" +
+            "      }\n" +
+            "    }\n" +
             "    var icon = item.querySelector('.sk-nav-icon svg'), headerIcon = document.querySelector('[data-sk-page-icon]');\n" +
             "    if (headerIcon) {\n" +
             "      headerIcon.textContent = '';\n" +

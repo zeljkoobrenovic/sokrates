@@ -213,7 +213,7 @@ public class ReportConstants {
             "\n" +
             "        details {\n" +
             "            padding: 8px;\n" +
-            "            margin: 8px;\n" +
+            "            margin: 8px 0;\n" +
             "            border: 1px solid var(--sk-border);\n" +
             "            background-color: var(--sk-surface-2);\n" +
             "            border-radius: 8px;\n" +
@@ -229,6 +229,14 @@ public class ReportConstants {
             "\n" +
             "        .sk-report-header td {\n" +
             "            background: transparent;\n" +
+            "        }\n" +
+            "\n" +
+            "        .sk-report-header a.sk-open-new-tab {\n" +
+            "            color: var(--sk-link);\n" +
+            "        }\n" +
+            "\n" +
+            "        .sk-report-header a.sk-open-new-tab:hover {\n" +
+            "            text-decoration: underline;\n" +
             "        }\n" +
             "\n" +
             "        .sk-report-header a, .sk-report-header a:hover {\n" +
@@ -253,6 +261,7 @@ public class ReportConstants {
             "            height: 72px;\n" +
             "            color: var(--sk-text);\n" +
             "            vertical-align: middle;\n" +
+            "            padding-top: 18px;\n" +
             "        }\n" +
             "\n" +
             "        .sk-report-description {\n" +

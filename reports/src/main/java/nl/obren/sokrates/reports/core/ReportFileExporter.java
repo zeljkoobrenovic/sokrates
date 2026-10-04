@@ -9,7 +9,6 @@ import nl.obren.sokrates.common.utils.FormattingUtils;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
-import nl.obren.sokrates.reports.utils.PromptsUtils;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -36,7 +35,6 @@ public class ReportFileExporter {
     static String htmlReportsSubFolder = "html";
 
     public static void exportReportsIndexFile(File reportsFolder, CodeAnalysisResults analysisResults, File sokratesConfigFolder) {
-        List<String[]> reportList = getReportsList(analysisResults, sokratesConfigFolder);
         File htmlExportFolder = getHtmlReportsFolder(reportsFolder);
         Metadata metadata = analysisResults.getCodeConfiguration().getMetadata();
         RichTextReport indexReport = new RichTextReport(metadata.getName(), "", metadata.getLogoLink());
@@ -48,7 +46,7 @@ public class ReportFileExporter {
         addTabStrip(indexReport, customTabs);
         addOverviewTab(indexReport, analysisResults);
         addHighlightsTab(indexReport, analysisResults);
-        addAnalysesTab(indexReport, analysisResults, reportList, htmlExportFolder);
+        addAnalysesTab(indexReport, analysisResults);
         addExplorerTabs(indexReport, customTabs);
         ReportActivityTab.addActivityTab(indexReport, analysisResults);
         addVisualsAndDataTabs(indexReport, analysisResults, htmlExportFolder);
@@ -63,7 +61,7 @@ public class ReportFileExporter {
         indexReport.addHtmlContent("<div class=\"tab sk-index-tabs\">");
         indexReport.addTab("overview", "Overview", true);
         indexReport.addTab("highlights", "Highlights", false);
-        indexReport.addTab("quality", "Analyses", false);
+        indexReport.addTab("quality", "Analysis Summary", false);
         indexReport.addTab("structure", "Structure", false);
         indexReport.addTab("commits", "Activity", false);
         indexReport.addTab("files", "Files", false);
@@ -140,18 +138,12 @@ public class ReportFileExporter {
         indexReport.endTabContentSection();
     }
 
-    private static void addAnalysesTab(RichTextReport indexReport, CodeAnalysisResults analysisResults, List<String[]> reportList, File htmlExportFolder) {
+    private static void addAnalysesTab(RichTextReport indexReport, CodeAnalysisResults analysisResults) {
         indexReport.startTabContentSection("quality", false);
         indexReport.addLineBreak();
         indexReport.startDiv("margin: 10px");
         summarize(indexReport, analysisResults);
         indexReport.addLineBreak();
-        indexReport.endDiv();
-        indexReport.startDiv("margin: 24px");
-        indexReport.addLevel2Header("All Analysis Reports");
-        for (String[] report : reportList) {
-            addReportFragment(htmlExportFolder, indexReport, report);
-        }
         indexReport.endDiv();
 
         indexReport.endTabContentSection();
@@ -202,7 +194,6 @@ public class ReportFileExporter {
         indexReport.startDiv("margin: 24px");
         ReportDataTab.addData(indexReport, analysisResults);
         indexReport.endDiv();
-        addPrompts(indexReport, analysisResults);
         indexReport.endTabContentSection();
     }
 
@@ -230,24 +221,6 @@ public class ReportFileExporter {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-    }
-
-    private static void addPrompts(RichTextReport report, CodeAnalysisResults analysisResults) {
-        report.addLineBreak();
-        report.startDiv("margin: 20px");
-        report.addLevel2Header("AI Prompts", "");
-        report.addParagraph("Generative AI tools, like ChatGPT or Gemini, can help you explore and discuss various aspects of source code repositories using simple prompts and file uploads. Sokrates provides you with curated data that you can use to analyze your source code further.", "color: grey; font-size: 90%; margin-top: 0");
-
-        report.startDiv("margin: 6px");
-        PromptsUtils.addRepositoryPromptSection("git-history-analyzer", report, analysisResults, "Example Prompt 1: Repository Evolution Analyzer (based on git history)", "", Arrays.asList(new Link[]{new Link("git-history.zip", "../data/zips/git-history.zip")}));
-
-        PromptsUtils.addRepositoryPromptSection("path-name-conventions-analyzer", report, analysisResults, "Example Prompt 2: File name conventions", "", Arrays.asList(new Link("files.json", "../data/files.json")));
-
-        PromptsUtils.addRepositoryPromptSection("technology-analyzer", report, analysisResults, "Example Prompt 3: Technology analyzer (based of file paths)", "", Arrays.asList(new Link("files.json", "../data/files.json")));
-
-        report.endDiv();
-
-        report.endDiv();
     }
 
     // Renders the language icons for a scope inside its activity panel (replacing the old single
@@ -406,39 +379,6 @@ public class ReportFileExporter {
         return svg;
     }
 
-    private static void addReportFragment(File reportsFolder, RichTextReport indexReport, String[] report) {
-        String reportFileName = report[0];
-        String reportTitle = report[1];
-        File reportFile = new File(reportsFolder, reportFileName);
-        boolean showReport = reportFile.exists() && StringUtils.isNotBlank(reportFileName);
-
-        if (showReport) {
-            indexReport.addHtmlContent("<a style='text-decoration: none' href=\"" + reportFileName + "\">");
-            indexReport.addHtmlContent("<div class='group' style='border-radius: 8px; padding: 0px 20px 5px 20px; margin: 10px; width: 130px; height: 175px; text-align: center; display: inline-block; vertical-align: top'>");
-        } else {
-            indexReport.addHtmlContent("<div class='group' style='border-radius: 8px; padding: 0px 20px 5px 20px; margin: 10px; width: 130px; height: 175px; text-align: center; display: inline-block; vertical-align: top; opacity: 0.4'>");
-        }
-
-        indexReport.startDiv("padding: 20px;");
-        if (StringUtils.isNotBlank(report[2])) {
-            indexReport.addHtmlContent(getIconSvg(report[2]));
-        } else {
-            indexReport.addHtmlContent(ReportConstants.REPORT_SVG_ICON);
-        }
-        indexReport.endDiv();
-        if (showReport) {
-            indexReport.startDiv("color: var(--sk-link, blue); ");
-            indexReport.addHtmlContent("<b>" + reportTitle + "</b>");
-            indexReport.endDiv();
-            indexReport.addHtmlContent("</a>");
-        } else {
-            indexReport.startDiv("");
-            indexReport.addHtmlContent("<b>" + reportTitle + "</b>");
-            indexReport.endDiv();
-        }
-        indexReport.endDiv();
-    }
-
     static List<CustomTab> getCustomTabs(CodeAnalysisResults analysisResults) {
         List<CustomTab> tabs = new ArrayList<>();
         CodeConfiguration configuration = analysisResults.getCodeConfiguration();
@@ -453,8 +393,41 @@ public class ReportFileExporter {
         return "custom-tab-" + (index + 1);
     }
 
+    /**
+     * The custom tab's iframe link for "Open in new tab": http(s) or relative links only (the link comes
+     * from the configuration; a javascript: or data: URL gets no link). Null when not safe or blank.
+     */
+    static String customTabLink(String iframeLink) {
+        if (StringUtils.isBlank(iframeLink)) {
+            return null;
+        }
+        String link = iframeLink.trim();
+        String scheme = link.matches("^[A-Za-z][A-Za-z0-9+.-]*:.*") ? link.substring(0, link.indexOf(':')).toLowerCase() : "";
+        return scheme.isEmpty() || scheme.equals("http") || scheme.equals("https") ? link : null;
+    }
+
+    // "Embedded from <host>" for an absolute link, "Embedded page" otherwise.
+    static String customTabSubtitle(String link) {
+        if (link != null) {
+            try {
+                String host = new java.net.URI(link).getHost();
+                if (StringUtils.isNotBlank(host)) {
+                    return "Embedded from " + host;
+                }
+            } catch (java.net.URISyntaxException e) {
+                // not a parsable URI: fall through to the generic subtitle
+            }
+        }
+        return "Embedded page";
+    }
+
     static String customTabIframe(CustomTab tab) {
-        return "<iframe src='" + HtmlEscapeUtils.escape(tab.getIframeLink().trim()) + "' style='width: 100%; border: none; height: calc(100vh - 220px); overflow: hidden; margin-top: -12px'></iframe>";
+        String link = customTabLink(tab.getIframeLink());
+        if (link == null) {
+            // Same rule as the "Open in new tab" link: a javascript: or data: URL is not embedded.
+            return "<p style='color: var(--sk-text-muted); margin: 20px'>This tab's link is not an http(s) or relative URL, so it is not embedded.</p>";
+        }
+        return "<iframe src='" + HtmlEscapeUtils.escape(link) + "' style='width: 100%; border: none; height: calc(100vh - 220px); overflow: hidden;'></iframe>";
     }
 
     private static void addExplorerFragment(RichTextReport indexReport, String explorer[]) {
@@ -513,10 +486,7 @@ public class ReportFileExporter {
 
     // The available reports, in display order, followed by the greyed placeholders of what is not available.
     private static final List<ReportEntry> REPORT_ENTRIES = Arrays.asList(
-            new ReportEntry("SourceCodeOverview.html", "Source Code Overview", "codebase", a -> true),
-            new ReportEntry("Components.html", "Components", "code_organization", a -> a.mainExists),
-            new ReportEntry("ComponentsAndDependencies.html", "Component Dependencies*", "dependencies", a -> a.mainExists && a.dependencies),
-            new ReportEntry("FileTemporalDependencies.html", "Temporal Dependencies", "temporal_dependency", a -> a.mainExists && a.history),
+            new ReportEntry("SourceCodeOverview.html", "Code Volume", "codebase", a -> true),
             new ReportEntry("Duplication.html", "Duplication", "duplication", a -> a.duplication),
             new ReportEntry("FileSize.html", "File Size", "file_size", a -> a.mainExists),
             new ReportEntry("FileAge.html", "File Age & Freshness", "file_history", a -> a.history),
@@ -524,11 +494,13 @@ public class ReportFileExporter {
             new ReportEntry("Commits.html", "Commits", "commits", a -> a.history),
             new ReportEntry("Contributors.html", "Contributors", "contributors", a -> a.history),
             new ReportEntry("UnitSize.html", "Unit Size*", "unit_size", a -> a.units),
-            new ReportEntry("ConditionalComplexity.html", "Conditional Complexity*", "conditional", a -> a.units),
+            new ReportEntry("ConditionalComplexity.html", "Unit Complexity*", "conditional", a -> a.units),
+            new ReportEntry("Components.html", "Logical Components", "code_organization", a -> a.mainExists),
+            new ReportEntry("FileTemporalDependencies.html", "Temporal Dependencies", "temporal_dependency", a -> a.mainExists && a.history),
+            new ReportEntry("ComponentsAndDependencies.html", "Static Dependencies*", "dependencies", a -> a.mainExists && a.dependencies),
             new ReportEntry("FeaturesOfInterest.html", "Features of Interest", "cross_cutting_concerns", a -> a.concerns),
-            new ReportEntry("Metrics.html", "All Metrics", "metrics", a -> true),
             new ReportEntry("Controls.html", "Goals & Controls", "goal", a -> a.controls),
-            new ReportEntry("Notes.html", "Notes & Findings", "notes", a -> a.findings),
+            new ReportEntry("Metrics.html", "All Metrics", "metrics", a -> true),
             new ReportEntry("", "Components and Dependencies", "dependencies", a -> !a.mainExists && a.dependencies),
             new ReportEntry("", "Components", "dependencies", a -> !a.mainExists && !a.dependencies),
             new ReportEntry("", "Duplication", "duplication", a -> !a.duplication),
@@ -541,8 +513,7 @@ public class ReportFileExporter {
             new ReportEntry("", "Conditional Complexity", "conditional", a -> !a.units),
             new ReportEntry("ComponentsAndDependencies.html", "Component Dependencies*", "dependencies", a -> !a.dependencies),
             new ReportEntry("", "Features of Interest", "cross_cutting_concerns", a -> !a.concerns),
-            new ReportEntry("", "Goals & Controls", "goal", a -> !a.controls),
-            new ReportEntry("", "Notes & Findings", "notes", a -> !a.findings));
+            new ReportEntry("", "Goals & Controls", "goal", a -> !a.controls));
 
     // Sidebar icon (ReportNavigation) per analysis report.
     private static final Map<String, String> NAVIGATION_ICONS = new HashMap<>();
@@ -582,15 +553,17 @@ public class ReportFileExporter {
         String overviewSubtitle = StringUtils.isNotBlank(metadata.getDescription())
                 ? metadata.getDescription() : "Size, age and recent activity of the codebase.";
         report.addTabItem("overview", "Overview", "index.html#overview", "overview", overviewSubtitle);
-        report.addTabItem("highlights", "Highlights", "index.html#highlights", "highlights",
-                "Headline numbers with a status, and the files most worth looking at first.");
         report.addTabItem("structure", "Structure", "index.html#structure", "structure",
                 "The codebase as nested circles: folders and files sized by lines of code, colored by scope or risk.");
         report.addTabItem("commits", "Activity", "index.html#commits", "activity",
                 "Commits, contributors and code churn over time, per year, month, week and day.");
+        report.addTabItem("highlights", "Highlights", "index.html#highlights", "highlights",
+                "Headline numbers with a status, and the files most worth looking at first.");
         List<CustomTab> customTabs = getCustomTabs(analysisResults);
         for (int i = 0; i < customTabs.size(); i++) {
-            report.addTabItem(customTabId(i), customTabs.get(i).getLabel(), "index.html#" + customTabId(i), "custom");
+            String link = customTabLink(customTabs.get(i).getIframeLink());
+            report.addTabItem(customTabId(i), customTabs.get(i).getLabel(), "index.html#" + customTabId(i), "custom",
+                    customTabSubtitle(link), link);
         }
         ReportNavigation.Group explorers = navigation.addGroup("Explorers");
         explorers.addTabItem("files", "File Explorer", "index.html#files", "files",
@@ -600,7 +573,7 @@ public class ReportFileExporter {
         explorers.addTabItem("commits-explorer", "Commit Explorer", "index.html#commits-explorer", "commits",
                 "Browse the commits and see which files each one changed.");
         ReportNavigation.Group analyses = navigation.addGroup("Analyses");
-        analyses.addTabItem("quality", "Summary", "index.html#quality", "analyses",
+        analyses.addTabItem("quality", "Analysis Summary", "index.html#quality", "analyses",
                 "A short summary of every analysis, with links to the full reports.");
         for (String[] entry : getReportsList(analysisResults, sokratesConfigFolder)) {
             if (StringUtils.isNotBlank(entry[0])) {
