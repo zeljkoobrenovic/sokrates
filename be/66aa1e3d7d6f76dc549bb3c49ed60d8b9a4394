@@ -1,0 +1,76 @@
+CLAUDE.md
+  s_223e7b216451e0::t_a08c9ded828cce 123
+reports/src/test/resources/golden/controls-report-empty.html
+  s_223e7b216451e0::t_d12af23aceda08 2
+reports/src/test/resources/golden/controls-report-populated.html
+  s_223e7b216451e0::t_d12af23aceda08 2-3
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportNavigation.java
+  s_223e7b216451e0::t_97c468c595241c 113-129,206-213,216,237,267-269
+reports/src/main/resources/templates/Structure.html
+  s_223e7b216451e0::t_8432bb972a9513 124-130,201,263,288,313,338,363,382,401,420,439
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportConstants.java
+  s_223e7b216451e0::t_6158d4b32c68a1 234-241
+  s_223e7b216451e0::t_76f673ca78435b 216
+  s_223e7b216451e0::t_c0fc075f466ac6 264
+reports/src/test/resources/golden/metrics-list-report.html
+  s_223e7b216451e0::t_d12af23aceda08 2
+reports/src/main/java/nl/obren/sokrates/reports/utils/ScopesRenderer.java
+  s_223e7b216451e0::t_b41acf6407d79e 166-172,177,182,271-276,287-292,294-300
+  s_223e7b216451e0::t_32225e2e6c3d61 277
+  s_223e7b216451e0::t_661a6ad4f64bae 278,303,320,324
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportShell.java
+  s_223e7b216451e0::t_97c468c595241c 105-115
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportFileExporter.java
+  s_223e7b216451e0::t_6158d4b32c68a1 425-430
+  s_223e7b216451e0::t_4b0fb7a1ba2709 49,141
+  s_223e7b216451e0::t_e2d3447236dd98 64,576
+  s_223e7b216451e0::t_97c468c595241c 396-423,564-566
+  s_223e7b216451e0::t_fda8825b420317 489,497-500,503,516,560-561
+reports/src/main/java/nl/obren/sokrates/reports/core/SummaryUtils.java
+  s_223e7b216451e0::t_e2d3447236dd98 41-42,71-73
+  s_223e7b216451e0::t_0a671d550b26f3 86-89,94-97,99
+common/src/main/resources/vis_templates/zoomable_circles.html
+  s_223e7b216451e0::t_8432bb972a9513 133-141
+reports/src/test/java/nl/obren/sokrates/reports/core/CustomTabLinkTest.java
+  s_223e7b216451e0::t_4112c3fe7d61ed 1-49
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportRenderer.java
+  s_223e7b216451e0::t_97c468c595241c 95-98
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/ConcernsReportGenerator.java
+  s_223e7b216451e0::t_70930d57f5deef 43,48,96-97
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/ConditionalComplexityReportGenerator.java
+  s_223e7b216451e0::t_5347cbab4a9a66 93-119
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/ControlsReportGenerator.java
+  s_223e7b216451e0::t_1fedd77bbc3a5f 42-43,47-63
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/DuplicationReportGenerator.java
+  s_223e7b216451e0::t_f6d7b47a9da4ed 159,210-212,239
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/FileAgeReportGenerator.java
+  s_223e7b216451e0::t_ade4238eb8aac9 56-57
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/FileSizeReportGenerator.java
+  s_223e7b216451e0::t_dfe42ee74141b1 113-141
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/FileTemporalDependenciesReportGenerator.java
+  s_223e7b216451e0::t_ab73a1e0224b5c 178-184,257
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/LogicalComponentsReportGenerator.java
+  s_223e7b216451e0::t_f87ef569cf23d2 90-94,111,113-131,271-274
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/MetricsListReportGenerator.java
+  s_223e7b216451e0::t_05b2a4caf387e5 20,22,42-43
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/OverviewReportGenerator.java
+  s_223e7b216451e0::t_c15b88ddc2b20e 109,111-115,129-130,180-183,186-187,198
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/UnitsSizeReportGenerator.java
+  s_223e7b216451e0::t_02fa3a99142123 96-133
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "be66aa1e3d7d6f76dc549bb3c49ed60d8b9a4394",
+  "prompts": {},
+  "sessions": {
+    "s_223e7b216451e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "17c1a50e-ffe3-43fa-bbef-5ca8411e20a4",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
