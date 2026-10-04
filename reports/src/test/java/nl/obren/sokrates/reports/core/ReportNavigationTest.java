@@ -108,4 +108,21 @@ class ReportNavigationTest {
         assertTrue(navigation.contextLineHtml("acme/<b>repo</b>").contains(" hidden>"));
         assertFalse(navigation.contextLineHtml("Duplication").contains("hidden"));
     }
+
+    @Test
+    void subTabItemsOpenATabWithItsFramePointedAtAnotherUrl() {
+        ReportNavigation navigation = new ReportNavigation("Landscape", "index.html#overview");
+        navigation.addGroup("Landscape")
+                .addTabItem("repositories", "Repositories", "index.html#repositories", "repositories")
+                .addSubTabItem("repositories-list", "churnTrend", "Churn", "repositories", "repositories.html?tab=churnTrend", "Churn per repository.");
+        navigation.setPageTitle("repositories-list/churnTrend", "Repositories: Churn");
+
+        String html = navigation.render("repositories");
+
+        assertTrue(html.contains("class='sk-nav-item sk-nav-sub' href='index.html#repositories-list/churnTrend' data-sk-nav='repositories-list/churnTrend'"), html);
+        assertTrue(html.contains("data-sk-frame-src='repositories.html?tab=churnTrend'"));
+        assertTrue(html.contains("data-sk-tab='repositories-list'"));
+        assertEquals("Repositories: Churn", navigation.titleOf("repositories-list/churnTrend"));
+        assertEquals(navigation.iconOf("repositories", 68), navigation.iconOf("repositories-list/churnTrend", 68), "the header shows the parent's icon");
+    }
 }

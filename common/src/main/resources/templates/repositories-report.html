@@ -774,6 +774,29 @@
         document.getElementById('tabs').innerHTML = html;
     }
 
+    // Whether a tab id exists and is shown (the trend/history tabs need commits, features need concerns).
+    function isTabAvailable(id) {
+        if (id === 'features') {
+            return HAS_FEATURES;
+        }
+        if (!TABS_BY_ID[id]) {
+            return false;
+        }
+        return options.showCommits || !['churnTrend', 'commitsTrend', 'contributorsTrend', 'history'].includes(id);
+    }
+
+    // ?tab=<id> opens that tab (the landscape sidebar links to them); unknown ids keep the default.
+    function applyTabFromQuery() {
+        let tab = null;
+        try {
+            tab = new URLSearchParams(window.location.search).get('tab');
+        } catch (e) {
+        }
+        if (tab && isTabAvailable(tab)) {
+            activeTab = tab;
+        }
+    }
+
     function selectTab(id) {
         activeTab = id;
         buildTabs();
@@ -1224,6 +1247,7 @@
     // Defer the (synchronous, potentially heavy) first render one frame so the loading
     // spinner actually paints before the main thread is blocked, then swap it for the report.
     function start() {
+        applyTabFromQuery();
         applyQueryFromHash();
         buildTabs();
         render();

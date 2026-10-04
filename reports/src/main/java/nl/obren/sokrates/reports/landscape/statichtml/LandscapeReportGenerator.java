@@ -68,6 +68,10 @@ public class LandscapeReportGenerator {
     public static final String OVERVIEW_TAB_ID = "overview";
     public static final String SUB_LANDSCAPES_TAB_ID = "sub-landscapes";
     public static final String REPOSITORIES_TAB_ID = "repositories";
+    // A tab without a tab button: only repositories.html, full height, opened by the Repositories sub-items.
+    public static final String REPOSITORIES_LIST_TAB_ID = "repositories-list";
+    // The same for contributors-report.html, opened by the Contributors sub-items.
+    public static final String CONTRIBUTORS_LIST_TAB_ID = "contributors-list";
 
     public static final String CONTRIBUTORS_TAB_ID = "contributors";
     public static final String ACTIVITY_TAB_ID = "activity";
@@ -215,6 +219,8 @@ public class LandscapeReportGenerator {
         addOverviewTab();
         addSublandscapesTab();
         addRepositoriesTab(repositories);
+        addRepositoriesListTab();
+        addContributorsListTab();
         addAiInsightsTab();
         addDataTab();
 
@@ -276,8 +282,11 @@ public class LandscapeReportGenerator {
         landscapeReport.setBreadcrumbs(configuration.getBreadcrumbs());
     }
 
+    // Kept after exportData: the sidebar asks it whether repositories.html has a Features of Interest tab.
+    private LandscapeDataExport dataExport;
+
     private void exportData(LandscapeAnalysisResults landscapeAnalysisResults, File folder) {
-        LandscapeDataExport dataExport = new LandscapeDataExport(landscapeAnalysisResults, folder);
+        dataExport = new LandscapeDataExport(landscapeAnalysisResults, folder);
         dataExport.setDataOnly(dataOnly);
         dataExport.exportRepositories(customTagsMap);
         LOG.info("Exporting contributors...");
@@ -363,6 +372,43 @@ public class LandscapeReportGenerator {
         landscapeReport.endDiv();
     }
 
+    // The tabs of repositories.html as sub-items of Repositories: each opens just repositories.html
+    // (REPOSITORIES_LIST_TAB_ID) on repositories.html?tab=<id> (the same ids and conditions as the page's own tab bar).
+    private void addRepositoriesSubItems(ReportNavigation navigation, ReportNavigation.Group group) {
+        boolean commits = landscapeAnalysisResults.getCommitsCount() > 0;
+        addRepositoriesSubItem(navigation, group, "repositories", "Overview", "Size, commits and contributors per repository.");
+        if (commits) {
+            addRepositoriesSubItem(navigation, group, "churnTrend", "Churn", "Lines added and deleted per repository, recent windows and trend.");
+            addRepositoriesSubItem(navigation, group, "commitsTrend", "Commits Trend", "Commits per repository over time.");
+            addRepositoriesSubItem(navigation, group, "contributorsTrend", "Contributors Trend", "Contributors per repository over time.");
+            addRepositoriesSubItem(navigation, group, "history", "History", "Age, first and latest commits of each repository.");
+        }
+        addRepositoriesSubItem(navigation, group, "metrics", "Metrics", "Duplication, size and complexity profiles, and controls per repository.");
+        if (dataExport != null && dataExport.hasFeaturesOfInterest()) {
+            addRepositoriesSubItem(navigation, group, "features", "Features of Interest", "Where the features of interest occur across the repositories.");
+        }
+    }
+
+    private void addRepositoriesSubItem(ReportNavigation navigation, ReportNavigation.Group group, String tab, String label, String subtitle) {
+        group.addSubTabItem(REPOSITORIES_LIST_TAB_ID, tab, label, "repositories", "repositories.html?tab=" + tab, subtitle);
+        navigation.setPageTitle(REPOSITORIES_LIST_TAB_ID + "/" + tab, "Repositories: " + label);
+    }
+
+    // The tabs of contributors-report.html as sub-items of Contributors (the same ids and conditions as the
+    // page's own tab bar: the Bots tab only when there are bots).
+    private void addContributorsSubItems(ReportNavigation navigation, ReportNavigation.Group group) {
+        addContributorsSubItem(navigation, group, "recent", "Recently Active", "Contributors with commits in the past 30 days.");
+        addContributorsSubItem(navigation, group, "all", "All Time", "Everyone who ever contributed to the repositories.");
+        if (!landscapeAnalysisResults.getBots().isEmpty()) {
+            addContributorsSubItem(navigation, group, "bots", "Bots", "Automated contributors (bots), kept apart from people.");
+        }
+    }
+
+    private void addContributorsSubItem(ReportNavigation navigation, ReportNavigation.Group group, String tab, String label, String subtitle) {
+        group.addSubTabItem(CONTRIBUTORS_LIST_TAB_ID, tab, label, "contributors", "contributors-report.html?tab=" + tab, subtitle);
+        navigation.setPageTitle(CONTRIBUTORS_LIST_TAB_ID + "/" + tab, "Contributors: " + label);
+    }
+
     /**
      * The landscape's sidebar, as on the repository reports: the tabs as index.html#tab items in groups,
      * without the search field (too few items to search), the landscape's name above the page header and the generation
@@ -390,6 +436,7 @@ public class LandscapeReportGenerator {
         }
         landscape.addTabItem(REPOSITORIES_TAB_ID, "Repositories", "index.html#" + REPOSITORIES_TAB_ID, "repositories",
                 repositoriesCount + (repositoriesCount == 1 ? " repository" : " repositories") + ": size, languages and activity, searchable and sortable.");
+        addRepositoriesSubItems(navigation, landscape);
         landscape.addTabItem(ACTIVITY_TAB_ID, "Activity", "index.html#" + ACTIVITY_TAB_ID, "activity",
                 "Commits, contributors and churn over time, per year, month, week and day.");
         for (int i = 0; i < configuration.getCustomTabs().size(); i++) {
@@ -401,6 +448,7 @@ public class LandscapeReportGenerator {
         people.addTabItem(CONTRIBUTORS_TAB_ID, "Contributors", "index.html#" + CONTRIBUTORS_TAB_ID, "contributors",
                 (recentContributorsCount > 0 ? recentContributorsCount + " contributors active in the past 30 days; " : "")
                         + "everyone who contributed, and the bots.");
+        addContributorsSubItems(navigation, people);
         if (teamsConfig.getTeams().size() > 0) {
             people.addTabItem(TEAMS_TAB_ID, "Teams", "index.html#" + TEAMS_TAB_ID, "teams",
                     (recentTeamsCount > 0 ? recentTeamsCount + " teams active in the past 30 days; " : "") + "the configured teams and their members.");
@@ -534,6 +582,24 @@ public class LandscapeReportGenerator {
     // blocks (repository counts by recency window) on top, then the searchable repositories list,
     // then repositories grouped by extension and tags, then the deeper statistics visuals and the
     // configured iframes.
+    // Just repositories.html (the sidebar's Repositories sub-items point it at one of its tabs), without the
+    // rest of the Repositories tab; loaded on first show (data-sk-src), filling the window below the header.
+    private void addRepositoriesListTab() {
+        addFullPageFrameTab(REPOSITORIES_LIST_TAB_ID, "repositories.html");
+    }
+
+    // Just contributors-report.html, for the Contributors sub-items (Recently Active, All Time, Bots).
+    private void addContributorsListTab() {
+        addFullPageFrameTab(CONTRIBUTORS_LIST_TAB_ID, "contributors-report.html");
+    }
+
+    private void addFullPageFrameTab(String tabId, String page) {
+        landscapeReport.startTabContentSection(tabId, false);
+        landscapeReport.addHtmlContent("<iframe data-sk-src='" + page + "' frameborder=0 "
+                + "style='width: 100%; height: calc(100vh - 190px); min-height: 600px; margin: 0; padding: 0; border: 0;'></iframe>");
+        landscapeReport.endTabContentSection();
+    }
+
     private void addRepositoriesTab(List<RepositoryAnalysisResults> repositories) {
         landscapeReport.startTabContentSection(REPOSITORIES_TAB_ID, false);
         LOG.info("Adding repository section...");

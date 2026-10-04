@@ -5,6 +5,22 @@ everything listed under the most recent date.
 
 ## 2026-10-04
 
+### Hide and show the sidebar
+
+On a wide screen, the sidebar of repository and landscape reports can be hidden with the small button
+at its top right; the menu button at the top left brings it back, and so do ⌘K / Ctrl+K and `/`.
+The choice is remembered in the browser for all reports. On narrow screens the sidebar stays a drawer,
+as before.
+
+### Landscape sidebar: the repositories and contributors lists' tabs
+
+Under **Repositories**, the landscape sidebar lists the tabs of the repositories list: Overview, Churn,
+Commits Trend, Contributors Trend, History, Metrics and, when configured, Features of Interest. Each
+opens just that list (`repositories.html?tab=…`), full height, without the rest of the Repositories tab.
+The links can be bookmarked (`index.html#repositories-list/churnTrend`), and `repositories.html?tab=…`
+also works on its own. **Contributors** has the same kind of sub-items for the contributors list:
+Recently Active, All Time and, when there are bots, Bots (`contributors-report.html?tab=…`).
+
 ### The Overview is titled with the configured name
 
 The Overview of a repository report ("At a Glance" in the sidebar) and of a landscape report now shows

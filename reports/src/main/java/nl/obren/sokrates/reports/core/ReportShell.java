@@ -49,6 +49,9 @@ public class ReportShell {
             ".sk-nav-item:hover {background: var(--sk-hover); color: var(--sk-text); text-decoration: none;}\n" +
             ".sk-nav-item.active {background: var(--sk-accent-soft); color: var(--sk-accent); font-weight: 600;}\n" +
             ".sk-nav-icon {display: inline-flex; flex: none; width: 16px;}\n" +
+            // Sub-items (a tab inside an index tab's page) sit indented under their parent's label.
+            ".sk-nav-item.sk-nav-sub {padding: 4px 8px 4px 42px; font-size: 13px;}\n" +
+            ".sk-nav-sub .sk-nav-icon {display: none;}\n" +
             ".sk-nav-label {overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}\n" +
             ".sk-has-shell .sk-index-tabs {display: none;}\n" +
             ".sk-nav-footer {margin-top: 8px; padding: 12px 8px 0 8px; border-top: 1px solid var(--sk-border);}\n" +
@@ -56,6 +59,22 @@ public class ReportShell {
             ".sk-nav-meta a {color: var(--sk-text-muted);}\n" +
             ".sk-nav-option {display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--sk-text-muted); cursor: pointer;}\n" +
             ".sk-nav-toggle {display: none;}\n" +
+            ".sk-nav-collapse {display: none;}\n" +
+            // Desktop: the sidebar can be hidden (html.sk-nav-hidden, remembered in localStorage['sokrates-nav']);
+            // the menu button then shows it again. Below 900px the sidebar is a drawer instead.
+            "@media (min-width: 901px) {\n" +
+            "  .sk-nav-collapse {display: flex; align-items: center; justify-content: center; position: absolute; top: 20px; right: 10px; " +
+            "width: 26px; height: 26px; padding: 0; cursor: pointer; color: var(--sk-text-faint); background: transparent; " +
+            "border: 1px solid transparent; border-radius: 6px;}\n" +
+            "  .sk-nav-collapse:hover {color: var(--sk-text); background: var(--sk-surface); border-color: var(--sk-border);}\n" +
+            "  .sk-nav-collapse + .sk-nav-search {margin-right: 32px;}\n" +
+            "  .sk-nav-hidden .sk-sidebar {display: none;}\n" +
+            "  .sk-nav-hidden .sk-main {margin-left: 0; padding-left: 64px;}\n" +
+            "  .sk-nav-hidden .sk-has-shell .sk-page-header {margin-left: -64px; padding-left: 64px;}\n" +
+            "  .sk-nav-hidden .sk-nav-toggle {display: flex; align-items: center; justify-content: center; position: fixed; top: 12px; left: 12px; " +
+            "z-index: 950; width: 34px; height: 34px; padding: 0; cursor: pointer; color: var(--sk-text-muted); " +
+            "background: var(--sk-surface); border: 1px solid var(--sk-border); border-radius: 8px; box-shadow: var(--sk-shadow);}\n" +
+            "}\n" +
             "@media (max-width: 900px) {\n" +
             "  .sk-sidebar {transform: translateX(-100%); transition: transform 0.2s ease; box-shadow: var(--sk-shadow-hover); padding-top: 58px;}\n" +
             "  .sk-nav-open .sk-sidebar {transform: none;}\n" +
@@ -69,9 +88,41 @@ public class ReportShell {
 
     public static final String SCRIPT = "" +
             "(function () {\n" +
+            "  // A hidden sidebar is restored before the page paints (this script runs in the head).\n" +
+            "  try { if (localStorage.getItem('sokrates-nav') === 'hidden') { document.documentElement.classList.add('sk-nav-hidden'); } } catch (e) {}\n" +
             "  function tabContent(id) {\n" +
             "    var el = id ? document.getElementById(id) : null;\n" +
             "    return el && el.classList.contains('tabcontent') ? el : null;\n" +
+            "  }\n" +
+            "  // The tab of a fragment: the id itself, or for a sub-item <tab>/<sub> its tab; null when none.\n" +
+            "  function baseTab(id) {\n" +
+            "    if (!id) { return null; }\n" +
+            "    if (tabContent(id)) { return id; }\n" +
+            "    var slash = id.indexOf('/');\n" +
+            "    return slash > 0 && tabContent(id.substring(0, slash)) ? id.substring(0, slash) : null;\n" +
+            "  }\n" +
+            "  function framePath(src) { return (src || '').split('#')[0].split('?')[0]; }\n" +
+            "  // A sub-item points the tab's iframe showing the same page at its own URL (repositories.html?tab=...);\n" +
+            "  // the tab itself (or another sub-item) puts the iframe back on its own URL. The iframe is replaced by a\n" +
+            "  // copy with the new URL instead of navigated, so the browser's back button is not spent on the frame.\n" +
+            "  function setFrameSrc(f, src) {\n" +
+            "    var copy = f.cloneNode(false);\n" +
+            "    copy.setAttribute('src', src);\n" +
+            "    f.parentNode.replaceChild(copy, f);\n" +
+            "  }\n" +
+            "  function applyFrame(id, el) {\n" +
+            "    var item = document.querySelector('.sk-nav-item[data-sk-nav=\"' + id.replace(/\"/g, '') + '\"]');\n" +
+            "    var src = item ? item.getAttribute('data-sk-frame-src') : null;\n" +
+            "    el.querySelectorAll('iframe').forEach(function (f) {\n" +
+            "      var original = f.getAttribute('data-sk-frame-default') || f.getAttribute('src');\n" +
+            "      if (!original) { return; }\n" +
+            "      if (src && framePath(src) === framePath(original)) {\n" +
+            "        if (!f.getAttribute('data-sk-frame-default')) { f.setAttribute('data-sk-frame-default', original); }\n" +
+            "        if (f.getAttribute('src') !== src) { setFrameSrc(f, src); }\n" +
+            "      } else if (!src && f.getAttribute('data-sk-frame-default') && f.getAttribute('src') !== original) {\n" +
+            "        setFrameSrc(f, original);\n" +
+            "      }\n" +
+            "    });\n" +
             "  }\n" +
             "  function tabButton(id) {\n" +
             "    var buttons = document.querySelectorAll('.tablinks[data-tab]');\n" +
@@ -110,10 +161,10 @@ public class ReportShell {
             "  function markNav(id) {\n" +
             "    var items = document.querySelectorAll('.sk-nav-item[data-sk-tab]');\n" +
             "    var found = false;\n" +
-            "    for (var i = 0; i < items.length; i++) { if (items[i].getAttribute('data-sk-tab') === id) { found = true; } }\n" +
+            "    for (var i = 0; i < items.length; i++) { if (items[i].getAttribute('data-sk-nav') === id) { found = true; } }\n" +
             "    if (!found) { return; }\n" +
             "    for (var j = 0; j < items.length; j++) {\n" +
-            "      var on = items[j].getAttribute('data-sk-tab') === id;\n" +
+            "      var on = items[j].getAttribute('data-sk-nav') === id;\n" +
             "      items[j].classList.toggle('active', on);\n" +
             "      if (on) { items[j].setAttribute('aria-current', 'page'); } else { items[j].removeAttribute('aria-current'); }\n" +
             "      if (on) { setPageTitle(items[j]); }\n" +
@@ -121,7 +172,8 @@ public class ReportShell {
             "  }\n" +
             "  // Shows one tab of the page (the tabs of a report page form one group, as in openTab).\n" +
             "  window.sokratesShowTab = function (id, button) {\n" +
-            "    var el = tabContent(id);\n" +
+            "    var base = baseTab(id);\n" +
+            "    var el = tabContent(base);\n" +
             "    if (!el) { return false; }\n" +
             "    var contents = document.getElementsByClassName('tabcontent');\n" +
             "    for (var i = 0; i < contents.length; i++) { contents[i].style.display = 'none'; }\n" +
@@ -132,9 +184,10 @@ public class ReportShell {
             "    el.querySelectorAll('iframe[data-sk-src]').forEach(function (f) {\n" +
             "      if (!f.getAttribute('src')) { f.setAttribute('src', f.getAttribute('data-sk-src')); }\n" +
             "    });\n" +
-            "    var b = button || tabButton(id);\n" +
+            "    var b = button || tabButton(base);\n" +
             "    if (b) { b.classList.add('active'); }\n" +
             "    markNav(id);\n" +
+            "    applyFrame(id, el);\n" +
             "    if (window.renderMermaidIn) { window.renderMermaidIn(el); }\n" +
             "    return true;\n" +
             "  };\n" +
@@ -159,9 +212,20 @@ public class ReportShell {
             "    var page = location.pathname.substring(location.pathname.lastIndexOf('/') + 1);\n" +
             "    if (file && file !== page) { return null; }\n" +
             "    var id = decodeURIComponent(href.substring(hash + 1));\n" +
-            "    return tabContent(id) ? id : null;\n" +
+            "    return baseTab(id) ? id : null;\n" +
             "  }\n" +
+            "  window.sokratesSetNavHidden = function (hidden) {\n" +
+            "    document.documentElement.classList.toggle('sk-nav-hidden', hidden);\n" +
+            "    try { if (hidden) { localStorage.setItem('sokrates-nav', 'hidden'); } else { localStorage.removeItem('sokrates-nav'); } } catch (e) {}\n" +
+            "  };\n" +
+            "  function narrow() { return window.matchMedia && window.matchMedia('(max-width: 900px)').matches; }\n" +
+            "  // The menu button: on desktop it shows/hides the sidebar, below 900px it opens/closes the drawer\n" +
+            "  // (an explicit true/false always means the drawer, e.g. closing it after a link).\n" +
             "  window.sokratesToggleNav = function (open) {\n" +
+            "    if (typeof open !== 'boolean' && !narrow()) {\n" +
+            "      window.sokratesSetNavHidden(!document.documentElement.classList.contains('sk-nav-hidden'));\n" +
+            "      return;\n" +
+            "    }\n" +
             "    var on = typeof open === 'boolean' ? open : !document.body.classList.contains('sk-nav-open');\n" +
             "    document.body.classList.toggle('sk-nav-open', on);\n" +
             "  };\n" +
@@ -169,7 +233,7 @@ public class ReportShell {
             "    var link = e.target.closest ? e.target.closest('a[href*=\"#\"]') : null;\n" +
             "    if (link && !link.target) {\n" +
             "      var id = linkedTab(link);\n" +
-            "      if (tabContent(id) && !e.metaKey && !e.ctrlKey && !e.shiftKey) {\n" +
+            "      if (baseTab(id) && !e.metaKey && !e.ctrlKey && !e.shiftKey) {\n" +
             "        e.preventDefault();\n" +
             "        window.sokratesShowTab(id);\n" +
             "        window.sokratesRememberTab(id);\n" +
@@ -239,7 +303,7 @@ public class ReportShell {
             "    var typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '') || (e.target && e.target.isContentEditable);\n" +
             "    if (((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) || (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey && !e.altKey)) {\n" +
             "      e.preventDefault();\n" +
-            "      if (window.matchMedia && window.matchMedia('(max-width: 900px)').matches) { window.sokratesToggleNav(true); }\n" +
+            "      if (narrow()) { window.sokratesToggleNav(true); } else { window.sokratesSetNavHidden(false); }\n" +
             "      input.focus();\n" +
             "      input.select();\n" +
             "    }\n" +

@@ -39,6 +39,8 @@ import java.util.stream.Collectors;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class LandscapeDataExport {
+    private boolean hasFeaturesOfInterest = false;
+
     public static final String REPOSITORIES_DATA_FILE_NAME = "repositories.txt";
     public static final String REPOSITORIES_DATA_JSON_FILE_NAME = "repositories.json";
     private LandscapeAnalysisResults analysisResults;
@@ -162,6 +164,11 @@ public class LandscapeDataExport {
      * Aggregates features of interest across repositories into a compact matrix
      * (concerns + per-repository match/file counts) for the report's Features tab.
      */
+    /** Whether repositories.html has a Features of Interest tab (known once the repositories are exported). */
+    public boolean hasFeaturesOfInterest() {
+        return hasFeaturesOfInterest;
+    }
+
     private Map<String, Object> buildFeaturesData(LandscapeConfiguration configuration) {
         FeaturesOfInterestAggregator aggregator = new FeaturesOfInterestAggregator(analysisResults.getRepositoryAnalysisResults());
         aggregator.aggregateFeaturesOfInterest(configuration.getRepositoriesListLimit());
@@ -177,6 +184,7 @@ public class LandscapeDataExport {
             concernsOut.add(c);
         });
         result.put("concerns", concernsOut);
+        hasFeaturesOfInterest = !concernsOut.isEmpty();
 
         List<Map<String, Object>> reposOut = new ArrayList<>();
         aggregator.getRepositories().forEach(repository -> {
