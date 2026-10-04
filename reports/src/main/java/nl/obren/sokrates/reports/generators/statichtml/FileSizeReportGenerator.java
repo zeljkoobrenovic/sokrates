@@ -6,6 +6,7 @@ package nl.obren.sokrates.reports.generators.statichtml;
 
 import nl.obren.sokrates.common.renderingutils.RichTextRenderingUtils;
 import nl.obren.sokrates.common.utils.ProcessingStopwatch;
+import nl.obren.sokrates.reports.core.FileReadsForChanges;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.landscape.utils.CorrelationDiagramGenerator;
 import nl.obren.sokrates.reports.utils.FilesReportUtils;
@@ -52,6 +53,9 @@ public class FileSizeReportGenerator {
         ProcessingStopwatch.start("reporting/file size/longest files");
         addLongestFilesList(report);
         ProcessingStopwatch.end("reporting/file size/longest files");
+        ProcessingStopwatch.start("reporting/file size/large files that change often");
+        addLargeFilesThatChangeOften(report);
+        ProcessingStopwatch.end("reporting/file size/large files that change often");
         ProcessingStopwatch.start("reporting/file size/files with most units");
         addFilesWithMostUnitsList(report);
         ProcessingStopwatch.end("reporting/file size/files with most units");
@@ -211,6 +215,54 @@ public class FileSizeReportGenerator {
         report.startSection("Longest Files (Top " + longestFiles.size() + ")", "");
         boolean cacheSourceFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
         report.addHtmlContent(FilesReportUtils.getFilesTable(longestFiles, cacheSourceFiles, false, false).toString());
+        report.endSection();
+    }
+
+    // The files read most for changes (lines × changes); omitted when switched off (analysis.fileReadsForChanges.enabled),
+    // without git history or without changes in the window.
+    private void addLargeFilesThatChangeOften(RichTextReport report) {
+        if (!codeAnalysisResults.getCodeConfiguration().getAnalysis().getFileReadsForChanges().isEnabled()) {
+            return;
+        }
+        FileReadsForChanges reads = FileReadsForChanges.of(codeAnalysisResults);
+        List<FileReadsForChanges.ChangedFile> files = reads.topFiles();
+        if (files.isEmpty()) {
+            return;
+        }
+        report.startSection("Large Files That Change Often (Top " + files.size() + ")",
+                "To change a file, an AI coding agent (or a person) has to read it: these files are read the most for the changes "
+                        + reads.windowLabel() + " (lines × changes).");
+        boolean linkToFiles = codeAnalysisResults.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
+        StringBuilder table = new StringBuilder();
+        // Long folder paths wrap (the shared file cell keeps them on one line), so the numeric columns stay in view.
+        table.append("<style>.sk-reads-table td:first-child > div { display: flex; }"
+                + " .sk-reads-table td:first-child > div > div:last-child { min-width: 0; }"
+                + " .sk-reads-table td:first-child > div > div:last-child div { white-space: normal !important; word-break: break-all; }</style>\n");
+        table.append("<div style='width: 100%; overflow-x: auto;'>\n");
+        table.append("<table class='sk-data-table sk-reads-table' style='width: 100%'>\n");
+        table.append("<tr><th>File</th><th># lines</th><th>≈ tokens<br>to read</th><th># changes<br>(" + reads.windowShortLabel() + ")</th>"
+                + "<th>≈ lines edited<br>per change</th><th>lines read per<br>line changed</th></tr>\n");
+        files.forEach(file -> {
+            double edited = file.getEditedLinesPerChange();
+            double ratio = file.getReadPerEditedLine();
+            table.append("<tr>\n");
+            table.append(FilesReportUtils.fileNameCell(file.getFile(), linkToFiles));
+            table.append("<td style='text-align: center'>" + file.getLinesOfCode() + "</td>\n");
+            table.append("<td style='text-align: center; white-space: nowrap' data-sort='" + file.getLinesOfCode() + "'>"
+                    + reads.tokenRange(file.getLinesOfCode()) + "</td>\n");
+            table.append("<td style='text-align: center'>" + file.getChanges() + "</td>\n");
+            table.append("<td style='text-align: center' data-sort='" + edited + "'>" + (edited > 0 ? FileReadsForChanges.about(edited) : "-") + "</td>\n");
+            table.append("<td style='text-align: center' data-sort='" + ratio + "'>" + (ratio > 0 ? FileReadsForChanges.about(ratio) : "-") + "</td>\n");
+            table.append("</tr>\n");
+        });
+        table.append("</table>\n</div>\n");
+        report.addHtmlContent(table.toString());
+        report.addParagraph("<span style='font-size: 90%; color: var(--sk-text-muted, #666)'>Tokens are lines × "
+                + reads.getTokensPerLineMin() + " to " + reads.getTokensPerLineMax()
+                + " (<code>analysis.fileReadsForChanges</code>). Lines edited per change are the file's lines added and deleted divided by its commits over the whole history. "
+                + "Agents read about 2,000 lines at a time: when a 17,000-line file was split into modules, the tokens an agent read for "
+                + "the same change fell by 83% (<a target='_blank' href='https://martinfowler.com/articles/exploring-gen-ai/refactoring-economic-benefit.html'>"
+                + "The Economic Benefit of Refactoring</a>, 2026).</span>");
         report.endSection();
     }
 

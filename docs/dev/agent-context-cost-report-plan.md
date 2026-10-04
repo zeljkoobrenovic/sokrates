@@ -1,6 +1,33 @@
 # Plan: "Agent Context Cost" report (rules of thumb)
 
-Status: implemented 2026-10-04 on branch sokrates/agent-context-cost (uncommitted) with the recommended choices: name "Agent Context Cost", no dollars, payback section kept.
+Status: superseded. After several redesigns the separate report was judged not useful and was removed on
+2026-10-04. Only its table survives, as the File Size report's "Large Files That Change Often" section
+(`FileReadsForChanges`). Earlier status: implemented 2026-10-04 on branch sokrates/agent-context-cost (uncommitted) with the recommended choices: name "Agent Context Cost", no dollars, payback section kept.
+
+## Outcome (2026-10-04)
+
+The report was removed. Its "Files Read Most for Changes" table moved into the File Size report as
+"Large Files That Change Often". Everything below is history.
+
+## Last report design (2026-10-04)
+
+The metric is the size of the files an agent opens per change, not a yearly total. The headline reads
+"A typical change here touches a file of ~N lines (~X tokens to read) and edits ~M lines in it: agents
+read about R lines for every line they change", followed by the share of changes in files over 2,000
+lines and the split saving. The bars are "code" vs "changes (1y)" per file-size band. The table lists
+the top files by lines × changes, with tokens to read, changes, lines edited per change, and lines read
+per line changed. The co-change column and the mass-commit filter were dropped.
+
+## Simplified (2026-10-04, superseded)
+
+The multi-rule page was hard to understand, so it was cut to one model: **reading = file size ×
+changes**. The page now has one headline (the total reading, the share in files over 2,000 lines, and
+the saving if those were split), one bar (lines of code vs reading in five size bands) plus per-component
+bars, and one table of the top files. Dropped: the per-commit reading, the working sets (co-change
+partners are now a context column only), the payback magnitudes, and the AI co-author split. The
+sections below describe the earlier designs. Follow-up: every commit counts for the file reads
+(the 30-file mass-commit filter applies to the co-change column only), the metric is called "file
+reads", and the headline is a thought experiment ("Had agents made the past year's changes …").
 
 ## Revision (2026-10-04)
 
@@ -8,7 +35,8 @@ After review the page was restyled like the other risk reports: five file-size b
 (350 / 1,000 / 2,000 / 5,000 lines) and five commit-reading bands (1k / 2k / 10k / 50k lines) on the
 risk colours, stacked bars for code vs. changes, per logical component and per commit (all vs AI
 co-authored). The headline tiles and rule callouts were dropped, and the rules of thumb moved into the
-about section, with each section keeping its rule as a subtitle.
+about section, with each section keeping its rule as a subtitle. The split by AI co-authored commits was
+removed again: the report does not use co-author data.
 
 ## Goal
 

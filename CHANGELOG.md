@@ -5,35 +5,25 @@ everything listed under the most recent date.
 
 ## 2026-10-04
 
-### New Agent Context Cost report
+### File Size report: large files that change often
 
-An **Agent Context Cost** report (`AgentContext.html`, in the sidebar after Temporal Dependencies; needs
-git history) gives **rules of thumb** for how much an AI coding agent has to read to change the main
-code. It uses only file sizes and the git history (which main files each commit touched, and the
-files changed together, the same pairs as the Temporal Dependencies report). Static dependencies,
-complexity and duplication are not used.
+The **File Size** report has a new section, **Large Files That Change Often**, after the longest files.
+To change a file, an AI coding agent (or a person) has to read it, so a big file that changes often is
+paid for on every change, while a big file nobody touches costs nothing. The table lists the 20 main
+files read most for the changes of the past year (lines × changes, every commit counted) with:
+- their lines and the tokens to read them (lines × 7 to 14, rounded);
+- their changes;
+- the lines edited per change (the file's lines added and deleted divided by its commits over the whole
+  history);
+- the lines read per line changed.
 
-It is laid out like the other risk reports. Five file-size bands, relative to an agent's read window,
-use the five risk colours: comfortable (1-350 lines), one short read (351-1,000), one full read
-(1,001-2,000), several reads (2,001-5,000) and monolith (5,001+). The sections are:
-- **Overall:** stacked bars comparing the share of the code in each band with the share of the past
-  year's file changes.
-- **Per logical component:** the file changes, coloured by the band of the changed file.
-- **Per commit:** the minimum reading (the lines of the files a commit touched), in five bands, with the
-  AI co-authored commits as a second bar when there are any.
-- **Hotspots:** the 20 files with the largest changes × working set, where the working set is the file
-  plus the files changed with it in at least 30% of its commits.
-- **Large files that change often:** a rough payback (in tens or hundreds of changes) of splitting them.
+The section is configured in `analysis.fileReadsForChanges`: `enabled`, `windowDays` (365),
+`maxFiles` (20), and `tokensPerLineMin`/`tokensPerLineMax` (7/14). New configurations get these keys
+from `init`; older ones use the defaults (`updateConfig` adds them). The section is omitted without git
+history. Sortable report tables now honour a `data-sort` attribute
+on a cell, so rounded values sort by the underlying number.
 
-The rules of thumb behind each section, with the evidence for each, are in the about section.
-
-All numbers are bands, shares or rounded ranges. Tokens are lines × 7 to 14, with the low end rounded
-down and the high end rounded up, and no money amounts are shown. Commits touching more than 30 main
-files are left out. The window is `analysis.maxTemporalDependenciesDepthDays` (default 365 days).
-
-What stays the same: no new configuration, and no change to the analysis or the `data/` exports.
-Sortable report tables now honour a `data-sort` attribute on a cell, so rounded values sort by the
-underlying number.
+(A separate Agent Context Cost report, briefly on `master`, was removed in favour of this section.)
 
 ### New File Complexity report
 

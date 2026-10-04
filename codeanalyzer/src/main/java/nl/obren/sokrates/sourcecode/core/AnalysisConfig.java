@@ -70,6 +70,9 @@ public class AnalysisConfig {
     // wrote with the unit bands; that key is now ignored when a configuration is loaded.
     private Thresholds fileComplexityThresholds = Thresholds.defaultFileComplexityThresholds();
 
+    // The File Size report's "Large Files That Change Often" section: window, list size, tokens per line
+    private FileReadsForChangesConfig fileReadsForChanges = new FileReadsForChangesConfig();
+
     // Thresholds for risk profiles used in commit analysis
     private Thresholds commitFilesCountThresholds = Thresholds.defaultCommitFilesCountThresholds();
 
@@ -231,6 +234,15 @@ public class AnalysisConfig {
 
     public void setFileComplexityThresholds(Thresholds fileComplexityThresholds) {
         this.fileComplexityThresholds = fileComplexityThresholds;
+    }
+
+    public FileReadsForChangesConfig getFileReadsForChanges() {
+        return fileReadsForChanges;
+    }
+
+    // An explicit null ("fileReadsForChanges": null) falls back to the defaults.
+    public void setFileReadsForChanges(FileReadsForChangesConfig fileReadsForChanges) {
+        this.fileReadsForChanges = fileReadsForChanges != null ? fileReadsForChanges : new FileReadsForChangesConfig();
     }
 
     public Thresholds getCommitFilesCountThresholds() {

@@ -155,6 +155,7 @@ Switches and risk thresholds for the analysis itself. Common keys:
 | `conditionalComplexityThresholds` | `{low:5, medium:10, high:25, veryHigh:50}` | Risk bands for unit complexity. |
 | `fileComplexityThresholds` | `{low:25, medium:50, high:125, veryHigh:250}` | Risk bands for file complexity (the sum of the McCabe indexes of a file's units; five times the unit bands). Replaces the never-used `fileConditionalComplexityThresholds`, which is ignored. |
 | `fileAgeThresholds` / `fileUpdateFrequencyThresholds` | (see source) | Risk bands for history metrics. |
+| `fileReadsForChanges` | `{enabled:true, windowDays:365, maxFiles:20, tokensPerLineMin:7, tokensPerLineMax:14}` | The File Size report's "Large Files That Change Often" section: the `maxFiles` main files read most for the changes of the last `windowDays` days (lines × commits; `0` or less = the whole history), with the tokens to read them shown as a range of lines × `tokensPerLineMin` to `tokensPerLineMax`. `enabled: false` hides the section. A min above the max is swapped, and values below 1 become 1. |
 
 Each `*Thresholds` is an object `{ "low", "medium", "high", "veryHigh" }`.
 

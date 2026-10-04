@@ -28,17 +28,7 @@ public class RiskDistributionStatsReportUtils {
         return getRiskDistributionPerKeySvgBarChart(distributions, labels, Palette.getRiskPaletteCss());
     }
 
-    /** The bars in the given order (the other variants put the riskiest bar first). */
-    public static String getRiskDistributionPerKeySvgBarChartInOrder(List<RiskDistributionStats> distributions, List<String> labels) {
-        return getRiskDistributionPerKeySvgBarChart(distributions, labels, Palette.getRiskPaletteCss(), false);
-    }
-
     public static String getRiskDistributionPerKeySvgBarChart(List<RiskDistributionStats> distributions, List<String> labels, Palette palette) {
-        return getRiskDistributionPerKeySvgBarChart(distributions, labels, palette, true);
-    }
-
-    private static String getRiskDistributionPerKeySvgBarChart(List<RiskDistributionStats> distributions, List<String> labels, Palette palette,
-                                                                 boolean riskiestFirst) {
         SimpleOneBarChart chart = new SimpleOneBarChart();
         chart.setWidth(900);
 
@@ -53,14 +43,13 @@ public class RiskDistributionStatsReportUtils {
         html[0] += "<div style='width: 100%; overflow-x: auto'>";
         html[0] += "<div style='font-size:90%;margin-bottom:20px;width:100%;text-alight:right'>" + chart.getLegend(labels, palette) + "</div>";
 
-        List<RiskDistributionStats> ordered = riskiestFirst ? distributions.stream()
+        distributions.stream()
                 .sorted((o1, o2) -> o2.getNegligibleRiskValue() - o1.getNegligibleRiskValue())
                 .sorted((o1, o2) -> o2.getLowRiskValue() - o1.getLowRiskValue())
                 .sorted((o1, o2) -> o2.getMediumRiskValue() - o1.getMediumRiskValue())
                 .sorted((o1, o2) -> o2.getHighRiskValue() - o1.getHighRiskValue())
                 .sorted((o1, o2) -> o2.getVeryHighRiskValue() - o1.getVeryHighRiskValue())
-                .collect(Collectors.toList()) : distributions;
-        ordered.forEach(distribution -> {
+                .forEach(distribution -> {
                     int totalValue = distribution.getTotalValue();
                     chart.setMaxBarWidth(Math.max(1, (int) Math.round(300.0 * ((double) totalValue / maxTotalValue[0]))));
 

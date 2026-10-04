@@ -42,7 +42,6 @@ public class ReportNavigation {
         ICONS.put("components", "<rect x='3' y='3' width='8' height='8' rx='1'/><rect x='13' y='13' width='8' height='8' rx='1'/><path d='M11 7h4a2 2 0 0 1 2 2v4'/>");
         ICONS.put("dependencies", "<circle cx='6' cy='6' r='2.5'/><circle cx='18' cy='6' r='2.5'/><circle cx='12' cy='18' r='2.5'/><path d='M7.5 8l3.5 7.5M16.5 8L13 15.5M8.5 6h7'/>");
         ICONS.put("temporal", "<circle cx='12' cy='13' r='8'/><path d='M12 9v4l2.5 2.5M9 2h6'/>");
-        ICONS.put("agent", "<rect x='4' y='8' width='16' height='12' rx='2'/><path d='M12 4v4M9 13v2M15 13v2M2 13v3M22 13v3'/><circle cx='12' cy='3' r='1'/>");
         ICONS.put("duplication", "<rect x='9' y='9' width='12' height='12' rx='2'/><path d='M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1'/>");
         ICONS.put("size", "<path d='M3 17l14-14 4 4L7 21z'/><path d='M7.5 12.5l2 2M10.5 9.5l2 2M13.5 6.5l2 2'/>");
         ICONS.put("age", "<circle cx='12' cy='12' r='9'/><path d='M12 7v5l3 3'/>");
