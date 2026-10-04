@@ -250,6 +250,8 @@ public class ReportConstants {
             "            color: var(--sk-text);\n" +
             "            display: inline-block;\n" +
             "            vertical-align: middle;\n" +
+            "            padding-top: 0;\n" +
+            "            margin-top: 0;\n" +
             "        }\n" +
             "\n" +
 
@@ -261,7 +263,6 @@ public class ReportConstants {
             "            height: 72px;\n" +
             "            color: var(--sk-text);\n" +
             "            vertical-align: middle;\n" +
-            "            padding-top: 18px;\n" +
             "        }\n" +
             "\n" +
             "        .sk-report-description {\n" +

@@ -31,9 +31,10 @@ class ReportNavigationTest {
     void escapesTheRepositoryNameAndConfiguredLabels() {
         String html = navigation().render("overview");
 
-        assertTrue(html.contains(">acme/&lt;b&gt;repo&lt;/b&gt;</a>"), html);
+        assertFalse(html.contains("repo"), "the repository name is in the page header, not the sidebar");
+        assertEquals("<a class='sk-page-context' href='index.html#overview'>acme/&lt;b&gt;repo&lt;/b&gt;</a>", navigation().contextLineHtml());
         assertTrue(html.contains("<span class='sk-nav-label'>My &lt;tab&gt;</span>"));
-        assertFalse(html.contains("<b>repo</b>") || html.contains("My <tab>"));
+        assertFalse(html.contains("My <tab>"));
     }
 
     @Test

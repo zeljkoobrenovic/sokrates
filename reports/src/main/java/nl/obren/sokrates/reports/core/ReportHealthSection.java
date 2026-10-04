@@ -28,8 +28,9 @@ public class ReportHealthSection {
             "color: var(--sk-text); background: var(--sk-surface); border: 1px solid var(--sk-border); border-radius: 10px; " +
             "box-shadow: var(--sk-shadow); text-decoration: none; transition: box-shadow 0.15s ease, transform 0.15s ease;}\n" +
             "a.sk-tile:hover {box-shadow: var(--sk-shadow-hover); transform: translateY(-1px); text-decoration: none;}\n" +
-            ".sk-tile-head {display: flex; align-items: center; justify-content: space-between; gap: 8px;}\n" +
-            ".sk-tile-label {font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--sk-text-muted);}\n" +
+            ".sk-tile-label {font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--sk-text-muted); " +
+            "white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}\n" +
+            ".sk-tile-value-row {display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px;}\n" +
             ".sk-tile-value {font-size: 30px; line-height: 1.15; font-variant-numeric: tabular-nums;}\n" +
             ".sk-tile-caption {font-size: 12px; color: var(--sk-text-muted);}\n" +
             ".sk-tile-spark {margin-top: auto; padding-top: 6px; color: var(--sk-accent); min-width: 0;}\n" +
@@ -81,13 +82,15 @@ public class ReportHealthSection {
         StringBuilder html = new StringBuilder();
         html.append("<a class='sk-tile' href='").append(HtmlEscapeUtils.escape(tile.link)).append("' title='")
                 .append(HtmlEscapeUtils.escape(tile.tooltip)).append("'>");
-        html.append("<div class='sk-tile-head'><span class='sk-tile-label'>").append(HtmlEscapeUtils.escape(tile.label)).append("</span>");
+        // The label has the full line (one line, ellipsis as a last resort); the status sits next to the value.
+        html.append("<div class='sk-tile-label' title='").append(HtmlEscapeUtils.escape(tile.label)).append("'>")
+                .append(HtmlEscapeUtils.escape(tile.label)).append("</div>");
+        html.append("<div class='sk-tile-value-row'><span class='sk-tile-value'>").append(HtmlEscapeUtils.escape(tile.value)).append("</span>");
         if (tile.status != HealthSummary.Status.NEUTRAL) {
             html.append("<span class='sk-status sk-status-").append(tile.status.getLabel()).append("'>")
                     .append(tile.status.getLabel()).append("</span>");
         }
         html.append("</div>");
-        html.append("<div class='sk-tile-value'>").append(HtmlEscapeUtils.escape(tile.value)).append("</div>");
         html.append("<div class='sk-tile-caption'>").append(HtmlEscapeUtils.escape(tile.caption)).append("</div>");
         if (!tile.sparklineValues.isEmpty()) {
             html.append("<div class='sk-tile-spark'>").append(sparkline(tile.sparklineSlots, tile.sparklineValues)).append("</div>");

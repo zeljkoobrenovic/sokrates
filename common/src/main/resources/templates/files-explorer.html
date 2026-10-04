@@ -96,6 +96,17 @@
                 transform: rotate(360deg);
             }
         }
+        /* Column picker ("Columns" button next to the search box). */
+        .sk-columns {display: inline-block; position: relative; margin-left: 12px; vertical-align: top;}
+        .sk-columns > summary {list-style: none; cursor: pointer; padding: 5px 12px; font-size: 14px; color: var(--sk-text);
+            background: var(--sk-surface); border: 1px solid var(--sk-border-strong); border-radius: 6px; white-space: nowrap;}
+        .sk-columns > summary::-webkit-details-marker {display: none;}
+        .sk-columns > summary::after {content: ' \25BE'; color: var(--sk-text-muted);}
+        .sk-columns-panel {position: absolute; z-index: 20; top: 36px; left: 0; min-width: 230px; padding: 10px 14px;
+            background: var(--sk-surface); border: 1px solid var(--sk-border); border-radius: 8px; box-shadow: var(--sk-shadow-hover);}
+        .sk-columns-group {margin: 6px 0 2px 0; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--sk-text-faint);}
+        .sk-columns-panel label {display: block; padding: 2px 0; font-size: 14px; color: var(--sk-text); white-space: nowrap; cursor: pointer;}
+        .sk-columns-reset {display: inline-block; margin-top: 8px; font-size: 13px; color: var(--sk-accent); cursor: pointer;}
     </style>
     ${sokrates-inflate-lib}
 </head>
@@ -126,6 +137,10 @@
                    style="font-size: 16px; height: 32px; width: 420px; margin-bottom: 10px"
                    onkeyup="update()">
             <div id="search-summary" style="display: inline-block"></div>
+            <details id="columns" class="sk-columns">
+                <summary>Columns</summary>
+                <div id="columns-panel" class="sk-columns-panel"></div>
+            </details>
         </div>
     </div>
 
@@ -306,6 +321,94 @@
     let sortKey = 'loc';
     let sortDir = -1;
 
+    // The optional columns, in table order, with their header group and default visibility. The
+    // defaults keep the table readable (all-time commits and churn, contributors, latest commit, scope);
+    // the recent windows, age and freshness are one click away in the "Columns" menu, and the choice is
+    // remembered in the browser.
+    const OPTIONAL_COLUMNS = [
+        {key: 'recentCommits', group: 'commits', label: '30d', menu: '30 days', history: true, show: false},
+        {key: 'recentCommits90', group: 'commits', label: '90d', menu: '90 days', history: true, show: false},
+        {key: 'commits', group: 'commits', label: 'all<br>time', menu: 'all time', history: true, show: true},
+        {key: 'churn30', group: 'line churn', label: '30d', menu: '30 days', history: true, show: false},
+        {key: 'churn90', group: 'line churn', label: '90d', menu: '90 days', history: true, show: false},
+        {key: 'churnTotal', group: 'line churn', label: 'all<br>time', menu: 'all time', history: true, show: true},
+        {key: 'contributors', group: null, label: 'contri-<br>butors', menu: 'contributors', history: true, show: true},
+        {key: 'age', group: null, label: 'age<br>(days)', menu: 'age (days since first commit)', history: true, show: false},
+        {key: 'freshness', group: null, label: 'freshness<br>(days)', menu: 'freshness (days since last commit)', history: true, show: false},
+        {key: 'latestCommit', group: null, label: 'latest<br>commit', menu: 'latest commit', history: true, show: true},
+        {key: 'scope', group: null, label: 'scope', menu: 'scope', history: false, show: true}
+    ];
+    const COLUMNS_KEY = 'sokrates-files-explorer-columns';
+    const visibleColumns = {};
+    OPTIONAL_COLUMNS.forEach(c => visibleColumns[c.key] = c.show);
+    try {
+        const saved = JSON.parse(localStorage.getItem(COLUMNS_KEY) || '{}');
+        Object.keys(saved).forEach(k => { if (k in visibleColumns) { visibleColumns[k] = !!saved[k]; } });
+    } catch (e) {
+    }
+
+    function isVisible(key) {
+        return !!visibleColumns[key];
+    }
+
+    function setColumnVisible(key, visible) {
+        visibleColumns[key] = visible;
+        try { localStorage.setItem(COLUMNS_KEY, JSON.stringify(visibleColumns)); } catch (e) {}
+        // A hidden column cannot show the sort order: fall back to size.
+        if (!visible && sortKey === key) {
+            sortKey = 'loc';
+            sortDir = -1;
+        }
+        update();
+    }
+
+    function resetColumns() {
+        OPTIONAL_COLUMNS.forEach(c => visibleColumns[c.key] = c.show);
+        try { localStorage.removeItem(COLUMNS_KEY); } catch (e) {}
+        if (!isVisible(sortKey) && sortColumns[sortKey] && OPTIONAL_COLUMNS.some(c => c.key === sortKey)) {
+            sortKey = 'loc';
+            sortDir = -1;
+        }
+        renderColumnsPanel(anyHistory);
+        update();
+    }
+
+    // The "Columns" menu: grouped checkboxes (history columns only when the data has history).
+    function renderColumnsPanel(hasHistory) {
+        const panel = document.getElementById('columns-panel');
+        panel.textContent = '';
+        let lastGroup;
+        OPTIONAL_COLUMNS.filter(c => hasHistory || !c.history).forEach(c => {
+            const group = c.group || (c.history ? 'file history' : 'other');
+            if (group !== lastGroup) {
+                const title = document.createElement('div');
+                title.className = 'sk-columns-group';
+                title.textContent = group;
+                panel.appendChild(title);
+                lastGroup = group;
+            }
+            const label = document.createElement('label');
+            const box = document.createElement('input');
+            box.type = 'checkbox';
+            box.checked = isVisible(c.key);
+            box.addEventListener('change', () => setColumnVisible(c.key, box.checked));
+            label.appendChild(box);
+            label.appendChild(document.createTextNode(' ' + c.menu));
+            panel.appendChild(label);
+        });
+        const reset = document.createElement('a');
+        reset.className = 'sk-columns-reset';
+        reset.textContent = 'Reset to default';
+        reset.addEventListener('click', resetColumns);
+        panel.appendChild(reset);
+    }
+
+    // Close the menu on a click elsewhere.
+    document.addEventListener('click', e => {
+        const menu = document.getElementById('columns');
+        if (menu && menu.open && !menu.contains(e.target)) { menu.open = false; }
+    });
+
     function comparator(a, b) {
         const column = sortColumns[sortKey];
         // For history-only columns, files without history always sink to the bottom — their values
@@ -354,6 +457,7 @@
     let saveSourceFiles = '${saveSourceFiles}' === 'true';
 
     files = files.sort(comparator);
+    const anyHistory = files.some(item => hasHistoryData(item));
 
     function getReposCount(files) {
         const allReposMap = {};
@@ -457,43 +561,34 @@
 
         html += '<table style="width: 100%">';
 
-        if (hasHistory) {
-            // Two-row header: row 1 groups the commits and line-churn sub-columns (each 30d / 90d /
-            // all time); the non-grouped columns span both rows. Row 2 holds the sortable sub-columns.
-            const rs = 2;
-            html += '<tr style="color: var(--sk-text-muted); background-color: var(--sk-surface-2)">';
-            html += sortHeader('lang', 'lang', 'text-align: center', rs);
-            if (filteredReposCount) {
-                html += sortHeader('repo', 'repo', 'text-align: left', rs);
+        // Optional columns shown for this data (history columns only when there is history).
+        const shown = OPTIONAL_COLUMNS.filter(c => isVisible(c.key) && (hasHistory || !c.history));
+        const grouped = shown.filter(c => c.group);
+        // Two header rows only when a grouped column (commits / line churn windows) is shown: row 1 has
+        // the group titles over their visible sub-columns, every other column spans both rows.
+        const rs = grouped.length ? 2 : undefined;
+        html += '<tr style="color: var(--sk-text-muted); background-color: var(--sk-surface-2)">';
+        html += sortHeader('lang', 'lang', 'text-align: center', rs);
+        if (filteredReposCount) {
+            html += sortHeader('repo', 'repo', 'text-align: left', rs);
+        }
+        html += sortHeader('name', 'file', 'text-align: left', rs);
+        html += sortHeader('loc', '&nbsp;LOC', 'text-align: left', rs);
+        let lastGroup = null;
+        shown.forEach(c => {
+            if (c.group) {
+                if (c.group !== lastGroup) {
+                    html += groupHeader(c.group, shown.filter(x => x.group === c.group).length);
+                }
+            } else {
+                html += sortHeader(c.key, c.label, 'text-align: center', rs);
             }
-            html += sortHeader('name', 'file', 'text-align: left', rs);
-            html += sortHeader('loc', '&nbsp;LOC', 'text-align: left', rs);
-            html += groupHeader('commits', 3);
-            html += groupHeader('line churn', 3);
-            html += sortHeader('contributors', 'contri-<br>butors', 'text-align: center', rs);
-            html += sortHeader('age', 'age<br>(days)', 'text-align: center', rs);
-            html += sortHeader('freshness', 'freshness<br>(days)', 'text-align: center', rs);
-            html += sortHeader('latestCommit', 'latest<br>commit', 'text-align: center', rs);
-            html += sortHeader('scope', 'scope', 'text-align: center', rs);
-            html += '</tr>';
-
+            lastGroup = c.group;
+        });
+        html += '</tr>';
+        if (grouped.length) {
             html += '<tr style="color: var(--sk-text-muted); background-color: var(--sk-surface-2)">';
-            html += sortHeader('recentCommits', '30d', 'text-align: center');
-            html += sortHeader('recentCommits90', '90d', 'text-align: center');
-            html += sortHeader('commits', 'all<br>time', 'text-align: center');
-            html += sortHeader('churn30', '30d', 'text-align: center');
-            html += sortHeader('churn90', '90d', 'text-align: center');
-            html += sortHeader('churnTotal', 'all<br>time', 'text-align: center');
-            html += '</tr>';
-        } else {
-            html += '<tr style="color: var(--sk-text-muted); background-color: var(--sk-surface-2)">';
-            html += sortHeader('lang', 'lang', 'text-align: center');
-            if (filteredReposCount) {
-                html += sortHeader('repo', 'repo', 'text-align: left');
-            }
-            html += sortHeader('name', 'file', 'text-align: left');
-            html += sortHeader('loc', '&nbsp;LOC', 'text-align: left');
-            html += sortHeader('scope', 'scope', 'text-align: center');
+            grouped.forEach(c => html += sortHeader(c.key, c.label, 'text-align: center'));
             html += '</tr>';
         }
 
@@ -552,48 +647,43 @@
             html += '<div style="margin-left: 2px; vertical-align: top; display: inline-block; font-size: 80%">' + item.linesOfCode.toLocaleString("en-US") + '</div>';
             html += '</div>';
             html += '</td>';
-            if (hasHistory) {
-                const recent = item.recentCommitsCount30Days || 0;
-                const recent90 = item.recentCommitsCount90Days || 0;
-                const total = item.commitsCount || 0;
-                const churn30 = item.churn30Days || 0;
-                const churn90 = item.churn90Days || 0;
-                const churnTotal = item.churnTotal || 0;
-                const contributors = item.contributorsCount || 0;
-                const ageDays = (item.ageDays == null) ? -1 : item.ageDays;
-                const freshnessDays = (item.freshnessDays == null) ? -1 : item.freshnessDays;
-                html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
-                    + (recent > 0 ? recent.toLocaleString('en-US') : '<span style="color: var(--sk-text-faint)">-</span>') + '</td>';
-                html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
-                    + (recent90 > 0 ? recent90.toLocaleString('en-US') : '<span style="color: var(--sk-text-faint)">-</span>') + '</td>';
+            const recent = item.recentCommitsCount30Days || 0;
+            const recent90 = item.recentCommitsCount90Days || 0;
+            const total = item.commitsCount || 0;
+            const churn30 = item.churn30Days || 0;
+            const churn90 = item.churn90Days || 0;
+            const churnTotal = item.churnTotal || 0;
+            const contributors = item.contributorsCount || 0;
+            const ageDays = (item.ageDays == null) ? -1 : item.ageDays;
+            const freshnessDays = (item.freshnessDays == null) ? -1 : item.freshnessDays;
+            const dash = '<span style="color: var(--sk-text-faint)">-</span>';
+            const plain = (n) => '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
+                + (n > 0 ? n.toLocaleString('en-US') : dash) + '</td>';
+            const cells = {
+                recentCommits: () => plain(recent),
+                recentCommits90: () => plain(recent90),
                 // commits (all time) — coloured by the file change-frequency band (heat palette).
-                html += colorCell(total, total > 0, bandColor(total, fileFreqThresholds, HEAT_PALETTE));
-                // line churn (total lines added+deleted) per window — plain numbers, recent windows
-                // are a muted dash when zero so the eye lands on files with recent churn.
-                html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
-                    + (churn30 > 0 ? churn30.toLocaleString('en-US') : '<span style="color: var(--sk-text-faint)">-</span>') + '</td>';
-                html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
-                    + (churn90 > 0 ? churn90.toLocaleString('en-US') : '<span style="color: var(--sk-text-faint)">-</span>') + '</td>';
-                html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%;">'
-                    + (churnTotal > 0 ? churnTotal.toLocaleString('en-US') : '<span style="color: var(--sk-text-faint)">-</span>') + '</td>';
-                // contributors — heat palette.
-                html += colorCell(contributors, contributors > 0, bandColor(contributors, fileContribThresholds, HEAT_PALETTE));
-                // age (days since first commit) — age palette.
-                html += colorCell(ageDays, ageDays >= 0, bandColor(ageDays, fileAgeThresholds, AGE_PALETTE));
-                // freshness (days since last commit) — freshness palette.
-                html += colorCell(freshnessDays, freshnessDays >= 0, bandColor(freshnessDays, fileAgeThresholds, FRESHNESS_PALETTE));
-                html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%; color: var(--sk-text-muted);">'
-                    + (item.latestCommitDate ? esc(item.latestCommitDate) : '<span style="color: var(--sk-text-faint)">-</span>') + '</td>';
-            }
-            html += '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">';
-            if (scope === 'main') {
-                html += '<div style="border: 1px solid var(--sk-border-strong); border-radius: 4px; padding: 0 4px; color: var(--sk-accent)">';
-            } else {
-                html += '<div style="border: 1px solid var(--sk-border-strong); background-color: var(--sk-surface-3); border-radius: 4px; padding: 0 4px;">';
-            }
-            html += esc(scope);
-            html += '</div>';
-            html += '</td>';
+                commits: () => colorCell(total, total > 0, bandColor(total, fileFreqThresholds, HEAT_PALETTE)),
+                // line churn (lines added + deleted) per window; a muted dash when zero.
+                churn30: () => plain(churn30),
+                churn90: () => plain(churn90),
+                churnTotal: () => plain(churnTotal),
+                contributors: () => colorCell(contributors, contributors > 0, bandColor(contributors, fileContribThresholds, HEAT_PALETTE)),
+                age: () => colorCell(ageDays, ageDays >= 0, bandColor(ageDays, fileAgeThresholds, AGE_PALETTE)),
+                freshness: () => colorCell(freshnessDays, freshnessDays >= 0, bandColor(freshnessDays, fileAgeThresholds, FRESHNESS_PALETTE)),
+                latestCommit: () => '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%; color: var(--sk-text-muted);">'
+                    + (item.latestCommitDate ? esc(item.latestCommitDate) : dash) + '</td>',
+                scope: () => {
+                    let cell = '<td style="text-align: center; padding-right: 5px; padding-left: 5px;">';
+                    if (scope === 'main') {
+                        cell += '<div style="border: 1px solid var(--sk-border-strong); border-radius: 4px; padding: 0 4px; color: var(--sk-accent)">';
+                    } else {
+                        cell += '<div style="border: 1px solid var(--sk-border-strong); background-color: var(--sk-surface-3); border-radius: 4px; padding: 0 4px;">';
+                    }
+                    return cell + esc(scope) + '</div></td>';
+                }
+            };
+            shown.forEach(c => html += cells[c.key]());
             html += '</tr>';
         });
 
@@ -606,6 +696,7 @@
     // spinner actually paints before the main thread is blocked, then swap it for the report.
     requestAnimationFrame(function () {
         requestAnimationFrame(function () {
+            renderColumnsPanel(anyHistory);
             update();
             document.getElementById('loading').style.display = 'none';
             document.getElementById('report').style.display = 'block';

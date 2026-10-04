@@ -56,11 +56,14 @@ public class ReportRenderer {
 
         content.append("<div class='sk-page-header'>");
         content.append(renderBreadcrumbsInDiv(richTextReport.getBreadcrumbs()));
+        if (ReportNavigation.pageTitle(richTextReport) != null) {
+            content.append(richTextReport.getNavigation().contextLineHtml());
+        }
         content.append("<table class='sk-report-header'>");
         content.append("<tr>");
 
-        content.append("<td style='border: none'>");
-        content.append("<div style='margin-top: 15px; padding-bottom: 28px; white-space: nowrap; overflow: hidden;'>");
+        content.append("<td style='border: none; padding: 0; padding-top: 14px'>");
+        content.append("<div style='padding-top: 10px; padding-bottom: 18px; white-space: nowrap; overflow: hidden;'>");
 
         if (StringUtils.isNotBlank(parentUrl)) {
             content.append(parentUrlHtml);
@@ -80,7 +83,7 @@ public class ReportRenderer {
 
         content.append("</td>");
 
-        content.append("<td style='border: none'>");
+        content.append("<td style='border: none; padding: 0; padding-left: 16px'>");
         if (StringUtils.isNotBlank(parentUrl)) {
             content.append(parentUrlHtml);
         }

@@ -82,6 +82,18 @@ public class ReportNavigation {
         return groups;
     }
 
+    public String getHomeHref() {
+        return homeHref;
+    }
+
+    /**
+     * The repository name as the first line of the page header (it used to head the sidebar, where long
+     * "owner/repository" names had to wrap), linking to the Overview.
+     */
+    public String contextLineHtml() {
+        return "<a class='sk-page-context' href='" + HtmlEscapeUtils.escape(homeHref) + "'>" + HtmlEscapeUtils.escape(title) + "</a>";
+    }
+
     public String getTitle() {
         return title;
     }
@@ -154,8 +166,6 @@ public class ReportNavigation {
                 .append("<svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'>")
                 .append("<path d='M4 6h16M4 12h16M4 18h16'/></svg></button>\n");
         html.append("<nav class='sk-sidebar' aria-label='Report navigation'>\n");
-        html.append("<a class='sk-sidebar-brand' href='").append(HtmlEscapeUtils.escape(homeHref)).append("'>")
-                .append(HtmlEscapeUtils.escape(title)).append("</a>\n");
         html.append("<button type='button' class='sk-search-button' onclick='sokratesOpenPalette()'>")
                 .append("<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'>")
                 .append("<circle cx='11' cy='11' r='7'/><path d='M20 20l-3.5-3.5'/></svg>")

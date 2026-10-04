@@ -29,10 +29,9 @@ public class ReportShell {
             // The page header (logo, title) as a full-width band in the sidebar's color.
             ".sk-has-shell .sk-page-header {margin: -4px -40px 24px -40px; padding: 4px 40px 0 40px; " +
             "background: var(--sk-surface-2); border-bottom: 1px solid var(--sk-border);}\n" +
-            ".sk-sidebar-brand {display: block; padding: 2px 8px 14px 8px; font-size: 17px; font-weight: 600; " +
-            "color: var(--sk-text); text-decoration: none; overflow-wrap: anywhere;}\n" +
-            ".sk-sidebar-brand:hover {text-decoration: none;}\n" +
-            ".sk-search-button {display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; margin-bottom: 18px; " +
+            ".sk-page-context {display: block; padding-top: 16px; font-size: 15px; font-weight: 600; color: var(--sk-text-muted); " +
+            "text-decoration: none; overflow-wrap: anywhere;}\n" +
+            ".sk-page-context:hover {color: var(--sk-text); text-decoration: none;}\n" +            ".sk-search-button {display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; margin-bottom: 18px; " +
             "padding: 7px 10px; font: inherit; font-size: 13px; color: var(--sk-text-muted); cursor: pointer; " +
             "background: var(--sk-surface); border: 1px solid var(--sk-border); border-radius: 8px;}\n" +
             ".sk-search-button:hover {border-color: var(--sk-border-strong); color: var(--sk-text);}\n" +
@@ -98,7 +97,7 @@ public class ReportShell {
             "  function setPageTitle(item) {\n" +
             "    var label = item.querySelector('.sk-nav-label');\n" +
             "    var title = document.querySelector('[data-sk-page-title]');\n" +
-            "    var brand = document.querySelector('.sk-sidebar-brand');\n" +
+            "    var brand = document.querySelector('.sk-page-context');\n" +
             "    if (!label || !title) { return; }\n" +
             "    title.textContent = label.textContent;\n" +
             "    var subtitle = document.querySelector('[data-sk-page-subtitle]');\n" +

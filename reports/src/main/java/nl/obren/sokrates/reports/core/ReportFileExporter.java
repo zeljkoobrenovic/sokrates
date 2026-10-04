@@ -552,7 +552,7 @@ public class ReportFileExporter {
         ReportNavigation.Group report = navigation.addGroup("At a Glance");
         String overviewSubtitle = StringUtils.isNotBlank(metadata.getDescription())
                 ? metadata.getDescription() : "Size, age and recent activity of the codebase.";
-        report.addTabItem("overview", "Overview", "index.html#overview", "overview", overviewSubtitle);
+        report.addTabItem("overview", "At a Glance", "index.html#overview", "overview", overviewSubtitle);
         report.addTabItem("structure", "Structure", "index.html#structure", "structure",
                 "The codebase as nested circles: folders and files sized by lines of code, colored by scope or risk.");
         report.addTabItem("commits", "Activity", "index.html#commits", "activity",
@@ -573,7 +573,7 @@ public class ReportFileExporter {
         explorers.addTabItem("commits-explorer", "Commit Explorer", "index.html#commits-explorer", "commits",
                 "Browse the commits and see which files each one changed.");
         ReportNavigation.Group analyses = navigation.addGroup("Analyses");
-        analyses.addTabItem("quality", "Analysis Summary", "index.html#quality", "analyses",
+        analyses.addTabItem("quality", "Analysis Overview", "index.html#quality", "analyses",
                 "A short summary of every analysis, with links to the full reports.");
         for (String[] entry : getReportsList(analysisResults, sokratesConfigFolder)) {
             if (StringUtils.isNotBlank(entry[0])) {
