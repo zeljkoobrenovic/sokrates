@@ -1,0 +1,21 @@
+CHANGELOG.md
+  s_96ca349cadeb3e::t_eaa10ab8d31607 8-14
+common/src/main/resources/templates/files-explorer.html
+  s_96ca349cadeb3e::t_d7bc36fae03e85 57-63,650,654,657
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ff8e9ca9f1eac58ad1f67a92ee7233934fed766a",
+  "prompts": {},
+  "sessions": {
+    "s_96ca349cadeb3e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab257b52-3f95-493b-821e-4d238c9931c7",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
