@@ -1,0 +1,42 @@
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportHealthSection.java
+  s_96ca349cadeb3e::t_6b4c98560ff7b0 79-84,152-183,188,197-205
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/core/FileReadsForChangesConfig.java
+  s_96ca349cadeb3e::t_14fa94ac9acad3 8-10,22-24,53-59
+  s_96ca349cadeb3e::t_6b4c98560ff7b0 13
+  s_96ca349cadeb3e::t_7e7bd943c846b1 60
+reports/src/main/java/nl/obren/sokrates/reports/core/HealthSummary.java
+  s_96ca349cadeb3e::t_6b4c98560ff7b0 45-46,189-192,202-223
+  s_96ca349cadeb3e::t_208a32669ad429 224
+reports/src/main/java/nl/obren/sokrates/reports/dataexporters/ReferencedFiles.java
+  s_96ca349cadeb3e::t_6b4c98560ff7b0 17-18,40-42
+reports/src/main/java/nl/obren/sokrates/reports/core/FileReadsForChanges.java
+  s_96ca349cadeb3e::t_14fa94ac9acad3 68,76,113-136
+  s_96ca349cadeb3e::t_75b3b34fd6ea77 137
+reports/src/test/java/nl/obren/sokrates/reports/core/HealthSummaryTest.java
+  s_96ca349cadeb3e::t_996c675a161d1e 143-159
+  s_96ca349cadeb3e::t_e1d9eba908d49a 14
+CHANGELOG.md
+  s_96ca349cadeb3e::t_9d075a5d557e96 20-27
+reports/src/test/java/nl/obren/sokrates/reports/core/FileReadsForChangesTest.java
+  s_96ca349cadeb3e::t_996c675a161d1e 153-172
+CLAUDE.md
+  s_96ca349cadeb3e::t_9d075a5d557e96 208
+docs/configuration.md
+  s_96ca349cadeb3e::t_9d075a5d557e96 158
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "e8f9102eb4934a25ee5a698c683526a39cdb8203",
+  "prompts": {},
+  "sessions": {
+    "s_96ca349cadeb3e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab257b52-3f95-493b-821e-4d238c9931c7",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
