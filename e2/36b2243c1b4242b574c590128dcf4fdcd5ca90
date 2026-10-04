@@ -1,0 +1,30 @@
+reports/src/main/resources/templates/Structure.html
+  s_223e7b216451e0::t_2a574659f47dd0 337-341
+  s_223e7b216451e0::t_870d4bac20ad9d 156-160,323-336,342-352
+  s_223e7b216451e0::t_fdf72080b9c9e7 353
+cli/src/main/java/nl/obren/sokrates/cli/ReportVisualsGenerator.java
+  s_223e7b216451e0::t_2a574659f47dd0 128-131,280,286-288,307-312
+cli/src/main/java/nl/obren/sokrates/cli/PathStringsToTreeStructure.java
+  s_223e7b216451e0::t_af2bd875e830f7 248
+  s_223e7b216451e0::t_2a574659f47dd0 35-38,245-247,249
+CLAUDE.md
+  s_223e7b216451e0::t_152b2a9a966144 207
+reports/src/main/java/nl/obren/sokrates/reports/dataexporters/SourceViewerExporter.java
+  s_223e7b216451e0::t_870d4bac20ad9d 3-4,112-127,132
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "e236b2243c1b4242b574c590128dcf4fdcd5ca90",
+  "prompts": {},
+  "sessions": {
+    "s_223e7b216451e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "17c1a50e-ffe3-43fa-bbef-5ca8411e20a4",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
