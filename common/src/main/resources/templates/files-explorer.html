@@ -312,6 +312,10 @@
         churn90: {value: item => item.churn90Days || 0, type: 'number', dir: -1, historyOnly: true},
         churnTotal: {value: item => item.churnTotal || 0, type: 'number', dir: -1, historyOnly: true},
         contributors: {value: item => item.contributorsCount || 0, type: 'number', dir: -1, historyOnly: true},
+        contributors30: {value: item => item.contributorsCount30Days || 0, type: 'number', dir: -1, historyOnly: true},
+        contributors90: {value: item => item.contributorsCount90Days || 0, type: 'number', dir: -1, historyOnly: true},
+        units: {value: item => item.unitsCount || 0, type: 'number', dir: -1},
+        mcCabe: {value: item => item.mcCabeIndexSum || 0, type: 'number', dir: -1},
         age: {value: item => (item.ageDays == null ? -1 : item.ageDays), type: 'number', dir: -1, historyOnly: true},
         freshness: {value: item => (item.freshnessDays == null ? -1 : item.freshnessDays), type: 'number', dir: 1, historyOnly: true},
         latestCommit: {value: item => item.latestCommitDate || '', type: 'string', dir: -1, historyOnly: true},
@@ -326,16 +330,20 @@
     // the recent windows, age and freshness are one click away in the "Columns" menu, and the choice is
     // remembered in the browser.
     const OPTIONAL_COLUMNS = [
+        {key: 'units', group: null, menuGroup: 'code', label: '#<br>units', menu: 'units (functions, methods)', field: 'unitsCount', positive: true, show: true},
+        {key: 'mcCabe', group: null, menuGroup: 'code', label: 'McCabe<br>index', menu: 'McCabe index (sum over units)', field: 'mcCabeIndexSum', positive: true, show: true},
         {key: 'recentCommits', group: 'commits', label: '30d', menu: '30 days', history: true, show: false},
         {key: 'recentCommits90', group: 'commits', label: '90d', menu: '90 days', history: true, show: false},
         {key: 'commits', group: 'commits', label: 'all<br>time', menu: 'all time', history: true, show: true},
         {key: 'churn30', group: 'line churn', label: '30d', menu: '30 days', history: true, show: false},
         {key: 'churn90', group: 'line churn', label: '90d', menu: '90 days', history: true, show: false},
         {key: 'churnTotal', group: 'line churn', label: 'all<br>time', menu: 'all time', history: true, show: true},
-        {key: 'contributors', group: null, label: 'contri-<br>butors', menu: 'contributors', history: true, show: true},
+        {key: 'contributors30', group: 'contributors', label: '30d', menu: '30 days', history: true, field: 'contributorsCount30Days', show: false},
+        {key: 'contributors90', group: 'contributors', label: '90d', menu: '90 days', history: true, field: 'contributorsCount90Days', show: false},
+        {key: 'contributors', group: 'contributors', label: 'all<br>time', menu: 'all time', history: true, show: true},
         {key: 'age', group: null, label: 'age<br>(days)', menu: 'age (days since first commit)', history: true, show: false},
         {key: 'freshness', group: null, label: 'freshness<br>(days)', menu: 'freshness (days since last commit)', history: true, show: false},
-        {key: 'latestCommit', group: null, label: 'latest<br>commit', menu: 'latest commit', history: true, show: true},
+        {key: 'latestCommit', group: null, label: 'latest<br>commit', menu: 'latest commit', history: true, show: false},
         {key: 'scope', group: null, label: 'scope', menu: 'scope', history: false, show: true}
     ];
     const COLUMNS_KEY = 'sokrates-files-explorer-columns';
@@ -373,13 +381,26 @@
         update();
     }
 
-    // The "Columns" menu: grouped checkboxes (history columns only when the data has history).
+    // Whether the data has a column at all: history columns need history, and a column backed by an
+    // optional field needs that field (left out by the landscape) — with a positive value when the
+    // field is 0 for files without it (units, McCabe).
+    function isAvailable(c, hasHistory) {
+        if (c.history && !hasHistory) {
+            return false;
+        }
+        if (c.field) {
+            return files.some(f => f[c.field] != null && (!c.positive || f[c.field] > 0));
+        }
+        return true;
+    }
+
+    // The "Columns" menu: grouped checkboxes of the columns the data has.
     function renderColumnsPanel(hasHistory) {
         const panel = document.getElementById('columns-panel');
         panel.textContent = '';
         let lastGroup;
-        OPTIONAL_COLUMNS.filter(c => hasHistory || !c.history).forEach(c => {
-            const group = c.group || (c.history ? 'file history' : 'other');
+        OPTIONAL_COLUMNS.filter(c => isAvailable(c, hasHistory)).forEach(c => {
+            const group = c.group || c.menuGroup || (c.history ? 'file history' : 'other');
             if (group !== lastGroup) {
                 const title = document.createElement('div');
                 title.className = 'sk-columns-group';
@@ -562,7 +583,7 @@
         html += '<table style="width: 100%">';
 
         // Optional columns shown for this data (history columns only when there is history).
-        const shown = OPTIONAL_COLUMNS.filter(c => isVisible(c.key) && (hasHistory || !c.history));
+        const shown = OPTIONAL_COLUMNS.filter(c => isVisible(c.key) && isAvailable(c, hasHistory));
         const grouped = shown.filter(c => c.group);
         // Two header rows only when a grouped column (commits / line churn windows) is shown: row 1 has
         // the group titles over their visible sub-columns, every other column spans both rows.
@@ -669,6 +690,10 @@
                 churn90: () => plain(churn90),
                 churnTotal: () => plain(churnTotal),
                 contributors: () => colorCell(contributors, contributors > 0, bandColor(contributors, fileContribThresholds, HEAT_PALETTE)),
+                contributors30: () => plain(item.contributorsCount30Days || 0),
+                contributors90: () => plain(item.contributorsCount90Days || 0),
+                units: () => plain(item.unitsCount || 0),
+                mcCabe: () => plain(item.mcCabeIndexSum || 0),
                 age: () => colorCell(ageDays, ageDays >= 0, bandColor(ageDays, fileAgeThresholds, AGE_PALETTE)),
                 freshness: () => colorCell(freshnessDays, freshnessDays >= 0, bandColor(freshnessDays, fileAgeThresholds, FRESHNESS_PALETTE)),
                 latestCommit: () => '<td style="text-align: center; padding-right: 5px; padding-left: 5px; font-size: 80%; color: var(--sk-text-muted);">'

@@ -57,6 +57,8 @@ public class FilesExplorerGenerators {
         aspect.getSourceFiles().forEach(file -> {
             if (!file.getRelativePath().startsWith("- -") && seen.add(file)) {
                 FileExport fileExport = new FileExport("", file.getRelativePath(), scope, file.getLinesOfCode());
+                fileExport.setUnitsCount(file.getUnitsCount());
+                fileExport.setMcCabeIndexSum(file.getUnitsMcCabeIndexSum());
                 // Populate git-history columns when file history was analysed; otherwise leave the
                 // defaults (0 commits, blank date).
                 FileModificationHistory history = file.getFileModificationHistory();
@@ -71,6 +73,8 @@ public class FilesExplorerGenerators {
                     fileExport.setAgeDays(history.daysSinceFirstUpdate());
                     fileExport.setFreshnessDays(history.daysSinceLatestUpdate());
                     fileExport.setContributorsCount(history.countContributors());
+                    fileExport.setContributorsCount30Days(contributorsWithin(history, 30));
+                    fileExport.setContributorsCount90Days(contributorsWithin(history, 90));
                     fileExport.setChurn30Days(history.getChurn30Days());
                     fileExport.setChurn90Days(history.getChurn90Days());
                     fileExport.setChurnTotal(history.getChurn());
@@ -86,6 +90,15 @@ public class FilesExplorerGenerators {
         return files;
     }
 
+
+    // Distinct contributors (commit e-mails) of the file's commits in the last {@code days} days.
+    static int contributorsWithin(FileModificationHistory history, int days) {
+        return (int) history.getCommits().stream()
+                .filter(commit -> commit.getDate() != null && DateUtils.isCommittedLessThanDaysAgo(commit.getDate(), days))
+                .map(commit -> commit.getEmail())
+                .distinct()
+                .count();
+    }
 
     public void exportJson(CodeAnalysisResults codeAnalysisResults) {
         try {
