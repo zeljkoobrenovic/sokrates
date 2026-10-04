@@ -1,0 +1,53 @@
+reports/src/main/java/nl/obren/sokrates/reports/dataexporters/ReferencedFiles.java
+  s_96ca349cadeb3e::t_dac1d1dde7d189 7,17-18,40
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/core/AnalysisConfig.java
+  s_96ca349cadeb3e::t_23b92d360206f3 73-75,239-246
+  s_96ca349cadeb3e::t_fe907119905cbc 247
+CLAUDE.md
+  s_96ca349cadeb3e::t_f67faa412bb86a 208
+reports/src/test/java/nl/obren/sokrates/reports/core/FileReadsForChangesTest.java
+  s_96ca349cadeb3e::t_a5bd924e32df6a 17,33-34,48,54-55,58-64,66-69,73-75,77-81,85,88-89,93-94,96-98,103,107,112-115
+  s_96ca349cadeb3e::t_23b92d360206f3 4,65,76,86,95,100,102,108-111,119-130,132,136-151
+  s_96ca349cadeb3e::t_73ea61580de518 131
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/FileSizeReportGenerator.java
+  s_96ca349cadeb3e::t_c1df2879465263 9,56-58,223,227-251,253-260,263-265
+  s_96ca349cadeb3e::t_23b92d360206f3 221-222,224-226,252,261-262
+  s_96ca349cadeb3e::t_47051813c9b02b 266-268
+CHANGELOG.md
+  s_96ca349cadeb3e::t_f67faa412bb86a 13,20-23
+  s_96ca349cadeb3e::t_585f896971a15e 8-12,14-19,24-26
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/BasicSourceCodeReportGenerator.java
+  s_96ca349cadeb3e::t_dac1d1dde7d189 92,188
+reports/src/main/java/nl/obren/sokrates/reports/utils/RiskDistributionStatsReportUtils.java
+  s_96ca349cadeb3e::t_dac1d1dde7d189 46,52
+docs/dev/agent-context-cost-report-plan.md
+  s_96ca349cadeb3e::t_636b8a8d408bfe 38-39
+  s_96ca349cadeb3e::t_585f896971a15e 3-12
+  s_96ca349cadeb3e::t_19011e39814d04 28-30
+  s_96ca349cadeb3e::t_a98e779d5f63f2 13-21
+  s_96ca349cadeb3e::t_b56a6d774e71ca 22-27
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/core/FileReadsForChangesConfig.java
+  s_96ca349cadeb3e::t_effcfb372168b0 1-64
+docs/configuration.md
+  s_96ca349cadeb3e::t_f67faa412bb86a 158
+reports/src/main/java/nl/obren/sokrates/reports/core/FileReadsForChanges.java
+  s_96ca349cadeb3e::t_cb3d6161905266 17,24,26-27,30,32,35,50-52,55-57,60-62,70-71,82-83,85,87,90-92,95-96,99-102,107,124-126,128,131-136,139-140,173-176,178-183,185,192-193,200-201,206-209
+  s_96ca349cadeb3e::t_23b92d360206f3 9,18-22,67-69,72-76,103,106,108,111-112,115-116,119-121,196-199
+  s_96ca349cadeb3e::t_73ea61580de518 203
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "89a3e1eb449c39936a43c0601c5d3d6c1974be3d",
+  "prompts": {},
+  "sessions": {
+    "s_96ca349cadeb3e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab257b52-3f95-493b-821e-4d238c9931c7",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
