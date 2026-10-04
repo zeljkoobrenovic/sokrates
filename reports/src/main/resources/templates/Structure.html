@@ -153,6 +153,11 @@
         <button class="tablinks" onclick="openTab(event, 'size')"
                 title="Size: size = lines of code, color = file size category">Size
         </button>
+        <!--sk-complexity-->
+        <button class="tablinks" onclick="openTab(event, 'complexity')"
+                title="Complexity: size = lines of code, color = file complexity category (sum of the McCabe indexes of the file's units)">Complexity
+        </button>
+        <!--/sk-complexity-->
         <button class="tablinks" onclick="openTab(event, 'contributors')"
                 title="Contributors: size = lines of code, color = contributors category">Contributors
         </button>
@@ -314,6 +319,37 @@
                 style="border: none; width: calc(100%); height: calc(100vh - 80px)">
         </iframe>
     </div>
+
+    <!--sk-complexity-->
+    <div id="complexity" class="tabcontent" style="">
+        <div class="legend-container" slot="margin-left: 10px">
+            <table>
+                <tr>
+                    <td>${fc-negligible}</td>
+                    <td>
+                        <div class="category-color" style="background-color: #1a9641" title="${fc-negligible}"></div>
+                        <div class="category-color" style="background-color: #a6d96a" title="${fc-low}"></div>
+                        <div class="category-color" style="background-color: #ffffbf" title="${fc-medium}"></div>
+                        <div class="category-color" style="background-color: #fdae61" title="${fc-high}"></div>
+                        <div class="category-color" style="background-color: #d7191c" title="${fc-very-high}"></div>
+                    </td>
+                    <td>${fc-very-high} McCabe index (sum over the file's units)</td>
+                    <td style="padding-left: 14px">
+                        <div class="category-color" style="background-color: #bdbdbd" title="no units: not measured"></div>
+                    </td>
+                    <td>not measured</td>
+                    <td style="padding-left: 22px">circle size = lines of code</td>
+                    <td style="padding-left: 20px">
+                        <a href="FileComplexity.html" target="_top">see report...</a>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <iframe data-src="visuals/zoomable_circles.html#main_mccabe_coloring"
+                style="border: none; width: calc(100%); height: calc(100vh - 80px)">
+        </iframe>
+    </div>
+    <!--/sk-complexity-->
 
     <div id="age" class="tabcontent" style="">
         <div class="legend-container" slot="margin-left: 10px">

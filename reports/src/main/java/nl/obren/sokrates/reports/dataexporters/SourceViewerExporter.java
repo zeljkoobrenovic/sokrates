@@ -1,5 +1,7 @@
 package nl.obren.sokrates.reports.dataexporters;
 
+import nl.obren.sokrates.sourcecode.threshold.Thresholds;
+import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.renderingutils.ReportTheme;
 import nl.obren.sokrates.reports.dataexporters.duplication.DuplicateFragmentExport;
@@ -107,10 +109,27 @@ class SourceViewerExporter {
         viewerArchiveEntries.put("fragments/" + fragmentType + ".json", new JsonGenerator().generate(fragments));
     }
 
+    // The Complexity tab colors files by file complexity: its legend shows the configured bands, and
+    // it is left out when no main file has units (nothing to color).
+    String withComplexityTab(String html) {
+        RiskDistributionStats complexity = analysisResults.getFilesAnalysisResults().getOverallFileComplexityDistribution();
+        if (complexity == null || complexity.getTotalCount() == 0) {
+            return html.replaceAll("(?s)<!--sk-complexity-->.*?<!--/sk-complexity-->", "");
+        }
+        Thresholds thresholds = codeConfiguration.getAnalysis().getFileComplexityThresholds();
+        return html.replace("<!--sk-complexity-->", "").replace("<!--/sk-complexity-->", "")
+                .replace("${fc-negligible}", thresholds.getNegligibleRiskLabel())
+                .replace("${fc-low}", thresholds.getLowRiskLabel())
+                .replace("${fc-medium}", thresholds.getMediumRiskLabel())
+                .replace("${fc-high}", thresholds.getHighRiskLabel())
+                .replace("${fc-very-high}", thresholds.getVeryHighRiskLabel());
+    }
+
     private void saveStructureFile() {
         try {
 
             String html = ReportTheme.apply(HtmlTemplateUtils.getResource("/templates/Structure.html"));
+            html = withComplexityTab(html);
 
             File htmlFile = new File(new File(reportsFolder, "html"), "Structure.html");
             FileUtils.write(htmlFile, html, UTF_8);

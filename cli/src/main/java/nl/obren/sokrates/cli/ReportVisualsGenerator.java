@@ -12,7 +12,6 @@ import nl.obren.sokrates.common.renderingutils.x3d.Unit3D;
 import nl.obren.sokrates.common.renderingutils.x3d.X3DomExporter;
 import nl.obren.sokrates.common.utils.*;
 import nl.obren.sokrates.sourcecode.SourceFile;
-import nl.obren.sokrates.sourcecode.stats.SourceFileComplexityDistribution;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.core.AnalysisConfig;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
@@ -126,8 +125,10 @@ public class ReportVisualsGenerator {
         }
 
         addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "loc", codeConfiguration.getAnalysis().getFileSizeThresholds(), Palette.getRiskPalette(), (sourceFile) -> sourceFile.getLinesOfCode(), (sourceFile) -> sourceFile.getLinesOfCode());
-        // File complexity: only files with units have one (see SourceFileComplexityDistribution).
-        addRiskColoredZoomableCircles(circlesEntries, SourceFileComplexityDistribution.filesWithUnits(mainSourceFiles), "mccabe", codeConfiguration.getAnalysis().getFileComplexityThresholds(), Palette.getRiskPalette(), (sourceFile) -> sourceFile.getUnitsMcCabeIndexSum(), (sourceFile) -> sourceFile.getLinesOfCode());
+        // File complexity: only files with units have one; the others stay in the layout (as on the size
+        // view) and are drawn grey.
+        addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "mccabe", codeConfiguration.getAnalysis().getFileComplexityThresholds(), Palette.getRiskPalette(),
+                (sourceFile) -> sourceFile.getUnitsCount() > 0 ? sourceFile.getUnitsMcCabeIndexSum() : PathStringsToTreeStructure.NOT_MEASURED, (sourceFile) -> sourceFile.getLinesOfCode());
 
         addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "age", codeConfiguration.getAnalysis().getFileAgeThresholds(), Palette.getAgePalette(), (sourceFile) -> sourceFile.getFileModificationHistory() != null ? sourceFile.getFileModificationHistory().daysSinceFirstUpdate() : 0, (sourceFile) -> sourceFile.getLinesOfCode());
         addRiskColoredZoomableCircles(circlesEntries, mainSourceFiles, "freshness", codeConfiguration.getAnalysis().getFileAgeThresholds(), Palette.getFreshnessPalette(),
@@ -276,12 +277,15 @@ public class ReportVisualsGenerator {
         VisualizationItem item3 = new VisualizationItem(thresholds.getMediumRiskLabel(), 0);
         VisualizationItem item4 = new VisualizationItem(thresholds.getHighRiskLabel(), 0);
         VisualizationItem item5 = new VisualizationItem(thresholds.getVeryHighRiskLabel(), 0);
+        VisualizationItem notMeasured = new VisualizationItem("not measured", 0);
 
         sourceFiles.forEach(sourceFile -> {
             int value = valueExtractor.getValue(sourceFile);
             String path = sourceFile.getRelativePath();
             int loc = sourceFile.getLinesOfCode();
-            if (value <= thresholds.getLow()) {
+            if (value == PathStringsToTreeStructure.NOT_MEASURED) {
+                notMeasured.getChildren().add(new VisualizationItem(path, loc, PathStringsToTreeStructure.NOT_MEASURED_COLOR));
+            } else if (value <= thresholds.getLow()) {
                 item1.getChildren().add(new VisualizationItem(path, loc, PathStringsToTreeStructure.getColor(thresholds, palette, value)));
             } else if (value <= thresholds.getMedium()) {
                 item2.getChildren().add(new VisualizationItem(path, loc, PathStringsToTreeStructure.getColor(thresholds, palette, value)));
@@ -300,7 +304,12 @@ public class ReportVisualsGenerator {
         item4.setName(item4.getName() + " (" + item4.getChildren().size() + ")");
         item5.setName(item5.getName() + " (" + item5.getChildren().size() + ")");
 
-        return new ArrayList<>(Arrays.asList(item1, item2, item3, item4, item5));
+        List<VisualizationItem> items = new ArrayList<>(Arrays.asList(item1, item2, item3, item4, item5));
+        if (!notMeasured.getChildren().isEmpty()) {
+            notMeasured.setName(notMeasured.getName() + " (" + notMeasured.getChildren().size() + ")");
+            items.add(notMeasured);
+        }
+        return items;
     }
 
     private void generate3DUnitsView(File visualsFolder, CodeAnalysisResults analysisResults) {

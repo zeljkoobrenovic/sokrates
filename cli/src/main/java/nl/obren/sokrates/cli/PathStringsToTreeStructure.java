@@ -32,6 +32,10 @@ public class PathStringsToTreeStructure {
         return treeRootNode;
     }
 
+    // A color value meaning "the metric does not apply to this file"; such files are drawn grey.
+    public static final int NOT_MEASURED = -1;
+    public static final String NOT_MEASURED_COLOR = "#bdbdbd";
+
     public static String getColor(Thresholds thresholds, Palette palette, int size) {
         List<String> colors = palette.getColors();
         if (colors.size() < 5) return "";
@@ -238,8 +242,11 @@ class DirectoryNode {
             }
             VisualizationItem item = new VisualizationItem(name + (valueForColoring > 0 ? " (" + valueForColoring + ")" : ""), valueForSize);
             List<VisualizationItem> children = child.toVisualizationRiskColoringItems(thresholds, palette, colorValueExtractor, sizeValueExtractor);
-            if (valueForColoring > 0 || children.size() > 0) {
-                item.setColor(PathStringsToTreeStructure.getColor(thresholds, palette, valueForColoring));
+            // NOT_MEASURED: a file the metric does not apply to (e.g. no units for file complexity),
+            // kept in the layout and drawn grey.
+            if (valueForColoring != 0 || children.size() > 0) {
+                item.setColor(valueForColoring == PathStringsToTreeStructure.NOT_MEASURED ? PathStringsToTreeStructure.NOT_MEASURED_COLOR
+                        : PathStringsToTreeStructure.getColor(thresholds, palette, valueForColoring));
                 items.add(item);
                 item.getChildren().addAll(children);
             }
