@@ -1,0 +1,34 @@
+CLAUDE.md
+  s_96ca349cadeb3e::t_e8a29af68bf4aa 125
+  s_96ca349cadeb3e::t_957bc68fbbdebb 123
+CHANGELOG.md
+  s_96ca349cadeb3e::t_957bc68fbbdebb 13
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/LandscapeReportGenerator.java
+  s_96ca349cadeb3e::t_8cafd228ccd855 368,379-380
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportNavigation.java
+  s_96ca349cadeb3e::t_957bc68fbbdebb 182-187
+  s_96ca349cadeb3e::t_e8a29af68bf4aa 197
+  s_96ca349cadeb3e::t_8cafd228ccd855 74-80,181,188
+common/src/main/resources/templates/contributor-report.html
+  s_96ca349cadeb3e::t_08c2466ecf6818 477
+docs/dev/agent-context-cost-report-plan.md
+  s_96ca349cadeb3e::t_bdfe48a43c5e06 36
+reports/src/main/java/nl/obren/sokrates/reports/utils/GraphvizDependencyRenderer.java
+  s_96ca349cadeb3e::t_2cb5d719843b28 86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "db18f3a506691f69f34ce15aee67970602ac4309",
+  "prompts": {},
+  "sessions": {
+    "s_96ca349cadeb3e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab257b52-3f95-493b-821e-4d238c9931c7",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
