@@ -81,6 +81,17 @@
             min-height: 0;
         }
 
+        /* The files map is hidden until the viewer opens it ("show files map"): the list then takes
+           the whole width. */
+        #layout.map-hidden #right {
+            display: none;
+        }
+
+        #layout.map-hidden #left {
+            width: 100% !important;
+            max-width: none;
+        }
+
         #viz {
             flex: 1;
             min-height: 0;
@@ -246,7 +257,7 @@
 </div>
 
 <div id="report" style="display: none;">
-    <div id="layout">
+    <div id="layout" class="map-hidden">
         <div id="left">
             <div style="margin-bottom: 6px">
                 <input id="filter" type="text"
@@ -262,6 +273,7 @@
                     <span id="selection-summary" style="color: var(--sk-text-muted); font-size: 80%"></span>
                     <label style="color: var(--sk-text-muted); font-size: 80%; margin-left: 10px"><input type="checkbox" id="hide-bots"
                             onchange="updateList()">hide bots</label>
+                    <button id="toggle-map" class="action-button" style="margin-left: 10px" onclick="toggleMap()">show files map</button>
                 </div>
                 <div id="truncation-note" style="color: var(--sk-text-muted); font-size: 75%; margin-top: 4px; display: none"></div>
             </div>
@@ -918,7 +930,28 @@
 
     let currentTreeKey = null;
 
+    // The files map (circle packing) is opt-in: hidden by default, opened with "show files map", and
+    // the choice is remembered in the browser. While hidden it is not laid out at all.
+    const MAP_KEY = 'sokrates-commits-explorer-map';
+    let mapShown = false;
+    try { mapShown = localStorage.getItem(MAP_KEY) === 'shown'; } catch (e) {}
+
+    function applyMapVisibility() {
+        document.getElementById('layout').classList.toggle('map-hidden', !mapShown);
+        document.getElementById('toggle-map').textContent = mapShown ? 'hide files map' : 'show files map';
+    }
+
+    function toggleMap() {
+        mapShown = !mapShown;
+        try { localStorage.setItem(MAP_KEY, mapShown ? 'shown' : 'hidden'); } catch (e) {}
+        applyMapVisibility();
+        updateViz();
+    }
+
     function updateViz() {
+        if (!mapShown) {
+            return;
+        }
         // Union of the files changed by the selected commits.
         const highlightIds = new Set();
         selected.forEach(idx => commitsByIdx[idx].files.forEach(id => highlightIds.add(id)));
@@ -972,6 +1005,7 @@
     // spinner actually paints before the main thread is blocked, then swap it for the report.
     requestAnimationFrame(function () {
         requestAnimationFrame(function () {
+            applyMapVisibility();
             updateList();
             updateViz();
             document.getElementById('loading').style.display = 'none';
