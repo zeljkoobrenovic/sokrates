@@ -1,0 +1,19 @@
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportNavigation.java
+  s_96ca349cadeb3e::t_5691e6416b9018 188
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7ff408b940d9796046103430ed225becedb3fd36",
+  "prompts": {},
+  "sessions": {
+    "s_96ca349cadeb3e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab257b52-3f95-493b-821e-4d238c9931c7",
+        "model": "unknown"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
