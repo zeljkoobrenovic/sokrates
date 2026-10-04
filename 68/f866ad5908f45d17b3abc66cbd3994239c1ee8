@@ -1,0 +1,30 @@
+reports/src/test/java/nl/obren/sokrates/reports/core/ReportNavigationTest.java
+  s_96ca349cadeb3e::t_eb112b89b05a38 87-89
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportFileExporter.java
+  s_96ca349cadeb3e::t_eb112b89b05a38 59
+CLAUDE.md
+  s_96ca349cadeb3e::t_6fb43dd5acc16c 123,125
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportNavigation.java
+  s_96ca349cadeb3e::t_640e95afa178d3 170-171,174-176
+  s_96ca349cadeb3e::t_eacc5c6f89dd84 16
+CHANGELOG.md
+  s_96ca349cadeb3e::t_6fb43dd5acc16c 8-16
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportShell.java
+  s_96ca349cadeb3e::t_640e95afa178d3 14-15,32,34-40,67,192,196-197,199-204,206-210,212,214-217,219,221-232,234,236-238
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "68f866ad5908f45d17b3abc66cbd3994239c1ee8",
+  "prompts": {},
+  "sessions": {
+    "s_96ca349cadeb3e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab257b52-3f95-493b-821e-4d238c9931c7",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
