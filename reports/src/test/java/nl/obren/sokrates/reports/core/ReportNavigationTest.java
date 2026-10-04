@@ -110,6 +110,23 @@ class ReportNavigationTest {
     }
 
     @Test
+    void theOverviewCanShowTheConfiguredLogoAsItsIcon() {
+        ReportNavigation navigation = navigation();
+        String icon = navigation.iconOf("overview", 68);
+        assertTrue(icon.startsWith("<svg width='68'"), icon);
+
+        navigation.setPageIcon("overview", " ");
+        assertEquals(icon, navigation.iconOf("overview", 68), "a blank logo keeps the icon");
+
+        navigation.setPageIcon("overview", "https://example.com/logo.png?a=1&b='2'");
+        String logo = navigation.iconOf("overview", 68);
+        assertTrue(logo.startsWith("<img class='sk-page-logo' src='https://example.com/logo.png?a=1&amp;b=&#39;2&#39;'"), logo);
+        assertTrue(logo.contains("<span hidden>" + icon + "</span>"), "the icon stays as the fallback");
+        assertTrue(navigation.render("overview").contains("data-sk-icon-src='https://example.com/logo.png?a=1&amp;b=&#39;2&#39;'"));
+        assertFalse(navigation.render("overview").contains("<img"), "the sidebar keeps its icon");
+    }
+
+    @Test
     void subTabItemsOpenATabWithItsFramePointedAtAnotherUrl() {
         ReportNavigation navigation = new ReportNavigation("Landscape", "index.html#overview");
         navigation.addGroup("Landscape")

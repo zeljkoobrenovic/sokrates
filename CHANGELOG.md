@@ -5,6 +5,12 @@ everything listed under the most recent date.
 
 ## 2026-10-04
 
+### The Overview shows the configured logo
+
+The header of the repository's At a Glance and of the landscape's Overview now shows the configured
+`metadata.logoLink` next to the configured name. Without a logo, or when the image does not load, the
+page keeps its usual icon. The sidebar's icons do not change.
+
 ### Hide and show the sidebar
 
 On a wide screen, the sidebar of repository and landscape reports can be hidden with the small button

@@ -144,6 +144,23 @@ public class ReportNavigation {
         }
     }
 
+    /**
+     * Shows the given image (e.g. the configured logo on the Overview) as the page header's icon instead of
+     * the item's sidebar icon, which stays the fallback when the image does not load; blank links are ignored.
+     */
+    public void setPageIcon(String id, String imageLink) {
+        if (imageLink == null || imageLink.trim().isEmpty()) {
+            return;
+        }
+        for (Group group : groups) {
+            for (Item item : group.items) {
+                if (item.id.equals(id)) {
+                    item.pageIcon = imageLink.trim();
+                }
+            }
+        }
+    }
+
     /** The header title of the item with this id: its page title when set, else its label; null if absent. */
     public String titleOf(String id) {
         for (Group group : groups) {
@@ -190,6 +207,12 @@ public class ReportNavigation {
         for (Group group : groups) {
             for (Item item : group.items) {
                 if (item.id.equals(id)) {
+                    if (item.pageIcon != null) {
+                        // The sidebar icon stays as a fallback for an image that does not load.
+                        return "<img class='sk-page-logo' src='" + HtmlEscapeUtils.escape(item.pageIcon) + "' alt='' width='" + size
+                                + "' height='" + size + "' onerror='this.hidden=true;this.nextElementSibling.hidden=false'>"
+                                + "<span hidden>" + Item.icon(item.icon, size) + "</span>";
+                    }
                     return Item.icon(item.icon, size);
                 }
             }
@@ -315,6 +338,7 @@ public class ReportNavigation {
         private String subtitle;
         private String subtitleLink;
         private String pageTitle;
+        private String pageIcon;
         private String frameSrc;
 
         Item(String id, String label, String href, String icon, String tab) {
@@ -347,6 +371,9 @@ public class ReportNavigation {
             }
             if (pageTitle != null) {
                 html.append(" data-sk-title='").append(HtmlEscapeUtils.escape(pageTitle)).append("'");
+            }
+            if (pageIcon != null) {
+                html.append(" data-sk-icon-src='").append(HtmlEscapeUtils.escape(pageIcon)).append("'");
             }
             if (tab != null) {
                 html.append(" data-sk-tab='").append(HtmlEscapeUtils.escape(tab)).append("'");

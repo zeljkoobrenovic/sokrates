@@ -265,6 +265,11 @@ public class ReportConstants {
             "            vertical-align: middle;\n" +
             "        }\n" +
             "\n" +
+            "        .sk-page-logo {\n" +
+            "            object-fit: contain;\n" +
+            "            border-radius: 8px;\n" +
+            "        }\n" +
+            "\n" +
             "        .sk-report-description {\n" +
             "            color: var(--sk-text-muted);\n" +
             "            font-size: 15px;\n" +

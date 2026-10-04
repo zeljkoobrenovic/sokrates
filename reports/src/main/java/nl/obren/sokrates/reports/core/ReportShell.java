@@ -154,7 +154,17 @@ public class ReportShell {
             "    var icon = item.querySelector('.sk-nav-icon svg'), headerIcon = document.querySelector('[data-sk-page-icon]');\n" +
             "    if (headerIcon) {\n" +
             "      headerIcon.textContent = '';\n" +
-            "      if (icon) { var big = icon.cloneNode(true); big.setAttribute('width', '68'); big.setAttribute('height', '68'); headerIcon.appendChild(big); }\n" +
+            "      var big = icon ? icon.cloneNode(true) : null;\n" +
+            "      if (big) { big.setAttribute('width', '68'); big.setAttribute('height', '68'); }\n" +
+            "      // An item's data-sk-icon-src (e.g. the configured logo on the Overview) wins over its sidebar icon, which stays the fallback.\n" +
+            "      var src = item.getAttribute('data-sk-icon-src');\n" +
+            "      if (src) {\n" +
+            "        var img = document.createElement('img');\n" +
+            "        img.className = 'sk-page-logo'; img.alt = ''; img.width = 68; img.height = 68;\n" +
+            "        img.onerror = function () { img.remove(); if (big) { headerIcon.appendChild(big); } };\n" +
+            "        img.src = src;\n" +
+            "        headerIcon.appendChild(img);\n" +
+            "      } else if (big) { headerIcon.appendChild(big); }\n" +
             "    }\n" +
             "    document.title = heading + (brand && heading !== brand.textContent ? ' \\u00b7 ' + brand.textContent : '');\n" +
             "  }\n" +

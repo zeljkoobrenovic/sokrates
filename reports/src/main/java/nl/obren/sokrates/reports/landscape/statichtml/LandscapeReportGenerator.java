@@ -462,8 +462,9 @@ public class LandscapeReportGenerator {
         }
         navigation.addGroup("Index").addTabItem(DATA_TAB_ID, "Data", "index.html#" + DATA_TAB_ID, "data",
                 "The landscape's data exports.");
-        // The Overview's header shows the configured name; "Overview" when there is none.
+        // The Overview's header shows the configured name and logo; "Overview" and its icon when there are none.
         navigation.setPageTitle(OVERVIEW_TAB_ID, metadata.getName());
+        navigation.setPageIcon(OVERVIEW_TAB_ID, metadata.getLogoLink());
         return navigation;
     }
 
