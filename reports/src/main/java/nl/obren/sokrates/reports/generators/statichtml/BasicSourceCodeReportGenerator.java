@@ -33,6 +33,7 @@ public class BasicSourceCodeReportGenerator {
     private RichTextReport fileHistoryReport = new RichTextReport("File Age & Freshness", "FileAge.html");
     private RichTextReport FileChurnReport = new RichTextReport("File Churn", "FileChurn.html");
     private RichTextReport fileTemporalDependenciesReport = new RichTextReport("Temporal Dependencies", "FileTemporalDependencies.html");
+    private RichTextReport agentContextReport = new RichTextReport("Agent Context Cost", "AgentContext.html");
     private RichTextReport unitSizeReport = new RichTextReport("Unit Size", "UnitSize.html");
     private RichTextReport conditionalComplexityReport = new RichTextReport("Conditional Complexity", "ConditionalComplexity.html");
     private RichTextReport commitsReport = new RichTextReport("Commits", "Commits.html");
@@ -89,7 +90,7 @@ public class BasicSourceCodeReportGenerator {
         addIf(reports, codeAnalyzerSettings.isAnalyzeFileSize(), fileSizeReport);
         addIf(reports, codeAnalyzerSettings.isAnalyzeConditionalComplexity(), fileComplexityReport);
         addIf(reports, codeAnalyzerSettings.isAnalyzeFileHistory() && hasFileHistory(),
-                fileHistoryReport, FileChurnReport, fileTemporalDependenciesReport, commitsReport, contributorsReport);
+                fileHistoryReport, FileChurnReport, fileTemporalDependenciesReport, agentContextReport, commitsReport, contributorsReport);
         addIf(reports, codeAnalyzerSettings.isAnalyzeUnitSize(), unitSizeReport);
         addIf(reports, codeAnalyzerSettings.isAnalyzeConditionalComplexity(), conditionalComplexityReport);
         addIf(reports, codeAnalyzerSettings.isAnalyzeConcerns(), concernsReport);
@@ -123,6 +124,7 @@ public class BasicSourceCodeReportGenerator {
         decorateReport(fileHistoryReport, name, logoLink);
         decorateReport(FileChurnReport, name, logoLink);
         decorateReport(fileTemporalDependenciesReport, name, logoLink);
+        decorateReport(agentContextReport, name, logoLink);
         decorateReport(commitsReport, name, logoLink);
         decorateReport(contributorsReport, name, logoLink);
         decorateReport(controlsReport, name, logoLink);
@@ -185,11 +187,12 @@ public class BasicSourceCodeReportGenerator {
         }
     }
 
-    /** The five git-history based reports: file age, file churn, temporal dependencies, commits, contributors. */
+    /** The git-history based reports: file age, file churn, temporal dependencies, agent context cost, commits, contributors. */
     private void createHistoryReports() {
         timed("reporting/file age", () -> new FileAgeReportGenerator(codeAnalysisResults).addFileAgeToReport(fileHistoryReport));
         timed("reporting/file change frequency", () -> new FileChurnReportGenerator(codeAnalysisResults).addFileHistoryToReport(FileChurnReport));
         timed("reporting/temporal dependencies", () -> new FileTemporalDependenciesReportGenerator(codeAnalysisResults).addTemporalDependenciesToReport(reportsFolder, fileTemporalDependenciesReport));
+        timed("reporting/agent context cost", () -> new AgentContextReportGenerator(codeAnalysisResults, codeConfigurationFile.getParentFile()).addAgentContextToReport(agentContextReport));
         timed("reporting/commits", () -> new CommitsReportGenerator(codeAnalysisResults).addContributorsAnalysisToReport(reportsFolder, commitsReport));
         timed("reporting/contributors", () -> new ContributorsReportGenerator(codeAnalysisResults).addContributorsAnalysisToReport(reportsFolder, contributorsReport));
     }

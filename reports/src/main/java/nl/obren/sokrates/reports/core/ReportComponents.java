@@ -57,9 +57,10 @@ public class ReportComponents {
     public static final String SCRIPT = "" +
             "(function () {\n" +
             "  function text(cell) { return (cell.textContent || '').replace(/\\s+/g, ' ').trim(); }\n" +
-            "  // A number when the cell reads as one (thousands separators, %, + and the minus sign allowed), else text.\n" +
+            "  // A number when the cell reads as one (thousands separators, %, + and the minus sign allowed), else text;\n" +
+            "  // a data-sort attribute overrides the shown text (e.g. a rounded \"~4k\").\n" +
             "  function sortValue(cell) {\n" +
-            "    var t = text(cell);\n" +
+            "    var t = cell.hasAttribute('data-sort') ? cell.getAttribute('data-sort') : text(cell);\n" +
             "    var n = t.replace(/[,%+\\s]/g, '').replace(/^\\u2212/, '-');\n" +
             "    return /^-?\\d+(\\.\\d+)?$/.test(n) ? {num: parseFloat(n)} : {str: t.toLowerCase()};\n" +
             "  }\n" +

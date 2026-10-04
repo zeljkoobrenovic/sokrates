@@ -498,6 +498,7 @@ public class ReportFileExporter {
             new ReportEntry("ConditionalComplexity.html", "Unit Complexity*", "conditional", a -> a.units),
             new ReportEntry("Components.html", "Logical Components", "code_organization", a -> a.mainExists),
             new ReportEntry("FileTemporalDependencies.html", "Temporal Dependencies", "temporal_dependency", a -> a.mainExists && a.history),
+            new ReportEntry("AgentContext.html", "Agent Context Cost", "bot", a -> a.mainExists && a.history),
             new ReportEntry("ComponentsAndDependencies.html", "Static Dependencies*", "dependencies", a -> a.mainExists && a.dependencies),
             new ReportEntry("FeaturesOfInterest.html", "Features of Interest", "cross_cutting_concerns", a -> a.concerns),
             new ReportEntry("Controls.html", "Goals & Controls", "goal", a -> a.controls),
@@ -510,6 +511,7 @@ public class ReportFileExporter {
             new ReportEntry("", "File Age & Freshness", "file_history", a -> !a.history),
             new ReportEntry("", "File Churn", "change", a -> !a.history),
             new ReportEntry("", "Temporal Dependencies", "temporal_dependency", a -> !a.history),
+            new ReportEntry("", "Agent Context Cost", "bot", a -> !a.history),
             new ReportEntry("", "Contributors", "contributors", a -> !a.history),
             new ReportEntry("", "Unit Size", "unit_size", a -> !a.units),
             new ReportEntry("", "Conditional Complexity", "conditional", a -> !a.units),
@@ -525,6 +527,7 @@ public class ReportFileExporter {
         NAVIGATION_ICONS.put("Components.html", "components");
         NAVIGATION_ICONS.put("ComponentsAndDependencies.html", "dependencies");
         NAVIGATION_ICONS.put("FileTemporalDependencies.html", "temporal");
+        NAVIGATION_ICONS.put("AgentContext.html", "agent");
         NAVIGATION_ICONS.put("Duplication.html", "duplication");
         NAVIGATION_ICONS.put("FileSize.html", "size");
         NAVIGATION_ICONS.put("FileComplexity.html", "file_complexity");

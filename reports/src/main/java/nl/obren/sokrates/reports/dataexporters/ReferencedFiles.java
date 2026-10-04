@@ -4,6 +4,7 @@
 
 package nl.obren.sokrates.reports.dataexporters;
 
+import nl.obren.sokrates.reports.core.AgentContextSummary;
 import nl.obren.sokrates.reports.core.HealthSummary;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -13,7 +14,8 @@ import java.util.Set;
 
 /**
  * The files whose source the shared viewer ({@code src/viewer.html}) caches: the ones the reports link
- * to — the top-N file lists, the files of the longest duplicates and the Overview hotspots. One list for
+ * to — the top-N file lists, the files of the longest duplicates, the Overview hotspots and the Agent Context
+ * Cost hotspots. One list for
  * {@link SourceViewerExporter}, which caches them, and the explorers, which link only to cached files.
  */
 public class ReferencedFiles {
@@ -35,6 +37,7 @@ public class ReferencedFiles {
         results.getDuplicationAnalysisResults().getLongestDuplicates().forEach(d ->
                 d.getDuplicatedFileBlocks().forEach(b -> referenced.add(b.getSourceFile())));
         new HealthSummary(results).hotspots().forEach(hotspot -> referenced.add(hotspot.getFile()));
+        AgentContextSummary.of(results).hotspots().forEach(context -> referenced.add(context.getFile()));
         return referenced;
     }
 }
