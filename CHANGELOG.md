@@ -5,6 +5,14 @@ everything listed under the most recent date.
 
 ## 2026-10-04
 
+### Commits explorer: the columns on the right stay visible; one-line page titles
+
+In the commits explorer, the message, author and co-authors columns now share the width the other
+columns leave, cut with "…" and shown in full on hover. Next to the files map, the files and lines
+columns used to scroll out of view. In repository and landscape reports, the page title in the header
+(for example a long name on the Overview / At a Glance) stays on one line, ending with "…" and shown
+in full on hover.
+
 ### Units explorer: long file and unit names are cut
 
 The units explorer gets the same treatment as the files explorer: file, folder and unit names longer

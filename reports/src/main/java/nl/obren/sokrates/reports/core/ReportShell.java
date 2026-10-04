@@ -29,6 +29,11 @@ public class ReportShell {
             "background: var(--sk-surface-2); border-bottom: 1px solid var(--sk-border);}\n" +
             ".sk-page-context {display: block; padding-top: 10px; font-size: 15px; font-weight: 600; color: var(--sk-text-muted); " +
             "text-decoration: none; overflow-wrap: anywhere;}\n" +
+            // The header title stays on one line, cut with an ellipsis (a long name would wrap below the icon otherwise):
+            // the title cell takes the width the icon leaves (max-width: 0 lets it shrink below its content).
+            ".sk-has-shell .sk-report-header {width: 100%;}\n" +
+            ".sk-has-shell .sk-report-header td:last-child {width: 100%; max-width: 0;}\n" +
+            ".sk-has-shell .sk-report-title {display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 40px;}\n" +
             ".sk-page-context:hover {color: var(--sk-text); text-decoration: none;}\n" +
             ".sk-page-context[hidden] {display: none;}\n" +            ".sk-nav-search {display: flex; align-items: center; gap: 8px; margin-bottom: 18px; padding: 0 10px; color: var(--sk-text-muted); " +
             "background: var(--sk-surface); border: 1px solid var(--sk-border); border-radius: 8px;}\n" +
@@ -138,6 +143,7 @@ public class ReportShell {
             "    // An item's data-sk-title (e.g. the repository name on the Overview) wins over its sidebar label.\n" +
             "    var heading = item.getAttribute('data-sk-title') || label.textContent;\n" +
             "    title.textContent = heading;\n" +
+            "    title.title = heading;\n" +
             "    if (brand) { brand.hidden = heading === brand.textContent; }\n" +
             "    var subtitle = document.querySelector('[data-sk-page-subtitle]');\n" +
             "    if (subtitle) {\n" +

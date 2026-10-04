@@ -26,6 +26,14 @@
             overflow: hidden;
         }
 
+        /* The message, author and co-author columns share the width the other columns leave (max-width: 0 lets a
+           cell of a full-width table shrink below its content), cut with an ellipsis and shown in full on hover,
+           so the columns on the right stay visible, also next to the files map. */
+        td.sk-cut {
+            max-width: 0;
+            text-overflow: ellipsis;
+        }
+
         .sortable {
             cursor: pointer;
             user-select: none;
@@ -451,6 +459,11 @@
         return true;
     }
 
+    // The co-authors as plain text, for the cell's hover title.
+    function coAuthorsText(commit) {
+        return commit.coAuthors.map(a => a.agent ? a.agent : (a.name || a.email || '')).join(', ');
+    }
+
     function coAuthorsHtml(commit) {
         return commit.coAuthors.map(a => {
             if (a.agent) {
@@ -534,14 +547,14 @@
             html += '<td style="color: var(--sk-text-muted)">' + commit.date + '</td>';
             html += '<td class="mono" style="color: var(--sk-text-muted)">' + escapeHtml((commit.sha || '').substring(0, 7)) + '</td>';
             if (hasMessages) {
-                html += '<td style="max-width: 300px; text-overflow: ellipsis" title="' + escapeHtml(commit.message || '') + '">'
+                html += '<td class="sk-cut" style="width: 45%" title="' + escapeHtml(commit.message || '') + '">'
                     + (commit.message ? escapeHtml(commit.message) : '<span style="color: var(--sk-text-faint)">-</span>') + '</td>';
             }
-            html += '<td style="max-width: 220px; text-overflow: ellipsis" title="' + escapeHtml(commit.email || '') + '">'
+            html += '<td class="sk-cut" style="width: 30%" title="' + escapeHtml(commit.email || '') + '">'
                 + escapeHtml(commit.userName || commit.email || '')
                 + (commit.bot ? '<span class="badge-bot">bot</span>' : '') + '</td>';
             if (hasCoAuthors) {
-                html += '<td style="max-width: 200px; text-overflow: ellipsis">'
+                html += '<td class="sk-cut" style="width: 25%" title="' + escapeHtml(coAuthorsText(commit)) + '">'
                     + (commit.coAuthors.length ? coAuthorsHtml(commit) : '<span style="color: var(--sk-text-faint)">-</span>') + '</td>';
             }
             html += '<td style="text-align: right" title="' + filesTooltip(commit) + '">'
