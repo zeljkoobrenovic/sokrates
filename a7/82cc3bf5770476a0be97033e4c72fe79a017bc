@@ -1,0 +1,28 @@
+CLAUDE.md
+  s_96ca349cadeb3e::t_666d2266a16f00 123
+CHANGELOG.md
+  s_96ca349cadeb3e::t_666d2266a16f00 8-15
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportShell.java
+  s_96ca349cadeb3e::t_0ddbf581c5dde5 32-35,146
+  s_96ca349cadeb3e::t_6a4cefbb65f260 36
+common/src/main/resources/templates/commits-explorer.html
+  s_96ca349cadeb3e::t_ddf561620f7141 29-36,462-466,550,553,557
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportRenderer.java
+  s_96ca349cadeb3e::t_0ddbf581c5dde5 94-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a782cc3bf5770476a0be97033e4c72fe79a017bc",
+  "prompts": {},
+  "sessions": {
+    "s_96ca349cadeb3e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab257b52-3f95-493b-821e-4d238c9931c7",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
