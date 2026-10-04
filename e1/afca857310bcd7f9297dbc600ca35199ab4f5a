@@ -1,0 +1,57 @@
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/threshold/Thresholds.java
+  s_223e7b216451e0::t_55ac8024cfcc26 55-56,58-59
+  s_223e7b216451e0::t_0c61bdc4a4fee5 54
+cli/src/main/java/nl/obren/sokrates/cli/ReportVisualsGenerator.java
+  s_223e7b216451e0::t_8f5d2722e21c5a 15,129-130
+codeanalyzer/src/test/java/nl/obren/sokrates/sourcecode/stats/SourceFileComplexityDistributionTest.java
+  s_223e7b216451e0::t_ab2cdcc312a2ff 1-80
+CHANGELOG.md
+  s_223e7b216451e0::t_dd2c1f94fcb580 6-26
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/FileComplexityReportGenerator.java
+  s_223e7b216451e0::t_11ba1de322c383 1-120,126,128-181
+  s_223e7b216451e0::t_a5c881e89a4ae0 121-122,127
+  s_223e7b216451e0::t_7ca523b7ab1ce8 123-124
+  s_223e7b216451e0::t_f6eef0943544a4 125
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/analysis/results/FileComplexityDistributionPerLogicalDecomposition.java
+  s_223e7b216451e0::t_f407fb3d5424af 1-31
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/core/AnalysisConfig.java
+  s_223e7b216451e0::t_55ac8024cfcc26 68-71,228-229,232-233
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportFileExporter.java
+  s_223e7b216451e0::t_8f5d2722e21c5a 492,530
+  s_223e7b216451e0::t_affccdc76d7776 509
+CLAUDE.md
+  s_223e7b216451e0::t_dd2c1f94fcb580 207
+reports/src/main/java/nl/obren/sokrates/reports/generators/statichtml/BasicSourceCodeReportGenerator.java
+  s_223e7b216451e0::t_8f5d2722e21c5a 32,90,122,156-157
+  s_223e7b216451e0::t_56f74bb448e42a 158
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/analysis/results/FilesAnalysisResults.java
+  s_223e7b216451e0::t_f407fb3d5424af 25-30,91-122
+reports/src/main/java/nl/obren/sokrates/reports/utils/FilesReportUtils.java
+  s_223e7b216451e0::t_11ba1de322c383 80
+docs/configuration.md
+  s_223e7b216451e0::t_dd2c1f94fcb580 156
+reports/src/main/java/nl/obren/sokrates/reports/dataexporters/ReferencedFiles.java
+  s_223e7b216451e0::t_8f5d2722e21c5a 27
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportNavigation.java
+  s_223e7b216451e0::t_8f5d2722e21c5a 51
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/stats/SourceFileComplexityDistribution.java
+  s_223e7b216451e0::t_f407fb3d5424af 1-58
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/analysis/files/UnitsAnalyzer.java
+  s_223e7b216451e0::t_0c61bdc4a4fee5 13,20,29,134-187
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "e1afca857310bcd7f9297dbc600ca35199ab4f5a",
+  "prompts": {},
+  "sessions": {
+    "s_223e7b216451e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "17c1a50e-ffe3-43fa-bbef-5ca8411e20a4",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
