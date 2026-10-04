@@ -1,0 +1,45 @@
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportShell.java
+  s_223e7b216451e0::t_c764520d475753 32-34,100
+common/src/main/resources/templates/files-explorer.html
+  s_223e7b216451e0::t_90343a75089eee 99-109,140-143,324-411,460,564-584,586-589,591,650-664,666-686,699
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportNavigation.java
+  s_223e7b216451e0::t_c764520d475753 85-96
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportHealthSection.java
+  s_223e7b216451e0::t_de34635e69c37c 85-88
+  s_223e7b216451e0::t_eefb82af0c8011 31-33
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportRenderer.java
+  s_223e7b216451e0::t_c764520d475753 59-61
+  s_223e7b216451e0::t_4c91c76480bc72 65-66,86
+reports/src/test/java/nl/obren/sokrates/reports/core/ReportNavigationTest.java
+  s_223e7b216451e0::t_6a0c29f04f56ec 34-35,37
+CLAUDE.md
+  s_223e7b216451e0::t_7798beff435f2f 123
+reports/src/test/resources/golden/controls-report-empty.html
+  s_223e7b216451e0::t_47694524e88217 1-2
+reports/src/test/resources/golden/controls-report-populated.html
+  s_223e7b216451e0::t_00b8768f212deb 1-2
+reports/src/test/resources/golden/findings-report-empty.html
+  s_223e7b216451e0::t_6e1839eee930bc 1-2
+reports/src/test/resources/golden/metrics-list-report.html
+  s_223e7b216451e0::t_37f37c25ba2ebc 1-2
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportConstants.java
+  s_223e7b216451e0::t_3347b68ae03a76 253-254
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportFileExporter.java
+  s_223e7b216451e0::t_ee434a2f5619a5 555,576
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "062580a67f326279954f10e7674b54f821534bbc",
+  "prompts": {},
+  "sessions": {
+    "s_223e7b216451e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "17c1a50e-ffe3-43fa-bbef-5ca8411e20a4",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
