@@ -76,6 +76,12 @@ public class ReportHealthSection {
             boolean viewerLinks = results.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
             report.addHtmlContent(hotspotsCard(hotspots, summary.hasHistory(), viewerLinks));
         }
+        // Shown only when changed files exceed the large-file size: otherwise it would repeat the hotspots.
+        List<FileReadsForChanges.ChangedFile> largeFiles = summary.largeChangingFiles();
+        if (!largeFiles.isEmpty()) {
+            boolean viewerLinks = results.getCodeConfiguration().getAnalysis().isSaveSourceFiles();
+            report.addHtmlContent(largeFilesCard(summary.largeFileReads(), largeFiles, viewerLinks));
+        }
     }
 
     static String tile(HealthSummary.Tile tile) {
@@ -143,15 +149,43 @@ public class ReportHealthSection {
         return html.toString();
     }
 
-    static String hotspot(int rank, HealthSummary.Hotspot hotspot, long maxScore, boolean history, boolean viewerLinks) {
-        SourceFile file = hotspot.file;
+    static String largeFilesCard(FileReadsForChanges reads, List<FileReadsForChanges.ChangedFile> files, boolean viewerLinks) {
+        StringBuilder html = new StringBuilder("<div class='sk-hotspots-card'>");
+        html.append("<div class='sk-hotspots-title'>Large files that change often</div>");
+        html.append("<div class='sk-hotspots-intro'>Main files over ").append(String.format(Locale.US, "%,d", reads.getLargeFileLines()))
+                .append(" lines changed ").append(HtmlEscapeUtils.escape(reads.windowLabel()))
+                .append(": people and AI coding agents read them in pieces for every change. Splitting them cuts what each change has to read. ")
+                .append("Ranked by lines × changes.</div><ol class='sk-hotspots'>");
+        long max = Math.max(1, files.get(0).getReadLines());
+        for (int i = 0; i < files.size(); i++) {
+            FileReadsForChanges.ChangedFile file = files.get(i);
+            StringBuilder row = new StringBuilder("<li class='sk-hotspot'>");
+            row.append("<span class='sk-hotspot-rank'>").append(i + 1).append("</span>");
+            row.append(fileCell(file.getFile(), viewerLinks));
+            row.append("<div class='sk-hotspot-signals'>");
+            row.append(chip(String.format(Locale.US, "%,d LOC", file.getLinesOfCode()), true));
+            row.append(chip(file.getChanges() + (file.getChanges() == 1 ? " change" : " changes") + " / " + reads.windowShortLabel(), false));
+            row.append(chip(reads.tokenRange(file.getLinesOfCode()) + " tokens to read", false));
+            row.append("</div>");
+            long percent = Math.max(2, Math.round(100.0 * file.getReadLines() / max));
+            row.append("<div class='sk-hotspot-score' title='lines × changes: ").append(file.getReadLines()).append("'><span style='width: ")
+                    .append(percent).append("%'></span></div>");
+            row.append("</li>");
+            html.append(row);
+        }
+        html.append("</ol>");
+        html.append("<a class='sk-hotspots-more' href='FileSize.html'>Large files that change often in the File Size report →</a>");
+        html.append("</div>");
+        return html.toString();
+    }
+
+    // The file name (a source viewer link when the viewer caches sources) above its folder.
+    private static String fileCell(SourceFile file, boolean viewerLinks) {
         String path = file.getRelativePath();
         int slash = path.lastIndexOf('/');
         String name = slash >= 0 ? path.substring(slash + 1) : path;
         String folder = slash >= 0 ? path.substring(0, slash + 1) : "";
-
-        StringBuilder html = new StringBuilder("<li class='sk-hotspot'>");
-        html.append("<span class='sk-hotspot-rank'>").append(rank).append("</span>");
+        StringBuilder html = new StringBuilder();
         html.append("<div class='sk-hotspot-file' title='").append(HtmlEscapeUtils.escape(path)).append("'>");
         if (viewerLinks) {
             html.append("<a class='sk-hotspot-name' target='_blank' href='").append(HtmlEscapeUtils.viewerFileHref("main", path)).append("'>")
@@ -160,6 +194,15 @@ public class ReportHealthSection {
             html.append("<span class='sk-hotspot-name'>").append(HtmlEscapeUtils.escape(name)).append("</span>");
         }
         html.append("<div class='sk-hotspot-path'>").append(HtmlEscapeUtils.escape(folder)).append("</div></div>");
+        return html.toString();
+    }
+
+    static String hotspot(int rank, HealthSummary.Hotspot hotspot, long maxScore, boolean history, boolean viewerLinks) {
+        SourceFile file = hotspot.file;
+
+        StringBuilder html = new StringBuilder("<li class='sk-hotspot'>");
+        html.append("<span class='sk-hotspot-rank'>").append(rank).append("</span>");
+        html.append(fileCell(file, viewerLinks));
 
         html.append("<div class='sk-hotspot-signals'>");
         if (hotspot.complexityIsLinesOfCode) {

@@ -42,6 +42,8 @@ public class HealthSummary {
     static final double[] COMPLEX_UNITS_BANDS = {5, 15};
     static final double[] LONG_UNITS_BANDS = {10, 25};
     static final double[] LARGE_FILES_BANDS = {10, 30};
+    static final double[] CHANGES_IN_LARGE_FILES_BANDS = {5, 15};
+    public static final int MAX_LARGE_CHANGING_FILES = 5;
 
     public enum Status {
         GOOD("good"), WATCH("watch"), HIGH("high"), NEUTRAL("");
@@ -184,6 +186,10 @@ public class HealthSummary {
                     status(largeShare, LARGE_FILES_BANDS), "FileSize.html", bandsTooltip(LARGE_FILES_BANDS)));
         }
         if (history) {
+            Tile changesInLargeFiles = changesInLargeFilesTile(largeFileReads());
+            if (changesInLargeFiles != null) {
+                tiles.add(changesInLargeFiles);
+            }
             addActivityTiles(tiles);
         }
         Tile goals = goalsTile();
@@ -191,6 +197,29 @@ public class HealthSummary {
             tiles.add(goals);
         }
         return tiles;
+    }
+
+    /** The file reads for changes when the File Size section is enabled (analysis.fileReadsForChanges), else null. */
+    public FileReadsForChanges largeFileReads() {
+        return results.getCodeConfiguration().getAnalysis().getFileReadsForChanges().isEnabled() ? FileReadsForChanges.of(results) : null;
+    }
+
+    /** The changed files over the large-file size, for the conditional "Large files that change often" list. */
+    public List<FileReadsForChanges.ChangedFile> largeChangingFiles() {
+        FileReadsForChanges reads = history ? largeFileReads() : null;
+        return reads == null ? Collections.emptyList() : reads.largeFiles(MAX_LARGE_CHANGING_FILES);
+    }
+
+    // The share of the window's changes that touched a file larger than an agent reads at once; null without changes.
+    static Tile changesInLargeFilesTile(FileReadsForChanges reads) {
+        if (reads == null || reads.getTotalChanges() == 0) {
+            return null;
+        }
+        double share = 100.0 * reads.getChangesInLargeFiles() / reads.getTotalChanges();
+        return new Tile("Changes in large files", percentage(share),
+                "of changes (" + reads.windowShortLabel() + ") touched files > " + String.format(Locale.US, "%,d", reads.getLargeFileLines()) + " lines",
+                status(share, CHANGES_IN_LARGE_FILES_BANDS), "FileSize.html",
+                "Large files are read in pieces for every change, by people and AI coding agents. " + bandsTooltip(CHANGES_IN_LARGE_FILES_BANDS));
     }
 
     private void addActivityTiles(List<Tile> tiles) {

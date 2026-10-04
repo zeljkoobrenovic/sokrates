@@ -65,6 +65,7 @@ public class FileReadsForChanges {
 
     private final int windowDays;
     private final int maxFiles;
+    private final int largeFileLines;
     private final int tokensPerLineMin;
     private final int tokensPerLineMax;
     private final List<ChangedFile> files = new ArrayList<>();
@@ -72,6 +73,7 @@ public class FileReadsForChanges {
     public FileReadsForChanges(List<SourceFile> mainFiles, FileReadsForChangesConfig config) {
         this.windowDays = config.getWindowDays();
         this.maxFiles = Math.max(1, config.getMaxFiles());
+        this.largeFileLines = Math.max(1, config.getLargeFileLines());
         this.tokensPerLineMin = Math.max(1, Math.min(config.getTokensPerLineMin(), config.getTokensPerLineMax()));
         this.tokensPerLineMax = Math.max(tokensPerLineMin, Math.max(config.getTokensPerLineMin(), config.getTokensPerLineMax()));
         mainFiles.forEach(file -> {
@@ -106,6 +108,31 @@ public class FileReadsForChanges {
     /** The files read most for changes (lines × changes), at most maxFiles. */
     public List<ChangedFile> topFiles() {
         return files.size() > maxFiles ? new ArrayList<>(files.subList(0, maxFiles)) : files;
+    }
+
+    /** The changed files larger than largeFileLines, most lines read first, at most max. */
+    public List<ChangedFile> largeFiles(int max) {
+        List<ChangedFile> large = new ArrayList<>();
+        files.stream().filter(this::isLarge).limit(max).forEach(large::add);
+        return large;
+    }
+
+    public boolean isLarge(ChangedFile file) {
+        return file.getLinesOfCode() > largeFileLines;
+    }
+
+    public int getLargeFileLines() {
+        return largeFileLines;
+    }
+
+    /** The changes in the window (one per commit and file). */
+    public long getTotalChanges() {
+        return files.stream().mapToLong(ChangedFile::getChanges).sum();
+    }
+
+    /** The changes in the window of files larger than largeFileLines. */
+    public long getChangesInLargeFiles() {
+        return files.stream().filter(this::isLarge).mapToLong(ChangedFile::getChanges).sum();
     }
 
     public int getTokensPerLineMin() {

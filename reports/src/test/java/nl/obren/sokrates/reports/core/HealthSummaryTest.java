@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -138,5 +139,22 @@ class HealthSummaryTest {
 
         assertEquals(3, svg.split("<rect").length - 1);
         assertTrue(svg.contains("<title>2026-09: 4</title>"));
+    }
+
+    @Test
+    void changesInLargeFilesTileShowsTheShareOfChangesTouchingLargeFiles() {
+        nl.obren.sokrates.sourcecode.core.FileReadsForChangesConfig config = new nl.obren.sokrates.sourcecode.core.FileReadsForChangesConfig();
+        FileReadsForChanges reads = new FileReadsForChanges(Arrays.asList(
+                file("Small.java", 300, 0, "2026-09-01", "x@a", "2026-09-02", "x@a", "2026-09-03", "x@a"),
+                file("Huge.java", 6000, 0, "2026-09-04", "x@a")), config);
+
+        HealthSummary.Tile tile = HealthSummary.changesInLargeFilesTile(reads);
+
+        assertEquals("Changes in large files", tile.getLabel());
+        assertEquals("25%", tile.getValue());
+        assertEquals(HealthSummary.Status.HIGH, tile.getStatus());
+        assertEquals("FileSize.html", tile.getLink());
+        assertNull(HealthSummary.changesInLargeFilesTile(new FileReadsForChanges(Collections.emptyList(), config)));
+        assertNull(HealthSummary.changesInLargeFilesTile(null));
     }
 }

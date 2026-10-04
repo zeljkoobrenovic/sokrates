@@ -17,8 +17,14 @@ files read most for the changes of the past year (lines × changes, every commit
   history);
 - the lines read per line changed.
 
-The section is configured in `analysis.fileReadsForChanges`: `enabled`, `windowDays` (365),
-`maxFiles` (20), and `tokensPerLineMin`/`tokensPerLineMax` (7/14). New configurations get these keys
+**Highlights** gets two matching parts:
+- a **Changes in large files** tile: the share of those changes that touched a file over 2,000 lines
+  (good below 5%, watch below 15%);
+- a short **Large files that change often** list below "Where to look first", with up to 5 such files.
+  It appears only when there are such files, as otherwise it would repeat the hotspots.
+
+The section, tile and list are configured in `analysis.fileReadsForChanges`: `enabled`, `windowDays`
+(365), `maxFiles` (20), `largeFileLines` (2000), and `tokensPerLineMin`/`tokensPerLineMax` (7/14). New configurations get these keys
 from `init`; older ones use the defaults (`updateConfig` adds them). The section is omitted without git
 history. Sortable report tables now honour a `data-sort` attribute
 on a cell, so rounded values sort by the underlying number.

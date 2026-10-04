@@ -150,4 +150,24 @@ class FileReadsForChangesTest {
         assertEquals(1, zero.getTokensPerLineMin());
         assertEquals(1, zero.getTokensPerLineMax());
     }
+
+    @Test
+    void largeFilesAreTheChangedFilesOverTheLargeFileSize() {
+        FileReadsForChangesConfig config = new FileReadsForChangesConfig();
+        FileReadsForChanges reads = new FileReadsForChanges(Arrays.asList(
+                file("Small.java", 300, 0, "c1", "c2", "c3", "c4"),
+                file("Big.java", 2500, 0, "c1"),
+                file("Huge.java", 6000, 0, "c1", "c2"),
+                file("Quiet.java", 9000, 0, "o1@" + OLD)), config);
+
+        assertEquals(Arrays.asList("Huge.java", "Big.java"),
+                reads.largeFiles(5).stream().map(f -> f.getFile().getRelativePath()).collect(Collectors.toList()));
+        assertEquals(1, reads.largeFiles(1).size());
+        assertEquals(7, reads.getTotalChanges());
+        assertEquals(3, reads.getChangesInLargeFiles());
+
+        config.setLargeFileLines(100);
+        assertEquals(7, new FileReadsForChanges(Collections.singletonList(file("Small.java", 300, 0, "c1", "c2", "c3", "c4", "c5", "c6", "c7")), config)
+                .getChangesInLargeFiles());
+    }
 }
