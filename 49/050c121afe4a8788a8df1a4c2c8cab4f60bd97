@@ -1,0 +1,35 @@
+reports/src/main/java/nl/obren/sokrates/reports/generators/explorers/FilesExplorerGenerators.java
+  s_223e7b216451e0::t_4a4b3db5fe836e 60-61,76-77,94-101
+  s_223e7b216451e0::t_4eb1d95289cdff 102
+common/src/main/resources/templates/files-explorer.html
+  s_26e964c15d0a7a::t_194bda04aa03ff 315-318,333-334,341-343,346,384-397,402-403,586,693-696
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/landscape/analysis/FileExport.java
+  s_223e7b216451e0::t_4a4b3db5fe836e 3,29-39,47-77
+  s_223e7b216451e0::t_9ef56d8d094df6 78
+reports/src/test/java/nl/obren/sokrates/reports/generators/explorers/FilesExplorerNewColumnsTest.java
+  s_223e7b216451e0::t_e1ef743b1f9004 1-60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "49050c121afe4a8788a8df1a4c2c8cab4f60bd97",
+  "prompts": {},
+  "sessions": {
+    "s_223e7b216451e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "17c1a50e-ffe3-43fa-bbef-5ca8411e20a4",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    },
+    "s_26e964c15d0a7a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "114b30ae-11ba-4bea-b92c-6261f67372dd",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
