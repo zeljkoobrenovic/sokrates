@@ -46,6 +46,9 @@ public class ReportNavigation {
         ICONS.put("size", "<path d='M3 17l14-14 4 4L7 21z'/><path d='M7.5 12.5l2 2M10.5 9.5l2 2M13.5 6.5l2 2'/>");
         ICONS.put("age", "<circle cx='12' cy='12' r='9'/><path d='M12 7v5l3 3'/>");
         ICONS.put("churn", "<path d='M21 12a9 9 0 0 1-15.5 6.2M3 12a9 9 0 0 1 15.5-6.2'/><path d='M21 3v6h-6M3 21v-6h6'/>");
+        ICONS.put("repositories", "<rect x='3' y='4' width='18' height='5' rx='1'/><rect x='3' y='11' width='18' height='5' rx='1'/><path d='M7 20h10M7 6.5h.01M7 13.5h.01'/>");
+        ICONS.put("teams", "<circle cx='12' cy='7' r='3'/><circle cx='5' cy='10' r='2.2'/><circle cx='19' cy='10' r='2.2'/><path d='M7 20v-1a5 5 0 0 1 10 0v1M1.5 19v-.5a3.5 3.5 0 0 1 4.5-3.3M22.5 19v-.5a3.5 3.5 0 0 0-4.5-3.3'/>");
+        ICONS.put("ai", "<path d='M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z'/><path d='M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2-2.2-.8 2.2-.8z'/>");
         ICONS.put("contributors", "<circle cx='9' cy='8' r='3.5'/><path d='M2 21v-1a6 6 0 0 1 12 0v1M16 4.5a3.5 3.5 0 0 1 0 7M22 21v-1a6 6 0 0 0-4-5.6'/>");
         ICONS.put("complexity", "<circle cx='6' cy='5' r='2'/><circle cx='6' cy='19' r='2'/><circle cx='18' cy='9' r='2'/><path d='M6 7v10M18 11c0 4-6 3-12 6'/>");
         ICONS.put("file_complexity", "<path d='M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z'/><path d='M14 3v6h6'/><path d='M9 18v-6M9 14c0-2 3-2 3-4M9 14c0 2 3 2 3 4'/>");

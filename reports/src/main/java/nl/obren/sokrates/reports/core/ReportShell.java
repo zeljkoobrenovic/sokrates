@@ -27,7 +27,7 @@ public class ReportShell {
             // The page header (logo, title) as a full-width band in the sidebar's color.
             ".sk-has-shell .sk-page-header {margin: -4px -40px 24px -40px; padding: 4px 40px 0 40px; " +
             "background: var(--sk-surface-2); border-bottom: 1px solid var(--sk-border);}\n" +
-            ".sk-page-context {display: block; padding-top: 16px; font-size: 15px; font-weight: 600; color: var(--sk-text-muted); " +
+            ".sk-page-context {display: block; padding-top: 10px; font-size: 15px; font-weight: 600; color: var(--sk-text-muted); " +
             "text-decoration: none; overflow-wrap: anywhere;}\n" +
             ".sk-page-context:hover {color: var(--sk-text); text-decoration: none;}\n" +            ".sk-nav-search {display: flex; align-items: center; gap: 8px; margin-bottom: 18px; padding: 0 10px; color: var(--sk-text-muted); " +
             "background: var(--sk-surface); border: 1px solid var(--sk-border); border-radius: 8px;}\n" +
