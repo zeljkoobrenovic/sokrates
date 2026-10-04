@@ -5,6 +5,12 @@ everything listed under the most recent date.
 
 ## 2026-10-04
 
+### Units explorer: long file and unit names are cut
+
+The units explorer gets the same treatment as the files explorer: file, folder and unit names longer
+than their column (420px) end with "…" and show in full on hover. Before, folders were cut at 40
+characters and unit names at 50, while file names were not cut at all.
+
 ### Files explorer: long file names are cut
 
 In the files explorer, a file or folder name longer than the column (420px) ends with "…", and the full

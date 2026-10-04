@@ -24,6 +24,13 @@
             overflow: hidden;
         }
 
+        /* Long file, folder and unit names are cut with an ellipsis (full name on hover), so the columns on the right stay visible. */
+        .sk-file-line {
+            max-width: 420px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         .sortable {
             cursor: pointer;
             user-select: none;
@@ -240,13 +247,9 @@
             const paths = (item.file || '').split('/');
             const fileName = paths[paths.length - 1];
             let folder = paths.slice(0, paths.length - 1).join('/');
-            let displayFolder = folder;
-            if (folder && folder.length > 40) {
-                displayFolder = folder.substring(0, 40) + '...';
-            }
             html += '<div style="border-left: 1px solid var(--sk-border); padding-left: 6px">';
-            html += '<div title="' + escapeHtml(folder) + '" style="font-size: 90%; color: var(--sk-text-muted)">' + escapeHtml(displayFolder) + '</div>';
-            html += '<div style="margin-bottom: 6px; color: #3f3f3f">' + escapeHtml(fileName) + '</div>';
+            html += '<div class="sk-file-line" title="' + escapeHtml(folder) + '" style="font-size: 90%; color: var(--sk-text-muted)">' + escapeHtml(folder) + '</div>';
+            html += '<div class="sk-file-line" title="' + escapeHtml(fileName) + '" style="margin-bottom: 6px; color: var(--sk-text)">' + escapeHtml(fileName) + '</div>';
             html += '</div>';
             html += '</td>';
 
@@ -255,16 +258,13 @@
             html += '<td>';
             html += '<div style="border-left: 1px solid var(--sk-border); padding-left: 6px">';
             const unitTitle = escapeHtml(item.longName || item.name) + (item.startLine ? ' (line ' + item.startLine + ')' : '');
-            let displayName = item.name;
-            if (displayName && displayName.length > 50) {
-                displayName = displayName.substring(0, 50) + '...';
-            }
+            const displayName = item.name;
             if (item.fragmentLink) {
-                html += '<div title="' + unitTitle + ' — view code" style="font-weight: bold">'
+                html += '<div class="sk-file-line" title="' + unitTitle + ' — view code" style="font-weight: bold">'
                     + '<a target="_blank" href="' + escapeHtml(item.fragmentLink) + '" style="color: var(--sk-accent)">'
                     + escapeHtml(displayName) + ' <span style="font-size: 60%; color: var(--sk-text-muted)">&#x2197;</span></a></div>';
             } else {
-                html += '<div title="' + unitTitle + '" style="color: var(--sk-text); font-weight: bold">' + escapeHtml(displayName) + '</div>';
+                html += '<div class="sk-file-line" title="' + unitTitle + '" style="color: var(--sk-text); font-weight: bold">' + escapeHtml(displayName) + '</div>';
             }
             html += '</div>';
             html += '</td>';
