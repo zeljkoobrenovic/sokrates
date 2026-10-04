@@ -365,7 +365,7 @@ public class LandscapeReportGenerator {
 
     /**
      * The landscape's sidebar, as on the repository reports: the tabs as index.html#tab items in groups,
-     * with the inline search filtering them, the landscape's name above the page header and the generation
+     * without the search field (too few items to search), the landscape's name above the page header and the generation
      * date in the footer. Counts go into the subtitles, so the labels (and page titles) stay short.
      */
     private ReportNavigation landscapeNavigation(int recentContributorsCount, int recentTeamsCount, int subLandscapesCount) {
@@ -376,6 +376,8 @@ public class LandscapeReportGenerator {
         String generatedOn = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
         String referenceDate = new SimpleDateFormat("yyyy-MM-dd").format(DateUtils.getCalendar().getTime());
         navigation.setGeneratedOn(generatedOn, referenceDate.equals(generatedOn) ? null : referenceDate);
+        // A handful of tabs: nothing to search.
+        navigation.setSearchable(false);
 
         int repositoriesCount = landscapeAnalysisResults.getFilteredRepositoryAnalysisResults().size();
         ReportNavigation.Group landscape = navigation.addGroup("Landscape");

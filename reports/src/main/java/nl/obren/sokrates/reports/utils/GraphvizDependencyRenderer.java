@@ -83,7 +83,7 @@ public class GraphvizDependencyRenderer {
                 .replace(">", "#gt;");
     }
 
-    // Map the few Graphviz X11 colour names used by callers to CSS-valid colours; hex values and
+    // Map the few Graphviz X11 colour names used by callers to CSS-valid colors; hex values and
     // standard CSS names pass through unchanged.
     private static String toCssColor(String color) {
         if (color == null) {

@@ -33,7 +33,7 @@ reads", and the headline is a thought experiment ("Had agents made the past year
 
 After review the page was restyled like the other risk reports: five file-size bands
 (350 / 1,000 / 2,000 / 5,000 lines) and five commit-reading bands (1k / 2k / 10k / 50k lines) on the
-risk colours, stacked bars for code vs. changes, per logical component and per commit (all vs AI
+risk colors, stacked bars for code vs. changes, per logical component and per commit (all vs AI
 co-authored). The headline tiles and rule callouts were dropped, and the rules of thumb moved into the
 about section, with each section keeping its rule as a subtitle. The split by AI co-authored commits was
 removed again: the report does not use co-author data.
