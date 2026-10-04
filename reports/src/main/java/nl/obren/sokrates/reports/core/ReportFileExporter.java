@@ -555,6 +555,8 @@ public class ReportFileExporter {
         String overviewSubtitle = StringUtils.isNotBlank(metadata.getDescription())
                 ? metadata.getDescription() : "Size, age and recent activity of the codebase.";
         report.addTabItem("overview", "At a Glance", "index.html#overview", "overview", overviewSubtitle);
+        // The Overview's header shows the configured name; "At a Glance" when there is none.
+        navigation.setPageTitle("overview", metadata.getName());
         report.addTabItem("structure", "Structure", "index.html#structure", "structure",
                 "The codebase as nested circles: folders and files sized by lines of code, colored by scope or risk.");
         report.addTabItem("commits", "Activity", "index.html#commits", "activity",

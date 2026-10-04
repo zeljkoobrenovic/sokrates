@@ -5,6 +5,14 @@ everything listed under the most recent date.
 
 ## 2026-10-04
 
+### The Overview is titled with the configured name
+
+The Overview of a repository report ("At a Glance" in the sidebar) and of a landscape report now shows
+the configured `metadata.name` as its page title, and as the browser tab title. The name line above the
+header is hidden there so it doesn't repeat. Without a name, the title stays "At a Glance" / "Overview".
+The sidebar labels don't change. Going back in the browser to the report's own URL (no `#tab`) now
+reopens the Overview instead of staying on the last tab.
+
 ### Landscape reports get the sidebar
 
 The landscape report now has the same left sidebar as the repository reports. Its tabs are sidebar

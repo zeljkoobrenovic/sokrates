@@ -89,4 +89,23 @@ class ReportNavigationTest {
         assertFalse(html.contains("sokratesOpenPalette"));
         assertTrue(html.contains("class='sk-nav-toggle'"));
     }
+
+    @Test
+    void theOverviewCanShowTheConfiguredNameAsItsTitle() {
+        ReportNavigation navigation = navigation();
+        assertEquals("Overview", navigation.titleOf("overview"));
+
+        navigation.setPageTitle("overview", "  ");
+        assertEquals("Overview", navigation.titleOf("overview"), "a blank name keeps the label");
+
+        navigation.setPageTitle("overview", "acme/<b>repo</b>");
+        assertEquals("acme/<b>repo</b>", navigation.titleOf("overview"));
+        assertEquals("Overview", navigation.labelOf("overview"), "the sidebar label stays");
+        String html = navigation.render("overview");
+        assertTrue(html.contains("data-sk-title='acme/&lt;b&gt;repo&lt;/b&gt;'"), html);
+        assertTrue(html.contains("<span class='sk-nav-label'>Overview</span>"));
+        // The context line would repeat the title, so it starts hidden; other pages show it.
+        assertTrue(navigation.contextLineHtml("acme/<b>repo</b>").contains(" hidden>"));
+        assertFalse(navigation.contextLineHtml("Duplication").contains("hidden"));
+    }
 }

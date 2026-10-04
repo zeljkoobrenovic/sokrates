@@ -57,7 +57,7 @@ public class ReportRenderer {
         content.append("<div class='sk-page-header'>");
         content.append(renderBreadcrumbsInDiv(richTextReport.getBreadcrumbs()));
         if (ReportNavigation.pageTitle(richTextReport) != null) {
-            content.append(richTextReport.getNavigation().contextLineHtml());
+            content.append(richTextReport.getNavigation().contextLineHtml(ReportNavigation.pageTitle(richTextReport)));
         }
         content.append("<table class='sk-report-header'>");
         content.append("<tr>");

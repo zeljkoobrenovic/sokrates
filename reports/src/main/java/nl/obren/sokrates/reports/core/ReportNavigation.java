@@ -102,7 +102,13 @@ public class ReportNavigation {
      * "owner/repository" names had to wrap), linking to the Overview.
      */
     public String contextLineHtml() {
-        return "<a class='sk-page-context' href='" + HtmlEscapeUtils.escape(homeHref) + "'>" + HtmlEscapeUtils.escape(title) + "</a>";
+        return contextLineHtml(null);
+    }
+
+    /** The context line, hidden when the page title already is the repository/landscape name (ReportShell toggles it per tab). */
+    public String contextLineHtml(String pageTitle) {
+        return "<a class='sk-page-context' href='" + HtmlEscapeUtils.escape(homeHref) + "'" + (title.equals(pageTitle) ? " hidden" : "") + ">"
+                + HtmlEscapeUtils.escape(title) + "</a>";
     }
 
     public String getTitle() {
@@ -115,6 +121,35 @@ public class ReportNavigation {
             for (Item item : group.items) {
                 if (item.id.equals(id)) {
                     return item.label;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Shows the given title in the page header (and the browser tab) instead of the item's sidebar label,
+     * e.g. the repository or landscape name on its Overview; blank titles are ignored.
+     */
+    public void setPageTitle(String id, String pageTitle) {
+        if (pageTitle == null || pageTitle.trim().isEmpty()) {
+            return;
+        }
+        for (Group group : groups) {
+            for (Item item : group.items) {
+                if (item.id.equals(id)) {
+                    item.pageTitle = pageTitle.trim();
+                }
+            }
+        }
+    }
+
+    /** The header title of the item with this id: its page title when set, else its label; null if absent. */
+    public String titleOf(String id) {
+        for (Group group : groups) {
+            for (Item item : group.items) {
+                if (item.id.equals(id)) {
+                    return item.pageTitle != null ? item.pageTitle : item.label;
                 }
             }
         }
@@ -168,7 +203,7 @@ public class ReportNavigation {
      */
     public static String pageTitle(RichTextReport report) {
         ReportNavigation navigation = report.getNavigation();
-        return navigation == null || report.isEmbedded() ? null : navigation.labelOf(report.getNavigationActiveId());
+        return navigation == null || report.isEmbedded() ? null : navigation.titleOf(report.getNavigationActiveId());
     }
 
     public String render(String activeId) {
@@ -261,6 +296,7 @@ public class ReportNavigation {
         private final String tab;
         private String subtitle;
         private String subtitleLink;
+        private String pageTitle;
 
         Item(String id, String label, String href, String icon, String tab) {
             this.id = id;
@@ -287,6 +323,9 @@ public class ReportNavigation {
             StringBuilder html = new StringBuilder("<a class='sk-nav-item" + (active ? " active" : "") + "'");
             html.append(" href='").append(HtmlEscapeUtils.escape(href)).append("'");
             html.append(" data-sk-nav='").append(HtmlEscapeUtils.escape(id)).append("'");
+            if (pageTitle != null) {
+                html.append(" data-sk-title='").append(HtmlEscapeUtils.escape(pageTitle)).append("'");
+            }
             if (tab != null) {
                 html.append(" data-sk-tab='").append(HtmlEscapeUtils.escape(tab)).append("'");
                 html.append(" data-sk-subtitle='").append(HtmlEscapeUtils.escape(subtitle == null ? "" : subtitle)).append("'");

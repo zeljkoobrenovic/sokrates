@@ -29,7 +29,8 @@ public class ReportShell {
             "background: var(--sk-surface-2); border-bottom: 1px solid var(--sk-border);}\n" +
             ".sk-page-context {display: block; padding-top: 10px; font-size: 15px; font-weight: 600; color: var(--sk-text-muted); " +
             "text-decoration: none; overflow-wrap: anywhere;}\n" +
-            ".sk-page-context:hover {color: var(--sk-text); text-decoration: none;}\n" +            ".sk-nav-search {display: flex; align-items: center; gap: 8px; margin-bottom: 18px; padding: 0 10px; color: var(--sk-text-muted); " +
+            ".sk-page-context:hover {color: var(--sk-text); text-decoration: none;}\n" +
+            ".sk-page-context[hidden] {display: none;}\n" +            ".sk-nav-search {display: flex; align-items: center; gap: 8px; margin-bottom: 18px; padding: 0 10px; color: var(--sk-text-muted); " +
             "background: var(--sk-surface); border: 1px solid var(--sk-border); border-radius: 8px;}\n" +
             ".sk-nav-search:focus-within {border-color: var(--sk-accent); color: var(--sk-text);}\n" +
             ".sk-nav-search-input {flex: 1; min-width: 0; padding: 7px 0; font: inherit; font-size: 13px; color: var(--sk-text); " +
@@ -83,7 +84,10 @@ public class ReportShell {
             "    var title = document.querySelector('[data-sk-page-title]');\n" +
             "    var brand = document.querySelector('.sk-page-context');\n" +
             "    if (!label || !title) { return; }\n" +
-            "    title.textContent = label.textContent;\n" +
+            "    // An item's data-sk-title (e.g. the repository name on the Overview) wins over its sidebar label.\n" +
+            "    var heading = item.getAttribute('data-sk-title') || label.textContent;\n" +
+            "    title.textContent = heading;\n" +
+            "    if (brand) { brand.hidden = heading === brand.textContent; }\n" +
             "    var subtitle = document.querySelector('[data-sk-page-subtitle]');\n" +
             "    if (subtitle) {\n" +
             "      subtitle.textContent = item.getAttribute('data-sk-subtitle') || '';\n" +
@@ -101,7 +105,7 @@ public class ReportShell {
             "      headerIcon.textContent = '';\n" +
             "      if (icon) { var big = icon.cloneNode(true); big.setAttribute('width', '68'); big.setAttribute('height', '68'); headerIcon.appendChild(big); }\n" +
             "    }\n" +
-            "    document.title = label.textContent + (brand ? ' \\u00b7 ' + brand.textContent : '');\n" +
+            "    document.title = heading + (brand && heading !== brand.textContent ? ' \\u00b7 ' + brand.textContent : '');\n" +
             "  }\n" +
             "  function markNav(id) {\n" +
             "    var items = document.querySelectorAll('.sk-nav-item[data-sk-tab]');\n" +
@@ -140,6 +144,8 @@ public class ReportShell {
             "  };\n" +
             "  function openFromHash(scrollTop) {\n" +
             "    var id = decodeURIComponent(location.hash.slice(1));\n" +
+            "    // Back to the page's own URL (no fragment): its first tab, as on load.\n" +
+            "    if (!id) { var first = document.querySelector('.tablinks[data-tab]'); id = first ? first.getAttribute('data-tab') : ''; }\n" +
             "    if (window.sokratesShowTab(id) && scrollTop) { holdTop(); }\n" +
             "  }\n" +
             "  window.addEventListener('popstate', function () { openFromHash(false); });\n" +

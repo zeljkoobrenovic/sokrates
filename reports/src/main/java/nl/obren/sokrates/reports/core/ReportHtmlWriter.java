@@ -26,7 +26,8 @@ public class ReportHtmlWriter {
             PrintWriter out = new PrintWriter(reportFile);
             String pageTitle = ReportNavigation.pageTitle(report);
             String titleText = pageTitle != null
-                    ? HtmlEscapeUtils.escape(pageTitle + " · " + report.getNavigation().getTitle())
+                    ? HtmlEscapeUtils.escape(pageTitle.equals(report.getNavigation().getTitle()) ? pageTitle
+                            : pageTitle + " · " + report.getNavigation().getTitle())
                     : extractTitle(report.getDisplayName());
             String reportsHtmlHeader = ReportConstants.REPORTS_HTML_HEADER.replace(
                     "<title></title>",
