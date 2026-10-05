@@ -1,0 +1,14 @@
+reports/src/main/java/nl/obren/sokrates/reports/utils/DataImageUtils.java
+  h_f6c4aeafc1bdc6 41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4ca04a619f29ec1684f8ece19890116cb0615fdb",
+  "prompts": {},
+  "humans": {
+    "h_f6c4aeafc1bdc6": {
+      "author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
