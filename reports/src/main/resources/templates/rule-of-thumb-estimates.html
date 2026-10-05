@@ -1,7 +1,7 @@
 <details class="sk-est" id="sk-est" data-main-loc="${mainLoc}" data-test-loc="${testLoc}"
          data-build-loc="${buildLoc}" data-generated-loc="${generatedLoc}" data-other-loc="${otherLoc}"
          data-tokens-min="${tokensMin}" data-tokens-max="${tokensMax}"
-         data-windows="${windows}" data-default-window="${defaultWindow}">
+         data-churn="${churn}" data-windows="${windows}" data-default-window="${defaultWindow}">
     <summary>
         <span class="sk-est-title">Rule-of-thumb estimates</span>
         <span class="sk-est-teaser" id="sk-est-teaser"></span>
@@ -82,7 +82,7 @@
                 <h4>AI token reads</h4>
                 <div class="sk-est-inputs">
                     <label><input type="number" id="sk-est-tpl-min" class="sk-est-short" min="1" step="1"> – <input type="number" id="sk-est-tpl-max" class="sk-est-short" min="1" step="1"> tokens per line</label>
-                    <label><input type="number" id="sk-est-price-min" class="sk-est-short" min="0" step="0.5" value="1"> – <input type="number" id="sk-est-price-max" class="sk-est-short" min="0" step="0.5" value="15"> per 1M input tokens</label>
+                    <label><input type="number" id="sk-est-price-min" class="sk-est-short" min="0" step="0.5" value="1"> – <input type="number" id="sk-est-price-max" class="sk-est-short" min="0" step="0.5" value="15"> per 1M read (input) tokens</label>
                     <label><input type="number" id="sk-est-context" min="1000" step="100000" value="200000"> tokens context window</label>
                     <label><input type="number" id="sk-est-reads" class="sk-est-short" min="0" step="1" value="20"> full reads per month</label>
                 </div>
@@ -100,10 +100,39 @@
                 </table>
             </div>
         </div>
+        <div class="sk-est-section" id="sk-est-write-section">
+            <div class="sk-est-heading">
+                <h4>AI write tokens</h4>
+                <div class="sk-est-inputs">
+                    <label>churn of the <select id="sk-est-churn-period">
+                        <option value="30">past 30 days</option>
+                        <option value="90">past 3 months</option>
+                        <option value="365" selected>past year</option>
+                    </select></label>
+                    <label>write tokens cost <input type="number" id="sk-est-write-factor" class="sk-est-short" min="0" step="0.5" value="3"> × the read token price</label>
+                    <label>hidden loop factor <input type="number" id="sk-est-loop-factor" class="sk-est-short" min="1" step="1" value="20"> ×</label>
+                </div>
+            </div>
+            <div class="sk-est-cards">
+                <div class="sk-est-card"><div class="sk-est-label">lines changed (churn)</div><div class="sk-est-value" id="sk-est-churn"></div><div class="sk-est-detail" id="sk-est-churn-detail"></div></div>
+                <div class="sk-est-card"><div class="sk-est-label">tokens to write the changes</div><div class="sk-est-value" id="sk-est-write-tokens"></div><div class="sk-est-detail" id="sk-est-write-tokens-detail"></div></div>
+                <div class="sk-est-card"><div class="sk-est-label">cost of writing the changes</div><div class="sk-est-value" id="sk-est-write-cost"></div><div class="sk-est-detail" id="sk-est-write-cost-detail"></div></div>
+                <div class="sk-est-card"><div class="sk-est-label">write cost per month</div><div class="sk-est-value" id="sk-est-write-month"></div><div class="sk-est-detail" id="sk-est-write-month-detail"></div></div>
+            </div>
+            <div class="sk-est-scopes">
+                <table>
+                    <thead><tr><th>scope</th><th>lines changed</th><th>tokens to write</th><th>cost</th><th>cost per month</th></tr></thead>
+                    <tbody id="sk-est-write-rows"></tbody>
+                </table>
+            </div>
+        </div>
         <div class="sk-est-note">
             Rules of thumb, not measurements: one man-year rebuilds about 10,000 lines of main code (design, testing and
             coordination included), and keeping a code base alive takes about 15% of its rebuild value per year
             (20 man-years of rebuild value need about 3 man-years of maintenance every year). The effort figures count main code only; the token figures count all code, per scope in the table. They count only reading the source once (input tokens), not the prompts, the answers or repeated reads within a session.
+            The write tokens price the churn (lines added + deleted) as if an AI agent wrote every changed line, with the same
+            tokens per line, at about 3 times the read token price (output tokens cost more than input tokens). The hidden loop
+            factor (20 by default) covers what an agent writes but does not keep: reasoning, drafts, retries and rewrites.
             Your changes are remembered in this browser for every report.
             <button type="button" class="sk-est-reset" id="sk-est-reset">Reset to defaults</button>
         </div>
@@ -119,7 +148,10 @@
             var windows = [];
             try { windows = JSON.parse(root.dataset.windows || '[]'); } catch (e) { }
             var inputIds = ['loc-per-my', 'cost-per-my', 'currency', 'maintenance',
-                'tpl-min', 'tpl-max', 'price-min', 'price-max', 'context', 'reads'];
+                'tpl-min', 'tpl-max', 'price-min', 'price-max', 'context', 'reads',
+                'churn-period', 'write-factor', 'loop-factor'];
+            var churnData = null;
+            try { churnData = JSON.parse(root.dataset.churn || 'null'); } catch (e) { }
             function el(id) { return document.getElementById('sk-est-' + id); }
             if (windows.length) {
                 var activity = el('activity');
@@ -184,6 +216,21 @@
                 SCOPES.forEach(function (scope) { selected[scope[0]] = Number(w[scope[0]]) || 0; });
                 return selected;
             }
+            function selectedChurn() {
+                var w = selectedWindow();
+                var data = w ? w.churn : churnData;
+                var values = data && data[el('churn-period').value];
+                var churn = {};
+                SCOPES.forEach(function (scope, i) { churn[scope[0]] = values ? Number(values[i]) || 0 : 0; });
+                return churn;
+            }
+            function hasChurn() {
+                var all = windows.length ? windows[windows.length - 1].churn : churnData;
+                if (!all) return false;
+                return Object.keys(all).some(function (period) {
+                    return all[period].some(function (v) { return v > 0; });
+                });
+            }
             function cell(row, text) {
                 var td = document.createElement('td');
                 td.textContent = text;
@@ -232,6 +279,40 @@
                     + repositoriesText());
                 set('month-cost-detail', oneDecimal(reads) + ' full reads of all code per month');
 
+                var churn = selectedChurn();
+                var period = Number(el('churn-period').value);
+                var periodLabel = el('churn-period').options[el('churn-period').selectedIndex].text;
+                var months = period / 30.44;
+                var writeFactor = num('write-factor', 3);
+                var outLow = priceLow * writeFactor, outHigh = priceHigh * writeFactor;
+                var allChurn = SCOPES.reduce(function (sum, scope) { return sum + churn[scope[0]]; }, 0);
+                var loopFactor = Math.max(1, num('loop-factor', 20));
+                var writeLow = allChurn * Math.min(tplMin, tplMax) * loopFactor, writeHigh = allChurn * Math.max(tplMin, tplMax) * loopFactor;
+                set('churn', compact(allChurn));
+                set('churn-detail', 'lines added + deleted in all code' + repositoriesText() + ' in the ' + periodLabel);
+                set('write-tokens', range(writeLow, writeHigh, compact));
+                set('write-tokens-detail', compact(allChurn) + ' lines × ' + range(tplMin, tplMax, oneDecimal) + ' tokens per line × '
+                    + oneDecimal(loopFactor) + ' hidden loop factor');
+                set('write-cost', range(writeLow / 1e6 * outLow, writeHigh / 1e6 * outHigh, inMoney));
+                set('write-cost-detail', 'at ' + range(outLow, outHigh, inMoney) + ' per million output tokens (' + oneDecimal(writeFactor) + ' × the read price), in the ' + periodLabel);
+                set('write-month', range(writeLow / 1e6 * outLow / months, writeHigh / 1e6 * outHigh / months, inMoney));
+                set('write-month-detail', 'the ' + periodLabel + ' averaged per month');
+                var writeRows = el('write-rows');
+                writeRows.textContent = '';
+                [['all', 'all code']].concat(SCOPES).forEach(function (scope) {
+                    var scopeChurn = scope[0] === 'all' ? allChurn : churn[scope[0]];
+                    if (scope[0] !== 'all' && scopeChurn === 0) return;
+                    var low = scopeChurn * Math.min(tplMin, tplMax) * loopFactor, high = scopeChurn * Math.max(tplMin, tplMax) * loopFactor;
+                    var row = document.createElement('tr');
+                    if (scope[0] === 'all') row.className = 'sk-est-total';
+                    cell(row, scope[1]);
+                    cell(row, scopeChurn.toLocaleString('en-US'));
+                    cell(row, range(low, high, compact));
+                    cell(row, range(low / 1e6 * outLow, high / 1e6 * outHigh, inMoney));
+                    cell(row, range(low / 1e6 * outLow / months, high / 1e6 * outHigh / months, inMoney));
+                    writeRows.appendChild(row);
+                });
+
                 var rows = el('scope-rows');
                 rows.textContent = '';
                 [['all', 'all code']].concat(SCOPES).forEach(function (scope) {
@@ -267,6 +348,7 @@
                 });
             }
 
+            el('write-section').hidden = !hasChurn();
             restore();
             inputIds.forEach(function (id) {
                 el(id).addEventListener('input', function () { update(); save(); });

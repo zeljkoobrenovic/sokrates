@@ -1,6 +1,7 @@
 package nl.obren.sokrates.reports.core;
 
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -80,5 +81,34 @@ class RuleOfThumbEstimatesTest {
     @Test
     void aRepositoryHasNoWindows() {
         assertTrue(RuleOfThumbEstimates.html(new long[]{1, 1, 1, 1, 1}, 7, 14, null).contains("data-windows=\"\""));
+    }
+
+    private static ContributionTimeSlot day(String date, int added, int deleted) {
+        ContributionTimeSlot slot = new ContributionTimeSlot();
+        slot.setTimeSlot(date);
+        slot.setLinesAdded(added);
+        slot.setLinesDeleted(deleted);
+        return slot;
+    }
+
+    @Test
+    void churnSumsAddedAndDeletedPerPeriodAndScope() {
+        DateUtils.setDateParam("2026-10-05");
+        DateUtils.reset();
+        CodeAnalysisResults results = repository(1000, 100, 0, "2026-10-01");
+        results.getContributorsAnalysisResults().getContributorsPerDayByScope().put("main",
+                Arrays.asList(day("2026-10-01", 10, 5), day("2026-08-01", 100, 0), day("2025-12-01", 1000, 0), day("2024-01-01", 9999, 0)));
+        results.getContributorsAnalysisResults().getContributorsPerDayByScope().put("test", Arrays.asList(day("2026-09-30", 3, 2)));
+
+        long[][] churn = RuleOfThumbEstimates.churn(results.getContributorsAnalysisResults());
+        assertArrayEquals(new long[]{15, 5, 0, 0, 0}, churn[0], "past 30 days");
+        assertArrayEquals(new long[]{115, 5, 0, 0, 0}, churn[1], "past 3 months");
+        assertArrayEquals(new long[]{1115, 5, 0, 0, 0}, churn[2], "past year");
+
+        String html = RuleOfThumbEstimates.html(new long[]{1000, 100, 0, 0, 0}, churn, 7, 14, null);
+        assertTrue(html.contains("data-churn=\"{&quot;30&quot;:[15,5,0,0,0],&quot;90&quot;:[115,5,0,0,0],&quot;365&quot;:[1115,5,0,0,0]}\""));
+
+        List<RuleOfThumbEstimates.Window> windows = RuleOfThumbEstimates.windows(Arrays.asList(results, results));
+        assertArrayEquals(new long[]{2230, 10, 0, 0, 0}, windows.get(3).getChurn()[2], "the landscape sums the repositories");
     }
 }

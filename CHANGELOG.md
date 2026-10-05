@@ -5,6 +5,14 @@ everything listed under the most recent date.
 
 ## 2026-10-05
 
+### Rule-of-thumb estimates: AI write tokens
+
+The rule-of-thumb estimates (repository and landscape At a Glance) have a new "AI write tokens" section: it prices the
+churn (lines added + deleted) of the past 30 days, 3 months or year (the default) as if an AI agent wrote every changed
+line, with the same tokens per line, write tokens at 3 times the read token price, and a hidden loop factor (20 by
+default) for what an agent writes but does not keep (reasoning, drafts, retries, rewrites). It shows the tokens, the cost
+for the period and per month, and a per-scope table; it is hidden when there is no git history.
+
 ### Landscape At a Glance: rule-of-thumb estimates
 
 The landscape's At a Glance page ends with the same "Rule-of-thumb estimates" section, over the summed lines of code of

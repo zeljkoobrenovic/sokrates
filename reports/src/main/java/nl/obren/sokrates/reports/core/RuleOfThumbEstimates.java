@@ -7,6 +7,8 @@ package nl.obren.sokrates.reports.core;
 import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
+import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.core.FileReadsForChangesConfig;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -24,6 +26,8 @@ public class RuleOfThumbEstimates {
     static final String TEMPLATE = "/templates/rule-of-thumb-estimates.html";
     /** The default landscape choice: repositories with a commit in the past year. */
     public static final String DEFAULT_WINDOW = "365";
+    /** The churn periods (days) the write-token estimate offers. */
+    static final int[] CHURN_PERIODS = {30, 90, 365};
 
     /** Lines of code of the repositories in one activity window. */
     public static class Window {
@@ -36,6 +40,7 @@ public class RuleOfThumbEstimates {
         private long buildLoc;
         private long generatedLoc;
         private long otherLoc;
+        private final long[][] churn = new long[CHURN_PERIODS.length][SCOPES.length];
 
         Window(String id, String label, int days) {
             this.id = id;
@@ -55,6 +60,16 @@ public class RuleOfThumbEstimates {
             buildLoc += Math.max(0, results.getBuildAndDeployAspectAnalysisResults().getLinesOfCode());
             generatedLoc += Math.max(0, results.getGeneratedAspectAnalysisResults().getLinesOfCode());
             otherLoc += Math.max(0, results.getOtherAspectAnalysisResults().getLinesOfCode());
+            long[][] repositoryChurn = churn(results.getContributorsAnalysisResults());
+            for (int p = 0; p < CHURN_PERIODS.length; p++) {
+                for (int s = 0; s < SCOPES.length; s++) {
+                    churn[p][s] += repositoryChurn[p][s];
+                }
+            }
+        }
+
+        public long[][] getChurn() {
+            return churn;
         }
 
         public String getId() {
@@ -72,7 +87,7 @@ public class RuleOfThumbEstimates {
         String toJson() {
             return "{\"id\":\"" + id + "\",\"label\":\"" + label + "\",\"repositories\":" + repositories
                     + ",\"main\":" + mainLoc + ",\"test\":" + testLoc + ",\"build\":" + buildLoc
-                    + ",\"generated\":" + generatedLoc + ",\"other\":" + otherLoc + "}";
+                    + ",\"generated\":" + generatedLoc + ",\"other\":" + otherLoc + ",\"churn\":" + churnJson(churn) + "}";
         }
     }
 
@@ -83,6 +98,7 @@ public class RuleOfThumbEstimates {
                         results.getBuildAndDeployAspectAnalysisResults().getLinesOfCode(),
                         results.getGeneratedAspectAnalysisResults().getLinesOfCode(),
                         results.getOtherAspectAnalysisResults().getLinesOfCode()},
+                churn(results.getContributorsAnalysisResults()),
                 reads.getTokensPerLineMin(), reads.getTokensPerLineMax(), null));
     }
 
@@ -92,7 +108,7 @@ public class RuleOfThumbEstimates {
         Window selected = windows.stream().filter(w -> w.id.equals(DEFAULT_WINDOW)).findFirst().orElse(windows.get(windows.size() - 1));
         FileReadsForChangesConfig reads = new FileReadsForChangesConfig();
         report.addHtmlContent(html(new long[]{selected.mainLoc, selected.testLoc, selected.buildLoc, selected.generatedLoc, selected.otherLoc},
-                reads.getTokensPerLineMin(), reads.getTokensPerLineMax(), windows));
+                selected.churn, reads.getTokensPerLineMin(), reads.getTokensPerLineMax(), windows));
     }
 
     /** The activity windows (by the repository's latest commit date), the last one all repositories. */
@@ -114,7 +130,45 @@ public class RuleOfThumbEstimates {
     /** Lines of code per scope, in the order {@link #SCOPES}. */
     static final String[] SCOPES = {"main", "test", "build", "generated", "other"};
 
+    /** Lines added + deleted per {@link #CHURN_PERIODS} period and {@link #SCOPES} scope, from the per-scope day slots. */
+    public static long[][] churn(ContributorsAnalysisResults contributors) {
+        long[][] churn = new long[CHURN_PERIODS.length][SCOPES.length];
+        if (contributors == null || contributors.getContributorsPerDayByScope() == null) {
+            return churn;
+        }
+        for (int s = 0; s < SCOPES.length; s++) {
+            List<ContributionTimeSlot> perDay = contributors.getContributorsPerDayByScope().get(SCOPES[s]);
+            if (perDay == null) {
+                continue;
+            }
+            for (ContributionTimeSlot slot : perDay) {
+                for (int p = 0; p < CHURN_PERIODS.length; p++) {
+                    if (DateUtils.isCommittedLessThanDaysAgo(slot.getTimeSlot(), CHURN_PERIODS[p])) {
+                        churn[p][s] += Math.max(0, slot.getLinesAdded()) + Math.max(0, slot.getLinesDeleted());
+                    }
+                }
+            }
+        }
+        return churn;
+    }
+
+    static String churnJson(long[][] churn) {
+        StringBuilder json = new StringBuilder("{");
+        for (int p = 0; p < CHURN_PERIODS.length; p++) {
+            json.append(p > 0 ? "," : "").append("\"").append(CHURN_PERIODS[p]).append("\":[");
+            for (int s = 0; s < SCOPES.length; s++) {
+                json.append(s > 0 ? "," : "").append(churn != null && p < churn.length && s < churn[p].length ? churn[p][s] : 0);
+            }
+            json.append("]");
+        }
+        return json.append("}").toString();
+    }
+
     static String html(long[] scopeLoc, int tokensPerLineMin, int tokensPerLineMax, List<Window> windows) {
+        return html(scopeLoc, null, tokensPerLineMin, tokensPerLineMax, windows);
+    }
+
+    static String html(long[] scopeLoc, long[][] churn, int tokensPerLineMin, int tokensPerLineMax, List<Window> windows) {
         int tokensMin = Math.max(1, Math.min(tokensPerLineMin, tokensPerLineMax));
         int tokensMax = Math.max(tokensMin, Math.max(tokensPerLineMin, tokensPerLineMax));
         String windowsJson = "";
@@ -130,6 +184,7 @@ public class RuleOfThumbEstimates {
         return html
                 .replace("${tokensMin}", String.valueOf(tokensMin))
                 .replace("${tokensMax}", String.valueOf(tokensMax))
+                .replace("${churn}", HtmlEscapeUtils.escape(churnJson(churn)))
                 .replace("${windows}", HtmlEscapeUtils.escape(windowsJson))
                 .replace("${defaultWindow}", DEFAULT_WINDOW);
     }
