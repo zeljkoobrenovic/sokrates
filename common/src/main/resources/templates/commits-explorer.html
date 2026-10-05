@@ -328,6 +328,10 @@
     commits.forEach((commit, index) => {
         commit.idx = index;
         commit.files = commit.fileIds || [];
+        // Read size (an indication): the lines of code the changed files have NOW, summed. A file that is not among
+        // the analyzed files now (deleted, or excluded from the analysis) counts 0 - its size in the payload is only a
+        // proxy for the files map. Roughly what reading the files of the commit takes, e.g. for an AI agent's token reads.
+        commit.readLines = commit.files.reduce((sum, id) => sum + (files[id].scope === 'deleted' ? 0 : (files[id].linesOfCode || 0)), 0);
         commit.coAuthors = commit.coAuthors || [];
         commit.aiAgents = commit.coAuthors.filter(a => a.agent).map(a => a.agent);
         commit.coAuthorSearch = commit.coAuthors.map(a => (a.name || '') + ' ' + (a.email || '') + ' ' + (a.agent || '')).join(' ').toLowerCase();
@@ -363,8 +367,12 @@
         coAuthors: {value: c => c.coAuthors.map(a => a.agent || a.name || a.email).join(', ').toLowerCase(), type: 'string', dir: 1},
         filesCount: {value: c => c.files.length, type: 'number', dir: -1},
         added: {value: c => c.linesAdded || 0, type: 'number', dir: -1},
-        deleted: {value: c => c.linesDeleted || 0, type: 'number', dir: -1}
+        deleted: {value: c => c.linesDeleted || 0, type: 'number', dir: -1},
+        readLines: {value: c => c.readLines, type: 'number', dir: -1}
     };
+
+    const READ_SIZE_TITLE = 'read size* (an indication): the current lines of code of the files this commit changed, summed; '
+        + 'a file that is deleted or not analyzed now counts 0. Roughly what reading these files takes, e.g. for the token reads of an AI agent.';
 
     let sortKey = 'date';
     let sortDir = -1;
@@ -387,11 +395,11 @@
         return cmp * sortDir;
     }
 
-    function sortHeader(key, label, extraStyle) {
+    function sortHeader(key, label, extraStyle, title) {
         const active = sortKey === key;
         const arrow = active ? (sortDir === 1 ? ' ▲' : ' ▼') : '';
         const cls = 'sortable' + (active ? ' sort-active' : '');
-        return '<td class="' + cls + '" style="' + (extraStyle || '') + '" onclick="updateList(\'' + key + '\')">'
+        return '<td class="' + cls + '" style="' + (extraStyle || '') + '"' + (title ? ' title="' + escapeHtml(title) + '"' : '') + ' onclick="updateList(\'' + key + '\')">'
             + label + '<span class="sort-arrow">' + arrow + '</span></td>';
     }
 
@@ -532,6 +540,7 @@
         html += sortHeader('filesCount', 'files', 'text-align: right');
         html += sortHeader('added', '+lines', 'text-align: right');
         html += sortHeader('deleted', '−lines', 'text-align: right');
+        html += sortHeader('readLines', 'read size*', 'text-align: right; white-space: nowrap', READ_SIZE_TITLE);
         html += '</tr>';
 
         displayed = [];
@@ -563,6 +572,8 @@
                 + (commit.linesAdded ? '+' + commit.linesAdded.toLocaleString('en-US') : '<span style="color: var(--sk-text-faint)">-</span>') + '</td>';
             html += '<td class="sk-deleted" style="text-align: right">'
                 + (commit.linesDeleted ? '−' + commit.linesDeleted.toLocaleString('en-US') : '<span style="color: var(--sk-text-faint)">-</span>') + '</td>';
+            html += '<td style="text-align: right; color: var(--sk-text-muted)" title="' + escapeHtml(READ_SIZE_TITLE) + '">'
+                + (commit.readLines ? commit.readLines.toLocaleString('en-US') : '<span style="color: var(--sk-text-faint)">-</span>') + '</td>';
             html += '</tr>';
         });
         html += '</table>';

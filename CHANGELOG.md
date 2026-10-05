@@ -5,6 +5,13 @@ everything listed under the most recent date.
 
 ## 2026-10-05
 
+### Commits explorer: read size per commit
+
+The commits explorer has a new "read size*" column: the lines of code that the files a commit changed
+have now, summed. It is an indication (hence the asterisk): roughly what reading those files takes, for
+example as the token reads of an AI agent working on such a change. A file that is deleted, or not
+analyzed now, counts 0. The column sorts like the others; hover over it for the explanation.
+
 ### Landscape AI Insights link to the repository reports
 
 In the landscape's AI Insights tab, a finding, a scanner and a repository now open the repository report's
