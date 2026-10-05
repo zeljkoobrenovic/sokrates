@@ -34,6 +34,89 @@
             text-overflow: ellipsis;
         }
 
+        /* Churn vs. read size timeline above the list: two strips of column bars sharing one time axis (latest on
+           the left), each with its own scale - churn is usually far smaller than what the changed files hold.
+           Series colors are validated (dataviz validate_palette) for both themes. */
+        :root {
+            --tl-churn: #c62828;
+            --tl-read: #1d4ed8;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --tl-churn: #ef5350;
+                --tl-read: #5b8ff0;
+            }
+        }
+
+        :root[data-theme="dark"] {
+            --tl-churn: #ef5350;
+            --tl-read: #5b8ff0;
+        }
+
+        #timeline {
+            position: relative;
+            margin: 8px 0 10px 0;
+        }
+
+        #timeline .tl-title {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 75%;
+            color: var(--sk-text-muted);
+            margin-top: 2px;
+        }
+
+        #timeline .tl-key {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            border-radius: 2px;
+            margin-right: 5px;
+            vertical-align: baseline;
+        }
+
+        #timeline svg {
+            display: block;
+            width: 100%;
+            overflow: visible;
+        }
+
+        #timeline .tl-hit {
+            fill: transparent;
+            cursor: pointer;
+        }
+
+        #timeline .tl-hit.on {
+            fill: var(--sk-hover);
+        }
+
+        #timeline .tl-axis {
+            display: flex;
+            justify-content: space-between;
+            font-size: 70%;
+            color: var(--sk-text-faint);
+            border-top: 1px solid var(--sk-border);
+            padding-top: 2px;
+        }
+
+        #timeline .tl-tip {
+            position: absolute;
+            z-index: 10;
+            pointer-events: none;
+            display: none;
+            padding: 6px 9px;
+            font-size: 75%;
+            line-height: 1.45;
+            white-space: nowrap;
+            color: var(--sk-text);
+            background: var(--sk-surface);
+            border: 1px solid var(--sk-border);
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
         .date-range input, .date-range select {
             font: inherit;
             color: var(--sk-text);
@@ -306,9 +389,11 @@
                     <label style="color: var(--sk-text-muted); font-size: 80%; margin-left: 10px"><input type="checkbox" id="hide-bots"
                             onchange="updateList()">hide bots</label>
                     <button id="toggle-map" class="action-button" style="margin-left: 10px" onclick="toggleMap()">show files map</button>
+                    <button id="toggle-timeline" class="action-button" onclick="toggleTimeline()">show timeline</button>
                 </div>
                 <div id="truncation-note" style="color: var(--sk-text-muted); font-size: 75%; margin-top: 4px; display: none"></div>
             </div>
+            <div id="timeline" style="display: none"></div>
             <div id="list"></div>
         </div>
         <div id="right">
@@ -526,6 +611,211 @@
         return escapeHtml(names.join('\n'));
     }
 
+    // ------------------------------------------------------------------ churn vs. read size timeline
+
+    // Per period of the listed (filtered) commits: churn (lines added + deleted) and read size* (the summed
+    // current size of the changed files), as two strips of column bars sharing one time axis with the latest
+    // period on the left. Days for up to ~3 months, weeks up to 2 years, months beyond; empty periods stay as
+    // gaps. Clicking a period narrows the date range to it.
+    let timelineBuckets = [];
+
+    function utcDate(date) {
+        return new Date(date + 'T00:00:00Z');
+    }
+
+    function isoDate(d) {
+        return d.toISOString().substring(0, 10);
+    }
+
+    function bucketStart(date, unit) {
+        const d = utcDate(date);
+        if (unit === 'week') {
+            d.setUTCDate(d.getUTCDate() - (d.getUTCDay() + 6) % 7);
+        } else if (unit === 'month') {
+            d.setUTCDate(1);
+        }
+        return isoDate(d);
+    }
+
+    function previousBucket(start, unit) {
+        const d = utcDate(start);
+        if (unit === 'day') {
+            d.setUTCDate(d.getUTCDate() - 1);
+        } else if (unit === 'week') {
+            d.setUTCDate(d.getUTCDate() - 7);
+        } else {
+            d.setUTCMonth(d.getUTCMonth() - 1);
+        }
+        return isoDate(d);
+    }
+
+    function bucketEnd(start, unit) {
+        const d = utcDate(start);
+        if (unit === 'week') {
+            d.setUTCDate(d.getUTCDate() + 6);
+        } else if (unit === 'month') {
+            d.setUTCMonth(d.getUTCMonth() + 1);
+            d.setUTCDate(0);
+        }
+        return isoDate(d);
+    }
+
+    function bucketLabel(bucket, unit) {
+        if (unit === 'day') return bucket.from;
+        if (unit === 'month') return bucket.from.substring(0, 7);
+        return bucket.from + ' – ' + bucket.to;
+    }
+
+    function formatLines(n) {
+        return n.toLocaleString('en-US');
+    }
+
+    // Hidden by default ("show timeline"); the choice is remembered like the files map's.
+    const TIMELINE_KEY = 'sokrates-commits-explorer-timeline';
+    let timelineShown = false;
+    try { timelineShown = localStorage.getItem(TIMELINE_KEY) === 'shown'; } catch (e) {}
+
+    function applyTimelineVisibility() {
+        document.getElementById('timeline').style.display = timelineShown ? 'block' : 'none';
+        document.getElementById('toggle-timeline').textContent = timelineShown ? 'hide timeline' : 'show timeline';
+    }
+
+    function toggleTimeline() {
+        timelineShown = !timelineShown;
+        try { localStorage.setItem(TIMELINE_KEY, timelineShown ? 'shown' : 'hidden'); } catch (e) {}
+        applyTimelineVisibility();
+        renderTimeline(lastFiltered);
+    }
+
+    function renderTimeline(list) {
+        const el = document.getElementById('timeline');
+        if (!timelineShown) {
+            // not laid out while hidden (it is drawn to the width it is shown at)
+            el.innerHTML = '';
+            timelineBuckets = [];
+            return;
+        }
+        const dates = list.map(c => c.date).filter(d => d).sort();
+        if (!dates.length) {
+            el.innerHTML = '';
+            timelineBuckets = [];
+            return;
+        }
+        const first = dates[0];
+        const last = dates[dates.length - 1];
+        const spanDays = (utcDate(last) - utcDate(first)) / 864e5;
+        const unit = spanDays <= 92 ? 'day' : (spanDays <= 731 ? 'week' : 'month');
+
+        const byStart = {};
+        const buckets = [];
+        const firstStart = bucketStart(first, unit);
+        for (let start = bucketStart(last, unit); start >= firstStart; start = previousBucket(start, unit)) {
+            const bucket = {from: start, to: bucketEnd(start, unit), commits: 0, added: 0, deleted: 0, read: 0};
+            byStart[start] = bucket;
+            buckets.push(bucket);
+        }
+        list.forEach(c => {
+            const bucket = c.date ? byStart[bucketStart(c.date, unit)] : null;
+            if (bucket) {
+                bucket.commits++;
+                bucket.added += c.linesAdded || 0;
+                bucket.deleted += c.linesDeleted || 0;
+                bucket.read += c.readLines || 0;
+            }
+        });
+        buckets.forEach(b => { b.churn = b.added + b.deleted; b.label = bucketLabel(b, unit); });
+        timelineBuckets = buckets;
+
+        const width = Math.max(200, el.clientWidth || 600);
+        const height = 44;
+        const step = width / buckets.length;
+        const gap = step >= 6 ? 2 : (step >= 3 ? 1 : 0);
+        const maxChurn = Math.max(1, ...buckets.map(b => b.churn));
+        const maxRead = Math.max(1, ...buckets.map(b => b.read));
+
+        function strip(key, max, color) {
+            let svg = '<svg height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none" data-strip="' + key + '">';
+            buckets.forEach((b, i) => {
+                const x = i * step;
+                svg += '<rect class="tl-hit" data-i="' + i + '" x="' + x + '" y="0" width="' + step + '" height="' + height + '"></rect>';
+                const value = b[key];
+                if (value > 0) {
+                    const h = Math.max(1, Math.round((height - 2) * value / max));
+                    const w = Math.max(1, step - gap);
+                    svg += '<rect x="' + (x + gap / 2) + '" y="' + (height - h) + '" width="' + w + '" height="' + h + '" rx="' + Math.min(2, w / 2)
+                        + '" style="fill: ' + color + '; pointer-events: none"></rect>';
+                }
+            });
+            return svg + '</svg>';
+        }
+
+        const unitName = unit === 'day' ? 'day' : unit;
+        const middle = buckets[Math.floor((buckets.length - 1) / 2)];
+        el.innerHTML =
+            '<div class="tl-title"><span><span class="tl-key" style="background: var(--tl-churn)"></span>churn: lines added + deleted per ' + unitName + '</span>'
+            + '<span>max ' + formatLines(maxChurn) + '</span></div>'
+            + strip('churn', maxChurn, 'var(--tl-churn)')
+            + '<div class="tl-title" title="' + escapeHtml(READ_SIZE_TITLE) + '"><span><span class="tl-key" style="background: var(--tl-read)"></span>read size*: current lines of the changed files per ' + unitName + '</span>'
+            + '<span>max ' + formatLines(maxRead) + '</span></div>'
+            + strip('read', maxRead, 'var(--tl-read)')
+            + '<div class="tl-axis"><span>' + escapeHtml(buckets[0].label) + ' (latest)</span>'
+            + (buckets.length > 2 ? '<span>' + escapeHtml(middle.label) + '</span>' : '')
+            + '<span>' + escapeHtml(buckets[buckets.length - 1].label) + '</span></div>'
+            + '<div class="tl-tip"></div>';
+    }
+
+    function timelineHover(i, event) {
+        const el = document.getElementById('timeline');
+        el.querySelectorAll('.tl-hit').forEach(r => r.classList.toggle('on', r.getAttribute('data-i') === String(i)));
+        const tip = el.querySelector('.tl-tip');
+        if (!tip) return;
+        if (i === null) {
+            tip.style.display = 'none';
+            return;
+        }
+        const b = timelineBuckets[i];
+        tip.innerHTML = '<b>' + escapeHtml(b.label) + '</b><br>'
+            + formatLines(b.commits) + (b.commits === 1 ? ' commit' : ' commits') + '<br>'
+            + '<span class="tl-key" style="background: var(--tl-churn)"></span>churn ' + formatLines(b.churn)
+            + ' <span style="color: var(--sk-text-muted)">(+' + formatLines(b.added) + ' / −' + formatLines(b.deleted) + ')</span><br>'
+            + '<span class="tl-key" style="background: var(--tl-read)"></span>read size* ' + formatLines(b.read)
+            + (b.churn > 0 && b.read > 0 ? ' <span style="color: var(--sk-text-muted)">(' + (b.read / b.churn).toLocaleString('en-US', {maximumFractionDigits: 1}) + '× the churn)</span>' : '')
+            + (b.commits ? '<br><span style="color: var(--sk-text-faint)">click to show only this period</span>' : '');
+        tip.style.display = 'block';
+        // Beside the cursor (right of it, or left near the right edge), so the strips' titles stay readable.
+        const box = el.getBoundingClientRect();
+        const x = event.clientX - box.left;
+        const right = x + 16 + tip.offsetWidth <= box.width;
+        tip.style.left = (right ? x + 16 : Math.max(0, x - 16 - tip.offsetWidth)) + 'px';
+        tip.style.top = Math.max(0, Math.min(event.clientY - box.top - tip.offsetHeight / 2, box.height - tip.offsetHeight)) + 'px';
+    }
+
+    document.addEventListener('mousemove', event => {
+        const hit = event.target.closest ? event.target.closest('#timeline .tl-hit') : null;
+        if (hit) {
+            timelineHover(parseInt(hit.getAttribute('data-i'), 10), event);
+        } else if (document.querySelector('#timeline .tl-hit.on')) {
+            timelineHover(null, event);
+        }
+    });
+
+    document.addEventListener('click', event => {
+        const hit = event.target.closest ? event.target.closest('#timeline .tl-hit') : null;
+        if (!hit) return;
+        const b = timelineBuckets[parseInt(hit.getAttribute('data-i'), 10)];
+        if (!b || !b.commits) return;
+        document.getElementById('date-from').value = b.from;
+        document.getElementById('date-to').value = b.to;
+        document.getElementById('date-preset').value = '';
+        updateList();
+    });
+
+    let timelineResize = null;
+    window.addEventListener('resize', () => {
+        clearTimeout(timelineResize);
+        timelineResize = setTimeout(() => renderTimeline(lastFiltered), 150);
+    });
+
     // ------------------------------------------------------------------ date range
 
     // The commits' first and latest dates bound the date fields; the presets end at the latest commit
@@ -582,6 +872,8 @@
 
         commits.sort(comparator);
         lastFiltered = commits.filter(c => matchesFilters(c, filters, hideBots));
+
+        renderTimeline(lastFiltered);
 
         document.getElementById('search-summary').innerHTML =
             lastFiltered.length.toLocaleString('en-US') + ' of ' + commits.length.toLocaleString('en-US')
@@ -1030,6 +1322,7 @@
         mapShown = !mapShown;
         try { localStorage.setItem(MAP_KEY, mapShown ? 'shown' : 'hidden'); } catch (e) {}
         applyMapVisibility();
+        renderTimeline(lastFiltered);
         updateViz();
     }
 
@@ -1091,6 +1384,7 @@
     requestAnimationFrame(function () {
         requestAnimationFrame(function () {
             applyMapVisibility();
+            applyTimelineVisibility();
             ['date-from', 'date-to'].forEach(id => { const el = document.getElementById(id); el.min = firstCommitDate; el.max = latestCommitDate; });
             updateList();
             updateViz();
