@@ -34,6 +34,15 @@
             text-overflow: ellipsis;
         }
 
+        .date-range input, .date-range select {
+            font: inherit;
+            color: var(--sk-text);
+            background: var(--sk-surface);
+            border: 1px solid var(--sk-border);
+            border-radius: 4px;
+            padding: 1px 4px;
+        }
+
         .sortable {
             cursor: pointer;
             user-select: none;
@@ -272,6 +281,21 @@
                        placeholder="search... (use ; for multiple terms, file:<text> to match changed files, coauthor:<text>, ai:yes|no|<agent>)"
                        style="font-size: 15px; height: 30px; width: 96%; margin-bottom: 6px"
                        onkeyup="updateList()">
+                <!-- Commit dates are YYYY-MM-DD; the range is inclusive and either end may be empty. -->
+                <div class="date-range" style="margin-bottom: 6px; white-space: nowrap; color: var(--sk-text-muted); font-size: 80%">
+                    dates:
+                    <input type="date" id="date-from" title="from (inclusive)" onchange="onDateRangeChange()">
+                    –
+                    <input type="date" id="date-to" title="to (inclusive)" onchange="onDateRangeChange()">
+                    <select id="date-preset" title="a period ending at the latest commit" onchange="applyDatePreset(this.value)">
+                        <option value="">any time</option>
+                        <option value="30">past 30 days</option>
+                        <option value="90">past 90 days</option>
+                        <option value="180">past 180 days</option>
+                        <option value="365">past year</option>
+                    </select>
+                    <button class="action-button" onclick="clearDateRange()">clear dates</button>
+                </div>
                 <div style="white-space: nowrap">
                     <span id="search-summary" style="color: var(--sk-text-muted); font-size: 80%"></span>
                 </div>
@@ -439,6 +463,9 @@
         if (hideBots && commit.bot) {
             return false;
         }
+        if ((filters.dateFrom && commit.date < filters.dateFrom) || (filters.dateTo && commit.date > filters.dateTo)) {
+            return false;
+        }
         for (let i = 0; i < filters.file.length; i++) {
             const text = filters.file[i];
             if (!commit.files.some(id => files[id].lower.includes(text))) {
@@ -499,6 +526,38 @@
         return escapeHtml(names.join('\n'));
     }
 
+    // ------------------------------------------------------------------ date range
+
+    // The commits' first and latest dates bound the date fields; the presets end at the latest commit
+    // (the analysis' last day of history), not at today.
+    const commitDates = commits.map(c => c.date).filter(d => d).sort();
+    const firstCommitDate = commitDates.length ? commitDates[0] : '';
+    const latestCommitDate = commitDates.length ? commitDates[commitDates.length - 1] : '';
+
+    function daysBefore(date, days) {
+        const d = new Date(date + 'T00:00:00Z');
+        d.setUTCDate(d.getUTCDate() - days + 1);
+        return d.toISOString().substring(0, 10);
+    }
+
+    function applyDatePreset(days) {
+        document.getElementById('date-from').value = days && latestCommitDate ? daysBefore(latestCommitDate, parseInt(days, 10)) : '';
+        document.getElementById('date-to').value = '';
+        updateList();
+    }
+
+    function onDateRangeChange() {
+        document.getElementById('date-preset').value = '';
+        updateList();
+    }
+
+    function clearDateRange() {
+        document.getElementById('date-from').value = '';
+        document.getElementById('date-to').value = '';
+        document.getElementById('date-preset').value = '';
+        updateList();
+    }
+
     function updateList(clickedKey) {
         if (clickedKey && sortColumns[clickedKey]) {
             if (sortKey === clickedKey) {
@@ -517,6 +576,8 @@
         }
 
         const filters = parseFilters();
+        filters.dateFrom = document.getElementById('date-from').value;
+        filters.dateTo = document.getElementById('date-to').value;
         const hideBots = document.getElementById('hide-bots').checked;
 
         commits.sort(comparator);
@@ -1030,6 +1091,7 @@
     requestAnimationFrame(function () {
         requestAnimationFrame(function () {
             applyMapVisibility();
+            ['date-from', 'date-to'].forEach(id => { const el = document.getElementById(id); el.min = firstCommitDate; el.max = latestCommitDate; });
             updateList();
             updateViz();
             document.getElementById('loading').style.display = 'none';

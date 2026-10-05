@@ -5,6 +5,13 @@ everything listed under the most recent date.
 
 ## 2026-10-05
 
+### Commits explorer: filter by date
+
+The commits explorer can now show only the commits of a period: pick a "from" and/or "to" date (both
+inclusive) under the search box, or a preset (past 30, 90 or 180 days, past year; these end at the
+latest commit in the history, not today). The date range works together with the search and "hide
+bots", and "select all matching" selects only the commits in the range.
+
 ### Commits explorer: read size per commit
 
 The commits explorer has a new "read size*" column: the lines of code that the files a commit changed
