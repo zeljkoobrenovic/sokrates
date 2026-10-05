@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     ${sokrates-theme}
-    <title>AI Cost Estimator</title>
+    <title>AI Cost Estimator*</title>
     <style>
         body {
             font-family: var(--sk-font);
@@ -690,6 +690,8 @@
     tasks.forEach((task, idx) => {
         task.idx = idx;
         task.churn = task.editAdded + task.editDeleted + task.newLines;
+        // The model's line inputs: lines read (total lines of the edited files, per session) and lines written.
+        task.readLines = task.sessions.reduce((sum, s) => sum + s[1], 0);
         const names = [];
         task.commits.forEach(c => {
             const a = authors[c.author] || {};
@@ -767,7 +769,7 @@
     }
 
     function renderTypes(list, total) {
-        let html = '<tr><th>type</th><th>what</th><th class="num">tasks</th><th class="num">sessions</th><th class="num">churned lines</th>'
+        let html = '<tr><th>type</th><th>what</th><th class="num">tasks</th><th class="num">sessions</th><th class="num" title="total lines of the edited files, per session, before amplification">lines read</th><th class="num">churned lines</th>'
             + '<th class="num">cost (P50)</th><th class="num">P10–P90</th><th class="num">share</th><th class="num">per 1,000 lines</th></tr>';
         TYPES.forEach(type => {
             const of = list.filter(t => t.type === type[0]);
@@ -777,6 +779,7 @@
             html += '<tr><td><span class="type">' + type[1] + '</span></td><td class="muted">' + type[2] + '</td>'
                 + '<td class="num">' + int(of.length) + '</td>'
                 + '<td class="num">' + int(of.reduce((s, t) => s + t.sessions.length, 0)) + '</td>'
+                + '<td class="num">' + int(of.reduce((s, t) => s + t.readLines, 0)) + '</td>'
                 + '<td class="num">' + int(churn) + '</td>'
                 + '<td class="num">' + money(q.p50) + '</td>'
                 + '<td class="num muted">' + money(q.p10) + ' – ' + money(q.p90) + '</td>'
@@ -848,6 +851,7 @@
         ['type', 'type', false],
         ['commits', 'commits', true],
         ['files', 'files', true],
+        ['readLines', 'lines read', true],
         ['churn', 'churned lines', true],
         ['sessions', 'sessions', true],
         ['p50', 'cost (P50)', true],
@@ -895,6 +899,7 @@
                 + '<td><span class="type">' + escapeHtml(TYPE_LABELS[task.type] || task.type) + '</span></td>'
                 + '<td class="num" title="' + escapeHtml(shas) + '">' + task.commits.length + '</td>'
                 + '<td class="num">' + task.files + (task.deletedFiles ? '<span class="muted" title="' + task.deletedFiles + ' files deleted (no cost)"> −' + task.deletedFiles + '</span>' : '') + '</td>'
+                + '<td class="num" title="total lines of the edited files, per session (at most 2,000 per file), before amplification">' + int(task.readLines) + '</td>'
                 + '<td class="num" title="' + task.editAdded + ' added and ' + task.editDeleted + ' deleted in existing files, ' + task.newLines + ' in new files">'
                 + int(task.churn) + '</td>'
                 + '<td class="num">' + task.sessions.length + '</td>'
@@ -923,11 +928,11 @@
 
     function downloadCsv() {
         const header = ['start', 'end', 'type', 'ticket', 'authors', 'commits', 'first_sha', 'last_sha', 'shas', 'files', 'deleted_files',
-            'edit_added', 'edit_deleted', 'new_lines', 'churn', 'sessions', 'input_tokens_p50', 'output_tokens_p50', 'cost_p10', 'cost_p50', 'cost_p90'];
+            'read_lines', 'edit_added', 'edit_deleted', 'new_lines', 'churn', 'sessions', 'input_tokens_p50', 'output_tokens_p50', 'cost_p10', 'cost_p50', 'cost_p90'];
         const rows = [header.join(',')];
         lastList.forEach(t => {
             rows.push([t.start, t.end, t.type, t.ticket, t.authorNames.join('; '), t.commits.length, t.commits[0].sha,
-                t.commits[t.commits.length - 1].sha, t.commits.map(c => c.sha).join(' '), t.files, t.deletedFiles, t.editAdded,
+                t.commits[t.commits.length - 1].sha, t.commits.map(c => c.sha).join(' '), t.files, t.deletedFiles, t.readLines, t.editAdded,
                 t.editDeleted, t.newLines, t.churn, t.sessions.length, Math.round(t.inputP50), Math.round(t.outputP50),
                 t.p10.toFixed(4), t.p50.toFixed(4), t.p90.toFixed(4)].map(csvCell).join(','));
         });

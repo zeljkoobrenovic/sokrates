@@ -76,7 +76,7 @@ public class ReportFileExporter {
         indexReport.addTab("units", "Units*", false);
         // The plain "commits" id is taken by the Activity tab above.
         indexReport.addTab("commits-explorer", "Commits", false);
-        indexReport.addTab("ai-cost", "AI Cost Estimator", false);
+        indexReport.addTab("ai-cost", "AI Cost Estimator*", false);
         indexReport.addTab("visuals", "Visuals", false);
         indexReport.addTab("data", "Data", false);
         for (int i = 0; i < customTabs.size(); i++) {
@@ -613,8 +613,8 @@ public class ReportFileExporter {
                 "Search, filter and sort the units (functions, methods) by size and complexity.");
         explorers.addTabItem("commits-explorer", "Commit Explorer", "index.html#commits-explorer", "commits",
                 "Browse the commits and see which files each one changed.");
-        explorers.addTabItem("ai-cost", "AI Cost Estimator", "index.html#ai-cost", "cost",
-                "What the history would cost if an AI coding agent had written it: tasks, sessions, tokens and a P10–P90 range.");
+        explorers.addTabItem("ai-cost", "AI Cost Estimator*", "index.html#ai-cost", "cost",
+                "*An experimental heuristic: what the history would cost if an AI coding agent had written it (tasks, sessions, tokens, a P10–P90 range).");
         ReportNavigation.Group analyses = navigation.addGroup("Analyses");
         analyses.addTabItem("quality", "Analysis Overview", "index.html#quality", "analyses",
                 "A short summary of every analysis, with links to the full reports.");

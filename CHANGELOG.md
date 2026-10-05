@@ -15,7 +15,9 @@ simply ignored.
 The AI Cost Estimator counts only the analyzed scopes (main, test, build & deployment, other; generated code, files in
 no scope and unanalyzed extensions are left out, while deleted files of analyzed extensions still count), and it reads
 each edited file's total lines, comments and blank lines included, as an agent reads the whole file (it used the lines
-of code before, which leave those out).
+of code before, which leave those out). The task-type and task tables (and the tasks CSV, `read_lines`) show these
+lines read next to the churned lines, the model's two line inputs. The page is now labelled "AI Cost Estimator*": the
+asterisk marks it as an experimental heuristic.
 
 The AI Cost Estimator's top is leaner: a filter, a period choice (with a custom range) and an "Assumptions" button that
 opens the prices and priors in groups.
