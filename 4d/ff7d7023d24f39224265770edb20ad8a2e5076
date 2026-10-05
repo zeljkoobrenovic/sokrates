@@ -1,0 +1,24 @@
+CLAUDE.md
+  s_5026482126c219::t_74a0f5e80ba154 132
+common/src/main/resources/templates/commits-explorer.html
+  s_5026482126c219::t_f24b5ec9826657 284-298,466-468,529-560,579-580
+  s_5026482126c219::t_24a7916004dab7 37-45,1094
+CHANGELOG.md
+  s_5026482126c219::t_74a0f5e80ba154 8-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4dff7d7023d24f39224265770edb20ad8a2e5076",
+  "prompts": {},
+  "sessions": {
+    "s_5026482126c219": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "02d24a13-bc18-4f57-8e09-809e545be12d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
