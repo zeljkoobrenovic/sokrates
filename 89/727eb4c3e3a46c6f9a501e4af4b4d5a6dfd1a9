@@ -1,0 +1,31 @@
+reports/src/main/java/nl/obren/sokrates/reports/core/RuleOfThumbEstimates.java
+  s_5026482126c219::t_b6e1fe9596d861 7,11-15,18-21,25-72,77-112,116-119,122-127,133-135
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/LandscapeReportGenerator.java
+  s_5026482126c219::t_495db87f5e8cd5 19,668-669
+reports/src/main/resources/templates/rule-of-thumb-estimates.html
+  s_5026482126c219::t_d323240a02507f 80,97
+  s_5026482126c219::t_fabbe7baf677db 132,186
+  s_5026482126c219::t_776b4313c41c26 2-3,37,95-96,100-112,146-155,157-158,178,216-219
+reports/src/test/java/nl/obren/sokrates/reports/core/RuleOfThumbEstimatesTest.java
+  s_5026482126c219::t_5ce5e2bb1af727 3-5,8-10,36-81
+CLAUDE.md
+  s_5026482126c219::t_d323240a02507f 208
+CHANGELOG.md
+  s_5026482126c219::t_91f88a936d8a67 8-14,18-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "89727eb4c3e3a46c6f9a501e4af4b4d5a6dfd1a9",
+  "prompts": {},
+  "sessions": {
+    "s_5026482126c219": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "02d24a13-bc18-4f57-8e09-809e545be12d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
