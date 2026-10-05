@@ -46,9 +46,17 @@ public class ReportShell {
             ".sk-nav-item.sk-nav-first {background: var(--sk-hover); color: var(--sk-text);}\n" +
             ".sk-kbd {font-family: var(--sk-font); font-size: 11px; padding: 0 5px; color: var(--sk-text-faint); " +
             "background: var(--sk-surface-2); border: 1px solid var(--sk-border); border-radius: 4px;}\n" +
+            // The group label is a button that opens and closes its items; while the search filters, closed groups show their matches.
             ".sk-nav-group {margin-bottom: 16px;}\n" +
-            ".sk-nav-group-label {padding: 0 8px 6px 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; " +
-            "text-transform: uppercase; color: var(--sk-text-faint);}\n" +
+            ".sk-nav-group-label {display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 2px 8px 6px 8px; font: inherit; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sk-text-faint); background: none; border: none; border-radius: 4px; cursor: pointer; text-align: left;}\n" +
+            ".sk-nav-group-label:hover {color: var(--sk-text-muted);}\n" +
+            ".sk-nav-group-label:focus-visible {outline: 2px solid var(--sk-accent); outline-offset: 1px;}\n" +
+            ".sk-nav-chevron {flex: none; opacity: 0; transition: transform .15s ease, opacity .15s ease;}\n" +
+            ".sk-nav-group-label:hover .sk-nav-chevron, .sk-nav-group-label:focus-visible .sk-nav-chevron, .sk-nav-group.sk-closed .sk-nav-chevron {opacity: 1;}\n" +
+            ".sk-nav-group.sk-closed .sk-nav-chevron {transform: rotate(-90deg);}\n" +
+            ".sk-nav-group.sk-closed {margin-bottom: 6px;}\n" +
+            ".sk-nav-group.sk-closed .sk-nav-group-items {display: none;}\n" +
+            ".sk-sidebar.sk-nav-filtering .sk-nav-group.sk-closed .sk-nav-group-items {display: block;}\n" +
             ".sk-nav-item {display: flex; align-items: center; gap: 10px; padding: 6px 8px; margin: 1px 0; border-radius: 6px; " +
             "font-size: 14px; color: var(--sk-text-muted); text-decoration: none;}\n" +
             ".sk-nav-item:hover {background: var(--sk-hover); color: var(--sk-text); text-decoration: none;}\n" +
@@ -174,6 +182,38 @@ public class ReportShell {
             "    }\n" +
             "    document.title = heading + (brand && heading !== brand.textContent ? ' \\u00b7 ' + brand.textContent : '');\n" +
             "  }\n" +
+            "  // Sidebar groups open and close (all open by default). The closed ones are remembered by label in\n" +
+            "  // localStorage['sokrates-nav-closed'], shared by every report page; the group of the open page is\n" +
+            "  // always shown (not remembered), so the active item never hides.\n" +
+            "  function closedGroups() {\n" +
+            "    try { var list = JSON.parse(localStorage.getItem('sokrates-nav-closed') || '[]'); return Array.isArray(list) ? list : []; } catch (e) { return []; }\n" +
+            "  }\n" +
+            "  function setGroupOpen(group, open) {\n" +
+            "    group.classList.toggle('sk-closed', !open);\n" +
+            "    var button = group.querySelector('.sk-nav-group-label');\n" +
+            "    if (button) { button.setAttribute('aria-expanded', open ? 'true' : 'false'); }\n" +
+            "  }\n" +
+            "  function openGroupOf(item) {\n" +
+            "    var group = item.closest ? item.closest('.sk-nav-group') : null;\n" +
+            "    if (group) { setGroupOpen(group, true); }\n" +
+            "  }\n" +
+            "  window.sokratesToggleNavGroup = function (button) {\n" +
+            "    var group = button.closest('.sk-nav-group');\n" +
+            "    if (!group) { return; }\n" +
+            "    var open = group.classList.contains('sk-closed');\n" +
+            "    setGroupOpen(group, open);\n" +
+            "    var label = group.getAttribute('data-sk-group');\n" +
+            "    var closed = closedGroups().filter(function (l) { return l !== label; });\n" +
+            "    if (!open) { closed.push(label); }\n" +
+            "    try { localStorage.setItem('sokrates-nav-closed', JSON.stringify(closed)); } catch (e) {}\n" +
+            "  };\n" +
+            "  window.sokratesRestoreNavGroups = function () {\n" +
+            "    var closed = closedGroups();\n" +
+            "    if (!closed.length) { return; }\n" +
+            "    document.querySelectorAll('.sk-sidebar .sk-nav-group').forEach(function (group) {\n" +
+            "      if (closed.indexOf(group.getAttribute('data-sk-group')) >= 0 && !group.querySelector('.sk-nav-item.active')) { setGroupOpen(group, false); }\n" +
+            "    });\n" +
+            "  };\n" +
             "  function markNav(id) {\n" +
             "    var items = document.querySelectorAll('.sk-nav-item[data-sk-tab]');\n" +
             "    var found = false;\n" +
@@ -183,7 +223,7 @@ public class ReportShell {
             "      var on = items[j].getAttribute('data-sk-nav') === id;\n" +
             "      items[j].classList.toggle('active', on);\n" +
             "      if (on) { items[j].setAttribute('aria-current', 'page'); } else { items[j].removeAttribute('aria-current'); }\n" +
-            "      if (on) { setPageTitle(items[j]); }\n" +
+            "      if (on) { setPageTitle(items[j]); openGroupOf(items[j]); }\n" +
             "    }\n" +
             "  }\n" +
             "  // Shows one tab of the page (the tabs of a report page form one group, as in openTab).\n" +
@@ -284,6 +324,8 @@ public class ReportShell {
             "  function text(el) { return (el.textContent || '').replace(/\\s+/g, ' ').trim(); }\n" +
             "  window.sokratesFilterNav = function (query) {\n" +
             "    var terms = (query || '').toLowerCase().trim().split(/\\s+/).filter(function (t) { return t; });\n" +
+            "    var sidebar = document.querySelector('.sk-sidebar');\n" +
+            "    if (sidebar) { sidebar.classList.toggle('sk-nav-filtering', terms.length > 0); }\n" +
             "    var first = null;\n" +
             "    document.querySelectorAll('.sk-sidebar .sk-nav-group').forEach(function (group) {\n" +
             "      var groupLabel = text(group.querySelector('.sk-nav-group-label') || group).toLowerCase();\n" +

@@ -142,4 +142,17 @@ class ReportNavigationTest {
         assertEquals("Repositories: Churn", navigation.titleOf("repositories-list/churnTrend"));
         assertEquals(navigation.iconOf("repositories", 68), navigation.iconOf("repositories-list/churnTrend", 68), "the header shows the parent's icon");
     }
+
+    @Test
+    void groupLabelsOpenAndCloseTheirItems() {
+        ReportNavigation navigation = new ReportNavigation("Repo", "index.html#overview");
+        navigation.addGroup("R&D <tools>").addTabItem("overview", "Overview", "index.html#overview", "overview");
+        String html = navigation.render("overview");
+
+        assertTrue(html.contains("<div class='sk-nav-group' data-sk-group='R&amp;D &lt;tools&gt;'>"), html);
+        assertTrue(html.contains("<button type='button' class='sk-nav-group-label' aria-expanded='true' onclick='sokratesToggleNavGroup(this)'>"
+                + "<span>R&amp;D &lt;tools&gt;</span>"), "open by default, the label escaped");
+        assertTrue(html.contains("<div class='sk-nav-group-items'>"));
+        assertTrue(html.indexOf("sokratesRestoreNavGroups()") > html.indexOf("</nav>"), "the closed groups are restored right after the sidebar");
+    }
 }

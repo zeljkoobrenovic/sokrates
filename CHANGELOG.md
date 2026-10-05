@@ -5,6 +5,13 @@ everything listed under the most recent date.
 
 ## 2026-10-05
 
+### Report sidebar: sections open and close
+
+In the repository and landscape reports, each section of the sidebar (At a Glance, Explorers, Analyses,
+AI Insights, …) now opens and closes with a click on its title. All sections are open by default; the
+closed ones are remembered in the browser and stay closed on every report page. The section of the
+page you are on is always shown, and the sidebar search also finds pages in closed sections.
+
 ### AI Insights in the repository report
 
 When a repository's `reports/ai-insights/` holds findings of the sokrates-skills AI scanners, the

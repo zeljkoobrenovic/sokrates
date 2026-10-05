@@ -257,11 +257,17 @@ public class ReportNavigation {
                     .append("oninput='sokratesFilterNav(this.value)'><kbd class='sk-kbd'>⌘K</kbd></div>\n");
             html.append("<div class='sk-nav-empty' hidden>No matching pages</div>\n");
         }
+        // Each group label opens and closes its items (all open by default; ReportShell remembers the closed ones).
         groups.forEach(group -> {
-            html.append("<div class='sk-nav-group'>\n");
-            html.append("<div class='sk-nav-group-label'>").append(HtmlEscapeUtils.escape(group.label)).append("</div>\n");
+            String label = HtmlEscapeUtils.escape(group.label);
+            html.append("<div class='sk-nav-group' data-sk-group='").append(label).append("'>\n");
+            html.append("<button type='button' class='sk-nav-group-label' aria-expanded='true' onclick='sokratesToggleNavGroup(this)'>")
+                    .append("<span>").append(label).append("</span>")
+                    .append("<svg class='sk-nav-chevron' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' ")
+                    .append("stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M6 9l6 6 6-6'/></svg></button>\n");
+            html.append("<div class='sk-nav-group-items'>\n");
             group.items.forEach(item -> html.append(item.render(activeId)));
-            html.append("</div>\n");
+            html.append("</div></div>\n");
         });
         html.append("<div class='sk-nav-footer'><label class='sk-nav-option'>")
                 .append("<input type='checkbox' data-sk-palette-toggle onchange='sokratesSetPalette(this.checked ? \"cvd\" : \"default\")'>")
@@ -278,6 +284,8 @@ public class ReportNavigation {
         }
         html.append("</div></div>\n");
         html.append("</nav>\n");
+        // Closes the groups closed earlier before the sidebar is painted (the function is in ReportShell's head script).
+        html.append("<script>if (window.sokratesRestoreNavGroups) { sokratesRestoreNavGroups(); }</script>\n");
         return html.toString();
     }
 
