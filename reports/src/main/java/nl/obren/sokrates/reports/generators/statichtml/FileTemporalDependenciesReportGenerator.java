@@ -188,12 +188,14 @@ public class FileTemporalDependenciesReportGenerator {
     private void renderFileDependencies(RichTextReport report, List<FilePairChangedTogether> filePairsChangedTogether, String suffix) {
         ProcessingStopwatch.start("reporting/temporal dependencies/extract dependencies");
         TemporalDependenciesHelper dependenciesHelper = new TemporalDependenciesHelper();
-        List<ComponentDependency> dependencies = dependenciesHelper.extractFileDependencies(filePairsChangedTogether);
+        List<ComponentDependency> dependencies = dependenciesHelper.extractFileDependencies(filePairsChangedTogether,
+                ForceGraphExporter.MAX_DEPENDECIES_GRAPH_SIZE);
         LOG.info("Extracted " + dependencies.size() + " dependencies");
         ProcessingStopwatch.end("reporting/temporal dependencies/extract dependencies");
 
         ProcessingStopwatch.start("reporting/temporal dependencies/extract dependencies with commits");
-        List<ComponentDependency> dependenciesWithCommits = dependenciesHelper.extractDependenciesWithCommits(filePairsChangedTogether);
+        List<ComponentDependency> dependenciesWithCommits = dependenciesHelper.extractDependenciesWithCommits(filePairsChangedTogether,
+                ForceGraphExporter.MAX_DEPENDECIES_GRAPH_SIZE);
         LOG.info("Extracted " + dependenciesWithCommits.size() + " dependencies with commits");
         ProcessingStopwatch.end("reporting/temporal dependencies/extract dependencies with commits");
 

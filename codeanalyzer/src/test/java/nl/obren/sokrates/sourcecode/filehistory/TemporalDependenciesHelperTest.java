@@ -124,4 +124,51 @@ class TemporalDependenciesHelperTest {
         assertEquals(4, dependencies.size());
         dependencies.forEach(d -> assertEquals(1, d.getCount()));
     }
+
+    @Test
+    void limitedFileDependenciesAreTheFirstOnesOfAnUnlimitedRunWithTheSameCounts() {
+        SourceFile a = file("a.java", "comp", "A");
+        SourceFile b = file("b.java", "comp", "B");
+        SourceFile c = file("c.java", "comp", "C");
+
+        // the a-b pair occurs again after the limit is reached; its commits must still be counted
+        List<FilePairChangedTogether> pairs = Arrays.asList(
+                pair(a, b, "c1"),
+                pair(a, c, "c2"),
+                pair(b, c, "c3"),
+                pair(b, a, "c4", "c5"));
+
+        List<ComponentDependency> unlimited = new TemporalDependenciesHelper().extractFileDependencies(pairs);
+        List<ComponentDependency> limited = new TemporalDependenciesHelper().extractFileDependencies(pairs, 1);
+
+        assertEquals(3, unlimited.size());
+        assertEquals(1, limited.size());
+        assertEquals(unlimited.get(0).getFromComponent(), limited.get(0).getFromComponent());
+        assertEquals(unlimited.get(0).getToComponent(), limited.get(0).getToComponent());
+        assertEquals(3, limited.get(0).getCount(), "{c1, c4, c5}");
+        assertEquals(unlimited.get(0).getCount(), limited.get(0).getCount());
+    }
+
+    @Test
+    void limitedDependenciesWithCommitsAreTheFirstOnesOfAnUnlimitedRunWithTheSameCounts() {
+        SourceFile a = file("a.java", "comp", "A");
+        SourceFile b = file("b.java", "comp", "B");
+        SourceFile c = file("c.java", "comp", "C");
+
+        List<FilePairChangedTogether> pairs = Arrays.asList(
+                pair(a, b, "c1", "c2"),
+                pair(a, c, "c1"),
+                pair(b, c, "c2", "c3"));
+
+        List<ComponentDependency> unlimited = new TemporalDependenciesHelper().extractDependenciesWithCommits(pairs);
+        for (int limit = 0; limit <= unlimited.size(); limit++) {
+            List<ComponentDependency> limited = new TemporalDependenciesHelper().extractDependenciesWithCommits(pairs, limit);
+            assertEquals(limit, limited.size());
+            for (int i = 0; i < limit; i++) {
+                assertEquals(unlimited.get(i).getFromComponent(), limited.get(i).getFromComponent());
+                assertEquals(unlimited.get(i).getToComponent(), limited.get(i).getToComponent());
+                assertEquals(unlimited.get(i).getCount(), limited.get(i).getCount());
+            }
+        }
+    }
 }

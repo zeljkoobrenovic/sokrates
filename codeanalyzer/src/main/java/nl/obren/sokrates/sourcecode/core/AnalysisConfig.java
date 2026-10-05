@@ -36,6 +36,10 @@ public class AnalysisConfig {
     // A maximal number of days in source code history used to calculate temporal file dependencies
     private int maxTemporalDependenciesDepthDays = 365;
 
+    // Commits touching more main files than this are left out of temporal file dependencies (a commit with N files
+    // yields N*(N-1)/2 file pairs, and such commits are mostly mass edits such as reformatting); 0 or less = no limit
+    private int maxFilesPerCommitForTemporalDependencies = 100;
+
     // Repositories with more than a given number of lines of main code will skip duplication analyses even if skipDuplication flag is false
     private int locDuplicationThreshold = 10000000;
 
@@ -275,6 +279,14 @@ public class AnalysisConfig {
 
     public void setMaxTemporalDependenciesDepthDays(int maxTemporalDependenciesDepthDays) {
         this.maxTemporalDependenciesDepthDays = maxTemporalDependenciesDepthDays;
+    }
+
+    public int getMaxFilesPerCommitForTemporalDependencies() {
+        return maxFilesPerCommitForTemporalDependencies;
+    }
+
+    public void setMaxFilesPerCommitForTemporalDependencies(int maxFilesPerCommitForTemporalDependencies) {
+        this.maxFilesPerCommitForTemporalDependencies = maxFilesPerCommitForTemporalDependencies;
     }
 
     public boolean isAnalyzeConcernOverlaps() {

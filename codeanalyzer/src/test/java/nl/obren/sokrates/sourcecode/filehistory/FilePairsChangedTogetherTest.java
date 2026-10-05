@@ -174,4 +174,92 @@ class FilePairsChangedTogetherTest {
         assertEquals(2, result.get(0).getCommits().size(), "pair with most shared commits comes first");
         assertEquals(1, result.get(1).getCommits().size());
     }
+
+    @Test
+    void aFileListingTheSameCommitTwiceIsCountedOnce() {
+        SourceFile a = file("a.java");
+        SourceFile b = file("b.java");
+        NamedSourceCodeAspect aspect = aspect(a, b);
+
+        List<FileModificationHistory> histories = Arrays.asList(
+                history("a.java", commit("c1", "2020-01-01"), commit("c1", "2020-01-01")),
+                history("b.java", commit("c1", "2020-01-01"), commit("c1", "2020-01-01")));
+
+        FilePairsChangedTogether pairs = new FilePairsChangedTogether(-1);
+        pairs.populate(aspect, histories);
+
+        assertEquals(1, pairs.getFilePairsList().size(), "no pair of a file with itself");
+        assertEquals(1, pairs.getFilePairsList().get(0).getCommits().size());
+    }
+
+    @Test
+    void pairsWithTheSameCountKeepTheOrderInWhichTheyWereFound() {
+        SourceFile a = file("a.java");
+        SourceFile b = file("b.java");
+        SourceFile c = file("c.java");
+        NamedSourceCodeAspect aspect = aspect(a, b, c);
+
+        List<FileModificationHistory> histories = Arrays.asList(
+                history("a.java", commit("c1", "2020-01-01")),
+                history("b.java", commit("c1", "2020-01-01")),
+                history("c.java", commit("c1", "2020-01-01")));
+
+        FilePairsChangedTogether pairs = new FilePairsChangedTogether(-1);
+        pairs.populate(aspect, histories);
+
+        List<FilePairChangedTogether> result = pairs.getFilePairsList();
+        assertEquals("b.java a.java", result.get(0).getSourceFile1().getRelativePath() + " " + result.get(0).getSourceFile2().getRelativePath());
+        assertEquals("c.java a.java", result.get(1).getSourceFile1().getRelativePath() + " " + result.get(1).getSourceFile2().getRelativePath());
+        assertEquals("c.java b.java", result.get(2).getSourceFile1().getRelativePath() + " " + result.get(2).getSourceFile2().getRelativePath());
+    }
+
+    @Test
+    void commitsWithMoreFilesThanTheLimitAreLeftOut() {
+        SourceFile a = file("a.java");
+        SourceFile b = file("b.java");
+        SourceFile c = file("c.java");
+        NamedSourceCodeAspect aspect = aspect(a, b, c);
+
+        // big touches all three files, small only a and b
+        List<FileModificationHistory> histories = Arrays.asList(
+                history("a.java", commit("big", "2020-01-01"), commit("small", "2020-01-02")),
+                history("b.java", commit("big", "2020-01-01"), commit("small", "2020-01-02")),
+                history("c.java", commit("big", "2020-01-01")));
+
+        FilePairsChangedTogether limited = new FilePairsChangedTogether(-1, 2);
+        limited.populate(aspect, histories);
+
+        assertEquals(1, limited.getSkippedCommitsCount());
+        assertEquals(1, limited.getFilePairsList().size(), "only the a-b pair of the small commit");
+        assertEquals(1, limited.getFilePairsList().get(0).getCommits().size());
+        assertTrue(limited.getFilePairsList().get(0).getCommits().contains("2020-01-02 small"));
+
+        FilePairsChangedTogether atTheLimit = new FilePairsChangedTogether(-1, 3);
+        atTheLimit.populate(aspect, histories);
+        assertEquals(0, atTheLimit.getSkippedCommitsCount(), "a commit with exactly the limit is kept");
+        assertEquals(3, atTheLimit.getFilePairsList().size());
+
+        FilePairsChangedTogether noLimit = new FilePairsChangedTogether(-1, 0);
+        noLimit.populate(aspect, histories);
+        assertEquals(3, noLimit.getFilePairsList().size());
+    }
+
+    @Test
+    void filesOutsideTheAspectDoNotCountTowardsTheLimit() {
+        SourceFile a = file("a.java");
+        SourceFile b = file("b.java");
+        NamedSourceCodeAspect aspect = aspect(a, b);
+
+        List<FileModificationHistory> histories = Arrays.asList(
+                history("a.java", commit("c1", "2020-01-01")),
+                history("b.java", commit("c1", "2020-01-01")),
+                history("test/x.java", commit("c1", "2020-01-01")),
+                history("test/y.java", commit("c1", "2020-01-01")));
+
+        FilePairsChangedTogether pairs = new FilePairsChangedTogether(-1, 2);
+        pairs.populate(aspect, histories);
+
+        assertEquals(0, pairs.getSkippedCommitsCount());
+        assertEquals(1, pairs.getFilePairsList().size());
+    }
 }

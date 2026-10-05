@@ -127,25 +127,29 @@ public class FileHistoryAnalyzer extends Analyzer {
     }
 
     private void analyzeFilesChangedTogether(List<FileModificationHistory> history) {
-        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(codeConfiguration.getAnalysis().getMaxTemporalDependenciesDepthDays());
+        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(codeConfiguration.getAnalysis().getMaxTemporalDependenciesDepthDays(),
+                codeConfiguration.getAnalysis().getMaxFilesPerCommitForTemporalDependencies());
         filePairsChangedTogether.populate(codeConfiguration.getMain(), history);
         analysisResults.setFilePairsChangedTogether(filePairsChangedTogether.getFilePairsList());
     }
 
     private void analyzeFilesChangedTogether30Days(List<FileModificationHistory> history) {
-        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(30);
+        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(30,
+                codeConfiguration.getAnalysis().getMaxFilesPerCommitForTemporalDependencies());
         filePairsChangedTogether.populate(codeConfiguration.getMain(), history);
         analysisResults.setFilePairsChangedTogether30Days(filePairsChangedTogether.getFilePairsList());
     }
 
     private void analyzeFilesChangedTogether90Days(List<FileModificationHistory> history) {
-        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(90);
+        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(90,
+                codeConfiguration.getAnalysis().getMaxFilesPerCommitForTemporalDependencies());
         filePairsChangedTogether.populate(codeConfiguration.getMain(), history);
         analysisResults.setFilePairsChangedTogether90Days(filePairsChangedTogether.getFilePairsList());
     }
 
     private void analyzeFilesChangedTogether180Days(List<FileModificationHistory> history) {
-        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(180);
+        FilePairsChangedTogether filePairsChangedTogether = new FilePairsChangedTogether(180,
+                codeConfiguration.getAnalysis().getMaxFilesPerCommitForTemporalDependencies());
         filePairsChangedTogether.populate(codeConfiguration.getMain(), history);
         analysisResults.setFilePairsChangedTogether180Days(filePairsChangedTogether.getFilePairsList());
     }

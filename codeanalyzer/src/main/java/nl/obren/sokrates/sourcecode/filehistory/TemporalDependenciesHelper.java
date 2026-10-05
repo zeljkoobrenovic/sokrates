@@ -18,7 +18,7 @@ public class TemporalDependenciesHelper {
     private static final Log LOG = LogFactory.getLog(TemporalDependenciesHelper.class);
     private List<ComponentDependency> componentDependencies = new ArrayList<>();
     private Map<String, ComponentDependency> componentDependenciesMap = new HashMap<>();
-    private Map<ComponentDependency, Set<String>> datesMap = new HashMap<>();
+    private Map<ComponentDependency, Collection<String>> commitsMap = new HashMap<>();
 
     public TemporalDependenciesHelper() {
     }
@@ -67,6 +67,15 @@ public class TemporalDependenciesHelper {
     }
 
     public List<ComponentDependency> extractFileDependencies(List<FilePairChangedTogether> filePairInstances) {
+        return extractFileDependencies(filePairInstances, DEPENDENCIES_LIST_LIMIT);
+    }
+
+    /**
+     * The file dependencies in the order of the pairs, at most maxDependencies of them. Pairs beyond
+     * that still add their commits to dependencies already in the list (the same file pair can occur
+     * twice), so the kept dependencies have the same counts as in an unlimited run.
+     */
+    public List<ComponentDependency> extractFileDependencies(List<FilePairChangedTogether> filePairInstances, int maxDependencies) {
         filePairInstances.forEach(filePairChangedTogether -> {
             String file1 = filePairChangedTogether.getSourceFile1().getRelativePath();
             String file2 = filePairChangedTogether.getSourceFile2().getRelativePath();
@@ -74,11 +83,7 @@ public class TemporalDependenciesHelper {
             String component2 = "[" + file2 + "]";
 
             if (!component1.equalsIgnoreCase(component2)) {
-                addDependency(filePairChangedTogether, component1, component2);
-            }
-
-            if (componentDependencies.size() > DEPENDENCIES_LIST_LIMIT) {
-                return;
+                addDependency(filePairChangedTogether, component1, component2, maxDependencies);
             }
         });
 
@@ -86,8 +91,17 @@ public class TemporalDependenciesHelper {
     }
 
     public List<ComponentDependency> extractDependenciesWithCommits(List<FilePairChangedTogether> filePairInstances) {
+        return extractDependenciesWithCommits(filePairInstances, DEPENDENCIES_LIST_LIMIT);
+    }
+
+    /**
+     * The commit-file links in the order of the pairs, at most maxDependencies of them; pairs beyond
+     * that still count towards the links already in the list.
+     */
+    public List<ComponentDependency> extractDependenciesWithCommits(List<FilePairChangedTogether> filePairInstances, int maxDependencies) {
         List<ComponentDependency> componentDependencies = new ArrayList<>();
         Map<String, ComponentDependency> componentDependenciesMap = new HashMap<>();
+        boolean[] limitReported = {false};
         filePairInstances.forEach(filePairChangedTogether -> {
             String file1 = filePairChangedTogether.getSourceFile1().getRelativePath();
             String file2 = filePairChangedTogether.getSourceFile2().getRelativePath();
@@ -97,41 +111,65 @@ public class TemporalDependenciesHelper {
             if (!component1.equalsIgnoreCase(component2)) {
                 filePairChangedTogether.getCommits().forEach(commit -> {
                     String commitId = "commit_" + commit;
-                    ComponentDependency dependency1 = getDependency(commitId, component1, componentDependencies, componentDependenciesMap);
-                    dependency1.setCount(dependency1.getCount() + 1);
-                    ComponentDependency dependency2 = getDependency(commitId, component2, componentDependencies, componentDependenciesMap);
-                    dependency2.setCount(dependency2.getCount() + 1);
+                    boolean create = componentDependencies.size() < maxDependencies;
+                    ComponentDependency dependency1 = getDependency(commitId, component1, componentDependencies, componentDependenciesMap, create);
+                    if (dependency1 != null) {
+                        dependency1.setCount(dependency1.getCount() + 1);
+                    }
+                    create = componentDependencies.size() < maxDependencies;
+                    ComponentDependency dependency2 = getDependency(commitId, component2, componentDependencies, componentDependenciesMap, create);
+                    if (dependency2 != null) {
+                        dependency2.setCount(dependency2.getCount() + 1);
+                    }
                 });
             }
 
-            if (componentDependencies.size() > DEPENDENCIES_LIST_LIMIT) {
-                LOG.info("Reached the limit of the graph size (" + DEPENDENCIES_LIST_LIMIT + " dependecies)");
-                return;
+            if (componentDependencies.size() >= maxDependencies && !limitReported[0]) {
+                limitReported[0] = true;
+                LOG.info("Reached the limit of the graph size (" + maxDependencies + " dependencies)");
             }
         });
 
         return componentDependencies;
     }
 
-    private void addDependency(FilePairChangedTogether filePairChangedTogether, String component1, String component2) {
-        ComponentDependency dependency = getDependency(component1, component2);
+    private void addDependency(FilePairChangedTogether filePairChangedTogether, String component1, String component2, int maxDependencies) {
+        ComponentDependency dependency = getDependency(component1, component2, componentDependencies, componentDependenciesMap,
+                componentDependencies.size() < maxDependencies);
+        if (dependency == null) {
+            return;
+        }
 
-        dependency.setCount(dependency.getCount() + 1);
-
-        Set<String> commits = datesMap.computeIfAbsent(dependency, k -> new HashSet<>());
-        commits.addAll(filePairChangedTogether.getCommits());
-        dependency.setCount(commits.size());
+        List<String> pairCommits = filePairChangedTogether.getCommits();
+        Collection<String> commits = commitsMap.get(dependency);
+        if (commits == null) {
+            // The first pair of a dependency is kept by reference, not copied: a file pair usually
+            // occurs once, so a set per dependency would only duplicate the pair's commit list.
+            commitsMap.put(dependency, pairCommits);
+            dependency.setCount(pairCommits.size() <= 1 ? pairCommits.size() : new HashSet<>(pairCommits).size());
+        } else {
+            Set<String> union = commits instanceof Set ? (Set<String>) commits : new HashSet<>(commits);
+            union.addAll(pairCommits);
+            commitsMap.put(dependency, union);
+            dependency.setCount(union.size());
+        }
     }
 
     private ComponentDependency getDependency(String name1, String name2,
                                               List<ComponentDependency> componentDependencies, Map<String, ComponentDependency> componentDependenciesMap) {
+        return getDependency(name1, name2, componentDependencies, componentDependenciesMap, true);
+    }
+
+    private ComponentDependency getDependency(String name1, String name2,
+                                              List<ComponentDependency> componentDependencies, Map<String, ComponentDependency> componentDependenciesMap,
+                                              boolean create) {
         String key = name1 + "::" + name2;
         String alternativeKey = name2 + "::" + name1;
 
         ComponentDependency componentDependency = componentDependenciesMap.get(key);
         if (componentDependency == null) {
             componentDependency = componentDependenciesMap.get(alternativeKey);
-            if (componentDependency == null) {
+            if (componentDependency == null && create) {
                 componentDependency = new ComponentDependency(name1, name2);
                 componentDependency.setCount(0);
 
@@ -143,7 +181,4 @@ public class TemporalDependenciesHelper {
         return componentDependency;
     }
 
-    private ComponentDependency getDependency(String name1, String name2) {
-        return getDependency(name1, name2, componentDependencies, componentDependenciesMap);
-    }
 }

@@ -3,6 +3,27 @@
 User-visible behaviour changes, newest first. `:latest` of the Docker image and the `master` branch carry
 everything listed under the most recent date.
 
+## 2026-10-05
+
+### Temporal dependencies: very large commits are left out, and the analysis uses much less memory
+
+Commits that touch more than 100 main files are no longer counted in the temporal (changed-together)
+file dependencies. A commit with N files produces N×(N−1)/2 file pairs, so one mass edit, such as
+reformatting or a license header update, could add millions of pairs and gigabytes of memory while
+saying little about which files are coupled. The limit is the new `analysis` setting
+`maxFilesPerCommitForTemporalDependencies` (default `100`; `0` or less turns it off). The log says
+how many commits were left out per window.
+
+Independently of the limit, building the file pairs and the file dependency force graphs now needs far
+less memory (in a test with 4.5 million pairs, peak heap fell from about 6.4 GB to about 1.1 GB), and
+pairs with the same number of shared commits are listed in a fixed order instead of a different one
+on each run.
+
+What stays the same: the windows, the reports, the `temporal_dependencies*.txt` exports and the force
+graphs (still the first 10,000 links, with the same counts). What to check: in a repository with
+commits that touch more than 100 main files, the pair counts and the component dependencies in the
+temporal views drop. Set `maxFilesPerCommitForTemporalDependencies` to `0` to get the old numbers.
+
 ## 2026-10-04
 
 ### Commits explorer: the columns on the right stay visible; one-line page titles
