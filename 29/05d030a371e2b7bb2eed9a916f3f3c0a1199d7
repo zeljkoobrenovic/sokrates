@@ -1,0 +1,41 @@
+reports/src/test/java/nl/obren/sokrates/reports/landscape/ai/AiCostEstimatorAggregatorTest.java
+  s_5026482126c219::t_db5be74ea426c2 1-82
+CLAUDE.md
+  s_5026482126c219::t_aef9bf04b40c00 209
+cli/src/main/java/nl/obren/sokrates/cli/ReportsCommands.java
+  s_5026482126c219::t_d78661f474461a 12-13,133-135,144
+reports/src/main/java/nl/obren/sokrates/reports/generators/explorers/AiCostEstimatorData.java
+  s_5026482126c219::t_862cfd7f7da375 3-4,21-42,129-158,216-225
+  s_5026482126c219::t_bb5ae1390a5df3 332-344
+reports/src/main/java/nl/obren/sokrates/reports/generators/explorers/AiCostEstimatorGenerator.java
+  s_5026482126c219::t_0179c5c0ecf57c 3,58-59,100-130,134,140-142
+  s_5026482126c219::t_9e02a5f7e2323d 143
+common/src/main/resources/templates/ai-cost-estimator.html
+  s_5026482126c219::t_11bc48a118ff76 368-372,425-427,710-711,890,907,940,964,975,979,1008-1011,1013
+  s_5026482126c219::t_fcb58120b282de 341,801-832,901,976,982,1012
+reports/src/main/java/nl/obren/sokrates/reports/landscape/ai/AiCostEstimatorAggregator.java
+  s_5026482126c219::t_bb5ae1390a5df3 1-123
+CHANGELOG.md
+  s_5026482126c219::t_aef9bf04b40c00 6-15
+reports/src/main/java/nl/obren/sokrates/reports/generators/explorers/CommitsExplorerGenerators.java
+  s_5026482126c219::t_0179c5c0ecf57c 92,122
+reports/src/main/java/nl/obren/sokrates/reports/landscape/statichtml/LandscapeReportGenerator.java
+  s_5026482126c219::t_b23fbafccf9eb7 23-25,87,153,215,234,378-380,475-485,513-534
+  s_5026482126c219::t_634181dc05c586 535
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2905d030a371e2b7bb2eed9a916f3f3c0a1199d7",
+  "prompts": {},
+  "sessions": {
+    "s_5026482126c219": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "02d24a13-bc18-4f57-8e09-809e545be12d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
