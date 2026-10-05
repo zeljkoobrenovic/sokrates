@@ -262,6 +262,7 @@ public class AiCostEstimatorData {
         private int vendoredChanges = 0;
         private int generatedChanges = 0;
         private int oversizedChanges = 0;
+        private int unscopedChanges = 0;
         private long droppedLines = 0;
 
         public int getBotCommits() {
@@ -318,6 +319,14 @@ public class AiCostEstimatorData {
 
         public void setOversizedChanges(int oversizedChanges) {
             this.oversizedChanges = oversizedChanges;
+        }
+
+        public int getUnscopedChanges() {
+            return unscopedChanges;
+        }
+
+        public void setUnscopedChanges(int unscopedChanges) {
+            this.unscopedChanges = unscopedChanges;
         }
 
         public long getDroppedLines() {

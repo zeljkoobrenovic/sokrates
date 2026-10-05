@@ -74,7 +74,7 @@
         }
 
         #filter {
-            width: 260px;
+            width: 220px;
         }
 
         .action-button {
@@ -250,32 +250,60 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
 
-        details.priors {
-            margin-top: 8px;
+        .assumptions {
+            margin-top: 10px;
+            padding: 12px 14px;
+            background: var(--sk-surface-2);
+            border-radius: 8px;
             font-size: 85%;
         }
 
-        details.priors > summary {
-            cursor: pointer;
-            color: var(--sk-accent);
-        }
-
-        .prior-grid {
+        .assumption-groups {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
-            gap: 6px 22px;
-            margin: 10px 0;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 14px 24px;
         }
 
-        .prior-grid > div {
+        .assumption-groups h4 {
+            margin: 0 0 6px 0;
+            font-size: 80%;
+            font-weight: 600;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--sk-text-muted);
+        }
+
+        .assumption-groups .row {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
+            margin-bottom: 4px;
         }
 
-        .prior-grid .name {
+        .assumption-groups .name {
             flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
             color: var(--sk-text-muted);
+        }
+
+        .assumption-groups input {
+            background: var(--sk-surface);
+        }
+
+        .assumption-groups input[type=number] {
+            width: 52px;
+        }
+
+        .assumption-groups .unit {
+            width: 12px;
+            font-size: 85%;
+            color: var(--sk-text-faint);
+        }
+
+        #toggle-assumptions[aria-expanded=true] {
+            background-color: var(--sk-accent-soft);
         }
 
         .notes {
@@ -310,33 +338,30 @@
     </div>
     <div id="content">
         <div class="toolbar">
-            <input id="filter" type="text" placeholder="filter tasks: author, ticket, sha, type (; = or)" oninput="schedule(render)">
-            <label>from <input type="date" id="date-from" onchange="render()"></label>
-            <label>to <input type="date" id="date-to" onchange="render()"></label>
+            <input id="filter" type="text" placeholder="Filter tasks" title="author, ticket, sha or type; separate alternatives with ;" oninput="schedule(render)">
             <select id="date-preset" onchange="applyPreset(this.value)" title="a period ending at the latest commit">
-                <option value="">period…</option>
-                <option value="30">past 30 days</option>
-                <option value="90">past 3 months</option>
-                <option value="180">past 6 months</option>
-                <option value="365">past year</option>
-                <option value="730">past 2 years</option>
-                <option value="all">all time</option>
+                <option value="all">All time</option>
+                <option value="30">Past 30 days</option>
+                <option value="90">Past 3 months</option>
+                <option value="180">Past 6 months</option>
+                <option value="365">Past year</option>
+                <option value="730">Past 2 years</option>
+                <option value="custom">Custom range…</option>
             </select>
-        </div>
-        <div class="toolbar" style="margin-top: 8px">
-            <span class="muted">price per 1M tokens:</span>
-            <label>input <input type="number" id="p-in" value="3" step="0.1" min="0"></label>
-            <label>output <input type="number" id="p-out" value="15" step="0.1" min="0"></label>
-            <label>cache write <input type="number" id="p-cw" value="3.75" step="0.05" min="0"></label>
-            <label>cache read <input type="number" id="p-cr" value="0.3" step="0.01" min="0"></label>
-            <label>currency <input type="text" id="currency" value="$" style="width: 34px; text-align: center"></label>
+            <span id="custom-range" hidden>
+                <input type="date" id="date-from" title="from (inclusive)" onchange="render()"> –
+                <input type="date" id="date-to" title="to (inclusive)" onchange="render()">
+            </span>
+            <button class="action-button" id="toggle-assumptions" onclick="toggleAssumptions()" aria-expanded="false">Assumptions</button>
         </div>
 
-        <details class="priors" id="priors">
-            <summary>Assumptions (priors) — each is a range; the simulation draws from it</summary>
-            <div class="prior-grid" id="prior-grid"></div>
-            <button class="action-button" onclick="resetInputs()">reset to defaults</button>
-        </details>
+        <div class="assumptions" id="assumptions" hidden>
+            <div class="assumption-groups" id="prior-grid"></div>
+            <div class="small muted" style="margin-top: 8px">
+                Each range is drawn from in every simulation run.
+                <button class="action-button" onclick="resetInputs()" style="margin-left: 6px">Reset</button>
+            </div>
+        </div>
 
         <div class="cards" id="cards"></div>
 
@@ -362,7 +387,9 @@
                 <li><b>Tasks</b> come from the commits. Commits that mention the same ticket id (e.g. ABC-123) are one task<span id="ticket-note"></span>.
                     Otherwise a task is consecutive commits by the same author, at most a day apart, touching overlapping files
                     (the history has dates, not times). Tasks are split into <b>sessions</b> of at most 10 files or 400 changed lines.</li>
-                <li><b>Reads</b> use the current size of the edited files (at most 2,000 lines per file), times a read amplification for
+                <li><b>Scopes:</b> main, test, build &amp; deployment and other code count; generated code, files in no scope and files with
+                    extensions the analysis does not cover are left out.</li>
+                <li><b>Reads</b> use the current total lines of the edited files, comments and blank lines included (at most 2,000 lines per file), times a read amplification for
                     re-reads and unchanged neighbouring files, plus exploration reads per session. New files are written, not read; deleted files cost nothing.</li>
                 <li><b>Writes</b> come from the churn: an edit to an existing file costs more per line (the edit repeats the old text and some context) than a line in a new file.</li>
                 <li><b>Agent steps</b> are a base number plus a number per touched file. Every step sends the whole context again;
@@ -400,29 +427,40 @@
     const TYPE_LABELS = {};
     TYPES.forEach(t => TYPE_LABELS[t[0]] = t[1]);
 
-    // [id, label, min, max, unit, step]
-    const PRIORS = [
-        ['tpl', 'tokens per line of code', 7, 14, 'tokens', 1],
-        ['base', 'base context (system prompt, tools, instructions)', 12000, 25000, 'tokens', 1000],
-        ['explore', 'exploration reads per session', 200, 1000, 'lines', 50],
-        ['amp-new', 'read amplification — new code', 1.2, 2, '×', 0.1],
-        ['amp-feature', 'read amplification — feature', 1.5, 3, '×', 0.1],
-        ['amp-fix', 'read amplification — fix', 2, 4, '×', 0.1],
-        ['amp-refactor', 'read amplification — refactoring', 1.5, 2.5, '×', 0.1],
-        ['steps', 'agent steps per session', 10, 25, 'steps', 1],
-        ['steps-file', 'extra agent steps per touched file', 3, 6, 'steps', 0.5],
-        ['tool', 'tool output per step (commands, searches, diffs)', 300, 1200, 'tokens', 50],
-        ['reason', 'reasoning output per step', 150, 600, 'tokens', 50],
-        ['edit', 'write overhead per edited line', 1.3, 2.5, '×', 0.1],
-        ['create', 'write overhead per new line', 1, 1.2, '×', 0.05],
-        ['miss', 'cache misses', 5, 20, '%', 1]
+    // Groups of [id, label, min, max (null = a single value), unit, step, hint].
+    const GROUPS = [
+        ['Prices per 1M tokens', [
+            ['p-in', 'input', 3, null, '', 0.1],
+            ['p-out', 'output', 15, null, '', 0.1],
+            ['p-cw', 'cache write', 3.75, null, '', 0.05],
+            ['p-cr', 'cache read', 0.3, null, '', 0.01],
+            ['currency', 'currency', '$', null, '', 0],
+            ['reference', 'reference per dev-day', 13, null, '', 1, 'cost per developer per active day to compare with']
+        ]],
+        ['Reads', [
+            ['tpl', 'tokens per line', 7, 14, '', 1],
+            ['base', 'base context', 12000, 25000, '', 1000, 'tokens of system prompt, tools and instructions'],
+            ['explore', 'exploration lines', 200, 1000, '', 50, 'lines read per session besides the edited files'],
+        ]],
+        ['Read amplification', [
+            ['amp-new', 'new code', 1.2, 2, '×', 0.1, 're-reads and unchanged neighbouring files'],
+            ['amp-feature', 'feature', 1.5, 3, '×', 0.1, 're-reads and unchanged neighbouring files'],
+            ['amp-fix', 'fix', 2, 4, '×', 0.1, 're-reads and unchanged neighbouring files'],
+            ['amp-refactor', 'refactoring', 1.5, 2.5, '×', 0.1, 're-reads and unchanged neighbouring files']
+        ]],
+        ['Agent', [
+            ['steps', 'steps / session', 10, 25, '', 1, 'agent steps per session'],
+            ['steps-file', 'steps / file', 3, 6, '', 0.5, 'extra agent steps per touched file'],
+            ['tool', 'tool output', 300, 1200, '', 50, 'tokens of command output, searches and diffs per step'],
+            ['reason', 'reasoning', 150, 600, '', 50, 'reasoning output tokens per step'],
+            ['miss', 'cache misses', 5, 20, '%', 1],
+            ['window', 'context window', 200000, null, '', 10000, 'tokens']
+        ]],
+        ['Writes', [
+            ['edit', 'edited line', 1.3, 2.5, '×', 0.1, 'write overhead: an edit repeats the old text and some context'],
+            ['create', 'new line', 1, 1.2, '×', 0.05, 'write overhead per line in a new file']
+        ]]
     ];
-    // [id, label, default, unit, step]
-    const SINGLES = [
-        ['window', 'context window', 200000, 'tokens', 10000],
-        ['reference', 'reference cost per developer per active day', 13, '', 1]
-    ];
-    const PRICE_IDS = ['p-in', 'p-out', 'p-cw', 'p-cr', 'currency'];
     const STORAGE_KEY = 'sokrates-ai-cost-estimator';
 
     // ------------------------------------------------------------------------------- helpers
@@ -494,25 +532,40 @@
 
     function buildPriorInputs() {
         let html = '';
-        PRIORS.forEach(p => {
-            html += '<div><span class="name">' + escapeHtml(p[1]) + '</span>'
-                + '<input type="number" id="' + p[0] + '-min" value="' + p[2] + '" step="' + p[5] + '" min="0"> – '
-                + '<input type="number" id="' + p[0] + '-max" value="' + p[3] + '" step="' + p[5] + '" min="0">'
-                + '<span class="muted small" style="width: 40px">' + escapeHtml(p[4]) + '</span></div>';
-        });
-        SINGLES.forEach(p => {
-            html += '<div><span class="name">' + escapeHtml(p[1]) + '</span>'
-                + '<input type="number" id="' + p[0] + '" value="' + p[2] + '" step="' + p[4] + '" min="0" style="width: 90px">'
-                + '<span class="muted small" style="width: 40px">' + escapeHtml(p[3]) + '</span></div>';
+        GROUPS.forEach(group => {
+            html += '<div><h4>' + escapeHtml(group[0]) + '</h4>';
+            group[1].forEach(p => {
+                const title = p[6] ? ' title="' + escapeHtml(p[6]) + '"' : '';
+                html += '<div class="row"' + title + '><span class="name">' + escapeHtml(p[1]) + '</span>';
+                if (p[0] === 'currency') {
+                    html += '<input type="text" id="currency" value="' + escapeHtml(p[2]) + '" style="width: 52px; text-align: center">';
+                } else if (p[3] == null) {
+                    html += '<input type="number" id="' + p[0] + '" value="' + p[2] + '" step="' + p[5] + '" min="0"'
+                        + (p[2] >= 1000 ? ' style="width: 72px"' : '') + '>';
+                } else {
+                    html += '<input type="number" id="' + p[0] + '-min" value="' + p[2] + '" step="' + p[5] + '" min="0">–'
+                        + '<input type="number" id="' + p[0] + '-max" value="' + p[3] + '" step="' + p[5] + '" min="0">';
+                }
+                html += '<span class="unit">' + escapeHtml(p[4]) + '</span></div>';
+            });
+            html += '</div>';
         });
         document.getElementById('prior-grid').innerHTML = html;
     }
 
     function inputIds() {
-        const ids = PRICE_IDS.slice();
-        PRIORS.forEach(p => ids.push(p[0] + '-min', p[0] + '-max'));
-        SINGLES.forEach(p => ids.push(p[0]));
+        const ids = [];
+        GROUPS.forEach(group => group[1].forEach(p => {
+            if (p[3] == null) ids.push(p[0]);
+            else ids.push(p[0] + '-min', p[0] + '-max');
+        }));
         return ids;
+    }
+
+    function toggleAssumptions() {
+        const panel = document.getElementById('assumptions');
+        panel.hidden = !panel.hidden;
+        document.getElementById('toggle-assumptions').setAttribute('aria-expanded', String(!panel.hidden));
     }
 
     const defaults = {};
@@ -660,16 +713,16 @@
 
     function applyPreset(value) {
         const from = document.getElementById('date-from'), to = document.getElementById('date-to');
+        document.getElementById('custom-range').hidden = value !== 'custom';
         if (value === 'all') {
             from.value = '';
             to.value = '';
-        } else if (value) {
+        } else if (value !== 'custom') {
             const d = new Date(latestDate + 'T00:00:00Z');
             d.setUTCDate(d.getUTCDate() - parseInt(value, 10) + 1);
             from.value = d.toISOString().substring(0, 10);
             to.value = latestDate;
         }
-        document.getElementById('date-preset').value = '';
         render();
     }
 
@@ -895,6 +948,7 @@
         add(noise.vendoredChanges, 'changes in vendored paths');
         add(noise.generatedChanges, 'changes in generated paths');
         add(noise.oversizedChanges, 'single file changes over 3,000 lines');
+        add(noise.unscopedChanges, 'changes to files outside the analyzed scopes');
         add(noise.emptiedCommits, 'commits with nothing left after that');
         let text = parts.length ? parts.join(', ') + ' (' + int(noise.droppedLines || 0) + ' lines).' : 'nothing in this history.';
         text += ' Merge commits are not in the extracted history.';

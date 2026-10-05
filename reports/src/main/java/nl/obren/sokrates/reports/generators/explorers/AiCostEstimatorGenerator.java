@@ -1,6 +1,9 @@
 package nl.obren.sokrates.reports.generators.explorers;
 
 import nl.obren.sokrates.common.renderingutils.ExplorerTemplate;
+import nl.obren.sokrates.sourcecode.SourceFile;
+import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.aspects.NamedSourceCodeAspect;
 import nl.obren.sokrates.sourcecode.githistory.FileUpdate;
 import org.apache.commons.io.FileUtils;
 
@@ -21,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,6 +36,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * reduced here to tasks and sessions (deterministic, from the same file updates as the commits
  * explorer); the page applies the token and price priors and simulates their uncertainty.
  * <ul>
+ * <li>Only the analyzed scopes count (main, test, build and deployment, other): changes to files
+ * that exist but are in no scope (unanalyzed extensions, ignored files) are dropped, while paths no
+ * longer in the codebase are kept when their extension is analyzed (deleted or renamed code).</li>
  * <li>Noise is dropped first: bot commits, commits touching more than {@link #MAX_FILES_PER_COMMIT}
  * files, lockfiles, vendored and generated paths, and single file changes over
  * {@link #MAX_LINES_PER_FILE_CHANGE} lines. Merge commits are not in git-history.txt at all.</li>
@@ -40,8 +47,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * author at most {@link #TASK_MAX_GAP_DAYS} day apart that touch overlapping files (the history
  * has dates, no times of day).</li>
  * <li>A task is split into sessions of at most {@link #SESSION_MAX_FILES} files or
- * {@link #SESSION_MAX_CHURN} churned lines; a session reads the edited files (current size,
- * at most {@link #MAX_READ_LINES} lines each), new files are written, deleted files cost nothing.</li>
+ * {@link #SESSION_MAX_CHURN} churned lines; a session reads the edited files (their current total
+ * lines, comments and blank lines included, as an agent reads the whole file; at most
+ * {@link #MAX_READ_LINES} lines each), new files are written, deleted files cost nothing.</li>
  * <li>The task type comes from the shape of its changes: new code, refactoring, fix or feature.</li>
  * </ul>
  */
@@ -86,9 +94,22 @@ public class AiCostEstimatorGenerator {
         this.reportsFolder = reportsFolder;
     }
 
-    public void export(List<CommitFileExport> currentFiles, List<FileUpdate> fileUpdates, Map<String, String> messagesBySha) {
+    public void export(CodeAnalysisResults results, List<FileUpdate> fileUpdates, Map<String, String> messagesBySha) {
         try {
-            AiCostEstimatorData data = buildData(currentFiles, fileUpdates, messagesBySha, MAX_COMMITS);
+            Set<String> extensions = new HashSet<>();
+            results.getCodeConfiguration().getExtensions().forEach(extension -> extensions.add(extension.toLowerCase()));
+            List<CommitFileExport> currentFiles = new ArrayList<>();
+            File[] sourceRoot = {null};
+            Set<SourceFile> seen = new HashSet<>();
+            collect(currentFiles, seen, sourceRoot, results.getMainAspectAnalysisResults().getAspect(), "main");
+            collect(currentFiles, seen, sourceRoot, results.getTestAspectAnalysisResults().getAspect(), "test");
+            collect(currentFiles, seen, sourceRoot, results.getGeneratedAspectAnalysisResults().getAspect(), "generated");
+            collect(currentFiles, seen, sourceRoot, results.getBuildAndDeployAspectAnalysisResults().getAspect(), "build");
+            collect(currentFiles, seen, sourceRoot, results.getOtherAspectAnalysisResults().getAspect(), "other");
+            // A path in no scope counts only when it is gone from the disk (deleted or renamed) and its extension is analyzed.
+            Predicate<String> keepUnscoped = path -> extensions.contains(extensionOf(path))
+                    && (sourceRoot[0] == null || !new File(sourceRoot[0], path).exists());
+            AiCostEstimatorData data = buildData(currentFiles, fileUpdates, messagesBySha, keepUnscoped, MAX_COMMITS);
             String page = new ExplorerTemplate().render("ai-cost-estimator.html", data);
             File folder = new File(reportsFolder, "explorers");
             folder.mkdirs();
@@ -96,6 +117,31 @@ public class AiCostEstimatorGenerator {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /** The scope's files with their total lines (what an agent reads); remembers the source root on the way. */
+    private static void collect(List<CommitFileExport> files, Set<SourceFile> seen, File[] sourceRoot, NamedSourceCodeAspect aspect, String scope) {
+        aspect.getSourceFiles().forEach(file -> {
+            if (file.getRelativePath().startsWith("- -") || !seen.add(file)) {
+                return;
+            }
+            File onDisk = file.getFile();
+            int lines = onDisk != null && onDisk.exists() ? file.getLines().size() : 0;
+            files.add(new CommitFileExport(file.getRelativePath(), scope, Math.max(lines, file.getLinesOfCode())));
+            if (sourceRoot[0] == null && onDisk != null) {
+                String absolute = onDisk.getAbsolutePath().replace('\\', '/');
+                String relative = file.getRelativePath().replace('\\', '/');
+                if (absolute.endsWith("/" + relative)) {
+                    sourceRoot[0] = new File(absolute.substring(0, absolute.length() - relative.length() - 1));
+                }
+            }
+        });
+    }
+
+    static String extensionOf(String path) {
+        String name = path.substring(path.lastIndexOf('/') + 1);
+        int dot = name.lastIndexOf('.');
+        return dot > 0 ? name.substring(dot + 1).toLowerCase() : "";
     }
 
     private static class Change {
@@ -149,7 +195,7 @@ public class AiCostEstimatorGenerator {
     }
 
     static AiCostEstimatorData buildData(List<CommitFileExport> currentFiles, List<FileUpdate> fileUpdates,
-                                         Map<String, String> messagesBySha, int maxCommits) {
+                                         Map<String, String> messagesBySha, Predicate<String> keepUnscoped, int maxCommits) {
         AiCostEstimatorData data = new AiCostEstimatorData();
 
         Map<String, Integer> currentSize = new HashMap<>();
@@ -196,7 +242,9 @@ public class AiCostEstimatorGenerator {
                 String lower = change.path.toLowerCase();
                 String name = lower.substring(lower.lastIndexOf('/') + 1);
                 boolean dropped = true;
-                if (LOCK_FILES.contains(name)) {
+                if (!currentSize.containsKey(lower) && !keepUnscoped.test(change.path)) {
+                    noise.setUnscopedChanges(noise.getUnscopedChanges() + 1);
+                } else if (LOCK_FILES.contains(name)) {
                     noise.setLockFileChanges(noise.getLockFileChanges() + 1);
                 } else if (VENDORED.matcher(lower).matches()) {
                     noise.setVendoredChanges(noise.getVendoredChanges() + 1);

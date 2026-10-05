@@ -51,7 +51,7 @@ class AiCostEstimatorGeneratorTest {
                 update("2024-03-01", "a@x.com", sha('a'), "src/Big.java", 10, 0),
                 update("2024-02-29", "a@x.com", sha('0'), "src/Big.java", 2, 1));      // day before, overlaps: same task as a
 
-        AiCostEstimatorData data = AiCostEstimatorGenerator.buildData(currentFiles(), updates, Collections.emptyMap(), 1000);
+        AiCostEstimatorData data = AiCostEstimatorGenerator.buildData(currentFiles(), updates, Collections.emptyMap(), path -> true, 1000);
 
         assertEquals(4, data.getTasks().size());
         AiCostEstimatorData.Task first = data.getTasks().get(0);
@@ -77,7 +77,7 @@ class AiCostEstimatorGeneratorTest {
                 update("2024-01-01", "a@x.com", sha('a'), "src/New.java", 600, 0),
                 update("2023-12-01", "a@x.com", sha('0'), "src/Gone.java", 80, 0));
 
-        AiCostEstimatorData data = AiCostEstimatorGenerator.buildData(currentFiles(), updates, Collections.emptyMap(), 1000);
+        AiCostEstimatorData data = AiCostEstimatorGenerator.buildData(currentFiles(), updates, Collections.emptyMap(), path -> true, 1000);
 
         AiCostEstimatorData.Task task = data.getTasks().get(1);
         assertEquals(600, task.getNewLines());
@@ -103,7 +103,7 @@ class AiCostEstimatorGeneratorTest {
             updates.add(update("2024-01-02", "a@x.com", sha('b'), "src/f" + i + ".java", 1, 0));
         }
 
-        AiCostEstimatorData data = AiCostEstimatorGenerator.buildData(currentFiles(), updates, Collections.emptyMap(), 1000);
+        AiCostEstimatorData data = AiCostEstimatorGenerator.buildData(currentFiles(), updates, Collections.emptyMap(), path -> true, 1000);
 
         AiCostEstimatorData.Noise noise = data.getNoise();
         assertEquals(1, noise.getBotCommits());
@@ -132,7 +132,7 @@ class AiCostEstimatorGeneratorTest {
         updates.add(0, update("2024-02-09", "b@x.com", sha('z'), "src/Small.java", 2, 0));
         messages.put(sha('z'), "Follow-up for PROJ-101");
 
-        AiCostEstimatorData data = AiCostEstimatorGenerator.buildData(currentFiles(), updates, messages, 1000);
+        AiCostEstimatorData data = AiCostEstimatorGenerator.buildData(currentFiles(), updates, messages, path -> true, 1000);
 
         assertEquals(Collections.singletonList("PROJ"), data.getTicketPrefixes());
         assertEquals(5, data.getTasks().size());
@@ -150,12 +150,32 @@ class AiCostEstimatorGeneratorTest {
             updates.add(update("2024-01-01", "a@x.com", sha('a'), "src/Other.java".replace("Other", "F" + i), 4, 2));
         }
 
-        AiCostEstimatorData data = AiCostEstimatorGenerator.buildData(currentFiles(), updates, Collections.emptyMap(), 1000);
+        AiCostEstimatorData data = AiCostEstimatorGenerator.buildData(currentFiles(), updates, Collections.emptyMap(), path -> true, 1000);
 
         AiCostEstimatorData.Task task = data.getTasks().get(0);
         assertEquals(3, task.getSessions().size());
         assertEquals(10, task.getSessions().get(0)[0]);
         assertEquals(5, task.getSessions().get(2)[0]);
         assertEquals(AiCostEstimatorGenerator.TYPE_FEATURE, task.getType());
+    }
+
+    @Test
+    void onlyTheAnalyzedScopesCount() {
+        List<FileUpdate> updates = Arrays.asList(
+                update("2024-01-01", "a@x.com", sha('a'), "README.md", 50, 10),
+                update("2024-01-01", "a@x.com", sha('a'), "src/Removed.java", 0, 40),
+                update("2024-01-01", "a@x.com", sha('a'), "src/Small.java", 5, 5),
+                update("2023-01-01", "a@x.com", sha('0'), "src/Removed.java", 40, 0));
+        // README.md is still on disk but in no scope; src/Removed.java is gone (an analyzed extension).
+        AiCostEstimatorData data = AiCostEstimatorGenerator.buildData(currentFiles(), updates, Collections.emptyMap(),
+                path -> path.endsWith(".java"), 1000);
+
+        assertEquals(1, data.getNoise().getUnscopedChanges());
+        AiCostEstimatorData.Task task = data.getTasks().get(1);
+        assertEquals(1, task.getFiles());
+        assertEquals(1, task.getDeletedFiles());
+        assertEquals(10, task.churn());
+        assertEquals("md", AiCostEstimatorGenerator.extensionOf("docs/README.MD"));
+        assertEquals("", AiCostEstimatorGenerator.extensionOf("Makefile"));
     }
 }

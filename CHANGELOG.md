@@ -5,6 +5,21 @@ everything listed under the most recent date.
 
 ## 2026-10-05
 
+### Rule-of-thumb estimates: AI token sections removed
+
+The "AI token reads" and "AI write tokens" sections of the rule-of-thumb estimates (repository and landscape At a
+Glance) are gone: AI token costs now have their own page, the AI Cost Estimator. The block keeps the rebuild value
+and the maintenance effort (and, in a landscape, the repositories choice); saved values of the removed inputs are
+simply ignored.
+
+The AI Cost Estimator counts only the analyzed scopes (main, test, build & deployment, other; generated code, files in
+no scope and unanalyzed extensions are left out, while deleted files of analyzed extensions still count), and it reads
+each edited file's total lines, comments and blank lines included, as an agent reads the whole file (it used the lines
+of code before, which leave those out).
+
+The AI Cost Estimator's top is leaner: a filter, a period choice (with a custom range) and an "Assumptions" button that
+opens the prices and priors in groups.
+
 ### AI Cost Estimator (new Explorers page)
 
 The repository report has a new **AI Cost Estimator** page (sidebar: Explorers): what the history would have cost if
