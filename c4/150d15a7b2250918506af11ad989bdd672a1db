@@ -1,0 +1,29 @@
+reports/src/main/java/nl/obren/sokrates/reports/core/RuleOfThumbEstimates.java
+  s_5026482126c219::t_108f48e804785b 36-37,51,53-57,74-75,81-85,94-95,109,114-115,117,126-130
+CLAUDE.md
+  s_5026482126c219::t_6ec354d8cb7c58 208
+reports/src/test/java/nl/obren/sokrates/reports/core/RuleOfThumbEstimatesTest.java
+  s_5026482126c219::t_108f48e804785b 16,21-23,33,73,76,82
+reports/src/main/resources/templates/rule-of-thumb-estimates.html
+  s_5026482126c219::t_06d5f16bd98a2a 1-2,33-37,74,76,79-84,87,89,99-101,104,163,165-168,170-173,177-179,187,203,205,207,209-216,218-230
+  s_5026482126c219::t_9cdaf8d5444222 22
+  s_5026482126c219::t_6ec354d8cb7c58 38,217
+CHANGELOG.md
+  s_5026482126c219::t_b59a1ecfabcc87 18-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c4150d15a7b2250918506af11ad989bdd672a1db",
+  "prompts": {},
+  "sessions": {
+    "s_5026482126c219": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "02d24a13-bc18-4f57-8e09-809e545be12d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
