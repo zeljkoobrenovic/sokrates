@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    ${sokrates-theme}
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI Insights</title>
+    <!--
+      The Sokrates AI Insights page: the findings of the sokrates-skills AI scanners
+      (<reports>/ai-insights/<scanner>.json, format owned by sokrates-skills, scan-core
+      schema/findings.schema.json), rendered inside the repository report. It is the sokrates-skills
+      explorer (scan-core templates/insights-explorer.html) without its own sidebar: the report's
+      sidebar lists the views (Overview, Attention Items, one per scanner) and opens this page with
+      ?view=<overview|attention|scanner id>. It follows the report's theme (light/dark) via the
+      --sk-* tokens. The standalone explorer, rendered by sokrates-skills' render_findings.py, stays
+      in <reports>/ai-insights/index.html.
+
+      Data (${data}, compressed): {docs: [findings documents, each with _file and an optional
+      summary_visual.src relative to this page], meta: [scanner display metadata, scanners.json],
+      icons: {scanner id | overview | attention -> icon path relative to this page},
+      reportIndex: the report index relative to this page}.
+    -->
+    ${sokrates-inflate-lib}
+    <style>
+        :root {
+            --bg: var(--sk-bg, #ffffff);
+            --surface: var(--sk-surface, #ffffff);
+            --panel: var(--sk-surface-2, #f8f9fb);
+            --panel-2: var(--sk-surface-3, #f1f3f6);
+            --border: var(--sk-border, #e0e0e0);
+            --border-strong: var(--sk-border-strong, #c0c0c0);
+            --text: var(--sk-text, #303030);
+            --muted: var(--sk-text-muted, #808080);
+            --faint: var(--sk-text-faint, #b8b8b8);
+            --accent: var(--sk-accent, #4a90d9);
+            --accent-soft: var(--sk-accent-soft, #e8f1fb);
+            --link: var(--sk-link, #4a90d9);
+            --sev-critical: #bd0026;
+            --sev-high: #f03b20;
+            --sev-medium: #fdae61;
+            --sev-low: #6192c3;
+            --sev-info: #b8b8b8;
+            --rec-bg: #fff8e8;
+            --rec-border: #f3dea0;
+            --rec-strong: #7a5a00;
+            --ref-bg: #e9f2ec;
+            --ref-text: #2b5e3a;
+            --emph: #14203a;
+            --conf-certain: #2b7a2b;
+            --conf-likely: #7a6119;
+            --conf-possible: #9a3c3c;
+            --shadow-sm: 0 1px 2px rgba(20, 30, 50, 0.06), 0 1px 6px rgba(20, 30, 50, 0.05);
+            --shadow-md: 0 2px 6px rgba(20, 30, 50, 0.08), 0 8px 24px rgba(20, 30, 50, 0.08);
+            --shadow-lg: 0 6px 14px rgba(20, 30, 50, 0.12), 0 16px 40px rgba(20, 30, 50, 0.12);
+        }
+
+        /* Dark: the same selectors as ReportTheme (OS dark unless light was chosen, or dark chosen). */
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --rec-bg: #2a2416; --rec-border: #5a4a1e; --rec-strong: #f0c674;
+                --ref-bg: #1d2b22; --ref-text: #8fd1a5; --emph: var(--sk-text, #e6e8ec);
+                --conf-certain: #8fd18f; --conf-likely: #e0c674; --conf-possible: #e8a0a0;
+                --shadow-sm: none; --shadow-md: 0 2px 10px rgba(0, 0, 0, 0.35); --shadow-lg: 0 6px 22px rgba(0, 0, 0, 0.45);
+            }
+        }
+        :root[data-theme="dark"] {
+            --rec-bg: #2a2416; --rec-border: #5a4a1e; --rec-strong: #f0c674;
+            --ref-bg: #1d2b22; --ref-text: #8fd1a5; --emph: var(--sk-text, #e6e8ec);
+            --conf-certain: #8fd18f; --conf-likely: #e0c674; --conf-possible: #e8a0a0;
+            --shadow-sm: none; --shadow-md: 0 2px 10px rgba(0, 0, 0, 0.35); --shadow-lg: 0 6px 22px rgba(0, 0, 0, 0.45);
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); }
+
+        body {
+            font-family: var(--sk-font, Roboto, Vollkorn, Ubuntu, Optima, Segoe, "Segoe UI", Candara, Calibri, Arial, sans-serif);
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        a { color: var(--link); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        code, pre, .mono {
+            font-family: var(--sk-font-mono, Menlo, Consolas, monospace);
+            font-size: 12.5px;
+        }
+
+        #main { padding: 4px 6px 80px 6px; max-width: 1400px; }
+        body.standalone #main { padding: 22px 34px 80px 34px; }
+        @media (max-width: 900px) { body.standalone #main { padding: 16px; } }
+
+        .sicon { display: inline-block; width: 1.4em; text-align: center; margin-right: 6px; font-style: normal; vertical-align: middle; }
+        img.sicon { width: 18px; height: 18px; object-fit: contain; margin-top: -2px; }
+        .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+
+        /* ---------- header: the report shell shows the title and icon; a standalone page shows its own ---------- */
+        .page-head { margin-bottom: 14px; }
+        .page-head h2 { margin: 0 0 4px 0; font-size: 42px; font-weight: 400; letter-spacing: -0.3px; line-height: 1.1; }
+        .scanner-head { display: flex; align-items: center; gap: 20px; }
+        .sicon.page { font-size: 64px; width: 88px; margin: 0; padding: 2px; flex: 0 0 88px; line-height: 1; }
+        img.sicon.page { width: 108px; height: 108px; margin: 0; padding: 2px; }
+        body:not(.standalone) .page-head h2, body:not(.standalone) .page-head .sicon.page { display: none; }
+        .page-head .meta { color: var(--muted); font-size: 13px; }
+        .page-head .meta code { background: var(--panel); padding: 1px 5px; border-radius: 4px; }
+        a.json-link code { color: var(--link); }
+        a.json-link:hover code { text-decoration: underline; }
+
+        .summary {
+            background: var(--panel); border: 1px solid var(--border-strong); border-radius: 10px; box-shadow: var(--shadow-sm);
+            padding: 12px 18px; margin: 14px 0 42px 0; font-size: 15px; line-height: 1.35;
+        }
+        .summary-head { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;
+            font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+        .summary-head .caret { color: var(--faint); font-size: 12px; }
+        .summary-head .hint { text-transform: none; letter-spacing: 0; font-size: 12px; color: var(--faint); margin-left: 6px; }
+        .summary-head:hover { color: var(--text); }
+        .summary-body { margin-top: 8px; }
+        .summary-visual { margin: 14px 0 4px 0; }
+        .summary-visual img { display: block; max-width: 100%; width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border); background: white; }
+        .summary-visual .credit { font-size: 11px; color: var(--faint); margin-top: 4px; text-align: right; }
+        ul.bullets { margin: 0; padding-left: 20px; }
+        ul.bullets b, .f-rec b, .summary b, .f-desc b {
+            font-weight: 700; color: var(--emph);
+            background: linear-gradient(transparent 62%, rgba(74, 144, 217, 0.22) 62%);
+            padding: 0 2px; border-radius: 2px;
+        }
+        code.inline { background: var(--panel-2); padding: 0 4px; border-radius: 3px; font-size: 0.9em; }
+        ul.bullets li { margin: 14px 0; line-height: 1.35; }
+        ul.bullets li::marker { color: var(--accent); }
+
+        /* ---------- tiles ---------- */
+        .tiles { display: flex; flex-wrap: wrap; gap: 12px; margin: 4px 0 18px 0; }
+        .tile {
+            min-width: 120px; flex: 0 1 auto;
+            background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+            padding: 10px 16px; box-shadow: var(--shadow-sm);
+        }
+        .tile .v { font-size: 24px; font-weight: 700; line-height: 1.15; }
+        .tile .l { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+        .tile .bar { height: 4px; border-radius: 2px; margin-top: 6px; }
+
+        /* ---------- toolbar ---------- */
+        .toolbar {
+            display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+            position: sticky; top: 0; z-index: 5;
+            background: var(--bg);
+            padding: 10px 0; margin: 0 0 12px 0; border-bottom: 1px solid var(--border);
+        }
+        .toolbar input[type=text] {
+            font-family: inherit; font-size: 14px; height: 34px; width: 340px; max-width: 100%;
+            border: 1px solid var(--border-strong); border-radius: 4px; padding: 0 12px; outline: none;
+            background: var(--surface); color: var(--text);
+        }
+        ::placeholder { color: var(--faint); opacity: 1; }
+
+        .chips { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+        .chip {
+            font-size: 12px; padding: 3px 9px; border-radius: 4px; cursor: pointer; user-select: none;
+            border: 1px solid var(--border); background: var(--surface); color: var(--text); white-space: nowrap;
+        }
+        .chip:hover { border-color: var(--accent); }
+        .chip.off { opacity: 0.38; }
+        .chip .n { color: var(--muted); margin-left: 4px; }
+        .chip.sev { border-width: 1px; border-left-width: 5px; }
+        .toolbar .spacer { flex: 1 1 auto; }
+        .toolbar select, .btn {
+            font-family: inherit; height: 32px; border: 1px solid var(--border); border-radius: 8px;
+            background: var(--surface); color: var(--text);
+        }
+        .toolbar select { font-size: 13px; padding: 0 8px; }
+        .btn { font-size: 12.5px; padding: 0 12px; cursor: pointer; }
+        .btn:hover { border-color: var(--accent); color: var(--accent); }
+        .result-count { font-size: 12.5px; color: var(--muted); }
+
+        /* ---------- badges ---------- */
+        .pill {
+            display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 999px;
+            border: 1px solid var(--border); color: var(--muted); background: var(--surface); white-space: nowrap;
+        }
+        .pill.certain { border-color: #7fbf7b; color: var(--conf-certain); }
+        .pill.likely { border-color: #c9b26b; color: var(--conf-likely); }
+        .pill.possible { border-color: #d9a7a7; color: var(--conf-possible); }
+        .tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 4px; background: var(--panel-2); color: var(--muted); margin-right: 4px; }
+
+        .sevbar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--panel-2); }
+        .sevbar span { display: block; height: 100%; }
+
+        /* ---------- overview cards ---------- */
+        .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 28px; }
+        .card {
+            display: block; color: var(--text);
+            background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; padding: 16px 18px;
+            cursor: pointer; box-shadow: var(--shadow-md); transition: box-shadow 0.15s, transform 0.15s;
+        }
+        .card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); text-decoration: none; }
+        .card-head { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+        .card h3 { margin: 0 0 2px 0; font-size: 27px; font-weight: 400; letter-spacing: -0.3px; line-height: 1.15; }
+        .card .meta { font-size: 12px; color: var(--muted); }
+        .sicon.card { font-size: 48px; width: 64px; margin: 0; padding: 2px; flex: 0 0 64px; line-height: 1; }
+        img.sicon.card { width: 64px; height: 64px; margin: 0; padding: 2px; }
+        .card .sum { font-size: 13.5px; color: var(--text); line-height: 1.5; }
+        .card .sum ul.bullets { padding-left: 18px; }
+        .card .sum li { margin: 7px 0; line-height: 1.35; }
+        .card .sum .more, .more { color: var(--muted); font-size: 12px; margin-top: 4px; }
+        .card .counts { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0 6px 0; font-size: 12px; color: var(--muted); }
+        .card .counts b { color: var(--text); }
+
+        /* ---------- groups & findings ---------- */
+        .group-nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 18px 0; }
+        .group-section { margin: 0 0 30px 0; }
+        .group-desc { color: var(--muted); font-size: 13.5px; line-height: 1.5; margin: -4px 0 12px 0; }
+        .scanner-desc { color: var(--muted); font-size: 14px; line-height: 1.55; margin: 8px 0 0 0; }
+        .card .scanner-desc { font-size: 13px; margin: 0 0 12px 0;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
+        .group-head {
+            display: flex; align-items: baseline; gap: 10px; cursor: pointer; user-select: none;
+            padding: 8px 0; border-bottom: 2px solid var(--border); margin-bottom: 10px;
+            border-top: 2px solid var(--border); margin-top: 42px;
+        }
+        .group-head h3 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.2px; }
+        .group-head .n { color: var(--muted); font-size: 13px; }
+        .group-head .caret { color: var(--faint); font-size: 12px; margin-left: auto; }
+
+        .finding {
+            border: 1px solid var(--border); border-radius: 2px; margin-bottom: 10px; background: var(--surface);
+            overflow: hidden; box-shadow: var(--shadow-sm); transition: box-shadow 0.15s;
+        }
+        .finding:hover, .finding.open { box-shadow: var(--shadow-md); }
+        .finding.attn-critical { border-left: 5px solid var(--sev-critical); }
+        .finding.attn-high { border-left: 5px solid var(--sev-high); }
+        .finding.attn-medium { border-left: 5px solid var(--sev-medium); }
+        .finding.attn-low { border-left: 5px solid var(--sev-low); }
+        .finding.attn-info { border-left: 5px solid var(--border); }
+        .finding.highlight { box-shadow: 0 0 0 3px var(--accent-soft); border-color: var(--accent); }
+
+        .f-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; user-select: none; background: var(--panel); }
+        .f-head .title { flex: 1 1 auto; font-weight: 500; font-size: 15px; }
+        .f-head .caret { color: var(--faint); font-size: 12px; transition: transform 0.15s; }
+        .finding.open .f-head .caret { transform: rotate(90deg); }
+
+        .f-body { display: none; padding: 4px 16px 14px 16px; border-top: 1px dashed var(--border); background: var(--surface); }
+        .finding.open .f-body { display: block; }
+
+        .f-desc { font-size: 14.5px; line-height: 1.35; margin: 10px 0; }
+        .f-desc ul.bullets li { margin: 12px 0; }
+        .f-rec { background: var(--rec-bg); border: 1px solid var(--rec-border); border-radius: 8px; padding: 10px 14px; margin: 10px 0; font-size: 14px; }
+        .f-rec b { color: var(--rec-strong); }
+
+        .f-section-title { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 14px 0 6px 0; }
+
+        /* Evidence stays a dark code block in both themes. */
+        .evidence { border-radius: 8px; margin-bottom: 10px; overflow: hidden; box-shadow: var(--shadow-sm); }
+        .evidence .loc {
+            display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+            background: #2b2f36; color: #cfd3da; padding: 6px 14px 6px 24px; font-size: 12px;
+            border-bottom: 1px solid #3a3f47;
+        }
+        .evidence .loc .file { color: #8ec5ff; }
+        .evidence .loc .lines { color: #9aa1ab; }
+        .evidence .loc .note { color: #b8bec8; font-style: italic; margin-left: auto; }
+        .evidence pre {
+            margin: 0; padding: 14px 18px 14px 24px; background: #1b1e24; color: #e6e8ec;
+            overflow-x: auto; white-space: pre; line-height: 1.5; font-size: 13px;
+        }
+        .evidence pre mark { background: #6b5a00; color: #fff2a8; }
+
+        .f-foot { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; font-size: 12px; color: var(--muted); }
+        .f-foot .id { font-size: 11.5px; background: var(--panel); padding: 1px 6px; border-radius: 4px; cursor: pointer; }
+        .f-foot .id:hover { color: var(--accent); }
+        .ref { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 4px; background: var(--ref-bg); color: var(--ref-text); }
+
+        table.attrs { border-collapse: collapse; font-size: 12.5px; margin-top: 4px; }
+        table.attrs td { padding: 2px 10px 2px 0; vertical-align: top; }
+        table.attrs td.k { color: var(--muted); white-space: nowrap; }
+
+        mark { background: #fff2a8; color: #202020; padding: 0 1px; border-radius: 2px; }
+
+        .empty { color: var(--muted); padding: 40px 0; text-align: center; }
+
+        .toast {
+            position: fixed; bottom: 18px; right: 18px; background: #303030; color: white; padding: 8px 14px;
+            border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity 0.2s; pointer-events: none;
+        }
+        .toast.show { opacity: 1; }
+
+        @media print {
+            .toolbar { display: none; }
+            .f-body { display: block !important; }
+            .finding { break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+<main id="main"></main>
+<div class="toast" id="toast"></div>
+
+<script>
+    const DATA = ${data};
+    const RAW_DATA = DATA.docs || [];
+    const SCANNERS_META = DATA.meta || [];
+    // icon id -> path relative to this page (black line art, inverted in dark mode)
+    const ICONS = DATA.icons || {};
+    const REPORT_INDEX = DATA.reportIndex || '../html/index.html';
+    const NAV_PREFIX = 'ai-insights/';
+    // Inside the report (an iframe of its index) the sidebar holds the views, and a view link opens the
+    // matching sidebar item; opened on its own, the page switches views itself (?view=).
+    const STANDALONE = window.self === window.top;
+    if (STANDALONE) document.body.classList.add('standalone');
+
+    const META = {};
+    (Array.isArray(SCANNERS_META) ? SCANNERS_META : []).forEach((m, i) => { if (m && m.id) META[m.id] = Object.assign({_order: i}, m); });
+
+    const SEVERITIES = ['critical', 'high', 'medium', 'low', 'info'];
+    const SEV_RANK = {critical: 0, high: 1, medium: 2, low: 3, info: 4};
+    const SEV_COLOR = {
+        critical: 'var(--sev-critical)', high: 'var(--sev-high)', medium: 'var(--sev-medium)',
+        low: 'var(--sev-low)', info: 'var(--sev-info)'
+    };
+    const CONFIDENCES = ['certain', 'likely', 'possible'];
+    // Unknown scanners fall back to a title-cased id, an emoji, no description, and sort last.
+    function scannerName(id) { return (META[id] && META[id].name) || titleCase(String(id).replace(/-scan$/, '')); }
+    function scannerDescription(id) { return (META[id] && META[id].description) || ''; }
+    function groupDescription(id, group) { return (META[id] && META[id].groups && META[id].groups[group]) || ''; }
+    function scannerRank(id) { return META[id] ? META[id]._order : 1e6; }
+    function iconImg(id, cls, title) {
+        return '<img class="sicon sk-invert-dark' + (cls ? ' ' + cls : '') + '" src="' + esc(ICONS[id]) + '" alt="' + esc(title || '') + '"' +
+            (title ? ' title="' + esc(title) + '"' : '') + '>';
+    }
+    function scannerIcon(id, cls) {
+        if (ICONS[id]) return iconImg(id, cls, scannerName(id));
+        return '<span class="sicon' + (cls ? ' ' + cls : '') + '" title="' + esc(scannerName(id)) + '">' + esc((META[id] && META[id].emoji) || '🔎') + '</span>';
+    }
+    function pageIcon(name, cls, fallbackHtml) {
+        return ICONS[name] ? iconImg(name, cls, '') : (fallbackHtml || '');
+    }
+
+    // ---------- data preparation ----------
+    const docs = (Array.isArray(RAW_DATA) ? RAW_DATA : [])
+        .filter(d => d && d.scanner && Array.isArray(d.findings) && d.scanner !== 'combined')
+        .sort((a, b) => scannerRank(a.scanner) - scannerRank(b.scanner) || String(a.scanner).localeCompare(String(b.scanner)));
+
+    docs.forEach(d => {
+        d.findings = d.findings.filter(f => f && typeof f === 'object');
+        d.findings.forEach((f, i) => {
+            f._scanner = d.scanner;
+            f.id = f.id == null ? d.scanner + '-' + (i + 1) : String(f.id);
+            f.title = f.title == null ? f.id : String(f.title);
+            f.severity = SEV_RANK[f.severity] === undefined ? 'info' : f.severity;
+            f.confidence = CONFIDENCES.includes(f.confidence) ? f.confidence : 'possible';
+            f.group = f.group || 'other';
+            f._search = [f.id, f.title, f.description, f.recommendation, f.group,
+                (f.tags || []).join(' '), (f.sokrates_refs || []).join(' '),
+                (f.evidence || []).map(e => (e.file || '') + ' ' + (e.snippet || '') + ' ' + (e.note || '')).join(' ')
+            ].join(' \n ').toLowerCase();
+        });
+    });
+
+    const allFindings = docs.flatMap(d => d.findings);
+
+    // ---------- state ----------
+    const state = {
+        view: 'overview',        // 'overview' | 'attention' | scanner id
+        query: '',
+        severities: new Set(SEVERITIES),
+        confidences: new Set(CONFIDENCES),
+        groups: null,            // Set of active groups for the current scanner, or null = all
+        sort: 'severity',
+        open: new Set(),         // open finding ids
+        collapsedGroups: new Set(),
+        summaryCollapsed: new Set()  // scanners whose summary box is collapsed
+    };
+
+    // ---------- helpers ----------
+    // Escapes for element content and quoted attribute values (both quote kinds).
+    function esc(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function titleCase(s) {
+        return String(s).replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function sevCounts(findings) {
+        const c = {critical: 0, high: 0, medium: 0, low: 0, info: 0};
+        findings.forEach(f => c[f.severity]++);
+        return c;
+    }
+
+    function worstSeverity(findings) {
+        return findings.reduce((w, f) => SEV_RANK[f.severity] < SEV_RANK[w] ? f.severity : w, 'info');
+    }
+
+    function sevBar(findings, width) {
+        const c = sevCounts(findings);
+        const total = findings.length || 1;
+        return '<div class="sevbar" style="' + (width ? 'width:' + width : '') + '" title="' +
+            SEVERITIES.map(s => c[s] + ' ' + s).join(', ') + '">' +
+            SEVERITIES.filter(s => c[s]).map(s =>
+                '<span style="width:' + (100 * c[s] / total) + '%; background:' + SEV_COLOR[s] + '"></span>').join('') +
+            '</div>';
+    }
+
+    function pill(conf) { return '<span class="pill ' + conf + '" title="confidence">' + conf + '</span>'; }
+
+    function terms() {
+        return state.query.split(';').map(t => t.trim().toLowerCase()).filter(Boolean);
+    }
+
+    function matches(f) {
+        if (!state.severities.has(f.severity)) return false;
+        if (!state.confidences.has(f.confidence)) return false;
+        if (state.groups && !state.groups.has(f.group)) return false;
+        const ts = terms();
+        return ts.every(t => f._search.indexOf(t) >= 0);
+    }
+
+    // Highlights the search terms; the terms are matched against the escaped text, so a term is escaped too.
+    function hl(text) {
+        let out = esc(text);
+        terms().forEach(t => {
+            const re = new RegExp('(' + esc(t).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'ig');
+            out = out.replace(re, '<mark>$1</mark>');
+        });
+        return out;
+    }
+
+    function sortFindings(list) {
+        const key = state.sort;
+        return list.slice().sort((a, b) => {
+            if (key === 'title') return a.title.localeCompare(b.title);
+            if (key === 'confidence') {
+                const d = CONFIDENCES.indexOf(a.confidence) - CONFIDENCES.indexOf(b.confidence);
+                return d || SEV_RANK[a.severity] - SEV_RANK[b.severity];
+            }
+            if (key === 'evidence') {
+                const d = (b.evidence || []).length - (a.evidence || []).length;
+                return d || SEV_RANK[a.severity] - SEV_RANK[b.severity];
+            }
+            const d = SEV_RANK[a.severity] - SEV_RANK[b.severity];
+            return d || a.title.localeCompare(b.title);
+        });
+    }
+
+    // Splits a narrative paragraph into sentences (one bullet each); tolerant of common
+    // abbreviations, decimals, and quoted/parenthesised sentence starts.
+    function sentences(text) {
+        const t = String(text || '').replace(/\s+/g, ' ').trim();
+        if (!t) return [];
+        const out = [];
+        let buf = '';
+        const parts = t.split(/(?<=[.!?])\s+(?=["'(\[]?[A-Z0-9])/);
+        parts.forEach(part => {
+            buf = buf ? buf + ' ' + part : part;
+            if (/\b(e\.g|i\.e|etc|vs|cf|approx|ca|no|vol|fig|Mr|Mrs|Ms|Dr|St)\.$/i.test(buf)) return;
+            out.push(buf); buf = '';
+        });
+        if (buf) out.push(buf);
+        return out;
+    }
+
+    // Emphasis for prose (as in the sokrates-skills explorer). Renders **bold** and `code` written by
+    // scanners, then emphasises quantities, quoted terms, code-like identifiers and proper nouns. The
+    // input is already HTML-escaped (quotes as &quot; and &#39;) and may contain <mark> tags; rules never
+    // touch text that is already inside <b> or <code>.
+    const EMPHASIS_RULES = [
+        [/\*\*([^*]+?)\*\*/g, (m, x) => '<b>' + x + '</b>'],
+        [/`([^`]+?)`/g, (m, x) => '<code class="inline">' + x + '</code>'],
+        [/&quot;([^&<>]{2,60}?)&quot;/g, (m, x) => '&quot;<b>' + x + '</b>&quot;'],
+        [/(^|[\s(])&#39;([^&<>]{2,40}?)&#39;(?=[\s.,;:)]|$)/g, (m, pre, x) => pre + '&#39;<b>' + x + '</b>&#39;'],
+        [/(^|[\s(])(~?\d(?:[\d,.]*\d)?(?:\s?(?:%|KB|MB|GB|k|M|LOC)|\s+(?:of\s+\d(?:[\d,.]*\d)?\s+)?[A-Za-z][\w-]*s)?)(?=[\s.,;:)]|$)/g,
+            (m, pre, x) => pre + '<b>' + x + '</b>'],
+        [/(^|[\s(])((?:\.?[A-Za-z]\w*)(?:(?:[-_./]|::)\w{2,})+(?:\.\w+)?)(?=[\s.,;:)]|$)/g,
+            (m, pre, x) => /[_./]|::/.test(x) || /\d/.test(x) ? pre + '<code class="inline">' + x + '</code>' : m],
+        [/([a-z0-9,;:)]\s)((?:[A-Z][\w+#-]*)(?:\s[A-Z][\w+#-]*)*)(?=[\s.,;:)]|$)/g,
+            (m, pre, x) => (x.length < 2 || /^(A|I|The|An|In|On|At|By|To|For|Of|And|Or|But|If|It|Its|This|That|These|Those|As|So|No|Not)$/.test(x))
+                ? m : pre + '<b>' + x + '</b>']
+    ];
+
+    function applyOutsideTags(html, re, fn) {
+        const parts = String(html).split(/(<[^>]+>)/);
+        let depth = 0;
+        return parts.map(part => {
+            if (part.startsWith('<')) {
+                if (/^<(b|code)\b/.test(part)) depth++;
+                else if (/^<\/(b|code)\b/.test(part)) depth = Math.max(0, depth - 1);
+                return part;
+            }
+            return depth > 0 ? part : part.replace(re, fn);
+        }).join('');
+    }
+
+    function emphasize(html) {
+        return EMPHASIS_RULES.reduce((acc, [re, fn]) => applyOutsideTags(acc, re, fn), String(html));
+    }
+
+    function bullets(text, max, fmt) {
+        const ss = sentences(text);
+        if (!ss.length) return '';
+        const shown = max ? ss.slice(0, max) : ss;
+        const f = x => emphasize((fmt || esc)(x));
+        return '<ul class="bullets">' + shown.map(x => '<li>' + f(x) + '</li>').join('') + '</ul>' +
+            (max && ss.length > max ? '<div class="more">+ ' + (ss.length - max) + ' more…</div>' : '');
+    }
+
+    function fmtDate(s) { return s ? String(s).replace('T', ' ').replace(/Z$/, ' UTC') : '?'; }
+
+    function toast(msg) {
+        const el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), 1500);
+    }
+
+    function cssId(s) { return String(s).replace(/[^a-zA-Z0-9_-]/g, '_'); }
+
+    // ---------- navigation ----------
+    // A link to another view: inside the report, the sidebar item of that view (its index route); standalone, this page.
+    function viewHref(view) {
+        return STANDALONE ? '?view=' + encodeURIComponent(view) : REPORT_INDEX + '#' + NAV_PREFIX + encodeURIComponent(view);
+    }
+
+    function viewLinkAttrs(view) {
+        return 'href="' + esc(viewHref(view)) + '"' + (STANDALONE ? '' : ' target="_parent"');
+    }
+
+    function readLocation() {
+        const v = new URLSearchParams(location.search).get('view');
+        if (v === 'attention' || docs.some(d => d.scanner === v)) state.view = v;
+        // A finding deep link (#<finding id>) opens its scanner with the finding expanded.
+        const h = decodeURIComponent(location.hash.replace(/^#/, ''));
+        const f = h ? allFindings.find(f => f.id === h) : null;
+        if (f) {
+            state.view = f._scanner;
+            state.open.add(f.id);
+            setTimeout(() => {
+                const el = document.getElementById('f-' + cssId(f.id));
+                if (el) {
+                    el.scrollIntoView({block: 'center'});
+                    el.classList.add('highlight');
+                    setTimeout(() => el.classList.remove('highlight'), 2500);
+                }
+            }, 30);
+        }
+    }
+
+    // ---------- main views ----------
+    function render() {
+        const main = document.getElementById('main');
+        if (!docs.length) {
+            main.innerHTML = '<div class="empty">No AI scanner findings.</div>';
+            return;
+        }
+        if (state.view === 'overview') main.innerHTML = renderOverview();
+        else if (state.view === 'attention') main.innerHTML = renderAttention();
+        else main.innerHTML = renderScanner(docs.find(d => d.scanner === state.view));
+        if (STANDALONE) {
+            document.title = (state.view === 'overview' ? 'Overview' : state.view === 'attention' ? 'Attention Items' : scannerName(state.view)) + ' · AI Insights';
+        }
+    }
+
+    function tiles(findings) {
+        const c = sevCounts(findings);
+        let html = '<div class="tiles">' +
+            '<div class="tile"><div class="v">' + findings.length + '</div><div class="l">findings</div>' + sevBar(findings) + '</div>';
+        SEVERITIES.forEach(s => {
+            html += '<div class="tile">' +
+                '<div class="v" style="color:' + (s === 'info' ? 'var(--muted)' : SEV_COLOR[s]) + '">' + c[s] + '</div>' +
+                '<div class="l">' + s + '</div><div class="bar" style="background:' + SEV_COLOR[s] + '"></div></div>';
+        });
+        return html + '</div>';
+    }
+
+    function renderOverview() {
+        const dates = docs.map(d => (d.analyzed_at || '').slice(0, 10)).filter(Boolean).sort();
+        const commit = (docs.find(d => d.target && d.target.commit) || {target: {}}).target.commit;
+        let html = '<div class="page-head scanner-head">' + pageIcon('overview', 'page') + '<div>' +
+            '<h2>AI Insights</h2>' +
+            '<div class="meta">' + docs.length + ' scanners · ' + allFindings.length + ' findings' +
+            (dates.length ? ' · analyzed ' + esc(dates[0]) + (dates[dates.length - 1] !== dates[0] ? ' – ' + esc(dates[dates.length - 1]) : '') : '') +
+            (commit ? ' · commit <code>' + esc(String(commit).slice(0, 12)) + '</code>' : '') + '</div></div></div>';
+        html += tiles(allFindings);
+
+        html += '<div class="cards">';
+        docs.forEach(d => {
+            const c = sevCounts(d.findings);
+            const groups = new Set(d.findings.map(f => f.group));
+            html += '<a class="card" ' + viewLinkAttrs(d.scanner) + '>' +
+                '<div class="card-head">' + scannerIcon(d.scanner, 'card') + '<div>' +
+                '<h3>' + esc(scannerName(d.scanner)) + '</h3>' +
+                '<div class="meta">' + esc((d.analyzed_at || '').slice(0, 10)) + '</div>' +
+                '</div></div>' +
+                (scannerDescription(d.scanner) ? '<div class="scanner-desc" title="' + esc(scannerDescription(d.scanner)) + '">' + esc(scannerDescription(d.scanner)) + '</div>' : '') +
+                sevBar(d.findings) +
+                '<div class="counts"><span><b>' + d.findings.length + '</b> findings</span><span><b>' + groups.size + '</b> groups</span>' +
+                SEVERITIES.filter(s => c[s] && s !== 'info').map(s => '<span style="color:' + SEV_COLOR[s] + '"><b>' + c[s] + '</b> ' + s + '</span>').join('') +
+                '</div><div class="sum">' + bullets(d.summary, 3) + '</div></a>';
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function toolbar(findings) {
+        const c = sevCounts(findings);
+        const cc = {certain: 0, likely: 0, possible: 0};
+        findings.forEach(f => cc[f.confidence]++);
+        return '<div class="toolbar">' +
+            '<input id="filter" type="text" placeholder="search… (use ; for multiple terms)" value="' + esc(state.query) + '">' +
+            '<div class="chips">' + SEVERITIES.map(s =>
+                '<span class="chip sev' + (state.severities.has(s) ? '' : ' off') + '" style="border-left-color:' + SEV_COLOR[s] + '" data-sev="' + s + '">' +
+                s + '<span class="n">' + c[s] + '</span></span>').join('') + '</div>' +
+            '<div class="chips">' + CONFIDENCES.map(k =>
+                '<span class="chip' + (state.confidences.has(k) ? '' : ' off') + '" data-conf="' + k + '">' + k + '<span class="n">' + cc[k] + '</span></span>').join('') + '</div>' +
+            '<span class="spacer"></span>' +
+            '<select id="sort">' +
+            [['severity', 'sort: severity'], ['title', 'sort: title'], ['confidence', 'sort: confidence'], ['evidence', 'sort: evidence count']]
+                .map(o => '<option value="' + o[0] + '"' + (state.sort === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select>' +
+            '<button class="btn" data-expand="1">expand all</button>' +
+            '<button class="btn" data-expand="0">collapse all</button>' +
+            '</div>';
+    }
+
+    function renderAttention() {
+        const base = allFindings.filter(f => f.severity !== 'info');
+        const visible = sortFindings(base.filter(matches));
+        let html = '<div class="page-head scanner-head">' + pageIcon('attention', 'page') + '<div><h2>Attention Items</h2>' +
+            '<div class="meta">All findings with severity above <i>info</i>, across ' + docs.length + ' scanners</div></div></div>';
+        html += toolbar(base);
+        html += '<div class="result-count" style="margin-bottom: 10px">' + visible.length + ' of ' + base.length + ' shown</div>';
+        html += visible.length ? visible.map(f => findingCard(f, true)).join('') : '<div class="empty">Nothing matches the current filters.</div>';
+        return html;
+    }
+
+    function renderScanner(d) {
+        if (!d) return '<div class="empty">Unknown scanner.</div>';
+        const findings = d.findings;
+        let html = '<div class="page-head scanner-head">' + scannerIcon(d.scanner, 'page') + '<div>' +
+            '<h2>' + esc(scannerName(d.scanner)) + '</h2>' +
+            '<div class="meta"><code>' + esc(d.scanner) + '</code> v' + esc(d.scanner_version || '?') +
+            ' · analyzed ' + esc(fmtDate(d.analyzed_at)) +
+            (d.target && d.target.commit ? ' · commit <code>' + esc(String(d.target.commit).slice(0, 12)) + '</code>' : '') +
+            (d._file ? ' · <a class="json-link" href="' + esc(d._file) + '" target="_blank" title="open the raw findings JSON"><code>' + esc(d._file.split('/').pop()) + '</code></a>' : '') + '</div>' +
+            (scannerDescription(d.scanner) ? '<div class="scanner-desc">' + esc(scannerDescription(d.scanner)) + '</div>' : '') + '</div></div>';
+        if (d.summary) {
+            const open = !state.summaryCollapsed.has(d.scanner);
+            html += '<div class="summary' + (open ? ' open' : '') + '">' +
+                '<div class="summary-head" data-summary="' + esc(d.scanner) + '">' +
+                '<span class="caret">' + (open ? '▾' : '▸') + '</span> Summary' +
+                (open ? '' : '<span class="hint">' + sentences(d.summary).length + ' points — click to expand</span>') + '</div>' +
+                (open ? '<div class="summary-body">' + bullets(d.summary) + summaryVisual(d) + '</div>' : '') + '</div>';
+        }
+
+        const groupMap = {};
+        findings.forEach(f => (groupMap[f.group] = groupMap[f.group] || []).push(f));
+        const groupNames = Object.keys(groupMap).sort((a, b) =>
+            SEV_RANK[worstSeverity(groupMap[a])] - SEV_RANK[worstSeverity(groupMap[b])] || groupMap[b].length - groupMap[a].length);
+
+        html += toolbar(findings);
+        html += '<div class="group-nav">' + groupNames.map(g => {
+            const on = !state.groups || state.groups.has(g);
+            const gd = groupDescription(d.scanner, g);
+            return '<span class="chip' + (on ? '' : ' off') + '" data-group="' + esc(g) + '" title="' + esc(gd ? gd + ' — ' : '') + 'click: toggle · shift+click: only this group">' +
+                '<span class="dot" style="background:' + SEV_COLOR[worstSeverity(groupMap[g])] + '; margin-right:5px"></span>' +
+                esc(titleCase(g)) + '<span class="n">' + groupMap[g].length + '</span></span>';
+        }).join('') + '</div>';
+
+        let shown = 0;
+        let body = '';
+        groupNames.forEach(g => {
+            const visible = sortFindings(groupMap[g].filter(matches));
+            if (!visible.length) return;
+            shown += visible.length;
+            const collapsed = state.collapsedGroups.has(g);
+            body += '<section class="group-section"><div class="group-head" data-collapse="' + esc(g) + '">' +
+                '<h3>' + esc(titleCase(g)) + '</h3><span class="n">' + visible.length + (visible.length !== groupMap[g].length ? ' of ' + groupMap[g].length : '') + '</span>' +
+                sevBar(visible, '90px') + '<span class="caret">' + (collapsed ? '▸' : '▾') + '</span></div>' +
+                (groupDescription(d.scanner, g) ? '<div class="group-desc">' + esc(groupDescription(d.scanner, g)) + '</div>' : '') +
+                (collapsed ? '' : visible.map(f => findingCard(f, false)).join('')) + '</section>';
+        });
+        html += '<div class="result-count" style="margin-bottom: 10px">' + shown + ' of ' + findings.length + ' findings shown</div>';
+        html += body || '<div class="empty">Nothing matches the current filters.</div>';
+        return html;
+    }
+
+    function findingCard(f, showScanner) {
+        const open = state.open.has(f.id);
+        const evidence = Array.isArray(f.evidence) ? f.evidence : [];
+        let html = '<div class="finding attn-' + f.severity + (open ? ' open' : '') + '" id="f-' + cssId(f.id) + '">' +
+            '<div class="f-head" data-finding="' + esc(f.id) + '">' +
+            scannerIcon(f._scanner) + '<span class="title">' + hl(f.title) + '</span>' +
+            (showScanner ? '<span class="tag">' + esc(scannerName(f._scanner)) + '</span>' : '') +
+            '<span class="tag">' + esc(f.group) + '</span>' + pill(f.confidence) +
+            '<span class="pill" title="evidence citations">' + evidence.length + ' ev</span>' +
+            '<span class="caret">▶</span></div>';
+        html += '<div class="f-body">';
+        html += '<div class="f-desc">' + bullets(f.description, 0, hl) + '</div>';
+        if (f.recommendation) html += '<div class="f-rec"><b>Recommendation.</b> ' + emphasize(hl(f.recommendation)) + '</div>';
+        if (evidence.length) {
+            html += '<div class="f-section-title">Evidence</div>';
+            evidence.forEach(e => {
+                e = e || {};
+                const lines = e.start_line === e.end_line || !e.end_line ? 'line ' + (e.start_line || '?') : 'lines ' + e.start_line + '–' + e.end_line;
+                html += '<div class="evidence"><div class="loc"><span class="file mono">' + hl(e.file) + '</span>' +
+                    '<span class="lines">' + esc(lines) + '</span>' +
+                    (e.note ? '<span class="note">' + hl(e.note) + '</span>' : '') + '</div>' +
+                    '<pre>' + hl(e.snippet) + '</pre></div>';
+            });
+        } else if (f.confidence === 'possible') {
+            html += '<div class="f-section-title">Evidence</div><div style="font-size:12.5px;color:var(--muted)">No file citation — inference only.</div>';
+        }
+        if (f.attributes && typeof f.attributes === 'object' && Object.keys(f.attributes).length) {
+            html += '<div class="f-section-title">Attributes</div><table class="attrs">' +
+                Object.keys(f.attributes).map(k => '<tr><td class="k">' + esc(k) + '</td><td>' +
+                    esc(typeof f.attributes[k] === 'object' ? JSON.stringify(f.attributes[k]) : f.attributes[k]) + '</td></tr>').join('') + '</table>';
+        }
+        html += '<div class="f-foot">' +
+            '<span class="id mono" data-copy="' + esc(f.id) + '" title="copy link">' + esc(f.id) + '</span>' +
+            (f.tags || []).map(t => '<span class="tag">' + hl(t) + '</span>').join('') +
+            (f.sokrates_refs || []).map(r => '<span class="ref mono">' + hl(r) + '</span>').join('') +
+            '</div></div></div>';
+        return html;
+    }
+
+    function summaryVisual(d) {
+        const v = d.summary_visual;
+        if (!v || !v.src) return '';
+        return '<div class="summary-visual"><img src="' + esc(v.src) + '" alt="Illustration of the ' +
+            esc(scannerName(d.scanner)) + ' summary" loading="lazy">' +
+            (v.credit ? '<div class="credit">' + esc(v.credit) + '</div>' : '') + '</div>';
+    }
+
+    // ---------- interaction (delegated; ids, groups and scanners travel in data attributes, never in inline JS) ----------
+    function toggleIn(set, value, all) {
+        if (set.has(value)) set.delete(value); else set.add(value);
+        if (!set.size) all.forEach(x => set.add(x));
+    }
+
+    function toggleGroup(g, shift) {
+        const d = docs.find(d => d.scanner === state.view);
+        const all = new Set(d.findings.map(f => f.group));
+        if (shift) {
+            state.groups = new Set([g]);
+        } else {
+            if (!state.groups) state.groups = new Set(all);
+            if (state.groups.has(g)) state.groups.delete(g); else state.groups.add(g);
+            if (!state.groups.size || state.groups.size === all.size) state.groups = null;
+        }
+    }
+
+    function expandAll(open) {
+        const list = state.view === 'attention' ? allFindings.filter(f => f.severity !== 'info')
+            : (docs.find(d => d.scanner === state.view) || {findings: []}).findings;
+        list.forEach(f => open ? state.open.add(f.id) : state.open.delete(f.id));
+    }
+
+    function copyLink(id) {
+        const url = location.href.split('#')[0] + '#' + encodeURIComponent(id);
+        if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => toast('Link copied'), () => toast(url));
+        else toast(url);
+    }
+
+    document.addEventListener('click', ev => {
+        const el = ev.target.closest('[data-sev],[data-conf],[data-group],[data-collapse],[data-summary],[data-finding],[data-copy],[data-expand]');
+        if (!el) return;
+        const ds = el.dataset;
+        if (ds.finding !== undefined) {
+            if (state.open.has(ds.finding)) state.open.delete(ds.finding); else state.open.add(ds.finding);
+            el.parentNode.classList.toggle('open', state.open.has(ds.finding));
+            return;
+        }
+        if (ds.copy !== undefined) { copyLink(ds.copy); return; }
+        if (ds.sev !== undefined) toggleIn(state.severities, ds.sev, SEVERITIES);
+        else if (ds.conf !== undefined) toggleIn(state.confidences, ds.conf, CONFIDENCES);
+        else if (ds.group !== undefined) toggleGroup(ds.group, ev.shiftKey);
+        else if (ds.collapse !== undefined) toggleIn(state.collapsedGroups, ds.collapse, []);
+        else if (ds.summary !== undefined) toggleIn(state.summaryCollapsed, ds.summary, []);
+        else if (ds.expand !== undefined) expandAll(ds.expand === '1');
+        render();
+    });
+
+    document.addEventListener('input', ev => {
+        if (ev.target.id !== 'filter') return;
+        state.query = ev.target.value;
+        const pos = ev.target.selectionStart;
+        render();
+        const el = document.getElementById('filter');
+        if (el) { el.focus(); if (pos != null) el.setSelectionRange(pos, pos); }
+    });
+
+    document.addEventListener('change', ev => {
+        if (ev.target.id !== 'sort') return;
+        state.sort = ev.target.value;
+        render();
+    });
+
+    window.addEventListener('hashchange', () => { readLocation(); render(); });
+
+    readLocation();
+    render();
+</script>
+</body>
+</html>

@@ -12,6 +12,7 @@ import nl.obren.sokrates.cli.skills.SkillsInstaller;
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.utils.*;
+import nl.obren.sokrates.reports.generators.explorers.AiInsightsExplorerGenerator;
 import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
@@ -29,6 +30,7 @@ import org.apache.commons.logging.LogFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -322,8 +324,28 @@ public class CommandLineInterface {
         }
 
         reportsCommands.generateReports(cmd, conf, reportsFolder);
-        runPostAnalysisHook(cmd, root, conf, reportsFolder, repoUrl, keptFolder);
+        if (runPostAnalysisHook(cmd, root, conf, reportsFolder, repoUrl, keptFolder)
+                && !cmd.hasOption(commands.getDataOnly().getOpt())) {
+            // The reports were written before the hook ran; render them again so they link the new findings.
+            LOG.info("The post-analysis command changed the AI findings in " + new File(reportsFolder, AiInsightsExplorerGenerator.INSIGHTS_FOLDER).getPath()
+                    + ": generating the reports again to include them.");
+            reportsCommands.generateReports(cmd, conf, reportsFolder);
+        }
         return reportsFolder;
+    }
+
+    // The AI findings files in <reports>/ai-insights (name, size and time of each *.json), to see whether the hook changed them.
+    static String aiFindingsFingerprint(File reportsFolder) {
+        File[] files = new File(reportsFolder, AiInsightsExplorerGenerator.INSIGHTS_FOLDER).listFiles((dir, name) -> name.toLowerCase().endsWith(".json"));
+        if (files == null) {
+            return "";
+        }
+        Arrays.sort(files);
+        StringBuilder fingerprint = new StringBuilder();
+        for (File file : files) {
+            fingerprint.append(file.getName()).append(':').append(file.length()).append(':').append(file.lastModified()).append('\n');
+        }
+        return fingerprint.toString();
     }
 
     /** The -postAnalysis / -ai command, if any: an explicit command wins over the agent preset. Null when neither is given. */
@@ -357,20 +379,23 @@ public class CommandLineInterface {
      * repository is skipped (-aiForce runs it anyway); -aiMaxRepos bounds the runs per invocation.
      * The state is written into the analysis folder, so for a clone it moves to the kept folder
      * with the rest; a skipped repository keeps its earlier state file.
+     *
+     * @return whether the command ran and changed the AI findings in the reports folder
      */
-    private void runPostAnalysisHook(CommandLine cmd, File root, File conf, File reportsFolder, String repoUrl, File keptFolder) {
+    private boolean runPostAnalysisHook(CommandLine cmd, File root, File conf, File reportsFolder, String repoUrl, File keptFolder) {
         String command = postAnalysisCommand(cmd);
         if (command == null) {
-            return;
+            return false;
         }
         File analysisFolder = conf.getParentFile();
         String head = PostAnalysisState.headCommit(root);
         String skipReason = postAnalysisSkipReason(cmd, command, head, PostAnalysisState.read(keptFolder != null ? keptFolder : analysisFolder));
         if (skipReason != null) {
             LOG.info("Post-analysis command skipped: " + skipReason);
-            return;
+            return false;
         }
         postAnalysisRuns++;
+        String findingsBefore = aiFindingsFingerprint(reportsFolder);
         GitRepoMetadata metadata = StringUtils.isNotBlank(repoUrl) ? GitRepoMetadata.fromUrl(repoUrl) : null;
         String repoName = metadata != null ? metadata.reportName() : root.toPath().toAbsolutePath().normalize().getFileName().toString();
         ProcessingStopwatch.start("post-analysis command");
@@ -381,6 +406,7 @@ public class CommandLineInterface {
         } catch (IOException e) {
             LOG.warn("Could not record the post-analysis run in " + analysisFolder.getPath() + ": " + e.getMessage());
         }
+        return !findingsBefore.equals(aiFindingsFingerprint(reportsFolder));
     }
 
     /** Why the hook is not run this time: an earlier successful run at the same head (unless -aiForce), or the -aiMaxRepos budget; null to run it. */

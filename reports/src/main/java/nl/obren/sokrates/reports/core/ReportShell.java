@@ -166,7 +166,7 @@ public class ReportShell {
             "      var src = item.getAttribute('data-sk-icon-src');\n" +
             "      if (src) {\n" +
             "        var img = document.createElement('img');\n" +
-            "        img.className = 'sk-page-logo'; img.alt = ''; img.width = 68; img.height = 68;\n" +
+            "        img.className = 'sk-page-logo' + (item.getAttribute('data-sk-icon-invert') ? ' sk-invert-dark' : ''); img.alt = ''; img.width = 68; img.height = 68;\n" +
             "        img.onerror = function () { img.remove(); if (big) { headerIcon.appendChild(big); } };\n" +
             "        img.src = src;\n" +
             "        headerIcon.appendChild(img);\n" +

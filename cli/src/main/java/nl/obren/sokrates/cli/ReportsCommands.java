@@ -5,6 +5,7 @@ import nl.obren.sokrates.common.io.JsonMapper;
 import nl.obren.sokrates.common.utils.*;
 import nl.obren.sokrates.reports.core.ReportFileExporter;
 import nl.obren.sokrates.reports.core.ReportNavigation;
+import nl.obren.sokrates.reports.generators.explorers.AiInsightsExplorerGenerator;
 import nl.obren.sokrates.reports.core.ReportHtmlWriter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.dataexporters.DataExporter;
@@ -197,7 +198,14 @@ class ReportsCommands {
         ProcessingStopwatch.end("reporting");
 
         ProcessingStopwatch.start("saving report");
-        ReportNavigation navigation = ReportFileExporter.repositoryNavigation(analysisResults, sokratesConfigFolder);
+        // The sokrates-skills AI scanner findings (<reports>/ai-insights/*.json), when there are any:
+        // their page, sidebar groups and index tab.
+        AiInsightsExplorerGenerator aiInsights = AiInsightsExplorerGenerator.load(reportsFolder);
+        if (!aiInsights.isEmpty()) {
+            LOG.info("AI Insights: findings of " + aiInsights.getScanners().size() + " scanner(s) " + aiInsights.getScanners());
+            aiInsights.export(reportsFolder);
+        }
+        ReportNavigation navigation = ReportFileExporter.repositoryNavigation(analysisResults, sokratesConfigFolder, aiInsights);
         reports.forEach(report -> {
             report.setNavigation(navigation, report.getFileName());
             cli.info("Generating the '" + report.getId().toUpperCase() + "' report...");
@@ -208,7 +216,7 @@ class ReportsCommands {
         });
         ProcessingStopwatch.start("saving report/index");
         if (!codeAnalyzerSettings.isDataOnly() && codeAnalyzerSettings.isUpdateIndex()) {
-            ReportFileExporter.exportReportsIndexFile(reportsFolder, analysisResults, sokratesConfigFolder);
+            ReportFileExporter.exportReportsIndexFile(reportsFolder, analysisResults, sokratesConfigFolder, aiInsights);
         }
         ProcessingStopwatch.end("saving report/index");
         ProcessingStopwatch.start("saving report/explorer");

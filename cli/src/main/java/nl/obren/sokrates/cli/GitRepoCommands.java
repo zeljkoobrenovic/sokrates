@@ -7,6 +7,7 @@ import nl.obren.sokrates.cli.git.CodeHostRepo;
 import nl.obren.sokrates.cli.git.GitRepoCloner;
 import nl.obren.sokrates.cli.git.GitRepoMetadata;
 import nl.obren.sokrates.common.utils.*;
+import nl.obren.sokrates.reports.generators.explorers.AiInsightsExplorerGenerator;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import org.apache.commons.cli.*;
@@ -110,6 +111,12 @@ class GitRepoCommands {
             if (keptConfig.exists()) {
                 LOG.info("Reusing the configuration kept in " + keptConfig.getPath());
                 FileUtils.copyFile(keptConfig, CodeConfigurationUtils.getDefaultSokratesConfigFile(clone));
+            }
+            // The AI findings of earlier runs travel along too: the fresh reports link them, and the move
+            // below (which replaces reports/) does not lose them when the post-analysis command is skipped.
+            File keptInsights = new File(new File(output, "reports"), AiInsightsExplorerGenerator.INSIGHTS_FOLDER);
+            if (keptInsights.isDirectory()) {
+                FileUtils.copyDirectory(keptInsights, new File(new File(analysisFolder, "reports"), AiInsightsExplorerGenerator.INSIGHTS_FOLDER));
             }
 
             cli.analyze(cmd, clone, false, url, output, listed);

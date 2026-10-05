@@ -5,6 +5,23 @@ everything listed under the most recent date.
 
 ## 2026-10-05
 
+### AI Insights in the repository report
+
+When a repository's `reports/ai-insights/` holds findings of the sokrates-skills AI scanners, the
+repository report now shows them itself: the sidebar gets an "AI Insights" group (Overview, Attention
+Items and the basic scanners) and an "AI Deep Dives" group (the evaluative scanners), between the
+analyses and Index. Each item opens a page in the report's style that follows the light/dark theme, with
+the same search, filters and evidence as the sokrates-skills explorer, but without a second menu. With
+`-postAnalysis` / `-ai`, the reports are generated once more after the agent changed the findings, so the
+new findings show up in the same run. For `analyzeGitRepo` and landscapes, the findings of earlier runs
+are kept: before, a re-run that skipped the agent (unchanged repository) replaced `reports/` and lost them.
+
+What stays the same: sokrates-skills still writes its standalone `reports/ai-insights/index.html`, and the
+landscape's AI Insights tab still links findings there. What to check: a custom tab added with
+`addCustomTab -label "AI Insights*" -iframeLink "../ai-insights/index.html"` (as the skills used to
+suggest) is left out while the report shows the findings itself; you can remove it from `customTabs` in
+`config.json`.
+
 ### Landscape: "At a Glance" and a new "Structure" page
 
 In the landscape report's sidebar, Overview is now called At a Glance, as in the repository report, and

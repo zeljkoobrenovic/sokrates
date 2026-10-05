@@ -149,6 +149,14 @@ public class ReportNavigation {
      * the item's sidebar icon, which stays the fallback when the image does not load; blank links are ignored.
      */
     public void setPageIcon(String id, String imageLink) {
+        setPageIcon(id, imageLink, false);
+    }
+
+    /**
+     * As {@link #setPageIcon(String, String)}; invertInDark marks black line art (e.g. the AI scanner
+     * icons) that the dark theme inverts (sk-invert-dark).
+     */
+    public void setPageIcon(String id, String imageLink, boolean invertInDark) {
         if (imageLink == null || imageLink.trim().isEmpty()) {
             return;
         }
@@ -156,6 +164,7 @@ public class ReportNavigation {
             for (Item item : group.items) {
                 if (item.id.equals(id)) {
                     item.pageIcon = imageLink.trim();
+                    item.pageIconInvert = invertInDark;
                 }
             }
         }
@@ -209,7 +218,7 @@ public class ReportNavigation {
                 if (item.id.equals(id)) {
                     if (item.pageIcon != null) {
                         // The sidebar icon stays as a fallback for an image that does not load.
-                        return "<img class='sk-page-logo' src='" + HtmlEscapeUtils.escape(item.pageIcon) + "' alt='' width='" + size
+                        return "<img class='sk-page-logo" + (item.pageIconInvert ? " sk-invert-dark" : "") + "' src='" + HtmlEscapeUtils.escape(item.pageIcon) + "' alt='' width='" + size
                                 + "' height='" + size + "' onerror='this.hidden=true;this.nextElementSibling.hidden=false'>"
                                 + "<span hidden>" + Item.icon(item.icon, size) + "</span>";
                     }
@@ -304,10 +313,23 @@ public class ReportNavigation {
          * hidden in the sidebar (indented label only) and shown in the page header.
          */
         public Group addSubTabItem(String tab, String sub, String label, String icon, String frameSrc, String subtitle) {
+            return addFrameItem(tab, sub, label, icon, frameSrc, subtitle, true);
+        }
+
+        /**
+         * Like {@link #addSubTabItem}, but a regular (not indented) item with its icon: a page of its own
+         * that the index shows by pointing one tab's iframe at frameSrc (e.g. the AI Insights views).
+         */
+        public Group addFrameTabItem(String tab, String sub, String label, String icon, String frameSrc, String subtitle) {
+            return addFrameItem(tab, sub, label, icon, frameSrc, subtitle, false);
+        }
+
+        private Group addFrameItem(String tab, String sub, String label, String icon, String frameSrc, String subtitle, boolean indented) {
             String id = tab + "/" + sub;
             Item item = new Item(id, label, "index.html#" + id, icon, tab);
             item.subtitle = subtitle;
             item.frameSrc = frameSrc;
+            item.indented = indented;
             items.add(item);
             return this;
         }
@@ -339,7 +361,9 @@ public class ReportNavigation {
         private String subtitleLink;
         private String pageTitle;
         private String pageIcon;
+        private boolean pageIconInvert;
         private String frameSrc;
+        private boolean indented;
 
         Item(String id, String label, String href, String icon, String tab) {
             this.id = id;
@@ -363,7 +387,7 @@ public class ReportNavigation {
 
         String render(String activeId) {
             boolean active = id.equals(activeId);
-            StringBuilder html = new StringBuilder("<a class='sk-nav-item" + (frameSrc != null ? " sk-nav-sub" : "") + (active ? " active" : "") + "'");
+            StringBuilder html = new StringBuilder("<a class='sk-nav-item" + (indented ? " sk-nav-sub" : "") + (active ? " active" : "") + "'");
             html.append(" href='").append(HtmlEscapeUtils.escape(href)).append("'");
             html.append(" data-sk-nav='").append(HtmlEscapeUtils.escape(id)).append("'");
             if (frameSrc != null) {
@@ -374,6 +398,9 @@ public class ReportNavigation {
             }
             if (pageIcon != null) {
                 html.append(" data-sk-icon-src='").append(HtmlEscapeUtils.escape(pageIcon)).append("'");
+                if (pageIconInvert) {
+                    html.append(" data-sk-icon-invert='true'");
+                }
             }
             if (tab != null) {
                 html.append(" data-sk-tab='").append(HtmlEscapeUtils.escape(tab)).append("'");

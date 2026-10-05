@@ -6,6 +6,7 @@ package nl.obren.sokrates.reports.core;
 
 import nl.obren.sokrates.common.renderingutils.ReportTheme;
 import nl.obren.sokrates.common.utils.FormattingUtils;
+import nl.obren.sokrates.reports.generators.explorers.AiInsightsExplorerGenerator;
 import nl.obren.sokrates.reports.utils.DataImageUtils;
 import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
@@ -35,19 +36,26 @@ public class ReportFileExporter {
     static String htmlReportsSubFolder = "html";
 
     public static void exportReportsIndexFile(File reportsFolder, CodeAnalysisResults analysisResults, File sokratesConfigFolder) {
+        exportReportsIndexFile(reportsFolder, analysisResults, sokratesConfigFolder, AiInsightsExplorerGenerator.load(reportsFolder));
+    }
+
+    /** As above, with the AI scanner findings already loaded (their sidebar groups and tab when there are any). */
+    public static void exportReportsIndexFile(File reportsFolder, CodeAnalysisResults analysisResults, File sokratesConfigFolder,
+                                              AiInsightsExplorerGenerator aiInsights) {
         File htmlExportFolder = getHtmlReportsFolder(reportsFolder);
         Metadata metadata = analysisResults.getCodeConfiguration().getMetadata();
         RichTextReport indexReport = new RichTextReport(metadata.getName(), "", metadata.getLogoLink());
         if (StringUtils.isNotBlank(metadata.getDescription())) {
             indexReport.setDescription(metadata.getDescription());
         }
-        List<CustomTab> customTabs = getCustomTabs(analysisResults);
-        indexReport.setNavigation(repositoryNavigation(analysisResults, sokratesConfigFolder), "overview");
+        List<CustomTab> customTabs = getCustomTabs(analysisResults, aiInsights);
+        indexReport.setNavigation(repositoryNavigation(analysisResults, sokratesConfigFolder, aiInsights), "overview");
         addTabStrip(indexReport, customTabs);
         addOverviewTab(indexReport, analysisResults);
         addHighlightsTab(indexReport, analysisResults);
         addAnalysesTab(indexReport, analysisResults);
         addExplorerTabs(indexReport, customTabs);
+        aiInsights.addTab(indexReport);
         ReportActivityTab.addActivityTab(indexReport, analysisResults);
         addVisualsAndDataTabs(indexReport, analysisResults, htmlExportFolder);
         ReportHtmlWriter.export(htmlExportFolder, indexReport, "index.html", analysisResults.getCodeConfiguration().getAnalysis().getCustomHtmlReportHeaderFragment());
@@ -378,13 +386,26 @@ public class ReportFileExporter {
         return svg;
     }
 
-    static List<CustomTab> getCustomTabs(CodeAnalysisResults analysisResults) {
+    /**
+     * The configured custom tabs, without one that embeds the sokrates-skills' standalone explorer
+     * (ai-insights/index.html, which the skills used to suggest adding) when the report shows the AI
+     * findings itself: that page has its own sidebar, so it would repeat the AI Insights items as a second menu.
+     */
+    static List<CustomTab> getCustomTabs(CodeAnalysisResults analysisResults, AiInsightsExplorerGenerator aiInsights) {
         List<CustomTab> tabs = new ArrayList<>();
         CodeConfiguration configuration = analysisResults.getCodeConfiguration();
         if (configuration != null && configuration.getCustomTabs() != null) {
-            configuration.getCustomTabs().stream().filter(tab -> tab != null && tab.isValid()).forEach(tabs::add);
+            configuration.getCustomTabs().stream().filter(tab -> tab != null && tab.isValid())
+                    .filter(tab -> aiInsights == null || aiInsights.isEmpty() || !embedsStandaloneAiExplorer(tab))
+                    .forEach(tabs::add);
         }
         return tabs;
+    }
+
+    static boolean embedsStandaloneAiExplorer(CustomTab tab) {
+        String link = tab.getIframeLink() == null ? "" : tab.getIframeLink().trim().split("[?#]")[0];
+        return link.equals(AiInsightsExplorerGenerator.INSIGHTS_FOLDER + "/index.html")
+                || link.endsWith("/" + AiInsightsExplorerGenerator.INSIGHTS_FOLDER + "/index.html");
     }
 
     static String customTabId(int index) {
@@ -546,6 +567,12 @@ public class ReportFileExporter {
      * reports, in the order of the Analyses tab. A report page's active id is its file name.
      */
     public static ReportNavigation repositoryNavigation(CodeAnalysisResults analysisResults, File sokratesConfigFolder) {
+        return repositoryNavigation(analysisResults, sokratesConfigFolder, null);
+    }
+
+    /** As above, plus the AI Insights groups (after the analyses, before Index) when aiInsights has findings. */
+    public static ReportNavigation repositoryNavigation(CodeAnalysisResults analysisResults, File sokratesConfigFolder,
+                                                       AiInsightsExplorerGenerator aiInsights) {
         Metadata metadata = analysisResults.getCodeConfiguration().getMetadata();
         ReportNavigation navigation = new ReportNavigation(metadata.getName(), "index.html#overview");
         String generatedOn = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
@@ -564,7 +591,7 @@ public class ReportFileExporter {
                 "Commits, contributors and code churn over time, per year, month, week and day.");
         report.addTabItem("highlights", "Highlights", "index.html#highlights", "highlights",
                 "Headline numbers with a status, and the files most worth looking at first.");
-        List<CustomTab> customTabs = getCustomTabs(analysisResults);
+        List<CustomTab> customTabs = getCustomTabs(analysisResults, aiInsights);
         for (int i = 0; i < customTabs.size(); i++) {
             String link = customTabLink(customTabs.get(i).getIframeLink());
             report.addTabItem(customTabId(i), customTabs.get(i).getLabel(), "index.html#" + customTabId(i), "custom",
@@ -584,6 +611,9 @@ public class ReportFileExporter {
             if (StringUtils.isNotBlank(entry[0])) {
                 analyses.addItem(entry[0], entry[1], entry[0], NAVIGATION_ICONS.get(entry[0]));
             }
+        }
+        if (aiInsights != null) {
+            aiInsights.addNavigation(navigation);
         }
         ReportNavigation.Group index = navigation.addGroup("Index");
         index.addTabItem("visuals", "Visuals", "index.html#visuals", "visuals",
