@@ -16,6 +16,7 @@ import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import nl.obren.sokrates.reports.charts.SimpleOneBarChart;
 import nl.obren.sokrates.reports.core.ReportNavigation;
 import nl.obren.sokrates.reports.core.RichTextReport;
+import nl.obren.sokrates.reports.core.RuleOfThumbEstimates;
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.renderingutils.ExplorerTemplate;
 import java.util.HashMap;
@@ -664,6 +665,8 @@ public class LandscapeReportGenerator {
         addFileAgeAndFreshnessSection();
         ProcessingStopwatch.end("reporting/overview/file age & freshness");
         addIFrames(landscapeAnalysisResults.getConfiguration().getiFrames());
+        RuleOfThumbEstimates.addForLandscape(landscapeReport, landscapeAnalysisResults.getFilteredRepositoryAnalysisResults()
+                .stream().map(RepositoryAnalysisResults::getAnalysisResults).collect(Collectors.toList()));
         ProcessingStopwatch.end("reporting/overview");
         landscapeReport.endTabContentSection();
         ProcessingStopwatch.end("reporting/big summary");

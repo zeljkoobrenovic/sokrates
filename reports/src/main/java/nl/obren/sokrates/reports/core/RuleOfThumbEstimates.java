@@ -4,36 +4,134 @@
 
 package nl.obren.sokrates.reports.core;
 
+import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import nl.obren.sokrates.reports.utils.HtmlTemplateUtils;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.core.FileReadsForChangesConfig;
+import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * The collapsed "Rule-of-thumb estimates" block at the bottom of the At a Glance tab: an in-page calculator
- * (rebuild value, maintenance effort, AI token reads) over the analysis' lines of code. Only numbers go into
- * the template; the assumptions are inputs the viewer can change.
+ * The collapsed "Rule-of-thumb estimates" block at the bottom of the At a Glance tab (repository and landscape):
+ * an in-page calculator (rebuild value, maintenance effort, AI token reads) over the lines of code. Only numbers
+ * go into the template; the assumptions are inputs the viewer can change. A landscape also passes its totals per
+ * repository activity window, which the page offers as a "repositories" choice.
  */
 public class RuleOfThumbEstimates {
     static final String TEMPLATE = "/templates/rule-of-thumb-estimates.html";
+    /** The default landscape choice: repositories with a commit in the past year. */
+    public static final String DEFAULT_WINDOW = "365";
+
+    /** Lines of code of the repositories in one activity window. */
+    public static class Window {
+        private final String id;
+        private final String label;
+        private final int days;
+        private int repositories;
+        private long mainLoc;
+        private long testLoc;
+        private long otherLoc;
+
+        Window(String id, String label, int days) {
+            this.id = id;
+            this.label = label;
+            this.days = days;
+        }
+
+        /** Whether a repository whose latest commit is on that date belongs to this window (all time: always). */
+        boolean includes(String latestCommitDate) {
+            return days <= 0 || (StringUtils.isNotBlank(latestCommitDate) && DateUtils.isDateWithinRange(latestCommitDate, days));
+        }
+
+        void add(int main, int test, int other) {
+            repositories++;
+            mainLoc += Math.max(0, main);
+            testLoc += Math.max(0, test);
+            otherLoc += Math.max(0, other);
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public int getRepositories() {
+            return repositories;
+        }
+
+        public long getMainLoc() {
+            return mainLoc;
+        }
+
+        String toJson() {
+            return "{\"id\":\"" + id + "\",\"label\":\"" + label + "\",\"repositories\":" + repositories
+                    + ",\"main\":" + mainLoc + ",\"test\":" + testLoc + ",\"other\":" + otherLoc + "}";
+        }
+    }
 
     public static void add(RichTextReport report, CodeAnalysisResults results) {
-        int otherLoc = results.getBuildAndDeployAspectAnalysisResults().getLinesOfCode()
-                + results.getGeneratedAspectAnalysisResults().getLinesOfCode()
-                + results.getOtherAspectAnalysisResults().getLinesOfCode();
         FileReadsForChangesConfig reads = results.getCodeConfiguration().getAnalysis().getFileReadsForChanges();
         report.addHtmlContent(html(results.getMainAspectAnalysisResults().getLinesOfCode(),
-                results.getTestAspectAnalysisResults().getLinesOfCode(), otherLoc,
-                reads.getTokensPerLineMin(), reads.getTokensPerLineMax()));
+                results.getTestAspectAnalysisResults().getLinesOfCode(), otherLoc(results),
+                reads.getTokensPerLineMin(), reads.getTokensPerLineMax(), null));
+    }
+
+    /** The landscape version: totals over the given repositories, per activity window (default: the past year). */
+    public static void addForLandscape(RichTextReport report, List<CodeAnalysisResults> repositories) {
+        List<Window> windows = windows(repositories);
+        Window selected = windows.stream().filter(w -> w.id.equals(DEFAULT_WINDOW)).findFirst().orElse(windows.get(windows.size() - 1));
+        FileReadsForChangesConfig reads = new FileReadsForChangesConfig();
+        report.addHtmlContent(html((int) Math.min(Integer.MAX_VALUE, selected.mainLoc), (int) Math.min(Integer.MAX_VALUE, selected.testLoc),
+                (int) Math.min(Integer.MAX_VALUE, selected.otherLoc), reads.getTokensPerLineMin(), reads.getTokensPerLineMax(), windows));
+    }
+
+    /** The activity windows (by the repository's latest commit date), the last one all repositories. */
+    public static List<Window> windows(List<CodeAnalysisResults> repositories) {
+        List<Window> windows = new ArrayList<>();
+        windows.add(new Window("30", "active in the past 30 days", 30));
+        windows.add(new Window("90", "active in the past 3 months", 90));
+        windows.add(new Window("180", "active in the past 6 months", 180));
+        windows.add(new Window(DEFAULT_WINDOW, "active in the past year", 365));
+        windows.add(new Window("730", "active in the past 2 years", 730));
+        windows.add(new Window("all", "all repositories", 0));
+        repositories.forEach(results -> {
+            String latest = results.getContributorsAnalysisResults().getLatestCommitDate();
+            int main = results.getMainAspectAnalysisResults().getLinesOfCode();
+            int test = results.getTestAspectAnalysisResults().getLinesOfCode();
+            int other = otherLoc(results);
+            windows.stream().filter(w -> w.includes(latest)).forEach(w -> w.add(main, test, other));
+        });
+        return windows;
+    }
+
+    private static int otherLoc(CodeAnalysisResults results) {
+        return results.getBuildAndDeployAspectAnalysisResults().getLinesOfCode()
+                + results.getGeneratedAspectAnalysisResults().getLinesOfCode()
+                + results.getOtherAspectAnalysisResults().getLinesOfCode();
     }
 
     static String html(int mainLoc, int testLoc, int otherLoc, int tokensPerLineMin, int tokensPerLineMax) {
+        return html(mainLoc, testLoc, otherLoc, tokensPerLineMin, tokensPerLineMax, null);
+    }
+
+    static String html(int mainLoc, int testLoc, int otherLoc, int tokensPerLineMin, int tokensPerLineMax, List<Window> windows) {
         int tokensMin = Math.max(1, Math.min(tokensPerLineMin, tokensPerLineMax));
         int tokensMax = Math.max(tokensMin, Math.max(tokensPerLineMin, tokensPerLineMax));
+        String windowsJson = "";
+        if (windows != null && !windows.isEmpty()) {
+            StringBuilder json = new StringBuilder("[");
+            windows.forEach(w -> json.append(json.length() > 1 ? "," : "").append(w.toJson()));
+            windowsJson = json.append("]").toString();
+        }
         return HtmlTemplateUtils.getResource(TEMPLATE)
                 .replace("${mainLoc}", String.valueOf(Math.max(0, mainLoc)))
                 .replace("${testLoc}", String.valueOf(Math.max(0, testLoc)))
                 .replace("${otherLoc}", String.valueOf(Math.max(0, otherLoc)))
                 .replace("${tokensMin}", String.valueOf(tokensMin))
-                .replace("${tokensMax}", String.valueOf(tokensMax));
+                .replace("${tokensMax}", String.valueOf(tokensMax))
+                .replace("${windows}", HtmlEscapeUtils.escape(windowsJson))
+                .replace("${defaultWindow}", DEFAULT_WINDOW);
     }
 }

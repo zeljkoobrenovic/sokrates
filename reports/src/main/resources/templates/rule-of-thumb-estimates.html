@@ -1,5 +1,6 @@
 <details class="sk-est" id="sk-est" data-main-loc="${mainLoc}" data-test-loc="${testLoc}" data-other-loc="${otherLoc}"
-         data-tokens-min="${tokensMin}" data-tokens-max="${tokensMax}">
+         data-tokens-min="${tokensMin}" data-tokens-max="${tokensMax}"
+         data-windows="${windows}" data-default-window="${defaultWindow}">
     <summary>
         <span class="sk-est-title">Rule-of-thumb estimates</span>
         <span class="sk-est-sub">rebuild value, maintenance effort and AI token reads, from lines of code; change the assumptions to see the effect</span>
@@ -33,6 +34,7 @@
         <div class="sk-est-section">
             <h4>Rebuild Value</h4>
             <div class="sk-est-inputs">
+                <label id="sk-est-activity-label" hidden>repositories <select id="sk-est-activity"></select></label>
                 <label>code <select id="sk-est-basis">
                     <option value="main">main code</option>
                     <option value="main-test">main + test code</option>
@@ -41,12 +43,10 @@
                 <label>lines of code per man-year <input type="number" id="sk-est-loc-per-my" min="100" step="1000" value="10000"></label>
                 <label>cost per man-year <input type="number" id="sk-est-cost-per-my" min="0" step="10000" value="100000"></label>
                 <label>currency <input type="text" id="sk-est-currency" class="sk-est-short" maxlength="4" value="€"></label>
-                <label>team size <input type="number" id="sk-est-team" class="sk-est-short" min="1" step="1" value="5"></label>
             </div>
             <div class="sk-est-cards">
                 <div class="sk-est-card"><div class="sk-est-value" id="sk-est-rebuild-my"></div><div class="sk-est-label">to rebuild</div><div class="sk-est-detail" id="sk-est-rebuild-my-detail"></div></div>
                 <div class="sk-est-card"><div class="sk-est-value" id="sk-est-rebuild-cost"></div><div class="sk-est-label">rebuild value</div><div class="sk-est-detail" id="sk-est-rebuild-cost-detail"></div></div>
-                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-rebuild-duration"></div><div class="sk-est-label">to rebuild with the team</div><div class="sk-est-detail" id="sk-est-rebuild-duration-detail"></div></div>
             </div>
         </div>
         <div class="sk-est-section">
@@ -77,9 +77,7 @@
         <div class="sk-est-note">
             Rules of thumb, not measurements: one man-year rebuilds about 10,000 lines of code (design, testing and
             coordination included), and keeping a code base alive takes about 15% of its rebuild value per year
-            (20 man-years of rebuild value need about 3 man-years of maintenance every year). The rebuild duration
-            divides the effort by the team size, which real projects rarely achieve. Token figures count only reading
-            the source once (input tokens), not the prompts, the answers or repeated reads within a session.
+            (20 man-years of rebuild value need about 3 man-years of maintenance every year). Token figures count only reading the source once (input tokens), not the prompts, the answers or repeated reads within a session.
             Your changes are remembered in this browser for every report.
             <button type="button" class="sk-est-reset" id="sk-est-reset">Reset to defaults</button>
         </div>
@@ -94,9 +92,24 @@
                 test: Number(root.dataset.testLoc) || 0,
                 other: Number(root.dataset.otherLoc) || 0
             };
-            var inputIds = ['basis', 'loc-per-my', 'cost-per-my', 'currency', 'team', 'maintenance',
+            var windows = [];
+            try { windows = JSON.parse(root.dataset.windows || '[]'); } catch (e) { }
+            var inputIds = ['basis', 'loc-per-my', 'cost-per-my', 'currency', 'maintenance',
                 'tpl-min', 'tpl-max', 'price-min', 'price-max', 'context', 'reads'];
             function el(id) { return document.getElementById('sk-est-' + id); }
+            if (windows.length) {
+                var activity = el('activity');
+                windows.forEach(function (w) {
+                    var option = document.createElement('option');
+                    option.value = w.id;
+                    option.textContent = w.label + ' (' + w.repositories.toLocaleString('en-US') + ')';
+                    activity.appendChild(option);
+                });
+                activity.value = root.dataset.defaultWindow;
+                if (activity.selectedIndex < 0) activity.selectedIndex = windows.length - 1;
+                el('activity-label').hidden = false;
+                inputIds.unshift('activity');
+            }
             el('tpl-min').value = root.dataset.tokensMin;
             el('tpl-max').value = root.dataset.tokensMax;
             var defaults = {};
@@ -116,6 +129,7 @@
                 return oneDecimal(v);
             }
             function money(v, currency) {
+                if (v > 0 && v < 0.01) return '<' + currency + '0.01';
                 if (v > 0 && v < 1) return currency + (Math.round(v * 100) / 100).toFixed(2);
                 return currency + compact(v);
             }
@@ -123,18 +137,25 @@
                 var low = format(Math.min(a, b)), high = format(Math.max(a, b));
                 return low === high ? low : low + ' – ' + high;
             }
-            function duration(months) {
-                if (months < 1) return Math.max(1, Math.round(months * 21)) + ' working days';
-                if (months < 24) return oneDecimal(months) + ' months';
-                return oneDecimal(months / 12) + ' years';
-            }
             function effort(manYears) {
                 if (manYears > 0 && manYears < 1) return oneDecimal(manYears * 12) + ' man-months';
                 return oneDecimal(manYears) + (Math.abs(manYears - 1) < 0.05 ? ' man-year' : ' man-years');
             }
             function set(id, text) { el(id).textContent = text; }
 
+            function selectedWindow() {
+                if (!windows.length) return null;
+                var id = el('activity').value;
+                return windows.filter(function (w) { return w.id === id; })[0] || windows[windows.length - 1];
+            }
+            function repositoriesText() {
+                var w = selectedWindow();
+                if (!w) return '';
+                return ' in ' + w.repositories.toLocaleString('en-US') + (w.repositories === 1 ? ' repository' : ' repositories');
+            }
             function basisLoc() {
+                var w = selectedWindow();
+                if (w) loc = { main: w.main, test: w.test, other: w.other };
                 var basis = el('basis').value;
                 if (basis === 'all') return loc.main + loc.test + loc.other;
                 if (basis === 'main-test') return loc.main + loc.test;
@@ -150,22 +171,19 @@
                 var currency = el('currency').value;
                 var locPerMy = Math.max(1, num('loc-per-my', 10000));
                 var costPerMy = num('cost-per-my', 0);
-                var team = Math.max(1, Math.round(num('team', 1)));
                 var maintenance = num('maintenance', 15) / 100;
 
                 var rebuildMy = lines / locPerMy;
                 set('rebuild-my', effort(rebuildMy));
-                set('rebuild-my-detail', lines.toLocaleString('en-US') + ' lines of ' + basisLabel() + ' ÷ '
+                set('rebuild-my-detail', lines.toLocaleString('en-US') + ' lines of ' + basisLabel() + repositoriesText() + ' ÷ '
                     + locPerMy.toLocaleString('en-US') + ' per man-year');
                 set('rebuild-cost', money(rebuildMy * costPerMy, currency));
                 set('rebuild-cost-detail', effort(rebuildMy) + ' × ' + money(costPerMy, currency) + ' per man-year');
-                set('rebuild-duration', duration(rebuildMy * 12 / team));
-                set('rebuild-duration-detail', team + (team === 1 ? ' person' : ' people') + ' working full time, without any overhead for a larger team');
 
                 var maintMy = rebuildMy * maintenance;
                 set('maint-my', effort(maintMy));
                 set('maint-my-detail', Math.round(maintenance * 100) + '% of ' + effort(rebuildMy) + ', or '
-                    + oneDecimal(maintMy) + ' full-time equivalent (FTE) every year');
+                    + (maintMy > 0 && maintMy < 1 ? (Math.round(maintMy * 100) / 100).toString() : oneDecimal(maintMy)) + ' full-time equivalent (FTE) every year');
                 set('maint-cost', money(maintMy * costPerMy, currency));
                 set('maint-cost-detail', effort(maintMy) + ' × ' + money(costPerMy, currency) + ' per man-year');
 
@@ -195,7 +213,10 @@
                 try { values = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) { }
                 if (!values) return;
                 inputIds.forEach(function (id) {
-                    if (values[id] !== undefined && values[id] !== null) el(id).value = values[id];
+                    if (values[id] === undefined || values[id] === null) return;
+                    var previous = el(id).value;
+                    el(id).value = values[id];
+                    if (el(id).tagName === 'SELECT' && el(id).selectedIndex < 0) el(id).value = previous;
                 });
             }
 
