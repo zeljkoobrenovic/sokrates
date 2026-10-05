@@ -1,0 +1,35 @@
+reports/src/main/resources/templates/rule-of-thumb-estimates.html
+  s_5026482126c219::t_5c5639943ac29e 34,63
+  s_5026482126c219::t_4b80d366400272 53
+  s_5026482126c219::t_530a4a8d109799 131-134,157,159,161,166-168,170
+  s_5026482126c219::t_cebf4c772dc5e3 1-7,13-18,20-33,35-52,54-62,64-71,73-130,135-156,158,160,162-165,169,171-215
+  s_5026482126c219::t_4926e10bb961c5 10-12,72
+  s_5026482126c219::t_c2753104f15d12 9
+  s_5026482126c219::t_416f4b515bc3cc 8,19
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportFileExporter.java
+  s_5026482126c219::t_14b90143eaf91b 138-139
+CLAUDE.md
+  s_5026482126c219::t_82a0f0e93a7fda 208
+reports/src/test/java/nl/obren/sokrates/reports/core/RuleOfThumbEstimatesTest.java
+  s_5026482126c219::t_14b90143eaf91b 1-30
+reports/src/main/java/nl/obren/sokrates/reports/core/RuleOfThumbEstimates.java
+  s_5026482126c219::t_14b90143eaf91b 1-39
+CHANGELOG.md
+  s_5026482126c219::t_a05779737650ce 8-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2a2d8821f6e790f2bbbde0e3ae615d72c518a42b",
+  "prompts": {},
+  "sessions": {
+    "s_5026482126c219": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "02d24a13-bc18-4f57-8e09-809e545be12d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
