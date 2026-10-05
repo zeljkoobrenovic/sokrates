@@ -1,0 +1,55 @@
+cli/src/main/java/nl/obren/sokrates/cli/GitRepoCommands.java
+  s_5026482126c219::t_df9dc1b5e17a1f 115-119
+  s_5026482126c219::t_c5fd10a6542454 10
+  s_5026482126c219::t_d5ac1761e2ed82 120
+reports/src/main/resources/ai-insights/scanners.json
+  s_5026482126c219::t_afe3f1c043e3a7 1-293
+cli/src/main/java/nl/obren/sokrates/cli/CommandLineInterface.java
+  s_5026482126c219::t_c5fd10a6542454 15
+  s_5026482126c219::t_7a14c5f70bc70a 33
+  s_5026482126c219::t_df9dc1b5e17a1f 327-333,337-350,382-383,385,388,395,398,409
+cli/src/test/java/nl/obren/sokrates/cli/RepositoryAiInsightsTest.java
+  s_5026482126c219::t_c2bd58855b3d14 1-79
+reports/src/test/java/nl/obren/sokrates/reports/core/ReportFileExporterTest.java
+  s_5026482126c219::t_d83fffb734af77 3,7,9,11-12,14,16,40-41,44,49-67
+  s_5026482126c219::t_894d8a73eb0619 68-69
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportFileExporter.java
+  s_5026482126c219::t_c5fd10a6542454 9
+  s_5026482126c219::t_0deb1eaa4c2906 39-44,52,58,409,570-575,615-616
+  s_5026482126c219::t_b8ca511775a35b 51,389-394,398-400,405-408,594
+  s_5026482126c219::t_66fc925da26331 410,617
+cli/src/main/java/nl/obren/sokrates/cli/ReportsCommands.java
+  s_5026482126c219::t_0deb1eaa4c2906 8,201-208,219
+reports/src/test/java/nl/obren/sokrates/reports/generators/explorers/AiInsightsExplorerGeneratorTest.java
+  s_5026482126c219::t_c2bd58855b3d14 1-110
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportNavigation.java
+  s_5026482126c219::t_4b636bff96eb3a 152-159,167,221,316-327,332,364,366,390,401-403
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportShell.java
+  s_5026482126c219::t_4b636bff96eb3a 169
+CHANGELOG.md
+  s_5026482126c219::t_f065b7c858def1 8-24
+reports/src/main/java/nl/obren/sokrates/reports/generators/explorers/AiInsightsExplorerGenerator.java
+  s_5026482126c219::t_002585322a4795 19,42,45,217,256,279
+  s_5026482126c219::t_a10574ef8203d2 249-250,252
+  s_5026482126c219::t_f55d2ac5ff43de 1-18,20-41,43-44,46-216,218-248,251,253-255,257-278,280-315
+CLAUDE.md
+  s_5026482126c219::t_f065b7c858def1 113-114
+common/src/main/resources/templates/ai-insights-explorer.html
+  s_5026482126c219::t_1b5251ebe6b504 1-805
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "377611d32641e4731bca585d54c798e51b2070de",
+  "prompts": {},
+  "sessions": {
+    "s_5026482126c219": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "02d24a13-bc18-4f57-8e09-809e545be12d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
