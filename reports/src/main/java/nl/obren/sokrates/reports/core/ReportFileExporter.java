@@ -135,6 +135,8 @@ public class ReportFileExporter {
         indexReport.endDiv();
         indexReport.endDiv();
 
+        RuleOfThumbEstimates.add(indexReport, analysisResults);
+
         indexReport.endTabContentSection();
     }
 

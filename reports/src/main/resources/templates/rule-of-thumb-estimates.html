@@ -1,0 +1,215 @@
+<details class="sk-est" id="sk-est" data-main-loc="${mainLoc}" data-test-loc="${testLoc}" data-other-loc="${otherLoc}"
+         data-tokens-min="${tokensMin}" data-tokens-max="${tokensMax}">
+    <summary>
+        <span class="sk-est-title">Rule-of-thumb estimates</span>
+        <span class="sk-est-sub">rebuild value, maintenance effort and AI token reads, from lines of code; change the assumptions to see the effect</span>
+    </summary>
+    <style>
+        .sk-est { white-space: normal; box-sizing: border-box; max-width: 100%; margin: 28px 0 20px 0; border: 1px solid var(--sk-border, #ddd); border-radius: 8px; background: var(--sk-surface, white); }
+        .sk-est > summary { cursor: pointer; padding: 12px 16px 12px 36px; list-style: none; position: relative; white-space: normal; overflow: visible; }
+        .sk-est > summary::-webkit-details-marker { display: none; }
+        .sk-est > summary::before { content: '\25B8'; position: absolute; left: 16px; top: 12px; color: var(--sk-text-muted, #666); transition: transform 0.15s; }
+        .sk-est[open] > summary::before { transform: rotate(90deg); }
+        .sk-est-title { font-weight: bold; font-size: 110%; }
+        .sk-est-sub { display: block; color: var(--sk-text-muted, #666); font-size: 85%; margin-top: 2px; }
+        .sk-est-body { padding: 4px 16px 16px 16px; }
+        .sk-est-section { margin-top: 14px; }
+        .sk-est-section h4 { margin: 0 0 6px 0; font-size: 95%; }
+        .sk-est-inputs { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; font-size: 85%; color: var(--sk-text-muted, #555); margin-bottom: 10px; }
+        .sk-est-inputs label { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .sk-est-inputs input, .sk-est-inputs select { font: inherit; color: var(--sk-text, black); background: var(--sk-bg, white);
+            border: 1px solid var(--sk-border-strong, #bbb); border-radius: 4px; padding: 2px 6px; }
+        .sk-est-inputs input[type=number] { width: 6.5em; }
+        .sk-est-inputs input.sk-est-short { width: 4.5em; }
+        .sk-est-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+        .sk-est-card { border: 1px solid var(--sk-border, #ddd); border-radius: 6px; padding: 10px 12px; background: var(--sk-surface-2, #f8f8f8); }
+        .sk-est-value { font-size: 150%; font-weight: bold; color: var(--sk-text, black); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sk-est-label { font-size: 85%; color: var(--sk-text, black); margin-top: 2px; }
+        .sk-est-detail { font-size: 78%; color: var(--sk-text-muted, #666); margin-top: 4px; }
+        .sk-est-note { font-size: 80%; color: var(--sk-text-muted, #666); margin-top: 14px; line-height: 1.5; }
+        .sk-est-reset { font: inherit; font-size: 85%; cursor: pointer; background: none; border: none; color: var(--sk-link, #1a73e8); padding: 0; }
+    </style>
+    <div class="sk-est-body">
+        <div class="sk-est-section">
+            <h4>Rebuild Value</h4>
+            <div class="sk-est-inputs">
+                <label>code <select id="sk-est-basis">
+                    <option value="main">main code</option>
+                    <option value="main-test">main + test code</option>
+                    <option value="all">all code</option>
+                </select></label>
+                <label>lines of code per man-year <input type="number" id="sk-est-loc-per-my" min="100" step="1000" value="10000"></label>
+                <label>cost per man-year <input type="number" id="sk-est-cost-per-my" min="0" step="10000" value="100000"></label>
+                <label>currency <input type="text" id="sk-est-currency" class="sk-est-short" maxlength="4" value="€"></label>
+                <label>team size <input type="number" id="sk-est-team" class="sk-est-short" min="1" step="1" value="5"></label>
+            </div>
+            <div class="sk-est-cards">
+                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-rebuild-my"></div><div class="sk-est-label">to rebuild</div><div class="sk-est-detail" id="sk-est-rebuild-my-detail"></div></div>
+                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-rebuild-cost"></div><div class="sk-est-label">rebuild value</div><div class="sk-est-detail" id="sk-est-rebuild-cost-detail"></div></div>
+                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-rebuild-duration"></div><div class="sk-est-label">to rebuild with the team</div><div class="sk-est-detail" id="sk-est-rebuild-duration-detail"></div></div>
+            </div>
+        </div>
+        <div class="sk-est-section">
+            <h4>Maintenance Effort</h4>
+            <div class="sk-est-inputs">
+                <label>yearly maintenance, % of rebuild value <input type="number" id="sk-est-maintenance" class="sk-est-short" min="0" max="100" step="1" value="15"></label>
+            </div>
+            <div class="sk-est-cards">
+                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-maint-my"></div><div class="sk-est-label">per year to maintain</div><div class="sk-est-detail" id="sk-est-maint-my-detail"></div></div>
+                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-maint-cost"></div><div class="sk-est-label">maintenance cost per year</div><div class="sk-est-detail" id="sk-est-maint-cost-detail"></div></div>
+            </div>
+        </div>
+        <div class="sk-est-section">
+            <h4>AI Token Reads</h4>
+            <div class="sk-est-inputs">
+                <label>tokens per line <input type="number" id="sk-est-tpl-min" class="sk-est-short" min="1" step="1"> – <input type="number" id="sk-est-tpl-max" class="sk-est-short" min="1" step="1"></label>
+                <label>price per 1M input tokens <input type="number" id="sk-est-price-min" class="sk-est-short" min="0" step="0.5" value="1"> – <input type="number" id="sk-est-price-max" class="sk-est-short" min="0" step="0.5" value="15"></label>
+                <label>context window (tokens) <input type="number" id="sk-est-context" min="1000" step="100000" value="200000"></label>
+                <label>full reads per month <input type="number" id="sk-est-reads" class="sk-est-short" min="0" step="1" value="20"></label>
+            </div>
+            <div class="sk-est-cards">
+                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-tokens"></div><div class="sk-est-label">tokens to read the code once</div><div class="sk-est-detail" id="sk-est-tokens-detail"></div></div>
+                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-windows"></div><div class="sk-est-label">context windows needed to hold it</div><div class="sk-est-detail" id="sk-est-windows-detail"></div></div>
+                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-read-cost"></div><div class="sk-est-label">cost of one full read</div><div class="sk-est-detail" id="sk-est-read-cost-detail"></div></div>
+                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-month-cost"></div><div class="sk-est-label">token cost per month</div><div class="sk-est-detail" id="sk-est-month-cost-detail"></div></div>
+            </div>
+        </div>
+        <div class="sk-est-note">
+            Rules of thumb, not measurements: one man-year rebuilds about 10,000 lines of code (design, testing and
+            coordination included), and keeping a code base alive takes about 15% of its rebuild value per year
+            (20 man-years of rebuild value need about 3 man-years of maintenance every year). The rebuild duration
+            divides the effort by the team size, which real projects rarely achieve. Token figures count only reading
+            the source once (input tokens), not the prompts, the answers or repeated reads within a session.
+            Your changes are remembered in this browser for every report.
+            <button type="button" class="sk-est-reset" id="sk-est-reset">Reset to defaults</button>
+        </div>
+    </div>
+    <script>
+        (function () {
+            var root = document.getElementById('sk-est');
+            if (!root) return;
+            var STORE_KEY = 'sokrates-estimates';
+            var loc = {
+                main: Number(root.dataset.mainLoc) || 0,
+                test: Number(root.dataset.testLoc) || 0,
+                other: Number(root.dataset.otherLoc) || 0
+            };
+            var inputIds = ['basis', 'loc-per-my', 'cost-per-my', 'currency', 'team', 'maintenance',
+                'tpl-min', 'tpl-max', 'price-min', 'price-max', 'context', 'reads'];
+            function el(id) { return document.getElementById('sk-est-' + id); }
+            el('tpl-min').value = root.dataset.tokensMin;
+            el('tpl-max').value = root.dataset.tokensMax;
+            var defaults = {};
+            inputIds.forEach(function (id) { defaults[id] = el(id).value; });
+
+            function num(id, fallback) {
+                var v = parseFloat(el(id).value);
+                return isFinite(v) && v >= 0 ? v : fallback;
+            }
+            function oneDecimal(v) {
+                return v < 10 ? (Math.round(v * 10) / 10).toLocaleString('en-US') : Math.round(v).toLocaleString('en-US');
+            }
+            function compact(v) {
+                if (v >= 1e9) return oneDecimal(v / 1e9) + 'B';
+                if (v >= 1e6) return oneDecimal(v / 1e6) + 'M';
+                if (v >= 1e4) return oneDecimal(v / 1e3) + 'k';
+                return oneDecimal(v);
+            }
+            function money(v, currency) {
+                if (v > 0 && v < 1) return currency + (Math.round(v * 100) / 100).toFixed(2);
+                return currency + compact(v);
+            }
+            function range(a, b, format) {
+                var low = format(Math.min(a, b)), high = format(Math.max(a, b));
+                return low === high ? low : low + ' – ' + high;
+            }
+            function duration(months) {
+                if (months < 1) return Math.max(1, Math.round(months * 21)) + ' working days';
+                if (months < 24) return oneDecimal(months) + ' months';
+                return oneDecimal(months / 12) + ' years';
+            }
+            function effort(manYears) {
+                if (manYears > 0 && manYears < 1) return oneDecimal(manYears * 12) + ' man-months';
+                return oneDecimal(manYears) + (Math.abs(manYears - 1) < 0.05 ? ' man-year' : ' man-years');
+            }
+            function set(id, text) { el(id).textContent = text; }
+
+            function basisLoc() {
+                var basis = el('basis').value;
+                if (basis === 'all') return loc.main + loc.test + loc.other;
+                if (basis === 'main-test') return loc.main + loc.test;
+                return loc.main;
+            }
+            function basisLabel() {
+                var basis = el('basis').value;
+                return basis === 'all' ? 'all code' : basis === 'main-test' ? 'main + test code' : 'main code';
+            }
+
+            function update() {
+                var lines = basisLoc();
+                var currency = el('currency').value;
+                var locPerMy = Math.max(1, num('loc-per-my', 10000));
+                var costPerMy = num('cost-per-my', 0);
+                var team = Math.max(1, Math.round(num('team', 1)));
+                var maintenance = num('maintenance', 15) / 100;
+
+                var rebuildMy = lines / locPerMy;
+                set('rebuild-my', effort(rebuildMy));
+                set('rebuild-my-detail', lines.toLocaleString('en-US') + ' lines of ' + basisLabel() + ' ÷ '
+                    + locPerMy.toLocaleString('en-US') + ' per man-year');
+                set('rebuild-cost', money(rebuildMy * costPerMy, currency));
+                set('rebuild-cost-detail', effort(rebuildMy) + ' × ' + money(costPerMy, currency) + ' per man-year');
+                set('rebuild-duration', duration(rebuildMy * 12 / team));
+                set('rebuild-duration-detail', team + (team === 1 ? ' person' : ' people') + ' working full time, without any overhead for a larger team');
+
+                var maintMy = rebuildMy * maintenance;
+                set('maint-my', effort(maintMy));
+                set('maint-my-detail', Math.round(maintenance * 100) + '% of ' + effort(rebuildMy) + ', or '
+                    + oneDecimal(maintMy) + ' full-time equivalent (FTE) every year');
+                set('maint-cost', money(maintMy * costPerMy, currency));
+                set('maint-cost-detail', effort(maintMy) + ' × ' + money(costPerMy, currency) + ' per man-year');
+
+                var tplMin = Math.max(0, num('tpl-min', 7)), tplMax = Math.max(0, num('tpl-max', 14));
+                var priceMin = num('price-min', 0), priceMax = num('price-max', 0);
+                var context = Math.max(1, num('context', 200000));
+                var reads = num('reads', 0);
+                var tokensLow = lines * Math.min(tplMin, tplMax), tokensHigh = lines * Math.max(tplMin, tplMax);
+                var priceLow = Math.min(priceMin, priceMax), priceHigh = Math.max(priceMin, priceMax);
+                set('tokens', range(tokensLow, tokensHigh, compact));
+                set('tokens-detail', lines.toLocaleString('en-US') + ' lines × ' + range(tplMin, tplMax, oneDecimal) + ' tokens per line');
+                set('windows', range(Math.ceil(tokensLow / context), Math.ceil(tokensHigh / context), compact));
+                set('windows-detail', 'of ' + compact(context) + ' tokens each, if the whole ' + basisLabel() + ' had to be in context');
+                set('read-cost', range(tokensLow / 1e6 * priceLow, tokensHigh / 1e6 * priceHigh, function (v) { return money(v, currency); }));
+                set('read-cost-detail', 'at ' + range(priceLow, priceHigh, function (v) { return money(v, currency); }) + ' per million input tokens');
+                set('month-cost', range(tokensLow / 1e6 * priceLow * reads, tokensHigh / 1e6 * priceHigh * reads, function (v) { return money(v, currency); }));
+                set('month-cost-detail', oneDecimal(reads) + ' full reads of the ' + basisLabel() + ' per month');
+            }
+
+            function save() {
+                var values = {};
+                inputIds.forEach(function (id) { values[id] = el(id).value; });
+                try { localStorage.setItem(STORE_KEY, JSON.stringify(values)); } catch (e) { }
+            }
+            function restore() {
+                var values = null;
+                try { values = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) { }
+                if (!values) return;
+                inputIds.forEach(function (id) {
+                    if (values[id] !== undefined && values[id] !== null) el(id).value = values[id];
+                });
+            }
+
+            restore();
+            inputIds.forEach(function (id) {
+                el(id).addEventListener('input', function () { update(); save(); });
+                el(id).addEventListener('change', function () { update(); save(); });
+            });
+            el('reset').addEventListener('click', function () {
+                inputIds.forEach(function (id) { el(id).value = defaults[id]; });
+                try { localStorage.removeItem(STORE_KEY); } catch (e) { }
+                update();
+            });
+            update();
+        })();
+    </script>
+</details>
