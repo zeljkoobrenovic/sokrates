@@ -66,6 +66,7 @@ public class LandscapeReportGenerator {
 
     public static final int RECENT_THRESHOLD_DAYS = 30;
     public static final String OVERVIEW_TAB_ID = "overview";
+    public static final String STRUCTURE_TAB_ID = "structure";
     public static final String SUB_LANDSCAPES_TAB_ID = "sub-landscapes";
     public static final String REPOSITORIES_TAB_ID = "repositories";
     // A tab without a tab button: only repositories.html, full height, opened by the Repositories sub-items.
@@ -217,6 +218,7 @@ public class LandscapeReportGenerator {
 
 
         addOverviewTab();
+        addStructureTab();
         addSublandscapesTab();
         addRepositoriesTab(repositories);
         addRepositoriesListTab();
@@ -347,17 +349,18 @@ public class LandscapeReportGenerator {
         // The tab strip; the sidebar (landscapeNavigation) replaces it on screen, so it is hidden
         // (sk-index-tabs) but still marks the active tab for openTab.
         landscapeReport.addHtmlContent("<div class=\"tab sk-index-tabs\">");
-        landscapeReport.addTab(OVERVIEW_TAB_ID, "Overview", true);
+        landscapeReport.addTab(OVERVIEW_TAB_ID, "At a Glance", true);
+        landscapeReport.addTab(STRUCTURE_TAB_ID, "Structure", false);
         if (subLandscapes.size() > 0) {
             landscapeReport.addTab(SUB_LANDSCAPES_TAB_ID, "Sub-Landscapes (" + (level1SubLandscapes.size() == 0 ? subLandscapes.size() : level1SubLandscapes.size()) + ")", false);
         }
+        // Contribution trends (per year/month/week/day), moved out of the Contributors tab.
+        landscapeReport.addTab(ACTIVITY_TAB_ID, "Activity", false);
         landscapeReport.addTab(REPOSITORIES_TAB_ID, "Repositories (" + landscapeAnalysisResults.getFilteredRepositoryAnalysisResults().size() + ")", false);
         landscapeReport.addTab(CONTRIBUTORS_TAB_ID, "Contributors" + (recentContributorsCount > 0 ? " (" + recentContributorsCount + ")" + "" : ""), false);
         if (teamsConfig.getTeams().size() > 0) {
             landscapeReport.addTab(TEAMS_TAB_ID, "Teams" + (recentContributorsCount > 0 ? " (" + recentTeamsCount + ")" + "" : ""), false);
         }
-        // Contribution trends (per year/month/week/day), moved out of the Contributors tab.
-        landscapeReport.addTab(ACTIVITY_TAB_ID, "Activity", false);
         // "Topology", not "Team Topology" — the tab shows contributor topology too, even when no
         // teams are configured.
         landscapeReport.addTab(TOPOLOGIES_TAB_ID, "Topology", false);
@@ -427,18 +430,20 @@ public class LandscapeReportGenerator {
 
         int repositoriesCount = landscapeAnalysisResults.getFilteredRepositoryAnalysisResults().size();
         ReportNavigation.Group landscape = navigation.addGroup("Landscape");
-        landscape.addTabItem(OVERVIEW_TAB_ID, "Overview", "index.html#" + OVERVIEW_TAB_ID, "overview",
+        landscape.addTabItem(OVERVIEW_TAB_ID, "At a Glance", "index.html#" + OVERVIEW_TAB_ID, "overview",
                 StringUtils.isNotBlank(metadata.getDescription()) ? metadata.getDescription()
                         : "Size, languages and activity of the landscape's " + repositoriesCount + (repositoriesCount == 1 ? " repository." : " repositories."));
+        landscape.addTabItem(STRUCTURE_TAB_ID, "Structure", "index.html#" + STRUCTURE_TAB_ID, "structure",
+                "The repositories by size: how many fall in each size category, and all of them as circles sized by main lines of code.");
         if (subLandscapesCount > 0) {
-            landscape.addTabItem(SUB_LANDSCAPES_TAB_ID, "Sub-Landscapes", "index.html#" + SUB_LANDSCAPES_TAB_ID, "structure",
+            landscape.addTabItem(SUB_LANDSCAPES_TAB_ID, "Sub-Landscapes", "index.html#" + SUB_LANDSCAPES_TAB_ID, "components",
                     subLandscapesCount + (subLandscapesCount == 1 ? " sub-landscape" : " sub-landscapes") + ", each with its own report.");
         }
+        landscape.addTabItem(ACTIVITY_TAB_ID, "Activity", "index.html#" + ACTIVITY_TAB_ID, "activity",
+                "Commits, contributors and churn over time, per year, month, week and day.");
         landscape.addTabItem(REPOSITORIES_TAB_ID, "Repositories", "index.html#" + REPOSITORIES_TAB_ID, "repositories",
                 repositoriesCount + (repositoriesCount == 1 ? " repository" : " repositories") + ": size, languages and activity, searchable and sortable.");
         addRepositoriesSubItems(navigation, landscape);
-        landscape.addTabItem(ACTIVITY_TAB_ID, "Activity", "index.html#" + ACTIVITY_TAB_ID, "activity",
-                "Commits, contributors and churn over time, per year, month, week and day.");
         for (int i = 0; i < configuration.getCustomTabs().size(); i++) {
             String tabName = configuration.getCustomTabs().get(i).getName();
             landscape.addTabItem(CUSTOM_TAB_ID_PREFIX + i, StringUtils.defaultIfBlank(tabName, "Custom"), "index.html#" + CUSTOM_TAB_ID_PREFIX + i, "custom", null);
@@ -462,7 +467,7 @@ public class LandscapeReportGenerator {
         }
         navigation.addGroup("Index").addTabItem(DATA_TAB_ID, "Data", "index.html#" + DATA_TAB_ID, "data",
                 "The landscape's data exports.");
-        // The Overview's header shows the configured name and logo; "Overview" and its icon when there are none.
+        // At a Glance's header shows the configured name and logo; "At a Glance" and its icon when there are none.
         navigation.setPageTitle(OVERVIEW_TAB_ID, metadata.getName());
         navigation.setPageIcon(OVERVIEW_TAB_ID, metadata.getLogoLink());
         return navigation;
@@ -654,21 +659,28 @@ public class LandscapeReportGenerator {
         // The extensions block has ONE fixed home: this tab (it used to move to the former
         // Statistics tab when showExtensionsOnFirstTab was false; that flag is gone).
         addExtensions();
-        // File age/freshness and the repository size distribution
-        // (moved here from the Repositories tab's statistics section).
+        // File age/freshness (moved here from the Repositories tab's statistics section).
         ProcessingStopwatch.start("reporting/overview/file age & freshness");
         addFileAgeAndFreshnessSection();
-        addZooSection();
         ProcessingStopwatch.end("reporting/overview/file age & freshness");
-        // Repositories circle-packing chart closes the Overview tab, before any custom iframes.
-        addRepositoriesBubbleChart();
         addIFrames(landscapeAnalysisResults.getConfiguration().getiFrames());
         ProcessingStopwatch.end("reporting/overview");
         landscapeReport.endTabContentSection();
         ProcessingStopwatch.end("reporting/big summary");
     }
 
-    // Overview tab (right after the extensions section): a circle-packing chart of all repositories
+    // Structure tab (under At a Glance): the repository size distribution and the repositories
+    // circle-packing chart, both moved out of At a Glance.
+    private void addStructureTab() {
+        ProcessingStopwatch.start("reporting/structure");
+        landscapeReport.startTabContentSection(STRUCTURE_TAB_ID, false);
+        addZooSection();
+        addRepositoriesBubbleChart();
+        landscapeReport.endTabContentSection();
+        ProcessingStopwatch.end("reporting/structure");
+    }
+
+    // Structure tab (after the size distribution): a circle-packing chart of all repositories
     // (size = main lines of code, color = main language; grouped into one circle per language), plus
     // a color legend listing every language present. Iframed from a self-contained visual file.
     private void addRepositoriesBubbleChart() {
@@ -684,7 +696,8 @@ public class LandscapeReportGenerator {
         iframe.setTitle("Repositories (size = main lines of code, color = main language)");
         iframe.setStyle("width: 100%; height: 970px;");
         iframe.setScrolling(false);
-        addIFrame(iframe);
+        // The circles lay out to the frame's size, so the frame loads when the tab is first shown.
+        addIFrame(iframe, true);
 
         List<String> languages = repositoryLanguagesByLoc(repositories);
         if (!languages.isEmpty()) {
@@ -1490,6 +1503,11 @@ public class LandscapeReportGenerator {
     }
 
     private void addIFrame(WebFrameLink iframe) {
+        addIFrame(iframe, false);
+    }
+
+    // lazy: the frame gets its src when its tab is first shown (data-sk-src, see sokratesShowTab)
+    private void addIFrame(WebFrameLink iframe, boolean lazy) {
         if (StringUtils.isNotBlank(iframe.getTitle())) {
             String title;
             if (StringUtils.isNotBlank(iframe.getMoreInfoLink())) {
@@ -1501,7 +1519,7 @@ public class LandscapeReportGenerator {
             landscapeReport.startSubSection(title, "");
         }
         String style = StringUtils.defaultIfBlank(iframe.getStyle(), "width: 100%; height: 200px; border: 1px solid lightgrey;");
-        landscapeReport.addHtmlContent("<iframe src='" + iframe.getSrc()
+        landscapeReport.addHtmlContent("<iframe " + (lazy ? "data-sk-src='" : "src='") + iframe.getSrc()
                 + "' frameborder='0' style='" + style + "'"
                 + (iframe.getScrolling() ? "" : " scrolling='no' ")
                 + "></iframe>");

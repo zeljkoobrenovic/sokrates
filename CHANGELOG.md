@@ -5,6 +5,15 @@ everything listed under the most recent date.
 
 ## 2026-10-05
 
+### Landscape: "At a Glance" and a new "Structure" page
+
+In the landscape report's sidebar, Overview is now called At a Glance, as in the repository report, and
+a new Structure page follows it. Structure holds the "Repositories Size Distribution" and the
+repositories circles chart (size = main lines of code, color = main language), which moved there from
+At a Glance. Activity now comes before Repositories, and Sub-Landscapes has a new icon so it doesn't
+share one with Structure. Links to `index.html#overview` still open At a Glance; the configured
+`iFramesAtStart` / `iFrames` stay on At a Glance.
+
 ### Files and units explorers show files like the Highlights tab
 
 In the files and units explorers, a file now shows as on the Highlights tab: the file name first, with
