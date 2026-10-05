@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    ${sokrates-theme}
+    <title>AI Cost Estimator</title>
+    <style>
+        body {
+            font-family: var(--sk-font);
+            color: var(--sk-text);
+            background: var(--sk-bg);
+            box-sizing: border-box;
+            margin: 0;
+            padding: 12px 12px 40px 12px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        h3 {
+            font-size: 78%;
+            font-weight: 600;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--sk-text-muted);
+            margin: 26px 0 8px 0;
+        }
+
+        .muted {
+            color: var(--sk-text-muted);
+        }
+
+        .small {
+            font-size: 80%;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px 14px;
+            font-size: 85%;
+        }
+
+        .toolbar label, .priors label {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--sk-text-muted);
+        }
+
+        input, select {
+            font: inherit;
+            color: var(--sk-text);
+            background: var(--sk-surface-2);
+            border: 1px solid transparent;
+            border-radius: 5px;
+            padding: 2px 6px;
+        }
+
+        input:hover, input:focus, select:hover, select:focus {
+            border-color: var(--sk-border-strong);
+            outline: none;
+        }
+
+        input[type=number] {
+            width: 70px;
+            text-align: right;
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        #filter {
+            width: 260px;
+        }
+
+        .action-button {
+            font-size: 90%;
+            color: var(--sk-accent);
+            background: none;
+            border: 1px solid var(--sk-border-strong);
+            border-radius: 4px;
+            padding: 2px 8px;
+            cursor: pointer;
+        }
+
+        .action-button:hover {
+            background-color: var(--sk-accent-soft);
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .card {
+            background: var(--sk-surface-2);
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+
+        .card .label {
+            font-size: 78%;
+            color: var(--sk-text-muted);
+        }
+
+        .card .value {
+            font-size: 150%;
+            font-weight: 600;
+            margin: 2px 0;
+        }
+
+        .card .detail {
+            font-size: 75%;
+            color: var(--sk-text-muted);
+            line-height: 1.4;
+        }
+
+        .scroll {
+            overflow-x: auto;
+        }
+
+        table.grid {
+            border-collapse: collapse;
+            font-size: 85%;
+            min-width: 100%;
+        }
+
+        table.grid th {
+            text-align: left;
+            font-weight: 600;
+            color: var(--sk-text-muted);
+            background: none;
+            border-bottom: 1px solid var(--sk-border-strong);
+            padding: 4px 8px;
+            white-space: nowrap;
+        }
+
+        table.grid td {
+            padding: 4px 8px;
+            border-bottom: 1px solid var(--sk-border);
+            white-space: nowrap;
+            height: auto;
+        }
+
+        table.grid .num {
+            text-align: right;
+        }
+
+        table.grid tr.total td {
+            font-weight: 600;
+        }
+
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th.sortable:hover, th.sort-active {
+            color: var(--sk-text);
+        }
+
+        .type {
+            display: inline-block;
+            font-size: 80%;
+            border-radius: 4px;
+            padding: 0 6px;
+            background: var(--sk-surface-3);
+            color: var(--sk-text);
+        }
+
+        .mono {
+            font-family: var(--sk-font-mono);
+            font-size: 90%;
+        }
+
+        .added {
+            color: var(--sk-added);
+        }
+
+        .deleted {
+            color: var(--sk-deleted);
+        }
+
+        /* Cost per period: one series of column bars, its own hover tooltip. */
+        #chart {
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 140px;
+            padding-top: 16px;
+            border-bottom: 1px solid var(--sk-border-strong);
+        }
+
+        #chart .col {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            align-items: flex-end;
+            cursor: default;
+        }
+
+        #chart .bar {
+            width: 100%;
+            min-height: 1px;
+            background: var(--sk-accent);
+            border-radius: 3px 3px 0 0;
+            opacity: .8;
+        }
+
+        #chart .col:hover .bar {
+            opacity: 1;
+        }
+
+        #chart-max {
+            position: absolute;
+            top: 0;
+            left: 0;
+            font-size: 70%;
+            color: var(--sk-text-faint);
+        }
+
+        #chart-axis {
+            display: flex;
+            justify-content: space-between;
+            font-size: 70%;
+            color: var(--sk-text-faint);
+            margin-top: 3px;
+        }
+
+        #tip {
+            position: fixed;
+            z-index: 10;
+            pointer-events: none;
+            display: none;
+            padding: 6px 9px;
+            font-size: 75%;
+            line-height: 1.45;
+            white-space: nowrap;
+            color: var(--sk-text);
+            background: var(--sk-surface);
+            border: 1px solid var(--sk-border);
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        details.priors {
+            margin-top: 8px;
+            font-size: 85%;
+        }
+
+        details.priors > summary {
+            cursor: pointer;
+            color: var(--sk-accent);
+        }
+
+        .prior-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+            gap: 6px 22px;
+            margin: 10px 0;
+        }
+
+        .prior-grid > div {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .prior-grid .name {
+            flex: 1;
+            color: var(--sk-text-muted);
+        }
+
+        .notes {
+            font-size: 82%;
+            color: var(--sk-text-muted);
+            line-height: 1.55;
+            max-width: 900px;
+        }
+
+        .notes li {
+            margin-bottom: 3px;
+        }
+
+        #loading {
+            color: var(--sk-text-muted);
+            padding: 40px 4px;
+        }
+
+        @media (max-width: 600px) {
+            #filter {
+                width: 100%;
+            }
+        }
+    </style>
+    ${sokrates-inflate-lib}
+</head>
+<body>
+<div id="loading">Simulating…</div>
+<div id="report" style="display: none">
+    <div id="empty" class="muted" style="display: none; padding: 20px 0">
+        There are no commits to estimate: the analysis has no git history, or everything in it was filtered out as noise.
+    </div>
+    <div id="content">
+        <div class="toolbar">
+            <input id="filter" type="text" placeholder="filter tasks: author, ticket, sha, type (; = or)" oninput="schedule(render)">
+            <label>from <input type="date" id="date-from" onchange="render()"></label>
+            <label>to <input type="date" id="date-to" onchange="render()"></label>
+            <select id="date-preset" onchange="applyPreset(this.value)" title="a period ending at the latest commit">
+                <option value="">period…</option>
+                <option value="30">past 30 days</option>
+                <option value="90">past 3 months</option>
+                <option value="180">past 6 months</option>
+                <option value="365">past year</option>
+                <option value="730">past 2 years</option>
+                <option value="all">all time</option>
+            </select>
+        </div>
+        <div class="toolbar" style="margin-top: 8px">
+            <span class="muted">price per 1M tokens:</span>
+            <label>input <input type="number" id="p-in" value="3" step="0.1" min="0"></label>
+            <label>output <input type="number" id="p-out" value="15" step="0.1" min="0"></label>
+            <label>cache write <input type="number" id="p-cw" value="3.75" step="0.05" min="0"></label>
+            <label>cache read <input type="number" id="p-cr" value="0.3" step="0.01" min="0"></label>
+            <label>currency <input type="text" id="currency" value="$" style="width: 34px; text-align: center"></label>
+        </div>
+
+        <details class="priors" id="priors">
+            <summary>Assumptions (priors) — each is a range; the simulation draws from it</summary>
+            <div class="prior-grid" id="prior-grid"></div>
+            <button class="action-button" onclick="resetInputs()">reset to defaults</button>
+        </details>
+
+        <div class="cards" id="cards"></div>
+
+        <h3>By task type</h3>
+        <div class="scroll"><table class="grid" id="types"></table></div>
+
+        <h3 id="chart-title">Estimated cost per month</h3>
+        <div id="chart"><span id="chart-max"></span></div>
+        <div id="chart-axis"></div>
+
+        <h3>Tasks</h3>
+        <div class="toolbar" style="margin-bottom: 6px">
+            <span id="tasks-summary" class="muted"></span>
+            <button class="action-button" onclick="downloadCsv()">download tasks CSV</button>
+        </div>
+        <div class="scroll"><table class="grid" id="tasks"></table></div>
+        <div style="margin-top: 8px"><button class="action-button" id="more" onclick="showMore()">show more</button></div>
+
+
+        <h3>How it works</h3>
+        <div class="notes">
+            <ul>
+                <li><b>Tasks</b> come from the commits. Commits that mention the same ticket id (e.g. ABC-123) are one task<span id="ticket-note"></span>.
+                    Otherwise a task is consecutive commits by the same author, at most a day apart, touching overlapping files
+                    (the history has dates, not times). Tasks are split into <b>sessions</b> of at most 10 files or 400 changed lines.</li>
+                <li><b>Reads</b> use the current size of the edited files (at most 2,000 lines per file), times a read amplification for
+                    re-reads and unchanged neighbouring files, plus exploration reads per session. New files are written, not read; deleted files cost nothing.</li>
+                <li><b>Writes</b> come from the churn: an edit to an existing file costs more per line (the edit repeats the old text and some context) than a line in a new file.</li>
+                <li><b>Agent steps</b> are a base number plus a number per touched file. Every step sends the whole context again;
+                    most of it is a cache read, a share is a cache miss. Tool output and reasoning are added per step.</li>
+                <li><b>Task type</b> comes from the shape of the task: <i>new code</i> (most lines in new files), <i>refactoring</i> (broad, deletes about as much as it adds),
+                    <i>fix</i> (at most 60 lines in at most 3 files) or <i>feature</i> (the rest). It sets the read amplification.</li>
+                <li><b>Still priors:</b> tool output, reasoning, cache misses and non-coding sessions. Git cannot see the agent's behaviour, so the result is a range (P10–P90 of
+                    <span id="draws"></span> simulations), not a measurement.</li>
+                <li><b>Left out as noise:</b> <span id="noise"></span></li>
+                <li><b>Smell test:</b> the cost per developer-day compares with the reference you set (by default the about $13 per developer per active day reported for
+                    Claude Code in enterprises). Open-source histories with many drive-by contributors land far lower; a large gap for a company team means the priors need a look,
+                    or that agent-assisted developers do more per day than the history shows.</li>
+                <li><b>Calibrate with a replay pilot:</b> pick 20–30 tasks from the CSV across types and sizes, check out the parent of each task's first commit
+                    (<span class="mono">git checkout &lt;first_sha&gt;^</span>), give an agent the commit message or ticket text as the prompt, record what each session
+                    actually used, and compare with the task's estimate. Then adjust the priors above.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+<div id="tip"></div>
+<script>
+    const imported = ${data};
+
+    const authors = imported.authors || [];
+    const tasks = imported.tasks || [];
+    const noise = imported.noise || {};
+    const ticketPrefixes = imported.ticketPrefixes || [];
+
+    const TYPES = [
+        ['new', 'New code', 'most lines in new files'],
+        ['feature', 'Feature', 'edits and additions to existing files'],
+        ['fix', 'Fix', 'small: at most 60 lines in at most 3 files'],
+        ['refactor', 'Refactoring', 'broad, deletes about as much as it adds']
+    ];
+    const TYPE_LABELS = {};
+    TYPES.forEach(t => TYPE_LABELS[t[0]] = t[1]);
+
+    // [id, label, min, max, unit, step]
+    const PRIORS = [
+        ['tpl', 'tokens per line of code', 7, 14, 'tokens', 1],
+        ['base', 'base context (system prompt, tools, instructions)', 12000, 25000, 'tokens', 1000],
+        ['explore', 'exploration reads per session', 200, 1000, 'lines', 50],
+        ['amp-new', 'read amplification — new code', 1.2, 2, '×', 0.1],
+        ['amp-feature', 'read amplification — feature', 1.5, 3, '×', 0.1],
+        ['amp-fix', 'read amplification — fix', 2, 4, '×', 0.1],
+        ['amp-refactor', 'read amplification — refactoring', 1.5, 2.5, '×', 0.1],
+        ['steps', 'agent steps per session', 10, 25, 'steps', 1],
+        ['steps-file', 'extra agent steps per touched file', 3, 6, 'steps', 0.5],
+        ['tool', 'tool output per step (commands, searches, diffs)', 300, 1200, 'tokens', 50],
+        ['reason', 'reasoning output per step', 150, 600, 'tokens', 50],
+        ['edit', 'write overhead per edited line', 1.3, 2.5, '×', 0.1],
+        ['create', 'write overhead per new line', 1, 1.2, '×', 0.05],
+        ['miss', 'cache misses', 5, 20, '%', 1]
+    ];
+    // [id, label, default, unit, step]
+    const SINGLES = [
+        ['window', 'context window', 200000, 'tokens', 10000],
+        ['reference', 'reference cost per developer per active day', 13, '', 1]
+    ];
+    const PRICE_IDS = ['p-in', 'p-out', 'p-cw', 'p-cr', 'currency'];
+    const STORAGE_KEY = 'sokrates-ai-cost-estimator';
+
+    // ------------------------------------------------------------------------------- helpers
+
+    function escapeHtml(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+    }
+
+    function num(id) {
+        const v = parseFloat(document.getElementById(id).value);
+        return isFinite(v) && v >= 0 ? v : 0;
+    }
+
+    function currency() {
+        return document.getElementById('currency').value || '';
+    }
+
+    function money(v) {
+        const c = escapeHtml(currency());
+        if (v > 0 && v < 0.01) return '&lt;' + c + '0.01';
+        if (v >= 1e6) return c + (v / 1e6).toFixed(v >= 1e7 ? 0 : 1) + 'M';
+        if (v >= 1e4) return c + Math.round(v / 1e3) + 'k';
+        if (v >= 100) return c + Math.round(v).toLocaleString('en-US');
+        return c + v.toFixed(2);
+    }
+
+    function compact(v) {
+        if (v >= 1e9) return (v / 1e9).toFixed(1) + 'B';
+        if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
+        if (v >= 1e3) return (v / 1e3).toFixed(v >= 1e4 ? 0 : 1) + 'k';
+        return Math.round(v).toString();
+    }
+
+    function int(v) {
+        return Math.round(v).toLocaleString('en-US');
+    }
+
+    function quantile(sorted, p) {
+        if (!sorted.length) return 0;
+        const i = (sorted.length - 1) * p;
+        const lo = Math.floor(i), hi = Math.ceil(i);
+        return sorted[lo] + (sorted[hi] - sorted[lo]) * (i - lo);
+    }
+
+    function quantiles(values) {
+        const sorted = Array.from(values).sort((a, b) => a - b);
+        return {p10: quantile(sorted, 0.1), p50: quantile(sorted, 0.5), p90: quantile(sorted, 0.9)};
+    }
+
+    // Seeded, so the same inputs always give the same numbers.
+    function mulberry32(seed) {
+        return function () {
+            seed |= 0;
+            seed = seed + 0x6D2B79F5 | 0;
+            let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+            t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+            return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        };
+    }
+
+    let timer = null;
+
+    function schedule(fn) {
+        clearTimeout(timer);
+        timer = setTimeout(fn, 250);
+    }
+
+    // ------------------------------------------------------------------------------- inputs
+
+    function buildPriorInputs() {
+        let html = '';
+        PRIORS.forEach(p => {
+            html += '<div><span class="name">' + escapeHtml(p[1]) + '</span>'
+                + '<input type="number" id="' + p[0] + '-min" value="' + p[2] + '" step="' + p[5] + '" min="0"> – '
+                + '<input type="number" id="' + p[0] + '-max" value="' + p[3] + '" step="' + p[5] + '" min="0">'
+                + '<span class="muted small" style="width: 40px">' + escapeHtml(p[4]) + '</span></div>';
+        });
+        SINGLES.forEach(p => {
+            html += '<div><span class="name">' + escapeHtml(p[1]) + '</span>'
+                + '<input type="number" id="' + p[0] + '" value="' + p[2] + '" step="' + p[4] + '" min="0" style="width: 90px">'
+                + '<span class="muted small" style="width: 40px">' + escapeHtml(p[3]) + '</span></div>';
+        });
+        document.getElementById('prior-grid').innerHTML = html;
+    }
+
+    function inputIds() {
+        const ids = PRICE_IDS.slice();
+        PRIORS.forEach(p => ids.push(p[0] + '-min', p[0] + '-max'));
+        SINGLES.forEach(p => ids.push(p[0]));
+        return ids;
+    }
+
+    const defaults = {};
+
+    function rememberDefaults() {
+        inputIds().forEach(id => defaults[id] = document.getElementById(id).value);
+    }
+
+    function restoreInputs() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            inputIds().forEach(id => {
+                if (saved[id] != null && saved[id] !== '') document.getElementById(id).value = saved[id];
+            });
+        } catch (e) {
+        }
+    }
+
+    function saveInputs() {
+        try {
+            const values = {};
+            inputIds().forEach(id => values[id] = document.getElementById(id).value);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
+        } catch (e) {
+        }
+    }
+
+    function resetInputs() {
+        inputIds().forEach(id => document.getElementById(id).value = defaults[id]);
+        try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+        simulate();
+        render();
+    }
+
+    function range(id) {
+        const a = num(id + '-min'), b = num(id + '-max');
+        return [Math.min(a, b), Math.max(a, b)];
+    }
+
+    // ------------------------------------------------------------------------------- the model
+
+    // Draws per task: enough for stable P10/P90 while the arrays stay small on big histories.
+    const DRAWS = Math.max(40, Math.min(200, Math.floor(3000000 / Math.max(1, tasks.length))));
+    let costs = new Float32Array(0), inputs = new Float32Array(0), cached = new Float32Array(0), outputs = new Float32Array(0);
+
+    // One session's tokens and cost for one draw of the priors (theta).
+    function session(s, amp, theta, prices) {
+        const files = s[0], readLines = s[1], editLines = s[2] + s[3], newLines = s[4];
+        const reads = (readLines * amp + theta.explore) * theta.tpl;
+        const writes = (editLines * theta.edit + newLines * theta.create) * theta.tpl;
+        const steps = theta.steps + theta.stepsFile * files;
+        const output = writes + steps * theta.reason;
+        const grown = reads + steps * theta.tool + output;
+        const peak = Math.min(theta.window, theta.base + grown);
+        const input = Math.max(steps * (theta.base + peak) / 2, theta.base + grown);
+        const written = Math.min(input, theta.base + grown);
+        const reread = input - written;
+        const cost = (written * prices.cw + reread * (theta.miss * prices.in + (1 - theta.miss) * prices.cr) + output * prices.out) / 1e6;
+        return [cost, input, reread * (1 - theta.miss), output];
+    }
+
+    function simulate() {
+        const random = mulberry32(42);
+        const draw = id => {
+            const r = range(id);
+            return r[0] + (r[1] - r[0]) * random();
+        };
+        const prices = {in: num('p-in'), out: num('p-out'), cw: num('p-cw'), cr: num('p-cr')};
+        const n = tasks.length;
+        costs = new Float32Array(n * DRAWS);
+        inputs = new Float32Array(n * DRAWS);
+        cached = new Float32Array(n * DRAWS);
+        outputs = new Float32Array(n * DRAWS);
+        for (let d = 0; d < DRAWS; d++) {
+            const theta = {
+                tpl: draw('tpl'), base: draw('base'), explore: draw('explore'), steps: draw('steps'), stepsFile: draw('steps-file'),
+                tool: draw('tool'), reason: draw('reason'), edit: draw('edit'), create: draw('create'), miss: draw('miss') / 100,
+                window: Math.max(1, num('window')),
+                amp: {new: draw('amp-new'), feature: draw('amp-feature'), fix: draw('amp-fix'), refactor: draw('amp-refactor')}
+            };
+            for (let t = 0; t < n; t++) {
+                const task = tasks[t];
+                const amp = theta.amp[task.type] || theta.amp.feature;
+                let c = 0, i = 0, k = 0, o = 0;
+                task.sessions.forEach(s => {
+                    const r = session(s, amp, theta, prices);
+                    c += r[0];
+                    i += r[1];
+                    k += r[2];
+                    o += r[3];
+                });
+                const at = t * DRAWS + d;
+                costs[at] = c;
+                inputs[at] = i;
+                cached[at] = k;
+                outputs[at] = o;
+            }
+        }
+        tasks.forEach((task, t) => {
+            const q = quantiles(costs.subarray(t * DRAWS, (t + 1) * DRAWS));
+            task.p10 = q.p10;
+            task.p50 = q.p50;
+            task.p90 = q.p90;
+            task.inputP50 = quantiles(inputs.subarray(t * DRAWS, (t + 1) * DRAWS)).p50;
+            task.outputP50 = quantiles(outputs.subarray(t * DRAWS, (t + 1) * DRAWS)).p50;
+        });
+    }
+
+    // Per-draw sums over a set of tasks, so a total keeps the correlation between tasks (one draw = one world).
+    function sums(list, array) {
+        const out = new Float64Array(DRAWS);
+        list.forEach(task => {
+            const offset = task.idx * DRAWS;
+            for (let d = 0; d < DRAWS; d++) out[d] += array[offset + d];
+        });
+        return out;
+    }
+
+    // ------------------------------------------------------------------------------- data prep
+
+    let firstDate = '', latestDate = '';
+    tasks.forEach((task, idx) => {
+        task.idx = idx;
+        task.churn = task.editAdded + task.editDeleted + task.newLines;
+        const names = [];
+        task.commits.forEach(c => {
+            const a = authors[c.author] || {};
+            const name = a.name || a.email || '';
+            if (names.indexOf(name) < 0) names.push(name);
+        });
+        task.authorNames = names;
+        task.search = (names.join(' ') + ' ' + task.commits.map(c => (authors[c.author] || {}).email + ' ' + c.sha).join(' ')
+            + ' ' + task.ticket + ' ' + task.type + ' ' + (TYPE_LABELS[task.type] || '')).toLowerCase();
+        if (!firstDate || task.start < firstDate) firstDate = task.start;
+        if (!latestDate || task.end > latestDate) latestDate = task.end;
+    });
+
+    function filtered() {
+        const from = document.getElementById('date-from').value;
+        const to = document.getElementById('date-to').value;
+        const terms = document.getElementById('filter').value.toLowerCase().split(';').map(t => t.trim()).filter(t => t);
+        return tasks.filter(task => (!from || task.start >= from) && (!to || task.start <= to)
+            && (!terms.length || terms.some(term => task.search.indexOf(term) >= 0)));
+    }
+
+    function applyPreset(value) {
+        const from = document.getElementById('date-from'), to = document.getElementById('date-to');
+        if (value === 'all') {
+            from.value = '';
+            to.value = '';
+        } else if (value) {
+            const d = new Date(latestDate + 'T00:00:00Z');
+            d.setUTCDate(d.getUTCDate() - parseInt(value, 10) + 1);
+            from.value = d.toISOString().substring(0, 10);
+            to.value = latestDate;
+        }
+        document.getElementById('date-preset').value = '';
+        render();
+    }
+
+    // ------------------------------------------------------------------------------- rendering
+
+    function card(label, value, detail) {
+        return '<div class="card"><div class="label">' + label + '</div><div class="value">' + value + '</div><div class="detail">' + detail + '</div></div>';
+    }
+
+    function rangeText(q) {
+        return 'P10–P90: ' + money(q.p10) + ' – ' + money(q.p90);
+    }
+
+    function scaled(q, factor) {
+        return {p10: q.p10 * factor, p50: q.p50 * factor, p90: q.p90 * factor};
+    }
+
+    function renderCards(list) {
+        const cost = quantiles(sums(list, costs));
+        const input = quantiles(sums(list, inputs)).p50;
+        const cachedInput = quantiles(sums(list, cached)).p50;
+        const output = quantiles(sums(list, outputs)).p50;
+        const churn = list.reduce((s, t) => s + t.churn, 0);
+        const sessions = list.reduce((s, t) => s + t.sessions.length, 0);
+        const commits = list.reduce((s, t) => s + t.commits.length, 0);
+        const devDays = new Set();
+        list.forEach(t => t.commits.forEach(c => devDays.add(c.author + '|' + c.date)));
+        const perK = churn ? scaled(cost, 1000 / churn) : {p10: 0, p50: 0, p90: 0};
+        const perDay = devDays.size ? scaled(cost, 1 / devDays.size) : {p10: 0, p50: 0, p90: 0};
+        const reference = num('reference');
+        let html = '';
+        html += card('Estimated AI cost', money(cost.p50), rangeText(cost) + '<br>for ' + int(list.length) + ' tasks');
+        html += card('Per 1,000 churned lines', money(perK.p50), rangeText(perK) + '<br>' + int(churn) + ' lines added or changed');
+        html += card('Per developer-day', money(perDay.p50), rangeText(perDay) + '<br>' + int(devDays.size) + ' developer-days'
+            + (reference ? ' · reference ' + money(reference) : ''));
+        html += card('Tokens', compact(input + output), compact(input) + ' input (' + (input ? Math.round(100 * cachedInput / input) : 0) + '% cache reads)'
+            + '<br>' + compact(output) + ' output');
+        html += card('Work', int(sessions) + ' sessions', int(list.length) + ' tasks · ' + int(commits) + ' commits'
+            + '<br>' + (list.length ? (sessions / list.length).toFixed(1) : '0') + ' sessions per task');
+        document.getElementById('cards').innerHTML = html;
+        return cost;
+    }
+
+    function renderTypes(list, total) {
+        let html = '<tr><th>type</th><th>what</th><th class="num">tasks</th><th class="num">sessions</th><th class="num">churned lines</th>'
+            + '<th class="num">cost (P50)</th><th class="num">P10–P90</th><th class="num">share</th><th class="num">per 1,000 lines</th></tr>';
+        TYPES.forEach(type => {
+            const of = list.filter(t => t.type === type[0]);
+            if (!of.length) return;
+            const q = quantiles(sums(of, costs));
+            const churn = of.reduce((s, t) => s + t.churn, 0);
+            html += '<tr><td><span class="type">' + type[1] + '</span></td><td class="muted">' + type[2] + '</td>'
+                + '<td class="num">' + int(of.length) + '</td>'
+                + '<td class="num">' + int(of.reduce((s, t) => s + t.sessions.length, 0)) + '</td>'
+                + '<td class="num">' + int(churn) + '</td>'
+                + '<td class="num">' + money(q.p50) + '</td>'
+                + '<td class="num muted">' + money(q.p10) + ' – ' + money(q.p90) + '</td>'
+                + '<td class="num">' + (total.p50 ? Math.round(100 * q.p50 / total.p50) : 0) + '%</td>'
+                + '<td class="num">' + (churn ? money(q.p50 * 1000 / churn) : '') + '</td></tr>';
+        });
+        document.getElementById('types').innerHTML = html;
+    }
+
+    let chartPeriods = [];
+
+    function renderChart(list) {
+        const months = {};
+        list.forEach(t => (months[t.start.substring(0, 7)] = months[t.start.substring(0, 7)] || []).push(t));
+        const keys = Object.keys(months).sort();
+        const byYear = keys.length > 48;
+        const periods = {};
+        if (keys.length) {
+            // Every period between the first and the last, empty ones kept as gaps.
+            let [y, m] = keys[0].split('-').map(Number);
+            const last = keys[keys.length - 1];
+            while (true) {
+                const key = y + '-' + String(m).padStart(2, '0');
+                const pk = byYear ? String(y) : key;
+                periods[pk] = (periods[pk] || []).concat(months[key] || []);
+                if (key >= last) break;
+                m++;
+                if (m > 12) { m = 1; y++; }
+            }
+        }
+        // Latest period on the left, like the commits explorer's timeline.
+        chartPeriods = Object.keys(periods).sort().reverse().map(key => {
+            const of = periods[key];
+            const q = quantiles(sums(of, costs));
+            return {key, q, tasks: of.length, churn: of.reduce((s, t) => s + t.churn, 0)};
+        });
+        document.getElementById('chart-title').textContent = 'Estimated cost per ' + (byYear ? 'year' : 'month') + ' (P50, by task start)';
+        const max = Math.max(0, ...chartPeriods.map(p => p.q.p50));
+        let html = '<span id="chart-max">' + (max ? money(max) : '') + '</span>';
+        chartPeriods.forEach((p, i) => {
+            const h = max ? Math.max(p.q.p50 ? 1 : 0, 100 * p.q.p50 / max) : 0;
+            html += '<div class="col" onmousemove="chartTip(' + i + ', event)" onmouseleave="hideTip()"><div class="bar" style="height: ' + h + '%"></div></div>';
+        });
+        document.getElementById('chart').innerHTML = html;
+        document.getElementById('chart-axis').innerHTML = chartPeriods.length
+            ? '<span>' + chartPeriods[0].key + '</span><span>' + chartPeriods[chartPeriods.length - 1].key + '</span>' : '';
+    }
+
+    function chartTip(i, event) {
+        const p = chartPeriods[i];
+        const tip = document.getElementById('tip');
+        tip.innerHTML = '<b>' + p.key + '</b><br>' + money(p.q.p50) + ' (P10–P90 ' + money(p.q.p10) + ' – ' + money(p.q.p90) + ')<br>'
+            + int(p.tasks) + ' tasks · ' + int(p.churn) + ' churned lines';
+        tip.style.display = 'block';
+        const x = Math.min(event.clientX + 12, window.innerWidth - tip.offsetWidth - 8);
+        tip.style.left = Math.max(4, x) + 'px';
+        tip.style.top = (event.clientY + 14) + 'px';
+    }
+
+    function hideTip() {
+        document.getElementById('tip').style.display = 'none';
+    }
+
+    // Tasks table: click-to-sort, show-more paging.
+    const COLUMNS = [
+        ['start', 'start', false],
+        ['author', 'author', false],
+        ['ticket', 'ticket', false],
+        ['type', 'type', false],
+        ['commits', 'commits', true],
+        ['files', 'files', true],
+        ['churn', 'churned lines', true],
+        ['sessions', 'sessions', true],
+        ['p50', 'cost (P50)', true],
+        ['p90', 'P10–P90', true]
+    ];
+    let sortKey = 'p50', sortDesc = true, pageSize = 100, lastList = [];
+
+    function sortValue(task, key) {
+        switch (key) {
+            case 'author': return (task.authorNames[0] || '').toLowerCase();
+            case 'commits': return task.commits.length;
+            case 'sessions': return task.sessions.length;
+            default: return task[key];
+        }
+    }
+
+    function sortBy(key) {
+        if (sortKey === key) {
+            sortDesc = !sortDesc;
+        } else {
+            sortKey = key;
+            sortDesc = COLUMNS.find(c => c[0] === key)[2];
+        }
+        renderTasks();
+    }
+
+    function showMore() {
+        pageSize += 100;
+        renderTasks();
+    }
+
+    function renderTasks() {
+        const list = lastList.slice().sort((a, b) => {
+            const x = sortValue(a, sortKey), y = sortValue(b, sortKey);
+            return (x < y ? -1 : x > y ? 1 : 0) * (sortDesc ? -1 : 1);
+        });
+        let html = '<tr>' + COLUMNS.map(c => '<th class="sortable' + (c[2] ? ' num' : '') + (c[0] === sortKey ? ' sort-active' : '')
+            + '" onclick="sortBy(\'' + c[0] + '\')">' + c[1] + (c[0] === sortKey ? (sortDesc ? ' ▾' : ' ▴') : '') + '</th>').join('') + '</tr>';
+        list.slice(0, pageSize).forEach(task => {
+            const shas = task.commits.map(c => c.sha + ' ' + c.date).join('\n');
+            const author = task.authorNames[0] + (task.authorNames.length > 1 ? ' +' + (task.authorNames.length - 1) : '');
+            html += '<tr><td>' + escapeHtml(task.start) + (task.end !== task.start ? '<span class="muted"> → ' + escapeHtml(task.end.substring(5)) + '</span>' : '') + '</td>'
+                + '<td title="' + escapeHtml(task.authorNames.join(', ')) + '">' + escapeHtml(author) + '</td>'
+                + '<td class="mono">' + escapeHtml(task.ticket) + '</td>'
+                + '<td><span class="type">' + escapeHtml(TYPE_LABELS[task.type] || task.type) + '</span></td>'
+                + '<td class="num" title="' + escapeHtml(shas) + '">' + task.commits.length + '</td>'
+                + '<td class="num">' + task.files + (task.deletedFiles ? '<span class="muted" title="' + task.deletedFiles + ' files deleted (no cost)"> −' + task.deletedFiles + '</span>' : '') + '</td>'
+                + '<td class="num" title="' + task.editAdded + ' added and ' + task.editDeleted + ' deleted in existing files, ' + task.newLines + ' in new files">'
+                + int(task.churn) + '</td>'
+                + '<td class="num">' + task.sessions.length + '</td>'
+                + '<td class="num">' + money(task.p50) + '</td>'
+                + '<td class="num muted">' + money(task.p10) + ' – ' + money(task.p90) + '</td></tr>';
+        });
+        document.getElementById('tasks').innerHTML = html;
+        document.getElementById('more').style.display = list.length > pageSize ? '' : 'none';
+        document.getElementById('tasks-summary').textContent = list.length > pageSize
+            ? 'showing ' + int(pageSize) + ' of ' + int(list.length) + ' tasks' : int(list.length) + ' tasks';
+    }
+
+    function render() {
+        lastList = filtered();
+        pageSize = 100;
+        const total = renderCards(lastList);
+        renderTypes(lastList, total);
+        renderChart(lastList);
+        renderTasks();
+    }
+
+    function csvCell(v) {
+        const s = String(v == null ? '' : v);
+        return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }
+
+    function downloadCsv() {
+        const header = ['start', 'end', 'type', 'ticket', 'authors', 'commits', 'first_sha', 'last_sha', 'shas', 'files', 'deleted_files',
+            'edit_added', 'edit_deleted', 'new_lines', 'churn', 'sessions', 'input_tokens_p50', 'output_tokens_p50', 'cost_p10', 'cost_p50', 'cost_p90'];
+        const rows = [header.join(',')];
+        lastList.forEach(t => {
+            rows.push([t.start, t.end, t.type, t.ticket, t.authorNames.join('; '), t.commits.length, t.commits[0].sha,
+                t.commits[t.commits.length - 1].sha, t.commits.map(c => c.sha).join(' '), t.files, t.deletedFiles, t.editAdded,
+                t.editDeleted, t.newLines, t.churn, t.sessions.length, Math.round(t.inputP50), Math.round(t.outputP50),
+                t.p10.toFixed(4), t.p50.toFixed(4), t.p90.toFixed(4)].map(csvCell).join(','));
+        });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(new Blob([rows.join('\n') + '\n'], {type: 'text/csv'}));
+        link.download = 'ai-cost-estimator-tasks.csv';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    }
+
+    function renderNotes() {
+        const parts = [];
+        const add = (count, text) => { if (count) parts.push(int(count) + ' ' + text); };
+        add(noise.botCommits, 'bot commits');
+        add(noise.massCommits, 'commits touching more than 300 files');
+        add(noise.lockFileChanges, 'lockfile changes');
+        add(noise.vendoredChanges, 'changes in vendored paths');
+        add(noise.generatedChanges, 'changes in generated paths');
+        add(noise.oversizedChanges, 'single file changes over 3,000 lines');
+        add(noise.emptiedCommits, 'commits with nothing left after that');
+        let text = parts.length ? parts.join(', ') + ' (' + int(noise.droppedLines || 0) + ' lines).' : 'nothing in this history.';
+        text += ' Merge commits are not in the extracted history.';
+        if (imported.analyzedCommitsCount < imported.keptCommitsCount) {
+            text += ' Only the newest ' + int(imported.analyzedCommitsCount) + ' of ' + int(imported.keptCommitsCount) + ' commits are estimated.';
+        }
+        document.getElementById('noise').textContent = text;
+        document.getElementById('ticket-note').textContent = ticketPrefixes.length
+            ? ' (ticket prefixes found: ' + ticketPrefixes.join(', ') + ')' : ' (no ticket ids found in this history)';
+        document.getElementById('draws').textContent = DRAWS;
+    }
+
+    (function init() {
+        buildPriorInputs();
+        rememberDefaults();
+        restoreInputs();
+        inputIds().forEach(id => document.getElementById(id).addEventListener('input', () => {
+            saveInputs();
+            schedule(() => {
+                simulate();
+                render();
+            });
+        }));
+        ['date-from', 'date-to'].forEach(id => {
+            const el = document.getElementById(id);
+            el.min = firstDate;
+            el.max = latestDate;
+        });
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            if (!tasks.length) {
+                document.getElementById('content').style.display = 'none';
+                document.getElementById('empty').style.display = 'block';
+            } else {
+                renderNotes();
+                simulate();
+                render();
+            }
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('report').style.display = 'block';
+        }));
+    })();
+</script>
+</body>
+</html>

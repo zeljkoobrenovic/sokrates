@@ -61,6 +61,8 @@ public class CommitsExplorerGenerators {
             File folder = new File(reportsFolder, "explorers");
             folder.mkdirs();
             FileUtils.write(new File(folder, "commits-explorer.html"), commitsExplorer, UTF_8);
+
+            new AiCostEstimatorGenerator(reportsFolder).export(currentFiles, fileUpdates, messagesBySha);
         } catch (IOException e) {
             e.printStackTrace();
         }

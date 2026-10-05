@@ -76,6 +76,7 @@ public class ReportFileExporter {
         indexReport.addTab("units", "Units*", false);
         // The plain "commits" id is taken by the Activity tab above.
         indexReport.addTab("commits-explorer", "Commits", false);
+        indexReport.addTab("ai-cost", "AI Cost Estimator", false);
         indexReport.addTab("visuals", "Visuals", false);
         indexReport.addTab("data", "Data", false);
         for (int i = 0; i < customTabs.size(); i++) {
@@ -181,6 +182,12 @@ public class ReportFileExporter {
         indexReport.startTabContentSection("commits-explorer", false);
         indexReport.addLineBreak();
         indexReport.addHtmlContent("<iframe src='../explorers/commits-explorer.html' style='width: 100%; border: none; height: calc(100vh - 220px); overflow: hidden; margin-top: -12px'></iframe>");
+
+        indexReport.endTabContentSection();
+
+        indexReport.startTabContentSection("ai-cost", false);
+        indexReport.addLineBreak();
+        indexReport.addHtmlContent("<iframe data-sk-src='../explorers/ai-cost-estimator.html' style='width: 100%; border: none; height: calc(100vh - 220px); margin-top: -12px'></iframe>");
 
         indexReport.endTabContentSection();
 
@@ -606,6 +613,8 @@ public class ReportFileExporter {
                 "Search, filter and sort the units (functions, methods) by size and complexity.");
         explorers.addTabItem("commits-explorer", "Commit Explorer", "index.html#commits-explorer", "commits",
                 "Browse the commits and see which files each one changed.");
+        explorers.addTabItem("ai-cost", "AI Cost Estimator", "index.html#ai-cost", "cost",
+                "What the history would cost if an AI coding agent had written it: tasks, sessions, tokens and a P10–P90 range.");
         ReportNavigation.Group analyses = navigation.addGroup("Analyses");
         analyses.addTabItem("quality", "Analysis Overview", "index.html#quality", "analyses",
                 "A short summary of every analysis, with links to the full reports.");

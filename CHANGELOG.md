@@ -5,6 +5,20 @@ everything listed under the most recent date.
 
 ## 2026-10-05
 
+### AI Cost Estimator (new Explorers page)
+
+The repository report has a new **AI Cost Estimator** page (sidebar: Explorers): what the history would have cost if
+an AI coding agent had written it. Commits are grouped into tasks (by ticket id such as ABC-123 when the messages carry
+them, otherwise consecutive commits of one author at most a day apart touching overlapping files), tasks are split into
+sessions of at most 10 files or 400 changed lines, reads come from the current size of the edited files (at most 2,000
+lines each, times a read amplification per task type), writes from the churn (new files cheaper per line than edits,
+deleted files free), plus agent steps, tool output, reasoning and prompt caching. Every assumption is an editable range;
+a seeded simulation gives P10–P90 for the total, per task type, per month, per 1,000 churned lines and per
+developer-day (with a reference to compare to, default $13). Bot commits, commits touching more than 300 files,
+lockfiles, vendored and generated paths and single file changes over 3,000 lines are left out. The task list can be
+downloaded as CSV (with the commit shas) for a replay pilot. Nothing changes in the existing reports or data; the page is
+written next to the commits explorer (`explorers/ai-cost-estimator.html`) and only needs the git history.
+
 ### Rule-of-thumb estimates: AI write tokens
 
 The rule-of-thumb estimates (repository and landscape At a Glance) have a new "AI write tokens" section: it prices the

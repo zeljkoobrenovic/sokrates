@@ -56,6 +56,7 @@ public class ReportNavigation {
         ICONS.put("metrics", "<path d='M4 9h16M4 15h16M10 3L8 21M16 3l-2 18'/>");
         ICONS.put("controls", "<circle cx='12' cy='12' r='9'/><circle cx='12' cy='12' r='5'/><circle cx='12' cy='12' r='1'/>");
         ICONS.put("notes", "<path d='M15 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z'/><path d='M15 21v-6h6'/>");
+        ICONS.put("cost", "<circle cx='12' cy='12' r='9'/><path d='M15 9.5c-.4-1.2-1.6-2-3-2-1.7 0-3 .9-3 2.2 0 3 6 1.6 6 4.6 0 1.3-1.3 2.2-3 2.2-1.4 0-2.6-.8-3-2M12 5.5v2M12 16.5v2'/>");
         ICONS.put("trend", "<path d='M3 17l6-6 4 4 8-8M15 7h6v6'/>");
     }
 
