@@ -38,6 +38,7 @@ public class DataImageUtils {
         map.put("go", "Go.png");
         map.put("pas", "Delphi_Object_Pascal.png");
         map.put("rb", "Ruby.png");
+        map.put("rbi", "Ruby.png");
         map.put("erb", "Ruby.png");
         map.put("gemspec", "Ruby.png");
         map.put("graphql", "graphql.png");
