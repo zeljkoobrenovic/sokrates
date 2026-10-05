@@ -20,6 +20,9 @@ import nl.obren.sokrates.reports.core.RuleOfThumbEstimates;
 import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.renderingutils.ExplorerTemplate;
 import java.util.HashMap;
+import nl.obren.sokrates.reports.generators.explorers.AiCostEstimatorData;
+import nl.obren.sokrates.reports.generators.explorers.AiCostEstimatorGenerator;
+import nl.obren.sokrates.reports.landscape.ai.AiCostEstimatorAggregator;
 import nl.obren.sokrates.reports.landscape.ai.AiInsightsAggregator;
 import nl.obren.sokrates.reports.landscape.ai.AiInsightsLandscapeExport;
 import nl.obren.sokrates.reports.landscape.data.LandscapeDataExport;
@@ -81,6 +84,7 @@ public class LandscapeReportGenerator {
     public static final String DATA_TAB_ID = "data";
     private static final String AI_INSIGHTS_TAB_ID = "ai-insights";
     public static final String AI_INSIGHTS_FILE_NAME = "ai-insights.html";
+    private static final String AI_COST_TAB_ID = "ai-cost";
     public static final String TEAMS_TAB_ID = "teams";
     public static final String CUSTOM_TAB_ID_PREFIX = "custom_tab_";
     public static final String CONTRIBUTORS_30_D = "contributors_30d_";
@@ -146,6 +150,7 @@ public class LandscapeReportGenerator {
     private final boolean dataOnly;
     // The AI scanner findings of the repositories (sokrates-skills, via -postAnalysis or by hand); empty when no repository has any.
     private AiInsightsLandscapeExport aiInsights = new AiInsightsLandscapeExport();
+    private AiCostEstimatorData aiCostEstimator = new AiCostEstimatorData();
     private File folder;
     private File reportsFolder;
     private Map<String, List<String>> contributorsPerWeekMap = new HashMap<>();
@@ -207,6 +212,7 @@ public class LandscapeReportGenerator {
 
         exportData(analysisResults, folder);
         exportAiInsightsData(repositories);
+        exportAiCostEstimatorData(repositories);
 
         if (dataOnly) {
             LOG.info("Data only: landscape data exported, skipping the report generation.");
@@ -225,6 +231,7 @@ public class LandscapeReportGenerator {
         addRepositoriesListTab();
         addContributorsListTab();
         addAiInsightsTab();
+        addAiCostEstimatorTab();
         addDataTab();
 
         landscapeReportContributorsTab.addContributorsTabs(CONTRIBUTORS_TAB_ID);
@@ -368,6 +375,9 @@ public class LandscapeReportGenerator {
         if (!aiInsights.isEmpty()) {
             landscapeReport.addTab(AI_INSIGHTS_TAB_ID, "AI Insights (" + aiInsights.getFindings().size() + ")", false);
         }
+        if (!aiCostEstimator.getTasks().isEmpty()) {
+            landscapeReport.addTab(AI_COST_TAB_ID, "AI Cost Estimator*", false);
+        }
         configuration.getCustomTabs().forEach(tab -> {
             int index = configuration.getCustomTabs().indexOf(tab);
             landscapeReport.addTabText(CUSTOM_TAB_ID_PREFIX + index, tab.getName(), false);
@@ -462,9 +472,17 @@ public class LandscapeReportGenerator {
         people.addTabItem(TOPOLOGIES_TAB_ID, "Topology", "index.html#" + TOPOLOGIES_TAB_ID, "dependencies",
                 "Who works with whom: contributors (and teams) connected by the repositories they share.");
 
-        if (!aiInsights.isEmpty()) {
-            navigation.addGroup("Insights").addTabItem(AI_INSIGHTS_TAB_ID, "AI Insights", "index.html#" + AI_INSIGHTS_TAB_ID, "ai",
-                    aiInsights.getFindings().size() + " findings of the AI scanners across the repositories.");
+        if (!aiInsights.isEmpty() || !aiCostEstimator.getTasks().isEmpty()) {
+            ReportNavigation.Group insights = navigation.addGroup("Insights");
+            if (!aiInsights.isEmpty()) {
+                insights.addTabItem(AI_INSIGHTS_TAB_ID, "AI Insights", "index.html#" + AI_INSIGHTS_TAB_ID, "ai",
+                        aiInsights.getFindings().size() + " findings of the AI scanners across the repositories.");
+            }
+            if (!aiCostEstimator.getTasks().isEmpty()) {
+                insights.addTabItem(AI_COST_TAB_ID, "AI Cost Estimator*", "index.html#" + AI_COST_TAB_ID, "cost",
+                        "*An experimental heuristic: what the history of " + aiCostEstimator.getRepositories().size()
+                                + " repositories would cost if an AI coding agent had written it.");
+            }
         }
         navigation.addGroup("Index").addTabItem(DATA_TAB_ID, "Data", "index.html#" + DATA_TAB_ID, "data",
                 "The landscape's data exports.");
@@ -490,6 +508,29 @@ public class LandscapeReportGenerator {
         } catch (IOException e) {
             LOG.error(e);
         }
+    }
+
+    /**
+     * Merges the repositories' AI Cost Estimator data (data/aiCostEstimator.json in their data.zip) into
+     * data/aiCostEstimator.json; the tab and page follow when there are tasks.
+     */
+    private void exportAiCostEstimatorData(List<RepositoryAnalysisResults> repositories) {
+        String prefix = landscapeAnalysisResults.getConfiguration().getRepositoryReportsUrlPrefix();
+        aiCostEstimator = AiCostEstimatorAggregator.aggregate(repositories, folder, prefix);
+        if (aiCostEstimator.getTasks().isEmpty()) {
+            return;
+        }
+        LOG.info("AI cost estimator: " + aiCostEstimator.getTasks().size() + " tasks in " + aiCostEstimator.getRepositories().size() + " repositories.");
+        AiCostEstimatorGenerator.saveData(aiCostEstimator, new File(folder, "data"));
+    }
+
+    /** The AI Cost Estimator tab: the same client-rendered page as a repository's, over all repositories' tasks. */
+    private void addAiCostEstimatorTab() {
+        if (aiCostEstimator.getTasks().isEmpty()) {
+            return;
+        }
+        new AiCostEstimatorGenerator(reportsFolder).exportPage(aiCostEstimator, reportsFolder);
+        addFullPageFrameTab(AI_COST_TAB_ID, AiCostEstimatorGenerator.PAGE_FILE_NAME);
     }
 
     /** The AI Insights tab: the client-rendered ai-insights.html (all findings, searchable; a Repositories view) in an iframe. */

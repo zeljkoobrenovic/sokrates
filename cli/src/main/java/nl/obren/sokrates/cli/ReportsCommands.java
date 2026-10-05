@@ -9,6 +9,8 @@ import nl.obren.sokrates.reports.generators.explorers.AiInsightsExplorerGenerato
 import nl.obren.sokrates.reports.core.ReportHtmlWriter;
 import nl.obren.sokrates.reports.core.RichTextReport;
 import nl.obren.sokrates.reports.dataexporters.DataExporter;
+import nl.obren.sokrates.reports.generators.explorers.AiCostEstimatorData;
+import nl.obren.sokrates.reports.generators.explorers.AiCostEstimatorGenerator;
 import nl.obren.sokrates.reports.generators.explorers.CommitsExplorerGenerators;
 import nl.obren.sokrates.reports.generators.explorers.FilesExplorerGenerators;
 import nl.obren.sokrates.reports.generators.explorers.UnitsExplorerGenerators;
@@ -128,6 +130,9 @@ class ReportsCommands {
             ProcessingStopwatch.start("saving data");
             dataExporter.saveData(sokratesConfigFile, codeConfiguration, reportsFolder, analysisResults);
             saveTextualSummary(reportsFolder, analysisResults);
+            // Also in -dataOnly runs: the landscape's AI Cost Estimator reads it from data.zip.
+            AiCostEstimatorData aiCostEstimator = AiCostEstimatorGenerator.build(analysisResults, sokratesConfigFile.getParentFile());
+            AiCostEstimatorGenerator.saveData(aiCostEstimator, dataExporter.getDataFolder());
             ProcessingStopwatch.end("saving data");
 
             if (!dataOnly) {
@@ -136,6 +141,7 @@ class ReportsCommands {
                 ProcessingStopwatch.end("generating visuals");
 
                 generateAndSaveReports(sokratesConfigFile, reportsFolder, sokratesConfigFile.getParentFile(), codeAnalyzer, analysisResults);
+                new AiCostEstimatorGenerator(reportsFolder).exportPage(aiCostEstimator);
             }
             saveExecutionStats(dataExporter.getDataFolder());
             // Final data step: package the whole data/ folder (incl. textual summary + execution

@@ -61,8 +61,6 @@ public class CommitsExplorerGenerators {
             File folder = new File(reportsFolder, "explorers");
             folder.mkdirs();
             FileUtils.write(new File(folder, "commits-explorer.html"), commitsExplorer, UTF_8);
-
-            new AiCostEstimatorGenerator(reportsFolder).export(codeAnalysisResults, fileUpdates, messagesBySha);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -91,7 +89,7 @@ public class CommitsExplorerGenerators {
         });
     }
 
-    private List<FileUpdate> readFileUpdates(CodeAnalysisResults results, File sokratesConfigFolder) {
+    static List<FileUpdate> readFileUpdates(CodeAnalysisResults results, File sokratesConfigFolder) {
         List<FileUpdate> updates = new ArrayList<>();
         if (sokratesConfigFolder == null) {
             return updates;
@@ -121,7 +119,7 @@ public class CommitsExplorerGenerators {
      * The first-message-line map from the optional git-commits.txt sidecar next to
      * git-history.txt; empty (message-less explorer) for histories extracted by older versions.
      */
-    private Map<String, String> readCommitMessages(CodeAnalysisResults results, File sokratesConfigFolder) {
+    static Map<String, String> readCommitMessages(CodeAnalysisResults results, File sokratesConfigFolder) {
         if (sokratesConfigFolder == null) {
             return new HashMap<>();
         }

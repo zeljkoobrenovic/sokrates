@@ -1,5 +1,7 @@
 package nl.obren.sokrates.reports.generators.explorers;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +18,28 @@ public class AiCostEstimatorData {
     private int keptCommitsCount = 0;
     private int analyzedCommitsCount = 0;
     private List<String> ticketPrefixes = new ArrayList<>();
+    // Landscape only: the repositories the tasks come from (Task.repo indexes it), and the task count
+    // before the newest-tasks cap.
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private List<Repository> repositories = new ArrayList<>();
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    private int totalTasksCount = 0;
+
+    public List<Repository> getRepositories() {
+        return repositories;
+    }
+
+    public void setRepositories(List<Repository> repositories) {
+        this.repositories = repositories;
+    }
+
+    public int getTotalTasksCount() {
+        return totalTasksCount;
+    }
+
+    public void setTotalTasksCount(int totalTasksCount) {
+        this.totalTasksCount = totalTasksCount;
+    }
 
     public List<Author> getAuthors() {
         return authors;
@@ -102,6 +126,36 @@ public class AiCostEstimatorData {
         }
     }
 
+    /** A landscape repository: its name and a link to its own AI Cost Estimator page. */
+    public static class Repository {
+        private String name = "";
+        private String url = "";
+
+        public Repository() {
+        }
+
+        public Repository(String name, String url) {
+            this.name = name;
+            this.url = url;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public void setUrl(String url) {
+            this.url = url;
+        }
+    }
+
     /** One commit of a task: short sha, date and the author's index in the author list. */
     public static class TaskCommit {
         private String sha = "";
@@ -159,6 +213,16 @@ public class AiCostEstimatorData {
         private int newLines = 0;
         private int deletedFiles = 0;
         private List<int[]> sessions = new ArrayList<>();
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        private Integer repo = null;
+
+        public Integer getRepo() {
+            return repo;
+        }
+
+        public void setRepo(Integer repo) {
+            this.repo = repo;
+        }
 
         public String getStart() {
             return start;
@@ -264,6 +328,19 @@ public class AiCostEstimatorData {
         private int oversizedChanges = 0;
         private int unscopedChanges = 0;
         private long droppedLines = 0;
+
+        /** Adds another repository's counts (landscape). */
+        public void add(Noise other) {
+            botCommits += other.botCommits;
+            massCommits += other.massCommits;
+            emptiedCommits += other.emptiedCommits;
+            lockFileChanges += other.lockFileChanges;
+            vendoredChanges += other.vendoredChanges;
+            generatedChanges += other.generatedChanges;
+            oversizedChanges += other.oversizedChanges;
+            unscopedChanges += other.unscopedChanges;
+            droppedLines += other.droppedLines;
+        }
 
         public int getBotCommits() {
             return botCommits;

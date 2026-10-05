@@ -3,6 +3,16 @@
 User-visible behaviour changes, newest first. `:latest` of the Docker image and the `master` branch carry
 everything listed under the most recent date.
 
+## 2026-10-06
+
+### Landscape: AI Cost Estimator*
+
+Landscapes have an "AI Cost Estimator*" page too (sidebar: Insights): the same estimate over the tasks of all
+repositories, with a repository column, a "By repository" table and the repository in the search and the CSV. Every
+analysis (also with `-dataOnly`) now stores its estimator data as `aiCostEstimator.json` in `data/data.zip`, which the
+landscape reads; repositories analyzed by an older version have none and are left out until they are re-analyzed. Big
+landscapes keep the newest 50,000 tasks.
+
 ## 2026-10-05
 
 ### Rule-of-thumb estimates: AI token sections removed

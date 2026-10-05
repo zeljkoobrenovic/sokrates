@@ -338,7 +338,7 @@
     </div>
     <div id="content">
         <div class="toolbar">
-            <input id="filter" type="text" placeholder="Filter tasks" title="author, ticket, sha or type; separate alternatives with ;" oninput="schedule(render)">
+            <input id="filter" type="text" placeholder="Filter tasks" title="repository, author, ticket, sha or type; separate alternatives with ;" oninput="schedule(render)">
             <select id="date-preset" onchange="applyPreset(this.value)" title="a period ending at the latest commit">
                 <option value="all">All time</option>
                 <option value="30">Past 30 days</option>
@@ -364,6 +364,11 @@
         </div>
 
         <div class="cards" id="cards"></div>
+
+        <div id="repos-section" hidden>
+            <h3>By repository</h3>
+            <div class="scroll"><table class="grid" id="repos"></table></div>
+        </div>
 
         <h3>By task type</h3>
         <div class="scroll"><table class="grid" id="types"></table></div>
@@ -417,6 +422,9 @@
     const tasks = imported.tasks || [];
     const noise = imported.noise || {};
     const ticketPrefixes = imported.ticketPrefixes || [];
+    // A landscape: the tasks of several repositories (task.repo indexes this list).
+    const repositories = imported.repositories || [];
+    const isLandscape = repositories.length > 0;
 
     const TYPES = [
         ['new', 'New code', 'most lines in new files'],
@@ -699,7 +707,8 @@
             if (names.indexOf(name) < 0) names.push(name);
         });
         task.authorNames = names;
-        task.search = (names.join(' ') + ' ' + task.commits.map(c => (authors[c.author] || {}).email + ' ' + c.sha).join(' ')
+        task.repoName = isLandscape && repositories[task.repo] ? repositories[task.repo].name : '';
+        task.search = (task.repoName + ' ' + names.join(' ') + ' ' + task.commits.map(c => (authors[c.author] || {}).email + ' ' + c.sha).join(' ')
             + ' ' + task.ticket + ' ' + task.type + ' ' + (TYPE_LABELS[task.type] || '')).toLowerCase();
         if (!firstDate || task.start < firstDate) firstDate = task.start;
         if (!latestDate || task.end > latestDate) latestDate = task.end;
@@ -789,6 +798,38 @@
         document.getElementById('types').innerHTML = html;
     }
 
+    function repoLink(index) {
+        const repo = repositories[index];
+        if (!repo) return '';
+        return repo.url ? '<a href="' + escapeHtml(repo.url) + '" target="_top">' + escapeHtml(repo.name) + '</a>' : escapeHtml(repo.name);
+    }
+
+    // Landscape only: the cost per repository, biggest first.
+    function renderRepositories(list, total) {
+        document.getElementById('repos-section').hidden = !isLandscape;
+        if (!isLandscape) return;
+        const byRepo = {};
+        list.forEach(t => (byRepo[t.repo] = byRepo[t.repo] || []).push(t));
+        const rows = Object.keys(byRepo).map(repo => {
+            const of = byRepo[repo];
+            return {repo: Number(repo), of, q: quantiles(sums(of, costs)), churn: of.reduce((s, t) => s + t.churn, 0)};
+        }).sort((a, b) => b.q.p50 - a.q.p50);
+        let html = '<tr><th>repository</th><th class="num">tasks</th><th class="num">sessions</th><th class="num">lines read</th><th class="num">churned lines</th>'
+            + '<th class="num">cost (P50)</th><th class="num">P10–P90</th><th class="num">share</th><th class="num">per 1,000 lines</th></tr>';
+        rows.forEach(r => {
+            html += '<tr><td>' + repoLink(r.repo) + '</td>'
+                + '<td class="num">' + int(r.of.length) + '</td>'
+                + '<td class="num">' + int(r.of.reduce((s, t) => s + t.sessions.length, 0)) + '</td>'
+                + '<td class="num">' + int(r.of.reduce((s, t) => s + t.readLines, 0)) + '</td>'
+                + '<td class="num">' + int(r.churn) + '</td>'
+                + '<td class="num">' + money(r.q.p50) + '</td>'
+                + '<td class="num muted">' + money(r.q.p10) + ' – ' + money(r.q.p90) + '</td>'
+                + '<td class="num">' + (total.p50 ? Math.round(100 * r.q.p50 / total.p50) : 0) + '%</td>'
+                + '<td class="num">' + (r.churn ? money(r.q.p50 * 1000 / r.churn) : '') + '</td></tr>';
+        });
+        document.getElementById('repos').innerHTML = html;
+    }
+
     let chartPeriods = [];
 
     function renderChart(list) {
@@ -846,6 +887,7 @@
     // Tasks table: click-to-sort, show-more paging.
     const COLUMNS = [
         ['start', 'start', false],
+    ].concat(isLandscape ? [['repo', 'repository', false]] : []).concat([
         ['author', 'author', false],
         ['ticket', 'ticket', false],
         ['type', 'type', false],
@@ -856,12 +898,13 @@
         ['sessions', 'sessions', true],
         ['p50', 'cost (P50)', true],
         ['p90', 'P10–P90', true]
-    ];
+    ]);
     let sortKey = 'p50', sortDesc = true, pageSize = 100, lastList = [];
 
     function sortValue(task, key) {
         switch (key) {
             case 'author': return (task.authorNames[0] || '').toLowerCase();
+            case 'repo': return task.repoName.toLowerCase();
             case 'commits': return task.commits.length;
             case 'sessions': return task.sessions.length;
             default: return task[key];
@@ -894,6 +937,7 @@
             const shas = task.commits.map(c => c.sha + ' ' + c.date).join('\n');
             const author = task.authorNames[0] + (task.authorNames.length > 1 ? ' +' + (task.authorNames.length - 1) : '');
             html += '<tr><td>' + escapeHtml(task.start) + (task.end !== task.start ? '<span class="muted"> → ' + escapeHtml(task.end.substring(5)) + '</span>' : '') + '</td>'
+                + (isLandscape ? '<td>' + repoLink(task.repo) + '</td>' : '')
                 + '<td title="' + escapeHtml(task.authorNames.join(', ')) + '">' + escapeHtml(author) + '</td>'
                 + '<td class="mono">' + escapeHtml(task.ticket) + '</td>'
                 + '<td><span class="type">' + escapeHtml(TYPE_LABELS[task.type] || task.type) + '</span></td>'
@@ -917,6 +961,7 @@
         pageSize = 100;
         const total = renderCards(lastList);
         renderTypes(lastList, total);
+        renderRepositories(lastList, total);
         renderChart(lastList);
         renderTasks();
     }
@@ -927,14 +972,14 @@
     }
 
     function downloadCsv() {
-        const header = ['start', 'end', 'type', 'ticket', 'authors', 'commits', 'first_sha', 'last_sha', 'shas', 'files', 'deleted_files',
-            'read_lines', 'edit_added', 'edit_deleted', 'new_lines', 'churn', 'sessions', 'input_tokens_p50', 'output_tokens_p50', 'cost_p10', 'cost_p50', 'cost_p90'];
+        const header = (isLandscape ? ['repository'] : []).concat(['start', 'end', 'type', 'ticket', 'authors', 'commits', 'first_sha', 'last_sha', 'shas', 'files', 'deleted_files',
+            'read_lines', 'edit_added', 'edit_deleted', 'new_lines', 'churn', 'sessions', 'input_tokens_p50', 'output_tokens_p50', 'cost_p10', 'cost_p50', 'cost_p90']);
         const rows = [header.join(',')];
         lastList.forEach(t => {
-            rows.push([t.start, t.end, t.type, t.ticket, t.authorNames.join('; '), t.commits.length, t.commits[0].sha,
+            rows.push((isLandscape ? [t.repoName] : []).concat([t.start, t.end, t.type, t.ticket, t.authorNames.join('; '), t.commits.length, t.commits[0].sha,
                 t.commits[t.commits.length - 1].sha, t.commits.map(c => c.sha).join(' '), t.files, t.deletedFiles, t.readLines, t.editAdded,
                 t.editDeleted, t.newLines, t.churn, t.sessions.length, Math.round(t.inputP50), Math.round(t.outputP50),
-                t.p10.toFixed(4), t.p50.toFixed(4), t.p90.toFixed(4)].map(csvCell).join(','));
+                t.p10.toFixed(4), t.p50.toFixed(4), t.p90.toFixed(4)]).map(csvCell).join(','));
         });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(new Blob([rows.join('\n') + '\n'], {type: 'text/csv'}));
@@ -959,6 +1004,12 @@
         text += ' Merge commits are not in the extracted history.';
         if (imported.analyzedCommitsCount < imported.keptCommitsCount) {
             text += ' Only the newest ' + int(imported.analyzedCommitsCount) + ' of ' + int(imported.keptCommitsCount) + ' commits are estimated.';
+        }
+        if (imported.totalTasksCount > tasks.length) {
+            text += ' Only the newest ' + int(tasks.length) + ' of ' + int(imported.totalTasksCount) + ' tasks of the repositories are estimated.';
+        }
+        if (isLandscape) {
+            text += ' The tasks come from ' + int(repositories.length) + ' repositories; repositories analyzed by an older Sokrates version have no estimator data and are left out.';
         }
         document.getElementById('noise').textContent = text;
         document.getElementById('ticket-note').textContent = ticketPrefixes.length

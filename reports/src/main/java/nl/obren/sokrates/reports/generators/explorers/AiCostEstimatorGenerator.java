@@ -1,5 +1,6 @@
 package nl.obren.sokrates.reports.generators.explorers;
 
+import nl.obren.sokrates.common.io.JsonGenerator;
 import nl.obren.sokrates.common.renderingutils.ExplorerTemplate;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
@@ -54,6 +55,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * </ul>
  */
 public class AiCostEstimatorGenerator {
+    public static final String DATA_FILE_NAME = "aiCostEstimator.json";
+    public static final String PAGE_FILE_NAME = "ai-cost-estimator.html";
     static final int MAX_COMMITS = 20000;
     static final int MAX_FILES_PER_COMMIT = 300;
     static final int MAX_LINES_PER_FILE_CHANGE = 3000;
@@ -94,29 +97,48 @@ public class AiCostEstimatorGenerator {
         this.reportsFolder = reportsFolder;
     }
 
-    public void export(CodeAnalysisResults results, List<FileUpdate> fileUpdates, Map<String, String> messagesBySha) {
+    /** The repository's estimator data: the history (git-history.txt next to the config) reduced to tasks and sessions. */
+    public static AiCostEstimatorData build(CodeAnalysisResults results, File sokratesConfigFolder) {
+        List<FileUpdate> fileUpdates = CommitsExplorerGenerators.readFileUpdates(results, sokratesConfigFolder);
+        Map<String, String> messagesBySha = CommitsExplorerGenerators.readCommitMessages(results, sokratesConfigFolder);
+        Set<String> extensions = new HashSet<>();
+        results.getCodeConfiguration().getExtensions().forEach(extension -> extensions.add(extension.toLowerCase()));
+        List<CommitFileExport> currentFiles = new ArrayList<>();
+        File[] sourceRoot = {null};
+        Set<SourceFile> seen = new HashSet<>();
+        collect(currentFiles, seen, sourceRoot, results.getMainAspectAnalysisResults().getAspect(), "main");
+        collect(currentFiles, seen, sourceRoot, results.getTestAspectAnalysisResults().getAspect(), "test");
+        collect(currentFiles, seen, sourceRoot, results.getGeneratedAspectAnalysisResults().getAspect(), "generated");
+        collect(currentFiles, seen, sourceRoot, results.getBuildAndDeployAspectAnalysisResults().getAspect(), "build");
+        collect(currentFiles, seen, sourceRoot, results.getOtherAspectAnalysisResults().getAspect(), "other");
+        // A path in no scope counts only when it is gone from the disk (deleted or renamed) and its extension is analyzed.
+        Predicate<String> keepUnscoped = path -> extensions.contains(extensionOf(path))
+                && (sourceRoot[0] == null || !new File(sourceRoot[0], path).exists());
+        return buildData(currentFiles, fileUpdates, messagesBySha, keepUnscoped, MAX_COMMITS);
+    }
+
+    /** Writes the data into the data folder (data/aiCostEstimator.json, packaged into data.zip; the landscape reads it). */
+    public static void saveData(AiCostEstimatorData data, File dataFolder) {
         try {
-            Set<String> extensions = new HashSet<>();
-            results.getCodeConfiguration().getExtensions().forEach(extension -> extensions.add(extension.toLowerCase()));
-            List<CommitFileExport> currentFiles = new ArrayList<>();
-            File[] sourceRoot = {null};
-            Set<SourceFile> seen = new HashSet<>();
-            collect(currentFiles, seen, sourceRoot, results.getMainAspectAnalysisResults().getAspect(), "main");
-            collect(currentFiles, seen, sourceRoot, results.getTestAspectAnalysisResults().getAspect(), "test");
-            collect(currentFiles, seen, sourceRoot, results.getGeneratedAspectAnalysisResults().getAspect(), "generated");
-            collect(currentFiles, seen, sourceRoot, results.getBuildAndDeployAspectAnalysisResults().getAspect(), "build");
-            collect(currentFiles, seen, sourceRoot, results.getOtherAspectAnalysisResults().getAspect(), "other");
-            // A path in no scope counts only when it is gone from the disk (deleted or renamed) and its extension is analyzed.
-            Predicate<String> keepUnscoped = path -> extensions.contains(extensionOf(path))
-                    && (sourceRoot[0] == null || !new File(sourceRoot[0], path).exists());
-            AiCostEstimatorData data = buildData(currentFiles, fileUpdates, messagesBySha, keepUnscoped, MAX_COMMITS);
-            String page = new ExplorerTemplate().render("ai-cost-estimator.html", data);
-            File folder = new File(reportsFolder, "explorers");
-            folder.mkdirs();
-            FileUtils.write(new File(folder, "ai-cost-estimator.html"), page, UTF_8);
+            FileUtils.write(new File(dataFolder, DATA_FILE_NAME), new JsonGenerator().generate(data), UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /** Renders explorers/ai-cost-estimator.html (the repository report) or the landscape's page. */
+    public void exportPage(AiCostEstimatorData data, File folder) {
+        try {
+            String page = new ExplorerTemplate().render("ai-cost-estimator.html", data);
+            folder.mkdirs();
+            FileUtils.write(new File(folder, PAGE_FILE_NAME), page, UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void exportPage(AiCostEstimatorData data) {
+        exportPage(data, new File(reportsFolder, "explorers"));
     }
 
     /** The scope's files with their total lines (what an agent reads); remembers the source root on the way. */
