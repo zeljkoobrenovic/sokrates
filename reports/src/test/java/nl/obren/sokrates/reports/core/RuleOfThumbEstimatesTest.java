@@ -13,12 +13,14 @@ import static org.junit.jupiter.api.Assertions.*;
 class RuleOfThumbEstimatesTest {
     @Test
     void rendersAClosedDetailsWithTheLinesOfCode() {
-        String html = RuleOfThumbEstimates.html(200000, 50000, 1234, 7, 14);
+        String html = RuleOfThumbEstimates.html(new long[]{200000, 50000, 1000, 200, 34}, 7, 14, null);
         assertTrue(html.trim().startsWith("<details class=\"sk-est\" id=\"sk-est\""));
         assertFalse(html.contains(" open"), "closed by default");
         assertTrue(html.contains("data-main-loc=\"200000\""));
         assertTrue(html.contains("data-test-loc=\"50000\""));
-        assertTrue(html.contains("data-other-loc=\"1234\""));
+        assertTrue(html.contains("data-build-loc=\"1000\""));
+        assertTrue(html.contains("data-generated-loc=\"200\""));
+        assertTrue(html.contains("data-other-loc=\"34\""));
         assertTrue(html.contains("data-tokens-min=\"7\""));
         assertTrue(html.contains("data-tokens-max=\"14\""));
         assertTrue(html.contains("value=\"10000\""), "10,000 lines of code per man-year");
@@ -28,7 +30,7 @@ class RuleOfThumbEstimatesTest {
 
     @Test
     void sanitizesTheTokenRange() {
-        String html = RuleOfThumbEstimates.html(-5, 0, 0, 20, 0);
+        String html = RuleOfThumbEstimates.html(new long[]{-5, 0, 0, 0, 0}, 20, 0, null);
         assertTrue(html.contains("data-main-loc=\"0\""));
         assertTrue(html.contains("data-tokens-min=\"1\""));
         assertTrue(html.contains("data-tokens-max=\"20\""));
@@ -68,15 +70,15 @@ class RuleOfThumbEstimatesTest {
         assertEquals(4, windows.get(5).getRepositories(), "all time includes repositories without history");
         assertEquals(321005, windows.get(5).getMainLoc());
 
-        String html = RuleOfThumbEstimates.html(21000, 2100, 210, 7, 14, windows);
+        String html = RuleOfThumbEstimates.html(new long[]{21000, 2100, 210, 0, 0}, 7, 14, windows);
         assertTrue(html.contains("data-default-window=\"365\""));
         assertTrue(html.contains("&quot;id&quot;:&quot;365&quot;"), "the windows are an escaped JSON attribute");
-        assertTrue(html.contains("&quot;other&quot;:210"));
+        assertTrue(html.contains("&quot;build&quot;:210"), "build & deployment per window");
         assertFalse(html.contains("${"));
     }
 
     @Test
     void aRepositoryHasNoWindows() {
-        assertTrue(RuleOfThumbEstimates.html(1, 1, 1, 7, 14).contains("data-windows=\"\""));
+        assertTrue(RuleOfThumbEstimates.html(new long[]{1, 1, 1, 1, 1}, 7, 14, null).contains("data-windows=\"\""));
     }
 }

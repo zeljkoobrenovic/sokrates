@@ -33,6 +33,8 @@ public class RuleOfThumbEstimates {
         private int repositories;
         private long mainLoc;
         private long testLoc;
+        private long buildLoc;
+        private long generatedLoc;
         private long otherLoc;
 
         Window(String id, String label, int days) {
@@ -46,11 +48,13 @@ public class RuleOfThumbEstimates {
             return days <= 0 || (StringUtils.isNotBlank(latestCommitDate) && DateUtils.isDateWithinRange(latestCommitDate, days));
         }
 
-        void add(int main, int test, int other) {
+        void add(CodeAnalysisResults results) {
             repositories++;
-            mainLoc += Math.max(0, main);
-            testLoc += Math.max(0, test);
-            otherLoc += Math.max(0, other);
+            mainLoc += Math.max(0, results.getMainAspectAnalysisResults().getLinesOfCode());
+            testLoc += Math.max(0, results.getTestAspectAnalysisResults().getLinesOfCode());
+            buildLoc += Math.max(0, results.getBuildAndDeployAspectAnalysisResults().getLinesOfCode());
+            generatedLoc += Math.max(0, results.getGeneratedAspectAnalysisResults().getLinesOfCode());
+            otherLoc += Math.max(0, results.getOtherAspectAnalysisResults().getLinesOfCode());
         }
 
         public String getId() {
@@ -67,14 +71,18 @@ public class RuleOfThumbEstimates {
 
         String toJson() {
             return "{\"id\":\"" + id + "\",\"label\":\"" + label + "\",\"repositories\":" + repositories
-                    + ",\"main\":" + mainLoc + ",\"test\":" + testLoc + ",\"other\":" + otherLoc + "}";
+                    + ",\"main\":" + mainLoc + ",\"test\":" + testLoc + ",\"build\":" + buildLoc
+                    + ",\"generated\":" + generatedLoc + ",\"other\":" + otherLoc + "}";
         }
     }
 
     public static void add(RichTextReport report, CodeAnalysisResults results) {
         FileReadsForChangesConfig reads = results.getCodeConfiguration().getAnalysis().getFileReadsForChanges();
-        report.addHtmlContent(html(results.getMainAspectAnalysisResults().getLinesOfCode(),
-                results.getTestAspectAnalysisResults().getLinesOfCode(), otherLoc(results),
+        report.addHtmlContent(html(new long[]{results.getMainAspectAnalysisResults().getLinesOfCode(),
+                        results.getTestAspectAnalysisResults().getLinesOfCode(),
+                        results.getBuildAndDeployAspectAnalysisResults().getLinesOfCode(),
+                        results.getGeneratedAspectAnalysisResults().getLinesOfCode(),
+                        results.getOtherAspectAnalysisResults().getLinesOfCode()},
                 reads.getTokensPerLineMin(), reads.getTokensPerLineMax(), null));
     }
 
@@ -83,8 +91,8 @@ public class RuleOfThumbEstimates {
         List<Window> windows = windows(repositories);
         Window selected = windows.stream().filter(w -> w.id.equals(DEFAULT_WINDOW)).findFirst().orElse(windows.get(windows.size() - 1));
         FileReadsForChangesConfig reads = new FileReadsForChangesConfig();
-        report.addHtmlContent(html((int) Math.min(Integer.MAX_VALUE, selected.mainLoc), (int) Math.min(Integer.MAX_VALUE, selected.testLoc),
-                (int) Math.min(Integer.MAX_VALUE, selected.otherLoc), reads.getTokensPerLineMin(), reads.getTokensPerLineMax(), windows));
+        report.addHtmlContent(html(new long[]{selected.mainLoc, selected.testLoc, selected.buildLoc, selected.generatedLoc, selected.otherLoc},
+                reads.getTokensPerLineMin(), reads.getTokensPerLineMax(), windows));
     }
 
     /** The activity windows (by the repository's latest commit date), the last one all repositories. */
@@ -98,25 +106,15 @@ public class RuleOfThumbEstimates {
         windows.add(new Window("all", "all repositories", 0));
         repositories.forEach(results -> {
             String latest = results.getContributorsAnalysisResults().getLatestCommitDate();
-            int main = results.getMainAspectAnalysisResults().getLinesOfCode();
-            int test = results.getTestAspectAnalysisResults().getLinesOfCode();
-            int other = otherLoc(results);
-            windows.stream().filter(w -> w.includes(latest)).forEach(w -> w.add(main, test, other));
+            windows.stream().filter(w -> w.includes(latest)).forEach(w -> w.add(results));
         });
         return windows;
     }
 
-    private static int otherLoc(CodeAnalysisResults results) {
-        return results.getBuildAndDeployAspectAnalysisResults().getLinesOfCode()
-                + results.getGeneratedAspectAnalysisResults().getLinesOfCode()
-                + results.getOtherAspectAnalysisResults().getLinesOfCode();
-    }
+    /** Lines of code per scope, in the order {@link #SCOPES}. */
+    static final String[] SCOPES = {"main", "test", "build", "generated", "other"};
 
-    static String html(int mainLoc, int testLoc, int otherLoc, int tokensPerLineMin, int tokensPerLineMax) {
-        return html(mainLoc, testLoc, otherLoc, tokensPerLineMin, tokensPerLineMax, null);
-    }
-
-    static String html(int mainLoc, int testLoc, int otherLoc, int tokensPerLineMin, int tokensPerLineMax, List<Window> windows) {
+    static String html(long[] scopeLoc, int tokensPerLineMin, int tokensPerLineMax, List<Window> windows) {
         int tokensMin = Math.max(1, Math.min(tokensPerLineMin, tokensPerLineMax));
         int tokensMax = Math.max(tokensMin, Math.max(tokensPerLineMin, tokensPerLineMax));
         String windowsJson = "";
@@ -125,10 +123,11 @@ public class RuleOfThumbEstimates {
             windows.forEach(w -> json.append(json.length() > 1 ? "," : "").append(w.toJson()));
             windowsJson = json.append("]").toString();
         }
-        return HtmlTemplateUtils.getResource(TEMPLATE)
-                .replace("${mainLoc}", String.valueOf(Math.max(0, mainLoc)))
-                .replace("${testLoc}", String.valueOf(Math.max(0, testLoc)))
-                .replace("${otherLoc}", String.valueOf(Math.max(0, otherLoc)))
+        String html = HtmlTemplateUtils.getResource(TEMPLATE);
+        for (int i = 0; i < SCOPES.length; i++) {
+            html = html.replace("${" + SCOPES[i] + "Loc}", String.valueOf(i < scopeLoc.length ? Math.max(0, scopeLoc[i]) : 0));
+        }
+        return html
                 .replace("${tokensMin}", String.valueOf(tokensMin))
                 .replace("${tokensMax}", String.valueOf(tokensMax))
                 .replace("${windows}", HtmlEscapeUtils.escape(windowsJson))

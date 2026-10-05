@@ -15,9 +15,10 @@ count only there).
 ### At a Glance: rule-of-thumb estimates
 
 At the bottom of a repository's At a Glance page, a new "Rule-of-thumb estimates" section (closed by default) turns the
-lines of code into rough estimates you can adjust: the rebuild effort and value (about 10,000 lines of code per
-man-year, a cost per man-year), the yearly maintenance effort (about 15% of the rebuild value per year), and
-the AI token reads of the code (tokens per line, price per million input tokens, context windows, full reads per month).
+lines of code into rough estimates you can adjust: the rebuild effort and value (about 10,000 lines of main code per
+man-year, a cost per man-year), the yearly maintenance effort (about 15% of the rebuild value per year), both from the
+main code only, and the AI token reads of all code (tokens per line, price per million input tokens, context windows,
+full reads per month), in total and per scope (main, test, build & deployment, generated, other) in a table.
 Every assumption is an input; your values are remembered in the browser for every report, with a reset to the defaults.
 These are rules of thumb, not measurements.
 

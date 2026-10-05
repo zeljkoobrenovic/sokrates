@@ -1,4 +1,5 @@
-<details class="sk-est" id="sk-est" data-main-loc="${mainLoc}" data-test-loc="${testLoc}" data-other-loc="${otherLoc}"
+<details class="sk-est" id="sk-est" data-main-loc="${mainLoc}" data-test-loc="${testLoc}"
+         data-build-loc="${buildLoc}" data-generated-loc="${generatedLoc}" data-other-loc="${otherLoc}"
          data-tokens-min="${tokensMin}" data-tokens-max="${tokensMax}"
          data-windows="${windows}" data-default-window="${defaultWindow}">
     <summary>
@@ -18,6 +19,7 @@
         .sk-est-section h4 { margin: 0 0 6px 0; font-size: 95%; }
         .sk-est-inputs { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; font-size: 85%; color: var(--sk-text-muted, #555); margin-bottom: 10px; }
         .sk-est-inputs label { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .sk-est-inputs label[hidden] { display: none; }
         .sk-est-inputs input, .sk-est-inputs select { font: inherit; color: var(--sk-text, black); background: var(--sk-bg, white);
             border: 1px solid var(--sk-border-strong, #bbb); border-radius: 4px; padding: 2px 6px; }
         .sk-est-inputs input[type=number] { width: 6.5em; }
@@ -28,6 +30,12 @@
         .sk-est-label { font-size: 85%; color: var(--sk-text, black); margin-top: 2px; }
         .sk-est-detail { font-size: 78%; color: var(--sk-text-muted, #666); margin-top: 4px; }
         .sk-est-note { font-size: 80%; color: var(--sk-text-muted, #666); margin-top: 14px; line-height: 1.5; }
+        .sk-est-scopes { overflow-x: auto; margin-top: 12px; }
+        .sk-est-scopes table { border-collapse: collapse; font-size: 85%; min-width: 100%; }
+        .sk-est-scopes th, .sk-est-scopes td { padding: 5px 10px; border-bottom: 1px solid var(--sk-border, #ddd); text-align: right; white-space: nowrap; }
+        .sk-est-scopes th { color: var(--sk-text-muted, #666); font-weight: normal; }
+        .sk-est-scopes th:first-child, .sk-est-scopes td:first-child { text-align: left; }
+        .sk-est-scopes tr.sk-est-total td { font-weight: bold; border-bottom: 1px solid var(--sk-border-strong, #bbb); }
         .sk-est-reset { font: inherit; font-size: 85%; cursor: pointer; background: none; border: none; color: var(--sk-link, #1a73e8); padding: 0; }
     </style>
     <div class="sk-est-body">
@@ -35,11 +43,6 @@
             <h4>Rebuild Value</h4>
             <div class="sk-est-inputs">
                 <label id="sk-est-activity-label" hidden>repositories <select id="sk-est-activity"></select></label>
-                <label>code <select id="sk-est-basis">
-                    <option value="main">main code</option>
-                    <option value="main-test">main + test code</option>
-                    <option value="all">all code</option>
-                </select></label>
                 <label>lines of code per man-year <input type="number" id="sk-est-loc-per-my" min="100" step="1000" value="10000"></label>
                 <label>cost per man-year <input type="number" id="sk-est-cost-per-my" min="0" step="10000" value="100000"></label>
                 <label>currency <input type="text" id="sk-est-currency" class="sk-est-short" maxlength="4" value="€"></label>
@@ -68,16 +71,22 @@
                 <label>full reads per month <input type="number" id="sk-est-reads" class="sk-est-short" min="0" step="1" value="20"></label>
             </div>
             <div class="sk-est-cards">
-                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-tokens"></div><div class="sk-est-label">tokens to read the code once</div><div class="sk-est-detail" id="sk-est-tokens-detail"></div></div>
+                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-tokens"></div><div class="sk-est-label">tokens to read all code once</div><div class="sk-est-detail" id="sk-est-tokens-detail"></div></div>
                 <div class="sk-est-card"><div class="sk-est-value" id="sk-est-windows"></div><div class="sk-est-label">context windows needed to hold it</div><div class="sk-est-detail" id="sk-est-windows-detail"></div></div>
-                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-read-cost"></div><div class="sk-est-label">cost of one full read</div><div class="sk-est-detail" id="sk-est-read-cost-detail"></div></div>
+                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-read-cost"></div><div class="sk-est-label">cost of one full read of all code</div><div class="sk-est-detail" id="sk-est-read-cost-detail"></div></div>
                 <div class="sk-est-card"><div class="sk-est-value" id="sk-est-month-cost"></div><div class="sk-est-label">token cost per month</div><div class="sk-est-detail" id="sk-est-month-cost-detail"></div></div>
+            </div>
+            <div class="sk-est-scopes">
+                <table>
+                    <thead><tr><th>scope</th><th>lines of code</th><th>tokens to read once</th><th>context windows</th><th>cost per read</th><th>cost per month</th></tr></thead>
+                    <tbody id="sk-est-scope-rows"></tbody>
+                </table>
             </div>
         </div>
         <div class="sk-est-note">
-            Rules of thumb, not measurements: one man-year rebuilds about 10,000 lines of code (design, testing and
+            Rules of thumb, not measurements: one man-year rebuilds about 10,000 lines of main code (design, testing and
             coordination included), and keeping a code base alive takes about 15% of its rebuild value per year
-            (20 man-years of rebuild value need about 3 man-years of maintenance every year). Token figures count only reading the source once (input tokens), not the prompts, the answers or repeated reads within a session.
+            (20 man-years of rebuild value need about 3 man-years of maintenance every year). The effort figures count main code only; the token figures count all code, per scope in the table. They count only reading the source once (input tokens), not the prompts, the answers or repeated reads within a session.
             Your changes are remembered in this browser for every report.
             <button type="button" class="sk-est-reset" id="sk-est-reset">Reset to defaults</button>
         </div>
@@ -87,14 +96,12 @@
             var root = document.getElementById('sk-est');
             if (!root) return;
             var STORE_KEY = 'sokrates-estimates';
-            var loc = {
-                main: Number(root.dataset.mainLoc) || 0,
-                test: Number(root.dataset.testLoc) || 0,
-                other: Number(root.dataset.otherLoc) || 0
-            };
+            var SCOPES = [['main', 'main'], ['test', 'test'], ['build', 'build & deployment'], ['generated', 'generated'], ['other', 'other']];
+            var loc = {};
+            SCOPES.forEach(function (scope) { loc[scope[0]] = Number(root.dataset[scope[0] + 'Loc']) || 0; });
             var windows = [];
             try { windows = JSON.parse(root.dataset.windows || '[]'); } catch (e) { }
-            var inputIds = ['basis', 'loc-per-my', 'cost-per-my', 'currency', 'maintenance',
+            var inputIds = ['loc-per-my', 'cost-per-my', 'currency', 'maintenance',
                 'tpl-min', 'tpl-max', 'price-min', 'price-max', 'context', 'reads'];
             function el(id) { return document.getElementById('sk-est-' + id); }
             if (windows.length) {
@@ -153,21 +160,23 @@
                 if (!w) return '';
                 return ' in ' + w.repositories.toLocaleString('en-US') + (w.repositories === 1 ? ' repository' : ' repositories');
             }
-            function basisLoc() {
+            function selectedLoc() {
                 var w = selectedWindow();
-                if (w) loc = { main: w.main, test: w.test, other: w.other };
-                var basis = el('basis').value;
-                if (basis === 'all') return loc.main + loc.test + loc.other;
-                if (basis === 'main-test') return loc.main + loc.test;
-                return loc.main;
+                if (!w) return loc;
+                var selected = {};
+                SCOPES.forEach(function (scope) { selected[scope[0]] = Number(w[scope[0]]) || 0; });
+                return selected;
             }
-            function basisLabel() {
-                var basis = el('basis').value;
-                return basis === 'all' ? 'all code' : basis === 'main-test' ? 'main + test code' : 'main code';
+            function cell(row, text) {
+                var td = document.createElement('td');
+                td.textContent = text;
+                row.appendChild(td);
             }
 
             function update() {
-                var lines = basisLoc();
+                var scopeLoc = selectedLoc();
+                var lines = scopeLoc.main;
+                var allLines = SCOPES.reduce(function (sum, scope) { return sum + scopeLoc[scope[0]]; }, 0);
                 var currency = el('currency').value;
                 var locPerMy = Math.max(1, num('loc-per-my', 10000));
                 var costPerMy = num('cost-per-my', 0);
@@ -175,7 +184,7 @@
 
                 var rebuildMy = lines / locPerMy;
                 set('rebuild-my', effort(rebuildMy));
-                set('rebuild-my-detail', lines.toLocaleString('en-US') + ' lines of ' + basisLabel() + repositoriesText() + ' ÷ '
+                set('rebuild-my-detail', lines.toLocaleString('en-US') + ' lines of main code' + repositoriesText() + ' ÷ '
                     + locPerMy.toLocaleString('en-US') + ' per man-year');
                 set('rebuild-cost', money(rebuildMy * costPerMy, currency));
                 set('rebuild-cost-detail', effort(rebuildMy) + ' × ' + money(costPerMy, currency) + ' per man-year');
@@ -191,16 +200,34 @@
                 var priceMin = num('price-min', 0), priceMax = num('price-max', 0);
                 var context = Math.max(1, num('context', 200000));
                 var reads = num('reads', 0);
-                var tokensLow = lines * Math.min(tplMin, tplMax), tokensHigh = lines * Math.max(tplMin, tplMax);
+                var tokensLow = allLines * Math.min(tplMin, tplMax), tokensHigh = allLines * Math.max(tplMin, tplMax);
                 var priceLow = Math.min(priceMin, priceMax), priceHigh = Math.max(priceMin, priceMax);
+                var inMoney = function (v) { return money(v, currency); };
                 set('tokens', range(tokensLow, tokensHigh, compact));
-                set('tokens-detail', lines.toLocaleString('en-US') + ' lines × ' + range(tplMin, tplMax, oneDecimal) + ' tokens per line');
+                set('tokens-detail', allLines.toLocaleString('en-US') + ' lines of all code' + repositoriesText() + ' × ' + range(tplMin, tplMax, oneDecimal) + ' tokens per line');
                 set('windows', range(Math.ceil(tokensLow / context), Math.ceil(tokensHigh / context), compact));
-                set('windows-detail', 'of ' + compact(context) + ' tokens each, if the whole ' + basisLabel() + ' had to be in context');
-                set('read-cost', range(tokensLow / 1e6 * priceLow, tokensHigh / 1e6 * priceHigh, function (v) { return money(v, currency); }));
-                set('read-cost-detail', 'at ' + range(priceLow, priceHigh, function (v) { return money(v, currency); }) + ' per million input tokens');
-                set('month-cost', range(tokensLow / 1e6 * priceLow * reads, tokensHigh / 1e6 * priceHigh * reads, function (v) { return money(v, currency); }));
-                set('month-cost-detail', oneDecimal(reads) + ' full reads of the ' + basisLabel() + ' per month');
+                set('windows-detail', 'of ' + compact(context) + ' tokens each, if all code had to be in context');
+                set('read-cost', range(tokensLow / 1e6 * priceLow, tokensHigh / 1e6 * priceHigh, inMoney));
+                set('read-cost-detail', 'at ' + range(priceLow, priceHigh, inMoney) + ' per million input tokens');
+                set('month-cost', range(tokensLow / 1e6 * priceLow * reads, tokensHigh / 1e6 * priceHigh * reads, inMoney));
+                set('month-cost-detail', oneDecimal(reads) + ' full reads of all code per month');
+
+                var rows = el('scope-rows');
+                rows.textContent = '';
+                [['all', 'all code']].concat(SCOPES).forEach(function (scope) {
+                    var scopeLines = scope[0] === 'all' ? allLines : scopeLoc[scope[0]];
+                    if (scope[0] !== 'all' && scopeLines === 0) return;
+                    var low = scopeLines * Math.min(tplMin, tplMax), high = scopeLines * Math.max(tplMin, tplMax);
+                    var row = document.createElement('tr');
+                    if (scope[0] === 'all') row.className = 'sk-est-total';
+                    cell(row, scope[1]);
+                    cell(row, scopeLines.toLocaleString('en-US'));
+                    cell(row, range(low, high, compact));
+                    cell(row, range(Math.ceil(low / context), Math.ceil(high / context), compact));
+                    cell(row, range(low / 1e6 * priceLow, high / 1e6 * priceHigh, inMoney));
+                    cell(row, range(low / 1e6 * priceLow * reads, high / 1e6 * priceHigh * reads, inMoney));
+                    rows.appendChild(row);
+                });
             }
 
             function save() {
