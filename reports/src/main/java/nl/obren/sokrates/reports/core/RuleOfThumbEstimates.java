@@ -98,11 +98,11 @@ public class RuleOfThumbEstimates {
     /** The activity windows (by the repository's latest commit date), the last one all repositories. */
     public static List<Window> windows(List<CodeAnalysisResults> repositories) {
         List<Window> windows = new ArrayList<>();
-        windows.add(new Window("30", "active in the past 30 days", 30));
-        windows.add(new Window("90", "active in the past 3 months", 90));
-        windows.add(new Window("180", "active in the past 6 months", 180));
-        windows.add(new Window(DEFAULT_WINDOW, "active in the past year", 365));
-        windows.add(new Window("730", "active in the past 2 years", 730));
+        windows.add(new Window("30", "repositories active in the past 30 days", 30));
+        windows.add(new Window("90", "repositories active in the past 3 months", 90));
+        windows.add(new Window("180", "repositories active in the past 6 months", 180));
+        windows.add(new Window(DEFAULT_WINDOW, "repositories active in the past year", 365));
+        windows.add(new Window("730", "repositories active in the past 2 years", 730));
         windows.add(new Window("all", "all repositories", 0));
         repositories.forEach(results -> {
             String latest = results.getContributorsAnalysisResults().getLatestCommitDate();

@@ -4,77 +4,94 @@
          data-windows="${windows}" data-default-window="${defaultWindow}">
     <summary>
         <span class="sk-est-title">Rule-of-thumb estimates</span>
-        <span class="sk-est-sub">rebuild value, maintenance effort and AI token reads, from lines of code; change the assumptions to see the effect</span>
+        <span class="sk-est-teaser" id="sk-est-teaser"></span>
     </summary>
     <style>
-        .sk-est { white-space: normal; box-sizing: border-box; max-width: 100%; margin: 28px 0 20px 0; border: 1px solid var(--sk-border, #ddd); border-radius: 8px; background: var(--sk-surface, white); }
-        .sk-est > summary { cursor: pointer; padding: 12px 16px 12px 36px; list-style: none; position: relative; white-space: normal; overflow: visible; }
+        .sk-est { white-space: normal; box-sizing: border-box; max-width: 100%; margin: 28px 0 20px 0; border: 1px solid var(--sk-border, #ddd);
+            border-radius: 10px; background: var(--sk-surface, white); font-variant-numeric: tabular-nums; }
+        .sk-est > summary { cursor: pointer; padding: 14px 18px 14px 40px; list-style: none; position: relative; white-space: normal; overflow: visible;
+            display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
         .sk-est > summary::-webkit-details-marker { display: none; }
-        .sk-est > summary::before { content: '\25B8'; position: absolute; left: 16px; top: 12px; color: var(--sk-text-muted, #666); transition: transform 0.15s; }
+        .sk-est > summary::before { content: '\25B8'; position: absolute; left: 18px; top: 14px; color: var(--sk-text-muted, #666); transition: transform 0.15s; }
         .sk-est[open] > summary::before { transform: rotate(90deg); }
-        .sk-est-title { font-weight: bold; font-size: 110%; }
-        .sk-est-sub { display: block; color: var(--sk-text-muted, #666); font-size: 85%; margin-top: 2px; }
-        .sk-est-body { padding: 4px 16px 16px 16px; }
-        .sk-est-section { margin-top: 14px; }
-        .sk-est-section h4 { margin: 0 0 6px 0; font-size: 95%; }
-        .sk-est-inputs { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; font-size: 85%; color: var(--sk-text-muted, #555); margin-bottom: 10px; }
-        .sk-est-inputs label { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .sk-est > summary:hover .sk-est-title { color: var(--sk-link, #1a73e8); }
+        .sk-est-title { font-weight: 600; font-size: 105%; }
+        .sk-est-teaser { color: var(--sk-text-muted, #666); font-size: 85%; }
+        .sk-est-body { padding: 0 18px 18px 18px; border-top: 1px solid var(--sk-border, #ddd); }
+        .sk-est-section { margin-top: 18px; }
+        .sk-est-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-bottom: 10px; }
+        .sk-est-heading h4 { margin: 0; font-size: 75%; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sk-text-muted, #666); }
+        .sk-est-inputs { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; font-size: 80%; color: var(--sk-text-muted, #666); }
+        .sk-est-inputs label { display: inline-flex; flex-wrap: wrap; gap: 5px; align-items: center; }
         .sk-est-inputs label[hidden] { display: none; }
-        .sk-est-inputs input, .sk-est-inputs select { font: inherit; color: var(--sk-text, black); background: var(--sk-bg, white);
-            border: 1px solid var(--sk-border-strong, #bbb); border-radius: 4px; padding: 2px 6px; }
-        .sk-est-inputs input[type=number] { width: 6.5em; }
-        .sk-est-inputs input.sk-est-short { width: 4.5em; }
-        .sk-est-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
-        .sk-est-card { border: 1px solid var(--sk-border, #ddd); border-radius: 6px; padding: 10px 12px; background: var(--sk-surface-2, #f8f8f8); }
-        .sk-est-value { font-size: 150%; font-weight: bold; color: var(--sk-text, black); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .sk-est-label { font-size: 85%; color: var(--sk-text, black); margin-top: 2px; }
-        .sk-est-detail { font-size: 78%; color: var(--sk-text-muted, #666); margin-top: 4px; }
-        .sk-est-note { font-size: 80%; color: var(--sk-text-muted, #666); margin-top: 14px; line-height: 1.5; }
+        .sk-est-inputs input, .sk-est-inputs select { font: inherit; color: var(--sk-text, black); background: var(--sk-surface-2, #f6f6f6);
+            border: 1px solid transparent; border-radius: 5px; padding: 2px 6px; text-align: right; }
+        .sk-est-inputs select { text-align: left; }
+        .sk-est-inputs input:hover, .sk-est-inputs select:hover { border-color: var(--sk-border-strong, #bbb); }
+        .sk-est-inputs input:focus, .sk-est-inputs select:focus { outline: none; border-color: var(--sk-accent, #1a73e8); background: var(--sk-bg, white); }
+        .sk-est-inputs input[type=number] { width: 5.5em; -moz-appearance: textfield; appearance: textfield; }
+        .sk-est-inputs input::-webkit-outer-spin-button, .sk-est-inputs input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .sk-est-inputs input.sk-est-short { width: 3.5em; }
+        .sk-est-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+        .sk-est-card { border-radius: 8px; padding: 10px 14px 12px 14px; background: var(--sk-surface-2, #f6f6f6); }
+        .sk-est-label { font-size: 78%; color: var(--sk-text-muted, #666); }
+        .sk-est-value { font-size: 135%; font-weight: 600; color: var(--sk-text, black); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sk-est-detail { font-size: 72%; color: var(--sk-text-faint, #888); margin-top: 4px; line-height: 1.4; }
         .sk-est-scopes { overflow-x: auto; margin-top: 12px; }
-        .sk-est-scopes table { border-collapse: collapse; font-size: 85%; min-width: 100%; }
-        .sk-est-scopes th, .sk-est-scopes td { padding: 5px 10px; border-bottom: 1px solid var(--sk-border, #ddd); text-align: right; white-space: nowrap; }
+        .sk-est-scopes table { border-collapse: collapse; font-size: 80%; min-width: 100%; }
+        .sk-est-scopes th, .sk-est-scopes td { background: none; height: auto; padding: 6px 12px; border: none; border-bottom: 1px solid var(--sk-border, #e5e5e5);
+            text-align: right; white-space: nowrap; }
         .sk-est-scopes th { color: var(--sk-text-muted, #666); font-weight: normal; }
-        .sk-est-scopes th:first-child, .sk-est-scopes td:first-child { text-align: left; }
-        .sk-est-scopes tr.sk-est-total td { font-weight: bold; border-bottom: 1px solid var(--sk-border-strong, #bbb); }
-        .sk-est-reset { font: inherit; font-size: 85%; cursor: pointer; background: none; border: none; color: var(--sk-link, #1a73e8); padding: 0; }
+        .sk-est-scopes th:first-child, .sk-est-scopes td:first-child { text-align: left; padding-left: 0; }
+        .sk-est-scopes tr.sk-est-total td { font-weight: 600; }
+        .sk-est-scopes tbody tr:not(.sk-est-total) td { color: var(--sk-text-muted, #666); }
+        .sk-est-scopes tbody tr:last-child td { border-bottom: none; }
+        .sk-est-note { font-size: 75%; color: var(--sk-text-faint, #888); margin-top: 18px; line-height: 1.5; }
+        .sk-est-reset { font: inherit; cursor: pointer; background: none; border: none; color: var(--sk-link, #1a73e8); padding: 0; }
     </style>
     <div class="sk-est-body">
         <div class="sk-est-section">
-            <h4>Rebuild Value</h4>
-            <div class="sk-est-inputs">
-                <label id="sk-est-activity-label" hidden>repositories <select id="sk-est-activity"></select></label>
-                <label>lines of code per man-year <input type="number" id="sk-est-loc-per-my" min="100" step="1000" value="10000"></label>
-                <label>cost per man-year <input type="number" id="sk-est-cost-per-my" min="0" step="10000" value="100000"></label>
-                <label>currency <input type="text" id="sk-est-currency" class="sk-est-short" maxlength="4" value="€"></label>
+            <div class="sk-est-heading">
+                <h4>Rebuild value</h4>
+                <div class="sk-est-inputs">
+                    <label id="sk-est-activity-label" hidden><select id="sk-est-activity"></select></label>
+                    <label><input type="number" id="sk-est-loc-per-my" min="100" step="1000" value="10000"> lines of main code per man-year</label>
+                    <label><input type="number" id="sk-est-cost-per-my" min="0" step="10000" value="100000"> per man-year</label>
+                    <label>currency <input type="text" id="sk-est-currency" class="sk-est-short" maxlength="4" value="€"></label>
+                </div>
             </div>
             <div class="sk-est-cards">
-                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-rebuild-my"></div><div class="sk-est-label">to rebuild</div><div class="sk-est-detail" id="sk-est-rebuild-my-detail"></div></div>
-                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-rebuild-cost"></div><div class="sk-est-label">rebuild value</div><div class="sk-est-detail" id="sk-est-rebuild-cost-detail"></div></div>
+                <div class="sk-est-card"><div class="sk-est-label">to rebuild</div><div class="sk-est-value" id="sk-est-rebuild-my"></div><div class="sk-est-detail" id="sk-est-rebuild-my-detail"></div></div>
+                <div class="sk-est-card"><div class="sk-est-label">rebuild value</div><div class="sk-est-value" id="sk-est-rebuild-cost"></div><div class="sk-est-detail" id="sk-est-rebuild-cost-detail"></div></div>
             </div>
         </div>
         <div class="sk-est-section">
-            <h4>Maintenance Effort</h4>
-            <div class="sk-est-inputs">
-                <label>yearly maintenance, % of rebuild value <input type="number" id="sk-est-maintenance" class="sk-est-short" min="0" max="100" step="1" value="15"></label>
+            <div class="sk-est-heading">
+                <h4>Maintenance effort</h4>
+                <div class="sk-est-inputs">
+                    <label><input type="number" id="sk-est-maintenance" class="sk-est-short" min="0" max="100" step="1" value="15"> % of the rebuild value per year</label>
+                </div>
             </div>
             <div class="sk-est-cards">
-                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-maint-my"></div><div class="sk-est-label">per year to maintain</div><div class="sk-est-detail" id="sk-est-maint-my-detail"></div></div>
-                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-maint-cost"></div><div class="sk-est-label">maintenance cost per year</div><div class="sk-est-detail" id="sk-est-maint-cost-detail"></div></div>
+                <div class="sk-est-card"><div class="sk-est-label">per year to maintain</div><div class="sk-est-value" id="sk-est-maint-my"></div><div class="sk-est-detail" id="sk-est-maint-my-detail"></div></div>
+                <div class="sk-est-card"><div class="sk-est-label">maintenance cost per year</div><div class="sk-est-value" id="sk-est-maint-cost"></div><div class="sk-est-detail" id="sk-est-maint-cost-detail"></div></div>
             </div>
         </div>
         <div class="sk-est-section">
-            <h4>AI Token Reads</h4>
-            <div class="sk-est-inputs">
-                <label>tokens per line <input type="number" id="sk-est-tpl-min" class="sk-est-short" min="1" step="1"> – <input type="number" id="sk-est-tpl-max" class="sk-est-short" min="1" step="1"></label>
-                <label>price per 1M input tokens <input type="number" id="sk-est-price-min" class="sk-est-short" min="0" step="0.5" value="1"> – <input type="number" id="sk-est-price-max" class="sk-est-short" min="0" step="0.5" value="15"></label>
-                <label>context window (tokens) <input type="number" id="sk-est-context" min="1000" step="100000" value="200000"></label>
-                <label>full reads per month <input type="number" id="sk-est-reads" class="sk-est-short" min="0" step="1" value="20"></label>
+            <div class="sk-est-heading">
+                <h4>AI token reads</h4>
+                <div class="sk-est-inputs">
+                    <label><input type="number" id="sk-est-tpl-min" class="sk-est-short" min="1" step="1"> – <input type="number" id="sk-est-tpl-max" class="sk-est-short" min="1" step="1"> tokens per line</label>
+                    <label><input type="number" id="sk-est-price-min" class="sk-est-short" min="0" step="0.5" value="1"> – <input type="number" id="sk-est-price-max" class="sk-est-short" min="0" step="0.5" value="15"> per 1M input tokens</label>
+                    <label><input type="number" id="sk-est-context" min="1000" step="100000" value="200000"> tokens context window</label>
+                    <label><input type="number" id="sk-est-reads" class="sk-est-short" min="0" step="1" value="20"> full reads per month</label>
+                </div>
             </div>
             <div class="sk-est-cards">
-                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-tokens"></div><div class="sk-est-label">tokens to read all code once</div><div class="sk-est-detail" id="sk-est-tokens-detail"></div></div>
-                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-windows"></div><div class="sk-est-label">context windows needed to hold it</div><div class="sk-est-detail" id="sk-est-windows-detail"></div></div>
-                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-read-cost"></div><div class="sk-est-label">cost of one full read of all code</div><div class="sk-est-detail" id="sk-est-read-cost-detail"></div></div>
-                <div class="sk-est-card"><div class="sk-est-value" id="sk-est-month-cost"></div><div class="sk-est-label">token cost per month</div><div class="sk-est-detail" id="sk-est-month-cost-detail"></div></div>
+                <div class="sk-est-card"><div class="sk-est-label">tokens to read all code once</div><div class="sk-est-value" id="sk-est-tokens"></div><div class="sk-est-detail" id="sk-est-tokens-detail"></div></div>
+                <div class="sk-est-card"><div class="sk-est-label">context windows to hold it</div><div class="sk-est-value" id="sk-est-windows"></div><div class="sk-est-detail" id="sk-est-windows-detail"></div></div>
+                <div class="sk-est-card"><div class="sk-est-label">cost of one full read of all code</div><div class="sk-est-value" id="sk-est-read-cost"></div><div class="sk-est-detail" id="sk-est-read-cost-detail"></div></div>
+                <div class="sk-est-card"><div class="sk-est-label">token cost per month</div><div class="sk-est-value" id="sk-est-month-cost"></div><div class="sk-est-detail" id="sk-est-month-cost-detail"></div></div>
             </div>
             <div class="sk-est-scopes">
                 <table>
@@ -210,6 +227,9 @@
                 set('read-cost', range(tokensLow / 1e6 * priceLow, tokensHigh / 1e6 * priceHigh, inMoney));
                 set('read-cost-detail', 'at ' + range(priceLow, priceHigh, inMoney) + ' per million input tokens');
                 set('month-cost', range(tokensLow / 1e6 * priceLow * reads, tokensHigh / 1e6 * priceHigh * reads, inMoney));
+                set('teaser', effort(rebuildMy) + ' to rebuild · ' + money(rebuildMy * costPerMy, currency) + ' rebuild value · '
+                    + effort(maintMy) + ' per year to maintain · ' + range(tokensLow, tokensHigh, compact) + ' tokens to read all code'
+                    + repositoriesText());
                 set('month-cost-detail', oneDecimal(reads) + ' full reads of all code per month');
 
                 var rows = el('scope-rows');
