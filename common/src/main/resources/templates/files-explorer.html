@@ -54,11 +54,35 @@
             overflow: hidden;
         }
 
-        /* Long file and folder names are cut with an ellipsis (full name on hover), so the columns on the right stay visible. */
-        .sk-file-line {
+        /* A file as on the Highlights tab: the name above, its folder (ending in "/") below, the full path on hover.
+           Long names are cut with an ellipsis, so the columns on the right stay visible. */
+        .sk-file-cell {
+            border-left: 1px solid var(--sk-border);
+            padding-left: 6px;
+            margin-bottom: 4px;
+        }
+
+        .sk-file-name {
+            display: block;
             max-width: 420px;
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 600;
+            color: var(--sk-text);
+        }
+
+        a.sk-file-name {
+            color: var(--sk-link);
+        }
+
+        .sk-file-folder {
+            max-width: 420px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 12px;
+            color: var(--sk-text-muted);
         }
 
         .sortable {
@@ -643,19 +667,18 @@
                 html += '</td>';
             }
             html += '<td>';
-            const paths = item.path.split('/');
-            const fileName = paths[paths.length - 1];
-            let folder = paths.slice(0, paths.length - 1).join('/');
-            html += '<div style="border-left: 1px solid var(--sk-border); padding-left: 6px">';
-            html += '<div class="sk-file-line" title="' + esc(folder) + '" style="font-size: 90%; color: var(--sk-text-muted)">' + esc(folder) + '</div>';
-            // File name: link to the cached source page when available, otherwise plain bold text.
+            const slash = item.path.lastIndexOf('/');
+            const fileName = item.path.substring(slash + 1);
+            const folder = slash >= 0 ? item.path.substring(0, slash + 1) : '';
+            html += '<div class="sk-file-cell" title="' + esc(item.path) + '">';
+            // File name: link to the cached source page when available, otherwise plain text.
             // (sourceFileLink is percent-encoded by the generator; escaping it is defense in depth.)
             if (saveSourceFiles && item.sourceFileLink) {
-                html += '<div class="sk-file-line" title="' + esc(fileName) + '" style="margin-bottom: 2px"><a href="' + esc(item.sourceFileLink) + '" target="_blank" '
-                    + 'style="color: var(--sk-accent); font-weight: bold">' + esc(fileName) + ' <span style="font-size: 60%; color: var(--sk-text-muted)">&#x2197;</span></a></div>';
+                html += '<a class="sk-file-name" href="' + esc(item.sourceFileLink) + '" target="_blank">' + esc(fileName) + '</a>';
             } else {
-                html += '<div class="sk-file-line" title="' + esc(fileName) + '" style="margin-bottom: 2px; color: var(--sk-text); font-weight: bold">' + esc(fileName) + '</div>';
+                html += '<span class="sk-file-name">' + esc(fileName) + '</span>';
             }
+            html += '<div class="sk-file-folder">' + esc(folder) + '</div>';
             html += '</div>';
             html += '</td>';
 

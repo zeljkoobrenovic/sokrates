@@ -5,6 +5,13 @@ everything listed under the most recent date.
 
 ## 2026-10-05
 
+### Files and units explorers show files like the Highlights tab
+
+In the files and units explorers, a file now shows as on the Highlights tab: the file name first, with
+the folder (ending in "/") in smaller grey text underneath, and the full path on hover. Before, the
+folder came first and the two explorers styled the name differently. The files explorer's name link
+no longer has the "↗" marker; the unit name links in the units explorer keep theirs.
+
 ### Temporal dependencies: very large commits are left out, and the analysis uses much less memory
 
 Commits that touch more than 100 main files are no longer counted in the temporal (changed-together)

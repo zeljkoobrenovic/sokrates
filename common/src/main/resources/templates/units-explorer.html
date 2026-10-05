@@ -31,6 +31,37 @@
             text-overflow: ellipsis;
         }
 
+        /* A file as on the Highlights tab: the name above, its folder (ending in "/") below, the full path on hover.
+           Long names are cut with an ellipsis, like the unit names. */
+        .sk-file-cell {
+            border-left: 1px solid var(--sk-border);
+            padding-left: 6px;
+            margin-bottom: 4px;
+        }
+
+        .sk-file-name {
+            display: block;
+            max-width: 420px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 600;
+            color: var(--sk-text);
+        }
+
+        a.sk-file-name {
+            color: var(--sk-link);
+        }
+
+        .sk-file-folder {
+            max-width: 420px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 12px;
+            color: var(--sk-text-muted);
+        }
+
         .sortable {
             cursor: pointer;
             user-select: none;
@@ -242,14 +273,15 @@
             html += langIcon(item.mainLang);
             html += '</td>';
 
-            // file: folder greyed, file name bold.
+            // file: the name above its folder, as on the Highlights tab.
             html += '<td>';
-            const paths = (item.file || '').split('/');
-            const fileName = paths[paths.length - 1];
-            let folder = paths.slice(0, paths.length - 1).join('/');
-            html += '<div style="border-left: 1px solid var(--sk-border); padding-left: 6px">';
-            html += '<div class="sk-file-line" title="' + escapeHtml(folder) + '" style="font-size: 90%; color: var(--sk-text-muted)">' + escapeHtml(folder) + '</div>';
-            html += '<div class="sk-file-line" title="' + escapeHtml(fileName) + '" style="margin-bottom: 6px; color: var(--sk-text)">' + escapeHtml(fileName) + '</div>';
+            const path = item.file || '';
+            const slash = path.lastIndexOf('/');
+            const fileName = path.substring(slash + 1);
+            const folder = slash >= 0 ? path.substring(0, slash + 1) : '';
+            html += '<div class="sk-file-cell" title="' + escapeHtml(path) + '">';
+            html += '<span class="sk-file-name">' + escapeHtml(fileName) + '</span>';
+            html += '<div class="sk-file-folder">' + escapeHtml(folder) + '</div>';
             html += '</div>';
             html += '</td>';
 
