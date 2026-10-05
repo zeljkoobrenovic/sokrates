@@ -539,7 +539,9 @@
             setTimeout(() => {
                 const el = document.getElementById('f-' + cssId(f.id));
                 if (el) {
-                    el.scrollIntoView({block: 'center'});
+                    // its title just below the sticky toolbar (centring a long open finding hides its title under it)
+                    const toolbar = document.querySelector('.toolbar');
+                    window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - (toolbar ? toolbar.offsetHeight : 0) - 8);
                     el.classList.add('highlight');
                     setTimeout(() => el.classList.remove('highlight'), 2500);
                 }

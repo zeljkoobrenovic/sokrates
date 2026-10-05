@@ -223,6 +223,9 @@
 
 <script>
     const data = ${data};
+    // repository name -> its export (AI insights link, scanners with their page links)
+    const repositoriesByName = {};
+    (data.repositories || []).forEach(r => { repositoriesByName[r.name] = r; });
     const SEVERITIES = ['critical', 'high', 'medium', 'low', 'info'];
     const PAGE = 200;
     let limit = PAGE;
@@ -329,10 +332,12 @@
         });
         let html = '';
         visible.slice(0, limit).forEach(f => {
+            const repo = repositoriesByName[f.repo] || {};
+            const scanner = (repo.scanners || []).find(s => s.scanner === f.scanner) || {};
             html += '<tr>'
                 + '<td>' + badge(f.severity) + '</td>'
-                + '<td><a href="' + esc(f.url.replace(/#.*$/, '')) + '" target="_blank" title="open the repository\'s AI Insights explorer">' + esc(f.repo) + '</a></td>'
-                + '<td class="muted">' + esc(f.scanner.replace(/-scan$/, '')) + (f.group ? ' <span class="muted">/ ' + esc(f.group) + '</span>' : '') + '</td>'
+                + '<td><a href="' + esc(repo.insightsUrl || f.url) + '" target="_blank" title="open the repository\'s AI Insights">' + esc(f.repo) + '</a></td>'
+                + '<td class="muted">' + (scanner.url ? '<a class="muted" href="' + esc(scanner.url) + '" target="_blank" title="open the scanner\'s page">' + esc(f.scanner.replace(/-scan$/, '')) + '</a>' : esc(f.scanner.replace(/-scan$/, ''))) + (f.group ? ' <span class="muted">/ ' + esc(f.group) + '</span>' : '') + '</td>'
                 + '<td><a href="' + esc(f.url) + '" target="_blank" title="' + esc(f.id) + '">' + esc(f.title) + '</a>'
                 + (f.description ? '<div class="desc">' + esc(f.description) + '</div>' : '')
                 + (f.recommendation ? '<div class="rec">' + esc(f.recommendation) + '</div>' : '')
@@ -357,14 +362,17 @@
         let html = '';
         data.repositories.forEach(r => {
             const bySeverity = SEVERITIES.filter(s => (r.findingsBySeverity || {})[s]).map(s => badge(s) + ' ' + r.findingsBySeverity[s]).join(' ');
-            const scanners = (r.scanners || []).map(s => '<span class="tag" title="' + esc(s.analyzedAt) + ': ' + s.findings + ' findings, ' + s.attention + ' above info">' + esc(s.scanner.replace(/-scan$/, '')) + '</span>').join('');
+            const scanners = (r.scanners || []).map(s => {
+                const tag = '<span class="tag" title="' + esc(s.analyzedAt) + ': ' + s.findings + ' findings, ' + s.attention + ' above info">' + esc(s.scanner.replace(/-scan$/, '')) + '</span>';
+                return s.url ? '<a href="' + esc(s.url) + '" target="_blank">' + tag + '</a>' : tag;
+            }).join('');
             html += '<tr>'
                 + '<td><a href="' + esc(r.reportUrl) + '" target="_blank">' + esc(r.name) + '</a></td>'
                 + '<td class="muted">' + esc((r.scannedAt || '').substring(0, 10)) + '</td>'
                 + '<td>' + scanners + '</td>'
                 + '<td>' + r.findings + (r.attention ? ' <span class="muted">(' + r.attention + ' above info)</span>' : '') + '</td>'
                 + '<td class="repo-sev">' + bySeverity + '</td>'
-                + '<td><a href="' + esc(r.insightsUrl) + '" target="_blank">explorer ↗</a></td>'
+                + '<td><a href="' + esc(r.insightsUrl) + '" target="_blank">AI insights ↗</a></td>'
                 + '</tr>';
         });
         document.getElementById('repo-rows').innerHTML = html;

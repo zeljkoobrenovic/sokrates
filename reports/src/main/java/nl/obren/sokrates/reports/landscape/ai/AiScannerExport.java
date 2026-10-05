@@ -11,6 +11,16 @@ public class AiScannerExport {
     private int attention = 0;
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String summary = "";
+    // the scanner's page of the repository (its report's AI Insights page, or the standalone explorer)
+    private String url = "";
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
 
     public String getScanner() {
         return scanner;

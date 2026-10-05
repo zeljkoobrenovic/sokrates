@@ -5,6 +5,14 @@ everything listed under the most recent date.
 
 ## 2026-10-05
 
+### Landscape AI Insights link to the repository reports
+
+In the landscape's AI Insights tab, a finding, a scanner and a repository now open the repository report's
+own AI Insights pages: a finding opens its scanner's page in the report, with the finding expanded. Before,
+they opened the standalone sokrates-skills explorer (`reports/ai-insights/index.html`). Repository reports
+generated before the report rendered the findings itself keep the old links. A finding id with a space now
+links correctly (it was encoded as "+", which the explorer did not decode).
+
 ### Report sidebar: sections open and close
 
 In the repository and landscape reports, each section of the sidebar (At a Glance, Explorers, Analyses,
@@ -23,8 +31,7 @@ the same search, filters and evidence as the sokrates-skills explorer, but witho
 new findings show up in the same run. For `analyzeGitRepo` and landscapes, the findings of earlier runs
 are kept: before, a re-run that skipped the agent (unchanged repository) replaced `reports/` and lost them.
 
-What stays the same: sokrates-skills still writes its standalone `reports/ai-insights/index.html`, and the
-landscape's AI Insights tab still links findings there. What to check: a custom tab added with
+What stays the same: sokrates-skills still writes its standalone `reports/ai-insights/index.html`. What to check: a custom tab added with
 `addCustomTab -label "AI Insights*" -iframeLink "../ai-insights/index.html"` (as the skills used to
 suggest) is left out while the report shows the findings itself; you can remove it from `customTabs` in
 `config.json`.

@@ -123,9 +123,23 @@ public class ReportShell {
             "    copy.setAttribute('src', src);\n" +
             "    f.parentNode.replaceChild(copy, f);\n" +
             "  }\n" +
+            "  // The sidebar item of a fragment: the item with that id, else the longest item id followed by \"/\"; the\n" +
+            "  // rest is passed to the item's frame as its fragment (#ai-insights/<scanner>/<finding id> opens the scanner's\n" +
+            "  // page on that finding). Null when no item matches.\n" +
+            "  function navTarget(id) {\n" +
+            "    var items = document.querySelectorAll('.sk-nav-item[data-sk-tab]');\n" +
+            "    var best = null;\n" +
+            "    for (var i = 0; i < items.length; i++) {\n" +
+            "      var nav = items[i].getAttribute('data-sk-nav') || '';\n" +
+            "      if (nav === id) { return {item: items[i], rest: ''}; }\n" +
+            "      if (nav && id.indexOf(nav + '/') === 0 && (!best || nav.length > best.nav.length)) { best = {item: items[i], nav: nav}; }\n" +
+            "    }\n" +
+            "    return best ? {item: best.item, rest: id.substring(best.nav.length + 1)} : null;\n" +
+            "  }\n" +
             "  function applyFrame(id, el) {\n" +
-            "    var item = document.querySelector('.sk-nav-item[data-sk-nav=\"' + id.replace(/\"/g, '') + '\"]');\n" +
-            "    var src = item ? item.getAttribute('data-sk-frame-src') : null;\n" +
+            "    var target = navTarget(id);\n" +
+            "    var src = target ? target.item.getAttribute('data-sk-frame-src') : null;\n" +
+            "    if (src && target.rest) { src += '#' + encodeURIComponent(target.rest); }\n" +
             "    el.querySelectorAll('iframe').forEach(function (f) {\n" +
             "      var original = f.getAttribute('data-sk-frame-default') || f.getAttribute('src');\n" +
             "      if (!original) { return; }\n" +
@@ -214,11 +228,11 @@ public class ReportShell {
             "      if (closed.indexOf(group.getAttribute('data-sk-group')) >= 0 && !group.querySelector('.sk-nav-item.active')) { setGroupOpen(group, false); }\n" +
             "    });\n" +
             "  };\n" +
-            "  function markNav(id) {\n" +
+            "  function markNav(fragmentId) {\n" +
+            "    var target = navTarget(fragmentId);\n" +
+            "    if (!target) { return; }\n" +
+            "    var id = target.item.getAttribute('data-sk-nav');\n" +
             "    var items = document.querySelectorAll('.sk-nav-item[data-sk-tab]');\n" +
-            "    var found = false;\n" +
-            "    for (var i = 0; i < items.length; i++) { if (items[i].getAttribute('data-sk-nav') === id) { found = true; } }\n" +
-            "    if (!found) { return; }\n" +
             "    for (var j = 0; j < items.length; j++) {\n" +
             "      var on = items[j].getAttribute('data-sk-nav') === id;\n" +
             "      items[j].classList.toggle('active', on);\n" +

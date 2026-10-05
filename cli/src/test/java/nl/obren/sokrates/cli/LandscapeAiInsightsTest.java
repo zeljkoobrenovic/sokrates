@@ -41,7 +41,9 @@ class LandscapeAiInsightsTest {
         try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(new File(landscape, "data/data.zip"))) {
             String json = new String(zip.getInputStream(zip.getEntry("ai-insights.json")).readAllBytes(), UTF_8);
             assertTrue(json.contains("\"title\" : \"TypeScript only\""), json);
-            assertTrue(json.contains("\"url\" : \"../alpha/reports/ai-insights/index.html#tech-stack-scan%2Flangs%2Fts\""), json);
+            // the repository report renders the findings, so the links open its AI Insights pages
+            assertTrue(json.contains("\"url\" : \"../alpha/reports/html/index.html#ai-insights/tech-stack-scan/tech-stack-scan%2Flangs%2Fts\""), json);
+            assertTrue(json.contains("\"insightsUrl\" : \"../alpha/reports/html/index.html#ai-insights/overview\""), json);
             assertTrue(json.contains("\"name\" : \"alpha\""));
             assertFalse(json.contains("\"name\" : \"beta\""), "repositories without findings are not listed");
         }

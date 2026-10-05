@@ -62,7 +62,9 @@ class AiInsightsAggregatorTest {
         assertEquals(AiInsightsAggregator.DESCRIPTION_LIMIT, high.getDescription().length(), "long descriptions are shortened");
         assertTrue(high.getDescription().endsWith("…"));
         assertEquals("Upgrade it.", high.getRecommendation());
-        assertEquals("../acme/alpha/reports/ai-insights/index.html#tech-stack-scan%2Fdeps%2Fold+lib", high.getUrl(), "a deep link into the repository's explorer");
+        // a space as %20, not "+": the pages decode their fragment with decodeURIComponent
+        assertEquals("../acme/alpha/reports/ai-insights/index.html#tech-stack-scan%2Fdeps%2Fold%20lib", high.getUrl(), "a deep link into the repository's explorer");
+        assertEquals("../acme/alpha/reports/ai-insights/index.html#view=tech-stack-scan", alpha.getScanners().get(1).getUrl(), "the scanner's view");
         AiFindingExport info = export.getFindings().get(2);
         assertEquals(List.of("rust", "async"), info.getTags());
         assertEquals("tech-stack-scan", info.getScanner());
@@ -73,6 +75,24 @@ class AiInsightsAggregatorTest {
         String json = new ObjectMapper().writeValueAsString(export);
         assertTrue(json.contains("\"url\":\"../acme/alpha/reports/ai-insights/index.html#security-scan%2Fsecrets%2Ftoken\""));
         assertFalse(json.contains("\"empty\""), "the isEmpty helper is not a data field");
+    }
+
+    @Test
+    void linksGoToTheRepositoryReportWhenItRendersTheFindings(@TempDir Path tmp) throws Exception {
+        File root = tmp.toFile();
+        FileUtils.write(new File(root, "acme/alpha/reports/ai-insights/tech-stack-scan.json"), TECH_STACK, UTF_8);
+        FileUtils.write(new File(root, "acme/alpha/reports/explorers/ai-insights.html"), "<html></html>", UTF_8);
+
+        AiInsightsLandscapeExport export = AiInsightsAggregator.aggregate(
+                List.of(repository("acme/alpha", "acme/alpha")), new File(root, "_sokrates_landscape"), "../");
+
+        AiRepositoryExport alpha = export.getRepositories().get(0);
+        assertEquals("../acme/alpha/reports/html/index.html#ai-insights/overview", alpha.getInsightsUrl());
+        assertEquals("../acme/alpha/reports/html/index.html#ai-insights/tech-stack-scan", alpha.getScanners().get(0).getUrl());
+        AiFindingExport high = export.getFindings().get(0);
+        assertEquals("../acme/alpha/reports/html/index.html#ai-insights/tech-stack-scan/tech-stack-scan%2Fdeps%2Fold%20lib", high.getUrl(),
+                "the scanner's page in the report, opened on the finding");
+        assertEquals("../acme/alpha/reports/index.html", alpha.getReportUrl());
     }
 
     @Test

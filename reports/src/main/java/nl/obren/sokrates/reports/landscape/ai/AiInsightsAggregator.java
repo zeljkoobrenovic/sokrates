@@ -29,6 +29,9 @@ import java.util.Map;
  */
 public class AiInsightsAggregator {
     public static final String AI_INSIGHTS_FOLDER = "ai-insights";
+    // The repository report's own AI Insights page (AiInsightsExplorerGenerator) and its sidebar route.
+    static final String IN_REPORT_PAGE = "explorers/ai-insights.html";
+    static final String IN_REPORT_ROUTE = "ai-insights/";
     public static final List<String> SEVERITIES = Arrays.asList("critical", "high", "medium", "low", "info");
     static final int DESCRIPTION_LIMIT = 320;
     static final int RECOMMENDATION_LIMIT = 240;
@@ -54,7 +57,9 @@ public class AiInsightsAggregator {
                 continue;
             }
             String reportsRelative = analysisResultsPath.replaceAll("/data/analysisResults\\.json$", "");
-            String insightsUrl = prefix + reportsRelative + "/" + AI_INSIGHTS_FOLDER + "/index.html";
+            RepositoryLinks links = new RepositoryLinks(prefix + reportsRelative,
+                    new File(reportsFolder, IN_REPORT_PAGE).isFile());
+            String insightsUrl = links.insights();
             String reportUrl = prefix + reportsRelative + "/index.html";
             String name = repository.getAnalysisResults().getMetadata().getName();
             AiRepositoryExport repositoryExport = new AiRepositoryExport();
@@ -65,7 +70,7 @@ public class AiInsightsAggregator {
             Arrays.sort(files == null ? new File[0] : files);
             for (File file : files == null ? new File[0] : files) {
                 try {
-                    addScanner(export, repositoryExport, name, insightsUrl, MAPPER.readTree(FileUtils.readFileToString(file, StandardCharsets.UTF_8)));
+                    addScanner(export, repositoryExport, name, links, MAPPER.readTree(FileUtils.readFileToString(file, StandardCharsets.UTF_8)));
                 } catch (Exception e) {
                     LOG.warn("Skipping " + file.getPath() + ": " + e.getMessage());
                 }
@@ -81,7 +86,7 @@ public class AiInsightsAggregator {
     }
 
     /** Adds one scanner document (the parsed findings JSON) of a repository; ignored when it has no scanner name or findings list. */
-    static void addScanner(AiInsightsLandscapeExport export, AiRepositoryExport repository, String repoName, String insightsUrl, JsonNode document) {
+    static void addScanner(AiInsightsLandscapeExport export, AiRepositoryExport repository, String repoName, RepositoryLinks links, JsonNode document) {
         String scanner = document.path("scanner").asText("");
         JsonNode findings = document.path("findings");
         if (StringUtils.isBlank(scanner) || !findings.isArray() || "combined".equals(scanner)) {
@@ -92,8 +97,9 @@ public class AiInsightsAggregator {
         scannerExport.setVersion(document.path("scanner_version").asText(""));
         scannerExport.setAnalyzedAt(document.path("analyzed_at").asText(""));
         scannerExport.setSummary(shorten(document.path("summary").asText(""), SUMMARY_LIMIT));
+        scannerExport.setUrl(links.scanner(scanner));
         for (JsonNode node : findings) {
-            AiFindingExport finding = toFinding(node, repoName, scanner, insightsUrl);
+            AiFindingExport finding = toFinding(node, repoName, scanner, links);
             export.getFindings().add(finding);
             scannerExport.setFindings(scannerExport.getFindings() + 1);
             repository.setFindings(repository.getFindings() + 1);
@@ -109,8 +115,8 @@ public class AiInsightsAggregator {
         }
     }
 
-    /** One finding: severity normalized, texts shortened, the explorer deep link built from the id. */
-    private static AiFindingExport toFinding(JsonNode node, String repoName, String scanner, String insightsUrl) {
+    /** One finding: severity normalized, texts shortened, the deep link built from the id. */
+    private static AiFindingExport toFinding(JsonNode node, String repoName, String scanner, RepositoryLinks links) {
         AiFindingExport finding = new AiFindingExport();
         finding.setRepo(repoName);
         finding.setScanner(scanner);
@@ -123,8 +129,45 @@ public class AiInsightsAggregator {
         finding.setDescription(shorten(node.path("description").asText(""), DESCRIPTION_LIMIT));
         finding.setRecommendation(shorten(node.path("recommendation").asText(""), RECOMMENDATION_LIMIT));
         node.path("tags").forEach(tag -> finding.getTags().add(tag.asText("")));
-        finding.setUrl(insightsUrl + (StringUtils.isNotBlank(finding.getId()) ? "#" + URLEncoder.encode(finding.getId(), StandardCharsets.UTF_8) : ""));
+        finding.setUrl(links.finding(scanner, finding.getId()));
         return finding;
+    }
+
+    /**
+     * Where a repository's AI insights open: the pages of its report (index.html#ai-insights/&lt;view&gt;, and
+     * #ai-insights/&lt;scanner&gt;/&lt;finding id&gt; for one finding) when the report renders them
+     * (explorers/ai-insights.html exists), else the standalone sokrates-skills explorer (ai-insights/index.html,
+     * #view=&lt;scanner&gt; or #&lt;finding id&gt;) that older reports have.
+     */
+    static class RepositoryLinks {
+        private final String reports;
+        private final boolean inReport;
+
+        RepositoryLinks(String reports, boolean inReport) {
+            this.reports = reports;
+            this.inReport = inReport;
+        }
+
+        String insights() {
+            return inReport ? reports + "/html/index.html#" + IN_REPORT_ROUTE + "overview" : reports + "/" + AI_INSIGHTS_FOLDER + "/index.html";
+        }
+
+        String scanner(String scanner) {
+            return inReport ? reports + "/html/index.html#" + IN_REPORT_ROUTE + fragment(scanner)
+                    : reports + "/" + AI_INSIGHTS_FOLDER + "/index.html#view=" + fragment(scanner);
+        }
+
+        String finding(String scanner, String id) {
+            if (StringUtils.isBlank(id)) {
+                return scanner(scanner);
+            }
+            return inReport ? scanner(scanner) + "/" + fragment(id) : reports + "/" + AI_INSIGHTS_FOLDER + "/index.html#" + fragment(id);
+        }
+    }
+
+    // Percent-encoded as encodeURIComponent does (the pages decode fragments with decodeURIComponent, which keeps a "+").
+    static String fragment(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
     static int severityRank(String severity) {
