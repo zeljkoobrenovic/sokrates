@@ -3,7 +3,7 @@
 User-visible behaviour changes, newest first. `:latest` of the Docker image and the `master` branch carry
 everything listed under the most recent date.
 
-## 2026-10-06
+## 2026-10-07
 
 ### Ease of change: "Tests" counts a test suite, not test volume
 
@@ -13,6 +13,8 @@ suite of reasonable size: no tests 1 (was 0), 5% of the main code 5, 10% 8, 20% 
 1.5 (was 1.75). Repositories without tests still score clearly lower (in one landscape: a 155-line sample went from
 5.8 / 4.7 to 6.5 / 5.8), repositories with a real test suite barely change, and medians rose from 4.9 / 4.4 to 5.3 / 5.2.
 Scores change on the next analysis.
+
+## 2026-10-06
 
 ### Ease of change: a soft weakest-link cap
 
