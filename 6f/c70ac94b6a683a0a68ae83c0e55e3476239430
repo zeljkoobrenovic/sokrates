@@ -1,0 +1,23 @@
+common/src/main/resources/templates/ai-cost-estimator.html
+  s_5026482126c219::t_0dad1523a2318d 437-438,495,983,1178,1295
+CHANGELOG.md
+  s_5026482126c219::t_0dad1523a2318d 8-13
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportActivityTab.java
+  s_5026482126c219::t_342be242a891c9 99,101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6fc70ac94b6a683a0a68ae83c0e55e3476239430",
+  "prompts": {},
+  "sessions": {
+    "s_5026482126c219": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "02d24a13-bc18-4f57-8e09-809e545be12d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
