@@ -1259,15 +1259,31 @@
     const GRADE_BANDS = [['A', 8, 10], ['B', 6.5, 8], ['C', 5, 6.5], ['D', 3.5, 5], ['E', 0, 3.5]];
 
     function locLabel(n) {
-        return n >= 1e6 ? (n / 1e6) + 'M' : n >= 1e3 ? (n / 1e3) + 'K' : String(n);
+        return n >= 1e6 ? +(n / 1e6).toPrecision(3) + 'M' : n >= 1e3 ? +(n / 1e3).toPrecision(3) + 'K' : String(n);
     }
 
     function scoresChart(rows) {
         const W = 900, H = 460, L = 44, R = 28, T = 12, B = 46;
-        const logs = rows.map(r => Math.log10(Math.max(1, r.mainLinesOfCode)));
-        let lo = Math.floor(Math.min.apply(null, logs)), hi = Math.ceil(Math.max.apply(null, logs));
-        if (hi <= lo) hi = lo + 1;
-        const x = loc => L + (Math.log10(Math.max(1, loc)) - lo) / (hi - lo) * (W - L - R);
+        // The axis starts near the bulk of the repositories (the 10th percentile by size, less about half a decade,
+        // never below the smallest), not at the decade below the smallest: a few tiny repositories would otherwise
+        // leave much of the chart empty. Smaller ones sit at the left edge as triangles. It always reaches the largest.
+        const logs = rows.map(r => Math.log10(Math.max(1, r.mainLinesOfCode))).sort((a, b) => a - b);
+        const at = p => {
+            const i = (logs.length - 1) * p, a = Math.floor(i), b = Math.ceil(i);
+            return logs[a] + (logs[b] - logs[a]) * (i - a);
+        };
+        const ext = Math.max(0.4, (at(0.9) - at(0.1)) * 0.2);
+        let lo = Math.max(logs[0], at(0.1) - ext), hi = logs[logs.length - 1];
+        const pad = Math.max(0.05, (hi - lo) * 0.03);
+        lo -= pad;
+        hi += pad;
+        if (hi - lo < 0.6) {
+            const mid = (lo + hi) / 2;
+            lo = mid - 0.3;
+            hi = mid + 0.3;
+        }
+        const logOf = loc => Math.log10(Math.max(1, loc));
+        const x = loc => L + (Math.min(hi, Math.max(lo, logOf(loc))) - lo) / (hi - lo) * (W - L - R);
         const y = v => T + (10 - v) / 10 * (H - T - B);
         let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width: 100%; max-width: ' + W + 'px; height: auto; font-size: 11px;"'
             + ' role="img" aria-label="ease of change against lines of main code">';
@@ -1280,15 +1296,23 @@
             svg += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="var(--sk-border)"></line>'
                 + '<text x="' + (L - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end" fill="var(--sk-text-muted)">' + v + '</text>';
         }
-        for (let p = lo; p <= hi; p++) {
-            const px = x(Math.pow(10, p));
-            svg += '<line x1="' + px + '" x2="' + px + '" y1="' + T + '" y2="' + (H - B) + '" stroke="var(--sk-border)"></line>'
-                + '<text x="' + px + '" y="' + (H - B + 16) + '" text-anchor="middle" fill="var(--sk-text-muted)">' + locLabel(Math.pow(10, p)) + '</text>';
+        // 1-2-5 ticks inside the range (only the powers of ten when the range spans many decades).
+        const steps = hi - lo > 4 ? [1] : [1, 2, 5];
+        for (let d = Math.floor(lo); d <= Math.ceil(hi); d++) {
+            steps.forEach(m => {
+                const value = m * Math.pow(10, d);
+                if (value < 1 || logOf(value) < lo || logOf(value) > hi) return;
+                const px = x(value);
+                svg += '<line x1="' + px + '" x2="' + px + '" y1="' + T + '" y2="' + (H - B) + '" stroke="var(--sk-border)"'
+                    + (m === 1 ? '' : ' stroke-dasharray="2 3"') + '></line>'
+                    + '<text x="' + px + '" y="' + (H - B + 16) + '" text-anchor="middle" fill="var(--sk-text-muted)">' + locLabel(value) + '</text>';
+            });
         }
         svg += '<text x="' + ((L + W - R) / 2) + '" y="' + (H - 6) + '" text-anchor="middle" fill="var(--sk-text-muted)">lines of main code (log scale)</text>'
             + '<text transform="translate(12,' + ((T + H - B) / 2) + ') rotate(-90)" text-anchor="middle" fill="var(--sk-text-muted)">'
             + (scoreKind === 'aiScore' ? 'AI' : 'Human') + ' ease of change</text>';
         // Larger repositories first, so smaller dots stay on top and clickable.
+        let beyond = 0;
         rows.slice().sort((a, b) => b.mainLinesOfCode - a.mainLinesOfCode).forEach(r => {
             const score = r.repositoryMetrics[scoreKind];
             const name = (r.metadata && r.metadata.name) || '';
@@ -1297,14 +1321,26 @@
                 + (score.coverageText ? '\n' + score.coverageText : '')
                 + (score.drags ? '\nbiggest drags: ' + score.drags : '');
             const color = (GRADE_COLORS[score.grade] || GRADE_COLORS.E)[0];
-            svg += '<a href="' + esc((r.reportFolderUrl || '') + 'index.html#highlights') + '" target="_blank">'
-                + '<circle cx="' + x(r.mainLinesOfCode).toFixed(1) + '" cy="' + y(score.value || 0).toFixed(1) + '" r="5.5" fill="' + color
+            const cx = x(r.mainLinesOfCode), cy = y(score.value || 0);
+            const side = logOf(r.mainLinesOfCode) < lo ? -1 : logOf(r.mainLinesOfCode) > hi ? 1 : 0;
+            svg += '<a href="' + esc((r.reportFolderUrl || '') + 'index.html#highlights') + '" target="_blank">';
+            if (side) {
+                // Beyond the axis range: a triangle at the edge, pointing out.
+                beyond++;
+                const tip = cx + side * 7, back = cx - side * 3;
+                svg += '<polygon points="' + tip.toFixed(1) + ',' + cy.toFixed(1) + ' ' + back.toFixed(1) + ',' + (cy - 6).toFixed(1) + ' '
+                    + back.toFixed(1) + ',' + (cy + 6).toFixed(1) + '" fill="' + color + '" stroke="var(--sk-text)" stroke-opacity="0.45" stroke-width="0.8">'
+                    + '<title>' + esc(title + '\n(beyond the axis range, drawn at its edge)') + '</title></polygon></a>';
+                return;
+            }
+            svg += '<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="5.5" fill="' + color
                 // Not all sub-scores measured: a hollow, dashed dot.
                 + (score.coverage ? '" fill-opacity="0.25" stroke="' + color + '" stroke-width="1.6" stroke-dasharray="2 1.5"'
                     : '" fill-opacity="0.85" stroke="var(--sk-text)" stroke-opacity="0.45" stroke-width="0.8"')
                 + '><title>' + esc(title) + '</title></circle></a>';
         });
-        return svg + '</svg>';
+        return svg + '</svg>' + (beyond ? '<div style="color: var(--sk-text-faint); font-size: 80%;">Triangles at the left edge: '
+            + beyond + (beyond === 1 ? ' repository' : ' repositories') + ' smaller than the axis range (hover for the size).</div>' : '');
     }
 
     // The Ease of Change* tab's chart, above its table: the rows are the tab's (searched, with scores).

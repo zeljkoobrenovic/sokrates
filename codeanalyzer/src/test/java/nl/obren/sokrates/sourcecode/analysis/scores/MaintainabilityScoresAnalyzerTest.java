@@ -51,8 +51,9 @@ class MaintainabilityScoresAnalyzerTest {
 
         MaintainabilityScore score = MaintainabilityScoresAnalyzer.combine(measured, weights);
 
-        // the arithmetic mean would be 7.75; the geometric mean is 5.6, the weakest link caps at 1 + 4
-        assertEquals(5.0, score.getValue());
+        // the arithmetic mean would be 7.75; the geometric mean is 5.6, and of its 0.6 above the weakest link (1 + 4)
+        // only half counts: 5.3 (a hard cap would pile every such repository onto exactly 5.0)
+        assertEquals(5.3, score.getValue());
         assertEquals("C", score.getGrade());
         assertEquals("D", score.getCappedBy());
         // drags are measured on the uncapped mean (5.6): a perfect D makes it 10
@@ -204,8 +205,17 @@ class MaintainabilityScoresAnalyzerTest {
         config.setCapExcludes(null);
         MaintainabilityScore capped = MaintainabilityScoresAnalyzer.combine(measured, weights,
                 MaintainabilityScoresAnalyzer.customFramework(measured, config, id -> null).rules);
-        assertEquals(3.5, capped.getValue());
+        assertEquals(4.0, capped.getValue(), "the mean 4.47 is 0.97 above 2 + 1.5; half of that counts");
         assertEquals(1.5, capped.getCapMargin());
+        config.setCapStrength(1.0);
+        assertEquals(3.5, MaintainabilityScoresAnalyzer.combine(measured, weights,
+                MaintainabilityScoresAnalyzer.customFramework(measured, config, id -> null).rules).getValue(), "capStrength 1: a hard cap");
+        config.setCapStrength(0.0);
+        MaintainabilityScore free = MaintainabilityScoresAnalyzer.combine(measured, weights,
+                MaintainabilityScoresAnalyzer.customFramework(measured, config, id -> null).rules);
+        assertEquals(4.5, free.getValue(), "capStrength 0: no cap");
+        assertEquals("", free.getCappedBy());
+        config.setCapStrength(null);
 
         config.setGradeThresholds(Arrays.asList(5.0, 7.0, 4.0, 2.0));
         assertEquals("D", MaintainabilityScoresAnalyzer.combine(measured, weights,

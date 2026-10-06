@@ -18,10 +18,20 @@ public class MaintainabilityScore {
     private double value;
     private String grade = "";
     private List<SubScore> subScores = new ArrayList<>();
-    // The label of the sub-score whose weakest-link cap set the total, or "" when the geometric mean did
+    // The label of the sub-score whose weakest-link cap held the total down, or "" when the geometric mean stands
     private String cappedBy = "";
     // The total is capped at the weakest sub-score + this margin (negative: no cap)
     private double capMargin = 4;
+    // The share of the excess above that the cap removes (1 = a hard cap, as analyses before 2026-10-06 had)
+    private double capStrength = 1;
+
+    public double getCapStrength() {
+        return capStrength;
+    }
+
+    public void setCapStrength(double capStrength) {
+        this.capStrength = capStrength;
+    }
     // Coverage: how many sub-scores count in this score (weight > 0), and the labels of those that could not be
     // measured (their analysis did not run); 0 = unknown (an analysis from before coverage was recorded)
     private int subScoresTotal;

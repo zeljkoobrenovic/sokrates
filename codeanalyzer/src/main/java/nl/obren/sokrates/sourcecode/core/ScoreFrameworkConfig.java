@@ -21,6 +21,10 @@ public class ScoreFrameworkConfig {
     // The total is capped at the weakest sub-score + this margin; null = the built-in 4, negative = no cap
     private Double weakestLinkMargin;
 
+    // The share of the excess above the weakest sub-score + margin that the cap removes, 0-1 (1 = a hard cap);
+    // null = the built-in 0.5
+    private Double capStrength;
+
     // Sub-score keys that never cap the total; null = the built-in ["knowledge"]
     private List<String> capExcludes;
 
@@ -154,6 +158,14 @@ public class ScoreFrameworkConfig {
 
     public void setWeakestLinkMargin(Double weakestLinkMargin) {
         this.weakestLinkMargin = weakestLinkMargin;
+    }
+
+    public Double getCapStrength() {
+        return capStrength;
+    }
+
+    public void setCapStrength(Double capStrength) {
+        this.capStrength = capStrength;
     }
 
     public List<String> getCapExcludes() {

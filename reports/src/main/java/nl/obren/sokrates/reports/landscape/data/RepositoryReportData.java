@@ -302,7 +302,7 @@ public class RepositoryReportData {
                     .map(s -> s.getLabel() + " " + String.format(Locale.US, "-%.1f", s.getDrag()))
                     .collect(Collectors.joining(", "));
             if (!score.getCappedBy().isEmpty()) {
-                this.drags += (this.drags.isEmpty() ? "" : "; ") + "capped by " + score.getCappedBy();
+                this.drags += (this.drags.isEmpty() ? "" : "; ") + "held down by " + score.getCappedBy();
             }
         }
 

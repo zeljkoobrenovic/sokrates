@@ -274,7 +274,7 @@ public class ReportFileExporter {
                 .sorted(Comparator.comparingDouble(SubScore::getDrag).reversed()).limit(3)
                 .map(s -> s.getLabel() + String.format(Locale.US, " -%.1f", s.getDrag())).collect(Collectors.joining(", "));
         String tooltip = String.format(Locale.US, "%.1f of 10, grade %s: ease of change*", score.getValue(), score.getGrade()) + (drags.isEmpty() ? "" : "; biggest drags: " + drags)
-                + (score.getCappedBy().isEmpty() ? "" : "; capped by " + score.getCappedBy())
+                + (score.getCappedBy().isEmpty() ? "" : "; held down by " + score.getCappedBy())
                 + (score.getCoverageText().isEmpty() ? "" : "; " + score.getCoverageText());
         // The info block's layout with the grade instead of a number (the number is in the hover text and on Highlights):
         // the A-E scale, current grade large, over a two-line label ("ease of change" / "for people*"), in the same

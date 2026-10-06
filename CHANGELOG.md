@@ -5,6 +5,23 @@ everything listed under the most recent date.
 
 ## 2026-10-06
 
+### Ease of change: a soft weakest-link cap
+
+The weakest-link cap was a hard clamp at the weakest code sub-score + 4, so every repository with one zero sub-score —
+typically no test code at all, also very large files or heavy duplication — got exactly 4.0, whatever the rest of its
+code looked like (in one 122-repository landscape, 44 had a Human score of exactly 4.0, mostly small samples without
+tests). Now only half of what the mean rises above that level counts: the weak spot still pulls the total down
+clearly, but repositories keep their differences (in that landscape: none at 4.0 for people, 5 for AI; median 4.9 /
+4.4). Scores change on the next analysis; "capped by" reads "held down by". A custom framework can set `capStrength`
+(0–1, default 0.5; 1 = the old hard cap).
+
+### Ease of Change* chart: an axis for the bulk of the repositories
+
+The chart's size axis no longer starts at the decade below the smallest repository, where a few tiny repositories left
+much of the chart empty. It now starts near the bulk of the repositories (the 10th percentile by size, less about half a
+decade) and still reaches the largest, with 1-2-5 ticks (2K, 5K, 10K, …); smaller repositories are drawn as triangles at
+the left edge, with their size on hover.
+
 ### "Ease of change" instead of "maintainability score"
 
 The Human and AI maintainability scores are now labelled **ease of change** — how easily people and AI agents can

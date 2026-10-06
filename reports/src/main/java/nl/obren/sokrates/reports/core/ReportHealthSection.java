@@ -212,8 +212,8 @@ public class ReportHealthSection {
             html.append("<div class='sk-hotspots-intro'>How easily the code can be understood and changed, from 0 to 10, by this ")
                     .append("repository's own framework (<code>analysis.maintainabilityScores.customFramework</code>). The total is a ")
                     .append("weighted geometric mean of its sub-scores")
-                    .append(scores.getHuman().getCapMargin() >= 0 ? ", capped at the weakest + "
-                            + margin(scores.getHuman().getCapMargin()) : "")
+                    .append(scores.getHuman().getCapMargin() >= 0 && scores.getHuman().getCapStrength() > 0
+                            ? ", held down near the weakest + " + margin(scores.getHuman().getCapMargin()) : "")
                     .append(". Sub-scores are ordered by <i>drag</i>, how much the uncapped mean would rise if that sub-score were 10; ")
                     .append("click one to see why it matters. ")
                     .append("<span class='sk-score-note'>* Compare only repositories scored by the same framework.</span></div>");
@@ -221,8 +221,8 @@ public class ReportHealthSection {
             html.append("<div class='sk-hotspots-intro'>How easily the code can be understood and changed, from 0 to 10. Other things ")
                     .append("equal, less code is easier and cheaper to change, for people and for agents. Both ratings weigh the same ")
                     .append("sub-scores: people struggle most with complex logic and knowledge held by few; agents pay for every ")
-                    .append("line they read, copy duplicates and need tests to check their work. The total is a weighted geometric mean, ")
-                    .append("capped at the weakest code sub-score + 4, so one weak spot is not averaged away. Sub-scores are ordered by ")
+                    .append("line they read, copy duplicates and need tests to check their work. The total is a weighted geometric mean; ")
+                    .append("above the weakest code sub-score + 4 only half of it counts, so one weak spot is not averaged away. Sub-scores are ordered by ")
                     .append("<i>drag</i>, how much the uncapped mean would rise if that sub-score were 10; click one to see why it matters. ")
                     .append("<span class='sk-score-note'>* A heuristic: compare repositories rather than read it as absolute. ")
                     .append("Set weights, or your own framework, in <code>analysis.maintainabilityScores</code>.</span></div>");
@@ -257,8 +257,11 @@ public class ReportHealthSection {
                     .append(HtmlEscapeUtils.escape(StringUtils.capitalize(score.getCoverageText()))).append(".</div>");
         }
         if (!score.getCappedBy().isEmpty()) {
-            html.append("<div class='sk-score-context'>Capped by ")
-                    .append(HtmlEscapeUtils.escape(score.getCappedBy())).append(" + ").append(margin(score.getCapMargin())).append(".</div>");
+            html.append("<div class='sk-score-context'>Held down by ").append(HtmlEscapeUtils.escape(score.getCappedBy()))
+                    .append(score.getCapStrength() >= 1 ? " + " + margin(score.getCapMargin()) + "."
+                            : String.format(Locale.US, ": above its score + %s, %s.", margin(score.getCapMargin()),
+                            score.getCapStrength() == 0.5 ? "half counts" : Math.round(100 * (1 - score.getCapStrength())) + "% counts"))
+                    .append("</div>");
         }
         if (!note.isEmpty()) {
             html.append("<div class='sk-score-context'>").append(HtmlEscapeUtils.escape(note)).append("</div>");

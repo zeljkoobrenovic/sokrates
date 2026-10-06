@@ -37,8 +37,10 @@ import java.util.function.Function;
  * change), copies duplicates, and needs tests to check its work.
  * <p>
  * The total is the weighted geometric mean of the sub-scores (so a strong sub-score cannot hide a weak one the
- * way an average would), capped at the weakest sub-score about the code (not the knowledge spread, which is about
- * people) + {@link #WEAKEST_LINK_MARGIN}.
+ * way an average would), with a soft weakest-link cap: of what the mean rises above the weakest sub-score about the
+ * code (not the knowledge spread, which is about people) + {@link #WEAKEST_LINK_MARGIN}, only
+ * 1 − {@link #CAP_STRENGTH} counts. A hard cap ({@code capStrength} 1) piled every repository with a zero sub-score
+ * (e.g. no tests) onto exactly 4.0, whatever the rest of its code looked like.
  * <p>
  * With {@code analysis.maintainabilityScores.useCustomFramework}, the configured framework ({@link ScoreFrameworkConfig})
  * replaces the sub-scores, anchors, weights, cap and grades ({@link #customFramework}).
@@ -67,6 +69,8 @@ public class MaintainabilityScoresAnalyzer {
     public static final Map<String, Double> AI_WEIGHTS = weights(0.75, 1.5, 1, 1, 1.75, 0.75, 1.75, 1.5, 2, 0);
 
     static final double WEAKEST_LINK_MARGIN = 4;
+    // The share of the excess above the weakest link + margin that the cap removes (1 = hard cap, 0 = none).
+    static final double CAP_STRENGTH = 0.5;
     // A zero sub-score would zero the geometric mean whatever the rest is.
     static final double SCORE_FLOOR = 0.5;
     static final int WINDOW_DAYS = 365;
@@ -92,6 +96,7 @@ public class MaintainabilityScoresAnalyzer {
     public static class Rules {
         // Negative: no cap.
         double weakestLinkMargin = WEAKEST_LINK_MARGIN;
+        double capStrength = CAP_STRENGTH;
         Set<String> capExcludes = new HashSet<>(Collections.singletonList(KNOWLEDGE));
         double[] gradeThresholds = GRADE_THRESHOLDS;
     }
@@ -253,6 +258,9 @@ public class MaintainabilityScoresAnalyzer {
         }
         if (config.getWeakestLinkMargin() != null) {
             framework.rules.weakestLinkMargin = config.getWeakestLinkMargin();
+        }
+        if (config.getCapStrength() != null) {
+            framework.rules.capStrength = Math.max(0, Math.min(1, config.getCapStrength()));
         }
         if (config.getCapExcludes() != null) {
             framework.rules.capExcludes = new HashSet<>(config.getCapExcludes());
@@ -454,7 +462,7 @@ public class MaintainabilityScoresAnalyzer {
     /**
      * The weighted total of the measured sub-scores (in {@link #KEYS} order); sub-scores with weight 0 are left out.
      * A sub-score's drag is measured on the uncapped geometric mean, so it ranks the sub-scores also while the
-     * weakest-link cap holds the total down; {@link MaintainabilityScore#getCappedBy()} names the capping one.
+     * weakest-link cap holds the total down; {@link MaintainabilityScore#getCappedBy()} names the sub-score that does.
      */
     public static MaintainabilityScore combine(List<SubScore> measured, Map<String, Double> weights) {
         return combine(measured, weights, new Rules());
@@ -470,13 +478,15 @@ public class MaintainabilityScoresAnalyzer {
         }
         MaintainabilityScore score = new MaintainabilityScore();
         double mean = geometricMean(weighted);
-        SubScore weakest = rules.weakestLinkMargin < 0 ? null : weakestCappingSubScore(weighted, rules.capExcludes);
+        SubScore weakest = rules.weakestLinkMargin < 0 || rules.capStrength <= 0 ? null : weakestCappingSubScore(weighted, rules.capExcludes);
         double total = mean;
         if (weakest != null && weakest.getScore() + rules.weakestLinkMargin < mean) {
-            total = weakest.getScore() + rules.weakestLinkMargin;
+            double excess = mean - (weakest.getScore() + rules.weakestLinkMargin);
+            total = mean - rules.capStrength * excess;
             score.setCappedBy(weakest.getLabel());
         }
         score.setCapMargin(rules.weakestLinkMargin);
+        score.setCapStrength(rules.capStrength);
         score.setValue(round1(total));
         score.setGrade(grade(total, rules.gradeThresholds));
         for (int i = 0; i < weighted.size(); i++) {
