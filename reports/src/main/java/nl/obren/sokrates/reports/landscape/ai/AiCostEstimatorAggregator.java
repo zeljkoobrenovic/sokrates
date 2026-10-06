@@ -42,21 +42,21 @@ public class AiCostEstimatorAggregator {
     public static AiCostEstimatorData aggregate(List<RepositoryAnalysisResults> repositories, File landscapeFolder, String prefix) {
         List<String> names = new ArrayList<>();
         List<String> urls = new ArrayList<>();
+        List<Long> mainLinesOfCode = new ArrayList<>();
         List<AiCostEstimatorData> data = new ArrayList<>();
         for (RepositoryAnalysisResults repository : repositories) {
             String analysisResultsPath = repository.getSokratesRepositoryLink().getAnalysisResultsPath().replace("\\", "/");
             // <repo>/reports/data/analysisResults.json -> <repo>/reports/data, resolved lexically (see AiInsightsAggregator)
             File dataFolder = new File(landscapeFolder, prefix + analysisResultsPath).toPath().toAbsolutePath().normalize().getParent().toFile();
+            // Without estimator data (an older analysis) a repository still counts in the naive rebuild.
             AiCostEstimatorData repositoryData = read(dataFolder);
-            if (repositoryData == null) {
-                continue;
-            }
             String reportsRelative = analysisResultsPath.replaceAll("/data/analysisResults\\.json$", "");
             names.add(repository.getAnalysisResults().getMetadata().getName());
             urls.add(prefix + reportsRelative + "/html/index.html#ai-cost");
+            mainLinesOfCode.add((long) Math.max(0, repository.getAnalysisResults().getMainAspectAnalysisResults().getLinesOfCode()));
             data.add(repositoryData);
         }
-        return merge(names, urls, data, MAX_TASKS);
+        return merge(names, urls, mainLinesOfCode, data, MAX_TASKS);
     }
 
     /** The repository's estimator data from data.zip, or the loose file; null when there is none. */
@@ -86,16 +86,25 @@ public class AiCostEstimatorAggregator {
         }
     }
 
-    /** One landscape estimator from the repositories' data (same order as names and urls), newest maxTasks tasks kept. */
-    static AiCostEstimatorData merge(List<String> names, List<String> urls, List<AiCostEstimatorData> data, int maxTasks) {
+    /**
+     * One landscape estimator from the repositories' data (same order as names, urls and lines of main code; null data =
+     * a repository without history data, counted only in the naive rebuild), newest maxTasks tasks kept.
+     */
+    static AiCostEstimatorData merge(List<String> names, List<String> urls, List<Long> mainLinesOfCode, List<AiCostEstimatorData> data, int maxTasks) {
         AiCostEstimatorData merged = new AiCostEstimatorData();
         Map<String, Integer> authorIndex = new HashMap<>();
         TreeSet<String> prefixes = new TreeSet<>();
         List<AiCostEstimatorData.Task> tasks = new ArrayList<>();
         for (int r = 0; r < data.size(); r++) {
+            merged.getRepositories().add(new AiCostEstimatorData.Repository(names.get(r), urls.get(r), mainLinesOfCode.get(r)));
+            merged.setMainLinesOfCode(merged.getMainLinesOfCode() + mainLinesOfCode.get(r));
             AiCostEstimatorData repository = data.get(r);
-            merged.getRepositories().add(new AiCostEstimatorData.Repository(names.get(r), urls.get(r)));
+            if (repository == null) {
+                continue;
+            }
             merged.getNoise().add(repository.getNoise());
+            merged.setLinesInScopes(merged.getLinesInScopes() + repository.getLinesInScopes());
+            merged.getEditedFileLines().addAll(repository.getEditedFileLines());
             merged.setTotalCommitsCount(merged.getTotalCommitsCount() + repository.getTotalCommitsCount());
             merged.setKeptCommitsCount(merged.getKeptCommitsCount() + repository.getKeptCommitsCount());
             merged.setAnalyzedCommitsCount(merged.getAnalyzedCommitsCount() + repository.getAnalyzedCommitsCount());

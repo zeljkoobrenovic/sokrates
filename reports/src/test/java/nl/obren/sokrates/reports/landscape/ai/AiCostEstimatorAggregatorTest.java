@@ -31,6 +31,7 @@ class AiCostEstimatorAggregatorTest {
         data.getTasks().add(task);
         data.getNoise().setBotCommits(2);
         data.setTotalCommitsCount(10);
+        data.setLinesInScopes(300);
         data.getTicketPrefixes().add("PROJ");
         return data;
     }
@@ -38,7 +39,7 @@ class AiCostEstimatorAggregatorTest {
     @Test
     void mergesTasksAuthorsAndNoise() {
         AiCostEstimatorData merged = AiCostEstimatorAggregator.merge(Arrays.asList("a", "b"), Arrays.asList("../a/reports/html/index.html#ai-cost", "../b"),
-                Arrays.asList(repository("2024-01-01", "x@y.com"), repository("2024-02-01", "z@y.com", "X@y.com")), 10);
+                Arrays.asList(1000L, 500L), Arrays.asList(repository("2024-01-01", "x@y.com"), repository("2024-02-01", "z@y.com", "X@y.com")), 10);
 
         assertEquals(2, merged.getRepositories().size());
         assertEquals("../a/reports/html/index.html#ai-cost", merged.getRepositories().get(0).getUrl());
@@ -51,12 +52,26 @@ class AiCostEstimatorAggregatorTest {
         assertEquals(1, merged.getTasks().get(0).getRepo());
         assertEquals(0, merged.getTasks().get(0).getCommits().get(0).getAuthor());
         assertEquals(2, merged.getTotalTasksCount());
+        assertEquals(1500, merged.getMainLinesOfCode());
+        assertEquals(600, merged.getLinesInScopes(), "summed over the repositories with history data");
+        assertEquals(500, merged.getRepositories().get(1).getMainLinesOfCode());
+    }
+
+    @Test
+    void aRepositoryWithoutHistoryDataCountsOnlyInTheRebuild() {
+        AiCostEstimatorData merged = AiCostEstimatorAggregator.merge(Arrays.asList("a", "old"), Arrays.asList("", ""),
+                Arrays.asList(1000L, 7000L), Arrays.asList(repository("2024-01-01", "x@y.com"), null), 10);
+        assertEquals(2, merged.getRepositories().size());
+        assertEquals(8000, merged.getMainLinesOfCode());
+        assertEquals(300, merged.getLinesInScopes(), "a repository without history data adds no lines to the hindsight measure");
+        assertEquals(1, merged.getTasks().size());
+        assertEquals(10, merged.getTotalCommitsCount());
     }
 
     @Test
     void keepsTheNewestTasks() {
         AiCostEstimatorData merged = AiCostEstimatorAggregator.merge(Arrays.asList("a", "b"), Arrays.asList("", ""),
-                Arrays.asList(repository("2024-01-01", "x@y.com"), repository("2024-02-01", "z@y.com")), 1);
+                Arrays.asList(0L, 0L), Arrays.asList(repository("2024-01-01", "x@y.com"), repository("2024-02-01", "z@y.com")), 1);
         assertEquals(1, merged.getTasks().size());
         assertEquals("2024-02-01", merged.getTasks().get(0).getStart());
         assertEquals(2, merged.getTotalTasksCount());

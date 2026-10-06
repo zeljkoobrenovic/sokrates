@@ -17,6 +17,38 @@ public class AiCostEstimatorData {
     private int totalCommitsCount = 0;
     private int keptCommitsCount = 0;
     private int analyzedCommitsCount = 0;
+    // The naive rebuild's one measured input: lines of main code (summed over the repositories in a landscape).
+    private long mainLinesOfCode = 0;
+    // Total lines (comments and blank lines included, like git's line counts) of the analyzed scopes' current files: with
+    // the lines the history added, it tells how much work was redone in hindsight. Landscape: repositories with history data.
+    private long linesInScopes = 0;
+    // The current total lines of each file the estimated history edited (still in the codebase): the Refactoring ROI
+    // prices splitting the ones above the max file size.
+    private List<Integer> editedFileLines = new ArrayList<>();
+
+    public List<Integer> getEditedFileLines() {
+        return editedFileLines;
+    }
+
+    public void setEditedFileLines(List<Integer> editedFileLines) {
+        this.editedFileLines = editedFileLines;
+    }
+
+    public long getLinesInScopes() {
+        return linesInScopes;
+    }
+
+    public void setLinesInScopes(long linesInScopes) {
+        this.linesInScopes = linesInScopes;
+    }
+
+    public long getMainLinesOfCode() {
+        return mainLinesOfCode;
+    }
+
+    public void setMainLinesOfCode(long mainLinesOfCode) {
+        this.mainLinesOfCode = mainLinesOfCode;
+    }
     private List<String> ticketPrefixes = new ArrayList<>();
     // Landscape only: the repositories the tasks come from (Task.repo indexes it), and the task count
     // before the newest-tasks cap.
@@ -126,17 +158,27 @@ public class AiCostEstimatorData {
         }
     }
 
-    /** A landscape repository: its name and a link to its own AI Cost Estimator page. */
+    /** A landscape repository: its name, a link to its own AI Cost Estimator page and its lines of main code. */
     public static class Repository {
         private String name = "";
         private String url = "";
+        private long mainLinesOfCode = 0;
 
         public Repository() {
         }
 
-        public Repository(String name, String url) {
+        public Repository(String name, String url, long mainLinesOfCode) {
             this.name = name;
             this.url = url;
+            this.mainLinesOfCode = mainLinesOfCode;
+        }
+
+        public long getMainLinesOfCode() {
+            return mainLinesOfCode;
+        }
+
+        public void setMainLinesOfCode(long mainLinesOfCode) {
+            this.mainLinesOfCode = mainLinesOfCode;
         }
 
         public String getName() {
@@ -199,7 +241,7 @@ public class AiCostEstimatorData {
     /**
      * A task: commits grouped by ticket, or consecutive commits of one author touching overlapping
      * files. {@code sessions} are the agent sessions it is split into, each
-     * {@code [files, readLines, editAdded, editDeleted, newLines]}.
+     * {@code [files, readLines, editAdded, editDeleted, newLines, readLines of each edited file...]}.
      */
     public static class Task {
         private String start = "";

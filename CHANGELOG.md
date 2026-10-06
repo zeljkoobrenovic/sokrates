@@ -5,7 +5,44 @@ everything listed under the most recent date.
 
 ## 2026-10-06
 
+### AI Cost Estimator*: refactoring savings
+
+The Historical tab has a **Refactoring savings** card: what files no larger than a "max file size" (default 400
+lines; its own Assumptions group) would have saved. Every file a session reads counts at most that many lines (a
+1,200-line file counts 400, a 330-line file 330; same files, same commits). That saves read tokens, and a
+**carry-over** share (default 25–75%) of the rest of the cost is cut by the same share of reads (fewer steps, less tool
+output), so the saving lies between the read tokens alone and the whole cost cut by the read share. The card shows the
+share saved (P10–P90), the amount, how many edited files are larger, and the lines read before and after; the cost of
+the refactoring is not included. For Sokrates at 400 lines: about 12%. The repositories' data now carries each edited
+file's read size per session and the current size of the edited files, so existing analyses show it after they are
+re-analyzed.
+
+### AI Cost Estimator*: uncertainty in the naive rebuild
+
+The Naive Rebuild has an **uncertainty** level: how sure we are that what gets built delivers the intended value. *Low*
+(the default, 0–10% of built work redone) is a migration of the same functionality; *medium* (25–50%), *high* (50–75%)
+and *very high* (75–90%) redo a share of the built work: changed after feedback, thrown away, rebuilt. A redo can miss
+again, so the work built is the kept code ÷ (1 − the share redone), in "Redoing" sessions that read what they replace;
+fixes now scale with everything built. The level sets an editable "work redone" range ("custom" when edited), and its
+explanation shows how much the history redid in hindsight (lines added ÷ lines today; Sokrates: about 37%, like
+medium), from the analyzed scopes' total lines now stored in `aiCostEstimator.json`.
+
+### AI Cost Estimator*: Historical and Naive Rebuild tabs
+
+The AI Cost Estimator (repository and landscape) has two tabs. **Historical** is the estimate so far, from the git
+history. **Naive Rebuild** estimates what an agent would spend writing the main code again the way a good team works:
+small, frequent commits of code with its tests, fixes after debugging, and refactoring along the way. Its one measured
+input is the lines of main code; test code (by default as much as main code), build & other code (5–15% of main),
+session size, reads, fixes per 1,000 lines and the share rewritten are assumptions in their own "Naive rebuild" group.
+Every session goes through the same token model as the history. The tab shows the cost (P10–P90) next to the history's,
+per 1,000 lines of main code, by kind of work (building, fixing, refactoring), by code (main, test, build & other) and,
+in a landscape, by repository; its Model diagram shows the rebuild. The analysis data (`aiCostEstimator.json`) now also
+carries the lines of main code, and a landscape counts every repository in the rebuild, also those analyzed by an older
+version. A repository without git history opens on the Naive Rebuild tab.
+
 ### AI Cost Estimator*: a simpler model, shown as a diagram
+
+Every assumption now has a one-line explanation under it in the Assumptions panel, and "How it works" is shorter.
 
 The model is simpler: every agent step re-sends the context, so a session costs about steps × average context (mostly at
 cache prices) plus its output. Its assumptions went from 14 ranges to 10: one read amplification instead of one per task

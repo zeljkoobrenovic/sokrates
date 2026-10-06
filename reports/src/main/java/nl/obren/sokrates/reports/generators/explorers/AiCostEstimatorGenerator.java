@@ -114,7 +114,11 @@ public class AiCostEstimatorGenerator {
         // A path in no scope counts only when it is gone from the disk (deleted or renamed) and its extension is analyzed.
         Predicate<String> keepUnscoped = path -> extensions.contains(extensionOf(path))
                 && (sourceRoot[0] == null || !new File(sourceRoot[0], path).exists());
-        return buildData(currentFiles, fileUpdates, messagesBySha, keepUnscoped, MAX_COMMITS);
+        AiCostEstimatorData data = buildData(currentFiles, fileUpdates, messagesBySha, keepUnscoped, MAX_COMMITS);
+        data.setMainLinesOfCode(Math.max(0, results.getMainAspectAnalysisResults().getLinesOfCode()));
+        data.setLinesInScopes(currentFiles.stream().filter(file -> !"generated".equals(file.getScope()))
+                .mapToLong(file -> Math.max(0, file.getLinesOfCode())).sum());
+        return data;
     }
 
     /** Writes the data into the data folder (data/aiCostEstimator.json, packaged into data.zip; the landscape reads it). */
@@ -327,6 +331,14 @@ public class AiCostEstimatorGenerator {
             addCommit(task, commit, author);
         }
 
+        Set<String> edited = new TreeSet<>();
+        tasks.forEach(builder -> builder.work.forEach((lower, work) -> {
+            if (work.kind != DELETE && currentSize.containsKey(lower)) {
+                edited.add(lower);
+            }
+        }));
+        edited.forEach(lower -> data.getEditedFileLines().add(currentSize.get(lower)));
+
         tasks.forEach(builder -> {
             finish(builder, currentSize, sizeProxy);
             if (builder.task.churn() > 0) {
@@ -435,6 +447,8 @@ public class AiCostEstimatorGenerator {
     private static void finish(TaskBuilder builder, Map<String, Integer> currentSize, Map<String, Integer> sizeProxy) {
         AiCostEstimatorData.Task task = builder.task;
         int[] session = null;
+        List<int[]> sessions = new ArrayList<>();
+        List<List<Integer>> fileReads = new ArrayList<>();
         int files = 0;
         for (FileWork work : builder.work.values()) {
             if (work.kind == DELETE) {
@@ -463,10 +477,14 @@ public class AiCostEstimatorGenerator {
                 int partChurn = added + deleted;
                 if (session == null || session[0] + 1 > SESSION_MAX_FILES || session[2] + session[3] + session[4] + partChurn > SESSION_MAX_CHURN) {
                     session = new int[5];
-                    task.getSessions().add(session);
+                    sessions.add(session);
+                    fileReads.add(new ArrayList<>());
                 }
                 session[0]++;
                 session[1] += readLines;
+                if (readLines > 0) {
+                    fileReads.get(fileReads.size() - 1).add(readLines);
+                }
                 if (work.kind == NEW) {
                     session[4] += added;
                 } else {
@@ -474,6 +492,17 @@ public class AiCostEstimatorGenerator {
                     session[3] += deleted;
                 }
             }
+        }
+        // [files, readLines, editAdded, editDeleted, newLines, then the read lines of each edited file] - the
+        // per-file sizes let the page cap them (the Refactoring ROI: what reads would cost with smaller files).
+        for (int i = 0; i < sessions.size(); i++) {
+            int[] totals = sessions.get(i);
+            List<Integer> reads = fileReads.get(i);
+            int[] full = Arrays.copyOf(totals, 5 + reads.size());
+            for (int r = 0; r < reads.size(); r++) {
+                full[5 + r] = reads.get(r);
+            }
+            task.getSessions().add(full);
         }
         task.setFiles(files);
         task.setType(typeOf(task));

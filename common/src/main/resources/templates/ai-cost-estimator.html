@@ -277,7 +277,13 @@
             display: flex;
             align-items: center;
             gap: 5px;
-            margin-bottom: 4px;
+        }
+
+        .assumption-groups .hint {
+            font-size: 85%;
+            line-height: 1.35;
+            color: var(--sk-text-faint);
+            margin: 1px 0 8px 0;
         }
 
         .assumption-groups .name {
@@ -345,6 +351,53 @@
         .sw-calc { background: #f2f2f2; border-color: #9a9a9a !important; }
         .sw-result { background: #e3f3e5; border-color: #4f9457 !important; }
 
+        body[data-tab="rebuild"] .hist-only, body[data-tab="historical"] .rebuild-only {
+            display: none !important;
+        }
+
+        .intro {
+            margin: 0 0 10px 0;
+            max-width: 900px;
+            font-size: 88%;
+            line-height: 1.45;
+            color: var(--sk-text-muted);
+        }
+
+        .inline-controls {
+            display: inline-flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px 14px;
+        }
+
+        .tabs {
+            display: flex;
+            width: fit-content;
+            margin-bottom: 10px;
+            border: 1px solid var(--sk-border-strong);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .tab-button {
+            font: inherit;
+            border: none;
+            background: none;
+            padding: 3px 12px;
+            color: var(--sk-text-muted);
+            cursor: pointer;
+        }
+
+        .tab-button + .tab-button {
+            border-left: 1px solid var(--sk-border-strong);
+        }
+
+        .tab-button.active {
+            background: var(--sk-accent-soft);
+            color: var(--sk-accent);
+            font-weight: 600;
+        }
+
         .notes {
             font-size: 82%;
             color: var(--sk-text-muted);
@@ -372,11 +425,19 @@
 <body>
 <div id="loading">Simulating…</div>
 <div id="report" style="display: none">
-    <div id="empty" class="muted" style="display: none; padding: 20px 0">
-        There are no commits to estimate: the analysis has no git history, or everything in it was filtered out as noise.
-    </div>
     <div id="content">
+        <div class="tabs" role="tablist">
+            <button class="tab-button" id="tab-historical" role="tab" onclick="showTab('historical')">Historical</button>
+            <button class="tab-button" id="tab-rebuild" role="tab" onclick="showTab('rebuild')">Naive Rebuild</button>
+        </div>
+        <p class="intro hist-only">What the history would have cost if an AI coding agent had done the work: commits become tasks and sessions,
+            and each session pays for its steps, every step re-sending the growing context.</p>
+        <p class="intro rebuild-only">What an AI coding agent would spend writing the main code again, the way a good team works: small commits with tests,
+            fixes after debugging, refactoring, and redoing the share of the work that the uncertainty says will not deliver.</p>
+        <p class="intro">All amounts are the agent's token costs only: they leave out people's time, discovery, planning, review, integration,
+            infrastructure and every other cost of building software.</p>
         <div class="toolbar">
+            <span class="hist-only inline-controls">
             <input id="filter" type="text" placeholder="Filter tasks" title="repository, author, ticket, sha or type; separate alternatives with ;" oninput="schedule(render)">
             <select id="date-preset" onchange="applyPreset(this.value)" title="a period ending at the latest commit">
                 <option value="all">All time</option>
@@ -391,6 +452,7 @@
                 <input type="date" id="date-from" title="from (inclusive)" onchange="render()"> –
                 <input type="date" id="date-to" title="to (inclusive)" onchange="render()">
             </span>
+            </span>
             <button class="action-button" id="toggle-assumptions" onclick="toggleAssumptions()" aria-expanded="false">Assumptions</button>
             <button class="action-button" id="toggle-model" onclick="toggleModel()" aria-expanded="false">Model</button>
         </div>
@@ -398,7 +460,7 @@
         <div class="assumptions" id="assumptions" hidden>
             <div class="assumption-groups" id="prior-grid"></div>
             <div class="small muted" style="margin-top: 8px">
-                Each range is drawn from in every simulation run.
+                Each simulation draws one value from every range.
                 <button class="action-button" onclick="resetInputs()" style="margin-left: 6px">Reset</button>
             </div>
         </div>
@@ -406,7 +468,7 @@
         <div class="model" id="model" hidden>
             <div id="model-diagram" class="muted small">Drawing the model…</div>
             <div class="model-legend small">
-                <span><i class="sw sw-data"></i>from the git history</span>
+                <span><i class="sw sw-data"></i>measured (git history, lines of code)</span>
                 <span><i class="sw sw-prior"></i>assumption (editable range)</span>
                 <span><i class="sw sw-calc"></i>calculation per session</span>
                 <span><i class="sw sw-result"></i>result</span>
@@ -414,6 +476,12 @@
             </div>
         </div>
 
+        <div id="historical" class="hist-only">
+        <div id="empty" class="muted" style="display: none; padding: 20px 0">
+            There are no commits to estimate: the analysis has no git history, or everything in it was filtered out as noise.
+            The Naive Rebuild tab needs only the lines of main code.
+        </div>
+        <div id="hist-body">
         <div class="cards" id="cards"></div>
 
         <div id="repos-section" hidden>
@@ -435,37 +503,74 @@
         </div>
         <div class="scroll"><table class="grid" id="tasks"></table></div>
         <div style="margin-top: 8px"><button class="action-button" id="more" onclick="showMore()">show more</button></div>
+        </div>
+        </div>
+
+        <div id="rebuild" class="rebuild-only">
+            <div class="cards" id="r-cards"></div>
+
+            <h3>By kind of work</h3>
+            <div class="scroll"><table class="grid" id="r-kinds"></table></div>
+
+            <h3>What gets built</h3>
+            <div class="scroll"><table class="grid" id="r-scopes"></table></div>
+
+            <div id="r-repos-section" hidden>
+                <h3>By repository</h3>
+                <div class="scroll"><table class="grid" id="r-repos"></table></div>
+            </div>
+        </div>
 
 
         <h3>How it works</h3>
         <div class="notes">
-            <ul>
-                <li><b>Tasks</b> come from the commits. Commits that mention the same ticket id (e.g. ABC-123) are one task<span id="ticket-note"></span>.
-                    Otherwise a task is consecutive commits by the same author, at most a day apart, touching overlapping files
-                    (the history has dates, not times). Tasks are split into <b>sessions</b> of at most 10 files or 400 changed lines.</li>
-                <li><b>Scopes:</b> main, test, build &amp; deployment and other code count; generated code, files in no scope and files with
-                    extensions the analysis does not cover are left out.</li>
-                <li><b>The model in one line:</b> every agent step sends the whole context again, so a session costs about
-                    <i>steps × average context</i>, mostly at cache prices, plus the output it writes.</li>
-                <li><b>Steps</b> are a base number per session plus a number per touched file. Fix tasks multiply them by a <i>debugging</i> factor:
-                    a small fix often comes after reproduce, run and inspect loops that git does not show, each adding tool output such as test runs and stack traces.</li>
-                <li><b>Context</b> starts at the base context (system prompt, tools, instructions) and grows by the reads (the current total lines of the
-                    edited files, comments and blank lines included, at most 2,000 per file, × tokens per line × a read amplification for re-reads and
-                    neighbouring files), the tool output and the output; new files are written, not read, deleted files cost nothing.</li>
-                <li><b>Output</b> is the changed lines × tokens per line × a write overhead (an edit repeats the old text and some context), plus output per step.</li>
-                <li><b>Cost:</b> the new context is a cache write, the re-sent context a cache read or, for the cache misses, full input, and the output is at the output price.
-                    Cache misses and the steps move the total most, and git cannot see either: measure them first in a replay pilot.</li>
-                <li><b>Task type</b> (<i>new code</i>: most lines in new files; <i>refactoring</i>: broad, deletes about as much as it adds;
-                    <i>fix</i>: at most 60 lines in at most 3 files; <i>feature</i>: the rest) groups the results; only fix tasks change the model (the debugging factor).</li>
-                <li><b>Still priors:</b> steps, tool output, output per step, cache misses and non-coding sessions. Git cannot see the agent's behaviour, so the result is a range (P10–P90 of
-                    <span id="draws"></span> simulations), not a measurement.</li>
+            <ul class="rebuild-only">
+                <li><b>In one line:</b> how much an agent would spend writing the main code again, the way a good team works: small, frequent commits,
+                    tests with the code, fixes with debugging, and refactoring along the way, redoing what the uncertainty says will not work out.</li>
+                <li><b>Measured:</b> only the lines of main code (<span id="r-main-note"></span>). Everything else is assumed:
+                    test code (by default as much as main code), build &amp; other code, and how the work goes.</li>
+                <li><b>Building:</b> sessions of a commit's size write new code and its tests, reading surrounding code for context.</li>
+                <li><b>Uncertainty:</b> how sure we are that what gets built delivers the intended value. <i>Low</i> is a migration (the same
+                    functionality, in another language); higher levels redo a share of the built work: changed after feedback, thrown away, rebuilt.
+                    A share <i>p</i> redone, where a redo can miss again, means building the kept code ÷ (1 − <i>p</i>). The history shows how much it redid
+                    in hindsight: lines added ÷ lines today.</li>
+                <li><b>Fixing:</b> a number of fixes per 1,000 lines built; each is a small change in about 2 files after reading code to find the cause,
+                    with its steps multiplied by the <i>debugging</i> factor.</li>
+                <li><b>Refactoring:</b> a share of the kept code is rewritten in sessions as large as build sessions, reading twice what they change.</li>
+                <li><b>Every session</b> goes through the same model as the history: steps, context that grows with reads, tool output and output,
+                    and cache-priced re-sends.</li>
+                <li><b>A range, not a measurement:</b> P10–P90 of <span id="r-draws"></span> simulations.</li>
+            </ul>
+            <ul class="hist-only">
+                <li><b>In one line:</b> every agent step re-sends the whole context, so a session costs about <i>steps × average context</i>,
+                    mostly at cache prices, plus its output.</li>
+                <li><b>Tasks:</b> commits with the same ticket id (e.g. ABC-123) are one task<span id="ticket-note"></span>; otherwise, consecutive commits
+                    of one author, at most a day apart, touching overlapping files. Each task is split into <b>sessions</b> of at most 10 files or 400 changed lines.</li>
+                <li><b>Scopes:</b> main, test, build &amp; deployment and other code count; generated code, unscoped files and unanalyzed extensions do not.</li>
+                <li><b>Steps:</b> a number per session plus one per touched file. Fix tasks multiply them by the <i>debugging</i> factor: a small fix often follows
+                    reproduce, run and inspect loops that git does not show.</li>
+                <li><b>Context</b> starts at the base context and grows with the reads, the tool output and the output. Reads are the edited files' current total lines
+                    (comments and blank lines included, at most 2,000 per file) × tokens per line × read amplification. New files are written, not read; deleted files are free.</li>
+                <li><b>Output:</b> changed lines × tokens per line × write overhead, plus output per step.</li>
+                <li><b>Cost:</b> new context at the cache-write price, re-sent context at the cache-read price (cache misses at the input price), output at the output price.</li>
+                <li><b>Refactoring savings:</b> what files no larger than the max file size would have saved. Every file a session reads counts at most
+                    that many lines (a 1,200-line file counts 400, a 330-line file 330; same files, same commits). That saves read tokens, and a carry-over
+                    share of the rest of the cost is cut by the same share of reads (fewer steps, less tool output). The cost of the refactoring is not included,
+                    and a change that needs several parts of a split file saves less, so the saving is optimistic.</li>
+                <li><b>Task type</b> groups the results: <i>new code</i> (most lines in new files), <i>refactoring</i> (broad, deletes about as much as it adds),
+                    <i>fix</i> (at most 60 lines in at most 3 files) or <i>feature</i> (the rest). Only fix tasks change the model.</li>
+                <li><b>A range, not a measurement:</b> git cannot see the agent, so steps, tool output, output per step and cache misses are assumptions;
+                    the result is P10–P90 of <span id="draws"></span> simulations. Steps and cache misses move it most.</li>
                 <li><b>Left out as noise:</b> <span id="noise"></span></li>
-                <li><b>Smell test:</b> the cost per developer-day compares with the reference you set (by default the about $13 per developer per active day reported for
-                    Claude Code in enterprises). Open-source histories with many drive-by contributors land far lower; a large gap for a company team means the priors need a look,
+                <li><b>Smell test:</b> compare the cost per developer-day with the reference (by default about $13, the reported enterprise average for Claude Code).
+                    Open-source histories with drive-by contributors land far lower; a large gap for a company team means the assumptions need a look,
                     or that agent-assisted developers do more per day than the history shows.</li>
-                <li><b>Calibrate with a replay pilot:</b> pick 20–30 tasks from the CSV across types and sizes, check out the parent of each task's first commit
-                    (<span class="mono">git checkout &lt;first_sha&gt;^</span>), give an agent the commit message or ticket text as the prompt, record what each session
-                    actually used, and compare with the task's estimate. Then adjust the priors above.</li>
+                <li><b>Calibrate with a replay pilot:</b> pick 20–30 tasks of different types and sizes from the CSV, check out each task's parent commit
+                    (<span class="mono">git checkout &lt;first_sha&gt;^</span>), prompt an agent with the commit message or ticket, record what each session used,
+                    compare with the estimate and adjust the assumptions.</li>
+            </ul>
+            <ul>
+                <li><b>Token costs only:</b> people's time, discovery, planning, review, integration, infrastructure, licences and operations are not included.</li>
                 <li><b>Further reading:</b> <a href="https://martinfowler.com/articles/exploring-gen-ai/refactoring-economic-benefit.html"
                     target="_blank" rel="noopener">martinfowler.com/articles/exploring-gen-ai/refactoring-economic-benefit</a></li>
             </ul>
@@ -493,35 +598,98 @@
     const TYPE_LABELS = {};
     TYPES.forEach(t => TYPE_LABELS[t[0]] = t[1]);
 
-    // Groups of [id, label, min, max (null = a single value), unit, step, hint].
+    // Groups of [id, label, min, max (null = a single value), unit, step, explanation].
     const GROUPS = [
+        ['Naive rebuild', [
+            ['r-level', 'uncertainty', 'low', null, '', 0, ''],
+            ['r-redo', 'work redone', 0, 10, '%', 1, 'Built work redone because it did not deliver the intended value: changed after feedback, thrown away, rebuilt.'],
+            ['r-test', 'test code', 1, 1, '×', 0.1, 'Lines of test code per line of main code; assumed, not measured.'],
+            ['r-other', 'build & other', 5, 15, '%', 1, 'Build, deployment, configuration and other code, as a share of main code.'],
+            ['r-lines', 'lines per session', 100, 300, '', 10, 'Lines a build session writes: one small commit of code and tests.'],
+            ['r-files', 'files per session', 2, 6, '', 1, 'Files a build or refactoring session touches.'],
+            ['r-read', 'lines read', 500, 2000, '', 100, 'Existing code a build session reads for context.'],
+            ['r-fixes', 'fixes per 1,000 lines', 2, 6, '', 0.5, 'Defects found and fixed while building; most are caught by the tests.'],
+            ['r-fix-lines', 'lines per fix', 10, 40, '', 1, 'Lines a fix changes, in about 2 files.'],
+            ['r-fix-read', 'lines read per fix', 500, 2000, '', 100, 'Code read to find the cause.'],
+            ['r-refactor', 'refactoring', 15, 30, '%', 1, 'Share of the kept code rewritten later, to keep it clean.']
+        ], 'rebuild'],
         ['Prices per 1M tokens', [
-            ['p-in', 'input', 3, null, '', 0.1],
-            ['p-out', 'output', 15, null, '', 0.1],
-            ['p-cw', 'cache write', 3.75, null, '', 0.05],
-            ['p-cr', 'cache read', 0.3, null, '', 0.01],
-            ['currency', 'currency', '$', null, '', 0],
-            ['reference', 'reference per dev-day', 13, null, '', 1, 'cost per developer per active day to compare with']
+            ['p-in', 'input', 3, null, '', 0.1, 'Uncached input: the cache misses.'],
+            ['p-out', 'output', 15, null, '', 0.1, 'Generated tokens: code, reasoning, messages.'],
+            ['p-cw', 'cache write', 3.75, null, '', 0.05, 'Context sent for the first time.'],
+            ['p-cr', 'cache read', 0.3, null, '', 0.01, 'Context sent again, from the cache.'],
+            ['currency', 'currency', '$', null, '', 0, 'Shown with every amount.'],
+            ['reference', 'reference per dev-day', 13, null, '', 1, 'Spend per developer per active day, to compare with.']
         ]],
         ['Steps', [
-            ['steps', 'per session', 10, 25, '', 1, 'agent steps per session'],
-            ['steps-file', 'per touched file', 3, 6, '', 0.5, 'extra agent steps per touched file'],
-            ['debug', 'debugging (fix tasks)', 1.5, 4, '×', 0.1, 'fix tasks: reproduce, run and inspect loops before a small change; multiplies their steps']
+            ['steps', 'per session', 10, 25, '', 1, 'Agent turns in every session.'],
+            ['steps-file', 'per touched file', 3, 6, '', 0.5, 'Extra turns per file read and changed.'],
+            ['debug', 'debugging', 1.5, 4, '×', 0.1, 'Multiplies the steps of fixes: reproduce, run, inspect.']
         ]],
         ['Context', [
-            ['base', 'base context', 12000, 25000, '', 1000, 'tokens of system prompt, tools and instructions'],
-            ['tpl', 'tokens per line', 7, 14, '', 1],
-            ['amp', 'read amplification', 1.5, 3, '×', 0.1, 're-reads and unchanged neighbouring files'],
-            ['tool', 'tool output per step', 300, 3000, '', 50, 'tokens per step of command output, test runs, build logs, stack traces, searches and diffs'],
-            ['window', 'context window', 200000, null, '', 10000, 'tokens']
+            ['base', 'base context', 12000, 25000, '', 1000, 'Tokens of system prompt, tools and instructions.'],
+            ['tpl', 'tokens per line', 7, 14, '', 1, 'Tokens in one line of code.'],
+            ['amp', 'read amplification', 1.5, 3, '×', 0.1, 'Re-reads and neighbouring files, per line of the edited files.'],
+            ['tool', 'tool output', 300, 3000, '', 50, 'Tokens per step of command output, test runs, logs, stack traces, search results.'],
+            ['window', 'context window', 200000, null, '', 10000, 'Most tokens the context holds.']
         ]],
         ['Output and cache', [
-            ['reason', 'output per step', 150, 600, '', 50, 'reasoning and other output tokens per step'],
-            ['edit', 'write overhead', 1.3, 2.5, '×', 0.1, 'per changed line: an edit repeats the old text and some context'],
-            ['miss', 'cache misses', 5, 20, '%', 1, 'the share of re-sent context that misses the prompt cache']
-        ]]
+            ['reason', 'output per step', 150, 600, '', 50, 'Tokens of reasoning and messages per step, besides the code.'],
+            ['edit', 'write overhead', 1.3, 2.5, '×', 0.1, 'Tokens written per changed line: an edit repeats old text and context.'],
+            ['miss', 'cache misses', 5, 20, '%', 1, 'Share of the re-sent context paid at the full input price.']
+        ]],
+        ['Refactoring savings', [
+            ['max-file', 'max file size', 400, null, '', 50, 'Lines. After refactoring, every file read in a session counts at most this many lines: the same files and commits, smaller files.'],
+            ['carry', 'carry-over', 25, 75, '%', 5, 'Share of the read saving that carries over to the other tokens: fewer steps, less tool output. 0% saves only the read tokens.']
+        ], 'historical']
     ];
     const STORAGE_KEY = 'sokrates-ai-cost-estimator';
+
+    // Uncertainty levels: the share of built work redone (%), and what it is like.
+    const UNCERTAINTY = [
+        ['low', 'low', 0, 10, 'a migration: the same functionality, in another language'],
+        ['medium', 'medium', 25, 50, 'a known product, requirements still moving'],
+        ['high', 'high', 50, 75, 'a new product, finding what customers value'],
+        ['very-high', 'very high', 75, 90, 'research, experiments, prototypes']
+    ];
+
+    // The select sets the work-redone range; editing the range by hand makes it "custom".
+    function levelOf(min, max) {
+        const level = UNCERTAINTY.find(l => l[2] === min && l[3] === max);
+        return level ? level[0] : 'custom';
+    }
+
+    function syncLevel() {
+        document.getElementById('r-level').value = levelOf(num('r-redo-min'), num('r-redo-max'));
+        updateLevelHint();
+    }
+
+    function applyLevel() {
+        const level = UNCERTAINTY.find(l => l[0] === document.getElementById('r-level').value);
+        if (level) {
+            document.getElementById('r-redo-min').value = level[2];
+            document.getElementById('r-redo-max').value = level[3];
+        }
+        updateLevelHint();
+    }
+
+    // In hindsight: the history added this many lines for the lines there are today, so 1 − today ÷ added was redone.
+    function hindsight() {
+        const today = imported.linesInScopes || 0;
+        const added = tasks.reduce((sum, t) => sum + t.editAdded + t.newLines, 0);
+        if (!tasks.length || !today || !added) return null;
+        const redone = Math.max(0, 1 - today / added);
+        const level = redone < 0.175 ? UNCERTAINTY[0] : redone < 0.5 ? UNCERTAINTY[1] : redone < 0.75 ? UNCERTAINTY[2] : UNCERTAINTY[3];
+        return {redone, level, added, today};
+    }
+
+    function updateLevelHint() {
+        const level = UNCERTAINTY.find(l => l[0] === document.getElementById('r-level').value);
+        const h = hindsight();
+        document.getElementById('r-level-hint').textContent = (level ? 'Like ' + level[4] + '. ' : '')
+            + (h ? 'This history: about ' + Math.round(100 * h.redone) + '% redone (' + compact(h.added) + ' lines added for '
+                + compact(h.today) + ' today), like ' + h.level[1] + '.' : '');
+    }
 
     // ------------------------------------------------------------------------------- helpers
 
@@ -593,11 +761,13 @@
     function buildPriorInputs() {
         let html = '';
         GROUPS.forEach(group => {
-            html += '<div><h4>' + escapeHtml(group[0]) + '</h4>';
+            html += '<div' + (group[2] === 'rebuild' ? ' class="rebuild-only"' : group[2] === 'historical' ? ' class="hist-only"' : '') + '><h4>' + escapeHtml(group[0]) + '</h4>';
             group[1].forEach(p => {
-                const title = p[6] ? ' title="' + escapeHtml(p[6]) + '"' : '';
-                html += '<div class="row"' + title + '><span class="name">' + escapeHtml(p[1]) + '</span>';
-                if (p[0] === 'currency') {
+                html += '<div class="row"><span class="name">' + escapeHtml(p[1]) + '</span>';
+                if (p[0] === 'r-level') {
+                    html += '<select id="r-level">' + UNCERTAINTY.map(l => '<option value="' + l[0] + '">' + escapeHtml(l[1]) + '</option>').join('')
+                        + '<option value="custom">custom</option></select>';
+                } else if (p[0] === 'currency') {
                     html += '<input type="text" id="currency" value="' + escapeHtml(p[2]) + '" style="width: 52px; text-align: center">';
                 } else if (p[3] == null) {
                     html += '<input type="number" id="' + p[0] + '" value="' + p[2] + '" step="' + p[5] + '" min="0"'
@@ -607,6 +777,8 @@
                         + '<input type="number" id="' + p[0] + '-max" value="' + p[3] + '" step="' + p[5] + '" min="0">';
                 }
                 html += '<span class="unit">' + escapeHtml(p[4]) + '</span></div>';
+                if (p[0] === 'r-level') html += '<div class="hint" id="r-level-hint"></div>';
+                if (p[6]) html += '<div class="hint">' + escapeHtml(p[6]) + '</div>';
             });
             html += '</div>';
         });
@@ -627,6 +799,23 @@
         panel.hidden = !panel.hidden;
         document.getElementById('toggle-model').setAttribute('aria-expanded', String(!panel.hidden));
         if (!panel.hidden) drawModel(lastList);
+    }
+
+    const TAB_KEY = 'sokrates-ai-cost-estimator-tab';
+
+    function currentTab() {
+        return document.body.dataset.tab || 'historical';
+    }
+
+    function showTab(tab) {
+        document.body.dataset.tab = tab;
+        ['historical', 'rebuild'].forEach(t => {
+            const button = document.getElementById('tab-' + t);
+            button.classList.toggle('active', t === tab);
+            button.setAttribute('aria-selected', String(t === tab));
+        });
+        try { localStorage.setItem(TAB_KEY, tab); } catch (e) {}
+        scheduleModel(lastList);
     }
 
     function toggleAssumptions() {
@@ -662,9 +851,16 @@
 
     function resetInputs() {
         inputIds().forEach(id => document.getElementById(id).value = defaults[id]);
+        syncLevel();
         try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+        recompute();
+    }
+
+    function recompute() {
         simulate();
+        simulateRebuild();
         render();
+        renderRebuild();
     }
 
     function range(id) {
@@ -677,6 +873,16 @@
     // Draws per task: enough for stable P10/P90 while the arrays stay small on big histories.
     const DRAWS = Math.max(40, Math.min(200, Math.floor(3000000 / Math.max(1, tasks.length))));
     let costs = new Float32Array(0), inputs = new Float32Array(0), cached = new Float32Array(0), outputs = new Float32Array(0);
+    // The refactoring savings per task and draw: the cost with every file read capped (only the read tokens change), and
+    // per draw the carry-over share.
+    let cappedCosts = new Float32Array(0), carryDraws = new Float64Array(0);
+    // A session's read lines with each file capped (sessions carry the per-file reads after the five totals).
+    function cappedRead(s, cap) {
+        if (s.length <= 5) return s[1];
+        let sum = 0;
+        for (let i = 5; i < s.length; i++) sum += Math.min(s[i], cap);
+        return sum;
+    }
 
     // One session's tokens and cost for one draw of the priors (theta): every step re-sends the context.
     function session(s, theta, prices, debug) {
@@ -692,29 +898,177 @@
         return [cost, input, reread * (1 - theta.miss), output];
     }
 
+    // One draw of the shared assumptions.
+    function drawTheta(draw) {
+        return {
+            steps: draw('steps'), stepsFile: draw('steps-file'), debug: draw('debug'), base: draw('base'), tpl: draw('tpl'), amp: draw('amp'),
+            tool: draw('tool'), reason: draw('reason'), edit: draw('edit'), miss: draw('miss') / 100,
+            window: Math.max(1, num('window'))
+        };
+    }
+
+    function prices() {
+        return {in: num('p-in'), out: num('p-out'), cw: num('p-cw'), cr: num('p-cr')};
+    }
+
+    // ------------------------------------------------------------------------------- the naive rebuild
+
+    const R_DRAWS = 2000;
+    const mainLinesOfCode = imported.mainLinesOfCode || 0;
+    const KINDS = [
+        ['build', 'Building', 'small commits of new code and its tests'],
+        ['redo', 'Redoing', 'work changed after feedback or thrown away (uncertainty)'],
+        ['fix', 'Fixing', 'small changes after debugging'],
+        ['refactor', 'Refactoring', 'rewriting a share of the kept code']
+    ];
+    let rebuild = null;
+
+    // Per draw: the lines kept (main measured, test and build & other assumed), then building, fixing and refactoring
+    // sessions, each through the same session model as the history; costs are linear in the lines of main code.
+    function simulateRebuild() {
+        const random = mulberry32(7);
+        const draw = id => {
+            const r = range(id);
+            return r[0] + (r[1] - r[0]) * random();
+        };
+        const price = prices();
+        const array = () => new Float64Array(R_DRAWS);
+        const out = {cost: array(), input: array(), cached: array(), output: array(), kept: array(), test: array(), other: array(),
+            kindCost: KINDS.map(array), kindSessions: KINDS.map(array), kindLines: KINDS.map(array)};
+        for (let d = 0; d < R_DRAWS; d++) {
+            const theta = drawTheta(draw);
+            const test = mainLinesOfCode * draw('r-test');
+            const other = mainLinesOfCode * draw('r-other') / 100;
+            const kept = mainLinesOfCode + test + other;
+            const lines = Math.max(1, draw('r-lines')), files = draw('r-files'), read = draw('r-read');
+            // Uncertainty: a share p of built work is redone, and a redo can miss again, so kept ÷ (1 − p) is built.
+            const redoShare = Math.min(0.95, draw('r-redo') / 100);
+            const redone = kept / (1 - redoShare) - kept;
+            const fixes = (kept + redone) / 1000 * draw('r-fixes'), fixLines = draw('r-fix-lines'), fixRead = draw('r-fix-read');
+            const rewritten = kept * draw('r-refactor') / 100;
+            const kinds = [
+                {count: kept / lines, session: [files, read, 0, 0, lines], debug: 1, lines: kept},
+                {count: redone / lines, session: [files, read + lines, lines / 2, lines / 2, 0], debug: 1, lines: redone},
+                {count: fixes, session: [2, fixRead, fixLines / 2, fixLines / 2, 0], debug: theta.debug, lines: fixes * fixLines},
+                {count: rewritten / lines, session: [files, 2 * lines, lines / 2, lines / 2, 0], debug: 1, lines: rewritten}
+            ];
+            kinds.forEach((kind, k) => {
+                const r = session(kind.session, theta, price, kind.debug);
+                out.kindCost[k][d] = kind.count * r[0];
+                out.kindSessions[k][d] = kind.count;
+                out.kindLines[k][d] = kind.lines;
+                out.cost[d] += kind.count * r[0];
+                out.input[d] += kind.count * r[1];
+                out.cached[d] += kind.count * r[2];
+                out.output[d] += kind.count * r[3];
+            });
+            out.kept[d] = kept;
+            out.test[d] = test;
+            out.other[d] = other;
+        }
+        rebuild = out;
+    }
+
+    function renderRebuild() {
+        if (!rebuild) return;
+        const cost = quantiles(rebuild.cost);
+        const perK = mainLinesOfCode ? scaled(cost, 1000 / mainLinesOfCode) : {p10: 0, p50: 0, p90: 0};
+        const input = quantiles(rebuild.input).p50, cachedInput = quantiles(rebuild.cached).p50, output = quantiles(rebuild.output).p50;
+        const sessions = KINDS.map((k, i) => quantiles(rebuild.kindSessions[i]).p50);
+        let history = '';
+        if (tasks.length) {
+            history = '<br>the history: ' + money(quantiles(sums(tasks, costs)).p50) + ' (P50)';
+        }
+        let html = '';
+        html += card('Estimated AI cost', money(cost.p50), rangeText(cost) + history);
+        html += card('Per 1,000 lines of main code', money(perK.p50), rangeText(perK) + '<br>' + int(mainLinesOfCode) + ' lines of main code');
+        html += card('Tokens', compact(input + output), compact(input) + ' input (' + (input ? Math.round(100 * cachedInput / input) : 0) + '% cache reads)'
+            + '<br>' + compact(output) + ' output');
+        html += card('Work', int(sessions.reduce((a, b) => a + b, 0)) + ' sessions', int(sessions[0]) + ' building · ' + int(sessions[1]) + ' redoing'
+            + '<br>' + int(sessions[2]) + ' fixing · ' + int(sessions[3]) + ' refactoring');
+        document.getElementById('r-cards').innerHTML = html;
+
+        let kinds = '<tr><th>work</th><th>what</th><th class="num">sessions</th><th class="num">lines changed</th>'
+            + '<th class="num">cost (P50)</th><th class="num">P10–P90</th><th class="num">share</th></tr>';
+        KINDS.forEach((kind, i) => {
+            const q = quantiles(rebuild.kindCost[i]);
+            kinds += '<tr><td><span class="type">' + kind[1] + '</span></td><td class="muted">' + kind[2] + '</td>'
+                + '<td class="num">' + int(sessions[i]) + '</td>'
+                + '<td class="num">' + int(quantiles(rebuild.kindLines[i]).p50) + '</td>'
+                + '<td class="num">' + money(q.p50) + '</td>'
+                + '<td class="num muted">' + money(q.p10) + ' – ' + money(q.p90) + '</td>'
+                + '<td class="num">' + (cost.p50 ? Math.round(100 * q.p50 / cost.p50) : 0) + '%</td></tr>';
+        });
+        document.getElementById('r-kinds').innerHTML = kinds;
+
+        // The cost splits over the code in proportion to its lines (every session is linear in them).
+        const scopeCost = part => quantiles(rebuild.cost.map((c, d) => rebuild.kept[d] ? c * part(d) / rebuild.kept[d] : 0));
+        const scopes = [
+            ['main code', 'measured', () => mainLinesOfCode],
+            ['test code', 'assumed: ' + rangeLabel('r-test') + '× main', d => rebuild.test[d]],
+            ['build & other code', 'assumed: ' + rangeLabel('r-other') + '% of main', d => rebuild.other[d]]
+        ];
+        let scopeRows = '<tr><th>code</th><th>basis</th><th class="num">lines</th><th class="num">cost (P50)</th><th class="num">P10–P90</th><th class="num">share</th></tr>';
+        scopes.forEach(scope => {
+            const q = scopeCost(scope[2]);
+            const lines = quantiles(rebuild.kept.map((k, d) => scope[2](d))).p50;
+            scopeRows += '<tr><td>' + scope[0] + '</td><td class="muted">' + escapeHtml(scope[1]) + '</td>'
+                + '<td class="num">' + int(lines) + '</td>'
+                + '<td class="num">' + money(q.p50) + '</td>'
+                + '<td class="num muted">' + money(q.p10) + ' – ' + money(q.p90) + '</td>'
+                + '<td class="num">' + (cost.p50 ? Math.round(100 * q.p50 / cost.p50) : 0) + '%</td></tr>';
+        });
+        document.getElementById('r-scopes').innerHTML = scopeRows;
+
+        document.getElementById('r-repos-section').hidden = !isLandscape;
+        if (isLandscape) {
+            let rows = '<tr><th>repository</th><th class="num">lines of main code</th><th class="num">cost (P50)</th><th class="num">P10–P90</th><th class="num">share</th></tr>';
+            repositories.map((repo, i) => ({i, loc: repo.mainLinesOfCode || 0})).filter(r => r.loc > 0).sort((a, b) => b.loc - a.loc).forEach(r => {
+                const share = mainLinesOfCode ? r.loc / mainLinesOfCode : 0;
+                rows += '<tr><td>' + repoLink(r.i) + '</td><td class="num">' + int(r.loc) + '</td>'
+                    + '<td class="num">' + money(cost.p50 * share) + '</td>'
+                    + '<td class="num muted">' + money(cost.p10 * share) + ' – ' + money(cost.p90 * share) + '</td>'
+                    + '<td class="num">' + Math.round(100 * share) + '%</td></tr>';
+            });
+            document.getElementById('r-repos').innerHTML = rows;
+        }
+        document.getElementById('r-main-note').textContent = int(mainLinesOfCode) + ' lines' + (isLandscape ? ' in ' + int(repositories.length) + ' repositories' : '')
+            + ', without comments and blank lines';
+        document.getElementById('r-draws').textContent = int(R_DRAWS);
+    }
+
     function simulate() {
         const random = mulberry32(42);
         const draw = id => {
             const r = range(id);
             return r[0] + (r[1] - r[0]) * random();
         };
-        const prices = {in: num('p-in'), out: num('p-out'), cw: num('p-cw'), cr: num('p-cr')};
+        const price = prices();
         const n = tasks.length;
         costs = new Float32Array(n * DRAWS);
+        const cap = Math.max(1, num('max-file'));
+        const capped = tasks.map(task => task.sessions.map(s => [s[0], cappedRead(s, cap), s[2], s[3], s[4]]));
+        tasks.forEach((task, t) => task.cappedReadLines = capped[t].reduce((sum, s) => sum + s[1], 0));
+        cappedCosts = new Float32Array(n * DRAWS);
+        carryDraws = new Float64Array(DRAWS);
+        // A separate random stream, so the carry-over does not shift the other draws.
+        const carryRandom = mulberry32(99);
+        const carryDraw = id => {
+            const r = range(id);
+            return r[0] + (r[1] - r[0]) * carryRandom();
+        };
         inputs = new Float32Array(n * DRAWS);
         cached = new Float32Array(n * DRAWS);
         outputs = new Float32Array(n * DRAWS);
         for (let d = 0; d < DRAWS; d++) {
-            const theta = {
-                steps: draw('steps'), stepsFile: draw('steps-file'), debug: draw('debug'), base: draw('base'), tpl: draw('tpl'), amp: draw('amp'),
-                tool: draw('tool'), reason: draw('reason'), edit: draw('edit'), miss: draw('miss') / 100,
-                window: Math.max(1, num('window'))
-            };
+            const theta = drawTheta(draw);
+            carryDraws[d] = carryDraw('carry') / 100;
             for (let t = 0; t < n; t++) {
-                let c = 0, i = 0, k = 0, o = 0;
+                let c = 0, i = 0, k = 0, o = 0, cc = 0;
                 const debug = tasks[t].type === 'fix' ? theta.debug : 1;
-                tasks[t].sessions.forEach(s => {
-                    const r = session(s, theta, prices, debug);
+                tasks[t].sessions.forEach((s, j) => {
+                    const r = session(s, theta, price, debug);
+                    cc += session(capped[t][j], theta, price, debug)[0];
                     c += r[0];
                     i += r[1];
                     k += r[2];
@@ -722,6 +1076,7 @@
                 });
                 const at = t * DRAWS + d;
                 costs[at] = c;
+                cappedCosts[at] = cc;
                 inputs[at] = i;
                 cached[at] = k;
                 outputs[at] = o;
@@ -828,8 +1183,33 @@
             + '<br>' + compact(output) + ' output');
         html += card('Work', int(sessions) + ' sessions', int(list.length) + ' tasks · ' + int(commits) + ' commits'
             + '<br>' + (list.length ? (sessions / list.length).toFixed(1) : '0') + ' sessions per task');
+        html += refactoringSavingsCard(list);
         document.getElementById('cards').innerHTML = html;
         return cost;
+    }
+
+    // Refactoring savings: what files no larger than the max file size would have saved. The saving lies between the read
+    // tokens alone (the sessions re-run with every file capped) and the whole cost cut by the share of reads saved; the
+    // carry-over says where.
+    function refactoringSavingsCard(list) {
+        const readNow = list.reduce((s, t) => s + t.readLines, 0), readCapped = list.reduce((s, t) => s + (t.cappedReadLines || 0), 0);
+        const readShare = readNow ? 1 - readCapped / readNow : 0;
+        const cap = int(num('max-file'));
+        if (!readShare) {
+            return card('Refactoring savings', '–', 'no file read is larger than ' + cap + ' lines<br>lines read ' + compact(readNow));
+        }
+        const all = sums(list, costs), cappedAll = sums(list, cappedCosts);
+        const saved = all.map((c, d) => {
+            const readOnly = c - cappedAll[d];
+            return readOnly + carryDraws[d] * Math.max(0, c * readShare - readOnly);
+        });
+        const share = quantiles(saved.map((v, d) => all[d] ? v / all[d] : 0));
+        const money50 = quantiles(saved);
+        const oversized = (imported.editedFileLines || []).filter(lines => lines > num('max-file')).length;
+        const pct = v => Math.round(100 * v) + '%';
+        return card('Refactoring savings', pct(share.p50) + ' less', money(money50.p50) + ' saved (' + pct(share.p10) + '–' + pct(share.p90) + ')'
+            + '<br>with files ≤ ' + cap + ' lines' + (oversized ? ' (' + int(oversized) + ' edited files are larger)' : '')
+            + '<br>lines read ' + compact(readNow) + ' → ' + compact(readCapped));
     }
 
     function renderTypes(list, total) {
@@ -1102,13 +1482,77 @@
             e('OUT', '× output price', 'COST'),
             'PP --> COST',
             e('COST', 'summed per task, per simulation', 'RES'),
+            prior('PM', 'refactoring', 'files ≤ ' + short(num('max-file')) + ' lines', 'carry-over ' + rangeLabel('carry') + '%'),
+            n('SAV', 'Refactoring savings', 'read tokens with files capped', '+ carry-over × the rest of the', 'cost cut by the share of reads saved'),
+            e('LR', 'capped per file', 'SAV'),
+            e('COST', 'again, smaller files', 'SAV'),
+            'PM --> SAV',
             'classDef data fill:#e3edfb,stroke:#6b8fc4,color:#1d2b3a',
             'classDef prior fill:#fff3d6,stroke:#c9962e,color:#3a2c0e',
             'classDef calc fill:#f2f2f2,stroke:#9a9a9a,color:#222',
             'classDef result fill:#e3f3e5,stroke:#4f9457,color:#173a1c',
             'class C,T,S,F,LR,LC,TY data',
-            'class PS,PC,PO,PP prior',
+            'class PS,PC,PO,PP,PM prior',
             'class ST,OUT,IN,COST calc',
+            'class RES,SAV result'
+        ].join('\n');
+    }
+
+    // The naive rebuild: main code (measured) plus assumed code, built, fixed and refactored in sessions of the same session model.
+    function rebuildModelDefinition() {
+        const c = currency();
+        const label = parts => '<b>' + mm(parts[0]) + '</b>' + parts.slice(1).map(p => '<br>' + mm(p)).join('');
+        const n = (id, ...parts) => id + '["' + label(parts) + '"]';
+        const prior = (id, ...parts) => id + '(["' + label(parts) + '"])';
+        const e = (from, text, to) => from + ' -->|"' + mm(text) + '"| ' + to;
+        const kept = rebuild ? quantiles(rebuild.kept).p50 : 0;
+        return [
+            'flowchart LR',
+            n('M', int(mainLinesOfCode) + ' lines of main code', 'measured'),
+            prior('PA', 'assumed code', 'test ' + rangeLabel('r-test') + '× main', 'build & other ' + rangeLabel('r-other') + '% of main'),
+            n('K', int(kept) + ' lines to build', 'main + test + build & other'),
+            prior('PU', 'uncertainty', rangeLabel('r-redo') + '% of built work redone'),
+            n('SU', 'redo sessions', 'read what is replaced, write it again'),
+            prior('PB', 'building', rangeLabel('r-lines') + ' lines per session', rangeLabel('r-files') + ' files, reads ' + rangeLabel('r-read') + ' lines'),
+            prior('PF', 'fixing', rangeLabel('r-fixes') + ' fixes per 1,000 lines', rangeLabel('r-fix-lines') + ' lines, reads ' + rangeLabel('r-fix-read') + ' lines',
+                '× ' + rangeLabel('debug') + ' debugging'),
+            prior('PR', 'refactoring', rangeLabel('r-refactor') + '% rewritten', 'reads twice what it changes'),
+            n('SB', 'build sessions', 'new code and tests'),
+            n('SF', 'fix sessions', 'debug, then a small change'),
+            n('SR', 'refactoring sessions', 'rewrite built code'),
+            prior('PS', 'session model', 'steps ' + rangeLabel('steps') + ' + ' + rangeLabel('steps-file') + ' per file',
+                'context: base ' + rangeLabel('base') + ', ' + rangeLabel('tpl') + ' tokens per line, ×' + rangeLabel('amp') + ' reads',
+                'tool output ' + rangeLabel('tool') + ', output ' + rangeLabel('reason') + ' per step'),
+            n('TOK', 'tokens per session', 'input: steps × average context', 'output: written lines + per step'),
+            prior('PP', 'prices per 1M', 'input ' + c + short(num('p-in')) + ' · output ' + c + short(num('p-out')),
+                'cache write ' + c + short(num('p-cw')) + ' · read ' + c + short(num('p-cr')), 'cache misses ' + rangeLabel('miss') + '%'),
+            n('COST', 'cost', 'sessions × cost per session'),
+            n('RES', 'P10 · P50 · P90', R_DRAWS + ' simulations over the ranges', 'by kind of work, by code, per 1,000 lines'),
+            e('M', 'plus', 'K'),
+            'PA --> K',
+            e('K', '÷ lines per session', 'SB'),
+            e('K', '÷ (1 − redone) − kept', 'SU'),
+            'PU --> SU',
+            e('SU', 'each session', 'TOK'),
+            e('K', 'fixes per 1,000 lines built', 'SF'),
+            e('K', 'share rewritten', 'SR'),
+            'PB --> SB',
+            'PF --> SF',
+            'PR --> SR',
+            e('SB', 'each session', 'TOK'),
+            e('SF', 'each session', 'TOK'),
+            e('SR', 'each session', 'TOK'),
+            'PS --> TOK',
+            e('TOK', 'cache writes, hits, misses, output', 'COST'),
+            'PP --> COST',
+            e('COST', 'per simulation', 'RES'),
+            'classDef data fill:#e3edfb,stroke:#6b8fc4,color:#1d2b3a',
+            'classDef prior fill:#fff3d6,stroke:#c9962e,color:#3a2c0e',
+            'classDef calc fill:#f2f2f2,stroke:#9a9a9a,color:#222',
+            'classDef result fill:#e3f3e5,stroke:#4f9457,color:#173a1c',
+            'class M data',
+            'class PA,PU,PB,PF,PR,PS,PP prior',
+            'class K,SB,SU,SF,SR,TOK,COST calc',
             'class RES result'
         ].join('\n');
     }
@@ -1121,7 +1565,8 @@
                 mermaidLib.initialize({startOnLoad: false, securityLevel: 'strict', theme: 'base',
                     flowchart: {useMaxWidth: false, htmlLabels: true, nodeSpacing: 22, rankSpacing: 34}, themeVariables: {fontSize: '13px', lineColor: '#888', edgeLabelBackground: '#ffffff'}});
             }
-            const result = await mermaidLib.render('model-svg-' + (++modelCount), modelDefinition(list));
+            const definition = currentTab() === 'rebuild' ? rebuildModelDefinition() : modelDefinition(list);
+            const result = await mermaidLib.render('model-svg-' + (++modelCount), definition);
             target.innerHTML = result.svg;
             target.classList.remove('muted', 'small');
         } catch (e) {
@@ -1172,11 +1617,12 @@
             text += ' Only the newest ' + int(tasks.length) + ' of ' + int(imported.totalTasksCount) + ' tasks of the repositories are estimated.';
         }
         if (isLandscape) {
-            text += ' The tasks come from ' + int(repositories.length) + ' repositories; repositories analyzed by an older Sokrates version have no estimator data and are left out.';
+            const withTasks = new Set(tasks.map(t => t.repo)).size;
+            text += ' The tasks come from ' + int(withTasks) + ' of ' + int(repositories.length) + ' repositories; repositories analyzed by an older Sokrates version have no history data here.';
         }
         document.getElementById('noise').textContent = text;
         document.getElementById('ticket-note').textContent = ticketPrefixes.length
-            ? ' (ticket prefixes found: ' + ticketPrefixes.join(', ') + ')' : ' (no ticket ids found in this history)';
+            ? ' (found: ' + ticketPrefixes.join(', ') + ')' : ' (none in this history)';
         document.getElementById('draws').textContent = DRAWS;
     }
 
@@ -1185,26 +1631,29 @@
         rememberDefaults();
         restoreInputs();
         inputIds().forEach(id => document.getElementById(id).addEventListener('input', () => {
+            if (id === 'r-level') applyLevel();
+            else if (id === 'r-redo-min' || id === 'r-redo-max') syncLevel();
             saveInputs();
-            schedule(() => {
-                simulate();
-                render();
-            });
+            schedule(recompute);
         }));
+        syncLevel();
         ['date-from', 'date-to'].forEach(id => {
             const el = document.getElementById(id);
             el.min = firstDate;
             el.max = latestDate;
         });
         requestAnimationFrame(() => requestAnimationFrame(() => {
+            let tab = 'historical';
+            try { tab = localStorage.getItem(TAB_KEY) || tab; } catch (e) {}
             if (!tasks.length) {
-                document.getElementById('content').style.display = 'none';
+                document.getElementById('hist-body').style.display = 'none';
                 document.getElementById('empty').style.display = 'block';
+                tab = 'rebuild';
             } else {
                 renderNotes();
-                simulate();
-                render();
             }
+            showTab(tab === 'rebuild' ? 'rebuild' : 'historical');
+            recompute();
             document.getElementById('loading').style.display = 'none';
             document.getElementById('report').style.display = 'block';
         }));

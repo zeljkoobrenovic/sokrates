@@ -375,7 +375,7 @@ public class LandscapeReportGenerator {
         if (!aiInsights.isEmpty()) {
             landscapeReport.addTab(AI_INSIGHTS_TAB_ID, "AI Insights (" + aiInsights.getFindings().size() + ")", false);
         }
-        if (!aiCostEstimator.getTasks().isEmpty()) {
+        if (hasAiCostEstimator()) {
             landscapeReport.addTab(AI_COST_TAB_ID, "AI Cost Estimator*", false);
         }
         configuration.getCustomTabs().forEach(tab -> {
@@ -472,16 +472,15 @@ public class LandscapeReportGenerator {
         people.addTabItem(TOPOLOGIES_TAB_ID, "Topology", "index.html#" + TOPOLOGIES_TAB_ID, "dependencies",
                 "Who works with whom: contributors (and teams) connected by the repositories they share.");
 
-        if (!aiInsights.isEmpty() || !aiCostEstimator.getTasks().isEmpty()) {
+        if (!aiInsights.isEmpty() || hasAiCostEstimator()) {
             ReportNavigation.Group insights = navigation.addGroup("Insights");
             if (!aiInsights.isEmpty()) {
                 insights.addTabItem(AI_INSIGHTS_TAB_ID, "AI Insights", "index.html#" + AI_INSIGHTS_TAB_ID, "ai",
                         aiInsights.getFindings().size() + " findings of the AI scanners across the repositories.");
             }
-            if (!aiCostEstimator.getTasks().isEmpty()) {
+            if (hasAiCostEstimator()) {
                 insights.addTabItem(AI_COST_TAB_ID, "AI Cost Estimator*", "index.html#" + AI_COST_TAB_ID, "cost",
-                        "*An experimental heuristic: what the history of " + aiCostEstimator.getRepositories().size()
-                                + " repositories would cost if an AI coding agent had written it.");
+                        "*An experimental heuristic: what the repositories would cost an AI coding agent, from their history or as a naive rebuild.");
             }
         }
         navigation.addGroup("Index").addTabItem(DATA_TAB_ID, "Data", "index.html#" + DATA_TAB_ID, "data",
@@ -510,6 +509,11 @@ public class LandscapeReportGenerator {
         }
     }
 
+    /** Tasks from the history, or main code for a naive rebuild. */
+    private boolean hasAiCostEstimator() {
+        return !aiCostEstimator.getTasks().isEmpty() || aiCostEstimator.getMainLinesOfCode() > 0;
+    }
+
     /**
      * Merges the repositories' AI Cost Estimator data (data/aiCostEstimator.json in their data.zip) into
      * data/aiCostEstimator.json; the tab and page follow when there are tasks.
@@ -517,16 +521,17 @@ public class LandscapeReportGenerator {
     private void exportAiCostEstimatorData(List<RepositoryAnalysisResults> repositories) {
         String prefix = landscapeAnalysisResults.getConfiguration().getRepositoryReportsUrlPrefix();
         aiCostEstimator = AiCostEstimatorAggregator.aggregate(repositories, folder, prefix);
-        if (aiCostEstimator.getTasks().isEmpty()) {
+        if (!hasAiCostEstimator()) {
             return;
         }
-        LOG.info("AI cost estimator: " + aiCostEstimator.getTasks().size() + " tasks in " + aiCostEstimator.getRepositories().size() + " repositories.");
+        LOG.info("AI cost estimator: " + aiCostEstimator.getTasks().size() + " tasks, " + aiCostEstimator.getMainLinesOfCode()
+                + " lines of main code in " + aiCostEstimator.getRepositories().size() + " repositories.");
         AiCostEstimatorGenerator.saveData(aiCostEstimator, new File(folder, "data"));
     }
 
     /** The AI Cost Estimator tab: the same client-rendered page as a repository's, over all repositories' tasks. */
     private void addAiCostEstimatorTab() {
-        if (aiCostEstimator.getTasks().isEmpty()) {
+        if (!hasAiCostEstimator()) {
             return;
         }
         new AiCostEstimatorGenerator(reportsFolder).exportPage(aiCostEstimator, reportsFolder);
