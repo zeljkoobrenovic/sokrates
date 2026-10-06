@@ -5,6 +5,13 @@ everything listed under the most recent date.
 
 ## 2026-10-06
 
+### AI Cost Estimator*: an educational tool
+
+The estimator page opens with "An educational tool, not an exact estimate: see how AI coding costs build up and where
+you can control them.", and its sidebar subtitle (repository and landscape) says
+the same.
+All the page's texts (intros, How it works, assumption explanations, table descriptions, notes) were tightened.
+
 ### AI Cost Estimator*: "base" AI cost
 
 The headline cards read "Estimated base AI cost" (and the chart "Estimated base cost per month/year"), and the note under

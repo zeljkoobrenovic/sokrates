@@ -355,6 +355,19 @@
             display: none !important;
         }
 
+        .lead {
+            margin: 0 0 12px 0;
+            max-width: 900px;
+            font-size: 95%;
+            line-height: 1.45;
+            color: var(--sk-text);
+        }
+
+        /* Inside a report the header's subtitle says it already. */
+        body.embedded .lead {
+            display: none;
+        }
+
         .intro {
             margin: 0 0 10px 0;
             max-width: 900px;
@@ -426,16 +439,16 @@
 <div id="loading">Simulating…</div>
 <div id="report" style="display: none">
     <div id="content">
+        <p class="lead">An educational tool, not an exact estimate: see how AI coding costs build up and where you can control them.</p>
         <div class="tabs" role="tablist">
             <button class="tab-button" id="tab-historical" role="tab" onclick="showTab('historical')">Historical</button>
             <button class="tab-button" id="tab-rebuild" role="tab" onclick="showTab('rebuild')">Naive Rebuild</button>
         </div>
-        <p class="intro hist-only">What the history would have cost if an AI coding agent had done the work: commits become tasks and sessions,
-            and each session pays for its steps, every step re-sending the growing context.</p>
-        <p class="intro rebuild-only">What an AI coding agent would spend writing the main code again, the way a good team works: small commits with tests,
-            fixes after debugging, refactoring, and redoing the share of the work that the uncertainty says will not deliver.</p>
-        <p class="intro">All amounts are base AI costs: the agent's tokens only, leaving out people's time, discovery, planning, review, integration,
-            infrastructure and every other cost of building software. Use them as a base to see where the levers for using AI effectively are, not as a budget.</p>
+        <p class="intro hist-only">What the history would have cost an AI coding agent: commits become tasks and sessions, and every step of a session
+            re-sends the growing context.</p>
+        <p class="intro rebuild-only">What an AI coding agent would spend to write the main code again the way a good team works: small commits with tests,
+            fixes, refactoring, and redoing what the uncertainty says will miss.</p>
+        <p class="intro">Base AI costs: the agent's tokens only, without people's time, discovery, planning, review, integration or infrastructure. Not a budget.</p>
         <div class="toolbar">
             <span class="hist-only inline-controls">
             <input id="filter" type="text" placeholder="Filter tasks" title="repository, author, ticket, sha or type; separate alternatives with ;" oninput="schedule(render)">
@@ -460,7 +473,7 @@
         <div class="assumptions" id="assumptions" hidden>
             <div class="assumption-groups" id="prior-grid"></div>
             <div class="small muted" style="margin-top: 8px">
-                Each simulation draws one value from every range.
+                Each simulation draws one value per range.
                 <button class="action-button" onclick="resetInputs()" style="margin-left: 6px">Reset</button>
             </div>
         </div>
@@ -468,18 +481,17 @@
         <div class="model" id="model" hidden>
             <div id="model-diagram" class="muted small">Drawing the model…</div>
             <div class="model-legend small">
-                <span><i class="sw sw-data"></i>measured (git history, lines of code)</span>
+                <span><i class="sw sw-data"></i>measured</span>
                 <span><i class="sw sw-prior"></i>assumption (editable range)</span>
-                <span><i class="sw sw-calc"></i>calculation per session</span>
+                <span><i class="sw sw-calc"></i>calculation</span>
                 <span><i class="sw sw-result"></i>result</span>
-                <span class="muted">values as currently set and filtered</span>
+                <span class="muted">current values and filter</span>
             </div>
         </div>
 
         <div id="historical" class="hist-only">
         <div id="empty" class="muted" style="display: none; padding: 20px 0">
-            There are no commits to estimate: the analysis has no git history, or everything in it was filtered out as noise.
-            The Naive Rebuild tab needs only the lines of main code.
+            No commits to estimate: no git history, or all of it filtered out as noise. Naive Rebuild needs only the lines of main code.
         </div>
         <div id="hist-body">
         <div class="cards" id="cards"></div>
@@ -499,7 +511,7 @@
         <h3>Tasks</h3>
         <div class="toolbar" style="margin-bottom: 6px">
             <span id="tasks-summary" class="muted"></span>
-            <button class="action-button" onclick="downloadCsv()">download tasks CSV</button>
+            <button class="action-button" onclick="downloadCsv()">download CSV</button>
         </div>
         <div class="scroll"><table class="grid" id="tasks"></table></div>
         <div style="margin-top: 8px"><button class="action-button" id="more" onclick="showMore()">show more</button></div>
@@ -525,52 +537,39 @@
         <h3>How it works</h3>
         <div class="notes">
             <ul class="rebuild-only">
-                <li><b>In one line:</b> how much an agent would spend writing the main code again, the way a good team works: small, frequent commits,
-                    tests with the code, fixes with debugging, and refactoring along the way, redoing what the uncertainty says will not work out.</li>
-                <li><b>Measured:</b> only the lines of main code (<span id="r-main-note"></span>). Everything else is assumed:
-                    test code (by default as much as main code), build &amp; other code, and how the work goes.</li>
-                <li><b>Building:</b> sessions of a commit's size write new code and its tests, reading surrounding code for context.</li>
-                <li><b>Uncertainty:</b> how sure we are that what gets built delivers the intended value. <i>Low</i> is a migration (the same
-                    functionality, in another language); higher levels redo a share of the built work: changed after feedback, thrown away, rebuilt.
-                    A share <i>p</i> redone, where a redo can miss again, means building the kept code ÷ (1 − <i>p</i>). The history shows how much it redid
-                    in hindsight: lines added ÷ lines today.</li>
-                <li><b>Fixing:</b> a number of fixes per 1,000 lines built; each is a small change in about 2 files after reading code to find the cause,
-                    with its steps multiplied by the <i>debugging</i> factor.</li>
-                <li><b>Refactoring:</b> a share of the kept code is rewritten in sessions as large as build sessions, reading twice what they change.</li>
-                <li><b>Every session</b> goes through the same model as the history: steps, context that grows with reads, tool output and output,
-                    and cache-priced re-sends.</li>
+                <li><b>Measured:</b> only the lines of main code (<span id="r-main-note"></span>); everything else is assumed.</li>
+                <li><b>Uncertainty:</b> how likely the built work delivers the intended value. <i>Low</i> is a migration; higher levels redo a share
+                    <i>p</i> of it (changed, discarded, rebuilt), so kept code ÷ (1 − <i>p</i>) gets built. The history's share in hindsight:
+                    1 − lines today ÷ lines added.</li>
+                <li><b>Building:</b> commit-sized sessions write code and tests, reading nearby code.</li>
+                <li><b>Fixing:</b> fixes per 1,000 lines built, each a small change in about 2 files after reading for the cause; steps × debugging.</li>
+                <li><b>Refactoring:</b> a share of the kept code is rewritten, reading twice what changes.</li>
+                <li><b>Sessions</b> use the Historical session model.</li>
                 <li><b>A range, not a measurement:</b> P10–P90 of <span id="r-draws"></span> simulations.</li>
             </ul>
             <ul class="hist-only">
-                <li><b>In one line:</b> every agent step re-sends the whole context, so a session costs about <i>steps × average context</i>,
-                    mostly at cache prices, plus its output.</li>
-                <li><b>Tasks:</b> commits with the same ticket id (e.g. ABC-123) are one task<span id="ticket-note"></span>; otherwise, consecutive commits
-                    of one author, at most a day apart, touching overlapping files. Each task is split into <b>sessions</b> of at most 10 files or 400 changed lines.</li>
-                <li><b>Scopes:</b> main, test, build &amp; deployment and other code count; generated code, unscoped files and unanalyzed extensions do not.</li>
-                <li><b>Steps:</b> a number per session plus one per touched file. Fix tasks multiply them by the <i>debugging</i> factor: a small fix often follows
-                    reproduce, run and inspect loops that git does not show.</li>
-                <li><b>Context</b> starts at the base context and grows with the reads, the tool output and the output. Reads are the edited files' current total lines
-                    (comments and blank lines included, at most 2,000 per file) × tokens per line × read amplification. New files are written, not read; deleted files are free.</li>
+                <li><b>Core:</b> a session costs about <i>steps × average context</i>, mostly at cache prices, plus its output.</li>
+                <li><b>Tasks:</b> commits sharing a ticket id (e.g. ABC-123) form a task<span id="ticket-note"></span>; otherwise, overlapping commits of one author
+                    at most a day apart. Tasks split into <b>sessions</b> of at most 10 files or 400 changed lines.</li>
+                <li><b>Scopes:</b> main, test, build &amp; deployment and other code count; generated, unscoped and unanalyzed files do not.</li>
+                <li><b>Steps:</b> per session plus per touched file; fix tasks × debugging, for the reproduce, run and inspect loops git does not show.</li>
+                <li><b>Context:</b> base context plus reads, tool output and output. Reads: the edited files' total lines (at most 2,000 each) × tokens per line
+                    × amplification. New files are written, not read; deleted files are free.</li>
                 <li><b>Output:</b> changed lines × tokens per line × write overhead, plus output per step.</li>
-                <li><b>Cost:</b> new context at the cache-write price, re-sent context at the cache-read price (cache misses at the input price), output at the output price.</li>
-                <li><b>Refactoring savings:</b> what files no larger than the max file size would have saved. Every file a session reads counts at most
-                    that many lines (a 1,200-line file counts 400, a 330-line file 330; same files, same commits). That saves read tokens, and a carry-over
-                    share of the rest of the cost is cut by the same share of reads (fewer steps, less tool output). The cost of the refactoring is not included,
-                    and a change that needs several parts of a split file saves less, so the saving is optimistic.</li>
-                <li><b>Task type</b> groups the results: <i>new code</i> (most lines in new files), <i>refactoring</i> (broad, deletes about as much as it adds),
-                    <i>fix</i> (at most 60 lines in at most 3 files) or <i>feature</i> (the rest). Only fix tasks change the model.</li>
-                <li><b>A range, not a measurement:</b> git cannot see the agent, so steps, tool output, output per step and cache misses are assumptions;
-                    the result is P10–P90 of <span id="draws"></span> simulations. Steps and cache misses move it most.</li>
+                <li><b>Cost:</b> new context at the cache-write price, re-sent context at the cache-read price (misses at the input price), output at the output price.</li>
+                <li><b>Refactoring savings:</b> files capped at the max file size (1,200 lines count as 400, 330 as 330; same files and commits). Read tokens drop,
+                    and a carry-over share of the rest drops by the same ratio. Excludes the refactoring itself; optimistic when a change needs several parts of a split file.</li>
+                <li><b>Task type</b> groups the results: <i>new code</i> (mostly new files), <i>refactoring</i> (broad, deletes about as much as it adds),
+                    <i>fix</i> (at most 60 lines in 3 files), <i>feature</i> (the rest). Only fixes change the model.</li>
+                <li><b>A range, not a measurement:</b> git cannot see the agent, so steps, tool output, output per step and cache misses are assumed;
+                    results are P10–P90 of <span id="draws"></span> simulations. Steps and cache misses matter most.</li>
                 <li><b>Left out as noise:</b> <span id="noise"></span></li>
-                <li><b>Smell test:</b> compare the cost per developer-day with the reference (by default about $13, the reported enterprise average for Claude Code).
-                    Open-source histories with drive-by contributors land far lower; a large gap for a company team means the assumptions need a look,
-                    or that agent-assisted developers do more per day than the history shows.</li>
-                <li><b>Calibrate with a replay pilot:</b> pick 20–30 tasks of different types and sizes from the CSV, check out each task's parent commit
-                    (<span class="mono">git checkout &lt;first_sha&gt;^</span>), prompt an agent with the commit message or ticket, record what each session used,
-                    compare with the estimate and adjust the assumptions.</li>
+                <li><b>Smell test:</b> compare the cost per developer-day with the reference (default about $13, the reported enterprise average for Claude Code).
+                    Open-source histories land far lower; a big gap for a company team means checking the assumptions, or that agents let developers do more per day.</li>
+                <li><b>Calibrate:</b> replay 20–30 varied tasks from the CSV: check out each parent commit (<span class="mono">git checkout &lt;first_sha&gt;^</span>),
+                    prompt an agent with the commit message or ticket, record its usage, compare, and adjust the assumptions.</li>
             </ul>
             <ul>
-                <li><b>Token costs only:</b> people's time, discovery, planning, review, integration, infrastructure, licences and operations are not included.</li>
                 <li><b>Further reading:</b> <a href="https://martinfowler.com/articles/exploring-gen-ai/refactoring-economic-benefit.html"
                     target="_blank" rel="noopener">martinfowler.com/articles/exploring-gen-ai/refactoring-economic-benefit</a></li>
             </ul>
@@ -590,9 +589,9 @@
     const isLandscape = repositories.length > 0;
 
     const TYPES = [
-        ['new', 'New code', 'most lines in new files'],
-        ['feature', 'Feature', 'edits and additions to existing files'],
-        ['fix', 'Fix', 'small: at most 60 lines in at most 3 files'],
+        ['new', 'New code', 'mostly new files'],
+        ['feature', 'Feature', 'changes to existing files'],
+        ['fix', 'Fix', 'at most 60 lines in 3 files'],
         ['refactor', 'Refactoring', 'broad, deletes about as much as it adds']
     ];
     const TYPE_LABELS = {};
@@ -602,53 +601,53 @@
     const GROUPS = [
         ['Naive rebuild', [
             ['r-level', 'uncertainty', 'low', null, '', 0, ''],
-            ['r-redo', 'work redone', 0, 10, '%', 1, 'Built work redone because it did not deliver the intended value: changed after feedback, thrown away, rebuilt.'],
-            ['r-test', 'test code', 1, 1, '×', 0.1, 'Lines of test code per line of main code; assumed, not measured.'],
-            ['r-other', 'build & other', 5, 15, '%', 1, 'Build, deployment, configuration and other code, as a share of main code.'],
-            ['r-lines', 'lines per session', 100, 300, '', 10, 'Lines a build session writes: one small commit of code and tests.'],
-            ['r-files', 'files per session', 2, 6, '', 1, 'Files a build or refactoring session touches.'],
-            ['r-read', 'lines read', 500, 2000, '', 100, 'Existing code a build session reads for context.'],
-            ['r-fixes', 'fixes per 1,000 lines', 2, 6, '', 0.5, 'Defects found and fixed while building; most are caught by the tests.'],
-            ['r-fix-lines', 'lines per fix', 10, 40, '', 1, 'Lines a fix changes, in about 2 files.'],
+            ['r-redo', 'work redone', 0, 10, '%', 1, 'Built work redone because it missed: changed after feedback, discarded, rebuilt.'],
+            ['r-test', 'test code', 1, 1, '×', 0.1, 'Test lines per main line.'],
+            ['r-other', 'build & other', 5, 15, '%', 1, 'Build, deployment, configuration and other code, as % of main.'],
+            ['r-lines', 'lines per session', 100, 300, '', 10, 'One small commit of code and tests.'],
+            ['r-files', 'files per session', 2, 6, '', 1, 'Per build or refactoring session.'],
+            ['r-read', 'lines read', 500, 2000, '', 100, 'Existing code a build session reads.'],
+            ['r-fixes', 'fixes per 1,000 lines', 2, 6, '', 0.5, 'Defects fixed while building; tests catch most.'],
+            ['r-fix-lines', 'lines per fix', 10, 40, '', 1, 'Changed per fix, in about 2 files.'],
             ['r-fix-read', 'lines read per fix', 500, 2000, '', 100, 'Code read to find the cause.'],
-            ['r-refactor', 'refactoring', 15, 30, '%', 1, 'Share of the kept code rewritten later, to keep it clean.']
+            ['r-refactor', 'refactoring', 15, 30, '%', 1, 'Share of the kept code rewritten later.']
         ], 'rebuild'],
         ['Prices per 1M tokens', [
-            ['p-in', 'input', 3, null, '', 0.1, 'Uncached input: the cache misses.'],
+            ['p-in', 'input', 3, null, '', 0.1, 'Uncached input (cache misses).'],
             ['p-out', 'output', 15, null, '', 0.1, 'Generated tokens: code, reasoning, messages.'],
-            ['p-cw', 'cache write', 3.75, null, '', 0.05, 'Context sent for the first time.'],
-            ['p-cr', 'cache read', 0.3, null, '', 0.01, 'Context sent again, from the cache.'],
-            ['currency', 'currency', '$', null, '', 0, 'Shown with every amount.'],
-            ['reference', 'reference per dev-day', 13, null, '', 1, 'Spend per developer per active day, to compare with.']
+            ['p-cw', 'cache write', 3.75, null, '', 0.05, 'Context sent the first time.'],
+            ['p-cr', 'cache read', 0.3, null, '', 0.01, 'Context re-sent from the cache.'],
+            ['currency', 'currency', '$', null, '', 0, 'Shown with amounts.'],
+            ['reference', 'reference per dev-day', 13, null, '', 1, 'Spend per developer per active day, for comparison.']
         ]],
         ['Steps', [
-            ['steps', 'per session', 10, 25, '', 1, 'Agent turns in every session.'],
+            ['steps', 'per session', 10, 25, '', 1, 'Agent turns per session.'],
             ['steps-file', 'per touched file', 3, 6, '', 0.5, 'Extra turns per file read and changed.'],
-            ['debug', 'debugging', 1.5, 4, '×', 0.1, 'Multiplies the steps of fixes: reproduce, run, inspect.']
+            ['debug', 'debugging', 1.5, 4, '×', 0.1, 'Multiplies fix steps: reproduce, run, inspect.']
         ]],
         ['Context', [
-            ['base', 'base context', 12000, 25000, '', 1000, 'Tokens of system prompt, tools and instructions.'],
-            ['tpl', 'tokens per line', 7, 14, '', 1, 'Tokens in one line of code.'],
-            ['amp', 'read amplification', 1.5, 3, '×', 0.1, 'Re-reads and neighbouring files, per line of the edited files.'],
-            ['tool', 'tool output', 300, 3000, '', 50, 'Tokens per step of command output, test runs, logs, stack traces, search results.'],
-            ['window', 'context window', 200000, null, '', 10000, 'Most tokens the context holds.']
+            ['base', 'base context', 12000, 25000, '', 1000, 'System prompt, tools and instructions.'],
+            ['tpl', 'tokens per line', 7, 14, '', 1, 'Per line of code.'],
+            ['amp', 'read amplification', 1.5, 3, '×', 0.1, 'Re-reads and neighbouring files, per edited line.'],
+            ['tool', 'tool output', 300, 3000, '', 50, 'Per step: command output, tests, logs, stack traces, searches.'],
+            ['window', 'context window', 200000, null, '', 10000, 'Maximum context.']
         ]],
         ['Output and cache', [
-            ['reason', 'output per step', 150, 600, '', 50, 'Tokens of reasoning and messages per step, besides the code.'],
-            ['edit', 'write overhead', 1.3, 2.5, '×', 0.1, 'Tokens written per changed line: an edit repeats old text and context.'],
-            ['miss', 'cache misses', 5, 20, '%', 1, 'Share of the re-sent context paid at the full input price.']
+            ['reason', 'output per step', 150, 600, '', 50, 'Reasoning and messages, besides code.'],
+            ['edit', 'write overhead', 1.3, 2.5, '×', 0.1, 'Per changed line: edits repeat old text and context.'],
+            ['miss', 'cache misses', 5, 20, '%', 1, 'Share of re-sent context at the input price.']
         ]],
         ['Refactoring savings', [
-            ['max-file', 'max file size', 400, null, '', 50, 'Lines. After refactoring, every file read in a session counts at most this many lines: the same files and commits, smaller files.'],
-            ['carry', 'carry-over', 25, 75, '%', 5, 'Share of the read saving that carries over to the other tokens: fewer steps, less tool output. 0% saves only the read tokens.']
+            ['max-file', 'max file size', 400, null, '', 50, 'Lines; larger files count as this size, as if split.'],
+            ['carry', 'carry-over', 25, 75, '%', 5, 'Share of the read saving carried to other tokens (fewer steps, less tool output); 0% = reads only.']
         ], 'historical']
     ];
     const STORAGE_KEY = 'sokrates-ai-cost-estimator';
 
     // Uncertainty levels: the share of built work redone (%), and what it is like.
     const UNCERTAINTY = [
-        ['low', 'low', 0, 10, 'a migration: the same functionality, in another language'],
-        ['medium', 'medium', 25, 50, 'a known product, requirements still moving'],
+        ['low', 'low', 0, 10, 'a migration: same functionality, new language'],
+        ['medium', 'medium', 25, 50, 'a known product, moving requirements'],
         ['high', 'high', 50, 75, 'a new product, finding what customers value'],
         ['very-high', 'very high', 75, 90, 'research, experiments, prototypes']
     ];
@@ -687,7 +686,7 @@
         const level = UNCERTAINTY.find(l => l[0] === document.getElementById('r-level').value);
         const h = hindsight();
         document.getElementById('r-level-hint').textContent = (level ? 'Like ' + level[4] + '. ' : '')
-            + (h ? 'This history: about ' + Math.round(100 * h.redone) + '% redone (' + compact(h.added) + ' lines added for '
+            + (h ? 'This history: about ' + Math.round(100 * h.redone) + '% redone (' + compact(h.added) + ' lines added, '
                 + compact(h.today) + ' today), like ' + h.level[1] + '.' : '');
     }
 
@@ -916,10 +915,10 @@
     const R_DRAWS = 2000;
     const mainLinesOfCode = imported.mainLinesOfCode || 0;
     const KINDS = [
-        ['build', 'Building', 'small commits of new code and its tests'],
-        ['redo', 'Redoing', 'work changed after feedback or thrown away (uncertainty)'],
+        ['build', 'Building', 'small commits of code and tests'],
+        ['redo', 'Redoing', 'work changed or discarded (uncertainty)'],
         ['fix', 'Fixing', 'small changes after debugging'],
-        ['refactor', 'Refactoring', 'rewriting a share of the kept code']
+        ['refactor', 'Refactoring', 'rewriting part of the kept code']
     ];
     let rebuild = null;
 
@@ -1032,7 +1031,7 @@
             });
             document.getElementById('r-repos').innerHTML = rows;
         }
-        document.getElementById('r-main-note').textContent = int(mainLinesOfCode) + ' lines' + (isLandscape ? ' in ' + int(repositories.length) + ' repositories' : '')
+        document.getElementById('r-main-note').textContent = int(mainLinesOfCode) + (isLandscape ? ' in ' + int(repositories.length) + ' repositories' : '')
             + ', without comments and blank lines';
         document.getElementById('r-draws').textContent = int(R_DRAWS);
     }
@@ -1176,7 +1175,7 @@
         const reference = num('reference');
         let html = '';
         html += card('Estimated base AI cost', money(cost.p50), rangeText(cost) + '<br>for ' + int(list.length) + ' tasks');
-        html += card('Per 1,000 churned lines', money(perK.p50), rangeText(perK) + '<br>' + int(churn) + ' lines added or changed');
+        html += card('Per 1,000 churned lines', money(perK.p50), rangeText(perK) + '<br>' + int(churn) + ' churned lines');
         html += card('Per developer-day', money(perDay.p50), rangeText(perDay) + '<br>' + int(devDays.size) + ' developer-days'
             + (reference ? ' · reference ' + money(reference) : ''));
         html += card('Tokens', compact(input + output), compact(input) + ' input (' + (input ? Math.round(100 * cachedInput / input) : 0) + '% cache reads)'
@@ -1196,7 +1195,7 @@
         const readShare = readNow ? 1 - readCapped / readNow : 0;
         const cap = int(num('max-file'));
         if (!readShare) {
-            return card('Refactoring savings', '–', 'no file read is larger than ' + cap + ' lines<br>lines read ' + compact(readNow));
+            return card('Refactoring savings', '–', 'no file read exceeds ' + cap + ' lines<br>lines read ' + compact(readNow));
         }
         const all = sums(list, costs), cappedAll = sums(list, cappedCosts);
         const saved = all.map((c, d) => {
@@ -1208,7 +1207,7 @@
         const oversized = (imported.editedFileLines || []).filter(lines => lines > num('max-file')).length;
         const pct = v => Math.round(100 * v) + '%';
         return card('Refactoring savings', pct(share.p50) + ' less', money(money50.p50) + ' saved (' + pct(share.p10) + '–' + pct(share.p90) + ')'
-            + '<br>with files ≤ ' + cap + ' lines' + (oversized ? ' (' + int(oversized) + ' edited files are larger)' : '')
+            + '<br>files ≤ ' + cap + ' lines' + (oversized ? ' (' + int(oversized) + ' edited files larger)' : '')
             + '<br>lines read ' + compact(readNow) + ' → ' + compact(readCapped));
     }
 
@@ -1601,30 +1600,32 @@
         const parts = [];
         const add = (count, text) => { if (count) parts.push(int(count) + ' ' + text); };
         add(noise.botCommits, 'bot commits');
-        add(noise.massCommits, 'commits touching more than 300 files');
+        add(noise.massCommits, 'commits over 300 files');
         add(noise.lockFileChanges, 'lockfile changes');
-        add(noise.vendoredChanges, 'changes in vendored paths');
-        add(noise.generatedChanges, 'changes in generated paths');
-        add(noise.oversizedChanges, 'single file changes over 3,000 lines');
-        add(noise.unscopedChanges, 'changes to files outside the analyzed scopes');
-        add(noise.emptiedCommits, 'commits with nothing left after that');
+        add(noise.vendoredChanges, 'vendored changes');
+        add(noise.generatedChanges, 'generated changes');
+        add(noise.oversizedChanges, 'file changes over 3,000 lines');
+        add(noise.unscopedChanges, 'changes outside the analyzed scopes');
+        add(noise.emptiedCommits, 'commits left empty');
         let text = parts.length ? parts.join(', ') + ' (' + int(noise.droppedLines || 0) + ' lines).' : 'nothing in this history.';
-        text += ' Merge commits are not in the extracted history.';
+        text += ' Merge commits are not extracted.';
         if (imported.analyzedCommitsCount < imported.keptCommitsCount) {
             text += ' Only the newest ' + int(imported.analyzedCommitsCount) + ' of ' + int(imported.keptCommitsCount) + ' commits are estimated.';
         }
         if (imported.totalTasksCount > tasks.length) {
-            text += ' Only the newest ' + int(tasks.length) + ' of ' + int(imported.totalTasksCount) + ' tasks of the repositories are estimated.';
+            text += ' Only the newest ' + int(tasks.length) + ' of ' + int(imported.totalTasksCount) + ' tasks are estimated.';
         }
         if (isLandscape) {
             const withTasks = new Set(tasks.map(t => t.repo)).size;
-            text += ' The tasks come from ' + int(withTasks) + ' of ' + int(repositories.length) + ' repositories; repositories analyzed by an older Sokrates version have no history data here.';
+            text += ' Tasks from ' + int(withTasks) + ' of ' + int(repositories.length) + ' repositories; those analyzed by an older Sokrates version have no history data.';
         }
         document.getElementById('noise').textContent = text;
         document.getElementById('ticket-note').textContent = ticketPrefixes.length
             ? ' (found: ' + ticketPrefixes.join(', ') + ')' : ' (none in this history)';
         document.getElementById('draws').textContent = DRAWS;
     }
+
+    try { if (window.self !== window.top) document.body.classList.add('embedded'); } catch (e) { document.body.classList.add('embedded'); }
 
     (function init() {
         buildPriorInputs();

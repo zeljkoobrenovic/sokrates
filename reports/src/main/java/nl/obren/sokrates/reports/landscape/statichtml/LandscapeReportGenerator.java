@@ -480,7 +480,7 @@ public class LandscapeReportGenerator {
             }
             if (hasAiCostEstimator()) {
                 insights.addTabItem(AI_COST_TAB_ID, "AI Cost Estimator*", "index.html#" + AI_COST_TAB_ID, "cost",
-                        "*An experimental heuristic: what the repositories would cost an AI coding agent, from their history or as a naive rebuild.");
+                        "*An educational tool, not an exact estimate: how AI coding costs build up, and where your levers to control them are.");
             }
         }
         navigation.addGroup("Index").addTabItem(DATA_TAB_ID, "Data", "index.html#" + DATA_TAB_ID, "data",

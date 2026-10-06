@@ -614,7 +614,7 @@ public class ReportFileExporter {
         explorers.addTabItem("commits-explorer", "Commit Explorer", "index.html#commits-explorer", "commits",
                 "Browse the commits and see which files each one changed.");
         explorers.addTabItem("ai-cost", "AI Cost Estimator*", "index.html#ai-cost", "cost",
-                "*An experimental heuristic: what an AI coding agent would spend, from the history or as a naive rebuild of the main code.");
+                "*An educational tool, not an exact estimate: how AI coding costs build up, and where your levers to control them are.");
         ReportNavigation.Group analyses = navigation.addGroup("Analyses");
         analyses.addTabItem("quality", "Analysis Overview", "index.html#quality", "analyses",
                 "A short summary of every analysis, with links to the full reports.");
