@@ -352,6 +352,8 @@ public class ScopingConventions {
         testFilesConventions.add(new Convention(".*/jest[.][a-zA-Z0-9\\.]+", "", "Jest files"));
         testFilesConventions.add(new Convention(".*/TestUtilities/.*", "", "Test utilities"));
         testFilesConventions.add(new Convention(".*/[Mm]ocks/.*", "", "Mocks"));
+
+        testFilesConventions.add(new Convention(".*/tests[.]rs", "", "Rust orchestration tests"));
     }
 
     public List<Convention> getIgnoredFilesConventions() {
