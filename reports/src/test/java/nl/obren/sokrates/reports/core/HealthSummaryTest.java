@@ -164,7 +164,7 @@ class HealthSummaryTest {
         score.setValue(5.4);
         score.setGrade("C");
 
-        HealthSummary.Tile tile = HealthSummary.scoreTile("AI score", score, "caption");
+        HealthSummary.Tile tile = HealthSummary.scoreTile("AI Score*", score, "caption");
 
         assertEquals("5.4", tile.getValue());
         assertEquals("C", tile.getGrade());

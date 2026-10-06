@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Renders {@link HealthSummary} at the top of the Overview tab: a grid of headline tiles (value,
@@ -82,7 +83,7 @@ public class ReportHealthSection {
             ".sk-score-context {font-size: 12px; color: var(--sk-text-muted); margin-bottom: 4px;}\n" +
             ".sk-subscores {list-style: none; margin: 0; padding: 0;}\n" +
             ".sk-subscore {display: grid; grid-template-columns: 128px 1fr 32px 36px; grid-template-rows: auto auto; align-items: center; " +
-            "column-gap: 8px; padding: 5px 0; border-top: 1px solid var(--sk-border); font-size: 13px;}\n" +
+            "column-gap: 8px; padding: 5px 0; font-size: 13px;}\n" +
             ".sk-subscore-label {font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}\n" +
             ".sk-subscore-bar {height: 6px; border-radius: 3px; background: var(--sk-surface-3); overflow: hidden;}\n" +
             ".sk-subscore-bar span {display: block; height: 100%; border-radius: 3px;}\n" +
@@ -92,6 +93,15 @@ public class ReportHealthSection {
             ".sk-subscore-value {text-align: right; font-variant-numeric: tabular-nums;}\n" +
             ".sk-subscore-drag {text-align: right; font-size: 12px; color: var(--sk-deleted); font-variant-numeric: tabular-nums;}\n" +
             ".sk-subscore-measure {grid-column: 1 / -1; font-size: 12px; color: var(--sk-text-muted);}\n" +
+            ".sk-subscore-item {border-top: 1px solid var(--sk-border);}\n" +
+            ".sk-subscore-details {padding: 0; margin: 0; border: none; background: none; border-radius: 0;}\n" +
+            ".sk-subscore-details > summary {list-style: none; cursor: pointer; margin: 0; white-space: normal; overflow: visible;}\n" +
+            ".sk-subscore-details > summary::-webkit-details-marker {display: none;}\n" +
+            ".sk-subscore-details > summary .sk-subscore-label::before {content: '\\25B8'; display: inline-block; width: 12px; color: var(--sk-text-faint); transition: transform 0.15s;}\n" +
+            ".sk-subscore-details[open] > summary .sk-subscore-label::before {transform: rotate(90deg);}\n" +
+            ".sk-subscore-details > summary:hover .sk-subscore-label {color: var(--sk-link);}\n" +
+            ".sk-subscore-why {font-size: 12px; line-height: 1.5; color: var(--sk-text-muted); padding: 0 0 8px 12px;}\n" +
+            ".sk-subscore-why p {margin: 4px 0;}\n" +
             "@media (max-width: 760px) {.sk-hotspot {grid-template-columns: 22px 1fr;} .sk-hotspot-signals, .sk-hotspot-score {grid-column: 2;}}\n" +
             ReportTheme.darkOnly(".sk-status-good", "color: #8fdc9f; background: rgba(46, 125, 50, 0.25);") +
             ReportTheme.darkOnly(".sk-status-watch, .sk-chip-warn", "color: #f5c56b; background: rgba(245, 166, 35, 0.18);") +
@@ -108,7 +118,7 @@ public class ReportHealthSection {
         }
         MaintainabilityScores scores = HealthSummary.shownScores(results);
         if (scores != null) {
-            report.addHtmlContent(scoresCard(scores));
+            report.addHtmlContent(scoresCard(scores, SubScoreExplanations.of(results)));
         }
         List<HealthSummary.Hotspot> hotspots = summary.hotspots();
         if (!hotspots.isEmpty()) {
@@ -189,47 +199,58 @@ public class ReportHealthSection {
     }
 
     static String scoresCard(MaintainabilityScores scores) {
+        return scoresCard(scores, SubScoreExplanations.BUILT_IN);
+    }
+
+    static String scoresCard(MaintainabilityScores scores, Map<String, SubScoreExplanations.Why> explanations) {
         StringBuilder html = new StringBuilder("<div class='sk-hotspots-card'>");
         html.append("<div class='sk-hotspots-title'>Maintainability scores*</div>");
         if (scores.isCustomFramework()) {
             html.append("<div class='sk-hotspots-intro'>How easy the code is to understand and change, from 0 to 10, by this ")
-                    .append("repository's own score framework (<code>analysis.maintainabilityScores.customFramework</code>): its sub-scores, ")
-                    .append("anchors and Human and AI weights. The total is a weighted geometric mean of the sub-scores")
-                    .append(scores.getHuman().getCapMargin() >= 0 ? ", capped at the weakest sub-score + "
+                    .append("repository's own framework (<code>analysis.maintainabilityScores.customFramework</code>). The total is a ")
+                    .append("weighted geometric mean of its sub-scores")
+                    .append(scores.getHuman().getCapMargin() >= 0 ? ", capped at the weakest + "
                             + margin(scores.getHuman().getCapMargin()) : "")
-                    .append(". Sub-scores are ordered by <i>drag</i>: how much the (uncapped) mean would rise if that sub-score were 10. ")
-                    .append("<span class='sk-score-note'>* Compare repositories scored by the same framework only.</span></div>");
+                    .append(". Sub-scores are ordered by <i>drag</i>, how much the uncapped mean would rise if that sub-score were 10; ")
+                    .append("click one to see why it matters. ")
+                    .append("<span class='sk-score-note'>* Compare only repositories scored by the same framework.</span></div>");
         } else {
-            html.append("<div class='sk-hotspots-intro'>How easy the code is to understand and change, from 0 to 10: the same measured ")
-                    .append("sub-scores, weighted for people and for AI coding agents. People struggle most with complex logic and with ")
-                    .append("knowledge held by few; an agent pays for every line it reads, copies duplicates and needs tests to check its work. ")
-                    .append("The total is a weighted geometric mean, capped at the weakest sub-score about the code + 4, so one weak spot is not averaged away. ")
-                    .append("Sub-scores are ordered by <i>drag</i>: how much the (uncapped) mean would rise if that sub-score were 10. ")
-                    .append("<span class='sk-score-note'>* A heuristic with fixed anchors; compare repositories rather than read it as absolute. ")
-                    .append("Weights, or a whole framework of your own, are configurable in <code>analysis.maintainabilityScores</code>.</span></div>");
+            html.append("<div class='sk-hotspots-intro'>How easy the code is to understand and change, from 0 to 10. Both scores weigh ")
+                    .append("the same sub-scores: people struggle most with complex logic and knowledge held by few; agents pay for every ")
+                    .append("line they read, copy duplicates and need tests to check their work. The total is a weighted geometric mean, ")
+                    .append("capped at the weakest code sub-score + 4, so one weak spot is not averaged away. Sub-scores are ordered by ")
+                    .append("<i>drag</i>, how much the uncapped mean would rise if that sub-score were 10; click one to see why it matters. ")
+                    .append("<span class='sk-score-note'>* A heuristic: compare repositories rather than read it as absolute. ")
+                    .append("Set weights, or your own framework, in <code>analysis.maintainabilityScores</code>.</span></div>");
         }
         html.append("<div class='sk-scores'>");
-        html.append(scoreColumn("Human", scores.getHuman(), ""));
+        html.append(scoreColumn("Human", scores.getHuman(), "", explanations, false));
         html.append(scoreColumn("AI", scores.getAi(), scores.getContextLinesPerChange() > 0
-                ? String.format(Locale.US, "~%,d lines (~%,d tokens) of main code read per change, over %,d changes in the past year",
+                ? String.format(Locale.US, "~%,d lines (~%,d tokens) read per change, over %,d changes in the past year",
                 scores.getContextLinesPerChange(), scores.getContextLinesPerChange() * 10L, scores.getChangesMeasured())
-                : ""));
+                : "", explanations, true));
         html.append("</div></div>");
         return html.toString();
+    }
+
+    private static String whyParagraph(String audience, String text) {
+        return text.isBlank() ? "" : "<p><b>" + audience + ":</b> " + HtmlEscapeUtils.escape(text) + "</p>";
     }
 
     private static String margin(double margin) {
         return margin == Math.rint(margin) ? String.valueOf((long) margin) : String.format(Locale.US, "%.1f", margin);
     }
 
-    private static String scoreColumn(String label, MaintainabilityScore score, String note) {
+    // aiFirst: the AI column puts why a sub-score matters for agents first.
+    private static String scoreColumn(String label, MaintainabilityScore score, String note,
+                                      Map<String, SubScoreExplanations.Why> explanations, boolean aiFirst) {
         StringBuilder html = new StringBuilder("<div class='sk-score-col'>");
         html.append("<div class='sk-score-head'><span class='sk-score-name'>").append(label).append("</span>")
                 .append(String.format(Locale.US, "<span class='sk-score-total'>%.1f</span>", score.getValue()))
                 .append(gradeScale(score.getGrade(), true)).append("</div>");
         if (!score.getCappedBy().isEmpty()) {
-            html.append("<div class='sk-score-context'>Capped by its weakest sub-score, ")
-                    .append(HtmlEscapeUtils.escape(score.getCappedBy())).append(" (+").append(margin(score.getCapMargin())).append(").</div>");
+            html.append("<div class='sk-score-context'>Capped by ")
+                    .append(HtmlEscapeUtils.escape(score.getCappedBy())).append(" + ").append(margin(score.getCapMargin())).append(".</div>");
         }
         if (!note.isEmpty()) {
             html.append("<div class='sk-score-context'>").append(HtmlEscapeUtils.escape(note)).append("</div>");
@@ -239,13 +260,28 @@ public class ReportHealthSection {
         html.append("<ul class='sk-subscores'>");
         for (SubScore subScore : subScores) {
             long width = Math.round(10 * subScore.getScore());
-            html.append("<li class='sk-subscore' title='weight ").append(String.format(Locale.US, "%.2f", subScore.getWeight())).append("'>");
+            SubScoreExplanations.Why why = explanations.get(subScore.getKey());
+            boolean expandable = why != null && !why.isEmpty();
+            html.append("<li class='sk-subscore-item'>");
+            if (expandable) {
+                html.append("<details class='sk-subscore-details'><summary>");
+            }
+            html.append("<div class='sk-subscore' title='weight ").append(String.format(Locale.US, "%.2f", subScore.getWeight()))
+                    .append(expandable ? "; click for why it matters" : "").append("'>");
             html.append("<span class='sk-subscore-label'>").append(HtmlEscapeUtils.escape(subScore.getLabel())).append("</span>");
             html.append("<span class='sk-subscore-bar'><span class='sk-subscore-").append(HealthSummary.scoreStatus(subScore.getScore()).getLabel())
                     .append("' style='width: ").append(Math.max(2, width)).append("%'></span></span>");
             html.append(String.format(Locale.US, "<span class='sk-subscore-value'>%.1f</span>", subScore.getScore()));
             html.append("<span class='sk-subscore-drag'>").append(subScore.getDrag() > 0 ? String.format(Locale.US, "−%.1f", subScore.getDrag()) : "").append("</span>");
             html.append("<span class='sk-subscore-measure'>").append(HtmlEscapeUtils.escape(subScore.getMeasureText())).append("</span>");
+            html.append("</div>");
+            if (expandable) {
+                html.append("</summary><div class='sk-subscore-why'>");
+                String humanWhy = whyParagraph("For people", why.getHuman());
+                String aiWhy = whyParagraph("For AI agents", why.getAi());
+                html.append(aiFirst ? aiWhy + humanWhy : humanWhy + aiWhy);
+                html.append("</div></details>");
+            }
             html.append("</li>");
         }
         html.append("</ul></div>");
@@ -257,10 +293,10 @@ public class ReportHealthSection {
         html.append("<div class='sk-hotspots-title'>Where to look first</div>");
         html.append("<div class='sk-hotspots-intro'>");
         if (history) {
-            html.append("Main files that are complex <i>and</i> changed often in the past year: changes there are frequent, ")
-                    .append("slow and error-prone. Ranked by complexity × days with changes; a single contributor marks knowledge risk.");
+            html.append("Complex main files changed often in the past year, where changes are frequent, slow and error-prone. ")
+                    .append("Ranked by complexity × days changed; a single contributor flags knowledge risk.");
         } else {
-            html.append("The most complex main files (no git history, so change frequency is unknown).");
+            html.append("The most complex main files (no git history, so no change frequency).");
         }
         html.append("</div><ol class='sk-hotspots'>");
         long maxScore = Math.max(1, hotspots.get(0).score);
@@ -278,7 +314,7 @@ public class ReportHealthSection {
         html.append("<div class='sk-hotspots-title'>Large files that change often</div>");
         html.append("<div class='sk-hotspots-intro'>Main files over ").append(String.format(Locale.US, "%,d", reads.getLargeFileLines()))
                 .append(" lines changed ").append(HtmlEscapeUtils.escape(reads.windowLabel()))
-                .append(": people and AI coding agents read them in pieces for every change. Splitting them cuts what each change has to read. ")
+                .append(". People and AI agents read them in pieces for every change; splitting them cuts that. ")
                 .append("Ranked by lines × changes.</div><ol class='sk-hotspots'>");
         long max = Math.max(1, files.get(0).getReadLines());
         for (int i = 0; i < files.size(); i++) {

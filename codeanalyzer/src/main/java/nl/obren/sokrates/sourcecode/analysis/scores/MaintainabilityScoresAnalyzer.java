@@ -158,7 +158,7 @@ public class MaintainabilityScoresAnalyzer {
             RiskDistributionStats unitSize = results.getUnitsAnalysisResults().getUnitSizeRiskDistribution();
             addShare(measured, UNIT_SIZE, "Unit size", unitSize, "of unit code in units > " + unitSize.getHighRiskThreshold() + " lines", UNIT_SIZE_ANCHORS);
             RiskDistributionStats complexity = results.getUnitsAnalysisResults().getConditionalComplexityRiskDistribution();
-            addShare(measured, UNIT_COMPLEXITY, "Unit complexity", complexity, "of unit code in units with McCabe > " + complexity.getHighRiskThreshold(), UNIT_COMPLEXITY_ANCHORS);
+            addShare(measured, UNIT_COMPLEXITY, "Unit complexity", complexity, "of unit code with McCabe > " + complexity.getHighRiskThreshold(), UNIT_COMPLEXITY_ANCHORS);
         }
         RiskDistributionStats fileSize = results.getFilesAnalysisResults().getOverallFileSizeDistribution();
         addShare(measured, FILE_SIZE, "File size", fileSize, fileSize == null ? "" : "of main code in files > " + fileSize.getHighRiskThreshold() + " lines", FILE_SIZE_ANCHORS);

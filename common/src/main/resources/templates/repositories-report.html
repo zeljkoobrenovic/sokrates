@@ -774,10 +774,6 @@
             riskColumn('freshness', 'Freshness', 'freshness', FRESH_PALETTE),
             riskColumn('updateFreq', 'Update<br>Frequency', 'updateFrequency', HEAT_PALETTE)
         ];
-        // The score columns follow the name column; off with showMaintainabilityScores: false (the data stays).
-        if (options.showScores !== false) {
-            cols.splice(2, 0, scoreColumn('humanScore', 'Human<br>Score*', 'humanScore'), scoreColumn('aiScore', 'AI<br>Score*', 'aiScore'));
-        }
         if (options.showControls) {
             cols.push({key: 'controls', label: 'Controls', type: 'string', dir: 1, headerStyle: 'text-align: center;', sortable: false,
                 value: i => '', cell: i => '<td style="text-align: center;">' + controlsHtml(i.repositoryMetrics) + '</td>'});
@@ -787,6 +783,28 @@
         TABS.push({id: 'metrics', label: 'Metrics', columns: cols, sortKey: 'name', sortDir: 1,
             filter: i => i.mainLinesOfCode > 0});
     })();
+
+    // Scores*: a size-vs-score chart above a table of the scores; only when the scores are on
+    // (showMaintainabilityScores, the data stays either way) and some repository has them.
+    const HAS_SCORES = options.showScores !== false
+        && repositories.some(r => r.repositoryMetrics && r.repositoryMetrics.humanScore);
+    if (HAS_SCORES) {
+        const nameCol = {key: 'name', label: 'Repository', type: 'string', dir: 1, headerStyle: 'text-align: left; ' + NAME_COL_STYLE,
+            value: i => (i.metadata && i.metadata.name ? i.metadata.name : '').toLowerCase(),
+            cell: i => '<td style="vertical-align: middle; ' + NAME_COL_STYLE + '">' + repoNameHtml(i) + '</td>'};
+        const locCol = {key: 'mainLoc', label: 'Main<br>LOC', type: 'number', dir: -1, headerStyle: 'text-align: right;',
+            value: i => i.mainLinesOfCode || 0,
+            cell: i => '<td style="text-align: right;">' + num(i.mainLinesOfCode) + '</td>'};
+        const contextCol = {key: 'contextLines', label: 'Lines read<br>per change', type: 'number', dir: -1, headerStyle: 'text-align: right;',
+            value: i => i.repositoryMetrics && i.repositoryMetrics.contextLinesPerChange || 0,
+            cell: i => '<td style="text-align: right;" title="current lines of the main files an average past-year commit touched">'
+                + (i.repositoryMetrics && i.repositoryMetrics.contextLinesPerChange > 0 ? '~' + num(i.repositoryMetrics.contextLinesPerChange) : '-') + '</td>'};
+        TABS.splice(1, 0, {id: 'scores', label: 'Scores*', sortKey: 'humanScore', sortDir: -1,
+            summaryChart: scoresSummary,
+            columns: [langCol, nameCol, scoreColumn('humanScore', 'Human<br>Score*', 'humanScore'),
+                scoreColumn('aiScore', 'AI<br>Score*', 'aiScore'), locCol, contextCol, reportCol],
+            filter: i => i.mainLinesOfCode > 0 && i.repositoryMetrics && i.repositoryMetrics.humanScore && i.repositoryMetrics.aiScore});
+    }
 
     const TABS_BY_ID = {};
     TABS.forEach(t => TABS_BY_ID[t.id] = t);
@@ -1215,6 +1233,91 @@
         const commits = matched.reduce((a, b) => a + (b.commitsCount || 0), 0);
         const recentContributors = matched.reduce((a, b) => a + (b.recentContributorsCount || 0), 0);
         document.getElementById('proportion-bars').innerHTML = proportionBars(count, mainLoc, commits, recentContributors);
+    }
+
+    // ---- Scores: main code size (x, log scale) against a maintainability score (y) ----------------
+
+    let scoreKind = 'humanScore';
+    try {
+        if (localStorage.getItem('sokrates-repositories-score') === 'aiScore') scoreKind = 'aiScore';
+    } catch (e) {
+    }
+
+    function selectScoreKind(kind) {
+        scoreKind = kind;
+        try {
+            localStorage.setItem('sokrates-repositories-score', kind);
+        } catch (e) {
+        }
+        render();
+    }
+
+    // The built-in grade bands; a repository with its own framework may grade differently (its dot keeps its grade).
+    const GRADE_BANDS = [['A', 8, 10], ['B', 6.5, 8], ['C', 5, 6.5], ['D', 3.5, 5], ['E', 0, 3.5]];
+
+    function locLabel(n) {
+        return n >= 1e6 ? (n / 1e6) + 'M' : n >= 1e3 ? (n / 1e3) + 'K' : String(n);
+    }
+
+    function scoresChart(rows) {
+        const W = 900, H = 460, L = 44, R = 28, T = 12, B = 46;
+        const logs = rows.map(r => Math.log10(Math.max(1, r.mainLinesOfCode)));
+        let lo = Math.floor(Math.min.apply(null, logs)), hi = Math.ceil(Math.max.apply(null, logs));
+        if (hi <= lo) hi = lo + 1;
+        const x = loc => L + (Math.log10(Math.max(1, loc)) - lo) / (hi - lo) * (W - L - R);
+        const y = v => T + (10 - v) / 10 * (H - T - B);
+        let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width: 100%; max-width: ' + W + 'px; height: auto; font-size: 11px;"'
+            + ' role="img" aria-label="maintainability score against lines of main code">';
+        GRADE_BANDS.forEach(b => {
+            svg += '<rect x="' + L + '" y="' + y(b[2]) + '" width="' + (W - L - R) + '" height="' + (y(b[1]) - y(b[2]))
+                + '" fill="' + GRADE_COLORS[b[0]][0] + '" fill-opacity="0.09"></rect>'
+                + '<text x="' + (W - R + 6) + '" y="' + ((y(b[1]) + y(b[2])) / 2 + 4) + '" fill="var(--sk-text-faint)">' + b[0] + '</text>';
+        });
+        for (let v = 0; v <= 10; v += 2) {
+            svg += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="var(--sk-border)"></line>'
+                + '<text x="' + (L - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end" fill="var(--sk-text-muted)">' + v + '</text>';
+        }
+        for (let p = lo; p <= hi; p++) {
+            const px = x(Math.pow(10, p));
+            svg += '<line x1="' + px + '" x2="' + px + '" y1="' + T + '" y2="' + (H - B) + '" stroke="var(--sk-border)"></line>'
+                + '<text x="' + px + '" y="' + (H - B + 16) + '" text-anchor="middle" fill="var(--sk-text-muted)">' + locLabel(Math.pow(10, p)) + '</text>';
+        }
+        svg += '<text x="' + ((L + W - R) / 2) + '" y="' + (H - 6) + '" text-anchor="middle" fill="var(--sk-text-muted)">lines of main code (log scale)</text>'
+            + '<text transform="translate(12,' + ((T + H - B) / 2) + ') rotate(-90)" text-anchor="middle" fill="var(--sk-text-muted)">'
+            + (scoreKind === 'aiScore' ? 'AI' : 'Human') + ' score</text>';
+        // Larger repositories first, so smaller dots stay on top and clickable.
+        rows.slice().sort((a, b) => b.mainLinesOfCode - a.mainLinesOfCode).forEach(r => {
+            const score = r.repositoryMetrics[scoreKind];
+            const name = (r.metadata && r.metadata.name) || '';
+            const title = name + '\n' + num(r.mainLinesOfCode) + ' lines of main code\n' + (scoreKind === 'aiScore' ? 'AI' : 'Human')
+                + ' score ' + (score.value || 0).toFixed(1) + ', grade ' + score.grade + (score.framework === 'custom' ? ' (own framework)' : '')
+                + (score.drags ? '\nbiggest drags: ' + score.drags : '');
+            const color = (GRADE_COLORS[score.grade] || GRADE_COLORS.E)[0];
+            svg += '<a href="' + esc((r.reportFolderUrl || '') + 'index.html#highlights') + '" target="_blank">'
+                + '<circle cx="' + x(r.mainLinesOfCode).toFixed(1) + '" cy="' + y(score.value || 0).toFixed(1) + '" r="5.5" fill="' + color
+                + '" fill-opacity="0.85" stroke="var(--sk-text)" stroke-opacity="0.45" stroke-width="0.8"><title>' + esc(title) + '</title></circle></a>';
+        });
+        return svg + '</svg>';
+    }
+
+    // The Scores* tab's chart, above its table: the rows are the tab's (searched, with scores).
+    function scoresSummary(rows) {
+        let html = '<div style="margin: 8px 0 10px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px;">'
+            + ['humanScore', 'aiScore'].map(k => '<button class="sk-pill' + (k === scoreKind ? ' active' : '') + '" onclick="selectScoreKind(\'' + k + '\')">'
+                + (k === 'aiScore' ? 'AI score' : 'Human score') + '</button>').join('');
+        if (rows.length) {
+            const sorted = rows.map(r => r.repositoryMetrics[scoreKind].value || 0).sort((a, b) => a - b);
+            const median = sorted.length % 2 ? sorted[(sorted.length - 1) / 2] : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;
+            html += '<span style="color: var(--sk-text-muted); font-size: 85%; margin-left: 8px;">median ' + median.toFixed(1)
+                + ' · one dot per repository, colored by grade; hover for details, click to open its Highlights</span>';
+        }
+        html += '</div>';
+        if (!rows.length) {
+            return html;
+        }
+        return html + scoresChart(rows)
+            + '<div style="color: var(--sk-text-faint); font-size: 80%; margin: 6px 0 14px 0;">Bands: the built-in grades (A 8+, B 6.5+, C 5+, D 3.5+). '
+            + 'Repositories analyzed before the scores existed are not listed. * A heuristic; compare repositories rather than read a score as absolute.</div>';
     }
 
     function renderFeatures(filters) {

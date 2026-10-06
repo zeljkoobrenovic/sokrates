@@ -171,33 +171,33 @@ public class HealthSummary {
         }
         MaintainabilityScores scores = shownScores(results);
         if (scores != null) {
-            tiles.add(scoreTile("Human score", scores.getHuman(), "how easy it is for people to understand and change"));
-            tiles.add(scoreTile("AI score", scores.getAi(), scores.getContextLinesPerChange() > 0
+            tiles.add(scoreTile("human score*", scores.getHuman(), "for people to understand and change"));
+            tiles.add(scoreTile("AI score*", scores.getAi(), scores.getContextLinesPerChange() > 0
                     ? String.format(Locale.US, "~%,d lines read per change", scores.getContextLinesPerChange())
-                    : "how easy it is for AI coding agents to understand and change"));
+                    : "for AI agents to understand and change"));
         }
         if (!results.skipDuplicationAnalysis() && results.getDuplicationAnalysisResults().getOverallDuplication() != null) {
             double duplication = results.getDuplicationAnalysisResults().getOverallDuplication().getDuplicationPercentage().doubleValue();
-            tiles.add(new Tile("Duplication", percentage(duplication), "of cleaned main code is duplicated",
+            tiles.add(new Tile("Duplication", percentage(duplication), "of main code duplicated",
                     status(duplication, DUPLICATION_BANDS), "Duplication.html", bandsTooltip(DUPLICATION_BANDS)));
         }
         if (results.getUnitsAnalysisResults().getTotalNumberOfUnits() > 0) {
             RiskDistributionStats complexity = results.getUnitsAnalysisResults().getConditionalComplexityRiskDistribution();
             double complexShare = highShare(complexity);
             tiles.add(new Tile("Complex units", percentage(complexShare),
-                    "of unit code has McCabe index > " + complexity.getHighRiskThreshold(),
+                    "of unit code with McCabe > " + complexity.getHighRiskThreshold(),
                     status(complexShare, COMPLEX_UNITS_BANDS), "ConditionalComplexity.html", bandsTooltip(COMPLEX_UNITS_BANDS)));
             RiskDistributionStats unitSize = results.getUnitsAnalysisResults().getUnitSizeRiskDistribution();
             double longShare = highShare(unitSize);
             tiles.add(new Tile("Long units", percentage(longShare),
-                    "of unit code is in units > " + unitSize.getHighRiskThreshold() + " lines",
+                    "of unit code in units > " + unitSize.getHighRiskThreshold() + " lines",
                     status(longShare, LONG_UNITS_BANDS), "UnitSize.html", bandsTooltip(LONG_UNITS_BANDS)));
         }
         RiskDistributionStats fileSize = results.getFilesAnalysisResults().getOverallFileSizeDistribution();
         if (fileSize != null && fileSize.getTotalValue() > 0) {
             double largeShare = highShare(fileSize);
             tiles.add(new Tile("Large files", percentage(largeShare),
-                    "of main code is in files > " + fileSize.getHighRiskThreshold() + " lines",
+                    "of main code in files > " + fileSize.getHighRiskThreshold() + " lines",
                     status(largeShare, LARGE_FILES_BANDS), "FileSize.html", bandsTooltip(LARGE_FILES_BANDS)));
         }
         if (history) {
@@ -232,9 +232,9 @@ public class HealthSummary {
         }
         double share = 100.0 * reads.getChangesInLargeFiles() / reads.getTotalChanges();
         return new Tile("Changes in large files", percentage(share),
-                "of changes (" + reads.windowShortLabel() + ") touched files > " + String.format(Locale.US, "%,d", reads.getLargeFileLines()) + " lines",
+                "of changes (" + reads.windowShortLabel() + ") to files > " + String.format(Locale.US, "%,d", reads.getLargeFileLines()) + " lines",
                 status(share, CHANGES_IN_LARGE_FILES_BANDS), "FileSize.html",
-                "Large files are read in pieces for every change, by people and AI coding agents. " + bandsTooltip(CHANGES_IN_LARGE_FILES_BANDS));
+                "People and AI agents read large files in pieces for every change. " + bandsTooltip(CHANGES_IN_LARGE_FILES_BANDS));
     }
 
     /** The scores when they exist and analysis.maintainabilityScores.show is on (they stay in the data either way), else null. */
@@ -288,8 +288,8 @@ public class HealthSummary {
         long ok = statuses.stream().filter(s -> "OK".equalsIgnoreCase(s.getStatus())).count();
         long failed = statuses.stream().filter(s -> "FAILED".equalsIgnoreCase(s.getStatus())).count();
         Status status = failed > 0 ? Status.HIGH : (ok < statuses.size() ? Status.WATCH : Status.GOOD);
-        return new Tile("Goals", ok + " / " + statuses.size(), "controls within the desired range",
-                status, "Controls.html", "Controls defined in goalsAndControls of the configuration");
+        return new Tile("Goals", ok + " / " + statuses.size(), "controls in range",
+                status, "Controls.html", "Controls from goalsAndControls in config.json");
     }
 
     /** The files most worth looking at first, highest score first (at most {@link #MAX_HOTSPOTS}). */

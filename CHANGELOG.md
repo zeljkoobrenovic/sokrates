@@ -5,6 +5,21 @@ everything listed under the most recent date.
 
 ## 2026-10-06
 
+### Landscape: Repositories › Scores*
+
+A new Scores* tab right after Overview (also in the sidebar). A chart plots every repository as a dot: lines of main
+code (log scale) across, its Human or AI maintainability score (toggle) up, colored by grade over the A–E bands; hover
+shows the score and its biggest drags, a click opens the repository's Highlights. Below it, a sortable table lists the
+Human and AI scores, main lines of code and lines read per change. Both follow the search box. The score columns moved
+here from the Metrics tab. Shown when the scores are on (`showMaintainabilityScores`) and at least one repository has
+them.
+
+### Why each maintainability sub-score matters
+
+On Highlights, every sub-score row of the Maintainability scores card opens on a click and explains why that
+sub-score matters for people and for AI agents (the column's own audience first). A custom framework can write its
+own texts per sub-score (`whyHuman`, `whyAi`); the rows are closed by default, so the card looks as before.
+
 ### Your own maintainability score framework
 
 `analysis.maintainabilityScores` takes a score framework of your own: with the explicit `"useCustomFramework": true`

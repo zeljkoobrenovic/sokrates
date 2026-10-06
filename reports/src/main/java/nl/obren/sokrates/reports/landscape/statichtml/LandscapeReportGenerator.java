@@ -398,9 +398,20 @@ public class LandscapeReportGenerator {
             addRepositoriesSubItem(navigation, group, "history", "History", "Age, first and latest commits of each repository.");
         }
         addRepositoriesSubItem(navigation, group, "metrics", "Metrics", "Duplication, size and complexity profiles, and controls per repository.");
+        if (hasMaintainabilityScores()) {
+            addRepositoriesSubItem(navigation, group, "scores", "Scores", "Human and AI maintainability scores against the size of the main code.");
+        }
         if (dataExport != null && dataExport.hasFeaturesOfInterest()) {
             addRepositoriesSubItem(navigation, group, "features", "Features of Interest", "Where the features of interest occur across the repositories.");
         }
+    }
+
+    // The repositories page shows its Scores tab under the same condition (options.showScores, scores present).
+    private boolean hasMaintainabilityScores() {
+        return landscapeAnalysisResults.getConfiguration().isShowMaintainabilityScores()
+                && landscapeAnalysisResults.getFilteredRepositoryAnalysisResults().stream()
+                .anyMatch(r -> r.getAnalysisResults() != null && r.getAnalysisResults().getMaintainabilityScores() != null
+                        && r.getAnalysisResults().getMaintainabilityScores().getHuman() != null);
     }
 
     private void addRepositoriesSubItem(ReportNavigation navigation, ReportNavigation.Group group, String tab, String label, String subtitle) {

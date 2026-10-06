@@ -46,6 +46,10 @@ public class ScoreFrameworkConfig {
         private double humanWeight = 1;
         private double aiWeight = 1;
 
+        // Why the sub-score matters for people / for AI agents, shown when its row is opened; empty = the built-in text
+        private String whyHuman = "";
+        private String whyAi = "";
+
         public SubScoreConfig() {
         }
 
@@ -113,6 +117,22 @@ public class ScoreFrameworkConfig {
 
         public double getAiWeight() {
             return aiWeight;
+        }
+
+        public String getWhyHuman() {
+            return whyHuman;
+        }
+
+        public void setWhyHuman(String whyHuman) {
+            this.whyHuman = whyHuman != null ? whyHuman : "";
+        }
+
+        public String getWhyAi() {
+            return whyAi;
+        }
+
+        public void setWhyAi(String whyAi) {
+            this.whyAi = whyAi != null ? whyAi : "";
         }
 
         public void setAiWeight(double aiWeight) {

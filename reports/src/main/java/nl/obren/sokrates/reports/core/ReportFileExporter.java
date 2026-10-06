@@ -263,8 +263,8 @@ public class ReportFileExporter {
         if (scores == null) {
             return;
         }
-        addScoreBlock(report, scores.getHuman(), "human score", "contributors");
-        addScoreBlock(report, scores.getAi(), "AI score", "bot");
+        addScoreBlock(report, scores.getHuman(), "human score*", "contributors");
+        addScoreBlock(report, scores.getAi(), "AI score*", "bot");
     }
 
     private static void addScoreBlock(RichTextReport report, MaintainabilityScore score, String label, String icon) {
@@ -634,7 +634,7 @@ public class ReportFileExporter {
         report.addTabItem("commits", "Activity", "index.html#commits", "activity",
                 "Commits, contributors and code churn over time, per year, month, week and day.");
         report.addTabItem("highlights", "Highlights", "index.html#highlights", "highlights",
-                "Headline numbers with a status, and the files most worth looking at first.");
+                "Headline numbers, scores and the files to look at first.");
         List<CustomTab> customTabs = getCustomTabs(analysisResults, aiInsights);
         for (int i = 0; i < customTabs.size(); i++) {
             String link = customTabLink(customTabs.get(i).getIframeLink());
