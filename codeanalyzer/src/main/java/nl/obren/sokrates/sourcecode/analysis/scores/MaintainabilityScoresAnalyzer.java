@@ -63,10 +63,10 @@ public class MaintainabilityScoresAnalyzer {
             FILE_COMPLEXITY, TEST_CODE, CHANGE_ENTROPY, CONTEXT_PER_CHANGE, KNOWLEDGE);
 
     public static final Map<String, String> LABELS = labels("Volume", "Duplication", "Unit size", "Unit complexity", "File size",
-            "File complexity", "Test code", "Change entropy", "Context per change", "Knowledge spread");
+            "File complexity", "Tests", "Change entropy", "Context per change", "Knowledge spread");
 
     public static final Map<String, Double> HUMAN_WEIGHTS = weights(1, 1, 1.5, 2, 0.75, 1, 0.75, 1, 0.5, 1.5);
-    public static final Map<String, Double> AI_WEIGHTS = weights(0.75, 1.5, 1, 1, 1.75, 0.75, 1.75, 1.5, 2, 0);
+    public static final Map<String, Double> AI_WEIGHTS = weights(0.75, 1.5, 1, 1, 1.75, 0.75, 1.5, 1.5, 2, 0);
 
     static final double WEAKEST_LINK_MARGIN = 4;
     // The share of the excess above the weakest link + margin that the cap removes (1 = hard cap, 0 = none).
@@ -85,7 +85,9 @@ public class MaintainabilityScoresAnalyzer {
     static final double[][] UNIT_COMPLEXITY_ANCHORS = {{0, 10}, {5, 8}, {15, 5}, {30, 2}, {50, 0}};
     static final double[][] FILE_SIZE_ANCHORS = {{0, 10}, {10, 8}, {30, 5}, {50, 2}, {75, 0}};
     static final double[][] FILE_COMPLEXITY_ANCHORS = {{0, 10}, {10, 8}, {25, 5}, {50, 2}, {75, 0}};
-    static final double[][] TEST_CODE_ANCHORS = {{0, 0}, {0.1, 3}, {0.3, 6}, {0.6, 8.5}, {1, 10}};
+    // Whether there is a test suite of reasonable size, not coverage (which reading the code cannot tell): no tests
+    // score low, a modest suite near full; more test code beyond 20% of the main code earns nothing.
+    static final double[][] TEST_CODE_ANCHORS = {{0, 1}, {0.05, 5}, {0.1, 8}, {0.2, 10}};
     static final double[][] CHANGE_ENTROPY_ANCHORS = {{0, 10}, {0.25, 8.5}, {0.5, 7}, {1, 4}, {2, 1}, {3, 0}};
     static final double[][] CONTEXT_ANCHORS = {{0, 10}, {500, 9}, {2_000, 7}, {5_000, 5}, {10_000, 3}, {25_000, 1}, {50_000, 0}};
     static final double[][] KNOWLEDGE_ANCHORS = {{1, 3}, {2, 5.5}, {3, 7.5}, {5, 10}};
@@ -182,7 +184,8 @@ public class MaintainabilityScoresAnalyzer {
         int testLoc = results.getTestAspectAnalysisResults().getLinesOfCode();
         double testRatio = (double) testLoc / mainLoc;
         measured.add(new SubScore(TEST_CODE, LABELS.get(TEST_CODE), testRatio,
-                String.format(Locale.US, "%,d test lines per 100 main lines", Math.round(100 * testRatio)), interpolate(testRatio, TEST_CODE_ANCHORS)));
+                testLoc == 0 ? "no test code" : String.format(Locale.US, "%,d test lines per 100 main lines", Math.round(100 * testRatio)),
+                interpolate(testRatio, TEST_CODE_ANCHORS)));
 
         if (changes.commits >= MIN_COMMITS) {
             measured.add(new SubScore(CHANGE_ENTROPY, LABELS.get(CHANGE_ENTROPY), changes.entropy,

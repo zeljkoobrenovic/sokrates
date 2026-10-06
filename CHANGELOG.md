@@ -5,6 +5,15 @@ everything listed under the most recent date.
 
 ## 2026-10-06
 
+### Ease of change: "Tests" counts a test suite, not test volume
+
+The test sub-score (key `testCode`, now labelled **Tests**) no longer rewards more test code up to 1:1 with the main
+code: the amount of test code is not coverage, which reading the code cannot tell. It now asks whether there is a test
+suite of reasonable size: no tests 1 (was 0), 5% of the main code 5, 10% 8, 20% or more full marks. Its AI weight is
+1.5 (was 1.75). Repositories without tests still score clearly lower (in one landscape: a 155-line sample went from
+5.8 / 4.7 to 6.5 / 5.8), repositories with a real test suite barely change, and medians rose from 4.9 / 4.4 to 5.3 / 5.2.
+Scores change on the next analysis.
+
 ### Ease of change: a soft weakest-link cap
 
 The weakest-link cap was a hard clamp at the weakest code sub-score + 4, so every repository with one zero sub-score —
