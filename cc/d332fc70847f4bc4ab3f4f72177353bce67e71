@@ -1,0 +1,45 @@
+reports/src/main/java/nl/obren/sokrates/reports/core/HealthSummary.java
+  s_4689be9680f045::t_d1b7298f57d1ee 247,250-254
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportFileExporter.java
+  s_4689be9680f045::t_d1b7298f57d1ee 277-280
+CHANGELOG.md
+  s_4689be9680f045::t_b6efbedfe91bfe 8-14
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/analysis/scores/MaintainabilityScore.java
+  s_4689be9680f045::t_9e5c694d9becb8 7-8,11,25-66
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportHealthSection.java
+  s_4689be9680f045::t_d1b7298f57d1ee 15-16,86,254-257
+reports/src/test/java/nl/obren/sokrates/reports/core/SubScoreExplanationsTest.java
+  s_4689be9680f045::t_e1bef96790cd42 78-84,87-95,97
+  s_4689be9680f045::t_5b3c6dec44d71c 85-86,96
+docs/configuration.md
+  s_4689be9680f045::t_b6efbedfe91bfe 160
+codeanalyzer/src/test/java/nl/obren/sokrates/sourcecode/analysis/scores/MaintainabilityScoresAnalyzerTest.java
+  s_4689be9680f045::t_e1bef96790cd42 241-268
+common/src/main/resources/templates/repositories-report.html
+  s_4689be9680f045::t_d1b7298f57d1ee 494,497-499,1297
+  s_4689be9680f045::t_5d01cbfbcf55b3 1302-1305,1327
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/analysis/scores/MaintainabilityScoresAnalyzer.java
+  s_4689be9680f045::t_9e5c694d9becb8 63-65,130-131,133-138,157,163,168,170,173,175,179,183,186,198,275-311,540-546
+  s_4689be9680f045::t_20e75bc5cf6f72 547
+CLAUDE.md
+  s_4689be9680f045::t_b6efbedfe91bfe 53,208
+reports/src/main/java/nl/obren/sokrates/reports/landscape/data/RepositoryReportData.java
+  s_4689be9680f045::t_d1b7298f57d1ee 281-283,294-295,313-327
+  s_4689be9680f045::t_cd202a1d7e6011 328
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ccd332fc70847f4bc4ab3f4f72177353bce67e71",
+  "prompts": {},
+  "sessions": {
+    "s_4689be9680f045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e7085e25-5288-4712-99e9-6028442fc33e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
