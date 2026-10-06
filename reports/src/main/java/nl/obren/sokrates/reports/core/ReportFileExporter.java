@@ -273,11 +273,12 @@ public class ReportFileExporter {
         String drags = score.getSubScores().stream().filter(s -> s.getDrag() > 0)
                 .sorted(Comparator.comparingDouble(SubScore::getDrag).reversed()).limit(3)
                 .map(s -> s.getLabel() + String.format(Locale.US, " -%.1f", s.getDrag())).collect(Collectors.joining(", "));
-        String tooltip = "0-10 ease of change*" + (drags.isEmpty() ? "" : "; biggest drags: " + drags)
+        String tooltip = String.format(Locale.US, "%.1f of 10, grade %s: ease of change*", score.getValue(), score.getGrade()) + (drags.isEmpty() ? "" : "; biggest drags: " + drags)
                 + (score.getCappedBy().isEmpty() ? "" : "; capped by " + score.getCappedBy())
                 + (score.getCoverageText().isEmpty() ? "" : "; " + score.getCoverageText());
-        // The info block's layout, tightened so a two-line label ("ease of change" / "for people*") and the grade
-        // scale fit the same 130 x 102 card as the size cards next to it.
+        // The info block's layout with the grade instead of a number (the number is in the hover text and on Highlights):
+        // the A-E scale, current grade large, over a two-line label ("ease of change" / "for people*"), in the same
+        // 130 x 102 card as the size cards next to it.
         String audience = score.isFullyMeasured() ? audienceLabel : audienceLabel + " (" + score.getCoverageShort() + ")";
         report.addHtmlContent("<a href='index.html#highlights' style='color: var(--sk-text, black);'>");
         report.startDiv("display: inline-block; text-align: center; margin-top: 12px; cursor: pointer;");
@@ -285,10 +286,9 @@ public class ReportFileExporter {
         report.startDiv("border-radius: 12px; cursor: pointer; margin: 12px 12px 36px 0px; display: inline-block; width: 130px; height: 102px; "
                 + "z-index: 2; --sk-tint: " + color + "; background-color: var(--sk-tint); text-align: center; vertical-align: middle; "
                 + "box-shadow: rgba(0, 0, 0, 0.15) 2.4px 2.4px 3.2px;", HtmlEscapeUtils.escape(tooltip));
-        report.addHtmlContent(String.format(Locale.US, "<div style='font-size: 34px; line-height: 1.1; padding-top: 8px; color: var(--sk-text, black);'>%.1f</div>", score.getValue()));
-        report.addHtmlContent("<div style='color: var(--sk-text, black); font-size: 11px; line-height: 1.25;'>ease of change<br>"
+        report.addHtmlContent("<div style='padding-top: 20px; height: 34px;'>" + ReportHealthSection.gradeScale(score.getGrade(), true) + "</div>");
+        report.addHtmlContent("<div style='margin-top: 10px; color: var(--sk-text, black); font-size: 12px; line-height: 1.25;'>ease of change<br>"
                 + HtmlEscapeUtils.escape(audience) + "</div>");
-        report.addHtmlContent("<div style='margin-top: 3px;'>" + ReportHealthSection.gradeScale(score.getGrade(), false) + "</div>");
         report.endDiv();
         report.endDiv();
         report.addHtmlContent("</a>");

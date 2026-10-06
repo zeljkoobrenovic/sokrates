@@ -10,7 +10,8 @@ everything listed under the most recent date.
 The Human and AI maintainability scores are now labelled **ease of change** — how easily people and AI agents can
 understand and change the code — because "maintainability" read as a verdict on code quality, while the ratings also
 (deliberately) reward less code: other things equal, a smaller code base is easier and cheaper to change. At a Glance
-shows "ease of change for people*" and "for AI*"; the Highlights tiles are both "Ease of change*" with the audience in
+shows the grade only — the A–E scale with the current grade large, labelled "ease of change for people*" / "for
+AI*" (the number is in the hover text and on Highlights); the Highlights tiles are both "Ease of change*" with the audience in
 the caption ("for people · biggest drag: …", "for AI · ~N lines read per change"), the Highlights card is "Ease of change*" and the landscape tab "Ease of Change*" (Human / AI toggle and
 columns). The landscape sidebar now lists it right after Overview, as the tab bar does
 (it had stayed after Metrics). Unchanged: the numbers, the configuration key `analysis.maintainabilityScores`, the
