@@ -1,0 +1,14 @@
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/scoping/ScopingConventions.java
+  h_f6c4aeafc1bdc6 355-356
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e527418f6dd5a0f643ae4220f668b6c784c22185",
+  "prompts": {},
+  "humans": {
+    "h_f6c4aeafc1bdc6": {
+      "author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
