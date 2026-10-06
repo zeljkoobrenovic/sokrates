@@ -96,9 +96,9 @@ class ReportActivityTab {
         indexReport.endSection();
 
         if (!isEmpty(perMonth)) {
-            indexReport.startSection("Per Month", "Activity per month, past " + (CommitsReportGenerator.PAST_MONTHS / 12) + " years.");
+            indexReport.startCollapsibleSection("Per Month", "Activity per month, past " + (CommitsReportGenerator.PAST_MONTHS / 12) + " years.");
             CommitsReportGenerator.addPerMonthDiagram(indexReport, analysis, perMonth);
-            indexReport.endSection();
+            indexReport.endCollapsibleSection();
         }
         if (!isEmpty(perWeek)) {
             indexReport.startCollapsibleSection("Per Week", "Activity per week, past " + (CommitsReportGenerator.PAST_WEEKS / 52) + " years.");

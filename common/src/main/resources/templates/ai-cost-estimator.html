@@ -434,8 +434,8 @@
             and each session pays for its steps, every step re-sending the growing context.</p>
         <p class="intro rebuild-only">What an AI coding agent would spend writing the main code again, the way a good team works: small commits with tests,
             fixes after debugging, refactoring, and redoing the share of the work that the uncertainty says will not deliver.</p>
-        <p class="intro">All amounts are the agent's token costs only: they leave out people's time, discovery, planning, review, integration,
-            infrastructure and every other cost of building software.</p>
+        <p class="intro">All amounts are base AI costs: the agent's tokens only, leaving out people's time, discovery, planning, review, integration,
+            infrastructure and every other cost of building software. Use them as a base to see where the levers for using AI effectively are, not as a budget.</p>
         <div class="toolbar">
             <span class="hist-only inline-controls">
             <input id="filter" type="text" placeholder="Filter tasks" title="repository, author, ticket, sha or type; separate alternatives with ;" oninput="schedule(render)">
@@ -492,7 +492,7 @@
         <h3>By task type</h3>
         <div class="scroll"><table class="grid" id="types"></table></div>
 
-        <h3 id="chart-title">Estimated cost per month</h3>
+        <h3 id="chart-title">Estimated base cost per month</h3>
         <div id="chart"><span id="chart-max"></span></div>
         <div id="chart-axis"></div>
 
@@ -980,7 +980,7 @@
             history = '<br>the history: ' + money(quantiles(sums(tasks, costs)).p50) + ' (P50)';
         }
         let html = '';
-        html += card('Estimated AI cost', money(cost.p50), rangeText(cost) + history);
+        html += card('Estimated base AI cost', money(cost.p50), rangeText(cost) + history);
         html += card('Per 1,000 lines of main code', money(perK.p50), rangeText(perK) + '<br>' + int(mainLinesOfCode) + ' lines of main code');
         html += card('Tokens', compact(input + output), compact(input) + ' input (' + (input ? Math.round(100 * cachedInput / input) : 0) + '% cache reads)'
             + '<br>' + compact(output) + ' output');
@@ -1175,7 +1175,7 @@
         const perDay = devDays.size ? scaled(cost, 1 / devDays.size) : {p10: 0, p50: 0, p90: 0};
         const reference = num('reference');
         let html = '';
-        html += card('Estimated AI cost', money(cost.p50), rangeText(cost) + '<br>for ' + int(list.length) + ' tasks');
+        html += card('Estimated base AI cost', money(cost.p50), rangeText(cost) + '<br>for ' + int(list.length) + ' tasks');
         html += card('Per 1,000 churned lines', money(perK.p50), rangeText(perK) + '<br>' + int(churn) + ' lines added or changed');
         html += card('Per developer-day', money(perDay.p50), rangeText(perDay) + '<br>' + int(devDays.size) + ' developer-days'
             + (reference ? ' · reference ' + money(reference) : ''));
@@ -1292,7 +1292,7 @@
             const q = quantiles(sums(of, costs));
             return {key, q, tasks: of.length, churn: of.reduce((s, t) => s + t.churn, 0)};
         });
-        document.getElementById('chart-title').textContent = 'Estimated cost per ' + (byYear ? 'year' : 'month') + ' (P50, by task start)';
+        document.getElementById('chart-title').textContent = 'Estimated base cost per ' + (byYear ? 'year' : 'month') + ' (P50, by task start)';
         const max = Math.max(0, ...chartPeriods.map(p => p.q.p50));
         let html = '<span id="chart-max">' + (max ? money(max) : '') + '</span>';
         chartPeriods.forEach((p, i) => {

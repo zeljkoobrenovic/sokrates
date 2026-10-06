@@ -5,6 +5,12 @@ everything listed under the most recent date.
 
 ## 2026-10-06
 
+### AI Cost Estimator*: "base" AI cost
+
+The headline cards read "Estimated base AI cost" (and the chart "Estimated base cost per month/year"), and the note under
+the intro says the amounts are a base to see where the levers for using AI effectively are, not a budget: the agent's
+tokens only, without people's time, discovery, planning, review, integration or infrastructure.
+
 ### AI Cost Estimator*: refactoring savings
 
 The Historical tab has a **Refactoring savings** card: what files no larger than a "max file size" (default 400
