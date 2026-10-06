@@ -1,0 +1,78 @@
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/core/ScoreFrameworkConfig.java
+  s_4689be9680f045::t_e35a2b1d89f063 1-154
+reports/src/main/java/nl/obren/sokrates/reports/landscape/data/RepositoryExport.java
+  s_4689be9680f045::t_39ef80c9b386b4 259-260
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/analysis/scores/MaintainabilityScores.java
+  s_4689be9680f045::t_083c920b6d78be 7-8,35
+  s_4689be9680f045::t_83b4e4d790ca1a 21-34,36-38
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/analysis/scores/MaintainabilityScoresAnalyzer.java
+  s_4689be9680f045::t_f9ccd38bee8d6c 14,19,21-22,42-44,47-48,85-102,118-130,196-286,414-417,427,429-430,433,435,455-458,463-467
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/core/AnalysisConfig.java
+  s_4689be9680f045::t_07beaaca229dcd 83-85,267-274
+  s_4689be9680f045::t_6ce5ed52c537d3 275
+reports/src/main/java/nl/obren/sokrates/reports/generators/explorers/AiCostEstimatorGenerator.java
+  s_4689be9680f045::t_293702db0ae73e 135-139,141-143,151-152
+reports/src/test/java/nl/obren/sokrates/reports/core/EstimateAssumptionsTest.java
+  s_4689be9680f045::t_db152f436fc2ea 1-61
+reports/src/main/java/nl/obren/sokrates/reports/landscape/data/RepositoryReportData.java
+  s_4689be9680f045::t_39ef80c9b386b4 279-280,285-289,308-314
+  s_4689be9680f045::t_9482fade0eee16 315
+reports/src/main/resources/templates/rule-of-thumb-estimates.html
+  s_4689be9680f045::t_dff1dd26e76cd5 1,100-106
+  s_4689be9680f045::t_38fd88f975355b 29-30,46-47,60,114-120,122,125-139,176
+  s_4689be9680f045::t_d7df70ed163118 72,107-110
+docs/configuration.md
+  s_4689be9680f045::t_1d9d8de0239847 160
+  s_4689be9680f045::t_89282ae3c39b4e 161
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/core/EstimateAssumptionsConfig.java
+  s_4689be9680f045::t_09c84cf05b9a08 1-88
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/core/MaintainabilityScoresConfig.java
+  s_4689be9680f045::t_556bc5317f282a 12-13,30-36,68-83
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportFileExporter.java
+  s_4689be9680f045::t_19e459b91a738e 271
+common/src/main/resources/templates/repositories-report.html
+  s_4689be9680f045::t_39ef80c9b386b4 492-493
+common/src/main/resources/templates/ai-cost-estimator.html
+  s_4689be9680f045::t_70527bd096465a 716,727,731-734,928
+  s_4689be9680f045::t_7db8c2354adeb3 2,64,69-70,298,700-715,717-726,728,736,808,810,819
+  s_4689be9680f045::t_2b8b04d325576e 474,643-646,729,831-864,1702
+  s_4689be9680f045::t_05d80c36921cf2 730
+cli/src/main/java/nl/obren/sokrates/cli/ReportsCommands.java
+  s_4689be9680f045::t_293702db0ae73e 13,145
+CLAUDE.md
+  s_4689be9680f045::t_76dcc1dc0856f7 208
+  s_4689be9680f045::t_89282ae3c39b4e 210
+reports/src/main/java/nl/obren/sokrates/reports/core/EstimateAssumptions.java
+  s_4689be9680f045::t_9724ddc1416133 1-62
+codeanalyzer/src/main/java/nl/obren/sokrates/sourcecode/analysis/scores/MaintainabilityScore.java
+  s_4689be9680f045::t_83b4e4d790ca1a 20-29
+reports/src/main/java/nl/obren/sokrates/reports/core/HealthSummary.java
+  s_4689be9680f045::t_19e459b91a738e 251,256-258
+  s_4689be9680f045::t_4b1610ed44e7e2 259-260
+reports/src/main/java/nl/obren/sokrates/reports/core/ReportHealthSection.java
+  s_4689be9680f045::t_19e459b91a738e 194-202,210,221-224,232
+  s_4689be9680f045::t_c596a485b6ccb1 203-209
+reports/src/main/java/nl/obren/sokrates/reports/core/RuleOfThumbEstimates.java
+  s_4689be9680f045::t_293702db0ae73e 19-20,71,78,98-102,112-113
+codeanalyzer/src/test/java/nl/obren/sokrates/sourcecode/analysis/scores/MaintainabilityScoresAnalyzerTest.java
+  s_4689be9680f045::t_6bdc2975db9592 3,5-7,13,16,136-240
+CHANGELOG.md
+  s_4689be9680f045::t_89282ae3c39b4e 16-24
+  s_4689be9680f045::t_1d9d8de0239847 8-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3cfc1f877ebbd0145662b40546db5541a6472cb4",
+  "prompts": {},
+  "sessions": {
+    "s_4689be9680f045": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e7085e25-5288-4712-99e9-6028442fc33e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "zeljkoobrenovic <zeljkoobrenovic@yahoo.com>"
+    }
+  }
+}
