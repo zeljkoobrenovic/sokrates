@@ -1,9 +1,12 @@
 package nl.obren.sokrates.reports.landscape.data;
 
+import nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScore;
 import nl.obren.sokrates.sourcecode.stats.RiskDistributionStats;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
 
 /**
  * Lightweight, JSON-serializable value objects carrying the per-repository data that the
@@ -66,6 +69,34 @@ public class RepositoryReportData {
         private RiskBands freshness;
         private RiskBands updateFrequency;
         private List<Control> controls = new ArrayList<>();
+        // The Human / AI maintainability scores (null for analyses without them) and the AI lines read per change.
+        private Score humanScore;
+        private Score aiScore;
+        private int contextLinesPerChange;
+
+        public Score getHumanScore() {
+            return humanScore;
+        }
+
+        public void setHumanScore(Score humanScore) {
+            this.humanScore = humanScore;
+        }
+
+        public Score getAiScore() {
+            return aiScore;
+        }
+
+        public void setAiScore(Score aiScore) {
+            this.aiScore = aiScore;
+        }
+
+        public int getContextLinesPerChange() {
+            return contextLinesPerChange;
+        }
+
+        public void setContextLinesPerChange(int contextLinesPerChange) {
+            this.contextLinesPerChange = contextLinesPerChange;
+        }
 
         public boolean isSkipDuplication() {
             return skipDuplication;
@@ -237,6 +268,54 @@ public class RepositoryReportData {
             churn.add(linesAdded + linesDeleted);
             churnAdded.add(linesAdded);
             churnDeleted.add(linesDeleted);
+        }
+    }
+
+    /** A maintainability score for the repositories list: value, grade and the sub-scores that drag it down most. */
+    public static class Score {
+        private double value;
+        private String grade = "";
+        private String drags = "";
+
+        public Score() {
+        }
+
+        public Score(MaintainabilityScore score) {
+            this.value = score.getValue();
+            this.grade = score.getGrade();
+            this.drags = score.getSubScores().stream()
+                    .filter(s -> s.getDrag() > 0)
+                    .sorted((a, b) -> Double.compare(b.getDrag(), a.getDrag()))
+                    .limit(3)
+                    .map(s -> s.getLabel() + " " + String.format(Locale.US, "-%.1f", s.getDrag()))
+                    .collect(Collectors.joining(", "));
+            if (!score.getCappedBy().isEmpty()) {
+                this.drags += (this.drags.isEmpty() ? "" : "; ") + "capped by " + score.getCappedBy();
+            }
+        }
+
+        public double getValue() {
+            return value;
+        }
+
+        public void setValue(double value) {
+            this.value = value;
+        }
+
+        public String getGrade() {
+            return grade;
+        }
+
+        public void setGrade(String grade) {
+            this.grade = grade;
+        }
+
+        public String getDrags() {
+            return drags;
+        }
+
+        public void setDrags(String drags) {
+            this.drags = drags;
         }
     }
 }

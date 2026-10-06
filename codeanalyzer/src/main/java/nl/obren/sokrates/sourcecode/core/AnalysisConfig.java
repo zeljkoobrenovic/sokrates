@@ -77,6 +77,9 @@ public class AnalysisConfig {
     // The File Size report's "Large Files That Change Often" section: window, list size, tokens per line
     private FileReadsForChangesConfig fileReadsForChanges = new FileReadsForChangesConfig();
 
+    // The Human and AI maintainability scores (Highlights tiles, Maintainability Scores section, landscape columns)
+    private MaintainabilityScoresConfig maintainabilityScores = new MaintainabilityScoresConfig();
+
     // Thresholds for risk profiles used in commit analysis
     private Thresholds commitFilesCountThresholds = Thresholds.defaultCommitFilesCountThresholds();
 
@@ -247,6 +250,15 @@ public class AnalysisConfig {
     // An explicit null ("fileReadsForChanges": null) falls back to the defaults.
     public void setFileReadsForChanges(FileReadsForChangesConfig fileReadsForChanges) {
         this.fileReadsForChanges = fileReadsForChanges != null ? fileReadsForChanges : new FileReadsForChangesConfig();
+    }
+
+    public MaintainabilityScoresConfig getMaintainabilityScores() {
+        return maintainabilityScores;
+    }
+
+    // An explicit null ("maintainabilityScores": null) falls back to the defaults.
+    public void setMaintainabilityScores(MaintainabilityScoresConfig maintainabilityScores) {
+        this.maintainabilityScores = maintainabilityScores != null ? maintainabilityScores : new MaintainabilityScoresConfig();
     }
 
     public Thresholds getCommitFilesCountThresholds() {

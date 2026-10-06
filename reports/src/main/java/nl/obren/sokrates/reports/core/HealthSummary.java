@@ -9,6 +9,8 @@ import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ControlStatus;
+import nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScore;
+import nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScores;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
 import nl.obren.sokrates.sourcecode.filehistory.FileModificationHistory;
@@ -68,6 +70,8 @@ public class HealthSummary {
         final String tooltip;
         final List<String> sparklineSlots;
         final List<Integer> sparklineValues;
+        // A maintainability grade (A-E), shown as the grade scale in place of the status; null for other tiles
+        String grade;
 
         Tile(String label, String value, String caption, Status status, String link, String tooltip) {
             this(label, value, caption, status, link, tooltip, Collections.emptyList(), Collections.emptyList());
@@ -95,6 +99,10 @@ public class HealthSummary {
 
         public Status getStatus() {
             return status;
+        }
+
+        public String getGrade() {
+            return grade;
         }
 
         public String getLink() {
@@ -161,6 +169,13 @@ public class HealthSummary {
         if (results.getMainAspectAnalysisResults().getFilesCount() == 0) {
             return tiles;
         }
+        MaintainabilityScores scores = shownScores(results);
+        if (scores != null) {
+            tiles.add(scoreTile("Human score", scores.getHuman(), "how easy it is for people to understand and change"));
+            tiles.add(scoreTile("AI score", scores.getAi(), scores.getContextLinesPerChange() > 0
+                    ? String.format(Locale.US, "~%,d lines read per change", scores.getContextLinesPerChange())
+                    : "how easy it is for AI coding agents to understand and change"));
+        }
         if (!results.skipDuplicationAnalysis() && results.getDuplicationAnalysisResults().getOverallDuplication() != null) {
             double duplication = results.getDuplicationAnalysisResults().getOverallDuplication().getDuplicationPercentage().doubleValue();
             tiles.add(new Tile("Duplication", percentage(duplication), "of cleaned main code is duplicated",
@@ -220,6 +235,26 @@ public class HealthSummary {
                 "of changes (" + reads.windowShortLabel() + ") touched files > " + String.format(Locale.US, "%,d", reads.getLargeFileLines()) + " lines",
                 status(share, CHANGES_IN_LARGE_FILES_BANDS), "FileSize.html",
                 "Large files are read in pieces for every change, by people and AI coding agents. " + bandsTooltip(CHANGES_IN_LARGE_FILES_BANDS));
+    }
+
+    /** The scores when they exist and analysis.maintainabilityScores.show is on (they stay in the data either way), else null. */
+    public static MaintainabilityScores shownScores(CodeAnalysisResults results) {
+        MaintainabilityScores scores = results.getMaintainabilityScores();
+        boolean show = results.getCodeConfiguration() == null || results.getCodeConfiguration().getAnalysis().getMaintainabilityScores().isShow();
+        return show && scores != null && scores.getHuman() != null && scores.getAi() != null ? scores : null;
+    }
+
+    // No link: the breakdown card is right below the tiles.
+    static Tile scoreTile(String label, MaintainabilityScore score, String caption) {
+        String value = String.format(Locale.US, "%.1f", score.getValue());
+        String tooltip = "0-10, grade " + score.getGrade() + " (A: 8+, B: 6.5+, C: 5+, D: 3.5+, E: below)";
+        Tile tile = new Tile(label, value, caption, scoreStatus(score.getValue()), null, tooltip);
+        tile.grade = score.getGrade();
+        return tile;
+    }
+
+    static Status scoreStatus(double score) {
+        return score >= 6.5 ? Status.GOOD : (score >= 5 ? Status.WATCH : Status.HIGH);
     }
 
     private void addActivityTiles(List<Tile> tiles) {

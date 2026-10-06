@@ -7,6 +7,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.AspectAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.FilesHistoryAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScores;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.contributors.Contributor;
 import nl.obren.sokrates.sourcecode.landscape.LandscapeConfiguration;
@@ -253,6 +254,12 @@ public class RepositoryExport {
         m.setNewness(new RepositoryReportData.RiskBands(analysis.getFilesHistoryAnalysisResults().getOverallFileFirstModifiedDistribution()));
         m.setFreshness(new RepositoryReportData.RiskBands(analysis.getFilesHistoryAnalysisResults().getOverallFileLastModifiedDistribution()));
         m.setUpdateFrequency(new RepositoryReportData.RiskBands(analysis.getFilesHistoryAnalysisResults().getOverallFileChangeDistribution()));
+        MaintainabilityScores scores = analysis.getMaintainabilityScores();
+        if (scores != null && scores.getHuman() != null && scores.getAi() != null) {
+            m.setHumanScore(new RepositoryReportData.Score(scores.getHuman()));
+            m.setAiScore(new RepositoryReportData.Score(scores.getAi()));
+            m.setContextLinesPerChange(scores.getContextLinesPerChange());
+        }
 
         if (configuration != null && configuration.isShowRepositoryControls()) {
             List<RepositoryReportData.Control> controls = new ArrayList<>();

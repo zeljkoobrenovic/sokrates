@@ -14,6 +14,9 @@ import nl.obren.sokrates.sourcecode.Link;
 import nl.obren.sokrates.sourcecode.Metadata;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScore;
+import nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScores;
+import nl.obren.sokrates.sourcecode.analysis.scores.SubScore;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.CustomTab;
 import nl.obren.sokrates.sourcecode.core.CodeConfigurationUtils;
@@ -29,6 +32,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static nl.obren.sokrates.reports.landscape.statichtml.LandscapeReportGenerator.*;
 
@@ -119,6 +123,7 @@ public class ReportFileExporter {
             addInfoBlockWithColor(indexReport, age, "age", FormattingUtils.formatCount(ageInDays) + " days", MAIN_LOC_FRESH_COLOR, "", "file_history", "FileAge.html");
             addInfoBlockWithColor(indexReport, FormattingUtils.getFormattedPercentage(100 - notChangedPerc) + "%", "main code touched", "1 year (" + FormattingUtils.getSmallTextForNumber(mainLoc - notChanged) + " LOC)", MAIN_LOC_FRESH_COLOR, "", "touch", "FileAge.html");
         }
+        addMaintainabilityScoreBlocks(indexReport, HealthSummary.shownScores(analysisResults));
         indexReport.endDiv();
         // The per-language icons used to sit here (always "main", above the scope toggle); they now live
         // inside each scope panel of the activity table, showing that scope's languages.
@@ -253,7 +258,33 @@ public class ReportFileExporter {
         indexReport.addHtmlContent(icons.toString());
     }
 
+    // The Human and AI maintainability scores, linking to their breakdown on the Highlights tab.
+    private static void addMaintainabilityScoreBlocks(RichTextReport report, MaintainabilityScores scores) {
+        if (scores == null) {
+            return;
+        }
+        addScoreBlock(report, scores.getHuman(), "human score", "contributors");
+        addScoreBlock(report, scores.getAi(), "AI score", "bot");
+    }
+
+    private static void addScoreBlock(RichTextReport report, MaintainabilityScore score, String label, String icon) {
+        HealthSummary.Status status = HealthSummary.scoreStatus(score.getValue());
+        String color = status == HealthSummary.Status.GOOD ? "#dff3e3" : (status == HealthSummary.Status.WATCH ? "#fdf0d5" : "#fbe1e1");
+        String drags = score.getSubScores().stream().filter(s -> s.getDrag() > 0)
+                .sorted(Comparator.comparingDouble(SubScore::getDrag).reversed()).limit(3)
+                .map(s -> s.getLabel() + String.format(Locale.US, " -%.1f", s.getDrag())).collect(Collectors.joining(", "));
+        String tooltip = "0-10 maintainability score*" + (drags.isEmpty() ? "" : "; biggest drags: " + drags)
+                + (score.getCappedBy().isEmpty() ? "" : "; capped by " + score.getCappedBy());
+        addInfoBlockWithColor(report, String.format(Locale.US, "%.1f", score.getValue()), label, ReportHealthSection.gradeScale(score.getGrade(), false),
+                color, HtmlEscapeUtils.escape(tooltip), icon, "index.html#highlights", false);
+    }
+
     static void addInfoBlockWithColor(RichTextReport report, String mainValue, String subtitle, String extra, String color, String tooltip, String icon, String link) {
+        addInfoBlockWithColor(report, mainValue, subtitle, extra, color, tooltip, icon, link, true);
+    }
+
+    // newTab false: a plain link, which the shell routes in-page when it names an index tab.
+    static void addInfoBlockWithColor(RichTextReport report, String mainValue, String subtitle, String extra, String color, String tooltip, String icon, String link, boolean newTab) {
         boolean isZero = mainValue.replaceAll("<.*?>", "").replaceAll("\\%", "").equals("0");
 
         String style = "border-radius: 12px;cursor: pointer;";
@@ -264,7 +295,11 @@ public class ReportFileExporter {
         style += "box-shadow: rgba(0, 0, 0, 0.15) 2.4px 2.4px 3.2px;";
 
         String specialColor = isZero ? " color: var(--sk-text-faint, grey);" : "color: var(--sk-text, black);";
-        report.startNewTabLink(link, specialColor + "");
+        if (newTab) {
+            report.startNewTabLink(link, specialColor + "");
+        } else {
+            report.addHtmlContent("<a href='" + link + "' style='" + specialColor + "'>");
+        }
         report.startDiv("display: inline-block; text-align: center; margin-top: 12px; cursor: pointer;");
         report.addHtmlContent("<div style='vertical-alignment: bottom; margin: 0px; margin-bottom: -10px; z-index: 3;" + (isZero ? "opacity: 0.4;" : "") + "'>" + getIconSvg(icon, 40) + "</div>");
         report.startDiv(style, tooltip);

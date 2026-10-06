@@ -5,6 +5,22 @@ everything listed under the most recent date.
 
 ## 2026-10-06
 
+### Human and AI maintainability scores*
+
+Every repository gets two scores from 0 to 10 (grades A–E): how easy the code is for **people** and for **AI coding
+agents** to understand and change. They weigh the same ten sub-scores differently: volume, duplication, unit size and
+complexity, file size and complexity, test code, change entropy (how scattered a past-year commit is
+over components), context per change (the lines of main code a commit touched, what an agent reads) and knowledge
+spread (who makes half of the commits). People are weighted more on complex logic and knowledge held by few, and AI
+more on large files, scattered changes, lines read, duplicates and tests. The total is a weighted geometric mean, capped
+at the weakest code sub-score + 4. At a Glance shows both scores next to the size cards (linking to the breakdown), the
+Highlights tab shows two tiles and a breakdown ordered by *drag* (what each
+sub-score costs the total), the landscape's Repositories › Metrics has two sortable columns, and the scores are metrics
+(`MAINTAINABILITY_SCORE_HUMAN`, `MAINTAINABILITY_SCORE_AI`, `AI_CONTEXT_LINES_PER_CHANGE`) for goals and controls.
+Weights can be set in `analysis.maintainabilityScores` (docs/configuration.md); `show: false` there, or
+`showMaintainabilityScores: false` in a landscape config, hides the scores but keeps them in the data. Nothing else changes; existing
+analyses show the scores after their next `generateReports`, and a landscape shows "-" for repositories analyzed before.
+
 ### AI Cost Estimator*: an educational tool
 
 The estimator page opens with "An educational tool, not an exact estimate: see how AI coding costs build up and where

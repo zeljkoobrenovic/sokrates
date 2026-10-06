@@ -8,6 +8,7 @@ import nl.obren.sokrates.common.utils.ProcessingStopwatch;
 import nl.obren.sokrates.common.utils.ProgressFeedback;
 import nl.obren.sokrates.sourcecode.analysis.files.*;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScoresAnalyzer;
 import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -80,6 +81,7 @@ public class CodeAnalyzer {
         if (shouldAnalyzeDuplication()) {
             timed("analysis/duplication", () -> new DuplicationAnalyzer(results).analyze(progressFeedback));
         }
+        timed("analysis/maintainability scores", () -> new MaintainabilityScoresAnalyzer(results).analyze());
         if (shouldAnalyzeControls()) {
             timed("analysis/controls", () -> new ControlsAnalyzer(results, progressFeedback).analyze());
         }

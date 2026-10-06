@@ -467,6 +467,42 @@
             + '<span style="font-size: 70%; margin-left: 4px;">' + pct.toFixed(1) + '%</span>';
     }
 
+    // A Human / AI maintainability score (0-10) with its A-E grade as an energy-label scale (the current grade
+    // larger and solid), and the sub-scores that drag it down most on hover.
+    const GRADE_COLORS = {A: ['var(--sk-risk-negligible, #1a9641)', '#fff'], B: ['var(--sk-risk-low, #a6d96a)', '#1f3d0c'],
+        C: ['#fee08b', '#5c4400'], D: ['var(--sk-risk-high, #fdae61)', '#5c2a00'], E: ['var(--sk-risk-very-high, #d7191c)', '#fff']};
+
+    function gradeScale(grade) {
+        return '<span style="display: inline-flex; align-items: center; gap: 2px; vertical-align: middle;">'
+            + Object.keys(GRADE_COLORS).map(g => {
+                const on = g === grade;
+                const size = on ? 22 : 12;
+                return '<span style="display: inline-flex; align-items: center; justify-content: center; width: ' + size + 'px; height: ' + size
+                    + 'px; border-radius: 3px; font-size: ' + (on ? 14 : 8) + 'px; font-weight: 600; line-height: 1; background: ' + GRADE_COLORS[g][0]
+                    + '; color: ' + GRADE_COLORS[g][1] + '; opacity: ' + (on ? 1 : 0.28) + (on ? '; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3)' : '')
+                    + ';">' + g + '</span>';
+            }).join('') + '</span>';
+    }
+
+    function scoreHtml(score, extra) {
+        if (!score) {
+            return '<span style="color: var(--sk-text-muted); font-size: 70%">-</span>';
+        }
+        const v = score.value || 0;
+        const title = 'grade ' + score.grade + ' (A: 8+, B: 6.5+, C: 5+, D: 3.5+, E: below)'
+            + (score.drags ? '\nbiggest drags: ' + score.drags : '') + (extra ? '\n' + extra : '');
+        return '<span title="' + esc(title) + '" style="white-space: nowrap; display: inline-flex; align-items: center; gap: 8px;">'
+            + '<b style="min-width: 24px; text-align: right;">' + v.toFixed(1) + '</b>' + gradeScale(score.grade) + '</span>';
+    }
+
+    function scoreColumn(key, label, field) {
+        return {key: key, label: label, type: 'number', dir: -1, headerStyle: 'text-align: left;',
+            value: i => i.repositoryMetrics && i.repositoryMetrics[field] ? i.repositoryMetrics[field].value : -1,
+            cell: i => '<td style="text-align: left;">' + scoreHtml(i.repositoryMetrics ? i.repositoryMetrics[field] : null,
+                field === 'aiScore' && i.repositoryMetrics.contextLinesPerChange > 0
+                    ? '~' + num(i.repositoryMetrics.contextLinesPerChange) + ' lines read per change' : '') + '</td>'};
+    }
+
     function controlsHtml(metrics) {
         if (!metrics || !metrics.controls || !metrics.controls.length) {
             return '';
@@ -737,6 +773,10 @@
             riskColumn('freshness', 'Freshness', 'freshness', FRESH_PALETTE),
             riskColumn('updateFreq', 'Update<br>Frequency', 'updateFrequency', HEAT_PALETTE)
         ];
+        // The score columns follow the name column; off with showMaintainabilityScores: false (the data stays).
+        if (options.showScores !== false) {
+            cols.splice(2, 0, scoreColumn('humanScore', 'Human<br>Score*', 'humanScore'), scoreColumn('aiScore', 'AI<br>Score*', 'aiScore'));
+        }
         if (options.showControls) {
             cols.push({key: 'controls', label: 'Controls', type: 'string', dir: 1, headerStyle: 'text-align: center;', sortable: false,
                 value: i => '', cell: i => '<td style="text-align: center;">' + controlsHtml(i.repositoryMetrics) + '</td>'});

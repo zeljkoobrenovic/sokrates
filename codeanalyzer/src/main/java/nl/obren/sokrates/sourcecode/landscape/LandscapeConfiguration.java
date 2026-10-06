@@ -60,6 +60,9 @@ public class LandscapeConfiguration {
     // If true, the repositories report will show the status of controls of each repository
     private boolean showRepositoryControls = true;
 
+    // If true, the repositories report shows the Human / AI maintainability score columns (the data is exported either way)
+    private boolean showMaintainabilityScores = true;
+
     // A maximal number of repositories shown in the short repository pages (embedded in the index page)
     private int repositoriesShortListLimit = 100;
 
@@ -319,6 +322,14 @@ public class LandscapeConfiguration {
 
     public void setShowRepositoryControls(boolean showRepositoryControls) {
         this.showRepositoryControls = showRepositoryControls;
+    }
+
+    public boolean isShowMaintainabilityScores() {
+        return showMaintainabilityScores;
+    }
+
+    public void setShowMaintainabilityScores(boolean showMaintainabilityScores) {
+        this.showMaintainabilityScores = showMaintainabilityScores;
     }
 
     public int getRepositoriesListLimit() {

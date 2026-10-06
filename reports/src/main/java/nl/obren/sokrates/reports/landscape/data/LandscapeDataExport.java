@@ -156,6 +156,7 @@ public class LandscapeDataExport {
         options.put("showCommits", analysisResults.getCommitsCount() > 0);
         options.put("showTags", repositoryExports.stream().anyMatch(r -> r.getTags() != null && !r.getTags().isEmpty()));
         options.put("showControls", configuration.isShowRepositoryControls());
+        options.put("showScores", configuration.isShowMaintainabilityScores());
         options.put("historyYears", configuration.getRepositoriesHistoryLimit());
         return options;
     }

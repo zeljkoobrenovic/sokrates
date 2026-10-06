@@ -157,4 +157,40 @@ class HealthSummaryTest {
         assertNull(HealthSummary.changesInLargeFilesTile(new FileReadsForChanges(Collections.emptyList(), config)));
         assertNull(HealthSummary.changesInLargeFilesTile(null));
     }
+
+    @Test
+    void scoreTilesHaveAGradeAStatusAndNoLink() {
+        nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScore score = new nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScore();
+        score.setValue(5.4);
+        score.setGrade("C");
+
+        HealthSummary.Tile tile = HealthSummary.scoreTile("AI score", score, "caption");
+
+        assertEquals("5.4", tile.getValue());
+        assertEquals("C", tile.getGrade());
+        assertEquals(HealthSummary.Status.WATCH, tile.getStatus());
+        assertNull(tile.getLink());
+        String html = ReportHealthSection.tile(tile);
+        assertTrue(html.startsWith("<div class='sk-tile'"));
+        assertTrue(html.endsWith("</div>"));
+        assertFalse(html.contains("href"));
+        assertTrue(html.contains("<span class='sk-grade sk-grade-c sk-grade-on'>C</span>"));
+        assertTrue(html.contains("<span class='sk-grade sk-grade-a'>A</span>"));
+    }
+
+    @Test
+    void hiddenScoresStayInTheDataButAreNotShown() {
+        nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults results = new nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults();
+        results.setCodeConfiguration(new nl.obren.sokrates.sourcecode.core.CodeConfiguration());
+        nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScores scores = new nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScores();
+        scores.setHuman(new nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScore());
+        scores.setAi(new nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScore());
+        results.setMaintainabilityScores(scores);
+
+        assertSame(scores, HealthSummary.shownScores(results));
+
+        results.getCodeConfiguration().getAnalysis().getMaintainabilityScores().setShow(false);
+        assertNull(HealthSummary.shownScores(results));
+        assertSame(scores, results.getMaintainabilityScores());
+    }
 }

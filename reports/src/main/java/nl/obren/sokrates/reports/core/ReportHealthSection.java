@@ -8,7 +8,12 @@ import nl.obren.sokrates.common.renderingutils.ReportTheme;
 import nl.obren.sokrates.reports.utils.HtmlEscapeUtils;
 import nl.obren.sokrates.sourcecode.SourceFile;
 import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
+import nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScore;
+import nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScores;
+import nl.obren.sokrates.sourcecode.analysis.scores.SubScore;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -57,6 +62,36 @@ public class ReportHealthSection {
             ".sk-hotspot-score {height: 6px; border-radius: 3px; background: var(--sk-surface-3); overflow: hidden;}\n" +
             ".sk-hotspot-score span {display: block; height: 100%; border-radius: 3px; background: var(--sk-deleted);}\n" +
             ".sk-hotspots-more {display: inline-block; margin: 8px 0 6px 0; font-size: 13px;}\n" +
+            ".sk-score-note {color: var(--sk-text-faint);}\n" +
+            // The A-E grade scale (energy-label style): every grade in its color, the current one larger and solid.
+            ".sk-grade-scale {display: inline-flex; align-items: center; gap: 2px; vertical-align: middle;}\n" +
+            ".sk-grade {display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 3px; " +
+            "font-size: 9px; font-weight: 600; line-height: 1; color: rgba(0, 0, 0, 0.55); opacity: 0.28;}\n" +
+            ".sk-grade.sk-grade-on {width: 24px; height: 24px; font-size: 15px; opacity: 1; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);}\n" +
+            ".sk-grade-lg .sk-grade {width: 18px; height: 18px; font-size: 11px;}\n" +
+            ".sk-grade-lg .sk-grade.sk-grade-on {width: 32px; height: 32px; font-size: 20px;}\n" +
+            ".sk-grade-a {background: var(--sk-risk-negligible, #1a9641); color: #fff;}\n" +
+            ".sk-grade-b {background: var(--sk-risk-low, #a6d96a); color: #1f3d0c;}\n" +
+            ".sk-grade-c {background: #fee08b; color: #5c4400;}\n" +
+            ".sk-grade-d {background: var(--sk-risk-high, #fdae61); color: #5c2a00;}\n" +
+            ".sk-grade-e {background: var(--sk-risk-very-high, #d7191c); color: #fff;}\n" +
+            ".sk-scores {display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 8px 32px; margin: 6px 0 10px 0;}\n" +
+            ".sk-score-head {display: flex; align-items: center; gap: 10px; padding-bottom: 4px;}\n" +
+            ".sk-score-name {font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--sk-text-muted); min-width: 52px;}\n" +
+            ".sk-score-total {font-size: 28px; font-variant-numeric: tabular-nums;}\n" +
+            ".sk-score-context {font-size: 12px; color: var(--sk-text-muted); margin-bottom: 4px;}\n" +
+            ".sk-subscores {list-style: none; margin: 0; padding: 0;}\n" +
+            ".sk-subscore {display: grid; grid-template-columns: 128px 1fr 32px 36px; grid-template-rows: auto auto; align-items: center; " +
+            "column-gap: 8px; padding: 5px 0; border-top: 1px solid var(--sk-border); font-size: 13px;}\n" +
+            ".sk-subscore-label {font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}\n" +
+            ".sk-subscore-bar {height: 6px; border-radius: 3px; background: var(--sk-surface-3); overflow: hidden;}\n" +
+            ".sk-subscore-bar span {display: block; height: 100%; border-radius: 3px;}\n" +
+            ".sk-subscore-good {background: var(--sk-risk-negligible, #1a9641);}\n" +
+            ".sk-subscore-watch {background: var(--sk-risk-high, #fdae61);}\n" +
+            ".sk-subscore-high {background: var(--sk-risk-very-high, #d7191c);}\n" +
+            ".sk-subscore-value {text-align: right; font-variant-numeric: tabular-nums;}\n" +
+            ".sk-subscore-drag {text-align: right; font-size: 12px; color: var(--sk-deleted); font-variant-numeric: tabular-nums;}\n" +
+            ".sk-subscore-measure {grid-column: 1 / -1; font-size: 12px; color: var(--sk-text-muted);}\n" +
             "@media (max-width: 760px) {.sk-hotspot {grid-template-columns: 22px 1fr;} .sk-hotspot-signals, .sk-hotspot-score {grid-column: 2;}}\n" +
             ReportTheme.darkOnly(".sk-status-good", "color: #8fdc9f; background: rgba(46, 125, 50, 0.25);") +
             ReportTheme.darkOnly(".sk-status-watch, .sk-chip-warn", "color: #f5c56b; background: rgba(245, 166, 35, 0.18);") +
@@ -70,6 +105,10 @@ public class ReportHealthSection {
             tiles.forEach(tile -> html.append(tile(tile)));
             html.append("</div>");
             report.addHtmlContent(html.toString());
+        }
+        MaintainabilityScores scores = HealthSummary.shownScores(results);
+        if (scores != null) {
+            report.addHtmlContent(scoresCard(scores));
         }
         List<HealthSummary.Hotspot> hotspots = summary.hotspots();
         if (!hotspots.isEmpty()) {
@@ -86,13 +125,19 @@ public class ReportHealthSection {
 
     static String tile(HealthSummary.Tile tile) {
         StringBuilder html = new StringBuilder();
-        html.append("<a class='sk-tile' href='").append(HtmlEscapeUtils.escape(tile.link)).append("' title='")
-                .append(HtmlEscapeUtils.escape(tile.tooltip)).append("'>");
+        String element = tile.link == null ? "div" : "a";
+        html.append("<").append(element).append(" class='sk-tile'");
+        if (tile.link != null) {
+            html.append(" href='").append(HtmlEscapeUtils.escape(tile.link)).append("'");
+        }
+        html.append(" title='").append(HtmlEscapeUtils.escape(tile.tooltip)).append("'>");
         // The label has the full line (one line, ellipsis as a last resort); the status sits next to the value.
         html.append("<div class='sk-tile-label' title='").append(HtmlEscapeUtils.escape(tile.label)).append("'>")
                 .append(HtmlEscapeUtils.escape(tile.label)).append("</div>");
         html.append("<div class='sk-tile-value-row'><span class='sk-tile-value'>").append(HtmlEscapeUtils.escape(tile.value)).append("</span>");
-        if (tile.status != HealthSummary.Status.NEUTRAL) {
+        if (tile.grade != null) {
+            html.append(gradeScale(tile.grade, false));
+        } else if (tile.status != HealthSummary.Status.NEUTRAL) {
             html.append("<span class='sk-status sk-status-").append(tile.status.getLabel()).append("'>")
                     .append(tile.status.getLabel()).append("</span>");
         }
@@ -101,7 +146,7 @@ public class ReportHealthSection {
         if (!tile.sparklineValues.isEmpty()) {
             html.append("<div class='sk-tile-spark'>").append(sparkline(tile.sparklineSlots, tile.sparklineValues)).append("</div>");
         }
-        html.append("</a>");
+        html.append("</").append(element).append(">");
         return html.toString();
     }
 
@@ -126,6 +171,71 @@ public class ReportHealthSection {
         }
         svg.append("</svg>");
         return svg.toString();
+    }
+
+    static final String GRADES = "ABCDE";
+
+    /** The A-E scale with the given grade highlighted; large for the score headers, small for cards. */
+    public static String gradeScale(String grade, boolean large) {
+        StringBuilder html = new StringBuilder("<span class='sk-grade-scale").append(large ? " sk-grade-lg" : "")
+                .append("' role='img' aria-label='grade ").append(HtmlEscapeUtils.escape(grade))
+                .append("' title='grade ").append(HtmlEscapeUtils.escape(grade)).append(" (A: 8+, B: 6.5+, C: 5+, D: 3.5+, E: below)'>");
+        for (char letter : GRADES.toCharArray()) {
+            String g = String.valueOf(letter);
+            html.append("<span class='sk-grade sk-grade-").append(g.toLowerCase()).append(g.equals(grade) ? " sk-grade-on" : "")
+                    .append("'>").append(g).append("</span>");
+        }
+        return html.append("</span>").toString();
+    }
+
+    static String scoresCard(MaintainabilityScores scores) {
+        StringBuilder html = new StringBuilder("<div class='sk-hotspots-card'>");
+        html.append("<div class='sk-hotspots-title'>Maintainability scores*</div>");
+        html.append("<div class='sk-hotspots-intro'>How easy the code is to understand and change, from 0 to 10: the same measured ")
+                .append("sub-scores, weighted for people and for AI coding agents. People struggle most with complex logic and with ")
+                .append("knowledge held by few; an agent pays for every line it reads, copies duplicates and needs tests to check its work. ")
+                .append("The total is a weighted geometric mean, capped at the weakest sub-score about the code + 4, so one weak spot is not averaged away. ")
+                .append("Sub-scores are ordered by <i>drag</i>: how much the (uncapped) mean would rise if that sub-score were 10. ")
+                .append("<span class='sk-score-note'>* A heuristic with fixed anchors; compare repositories rather than read it as absolute. ")
+                .append("Weights are configurable in <code>analysis.maintainabilityScores</code>.</span></div>");
+        html.append("<div class='sk-scores'>");
+        html.append(scoreColumn("Human", scores.getHuman(), ""));
+        html.append(scoreColumn("AI", scores.getAi(), scores.getContextLinesPerChange() > 0
+                ? String.format(Locale.US, "~%,d lines (~%,d tokens) of main code read per change, over %,d changes in the past year",
+                scores.getContextLinesPerChange(), scores.getContextLinesPerChange() * 10L, scores.getChangesMeasured())
+                : ""));
+        html.append("</div></div>");
+        return html.toString();
+    }
+
+    private static String scoreColumn(String label, MaintainabilityScore score, String note) {
+        StringBuilder html = new StringBuilder("<div class='sk-score-col'>");
+        html.append("<div class='sk-score-head'><span class='sk-score-name'>").append(label).append("</span>")
+                .append(String.format(Locale.US, "<span class='sk-score-total'>%.1f</span>", score.getValue()))
+                .append(gradeScale(score.getGrade(), true)).append("</div>");
+        if (!score.getCappedBy().isEmpty()) {
+            html.append("<div class='sk-score-context'>Capped by its weakest sub-score, ")
+                    .append(HtmlEscapeUtils.escape(score.getCappedBy())).append(" (+4).</div>");
+        }
+        if (!note.isEmpty()) {
+            html.append("<div class='sk-score-context'>").append(HtmlEscapeUtils.escape(note)).append("</div>");
+        }
+        List<SubScore> subScores = new ArrayList<>(score.getSubScores());
+        subScores.sort(Comparator.comparingDouble(SubScore::getDrag).reversed());
+        html.append("<ul class='sk-subscores'>");
+        for (SubScore subScore : subScores) {
+            long width = Math.round(10 * subScore.getScore());
+            html.append("<li class='sk-subscore' title='weight ").append(String.format(Locale.US, "%.2f", subScore.getWeight())).append("'>");
+            html.append("<span class='sk-subscore-label'>").append(HtmlEscapeUtils.escape(subScore.getLabel())).append("</span>");
+            html.append("<span class='sk-subscore-bar'><span class='sk-subscore-").append(HealthSummary.scoreStatus(subScore.getScore()).getLabel())
+                    .append("' style='width: ").append(Math.max(2, width)).append("%'></span></span>");
+            html.append(String.format(Locale.US, "<span class='sk-subscore-value'>%.1f</span>", subScore.getScore()));
+            html.append("<span class='sk-subscore-drag'>").append(subScore.getDrag() > 0 ? String.format(Locale.US, "−%.1f", subScore.getDrag()) : "").append("</span>");
+            html.append("<span class='sk-subscore-measure'>").append(HtmlEscapeUtils.escape(subScore.getMeasureText())).append("</span>");
+            html.append("</li>");
+        }
+        html.append("</ul></div>");
+        return html.toString();
     }
 
     static String hotspotsCard(List<HealthSummary.Hotspot> hotspots, boolean history, boolean viewerLinks) {

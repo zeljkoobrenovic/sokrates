@@ -14,6 +14,7 @@ import nl.obren.sokrates.sourcecode.core.CodeConfiguration;
 import nl.obren.sokrates.sourcecode.core.FoundTag;
 import nl.obren.sokrates.sourcecode.dependencies.Dependency;
 import nl.obren.sokrates.sourcecode.metrics.MetricsList;
+import nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScores;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +53,7 @@ public class CodeAnalysisResults {
 
     private DuplicationAnalysisResults duplicationAnalysisResults = new DuplicationAnalysisResults();
     private ContributorsAnalysisResults contributorsAnalysisResults = new ContributorsAnalysisResults();
+    private MaintainabilityScores maintainabilityScores;
 
     private int numberOfExcludedFiles;
     private Map<String, Integer> excludedExtensions;
@@ -298,6 +300,15 @@ public class CodeAnalysisResults {
 
     public void setContributorsAnalysisResults(ContributorsAnalysisResults contributorsAnalysisResults) {
         this.contributorsAnalysisResults = contributorsAnalysisResults;
+    }
+
+    /** The Human and AI maintainability scores, or null (disabled, no main code, or an older analysis). */
+    public MaintainabilityScores getMaintainabilityScores() {
+        return maintainabilityScores;
+    }
+
+    public void setMaintainabilityScores(MaintainabilityScores maintainabilityScores) {
+        this.maintainabilityScores = maintainabilityScores;
     }
 
     public List<FoundTag> getFoundTags() {
