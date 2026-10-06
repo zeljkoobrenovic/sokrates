@@ -5,6 +5,23 @@ everything listed under the most recent date.
 
 ## 2026-10-06
 
+### AI Cost Estimator*: a simpler model, shown as a diagram
+
+The model is simpler: every agent step re-sends the context, so a session costs about steps × average context (mostly at
+cache prices) plus its output. Its assumptions went from 14 ranges to 10: one read amplification instead of one per task
+type (the task type now only groups the results), no separate exploration reads, one write overhead for every changed
+line, and "output per step" instead of reasoning. Those barely moved the total (each by 1–6% across its range). One
+assumption was added where git hides real work: a debugging factor (1.5–4×) multiplies the steps of fix tasks (a small
+fix often follows reproduce, run and inspect loops), and tool output per step now goes up to 3,000 tokens (test runs,
+build logs, stack traces). Together these raise this repository's estimate by about half, mostly in fix tasks.
+
+The AI Cost Estimator (repository and landscape) has a "Model" button next to "Assumptions" that opens its model as a
+left-to-right diagram (at its natural size, the panel scrolls sideways; the arrows say what happens along them): how the git
+history becomes tasks and sessions, how the session inputs (lines read, edited and new lines, files) combine with every
+assumption into read, write, input and output tokens and the cost, and how the simulation turns that into the P10–P90
+results. The numbers in it follow the current filter and assumptions. It is drawn with Mermaid from cdn.jsdelivr.net,
+like the reports' other diagrams. "How it works" ends with a further-reading link to Martin Fowler's site.
+
 ### Landscape: AI Cost Estimator*
 
 Landscapes have an "AI Cost Estimator*" page too (sidebar: Insights): the same estimate over the tasks of all

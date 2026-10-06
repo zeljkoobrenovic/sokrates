@@ -302,9 +302,48 @@
             color: var(--sk-text-faint);
         }
 
-        #toggle-assumptions[aria-expanded=true] {
+        #toggle-assumptions[aria-expanded=true], #toggle-model[aria-expanded=true] {
             background-color: var(--sk-accent-soft);
         }
+
+        /* The model diagram (Mermaid) stays on a light canvas in both themes, like the reports' other diagrams. */
+        .model {
+            margin-top: 10px;
+            background: var(--sk-canvas, #fff);
+            border: 1px solid var(--sk-border);
+            border-radius: 8px;
+            padding: 12px;
+            overflow-x: auto;
+        }
+
+        /* Natural size (readable): the panel scrolls sideways when the diagram is wider. */
+        #model-diagram svg {
+            max-width: none;
+            height: auto;
+        }
+
+        .model-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 16px;
+            margin-top: 8px;
+            color: #555;
+        }
+
+        .model-legend .sw {
+            display: inline-block;
+            width: 11px;
+            height: 11px;
+            border-radius: 3px;
+            margin-right: 5px;
+            vertical-align: -1px;
+            border: 1px solid;
+        }
+
+        .sw-data { background: #e3edfb; border-color: #6b8fc4 !important; }
+        .sw-prior { background: #fff3d6; border-color: #c9962e !important; }
+        .sw-calc { background: #f2f2f2; border-color: #9a9a9a !important; }
+        .sw-result { background: #e3f3e5; border-color: #4f9457 !important; }
 
         .notes {
             font-size: 82%;
@@ -353,6 +392,7 @@
                 <input type="date" id="date-to" title="to (inclusive)" onchange="render()">
             </span>
             <button class="action-button" id="toggle-assumptions" onclick="toggleAssumptions()" aria-expanded="false">Assumptions</button>
+            <button class="action-button" id="toggle-model" onclick="toggleModel()" aria-expanded="false">Model</button>
         </div>
 
         <div class="assumptions" id="assumptions" hidden>
@@ -360,6 +400,17 @@
             <div class="small muted" style="margin-top: 8px">
                 Each range is drawn from in every simulation run.
                 <button class="action-button" onclick="resetInputs()" style="margin-left: 6px">Reset</button>
+            </div>
+        </div>
+
+        <div class="model" id="model" hidden>
+            <div id="model-diagram" class="muted small">Drawing the model…</div>
+            <div class="model-legend small">
+                <span><i class="sw sw-data"></i>from the git history</span>
+                <span><i class="sw sw-prior"></i>assumption (editable range)</span>
+                <span><i class="sw sw-calc"></i>calculation per session</span>
+                <span><i class="sw sw-result"></i>result</span>
+                <span class="muted">values as currently set and filtered</span>
             </div>
         </div>
 
@@ -394,14 +445,19 @@
                     (the history has dates, not times). Tasks are split into <b>sessions</b> of at most 10 files or 400 changed lines.</li>
                 <li><b>Scopes:</b> main, test, build &amp; deployment and other code count; generated code, files in no scope and files with
                     extensions the analysis does not cover are left out.</li>
-                <li><b>Reads</b> use the current total lines of the edited files, comments and blank lines included (at most 2,000 lines per file), times a read amplification for
-                    re-reads and unchanged neighbouring files, plus exploration reads per session. New files are written, not read; deleted files cost nothing.</li>
-                <li><b>Writes</b> come from the churn: an edit to an existing file costs more per line (the edit repeats the old text and some context) than a line in a new file.</li>
-                <li><b>Agent steps</b> are a base number plus a number per touched file. Every step sends the whole context again;
-                    most of it is a cache read, a share is a cache miss. Tool output and reasoning are added per step.</li>
-                <li><b>Task type</b> comes from the shape of the task: <i>new code</i> (most lines in new files), <i>refactoring</i> (broad, deletes about as much as it adds),
-                    <i>fix</i> (at most 60 lines in at most 3 files) or <i>feature</i> (the rest). It sets the read amplification.</li>
-                <li><b>Still priors:</b> tool output, reasoning, cache misses and non-coding sessions. Git cannot see the agent's behaviour, so the result is a range (P10–P90 of
+                <li><b>The model in one line:</b> every agent step sends the whole context again, so a session costs about
+                    <i>steps × average context</i>, mostly at cache prices, plus the output it writes.</li>
+                <li><b>Steps</b> are a base number per session plus a number per touched file. Fix tasks multiply them by a <i>debugging</i> factor:
+                    a small fix often comes after reproduce, run and inspect loops that git does not show, each adding tool output such as test runs and stack traces.</li>
+                <li><b>Context</b> starts at the base context (system prompt, tools, instructions) and grows by the reads (the current total lines of the
+                    edited files, comments and blank lines included, at most 2,000 per file, × tokens per line × a read amplification for re-reads and
+                    neighbouring files), the tool output and the output; new files are written, not read, deleted files cost nothing.</li>
+                <li><b>Output</b> is the changed lines × tokens per line × a write overhead (an edit repeats the old text and some context), plus output per step.</li>
+                <li><b>Cost:</b> the new context is a cache write, the re-sent context a cache read or, for the cache misses, full input, and the output is at the output price.
+                    Cache misses and the steps move the total most, and git cannot see either: measure them first in a replay pilot.</li>
+                <li><b>Task type</b> (<i>new code</i>: most lines in new files; <i>refactoring</i>: broad, deletes about as much as it adds;
+                    <i>fix</i>: at most 60 lines in at most 3 files; <i>feature</i>: the rest) groups the results; only fix tasks change the model (the debugging factor).</li>
+                <li><b>Still priors:</b> steps, tool output, output per step, cache misses and non-coding sessions. Git cannot see the agent's behaviour, so the result is a range (P10–P90 of
                     <span id="draws"></span> simulations), not a measurement.</li>
                 <li><b>Left out as noise:</b> <span id="noise"></span></li>
                 <li><b>Smell test:</b> the cost per developer-day compares with the reference you set (by default the about $13 per developer per active day reported for
@@ -410,6 +466,8 @@
                 <li><b>Calibrate with a replay pilot:</b> pick 20–30 tasks from the CSV across types and sizes, check out the parent of each task's first commit
                     (<span class="mono">git checkout &lt;first_sha&gt;^</span>), give an agent the commit message or ticket text as the prompt, record what each session
                     actually used, and compare with the task's estimate. Then adjust the priors above.</li>
+                <li><b>Further reading:</b> <a href="https://martinfowler.com/articles/exploring-gen-ai/refactoring-economic-benefit.html"
+                    target="_blank" rel="noopener">martinfowler.com/articles/exploring-gen-ai/refactoring-economic-benefit</a></li>
             </ul>
         </div>
     </div>
@@ -445,28 +503,22 @@
             ['currency', 'currency', '$', null, '', 0],
             ['reference', 'reference per dev-day', 13, null, '', 1, 'cost per developer per active day to compare with']
         ]],
-        ['Reads', [
-            ['tpl', 'tokens per line', 7, 14, '', 1],
+        ['Steps', [
+            ['steps', 'per session', 10, 25, '', 1, 'agent steps per session'],
+            ['steps-file', 'per touched file', 3, 6, '', 0.5, 'extra agent steps per touched file'],
+            ['debug', 'debugging (fix tasks)', 1.5, 4, '×', 0.1, 'fix tasks: reproduce, run and inspect loops before a small change; multiplies their steps']
+        ]],
+        ['Context', [
             ['base', 'base context', 12000, 25000, '', 1000, 'tokens of system prompt, tools and instructions'],
-            ['explore', 'exploration lines', 200, 1000, '', 50, 'lines read per session besides the edited files'],
-        ]],
-        ['Read amplification', [
-            ['amp-new', 'new code', 1.2, 2, '×', 0.1, 're-reads and unchanged neighbouring files'],
-            ['amp-feature', 'feature', 1.5, 3, '×', 0.1, 're-reads and unchanged neighbouring files'],
-            ['amp-fix', 'fix', 2, 4, '×', 0.1, 're-reads and unchanged neighbouring files'],
-            ['amp-refactor', 'refactoring', 1.5, 2.5, '×', 0.1, 're-reads and unchanged neighbouring files']
-        ]],
-        ['Agent', [
-            ['steps', 'steps / session', 10, 25, '', 1, 'agent steps per session'],
-            ['steps-file', 'steps / file', 3, 6, '', 0.5, 'extra agent steps per touched file'],
-            ['tool', 'tool output', 300, 1200, '', 50, 'tokens of command output, searches and diffs per step'],
-            ['reason', 'reasoning', 150, 600, '', 50, 'reasoning output tokens per step'],
-            ['miss', 'cache misses', 5, 20, '%', 1],
+            ['tpl', 'tokens per line', 7, 14, '', 1],
+            ['amp', 'read amplification', 1.5, 3, '×', 0.1, 're-reads and unchanged neighbouring files'],
+            ['tool', 'tool output per step', 300, 3000, '', 50, 'tokens per step of command output, test runs, build logs, stack traces, searches and diffs'],
             ['window', 'context window', 200000, null, '', 10000, 'tokens']
         ]],
-        ['Writes', [
-            ['edit', 'edited line', 1.3, 2.5, '×', 0.1, 'write overhead: an edit repeats the old text and some context'],
-            ['create', 'new line', 1, 1.2, '×', 0.05, 'write overhead per line in a new file']
+        ['Output and cache', [
+            ['reason', 'output per step', 150, 600, '', 50, 'reasoning and other output tokens per step'],
+            ['edit', 'write overhead', 1.3, 2.5, '×', 0.1, 'per changed line: an edit repeats the old text and some context'],
+            ['miss', 'cache misses', 5, 20, '%', 1, 'the share of re-sent context that misses the prompt cache']
         ]]
     ];
     const STORAGE_KEY = 'sokrates-ai-cost-estimator';
@@ -570,6 +622,13 @@
         return ids;
     }
 
+    function toggleModel() {
+        const panel = document.getElementById('model');
+        panel.hidden = !panel.hidden;
+        document.getElementById('toggle-model').setAttribute('aria-expanded', String(!panel.hidden));
+        if (!panel.hidden) drawModel(lastList);
+    }
+
     function toggleAssumptions() {
         const panel = document.getElementById('assumptions');
         panel.hidden = !panel.hidden;
@@ -619,17 +678,15 @@
     const DRAWS = Math.max(40, Math.min(200, Math.floor(3000000 / Math.max(1, tasks.length))));
     let costs = new Float32Array(0), inputs = new Float32Array(0), cached = new Float32Array(0), outputs = new Float32Array(0);
 
-    // One session's tokens and cost for one draw of the priors (theta).
-    function session(s, amp, theta, prices) {
-        const files = s[0], readLines = s[1], editLines = s[2] + s[3], newLines = s[4];
-        const reads = (readLines * amp + theta.explore) * theta.tpl;
-        const writes = (editLines * theta.edit + newLines * theta.create) * theta.tpl;
-        const steps = theta.steps + theta.stepsFile * files;
-        const output = writes + steps * theta.reason;
-        const grown = reads + steps * theta.tool + output;
-        const peak = Math.min(theta.window, theta.base + grown);
-        const input = Math.max(steps * (theta.base + peak) / 2, theta.base + grown);
-        const written = Math.min(input, theta.base + grown);
+    // One session's tokens and cost for one draw of the priors (theta): every step re-sends the context.
+    function session(s, theta, prices, debug) {
+        const files = s[0], readLines = s[1], changedLines = s[2] + s[3] + s[4];
+        const steps = (theta.steps + theta.stepsFile * files) * debug;
+        const output = changedLines * theta.tpl * theta.edit + steps * theta.reason;
+        const growth = readLines * theta.amp * theta.tpl + steps * theta.tool + output;
+        const peak = Math.min(theta.window, theta.base + growth);
+        const input = Math.max(steps * (theta.base + peak) / 2, theta.base + growth);
+        const written = Math.min(input, theta.base + growth);
         const reread = input - written;
         const cost = (written * prices.cw + reread * (theta.miss * prices.in + (1 - theta.miss) * prices.cr) + output * prices.out) / 1e6;
         return [cost, input, reread * (1 - theta.miss), output];
@@ -649,17 +706,15 @@
         outputs = new Float32Array(n * DRAWS);
         for (let d = 0; d < DRAWS; d++) {
             const theta = {
-                tpl: draw('tpl'), base: draw('base'), explore: draw('explore'), steps: draw('steps'), stepsFile: draw('steps-file'),
-                tool: draw('tool'), reason: draw('reason'), edit: draw('edit'), create: draw('create'), miss: draw('miss') / 100,
-                window: Math.max(1, num('window')),
-                amp: {new: draw('amp-new'), feature: draw('amp-feature'), fix: draw('amp-fix'), refactor: draw('amp-refactor')}
+                steps: draw('steps'), stepsFile: draw('steps-file'), debug: draw('debug'), base: draw('base'), tpl: draw('tpl'), amp: draw('amp'),
+                tool: draw('tool'), reason: draw('reason'), edit: draw('edit'), miss: draw('miss') / 100,
+                window: Math.max(1, num('window'))
             };
             for (let t = 0; t < n; t++) {
-                const task = tasks[t];
-                const amp = theta.amp[task.type] || theta.amp.feature;
                 let c = 0, i = 0, k = 0, o = 0;
-                task.sessions.forEach(s => {
-                    const r = session(s, amp, theta, prices);
+                const debug = tasks[t].type === 'fix' ? theta.debug : 1;
+                tasks[t].sessions.forEach(s => {
+                    const r = session(s, theta, prices, debug);
                     c += r[0];
                     i += r[1];
                     k += r[2];
@@ -964,6 +1019,114 @@
         renderRepositories(lastList, total);
         renderChart(lastList);
         renderTasks();
+        scheduleModel(lastList);
+    }
+
+    // ------------------------------------------------------------------------------- the model diagram
+
+    let mermaidLib = null, modelTimer = null, modelCount = 0;
+
+    // Drawn only while shown: Mermaid lays out to the visible size.
+    function scheduleModel(list) {
+        clearTimeout(modelTimer);
+        if (document.getElementById('model').hidden) return;
+        modelTimer = setTimeout(() => drawModel(list), 300);
+    }
+
+    // Mermaid labels: numbers and fixed words only, but escape anyway (entity codes, as the reports do).
+    function mm(text) {
+        return String(text).replace(/&/g, '#amp;').replace(/"/g, '#quot;').replace(/</g, '#lt;').replace(/>/g, '#gt;');
+    }
+
+    function short(v) {
+        if (v >= 1e6) return (v / 1e6).toFixed(v >= 1e7 ? 0 : 1) + 'M';
+        if (v >= 1e4) return Math.round(v / 1e3) + 'k';
+        return (Math.round(v * 100) / 100).toLocaleString('en-US');
+    }
+
+    function rangeLabel(id) {
+        const r = range(id);
+        return r[0] === r[1] ? short(r[0]) : short(r[0]) + '–' + short(r[1]);
+    }
+
+    function modelDefinition(list) {
+        const sessions = list.reduce((s, t) => s + t.sessions.length, 0);
+        const commits = list.reduce((s, t) => s + t.commits.length, 0);
+        const readLines = list.reduce((s, t) => s + t.readLines, 0);
+        const changed = list.reduce((s, t) => s + t.churn, 0);
+        const files = list.reduce((s, t) => s + t.sessions.reduce((f, x) => f + x[0], 0), 0);
+        const c = currency();
+        // A node: the first line bold, the others below it (each escaped, joined with <br>).
+        const label = parts => '<b>' + mm(parts[0]) + '</b>' + parts.slice(1).map(p => '<br>' + mm(p)).join('');
+        const n = (id, ...parts) => id + '["' + label(parts) + '"]';
+        const prior = (id, ...parts) => id + '(["' + label(parts) + '"])';
+        // An edge with a short text on the line.
+        const e = (from, text, to) => from + ' -->|"' + mm(text) + '"| ' + to;
+        return [
+            'flowchart LR',
+            n('C', int(commits) + ' commits', 'noise left out'),
+            n('T', int(list.length) + ' tasks', 'ticket id, or one author\'s', 'overlapping commits'),
+            n('S', int(sessions) + ' sessions', 'at most 10 files or 400 lines'),
+            n('F', int(files) + ' files touched'),
+            n('LR', int(readLines) + ' lines read', 'edited files, ≤ 2,000 lines each'),
+            n('LC', int(changed) + ' lines changed'),
+            prior('PS', 'steps', rangeLabel('steps') + ' + ' + rangeLabel('steps-file') + ' per file', 'fix tasks × ' + rangeLabel('debug') + ' debugging'),
+            prior('PO', 'output', rangeLabel('reason') + ' per step', 'write overhead ' + rangeLabel('edit') + '×'),
+            prior('PC', 'context', 'base ' + rangeLabel('base') + ' · ' + rangeLabel('tpl') + ' tokens per line',
+                'read amplification ' + rangeLabel('amp') + '×', 'tool output ' + rangeLabel('tool') + ' per step'),
+            n('ST', 'steps', '(base + per file × files)', '× debugging for fix tasks'),
+            n('OUT', 'output tokens', 'lines changed × tokens per line', '× overhead + steps × output per step'),
+            n('IN', 'input tokens', 'steps × average context', 'context grows from base by the reads,', 'tool output and output; ≤ window ' + short(num('window'))),
+            prior('PP', 'prices per 1M', 'input ' + c + short(num('p-in')) + ' · output ' + c + short(num('p-out')),
+                'cache write ' + c + short(num('p-cw')) + ' · read ' + c + short(num('p-cr')), 'cache misses ' + rangeLabel('miss') + '%'),
+            n('COST', 'cost per session', 'new context × cache write', '+ re-sent context × (misses × input', '+ hits × cache read)', '+ output × output price'),
+            n('RES', 'P10 · P50 · P90', DRAWS + ' simulations over the ranges', 'total, per task type, per month,', 'per 1,000 lines, per developer-day'),
+            e('C', 'grouped', 'T'),
+            n('TY', 'task type', 'new code, feature, fix, refactoring'),
+            e('T', 'classified', 'TY'),
+            e('TY', 'fix: × debugging', 'ST'),
+            e('T', 'split', 'S'),
+            'S --> F',
+            'S --> LC',
+            'S --> LR',
+            e('F', '× steps per file', 'ST'),
+            e('LC', '× tokens per line × overhead', 'OUT'),
+            e('LR', 'reads: × amplification × tokens per line', 'IN'),
+            'PS --> ST',
+            'PO --> OUT',
+            'PC --> IN',
+            e('ST', '× output per step', 'OUT'),
+            e('ST', 'each step re-sends the context', 'IN'),
+            e('OUT', 'grows the context', 'IN'),
+            e('IN', 'cache writes, hits and misses', 'COST'),
+            e('OUT', '× output price', 'COST'),
+            'PP --> COST',
+            e('COST', 'summed per task, per simulation', 'RES'),
+            'classDef data fill:#e3edfb,stroke:#6b8fc4,color:#1d2b3a',
+            'classDef prior fill:#fff3d6,stroke:#c9962e,color:#3a2c0e',
+            'classDef calc fill:#f2f2f2,stroke:#9a9a9a,color:#222',
+            'classDef result fill:#e3f3e5,stroke:#4f9457,color:#173a1c',
+            'class C,T,S,F,LR,LC,TY data',
+            'class PS,PC,PO,PP prior',
+            'class ST,OUT,IN,COST calc',
+            'class RES result'
+        ].join('\n');
+    }
+
+    async function drawModel(list) {
+        const target = document.getElementById('model-diagram');
+        try {
+            if (!mermaidLib) {
+                mermaidLib = (await import('https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs')).default;
+                mermaidLib.initialize({startOnLoad: false, securityLevel: 'strict', theme: 'base',
+                    flowchart: {useMaxWidth: false, htmlLabels: true, nodeSpacing: 22, rankSpacing: 34}, themeVariables: {fontSize: '13px', lineColor: '#888', edgeLabelBackground: '#ffffff'}});
+            }
+            const result = await mermaidLib.render('model-svg-' + (++modelCount), modelDefinition(list));
+            target.innerHTML = result.svg;
+            target.classList.remove('muted', 'small');
+        } catch (e) {
+            target.textContent = 'The model diagram needs the Mermaid library from cdn.jsdelivr.net (' + e.message + ').';
+        }
     }
 
     function csvCell(v) {
