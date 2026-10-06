@@ -258,27 +258,40 @@ public class ReportFileExporter {
         indexReport.addHtmlContent(icons.toString());
     }
 
-    // The Human and AI maintainability scores, linking to their breakdown on the Highlights tab.
+    // The Human and AI ease of change (maintainability scores), linking to their breakdown on the Highlights tab.
     private static void addMaintainabilityScoreBlocks(RichTextReport report, MaintainabilityScores scores) {
         if (scores == null) {
             return;
         }
-        addScoreBlock(report, scores.getHuman(), "human score*", "contributors");
-        addScoreBlock(report, scores.getAi(), "AI score*", "bot");
+        addScoreBlock(report, scores.getHuman(), "for people*", "contributors");
+        addScoreBlock(report, scores.getAi(), "for AI*", "bot");
     }
 
-    private static void addScoreBlock(RichTextReport report, MaintainabilityScore score, String label, String icon) {
+    private static void addScoreBlock(RichTextReport report, MaintainabilityScore score, String audienceLabel, String icon) {
         HealthSummary.Status status = HealthSummary.gradeStatus(score.getGrade());
         String color = status == HealthSummary.Status.GOOD ? "#dff3e3" : (status == HealthSummary.Status.WATCH ? "#fdf0d5" : "#fbe1e1");
         String drags = score.getSubScores().stream().filter(s -> s.getDrag() > 0)
                 .sorted(Comparator.comparingDouble(SubScore::getDrag).reversed()).limit(3)
                 .map(s -> s.getLabel() + String.format(Locale.US, " -%.1f", s.getDrag())).collect(Collectors.joining(", "));
-        String tooltip = "0-10 maintainability score*" + (drags.isEmpty() ? "" : "; biggest drags: " + drags)
+        String tooltip = "0-10 ease of change*" + (drags.isEmpty() ? "" : "; biggest drags: " + drags)
                 + (score.getCappedBy().isEmpty() ? "" : "; capped by " + score.getCappedBy())
                 + (score.getCoverageText().isEmpty() ? "" : "; " + score.getCoverageText());
-        addInfoBlockWithColor(report, String.format(Locale.US, "%.1f", score.getValue()),
-                score.isFullyMeasured() ? label : label + " (" + score.getCoverageShort() + ")", ReportHealthSection.gradeScale(score.getGrade(), false),
-                color, HtmlEscapeUtils.escape(tooltip), icon, "index.html#highlights", false);
+        // The info block's layout, tightened so a two-line label ("ease of change" / "for people*") and the grade
+        // scale fit the same 130 x 102 card as the size cards next to it.
+        String audience = score.isFullyMeasured() ? audienceLabel : audienceLabel + " (" + score.getCoverageShort() + ")";
+        report.addHtmlContent("<a href='index.html#highlights' style='color: var(--sk-text, black);'>");
+        report.startDiv("display: inline-block; text-align: center; margin-top: 12px; cursor: pointer;");
+        report.addHtmlContent("<div style='vertical-alignment: bottom; margin: 0px; margin-bottom: -10px; z-index: 3;'>" + getIconSvg(icon, 40) + "</div>");
+        report.startDiv("border-radius: 12px; cursor: pointer; margin: 12px 12px 36px 0px; display: inline-block; width: 130px; height: 102px; "
+                + "z-index: 2; --sk-tint: " + color + "; background-color: var(--sk-tint); text-align: center; vertical-align: middle; "
+                + "box-shadow: rgba(0, 0, 0, 0.15) 2.4px 2.4px 3.2px;", HtmlEscapeUtils.escape(tooltip));
+        report.addHtmlContent(String.format(Locale.US, "<div style='font-size: 34px; line-height: 1.1; padding-top: 8px; color: var(--sk-text, black);'>%.1f</div>", score.getValue()));
+        report.addHtmlContent("<div style='color: var(--sk-text, black); font-size: 11px; line-height: 1.25;'>ease of change<br>"
+                + HtmlEscapeUtils.escape(audience) + "</div>");
+        report.addHtmlContent("<div style='margin-top: 3px;'>" + ReportHealthSection.gradeScale(score.getGrade(), false) + "</div>");
+        report.endDiv();
+        report.endDiv();
+        report.addHtmlContent("</a>");
     }
 
     static void addInfoBlockWithColor(RichTextReport report, String mainValue, String subtitle, String extra, String color, String tooltip, String icon, String link) {

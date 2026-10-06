@@ -77,7 +77,7 @@ public class SubScoreExplanations {
                 "Lines read per change drive an agent's token cost and accuracy: the more it reads, the costlier and more error-prone each task."));
         why.put(KNOWLEDGE, new Why(
                 "When a few people make most changes, the knowledge sits with them: their absence slows everyone, and reviews and onboarding depend on them.",
-                "Not in the AI score by default: an agent reads the code, not people's memory, though it gains when that knowledge is written down."));
+                "Not in the AI rating by default: an agent reads the code, not people's memory, though it gains when that knowledge is written down."));
         BUILT_IN = Collections.unmodifiableMap(why);
     }
 

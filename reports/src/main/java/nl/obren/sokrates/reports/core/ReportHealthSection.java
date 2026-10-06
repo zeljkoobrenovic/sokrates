@@ -207,9 +207,9 @@ public class ReportHealthSection {
 
     static String scoresCard(MaintainabilityScores scores, Map<String, SubScoreExplanations.Why> explanations) {
         StringBuilder html = new StringBuilder("<div class='sk-hotspots-card'>");
-        html.append("<div class='sk-hotspots-title'>Maintainability scores*</div>");
+        html.append("<div class='sk-hotspots-title'>Ease of change*</div>");
         if (scores.isCustomFramework()) {
-            html.append("<div class='sk-hotspots-intro'>How easy the code is to understand and change, from 0 to 10, by this ")
+            html.append("<div class='sk-hotspots-intro'>How easily the code can be understood and changed, from 0 to 10, by this ")
                     .append("repository's own framework (<code>analysis.maintainabilityScores.customFramework</code>). The total is a ")
                     .append("weighted geometric mean of its sub-scores")
                     .append(scores.getHuman().getCapMargin() >= 0 ? ", capped at the weakest + "
@@ -218,8 +218,9 @@ public class ReportHealthSection {
                     .append("click one to see why it matters. ")
                     .append("<span class='sk-score-note'>* Compare only repositories scored by the same framework.</span></div>");
         } else {
-            html.append("<div class='sk-hotspots-intro'>How easy the code is to understand and change, from 0 to 10. Both scores weigh ")
-                    .append("the same sub-scores: people struggle most with complex logic and knowledge held by few; agents pay for every ")
+            html.append("<div class='sk-hotspots-intro'>How easily the code can be understood and changed, from 0 to 10. Other things ")
+                    .append("equal, less code is easier and cheaper to change, for people and for agents. Both ratings weigh the same ")
+                    .append("sub-scores: people struggle most with complex logic and knowledge held by few; agents pay for every ")
                     .append("line they read, copy duplicates and need tests to check their work. The total is a weighted geometric mean, ")
                     .append("capped at the weakest code sub-score + 4, so one weak spot is not averaged away. Sub-scores are ordered by ")
                     .append("<i>drag</i>, how much the uncapped mean would rise if that sub-score were 10; click one to see why it matters. ")

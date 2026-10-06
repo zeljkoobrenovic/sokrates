@@ -81,8 +81,8 @@ class SubScoreExplanationsTest {
         MaintainabilityScore score = score(new SubScore(MaintainabilityScoresAnalyzer.VOLUME, "Volume", 0, "", 8).withWeight(1));
         score.setSubScoresTotal(3);
         score.setNotMeasured(Arrays.asList("Unit size", "Unit complexity"));
-        HealthSummary.Tile tile = HealthSummary.scoreTile("human score*", score, "for people to understand and change");
-        assertEquals("measured on 1 of 3 sub-scores", tile.caption);
+        HealthSummary.Tile tile = HealthSummary.scoreTile("Ease of change*", score, "for people · biggest drag: volume");
+        assertEquals("for people · measured on 1 of 3 sub-scores", tile.caption);
         assertTrue(tile.tooltip.contains("not measured: Unit size, Unit complexity"));
 
         MaintainabilityScores scores = new MaintainabilityScores();
@@ -93,6 +93,16 @@ class SubScoreExplanationsTest {
 
         score.setSubScoresTotal(1);
         score.setNotMeasured(java.util.Collections.emptyList());
-        assertEquals("for people to understand and change", HealthSummary.scoreTile("human score*", score, "for people to understand and change").caption);
+        assertEquals("for people · biggest drag: volume", HealthSummary.scoreTile("Ease of change*", score, "for people · biggest drag: volume").caption);
+    }
+
+    @Test
+    void theTileCaptionNamesTheBiggestDrag() {
+        SubScore volume = new SubScore(MaintainabilityScoresAnalyzer.VOLUME, "Volume", 0, "", 7).withWeight(1);
+        volume.setDrag(0.4);
+        SubScore knowledge = new SubScore(MaintainabilityScoresAnalyzer.KNOWLEDGE, "Knowledge spread", 0, "", 3).withWeight(1);
+        knowledge.setDrag(1.3);
+        assertEquals("biggest drag: knowledge spread", HealthSummary.biggestDrag(score(volume, knowledge)));
+        assertEquals("no sub-score holds it back", HealthSummary.biggestDrag(score(new SubScore("a", "A", 0, "", 10).withWeight(1))));
     }
 }

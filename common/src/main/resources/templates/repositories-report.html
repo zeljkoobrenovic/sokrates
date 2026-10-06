@@ -787,7 +787,7 @@
             filter: i => i.mainLinesOfCode > 0});
     })();
 
-    // Scores*: a size-vs-score chart above a table of the scores; only when the scores are on
+    // Ease of Change* (tab id 'scores'): a size-vs-score chart above a table of the scores; only when the scores are on
     // (showMaintainabilityScores, the data stays either way) and some repository has them.
     const HAS_SCORES = options.showScores !== false
         && repositories.some(r => r.repositoryMetrics && r.repositoryMetrics.humanScore);
@@ -802,10 +802,10 @@
             value: i => i.repositoryMetrics && i.repositoryMetrics.contextLinesPerChange || 0,
             cell: i => '<td style="text-align: right;" title="current lines of the main files an average past-year commit touched">'
                 + (i.repositoryMetrics && i.repositoryMetrics.contextLinesPerChange > 0 ? '~' + num(i.repositoryMetrics.contextLinesPerChange) : '-') + '</td>'};
-        TABS.splice(1, 0, {id: 'scores', label: 'Scores*', sortKey: 'humanScore', sortDir: -1,
+        TABS.splice(1, 0, {id: 'scores', label: 'Ease of Change*', sortKey: 'humanScore', sortDir: -1,
             summaryChart: scoresSummary,
-            columns: [langCol, nameCol, scoreColumn('humanScore', 'Human<br>Score*', 'humanScore'),
-                scoreColumn('aiScore', 'AI<br>Score*', 'aiScore'), locCol, contextCol, reportCol],
+            columns: [langCol, nameCol, scoreColumn('humanScore', 'Human ease<br>of change*', 'humanScore'),
+                scoreColumn('aiScore', 'AI ease<br>of change*', 'aiScore'), locCol, contextCol, reportCol],
             filter: i => i.mainLinesOfCode > 0 && i.repositoryMetrics && i.repositoryMetrics.humanScore && i.repositoryMetrics.aiScore});
     }
 
@@ -1270,7 +1270,7 @@
         const x = loc => L + (Math.log10(Math.max(1, loc)) - lo) / (hi - lo) * (W - L - R);
         const y = v => T + (10 - v) / 10 * (H - T - B);
         let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width: 100%; max-width: ' + W + 'px; height: auto; font-size: 11px;"'
-            + ' role="img" aria-label="maintainability score against lines of main code">';
+            + ' role="img" aria-label="ease of change against lines of main code">';
         GRADE_BANDS.forEach(b => {
             svg += '<rect x="' + L + '" y="' + y(b[2]) + '" width="' + (W - L - R) + '" height="' + (y(b[1]) - y(b[2]))
                 + '" fill="' + GRADE_COLORS[b[0]][0] + '" fill-opacity="0.09"></rect>'
@@ -1287,13 +1287,13 @@
         }
         svg += '<text x="' + ((L + W - R) / 2) + '" y="' + (H - 6) + '" text-anchor="middle" fill="var(--sk-text-muted)">lines of main code (log scale)</text>'
             + '<text transform="translate(12,' + ((T + H - B) / 2) + ') rotate(-90)" text-anchor="middle" fill="var(--sk-text-muted)">'
-            + (scoreKind === 'aiScore' ? 'AI' : 'Human') + ' score</text>';
+            + (scoreKind === 'aiScore' ? 'AI' : 'Human') + ' ease of change</text>';
         // Larger repositories first, so smaller dots stay on top and clickable.
         rows.slice().sort((a, b) => b.mainLinesOfCode - a.mainLinesOfCode).forEach(r => {
             const score = r.repositoryMetrics[scoreKind];
             const name = (r.metadata && r.metadata.name) || '';
             const title = name + '\n' + num(r.mainLinesOfCode) + ' lines of main code\n' + (scoreKind === 'aiScore' ? 'AI' : 'Human')
-                + ' score ' + (score.value || 0).toFixed(1) + ', grade ' + score.grade + (score.framework === 'custom' ? ' (own framework)' : '')
+                + ' ease of change ' + (score.value || 0).toFixed(1) + ', grade ' + score.grade + (score.framework === 'custom' ? ' (own framework)' : '')
                 + (score.coverageText ? '\n' + score.coverageText : '')
                 + (score.drags ? '\nbiggest drags: ' + score.drags : '');
             const color = (GRADE_COLORS[score.grade] || GRADE_COLORS.E)[0];
@@ -1307,11 +1307,11 @@
         return svg + '</svg>';
     }
 
-    // The Scores* tab's chart, above its table: the rows are the tab's (searched, with scores).
+    // The Ease of Change* tab's chart, above its table: the rows are the tab's (searched, with scores).
     function scoresSummary(rows) {
         let html = '<div style="margin: 8px 0 10px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px;">'
             + ['humanScore', 'aiScore'].map(k => '<button class="sk-pill' + (k === scoreKind ? ' active' : '') + '" onclick="selectScoreKind(\'' + k + '\')">'
-                + (k === 'aiScore' ? 'AI score' : 'Human score') + '</button>').join('');
+                + (k === 'aiScore' ? 'AI' : 'Human') + '</button>').join('');
         if (rows.length) {
             const sorted = rows.map(r => r.repositoryMetrics[scoreKind].value || 0).sort((a, b) => a - b);
             const median = sorted.length % 2 ? sorted[(sorted.length - 1) / 2] : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;

@@ -391,6 +391,9 @@ public class LandscapeReportGenerator {
     private void addRepositoriesSubItems(ReportNavigation navigation, ReportNavigation.Group group) {
         boolean commits = landscapeAnalysisResults.getCommitsCount() > 0;
         addRepositoriesSubItem(navigation, group, "repositories", "Overview", "Size, commits and contributors per repository.");
+        if (hasMaintainabilityScores()) {
+            addRepositoriesSubItem(navigation, group, "scores", "Ease of Change*", "How easily people and AI agents can understand and change each repository, against the size of its main code.");
+        }
         if (commits) {
             addRepositoriesSubItem(navigation, group, "churnTrend", "Churn", "Lines added and deleted per repository, recent windows and trend.");
             addRepositoriesSubItem(navigation, group, "commitsTrend", "Commits Trend", "Commits per repository over time.");
@@ -398,9 +401,6 @@ public class LandscapeReportGenerator {
             addRepositoriesSubItem(navigation, group, "history", "History", "Age, first and latest commits of each repository.");
         }
         addRepositoriesSubItem(navigation, group, "metrics", "Metrics", "Duplication, size and complexity profiles, and controls per repository.");
-        if (hasMaintainabilityScores()) {
-            addRepositoriesSubItem(navigation, group, "scores", "Scores", "Human and AI maintainability scores against the size of the main code.");
-        }
         if (dataExport != null && dataExport.hasFeaturesOfInterest()) {
             addRepositoriesSubItem(navigation, group, "features", "Features of Interest", "Where the features of interest occur across the repositories.");
         }

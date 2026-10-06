@@ -150,7 +150,7 @@ class HealthSummaryTest {
 
         HealthSummary.Tile tile = HealthSummary.changesInLargeFilesTile(reads);
 
-        assertEquals("Changes in large files", tile.getLabel());
+        assertEquals("Large-file changes", tile.getLabel());
         assertEquals("25%", tile.getValue());
         assertEquals(HealthSummary.Status.HIGH, tile.getStatus());
         assertEquals("FileSize.html", tile.getLink());

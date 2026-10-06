@@ -10,6 +10,7 @@ import nl.obren.sokrates.sourcecode.analysis.results.CodeAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ContributorsAnalysisResults;
 import nl.obren.sokrates.sourcecode.analysis.results.ControlStatus;
 import nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScore;
+import nl.obren.sokrates.sourcecode.analysis.scores.SubScore;
 import nl.obren.sokrates.sourcecode.analysis.scores.MaintainabilityScores;
 import nl.obren.sokrates.sourcecode.contributors.ContributionTimeSlot;
 import nl.obren.sokrates.sourcecode.filehistory.DateUtils;
@@ -171,10 +172,11 @@ public class HealthSummary {
         }
         MaintainabilityScores scores = shownScores(results);
         if (scores != null) {
-            tiles.add(scoreTile("human score*", scores.getHuman(), "for people to understand and change"));
-            tiles.add(scoreTile("AI score*", scores.getAi(), scores.getContextLinesPerChange() > 0
+            // The tile label is one uppercase line, so the audience goes into the (wrapping) caption.
+            tiles.add(scoreTile("Ease of change*", scores.getHuman(), "for people · " + biggestDrag(scores.getHuman())));
+            tiles.add(scoreTile("Ease of change*", scores.getAi(), "for AI · " + (scores.getContextLinesPerChange() > 0
                     ? String.format(Locale.US, "~%,d lines read per change", scores.getContextLinesPerChange())
-                    : "for AI agents to understand and change"));
+                    : biggestDrag(scores.getAi()))));
         }
         if (!results.skipDuplicationAnalysis() && results.getDuplicationAnalysisResults().getOverallDuplication() != null) {
             double duplication = results.getDuplicationAnalysisResults().getOverallDuplication().getDuplicationPercentage().doubleValue();
@@ -231,7 +233,7 @@ public class HealthSummary {
             return null;
         }
         double share = 100.0 * reads.getChangesInLargeFiles() / reads.getTotalChanges();
-        return new Tile("Changes in large files", percentage(share),
+        return new Tile("Large-file changes", percentage(share),
                 "of changes (" + reads.windowShortLabel() + ") to files > " + String.format(Locale.US, "%,d", reads.getLargeFileLines()) + " lines",
                 status(share, CHANGES_IN_LARGE_FILES_BANDS), "FileSize.html",
                 "People and AI agents read large files in pieces for every change. " + bandsTooltip(CHANGES_IN_LARGE_FILES_BANDS));
@@ -250,11 +252,21 @@ public class HealthSummary {
         String tooltip = "0-10, grade " + score.getGrade() + " (A: 8+, B: 6.5+, C: 5+, D: 3.5+, E: below)"
                 + (score.getCoverageText().isEmpty() ? "" : "; " + score.getCoverageText());
         if (!score.isFullyMeasured()) {
-            caption = "measured on " + score.getSubScores().size() + " of " + score.getSubScoresTotal() + " sub-scores";
+            String measured = "measured on " + score.getSubScores().size() + " of " + score.getSubScoresTotal() + " sub-scores";
+            int audienceEnd = caption.indexOf(" · ");
+            caption = audienceEnd > 0 ? caption.substring(0, audienceEnd) + " · " + measured : measured;
         }
         Tile tile = new Tile(label, value, caption, gradeStatus(score.getGrade()), null, tooltip);
         tile.grade = score.getGrade();
         return tile;
+    }
+
+    // "biggest drag: knowledge spread", or "no sub-score holds it back" when none drags.
+    static String biggestDrag(MaintainabilityScore score) {
+        return score.getSubScores().stream().filter(subScore -> subScore.getDrag() > 0)
+                .max(java.util.Comparator.comparingDouble(SubScore::getDrag))
+                .map(subScore -> "biggest drag: " + subScore.getLabel().toLowerCase(Locale.ROOT))
+                .orElse("no sub-score holds it back");
     }
 
     /** A and B good, C watch, D and E high: follows the grade, so configured grade thresholds carry over. */

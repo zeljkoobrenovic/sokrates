@@ -5,6 +5,18 @@ everything listed under the most recent date.
 
 ## 2026-10-06
 
+### "Ease of change" instead of "maintainability score"
+
+The Human and AI maintainability scores are now labelled **ease of change** — how easily people and AI agents can
+understand and change the code — because "maintainability" read as a verdict on code quality, while the ratings also
+(deliberately) reward less code: other things equal, a smaller code base is easier and cheaper to change. At a Glance
+shows "ease of change for people*" and "for AI*"; the Highlights tiles are both "Ease of change*" with the audience in
+the caption ("for people · biggest drag: …", "for AI · ~N lines read per change"), the Highlights card is "Ease of change*" and the landscape tab "Ease of Change*" (Human / AI toggle and
+columns). The landscape sidebar now lists it right after Overview, as the tab bar does
+(it had stayed after Metrics). Unchanged: the numbers, the configuration key `analysis.maintainabilityScores`, the
+landscape option `showMaintainabilityScores` and the metric ids `MAINTAINABILITY_SCORE_HUMAN` / `_AI`, so existing
+goals and controls keep working. The "Changes in large files" tile is now "Large-file changes", so its title fits.
+
 ### Maintainability scores show their coverage
 
 A score left without some of its sub-scores (their analysis did not run: no units for a language, no git history,
@@ -14,7 +26,7 @@ dashed dot on the chart. Fully measured scores look as before; analyses from bef
 
 ### Landscape: Repositories › Scores*
 
-A new Scores* tab right after Overview (also in the sidebar). A chart plots every repository as a dot: lines of main
+A new Scores* tab right after Overview (also in the sidebar; renamed Ease of Change*, see above). A chart plots every repository as a dot: lines of main
 code (log scale) across, its Human or AI maintainability score (toggle) up, colored by grade over the A–E bands; hover
 shows the score and its biggest drags, a click opens the repository's Highlights. Below it, a sortable table lists the
 Human and AI scores, main lines of code and lines read per change. Both follow the search box. The score columns moved

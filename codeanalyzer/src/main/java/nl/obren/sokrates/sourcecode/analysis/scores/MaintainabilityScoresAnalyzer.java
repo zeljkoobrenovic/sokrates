@@ -142,9 +142,9 @@ public class MaintainabilityScoresAnalyzer {
         results.setMaintainabilityScores(scores);
 
         results.getMetricsList().addMetric().id(AnalysisUtils.getMetricId("MAINTAINABILITY_SCORE_HUMAN"))
-                .description("Human maintainability score (0-10)").value(scores.getHuman().getValue());
+                .description("Human ease of change (maintainability score, 0-10)").value(scores.getHuman().getValue());
         results.getMetricsList().addMetric().id(AnalysisUtils.getMetricId("MAINTAINABILITY_SCORE_AI"))
-                .description("AI maintainability score (0-10)").value(scores.getAi().getValue());
+                .description("AI ease of change (maintainability score, 0-10)").value(scores.getAi().getValue());
         if (changes.commits > 0) {
             results.getMetricsList().addMetric().id(AnalysisUtils.getMetricId("AI_CONTEXT_LINES_PER_CHANGE"))
                     .description("Lines of main code read per change, past year").value(scores.getContextLinesPerChange());
